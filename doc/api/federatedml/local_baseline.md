@@ -24,9 +24,6 @@ respective information like Logistic Regression module. In addition,
 note that loss history is not available for Guest when running
 homogeneous training.
 
-For examples of using Local Baseline module, please refer
-[here](../../../examples/pipeline/local_baseline).
-
 ## Param
 
 ::: federatedml.param.local_baseline_param
@@ -37,3 +34,7 @@ For examples of using Local Baseline module, please refer
       show_root_toc_entry: false
       show_root_full_path: false
 
+
+## Examples
+
+{% include-examples "local_baseline" %}

@@ -267,9 +267,11 @@ Framework\].](https://arxiv.org/abs/1901.08755)
 
 > ![Figure 4: complete secure boost](../../images/complete_secure.png)
 
-  - Please refer to
-    test\_secureboost\_train\_complete\_secure\_conf.json in  
-    [here](../../../examples/dsl/v2/hetero_secureboost).
+
+
+### Examples
+
+{% include-examples "hetero_secureboost" %}
 
 ## Hetero Fast SecureBoost
 

@@ -1,4 +1,4 @@
-# Introduction
+# Hetero FTL
 
 Now, hetero federated transfer learning is refactorized based on
 fate-1.5. And additional test datasets are offered.
@@ -56,8 +56,7 @@ several local model weights updates, thus communication cost is reduced.
   - Support plain/encrypted mode
   - Support local layer define / optimizer define
   - Support communication-efficient mode. See
-    test\_ftl\_comm\_eff\_conf.json in
-    [here](../../../examples/dsl/v2/hetero_ftl).
+    {% include-example "../../../examples/dsl/v2/hetero_ftl/test_ftl_comm_eff_conf.json" %}
 
 ## Applications
 

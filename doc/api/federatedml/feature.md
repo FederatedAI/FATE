@@ -255,8 +255,11 @@ federatedml.param.sbt\_feature\_transformer\_param
 
 Feature Imputation imputes missing features on dense instances using
 user-specified method(s) and value(s). Imputation can be done on select
-columns using arbitrary methods. Please refer
-[here](../../../examples/pipeline/feature_imputation) for examples.
+columns using arbitrary methods. 
+
+## Examples
+
+{% include-examples "feature_imputation" %}
 
 ## Param
 

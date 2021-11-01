@@ -29,8 +29,10 @@ to count some features. It supports integers and floating-point numbers
 from - 2 ^ 63 to 2 ^ 64. By default, the maximum precision is set to 6
 decimal places.
 
-There is an
-[example](../../../examples/pipeline/feldman_verifiable_sum)
+
+## Examples
+
+{% include-examples "feldman_verifiable_sum" %}
 
 ## Param
 

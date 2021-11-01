@@ -27,6 +27,6 @@ For more details of psi, you can refer to this
     input format is dense, default is set to np.nan. Default setting is
     suggested
 
-## How to use
+## Examples
 
-An example is offered in examples/dsl/v2/psi folder.
+{ % include-examples "psi" %}

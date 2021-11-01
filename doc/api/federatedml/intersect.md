@@ -57,8 +57,7 @@ module](./sir.md).
 ## Intersection With Cache
 
 Intersection may be conducted as online/offline phases. Both RSA and DH
-Intersection support cache. For examples employing cache mechanism,
-please refer [here](../../../examples/pipeline/intersect).
+Intersection support cache. 
 
 ## Multi-Host Intersection
 
@@ -148,3 +147,7 @@ RAW intersection supports the following extra feature:
 1.  base64 encoding may be used for all hashing methods.
 
 RSA intersection is used for intersection cardinality estimation.
+
+## Examples
+
+{% include-examples "intersect" %}

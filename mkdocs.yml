@@ -56,8 +56,6 @@ plugins:
       hooks:
         on_pre_build: "doc.mkdocs.hook:pre_build"
         on_page_markdown: "doc.mkdocs.hook:on_page_markdown"
-  - macros:
-      module_name: doc/mkdocs/macro
   - search
   - mkdocstrings:
       default_handler: python
@@ -113,9 +111,6 @@ markdown_extensions:
   - pymdownx.tilde
 
 extra:
-  repo_base: https://github.com/FederatedAI/FATE/tree/master
-  github_branch_base_url: https://github.com/FederatedAI/FATE/tree/master
-
   alternate:
     - name: English
       lang: en

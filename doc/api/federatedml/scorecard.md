@@ -51,5 +51,7 @@ range and parameter values.
   - need\_run  
     Indicate if this module needs to be run, default True
 
-  - examples  
-    Here is an [example](../../../examples/pipeline/scorecard).
+
+## Examples
+
+{% include-examples "scorecard" %}

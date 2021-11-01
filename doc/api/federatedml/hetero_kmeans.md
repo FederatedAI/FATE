@@ -3,7 +3,6 @@
 Kmeans is a simple statistic model widely used for clustering. FATE
 provides Heterogeneous Kmeans(HeteroKmeans).
 
-`examples/dsl/v1/hetero_kmeans`.
 
 Here we simplify participants of the federation process into three
 parties. Party A represents Guest, party B represents Host. Party C,
@@ -52,3 +51,8 @@ zero when aggregating at arbiter.
 2.  Random\_stat specify supported
 3.  Centroids are selected randomly
 4.  Labeled and unlabeled data supported
+
+
+## Examples
+
+{% include-examples "hetero_kmeans" %}

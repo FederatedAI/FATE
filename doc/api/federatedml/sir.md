@@ -13,9 +13,6 @@ Transfer(OT)](https://eprint.iacr.org/2017/1011).
 This component can be used to retrieve specific feature value(s) or
 label value, with arbitrary security level.
 
-There is an
-[example](../../../examples/pipeline/secure_information_retrieval).
-
 ## Param
 
 ::: federatedml.param.sir_param
@@ -26,3 +23,7 @@ There is an
       show_root_toc_entry: false
       show_root_full_path: false
 
+
+## Examples
+
+{% include-examples "secure_information_retrieval" %}

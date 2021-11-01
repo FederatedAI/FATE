@@ -33,8 +33,7 @@ configuration file.
     }
 ```
 
-For examples of using stepwise with linear models, please refer
-[here](../../../examples/dsl/v2/hetero_stepwise). For explanation on
+For explanation on
 stepwise module parameters, please refer to
 [stepwise param](../../../python/federatedml/param/stepwise_param.py).
 
@@ -51,3 +50,7 @@ coefficient/intercept values) are of the final result model.
       show_root_toc_entry: false
       show_root_full_path: false
 
+
+## Examples
+
+{% include-examples "hetero_stepwise" %}

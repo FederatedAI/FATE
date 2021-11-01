@@ -26,5 +26,6 @@ all three may be specified. The module takes either int (instance count)
 or float (fraction) value for set sizes, but mixed-type inputs cannot be
 used.
 
-For examples of using Data Split module, please refer
-[here](../../../examples/pipeline/data_split).
+# Examples
+
+{% include-examples "data_split" %}

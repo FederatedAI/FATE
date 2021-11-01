@@ -43,8 +43,13 @@ def clean_params_doc():
         print("Error: %s - %s." % (e.filename, e.strerror))
 
 
-INCLUDE_EXAMPLE_REGEX = re.compile(
+_INCLUDE_EXAMPLES_REGEX = re.compile(
     r"""(?P<_includer_indent>[^\S\r\n]*){%\s*include-examples\s*"(?P<example_name>[^")]+)"\s*%}""",
+    flags=re.VERBOSE | re.DOTALL,
+)
+
+_INCLUDE_EXAMPLE_REGEX = re.compile(
+    r"""(?P<_includer_indent>[^\S\r\n]*){%\s*include-example\s*"(?P<example_path>[^")]+)"\s*%}""",
     flags=re.VERBOSE | re.DOTALL,
 )
 
@@ -62,53 +67,87 @@ _EXAMPLES_BASE = os.path.abspath(
 )
 
 
-def sub_includes(file_path):
+def sub_include_examples(match):
+
+    example_name = match.group("example_name")
+    indents_level0 = match.group("_includer_indent")
+
+    lines = []
+    lines.append(f"{indents_level0}???+ Example\n")
+    lines.append(f"{indents_level0}\n")
+    indents_level1 = indents_level0 + "    "
+    for example_type in ["pipeline", "dsl/v2", "dsl/v1"]:
+        include_path = os.path.join(_EXAMPLES_BASE, example_type, example_name, "*.*")
+        lines.append(f'{indents_level1}=== "{example_type}"\n\n')
+        indents_level2 = f"{indents_level1}    "
+
+        if example_type == "dsl/v1":
+            lines.append(f"{indents_level2}!!! warning\n")
+            lines.append(f"{indents_level2}    `dsl version 1` is deprecated, please consider use `dsl version v2` or `pipeline` instead!\n")
+            lines.append(f"{indents_level2}    \n")
+
+        for name in glob.glob(include_path):
+            if name.endswith("README.md") or name.endswith("readme.md"):
+                lines.append(f"{indents_level2}```markdown\n")
+                with open(name) as f:
+                    for line in f.readlines():
+                        lines.append(f"{indents_level2}{line}")
+
+                lines.append(f"{indents_level2}\n")
+                lines.append(f"{indents_level2}```\n")
+                lines.append(f"{indents_level2}\n")
+
+        for file_name in glob.glob(include_path):
+            if file_name.endswith("README.md") or file_name.endswith("readme.md"):
+                continue
+            _, file_extension = os.path.splitext(file_name)
+            lint = _LINT_MAP.get(file_extension, "")
+            lines.append(f'{indents_level2}??? Example "{os.path.basename(file_name)}"\n')
+            lines.append(f"{indents_level2}    ```{lint}\n")
+            head = True
+            with open(file_name) as f:
+                for line in f.readlines():
+                    # skip license
+                    if head:
+                        if line.strip() == "" or line.lstrip().startswith("#"):
+                            continue
+                    head = False
+                    lines.append(f"{indents_level2}    {line}")
+            lines.append(f"{indents_level2}    \n")
+            lines.append(f"{indents_level2}    ```\n")
+            lines.append(f"{indents_level2}    \n")
+
+    return "".join(lines)
+
+
+def sub_include_example(src_file_path):
     def sub(match):
-        example_name = match.group("example_name")
+        example_path = match.group("example_path")
         indents_level0 = match.group("_includer_indent")
 
         lines = []
-        lines.append(f"{indents_level0}!!! Example\n")
+        lines.append(f"{indents_level0}\n")
+        lines.append(f'{indents_level0}??? Example "{example_path}"\n')
         lines.append(f"{indents_level0}\n")
         indents_level1 = indents_level0 + "    "
-        for example_type in ["pipeline", "dsl/v2", "dsl/v1"]:
-            include_path = os.path.join(
-                _EXAMPLES_BASE, example_type, example_name, "*.*"
-            )
-            lines.append(f'{indents_level1}=== "{example_type}"\n\n')
-            indents_level2 = f"{indents_level1}    "
-
-            for name in glob.glob(include_path):
-                if name.endswith("README.md") or name.endswith("readme.md"):
-                    lines.append(f"{indents_level2}```markdown\n")
-                    with open(name) as f:
-                        for line in f.readlines():
-                            lines.append(f"{indents_level2}{line}")
-
-                    lines.append(f"{indents_level2}\n")
-                    lines.append(f"{indents_level2}```\n")
-                    lines.append(f"{indents_level2}\n")
-
-            for file_name in glob.glob(include_path):
-                if file_name.endswith("README.md") or file_name.endswith("readme.md"):
-                    continue
-                _, file_extension = os.path.splitext(file_name)
-                lint = _LINT_MAP.get(file_extension, "")
-                lines.append(f'{indents_level2}=== "{os.path.basename(file_name)}"\n')
-                lines.append(f"{indents_level2}    ```{lint}\n")
-                head = True
-                with open(file_name) as f:
-                    for line in f.readlines():
-                        # skip license
-                        if head:
-                            if line.strip() == "" or line.lstrip().startswith("#"):
-                                continue
-                        head = False
-                        lines.append(f"{indents_level2}    {line}")
-                lines.append(f"{indents_level2}    \n")
-                lines.append(f"{indents_level2}    ```\n")
-                lines.append(f"{indents_level2}    \n")
-
+        abs_file_path = os.path.abspath(
+            os.path.join(src_file_path, os.pardir, example_path)
+        )
+        with open(abs_file_path) as f:
+            _, file_extension = os.path.splitext(abs_file_path)
+            lint = _LINT_MAP.get(file_extension, "")
+            lines.append(f"{indents_level1}```{lint}\n")
+            head = True
+            for line in f.readlines():
+                # skip license
+                if head:
+                    if line.strip() == "" or line.lstrip().startswith("#"):
+                        continue
+                head = False
+                lines.append(f"{indents_level1}    {line}")
+            lines.append(f"{indents_level1}\n")
+            lines.append(f"{indents_level1}```\n")
+            lines.append(f"{indents_level1}\n")
         return "".join(lines)
 
     return sub
@@ -116,9 +155,14 @@ def sub_includes(file_path):
 
 def on_page_markdown(markdown, page, **kwargs):
     markdown = re.sub(
-        INCLUDE_EXAMPLE_REGEX,
-        sub_includes(page.file.abs_src_path),
+        _INCLUDE_EXAMPLES_REGEX,
+        sub_include_examples,
         markdown,
     )
 
+    markdown = re.sub(
+        _INCLUDE_EXAMPLE_REGEX,
+        sub_include_example(page.file.abs_src_path),
+        markdown,
+    )
     return markdown
