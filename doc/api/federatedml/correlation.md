@@ -2,24 +2,22 @@
 
 ## Introduction
 
-Pearson Correlation Coefficient is a measure of the linear correlation
-between two variables, X and Y, defined as,
+Pearson Correlation Coefficient is a measure of the linear correlation between two variables, $X$ and $Y$, defined as,
 
-![](../../images/pearson.png)
+$$\rho_{X,Y} = \frac{cov(X, Y)}{\sigma_X\sigma_Y} = \frac{E[(X-\mu_X)(Y-\mu_Y)]}{\sigma_X\sigma_Y} = E\left[\left(\frac{X-\mu_X}{\sigma_X}\cdot\frac{Y-\mu_Y}{\sigma_Y}\right)\right]$$
 
 Let
 
-![](../../images/standard.png)
+$$\tilde{X} = \frac{X-\mu_X}{\sigma_X}, \tilde{Y}=\frac{Y-\mu_Y}{\sigma_Y}$$
 
 then,
 
-![](../../images/rewrited.png)
+$$\rho_{X, Y} = E[\tilde{X}\tilde{Y}]$$
 
 ## Implementation Detail
 
 We use an MPC protocol called SPDZ for Heterogeneous Pearson Correlation
-Coefficient calculation. For more details, one can refer
-[here](./secureprotol.md).
+Coefficient calculation. For more details, one can refer [[here](./secureprotol.md)]
 
 ## Param
 
@@ -43,21 +41,10 @@ Coefficient calculation. For more details, one can refer
   - column\_names  
     names of columns use for calculation.
 
-> 
-> 
-> <div class="note">
-> 
-> <div class="admonition-title">
-> 
-> Note
-> 
-> </div>
-> 
-> if both params are provided, the union of columns indicated are used
-> for calculation.
-> 
-> </div>
+!!! Note
 
-  - examples  
-    Please refer [here](../../../examples/pipeline/hetero_pearson)
-    for examples.
+    if both params are provided, the union of columns indicated are used for calculation.
+
+## Examples
+
+{% include-examples "hetero_pearson" %}
