@@ -5,8 +5,6 @@ import random
 import time
 
 from flow_sdk.client import FlowClient
-from fate_flow import set_env
-from fate_arch.common.conf_utils import get_base_config
 
 home_dir = os.path.split(os.path.realpath(__file__))[0]
 
@@ -32,11 +30,6 @@ evaluation_component_name = 'evaluation_0'
 # HOST = 'host'
 # ARBITER = 'arbiter'
 
-SDK_VERSION = "v1"
-FATE_FLOW_SERVICE_NAME = "fateflow"
-HOST = get_base_config(FATE_FLOW_SERVICE_NAME, {}).get("host", "127.0.0.1")
-HTTP_PORT = get_base_config(FATE_FLOW_SERVICE_NAME, {}).get("http_port")
-
 START = 'start'
 SUCCESS = 'success'
 RUNNING = 'running'
@@ -50,7 +43,8 @@ WAIT_UPLOAD_TIME = 1000
 OTHER_TASK_TIME = 7200
 # RETRY_JOB_STATUS_TIME = 5
 STATUS_CHECKER_TIME = 10
-flow_client = FlowClient(HOST, HTTP_PORT, SDK_VERSION)
+
+flow_client: FlowClient
 
 
 def get_timeid():
@@ -424,7 +418,7 @@ class TrainSBTTask(TrainTask):
             exit(1)
 
 
-def main():
+if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser()
 
     arg_parser.add_argument("-f", "--file_type", type=str,
@@ -437,7 +431,8 @@ def main():
     arg_parser.add_argument("-gid", "--guest_id", type=int, help="guest party id", required=True)
     arg_parser.add_argument("-hid", "--host_id", type=int, help="host party id", required=True)
     arg_parser.add_argument("-aid", "--arbiter_id", type=int, help="arbiter party id", required=True)
-
+    arg_parser.add_argument("-ip", "--flow_server_ip", type=str, help="please input flow server'ip")
+    arg_parser.add_argument("-port", "--flow_server_port", type=int, help="please input flow server port")
     arg_parser.add_argument("--add_sbt", help="test sbt or not", type=int,
                             default=1, choices=[0, 1])
 
@@ -452,7 +447,10 @@ def main():
     file_type = args.file_type
     add_sbt = args.add_sbt
     start_serving = args.serving
+    ip = args.flow_server_ip
+    port = args.flow_server_port
 
+    flow_client = FlowClient(ip=ip, port=port, version="v1")
     task = TrainLRTask(file_type, guest_id, host_id, arbiter_id)
     task.run(start_serving)
 
@@ -460,6 +458,3 @@ def main():
         task = TrainSBTTask(file_type, guest_id, host_id, arbiter_id)
         task.run()
 
-
-if __name__ == "__main__":
-    main()
