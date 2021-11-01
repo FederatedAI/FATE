@@ -1,7 +1,6 @@
 import argparse
 import json
 import os
-import pprint
 import random
 import time
 from flow_sdk.client import FlowClient
@@ -15,9 +14,6 @@ flow_client = None
 
 guest_party_id = -1
 host_party_id = -1
-
-work_mode = 0
-backend = 0
 
 user_name = ""
 
@@ -57,8 +53,6 @@ def create_new_runtime_config():
     conf_dict["initiator"]["party_id"] = guest_party_id
     conf_dict["role"]["guest"] = [guest_party_id]
     conf_dict["role"]["host"] = [host_party_id]
-    conf_dict["job_parameters"]["common"]["work_mode"] = work_mode
-    conf_dict["job_parameters"]["common"]["backend"] = backend
     conf_dict["job_parameters"]["role"] = {
         "guest": {"0": {"user": user_name}},
         "host": {"0": {"user": user_name}},
@@ -74,7 +68,7 @@ def exec_task(dsl_path, config_data):
             dsl_dict = json.loads(fin.read())
 
     result = flow_client.job.submit(config_data=config_data, dsl_data=dsl_dict)
-    pprint.pprint (result["data"])
+    print(json.dumps(result["data"], indent=4))
     try:
         status = result["retcode"]
     except:
@@ -152,20 +146,14 @@ if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("guest_party_id", type=int, help="please input guest party id")
     arg_parser.add_argument("host_party_id", type=int, help="please input host party id")
-    arg_parser.add_argument("work_mode", type=int,
-                            help="please input work_mode, 0 stands for standalone, 1  stands for cluster")
     arg_parser.add_argument("flow_server_ip", type=str, help="please input flow server'ip")
     arg_parser.add_argument("flow_server_port", type=int, help="please input flow server port")
-    arg_parser.add_argument("-b", "--backend", type=int, default=0,
-                            help="please input backend, 0 stands for eggroll, 1 stands for spark")
     arg_parser.add_argument("-u", "--user_name", type=str, help="please input user name")
 
     args = arg_parser.parse_args()
 
     guest_party_id = args.guest_party_id
     host_party_id = args.host_party_id
-    work_mode = args.work_mode
-    backend = args.backend
     user_name = args.user_name
 
     ip = args.flow_server_ip
