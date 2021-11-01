@@ -133,21 +133,23 @@ def sub_include_example(src_file_path):
         abs_file_path = os.path.abspath(
             os.path.join(src_file_path, os.pardir, example_path)
         )
-        with open(abs_file_path) as f:
-            _, file_extension = os.path.splitext(abs_file_path)
-            lint = _LINT_MAP.get(file_extension, "")
-            lines.append(f"{indents_level1}```{lint}\n")
-            head = True
-            for line in f.readlines():
-                # skip license
-                if head:
-                    if line.strip() == "" or line.lstrip().startswith("#"):
-                        continue
-                head = False
-                lines.append(f"{indents_level1}    {line}")
-            lines.append(f"{indents_level1}\n")
-            lines.append(f"{indents_level1}```\n")
-            lines.append(f"{indents_level1}\n")
+        if os.path.exists(abs_file_path):
+            with open(abs_file_path) as f:
+                _, file_extension = os.path.splitext(abs_file_path)
+                lint = _LINT_MAP.get(file_extension, "")
+                lines.append(f"{indents_level1}```{lint}\n")
+                head = True
+                for line in f.readlines():
+                   # skip license
+                    if head:
+                      if line.strip() == "" or line.lstrip().startswith("#"):
+                         continue
+                    head = False
+                    lines.append(f"{indents_level1}    {line}")
+                lines.append(f"{indents_level1}\n")
+                lines.append(f"{indents_level1}```\n")
+                lines.append(f"{indents_level1}\n")
+        
         return "".join(lines)
 
     return sub
