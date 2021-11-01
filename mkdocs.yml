@@ -51,12 +51,13 @@ theme:
 
 plugins:
   - awesome-pages
-  - macros:
-      module_name: doc/mkdocs/macro
   - mkdocs-simple-hooks:
     # generate params's md
       hooks:
         on_pre_build: "doc.mkdocs.hook:pre_build"
+        on_page_markdown: "doc.mkdocs.hook:on_page_markdown"
+  - macros:
+      module_name: doc/mkdocs/macro
   - search
   - mkdocstrings:
       default_handler: python
