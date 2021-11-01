@@ -23,7 +23,7 @@ import numpy as np
 from federatedml.nn.hetero_nn.backend.tf_keras.interactive.drop_out import DropOut
 from federatedml.util.fixpoint_solver import FixedPointEncoder
 
-from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
+from federatedml.secureprotol.paillier_tensor import PaillierTensor
 from federatedml.nn.hetero_nn.backend.tf_keras.interactive.dense_model import GuestDenseModel
 from federatedml.nn.hetero_nn.backend.tf_keras.interactive.dense_model import HostDenseModel
 from federatedml.nn.hetero_nn.util import random_number_generator

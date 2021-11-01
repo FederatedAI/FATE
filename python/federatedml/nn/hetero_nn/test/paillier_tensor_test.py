@@ -1,6 +1,6 @@
 import numpy as np
 import unittest
-from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
+from federatedml.secureprotol.paillier_tensor import PaillierTensor
 from federatedml.util import consts
 from fate_arch.session import computing_session as session
 import random

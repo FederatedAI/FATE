@@ -22,7 +22,7 @@ import random
 import numpy as np
 from fate_arch.session import computing_session
 
-from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
+from federatedml.secureprotol.paillier_tensor import PaillierTensor
 
 BITS = 10
 MIXED_RATE = 0.5

@@ -26,7 +26,7 @@ from tensorflow.python.keras.backend import gradients
 from tensorflow.python.keras.backend import set_session
 
 from fate_arch.session import computing_session as session
-from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
+from federatedml.secureprotol.paillier_tensor import PaillierTensor
 from federatedml.util import LOGGER
 
 
