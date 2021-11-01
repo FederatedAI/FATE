@@ -1,7 +1,6 @@
 mkdocs-material==7.3.0
 mkdocs-jupyter==0.18.0
 python-markdown-math==0.8
-mkdocs-macros-plugin==0.6.0
 git+git://github.com/weiwee/mkdocs-static-i18n@main#egg=mkdocs-static-i18n
 git+git://github.com/mkdocstrings/mkdocstrings@f6cf570#egg=mkdocstrings
 pytkdocs[numpy-style]==0.14.0
