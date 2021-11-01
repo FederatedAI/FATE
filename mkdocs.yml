@@ -10,6 +10,9 @@ nav:
     - tutorial/index.md
     - pipeline: 
       - notebook: tutorial/pipeline/pipeline_tutorial_0.ipynb
+    - DSL Conf:
+      - job conf guide: tutorial/dsl_conf/dsl_conf_v2_setting_guide.md
+      - upload guide: tutorial/dsl_conf/upload_data_guide.md
     - model publish: tutorial/model_publish_with_serving_guide.md
   - API:
     - Arch:

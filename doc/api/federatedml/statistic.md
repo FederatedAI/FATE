@@ -22,3 +22,15 @@ The indicators for each column that can be statistic are list as follow.
     number before the "%" should be integer.
 
 These static values can be used in feature selection as a criterion.
+
+## Param
+
+::: federatedml.param.statistics_param
+    rendering:
+      heading_level: 3
+      show_source: true
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_root_full_path: false
+
+{% include-examples "data_statistics" %}

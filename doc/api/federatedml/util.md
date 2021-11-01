@@ -73,13 +73,6 @@ them to desired output Table.
   - Outlier value replace, also provides several outlier replace method
     like missing value impute.
 
-Please check out federatedmd/feature/imputer.py for more details.
-
-<div class="literalinclude">
-
-../feature/imputer.py
-
-</div>
 
 # Sample Weight
 
@@ -97,25 +90,15 @@ will be given.
 Please note that when weight is not None, only `weight_diff` convergence
 check method may be used for training GLM.
 
-## How to Use
+## Param
 
-  - params
-
-  - class\_weight  
-    str or dict, class weight dictionary or class weight computation
-    mode. String value only accepts 'balanced'. If dict provided, key
-    should be class(label), and weight will not be normalized.
-
-  - sample\_weight\_name  
-    str, name of column which specifies sample weight. Extracted weight
-    values will be normalized.
-
-  - normalize  
-    bool, default False. Whether to normalize sample weight extracted
-    from <span class="title-ref">sample\_weight\_name</span> column
-
-  - need\_run  
-    bool, whether to run this module
+::: federatedml.param.sample_weight_param
+    rendering:
+      heading_level: 3
+      show_source: true
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_root_full_path: false
 
 > 
 > 
@@ -140,17 +123,12 @@ User may specify encoder to transform labels into designated values. If
 no specification is provided, module will automatically encodes label
 into categorical label values(integers) starting at 0.
 
-## How to Use
+## Param
 
-  - params
-
-  - label\_encoder  
-    None, dict, specify (label, encoded label) key-value pairs for
-    transforming labels to new values.
-
-  - label\_list  
-    None, list, list all input labels, used for matching types of
-    original keys in label\_encoder dict
-
-  - need\_run  
-    bool, whether to run this module
+::: federatedml.param.label_transform_param
+    rendering:
+      heading_level: 3
+      show_source: true
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_root_full_path: false

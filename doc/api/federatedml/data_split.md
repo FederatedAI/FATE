@@ -13,7 +13,7 @@ The module takes one table input as specified in job config file. Table
 must be uploaded beforehand as with other federatedml models. Module
 parameters should be specified in job config file. Any parameter
 unspecified will take the default value detailed in
-[parameter definition](../../../python/federatedml/param/data\_split\_param.py).
+parameter definition below.
 
 Data Split module always outputs three tables (train, test, and validate
 sets). Each table may be used as input of another module. Below are the
@@ -25,6 +25,16 @@ size; 3. only one of the three sizes is needed to split input data, but
 all three may be specified. The module takes either int (instance count)
 or float (fraction) value for set sizes, but mixed-type inputs cannot be
 used.
+
+## Param
+
+::: federatedml.param.data_split_param
+    rendering:
+      heading_level: 3
+      show_source: true
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_root_full_path: false
 
 # Examples
 

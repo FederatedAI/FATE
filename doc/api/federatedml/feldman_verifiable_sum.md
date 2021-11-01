@@ -29,11 +29,6 @@ to count some features. It supports integers and floating-point numbers
 from - 2 ^ 63 to 2 ^ 64. By default, the maximum precision is set to 6
 decimal places.
 
-
-## Examples
-
-{% include-examples "feldman_verifiable_sum" %}
-
 ## Param
 
   - params
@@ -50,3 +45,7 @@ decimal places.
 
 2.Attacks can be detected when the malicious participant is less than
 (n-1)/2
+
+## Examples
+
+{% include-examples "feldman_verifiable_sum" %}
