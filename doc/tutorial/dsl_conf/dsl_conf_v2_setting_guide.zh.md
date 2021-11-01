@@ -1,6 +1,6 @@
 # 任务配置和运行配置 V2
 
-[[ENG](dsl_conf_v2_setting_guide.md)]
+[[ENG](../dsl_conf_v2_setting_guide.md)]
 
 ## DSL 配置说明
 
