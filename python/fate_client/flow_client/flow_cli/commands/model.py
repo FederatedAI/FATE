@@ -248,7 +248,7 @@ def get_predict_dsl(ctx, **kwargs):
 
     \b
     - USAGE:
-        flow model get-predict-dsl --model_id $MODEL_ID --model_version $MODEL_VERSION -o ./examples/
+        flow model get-predict-dsl --model-id $MODEL_ID --model-version $MODEL_VERSION -o ./examples/
     """
     config_data, dsl_data = preprocess(**kwargs)
     dsl_filename = "predict_dsl_{}.json".format(datetime.now().strftime('%Y%m%d%H%M%S'))
@@ -288,7 +288,7 @@ def get_predict_conf(ctx, **kwargs):
 
     \b
     - USAGE:
-        flow model get-predict-conf --model_id $MODEL_ID --model_version $MODEL_VERSION -o ./examples/
+        flow model get-predict-conf --model-id $MODEL_ID --model-version $MODEL_VERSION -o ./examples/
 
     """
     config_data, dsl_data = preprocess(**kwargs)
@@ -340,7 +340,7 @@ def deploy(ctx, **kwargs):
 
     \b
     - USAGE:
-        flow model deploy --model_id $MODEL_ID --model_version $MODEL_VERSION
+        flow model deploy --model-id $MODEL_ID --model-version $MODEL_VERSION
 
     """
     request_data = {
@@ -396,7 +396,7 @@ def deploy(ctx, **kwargs):
 @click.option('--detail', is_flag=True, default=False,
               help="If specified, details of model would be shown.")
 @click.pass_context
-def model_info(ctx, **kwargs):
+def get_model_info(ctx, **kwargs):
     """
     \b
     - DESCRIPTION:
@@ -404,8 +404,8 @@ def model_info(ctx, **kwargs):
 
     \b
     - USAGE:
-        flow model model-info --model_id $MODEL_ID --model_version $MODEL_VERSION
-        flow model model-info --model_id $MODEL_ID --model_version $MODEL_VERSION --detail
+        flow model model-info --model-id $MODEL_ID --model-version $MODEL_VERSION
+        flow model model-info --model-id $MODEL_ID --model-version $MODEL_VERSION --detail
     """
     config_data, dsl_data = preprocess(**kwargs)
     if not config_data.pop('detail'):
