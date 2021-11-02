@@ -1,5 +1,5 @@
 from federatedml.nn.hetero_nn.util.random_number_generator import RandomNumberGenerator
-from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
+from federatedml.secureprotol.paillier_tensor import PaillierTensor
 import numpy as np
 from fate_arch.session import computing_session as session
 import random
@@ -8,7 +8,7 @@ import unittest
 
 class TestRandomNumberGenerator(unittest.TestCase):
     def setUp(self):
-        session.init("test_random_number" + str(random.random()), 0)
+        session.init("test_random_number" + str(random.random()))
         self.rng_gen = RandomNumberGenerator()
 
     def test_generate_random_number(self):

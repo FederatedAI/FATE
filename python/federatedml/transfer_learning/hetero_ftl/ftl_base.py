@@ -16,7 +16,7 @@ from federatedml.nn.hetero_nn.util import random_number_generator
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 from federatedml.util import consts
-from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
+from federatedml.secureprotol.paillier_tensor import PaillierTensor
 from federatedml.protobuf.generated.ftl_model_param_pb2 import FTLModelParam
 from federatedml.protobuf.generated.ftl_model_meta_pb2 import FTLModelMeta, FTLPredictParam, FTLOptimizerParam
 
@@ -156,7 +156,7 @@ class FTL(ModelBase):
             self.encrypt_calculators = [self.generated_encrypted_calculator() for i in range(3)]
         encrypted_tensors = []
         for comp, calculator in zip(components, self.encrypt_calculators):
-            encrypted_tensor = PaillierTensor(ori_data=comp, partitions=self.partitions)
+            encrypted_tensor = PaillierTensor(comp, partitions=self.partitions)
             if return_dtable:
                 encrypted_tensors.append(encrypted_tensor.encrypt(calculator).get_obj())
             else:

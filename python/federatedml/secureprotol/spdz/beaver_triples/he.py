@@ -17,7 +17,8 @@ import numpy as np
 
 from fate_arch.session import is_table
 from federatedml.secureprotol.spdz.communicator import Communicator
-from federatedml.secureprotol.spdz.utils.random_utils import rand_tensor, urand_tensor
+from federatedml.secureprotol.spdz.utils import rand_tensor, urand_tensor
+from federatedml.util import LOGGER
 
 
 def encrypt_tensor(tensor, public_key):
@@ -45,6 +46,7 @@ def beaver_triplets(a_tensor, b_tensor, dot, q_field, he_key_pair, communicator:
     b = rand_tensor(q_field, b_tensor)
 
     def _cross(self_index, other_index):
+        LOGGER.debug(f"_cross: a={a}, b={b}")
         _c = dot(a, b)
         encrypted_a = encrypt_tensor(a, public_key)
         communicator.remote_encrypted_tensor(encrypted=encrypted_a, tag=f"{name}_a_{self_index}")

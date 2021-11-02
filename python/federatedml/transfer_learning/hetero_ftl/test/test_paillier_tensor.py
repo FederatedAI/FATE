@@ -15,7 +15,7 @@
 #
 
 import numpy as np
-from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
+from federatedml.secureprotol.paillier_tensor import PaillierTensor
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 from federatedml.param.encrypt_param import EncryptParam
@@ -41,12 +41,12 @@ class TestPaillierTensor(unittest.TestCase):
         arr4 = np.ones([50, 1])
         arr5 = np.ones([32])
 
-        pt = PaillierTensor(ori_data=arr1)
-        pt2 = PaillierTensor(ori_data=arr2)
-        pt3 = PaillierTensor(ori_data=arr3)
+        pt = PaillierTensor(arr1)
+        pt2 = PaillierTensor(arr2)
+        pt3 = PaillierTensor(arr3)
 
-        pt4 = PaillierTensor(ori_data=arr4)
-        pt5 = PaillierTensor(ori_data=arr5)
+        pt4 = PaillierTensor(arr4)
+        pt5 = PaillierTensor(arr5)
 
         encrypter = PaillierEncrypt()
         encrypter.generate_key(EncryptParam().key_length)

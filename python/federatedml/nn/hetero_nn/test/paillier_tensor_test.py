@@ -1,6 +1,6 @@
 import numpy as np
 import unittest
-from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
+from federatedml.secureprotol.paillier_tensor import PaillierTensor
 from federatedml.util import consts
 from fate_arch.session import computing_session as session
 import random
@@ -8,11 +8,11 @@ import random
 
 class TestPaillierTensor(unittest.TestCase):
     def setUp(self):
-        session.init("test_paillier_tensor" + str(random.random()), 0)
+        session.init("test_paillier_tensor" + str(random.random()))
         self.data1 = np.ones((1000, 10))
         self.data2 = np.ones((1000, 10))
-        self.paillier_tensor1 = PaillierTensor(ori_data=self.data1, partitions=10)
-        self.paillier_tensor2 = PaillierTensor(ori_data=self.data2, partitions=10)
+        self.paillier_tensor1 = PaillierTensor(self.data1, partitions=10)
+        self.paillier_tensor2 = PaillierTensor(self.data2, partitions=10)
 
     def test_tensor_add(self):
         paillier_tensor = self.paillier_tensor1 + self.paillier_tensor2
