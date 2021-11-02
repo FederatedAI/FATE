@@ -20,3 +20,4 @@ class ComputingEngine(object):
     SPARK = 'SPARK'
     LINKIS_SPARK = 'LINKIS_SPARK'
     STANDALONE = 'STANDALONE'
+

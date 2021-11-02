@@ -15,12 +15,6 @@
             9999
         ]
     },
-    "job_parameters": {
-        "common": {
-            "work_mode": 0,
-            "backend": 0
-        }
-    },
     "component_parameters": {
         "common": {
             "intersection_0": {
@@ -109,7 +103,7 @@
         "role": {
             "guest": {
                 "0": {
-                    "dataio_1": {
+                    "data_transform_1": {
                         "missing_fill": true,
                         "missing_fill_method": "mean",
                         "outlier_replace": false,
@@ -127,7 +121,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_2": {
+                    "data_transform_2": {
                         "missing_fill": true,
                         "missing_fill_method": "mean",
                         "outlier_replace": false,
@@ -151,7 +145,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "missing_fill": true,
                         "missing_fill_method": "mean",
                         "outlier_replace": false,
@@ -167,7 +161,7 @@
             },
             "host": {
                 "0": {
-                    "dataio_1": {
+                    "data_transform_1": {
                         "input_format": "tag",
                         "delimitor": ";",
                         "tag_with_value": true,
@@ -180,7 +174,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_2": {
+                    "data_transform_2": {
                         "input_format": "tag",
                         "delimitor": ";",
                         "tag_with_value": true,
@@ -199,7 +193,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "input_format": "tag",
                         "delimitor": ";",
                         "tag_with_value": true,

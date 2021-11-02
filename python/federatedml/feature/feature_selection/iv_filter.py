@@ -25,7 +25,7 @@ class IVFilter(FederatedIsoModelFilter):
 
     def _parse_filter_param(self, filter_param: IVFilterParam):
         super()._parse_filter_param(filter_param)
-        self.merge_type = filter_param.mul_class_merge_type
+        self.merge_type = filter_param.mul_class_merge_type[0]
 
     def _merge_iv(self):
         metric_infos = self.iso_model.get_all_metric_info()
@@ -37,11 +37,11 @@ class IVFilter(FederatedIsoModelFilter):
         host_values = np.array(metric_infos[0].host_values)
         for m in metric_infos[1:]:
             if self.merge_type == "max":
-                values = np.max(values, m.values)
-                host_values = np.max(host_values, m.host_values)
+                values = np.maximum(values, m.values)
+                host_values = np.maximum(host_values, m.host_values)
             elif self.merge_type == "min":
-                values = np.min(values, m.values)
-                host_values = np.min(host_values, m.host_values)
+                values = np.minimum(values, m.values)
+                host_values = np.minimum(host_values, m.host_values)
             else:
                 values += m.values
                 host_values += m.host_values

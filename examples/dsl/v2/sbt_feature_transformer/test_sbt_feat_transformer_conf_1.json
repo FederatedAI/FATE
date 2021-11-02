@@ -12,13 +12,6 @@
             9999
         ]
     },
-    "job_parameters": {
-        "common": {
-            "job_type": "train",
-            "backend": 0,
-            "work_mode": 0
-        }
-    },
     "component_parameters": {
         "common": {
             "fast_secureboost_0": {
@@ -61,30 +54,26 @@
                     },
                     "local_baseline_0": {
                         "model_name": "LogisticRegression",
-                        "model_opts":
-                            {
-                                "penalty": "l2",
-                                "tol": 0.0001,
-                                "C": 1.0,
-                                "fit_intercept": true,
-                                "solver": "lbfgs",
-                                "max_iter": 50
-                            }
-                        ,
+                        "model_opts": {
+                            "penalty": "l2",
+                            "tol": 0.0001,
+                            "C": 1.0,
+                            "fit_intercept": true,
+                            "solver": "lbfgs",
+                            "max_iter": 50
+                        },
                         "need_run": true
                     },
                     "local_baseline_1": {
                         "model_name": "LogisticRegression",
-                        "model_opts":
-                            {
-                                "penalty": "l2",
-                                "tol": 0.0001,
-                                "C": 1.0,
-                                "fit_intercept": true,
-                                "solver": "lbfgs",
-                                "max_iter": 50
-                            }
-                        ,
+                        "model_opts": {
+                            "penalty": "l2",
+                            "tol": 0.0001,
+                            "C": 1.0,
+                            "fit_intercept": true,
+                            "solver": "lbfgs",
+                            "max_iter": 50
+                        },
                         "need_run": true
                     }
                 }

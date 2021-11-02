@@ -19,13 +19,12 @@ import json
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.hetero_secureboost import HeteroSecureBoost
-from pipeline.component.dataio import DataIO
+from pipeline.component import DataTransform
 from pipeline.component.evaluation import Evaluation
 from pipeline.component.intersection import Intersection
 from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
 from pipeline.interface.model import Model
-from pipeline.runtime.entity import JobParameters
 from pipeline.utils.tools import load_job_config
 
 
@@ -39,8 +38,6 @@ def prettify(response, verbose=True):
 def main(config="../../config.yaml", namespace=""):
     if isinstance(config, str):
         config = load_job_config(config)
-    backend = config.backend
-    work_mode = config.work_mode
     parties = config.parties
     guest = parties.guest[0]
     hosts = parties.host[0]
@@ -62,23 +59,23 @@ def main(config="../../config.yaml", namespace=""):
     # configure Reader for host
     reader_0.get_party_instance(role='host', party_id=hosts).component_param(table=host_train_data)
 
-    dataio_0 = DataIO(name="dataio_0", output_format='dense')
+    data_transform_0 = DataTransform(name="data_transform_0", output_format='dense')
 
     # get DataIO party instance of guest
-    dataio_0_guest_party_instance = dataio_0.get_party_instance(role='guest', party_id=guest)
+    data_transform_0_guest_party_instance = data_transform_0.get_party_instance(role='guest', party_id=guest)
     # configure DataIO for guest
-    dataio_0_guest_party_instance.component_param(with_label=True)
+    data_transform_0_guest_party_instance.component_param(with_label=True)
     # get and configure DataIO party instance of host
-    dataio_0.get_party_instance(role='host', party_id=hosts).component_param(with_label=False)
+    data_transform_0.get_party_instance(role='host', party_id=hosts).component_param(with_label=False)
 
     # define Intersection components
     intersection_0 = Intersection(name="intersection_0")
 
     pipeline.add_component(reader_0)
 
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
 
-    pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
+    pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
 
     # secure boost component
     hetero_secure_boost_0 = HeteroSecureBoost(name="hetero_secure_boost_0",
@@ -107,8 +104,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.compile()
 
     # fit model
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
     # query component summary
     prettify(pipeline.get_component("hetero_secure_boost_0").get_summary())
     prettify(pipeline.get_component("hetero_secure_boost_1").get_summary())

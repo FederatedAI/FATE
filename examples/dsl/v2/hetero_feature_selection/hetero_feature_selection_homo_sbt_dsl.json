@@ -45,7 +45,7 @@
             }
         },
         "homo_secureboost_0": {
-            "module": "HomoSecureboost",
+            "module": "HomoSecureBoost",
             "input": {
                 "data": {
                     "train_data": [

@@ -15,7 +15,7 @@
 #
 
 
-from pipeline.backend.config import WorkMode
+# from pipeline.backend.config import WorkMode
 from pipeline.utils.logger import LOGGER
 
 
@@ -23,6 +23,7 @@ class OnlineCommand(object):
     def __init__(self, pipeline_obj):
         self.pipeline_obj = pipeline_obj
 
+    """
     def _feed_online_conf(self):
         conf = {"initiator": self.pipeline_obj._get_initiator_conf(),
                 "role": self.pipeline_obj._roles}
@@ -34,7 +35,15 @@ class OnlineCommand(object):
                                   "model_version": predict_model_info.model_version,
                                   "work_mode": WorkMode.CLUSTER}
         return conf
+    """
 
+    def _feed_online_conf(self):
+        conf = {"initiator": self.pipeline_obj._get_initiator_conf(),
+                "role": self.pipeline_obj._roles}
+        predict_model_info = self.pipeline_obj.get_predict_model_info()
+        conf["job_parameters"] = {"model_id": predict_model_info.model_id,
+                                  "model_version": predict_model_info.model_version}
+        return conf
     @LOGGER.catch(reraise=True)
     def load(self, file_path=None):
         if not self.pipeline_obj.is_deploy():

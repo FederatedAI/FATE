@@ -13,84 +13,82 @@ FATE (Federated AI Technology Enabler) is an open-source project initiated by We
 <https://fate.fedai.org>
 
 
-## Federated Learning Algorithms In FATE
+## Federated Learning Algorithms in FATE
 FATE already supports a number of federated learning algorithms, including vertical federated learning, horizontal federated learning, and federated transfer learning. More details are available in [federatedml](./python/federatedml).
 
 
-## Install
+## Installation
 
-FATE can be installed on Linux or Mac. Now, FATE can support：
+FATE can be installed on Linux or Mac. Now, FATE can support two installation approaches：
 
 * Native installation: standalone and cluster deployments;
 
-* KubeFATE installation:
+* Cloud native installation using KubeFATE:
 
-	- Multipal parties deployment by docker-compose, which for development and test purpose;
+	- Multi-party deployment by Docker-compose, which is for the development and testing purpose;
 
-	- Cluster (multi-node) deployment by Kubernetes
+	- Cluster (multi-node) deployment by Kubernetes.
 
 ### Native installation:
-Software environment :jdk1.8+、Python3.6、python virtualenv、mysql5.6+
+Software environment: JDK 1.8+, Python 3.6, python virtualenv and mysql 5.6+
 
-##### Standalone
-FATE provides Standalone runtime architecture for developers. It can help developers quickly test FATE. Standalone support two types of deployment: Docker version and Manual version. Please refer to Standalone deployment guide: [standalone-deploy](./standalone-deploy/)
+##### Standalone Runtime
+FATE provides Standalone runtime architecture for developers. It can help developers quickly test FATE. Standalone support two types of deployment: Docker version and Manual version. Please refer to [Standalone Deployment Guide](deploy/standalone-deploy/).
 
-##### Cluster
-FATE also provides a distributed runtime architecture for Big Data scenario. Migration from standalone to cluster requires configuration change only. No algorithm change is needed.
-
-To deploy FATE on a cluster, please refer to cluster deployment guide: [cluster-deploy](./cluster-deploy).
+##### Cluster Runtime
+FATE also provides a Cluster (distributed) runtime architecture for big data scenario. Migration from Standalone Runtime to Cluster Runtime requires only changes of the configuration. No change of the algorithm is needed. To deploy FATE on a cluster, please refer to [Cluster Deployment Guide](./cluster-deploy).
 
 ### KubeFATE installation:
-Using KubeFATE, FATE can be deployed by either docker-compose or Kubernetes:
+Using KubeFATE, FATE can be deployed by either Docker-Compose or Kubernetes:
 
-* For development or testing purposes, docker-compose is recommended. It only requires Docker enviroment. For more detail, please refer to [Deployment by Docker Compose](https://github.com/FederatedAI/KubeFATE/tree/master/docker-deploy).
+* For development or testing purposes, Docker-Compose is recommended. It only requires Docker environment. For more detail, please refer to [Deployment by Docker Compose](https://github.com/FederatedAI/KubeFATE/tree/master/docker-deploy).
 
-* For a production or a large scale deployment, Kubernetes is recommended as an underlying infrastructure to manage FATE system. For more detail, please refer to [Deployment on Kubernetes](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy).
+* For a production or a large scale deployment, Kubernetes is recommended as an underlying infrastructure to manage a FATE cluster. For more detail, please refer to [Deployment on Kubernetes](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy).
 
-More instructions can be found in [KubeFATE](https://github.com/FederatedAI/KubeFATE).
+More instructions can be found in the repo of [KubeFATE](https://github.com/FederatedAI/KubeFATE).
 
-### FATE-Client Installation
-FATE-client is an easy tool for interacting with FATE. We strongly recommend you install FATE-client and take its advantage to use FATE conveniently. Please refer to this [document](./python/fate_client/README.rst) for more details on FATE-Client.
+## FATE-Client 
+FATE-client is a tool for easy interaction with FATE. We strongly recommend you install FATE-client and use it with FATE conveniently. Please refer to this [document](./python/fate_client/README.rst) for more details on FATE-Client.
 
 
 ## Running Tests
 
-A script to run all the unittests has been provided in ./python/federatedml/test folder.
+A script to run all the unit tests has been provided in ./python/federatedml/test folder.
 
 Once FATE is installed, tests can be run using:
 
-> sh ./python/federatedml/test/run_test.sh
+```$ sh ./python/federatedml/test/run_test.sh```
 
-All the unittests shall pass if FATE is installed properly.
+All the unit tests should pass if FATE is installed properly.
 
-## Example Programs
+## Documentation
+### Quick Start Guide
 
-### Quick Start
+A tutorial of getting started with modeling tasks can be found [here](./examples/pipeline/README.rst).
 
-We have provided a tutorial for quick starting modeling task. Please refer [here](./examples/pipeline/README.rst)
+###  Obtaining Model and Checking out Results
+Functions such as tracking component output models or logs can be invoked by a tool called fate-flow. The deployment and usage of fate-flow can be found [here](./python/fate_flow/README.md).
 
-###  Obtain Model and Check Out Results
-We provided functions such as tracking component output models or logs etc. through a tool called fate-flow. The deployment and usage of fate-flow can be found [here](./python/fate_flow/README.md)
-
-
-## Doc
-### API doc
-FATE provides some API documents in [doc-api](https://fate.readthedocs.io/en/latest/?badge=latest)
-### Develop Guide doc
-How to develop your federated learning algorithm using FATE? you can see FATE develop guide document in [develop-guide](./doc/develop_guide.rst)
-### Other doc
-FATE also provides many other documents in [doc](./doc/). These documents can help you understand FATE better.
+### API Guide
+FATE provides API documents in [doc-api](https://fate.readthedocs.io/en/latest/?badge=latest).
+### Development Guide
+To develop your federated learning algorithms using FATE, please refer to [FATE Development Guide](./doc/develop_guide.rst).
+### Other Documents
+To better understand FATE, refer to documents in [doc/](./doc/). 
 
 ## Getting Involved
 
-*  Join our maillist [Fate-FedAI Group IO](https://groups.io/g/Fate-FedAI). You can ask questions and participate in the development discussion.
+*  Join our maillist [FATE-FedAI Group IO](https://groups.io/g/Fate-FedAI). You can ask questions and participate in the development discussion.
 
-*  For any frequently asked questions, you can check in [FAQ](https://github.com/FederatedAI/FATE/wiki).
+*  Check out the [FAQ](https://github.com/FederatedAI/FATE/wiki) for any questions you may have.
 
 *  Please report bugs by submitting [issues](https://github.com/FederatedAI/FATE/issues).
 
-*  Submit contributions using [pull requests](https://github.com/FederatedAI/FATE/pulls)
+*  Submit contributions using [pull requests](https://github.com/FederatedAI/FATE/pulls).
 
+* Bilibili: [@FATEFedAI](https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)
+
+* Twitter: [@FATEFedAI](https://twitter.com/FateFedAI)
 
 ### License
 [Apache License 2.0](LICENSE)

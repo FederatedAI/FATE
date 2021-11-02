@@ -22,7 +22,6 @@ from pipeline.component.dataio import DataIO
 from pipeline.component.homo_feature_binning import HomoFeatureBinning
 from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
-from pipeline.runtime.entity import JobParameters
 from pipeline.utils.tools import load_job_config
 
 
@@ -34,8 +33,6 @@ def main(config="../../config.yaml", namespace=""):
     guest = parties.guest[0]
     host = parties.host[0]
     arbiter = parties.arbiter[0]
-    backend = config.backend
-    work_mode = config.work_mode
 
     guest_train_data = {"name": "breast_homo_guest", "namespace": f"experiment{namespace}"}
     host_train_data = {"name": "breast_homo_host", "namespace": f"experiment{namespace}"}
@@ -70,8 +67,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.compile()
 
     # fit model
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
     # query component summary
     # print(json.dumps(pipeline.get_component("homo_binning_0").get_summary(), indent=4, ensure_ascii=False))
 

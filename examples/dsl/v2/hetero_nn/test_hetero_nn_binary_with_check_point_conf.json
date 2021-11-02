@@ -12,17 +12,11 @@
             10000
         ]
     },
-    "job_parameters": {
-        "common": {
-            "work_mode": 0,
-            "backend": 0
-        }
-    },
     "component_parameters": {
         "role": {
             "guest": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true
                     },
                     "hetero_nn_0": {
@@ -192,7 +186,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_1": {
+                    "data_transform_1": {
                         "with_label": true
                     },
                     "reader_0": {
@@ -205,7 +199,7 @@
             },
             "host": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
                     },
                     "hetero_nn_0": {
@@ -322,7 +316,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_1": {
+                    "data_transform_1": {
                         "with_label": false
                     },
                     "reader_0": {
@@ -336,18 +330,21 @@
         },
         "common": {
             "hetero_nn_0": {
-                "epochs": 1,
-                "validation_freqs": 1,
+                "epochs": 3,
                 "interactive_layer_lr": 0.15,
                 "batch_size": -1,
                 "early_stop": "diff",
-                "early_stopping_rounds": 15,
-                "use_first_metric_only": true,
                 "callback_param": {
                     "callbacks": [
                         "ModelCheckpoint"
                     ],
-                    "save_freq": "epoch"
+                    "save_freq": "epoch",
+                    "validation_freqs": 1,
+                    "use_first_metric_only": true,
+                    "early_stopping_rounds": 15,
+                    "metrics": [
+                        "AUC"
+                    ]
                 },
                 "optimizer": {
                     "learning_rate": 0.15,
@@ -357,9 +354,6 @@
                     "optimizer": "SGD"
                 },
                 "loss": "binary_crossentropy",
-                "metrics": [
-                    "AUC"
-                ],
                 "bottom_nn_define": null,
                 "top_nn_define": null,
                 "interactive_layer_define": null,
@@ -367,8 +361,6 @@
             },
             "hetero_nn_1": {
                 "optimizer": null,
-                "loss": null,
-                "metrics": null,
                 "bottom_nn_define": null,
                 "top_nn_define": null,
                 "interactive_layer_define": null,

@@ -434,7 +434,6 @@ class HomoDecisionTreeClient(DecisionTree):
                     'running on distributed backend'.format(self.epoch_idx, self.tree_idx))
 
         self.init_root_node_and_gh_sum()
-        LOGGER.debug('self grad and hess is {}'.format(list(self.g_h.collect())))
         LOGGER.debug('assign samples to root node')
         self.inst2node_idx = self.assign_instance_to_root_node(self.data_bin, 0)
 

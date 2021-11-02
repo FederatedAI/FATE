@@ -93,3 +93,6 @@ MODEL_VERSION = click.option("--model-version", type=click.STRING, help="Model v
 MODEL_VERSION_REQUIRED = click.option("--model-version", type=click.STRING, required=True, help="Model version.")
 
 MODEL_ID_REQUIRED = click.option("--model-id", type=click.STRING, required=True, help="Model id.")
+
+SERVICE_NAME = click.option("--service", type=click.STRING, required=True, help="Service Name")
+FORCE = click.option('--force', is_flag=True, default=False, help="force execute")

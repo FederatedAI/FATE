@@ -17,13 +17,12 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component import DataIO
+from pipeline.component import DataTransform
 from pipeline.component import HomoDataSplit
 from pipeline.component import Reader
 from pipeline.interface import Data
 
 from pipeline.utils.tools import load_job_config
-from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -33,8 +32,6 @@ def main(config="../../config.yaml", namespace=""):
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
-    backend = config.backend
-    work_mode = config.work_mode
 
 
     guest_train_data = {"name": "breast_homo_guest", "namespace": f"experiment{namespace}"}
@@ -46,22 +43,21 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
-    dataio_0 = DataIO(name="dataio_0")
+    data_transform_0 = DataTransform(name="data_transform_0")
 
-    dataio_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, output_format="dense",
+    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, output_format="dense",
                                                                               label_name="y", label_type="int")
-    dataio_0.get_party_instance(role='host', party_id=host).component_param(with_label=True)
+    data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=True)
 
     homo_data_split_0 = HomoDataSplit(name="homo_data_split_0", stratified=True, validate_size=0.2)
 
     pipeline.add_component(reader_0)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(homo_data_split_0, data=Data(data=dataio_0.output.data))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(homo_data_split_0, data=Data(data=data_transform_0.output.data))
 
     pipeline.compile()
 
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
 
     print(pipeline.get_component("homo_data_split_0").get_summary())
 

@@ -3,9 +3,6 @@
         "role": "guest",
         "party_id": 10000
     },
-    "job_parameters": {
-        "work_mode": 0
-    },
     "role": {
         "guest": [
             10000

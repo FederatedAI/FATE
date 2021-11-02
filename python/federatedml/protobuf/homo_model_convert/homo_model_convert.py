@@ -50,7 +50,7 @@ def _get_component_converter(module_name: str,
         for name, obj in inspect.getmembers(proto_module):
             if inspect.isclass(obj) and issubclass(obj, ComponentConverterBase):
                 for module in obj.get_target_modules():
-                    if module == module_name:
+                    if module.lower() == module_name.lower():
                         return framework_name, obj()
     return None, None
 
@@ -73,7 +73,7 @@ def get_default_target_framework(model_contents: dict,
             framework_name = "pytorch"
         else:
             framework_name = "tf_keras"
-    elif module_name == 'HomoSecureboost':
+    elif module_name.lower() == 'homosecureboost':
         framework_name = 'lightgbm'
     else:
         LOGGER.debug(f"Module {module_name} is not a supported homogeneous model")

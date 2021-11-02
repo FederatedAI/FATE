@@ -17,7 +17,7 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component import DataIO
+from pipeline.component import DataTransform
 from pipeline.component import Evaluation
 from pipeline.component import HomoLR
 from pipeline.component import Reader
@@ -36,7 +36,6 @@ def main(config="../../config.yaml", param="./breast_lr_config.yaml", namespace=
     guest = parties.guest[0]
     host = parties.host[0]
     arbiter = parties.arbiter[0]
-    backend = config.backend
     work_mode = config.work_mode
 
     if isinstance(param, str):
@@ -87,15 +86,15 @@ def main(config="../../config.yaml", param="./breast_lr_config.yaml", namespace=
     # configure Reader for host
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
-    # define DataIO components
-    dataio_0 = DataIO(name="dataio_0")  # start component numbering at 0
+    # define DataTransform components
+    data_transform_0 = DataTransform(name="data_transform_0")  # start component numbering at 0
 
-    # get DataIO party instance of guest
-    dataio_0_guest_party_instance = dataio_0.get_party_instance(role='guest', party_id=guest)
-    # configure DataIO for guest
-    dataio_0_guest_party_instance.component_param(with_label=True, output_format="dense")
-    # get and configure DataIO party instance of host
-    dataio_0.get_party_instance(role='host', party_id=host).component_param(with_label=True)
+    # get DataTransform party instance of guest
+    data_transform_0_guest_party_instance = data_transform_0.get_party_instance(role='guest', party_id=guest)
+    # configure DataTransform for guest
+    data_transform_0_guest_party_instance.component_param(with_label=True, output_format="dense")
+    # get and configure DataTransform party instance of host
+    data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=True)
 
     lr_param = {
     }
@@ -124,9 +123,9 @@ def main(config="../../config.yaml", param="./breast_lr_config.yaml", namespace=
 
     # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(homo_lr_0, data=Data(train_data=dataio_0.output.data))
-    pipeline.add_component(homo_lr_1, data=Data(test_data=dataio_0.output.data),
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(homo_lr_0, data=Data(train_data=data_transform_0.output.data))
+    pipeline.add_component(homo_lr_1, data=Data(test_data=data_transform_0.output.data),
                            model=Model(homo_lr_0.output.model))
     pipeline.add_component(evaluation_0, data=Data(data=homo_lr_0.output.data))
 
@@ -134,7 +133,7 @@ def main(config="../../config.yaml", param="./breast_lr_config.yaml", namespace=
     pipeline.compile()
 
     # fit model
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
+    job_parameters = JobParameters(work_mode=work_mode)
     pipeline.fit(job_parameters)
     # query component summary
     data_summary = {"train": {"guest": guest_train_data["name"], "host": host_train_data["name"]},

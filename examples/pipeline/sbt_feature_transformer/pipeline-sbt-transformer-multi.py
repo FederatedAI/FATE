@@ -28,7 +28,6 @@ from pipeline.component.evaluation import Evaluation
 from pipeline.interface.model import Model
 
 from pipeline.utils.tools import load_job_config
-from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -39,8 +38,6 @@ def main(config="../../config.yaml", namespace=""):
     guest = parties.guest[0]
     host = parties.host[0]
 
-    backend = config.backend
-    work_mode = config.work_mode
 
     # data sets
     guest_train_data = {"name": "vehicle_scale_hetero_guest", "namespace": f"experiment{namespace}"}
@@ -113,8 +110,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(transformer_0, data=Data(data=intersect_0.output.data),
                            model=Model(isometric_model=hetero_secure_boost_0.output.model))
     pipeline.compile()
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
 
 
 if __name__ == "__main__":

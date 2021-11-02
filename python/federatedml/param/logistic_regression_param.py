@@ -143,7 +143,7 @@ class LogisticParam(BaseParam):
         self.metrics = metrics or []
         self.use_first_metric_only = use_first_metric_only
         self.floating_point_precision = floating_point_precision
-        self.callback_param = callback_param
+        self.callback_param = copy.deepcopy(callback_param)
 
     def check(self):
         descr = "logistic_param's"
@@ -246,11 +246,9 @@ class LogisticParam(BaseParam):
 
         for p in ["early_stopping_rounds", "validation_freqs", "metrics",
                   "use_first_metric_only"]:
-            if self._warn_to_deprecate_param(p, "", ""):
-                # assert 1 == 2, f"{self._deprecated_params_set}, {self.get_user_feeded()}"
+            # if self._warn_to_deprecate_param(p, "", ""):
+            if self._deprecated_params_set.get(p):
                 if "callback_param" in self.get_user_feeded():
-                    import pprint
-                    pprint.pprint(f"{self._deprecated_params_set}, {self.get_user_feeded()}")
                     raise ValueError(f"{p} and callback param should not be set simultaneously，"
                                      f"{self._deprecated_params_set}, {self.get_user_feeded()}")
                 else:

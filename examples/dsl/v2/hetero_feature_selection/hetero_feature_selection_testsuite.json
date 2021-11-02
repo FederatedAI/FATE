@@ -39,9 +39,37 @@
             "table_name": "breast_hetero_host",
             "namespace": "experiment",
             "role": "host_1"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_host",
+            "namespace": "experiment",
+            "role": "host_1"
         }
     ],
     "tasks": {
+        "hetero_feature_selection_homo_sbt": {
+            "conf": "hetero_feature_selection_homo_sbt_conf.json",
+            "dsl": "hetero_feature_selection_homo_sbt_dsl.json"
+        },
         "hetero_feature_selection_select_cols": {
             "conf": "hetero_feature_selection_select_cols_conf.json",
             "dsl": "hetero_feature_selection_select_cols_dsl.json"
@@ -78,6 +106,10 @@
             "conf": "hetero_feature_selection_iv_top_k_conf.json",
             "dsl": "hetero_feature_selection_iv_top_k_dsl.json"
         },
+        "hetero_feature_selection_local_only": {
+            "conf": "hetero_feature_selection_local_only_conf.json",
+            "dsl": "hetero_feature_selection_local_only_dsl.json"
+        },
         "hetero_feature_selection_pearson": {
             "conf": "hetero_feature_selection_pearson_conf.json",
             "dsl": "hetero_feature_selection_pearson_dsl.json"
@@ -98,9 +130,21 @@
             "conf": "hetero_feature_selection_manually_left_conf.json",
             "dsl": "hetero_feature_selection_manually_left_dsl.json"
         },
-        "hetero_feature_selection_homo_sbt": {
-            "conf": "hetero_feature_selection_homo_sbt_conf.json",
-            "dsl": "hetero_feature_selection_homo_sbt_dsl.json"
+        "hetero_feature_selection_pearson_predict": {
+            "conf": "hetero_feature_selection_pearson_predict_conf.json",
+            "dsl": "hetero_feature_selection_pearson_predict_dsl.json"
+        },
+        "hetero_feature_selection_multiclass": {
+            "conf": "hetero_feature_selection_multiclass_conf.json",
+            "dsl": "hetero_feature_selection_multiclass_dsl.json"
+        },
+        "hetero_feature_selection_multiclass_case1": {
+            "conf": "hetero_feature_selection_multiclass_case1_conf.json",
+            "dsl": "hetero_feature_selection_multiclass_case1_dsl.json"
+        },
+        "hetero_feature_selection_multiclass_all_case": {
+            "conf": "hetero_feature_selection_multiclass_all_case_conf.json",
+            "dsl": "hetero_feature_selection_multiclass_all_case_dsl.json"
         }
     }
 }
