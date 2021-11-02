@@ -23,7 +23,7 @@ import numpy as np
 from federatedml.nn.hetero_nn.backend.tf_keras.interactive.drop_out import DropOut
 from federatedml.util.fixpoint_solver import FixedPointEncoder
 
-from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
+from federatedml.secureprotol.paillier_tensor import PaillierTensor
 from federatedml.nn.hetero_nn.backend.tf_keras.interactive.dense_model import GuestDenseModel
 from federatedml.nn.hetero_nn.backend.tf_keras.interactive.dense_model import HostDenseModel
 from federatedml.nn.hetero_nn.util import random_number_generator
@@ -89,7 +89,7 @@ class InterActiveGuestDenseLayer(object):
 
     def forward(self, guest_input, epoch=0, batch=0, train=True):
         LOGGER.info("interactive layer start forward propagation of epoch {} batch {}".format(epoch, batch))
-        encrypted_host_input = PaillierTensor(tb_obj=self.get_host_encrypted_forward_from_host(epoch, batch))
+        encrypted_host_input = PaillierTensor(self.get_host_encrypted_forward_from_host(epoch, batch))
 
         if not self.partitions:
             self.partitions = encrypted_host_input.partitions
@@ -112,7 +112,7 @@ class InterActiveGuestDenseLayer(object):
         guest_output = self.guest_model.forward_dense(guest_input)
 
         if not self.guest_model.empty:
-            dense_output_data = host_output + PaillierTensor(ori_data=guest_output, partitions=self.partitions)
+            dense_output_data = host_output + PaillierTensor(guest_output, partitions=self.partitions)
         else:
             dense_output_data = host_output
 
@@ -196,7 +196,7 @@ class InterActiveGuestDenseLayer(object):
         return input_gradient
 
     def update_host(self, activation_gradient, weight_gradient, acc_noise):
-        activation_gradient_tensor = PaillierTensor(ori_data=activation_gradient, partitions=self.partitions)
+        activation_gradient_tensor = PaillierTensor(activation_gradient, partitions=self.partitions)
         input_gradient = self.host_model.get_input_gradient(activation_gradient_tensor, acc_noise,
                                                             encoder=self.fixed_point_encoder)
         # input_gradient = self.host_model.get_input_gradient(activation_gradient, acc_noise)
@@ -238,11 +238,11 @@ class InterActiveGuestDenseLayer(object):
         decrypted_dense_output = self.get_guest_decrypted_forward_from_host(epoch, batch)
 
         if mask_table:
-            out = PaillierTensor(tb_obj=decrypted_dense_output) - guest_forward_noise
+            out = PaillierTensor(decrypted_dense_output) - guest_forward_noise
             out = out.get_obj().join(mask_table, self.expand_columns)
-            return PaillierTensor(tb_obj=out)
+            return PaillierTensor(out)
         else:
-            return PaillierTensor(tb_obj=decrypted_dense_output) - guest_forward_noise
+            return PaillierTensor(decrypted_dense_output) - guest_forward_noise
 
     def backward_interactive(self, activation_gradient, epoch, batch):
         LOGGER.info("get encrypted weight gradient of epoch {} batch {}".format(epoch, batch))
@@ -369,12 +369,12 @@ class InteractiveHostDenseLayer(object):
             self.train_encrypted_calculator.append(self.generated_encrypted_calculator())
 
         LOGGER.info("forward propagation: encrypt host_bottom_output of epoch {} batch {}".format(epoch, batch))
-        host_input = PaillierTensor(ori_data=host_input, partitions=self.partitions)
+        host_input = PaillierTensor(host_input, partitions=self.partitions)
 
         encrypted_host_input = host_input.encrypt(self.train_encrypted_calculator[batch])
         self.send_host_encrypted_forward_to_guest(encrypted_host_input.get_obj(), epoch, batch)
 
-        encrypted_guest_forward = PaillierTensor(tb_obj=self.get_guest_encrypted_forwrad_from_guest(epoch, batch))
+        encrypted_guest_forward = PaillierTensor(self.get_guest_encrypted_forwrad_from_guest(epoch, batch))
 
         decrypted_guest_forward = encrypted_guest_forward.decrypt(self.encrypter)
         if self.fixed_point_encoder:
@@ -427,7 +427,7 @@ class InteractiveHostDenseLayer(object):
         self.send_encrypted_acc_noise_to_guest(encrypted_acc_noise, epoch, batch)
 
         self.acc_noise += noise_weight_gradient
-        host_input_gradient = PaillierTensor(tb_obj=self.get_host_backward_from_guest(epoch, batch))
+        host_input_gradient = PaillierTensor(self.get_host_backward_from_guest(epoch, batch))
 
         host_input_gradient = host_input_gradient.decrypt(self.encrypter)
 

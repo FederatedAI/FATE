@@ -22,17 +22,17 @@ tree-based algorithms, deep learning and transfer learning.
 
 #### Standalone
 - [Deployment by Docker Compose](https://github.com/FederatedAI/KubeFATE/tree/master/docker-deploy)
-- [Native Standalone-deploy](../deploy/standalone-deploy/)
+- [Native Standalone-deploy](./deploy/standalone-deploy/)
 
 #### Cluster
-- [Deployment on Kubernetes](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy).
-- [Native Cluster-deploy](../deploy/cluster-deploy)
+- [Deployment on Kubernetes](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy)
+- [Native Cluster-deploy](./deploy/cluster-deploy)
 
 #### Quick Start
 - [Run unittest](./python/federatedml/test/)
-- [Run Job with FATE-Pipeline](./doc/tutorial/pipeline/fate_client_pipeline_tutotial.md)
-- [FATE-Pipeline Tutorial in Jupyter Notebook](./doc/tutorial/pipeline/pipeline_tutorial_0.ipynb)
+- [Run Job with FATE-Pipeline](./doc/tutorial/pipeline/pipeline_guide.md)
 - [Run Job with DSL json conf](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.md)
+- [FATE-Pipeline Tutorial in Jupyter Notebook](./doc/tutorial/pipeline/pipeline_tutorial_0.ipynb)
 
 ## Documentation 
 
@@ -61,7 +61,7 @@ tree-based algorithms, deep learning and transfer learning.
 - [Federation API](./doc/api/federation.md)
 - [Flow SDK API](./doc/api/flow_sdk.md)
 - [Flow Client](./doc/api/flow_client.md)
-- [Pipeline](./doc/api/pipeline.md)
+- [FATE Pipeline](./doc/api/pipeline.md)
 - [FATE Test](./doc/api/fate_test.md)
 
 ## Getting Involved

@@ -101,7 +101,6 @@ def main(config="../../config.yaml", namespace=""):
             "need_cv": True
         },
         "reveal_every_iter": True,
-        "compute_loss": True,
         "reveal_strategy": "respectively"
     }
 

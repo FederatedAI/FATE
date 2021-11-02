@@ -326,10 +326,10 @@ def get_predict_conf(ctx, **kwargs):
 @click.option("--dsl-path", type=click.Path(exists=True),
               help="User specified predict dsl file")
 @click.option("--cpn-step-index", type=click.STRING, multiple=True,
-              help="Specify a checkpoint to deploy. If no checkpoint is specified, the latest checkpoint will be used. "
+              help="Specify a checkpoint model to replace the pipeline model. "
                    "Use : to separate component name and step index (E.g. --cpn-step-index cpn_a:123)")
 @click.option("--cpn-step-name", type=click.STRING, multiple=True,
-              help="Specify a checkpoint to deploy. If no checkpoint is specified, the latest checkpoint will be used. "
+              help="Specify a checkpoint model to replace the pipeline model. "
                    "Use : to separate component name and step name (E.g. --cpn-step-name cpn_b:foobar)")
 @click.pass_context
 def deploy(ctx, **kwargs):
