@@ -62,7 +62,6 @@
                     "key_length": 1024
                 },
                 "reveal_strategy": "respectively",
-                "compute_loss": true,
                 "reveal_every_iter": false
             },
             "evaluation_0": {

@@ -86,7 +86,6 @@
                 "max_iter": 1,
                 "early_stop": "diff",
                 "reveal_strategy": "all_reveal_in_guest",
-                "compute_loss": true,
                 "reveal_every_iter": false
             },
             "evaluation_0": {
