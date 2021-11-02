@@ -280,8 +280,6 @@ configuration
 | Parameter Name                   | Default Value       | Acceptable Values             | Information                                                                                                                                          |
 | -------------------------------- | ------------------- | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | job\_type                        | train               | train, predict                | job type                                                                                                                                             |
-| work\_mode                       | 0                   | 0, 1                          | 0 for standalone, 1 for cluster                                                                                                                      |
-| backend                          | 0                   | 0, 1, 2                       | 0 for EGGROLL, 1 for SPARK with RabbitMQ, 2 for SPARK with Pulsar                                                                                    |
 | task\_cores                      | 4                   | positive integer              | total cpu cores requested                                                                                                                            |
 | task\_parallelism                | 1                   | positive int                  | maximum number of tasks allowed to run in parallel                                                                                                   |
 | computing\_partitions            | same as task\_cores | positive integer              | partition number for table computing                                                                                                                 |
@@ -303,14 +301,8 @@ Note
 
 </div>
 
-1\. Some types of `computing_engine`, `storage_engine`, and
-`federation_engine` are only compatible with each other. For examples,
-SPARK `computing_engine` only supports HDFS `storage_engine`.
-
-2\. Combination of `work_mode` and `backend` automatically determines
-which three engines will be used.
-
-3\. Developer may implement other types of engines and set new engine
+1\. Some types of `computing_engine`, `storage_engine` are only compatible with each other. 
+2\. Developer may implement other types of engines and set new engine
 combinations in runtime
 conf.
 
@@ -320,10 +312,10 @@ conf.
 
 | Parameter Name     | Default Value                                        | Acceptable Values                     | Information                            |
 | ------------------ | ---------------------------------------------------- | ------------------------------------- | -------------------------------------- |
-| computing\_engine  | set automatically based on `work_mode` and `backend` | EGGROLL, SPARK, STANDALONE            | engine for computation                 |
-| storage\_engine    | set automatically based on `work_mode` and `backend` | EGGROLL, HDFS, STANDALONE             | engine for storage                     |
-| federation\_engine | set automatically based on `work_mode` and `backend` | EGGROLL, RABBITMQ, STANDALONE, PULSAR | engine for communication among parties |
-| federated\_mode    | set automatically based on `work_mode` and `backend` | SINGLE, MULTIPLE                      | federation mode                        |
+| computing\_engine  | Configure in service_conf.yaml | EGGROLL, SPARK, STANDALONE            | engine for computation                 |
+| storage\_engine    | Configure in service_conf.yaml | EGGROLL, HDFS, STANDALONE             | engine for storage                     |
+| federation\_engine | Configure in service_conf.yaml | EGGROLL, RABBITMQ, STANDALONE, PULSAR | engine for communication among parties |
+| federated\_mode    | set automatically based on `federation_engine` | SINGLE, MULTIPLE                      | federation mode                        |
 
 Non-configurable Job Parameters
 
@@ -336,8 +328,6 @@ Non-configurable Job Parameters
 ``` sourceCode json
 "job_parameters": {
    "common": {
-      "work_mode": 1,
-      "backend": 0,
       "task_cores": 4
    }
 }
@@ -351,8 +341,6 @@ Non-configurable Job Parameters
 "job_parameters": {
    "common": {
        "job_type": "train",
-       "work_mode": 1,
-       "backend": 0,
        "eggroll_run": {
          "eggroll.session.processors.per.node": 2
        },
@@ -372,8 +360,6 @@ Non-configurable Job Parameters
 "job_parameters": {
    "common": {
        "job_type": "train",
-       "work_mode": 1,
-       "backend": 1,
        "spark_run": {
            "num-executors": 1,
            "executor-cores": 2
@@ -401,8 +387,6 @@ Non-configurable Job Parameters
 "job_parameters": {
    "common": {
        "job_type": "train",
-       "work_mode": 1,
-       "backend": 2,
        "spark_run": {
            "num-executors": 1,
            "executor-cores": 2
@@ -426,9 +410,7 @@ restrictions on number of parallel tasks in previous versions.
     `$PROJECT_BASE/conf/service_conf.yaml`
   - fate\_on\_eggroll：total\_cores=cores\_per\_node\*nodes
   - fate\_on\_spark：total\_cores=cores\_per\_node\*nodes
-  - standalone：use
-    **STANDALONE\_BACKEND\_VIRTUAL\_CORES\_PER\_NODE**from
-    `$PROJECT_BASE/python/fate_flow/settings.py`
+  - fate\_on\_standalone：total\_cores=cores\_per\_node\*nodes
   - separate computing resources for different engines
   - above settings effective after restarting FATE-Flow server
 
@@ -812,8 +794,7 @@ predict dsl:
     store them inside job folder under corresponding directory
     `$PROJECT_BASE/jobs/$jobid/`
 2.  Parse job dsl & job config, generate fine-grained configuration
-    according to provided settings (as mentioned above, backend &
-    work\_mode together determines configration for three engines) and
+    according to provided settings and
     fill in default parameter values
 3.  Distribute and store common configuration to each party, generate
     and store party-specific **job\_runtime\_on\_party\_conf**under jobs
