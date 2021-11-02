@@ -28,15 +28,18 @@ class FixedPointNumber(object):
     LOG2_BASE = math.log(BASE, 2)
     FLOAT_MANTISSA_BITS = sys.float_info.mant_dig
 
-    Q = 293973345475167247070445277780365744413
+    Q = 293973345475167247070445277780365744413 ** 2
 
     def __init__(self, encoding, exponent, n=None, max_int=None):
-        self.n = n
-        self.max_int = max_int
-
-        if self.n is None:
-            self.n = self.Q
-            self.max_int = self.Q // 3 - 1
+        if n is None:
+            self.n = FixedPointNumber.Q
+            self.max_int = self.n // 2
+        else:
+            self.n = n
+            if max_int is None:
+                self.max_int = self.n // 2
+            else:
+                self.max_int = max_int
 
         self.encoding = encoding
         self.exponent = exponent
@@ -61,7 +64,7 @@ class FixedPointNumber(object):
 
         if n is None:
             n = cls.Q
-            max_int = cls.Q // 3 - 1
+            max_int = n // 2
 
         if precision is None:
             if isinstance(scalar, int) or isinstance(scalar, np.int16) or \
@@ -84,11 +87,9 @@ class FixedPointNumber(object):
         int_fixpoint = int(round(scalar * pow(cls.BASE, exponent)))
 
         if abs(int_fixpoint) > max_int:
-            assert 1 == 2, f"scalar: {scalar}, int_fix_popint: {int_fixpoint}," \
-                           f"max_int: {max_int}" \
-                           f" base: {cls.BASE}, {exponent}"
-            raise ValueError('Integer needs to be within +/- %d but got %d'
-                             % (max_int, int_fixpoint))
+            raise ValueError(f"Integer needs to be within +/- {max_int},but got {int_fixpoint},"
+                             f"basic info, scalar={scalar}, base={cls.BASE}, exponent={exponent}"
+                             )
 
         return cls(int_fixpoint % n, exponent, n, max_int)
 
@@ -159,7 +160,7 @@ class FixedPointNumber(object):
     def __rsub__(self, other):
         if type(other).__name__ == "PaillierEncryptedNumber":
             return other - self.decode()
-                
+
         x = self.__sub__(other)
         x = -1 * x.decode()
         return self.encode(x, n=self.n, max_int=self.max_int)
@@ -259,8 +260,8 @@ class FixedPointNumber(object):
             other = self.encode(other.decode(), n=self.n, max_int=self.max_int)
         x, y = self.__align_exponent(self, other)
         encoding = (x.encoding + y.encoding) % self.n
-        return FixedPointNumber(encoding, x.exponent, n=self.n, max_int=self.max_int) 
-    
+        return FixedPointNumber(encoding, x.exponent, n=self.n, max_int=self.max_int)
+
     def __add_scalar(self, scalar):
         encoded = self.encode(scalar, n=self.n, max_int=self.max_int)
         return self.__add_fixedpointnumber(encoded)
@@ -278,17 +279,13 @@ class FixedPointNumber(object):
         return self.__add_scalar(scalar)
 
     def __mul_fixedpointnumber(self, other):
-        if self.n != other.n:
-            raise ValueError(f"Multiplying number with different field")
-        encoding = (self.encoding * other.encoding) % self.n
-        exponent = self.exponent + other.exponent
-        mul_fixedpoint = FixedPointNumber(encoding, exponent, n=self.n, max_int=self.max_int)
-        truncate_mul_fixedpoint = self.__truncate(mul_fixedpoint)
-        return truncate_mul_fixedpoint
+        return self.__mul_scalar(other.decode())
 
     def __mul_scalar(self, scalar):
-        encoded = self.encode(scalar, n=self.n, max_int=self.max_int)
-        return self.__mul_fixedpointnumber(encoded)
+        val = self.decode()
+        z = val * scalar
+        z_encode = FixedPointNumber.encode(z, n=self.n, max_int=self.max_int)
+        return z_encode
 
     def __abs__(self):
         if self.encoding <= self.max_int:
@@ -303,65 +300,66 @@ class FixedPointNumber(object):
 
 
 class FixedPointEndec(object):
-    
-    def __init__(self, n):       
-        self.n = n       
-        self.max_int = n // 3 - 1
 
-    @staticmethod
-    def table_op(x, op):
-        arr = np.zeros(shape=x.shape, dtype=object)
-        view = arr.view().reshape(-1)
-        x_array = x.view().reshape(-1)
-        for i in range(arr.size):
-            view[i] = op(x_array[i])
-        return arr
+    def __init__(self, n=None, max_int=None, precision=None, *args, **kwargs):
+        if n is None:
+            self.n = FixedPointNumber.Q
+            self.max_int = self.n // 2
+        else:
+            self.n = n
+            if max_int is None:
+                self.max_int = self.n // 2
+            else:
+                self.max_int = max_int
 
-    @staticmethod
-    def table_decode_op(x):
-        arr = np.zeros(shape=x.shape, dtype=object)
-        view = arr.view().reshape(-1)
-        for i in range(arr.size):
-            view[i] = view[i].decode()
-        return arr
+        self.precision = precision
 
     @classmethod
-    def _basic_op(cls, tensor, op):
+    def _transform_op(cls, tensor, op):
         from fate_arch.session import is_table
-        if isinstance(tensor, np.ndarray):
-            arr = np.zeros(shape=tensor.shape, dtype=object)
+
+        def _transform(x):
+            arr = np.zeros(shape=x.shape, dtype=object)
             view = arr.view().reshape(-1)
-            t = tensor.view().reshape(-1)
+            x_array = x.view().reshape(-1)
             for i in range(arr.size):
-                view[i] = op(t[i])
+                view[i] = op(x_array[i])
+
             return arr
 
-        elif is_table(tensor):
-            f = functools.partial(cls.table_op, op=op)
-            return tensor.mapValues(f)
-        else:
+        if isinstance(tensor, (int, np.int16, np.int32, np.int64,
+                               float, np.float16, np.float32, np.float64,
+                               FixedPointNumber)):
             return op(tensor)
 
-    def encode(self, float_tensor):
-        f = functools.partial(FixedPointNumber.encode,
-                              n=self.n, max_int=self.max_int)
-        return self._basic_op(float_tensor, op=f)
+        if isinstance(tensor, np.ndarray):
+            z = _transform(tensor)
+            return z
 
-    def __truncate_op(self, a):
-        if not isinstance(a, FixedPointNumber):
-            return a
-        scalar = a.decode()
-        return FixedPointNumber.encode(scalar, n=self.n, max_int=self.max_int)
+        elif is_table(tensor):
+            f = functools.partial(_transform)
+            return tensor.mapValues(f)
+        else:
+            raise ValueError(f"unsupported type: {type(tensor)}")
 
-    @staticmethod
-    def decode_number(number):
-        if isinstance(number, (int, np.int16, np.int32, np.int64)):
-            return number
+    def _encode(self, scalar):
+        return FixedPointNumber.encode(scalar,
+                                       n=self.n,
+                                       max_int=self.max_int,
+                                       precision=self.precision)
+
+    def _decode(self, number):
         return number.decode()
 
+    def _truncate(self, number):
+        scalar = number.decode()
+        return FixedPointNumber.encode(scalar, n=self.n, max_int=self.max_int)
+
+    def encode(self, float_tensor):
+        return self._transform_op(float_tensor, op=self._encode)
+
     def decode(self, integer_tensor):
-        return self._basic_op(integer_tensor, op=self.decode_number)
+        return self._transform_op(integer_tensor, op=self._decode)
 
     def truncate(self, integer_tensor, *args, **kwargs):
-        return self._basic_op(integer_tensor, op=self.__truncate_op)
-
+        return self._transform_op(integer_tensor, op=self._truncate)

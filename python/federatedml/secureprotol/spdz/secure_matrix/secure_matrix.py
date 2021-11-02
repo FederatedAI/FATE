@@ -22,7 +22,7 @@ from fate_arch.session import is_table
 from federatedml.secureprotol.fixedpoint import FixedPointEndec
 from federatedml.secureprotol.spdz.tensor import fixedpoint_numpy, fixedpoint_table
 from federatedml.transfer_variable.transfer_class.secret_share_transfer_variable import SecretShareTransferVariable
-from federatedml.util import consts, LOGGER
+from federatedml.util import consts
 
 
 class SecureMatrix(object):
@@ -40,41 +40,8 @@ class SecureMatrix(object):
             self.encoder = FixedPointEndec(q_field)
         return self.encoder
 
-    @classmethod
-    def table_dot(cls, a_table, b_table):
-        def _table_dot_func(it):
-            ret = None
-            for _, (x, y) in it:
-                if ret is None:
-                    ret = np.tensordot(x, y, [[], []])
-                else:
-                    ret += np.tensordot(x, y, [[], []])
-            return ret
-
-        return a_table.join(b_table, lambda x, y: [x, y]) \
-            .applyPartitions(lambda it: _table_dot_func(it)) \
-            .reduce(lambda x, y: x + y)
-
-    @classmethod
-    def dot(cls, matrix, y):
-        def _vec_dot(x, y):
-            ret = np.dot(x, y)
-            if not isinstance(ret, np.ndarray):
-                ret = np.array([ret])
-            return ret
-
-        if isinstance(y, np.ndarray):
-            ret = matrix.mapValues(lambda x: _vec_dot(x, y))
-            return ret
-
-        elif is_table(y):
-            ret = cls.table_dot(matrix, y)
-            return ret
-        else:
-            raise ValueError(f"type={type(y)}")
-
     def secure_matrix_mul(self, matrix, tensor_name, cipher=None, suffix=tuple(), is_fixedpoint_table=True):
-        curt_suffix = ("secure_matrix_mul",) + suffix
+        current_suffix = ("secure_matrix_mul",) + suffix
         dst_role = consts.GUEST if self.party.role == consts.HOST else consts.HOST
 
         if cipher is not None:
@@ -85,11 +52,10 @@ class SecureMatrix(object):
                 encrypt_mat = cipher.recursive_encrypt(de_matrix)
 
             # remote encrypted matrix;
-            LOGGER.debug(f"In_secure_matrix_mul, encrypt_mat: {encrypt_mat}")
             self.transfer_variable.encrypted_share_matrix.remote(encrypt_mat,
                                                                  role=dst_role,
                                                                  idx=0,
-                                                                 suffix=curt_suffix)
+                                                                 suffix=current_suffix)
 
             share_tensor = SecureMatrix.from_source(tensor_name,
                                                     self.other_party,
@@ -103,13 +69,15 @@ class SecureMatrix(object):
         else:
             share = self.transfer_variable.encrypted_share_matrix.get(role=dst_role,
                                                                       idx=0,
-                                                                      suffix=curt_suffix)
-            LOGGER.debug(f"Make share tensor")
-            if isinstance(matrix, (fixedpoint_table.FixedPointTensor,
-                                   fixedpoint_table.PaillierFixedPointTensor)):
-                matrix = matrix.value
-            ret = SecureMatrix.dot(matrix, share)
-            LOGGER.debug(f"tmc, ret: {ret}")
+                                                                      suffix=current_suffix)
+
+            if is_table(share):
+                share = fixedpoint_table.PaillierFixedPointTensor(share)
+                ret = share.dot(matrix)
+            else:
+                share = fixedpoint_numpy.PaillierFixedPointTensor(share)
+                ret = share.dot(matrix)
+
             share_tensor = SecureMatrix.from_source(tensor_name,
                                                     ret,
                                                     cipher,
@@ -117,6 +85,30 @@ class SecureMatrix(object):
                                                     self.encoder)
 
             return share_tensor
+
+    def share_encrypted_matrix(self, suffix, is_remote, cipher, **kwargs):
+        current_suffix = ("share_encrypted_matrix",) + suffix
+        if is_remote:
+            for var_name, var in kwargs.items():
+                dst_role = consts.GUEST if self.party.role == consts.HOST else consts.HOST
+                if isinstance(var, fixedpoint_table.FixedPointTensor):
+                    encrypt_var = cipher.distribute_encrypt(var.value)
+                else:
+                    encrypt_var = cipher.recursive_encrypt(var.value)
+                self.transfer_variable.encrypted_share_matrix.remote(encrypt_var, role=dst_role,
+                                                                     suffix=(var_name,) + current_suffix)
+        else:
+            res = []
+            for var_name in kwargs.keys():
+                dst_role = consts.GUEST if self.party.role == consts.HOST else consts.HOST
+                z = self.transfer_variable.encrypted_share_matrix.get(role=dst_role, idx=0,
+                                                                      suffix=(var_name,) + current_suffix)
+                if is_table(z):
+                    res.append(fixedpoint_table.PaillierFixedPointTensor(z))
+                else:
+                    res.append(fixedpoint_numpy.PaillierFixedPointTensor(z))
+
+            return tuple(res)
 
     @classmethod
     def from_source(cls, tensor_name, source, cipher, q_field, encoder, is_fixedpoint_table=True):
