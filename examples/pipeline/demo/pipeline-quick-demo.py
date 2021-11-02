@@ -19,7 +19,6 @@ from pipeline.backend.config import Backend, WorkMode
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import Reader, DataTransform, Intersection, HeteroSecureBoost, Evaluation
 from pipeline.interface import Data
-from pipeline.runtime.entity import JobParameters
 
 # table name & namespace in data storage
 # data should be uploaded before running modeling task

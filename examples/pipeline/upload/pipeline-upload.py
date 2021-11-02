@@ -25,7 +25,6 @@ def main(config="../../config.yaml", namespace=""):
         config = load_job_config(config)
     parties = config.parties
     guest = parties.guest[0]
-    work_mode = config.work_mode
     data_base = config.data_base_dir
 
     # partition for data storage
@@ -51,7 +50,7 @@ def main(config="../../config.yaml", namespace=""):
                                     head=0, partition=partition,
                                     id_delimiter=",")
     # upload both data
-    pipeline_upload.upload(work_mode=work_mode, backend=backend, drop=1)
+    pipeline_upload.upload(drop=1)
 
 
 if __name__ == "__main__":

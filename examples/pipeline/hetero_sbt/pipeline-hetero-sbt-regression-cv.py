@@ -24,7 +24,6 @@ from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
 
 from pipeline.utils.tools import load_job_config
-from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -35,7 +34,6 @@ def main(config="../../config.yaml", namespace=""):
     guest = parties.guest[0]
     host = parties.host[0]
 
-    work_mode = config.work_mode
 
     # data sets
     guest_train_data = {"name": "student_hetero_guest", "namespace": f"experiment{namespace}"}
@@ -79,8 +77,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(hetero_secure_boost_0, data=Data(train_data=intersect_0.output.data))
 
     pipeline.compile()
-    job_parameters = JobParameters(work_mode=work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
 
     print("fitting hetero secureboost done, result:")
     print(pipeline.get_component("hetero_secure_boost_0").get_summary())

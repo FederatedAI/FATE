@@ -26,7 +26,6 @@ from pipeline.component.evaluation import Evaluation
 from pipeline.interface.model import Model
 
 from pipeline.utils.tools import load_job_config
-from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -37,7 +36,6 @@ def main(config="../../config.yaml", namespace=""):
     guest = parties.guest[0]
     host = parties.host[0]
 
-    work_mode = config.work_mode
 
     # data sets
     guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
@@ -93,8 +91,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(evaluation_0, data=Data(data=hetero_fast_secure_boost_0.output.data))
 
     pipeline.compile()
-    job_parameters = JobParameters(work_mode=work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
 
     print("fitting hetero fast secureboost done, result:")
     print(pipeline.get_component("hetero_fast_secure_boost_0").get_summary())
@@ -111,7 +108,7 @@ def main(config="../../config.yaml", namespace=""):
     predict_pipeline.add_component(pipeline,
                                    data=Data(predict_input={pipeline.data_transform_0.input.data: reader_0.output.data}))
     # run predict model
-    predict_pipeline.predict(job_parameters)
+    predict_pipeline.predict()
 
 
 if __name__ == "__main__":

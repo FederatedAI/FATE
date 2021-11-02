@@ -22,7 +22,6 @@ from pipeline.component.hetero_feature_binning import HeteroFeatureBinning
 from pipeline.component.intersection import Intersection
 from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
-from pipeline.runtime.entity import JobParameters
 from pipeline.utils.tools import load_job_config
 
 
@@ -95,8 +94,7 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline.compile()
 
-    job_parameters = JobParameters()
-    pipeline.fit(job_parameters)
+    pipeline.fit()
 
     pipeline.deploy_component([data_transform_0, intersection_0, hetero_feature_binning_0])
 
@@ -108,7 +106,7 @@ def main(config="../../config.yaml", namespace=""):
     predict_pipeline.add_component(pipeline,
                                    data=Data(predict_input={pipeline.data_transform_0.input.data: reader_0.output.data}))
     # run predict model
-    predict_pipeline.predict(job_parameters)
+    predict_pipeline.predict()
 
 
 if __name__ == "__main__":

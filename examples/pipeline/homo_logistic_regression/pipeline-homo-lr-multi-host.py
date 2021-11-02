@@ -25,7 +25,6 @@ from pipeline.component import Reader
 from pipeline.component import FeatureScale
 from pipeline.interface import Data
 from pipeline.utils.tools import load_job_config
-from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -36,7 +35,6 @@ def main(config="../../config.yaml", namespace=""):
     guest = parties.guest[0]
     host = parties.host
     arbiter = parties.arbiter[0]
-    work_mode = config.work_mode
 
     guest_train_data = {"name": "breast_homo_guest", "namespace": f"experiment{namespace}"}
     host_train_data = {"name": "breast_homo_host", "namespace": f"experiment{namespace}"}
@@ -100,8 +98,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.compile()
 
     # fit model
-    job_parameters = JobParameters(work_mode=work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
     # query component summary
     print(json.dumps(pipeline.get_component("homo_lr_0").get_summary(), indent=4, ensure_ascii=False))
     print(json.dumps(pipeline.get_component("evaluation_0").get_summary(), indent=4, ensure_ascii=False))

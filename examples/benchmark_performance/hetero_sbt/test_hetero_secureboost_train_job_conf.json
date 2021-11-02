@@ -12,9 +12,6 @@
             9999
         ]
     },
-    "job_parameters": {
-        "common": {}
-    },
     "component_parameters": {
         "common": {
             "intersection_0": {

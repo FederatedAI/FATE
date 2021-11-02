@@ -44,7 +44,8 @@ class CSession(CSessionABC):
         from fate_arch.common.address import PathAddress
         if isinstance(address, PathAddress):
             from fate_arch.computing.non_distributed import LocalData
-            return LocalData(address.path)
+            from fate_arch.computing import ComputingEngine
+            return LocalData(address.path, engine=ComputingEngine.SPARK)
 
         from fate_arch.common.address import HiveAddress, LinkisHiveAddress
 
