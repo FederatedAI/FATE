@@ -35,7 +35,7 @@ configuration file.
 
 For explanation on
 stepwise module parameters, please refer to
-[stepwise param](../../../python/federatedml/param/stepwise_param.py).
+[stepwise param](../../python/federatedml/param/stepwise_param.py).
 
 Please note that on FATE Board, shown model information (max iters &
 coefficient/intercept values) are of the final result model.

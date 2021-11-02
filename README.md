@@ -39,7 +39,7 @@ tree-based algorithms, deep learning and transfer learning.
 ### Understand FATE Design 
 
 - [FATE structure]
-- [Modules](doc/api/federatedml/index.md)
+- [Modules](doc/federatedml_component/index.md)
 - [Algorithm Parameters](./python/federatedml/param)
 - [Papers & Articles](./doc/resources)
 
@@ -52,20 +52,21 @@ tree-based algorithms, deep learning and transfer learning.
 
 ### Contribute to FATE
 
-- [develop guide](./doc/community/develop_guide.md)
-- [develop guide for FATE-Client](./doc/community/fate_client_develop_guide.md)
+- [develop guide](doc/develop/develop_guide.md)
+- [develop guide for FATE-Client](doc/develop/fate_client_develop_guide.md)
 
 ### API References
 
-- [Computing API](./doc/api/computing.md)
+- [Computing API](doc/computing.md)
 - [Federation API](./doc/api/federation.md)
-- [Flow SDK API](./doc/api/flow_sdk.md)
-- [Flow Client](./doc/api/flow_client.md)
-- [FATE Pipeline](./doc/api/pipeline.md)
+- [Flow SDK API](doc/api/fate_client/flow_sdk.md)
+- [Flow Client](doc/api/fate_client/flow_client.md)
+- [FATE Pipeline](doc/api/fate_client/pipeline.md)
 - [FATE Test](./doc/api/fate_test.md)
 
 ## Getting Involved
 
+- [FATE Community](https://github.com/FederatedAI/FATE-Community)
 - [Fate-FedAI Group IO](https://groups.io/g/Fate-FedAI)
 - [FAQ](https://github.com/FederatedAI/FATE/wiki)
 - [issues](https://github.com/FederatedAI/FATE/issues)

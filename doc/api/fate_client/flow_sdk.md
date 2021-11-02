@@ -1,6 +1,6 @@
 # Fate Flow Client SDK Guide
 
-[[中文](./flow_sdk.zh.md)]
+[[中文](flow_sdk.zh.md)]
 
 ## Usage
 

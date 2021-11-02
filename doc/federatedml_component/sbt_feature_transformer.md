@@ -7,7 +7,7 @@ paper](https://research.fb.com/wp-content/uploads/2016/11/practical-lessons-from
 for its details.
 
 ![Figure 5: Encoding using leaf
-indices\</div\>](../../images/gbdt_lr.png)
+indices\</div\>](../images/gbdt_lr.png)
 
 ## Param
 

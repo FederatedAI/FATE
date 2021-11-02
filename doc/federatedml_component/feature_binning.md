@@ -14,7 +14,7 @@ As for calculating the federated iv and woe values, the following figure
 can describe the principle properly.
 
 ![Figure 1 (Federated Feature Binning
-Principle)](../../images/binning_principle.png)
+Principle)](../images/binning_principle.png)
 
 As the figure shows, B party which has the data labels encrypt its
 labels with Addiction homomorphic encryption and then send to A. A
@@ -26,7 +26,7 @@ encrypted label information to all hosts, and each of the hosts
 calculates and sends back the static info.
 
 ![Figure 2： Multi-Host Binning
-Principle](../../images/multiple_host_binning.png)
+Principle](../images/multiple_host_binning.png)
 
 For optimal binning, each party use quantile binning or bucket binning
 find initial split points. Then Guest will send encrypted labels to
@@ -34,7 +34,7 @@ Host. Host use them calculate histogram of each bin and send back to
 Guest. Then start optimal binning methods.
 
 ![Figure 3： Multi-Host Binning
-Principle](../../images/optimal_binning.png)
+Principle](../images/optimal_binning.png)
 
 There exist two kinds of methods, merge-optimal binning and
 split-optimal binning. When choosing metrics as iv, gini or chi-square,

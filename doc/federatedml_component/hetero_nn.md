@@ -18,7 +18,7 @@ The following figure shows the proposed Federated Heterogeneous Neural
 Network framework.
 
 ![Figure 1 (Framework of Federated Heterogeneous Neural
-Network)](../../images/hetero_nn_framework.png)
+Network)](../images/hetero_nn_framework.png)
 
 Party B: We define the party B as the data provider who holds both a
 data matrix and the class label. Since the class label information is
@@ -84,7 +84,7 @@ Forward Propagation Process consists of three parts.
 >     Heterogeneous Neural Network framework.
 > 
 > ![Figure 2 (Forward Propagation of Federated Heterogeneous Neural
-> Network)](../../images/hetero_nn_forward_propagation.png)
+> Network)](../images/hetero_nn_forward_propagation.png)
 
 ## Backward Propagation of Federated Heterogeneous Neural Network
 
@@ -130,7 +130,7 @@ Backward Propagation Process also consists of three parts.
 >     Heterogeneous Neural Network framework.
 > 
 > ![Figure 3 (Backward Propagation of Federated Heterogeneous Neural
-> Network)](../../images/hetero_nn_backward_propagation.png)
+> Network)](../images/hetero_nn_backward_propagation.png)
 
 ## Param
 

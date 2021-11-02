@@ -20,7 +20,7 @@ keys.
 The process of HeteroPoisson training is shown below:
 
 ![Figure 1： Federated HeteroPoisson
-Principle](../../images/HeteroPoisson.png)
+Principle](../images/HeteroPoisson.png)
 
 A sample alignment process is conducted before training. The sample
 alignment process identifies overlapping samples in databases of all
@@ -82,7 +82,7 @@ converged, based on the stopping criteria set by Guest.
 9.  Support sparse format data as input.
 
 10. Support stepwise. For details on stepwise mode, please refer
-    [here](./stepwise.md).
+    [here](stepwise.md).
 
 <div class="note">
 

@@ -18,10 +18,11 @@ nav:
     - Arch:
       - Computing: api/computing.md
       - Federation: api/federation.md
-    - Params:
-      - ... | flat | api/params/*.md
+
   - FederatedML:
-    - ... | flat | api/federatedml/*.md
+    - ... | flat | federatedml_component/*.md
+    - Params:
+      - ... | flat | federatedml_component/params/*.md
   - Resources:
     - resources/index.md
 

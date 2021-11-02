@@ -324,7 +324,7 @@ fate\_flow\_client 模块的运行规则是：
 若希望后续用户可以通过python脚本形式启动建模任务，需要在
 [python/fate\_client/pipeline/component](../../python/fate_client/pipeline/component)
 中添加自己的组件。详情请参考Pipeline的
-[文档](../../doc/api/pipeline.md)
+[文档](../api/fate_client/pipeline.md)
 
 ## 开始建模任务
 

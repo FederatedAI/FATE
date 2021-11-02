@@ -5,7 +5,7 @@
 We provide some example scripts of running FATE jobs with
 [FATE-Pipeline](../../../examples/pipeline).
 
-Please refer [here](../../api/pipeline.md) for details on
+Please refer [here](../../api/fate_client/pipeline.md) for details on
 FATE-Pipeline. DSL version of provided Pipeline examples can be found
 [here](../../../examples/dsl/v2).
 
@@ -168,7 +168,7 @@ following instructions in the script.
     with the trained model. Note that `Evaluation` component is added to
     the prediction workflow. For more information on using
     FATE-Pipeline, please refer to this
-        [guide](../../api/pipeline.md).
+        [guide](../../api/fate_client/pipeline.md).
     
         2021-03-25 17:17:05.568 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:121 - Job id is 202103251717052325809
                             Job is still waiting, time elapse: 0:00:01

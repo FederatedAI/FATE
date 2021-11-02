@@ -15,7 +15,7 @@ spaces of guest and hosts are identical. An optional encryption mode for
 model is provided. By doing this, no party can get the private model of
 other parties.
 
-![Figure 1 (Federated Homo NN Principle)](../../images/homo_nn.png)
+![Figure 1 (Federated Homo NN Principle)](../images/homo_nn.png)
 
 The Homo NN process is shown in Figure 1. Models of Party A and Party B
 have the same neural networks structure. In each iteration, each party

@@ -17,7 +17,7 @@ $$\rho_{X, Y} = E[\tilde{X}\tilde{Y}]$$
 ## Implementation Detail
 
 We use an MPC protocol called SPDZ for Heterogeneous Pearson Correlation
-Coefficient calculation. For more details, one can refer [[here](./secureprotol.md)]
+Coefficient calculation. For more details, one can refer [[here](secureprotol.md)]
 
 ## Param
 
