@@ -228,7 +228,6 @@ class LogisticParam(BaseParam):
                 raise ValueError("early stopping rounds should be larger than 0 when it's integer")
             if self.validation_freqs is None:
                 raise ValueError("validation freqs must be set when early stopping is enabled")
-
         if self.metrics is not None and not isinstance(self.metrics, list):
             raise ValueError("metrics should be a list")
 

@@ -77,3 +77,6 @@ class Communicator(object):
         self._rescontruct_variable.clean()
         self._mul_triplets_encrypted_variable.clean()
         self._mul_triplets_cross_variable.clean()
+
+    def set_flowid(self, flowid):
+        self._transfer_variable.set_flowid(flowid)
