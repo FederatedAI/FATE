@@ -1,5 +1,5 @@
 from federatedml.nn.hetero_nn.util.random_number_generator import RandomNumberGenerator
-from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
+from federatedml.secureprotol.paillier_tensor import PaillierTensor
 import numpy as np
 from fate_arch.session import computing_session as session
 import random

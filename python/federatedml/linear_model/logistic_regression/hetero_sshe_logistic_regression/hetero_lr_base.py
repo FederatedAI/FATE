@@ -21,7 +21,7 @@ from abc import ABC
 
 import numpy as np
 
-from fate_arch import session
+from fate_arch.session import get_parties
 from federatedml.framework.hetero.procedure import batch_generator
 from federatedml.linear_model.linear_model_base import BaseLinearModel
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
@@ -63,9 +63,17 @@ class HeteroLRBase(BaseLinearModel, ABC):
         if self.role == consts.GUEST:
             q_field = self.cipher.public_key.n
             self.transfer_variable.q_field.remote(q_field, role=consts.HOST, suffix=("q_field",))
+            #
+            # self.host_cipher = self.transfer_variable.q_field.get(role=consts.HOST, idx=0,
+            #                                                   suffix=("cipher",))
+
+
         else:
             q_field = self.transfer_variable.q_field.get(role=consts.GUEST, idx=0,
                                                           suffix=("q_field",))
+
+            # self.transfer_variable.q_field.remote(self.cipher, role=consts.GUEST, suffix=("cipher",))
+
         return q_field
 
     def _init_model(self, params: LogisticRegressionParam):
@@ -79,7 +87,6 @@ class HeteroLRBase(BaseLinearModel, ABC):
         self.review_every_iter = params.reveal_every_iter
 
         self.q_field = self._transfer_q_field()
-        # self.fixedpoint_filed = 293973345475167247070445277780365744413 ** 2
 
         LOGGER.debug(f"q_field: {self.q_field}")
 
@@ -95,38 +102,24 @@ class HeteroLRBase(BaseLinearModel, ABC):
                                               q_field=self.q_field,
                                               other_party=self.other_party)
 
+    def _init_weights(self, model_shape):
+        if self.role == consts.HOST:
+            self.init_param_obj.fit_intercept = False
+        return self.initializer.init_model(model_shape, init_params=self.init_param_obj)
+
     def _set_parties(self):
         parties = []
-        guest_parties = session.get_latest_opened().parties.roles_to_parties(["guest"])
-        host_parties = session.get_latest_opened().parties.roles_to_parties(["host"])
+        guest_parties = get_parties().roles_to_parties(["guest"])
+        host_parties = get_parties().roles_to_parties(["host"])
         parties.extend(guest_parties)
         parties.extend(host_parties)
 
-        local_party = session.get_latest_opened().parties.local_party
+        local_party = get_parties().local_party
         other_party = parties[0] if parties[0] != local_party else parties[1]
 
         self.parties = parties
         self.local_party = local_party
         self.other_party = other_party
-
-    def get_model_summary(self):
-        header = self.header
-        if header is None:
-            return {}
-        weight_dict, intercept_ = self.get_weight_intercept_dict(header)
-        best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
-
-        summary = {"coef": weight_dict,
-                   "intercept": intercept_,
-                   "is_converged": self.is_converged,
-                   "one_vs_rest": self.need_one_vs_rest,
-                   "best_iteration": best_iteration}
-
-        if self.validation_strategy:
-            validation_summary = self.validation_strategy.summary()
-            if validation_summary:
-                summary["validation_metrics"] = validation_summary
-        return summary
 
     @property
     def is_respectively_reveal(self):
@@ -179,16 +172,9 @@ class HeteroLRBase(BaseLinearModel, ABC):
             self.need_one_vs_rest = False
             self.fit_binary(data_instances, validate_data)
 
-    def _init_weights(self, model_shape):
-        return self.initializer.init_model(model_shape, init_params=self.init_param_obj)
-
-    def check_converge_by_loss(self, loss, suffix):
-        if self.role == consts.GUEST:
-            self.is_converged = self.converge_func.is_converge(loss)
-            self.transfer_variable.is_converged.remote(self.is_converged, suffix=suffix)
-        else:
-            self.is_converged = self.transfer_variable.is_converged.get(idx=0, suffix=suffix)
-        return self.is_converged
+    def one_vs_rest_fit(self, train_data=None, validate_data=None):
+        LOGGER.debug("Class num larger than 2, need to do one_vs_rest")
+        self.one_vs_rest_obj.fit(data_instances=train_data, validate_data=validate_data)
 
     def fit_binary(self, data_instances, validate_data=None):
         LOGGER.info("Start to hetero_sshe_logistic_regression")
@@ -199,12 +185,12 @@ class HeteroLRBase(BaseLinearModel, ABC):
 
         if not self.component_properties.is_warm_start:
             w = self._init_weights(model_shape)
-            last_models = w
             self.model_weights = LinearModelWeights(l=w,
                                                     fit_intercept=self.model_param.init_param.fit_intercept)
+            last_models = copy.deepcopy(self.model_weights)
         else:
-            last_models = self.model_weights.unboxed
-            w = last_models
+            last_models = copy.deepcopy(self.model_weights)
+            w = last_models.unboxed
             self.callback_warm_start_init_iter(self.n_iter_)
 
         self.batch_generator.initialize_batch_generator(data_instances, batch_size=self.batch_size)
@@ -216,6 +202,7 @@ class HeteroLRBase(BaseLinearModel, ABC):
                 q_field=self.q_field,
                 use_mix_rand=self.model_param.use_mix_rand,
         ) as spdz:
+            spdz.set_flowid(self.flowid)
             if self.role == consts.GUEST:
                 self.labels = data_instances.mapValues(lambda x: np.array([x.label], dtype=int))
 
@@ -271,6 +258,17 @@ class HeteroLRBase(BaseLinearModel, ABC):
                                                          features=batch_data,
                                                          suffix=current_suffix)
 
+                    # loss computing;
+                    suffix = ("loss",) + current_suffix
+                    if self.review_every_iter:
+                        batch_loss = self.compute_loss(weights=self.model_weights, suffix=suffix)
+                    else:
+                        batch_loss = self.compute_loss(weights=(w_self, w_remote), suffix=suffix)
+
+                    if batch_loss is not None:
+                        batch_loss = batch_loss * self.batch_num[batch_idx]
+                    loss_list.append(batch_loss)
+
                     if self.review_every_iter:
                         LOGGER.debug(f"before review: self_g shape: {self_g.shape}, remote_g_shape: {remote_g}，"
                                      f"self_g: {self_g}")
@@ -299,17 +297,7 @@ class HeteroLRBase(BaseLinearModel, ABC):
                         w_self -= self_g
                         w_remote -= remote_g
 
-                    LOGGER.debug(f"other_w_self shape: {w_self.shape}, w_remote_shape: {w_remote.shape}")
-
-                    suffix = ("loss",) + current_suffix
-                    if self.review_every_iter:
-                        batch_loss = self.compute_loss(weights=self.model_weights, suffix=suffix)
-                    else:
-                        batch_loss = self.compute_loss(weights=(w_self, w_remote), suffix=suffix)
-
-                    if batch_loss is not None:
-                        batch_loss = batch_loss * self.batch_num[batch_idx]
-                    loss_list.append(batch_loss)
+                    LOGGER.debug(f"w_self shape: {w_self.shape}, w_remote_shape: {w_remote.shape}")
 
                 if self.role == consts.GUEST:
                     loss = np.sum(loss_list) / instances_count
@@ -323,10 +311,10 @@ class HeteroLRBase(BaseLinearModel, ABC):
                 elif self.converge_func_name == "weight_diff":
                     if self.review_every_iter:
                         self.is_converged = self.check_converge_by_weights(
-                            last_w=last_models,
+                            last_w=last_models.unboxed,
                             new_w=self.model_weights.unboxed,
                             suffix=(str(self.n_iter_),))
-                        last_models = copy.deepcopy(self.model_weights.unboxed)
+                        last_models = copy.deepcopy(self.model_weights)
                     else:
                         self.is_converged = self.check_converge_by_weights(
                             last_w=(last_w_self, last_w_remote),
@@ -390,8 +378,19 @@ class HeteroLRBase(BaseLinearModel, ABC):
             raise NotImplementedError(f"review strategy: {self.model_param.reveal_strategy} has not been implemented.")
         return new_w
 
+    def check_converge_by_loss(self, loss, suffix):
+        if self.role == consts.GUEST:
+            self.is_converged = self.converge_func.is_converge(loss)
+            self.transfer_variable.is_converged.remote(self.is_converged, suffix=suffix)
+        else:
+            self.is_converged = self.transfer_variable.is_converged.get(idx=0, suffix=suffix)
+        return self.is_converged
+
     def check_converge_by_weights(self, last_w, new_w, suffix):
-        raise NotImplementedError()
+        if self.review_every_iter:
+            return self._review_every_iter_weights_check(last_w, new_w, suffix)
+        else:
+            return self._not_review_every_iter_weights_check(last_w, new_w, suffix)
 
     def _review_every_iter_weights_check(self, last_w, new_w, suffix):
         raise NotImplementedError()
@@ -449,23 +448,56 @@ class HeteroLRBase(BaseLinearModel, ABC):
         return meta_protobuf_obj
 
     def get_single_model_param(self, model_weights=None, header=None):
-        weight_dict = {}
-        model_weights = model_weights if model_weights else self.model_weights
+        # weight_dict = {}
+        # model_weights = model_weights if model_weights else self.model_weights
         header = header if header else self.header
-        for idx, header_name in enumerate(header):
-            coef_i = model_weights.coef_[idx]
-            weight_dict[header_name] = coef_i
+        # for idx, header_name in enumerate(header):
+        #     coef_i = model_weights.coef_[idx]
+        #     weight_dict[header_name] = coef_i
 
         result = {'iters': self.n_iter_,
                   'loss_history': self.loss_history,
                   'is_converged': self.is_converged,
-                  'weight': weight_dict,
+                  # 'weight': weight_dict,
                   'intercept': self.model_weights.intercept_,
                   'header': header,
                   'best_iteration': -1 if self.validation_strategy is None else
                   self.validation_strategy.best_iteration
                   }
+
+        if self.role == consts.GUEST or self.is_respectively_reveal:
+            model_weights = model_weights if model_weights else self.model_weights
+            weight_dict = {}
+            for idx, header_name in enumerate(header):
+                coef_i = model_weights.coef_[idx]
+                weight_dict[header_name] = coef_i
+
+            result['weight'] = weight_dict
+
         return result
+
+    def get_model_summary(self):
+        header = self.header
+        if header is None:
+            return {}
+        weight_dict, intercept_ = self.get_weight_intercept_dict(header)
+        best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
+
+        summary = {"coef": weight_dict,
+                   "intercept": intercept_,
+                   "is_converged": self.is_converged,
+                   "one_vs_rest": self.need_one_vs_rest,
+                   "best_iteration": best_iteration}
+
+        if not self.is_respectively_reveal:
+            del summary["intercept"]
+            del summary["coef"]
+
+        if self.validation_strategy:
+            validation_summary = self.validation_strategy.summary()
+            if validation_summary:
+                summary["validation_metrics"] = validation_summary
+        return summary
 
     def load_model(self, model_dict):
         LOGGER.debug("Start Loading model")
@@ -493,22 +525,22 @@ class HeteroLRBase(BaseLinearModel, ABC):
 
     def load_single_model(self, single_model_obj):
         LOGGER.info("It's a binary task, start to load single model")
-        feature_shape = len(self.header)
-        tmp_vars = np.zeros(feature_shape)
-        weight_dict = dict(single_model_obj.weight)
 
-        for idx, header_name in enumerate(self.header):
-            tmp_vars[idx] = weight_dict.get(header_name)
+        if self.role == consts.GUEST or self.is_respectively_reveal:
+            feature_shape = len(self.header)
+            tmp_vars = np.zeros(feature_shape)
+            weight_dict = dict(single_model_obj.weight)
 
-        if self.fit_intercept:
-            tmp_vars = np.append(tmp_vars, single_model_obj.intercept)
-        self.model_weights = LinearModelWeights(tmp_vars, fit_intercept=self.fit_intercept)
+            for idx, header_name in enumerate(self.header):
+                tmp_vars[idx] = weight_dict.get(header_name)
+
+            if self.fit_intercept:
+                tmp_vars = np.append(tmp_vars, single_model_obj.intercept)
+            self.model_weights = LinearModelWeights(tmp_vars, fit_intercept=self.fit_intercept)
+
         self.n_iter_ = single_model_obj.iters
         return self
 
-    def one_vs_rest_fit(self, train_data=None, validate_data=None):
-        LOGGER.debug("Class num larger than 2, need to do one_vs_rest")
-        self.one_vs_rest_obj.fit(data_instances=train_data, validate_data=validate_data)
 
 
 

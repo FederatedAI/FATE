@@ -21,6 +21,8 @@ import numpy as np
 from federatedml.linear_model.logistic_regression.hetero_sshe_logistic_regression.hetero_lr_base import HeteroLRBase
 from federatedml.optim import activation
 from federatedml.protobuf.generated import lr_model_param_pb2
+from federatedml.secureprotol import PaillierEncrypt
+from federatedml.secureprotol.fate_paillier import PaillierPublicKey, PaillierPrivateKey
 from federatedml.secureprotol.spdz.secure_matrix.secure_matrix import SecureMatrix
 from federatedml.secureprotol.spdz.tensor import fixedpoint_numpy, fixedpoint_table
 from federatedml.util import LOGGER, consts
@@ -37,9 +39,6 @@ class HeteroLRGuest(HeteroLRBase):
         self.z_square = None
         self.wx_self = None
         self.wx_remote = None
-
-    def _init_model(self, params):
-        super()._init_model(params)
 
     def _cal_z_in_share(self, w_self, w_remote, features, suffix):
         z1 = features.dot_local(w_self)
@@ -90,7 +89,7 @@ class HeteroLRGuest(HeteroLRBase):
 
         sigmoid_z = self._compute_sigmoid(z, remote_z)
 
-        self.encrypted_wx = sigmoid_z
+        self.encrypted_wx = self.wx_self + self.wx_remote
 
         self.encrypted_error = sigmoid_z - self.labels
 
@@ -141,6 +140,7 @@ class HeteroLRGuest(HeteroLRBase):
         """
         wx = (-0.5 * self.encrypted_wx).reduce(operator.add)
         ywx = (self.encrypted_wx * self.labels).reduce(operator.add)
+
         wx_square = (2 * self.wx_remote * self.wx_self).reduce(operator.add) + \
                     (self.wx_self * self.wx_self).reduce(operator.add)
 
@@ -155,13 +155,32 @@ class HeteroLRGuest(HeteroLRBase):
 
         wx_square = (wx_remote_square + wx_square) * -0.125
 
-        LOGGER.debug(f"wx_square: {wx_square}")
+        LOGGER.info(f"wx_square: {wx_square}")
 
-        loss = np.hstack((wx.value, ywx.value, wx_square.value))
+        # DEBUG
+        # de_wx = self.host_cipher.recursive_decrypt(wx.value)
+        # de_ywx = self.host_cipher.recursive_decrypt(ywx.value)
+        # de_wx_square = self.host_cipher.recursive_decrypt(wx_square.value)
+        # wx_square1 = (2 * self.wx_remote * self.wx_self).reduce(operator.add)
+        # de_wx_square1 = self.host_cipher.recursive_decrypt(wx_square1.value)
+        # wx_square2 = (self.wx_self * self.wx_self).reduce(operator.add)
+        # de_wx_square2 = self.fixedpoint_encoder.decode(wx_square2.value)
+        # de_wx_square3 = self.host_cipher.recursive_decrypt(wx_remote_square.value)
+        # de_wx_remote = self.host_cipher.recursive_decrypt(self.wx_remote.value.reduce(operator.add))
+        # de_wx_self = self.fixedpoint_encoder.decode(self.wx_self.value.reduce(operator.add))
+        # de_wx_sum = de_wx_remote + de_wx_self
+        # LOGGER.info(f"compute_loss: de_wx: {de_wx}")
+        # LOGGER.info(f"compute_loss: de_ywx: {de_ywx}")
+        # LOGGER.info(f"compute_loss: de_wx_square: {de_wx_square}")
+        # LOGGER.info(f"compute_loss: de_wx_square1: {de_wx_square1}")
+        # LOGGER.info(f"compute_loss: de_wx_square2: {de_wx_square2}")
+        # LOGGER.info(f"compute_loss: de_wx_square3: {de_wx_square3}")
+        # LOGGER.info(f"compute_loss: de_wx_remote: {de_wx_remote}")
+        # LOGGER.info(f"compute_loss: de_wx_self: {de_wx_self}")
+        # LOGGER.info(f"compute_loss: de_wx_sum: {de_wx_sum}")
 
         batch_num = self.batch_num[int(suffix[2])]
-        loss = loss * (-1 / batch_num) - np.log(0.5)
-        loss = fixedpoint_numpy.PaillierFixedPointTensor(loss)
+        loss = (wx + ywx + wx_square) * (-1 / batch_num) - np.log(0.5)
 
         LOGGER.debug(f"loss: {loss}")
 
@@ -172,10 +191,11 @@ class HeteroLRGuest(HeteroLRBase):
                                               q_field=self.fixedpoint_encoder.n,
                                               encoder=self.fixedpoint_encoder)
 
-        loss = share_loss.get(tensor_name=f"share_loss_{suffix}",
-                              broadcast=False)
+        tensor_name = ".".join(("loss",) + suffix)
+        loss = share_loss.get(tensor_name=tensor_name,
+                              broadcast=False)[0]
+
         LOGGER.debug(f"share_loss.get: {loss}")
-        loss = np.sum(loss)
 
         if self.review_every_iter:
             loss_norm = self.optimizer.loss_norm(weights)
@@ -211,12 +231,6 @@ class HeteroLRGuest(HeteroLRBase):
                 loss = loss + loss_norm
 
         return loss
-
-    def check_converge_by_weights(self, last_w, new_w, suffix):
-        if self.review_every_iter:
-            return self._review_every_iter_weights_check(last_w, new_w, suffix)
-        else:
-            return self._not_review_every_iter_weights_check(last_w, new_w, suffix)
 
     def _review_every_iter_weights_check(self, last_w, new_w, suffix):
         square_sum = np.sum((last_w - new_w) ** 2)
@@ -296,13 +310,23 @@ class HeteroLRGuest(HeteroLRBase):
     def get_single_model_param(self, model_weights=None, header=None):
         result = super().get_single_model_param(model_weights, header)
         if not self.is_respectively_reveal:
-            result["cipher"] = self.cipher
+            result["cipher"] = dict(public_key=dict(n=str(self.cipher.public_key.n)),
+                                    private_key=dict(p=str(self.cipher.privacy_key.p),
+                                                     q=str(self.cipher.privacy_key.q)))
+            # result["cipher"] = (self.cipher.public_key.n, self.cipher.privacy_key.p, self.cipher.privacy_key.q)
         return result
 
     def load_single_model(self, single_model_obj):
         super(HeteroLRGuest, self).load_single_model(single_model_obj)
         if not self.is_respectively_reveal:
-            self.cipher = single_model_obj.cipher
+            cipher_info = single_model_obj.cipher
+            self.cipher = PaillierEncrypt()
+            public_key = PaillierPublicKey(int(cipher_info.public_key.n))
+            # public_key = PaillierPublicKey(cipher_info[0])
+            privacy_key = PaillierPrivateKey(public_key, int(cipher_info.private_key.p), int(cipher_info.private_key.q))
+            # privacy_key = PaillierPrivateKey(public_key, cipher_info[1], cipher_info[2])
+            self.cipher.set_public_key(public_key=public_key)
+            self.cipher.set_privacy_key(privacy_key=privacy_key)
 
     def get_model_summary(self):
         summary = super(HeteroLRGuest, self).get_model_summary()

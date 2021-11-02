@@ -15,22 +15,33 @@
 
 
 import functools
+import math
 import random
+import sys
 
 import numpy as np
 from fate_arch.session import is_table
 from federatedml.secureprotol.fixedpoint import FixedPointNumber
 
 
+FLOAT_MANTISSA_BITS = 32
+PRECISION = 2 ** FLOAT_MANTISSA_BITS
+
+
+def rand_number_generator(q_field):
+    number = FixedPointNumber(encoding=random.randint(1, PRECISION),
+                              exponent=math.floor((FLOAT_MANTISSA_BITS / 2)
+                                                  / FixedPointNumber.LOG2_BASE),
+                              n=q_field
+                              )
+
+    return number
+
+
 def rand_tensor(q_field, tensor):
-    precision = 2 ** 64
     if is_table(tensor):
         return tensor.mapValues(
-            lambda x: np.array([FixedPointNumber(encoding=random.randint(1, precision),
-                                                 exponent=FixedPointNumber.calculate_exponent_from_precision(
-                                                     precision=precision),
-                                                 n=q_field
-                                                 )
+            lambda x: np.array([rand_number_generator(q_field=q_field)
                                 for _ in x],
                                dtype=FixedPointNumber)
         )
@@ -38,45 +49,26 @@ def rand_tensor(q_field, tensor):
         arr = np.zeros(shape=tensor.shape, dtype=FixedPointNumber)
         view = arr.view().reshape(-1)
         for i in range(arr.size):
-            view[i] = FixedPointNumber(encoding=random.randint(1, precision),
-                                       exponent=FixedPointNumber.calculate_exponent_from_precision(precision=precision),
-                                       n=q_field
-                                       )
+            view[i] = rand_number_generator(q_field=q_field)
         return arr
     raise NotImplementedError(f"type={type(tensor)}")
 
 
 class _MixRand(object):
-    def __init__(self, lower, upper, q_field, base_size=1000, inc_velocity=0.1, inc_velocity_deceleration=0.01):
-        self._lower = lower
-        if self._lower < 0:
-            raise ValueError(f"lower should great than 0, found {self._lower}")
-        self._upper = upper
-        if self._upper < self._lower:
-            raise ValueError(f"requires upper >= lower, yet upper={upper} and lower={lower}")
-
-        self._q_field = q_field
-        if self._q_field < self._upper:
-            raise ValueError(f"requires q_field >= upper, yet upper={q_field} and lower={upper}")
-
+    def __init__(self, q_field, base_size=1000, inc_velocity=0.1, inc_velocity_deceleration=0.01):
         self._caches = []
+        self._q_field = q_field
 
         # generate base random numbers
         for _ in range(base_size):
-            rand_num = FixedPointNumber(encoding=random.SystemRandom().randint(self._lower, self._upper),
-                                        exponent=FixedPointNumber.calculate_exponent_from_precision(
-                                            precision=self._upper),
-                                        n=self._q_field)
+            rand_num = rand_number_generator(q_field=self._q_field)
             self._caches.append(rand_num)
 
         self._inc_rate = inc_velocity
         self._inc_velocity_deceleration = inc_velocity_deceleration
 
     def _inc(self):
-        rand_num = FixedPointNumber(encoding=random.SystemRandom().randint(self._lower, self._upper),
-                                    exponent=FixedPointNumber.calculate_exponent_from_precision(
-                                        precision=self._upper),
-                                    n=self._q_field)
+        rand_num = rand_number_generator(q_field=self._q_field)
         self._caches.append(rand_num)
 
     def __next__(self):
@@ -88,8 +80,8 @@ class _MixRand(object):
         return self
 
 
-def _mix_rand_func(it, precision, q_field):
-    _mix = _MixRand(1, precision, q_field)
+def _mix_rand_func(it, q_field):
+    _mix = _MixRand(q_field)
     result = []
     for k, v in it:
         result.append((k, np.array([next(_mix) for _ in v], dtype=object)))
@@ -97,29 +89,20 @@ def _mix_rand_func(it, precision, q_field):
 
 
 def urand_tensor(q_field, tensor, use_mix=False):
-    precision = 2 ** 64
     if is_table(tensor):
         if use_mix:
             return tensor.mapPartitions(functools.partial(_mix_rand_func,
-                                                          precision=precision,
                                                           q_field=q_field),
                                         use_previous_behavior=False,
                                         preserves_partitioning=True)
         return tensor.mapValues(
-            lambda x: np.array([FixedPointNumber(encoding=random.SystemRandom().randint(1, precision),
-                                                 exponent=FixedPointNumber.calculate_exponent_from_precision(
-                                                     precision=precision),
-                                                 n=q_field
-                                                 )
+            lambda x: np.array([rand_number_generator(q_field=q_field)
                                 for _ in x],
                                dtype=FixedPointNumber))
     if isinstance(tensor, np.ndarray):
         arr = np.zeros(shape=tensor.shape, dtype=FixedPointNumber)
         view = arr.view().reshape(-1)
         for i in range(arr.size):
-            view[i] = FixedPointNumber(encoding=random.SystemRandom().randint(1, precision),
-                                       exponent=FixedPointNumber.calculate_exponent_from_precision(precision=precision),
-                                       n=q_field
-                                       )
+            view[i] = rand_number_generator(q_field=q_field)
         return arr
     raise NotImplementedError(f"type={type(tensor)}")

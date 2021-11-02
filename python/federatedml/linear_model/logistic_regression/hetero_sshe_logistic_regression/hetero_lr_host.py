@@ -18,8 +18,10 @@ import operator
 
 import numpy as np
 
+from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.linear_model.logistic_regression.hetero_sshe_logistic_regression.hetero_lr_base import HeteroLRBase
 from federatedml.protobuf.generated import lr_model_param_pb2
+from federatedml.secureprotol.fate_paillier import PaillierPublicKey, PaillierEncryptedNumber
 from federatedml.secureprotol.spdz.secure_matrix.secure_matrix import SecureMatrix
 from federatedml.secureprotol.spdz.tensor import fixedpoint_table, fixedpoint_numpy
 from federatedml.util import consts, LOGGER
@@ -31,10 +33,6 @@ class HeteroLRHost(HeteroLRBase):
         super().__init__()
         self.data_batch_count = []
         self.wx_self = None
-
-    def _init_weights(self, model_shape):
-        self.init_param_obj.fit_intercept = False
-        return self.initializer.init_model(model_shape, init_params=self.init_param_obj)
 
     def _cal_z_in_share(self, w_self, w_remote, features, suffix):
         z1 = features.dot_local(w_self)
@@ -63,6 +61,11 @@ class HeteroLRHost(HeteroLRBase):
             z = features.dot_local(w)
 
         self.wx_self = z
+
+        # # DEBUG;
+        # de_wx_self = self.fixedpoint_encoder.decode(self.wx_self.value.reduce(operator.add))
+        # LOGGER.info(f"forward: de_wx_self: {de_wx_self}")
+
         self.secure_matrix_obj.share_encrypted_matrix(suffix=suffix,
                                                       is_remote=True,
                                                       cipher=self.cipher,
@@ -112,6 +115,7 @@ class HeteroLRHost(HeteroLRBase):
           Loss = - y * log(h(x)) - (1-y) * log(1 - h(x)) where h(x) = 1/(1+exp(-wx))
           Then loss' = - (1/N)*∑(log(1/2) - 1/2*wx + ywx - 1/8(wx)^2)
         """
+
         wx_self_square = (self.wx_self * self.wx_self).reduce(operator.add)
         LOGGER.debug(f"wx_self_square: {wx_self_square}")
 
@@ -130,15 +134,16 @@ class HeteroLRHost(HeteroLRBase):
 
         LOGGER.debug(f"share_loss: {share_loss}")
 
-        # todo: dylan, review & unreview loss_norm;
         if self.review_every_iter:
             loss_norm = self.optimizer.loss_norm(weights)
             if loss_norm:
-                share_loss += loss_norm/3.0
+                share_loss += loss_norm
             LOGGER.debug(f"share_loss+loss_norm: {share_loss}")
-            share_loss.broadcast_reconstruct_share(tensor_name=f"share_loss_{suffix}")
+            tensor_name = ".".join(("loss",) + suffix)
+            share_loss.broadcast_reconstruct_share(tensor_name=tensor_name)
         else:
-            share_loss.broadcast_reconstruct_share(tensor_name=f"share_loss_{suffix}")
+            tensor_name = ".".join(("loss",) + suffix)
+            share_loss.broadcast_reconstruct_share(tensor_name=tensor_name)
             if self.optimizer.penalty == consts.L2_PENALTY:
                 w_self, w_remote = weights
 
@@ -163,12 +168,6 @@ class HeteroLRHost(HeteroLRBase):
 
                 loss_norm = w_tensor.dot(w_tensor_transpose, target_name=loss_norm_tensor_name)
                 loss_norm.broadcast_reconstruct_share()
-
-    def check_converge_by_weights(self, last_w, new_w, suffix):
-        if self.review_every_iter:
-            return self._review_every_iter_weights_check(last_w, new_w, suffix)
-        else:
-            return self._not_review_every_iter_weights_check(last_w, new_w, suffix)
 
     def _review_every_iter_weights_check(self, last_w, new_w, suffix):
         square_sum = np.sum((last_w - new_w) ** 2)
@@ -196,6 +195,28 @@ class HeteroLRHost(HeteroLRBase):
         self.transfer_variable.host_prob.remote(prob_host, role=consts.GUEST, idx=0)
         LOGGER.info("Remote probability to Guest")
 
+    def get_single_model_param(self, model_weights=None, header=None):
+        result = super().get_single_model_param(model_weights, header)
+        if not self.is_respectively_reveal:
+            weight_dict = {}
+            model_weights = model_weights if model_weights else self.model_weights
+            header = header if header else self.header
+            for idx, header_name in enumerate(header):
+                coef_i = model_weights.coef_[idx]
+
+                is_obfuscator = False
+                if hasattr(coef_i, "__is_obfuscator"):
+                    is_obfuscator = getattr(coef_i, "__is_obfuscator")
+
+                public_key = lr_model_param_pb2.CipherPublicKey(n=str(coef_i.public_key.n))
+                weight_dict[header_name] = lr_model_param_pb2.CipherText(public_key=public_key,
+                                                                         cipher_text=str(coef_i.ciphertext()),
+                                                                         exponent=str(coef_i.exponent),
+                                                                         is_obfuscator=is_obfuscator)
+            result["encrypted_weight"] = weight_dict
+
+        return result
+
     def _get_param(self):
         if self.need_cv:
             param_protobuf_obj = lr_model_param_pb2.LRModelParam()
@@ -217,4 +238,24 @@ class HeteroLRHost(HeteroLRBase):
         param_protobuf_obj = lr_model_param_pb2.LRModelParam(**single_result)
 
         return param_protobuf_obj
+
+    def load_single_model(self, single_model_obj):
+        super(HeteroLRHost, self).load_single_model(single_model_obj)
+        if not self.is_respectively_reveal:
+            feature_shape = len(self.header)
+            tmp_vars = [None] * feature_shape
+            weight_dict = dict(single_model_obj.encrypted_weight)
+            for idx, header_name in enumerate(self.header):
+                cipher_weight = weight_dict.get(header_name)
+                public_key = PaillierPublicKey(int(cipher_weight.public_key.n))
+                cipher_text = int(cipher_weight.cipher_text)
+                exponent = int(cipher_weight.exponent)
+                is_obfuscator = cipher_weight.is_obfuscator
+                coef_i = PaillierEncryptedNumber(public_key, cipher_text, exponent)
+                if is_obfuscator:
+                    coef_i.apply_obfuscator()
+
+                tmp_vars[idx] = coef_i
+
+            self.model_weights = LinearModelWeights(tmp_vars, fit_intercept=self.fit_intercept)
 

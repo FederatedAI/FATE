@@ -22,7 +22,7 @@ import random
 import numpy as np
 from fate_arch.session import computing_session
 
-from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
+from federatedml.secureprotol.paillier_tensor import PaillierTensor
 
 BITS = 10
 MIXED_RATE = 0.5
@@ -69,10 +69,10 @@ class RandomNumberGenerator(object):
         if keep_table:
             tb = keep_table.mapValues(lambda keep_array: self.generate_random_number(keep=keep_array,
                                                                                      mixed_rate=mixed_rate))
-            return PaillierTensor(tb_obj=tb)
+            return PaillierTensor(tb)
         else:
             tb = computing_session.parallelize([None for _ in range(shape[0])], include_key=False, partition=partition)
 
             tb = tb.mapValues(lambda val: self.generate_random_number(shape[1:], mixed_rate=mixed_rate))
 
-            return PaillierTensor(tb_obj=tb)
+            return PaillierTensor(tb)
