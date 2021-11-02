@@ -571,6 +571,7 @@ class HomoDecisionTreeClient(DecisionTree):
                                   missing_dir=node.missing_dir,
                                   mo_weight=mo_weight
                                   )
+
         model_param.leaf_count.update(self.leaf_count)
         return model_param
 

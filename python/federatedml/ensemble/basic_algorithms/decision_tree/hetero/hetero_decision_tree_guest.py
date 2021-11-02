@@ -45,6 +45,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         # mo tree
         self.mo_tree = False
+        self.class_num = 1
 
     """
     Node Encode/ Decode
@@ -111,6 +112,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
              encrypter, encrypted_mode_calculator,
              host_party_list,
              task_type,
+             class_num=1,
              complete_secure=False,
              goss_subsample=False,
              cipher_compressing=False,
@@ -133,6 +135,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.max_sample_weight = max_sample_weight
         self.task_type = task_type
         self.mo_tree = mo_tree
+        self.class_num = class_num
 
         # initializing goss settings
         if self.run_goss:
@@ -409,7 +412,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
                                    en_calculator=self.encrypted_mode_calculator,
                                    g_min=g_min,
                                    g_max=g_max,
-                                   mo_mode=self.mo_tree)
+                                   mo_mode=self.mo_tree,  # mo packing
+                                   class_num=self.class_num  # no mo packing
+                                   )
             en_grad_hess = self.packer.pack_and_encrypt(self.grad_and_hess)
 
         else:

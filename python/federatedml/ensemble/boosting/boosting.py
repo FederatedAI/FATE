@@ -362,6 +362,10 @@ class Boosting(ModelBase, ABC):
 
     @staticmethod
     def accumulate_y_hat(val, new_val, lr=0.1, idx=0):
+        # vector sum
+        if type(new_val) == np.ndarray and len(new_val) == len(val):
+            return val + new_val*lr
+        # accumulate by dimension
         z_vec = np.zeros(len(val))
         z_vec[idx] = lr * new_val
         return z_vec + val

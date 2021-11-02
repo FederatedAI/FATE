@@ -376,7 +376,7 @@ class DecisionTree(BasicAlgorithms, ABC):
 
         mo_weight = None
         weight = node.weight
-        if type(node.weight) == np.ndarray:
+        if type(node.weight) == np.ndarray and len(node.weight) > 1:
             weight = -1
             mo_weight = list(node.weight)  # use multi output
 

@@ -214,7 +214,8 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                                            complete_secure=complete_secure, max_sample_weights=self.max_sample_weight,
                                            fast_sbt=fast_sbt, tree_type=tree_type, target_host_id=target_host_id,
                                            guest_depth=self.guest_depth, host_depth=self.host_depth,
-                                           mo_tree=(self.multi_mode == consts.MULTI_OUTPUT)
+                                           mo_tree=(self.multi_mode == consts.MULTI_OUTPUT),
+                                           class_num=len(self.classes_) if len(self.classes_) > 2 else 1  # mo parameter
                                            )
 
         tree.fit()

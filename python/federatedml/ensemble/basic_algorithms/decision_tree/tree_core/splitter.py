@@ -90,6 +90,8 @@ class Splitter(object):
         self.min_child_weight = min_child_weight
 
     def _check_min_child_weight(self, l_h, r_h):
+        if type(l_h) == np.ndarray:
+            l_h, r_h = np.sum(l_h), np.sum(r_h)
         return l_h >= self.min_child_weight and r_h >= self.min_child_weight
 
     def _check_sample_num(self, l_cnt, r_cnt):
