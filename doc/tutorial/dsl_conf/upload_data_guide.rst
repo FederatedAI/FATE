@@ -62,8 +62,7 @@ Here is an example showing how to create a upload config file:
     "table_name": "hetero_breast_guest",
     "namespace": "experiment",
     "head": 1,
-    "partition": 8,
-    "work_mode": 0
+    "partition": 8
   }
 
 Field Specifications:
@@ -72,7 +71,6 @@ Field Specifications:
 2. table_name & namespace: Indicators for stored data table.
 3. head: Specify whether your data file include a header or not
 4. partition: Specify how many partitions used to store the data
-5. work_mode: Specify current work mode: 0 for standalone, 1 for cluster
 
 
 Upload Command

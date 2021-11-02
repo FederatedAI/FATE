@@ -75,14 +75,13 @@ zookeeper:
         "arbiter": ["10000"]
     },
     "job_parameters": {
-        "work_mode": 1,
         "model_id": "arbiter-10000#guest-9999#host-10000#model",
         "model_version": "202006122116502527621"
     }
 }
 ```
 
-所有参数均要根据实际情况填入，特别注意work_mode，分布式集群为1，单机为0。serving服务将从FATE Flow下载模型。默认情况下，serving服务下载模型的地址如下："http：// {FATE_FLOW_IP}：{FATE_FLOW_HTTP_PORT} {FATE_FLOW_MODEL_TRANSFER_ENDPOINT}"。用户也可以把job_parameters['use_transfer_url_on_serving']设置成"true"，serving服务将通过serving-server.properties中的`model.transfer.url`中定义的地址来下载模型。
+serving服务将从FATE Flow下载模型。默认情况下，serving服务下载模型的地址如下："http：// {FATE_FLOW_IP}：{FATE_FLOW_HTTP_PORT} {FATE_FLOW_MODEL_TRANSFER_ENDPOINT}"。用户也可以把job_parameters['use_transfer_url_on_serving']设置成"true"，serving服务将通过serving-server.properties中的`model.transfer.url`中定义的地址来下载模型。
 执行命令：
 
 ```bash
@@ -107,7 +106,6 @@ python fate_flow_client.py -f load -c examples/publish_load_model.json
         "arbiter": ["10000"]
     },
     "job_parameters": {
-        "work_mode": 1,
         "model_id": "arbiter-10000#guest-10000#host-10000#model",
         "model_version": "2019081217340125761469"
     },
@@ -116,7 +114,7 @@ python fate_flow_client.py -f load -c examples/publish_load_model.json
 }
 ```
 
-除了``servings``参数非必填，所有参数均要根据实际情况填入，特别注意work_mode，分布式集群为1，单机为0
+除了``servings``参数非必填，所有参数均要根据实际情况填入
 
 当``servings``参数为空，则发布到所有serving-server实例
 

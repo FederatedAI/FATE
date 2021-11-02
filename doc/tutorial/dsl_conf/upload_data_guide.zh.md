@@ -57,8 +57,7 @@ DataIO模块接受以下输入数据格式，并将其转换为所需的输出DT
   "table_name": "hetero_breast_guest",
   "namespace": "experiment",
   "head": 1,
-  "partition": 8,
-  "work_mode": 0
+  "partition": 8
 }
 ```
 
@@ -68,7 +67,6 @@ DataIO模块接受以下输入数据格式，并将其转换为所需的输出DT
 2.  table\_name\&namespace: 存储数据表的标识符号
 3.  head: 指定数据文件是否包含表头
 4.  partition: 指定用于存储数据的分区数
-5.  work\_mode: 指定工作模式，0代表单机版，1代表集群版
 
 ## 上传命令
 
