@@ -83,7 +83,9 @@ def sub_include_examples(match):
 
         if example_type == "dsl/v1":
             lines.append(f"{indents_level2}!!! warning\n")
-            lines.append(f"{indents_level2}    `dsl version 1` is deprecated, please consider use `dsl version v2` or `pipeline` instead!\n")
+            lines.append(
+                f"{indents_level2}    `dsl version 1` is deprecated, please consider use `dsl version v2` or `pipeline` instead!\n"
+            )
             lines.append(f"{indents_level2}    \n")
 
         for name in glob.glob(include_path):
@@ -102,7 +104,9 @@ def sub_include_examples(match):
                 continue
             _, file_extension = os.path.splitext(file_name)
             lint = _LINT_MAP.get(file_extension, "")
-            lines.append(f'{indents_level2}??? Example "{os.path.basename(file_name)}"\n')
+            lines.append(
+                f'{indents_level2}??? Example "{os.path.basename(file_name)}"\n'
+            )
             lines.append(f"{indents_level2}    ```{lint}\n")
             head = True
             with open(file_name) as f:
@@ -155,7 +159,26 @@ def sub_include_example(src_file_path):
     return sub
 
 
+_MARKDOWN_URL_REGEX = re.compile(
+    r"""(?P<text>\[(.+)\])\((?P<url>[^ ]+)(?: "(?P<title>.+)")?\)""",
+    flags=re.VERBOSE | re.DOTALL,
+)
+
+
+def _fix_zh_url(match):
+    text = match.group("text")
+    url = match.group("url")
+    title = match.group("title")
+
+    if not os.path.isabs(url):
+        url = os.path.join(os.pardir, url)
+    return f'{text}({url})'
+
+
 def on_page_markdown(markdown, page, **kwargs):
+    if page.file.abs_src_path.rsplit(".", 2)[-2] == "zh":
+        markdown = re.sub(_MARKDOWN_URL_REGEX, _fix_zh_url, markdown)
+
     markdown = re.sub(
         _INCLUDE_EXAMPLES_REGEX,
         sub_include_examples,
