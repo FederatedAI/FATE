@@ -26,6 +26,16 @@ nav:
   - Resources:
     - resources/index.md
 
+  - Deploy:
+    - standalone:
+      - ... | flat | deploy/standalone-deploy/doc/*.md
+    - cluster:
+      - fate_on_eggroll:
+        - ... | flat | deploy/cluster-deploy/doc/fate_on_eggroll/*.md
+      - fate_on_spark:
+        - ... | flat | deploy/cluster-deploy/doc/fate_on_spark/*.md
+      
+
 theme:
   name: material
   custom_dir: "doc/mkdocs/theme"
