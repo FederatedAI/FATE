@@ -129,7 +129,7 @@ class HomoDecisionTreeArbiter(DecisionTree):
             for batch_id, i in enumerate(range(0, cur_layer_node_num, self.max_split_nodes)):
 
                 left_node_histogram = self.sync_local_histogram(suffix=(batch_id, dep, self.epoch_idx, self.tree_idx))
-
+                LOGGER.debug('cwj agg hist is {}'.format(left_node_histogram))
                 all_histograms = self.histogram_subtraction(left_node_histogram, self.stored_histograms)
                 # store histogram
                 for hist in all_histograms:

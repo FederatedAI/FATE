@@ -478,6 +478,7 @@ class HomoDecisionTreeClient(DecisionTree):
                     sparse_point=self.bin_sparse_points,
                     valid_feature=self.valid_features
                 )
+                LOGGER.debug('cwj local hist {}'.format(local_histogram))
 
                 LOGGER.debug('federated finding best splits for batch{} at layer {}'.format(batch_id, dep))
                 self.sync_local_node_histogram(local_histogram, suffix=(batch_id, dep, self.epoch_idx, self.tree_idx))

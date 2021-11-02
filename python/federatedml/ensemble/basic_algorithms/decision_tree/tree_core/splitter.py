@@ -89,10 +89,12 @@ class Splitter(object):
         self.min_leaf_node = min_leaf_node
         self.min_child_weight = min_child_weight
 
+
     def _check_min_child_weight(self, l_h, r_h):
         if type(l_h) == np.ndarray:
             l_h, r_h = np.sum(l_h), np.sum(r_h)
-        return l_h >= self.min_child_weight and r_h >= self.min_child_weight
+        rs = l_h >= self.min_child_weight and r_h >= self.min_child_weight
+        return rs
 
     def _check_sample_num(self, l_cnt, r_cnt):
         return l_cnt >= self.min_leaf_node and r_cnt >= self.min_leaf_node
@@ -144,7 +146,17 @@ class Splitter(object):
                 sum_hess_r = sum_hess - sum_hess_l
                 node_cnt_r = node_cnt - node_cnt_l
 
-                if self._check_sample_num(node_cnt_l, node_cnt_r) and self._check_min_child_weight(sum_hess_l, sum_hess_r):
+                a = self._check_sample_num(node_cnt_l, node_cnt_r) 
+                b = self._check_min_child_weight(sum_hess_l, sum_hess_r)
+                try:
+                   if a and b:
+                       pass
+                except:
+                   LOGGER.debug('cwj sum grad {}, cwj sum hess {}, nmsl grad l {} nmsl hess l {}'.format(sum_grad, sum_hess, sum_grad_l, sum_hess_l))
+                   LOGGER.debug('cwj histogram {}'.format(histogram))
+                   raise ValueError('cwj error a {}, b {}, lh {} rh {} type {} {}'.format(a, b, sum_hess_l, sum_hess_r, type(sum_hess_l), type(sum_hess_r)))
+
+                if a and b:
                     gain = self.criterion.split_gain([sum_grad, sum_hess],
                                                      [sum_grad_l, sum_hess_l], [sum_grad_r, sum_hess_r])
 

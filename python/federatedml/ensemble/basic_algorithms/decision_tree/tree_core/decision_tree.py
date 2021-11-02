@@ -386,7 +386,8 @@ class DecisionTree(BasicAlgorithms, ABC):
     def mo_weight_load(node_param):
 
         weight = node_param.weight
-        if node_param.mo_weight is not None:
+        mo_weight = list(node_param.mo_weight)
+        if len(mo_weight) != 0:
             weight = np.array(list(node_param.mo_weight))
 
         return weight
