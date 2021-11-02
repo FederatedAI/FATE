@@ -13,12 +13,6 @@
             10000
         ]
     },
-    "job_parameters": {
-        "common": {
-            "work_mode": 0,
-            "backend": 0
-        }
-    },
     "component_parameters": {
         "common": {
             "intersect_0": {
@@ -35,7 +29,7 @@
         "role": {
             "guest": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false,
                         "output_format": "dense"
                     },
@@ -49,7 +43,7 @@
             },
             "host": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false,
                         "output_format": "dense"
                     },
@@ -61,7 +55,7 @@
                     }
                 },
                 "1": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false,
                         "output_format": "dense"
                     },

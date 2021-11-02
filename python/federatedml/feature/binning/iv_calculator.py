@@ -15,6 +15,7 @@
 
 import functools
 import math
+import operator
 
 import numpy as np
 
@@ -160,14 +161,9 @@ class IvCalculator(object):
             for col_name, data_event_count in result_counts.items():
                 col_result_obj = self.woe_1d(data_event_count, adjustment_factor)
                 col_result_obj_dict[col_name] = col_result_obj
-                # assert isinstance(col_result_obj, BinColResults)
-                # self.bin_results.put_col_results(col_name, col_result_obj)
         else:
             woe_1d = functools.partial(self.woe_1d, adjustment_factor=adjustment_factor)
             col_result_obj_dict = dict(result_counts.mapValues(woe_1d).collect())
-            # for col_name, col_result_obj in col_result_obj_dict.items():
-            #     assert isinstance(col_result_obj, BinColResults)
-            #     self.bin_results.put_col_results(col_name, col_result_obj)
         return col_result_obj_dict
 
     @staticmethod
@@ -424,3 +420,24 @@ class IvCalculator(object):
             return instances
 
         return data_instances.mapValues(convert)
+
+    @staticmethod
+    def check_containing_missing_value(data_instances):
+        is_sparse = data_overview.is_sparse_data(data_instances)
+
+        def _sparse_check(instance):
+            result = set()
+            sparse_data = instance.features.get_all_data()
+            for col_idx, col_value in sparse_data:
+                if np.isnan(col_value):
+                    result.add(col_idx)
+            return result
+
+        if is_sparse:
+            has_missing_value = data_instances.mapValues(_sparse_check).reduce(
+                lambda a, b: a.union(b)
+            )
+        else:
+            has_missing_value = data_instances.mapValues(lambda x: x.features).reduce(operator.add)
+            has_missing_value = {idx for idx, value in enumerate(has_missing_value) if np.isnan(value)}
+        return has_missing_value

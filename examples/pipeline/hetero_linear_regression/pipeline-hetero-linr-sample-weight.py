@@ -17,7 +17,7 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component import DataIO
+from pipeline.component import DataTransform
 from pipeline.component import Evaluation
 from pipeline.component import HeteroLinR
 from pipeline.component import Intersection
@@ -26,7 +26,6 @@ from pipeline.component import Reader
 from pipeline.interface import Data
 
 from pipeline.utils.tools import load_job_config
-from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -37,8 +36,6 @@ def main(config="../../config.yaml", namespace=""):
     guest = parties.guest[0]
     host = parties.host[0]
     arbiter = parties.arbiter[0]
-    backend = config.backend
-    work_mode = config.work_mode
 
     guest_train_data = {"name": "motor_hetero_guest", "namespace": f"experiment{namespace}"}
     host_train_data = {"name": "motor_hetero_host", "namespace": f"experiment{namespace}"}
@@ -49,10 +46,10 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
-    dataio_0 = DataIO(name="dataio_0")
-    dataio_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, label_name="motor_speed",
+    data_transform_0 = DataTransform(name="data_transform_0")
+    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, label_name="motor_speed",
                                                                              label_type="float", output_format="dense")
-    dataio_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
+    data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
     sample_weight_0 = SampleWeight(name="sample_weight_0")
@@ -70,21 +67,20 @@ def main(config="../../config.yaml", namespace=""):
     # evaluation_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)
 
     pipeline.add_component(reader_0)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
     pipeline.add_component(sample_weight_0, data=Data(data=intersection_0.output.data))
     pipeline.add_component(hetero_linr_0, data=Data(train_data=sample_weight_0.output.data))
     pipeline.add_component(evaluation_0, data=Data(data=hetero_linr_0.output.data))
 
     pipeline.compile()
 
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
 
 
     # predict
     # deploy required components
-    pipeline.deploy_component([dataio_0, intersection_0, hetero_linr_0])
+    pipeline.deploy_component([data_transform_0, intersection_0, hetero_linr_0])
 
     predict_pipeline = PipeLine()
     # add data reader onto predict pipeline
@@ -92,9 +88,9 @@ def main(config="../../config.yaml", namespace=""):
     # add selected components from train pipeline onto predict pipeline
     # specify data source
     predict_pipeline.add_component(pipeline,
-                                   data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
+                                   data=Data(predict_input={pipeline.data_transform_0.input.data: reader_0.output.data}))
     # run predict model
-    predict_pipeline.predict(job_parameters)
+    predict_pipeline.predict()
 
 
 if __name__ == "__main__":

@@ -1,7 +1,6 @@
 import argparse
 import json
 import os
-import pprint
 import random
 import time
 from flow_sdk.client import FlowClient
@@ -15,10 +14,6 @@ flow_client = None
 
 guest_party_id = -1
 host_party_id = -1
-
-work_mode = 0
-backend = 0
-dsl_version = 1
 
 user_name = ""
 
@@ -38,14 +33,14 @@ def get_timeid():
 def gen_unique_path():
     config_dir = os.path.join(home_dir, "test")
     if not os.path.isdir(config_dir):
-        os.mkdir(config_dir)
+        os.makedirs(config_dir)
 
     return os.path.join(config_dir, "toy_example_conf.json_" + get_timeid())
 
 
 def create_new_runtime_config():
     conf_dict = {}
-    conf_path = conf_v1_path if dsl_version == 1 else conf_v2_path
+    conf_path = conf_v2_path
     with open(conf_path, "r") as fin:
         conf_dict = json.loads(fin.read())
 
@@ -58,16 +53,10 @@ def create_new_runtime_config():
     conf_dict["initiator"]["party_id"] = guest_party_id
     conf_dict["role"]["guest"] = [guest_party_id]
     conf_dict["role"]["host"] = [host_party_id]
-    if dsl_version == 1:
-        conf_dict["job_parameters"]["work_mode"] = work_mode
-        conf_dict["job_parameters"]["backend"] = backend
-    else:
-        conf_dict["job_parameters"]["common"]["work_mode"] = work_mode
-        conf_dict["job_parameters"]["common"]["backend"] = backend
-        conf_dict["job_parameters"]["role"] = {
-            "guest": {"0": {"user": user_name}},
-            "host": {"0": {"user": user_name}},
-        }
+    conf_dict["job_parameters"]["role"] = {
+        "guest": {"0": {"user": user_name}},
+        "host": {"0": {"user": user_name}},
+    }
 
     return conf_dict
 
@@ -79,7 +68,7 @@ def exec_task(dsl_path, config_data):
             dsl_dict = json.loads(fin.read())
 
     result = flow_client.job.submit(config_data=config_data, dsl_data=dsl_dict)
-    pprint.pprint (result["data"])
+    print(json.dumps(result["data"], indent=4))
     try:
         status = result["retcode"]
     except:
@@ -111,7 +100,7 @@ def show_log(job_id, log_level):
     log_dir = os.path.join(home_dir, "test", "log")
     log_path = os.path.join(log_dir, "job_" + job_id + "_log", "guest", str(guest_party_id), "secure_add_example_0")
     if not os.path.isdir(log_dir):
-        os.mkdir(log_dir)
+        os.makedirs(log_dir)
     result = flow_client.job.log(job_id=job_id, output_path=log_dir)
 
     if 'retcode' not in result or result['retcode'] != 0:
@@ -157,23 +146,14 @@ if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("guest_party_id", type=int, help="please input guest party id")
     arg_parser.add_argument("host_party_id", type=int, help="please input host party id")
-    arg_parser.add_argument("work_mode", type=int,
-                            help="please input work_mode, 0 stands for standalone, 1  stands for cluster")
     arg_parser.add_argument("flow_server_ip", type=str, help="please input flow server'ip")
     arg_parser.add_argument("flow_server_port", type=int, help="please input flow server port")
-    arg_parser.add_argument("-b", "--backend", type=int, default=0,
-                            help="please input backend, 0 stands for eggroll, 1 stands for spark")
-    arg_parser.add_argument("-v", "--dsl_version", type=int, default=1,
-                            help="please input dsl version to use")
     arg_parser.add_argument("-u", "--user_name", type=str, help="please input user name")
 
     args = arg_parser.parse_args()
 
     guest_party_id = args.guest_party_id
     host_party_id = args.host_party_id
-    work_mode = args.work_mode
-    backend = args.backend
-    dsl_version = args.dsl_version
     user_name = args.user_name
 
     ip = args.flow_server_ip

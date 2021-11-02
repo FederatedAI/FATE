@@ -25,10 +25,11 @@ class EncryptedModeCalculatorParam(BaseParam):
 
     Parameters
     ----------
-    mode: str, support 'strict', 'fast', 'balance', 'confusion_opt', ' only, default: strict
+    mode: {'strict', 'fast', 'balance', 'confusion_opt'}
+        encrypted mode, default: strict
 
-    re_encrypted_rate: float or int, numeric number in [0, 1], use when mode equals to 'balance, default: 1
-
+    re_encrypted_rate: float or int
+        numeric number in [0, 1], use when mode equals to 'balance', default: 1
     """
 
     def __init__(self, mode="strict", re_encrypted_rate=1):

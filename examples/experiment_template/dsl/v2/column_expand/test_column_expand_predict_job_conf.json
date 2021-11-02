@@ -17,14 +17,12 @@
     },
     "job_parameters": {
         "common": {
-            "job_type": "predict",
-            "backend": 0,
-            "work_mode": 0
+            "job_type": "predict"
         }
     },
     "component_parameters": {
         "common": {
-            "dataio_0": {
+            "data_transform_0": {
                 "output_format": "dense"
             },
             "hetero_lr_0": {
@@ -59,7 +57,7 @@
         "role": {
             "host": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
                     },
                     "reader_0": {
@@ -72,7 +70,7 @@
             },
             "guest": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true
                     },
                     "reader_0": {

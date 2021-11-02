@@ -98,7 +98,7 @@ class Model(BaseFlowAPI):
         config_data, dsl_data = preprocess(**kwargs)
         return self._post(url='model/model_tag/retrieve', json=config_data)
 
-    def deploy(self, model_id, model_version, cpn_list=None, predict_dsl=None):
+    def deploy(self, model_id, model_version, cpn_list=None, predict_dsl=None, components_checkpoint=None):
         kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
         return self._post(url='model/deploy', json=config_data)

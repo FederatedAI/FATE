@@ -15,13 +15,6 @@
             9999
         ]
     },
-    "job_parameters": {
-        "common": {
-            "job_type": "train",
-            "backend": 0,
-            "work_mode": 0
-        }
-    },
     "component_parameters": {
         "common": {
             "hetero_poisson_0": {
@@ -42,7 +35,9 @@
                 "decay_sqrt": false,
                 "exposure_colname": "exposure",
                 "callback_param": {
-                    "callbacks": ["ModelCheckpoint"]
+                    "callbacks": [
+                        "ModelCheckpoint"
+                    ]
                 }
             },
             "hetero_poisson_1": {
@@ -68,7 +63,7 @@
         "role": {
             "guest": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true,
                         "label_name": "doctorco",
                         "label_type": "float",
@@ -87,7 +82,7 @@
                     "evaluation_0": {
                         "need_run": false
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
                     },
                     "reader_0": {

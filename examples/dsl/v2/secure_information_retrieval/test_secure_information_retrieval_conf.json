@@ -12,13 +12,6 @@
             9999
         ]
     },
-    "job_parameters": {
-        "common": {
-            "job_type": "train",
-            "backend": 0,
-            "work_mode": 0
-        }
-    },
     "component_parameters": {
         "role": {
             "guest": {
@@ -58,7 +51,10 @@
                     "key_length": 1024
                 },
                 "raw_retrieval": false,
-                "target_cols": ["x0", "x3"]
+                "target_cols": [
+                    "x0",
+                    "x3"
+                ]
             }
         }
     }

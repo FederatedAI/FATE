@@ -51,6 +51,10 @@ fate_on_spark:
     name_node: hdfs://fate-cluster
     # default /
     path_prefix:
+  localfs:
+    name_node:
+    # default /
+    path_prefix:
   rabbitmq:
     host: 192.168.0.4
     mng_port: 12345
@@ -66,8 +70,8 @@ fate_on_spark:
     cluster: standalone
     # all parties should use a same tenant
     tenant: fl-tenant
-    # message ttl in minutes
-    topic_ttl: 5
+    # message retention in minutes, -1 means unlimited.
+    topic_ttl: -1
     # default conf/pulsar_route_table.yaml
     route_table:
   nginx:

@@ -2,8 +2,9 @@ import argparse
 import json
 import os
 import random
-import subprocess
 import time
+
+from flow_sdk.client import FlowClient
 
 home_dir = os.path.split(os.path.realpath(__file__))[0]
 
@@ -15,14 +16,16 @@ hetero_lr_dsl_file = home_dir + "/config/test_hetero_lr_train_job_dsl.json"
 hetero_sbt_config_file = home_dir + "/config/test_secureboost_train_binary_conf.json"
 hetero_sbt_dsl_file = home_dir + "/config/test_secureboost_train_dsl.json"
 
+publish_conf_file = home_dir + "/config/publish_load_model.json"
+bind_conf_file = home_dir + "/config/bind_model_service.json"
+
 predict_task_file = home_dir + "/config/test_predict_conf.json"
 
 guest_import_data_file = home_dir + "/config/data/breast_b.csv"
-fate_flow_path = home_dir + "/../../python/fate_flow/fate_flow_client.py"
+# fate_flow_path = home_dir + "/../../python/fate_flow/fate_flow_client.py"
 fate_flow_home = home_dir + "/../../python/fate_flow"
 
 evaluation_component_name = 'evaluation_0'
-
 # GUEST = 'guest'
 # HOST = 'host'
 # ARBITER = 'arbiter'
@@ -41,6 +44,8 @@ OTHER_TASK_TIME = 7200
 # RETRY_JOB_STATUS_TIME = 5
 STATUS_CHECKER_TIME = 10
 
+flow_client: FlowClient
+
 
 def get_timeid():
     return str(int(time.time())) + "_" + str(random.randint(1000, 9999))
@@ -54,6 +59,12 @@ def time_print(msg):
     print(f"[{time.strftime('%Y-%m-%d %X')}] {msg}\n")
 
 
+def get_config_file(file_name):
+    with open(file_name, 'r', encoding='utf-8') as f:
+        json_info = json.load(f)
+    return json_info
+
+
 class TaskManager(object):
     @staticmethod
     def start_block_task(cmd, max_waiting_time=OTHER_TASK_TIME):
@@ -61,24 +72,22 @@ class TaskManager(object):
         print(f"Starting block task, cmd is {cmd}")
         while True:
             # print("exec cmd: {}".format(cmd))
-            subp = subprocess.Popen(cmd,
-                                    shell=False,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.STDOUT)
-            stdout, stderr = subp.communicate()
-            stdout = stdout.decode("utf-8")
+            stdout = flow_client.component.metric_all(job_id=cmd.get("job_id"), role="guest",
+                                                      party_id=cmd.get("party_id"),
+                                                      component_name=cmd.get("component_name"))
+
             if not stdout:
                 waited_time = time.time() - start_time
                 if waited_time >= max_waiting_time:
                     # raise ValueError(
                     #     "[obtain_component_output] task:{} failed stdout:{}".format(task_type, stdout))
                     return None
-                print("job cmd: {}, waited time: {}".format(cmd, waited_time))
+                print("job cmd: component metric_all, waited time: {}".format(waited_time))
                 time.sleep(STATUS_CHECKER_TIME)
             else:
                 break
         try:
-            stdout = json.loads(stdout)
+            json.dumps(stdout)
         except json.decoder.JSONDecodeError:
             raise RuntimeError("start task error, return value: {}".format(stdout))
 
@@ -97,36 +106,29 @@ class TaskManager(object):
             time.sleep(STATUS_CHECKER_TIME)
 
     @staticmethod
-    def start_task(cmd):
-        time_print('Start task: {}'.format(cmd))
-        subp = subprocess.Popen(cmd,
-                                shell=False,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT)
-        stdout, stderr = subp.communicate()
-        stdout = stdout.decode("utf-8")
-        # time_print("start_task, stdout:" + str(stdout))
-        try:
-            stdout = json.loads(stdout)
-        except:
+    def task_status(stdout, msg):
+        status = stdout.get("retcode", None)
+        if status is None:
             raise RuntimeError("start task error, return value: {}".format(stdout))
-        return stdout
+        elif status == 0:
+            return status
+        else:
+            raise ValueError("{}, status:{}, stdout:{}".format(msg, status, stdout))
 
     def get_table_info(self, name, namespace):
-        cmd = ["python", fate_flow_path, "-f", "table_info", "-t", str(name), "-n", str(namespace)]
-        table_info = self.start_task(cmd)
-        time_print(table_info)
-        return table_info
+        time_print('Start task: {}'.format("table_info"))
+        stdout = flow_client.table.info(namespace=str(namespace), table_name=str(name))
+        self.task_status(stdout, "query data info task exec fail")
+
+        return stdout
 
 
 class TrainTask(TaskManager):
-    def __init__(self, data_type, guest_id, host_id, arbiter_id, work_mode, backend):
+    def __init__(self, data_type, guest_id, host_id, arbiter_id):
         self.method = 'all'
         self.guest_id = guest_id
         self.host_id = host_id
         self.arbiter_id = arbiter_id
-        self.work_mode = work_mode
-        self.backend = backend
         self._data_type = data_type
         self.model_id = None
         self.model_version = None
@@ -158,66 +160,58 @@ class TrainTask(TaskManager):
     def _make_runtime_conf(self, conf_type='train'):
         pass
 
-    def _check_status(self, jobid):
+    def _check_status(self, job_id):
         pass
+
+    # def _deploy_model(self):
+    #     pass
 
     def run(self, start_serving=0):
         config_dir_path = self._make_runtime_conf()
-        start_task_cmd = ['python', fate_flow_path, "-f", "submit_job", "-c",
-                          config_dir_path, "-d", self.dsl_file]
-        stdout = self.start_task(start_task_cmd)
-        status = stdout["retcode"]
-
-        if status != 0:
-            raise ValueError(
-                "Training task exec fail, status:{}, stdout:{}".format(status, stdout))
-        else:
-            jobid = stdout["jobId"]
+        time_print('Start task: {}'.format("job submit"))
+        stdout = flow_client.job.submit(config_data=get_config_file(config_dir_path),
+                                        dsl_data=get_config_file(self.dsl_file))
+        self.task_status(stdout, "Training task exec fail")
+        print(json.dumps(stdout, indent=4))
+        job_id = stdout.get("jobId")
 
         self.model_id = stdout['data']['model_info']['model_id']
         self.model_version = stdout['data']['model_info']['model_version']
 
-        self._check_status(jobid)
-
-        auc = self._get_auc(jobid)
+        self._check_status(job_id)
+        auc = self._get_auc(job_id)
         if auc < self.auc_base:
             time_print("[Warning]  The auc: {} is lower than expect value: {}".format(auc, self.auc_base))
         else:
             time_print("[Train] train auc:{}".format(auc))
         time.sleep(WAIT_UPLOAD_TIME / 100)
+        self.start_predict_task()
 
         if start_serving:
             self._load_model()
             self._bind_model()
 
-        self.start_predict_task()
-
     def start_predict_task(self):
+        self._deploy_model()
         config_dir_path = self._make_runtime_conf("predict")
-        start_task_cmd = ['python', fate_flow_path, "-f", "submit_job", "-c", config_dir_path]
-        stdout = self.start_task(start_task_cmd)
-        status = stdout["retcode"]
-        if status != 0:
-            raise ValueError(
-                "Training task exec fail, status:{}, stdout:{}".format(status, stdout))
-        else:
-            jobid = stdout["jobId"]
-
-        self._check_status(jobid)
-
+        time_print('Start task: {}'.format("job submit"))
+        stdout = flow_client.job.submit(config_data=get_config_file(config_dir_path))
+        self.task_status(stdout, "Training task exec fail")
+        job_id = stdout.get("jobId")
+        self._check_status(job_id)
         time_print("[Predict Task] Predict success")
 
-    def _parse_dsl_components(self):
+    @staticmethod
+    def _parse_dsl_components():
         with open(hetero_lr_dsl_file, 'r', encoding='utf-8') as f:
             json_info = json.loads(f.read())
         components = list(json_info['components'].keys())
         return components
 
-    def _check_cpn_status(self, job_id):
-        check_cmd = ['python', fate_flow_path, "-f", "query_job",
-                     "-j", job_id, "-r", "guest"]
-
-        stdout = self.start_task(check_cmd)
+    @staticmethod
+    def _check_cpn_status(job_id):
+        time_print('Start task: {}'.format("job query"))
+        stdout = flow_client.job.query(job_id=job_id)
         try:
             status = stdout["retcode"]
             if status != 0:
@@ -231,6 +225,16 @@ class TrainTask(TaskManager):
         except:
             return None
 
+    def _deploy_model(self):
+        time_print('Start task: {}'.format("model deploy"))
+        stdout = flow_client.model.deploy(model_id=self.model_id, model_version=self.model_version, cpn_list=[
+            "reader_0", "data_transform_0", "intersection_0", self.train_component_name])
+        self.task_status(stdout, "Deploy task exec fail")
+        time_print(stdout)
+        self.predict_model_version = stdout["data"]["model_version"]
+        self.predict_model_id = stdout["data"]["model_id"]
+        time_print("[Predict Task] Deploy success")
+
     @staticmethod
     def _check_exit(status):
         if status is None:
@@ -240,10 +244,8 @@ class TrainTask(TaskManager):
             return False
         return True
 
-    def _get_auc(self, jobid):
-        cmd = ["python", fate_flow_path, "-f", "component_metric_all", "-j",
-               jobid, "-p", str(self.guest_id), "-r", "guest",
-               "-cpn", evaluation_component_name]
+    def _get_auc(self, job_id):
+        cmd = {'job_id': job_id, "party_id": str(self.guest_id), "component_name": evaluation_component_name}
         eval_res = self.start_block_task(cmd, max_waiting_time=OTHER_TASK_TIME)
         eval_results = eval_res['data']['train'][self.train_component_name]['data']
         time_print("Get auc eval res: {}".format(eval_results))
@@ -254,15 +256,10 @@ class TrainTask(TaskManager):
         return auc
 
     def _bind_model(self):
-        bind_template = fate_flow_home + "/examples/bind_model_service.json"
-        config_path = self.__config_bind_load(bind_template)
-
-        bind_cmd = ['python', fate_flow_path, "-f", "bind", "-c", config_path]
-        stdout = self.start_task(bind_cmd)
-        status = stdout["retcode"]
-        if status != 0:
-            raise ValueError(
-                "Bind model failed, status:{}, stdout:{}".format(status, stdout))
+        config_path = self.__config_bind_load(bind_conf_file)
+        time_print('Start task: {}'.format("model bind"))
+        stdout = flow_client.model.bind(config_data=get_config_file(config_path))
+        self.task_status(stdout, "Bind model failed")
         time_print("Bind model Success")
         return True
 
@@ -274,14 +271,13 @@ class TrainTask(TaskManager):
         json_info["role"]["guest"] = [str(self.guest_id)]
         json_info["role"]["host"] = [str(self.host_id)]
         json_info["role"]["arbiter"] = [str(self.arbiter_id)]
-        json_info["job_parameters"]["work_mode"] = self.work_mode
-        json_info["job_parameters"]["model_id"] = self.model_id
-        json_info["job_parameters"]["model_version"] = self.model_version
+        json_info["job_parameters"]["model_id"] = self.predict_model_id
+        json_info["job_parameters"]["model_version"] = self.predict_model_version
 
         if 'servings' in json_info:
             del json_info['servings']
 
-        config = json.dumps(json_info)
+        config = json.dumps(json_info, indent=4)
         config_path = gen_unique_path('bind_model')
         config_dir_path = os.path.dirname(config_path)
         os.makedirs(config_dir_path, exist_ok=True)
@@ -290,14 +286,10 @@ class TrainTask(TaskManager):
         return config_path
 
     def _load_model(self):
-        load_template = fate_flow_home + "/examples/publish_load_model.json"
-        config_path = self.__config_bind_load(load_template)
-        bind_cmd = ['python', fate_flow_path, "-f", "load", "-c", config_path]
-        stdout = self.start_task(bind_cmd)
-        status = stdout["retcode"]
-        if status != 0:
-            raise ValueError(
-                "Load model failed, status:{}, stdout:{}".format(status, stdout))
+        config_path = self.__config_bind_load(publish_conf_file)
+        time_print('Start task: {}'.format("model load"))
+        stdout = flow_client.model.load(config_data=get_config_file(config_path))
+        status = self.task_status(stdout, "Load model failed")
 
         data = stdout["data"]
         try:
@@ -315,8 +307,9 @@ class TrainTask(TaskManager):
 
 
 class TrainLRTask(TrainTask):
-    def __init__(self, data_type, guest_id, host_id, arbiter_id, work_mode, back_end):
-        super().__init__(data_type, guest_id, host_id, arbiter_id, work_mode, back_end)
+    def __init__(self, data_type, guest_id, host_id, arbiter_id):
+        super().__init__(data_type, guest_id, host_id, arbiter_id)
+
         self.dsl_file = hetero_lr_dsl_file
         self.train_component_name = 'hetero_lr_0'
 
@@ -333,30 +326,28 @@ class TrainLRTask(TrainTask):
         json_info['role']['arbiter'] = [self.arbiter_id]
 
         json_info['initiator']['party_id'] = self.guest_id
-        json_info['job_parameters']['work_mode'] = self.work_mode
-        json_info['job_parameters']['backend'] = self.backend
 
         if self.model_id is not None:
-            json_info["job_parameters"]["model_id"] = self.model_id
-            json_info["job_parameters"]["model_version"] = self.model_version
+            json_info["job_parameters"]["common"]["model_id"] = self.predict_model_id
+            json_info["job_parameters"]["common"]["model_version"] = self.predict_model_version
 
         table_info = {"name": self.guest_table_name,
                       "namespace": self.guest_namespace}
         if conf_type == 'train':
-            json_info["role_parameters"]["guest"]["args"]["data"]["train_data"] = [table_info]
-            json_info["role_parameters"]["guest"]["args"]["data"]["eval_data"] = [table_info]
+            json_info["component_parameters"]["role"]["guest"]["0"]["reader_0"]["table"] = table_info
+            json_info["component_parameters"]["role"]["guest"]["0"]["reader_1"]["table"] = table_info
         else:
-            json_info["role_parameters"]["guest"]["args"]["data"]["eval_data"] = [table_info]
+            json_info["component_parameters"]["role"]["guest"]["0"]["reader_0"]["table"] = table_info
 
         table_info = {"name": self.host_name,
                       "namespace": self.host_namespace}
         if conf_type == 'train':
-            json_info["role_parameters"]["host"]["args"]["data"]["train_data"] = [table_info]
-            json_info["role_parameters"]["host"]["args"]["data"]["eval_data"] = [table_info]
+            json_info["component_parameters"]["role"]["host"]["0"]["reader_0"]["table"] = table_info
+            json_info["component_parameters"]["role"]["host"]["0"]["reader_1"]["table"] = table_info
         else:
-            json_info["role_parameters"]["host"]["args"]["data"]["eval_data"] = [table_info]
+            json_info["component_parameters"]["role"]["host"]["0"]["reader_0"]["table"] = table_info
 
-        config = json.dumps(json_info)
+        config = json.dumps(json_info, indent=4)
         config_path = gen_unique_path('submit_job_guest')
         config_dir_path = os.path.dirname(config_path)
         os.makedirs(config_dir_path, exist_ok=True)
@@ -364,8 +355,8 @@ class TrainLRTask(TrainTask):
             fout.write(config + "\n")
         return config_path
 
-    def _check_status(self, jobid):
-        params = [jobid]
+    def _check_status(self, job_id):
+        params = [job_id]
         job_status = self.start_block_func(self._check_cpn_status, params,
                                            exit_func=self._check_exit, max_waiting_time=MAX_TRAIN_TIME)
         if job_status == FAIL:
@@ -373,10 +364,10 @@ class TrainLRTask(TrainTask):
 
 
 class TrainSBTTask(TrainTask):
-    def __init__(self, data_type, guest_id, host_id, arbiter_id, work_mode, backend):
-        super().__init__(data_type, guest_id, host_id, arbiter_id, work_mode, backend)
+    def __init__(self, data_type, guest_id, host_id, arbiter_id):
+        super().__init__(data_type, guest_id, host_id, arbiter_id)
         self.dsl_file = hetero_sbt_dsl_file
-        self.train_component_name = 'secureboost_0'
+        self.train_component_name = 'hetero_secure_boost_0'
 
     def _make_runtime_conf(self, conf_type='train'):
         if conf_type == 'train':
@@ -390,30 +381,28 @@ class TrainSBTTask(TrainTask):
         json_info['role']['host'] = [self.host_id]
 
         json_info['initiator']['party_id'] = self.guest_id
-        json_info['job_parameters']['work_mode'] = self.work_mode
-        json_info['job_parameters']['backend'] = self.backend
 
         if self.model_id is not None:
-            json_info["job_parameters"]["model_id"] = self.model_id
-            json_info["job_parameters"]["model_version"] = self.model_version
+            json_info["job_parameters"]["common"]["model_id"] = self.predict_model_id
+            json_info["job_parameters"]["common"]["model_version"] = self.predict_model_version
 
         table_info = {"name": self.guest_table_name,
                       "namespace": self.guest_namespace}
         if conf_type == 'train':
-            json_info["role_parameters"]["guest"]["args"]["data"]["train_data"] = [table_info]
-            json_info["role_parameters"]["guest"]["args"]["data"]["eval_data"] = [table_info]
+            json_info["component_parameters"]["role"]["guest"]["0"]["reader_0"]["table"] = table_info
+            json_info["component_parameters"]["role"]["guest"]["0"]["reader_1"]["table"] = table_info
         else:
-            json_info["role_parameters"]["guest"]["args"]["data"]["eval_data"] = [table_info]
+            json_info["component_parameters"]["role"]["guest"]["0"]["reader_0"]["table"] = table_info
 
         table_info = {"name": self.host_name,
                       "namespace": self.host_namespace}
         if conf_type == 'train':
-            json_info["role_parameters"]["host"]["args"]["data"]["train_data"] = [table_info]
-            json_info["role_parameters"]["host"]["args"]["data"]["eval_data"] = [table_info]
+            json_info["component_parameters"]["role"]["host"]["0"]["reader_0"]["table"] = table_info
+            json_info["component_parameters"]["role"]["host"]["0"]["reader_1"]["table"] = table_info
         else:
-            json_info["role_parameters"]["host"]["args"]["data"]["eval_data"] = [table_info]
+            json_info["component_parameters"]["role"]["host"]["0"]["reader_0"]["table"] = table_info
 
-        config = json.dumps(json_info)
+        config = json.dumps(json_info, indent=4)
         config_path = gen_unique_path('submit_job_guest')
         config_dir_path = os.path.dirname(config_path)
         os.makedirs(config_dir_path, exist_ok=True)
@@ -421,18 +410,17 @@ class TrainSBTTask(TrainTask):
             fout.write(config + "\n")
         return config_path
 
-    def _check_status(self, jobid):
-        params = [jobid]
+    def _check_status(self, job_id):
+        params = [job_id]
         job_status = self.start_block_func(self._check_cpn_status, params,
                                            exit_func=self._check_exit, max_waiting_time=MAX_TRAIN_TIME)
         if job_status == FAIL:
             exit(1)
 
 
-def main():
+if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser()
 
-    arg_parser.add_argument("-m", "--mode", type=int, help="work mode", choices=[0, 1], required=True)
     arg_parser.add_argument("-f", "--file_type", type=str,
                             help="file_type, "
                                  "'fast' means breast data "
@@ -443,8 +431,8 @@ def main():
     arg_parser.add_argument("-gid", "--guest_id", type=int, help="guest party id", required=True)
     arg_parser.add_argument("-hid", "--host_id", type=int, help="host party id", required=True)
     arg_parser.add_argument("-aid", "--arbiter_id", type=int, help="arbiter party id", required=True)
-    arg_parser.add_argument("-b", "--backend", type=int, help="backend", choices=[0, 1], default=0)
-
+    arg_parser.add_argument("-ip", "--flow_server_ip", type=str, help="please input flow server'ip")
+    arg_parser.add_argument("-port", "--flow_server_port", type=int, help="please input flow server port")
     arg_parser.add_argument("--add_sbt", help="test sbt or not", type=int,
                             default=1, choices=[0, 1])
 
@@ -453,22 +441,20 @@ def main():
 
     args = arg_parser.parse_args()
 
-    work_mode = args.mode
     guest_id = args.guest_id
     host_id = args.host_id
     arbiter_id = args.arbiter_id
     file_type = args.file_type
     add_sbt = args.add_sbt
-    back_end = args.backend
     start_serving = args.serving
+    ip = args.flow_server_ip
+    port = args.flow_server_port
 
-    task = TrainLRTask(file_type, guest_id, host_id, arbiter_id, work_mode, back_end)
+    flow_client = FlowClient(ip=ip, port=port, version="v1")
+    task = TrainLRTask(file_type, guest_id, host_id, arbiter_id)
     task.run(start_serving)
 
     if add_sbt:
-        task = TrainSBTTask(file_type, guest_id, host_id, arbiter_id, work_mode, back_end)
+        task = TrainSBTTask(file_type, guest_id, host_id, arbiter_id)
         task.run()
 
-
-if __name__ == "__main__":
-    main()

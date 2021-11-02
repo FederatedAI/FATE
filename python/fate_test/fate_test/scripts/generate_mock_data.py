@@ -5,18 +5,24 @@ import random
 import threading
 import sys
 import time
-import copy
 import uuid
 import functools
 import pandas as pd
 import numpy as np
 
-from fate_arch import storage
-from fate_arch.common import WorkMode, Backend
-from fate_flow.utils import data_utils
-from fate_arch.session import Session
-from fate_arch.storage import StorageEngine
 from fate_test._config import Config
+def import_fate():
+    from fate_arch import storage
+    from fate_flow.utils import data_utils
+    from fate_arch import session
+    from fate_arch.storage import StorageEngine
+    from fate_arch.common.conf_utils import get_base_config
+    from fate_arch.storage import EggRollStoreType
+    return storage, data_utils, session, StorageEngine, get_base_config, EggRollStoreType
+
+
+storage, data_utils, session, StorageEngine, get_base_config, EggRollStoreType = import_fate()
+
 
 sys.setrecursionlimit(1000000)
 
@@ -87,7 +93,7 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
             data += random.choice(data_list) + ";"
         return data[:-1]
 
-    def _generate_tag_value_data(data_path, start_num, end_num, feature_nums):
+    def _generate_tag_value_data(data_path, start_num, end_num, feature_nums, progress):
         data_num = end_num - start_num
         section_data_size = round(data_num / 100)
         iteration = round(data_num / section_data_size)
@@ -99,7 +105,7 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
                 output_data["id"] = id_encryption(encryption_type, section_data_size * batch + start_num,
                                                   section_data_size * (batch + 1) + start_num)
                 slicing_data_size = section_data_size
-            elif section_data_size * batch <= data_num:
+            elif section_data_size * batch < data_num:
                 output_data['id'] = id_encryption(encryption_type, section_data_size * batch + start_num, end_num)
                 slicing_data_size = data_num - section_data_size * batch
             else:
@@ -108,7 +114,7 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
             output_data['feature'] = feature
             output_data.to_csv(data_path, mode='a+', index=False, header=False)
 
-    def _generate_dens_data(data_path, start_num, end_num, feature_nums, label_flag):
+    def _generate_dens_data(data_path, start_num, end_num, feature_nums, label_flag, progress):
         if label_flag:
             head_1 = ['id', 'y']
         else:
@@ -126,7 +132,7 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
                 df_data_1["id"] = id_encryption(encryption_type, section_data_size * batch + start_num,
                                                 section_data_size * (batch + 1) + start_num)
                 slicing_data_size = section_data_size
-            elif section_data_size * batch <= data_num:
+            elif section_data_size * batch < data_num:
                 df_data_1["id"] = id_encryption(encryption_type, section_data_size * batch + start_num, end_num)
                 slicing_data_size = data_num - section_data_size * batch
             else:
@@ -138,7 +144,7 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
             output_data = pd.concat([df_data_1, df_data_2], axis=1)
             output_data.to_csv(data_path, mode='a+', index=False, header=False)
 
-    def _generate_tag_data(data_path, start_num, end_num, feature_nums, sparsity):
+    def _generate_tag_data(data_path, start_num, end_num, feature_nums, sparsity, progress):
         data_num = end_num - start_num
         section_data_size = round(data_num / 100)
         iteration = round(data_num / section_data_size)
@@ -151,7 +157,7 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
                 output_data["id"] = id_encryption(encryption_type, section_data_size * batch + start_num,
                                                   section_data_size * (batch + 1) + start_num)
                 slicing_data_size = section_data_size
-            elif section_data_size * batch <= data_num:
+            elif section_data_size * batch < data_num:
                 output_data["id"] = id_encryption(encryption_type, section_data_size * batch + start_num, end_num)
                 slicing_data_size = data_num - section_data_size * batch
             else:
@@ -160,16 +166,8 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
             output_data['feature'] = feature
             output_data.to_csv(data_path, mode='a+', index=False, header=False)
 
-    def _generate_parallelize_data(start_num, end_num, feature_nums, table_name, namespace, path_prefix="data_test"):
-        session = Session.create(work_mode=work_mode, backend=backend)
-        data_num = end_num - start_num
-        session_id = str(uuid.uuid1())
-        session.init_computing(session_id)
-        step = 10000 if data_num > 10000 else int(data_num / 10)
-        table_list = [(f"{i * step}", f"{feature_nums}") for i in range(int(data_num / step) + start_num)]
-        partition = 4
-        table = session.computing.parallelize(table_list, partition=partition, include_key=True)
-
+    def _generate_parallelize_data(start_num, end_num, feature_nums, table_name, namespace, label_flag, data_type,
+                                   partition, progress):
         def expand_id_range(k, v):
             if label_flag:
                 return [(id_encryption(encryption_type, ids, ids + 1),
@@ -183,58 +181,87 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
                     return [(id_encryption(encryption_type, ids, ids + 1),
                              ";".join([random.choice(data) for i in range(int(v))]))
                             for ids in range(int(k), min(step + int(k), data_num))]
-                elif data_type == 'tag_value':
-                    return [(id_encryption(encryption_type, ids, ids + 1), ",".join(
-                        [f"x{i}" + ':' + str(round(np.random.randn(), 2)) + ";" for i in
-                         np.random.uniform(size=int(v))]))
-                            for ids in range(int(k), min(step + int(k), data_num))]
-                elif data_type == 'dense':
-                    return [(id_encryption(encryption_type, ids, ids + 1),
-                             ",".join([str(i) for i in np.random.randint(-100, 100, size=int(v)) / 100]))
-                            for ids in range(int(k), min(step + int(k), data_num))]
 
+                elif data_type == 'tag_value':
+                    return [(id_encryption(encryption_type, ids, ids + 1)[0], ";".join(
+                                                [f"x{i}" + ':' + str(round(np.random.randn(), 2)) for i in
+                                                                             range(int(v))])) for ids in range(int(k), min(step + int(k), data_num))]
+                elif data_type == 'dense':
+                    return [(id_encryption(encryption_type, ids, ids + 1)[0],
+                                                     ",".join([str(i) for i in np.random.randint(-100, 100, size=int(v)) / 100]))
+                                                                                 for ids in range(int(k), min(step + int(k), data_num))]
+        data_num = end_num - start_num
+        step = 10000 if data_num > 10000 else int(data_num / 10)
+        table_list = [(f"{i * step}", f"{feature_nums}") for i in range(int(data_num / step) + start_num)]
+        table = sess.computing.parallelize(table_list, partition=partition, include_key=True)
         table = table.flatMap(functools.partial(expand_id_range))
         if label_flag:
-            table.schema = {"sid": "id", "header": ",".join(["y"] + [f"x{i}" for i in range(feature_nums)])}
+            schema = {"sid": "id", "header": ",".join(["y"] + [f"x{i}" for i in range(feature_nums)])}
         else:
-            table.schema = {"sid": "id", "header": ",".join([f"x{i}" for i in range(feature_nums)])}
+            schema = {"sid": "id", "header": ",".join([f"x{i}" for i in range(feature_nums)])}
+        if data_type != "dense":
+            schema = None
 
-        if work_mode == WorkMode.STANDALONE:
-            address_dict = {"name": table_name, "namespace": namespace}
-            storage_engine = StorageEngine.STANDALONE
-        elif work_mode == WorkMode.CLUSTER and backend == Backend.EGGROLL:
-            from fate_arch.storage import EggRollStorageType
-            address_dict = {"name": table_name, "namespace": namespace,
-                            "storage_type": EggRollStorageType.ROLLPAIR_LMDB}
-            storage_engine = StorageEngine.EGGROLL
-        elif work_mode == WorkMode.CLUSTER and backend == Backend.SPARK:
-            address_dict = {"path": data_utils.default_output_fs_path(name=table_name, namespace=namespace,
-                                                                      prefix=path_prefix)}
-            storage_engine = StorageEngine.HDFS
-        else:
-            raise RuntimeError(f"Unknown work_mode: {work_mode} or backend {backend} given.")
-        address = storage.StorageTableMeta.create_address(storage_engine=storage_engine, address_dict=address_dict)
-        table.save(address, schema=table.schema, partitions=table.partitions)
+        h_table = sess.get_table(name=table_name, namespace=namespace)
+        if h_table:
+            h_table.destroy()
 
-        part_of_data = []
-        part_of_limit = 100
-        for k, v in table.collect():
-            part_of_data.append((k, v))
-            part_of_limit -= 1
-            if part_of_limit == 0:
-                break
-        table_count = table.count()
-        save_schema = copy.deepcopy(table.schema)
-        table_meta = storage.StorageTableMeta(name=table_name, namespace=namespace, new=True)
-        table_meta.address = address
-        table_meta.partitions = table.partitions
-        table_meta.engine = storage_engine
-        table_meta.type = storage.EggRollStorageType.ROLLPAIR_LMDB
-        table_meta.schema = save_schema
-        table_meta.part_of_data = part_of_data
-        table_meta.count = table_count
-        table_meta.create()
-        session.computing.kill()
+        table_meta = sess.persistent(computing_table=table, name=table_name, namespace=namespace, schema=schema)
+
+        storage_session = sess.storage()
+        s_table = storage_session.get_table(namespace=table_meta.get_namespace(), name=table_meta.get_name())
+        if s_table.count() == data_num:
+            progress.set_time_percent(100)
+
+    def data_save(data_info, table_names, namespaces, partition_list):
+        data_count = 0
+        for idx, data_name in enumerate(data_info.keys()):
+            label_flag = True if 'guest' in data_info[data_name] else False
+            data_type = 'dense' if 'guest' in data_info[data_name] else host_data_type
+            if split_host and ('host' in data_info[data_name]):
+                host_end_num = int(np.ceil(host_data_size / len(data_info))) * (data_count + 1) if np.ceil(
+                    host_data_size / len(data_info)) * (data_count + 1) <= host_data_size else host_data_size
+                host_start_num = int(np.ceil(host_data_size / len(data_info))) * data_count
+                data_count += 1
+            else:
+                host_end_num = host_data_size
+                host_start_num = 0
+            out_path = os.path.join(str(big_data_dir), data_name)
+            if os.path.exists(out_path) and os.path.isfile(out_path) and not parallelize:
+                if force:
+                    remove_file(out_path)
+                else:
+                    raise Exception('{} Already exists'.format(out_path))
+            data_i = (idx + 1) / len(data_info)
+            downLoad = f'dataget  [{"#" * int(24 * data_i)}{"-" * (24 - int(24 * data_i))}]  {idx + 1}/{len(data_info)}'
+            start = time.time()
+            progress = data_progress(downLoad, start)
+            thread = threading.Thread(target=run, args=[progress])
+            thread.start()
+
+            try:
+                if 'guest' in data_info[data_name]:
+                    if not parallelize:
+                        _generate_dens_data(out_path, guest_start_num, guest_end_num, guest_feature_num, label_flag, progress)
+                    else:
+                        _generate_parallelize_data(guest_start_num, guest_end_num, guest_feature_num, table_names[idx],
+                                                   namespaces[idx], label_flag, data_type, partition_list[idx], progress)
+                else:
+                    if data_type == 'tag' and not parallelize:
+                        _generate_tag_data(out_path, host_start_num, host_end_num, host_feature_num, sparsity, progress)
+                    elif data_type == 'tag_value' and not parallelize:
+                        _generate_tag_value_data(out_path, host_start_num, host_end_num, host_feature_num, progress)
+                    elif data_type == 'dense' and not parallelize:
+                        _generate_dens_data(out_path, host_start_num, host_end_num, host_feature_num, label_flag, progress)
+                    elif parallelize:
+                        _generate_parallelize_data(host_start_num, host_end_num, host_feature_num, table_names[idx],
+                                                   namespaces[idx], label_flag, data_type, partition_list[idx], progress)
+                progress.set_switch(False)
+                time.sleep(1)
+                print()
+            except Exception:
+               progress.set_switch(False)
+               raise Exception(f"Output file failed")
 
     def run(p):
         while p.get_switch():
@@ -261,56 +288,17 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
     date_set = {}
     table_name_list = []
     table_namespace_list = []
+    partition_list = []
     for upload_dict in testsuite_config.get('data'):
         date_set[os.path.basename(upload_dict.get('file'))] = upload_dict.get('role')
-        table_name_list.append(upload_dict.get('name'))
+        table_name_list.append(upload_dict.get('table_name'))
         table_namespace_list.append(upload_dict.get('namespace'))
-    data_count = 0
-    for idx, data_name in enumerate(date_set.keys()):
-        label_flag = True if 'guest' in date_set[data_name] else False
-        data_type = 'dense' if 'guest' in date_set[data_name] else host_data_type
-        if split_host and ('host' in date_set[data_name]):
-            host_end_num = int(np.ceil(host_data_size / len(date_set))) * (data_count + 1) if np.ceil(
-                host_data_size / len(date_set)) * (data_count + 1) <= host_data_size else host_data_size
-            host_start_num = int(np.ceil(host_data_size / len(date_set))) * data_count
-            data_count += 1
-        else:
-            host_end_num = host_data_size
-            host_start_num = 0
-        out_path = os.path.join(str(big_data_dir), data_name)
-        if os.path.exists(out_path) and os.path.isfile(out_path):
-            if force:
-                remove_file(out_path)
-            else:
-                raise Exception('{} Already exists'.format(out_path))
-        data_i = (idx + 1) / len(date_set)
-        downLoad = f'dataget  [{"#" * int(24 * data_i)}{"-" * (24 - int(24 * data_i))}]  {idx + 1}/{len(date_set)}'
-        start = time.time()
-        progress = data_progress(downLoad, start)
-        thread = threading.Thread(target=run, args=[progress])
-        thread.start()
-        work_mode = conf.work_mode
-        backend = conf.backend
-        try:
-            if 'guest' in date_set[data_name]:
-                if not parallelize:
-                    _generate_dens_data(out_path, guest_start_num, guest_end_num, guest_feature_num, label_flag)
-                else:
-                    _generate_parallelize_data(guest_start_num, guest_end_num, guest_feature_num,
-                                               table_name_list[idx], table_namespace_list[idx], path_prefix="")
-            else:
-                if data_type == 'tag' and not parallelize:
-                    _generate_tag_data(out_path, host_start_num, host_end_num, host_feature_num, sparsity)
-                elif data_type == 'tag_value' and not parallelize:
-                    _generate_tag_value_data(out_path, host_start_num, host_end_num, host_feature_num)
-                elif data_type == 'dense' and not parallelize:
-                    _generate_dens_data(out_path, host_start_num, host_end_num, host_feature_num, label_flag)
-                elif parallelize:
-                    _generate_parallelize_data(host_start_num, host_end_num, guest_feature_num,
-                                               table_name_list[idx], table_namespace_list[idx], path_prefix="")
-            progress.set_switch(False)
-            time.sleep(1)
-            print()
-        except Exception:
-            progress.set_switch(False)
-            raise Exception(f"Output file failed")
+        partition_list.append(upload_dict.get('partition', 8))
+
+    if parallelize:
+        with session.Session() as sess:
+            session_id = str(uuid.uuid1())
+            sess.init_computing(session_id)
+            data_save(data_info=date_set, table_names=table_name_list, namespaces=table_namespace_list, partition_list=partition_list)
+    else:
+        data_save(data_info=date_set, table_names=table_name_list, namespaces=table_namespace_list, partition_list=partition_list)

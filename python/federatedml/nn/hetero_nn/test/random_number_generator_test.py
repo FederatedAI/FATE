@@ -8,7 +8,7 @@ import unittest
 
 class TestRandomNumberGenerator(unittest.TestCase):
     def setUp(self):
-        session.init("test_random_number" + str(random.random()), 0)
+        session.init("test_random_number" + str(random.random()))
         self.rng_gen = RandomNumberGenerator()
 
     def test_generate_random_number(self):

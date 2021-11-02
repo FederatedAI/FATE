@@ -29,7 +29,8 @@ class PredictParam(BaseParam):
     Parameters
     ----------
 
-    threshold: float or int, The threshold use to separate positive and negative class. Normally, it should be (0,1)
+    threshold: float or int
+        The threshold use to separate positive and negative class. Normally, it should be (0,1)
     """
 
     def __init__(self, threshold=0.5):

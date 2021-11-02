@@ -18,10 +18,14 @@
                 }
             },
             "output": {
-                "data": ["train"],
-                "model": ["dataio"]
+                "data": [
+                    "train"
+                ],
+                "model": [
+                    "dataio"
+                ]
             }
-         },
+        },
         "intersection_0": {
             "module": "Intersection",
             "input": {
@@ -32,7 +36,9 @@
                 }
             },
             "output": {
-                "data": ["train"]
+                "data": [
+                    "train"
+                ]
             }
         },
         "secureboost_0": {
@@ -45,8 +51,12 @@
                 }
             },
             "output": {
-                "data": ["train"],
-                "model": ["train"]
+                "data": [
+                    "train"
+                ],
+                "model": [
+                    "train"
+                ]
             }
         },
         "sbt_feature_transformer_0": {
@@ -62,8 +72,12 @@
                 ]
             },
             "output": {
-                "data": ["train"],
-                "model": ["model"]
+                "data": [
+                    "train"
+                ],
+                "model": [
+                    "model"
+                ]
             }
         }
     }

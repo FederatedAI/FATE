@@ -15,12 +15,6 @@
             9999
         ]
     },
-    "job_parameters": {
-        "common": {
-            "work_mode": 1,
-            "backend": 1
-        }
-    },
     "component_parameters": {
         "common": {
             "hetero_lr_0": {
@@ -57,7 +51,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
                     }
                 }
@@ -70,7 +64,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true,
                         "output_format": "dense"
                     }

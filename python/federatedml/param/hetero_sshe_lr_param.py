@@ -115,7 +115,7 @@ class LogisticRegressionParam(BaseParam):
         self.use_mix_rand = use_mix_rand
         self.reveal_strategy = reveal_strategy
         self.reveal_every_iter = reveal_every_iter
-        self.callback_param = callback_param
+        self.callback_param = copy.deepcopy(callback_param)
         self.cv_param = cv_param
 
     def check(self):

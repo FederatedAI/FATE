@@ -18,9 +18,9 @@ This section introduces the dsl and conf for different types of tasks.
 
 3. Union Task on Table:
 
-    dsl: test_union_dataio_job_dsl.json
+    dsl: test_union_data_transform_job_dsl.json
     
-    runtime_config: test_union_dataio_job_conf.json
+    runtime_config: test_union_data_transform_job_conf.json
     
 4. Union Task on TagValue Table (with duplicated ids):
     

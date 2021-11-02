@@ -18,6 +18,7 @@ import collections
 
 from sklearn.model_selection import train_test_split
 
+from fate_arch.session import computing_session
 from federatedml.model_base import Metric, MetricMeta
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.model_base import ModelBase
@@ -289,7 +290,9 @@ class DataSplitter(ModelBase):
 
     @staticmethod
     def _match_id(data_inst, ids):
-        return data_inst.filter(lambda k, v: k in ids)
+        ids = [(i, None) for i in ids]
+        id_table = computing_session.parallelize(ids, include_key=True, partition=data_inst.partitions)
+        return data_inst.join(id_table, lambda v1, v2: v1)
 
     @staticmethod
     def _set_output_table_schema(data_inst, schema):

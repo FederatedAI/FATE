@@ -19,72 +19,88 @@
 import numpy as np
 from federatedml.util import LOGGER
 from fate_arch.session import computing_session
+from fate_arch.abc import CTableABC
 
 
 class PaillierTensor(object):
-    def __init__(self, ori_data=None, tb_obj=None, partitions=1):
-        if ori_data is not None:
-            self._ori_data = ori_data
+    def __init__(self, obj, partitions=1):
+        if obj is None:
+            raise ValueError("Cannot convert None to Paillier tensor")
+
+        if isinstance(obj, (list, np.ndarray)):
+            self._ori_data = obj
             self._partitions = partitions
-            self._obj = computing_session.parallelize(ori_data,
+            self._obj = computing_session.parallelize(obj,
                                                       include_key=False,
                                                       partition=partitions)
-        else:
+        elif isinstance(obj, CTableABC):
             self._ori_data = None
-            self._partitions = tb_obj.partitions
-            self._obj = tb_obj
+            self._partitions = obj.partitions
+            self._obj = obj
+        else:
+            raise ValueError(f"Cannot convert obj to Paillier tensor, object type is {type(obj)}")
 
         LOGGER.debug("tensor's partition is {}".format(self._partitions))
 
     def __add__(self, other):
         if isinstance(other, PaillierTensor):
-            return PaillierTensor(tb_obj=self._obj.join(other._obj, lambda v1, v2: v1 + v2))
+            return PaillierTensor(self._obj.join(other._obj, lambda v1, v2: v1 + v2))
+        elif isinstance(other, CTableABC):
+            return PaillierTensor(self._obj.join(other, lambda v1, v2: v1 + v2))
+        elif isinstance(other, (np.ndarray, int, float)):
+            return PaillierTensor(self._obj.mapValues(lambda v: v + other))
         else:
-            return PaillierTensor(tb_obj=self._obj.mapValues(lambda v: v + other))
+            raise ValueError(f"Unrecognized type {type(other)}, dose not support subtraction")
 
     def __radd__(self, other):
         return self.__add__(other)
 
     def __sub__(self, other):
         if isinstance(other, PaillierTensor):
-            return PaillierTensor(tb_obj=self._obj.join(other._obj, lambda v1, v2: v1 - v2))
+            return PaillierTensor(self._obj.join(other._obj, lambda v1, v2: v1 - v2))
+        elif isinstance(other, CTableABC):
+            return PaillierTensor(self._obj.join(other, lambda v1, v2: v1 - v2))
+        elif isinstance(other, (np.ndarray, int, float)):
+            return PaillierTensor(self._obj.mapValues(lambda v: v - other))
         else:
-            return PaillierTensor(tb_obj=self._obj.mapValues(lambda v: v - other))
+            raise ValueError(f"Unrecognized type {type(other)}, dose not support subtraction")
 
     def __rsub__(self, other):
         return self.__sub__(other)
 
     def __mul__(self, other):
         if isinstance(other, (int, float)):
-            return PaillierTensor(tb_obj=self._obj.mapValues(lambda val: val * other))
+            return PaillierTensor(self._obj.mapValues(lambda val: val * other))
         elif isinstance(other, np.ndarray):
-            return PaillierTensor(tb_obj=self._obj.mapValues(lambda val: np.matmul(val, other)))
+            return PaillierTensor(self._obj.mapValues(lambda val: np.matmul(val, other)))
+        elif isinstance(other, CTableABC):
+            other = PaillierTensor(other)
+            return self.__mul__(other)
+        elif isinstance(other, PaillierTensor):
+            ret = self.numpy() * other.numpy()
+            return PaillierTensor(ret, partitions=max(self.partitions, other.partitions))
 
-        try:
-            _other = other.numpy()
-        except AttributeError:
-            raise ValueError("multiply does not support")
+    def matmul(self, other):
+        if isinstance(other, np.ndarray):
+            if len(other.shape) != 2:
+                raise ValueError("Only Support 2-D multiplication in matmul op, "
+                                 "if you want to do 3-D, use fast_multiply_3d")
 
-        ret = self.numpy() * _other
-
-        return PaillierTensor(ori_data=ret, partitions=max(self.partitions, other.partitions))
-
-    # def element_wise_product(self, other, multiplication='left'):
-    #
-    #     assert multiplication in ['left', 'right']
-    #     if isinstance(other, PaillierTensor):
-    #         return self * other if multiplication == 'left' else other * self
-    #     if isinstance(other, np.ndarray):
-    #         return self * PaillierTensor(ori_data=other) if multiplication == 'left' else PaillierTensor(other) * self
-    #     else:
-    #         raise ValueError('only PaillierTensor and ndarray are supported for element-wise product')
+        return self.fast_matmul_2d(other)
 
     def multiply(self, other):
-        if not isinstance(other, PaillierTensor):
-            raise ValueError("multiply operator of HeteroNNTensor should between to HeteroNNTensor")
-
-        return PaillierTensor(tb_obj=self._obj.join(other._obj, lambda val1, val2: np.multiply(val1, val2)),
-                              partitions=self._partitions)
+        if isinstance(other, np.ndarray):
+            if other.shape != self.shape:
+                raise ValueError(f"operands could not be broadcast together with shapes {self.shape} {other.shape}")
+            rhs = PaillierTensor(other)
+            return PaillierTensor(self.multiply(rhs))
+        elif isinstance(other, CTableABC):
+            other = PaillierTensor(other)
+            return self.multiply(other)
+        elif isinstance(other, PaillierTensor):
+            return PaillierTensor(self._obj.join(other._obj, lambda v1, v2: v1 * v2))
+        else:
+            raise ValueError(f"Not support type in multiply op {type(other)}")
 
     @property
     def T(self):
@@ -125,24 +141,14 @@ class PaillierTensor(object):
         else:
             ret_obj = self._obj.mapValues(lambda val: np.mean(val, axis - 1))
 
-            return PaillierTensor(tb_obj=ret_obj)
-
-    # def sum(self, axis=0):
-    #     assert axis < len(self.shape)
-    #     if axis == 0:
-    #         if len(self.shape) == 2:
-    #             return PaillierTensor(ori_data=np.array([self._obj.reduce(lambda t1, t2: t1 + t2)]))
-    #         else:
-    #             return PaillierTensor(ori_data=self._obj.reduce(lambda t1, t2: t1+t2))
-    #     else:
-    #         return PaillierTensor(tb_obj=self._obj.mapValues(lambda x: x.sum(axis=axis-1)))
+            return PaillierTensor(ret_obj)
 
     def reduce_sum(self):
         return self._obj.reduce(lambda t1, t2: t1 + t2)
 
     def map_ndarray_product(self, other):
         if isinstance(other, np.ndarray):
-            return PaillierTensor(tb_obj=self._obj.mapValues(lambda val: val * other))
+            return PaillierTensor(self._obj.mapValues(lambda val: val * other))
         else:
             raise ValueError('only support numpy array')
 
@@ -160,23 +166,22 @@ class PaillierTensor(object):
         return self._ori_data
 
     def encrypt(self, encrypt_tool):
-        return PaillierTensor(tb_obj=encrypt_tool.encrypt(self._obj))
+        return PaillierTensor(encrypt_tool.encrypt(self._obj))
 
     def decrypt(self, decrypt_tool):
-        return PaillierTensor(tb_obj=self._obj.mapValues(lambda val: decrypt_tool.recursive_decrypt(val)))
+        return PaillierTensor(self._obj.mapValues(lambda val: decrypt_tool.recursive_decrypt(val)))
 
     def encode(self, encoder):
-        return PaillierTensor(tb_obj=self._obj.mapValues(lambda val: encoder.encode(val)))
+        return PaillierTensor(self._obj.mapValues(lambda val: encoder.encode(val)))
 
     def decode(self, decoder):
-        return PaillierTensor(tb_obj=self._obj.mapValues(lambda val: decoder.decode(val)))
+        return PaillierTensor(self._obj.mapValues(lambda val: decoder.decode(val)))
 
     @staticmethod
     def _vector_mul(kv_iters):
         ret_mat = None
         for k, v in kv_iters:
             tmp_mat = np.outer(v[0], v[1])
-            # tmp_mat = np.tensordot(v[0], v[1], [[], []])
 
             if ret_mat is not None:
                 ret_mat += tmp_mat
@@ -191,8 +196,11 @@ class PaillierTensor(object):
         Their result is a matrix of (n, k)
         """
         if isinstance(other, np.ndarray):
-            mat_tensor = PaillierTensor(ori_data=other, partitions=self.partitions)
+            mat_tensor = PaillierTensor(other, partitions=self.partitions)
             return self.fast_matmul_2d(mat_tensor)
+
+        if isinstance(other, CTableABC):
+            other = PaillierTensor(other)
 
         func = self._vector_mul
         ret_mat = self._obj.join(other.get_obj(), lambda vec1, vec2: (vec1, vec2)).applyPartitions(func).reduce(
@@ -205,32 +213,36 @@ class PaillierTensor(object):
         assert multiply in ['left', 'right']
         if isinstance(other, PaillierTensor):
             mat = other
+        elif isinstance(other, CTableABC):
+            mat = PaillierTensor(other)
         elif isinstance(other, np.ndarray):
-            mat = PaillierTensor(ori_data=other, partitions=self.partitions)
+            mat = PaillierTensor(other, partitions=self.partitions)
         else:
             raise ValueError('only support numpy array and Paillier Tensor')
 
         if multiply == 'left':
-            return PaillierTensor(tb_obj=self._obj.join(mat._obj, lambda val1, val2: np.tensordot(val1, val2, (1, 0))),
+            return PaillierTensor(self._obj.join(mat._obj, lambda val1, val2: np.tensordot(val1, val2, (1, 0))),
                                   partitions=self._partitions)
 
         if multiply == 'right':
-            return PaillierTensor(tb_obj=mat._obj.join(self._obj, lambda val1, val2: np.tensordot(val1, val2, (1, 0))),
+            return PaillierTensor(mat._obj.join(self._obj, lambda val1, val2: np.tensordot(val1, val2, (1, 0))),
                                   partitions=self._partitions)
 
     def element_wise_product(self, other):
         if isinstance(other, np.ndarray):
-            mat = PaillierTensor(ori_data=other, partitions=self.partitions)
+            mat = PaillierTensor(other, partitions=self.partitions)
+        elif isinstance(other, CTableABC):
+            mat = PaillierTensor(other)
         else:
             mat = other
-        return PaillierTensor(tb_obj=self._obj.join(mat._obj, lambda val1, val2: val1 * val2))
+        return PaillierTensor(self._obj.join(mat._obj, lambda val1, val2: val1 * val2))
 
     def squeeze(self, axis):
         if axis == 0:
-            return PaillierTensor(ori_data=list(self._obj.collect())[0][1], partitions=self.partitions)
+            return PaillierTensor(list(self._obj.collect())[0][1], partitions=self.partitions)
         else:
-            return PaillierTensor(tb_obj=self._obj.mapValues(lambda val: np.squeeze(val, axis=axis - 1)))
+            return PaillierTensor(self._obj.mapValues(lambda val: np.squeeze(val, axis=axis - 1)))
 
     def select_columns(self, select_table):
-        return PaillierTensor(tb_obj=self._obj.join(select_table, lambda v1, v2: v1[v2]))
+        return PaillierTensor(self._obj.join(select_table, lambda v1, v2: v1[v2]))
 
