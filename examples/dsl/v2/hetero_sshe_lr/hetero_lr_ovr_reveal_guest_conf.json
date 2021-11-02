@@ -85,7 +85,7 @@
                 },
                 "max_iter": 1,
                 "early_stop": "diff",
-                "reveal_strategy": "all_reveal_in_guest",
+                "reveal_strategy": "encrypted_reveal_in_host",
                 "reveal_every_iter": false
             },
             "evaluation_0": {
