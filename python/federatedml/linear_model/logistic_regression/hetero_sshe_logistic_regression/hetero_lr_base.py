@@ -202,6 +202,7 @@ class HeteroLRBase(BaseLinearModel, ABC):
                 q_field=self.q_field,
                 use_mix_rand=self.model_param.use_mix_rand,
         ) as spdz:
+            spdz.set_flowid(self.flowid)
             if self.role == consts.GUEST:
                 self.labels = data_instances.mapValues(lambda x: np.array([x.label], dtype=int))
 
@@ -447,22 +448,32 @@ class HeteroLRBase(BaseLinearModel, ABC):
         return meta_protobuf_obj
 
     def get_single_model_param(self, model_weights=None, header=None):
-        weight_dict = {}
-        model_weights = model_weights if model_weights else self.model_weights
+        # weight_dict = {}
+        # model_weights = model_weights if model_weights else self.model_weights
         header = header if header else self.header
-        for idx, header_name in enumerate(header):
-            coef_i = model_weights.coef_[idx]
-            weight_dict[header_name] = coef_i
+        # for idx, header_name in enumerate(header):
+        #     coef_i = model_weights.coef_[idx]
+        #     weight_dict[header_name] = coef_i
 
         result = {'iters': self.n_iter_,
                   'loss_history': self.loss_history,
                   'is_converged': self.is_converged,
-                  'weight': weight_dict,
+                  # 'weight': weight_dict,
                   'intercept': self.model_weights.intercept_,
                   'header': header,
                   'best_iteration': -1 if self.validation_strategy is None else
                   self.validation_strategy.best_iteration
                   }
+
+        if self.role == consts.GUEST or self.is_respectively_reveal:
+            model_weights = model_weights if model_weights else self.model_weights
+            weight_dict = {}
+            for idx, header_name in enumerate(header):
+                coef_i = model_weights.coef_[idx]
+                weight_dict[header_name] = coef_i
+
+            result['weight'] = weight_dict
+
         return result
 
     def get_model_summary(self):
@@ -477,6 +488,10 @@ class HeteroLRBase(BaseLinearModel, ABC):
                    "is_converged": self.is_converged,
                    "one_vs_rest": self.need_one_vs_rest,
                    "best_iteration": best_iteration}
+
+        if not self.is_respectively_reveal:
+            del summary["intercept"]
+            del summary["coef"]
 
         if self.validation_strategy:
             validation_summary = self.validation_strategy.summary()
@@ -510,16 +525,19 @@ class HeteroLRBase(BaseLinearModel, ABC):
 
     def load_single_model(self, single_model_obj):
         LOGGER.info("It's a binary task, start to load single model")
-        feature_shape = len(self.header)
-        tmp_vars = np.zeros(feature_shape)
-        weight_dict = dict(single_model_obj.weight)
 
-        for idx, header_name in enumerate(self.header):
-            tmp_vars[idx] = weight_dict.get(header_name)
+        if self.role == consts.GUEST or self.is_respectively_reveal:
+            feature_shape = len(self.header)
+            tmp_vars = np.zeros(feature_shape)
+            weight_dict = dict(single_model_obj.weight)
 
-        if self.fit_intercept:
-            tmp_vars = np.append(tmp_vars, single_model_obj.intercept)
-        self.model_weights = LinearModelWeights(tmp_vars, fit_intercept=self.fit_intercept)
+            for idx, header_name in enumerate(self.header):
+                tmp_vars[idx] = weight_dict.get(header_name)
+
+            if self.fit_intercept:
+                tmp_vars = np.append(tmp_vars, single_model_obj.intercept)
+            self.model_weights = LinearModelWeights(tmp_vars, fit_intercept=self.fit_intercept)
+
         self.n_iter_ = single_model_obj.iters
         return self
 

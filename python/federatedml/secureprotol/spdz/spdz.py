@@ -71,3 +71,7 @@ class SPDZ(object):
     @classmethod
     def dot(cls, left, right, target_name=None):
         return left.dot(right, target_name)
+
+    def set_flowid(self, flowid):
+        self.communicator.set_flowid(flowid)
+

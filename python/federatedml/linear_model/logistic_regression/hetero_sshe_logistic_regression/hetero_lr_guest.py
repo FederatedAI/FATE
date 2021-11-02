@@ -310,7 +310,10 @@ class HeteroLRGuest(HeteroLRBase):
     def get_single_model_param(self, model_weights=None, header=None):
         result = super().get_single_model_param(model_weights, header)
         if not self.is_respectively_reveal:
-            result["cipher"] = (self.cipher.public_key.n, self.cipher.privacy_key.p, self.cipher.privacy_key.q)
+            result["cipher"] = dict(public_key=dict(n=str(self.cipher.public_key.n)),
+                                    private_key=dict(p=str(self.cipher.privacy_key.p),
+                                                     q=str(self.cipher.privacy_key.q)))
+            # result["cipher"] = (self.cipher.public_key.n, self.cipher.privacy_key.p, self.cipher.privacy_key.q)
         return result
 
     def load_single_model(self, single_model_obj):
@@ -318,8 +321,10 @@ class HeteroLRGuest(HeteroLRBase):
         if not self.is_respectively_reveal:
             cipher_info = single_model_obj.cipher
             self.cipher = PaillierEncrypt()
-            public_key = PaillierPublicKey(cipher_info[0])
-            privacy_key = PaillierPrivateKey(public_key, cipher_info[1], cipher_info[2])
+            public_key = PaillierPublicKey(int(cipher_info.public_key.n))
+            # public_key = PaillierPublicKey(cipher_info[0])
+            privacy_key = PaillierPrivateKey(public_key, int(cipher_info.private_key.p), int(cipher_info.private_key.q))
+            # privacy_key = PaillierPrivateKey(public_key, cipher_info[1], cipher_info[2])
             self.cipher.set_public_key(public_key=public_key)
             self.cipher.set_privacy_key(privacy_key=privacy_key)
 
