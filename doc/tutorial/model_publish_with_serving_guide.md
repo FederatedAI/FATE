@@ -75,7 +75,6 @@ Example of modified configuration:
         "arbiter": ["10000"]
     },
     "job_parameters": {
-        "work_mode": 1,
         "model_id": "arbiter-10000#guest-9999#host-10000#model",
         "model_version": "202006122116502527621"
     }
@@ -83,7 +82,7 @@ Example of modified configuration:
 ```
 
 All parameters should be filled in according to actual setting. 
-User should pay special attention to work_mode, for which 1 indicates cluster mode, and 0 indicates standalone mode. The serving server will load model from the fate flow service. By default, the address for serving server to load model is formatted as follows: 'http://{FATE_FLOW_IP}:{FATE_FLOW_HTTP_PORT}{FATE_FLOW_MODEL_TRANSFER_ENDPOINT}'. To load model with `model.transfer.url` defined in serving-server.properties, a user can set job_parameters['use_transfer_url_on_serving'] to `true`.
+The serving server will load model from the fate flow service. By default, the address for serving server to load model is formatted as follows: 'http://{FATE_FLOW_IP}:{FATE_FLOW_HTTP_PORT}{FATE_FLOW_MODEL_TRANSFER_ENDPOINT}'. To load model with `model.transfer.url` defined in serving-server.properties, a user can set job_parameters['use_transfer_url_on_serving'] to `true`.
 
 Run command:
 
@@ -109,7 +108,6 @@ Example of modified configuration:
         "arbiter": ["10000"]
     },
     "job_parameters": {
-        "work_mode": 1,
         "model_id": "arbiter-10000#guest-10000#host-10000#model",
         "model_version": "2019081217340125761469"
     },
@@ -119,7 +117,6 @@ Example of modified configuration:
 ```
 
 Except for optional parameter ``servings``, all parameters should be filled in according to actual setting. 
-User should pay special attention to work_mode, for which 1 indicates cluster mode, and 0 indicates standalone mode. 
 
 If parameter ``servings`` is unfilled, model will be published to all serving-server instances
 

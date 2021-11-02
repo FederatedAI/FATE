@@ -241,8 +241,6 @@ Job Runtime Conf用于设置各个参与方的信息, 作业的参数及各个�
 | 配置项                              | 默认值            | 支持值                            | 说明                                                               |
 | -------------------------------- | -------------- | ------------------------------ | ---------------------------------------------------------------- |
 | job\_type                        | train          | train, predict                 | 任务类型                                                             |
-| work\_mode                       | 0              | 0, 1                           | 0代表单方单机版，1代表多方分布式版本                                              |
-| backend                          | 0              | 0, 1, 2                        | 0代表EGGROLL，1代表SPARK加RabbitMQ，2代表SPARK加Pulsar                     |
 | task\_cores                      | 4              | 正整数                            | 作业申请的总cpu核数                                                      |
 | task\_parallelism                | 1              | 正整数                            | task并行度                                                          |
 | computing\_partitions            | task所分配到的cpu核数 | 正整数                            | 计算时数据表的分区数                                                       |
@@ -267,26 +265,24 @@ Note
 
 </div>
 
-1.  三大类引擎具有一定的支持依赖关系，例如Spark计算引擎当前仅支持使用HDFS作为中间数据存储引擎
-2.  work\_mode +
-    backend会自动依据支持依赖关系，产生对应的三大引擎配置computing、storage、federation
-3.  开发者可自行实现适配的引擎，并在runtime
+1.  计算引擎和存储引擎之间具有一定的支持依赖关系
+2.  开发者可自行实现适配的引擎，并在runtime
 config配置引擎
 
 #### 4.3 未开放参数
 
 | 配置项                | 默认值                        | 支持值                                   | 说明                     |
 | ------------------ | -------------------------- | ------------------------------------- | ---------------------- |
-| computing\_engine  | 依据work\_mode和backend, 自动得到 | EGGROLL, SPARK, STANDALONE            | 计算引擎类型                 |
-| storage\_engine    | 依据work\_mode和backend, 自动得到 | EGGROLL, HDFS, STANDALONE             | 组件输出中间数据存储引擎类型         |
-| federation\_engine | 依据work\_mode和backend, 自动得到 | EGGROLL, RABBITMQ, STANDALONE, PULSAR | 通信引擎类型                 |
-| federated\_mode    | 依据work\_mode和backend, 自动得到 | SINGLE, MULTIPLE                      | 联邦合作模式: 多站点多方或者单站点模拟多方 |
+| computing\_engine  | service_conf.yaml配置 | EGGROLL, SPARK, STANDALONE            | 计算引擎类型                 |
+| storage\_engine    | service_conf.yaml配置 | EGGROLL, HDFS, STANDALONE, LOCALFS      | 组件输出中间数据存储引擎类型         |
+| federation\_engine | service_conf.yaml配置 | EGGROLL, RABBITMQ, STANDALONE, PULSAR | 通信引擎类型                 |
+| federated\_mode    | 依据federation\_engine自动得到 | SINGLE, MULTIPLE                      | 联邦合作模式: 多站点多方或者单站点模拟多方 |
 
 未开放参数
 
 #### 4.4 参考配置
 
-1.  使用eggroll作为backend，采取默认cpu分配计算策略时的配置
+1.  使用eggroll作为computing engine，采取默认cpu分配计算策略时的配置
 
 <!-- end list -->
 
@@ -294,8 +290,6 @@ config配置引擎
 "job_parameters": {
   "common": {
     "job_type": "train",
-    "work_mode": 1,
-    "backend": 0,
     "task_cores": 6,
     "task_parallelism": 2,
     "computing_partitions": 8,
@@ -304,7 +298,7 @@ config配置引擎
 }
 ```
 
-2.  使用eggroll作为backend，采取直接指定cpu等参数时的配置
+2.  使用eggroll作为computing engine，采取直接指定cpu等参数时的配置
 
 <!-- end list -->
 
@@ -312,8 +306,6 @@ config配置引擎
 "job_parameters": {
   "common": {
     "job_type": "train",
-    "work_mode": 1,
-    "backend": 0,
     "eggroll_run": {
       "eggroll.session.processors.per.node": 2
     },
@@ -324,7 +316,7 @@ config配置引擎
 }
 ```
 
-3.  使用spark加rabbitMQ作为backend，采取直接指定cpu等参数时的配置
+3.  使用spark作为computing engine，rabbitmq作为federation engine,采取直接指定cpu等参数时的配置
 
 <!-- end list -->
 
@@ -332,8 +324,6 @@ config配置引擎
 "job_parameters": {
   "common": {
     "job_type": "train",
-    "work_mode": 1,
-    "backend": 1,
     "spark_run": {
       "num-executors": 1,
       "executor-cores": 2
@@ -353,15 +343,13 @@ config配置引擎
 }
 ```
 
-4.  使用spark加pulsar作为backend
+4.  使用spark作为computing engine，pulsar作为federation engine
 
 <!-- end list -->
 
 ``` sourceCode json
 "job_parameters": {
   "common": {
-    "work_mode": 1,
-    "backend": 2,
     "spark_run": {
       "num-executors": 1,
       "executor-cores": 2
@@ -381,7 +369,7 @@ config配置引擎
     server启动时从配置文件扫描所有基础引擎信息并注册到数据库表`t_engine_registry`
   - fate\_on\_eggroll：total\_cores=cores\_per\_node\*nodes
   - fate\_on\_spark：total\_cores=cores\_per\_node\*nodes
-  - standalone：使用`$PROJECT_BASE/python/fate_flow/settings.py`的**STANDALONE\_BACKEND\_VIRTUAL\_CORES\_PER\_NODE**虚拟配置
+  - fate\_on\_standalone：total\_cores=cores\_per\_node\*nodes
   - 不同基础引擎间的资源计算互相隔离
   - 以上配置修改后均需要重启fateflow server使之生效
 
@@ -738,7 +726,7 @@ flow model deploy --model-id $model_id --model-version $model_version --cpn-list
 1.  提交作业后，fateflow获取job dsl与job
     config，存于数据库`t_job`表对应字段以及`$PROJECT_BASE/jobs/$jobid/`目录
 2.  解析job dsl与job
-    config，依据合并参数生成细粒度参数(如上述所说的backend\&work\_mode对应会生成三个引擎参数),
+    config，依据合并参数生成细粒度参数,
     以及处理参数默认值
 3.  将共同配置分发到各参与方并存储，依据参与方的实际信息，生成**job\_runtime\_on\_party\_conf**，同样存于数据库与jobs目录
 4.  每个参与方接收到任务时，均依据**job\_runtime\_on\_party\_conf**执行
