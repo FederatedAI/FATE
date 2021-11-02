@@ -19,15 +19,15 @@ FATE官方网站：<https://fate.fedai.org/>
 
 #### 单机版
 - [Docker Compose安装](https://github.com/FederatedAI/KubeFATE/tree/master/docker-deploy)
-- [原生单机版安装](../deploy/standalone-deploy/)
+- [原生单机版安装](./deploy/standalone-deploy/)
 
 #### 分布式
-- [Kubernetes安装](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy).
-- [原生集群安装](../deploy/cluster-deploy).
+- [Kubernetes安装](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy)
+- [原生集群安装](./deploy/cluster-deploy)
 
 ### 快速开始
 - [单元测试](./python/federatedml/test/)
-- [使用FATE-PipeLine启动任务](./doc/tutorial/pipeline/fate_client_pipeline_tutotial.md)
+- [使用FATE-PipeLine启动任务](./doc/tutorial/pipeline/pipeline_guide.md)
 - [使用DSL json conf启动任务](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.md)
 - [在Jupyter Notebook使用FATE-Pipeline](./doc/tutorial/pipeline/pipeline_tutorial_0.ipynb)
 
@@ -58,7 +58,7 @@ FATE官方网站：<https://fate.fedai.org/>
 - [Federation API](./doc/api/federation.md)
 - [Flow SDK API](./doc/api/flow_sdk.md)
 - [Flow Client](./doc/api/flow_client.md)
-- [Pipeline](./doc/api/pipeline.md)
+- [FATE Pipeline](./doc/api/pipeline.md)
 - [FATE Test](./doc/api/fate_test.md)
 
 ## 了解更多
