@@ -30,7 +30,7 @@ For optimal binning, each party use quantile binning or bucket binning find init
    :width: 850
    :align: center
 
-   Figure 3： Multi-Host Binning Principle
+   Figure 3： Optimal Binning Principle
 
 
 There exist two kinds of methods, merge-optimal binning and split-optimal binning. When choosing metrics as iv, gini or chi-square, merge type optimal binning will be used. On the other hand, if ks is choosed, split type optimal binning will be used.

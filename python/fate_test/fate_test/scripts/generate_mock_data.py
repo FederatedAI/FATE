@@ -166,7 +166,8 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
             output_data['feature'] = feature
             output_data.to_csv(data_path, mode='a+', index=False, header=False)
 
-    def _generate_parallelize_data(start_num, end_num, feature_nums, table_name, namespace, label_flag, data_type, progress):
+    def _generate_parallelize_data(start_num, end_num, feature_nums, table_name, namespace, label_flag, data_type,
+                                   partition, progress):
         def expand_id_range(k, v):
             if label_flag:
                 return [(id_encryption(encryption_type, ids, ids + 1),
@@ -192,11 +193,7 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
         data_num = end_num - start_num
         step = 10000 if data_num > 10000 else int(data_num / 10)
         table_list = [(f"{i * step}", f"{feature_nums}") for i in range(int(data_num / step) + start_num)]
-        partition = 4
-        print(table_list)
-        # ble = session.get_session().computing.parallelize(table_list, partition=partition, include_key=True)
         table = sess.computing.parallelize(table_list, partition=partition, include_key=True)
-        print(table)
         table = table.flatMap(functools.partial(expand_id_range))
         if label_flag:
             schema = {"sid": "id", "header": ",".join(["y"] + [f"x{i}" for i in range(feature_nums)])}
@@ -216,7 +213,7 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
         if s_table.count() == data_num:
             progress.set_time_percent(100)
 
-    def data_save(data_info, table_names, namespaces):
+    def data_save(data_info, table_names, namespaces, partition_list):
         data_count = 0
         for idx, data_name in enumerate(data_info.keys()):
             label_flag = True if 'guest' in data_info[data_name] else False
@@ -247,8 +244,8 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
                     if not parallelize:
                         _generate_dens_data(out_path, guest_start_num, guest_end_num, guest_feature_num, label_flag, progress)
                     else:
-                        _generate_parallelize_data(guest_start_num, guest_end_num, guest_feature_num,
-                                                   table_names[idx], namespaces[idx], label_flag, data_type, progress)
+                        _generate_parallelize_data(guest_start_num, guest_end_num, guest_feature_num, table_names[idx],
+                                                   namespaces[idx], label_flag, data_type, partition_list[idx], progress)
                 else:
                     if data_type == 'tag' and not parallelize:
                         _generate_tag_data(out_path, host_start_num, host_end_num, host_feature_num, sparsity, progress)
@@ -257,8 +254,8 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
                     elif data_type == 'dense' and not parallelize:
                         _generate_dens_data(out_path, host_start_num, host_end_num, host_feature_num, label_flag, progress)
                     elif parallelize:
-                        _generate_parallelize_data(host_start_num, host_end_num, host_feature_num,
-                                                   table_names[idx], namespaces[idx], label_flag, data_type, progress)
+                        _generate_parallelize_data(host_start_num, host_end_num, host_feature_num, table_names[idx],
+                                                   namespaces[idx], label_flag, data_type, partition_list[idx], progress)
                 progress.set_switch(False)
                 time.sleep(1)
                 print()
@@ -291,15 +288,17 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
     date_set = {}
     table_name_list = []
     table_namespace_list = []
+    partition_list = []
     for upload_dict in testsuite_config.get('data'):
         date_set[os.path.basename(upload_dict.get('file'))] = upload_dict.get('role')
         table_name_list.append(upload_dict.get('table_name'))
         table_namespace_list.append(upload_dict.get('namespace'))
+        partition_list.append(upload_dict.get('partition', 8))
 
     if parallelize:
         with session.Session() as sess:
             session_id = str(uuid.uuid1())
             sess.init_computing(session_id)
-            data_save(data_info=date_set, table_names=table_name_list, namespaces=table_namespace_list)
+            data_save(data_info=date_set, table_names=table_name_list, namespaces=table_namespace_list, partition_list=partition_list)
     else:
-        data_save(data_info=date_set, table_names=table_name_list, namespaces=table_namespace_list)
+        data_save(data_info=date_set, table_names=table_name_list, namespaces=table_namespace_list, partition_list=partition_list)

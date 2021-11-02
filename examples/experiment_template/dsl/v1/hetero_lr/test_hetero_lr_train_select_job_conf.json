@@ -4,7 +4,6 @@
     "party_id": 9999
   },
   "job_parameters": {
-    "work_mode": 1,
     "task_cores": 4
   },
   "role": {

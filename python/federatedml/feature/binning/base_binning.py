@@ -453,6 +453,8 @@ class BaseBinning(object):
 
     @staticmethod
     def get_bin_num(value, split_points):
+        if np.isnan(value):
+            return len(split_points)
         sp = split_points[:-1]
         col_bin_num = bisect.bisect_left(sp, value)
         # col_bin_num = bisect.bisect_left(split_points, value)

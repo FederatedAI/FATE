@@ -12,19 +12,22 @@
             10000
         ]
     },
+    "job_parameters": {
+        "common": {
+            "job_type": "train"
+        }
+    },
     "component_parameters": {
         "role": {
             "guest": {
                 "0": {
-                    "dataio_1": {
+                    "dataio_0": {
                         "with_label": true,
                         "output_format": "dense"
                     },
-                    "reader_1": {
-                        "table": {
-                            "name": "vehicle_scale_hetero_guest",
-                            "namespace": "experiment"
-                        }
+                    "dataio_1": {
+                        "with_label": true,
+                        "output_format": "dense"
                     },
                     "reader_0": {
                         "table": {
@@ -32,23 +35,23 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
-                        "with_label": true,
-                        "output_format": "dense"
+                    "reader_1": {
+                        "table": {
+                            "name": "vehicle_scale_hetero_guest",
+                            "namespace": "experiment"
+                        }
                     }
                 }
             },
             "host": {
                 "0": {
+                    "dataio_0": {
+                        "with_label": false,
+                        "output_format": "dense"
+                    },
                     "dataio_1": {
                         "with_label": true,
                         "output_format": "dense"
-                    },
-                    "reader_1": {
-                        "table": {
-                            "name": "vehicle_scale_hetero_host",
-                            "namespace": "experiment"
-                        }
                     },
                     "reader_0": {
                         "table": {
@@ -56,9 +59,11 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
-                        "with_label": false,
-                        "output_format": "dense"
+                    "reader_1": {
+                        "table": {
+                            "name": "vehicle_scale_hetero_host",
+                            "namespace": "experiment"
+                        }
                     }
                 }
             }

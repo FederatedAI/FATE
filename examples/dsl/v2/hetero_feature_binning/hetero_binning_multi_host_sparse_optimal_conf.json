@@ -13,32 +13,13 @@
             10000
         ]
     },
+    "job_parameters": {
+        "common": {
+            "job_type": "train"
+        }
+    },
     "component_parameters": {
         "role": {
-            "host": {
-                "1": {
-                    "reader_0": {
-                        "table": {
-                            "name": "breast_hetero_host",
-                            "namespace": "experiment"
-                        }
-                    }
-                },
-                "0|1": {
-                    "dataio_0": {
-                        "with_label": false,
-                        "output_format": "sparse"
-                    }
-                },
-                "0": {
-                    "reader_0": {
-                        "table": {
-                            "name": "breast_hetero_host",
-                            "namespace": "experiment"
-                        }
-                    }
-                }
-            },
             "guest": {
                 "0": {
                     "dataio_0": {
@@ -50,6 +31,30 @@
                             "name": "breast_hetero_guest",
                             "namespace": "experiment"
                         }
+                    }
+                }
+            },
+            "host": {
+                "1": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    }
+                },
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    }
+                },
+                "0|1": {
+                    "dataio_0": {
+                        "with_label": false,
+                        "output_format": "sparse"
                     }
                 }
             }

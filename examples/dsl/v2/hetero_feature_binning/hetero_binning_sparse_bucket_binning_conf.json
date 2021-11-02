@@ -12,6 +12,11 @@
             10000
         ]
     },
+    "job_parameters": {
+        "common": {
+            "job_type": "train"
+        }
+    },
     "component_parameters": {
         "role": {
             "host": {
