@@ -54,7 +54,7 @@ FATE官方网站：<https://fate.fedai.org/>
 
 ### API文档
 
-- [Computing API](doc/computing.md)
+- [Computing API](doc/api/computing.md)
 - [Federation API](./doc/api/federation.md)
 - [Flow SDK API](doc/api/fate_client/flow_sdk.md)
 - [Flow Client](doc/api/fate_client/flow_client.md)
