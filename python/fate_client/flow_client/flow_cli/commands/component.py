@@ -229,7 +229,7 @@ def output_data_table(ctx, **kwargs):
 @cli_args.COMPONENT_NAME_REQUIRED
 @cli_args.OUTPUT_PATH
 @click.pass_context
-def download_summary(ctx, **kwargs):
+def get_summary(ctx, **kwargs):
     """
     \b
     - DESCRIPTION:
@@ -237,8 +237,8 @@ def download_summary(ctx, **kwargs):
 
     \b
     - USAGE:
-        flow component download-summary -j $JOB_ID -r host -p 10000 -cpn hetero_feature_binning_0
-        flow component download-summary -j $JOB_ID -r host -p 10000 -cpn hetero_feature_binning_0 -o ./examples/
+        flow component get-summary -j $JOB_ID -r host -p 10000 -cpn hetero_feature_binning_0
+        flow component get-summary -j $JOB_ID -r host -p 10000 -cpn hetero_feature_binning_0 -o ./examples/
     """
     config_data, dsl_data = preprocess(**kwargs)
     if config_data.get("output_path"):

@@ -12,13 +12,6 @@
             9999
         ]
     },
-    "job_parameters": {
-        "common": {
-            "job_type": "train",
-            "backend": 0,
-            "work_mode": 0
-        }
-    },
     "component_parameters": {
         "common": {
             "hetero_nn_0": {
@@ -36,9 +29,6 @@
                     "optimizer": "Adam"
                 },
                 "loss": "categorical_crossentropy",
-                "metrics": [
-                    "accuracy"
-                ],
                 "bottom_nn_define": {
                     "class_name": "Sequential",
                     "config": {
@@ -173,7 +163,6 @@
             "hetero_nn_1": {
                 "optimizer": null,
                 "loss": null,
-                "metrics": null,
                 "bottom_nn_define": null,
                 "top_nn_define": null,
                 "interactive_layer_define": null,
@@ -186,7 +175,7 @@
         "role": {
             "host": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
                     },
                     "reader_0": {
@@ -199,7 +188,7 @@
             },
             "guest": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true
                     },
                     "reader_0": {

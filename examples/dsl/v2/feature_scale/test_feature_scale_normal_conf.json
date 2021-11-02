@@ -15,13 +15,6 @@
             9999
         ]
     },
-    "job_parameters": {
-        "common": {
-            "job_type": "train",
-            "backend": 0,
-            "work_mode": 0
-        }
-    },
     "component_parameters": {
         "common": {
             "federated_sample_0": {
@@ -71,7 +64,18 @@
                         }
                     },
                     "feature_scale_0": {
-                        "feat_upper": [1, 2, 1, 1, 0.5, 1, 2, 2, 1, 1]
+                        "feat_upper": [
+                            1,
+                            2,
+                            1,
+                            1,
+                            0.5,
+                            1,
+                            2,
+                            2,
+                            1,
+                            1
+                        ]
                     }
                 }
             },

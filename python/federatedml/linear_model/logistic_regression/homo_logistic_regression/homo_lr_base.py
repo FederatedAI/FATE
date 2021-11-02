@@ -54,7 +54,7 @@ class HomoLRBase(BaseLogisticRegression):
             self.cipher_operator = FakeEncrypt()
 
         self.transfer_variable = HomoLRTransferVariable()
-        self.aggregator.register_aggregator(self.transfer_variable)
+        # self.aggregator.register_aggregator(self.transfer_variable)
         self.optimizer = optimizer_factory(params)
         self.aggregate_iters = params.aggregate_iters
         self.use_proximal = params.use_proximal

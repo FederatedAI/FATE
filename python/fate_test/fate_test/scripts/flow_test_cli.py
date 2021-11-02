@@ -68,7 +68,7 @@ def api(ctx, **kwargs):
         return
     try:
         start = time.time()
-        flow_rest_api.run_test_api(get_role(conf=config_inst))
+        flow_rest_api.run_test_api(get_role(conf=config_inst), namespace)
         echo.echo(f"elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
     except Exception:
         exception_id = uuid.uuid1()
@@ -96,7 +96,7 @@ def api(ctx, **kwargs):
         return
     try:
         start = time.time()
-        flow_sdk_api.run_test_api(get_role(conf=config_inst))
+        flow_sdk_api.run_test_api(get_role(conf=config_inst), namespace)
         echo.echo(f"elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
     except Exception:
         exception_id = uuid.uuid1()
@@ -124,7 +124,7 @@ def api(ctx, **kwargs):
         return
     try:
         start = time.time()
-        flow_cli_api.run_test_api(get_role(conf=config_inst))
+        flow_cli_api.run_test_api(get_role(conf=config_inst), namespace)
         echo.echo(f"elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
     except Exception:
         exception_id = uuid.uuid1()
@@ -146,16 +146,17 @@ def get_role(conf: Config):
                    'host_party_id': [conf.role['host'][0]],
                    'arbiter_party_id': conf.role['arbiter'],
                    'online_serving': conf.serving_setting['serving_setting']['address'],
-                   'work_mode': conf.work_mode,
                    'train_conf_path': os.path.abspath(conf.data_base_dir) + flow_test_template['train_conf_path'],
                    'train_dsl_path': os.path.abspath(conf.data_base_dir) + flow_test_template['train_dsl_path'],
                    'predict_conf_path': os.path.abspath(conf.data_base_dir) + flow_test_template['predict_conf_path'],
                    'predict_dsl_path': os.path.abspath(conf.data_base_dir) + flow_test_template['predict_dsl_path'],
                    'upload_file_path': os.path.abspath(conf.data_base_dir) + flow_test_template['upload_conf_path'],
+                   'model_file_path': os.path.abspath(conf.data_base_dir) + flow_test_template['model_conf_path'],
                    'server_url': "http://{}/{}".format(flow_services, config['api_version']),
                    'train_auc': config['train_auc'],
                    'component_name': config['component_name'],
                    'component_is_homo': config.get('component_is_homo', False),
+                   'serving_setting': conf.serving_setting['serving_setting']['address'],
                    'metric_output_path': config['metric_output_path'],
                    'model_output_path': config['model_output_path'],
                    'cache_directory': conf.cache_directory,

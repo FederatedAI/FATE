@@ -5,20 +5,15 @@
         "party_id": 10000
     },
     "role": {
-        "guest": [
-            10000
+        "arbiter": [
+            9999
         ],
         "host": [
             9999
         ],
-        "arbiter": [
-            9999
+        "guest": [
+            10000
         ]
-    },
-    "job_parameters": {
-        "common": {
-            "job_type": "train"
-        }
     },
     "component_parameters": {
         "role": {

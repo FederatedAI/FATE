@@ -12,11 +12,6 @@
             10000
         ]
     },
-    "job_parameters": {
-        "common": {
-            "job_type": "train"
-        }
-    },
     "component_parameters": {
         "role": {
             "guest": {
@@ -27,7 +22,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true
                     },
                     "reader_1": {
@@ -46,7 +41,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
                     },
                     "reader_1": {
@@ -59,10 +54,10 @@
             }
         },
         "common": {
-            "dataio_0": {
+            "data_transform_0": {
                 "output_format": "dense"
             },
-            "dataio_1": {
+            "data_transform_1": {
                 "output_format": "dense"
             },
             "hetero_sshe_lr_0": {
@@ -77,10 +72,15 @@
                 },
                 "max_iter": 30,
                 "early_stop": "diff",
-                "validation_freqs": 1,
-                "early_stopping_rounds": 3,
+                "callback_param": {
+                    "callbacks": [
+                        "EarlyStopping",
+                        "PerformanceEvaluate"
+                    ],
+                    "validation_freqs": 1,
+                    "early_stopping_rounds": 3
+                },
                 "reveal_strategy": "respectively",
-                "compute_loss": true,
                 "reveal_every_iter": true
             },
             "evaluation_0": {

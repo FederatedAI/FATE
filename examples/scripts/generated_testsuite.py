@@ -31,25 +31,41 @@ def extract(my_pipeline, file_name, output_path='generated_conf_and_dsl'):
     """
     code_lines.append(code)
 
-    screen_keywords = [".predict(", ".fit(", ".deploy_component(", "predict"]
+    screen_keywords = [".predict(", ".fit(", ".deploy_component(", "predict_pipeline ",
+                       "predict_pipeline."]
+    continue_to_screen = False
+    has_return = False
+
     with open(file_path, 'r') as f:
         lines = f.readlines()
         for l in lines:
-            # if ".predict(" in l or ".fit(" in l :
-            #     code_lines.append(f"# {l}")
+            if ".predict(" in l or ".fit(" in l :
+                code_lines.append(f"# {l}")
 
-            # elif 'if __name__ == "__main__":' in l:
-            if 'return' in l:
+            elif 'if __name__ == "__main__":' in l:
+                if not has_return:
+                    code_lines.append("    extract(pipeline, __file__)\n")
+                    code_lines.append(l)
+
+            elif 'return' in l:
                 code_lines.append("    extract(pipeline, __file__)\n")
                 code_lines.append(l)
+                has_return = True
+
             elif "get_summary()" in l:
                 continue
+            elif continue_to_screen:
+                code_lines.append(f"# {l}")
+                if ")" in l:
+                    continue_to_screen = False
             else:
                 should_append = True
                 for key_word in screen_keywords:
                     if key_word in l:
                         code_lines.append(f"# {l}")
                         should_append = False
+                        if ")" not in l:
+                            continue_to_screen = True
                 if should_append:
                     code_lines.append(l)
 

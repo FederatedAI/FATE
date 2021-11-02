@@ -17,6 +17,7 @@
 #  limitations under the License.
 
 import numpy as np
+import operator
 
 from federatedml.feature.feature_selection.model_adapter import isometric_model
 from federatedml.feature.feature_selection.model_adapter.adapter_base import BaseAdapter
@@ -28,12 +29,13 @@ class BinningAdapter(BaseAdapter):
 
     def _load_one_class(self, local_result, remote_results):
         values_dict = dict(local_result.binning_result)
+        values_sorted_dict = sorted(values_dict.items(), key=operator.itemgetter(0))
         values = []
         col_names = []
-        for n, v in values_dict.items():
+        for n, v in values_sorted_dict:
             values.append(v.iv)
             col_names.append(n)
-        # LOGGER.debug(f"In binning adapter convert, host_results: {host_results}")
+        LOGGER.debug(f"When loading iv, values: {values}, col_names: {col_names}")
         host_party_ids = [int(x.party_id) for x in remote_results]
         host_values = []
         host_col_names = []

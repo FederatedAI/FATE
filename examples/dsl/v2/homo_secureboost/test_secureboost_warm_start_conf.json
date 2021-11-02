@@ -15,18 +15,11 @@
             10000
         ]
     },
-    "job_parameters": {
-        "common": {
-            "backend": 0,
-            "work_mode": 0,
-            "job_type": "train"
-        }
-    },
     "component_parameters": {
         "role": {
             "guest": {
                 "0": {
-                    "dataio_1": {
+                    "data_transform_1": {
                         "with_label": true,
                         "output_format": "dense"
                     },
@@ -42,7 +35,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true,
                         "output_format": "dense"
                     }
@@ -50,7 +43,7 @@
             },
             "host": {
                 "0": {
-                    "dataio_1": {
+                    "data_transform_1": {
                         "with_label": true,
                         "output_format": "dense"
                     },
@@ -66,7 +59,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true,
                         "output_format": "dense"
                     }

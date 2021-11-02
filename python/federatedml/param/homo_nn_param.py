@@ -33,28 +33,37 @@ class HomoNNParam(BaseParam):
 
     Parameters
     ----------
-    Args:
-        secure_aggregate: enable secure aggregation or not, defaults to True.
-        aggregate_every_n_epoch: aggregate model every n epoch, defaults to 1.
-        config_type: one of "nn", "keras", "tf"
-        nn_define: a dict represents the structure of neural network.
-        optimizer: optimizer method, accept following types:
-            1. a string, one of "Adadelta", "Adagrad", "Adam", "Adamax", "Nadam", "RMSprop", "SGD"
-            2. a dict, with a required key-value pair keyed by "optimizer",
-                with optional key-value pairs such as learning rate.
-            defaults to "SGD"
-        loss: a string
-        metrics:
-        max_iter: the maximum iteration for aggregation in training.
-        batch_size : batch size when updating model.
-            -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
-            defaults to -1.
-        early_stop : str, 'diff', 'weight_diff' or 'abs', default: 'diff'
-            Method used to judge converge or not.
-                a)	diff： Use difference of loss between two iterations to judge whether converge.
-                b)  weight_diff: Use difference between weights of two consecutive iterations
-                c)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < eps, it is converged.
-        encode_label : encode label to one_hot.
+    secure_aggregate : bool
+        enable secure aggregation or not, defaults to True.
+    aggregate_every_n_epoch : int
+        aggregate model every n epoch, defaults to 1.
+    config_type : {"nn", "keras", "tf"}
+        config type
+    nn_define : dict
+        a dict represents the structure of neural network.
+    optimizer : str or dict
+        optimizer method, accept following types:
+        1. a string, one of "Adadelta", "Adagrad", "Adam", "Adamax", "Nadam", "RMSprop", "SGD"
+        2. a dict, with a required key-value pair keyed by "optimizer",
+            with optional key-value pairs such as learning rate.
+        defaults to "SGD"
+    loss : str
+        loss
+    metrics: str or list of str
+        metrics
+    max_iter: int
+        the maximum iteration for aggregation in training.
+    batch_size : int
+        batch size when updating model.
+        -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
+        defaults to -1.
+    early_stop : {'diff', 'weight_diff', 'abs'}
+        Method used to judge converge or not.
+            a)	diff： Use difference of loss between two iterations to judge whether converge.
+            b)  weight_diff: Use difference between weights of two consecutive iterations
+            c)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < eps, it is converged.
+    encode_label : bool
+        encode label to one_hot.
     """
 
     def __init__(
@@ -95,7 +104,7 @@ class HomoNNParam(BaseParam):
 
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
-        self.callback_param = callback_param
+        self.callback_param = copy.deepcopy(callback_param)
 
     def check(self):
         supported_config_type = ["nn", "keras", "pytorch"]

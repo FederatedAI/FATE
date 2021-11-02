@@ -12,16 +12,11 @@
             10000
         ]
     },
-    "job_parameters": {
-        "common": {
-            "job_type": "train"
-        }
-    },
     "component_parameters": {
         "role": {
             "guest": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true
                     },
                     "reader_0": {
@@ -34,7 +29,7 @@
             },
             "host": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
                     },
                     "reader_0": {
@@ -47,7 +42,7 @@
             }
         },
         "common": {
-            "dataio_0": {
+            "data_transform_0": {
                 "output_format": "dense"
             },
             "hetero_sshe_lr_0": {
@@ -67,7 +62,6 @@
                     "key_length": 1024
                 },
                 "reveal_strategy": "respectively",
-                "compute_loss": true,
                 "reveal_every_iter": true
             },
             "evaluation_0": {

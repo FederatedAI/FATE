@@ -10,6 +10,8 @@ __pycache__
 *.prefs
 _build
 venv
+*.log
+*.tar.gz
 
 # excluded paths
 /arch/core/target/
@@ -35,6 +37,13 @@ venv
 .vscode/*
 /eggroll/
 /fateboard/
+/doc/api/params/
+
+# fate_test
+fate_test_config.yaml
+examples/cache/
+**/fate_test/**/logs/
+**/fate_test/**/output/
 
 # user defined config
 /conf/local.*.yaml

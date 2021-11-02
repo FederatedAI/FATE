@@ -4,7 +4,7 @@ Example Usage Guide
 本章节介绍examples目录，它提供了pipeline样例、dsl的配置、
 以及正确性对比验证回归的样例、常规建模模版等。
 
-为方便用户快速使用样例，FATE提供样例执行工具`FATE-Test <../python/fate_test/README.rst>`__.
+为方便用户快速使用样例，FATE提供样例执行工具`FATE-Test <../doc/api/fate_test.rst>`__.
 
 为方便使用dsl/conf，我们建议用户安装使用`FATE-Client <../python/fate_client/README.rst>`__.
 
@@ -21,7 +21,7 @@ FATE-Pipeline
 
 为了提升联邦建模的易用性，FATE-v1.5 提供了python调用FATE组件的API接口.
 用户可通过python编程快速搭建联邦学习模型，具体教程可参考
-`FATE-Pipeline <../python/fate_client/pipeline/README.rst>`__.
+`FATE-Pipeline <../doc/pipeline.rst>`__.
 我们对于每个算法模块也提供了大量的Pipeline搭建联邦学习模型的样例，具体可参考\ `pipeline <./pipeline>`__.
 
 下面样例为使用FATE-Pipeline快速建模纵向SecureBoost模型：
@@ -114,7 +114,7 @@ Benchmark Quality
 * 横向: LogisticRegression(`benchmark_quality/homo_lr <./benchmark_quality/homo_lr>`__),
   SecureBoost(`benchmark_quality/homo_sbt <./benchmark_quality/homo_sbt>`__), NN(`benchmark_quality/homo_nn <./benchmark_quality/homo_nn>`__.
 
-执行方法可参考\ `benchmark_quality使用文档 <../python/fate_test/README.rst>`__
+执行方法可参考\ `benchmark_quality使用文档 <../doc/api/fate_test.rst>`__
 
 Upload Default Data
 -------------------

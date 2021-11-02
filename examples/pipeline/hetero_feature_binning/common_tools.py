@@ -36,8 +36,6 @@ def make_add_one_hot_dsl(config, namespace, bin_param, is_multi_host=False):
     parties = config.parties
     guest = parties.guest[0]
     hosts = parties.host
-    backend = config.backend
-    work_mode = config.work_mode
 
     guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
     host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
@@ -113,7 +111,7 @@ def make_add_one_hot_dsl(config, namespace, bin_param, is_multi_host=False):
     # compile pipeline once finished adding modules, this step will form conf and dsl files for running job
     pipeline.compile()
 
-    # pipeline.fit(backend=backend, work_mode=work_mode)
+    # pipeline.fit(work_mode=work_mode)
     return pipeline
 
 
@@ -122,8 +120,6 @@ def make_normal_dsl(config, namespace, bin_param, dataset='breast', is_multi_hos
     parties = config.parties
     guest = parties.guest[0]
     hosts = parties.host
-    backend = config.backend
-    work_mode = config.work_mode
 
     if dataset == 'breast':
         guest_table_name = 'breast_hetero_guest'
@@ -194,7 +190,7 @@ def make_normal_dsl(config, namespace, bin_param, dataset='breast', is_multi_hos
     pipeline.compile()
 
     # fit model
-    # pipeline.fit(backend=backend, work_mode=work_mode)
+    # pipeline.fit(work_mode=work_mode)
     return pipeline
 
 
@@ -278,5 +274,5 @@ def make_asymmetric_dsl(config, namespace, guest_param, host_param, dataset='bre
     pipeline.compile()
 
     # fit model
-    # pipeline.fit(backend=backend, work_mode=work_mode)
+    # pipeline.fit(work_mode=work_mode)
     return pipeline

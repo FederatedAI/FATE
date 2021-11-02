@@ -4,7 +4,7 @@ Example Usage Guide.
 We provide here examples of FATE jobs, including FATE-Pipeline scripts,
 DSL conf files, and modeling quality comparison tasks
 
-We suggest that user use example-runner tool `FATE-Test <../python/fate_test/README.rst>`__.
+We suggest that user use example-runner tool `FATE-Test <../doc/api/fate_test.rst>`__.
 
 Also, for smoother interaction with FATE-Flow, we suggest that user install Flow-Client with `FATE-Client <../python/fate_client/README.rst>`__.
 
@@ -21,7 +21,7 @@ FATE-Pipeline
 
 To enhance usability of FATE, starting at FATE-v1.5, FATE provides python APIs.
 User may develop federated learning models conveniently with
-`FATE-Pipeline <../python/fate_client/pipeline/README.rst>`__.
+`FATE-Pipeline <../doc/pipeline.rst>`__.
 We provide a host of Pipeline examples for each FATE module and a quick start guide for Pipeline
 `here <./pipeline>`__
 
@@ -125,7 +125,7 @@ following common models:
   SecureBoost(`benchmark_quality/homo_sbt <./benchmark_quality/homo_sbt>`__), NN(`benchmark_quality/homo_nn <./benchmark_quality/homo_nn>`__.
 
 Starting at v1.6, benchmark quality supports matching metrics from the same script. For more details, please refer
-to the `guide <../python/fate_test/README.rst>`__.
+to the `guide <../doc/api/fate_test.rst>`__.
 
 Upload Default Data
 -------------------
@@ -135,7 +135,7 @@ along with a utility script for uploading all data sets. User may use the provid
 script to upload all pre-given data, or modify the corresponding configuration file for uploading
 arbitrary data. Please refer `scripts <./scripts/README.rst>`__ for details.
 
-Alternatively, user may use `FATE-Test <../python/fate_test/README.rst#data>`__ for uploading data.
+Alternatively, user may use `FATE-Test <../doc/api/fate_test.rst#data>`__ for uploading data.
 
 Toy Example
 -----------

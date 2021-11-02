@@ -21,10 +21,7 @@ from fate_arch.common.address import PathAddress
 
 class StorageSession(StorageSessionBase):
     def __init__(self, session_id, options=None):
-        super(StorageSession, self).__init__(session_id=session_id, engine_name=StorageEngine.PATH)
-
-    def create(self):
-        pass
+        super(StorageSession, self).__init__(session_id=session_id, engine=StorageEngine.PATH)
 
     def table(self, address: AddressABC, name, namespace, partitions, store_type=None, options=None, **kwargs):
         if isinstance(address, PathAddress):

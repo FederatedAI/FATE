@@ -5,33 +5,15 @@
         "party_id": 10000
     },
     "role": {
-        "guest": [
-            10000
-        ],
         "host": [
             9999
+        ],
+        "guest": [
+            10000
         ]
-    },
-    "job_parameters": {
-        "common": {
-            "job_type": "train"
-        }
     },
     "component_parameters": {
         "role": {
-            "guest": {
-                "0": {
-                    "reader_0": {
-                        "table": {
-                            "name": "breast_hetero_guest",
-                            "namespace": "experiment"
-                        }
-                    },
-                    "dataio_0": {
-                        "with_label": true
-                    }
-                }
-            },
             "host": {
                 "0": {
                     "reader_0": {
@@ -42,6 +24,19 @@
                     },
                     "dataio_0": {
                         "with_label": false
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_0": {
+                        "with_label": true
                     }
                 }
             }
