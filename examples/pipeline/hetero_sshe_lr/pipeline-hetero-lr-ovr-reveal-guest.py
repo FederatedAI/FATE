@@ -22,6 +22,7 @@ from pipeline.component import HeteroSSHELR
 from pipeline.component import DataTransform
 from pipeline.component import Evaluation
 from pipeline.component import Intersection
+from pipeline.component import HeteroFeatureSelection
 from pipeline.component import Reader
 from pipeline.interface import Data
 from pipeline.interface import Model
@@ -114,9 +115,8 @@ def main(config="../../config.yaml", namespace=""):
         "init_param": {
             "init_method": "random_uniform"
         },
-        "reveal_strategy": "all_reveal_in_guest",
-        "reveal_every_iter": False,
-        "compute_loss": True,
+        "reveal_strategy": "encrypted_reveal_in_host",
+        "reveal_every_iter": False
     }
 
     hetero_sshe_lr_0 = HeteroSSHELR(**lr_param)

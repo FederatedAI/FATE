@@ -110,8 +110,7 @@ def main(config="../../config.yaml", namespace=""):
             "init_method": "zeros"
         },
         "reveal_strategy": "respectively",
-        "reveal_every_iter": True,
-        "compute_loss": True
+        "reveal_every_iter": True
     }
 
     hetero_sshe_lr_0 = HeteroSSHELR(**lr_param)
