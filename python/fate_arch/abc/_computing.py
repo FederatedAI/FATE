@@ -42,7 +42,7 @@ class CTableABC(metaclass=ABCMeta):
         get the engine name of table
 
         Returns
-        ------
+        -------
         int
            number of partitions
         """
@@ -55,7 +55,7 @@ class CTableABC(metaclass=ABCMeta):
         get the partitions of table
 
         Returns
-        ------
+        -------
         int
            number of partitions
         """
@@ -124,8 +124,9 @@ class CTableABC(metaclass=ABCMeta):
         object
           a data from table
 
+        
         Notes
-        ------
+        -------
         no order guarantee
         """
         ...
@@ -158,7 +159,7 @@ class CTableABC(metaclass=ABCMeta):
            A new table
 
         Examples
-        ------
+        --------
         >>> from fate_arch.session import computing_session
         >>> a = computing_session.parallelize([('k1', 1), ('k2', 2), ('k3', 3)], include_key=True, partition=2)
         >>> b = a.map(lambda k, v: (k, v**2))
@@ -323,26 +324,28 @@ class CTableABC(metaclass=ABCMeta):
     def reduce(self, func):
         """
         reduces all value in pair of table by a binary function `func`
-
+        
         Parameters
         ----------
-        func: ``typing.Callable[[object, object], object]``
+        func: typing.Callable[[object, object], object]
            binary function reduce two value into one
-
-        Notes
-        -------
-        `func` should be associative
-
+           
         Returns
         -------
         object
            a single object
+
+        
 
         Examples
         --------
         >>> from fate_arch.session import computing_session
         >>> a = computing_session.parallelize(range(100), include_key=False, partition=4)
         >>> assert a.reduce(lambda x, y: x + y) == sum(range(100))
+        
+        Notes
+        ------
+        `func` should be associative
         """
         ...
 
@@ -370,7 +373,6 @@ class CTableABC(metaclass=ABCMeta):
     def sample(self, *, fraction: typing.Optional[float] = None, num: typing.Optional[int] = None, seed=None):
         """
         return a sampled subset of this Table.
-
         Parameters
         ----------
         fraction: float
@@ -382,10 +384,6 @@ class CTableABC(metaclass=ABCMeta):
         seed: int
           Seed of the random number generator. Use current timestamp when `None` is passed.
 
-        Notes
-        ------
-        use one of ``fraction`` and ``num``, not both
-
         Returns
         -------
         CTableABC
@@ -395,8 +393,13 @@ class CTableABC(metaclass=ABCMeta):
         --------
         >>> from fate_arch.session import computing_session
         >>> x = computing_session.parallelize(range(100), include_key=False, partition=4)
-        >>>  6 <= x.sample(fraction=0.1, seed=81).count() <= 14
+        >>> 6 <= x.sample(fraction=0.1, seed=81).count() <= 14
         True
+        
+        Notes
+        -------
+        use one of ``fraction`` and ``num``, not both
+
         """
         ...
 

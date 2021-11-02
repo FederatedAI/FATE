@@ -1,2 +1,0 @@
-# OneVsRest
-FATE provides OneVsRest for logistic regression, including hetero_lr and homo_lr. Detailed information on OneVsRest could be found in [OneVsRest wiki](https://en.wikipedia.org/wiki/Multiclass_classification#One-vs.-rest)

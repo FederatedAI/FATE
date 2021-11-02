@@ -27,9 +27,9 @@ class OneVsRestParam(BaseParam):
 
     Parameters
     ----------
-    has_arbiter: bool. For some algorithm, may not has arbiter, for instances, secureboost of FATE,
-                     for these algorithms, it should be set to false.
-                default true
+    has_arbiter: bool, default: true
+        For some algorithm, may not has arbiter, for instances, secureboost of FATE,
+        for these algorithms, it should be set to false.
     """
 
     def __init__(self, need_one_vs_rest=False, has_arbiter=True):

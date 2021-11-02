@@ -34,10 +34,14 @@ class SelectorParam(object):
     Parameters used for Homo Neural Network.
 
     Args:
-        method: None or str, back propagation select method, accept "relative" only, default: None
-        selective_size: int, deque size to use, store the most recent selective_size historical loss, default: 1024
-        beta: int, sample whose selective probability >= power(np.random, beta) will be selected
-        min_prob: Numeric, selective probability is max(min_prob, rank_rate)
+        method: None or str
+            back propagation select method, accept "relative" only, default: None
+        selective_size: int
+            deque size to use, store the most recent selective_size historical loss, default: 1024
+        beta: int
+            sample whose selective probability >= power(np.random, beta) will be selected
+        min_prob: Numeric
+            selective probability is max(min_prob, rank_rate)
 
     """
     def __init__(self, method=None, beta=1, selective_size=consts.SELECTIVE_SIZE, min_prob=0, random_state=None):
