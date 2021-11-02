@@ -72,7 +72,7 @@ Hosts decode feature ids back to feature names and obtain selection
 results.
 
 ![Figure 4: Multi-Host Selection
-Principle\</div\>](../../images/multi_host_selection.png)
+Principle\</div\>](../images/multi_host_selection.png)
 
 More feature selection methods will be provided. Please make suggestions
 by submitting an issue.

@@ -12,24 +12,24 @@ represents Guest， party B represents Host.
 
 To begin with, there are two protocol will be used below.
 
-![Figure 1 (Protocol 1)](../../images/share_enctyped_matrix.jpg)
+![Figure 1 (Protocol 1)](../images/share_enctyped_matrix.jpg)
 
-![Figure 2 (Protocol 2)](../../images/secure_matrix_multiplication.jpg)
+![Figure 2 (Protocol 2)](../images/secure_matrix_multiplication.jpg)
 
 Use these two protocol, the training process could be described as the
 following.
 
-![Figure 3 Training 1](../../images/training_1.jpg)
+![Figure 3 Training 1](../images/training_1.jpg)
 
-![Figure 4 Training 2](../../images/training_2.jpg)
+![Figure 4 Training 2](../images/training_2.jpg)
 
-![Figure 5 Training 3](../../images/training_3.jpg)
+![Figure 5 Training 3](../images/training_3.jpg)
 
-![Figure 6 Training 4](../../images/training_4.jpg)
+![Figure 6 Training 4](../images/training_4.jpg)
 
-![Figure 7 Training 5](../../images/training_5.jpg)
+![Figure 7 Training 5](../images/training_5.jpg)
 
-![Figure 8 Training 6](../../images/training_6.jpg)
+![Figure 8 Training 6](../images/training_6.jpg)
 
 ## Param
 

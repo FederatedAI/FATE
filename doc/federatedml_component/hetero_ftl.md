@@ -14,7 +14,7 @@ Figure 1. Our objective is to predict labels for host as accurately as
 possible.
 
 ![Figure 1： Federated Transfer Learning in the sample and feature
-space](../../images/samples.png)
+space](../images/samples.png)
 
 for two-party problem
 
@@ -22,7 +22,7 @@ Our solution employs an architecture of two layers: local layer and
 federation layer.
 
 ![Figure 2: Architecture of Federated Transfer
-Learning](../../images/architecture.png)
+Learning](../images/architecture.png)
 
 In the Local layer, both guest and host exploit a local model for
 extracting features from input data and outputting extracted features in

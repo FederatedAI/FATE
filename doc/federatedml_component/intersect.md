@@ -15,7 +15,7 @@ without leaking non-overlapping ids. The process is illustrated below in
 <span class="title-ref">figure 1</span>.
 
 ![Figure 1 (RSA Intersection between party A and party
-B)](../../images/rsa_intersection.png)
+B)](../images/rsa_intersection.png)
 
 In <span class="title-ref">figure 1</span> ,Party A has user id
 u1,u2,u3,u4, while Party B has u1,u2,u3,u5. After Intersection, party A
@@ -52,7 +52,7 @@ the intersection ids to the sender.
 This mode implements secure intersection based on symmetric encryption
 with Pohlig–Hellman commutative cipher. DH Intersection is also used in
 [Secure Information Retrieval(SIR)
-module](./sir.md).
+module](sir.md).
 
 ## Intersection With Cache
 
@@ -66,7 +66,7 @@ guest can perform intersection with more than one host simultaneously
 and get the common ids among all participants.
 
 ![Figure 2 (multi-hosts
-Intersection)](../../images/multi_host_intersect.png)
+Intersection)](../images/multi_host_intersect.png)
 
 Refer to <span class="title-ref">figure 2</span> for a demonstration of
 one guest running intersection with two hosts; the same process applies
@@ -130,11 +130,11 @@ RSA, RAW, and DH intersection methods support:
 
 1.  Multi-host PSI task. The detailed configuration for multi-host task
     can be found
-    [here](../../tutorial/dsl_conf/dsl_conf_v2_setting_guide.md#multi-host-configuration).
+    [here](../tutorial/dsl_conf/dsl_conf_v2_setting_guide.md#multi-host-configuration).
 2.  Match ID intersection using ID expanding.
 3.  Configurable hashing methods, including sha256, md5, and sm3; hash
     operators of RSA intersection can be configured separately, please
-    refer [here](../../../python/federatedml/param/intersect_param.py)
+    refer [here](../../python/federatedml/param/intersect_param.py)
     for more details.
 4.  Preprocessing step to pre-filter Host's data for faster PSI
 

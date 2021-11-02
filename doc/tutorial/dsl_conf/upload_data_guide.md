@@ -81,7 +81,7 @@ Field Specifications:
 ## Upload Command
 
 We use fate-flow to upload data. Starting at FATE ver1.5, [FATE-Flow
-Client Command Line](../../api/flow_client.md) is
+Client Command Line](../../api/fate_client/flow_client.md) is
 recommended for interacting with FATE-Flow.
 
 The command is as follows:

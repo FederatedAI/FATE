@@ -18,7 +18,7 @@ keys.
 The process of HeteroLinR training is shown below:
 
 ![Figure 1 (Federated HeteroLinR
-Principle)](../../images/HeteroLinR.png)
+Principle)](../images/HeteroLinR.png)
 
 A sample alignment process is conducted before training. The sample
 alignment process identifies overlapping samples in databases of all
@@ -83,7 +83,7 @@ details on the secure model-building process, please refer to this
 
 5.  Support multi-host modeling task. For details on how to configure
     for multi-host modeling task, please refer to this
-    [guide](../../tutorial/dsl_conf/dsl_conf_v2_setting_guide.md)
+    [guide](../tutorial/dsl_conf/dsl_conf_v2_setting_guide.md)
 
 6.  Support validation for every arbitrary iterations
 
@@ -96,4 +96,4 @@ details on the secure model-building process, please refer to this
 9.  Support sparse format data as input.
 
 10. Support stepwise. For details on stepwise mode, please refer
-    [stepwise](./stepwise.md) .
+    [stepwise](stepwise.md) .

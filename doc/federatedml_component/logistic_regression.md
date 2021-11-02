@@ -16,7 +16,7 @@ are identical. An optional encryption mode for computing gradients is
 provided for host parties. By doing this, the plain model is not
 available for this host any more.
 
-![Figure 1 (Federated HomoLR Principle)](../../images/HomoLR.png)
+![Figure 1 (Federated HomoLR Principle)](../images/HomoLR.png)
 
 The HomoLR process is shown in `lr figure 1`. Models of Party A and
 Party B have the same structure. In each iteration, each party trains
@@ -41,7 +41,7 @@ sample ids) on the two parties since it is conducted in an encrypted
 way. Check out [\[paper 1\]](https://arxiv.org/abs/1711.10677) for more
 details.
 
-![Figure 2 (Federated HeteroLR Principle)](../../images/HeteroLR.png)
+![Figure 2 (Federated HeteroLR Principle)](../images/HeteroLR.png)
 
 In the training process, party A and party B compute out the elements
 needed for final gradients. Arbiter aggregate them and compute out the
@@ -57,7 +57,7 @@ criterion. Since the arbiter can obtain the completed model weight, the
 convergence decision is happening in Arbiter.
 
 ![Figure 3 (Federated Multi-host HeteroLR
-Principle)](../../images/hetero_lr_multi_host.png)
+Principle)](../images/hetero_lr_multi_host.png)
 
 ## Param
 

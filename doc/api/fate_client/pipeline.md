@@ -68,7 +68,7 @@ each component name includes a numbering as suffix for easy tracking.
 
 Components each may have input and/or output `Data` and/or `Model`. For
 details on how to use component, please refer to this
-[guide](./pipeline_component.md).
+[guide](pipeline_component.md).
 
 An example of initializing a component with specified parameter
 values:
@@ -80,7 +80,7 @@ hetero_lr_0 = HeteroLR(name="hetero_lr_0", early_stop="weight_diff", max_iter=10
 
 ### Input
 
-[Input](./pipeline_component.md) encapsulates all input of a component,
+[Input](pipeline_component.md) encapsulates all input of a component,
 including `Data`, `Cache`, and `Model` input. To access `input` of a
 component, reference its `input` attribute:
 
@@ -90,7 +90,7 @@ input_all = data_transform_0.input
 
 ### Output
 
-[Output](./pipeline_component.md) encapsulates all output result of a
+[Output](pipeline_component.md) encapsulates all output result of a
 component, including `Data`, `Cache`, and `Model` output. To access
 `Output` from a component, reference its `output` attribute:
 
@@ -102,19 +102,19 @@ output_all = data_transform_0.output
 
 `Data` wraps all data-type input and output of components. FATE Pipeline
 includes five types of `data`, each is used for different scenario. For
-more information, please refer [here](./pipeline_component.md).
+more information, please refer [here](pipeline_component.md).
 
 ### Model
 
 `Model` defines model input and output of components. Similar to `Data`,
 the two types of `models` are used for different purposes. For more
-information, please refer [here](./pipeline_component.md).
+information, please refer [here](pipeline_component.md).
 
 ### Cache
 
 `Caches` wraps cache input and output of `Intersection` component. Only
 `Intersection` component may have `cache` input or output. For more
-information, please refer [here](./pipeline_component.md).
+information, please refer [here](pipeline_component.md).
 
 ## Build A Pipeline
 
@@ -224,7 +224,7 @@ pipeline.fit()
 
 FATE Pipeline provides API to query component information, including
 data, model, and summary. All query API have matching name to
-[FlowPy](./flow_sdk.md), while Pipeline retrieves and returns query
+[FlowPy](flow_sdk.md), while Pipeline retrieves and returns query
 result directly to user.
 
 ``` sourceCode python

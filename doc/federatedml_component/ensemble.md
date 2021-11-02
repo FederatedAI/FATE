@@ -18,7 +18,7 @@ information on private data.
 The following figure shows the proposed Federated SecureBoost framework.
 
 ![Figure 1: Framework of Federated
-SecureBoost](../../images/secureboost.png)
+SecureBoost](../images/secureboost.png)
 
   - Active Party
 
@@ -60,14 +60,14 @@ back to the owner party. The following figure shows the process of
 finding split in federated tree building.
 
 ![Figure 2: Process of Federated Split
-Finding](../../images/split_finding.png)
+Finding](../images/split_finding.png)
 
 The parties continue the split finding process until tree construction
 finishes. Each party only knows the detailed split information of the
 tree nodes where the split features are provided by the party. The
 following figure shows the final structure of a single decision tree.
 
-![Figure 3: A Single Decision Tree](../../images/tree_structure.png)
+![Figure 3: A Single Decision Tree](../images/tree_structure.png)
 
 To use the learned model to classify a new instance, the active party
 first judges where current tree node belongs to. If the current tree
@@ -80,7 +80,7 @@ the current node is a leave. The following figure shows the federated
 inference process.
 
 ![Figure 4: Process of Federated
-Inference](../../images/federated_inference.png)
+Inference](../images/federated_inference.png)
 
 By following the SecureBoost framework, multiple parties can jointly
 build tree ensemble model without leaking privacy in federated learning.
@@ -126,11 +126,11 @@ Hetero SecureBoost supports the following applications.
   - Support another homomorphic encryption method called "Iterative
     Affine" since FATE-1.1
   - Support early stopping in FATE-1.4, to use early stopping, see
-    [\[Boosting Tree Param\]](../../../python/federatedml/param/boosting_param.py)
+    [\[Boosting Tree Param\]](../../python/federatedml/param/boosting_param.py)
   - Support sparse data optimization in FATE-1.5. You can activate it by
     setting "sparse\_optimization" as true in conf. Notice that this
     feature may increase memory consumption. See
-    [here](../../../python/federatedml/param/boosting_param.py).
+    [here](../../python/federatedml/param/boosting_param.py).
   - Support feature subsample random seed setting in FATE-1.5
   - Support feature binning error setting.
 
@@ -145,7 +145,7 @@ The figure below shows the overall framework of the homo SecureBoost
 algorithm.
 
 ![Figure 1: Framework of Homo
-SecureBoost](../../images/homo_framework.png)
+SecureBoost](../images/homo_framework.png)
 
   - Client  
     Clients are the participants who hold their labeled samples. Samples
@@ -180,7 +180,7 @@ The key steps of learning a Homo SecureBoost model are described below:
         Figure below shows how histogram secure aggregations are
         conducted.
         
-        ![Figure 2: Secure aggregation](../../images/secure_agg.png)
+        ![Figure 2: Secure aggregation](../images/secure_agg.png)
     
     3)  The server commit histogram subtractions: getting the right node
         histograms by subtracting left node local histogram from parent
@@ -195,7 +195,7 @@ The key steps of learning a Homo SecureBoost model are described below:
         tree.
         
         ![Figure 3: Example of bulding a two-layer homo-decision
-        tree](../../images/homo_fit.png)
+        tree](../images/homo_fit.png)
 3.  If tree number reaches the max number, or loss is converged, Homo
     SecureBoost Fitting process stops.
 
@@ -265,7 +265,7 @@ first decision tree. This can avoid label leakages, accord to
 [\[SecureBoost: A Lossless Federated Learning
 Framework\].](https://arxiv.org/abs/1901.08755)
 
-> ![Figure 4: complete secure boost](../../images/complete_secure.png)
+> ![Figure 4: complete secure boost](../images/complete_secure.png)
 
 
 
@@ -297,7 +297,7 @@ be preserved on the host side while leaf weights will be preserved on
 the guest side. In this way, encryption and communication costs are
 reduced by half. (If there are two parties)
 
-> ![Figure 5: mix mode introduction](../../images/mix_tree.png)
+> ![Figure 5: mix mode introduction](../images/mix_tree.png)
 
 While conducting inference, every party will traverse its trees locally.
 All hosts will send the final leaf id to guests and the guest retrieves
@@ -305,7 +305,7 @@ leaf weights using received leaf id. The prediction only needs one
 communication in mix mode.
 
 > ![Figure 6: mix mode training ('tree\_num\_per\_party'=1) and
-> predicting](../../images/mix_procedure.png)
+> predicting](../images/mix_procedure.png)
 
 ### LAYERED mode
 
@@ -315,7 +315,7 @@ with the help of the guest, and the guest will be responsible for the
 next "guest\_depth" layers. All trees will be built in this 'layered'
 manner.
 
-> ![Figure 7: layered mode introduction](../../images/layered_tree.png)
+> ![Figure 7: layered mode introduction](../images/layered_tree.png)
 
 The benefits of layered mod is obvious, like the mix mode, parts of
 communication costs and encryption costs will be saved in the process of
@@ -323,7 +323,7 @@ training. When predicting, we only need one communication because all
 host can conduct inferences of host layers locally.
 
 > ![Figure 8: layered mode training and
-> predicting](../../images/layered_procedure.png)
+> predicting](../images/layered_procedure.png)
 
 According to experiments on our standard data sets, mix mode and layered
 mode of Fast SBT can still give performances (sometimes even better)

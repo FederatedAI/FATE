@@ -1,6 +1,6 @@
 # FATE-Flow Client Command Line Interface v2 Guide
 
-[[中文](./flow_client.zh.md)]
+[[中文](flow_client.zh.md)]
 
 ## Usage
 

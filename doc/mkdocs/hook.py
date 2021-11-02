@@ -9,7 +9,7 @@ repo_base = os.path.abspath(
     )
 )
 params_source = os.path.join(repo_base, "python", "federatedml", "param")
-params_doc_target = os.path.join(repo_base, "doc", "api", "params")
+params_doc_target = os.path.join(repo_base, "doc", "federatedml_component", "params")
 md_template = """\
 # {name}
 ::: federatedml.param.{name}

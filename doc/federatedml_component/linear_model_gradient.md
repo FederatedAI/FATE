@@ -13,9 +13,9 @@ where H is Hessian matrix of w.
 
 However, getting Hessian matrix is computational expensive. Thus, a more feasible solution is to use quansi-newton methods. We implement a stochastic quansi-newton method whose process can be shown as below.
 
-![Figure 1: Stochastic Quasi-Newton Method](../../images/sqn_1.png)
+![Figure 1: Stochastic Quasi-Newton Method](../images/sqn_1.png)
 
-![Figure 2: Hessian Updating](../../images/sqn_2.png)
+![Figure 2: Hessian Updating](../images/sqn_2.png)
 
 
 For more details, please refer to this [paper](https://arxiv.org/abs/1912.00513v2)

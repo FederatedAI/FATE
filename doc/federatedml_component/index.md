@@ -18,7 +18,7 @@ provide:
 5.  Secure Protocol: Provides multiple security protocols for secure
     multi-party computing and interaction between participants.
 
-![Federated Machine Learning Framework](../../images/federatedml_structure.png)
+![Federated Machine Learning Framework](../images/federatedml_structure.png)
 
 ## Algorithm List
 

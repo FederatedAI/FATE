@@ -393,7 +393,7 @@ To define a Pipeline component, follow these guidelines:
 
 Then you may use Pipeline to construct and initiate a job with the newly
 defined component. For guide on Pipeline usage, please refer to
-[fate\_client/pipeline](../api/pipeline.md).
+[fate\_client/pipeline](../api/fate_client/pipeline.md).
 
 ## Start a modeling task
 
