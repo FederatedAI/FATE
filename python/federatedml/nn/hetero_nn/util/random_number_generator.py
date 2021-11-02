@@ -69,10 +69,10 @@ class RandomNumberGenerator(object):
         if keep_table:
             tb = keep_table.mapValues(lambda keep_array: self.generate_random_number(keep=keep_array,
                                                                                      mixed_rate=mixed_rate))
-            return PaillierTensor(tb_obj=tb)
+            return PaillierTensor(tb)
         else:
             tb = computing_session.parallelize([None for _ in range(shape[0])], include_key=False, partition=partition)
 
             tb = tb.mapValues(lambda val: self.generate_random_number(shape[1:], mixed_rate=mixed_rate))
 
-            return PaillierTensor(tb_obj=tb)
+            return PaillierTensor(tb)
