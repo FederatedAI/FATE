@@ -160,7 +160,7 @@ def sub_include_example(src_file_path):
 
 
 _MARKDOWN_URL_REGEX = re.compile(
-    r"""(?P<text>\[(.+)\])\((?P<url>[^ ]+)(?: "(?P<title>.+)")?\)""",
+    r"""(?P<text>\[[^\(]?\])\((?P<url>[^\)]+)\)""",
     flags=re.VERBOSE | re.DOTALL,
 )
 
@@ -168,9 +168,8 @@ _MARKDOWN_URL_REGEX = re.compile(
 def _fix_zh_url(match):
     text = match.group("text")
     url = match.group("url")
-    title = match.group("title")
 
-    if not os.path.isabs(url):
+    if not url.startswith("http"):
         url = os.path.join(os.pardir, url)
     return f'{text}({url})'
 
