@@ -201,7 +201,6 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
             self.grad_and_hess = self.compute_local_grad_and_hess(self.y_hat)
             self.cur_epoch_idx = epoch_idx
 
-        LOGGER.debug('grad and hess is {}'.format(list(self.grad_and_hess.collect())))
         if self.multi_mode == consts.MULTI_OUTPUT:
             g_h = self.grad_and_hess
         else:

@@ -50,7 +50,7 @@ class HistogramBag(object):
     holds histograms
     """
 
-    def __init__(self, tensor: list, hid: int = -1, p_hid: int = -1, tensor_type='list'):
+    def __init__(self, tensor: list, hid: int = -1, p_hid: int = -1):
 
         """
         :param tensor: list returned by calculate_histogram
@@ -62,7 +62,7 @@ class HistogramBag(object):
         self.hid = hid
         self.p_hid = p_hid
         self.bag = tensor
-        self.tensor_type = tensor_type
+        self.tensor_type = type(self.bag)
 
     def binary_op(self, other, func, inplace=False):
 
@@ -93,9 +93,9 @@ class HistogramBag(object):
             raise ValueError('unknown tensor type')
 
     def __sub__(self, other):
-        if self.tensor_type == 'list':
+        if self.tensor_type == list:
             return self.binary_op(other, sub, inplace=False)
-        elif self.tensor_type == 'array':
+        elif self.tensor_type == np.ndarray:
             self.bag -= other.bag
             return self
         else:
@@ -456,14 +456,15 @@ class FeatureHistogram(object):
                     feature_histogram_template.append([])
                     continue
                 else:
+                    # 0, 0, 0 -> grad, hess, sample count
                     if mo_dim:
-                        empty_hist = [np.zeros(mo_dim), np.zeros(mo_dim), 0]
+                        feature_histogram_template.append([[np.zeros(mo_dim), np.zeros(mo_dim), 0]
+                                                           for j in
+                                                           range(bin_split_points[fid].shape[0] + missing_bin)])
                     else:
-                        # 0, 0, 0 -> grad, hess, sample count
-                        empty_hist = [0, 0, 0]
-                    feature_histogram_template.append([empty_hist
-                                                       for j in
-                                                       range(bin_split_points[fid].shape[0] + missing_bin)])
+                        feature_histogram_template.append([[0, 0, 0]
+                                                           for j in
+                                                           range(bin_split_points[fid].shape[0] + missing_bin)])
 
             node_histograms.append(feature_histogram_template)
             # check feature num
