@@ -14,17 +14,30 @@ nav:
       - job conf guide: tutorial/dsl_conf/dsl_conf_v2_setting_guide.md
       - upload guide: tutorial/dsl_conf/upload_data_guide.md
     - model publish: tutorial/model_publish_with_serving_guide.md
-  - API:
-    - Arch:
-      - Computing: api/computing.md
-      - Federation: api/federation.md
 
   - FederatedML:
     - ... | flat | federatedml_component/*.md
     - Params:
       - ... | flat | federatedml_component/params/*.md
+  
+  - Deploy:
+    - standalone:
+      - ... | flat | deploy/standalone-deploy/doc/*.md
+    - cluster:
+      - fate_on_eggroll:
+        - ... | flat | deploy/cluster-deploy/doc/fate_on_eggroll/*.md
+      - fate_on_spark:
+        - ... | flat | deploy/cluster-deploy/doc/fate_on_spark/*.md
+  
+  - API:
+    - api/index.md
+    - Computing: api/computing.md
+    - Federation: api/federation.md
+  
   - Resources:
     - resources/index.md
+
+      
 
 theme:
   name: material
