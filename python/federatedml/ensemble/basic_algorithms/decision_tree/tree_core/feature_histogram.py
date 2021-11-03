@@ -39,6 +39,10 @@ from federatedml.secureprotol.iterative_affine import DeterministicIterativeAffi
 
 LOGGER = log.getLogger()
 
+# ret type
+TENSOR = 'tensor'
+TABLE = 'tb'
+
 
 class HistogramBag(object):
 
@@ -217,7 +221,7 @@ class FeatureHistogram(object):
             sibling_node_id_map = None
             parent_node_id_map = None
 
-        if ret == 'tensor':
+        if ret == TENSOR:
 
             histograms = self.calculate_histogram(data_bin, grad_and_hess,
                                                   bin_split_points, bin_sparse_points,
@@ -286,7 +290,7 @@ class FeatureHistogram(object):
                             zero_as_missing=False,
                             parent_node_id_map=None,
                             sibling_node_id_map=None,
-                            ret="tensor"):
+                            ret=TENSOR):
 
         """
         This is the old interface for histogram computation
@@ -305,18 +309,27 @@ class FeatureHistogram(object):
 
         LOGGER.debug("bin_shape is {}, node num is {}".format(bin_split_points.shape, len(node_map)))
 
+        if grad_and_hess.count() == 0:
+            raise ValueError('input grad and hess is empty')
+
+        # histogram template will be adjusted when running mo tree
+        mo_dim = None
+        g_h_example = grad_and_hess.take(1)
+        if type(g_h_example[0][1][0]) == np.ndarray and len(g_h_example[0][1][0]) > 1:
+            mo_dim = len(g_h_example[0][1][0])
+
         # reformat, now format is: key, ((data_instance, node position), (g, h))
         batch_histogram_intermediate_rs = data_bin.join(grad_and_hess, lambda data_inst, g_h: (data_inst, g_h))
 
-        if batch_histogram_intermediate_rs.count() == 0: # if input sample number is 0, return empty histograms
+        if batch_histogram_intermediate_rs.count() == 0:  # if input sample number is 0, return empty histograms
 
             node_histograms = FeatureHistogram._generate_histogram_template(node_map, bin_split_points, valid_features,
-                                                                            1 if use_missing else 0)
+                                                                            1 if use_missing else 0, mo_dim=mo_dim)
             hist_list = FeatureHistogram._generate_histogram_key_value_list(node_histograms, node_map, bin_split_points,
                                                                             parent_node_id_map=parent_node_id_map,
                                                                             sibling_node_id_map=sibling_node_id_map)
 
-            if ret == 'tensor':
+            if ret == TENSOR:
                 feature_num = bin_split_points.shape[0]
                 return FeatureHistogram._recombine_histograms(hist_list, node_map, feature_num)
             else:
@@ -332,7 +345,8 @@ class FeatureHistogram(object):
                 use_missing=use_missing, zero_as_missing=zero_as_missing,
                 parent_nid_map=parent_node_id_map,
                 sibling_node_id_map=sibling_node_id_map,
-                stable_reduce=self.stable_reduce
+                stable_reduce=self.stable_reduce,
+                mo_dim=mo_dim
             )
 
             agg_func = self._stable_hist_aggregate if self.stable_reduce else self._hist_aggregate
@@ -429,7 +443,7 @@ class FeatureHistogram(object):
 
     @staticmethod
     def _generate_histogram_template(node_map: dict, bin_split_points: np.ndarray, valid_features: dict,
-                                     missing_bin):
+                                     missing_bin, mo_dim=None):
 
         # for every feature, generate histograms containers (initialized val are 0s)
         node_num = len(node_map)
@@ -442,8 +456,12 @@ class FeatureHistogram(object):
                     feature_histogram_template.append([])
                     continue
                 else:
-                    # 0, 0, 0 -> grad, hess, sample count
-                    feature_histogram_template.append([[0, 0, 0]
+                    if mo_dim:
+                        empty_hist = [np.zeros(mo_dim), np.zeros(mo_dim), 0]
+                    else:
+                        # 0, 0, 0 -> grad, hess, sample count
+                        empty_hist = [0, 0, 0]
+                    feature_histogram_template.append([empty_hist
                                                        for j in
                                                        range(bin_split_points[fid].shape[0] + missing_bin)])
 
@@ -479,7 +497,8 @@ class FeatureHistogram(object):
     def _batch_calculate_histogram(kv_iterator, bin_split_points=None,
                                    bin_sparse_points=None, valid_features=None,
                                    node_map=None, use_missing=False, zero_as_missing=False,
-                                   parent_nid_map=None, sibling_node_id_map=None, stable_reduce=False):
+                                   parent_nid_map=None, sibling_node_id_map=None, stable_reduce=False,
+                                   mo_dim=None):
         data_bins = []
         node_ids = []
         grad = []
@@ -522,7 +541,7 @@ class FeatureHistogram(object):
                              for j in range(node_num)]
 
         node_histograms = FeatureHistogram._generate_histogram_template(node_map, bin_split_points, valid_features,
-                                                                        missing_bin)
+                                                                        missing_bin, mo_dim=mo_dim)
 
         for rid in range(data_record):
 
