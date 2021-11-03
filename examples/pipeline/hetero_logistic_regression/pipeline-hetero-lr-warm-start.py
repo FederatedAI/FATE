@@ -104,7 +104,7 @@ def main(config="../../config.yaml", namespace=""):
         }
     }
 
-    hetero_lr_0 = HeteroLR(name="hetero_lr_0", max_iter=3, **lr_param)
+    hetero_lr_0 = HeteroLR(name="hetero_lr_0", max_iter=5, **lr_param)
     hetero_lr_1 = HeteroLR(name="hetero_lr_1", max_iter=30, **lr_param)
     hetero_lr_2 = HeteroLR(name="hetero_lr_2", max_iter=30, **lr_param)
 
