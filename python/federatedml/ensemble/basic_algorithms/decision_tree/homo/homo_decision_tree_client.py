@@ -312,11 +312,15 @@ class HomoDecisionTreeClient(DecisionTree):
 
     def init_memory_hist_builder(self, g, h, bin_data, bin_num):
 
-        for i in range(0, g.shape[1]):
-            g_arr = np.ascontiguousarray(g[::, i], dtype=np.float32)
-            h_arr = np.ascontiguousarray(h[::, i], dtype=np.float32)
-            hist_builder = HistogramBuilder(bin_data, bin_num, g_arr, h_arr, False)
-            self.memory_hist_builder_list.append(hist_builder)
+        if len(g.shape) == 2:  # mo case
+            idx_end = g.shape[1]
+            for i in range(0, idx_end):
+                g_arr = np.ascontiguousarray(g[::, i], dtype=np.float32)
+                h_arr = np.ascontiguousarray(h[::, i], dtype=np.float32)
+                hist_builder = HistogramBuilder(bin_data, bin_num, g_arr, h_arr, False)
+                self.memory_hist_builder_list.append(hist_builder)
+        else:
+            self.memory_hist_builder_list.append(HistogramBuilder(bin_data, bin_num, g, h, False))
 
     def sklearn_compute_agg_hist(self, data_indices):
 
