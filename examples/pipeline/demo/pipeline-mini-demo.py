@@ -14,7 +14,6 @@
 #  limitations under the License.
 #
 
-
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataTransform
 from pipeline.component import Evaluation
