@@ -29,7 +29,7 @@ class ScorecardParam(BaseParam):
     Parameters
     ----------
 
-    method : str, default: 'credit'
+    method : {"credit"}, default: 'credit'
         score method, currently only supports "credit"
 
     offset : int or float, default: 500

@@ -68,6 +68,7 @@ def check_config(config: typing.Dict, required_arguments: typing.List):
 
 def preprocess(**kwargs):
     kwargs.pop('self', None)
+    kwargs.pop('kwargs', None)
     config_data = kwargs.pop('config_data', {})
     dsl_data = kwargs.pop('dsl_data', {})
 

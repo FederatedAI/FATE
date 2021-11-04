@@ -60,6 +60,10 @@ This section introduces the dsl and conf for usage of different type of task.
     dsl: hetero-lr-normal-predict-dsl.json
     conf: hetero-lr-normal-predict-conf.json
     deps: Train_task
+    
+15. Warm start task:
+    dsl: hetero_lr_warm_start_dsl.json
+    conf: hetero_lr_warm_start_conf.json
 
 Users can use following commands to running the task.
 

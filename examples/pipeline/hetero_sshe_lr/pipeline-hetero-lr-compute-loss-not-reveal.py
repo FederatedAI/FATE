@@ -96,7 +96,6 @@ def main(config="../../config.yaml", namespace=""):
             "key_length": 1024
         },
         "reveal_every_iter": False,
-        "compute_loss": True,
         "reveal_strategy": "respectively"
     }
 

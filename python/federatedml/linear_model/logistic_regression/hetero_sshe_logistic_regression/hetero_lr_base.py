@@ -78,6 +78,8 @@ class HeteroLRBase(BaseLinearModel, ABC):
 
     def _init_model(self, params: LogisticRegressionParam):
         super()._init_model(params)
+        if self.role == consts.HOST:
+            self.init_param_obj.fit_intercept = False
         self.cipher = PaillierEncrypt()
         self.cipher.generate_key(self.model_param.encrypt_param.key_length)
         self.transfer_variable = SSHEModelTransferVariable()
@@ -103,8 +105,8 @@ class HeteroLRBase(BaseLinearModel, ABC):
                                               other_party=self.other_party)
 
     def _init_weights(self, model_shape):
-        if self.role == consts.HOST:
-            self.init_param_obj.fit_intercept = False
+        # if self.role == consts.HOST:
+        #     self.init_param_obj.fit_intercept = False
         return self.initializer.init_model(model_shape, init_params=self.init_param_obj)
 
     def _set_parties(self):

@@ -3,7 +3,7 @@
 	We will take hetero-secureboost as an example.
 	
 ## Submit a training task
-We can start a training job by submitting conf & dsl through [Flow Client](../../../python/fate_client/flow_client/README.rst),
+We can start a training job by submitting conf & dsl through [Flow Client](../../../doc/api/fate_client/flow_client.rst),
 Here we submit a hetero-secureboost binary classification task, whose conf and dsl are in [hetero secureboost example 
 folder.](../../dsl/v2/hetero_secureboost)
 
@@ -72,7 +72,6 @@ with model_id and model_version returned by training job.
         },
         "job_parameters": {
             "common": {
-                "work_mode": 0,
                 "job_type": "predict",
                 "model_id": "guest-10000#host-9999#model", <<-- to replace
                 "model_version": "20200928174750711017114"  <<-- to replace

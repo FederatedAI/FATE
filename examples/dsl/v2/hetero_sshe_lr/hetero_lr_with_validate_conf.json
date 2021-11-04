@@ -81,7 +81,6 @@
                     "early_stopping_rounds": 3
                 },
                 "reveal_strategy": "respectively",
-                "compute_loss": true,
                 "reveal_every_iter": true
             },
             "evaluation_0": {
