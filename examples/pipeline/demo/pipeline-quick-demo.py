@@ -15,7 +15,6 @@
 #
 
 import json
-from pipeline.backend.config import Backend, WorkMode
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import Reader, DataTransform, Intersection, HeteroSecureBoost, Evaluation
 from pipeline.interface import Data
@@ -73,7 +72,7 @@ pipeline.add_component(reader_0)\
 
 
 # compile & fit pipeline
-pipeline.compile().fit(JobParameters(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE))
+pipeline.compile().fit()
 # to run this task with cluster deployment, use the following setting instead
 # may change data engine backend according to actual environment
 # pipeline.compile().fit(JobParameters(backend=Backend.EGGROLL, work_mode=WorkMode.CLUSTER))
