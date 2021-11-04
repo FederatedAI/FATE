@@ -114,7 +114,7 @@ following instructions in the script.
     python examples/pipeline/demo/pipeline-quick-demo.py
     ```
     
-    The details of each step of this demo can be shown
+    The details of each step of this demo can be found
     [here](../../../examples/pipeline/demo/pipeline-quick-demo.py).
     
     This quick demo shows how to build to a heterogeneous SecureBoost
@@ -127,18 +127,17 @@ following instructions in the script.
     Progress of job execution will be printed as modules run. A message
     indicating final status ("success") will be printed when job
     finishes. The script queries final model information when model
-    training
-        completes.
+    training completes.
     
-        2021-03-25 17:13:51.370 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:121 - Job id is 202103251713510969875
-                            Job is still waiting, time elapse: 0:00:00
-        2021-03-25 17:13:52Running component reader_0, time elapse: 0:00:02
-        2021-03-25 17:13:54Running component dataio_0, time elapse: 0:00:05
-        2021-03-25 17:13:57Running component intersection_0, time elapse: 0:00:09
-        2021-03-25 17:14:01Running component hetero_secureboost_0, time elapse: 0:00:35
-        2021-03-25 17:14:27Running component evaluation_0, time elapse: 0:00:40
-        2021-03-25 17:14:32.446 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:129 - Job is success!!! Job id is 202103251713510969875
-        2021-03-25 17:14:32.447 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:130 - Total time: 0:00:41
+        2021-11-04 10:12:02.959 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:122 - Job id is 202111041012010774740
+                   Job is still waiting, time elapse: 0:00:00
+        2021-11-04 10:12:03Running component reader_0, time elapse: 0:00:07
+        2021-11-04 10:12:20Running component data_transform_0, time elapse: 0:00:23
+        2021-11-04 10:12:36Running component intersection_0, time elapse: 0:00:41
+        2021-11-04 10:12:54Running component hetero_secureboost_0, time elapse: 0:01:47
+        2021-11-04 10:13:59Running component evaluation_0, time elapse: 0:02:04
+        2021-11-04 10:14:17.427 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:130 - Job is success!!! Job id is 202111041012010774740
+        2021-11-04 10:14:17.427 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:131 - Total time: 0:02:14
 
 6.  (another example) run FATE-Pipeline fit and predict jobs
     
@@ -149,18 +148,17 @@ following instructions in the script.
     
     This [script](../../../examples/pipeline/demo/pipeline-mini-demo.py)
     trains a heterogeneous logistic regression model and then runs
-    prediction with the trained
-        model.
+    prediction with the trained model.
     
-        2021-03-25 17:16:24.832 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:121 - Job id is 202103251716244738746
-                            Job is still waiting, time elapse: 0:00:00
-        2021-03-25 17:16:25Running component reader_0, time elapse: 0:00:02
-        2021-03-25 17:16:27Running component dataio_0, time elapse: 0:00:05
-        2021-03-25 17:16:30Running component intersection_0, time elapse: 0:00:09
-        2021-03-25 17:16:35Running component hetero_lr_0, time elapse: 0:00:38
-        2021-03-25 17:17:04.332 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:129 - Job is success!!! Job id is 202103251716244738746
-        2021-03-25 17:17:04.332 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:130 - Total time: 0:00:39
-    
+        2021-11-04 10:07:27.192 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:122 - Job id is 202111041007248446580
+                   Job is still waiting, time elapse: 0:00:02
+        2021-11-04 10:07:29Running component reader_0, time elapse: 0:00:08
+        2021-11-04 10:07:47Running component data_transform_0, time elapse: 0:00:26
+        2021-11-04 10:08:03Running component intersection_0, time elapse: 0:00:44
+        2021-11-04 10:08:20Running component hetero_lr_0, time elapse: 0:01:29
+        2021-11-04 10:09:07.846 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:130 - Job is success!!! Job id is 202111041007248446580
+        2021-11-04 10:09:07.846 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:131 - Total time: 0:01:40
+               
     Once fit job completes, demo script will print coefficients and
     training information of model.
     
@@ -170,12 +168,12 @@ following instructions in the script.
     FATE-Pipeline, please refer to this
         [guide](../../api/fate_client/pipeline.md).
     
-        2021-03-25 17:17:05.568 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:121 - Job id is 202103251717052325809
-                            Job is still waiting, time elapse: 0:00:01
-        2021-03-25 17:17:07Running component reader_1, time elapse: 0:00:03
-        2021-03-25 17:17:09Running component dataio_0, time elapse: 0:00:06
-        2021-03-25 17:17:12Running component intersection_0, time elapse: 0:00:10
-        2021-03-25 17:17:17Running component hetero_lr_0, time elapse: 0:00:15
-        2021-03-25 17:17:22Running component evaluation_0, time elapse: 0:00:20
-        2021-03-25 17:17:26.968 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:129 - Job is success!!! Job id is 202103251717052325809
-        2021-03-25 17:17:26.968 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:130 - Total time: 0:00:21
+        2021-11-04 10:09:10.899 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:122 - Job id is 202111041009082730800
+                   Job is still waiting, time elapse: 0:00:08
+        2021-11-04 10:09:19Running component reader_1, time elapse: 0:00:14
+        2021-11-04 10:09:37Running component data_transform_0, time elapse: 0:00:32
+        2021-11-04 10:09:53Running component intersection_0, time elapse: 0:00:50
+        2021-11-04 10:10:11Running component hetero_lr_0, time elapse: 0:01:10
+        2021-11-04 10:10:32Running component evaluation_0, time elapse: 0:01:30
+        2021-11-04 10:10:52.516 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:130 - Job is success!!! Job id is 202111041009082730800
+        2021-11-04 10:10:52.516 | INFO     | pipeline.utils.invoker.job_submitter:monitor_job_status:131 - Total time: 0:01:41

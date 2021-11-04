@@ -1,7 +1,5 @@
 # 任务配置和运行配置 V2
 
-[[ENG](../dsl_conf_v2_setting_guide.md)]
-
 ## DSL 配置说明
 
 ### 1\. 概述
@@ -562,9 +560,9 @@ config配置引擎
 ##### 5.4.1 说明
 
 DSL V2不会自动为训练任务生成预测dsl。 用户需要首先使用[Flow
-Client](../../../api/flow_client.md) 部署所需模型中模块。
+Client](../../api/flow_client.md) 部署所需模型中模块。
 详细命令说明请参考[FATE-Flow
-document](../../../flow_client.md#deploy)
+document](../../api/flow_client.md#deploy)
 
 ``` sourceCode bash
 flow model deploy --model-id $model_id --model-version $model_version --cpn-list ...

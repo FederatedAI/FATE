@@ -1,4 +1,5 @@
 # FATE模型发布及在线联邦推理指南
+[[English](../model_publish_with_serving_guide.md)]
 
 # 1. 概述
 

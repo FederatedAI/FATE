@@ -1,4 +1,5 @@
 # Guide to FATE Model Publishing & Federated Online Inference
+[[中文](model_publish_with_serving_guide.zh.md)]
 
 # 1. Overview
 
