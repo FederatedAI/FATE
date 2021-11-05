@@ -84,8 +84,7 @@
                 },
                 "callback_param": {
                     "callbacks": [
-                        "EarlyStopping",
-                        "PerformanceEvaluate"
+                        "EarlyStopping"
                     ],
                     "validation_freqs": 3,
                     "early_stopping_rounds": 3,
