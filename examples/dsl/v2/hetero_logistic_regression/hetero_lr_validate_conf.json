@@ -82,8 +82,15 @@
                     "random_seed": 103,
                     "need_cv": false
                 },
-                "validation_freqs": 3,
-                "early_stopping_rounds": 3
+                "callback_param": {
+                    "callbacks": [
+                        "EarlyStopping",
+                        "PerformanceEvaluate"
+                    ],
+                    "validation_freqs": 3,
+                    "early_stopping_rounds": 3,
+                    "use_first_metric_only": false
+                }
             },
             "evaluation_0": {
                 "eval_type": "binary"
