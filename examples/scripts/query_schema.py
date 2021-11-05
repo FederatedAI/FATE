@@ -24,9 +24,10 @@ import time
 import traceback
 import os
 
+from flow_sdk.client import FlowClient
+
 feature_idx = -1
 
-WORK_MODE = 0
 
 MAX_INTERSECT_TIME = 600
 MAX_TRAIN_TIME = 3600
@@ -35,7 +36,7 @@ STATUS_CHECKER_TIME = 10
 home_dir = os.path.split(os.path.realpath(__file__))[0]
 fate_flow_path = home_dir + "/../../python/fate_flow/fate_flow_client.py"
 fate_flow_home = home_dir + "/../../python/fate_flow"
-
+flow_client: FlowClient
 
 class BaseTask(object):
     def __init__(self, argv=None):
@@ -46,23 +47,18 @@ class BaseTask(object):
         pass
 
     @staticmethod
-    def start_block_task(cmd, max_waiting_time=OTHER_TASK_TIME):
+    def start_block_task(job_id, max_waiting_time=OTHER_TASK_TIME):
         start_time = time.time()
         while True:
             # print("exec cmd: {}".format(cmd))
-            subp = subprocess.Popen(cmd,
-                                    shell=False,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.STDOUT)
-            stdout, stderr = subp.communicate()
-            stdout = stdout.decode("utf-8")
+            stdout = flow_client.job.query(job_id=job_id)
             if not stdout:
                 waited_time = time.time() - start_time
                 if waited_time >= max_waiting_time:
                     # raise ValueError(
                     #     "[obtain_component_output] task:{} failed stdout:{}".format(task_type, stdout))
                     return None
-                print("job cmd: {}, waited time: {}".format(cmd, waited_time))
+                print("job : {}, waited time: {}".format(job_id, waited_time))
                 time.sleep(STATUS_CHECKER_TIME)
             else:
                 break
@@ -82,25 +78,11 @@ class BaseTask(object):
             time.sleep(STATUS_CHECKER_TIME)
 
     @staticmethod
-    def start_task(cmd):
-        print('Start task: {}'.format(cmd))
-        subp = subprocess.Popen(cmd,
-                                shell=False,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT)
-        stdout, stderr = subp.communicate()
-        stdout = stdout.decode("utf-8")
-        # print("start_task, stdout:" + str(stdout))
-        try:
-            stdout = json.loads(stdout)
-        except json.JSONDecodeError:
-            raise RuntimeError("start task error, return value: {}".format(stdout))
-        return stdout
+    def start_task():
+        pass
 
     def get_table_info(self, name, namespace):
-        # cmd = ['flow', "table", "info", "-t", str(name), "-n", str(namespace)]
-        cmd = ['python', fate_flow_path, "-f", "table_info", "-t", str(name), "-n", str(namespace)]
-        table_info = self.start_task(cmd)
+        table_info = flow_client.table.info(table_name=str(name), namespace=str(namespace))
         return table_info
 
     def read_json_file(self, file_path):
@@ -122,12 +104,8 @@ class QuerySchema(BaseTask):
     def query_component_output_data(self, job_id, cpn, this_feature_idx=None):
         if this_feature_idx is None:
             this_feature_idx = feature_idx
-        cmd = ['python', fate_flow_path, "-f", "component_output_data_table", "-j", job_id,
-               '-cpn', cpn, '-r', self.role, '-p', str(self.party_id)]
-        # cmd = ['flow', 'component', 'output-data-table', '-j', job_id, '-cpn', cpn, "-r", self.role,
-        #        '-p', self.party_id]
-
-        stdout = self.start_task(cmd)
+        stdout = flow_client.component.output_data_table(job_id=job_id, role=self.role, party_id=str(self.party_id),
+                                                         component_name=cpn)
         if stdout['retcode'] != 0:
             raise RuntimeError(f"checking component output data error, error info: {stdout['retmsg']}")
 
@@ -159,9 +137,14 @@ if __name__ == '__main__':
     parser.add_argument('-r', '--role', required=True, choices=["guest", "host", "arbiter"],
                         type=str, help="job id")
     parser.add_argument('-p', '--party_id', required=True, type=str, help="party id")
+    parser.add_argument("-ip", "--flow_server_ip", type=str, help="please input flow server'ip")
+    parser.add_argument("-port", "--flow_server_port", type=int, help="please input flow server port")
 
     try:
         args = parser.parse_args()
+        ip = args.flow_server_ip
+        port = args.flow_server_port
+        flow_client = FlowClient(ip=ip, port=port, version="v1")
         task_obj = QuerySchema(args)
         task_obj.query_component_output_data(str(args.job_id), args.component_name)
 

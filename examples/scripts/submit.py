@@ -33,27 +33,18 @@ def set_logger(name):
 
 class Submitter(object):
 
-    def __init__(self, fate_home, work_mode, backend, existing_strategy, spark_submit_config):
+    def __init__(self, flow_client, fate_home, existing_strategy, spark_submit_config):
+        self.flow_client = flow_client
         self._fate_home = fate_home
-        self._work_mode = work_mode
-        self._backend = backend
         self._existing_strategy = existing_strategy
         self._spark_submit_config = spark_submit_config
 
     @property
     def _flow_client_path(self):
-        return os.path.join(self._fate_home, "../python/fate_flow/fate_flow_client.py")
+        return os.path.join(self._fate_home, "python/fate_flow/fate_flow_client.py")
 
     def set_fate_home(self, path):
         self._fate_home = path
-        return self
-
-    def set_work_mode(self, mode):
-        self._work_mode = mode
-        return self
-
-    def set_backend(self, backend):
-        self._backend = backend
         return self
 
     @staticmethod
@@ -66,12 +57,19 @@ class Submitter(object):
         stdout, stderr = subp.communicate()
         return stdout.decode("utf-8")
 
-    def submit(self, cmd):
-        full_cmd = ["python", self._flow_client_path]
-        full_cmd.extend(cmd)
-        stdout = self.run_cmd(full_cmd)
+    def run_flow_client(self, command, config_data, dsl_data=None, drop=0):
+        if command == "data/upload":
+            stdout = self.flow_client.data.upload(config_data=config_data, drop=drop)
+        elif command == "table/info":
+            stdout = self.flow_client.table.info(table_name=config_data.get("table_name"),
+                                                 namespace=config_data.get("namespace"))
+        elif command == "job/submit":
+            stdout = self.flow_client.job.submit(config_data=config_data, dsl_data=dsl_data)
+        elif command == "job/query":
+            stdout = self.flow_client.job.query(job_id=config_data.get("job_id"))
+        else:
+            stdout = {}
         try:
-            stdout = json.loads(stdout)
             status = stdout["retcode"]
         except json.decoder.JSONDecodeError:
             raise ValueError(f"[submit_job]fail, stdout:{stdout}")
@@ -81,45 +79,43 @@ class Submitter(object):
             raise ValueError(f"[submit_job]fail, status:{status}, stdout:{stdout}")
         return stdout
 
-    def upload(self, data_path, namespace, name, partition=10, head=1, remote_host=None, backend=None):
-        if backend is None:
-            backend = self._backend
-        conf = dict(
+    def upload(self, data_path, namespace, name, partition=10, head=1, remote_host=None):
+        config_data = dict(
             file=data_path,
             head=head,
             partition=partition,
-            work_mode=self._work_mode,
             table_name=name,
-            backend=backend,
             namespace=namespace
         )
+        command = "data/upload"
         with tempfile.NamedTemporaryFile("w") as f:
-            json.dump(conf, f)
+            json.dump(config_data, f)
             f.flush()
             if remote_host:
-                self.run_cmd(["scp", f.name, f"{remote_host}:{f.name}"])
-                env_path = os.path.join(self._fate_home, "../bin/init_env.sh")
-                upload_cmd = f"source {env_path}"
-                upload_cmd = f"{upload_cmd} && python {self._flow_client_path} -f upload -c {f.name}"
-                if self._existing_strategy == 0 or self._existing_strategy == 1:
-                    upload_cmd = f"{upload_cmd} -drop {self._existing_strategy}"
-                upload_cmd = f"{upload_cmd} && rm {f.name}"
-                stdout = self.run_cmd(["ssh", remote_host, upload_cmd])
-                try:
-                    stdout = json.loads(stdout)
-                    status = stdout["retcode"]
-                except json.decoder.JSONDecodeError:
-                    raise ValueError(f"[submit_job]fail, stdout:{stdout}")
-                if status != 0:
-                    if status == 100 and "table already exists" in stdout["retmsg"]:
-                        return None
-                    raise ValueError(f"[submit_job]fail, status:{status}, stdout:{stdout}")
-                return stdout["jobId"]
+                json.dump(config_data, f)
+                f.flush()
+                if remote_host:
+                    self.run_cmd(["scp", f.name, f"{remote_host}:{f.name}"])
+                    env_path = os.path.join(self._fate_home, "bin/init_env.sh")
+                    upload_cmd = f"source {env_path}"
+                    upload_cmd = f"{upload_cmd} && python {self._flow_client_path} -f upload -c {f.name}"
+                    if self._existing_strategy == 0 or self._existing_strategy == 1:
+                        upload_cmd = f"{upload_cmd} -drop {self._existing_strategy}"
+                    upload_cmd = f"{upload_cmd} && rm {f.name}"
+                    stdout = self.run_cmd(["ssh", remote_host, upload_cmd])
+                    try:
+                        stdout = json.loads(stdout)
+                        status = stdout["retcode"]
+                    except json.decoder.JSONDecodeError:
+                        raise ValueError(f"[submit_job]fail, stdout:{stdout}")
+                    if status != 0:
+                        if status == 100 and "table already exists" in stdout["retmsg"]:
+                            return None
+                        raise ValueError(f"[submit_job]fail, status:{status}, stdout:{stdout}")
+                    return stdout["jobId"]
             else:
-                cmd = ["-f", "upload", "-c", f.name]
-                if self._existing_strategy == 0 or self._existing_strategy == 1:
-                    cmd.extend(["-drop", f"{self._existing_strategy}"])
-                stdout = self.submit(cmd)
+                config_data["file"] = os.path.join(self._fate_home, config_data["file"])
+                stdout = self.run_flow_client(command=command, config_data=config_data, drop=self._existing_strategy)
                 if stdout is None:
                     return None
                 else:
@@ -134,11 +130,13 @@ class Submitter(object):
         with tempfile.NamedTemporaryFile("w") as f:
             json.dump(conf, f)
             f.flush()
+            command = "job/submit"
             if submit_type == "train":
-                stdout = self.submit(["-f", "submit_job", "-c", f.name, "-d", dsl_path])
+                command = "job/submit"
+                stdout = self.run_flow_client(command=command, config_data=conf_path, dsl_data=dsl_path)
                 result['model_info'] = stdout["data"]["model_info"]
             else:
-                stdout = self.submit(["-f", "submit_job", "-c", f.name])
+                stdout = self.run_flow_client(command=command, config_data=conf_path)
             result['jobId'] = stdout["jobId"]
         return result
 
@@ -147,8 +145,6 @@ class Submitter(object):
             d = json.load(f)
         if substitute is not None:
             d = recursive_update(d, substitute)
-        d['job_parameters']['work_mode'] = self._work_mode
-        d['job_parameters']['backend'] = self._backend
         d['job_parameters']['spark_submit_config'] = self._spark_submit_config
         initiator_role = d['initiator']['role']
         d['initiator']['party_id'] = roles[initiator_role][0]
@@ -165,7 +161,8 @@ class Submitter(object):
         deadline = time.time() + timeout
         start = time.time()
         while True:
-            stdout = self.submit(["-f", "query_job", "-j", job_id])
+            command = "job/query"
+            stdout = self.run_flow_client(command=command, config_data={"job_id": job_id})
             status = stdout["data"][0]["f_status"]
             elapse_seconds = int(time.time() - start)
             date = time.strftime('%Y-%m-%d %X')
