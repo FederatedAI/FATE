@@ -70,8 +70,11 @@ class Data(object):
         for field_name in config.keys():
             if field_name not in ["file", "role"]:
                 kwargs[field_name] = config[field_name]
-
-        file_path = path.parent.joinpath(config["file"]).resolve()
+        if config.get("engine", {}) != "PATH":
+            file_path = path.parent.joinpath(config["file"]).resolve()
+        else:
+            file_path = path.parent.joinpath(config["address"]["path"]).resolve()
+        # file_path = path.parent.joinpath(config["file"]).resolve()
         if not file_path.exists():
             kwargs["file"] = config["file"]
             # raise ValueError(f"loading from data config: {config} in {path} failed, file: {file_path} not exists")
@@ -338,7 +341,6 @@ class Testsuite(object):
             if "use_local_data" not in d:
                 d.update({"use_local_data": _config.use_local_data})
             dataset.append(Data.load(d, path))
-
         jobs = []
         for job_name, job_configs in testsuite_config.get("tasks", {}).items():
             jobs.append(

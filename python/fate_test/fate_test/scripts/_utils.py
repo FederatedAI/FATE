@@ -100,7 +100,8 @@ def _upload_data(clients: Clients, suite, config: Config, output_path=None):
                            width=24) as bar:
         for i, data in enumerate(suite.dataset):
             data.update(config)
-            data_progress = DataProgress(f"{data.role_str}<-{data.config['namespace']}.{data.config['table_name']}")
+            table_name = data.config['table_name'] if data.config.get('table_name', None) is not None else data.config.get('name')
+            data_progress = DataProgress(f"{data.role_str}<-{data.config['namespace']}.{table_name}")
 
             def update_bar(n_step):
                 bar.item_show_func = lambda x: data_progress.show()
@@ -117,10 +118,11 @@ def _upload_data(clients: Clients, suite, config: Config, output_path=None):
 
             try:
                 echo.stdout_newline()
-                response, data_path = clients[data.role_str].upload_data(data, _call_back, output_path)
+                status, data_path = clients[data.role_str].upload_data(data, _call_back, output_path)
+                time.sleep(1)
                 data_progress.update()
-                if not response.status.is_success():
-                    raise RuntimeError(f"uploading {i + 1}th data for {suite.path} {response.status}")
+                if status != 'success':
+                    raise RuntimeError(f"uploading {i + 1}th data for {suite.path} {status}")
                 bar.update(1)
                 if _config.data_switch:
                     generate_mock_data.remove_file(data_path)
@@ -141,12 +143,13 @@ def _delete_data(clients: Clients, suite: Testsuite):
         for data in suite.dataset:
             # noinspection PyBroadException
             try:
+                table_name = data.config['table_name'] if data.config.get('table_name', None) is not None else data.config.get('name')
                 bar.item_show_func = \
-                    lambda x: f"delete table: name={data.config['table_name']}, namespace={data.config['namespace']}"
+                    lambda x: f"delete table: name={table_name}, namespace={data.config['namespace']}"
                 clients[data.role_str].delete_data(data)
             except Exception:
                 LOGGER.exception(
-                    f"delete failed: name={data.config['table_name']}, namespace={data.config['namespace']}")
+                    f"delete failed: name={table_name}, namespace={data.config['namespace']}")
 
             time.sleep(0.5)
             bar.update(1)
