@@ -19,6 +19,7 @@ from pipeline.param.base_param import BaseParam
 from pipeline.param.cross_validation_param import CrossValidationParam
 from pipeline.param.callback_param import CallbackParam
 from pipeline.param.encrypt_param import EncryptParam
+from pipeline.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from pipeline.param.init_model_param import InitParam
 from pipeline.param.predict_param import PredictParam
 from pipeline.param import consts
@@ -96,6 +97,7 @@ class LogisticRegressionParam(BaseParam):
                  reveal_strategy="respectively",
                  reveal_every_iter=True,
                  callback_param=CallbackParam(),
+                 encrypted_mode_calculator_param=EncryptedModeCalculatorParam()
                  ):
         super(LogisticRegressionParam, self).__init__()
         self.penalty = penalty
@@ -117,6 +119,7 @@ class LogisticRegressionParam(BaseParam):
         self.reveal_every_iter = reveal_every_iter
         self.callback_param = copy.deepcopy(callback_param)
         self.cv_param = cv_param
+        self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
 
     def check(self):
         descr = "logistic_param's"

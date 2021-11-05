@@ -40,14 +40,15 @@ class HeteroLRGuest(HeteroLRBase):
         self.wx_self = None
         self.wx_remote = None
 
-    def _cal_z_in_share(self, w_self, w_remote, features, suffix):
+    def _cal_z_in_share(self, w_self, w_remote, features, suffix, cipher):
         z1 = features.dot_local(w_self)
 
         za_suffix = ("za",) + suffix
 
         za_share = self.secure_matrix_obj.secure_matrix_mul(w_remote,
                                                             tensor_name=".".join(za_suffix),
-                                                            cipher=self.cipher,
+                                                            cipher=cipher,
+                                                            # cipher=self.cipher,
                                                             suffix=za_suffix)
         zb_suffix = ("zb",) + suffix
         zb_share = self.secure_matrix_obj.secure_matrix_mul(features,
@@ -61,7 +62,8 @@ class HeteroLRGuest(HeteroLRBase):
     def _compute_sigmoid(self, z, remote_z):
         # z_square = z * z
 
-        complete_z = remote_z + z
+        # complete_z = remote_z + z
+        complete_z = z + remote_z
         # self.z_square = z_square + remote_z_square
         # self.z_square = self.z_square + 2 * remote_z * z
         sigmoid_z = complete_z * 0.25 + 0.5
@@ -70,10 +72,10 @@ class HeteroLRGuest(HeteroLRBase):
         # sigmoid_z = complete_z * 0.197 - complete_z_cube * 0.004 + 0.5
         return sigmoid_z
 
-    def forward(self, weights, features, suffix):
-        if not self.review_every_iter:
+    def forward(self, weights, features, suffix, cipher):
+        if not self.reveal_every_iter:
             w_self, w_remote = weights
-            z = self._cal_z_in_share(w_self, w_remote, features, suffix)
+            z = self._cal_z_in_share(w_self, w_remote, features, suffix, cipher)
         else:
             LOGGER.debug(f"Calculate z directly.")
             w = weights.unboxed
@@ -96,12 +98,13 @@ class HeteroLRGuest(HeteroLRBase):
         tensor_name = ".".join(("sigmoid_z",) + suffix)
         shared_sigmoid_z = SecureMatrix.from_source(tensor_name,
                                                     sigmoid_z,
-                                                    self.cipher,
+                                                    cipher,
+                                                    # self.cipher,
                                                     self.fixedpoint_encoder.n,
                                                     self.fixedpoint_encoder)
         return shared_sigmoid_z
 
-    def backward(self, error, features, suffix):
+    def backward(self, error, features, suffix, cipher):
         batch_num = self.batch_num[int(suffix[1])]
 
         error_1_n = error * (1 / batch_num)
@@ -111,7 +114,8 @@ class HeteroLRGuest(HeteroLRBase):
         ga2_suffix = ("ga2",) + suffix
         ga2_2 = self.secure_matrix_obj.secure_matrix_mul(error_1_n,
                                                          tensor_name=".".join(ga2_suffix),
-                                                         cipher=self.cipher,
+                                                         cipher=cipher,
+                                                         # cipher=self.cipher,
                                                          suffix=ga2_suffix,
                                                          is_fixedpoint_table=False)
 
@@ -132,7 +136,7 @@ class HeteroLRGuest(HeteroLRBase):
 
         return gb2, ga2_2
 
-    def compute_loss(self, weights, suffix):
+    def compute_loss(self, weights, suffix, cipher=None):
         """
           Use Taylor series expand log loss:
           Loss = - y * log(h(x)) - (1-y) * log(1 - h(x)) where h(x) = 1/(1+exp(-wx))
@@ -197,7 +201,7 @@ class HeteroLRGuest(HeteroLRBase):
 
         LOGGER.debug(f"share_loss.get: {loss}")
 
-        if self.review_every_iter:
+        if self.reveal_every_iter:
             loss_norm = self.optimizer.loss_norm(weights)
             LOGGER.debug(f"loss: {loss}, loss_norm: {loss_norm}")
             if loss_norm:
@@ -232,7 +236,7 @@ class HeteroLRGuest(HeteroLRBase):
 
         return loss
 
-    def _review_every_iter_weights_check(self, last_w, new_w, suffix):
+    def _reveal_every_iter_weights_check(self, last_w, new_w, suffix):
         square_sum = np.sum((last_w - new_w) ** 2)
         host_sums = self.converge_transfer_variable.square_sum.get(suffix=suffix)
         for hs in host_sums:
@@ -264,7 +268,7 @@ class HeteroLRGuest(HeteroLRBase):
             predict_result = self.one_vs_rest_obj.predict(data_instances)
             return predict_result
         LOGGER.debug(
-            f"Before_predict_review_strategy: {self.model_param.reveal_strategy}, {self.is_respectively_reveal}")
+            f"Before_predict_reveal_strategy: {self.model_param.reveal_strategy}, {self.is_respectively_reveal}")
 
         def _vec_dot(v, coef, intercept):
             return fate_operator.vec_dot(v.features, coef) + intercept

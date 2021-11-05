@@ -131,7 +131,7 @@ class FixedPointTensor(TensorBase):
 
         elif is_table(other):
             # todo: dylan[0]
-            ret = table_dot_mod(self.value, other, self.q_field)[0]
+            ret = table_dot_mod(self.value, other, self.q_field).reshape((1, -1))[0]
             ret = self.endec.truncate(ret, self.get_spdz().party_idx)
             return fixedpoint_numpy.FixedPointTensor(ret,
                                                      self.q_field,
@@ -220,6 +220,7 @@ class FixedPointTensor(TensorBase):
 
     def __add__(self, other):
         if isinstance(other, PaillierFixedPointTensor):
+            # PaillierFixedPointTensor
             return other + self
         if isinstance(other, FixedPointTensor):
             z_value = _table_binary_mod_op(self.value, other.value, self.q_field, operator.add)
@@ -234,7 +235,7 @@ class FixedPointTensor(TensorBase):
 
     def __sub__(self, other):
         if isinstance(other, PaillierFixedPointTensor):
-            return other + self
+            return other * (-1) + self
         if isinstance(other, FixedPointTensor):
             z_value = _table_binary_mod_op(self.value, other.value, self.q_field, operator.sub)
         elif is_table(other):
@@ -302,7 +303,7 @@ class PaillierFixedPointTensor(TensorBase):
 
         elif is_table(other):
             # todo: dylan [0]
-            ret = table_dot(self.value, other)[0]
+            ret = table_dot(self.value, other).reshape((1, -1))[0]
             return fixedpoint_numpy.PaillierFixedPointTensor(ret, target_name)
         else:
             raise ValueError(f"type={type(other)}")
@@ -319,7 +320,8 @@ class PaillierFixedPointTensor(TensorBase):
 
     def __add__(self, other):
         if isinstance(other, (PaillierFixedPointTensor, FixedPointTensor)):
-            return self._boxed(_table_binary_op(self.value, other.value, operator.add))
+            # return self._boxed(_table_binary_op(self.value, other.value, operator.add))
+            return self._boxed(_table_binary_op(other.value, self.value, operator.add))
         elif is_table(other):
             return self._boxed(_table_binary_op(self.value, other, operator.add))
         else:
