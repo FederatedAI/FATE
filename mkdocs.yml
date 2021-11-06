@@ -16,9 +16,11 @@ nav:
     - model publish: tutorial/model_publish_with_serving_guide.md
 
   - FederatedML:
-    - ... | flat | federatedml_component/*.md
+    - Secure Protocol: federatedml_component/secureprotol.md
     - Params:
       - ... | flat | federatedml_component/params/*.md
+    - Components:
+      - ... | flat | federatedml_component/*.md
   
   - Deploy:
     - standalone:
