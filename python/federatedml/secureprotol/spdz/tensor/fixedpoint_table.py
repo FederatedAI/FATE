@@ -221,7 +221,8 @@ class FixedPointTensor(TensorBase):
     def __add__(self, other):
         if isinstance(other, PaillierFixedPointTensor):
             # PaillierFixedPointTensor
-            return other + self
+            z_value = _table_binary_op(self.value, other.value, operator.add)
+            return PaillierFixedPointTensor(z_value)
         if isinstance(other, FixedPointTensor):
             z_value = _table_binary_mod_op(self.value, other.value, self.q_field, operator.add)
         elif is_table(other):
@@ -235,7 +236,8 @@ class FixedPointTensor(TensorBase):
 
     def __sub__(self, other):
         if isinstance(other, PaillierFixedPointTensor):
-            return other * (-1) + self
+            z_value = _table_binary_op(self.value, other.value, operator)
+            return PaillierFixedPointTensor(z_value)
         if isinstance(other, FixedPointTensor):
             z_value = _table_binary_mod_op(self.value, other.value, self.q_field, operator.sub)
         elif is_table(other):
@@ -320,8 +322,7 @@ class PaillierFixedPointTensor(TensorBase):
 
     def __add__(self, other):
         if isinstance(other, (PaillierFixedPointTensor, FixedPointTensor)):
-            # return self._boxed(_table_binary_op(self.value, other.value, operator.add))
-            return self._boxed(_table_binary_op(other.value, self.value, operator.add))
+            return self._boxed(_table_binary_op(self.value, other.value, operator.add))
         elif is_table(other):
             return self._boxed(_table_binary_op(self.value, other, operator.add))
         else:
