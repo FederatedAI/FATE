@@ -582,7 +582,18 @@ class PipeLine(object):
             return pickle.loads(fin.read())
 
     @LOGGER.catch(reraise=True)
-    def deploy_component(self, components=None):
+    def deploy_component(self, components=None, components_checkpoint=None):
+        """
+        Parameters
+        ----------
+        components: component list,
+            if none, deploy all applicable components
+        components_checkpoint: dict,
+            specifies checkpoint at which certain component to be deployed,
+            ex. {"hetero_lr_0": {"step_index": 5}}
+        Returns
+        -------
+        """
         if self._train_dsl is None:
             raise ValueError("Before deploy model, training should be finished!!!")
 
@@ -606,7 +617,8 @@ class PipeLine(object):
 
         res_dict = self._job_invoker.model_deploy(model_id=self._model_info.model_id,
                                                   model_version=self._model_info.model_version,
-                                                  cpn_list=deploy_cpns)
+                                                  cpn_list=deploy_cpns,
+                                                  components_checkpoint=components_checkpoint)
         self._predict_model_info = SimpleNamespace(model_id=res_dict["model_id"],
                                                    model_version=res_dict["model_version"])
 

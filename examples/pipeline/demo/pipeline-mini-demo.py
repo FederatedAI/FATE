@@ -68,7 +68,8 @@ def main():
                            early_stop="diff",
                            learning_rate=0.15,
                            optimizer="rmsprop",
-                           max_iter=10)
+                           max_iter=10,
+                           callback_param={"callbacks": ["ModelCheckpoint"]})
 
     # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)
@@ -90,7 +91,8 @@ def main():
 
     # predict
     # deploy required components
-    pipeline.deploy_component([data_transform_0, intersection_0, hetero_lr_0])
+    pipeline.deploy_component([data_transform_0, intersection_0, hetero_lr_0],
+                              components_checkpoint={"hetero_lr_0": {"step_index": 8}})
 
     # initiate predict pipeline
     predict_pipeline = PipeLine()

@@ -101,6 +101,10 @@ class Model(BaseFlowAPI):
     def deploy(self, model_id, model_version, cpn_list=None, predict_dsl=None, components_checkpoint=None):
         kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
+
+        if config_data.get('cpn_list') and config_data.get('predict_dsl'):
+            raise KeyError("Cannot use 'cpn_list' and 'predict_dsl' at the same time.")
+
         return self._post(url='model/deploy', json=config_data)
 
     def get_predict_dsl(self, model_id, model_version):
