@@ -686,46 +686,59 @@ class Federation(FederationABC):
         partition_size = -1
         all_data = []
 
-        for method, properties, body in channel_info.consume():
-            print(
-                f"[rabbitmq._partition_receive] method: {method}, properties: {properties}."
-            )
-            if properties.message_id != name or properties.correlation_id != tag:
-                # todo: fix this
-                channel_info.basic_ack(delivery_tag=method.delivery_tag)
-                print(
-                    f"[rabbitmq._partition_receive]: require {name}.{tag}, got {properties.message_id}.{properties.correlation_id}"
-                )
-                continue
-
-            if properties.content_type == "application/json":
-                message_key = properties.headers["message_key"]
-                if message_key in message_key_cache:
+        while True:
+            try:
+                for method, properties, body in channel_info.consume():
                     print(
-                        f"[rabbitmq._partition_receive] message_key : {message_key} is duplicated"
+                        f"[rabbitmq._partition_receive] method: {method}, properties: {properties}."
                     )
-                    channel_info.basic_ack(delivery_tag=method.delivery_tag)
-                    continue
+                    if properties.message_id != name or properties.correlation_id != tag:
+                        # todo: fix this
+                        channel_info.basic_ack(delivery_tag=method.delivery_tag)
+                        print(
+                            f"[rabbitmq._partition_receive]: require {name}.{tag}, got {properties.message_id}.{properties.correlation_id}"
+                        )
+                        continue
 
-                message_key_cache.add(message_key)
+                    if properties.content_type == "application/json":
+                        message_key = properties.headers["message_key"]
+                        if message_key in message_key_cache:
+                            print(
+                                f"[rabbitmq._partition_receive] message_key : {message_key} is duplicated"
+                            )
+                            channel_info.basic_ack(delivery_tag=method.delivery_tag)
+                            continue
 
-                if properties.headers["partition_size"] >= 0:
-                    partition_size = properties.headers["partition_size"]
+                        message_key_cache.add(message_key)
 
-                data = json.loads(body)
-                data_iter = (
-                    (p_loads(bytes.fromhex(el["k"])), p_loads(bytes.fromhex(el["v"])))
-                    for el in data
+                        if properties.headers["partition_size"] >= 0:
+                            partition_size = properties.headers["partition_size"]
+
+                        data = json.loads(body)
+                        data_iter = (
+                            (p_loads(bytes.fromhex(el["k"])), p_loads(bytes.fromhex(el["v"])))
+                            for el in data
+                        )
+                        count += len(data)
+                        print(f"[rabbitmq._partition_receive] count: {count}")
+                        all_data.extend(data_iter)
+                        channel_info.basic_ack(delivery_tag=method.delivery_tag)
+
+                        if count == partition_size:
+                            channel_info.cancel()
+                            return all_data
+                    else:
+                        ValueError(
+                            f"[rabbitmq._partition_receive]properties.content_type is {properties.content_type}, but must be application/json"
+                        )
+
+            except Exception as e:
+                LOGGER.error(
+                    f"[rabbitmq._partition_receive]catch exception {e}, while receiving {name}.{tag}"
                 )
-                count += len(data)
-                print(f"[rabbitmq._partition_receive] count: {count}")
-                all_data.extend(data_iter)
-                channel_info.basic_ack(delivery_tag=method.delivery_tag)
-
+                # avoid hang on consume()
                 if count == partition_size:
                     channel_info.cancel()
                     return all_data
-            else:
-                ValueError(
-                    f"[rabbitmq._partition_receive]properties.content_type is {properties.content_type}, but must be application/json"
-                )
+                else:
+                    raise e
