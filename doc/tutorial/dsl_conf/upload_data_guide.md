@@ -1,6 +1,6 @@
 # Upload Data Guide
 
-[[中文](upload_data_guide_zh.md)]
+[[中文](upload_data_guide.zh.md)]
 
 Before start a modeling task, the data to be used should be uploaded.
 Typically, a party is usually a cluster which include multiple nodes.
