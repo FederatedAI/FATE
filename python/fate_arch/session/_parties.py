@@ -103,6 +103,8 @@ class PartiesInfo(object):
         self._host = Role(role_to_parties["host"])
         self._arbiter = Role(role_to_parties["arbiter"])
 
+        self._set_instance(self)
+
     @property
     @classmethod
     def Guest(cls) -> Role:
