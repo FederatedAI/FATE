@@ -271,6 +271,13 @@ predict_pipeline.add_component(evaluation_0, data=Data(data=pipeline.hetero_lr_0
 predict_pipeline.predict()
 ```
 
+If components are checkpoint saved during training process, user may specify which checkpoint model to be used for prediction.
+For an example, please refer [here](../../../examples/pipeline/demo/pipeline-deploy-demo.py).
+
+```sourceCode python
+predict_pipeline.predict(components_checkpoint={"hetero_lr_0": {"step_index": 8}})
+```
+
 ## Save and Recovery of Pipeline
 
 To save a pipeline, just use **dump** interface.
