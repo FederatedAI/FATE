@@ -231,7 +231,7 @@ class IntersectModelBase(ModelBase):
                 self.intersect_ids = self.intersection_obj.run_intersect(intersect_data)
 
         if self.intersection_obj.cardinality_only:
-            if self.intersection_obj.intersect_num:
+            if self.intersection_obj.intersect_num is not None:
                 data_count = data.count()
                 self.intersect_num = self.intersection_obj.intersect_num
                 self.intersect_rate = self.intersect_num / data_count
