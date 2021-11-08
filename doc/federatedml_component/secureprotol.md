@@ -168,7 +168,7 @@ multiparty computation scheme based on somewhat homomorphic encryption
   
     ```python
     from fate_arch.session import Session
-    s = Session.create(backend=0, work_mode=0)
+    s = Session.create()
     
     # on guest side
     s.init_computing("a guest session name")
