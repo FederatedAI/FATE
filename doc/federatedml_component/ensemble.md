@@ -228,7 +228,7 @@ Homo SecureBoost supports the following applications:
   - multi classification, the objective function is softmax
     cross-entropy
   - regression, objective function includes
-    least-squared-error-loss、least-absolutely-error-loss、huber-loss、tweedie-loss、fair-loss、
+    least-squared-error-loss, least-absolutely-error-loss, huber-loss, tweedie-loss, fair-loss,
     log-cosh-loss
 
 ### Other features
@@ -257,7 +257,7 @@ Homo SecureBoost supports the following applications:
       show_root_full_path: false
 
 
-Hetero Complete Secureboost -----------------------
+## Hetero Complete Secureboost 
 
 Now Hetero SecureBoost adds a new option: complete\_secure. Once
 enabled, the boosting model will only use guest features to build the
