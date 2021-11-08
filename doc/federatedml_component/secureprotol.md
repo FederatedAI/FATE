@@ -166,14 +166,17 @@ multiparty computation scheme based on somewhat homomorphic encryption
   
     ```python
     from fate_arch.session import Session
-    s = Session.create(backend=0, work_mode=0)
+    s = Session.create()
     
     # on guest side
     s.init_computing("a guest session name")
-    s.init_federation("federation session name",runtime_conf={
-    "local": {"role": "guest", "party_id": 1000},
-    "role": {"guest": [1000], "host": [999]},
-    },)
+    s.init_federation("federation session name",
+    runtime_conf={
+      "local": {"role": "guest", "party_id": 1000},
+      "role": {"guest": [1000], "host": [999]},
+    },
+    service_conf=<proxy config>  # for distributed situation
+    )
     s.as_default()
     partys = s.parties.all_parties
     # [Party(role=guest, party_id=1000), Party(role=host, party_id=999)]
@@ -182,9 +185,11 @@ multiparty computation scheme based on somewhat homomorphic encryption
     s.init_computing("a host session name")
     s.init_federation("federation session name",
     runtime_conf={
-    "local": {"role": "host", "party_id": 999},
-    "role": {"guest": [1000], "host": [999]},
-    },)
+      "local": {"role": "host", "party_id": 999},
+      "role": {"guest": [1000], "host": [999]},
+    },
+    service_conf=<proxy config>  # for distributed situation
+    )
     s.as_default()
     partys = s.parties.all_parties
     # [Party(role=guest, party_id=1000), Party(role=host, party_id=999)]

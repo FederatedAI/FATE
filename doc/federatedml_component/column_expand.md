@@ -4,6 +4,7 @@ Column Expand is used for adding arbitrary number of columns with
 user-provided values. This module is run directly on table object(raw
 data), before data entering Data Transform.
 
+<!-- mkdocs
 ## Param
 
 ::: federatedml.param.column_expand_param
@@ -13,3 +14,4 @@ data), before data entering Data Transform.
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
+-->

@@ -114,6 +114,7 @@ And for Host:
     125, alice, 5
     130, bob, 4
 
+<!-- mkdocs
 ## Param
 
 ::: federatedml.param.intersect_param
@@ -123,6 +124,7 @@ And for Host:
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
+ -->
 
 ## Feature
 
@@ -148,6 +150,8 @@ RAW intersection supports the following extra feature:
 
 RSA intersection is used for intersection cardinality estimation.
 
+<!-- 
 ## Examples
 
 {% include-examples "intersect" %}
+-->

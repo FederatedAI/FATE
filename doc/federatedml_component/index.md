@@ -77,6 +77,7 @@ provide:
   - [Oblivious Transfer](secureprotol.md#oblivious-transfer)
   - [Feldman Verifiable Secret Sharing](secureprotol.md#feldman-verifiable-secret-sharing)
 
+<!-- mkdocs
 ## Params
 
 ::: federatedml.param
@@ -86,3 +87,4 @@ provide:
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
+ -->

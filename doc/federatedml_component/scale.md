@@ -9,6 +9,7 @@ Feature Scale module supports min-max scale and standard scale.
 2.  standard scale: standardize features by removing the mean and
     scaling to unit variance
 
+<!-- mkdocs
 ## Param
 
 ::: federatedml.param.scale_param
@@ -18,3 +19,4 @@ Feature Scale module supports min-max scale and standard scale.
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
+-->
