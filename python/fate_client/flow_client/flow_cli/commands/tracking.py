@@ -76,30 +76,6 @@ def metric_all(ctx, **kwargs):
     access_server('post', ctx, 'tracking/component/metric/all', config_data)
 
 
-@tracking.command("metric-delete", short_help="Delete Metric Command")
-@click.option('-d', '--date', type=click.STRING,
-              help="An 8-digit valid date, format like 'YYYYMMDD'")
-@cli_args.JOBID
-@click.pass_context
-def metric_delete(ctx, **kwargs):
-    """
-    \b
-    - DESCRIPTION:
-        Delete specified metric.
-        If you input both two optional arguments, the 'date' argument will be detected in priority,
-        while the job id will be ignored.
-
-    \b
-    - USAGE:
-        flow component metric-delete -d 20200101
-        flow component metric-delete -j $JOB_ID
-    """
-    config_data, dsl_data = preprocess(**kwargs)
-    if config_data.get('date'):
-        config_data['model'] = config_data.pop('date')
-    access_server('post', ctx, 'tracking/component/metric/delete', config_data)
-
-
 @tracking.command("parameters", short_help="Component Parameters Command")
 @cli_args.JOBID_REQUIRED
 @cli_args.ROLE_REQUIRED
