@@ -174,6 +174,8 @@ def load_value_to_type(value, value_type):
         loaded_value = getattr(np, value_type)(value)
     elif value_type in ["str", "_str"]:
         loaded_value = str(value)
+    elif value_type.lower() in ["none", "nonetype"]:
+        loaded_value = None
     else:
         raise ValueError(f"unknown value type: {value_type}")
     return loaded_value

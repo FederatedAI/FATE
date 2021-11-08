@@ -32,11 +32,14 @@ class EncodeParam(BaseParam):
 
     Parameters
     ----------
-    salt: the src data string will be str = str + salt, default by empty string
+    salt: str
+        the src data string will be str = str + salt, default by empty string
 
-    encode_method: str, the hash method of src data string, support md5, sha1, sha224, sha256, sha384, sha512, sm3, default by None
+    encode_method: {"none", "md5", "sha1", "sha224", "sha256", "sha384", "sha512", "sm3"}
+        the hash method of src data string, support md5, sha1, sha224, sha256, sha384, sha512, sm3, default by None
 
-    base64: bool, if True, the result of hash will be changed to base64, default by False
+    base64: bool
+        if True, the result of hash will be changed to base64, default by False
     """
 
     def __init__(self, salt='', encode_method='none', base64=False):
@@ -75,17 +78,22 @@ class RAWParam(BaseParam):
 
     Parameters
     ----------
-    use_hash: bool, whether to hash ids for raw intersect
+    use_hash: bool
+        whether to hash ids for raw intersect
 
-    salt: str, the src data string will be str = str + salt, default by empty string
+    salt: str
+        the src data string will be str = str + salt, default by empty string
 
-    hash_method: str, the hash method of src data string, support md5, sha1, sha224, sha256, sha384, sha512, sm3, default by None
+    hash_method: str
+        the hash method of src data string, support md5, sha1, sha224, sha256, sha384, sha512, sm3, default by None
 
-    base64: bool, if True, the result of hash will be changed to base64, default by False
+    base64: bool
+        if True, the result of hash will be changed to base64, default by False
 
-    join_role: str, role who joins ids, supports "guest" and "host" only and effective only for raw.
-               If it is "guest", the host will send its ids to guest and find the intersection of
-               ids in guest; if it is "host", the guest will send its ids to host. Default by "guest";
+    join_role: {"guest", "host"}
+        role who joins ids, supports "guest" and "host" only and effective only for raw.
+        If it is "guest", the host will send its ids to guest and find the intersection of
+        ids in guest; if it is "host", the guest will send its ids to host. Default by "guest";
     """
 
     def __init__(self, use_hash=False, salt='', hash_method='none', base64=False, join_role=consts.GUEST):
@@ -121,20 +129,27 @@ class RSAParam(BaseParam):
 
     Parameters
     ----------
-    salt: the src data string will be str = str + salt, default ''
+    salt: str
+        the src data string will be str = str + salt, default ''
 
-    hash_method: str, the hash method of src data string, support sha256, sha384, sha512, sm3, default sha256
+    hash_method: str
+        the hash method of src data string, support sha256, sha384, sha512, sm3, default sha256
 
-    final_hash_method: str, the hash method of result data string, support md5, sha1, sha224, sha256, sha384, sha512, sm3, default sha256
+    final_hash_method: str
+        the hash method of result data string, support md5, sha1, sha224, sha256, sha384, sha512, sm3, default sha256
 
-    split_calculation: bool, if True, Host & Guest split operations for faster performance, recommended on large data set
+    split_calculation: bool
+        if True, Host & Guest split operations for faster performance, recommended on large data set
 
-    random_base_fraction: positive float, if not None, generate (fraction * public key id count) of r for encryption and reuse generated r;
+    random_base_fraction: positive float
+        if not None, generate (fraction * public key id count) of r for encryption and reuse generated r;
         note that value greater than 0.99 will be taken as 1, and value less than 0.01 will be rounded up to 0.01
 
-    key_length: int, value >= 1024, bit count of rsa key, default 1024
+    key_length: int
+        value >= 1024, bit count of rsa key, default 1024
 
-    random_bit: positive int, it will define the size of blinding factor in rsa algorithm, default 128
+    random_bit: positive int
+        it will define the size of blinding factor in rsa algorithm, default 128
 
     """
 
@@ -185,12 +200,14 @@ class DHParam(BaseParam):
 
     Parameters
     ----------
-    salt: the src data string will be str = str + salt, default ''
+    salt: str
+        the src data string will be str = str + salt, default ''
 
-    hash_method: str, the hash method of src data string, support none, md5, sha1, sha 224, sha256, sha384, sha512, sm3,
-        default sha256
+    hash_method: str
+        the hash method of src data string, support none, md5, sha1, sha 224, sha256, sha384, sha512, sm3, default sha256
 
-    key_length: int, value >= 1024, the key length of the commutative cipher p, default 1024
+    key_length: int, value >= 1024
+        the key length of the commutative cipher p, default 1024
 
     """
 
@@ -224,9 +241,12 @@ class IntersectCache(BaseParam):
 
         Parameters
         ----------
-        use_cache: whether to use cached ids; with ver1.7 and above, this param is ignored
-        id_type: with ver1.7 and above, this param is ignored
-        encrypt_type: with ver1.7 and anove, this param is ignored
+        use_cache: bool
+            whether to use cached ids; with ver1.7 and above, this param is ignored
+        id_type
+            with ver1.7 and above, this param is ignored
+        encrypt_type
+            with ver1.7 and anove, this param is ignored
         """
         super().__init__()
         self.use_cache = use_cache
@@ -251,27 +271,34 @@ class IntersectPreProcessParam(BaseParam):
 
     Parameters
     ----------
-    false_positive_rate: float, initial target false positive rate when creating Bloom Filter,
-                         must be <= 0.5, default 1e-3
+    false_positive_rate: float
+        initial target false positive rate when creating Bloom Filter,
+        must be <= 0.5, default 1e-3
 
-    encrypt_method: str, encrypt method for encrypting id when performing cardinality_only task,
-                    supports rsa only, default rsa;
-                    specify rsa parameter setting with RSAParam
+    encrypt_method: str
+        encrypt method for encrypting id when performing cardinality_only task,
+        supports rsa only, default rsa;
+        specify rsa parameter setting with RSAParam
 
-    hash_method: str, the hash method for inserting ids, support md5, sha1, sha 224, sha256, sha384, sha512, sm3,
-                 default sha256
+    hash_method: str
+        the hash method for inserting ids, support md5, sha1, sha 224, sha256, sha384, sha512, sm3,
+        default sha256
 
-    preprocess_method: str, the hash method for encoding ids before insertion into filter, default sha256,
-                       only effective for preprocessing
+    preprocess_method: str
+        the hash method for encoding ids before insertion into filter, default sha256,
+        only effective for preprocessing
 
-    preprocess_salt: str, salt to be appended to hash result by preprocess_method before insertion into filter,
-                     default '', only effective for preprocessing
+    preprocess_salt: str
+        salt to be appended to hash result by preprocess_method before insertion into filter,
+        default '', only effective for preprocessing
 
-    random_state: seed for random salt generator when constructing hash functions,
-                  salt is appended to hash result by hash_method when performing insertion, default None
+    random_state: int
+        seed for random salt generator when constructing hash functions,
+        salt is appended to hash result by hash_method when performing insertion, default None
 
-    filter_owner: str, role that constructs filter, either guest or host, default guest,
-                  only effective for preprocessing
+    filter_owner: str
+        role that constructs filter, either guest or host, default guest,
+        only effective for preprocessing
 
     """
 
@@ -333,76 +360,98 @@ class IntersectParam(BaseParam):
 
     Parameters
     ----------
-    intersect_method: str, it supports 'rsa', 'raw', and 'dh', default by 'rsa'
+    intersect_method: str
+        it supports 'rsa', 'raw', and 'dh', default by 'rsa'
 
-    random_bit: positive int, it will define the size of blinding factor in rsa algorithm, default 128
+    random_bit: positive int
+        it will define the size of blinding factor in rsa algorithm, default 128
         note that this param will be deprecated in future, please use random_bit in RSAParam instead
 
-    sync_intersect_ids: bool. In rsa, 'sync_intersect_ids' is True means guest or host will send intersect results to the others, and False will not.
-                            while in raw, 'sync_intersect_ids' is True means the role of "join_role" will send intersect results and the others will get them.
-                            Default by True.
+    sync_intersect_ids: bool
+        In rsa, 'sync_intersect_ids' is True means guest or host will send intersect results to the others, and False will not.
+        while in raw, 'sync_intersect_ids' is True means the role of "join_role" will send intersect results and the others will get them.
+        Default by True.
 
-    join_role: str, role who joins ids, supports "guest" and "host" only and effective only for raw.
-               If it is "guest", the host will send its ids to guest and find the intersection of
-               ids in guest; if it is "host", the guest will send its ids to host. Default by "guest";
-               note this param will be deprecated in future version, please use 'join_role' in raw_params instead
+    join_role: str
+        role who joins ids, supports "guest" and "host" only and effective only for raw.
+        If it is "guest", the host will send its ids to guest and find the intersection of
+        ids in guest; if it is "host", the guest will send its ids to host. Default by "guest";
+        note this param will be deprecated in future version, please use 'join_role' in raw_params instead
 
-    only_output_key: bool, if false, the results of intersection will include key and value which from input data; if true, it will just include key from input
-                     data and the value will be empty or filled by uniform string like "intersect_id"
+    only_output_key: bool
+        if false, the results of intersection will include key and value which from input data; if true, it will just include key from input
+        data and the value will be empty or filled by uniform string like "intersect_id"
 
-    with_encode: bool, if True, it will use hash method for intersect ids, effective for raw method only;
-                 note that this param will be deprecated in future version, please use 'use_hash' in raw_params;
-                 currently if this param is set to True,
-                 specification by 'encode_params' will be taken instead of 'raw_params'.
+    with_encode: bool
+        if True, it will use hash method for intersect ids, effective for raw method only;
+        note that this param will be deprecated in future version, please use 'use_hash' in raw_params;
+        currently if this param is set to True,
+        specification by 'encode_params' will be taken instead of 'raw_params'.
 
-    encode_params: EncodeParam, effective only when with_encode is True;
-                  this param will be deprecated in future version, use 'raw_params' in future implementation
+    encode_params: EncodeParam
+        effective only when with_encode is True;
+        this param will be deprecated in future version, use 'raw_params' in future implementation
 
-    raw_params: RAWParam, effective for raw method only
+    raw_params: RAWParam
+        effective for raw method only
 
-    rsa_params: RSAParam, effective for rsa method only
+    rsa_params: RSAParam
+        effective for rsa method only
 
-    dh_params: DHParam, effective for dh method only
+    dh_params: DHParam
+        effective for dh method only
 
-    join_method: str, choose 'inner_join' or 'left_join',
-            if 'left_join', participants will all include sample_id_generator's (imputed) ids in output,
-            default 'inner_join'
+    join_method: {'inner_join', 'left_join'}
+        if 'left_join', participants will all include sample_id_generator's (imputed) ids in output,
+        default 'inner_join'
 
-    new_sample_id: bool, whether to generate new id for sample_id_generator's ids,
-                   only effective when join_method is 'left_join' or when input data are instance with match id,
-                   default False
+    new_sample_id: bool
+        whether to generate new id for sample_id_generator's ids,
+        only effective when join_method is 'left_join' or when input data are instance with match id,
+        default False
 
-    sample_id_generator: str, role whose ids are to be kept,
-                         effective only when join_method is 'left_join' or when input data are instance with match id,
-                         default 'guest'
+    sample_id_generator: str
+        role whose ids are to be kept,
+        effective only when join_method is 'left_join' or when input data are instance with match id,
+        default 'guest'
 
-    intersect_cache_param: IntersectCacheParam, specification for cache generation,
-                           with ver1.7 and above, this param is ignored.
+    intersect_cache_param: IntersectCacheParam
+        specification for cache generation,
+        with ver1.7 and above, this param is ignored.
 
-    run_cache: whether to store Host's encrypted ids, only valid when intersect method is 'rsa' or 'dh', default False
+    run_cache: bool
+        whether to store Host's encrypted ids, only valid when intersect method is 'rsa' or 'dh', default False
 
-    cardinality_only: boolean, whether to output estimated intersection count(cardinality);
+    cardinality_only: bool
+        whether to output estimated intersection count(cardinality);
         if sync_cardinality is True, then sync cardinality count with host(s)
 
-    sync_cardinality: boolean, whether to sync cardinality with all participants, default False,
+    sync_cardinality: bool
+        whether to sync cardinality with all participants, default False,
         only effective when cardinality_only set to True
 
-    run_preprocess: boolean, whether to run preprocess process, default False
+    run_preprocess: bool
+        whether to run preprocess process, default False
 
-    intersect_preprocess_params: IntersectPreProcessParam, used for preprocessing and cardinality_only mode
+    intersect_preprocess_params: IntersectPreProcessParam
+        used for preprocessing and cardinality_only mode
 
-    repeated_id_process: bool, if true, intersection will process the ids which can be repeatable;
-                         in ver 1.7 and above,repeated id process
-                         will be automatically applied to data with instance id, this param will be ignored
+    repeated_id_process: bool
+        if true, intersection will process the ids which can be repeatable;
+        in ver 1.7 and above,repeated id process
+        will be automatically applied to data with instance id, this param will be ignored
 
-    repeated_id_owner: str, which role has the repeated id; in ver 1.7 and above, this param is ignored
+    repeated_id_owner: str
+        which role has the repeated id; in ver 1.7 and above, this param is ignored
 
-    allow_info_share: bool, in ver 1.7 and above, this param is ignored
+    allow_info_share: bool
+        in ver 1.7 and above, this param is ignored
 
-    info_owner: str, in ver 1.7 and above, this param is ignored
+    info_owner: str
+        in ver 1.7 and above, this param is ignored
 
-    with_sample_id: bool, data with sample id or not, default False; in ver 1.7 and above, this param is ignored
-
+    with_sample_id: bool
+        data with sample id or not, default False; in ver 1.7 and above, this param is ignored
     """
 
     def __init__(self, intersect_method: str = consts.RSA, random_bit=DEFAULT_RANDOM_BIT, sync_intersect_ids=True,

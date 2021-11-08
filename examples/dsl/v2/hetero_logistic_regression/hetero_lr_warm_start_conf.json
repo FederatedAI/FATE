@@ -1,0 +1,116 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "arbiter": [
+            10000
+        ],
+        "host": [
+            10000
+        ],
+        "guest": [
+            9999
+        ]
+    },
+    "component_parameters": {
+        "common": {
+            "hetero_lr_0": {
+                "penalty": "L2",
+                "optimizer": "sgd",
+                "tol": 0.0001,
+                "alpha": 0.01,
+                "early_stop": "diff",
+                "batch_size": -1,
+                "learning_rate": 0.15,
+                "max_iter": 5,
+                "init_param": {
+                    "init_method": "zeros",
+                    "fit_intercept": true
+                },
+                "encrypt_param": {
+                    "key_length": 1024
+                },
+                "callback_param": {
+                    "callbacks": ["ModelCheckpoint"],
+                    "validation_freqs": 1,
+                    "early_stopping_rounds": 1,
+                    "metrics": null,
+                    "use_first_metric_only": false,
+                    "save_freq": 1
+                }
+            },
+            "hetero_lr_1": {
+                "penalty": "L2",
+                "optimizer": "sgd",
+                "tol": 0.0001,
+                "alpha": 0.01,
+                "early_stop": "diff",
+                "batch_size": -1,
+                "learning_rate": 0.15,
+                "max_iter": 30,
+                "init_param": {
+                    "init_method": "zeros",
+                    "fit_intercept": true
+                },
+                "encrypt_param": {
+                    "key_length": 1024
+                }
+            },
+            "hetero_lr_2": {
+                "penalty": "L2",
+                "optimizer": "sgd",
+                "tol": 0.0001,
+                "alpha": 0.01,
+                "early_stop": "diff",
+                "batch_size": -1,
+                "learning_rate": 0.15,
+                "max_iter": 30,
+                "init_param": {
+                    "init_method": "zeros",
+                    "fit_intercept": true
+                },
+                "encrypt_param": {
+                    "key_length": 1024
+                }
+            },
+            "evaluation_0": {
+                "eval_type": "regression",
+                "pos_label": 1
+            }
+        },
+        "role": {
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "data_transform_0": {
+                        "with_label": false
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "data_transform_0": {
+                        "with_label": true,
+                        "label_name": "y",
+                        "label_type": "int",
+                        "output_format": "dense"
+                    }
+                }
+            }
+        }
+    }
+}

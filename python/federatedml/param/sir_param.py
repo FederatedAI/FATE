@@ -26,22 +26,33 @@ from federatedml.util import consts, LOGGER
 @deprecated_param("key_size", "raw_retrieval")
 class SecureInformationRetrievalParam(BaseParam):
     """
-    security_level: float [0, 1]; if security_level == 0, then do raw data retrieval
+    Parameters
+    ----------
+    security_level: float, default 0.5 
+        security level, should set value in [0, 1]
+        if security_level equals 0.0 means raw data retrieval
 
-    oblivious_transfer_protocol: OT type, only supports OT_Hauck
+    oblivious_transfer_protocol: {"OT_Hauck"}
+        OT type, only supports OT_Hauck
 
-    commutative_encryption: the commutative encryption scheme used, only supports CommutativeEncryptionPohligHellman
+    commutative_encryption : {"CommutativeEncryptionPohligHellman"}
+        the commutative encryption scheme used
 
-    non_committing_encryption: the non-committing encryption scheme used, only supports aes
+    non_committing_encryption : {"aes"}
+        the non-committing encryption scheme used
 
-    dh_params: params for Pohlig-Hellman Encryption
+    dh_params
+        params for Pohlig-Hellman Encryption
 
-    key_size: int, value >= 1024, the key length of the commutative cipher;
+    key_size: int, value >= 1024
+        the key length of the commutative cipher;
         note that this param will be deprecated in future, please specify key_length in PHParam instead.
 
-    raw_retrieval: bool, perform raw retrieval if raw_retrieval
+    raw_retrieval: bool
+        perform raw retrieval if raw_retrieval
 
-    target_cols: str or list of str, target cols to retrieve;
+    target_cols: str or list of str
+        target cols to retrieve;
         any values not retrieved will be marked as "unretrieved",
         if target_cols is None, label will be retrieved, same behavior as in previous version
         default None

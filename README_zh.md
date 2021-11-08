@@ -4,87 +4,72 @@
   <img src="./doc/images/FATE_logo.png">
 </div>
 
-[DOC](./doc) | [Quick Start](./examples/dsl/v2) | [English](./README.md)
+[DOC](./doc) | [Quick Start](doc/tutorial/pipeline/pipeline_guide.md) | [English](./README.md)
 
-FATE (Federated AI Technology Enabler) 是微众银行AI部门发起的开源项目，为联邦学习生态系统提供了可靠的安全计算框架。FATE项目使用多方安全计算 (MPC) 以及同态加密 (HE) 技术构建底层安全计算协议，以此支持不同种类的机器学习的安全计算，包括逻辑回归、基于树的算法、深度学习和迁移学习等。
+FATE (Federated AI Technology Enabler) 是微众银行AI部门发起的开源项目，为联邦学习生态系统提供了可靠的安全计算框架。
+FATE项目使用多方安全计算 (MPC) 以及同态加密 (HE) 技术构建底层安全计算协议，以此支持不同种类的机器学习的安全计算，
+包括逻辑回归、基于树的算法、深度学习和迁移学习等。
 
 FATE官方网站：<https://fate.fedai.org/>
 
-## FATE中的联邦学习算法
 
-FATE目前支持三种类型联邦学习算法：横向联邦学习、纵向联邦学习以及迁移学习。算法细节请参考文档 [python/federatedml](./python/federatedml) 。
+## 教程
 
+### 部署
 
-## 安装教程
+#### 单机版
+- [Docker Compose安装](https://github.com/FederatedAI/KubeFATE/tree/master/docker-deploy)
+- [原生单机版安装](./deploy/standalone-deploy/)
 
-FATE支持Linux或Mac操作系统，当前FATE支持：
-
-* Native部署: 单机部署和集群部署;
-
-* KubeFATE部署
-
-### Native部署
-运行环境: jdk1.8+、Python3.6、python virtualenv、mysql5.6+
-##### 单机部署
-
-FATE为开发人员提供了单机部署架构版本。单机部署版本可以帮助开发人员快速开发以及测试FATE。该版本支持两种类型：1）Docker；2）手动编译。
-
-具体细节请参阅单机部署指南：[standalone-deploy](deploy/standalone-deploy/)。
-
-##### 集群部署
-
-FATE同样为大数据场景提供了分布式运行部署架构版本。从单机部署迁移到集群部署仅需要更改配置文件，不需要更改算法。
-
-具体细节请参阅集群部署指南：[cluster-deploy](./cluster-deploy)。
-
-### KubeFATE部署:
-通过 KubeFATE, 我们可以使用 docker-compose或者 Kubernetes方式部署FATE:
-
-* 如果是开发或者测试场景, 推荐使用docker-compose部署方式. 这种模式仅仅需要 Docker 环境。 更多细节请参考 [FATE Docker Compose部署](https://github.com/FederatedAI/KubeFATE/tree/master/docker-deploy).
-
-* 如果生产环境或者大规模部署, 推荐使用Kubernetes方式来管理FATE系统 。更多细节请参考[ FATE Kubernetes部署](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy).
-
-更多使用说明请见[KubeFATE](https://github.com/FederatedAI/KubeFATE)。
-
-## 运行测试
-
-./federatedml/test 文件夹中提供了所有单元测试的脚本。
-
-安装FATE后，可以使用以下命令运行测试：
-
-> sh ./federatedml/test/run_test.sh
-
-如果FATE被正确安装，那么所有单元测试都将成功通过。
-
-## 示例程序
+#### 分布式
+- [Kubernetes安装](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy)
+- [原生集群安装](./deploy/cluster-deploy)
 
 ### 快速开始
+- [单元测试](./python/federatedml/test/)
+- [使用FATE-PipeLine启动任务](./doc/tutorial/pipeline/pipeline_guide.md)
+- [使用DSL json conf启动任务](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.md)
+- [在Jupyter Notebook使用FATE-Pipeline](./doc/tutorial/pipeline/pipeline_tutorial_0.ipynb)
 
-我们提供了一个用于快速搭建训练任务的python脚本作为示例。请参考：["./examples"](./examples/pipeline/README.rst)
+## 文档
 
-###  获取模型并检查结果
-FATE提供了名为 fate-flow 的工具用来跟踪组件输出模型或日志。fate-flow的部署和使用可以在 [这里](./python/fate_flow/README_zh.md) 找到。
+### 理解FATE设计
 
+- [FATE structure]
+- [组件](doc/federatedml_component/index.md)
+- [算法参数](./python/federatedml/param)
+- [论文与资料](./doc/resources)
 
-## 文档资料
-### API 文档
-FATE在 [doc-api](https://fate.readthedocs.io/en/latest/?badge=latest)提供了API文档.
-### 开发者文档
-如何使用FATE开发联邦学习算法？您可以在 [develop-guide](./doc/develop_guide_zh.rst) 中查看FATE开发指南。
+### 工具与服务
 
-### 其他文档
-FATE还在 [doc](./doc/) 中提供了许多其他文档。这些文档可以帮助您更好地了解FATE。
+- [FATE-Flow](https://github.com/FederatedAI/FATE-Flow)
+- [FATE-Board](https://github.com/FederatedAI/FATE-Board)
+- [FATE-Serving](https://github.com/FederatedAI/FATE-Serving)
+- [FATE-Cloud](https://github.com/FederatedAI/FATE-Cloud)
 
+### 贡献代码
 
-## 参与到FATE开源社区
+- [开发指南](doc/develop/develop_guide.zh.md)
+- [FATE-Client开发指南](doc/develop/fate_client_develop_guide.md)
 
-*  加入我们的邮件列表 [Fate-FedAI Group IO](https://groups.io/g/Fate-FedAI)，您可以提出问题或参与讨论。
+### API文档
 
-*  对于常见问题, 我们为您提供了 [FAQ文档](https://github.com/WeBankFinTech/FATE/wiki)。
+- [Computing API](doc/api/computing.md)
+- [Federation API](./doc/api/federation.md)
+- [Flow SDK API](doc/api/fate_client/flow_sdk.md)
+- [Flow Client](doc/api/fate_client/flow_client.md)
+- [FATE Pipeline](doc/api/fate_client/pipeline.md)
+- [FATE Test](./doc/api/fate_test.md)
 
-*  请使用 [issues](https://github.com/WeBankFinTech/FATE/issues) 提交BUG。
+## 了解更多
 
-*  请使用 [pull requests](https://github.com/WeBankFinTech/FATE/pulls) 提交、贡献代码。
+- [FATE Community](https://github.com/FederatedAI/FATE-Community)
+- [Fate-FedAI Group IO](https://groups.io/g/Fate-FedAI)
+- [FAQ](https://github.com/FederatedAI/FATE/wiki)
+- [issues](https://github.com/FederatedAI/FATE/issues)
+- [pull requests](https://github.com/FederatedAI/FATE/pulls)
+- [Bilibili: @FATEFedAI](https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)
+- [Twitter: @FATEFedAI](https://twitter.com/FateFedAI)
 
 
 ### License

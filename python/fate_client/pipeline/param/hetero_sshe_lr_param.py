@@ -15,13 +15,13 @@
 
 import copy
 
-from federatedml.param.base_param import BaseParam
-from federatedml.param.cross_validation_param import CrossValidationParam
-from federatedml.param.callback_param import CallbackParam
-from federatedml.param.encrypt_param import EncryptParam
-from federatedml.param.init_model_param import InitParam
-from federatedml.param.predict_param import PredictParam
-from federatedml.util import consts
+from pipeline.param.base_param import BaseParam
+from pipeline.param.cross_validation_param import CrossValidationParam
+from pipeline.param.callback_param import CallbackParam
+from pipeline.param.encrypt_param import EncryptParam
+from pipeline.param.init_model_param import InitParam
+from pipeline.param.predict_param import PredictParam
+from pipeline.param import consts
 
 
 class LogisticRegressionParam(BaseParam):

@@ -46,13 +46,13 @@
             "conf": "hetero_lr_warm_start_conf.json",
             "dsl": "hetero_lr_warm_start_dsl.json"
         },
-        "hetero_lr_all_reveal_in_guest": {
-            "conf": "hetero_lr_all_reveal_in_guest_conf.json",
-            "dsl": "hetero_lr_all_reveal_in_guest_dsl.json"
+        "hetero_lr_encrypted_reveal_in_host": {
+            "conf": "hetero_lr_encrypted_reveal_in_host_conf.json",
+            "dsl": "hetero_lr_encrypted_reveal_in_host_dsl.json"
         },
-        "hetero_lr_ovr_reveal_guest": {
-            "conf": "hetero_lr_ovr_reveal_guest_conf.json",
-            "dsl": "hetero_lr_ovr_reveal_guest_dsl.json"
+        "hetero_lr_ovr_encrypted_reveal_in_host": {
+            "conf": "hetero_lr_encrypted_reveal_in_host_conf.json",
+            "dsl": "hetero_lr_encrypted_reveal_in_host_dsl.json"
         },
         "hetero_lr_normal": {
             "conf": "hetero_lr_normal_conf.json",

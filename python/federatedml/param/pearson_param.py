@@ -21,6 +21,30 @@ from federatedml.param.base_param import BaseParam
 
 
 class PearsonParam(BaseParam):
+    """
+    param for pearson correlation
+    
+    Parameters
+    ----------
+
+    column_names : list of string
+        list of column names
+    
+    column_index : list of int
+        list of column index
+    
+    cross_parties : bool, default: True
+        if True, calculate correlation of columns from both party
+    
+    need_run : bool
+        set False to skip this party
+    
+    use_mix_rand : bool, defalut: False
+        mix system random and pseudo random for quicker calculation
+    
+    calc_loca_vif : bool, default True
+        calculate VIF for columns in local
+    """
     def __init__(
         self,
         column_names=None,

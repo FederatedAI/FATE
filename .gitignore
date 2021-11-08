@@ -37,6 +37,7 @@ venv
 .vscode/*
 /eggroll/
 /fateboard/
+/doc/federatedml_component/params/
 
 # fate_test
 fate_test_config.yaml
