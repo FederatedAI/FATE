@@ -13,8 +13,11 @@ represents Guest, party B and party C represent Host. The process of
 Feldman Verifiable Sum is shown below:
 
 ![Figure 1: Process of Feldman Verifiable Sum](../images/feldman_verifiable_sum.png "Figure 1: Process of Feldman Verifiable Sum")
+***Figure 1:*** *Process of Feldman Verifiable Sum*
+
 
 ![Figure 2: Process of share sub-key](../images/share_sub-key.png "Figure 2: Process of share sub-key")
+***Figure 2:*** *Process of share sub-key*
 
 In the process shown above, each party encrypts its own secret value,
 share sub-key, recieve sub-keys from other parties, and then combine all

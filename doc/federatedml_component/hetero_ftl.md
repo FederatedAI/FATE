@@ -4,8 +4,7 @@ Now, hetero federated transfer learning is refactorized based on
 fate-1.5. And additional test datasets are offered.
 
 This folder contains code for implementing algorithm presented in
-<span class="title-ref">Secure Federated Transfer Learning
-\<https://arxiv.org/abs/1812.03337\></span>\_\_.
+[\[Secure Federated Transfer Learning\].](https://arxiv.org/abs/1812.03337).
 
 Our FTL algorithm is trying to solve problem where two participants
 -host and guest - have only partial overlaps in the sample space and may
@@ -38,8 +37,7 @@ minimizing target loss and alignment loss.
 
 In current version, we get rid of the arbiter and still guarantee
 data/model privacy. For detail on how this can be achieved, please refer
-to <span class="title-ref">Secure Federated Transfer Learning
-\<https://arxiv.org/abs/1812.03337\></span>\_\_.
+to [\[Secure Federated Transfer Learning\].](https://arxiv.org/abs/1812.03337).
 
 We support two mode for the FTL algorithms: plain mode and encrypted
 mode. In plain mode, data are computed and transferred in plaintext,
@@ -55,8 +53,8 @@ several local model weights updates, thus communication cost is reduced.
 
   - Support plain/encrypted mode
   - Support local layer define / optimizer define
-  - Support communication-efficient mode. See
-    {% include-example "../../../examples/dsl/v2/hetero_ftl/test_ftl_comm_eff_conf.json" %}
+  - Support communication-efficient mode
+   
 
 ## Applications
 
