@@ -82,10 +82,10 @@ data. Intersection module then automatically checks for and process data
 with instance ID.
 
 Note that parameters for original repeated ID process such as
-<span class="title-ref">repeated\_id\_process</span> are deprecated in
-ver 1.7. Specify <span class="title-ref">join\_id\_owner</span> to the
+``repeated_id_process`` are deprecated in
+ver 1.7. Specify ``sample_id_generator`` to the
 role whose sid to be kept. For instances, when
-<span class="title-ref">join\_id\_owner</span> is set to Guest(default),
+``sample_id_generator`` is set to Guest(default),
 Guest's data is
 
     sid, id, value
@@ -131,7 +131,7 @@ RSA, RAW, and DH intersection methods support:
 1.  Multi-host PSI task. The detailed configuration for multi-host task
     can be found
     [here](../tutorial/dsl_conf/dsl_conf_v2_setting_guide.md#multi-host-configuration).
-2.  Match ID intersection using ID expanding.
+2.  Automatically match ID intersection using ID expanding (when data contains instance id).
 3.  Configurable hashing methods, including sha256, md5, and sm3; hash
     operators of RSA intersection can be configured separately, please
     refer [here](../../python/federatedml/param/intersect_param.py)
