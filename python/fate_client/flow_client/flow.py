@@ -20,7 +20,7 @@ import click
 from ruamel import yaml
 
 from flow_client.flow_cli.commands import checkpoint, component, data, job, model, queue, table, tag, task, provider, \
-    server, service, resource, privilege
+    server, service, resource, privilege, test
 from flow_client.flow_cli.utils.cli_utils import prettify
 
 
@@ -55,15 +55,17 @@ def flow_cli(ctx):
         if local_conf_path.exists():
             server_conf.update(yaml.safe_load(local_conf_path.read_text()).get("fateflow", {}))
 
+        ctx.obj["ip"] = server_conf["host"]
         ctx.obj["http_port"] = server_conf["http_port"]
-        ctx.obj["server_url"] = f"http://{server_conf['host']}:{ctx.obj['http_port']}/{ctx.obj['api_version']}"
+        ctx.obj["server_url"] = f"http://{ctx.obj['ip']}:{ctx.obj['http_port']}/{ctx.obj['api_version']}"
 
         if server_conf.get('http_app_key') and server_conf.get('http_secret_key'):
             ctx.obj['app_key'] = server_conf['http_app_key']
             ctx.obj['secret_key'] = server_conf['http_secret_key']
     elif config.get("ip") and config.get("port"):
+        ctx.obj["ip"] = config["ip"]
         ctx.obj["http_port"] = int(config["port"])
-        ctx.obj["server_url"] = f"http://{config['ip']}:{ctx.obj['http_port']}/{config['api_version']}"
+        ctx.obj["server_url"] = f"http://{ctx.obj['ip']}:{ctx.obj['http_port']}/{config['api_version']}"
 
         if config.get('app_key') and config.get('secret_key'):
             ctx.obj['app_key'] = config['app_key']
@@ -155,6 +157,7 @@ flow_cli.add_command(task.task)
 flow_cli.add_command(table.table)
 flow_cli.add_command(tag.tag)
 flow_cli.add_command(checkpoint.checkpoint)
+flow_cli.add_command(test.test)
 
 
 if __name__ == '__main__':

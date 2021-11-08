@@ -16,6 +16,7 @@ list each specify the sample ratio of corresponding label. e.g.
 > 
 >     [(0, 1.5), (1, 2.5), (3, 3.5)]
 
+<!-- mkdocs
 ## Param
 
 ::: federatedml.param.sample_param
@@ -25,3 +26,4 @@ list each specify the sample ratio of corresponding label. e.g.
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
+ -->

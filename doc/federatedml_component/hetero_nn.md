@@ -132,6 +132,7 @@ Backward Propagation Process also consists of three parts.
 > ![Figure 3 (Backward Propagation of Federated Heterogeneous Neural
 > Network)](../images/hetero_nn_backward_propagation.png)
 
+<!-- mkdocs
 ## Param
 
 ::: federatedml.param.hetero_nn_param
@@ -141,6 +142,7 @@ Backward Propagation Process also consists of three parts.
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
+-->
 
 ## Other features
 

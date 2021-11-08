@@ -40,6 +40,7 @@ stepwise module parameters, please refer to
 Please note that on FATE Board, shown model information (max iters &
 coefficient/intercept values) are of the final result model.
 
+<!-- mkdocs
 ## Param
 
 ::: federatedml.param.stepwise_param
@@ -49,8 +50,10 @@ coefficient/intercept values) are of the final result model.
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
+-->
 
-
+<!-- mkdocs
 ## Examples
 
 {% include-examples "hetero_stepwise" %}
+-->

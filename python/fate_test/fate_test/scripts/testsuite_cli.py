@@ -53,12 +53,14 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
               help="skip uploading data specified in testsuite")
 @click.option("--data-only", is_flag=True, default=False,
               help="upload data only")
+@click.option("--provider", type=str,
+              help="Select the fat version, for example: fate@1.7")
 @click.option("--disable-clean-data", "clean_data", flag_value=False, default=None)
 @click.option("--enable-clean-data", "clean_data", flag_value=True, default=None)
 @SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
 def run_suite(ctx, replace, include, exclude, glob, timeout, update_job_parameters, update_component_parameters,
-              skip_dsl_jobs, skip_pipeline_jobs, skip_data, data_only, clean_data, task_cores, **kwargs):
+              skip_dsl_jobs, skip_pipeline_jobs, skip_data, data_only, clean_data, task_cores, provider, **kwargs):
     """
     process testsuite
     """
@@ -77,7 +79,7 @@ def run_suite(ctx, replace, include, exclude, glob, timeout, update_job_paramete
     echo.welcome()
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
     echo.echo("loading testsuites:")
-    suites = _load_testsuites(includes=include, excludes=exclude, glob=glob)
+    suites = _load_testsuites(includes=include, excludes=exclude, glob=glob, provider=provider)
     for suite in suites:
         echo.echo(f"\tdataset({len(suite.dataset)}) dsl jobs({len(suite.jobs)}) "
                   f"pipeline jobs ({len(suite.pipeline_jobs)}) {suite.path}")

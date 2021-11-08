@@ -29,7 +29,8 @@ class FlowClient(BaseFlowClient):
     privilege = api.Privilege()
     checkpoint = api.Checkpoint()
     remote_version = api.Version()
+    test = api.Test()
 
-    def __init__(self, ip, port, version):
-        super().__init__(ip, port, version)
+    def __init__(self, ip, port, version, app_key=None, secret_key=None):
+        super().__init__(ip, port, version, app_key, secret_key)
         self.API_BASE_URL = 'http://%s:%s/%s/' % (ip, port, version)

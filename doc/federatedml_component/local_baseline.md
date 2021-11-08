@@ -24,6 +24,7 @@ respective information like Logistic Regression module. In addition,
 note that loss history is not available for Guest when running
 homogeneous training.
 
+<!-- mkdocs
 ## Param
 
 ::: federatedml.param.local_baseline_param
@@ -33,8 +34,10 @@ homogeneous training.
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
+-->
 
-
+<!-- 
 ## Examples
 
 {% include-examples "local_baseline" %}
+-->

@@ -49,6 +49,11 @@ PARTYID = click.option("-p", "--party-id", type=click.STRING,
 PARTYID_REQUIRED = click.option("-p", "--party-id", type=click.STRING, required=True,
                                 help="A valid party id.")
 
+GUEST_PARTYID_REQUIRED = click.option("--guest-party-id", type=click.STRING, required=True,
+                                      help="A valid party id.")
+HOST_PARTYID_REQUIRED = click.option("--host-party-id", type=click.STRING, required=True,
+                                      help="A valid party id.")
+
 COMPONENT_NAME = click.option("-cpn", "--component-name", type=click.STRING,
                               help="A valid component name.")
 
@@ -96,6 +101,9 @@ MODEL_ID_REQUIRED = click.option("--model-id", type=click.STRING, required=True,
 
 SERVICE_NAME = click.option("--service", type=click.STRING, required=True, help="Service Name")
 FORCE = click.option('--force', is_flag=True, default=False, help="force execute")
+
+TIMEOUT = click.option("--timeout", type=click.INT, default=300,
+                       help="Timeout limit, default 300 seconds")
 
 SRC_PARTY_ID =  click.option("--src-party-id", type=click.STRING, required=True, help="src party id.")
 SRC_ROLE =  click.option("--src-role", type=click.Choice(role_choices_list), required=True, metavar="TEXT",

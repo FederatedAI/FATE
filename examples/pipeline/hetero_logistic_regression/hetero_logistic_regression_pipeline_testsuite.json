@@ -86,6 +86,9 @@
         },
         "hetero-lr-sparse-sqn": {
             "script": "pipeline-hetero-lr-sparse-sqn.py"
+        },
+        "hetero-lr-warm-start": {
+            "script": "pipeline-hetero-lr-warm-start.py"
         }
     }
 }

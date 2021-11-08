@@ -23,6 +23,7 @@ The indicators for each column that can be statistic are list as follow.
 
 These static values can be used in feature selection as a criterion.
 
+<!-- mkdocs
 ## Param
 
 ::: federatedml.param.statistics_param
@@ -32,5 +33,9 @@ These static values can be used in feature selection as a criterion.
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
+-->
 
+<!-- mkdocs
+## Examples
 {% include-examples "data_statistics" %}
+-->

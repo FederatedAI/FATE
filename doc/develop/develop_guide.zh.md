@@ -1,7 +1,5 @@
 # 开发指南
 
-[[ENG](../develop_guide.md)]
-
 ## 为 FATE 开发可运行的算法模块
 
 本文档描述了如何开发算法模块，使得该模块可以在 FATE 架构下被调用。
@@ -32,17 +30,18 @@
 3.  重载 BaseParam 的参数检查接口，否则将会抛出未实现的错误。检查方法被用于验证参数变量是否可用。
 
 以 hetero lr 的参数对象为例，python文件为
-[federatedml/param/logistic\_regression\_param.py](../../python/federatedml/param/logistic_regression_param.py)
+`federatedml/param/logistic\_regression\_param.py`
+<!-- {% include-example "../../python/federatedml/param/logistic_regression_param.py" %} -->
 
 首先，它继承自 BaseParam：
 
-``` sourceCode python
+```python
 class LogisticParam(BaseParam):
 ```
 
 然后，在 <span class="title-ref">\_\_init\_\_</span> 方法中定义所有参数变量：
 
-``` sourceCode python
+```python
 def __init__(self, penalty='L2',
              eps=1e-5, alpha=1.0, optimizer='sgd', party_weight=1,
              batch_size=-1, learning_rate=0.01, init_param=InitParam(),
@@ -76,7 +75,7 @@ def __init__(self, penalty='L2',
 
 之后，重载参数检查的接口：
 
-``` sourceCode python
+```python
 def check(self):
     descr = "logistic_param's"
 
@@ -125,10 +124,10 @@ def check(self):
         | host | arbiter"</span> 可以作为定义角色密钥的另一种方法。
 
 也可以用 hetero-lr 来说明，您可以在
-[federatedml/conf/setting\_conf/HeteroLR.json](../../python/federatedml/conf/setting_conf/HeteroLR.json)
-中找到它。
+`federatedml/conf/setting\_conf/HeteroLR.json` 中找到它。
+<!-- {% include-example "../../python/federatedml/conf/setting_conf/HeteroLR.json" %} -->
 
-``` sourceCode json
+```json
 {
     "module_path":  "federatedml/logistic_regression/hetero_logistic_regression",
     "param_class" : "federatedml/param/logistic_regression_param.py/LogisticParam",

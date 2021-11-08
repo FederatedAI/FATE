@@ -14,6 +14,13 @@ will be given.
 Please note that when weight is not None, only `weight_diff` convergence
 check method may be used for training GLM.
 
+
+!!!Note
+
+    If both `class_weight` and `sample_weight_name` are provided, values
+    from column of `sample_weight_name` will be used.
+
+<!--  mkdocs
 ## Param
 
 ::: federatedml.param.sample_weight_param
@@ -23,18 +30,4 @@ check method may be used for training GLM.
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
-
-> 
-> 
-> <div class="note">
-> 
-> <div class="admonition-title">
-> 
-> Note
-> 
-> </div>
-> 
-> If both `class_weight` and `sample_weight_name` are provided, values
-> from column of `sample_weight_name` will be used.
-> 
-> </div>
+ -->

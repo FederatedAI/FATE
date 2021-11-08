@@ -9,6 +9,7 @@ for its details.
 ![Figure 5: Encoding using leaf
 indices\</div\>](../images/gbdt_lr.png)
 
+<!-- mkdocs
 ## Param
 
 ::: federatedml.param.sbt_feature_transformer_param
@@ -18,3 +19,4 @@ indices\</div\>](../images/gbdt_lr.png)
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
+-->

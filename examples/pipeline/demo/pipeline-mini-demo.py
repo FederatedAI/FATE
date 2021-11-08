@@ -14,8 +14,6 @@
 #  limitations under the License.
 #
 
-
-from pipeline.backend.config import Backend, WorkMode
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataTransform
 from pipeline.component import Evaluation
@@ -30,12 +28,6 @@ def main():
     guest = 9999
     host = 10000
     arbiter = 10000
-    # 0 for eggroll, 1 for spark
-    backend = Backend.EGGROLL
-    # 0 for standalone, 1 for cluster
-    work_mode = WorkMode.STANDALONE
-    # use the work mode below for cluster deployment
-    # work_mode = WorkMode.CLUSTER
 
     # specify input data name & namespace in database
     guest_train_data = {"name": "breast_hetero_guest", "namespace": "experiment"}

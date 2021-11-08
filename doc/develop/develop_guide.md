@@ -39,7 +39,7 @@ needed.
     variables.
 
 Take hetero lr's parameter object as example, the python file is
-[python/federatedml/param/logistic\_regression\_param.py](../python/federatedml/param/logistic_regression_param.py)
+[here](../../python/federatedml/param/logistic_regression_param.py)
 
 firstly, it inherits BaseParam:
 
@@ -145,7 +145,7 @@ this file to get the information of how to start program of the module.
     > way to define the role keys.
 
 Take hetero-lr as an example, users can find it in
-[python/federatedml/conf/setting\_conf/HeteroLR.json](../python/federatedml/conf/setting_conf/HeteroLR.json)
+[python/federatedml/conf/setting\_conf/HeteroLR.json](../../python/federatedml/conf/setting_conf/HeteroLR.json)
 
 ``` sourceCode json
 {
@@ -229,7 +229,7 @@ class HeteroBoostingTransferVariable(BaseTransferVariables):
 
 After setting that, the following command would help you create
 corresponding json setting file in
-[auth\_conf](../python/federatedml/transfer_variable/auth_conf) folder
+[auth\_conf](../../python/federatedml/transfer_variable/auth_conf) folder
 where fate\_flow can refer
 to.
 
@@ -250,7 +250,7 @@ The rule of running a module with fate\_flow\_client is that:
 
 In this section, we describe how to do 3-5. Many common interfaces are
 provided in
-[python/federatedml/model\_base.py](../python/federatedml/model_base.py)
+[python/federatedml/model\_base.py](../../python/federatedml/model_base.py)
 .
 
   - Override fit interface if needed  
@@ -337,7 +337,7 @@ To use the trained model through different platform, FATE use protobuf
 files to save the parameters and model result of a task. When developing
 your own module, you are supposed to create two proto files which
 defined your model content in [this
-folder](../python/federatedml/protobuf/proto).
+folder](../../python/federatedml/protobuf/proto).
 
 For more details of protobuf, please refer to [this
 tutorial](https://developers.google.com/protocol-buffers/docs/pythontutorial)
@@ -347,7 +347,7 @@ parameters of a task. 2. File with "param" as suffix: Save the model
 result of a task.
 
 After defining your proto files, you can use the following script named
-[generate\_py.sh](../python/fate_arch/protobuf/generate_py.sh) to create
+[generate\_py.sh](../../python/fate_arch/protobuf/generate_py.sh) to create
 the corresponding python file:
 
 > 
@@ -385,7 +385,7 @@ To define a Pipeline component, follow these guidelines:
 3.  as a good practice, components should have the same names as their
     corresponding modules
 4.  components take in parameters at initialization as defined in
-    [fate\_client/pipeline/param](../python/fate_client/pipeline/param),
+    [fate\_client/pipeline/param](../../python/fate_client/pipeline/param),
     where a BaseParam and consts file are provided
 5.  set attributes of component input and output, including whether
     module has output model, or type of data output('single' vs.
