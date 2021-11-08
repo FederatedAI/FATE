@@ -16,14 +16,14 @@ sample count)/(total sample number) \* compute PSI value: psi = sum(
 expect\_percentage) )
 
 For more details of psi, you can refer to this
-<span class="title-ref">PSI tutorial
-\<https://www.lexjansen.com/wuss/2017/47\_Final\_Paper\_PDF.pdf\></span>\_\_
+ [\[PSI tutorial\].](https://www.lexjansen.com/wuss/2017/47\_Final\_Paper\_PDF.pdf).
+
 
 ## Param
 
   - max\_bin\_num: int, max bin number of quantile feature binning
   - need\_run: bool, need to run this module in DSL
-  - dense\_missing\_val: int/ float/ string imputed missing value when
+  - dense\_missing\_val: int, float, string imputed missing value when
     input format is dense, default is set to np.nan. Default setting is
     suggested
 

@@ -3,10 +3,12 @@ beautifultable==1.0.0
 cachetools==3.0.0
 cloudpickle==0.6.1
 cos-python-sdk-v5==1.9.10
+dataclasses;python_version < "3.7"
 Flask==1.0.2
 gmpy2==2.0.8
 joblib==1.0.1
 kazoo==2.6.1
+pyyaml==5.4.1
 kfserving==0.5.1
 kubernetes>=12.0.1
 lmdb==0.98

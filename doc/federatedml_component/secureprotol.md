@@ -116,13 +116,11 @@ $$ dec(v) = enc(v) ^ d \pmod{n} $$
 It will do nothing and return input data during encryption and
 decryption.
 
-# Encode
+# Hash Factory
 
-Encode module provides some method including "md5", "sha1", "sha224",
-"sha256", "sha384", "sha512" for data encoding. This module can help you
-to encode your data with more convenient. It also supports for adding
-salt in front of data or behind data. For the encoding result, you can
-choose transform it to base64 or not.
+Hash factory provides following data encoding methods: "md5", "sha1", "sha224",
+"sha256", "sha384", "sha512", "sm3". This module is meant to make hashing operation with more convenient. 
+It also supports adding salt and outputing results to base64 format.
 
 # Diffne Hellman Key Exchange
 

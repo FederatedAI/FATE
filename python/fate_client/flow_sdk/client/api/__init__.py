@@ -24,3 +24,4 @@ from flow_sdk.client.api.task import Task
 from flow_sdk.client.api.tag import Tag
 from flow_sdk.client.api.checkpoint import Checkpoint
 from flow_sdk.client.api.version import Version
+from flow_sdk.client.api.test import Test

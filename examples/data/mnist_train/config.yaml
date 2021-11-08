@@ -1,0 +1,7 @@
+inputs:
+  PIL_mode: L
+  ext: jpg
+  type: images
+targets:
+  type: integer
+type: vision
