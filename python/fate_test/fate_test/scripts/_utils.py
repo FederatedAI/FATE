@@ -43,7 +43,7 @@ def _big_data_task(includes, guest_data_size, host_data_size, guest_feature_num,
                                                 match_rate, sparsity, force, split_host, output_path, parallelize)
 
 
-def _load_testsuites(includes, excludes, glob, suffix="testsuite.json", suite_type="testsuite"):
+def _load_testsuites(includes, excludes, glob, provider=None, suffix="testsuite.json", suite_type="testsuite"):
     def _find_testsuite_files(path):
         if isinstance(path, str):
             path = Path(path)
@@ -79,7 +79,7 @@ def _load_testsuites(includes, excludes, glob, suffix="testsuite.json", suite_ty
     for suite_path in suite_paths:
         try:
             if suite_type == "testsuite":
-                suite = Testsuite.load(suite_path.resolve())
+                suite = Testsuite.load(suite_path.resolve(), provider)
             elif suite_type == "benchmark":
                 suite = BenchmarkSuite.load(suite_path.resolve())
             else:
