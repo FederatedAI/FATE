@@ -83,14 +83,14 @@ Servel plugins are introdused to makes mkdocs-material much powerful:
 ### include examples
 
 ```
-{% include-examples "<name>" %}
+<!-- {% include-examples "<name>" %} -->
 ```
 extract all components's examples(pipeline, dsl v1, dsl v2) from `examples` folder
 
 ### include example
 
 ```
-{% include-example "???" %}
+<!-- {% include-example "???" %} -->
 ```
 
 extract source code `???` from repo.

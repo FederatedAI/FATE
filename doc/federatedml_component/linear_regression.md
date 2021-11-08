@@ -32,6 +32,7 @@ transfers back the final gradients to corresponding parties. For more
 details on the secure model-building process, please refer to this
 [paper.](https://arxiv.org/pdf/1902.04885.pdf)
 
+<!-- mkdocs
 ## Param
 
 ::: federatedml.param.linear_regression_param
@@ -41,7 +42,7 @@ details on the secure model-building process, please refer to this
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
-
+-->
 
 ## Features
 

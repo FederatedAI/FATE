@@ -34,6 +34,7 @@ and clustering. Available metrics include:
 19. CONTINGENCY\_MATRIX:Compute contingency matrix for clustering tasks
     (labels are needed)
 
+<!-- mkdocs
 ## Param
 
 ::: federatedml.param.evaluation_param
@@ -43,3 +44,4 @@ and clustering. Available metrics include:
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
+-->

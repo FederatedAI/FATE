@@ -68,6 +68,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
   - [Oblivious Transfer](secureprotol.md#oblivious-transfer)
   - [Feldman Verifiable Secret Sharing](secureprotol.md#feldman-verifiable-secret-sharing)
 
+<!-- mkdocs
 ## 算法参数
 
 ::: federatedml.param
@@ -77,3 +78,4 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
+-->

@@ -13,6 +13,7 @@ Transfer(OT)](https://eprint.iacr.org/2017/1011).
 This component can be used to retrieve specific feature value(s) or
 label value, with arbitrary security level.
 
+<!-- mkdocs
 ## Param
 
 ::: federatedml.param.sir_param
@@ -22,8 +23,10 @@ label value, with arbitrary security level.
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
+-->
 
-
+<!-- mkdocs
 ## Examples
 
 {% include-examples "secure_information_retrieval" %}
+-->

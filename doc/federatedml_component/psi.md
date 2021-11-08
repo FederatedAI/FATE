@@ -27,6 +27,9 @@ For more details of psi, you can refer to this
     input format is dense, default is set to np.nan. Default setting is
     suggested
 
+<!-- mkdocs
 ## Examples
 
 { % include-examples "psi" %}
+-->
+
