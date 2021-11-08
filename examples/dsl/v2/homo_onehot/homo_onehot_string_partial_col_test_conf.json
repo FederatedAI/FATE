@@ -51,7 +51,7 @@
             }
         },
         "common": {
-            "dataio_0": {
+            "data_transform_0": {
                 "data_type": "str",
                 "with_label": true,
                 "label_name": "y",
