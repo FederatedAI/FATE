@@ -63,11 +63,11 @@
         "hetero-lr-large-init-w-compute-loss": {
             "script": "pipeline-hetero-lr-large-init-w-compute-loss.py"
         },
-        "hetero-lr-all-reveal-in-guest": {
-            "script": "pipeline-hetero-lr-all-reveal-in-guest.py"
+        "hetero-lr-encrypted-reveal-in-host": {
+            "script": "pipeline-hetero-lr-encrypted-reveal-in-host.py"
         },
-        "hetero-lr-ovr-reveal-guest": {
-            "script": "pipeline-hetero-lr-ovr-reveal-guest.py"
+        "hetero-lr-ovr-encrypted-reveal-in-host": {
+            "script": "pipeline-hetero-lr-ovr-encrypted-reveal-in-host.py"
         },
         "hetero-lr-ovr-none-penalty": {
             "script": "pipeline-hetero-lr-ovr-none-penalty.py"

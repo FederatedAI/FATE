@@ -560,9 +560,9 @@ config配置引擎
 ##### 5.4.1 说明
 
 DSL V2不会自动为训练任务生成预测dsl。 用户需要首先使用[Flow
-Client](../../api/flow_client.md) 部署所需模型中模块。
+Client](../../api/fate_client/flow_client.md) 部署所需模型中模块。
 详细命令说明请参考[FATE-Flow
-document](../../api/flow_client.md#deploy)
+document](../../api/fate_client/flow_client.md#deploy)
 
 ``` sourceCode bash
 flow model deploy --model-id $model_id --model-version $model_version --cpn-list ...
