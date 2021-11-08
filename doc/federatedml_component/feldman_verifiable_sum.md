@@ -12,10 +12,9 @@ Here, three participants of the federation process is given, Party A
 represents Guest, party B and party C represent Host. The process of
 Feldman Verifiable Sum is shown below:
 
-![Figure 1: Process of Feldman Verifiable
-Sum](../images/feldman_verifiable_sum.png)
+![Figure 1: Process of Feldman Verifiable Sum](../images/feldman_verifiable_sum.png "Figure 1: Process of Feldman Verifiable Sum")
 
-![Figure 2: Process of share sub-key](../images/share_sub-key.png)
+![Figure 2: Process of share sub-key](../images/share_sub-key.png "Figure 2: Process of share sub-key")
 
 In the process shown above, each party encrypts its own secret value,
 share sub-key, recieve sub-keys from other parties, and then combine all
@@ -31,13 +30,13 @@ decimal places.
 
 ## Param
 
-  - params
-
-  - sum\_cols  
-    list of column index, default: None
-
-  - q\_n  
-    int, positive integer less than or equal to 16, default: 6
+::: federatedml.param.feldman_verifiable_sum_param
+    rendering:
+      heading_level: 3
+      show_source: true
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_root_full_path: false
 
 ## Features
 

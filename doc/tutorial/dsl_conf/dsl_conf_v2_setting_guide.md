@@ -1,6 +1,6 @@
 # DSL & Task Submit Runtime Conf Setting V2
 
-[[中文](dsl_conf_v2_setting_guide_zh.md)]
+[[中文](dsl_conf_v2_setting_guide.zh.md)]
 
 To make the modeling task more flexible, currently, FATE uses its own
 domain-specific language(DSL) to describe modeling task. With usage of
