@@ -132,7 +132,9 @@ Hetero SecureBoost supports the following applications.
     feature may increase memory consumption. See
     [here](../../python/federatedml/param/boosting_param.py).
   - Support feature subsample random seed setting in FATE-1.5
-  - Support feature binning error setting.
+  - Support feature binning error setting
+  - Support GOSS sampling in FATE-1.6
+  - Support cipher compressing and g, h packing in FATE-1.7
 
 ## Homo SecureBoost
 
