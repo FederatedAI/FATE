@@ -58,11 +58,13 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
               help="Extract performance time consuming from history tags for comparison")
 @click.option("--skip-data", is_flag=True, default=False,
               help="skip uploading data specified in testsuite")
+@click.option("--provider", type=str,
+              help="Select the fat version, for example: fate@1.7")
 @click.option("--disable-clean-data", "clean_data", flag_value=False, default=None)
 @SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
-def run_task(ctx, job_type, include, replace, timeout, update_job_parameters, update_component_parameters,
-             max_iter, max_depth, num_trees, task_cores, storage_tag, history_tag, skip_data, clean_data, **kwargs):
+def run_task(ctx, job_type, include, replace, timeout, update_job_parameters, update_component_parameters, max_iter,
+             max_depth, num_trees, task_cores, storage_tag, history_tag, skip_data, clean_data, provider, **kwargs):
     """
     Test the performance of big data tasks, alias: bp
     """
@@ -89,7 +91,7 @@ def run_task(ctx, job_type, include, replace, timeout, update_job_parameters, up
     echo.welcome()
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
     echo.echo("loading testsuites:")
-    suites = _load_testsuites(includes=include, excludes=tuple(), glob=None)
+    suites = _load_testsuites(includes=include, excludes=tuple(), glob=None, provider=provider)
     for i, suite in enumerate(suites):
         echo.echo(f"\tdataset({len(suite.dataset)}) dsl jobs({len(suite.jobs)}) {suite.path}")
 
@@ -170,8 +172,7 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                     job.job_conf.update_component_parameters('num_trees', num_trees)
                 if task_cores is not None:
                     job.job_conf.update_job_common_parameters(task_cores=task_cores)
-                job.job_conf.update(config.parties, config.work_mode, timeout, update_job_parameters,
-                                    update_component_parameters)
+                job.job_conf.update(config.parties, timeout, update_job_parameters, update_component_parameters)
             except Exception:
                 _raise()
                 continue
