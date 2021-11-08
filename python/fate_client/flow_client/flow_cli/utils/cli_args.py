@@ -104,3 +104,11 @@ FORCE = click.option('--force', is_flag=True, default=False, help="force execute
 
 TIMEOUT = click.option("--timeout", type=click.INT, default=300,
                        help="Timeout limit, default 300 seconds")
+
+SRC_PARTY_ID =  click.option("--src-party-id", type=click.STRING, required=True, help="src party id.")
+SRC_ROLE =  click.option("--src-role", type=click.Choice(role_choices_list), required=True, metavar="TEXT",
+                    help="Role name. Users can choose one from {} and {}.".format(",".join(role_choices_list[:-1]),
+                                                                              role_choices_list[-1]))
+PRIVILEGE_ROLE =  click.option("--privilege-role", type=click.STRING, help="privilege role.")
+PRIVILEGE_COMMAND =  click.option("--privilege-command", type=click.STRING, help="privilege command.")
+PRIVILEGE_COMPONENT =  click.option("--privilege-component", type=click.STRING, help="privilege component.")
