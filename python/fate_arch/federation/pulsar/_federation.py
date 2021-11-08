@@ -481,7 +481,7 @@ class Federation(FederationABC):
                             proxy_url=proxy,
                         ).ok:
                             LOGGER.debug(
-                                "pulsar cluster with name: %s, broker_url: %s crated",
+                                "pulsar cluster with name: %s, broker_url: %s created",
                                 party.party_id,
                                 broker_url,
                             )
