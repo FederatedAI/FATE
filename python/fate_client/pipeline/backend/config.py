@@ -74,6 +74,9 @@ class FlowConfig(object):
         raise ValueError(f"PORT not configured. "
                          f"Please use command line tool pipeline init to set Flow server port")
 
+    APP_KEY = conf.get("app_key", None)
+    SECRET_KEY = conf.get("secret_key", None)
+
 
 class LogPath(object):
     @classmethod

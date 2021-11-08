@@ -69,6 +69,10 @@
         "dh_cache_intersect": {
             "conf": "./test_intersect_job_dh_cache_conf.json",
             "dsl": "./test_intersect_job_cache_dsl.json"
+        },
+        "intersect_cardinality": {
+            "conf": "./test_intersect_job_cardinality_conf.json",
+            "dsl": "./test_intersect_job_dsl.json"
         }
     }
 }
