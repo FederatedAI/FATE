@@ -328,4 +328,4 @@ structure is:
 
 ## Examples
 
-{% include-examples "homo_nn" %}
+<!-- {% include-examples "homo_nn" %} -->

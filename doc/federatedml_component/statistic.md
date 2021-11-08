@@ -33,4 +33,4 @@ These static values can be used in feature selection as a criterion.
       show_root_toc_entry: false
       show_root_full_path: false
 
-{% include-examples "data_statistics" %}
+<!-- {% include-examples "data_statistics" %} -->

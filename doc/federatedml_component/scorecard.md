@@ -54,4 +54,4 @@ range and parameter values.
 
 ## Examples
 
-{% include-examples "scorecard" %}
+<!-- {% include-examples "scorecard" %} -->

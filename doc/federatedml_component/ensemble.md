@@ -271,7 +271,7 @@ Framework\].](https://arxiv.org/abs/1901.08755)
 
 ### Examples
 
-{% include-examples "hetero_secureboost" %}
+<!-- {% include-examples "hetero_secureboost" %} -->
 
 ## Hetero Fast SecureBoost
 

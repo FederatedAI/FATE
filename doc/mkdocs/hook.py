@@ -44,12 +44,12 @@ def clean_params_doc():
 
 
 _INCLUDE_EXAMPLES_REGEX = re.compile(
-    r"""(?P<_includer_indent>[^\S\r\n]*){%\s*include-examples\s*"(?P<example_name>[^")]+)"\s*%}""",
+    r"""(?P<_includer_indent>[^\S\r\n]*)<!--\s*{\s*%\s*include-examples\s*"(?P<example_name>[^")]+)"\s*%\s*}\s*-->""",
     flags=re.VERBOSE | re.DOTALL,
 )
 
 _INCLUDE_EXAMPLE_REGEX = re.compile(
-    r"""(?P<_includer_indent>[^\S\r\n]*){%\s*include-example\s*"(?P<example_path>[^")]+)"\s*%}""",
+    r"""(?P<_includer_indent>[^\S\r\n]*)<!--\s*{\s*%\s*include-example\s*"(?P<example_path>[^")]+)"\s*%\s*}\s*-->""",
     flags=re.VERBOSE | re.DOTALL,
 )
 
@@ -177,7 +177,7 @@ def _fix_zh_url(match):
 def on_page_markdown(markdown, page, **kwargs):
     if page.file.abs_src_path.rsplit(".", 2)[-2] == "zh":
         markdown = re.sub(_MARKDOWN_URL_REGEX, _fix_zh_url, markdown)
-
+    
     markdown = re.sub(
         _INCLUDE_EXAMPLES_REGEX,
         sub_include_examples,

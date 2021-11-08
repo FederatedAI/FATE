@@ -31,7 +31,7 @@
 
 以 hetero lr 的参数对象为例，python文件为
 `federatedml/param/logistic\_regression\_param.py`
-{% include-example "../../python/federatedml/param/logistic_regression_param.py" %}
+<!-- {% include-example "../../python/federatedml/param/logistic_regression_param.py" %} -->
 
 首先，它继承自 BaseParam：
 
@@ -125,7 +125,7 @@ def check(self):
 
 也可以用 hetero-lr 来说明，您可以在
 `federatedml/conf/setting\_conf/HeteroLR.json` 中找到它。
-{% include-example "../../python/federatedml/conf/setting_conf/HeteroLR.json" %}
+<!-- {% include-example "../../python/federatedml/conf/setting_conf/HeteroLR.json" %} -->
 
 ```json
 {

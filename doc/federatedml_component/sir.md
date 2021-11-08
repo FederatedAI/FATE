@@ -26,4 +26,4 @@ label value, with arbitrary security level.
 
 ## Examples
 
-{% include-examples "secure_information_retrieval" %}
+<!-- {% include-examples "secure_information_retrieval" %} -->

@@ -47,4 +47,4 @@ Coefficient calculation. For more details, one can refer [[here](secureprotol.md
 
 ## Examples
 
-{% include-examples "hetero_pearson" %}
+<!-- {% include-examples "hetero_pearson" %} -->
