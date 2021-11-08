@@ -22,6 +22,7 @@ from fate_test.scripts.data_cli import data_group
 from fate_test.scripts.testsuite_cli import run_suite
 from fate_test.scripts.performance_cli import run_task
 from fate_test.scripts.flow_test_cli import flow_group
+from fate_test.scripts.quick_test_cli import quick_test_group
 
 commands = {
     "config": config_group,
@@ -29,7 +30,8 @@ commands = {
     "performance": run_task,
     "benchmark-quality": run_benchmark,
     "data": data_group,
-    "flow-test": flow_group
+    "flow-test": flow_group,
+    "quick-test": quick_test_group
 }
 
 commands_alias = {
@@ -62,10 +64,3 @@ def cli(ctx, **kwargs):
 
 if __name__ == '__main__':
     cli(obj=SharedOptions())
-
-
-# TODO:
-# 1. make sure the datasets `breast_hetero_host` and breast_hetero_guest` exist
-#    before running each test suite
-# 2. make each test suite can be run separately
-# 3. print the job id on each test suite
