@@ -55,6 +55,7 @@ them to desired output Table.
         0.2 0 0.5 0
         0.3 0.6 0 0.7
 
+<!-- mkdocs
 ## Param
 
 ::: federatedml.param.dataio_param
@@ -64,7 +65,7 @@ them to desired output Table.
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
-
+ -->
 
 ## Other Features of DataIO
 

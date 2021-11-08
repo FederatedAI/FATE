@@ -26,6 +26,7 @@ all three may be specified. The module takes either int (instance count)
 or float (fraction) value for set sizes, but mixed-type inputs cannot be
 used.
 
+<!-- mkdocs
 ## Param
 
 ::: federatedml.param.data_split_param
@@ -35,7 +36,10 @@ used.
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
+-->
 
+<!-- mkdocs
 # Examples
 
-<!-- {% include-examples "data_split" %} -->
+{% include-examples "data_split" %}
+-->

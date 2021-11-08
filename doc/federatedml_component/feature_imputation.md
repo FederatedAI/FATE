@@ -4,6 +4,7 @@ Feature Imputation imputes missing features on dense instances using
 user-specified method(s) and value(s). Imputation can be done on select
 columns using arbitrary methods. 
 
+<!-- mkdocs
 ## Param
 
 ::: federatedml.param.feature_imputation_param
@@ -13,8 +14,10 @@ columns using arbitrary methods.
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
+-->
 
-
+<!-- mkdocs
 ## Examples
 
-<!-- {% include-examples "feature_imputation" %} -->
+{% include-examples "feature_imputation" %}
+-->

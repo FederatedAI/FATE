@@ -12,6 +12,7 @@ Scorecard module of FATE provides a score transformer which scales
 predict score(probability of default) to credit score with user-defined
 range and parameter values.
 
+<!-- mkdocs
 ## Param
 
 ::: federatedml.param.scorecard_param
@@ -21,7 +22,7 @@ range and parameter values.
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
-
+-->
 
 ## How to Use
 
@@ -51,7 +52,8 @@ range and parameter values.
   - need\_run  
     Indicate if this module needs to be run, default True
 
-
+<!-- mkdocs
 ## Examples
 
-<!-- {% include-examples "scorecard" %} -->
+{% include-examples "scorecard" %}
+-->

@@ -46,6 +46,8 @@ decimal places.
 2.Attacks can be detected when the malicious participant is less than
 (n-1)/2
 
+<!-- mkdocs
 ## Examples
 
-<!-- {% include-examples "feldman_verifiable_sum" %} -->
+{% include-examples "feldman_verifiable_sum" %}
+-->

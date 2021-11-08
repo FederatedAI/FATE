@@ -56,7 +56,9 @@ several local model weights updates, thus communication cost is reduced.
   - Support plain/encrypted mode
   - Support local layer define / optimizer define
   - Support communication-efficient mode. See
-    <!-- {% include-example "../../../examples/dsl/v2/hetero_ftl/test_ftl_comm_eff_conf.json" %} -->
+    <!--     
+    {% include-example "../../../examples/dsl/v2/hetero_ftl/test_ftl_comm_eff_conf.json" %}
+    -->
 
 ## Applications
 

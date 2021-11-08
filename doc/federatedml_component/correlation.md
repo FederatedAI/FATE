@@ -19,6 +19,7 @@ $$\rho_{X, Y} = E[\tilde{X}\tilde{Y}]$$
 We use an MPC protocol called SPDZ for Heterogeneous Pearson Correlation
 Coefficient calculation. For more details, one can refer [[here](secureprotol.md)]
 
+<!-- mkdocs
 ## Param
 
 ::: federatedml.param.pearson_param
@@ -28,6 +29,7 @@ Coefficient calculation. For more details, one can refer [[here](secureprotol.md
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
+-->
 
 ## How to Use
 
@@ -45,6 +47,8 @@ Coefficient calculation. For more details, one can refer [[here](secureprotol.md
 
     if both params are provided, the union of columns indicated are used for calculation.
 
+<!-- mkdocs
 ## Examples
 
-<!-- {% include-examples "hetero_pearson" %} -->
+{% include-examples "hetero_pearson" %}
+-->
