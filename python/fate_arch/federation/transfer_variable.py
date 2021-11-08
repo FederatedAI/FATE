@@ -21,7 +21,7 @@ from typing import Union
 from fate_arch.abc import GarbageCollectionABC
 from fate_arch.common import Party, profile
 from fate_arch.common.log import getLogger
-from fate_arch.session import get_session, get_parties
+from fate_arch.session import PartiesInfo, Role, get_parties, get_session
 
 __all__ = ["Variable", "BaseTransferVariables"]
 
@@ -291,15 +291,11 @@ class Variable(object):
             object or list of object
         """
         if role is None:
-            src_parties = get_parties().roles_to_parties(
-                roles=self._src, strict=False
-            )
+            src_parties = get_parties().roles_to_parties(roles=self._src, strict=False)
         else:
             if isinstance(role, str):
                 role = [role]
-            src_parties = get_parties().roles_to_parties(
-                roles=role, strict=False
-            )
+            src_parties = get_parties().roles_to_parties(roles=role, strict=False)
         if isinstance(idx, list):
             rtn = self.get_parties(parties=[src_parties[i] for i in idx], suffix=suffix)
         elif isinstance(idx, int):
@@ -378,3 +374,85 @@ class BaseTransferVariables(object):
 
         """
         return get_parties().local_party
+
+
+"""
+auto tags
+"""
+
+
+class _TagSpace:
+    def __init__(self) -> None:
+        self._tags = {}
+        self._gc = {}
+
+    def get(self, name: str, party: Party):
+        if name not in self._tags:
+            self._tags[name] = {}
+            self._gc[name] = {}
+
+        if party not in self._tags[name]:
+            self._tags[name][party] = 0
+            self._gc[name][party] = IterationGC()
+
+        return self._tags[name][party], self._gc[name][party]
+
+    def inc(self, name: str, party: typing.Union[Party, typing.List[Party]]):
+        if not isinstance(party, list):
+            party = [party]
+        for p in party:
+            cur = self.get(name, p)
+            self._tags[name][p] = cur + 1
+
+    def get_list(
+        self, name: str, parties: typing.List[Party]
+    ) -> typing.Tuple[typing.List[str], typing.List[IterationGC]]:
+        tag_list = []
+        gc_list = []
+        for p in parties:
+            tag, gc = self.get(name, p)
+            tag_list.append(tag)
+            gc_list.append(gc)
+        return tag_list, gc_list
+
+
+_REMOTE_TAG_SPACE = _TagSpace()
+_GET_TAG_SPACE = _TagSpace()
+
+_TYPE_PARTIES = typing.Union[
+    typing.Union[Role, Party], typing.List[typing.Union[Role, Party]]
+]
+
+
+def remote(
+    parties: _TYPE_PARTIES,
+    **kwargs,
+):
+    if len(kwargs) != 1:
+        raise KeyError(f"expected to process one object each time, got {len(kwargs)}")
+    name = list(kwargs.keys())[0]
+    v = kwargs[name]
+    parties = PartiesInfo.get_parties(parties)
+    session = get_session()
+    tags, gc_list = _REMOTE_TAG_SPACE.get_list(name=name, party=parties)
+    for p, t, gc in zip(parties, tags, gc_list):
+        session.federation.remote(v=v, name=name, tag=t, parties=p, gc=gc_list)
+        gc.gc()
+    _REMOTE_TAG_SPACE.inc(name=name, party=parties)
+
+
+def get(parties: _TYPE_PARTIES, name):
+    return_single = isinstance(parties, Party)
+    parties = PartiesInfo.get_parties(parties)
+    session = get_session()
+    tags, gc_list = _GET_TAG_SPACE.get_list(name=name, party=parties)
+    objs = []
+    for p, t, gc in zip(parties, tags, gc_list):
+        objs.append(session.federation.get(name=name, tag=t, parties=p, gc=gc))
+    if return_single:
+        return objs[0]
+    _GET_TAG_SPACE.inc(name=name, party=parties)
+    return objs
+
+
+Parties = PartiesInfo

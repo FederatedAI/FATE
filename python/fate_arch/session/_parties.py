@@ -20,15 +20,67 @@ import typing
 from fate_arch.common import Party
 
 
+class Role:
+    def __init__(self, parties) -> None:
+        self._parties = parties
+        self._size = len(self._parties)
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            if key < 0 or key >= len(self._parties):
+                raise KeyError(
+                    f"key should be an integer ranging from 0 to {self._size-1}(inclusive)"
+                )
+            return self._parties[key]
+
+        if isinstance(key, slice):
+            return self._parties[slice]
+
+        raise KeyError(f"unsupported key: {key}")
+
+
 class PartiesInfo(object):
+
+    _instance = None
+
+    @classmethod
+    def _set_instance(cls, inst):
+        cls._instance = inst
+
+    @classmethod
+    def _get_instance(cls) -> "PartiesInfo":
+        if cls._instance is None:
+            raise RuntimeError(f"parties not initialized")
+        return cls._instance
+
+    @classmethod
+    def get_parties(cls, parties) -> typing.List[Party]:
+        if isinstance(parties, Party):
+            return [parties]
+
+        elif isinstance(parties, Role):
+            return parties[:]
+
+        elif isinstance(parties, list):
+            plain_parties = []
+            for p in parties:
+                plain_parties.extend(cls.get_parties(p))
+            if len(set(plain_parties)) != len(plain_parties):
+                raise ValueError(f"duplicated parties exsits: {plain_parties}")
+            return plain_parties
+        raise ValueError(f"unsupported type: {type(parties)}")
 
     @staticmethod
     def from_conf(conf: typing.MutableMapping[str, dict]):
         try:
-            local = Party(role=conf['local']['role'], party_id=conf['local']['party_id'])
+            local = Party(
+                role=conf["local"]["role"], party_id=conf["local"]["party_id"]
+            )
             role_to_parties = {}
             for role, party_id_list in conf.get("role", {}).items():
-                role_to_parties[role] = [Party(role=role, party_id=party_id) for party_id in party_id_list]
+                role_to_parties[role] = [
+                    Party(role=role, party_id=party_id) for party_id in party_id_list
+                ]
         except Exception as e:
             raise RuntimeError(
                 "conf parse error, a correct configuration could be:\n"
@@ -39,9 +91,32 @@ class PartiesInfo(object):
             ) from e
         return PartiesInfo(local, role_to_parties)
 
-    def __init__(self, local: Party, role_to_parties: typing.MutableMapping[str, typing.List[Party]]):
+    def __init__(
+        self,
+        local: Party,
+        role_to_parties: typing.MutableMapping[str, typing.List[Party]],
+    ):
         self._local = local
         self._role_to_parties = role_to_parties
+
+        self._guest = Role(role_to_parties["guest"])
+        self._host = Role(role_to_parties["host"])
+        self._arbiter = Role(role_to_parties["arbiter"])
+
+    @property
+    @classmethod
+    def Guest(cls) -> Role:
+        return cls.get_instance()._guest
+
+    @property
+    @classmethod
+    def Host(cls) -> Role:
+        return cls.get_instance()._host
+
+    @property
+    @classmethod
+    def Arbiter(cls) -> Role:
+        return cls.get_instance()._arbiter
 
     @property
     def local_party(self) -> Party:
@@ -49,7 +124,9 @@ class PartiesInfo(object):
 
     @property
     def all_parties(self):
-        return [party for parties in self._role_to_parties.values() for party in parties]
+        return [
+            party for parties in self._role_to_parties.values() for party in parties
+        ]
 
     @property
     def role_set(self):
@@ -60,8 +137,10 @@ class PartiesInfo(object):
         for role in roles:
             if role not in self._role_to_parties:
                 if strict:
-                    raise RuntimeError(f"try to get role {role} "
-                                       f"which is not configured in `role` in runtime conf({self._role_to_parties})")
+                    raise RuntimeError(
+                        f"try to get role {role} "
+                        f"which is not configured in `role` in runtime conf({self._role_to_parties})"
+                    )
                 else:
                     continue
             parties.extend(self._role_to_parties[role])
