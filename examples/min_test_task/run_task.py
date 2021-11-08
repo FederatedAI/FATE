@@ -43,8 +43,16 @@ WAIT_UPLOAD_TIME = 1000
 OTHER_TASK_TIME = 7200
 # RETRY_JOB_STATUS_TIME = 5
 STATUS_CHECKER_TIME = 10
-
 flow_client: FlowClient
+
+
+def get_flow_info():
+    from fate_flow import set_env
+    from fate_arch.common.conf_utils import get_base_config
+    FATE_FLOW_SERVICE_NAME = "fateflow"
+    HOST = get_base_config(FATE_FLOW_SERVICE_NAME, {}).get("host", "127.0.0.1")
+    HTTP_PORT = get_base_config(FATE_FLOW_SERVICE_NAME, {}).get("http_port")
+    return HOST, HTTP_PORT
 
 
 def get_timeid():
@@ -449,7 +457,8 @@ if __name__ == "__main__":
     start_serving = args.serving
     ip = args.flow_server_ip
     port = args.flow_server_port
-
+    if ip is None:
+        ip, port = get_flow_info()
     flow_client = FlowClient(ip=ip, port=port, version="v1")
     task = TrainLRTask(file_type, guest_id, host_id, arbiter_id)
     task.run(start_serving)
