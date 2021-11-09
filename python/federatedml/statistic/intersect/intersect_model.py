@@ -392,9 +392,16 @@ class IntersectModelBase(ModelBase):
         self.callback()
 
         result_data = self.intersect_ids
-        if not self.use_match_id_process and not self.intersection_obj.only_output_key and result_data:
-            result_data = self.intersection_obj.get_value_from_data(result_data, data_inst)
-            LOGGER.debug(f"not only_output_key, restore value called")
+        if not self.use_match_id_process:
+            if not self.intersection_obj.only_output_key and result_data:
+                result_data = self.intersection_obj.get_value_from_data(result_data, data_inst)
+                self.intersect_ids.schema = result_data.schema
+                LOGGER.debug(f"not only_output_key, restore value called")
+            if self.intersection_obj.only_output_key and result_data:
+                schema = {"sid_name": data_inst.schema["sid_name"]}
+                result_data = result_data.mapValues(lambda v: 1)
+                result_data.schema = schema
+                self.intersect_ids.schema = schema
 
         if self.model_param.join_method == consts.LEFT_JOIN:
             result_data = self.__sync_join_id(data_inst, self.intersect_ids)
