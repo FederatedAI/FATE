@@ -29,14 +29,26 @@ print(f'fate_path: {cur_path}')
 sys.path.append(cur_path)
 
 from examples.scripts import submit
+from python.fate_client.flow_sdk.client import FlowClient
 
 
-def check_data_count(submitter, fate_home, table_name, namespace, expect_count):
-    fate_flow_path = os.path.join(fate_home, "../python/fate_flow/fate_flow_client.py")
-    cmd = ["python", fate_flow_path, "-f", "table_info", "-t", table_name, "-n", namespace]
-    stdout = submitter.run_cmd(cmd)
+def get_flow_info():
+    from fate_flow import set_env
+    from fate_arch.common.conf_utils import get_base_config
+    FATE_FLOW_SERVICE_NAME = "fateflow"
+    HOST = get_base_config(FATE_FLOW_SERVICE_NAME, {}).get("host", "127.0.0.1")
+    HTTP_PORT = get_base_config(FATE_FLOW_SERVICE_NAME, {}).get("http_port")
+    return HOST, HTTP_PORT
+
+
+def check_data_count(submitter, table_name, namespace, expect_count):
+    command = "table/info"
+    config_data = {
+        "table_name": table_name,
+        "namespace": namespace
+    }
+    stdout = submitter.run_flow_client(command=command, config_data=config_data)
     try:
-        stdout = json.loads(stdout)
         count = stdout["data"]["count"]
         if count != expect_count:
             raise AssertionError("Count of upload file is not as expect, count is: {},"
@@ -47,7 +59,7 @@ def check_data_count(submitter, fate_home, table_name, namespace, expect_count):
     print(f"[{time.strftime('%Y-%m-%d %X')}] check_data_out {stdout} \n")
 
 
-def data_upload(submitter, upload_config, check_interval, fate_home, backend):
+def data_upload(submitter, upload_config, check_interval, fate_home):
     # with open(file_name) as f:
     #     upload_config = json.loads(f.read())
 
@@ -59,7 +71,6 @@ def data_upload(submitter, upload_config, check_interval, fate_home, backend):
                                   namespace=data["namespace"],
                                   name=data["table_name"],
                                   partition=data["partition"],
-                                  backend=backend,
                                   head=data["head"])
         print(f"[{time.strftime('%Y-%m-%d %X')}]upload done {format_msg}, job_id={job_id}\n")
         if job_id is None:
@@ -67,14 +78,14 @@ def data_upload(submitter, upload_config, check_interval, fate_home, backend):
             continue
 
         submitter.await_finish(job_id, check_interval=check_interval)
-        check_data_count(submitter, fate_home, data["table_name"], data["namespace"], data["count"])
+        check_data_count(submitter, data["table_name"], data["namespace"], data["count"])
 
 
 def read_data(fate_home, config_type):
     if config_type == 'min-test':
-        config_file = os.path.join(fate_home, "scripts/min_test_config.json")
+        config_file = os.path.join(fate_home, "examples/scripts/min_test_config.json")
     else:
-        config_file = os.path.join(fate_home, "scripts/config.json")
+        config_file = os.path.join(fate_home, "examples/scripts/config.json")
 
     with open(config_file, 'r', encoding='utf-8') as f:
         json_info = json.loads(f.read())
@@ -82,49 +93,49 @@ def read_data(fate_home, config_type):
 
 
 def main():
-    import examples
-    fate_home = os.path.dirname(examples.__file__)
+    # import examples
+    # fate_home = os.path.dirname(examples.__file__)
     # fate_home = os.path.abspath(f"{os.getcwd()}/../")
 
     arg_parser = argparse.ArgumentParser()
-
-    arg_parser.add_argument("-m", "--mode", type=int, help="work mode", choices=[0, 1],
-                            required=True)
     arg_parser.add_argument("-f", "--force",
                             help="table existing strategy, "
-                                 "-1 means skip upload, "
                                  "0 means force upload, "
                                  "1 means upload after deleting old table",
                             type=int,
-                            choices=[-1, 0, 1],
+                            choices=[0, 1],
                             default=0)
     arg_parser.add_argument("-i", "--interval", type=int, help="check job status every i seconds, defaults to 1",
                             default=1)
 
-    arg_parser.add_argument("-b", "--backend", type=int, help="backend", choices=[0, 1], default=0)
+    arg_parser.add_argument("-ip", "--flow_server_ip", type=str, help="please input flow server'ip")
+    arg_parser.add_argument("-port", "--flow_server_port", type=int, help="please input flow server port")
     arg_parser.add_argument("-c", "--config_file", type=str, help="config file", default="min-test")
 
     args = arg_parser.parse_args()
 
-    work_mode = args.mode
     existing_strategy = args.force
-    backend = args.backend
     interval = args.interval
     config_file = args.config_file
+    ip = args.flow_server_ip
+    port = args.flow_server_port
+    if ip is None:
+        ip, port = get_flow_info()
+    flow_client = FlowClient(ip=ip, port=port, version="v1")
+
     spark_submit_config = {}
-    submitter = submit.Submitter(fate_home=fate_home,
-                                 work_mode=work_mode,
-                                 backend=backend,
+    submitter = submit.Submitter(flow_client=flow_client,
+                                 fate_home=cur_path,
                                  existing_strategy=existing_strategy,
                                  spark_submit_config=spark_submit_config)
 
     if config_file in ["all", "min-test"]:
-        upload_data = read_data(fate_home, config_file)
+        upload_data = read_data(cur_path, config_file)
     else:
         with open(config_file, 'r', encoding='utf-8') as f:
             upload_data = json.loads(f.read())
 
-    data_upload(submitter, upload_data, interval, fate_home, backend=backend)
+    data_upload(submitter, upload_data, interval, cur_path)
 
 
 if __name__ == "__main__":
