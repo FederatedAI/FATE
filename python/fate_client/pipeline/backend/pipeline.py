@@ -127,6 +127,7 @@ class PipeLine(object):
 
     def set_global_job_provider(self, provider):
         self._global_job_provider = provider
+        return self
 
     @LOGGER.catch(reraise=True)
     def set_roles(self, guest=None, host=None, arbiter=None, **kwargs):
