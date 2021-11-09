@@ -5,9 +5,6 @@
         "party_id": 10000
     },
     "role": {
-        "arbiter": [
-            9999
-        ],
         "host": [
             9999
         ],

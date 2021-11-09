@@ -7,6 +7,7 @@ model performance.
 In this version, we provide several filter methods for feature
 selection.
 
+<!-- mkdocs
 ## Param
 
 ::: federatedml.param.feature_selection_param
@@ -16,7 +17,7 @@ selection.
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
-
+-->
 
 ## Features
 

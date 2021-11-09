@@ -1,6 +1,6 @@
 # 上传数据指南
 
-[[ENG](../upload_data_guide.md)]
+[[ENG](upload_data_guide.md)]
 
 在开始建模任务之前，应上传要使用的数据。通常来说，一个参与方是包含多个节点的集群。因此，当我们上传数据时，这些数据将被分配给这些节点。
 
@@ -71,7 +71,7 @@ DataIO模块接受以下输入数据格式，并将其转换为所需的输出DT
 ## 上传命令
 
 使用fate-flow上传数据。从FATE-1.5开始，推荐使用 [FATE-Flow Client Command
-Line](../../../flow_client.md)
+Line](../../api/fate_client/flow_client.md)
 执行FATE-Flow任务。
 
 上传数据命令如下：

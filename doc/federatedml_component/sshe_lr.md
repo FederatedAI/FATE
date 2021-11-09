@@ -31,6 +31,7 @@ following.
 
 ![Figure 8 Training 6](../images/training_6.jpg)
 
+<!-- mkdocs
 ## Param
 
 ::: federatedml.param.hetero_sshe_lr_param
@@ -40,7 +41,7 @@ following.
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
-
+-->
 
 ## Features
 

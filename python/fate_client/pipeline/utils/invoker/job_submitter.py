@@ -31,7 +31,8 @@ from pipeline.utils.logger import LOGGER
 
 class JobInvoker(object):
     def __init__(self):
-        self.client = FlowClient(ip=conf.FlowConfig.IP, port=conf.FlowConfig.PORT, version=conf.SERVER_VERSION)
+        self.client = FlowClient(ip=conf.FlowConfig.IP, port=conf.FlowConfig.PORT, version=conf.SERVER_VERSION,
+                                 app_key=conf.FlowConfig.APP_KEY, secret_key=conf.FlowConfig.SECRET_KEY)
 
     def submit_job(self, dsl=None, submit_conf=None, callback_func=None):
         """
@@ -414,13 +415,15 @@ class JobInvoker(object):
         except:
             raise ValueError("Cannot get output model, err msg: ")
 
-    def model_deploy(self, model_id, model_version, cpn_list=None, predict_dsl=None):
+    def model_deploy(self, model_id, model_version, cpn_list=None, predict_dsl=None, components_checkpoint=None):
         if cpn_list:
             result = self.client.model.deploy(model_id=model_id, model_version=model_version, cpn_list=cpn_list)
         elif predict_dsl:
-            result = self.client.model.deploy(model_id=model_id, model_version=model_version, predict_dsl=predict_dsl)
+            result = self.client.model.deploy(model_id=model_id, model_version=model_version,
+                                              predict_dsl=predict_dsl, components_checkpoint=components_checkpoint)
         else:
-            result = self.client.model.deploy(model_id=model_id, model_version=model_version)
+            result = self.client.model.deploy(model_id=model_id, model_version=model_version,
+                                              components_checkpoint=components_checkpoint)
 
         if result is None or 'retcode' not in result:
             raise ValueError("Call flow deploy is failed, check if fate_flow server is up!")

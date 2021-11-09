@@ -106,3 +106,41 @@ def bind(ctx, **kwargs):
     """
     config_data, _ = preprocess(**kwargs)
     access_server('post', ctx, 'table/bind', config_data)
+
+
+@table.command("tracking-source", short_help="Tracking Source Table")
+@cli_args.NAMESPACE
+@cli_args.TABLE_NAME
+@click.pass_context
+def tracking_source(ctx, **kwargs):
+    """
+    - DESCRIPTION:
+
+    \b
+    tracking a table's parent table
+
+    \b
+    - USAGE:
+        flow table tracking_source -n $NAMESPACE -t $TABLE_NAME
+    """
+    config_data, _ = preprocess(**kwargs)
+    access_server('post', ctx, 'table/tracking/source', config_data)
+
+
+@table.command("tracking-job", short_help="Tracking Using Table Job")
+@cli_args.NAMESPACE
+@cli_args.TABLE_NAME
+@click.pass_context
+def tracking_job(ctx, **kwargs):
+    """
+    - DESCRIPTION:
+
+    \b
+    tracking jobs of using table
+
+    \b
+    - USAGE:
+        flow table tracking_job -n $NAMESPACE -t $TABLE_NAME
+    """
+    config_data, _ = preprocess(**kwargs)
+    access_server('post', ctx, 'table/tracking/job', config_data)

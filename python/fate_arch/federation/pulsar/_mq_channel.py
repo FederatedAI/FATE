@@ -6,7 +6,6 @@
 import time
 
 import pulsar
-from pulsar import _pulsar
 from fate_arch.common import log
 
 LOGGER = log.getLogger()

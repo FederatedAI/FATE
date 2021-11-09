@@ -145,3 +145,15 @@ class EncryptModeCalculator(object):
     def init_enc_zero(self, input_data, raw_en=False, exponent=0):
         en_func = self.get_enc_func(self.encrypter, raw_en, exponent)
         self.set_enc_zeros(input_data, en_func)
+
+    def recursive_encrypt(self, input_data):
+        return self.encrypter.recursive_encrypt(input_data)
+
+    def distribute_encrypt(self, input_data):
+        return self.encrypt(input_data)
+
+    def distribute_decrypt(self, input_data):
+        return self.encrypter.distribute_decrypt(input_data)
+
+    def recursive_decrypt(self, input_data):
+        return self.encrypter.recursive_decrypt(input_data)

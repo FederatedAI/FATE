@@ -522,7 +522,18 @@ class PipeLine(object):
                                                                 self._initiator.party_id)
 
     @LOGGER.catch(reraise=True)
-    def predict(self, job_parameters=None):
+    def predict(self, job_parameters=None, components_checkpoint=None):
+        """
+
+        Parameters
+        ----------
+        job_parameters: None
+        components_checkpoint: specify which model to take, ex.: {"hetero_lr_0": {"step_index": 8}}
+
+        Returns
+        -------
+
+        """
         if self._stage != "predict":
             raise ValueError(
                 "To use predict function, please deploy component(s) from training pipeline"
@@ -535,7 +546,8 @@ class PipeLine(object):
 
         res_dict = self._job_invoker.model_deploy(model_id=self._model_info.model_id,
                                                   model_version=self._model_info.model_version,
-                                                  predict_dsl=self._predict_dsl)
+                                                  predict_dsl=self._predict_dsl,
+                                                  components_checkpoint=components_checkpoint)
         self._predict_model_info = SimpleNamespace(model_id=res_dict["model_id"],
                                                    model_version=res_dict["model_version"])
         predict_conf = self._feed_job_parameters(self._train_conf,

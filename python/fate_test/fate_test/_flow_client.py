@@ -44,18 +44,22 @@ class FLOWClient(object):
 
     def upload_data(self, data: Data, callback=None, output_path=None):
         try:
-            response, data_path = self._upload_data(conf=data.config, output_path=output_path, verbose=0, drop=1)
+            response, data_path, bind = self._upload_data(conf=data.config, output_path=output_path, verbose=0, drop=1)
             if callback is not None:
                 callback(response)
-            status = self._awaiting(response.job_id, "local")
-            response.status = status
+            if not bind:
+                status = self._awaiting(response.job_id, "local")
+                status = str(status).lower()
+            else:
+                status = response["retmsg"]
         except Exception as e:
             raise RuntimeError(f"upload data failed") from e
-        return response, data_path
+        return status, data_path
 
     def delete_data(self, data: Data):
         try:
-            self._delete_data(table_name=data.config['table_name'], namespace=data.config['namespace'])
+            table_name = data.config['table_name'] if data.config.get('table_name', None) is not None else data.config.get('name')
+            self._delete_data(table_name=table_name, namespace=data.config['namespace'])
         except Exception as e:
             raise RuntimeError(f"delete data failed") from e
 
@@ -119,24 +123,38 @@ class FLOWClient(object):
         return file
 
     def _upload_data(self, conf, output_path=None, verbose=0, drop=1):
-        if output_path is not None:
-            conf['file'] = os.path.join(os.path.abspath(output_path), os.path.basename(conf.get('file')))
+        if conf.get("engine", {}) != "PATH":
+            if output_path is not None:
+                conf['file'] = os.path.join(os.path.abspath(output_path), os.path.basename(conf.get('file')))
+            else:
+                if _config.data_switch is not None:
+                    conf['file'] = os.path.join(str(self._cache_directory), os.path.basename(conf.get('file')))
+                else:
+                    conf['file'] = os.path.join(str(self._data_base_dir), conf.get('file'))
+            path = Path(conf.get('file'))
+            if not path.exists():
+                raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
+                                f'please check the path: {path}')
+            upload_response = self.flow_client(request='data/upload', param=self._save_json(conf, 'upload_conf.json'),
+                                               verbose=verbose, drop=drop)
+            response = UploadDataResponse(upload_response)
+            return response, conf['file'], False
         else:
             if _config.data_switch is not None:
-                conf['file'] = os.path.join(str(self._cache_directory), os.path.basename(conf.get('file')))
+                conf['address']['path'] = os.path.join(str(self._cache_directory), conf['address']['path'])
             else:
-                conf['file'] = os.path.join(str(self._data_base_dir), conf.get('file'))
-        path = Path(conf.get('file'))
-        if not path.is_file():
-            path = self._data_base_dir.joinpath(conf.get('file')).resolve()
-
-        if not path.exists():
-            raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
-                            f'please check the path: {path}')
-        upload_response = self.flow_client(request='data/upload', param=self._save_json(conf, 'upload_conf.json'),
-                                           verbose=verbose, drop=drop)
-        response = UploadDataResponse(upload_response)
-        return response, conf['file']
+                conf['address']['path'] = os.path.join(str(self._data_base_dir), conf['address']['path'])
+            conf['drop'] = drop
+            del conf["extend_sid"]
+            del conf["auto_increasing_sid"]
+            del conf["use_local_data"]
+            path = Path(conf.get('address').get('path'))
+            self._table_bind(conf)
+            if not path.exists():
+                raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
+                                f'please check the path: {path}')
+            response = self._table_bind(conf)
+            return response, None, True
 
     def _delete_data(self, table_name, namespace):
         param = {
@@ -213,6 +231,17 @@ class FLOWClient(object):
     def _add_notes(self, job_id, role, party_id, notes):
         data = dict(job_id=job_id, role=role, party_id=party_id, notes=notes)
         response = AddNotesResponse(self._post(url='job/update', json=data))
+        return response
+
+    def _table_bind(self, data):
+        response = self._post(url='table/bind', json=data)
+        try:
+            retcode = response['retcode']
+            retmsg = response['retmsg']
+            if retcode != 0 or retmsg != 'success':
+                raise RuntimeError(f"table bind error: {response}")
+        except Exception as e:
+            raise RuntimeError(f"table bind error: {response}") from e
         return response
 
     @property

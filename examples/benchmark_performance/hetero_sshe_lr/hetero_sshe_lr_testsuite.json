@@ -1,19 +1,19 @@
 {
     "data": [
         {
-            "file": "examples/data/epsilon_5k_hetero_guest.csv",
+            "file": "examples/data/performance_hetero_guest.csv",
             "head": 1,
             "partition": 4,
-            "table_name": "epsilon_5k_hetero_guest",
-            "namespace": "experiment",
+            "table_name": "performance_hetero_guest",
+            "namespace": "performance",
             "role": "guest_0"
         },
         {
-            "file": "examples/data/epsilon_5k_hetero_host_tag_value.csv",
+            "file": "examples/data/performance_hetero_host_tag_value.csv",
             "head": 1,
             "partition": 4,
-            "table_name": "epsilon_5k_hetero_host_tag_value",
-            "namespace": "experiment",
+            "table_name": "performance_hetero_host",
+            "namespace": "performance",
             "role": "host_0"
         }
     ],

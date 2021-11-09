@@ -10,7 +10,6 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from fate_arch.common.log import getLogger
-from fate_arch.federation.pulsar._mq_channel import DEFAULT_SUBSCRIPTION_NAME
 
 logger = getLogger()
 

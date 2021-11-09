@@ -30,7 +30,7 @@ class FeatureImputationParam(BaseParam):
     default_value : None or single object type or list, the value to replace missing value.
                     if None, it will use default value defined in federatedml/feature/imputer.py,
                     if single object, will fill missing value with this object,
-                    if list, it's length should be the sample of input data' feature dimension,
+                    if list, it's length should be the same as input data' feature dimension,
                         means that if some column happens to have missing values, it will replace it
                         the value by element in the identical position of this list.
                     default: None

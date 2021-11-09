@@ -116,13 +116,11 @@ $$ dec(v) = enc(v) ^ d \pmod{n} $$
 It will do nothing and return input data during encryption and
 decryption.
 
-# Encode
+# Hash Factory
 
-Encode module provides some method including "md5", "sha1", "sha224",
-"sha256", "sha384", "sha512" for data encoding. This module can help you
-to encode your data with more convenient. It also supports for adding
-salt in front of data or behind data. For the encoding result, you can
-choose transform it to base64 or not.
+Hash factory provides following data encoding methods: "md5", "sha1", "sha224",
+"sha256", "sha384", "sha512", "sm3". This module is meant to make hashing operation with more convenient. 
+It also supports adding salt and outputing results to base64 format.
 
 # Diffne Hellman Key Exchange
 
@@ -168,14 +166,17 @@ multiparty computation scheme based on somewhat homomorphic encryption
   
     ```python
     from fate_arch.session import Session
-    s = Session.create(backend=0, work_mode=0)
+    s = Session.create()
     
     # on guest side
     s.init_computing("a guest session name")
-    s.init_federation("federation session name",runtime_conf={
-    "local": {"role": "guest", "party_id": 1000},
-    "role": {"guest": [1000], "host": [999]},
-    },)
+    s.init_federation("federation session name",
+    runtime_conf={
+      "local": {"role": "guest", "party_id": 1000},
+      "role": {"guest": [1000], "host": [999]},
+    },
+    service_conf=<proxy config>  # for distributed situation
+    )
     s.as_default()
     partys = s.parties.all_parties
     # [Party(role=guest, party_id=1000), Party(role=host, party_id=999)]
@@ -184,9 +185,11 @@ multiparty computation scheme based on somewhat homomorphic encryption
     s.init_computing("a host session name")
     s.init_federation("federation session name",
     runtime_conf={
-    "local": {"role": "host", "party_id": 999},
-    "role": {"guest": [1000], "host": [999]},
-    },)
+      "local": {"role": "host", "party_id": 999},
+      "role": {"guest": [1000], "host": [999]},
+    },
+    service_conf=<proxy config>  # for distributed situation
+    )
     s.as_default()
     partys = s.parties.all_parties
     # [Party(role=guest, party_id=1000), Party(role=host, party_id=999)]

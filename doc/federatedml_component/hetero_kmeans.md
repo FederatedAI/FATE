@@ -35,6 +35,7 @@ During the aggregate process, parties will use secure aggregate as all
 sent distances will be added with random numbers that can be combined to
 zero when aggregating at arbiter.
 
+<!-- mkdocs
 ## Param
 
 ::: federatedml.param.hetero_kmeans_param
@@ -44,6 +45,7 @@ zero when aggregating at arbiter.
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
+-->
 
 ## Features
 
@@ -52,7 +54,8 @@ zero when aggregating at arbiter.
 3.  Centroids are selected randomly
 4.  Labeled and unlabeled data supported
 
-
+<!-- mkdocs
 ## Examples
 
 {% include-examples "hetero_kmeans" %}
+-->
