@@ -16,7 +16,7 @@ This section introduces the dsl and conf for usage of different types of tasks.
     dsl: hetero_lr_cv_dsl.json
     runtime_config: hetero_lr_cv_conf.json
 
-4. One vs Rest Task:
+4. One vs Rest(OVR) Task:
     dsl: hetero_lr_ovr_dsl.json
     conf: hetero_lr_ovr_conf.json
 
@@ -33,20 +33,20 @@ This section introduces the dsl and conf for usage of different types of tasks.
     conf: hetero_lr_encrypted_reveal_in_host_conf.json
 
 8. LR L1 penalty task:
-   dsl: hetero_lr_l1_dsl.json
-   conf: hetero_lr_l1_conf.json
+    dsl: hetero_lr_l1_dsl.json
+    conf: hetero_lr_l1_conf.json
 
 9. OVR LR with Encrypted Reveal in Host task:
     dsl: hetero_lr_ovr_encrypted_reveal_in_host_dsl.json
     conf: hetero_lr_ovr_encrypted_reveal_in_host_conf.json
 
 10. LR OVR None-penalty task:
-   dsl: hetero_lr_ovr_none_penalty_dsl.json
-   conf: hetero_lr_ovr_none_penalty_conf.json
+    dsl: hetero_lr_ovr_none_penalty_dsl.json
+    conf: hetero_lr_ovr_none_penalty_conf.json
 
 11. LR OVR L1 penalty task:
-   dsl: hetero_lr_ovr_l1_dsl.json
-   conf: hetero_lr_ovr_l1_conf.json
+    dsl: hetero_lr_ovr_l1_dsl.json
+    conf: hetero_lr_ovr_l1_conf.json
 
 12. LR with Large Init Weight:
     dsl: hetero_lr_large_init_w_compute_loss_dsl.json

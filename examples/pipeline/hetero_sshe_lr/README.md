@@ -13,7 +13,7 @@ This section introduces the Pipeline scripts for different types of tasks.
 3. Cross Validation Task(with fold history data output of predict score):
     script: pipeline-hetero-lr-cv.py
 
-4. One vs Rest Task:
+4. One vs Rest(OVR) Task:
     script: pipeline-hetero-lr-ovr.py
 
 5. LR with validation:
