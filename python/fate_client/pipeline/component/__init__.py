@@ -18,7 +18,6 @@ from pipeline.component.homo_data_split import HomoDataSplit
 from pipeline.component.homo_lr import HomoLR
 from pipeline.component.homo_nn import HomoNN
 from pipeline.component.homo_secureboost import HomoSecureBoost
-from pipeline.component.homo_secureboost import HomoSecureBoost
 from pipeline.component.homo_feature_binning import HomoFeatureBinning
 from pipeline.component.intersection import Intersection
 from pipeline.component.local_baseline import LocalBaseline
