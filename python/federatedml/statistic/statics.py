@@ -423,7 +423,8 @@ class MultivariateStatisticalSummary(object):
                     # except ValueError as e:
                     #     raise ValueError(f"Static Module accept numeric input only. Error info: {e}")
                 # LOGGER.debug(f"In statics, features: {features}")
-                row_values = [x for idx, x in enumerate(features) if idx in cols_index]
+                # row_values = [x for idx, x in enumerate(features) if idx in cols_index]
+                row_values = [features[x] for x in cols_index]
                 # row_values = features[cols_index]
             else:
                 sparse_data = instances.features.get_sparse_vector()

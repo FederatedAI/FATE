@@ -54,6 +54,7 @@ class HomoBinningClient(BaseFeatureBinning):
 
     def _init_model(self, model_param: HomoFeatureBinningParam):
         self.model_param = model_param
+        self.transform_type = self.model_param.transform_param.transform_type
         if self.model_param.method == consts.VIRTUAL_SUMMARY:
             self.binning_obj = virtual_summary_binning.Client(self.model_param)
         elif self.model_param.method == consts.RECURSIVE_QUERY:
