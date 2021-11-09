@@ -218,7 +218,7 @@ class IntersectCache(BaseParam):
         ----------
         use_cache: whether to use cached ids; with ver1.7 and above, this param is ignored
         id_type: with ver1.7 and above, this param is ignored
-        encrypt_type: with ver1.7 and anove, this param is ignored
+        encrypt_type: with ver1.7 and above, this param is ignored
         """
         super().__init__()
         self.use_cache = use_cache
