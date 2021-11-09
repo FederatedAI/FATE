@@ -38,6 +38,7 @@ from pipeline.component.secure_information_retrieval import SecureInformationRet
 from pipeline.component.cache_loader import CacheLoader
 from pipeline.component.model_loader import ModelLoader
 from pipeline.component.hetero_kmeans import HeteroKmeans
+from pipeline.component.homo_onehot import HomoOneHotEncoder
 
 __all__ = ["DataStatistics", "DataIO", "Evaluation", "HeteroDataSplit",
            "HeteroFastSecureBoost", "HeteroFeatureBinning", "HeteroFeatureSelection",
@@ -48,5 +49,5 @@ __all__ = ["DataStatistics", "DataIO", "Evaluation", "HeteroDataSplit",
            "FederatedSample", "FeatureScale", "Union", "ColumnExpand", "FeldmanVerifiableSum",
            "SampleWeight", "DataTransform", "SBTTransformer", "FeatureImputation",
            "LabelTransform", "SecureInformationRetrieval", "CacheLoader", "ModelLoader",
-           "HeteroSSHELR", "HeteroKmeans"]
+           "HeteroSSHELR", "HeteroKmeans", "HomoOneHotEncoder"]
 

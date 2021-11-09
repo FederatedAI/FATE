@@ -54,7 +54,7 @@
             }
         },
         "common": {
-            "dataio_0": {
+            "data_transform_0": {
                 "with_label": true,
                 "label_name": "target",
                 "output_format": "dense"

@@ -166,7 +166,7 @@ multiparty computation scheme based on somewhat homomorphic encryption
   
     ```python
     from fate_arch.session import Session
-    s = Session.create()
+    s = Session()
     
     # on guest side
     s.init_computing("a guest session name")
@@ -177,7 +177,7 @@ multiparty computation scheme based on somewhat homomorphic encryption
     },
     service_conf=<proxy config>  # for distributed situation
     )
-    s.as_default()
+    s.as_global()
     partys = s.parties.all_parties
     # [Party(role=guest, party_id=1000), Party(role=host, party_id=999)]
     
@@ -190,7 +190,7 @@ multiparty computation scheme based on somewhat homomorphic encryption
     },
     service_conf=<proxy config>  # for distributed situation
     )
-    s.as_default()
+    s.as_global()
     partys = s.parties.all_parties
     # [Party(role=guest, party_id=1000), Party(role=host, party_id=999)]
     ```

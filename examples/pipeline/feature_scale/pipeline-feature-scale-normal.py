@@ -17,7 +17,7 @@
 import argparse
 from pipeline.utils.tools import load_job_config
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component import DataIO
+from pipeline.component import DataTransform
 from pipeline.component import Evaluation
 from pipeline.component import FeatureScale
 from pipeline.component import FederatedSample
@@ -48,11 +48,11 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
-    dataio_0 = DataIO(name="dataio_0")
-    dataio_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, missing_fill=True,
-                                                                              outlier_replace=True)
-    dataio_0.get_party_instance(role='host', party_id=host).component_param(with_label=False, missing_fill=True,
-                                                                            outlier_replace=True)
+    data_transform_0 = DataTransform(name="data_transform_0")
+    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, missing_fill=True,
+                                                                                      outlier_replace=True)
+    data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False, missing_fill=True,
+                                                                                    outlier_replace=True)
 
     intersection_0 = Intersection(name="intersection_0")
     federated_sample_0 = FederatedSample(name="federated_sample_0", mode="stratified", method="upsample",
@@ -68,8 +68,8 @@ def main(config="../../config.yaml", namespace=""):
     evaluation_0 = Evaluation(name="evaluation_0")
 
     pipeline.add_component(reader_0)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
     pipeline.add_component(federated_sample_0, data=Data(data=intersection_0.output.data))
     pipeline.add_component(feature_scale_0, data=Data(data=federated_sample_0.output.data))
     pipeline.add_component(hetero_feature_binning_0, data=Data(data=feature_scale_0.output.data))

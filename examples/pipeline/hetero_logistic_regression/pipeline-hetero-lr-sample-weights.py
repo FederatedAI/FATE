@@ -18,14 +18,14 @@ import argparse
 import json
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
-from pipeline.component.hetero_lr import HeteroLR
-from pipeline.component.intersection import Intersection
-from pipeline.component.evaluation import Evaluation
+from pipeline.component import DataTransform
+from pipeline.component import HeteroLR
+from pipeline.component import Intersection
+from pipeline.component import Evaluation
 from pipeline.component import SampleWeight
-from pipeline.component.reader import Reader
-from pipeline.component.scale import FeatureScale
-from pipeline.interface.data import Data
+from pipeline.component import Reader
+from pipeline.component import FeatureScale
+from pipeline.interface import Data
 from pipeline.utils.tools import load_job_config
 
 
@@ -55,9 +55,9 @@ def main(config="../../config.yaml", namespace=""):
     # configure Reader for host
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
-    # define DataIO components
-    dataio_0 = DataIO(name="dataio_0", with_label=True, output_format="dense")  # start component numbering at 0
-    dataio_0.get_party_instance(role="host", party_id=host).component_param(with_label=False)
+    # define DataTransform components
+    data_transform_0 = DataTransform(name="data_transform_0", with_label=True, output_format="dense")  # start component numbering at 0
+    data_transform_0.get_party_instance(role="host", party_id=host).component_param(with_label=False)
     intersect_0 = Intersection(name='intersect_0')
 
     scale_0 = FeatureScale(name='scale_0', need_run=False)
@@ -89,8 +89,8 @@ def main(config="../../config.yaml", namespace=""):
     evaluation_0 = Evaluation(name='evaluation_0')
     # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(intersect_0, data=Data(data=dataio_0.output.data))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(intersect_0, data=Data(data=data_transform_0.output.data))
     # set data input sources of intersection components
     pipeline.add_component(scale_0, data=Data(data=intersect_0.output.data))
     pipeline.add_component(sample_weight_0, data=Data(data=scale_0.output.data))
