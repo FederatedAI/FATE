@@ -79,12 +79,14 @@ def run_test(includes, conf: Config, error_log_file, unit_test_path):
 
     failed_count = 0
     data_base_dir = conf.data_base_dir
-    ml_dir = os.path.join(data_base_dir, unit_test_path)
-    os.environ['PYTHONPATH'] = ml_dir
+    PYTHONPATH = os.path.join(data_base_dir, "python")
+    os.environ['PYTHONPATH'] = PYTHONPATH
     if len(includes) == 0:
+        ml_dir = conf.federatedml_dir
         traverse_folder(ml_dir)
     else:
-        for v in includes:
+        ml_dir = includes
+        for v in ml_dir:
             traverse_folder(os.path.abspath(v))
 
     echo.echo(f"there are {failed_count} failed test")
