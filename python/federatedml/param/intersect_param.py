@@ -246,7 +246,7 @@ class IntersectCache(BaseParam):
         id_type
             with ver1.7 and above, this param is ignored
         encrypt_type
-            with ver1.7 and anove, this param is ignored
+            with ver1.7 and above, this param is ignored
         """
         super().__init__()
         self.use_cache = use_cache
