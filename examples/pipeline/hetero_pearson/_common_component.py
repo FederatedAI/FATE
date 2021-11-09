@@ -17,10 +17,10 @@ import argparse
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import HeteroPearson
-from pipeline.component.dataio import DataIO
-from pipeline.component.intersection import Intersection
-from pipeline.component.reader import Reader
-from pipeline.interface.data import Data
+from pipeline.component import DataTransform
+from pipeline.component import Intersection
+from pipeline.component import Reader
+from pipeline.interface import Data
 from pipeline.utils.tools import load_job_config
 
 
@@ -67,11 +67,11 @@ def run_pearson_pipeline(
         role="host", party_id=config.parties.host[0]
     ).component_param(table=host_data)
 
-    dataio_0 = DataIO(name="dataio_0")
-    dataio_0.get_party_instance(
+    data_transform_0 = DataTransform(name="data_transform_0")
+    data_transform_0.get_party_instance(
         role="guest", party_id=config.parties.guest[0]
     ).component_param(with_label=True, output_format="dense")
-    dataio_0.get_party_instance(
+    data_transform_0.get_party_instance(
         role="host", party_id=config.parties.host[0]
     ).component_param(with_label=False)
 
@@ -92,8 +92,8 @@ def run_pearson_pipeline(
         ).component_param(**host_only_param)
 
     pipeline.add_component(reader_0)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(intersect_0, data=Data(data=dataio_0.output.data))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(intersect_0, data=Data(data=data_transform_0.output.data))
     pipeline.add_component(
         hetero_pearson_component, data=Data(train_data=intersect_0.output.data)
     )

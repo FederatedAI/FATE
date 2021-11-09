@@ -17,11 +17,11 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.data_transform import DataTransform
-from pipeline.component.hetero_feature_binning import HeteroFeatureBinning
-from pipeline.component.intersection import Intersection
-from pipeline.component.reader import Reader
-from pipeline.interface.data import Data
+from pipeline.component import DataTransform
+from pipeline.component import HeteroFeatureBinning
+from pipeline.component import Intersection
+from pipeline.component import Reader
+from pipeline.interface import Data
 from pipeline.utils.tools import load_job_config
 
 

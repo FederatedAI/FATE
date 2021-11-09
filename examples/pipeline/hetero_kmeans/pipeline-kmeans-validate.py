@@ -17,13 +17,13 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
-from pipeline.component.hetero_kmeans import HeteroKmeans
-from pipeline.component.intersection import Intersection
-from pipeline.component.evaluation import Evaluation
-from pipeline.component.reader import Reader
-from pipeline.interface.data import Data
-from pipeline.interface.model import Model
+from pipeline.component import DataTransform
+from pipeline.component import HeteroKmeans
+from pipeline.component import Intersection
+from pipeline.component import Evaluation
+from pipeline.component import Reader
+from pipeline.interface import Data
+from pipeline.interface import Model
 
 from pipeline.utils.tools import load_job_config
 
@@ -61,16 +61,16 @@ def main(config="../../config.yaml", namespace=""):
     reader_1.get_party_instance(role='guest', party_id=guest).component_param(table=guest_eval_data)
     reader_1.get_party_instance(role='host', party_id=host).component_param(table=host_eval_data)
 
-    # define DataIO components
-    dataio_0 = DataIO(name="dataio_0")  # start component numbering at 0
-    dataio_1 = DataIO(name="dataio_1")
+    # define DataTransform components
+    data_transform_0 = DataTransform(name="data_transform_0")  # start component numbering at 0
+    data_transform_1 = DataTransform(name="data_transform_1")
 
-    # get DataIO party instance of guest
-    dataio_0_guest_party_instance = dataio_0.get_party_instance(role='guest', party_id=guest)
-    # configure DataIO for guest
-    dataio_0_guest_party_instance.component_param(with_label=True, output_format="dense")
-    # get and configure DataIO party instance of host
-    dataio_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
+    # get DataTransform party instance of guest
+    data_transform_0_guest_party_instance = data_transform_0.get_party_instance(role='guest', party_id=guest)
+    # configure DataTransform for guest
+    data_transform_0_guest_party_instance.component_param(with_label=True, output_format="dense")
+    # get and configure DataTransform party instance of host
+    data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     # define Intersection components
     intersection_0 = Intersection(name="intersection_0")
@@ -89,11 +89,11 @@ def main(config="../../config.yaml", namespace=""):
     # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)
     pipeline.add_component(reader_1)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(dataio_1, data=Data(data=reader_1.output.data), model=Model(dataio_0.output.model))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(data_transform_1, data=Data(data=reader_1.output.data), model=Model(data_transform_0.output.model))
     # set data input sources of intersection components
-    pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
-    pipeline.add_component(intersection_1, data=Data(data=dataio_1.output.data))
+    pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
+    pipeline.add_component(intersection_1, data=Data(data=data_transform_1.output.data))
     # set train & validate data of hetero_lr_0 component
 
     pipeline.add_component(hetero_kmeans_0, data=Data(train_data=intersection_0.output.data))
