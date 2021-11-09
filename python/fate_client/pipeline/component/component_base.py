@@ -30,6 +30,7 @@ class Component(object):
         self._role_parameter_keywords = set()
         self._module_name = None
         self._component_param = {}
+        self._provider = None
 
     def __new__(cls, *args, **kwargs):
         if cls.__name__.lower() not in cls.__instance:
@@ -47,6 +48,14 @@ class Component(object):
 
     def reset_name(self, name):
         self._component_name = name
+
+    @property
+    def provider(self):
+        return self._provider
+
+    @provider.setter
+    def provider(self, provider):
+        self._provider = provider
 
     def get_party_instance(self, role="guest", party_id=None) -> 'Component':
         if role not in ["guest", "host", "arbiter"]:
