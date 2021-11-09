@@ -32,6 +32,15 @@ from examples.scripts import submit
 from python.fate_client.flow_sdk.client import FlowClient
 
 
+def get_flow_info():
+    from fate_flow import set_env
+    from fate_arch.common.conf_utils import get_base_config
+    FATE_FLOW_SERVICE_NAME = "fateflow"
+    HOST = get_base_config(FATE_FLOW_SERVICE_NAME, {}).get("host", "127.0.0.1")
+    HTTP_PORT = get_base_config(FATE_FLOW_SERVICE_NAME, {}).get("http_port")
+    return HOST, HTTP_PORT
+
+
 def check_data_count(submitter, table_name, namespace, expect_count):
     command = "table/info"
     config_data = {
@@ -110,6 +119,8 @@ def main():
     config_file = args.config_file
     ip = args.flow_server_ip
     port = args.flow_server_port
+    if ip is None:
+        ip, port = get_flow_info()
     flow_client = FlowClient(ip=ip, port=port, version="v1")
 
     spark_submit_config = {}
