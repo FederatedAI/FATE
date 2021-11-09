@@ -759,6 +759,8 @@ input argument.
 <span class="title-ref">Performance</span> sub-command is used to test
 efficiency of designated FATE jobs.
 
+Example tests may be found [here](../../examples/benchmark_performance).
+
 ### command options
 
 ``` sourceCode bash

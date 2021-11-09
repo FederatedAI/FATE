@@ -51,8 +51,8 @@
             "dsl": "hetero_lr_encrypted_reveal_in_host_dsl.json"
         },
         "hetero_lr_ovr_encrypted_reveal_in_host": {
-            "conf": "hetero_lr_encrypted_reveal_in_host_conf.json",
-            "dsl": "hetero_lr_encrypted_reveal_in_host_dsl.json"
+            "conf": "hetero_lr_ovr_encrypted_reveal_in_host_conf.json",
+            "dsl": "hetero_lr_ovr_encrypted_reveal_in_host_dsl.json"
         },
         "hetero_lr_normal": {
             "conf": "hetero_lr_normal_conf.json",
