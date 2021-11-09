@@ -16,6 +16,10 @@
 #  limitations under the License.
 #
 
+fate_project_base=$(cd `dirname $0`; cd ../;pwd)
+echo FATE_PROJECT_BASE=$fate_project_base
+echo FATE_DEPLOY_BASE=$fate_project_base
+
 export PYTHONPATH=
 export EGGROLL_HOME=
 venv=
