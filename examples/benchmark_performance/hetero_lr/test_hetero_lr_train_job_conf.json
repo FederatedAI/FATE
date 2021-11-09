@@ -100,8 +100,8 @@
                 "0": {
                     "reader_0": {
                         "table": {
-                            "name": "breast_hetero_host_tag_value",
-                            "namespace": "experiment"
+                            "name": "performance_hetero_host_tag_value",
+                            "namespace": "performance"
                         }
                     },
                     "data_transform_1": {
@@ -113,8 +113,8 @@
                     },
                     "reader_1": {
                         "table": {
-                            "name": "breast_hetero_host_tag_value",
-                            "namespace": "experiment"
+                            "name": "performance_hetero_host_tag_value",
+                            "namespace": "performance"
                         }
                     },
                     "data_transform_0": {
@@ -130,8 +130,8 @@
                 "0": {
                     "reader_0": {
                         "table": {
-                            "name": "breast_hetero_guest",
-                            "namespace": "experiment"
+                            "name": "performance_hetero_guest",
+                            "namespace": "performance"
                         }
                     },
                     "data_transform_1": {
@@ -148,8 +148,8 @@
                     },
                     "reader_1": {
                         "table": {
-                            "name": "breast_hetero_guest",
-                            "namespace": "experiment"
+                            "name": "performance_hetero_guest",
+                            "namespace": "performance"
                         }
                     },
                     "data_transform_0": {

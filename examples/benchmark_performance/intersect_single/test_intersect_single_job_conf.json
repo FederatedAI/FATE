@@ -32,8 +32,8 @@
                 "0": {
                     "reader_0": {
                         "table": {
-                            "name": "breast_hetero_host_tag_value",
-                            "namespace": "experiment"
+                            "name": "performance_hetero_host_tag_value",
+                            "namespace": "performance"
                         }
                     }
                 }
@@ -42,8 +42,8 @@
                 "0": {
                     "reader_0": {
                         "table": {
-                            "name": "breast_hetero_guest",
-                            "namespace": "experiment"
+                            "name": "performance_hetero_guest",
+                            "namespace": "performance"
                         }
                     }
                 }
