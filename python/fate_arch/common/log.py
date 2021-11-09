@@ -184,37 +184,6 @@ class LoggerFactory(object):
                     logger.addHandler(
                         LoggerFactory.get_global_handler(level_logger_name, level, LoggerFactory.PARENT_LOG_DIR))
 
-    @staticmethod
-    def get_job_logger(job_id, log_type):
-        fate_flow_log_dir = file_utils.get_project_base_directory('logs', 'fate_flow')
-        job_log_dir = file_utils.get_project_base_directory('logs', job_id)
-        if not job_id:
-            log_dirs = [fate_flow_log_dir]
-        else:
-            if log_type == 'audit':
-                log_dirs = [job_log_dir, fate_flow_log_dir]
-            else:
-                log_dirs = [job_log_dir]
-        if LoggerFactory.log_share:
-            oldmask = os.umask(000)
-            os.makedirs(job_log_dir, exist_ok=True)
-            os.makedirs(fate_flow_log_dir, exist_ok=True)
-            os.umask(oldmask)
-        else:
-            os.makedirs(job_log_dir, exist_ok=True)
-            os.makedirs(fate_flow_log_dir, exist_ok=True)
-        logger = LoggerFactory.new_logger(f"{job_id}_{log_type}")
-        for job_log_dir in log_dirs:
-            handler = LoggerFactory.get_handler(class_name=None, level=LoggerFactory.LEVEL,
-                                                log_dir=job_log_dir, log_type=log_type, job_id=job_id)
-            error_handler = LoggerFactory.get_handler(class_name=None, level=logging.ERROR,
-                                                      log_dir=job_log_dir, log_type=log_type, job_id=job_id)
-            logger.addHandler(handler)
-            logger.addHandler(error_handler)
-        with LoggerFactory.lock:
-            LoggerFactory.schedule_logger_dict[job_id + log_type] = logger
-        return logger
-
 
 def setDirectory(directory=None):
     LoggerFactory.set_directory(directory)
