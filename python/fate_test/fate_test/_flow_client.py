@@ -141,11 +141,10 @@ class FLOWClient(object):
             return response, conf['file'], False
         else:
             if _config.data_switch is not None:
-                conf['address']['path'] = os.path.join(str(self._cache_directory), os.path.basename(conf.get('file')))
+                conf['address']['path'] = os.path.join(str(self._cache_directory), conf['address']['path'])
             else:
-                conf['address']['path'] = os.path.join(str(self._data_base_dir), conf.get('file'))
+                conf['address']['path'] = os.path.join(str(self._data_base_dir), conf['address']['path'])
             conf['drop'] = drop
-            del conf["file"]
             del conf["extend_sid"]
             del conf["auto_increasing_sid"]
             del conf["use_local_data"]
