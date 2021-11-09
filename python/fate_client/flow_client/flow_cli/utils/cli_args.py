@@ -100,7 +100,8 @@ MODEL_VERSION_REQUIRED = click.option("--model-version", type=click.STRING, requ
 MODEL_ID_REQUIRED = click.option("--model-id", type=click.STRING, required=True, help="Model id.")
 
 SERVICE_NAME = click.option("--service", type=click.STRING, required=True, help="Service Name")
-FORCE = click.option('--force', is_flag=True, default=False, help="force execute")
+FORCE = click.option("--force", is_flag=True, default=False, help="force execute")
+SIMPLE = click.option("-s", '--simple', is_flag=True, default=False, help="simple output")
 
 TIMEOUT = click.option("--timeout", type=click.INT, default=300,
                        help="Timeout limit, default 300 seconds")

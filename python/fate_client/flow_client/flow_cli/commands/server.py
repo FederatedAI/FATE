@@ -31,7 +31,7 @@ def server(ctx):
     pass
 
 
-@server.command("version", short_help="Show Versions Command")
+@server.command("versions", short_help="Show Versions Command")
 @click.pass_context
 def versions(ctx, **kwargs):
     config_data, dsl_data = preprocess(**kwargs)
