@@ -20,7 +20,7 @@ import os
 from cachetools import LRUCache, cached
 from ruamel import yaml
 
-PROJECT_BASE = os.getenv("FATE_PROJECT_BASE")
+PROJECT_BASE = os.getenv("FATE_PROJECT_BASE") or os.getenv("FATE_DEPLOY_BASE")
 FATE_BASE = os.getenv("FATE_BASE")
 
 
