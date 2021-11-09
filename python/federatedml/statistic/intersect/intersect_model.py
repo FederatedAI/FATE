@@ -497,7 +497,7 @@ class IntersectGuest(IntersectModelBase):
         return data_instances
 
     def get_filter_process(self, data_instances, hash_operator):
-        filter_list = self.transfer_variable.intersect_filter_from_guest.get(idx=-1)
+        filter_list = self.transfer_variable.intersect_filter_from_host.get(idx=-1)
         LOGGER.debug(f"got filter from all host")
 
         filtered_data_list = [data_instances.filter(lambda k, v: filter.check(
