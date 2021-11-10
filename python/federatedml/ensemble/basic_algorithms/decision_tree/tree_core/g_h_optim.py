@@ -159,7 +159,10 @@ class GHPacker(object):
 
         rs = self.packer.decrypt_cipher_packages(split_info_package_list)
         for split_info in rs:
-            unpack_rs = self.packer.unpack_an_int_list(split_info.sum_grad)
+            if self.mo_mode:
+                unpack_rs = self.packer.unpack_an_int_list(split_info.sum_grad)
+            else:
+                unpack_rs = self.packer.unpack_an_int(split_info.sum_grad, self.packer.bit_assignment[0])
             g, h = g_h_recover_post_func(unpack_rs, fix_point_precision)
             split_info.sum_grad = g - self.g_offset * split_info.sample_count
             split_info.sum_hess = h

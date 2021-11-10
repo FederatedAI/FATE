@@ -130,7 +130,8 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
                                            complete_secure=complete_secure,
                                            fast_sbt=fast_sbt, tree_type=tree_type, target_host_id=target_host_id,
                                            guest_depth=self.guest_depth, host_depth=self.host_depth,
-                                           mo_tree=(self.multi_mode == consts.MULTI_OUTPUT)
+                                           mo_tree=(self.multi_mode == consts.MULTI_OUTPUT),
+                                           bin_num=self.bin_num
                                            )
         tree.fit()
 
@@ -251,3 +252,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.tree_plan = plan.decode_plan(model_param.tree_plan)
         if self.work_mode == consts.MIX_TREE:
             self.load_feature_importance(model_param.feature_importances)
+
+    # implement abstract function
+    def check_label(self, *args):
+        pass
