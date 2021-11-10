@@ -19,8 +19,7 @@
 
 import copy
 
-from federatedml.param.base_param import BaseParam, deprecated_param
-from federatedml.param.base_param import BaseParam
+from federatedml.param.glm_param import LinearModelParam
 from federatedml.param.callback_param import CallbackParam
 from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
@@ -32,8 +31,7 @@ from federatedml.param.stepwise_param import StepwiseParam
 from federatedml.util import consts
 
 
-@deprecated_param("validation_freqs", "metrics", "early_stopping_rounds", "use_first_metric_only")
-class LinearParam(BaseParam):
+class LinearParam(LinearModelParam):
     """
     Parameters used for Linear Regression.
 
@@ -69,9 +67,6 @@ class LinearParam(BaseParam):
             a)	diff： Use difference of loss between two iterations to judge whether converge.
             b)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < tol, it is converged.
             c)  weight_diff: Use difference between weights of two consecutive iterations
-
-    predict_param: PredictParam object, default: default PredictParam object
-        predict param
 
     encrypt_param: EncryptParam object, default: default EncryptParam object
         encrypt param
@@ -118,144 +113,27 @@ class LinearParam(BaseParam):
     def __init__(self, penalty='L2',
                  tol=1e-4, alpha=1.0, optimizer='sgd',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
-                 max_iter=20, early_stop='diff', predict_param=PredictParam(),
+                 max_iter=20, early_stop='diff',
                  encrypt_param=EncryptParam(), sqn_param=StochasticQuasiNewtonParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  cv_param=CrossValidationParam(), decay=1, decay_sqrt=True, validation_freqs=None,
                  early_stopping_rounds=None, stepwise_param=StepwiseParam(), metrics=None, use_first_metric_only=False,
                  floating_point_precision=23, callback_param=CallbackParam()):
-        super(LinearParam, self).__init__()
-        self.penalty = penalty
-        self.tol = tol
-        self.alpha = alpha
-        self.optimizer = optimizer
-        self.batch_size = batch_size
-        self.learning_rate = learning_rate
-        self.init_param = copy.deepcopy(init_param)
-        self.max_iter = max_iter
-        self.early_stop = early_stop
-        self.encrypt_param = encrypt_param
-        self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
-        self.cv_param = copy.deepcopy(cv_param)
-        self.predict_param = copy.deepcopy(predict_param)
-        self.decay = decay
-        self.decay_sqrt = decay_sqrt
-        self.validation_freqs = validation_freqs
+        super(LinearParam, self).__init__(penalty, tol, alpha, optimizer, batch_size,
+                                          learning_rate, init_param, max_iter, early_stop,
+                                          encrypt_param, cv_param, decay,
+                                          decay_sqrt, validation_freqs,
+                                          early_stopping_rounds, stepwise_param,
+                                          metrics, use_first_metric_only,
+                                          floating_point_precision, callback_param)
         self.sqn_param = copy.deepcopy(sqn_param)
-        self.early_stopping_rounds = early_stopping_rounds
-        self.stepwise_param = copy.deepcopy(stepwise_param)
-        self.metrics = metrics or []
-        self.use_first_metric_only = use_first_metric_only
-        self.floating_point_precision = floating_point_precision
-        self.callback_param = copy.deepcopy(callback_param)
+        self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
 
     def check(self):
         descr = "linear_regression_param's "
-
-        if self.penalty is None:
-            self.penalty = 'NONE'
-        elif type(self.penalty).__name__ != "str":
-            raise ValueError(
-                descr + "penalty {} not supported, should be str type".format(self.penalty))
-
-        self.penalty = self.penalty.upper()
-        if self.penalty not in ['L1', 'L2', 'NONE']:
-            raise ValueError(
-                "penalty {} not supported, penalty should be 'L1', 'L2' or 'none'".format(self.penalty))
-
-        if type(self.tol).__name__ not in ["int", "float"]:
-            raise ValueError(
-                descr + "tol {} not supported, should be float type".format(self.tol))
-
-        if type(self.alpha).__name__ not in ["int", "float"]:
-            raise ValueError(
-                descr + "alpha {} not supported, should be float type".format(self.alpha))
-
-        if type(self.optimizer).__name__ != "str":
-            raise ValueError(
-                descr + "optimizer {} not supported, should be str type".format(self.optimizer))
-        else:
-            self.optimizer = self.optimizer.lower()
-            if self.optimizer not in ['sgd', 'rmsprop', 'adam', 'adagrad', 'sqn']:
-                raise ValueError(
-                    descr + "optimizer not supported, optimizer should be"
-                    " 'sgd', 'rmsprop', 'adam', 'sqn' or 'adagrad'")
-
-        if type(self.batch_size).__name__ not in ["int", "long"]:
-            raise ValueError(
-                descr + "batch_size {} not supported, should be int type".format(self.batch_size))
-        if self.batch_size != -1:
-            if type(self.batch_size).__name__ not in ["int", "long"] \
-                    or self.batch_size < consts.MIN_BATCH_SIZE:
-                raise ValueError(descr + " {} not supported, should be larger than {} or "
-                                         "-1 represent for all data".format(self.batch_size, consts.MIN_BATCH_SIZE))
-
-        if type(self.learning_rate).__name__ not in ["int", "float"]:
-            raise ValueError(
-                descr + "learning_rate {} not supported, should be float type".format(
-                    self.learning_rate))
-
-        self.init_param.check()
-
-        if type(self.max_iter).__name__ != "int":
-            raise ValueError(
-                descr + "max_iter {} not supported, should be int type".format(self.max_iter))
-        elif self.max_iter <= 0:
-            raise ValueError(
-                descr + "max_iter must be greater or equal to 1")
-
-        if type(self.early_stop).__name__ != "str":
-            raise ValueError(
-                descr + "early_stop {} not supported, should be str type".format(
-                    self.early_stop))
-        else:
-            self.early_stop = self.early_stop.lower()
-            if self.early_stop not in ['diff', 'abs', 'weight_diff']:
-                raise ValueError(
-                    descr + "early_stop not supported, early_stop should be 'weight_diff', 'diff' or 'abs'")
-
-        self.encrypt_param.check()
+        super(LinearParam, self).check()
+        self.sqn_param.check()
         if self.encrypt_param.method != consts.PAILLIER:
             raise ValueError(
                 descr + "encrypt method supports 'Paillier' only")
-
-        self.encrypted_mode_calculator_param.check()
-        
-        if type(self.decay).__name__ not in ["int", "float"]:
-            raise ValueError(
-                descr + "decay {} not supported, should be 'int' or 'float'".format(self.decay)
-            )
-        if type(self.decay_sqrt).__name__ not in ["bool"]:
-            raise ValueError(
-                descr + "decay_sqrt {} not supported, should be 'bool'".format(self.decay)
-            )
-        self.sqn_param.check()
-        self.stepwise_param.check()
-
-        for p in ["early_stopping_rounds", "validation_freqs", "metrics",
-                  "use_first_metric_only"]:
-            if self._warn_to_deprecate_param(p, "", ""):
-                if "callback_param" in self.get_user_feeded():
-                    raise ValueError(f"{p} and callback param should not be set simultaneously")
-                else:
-                    self.callback_param.callbacks = ["PerformanceEvaluate"]
-                break
-
-        if self._warn_to_deprecate_param("validation_freqs", descr, "callback_param's 'validation_freqs'"):
-            self.callback_param.validation_freqs = self.validation_freqs
-
-        if self._warn_to_deprecate_param("early_stopping_rounds", descr, "callback_param's 'early_stopping_rounds'"):
-            self.callback_param.early_stopping_rounds = self.early_stopping_rounds
-
-        if self._warn_to_deprecate_param("metrics", descr, "callback_param's 'metrics'"):
-            self.callback_param.metrics = self.metrics
-
-        if self._warn_to_deprecate_param("use_first_metric_only", descr, "callback_param's 'use_first_metric_only'"):
-            self.callback_param.use_first_metric_only = self.use_first_metric_only
-
-        if self.floating_point_precision is not None and \
-                (not isinstance(self.floating_point_precision, int) or
-                 self.floating_point_precision < 0 or self.floating_point_precision > 64):
-            raise ValueError("floating point precision should be null or a integer between 0 and 64")
-        self.callback_param.check()
         return True
