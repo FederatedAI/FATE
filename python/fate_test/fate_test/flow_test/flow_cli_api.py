@@ -28,7 +28,7 @@ class TestModel(object):
         self.fate_flow_path = fate_flow_path
         self.component_name = component_name
 
-        self.python_bin = sys.executable or 'python'
+        self.python_bin = sys.executable or 'python3'
 
         self.request_api_info_path = f'./logs/{namespace}/cli_exception.log'
         os.makedirs(os.path.dirname(self.request_api_info_path), exist_ok=True)

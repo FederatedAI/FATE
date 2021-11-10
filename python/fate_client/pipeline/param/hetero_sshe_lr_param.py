@@ -27,7 +27,7 @@ from pipeline.param import consts
 
 class LogisticRegressionParam(BaseParam):
     """
-    Parameters used for Logistic Regression both for Homo mode or Hetero mode.
+    Parameters used for Hetero SSHE Logistic Regression
 
     Parameters
     ----------

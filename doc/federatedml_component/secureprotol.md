@@ -116,13 +116,13 @@ $$ dec(v) = enc(v) ^ d \pmod{n} $$
 It will do nothing and return input data during encryption and
 decryption.
 
-# Hash Factory
+## Hash Factory
 
 Hash factory provides following data encoding methods: "md5", "sha1", "sha224",
 "sha256", "sha384", "sha512", "sm3". This module is meant to make hashing operation with more convenient. 
 It also supports adding salt and outputing results to base64 format.
 
-# Diffne Hellman Key Exchange
+## Diffne Hellman Key Exchange
 
 Diffie–Hellman key exchange is a method to exchange cryptographic keys
 over a public channel securely
