@@ -12,6 +12,8 @@ _build
 venv
 *.log
 *.tar.gz
+*.db
+*.db-journal
 
 # excluded paths
 /arch/core/target/
