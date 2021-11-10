@@ -120,8 +120,11 @@ class Federation(FederationABC):
         policy_id = federation_info.get("policy_id")
         """
 
-        union_name = string_utils.random_string(4)
-        policy_id = string_utils.random_string(10)
+        # union_name = string_utils.random_string(4)
+        # policy_id = string_utils.random_string(10)
+
+        union_name = federation_session_id
+        policy_id = federation_session_id
 
         rabbitmq_run = runtime_conf.get("job_parameters", {}).get("rabbitmq_run", {})
         LOGGER.debug(f"rabbitmq_run: {rabbitmq_run}")
