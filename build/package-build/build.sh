@@ -18,7 +18,7 @@
 
 set -e
 source_dir=$(cd `dirname $0`; cd ../;cd ../;pwd)
-support_modules=(bin conf examples fate fateflow fateboard eggroll)
+support_modules=(bin conf examples build deploy fate fateflow fateboard eggroll)
 packaging_modules=()
 echo ${source_dir}
 if [[ -n ${1} ]]; then
@@ -32,7 +32,8 @@ echo "[INFO] source dir: ${source_dir}"
 #git submodule foreach --recursive git pull
 version=`grep "FATE=" fate.env | awk -F '=' '{print $2}'`
 package_dir_name="FATE_install_"${version}
-package_dir=${source_dir}/build/package-build/${package_dir_name}
+#package_dir=${source_dir}/build/package-build/${package_dir_name}
+package_dir=${source_dir}/${package_dir_name}
 echo "[INFO] build info"
 echo "[INFO] version: "${version}
 echo "[INFO] version tag: "${version_tag}
@@ -41,9 +42,7 @@ rm -rf ${package_dir} ${package_dir}_${version_tag}".tar.gz"
 mkdir -p ${package_dir}
 
 function packaging_bin() {
-    echo "[INFO] package bin start"
-    cp -r bin ${package_dir}/
-    echo "[INFO] package bin done"
+    packaging_general_dir "bin"
 }
 
 function packaging_conf() {
@@ -54,14 +53,30 @@ function packaging_conf() {
 }
 
 function packaging_examples(){
-    echo "[INFO] package example start"
-    cp -r examples ${package_dir}/
-    echo "[INFO] package example done"
+    packaging_general_dir "examples"
+}
+
+function packaging_build(){
+    packaging_general_dir "build"
+}
+
+function packaging_deploy(){
+    packaging_general_dir "deploy"
+}
+
+function packaging_general_dir(){
+    dir_name=$1
+    echo "[INFO] package ${dir_name} start"
+    if [[ -d "${package_dir}/${dir_name}" ]];then
+      rm -rf ${package_dir}/${dir_name}
+    fi
+    cp -r ${dir_name} ${package_dir}/
+    echo "[INFO] package ${dir_name} done"
 }
 
 function packaging_fate(){
     echo "[INFO] package fate start"
-    if [[ ! -d "${package_dir}/fate" ]];then
+    if [[ -d "${package_dir}/fate" ]];then
       rm -rf ${package_dir}/fate
     fi
     mkdir -p ${package_dir}/fate
@@ -235,7 +250,8 @@ compress(){
     echo "[INFO] compress done"
     echo "[INFO] a total of `ls ${package_dir} | wc -l | awk '{print $1}'` packages:"
     ls -lrt ${package_dir}
-    cd ${source_dir}/build/package-build
+    package_dir_parent=$(cd `dirname ${package_dir}`; pwd)
+    cd ${package_dir_parent}
     tar czf ${package_dir_name}_${version_tag}".tar.gz" ${package_dir_name}
 }
 
