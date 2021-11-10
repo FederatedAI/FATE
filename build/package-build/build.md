@@ -13,7 +13,7 @@
 
 ## 3. Build
 ```bash
-git clone https://github.com/FederatedAI/FATE-Flow.git -b $branch --recurse-submodules --depth=1
+git clone https://github.com/FederatedAI/FATE.git -b $branch --recurse-submodules --depth=1
 cd FATE-Flow/cluster-deploy
 bash build.sh release all
 ```
