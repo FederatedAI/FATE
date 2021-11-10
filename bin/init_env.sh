@@ -16,8 +16,13 @@
 #  limitations under the License.
 #
 
+fate_project_base=$(cd `dirname $0`; cd ../;pwd)
+export FATE_PROJECT_BASE=$fate_project_base
+export FATE_DEPLOY_BASE=$fate_project_base
+
 export PYTHONPATH=
 export EGGROLL_HOME=
+export EGGROLL_LOG_LEVEL=INFO
 venv=
 export JAVA_HOME=
 export PATH=$PATH:$JAVA_HOME/bin
