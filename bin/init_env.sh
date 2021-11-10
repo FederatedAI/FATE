@@ -16,7 +16,7 @@
 #  limitations under the License.
 #
 
-fate_project_base=$(cd `dirname $0`; cd ../;pwd)
+fate_project_base=$(cd `dirname "$(realpath "${BASH_SOURCE[0]}")"`; cd ../;pwd)
 export FATE_PROJECT_BASE=$fate_project_base
 export FATE_DEPLOY_BASE=$fate_project_base
 
