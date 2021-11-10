@@ -71,6 +71,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.work_mode = param.work_mode
         self.guest_depth = param.guest_depth
         self.host_depth = param.host_depth
+        self.multi_mode = param.multi_mode
 
         if self.use_missing:
             self.tree_param.use_missing = self.use_missing
@@ -130,8 +131,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
                                            complete_secure=complete_secure,
                                            fast_sbt=fast_sbt, tree_type=tree_type, target_host_id=target_host_id,
                                            guest_depth=self.guest_depth, host_depth=self.host_depth,
-                                           mo_tree=(self.multi_mode == consts.MULTI_OUTPUT),
-                                           bin_num=self.bin_num
+                                           mo_tree=(self.multi_mode == consts.MULTI_OUTPUT), bin_num=self.bin_num
                                            )
         tree.fit()
 

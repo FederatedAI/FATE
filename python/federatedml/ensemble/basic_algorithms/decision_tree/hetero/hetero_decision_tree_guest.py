@@ -135,7 +135,10 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.max_sample_weight = max_sample_weight
         self.task_type = task_type
         self.mo_tree = mo_tree
-        self.class_num = class_num
+        if self.mo_tree:  # when mo mode is activated, need class number
+            self.class_num = class_num
+        else:
+            self.class_num = 1
 
         # initializing goss settings
         if self.run_goss:
@@ -832,16 +835,19 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         model_param = DecisionTreeModelParam()
         for node in self.tree_node:
+            weight, mo_weight = self.mo_weight_extract(node)
+            LOGGER.debug('cwj weight {}, mo weight {}'.format(weight, mo_weight))
             model_param.tree_.add(id=node.id,
                                   sitename=node.sitename,
                                   fid=node.fid,
                                   bid=node.bid,
-                                  weight=node.weight,
+                                  weight=weight,
                                   is_leaf=node.is_leaf,
                                   left_nodeid=node.left_nodeid,
                                   right_nodeid=node.right_nodeid,
-                                  missing_dir=node.missing_dir)
-
+                                  missing_dir=node.missing_dir,
+                                  mo_weight=mo_weight
+                                  )
         model_param.split_maskdict.update(self.split_maskdict)
         model_param.missing_dir_maskdict.update(self.missing_dir_maskdict)
         model_param.leaf_count.update(self.leaf_count)
@@ -850,11 +856,12 @@ class HeteroDecisionTreeGuest(DecisionTree):
     def set_model_param(self, model_param):
         self.tree_node = []
         for node_param in model_param.tree_:
+            weight = self.mo_weight_load(node_param)
             _node = Node(id=node_param.id,
                          sitename=node_param.sitename,
                          fid=node_param.fid,
                          bid=node_param.bid,
-                         weight=node_param.weight,
+                         weight=weight,
                          is_leaf=node_param.is_leaf,
                          left_nodeid=node_param.left_nodeid,
                          right_nodeid=node_param.right_nodeid,
@@ -864,4 +871,3 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         self.split_maskdict = dict(model_param.split_maskdict)
         self.missing_dir_maskdict = dict(model_param.missing_dir_maskdict)
-

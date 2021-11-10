@@ -275,7 +275,7 @@ class DecisionTree(BasicAlgorithms, ABC):
         """
         prevent float error
         """
-        return round(num, consts.TREE_DECIMAL_ROUND)
+        return np.round(num, consts.TREE_DECIMAL_ROUND)
 
     def update_feature_importance(self, splitinfo, record_site_name=True):
 

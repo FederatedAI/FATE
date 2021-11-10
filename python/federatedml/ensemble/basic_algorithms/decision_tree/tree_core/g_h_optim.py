@@ -7,7 +7,7 @@ from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.splitter impo
 from federatedml.util import consts
 from federatedml.cipher_compressor.compressor import CipherCompressorHost, NormalCipherPackage
 from federatedml.cipher_compressor.compressor import PackingCipherTensorPackage
-
+from federatedml.util import LOGGER
 fix_point_precision = 2**52
 REGRESSION_MAX_GRADIENT = 10**9
 
@@ -131,10 +131,11 @@ class GHPacker(object):
         return int_fixpoint
 
     @staticmethod
-    def to_fixedpoint(gh, mul, g_offset):
+    def to_fixedpoint_arr_format(gh, mul, g_offset):
 
         en_list = []
-        for g, h in zip(gh[0:len(gh)//2], gh[len(gh)//2:]):
+        g_arr, h_arr = gh
+        for g, h in zip(g_arr, h_arr):
             g += g_offset  # to positive
             g_encoding = GHPacker.fixedpoint_encode(g, mul)
             h_encoding = GHPacker.fixedpoint_encode(h, mul)
@@ -142,10 +143,18 @@ class GHPacker(object):
             en_list.append(h_encoding)
 
         return en_list
+    
+    @staticmethod
+    def to_fixedpoint(gh, mul, g_offset):
+        g, h = gh
+        return [GHPacker.fixedpoint_encode(g+g_offset, mul), GHPacker.fixedpoint_encode(h, mul)]
 
     def pack_and_encrypt(self, gh):
-
-        fixed_int_encode_func = functools.partial(self.to_fixedpoint, mul=self.precision, g_offset=self.g_offset)
+        
+        fixedpoint_encode_func = self.to_fixedpoint
+        if self.mo_mode:
+            fixedpoint_encode_func = self.to_fixedpoint_arr_format
+        fixed_int_encode_func = functools.partial(fixedpoint_encode_func, mul=self.precision, g_offset=self.g_offset)
         large_int_gh = gh.mapValues(fixed_int_encode_func)
         if not self.mo_mode:
             en_g_h = self.packer.pack_and_encrypt(large_int_gh, post_process_func=post_func) # take cipher out from list
@@ -162,7 +171,7 @@ class GHPacker(object):
             if self.mo_mode:
                 unpack_rs = self.packer.unpack_an_int_list(split_info.sum_grad)
             else:
-                unpack_rs = self.packer.unpack_an_int(split_info.sum_grad, self.packer.bit_assignment[0])
+                unpack_rs = self.packer._unpack_an_int(split_info.sum_grad, self.packer._bit_assignment[0])
             g, h = g_h_recover_post_func(unpack_rs, fix_point_precision)
             split_info.sum_grad = g - self.g_offset * split_info.sample_count
             split_info.sum_hess = h

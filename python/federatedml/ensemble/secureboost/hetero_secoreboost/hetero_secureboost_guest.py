@@ -313,7 +313,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         else:
             pred_func = sbt_guest_predict
 
-        predict_rs = pred_func(processed_data, self.transfer_variable, trees, self.learning_rate,
+        predict_rs = pred_func(processed_data, self.predict_transfer_inst, trees, self.learning_rate,
                                self.init_score, self.booster_dim, predict_cache,
                                pred_leaf=(ret_format == 'leaf'))
 
