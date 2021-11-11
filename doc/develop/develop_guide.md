@@ -107,8 +107,8 @@ def check(self):
 
 ### Step 2. Register meta of the new component 
 
-The purpose to register the meta is that fate\_flow module extract 
-this file to get the information of how to start program of the component.
+The purpose to register the meta is that FATE Flow uses 
+this file to get the information on  how to start program of the component.
 
 1.  Define component meta python file under
     [components](../../python/federatedml/components), 
@@ -116,16 +116,16 @@ this file to get the information of how to start program of the component.
 
 2.  Developing the meta file. 
     
-      - inherit from component meta, and define the module name of this component, 
+      - inherit from component meta, and name meta with component's name, 
       like xxx_cpn_meta = ComponentMeta("XXX"). XXX is the module to be used in dsl file.  
       ``` sourceCode python
           from .components import ComponentMeta
           hetero_lr_cpn_meta = ComponentMeta("HeteroLR")
       ``` 
-      - use the decorator xxx_cpn_meta.bind_runner.on_$role with a special function to bind the running object of each role.  
-        $role mainly includes guest\host\arbiter, if some component use same running module of several role, syntax like 
+      - use the decorator xxx_cpn_meta.bind_runner.on_$role to bind the running object to each role.  
+        $role mainly includes guest\host\arbiter. If component uses the same running module for several roles, syntax like 
           xxx_cpn_meta.bind_runner.on_$role1.on_$role2.on_$role3 is also supported.   
-        The function should import the running object of this role then return the object.  
+        This function imports and returns the running object of corresponding role.  
    
         Take hetero-lr as an example, users can find it in
         [python/federatedml/components/hetero_lr.py](../../python/federatedml/conf/setting_conf/HeteroLR.json)
@@ -143,9 +143,9 @@ this file to get the information of how to start program of the component.
                 
                 return HeteroLRHost
         ``` 
-        - use the decorator xxx_cpn_meta.bind_param with a special function to bind the parameter object of the developing component,
+        - use the decorator xxx_cpn_meta.bind_param to bind the parameter object to the developing component,
           which defines in Step 1.  
-          The function should import the parameter object of this role then return the object.  
+          The function imports and returns the parameter object.  
           
           ``` sourceCode python
               @hetero_lr_cpn_meta.bind_param
@@ -157,16 +157,15 @@ this file to get the information of how to start program of the component.
         
 ### Step 3. Define the transfer variable object of this module. (Optional)
 
-This step is needed only when this module is federated, which means
+This step is needed only when module is federated, which means
 there exists information interaction between different parties.
 
 Developing a file to define transfer_class object under the fold
 [transfer\_class](../../python/federatedml/transfer_variable/transfer_class)
 
 In this python file, you would need to create a "transfer\_variable"
-class and inherit the BaseTransferVariables class. Then, define each
-transfer variable as its attributes. Here is an example to make it more
-understandable:
+class which inherits `BaseTransferVariables`. Then, define each
+transfer variable as its attributes. Here is an example:
 
 ``` sourceCode python
 from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
