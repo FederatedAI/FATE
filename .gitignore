@@ -12,6 +12,8 @@ _build
 venv
 *.log
 *.tar.gz
+*.db
+*.db-journal
 
 # excluded paths
 /arch/core/target/
@@ -38,6 +40,7 @@ venv
 /eggroll/
 /fateboard/
 /doc/federatedml_component/params/
+/FATE_install_*/
 
 # fate_test
 fate_test_config.yaml

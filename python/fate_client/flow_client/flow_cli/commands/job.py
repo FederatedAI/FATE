@@ -215,7 +215,7 @@ def log(ctx, **kwargs):
     job_id = config_data['job_id']
     tar_file_name = 'job_{}_log.tar.gz'.format(job_id)
     extract_dir = os.path.join(config_data['output_path'], 'job_{}_log'.format(job_id))
-    with closing(access_server('get', ctx, 'job/log', config_data, False, stream=True)) as response:
+    with closing(access_server('post', ctx, 'job/log/download', config_data, False, stream=True)) as response:
         if response.status_code == 200:
             download_from_request(http_response=response, tar_file_name=tar_file_name, extract_dir=extract_dir)
             res = {'retcode': 0,
