@@ -590,6 +590,10 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         if self.multi_mode not in [consts.SINGLE_OUTPUT, consts.MULTI_OUTPUT]:
             raise ValueError('unsupported multi-classification mode')
 
+        if self.multi_mode == consts.MULTI_OUTPUT:
+            if self.objective_param.task_type == consts.REGRESSION:
+                raise ValueError('regression tasks not support multi-output trees')
+
         return True
 
 
@@ -660,5 +664,12 @@ class HomoSecureBoostParam(BoostingParam):
 
         if self._warn_to_deprecate_param("metrics", descr, "callback_param's 'metrics'"):
             self.callback_param.metrics = self.metrics
+
+        if self.multi_mode not in [consts.SINGLE_OUTPUT, consts.MULTI_OUTPUT]:
+            raise ValueError('unsupported multi-classification mode')
+
+        if self.multi_mode == consts.MULTI_OUTPUT:
+            if self.objective_param.task_type == consts.REGRESSION:
+                raise ValueError('regression tasks not support multi-output trees')
 
         return True
