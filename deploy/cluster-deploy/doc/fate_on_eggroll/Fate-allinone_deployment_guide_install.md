@@ -487,7 +487,7 @@ tail -f ./logs/deploy-mysql-host.log    (Print the deployment status of mysql at
 
 2\) Fateflow Logs
 
-/data/projects/fate/python/logs/fate\_flow/
+/data/projects/fate/fate\_flow/logs
 
 3\) Fateboard Logs
 
