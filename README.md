@@ -22,11 +22,11 @@ tree-based algorithms, deep learning and transfer learning.
 
 #### Standalone
 - [Native Standalone-deploy](./deploy/standalone-deploy/)
-- [Deployment by Docker Compose](https://github.com/FederatedAI/KubeFATE/tree/master/docker-deploy)
 
 #### Cluster
 - [Native Cluster-deploy](./deploy/cluster-deploy)
 - [Deployment by Ansible](https://github.com/FederatedAI/AnsibleFATE)
+- [Deployment by Docker Compose](https://github.com/FederatedAI/KubeFATE/tree/master/docker-deploy)
 - [Deployment on Kubernetes](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy)
 
 #### Quick Start
