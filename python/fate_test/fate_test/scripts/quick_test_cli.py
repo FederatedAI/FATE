@@ -34,12 +34,11 @@ def unit_test(ctx, include, **kwargs):
         return
 
     error_log_file = f"./logs/{namespace}/error_test.log"
-    unit_test_path = "./python/federatedml/"
     os.makedirs(os.path.dirname(error_log_file), exist_ok=True)
-    run_test(includes=include, conf=config_inst, error_log_file=error_log_file, unit_test_path=unit_test_path)
+    run_test(includes=include, conf=config_inst, error_log_file=error_log_file)
 
 
-def run_test(includes, conf: Config, error_log_file, unit_test_path):
+def run_test(includes, conf: Config, error_log_file):
     def error_log(stdout):
         if stdout is None:
             return os.path.abspath(error_log_file)
