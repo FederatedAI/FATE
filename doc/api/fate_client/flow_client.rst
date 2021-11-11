@@ -258,7 +258,7 @@ Job
     flow job dsl --cpn-path fate_flow/examples/component_list.txt --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json -o fate_flow/examples/
 
     flow job dsl --cpn-list "dataio_0, hetero_feature_binning_0, hetero_feature_selection_0, evaluation_0" --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json -o fate_flow/examples/
-            
+
     flow job dsl --cpn-list [dataio_0,hetero_feature_binning_0,hetero_feature_selection_0,evaluation_0] --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json -o fate_flow/examples/
 
 Component (TRACKING)
@@ -566,7 +566,7 @@ Model
 .. code:: bash
 
     flow model export -c fate_flow/examples/export_model.json
-    flow model export -c fate_flow/examplse/store_model.json --to-database
+    flow model export -c fate_flow/examples/store_model.json --to-database
 
 ``migrate``
 ~~~~~~~~~~~
