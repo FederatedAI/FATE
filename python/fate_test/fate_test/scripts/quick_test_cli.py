@@ -77,11 +77,11 @@ def run_test(includes, conf: Config, error_log_file):
                         run_test(file_fullname_new)
 
     failed_count = 0
-    ml_dir = conf.federatedml_dir
-    PYTHONPATH = os.path.join(conf.data_base_dir, ml_dir.split("federatedml")[0])
+    fate_base = conf.fate_base
+    ml_dir = os.path.join(fate_base, "python/federatedml")
+    PYTHONPATH = os.environ.get('PYTHONPATH') + ":"  + os.path.join(fate_base, "python")
     os.environ['PYTHONPATH'] = PYTHONPATH
     if len(includes) == 0:
-        ml_dir = conf.federatedml_dir
         traverse_folder(ml_dir)
     else:
         ml_dir = includes

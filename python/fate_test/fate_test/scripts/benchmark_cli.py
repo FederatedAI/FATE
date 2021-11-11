@@ -98,8 +98,8 @@ def _run_benchmark_pairs(config: Config, suite: BenchmarkSuite, tol: float, name
                          data_namespace_mangling: bool, storage_tag, history_tag, fate_version, match_details):
     # pipeline demo goes here
     pair_n = len(suite.pairs)
-    ml_dir = config.federatedml_dir
-    PYTHONPATH = os.path.join(config.data_base_dir, ml_dir.split("federatedml")[0])
+    fate_base = config.fate_base
+    PYTHONPATH = os.environ.get('PYTHONPATH') + ":"  + os.path.join(fate_base, "python")
     os.environ['PYTHONPATH'] = PYTHONPATH
     for i, pair in enumerate(suite.pairs):
         echo.echo(f"Running [{i + 1}/{pair_n}] group: {pair.pair_name}")
