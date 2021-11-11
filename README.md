@@ -50,7 +50,7 @@ tree-based algorithms, deep learning and transfer learning.
 - [FATE-Board](https://github.com/FederatedAI/FATE-Board)
 - [FATE-Serving](https://github.com/FederatedAI/FATE-Serving)
 - [FATE-Cloud](https://github.com/FederatedAI/FATE-Cloud)
-- [eggroll](https://github.com/WeBankFinTech/eggroll)
+- [EggRoll](https://github.com/WeBankFinTech/eggroll)
 - [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE)
 - [KubeFATE](https://github.com/FederatedAI/KubeFATE)
 
