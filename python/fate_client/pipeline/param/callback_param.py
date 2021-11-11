@@ -17,7 +17,6 @@
 #  limitations under the License.
 #
 from pipeline.param.base_param import BaseParam
-from pipeline.param import consts
 
 
 class CallbackParam(BaseParam):
@@ -30,13 +29,13 @@ class CallbackParam(BaseParam):
         Indicate what kinds of callback functions is desired during the training process.
         Accepted values: {'EarlyStopping', 'ModelCheckpoint'， 'PerformanceEvaluate'}
 
-    validation_freqs: int, list, tuple, set, or None
+    validation_freqs: {None, int, list, tuple, set}
         validation frequency during training.
 
-    early_stopping_rounds: int, default: None
+    early_stopping_rounds: None or int
         Will stop training if one metric doesn’t improve in last early_stopping_round rounds
 
-    metrics: list or None, default: None
+    metrics: None, or list
         Indicate when executing evaluation during train process, which metrics will be used. If set as empty,
         default metrics for specific task type will be used. As for binary classification, default metrics are
         ['auc', 'ks']
@@ -69,6 +68,16 @@ class CallbackParam(BaseParam):
                 raise ValueError("early stopping rounds should be larger than 0 when it's integer")
             if self.validation_freqs is None:
                 raise ValueError("validation freqs must be set when early stopping is enabled")
+
+        if self.validation_freqs is not None:
+            if type(self.validation_freqs).__name__ not in ["int", "list", "tuple", "set"]:
+                raise ValueError(
+                    "validation strategy param's validate_freqs's type not supported ,"
+                    " should be int or list or tuple or set"
+                )
+            if type(self.validation_freqs).__name__ == "int" and \
+                    self.validation_freqs <= 0:
+                raise ValueError("validation strategy param's validate_freqs should greater than 0")
 
         if self.metrics is not None and not isinstance(self.metrics, list):
             raise ValueError("metrics should be a list")

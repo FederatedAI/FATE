@@ -25,7 +25,6 @@ from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.init_model_param import InitParam
-from federatedml.param.predict_param import PredictParam
 from federatedml.param.sqn_param import StochasticQuasiNewtonParam
 from federatedml.param.stepwise_param import StepwiseParam
 from federatedml.util import consts
