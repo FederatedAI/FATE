@@ -111,7 +111,7 @@ The purpose to register the meta is that fate\_flow module extract
 this file to get the information of how to start program of the component.
 
 1.  Define component meta python file under
-    [components](../python/federatedml/components), 
+    [components](../../python/federatedml/components), 
     name it as xxx.py, where xxx stands for the algorithm component you want to develop.
 
 2.  Developing the meta file. 
@@ -161,7 +161,7 @@ This step is needed only when this module is federated, which means
 there exists information interaction between different parties.
 
 Developing a file to define transfer_class object under the fold
-[transfer\_class](../python/federatedml/transfer_variable/transfer_class)
+[transfer\_class](../../python/federatedml/transfer_variable/transfer_class)
 
 In this python file, you would need to create a "transfer\_variable"
 class and inherit the BaseTransferVariables class. Then, define each
@@ -352,7 +352,7 @@ One wrapped into a component, module can be used with FATE Pipeline API.
 To define a Pipeline component, follow these guidelines:
 
 1.  all components reside in
-    [fate\_client/pipeline/component](../python/fate_client/pipeline/component)
+    [fate\_client/pipeline/component](../../python/fate_client/pipeline/component)
     directory
 2.  components should inherit common base `Component`
 3.  as a good practice, components should have the same names as their
