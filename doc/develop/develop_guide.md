@@ -116,15 +116,15 @@ this file to get the information on  how to start program of the component.
 
 2.  Developing the meta file. 
     
-      - inherit from component meta, and name meta with component's name, 
+      - inherit from ComponentMeta, and name meta with component's name, 
       like xxx_cpn_meta = ComponentMeta("XXX"). XXX is the module to be used in dsl file.  
       ``` sourceCode python
           from .components import ComponentMeta
           hetero_lr_cpn_meta = ComponentMeta("HeteroLR")
       ``` 
-      - use the decorator xxx_cpn_meta.bind_runner.on_$role to bind the running object to each role.  
+      - use the decorator `xxx_cpn_meta.bind_runner.on_$role` to bind the running object to each role.  
         $role mainly includes guest\host\arbiter. If component uses the same running module for several roles, syntax like 
-          xxx_cpn_meta.bind_runner.on_$role1.on_$role2.on_$role3 is also supported.   
+          `xxx_cpn_meta.bind_runner.on_$role1.on_$role2.on_$role3` is also supported.   
         This function imports and returns the running object of corresponding role.  
    
         Take hetero-lr as an example, users can find it in
@@ -143,7 +143,7 @@ this file to get the information on  how to start program of the component.
                 
                 return HeteroLRHost
         ``` 
-        - use the decorator xxx_cpn_meta.bind_param to bind the parameter object to the developing component,
+        - use the decorator `xxx_cpn_meta.bind_param` to bind the parameter object to the developing component,
           which defines in Step 1.  
           The function imports and returns the parameter object.  
           
