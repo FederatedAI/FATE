@@ -78,8 +78,8 @@ def run_test(includes, conf: Config, error_log_file, unit_test_path):
                         run_test(file_fullname_new)
 
     failed_count = 0
-    data_base_dir = conf.data_base_dir
-    PYTHONPATH = os.path.join(data_base_dir, "python")
+    ml_dir = conf.federatedml_dir
+    PYTHONPATH = os.path.join(conf.data_base_dir, ml_dir.split("federatedml")[0])
     os.environ['PYTHONPATH'] = PYTHONPATH
     if len(includes) == 0:
         ml_dir = conf.federatedml_dir
