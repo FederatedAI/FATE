@@ -6,7 +6,7 @@ penalty: "L2"
 max_iter: 30
 alpha: 10
 learning_rate: 0.20
-optimizer: "sgd"
+optimizer: "rmsprop"
 batch_size: 5000
 early_stop: "diff"
 init_method: "zeros"
