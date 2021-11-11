@@ -21,12 +21,13 @@ tree-based algorithms, deep learning and transfer learning.
 ### Deploy
 
 #### Standalone
-- [Deployment by Docker Compose](https://github.com/FederatedAI/KubeFATE/tree/master/docker-deploy)
 - [Native Standalone-deploy](./deploy/standalone-deploy/)
+- [Deployment by Docker Compose](https://github.com/FederatedAI/KubeFATE/tree/master/docker-deploy)
 
 #### Cluster
-- [Deployment on Kubernetes](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy)
 - [Native Cluster-deploy](./deploy/cluster-deploy)
+- [Deployment by Ansible](https://github.com/FederatedAI/AnsibleFATE)
+- [Deployment on Kubernetes](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy)
 
 #### Quick Start
 - [Run unittest](./python/federatedml/test/)
@@ -49,6 +50,9 @@ tree-based algorithms, deep learning and transfer learning.
 - [FATE-Board](https://github.com/FederatedAI/FATE-Board)
 - [FATE-Serving](https://github.com/FederatedAI/FATE-Serving)
 - [FATE-Cloud](https://github.com/FederatedAI/FATE-Cloud)
+- [eggroll](https://github.com/WeBankFinTech/eggroll)
+- [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE)
+- [KubeFATE](https://github.com/FederatedAI/KubeFATE)
 
 ### Contribute to FATE
 
