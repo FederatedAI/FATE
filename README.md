@@ -57,7 +57,6 @@ tree-based algorithms, deep learning and transfer learning.
 ### Contribute to FATE
 
 - [develop guide](doc/develop/develop_guide.md)
-- [develop guide for FATE-Client](doc/develop/fate_client_develop_guide.md)
 
 ### API References
 
