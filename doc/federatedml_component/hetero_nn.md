@@ -153,10 +153,10 @@ Backward Propagation Process also consists of three parts.
   - Support low floating-point optimization since FATE-v1.6.0
   - Support drop out strategy of interactive layer since FATE-v1.6.0
 
-\[1\] Zhang Q, Wang C, Wu H, et al. GELU-Net: A Globally Encrypted,
+[1] Zhang Q, Wang C, Wu H, et al. GELU-Net: A Globally Encrypted,
 Locally Unencrypted Deep Neural Network for Privacy-Preserved
 Learning\[C\]//IJCAI. 2018: 3933-3939.
 
-\[2\] Zhang Y, Zhu H. Additively Homomorphical Encryption based Deep
+[2] Zhang Y, Zhu H. Additively Homomorphical Encryption based Deep
 Neural Network for Asymmetrically Collaborative Machine Learning\[J\].
 arXiv preprint arXiv:2007.06849, 2020.
