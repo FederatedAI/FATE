@@ -19,7 +19,7 @@ import argparse
 import pandas as pd
 import os
 from sklearn.metrics import roc_auc_score
-from sklearn.ensemble.gradient_boosting import GradientBoostingClassifier
+from sklearn.ensemble import GradientBoostingClassifier
 from pipeline.utils.tools import JobConfig
 
 

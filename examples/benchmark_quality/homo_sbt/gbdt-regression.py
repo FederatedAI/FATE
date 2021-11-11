@@ -19,7 +19,7 @@ import os
 import pandas as pd
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
-from sklearn.ensemble.gradient_boosting import GradientBoostingRegressor
+from sklearn.ensemble import GradientBoostingRegressor
 from pipeline.utils.tools import JobConfig
 
 
