@@ -1,6 +1,6 @@
 # Federated Machine Learning
 
-[[中文](index.zh.md)]
+[[中文](README.zh.md)]
 
 FederatedML includes implementation of many common machine learning
 algorithms on federated learning. All modules are developed in a
