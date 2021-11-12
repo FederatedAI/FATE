@@ -19,6 +19,7 @@
 set -e
 source_dir=$(cd `dirname $0`; cd ../;cd ../;pwd)
 support_modules=(bin conf examples build deploy fate fateflow fateboard eggroll)
+environment_modules=(python jdk pypi)
 packaging_modules=()
 echo ${source_dir}
 if [[ -n ${1} ]]; then
@@ -226,6 +227,32 @@ function packaging_proxy(){
     mkdir -p ${package_dir}/proxy/nginx
     cp -r conf lua ${package_dir}/proxy/nginx
     echo "[INFO] package proxy done"
+}
+
+function packaging_python36(){
+    echo "[INFO] package python36 start"
+    cd ${source_dir}
+    mkdir -p ${package_dir}/python36
+    cd ${package_dir}/python36
+    wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/Miniconda3-4.5.4-Linux-x86_64.sh
+    echo "[INFO] package python36 done"
+}
+
+function packaging_jdk(){
+    echo "[INFO] package jdk start"
+    cd ${source_dir}
+    mkdir -p ${package_dir}/jdk
+    cd ${package_dir}/jdk
+    wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192.tar.gz
+    echo "[INFO] package jdk done"
+}
+
+function packaging_pypi(){
+    echo "[INFO] package pypi start"
+    cd ${source_dir}
+    mkdir -p ${package_dir}/pypi
+    pip download -r ./python/requirements.txt -d ${package_dir}/pypi/
+    echo "[INFO] package pypi done"
 }
 
 compress(){

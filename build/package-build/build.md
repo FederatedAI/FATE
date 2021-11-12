@@ -1,5 +1,5 @@
 
-# FATE Build Guide
+# FATE Packages Build Guide
 
 [TOC]
 
