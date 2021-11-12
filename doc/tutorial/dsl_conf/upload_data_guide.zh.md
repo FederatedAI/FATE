@@ -77,13 +77,13 @@ Line](../../api/fate_client/flow_client.md)
 上传数据命令如下：
 
 ``` sourceCode bash
-flow data upload -c dsl_test/upload_data.json
+flow data upload -c examples/dsl/v2/upload/upload_conf.json
 ```
 
 同时，用户也可使用旧版的python脚本方式上传数据：
 
 ``` sourceCode bash
-python ${your_install_path}/fate_flow/fate_flow_client.py -f upload -c dsl_test/upload_data.json
+python ${your_install_path}/fate_flow/fate_flow_client.py -f upload -c examples/dsl/v2/upload/upload_conf.json
 ```
 
 <div class="note">
@@ -102,17 +102,27 @@ Note
 
 ``` sourceCode json
 {
-  "data": {
-      "board_url": "http://127.0.0.1:8080/index.html#/dashboard?job_id=202010131102075363217&role=local&party_id=0",
-      "job_dsl_path": "/data/projects/fate/jobs/202010131102075363217/job_dsl.json",
-      "job_runtime_conf_path": "/data/projects/fate/jobs/202010131102075363217/job_runtime_conf.json",
-      "logs_directory": "/data/projects/fate/logs/202010131102075363217",
-      "namespace": "experiment",
-      "table_name": "breast_hetero_guest"
-  },
-  "jobId": "202010131102075363217",
-  "retcode": 0,
-  "retmsg": "success"
+    "data": {
+        "board_url": "http://127.0.0.1:8080/index.html#/dashboard?job_id=202111111542373868350&role=local&party_id=0",
+        "code": 0,
+        "dsl_path": "/data/projects/fate/fateflow/jobs/202111111542373868350/job_dsl.json",
+        "job_id": "202111111542373868350",
+        "logs_directory": "/data/projects/fate/fateflow/logs/202111111542373868350",
+        "message": "success",
+        "model_info": {
+            "model_id": "local-0#model",
+            "model_version": "202111111542373868350"
+        },
+        "namespace": "experiment",
+        "pipeline_dsl_path": "/data/projects/fate/fateflow/jobs/202111111542373868350/pipeline_dsl.json",
+        "runtime_conf_on_party_path": "/data/projects/fate/fateflow/jobs/202111111542373868350/local/0/job_runtime_on_party_conf.json",
+        "runtime_conf_path": "/data/projects/fate/fateflow/jobs/202111111542373868350/job_runtime_conf.json",
+        "table_name": "breast_hetero_guest",
+        "train_runtime_conf_path": "/data/projects/fate/fateflow/jobs/202111111542373868350/train_runtime_conf.json"
+    },
+    "jobId": "202111111542373868350",
+    "retcode": 0,
+    "retmsg": "success"
 }
 ```
 
