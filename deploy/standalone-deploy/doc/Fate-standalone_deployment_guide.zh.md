@@ -133,7 +133,7 @@
 - 安装fate client
 
    ```bash
-   cd standalone_fate_install_${version}_release
+   cd standalone_fate_install_${version}
    sh init.sh init
    ```
 
