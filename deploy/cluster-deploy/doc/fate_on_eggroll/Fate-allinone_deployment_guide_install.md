@@ -21,7 +21,7 @@
 The architecture diagram:
 
 <div style="text-align:center", align=center>
-<img src="../images/arch_en.png" />
+<img src="../../images/arch_en.png" />
 </div>
 
 # 3\. Component Description
@@ -679,20 +679,3 @@ netstat -tlnp | grep 8080
 | fate\_flow \& task log| /data/projects/fate/python/logs
 | fateboard| /data/projects/fate/fateboard/logs
 | mysql| /data/logs/mysql/
-
-# 8\. Appendix
-
-## 8.1 Eggroll Parameter Tuning
-
-Assuming that the number of CPU cores is c, the number of nodemanagers is n, and the number of tasks to be executed simultaneously is p, then:
-
-egg\_num=eggroll.session.processors.per.node = c \* 0.8 / p
-
-partitions (roll pair partition number) = egg\_num \* n
-
-The parameters used by the job can be specified with the job parameters in job conf:
-
-1. egg\_num: configure task\_cores or configure processors\_per\_node parameter in eggroll\_run
-2. partitions: configure computing\_partitions
-
-For more information about configuring job submission, refer to [dsl\_conf\_v2\_setting\_guide](../../doc/dsl_conf_v2_setting_guide.rst)

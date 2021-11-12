@@ -22,7 +22,7 @@
 架构图：
 
 <div style="text-align:center", align=center>
-<img src="../images/proxy_zh.png" />
+<img src="../../images/proxy_zh.png" />
 </div>
 
 # 3.组件说明
