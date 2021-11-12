@@ -19,7 +19,7 @@
 set -e
 source_dir=$(cd `dirname $0`; cd ../;cd ../;pwd)
 support_modules=(bin conf examples build deploy fate fateflow fateboard eggroll)
-environment_modules=(python jdk pypi)
+environment_modules=(python36 jdk pypi)
 packaging_modules=()
 echo ${source_dir}
 if [[ -n ${1} ]]; then
