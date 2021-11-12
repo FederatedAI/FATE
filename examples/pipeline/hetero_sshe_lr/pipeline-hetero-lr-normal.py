@@ -113,19 +113,16 @@ def main(config="../../config.yaml", namespace=""):
     prettify(pipeline.get_component("hetero_sshe_lr_0").get_summary())
     prettify(pipeline.get_component("evaluation_0").get_summary())
 
-    # pipeline.deploy_component([data_transform_0, intersection_0, hetero_sshe_lr_0])
-    #
-    # predict_pipeline = PipeLine()
+    pipeline.deploy_component([data_transform_0, intersection_0, hetero_sshe_lr_0])
+    predict_pipeline = PipeLine()
     # # add data reader onto predict pipeline
-    # predict_pipeline.add_component(reader_0)
+    predict_pipeline.add_component(reader_0)
     # # add selected components from train pipeline onto predict pipeline
     # # specify data source
-    # predict_pipeline.add_component(pipeline,
-    #                                data=Data(predict_input={pipeline.data_transform_0.input.data: reader_0.output.data}))
+    predict_pipeline.add_component(pipeline,
+                                   data=Data(predict_input={pipeline.data_transform_0.input.data: reader_0.output.data}))
     # # run predict model
-    # predict_pipeline.predict(job_parameters)
-
-    return pipeline
+    predict_pipeline.predict()
 
 
 if __name__ == "__main__":

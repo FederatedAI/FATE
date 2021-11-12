@@ -105,6 +105,11 @@
         "hetero_lr_warm_start": {
             "conf": "hetero_lr_warm_start_conf.json",
             "dsl": "hetero_lr_warm_start_dsl.json"
+        },
+        "hetero_lr_normal_predict": {
+            "deps": "hetero_lr_normal",
+            "conf": "hetero_lr_normal_predict_conf.json",
+            "dsl": "hetero_lr_normal_predict_dsl.json"
         }
     }
 }
