@@ -26,7 +26,6 @@ FATE官方网站：<https://fate.fedai.org/>
 - [原生集群安装](./deploy/cluster-deploy)
 
 ### 快速开始
-- [单元测试](./python/federatedml/test/)
 - [使用FATE-PipeLine启动任务](./doc/tutorial/pipeline/pipeline_guide.md)
 - [使用DSL json conf启动任务](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.md)
 - [在Jupyter Notebook使用FATE-Pipeline](./doc/tutorial/pipeline/pipeline_tutorial_0.ipynb)
@@ -62,7 +61,7 @@ FATE官方网站：<https://fate.fedai.org/>
 - [Flow SDK API](doc/api/fate_client/flow_sdk.md)
 - [Flow Client](doc/api/fate_client/flow_client.md)
 - [FATE Pipeline](doc/api/fate_client/pipeline.md)
-- [FATE Test](./doc/api/fate_test.md)
+- [FATE Test](./doc/tutorial/fate_test_tutorial.md)
 
 ### 在线课程
 - [Bilibili: @FATEFedAI](https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)

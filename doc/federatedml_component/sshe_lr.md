@@ -49,7 +49,7 @@ following.
 > 
 > 2.  Mini-batch mechanism
 > 
-> 3.  Six optimization method:
+> 3.  Five optimization method:
 >     
 >     >   - sgd  
 >     >     gradient descent with arbitrary batch size
@@ -65,11 +65,8 @@ following.
 >     > 
 >     >   - nesterov\_momentum\_sgd  
 >     >     Nesterov Momentum
->     > 
->     >   - sqn  
->     >     stochastic quansi-newton. The algorithm details can refer to
->     >     [this paper](https://arxiv.org/abs/1912.00513v2)
-> 
+>
+>
 > 4.  Three converge criteria:
 >     
 >     >   - diff  
