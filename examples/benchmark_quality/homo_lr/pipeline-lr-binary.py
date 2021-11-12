@@ -23,7 +23,6 @@ from pipeline.component import HomoLR
 from pipeline.component import Reader
 from pipeline.interface import Data, Model
 from pipeline.utils.tools import load_job_config, JobConfig
-from pipeline.runtime.entity import JobParameters
 
 from fate_test.utils import extract_data, parse_summary_result
 from federatedml.evaluation.metrics import classification_metric
@@ -36,7 +35,6 @@ def main(config="../../config.yaml", param="./breast_lr_config.yaml", namespace=
     guest = parties.guest[0]
     host = parties.host[0]
     arbiter = parties.arbiter[0]
-    work_mode = config.work_mode
 
     if isinstance(param, str):
         param = JobConfig.load_from_file(param)
@@ -133,8 +131,7 @@ def main(config="../../config.yaml", param="./breast_lr_config.yaml", namespace=
     pipeline.compile()
 
     # fit model
-    job_parameters = JobParameters(work_mode=work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
     # query component summary
     data_summary = {"train": {"guest": guest_train_data["name"], "host": host_train_data["name"]},
                     "test": {"guest": guest_train_data["name"], "host": host_train_data["name"]}

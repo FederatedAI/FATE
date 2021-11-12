@@ -7,7 +7,7 @@
 要开发模块，需要执行以下 5 个步骤。
 
 1.  定义将在此模块中使用的 python 参数对象。
-2.  定义模块的 Setting conf json 配置文件。
+2.  定义模块的 meta 文件。
 3.  如果模块需要联邦，则需定义传输变量配置文件。
 4.  您的算法模块需要继承model\_base类，并完成几个指定的函数。
 5.  定义模型保存所需的protobuf文件。
@@ -93,68 +93,53 @@ def check(self):
             "logistic_param's eps {} not supported, should be float type".format(self.eps))
 ```
 
-### 第二步：定义新模块的配置文件
+### 第二步：定义新模块的meta文件
 
-定义配置文件是为了使 <span class="title-ref">fate\_flow</span>
+定义meta文件是为了使 FATE-Flow
 模块通过该文件以获取有关如何启动模块程序的信息。
 
 1.  在
-    <span class="title-ref">python/federatedml/conf/setting\_conf/</span>
-    中定义名为 xxx.json 的配置文件，其中 xxx 是您要开发的模块。请注意，xxx.json 的名称 “xxx”
-    要求非常严格，因为当 fate\_flow dsl 解析器在作业 dsl 中提取模块 “xxx”
-    时，它只是将模块名称 “xxx” 与 “.json” 连接起来，并在
-    <span class="title-ref">python/federatedml/conf/setting\_conf/xxx.json</span>
-    中检索配置文件。
-2.  设置 conf.json 的字段规范。
-      - module\_path  
-        您开发的模块的路径前缀。
+    [components](../../python/federatedml/components)
+    中定义名为 xxx.py 的meta文件，其中 xxx 是您要开发的模块。
     
-      - param\_class  
-        在步骤 1 中定义的 param\_class 的路径，它是参数 python 文件和参数对象名称的路径的连结。
-    
-      - role
+2.  配置 meta 文件。
+       - 继承 ComponentMeta, 用模块名为其命名, 
+      例如 xxx_cpn_meta = ComponentMeta("XXX"). XXX 即在 dsl 中调用的模块名。
+      ``` sourceCode python
+          from .components import ComponentMeta
+          hetero_lr_cpn_meta = ComponentMeta("HeteroLR")
+      ``` 
+      - 使用装饰器 `xxx_cpn_meta.bind_runner.on_$role`将模块object绑定至每个角色。
+        $role 包括 guest\host\arbiter. 如果多个角色使用同一模块object，可以使用
+          `xxx_cpn_meta.bind_runner.on_$role1.on_$role2.on_$role3` 格式注明。 
+        装饰器方程将引入并返回对应角色的模块object。
+   
+        以hetero-lr 为例：
+        [python/federatedml/components/hetero_lr.py](../../python/federatedml/conf/setting_conf/HeteroLR.json)
         
-            "role": {
-                "guest": 启动Guest端程序的路径后缀
-                "host":  启动Host端程序的路径后缀
-                "arbiter": 启动Arbiter端程序的路径后缀
-            }
-        
-        另外，如果该模块不需要联邦，即各方都可以启动同一个程序文件，那么 <span class="title-ref">"guest
-        | host | arbiter"</span> 可以作为定义角色密钥的另一种方法。
-
-也可以用 hetero-lr 来说明，您可以在
-`federatedml/conf/setting\_conf/HeteroLR.json` 中找到它。
-<!-- {% include-example "../../python/federatedml/conf/setting_conf/HeteroLR.json" %} -->
-
-```json
-{
-    "module_path":  "federatedml/logistic_regression/hetero_logistic_regression",
-    "param_class" : "federatedml/param/logistic_regression_param.py/LogisticParam",
-    "role":
-    {
-        "guest":
-        {
-            "program": "hetero_lr_guest.py/HeteroLRGuest"
-        },
-        "host":
-        {
-            "program": "hetero_lr_host.py/HeteroLRHost"
-        },
-        "arbiter":
-        {
-            "program": "hetero_lr_arbiter.py/HeteroLRArbiter"
-        }
-    }
-}
-```
-
-我们来看一下在 HeteroLR.json 里上面这部分内容：HeteroLR 是一个联邦模块，它的Guest程序在
-<span class="title-ref">python/federatedml/logistic\_regression/hetero\_logistic\_regression/hetero\_lr\_guest.py</span>
-中定义，并且 HeteroLRGuest 是一个Guest类对象，对于Host和Arbiter类对象也有类似的定义。fate\_flow 会结合
-module\_path 和角色程序来运行该模块。"param\_class" 指在
-<span class="title-ref">python/federatedml/param/logistic\_regression\_param.py</span>
-中定义了 HeteroLR 的参数类对象，并且类名称为 LogisticParam。
+        ``` sourceCode python
+            @hetero_lr_cpn_meta.bind_runner.on_guest
+            def hetero_lr_runner_guest():
+                from federatedml.linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_guest import HeteroLRGuest
+                
+                return HeteroLRGuest
+                
+            @hetero_lr_cpn_meta.bind_runner.on_host
+            def hetero_lr_runner_host():
+                from federatedml.linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_host import HeteroLRHost
+                
+                return HeteroLRHost
+        ``` 
+        - 使用装饰器 `xxx_cpn_meta.bind_param` 将参数object绑定至step1中定义的各个模块object，
+        装饰器方程将引入并返回对应参数object。
+          
+          ``` sourceCode python
+              @hetero_lr_cpn_meta.bind_param
+              def hetero_lr_param():
+                  from federatedml.param.logistic_regression_param import HeteroLogisticParam
+                  
+                  return HeteroLogisticParam
+          ``` 
 
 ### 第三步：定义此模块的传递变量py文件并生成传递变量对象（可选）
 
@@ -176,19 +161,36 @@ Note
 
 在该定义文件中，您需要创建需要的 transfer\_variable
 类，并继承BaseTransferVariables类，然后定义相应的变量，并为其赋予需要的传输权限。以
-“HeteroBoostingTransferVariable”为例，可以参考一下代码：
+“HeteroLRTransferVariable”为例，可以参考以下代码：
 
-``` sourceCode json
+``` sourceCode python
 from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
 
 
 # noinspection PyAttributeOutsideInit
-class HeteroBoostingTransferVariable(BaseTransferVariables):
+class HeteroLRTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
-        self.booster_dim = self._create_variable(name='booster_dim', src=['guest'], dst=['host'])
-        self.stop_flag = self._create_variable(name='stop_flag', src=['guest'], dst=['host'])
-        self.predict_start_round = self._create_variable(name='predict_start_round', src=['guest'], dst=['host'])
+        self.batch_data_index = self._create_variable(name='batch_data_index', src=['guest'], dst=['host'])
+        self.batch_info = self._create_variable(name='batch_info', src=['guest'], dst=['host', 'arbiter'])
+        self.converge_flag = self._create_variable(name='converge_flag', src=['arbiter'], dst=['host', 'guest'])
+        self.fore_gradient = self._create_variable(name='fore_gradient', src=['guest'], dst=['host'])
+        self.forward_hess = self._create_variable(name='forward_hess', src=['guest'], dst=['host'])
+        self.guest_gradient = self._create_variable(name='guest_gradient', src=['guest'], dst=['arbiter'])
+        self.guest_hess_vector = self._create_variable(name='guest_hess_vector', src=['guest'], dst=['arbiter'])
+        self.guest_optim_gradient = self._create_variable(name='guest_optim_gradient', src=['arbiter'], dst=['guest'])
+        self.host_forward_dict = self._create_variable(name='host_forward_dict', src=['host'], dst=['guest'])
+        self.host_gradient = self._create_variable(name='host_gradient', src=['host'], dst=['arbiter'])
+        self.host_hess_vector = self._create_variable(name='host_hess_vector', src=['host'], dst=['arbiter'])
+        self.host_loss_regular = self._create_variable(name='host_loss_regular', src=['host'], dst=['guest'])
+        self.host_optim_gradient = self._create_variable(name='host_optim_gradient', src=['arbiter'], dst=['host'])
+        self.host_prob = self._create_variable(name='host_prob', src=['host'], dst=['guest'])
+        self.host_sqn_forwards = self._create_variable(name='host_sqn_forwards', src=['host'], dst=['guest'])
+        self.loss = self._create_variable(name='loss', src=['guest'], dst=['arbiter'])
+        self.loss_intermediate = self._create_variable(name='loss_intermediate', src=['host'], dst=['guest'])
+        self.paillier_pubkey = self._create_variable(name='paillier_pubkey', src=['arbiter'], dst=['host', 'guest'])
+        self.sqn_sample_index = self._create_variable(name='sqn_sample_index', src=['guest'], dst=['host'])
+        self.use_async = self._create_variable(name='use_async', src=['guest'], dst=['host'])
 ```
 
 其中，需要设定的属性为：

@@ -5,9 +5,9 @@ label_name: "y"
 penalty: "L2"
 max_iter: 20
 alpha: 0.00001
-learning_rate: 0.3
-optimizer: "sgd"
-batch_size: 16
+learning_rate: 0.15
+optimizer: "rmsprop"
+batch_size: 20
 early_stop: "diff"
-init_method: "random_uniform"
-reveal_strategy: "all_reveal_in_guest"
+init_method: "zeros"
+reveal_strategy: "respectively"

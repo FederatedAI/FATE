@@ -33,6 +33,7 @@ nav:
   
   - API:
     - api/index.md
+    - Session: api/session.md
     - Computing: api/computing.md
     - Federation: api/federation.md
   
