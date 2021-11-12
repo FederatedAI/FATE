@@ -50,3 +50,14 @@ examples/cache/
 
 # user defined config
 /conf/local.*.yaml
+
+# logs
+**/logs/*
+
+# editable install
+PKG-INFO
+entry_points.txt
+dependency_links.txt
+requires.txt
+SOURCES.txt
+top_level.txt
