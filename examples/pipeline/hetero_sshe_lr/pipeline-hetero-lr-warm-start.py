@@ -41,7 +41,6 @@ def main(config="../../config.yaml", namespace=""):
     parties = config.parties
     guest = parties.guest[0]
     hosts = parties.host[0]
-    arbiter = parties.arbiter[0]
     guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
     host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
     # guest_train_data = {"name": "default_credit_hetero_guest", "namespace": f"experiment{namespace}"}
@@ -52,7 +51,7 @@ def main(config="../../config.yaml", namespace=""):
     # set job initiator
     pipeline.set_initiator(role='guest', party_id=guest)
     # set participants information
-    pipeline.set_roles(guest=guest, host=hosts, arbiter=arbiter)
+    pipeline.set_roles(guest=guest, host=hosts)
 
     # define Reader components to read in data
     reader_0 = Reader(name="reader_0")
@@ -81,7 +80,7 @@ def main(config="../../config.yaml", namespace=""):
 
     lr_param = {
         "penalty": "L2",
-        "optimizer": "sgd",
+        "optimizer": "rmsprop",
         "tol": 0.0001,
         "alpha": 0.01,
         "early_stop": "diff",
@@ -94,6 +93,8 @@ def main(config="../../config.yaml", namespace=""):
         "encrypt_param": {
             "key_length": 1024
         },
+        "reveal_strategy": "respectively",
+        "reveal_every_iter": True,
         "callback_param": {
             "callbacks": ["ModelCheckpoint"],
             "validation_freqs": 1,

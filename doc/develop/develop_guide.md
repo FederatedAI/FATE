@@ -2,44 +2,44 @@
 
 [[中文](develop_guide.zh.md)]
 
-## Develop a runnable algorithm module of FATE
+## Develop a runnable algorithm component of FATE
 
-In this document, it describes how to develop an algorithm module, which
+In this document, it describes how to develop an algorithm component, which
 can be callable under the architecture of FATE.
 
-To develop a module, the following 5 steps are needed.
+To develop a component, the following 5 steps are needed.
 
 1.  define the python parameter object which will be used in this
-    module.
-2.  define the setting conf json of the module.
-3.  define the transfer\_variable json if the module needs federation.
-4.  define your module which should inherit model\_base class.
+    component.
+2.  register meta of the new component.
+3.  define the transfer\_variable object if the component needs federation.
+4.  define your component which should inherit model\_base class.
 5.  Define the protobuf file required for model saving.
-6.  (optional) define Pipeline component for your module.
+6.  (optional) define Pipeline component for your component.
 
 In the following sections we will describe the 5 steps in detail, with
 toy\_example.
 
-### Step 1. Define the parameter object this module will use
+### Step 1. Define the parameter object this component will use
 
 Parameter object is the only way to pass user-define runtime parameters
-to the developing module, so every module has it's own parameter object.
+to the developing component, so every component has it's own parameter object.
 In order to define a usable parameter object, three steps will be
 needed.
 
 1.  Open a new python file, rename it as xxx\_param.py where xxx stands
-    for your module'name, putting it in folder python/federatedm/param/.
+    for your component'name, putting it in folder python/federatedm/param/.
     The class object defined in xxx\_param.py should inherit the
     BaseParam class that define in
     python/federatedml/param/base\_param.py
 2.  \_\_init\_\_ of your parameter class should specify all parameters
-    that the module use.
+    that the component use.
 3.  Override the check interface of BaseParam, without which will cause
     not implemented error. Check method is use to validate the parameter
     variables.
 
 Take hetero lr's parameter object as example, the python file is
-[python/federatedml/param/logistic\_regression\_param.py](../python/federatedml/param/logistic_regression_param.py)
+[here](../../python/federatedml/param/logistic_regression_param.py)
 
 firstly, it inherits BaseParam:
 
@@ -105,115 +105,96 @@ def check(self):
             "logistic_param's eps {} not supported, should be float type".format(self.eps))
 ```
 
-### Step 2. Define the setting conf of the new module
+### Step 2. Register meta of the new component 
 
-The purpose to define a setting conf is that fate\_flow module extract
-this file to get the information of how to start program of the module.
+The purpose to register the meta is that FATE Flow uses 
+this file to get the information on  how to start program of the component.
 
-1.  Define the setting conf in
-    <span class="title-ref">python/federatedml/conf/setting\_conf/</span>,
-    name it as xxx.json, where xxx is the module you want to develop.
-    Please note that xxx.json' name "xxx" is very strict, because when
-    fate\_flow dsl parser extract the module "xxx" in job dsl, it just
-    concatenates module's name "xxx" with ".json" and retrieve the
-    setting conf in
-    <span class="title-ref">python/federatedml/conf/setting\_conf/xxx.json</span>.
+1.  Define component meta python file under
+    [components](../../python/federatedml/components), 
+    name it as xxx.py, where xxx stands for the algorithm component you want to develop.
 
-2.  Field Specification of setting conf json.
+2.  Developing the meta file. 
     
-      - module\_path  
-        the path prefix of the developing module's program.
-    
-      - param\_class  
-        the path to find the param\_class define in Step 1, it's a
-        concatenation of path of the parameter python file and parameter
-        object name.
-    
-      - role
-    
-      - guest  
-        the path suffix to start the guest program
-    
-      - host  
-        the path suffix to start the host program
-    
-      - arbiter  
-        the path suffix to start the arbiter program
-    
-    > What's more, if this module does not need federation, which means
-    > all parties start a same program file, "guestarbiter" is another
-    > way to define the role keys.
+      - inherit from ComponentMeta, and name meta with component's name, 
+      like xxx_cpn_meta = ComponentMeta("XXX"). XXX is the module to be used in dsl file.  
+      ``` sourceCode python
+          from .components import ComponentMeta
+          hetero_lr_cpn_meta = ComponentMeta("HeteroLR")
+      ``` 
+      - use the decorator `xxx_cpn_meta.bind_runner.on_$role` to bind the running object to each role.  
+        $role mainly includes guest\host\arbiter. If component uses the same running module for several roles, syntax like 
+          `xxx_cpn_meta.bind_runner.on_$role1.on_$role2.on_$role3` is also supported.   
+        This function imports and returns the running object of corresponding role.  
+   
+        Take hetero-lr as an example, users can find it in
+        [python/federatedml/components/hetero_lr.py](../../python/federatedml/conf/setting_conf/HeteroLR.json)
+        
+        ``` sourceCode python
+            @hetero_lr_cpn_meta.bind_runner.on_guest
+            def hetero_lr_runner_guest():
+                from federatedml.linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_guest import HeteroLRGuest
+                
+                return HeteroLRGuest
+                
+            @hetero_lr_cpn_meta.bind_runner.on_host
+            def hetero_lr_runner_host():
+                from federatedml.linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_host import HeteroLRHost
+                
+                return HeteroLRHost
+        ``` 
+        - use the decorator `xxx_cpn_meta.bind_param` to bind the parameter object to the developing component,
+          which defines in Step 1.  
+          The function imports and returns the parameter object.  
+          
+          ``` sourceCode python
+              @hetero_lr_cpn_meta.bind_param
+              def hetero_lr_param():
+                  from federatedml.param.logistic_regression_param import HeteroLogisticParam
+                  
+                  return HeteroLogisticParam
+          ``` 
+        
+### Step 3. Define the transfer variable object of this module. (Optional)
 
-Take hetero-lr as an example, users can find it in
-[python/federatedml/conf/setting\_conf/HeteroLR.json](../python/federatedml/conf/setting_conf/HeteroLR.json)
-
-``` sourceCode json
-{
-    "module_path":  "federatedml/logistic_regression/hetero_logistic_regression",
-    "param_class" : "federatedml/param/logistic_regression_param.py/LogisticParam",
-    "role":
-    {
-        "guest":
-        {
-            "program": "hetero_lr_guest.py/HeteroLRGuest"
-        },
-        "host":
-        {
-            "program": "hetero_lr_host.py/HeteroLRHost"
-        },
-        "arbiter":
-        {
-            "program": "hetero_lr_arbiter.py/HeteroLRArbiter"
-        }
-    }
-}
-```
-
-Have a look at the above content in HeteroLR.json, HeteroLR is a
-federation module, its' guest program is define in
-python/federatedml/logistic\_regression/hetero\_logistic\_regression/hetero\_lr\_guest.py
-and HeteroLRGuest is the guest class object. The same rules holds in
-host and arbiter class too. Fate\_flow combine's module\_path and role's
-program to run this module. "param\_class" indicates that the parameter
-class object of HeteroLR is defined in
-"python/federatedml/param/logistic\_regression\_param.py", and the class
-name is
-LogisticParam.
-
-### Step 3. Define the transfer variable json of this module and generate transfer variable object. (Optional)
-
-This step is needed only when this module is federated, which means
+This step is needed only when module is federated, which means
 there exists information interaction between different parties.
 
-<div class="note">
-
-<div class="admonition-title">
-
-Note
-
-</div>
-
-this json file should be put under the folder
-[transfer\_class](../python/federatedml/transfer_variable/transfer_class)
-
-</div>
+Developing a file to define transfer_class object under the fold
+[transfer\_class](../../python/federatedml/transfer_variable/transfer_class)
 
 In this python file, you would need to create a "transfer\_variable"
-class and inherit the BaseTransferVariables class. Then, define each
-transfer variable as its attributes. Here is an example to make it more
-understandable:
+class which inherits `BaseTransferVariables`. Then, define each
+transfer variable as its attributes. Here is an example:
 
-``` sourceCode json
+``` sourceCode python
 from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
 
 
 # noinspection PyAttributeOutsideInit
-class HeteroBoostingTransferVariable(BaseTransferVariables):
+class HeteroLRTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
-        self.booster_dim = self._create_variable(name='booster_dim', src=['guest'], dst=['host'])
-        self.stop_flag = self._create_variable(name='stop_flag', src=['guest'], dst=['host'])
-        self.predict_start_round = self._create_variable(name='predict_start_round', src=['guest'], dst=['host'])
+        self.batch_data_index = self._create_variable(name='batch_data_index', src=['guest'], dst=['host'])
+        self.batch_info = self._create_variable(name='batch_info', src=['guest'], dst=['host', 'arbiter'])
+        self.converge_flag = self._create_variable(name='converge_flag', src=['arbiter'], dst=['host', 'guest'])
+        self.fore_gradient = self._create_variable(name='fore_gradient', src=['guest'], dst=['host'])
+        self.forward_hess = self._create_variable(name='forward_hess', src=['guest'], dst=['host'])
+        self.guest_gradient = self._create_variable(name='guest_gradient', src=['guest'], dst=['arbiter'])
+        self.guest_hess_vector = self._create_variable(name='guest_hess_vector', src=['guest'], dst=['arbiter'])
+        self.guest_optim_gradient = self._create_variable(name='guest_optim_gradient', src=['arbiter'], dst=['guest'])
+        self.host_forward_dict = self._create_variable(name='host_forward_dict', src=['host'], dst=['guest'])
+        self.host_gradient = self._create_variable(name='host_gradient', src=['host'], dst=['arbiter'])
+        self.host_hess_vector = self._create_variable(name='host_hess_vector', src=['host'], dst=['arbiter'])
+        self.host_loss_regular = self._create_variable(name='host_loss_regular', src=['host'], dst=['guest'])
+        self.host_optim_gradient = self._create_variable(name='host_optim_gradient', src=['arbiter'], dst=['host'])
+        self.host_prob = self._create_variable(name='host_prob', src=['host'], dst=['guest'])
+        self.host_sqn_forwards = self._create_variable(name='host_sqn_forwards', src=['host'], dst=['guest'])
+        self.loss = self._create_variable(name='loss', src=['guest'], dst=['arbiter'])
+        self.loss_intermediate = self._create_variable(name='loss_intermediate', src=['host'], dst=['guest'])
+        self.paillier_pubkey = self._create_variable(name='paillier_pubkey', src=['arbiter'], dst=['host', 'guest'])
+        self.sqn_sample_index = self._create_variable(name='sqn_sample_index', src=['guest'], dst=['host'])
+        self.use_async = self._create_variable(name='use_async', src=['guest'], dst=['host'])
 ```
 
   - name  
@@ -227,15 +208,6 @@ class HeteroBoostingTransferVariable(BaseTransferVariables):
     list, should be some combinations of "guest", "host", "arbiter",
     defines where the interactive information is sending to.
 
-After setting that, the following command would help you create
-corresponding json setting file in
-[auth\_conf](../python/federatedml/transfer_variable/auth_conf) folder
-where fate\_flow can refer
-to.
-
-``` sourceCode bash
-python fate_arch/federation/transfer_variable/scripts/generate_auth_conf.py federatedml federatedml/transfer_variable/auth_conf
-```
 
 ### Step 4. Define your module, it should inherit model\_base
 
@@ -250,7 +222,7 @@ The rule of running a module with fate\_flow\_client is that:
 
 In this section, we describe how to do 3-5. Many common interfaces are
 provided in
-[python/federatedml/model\_base.py](../python/federatedml/model_base.py)
+[python/federatedml/model\_base.py](../../python/federatedml/model_base.py)
 .
 
   - Override fit interface if needed  
@@ -337,7 +309,7 @@ To use the trained model through different platform, FATE use protobuf
 files to save the parameters and model result of a task. When developing
 your own module, you are supposed to create two proto files which
 defined your model content in [this
-folder](../python/federatedml/protobuf/proto).
+folder](../../python/federatedml/protobuf/proto).
 
 For more details of protobuf, please refer to [this
 tutorial](https://developers.google.com/protocol-buffers/docs/pythontutorial)
@@ -347,7 +319,7 @@ parameters of a task. 2. File with "param" as suffix: Save the model
 result of a task.
 
 After defining your proto files, you can use the following script named
-[generate\_py.sh](../python/fate_arch/protobuf/generate_py.sh) to create
+[generate\_py.sh](../../python/fate_arch/protobuf/generate_py.sh) to create
 the corresponding python file:
 
 > 
@@ -379,13 +351,13 @@ One wrapped into a component, module can be used with FATE Pipeline API.
 To define a Pipeline component, follow these guidelines:
 
 1.  all components reside in
-    [fate\_client/pipeline/component](../python/fate_client/pipeline/component)
+    [fate\_client/pipeline/component](../../python/fate_client/pipeline/component)
     directory
 2.  components should inherit common base `Component`
 3.  as a good practice, components should have the same names as their
     corresponding modules
 4.  components take in parameters at initialization as defined in
-    [fate\_client/pipeline/param](../python/fate_client/pipeline/param),
+    [fate\_client/pipeline/param](../../python/fate_client/pipeline/param),
     where a BaseParam and consts file are provided
 5.  set attributes of component input and output, including whether
     module has output model, or type of data output('single' vs.

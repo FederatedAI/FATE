@@ -21,7 +21,7 @@
 The architecture diagram:
 
 <div style="text-align:center", align=center>
-<img src="../images/arch_en.png" />
+<img src="../../images/arch_en.png" />
 </div>
 
 # 3\. Component Description
@@ -487,7 +487,7 @@ tail -f ./logs/deploy-mysql-host.log    (Print the deployment status of mysql at
 
 2\) Fateflow Logs
 
-/data/projects/fate/python/logs/fate\_flow/
+/data/projects/fate/fate\_flow/logs
 
 3\) Fateboard Logs
 
@@ -497,7 +497,7 @@ tail -f ./logs/deploy-mysql-host.log    (Print the deployment status of mysql at
 
 ## 6.1 Verify toy\_example Deployment
 
-A user must set 3 parameters for this testing: guest\_partyid, host\_partyid, and work\_mode.
+A user must set 3 parameters for this testing: guest\_partyid, host\_partyid.
 
 ### 6.1.1 One-Sided Testing
 
@@ -505,22 +505,20 @@ A user must set 3 parameters for this testing: guest\_partyid, host\_partyid, an
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/toy_example/
-python run_toy_example.py 10000 10000 1
+flow test toy --guest-party-id 10000 --host-party-id 10000 
 ```
 
 A result similar to the following indicates successful operation:
 
 "2020-04-28 18:26:20,789 - secure\_add\_guest.py\[line:126] - INFO: success to calculate secure\_sum, it is 1999.9999999999998"
 
-Tip: If the error "max cores per job is 1, please modify job parameters" appears, a user needs to modify the parameter task\_cores to 1 in the toy\_example\_conf.json file under the current directory.
+Tip: If the error "max cores per job is 1, please modify job parameters" appears, a user needs to modify the parameter task\_cores to 1, add "-c 1" to run toy test.
 
 2\) Execute on 192.168.0.2, with both guest\_partyid and host\_partyid set to 9999:
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/toy_example/
-python run_toy_example.py 9999 9999 1
+flow test toy --guest-party-id 9999 --host-party-id 9999
 ```
 
 A result similar to the following indicates successful operation:
@@ -533,8 +531,7 @@ Select 9999 as the guest and execute on 192.168.0.2:
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/toy_example/
-python run_toy_example.py 9999 10000 1
+flow test toy --guest-party-id 9999 --host-party-id 10000
 ```
 
 A result similar to the following indicates successful operation:
@@ -550,7 +547,7 @@ Execute on 192.168.0.1 and 192.168.0.2 respectively:
 ```
 source /data/projects/fate/bin/init_env.sh
 cd /data/projects/fate/examples/scripts/
-python upload_default_data.py -m 1
+python upload_default_data.py
 ```
 
 For more details, refer to [Script Readme](../../examples/scripts/README.rst)
@@ -567,9 +564,9 @@ Select 9999 as the guest and execute on 192.168.0.2:
 source /data/projects/fate/bin/init_env.sh
 cd /data/projects/fate/examples/min_test_task/
 #One-sided testing
-python run_task.py -m 1 -gid 9999 -hid 9999 -aid 9999 -f fast
+python run_task.py -gid 9999 -hid 9999 -aid 9999 -f fast
 #Two-sided testing
-python run_task.py -m 1 -gid 9999 -hid 10000 -aid 10000 -f fast
+python run_task.py -gid 9999 -hid 10000 -aid 10000 -f fast
 ```
 
 Other parameters that may be useful include:
@@ -618,7 +615,7 @@ sh ./bin/eggroll.sh clustermanager start/stop/status/restart
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/python/fate_flow
+cd /data/projects/fate/fate_flow/bin
 sh service.sh start|stop|status|restart
 ```
 
@@ -676,23 +673,6 @@ netstat -tlnp | grep 8080
 | Service| Log Path
 |----------|----------
 | eggroll| /data/projects/fate/eggroll/logs
-| fate\_flow \& task log| /data/projects/fate/python/logs
+| fate\_flow \& task log| /data/projects/fate/fateflow/logs/
 | fateboard| /data/projects/fate/fateboard/logs
 | mysql| /data/logs/mysql/
-
-# 8\. Appendix
-
-## 8.1 Eggroll Parameter Tuning
-
-Assuming that the number of CPU cores is c, the number of nodemanagers is n, and the number of tasks to be executed simultaneously is p, then:
-
-egg\_num=eggroll.session.processors.per.node = c \* 0.8 / p
-
-partitions (roll pair partition number) = egg\_num \* n
-
-The parameters used by the job can be specified with the job parameters in job conf:
-
-1. egg\_num: configure task\_cores or configure processors\_per\_node parameter in eggroll\_run
-2. partitions: configure computing\_partitions
-
-For more information about configuring job submission, refer to [dsl\_conf\_v2\_setting\_guide](../../doc/dsl_conf_v2_setting_guide.rst)

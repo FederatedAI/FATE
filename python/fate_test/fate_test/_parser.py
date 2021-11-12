@@ -70,13 +70,12 @@ class Data(object):
         for field_name in config.keys():
             if field_name not in ["file", "role"]:
                 kwargs[field_name] = config[field_name]
-
-        file_path = path.parent.joinpath(config["file"]).resolve()
-        if not file_path.exists():
-            kwargs["file"] = config["file"]
-            # raise ValueError(f"loading from data config: {config} in {path} failed, file: {file_path} not exists")
-        else:
-            kwargs["file"] = file_path
+        if config.get("engine", {}) != "PATH":
+            file_path = path.parent.joinpath(config["file"]).resolve()
+            if not file_path.exists():
+                kwargs["file"] = config["file"]
+            else:
+                kwargs["file"] = file_path
         role_str = config.get("role") if config.get("role") != "guest" else "guest_0"
         return Data(config=kwargs, role_str=role_str)
 
@@ -198,17 +197,22 @@ class JobConf(object):
 
 
 class JobDSL(object):
-    def __init__(self, components: dict):
+    def __init__(self, components: dict, provider=None):
         self.components = components
-
+        self.provider = provider
     @staticmethod
-    def load(path: Path):
+    def load(path: Path, provider):
         with path.open("r") as f:
             kwargs = json.load(f, object_hook=DSL_JSON_HOOK.hook)
+            if provider is not None:
+                kwargs["provider"] = provider
         return JobDSL(**kwargs)
 
     def as_dict(self):
-        return dict(components=self.components)
+        if self.provider is None:
+            return dict(components=self.components)
+        else:
+            return dict(components=self.components, provider=self.provider)
 
 
 class Job(object):
@@ -225,11 +229,11 @@ class Job(object):
         self.pre_works = pre_works
 
     @classmethod
-    def load(cls, job_name, job_configs, base: Path):
+    def load(cls, job_name, job_configs, base: Path, provider):
         job_conf = JobConf.load(base.joinpath(job_configs.get("conf")).resolve())
         job_dsl = job_configs.get("dsl", None)
         if job_dsl is not None:
-            job_dsl = JobDSL.load(base.joinpath(job_dsl).resolve())
+            job_dsl = JobDSL.load(base.joinpath(job_dsl).resolve(), provider)
 
         pre_works = []
         pre_works_value = []
@@ -329,7 +333,7 @@ class Testsuite(object):
             self._final_status[job.job_name] = FinalStatus(job.job_name)
 
     @staticmethod
-    def load(path: Path):
+    def load(path: Path, provider):
         with path.open("r") as f:
             testsuite_config = json.load(f, object_hook=DATA_JSON_HOOK.hook)
 
@@ -338,14 +342,15 @@ class Testsuite(object):
             if "use_local_data" not in d:
                 d.update({"use_local_data": _config.use_local_data})
             dataset.append(Data.load(d, path))
-
         jobs = []
         for job_name, job_configs in testsuite_config.get("tasks", {}).items():
             jobs.append(
-                Job.load(job_name=job_name, job_configs=job_configs, base=path.parent)
+                Job.load(job_name=job_name, job_configs=job_configs, base=path.parent, provider=provider)
             )
 
         pipeline_jobs = []
+        if testsuite_config.get("pipeline_tasks", None) is not None and provider is not None:
+            print('[Warning]  Pipeline does not support parameter: provider-> {}'.format(provider))
         for job_name, job_configs in testsuite_config.get("pipeline_tasks", {}).items():
             script_path = path.parent.joinpath(job_configs["script"]).resolve()
             pipeline_jobs.append(PipelineJob(job_name, script_path))

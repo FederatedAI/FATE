@@ -2,19 +2,18 @@
 
 Federatedml模块包括许多常见机器学习算法联邦化实现。所有模块均采用去耦的模块化方法开发，以增强模块的可扩展性。具体来说，我们提供：
 
-1.  联邦统计: 包括隐私交集计算，并集计算，皮尔逊系数, PSI等
-2.  联邦特征工程：包括联邦采样，联邦特征分箱，联邦特征选择等。
-3.  联邦机器学习算法：包括横向和纵向的联邦LR, GBDT， DNN，迁移学习等
-4.  模型评估：提供对二分类，多分类，回归评估，聚类评估，联邦和单边对比评估
-5.  安全协议：提供了多种安全协议，以进行更安全的多方交互计算。
+1. 联邦统计: 包括隐私交集计算，并集计算，皮尔逊系数, PSI等
+2. 联邦信息检索：基于OT的PIR(SIR)
+3. 联邦特征工程：包括联邦采样，联邦特征分箱，联邦特征选择等。
+4. 联邦机器学习算法：包括横向和纵向的联邦LR, GBDT， DNN，迁移学习, 无监督学习等
+5. 模型评估：提供对二分类，多分类，回归评估，聚类评估，联邦和单边对比评估
+6. 安全协议：提供了多种安全协议，以进行更安全的多方交互计算。
 
-![Figure 1： Federated Machine Learning Framework](../../images/federatedml_structure.png)
 
 ## 算法清单
 
 | 算法                                                                             | 模块名                     | 描述                                                                                                  | 数据输入                          | 数据输出                                                                                              | 模型输入                                    | 模型输出                       |
 | ------------------------------------------------------------------------------ | ----------------------- | --------------------------------------------------------------------------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------- | -------------------------- |
-| Reader                                                                         | Reader                  | 当输入数据的存储引擎当前计算引擎不支持时，会自动转存到FATE集群适配计算引擎的组件输出存储引擎；当输入数据的存储格式非FATE支持存储格式时，会自动转换格式，并存储到FATE集群的组件输出存储引擎 | 用户原始存储数据                      | 转换后原始数据                                                                                           |                                         |                            |
 | [DataIO](data_transform.md)                                                             | DataIO                  | 该组件将原始数据转换为Instance对象(FATE-v1.7后会逐步弃用，使用DataTransform)。                                             | Table，值为原始数据                  | 转换后的数据表，值为在 : <span class="title-ref">federatedml/feature/instance.py</span> 中定义的Data Instance的实例 |                                         | DataIO模型                   |
 | [DataTransform](data_transform.md)                                                      | DataTransform           | 该组件将原始数据转换为Instance对象。                                                                              | Table，值为原始数据                  | 转换后的数据表，值为在 : <span class="title-ref">federatedml/feature/instance.py</span> 中定义的Data Instance的实例 |                                         | DataTransform模型            |
 | [Intersect](intersect.md)                                                     | Intersection            | 计算两方的相交数据集，而不会泄漏任何差异数据集的信息。主要用于纵向任务。                                                                | Table                         | 两方Table中相交的部分                                                                                     |                                         | Intersect模型                |
@@ -61,13 +60,13 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
       - [Affine Homomorphic Encryption](secureprotol.md#affine-homomorphic-encryption)
       - [IterativeAffine Homomorphic Encryption](secureprotol.md#iterativeaffine-homomorphic-encryption)
       - [RSA encryption](secureprotol.md#rst-encryption)
-      - [Fake encryption](secureprotol.md#fake-encryption)
   - [Encode](secureprotol.md#encode)
   - [Diffne Hellman Key Exchange](secureprotol.md#diffne-hellman-key-exchange)
   - [SecretShare MPC Protocol(SPDZ)](secureprotol.md#secretshare-mpc-protocol-spdz)
   - [Oblivious Transfer](secureprotol.md#oblivious-transfer)
   - [Feldman Verifiable Secret Sharing](secureprotol.md#feldman-verifiable-secret-sharing)
 
+<!-- mkdocs
 ## 算法参数
 
 ::: federatedml.param
@@ -77,3 +76,4 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
+-->

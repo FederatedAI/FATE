@@ -7,24 +7,23 @@ algorithms on federated learning. All modules are developed in a
 decoupling modular approach to enhance scalability. Specifically, we
 provide:
 
-1.  Federated Statistic: PSI, Union, Pearson Correlation, etc.
-2.  Federated Feature Engineering: Feature Sampling, Feature Binning,
+1. Federated Statistic: PSI, Union, Pearson Correlation, etc.
+2. Federated Information Retrieval: PIR( SIR) Based OT
+3. Federated Feature Engineering: Feature Sampling, Feature Binning,
     Feature Selection, etc.
-3.  Federated Machine Learning Algorithms: LR, GBDT, DNN,
-    TransferLearning, which support Heterogeneous and Homogeneous
+4. Federated Machine Learning Algorithms: LR, GBDT, DNN,
+    TransferLearning, UnsupervisedLearning which support Heterogeneous and Homogeneous
     styles.
-4.  Model Evaluation: Binary | Multiclass | Regression | Clustering
+5. Model Evaluation: Binary | Multiclass | Regression | Clustering
     Evaluation, Local vs Federated Comparison.
-5.  Secure Protocol: Provides multiple security protocols for secure
+6. Secure Protocol: Provides multiple security protocols for secure
     multi-party computing and interaction between participants.
 
-![Federated Machine Learning Framework](../images/federatedml_structure.png)
 
 ## Algorithm List
 
 | Algorithm                                                                      | Module Name                  | Description                                                                                                                           | Data Input                                        | Data Output                                                                                           | Model Input                                          | Model Output                                                            |
 | ------------------------------------------------------------------------------ | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------- |
-| Reader                                                                         | Reader                       | This component loads and transforms data from storage engine so that data is compatible with FATE computing engine                    | Original Data                                     | Transformed Data                                                                                      |                                                      |                                                                         |
 | [DataIO](data_transform.md)                                                             | DataIO                       | This component transforms user-uploaded data into Instance object(deprecate in FATe-v1.7, use DataTransform instead).                 | Table, values are raw data.                       | Transformed Table, values are data instance defined [here](../python/federatedml/feature/instance.py) |                                                      | DataIO Model                                                            |
 | [DataTransform](data_transform.md)                                                      | DataTransform                | This component transforms user-uploaded data into Instance object.                                                                    | Table, values are raw data.                       | Transformed Table, values are data instance defined [here](../python/federatedml/feature/instance.py) |                                                      | DataTransform Model                                                     |
 | [Intersect](intersect.md)                                                     | Intersection                 | Compute intersect data set of multiple parties without leakage of difference set information. Mainly used in hetero scenario task.    | Table.                                            | Table with only common instance keys.                                                                 |                                                      | Intersect Model                                                         |
@@ -50,7 +49,7 @@ provide:
 | [Homo Secure Boosting](ensemble.md)                                           | HomoSecureBoost              | Build homo secure boosting model through multiple parties                                                                             | Table, values are instances.                      | Table, values are instances.                                                                          |                                                      | SecureBoost Model, consists of model-meta and model-param.              |
 | [Homo OneHot Encoder](homo_onehot_encoder.md)                         | HomoOneHotEncoder            | Build homo onehot encoder model through multiple parties.                                                                             | Table, values are instances.                      | Transformed Table with new header.                                                                    |                                                      | Feature-name mapping between original header and new header.            |
 | [Data Split](data_split.md)                                                   | Data Split                   | Split one data table into 3 tables by given ratio or count                                                                            | Table, values are instances.                      | 3 Tables, values are instance.                                                                        |                                                      |                                                                         |
-| [Column Expand](column-expand.md)                                     | Column Expand                | Add arbitrary number of columns with user-provided values.                                                                            | Table, values are raw data.                       | Transformed Table with added column(s) and new header.                                                |                                                      | Column Expand Model                                                     |
+| [Column Expand](column_expand.md)                                     | Column Expand                | Add arbitrary number of columns with user-provided values.                                                                            | Table, values are raw data.                       | Transformed Table with added column(s) and new header.                                                |                                                      | Column Expand Model                                                     |
 | [Secure Information Retrieval](sir.md)                                        | Secure Information Retrieval | Securely retrieves information from host through oblivious transfer                                                                   | Table, values are instance                        | Table, values are instance                                                                            |                                                      |                                                                         |
 | [Hetero Federated Transfer Learning](hetero_ftl.md)                           | Hetero FTL                   | Build Hetero FTL Model Between 2 party                                                                                                | Table, values are instance                        |                                                                                                       |                                                      | Hetero FTL Model                                                        |
 | [Hetero KMeans](hetero_kmeans.md)                                             | Hetero KMeans                | Build Hetero KMeans model through multiple parties                                                                                    | Table, values are instance                        | Table, values are instance; Arbier outputs 2 Tables                                                   |                                                      | Hetero KMeans Model                                                     |
@@ -70,13 +69,13 @@ provide:
       - [Affine Homomorphic Encryption](secureprotol.md#affine-homomorphic-encryption)
       - [IterativeAffine Homomorphic Encryption](secureprotol.md#iterativeaffine-homomorphic-encryption)
       - [RSA encryption](secureprotol.md#rst-encryption)
-      - [Fake encryption](secureprotol.md#fake-encryption)
   - [Encode](secureprotol.md#encode)
   - [Diffne Hellman Key Exchange](secureprotol.md#diffne-hellman-key-exchange)
   - [SecretShare MPC Protocol(SPDZ)](secureprotol.md#secretshare-mpc-protocol-spdz)
   - [Oblivious Transfer](secureprotol.md#oblivious-transfer)
   - [Feldman Verifiable Secret Sharing](secureprotol.md#feldman-verifiable-secret-sharing)
 
+<!-- mkdocs
 ## Params
 
 ::: federatedml.param
@@ -86,3 +85,4 @@ provide:
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
+ -->

@@ -34,7 +34,7 @@ class CrossValidationParam(BaseParam):
     mode: str, default: 'Hetero'
         Indicate what mode is current task
 
-    role: str, default: 'Guest'
+    role: {'Guest', 'Host', 'Arbiter'}, default: 'Guest'
         Indicate what role is current party
 
     shuffle: bool, default: True
@@ -50,7 +50,7 @@ class CrossValidationParam(BaseParam):
         Indicate whether to output table of ids used by each fold, else return original input data
         returned ids are formatted as: {original_id}#fold{fold_num}#{train/validate}
 
-    history_value_type: str, default score, choose between {'instance', 'score'}
+    history_value_type: {'score', 'instance'}, default score
         Indicate whether to include original instance or predict score in the output fold history,
         only effective when output_fold_history set to True
 

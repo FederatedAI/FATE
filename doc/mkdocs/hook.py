@@ -44,12 +44,12 @@ def clean_params_doc():
 
 
 _INCLUDE_EXAMPLES_REGEX = re.compile(
-    r"""(?P<_includer_indent>[^\S\r\n]*){%\s*include-examples\s*"(?P<example_name>[^")]+)"\s*%}""",
+    r"""(?P<_includer_indent>[^\S\r\n]*){\s*%\s*include-examples\s*"(?P<example_name>[^")]+)"\s*%\s*}\s*""",
     flags=re.VERBOSE | re.DOTALL,
 )
 
 _INCLUDE_EXAMPLE_REGEX = re.compile(
-    r"""(?P<_includer_indent>[^\S\r\n]*){%\s*include-example\s*"(?P<example_path>[^")]+)"\s*%}""",
+    r"""(?P<_includer_indent>[^\S\r\n]*){\s*%\s*include-example\s*"(?P<example_path>[^")]+)"\s*%\s*}\s*""",
     flags=re.VERBOSE | re.DOTALL,
 )
 
@@ -76,17 +76,10 @@ def sub_include_examples(match):
     lines.append(f"{indents_level0}???+ Example\n")
     lines.append(f"{indents_level0}\n")
     indents_level1 = indents_level0 + "    "
-    for example_type in ["pipeline", "dsl/v2", "dsl/v1"]:
+    for example_type, pretty_name in [("pipeline", "Pipeline"), ("dsl/v2", "DSL")]:
         include_path = os.path.join(_EXAMPLES_BASE, example_type, example_name, "*.*")
-        lines.append(f'{indents_level1}=== "{example_type}"\n\n')
+        lines.append(f'{indents_level1}=== "{pretty_name}"\n\n')
         indents_level2 = f"{indents_level1}    "
-
-        if example_type == "dsl/v1":
-            lines.append(f"{indents_level2}!!! warning\n")
-            lines.append(
-                f"{indents_level2}    `dsl version 1` is deprecated, please consider use `dsl version v2` or `pipeline` instead!\n"
-            )
-            lines.append(f"{indents_level2}    \n")
 
         for name in glob.glob(include_path):
             if name.endswith("README.md") or name.endswith("readme.md"):
@@ -174,9 +167,26 @@ def _fix_zh_url(match):
     return f'{text}({url})'
 
 
+
+_COMMENT_REGEX = re.compile(
+    r"""[^\S\r\n]*<!--\s*mkdocs\s*\n(?P<_content>.*?)-->""",
+    flags=re.VERBOSE | re.DOTALL,
+)
+
+def _remove_comment(match):
+    content = match.group("_content")
+    return content
+
 def on_page_markdown(markdown, page, **kwargs):
     if page.file.abs_src_path.rsplit(".", 2)[-2] == "zh":
         markdown = re.sub(_MARKDOWN_URL_REGEX, _fix_zh_url, markdown)
+
+    # remove specific commnent    
+    markdown = re.sub(
+        _COMMENT_REGEX,
+        _remove_comment,
+        markdown
+    )
 
     markdown = re.sub(
         _INCLUDE_EXAMPLES_REGEX,
@@ -190,3 +200,4 @@ def on_page_markdown(markdown, page, **kwargs):
         markdown,
     )
     return markdown
+

@@ -59,6 +59,7 @@ convergence decision is happening in Arbiter.
 ![Figure 3 (Federated Multi-host HeteroLR
 Principle)](../images/hetero_lr_multi_host.png)
 
+<!-- mkdocs
 ## Param
 
 ::: federatedml.param.logistic_regression_param
@@ -68,6 +69,7 @@ Principle)](../images/hetero_lr_multi_host.png)
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
+-->
 
 
 ## Features

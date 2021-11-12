@@ -23,7 +23,7 @@
 架构图：
 
 <div style="text-align:center", align=center>
-<img src="../images/arch_zh.png" />
+<img src="../../images/arch_zh.png" />
 </div>
 
 # 3.组件说明
@@ -500,7 +500,7 @@ tail -f ./logs/deploy-mysql-host.log    （实时打印HOST端mysql的部署情�
 
 2）fateflow日志
 
-/data/projects/fate/python/logs/fate_flow/
+/data/projects/fate/fate_flow/logs/fate_flow/
 
 3）fateboard日志
 
@@ -512,7 +512,7 @@ tail -f ./logs/deploy-mysql-host.log    （实时打印HOST端mysql的部署情�
 6.1 Toy_example部署验证
 -----------------------
 
-此测试您需要设置3个参数：guest_partyid，host_partyid，work_mode。
+此测试您需要设置2个参数：guest_partyid，host_partyid。
 
 ### 6.1.1 单边测试
 
@@ -520,22 +520,20 @@ tail -f ./logs/deploy-mysql-host.log    （实时打印HOST端mysql的部署情�
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/toy_example/
-python run_toy_example.py 10000 10000 1
+flow test toy --guest-party-id 10000 --host-party-id 10000 
 ```
 
 类似如下结果表示成功：
 
 "2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
 
-提示：如出现max cores per job is 1, please modify job parameters报错提示，需要修改当前目录下文件toy_example_conf.json中参数task_cores为1.
+提示：如出现max cores per job is 1, please modify job parameters报错提示，需要修改运行时参数task_cores为1，增加命令行参数 '-c 1'.
 
 2）192.168.0.2上执行，guest_partyid和host_partyid都设为9999：
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/toy_example/
-python run_toy_example.py 9999 9999 1
+flow test toy --guest-party-id 9999 --host-party-id 9999
 ```
 
 类似如下结果表示成功：
@@ -548,8 +546,7 @@ python run_toy_example.py 9999 9999 1
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/toy_example/
-python run_toy_example.py 9999 10000 1
+flow test toy --guest-party-id 9999 --host-party-id 10000
 ```
 
 类似如下结果表示成功：
@@ -566,7 +563,7 @@ python run_toy_example.py 9999 10000 1
 ```
 source /data/projects/fate/bin/init_env.sh
 cd /data/projects/fate/examples/scripts/
-python upload_default_data.py -m 1
+python upload_default_data.py
 ```
 
 更多细节信息，敬请参考[脚本README](../../examples/scripts/README.rst)
@@ -583,9 +580,9 @@ python upload_default_data.py -m 1
 source /data/projects/fate/bin/init_env.sh
 cd /data/projects/fate/examples/min_test_task/
 #单边测试
-python run_task.py -m 1 -gid 9999 -hid 9999 -aid 9999 -f fast
+python run_task.py -gid 9999 -hid 9999 -aid 9999 -f fast
 #双边测试
-python run_task.py -m 1 -gid 9999 -hid 10000 -aid 10000 -f fast
+python run_task.py -gid 9999 -hid 10000 -aid 10000 -f fast
 ```
 
 其他一些可能有用的参数包括：
@@ -701,18 +698,4 @@ netstat -tlnp | grep 8080
 | fateboard          | /data/projects/fate/fateboard/logs |
 | mysql              | /data/logs/mysql/                  |
 
-# 8. 附录
 
-## 8.1 Eggroll参数调优
-
-假定 CPU核数（cpu cores）为 c, Nodemanager的数量为 n，需要同时运行的任务数为 p，则：
-
-egg_num=eggroll.session.processors.per.node = c * 0.8 / p
-
-partitions （roll pair分区数）= egg_num * n
-
-可通过job conf中的job parameters指定作业使用的参数：
-1. egg_num：配置task_cores或者配置eggroll_run中processors_per_node参数
-2. partitions：配置computing_partitions
-
-更多关于作业提交配置请参考[dsl_conf_v2_setting_guide_zh](../../doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide_zh.rst)

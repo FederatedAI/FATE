@@ -26,19 +26,18 @@ FATE官方网站：<https://fate.fedai.org/>
 - [原生集群安装](./deploy/cluster-deploy)
 
 ### 快速开始
-- [单元测试](./python/federatedml/test/)
 - [使用FATE-PipeLine启动任务](./doc/tutorial/pipeline/pipeline_guide.md)
 - [使用DSL json conf启动任务](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.md)
 - [在Jupyter Notebook使用FATE-Pipeline](./doc/tutorial/pipeline/pipeline_tutorial_0.ipynb)
 
 ## 文档
 
-### 理解FATE设计
+### FATE设计
 
-- [FATE structure]
+- [架构](./doc/architecture/index.md)
 - [组件](doc/federatedml_component/index.md)
 - [算法参数](./python/federatedml/param)
-- [论文与资料](./doc/resources)
+- [论文与会议资料](./doc/resources/index.zh.md)
 
 ### 工具与服务
 
@@ -46,11 +45,14 @@ FATE官方网站：<https://fate.fedai.org/>
 - [FATE-Board](https://github.com/FederatedAI/FATE-Board)
 - [FATE-Serving](https://github.com/FederatedAI/FATE-Serving)
 - [FATE-Cloud](https://github.com/FederatedAI/FATE-Cloud)
+- [FedVision](https://github.com/FederatedAI/FedVision)
+- [EggRoll](https://github.com/WeBankFinTech/eggroll)
+- [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE)
+- [KubeFATE](https://github.com/FederatedAI/KubeFATE)
 
 ### 贡献代码
 
 - [开发指南](doc/develop/develop_guide.zh.md)
-- [FATE-Client开发指南](doc/develop/fate_client_develop_guide.md)
 
 ### API文档
 
@@ -59,7 +61,11 @@ FATE官方网站：<https://fate.fedai.org/>
 - [Flow SDK API](doc/api/fate_client/flow_sdk.md)
 - [Flow Client](doc/api/fate_client/flow_client.md)
 - [FATE Pipeline](doc/api/fate_client/pipeline.md)
-- [FATE Test](./doc/api/fate_test.md)
+- [FATE Test](./doc/tutorial/fate_test_tutorial.md)
+
+### 在线课程
+- [Bilibili: @FATEFedAI](https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)
+
 
 ## 了解更多
 
@@ -68,7 +74,6 @@ FATE官方网站：<https://fate.fedai.org/>
 - [FAQ](https://github.com/FederatedAI/FATE/wiki)
 - [issues](https://github.com/FederatedAI/FATE/issues)
 - [pull requests](https://github.com/FederatedAI/FATE/pulls)
-- [Bilibili: @FATEFedAI](https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)
 - [Twitter: @FATEFedAI](https://twitter.com/FateFedAI)
 
 

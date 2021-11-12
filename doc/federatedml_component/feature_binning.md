@@ -47,6 +47,7 @@ iteratively as event case. All other cases will be treated as non-event
 cases. Therefore, we can obtain a set of iv\&woe result for each label
 case.
 
+<!-- mkdocs
 ## Param
 
 ::: federatedml.param.feature_binning_param
@@ -56,7 +57,7 @@ case.
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
-
+ -->
 
 ## Features
 

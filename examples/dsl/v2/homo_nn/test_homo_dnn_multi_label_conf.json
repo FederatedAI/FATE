@@ -18,7 +18,7 @@
     },
     "component_parameters": {
         "common": {
-            "dataio_0": {
+            "data_transform_0": {
                 "with_label": true
             },
             "homo_nn_0": {
@@ -136,7 +136,7 @@
                     }
                 },
                 "0|1": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true
                     }
                 }
@@ -149,7 +149,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true,
                         "output_format": "dense"
                     }

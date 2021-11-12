@@ -7,7 +7,7 @@ Initialize a computing session:
 ```python
 from fate_arch.session import computing_session
 # initialize
-computing_session.init(work_mode=0, backend=0, session_id="a great session")
+computing_session.init(session_id="a great session")
 # create a table from iterable data
 table = computing_session.parallelize(range(100), include_key=False, partition=2)
 ```

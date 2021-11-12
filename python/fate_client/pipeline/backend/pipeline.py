@@ -66,6 +66,7 @@ class PipeLine(object):
         self.online = OnlineCommand(self)
         self._load = False
         self.model_convert = ModelConvert(self)
+        self._global_job_provider = None
 
     @LOGGER.catch(reraise=True)
     def set_initiator(self, role, party_id):
@@ -123,6 +124,10 @@ class PipeLine(object):
                           "party_id": self._initiator.party_id}
 
         return initiator_conf
+
+    def set_global_job_provider(self, provider):
+        self._global_job_provider = provider
+        return self
 
     @LOGGER.catch(reraise=True)
     def set_roles(self, guest=None, host=None, arbiter=None, **kwargs):
@@ -282,6 +287,9 @@ class PipeLine(object):
             return component_tasks
 
     def _construct_train_dsl(self):
+        if self._global_job_provider:
+            self._train_dsl["provider"] = self._global_job_provider
+
         self._train_dsl["components"] = {}
         for name, component in self._components.items():
             component_dsl = {"module": component.module}
@@ -297,6 +305,11 @@ class PipeLine(object):
                 for output_key, attr in output_attrs.items():
                     if hasattr(component.output, attr):
                         component_dsl["output"][output_key] = getattr(component.output, attr)
+
+            if hasattr(component, "provider"):
+                provider = getattr(component, "provider")
+                if provider is not None:
+                    component_dsl["provider"] = provider
 
             self._train_dsl["components"][name] = component_dsl
 
@@ -522,7 +535,18 @@ class PipeLine(object):
                                                                 self._initiator.party_id)
 
     @LOGGER.catch(reraise=True)
-    def predict(self, job_parameters=None):
+    def predict(self, job_parameters=None, components_checkpoint=None):
+        """
+
+        Parameters
+        ----------
+        job_parameters: None
+        components_checkpoint: specify which model to take, ex.: {"hetero_lr_0": {"step_index": 8}}
+
+        Returns
+        -------
+
+        """
         if self._stage != "predict":
             raise ValueError(
                 "To use predict function, please deploy component(s) from training pipeline"
@@ -535,7 +559,8 @@ class PipeLine(object):
 
         res_dict = self._job_invoker.model_deploy(model_id=self._model_info.model_id,
                                                   model_version=self._model_info.model_version,
-                                                  predict_dsl=self._predict_dsl)
+                                                  predict_dsl=self._predict_dsl,
+                                                  components_checkpoint=components_checkpoint)
         self._predict_model_info = SimpleNamespace(model_id=res_dict["model_id"],
                                                    model_version=res_dict["model_version"])
         predict_conf = self._feed_job_parameters(self._train_conf,

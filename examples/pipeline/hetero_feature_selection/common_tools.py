@@ -16,19 +16,19 @@
 import json
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.data_statistics import DataStatistics
-from pipeline.component.dataio import DataIO
-from pipeline.component.hetero_fast_secureboost import HeteroFastSecureBoost
-from pipeline.component.hetero_feature_binning import HeteroFeatureBinning
-from pipeline.component.hetero_feature_selection import HeteroFeatureSelection
-from pipeline.component.hetero_secureboost import HeteroSecureBoost
-from pipeline.component.intersection import Intersection
-from pipeline.component.psi import PSI
-from pipeline.component.reader import Reader
-from pipeline.component.sampler import FederatedSample
-from pipeline.component.scale import FeatureScale
-from pipeline.interface.data import Data
-from pipeline.interface.model import Model
+from pipeline.component import DataStatistics
+from pipeline.component import DataTransform
+from pipeline.component import HeteroFastSecureBoost
+from pipeline.component import HeteroFeatureBinning
+from pipeline.component import HeteroFeatureSelection
+from pipeline.component import HeteroSecureBoost
+from pipeline.component import Intersection
+from pipeline.component import PSI
+from pipeline.component import Reader
+from pipeline.component import FederatedSample
+from pipeline.component import FeatureScale
+from pipeline.interface import Data
+from pipeline.interface import Model
 
 
 def prettify(response, verbose=True):
@@ -67,21 +67,21 @@ def make_normal_dsl(config, namespace, selection_param, is_multi_host=False,
     # configure Reader for host
     reader_0.get_party_instance(role='host', party_id=hosts).component_param(table=host_train_data)
 
-    # define DataIO components
-    dataio_0 = DataIO(name="dataio_0")  # start component numbering at 0
+    # define DataTransform components
+    data_transform_0 = DataTransform(name="data_transform_0")  # start component numbering at 0
 
-    # get DataIO party instance of guest
-    dataio_0_guest_party_instance = dataio_0.get_party_instance(role='guest', party_id=guest)
-    # configure DataIO for guest
-    dataio_0_guest_party_instance.component_param(with_label=True, output_format="dense")
-    # get and configure DataIO party instance of host
-    dataio_0.get_party_instance(role='host', party_id=hosts).component_param(with_label=False)
+    # get DataTransform party instance of guest
+    data_transform_0_guest_party_instance = data_transform_0.get_party_instance(role='guest', party_id=guest)
+    # configure DataTransform for guest
+    data_transform_0_guest_party_instance.component_param(with_label=True, output_format="dense")
+    # get and configure DataTransform party instance of host
+    data_transform_0.get_party_instance(role='host', party_id=hosts).component_param(with_label=False)
 
     # define Intersection components
     intersection_0 = Intersection(name="intersection_0")
     pipeline.add_component(reader_0)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
 
     last_cpn = intersection_0
     selection_include_model = []
@@ -102,11 +102,11 @@ def make_normal_dsl(config, namespace, selection_param, is_multi_host=False,
         reader_1 = Reader(name="reader_1")
         reader_1.get_party_instance(role='guest', party_id=guest).component_param(table=guest_eval_data)
         reader_1.get_party_instance(role='host', party_id=hosts).component_param(table=host_eval_data)
-        dataio_1 = DataIO(name="dataio_1")
+        data_transform_1 = DataTransform(name="data_transform_1")
         intersection_1 = Intersection(name="intersection_1")
         pipeline.add_component(reader_1)
-        pipeline.add_component(dataio_1, data=Data(data=reader_1.output.data), model=Model(dataio_0.output.model))
-        pipeline.add_component(intersection_1, data=Data(data=dataio_1.output.data))
+        pipeline.add_component(data_transform_1, data=Data(data=reader_1.output.data), model=Model(data_transform_0.output.model))
+        pipeline.add_component(intersection_1, data=Data(data=data_transform_1.output.data))
 
         psi_0 = PSI(**kwargs['psi_param'])
         pipeline.add_component(psi_0, data=Data(train_data=intersection_0.output.data,
@@ -163,31 +163,31 @@ def make_single_predict_pipeline(config, namespace, selection_param, is_multi_ho
     # configure Reader for host
     reader_0.get_party_instance(role='host', party_id=hosts).component_param(table=host_train_data)
 
-    # define DataIO components
-    dataio_0 = DataIO(name="dataio_0")  # start component numbering at 0
+    # define DataTransform components
+    data_transform_0 = DataTransform(name="data_transform_0")  # start component numbering at 0
 
-    # get DataIO party instance of guest
-    dataio_0_guest_party_instance = dataio_0.get_party_instance(role='guest', party_id=guest)
-    # configure DataIO for guest
-    dataio_0_guest_party_instance.component_param(with_label=True, output_format="dense")
-    # get and configure DataIO party instance of host
-    dataio_0.get_party_instance(role='host', party_id=hosts).component_param(with_label=False)
+    # get DataTransform party instance of guest
+    data_transform_0_guest_party_instance = data_transform_0.get_party_instance(role='guest', party_id=guest)
+    # configure DataTransform for guest
+    data_transform_0_guest_party_instance.component_param(with_label=True, output_format="dense")
+    # get and configure DataTransform party instance of host
+    data_transform_0.get_party_instance(role='host', party_id=hosts).component_param(with_label=False)
 
     # define Intersection components
     intersection_0 = Intersection(name="intersection_0")
     pipeline.add_component(reader_0)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
 
     reader_1 = Reader(name="reader_1")
     reader_1.get_party_instance(role='guest', party_id=guest).component_param(table=guest_eval_data)
     reader_1.get_party_instance(role='host', party_id=hosts).component_param(table=host_eval_data)
-    dataio_1 = DataIO(name="dataio_1")
+    data_transform_1 = DataTransform(name="data_transform_1")
     intersection_1 = Intersection(name="intersection_1")
 
     pipeline.add_component(reader_1)
-    pipeline.add_component(dataio_1, data=Data(data=reader_1.output.data), model=Model(dataio_0.output.model))
-    pipeline.add_component(intersection_1, data=Data(data=dataio_1.output.data))
+    pipeline.add_component(data_transform_1, data=Data(data=reader_1.output.data), model=Model(data_transform_0.output.model))
+    pipeline.add_component(intersection_1, data=Data(data=data_transform_1.output.data))
 
     sample_0 = FederatedSample(name='sample_0', fractions=0.9)
     pipeline.add_component(sample_0, data=Data(data=intersection_0.output.data))

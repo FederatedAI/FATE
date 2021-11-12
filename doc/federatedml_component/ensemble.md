@@ -132,7 +132,9 @@ Hetero SecureBoost supports the following applications.
     feature may increase memory consumption. See
     [here](../../python/federatedml/param/boosting_param.py).
   - Support feature subsample random seed setting in FATE-1.5
-  - Support feature binning error setting.
+  - Support feature binning error setting
+  - Support GOSS sampling in FATE-1.6
+  - Support cipher compressing and g, h packing in FATE-1.7
 
 ## Homo SecureBoost
 
@@ -228,7 +230,7 @@ Homo SecureBoost supports the following applications:
   - multi classification, the objective function is softmax
     cross-entropy
   - regression, objective function includes
-    least-squared-error-loss、least-absolutely-error-loss、huber-loss、tweedie-loss、fair-loss、
+    least-squared-error-loss, least-absolutely-error-loss, huber-loss, tweedie-loss, fair-loss,
     log-cosh-loss
 
 ### Other features
@@ -246,6 +248,7 @@ Homo SecureBoost supports the following applications:
   - Support feature subsample random seed setting in FATE-1.5
   - Support feature binning error setting.
 
+<!-- mkdocs
 ### Param
 
 ::: federatedml.param.boosting_param
@@ -255,9 +258,9 @@ Homo SecureBoost supports the following applications:
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
+ -->
 
-
-Hetero Complete Secureboost -----------------------
+## Hetero Complete Secureboost 
 
 Now Hetero SecureBoost adds a new option: complete\_secure. Once
 enabled, the boosting model will only use guest features to build the
@@ -268,10 +271,11 @@ Framework\].](https://arxiv.org/abs/1901.08755)
 > ![Figure 4: complete secure boost](../images/complete_secure.png)
 
 
-
+<!-- mkdocs
 ### Examples
 
 {% include-examples "hetero_secureboost" %}
+ -->
 
 ## Hetero Fast SecureBoost
 

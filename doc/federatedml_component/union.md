@@ -75,8 +75,8 @@ If an id <span class="title-ref">42</span> exists in both
     <span class="title-ref">42\_dataio\_1</span>.
 
 
+<!-- mkdocs
 ## Param
-
 ::: federatedml.param.union_param
     rendering:
       heading_level: 3
@@ -84,7 +84,10 @@ If an id <span class="title-ref">42</span> exists in both
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
+ -->
 
+<!-- mkdocs
 ## Examples
 
 {% include-examples "union" %}
+-->

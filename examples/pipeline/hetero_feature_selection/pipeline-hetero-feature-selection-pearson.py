@@ -17,7 +17,7 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component import DataIO
+from pipeline.component import DataTransform
 from pipeline.component import HeteroPearson
 from pipeline.component import HeteroFeatureBinning
 from pipeline.component import HeteroFeatureSelection
@@ -46,9 +46,9 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
-    dataio_0 = DataIO(name="dataio_0")
-    dataio_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True)
-    dataio_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
+    data_transform_0 = DataTransform(name="data_transform_0")
+    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True)
+    data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
 
@@ -72,8 +72,8 @@ def main(config="../../config.yaml", namespace=""):
     }
     hetero_feature_selection_0 = HeteroFeatureSelection(**selection_param)
     pipeline.add_component(reader_0)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
     pipeline.add_component(hetero_binning_0, data=Data(data=intersection_0.output.data))
     pipeline.add_component(hetero_pearson_0, data=Data(data=intersection_0.output.data))
     pipeline.add_component(hetero_feature_selection_0, data=Data(data=intersection_0.output.data),

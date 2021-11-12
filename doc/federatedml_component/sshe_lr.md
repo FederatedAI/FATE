@@ -31,6 +31,7 @@ following.
 
 ![Figure 8 Training 6](../images/training_6.jpg)
 
+<!-- mkdocs
 ## Param
 
 ::: federatedml.param.hetero_sshe_lr_param
@@ -40,7 +41,7 @@ following.
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
-
+-->
 
 ## Features
 
@@ -48,7 +49,7 @@ following.
 > 
 > 2.  Mini-batch mechanism
 > 
-> 3.  Six optimization method:
+> 3.  Five optimization method:
 >     
 >     >   - sgd  
 >     >     gradient descent with arbitrary batch size
@@ -64,11 +65,8 @@ following.
 >     > 
 >     >   - nesterov\_momentum\_sgd  
 >     >     Nesterov Momentum
->     > 
->     >   - sqn  
->     >     stochastic quansi-newton. The algorithm details can refer to
->     >     [this paper](https://arxiv.org/abs/1912.00513v2)
-> 
+>
+>
 > 4.  Three converge criteria:
 >     
 >     >   - diff  

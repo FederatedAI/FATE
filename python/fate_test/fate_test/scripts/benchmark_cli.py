@@ -1,3 +1,4 @@
+import os
 import time
 import uuid
 from datetime import timedelta
@@ -97,6 +98,9 @@ def _run_benchmark_pairs(config: Config, suite: BenchmarkSuite, tol: float, name
                          data_namespace_mangling: bool, storage_tag, history_tag, fate_version, match_details):
     # pipeline demo goes here
     pair_n = len(suite.pairs)
+    fate_base = config.fate_base
+    PYTHONPATH = os.environ.get('PYTHONPATH') + ":"  + os.path.join(fate_base, "python")
+    os.environ['PYTHONPATH'] = PYTHONPATH
     for i, pair in enumerate(suite.pairs):
         echo.echo(f"Running [{i + 1}/{pair_n}] group: {pair.pair_name}")
         results = {}
@@ -139,3 +143,5 @@ def _run_benchmark_pairs(config: Config, suite: BenchmarkSuite, tol: float, name
         match_metrics(evaluate=True, group_name=pair.pair_name, abs_tol=tol, rel_tol=rel_tol,
                       storage_tag=storage_tag, history_tag=history_tag, fate_version=fate_version,
                       cache_directory=config.cache_directory, match_details=match_details, **results)
+
+

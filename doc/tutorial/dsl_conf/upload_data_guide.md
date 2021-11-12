@@ -1,6 +1,6 @@
 # Upload Data Guide
 
-[[中文](upload_data_guide_zh.md)]
+[[中文](upload_data_guide.zh.md)]
 
 Before start a modeling task, the data to be used should be uploaded.
 Typically, a party is usually a cluster which include multiple nodes.
@@ -87,7 +87,7 @@ recommended for interacting with FATE-Flow.
 The command is as follows:
 
 ``` sourceCode bash
-flow data upload -c dsl_test/upload_data.json
+flow data upload -c examples/dsl/v2/upload/upload_conf.json
 ```
 
 Meanwhile, user can still upload data using python script as in the
@@ -95,7 +95,7 @@ older
 versions:
 
 ``` sourceCode bash
-python ${your_install_path}/fate_flow/fate_flow_client.py -f upload -c dsl_test/upload_data.json
+python ${your_install_path}/fate_flow/fate_flow_client.py -f upload -c examples/dsl/v2/upload/upload_conf.json
 ```
 
 <div class="note">
@@ -115,17 +115,27 @@ success.
 
 ``` sourceCode json
 {
-  "data": {
-      "board_url": "http://127.0.0.1:8080/index.html#/dashboard?job_id=202010131102075363217&role=local&party_id=0",
-      "job_dsl_path": "/data/projects/fate/jobs/202010131102075363217/job_dsl.json",
-      "job_runtime_conf_path": "/data/projects/fate/jobs/202010131102075363217/job_runtime_conf.json",
-      "logs_directory": "/data/projects/fate/logs/202010131102075363217",
-      "namespace": "experiment",
-      "table_name": "breast_hetero_guest"
-  },
-  "jobId": "202010131102075363217",
-  "retcode": 0,
-  "retmsg": "success"
+    "data": {
+        "board_url": "http://127.0.0.1:8080/index.html#/dashboard?job_id=202111111542373868350&role=local&party_id=0",
+        "code": 0,
+        "dsl_path": "/data/projects/fate/fateflow/jobs/202111111542373868350/job_dsl.json",
+        "job_id": "202111111542373868350",
+        "logs_directory": "/data/projects/fate/fateflow/logs/202111111542373868350",
+        "message": "success",
+        "model_info": {
+            "model_id": "local-0#model",
+            "model_version": "202111111542373868350"
+        },
+        "namespace": "experiment",
+        "pipeline_dsl_path": "/data/projects/fate/fateflow/jobs/202111111542373868350/pipeline_dsl.json",
+        "runtime_conf_on_party_path": "/data/projects/fate/fateflow/jobs/202111111542373868350/local/0/job_runtime_on_party_conf.json",
+        "runtime_conf_path": "/data/projects/fate/fateflow/jobs/202111111542373868350/job_runtime_conf.json",
+        "table_name": "breast_hetero_guest",
+        "train_runtime_conf_path": "/data/projects/fate/fateflow/jobs/202111111542373868350/train_runtime_conf.json"
+    },
+    "jobId": "202111111542373868350",
+    "retcode": 0,
+    "retmsg": "success"
 }
 ```
 

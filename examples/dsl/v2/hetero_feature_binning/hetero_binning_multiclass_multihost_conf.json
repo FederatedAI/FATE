@@ -22,11 +22,11 @@
         "role": {
             "guest": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true,
                         "output_format": "dense"
                     },
-                    "dataio_1": {
+                    "data_transform_1": {
                         "with_label": true,
                         "output_format": "dense"
                     },
@@ -46,11 +46,11 @@
             },
             "host": {
                 "0|1": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false,
                         "output_format": "dense"
                     },
-                    "dataio_1": {
+                    "data_transform_1": {
                         "with_label": true,
                         "output_format": "dense"
                     },

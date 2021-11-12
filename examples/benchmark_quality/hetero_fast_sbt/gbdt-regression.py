@@ -17,12 +17,8 @@
 import argparse
 import os
 import pandas as pd
-from sklearn.ensemble.gradient_boosting import GradientBoostingRegressor
-from sklearn.metrics import explained_variance_score
+from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.metrics import mean_absolute_error
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import median_absolute_error
-from sklearn.metrics import r2_score
 
 
 from pipeline.utils.tools import JobConfig

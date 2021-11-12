@@ -36,6 +36,7 @@ Since there is no model transferred in plaintext, except for the owner
 of the model, no other party can obtain the real information of the
 model.
 
+<!-- mkdocs
 ## Param
 
 ::: federatedml.param.homo_nn_param
@@ -45,6 +46,7 @@ model.
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
+-->
 
 ## Features
 
@@ -326,6 +328,8 @@ structure is:
       [metrics doc](https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/metrics),
       such as Accuracy, AUC ...
 
+<!-- mkdocs
 ## Examples
 
 {% include-examples "homo_nn" %}
+-->

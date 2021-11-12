@@ -58,7 +58,7 @@ class QuantileSummaries(object):
             The observation that prepare to insert
 
         """
-        if x in self.abnormal_list or np.isnan(x):
+        if x in self.abnormal_list or (isinstance(x, float) and np.isnan(x)):
             self.missing_count += 1
             return
 

@@ -17,11 +17,11 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
-from pipeline.component.psi import PSI
-from pipeline.component.reader import Reader
-from pipeline.interface.data import Data
-from pipeline.interface.model import Model
+from pipeline.component import DataTransform
+from pipeline.component import PSI
+from pipeline.component import Reader
+from pipeline.interface import Data
+from pipeline.interface import Model
 
 from pipeline.utils.tools import load_job_config
 
@@ -48,22 +48,22 @@ def main(config="../../config.yaml", namespace=""):
     reader_1.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
     reader_1.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
-    dataio_0 = DataIO(name="dataio_0")
-    dataio_1 = DataIO(name="dataio_1")
+    data_transform_0 = DataTransform(name="data_transform_0")
+    data_transform_1 = DataTransform(name="data_transform_1")
 
-    dataio_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=False, output_format="dense")
-    dataio_1.get_party_instance(role='guest', party_id=guest).component_param(with_label=False, output_format="dense")
+    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=False, output_format="dense")
+    data_transform_1.get_party_instance(role='guest', party_id=guest).component_param(with_label=False, output_format="dense")
 
-    dataio_0.get_party_instance(role='host', party_id=host).component_param(with_label=False, output_format="dense")
-    dataio_1.get_party_instance(role='host', party_id=host).component_param(with_label=False, output_format="dense")
+    data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False, output_format="dense")
+    data_transform_1.get_party_instance(role='host', party_id=host).component_param(with_label=False, output_format="dense")
 
     psi_0 = PSI(name='psi_0', max_bin_num=20)
 
     pipeline.add_component(reader_0)
     pipeline.add_component(reader_1)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(dataio_1, data=Data(data=reader_1.output.data), model=Model(dataio_0.output.model))
-    pipeline.add_component(psi_0, data=Data(train_data=dataio_0.output.data, validate_data=dataio_1.output.data))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(data_transform_1, data=Data(data=reader_1.output.data), model=Model(data_transform_0.output.model))
+    pipeline.add_component(psi_0, data=Data(train_data=data_transform_0.output.data, validate_data=data_transform_1.output.data))
 
     pipeline.compile()
 

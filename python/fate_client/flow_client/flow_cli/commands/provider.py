@@ -30,6 +30,16 @@ def provider(ctx):
     """
     pass
 
+@provider.command("list", short_help="List All Providers Command")
+@click.pass_context
+@click.option("-n", "--provider-name", type=click.STRING, help="Provider Name")
+def list_providers(ctx, **kwargs):
+    config_data, dsl_data = preprocess(**kwargs)
+    if kwargs.get("provider_name"):
+        access_server("post", ctx, f"provider/{kwargs['provider_name']}/get", config_data)
+    else:
+        access_server("post", ctx, "provider/get", config_data)
+
 
 @provider.command("register", short_help="Register New Provider Command")
 @cli_args.CONF_PATH
@@ -38,18 +48,11 @@ def register(ctx, **kwargs):
     config_data, dsl_data = preprocess(**kwargs)
     for p in {"path"}:
         config_data[p] = check_abs_path(config_data.get(p))
-    access_server('post', ctx, 'component/provider/register', config_data)
-
-
-@provider.command("list", short_help="List All Providers Command")
-@click.pass_context
-def list_providers(ctx, **kwargs):
-    config_data, dsl_data = preprocess(**kwargs)
-    access_server('post', ctx, 'component/provider/get', config_data)
+    access_server("post", ctx, "provider/register", config_data)
 
 
 @provider.command("list-components", short_help="List All Components Command")
 @click.pass_context
 def list_components(ctx, **kwargs):
     config_data, dsl_data = preprocess(**kwargs)
-    access_server('post', ctx, 'component/get', config_data)
+    access_server("post", ctx, "component/get", config_data)

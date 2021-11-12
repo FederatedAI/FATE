@@ -27,16 +27,16 @@ class StepwiseParam(BaseParam):
 
     Parameters
     ----------
-    score_name: str, default: 'AIC'
+    score_name: {"AIC", "BIC"}, default: 'AIC'
         Specify which model selection criterion to be used
 
-    mode: str, default: 'Hetero'
+    mode: {"Hetero", "Homo"}, default: 'Hetero'
         Indicate what mode is current task
 
-    role: str, default: 'Guest'
+    role: {"Guest", "Host", "Arbiter"}, default: 'Guest'
         Indicate what role is current party
 
-    direction: str, default: 'both'
+    direction: {"both", "forward", "backward"}, default: 'both'
         Indicate which direction to go for stepwise.
         'forward' means forward selection; 'backward' means elimination; 'both' means possible models of both directions are examined at each step.
 
