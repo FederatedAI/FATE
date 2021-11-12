@@ -2,13 +2,13 @@
 
 Federatedml模块包括许多常见机器学习算法联邦化实现。所有模块均采用去耦的模块化方法开发，以增强模块的可扩展性。具体来说，我们提供：
 
-1.  联邦统计: 包括隐私交集计算，并集计算，皮尔逊系数, PSI等
-2.  联邦特征工程：包括联邦采样，联邦特征分箱，联邦特征选择等。
-3.  联邦机器学习算法：包括横向和纵向的联邦LR, GBDT， DNN，迁移学习等
-4.  模型评估：提供对二分类，多分类，回归评估，聚类评估，联邦和单边对比评估
-5.  安全协议：提供了多种安全协议，以进行更安全的多方交互计算。
+1. 联邦统计: 包括隐私交集计算，并集计算，皮尔逊系数, PSI等
+2. 联邦信息检索：基于OT的PIR(SIR)
+3. 联邦特征工程：包括联邦采样，联邦特征分箱，联邦特征选择等。
+4. 联邦机器学习算法：包括横向和纵向的联邦LR, GBDT， DNN，迁移学习, 无监督学习等
+5. 模型评估：提供对二分类，多分类，回归评估，聚类评估，联邦和单边对比评估
+6. 安全协议：提供了多种安全协议，以进行更安全的多方交互计算。
 
-![Figure 1： Federated Machine Learning Framework](../images/federatedml_structure.png)
 
 ## 算法清单
 
@@ -61,7 +61,6 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
       - [Affine Homomorphic Encryption](secureprotol.md#affine-homomorphic-encryption)
       - [IterativeAffine Homomorphic Encryption](secureprotol.md#iterativeaffine-homomorphic-encryption)
       - [RSA encryption](secureprotol.md#rst-encryption)
-      - [Fake encryption](secureprotol.md#fake-encryption)
   - [Encode](secureprotol.md#encode)
   - [Diffne Hellman Key Exchange](secureprotol.md#diffne-hellman-key-exchange)
   - [SecretShare MPC Protocol(SPDZ)](secureprotol.md#secretshare-mpc-protocol-spdz)

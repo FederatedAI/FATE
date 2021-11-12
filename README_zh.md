@@ -46,11 +46,14 @@ FATE官方网站：<https://fate.fedai.org/>
 - [FATE-Board](https://github.com/FederatedAI/FATE-Board)
 - [FATE-Serving](https://github.com/FederatedAI/FATE-Serving)
 - [FATE-Cloud](https://github.com/FederatedAI/FATE-Cloud)
+- [FedVision](https://github.com/FederatedAI/FedVision)
+- [EggRoll](https://github.com/WeBankFinTech/eggroll)
+- [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE)
+- [KubeFATE](https://github.com/FederatedAI/KubeFATE)
 
 ### 贡献代码
 
 - [开发指南](doc/develop/develop_guide.zh.md)
-- [FATE-Client开发指南](doc/develop/fate_client_develop_guide.md)
 
 ### API文档
 
@@ -61,6 +64,10 @@ FATE官方网站：<https://fate.fedai.org/>
 - [FATE Pipeline](doc/api/fate_client/pipeline.md)
 - [FATE Test](./doc/api/fate_test.md)
 
+### 在线课程
+- [Bilibili: @FATEFedAI](https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)
+
+
 ## 了解更多
 
 - [FATE Community](https://github.com/FederatedAI/FATE-Community)
@@ -68,7 +75,6 @@ FATE官方网站：<https://fate.fedai.org/>
 - [FAQ](https://github.com/FederatedAI/FATE/wiki)
 - [issues](https://github.com/FederatedAI/FATE/issues)
 - [pull requests](https://github.com/FederatedAI/FATE/pulls)
-- [Bilibili: @FATEFedAI](https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)
 - [Twitter: @FATEFedAI](https://twitter.com/FateFedAI)
 
 

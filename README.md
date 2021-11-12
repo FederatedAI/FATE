@@ -39,7 +39,7 @@ tree-based algorithms, deep learning and transfer learning.
 
 ### Understand FATE Design 
 
-- [FATE structure]
+- [Architecture](./doc/architecture/index.md)
 - [Components](./doc/federatedml_component/index.md)
 - [Algorithm Parameters](./python/federatedml/param)
 - [Papers & Articles](./doc/resources)
@@ -50,6 +50,7 @@ tree-based algorithms, deep learning and transfer learning.
 - [FATE-Board](https://github.com/FederatedAI/FATE-Board)
 - [FATE-Serving](https://github.com/FederatedAI/FATE-Serving)
 - [FATE-Cloud](https://github.com/FederatedAI/FATE-Cloud)
+- [FedVision](https://github.com/FederatedAI/FedVision)
 - [EggRoll](https://github.com/WeBankFinTech/eggroll)
 - [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE)
 - [KubeFATE](https://github.com/FederatedAI/KubeFATE)
@@ -67,6 +68,9 @@ tree-based algorithms, deep learning and transfer learning.
 - [FATE Pipeline](doc/api/fate_client/pipeline.md)
 - [FATE Test](./doc/api/fate_test.md)
 
+### Online Courses
+- [Bilibili: @FATEFedAI](https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)
+
 ## Getting Involved
 
 - [FATE Community](https://github.com/FederatedAI/FATE-Community)
@@ -74,7 +78,6 @@ tree-based algorithms, deep learning and transfer learning.
 - [FAQ](https://github.com/FederatedAI/FATE/wiki)
 - [issues](https://github.com/FederatedAI/FATE/issues)
 - [pull requests](https://github.com/FederatedAI/FATE/pulls)
-- [Bilibili: @FATEFedAI](https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)
 - [Twitter: @FATEFedAI](https://twitter.com/FateFedAI)
 
 

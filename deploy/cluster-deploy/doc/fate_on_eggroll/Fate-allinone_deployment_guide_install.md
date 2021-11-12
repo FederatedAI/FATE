@@ -21,7 +21,7 @@
 The architecture diagram:
 
 <div style="text-align:center", align=center>
-<img src="../images/arch_en.png" />
+<img src="../../images/arch_en.png" />
 </div>
 
 # 3\. Component Description
@@ -676,4 +676,3 @@ netstat -tlnp | grep 8080
 | fate\_flow \& task log| /data/projects/fate/fateflow/logs/
 | fateboard| /data/projects/fate/fateboard/logs
 | mysql| /data/logs/mysql/
-
