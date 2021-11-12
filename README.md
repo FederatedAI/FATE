@@ -29,7 +29,6 @@ tree-based algorithms, deep learning and transfer learning.
 - [Native Cluster-deploy](./deploy/cluster-deploy)
 
 #### Quick Start
-- [Run unittest](./python/federatedml/test/)
 - [Run Job with FATE-Pipeline](./doc/tutorial/pipeline/pipeline_guide.md)
 - [Run Job with DSL json conf](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.md)
 - [FATE-Pipeline Tutorial in Jupyter Notebook](./doc/tutorial/pipeline/pipeline_tutorial_0.ipynb)
@@ -62,7 +61,7 @@ tree-based algorithms, deep learning and transfer learning.
 - [Flow SDK API](doc/api/fate_client/flow_sdk.md)
 - [Flow Client](doc/api/fate_client/flow_client.md)
 - [FATE Pipeline](doc/api/fate_client/pipeline.md)
-- [FATE Test](./doc/api/fate_test.md)
+- [FATE Test](./doc/tutorial/fate_test_tutorial.md)
 
 ## Getting Involved
 
