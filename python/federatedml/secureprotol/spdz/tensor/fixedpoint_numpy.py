@@ -337,10 +337,6 @@ class PaillierFixedPointTensor(TensorBase):
             # todo: dylan
             share = _pre
 
-            # for _party in spdz.other_parties[:-1]:
-            #     r = urand_tensor(q_field, source)
-            #     spdz.communicator.remote_share(share=r - _pre, tensor_name=tensor_name, party=_party)
-            #     _pre = r
             spdz.communicator.remote_share(share=source - encoder.decode(_pre),
                                            tensor_name=tensor_name,
                                            party=spdz.other_parties[-1])

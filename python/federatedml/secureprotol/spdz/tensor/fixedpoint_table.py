@@ -379,11 +379,7 @@ class PaillierFixedPointTensor(TensorBase):
             _pre = urand_tensor(q_field, source, use_mix=spdz.use_mix_rand)
 
             share = _pre
-            # for _party in spdz.other_parties[:-1]:
-            #     r = urand_tensor(q_field, source, use_mix=spdz.use_mix_rand)
-            #     spdz.communicator.remote_share(share=_table_binary_mod_op(r, _pre, q_field, operator.sub),
-            #                                    tensor_name=tensor_name, party=_party)
-            #     _pre = r
+
             spdz.communicator.remote_share(share=_table_binary_op(source, encoder.decode(_pre), operator.sub),
                                            tensor_name=tensor_name, party=spdz.other_parties[-1])
             return FixedPointTensor(value=share,
