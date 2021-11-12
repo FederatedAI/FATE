@@ -310,7 +310,8 @@ class HeteroLRBase(BaseLinearModel, ABC):
                 if self.role == consts.GUEST:
                     loss = np.sum(loss_list) / instances_count
                     self.loss_history.append(loss)
-                    self.callback_loss(self.n_iter_, loss)
+                    if self.need_call_back_loss:
+                        self.callback_loss(self.n_iter_, loss)
                 else:
                     loss = None
 
