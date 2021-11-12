@@ -26,9 +26,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-FROM python:3.6
+FROM centos/python-36-centos7
+
+ARG version
+
+USER root
 
 WORKDIR /fate
+ENV WORKDIR /fate
 
 ADD fate.tar /fate
 ADD docker-entrypoint.sh /fate
@@ -39,14 +44,25 @@ COPY docker-entrypoint.sh /usr/local/bin/
 
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-RUN apt-get update && apt-get install libgmp3-dev -y && apt-get install -y libmpfr-dev libmpfr-doc libmpfr6 && apt-get install libmpc-dev -y
+RUN sh ./bin/install_os_dependencies.sh root && yum clean all
 
-#RUN pip install -r requirements.txt -f ./pip-dependedocker ncies --no-index
-RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r /fate/python/requirements.txt
+RUN pip install --upgrade pip
 
-ENV PYTHONPATH /fate/python
+RUN pip install -r ./requirements.txt -f ./env/pypi --no-index
 
-RUN tar -xzf /fate/jdk-8u192.tar.gz
-ENV JAVA_PATH /fate/jdk-8u192/bin
+RUN cd ./fate/python/fate_client && python setup.py install
+RUN flow init -c ./conf/service_conf.yaml
+
+ENV PYTHONPATH /fate/fate/python:/fate/fateflow/python
+
+RUN cd ./env/jdk/ && tar -xzf jdk-8u192.tar.gz
+ENV JAVA_PATH /fate/env/jdk/jdk-8u192/bin
+
+RUN sed -i.bak "s#fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:sqlite:/fate/fate_sqlite.db#g" ./fateboard/conf/application.properties
+RUN sed -i.bak "s#fateflow.url=.*#fateflow.url=http://localhost:9380#g" ./fateboard/conf/application.properties
+
+ENV FATE_PROJECT_BASE /fate
+ENV FATE_BASE /fate/fate
+ENV FATE_FLOW_BASE /fate/fateflow
 
 ENTRYPOINT ["docker-entrypoint.sh"]
