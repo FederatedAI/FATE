@@ -698,18 +698,4 @@ netstat -tlnp | grep 8080
 | fateboard          | /data/projects/fate/fateboard/logs |
 | mysql              | /data/logs/mysql/                  |
 
-# 8. 附录
 
-## 8.1 Eggroll参数调优
-
-假定 CPU核数（cpu cores）为 c, Nodemanager的数量为 n，需要同时运行的任务数为 p，则：
-
-egg_num=eggroll.session.processors.per.node = c * 0.8 / p
-
-partitions （roll pair分区数）= egg_num * n
-
-可通过job conf中的job parameters指定作业使用的参数：
-1. egg_num：配置task_cores或者配置eggroll_run中processors_per_node参数
-2. partitions：配置computing_partitions
-
-更多关于作业提交配置请参考[dsl_conf_v2_setting_guide_zh](../../doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide_zh.rst)
