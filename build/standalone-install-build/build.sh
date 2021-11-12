@@ -1,5 +1,4 @@
 #!/bin/bash
-
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -90,7 +89,11 @@ compress(){
     ls -lrt ${package_dir}
     package_dir_parent=$(cd `dirname ${package_dir}`; pwd)
     cd ${package_dir_parent}
-    tar czf ${package_dir_name}_${version_tag}".tar.gz" ${package_dir_name}
+    if [[ $3 -eq 1 ]];then
+        echo "[INFO] skip compress"
+    else
+        tar czf ${package_dir_name}_${version_tag}".tar.gz" ${package_dir_name}
+    fi
     echo "[INFO] compress done"
 }
 
@@ -104,7 +107,7 @@ build() {
 }
 
 usage() {
-    echo "usage: $0 {version_tag}"
+    echo "usage: $0 {version_tag} {if_skip_compress}"
 }
 
 

@@ -1,5 +1,5 @@
 
-# FATE Standalone Install Build Guide
+# FATE Standalone Install Package Build Guide
 
 [TOC]
 
@@ -14,9 +14,9 @@
 ## 2. Build
 
 ```bash
-git clone https://github.com/FederatedAI/FATE.git -b $branch --recurse-submodules --depth=1
+git clone https://github.com/FederatedAI/FATE.git -b ${branch} --recurse-submodules --depth=1
 cd FATE
-bash build/package-build/build.sh $version_tag
+bash build/package-build/build.sh ${version_tag}
 ```
 
 Please set the **branch** and the **version_tag**.
@@ -26,14 +26,14 @@ The **all** means that modules needs to be deployed, all means all, supports all
 ## 3. Output
 
 ```bash
-ls -l standalone_fate_install_$version_$version_tag.tar.gz
+ls -l standalone_fate_install_${version}_${version_tag}.tar.gz
 ```
 
 ## 4. Check packages
 
 ```bash
-tar xzf standalone_fate_install_$version_$version_tag.tar.gz
-ls -lrt standalone_fate_install_$version
+tar xzf standalone_fate_install_${version}_${version_tag}.tar.gz
+ls -lrt standalone_fate_install_${version}
 ```
 
 You can see the following package:
