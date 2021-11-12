@@ -21,12 +21,13 @@ tree-based algorithms, deep learning and transfer learning.
 ### Deploy
 
 #### Standalone
-- [Deployment by Docker Compose](https://github.com/FederatedAI/KubeFATE/tree/master/docker-deploy)
 - [Native Standalone-deploy](./deploy/standalone-deploy/)
 
 #### Cluster
-- [Deployment on Kubernetes](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy)
 - [Native Cluster-deploy](./deploy/cluster-deploy)
+- [Deployment by Ansible](https://github.com/FederatedAI/AnsibleFATE)
+- [Deployment by Docker Compose](https://github.com/FederatedAI/KubeFATE/tree/master/docker-deploy)
+- [Deployment on Kubernetes](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy)
 
 #### Quick Start
 - [Run Job with FATE-Pipeline](./doc/tutorial/pipeline/pipeline_guide.md)
@@ -48,11 +49,13 @@ tree-based algorithms, deep learning and transfer learning.
 - [FATE-Board](https://github.com/FederatedAI/FATE-Board)
 - [FATE-Serving](https://github.com/FederatedAI/FATE-Serving)
 - [FATE-Cloud](https://github.com/FederatedAI/FATE-Cloud)
+- [EggRoll](https://github.com/WeBankFinTech/eggroll)
+- [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE)
+- [KubeFATE](https://github.com/FederatedAI/KubeFATE)
 
 ### Contribute to FATE
 
 - [develop guide](doc/develop/develop_guide.md)
-- [develop guide for FATE-Client](doc/develop/fate_client_develop_guide.md)
 
 ### API References
 

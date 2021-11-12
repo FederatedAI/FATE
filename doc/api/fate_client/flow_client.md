@@ -536,7 +536,7 @@ model
 
 ``` sourceCode bash
 flow model export -c fate_flow/examples/export_model.json
-flow model export -c fate_flow/examplse/store_model.json --to-database
+flow model export -c fate_flow/examples/store_model.json --to-database
 ```
 
 ### `migrate`
