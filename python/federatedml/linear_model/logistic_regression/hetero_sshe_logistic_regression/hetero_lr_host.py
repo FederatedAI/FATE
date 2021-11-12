@@ -62,21 +62,15 @@ class HeteroLRHost(HeteroLRBase):
 
         self.wx_self = z
 
-        # # DEBUG;
-        # de_wx_self = self.fixedpoint_encoder.decode(self.wx_self.value.reduce(operator.add))
-        # LOGGER.info(f"forward: de_wx_self: {de_wx_self}")
-
         self.secure_matrix_obj.share_encrypted_matrix(suffix=suffix,
                                                       is_remote=True,
                                                       cipher=cipher,
-                                                      # cipher=self.cipher,
                                                       z=z)
 
         tensor_name = ".".join(("sigmoid_z",) + suffix)
         shared_sigmoid_z = SecureMatrix.from_source(tensor_name,
                                                     self.other_party,
                                                     cipher,
-                                                    # self.cipher,
                                                     self.fixedpoint_encoder.n,
                                                     self.fixedpoint_encoder)
 
@@ -85,7 +79,6 @@ class HeteroLRHost(HeteroLRBase):
     def backward(self, error: fixedpoint_table.FixedPointTensor, features, suffix, cipher):
         batch_num = self.batch_num[int(suffix[1])]
 
-        # ga = error.dot_local(features)
         ga = features.dot_local(error)
         LOGGER.debug(f"ga: {ga}, batch_num: {batch_num}")
         ga = ga * (1 / batch_num)
@@ -104,7 +97,6 @@ class HeteroLRHost(HeteroLRBase):
         gb1 = SecureMatrix.from_source(tensor_name,
                                        self.other_party,
                                        cipher,
-                                       # self.cipher,
                                        self.fixedpoint_encoder.n,
                                        self.fixedpoint_encoder,
                                        is_fixedpoint_table=False)
@@ -126,14 +118,12 @@ class HeteroLRHost(HeteroLRBase):
         self.secure_matrix_obj.share_encrypted_matrix(suffix=suffix,
                                                       is_remote=True,
                                                       cipher=cipher,
-                                                      # cipher=self.cipher,
                                                       wx_self_square=wx_self_square)
 
         tensor_name = ".".join(("shared_loss",) + suffix)
         share_loss = SecureMatrix.from_source(tensor_name=tensor_name,
                                               source=self.other_party,
                                               cipher=cipher,
-                                              # cipher=self.cipher,
                                               q_field=self.fixedpoint_encoder.n,
                                               encoder=self.fixedpoint_encoder,
                                               is_fixedpoint_table=False)
@@ -232,7 +222,6 @@ class HeteroLRHost(HeteroLRBase):
         LOGGER.debug("In get_param, self.need_one_vs_rest: {}".format(self.need_one_vs_rest))
 
         if self.need_one_vs_rest:
-            # one_vs_rest_class = list(map(str, self.one_vs_rest_obj.classes))
             one_vs_rest_result = self.one_vs_rest_obj.save(lr_model_param_pb2.SingleModel)
             single_result = {'header': self.header, 'need_one_vs_rest': True, "best_iteration": -1}
         else:

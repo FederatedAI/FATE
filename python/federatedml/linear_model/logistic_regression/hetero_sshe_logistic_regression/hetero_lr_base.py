@@ -65,16 +65,10 @@ class HeteroLRBase(BaseLinearModel, ABC):
         if self.role == consts.GUEST:
             q_field = self.cipher.public_key.n
             self.transfer_variable.q_field.remote(q_field, role=consts.HOST, suffix=("q_field",))
-            #
-            # self.host_cipher = self.transfer_variable.q_field.get(role=consts.HOST, idx=0,
-            #                                                   suffix=("cipher",))
-
 
         else:
             q_field = self.transfer_variable.q_field.get(role=consts.GUEST, idx=0,
                                                           suffix=("q_field",))
-
-            # self.transfer_variable.q_field.remote(self.cipher, role=consts.GUEST, suffix=("cipher",))
 
         return q_field
 
@@ -108,8 +102,6 @@ class HeteroLRBase(BaseLinearModel, ABC):
                                               other_party=self.other_party)
 
     def _init_weights(self, model_shape):
-        # if self.role == consts.HOST:
-        #     self.init_param_obj.fit_intercept = False
         return self.initializer.init_model(model_shape, init_params=self.init_param_obj)
 
     def _set_parties(self):
@@ -406,7 +398,7 @@ class HeteroLRBase(BaseLinearModel, ABC):
         if self.reveal_every_iter:
             return self._reveal_every_iter_weights_check(last_w, new_w, suffix)
         else:
-            return self._not_reeal_every_iter_weights_check(last_w, new_w, suffix)
+            return self._not_reveal_every_iter_weights_check(last_w, new_w, suffix)
 
     def _reveal_every_iter_weights_check(self, last_w, new_w, suffix):
         raise NotImplementedError()
@@ -464,13 +456,7 @@ class HeteroLRBase(BaseLinearModel, ABC):
         return meta_protobuf_obj
 
     def get_single_model_param(self, model_weights=None, header=None):
-        # weight_dict = {}
-        # model_weights = model_weights if model_weights else self.model_weights
         header = header if header else self.header
-        # for idx, header_name in enumerate(header):
-        #     coef_i = model_weights.coef_[idx]
-        #     weight_dict[header_name] = coef_i
-
         result = {'iters': self.n_iter_,
                   'loss_history': self.loss_history,
                   'is_converged': self.is_converged,
@@ -519,7 +505,7 @@ class HeteroLRBase(BaseLinearModel, ABC):
         LOGGER.debug("Start Loading model")
         result_obj = list(model_dict.get('model').values())[0].get(self.model_param_name)
         meta_obj = list(model_dict.get('model').values())[0].get(self.model_meta_name)
-        # self.fit_intercept = meta_obj.fit_intercept
+
         if self.init_param_obj is None:
             self.init_param_obj = InitParam()
         self.init_param_obj.fit_intercept = meta_obj.fit_intercept
