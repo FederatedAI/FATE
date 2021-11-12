@@ -68,6 +68,9 @@ tree-based algorithms, deep learning and transfer learning.
 - [FATE Pipeline](doc/api/fate_client/pipeline.md)
 - [FATE Test](./doc/api/fate_test.md)
 
+### Online Courses
+- [Bilibili: @FATEFedAI](https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)
+
 ## Getting Involved
 
 - [FATE Community](https://github.com/FederatedAI/FATE-Community)
@@ -75,7 +78,6 @@ tree-based algorithms, deep learning and transfer learning.
 - [FAQ](https://github.com/FederatedAI/FATE/wiki)
 - [issues](https://github.com/FederatedAI/FATE/issues)
 - [pull requests](https://github.com/FederatedAI/FATE/pulls)
-- [Bilibili: @FATEFedAI](https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)
 - [Twitter: @FATEFedAI](https://twitter.com/FateFedAI)
 
 

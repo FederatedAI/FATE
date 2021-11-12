@@ -7,18 +7,18 @@ algorithms on federated learning. All modules are developed in a
 decoupling modular approach to enhance scalability. Specifically, we
 provide:
 
-1.  Federated Statistic: PSI, Union, Pearson Correlation, etc.
-2.  Federated Feature Engineering: Feature Sampling, Feature Binning,
+1. Federated Statistic: PSI, Union, Pearson Correlation, etc.
+2. Federated Information Retrieval: PIR( SIR) Based OT
+3. Federated Feature Engineering: Feature Sampling, Feature Binning,
     Feature Selection, etc.
-3.  Federated Machine Learning Algorithms: LR, GBDT, DNN,
-    TransferLearning, which support Heterogeneous and Homogeneous
+4. Federated Machine Learning Algorithms: LR, GBDT, DNN,
+    TransferLearning, UnsupervisedLearning which support Heterogeneous and Homogeneous
     styles.
-4.  Model Evaluation: Binary | Multiclass | Regression | Clustering
+5. Model Evaluation: Binary | Multiclass | Regression | Clustering
     Evaluation, Local vs Federated Comparison.
-5.  Secure Protocol: Provides multiple security protocols for secure
+6. Secure Protocol: Provides multiple security protocols for secure
     multi-party computing and interaction between participants.
 
-![Federated Machine Learning Framework](../images/federatedml_structure.png)
 
 ## Algorithm List
 
@@ -70,7 +70,6 @@ provide:
       - [Affine Homomorphic Encryption](secureprotol.md#affine-homomorphic-encryption)
       - [IterativeAffine Homomorphic Encryption](secureprotol.md#iterativeaffine-homomorphic-encryption)
       - [RSA encryption](secureprotol.md#rst-encryption)
-      - [Fake encryption](secureprotol.md#fake-encryption)
   - [Encode](secureprotol.md#encode)
   - [Diffne Hellman Key Exchange](secureprotol.md#diffne-hellman-key-exchange)
   - [SecretShare MPC Protocol(SPDZ)](secureprotol.md#secretshare-mpc-protocol-spdz)
