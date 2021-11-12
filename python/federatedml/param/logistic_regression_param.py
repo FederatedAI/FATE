@@ -122,13 +122,16 @@ class LogisticParam(LinearModelParam):
                  use_first_metric_only=False,
                  callback_param=CallbackParam()
                  ):
-        super(LogisticParam, self).__init__(penalty, tol, alpha, optimizer, batch_size,
-                                            learning_rate, init_param, max_iter, early_stop,
-                                            encrypt_param, cv_param, decay, decay_sqrt,
-                                            validation_freqs,
-                                            early_stopping_rounds, stepwise_param,
-                                            metrics, use_first_metric_only,
-                                            floating_point_precision, callback_param)
+        super(LogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
+                                            batch_size=batch_size, learning_rate=learning_rate,
+                                            init_param=init_param, max_iter=max_iter, early_stop=early_stop,
+                                            encrypt_param=encrypt_param, cv_param=cv_param, decay=decay,
+                                            decay_sqrt=decay_sqrt, validation_freqs=validation_freqs,
+                                            early_stopping_rounds=early_stopping_rounds,
+                                            stepwise_param=stepwise_param, metrics=metrics,
+                                            use_first_metric_only=use_first_metric_only,
+                                            floating_point_precision=floating_point_precision,
+                                            callback_param=callback_param)
         self.predict_param = copy.deepcopy(predict_param)
         self.multi_class = multi_class
 
@@ -171,7 +174,7 @@ class HomoLogisticParam(LogisticParam):
                  encrypt_param=EncryptParam(method=None), re_encrypt_batches=2,
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True,
-                 aggregate_iters=1, multi_class='ovr', validation_freqs=None,
+                 aggregate_iters=1, validation_freqs=None,
                  early_stopping_rounds=None,
                  metrics=['auc', 'ks'],
                  use_first_metric_only=False,
@@ -183,7 +186,7 @@ class HomoLogisticParam(LogisticParam):
                                                 learning_rate=learning_rate,
                                                 init_param=init_param, max_iter=max_iter, early_stop=early_stop,
                                                 encrypt_param=encrypt_param, predict_param=predict_param,
-                                                cv_param=cv_param, multi_class=multi_class,
+                                                cv_param=cv_param,
                                                 validation_freqs=validation_freqs,
                                                 decay=decay, decay_sqrt=decay_sqrt,
                                                 early_stopping_rounds=early_stopping_rounds,

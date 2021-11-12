@@ -118,13 +118,16 @@ class LinearParam(LinearModelParam):
                  cv_param=CrossValidationParam(), decay=1, decay_sqrt=True, validation_freqs=None,
                  early_stopping_rounds=None, stepwise_param=StepwiseParam(), metrics=None, use_first_metric_only=False,
                  floating_point_precision=23, callback_param=CallbackParam()):
-        super(LinearParam, self).__init__(penalty, tol, alpha, optimizer, batch_size,
-                                          learning_rate, init_param, max_iter, early_stop,
-                                          encrypt_param, cv_param, decay,
-                                          decay_sqrt, validation_freqs,
-                                          early_stopping_rounds, stepwise_param,
-                                          metrics, use_first_metric_only,
-                                          floating_point_precision, callback_param)
+        super(LinearParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
+                                          batch_size=batch_size, learning_rate=learning_rate,
+                                          init_param=init_param, max_iter=max_iter, early_stop=early_stop,
+                                          encrypt_param=encrypt_param, cv_param=cv_param, decay=decay,
+                                          decay_sqrt=decay_sqrt, validation_freqs=validation_freqs,
+                                          early_stopping_rounds=early_stopping_rounds,
+                                          stepwise_param=stepwise_param, metrics=metrics,
+                                          use_first_metric_only=use_first_metric_only,
+                                          floating_point_precision=floating_point_precision,
+                                          callback_param=callback_param)
         self.sqn_param = copy.deepcopy(sqn_param)
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
 

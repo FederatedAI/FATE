@@ -118,6 +118,7 @@ class LogisticRegressionParam(LogisticParam):
     def check(self):
         descr = "logistic_param's"
         super(LogisticRegressionParam, self).check()
+        self.check_boolean(self.reveal_every_iter, descr)
 
         if self.penalty is None:
             pass
@@ -169,6 +170,5 @@ class LogisticRegressionParam(LogisticParam):
 
         if self.reveal_strategy == "encrypted_reveal_in_host" and self.reveal_every_iter:
             raise PermissionError("reveal strategy: encrypted_reveal_in_host mode is not allow to reveal every iter.")
-        self.check_boolean(self.reveal_every_iter, descr)
         self.encrypted_mode_calculator_param.check()
         return True
