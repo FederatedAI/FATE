@@ -54,3 +54,5 @@ You can see the following package:
 | packages_md5.txt | md5 numbers for each package                              |
 
 ## 5. Using Standalone Install Package Install FATE Stanadlone
+
+Please reference [Fate-standalone_deployment_guide](../deploy/../../deploy/standalone-deploy/doc/Fate-standalone_deployment_guide.md)

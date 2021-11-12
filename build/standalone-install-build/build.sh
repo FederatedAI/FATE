@@ -46,6 +46,7 @@ function packaging_env(){
     cd ${source_dir} 
     cp build/standalone-install-build/init.sh ${package_dir}
     sed -i.bak "s/version=.*/version=${version}/g" ${package_dir}/init.sh
+    rm -rf ${package_dir}/init.sh.bak
 
     echo "[INFO] enter build packages"
     sh build/package-build/build.sh ${version_tag} "${environment_modules[@]}";
