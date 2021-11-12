@@ -33,12 +33,12 @@ FATE官方网站：<https://fate.fedai.org/>
 
 ## 文档
 
-### 理解FATE设计
+### FATE设计
 
-- [FATE structure]
+- [架构](./doc/architecture/index.md)
 - [组件](doc/federatedml_component/index.md)
 - [算法参数](./python/federatedml/param)
-- [论文与资料](./doc/resources)
+- [论文与会议资料](./doc/resources/index.zh.md)
 
 ### 工具与服务
 
