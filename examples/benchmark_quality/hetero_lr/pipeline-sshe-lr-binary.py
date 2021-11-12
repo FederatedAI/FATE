@@ -25,7 +25,6 @@ from pipeline.component import Reader
 from pipeline.interface import Data, Model
 
 from pipeline.utils.tools import load_job_config, JobConfig
-from pipeline.runtime.entity import JobParameters
 
 from fate_test.utils import extract_data, parse_summary_result
 from federatedml.evaluation.metrics import classification_metric
@@ -39,8 +38,6 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     guest = parties.guest[0]
     host = parties.host[0]
     arbiter = parties.arbiter[0]
-    backend = config.backend
-    work_mode = config.work_mode
 
     if isinstance(param, str):
         param = JobConfig.load_from_file(param)
@@ -110,9 +107,8 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
             "random_seed": param.get("random_seed", 103),
             "fit_intercept": True
         },
-        "reveal_strategy": param.get("reveal_strategy", "all_reveal_in_guest"),
-        "reveal_every_iter": False,
-        "compute_loss": True
+        "reveal_strategy": param.get("reveal_strategy", "respectively"),
+        "reveal_every_iter": True
     }
     lr_param.update(config_param)
     print(f"lr_param: {lr_param}, data_set: {data_set}")
@@ -134,8 +130,7 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     pipeline.compile()
 
     # fit model
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
     lr_0_data = pipeline.get_component("hetero_sshe_lr_0").get_output_data().get("data")
     lr_1_data = pipeline.get_component("hetero_sshe_lr_1").get_output_data().get("data")
     lr_0_score = extract_data(lr_0_data, "predict_result")
@@ -155,7 +150,7 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     data_summary = {"train": {"guest": guest_train_data["name"], "host": host_train_data["name"]},
                     "test": {"guest": guest_train_data["name"], "host": host_train_data["name"]}
                     }
-
+    print(f"result_summary: {result_summary}; data_summary: {data_summary}")
     return data_summary, result_summary
 
 
