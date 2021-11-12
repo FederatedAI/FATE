@@ -17,60 +17,80 @@
 #
 
 basepath=$(cd `dirname $0`;pwd)
-version=1.6.1
+version=
 env_dir=${basepath}/env
-python_dir=${basepath}/env/python36
-pypi_dir=${basepath}/env/pypi
-jdk_dir=${basepath}/env/jdk
-miniconda_dir=${python_dir}/miniconda
-venv_dir=${python_dir}/venv
+
+python_resouce=${basepath}/env/python36
+pypi_resource=${basepath}/env/pypi
+jdk_resource=${basepath}/env/jdk
+
+jdk_dir=${jdk_resource}/jdk-8u192
+miniconda_dir=${python_resouce}/miniconda
+venv_dir=${python_resouce}/venv
+
+echo "[INFO] env dir: ${env_dir}"
+echo "[INFO] jdk dir: ${jdk_dir}"
+echo "[INFO] venv dir: ${venv_dir}"
 
 init() {
 
   cd ${basepath}
-  #install os dependency
-  sh bin/init_env.sh
 
-  #install python36
-  if [ ! -f ${basepath}/miniconda/bin/python ]; then
-    bash ${env_dir}/python36/Miniconda3-4.5.4-Linux-x86_64.sh -b -p ${miniconda_dir}
+  echo "[INFO] install os dependency"
+  sh bin/install_os_dependencies.sh
+  echo "[INFO] install os dependency done"
+
+  echo "[INFO] install python36"
+  if [ ! -d ${miniconda_dir} ]; then
+    bash ${python_resouce}/Miniconda3-4.5.4-Linux-x86_64.sh -b -p ${miniconda_dir}
   fi
+  echo "[INFO] install python36 done"
+
+  echo "[INFO] install jdk"
+  if [ ! -d ${jdk_dir} ]; then
+    cd ${jdk_resource}
+    tar xzf jdk-8u192.tar.gz
+  fi
+  echo "[INFO] install jdk done"
+
+  cd ${basepath}
 
   if [ ! -f ${venv_dir}/bin/python ]; then
-    #install python36
-    ${miniconda_dir}/bin/pip install virtualenv -f ${pypi_dir}--no-index
+    echo "[INFO] install virtualenv"
+    ${miniconda_dir}/bin/pip install virtualenv -f ${pypi_resource} --no-index
     ${miniconda_dir}/bin/virtualenv -p ${miniconda_dir}/bin/python3.6  --no-wheel --no-setuptools --no-download ${venv_dir}
     source ${venv_dir}/bin/activate
-    pip install ${pypi_dir}/setuptools-42.0.2-py2.py3-none-any.whl
-    #install fate python dependency package
-    echo "pip install -r ${basepath}/requirements.txt -f ${pypi_dir} --no-index"
-    pip install -r ${basepath}/requirements.txt -f ${pypi_dir} --no-index
-    pnum=$( pip list | wc -l )
-    rnum=$( grep -cE '=|>|<' ${basepath}/requirements.txt  )
-    echo "install: $pnum require: $rnum"
+    pip install setuptools --no-index -f ${pypi_resource}
+    echo "[INFO] install virtualenv done"
 
-    #if [ $pnum -lt $rnum ]
-    #then
-    #  pip install -r ${basepath}/files/requirements.txt -f ${basepath}/files/pip-packages-fate-${version} --no-index
-    #fi
-    #rm -rf  ${basepath}/files
+    echo "[INFO] install python dependency packages by ${basepath}/requirements.txt using ${pypi_resource}"
+    pip install -r ${basepath}/requirements.txt -f ${pypi_resource} --no-index
+    echo "[INFO] install python dependency packages done"
+
+    echo "[INFO] install fate client"
+    cd ${basepath}/fate/python/fate_client
+    python setup.py install
+    flow init -c ${basepath}/conf/service_conf.yaml
+    echo "[INFO] install fate client done"
   fi
 
-	#set fate_flow 
-	sed -i.bak "s#PYTHONPATH=.*#PYTHONPATH=${basepath}/fate/python:${basepath}/fateflow/python#g" ${basepath}/bin/init_env.sh
-	sed -i.bak "s#venv=.*#venv=${venv_dir}#g" ${basepath}/bin/init_env.sh
-	sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=${jdk_dir}/jdk1.8.0_192/#g" ${basepath}/bin/init_env.sh
-	
+  echo "[INFO] setup fateflow"
+  sed -i.bak "s#PYTHONPATH=.*#PYTHONPATH=${basepath}/fate/python:${basepath}/fateflow/python#g" ${basepath}/bin/init_env.sh
+  sed -i.bak "s#venv=.*#venv=${venv_dir}#g" ${basepath}/bin/init_env.sh
+  sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=${jdk_dir}/#g" ${basepath}/bin/init_env.sh
+  echo "[INFO] setup fateflow done"
 	#sed -i.bak "s#host:.*#host: 127.0.0.1#g" ${basepath}/conf/service_conf.yaml
-	
-	#set board
-	sed -i.bak "s#fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:sqlite:${basepath}/fate_sqlite.db#g" ${basepath}/fateboard/conf/application.properties
-	sed -i.bak "s#fateflow.url=.*#fateflow.url=http://localhost:9380#g" ${basepath}/fateboard/conf/application.properties
-
-  action restart
+  echo "[INFO] setup fateboard"
+  sed -i.bak "s#fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:sqlite:${basepath}/fate_sqlite.db#g" ${basepath}/fateboard/conf/application.properties
+  sed -i.bak "s#fateflow.url=.*#fateflow.url=http://localhost:9380#g" ${basepath}/fateboard/conf/application.properties
+  echo "[INFO] setup fateboard done"
 }
 
 action() {
+  cd $basepath
+
+  source $basepath/bin/init_env.sh
+
 	cd  $basepath/fateflow
 	sh  bin/service.sh $1
 

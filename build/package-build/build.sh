@@ -234,7 +234,7 @@ function packaging_python36(){
     cd ${source_dir}
     mkdir -p ${package_dir}/python36
     cd ${package_dir}/python36
-    wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/Miniconda3-4.5.4-Linux-x86_64.sh
+    wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/Miniconda3-4.5.4-Linux-x86_64.sh
     echo "[INFO] package python36 done"
 }
 
@@ -243,7 +243,7 @@ function packaging_jdk(){
     cd ${source_dir}
     mkdir -p ${package_dir}/jdk
     cd ${package_dir}/jdk
-    wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192.tar.gz
+    wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/jdk-8u192.tar.gz
     echo "[INFO] package jdk done"
 }
 
