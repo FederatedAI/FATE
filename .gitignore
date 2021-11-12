@@ -40,7 +40,10 @@ venv
 /eggroll/
 /fateboard/
 /doc/federatedml_component/params/
+
+# build dir
 /FATE_install_*/
+/standalone_fate_install_*/
 
 # fate_test
 fate_test_config.yaml
