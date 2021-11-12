@@ -20,7 +20,7 @@
 The architecture diagram:
 
 <div style="text-align:center", align=center>
-<img src="../images/proxy_en.png" />
+<img src="../../images/proxy_en.png" />
 </div>
 
 # 3\. Component Description
