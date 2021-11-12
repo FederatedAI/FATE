@@ -5,7 +5,7 @@ label_name: "y"
 penalty: "L2"
 max_iter: 30
 alpha: 0.00001
-learning_rate: 0.3
+learning_rate: 0.35
 optimizer: "adam"
 batch_size: 20
 early_stop: "diff"

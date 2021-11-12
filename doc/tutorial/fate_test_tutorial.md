@@ -2,26 +2,8 @@
 
 A collection of useful tools to running FATE tests and [examples](../../examples).
 
-![tutorial](../images/tutorial.gif)
-
 ## quick start
-
-1.  (optional) create virtual env
-    
-    ``` sourceCode bash
-    python -m venv venv
-    source venv/bin/activate
-    pip install -U pip
-    ```
-
-2.  install fate\_test
-    
-    ``` sourceCode bash
-    pip install fate_test
-    fate_test --help
-    ```
-
-3.  edit default fate\_test\_config.yaml
+1.  edit default fate\_test\_config.yaml
     
     ``` sourceCode bash
     # edit priority config file with system default editor
@@ -29,7 +11,7 @@ A collection of useful tools to running FATE tests and [examples](../../examples
     fate_test config edit
     ```
 
-4.  configure FATE-Pipeline and FATE-Flow Commandline server setting
+2.  configure FATE-Pipeline and FATE-Flow Commandline server setting
 
 <!-- end list -->
 
@@ -40,19 +22,19 @@ pipeline init --port 9380 --ip 127.0.0.1
 flow init --port 9380 --ip 127.0.0.1
 ```
 
-5.  run some fate\_test suite
+3.  run some fate\_test suite
     
     ``` sourceCode bash
     fate_test suite -i <path contains *testsuite.json>
     ```
 
-6.  run some fate\_test benchmark
+4.  run some fate\_test benchmark
     
     ``` sourceCode bash
     fate_test benchmark-quality -i <path contains *benchmark.json>
     ```
 
-7.  useful logs or exception will be saved to logs dir with namespace
+5.  useful logs or exception will be saved to logs dir with namespace
     shown in last step
 
 ## command types
@@ -90,3 +72,7 @@ flow init --port 9380 --ip 127.0.0.1
     fate_test data generate -i <path contains *benchmark.json> -ng 10000 -fg 10 -fh 10 -m 1.0 --upload-data
     fate_test performance -i <path contains *benchmark.json>
     ```
+    
+## Usage 
+
+![tutorial](../images/tutorial.gif)

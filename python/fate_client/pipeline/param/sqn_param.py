@@ -31,7 +31,7 @@ class StochasticQuasiNewtonParam(BaseParam):
     memory_M : int, default: 5
         Stack size of curvature information, i.e. y_k and s_k in the paper.
 
-    sample_size: int, default: 5000
+    sample_size : int, default: 5000
         Sample size of data that used to update Hess matrix
 
     """
