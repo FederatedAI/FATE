@@ -18,7 +18,9 @@
 set -e
 
 source_dir=$(cd `dirname $0`; cd ../;cd ../;pwd)
-echo ${source_dir}
+echo "[INFO] source dir: ${source_dir}"
+cd ${source_dir}
+source ./build/common/var.sh
 
 if [[ -n ${1} ]]; then
     version_tag=$1
@@ -26,17 +28,23 @@ else
     version_tag="rc"
 fi
 
-cd ${source_dir}
-echo "[INFO] source dir: ${source_dir}"
 version=`grep "FATE=" fate.env | awk -F '=' '{print $2}'`
-standalone_install_package_dir_name="standalone_fate_install_"${version}
+standalone_install_package_dir_name="standalone_fate_install_${version}_${version_tag}"
 standalone_install_package_dir=${source_dir}/${standalone_install_package_dir_name}
 
 package_dir_name="standalone_fate_docker_"${version}
 package_dir=${source_dir}/${package_dir_name}
+
+if [[ ${version_tag} == ${RELEASE_VERSION_TAG_NAME} ]];then
+  image_tag=${version}
+else
+  image_tag="${version}-${version_tag}"
+fi
+
 echo "[INFO] build info"
 echo "[INFO] version: "${version}
 echo "[INFO] version tag: "${version_tag}
+echo "[INFO] image tag: "${image_tag}
 echo "[INFO] package output dir is "${package_dir}
 
 rm -rf ${package_dir} ${package_dir}_${version_tag}".tar.gz"
@@ -54,43 +62,44 @@ build() {
   fi
   mkdir -p ${workdir}
 
-  echo "[INFO] build standalone install package"
+  echo "[INFO] get standalone install package"
   if [[ -d ${standalone_install_package_dir} ]];then
     echo "[INFO] standalone install package already exists, skip build"
   else
     sh build/standalone-install-build/build.sh ${version_tag} 1
   fi
+
   echo "[INFO] copy standalone install package"
   cp -r ${standalone_install_package_dir}/* ${workdir}/
-  echo "[INFO] build standalone install package done"
+  echo "[INFO] get standalone install package done"
 
   cd ${workdir}
   tar -cf ../fate.tar ./*
   cd ../
 
-  a=`docker images | grep "fate" | grep "${version}" | wc -l`
+  a=`docker images | grep "fate" | grep "${image_tag}" | wc -l`
   if [[ a -ne 0 ]];then
-    docker rmi fate:${version}
+    docker rmi fate:${image_tag}
     if [[ $? -eq 0 ]];then
-      echo "rm image fate:${version}"
+      echo "rm image fate:${image_tag}"
     else
-      echo "please rm image fate:${version}"
+      echo "please rm image fate:${image_tag}"
       exit 1
     fi
   fi
-  docker build -t fate:${version} .
+  docker build -t fate:${image_tag} .
 
 }
 
 packaging() {
   cd ${package_dir}
-  image_tar="standalone_fate_docker_image_"${version}".tar"
+  image_tar="standalone_fate_docker_image_"${version}_${version_tag}".tar"
 
   if [[ -f ${image_tar} ]]; then
     rm -rf ${image_tar}
   fi
 
-  docker save fate:${version} -o ${image_tar}
+  docker save fate:${image_tag} -o ${image_tar}
 }
 
 usage() {

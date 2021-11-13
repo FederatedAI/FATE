@@ -37,10 +37,10 @@ ls -lrt standalone_fate_docker_${version}
 
 You can see the following package:
 
-| Name             | Details                                                   |
-| ---------------- | --------------------------------------------------------- |
-| standalone_fate_docker_image_${version}_release.tar              | docker image tar |
-| fate.tar                        | temporary files|
+| Name                                                       | Details          |
+| ---------------------------------------------------------- | ---------------- |
+| standalone_fate_docker_image_${version}_${version_tag}.tar | docker image tar |
+| fate.tar                                                   | temporary files  |
 
 ## 5. Using Standalone Docker Package Install FATE Stanadlone
 
