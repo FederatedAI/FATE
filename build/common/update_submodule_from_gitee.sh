@@ -25,3 +25,6 @@ sed -i.bak "s#WeBankFinTech.*/#WeBankFinTech/#g" .gitmodules
 # change to gitee
 sed -i.bak "s/github/gitee/g" .gitmodules
 sed -i.bak "s#WeBankFinTech.*/#WeBankFinTechFATE/#g" .gitmodules
+
+git submodule init
+git submodule update
