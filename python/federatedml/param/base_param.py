@@ -39,7 +39,25 @@ def deprecated_param(*names):
     return _decorator
 
 
-class BaseParam(object):
+class _StaticDefaultMeta(type):
+    """
+    hook object creation, copy all default parameters in `__init__`
+    """
+    def __call__(cls, *args, **kwargs):
+        obj = cls.__new__(cls)
+
+        import inspect
+        import copy
+
+        signature = inspect.signature(obj.__init__).bind(*args, **kwargs)
+        signature.apply_defaults()
+        args = copy.deepcopy(signature.args)
+        kwargs = copy.deepcopy(signature.kwargs)
+        obj.__init__(*args, **kwargs)
+        return obj
+
+
+class BaseParam(metaclass=_StaticDefaultMeta):
     def __init__(self):
         pass
 
@@ -93,9 +111,7 @@ class BaseParam(object):
                 # get attr
                 attr = getattr(obj, attr_name)
                 if attr and type(attr).__name__ not in dir(builtins):
-                    ret_dict[attr_name] = _recursive_convert_obj_to_dict(
-                        attr
-                    )
+                    ret_dict[attr_name] = _recursive_convert_obj_to_dict(attr)
                 else:
                     ret_dict[attr_name] = attr
 
