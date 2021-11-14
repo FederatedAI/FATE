@@ -32,7 +32,7 @@ version=`grep "FATE=" fate.env | awk -F '=' '{print $2}'`
 standalone_install_package_dir_name="standalone_fate_install_${version}_${version_tag}"
 standalone_install_package_dir=${source_dir}/${standalone_install_package_dir_name}
 
-package_dir_name="standalone_fate_docker_"${version}
+package_dir_name="standalone_fate_docker_${version}_${version_tag}"
 package_dir=${source_dir}/${package_dir_name}
 
 if [[ ${version_tag} == ${RELEASE_VERSION_TAG_NAME} ]];then
