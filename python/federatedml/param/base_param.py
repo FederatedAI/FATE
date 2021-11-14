@@ -19,7 +19,6 @@
 import builtins
 import json
 import os
-import copy
 
 from federatedml.util import LOGGER, consts
 
@@ -167,7 +166,7 @@ class BaseParam(metaclass=_StaticDefaultMeta):
                 else:
                     # recursive set obj attr
                     sub_params = _recursive_update_param(
-                        copy.deepcopy(attr), config_value, depth + 1, prefix=f"{prefix}{config_key}."
+                        attr, config_value, depth + 1, prefix=f"{prefix}{config_key}."
                     )
                     setattr(param, config_key, sub_params)
 
