@@ -29,7 +29,7 @@ print(f'fate_path: {cur_path}')
 sys.path.append(cur_path)
 
 from examples.scripts import submit
-from python.fate_client.flow_sdk.client import FlowClient
+from flow_sdk.client import FlowClient
 
 
 def get_flow_info():
