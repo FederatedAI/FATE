@@ -30,10 +30,11 @@ variable.guest_share.remote("from guest")
 variable.guest_share.get()
 ```
 
+<!-- mkdocs
 ::: fate_arch.federation.transfer_variable
     heading_level: 3
     show_source: true
     show_root_heading: true
     show_root_toc_entry: false
     show_root_full_path: false
-
+-->
