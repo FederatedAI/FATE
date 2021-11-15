@@ -39,7 +39,7 @@ FATE官方网站：<https://fate.fedai.org/>
 - [算法参数](./python/federatedml/param)
 - [论文与会议资料](./doc/resources/index.zh.md)
 
-### 工具与服务
+### 关联仓库
 
 - [FATE-Flow](https://github.com/FederatedAI/FATE-Flow)
 - [FATE-Board](https://github.com/FederatedAI/FATE-Board)
