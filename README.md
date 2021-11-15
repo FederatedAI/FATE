@@ -28,9 +28,9 @@ It implements secure computation protocols based on homomorphic encryption and m
 - [Deployment on Kubernetes](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy)
 
 #### Quick Start
-- [Run Job with FATE-Pipeline](./doc/tutorial/pipeline/pipeline_guide.md)
-- [Run Job with DSL json conf](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.md)
-- [FATE-Pipeline Tutorial in Jupyter Notebook](./doc/tutorial/pipeline/pipeline_tutorial_0.ipynb)
+- [Train & Predict Hetero SecureBoost with FATE-Pipeline](./doc/tutorial/pipeline/pipelin_tutorial_hetero_secureboost.ipynb)
+- [Build Homo NN model with FATE-Pipeline](./doc/tutorial/pipeline/pipeline_tutorial_0.ipynb)
+- [Run Job with DSL json conf](./doc/tutorial/dsl_conf_tutorial.md)
 
 ## Documentation 
 
@@ -64,6 +64,7 @@ It implements secure computation protocols based on homomorphic encryption and m
 - [Flow Client](doc/api/fate_client/flow_client.md)
 - [FATE Pipeline](doc/api/fate_client/pipeline.md)
 - [FATE Test](./doc/tutorial/fate_test_tutorial.md)
+- [DSL Conf Setting Guide](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.md)
 
 ### Online Courses
 - [Bilibili: @FATEFedAI](https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)

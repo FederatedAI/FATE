@@ -24,9 +24,9 @@ FATE官方网站：<https://fate.fedai.org/>
 - [原生集群安装](./deploy/cluster-deploy)
 
 ### 快速开始
-- [使用FATE-PipeLine启动任务](./doc/tutorial/pipeline/pipeline_guide.md)
-- [使用DSL json conf启动任务](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.md)
-- [在Jupyter Notebook使用FATE-Pipeline](./doc/tutorial/pipeline/pipeline_tutorial_0.ipynb)
+- [使用FATE-Pipeline训练及预测纵向SBT任务](./doc/tutorial/pipeline/pipelin_tutorial_hetero_secureboost.ipynb)
+- [使用FATE-Pipeline构建横向NN模型](./doc/tutorial/pipeline/pipeline_tutorial_0.ipynb)
+- [使用DSL json conf运行任务](./doc/tutorial/dsl_conf_tutorial.md)
 
 ## 文档
 
@@ -60,6 +60,7 @@ FATE官方网站：<https://fate.fedai.org/>
 - [Flow Client](doc/api/fate_client/flow_client.md)
 - [FATE Pipeline](doc/api/fate_client/pipeline.md)
 - [FATE Test](./doc/tutorial/fate_test_tutorial.md)
+- [DSL Conf Setting Guide](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.zh.md)
 
 ### 在线课程
 - [Bilibili: @FATEFedAI](https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)
