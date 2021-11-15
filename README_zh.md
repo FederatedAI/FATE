@@ -34,8 +34,8 @@ FATE官方网站：<https://fate.fedai.org/>
 
 ### FATE设计
 
-- [架构](./doc/architecture/index.md)
-- [组件](doc/federatedml_component/index.md)
+- [架构](./doc/architecture/README.md)
+- [组件](doc/federatedml_component/README.md)
 - [算法参数](./python/federatedml/param)
 - [论文与会议资料](./doc/resources/index.zh.md)
 
