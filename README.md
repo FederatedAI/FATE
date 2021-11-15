@@ -33,7 +33,7 @@ FATE document: <https://fate.readthedocs.io/en/latest>
 - [Deployment on Kubernetes](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy)
 
 #### Quick Start
-- [Train & Predict Hetero SecureBoost with FATE-Pipeline](./doc/tutorial/pipeline/pipeline_tutorial_hetero_secureboost.ipynb)
+- [Train & Predict Hetero SecureBoost with FATE-Pipeline](./doc/tutorial/pipeline/pipeline_tutorial_hetero_sbt.ipynb)
 - [Build Homo NN model with FATE-Pipeline](doc/tutorial/pipeline/pipeline_tutorial_homo_nn.ipynb)
 - [Run Job with DSL json conf](doc/tutorial/dsl_conf/dsl_conf_tutorial.md)
 
