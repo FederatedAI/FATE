@@ -28,8 +28,8 @@ job.
 
 | No. | Argument   | Type   | Required | Description                     |
 | --- | ---------- | ------ | -------- | ------------------------------- |
-| 1   | conf\_path | string | Yes      | Runtime configuration file path |
-| 2   | dsl\_path  | string | Yes      | DSL file path                   |
+| 1   | conf_path | string | Yes      | Runtime configuration file path |
+| 2   | dsl_path  | string | Yes      | DSL file path                   |
 
 #### `stop(job_id)`
 
@@ -38,7 +38,7 @@ job.
 
 | No. | Argument | Type    | Required | Description    |
 | --- | -------- | ------- | -------- | -------------- |
-| 1   | job\_id  | integer | Yes      | A valid job id |
+| 1   | job_id  | integer | Yes      | A valid job id |
 
 #### `query(job_id=None, role=None, party_id=None, status=None)`
 
@@ -47,9 +47,9 @@ job.
 
 | No. | Argument  | Type    | Required | Description    |
 | --- | --------- | ------- | -------- | -------------- |
-| 1   | job\_id   | integer | No       | A valid job id |
+| 1   | job_id   | integer | No       | A valid job id |
 | 2   | role      | string  | No       | Role           |
-| 3   | party\_id | integer | No       | Party id       |
+| 3   | party_id | integer | No       | Party id       |
 | 4   | status    | string  | No       | Job Status     |
 
 #### `config(job_id, role, party_id, output_path)`
@@ -59,10 +59,10 @@ job.
 
 | No | Argument     | Type    | Required | Description           |
 | -- | ------------ | ------- | -------- | --------------------- |
-| 1  | job\_id      | integer | Yes      | A valid job id        |
+| 1  | job_id      | integer | Yes      | A valid job id        |
 | 2  | role         | string  | Yes      | Role                  |
-| 3  | party\_id    | integer | Yes      | Party id              |
-| 4  | output\_path | string  | Yes      | Specified Output Path |
+| 3  | party_id    | integer | Yes      | Party id              |
+| 4  | output_path | string  | Yes      | Specified Output Path |
 
 #### `log(job_id, output_path)`
 
@@ -71,8 +71,8 @@ job.
 
 | No. | Argument     | Type    | Required | Description           |
 | --- | ------------ | ------- | -------- | --------------------- |
-| 1   | job\_id      | integer | Yes      | A valid job id        |
-| 2   | output\_path | string  | Yes      | Specified Output Path |
+| 1   | job_id      | integer | Yes      | A valid job id        |
+| 2   | output_path | string  | Yes      | Specified Output Path |
 
 #### `list(limit=10)`
 
@@ -91,10 +91,10 @@ jobs.
 
 | No. | Argument        | Type    | Required | Description    |
 | --- | --------------- | ------- | -------- | -------------- |
-| 1   | job\_id         | integer | No       | A valid job id |
+| 1   | job_id         | integer | No       | A valid job id |
 | 2   | role            | string  | No       | Role           |
-| 3   | party\_id       | integer | No       | Party id       |
-| 4   | component\_name | string  | No       | Component Name |
+| 3   | party_id       | integer | No       | Party id       |
+| 4   | component_name | string  | No       | Component Name |
 
 #### `generate_dsl(train_dsl_path, cpn_file_path=None, cpn_list = None)`
 
@@ -104,10 +104,10 @@ generator.
 
 | No. | Argument         | Type         | Required | Description                                                  |
 | --- | ---------------- | ------------ | -------- | ------------------------------------------------------------ |
-| 1   | train\_dsl\_path | string(path) | Yes      | User specifies the train dsl file path.                      |
+| 1   | train_dsl_path | string(path) | Yes      | User specifies the train dsl file path.                      |
 | 2   | version          | string       | No       | Specified version of dsl parser. Default 1.                  |
-| 3   | cpn\_file\_path  | string(path) | No       | User specifies a file path which records the component list. |
-| 4   | cpn\_list        | list         | No       | User inputs a list of component names.                       |
+| 3   | cpn_file_path  | string(path) | No       | User specifies a file path which records the component list. |
+| 4   | cpn_list        | list         | No       | User inputs a list of component names.                       |
 
 ## Component Operations
 
@@ -126,10 +126,10 @@ client.component.parameters(job_id, role, party_id, component_name)
 
 | No. | Argument        | Type    | Required | Description    |
 | --- | --------------- | ------- | -------- | -------------- |
-| 1   | job\_id         | integer | Yes      | A valid job id |
+| 1   | job_id         | integer | Yes      | A valid job id |
 | 2   | role            | string  | Yes      | Role           |
-| 3   | party\_id       | integer | Yes      | Party id       |
-| 4   | component\_name | string  | Yes      | Component Name |
+| 3   | party_id       | integer | Yes      | Party id       |
+| 4   | component_name | string  | Yes      | Component Name |
 
 #### `metric_all(job_id, role, party_id, component_name)`
 
@@ -138,10 +138,10 @@ client.component.parameters(job_id, role, party_id, component_name)
 
 | No. | Argument        | Type    | Required | Description    |
 | --- | --------------- | ------- | -------- | -------------- |
-| 1   | job\_id         | integer | Yes      | A valid job id |
+| 1   | job_id         | integer | Yes      | A valid job id |
 | 2   | role            | string  | Yes      | Role           |
-| 3   | party\_id       | integer | Yes      | Party id       |
-| 4   | component\_name | string  | Yes      | Component Name |
+| 3   | party_id       | integer | Yes      | Party id       |
+| 4   | component_name | string  | Yes      | Component Name |
 
 #### `metrics(job_id, role, party_id, component_name)`
 
@@ -150,10 +150,10 @@ client.component.parameters(job_id, role, party_id, component_name)
 
 | No. | Argument        | Type    | Required | Description    |
 | --- | --------------- | ------- | -------- | -------------- |
-| 1   | job\_id         | integer | Yes      | A valid job id |
+| 1   | job_id         | integer | Yes      | A valid job id |
 | 2   | role            | string  | Yes      | Role           |
-| 3   | party\_id       | integer | Yes      | Party id       |
-| 4   | component\_name | string  | Yes      | Component Name |
+| 3   | party_id       | integer | Yes      | Party id       |
+| 4   | component_name | string  | Yes      | Component Name |
 
 #### `metric_delete(date=None, job_id=None)`
 
@@ -164,10 +164,10 @@ metric.
 | No. | Argument | Type    | Required | Description                                   |
 | --- | -------- | ------- | -------- | --------------------------------------------- |
 | 1   | date     | integer | Yes      | An 8-Digit Valid Date, Format Like 'YYYYMMDD' |
-| 2   | job\_id  | integer | Yes      | A valid job id                                |
+| 2   | job_id  | integer | Yes      | A valid job id                                |
 
 `Notice`: If you input two optional arguments in the mean time, the
-'date' argument will be detected in priority while the 'job\_id'
+'date' argument will be detected in priority while the 'job_id'
 argument would be ignored.
 
 #### `output_model(job_id, role, party_id, component_name)`
@@ -177,10 +177,10 @@ argument would be ignored.
 
 | No. | Argument        | Type    | Required | Description    |
 | --- | --------------- | ------- | -------- | -------------- |
-| 1   | job\_id         | integer | Yes      | A valid job id |
+| 1   | job_id         | integer | Yes      | A valid job id |
 | 2   | role            | string  | Yes      | Role           |
-| 3   | party\_id       | integer | Yes      | Party id       |
-| 4   | component\_name | string  | Yes      | Component Name |
+| 3   | party_id       | integer | Yes      | Party id       |
+| 4   | component_name | string  | Yes      | Component Name |
 
 #### `output_data(job_id, role, party_id, component_name, output_path, limit=10)`
 
@@ -190,11 +190,11 @@ component.
 
 | No. | Argument        | Type    | Required | Description                                |
 | --- | --------------- | ------- | -------- | ------------------------------------------ |
-| 1   | job\_id         | integer | Yes      | A valid job id                             |
+| 1   | job_id         | integer | Yes      | A valid job id                             |
 | 2   | role            | string  | Yes      | Role                                       |
-| 3   | party\_id       | integer | Yes      | Party id                                   |
-| 4   | component\_name | string  | Yes      | Component Name                             |
-| 5   | output\_path    | string  | Yes      | Specified Output directory path            |
+| 3   | party_id       | integer | Yes      | Party id                                   |
+| 4   | component_name | string  | Yes      | Component Name                             |
+| 5   | output_path    | string  | Yes      | Specified Output directory path            |
 | 6   | limit           | integer | No       | Limit the number of results, default is 10 |
 
 #### `output_data_table(job_id, role, party_id, component_name)`
@@ -204,10 +204,10 @@ component.
 
 | No. | Argument        | Type    | Required | Description    |
 | --- | --------------- | ------- | -------- | -------------- |
-| 1   | job\_id         | integer | Yes      | A valid job id |
+| 1   | job_id         | integer | Yes      | A valid job id |
 | 2   | role            | string  | Yes      | Role           |
-| 3   | party\_id       | integer | Yes      | Party id       |
-| 4   | component\_name | string  | Yes      | Component Name |
+| 3   | party_id       | integer | Yes      | Party id       |
+| 4   | component_name | string  | Yes      | Component Name |
 
 #### `list(job_id)`
 
@@ -216,7 +216,7 @@ component.
 
 | No. | Argument | Type    | Required | Description    |
 | --- | -------- | ------- | -------- | -------------- |
-| 1   | job\_id  | integer | Yes      | A valid job id |
+| 1   | job_id  | integer | Yes      | A valid job id |
 
 #### `get_summary(job_id, role, party_id, component_name)`
 
@@ -225,10 +225,10 @@ component.
 
 | No. | Argument        | Type    | Required | Description    |
 | --- | --------------- | ------- | -------- | -------------- |
-| 1   | job\_id         | integer | Yes      | A valid job id |
+| 1   | job_id         | integer | Yes      | A valid job id |
 | 2   | role            | string  | Yes      | Role           |
-| 3   | party\_id       | integer | Yes      | Party id       |
-| 4   | component\_name | string  | Yes      | Component Name |
+| 3   | party_id       | integer | Yes      | Party id       |
+| 4   | component_name | string  | Yes      | Component Name |
 
 ## Data Operations
 
@@ -247,7 +247,7 @@ client.data.download(conf_path)
 
 | No. | Argument   | Type   | Required | Description             |
 | --- | ---------- | ------ | -------- | ----------------------- |
-| 1   | conf\_path | string | Yes      | Configuration file path |
+| 1   | conf_path | string | Yes      | Configuration file path |
 
 #### `upload(conf_path, verbose=0, drop=0)`
 
@@ -257,7 +257,7 @@ Table.
 
 | No. | Argument   | Type    | Required | Description                                                                                                                                                                                           |
 | --- | ---------- | ------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | conf\_path | string  | Yes      | Configuration file path                                                                                                                                                                               |
+| 1   | conf_path | string  | Yes      | Configuration file path                                                                                                                                                                               |
 | 2   | verbose    | integer | No       | Verbose mode, 0 (default) means 'disable', 1 means 'enable'                                                                                                                                           |
 | 3   | drop       | integer | No       | If 'drop' is set to be 0 (defualt), when data had been uploaded before, current upload task would be rejected. If 'drop' is set to be 1, data of old version would be replaced by the latest version. |
 
@@ -270,7 +270,7 @@ History.
 | No. | Argument | Type    | Required | Description                                |
 | --- | -------- | ------- | -------- | ------------------------------------------ |
 | 1   | limit    | integer | No       | Limit the number of results, default is 10 |
-| 2   | job\_id  | integer | No       | A valid job id                             |
+| 2   | job_id  | integer | No       | A valid job id                             |
 
 ## Task Operations
 
@@ -299,10 +299,10 @@ tasks.
 
 | No. | Argument        | Type    | Required | Description     |
 | --- | --------------- | ------- | -------- | --------------- |
-| 1   | job\_id         | integer | No       | A valid job id. |
+| 1   | job_id         | integer | No       | A valid job id. |
 | 2   | role            | string  | No       | Role            |
-| 3   | party\_id       | integer | No       | Party ID        |
-| 4   | component\_name | string  | No       | Component Name  |
+| 3   | party_id       | integer | No       | Party ID        |
+| 4   | component_name | string  | No       | Component Name  |
 | 5   | status          | string  | No       | Job Status      |
 
 ## Model Operations
@@ -317,27 +317,23 @@ client.model.load(conf_path)
 
 #### `load(conf_path=None, job_id=None)`
 
-  - *Description*： Load model. Need to deploy model first if
-    <span class="title-ref">dsl\_version</span> ==
-    <span class="title-ref">2</span>.
+  - *Description*： Load model. Need to `deploy` model first if `dsl_version == 2`.
   - *Arguments*：
 
 | No. | Argument   | Type   | Required | Description             |
 | --- | ---------- | ------ | -------- | ----------------------- |
-| 1   | conf\_path | string | No       | Configuration file path |
-| 2   | job\_id    | string | No       | A valid job id          |
+| 1   | conf_path | string | No       | Configuration file path |
+| 2   | job_id    | string | No       | A valid job id          |
 
 #### `bind(conf_path, job_id=None)`
 
-  - *Description*： Bind model. Need to deploy model first if
-    <span class="title-ref">dsl\_version</span> ==
-    <span class="title-ref">2</span>.
+  - *Description*： Bind model. Need to `deploy` model first if `dsl_version == 2`.
   - *Arguments*：
 
 | No. | Argument   | Type   | Required | Description             |
 | --- | ---------- | ------ | -------- | ----------------------- |
-| 1   | conf\_path | string | Yes      | Configuration file path |
-| 2   | job\_id    | string | No       | A valid job id          |
+| 1   | conf_path | string | Yes      | Configuration file path |
+| 2   | job_id    | string | No       | A valid job id          |
 
 #### `export_model(conf_path, to_database=False)`
 
@@ -347,8 +343,8 @@ model.
 
 | No. | Argument     | Type   | Required | Description                                                                                                                                |
 | --- | ------------ | ------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1   | conf\_path   | string | Yes      | Configuration file path                                                                                                                    |
-| 2   | to\_database | bool   | No       | If specified and there is a valid database environment, fate flow will export model to database which you specified in configuration file. |
+| 1   | conf_path   | string | Yes      | Configuration file path                                                                                                                    |
+| 2   | to_database | bool   | No       | If specified and there is a valid database environment, fate flow will export model to database which you specified in configuration file. |
 
 #### `import_model(conf_path, from_database=False)`
 
@@ -358,8 +354,8 @@ model.
 
 | No. | Argument       | Type   | Required | Description                                                                                                                                  |
 | --- | -------------- | ------ | -------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | conf\_path     | string | Yes      | Configuration file path                                                                                                                      |
-| 2   | from\_database | bool   | No       | If specified and there is a valid database environment, fate flow will import model from database which you specified in configuration file. |
+| 1   | conf_path     | string | Yes      | Configuration file path                                                                                                                      |
+| 2   | from_database | bool   | No       | If specified and there is a valid database environment, fate flow will import model from database which you specified in configuration file. |
 
 #### `migrate(conf_path, to_database=False)`
 
@@ -369,8 +365,8 @@ model.
 
 | No. | Argument     | Type   | Required | Description                                                                                                                                |
 | --- | ------------ | ------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1   | conf\_path   | string | Yes      | Configuration file path                                                                                                                    |
-| 2   | to\_database | bool   | No       | If specified and there is a valid database environment, fate flow will export model to database which you specified in configuration file. |
+| 1   | conf_path   | string | Yes      | Configuration file path                                                                                                                    |
+| 2   | to_database | bool   | No       | If specified and there is a valid database environment, fate flow will export model to database which you specified in configuration file. |
 
 #### `tag_list(job_id)`
 
@@ -379,7 +375,7 @@ model.
 
 | No. | Argument | Type    | Required | Description    |
 | --- | -------- | ------- | -------- | -------------- |
-| 1   | job\_id  | integer | Yes      | A valid job id |
+| 1   | job_id  | integer | Yes      | A valid job id |
 
 #### `tag_model(job_id, tag_name, remove=False)`
 
@@ -389,21 +385,22 @@ model.
 
 | No. | Argument  | Type    | Required | Description                                                                                          |
 | --- | --------- | ------- | -------- | ---------------------------------------------------------------------------------------------------- |
-| 1   | job\_id   | integer | Yes      | A valid job id                                                                                       |
-| 2   | tag\_name | string  | Yes      | The name of tag                                                                                      |
+| 1   | job_id   | integer | Yes      | A valid job id                                                                                       |
+| 2   | tag_name | string  | Yes      | The name of tag                                                                                      |
 | 3   | remove    | bool    | No       | If specified, the name of specified model will be removed from the model name list of specified tag. |
 
-#### `deploy(model_id, model_version=None, cpn_list=None, predict_dsl=None)`
+#### `deploy(model_id, model_version=None, cpn_list=None, predict_dsl=None, components_checkpoint=None)`
 
   - *Description*： Deploy model.
   - *Arguments*：
 
 | No. | Argument       | Type   | Required | Description          |
 | --- | -------------- | ------ | -------- | -------------------- |
-| 1   | model\_id      | string | Yes      | Parent model id      |
-| 2   | model\_version | string | Yes      | Parent model version |
-| 3   | cpn\_list      | list   | No       | Component list       |
-| 4   | predict\_dsl   | dict   | No       | Predict DSL          |
+| 1   | model_id      | string | Yes      | Parent model id      |
+| 2   | model_version | string | Yes      | Parent model version |
+| 3   | cpn_list      | list   | No       | Component list       |
+| 4   | predict_dsl   | dict   | No       | Predict DSL          |
+| 5   | components_checkpoint   | dict   | No       | Specify checkpoints          |
 
 #### `get_predict_dsl(model_id, model_version)`
 
@@ -412,8 +409,8 @@ model.
 
 | No. | Argument       | Type   | Required | Description          |
 | --- | -------------- | ------ | -------- | -------------------- |
-| 1   | model\_id      | string | Yes      | Parent model id      |
-| 2   | model\_version | string | Yes      | Parent model version |
+| 1   | model_id      | string | Yes      | Parent model id      |
+| 2   | model_version | string | Yes      | Parent model version |
 
 #### `get_predict_conf(model_id, model_version)`
 
@@ -422,8 +419,8 @@ model.
 
 | No. | Argument       | Type   | Required | Description          |
 | --- | -------------- | ------ | -------- | -------------------- |
-| 1   | model\_id      | string | Yes      | Parent model id      |
-| 2   | model\_version | string | Yes      | Parent model version |
+| 1   | model_id      | string | Yes      | Parent model id      |
+| 2   | model_version | string | Yes      | Parent model version |
 
 #### `get_model_info(model_id=None, model_version=None, role=None, party_id=None, query_filters=None, **kwargs)`
 
@@ -432,11 +429,11 @@ model.
 
 | No. | Argument       | Type   | Required | Description   |
 | --- | -------------- | ------ | -------- | ------------- |
-| 1   | model\_id      | string | No       | model id      |
-| 2   | model\_version | string | Yes      | model version |
+| 1   | model_id      | string | No       | model id      |
+| 2   | model_version | string | Yes      | model version |
 | 3   | role           | string | No       | role name     |
-| 4   | party\_id      | string | No       | party id      |
-| 5   | query\_filters | list   | No       | query filters |
+| 4   | party_id      | string | No       | party id      |
+| 5   | query_filters | list   | No       | query filters |
 
 #### `homo_convert(conf_path)`
 
@@ -446,7 +443,7 @@ model.
 
 | No. | Argument   | Type   | Required | Description             |
 | --- | ---------- | ------ | -------- | ----------------------- |
-| 1   | conf\_path | string | Yes      | Configuration file path |
+| 1   | conf_path | string | Yes      | Configuration file path |
 
 #### `homo_deploy(conf_path)`
 
@@ -456,7 +453,7 @@ model.
 
 | No. | Argument   | Type   | Required | Description             |
 | --- | ---------- | ------ | -------- | ----------------------- |
-| 1   | conf\_path | string | Yes      | Configuration file path |
+| 1   | conf_path | string | Yes      | Configuration file path |
 
 ## Tag Operations
 
@@ -475,8 +472,8 @@ client.tag.create(tag_name, desc)
 
 | No. | Argument  | Type   | Required | Description            |
 | --- | --------- | ------ | -------- | ---------------------- |
-| 1   | tag\_name | string | Yes      | The name of tag        |
-| 2   | tag\_desc | string | No       | The description of tag |
+| 1   | tag_name | string | Yes      | The name of tag        |
+| 2   | tag_desc | string | No       | The description of tag |
 
 #### `update(tag_name, new_tag_name=None, new_tag_desc=None)`
 
@@ -485,9 +482,9 @@ client.tag.create(tag_name, desc)
 
 | No. | Argument       | Type   | Required | Description            |
 | --- | -------------- | ------ | -------- | ---------------------- |
-| 1   | tag\_name      | string | Yes      | The name of tag        |
-| 2   | new\_tag\_name | string | No       | New name of tag        |
-| 3   | new\_tag\_desc | string | No       | New description of tag |
+| 1   | tag_name      | string | Yes      | The name of tag        |
+| 2   | new_tag_name | string | No       | New name of tag        |
+| 3   | new_tag_desc | string | No       | New description of tag |
 
 #### `list(limit=10)`
 
@@ -507,8 +504,8 @@ tag.
 
 | No. | Argument    | Type   | Required | Description                                                                                  |
 | --- | ----------- | ------ | -------- | -------------------------------------------------------------------------------------------- |
-| 1   | tag\_name   | string | Yes      | The name of tag                                                                              |
-| 2   | with\_model | bool   | No       | If specified, the information of models which have the tag custom queried would be displayed |
+| 1   | tag_name   | string | Yes      | The name of tag                                                                              |
+| 2   | with_model | bool   | No       | If specified, the information of models which have the tag custom queried would be displayed |
 
 #### `delete(tag_name)`
 
@@ -517,7 +514,7 @@ tag.
 
 | No. | Argument  | Type   | Required | Description     |
 | --- | --------- | ------ | -------- | --------------- |
-| 1   | tag\_name | string | Yes      | The name of tag |
+| 1   | tag_name | string | Yes      | The name of tag |
 
 ## Table Operations
 
@@ -537,7 +534,7 @@ client.table.info(namespace, table_name)
 | No. | Argument    | Type   | Required | Description |
 | --- | ----------- | ------ | -------- | ----------- |
 | 1   | namespace   | string | Yes      | Namespace   |
-| 2   | table\_name | string | Yes      | Table Name  |
+| 2   | table_name | string | Yes      | Table Name  |
 
 #### `delete(namespace=None, table_name=None, job_id=None, role=None, party_id=None, component_name=None)`
 
@@ -547,11 +544,11 @@ client.table.info(namespace, table_name)
 | No. | Argument        | Type    | Required | Description    |
 | --- | --------------- | ------- | -------- | -------------- |
 | 1   | namespace       | string  | No       | Namespace      |
-| 2   | table\_name     | string  | No       | Table Name     |
-| 3   | job\_id         | integer | No       | A valid job id |
+| 2   | table_name     | string  | No       | Table Name     |
+| 3   | job_id         | integer | No       | A valid job id |
 | 4   | role            | string  | No       | Role           |
-| 5   | party\_id       | integer | No       | Party id       |
-| 6   | component\_name | string  | No       | Component Name |
+| 5   | party_id       | integer | No       | Party id       |
+| 6   | component_name | string  | No       | Component Name |
 
 ## Queue Operations
 
