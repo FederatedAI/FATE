@@ -1,11 +1,16 @@
-# DSL version 2 predict tutorial
-	This documentation will give a brief tutorial of how to run a predict task after a trainning task.
-	We will take hetero-secureboost as an example.
+# DSL Conf Tutorial
+
+This documentation will give a brief tutorial on how to run train & predict tasks with [DSL Conf](dsl_conf_v2_setting_guide.md).
+We will take hetero-secureboost as an example.
 	
+## Upload Data
+
+Before running jobs, data need to be uploaded to data storage. Please refer [here](./upload_data_guide.md) for an example.
+
 ## Submit a training task
-We can start a training job by submitting conf & dsl through [Flow Client](../../../doc/api/fate_client/flow_client.rst),
+We can start a training job by submitting conf & dsl through [Flow Client](../api/fate_client/flow_client.rst),
 Here we submit a hetero-secureboost binary classification task, whose conf and dsl are in [hetero secureboost example 
-folder.](../../dsl/v2/hetero_secureboost)
+folder.](../../../examples/dsl/v2/hetero_secureboost)
 
     >> flow job submit -c ./examples/dsl/v2/hetero_secureboost/test_secureboost_train_binary_conf.json -d ./examples/dsl/v2/hetero_secureboost/test_secureboost_train_dsl.json
     >> {
@@ -53,7 +58,7 @@ We use flow_client to deploy components needed in the prediction task:
 
 We can modify existing predict conf by replacing model_id, model_version and data set name with yours to make a new 
 predict conf.
-Here we replace model_id and model_version in [predict conf](../../dsl/v2/hetero_secureboost/test_predict_conf.json) 
+Here we replace model_id and model_version in [predict conf](../../../examples/dsl/v2/hetero_secureboost/test_predict_conf.json) 
 with model_id and model_version returned by training job.
 
     {
