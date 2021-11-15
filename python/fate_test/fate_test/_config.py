@@ -33,9 +33,9 @@ flow_test_config_directory: examples/flow_test_template/hetero_lr/flow_test_conf
 fate_base: path(FATE)/fate
 clean_data: true
 parties:
-  guest: [10000]
-  host: [9999, 10000]
-  arbiter: [9999]
+  guest: [9999]
+  host: [10000, 9999]
+  arbiter: [10000]
 services:
   - flow_services:
       - {address: 127.0.0.1:9380, parties: [9999, 10000]}
