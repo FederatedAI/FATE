@@ -25,9 +25,9 @@ The architecture diagram:
 
 # 3\. Component Description
 
-| Software| Component| Port| Description
-|----------|----------|----------|----------
-| eggroll| rollsite| 9370| The cross-site/party communication component, equivalent to proxy+federation; each party can only have one for this service
+| Software | Component | Port | Description                                                  |
+| -------- | --------- | ---- | ------------------------------------------------------------ |
+| eggroll  | rollsite  | 9370 | The cross-site/party communication component, equivalent to proxy+federation; each party can only have one for this service |
 
 # 4\. Basic Environment Configuration
 
@@ -132,6 +132,8 @@ Note: In this guide, the installation directory is /data/projects/install and th
 ## 5.1 Obtain Installation Package
 
 Execute as app user on the destination server (192.168.0.1 with extranet environment):
+
+Note: Replace ${version} with the specific FATE version number.
 
 ```
 cd /data/projects/install

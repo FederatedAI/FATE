@@ -252,13 +252,13 @@ Note: In this guide, the installation directory is /data/projects/ and the execu
 
 Go to the /data/projects/ directory of the execution node and execute:
 
+Note: Replace ${version} with specific FATE version number,can be viewed on the [release page](https://github.com/FederatedAI/FATE/releases).
+
 ```
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_cluster_install_{version}_release-c7-u18.tar.gz
-tar xzf fate_cluster_install_{version}_release-c7-u18.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_cluster_install_${version}_release-c7-u18.tar.gz
+tar xzf fate_cluster_install_${version}_release-c7-u18.tar.gz
 ```
-
-Note: {version}can be viewed on the [release page](https://github.com/FederatedAI/FATE/releases).
 
 ## 5.2 Pre-Deployment Check
 
