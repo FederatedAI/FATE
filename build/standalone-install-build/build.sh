@@ -142,7 +142,7 @@ compress(){
     if [[ ${if_skip_compress} -eq 1 ]];then
         echo "[INFO] skip compress"
     else
-        tar czf ${package_dir_name}_${version_tag}".tar.gz" ${package_dir_name}
+        tar czf ${package_dir_name}".tar.gz" ${package_dir_name}
     fi
     echo "[INFO] compress done"
 }
