@@ -20,12 +20,14 @@ FATE文档：<https://fate.readthedocs.io/en/latest>
 ### 部署
 
 #### 单机版
-- [Docker Compose安装](https://github.com/FederatedAI/KubeFATE/tree/master/docker-deploy)
 - [原生单机版安装](./deploy/standalone-deploy/)
 
-#### 分布式
-- [Kubernetes安装](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy)
+#### 集群
 - [原生集群安装](./deploy/cluster-deploy)
+- [Ansible集群安装](https://github.com/FederatedAI/AnsibleFATE)
+- [Kubernetes安装](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy)
+- [Docker Compose安装](https://github.com/FederatedAI/KubeFATE/tree/master/docker-deploy)
+
 
 ### 快速开始
 - [使用FATE-Pipeline训练及预测纵向SBT任务](./doc/tutorial/pipeline/pipeline_tutorial_hetero_sbt.ipynb)
