@@ -32,11 +32,11 @@ ARG version
 
 USER root
 
-WORKDIR /fate
-ENV WORKDIR /fate
+WORKDIR /data/projects/fate
+ENV WORKDIR /data/projects/fate
 
-ADD fate.tar /fate
-ADD docker-entrypoint.sh /fate
+ADD fate.tar ${WORKDIR}
+ADD docker-entrypoint.sh ${WORKDIR}
 
 RUN rm /bin/sh && ln -sf /bin/bash /bin/sh
 
@@ -48,12 +48,8 @@ RUN sh ./bin/install_os_dependencies.sh root && yum clean all
 
 # python enviroment and dependencies
 RUN pip install --upgrade pip -f ./env/pypi --no-index
-# virtual environments are not used in docker environments
-RUN sed -i.bak "s#venv=.*##g" ./bin/init_env.sh
-RUN sed -i.bak "s#source.*venv.*##g" ./bin/init_env.sh
 RUN pip install -r ./requirements.txt -f ./env/pypi --no-index
-
-ENV PYTHONPATH /fate/fate/python:/fate/fateflow/python
+ENV PYTHONPATH ${WORKDIR}/fate/python:${WORKDIR}/fateflow/python
 RUN sed -i.bak "s#PYTHONPATH=.*#PYTHONPATH=${PYTHONPATH}#g" ./bin/init_env.sh
 
 # install and initialize the fate client
@@ -62,14 +58,20 @@ RUN flow init -c ./conf/service_conf.yaml
 
 # java enviroment
 RUN cd ./env/jdk/ && tar -xzf jdk-8u192.tar.gz
-ENV JAVA_HOME /fate/env/jdk/jdk-8u192
+ENV JAVA_HOME ${WORKDIR}/env/jdk/jdk-8u192
 RUN sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=${JAVA_HOME}#g" ./bin/init_env.sh
 
-RUN sed -i.bak "s#fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:sqlite:/fate/fate_sqlite.db#g" ./fateboard/conf/application.properties
+RUN sed -i.bak "s#fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:sqlite:${WORKDIR}/fate_sqlite.db#g" ./fateboard/conf/application.properties
 RUN sed -i.bak "s#fateflow.url=.*#fateflow.url=http://localhost:9380#g" ./fateboard/conf/application.properties
 
-ENV FATE_PROJECT_BASE /fate
-ENV FATE_BASE /fate/fate
-ENV FATE_FLOW_BASE /fate/fateflow
+ENV FATE_PROJECT_BASE ${WORKDIR}
+ENV FATE_BASE ${WORKDIR}/fate
+ENV FATE_FLOW_BASE ${WORKDIR}/fateflow
+
+# clean up things that don't need to be used in the Docker environment
+RUN sed -i.bak "s#venv=.*##g" ./bin/init_env.sh
+RUN sed -i.bak "s#source.*venv.*##g" ./bin/init_env.sh
+RUN rm -rf ./env/python36
+RUN rm -rf ./init.sh
 
 ENTRYPOINT ["docker-entrypoint.sh"]
