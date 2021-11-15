@@ -254,9 +254,11 @@ Go to the /data/projects/ directory of the execution node and execute:
 
 ```
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_cluster_install_1.6.1_release-c7-u18.tar.gz
-tar xzf fate_cluster_install_1.6.1_release-c7-u18.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_cluster_install_{version}_release-c7-u18.tar.gz
+tar xzf fate_cluster_install_{version}_release-c7-u18.tar.gz
 ```
+
+Note: {version}can be viewed on the [release page](https://github.com/FederatedAI/FATE/releases).
 
 ## 5.2 Pre-Deployment Check
 
@@ -288,45 +290,45 @@ vi fate-cluster-install/allInone/conf/setup.conf
 
 Description of Profile setup.conf
 
-| Configuration Item| Item Value| Description
-|----------|----------|----------
-| roles| Default: "host", "guest"| The deployment roles: host or guest
-| version| Default: 1.6.1| The version of FATE
-| pbase| Default: /data/projects| The root directory of the project
-| lbase| Default: /data/logs| Keep the default value and do not modify
-| ssh\_user| Default: app| The user who connects the destination machine by ssh, and the owner of the deployed file
-| ssh\_group| Default: apps| The group which the user who connects the destination machine by ssh belongs to, and the group which the deployed file belongs to
-| ssh\_port| Default: 22, modify according to the actual situation| The ssh connection port; verify the port before deployment, otherwise the connection error will be reported
-| eggroll\_dbname| Default: eggroll\_meta| The name of the DB that eggroll is connected to
-| fate\_flow\_dbname| Default: fate\_flow| The name of the DB that fate\_flow, fateboard, etc. are connected to
-| mysql\_admin\_pass| Default:| The password of mysql admin (root)
-| redis\_pass| Default:| The password of redis (currently not used)
-| mysql\_user| Default: fate| The account for mysql application connection
-| mysql\_port| Default: 3306, modify according to the actual situation| The port listened by the mysql service
-| host\_id| Default: 10000, modify according to the implementation plan| The party id of host
-| host\_ip| 192.168.0.1| The ip of host
-| host\_mysql\_ip| Match host\_ip by default| The ip of host mysql
-| host\_mysql\_pass| Default:| The account for host mysql application connection
-| guest\_id| Default: 9999, modify according to the implementation plan| The party id of guest
-| guest\_ip| 192.168.0.2| The ip of guest
-| guest\_mysql\_ip| Match guest\_ip by default| The ip of guest mysql
-| guest\_mysql\_pass| Default:| The account for guest mysql application connection
-| dbmodules| Default: "mysql"| The list of deployment modules for DB components, such as "mysql"
-| basemodules| Default: "tools", "base", "java", "python", "eggroll", "fate"| The list of deployment modules for non-DB components, such as "tools", "base", "java", "python", "eggroll", "fate"
-| fateflow\_grpc\_port| Default: 9360| The fateflow grpc service port
-| fateflow\_http\_port| Default: 9380| The fateflow http service port
-| fateboard\_port| Default: 8080| The fateboard service port
-| rollsite\_port| Default: 9370| The rollsite service port
-| clustermanager\_port| Default: 4670| The clustermanager service port
-| nodemanager\_port| Default: 4671| The nodemanager service port
+| Configuration Item   | Item Value                                                   | Description                                                  |
+| -------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| roles                | Default: "host", "guest"                                     | The deployment roles: host or guest                          |
+| version              | Default: {version}                                           | The version of FATE                                          |
+| pbase                | Default: /data/projects                                      | The root directory of the project                            |
+| lbase                | Default: /data/logs                                          | Keep the default value and do not modify                     |
+| ssh\_user            | Default: app                                                 | he user who connects the destination machine<br> by ssh,and the owner of the deployed file |
+| ssh\_group           | Default: apps                                                | The group which the user who connects the <br>destination machine by ssh belongs to, and <br>the group which the deployed file belongs to |
+| ssh\_port            | Default: 22, modify <br>according to the actual situation    | The ssh connection port; verify the port before<br> deployment, otherwise the connection error will be reported |
+| eggroll\_dbname      | Default: eggroll\_meta                                       | The name of the DB that eggroll is connected to              |
+| fate\_flow\_dbname   | Default: fate\_flow                                          | The name of the DB that fate\_flow, fateboard, etc. are connected to |
+| mysql\_admin\_pass   | Default:                                                     | The password of mysql admin (root)                           |
+| redis\_pass          | Default:                                                     | The password of redis (currently not used)                   |
+| mysql\_user          | Default: fate                                                | The account for mysql application connection                 |
+| mysql\_port          | Default: 3306, modify according to the actual situation      | The port listened by the mysql service                       |
+| host\_id             | Default: 10000, modify according to the implementation plan  | The party id of host                                         |
+| host\_ip             | 192.168.0.1                                                  | The ip of host                                               |
+| host\_mysql\_ip      | Match host\_ip by default                                    | The ip of host mysql                                         |
+| host\_mysql\_pass    | Default:                                                     | The account for host mysql application connection            |
+| guest\_id            | Default: 9999, modify according to the implementation plan   | The party id of guest                                        |
+| guest\_ip            | 192.168.0.2                                                  | The ip of guest                                              |
+| guest\_mysql\_ip     | Match guest\_ip by default                                   | The ip of guest mysql                                        |
+| guest\_mysql\_pass   | Default:                                                     | The account for guest mysql application connection           |
+| dbmodules            | Default: "mysql"                                             | The list of deployment modules for DB components, such as "mysql" |
+| basemodules          | Default: "tools", "base", "java", "python", "eggroll", "fate" | The list of deployment modules for non-DB components, such as "tools", "base", "java", "python", "eggroll", "fate" |
+| fateflow\_grpc\_port | Default: 9360                                                | The fateflow grpc service port                               |
+| fateflow\_http\_port | Default: 9380                                                | The fateflow http service port                               |
+| fateboard\_port      | Default: 8080                                                | The fateboard service port                                   |
+| rollsite\_port       | Default: 9370                                                | The rollsite service port                                    |
+| clustermanager\_port | Default: 4670                                                | The clustermanager service port                              |
+| nodemanager\_port    | Default: 4671                                                | The nodemanager service port                                 |
 
-**1) Simultaneous Deployment of Two Hosts partyA+partyB**\*\*
+**1) Simultaneous Deployment of Two Hosts partyA+partyB**
 
 ```
 #to install role
 roles=( "host" "guest" )
 
-version="1.6.1"
+version="{version}"
 #project base
 pbase="/data/projects"
 #log directory
@@ -391,7 +393,7 @@ nodemanager_port=4671
 #to install role
 roles=( "host" )
 
-version="1.6.1"
+version="{version}"
 #project base
 pbase="/data/projects"
 #log directory
