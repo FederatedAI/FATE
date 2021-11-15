@@ -6,9 +6,7 @@
 
 [DOC](./doc) | [Quick Start](doc/tutorial/pipeline/pipeline_guide.md) | [English](./README.md)
 
-FATE (Federated AI Technology Enabler) 是微众银行AI部门发起的开源项目，为联邦学习生态系统提供了可靠的安全计算框架。
-FATE项目使用多方安全计算 (MPC) 以及同态加密 (HE) 技术构建底层安全计算协议，以此支持不同种类的机器学习的安全计算，
-包括逻辑回归、基于树的算法、深度学习和迁移学习等。
+FATE (Federated AI Technology Enabler) 是微众银行AI部门发起的全球首个联邦学习工业级开源框架，可以让企业和机构在保护数据安全和数据隐私的前提下进行数据协作。FATE于2019年2月首次对外开源，并于2019年6月由微众银行捐献给Linux基金会，并成立FATE TSC对FATE社区进行开源治理，成员包含国内主要云计算和金融服务企业。FATE项目使用多方安全计算 (MPC) 以及同态加密 (HE) 技术构建底层安全计算协议，以此支持不同种类的机器学习的安全计算，包括逻辑回归、基于树的算法、深度学习和迁移学习等。
 
 FATE官方网站：<https://fate.fedai.org/>
 
@@ -32,33 +30,40 @@ FATE官方网站：<https://fate.fedai.org/>
 
 ## 文档
 
-### 理解FATE设计
+### FATE设计
 
-- [FATE structure]
-- [组件](doc/federatedml_component/index.md)
+- [架构](./doc/architecture/README.md)
+- [组件](doc/federatedml_component/README.md)
 - [算法参数](./python/federatedml/param)
-- [论文与资料](./doc/resources)
+- [论文与会议资料](./doc/resources/index.zh.md)
 
-### 工具与服务
+### 关联仓库
 
 - [FATE-Flow](https://github.com/FederatedAI/FATE-Flow)
 - [FATE-Board](https://github.com/FederatedAI/FATE-Board)
 - [FATE-Serving](https://github.com/FederatedAI/FATE-Serving)
 - [FATE-Cloud](https://github.com/FederatedAI/FATE-Cloud)
+- [FedVision](https://github.com/FederatedAI/FedVision)
+- [EggRoll](https://github.com/WeBankFinTech/eggroll)
+- [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE)
+- [KubeFATE](https://github.com/FederatedAI/KubeFATE)
 
 ### 贡献代码
 
 - [开发指南](doc/develop/develop_guide.zh.md)
-- [FATE-Client开发指南](doc/develop/fate_client_develop_guide.md)
 
 ### API文档
-
+- [Session API](doc/api/session.md)
 - [Computing API](doc/api/computing.md)
 - [Federation API](./doc/api/federation.md)
 - [Flow SDK API](doc/api/fate_client/flow_sdk.md)
 - [Flow Client](doc/api/fate_client/flow_client.md)
 - [FATE Pipeline](doc/api/fate_client/pipeline.md)
 - [FATE Test](./doc/tutorial/fate_test_tutorial.md)
+
+### 在线课程
+- [Bilibili: @FATEFedAI](https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)
+
 
 ## 了解更多
 
@@ -67,7 +72,6 @@ FATE官方网站：<https://fate.fedai.org/>
 - [FAQ](https://github.com/FederatedAI/FATE/wiki)
 - [issues](https://github.com/FederatedAI/FATE/issues)
 - [pull requests](https://github.com/FederatedAI/FATE/pulls)
-- [Bilibili: @FATEFedAI](https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)
 - [Twitter: @FATEFedAI](https://twitter.com/FateFedAI)
 
 

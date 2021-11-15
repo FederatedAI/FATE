@@ -83,6 +83,12 @@
         },
         "hetero-lr-cv": {
             "script": "pipeline-hetero-lr-cv.py"
+        },
+        "hetero-lr-converged-weight-diff-respectively-not-reveal": {
+            "script": "pipeline-hetero-lr-converged-weight-diff-respectively-not-reveal.py"
+        },
+        "hetero-lr-converged-weight-diff-encrypted-not-reveal": {
+            "script": "pipeline-hetero-lr-converged-weight-diff-encrypted-not-reveal.py"
         }
     }
 }
