@@ -26,7 +26,8 @@ cur_path = os.path.realpath(__file__)
 for i in range(3):
     cur_path = os.path.dirname(cur_path)
 print(f'fate_path: {cur_path}')
-sys.path.append(cur_path)
+# sys.path.append(cur_path)
+sys.path.insert(0, cur_path)
 
 import submit
 from flow_sdk.client import FlowClient
