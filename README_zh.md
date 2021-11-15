@@ -29,8 +29,8 @@ FATE文档：<https://fate.readthedocs.io/en/latest>
 
 ### 快速开始
 - [使用FATE-Pipeline训练及预测纵向SBT任务](./doc/tutorial/pipeline/pipelin_tutorial_hetero_secureboost.ipynb)
-- [使用FATE-Pipeline构建横向NN模型](./doc/tutorial/pipeline/pipeline_tutorial_0.ipynb)
-- [使用DSL json conf运行任务](./doc/tutorial/dsl_conf_tutorial.md)
+- [使用FATE-Pipeline构建横向NN模型](doc/tutorial/pipeline/pipeline_tutorial_homo_nn.ipynb)
+- [使用DSL json conf运行任务](doc/tutorial/dsl_conf/dsl_conf_tutorial.md)
 
 ## 文档
 

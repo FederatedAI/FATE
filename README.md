@@ -34,8 +34,8 @@ FATE document: <https://fate.readthedocs.io/en/latest>
 
 #### Quick Start
 - [Train & Predict Hetero SecureBoost with FATE-Pipeline](./doc/tutorial/pipeline/pipelin_tutorial_hetero_secureboost.ipynb)
-- [Build Homo NN model with FATE-Pipeline](./doc/tutorial/pipeline/pipeline_tutorial_0.ipynb)
-- [Run Job with DSL json conf](./doc/tutorial/dsl_conf_tutorial.md)
+- [Build Homo NN model with FATE-Pipeline](doc/tutorial/pipeline/pipeline_tutorial_homo_nn.ipynb)
+- [Run Job with DSL json conf](doc/tutorial/dsl_conf/dsl_conf_tutorial.md)
 
 ## Documentation 
 
