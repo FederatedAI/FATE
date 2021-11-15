@@ -130,7 +130,6 @@ class FixedPointTensor(TensorBase):
             return self._boxed(ret, target_name)
 
         elif is_table(other):
-            # todo: dylan[0]
             ret = table_dot_mod(self.value, other, self.q_field).reshape((1, -1))[0]
             ret = self.endec.truncate(ret, self.get_spdz().party_idx)
             return fixedpoint_numpy.FixedPointTensor(ret,
@@ -220,10 +219,9 @@ class FixedPointTensor(TensorBase):
 
     def __add__(self, other):
         if isinstance(other, PaillierFixedPointTensor):
-            # PaillierFixedPointTensor
             z_value = _table_binary_op(self.value, other.value, operator.add)
             return PaillierFixedPointTensor(z_value)
-        if isinstance(other, FixedPointTensor):
+        elif isinstance(other, FixedPointTensor):
             z_value = _table_binary_mod_op(self.value, other.value, self.q_field, operator.add)
         elif is_table(other):
             z_value = _table_binary_mod_op(self.value, other, self.q_field, operator.add)
@@ -236,9 +234,9 @@ class FixedPointTensor(TensorBase):
 
     def __sub__(self, other):
         if isinstance(other, PaillierFixedPointTensor):
-            z_value = _table_binary_op(self.value, other.value, operator)
+            z_value = _table_binary_op(self.value, other.value, operator.sub)
             return PaillierFixedPointTensor(z_value)
-        if isinstance(other, FixedPointTensor):
+        elif isinstance(other, FixedPointTensor):
             z_value = _table_binary_mod_op(self.value, other.value, self.q_field, operator.sub)
         elif is_table(other):
             z_value = _table_binary_mod_op(self.value, other, self.q_field, operator.sub)
@@ -248,9 +246,7 @@ class FixedPointTensor(TensorBase):
         return self._boxed(z_value)
 
     def __rsub__(self, other):
-        if isinstance(other, PaillierFixedPointTensor):
-            return other - self
-        if isinstance(other, FixedPointTensor):
+        if isinstance(other, (PaillierFixedPointTensor, FixedPointTensor)):
             return other - self
         elif is_table(other):
             z_value = _table_binary_mod_op(other, self.value, self.q_field, operator.sub)
@@ -260,10 +256,9 @@ class FixedPointTensor(TensorBase):
 
     def __mul__(self, other):
         if isinstance(other, FixedPointTensor):
-            # raise NotImplementedError("__mul__ support scalar only")
             z_value = _table_binary_mod_op(self.value, other.value, self.q_field, operator.mul)
         elif isinstance(other, PaillierFixedPointTensor):
-            return other * self
+            z_value = _table_binary_op(self.value, other.value, operator.mul)
         else:
             z_value = _table_scalar_mod_op(self.value, other, self.q_field, operator.mul)
         z_value = self.endec.truncate(z_value, self.get_spdz().party_idx)
@@ -304,7 +299,6 @@ class PaillierFixedPointTensor(TensorBase):
             return self._boxed(ret, target_name)
 
         elif is_table(other):
-            # todo: dylan [0]
             ret = table_dot(self.value, other).reshape((1, -1))[0]
             return fixedpoint_numpy.PaillierFixedPointTensor(ret, target_name)
         else:
@@ -349,7 +343,6 @@ class PaillierFixedPointTensor(TensorBase):
 
     def __mul__(self, other):
         if isinstance(other, FixedPointTensor):
-            # raise NotImplementedError("__mul__ support scalar only")
             z_value = _table_binary_op(self.value, other.value, operator.mul)
         elif is_table(other):
             z_value = _table_binary_op(self.value, other, operator.mul)

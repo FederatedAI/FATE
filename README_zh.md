@@ -34,8 +34,8 @@ FATE官方网站：<https://fate.fedai.org/>
 
 ### FATE设计
 
-- [架构](./doc/architecture/index.md)
-- [组件](doc/federatedml_component/index.md)
+- [架构](./doc/architecture/README.md)
+- [组件](doc/federatedml_component/README.md)
 - [算法参数](./python/federatedml/param)
 - [论文与会议资料](./doc/resources/index.zh.md)
 
@@ -55,7 +55,7 @@ FATE官方网站：<https://fate.fedai.org/>
 - [开发指南](doc/develop/develop_guide.zh.md)
 
 ### API文档
-
+- [Session API](doc/api/session.md)
 - [Computing API](doc/api/computing.md)
 - [Federation API](./doc/api/federation.md)
 - [Flow SDK API](doc/api/fate_client/flow_sdk.md)

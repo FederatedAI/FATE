@@ -107,6 +107,14 @@
             "deps": "hetero_lr_ovr",
             "conf": "hetero_lr_ovr_predict_conf.json",
             "dsl": "hetero_lr_ovr_predict_dsl.json"
+        },
+        "hetero_lr_converged_weight_diff_respectively_not_reveal": {
+            "conf": "hetero_lr_converged_weight_diff_respectively_not_reveal_conf.json",
+            "dsl": "hetero_lr_converged_weight_diff_respectively_not_reveal_dsl.json"
+        },
+        "hetero_lr_converged_weight_diff_encrypted_not_reveal": {
+            "conf": "hetero_lr_converged_weight_diff_encrypted_not_reveal_conf.json",
+            "dsl": "hetero_lr_converged_weight_diff_encrypted_not_reveal_dsl.json"
         }
     }
 }

@@ -26,35 +26,6 @@
                 ]
             }
         },
-        "reader_1": {
-            "module": "Reader",
-            "output": {
-                "data": [
-                    "data"
-                ]
-            }
-        },
-        "data_transform_1": {
-            "module": "DataTransform",
-            "input": {
-                "data": {
-                    "data": [
-                        "reader_1.data"
-                    ]
-                },
-                "model": [
-                    "data_transform_0.model"
-                ]
-            },
-            "output": {
-                "data": [
-                    "data"
-                ],
-                "model": [
-                    "model"
-                ]
-            }
-        },
         "intersection_0": {
             "module": "Intersection",
             "input": {
@@ -73,29 +44,11 @@
                 ]
             }
         },
-        "intersection_1": {
-            "module": "Intersection",
+        "hetero_sshe_lr_0": {
+            "module": "HeteroSSHELR",
             "input": {
                 "data": {
-                    "data": [
-                        "data_transform_1.data"
-                    ]
-                }
-            },
-            "output": {
-                "data": [
-                    "data"
-                ],
-                "cache": [
-                    "cache"
-                ]
-            }
-        },
-        "hetero_feature_binning_0": {
-            "module": "HeteroFeatureBinning",
-            "input": {
-                "data": {
-                    "data": [
+                    "train_data": [
                         "intersection_0.data"
                     ]
                 }
@@ -109,24 +62,18 @@
                 ]
             }
         },
-        "hetero_feature_binning_1": {
-            "module": "HeteroFeatureBinning",
+        "evaluation_0": {
+            "module": "Evaluation",
             "input": {
                 "data": {
                     "data": [
-                        "intersection_1.data"
+                        "hetero_sshe_lr_0.data"
                     ]
-                },
-                "model": [
-                    "hetero_feature_binning_0.model"
-                ]
+                }
             },
             "output": {
                 "data": [
                     "data"
-                ],
-                "model": [
-                    "model"
                 ]
             }
         }
