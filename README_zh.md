@@ -6,9 +6,7 @@
 
 [DOC](./doc) | [Quick Start](doc/tutorial/pipeline/pipeline_guide.md) | [English](./README.md)
 
-FATE (Federated AI Technology Enabler) 是微众银行AI部门发起的开源项目，为联邦学习生态系统提供了可靠的安全计算框架。
-FATE项目使用多方安全计算 (MPC) 以及同态加密 (HE) 技术构建底层安全计算协议，以此支持不同种类的机器学习的安全计算，
-包括逻辑回归、基于树的算法、深度学习和迁移学习等。
+FATE (Federated AI Technology Enabler) 是微众银行AI部门发起的全球首个联邦学习工业级开源框架，可以让企业和机构在保护数据安全和数据隐私的前提下进行数据协作。FATE于2019年2月首次对外开源，并于2019年6月由微众银行捐献给Linux基金会，并成立FATE TSC对FATE社区进行开源治理，成员包含国内主要云计算和金融服务企业。FATE项目使用多方安全计算 (MPC) 以及同态加密 (HE) 技术构建底层安全计算协议，以此支持不同种类的机器学习的安全计算，包括逻辑回归、基于树的算法、深度学习和迁移学习等。
 
 FATE官方网站：<https://fate.fedai.org/>
 
@@ -39,7 +37,7 @@ FATE官方网站：<https://fate.fedai.org/>
 - [算法参数](./python/federatedml/param)
 - [论文与会议资料](./doc/resources/index.zh.md)
 
-### 工具与服务
+### 关联仓库
 
 - [FATE-Flow](https://github.com/FederatedAI/FATE-Flow)
 - [FATE-Board](https://github.com/FederatedAI/FATE-Board)

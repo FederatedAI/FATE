@@ -8,12 +8,10 @@
 
 [DOC](./doc) | [Quick Start](doc/tutorial/pipeline/pipeline_guide.md) | [中文](./README_zh.md)
 
-FATE (Federated AI Technology Enabler) is an open-source project initiated by Webank's AI Department to provide a secure computing framework to support federated AI ecosystem. 
-It implements secure computation protocols based on homomorphic encryption and multi-party computation (MPC). 
-Supporting various federated learning scenarios, FATE now provides a host of federated learning algorithms, including logistic regression, 
-tree-based algorithms, deep learning and transfer learning.
+FATE (Federated AI Technology Enabler) is the world's first industrial grade federated learning open source framework initiated by Webank's AI Department to enable enterprises and institutions to collaborate on data while protecting data security and privacy. FATE opened source for the first time in February 2019, and was donated to Linux Foundation by Webank in June 2019. FATE TSC was established to conduct open source governance of FATE community, with members including major domestic cloud computing and financial service enterprises. 
+It implements secure computation protocols based on homomorphic encryption and multi-party computation (MPC). Supporting various federated learning scenarios, FATE now provides a host of federated learning algorithms, including logistic regression, tree-based algorithms, deep learning and transfer learning.
 
-<https://fate.fedai.org>
+<https://fate.readthedocs.io/en/latest>
 
 
 ## Getting Started
@@ -43,7 +41,7 @@ tree-based algorithms, deep learning and transfer learning.
 - [Algorithm Parameters](./python/federatedml/param)
 - [Paper & Conference](./doc/resources/index.md)
 
-### Tools & Services
+### Association Repository
 
 - [FATE-Flow](https://github.com/FederatedAI/FATE-Flow)
 - [FATE-Board](https://github.com/FederatedAI/FATE-Board)

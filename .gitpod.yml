@@ -21,7 +21,6 @@ github:
 vscode:
   extensions:
     - ms-python.python
-    - eamodio.gitlens
 
 tasks:
   - name: vscode settings
@@ -45,18 +44,13 @@ tasks:
       unset PIP_USER && unset PYTHONUSERBASE
       cat << 'EOF' >> "$PWD/.git/info/exclude"
       /bin/init_env.sh
-      /python/fate_client/pipeline/config.yaml
       /fateboard/src/main/resources/application.properties
       EOF
       sed -i 's#export PYTHONPATH=#export PYTHONPATH=/workspace/FATE/python:/workspace/FATE/fateflow/python:/workspace/FATE/eggroll/python#' bin/init_env.sh
       sed -i 's#venv=.*#venv=/venv/py36#' bin/init_env.sh
-      /venv/py36/bin/python -m pip install /workspace/FATE/python/fate_client
-      /venv/py36/bin/python -m pip install /workspace/FATE/python/fate_test
-      /venv/py36/bin/pipeline init --ip 127.0.0.1 --port 9380
 
     command: | 
       git update-index --assume-unchanged bin/init_env.sh \
-      && git update-index --assume-unchanged python/fate_client/pipeline/config.yaml \
       && source /workspace/FATE/bin/init_env.sh \
       && bash /workspace/FATE/fateflow/bin/service.sh start \
       && gp sync-done flowup
@@ -67,7 +61,8 @@ tasks:
       rm -rf /workspace/m2-repository
       sed -i 's#fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:sqlite:/workspace/FATE/fate_sqlite.db#' fateboard/src/main/resources/application.properties
       sed -i 's#sdkman_auto_answer=.*#sdkman_auto_answer=true#' /home/gitpod/.sdkman/etc/config
-    command: |
+    
+      command: |
       cd /workspace/FATE/fateboard \
       && git update-index --assume-unchanged src/main/resources/application.properties \
       && cd /workspace/FATE \
@@ -85,4 +80,4 @@ ports:
   - port: 9360
     onOpen: ignore
   - port: 8080
-    onOpen: open-preview
+    onOpen: open-browser

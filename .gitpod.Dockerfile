@@ -1,5 +1,11 @@
 FROM gitpod/workspace-full:latest
 
+### jdk
+USER gitpod
+RUN bash -c ". /home/gitpod/.sdkman/bin/sdkman-init.sh \
+    && sed -i 's#sdkman_auto_answer=.*#sdkman_auto_answer=true#' /home/gitpod/.sdkman/etc/config \
+    && sdk install java 8.0.292.j9-adpt \
+    && sdk default java 8.0.292.j9-adpt"
 
 ### Python ###
 USER root
@@ -19,7 +25,10 @@ RUN pyenv install 3.6.15 \
     && /venv/py36/bin/python -m pip install --no-cache-dir -r /venv/requirements.txt \
     && sudo rm -rf /tmp/* \
     && sudo rm /venv/requirements.txt
-RUN bash -c ". /home/gitpod/.sdkman/bin/sdkman-init.sh \
-    && sed -i 's#sdkman_auto_answer=.*#sdkman_auto_answer=true#' /home/gitpod/.sdkman/etc/config \
-    && sdk install java 8.0.292.j9-adpt \
-    && sdk default java 8.0.292.j9-adpt"
+
+COPY python/fate_client /venv/fate_client
+RUN /venv/py36/bin/python -m pip install --no-cache-dir /venv/fate_client \
+    && /venv/py36/bin/pipeline init --ip 127.0.0.1 --port 9380
+
+COPY python/fate_test /venv/fate_test
+RUN /venv/py36/bin/python -m pip install --no-cache-dir /venv/fate_test
