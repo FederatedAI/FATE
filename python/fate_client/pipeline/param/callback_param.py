@@ -35,7 +35,7 @@ class CallbackParam(BaseParam):
     early_stopping_rounds: None or int
         Will stop training if one metric doesn’t improve in last early_stopping_round rounds
 
-    metrics: None, or list
+    metrics: None, or list, default None
         Indicate when executing evaluation during train process, which metrics will be used. If set as empty,
         default metrics for specific task type will be used. As for binary classification, default metrics are
         ['auc', 'ks']

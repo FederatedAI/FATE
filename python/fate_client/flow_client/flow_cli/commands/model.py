@@ -150,7 +150,7 @@ def export_model(ctx, **kwargs):
     \b
     - USAGE:
         flow model export -c fate_flow/examples/export_model.json
-        flow model export -c fate_flow/examplse/store_model.json --to-database
+        flow model export -c fate_flow/examples/store_model.json --to-database
     """
     config_data, dsl_data = preprocess(**kwargs)
     if not config_data.pop('to_database'):

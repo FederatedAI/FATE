@@ -12,33 +12,6 @@
             10000
         ]
     },
-    "job_parameters": {
-        "common": {
-            "computing_engine": "STANDALONE",
-            "federation_engine": "STANDALONE",
-            "storage_engine": "STANDALONE",
-            "engines_address": {},
-            "federated_mode": "SINGLE",
-            "task_parallelism": 1,
-            "computing_partitions": 4,
-            "federated_status_collect_type": "PUSH",
-            "model_id": "guest-10000#host-9999#model",
-            "model_version": "202109011508335850710",
-            "auto_retries": 0,
-            "auto_retry_delay": 1,
-            "eggroll_run": {},
-            "spark_run": {},
-            "rabbitmq_run": {},
-            "pulsar_run": {},
-            "adaptation_parameters": {
-                "task_nodes": 1,
-                "task_cores_per_node": 4,
-                "task_memory_per_node": 0,
-                "request_task_cores": 4,
-                "if_initiator_baseline": true
-            }
-        }
-    },
     "component_parameters": {
         "role": {
             "guest": {
@@ -97,7 +70,5 @@
                 "local_only": false
             }
         }
-    },
-    "dsl_path": "/tmp/tmp2zc5tf8b/job_dsl.json",
-    "conf_path": "/tmp/tmp2zc5tf8b/job_runtime_conf.json"
+    }
 }

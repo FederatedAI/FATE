@@ -14,7 +14,7 @@ keys.
 
 The process of HeteroKmeans training is shown below:
 
-![hetero-kmeans structure](../../images/heterokmeans.png)
+![hetero-kmeans structure](../images/heterokmeans.png)
 
 Figure 1 (Federated HeteroKmeans Principle)
 

@@ -27,13 +27,13 @@ class LabelTransformParam(BaseParam):
     Parameters
     ----------
 
-    label_encoder : None, dict, default : None
+    label_encoder : None or dict, default : None
         Specify (label, encoded label) key-value pairs for transforming labels to new values.
         e.g. {"Yes": 1, "No": 0}
 
-    label_list : None, list, default : None
+    label_list : None or list, default : None
         List all input labels, used for matching types of original keys in label_encoder dict,
-        length should match key count of label_encoder
+        length should match key count in label_encoder
         e.g. ["Yes", "No"]
 
     need_run: bool, default: True

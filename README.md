@@ -21,27 +21,27 @@ tree-based algorithms, deep learning and transfer learning.
 ### Deploy
 
 #### Standalone
-- [Deployment by Docker Compose](https://github.com/FederatedAI/KubeFATE/tree/master/docker-deploy)
 - [Native Standalone-deploy](./deploy/standalone-deploy/)
 
 #### Cluster
-- [Deployment on Kubernetes](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy)
 - [Native Cluster-deploy](./deploy/cluster-deploy)
+- [Deployment by Ansible](https://github.com/FederatedAI/AnsibleFATE)
+- [Deployment by Docker Compose](https://github.com/FederatedAI/KubeFATE/tree/master/docker-deploy)
+- [Deployment on Kubernetes](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy)
 
 #### Quick Start
-- [Run unittest](./python/federatedml/test/)
 - [Run Job with FATE-Pipeline](./doc/tutorial/pipeline/pipeline_guide.md)
 - [Run Job with DSL json conf](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.md)
 - [FATE-Pipeline Tutorial in Jupyter Notebook](./doc/tutorial/pipeline/pipeline_tutorial_0.ipynb)
 
 ## Documentation 
 
-### Understand FATE Design 
+### FATE Design 
 
-- [FATE structure]
+- [Architecture](./doc/architecture/index.md)
 - [Components](./doc/federatedml_component/index.md)
 - [Algorithm Parameters](./python/federatedml/param)
-- [Papers & Articles](./doc/resources)
+- [Paper & Conference](./doc/resources/index.md)
 
 ### Tools & Services
 
@@ -49,11 +49,14 @@ tree-based algorithms, deep learning and transfer learning.
 - [FATE-Board](https://github.com/FederatedAI/FATE-Board)
 - [FATE-Serving](https://github.com/FederatedAI/FATE-Serving)
 - [FATE-Cloud](https://github.com/FederatedAI/FATE-Cloud)
+- [FedVision](https://github.com/FederatedAI/FedVision)
+- [EggRoll](https://github.com/WeBankFinTech/eggroll)
+- [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE)
+- [KubeFATE](https://github.com/FederatedAI/KubeFATE)
 
 ### Contribute to FATE
 
 - [develop guide](doc/develop/develop_guide.md)
-- [develop guide for FATE-Client](doc/develop/fate_client_develop_guide.md)
 
 ### API References
 
@@ -62,7 +65,10 @@ tree-based algorithms, deep learning and transfer learning.
 - [Flow SDK API](doc/api/fate_client/flow_sdk.md)
 - [Flow Client](doc/api/fate_client/flow_client.md)
 - [FATE Pipeline](doc/api/fate_client/pipeline.md)
-- [FATE Test](./doc/api/fate_test.md)
+- [FATE Test](./doc/tutorial/fate_test_tutorial.md)
+
+### Online Courses
+- [Bilibili: @FATEFedAI](https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)
 
 ## Getting Involved
 
@@ -71,7 +77,6 @@ tree-based algorithms, deep learning and transfer learning.
 - [FAQ](https://github.com/FederatedAI/FATE/wiki)
 - [issues](https://github.com/FederatedAI/FATE/issues)
 - [pull requests](https://github.com/FederatedAI/FATE/pulls)
-- [Bilibili: @FATEFedAI](https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)
 - [Twitter: @FATEFedAI](https://twitter.com/FateFedAI)
 
 

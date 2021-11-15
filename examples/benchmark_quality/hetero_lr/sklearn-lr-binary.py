@@ -17,12 +17,10 @@
 import argparse
 
 import pandas
-from sklearn.linear_model.logistic import LogisticRegression
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import roc_auc_score, precision_score, accuracy_score, recall_score, roc_curve
 import os
 
-from sklearn.model_selection import train_test_split
 from pipeline.utils.tools import JobConfig
 
 

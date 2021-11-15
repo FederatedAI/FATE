@@ -12,6 +12,8 @@ _build
 venv
 *.log
 *.tar.gz
+*.db
+*.db-journal
 
 # excluded paths
 /arch/core/target/
@@ -39,6 +41,10 @@ venv
 /fateboard/
 /doc/federatedml_component/params/
 
+# build dir
+/FATE_install_*/
+/standalone_fate_install_*/
+
 # fate_test
 fate_test_config.yaml
 examples/cache/
@@ -47,3 +53,14 @@ examples/cache/
 
 # user defined config
 /conf/local.*.yaml
+
+# logs
+**/logs/*
+
+# editable install
+PKG-INFO
+entry_points.txt
+dependency_links.txt
+requires.txt
+SOURCES.txt
+top_level.txt

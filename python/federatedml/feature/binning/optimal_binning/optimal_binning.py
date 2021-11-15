@@ -21,7 +21,6 @@ import functools
 import math
 import operator
 import time
-import uuid
 
 import numpy as np
 
@@ -39,13 +38,16 @@ from federatedml.util import consts
 
 
 class OptimalBinning(BaseBinning):
-    def __init__(self, params: HeteroFeatureBinningParam, abnormal_list=None):
+    def __init__(self, params, abnormal_list=None):
         super().__init__(params, abnormal_list)
-        self.optimal_param = params.optimal_binning_param
-        self.optimal_param.adjustment_factor = params.adjustment_factor
-        self.optimal_param.max_bin = params.bin_num
-        if math.ceil(1.0 / self.optimal_param.max_bin_pct) > self.optimal_param.max_bin:
-            raise ValueError("Arguments logical error, ceil(1.0/max_bin_pct) should be smaller or equal than bin_num")
+        """The following lines work only in fitting process"""
+        if isinstance(params, HeteroFeatureBinningParam):
+            self.optimal_param = params.optimal_binning_param
+            self.optimal_param.adjustment_factor = params.adjustment_factor
+            self.optimal_param.max_bin = params.bin_num
+            if math.ceil(1.0 / self.optimal_param.max_bin_pct) > self.optimal_param.max_bin:
+                raise ValueError("Arguments logical error, ceil(1.0/max_bin_pct) "
+                                 "should be smaller or equal than bin_num")
 
         self.adjustment_factor = params.adjustment_factor
         self.event_total = None
