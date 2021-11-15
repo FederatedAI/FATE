@@ -45,7 +45,7 @@ ls -l FATE_install_${version}_${version_tag}.tar.gz
 
 ```bash
 tar xzf FATE_install_${version}_${version_tag}.tar.gz
-ls -lrt FATE_install_${version}
+ls -lrt FATE_install_${version}_${version_tag}
 ```
 
 You can see the following package:
@@ -78,13 +78,13 @@ bash build/package-build/build.sh ${version_tag} pypi
 And then you found it:
 
 ```bash
-FATE_install_${version}/pypi.tar.gz
+FATE_install_${version}_${version_tag}/pypi.tar.gz
 ```
 
 You can use it like:
 
 ```bash
-pip install -r FATE/python/requirements.txt --no-index -f FATE_install_${version}/pypi
+pip install -r FATE/python/requirements.txt --no-index -f FATE_install_${version}_${version_tag}/pypi
 ```
 
 **Ensure that the operating system on which the dependency packages are made and the operating system on which the dependency packages will be installed**
@@ -102,7 +102,7 @@ bash build/package-build/build.sh ${version_tag} python36
 And then you found it:
 
 ```bash
-FATE_install_${version}/python36.tar.gz
+FATE_install_${version}_${version_tag}/python36.tar.gz
 ```
 
 **Ensure that the operating system on which the dependency packages are made and the operating system on which the dependency packages will be installed**
@@ -120,5 +120,5 @@ bash build/package-build/build.sh ${version_tag} jdk
 And then you can use it like:
 
 ```bash
-FATE_install_${version}/jdk.tar.gz
+FATE_install_${version}_${version_tag}/jdk.tar.gz
 ```

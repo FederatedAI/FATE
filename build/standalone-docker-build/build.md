@@ -36,13 +36,13 @@ The **all** means that modules needs to be deployed, all means all, supports all
 ## 4. Output
 
 ```bash
-ls -l standalone_fate_install_${version}
+ls -l standalone_fate_install_${version}_${version_tag}
 ```
 
 ## 5. Check packages
 
 ```bash
-ls -lrt standalone_fate_docker_${version}
+ls -lrt standalone_fate_docker_${version}_${version_tag}
 ```
 
 You can see the following package:

@@ -45,7 +45,7 @@ ls -l standalone_fate_install_${version}_${version_tag}.tar.gz
 
 ```bash
 tar xzf standalone_fate_install_${version}_${version_tag}.tar.gz
-ls -lrt standalone_fate_install_${version}
+ls -lrt standalone_fate_install_${version}_${version_tag}
 ```
 
 You can see the following package:
