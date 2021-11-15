@@ -46,17 +46,24 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 RUN sh ./bin/install_os_dependencies.sh root && yum clean all
 
-RUN pip install --upgrade pip
-
+# python enviroment and dependencies
+RUN pip install --upgrade pip -f ./env/pypi --no-index
+# virtual environments are not used in docker environments
+RUN sed -i.bak "s#venv=.*##g" ./bin/init_env.sh
+RUN sed -i.bak "s#source.*venv.*##g" ./bin/init_env.sh
 RUN pip install -r ./requirements.txt -f ./env/pypi --no-index
 
+ENV PYTHONPATH /fate/fate/python:/fate/fateflow/python
+RUN sed -i.bak "s#PYTHONPATH=.*#PYTHONPATH=${PYTHONPATH}#g" ./bin/init_env.sh
+
+# install and initialize the fate client
 RUN cd ./fate/python/fate_client && python setup.py install
 RUN flow init -c ./conf/service_conf.yaml
 
-ENV PYTHONPATH /fate/fate/python:/fate/fateflow/python
-
+# java enviroment
 RUN cd ./env/jdk/ && tar -xzf jdk-8u192.tar.gz
-ENV JAVA_PATH /fate/env/jdk/jdk-8u192/bin
+ENV JAVA_HOME /fate/env/jdk/jdk-8u192
+RUN sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=${JAVA_HOME}#g" ./bin/init_env.sh
 
 RUN sed -i.bak "s#fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:sqlite:/fate/fate_sqlite.db#g" ./fateboard/conf/application.properties
 RUN sed -i.bak "s#fateflow.url=.*#fateflow.url=http://localhost:9380#g" ./fateboard/conf/application.properties
