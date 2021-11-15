@@ -38,8 +38,8 @@ tree-based algorithms, deep learning and transfer learning.
 
 ### FATE Design 
 
-- [Architecture](./doc/architecture/index.md)
-- [Components](./doc/federatedml_component/index.md)
+- [Architecture](./doc/architecture/README.md)
+- [Components](./doc/federatedml_component/README.md)
 - [Algorithm Parameters](./python/federatedml/param)
 - [Paper & Conference](./doc/resources/index.md)
 
