@@ -7,7 +7,7 @@ from federatedml.ensemble import HeteroSecureBoostingTreeGuest, HeteroSecureBoos
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam, DecisionTreeModelParam
 from federatedml.ensemble.boosting.boosting_core import Boosting
 from federatedml.ensemble import HeteroDecisionTreeHost
-from federatedml.protobuf.model_migrate.sbt_model_to_lgb import sbt_to_lgb
+from federatedml.protobuf.homo_model_convert.lightgbm.gbdt import sbt_to_lgb
 from federatedml.param.shap_param import TreeSHAPParam
 from federatedml.util import LOGGER
 from federatedml.util import consts
