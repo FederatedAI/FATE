@@ -43,7 +43,7 @@ tree-based algorithms, deep learning and transfer learning.
 - [Algorithm Parameters](./python/federatedml/param)
 - [Paper & Conference](./doc/resources/index.md)
 
-### Tools & Services
+### Association Repository
 
 - [FATE-Flow](https://github.com/FederatedAI/FATE-Flow)
 - [FATE-Board](https://github.com/FederatedAI/FATE-Board)
