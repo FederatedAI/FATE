@@ -93,6 +93,7 @@ class HeteroLRGuest(HeteroLRBase):
         if with_weight(data_instances):
             if self.model_param.early_stop == "diff":
                 LOGGER.warning("input data with weight, please use 'weight_diff' for 'early_stop'.")
+            # @TODO: move scale sample weight to `fit`
             data_instances = scale_sample_weight(data_instances)
             self.gradient_loss_operator.set_use_sample_weight()
             LOGGER.debug(f"instance weight scaled; use weighted gradient loss operator")
@@ -104,6 +105,7 @@ class HeteroLRGuest(HeteroLRBase):
         self.transfer_variable.use_async.remote(use_async)
 
         LOGGER.info("Generate mini-batch from input data")
+        # @TODO: move initialize batch generator & calculator to `fit`
         self.batch_generator.initialize_batch_generator(data_instances, self.batch_size)
         self.gradient_loss_operator.set_total_batch_nums(self.batch_generator.batch_nums)
 
