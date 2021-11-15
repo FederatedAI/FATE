@@ -23,12 +23,12 @@ import sys
 import time
 
 cur_path = os.path.realpath(__file__)
-for i in range(2):
+for i in range(3):
     cur_path = os.path.dirname(cur_path)
 print(f'fate_path: {cur_path}')
 sys.path.append(cur_path)
 
-from examples.scripts import submit
+import submit
 from flow_sdk.client import FlowClient
 
 
