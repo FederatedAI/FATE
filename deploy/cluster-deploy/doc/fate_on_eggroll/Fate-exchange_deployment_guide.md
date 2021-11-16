@@ -186,6 +186,7 @@ tar xvf eggroll.tar.gz -C /data/projects/fate
 cat >/data/projects/fate/init_env.sh <<EOF
 export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
 export PATH=\$PATH:\$JAVA_HOME/bin
+export EGGROLL_LOG_LEVEL=DEBUG
 EOF
 ```
 
