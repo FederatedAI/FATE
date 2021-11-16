@@ -1,0 +1,44 @@
+# base dir for data upload conf eg, data_base_dir={FATE}
+# examples/data/breast_hetero_guest.csv -> $data_base_dir/examples/data/breast_hetero_guest.csv
+data_base_dir: path(FATE)
+# fate_test job Dedicated directory, File storage location,cache_directory={FATE}/examples/fate_test/cache/
+cache_directory: examples/cache/
+performance_template_directory: examples/benchmark_performance/
+flow_test_config_directory: examples/flow_test_template/hetero_lr/flow_test_config.yaml
+fate_base: path(FATE)/fate
+clean_data: true
+parties:
+  guest: [9999]
+  host: [10000, 9999]
+  arbiter: [10000]
+services:
+  - flow_services:
+      - {address: 127.0.0.1:9380, parties: [9999, 10000]}
+    serving_setting:
+      address: 127.0.0.1:8059
+
+    ssh_tunnel: # optional
+      enable: false
+      ssh_address: <remote ip>:<remote port>
+      ssh_username:
+      ssh_password: # optional
+      ssh_priv_key: "~/.ssh/id_rsa"
+
+
+# what is ssh_tunnel?
+# to open the ssh tunnel(s) if the remote service
+# cannot be accessed directly from the location where the test suite is run!
+#
+#                       +---------------------+
+#                       |    ssh address      |
+#                       |    ssh username     |
+#                       |    ssh password/    |
+#         +--------+    |    ssh priv_key     |        +----------------+
+#         |local ip+----------ssh tuunel-------------->+remote local ip |
+#         +--------+    |                     |        +----------------+
+#                       |                     |
+# request local ip:port +----- as if --------->request remote's local ip:port from remote side
+#                       |                     |
+#                       |                     |
+#                       +---------------------+
+#
