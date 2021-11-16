@@ -193,7 +193,7 @@ echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab
 Or create by using the code package script in Section 5.1, and execute as app user:
 
 ```
-sh /data/projects/fate-cluster-install/tools/makeVirtualDisk.sh
+sh /data/projects/fate-cluster-install/tools-install/makeVirtualDisk.sh
 Waring: please make sure has enough space of your disk first!!! (Please make sure there is enough storage space)
 current user has sudo privilege(yes|no):yes      (Whether the user has sudo privilege; enter yes and do not abbreviate it)
 Enter store directory:/data    (Set the storage path for virtual memory files; make sure the directory exists and do not set it to the root directory)
@@ -295,6 +295,7 @@ Description of Profile setup.conf
 | roles                | Default: "host", "guest"                                     | The deployment roles: host or guest                          |
 | version              | Default: {version}                                           | The version of FATE                                          |
 | pbase                | Default: /data/projects                                      | The root directory of the project                            |
+| pname                | Default: fate                                                | project name                                                 |
 | lbase                | Default: /data/logs                                          | Keep the default value and do not modify                     |
 | ssh\_user            | Default: app                                                 | he user who connects the destination machine<br> by ssh,and the owner of the deployed file |
 | ssh\_group           | Default: apps                                                | The group which the user who connects the <br>destination machine by ssh belongs to, and <br>the group which the deployed file belongs to |
@@ -331,6 +332,9 @@ roles=( "host" "guest" )
 version="{version}"
 #project base
 pbase="/data/projects"
+#project name
+pname="fate"
+
 #log directory
 lbase="/data/logs"
 
@@ -396,6 +400,9 @@ roles=( "host" )
 version="{version}"
 #project base
 pbase="/data/projects"
+#project name
+pname="fate"
+
 #log directory
 lbase="/data/logs"
 
@@ -489,7 +496,7 @@ tail -f ./logs/deploy-mysql-host.log    (Print the deployment status of mysql at
 
 2\) Fateflow Logs
 
-/data/projects/fate/fate\_flow/logs
+/data/projects/fate/fateflow/logs/fate_flow
 
 3\) Fateboard Logs
 
@@ -617,7 +624,7 @@ sh ./bin/eggroll.sh clustermanager start/stop/status/restart
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/fate_flow/bin
+cd /data/projects/fate/fateflow/bin
 sh service.sh start|stop|status|restart
 ```
 
@@ -675,6 +682,14 @@ netstat -tlnp | grep 8080
 | Service| Log Path
 |----------|----------
 | eggroll| /data/projects/fate/eggroll/logs
-| fate\_flow \& task log| /data/projects/fate/fateflow/logs/
+| fate\_flow \& task log| /data/projects/fate/fateflow/logs
 | fateboard| /data/projects/fate/fateboard/logs
 | mysql| /data/logs/mysql/
+
+| Service               | Log Path                                           |
+| --------------------- | -------------------------------------------------- |
+| eggroll               | /data/projects/fate/eggroll/logs                   |
+| fate\_flow & task log | /data/projects/fate/fateflow/logs                  |
+| fateboard             | /data/projects/fate/fateboard/logs                 |
+| mysql                 | /data/projects/fate/common/mysql/mysql-8.0.13/logs |
+
