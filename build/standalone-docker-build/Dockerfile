@@ -56,6 +56,9 @@ RUN sed -i.bak "s#PYTHONPATH=.*#PYTHONPATH=${PYTHONPATH}#g" ./bin/init_env.sh
 RUN cd ./fate/python/fate_client && python setup.py install
 RUN flow init -c ./conf/service_conf.yaml
 
+# install the fate test
+RUN cd ./fate/python/fate_test && python setup.py install
+
 # java enviroment
 RUN cd ./env/jdk/ && tar -xzf jdk-8u192.tar.gz
 ENV JAVA_HOME ${WORKDIR}/env/jdk/jdk-8u192

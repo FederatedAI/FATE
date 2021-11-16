@@ -72,6 +72,11 @@ init() {
     python setup.py install
     flow init -c ${basepath}/conf/service_conf.yaml
     echo "[INFO] install fate client done"
+
+    echo "[INFO] install fate test"
+    cd ${basepath}/fate/python/fate_test
+    python setup.py install
+    echo "[INFO] install fate test done"
   fi
 
   echo "[INFO] setup fateflow"
