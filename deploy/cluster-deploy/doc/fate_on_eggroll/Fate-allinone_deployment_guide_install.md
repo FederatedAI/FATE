@@ -679,13 +679,6 @@ netstat -tlnp | grep 8080
 
 ## 7.3 Service Logs
 
-| Service| Log Path
-|----------|----------
-| eggroll| /data/projects/fate/eggroll/logs
-| fate\_flow \& task log| /data/projects/fate/fateflow/logs
-| fateboard| /data/projects/fate/fateboard/logs
-| mysql| /data/logs/mysql/
-
 | Service               | Log Path                                           |
 | --------------------- | -------------------------------------------------- |
 | eggroll               | /data/projects/fate/eggroll/logs                   |
@@ -693,3 +686,78 @@ netstat -tlnp | grep 8080
 | fateboard             | /data/projects/fate/fateboard/logs                 |
 | mysql                 | /data/projects/fate/common/mysql/mysql-8.0.13/logs |
 
+## 7.4 Space Clearance Rules 
+
+### 7.4.1 fateflow job log 
+
+Machine: The machine where the fate flow service is located 
+
+Directory: /data/projects/fate/fateflow/logs 
+
+Retention period: N=14 days 
+
+Rule: The directory starts with jobid, and the data whose jobid is N days ago is cleaned up 
+
+Reference command: rm -rf /data/projects/fate/fateflow/logs/20211116* 
+
+### 7.4.2 fateflow system log 
+
+Machine: The machine where the fate flow service is located 
+
+Directory: /data/projects/fate/fateflow/logs/fate_flow 
+
+Retention period: N=14 days 
+
+Rule: End with the date, clean up the data N days ago 
+
+Reference command: rm -rf /data/projects/fate/fateflow/logs/fate_flow/\*.2021-11-16
+
+### 7.4.3 EggRoll Session log 
+
+Machine: eggroll node node 
+
+Directory: /data/projects/fate/eggroll/logs/ 
+
+Retention period: N=14 days 
+
+Rule: The directory starts with jobid, and the data whose jobid is N days ago is cleaned up 
+
+Reference command: rm -rf /data/projects/fate/eggroll/logs/20211116* 
+
+### 7.4.4 EggRoll system log 
+
+Machine: eggroll node node 
+
+Directory: /data/projects/fate/eggroll/logs/eggroll 
+
+Retention period: N=14 days 
+
+Rule: files in the history folder established by the end of the date and the year, and clean up the data N days ago 
+
+Reference command: rm -rf /data/projects/fate/eggroll/logs/eggroll/\*.2021-11-16_* and
+
+​                                       rm -rf /data/projects/fate/eggroll/logs/eggroll/2021/11/01 
+
+### 7.4.5 Calculating temporary data 
+
+Machine: eggroll node node 
+
+Directory: /data/projects/fate/eggroll/data/IN_MEMORY 
+
+Retention period: N=7 days 
+
+Rule: namespace starts with jobid, clean up data whose jobid is N days ago 
+
+Reference command: rm -rf /data/projects/fate/eggroll/data/IN_MEMORY/20211116* 
+
+### 7.4.6 Job component output data 
+
+Machine: eggroll node node 
+
+Directory: /data/projects/fate/eggroll/data/LMDB 
+
+Retention period: N=14 days 
+
+Rule: namespace starts with output_data_jobid, clean up data whose jobid is N days ago 
+
+Reference command: rm -rf /data/projects/fate/eggroll/data/LMDB/output_data_20211116*  

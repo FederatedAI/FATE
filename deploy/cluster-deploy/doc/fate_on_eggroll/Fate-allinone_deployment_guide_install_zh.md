@@ -745,7 +745,7 @@ netstat -tlnp | grep 8080
 
 参考命令：   rm -rf /data/projects/fate/eggroll/logs/20211116* 
 
-### 7.4.3 EggRoll系统日志
+### 7.4.4 EggRoll系统日志
 
 所在机器：eggroll node节点 
 
@@ -759,7 +759,7 @@ netstat -tlnp | grep 8080
 
 ​                       rm -rf /data/projects/fate/eggroll/logs/eggroll/2021/11/01
 
-### 7.4.4 计算临时数据
+### 7.4.5 计算临时数据
 
 所在机器：eggroll node节点 
 
@@ -771,11 +771,11 @@ netstat -tlnp | grep 8080
 
 参考命令：   rm -rf /data/projects/fate/eggroll/data/IN_MEMORY/20211116* 
 
-### 7.4.5 作业组件输出数据
+### 7.4.6 作业组件输出数据
 
 所在机器：eggroll node节点 
 
-目录：/data/projects/fate/eggroll/data/LMDB 
+目录：/data/projects/fate/eggroll/data/LMDB
 
 保留期限：N=14天
 
