@@ -53,29 +53,29 @@ RUN sh ./bin/install_os_dependencies.sh root && yum clean all
 RUN pip install --upgrade pip -f ./env/pypi --no-index
 RUN pip install -r ./requirements.txt -f ./env/pypi --no-index
 ENV PYTHONPATH ${WORKDIR}/fate/python:${WORKDIR}/fateflow/python
-RUN sed -i.bak "s#PYTHONPATH=.*#PYTHONPATH=${PYTHONPATH}#g" ./bin/init_env.sh
+RUN sed -i "s#PYTHONPATH=.*#PYTHONPATH=${PYTHONPATH}#g" ./bin/init_env.sh
 
 # install and initialize the fate client
 RUN cd ./fate/python/fate_client && python setup.py install
 RUN flow init -c ./conf/service_conf.yaml
 
 # install the fate test
-RUN cd ${FATE_BASE}/python/fate_test && \
-    sed -i.bak "s#data_base_dir:.*#data_base_dir: ${FATE_PROJECT_BASE}#g" ./fate_test/fate_test_config.yaml && \
-    sed -i.bak "s#fate_base:.*#fate_base: ${FATE_BASE}#g" ./fate_test/fate_test_config.yaml && \
+RUN cd ./fate/python/fate_test && \
+    sed -i "s#data_base_dir:.*#data_base_dir: ${FATE_PROJECT_BASE}#g" ./fate_test/fate_test_config.yaml && \
+    sed -i "s#fate_base:.*#fate_base: ${FATE_BASE}#g" ./fate_test/fate_test_config.yaml && \
     python setup.py install
 
 # java enviroment
 RUN cd ./env/jdk/ && tar -xzf jdk-8u192.tar.gz
 ENV JAVA_HOME ${WORKDIR}/env/jdk/jdk-8u192
-RUN sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=${JAVA_HOME}#g" ./bin/init_env.sh
+RUN sed -i "s#JAVA_HOME=.*#JAVA_HOME=${JAVA_HOME}#g" ./bin/init_env.sh
 
-RUN sed -i.bak "s#fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:sqlite:${WORKDIR}/fate_sqlite.db#g" ./fateboard/conf/application.properties
-RUN sed -i.bak "s#fateflow.url=.*#fateflow.url=http://localhost:9380#g" ./fateboard/conf/application.properties
+RUN sed -i "s#fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:sqlite:${WORKDIR}/fate_sqlite.db#g" ./fateboard/conf/application.properties
+RUN sed -i "s#fateflow.url=.*#fateflow.url=http://localhost:9380#g" ./fateboard/conf/application.properties
 
 # clean up things that don't need to be used in the Docker environment
-RUN sed -i.bak "s#venv=.*##g" ./bin/init_env.sh
-RUN sed -i.bak "s#source.*venv.*##g" ./bin/init_env.sh
+RUN sed -i "s#venv=.*##g" ./bin/init_env.sh
+RUN sed -i "s#source.*venv.*##g" ./bin/init_env.sh
 RUN rm -rf ./env/python36
 RUN rm -rf ./init.sh
 

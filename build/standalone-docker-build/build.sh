@@ -20,7 +20,7 @@ set -e
 source_dir=$(cd `dirname $0`; cd ../;cd ../;pwd)
 echo "[INFO] source dir: ${source_dir}"
 cd ${source_dir}
-source ./build/common/var.sh
+source ./build/common/common.sh
 
 if [[ -n ${1} ]]; then
     version_tag=$1
