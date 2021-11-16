@@ -11,12 +11,13 @@ BASEDIR=$(dirname "$0")
 cd "$BASEDIR"
 WORKING_DIR=$(pwd)
 
+# get version
+source_dir=$(cd `dirname $0`; cd ../;cd ../;pwd)
+cd ${source_dir}
+#git submodule foreach --recursive git pull
+version=`grep "FATE=" fate.env | awk -F '=' '{print $2}'`
+cd ${WORKING_DIR}
 
-
-# import build.sh
-source ../package-build/build.sh
-
-package_dir=${package_dir}
 
 
 # set image PREFIX and TAG
@@ -31,10 +32,10 @@ source ${WORKING_DIR}/.env
 # print build INFO
 echo "[INFO] Build info"
 echo "[INFO] Version: v"${version}
-echo "[INFO] Package output dir is "${package_dir}
 echo "[INFO] Image prefix is: "${PREFIX}
 echo "[INFO] Image tag is: "${TAG}
 echo "[INFO] Base image tag is: "${BASE_TAG}
+echo "[INFO] source dir: "${source_dir}
 echo "[INFO] Package dir is: "${WORKING_DIR}/catch/
 
 package() {
@@ -46,7 +47,7 @@ package() {
         sed -i 's#sh ./auto-packaging.sh#docker run --rm -u $(id -u):$(id -g) -v ${source_dir}/eggroll:/data/projects/fate/eggroll --entrypoint="" maven:3.6-jdk-8 /bin/bash -c "cd /data/projects/fate/eggroll/deploy \&\& bash auto-packaging.sh"#g' ../package-build/build_docker.sh 
 
         # package all
-        bash ../package-build/build_docker.sh release all
+        source ../package-build/build_docker.sh release all
 
         rm -rf ../package-build/build_docker.sh
 
