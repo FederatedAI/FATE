@@ -77,7 +77,7 @@ build() {
   tar -cf ../fate.tar ./*
   cd ../
 
-  a=`docker images | grep "fate" | grep "${image_tag}" | wc -l`
+  a=`docker images | grep "fate" | grep "${image_tag} " | wc -l`
   if [[ a -ne 0 ]];then
     docker rmi fate:${image_tag}
     if [[ $? -eq 0 ]];then
