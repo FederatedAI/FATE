@@ -12,23 +12,24 @@ FATE于2019年2月首次对外开源，并于2019年6月由微众银行捐献给
 [FATE TSC](https://github.com/FederatedAI/FATE-Community/blob/master/FATE_Project_Technical_Charter.pdf)
 对FATE社区进行开源治理，成员包含国内主要云计算和金融服务企业。
 
-FATE官方网站：<https://fate.fedai.org/>
-FATE文档：<https://fate.readthedocs.io/en/latest>
+<https://fate.readthedocs.io/en/latest>
 
 ## 教程
 
 ### 部署
 
 #### 单机版
-- [Docker Compose安装](https://github.com/FederatedAI/KubeFATE/tree/master/docker-deploy)
 - [原生单机版安装](./deploy/standalone-deploy/)
 
-#### 分布式
-- [Kubernetes安装](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy)
+#### 集群
 - [原生集群安装](./deploy/cluster-deploy)
+- [Ansible集群安装](https://github.com/FederatedAI/AnsibleFATE)
+- [Kubernetes安装](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy)
+- [Docker Compose安装](https://github.com/FederatedAI/KubeFATE/tree/master/docker-deploy)
+
 
 ### 快速开始
-- [使用FATE-Pipeline训练及预测纵向SBT任务](./doc/tutorial/pipeline/pipelin_tutorial_hetero_secureboost.ipynb)
+- [使用FATE-Pipeline训练及预测纵向SBT任务](./doc/tutorial/pipeline/pipeline_tutorial_hetero_sbt.ipynb)
 - [使用FATE-Pipeline构建横向NN模型](doc/tutorial/pipeline/pipeline_tutorial_homo_nn.ipynb)
 - [使用DSL json conf运行任务](doc/tutorial/dsl_conf/dsl_conf_tutorial.md)
 
@@ -80,5 +81,5 @@ FATE文档：<https://fate.readthedocs.io/en/latest>
 - [Twitter: @FATEFedAI](https://twitter.com/FateFedAI)
 
 
-### License
+## License
 [Apache License 2.0](LICENSE)
