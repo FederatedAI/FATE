@@ -42,7 +42,7 @@ tree-based algorithms, deep learning and transfer learning.
 - [Architecture](./doc/architecture/index.md)
 - [Components](./doc/federatedml_component/index.md)
 - [Algorithm Parameters](./python/federatedml/param)
-- [Paper & Conference](./doc/resources/index.md)
+- [Paper & Conference](./doc/resources/README.md)
 
 ### Tools & Services
 

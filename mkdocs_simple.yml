@@ -7,7 +7,7 @@ copyright: © Copyright 2020 WeBank Co., Ltd. | All Rights Reserved.
 
 nav:
   - Tutorial:
-    - tutorial/index.md
+    - tutorial/README.md
     - pipeline: 
       - notebook: tutorial/pipeline/pipeline_tutorial_0.ipynb
     - model publish: tutorial/model_publish_with_serving_guide.md
@@ -20,7 +20,7 @@ nav:
   - FederatedML:
     - ... | flat | api/federatedml/*.md
   - Resources:
-    - resources/index.md
+    - resources/README.md
 
 theme:
   name: material

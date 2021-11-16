@@ -38,7 +38,7 @@ FATE官方网站：<https://fate.fedai.org/>
 - [架构](./doc/architecture/index.md)
 - [组件](doc/federatedml_component/index.md)
 - [算法参数](./python/federatedml/param)
-- [论文与会议资料](./doc/resources/index.zh.md)
+- [论文与会议资料](./doc/resources/README.zh.md)
 
 ### 工具与服务
 
