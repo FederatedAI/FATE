@@ -5,7 +5,7 @@ from federatedml.model_base import ModelBase
 from federatedml.transfer_variable.transfer_class.shap_transfer_variable import SHAPTransferVariable
 from federatedml.ensemble import HeteroSecureBoostingTreeGuest, HeteroSecureBoostingTreeHost
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam, DecisionTreeModelParam
-from federatedml.ensemble.boosting.boosting_core import Boosting
+from federatedml.ensemble.boosting.boosting import Boosting
 from federatedml.ensemble import HeteroDecisionTreeHost
 from federatedml.protobuf.homo_model_convert.lightgbm.gbdt import sbt_to_lgb
 from federatedml.param.shap_param import TreeSHAPParam
