@@ -18,7 +18,7 @@ To reduce the size of images, a few base images are created first. Other images 
 - ***base images***: contain the minimum dependencies of  components of FATE.
 - ***component images*** contain a specific component of FATE, it is built on the top of ***base image***
 
-Before building the images, the `.env` file must be configured, so that the version of codebase can be easily identified. 
+Before building the image, you can configure the `.env` file and set it as your own image PREFIX and TAG.
 
 When images are built, base images have the naming format as follows:
 
@@ -37,8 +37,8 @@ and component images have the below naming format:
 A sample of `.env` is as follows:
 ```bash
 PREFIX=federatedai
-BASE_TAG=1.4.0-release
-TAG=1.4.0-release
+BASE_TAG=${version}-release
+TAG=${version}-release
 ```
 **NOTE:** 
 If the FATE images will be pushed to a registry server, the above configuration assumes the use of Docker Hub. If a local registry (e.g. Harbor) is used for storing images, change the `PREFIX` as follows:
