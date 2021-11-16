@@ -81,5 +81,5 @@ FATE于2019年2月首次对外开源，并于2019年6月由微众银行捐献给
 - [Twitter: @FATEFedAI](https://twitter.com/FateFedAI)
 
 
-### License
+## License
 [Apache License 2.0](LICENSE)
