@@ -71,7 +71,7 @@
             "dsl": "./test_data_transform_dsl.json"
         },
         "data_transform_svmlight": {
-            "conf": "./test_data_transform_tag_value_conf.json",
+            "conf": "./test_data_transform_svmlight.json",
             "dsl": "./test_data_transform_validate_dsl.json"
         }
     }
