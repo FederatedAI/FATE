@@ -34,6 +34,9 @@ USER root
 
 WORKDIR /data/projects/fate
 ENV WORKDIR /data/projects/fate
+ENV FATE_PROJECT_BASE ${WORKDIR}
+ENV FATE_BASE ${WORKDIR}/fate
+ENV FATE_FLOW_BASE ${WORKDIR}/fateflow
 
 ADD fate.tar ${WORKDIR}
 ADD docker-entrypoint.sh ${WORKDIR}
@@ -57,7 +60,9 @@ RUN cd ./fate/python/fate_client && python setup.py install
 RUN flow init -c ./conf/service_conf.yaml
 
 # install the fate test
-RUN cd ./fate/python/fate_test && python setup.py install
+RUN sed "s#data_base_dir:.*#data_base_dir: ${FATE_PROJECT_BASE}#g" ${FATE_BASE}/python/fate_test/fate_test_config.yaml
+RUN sed "s#fate_base:.*#fate_base: ${FATE_BASE}#g" ${FATE_BASE}/python/fate_test/fate_test_config.yaml
+RUN cd ${FATE_BASE}/python/fate_test && python setup.py install
 
 # java enviroment
 RUN cd ./env/jdk/ && tar -xzf jdk-8u192.tar.gz
@@ -66,10 +71,6 @@ RUN sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=${JAVA_HOME}#g" ./bin/init_env.sh
 
 RUN sed -i.bak "s#fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:sqlite:${WORKDIR}/fate_sqlite.db#g" ./fateboard/conf/application.properties
 RUN sed -i.bak "s#fateflow.url=.*#fateflow.url=http://localhost:9380#g" ./fateboard/conf/application.properties
-
-ENV FATE_PROJECT_BASE ${WORKDIR}
-ENV FATE_BASE ${WORKDIR}/fate
-ENV FATE_FLOW_BASE ${WORKDIR}/fateflow
 
 # clean up things that don't need to be used in the Docker environment
 RUN sed -i.bak "s#venv=.*##g" ./bin/init_env.sh
