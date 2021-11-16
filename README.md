@@ -15,8 +15,7 @@ FATE open-sourced for the first time in February 2019, and was donated to Linux 
 [FATE TSC](https://github.com/FederatedAI/FATE-Community/blob/master/FATE_Project_Technical_Charter.pdf) was established 
 to lead FATE open-source community, with members from major domestic cloud computing and financial service enterprises. 
 
-FATE Official Website: <https://fate.fedai.org/>
-FATE document: <https://fate.readthedocs.io/en/latest>
+<https://fate.readthedocs.io/en/latest>
 
 
 ## Getting Started
@@ -32,7 +31,7 @@ FATE document: <https://fate.readthedocs.io/en/latest>
 - [Deployment by Docker Compose](https://github.com/FederatedAI/KubeFATE/tree/master/docker-deploy)
 - [Deployment on Kubernetes](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy)
 
-#### Quick Start
+### Quick Start
 - [Train & Predict Hetero SecureBoost with FATE-Pipeline](./doc/tutorial/pipeline/pipeline_tutorial_hetero_sbt.ipynb)
 - [Build Homo NN model with FATE-Pipeline](doc/tutorial/pipeline/pipeline_tutorial_homo_nn.ipynb)
 - [Run Job with DSL json conf](doc/tutorial/dsl_conf/dsl_conf_tutorial.md)
@@ -84,6 +83,6 @@ FATE document: <https://fate.readthedocs.io/en/latest>
 - [Twitter: @FATEFedAI](https://twitter.com/FateFedAI)
 
 
-### License
+## License
 [Apache License 2.0](LICENSE)
 

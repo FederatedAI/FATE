@@ -12,8 +12,7 @@ FATE于2019年2月首次对外开源，并于2019年6月由微众银行捐献给
 [FATE TSC](https://github.com/FederatedAI/FATE-Community/blob/master/FATE_Project_Technical_Charter.pdf)
 对FATE社区进行开源治理，成员包含国内主要云计算和金融服务企业。
 
-FATE官方网站：<https://fate.fedai.org/>
-FATE文档：<https://fate.readthedocs.io/en/latest>
+<https://fate.readthedocs.io/en/latest>
 
 ## 教程
 
@@ -82,5 +81,5 @@ FATE文档：<https://fate.readthedocs.io/en/latest>
 - [Twitter: @FATEFedAI](https://twitter.com/FateFedAI)
 
 
-### License
+## License
 [Apache License 2.0](LICENSE)
