@@ -35,7 +35,8 @@ RUN mkdir -p ./fml_agent/data; \
     version=$(grep -E "FATE=" /data/projects/fate/fate.env | awk -F "=" '{print $2}'); \
     sed -i "s/version = \"0.1\"/version = \"${version}\"/g" pyproject.toml  ; \
     pip install poetry; \
-    poetry install;
+    poetry build; \
+    pip install dist/fate_client-${version}.tar.gz;
 
 ENV PYTHONPATH=$PYTHONPATH:/data/projects/fate/:/data/projects/fate/eggroll/python:/data/projects/fate/fate/python:/data/projects/fate/fate
 ENV EGGROLL_HOME=/data/projects/fate/eggroll
