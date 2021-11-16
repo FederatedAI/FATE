@@ -54,8 +54,6 @@ class ObjectiveParam(BaseParam):
 
         descr = "objective param's"
 
-        LOGGER.debug('check objective {}'.format(self.objective))
-
         if task_type not in [consts.CLASSIFICATION, consts.REGRESSION]:
             self.objective = self.check_and_change_lower(self.objective,
                                                    ["cross_entropy", "lse", "lae", "huber", "fair",

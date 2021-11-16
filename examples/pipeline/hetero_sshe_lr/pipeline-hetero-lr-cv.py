@@ -80,7 +80,7 @@ def main(config="../../config.yaml", namespace=""):
     lr_param = {
         "name": "hetero_sshe_lr_0",
         "penalty": "L2",
-        "optimizer": "sgd",
+        "optimizer": "rmsprop",
         "tol": 0.0001,
         "alpha": 0.01,
         "max_iter": 30,

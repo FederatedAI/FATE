@@ -1,5 +1,15 @@
 ARG PREFIX=prefix
 ARG BASE_TAG=tag
+
+FROM ${PREFIX}/base-image:${BASE_TAG} as builder
+WORKDIR /data/projects/fate/
+COPY eggroll.tar.gz .
+COPY fate.tar.gz .
+RUN tar -xzf eggroll.tar.gz; \
+    tar -xzf fate.tar.gz;
+
+RUN ls -l
+
 FROM ${PREFIX}/base-image:${BASE_TAG}
 
 RUN set -eux; \
@@ -10,15 +20,11 @@ RUN set -eux; \
 
 WORKDIR /data/projects/fate/eggroll/
 
-ARG version
+COPY --from=builder /data/projects/fate/eggroll /data/projects/fate/eggroll
+COPY --from=builder /data/projects/fate/fate /data/projects/fate/fate
 
-COPY eggroll ./
-COPY python /data/projects/fate/python
-
-ENV PYTHONPATH=/data/projects/fate/python:/data/projects/fate/eggroll/python
+ENV PYTHONPATH=/data/projects/fate/fate/python:/data/projects/fate/eggroll/python
 ENV EGGROLL_HOME=/data/projects/fate/eggroll/
-
-CMD sh ./bin/eggroll.sh clustermanager start
 
 ENV TINI_VERSION v0.18.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini

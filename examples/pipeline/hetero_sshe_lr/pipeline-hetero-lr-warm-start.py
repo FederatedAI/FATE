@@ -80,7 +80,7 @@ def main(config="../../config.yaml", namespace=""):
 
     lr_param = {
         "penalty": "L2",
-        "optimizer": "sgd",
+        "optimizer": "rmsprop",
         "tol": 0.0001,
         "alpha": 0.01,
         "early_stop": "diff",
@@ -93,6 +93,8 @@ def main(config="../../config.yaml", namespace=""):
         "encrypt_param": {
             "key_length": 1024
         },
+        "reveal_strategy": "respectively",
+        "reveal_every_iter": True,
         "callback_param": {
             "callbacks": ["ModelCheckpoint"],
             "validation_freqs": 1,

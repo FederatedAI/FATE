@@ -28,13 +28,13 @@ class ColumnExpandParam(BaseParam):
     Parameters
     ----------
 
-    append_header : None, str, List[str] default: None
+    append_header : None or str or List[str], default: None
         Name(s) for appended feature(s). If None is given, module outputs the original input value without any operation.
 
     method : str, default: 'manual'
         If method is 'manual', use user-specified `fill_value` to fill in new features.
 
-    fill_value : int, float, str, List[int], List[float], List[str] default: 1e-8
+    fill_value : int or float or str or List[int] or List[float] or List[str], default: 1e-8
         Used for filling expanded feature columns. If given a list, length of the list must match that of `append_header`
 
     need_run: bool, default: True
