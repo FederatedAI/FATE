@@ -5,7 +5,7 @@ echo "[INFO] kernel: ${kernel}"
 case "${kernel}" in
     "Darwin")
             OS=MacOS
-            sed_cmd="sed -i ''"
+            alias fate_sed_cmd="sed -i ''"
             ;;
     "Linux")
             system=`sed -e '/"/s/"//g' /etc/os-release | awk -F= '/^NAME/{print $2}'`
@@ -23,7 +23,7 @@ case "${kernel}" in
                         exit -1
             esac
 
-            sed_cmd="sed -i"
+            alias fate_sed_cmd="sed -i"
 
             ;;
     *)

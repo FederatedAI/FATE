@@ -32,6 +32,9 @@ echo "[INFO] env dir: ${env_dir}"
 echo "[INFO] jdk dir: ${jdk_dir}"
 echo "[INFO] venv dir: ${venv_dir}"
 
+cd ${project_base}
+source ./bin/common.sh
+
 init() {
 
   cd ${project_base}
@@ -75,21 +78,21 @@ init() {
 
     echo "[INFO] install fate test"
     cd ${project_base}/fate/python/fate_test
-    sed -i.bak "s#data_base_dir:.*#data_base_dir: ${project_base}#g" ./fate_test/fate_test_config.yaml
-    sed -i.bak "s#fate_base:.*#fate_base: ${project_base}/fate#g" ./fate_test/fate_test_config.yaml
+    fate_sed_cmd "s#data_base_dir:.*#data_base_dir: ${project_base}#g" ./fate_test/fate_test_config.yaml
+    fate_sed_cmd "s#fate_base:.*#fate_base: ${project_base}/fate#g" ./fate_test/fate_test_config.yaml
     python setup.py install
     echo "[INFO] install fate test done"
   fi
 
   echo "[INFO] setup fateflow"
-  sed -i.bak "s#PYTHONPATH=.*#PYTHONPATH=${project_base}/fate/python:${project_base}/fateflow/python#g" ${project_base}/bin/init_env.sh
-  sed -i.bak "s#venv=.*#venv=${venv_dir}#g" ${project_base}/bin/init_env.sh
-  sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=${jdk_dir}/#g" ${project_base}/bin/init_env.sh
+  fate_sed_cmd "s#PYTHONPATH=.*#PYTHONPATH=${project_base}/fate/python:${project_base}/fateflow/python#g" ${project_base}/bin/init_env.sh
+  fate_sed_cmd "s#venv=.*#venv=${venv_dir}#g" ${project_base}/bin/init_env.sh
+  fate_sed_cmd "s#JAVA_HOME=.*#JAVA_HOME=${jdk_dir}/#g" ${project_base}/bin/init_env.sh
   echo "[INFO] setup fateflow done"
-	#sed -i.bak "s#host:.*#host: 127.0.0.1#g" ${project_base}/conf/service_conf.yaml
+
   echo "[INFO] setup fateboard"
-  sed -i.bak "s#fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:sqlite:${project_base}/fate_sqlite.db#g" ${project_base}/fateboard/conf/application.properties
-  sed -i.bak "s#fateflow.url=.*#fateflow.url=http://localhost:9380#g" ${project_base}/fateboard/conf/application.properties
+  fate_sed_cmd "s#fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:sqlite:${project_base}/fate_sqlite.db#g" ${project_base}/fateboard/conf/application.properties
+  fate_sed_cmd "s#fateflow.url=.*#fateflow.url=http://localhost:9380#g" ${project_base}/fateboard/conf/application.properties
   echo "[INFO] setup fateboard done"
 }
 

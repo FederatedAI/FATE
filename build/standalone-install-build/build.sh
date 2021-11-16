@@ -17,9 +17,13 @@
 
 set -e
 source_dir=$(cd `dirname $0`; cd ../;cd ../;pwd)
+echo "[INFO] source dir: ${source_dir}"
+cd ${source_dir}
+source ./bin/common.sh
+
 support_modules=(bin conf examples fate fateflow fateboard)
 environment_modules=(python36 jdk pypi)
-echo ${source_dir}
+
 if [[ -n ${1} ]]; then
     version_tag=$1
 else
@@ -27,8 +31,6 @@ else
 fi
 if_skip_compress=$2
 
-cd ${source_dir}
-echo "[INFO] source dir: ${source_dir}"
 version=`grep "FATE=" fate.env | awk -F '=' '{print $2}'`
 install_package_dir_name="FATE_install_${version}_${version_tag}"
 install_package_dir=${source_dir}/${install_package_dir_name}
@@ -49,8 +51,7 @@ function packaging(){
 
     # init.sh
     cp build/standalone-install-build/init.sh ${package_dir}
-    sed -i.bak "s/version=.*/version=${version}/g" ${package_dir}/init.sh
-    rm -rf ${package_dir}/init.sh.bak
+    fate_sed_cmd "s/version=.*/version=${version}/g" ${package_dir}/init.sh
 
     echo "[INFO] get install packages"
     if [[ -d ${install_package_dir} ]];then
@@ -87,50 +88,6 @@ function packaging(){
     echo "[INFO] deal system packages done"
 
     echo "[INFO] package done"
-}
-
-function packaging_env(){
-    echo "[INFO] package env start"
-    cd ${source_dir} 
-    cp build/standalone-install-build/init.sh ${package_dir}
-    sed -i.bak "s/version=.*/version=${version}/g" ${package_dir}/init.sh
-    rm -rf ${package_dir}/init.sh.bak
-
-    echo "[INFO] enter build packages"
-    sh build/package-build/build.sh ${version_tag} "${environment_modules[@]}"
-    echo "[INFO] exit build packages"
-
-    env_dir=${package_dir}/env
-    if [[ -d "${env_dir}" ]];then
-      rm -rf ${env_dir}
-    fi
-    mkdir -p ${env_dir}
-    cp -r ${install_package_dir}/* ${env_dir}/
-    
-    cd ${env_dir}
-    for module in "${environment_modules[@]}";
-    do
-        tar xzf ${module}.tar.gz
-        rm -rf ${module}.tar.gz
-    done
-    echo "[INFO] package env done"
-}
-
-function packaging_systems(){
-    echo "[INFO] package systems start"
-    cd ${source_dir}
-    echo "[INFO] enter build packages"
-    sh build/package-build/build.sh ${version_tag} "${support_modules[@]}"
-    echo "[INFO] exit build packages"
-
-    cp -r ${install_package_dir}/* ${package_dir}/
-    cd ${package_dir}
-    for module in "${support_modules[@]}";
-    do
-        tar xzf ${module}.tar.gz
-        rm -rf ${module}.tar.gz
-    done
-    echo "[INFO] package systems done"
 }
 
 compress(){
