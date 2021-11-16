@@ -6,14 +6,16 @@
   <img src="./doc/images/FATE_logo.png">
 </div>
 
-[DOC](./doc) | [Quick Start](doc/tutorial/pipeline/pipeline_guide.md) | [中文](./README_zh.md)
+[DOC](./doc) | [Quick Start](doc/tutorial/pipeline/pipeline_tutorial_hetero_sbt.ipynb) | [中文](./README_zh.md)
 
-FATE (Federated AI Technology Enabler) is an open-source project initiated by Webank's AI Department to provide a secure computing framework to support federated AI ecosystem. 
+FATE (Federated AI Technology Enabler) is the world's first industrial grade federated learning open source framework initiated by Webank's AI Department to enable enterprises and institutions to collaborate on data while protecting data security and privacy. 
 It implements secure computation protocols based on homomorphic encryption and multi-party computation (MPC). 
-Supporting various federated learning scenarios, FATE now provides a host of federated learning algorithms, including logistic regression, 
-tree-based algorithms, deep learning and transfer learning.
+Supporting various federated learning scenarios, FATE now provides a host of federated learning algorithms, including logistic regression, tree-based algorithms, deep learning, and transfer learning.
+FATE open-sourced for the first time in February 2019, and was donated to Linux Foundation by WeBank in June 2019. 
+[FATE TSC](https://github.com/FederatedAI/FATE-Community/blob/master/FATE_Project_Technical_Charter.pdf) was established 
+to lead FATE open-source community, with members from major domestic cloud computing and financial service enterprises. 
 
-<https://fate.fedai.org>
+<https://fate.readthedocs.io/en/latest>
 
 
 ## Getting Started
@@ -29,21 +31,21 @@ tree-based algorithms, deep learning and transfer learning.
 - [Deployment by Docker Compose](https://github.com/FederatedAI/KubeFATE/tree/master/docker-deploy)
 - [Deployment on Kubernetes](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy)
 
-#### Quick Start
-- [Run Job with FATE-Pipeline](./doc/tutorial/pipeline/pipeline_guide.md)
-- [Run Job with DSL json conf](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.md)
-- [FATE-Pipeline Tutorial in Jupyter Notebook](./doc/tutorial/pipeline/pipeline_tutorial_0.ipynb)
+### Quick Start
+- [Train & Predict Hetero SecureBoost with FATE-Pipeline](./doc/tutorial/pipeline/pipeline_tutorial_hetero_sbt.ipynb)
+- [Build Homo NN model with FATE-Pipeline](doc/tutorial/pipeline/pipeline_tutorial_homo_nn.ipynb)
+- [Run Job with DSL json conf](doc/tutorial/dsl_conf/dsl_conf_tutorial.md)
 
 ## Documentation 
 
 ### FATE Design 
 
-- [Architecture](./doc/architecture/index.md)
-- [Components](./doc/federatedml_component/index.md)
+- [Architecture](./doc/architecture/README.md)
+- [Components](./doc/federatedml_component/README.md)
 - [Algorithm Parameters](./python/federatedml/param)
 - [Paper & Conference](./doc/resources/index.md)
 
-### Tools & Services
+### Association Repository
 
 - [FATE-Flow](https://github.com/FederatedAI/FATE-Flow)
 - [FATE-Board](https://github.com/FederatedAI/FATE-Board)
@@ -59,13 +61,14 @@ tree-based algorithms, deep learning and transfer learning.
 - [develop guide](doc/develop/develop_guide.md)
 
 ### API References
-
+- [Session API](doc/api/session.md)
 - [Computing API](doc/api/computing.md)
 - [Federation API](./doc/api/federation.md)
 - [Flow SDK API](doc/api/fate_client/flow_sdk.md)
-- [Flow Client](doc/api/fate_client/flow_client.md)
+- [Flow Client](https://github.com/FederatedAI/FATE-Flow/blob/develop-1.7.0/doc/fate_flow_client.md)
 - [FATE Pipeline](doc/api/fate_client/pipeline.md)
 - [FATE Test](./doc/tutorial/fate_test_tutorial.md)
+- [DSL Conf Setting Guide](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.md)
 
 ### Online Courses
 - [Bilibili: @FATEFedAI](https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)
@@ -80,6 +83,6 @@ tree-based algorithms, deep learning and transfer learning.
 - [Twitter: @FATEFedAI](https://twitter.com/FateFedAI)
 
 
-### License
+## License
 [Apache License 2.0](LICENSE)
 

@@ -40,6 +40,7 @@ flowing is a short guide.
     computing_session.parallelize(...)
     ```
 
+<!-- mkdocs
 ## Detailed API
 
 ::: fate_arch.session.Session
@@ -49,3 +50,4 @@ flowing is a short guide.
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
+-->
