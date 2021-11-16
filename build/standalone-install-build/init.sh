@@ -75,8 +75,8 @@ init() {
 
     echo "[INFO] install fate test"
     cd ${project_base}/fate/python/fate_test
-    sed "s#data_base_dir:.*#data_base_dir: ${project_base}#g" ./fate_test_config.yaml
-    sed "s#fate_base:.*#fate_base: ${project_base}/fate#g" ./fate_test_config.yaml
+    sed -i.bak "s#data_base_dir:.*#data_base_dir: ${project_base}#g" ./fate_test/fate_test_config.yaml
+    sed -i.bak "s#fate_base:.*#fate_base: ${project_base}/fate#g" ./fate_test/fate_test_config.yaml
     python setup.py install
     echo "[INFO] install fate test done"
   fi

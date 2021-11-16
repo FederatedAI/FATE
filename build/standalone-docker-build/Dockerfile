@@ -60,9 +60,10 @@ RUN cd ./fate/python/fate_client && python setup.py install
 RUN flow init -c ./conf/service_conf.yaml
 
 # install the fate test
-RUN sed "s#data_base_dir:.*#data_base_dir: ${FATE_PROJECT_BASE}#g" ${FATE_BASE}/python/fate_test/fate_test_config.yaml
-RUN sed "s#fate_base:.*#fate_base: ${FATE_BASE}#g" ${FATE_BASE}/python/fate_test/fate_test_config.yaml
-RUN cd ${FATE_BASE}/python/fate_test && python setup.py install
+RUN cd ${FATE_BASE}/python/fate_test && \
+    sed -i.bak "s#data_base_dir:.*#data_base_dir: ${FATE_PROJECT_BASE}#g" ./fate_test/fate_test_config.yaml && \
+    sed -i.bak "s#fate_base:.*#fate_base: ${FATE_BASE}#g" ./fate_test/fate_test_config.yaml && \
+    python setup.py install
 
 # java enviroment
 RUN cd ./env/jdk/ && tar -xzf jdk-8u192.tar.gz
