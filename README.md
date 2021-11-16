@@ -43,7 +43,7 @@ to lead FATE open-source community, with members from major domestic cloud compu
 - [Architecture](./doc/architecture/README.md)
 - [Components](./doc/federatedml_component/README.md)
 - [Algorithm Parameters](./python/federatedml/param)
-- [Paper & Conference](./doc/resources/index.md)
+- [Paper & Conference](./doc/resources/README.md)
 
 ### Association Repository
 
