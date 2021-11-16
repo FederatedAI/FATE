@@ -6,12 +6,17 @@
   <img src="./doc/images/FATE_logo.png">
 </div>
 
-[DOC](./doc) | [Quick Start](doc/tutorial/pipeline/pipeline_guide.md) | [中文](./README_zh.md)
+[DOC](./doc) | [Quick Start](doc/tutorial/pipeline/pipeline_tutorial_hetero_sbt.ipynb) | [中文](./README_zh.md)
 
-FATE (Federated AI Technology Enabler) is the world's first industrial grade federated learning open source framework initiated by Webank's AI Department to enable enterprises and institutions to collaborate on data while protecting data security and privacy. FATE opened source for the first time in February 2019, and was donated to Linux Foundation by Webank in June 2019. FATE TSC was established to conduct open source governance of FATE community, with members including major domestic cloud computing and financial service enterprises. 
-It implements secure computation protocols based on homomorphic encryption and multi-party computation (MPC). Supporting various federated learning scenarios, FATE now provides a host of federated learning algorithms, including logistic regression, tree-based algorithms, deep learning and transfer learning.
+FATE (Federated AI Technology Enabler) is the world's first industrial grade federated learning open source framework initiated by Webank's AI Department to enable enterprises and institutions to collaborate on data while protecting data security and privacy. 
+It implements secure computation protocols based on homomorphic encryption and multi-party computation (MPC). 
+Supporting various federated learning scenarios, FATE now provides a host of federated learning algorithms, including logistic regression, tree-based algorithms, deep learning, and transfer learning.
+FATE open-sourced for the first time in February 2019, and was donated to Linux Foundation by WeBank in June 2019. 
+[FATE TSC](https://github.com/FederatedAI/FATE-Community/blob/master/FATE_Project_Technical_Charter.pdf) was established 
+to lead FATE open-source community, with members from major domestic cloud computing and financial service enterprises. 
 
-<https://fate.readthedocs.io/en/latest>
+FATE Official Website: <https://fate.fedai.org/>
+FATE document: <https://fate.readthedocs.io/en/latest>
 
 
 ## Getting Started
@@ -28,9 +33,9 @@ It implements secure computation protocols based on homomorphic encryption and m
 - [Deployment on Kubernetes](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy)
 
 #### Quick Start
-- [Run Job with FATE-Pipeline](./doc/tutorial/pipeline/pipeline_guide.md)
-- [Run Job with DSL json conf](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.md)
-- [FATE-Pipeline Tutorial in Jupyter Notebook](./doc/tutorial/pipeline/pipeline_tutorial_0.ipynb)
+- [Train & Predict Hetero SecureBoost with FATE-Pipeline](./doc/tutorial/pipeline/pipeline_tutorial_hetero_sbt.ipynb)
+- [Build Homo NN model with FATE-Pipeline](doc/tutorial/pipeline/pipeline_tutorial_homo_nn.ipynb)
+- [Run Job with DSL json conf](doc/tutorial/dsl_conf/dsl_conf_tutorial.md)
 
 ## Documentation 
 
@@ -61,9 +66,10 @@ It implements secure computation protocols based on homomorphic encryption and m
 - [Computing API](doc/api/computing.md)
 - [Federation API](./doc/api/federation.md)
 - [Flow SDK API](doc/api/fate_client/flow_sdk.md)
-- [Flow Client](doc/api/fate_client/flow_client.md)
+- [Flow Client](https://github.com/FederatedAI/FATE-Flow/blob/develop-1.7.0/doc/fate_flow_client.md)
 - [FATE Pipeline](doc/api/fate_client/pipeline.md)
 - [FATE Test](./doc/tutorial/fate_test_tutorial.md)
+- [DSL Conf Setting Guide](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.md)
 
 ### Online Courses
 - [Bilibili: @FATEFedAI](https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)
