@@ -18,81 +18,74 @@ Starting at FATE-1.5.0, V2 of dsl and submit conf is recommended.
 
 ## DSL Configure File
 
-### 1\. Overview
+### 1. Overview
 
 We use json file which is actually a dictionary as a dsl config file.
 
-### 2\. Components
+### 2. Components
 
   - **definition:** components in your modeling task, always the first
     level of dsl dict.
   - **example:**
 
-<!-- end list -->
-
-``` sourceCode json
-{
-  "components" : {
-          ...
+    ```json
+    {
+      "components" : {
+        ...
       }
-  }
-```
+    }
+    ```
 
   - **explanation:**
 
-Then each component should be defined on the second level. Here is an
-example of setting a component:
+    Then each component should be defined on the second level. Here is an example of setting a component:
 
-``` sourceCode json
-"data_transform_0": {
-      "module": "DataTransform",
-      "input": {
-          "data": {
-              "data": [
-                  "reader_0.train_data"
-              ]
+    ```json
+    "data_transform_0": {
+          "module": "DataTransform",
+          "input": {
+              "data": {
+                  "data": [
+                      "reader_0.train_data"
+                  ]
+              }
+          },
+          "output": {
+              "data": ["train"],
+              "model": ["model"]
           }
-      },
-      "output": {
-          "data": ["train"],
-          "model": ["model"]
       }
-  }
-```
+    ```
 
-As the example shows, user define the component name as key of this
-module.
+    As the example shows, user define the component name as key of this module.
 
-Please note that in DSL V2, all modeling task config should contain a
-**Reader** component to reader data from storage service, this component
-has "output" field only, like the following:
+    Please note that in DSL V2, all modeling task config should contain a **Reader** component to reader data from storage service, this component has "output" field only, like the following:
 
-``` sourceCode json
-"reader_0": {
-      "module": "Reader",
-      "output": {
-          "data": ["train"]
-      }
-}
-```
+    ```json
+    "reader_0": {
+          "module": "Reader",
+          "output": {
+              "data": ["train"]
+          }
+    }
+    ```
 
-### 3\. Module
+### 3. Module
 
   - **definition:** Specify which component to use.
   - **explanation:** This field should strictly match the file name in
     python/federatedml/conf/setting\_conf except the `.json` suffix.
   - **example:**
 
-<!-- end list -->
 
-``` sourceCode json
-"hetero_feature_binning_1": {
-    "module": "HeteroFeatureBinning",
-     ...
-}
-```
+    ```json
+    "hetero_feature_binning_1": {
+        "module": "HeteroFeatureBinning",
+        ...
+    }
+    ```
 
-### 4\. Input
+### 4. Input
 
   - **definition:** There are two types of input, data and model.
 
@@ -116,59 +109,57 @@ has "output" field only, like the following:
   - **definition:** Model input from previous modules; there are two
     possible model-input types:
 
-<!-- end list -->
-
-1.  model: This is a model input by the same type of component. For
-    example, hetero\_binning\_0 run as a fit component, and
-    hetero\_binning\_1 takes model output of hetero\_binning\_0 as input
-    so that can be used to transform or predict. Here's an example
-    showing this logic:
-    
-    ``` sourceCode json
-    "hetero_feature_binning_1": {
-        "module": "HeteroFeatureBinning",
-        "input": {
-            "data": {
-                "data": [
-                    "data_transform_1.validate_data"
+    1.  model: This is a model input by the same type of component. For
+        example, hetero\_binning\_0 run as a fit component, and
+        hetero\_binning\_1 takes model output of hetero\_binning\_0 as input
+        so that can be used to transform or predict. Here's an example
+        showing this logic:
+        
+        ```json
+        "hetero_feature_binning_1": {
+            "module": "HeteroFeatureBinning",
+            "input": {
+                "data": {
+                    "data": [
+                        "data_transform_1.validate_data"
+                    ]
+                },
+                "model": [
+                    "hetero_feature_binning_0.fit_model"
                 ]
             },
-            "model": [
-                "hetero_feature_binning_0.fit_model"
-            ]
-        },
-        "output": {
-            "data": ["validate_data"],
-          "model": ["eval_model"]
+            "output": {
+                "data": ["validate_data"],
+              "model": ["eval_model"]
+            }
         }
-    }
-    ```
+        ```
 
-2.  isometric\_model: This is used to specify the model input from
-    upstream components. For example, feature selection will take
-    feature binning as upstream model, since it will use information
-    value as feature importance. Here's an example of feature selection
-    component:
-    
-    ``` sourceCode json
-    "hetero_feature_selection_0": {
-        "module": "HeteroFeatureSelection",
-        "input": {
-            "data": {
-                "data": [
-                    "hetero_feature_binning_0.train"
+    2.  isometric\_model: This is used to specify the model input from
+        upstream components. For example, feature selection will take
+        feature binning as upstream model, since it will use information
+        value as feature importance. Here's an example of feature selection
+        component:
+        
+        ```json
+        "hetero_feature_selection_0": {
+            "module": "HeteroFeatureSelection",
+            "input": {
+                "data": {
+                    "data": [
+                        "hetero_feature_binning_0.train"
+                    ]
+                },
+                "isometric_model": [
+                    "hetero_feature_binning_0.output_model"
                 ]
             },
-            "isometric_model": [
-                "hetero_feature_binning_0.output_model"
-            ]
-        },
-        "output": {
-            "data": ["train"],
-            "model": ["output_model"]
+            "output": {
+                "data": ["train"],
+                "model": ["output_model"]
+            }
         }
-    }
-    ```
+        ```
 
 #### 4.3 Model Output
 
@@ -179,12 +170,10 @@ has "output" field only, like the following:
 
   - **definition:** data output, there are four types:
 
-<!-- end list -->
-
-1.  data: normal data output
-2.  train\_data: only for Data Split
-3.  validate\_data: only for Data Split
-4.  test\_data： only for Data Split
+    1.  data: normal data output
+    2.  train\_data: only for Data Split
+    3.  validate\_data: only for Data Split
+    4.  test\_data： only for Data Split
 
 #### 5.2 Model Output
 
@@ -192,37 +181,33 @@ has "output" field only, like the following:
 
 ## JOB RUNTIME CONFIG Guide (for version 1.5.x and above)
 
-### 1\. Overview
+### 1. Overview
 
 Job Runtime Conf configures job and module settings for all
 participants. Configurable values include:
 
-### 2\. DSL version
+### 2. DSL version
 
   - **definition:** conf version, default 1, 2 is recommended
   - **example:**
 
-<!-- end list -->
+    ```json
+    "dsl_version": "2"
+    ```
 
-``` sourceCode json
-"dsl_version": "2"
-```
-
-### 3\. Job Participants
+### 3. Job Participants
 
 #### 3.1 Initiator
 
   - **definition:** role and party\_id of job initiator
   - **example:**
 
-<!-- end list -->
-
-``` sourceCode json
-"initiator": {
-    "role": "guest",
-    "party_id": 9999
-}
-```
+    ```json
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    }
+    ```
 
 #### 3.2 Role
 
@@ -232,17 +217,15 @@ participants. Configurable values include:
     list since multiple parties may take the same role in a job
   - **examples**
 
-<!-- end list -->
+    ```json
+    "role": {
+        "guest": [9999],
+        "host": [10000],
+        "arbiter": [10000]
+    }
+    ```
 
-``` sourceCode json
-"role": {
-    "guest": [9999],
-    "host": [10000],
-    "arbiter": [10000]
-}
-```
-
-### 4\. System Runtime Parameters
+### 4. System Runtime Parameters
 
   - **definition:** main system configuration when running jobs
 
@@ -253,19 +236,17 @@ participants. Configurable values include:
     \(role:\)party\_index format; note that `role` configuration takes
     priority over `common`
 
-<!-- end list -->
-
-``` sourceCode json
-"common": {
-}
-
-"role": {
-  "guest": {
-    "0": {
+    ```json
+    "common": {
     }
-  }
-}
-```
+
+    "role": {
+      "guest": {
+        "0": {
+        }
+      }
+    }
+    ```
 
 In the example above, configuration inside`common` applies to all
 participants; configuration inside `role-guest-0` only applies to
@@ -293,20 +274,12 @@ configuration
 
 Configurable Job Parameters
 
-<div class="note">
+!!! Note
 
-<div class="admonition-title">
-
-Note
-
-</div>
-
-1\. Some types of `computing_engine`, `storage_engine` are only compatible with each other. 
-2\. Developer may implement other types of engines and set new engine
-combinations in runtime
-conf.
-
-</div>
+    1. Some types of `computing_engine`, `storage_engine` are only compatible with each other. 
+    2. Developer may implement other types of engines and set new engine
+    combinations in runtime
+    conf.
 
 #### 4.3 Non-Configurable Job Parameters
 
@@ -323,77 +296,69 @@ Non-configurable Job Parameters
 
 1.  **EGGROLL** conf example with default CPU settings:
 
-<!-- end list -->
-
-``` sourceCode json
-"job_parameters": {
-   "common": {
-      "task_cores": 4
-   }
-}
-```
+    ```json
+    "job_parameters": {
+      "common": {
+          "task_cores": 4
+      }
+    }
+    ```
 
 2.  **EGGROLL** conf example with manually specified CPU settings:
 
-<!-- end list -->
-
-``` sourceCode json
-"job_parameters": {
-   "common": {
-       "job_type": "train",
-       "eggroll_run": {
-         "eggroll.session.processors.per.node": 2
-       },
-       "task_parallelism": 2,
-       "computing_partitions": 8,
-       "timeout": 36000,
-   }
-}
-```
+    ```json
+    "job_parameters": {
+      "common": {
+          "job_type": "train",
+          "eggroll_run": {
+            "eggroll.session.processors.per.node": 2
+          },
+          "task_parallelism": 2,
+          "computing_partitions": 8,
+          "timeout": 36000,
+      }
+    }
+    ```
 
 3.  **SPARK With RabbitMQ** conf example with manually specified CPU
     settings:
 
-<!-- end list -->
-
-``` sourceCode json
-"job_parameters": {
-   "common": {
-       "job_type": "train",
-       "spark_run": {
-           "num-executors": 1,
-           "executor-cores": 2
-       },
-       "task_parallelism": 2,
-       "computing_partitions": 8,
-       "timeout": 36000,
-       "rabbitmq_run": {
-           "queue": {
-               "durable": true
-           },
-           "connection": {
-               "heartbeat": 10000
-           }
-       }
-   }
-}
-```
+    ```json
+    "job_parameters": {
+      "common": {
+          "job_type": "train",
+          "spark_run": {
+              "num-executors": 1,
+              "executor-cores": 2
+          },
+          "task_parallelism": 2,
+          "computing_partitions": 8,
+          "timeout": 36000,
+          "rabbitmq_run": {
+              "queue": {
+                  "durable": true
+              },
+              "connection": {
+                  "heartbeat": 10000
+              }
+          }
+      }
+    }
+    ```
 
 4.  **SPARK With Pulsar** conf example with default setting :
 
-<!-- end list -->
-
-``` sourceCode json
-"job_parameters": {
-   "common": {
-       "job_type": "train",
-       "spark_run": {
-           "num-executors": 1,
-           "executor-cores": 2
-       }
-   }
-}
-```
+    ```json
+    "job_parameters": {
+      "common": {
+          "job_type": "train",
+          "spark_run": {
+              "num-executors": 1,
+              "executor-cores": 2
+          }
+      }
+    }
+    ```
 
 #### 4.5 Resource Management
 
@@ -420,6 +385,7 @@ Calculate actual `task_run_cores` each task requests at computing
 engine, may not equal to the amount applied by resource manager
 
 1.  only set `task_cores` in job conf:
+
       - task\_run\_cores(guest, host)：max(task\_cores / total\_nodes, 1)
         \* total\_nodes
       - task\_run\_cores(arbiter)：max(1 / total\_nodes, 1) \*
@@ -429,9 +395,11 @@ engine, may not equal to the amount applied by resource manager
         eggroll.session.processors.per.node for EGGROLL, and
         executor-cores & num-executors for SPARK
 2.  set eggroll\_run in job conf：
+
       - task\_run\_cores(guest, host,
         arbiter)：eggroll.session.processors.per.node \* total\_nodes
 3.  set spark\_run in job conf：
+
       - task\_run\_cores(guest, host, arbiter)：executor-cores \*
         num-executors
 
@@ -471,7 +439,7 @@ engine, may not equal to the amount applied by resource manager
         succeeded participants, and the job fails in resource
         application
 
-### 5\. Component Parameter Configuration
+### 5. Component Parameter Configuration
 
 #### 5.1 Configuration Applicable Range Policy
 
@@ -480,9 +448,7 @@ engine, may not equal to the amount applied by resource manager
     $role:$party\_index format; note that `role` configuration takes
     priority over `common`
 
-<!-- end list -->
-
-``` sourceCode json
+```json
 "commom": {
 }
 
@@ -496,10 +462,10 @@ engine, may not equal to the amount applied by resource manager
 
 In the example above, configuration inside`common` applies to all
 participants; configuration inside `role-guest-0` only applies to
-participant <span class="title-ref">guest\_0</span>
+participant `guest_0`
 
-Note: current version now supports checking on both fields of
-specification.
+!!!Note
+    current version now supports checking on both fields of specification.
 
 #### 5.2 Example Component Parameter Configuration
 
@@ -509,9 +475,7 @@ specification.
     for each participant
   - Names of the above modules are specified in dsl file
 
-<!-- end list -->
-
-``` sourceCode json
+```json
 "component_parameters": {
   "common": {
     "intersection_0": {
@@ -565,7 +529,7 @@ specification.
 For multi-host modeling case, all the host's party ids should be list in
 the role field.
 
-``` sourceCode json
+```json
 "role": {
    "guest": [
      10000
@@ -582,7 +546,7 @@ the role field.
 Each parameter set for host should also be config The number of elements
 should match the number of hosts.
 
-``` sourceCode json
+```json
 "component_parameters": {
    "role": {
       "host": {
@@ -633,8 +597,8 @@ document](../../api/fate_client/flow_client.md#deploy) for
 details on using deploy
 command:
 
-``` sourceCode bash
-flow model deploy --model-id $model_id --model-version $model_version --cpn-list ...
+```bash
+$ flow model deploy --model-id $model_id --model-version $model_version --cpn-list ...
 ```
 
 Optionally, user can add additional component(s) to predict dsl, like
@@ -644,7 +608,7 @@ Optionally, user can add additional component(s) to predict dsl, like
 
 training dsl:
 
-``` sourceCode json
+```json
 "components": {
     "reader_0": {
         "module": "Reader",
@@ -710,7 +674,7 @@ training dsl:
 
 predict dsl:
 
-``` sourceCode json
+```json
 "components": {
     "reader_0": {
         "module": "Reader",
@@ -788,7 +752,7 @@ predict dsl:
     }
 ```
 
-### 6\. Basic Workflow
+### 6. Basic Workflow
 
 1.  After job submission, FATE-Flow obtains job dsl and job config and
     store them inside job folder under corresponding directory
