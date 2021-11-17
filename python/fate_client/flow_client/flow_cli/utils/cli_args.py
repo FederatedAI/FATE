@@ -105,7 +105,7 @@ SIMPLE = click.option("-s", '--simple', is_flag=True, default=False, help="simpl
 
 TIMEOUT = click.option("--timeout", type=click.INT, default=300,
                        help="Timeout limit, default 300 seconds")
-TASK_CORES = click.option("-c", "--task-cores", type=click.INT, default=2,
+TASK_CORES = click.option("--task-cores", type=click.INT, default=2,
                        help="Run Job Task Cores, default 2 cores")
 
 SRC_PARTY_ID =  click.option("--src-party-id", type=click.STRING, required=True, help="src party id.")
