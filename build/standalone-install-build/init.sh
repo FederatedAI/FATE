@@ -16,13 +16,13 @@
 #  limitations under the License.
 #
 
-basepath=$(cd `dirname $0`;pwd)
+project_base=$(cd `dirname $0`;pwd)
 version=
-env_dir=${basepath}/env
+env_dir=${project_base}/env
 
-python_resouce=${basepath}/env/python36
-pypi_resource=${basepath}/env/pypi
-jdk_resource=${basepath}/env/jdk
+python_resouce=${project_base}/env/python36
+pypi_resource=${project_base}/env/pypi
+jdk_resource=${project_base}/env/jdk
 
 jdk_dir=${jdk_resource}/jdk-8u192
 miniconda_dir=${python_resouce}/miniconda
@@ -32,9 +32,12 @@ echo "[INFO] env dir: ${env_dir}"
 echo "[INFO] jdk dir: ${jdk_dir}"
 echo "[INFO] venv dir: ${venv_dir}"
 
+cd ${project_base}
+source ./bin/common.sh
+
 init() {
 
-  cd ${basepath}
+  cd ${project_base}
 
   echo "[INFO] install os dependency"
   sh bin/install_os_dependencies.sh
@@ -53,7 +56,7 @@ init() {
   fi
   echo "[INFO] install jdk done"
 
-  cd ${basepath}
+  cd ${project_base}
 
   if [ ! -f ${venv_dir}/bin/python ]; then
     echo "[INFO] install virtualenv"
@@ -63,41 +66,48 @@ init() {
     pip install setuptools --no-index -f ${pypi_resource}
     echo "[INFO] install virtualenv done"
 
-    echo "[INFO] install python dependency packages by ${basepath}/requirements.txt using ${pypi_resource}"
-    pip install -r ${basepath}/requirements.txt -f ${pypi_resource} --no-index
+    echo "[INFO] install python dependency packages by ${project_base}/requirements.txt using ${pypi_resource}"
+    pip install -r ${project_base}/requirements.txt -f ${pypi_resource} --no-index
     echo "[INFO] install python dependency packages done"
 
     echo "[INFO] install fate client"
-    cd ${basepath}/fate/python/fate_client
+    cd ${project_base}/fate/python/fate_client
     python setup.py install
-    flow init -c ${basepath}/conf/service_conf.yaml
+    flow init -c ${project_base}/conf/service_conf.yaml
     echo "[INFO] install fate client done"
+
+    echo "[INFO] install fate test"
+    cd ${project_base}/fate/python/fate_test
+    fate_sed_cmd "s#data_base_dir:.*#data_base_dir: ${project_base}#g" ./fate_test/fate_test_config.yaml
+    fate_sed_cmd "s#fate_base:.*#fate_base: ${project_base}/fate#g" ./fate_test/fate_test_config.yaml
+    python setup.py install
+    echo "[INFO] install fate test done"
   fi
 
   echo "[INFO] setup fateflow"
-  sed -i.bak "s#PYTHONPATH=.*#PYTHONPATH=${basepath}/fate/python:${basepath}/fateflow/python#g" ${basepath}/bin/init_env.sh
-  sed -i.bak "s#venv=.*#venv=${venv_dir}#g" ${basepath}/bin/init_env.sh
-  sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=${jdk_dir}/#g" ${basepath}/bin/init_env.sh
+  fate_sed_cmd "s#PYTHONPATH=.*#PYTHONPATH=${project_base}/fate/python:${project_base}/fateflow/python#g" ${project_base}/bin/init_env.sh
+  fate_sed_cmd "s#venv=.*#venv=${venv_dir}#g" ${project_base}/bin/init_env.sh
+  fate_sed_cmd "s#JAVA_HOME=.*#JAVA_HOME=${jdk_dir}/#g" ${project_base}/bin/init_env.sh
   echo "[INFO] setup fateflow done"
-	#sed -i.bak "s#host:.*#host: 127.0.0.1#g" ${basepath}/conf/service_conf.yaml
+
   echo "[INFO] setup fateboard"
-  sed -i.bak "s#fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:sqlite:${basepath}/fate_sqlite.db#g" ${basepath}/fateboard/conf/application.properties
-  sed -i.bak "s#fateflow.url=.*#fateflow.url=http://localhost:9380#g" ${basepath}/fateboard/conf/application.properties
+  fate_sed_cmd "s#fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:sqlite:${project_base}/fate_sqlite.db#g" ${project_base}/fateboard/conf/application.properties
+  fate_sed_cmd "s#fateflow.url=.*#fateflow.url=http://localhost:9380#g" ${project_base}/fateboard/conf/application.properties
   echo "[INFO] setup fateboard done"
 }
 
 action() {
-  cd $basepath
+  cd $project_base
 
-  source $basepath/bin/init_env.sh
+  source $project_base/bin/init_env.sh
 
-	cd  $basepath/fateflow
+	cd  $project_base/fateflow
 	sh  bin/service.sh $1
 
-	cd  $basepath/fateboard
+	cd  $project_base/fateboard
 	sh  service.sh $1
 
-	cd $basepath
+	cd $project_base
 }
 
 
