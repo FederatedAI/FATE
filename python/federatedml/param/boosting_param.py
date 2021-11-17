@@ -591,7 +591,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
             raise ValueError('unsupported multi-classification mode')
 
         if self.multi_mode == consts.MULTI_OUTPUT:
-            if self.objective_param.task_type == consts.REGRESSION:
+            if self.task_type == consts.REGRESSION:
                 raise ValueError('regression tasks not support multi-output trees')
 
         return True
@@ -669,7 +669,7 @@ class HomoSecureBoostParam(BoostingParam):
             raise ValueError('unsupported multi-classification mode')
 
         if self.multi_mode == consts.MULTI_OUTPUT:
-            if self.objective_param.task_type == consts.REGRESSION:
+            if self.task_type == consts.REGRESSION:
                 raise ValueError('regression tasks not support multi-output trees')
 
         return True

@@ -4,7 +4,7 @@ import lightgbm as lgb
 from federatedml.model_base import ModelBase
 from federatedml.transfer_variable.transfer_class.shap_transfer_variable import SHAPTransferVariable
 from federatedml.ensemble import HeteroSecureBoostingTreeGuest, HeteroSecureBoostingTreeHost
-from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam, DecisionTreeModelParam
+from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
 from federatedml.ensemble.boosting.boosting import Boosting
 from federatedml.ensemble import HeteroDecisionTreeHost
 from federatedml.protobuf.homo_model_convert.lightgbm.gbdt import sbt_to_lgb
@@ -156,7 +156,7 @@ class TreeSHAP(ModelBase):
 
         lgb_model = self.convert_hetero_guest_sbt_to_lgb(tree_param)
         to_predict_sample = self.extend_host_fed_feat(data_arr, len(host_fed_feat_idx))
-        predict_rs = lgb_model.predict([to_predict_sample])
+        # predict_rs = lgb_model.predict([to_predict_sample])
         contrib = lgb_model.predict([to_predict_sample], pred_contrib=True)
         return contrib
 

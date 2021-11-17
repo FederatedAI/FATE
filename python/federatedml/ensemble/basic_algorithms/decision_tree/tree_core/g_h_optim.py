@@ -171,7 +171,7 @@ class GHPacker(object):
             if self.mo_mode:
                 unpack_rs = self.packer.unpack_an_int_list(split_info.sum_grad)
             else:
-                unpack_rs = self.packer._unpack_an_int(split_info.sum_grad, self.packer._bit_assignment[0])
+                unpack_rs = self.packer.unpack_an_int(split_info.sum_grad, self.packer.bit_assignment[0])
             g, h = g_h_recover_post_func(unpack_rs, fix_point_precision)
             split_info.sum_grad = g - self.g_offset * split_info.sample_count
             split_info.sum_hess = h
