@@ -81,6 +81,40 @@
       "role": "host_0"
     }
   ],
+  "hetero_lr-binary-0": {
+    "local": {
+      "script": "./sklearn-lr-binary.py",
+      "conf": "./breast_config.yaml"
+    },
+    "FATE-hetero-lr": {
+      "script": "./pipeline-lr-binary.py",
+      "conf": "./breast_config.yaml"
+    },
+    "FATE-hetero-sshe-lr": {
+      "script": "./pipeline-sshe-lr-binary.py",
+      "conf": "./breast_sshe_lr_config.yaml"
+    },
+    "compare_setting": {
+      "relative_tol": 1e-2
+    }
+  },
+  "hetero_lr-binary-1": {
+    "local": {
+      "script": "./sklearn-lr-binary.py",
+      "conf": "./default_credit_config.yaml"
+    },
+    "FATE-hetero-lr": {
+      "script": "./pipeline-lr-binary.py",
+      "conf": "./default_credit_config.yaml"
+    },
+    "FATE-hetero-sshe-lr": {
+      "script": "./pipeline-sshe-lr-binary.py",
+      "conf": "./default_credit_sshe_lr_config.yaml"
+    },
+    "compare_setting": {
+      "relative_tol": 1e-2
+    }
+  },
   "hetero_lr-binary-2": {
     "local": {
       "script": "./sklearn-lr-binary.py",
@@ -93,6 +127,40 @@
     "FATE-hetero-sshe-lr": {
       "script": "./pipeline-sshe-lr-binary.py",
       "conf": "./epsilon_5k_sshe_lr_config.yaml"
+    },
+    "compare_setting": {
+      "relative_tol": 1e-2
+    }
+  },
+  "hetero_lr-binary-3": {
+    "local": {
+      "script": "./sklearn-lr-binary.py",
+      "conf": "./give_credit_config.yaml"
+    },
+    "FATE-hetero-lr": {
+      "script": "./pipeline-lr-binary.py",
+      "conf": "./give_credit_config.yaml"
+    },
+    "FATE-hetero-sshe-lr": {
+      "script": "./pipeline-sshe-lr-binary.py",
+      "conf": "./give_credit_sshe_lr_config.yaml"
+    },
+    "compare_setting": {
+      "relative_tol": 1e-2
+    }
+  },
+  "multi": {
+    "local": {
+      "script": "./sklearn-lr-multi.py",
+      "conf": "./vehicle_lr_sklearn_config.yaml"
+    },
+    "FATE-hetero-lr": {
+      "script": "./pipeline-lr-multi.py",
+      "conf": "./vehicle_config.yaml"
+    },
+    "FATE-hetero-sshe-lr": {
+      "script": "./pipeline-sshe-lr-multi.py",
+      "conf": "./vehicle_sshe_lr_config.yaml"
     },
     "compare_setting": {
       "relative_tol": 1e-2

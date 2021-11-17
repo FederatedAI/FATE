@@ -3,10 +3,10 @@ data_host: "examples/data/give_credit_hetero_host.csv"
 idx: "id"
 label_name: "y"
 penalty: "L2"
-max_iter: 20
+max_iter: 5
 alpha: 10
-learning_rate: 0.15
-optimizer: "sgd"
+learning_rate: 0.2
+optimizer: "adam"
 batch_size: 5000
 early_stop: "diff"
 init_method: "zeros"

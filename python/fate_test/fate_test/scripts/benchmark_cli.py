@@ -1,4 +1,5 @@
 import os
+import re
 import time
 import uuid
 from datetime import timedelta
@@ -12,6 +13,8 @@ from fate_test._parser import BenchmarkSuite
 from fate_test.scripts._options import SharedOptions
 from fate_test.scripts._utils import _upload_data, _delete_data, _load_testsuites, _load_module_from_script
 from fate_test.utils import show_data, match_metrics
+
+DATA_DISPLAY_PATTERN = re.compile("^FATE")
 
 
 @click.command(name="benchmark-quality")
@@ -128,7 +131,8 @@ def _run_benchmark_pairs(config: Config, suite: BenchmarkSuite, tol: float, name
                     data, metric = mod.main()
                 results[job_name] = metric
                 echo.echo(f"[{j + 1}/{job_n}] job: {job.job_name} Success!")
-                if job_name == "FATE":
+
+                if DATA_DISPLAY_PATTERN.match(job_name):
                     data_summary = data
                 if data_summary is None:
                     data_summary = data
