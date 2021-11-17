@@ -25,9 +25,9 @@ The architecture diagram:
 
 # 3\. Component Description
 
-| Software| Component| Port| Description
-|----------|----------|----------|----------
-| eggroll| rollsite| 9370| The cross-site/party communication component, equivalent to proxy+federation; each party can only have one for this service
+| Software | Component | Port | Description                                                  |
+| -------- | --------- | ---- | ------------------------------------------------------------ |
+| eggroll  | rollsite  | 9370 | The cross-site/party communication component, equivalent to proxy+federation; each party can only have one for this service |
 
 # 4\. Basic Environment Configuration
 
@@ -133,6 +133,8 @@ Note: In this guide, the installation directory is /data/projects/install and th
 
 Execute as app user on the destination server (192.168.0.1 with extranet environment):
 
+Note: Replace ${version} with the specific FATE version number.
+
 ```
 cd /data/projects/install
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
@@ -184,6 +186,7 @@ tar xvf eggroll.tar.gz -C /data/projects/fate
 cat >/data/projects/fate/init_env.sh <<EOF
 export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
 export PATH=\$PATH:\$JAVA_HOME/bin
+export EGGROLL_LOG_LEVEL=DEBUG
 EOF
 ```
 
