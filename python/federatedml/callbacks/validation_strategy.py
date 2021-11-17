@@ -121,12 +121,16 @@ class ValidationStrategy(CallbackBase):
         return "_".join([prefix, keywords, str(epoch), data_type])
 
     @staticmethod
-    def make_data_set_name(need_cv, model_flowid, epoch):
+    def make_data_set_name(need_cv, need_run_ovr, model_flowid, epoch):
         data_iteration_name = "_".join(["iteration", str(epoch)])
+        cv_fold = "_".join(["fold", model_flowid.split(".", -1)[-1]])
+
+        if need_run_ovr:
+            data_iteration_name = model_flowid + '.' + data_iteration_name
+
         if not need_cv:
             return data_iteration_name
 
-        cv_fold = "_".join(["fold", model_flowid.split(".", -1)[-1]])
         return ".".join([cv_fold, data_iteration_name])
 
     @staticmethod
@@ -261,7 +265,7 @@ class ValidationStrategy(CallbackBase):
 
         eval_obj._init_model(evaluate_param)
         eval_obj.set_tracker(model.tracker)
-        data_set_name = self.make_data_set_name(model.need_cv, model.flowid,  epoch)
+        data_set_name = self.make_data_set_name(model.need_cv, model.callback_one_vs_rest, model.flowid,  epoch)
         eval_data = {data_set_name: predicts}
         eval_result_dict = eval_obj.fit(eval_data, return_result=True)
         epoch_summary = eval_obj.summary()
