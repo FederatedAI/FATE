@@ -44,7 +44,7 @@ RUN pyenv install 3.6.15 \
 
 COPY python/fate_client /venv/fate_client
 RUN /venv/py36/bin/python -m pip install --no-cache-dir /venv/fate_client \
-    && /venv/py36/bin/pipeline init --ip 127.0.0.1 --port 9380
+    && /venv/py36/bin/pipeline init --ip 127.0.0.1 --port 9380 \
     && /venv/py36/bin/flow init --ip 127.0.0.1 --port 9380
 
 COPY python/fate_test /venv/fate_test

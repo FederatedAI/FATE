@@ -31,7 +31,8 @@ tasks:
         "python.envFile": "${workspaceFolder}/.vscode/.env",
         "python.defaultInterpreterPath": "/venv/py36/bin/python",
         "python.pythonPath": "/venv/py36/bin/python",
-        "python.autoComplete.extraPaths": ["python", "python/fate_client", "python/fate_test", "fateflow/python", "eggroll/python"]
+        "python.autoComplete.extraPaths": ["python", "python/fate_client", "python/fate_test", "fateflow/python", "eggroll/python"],
+        "git.alwaysSignOff": true
       }
       EOF
       cat << 'EOF' > "$PWD/.vscode/.env"
