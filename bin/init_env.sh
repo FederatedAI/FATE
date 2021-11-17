@@ -22,7 +22,8 @@ export FATE_DEPLOY_BASE=$fate_project_base
 export EGGROLL_HOME=
 export PYTHONPATH=
 
-export FATE_LOG_LEVEL=INFO
+export FATE_LOG_LEVEL=DEBUG
+export FATE_PROFILE_LOG_ENABLED=0
 export EGGROLL_LOG_LEVEL=INFO
 
 venv=
