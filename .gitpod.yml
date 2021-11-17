@@ -56,7 +56,10 @@ tasks:
       -DFATE_DEPLOY_PREFIX=/workspace/FATE/fateflow/logs/ \
       -Dssh_config_file=/fateboard/resources/ \
       -Xmx2048m -Xms2048m -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:gc.log -XX:+HeapDumpOnOutOfMemoryError \
-      -jar /fateboard/fateboard.jar >/dev/null 2>&1 &
+      -jar /fateboard/fateboard.jar >/dev/null 2>&1 & \
+      && echo done
+
+
 
 ports:
   - port: 9380
