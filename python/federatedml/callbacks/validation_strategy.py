@@ -123,15 +123,19 @@ class ValidationStrategy(CallbackBase):
     @staticmethod
     def make_data_set_name(need_cv, need_run_ovr, model_flowid, epoch):
         data_iteration_name = "_".join(["iteration", str(epoch)])
-        cv_fold = "_".join(["fold", model_flowid.split(".", -1)[-1]])
-
-        if need_run_ovr:
-            data_iteration_name = model_flowid + '.' + data_iteration_name
-
-        if not need_cv:
+        if not need_cv and not need_run_ovr:
             return data_iteration_name
 
-        return ".".join([cv_fold, data_iteration_name])
+        if need_cv:
+            if not need_run_ovr:
+                prefix = "_".join(["fold", model_flowid.split(".", -1)[-1]])
+            else:
+                prefix = "_".join(["fold", model_flowid.split(".", -1)[-2]])
+                prefix = ".".join([prefix, model_flowid.split(".", -1)[-1]])
+        else:
+            prefix = model_flowid.split(".", -1)[-1]
+
+        return ".".join([prefix, data_iteration_name])
 
     @staticmethod
     def extract_best_model(model):
