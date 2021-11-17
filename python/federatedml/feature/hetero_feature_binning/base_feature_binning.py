@@ -282,7 +282,7 @@ class BaseFeatureBinning(ModelBase):
                     i += len(self.labels)
 
         if list(model_param.header_anonymous):
-            self.header_anonymous = model_param.header_anonymous
+            self.header_anonymous = list(model_param.header_anonymous)
 
     def export_model(self):
         if self.model_output is not None:
