@@ -127,9 +127,11 @@ class ValidationStrategy(CallbackBase):
             return data_iteration_name
 
         if need_cv:
-            prefix = "_".join(["fold", model_flowid.split(".", -1)[-1]])
-            if need_run_ovr:
-                prefix = prefix + "." + model_flowid.split(".", -1)[-2]
+            if not need_run_ovr:
+                prefix = "_".join(["fold", model_flowid.split(".", -1)[-1]])
+            else:
+                prefix = "_".join(["fold", model_flowid.split(".", -1)[-2]])
+                prefix = ".".join([prefix, model_flowid.split(".", -1)[-1]])
         else:
             prefix = model_flowid.split(".", -1)[-1]
 
