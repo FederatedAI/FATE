@@ -141,6 +141,7 @@ class ModelBase(object):
         self.flowid = ""
         self.task_version_id = ""
         self.need_one_vs_rest = False
+        self.callback_one_vs_rest = False
         self.checkpoint_manager = None
         self.cv_fold = 0
         self.validation_freqs = None

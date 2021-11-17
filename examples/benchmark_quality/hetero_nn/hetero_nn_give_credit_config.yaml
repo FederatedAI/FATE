@@ -5,7 +5,7 @@ label_name: "y"
 learning_rate: 0.05
 tol: 0.01
 loss: "binary_crossentropy"
-batch_size: 15000
+batch_size: 12000
 metrics: ["AUC"]
 epochs: 5
 bottom_layer_units: 2
