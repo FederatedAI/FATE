@@ -30,11 +30,12 @@ data_base_dir: path(FATE)
 cache_directory: examples/cache/
 performance_template_directory: examples/benchmark_performance/
 flow_test_config_directory: examples/flow_test_template/hetero_lr/flow_test_config.yaml
+fate_base: path(FATE)/fate
 clean_data: true
 parties:
-  guest: [10000]
-  host: [9999, 10000]
-  arbiter: [9999]
+  guest: [9999]
+  host: [10000, 9999]
+  arbiter: [10000]
 services:
   - flow_services:
       - {address: 127.0.0.1:9380, parties: [9999, 10000]}
@@ -147,6 +148,7 @@ class Config(object):
         self.cache_directory = os.path.join(config["data_base_dir"], config["cache_directory"])
         self.perf_template_dir = os.path.join(config["data_base_dir"], config["performance_template_directory"])
         self.flow_test_config_dir = os.path.join(config["data_base_dir"], config["flow_test_config_directory"])
+        self.fate_base = config["fate_base"]
         self.clean_data = config.get("clean_data", True)
         self.parties = Parties.from_dict(config["parties"])
         self.role = config["parties"]

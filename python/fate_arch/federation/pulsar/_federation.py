@@ -8,19 +8,17 @@ import json
 import sys
 import time
 import typing
-import random
+
 from pickle import dumps as p_dumps, loads as p_loads
 
-import pulsar
-
 # noinspection PyPackageRequirements
-from pyspark import SparkContext, RDD
+from pyspark import SparkContext
 
-from fate_arch.common import conf_utils, file_utils
+from fate_arch.common import file_utils
 from fate_arch.abc import FederationABC, GarbageCollectionABC
 from fate_arch.common import Party
 from fate_arch.common.log import getLogger
-from fate_arch.computing.spark import get_storage_level, Table
+from fate_arch.computing.spark import Table
 from fate_arch.computing.spark._materialize import materialize
 from fate_arch.federation.pulsar._mq_channel import (
     MQChannel,
@@ -481,7 +479,7 @@ class Federation(FederationABC):
                             proxy_url=proxy,
                         ).ok:
                             LOGGER.debug(
-                                "pulsar cluster with name: %s, broker_url: %s crated",
+                                "pulsar cluster with name: %s, broker_url: %s created",
                                 party.party_id,
                                 broker_url,
                             )
@@ -926,33 +924,3 @@ class Federation(FederationABC):
                     return all_data
                 else:
                     raise e
-
-    def _unsubscribe_topic(self, topic_name):
-        self._pulsar_manager.unsubscribe_topic(
-            self._tenant, self._session_id, topic_name, DEFAULT_SUBSCRIPTION_NAME
-        )
-        LOGGER.debug(
-            f"[unsubscribe topic {self._session_id}/{topic_name}/{DEFAULT_SUBSCRIPTION_NAME}"
-        )
-
-    def _unsubscribe_topics(self, party_topic_infos):
-        for party_topic_info in party_topic_infos:
-            for topic_info in party_topic_info:
-                topic_pair = topic_info[1]
-                self._unsubscribe_topic(topic_pair.receive)
-
-    # this is used inside spark, which is required to create pulsar manager first
-    # the mq_channel is a MQChannel instance
-    def _unsubscribe_topic_without_manager(self, mq_channel):
-        pulsar_manager = PulsarManager(
-            host=mq_channel._host, port=mq_channel._mng_port)
-        pulsar_manager.unsubscribe_topic(
-            mq_channel._tenant,
-            mq_channel._namespace,
-            mq_channel._receive_topic,
-            DEFAULT_SUBSCRIPTION_NAME,
-        )
-
-        LOGGER.debug(
-            f"[unsubscribe topic {mq_channel._namespace}/{mq_channel._receive_topic}/{DEFAULT_SUBSCRIPTION_NAME}"
-        )

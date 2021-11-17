@@ -26,7 +26,6 @@ from pipeline.component.evaluation import Evaluation
 from pipeline.interface.model import Model
 from pipeline.utils.tools import load_job_config
 from pipeline.utils.tools import JobConfig
-from pipeline.runtime.entity import JobParameters
 
 from federatedml.evaluation.metrics import regression_metric, classification_metric
 from fate_test.utils import extract_data, parse_summary_result
@@ -44,7 +43,6 @@ def main(config="../../config.yaml", param="./xgb_config_binary.yaml", namespace
     guest = parties.guest[0]
     host = parties.host[0]
 
-    work_mode = config.work_mode
 
     # data sets
     guest_train_data = {"name": param['data_guest_train'], "namespace": f"experiment{namespace}"}
@@ -106,8 +104,7 @@ def main(config="../../config.yaml", param="./xgb_config_binary.yaml", namespace
     pipeline.add_component(evaluation_0, data=Data(data=hetero_fast_sbt_0.output.data))
 
     pipeline.compile()
-    job_parameters = JobParameters(work_mode=work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
 
     sbt_0_data = pipeline.get_component("hetero_fast_sbt_0").get_output_data().get("data")
     sbt_1_data = pipeline.get_component("hetero_fast_sbt_1").get_output_data().get("data")

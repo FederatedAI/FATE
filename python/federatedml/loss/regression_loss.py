@@ -146,7 +146,7 @@ class FairLoss(object):
 
     def __init__(self, c):
         if c is None:
-            self.c = const.FLOAT_ZERO
+            self.c = consts.FLOAT_ZERO
         else:
             self.c = c
 

@@ -23,7 +23,7 @@
 架构图：
 
 <div style="text-align:center", align=center>
-<img src="../images/arch_zh.png" />
+<img src="../../images/arch_zh.png" />
 </div>
 
 # 3.组件说明
@@ -202,7 +202,7 @@ echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab
 或者使用5.1章节的代码包中的脚本创建，app用户执行：
 
 ```
-sh /data/projects/fate-cluster-install/tools/makeVirtualDisk.sh
+sh /data/projects/fate-cluster-install/tools-install/makeVirtualDisk.sh
 Waring: please make sure has enough space of your disk first!!! （请确认有足够的存储空间）
 current user has sudo privilege(yes|no):yes      （是否有sudo权限，输入yes，不能简写）
 Enter store directory:/data    （设置虚拟内存文件的存放路径，确保目录存在和不要设置在根目录）
@@ -263,10 +263,12 @@ Swap:        131071           0      131071
 
 进入执行节点的/data/projects/目录，执行：
 
+备注：用具体FATE版本号替换${version},可在[release页面](https://github.com/FederatedAI/FATE/releases)上查看
+
 ```
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_cluster_install_1.6.1_release-c7-u18.tar.gz
-tar xzf fate_cluster_install_1.6.1_release-c7-u18.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_cluster_install_${version}_release-c7-u18.tar.gz
+tar xzf fate_cluster_install_${version}_release-c7-u18.tar.gz
 ```
 
 ## 5.2 部署前检查
@@ -303,8 +305,9 @@ vi fate-cluster-install/allInone/conf/setup.conf
 | 配置项              | 配置项值                                              | 说明                                                         |
 | ------------------- | ----------------------------------------------------- | ------------------------------------------------------------ |
 | roles               | 默认："host" "guest"                                  | 部署的角色，有HOST端、GUEST端                                |
-| version             | 默认：1.6.1                                           | Fate 版本号                                                  |
+| version             | 默认：${version}                                      | Fate 版本号                                                  |
 | pbase               | 默认： /data/projects                                 | 项目根目录                                                   |
+| pname               | 默认：fate                                            | 项目名称                                                     |
 | lbase               | 默认：/data/logs                                      | 保持默认不要修改                                             |
 | ssh_user            | 默认：app                                             | ssh连接目标机器的用户，也是部署后文件的属主                  |
 | ssh_group           | 默认：apps                                            | ssh连接目标的用户的属组，也是部署后文件的属组                |
@@ -338,9 +341,12 @@ vi fate-cluster-install/allInone/conf/setup.conf
 #to install role
 roles=( "host" "guest" )
 
-version="1.6.1"
+version="${version}"
 #project base
 pbase="/data/projects"
+#project name
+pname="fate"
+
 #log directory
 lbase="/data/logs"
 
@@ -403,9 +409,12 @@ nodemanager_port=4671
 #to install role
 roles=( "host" )
 
-version="1.6.1"
+version="${version}"
 #project base
 pbase="/data/projects"
+#project name
+pname="fate"
+
 #log directory
 lbase="/data/logs"
 
@@ -500,7 +509,7 @@ tail -f ./logs/deploy-mysql-host.log    （实时打印HOST端mysql的部署情�
 
 2）fateflow日志
 
-/data/projects/fate/python/logs/fate_flow/
+/data/projects/fate/fateflow/logs/fate_flow
 
 3）fateboard日志
 
@@ -512,7 +521,7 @@ tail -f ./logs/deploy-mysql-host.log    （实时打印HOST端mysql的部署情�
 6.1 Toy_example部署验证
 -----------------------
 
-此测试您需要设置3个参数：guest_partyid，host_partyid，work_mode。
+此测试您需要设置2个参数：guest_partyid，host_partyid。
 
 ### 6.1.1 单边测试
 
@@ -520,22 +529,20 @@ tail -f ./logs/deploy-mysql-host.log    （实时打印HOST端mysql的部署情�
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/toy_example/
-python run_toy_example.py 10000 10000 1
+flow test toy --guest-party-id 10000 --host-party-id 10000 
 ```
 
 类似如下结果表示成功：
 
 "2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
 
-提示：如出现max cores per job is 1, please modify job parameters报错提示，需要修改当前目录下文件toy_example_conf.json中参数task_cores为1.
+提示：如出现max cores per job is 1, please modify job parameters报错提示，需要修改运行时参数task_cores为1，增加命令行参数 '-c 1'.
 
 2）192.168.0.2上执行，guest_partyid和host_partyid都设为9999：
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/toy_example/
-python run_toy_example.py 9999 9999 1
+flow test toy --guest-party-id 9999 --host-party-id 9999
 ```
 
 类似如下结果表示成功：
@@ -548,8 +555,7 @@ python run_toy_example.py 9999 9999 1
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/toy_example/
-python run_toy_example.py 9999 10000 1
+flow test toy --guest-party-id 9999 --host-party-id 10000
 ```
 
 类似如下结果表示成功：
@@ -566,7 +572,7 @@ python run_toy_example.py 9999 10000 1
 ```
 source /data/projects/fate/bin/init_env.sh
 cd /data/projects/fate/examples/scripts/
-python upload_default_data.py -m 1
+python upload_default_data.py
 ```
 
 更多细节信息，敬请参考[脚本README](../../examples/scripts/README.rst)
@@ -583,9 +589,9 @@ python upload_default_data.py -m 1
 source /data/projects/fate/bin/init_env.sh
 cd /data/projects/fate/examples/min_test_task/
 #单边测试
-python run_task.py -m 1 -gid 9999 -hid 9999 -aid 9999 -f fast
+python run_task.py -gid 9999 -hid 9999 -aid 9999 -f fast
 #双边测试
-python run_task.py -m 1 -gid 9999 -hid 10000 -aid 10000 -f fast
+python run_task.py -gid 9999 -hid 10000 -aid 10000 -f fast
 ```
 
 其他一些可能有用的参数包括：
@@ -637,7 +643,7 @@ sh ./bin/eggroll.sh clustermanager start/stop/status/restart
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/python/fate_flow
+cd /data/projects/fate/fateflow/bin
 sh service.sh start|stop|status|restart
 ```
 
@@ -694,25 +700,85 @@ netstat -tlnp | grep 8080
 
 ## 7.3 服务日志
 
-| 服务               | 日志路径                           |
-| ------------------ | ---------------------------------- |
-| eggroll            | /data/projects/fate/eggroll/logs   |
-| fate_flow&任务日志 | /data/projects/fate/python/logs    |
-| fateboard          | /data/projects/fate/fateboard/logs |
-| mysql              | /data/logs/mysql/                  |
+| 服务               | 日志路径                                           |
+| ------------------ | -------------------------------------------------- |
+| eggroll            | /data/projects/fate/eggroll/logs                   |
+| fate_flow&任务日志 | /data/projects/fate/fateflow/logs                  |
+| fateboard          | /data/projects/fate/fateboard/logs                 |
+| mysql              | /data/projects/fate/common/mysql/mysql-8.0.13/logs |
 
-# 8. 附录
+## 7.4 空间清理规则
 
-## 8.1 Eggroll参数调优
+### 7.4.1 fateflow作业日志
 
-假定 CPU核数（cpu cores）为 c, Nodemanager的数量为 n，需要同时运行的任务数为 p，则：
+所在机器：fate flow服务所在机器 
 
-egg_num=eggroll.session.processors.per.node = c * 0.8 / p
+目录：/data/projects/fate/fateflow/logs
 
-partitions （roll pair分区数）= egg_num * n
+保留期限：N=14天
 
-可通过job conf中的job parameters指定作业使用的参数：
-1. egg_num：配置task_cores或者配置eggroll_run中processors_per_node参数
-2. partitions：配置computing_partitions
+规则：目录以$jobid开头，清理$jobid为N天前的数据 
 
-更多关于作业提交配置请参考[dsl_conf_v2_setting_guide_zh](../../doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide_zh.rst)
+参考命令：   rm -rf /data/projects/fate/fateflow/logs/20211116* 
+
+### 7.4.2 fateflow系统日志
+
+所在机器：fate flow服务所在机器 
+
+目录：/data/projects/fate/fateflow/logs/fate_flow
+
+保留期限：N=14天
+
+规则：以日期结尾，清理日期为N天前的数据 
+
+参考命令：   rm -rf /data/projects/fate/fateflow/logs/fate_flow/*.2021-11-16
+
+### 7.4.3 EggRoll Session日志
+
+所在机器：eggroll node节点 
+
+目录：/data/projects/fate/eggroll/logs/ 
+
+保留期限：N=14天
+
+规则：目录以$jobid开头，清理$jobid为N天前的数据 
+
+参考命令：   rm -rf /data/projects/fate/eggroll/logs/20211116* 
+
+### 7.4.4 EggRoll系统日志
+
+所在机器：eggroll node节点 
+
+目录：/data/projects/fate/eggroll/logs/eggroll
+
+保留期限：N=14天
+
+规则：以日期结尾和以年份建立的历史文件夹中文件，清理N天前的数据 
+
+参考命令：   rm -rf /data/projects/fate/eggroll/logs/eggroll/\*.2021-11-16_*和
+
+​                       rm -rf /data/projects/fate/eggroll/logs/eggroll/2021/11/01
+
+### 7.4.5 计算临时数据
+
+所在机器：eggroll node节点 
+
+目录：/data/projects/fate/eggroll/data/IN_MEMORY 
+
+保留期限：N=7天
+
+规则：namespace以$jobid开头，清理$jobid为N天前的数据 
+
+参考命令：   rm -rf /data/projects/fate/eggroll/data/IN_MEMORY/20211116* 
+
+### 7.4.6 作业组件输出数据
+
+所在机器：eggroll node节点 
+
+目录：/data/projects/fate/eggroll/data/LMDB
+
+保留期限：N=14天
+
+规则：namespace以output_data_$jobid开头，清理$jobid为N天前的数据 
+
+参考命令：   rm -rf /data/projects/fate/eggroll/data/LMDB/output_data_20211116* 

@@ -51,6 +51,9 @@ This section introduces the Pipeline scripts for different types of tasks.
 13. RSA Intersect with Cache Loader:
     script: pipeline-intersect-rsa-cache-loader.py
     
+14. Intersect Cardinality:
+    script": pipeline-intersect-cardinality.py
+    
 Users can run a pipeline job directly:
 
     python ${pipeline_script}

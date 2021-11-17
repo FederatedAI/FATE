@@ -17,14 +17,14 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
-from pipeline.component.homo_lr import HomoLR
-from pipeline.component.homo_onehot import HomoOneHotEncoder
-from pipeline.component.reader import Reader
-from pipeline.component.evaluation import Evaluation
-from pipeline.component.scale import FeatureScale
-from pipeline.interface.data import Data
-from pipeline.interface.model import Model
+from pipeline.component import DataTransform
+from pipeline.component import HomoLR
+from pipeline.component import HomoOneHotEncoder
+from pipeline.component import Reader
+from pipeline.component import Evaluation
+from pipeline.component import FeatureScale
+from pipeline.interface import Data
+from pipeline.interface import Model
 from pipeline.utils.tools import load_job_config
 import json
 
@@ -62,9 +62,9 @@ def main(config="../../config.yaml", namespace=""):
     reader_1.get_party_instance(role='guest', party_id=guest).component_param(table=guest_eval_data)
     reader_1.get_party_instance(role='host', party_id=host).component_param(table=host_eval_data)
 
-    # define DataIO components
-    dataio_0 = DataIO(name="dataio_0", with_label=True, output_format="dense", label_name='target')  # start component numbering at 0
-    dataio_1 = DataIO(name="dataio_1")
+    # define DataTransform components
+    data_transform_0 = DataTransform(name="data_transform_0", with_label=True, output_format="dense", label_name='target')  # start component numbering at 0
+    data_transform_1 = DataTransform(name="data_transform_1")
 
     homo_onehot_param = {
         "transform_col_indexes": [1, 2, 5, 6, 8, 10, 11, 12],
@@ -109,12 +109,12 @@ def main(config="../../config.yaml", namespace=""):
     # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)
     pipeline.add_component(reader_1)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    # set dataio_1 to replicate model from dataio_0
-    pipeline.add_component(dataio_1, data=Data(data=reader_1.output.data), model=Model(dataio_0.output.model))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    # set data_transform_1 to replicate model from data_transform_0
+    pipeline.add_component(data_transform_1, data=Data(data=reader_1.output.data), model=Model(data_transform_0.output.model))
 
-    pipeline.add_component(homo_onehot_0, data=Data(data=dataio_0.output.data))
-    pipeline.add_component(homo_onehot_1, data=Data(data=dataio_1.output.data),
+    pipeline.add_component(homo_onehot_0, data=Data(data=data_transform_0.output.data))
+    pipeline.add_component(homo_onehot_1, data=Data(data=data_transform_1.output.data),
                            model=Model(homo_onehot_0.output.model))
     pipeline.add_component(scale_0, data=Data(data=homo_onehot_0.output.data))
     pipeline.add_component(scale_1, data=Data(data=homo_onehot_1.output.data),

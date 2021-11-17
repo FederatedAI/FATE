@@ -33,8 +33,10 @@ def cli():
               help="Path to pipeline configuration file.")
 @click.option("-d", "--log-directory", type=click.Path(),
               help="Path to pipeline logs directory.")
-@click.option("--ip", type=click.STRING, help="Fate flow server ip address.")
-@click.option("--port", type=click.INT, help="Fate flow server port.")
+@click.option("--ip", type=click.STRING, help="Fate Flow server ip address.")
+@click.option("--port", type=click.INT, help="Fate Flow server port.")
+@click.option("--app-key", type=click.STRING, help="app key for request to Fate Flow server")
+@click.option("--secret-key", type=click.STRING, help="secret key for request to Fate Flow server")
 @click.option("-r", "--system-user", type=click.STRING, help="system user role")
 def _init(**kwargs):
     """
@@ -56,6 +58,8 @@ def _init(**kwargs):
     port = kwargs.get("port")
     log_directory = kwargs.get("log_directory")
     system_user = kwargs.get("system_user")
+    app_key = kwargs.get("app_key")
+    secret_key = kwargs.get("secret_key")
 
     if config_path is None and (ip is None or port is None):
         print(
@@ -76,6 +80,10 @@ def _init(**kwargs):
         config["port"] = port
     if log_directory:
         config["log_directory"] = Path(log_directory).resolve().__str__()
+    if app_key:
+        config["app_key"] = app_key
+    if secret_key:
+        config["secret_key"] = secret_key
 
     if system_user:
         system_user = system_user.lower()

@@ -231,7 +231,7 @@ class IntersectModelBase(ModelBase):
                 self.intersect_ids = self.intersection_obj.run_intersect(intersect_data)
 
         if self.intersection_obj.cardinality_only:
-            if self.intersection_obj.intersect_num:
+            if self.intersection_obj.intersect_num is not None:
                 data_count = data.count()
                 self.intersect_num = self.intersection_obj.intersect_num
                 self.intersect_rate = self.intersect_num / data_count
@@ -392,9 +392,16 @@ class IntersectModelBase(ModelBase):
         self.callback()
 
         result_data = self.intersect_ids
-        if not self.use_match_id_process and not self.intersection_obj.only_output_key and result_data:
-            result_data = self.intersection_obj.get_value_from_data(result_data, data_inst)
-            LOGGER.debug(f"not only_output_key, restore value called")
+        if not self.use_match_id_process:
+            if not self.intersection_obj.only_output_key and result_data:
+                result_data = self.intersection_obj.get_value_from_data(result_data, data_inst)
+                self.intersect_ids.schema = result_data.schema
+                LOGGER.debug(f"not only_output_key, restore value called")
+            if self.intersection_obj.only_output_key and result_data:
+                schema = {"sid_name": data_inst.schema["sid_name"]}
+                result_data = result_data.mapValues(lambda v: 1)
+                result_data.schema = schema
+                self.intersect_ids.schema = schema
 
         if self.model_param.join_method == consts.LEFT_JOIN:
             result_data = self.__sync_join_id(data_inst, self.intersect_ids)
@@ -490,7 +497,7 @@ class IntersectGuest(IntersectModelBase):
         return data_instances
 
     def get_filter_process(self, data_instances, hash_operator):
-        filter_list = self.transfer_variable.intersect_filter_from_guest.get(idx=-1)
+        filter_list = self.transfer_variable.intersect_filter_from_host.get(idx=-1)
         LOGGER.debug(f"got filter from all host")
 
         filtered_data_list = [data_instances.filter(lambda k, v: filter.check(

@@ -25,7 +25,7 @@ class InitParam(BaseParam):
 
     Parameters
     ----------
-    init_method : str, 'random_uniform', 'random_normal', 'ones', 'zeros' or 'const'. default: 'random_uniform'
+    init_method : {'random_uniform', 'random_normal', 'ones', 'zeros' or 'const'}
         Initial method.
 
     init_const : int or float, default: 1

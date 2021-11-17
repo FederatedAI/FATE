@@ -29,6 +29,7 @@ from federatedml.one_vs_rest.one_vs_rest import one_vs_rest_factory
 from federatedml.param.hetero_sshe_lr_param import LogisticRegressionParam
 from federatedml.param.logistic_regression_param import InitParam
 from federatedml.protobuf.generated import lr_model_meta_pb2
+from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.secureprotol.fixedpoint import FixedPointEndec
 from federatedml.secureprotol.spdz import SPDZ
@@ -58,26 +59,22 @@ class HeteroLRBase(BaseLinearModel, ABC):
         self.one_vs_rest_obj = None
         self.secure_matrix_obj: SecureMatrix
         self._set_parties()
+        self.cipher_tool = None
 
     def _transfer_q_field(self):
         if self.role == consts.GUEST:
             q_field = self.cipher.public_key.n
             self.transfer_variable.q_field.remote(q_field, role=consts.HOST, suffix=("q_field",))
-            #
-            # self.host_cipher = self.transfer_variable.q_field.get(role=consts.HOST, idx=0,
-            #                                                   suffix=("cipher",))
-
 
         else:
             q_field = self.transfer_variable.q_field.get(role=consts.GUEST, idx=0,
                                                           suffix=("q_field",))
 
-            # self.transfer_variable.q_field.remote(self.cipher, role=consts.GUEST, suffix=("cipher",))
-
         return q_field
 
     def _init_model(self, params: LogisticRegressionParam):
         super()._init_model(params)
+        self.encrypted_mode_calculator_param = params.encrypted_mode_calculator_param
         if self.role == consts.HOST:
             self.init_param_obj.fit_intercept = False
         self.cipher = PaillierEncrypt()
@@ -86,13 +83,13 @@ class HeteroLRBase(BaseLinearModel, ABC):
         self.one_vs_rest_obj = one_vs_rest_factory(self, role=self.role, mode=self.mode, has_arbiter=False)
 
         self.converge_func_name = params.early_stop
-        self.review_every_iter = params.reveal_every_iter
+        self.reveal_every_iter = params.reveal_every_iter
 
         self.q_field = self._transfer_q_field()
 
         LOGGER.debug(f"q_field: {self.q_field}")
 
-        if not self.review_every_iter:
+        if not self.reveal_every_iter:
             self.self_optimizer = copy.deepcopy(self.optimizer)
             self.remote_optimizer = copy.deepcopy(self.optimizer)
 
@@ -105,8 +102,6 @@ class HeteroLRBase(BaseLinearModel, ABC):
                                               other_party=self.other_party)
 
     def _init_weights(self, model_shape):
-        # if self.role == consts.HOST:
-        #     self.init_param_obj.fit_intercept = False
         return self.initializer.init_model(model_shape, init_params=self.init_param_obj)
 
     def _set_parties(self):
@@ -150,13 +145,13 @@ class HeteroLRBase(BaseLinearModel, ABC):
             )
             return wa, wb
 
-    def forward(self, weights, features, suffix):
+    def forward(self, weights, features, suffix, cipher):
         raise NotImplementedError("Should not call here")
 
-    def backward(self, error, features, suffix):
+    def backward(self, error, features, suffix, cipher):
         raise NotImplementedError("Should not call here")
 
-    def compute_loss(self, weights, suffix):
+    def compute_loss(self, weights, suffix, cipher):
         raise NotImplementedError("Should not call here")
 
     def fit(self, data_instances, validate_data=None):
@@ -175,11 +170,11 @@ class HeteroLRBase(BaseLinearModel, ABC):
             self.fit_binary(data_instances, validate_data)
 
     def one_vs_rest_fit(self, train_data=None, validate_data=None):
-        LOGGER.debug("Class num larger than 2, need to do one_vs_rest")
+        LOGGER.info("Class num larger than 2, do one_vs_rest")
         self.one_vs_rest_obj.fit(data_instances=train_data, validate_data=validate_data)
 
     def fit_binary(self, data_instances, validate_data=None):
-        LOGGER.info("Start to hetero_sshe_logistic_regression")
+        LOGGER.info("Starting to hetero_sshe_logistic_regression")
         self.callback_list.on_train_begin(data_instances, validate_data)
 
         model_shape = self.get_features_shape(data_instances)
@@ -205,6 +200,7 @@ class HeteroLRBase(BaseLinearModel, ABC):
                 use_mix_rand=self.model_param.use_mix_rand,
         ) as spdz:
             spdz.set_flowid(self.flowid)
+            self.secure_matrix_obj.set_flowid(self.flowid)
             if self.role == consts.GUEST:
                 self.labels = data_instances.mapValues(lambda x: np.array([x.label], dtype=int))
 
@@ -213,6 +209,8 @@ class HeteroLRBase(BaseLinearModel, ABC):
             LOGGER.debug(f"first_w_self shape: {w_self.shape}, w_remote_shape: {w_remote.shape}")
 
             batch_data_generator = self.batch_generator.generate_batch_data()
+
+            self.cipher_tool = []
             encoded_batch_data = []
             for batch_data in batch_data_generator:
                 if self.fit_intercept:
@@ -226,63 +224,72 @@ class HeteroLRBase(BaseLinearModel, ABC):
                                                       q_field=self.fixedpoint_encoder.n,
                                                       endec=self.fixedpoint_encoder))
 
+                self.cipher_tool.append(EncryptModeCalculator(self.cipher,
+                                                              self.encrypted_mode_calculator_param.mode,
+                                                              self.encrypted_mode_calculator_param.re_encrypted_rate))
+
             while self.n_iter_ < self.max_iter:
                 self.callback_list.on_epoch_begin(self.n_iter_)
-                LOGGER.debug(f"n_iter: {self.n_iter_}")
+                LOGGER.info(f"start to n_iter: {self.n_iter_}")
 
                 loss_list = []
 
                 self.optimizer.set_iters(self.n_iter_)
-                if not self.review_every_iter:
+                if not self.reveal_every_iter:
                     self.self_optimizer.set_iters(self.n_iter_)
                     self.remote_optimizer.set_iters(self.n_iter_)
 
                 for batch_idx, batch_data in enumerate(encoded_batch_data):
                     current_suffix = (str(self.n_iter_), str(batch_idx))
 
-                    if self.review_every_iter:
+                    if self.reveal_every_iter:
                         y = self.forward(weights=self.model_weights,
                                          features=batch_data,
-                                         suffix=current_suffix)
+                                         suffix=current_suffix,
+                                         cipher=self.cipher_tool[batch_idx])
                     else:
                         y = self.forward(weights=(w_self, w_remote),
                                          features=batch_data,
-                                         suffix=current_suffix)
+                                         suffix=current_suffix,
+                                         cipher=self.cipher_tool[batch_idx])
 
                     if self.role == consts.GUEST:
                         error = y - self.labels
 
                         self_g, remote_g = self.backward(error=error,
                                                          features=batch_data,
-                                                         suffix=current_suffix)
+                                                         suffix=current_suffix,
+                                                         cipher=self.cipher_tool[batch_idx])
                     else:
                         self_g, remote_g = self.backward(error=y,
                                                          features=batch_data,
-                                                         suffix=current_suffix)
+                                                         suffix=current_suffix,
+                                                         cipher=self.cipher_tool[batch_idx])
 
                     # loss computing;
                     suffix = ("loss",) + current_suffix
-                    if self.review_every_iter:
-                        batch_loss = self.compute_loss(weights=self.model_weights, suffix=suffix)
+                    if self.reveal_every_iter:
+                        batch_loss = self.compute_loss(weights=self.model_weights, suffix=suffix, cipher=self.cipher_tool[batch_idx])
                     else:
-                        batch_loss = self.compute_loss(weights=(w_self, w_remote), suffix=suffix)
+                        batch_loss = self.compute_loss(weights=(w_self, w_remote), suffix=suffix, cipher=self.cipher_tool[batch_idx])
 
                     if batch_loss is not None:
                         batch_loss = batch_loss * self.batch_num[batch_idx]
                     loss_list.append(batch_loss)
 
-                    if self.review_every_iter:
-                        LOGGER.debug(f"before review: self_g shape: {self_g.shape}, remote_g_shape: {remote_g}，"
-                                     f"self_g: {self_g}")
+                    if self.reveal_every_iter:
+                        # LOGGER.debug(f"before reveal: self_g shape: {self_g.shape}, remote_g_shape: {remote_g}，"
+                        #              f"self_g: {self_g}")
 
-                        new_g = self.review_models(self_g, remote_g, suffix=current_suffix)
-                        LOGGER.debug(f"after review: new_g shape: {new_g.shape}, new_g: {new_g}"
-                                     f"self.model_param.reveal_strategy: {self.model_param.reveal_strategy}")
+                        new_g = self.reveal_models(self_g, remote_g, suffix=current_suffix)
+
+                        # LOGGER.debug(f"after reveal: new_g shape: {new_g.shape}, new_g: {new_g}"
+                        #              f"self.model_param.reveal_strategy: {self.model_param.reveal_strategy}")
 
                         if new_g is not None:
                             self.model_weights = self.optimizer.update_model(self.model_weights, new_g,
                                                                              has_applied=False)
-                            LOGGER.debug(f"after review, model weight: {self.model_weights.unboxed}")
+
                         else:
                             self.model_weights = LinearModelWeights(
                                 l=np.zeros(self_g.shape),
@@ -292,10 +299,12 @@ class HeteroLRBase(BaseLinearModel, ABC):
                             self_g = self_g + self.self_optimizer.alpha * w_self
                             remote_g = remote_g + self.remote_optimizer.alpha * w_remote
 
-                        LOGGER.debug(f"before optimizer: {self_g}, {remote_g}")
+                        # LOGGER.debug(f"before optimizer: {self_g}, {remote_g}")
+
                         self_g = self.self_optimizer.apply_gradients(self_g)
                         remote_g = self.remote_optimizer.apply_gradients(remote_g)
-                        LOGGER.debug(f"after optimizer: {self_g}, {remote_g}")
+
+                        # LOGGER.debug(f"after optimizer: {self_g}, {remote_g}")
                         w_self -= self_g
                         w_remote -= remote_g
 
@@ -304,14 +313,15 @@ class HeteroLRBase(BaseLinearModel, ABC):
                 if self.role == consts.GUEST:
                     loss = np.sum(loss_list) / instances_count
                     self.loss_history.append(loss)
-                    self.callback_loss(self.n_iter_, loss)
+                    if self.need_call_back_loss:
+                        self.callback_loss(self.n_iter_, loss)
                 else:
                     loss = None
 
                 if self.converge_func_name in ["diff", "abs"]:
                     self.is_converged = self.check_converge_by_loss(loss, suffix=(str(self.n_iter_),))
                 elif self.converge_func_name == "weight_diff":
-                    if self.review_every_iter:
+                    if self.reveal_every_iter:
                         self.is_converged = self.check_converge_by_weights(
                             last_w=last_models.unboxed,
                             new_w=self.model_weights.unboxed,
@@ -337,8 +347,8 @@ class HeteroLRBase(BaseLinearModel, ABC):
                     break
 
             # Finally reconstruct
-            if not self.review_every_iter:
-                new_w = self.review_models(w_self, w_remote, suffix=("final",))
+            if not self.reveal_every_iter:
+                new_w = self.reveal_models(w_self, w_remote, suffix=("final",))
                 if new_w is not None:
                     self.model_weights = LinearModelWeights(
                         l=new_w,
@@ -347,7 +357,7 @@ class HeteroLRBase(BaseLinearModel, ABC):
         LOGGER.debug(f"loss_history: {self.loss_history}")
         self.set_summary(self.get_model_summary())
 
-    def review_models(self, w_self, w_remote, suffix=None):
+    def reveal_models(self, w_self, w_remote, suffix=None):
         if suffix is None:
             suffix = self.n_iter_
 
@@ -377,7 +387,7 @@ class HeteroLRBase(BaseLinearModel, ABC):
                 new_w = w_self.reconstruct(tensor_name=f"wa_{suffix}", broadcast=False)
 
         else:
-            raise NotImplementedError(f"review strategy: {self.model_param.reveal_strategy} has not been implemented.")
+            raise NotImplementedError(f"reveal strategy: {self.model_param.reveal_strategy} has not been implemented.")
         return new_w
 
     def check_converge_by_loss(self, loss, suffix):
@@ -389,15 +399,15 @@ class HeteroLRBase(BaseLinearModel, ABC):
         return self.is_converged
 
     def check_converge_by_weights(self, last_w, new_w, suffix):
-        if self.review_every_iter:
-            return self._review_every_iter_weights_check(last_w, new_w, suffix)
+        if self.reveal_every_iter:
+            return self._reveal_every_iter_weights_check(last_w, new_w, suffix)
         else:
-            return self._not_review_every_iter_weights_check(last_w, new_w, suffix)
+            return self._not_reveal_every_iter_weights_check(last_w, new_w, suffix)
 
-    def _review_every_iter_weights_check(self, last_w, new_w, suffix):
+    def _reveal_every_iter_weights_check(self, last_w, new_w, suffix):
         raise NotImplementedError()
 
-    def _not_review_every_iter_weights_check(self, last_w, new_w, suffix):
+    def _not_reveal_every_iter_weights_check(self, last_w, new_w, suffix):
         last_w_self, last_w_remote = last_w
         w_self, w_remote = new_w
         grad_self = w_self - last_w_self
@@ -410,7 +420,6 @@ class HeteroLRBase(BaseLinearModel, ABC):
 
         grad_encode = np.array([grad_encode])
 
-        LOGGER.debug(f"grad_encode: {grad_encode}")
         grad_tensor_name = ".".join(("check_converge_grad",) + suffix)
         grad_tensor = fixedpoint_numpy.FixedPointTensor(value=grad_encode,
                                                         q_field=self.fixedpoint_encoder.n,
@@ -426,7 +435,7 @@ class HeteroLRBase(BaseLinearModel, ABC):
         grad_norm_tensor_name = ".".join(("check_converge_grad_norm",) + suffix)
 
         grad_norm = grad_tensor.dot(grad_tensor_transpose, target_name=grad_norm_tensor_name).get()
-        LOGGER.info(f"gradient spdz dot.get: {grad_norm}")
+
         weight_diff = np.sqrt(grad_norm[0][0])
         LOGGER.info("iter: {}, weight_diff:{}, is_converged: {}".format(self.n_iter_,
                                                                         weight_diff, self.is_converged))
@@ -450,13 +459,7 @@ class HeteroLRBase(BaseLinearModel, ABC):
         return meta_protobuf_obj
 
     def get_single_model_param(self, model_weights=None, header=None):
-        # weight_dict = {}
-        # model_weights = model_weights if model_weights else self.model_weights
         header = header if header else self.header
-        # for idx, header_name in enumerate(header):
-        #     coef_i = model_weights.coef_[idx]
-        #     weight_dict[header_name] = coef_i
-
         result = {'iters': self.n_iter_,
                   'loss_history': self.loss_history,
                   'is_converged': self.is_converged,
@@ -505,16 +508,16 @@ class HeteroLRBase(BaseLinearModel, ABC):
         LOGGER.debug("Start Loading model")
         result_obj = list(model_dict.get('model').values())[0].get(self.model_param_name)
         meta_obj = list(model_dict.get('model').values())[0].get(self.model_meta_name)
-        # self.fit_intercept = meta_obj.fit_intercept
+
         if self.init_param_obj is None:
             self.init_param_obj = InitParam()
         self.init_param_obj.fit_intercept = meta_obj.fit_intercept
         self.model_param.reveal_strategy = meta_obj.reveal_strategy
-        LOGGER.debug(f"review_strategy: {self.model_param.reveal_strategy}, {self.is_respectively_reveal}")
+        LOGGER.debug(f"reveal_strategy: {self.model_param.reveal_strategy}, {self.is_respectively_reveal}")
         self.header = list(result_obj.header)
-        # For hetero-lr arbiter predict function
+
         need_one_vs_rest = result_obj.need_one_vs_rest
-        LOGGER.debug("in _load_model need_one_vs_rest: {}".format(need_one_vs_rest))
+        LOGGER.info("in _load_model need_one_vs_rest: {}".format(need_one_vs_rest))
         if need_one_vs_rest:
             one_vs_rest_result = result_obj.one_vs_rest_result
             self.one_vs_rest_obj = one_vs_rest_factory(classifier=self, role=self.role,

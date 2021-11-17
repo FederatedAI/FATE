@@ -12,7 +12,7 @@ a taste of how FATE Pipeline works. Default values of party ids and work
 mode may need to be modified depending on the deployment setting.
 
 ``` sourceCode bash
-python pipeline-mini-demo.py config.yaml
+python pipeline-mini-demo.py
 ```
 
 For more pipeline demo, please refer to
@@ -269,6 +269,13 @@ prediction.
 ``` sourceCode python
 predict_pipeline.add_component(evaluation_0, data=Data(data=pipeline.hetero_lr_0.output.data))
 predict_pipeline.predict()
+```
+
+If components are checkpoint saved during training process, user may specify which checkpoint model to be used for prediction.
+For an example, please refer [here](../../../examples/pipeline/demo/pipeline-deploy-demo.py).
+
+```sourceCode python
+predict_pipeline.predict(components_checkpoint={"hetero_lr_0": {"step_index": 8}})
 ```
 
 ## Save and Recovery of Pipeline

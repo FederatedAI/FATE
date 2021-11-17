@@ -35,6 +35,9 @@ class SecureMatrix(object):
         self.encoder = None
         self.get_or_create_endec(self.q_field)
 
+    def set_flowid(self, flowid):
+        self.transfer_variable.set_flowid(flowid)
+
     def get_or_create_endec(self, q_field, **kwargs):
         if self.encoder is None:
             self.encoder = FixedPointEndec(q_field)
@@ -73,6 +76,7 @@ class SecureMatrix(object):
 
             if is_table(share):
                 share = fixedpoint_table.PaillierFixedPointTensor(share)
+
                 ret = share.dot(matrix)
             else:
                 share = fixedpoint_numpy.PaillierFixedPointTensor(share)

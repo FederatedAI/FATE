@@ -28,12 +28,14 @@ class LocalBaselineParam(BaseParam):
 
     Parameters
     ----------
-    model_name: str, sklearn model used to train on baseline model
+    model_name : str
+        sklearn model used to train on baseline model
 
-    model_opts: dict or none, default None
+    model_opts : dict or none, default None
         Param to be used as input into baseline model
 
-    predict_param: PredictParam object, default: default PredictParam object
+    predict_param : PredictParam object, default: default PredictParam object
+        predict param
 
     need_run: bool, default True
         Indicate if this module needed to be run
