@@ -8,7 +8,7 @@ from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import Boostin
 from federatedml.ensemble.boosting.boosting import Boosting
 from federatedml.ensemble import HeteroDecisionTreeHost
 from federatedml.protobuf.homo_model_convert.lightgbm.gbdt import sbt_to_lgb
-from federatedml.param.shap_param import TreeSHAPParam
+from federatedml.param.shap_param import SHAPParam
 from federatedml.util import LOGGER
 from federatedml.util import consts
 
@@ -22,9 +22,10 @@ class TreeSHAP(ModelBase):
         self.tree_param = None
         self.tree_meta = None
         self.run_mode = consts.HOMO
-        self.model_param = TreeSHAPParam()
+        self.model_param = SHAPParam()
         self.transfer_variable = SHAPTransferVariable()
         self.class_num = 1
+        self.tree_work_mode = consts.STD_TREE
 
         self.left_dir_split_val, self.right_dir_split_val = 2, 0
         self.mock_fed_feature = 1  # 1<2 go left, 0<1 go right
@@ -39,14 +40,13 @@ class TreeSHAP(ModelBase):
 
     def convert_hetero_guest_sbt_to_lgb(self, param):
         model_str = sbt_to_lgb(param, self.tree_meta)
-        LOGGER.debug('model str is {}'.format(model_str))
         lgb_model = lgb.Booster(model_str=model_str)
         return lgb_model
 
     @staticmethod
     def _get_model_type(model_dict):
         """
-        fast-sbt or sbt ? hetero or homo ?
+        hetero or homo ?
         """
         sbt_key_prefix = consts.HETERO_SBT_GUEST_MODEL.replace('Guest', '')
         homo_sbt_key_prefix = consts.HOMO_SBT_GUEST_MODEL.replace('Guest', '')
@@ -58,9 +58,6 @@ class TreeSHAP(ModelBase):
                     return consts.HOMO_SBT
 
         return None
-
-    def make_output_rs(self, lgb_model, pred_contrib):
-        pass
 
     def make_predict_format(self, to_interpret_inst):
 
@@ -156,7 +153,6 @@ class TreeSHAP(ModelBase):
 
         lgb_model = self.convert_hetero_guest_sbt_to_lgb(tree_param)
         to_predict_sample = self.extend_host_fed_feat(data_arr, len(host_fed_feat_idx))
-        # predict_rs = lgb_model.predict([to_predict_sample])
         contrib = lgb_model.predict([to_predict_sample], pred_contrib=True)
         return contrib
 
@@ -198,7 +194,15 @@ class TreeSHAP(ModelBase):
             LOGGER.debug('contrib {}'.format(contribs))
             LOGGER.info('explain model done')
 
+    """
+    Model IO
+    """
+
     def load_model(self, model_dict):
+
+        """
+        Load Model from isometric model
+        """
 
         key = 'isometric_model'
         model_type = self._get_model_type(model_dict[key])
@@ -216,7 +220,12 @@ class TreeSHAP(ModelBase):
                     self.tree_meta = model_content[content_name]
                 elif 'Param' in content_name:
                     self.tree_param = model_content[content_name]
+                    self.tree_param = self.tree_param.work_mode
                     self.class_num = len(self.tree_param.classes_)
+
+    """
+    fit
+    """
 
     def fit(self, data_inst):
 
