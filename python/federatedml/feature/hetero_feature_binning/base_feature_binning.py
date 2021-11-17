@@ -268,7 +268,7 @@ class BaseFeatureBinning(ModelBase):
 
         self.host_results = []
         host_pbs = list(model_param.multi_class_result.host_results)
-        if self.role == consts.GUEST:
+        if len(host_pbs):
             if len(self.labels) == 2:
                 for host_pb in host_pbs:
                     self.host_results.append(MultiClassBinResult.reconstruct(
