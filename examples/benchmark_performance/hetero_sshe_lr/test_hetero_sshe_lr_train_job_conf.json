@@ -100,8 +100,8 @@
                 "0": {
                     "reader_0": {
                         "table": {
-                            "name": "epsilon_5k_hetero_host",
-                            "namespace": "experiment"
+                            "name": "performance_hetero_host",
+                            "namespace": "performance"
                         }
                     },
                     "data_transform_1": {
@@ -112,8 +112,8 @@
                     },
                     "reader_1": {
                         "table": {
-                            "name": "epsilon_5k_hetero_host",
-                            "namespace": "experiment"
+                            "name": "performance_hetero_host",
+                            "namespace": "performance"
                         }
                     },
                     "data_transform_0": {
@@ -128,8 +128,8 @@
                 "0": {
                     "reader_0": {
                         "table": {
-                            "name": "epsilon_5k_hetero_guest",
-                            "namespace": "experiment"
+                            "name": "performance_hetero_guest",
+                            "namespace": "performance"
                         }
                     },
                     "data_transform_1": {
@@ -142,8 +142,8 @@
                     },
                     "reader_1": {
                         "table": {
-                            "name": "epsilon_5k_hetero_guest",
-                            "namespace": "experiment"
+                            "name": "performance_hetero_guest",
+                            "namespace": "performance"
                         }
                     },
                     "data_transform_0": {

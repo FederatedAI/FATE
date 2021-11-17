@@ -33,6 +33,8 @@ and clustering. Available metrics include:
     algorithms
 19. CONTINGENCY\_MATRIX:Compute contingency matrix for clustering tasks
     (labels are needed)
+20. PSI: Compute Population Stability Index.
+21. F1-Score: Compute F1-Score for binary tasks.
 
 <!-- mkdocs
 ## Param

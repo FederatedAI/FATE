@@ -18,12 +18,12 @@ import argparse
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataTransform
-from pipeline.component.hetero_secureboost import HeteroSecureBoost
-from pipeline.component.intersection import Intersection
-from pipeline.component.reader import Reader
-from pipeline.interface.data import Data
-from pipeline.component.evaluation import Evaluation
-from pipeline.interface.model import Model
+from pipeline.component import HeteroSecureBoost
+from pipeline.component import Intersection
+from pipeline.component import Reader
+from pipeline.interface import Data
+from pipeline.component import Evaluation
+from pipeline.interface import Model
 
 from pipeline.utils.tools import load_job_config
 
@@ -110,6 +110,10 @@ def main(config="../../config.yaml", namespace=""):
 
     # run predict model
     predict_pipeline.predict()
+    predict_result = predict_pipeline.get_component("hetero_secure_boost_0").get_output_data()
+    print("Showing 10 data of predict result")
+    for ret in predict_result["data"][:10]:
+        print (ret)
 
 
 if __name__ == "__main__":

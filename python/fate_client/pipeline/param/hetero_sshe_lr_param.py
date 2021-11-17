@@ -19,6 +19,7 @@ from pipeline.param.base_param import BaseParam
 from pipeline.param.cross_validation_param import CrossValidationParam
 from pipeline.param.callback_param import CallbackParam
 from pipeline.param.encrypt_param import EncryptParam
+from pipeline.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from pipeline.param.init_model_param import InitParam
 from pipeline.param.predict_param import PredictParam
 from pipeline.param import consts
@@ -26,7 +27,7 @@ from pipeline.param import consts
 
 class LogisticRegressionParam(BaseParam):
     """
-    Parameters used for Logistic Regression both for Homo mode or Hetero mode.
+    Parameters used for Hetero SSHE Logistic Regression
 
     Parameters
     ----------
@@ -39,8 +40,8 @@ class LogisticRegressionParam(BaseParam):
     alpha : float, default: 1.0
         Regularization strength coefficient.
 
-    optimizer : str, 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd', 'sqn' or 'adagrad', default: 'rmsprop'
-        Optimize method, if 'sqn' has been set, sqn_param will take effect. Currently, 'sqn' support hetero mode only.
+    optimizer : str, 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd', or 'adagrad', default: 'sgd'
+        Optimize method
 
     batch_size : int, default: -1
         Batch size when updating model. -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
@@ -68,10 +69,13 @@ class LogisticRegressionParam(BaseParam):
         lr = lr0/(1+decay*t) if decay_sqrt is False, otherwise, lr = lr0 / sqrt(1+decay*t)
 
     encrypt_param: EncryptParam object, default: default EncryptParam object
+        encrypt param
 
     predict_param: PredictParam object, default: default PredictParam object
+        predict param
 
     cv_param: CrossValidationParam object, default: default CrossValidationParam object
+        cv param
 
     multi_class: str, 'ovr', default: 'ovr'
         If it is a multi_class task, indicate what strategy to use. Currently, support 'ovr' short for one_vs_rest only.
@@ -96,6 +100,7 @@ class LogisticRegressionParam(BaseParam):
                  reveal_strategy="respectively",
                  reveal_every_iter=True,
                  callback_param=CallbackParam(),
+                 encrypted_mode_calculator_param=EncryptedModeCalculatorParam()
                  ):
         super(LogisticRegressionParam, self).__init__()
         self.penalty = penalty
@@ -117,6 +122,7 @@ class LogisticRegressionParam(BaseParam):
         self.reveal_every_iter = reveal_every_iter
         self.callback_param = copy.deepcopy(callback_param)
         self.cv_param = cv_param
+        self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
 
     def check(self):
         descr = "logistic_param's"

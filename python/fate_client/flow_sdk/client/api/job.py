@@ -81,7 +81,7 @@ class Job(BaseFlowAPI):
         job_id = config_data['job_id']
         tar_file_name = 'job_{}_log.tar.gz'.format(job_id)
         extract_dir = os.path.join(config_data['output_path'], 'job_{}_log'.format(job_id))
-        with closing(self._get(url='job/log', handle_result=False, json=config_data, stream=True)) as response:
+        with closing(self._post(url='job/log/download', handle_result=False, json=config_data, stream=True)) as response:
             if response.status_code == 200:
                 download_from_request(http_response=response, tar_file_name=tar_file_name, extract_dir=extract_dir)
                 response = {'retcode': 0,

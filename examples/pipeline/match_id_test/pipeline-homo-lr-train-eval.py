@@ -60,7 +60,7 @@ def main(config="../../config.yaml", namespace=""):
     reader_1 = Reader(name="reader_1")
     reader_1.get_party_instance(role='guest', party_id=guest).component_param(table=guest_eval_data)
     reader_1.get_party_instance(role='host', party_id=host).component_param(table=host_eval_data)
-    # define DataIO components
+    # define DataTransform components
     data_transform_0 = DataTransform(name="data_transform_0", with_match_id=True,
                              with_label=True, output_format="dense")
     data_transform_1 = DataTransform(name="data_transform_1")  # start component numbering at 0

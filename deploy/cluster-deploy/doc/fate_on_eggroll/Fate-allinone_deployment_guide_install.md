@@ -21,7 +21,7 @@
 The architecture diagram:
 
 <div style="text-align:center", align=center>
-<img src="../images/arch_en.png" />
+<img src="../../images/arch_en.png" />
 </div>
 
 # 3\. Component Description
@@ -193,7 +193,7 @@ echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab
 Or create by using the code package script in Section 5.1, and execute as app user:
 
 ```
-sh /data/projects/fate-cluster-install/tools/makeVirtualDisk.sh
+sh /data/projects/fate-cluster-install/tools-install/makeVirtualDisk.sh
 Waring: please make sure has enough space of your disk first!!! (Please make sure there is enough storage space)
 current user has sudo privilege(yes|no):yes      (Whether the user has sudo privilege; enter yes and do not abbreviate it)
 Enter store directory:/data    (Set the storage path for virtual memory files; make sure the directory exists and do not set it to the root directory)
@@ -252,10 +252,12 @@ Note: In this guide, the installation directory is /data/projects/ and the execu
 
 Go to the /data/projects/ directory of the execution node and execute:
 
+Note: Replace ${version} with specific FATE version number,can be viewed on the [release page](https://github.com/FederatedAI/FATE/releases).
+
 ```
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_cluster_install_1.6.1_release-c7-u18.tar.gz
-tar xzf fate_cluster_install_1.6.1_release-c7-u18.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_cluster_install_${version}_release-c7-u18.tar.gz
+tar xzf fate_cluster_install_${version}_release-c7-u18.tar.gz
 ```
 
 ## 5.2 Pre-Deployment Check
@@ -288,47 +290,51 @@ vi fate-cluster-install/allInone/conf/setup.conf
 
 Description of Profile setup.conf
 
-| Configuration Item| Item Value| Description
-|----------|----------|----------
-| roles| Default: "host", "guest"| The deployment roles: host or guest
-| version| Default: 1.6.1| The version of FATE
-| pbase| Default: /data/projects| The root directory of the project
-| lbase| Default: /data/logs| Keep the default value and do not modify
-| ssh\_user| Default: app| The user who connects the destination machine by ssh, and the owner of the deployed file
-| ssh\_group| Default: apps| The group which the user who connects the destination machine by ssh belongs to, and the group which the deployed file belongs to
-| ssh\_port| Default: 22, modify according to the actual situation| The ssh connection port; verify the port before deployment, otherwise the connection error will be reported
-| eggroll\_dbname| Default: eggroll\_meta| The name of the DB that eggroll is connected to
-| fate\_flow\_dbname| Default: fate\_flow| The name of the DB that fate\_flow, fateboard, etc. are connected to
-| mysql\_admin\_pass| Default:| The password of mysql admin (root)
-| redis\_pass| Default:| The password of redis (currently not used)
-| mysql\_user| Default: fate| The account for mysql application connection
-| mysql\_port| Default: 3306, modify according to the actual situation| The port listened by the mysql service
-| host\_id| Default: 10000, modify according to the implementation plan| The party id of host
-| host\_ip| 192.168.0.1| The ip of host
-| host\_mysql\_ip| Match host\_ip by default| The ip of host mysql
-| host\_mysql\_pass| Default:| The account for host mysql application connection
-| guest\_id| Default: 9999, modify according to the implementation plan| The party id of guest
-| guest\_ip| 192.168.0.2| The ip of guest
-| guest\_mysql\_ip| Match guest\_ip by default| The ip of guest mysql
-| guest\_mysql\_pass| Default:| The account for guest mysql application connection
-| dbmodules| Default: "mysql"| The list of deployment modules for DB components, such as "mysql"
-| basemodules| Default: "tools", "base", "java", "python", "eggroll", "fate"| The list of deployment modules for non-DB components, such as "tools", "base", "java", "python", "eggroll", "fate"
-| fateflow\_grpc\_port| Default: 9360| The fateflow grpc service port
-| fateflow\_http\_port| Default: 9380| The fateflow http service port
-| fateboard\_port| Default: 8080| The fateboard service port
-| rollsite\_port| Default: 9370| The rollsite service port
-| clustermanager\_port| Default: 4670| The clustermanager service port
-| nodemanager\_port| Default: 4671| The nodemanager service port
+| Configuration Item   | Item Value                                                   | Description                                                  |
+| -------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| roles                | Default: "host", "guest"                                     | The deployment roles: host or guest                          |
+| version              | Default: {version}                                           | The version of FATE                                          |
+| pbase                | Default: /data/projects                                      | The root directory of the project                            |
+| pname                | Default: fate                                                | project name                                                 |
+| lbase                | Default: /data/logs                                          | Keep the default value and do not modify                     |
+| ssh\_user            | Default: app                                                 | he user who connects the destination machine<br> by ssh,and the owner of the deployed file |
+| ssh\_group           | Default: apps                                                | The group which the user who connects the <br>destination machine by ssh belongs to, and <br>the group which the deployed file belongs to |
+| ssh\_port            | Default: 22, modify <br>according to the actual situation    | The ssh connection port; verify the port before<br> deployment, otherwise the connection error will be reported |
+| eggroll\_dbname      | Default: eggroll\_meta                                       | The name of the DB that eggroll is connected to              |
+| fate\_flow\_dbname   | Default: fate\_flow                                          | The name of the DB that fate\_flow, fateboard, etc. are connected to |
+| mysql\_admin\_pass   | Default:                                                     | The password of mysql admin (root)                           |
+| redis\_pass          | Default:                                                     | The password of redis (currently not used)                   |
+| mysql\_user          | Default: fate                                                | The account for mysql application connection                 |
+| mysql\_port          | Default: 3306, modify according to the actual situation      | The port listened by the mysql service                       |
+| host\_id             | Default: 10000, modify according to the implementation plan  | The party id of host                                         |
+| host\_ip             | 192.168.0.1                                                  | The ip of host                                               |
+| host\_mysql\_ip      | Match host\_ip by default                                    | The ip of host mysql                                         |
+| host\_mysql\_pass    | Default:                                                     | The account for host mysql application connection            |
+| guest\_id            | Default: 9999, modify according to the implementation plan   | The party id of guest                                        |
+| guest\_ip            | 192.168.0.2                                                  | The ip of guest                                              |
+| guest\_mysql\_ip     | Match guest\_ip by default                                   | The ip of guest mysql                                        |
+| guest\_mysql\_pass   | Default:                                                     | The account for guest mysql application connection           |
+| dbmodules            | Default: "mysql"                                             | The list of deployment modules for DB components, such as "mysql" |
+| basemodules          | Default: "tools", "base", "java", "python", "eggroll", "fate" | The list of deployment modules for non-DB components, such as "tools", "base", "java", "python", "eggroll", "fate" |
+| fateflow\_grpc\_port | Default: 9360                                                | The fateflow grpc service port                               |
+| fateflow\_http\_port | Default: 9380                                                | The fateflow http service port                               |
+| fateboard\_port      | Default: 8080                                                | The fateboard service port                                   |
+| rollsite\_port       | Default: 9370                                                | The rollsite service port                                    |
+| clustermanager\_port | Default: 4670                                                | The clustermanager service port                              |
+| nodemanager\_port    | Default: 4671                                                | The nodemanager service port                                 |
 
-**1) Simultaneous Deployment of Two Hosts partyA+partyB**\*\*
+**1) Simultaneous Deployment of Two Hosts partyA+partyB**
 
 ```
 #to install role
 roles=( "host" "guest" )
 
-version="1.6.1"
+version="{version}"
 #project base
 pbase="/data/projects"
+#project name
+pname="fate"
+
 #log directory
 lbase="/data/logs"
 
@@ -391,9 +397,12 @@ nodemanager_port=4671
 #to install role
 roles=( "host" )
 
-version="1.6.1"
+version="{version}"
 #project base
 pbase="/data/projects"
+#project name
+pname="fate"
+
 #log directory
 lbase="/data/logs"
 
@@ -487,7 +496,7 @@ tail -f ./logs/deploy-mysql-host.log    (Print the deployment status of mysql at
 
 2\) Fateflow Logs
 
-/data/projects/fate/python/logs/fate\_flow/
+/data/projects/fate/fateflow/logs/fate_flow
 
 3\) Fateboard Logs
 
@@ -497,7 +506,7 @@ tail -f ./logs/deploy-mysql-host.log    (Print the deployment status of mysql at
 
 ## 6.1 Verify toy\_example Deployment
 
-A user must set 3 parameters for this testing: guest\_partyid, host\_partyid, and work\_mode.
+A user must set 3 parameters for this testing: guest\_partyid, host\_partyid.
 
 ### 6.1.1 One-Sided Testing
 
@@ -505,22 +514,20 @@ A user must set 3 parameters for this testing: guest\_partyid, host\_partyid, an
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/toy_example/
-python run_toy_example.py 10000 10000 1
+flow test toy --guest-party-id 10000 --host-party-id 10000 
 ```
 
 A result similar to the following indicates successful operation:
 
 "2020-04-28 18:26:20,789 - secure\_add\_guest.py\[line:126] - INFO: success to calculate secure\_sum, it is 1999.9999999999998"
 
-Tip: If the error "max cores per job is 1, please modify job parameters" appears, a user needs to modify the parameter task\_cores to 1 in the toy\_example\_conf.json file under the current directory.
+Tip: If the error "max cores per job is 1, please modify job parameters" appears, a user needs to modify the parameter task\_cores to 1, add "-c 1" to run toy test.
 
 2\) Execute on 192.168.0.2, with both guest\_partyid and host\_partyid set to 9999:
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/toy_example/
-python run_toy_example.py 9999 9999 1
+flow test toy --guest-party-id 9999 --host-party-id 9999
 ```
 
 A result similar to the following indicates successful operation:
@@ -533,8 +540,7 @@ Select 9999 as the guest and execute on 192.168.0.2:
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/toy_example/
-python run_toy_example.py 9999 10000 1
+flow test toy --guest-party-id 9999 --host-party-id 10000
 ```
 
 A result similar to the following indicates successful operation:
@@ -550,7 +556,7 @@ Execute on 192.168.0.1 and 192.168.0.2 respectively:
 ```
 source /data/projects/fate/bin/init_env.sh
 cd /data/projects/fate/examples/scripts/
-python upload_default_data.py -m 1
+python upload_default_data.py
 ```
 
 For more details, refer to [Script Readme](../../examples/scripts/README.rst)
@@ -567,9 +573,9 @@ Select 9999 as the guest and execute on 192.168.0.2:
 source /data/projects/fate/bin/init_env.sh
 cd /data/projects/fate/examples/min_test_task/
 #One-sided testing
-python run_task.py -m 1 -gid 9999 -hid 9999 -aid 9999 -f fast
+python run_task.py -gid 9999 -hid 9999 -aid 9999 -f fast
 #Two-sided testing
-python run_task.py -m 1 -gid 9999 -hid 10000 -aid 10000 -f fast
+python run_task.py -gid 9999 -hid 10000 -aid 10000 -f fast
 ```
 
 Other parameters that may be useful include:
@@ -618,7 +624,7 @@ sh ./bin/eggroll.sh clustermanager start/stop/status/restart
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/python/fate_flow
+cd /data/projects/fate/fateflow/bin
 sh service.sh start|stop|status|restart
 ```
 
@@ -673,26 +679,85 @@ netstat -tlnp | grep 8080
 
 ## 7.3 Service Logs
 
-| Service| Log Path
-|----------|----------
-| eggroll| /data/projects/fate/eggroll/logs
-| fate\_flow \& task log| /data/projects/fate/python/logs
-| fateboard| /data/projects/fate/fateboard/logs
-| mysql| /data/logs/mysql/
+| Service               | Log Path                                           |
+| --------------------- | -------------------------------------------------- |
+| eggroll               | /data/projects/fate/eggroll/logs                   |
+| fate\_flow & task log | /data/projects/fate/fateflow/logs                  |
+| fateboard             | /data/projects/fate/fateboard/logs                 |
+| mysql                 | /data/projects/fate/common/mysql/mysql-8.0.13/logs |
 
-# 8\. Appendix
+## 7.4 Space Clearance Rules 
 
-## 8.1 Eggroll Parameter Tuning
+### 7.4.1 fateflow job log 
 
-Assuming that the number of CPU cores is c, the number of nodemanagers is n, and the number of tasks to be executed simultaneously is p, then:
+Machine: The machine where the fate flow service is located 
 
-egg\_num=eggroll.session.processors.per.node = c \* 0.8 / p
+Directory: /data/projects/fate/fateflow/logs 
 
-partitions (roll pair partition number) = egg\_num \* n
+Retention period: N=14 days 
 
-The parameters used by the job can be specified with the job parameters in job conf:
+Rule: The directory starts with jobid, and the data whose jobid is N days ago is cleaned up 
 
-1. egg\_num: configure task\_cores or configure processors\_per\_node parameter in eggroll\_run
-2. partitions: configure computing\_partitions
+Reference command: rm -rf /data/projects/fate/fateflow/logs/20211116* 
 
-For more information about configuring job submission, refer to [dsl\_conf\_v2\_setting\_guide](../../doc/dsl_conf_v2_setting_guide.rst)
+### 7.4.2 fateflow system log 
+
+Machine: The machine where the fate flow service is located 
+
+Directory: /data/projects/fate/fateflow/logs/fate_flow 
+
+Retention period: N=14 days 
+
+Rule: End with the date, clean up the data N days ago 
+
+Reference command: rm -rf /data/projects/fate/fateflow/logs/fate_flow/\*.2021-11-16
+
+### 7.4.3 EggRoll Session log 
+
+Machine: eggroll node node 
+
+Directory: /data/projects/fate/eggroll/logs/ 
+
+Retention period: N=14 days 
+
+Rule: The directory starts with jobid, and the data whose jobid is N days ago is cleaned up 
+
+Reference command: rm -rf /data/projects/fate/eggroll/logs/20211116* 
+
+### 7.4.4 EggRoll system log 
+
+Machine: eggroll node node 
+
+Directory: /data/projects/fate/eggroll/logs/eggroll 
+
+Retention period: N=14 days 
+
+Rule: files in the history folder established by the end of the date and the year, and clean up the data N days ago 
+
+Reference command: rm -rf /data/projects/fate/eggroll/logs/eggroll/\*.2021-11-16_* and
+
+​                                       rm -rf /data/projects/fate/eggroll/logs/eggroll/2021/11/01 
+
+### 7.4.5 Calculating temporary data 
+
+Machine: eggroll node node 
+
+Directory: /data/projects/fate/eggroll/data/IN_MEMORY 
+
+Retention period: N=7 days 
+
+Rule: namespace starts with jobid, clean up data whose jobid is N days ago 
+
+Reference command: rm -rf /data/projects/fate/eggroll/data/IN_MEMORY/20211116* 
+
+### 7.4.6 Job component output data 
+
+Machine: eggroll node node 
+
+Directory: /data/projects/fate/eggroll/data/LMDB 
+
+Retention period: N=14 days 
+
+Rule: namespace starts with output_data_jobid, clean up data whose jobid is N days ago 
+
+Reference command: rm -rf /data/projects/fate/eggroll/data/LMDB/output_data_20211116*  

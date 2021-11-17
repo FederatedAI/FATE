@@ -54,7 +54,7 @@ def main(config="../../config.yaml", namespace=""):
     # configure Reader for host
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
-    # define DataIO components
+    # define DataTransform components
     data_transform_0 = DataTransform(name="data_transform_0", with_match_id=True,
                              with_label=True, output_format="dense")  # start component numbering at 0
 

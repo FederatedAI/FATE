@@ -8,8 +8,8 @@
                 ]
             }
         },
-        "dataio_0": {
-            "module": "DataIO",
+        "data_transform_0": {
+            "module": "DataTransform",
             "input": {
                 "data": {
                     "data": [
@@ -31,7 +31,7 @@
             "input": {
                 "data": {
                     "data": [
-                        "dataio_0.data"
+                        "data_transform_0.data"
                     ]
                 }
             },
@@ -88,8 +88,8 @@
                 ]
             }
         },
-        "dataio_1": {
-            "module": "DataIO",
+        "data_transform_1": {
+            "module": "DataTransform",
             "input": {
                 "data": {
                     "data": [
@@ -97,7 +97,7 @@
                     ]
                 },
                 "model": [
-                    "dataio_0.model"
+                    "data_transform_0.model"
                 ]
             },
             "output": {
@@ -114,7 +114,7 @@
             "input": {
                 "data": {
                     "data": [
-                        "dataio_1.data"
+                        "data_transform_1.data"
                     ]
                 }
             },

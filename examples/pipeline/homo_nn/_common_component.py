@@ -16,9 +16,9 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
-from pipeline.component.reader import Reader
-from pipeline.interface.data import Data
+from pipeline.component import DataTransform
+from pipeline.component import Reader
+from pipeline.interface import Data
 from pipeline.utils.tools import load_job_config
 
 
@@ -79,28 +79,28 @@ def run_homo_nn_pipeline(config, namespace, data: dict, nn_component, num_host):
             table=host_train_data[i]
         )
 
-    dataio_0 = DataIO(name="dataio_0", with_label=True)
-    dataio_0.get_party_instance(
+    data_transform_0 = DataTransform(name="data_transform_0", with_label=True)
+    data_transform_0.get_party_instance(
         role="guest", party_id=config.parties.guest[0]
     ).component_param(with_label=True, output_format="dense")
-    dataio_0.get_party_instance(role="host", party_id=hosts).component_param(
+    data_transform_0.get_party_instance(role="host", party_id=hosts).component_param(
         with_label=True
     )
 
     pipeline.add_component(reader_0)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(nn_component, data=Data(train_data=dataio_0.output.data))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(nn_component, data=Data(train_data=data_transform_0.output.data))
     pipeline.compile()
     pipeline.fit()
     print(pipeline.get_component("homo_nn_0").get_summary())
-    pipeline.deploy_component([dataio_0, nn_component])
+    pipeline.deploy_component([data_transform_0, nn_component])
 
     # predict
     predict_pipeline = PipeLine()
     predict_pipeline.add_component(reader_0)
     predict_pipeline.add_component(
         pipeline,
-        data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}),
+        data=Data(predict_input={pipeline.data_transform_0.input.data: reader_0.output.data}),
     )
     # run predict model
     predict_pipeline.predict()

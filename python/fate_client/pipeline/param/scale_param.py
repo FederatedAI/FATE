@@ -28,32 +28,40 @@ class ScaleParam(BaseParam):
 
     Parameters
     ----------
-        method : str, like scale in sklearn, now it support "min_max_scale" and "standard_scale", and will support other scale method soon.
-                 Default "standard_scale", which will do nothing for scale
+    method : {"standard_scale", "min_max_scale"}
+        like scale in sklearn, now it support "min_max_scale" and "standard_scale", and will support other scale method soon.
+        Default standard_scale, which will do nothing for scale
 
-        mode: str, the mode support "normal" and "cap". for mode is "normal", the feat_upper and feat_lower is the normal value like "10" or "3.1" and for "cap", feat_upper and
-              feature_lower will between 0 and 1, which means the percentile of the column. Default "normal"
+    mode : {"normal", "cap"}
+        for mode is "normal", the feat_upper and feat_lower is the normal value like "10" or "3.1"
+        and for "cap", feat_upper and feature_lower will between 0 and 1, which means the percentile of the column. Default "normal"
 
-        feat_upper: int or float or list of int or float, the upper limit in the column.
-                    If use list, mode must be "normal", and list length should equal to the number of features to scale.
-                    If the scaled value is larger than feat_upper, it will be set to feat_upper. Default None.
+    feat_upper : int or float or list of int or float
+        the upper limit in the column.
+        If use list, mode must be "normal", and list length should equal to the number of features to scale.
+        If the scaled value is larger than feat_upper, it will be set to feat_upper
 
-        feat_lower: int or float or list of int or float, the lower limit in the column.
-                    If use list, mode must be "normal", and list length should equal to the number of features to scale.
-                    If the scaled value is less than feat_lower, it will be set to feat_lower. Default None.
+    feat_lower: int or float or list of int or float
+        the lower limit in the column.
+        If use list, mode must be "normal", and list length should equal to the number of features to scale.
+        If the scaled value is less than feat_lower, it will be set to feat_lower
 
-        scale_col_indexes: list,the idx of column in scale_column_idx will be scaled, while the idx of column is not in, it will not be scaled.
+    scale_col_indexes: list
+        the idx of column in scale_column_idx will be scaled, while the idx of column is not in, it will not be scaled.
 
-        scale_names : list of string, default: [].Specify which columns need to scaled. Each element in the list represent for a column name in header.
+    scale_names : list of string
+        Specify which columns need to scaled. Each element in the list represent for a column name in header. default: []
 
-        with_mean: bool, used for "standard_scale". Default True.
+    with_mean : bool
+        used for "standard_scale". Default True.
 
-        with_std: bool, used for "standard_scale". Default True.
-            The standard scale of column x is calculated as : z = (x - u) / s, where u is the mean of the column and s is the standard deviation of the column.
-            if with_mean is False, u will be 0, and if with_std is False, s will be 1.
+    with_std : bool
+        used for "standard_scale". Default True.
+        The standard scale of column x is calculated as : $z = (x - u) / s$ , where $u$ is the mean of the column and $s$ is the standard deviation of the column.
+        if with_mean is False, $u$ will be 0, and if with_std is False, $s$ will be 1.
 
-        need_run: bool, default True
-            Indicate if this module needed to be run
+    need_run : bool
+        Indicate if this module needed to be run, default True
 
     """
 

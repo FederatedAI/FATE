@@ -51,8 +51,8 @@
             "dsl": "hetero_lr_encrypted_reveal_in_host_dsl.json"
         },
         "hetero_lr_ovr_encrypted_reveal_in_host": {
-            "conf": "hetero_lr_encrypted_reveal_in_host_conf.json",
-            "dsl": "hetero_lr_encrypted_reveal_in_host_dsl.json"
+            "conf": "hetero_lr_ovr_encrypted_reveal_in_host_conf.json",
+            "dsl": "hetero_lr_ovr_encrypted_reveal_in_host_dsl.json"
         },
         "hetero_lr_normal": {
             "conf": "hetero_lr_normal_conf.json",
@@ -97,6 +97,24 @@
         "hetero_lr_normal_not_fit_intercept": {
             "conf": "hetero_lr_normal_not_fit_intercept_conf.json",
             "dsl": "hetero_lr_normal_not_fit_intercept_dsl.json"
+        },
+        "hetero_lr_normal_predict": {
+            "deps": "hetero_lr_normal",
+            "conf": "hetero_lr_normal_predict_conf.json",
+            "dsl": "hetero_lr_normal_predict_dsl.json"
+        },
+        "hetero_lr_ovr_predict": {
+            "deps": "hetero_lr_ovr",
+            "conf": "hetero_lr_ovr_predict_conf.json",
+            "dsl": "hetero_lr_ovr_predict_dsl.json"
+        },
+        "hetero_lr_converged_weight_diff_respectively_not_reveal": {
+            "conf": "hetero_lr_converged_weight_diff_respectively_not_reveal_conf.json",
+            "dsl": "hetero_lr_converged_weight_diff_respectively_not_reveal_dsl.json"
+        },
+        "hetero_lr_converged_weight_diff_encrypted_not_reveal": {
+            "conf": "hetero_lr_converged_weight_diff_encrypted_not_reveal_conf.json",
+            "dsl": "hetero_lr_converged_weight_diff_encrypted_not_reveal_dsl.json"
         }
     }
 }

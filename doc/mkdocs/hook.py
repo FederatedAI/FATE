@@ -76,17 +76,10 @@ def sub_include_examples(match):
     lines.append(f"{indents_level0}???+ Example\n")
     lines.append(f"{indents_level0}\n")
     indents_level1 = indents_level0 + "    "
-    for example_type in ["pipeline", "dsl/v2", "dsl/v1"]:
+    for example_type, pretty_name in [("pipeline", "Pipeline"), ("dsl/v2", "DSL")]:
         include_path = os.path.join(_EXAMPLES_BASE, example_type, example_name, "*.*")
-        lines.append(f'{indents_level1}=== "{example_type}"\n\n')
+        lines.append(f'{indents_level1}=== "{pretty_name}"\n\n')
         indents_level2 = f"{indents_level1}    "
-
-        if example_type == "dsl/v1":
-            lines.append(f"{indents_level2}!!! warning\n")
-            lines.append(
-                f"{indents_level2}    `dsl version 1` is deprecated, please consider use `dsl version v2` or `pipeline` instead!\n"
-            )
-            lines.append(f"{indents_level2}    \n")
 
         for name in glob.glob(include_path):
             if name.endswith("README.md") or name.endswith("readme.md"):

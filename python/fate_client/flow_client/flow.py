@@ -19,7 +19,7 @@ from pathlib import Path
 import click
 from ruamel import yaml
 
-from flow_client.flow_cli.commands import checkpoint, component, data, job, model, queue, table, tag, task, provider, \
+from flow_client.flow_cli.commands import checkpoint, tracking, component, data, job, model, queue, table, tag, task, provider, \
     server, service, resource, privilege, test
 from flow_client.flow_cli.utils.cli_utils import prettify
 
@@ -146,6 +146,7 @@ def initialization(**kwargs):
 flow_cli.add_command(server.server)
 flow_cli.add_command(service.service)
 flow_cli.add_command(provider.provider)
+flow_cli.add_command(tracking.tracking)
 flow_cli.add_command(component.component)
 flow_cli.add_command(data.data)
 flow_cli.add_command(job.job)

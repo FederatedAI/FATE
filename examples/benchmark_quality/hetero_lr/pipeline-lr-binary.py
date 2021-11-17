@@ -39,7 +39,6 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     guest = parties.guest[0]
     host = parties.host[0]
     arbiter = parties.arbiter[0]
-    work_mode = config.work_mode
 
     if isinstance(param, str):
         param = JobConfig.load_from_file(param)
@@ -130,7 +129,7 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
     pipeline.compile()
 
     # fit model
-    job_parameters = JobParameters(work_mode=work_mode)
+    job_parameters = JobParameters()
     pipeline.fit(job_parameters)
     lr_0_data = pipeline.get_component("hetero_lr_0").get_output_data().get("data")
     lr_1_data = pipeline.get_component("hetero_lr_1").get_output_data().get("data")

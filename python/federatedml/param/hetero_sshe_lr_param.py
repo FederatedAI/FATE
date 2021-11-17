@@ -19,6 +19,7 @@ from federatedml.param.base_param import BaseParam
 from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.callback_param import CallbackParam
 from federatedml.param.encrypt_param import EncryptParam
+from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from federatedml.param.init_model_param import InitParam
 from federatedml.param.predict_param import PredictParam
 from federatedml.util import consts
@@ -26,7 +27,7 @@ from federatedml.util import consts
 
 class LogisticRegressionParam(BaseParam):
     """
-    Parameters used for Logistic Regression both for Homo mode or Hetero mode.
+    Parameters used for Hetero SSHE Logistic Regression
 
     Parameters
     ----------
@@ -39,8 +40,8 @@ class LogisticRegressionParam(BaseParam):
     alpha : float, default: 1.0
         Regularization strength coefficient.
 
-    optimizer : str, 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd', 'sqn' or 'adagrad', default: 'rmsprop'
-        Optimize method, if 'sqn' has been set, sqn_param will take effect. Currently, 'sqn' support hetero mode only.
+    optimizer : str, 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd', or 'adagrad', default: 'rmsprop'
+        Optimize method
 
     batch_size : int, default: -1
         Batch size when updating model. -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
@@ -99,6 +100,7 @@ class LogisticRegressionParam(BaseParam):
                  reveal_strategy="respectively",
                  reveal_every_iter=True,
                  callback_param=CallbackParam(),
+                 encrypted_mode_calculator_param=EncryptedModeCalculatorParam()
                  ):
         super(LogisticRegressionParam, self).__init__()
         self.penalty = penalty
@@ -119,7 +121,8 @@ class LogisticRegressionParam(BaseParam):
         self.reveal_strategy = reveal_strategy
         self.reveal_every_iter = reveal_every_iter
         self.callback_param = copy.deepcopy(callback_param)
-        self.cv_param = cv_param
+        self.cv_param = copy.deepcopy(cv_param)
+        self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
 
     def check(self):
         descr = "logistic_param's"

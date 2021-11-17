@@ -16,7 +16,7 @@ All you need to do is just run the following command in guest party:
 
     .. code-block:: bash
 
-        python run_task.py -m {work_mode} -gid {guest_id} -hid {host_id}, -aid {arbiter_id}
+        python run_task.py -gid {guest_id} -hid {host_id}, -aid {arbiter_id}
 
 This test will automatically take breast as test data set.
 

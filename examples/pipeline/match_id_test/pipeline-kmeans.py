@@ -55,9 +55,9 @@ def main(config="../../config.yaml", namespace=""):
 
     data_transform_0 = DataTransform(name="data_transform_0", with_match_id=True)
     data_transform_0_guest_party_instance = data_transform_0.get_party_instance(role='guest', party_id=guest)
-    # configure DataIO for guest
+    # configure DataTransform for guest
     data_transform_0_guest_party_instance.component_param(with_label=True, output_format="dense")
-    # get and configure DataIO party instance of host
+    # get and configure DataTransform party instance of host
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     # define Intersection components

@@ -132,7 +132,7 @@ class TaskManager(object):
 
 
 class TrainTask(TaskManager):
-    def __init__(self, data_type, guest_id, host_id, arbiter_id):
+    def __init__(self, data_type, guest_id, host_id, arbiter_id=0):
         self.method = 'all'
         self.guest_id = guest_id
         self.host_id = host_id
@@ -372,8 +372,8 @@ class TrainLRTask(TrainTask):
 
 
 class TrainSBTTask(TrainTask):
-    def __init__(self, data_type, guest_id, host_id, arbiter_id):
-        super().__init__(data_type, guest_id, host_id, arbiter_id)
+    def __init__(self, data_type, guest_id, host_id):
+        super().__init__(data_type, guest_id, host_id)
         self.dsl_file = hetero_sbt_dsl_file
         self.train_component_name = 'hetero_secure_boost_0'
 
@@ -387,6 +387,9 @@ class TrainSBTTask(TrainTask):
 
         json_info['role']['guest'] = [self.guest_id]
         json_info['role']['host'] = [self.host_id]
+
+        if 'arbiter' in json_info['role']:
+            del json_info['role']['arbiter']
 
         json_info['initiator']['party_id'] = self.guest_id
 
@@ -464,6 +467,6 @@ if __name__ == "__main__":
     task.run(start_serving)
 
     if add_sbt:
-        task = TrainSBTTask(file_type, guest_id, host_id, arbiter_id)
+        task = TrainSBTTask(file_type, guest_id, host_id)
         task.run()
 

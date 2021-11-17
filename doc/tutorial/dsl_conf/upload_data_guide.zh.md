@@ -9,49 +9,63 @@
 DataIO模块接受以下输入数据格式，并将其转换为所需的输出DTable。
 
   - 稠密输入格式  
-    输入的Dtable值是一个包含单个元素的列表，例如： :
-    
-        1.0,2.0,3.0,4.5
-        1.1,2.1,3.4,1.3
-        2.4,6.3,1.5,9.0
+    输入的Dtable值是一个包含单个元素的列表，例如:
+
+    ```
+    1.0,2.0,3.0,4.5
+    1.1,2.1,3.4,1.3
+    2.4,6.3,1.5,9.0
+    ```
 
   - svm-light输入格式  
-    输入的Dtable值的第一项是label，其后是一个由键值对"feature-id:value"组成的列表，例如： :
-    
-        1 1:0.5 2:0.6
-        0 1:0.7 3:0.8 5:0.2
+    输入的Dtable值的第一项是label，其后是一个由键值对"feature-id:value"组成的列表，例如:
+
+    ``` 
+    1 1:0.5 2:0.6
+    0 1:0.7 3:0.8 5:0.2
+    ```
 
   - tag
     输入格式  
-    输入的Dtable值是一个由tag组成的列表，DataIO模块首先统计所有在输入表中出现过的tag，然后将这些tag按字典序排序，并将它们转换成one-hot表示。例如：假设值是
-    :
+    输入的Dtable值是一个由tag组成的列表，DataIO模块首先统计所有在输入表中出现过的tag，然后将这些tag按字典序排序，并将它们转换成one-hot表示。例如: 
     
-        a c
-        a b d
-    
-    经过处理, 新的值为： :
-    
-        1 0 1 0
-        1 1 0 1
+    假设值是:
 
-<!-- end list -->
+    ``` 
+    a c
+    a b d
+    ```
+    
+    经过处理, 新的值为:
+
+    ``` 
+    1 0 1 0
+    1 1 0 1
+    ```
+
 
   - :tag:value 输入格式:
-    输入的Dtable值是一个由键值对"tag:value"组成的列表，类似于svm-light输入格式和tag输入格式的结合。DataIO模块首先统计所有在输入表中出现过的tag，然后将这些tag按字典序排序。排序后的结果作为输出数据的列名，某条数据的每个tag对应的value则作为该条数据在相应列上的值。若该条数据的某个tag没有值，则填入0补充。例如，假设值是：
+    输入的Dtable值是一个由键值对"tag:value"组成的列表，类似于svm-light输入格式和tag输入格式的结合。DataIO模块首先统计所有在输入表中出现过的tag，然后将这些tag按字典序排序。排序后的结果作为输出数据的列名，某条数据的每个tag对应的value则作为该条数据在相应列上的值。若该条数据的某个tag没有值，则填入0补充。例如,
     
-        a:0.2 c:1.5
-        a:0.3 b:0.6 d:0.7
+    假设值是:
+
+    ```
+    a:0.2 c:1.5
+    a:0.3 b:0.6 d:0.7
+    ```
     
-    经过处理, 新的值为： :
-    
-        0.2 0 0.5 0
-        0.3 0.6 0 0.7
+    经过处理, 新的值为:
+
+    ``` 
+    0.2 0 0.5 0
+    0.3 0.6 0 0.7
+    ```
 
 ## 定义上传数据配置文件
 
 下面是一个说明如何创建上传配置文件的示例：
 
-``` sourceCode json
+```json
 {
   "file": "examples/data/breast_hetero_guest.csv",
   "table_name": "hetero_breast_guest",
@@ -76,43 +90,45 @@ Line](../../api/fate_client/flow_client.md)
 
 上传数据命令如下：
 
-``` sourceCode bash
-flow data upload -c dsl_test/upload_data.json
+```bash
+$ flow data upload -c examples/dsl/v2/upload/upload_conf.json
 ```
 
 同时，用户也可使用旧版的python脚本方式上传数据：
 
-``` sourceCode bash
-python ${your_install_path}/fate_flow/fate_flow_client.py -f upload -c dsl_test/upload_data.json
+```bash
+$ python ${your_install_path}/fate_flow/fate_flow_client.py -f upload -c examples/dsl/v2/upload/upload_conf.json
 ```
 
-<div class="note">
+!!! Note
 
-<div class="admonition-title">
-
-Note
-
-</div>
-
-每个提供数据的集群（即guest和host）都需执行此步骤
-
-</div>
+    每个提供数据的集群（即guest和host）都需执行此步骤
 
 运行此命令后，如果成功，将显示以下信息：
 
-``` sourceCode json
+```json
 {
-  "data": {
-      "board_url": "http://127.0.0.1:8080/index.html#/dashboard?job_id=202010131102075363217&role=local&party_id=0",
-      "job_dsl_path": "/data/projects/fate/jobs/202010131102075363217/job_dsl.json",
-      "job_runtime_conf_path": "/data/projects/fate/jobs/202010131102075363217/job_runtime_conf.json",
-      "logs_directory": "/data/projects/fate/logs/202010131102075363217",
-      "namespace": "experiment",
-      "table_name": "breast_hetero_guest"
-  },
-  "jobId": "202010131102075363217",
-  "retcode": 0,
-  "retmsg": "success"
+    "data": {
+        "board_url": "http://127.0.0.1:8080/index.html#/dashboard?job_id=202111111542373868350&role=local&party_id=0",
+        "code": 0,
+        "dsl_path": "/data/projects/fate/fateflow/jobs/202111111542373868350/job_dsl.json",
+        "job_id": "202111111542373868350",
+        "logs_directory": "/data/projects/fate/fateflow/logs/202111111542373868350",
+        "message": "success",
+        "model_info": {
+            "model_id": "local-0#model",
+            "model_version": "202111111542373868350"
+        },
+        "namespace": "experiment",
+        "pipeline_dsl_path": "/data/projects/fate/fateflow/jobs/202111111542373868350/pipeline_dsl.json",
+        "runtime_conf_on_party_path": "/data/projects/fate/fateflow/jobs/202111111542373868350/local/0/job_runtime_on_party_conf.json",
+        "runtime_conf_path": "/data/projects/fate/fateflow/jobs/202111111542373868350/job_runtime_conf.json",
+        "table_name": "breast_hetero_guest",
+        "train_runtime_conf_path": "/data/projects/fate/fateflow/jobs/202111111542373868350/train_runtime_conf.json"
+    },
+    "jobId": "202111111542373868350",
+    "retcode": 0,
+    "retmsg": "success"
 }
 ```
 
