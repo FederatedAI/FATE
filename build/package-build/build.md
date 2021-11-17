@@ -11,29 +11,41 @@
 | Maven  | 3.6.1+  |
 | Python | 3.6.5   |
 
-## 2. Build
+## 2. Get the source code
+
+### 2.1 Get code from Github
 
 ```bash
 git clone https://github.com/FederatedAI/FATE.git -b $branch --recurse-submodules --depth=1
-cd FATE
-bash build/package-build/build.sh $version_tag all
 ```
 
 Please set the **branch** and the **version_tag**.
 The **depth** parameter represents the code that only gets the latest commit, which can speed up the clone.
-The **all** means that modules needs to be deployed, all means all, supports all, python, fateboard, eggroll
 
-## 3. Output
+### 2.2 Get code from Gitee(Try Gitee when you can't connect to Github for code)
+
+Please reference [how_to_use_gitee](../common/how_to_use_gitee.md)
+
+## 3. Build
 
 ```bash
-ls -l FATE_install_$version_$version_tag.tar.gz
+cd FATE
+bash build/package-build/build.sh ${version_tag} all
 ```
 
-## 4. Check packages
+The **all** means that modules needs to be deployed, all means all, supports all, python, fateboard, eggroll
+
+## 4. Output
 
 ```bash
-tar xzf FATE_install_$version_$version_tag.tar.gz
-ls -lrt FATE_install_$version
+ls -l FATE_install_${version}_${version_tag}.tar.gz
+```
+
+## 5. Check packages
+
+```bash
+tar xzf FATE_install_${version}_${version_tag}.tar.gz
+ls -lrt FATE_install_${version}_${version_tag}
 ```
 
 You can see the following package:
@@ -60,23 +72,23 @@ You can make python dependency package like:
 
 ```bash
 cd FATE
-bash build/package-build/build.sh $version_tag pypi
+bash build/package-build/build.sh ${version_tag} pypi
 ```
 
 And then you found it:
 
 ```bash
-FATE_install_$version/pypi.tar.gz
+FATE_install_${version}_${version_tag}/pypi.tar.gz
 ```
 
 You can use it like:
 
 ```bash
-pip install -r FATE/python/requirements.txt --no-index -f FATE_install_$version/pypi
+pip install -r FATE/python/requirements.txt --no-index -f FATE_install_${version}_${version_tag}/pypi
 ```
 
 **Ensure that the operating system on which the dependency packages are made and the operating system on which the dependency packages will be installed**
-**Don't forget to set the value of $version**
+**Don't forget to set the value of ${version}**
 
 ## 7. Make python environment install package(Optional)
 
@@ -84,17 +96,17 @@ You can make it like:
 
 ```bash
 cd FATE
-bash build/package-build/build.sh $version_tag python36
+bash build/package-build/build.sh ${version_tag} python36
 ```
 
 And then you found it:
 
 ```bash
-FATE_install_$version/python36.tar.gz
+FATE_install_${version}_${version_tag}/python36.tar.gz
 ```
 
 **Ensure that the operating system on which the dependency packages are made and the operating system on which the dependency packages will be installed**
-**Don't forget to set the value of $version**
+**Don't forget to set the value of ${version}**
 
 ## 8. Make java environment install package(Optional)
 
@@ -102,11 +114,11 @@ You can make it like:
 
 ```bash
 cd FATE
-bash build/package-build/build.sh $version_tag jdk
+bash build/package-build/build.sh ${version_tag} jdk
 ```
 
 And then you can use it like:
 
 ```bash
-FATE_install_$version/jdk.tar.gz
+FATE_install_${version}_${version_tag}/jdk.tar.gz
 ```

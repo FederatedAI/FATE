@@ -16,18 +16,18 @@ FATE（Federated AI Technology Enable）是一个工业级的分布式联邦学�
   
 ```$ git clone git@github.com:FederatedAI/FATE.git```
   
-  拉取完毕后，进入”docker-build/”工作目录。
+  拉取完毕后，进入`FATE/build/docker-build/`工作目录。
 
 配置镜像名称
 为了减少镜像的容量，我们把镜像划分为以下几类：
 - 基础镜像： 安装了必要的依赖包，作为模块镜像的基础镜像(Base Image)。
 - 模块镜像： 包含了FATE中某个特定的模块。
 
-用户在开始构建镜像之前需要配置“.env”，通过该文件，镜像在构建完毕后会被打上相应的标签以后续使用，例子如下：
+用户在开始构建镜像之前可以配置“.env”，通过该文件，镜像在构建完毕后会被打上相应的标签以后续使用，例子如下：
 ```
   PREFIX=federatedai
-  BASE_TAG=1.4.0-release
-  TAG=1.4.0-release
+  BASE_TAG=${version}-release
+  TAG=${version}-release
 
   # PREFIX: 用于要推送的镜像仓库(Registry)以及其命名空间
   # BASE_TAG: 基础镜像的标签

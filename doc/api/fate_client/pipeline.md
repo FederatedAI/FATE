@@ -12,7 +12,7 @@ a taste of how FATE Pipeline works. Default values of party ids and work
 mode may need to be modified depending on the deployment setting.
 
 ``` sourceCode bash
-python pipeline-mini-demo.py config.yaml
+python pipeline-mini-demo.py
 ```
 
 For more pipeline demo, please refer to

@@ -1,5 +1,4 @@
 #!/bin/bash
-
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -26,13 +25,14 @@ if [[ -n ${1} ]]; then
 else
     version_tag="rc"
 fi
+if_skip_compress=$2
 
 cd ${source_dir}
 echo "[INFO] source dir: ${source_dir}"
 version=`grep "FATE=" fate.env | awk -F '=' '{print $2}'`
-fate_packages_dir_name="FATE_install_"${version}
-fate_packages_dir=${source_dir}/${fate_packages_dir_name}
-package_dir_name="standalone_fate_install_"${version}
+install_package_dir_name="FATE_install_${version}_${version_tag}"
+install_package_dir=${source_dir}/${install_package_dir_name}
+package_dir_name="standalone_fate_install_${version}_${version_tag}"
 package_dir=${source_dir}/${package_dir_name}
 echo "[INFO] build info"
 echo "[INFO] version: "${version}
@@ -40,6 +40,54 @@ echo "[INFO] version tag: "${version_tag}
 echo "[INFO] package output dir is "${package_dir}
 rm -rf ${package_dir} ${package_dir}_${version_tag}".tar.gz"
 mkdir -p ${package_dir}
+
+echo "${environment_modules[@]}" "${support_modules[@]}"
+
+function packaging(){
+    echo "[INFO] package start"
+    cd ${source_dir} 
+
+    # init.sh
+    cp build/standalone-install-build/init.sh ${package_dir}
+    sed -i.bak "s/version=.*/version=${version}/g" ${package_dir}/init.sh
+    rm -rf ${package_dir}/init.sh.bak
+
+    echo "[INFO] get install packages"
+    if [[ -d ${install_package_dir} ]];then
+        echo "[INFO] install package already exists, skip build"
+    else
+        sh build/package-build/build.sh ${version_tag} "${environment_modules[@]}" "${support_modules[@]}"
+    fi
+    echo "[INFO] get install packages done"
+
+    cp -r ${install_package_dir}/* ${package_dir}/
+    echo "[INFO] copy install packages done"
+
+    cd ${package_dir}
+    echo "[INFO] deal env packages"
+    env_dir=${package_dir}/env
+    if [[ -d "${env_dir}" ]];then
+      rm -rf ${env_dir}
+    fi
+    mkdir -p ${env_dir}
+    
+    for module in "${environment_modules[@]}";
+    do
+        tar xzf ${module}.tar.gz -C ${env_dir}
+        rm -rf ${module}.tar.gz
+    done
+    echo "[INFO] deal env packages done"
+
+    echo "[INFO] deal system packages"
+    for module in "${support_modules[@]}";
+    do
+        tar xzf ${module}.tar.gz
+        rm -rf ${module}.tar.gz
+    done
+    echo "[INFO] deal system packages done"
+
+    echo "[INFO] package done"
+}
 
 function packaging_env(){
     echo "[INFO] package env start"
@@ -49,7 +97,7 @@ function packaging_env(){
     rm -rf ${package_dir}/init.sh.bak
 
     echo "[INFO] enter build packages"
-    sh build/package-build/build.sh ${version_tag} "${environment_modules[@]}";
+    sh build/package-build/build.sh ${version_tag} "${environment_modules[@]}"
     echo "[INFO] exit build packages"
 
     env_dir=${package_dir}/env
@@ -57,7 +105,7 @@ function packaging_env(){
       rm -rf ${env_dir}
     fi
     mkdir -p ${env_dir}
-    cp -r ${fate_packages_dir}/* ${env_dir}/
+    cp -r ${install_package_dir}/* ${env_dir}/
     
     cd ${env_dir}
     for module in "${environment_modules[@]}";
@@ -74,7 +122,8 @@ function packaging_systems(){
     echo "[INFO] enter build packages"
     sh build/package-build/build.sh ${version_tag} "${support_modules[@]}"
     echo "[INFO] exit build packages"
-    cp -r ${fate_packages_dir}/* ${package_dir}/
+
+    cp -r ${install_package_dir}/* ${package_dir}/
     cd ${package_dir}
     for module in "${support_modules[@]}";
     do
@@ -90,21 +139,24 @@ compress(){
     ls -lrt ${package_dir}
     package_dir_parent=$(cd `dirname ${package_dir}`; pwd)
     cd ${package_dir_parent}
-    tar czf ${package_dir_name}_${version_tag}".tar.gz" ${package_dir_name}
+    if [[ ${if_skip_compress} -eq 1 ]];then
+        echo "[INFO] skip compress"
+    else
+        tar czf ${package_dir_name}_${version_tag}".tar.gz" ${package_dir_name}
+    fi
     echo "[INFO] compress done"
 }
 
 
 build() {
     echo "[INFO] packaging start------------------------------------------------------------------------"
-    packaging_env
-    packaging_systems
+    packaging
     echo "[INFO] packaging end ------------------------------------------------------------------------"
     compress
 }
 
 usage() {
-    echo "usage: $0 {version_tag}"
+    echo "usage: $0 {version_tag} {if_skip_compress}"
 }
 
 

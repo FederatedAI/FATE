@@ -11,81 +11,72 @@ DSL 的配置文件采用 json 格式，实际上，整个配置文件就是一�
   - **含义：** 在这个 dict 的第一级是 "components"，用来表示这个任务将会使用到的各个模块。
   - **参考：**
 
-<!-- end list -->
-
-``` sourceCode json
-{
-  "components" : {
-          ...
+    ```json
+    {
+      "components" : {
+              ...
+          }
       }
-  }
-```
+    ```
 
   - **说明：**
 
-每个独立的模块定义在 "components" 之下，例如：
+    每个独立的模块定义在 "components" 之下，例如：
 
-``` sourceCode json
-"data_transform_0": {
-      "module": "DataTransform",
-      "input": {
-          "data": {
-              "data": [
-                  "reader_0.train_data"
-              ]
+    ```json
+    "data_transform_0": {
+          "module": "DataTransform",
+          "input": {
+              "data": {
+                  "data": [
+                      "reader_0.train_data"
+                  ]
+              }
+          },
+          "output": {
+              "data": ["train"],
+              "model": ["model"]
           }
-      },
-      "output": {
-          "data": ["train"],
-          "model": ["model"]
       }
-  }
-```
+    ```
 
-所有数据需要通过\**Reader*\*模块从数据存储拿取数据，注意此模块仅有输出`output`
+    所有数据需要通过**Reader**模块从数据存储拿取数据，注意此模块仅有输出`output`
 
-``` sourceCode json
-"reader_0": {
-      "module": "Reader",
-      "output": {
-          "data": ["train"]
-      }
-}
-```
+    ```json
+    "reader_0": {
+          "module": "Reader",
+          "output": {
+              "data": ["train"]
+          }
+    }
+    ```
 
-### 3\. 模块
+### 3. 模块
 
   - **含义：** 用来指定使用的模块。这
   - **说明：** 个参数的内容需要和
-    <span class="title-ref">federatedml/conf/setting\_conf</span>
-    下各个模块的文件名保持一致（不包括 .json 后缀）。
+    `federatedml/conf/setting\_conf` 下各个模块的文件名保持一致（不包括 .json 后缀）。
   - **参考：**
 
-<!-- end list -->
+    ```json
+    "hetero_feature_binning_1": {
+        "module": "HeteroFeatureBinning",
+        ...
+    }
+    ```
 
-``` sourceCode json
-"hetero_feature_binning_1": {
-    "module": "HeteroFeatureBinning",
-     ...
-}
-```
-
-### 4\. 输入
+### 4. 输入
 
   - **含义：** 上游输入，分为两种输入类型，分别是数据和模型。
 
 #### 4.1 数据输入
 
   - **含义：** 上游数据输入，分为三种输入类型：
-    
-    > 1.  data: 一般被用于 data-transform模块, feature\_engineering 模块或者
-    >     evaluation 模块
-    > 2.  train\_data: 一般被用于 homo\_lr, hetero\_lr 和 secure\_boost
-    >     模块。如果出现了 train\_data 字段，那么这个任务将会被识别为一个 fit 任务
-    > 3.  validate\_data： 如果存在 train\_data
-    >     字段，那么该字段是可选的。如果选择保留该字段，则指向的数据将会作为
-    >     validation set
-    > 4.  test\_data: 用作预测数据，如提供，需同时提供model输入。
+  
+    1.  data: 一般被用于 data-transform模块, feature\_engineering 模块或者 evaluation 模块
+    2.  train\_data: 一般被用于 homo\_lr, hetero\_lr 和 secure\_boost 模块。如果出现了 train\_data 字段，那么这个任务将会被识别为一个 fit 任务
+    3.  validate\_data： 如果存在 train\_data 字段，那么该字段是可选的。如果选择保留该字段，则指向的数据将会作为 validation set
+    4.  test\_data: 用作预测数据，如提供，需同时提供model输入。
 
 #### 4.2 模型输入
 
@@ -94,7 +85,7 @@ DSL 的配置文件采用 json 格式，实际上，整个配置文件就是一�
         hetero\_binning\_1 将会使用 hetero\_binning\_0 的输出用于 predict 或
         transform。代码示例：
         
-        ``` sourceCode json
+        ```json
         "hetero_feature_binning_1": {
             "module": "HeteroFeatureBinning",
             "input": {
@@ -114,11 +105,9 @@ DSL 的配置文件采用 json 格式，实际上，整个配置文件就是一�
         }
         ```
     
-    2.  isometric\_model: 用于指定继承上游组件的模型输入。 例如，feature selection 的上游组件是
-        feature binning，它将会用到 feature binning 的信息来作为 feature
-        importance。代码示例：
+    2.  isometric\_model: 用于指定继承上游组件的模型输入。 例如，feature selection 的上游组件是 feature binning，它将会用到 feature binning 的信息来作为 feature importance。代码示例：
         
-        ``` sourceCode json
+        ```json
         "hetero_feature_selection_0": {
             "module": "HeteroFeatureSelection",
             "input": {
@@ -138,15 +127,13 @@ DSL 的配置文件采用 json 格式，实际上，整个配置文件就是一�
         }
         ```
 
-### 5\. 输出
+### 5. 输出
 
   - **含义：** 输出，与输入一样，分为数据和模型输出
 
 #### 5.1 数据输出
 
   - **含义：** 数据输出，分为四种输出类型：
-
-<!-- end list -->
 
 1.  data: 常规模块数据输出
 2.  train\_data: 仅用于Data Split
@@ -159,36 +146,32 @@ DSL 的配置文件采用 json 格式，实际上，整个配置文件就是一�
 
 ## JOB RUNTIME CONFIG配置说明，针对1.5.x版本新格式
 
-### 1\. 概述
+### 1. 概述
 
 Job Runtime Conf用于设置各个参与方的信息, 作业的参数及各个组件的参数。 内容包括如下：
 
-### 2\. DSL版本
+### 2. DSL版本
 
   - **含义：** 配置版本，默认不配置为1，建议配置为2
   - **参考：**
 
-<!-- end list -->
+    ```json
+    "dsl_version": "2"
+    ```
 
-``` sourceCode json
-"dsl_version": "2"
-```
-
-### 3\. 作业参与方
+### 3. 作业参与方
 
 #### 3.1 发起方
 
   - **含义：** 任务发起方的role和party\_id。
   - **参考：**
 
-<!-- end list -->
-
-``` sourceCode json
-"initiator": {
-    "role": "guest",
-    "party_id": 9999
-}
-```
+    ```json
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    }
+    ```
 
 #### 3.2 所有参与方
 
@@ -197,15 +180,13 @@ Job Runtime Conf用于设置各个参与方的信息, 作业的参数及各个�
     以列表形式存在，因为一个任务可能涉及到多个 party 担任同一种角色。
   - **参考：**
 
-<!-- end list -->
-
-``` sourceCode json
-"role": {
-    "guest": [9999],
-    "host": [10000],
-    "arbiter": [10000]
-}
-```
+    ```json
+    "role": {
+        "guest": [9999],
+        "host": [10000],
+        "arbiter": [10000]
+    }
+    ```
 
 ### 4\. 系统运行参数
 
@@ -215,21 +196,19 @@ Job Runtime Conf用于设置各个参与方的信息, 作业的参数及各个�
 #### 4.1 参数应用范围策略设置
 
   - 应用于所有参与方，使用common范围标识符
-  - 仅应用于某参与方，使用role范围标识符，使用\(role:\)party\_index定位被指定的参与方，直接指定的参数优先级高于common参数
+  - 仅应用于某参与方，使用role范围标识符，使用role: {party\_index: ...}定位被指定的参与方，直接指定的参数优先级高于common参数
 
-<!-- end list -->
-
-``` sourceCode json
-"common": {
-}
-
-"role": {
-  "guest": {
-    "0": {
+    ```json
+    "common": {
     }
-  }
-}
-```
+
+    "role": {
+      "guest": {
+        "0": {
+        }
+      }
+    }
+    ```
 
 其中common下的参数应用于所有参与方，role-guest-0配置下的参数应用于guest角色0号下标的参与方
 注意，当前版本系统运行参数未对仅应用于某参与方做严格测试，建议使用优先选用common
@@ -253,19 +232,10 @@ Job Runtime Conf用于设置各个参与方的信息, 作业的参数及各个�
 
 支持的系统参数
 
-<div class="note">
+!!! Note
 
-<div class="admonition-title">
-
-Note
-
-</div>
-
-</div>
-
-1.  计算引擎和存储引擎之间具有一定的支持依赖关系
-2.  开发者可自行实现适配的引擎，并在runtime
-config配置引擎
+    1.  计算引擎和存储引擎之间具有一定的支持依赖关系
+    2.  开发者可自行实现适配的引擎，并在runtime config配置引擎
 
 #### 4.3 未开放参数
 
@@ -282,84 +252,75 @@ config配置引擎
 
 1.  使用eggroll作为computing engine，采取默认cpu分配计算策略时的配置
 
-<!-- end list -->
-
-``` sourceCode json
-"job_parameters": {
-  "common": {
-    "job_type": "train",
-    "task_cores": 6,
-    "task_parallelism": 2,
-    "computing_partitions": 8,
-    "timeout": 36000
-  }
-}
-```
+    ```json
+    "job_parameters": {
+      "common": {
+        "job_type": "train",
+        "task_cores": 6,
+        "task_parallelism": 2,
+        "computing_partitions": 8,
+        "timeout": 36000
+      }
+    }
+    ```
 
 2.  使用eggroll作为computing engine，采取直接指定cpu等参数时的配置
 
-<!-- end list -->
-
-``` sourceCode json
-"job_parameters": {
-  "common": {
-    "job_type": "train",
-    "eggroll_run": {
-      "eggroll.session.processors.per.node": 2
-    },
-    "task_parallelism": 2,
-    "computing_partitions": 8,
-    "timeout": 36000,
-  }
-}
-```
+    ```json
+    "job_parameters": {
+      "common": {
+        "job_type": "train",
+        "eggroll_run": {
+          "eggroll.session.processors.per.node": 2
+        },
+        "task_parallelism": 2,
+        "computing_partitions": 8,
+        "timeout": 36000,
+      }
+    }
+    ```
 
 3.  使用spark作为computing engine，rabbitmq作为federation engine,采取直接指定cpu等参数时的配置
 
-<!-- end list -->
-
-``` sourceCode json
-"job_parameters": {
-  "common": {
-    "job_type": "train",
-    "spark_run": {
-      "num-executors": 1,
-      "executor-cores": 2
-    },
-    "task_parallelism": 2,
-    "computing_partitions": 8,
-    "timeout": 36000,
-    "rabbitmq_run": {
-      "queue": {
-        "durable": true
-      },
-      "connection": {
-        "heartbeat": 10000
+    ```json
+    "job_parameters": {
+      "common": {
+        "job_type": "train",
+        "spark_run": {
+          "num-executors": 1,
+          "executor-cores": 2
+        },
+        "task_parallelism": 2,
+        "computing_partitions": 8,
+        "timeout": 36000,
+        "rabbitmq_run": {
+          "queue": {
+            "durable": true
+          },
+          "connection": {
+            "heartbeat": 10000
+          }
+        }
       }
     }
-  }
-}
-```
+    ```
 
 4.  使用spark作为computing engine，pulsar作为federation engine
 
-<!-- end list -->
-
-``` sourceCode json
-"job_parameters": {
-  "common": {
-    "spark_run": {
-      "num-executors": 1,
-      "executor-cores": 2
-    },
-  }
-}
-```
+    ```json
+    "job_parameters": {
+      "common": {
+        "spark_run": {
+          "num-executors": 1,
+          "executor-cores": 2
+        },
+      }
+    }
+    ```
 
 #### 4.5 资源管理详细说明
 
-1.5.0版本开始，为了进一步管理资源，fateflow启用更细粒度的cpu
-    cores管理策略，去除早前版本直接通过限制同时运行作业个数的策略
+1.5.0版本开始，为了进一步管理资源，fateflow启用更细粒度的cpu cores管理策略，去除早前版本直接通过限制同时运行作业个数的策略
 
 ##### 4.5.1 总资源配置
 
@@ -410,26 +371,24 @@ config配置引擎
     0)，则该作业申请资源成功
       - 若非所有参与方均申请资源成功，则发送资源回滚指令到已申请成功的参与方，该作业申请资源失败
 
-### 5\. 组件运行参数
+### 5. 组件运行参数
 
 #### 5.1 参数应用范围策略设置
 
   - 应用于所有参与方，使用common范围标识符
-  - 仅应用于某参与方，使用role范围标识符，使用\(role:\)party\_index定位被指定的参与方，直接指定的参数优先级高于common参数
+  - 仅应用于某参与方，使用role范围标识符，使用role: {party\_index: ...} 定位被指定的参与方，直接指定的参数优先级高于common参数
 
-<!-- end list -->
-
-``` sourceCode json
-"commom": {
-}
-
-"role": {
-  "guest": {
-    "0": {
+    ```json
+    "commom": {
     }
-  }
-}
-```
+
+    "role": {
+      "guest": {
+        "0": {
+        }
+      }
+    }
+    ```
 
 其中common配置下的参数应用于所有参与方，role-guest-0配置下的参数表示应用于guest角色0号下标的参与方
 注意，当前版本组件运行参数已支持两种应用范围策略
@@ -440,56 +399,54 @@ config配置引擎
   - 对于`reader_0`与`data_transform_0`两个组件的运行参数，依据不同的参与方进行特定配置，这是因为通常不同参与方的输入参数并不一致，所有通常这两个组件一般按参与方设置
   - 上述组件名称是在DSL配置文件中定义
 
-<!-- end list -->
-
-``` sourceCode json
-"component_parameters": {
-  "common": {
-    "intersection_0": {
-      "intersect_method": "raw",
-      "sync_intersect_ids": true,
-      "only_output_key": false
-    },
-    "hetero_lr_0": {
-      "penalty": "L2",
-      "optimizer": "rmsprop",
-      "alpha": 0.01,
-      "max_iter": 3,
-      "batch_size": 320,
-      "learning_rate": 0.15,
-      "init_param": {
-        "init_method": "random_uniform"
-      }
-    }
-  },
-  "role": {
-    "guest": {
-      "0": {
-        "reader_0": {
-          "table": {"name": "breast_hetero_guest", "namespace": "experiment"}
+    ```json
+    "component_parameters": {
+      "common": {
+        "intersection_0": {
+          "intersect_method": "raw",
+          "sync_intersect_ids": true,
+          "only_output_key": false
         },
-        "data_transform_0":{
-          "with_label": true,
-          "label_name": "y",
-          "label_type": "int",
-          "output_format": "dense"
+        "hetero_lr_0": {
+          "penalty": "L2",
+          "optimizer": "rmsprop",
+          "alpha": 0.01,
+          "max_iter": 3,
+          "batch_size": 320,
+          "learning_rate": 0.15,
+          "init_param": {
+            "init_method": "random_uniform"
+          }
+        }
+      },
+      "role": {
+        "guest": {
+          "0": {
+            "reader_0": {
+              "table": {"name": "breast_hetero_guest", "namespace": "experiment"}
+            },
+            "data_transform_0":{
+              "with_label": true,
+              "label_name": "y",
+              "label_type": "int",
+              "output_format": "dense"
+            }
+          }
+        },
+        "host": {
+          "0": {
+            "reader_0": {
+              "table": {"name": "breast_hetero_host", "namespace": "experiment"}
+            },
+            "data_transform_0":{
+              "with_label": false,
+              "output_format": "dense"
+            }
+          }
         }
       }
-    },
-    "host": {
-      "0": {
-        "reader_0": {
-          "table": {"name": "breast_hetero_host", "namespace": "experiment"}
-        },
-        "data_transform_0":{
-          "with_label": false,
-          "output_format": "dense"
-        }
-      }
     }
-  }
-}
-```
+    ```
 
 #### 5.3 多Host 配置
 
@@ -497,63 +454,59 @@ config配置引擎
 
   - **样例**:
 
-<!-- end list -->
-
-``` sourceCode json
-"role": {
-   "guest": [
-     10000
-   ],
-   "host": [
-     10000, 10001, 10002
-   ],
-   "arbiter": [
-     10000
-   ]
-}
-```
+    ```json
+    "role": {
+      "guest": [
+        10000
+      ],
+      "host": [
+        10000, 10001, 10002
+      ],
+      "arbiter": [
+        10000
+      ]
+    }
+    ```
 
 各host不同的配置应在各自对应模块下分别列举
 
   - **样例**:
 
-<!-- end list -->
-
-``` sourceCode json
-"component_parameters": {
-   "role": {
-      "host": {
-         "0": {
-            "reader_0": {
-               "table":
-                {
-                  "name": "hetero_breast_host_0",
-                  "namespace": "hetero_breast_host"
+    ```json
+    "component_parameters": {
+      "role": {
+          "host": {
+            "0": {
+                "reader_0": {
+                  "table":
+                    {
+                      "name": "hetero_breast_host_0",
+                      "namespace": "hetero_breast_host"
+                    }
+                }
+            },
+            "1": {
+                "reader_0": {
+                  "table":
+                  {
+                      "name": "hetero_breast_host_1",
+                      "namespace": "hetero_breast_host"
+                  }
+                }
+            },
+            "2": {
+                "reader_0": {
+                  "table":
+                  {
+                      "name": "hetero_breast_host_2",
+                      "namespace": "hetero_breast_host"
+                  }
                 }
             }
-         },
-         "1": {
-            "reader_0": {
-               "table":
-               {
-                  "name": "hetero_breast_host_1",
-                  "namespace": "hetero_breast_host"
-               }
-            }
-         },
-         "2": {
-            "reader_0": {
-               "table":
-               {
-                  "name": "hetero_breast_host_2",
-                  "namespace": "hetero_breast_host"
-               }
-            }
-         }
+          }
       }
-   }
-}
-```
+    }
+    ```
 
 #### 5.4 预测任务配置
 
@@ -564,8 +517,8 @@ Client](../../api/fate_client/flow_client.md) 部署所需模型中模块。
 详细命令说明请参考[FATE-Flow
 document](../../api/fate_client/flow_client.md#deploy)
 
-``` sourceCode bash
-flow model deploy --model-id $model_id --model-version $model_version --cpn-list ...
+```bash
+$ flow model deploy --model-id $model_id --model-version $model_version --cpn-list ...
 ```
 
 可选地，用户可以在预测dsl中加入新模块，如`Evaluation`
@@ -574,7 +527,7 @@ flow model deploy --model-id $model_id --model-version $model_version --cpn-list
 
 训练 dsl：
 
-``` sourceCode json
+```json
 "components": {
     "reader_0": {
         "module": "Reader",
@@ -640,7 +593,7 @@ flow model deploy --model-id $model_id --model-version $model_version --cpn-list
 
 预测 dsl:
 
-``` sourceCode json
+```json
 "components": {
     "reader_0": {
         "module": "Reader",
@@ -719,7 +672,7 @@ flow model deploy --model-id $model_id --model-version $model_version --cpn-list
 }
 ```
 
-### 6\. 基本原理
+### 6. 基本原理
 
 1.  提交作业后，fateflow获取job dsl与job
     config，存于数据库`t_job`表对应字段以及`$PROJECT_BASE/jobs/$jobid/`目录

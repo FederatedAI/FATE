@@ -22,7 +22,7 @@ from fate_test.scripts.data_cli import data_group
 from fate_test.scripts.testsuite_cli import run_suite
 from fate_test.scripts.performance_cli import run_task
 from fate_test.scripts.flow_test_cli import flow_group
-from fate_test.scripts.quick_test_cli import quick_test_group
+from fate_test.scripts.quick_test_cli import unittest_group
 
 commands = {
     "config": config_group,
@@ -31,7 +31,7 @@ commands = {
     "benchmark-quality": run_benchmark,
     "data": data_group,
     "flow-test": flow_group,
-    "quick-test": quick_test_group
+    "unittest": unittest_group
 }
 
 commands_alias = {
