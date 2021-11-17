@@ -71,6 +71,11 @@ class HeteroLRGuest(HeteroLRBase):
 
         classes = self.one_vs_rest_obj.get_data_classes(data_instances)
 
+        if with_weight(data_instances):
+            data_instances = scale_sample_weight(data_instances)
+            self.gradient_loss_operator.set_use_sample_weight()
+            LOGGER.debug(f"instance weight scaled; use weighted gradient loss operator")
+
         if len(classes) > 2:
             self.need_one_vs_rest = True
             self.need_call_back_loss = False
@@ -93,10 +98,8 @@ class HeteroLRGuest(HeteroLRBase):
         if with_weight(data_instances):
             if self.model_param.early_stop == "diff":
                 LOGGER.warning("input data with weight, please use 'weight_diff' for 'early_stop'.")
-            # @TODO: move scale sample weight to `fit`
-            data_instances = scale_sample_weight(data_instances)
-            self.gradient_loss_operator.set_use_sample_weight()
-            LOGGER.debug(f"instance weight scaled; use weighted gradient loss operator")
+            # data_instances = scale_sample_weight(data_instances)
+            # self.gradient_loss_operator.set_use_sample_weight()
             # LOGGER.debug(f"data_instances after scale: {[v[1].weight for v in list(data_instances.collect())]}")
         elif len(self.component_properties.host_party_idlist) == 1:
             LOGGER.debug(f"set_use_async")
