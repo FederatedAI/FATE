@@ -20,7 +20,7 @@ set -e
 source_dir=$(cd `dirname $0`; cd ../;cd ../;pwd)
 echo "[INFO] source dir: ${source_dir}"
 cd ${source_dir}
-source ./build/common/var.sh
+source ./bin/common.sh
 
 if [[ -n ${1} ]]; then
     version_tag=$1
@@ -77,7 +77,7 @@ build() {
   tar -cf ../fate.tar ./*
   cd ../
 
-  a=`docker images | grep "fate" | grep "${image_tag}" | wc -l`
+  a=`docker images | grep "fate" | grep "${image_tag} " | wc -l`
   if [[ a -ne 0 ]];then
     docker rmi fate:${image_tag}
     if [[ $? -eq 0 ]];then

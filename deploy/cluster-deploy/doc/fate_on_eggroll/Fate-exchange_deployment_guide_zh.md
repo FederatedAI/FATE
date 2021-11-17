@@ -196,6 +196,7 @@ tar xvf eggroll.tar.gz -C /data/projects/fate
 cat >/data/projects/fate/init_env.sh <<EOF
 export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
 export PATH=\$PATH:\$JAVA_HOME/bin
+export EGGROLL_LOG_LEVEL=DEBUG
 EOF
 ```
 
@@ -216,7 +217,7 @@ EOF
 cat > /data/projects/fate/eggroll/conf/eggroll.properties <<EOF
 [eggroll]
 # for roll site. rename in the next round
-eggroll.rollsite.coordinator=webank
+eggroll.rollsite.coordinator=fate
 eggroll.rollsite.host=192.168.0.1
 eggroll.rollsite.port=9370
 eggroll.rollsite.party.id=exchange

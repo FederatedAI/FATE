@@ -51,6 +51,12 @@
         },
         "train_with_fixed_point_opt": {
             "script": "./pipeline-hetero-nn-train-binary-floating_point_precision.py"
+        },
+        "hetero_nn_train_with_warm_start": {
+            "script": "./pipeline-hetero-nn-train-with-warm_start.py"
+        },
+        "hetero_nn_train_with_check_point": {
+            "script": "./pipeline-hetero-nn-train-with-check-point.py"
         }
     }
 }

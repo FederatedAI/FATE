@@ -1,1 +1,0 @@
-RELEASE_VERSION_TAG_NAME="release"

@@ -29,7 +29,8 @@ fi
 
 cd ${source_dir}
 echo "[INFO] source dir: ${source_dir}"
-#git submodule foreach --recursive git pull
+git submodule init
+git submodule update
 version=`grep "FATE=" fate.env | awk -F '=' '{print $2}'`
 package_dir_name="FATE_install_${version}_${version_tag}"
 package_dir=${source_dir}/${package_dir_name}
@@ -85,14 +86,14 @@ function packaging_fate(){
 
 function packaging_fateflow(){
     echo "[INFO] package fateflow start"
-    pull_fateflow
+    #pull_fateflow
     cp -r fateflow ${package_dir}/
     echo "[INFO] package fateflow done"
 }
 
 packaging_fateboard(){
     echo "[INFO] package fateboard start"
-    pull_fateboard
+    #pull_fateboard
     cd ./fateboard
     fateboard_version=$(grep -E -m 1 -o "<version>(.*)</version>" ./pom.xml | tr -d '[\\-a-z<>//]' | awk -F "version" '{print $2}')
     echo "[INFO] fateboard version "${fateboard_version}
@@ -110,7 +111,7 @@ packaging_fateboard(){
 
 packaging_eggroll(){
     echo "[INFO] package eggroll start"
-    pull_eggroll
+    #pull_eggroll
     cd ./eggroll
     cd ./deploy
     sh ./auto-packaging.sh

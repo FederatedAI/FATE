@@ -202,7 +202,7 @@ echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab
 或者使用5.1章节的代码包中的脚本创建，app用户执行：
 
 ```
-sh /data/projects/fate-cluster-install/tools/makeVirtualDisk.sh
+sh /data/projects/fate-cluster-install/tools-install/makeVirtualDisk.sh
 Waring: please make sure has enough space of your disk first!!! （请确认有足够的存储空间）
 current user has sudo privilege(yes|no):yes      （是否有sudo权限，输入yes，不能简写）
 Enter store directory:/data    （设置虚拟内存文件的存放路径，确保目录存在和不要设置在根目录）
@@ -263,10 +263,12 @@ Swap:        131071           0      131071
 
 进入执行节点的/data/projects/目录，执行：
 
+备注：用具体FATE版本号替换${version},可在[release页面](https://github.com/FederatedAI/FATE/releases)上查看
+
 ```
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_cluster_install_1.6.1_release-c7-u18.tar.gz
-tar xzf fate_cluster_install_1.6.1_release-c7-u18.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_cluster_install_${version}_release-c7-u18.tar.gz
+tar xzf fate_cluster_install_${version}_release-c7-u18.tar.gz
 ```
 
 ## 5.2 部署前检查
@@ -303,8 +305,9 @@ vi fate-cluster-install/allInone/conf/setup.conf
 | 配置项              | 配置项值                                              | 说明                                                         |
 | ------------------- | ----------------------------------------------------- | ------------------------------------------------------------ |
 | roles               | 默认："host" "guest"                                  | 部署的角色，有HOST端、GUEST端                                |
-| version             | 默认：1.6.1                                           | Fate 版本号                                                  |
+| version             | 默认：${version}                                      | Fate 版本号                                                  |
 | pbase               | 默认： /data/projects                                 | 项目根目录                                                   |
+| pname               | 默认：fate                                            | 项目名称                                                     |
 | lbase               | 默认：/data/logs                                      | 保持默认不要修改                                             |
 | ssh_user            | 默认：app                                             | ssh连接目标机器的用户，也是部署后文件的属主                  |
 | ssh_group           | 默认：apps                                            | ssh连接目标的用户的属组，也是部署后文件的属组                |
@@ -338,9 +341,12 @@ vi fate-cluster-install/allInone/conf/setup.conf
 #to install role
 roles=( "host" "guest" )
 
-version="1.6.1"
+version="${version}"
 #project base
 pbase="/data/projects"
+#project name
+pname="fate"
+
 #log directory
 lbase="/data/logs"
 
@@ -403,9 +409,12 @@ nodemanager_port=4671
 #to install role
 roles=( "host" )
 
-version="1.6.1"
+version="${version}"
 #project base
 pbase="/data/projects"
+#project name
+pname="fate"
+
 #log directory
 lbase="/data/logs"
 
@@ -500,7 +509,7 @@ tail -f ./logs/deploy-mysql-host.log    （实时打印HOST端mysql的部署情�
 
 2）fateflow日志
 
-/data/projects/fate/fate_flow/logs/fate_flow/
+/data/projects/fate/fateflow/logs/fate_flow
 
 3）fateboard日志
 
@@ -634,7 +643,7 @@ sh ./bin/eggroll.sh clustermanager start/stop/status/restart
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/python/fate_flow
+cd /data/projects/fate/fateflow/bin
 sh service.sh start|stop|status|restart
 ```
 
@@ -691,11 +700,85 @@ netstat -tlnp | grep 8080
 
 ## 7.3 服务日志
 
-| 服务               | 日志路径                           |
-| ------------------ | ---------------------------------- |
-| eggroll            | /data/projects/fate/eggroll/logs   |
-| fate_flow&任务日志 | /data/projects/fate/python/logs    |
-| fateboard          | /data/projects/fate/fateboard/logs |
-| mysql              | /data/logs/mysql/                  |
+| 服务               | 日志路径                                           |
+| ------------------ | -------------------------------------------------- |
+| eggroll            | /data/projects/fate/eggroll/logs                   |
+| fate_flow&任务日志 | /data/projects/fate/fateflow/logs                  |
+| fateboard          | /data/projects/fate/fateboard/logs                 |
+| mysql              | /data/projects/fate/common/mysql/mysql-8.0.13/logs |
 
+## 7.4 空间清理规则
 
+### 7.4.1 fateflow作业日志
+
+所在机器：fate flow服务所在机器 
+
+目录：/data/projects/fate/fateflow/logs
+
+保留期限：N=14天
+
+规则：目录以$jobid开头，清理$jobid为N天前的数据 
+
+参考命令：   rm -rf /data/projects/fate/fateflow/logs/20211116* 
+
+### 7.4.2 fateflow系统日志
+
+所在机器：fate flow服务所在机器 
+
+目录：/data/projects/fate/fateflow/logs/fate_flow
+
+保留期限：N=14天
+
+规则：以日期结尾，清理日期为N天前的数据 
+
+参考命令：   rm -rf /data/projects/fate/fateflow/logs/fate_flow/*.2021-11-16
+
+### 7.4.3 EggRoll Session日志
+
+所在机器：eggroll node节点 
+
+目录：/data/projects/fate/eggroll/logs/ 
+
+保留期限：N=14天
+
+规则：目录以$jobid开头，清理$jobid为N天前的数据 
+
+参考命令：   rm -rf /data/projects/fate/eggroll/logs/20211116* 
+
+### 7.4.4 EggRoll系统日志
+
+所在机器：eggroll node节点 
+
+目录：/data/projects/fate/eggroll/logs/eggroll
+
+保留期限：N=14天
+
+规则：以日期结尾和以年份建立的历史文件夹中文件，清理N天前的数据 
+
+参考命令：   rm -rf /data/projects/fate/eggroll/logs/eggroll/\*.2021-11-16_*和
+
+​                       rm -rf /data/projects/fate/eggroll/logs/eggroll/2021/11/01
+
+### 7.4.5 计算临时数据
+
+所在机器：eggroll node节点 
+
+目录：/data/projects/fate/eggroll/data/IN_MEMORY 
+
+保留期限：N=7天
+
+规则：namespace以$jobid开头，清理$jobid为N天前的数据 
+
+参考命令：   rm -rf /data/projects/fate/eggroll/data/IN_MEMORY/20211116* 
+
+### 7.4.6 作业组件输出数据
+
+所在机器：eggroll node节点 
+
+目录：/data/projects/fate/eggroll/data/LMDB
+
+保留期限：N=14天
+
+规则：namespace以output_data_$jobid开头，清理$jobid为N天前的数据 
+
+参考命令：   rm -rf /data/projects/fate/eggroll/data/LMDB/output_data_20211116* 
