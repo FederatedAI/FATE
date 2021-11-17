@@ -265,7 +265,7 @@ class ValidationStrategy(CallbackBase):
 
         eval_obj._init_model(evaluate_param)
         eval_obj.set_tracker(model.tracker)
-        data_set_name = self.make_data_set_name(model.need_cv, model.need_one_vs_rest, model.flowid,  epoch)
+        data_set_name = self.make_data_set_name(model.need_cv, model.callback_one_vs_rest, model.flowid,  epoch)
         eval_data = {data_set_name: predicts}
         eval_result_dict = eval_obj.fit(eval_data, return_result=True)
         epoch_summary = eval_obj.summary()
