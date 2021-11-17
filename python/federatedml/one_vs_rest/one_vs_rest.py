@@ -120,13 +120,14 @@ class OneVsRest(object):
 
         LOGGER.info("Total classes:{}".format(self.classes))
 
+        self.classifier.callback_one_vs_rest = True
         current_flow_id = self.classifier.flowid
         summary_dict = {}
         for label_index, label in enumerate(self.classes):
             LOGGER.info("Start to train OneVsRest with label_index:{}, label:{}".format(label_index, label))
             classifier = copy.deepcopy(self.classifier)
             classifier.need_one_vs_rest = False
-            classifier.set_flowid("_".join([current_flow_id, "one_vs_rest", str(label_index)]))
+            classifier.set_flowid("_".join([current_flow_id, "model", str(label_index)]))
             if self.has_label:
                 header = data_instances.schema.get("header")
                 data_instances_mask_label = self._mask_data_label(data_instances, label=label)

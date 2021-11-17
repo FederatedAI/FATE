@@ -107,7 +107,7 @@ def _run_benchmark_pairs(config: Config, suite: BenchmarkSuite, tol: float, name
     for i, pair in enumerate(suite.pairs):
         echo.echo(f"Running [{i + 1}/{pair_n}] group: {pair.pair_name}")
         results = {}
-        data_summary = None
+        # data_summary = None
         job_n = len(pair.jobs)
         for j, job in enumerate(pair.jobs):
             try:
@@ -133,9 +133,10 @@ def _run_benchmark_pairs(config: Config, suite: BenchmarkSuite, tol: float, name
                 echo.echo(f"[{j + 1}/{job_n}] job: {job.job_name} Success!")
 
                 if DATA_DISPLAY_PATTERN.match(job_name):
-                    data_summary = data
-                if data_summary is None:
-                    data_summary = data
+                    # data_summary = data
+                    show_data(data)
+                # if data_summary is None:
+                #    data_summary = data
             except Exception as e:
                 exception_id = uuid.uuid1()
                 echo.echo(f"exception while running [{j + 1}/{job_n}] job, exception_id={exception_id}", err=True,
@@ -143,7 +144,7 @@ def _run_benchmark_pairs(config: Config, suite: BenchmarkSuite, tol: float, name
                 LOGGER.exception(f"exception id: {exception_id}, error message: \n{e}")
                 continue
         rel_tol = pair.compare_setting.get("relative_tol")
-        show_data(data_summary)
+        # show_data(data_summary)
         match_metrics(evaluate=True, group_name=pair.pair_name, abs_tol=tol, rel_tol=rel_tol,
                       storage_tag=storage_tag, history_tag=history_tag, fate_version=fate_version,
                       cache_directory=config.cache_directory, match_details=match_details, **results)
