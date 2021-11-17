@@ -130,8 +130,7 @@ def _run_benchmark_pairs(config: Config, suite: BenchmarkSuite, tol: float, name
                 else:
                     data, metric = mod.main()
                 results[job_name] = metric
-                echo.echo(f"[{j + 1}/{job_n}] job: {job.job_name} Success!")
-
+                echo.echo(f"[{j + 1}/{job_n}] job: {job.job_name} Success!\n")
                 if DATA_DISPLAY_PATTERN.match(job_name):
                     # data_summary = data
                     show_data(data)
