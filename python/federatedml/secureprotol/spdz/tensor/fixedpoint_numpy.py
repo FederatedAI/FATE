@@ -191,7 +191,10 @@ class FixedPointTensor(TensorBase):
         return self._boxed(z_value)
 
     def __add__(self, other):
-        if isinstance(other, FixedPointTensor):
+        if isinstance(other, PaillierFixedPointTensor):
+            z_value = (self.value + other)
+            return PaillierFixedPointTensor(z_value)
+        elif isinstance(other, FixedPointTensor):
             return self._raw_add(other.value)
         z_value = (self.value + other) % self.q_field
         return self._boxed(z_value)
@@ -200,20 +203,27 @@ class FixedPointTensor(TensorBase):
         return self.__add__(other)
 
     def __sub__(self, other):
-        if isinstance(other, FixedPointTensor):
+        if isinstance(other, PaillierFixedPointTensor):
+            z_value = (self.value - other)
+            return PaillierFixedPointTensor(z_value)
+        elif isinstance(other, FixedPointTensor):
             return self._raw_sub(other.value)
         z_value = (self.value - other) % self.q_field
         return self._boxed(z_value)
 
     def __rsub__(self, other):
-        if isinstance(other, FixedPointTensor):
+        if isinstance(other, (PaillierFixedPointTensor, FixedPointTensor)):
             return other - self
         z_value = (other - self.value) % self.q_field
         return self._boxed(z_value)
 
     def __mul__(self, other):
+        if isinstance(other, PaillierFixedPointTensor):
+            z_value = self.value * other.value
+            return PaillierFixedPointTensor(z_value)
+
         if isinstance(other, FixedPointTensor):
-            raise NotImplementedError("__mul__ support scalar only")
+            other = other.value
 
         z_value = self.value * other
         z_value = z_value % self.q_field
@@ -334,7 +344,7 @@ class PaillierFixedPointTensor(TensorBase):
 
         if isinstance(source, np.ndarray):
             _pre = urand_tensor(q_field, source)
-            # todo: dylan
+
             share = _pre
 
             spdz.communicator.remote_share(share=source - encoder.decode(_pre),

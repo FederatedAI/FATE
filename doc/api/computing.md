@@ -12,6 +12,7 @@ computing_session.init(session_id="a great session")
 table = computing_session.parallelize(range(100), include_key=False, partition=2)
 ```
 
+<!-- mkdocs
 ## computing session
 
 ::: fate_arch.session.computing_session
@@ -34,4 +35,4 @@ After creating a table using computing session, many distributed computing api a
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
-
+-->

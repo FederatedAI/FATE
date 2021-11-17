@@ -12,11 +12,12 @@ from fate_test._config import Config
 from fate_test._flow_client import DataProgress, UploadDataResponse, QueryJobResponse
 from fate_test._io import echo, LOGGER, set_logger
 from fate_test._parser import Testsuite, BenchmarkSuite, DATA_JSON_HOOK, CONF_JSON_HOOK, DSL_JSON_HOOK
-from fate_test.scripts import generate_mock_data
 
 
 def _big_data_task(includes, guest_data_size, host_data_size, guest_feature_num, host_feature_num, host_data_type,
                    config_inst, encryption_type, match_rate, sparsity, force, split_host, output_path, parallelize):
+    from fate_test.scripts import generate_mock_data
+    
     def _find_testsuite_files(path):
         suffix = ["testsuite.json", "benchmark.json"]
         if isinstance(path, str):
@@ -125,6 +126,8 @@ def _upload_data(clients: Clients, suite, config: Config, output_path=None):
                     raise RuntimeError(f"uploading {i + 1}th data for {suite.path} {status}")
                 bar.update(1)
                 if _config.data_switch:
+                    from fate_test.scripts import generate_mock_data
+                    
                     generate_mock_data.remove_file(data_path)
             except Exception:
                 exception_id = str(uuid.uuid1())

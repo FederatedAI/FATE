@@ -6,15 +6,15 @@ from fate_test._io import LOGGER, echo
 from fate_test.scripts._options import SharedOptions
 
 
-@click.group(name="quick-test")
-def quick_test_group():
+@click.group(name="unittest")
+def unittest_group():
     """
-    quick test
+    unit test
     """
     ...
 
 
-@quick_test_group.command("federatedml")
+@unittest_group.command("federatedml")
 @click.option('-i', '--include', type=click.Path(exists=True), multiple=True, metavar="<include>",
               help="Specify federatedml test units for testing")
 @SharedOptions.get_shared_options(hidden=True)

@@ -7,38 +7,46 @@ copyright: © Copyright 2020 WeBank Co., Ltd. | All Rights Reserved.
 
 nav:
   - Tutorial:
-    - tutorial/index.md
+    - tutorial/README.md
     - pipeline: 
-      - notebook: tutorial/pipeline/pipeline_tutorial_0.ipynb
+      - sbt demo: tutorial/pipeline/pipeline_tutorial_hetero_sbt.ipynb
+      - homo nn demo: tutorial/pipeline/pipeline_tutorial_homo_nn.ipynb
+      - data upload demo: tutorial/pipeline/pipeline_tutorial_upload.ipynb
     - DSL Conf:
       - job conf guide: tutorial/dsl_conf/dsl_conf_v2_setting_guide.md
       - upload guide: tutorial/dsl_conf/upload_data_guide.md
     - model publish: tutorial/model_publish_with_serving_guide.md
-
+  
+  - Architecture:
+    - architecture/README.md
+  
   - FederatedML:
-    - Secure Protocol: federatedml_component/secureprotol.md
+    - federatedml_component/README.md
     - Components:
       - ... | flat | federatedml_component/*.md
+    - Secure Protocol: federatedml_component/secureprotol.md
     - Params:
       - ... | flat | federatedml_component/params/*.md
   
   - Deploy:
     - standalone:
+      - deploy/standalone-deploy/README.md
       - ... | flat | deploy/standalone-deploy/doc/*.md
     - cluster:
+      - deploy/cluster-deploy/README.md
       - fate_on_eggroll:
         - ... | flat | deploy/cluster-deploy/doc/fate_on_eggroll/*.md
       - fate_on_spark:
         - ... | flat | deploy/cluster-deploy/doc/fate_on_spark/*.md
   
   - API:
-    - api/index.md
+    - api/README.md
     - Session: api/session.md
     - Computing: api/computing.md
     - Federation: api/federation.md
   
   - Resources:
-    - resources/index.md
+    - resources/README.md
 
       
 

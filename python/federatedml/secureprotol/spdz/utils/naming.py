@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import _md5
+import hashlib
 
 
 class NamingService(object):
@@ -32,8 +32,8 @@ class NamingService(object):
         return prev
 
     def __init__(self, init_name="ss"):
-        self._name = _md5.md5(init_name.encode("utf-8")).hexdigest()
+        self._name = hashlib.md5(init_name.encode("utf-8")).hexdigest()
 
     def next(self):
-        self._name = _md5.md5(self._name.encode("utf-8")).hexdigest()
+        self._name = hashlib.md5(self._name.encode("utf-8")).hexdigest()
         return self._name

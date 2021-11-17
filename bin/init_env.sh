@@ -19,11 +19,14 @@
 fate_project_base=$(cd `dirname "$(realpath "${BASH_SOURCE[0]:-${(%):-%x}}")"`; cd ../;pwd)
 export FATE_PROJECT_BASE=$fate_project_base
 export FATE_DEPLOY_BASE=$fate_project_base
-
-export PYTHONPATH=${FATE_DEPLOY_BASE}/python:${FATE_DEPLOY_BASE}/fateflow/python:${FATE_DEPLOY_BASE}/eggroll/python:${PYTHONPATH}
 export EGGROLL_HOME=
+export PYTHONPATH=
+
+export FATE_LOG_LEVEL=DEBUG
+export FATE_PROFILE_LOG_ENABLED=0
 export EGGROLL_LOG_LEVEL=INFO
-venv=/data/py36
+
+venv=
 export JAVA_HOME=
 export PATH=$PATH:$JAVA_HOME/bin
 source ${venv}/bin/activate

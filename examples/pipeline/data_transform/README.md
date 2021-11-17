@@ -15,6 +15,18 @@ This section introduces the Pipeline scripts for different types of tasks.
 3. Input Data With Missing Value:
 
     script: pipeline-data-transform-missing-value.py
+    
+4. SVM-Light InputFormat Task:  
+    
+    script: pipeline-data-transform-svmlight.py  
+    
+5. Dense InputFormat With MatchID Task:  
+
+    script: pipeline-data-transform-dense-match-id.py  
+    
+6. TagValue InputFormat With MatchID Task:  
+
+    script: pipeline-data-transform-tag-value-match-id.py  
 
 Users can run a pipeline job directly:
 

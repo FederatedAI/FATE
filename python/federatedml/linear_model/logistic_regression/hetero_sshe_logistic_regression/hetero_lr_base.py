@@ -170,11 +170,11 @@ class HeteroLRBase(BaseLinearModel, ABC):
             self.fit_binary(data_instances, validate_data)
 
     def one_vs_rest_fit(self, train_data=None, validate_data=None):
-        LOGGER.debug("Class num larger than 2, need to do one_vs_rest")
+        LOGGER.info("Class num larger than 2, do one_vs_rest")
         self.one_vs_rest_obj.fit(data_instances=train_data, validate_data=validate_data)
 
     def fit_binary(self, data_instances, validate_data=None):
-        LOGGER.info("Start to hetero_sshe_logistic_regression")
+        LOGGER.info("Starting to hetero_sshe_logistic_regression")
         self.callback_list.on_train_begin(data_instances, validate_data)
 
         model_shape = self.get_features_shape(data_instances)
@@ -230,7 +230,7 @@ class HeteroLRBase(BaseLinearModel, ABC):
 
             while self.n_iter_ < self.max_iter:
                 self.callback_list.on_epoch_begin(self.n_iter_)
-                LOGGER.debug(f"n_iter: {self.n_iter_}")
+                LOGGER.info(f"start to n_iter: {self.n_iter_}")
 
                 loss_list = []
 
@@ -278,17 +278,18 @@ class HeteroLRBase(BaseLinearModel, ABC):
                     loss_list.append(batch_loss)
 
                     if self.reveal_every_iter:
-                        LOGGER.debug(f"before reveal: self_g shape: {self_g.shape}, remote_g_shape: {remote_g}，"
-                                     f"self_g: {self_g}")
+                        # LOGGER.debug(f"before reveal: self_g shape: {self_g.shape}, remote_g_shape: {remote_g}，"
+                        #              f"self_g: {self_g}")
 
                         new_g = self.reveal_models(self_g, remote_g, suffix=current_suffix)
-                        LOGGER.debug(f"after reveal: new_g shape: {new_g.shape}, new_g: {new_g}"
-                                     f"self.model_param.reveal_strategy: {self.model_param.reveal_strategy}")
+
+                        # LOGGER.debug(f"after reveal: new_g shape: {new_g.shape}, new_g: {new_g}"
+                        #              f"self.model_param.reveal_strategy: {self.model_param.reveal_strategy}")
 
                         if new_g is not None:
                             self.model_weights = self.optimizer.update_model(self.model_weights, new_g,
                                                                              has_applied=False)
-                            LOGGER.debug(f"after reveal, model weight: {self.model_weights.unboxed}")
+
                         else:
                             self.model_weights = LinearModelWeights(
                                 l=np.zeros(self_g.shape),
@@ -298,10 +299,12 @@ class HeteroLRBase(BaseLinearModel, ABC):
                             self_g = self_g + self.self_optimizer.alpha * w_self
                             remote_g = remote_g + self.remote_optimizer.alpha * w_remote
 
-                        LOGGER.debug(f"before optimizer: {self_g}, {remote_g}")
+                        # LOGGER.debug(f"before optimizer: {self_g}, {remote_g}")
+
                         self_g = self.self_optimizer.apply_gradients(self_g)
                         remote_g = self.remote_optimizer.apply_gradients(remote_g)
-                        LOGGER.debug(f"after optimizer: {self_g}, {remote_g}")
+
+                        # LOGGER.debug(f"after optimizer: {self_g}, {remote_g}")
                         w_self -= self_g
                         w_remote -= remote_g
 
@@ -417,7 +420,6 @@ class HeteroLRBase(BaseLinearModel, ABC):
 
         grad_encode = np.array([grad_encode])
 
-        LOGGER.debug(f"grad_encode: {grad_encode}")
         grad_tensor_name = ".".join(("check_converge_grad",) + suffix)
         grad_tensor = fixedpoint_numpy.FixedPointTensor(value=grad_encode,
                                                         q_field=self.fixedpoint_encoder.n,
@@ -433,7 +435,7 @@ class HeteroLRBase(BaseLinearModel, ABC):
         grad_norm_tensor_name = ".".join(("check_converge_grad_norm",) + suffix)
 
         grad_norm = grad_tensor.dot(grad_tensor_transpose, target_name=grad_norm_tensor_name).get()
-        LOGGER.info(f"gradient spdz dot.get: {grad_norm}")
+
         weight_diff = np.sqrt(grad_norm[0][0])
         LOGGER.info("iter: {}, weight_diff:{}, is_converged: {}".format(self.n_iter_,
                                                                         weight_diff, self.is_converged))
@@ -513,9 +515,9 @@ class HeteroLRBase(BaseLinearModel, ABC):
         self.model_param.reveal_strategy = meta_obj.reveal_strategy
         LOGGER.debug(f"reveal_strategy: {self.model_param.reveal_strategy}, {self.is_respectively_reveal}")
         self.header = list(result_obj.header)
-        # For hetero-lr arbiter predict function
+
         need_one_vs_rest = result_obj.need_one_vs_rest
-        LOGGER.debug("in _load_model need_one_vs_rest: {}".format(need_one_vs_rest))
+        LOGGER.info("in _load_model need_one_vs_rest: {}".format(need_one_vs_rest))
         if need_one_vs_rest:
             one_vs_rest_result = result_obj.one_vs_rest_result
             self.one_vs_rest_obj = one_vs_rest_factory(classifier=self, role=self.role,
