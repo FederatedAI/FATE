@@ -6,11 +6,11 @@
 
 服务器配置：
 
-| **数量**      |    1                                                  |
-| ------------ | ----------------------------------------------------- |
-| **配置**      | 8 core / 16G memory / 500G hard disk                  |
-| **操作系统**   | Version: CentOS Linux release 7                       |
-| **用户**      | User: app owner:apps                                  |
+| **数量**     | 1                                    |
+| ------------ | ------------------------------------ |
+| **配置**     | 8 core / 16G memory / 500G hard disk |
+| **操作系统** | Version: CentOS Linux release 7      |
+| **用户**     | User: app owner:apps                 |
 
 注意，如下示例中的${version}，请用实际的版本号替换，参考[fate.env](../../../fate.env)文件中的FATE版本
 

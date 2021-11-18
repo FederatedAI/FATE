@@ -6,11 +6,11 @@
 
 Server configuration.
 
-| **number** | 1 |
-| ------------ | ----------------------------------------------------- |
+| **number**        | 1                                    |
+| ----------------- | ------------------------------------ |
 | **Configuration** | 8 core / 16G memory / 500G hard disk |
-| **OS** | Version: CentOS Linux release 7 |
-| **User** | User: app owner:apps |
+| **OS**            | Version: CentOS Linux release 7      |
+| **User**          | User: app owner:apps                 |
 
 ## 2. Pre-deployment environment check
 
