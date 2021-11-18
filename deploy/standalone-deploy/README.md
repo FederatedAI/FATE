@@ -127,10 +127,10 @@ The script will complete automatically:
    - Load environment variables
 
    ```bash
-   source . /bin/init_env.sh
+   source ./bin/init_env.sh
    ```
 
-   - [test items](#4-test items)
+   - [test items](#4-test-items)
 
 ## 4. test items
 
@@ -149,7 +149,7 @@ The script will complete automatically:
 ### 4.2 Unit tests
 
    ```bash
-   bash . /fate/python/federatedml/test/run_test.sh
+   bash ./fate/python/federatedml/test/run_test.sh
    ```
 
    If successful, the screen displays a statement like the following:
@@ -158,7 +158,7 @@ The script will complete automatically:
    there are 0 failed tests
    ```
 
-Some use case algorithms are in [examples](... /... /... /examples/dsl/v2) folder, please try using them.
+Some use case algorithms are in [examples](../../../examples/dsl/v2) folder, please try using them.
 
 You can also experience the algorithm process kanban through your browser by visiting: Http://${ip}:8080, ip is `127.0.0.1` or the actual ip of the local machine
 
