@@ -16,7 +16,7 @@
 git clone https://github.com/FederatedAI/FATE.git -b $branch --recurse-submodules --depth=1
 ```
 
-Please set the **branch**, **version_tag** and the **depth**.
+Please set the **branch** parameter, if you use a release branch, then **branch** is v`version number`, e.g. `v1.7.0`
 The **depth** parameter represents the code that only gets the latest commit, which can speed up the clone.
 
 ### 2.2 Get code from Gitee(Try Gitee when you can't connect to Github for code)
@@ -51,4 +51,4 @@ You can see the following package:
 
 ## 6. Using Standalone Docker Package Install FATE Stanadlone
 
-Please reference [Fate-standalone_deployment_guide](../deploy/../../deploy/standalone-deploy/doc/Fate-standalone_deployment_guide.md)
+Please reference [standalone fate deployment guide](../deploy/../../deploy/standalone-deploy/README.md)
