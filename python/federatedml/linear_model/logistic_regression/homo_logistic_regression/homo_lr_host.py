@@ -59,14 +59,10 @@ class HomoLRHost(HomoLRBase):
             self.use_encrypt = False
             self.gradient_operator = LogisticGradient()
 
-    def fit(self, data_instances, validate_data=None):
+    def fit_binary(self, data_instances, validate_data=None):
         self.aggregator = aggregator.Host()
         self.aggregator.register_aggregator(self.transfer_variable)
 
-        self._abnormal_detection(data_instances)
-        self.check_abnormal_values(data_instances)
-        self.init_schema(data_instances)
-        # validation_strategy = self.init_validation_strategy(data_instances, validate_data)
         self._client_check_data(data_instances)
         self.callback_list.on_train_begin(data_instances, validate_data)
 
@@ -185,6 +181,11 @@ class HomoLRHost(HomoLRBase):
         self._abnormal_detection(data_instances)
         self.init_schema(data_instances)
         data_instances = self.align_data_header(data_instances, self.header)
+        LOGGER.info("Start predict is a one_vs_rest task: {}".format(self.need_one_vs_rest))
+        if self.need_one_vs_rest:
+            predict_result = self.one_vs_rest_obj.predict(data_instances)
+            return predict_result
+
         suffix = ('predict',)
         if self.component_properties.has_arbiter:
             pubkey = self.cipher.gen_paillier_pubkey(enable=self.use_encrypt, suffix=suffix)
@@ -216,23 +217,54 @@ class HomoLRHost(HomoLRBase):
 
         return predict_result
 
-    def _get_param(self):
+    # def _get_param(self):
+    #     header = self.header
+    #
+    #     weight_dict = {}
+    #     intercept = 0
+    #     if not self.use_encrypt and not self.component_properties.need_cv:
+    #         lr_vars = self.model_weights.coef_
+    #         for idx, header_name in enumerate(header):
+    #             coef_i = lr_vars[idx]
+    #             weight_dict[header_name] = coef_i
+    #         intercept = self.model_weights.intercept_
+    #
+    #     param_protobuf_obj = lr_model_param_pb2.LRModelParam(iters=self.n_iter_,
+    #                                                          loss_history=self.loss_history,
+    #                                                          is_converged=self.is_converged,
+    #                                                          weight=weight_dict,
+    #                                                          intercept=intercept,
+    #                                                          header=header)
+    #
+    #     return param_protobuf_obj
+
+    def get_single_model_param(self):
         header = self.header
 
         weight_dict = {}
-        intercept = 0
+        # LOGGER.debug("in get_single_model_param, model_weights: {}, coef: {}, header: {}".format(
+        #     self.model_weights.unboxed, self.model_weights.coef_, self.header
+        # ))
         if not self.use_encrypt and not self.component_properties.need_cv:
             lr_vars = self.model_weights.coef_
             for idx, header_name in enumerate(header):
                 coef_i = lr_vars[idx]
                 weight_dict[header_name] = coef_i
             intercept = self.model_weights.intercept_
+        else:
+            intercept = 0
 
-        param_protobuf_obj = lr_model_param_pb2.LRModelParam(iters=self.n_iter_,
-                                                             loss_history=self.loss_history,
-                                                             is_converged=self.is_converged,
-                                                             weight=weight_dict,
-                                                             intercept=intercept,
-                                                             header=header)
+        # for idx, header_name in enumerate(self.header):
+        #     coef_i = self.model_weights.coef_[idx]
+        #     weight_dict[header_name] = coef_i
 
-        return param_protobuf_obj
+        result = {'iters': self.n_iter_,
+                  'loss_history': self.loss_history,
+                  'is_converged': self.is_converged,
+                  'weight': weight_dict,
+                  'intercept': intercept,
+                  'header': self.header,
+                  'best_iteration': -1 if self.validation_strategy is None else
+                  self.validation_strategy.best_iteration
+                  }
+        return result

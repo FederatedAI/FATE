@@ -45,11 +45,11 @@ class HomoLRArbiter(HomoLRBase):
         super()._init_model(params)
         self.cipher.register_paillier_cipher(self.transfer_variable)
 
-    def fit(self, data_instances=None, validate_data=None):
+    def fit_binary(self, data_instances=None, validate_data=None):
         self.aggregator = aggregator.Arbiter()
         self.aggregator.register_aggregator(self.transfer_variable)
 
-        self._server_check_data()
+        # self._server_check_data()
 
         host_ciphers = self.cipher.paillier_keygen(key_length=self.model_param.encrypt_param.key_length,
                                                    suffix=('fit',))
@@ -108,9 +108,13 @@ class HomoLRArbiter(HomoLRBase):
     def predict(self, data_instantces=None):
         LOGGER.info(f'Start predict task')
         current_suffix = ('predict',)
+
+        LOGGER.info("Start predict is a one_vs_rest task: {}".format(self.need_one_vs_rest))
+        if self.need_one_vs_rest:
+            predict_result = self.one_vs_rest_obj.predict(data_instantces)
+            return predict_result
         host_ciphers = self.cipher.paillier_keygen(key_length=self.model_param.encrypt_param.key_length,
                                                    suffix=current_suffix)
-
         # LOGGER.debug("Loaded arbiter model: {}".format(self.model_weights.unboxed))
         for idx, cipher in host_ciphers.items():
             if cipher is None:
