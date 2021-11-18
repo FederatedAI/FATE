@@ -1,4 +1,3 @@
-
 # FATE Standalone Docker Package Build Guide
 
 [TOC]
@@ -17,7 +16,7 @@
 git clone https://github.com/FederatedAI/FATE.git -b $branch --recurse-submodules --depth=1
 ```
 
-Please set the **branch** and the **version_tag**.
+Please set the **branch**, **version_tag** and the **depth**.
 The **depth** parameter represents the code that only gets the latest commit, which can speed up the clone.
 
 ### 2.2 Get code from Gitee(Try Gitee when you can't connect to Github for code)
@@ -30,8 +29,6 @@ Please reference [how_to_use_gitee](../common/how_to_use_gitee.md)
 cd FATE
 bash build/standalone-docker-build/build.sh ${version_tag}
 ```
-
-The **all** means that modules needs to be deployed, all means all, supports all, python, fateboard, eggroll
 
 ## 4. Output
 
