@@ -47,7 +47,7 @@ COPY docker-entrypoint.sh /usr/local/bin/
 
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-RUN sh ./bin/install_os_dependencies.sh root && yum clean all
+RUN sh ./init.sh
 
 # python enviroment and dependencies
 RUN pip install --upgrade pip -f ./env/pypi --no-index
