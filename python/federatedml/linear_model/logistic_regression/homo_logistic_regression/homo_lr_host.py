@@ -217,34 +217,11 @@ class HomoLRHost(HomoLRBase):
 
         return predict_result
 
-    # def _get_param(self):
-    #     header = self.header
-    #
-    #     weight_dict = {}
-    #     intercept = 0
-    #     if not self.use_encrypt and not self.component_properties.need_cv:
-    #         lr_vars = self.model_weights.coef_
-    #         for idx, header_name in enumerate(header):
-    #             coef_i = lr_vars[idx]
-    #             weight_dict[header_name] = coef_i
-    #         intercept = self.model_weights.intercept_
-    #
-    #     param_protobuf_obj = lr_model_param_pb2.LRModelParam(iters=self.n_iter_,
-    #                                                          loss_history=self.loss_history,
-    #                                                          is_converged=self.is_converged,
-    #                                                          weight=weight_dict,
-    #                                                          intercept=intercept,
-    #                                                          header=header)
-    #
-    #     return param_protobuf_obj
-
     def get_single_model_param(self):
         header = self.header
 
         weight_dict = {}
-        # LOGGER.debug("in get_single_model_param, model_weights: {}, coef: {}, header: {}".format(
-        #     self.model_weights.unboxed, self.model_weights.coef_, self.header
-        # ))
+
         if not self.use_encrypt and not self.component_properties.need_cv:
             lr_vars = self.model_weights.coef_
             for idx, header_name in enumerate(header):
@@ -253,10 +230,6 @@ class HomoLRHost(HomoLRBase):
             intercept = self.model_weights.intercept_
         else:
             intercept = 0
-
-        # for idx, header_name in enumerate(self.header):
-        #     coef_i = self.model_weights.coef_[idx]
-        #     weight_dict[header_name] = coef_i
 
         result = {'iters': self.n_iter_,
                   'loss_history': self.loss_history,
