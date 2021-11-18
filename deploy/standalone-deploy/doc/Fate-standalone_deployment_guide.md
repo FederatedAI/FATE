@@ -131,7 +131,7 @@
 ### 4.1 Toy测试
 
    ```bash
-   flow test toy --guest-party-id 10000 --host-party-id 10000
+   flow test toy -gid 10000 -hid 10000
    ```
 
    如果成功，屏幕显示类似下方的语句:
