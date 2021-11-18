@@ -51,4 +51,4 @@ ls -lrt standalone_fate_docker_${version}_${version_tag}
 
 ## 6. 使用独立的Docker包安装FATE Stanadlone
 
-请参考[Fate-standalone_deployment_guide](../deploy/../../deploy/standalone-deploy/doc/Fate-standalone_deployment_guide.zh.md)
+请参考[standalone fate deployment guide](../deploy/../../deploy/standalone-deploy/README.zh.md)

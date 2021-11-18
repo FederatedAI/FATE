@@ -51,4 +51,4 @@ You can see the following package:
 
 ## 6. Using Standalone Docker Package Install FATE Stanadlone
 
-Please reference [Fate-standalone_deployment_guide](../deploy/../../deploy/standalone-deploy/doc/Fate-standalone_deployment_guide.md)
+Please reference [standalone fate deployment guide](../deploy/../../deploy/standalone-deploy/README.md)
