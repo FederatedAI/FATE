@@ -40,7 +40,7 @@ FATE于2019年2月首次对外开源，并于2019年6月由微众银行捐献给
 - [架构](./doc/architecture/README.md)
 - [组件](doc/federatedml_component/README.md)
 - [算法参数](./python/federatedml/param)
-- [论文与会议资料](./doc/resources/index.zh.md)
+- [论文与会议资料](./doc/resources/README.zh.md)
 
 ### 关联仓库
 

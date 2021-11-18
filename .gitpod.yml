@@ -31,7 +31,8 @@ tasks:
         "python.envFile": "${workspaceFolder}/.vscode/.env",
         "python.defaultInterpreterPath": "/venv/py36/bin/python",
         "python.pythonPath": "/venv/py36/bin/python",
-        "python.autoComplete.extraPaths": ["python", "python/fate_client", "python/fate_test", "fateflow/python", "eggroll/python"]
+        "python.autoComplete.extraPaths": ["python", "python/fate_client", "python/fate_test", "fateflow/python", "eggroll/python"],
+        "git.alwaysSignOff": true
       }
       EOF
       cat << 'EOF' > "$PWD/.vscode/.env"
@@ -57,6 +58,8 @@ tasks:
       -Dssh_config_file=/fateboard/resources/ \
       -Xmx2048m -Xms2048m -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:gc.log -XX:+HeapDumpOnOutOfMemoryError \
       -jar /fateboard/fateboard.jar >/dev/null 2>&1 &
+      echo done
+
 
 ports:
   - port: 9380

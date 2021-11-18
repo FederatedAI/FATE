@@ -9,7 +9,9 @@ nav:
   - Tutorial:
     - tutorial/README.md
     - pipeline: 
-      - notebook: tutorial/pipeline/pipeline_tutorial_0.ipynb
+      - sbt demo: tutorial/pipeline/pipeline_tutorial_hetero_sbt.ipynb
+      - homo nn demo: tutorial/pipeline/pipeline_tutorial_homo_nn.ipynb
+      - data upload demo: tutorial/pipeline/pipeline_tutorial_upload.ipynb
     - DSL Conf:
       - job conf guide: tutorial/dsl_conf/dsl_conf_v2_setting_guide.md
       - upload guide: tutorial/dsl_conf/upload_data_guide.md
@@ -44,7 +46,7 @@ nav:
     - Federation: api/federation.md
   
   - Resources:
-    - resources/index.md
+    - resources/README.md
 
       
 
