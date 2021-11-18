@@ -50,20 +50,20 @@ ls -lrt standalone_fate_install_${version}_${version_tag}
 
 You can see the following package:
 
-| Name             | Details                                                   |
-| ---------------- | --------------------------------------------------------- |
-| env              | environment installation packages: python36, pypi, jdk    |
-| init.sh          | fate standalone initialization script                     |
-| bin              | some scripts                                              |
-| conf             | some configuration files                                  |
-| examples         | some algorithm test examples                              |
-| fate             | include federatedml and fate arch                         |
-| fateflow         | include fateflow                                          |
-| fateboard        | fateboard packages                                        |
-| fate.env         | settings for version                                      |
-| requirements.txt | necessary dependency for python environment               |
-| RELEASE.md       | release document                                          |
-| packages_md5.txt | md5 numbers for each package                              |
+| Name             | Details                                                |
+| ---------------- | ------------------------------------------------------ |
+| env              | environment installation packages: python36, pypi, jdk |
+| init.sh          | fate standalone initialization script                  |
+| bin              | some scripts                                           |
+| conf             | some configuration files                               |
+| examples         | some algorithm test examples                           |
+| fate             | include federatedml and fate arch                      |
+| fateflow         | include fateflow                                       |
+| fateboard        | fateboard packages                                     |
+| fate.env         | settings for version                                   |
+| requirements.txt | necessary dependency for python environment            |
+| RELEASE.md       | release document                                       |
+| packages_md5.txt | md5 numbers for each package                           |
 
 ## 6. Using Standalone Install Package Install FATE Stanadlone
 
