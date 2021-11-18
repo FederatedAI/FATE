@@ -1,5 +1,5 @@
-#!/usr/bin/env python 
-# -*- coding: utf-8 -*- 
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
@@ -18,12 +18,14 @@
 #
 
 import numpy as np
-
+from fate_arch.federation import Tag, get, remote
+from fate_arch.session import PartiesInfo as Parties
 from fate_arch.session import computing_session as session
-from federatedml.model_base import ModelBase, ComponentOutput
+from federatedml.model_base import ComponentOutput, ModelBase
 from federatedml.param.secure_add_example_param import SecureAddExampleParam
-from federatedml.transfer_variable.transfer_class.secure_add_example_transfer_variable import \
-    SecureAddExampleTransferVariable
+from federatedml.transfer_variable.transfer_class.secure_add_example_transfer_variable import (
+    SecureAddExampleTransferVariable,
+)
 from federatedml.util import LOGGER
 
 
@@ -35,7 +37,6 @@ class SecureAddHost(ModelBase):
         self.y2 = None
         self.x2 = None
         self.x2_plus_y2 = None
-        self.transfer_inst = SecureAddExampleTransferVariable()
         self.model_param = SecureAddExampleParam()
         self.data_output = None
         self.model_output = None
@@ -67,19 +68,7 @@ class SecureAddHost(ModelBase):
         host_sum = self.x2_plus_y2.reduce(lambda x, y: x + y)
         return host_sum
 
-    def sync_share_to_guest(self):
-        self.transfer_inst.host_share.remote(self.y1,
-                                             role="guest",
-                                             idx=0)
-
-    def recv_share_from_guest(self):
-        self.x2 = self.transfer_inst.guest_share.get(idx=0)
-
-    def sync_host_sum_to_guest(self, host_sum):
-        self.transfer_inst.host_sum.remote(host_sum,
-                                           role="guest",
-                                           idx=0)
-
+    @Tag("toy")
     def run(self, cpn_input):
         LOGGER.info("begin to init parameters of secure add example host")
         self._init_runtime_parameters(cpn_input)
@@ -90,16 +79,18 @@ class SecureAddHost(ModelBase):
         LOGGER.info("split data into two random parts")
         self.secure()
 
-        LOGGER.info("get share of one random part data from guest")
-        self.recv_share_from_guest()
+        # demo for switch tag context
+        with Tag("share"):
+            LOGGER.info("get share of one random part data from guest")
+            self.x2 = get(parties=Parties.Guest[0], name="guest_share")
 
         LOGGER.info("share one random part data to guest")
-        self.sync_share_to_guest()
+        remote(parties=Parties.Guest[0], host_share=self.y1)
 
         LOGGER.info("begin to get sum of host and guest")
         host_sum = self.add()
 
         LOGGER.info("send host sum to guest")
-        self.sync_host_sum_to_guest(host_sum)
+        remote(parties=Parties.Guest[0], host_sum=host_sum)
 
         return ComponentOutput(self.save_data(), self.export_model(), self.save_cache())

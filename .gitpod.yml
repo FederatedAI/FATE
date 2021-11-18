@@ -27,12 +27,22 @@ tasks:
     init: |
       mkdir -p "$PWD/.vscode";
       cat << 'EOF' > "$PWD/.vscode/settings.json"
-      { 
-        "python.envFile": "${workspaceFolder}/.vscode/.env",
-        "python.defaultInterpreterPath": "/venv/py36/bin/python",
-        "python.pythonPath": "/venv/py36/bin/python",
-        "python.autoComplete.extraPaths": ["python", "python/fate_client", "python/fate_test", "fateflow/python", "eggroll/python"],
-        "git.alwaysSignOff": true
+      {
+          "python.envFile": "${workspaceFolder}/.vscode/.env",
+          "python.defaultInterpreterPath": "/venv/py36/bin/python",
+          "python.pythonPath": "/venv/py36/bin/python",
+          "python.autoComplete.extraPaths": ["python", "python/fate_client", "python/fate_test", "fateflow/python", "eggroll/python"],
+          "git.alwaysSignOff": true,
+          "python.analysis.extraPaths": [
+            "python",
+            "python/fate_client",
+            "python/fate_test",
+            "fateflow/python",
+            "eggroll/python"
+          ],
+          "python.formatting.provider": "black",
+          "python.formatting.blackPath": "/venv/py36/bin/black",
+          "python.sortImports.path": "/venv/py36/bin/isort"
       }
       EOF
       cat << 'EOF' > "$PWD/.vscode/.env"

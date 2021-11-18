@@ -39,7 +39,21 @@ class Role:
         raise KeyError(f"unsupported key: {key}")
 
 
-class PartiesInfo(object):
+class _PartiesMeta(type):
+    @property
+    def Guest(cls) -> Role:
+        return cls._get_instance()._guest
+
+    @property
+    def Host(cls) -> Role:
+        return cls._get_instance()._host
+
+    @property
+    def Arbiter(cls) -> Role:
+        return cls._get_instance()._arbiter
+
+
+class PartiesInfo(metaclass=_PartiesMeta):
 
     _instance = None
 
@@ -101,25 +115,10 @@ class PartiesInfo(object):
 
         self._guest = Role(role_to_parties["guest"])
         self._host = Role(role_to_parties["host"])
-        self._arbiter = Role(role_to_parties["arbiter"])
+        self._arbiter = Role(role_to_parties.get("arbiter", []))
 
         self._set_instance(self)
-
-    @property
-    @classmethod
-    def Guest(cls) -> Role:
-        return cls.get_instance()._guest
-
-    @property
-    @classmethod
-    def Host(cls) -> Role:
-        return cls.get_instance()._host
-
-    @property
-    @classmethod
-    def Arbiter(cls) -> Role:
-        return cls.get_instance()._arbiter
-
+    
     @property
     def local_party(self) -> Party:
         return self._local
@@ -153,4 +152,4 @@ class PartiesInfo(object):
         return self._role_to_parties[role][idx]
 
 
-__all__ = ["PartiesInfo"]
+__all__ = ["PartiesInfo", "Role"]

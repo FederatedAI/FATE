@@ -13,15 +13,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
 import hashlib
 import typing
-from collections import deque
 from typing import Union
 
-from fate_arch.abc import GarbageCollectionABC
 from fate_arch.common import Party, profile
 from fate_arch.common.log import getLogger
-from fate_arch.session import PartiesInfo, Role, get_parties, get_session
+from fate_arch.federation._gc import IterationGC
 
 __all__ = ["Variable", "BaseTransferVariables"]
 
@@ -39,47 +38,6 @@ class FederationTagNamespace(object):
     def generate_tag(cls, *suffix):
         tags = (cls.__namespace, *map(str, suffix))
         return ".".join(tags)
-
-
-class IterationGC(GarbageCollectionABC):
-    def __init__(self, capacity=2):
-        self._ashcan: deque[typing.List[typing.Tuple[typing.Any, str, dict]]] = deque()
-        self._last_tag: typing.Optional[str] = None
-        self._capacity = capacity
-        self._enable = True
-
-    def add_gc_action(self, tag: str, obj, method, args_dict):
-        if self._last_tag == tag:
-            self._ashcan[-1].append((obj, method, args_dict))
-        else:
-            self._ashcan.append([(obj, method, args_dict)])
-            self._last_tag = tag
-
-    def disable(self):
-        self._enable = False
-
-    def set_capacity(self, capacity):
-        self._capacity = capacity
-
-    def gc(self):
-        if not self._enable:
-            return
-        if len(self._ashcan) <= self._capacity:
-            return
-        self._safe_gc_call(self._ashcan.popleft())
-
-    def clean(self):
-        while self._ashcan:
-            self._safe_gc_call(self._ashcan.pop())
-
-    @staticmethod
-    def _safe_gc_call(actions: typing.List[typing.Tuple[typing.Any, str, dict]]):
-        for obj, method, args_dict in actions:
-            try:
-                LOGGER.debug(f"[CLEAN]deleting {obj}, {method}, {args_dict}")
-                getattr(obj, method)(**args_dict)
-            except Exception as e:
-                LOGGER.debug(f"[CLEAN]this could be ignore {e}")
 
 
 class Variable(object):
@@ -168,6 +126,8 @@ class Variable(object):
         -------
         None
         """
+        from fate_arch.session import get_session
+
         session = get_session()
         if isinstance(parties, Party):
             parties = [parties]
@@ -217,6 +177,8 @@ class Variable(object):
            a list of objects/tables get from parties with same order of ``parties``
 
         """
+        from fate_arch.session import session
+
         session = get_session()
         if not isinstance(parties, list):
             parties = [parties]
@@ -258,6 +220,8 @@ class Variable(object):
                 The default is -1, which means sent values to parties regardless their party id
             suffix: additional tag suffix, the default is tuple()
         """
+        from fate_arch.session import get_parties
+
         party_info = get_parties()
         if idx >= 0 and role is None:
             raise ValueError("role cannot be None if idx specified")
@@ -290,6 +254,8 @@ class Variable(object):
         Returns:
             object or list of object
         """
+        from fate_arch.session import get_parties
+
         if role is None:
             src_parties = get_parties().roles_to_parties(roles=self._src, strict=False)
         else:
@@ -360,6 +326,8 @@ class BaseTransferVariables(object):
            list of parties
 
         """
+        from fate_arch.session import get_parties
+
         return get_parties().all_parties
 
     @staticmethod
@@ -373,86 +341,6 @@ class BaseTransferVariables(object):
            party this program running on
 
         """
+        from fate_arch.session import get_parties
+
         return get_parties().local_party
-
-
-"""
-auto tags
-"""
-
-
-class _TagSpace:
-    def __init__(self) -> None:
-        self._tags = {}
-        self._gc = {}
-
-    def get(self, name: str, party: Party):
-        if name not in self._tags:
-            self._tags[name] = {}
-            self._gc[name] = {}
-
-        if party not in self._tags[name]:
-            self._tags[name][party] = 0
-            self._gc[name][party] = IterationGC()
-
-        return self._tags[name][party], self._gc[name][party]
-
-    def inc(self, name: str, party: typing.Union[Party, typing.List[Party]]):
-        if not isinstance(party, list):
-            party = [party]
-        for p in party:
-            cur = self.get(name, p)
-            self._tags[name][p] = cur + 1
-
-    def get_list(
-        self, name: str, parties: typing.List[Party]
-    ) -> typing.Tuple[typing.List[str], typing.List[IterationGC]]:
-        tag_list = []
-        gc_list = []
-        for p in parties:
-            tag, gc = self.get(name, p)
-            tag_list.append(tag)
-            gc_list.append(gc)
-        return tag_list, gc_list
-
-
-_REMOTE_TAG_SPACE = _TagSpace()
-_GET_TAG_SPACE = _TagSpace()
-
-_TYPE_PARTIES = typing.Union[
-    typing.Union[Role, Party], typing.List[typing.Union[Role, Party]]
-]
-
-
-def remote(
-    parties: _TYPE_PARTIES,
-    **kwargs,
-):
-    if len(kwargs) != 1:
-        raise KeyError(f"expected to process one object each time, got {len(kwargs)}")
-    name = list(kwargs.keys())[0]
-    v = kwargs[name]
-    parties = PartiesInfo.get_parties(parties)
-    session = get_session()
-    tags, gc_list = _REMOTE_TAG_SPACE.get_list(name=name, party=parties)
-    for p, t, gc in zip(parties, tags, gc_list):
-        session.federation.remote(v=v, name=name, tag=t, parties=p, gc=gc_list)
-        gc.gc()
-    _REMOTE_TAG_SPACE.inc(name=name, party=parties)
-
-
-def get(parties: _TYPE_PARTIES, name):
-    return_single = isinstance(parties, Party)
-    parties = PartiesInfo.get_parties(parties)
-    session = get_session()
-    tags, gc_list = _GET_TAG_SPACE.get_list(name=name, party=parties)
-    objs = []
-    for p, t, gc in zip(parties, tags, gc_list):
-        objs.append(session.federation.get(name=name, tag=t, parties=p, gc=gc))
-    if return_single:
-        return objs[0]
-    _GET_TAG_SPACE.inc(name=name, party=parties)
-    return objs
-
-
-Parties = PartiesInfo

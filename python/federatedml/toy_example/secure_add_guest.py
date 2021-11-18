@@ -1,5 +1,5 @@
-#!/usr/bin/env python 
-# -*- coding: utf-8 -*- 
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
@@ -18,12 +18,14 @@
 #
 
 import numpy as np
-
+from fate_arch.federation import Tag, get, remote
+from fate_arch.session import PartiesInfo as Parties
 from fate_arch.session import computing_session as session
-from federatedml.model_base import ModelBase, ComponentOutput
+from federatedml.model_base import ComponentOutput, ModelBase
 from federatedml.param.secure_add_example_param import SecureAddExampleParam
-from federatedml.transfer_variable.transfer_class.secure_add_example_transfer_variable import \
-    SecureAddExampleTransferVariable
+from federatedml.transfer_variable.transfer_class.secure_add_example_transfer_variable import (
+    SecureAddExampleTransferVariable,
+)
 from federatedml.util import LOGGER
 
 
@@ -79,19 +81,7 @@ class SecureAddGuest(ModelBase):
 
         return secure_sum
 
-    def sync_share_to_host(self):
-        self.transfer_inst.guest_share.remote(self.x2,
-                                              role="host",
-                                              idx=0)
-
-    def recv_share_from_host(self):
-        self.y1 = self.transfer_inst.host_share.get(idx=0)
-
-    def recv_host_sum_from_host(self):
-        host_sum = self.transfer_inst.host_sum.get(idx=0)
-        
-        return host_sum
-
+    @Tag("toy")
     def run(self, cpn_input):
         LOGGER.info("begin to init parameters of secure add example guest")
 
@@ -103,21 +93,23 @@ class SecureAddGuest(ModelBase):
         LOGGER.info("split data into two random parts")
         self.secure()
 
-        LOGGER.info("share one random part data to host")
-        self.sync_share_to_host()
+        # demo for switch tag context
+        with Tag("share"):
+            LOGGER.info("share one random part data to host")
+            remote(parties=Parties.Host[0], guest_share=self.x2)
 
         LOGGER.info("get share of one random part data from host")
-        self.recv_share_from_host()
+        self.y1 = get(Parties.Host[0], name="host_share")
 
         LOGGER.info("begin to get sum of guest and host")
         guest_sum = self.add()
 
         LOGGER.info("receive host sum from guest")
-        host_sum = self.recv_host_sum_from_host()
+        host_sum = get(Parties.Host[0], "host_sum")
 
         secure_sum = self.reconstruct(guest_sum, host_sum)
 
-        assert (np.abs(secure_sum - self.data_num * 2) < 1e-6)
+        assert np.abs(secure_sum - self.data_num * 2) < 1e-6
 
         LOGGER.info("success to calculate secure_sum, it is {}".format(secure_sum))
 
