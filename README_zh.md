@@ -32,6 +32,7 @@ FATE于2019年2月首次对外开源，并于2019年6月由微众银行捐献给
 - [使用FATE-Pipeline训练及预测纵向SBT任务](./doc/tutorial/pipeline/pipeline_tutorial_hetero_sbt.ipynb)
 - [使用FATE-Pipeline构建横向NN模型](doc/tutorial/pipeline/pipeline_tutorial_homo_nn.ipynb)
 - [使用DSL json conf运行任务](doc/tutorial/dsl_conf/dsl_conf_tutorial.md)
+- [更多教程](doc/tutorial)
 
 ## 文档
 

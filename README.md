@@ -35,6 +35,7 @@ to lead FATE open-source community, with members from major domestic cloud compu
 - [Train & Predict Hetero SecureBoost with FATE-Pipeline](./doc/tutorial/pipeline/pipeline_tutorial_hetero_sbt.ipynb)
 - [Build Homo NN model with FATE-Pipeline](doc/tutorial/pipeline/pipeline_tutorial_homo_nn.ipynb)
 - [Run Job with DSL json conf](doc/tutorial/dsl_conf/dsl_conf_tutorial.md)
+- [Tutorials](doc/tutorial)
 
 ## Documentation 
 
