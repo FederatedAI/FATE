@@ -9,6 +9,25 @@
   * Simplified the API interface for Session, remove backend and workmode parameters
   * Heterogeneous Engine Support: Federation between Spark-Local and Spark-Cluster
   * Computing Engine, Storage Engine, Federation Engine are set in conf/service_conf.yaml when FATE is deployed
+  
+> FederatedML
+* Optimized Hetero-SecureBoost: with gradient packing、cipher compressing, and sparse point statistics optimization, 4x+ faster
+* Homo-SecureBoost supports memory-based histogram computation for more efficient tree building, 5x+ faster
+* Optimized RSA Intersect with CRT optimization, 3x+ faster
+* New two-party Hetero Logistic Regression Algorithm: mixed protocol of HE and MPC, without a trusted third party
+• Support data with match-id,  separating match id and sample id
+* New DH Intersect based on PH Key-exchange protocol 
+* Intersect support cardinality estimation 
+* Intersect adds optionally preprocessing step
+* RSA and DH Intersect support cache
+* New Feature Imputation module: can apply arbitrary imputation method to each column
+* New Label Transform module: transform categorical label values
+* Homo-LR, Homo-SecureBoost, Homo-NN now can convert models into sklearn、lightgbm、torch & tf-keras framework
+* Hetero Feature Binning supports multi-class task, higher efficiency with label packing
+* Hetero Feature Selection support multi-class iv filter
+* Secure Information Retrieval supports multi-column retrieval
+* Major training algorithms support warm-start and checkpoint : Homo & Hetero LR, Homo & Hetero-SecureBoost, Homo & Hetero NN
+* Optimized Pailler addition operation, several times faster, Hetero-SecureBoost with Paillier speed up 2x+
 
 
 # Release 1.6.1
