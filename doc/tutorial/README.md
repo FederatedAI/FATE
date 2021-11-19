@@ -8,3 +8,4 @@ Here we provide tutorials on running FATE jobs:
 - [Upload & Train Hetero SecureBoost on Data with Match ID](pipeline/pipeline_tutorial_match_id.ipynb)
 - [Run Job with DSL json conf](doc/tutorial/dsl_conf/dsl_conf_tutorial.md)
 - to [publish model](model_publish_with_serving_guide.md) with FATE Serving
+- [FATE-Test Tutorial](fate_test_tutorial.md)
