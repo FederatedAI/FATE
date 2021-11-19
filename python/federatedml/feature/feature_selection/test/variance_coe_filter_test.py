@@ -63,7 +63,7 @@ class TestVarianceCoeFilter(unittest.TestCase):
         return result
 
     def test_filter_logic(self):
-        data_table = self.gen_data(1000, 10, 48)
+        data_table = self.gen_data(1000, 10, 4)
         select_param = FeatureSelectionParam()
         select_param.variance_coe_param.value_threshold = 0.1
         selection_obj = self._make_selection_obj(data_table)

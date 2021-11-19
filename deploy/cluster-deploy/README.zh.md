@@ -1,6 +1,6 @@
 ## FATE 集群部署指引 | [英文](./README.md)
 ### 背景知识
-- [架构](../../doc/architecture/index.md)
+- [架构](../../doc/architecture/README.md)
 
 ### FATE on EggRoll部署(生产推荐)
 - [AllinOne部署](doc/fate_on_eggroll/Fate-allinone_deployment_guide_install.zh.md)
