@@ -32,7 +32,7 @@ class SigmoidBinaryCrossEntropyLoss(object):
 
         Returns
         -------
-        y_initialize : table, the value of the table is a 1D numpy ndarray,
+        y_initialize : Table, the value of the table is a 1D numpy ndarray,
             which filled with zeros
 
         """
@@ -135,7 +135,7 @@ class SoftmaxCrossEntropyLoss(object):
 
         Returns
         -------
-        y_initialize : table, the value of the table is a 1D numpy ndarray
+        y_initialize : Table, the value of the table is a 1D numpy ndarray
             with shape equals to dims, which filled with zeros
 
         """
