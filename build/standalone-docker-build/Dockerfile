@@ -77,5 +77,7 @@ RUN sed -i "s#fateflow.url=.*#fateflow.url=http://localhost:9380#g" ./fateboard/
 RUN sed -i "s#venv=.*##g" ./bin/init_env.sh
 RUN sed -i "s#source.*venv.*##g" ./bin/init_env.sh
 RUN rm -rf ./env/python36
+# not work
+RUN rm -rf ./env/pypi
 
 ENTRYPOINT ["docker-entrypoint.sh"]
