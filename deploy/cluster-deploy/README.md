@@ -1,6 +1,6 @@
 ## FATE Cluster Deployment Guide | [中文](./README.zh.md)
 ### BackGround
-- [Architecture](../../doc/architecture/index.md)
+- [Architecture](../../doc/architecture/README.md)
 
 ### Deployment for FATE on EggRoll(Recommended for Production)
 - [Install AllinOne](doc/fate_on_eggroll/Fate-allinone_deployment_guide_install.md)
