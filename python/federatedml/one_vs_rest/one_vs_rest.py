@@ -127,7 +127,7 @@ class OneVsRest(object):
             LOGGER.info("Start to train OneVsRest with label_index:{}, label:{}".format(label_index, label))
             classifier = copy.deepcopy(self.classifier)
             classifier.need_one_vs_rest = False
-            classifier.set_flowid("_".join([current_flow_id, "model", str(label_index)]))
+            classifier.set_flowid(".".join([current_flow_id, "model_" + str(label_index)]))
             if self.has_label:
                 header = data_instances.schema.get("header")
                 data_instances_mask_label = self._mask_data_label(data_instances, label=label)
@@ -182,7 +182,7 @@ class OneVsRest(object):
         predict_res_list = []
         for i, model in enumerate(self.models):
             current_flow_id = model.flowid
-            model.set_flowid("_".join([current_flow_id, "one_vs_rest", str(i)]))
+            model.set_flowid(".".join([current_flow_id, "model_" + str(i)]))
 
             LOGGER.info("Start to predict with model:{}".format(i))
             # model.set_flowid("predict_" + str(i))

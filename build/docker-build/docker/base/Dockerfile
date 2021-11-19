@@ -17,9 +17,8 @@ RUN set -eux && \
     yum clean all
 
 RUN pip install --upgrade pip && \
-    # for homo_model_deployer need import tensorflow and torch
-    # sed -i '/tensorflow.*/d' /data/projects/python/requirements.txt && \
-    # sed -i '/torch.*/d' /data/projects/python/requirements.txt && \
-    # sed -i '/torchvision.*/d' /data/projects/python/requirements.txt && \
-    # sed -i '/pytorch-lightning.*/d' /data/projects/python/requirements.txt && \
+    sed -i '/tensorflow.*/d' /data/projects/python/requirements.txt && \
+    sed -i '/torch.*/d' /data/projects/python/requirements.txt && \
+    sed -i '/torchvision.*/d' /data/projects/python/requirements.txt && \
+    sed -i '/pytorch-lightning.*/d' /data/projects/python/requirements.txt && \
     pip install -r requirements.txt
