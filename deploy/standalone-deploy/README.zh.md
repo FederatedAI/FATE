@@ -67,7 +67,6 @@ docker pull federatedai/standalone_fate ${version}
 
    ```bash
    docker exec -it $(docker ps -aqf "name=standalone_fate") bash
-   docker exec -it ${CONTAINER_ID} bash
    ```
 
    - [测试项](#4-测试项)
@@ -149,7 +148,7 @@ docker pull federatedai/standalone_fate ${version}
 ### 4.2 单元测试
 
    ```bash
-   bash ./fate/python/federatedml/test/run_test.sh
+   fate_test unittest federatedml --yes
    ```
 
    如果成功，屏幕显示类似下方的语句:

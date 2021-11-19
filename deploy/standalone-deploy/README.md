@@ -67,7 +67,6 @@ docker pull federatedai/standalone_fate ${version}
 
    ```bash
    docker exec -it $(docker ps -aqf "name=standalone_fate") bash
-   docker exec -it ${CONTAINER_ID} bash
    ```
 
    - [test item](#4-test-items)
@@ -149,7 +148,7 @@ The script will complete automatically:
 ### 4.2 Unit tests
 
    ```bash
-   bash ./fate/python/federatedml/test/run_test.sh
+   fate_test unittest federatedml --yes
    ```
 
    If successful, the screen displays a statement like the following:
