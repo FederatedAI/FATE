@@ -30,6 +30,14 @@ cd FATE
 bash build/standalone-docker-build/build.sh ${version_tag}
 ```
 
+Optional advanced usage:
+
+- Replace the default image source with a custom yum image source to install dependencies, and restore the default image source after installation
+
+    ```bash
+    bash build/standalone-docker-build/build.sh ${version_tag} {path to your image source}
+    ```
+
 ## 4. Output
 
 ```bash

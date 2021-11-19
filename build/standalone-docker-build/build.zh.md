@@ -30,6 +30,14 @@ cd FATE
 bash build/standalon-docker-build/build.sh ${version_tag}
 ```
 
+可选高级用法:
+
+- 用自定义的yum镜像源替换默认镜像源用来安装依赖包, 安装完成后恢复系统默认镜像源
+
+    ```bash
+    bash build/standalon-docker-build/build.sh ${version_tag} {你的镜像源文件路径}
+    ```
+
 ## 4. 输出
 
 ```bash

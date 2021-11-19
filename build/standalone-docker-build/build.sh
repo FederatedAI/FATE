@@ -27,6 +27,7 @@ if [[ -n ${1} ]]; then
 else
     version_tag="rc"
 fi
+replace_repo_file=$2
 
 version=`grep "FATE=" fate.env | awk -F '=' '{print $2}'`
 standalone_install_package_dir_name="standalone_fate_install_${version}_${version_tag}"
@@ -47,6 +48,7 @@ image_path=${image_namespace}/${image_name}:${image_tag}
 echo "[INFO] build info"
 echo "[INFO] version: "${version}
 echo "[INFO] version tag: "${version_tag}
+echo "[INFO] replace repo file: "${replace_repo_file}
 echo "[INFO] image namespace: "${image_namespace}
 echo "[INFO] image name: "${image_name}
 echo "[INFO] image tag: "${image_tag}
@@ -80,6 +82,10 @@ build() {
   echo "[INFO] get standalone install package done"
 
   cd ${workdir}
+  cp ${source_dir}/build/standalone-docker-build/init.sh ./
+  if [[ -f ${replace_repo_file} ]];then
+    cp ${replace_repo_file} ./CentOS-Base.repo
+  fi
   tar -cf ../fate.tar ./*
   cd ../
 
@@ -109,7 +115,7 @@ packaging() {
 }
 
 usage() {
-    echo "usage: $0 {version_tag}"
+    echo "usage: $0 {version_tag} {replace_repo_file}"
 }
 
 
