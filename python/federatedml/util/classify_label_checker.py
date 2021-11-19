@@ -41,7 +41,7 @@ class ClassifyLabelChecker(object):
 
         Parameters
         ----------
-        data_inst : DTable,
+        data_inst : Table,
                     values are data instance format define in federatedml/feature/instance.py
 
         Returns
@@ -80,7 +80,7 @@ class RegressionLabelChecker(object):
 
         Parameters
         ----------
-        data_inst : DTable,
+        data_inst : Table,
                     values are data instance format define in federatedml/feature/instance.py
 
         """

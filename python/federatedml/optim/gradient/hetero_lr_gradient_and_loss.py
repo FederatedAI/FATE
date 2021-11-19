@@ -74,9 +74,25 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         current_suffix = (n_iter_, batch_index)
         n = data_instances.count()
 
-        quarter_wx = self.host_forwards[0].join(self.half_d, lambda x, y: x + y)
-        ywx = quarter_wx.join(data_instances, lambda wx, d: wx * (4 * d.label) + 2).reduce(reduce_add)
-        # self_wx_square = self.forwards.mapValues(lambda x: np.square(x)).reduce(reduce_add)
+        host_wx_y = self.host_forwards[0].join(data_instances, lambda x, y: (x, y.label))
+        self_wx_y = self.half_d.join(data_instances, lambda x, y: (x, y.label))
+
+        def _sum_ywx(wx_y):
+            sum1, sum2 = 0, 0
+            for _, (x, y) in wx_y:
+                if y == 1:
+                    sum1 += x
+                else:
+                    sum2 -= x
+            return sum1 + sum2
+
+        ywx = host_wx_y.applyPartitions(_sum_ywx).reduce(reduce_add) + \
+              self_wx_y.applyPartitions(_sum_ywx).reduce(reduce_add)
+        ywx = ywx * 4 + 2 * n
+
+        # quarter_wx = self.host_forwards[0].join(self.half_d, lambda x, y: x + y)
+        # ywx = quarter_wx.join(data_instances, lambda wx, d: wx * (4 * d.label) + 2).reduce(reduce_add)
+
         self_wx_square = data_instances.mapValues(
             lambda v: np.square(vec_dot(v.features, w.coef_) + w.intercept_)).reduce(reduce_add)
         half_wx = data_instances.mapValues(
@@ -117,6 +133,8 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
             lambda v: (vec_dot(v.features, delta_s.coef_) + delta_s.intercept_) * 0.25)
         for host_forward in host_forwards:
             forwards = forwards.join(host_forward, lambda g, h: g + (h * 0.25))
+        if self.use_sample_weight:
+            forwards = forwards.join(data_instances, lambda h, d: h * d.weight)
         # forward_hess = forwards.mapValues(lambda x: 0.25 * x / sample_size)
         hess_vector = self.compute_gradient(data_instances,
                                             forwards,
@@ -140,11 +158,8 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
         forwards = 1/4 * wx
         """
         # wx = data_instances.mapValues(lambda v: vec_dot(v.features, model_weights.coef_) + model_weights.intercept_)
-        if self.use_sample_weight:
-            self.forwards = data_instances.mapValues(
-                lambda v: 0.25 * vec_dot(v.features, model_weights.coef_) * v.weight)
-        else:
-            self.forwards = data_instances.mapValues(lambda v: 0.25 * vec_dot(v.features, model_weights.coef_))
+
+        self.forwards = data_instances.mapValues(lambda v: 0.25 * vec_dot(v.features, model_weights.coef_))
         return self.forwards
 
     def compute_half_g(self, data_instances, w, cipher, batch_index):

@@ -17,16 +17,15 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
-from pipeline.component.hetero_secureboost import HeteroSecureBoost
-from pipeline.component.intersection import Intersection
-from pipeline.component.reader import Reader
-from pipeline.interface.data import Data
-from pipeline.component.evaluation import Evaluation
-from pipeline.interface.model import Model
+from pipeline.component import DataTransform
+from pipeline.component import HeteroSecureBoost
+from pipeline.component import Intersection
+from pipeline.component import Reader
+from pipeline.interface import Data
+from pipeline.component import Evaluation
+from pipeline.interface import Model
 
 from pipeline.utils.tools import load_job_config
-from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -37,8 +36,6 @@ def main(config="../../config.yaml", namespace=""):
     guest = parties.guest[0]
     host = parties.host[0]
 
-    backend = config.backend
-    work_mode = config.work_mode
 
     # data sets
     guest_train_data = {"name": "ionosphere_scale_hetero_guest", "namespace": f"experiment{namespace}"}
@@ -58,14 +55,14 @@ def main(config="../../config.yaml", namespace=""):
     reader_1.get_party_instance(role="guest", party_id=guest).component_param(table=guest_validate_data)
     reader_1.get_party_instance(role="host", party_id=host).component_param(table=host_validate_data)
 
-    dataio_0, dataio_1 = DataIO(name="dataio_0"), DataIO(name="dataio_1")
+    data_transform_0, data_transform_1 = DataTransform(name="data_transform_0"), DataTransform(name="data_transform_1")
 
-    dataio_0.get_party_instance(role="guest", party_id=guest).component_param(with_label=True, output_format="dense",
+    data_transform_0.get_party_instance(role="guest", party_id=guest).component_param(with_label=True, output_format="dense",
                                                                               label_name="label", label_type="int")
-    dataio_0.get_party_instance(role="host", party_id=host).component_param(with_label=False)
-    dataio_1.get_party_instance(role="guest", party_id=guest).component_param(with_label=True, output_format="dense",
+    data_transform_0.get_party_instance(role="host", party_id=host).component_param(with_label=False)
+    data_transform_1.get_party_instance(role="guest", party_id=guest).component_param(with_label=True, output_format="dense",
                                                                               label_name="label", label_type="int")
-    dataio_1.get_party_instance(role="host", party_id=host).component_param(with_label=False)
+    data_transform_1.get_party_instance(role="host", party_id=host).component_param(with_label=False)
 
     # data intersect component
     intersect_0 = Intersection(name="intersection_0")
@@ -86,17 +83,16 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline.add_component(reader_0)
     pipeline.add_component(reader_1)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(dataio_1, data=Data(data=reader_1.output.data), model=Model(dataio_0.output.model))
-    pipeline.add_component(intersect_0, data=Data(data=dataio_0.output.data))
-    pipeline.add_component(intersect_1, data=Data(data=dataio_1.output.data))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(data_transform_1, data=Data(data=reader_1.output.data), model=Model(data_transform_0.output.model))
+    pipeline.add_component(intersect_0, data=Data(data=data_transform_0.output.data))
+    pipeline.add_component(intersect_1, data=Data(data=data_transform_1.output.data))
     pipeline.add_component(hetero_secure_boost_0, data=Data(train_data=intersect_0.output.data,
                                                             validate_data=intersect_1.output.data))
     pipeline.add_component(evaluation_0, data=Data(data=hetero_secure_boost_0.output.data))
 
     pipeline.compile()
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
 
     print("fitting hetero secureboost done, result:")
     print(pipeline.get_component("hetero_secure_boost_0").get_summary())

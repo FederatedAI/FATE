@@ -165,6 +165,9 @@
         "train_binary": {
             "script": "./pipeline-homo-sbt-binary.py"
         },
+        "train_binary_in_memory_backend": {
+            "script": "./pipeline-homo-sbt-binary-with-memory-backend.py"
+        },
         "train_binary_predict": {
             "script": "./pipeline-homo-sbt-binary-with-predict.py"
         },

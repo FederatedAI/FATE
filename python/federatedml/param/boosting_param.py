@@ -17,14 +17,18 @@
 #  limitations under the License.
 #
 
-from federatedml.param.base_param import BaseParam
+from federatedml.param.base_param import BaseParam, deprecated_param
 from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.predict_param import PredictParam
+from federatedml.param.callback_param import CallbackParam
 from federatedml.util import consts, LOGGER
 import copy
 import collections
+
+hetero_deprecated_param_list = ["early_stopping_rounds", "validation_freqs", "metrics", "use_first_metric_only"]
+homo_deprecated_param_list = ["validation_freqs", "metrics"]
 
 
 class ObjectiveParam(BaseParam):
@@ -33,14 +37,15 @@ class ObjectiveParam(BaseParam):
 
     Parameters
     ----------
-    objective : None or str, accepted None,'cross_entropy','lse','lae','log_cosh','tweedie','fair','huber' only,
-                None in host's config, should be str in guest'config.
-                when task_type is classification, only support cross_entropy,
-                other 6 types support in regression task. default: None
+    objective : {None, 'cross_entropy', 'lse', 'lae', 'log_cosh', 'tweedie', 'fair', 'huber'}
+        None in host's config, should be str in guest'config.
+        when task_type is classification, only support 'cross_entropy',
+        other 6 types support in regression task
 
-    params : None or list, should be non empty list when objective is 'tweedie','fair','huber',
-             first element of list shoulf be a float-number large than 0.0 when objective is 'fair','huber',
-             first element of list should be a float-number in [1.0, 2.0) when objective is 'tweedie'
+    params : None or list
+        should be non empty list when objective is 'tweedie','fair','huber',
+        first element of list shoulf be a float-number large than 0.0 when objective is 'fair', 'huber',
+        first element of list should be a float-number in [1.0, 2.0) when objective is 'tweedie'
     """
 
     def __init__(self, objective='cross_entropy', params=None):
@@ -96,40 +101,51 @@ class DecisionTreeParam(BaseParam):
 
     Parameters
     ----------
-    criterion_method : str, accepted "xgboost" only, the criterion function to use, default: 'xgboost'
+    criterion_method : {"xgboost"}, default: "xgboost"
+        the criterion function to use
 
-    criterion_params: list or dict, should be non empty and elements are float-numbers,
-                      if a list is offered, the first one is l2 regularization value, and the second one is
-                      l1 regularization value.
-                      if a dict is offered, make sure it contains key 'l1', and 'l2'.
-                      l1, l2 regularization values are non-negative floats.
-                      default: [0.1, 0] or {'l1':0, 'l2':0,1}
+    criterion_params: list or dict
+        should be non empty and elements are float-numbers,
+        if a list is offered, the first one is l2 regularization value, and the second one is
+        l1 regularization value.
+        if a dict is offered, make sure it contains key 'l1', and 'l2'.
+        l1, l2 regularization values are non-negative floats.
+        default: [0.1, 0] or {'l1':0, 'l2':0,1}
 
-    max_depth: int, positive integer, the max depth of a decision tree, default: 3
+    max_depth: positive integer
+        the max depth of a decision tree, default: 3
 
-    min_sample_split: int, least quantity of nodes to split, default: 2
+    min_sample_split: int
+        least quantity of nodes to split, default: 2
 
-    min_impurity_split: float, least gain of a single split need to reach, default: 1e-3
+    min_impurity_split: float
+        least gain of a single split need to reach, default: 1e-3
 
-    min_child_weight: float, sum of hessian needed in child nodes. default is 0
+    min_child_weight: float
+        sum of hessian needed in child nodes. default is 0
 
-    min_leaf_node: int, when samples no more than min_leaf_node, it becomes a leave, default: 1
+    min_leaf_node: int
+        when samples no more than min_leaf_node, it becomes a leave, default: 1
 
-    max_split_nodes: int, positive integer, we will use no more than max_split_nodes to
-                      parallel finding their splits in a batch, for memory consideration. default is 65536
+    max_split_nodes: positive integer
+        we will use no more than max_split_nodes to
+        parallel finding their splits in a batch, for memory consideration. default is 65536
 
-    feature_importance_type: str, support 'split', 'gain' only.
-                             if is 'split', feature_importances calculate by feature split times,
-                             if is 'gain', feature_importances calculate by feature split gain.
-                             default: 'split'
+    feature_importance_type: {'split', 'gain'}
+        if is 'split', feature_importances calculate by feature split times,
+        if is 'gain', feature_importances calculate by feature split gain.
+        default: 'split'
 
-    use_missing: bool, accepted True, False only, use missing value in training process or not. default: False
+    use_missing: bool
+        use missing value in training process or not. default: False
 
-    zero_as_missing: bool, accepted True, False only, regard 0 as missing value or not,
-                     will be use only if use_missing=True, default: False
+    zero_as_missing: bool
+        regard 0 as missing value or not,
+        will be use only if use_missing=True, default: False
 
-    deterministic: bool, ensure stability when computing histogram. Set this to true to ensure stable result when using
-                         same data and same parameter. But it may slow down computation.
+    deterministic: bool
+        ensure stability when computing histogram. Set this to true to ensure stable result when using
+        same data and same parameter. But it may slow down computation.
 
     """
 
@@ -222,31 +238,38 @@ class DecisionTreeParam(BaseParam):
 
 class BoostingParam(BaseParam):
     """
-        Basic parameter for Boosting Algorithms
+    Basic parameter for Boosting Algorithms
 
-        Parameters
-        ----------
-        task_type : str, accepted 'classification', 'regression' only, default: 'classification'
+    Parameters
+    ----------
+    task_type : {'classification', 'regression'}, default: 'classification'
+        task type
 
-        objective_param : ObjectiveParam Object, default: ObjectiveParam()
+    objective_param : ObjectiveParam Object, default: ObjectiveParam()
+        objective param
 
-        learning_rate : float, accepted float, int or long only, the learning rate of secure boost. default: 0.3
+    learning_rate : float, int or long
+        the learning rate of secure boost. default: 0.3
 
-        num_trees : int, accepted int, float only, the max number of boosting round. default: 5
+    num_trees : int or float
+        the max number of boosting round. default: 5
 
-        subsample_feature_rate : float, a float-number in [0, 1], default: 1.0
+    subsample_feature_rate : float
+        a float-number in [0, 1], default: 1.0
 
-        n_iter_no_change : bool,
-            when True and residual error less than tol, tree building process will stop. default: True
+    n_iter_no_change : bool,
+        when True and residual error less than tol, tree building process will stop. default: True
 
-        bin_num: int, positive integer greater than 1, bin number use in quantile. default: 32
+    bin_num: positive integer greater than 1
+        bin number use in quantile. default: 32
 
-        validation_freqs: None or positive integer or container object in python. Do validation in training process or Not.
-                          if equals None, will not do validation in train process;
-                          if equals positive integer, will validate data every validation_freqs epochs passes;
-                          if container object in python, will validate data if epochs belong to this container.
-                            e.g. validation_freqs = [10, 15], will validate data when epoch equals to 10 and 15.
-                          Default: None
+    validation_freqs: None or positive integer or container object in python
+        Do validation in training process or Not.
+        if equals None, will not do validation in train process;
+        if equals positive integer, will validate data every validation_freqs epochs passes;
+        if container object in python, will validate data if epochs belong to this container.
+        e.g. validation_freqs = [10, 15], will validate data when epoch equals to 10 and 15.
+        Default: None
         """
 
     def __init__(self,  task_type=consts.CLASSIFICATION,
@@ -326,10 +349,14 @@ class BoostingParam(BaseParam):
 class HeteroBoostingParam(BoostingParam):
 
     """
-    encrypt_param : EncodeParam Object, encrypt method use in secure boost, default: EncryptParam()
+    Parameters
+    ----------
+    encrypt_param : EncodeParam Object
+        encrypt method use in secure boost, default: EncryptParam()
 
-    encrypted_mode_calculator_param: EncryptedModeCalculatorParam object, the calculation mode use in secureboost,
-                                     default: EncryptedModeCalculatorParam()
+    encrypted_mode_calculator_param: EncryptedModeCalculatorParam object
+        the calculation mode use in secureboost,
+        default: EncryptedModeCalculatorParam()
     """
 
     def __init__(self, task_type=consts.CLASSIFICATION,
@@ -373,85 +400,103 @@ class HeteroBoostingParam(BoostingParam):
         return True
 
 
+@deprecated_param(*hetero_deprecated_param_list)
 class HeteroSecureBoostParam(HeteroBoostingParam):
     """
-        Define boosting tree parameters that used in federated ml.
+    Define boosting tree parameters that used in federated ml.
 
-        Parameters
-        ----------
-        task_type : str, accepted 'classification', 'regression' only, default: 'classification'
+    Parameters
+    ----------
+    task_type : {'classification', 'regression'}, default: 'classification'
+        task type
 
-        tree_param : DecisionTreeParam Object, default: DecisionTreeParam()
+    tree_param : DecisionTreeParam Object, default: DecisionTreeParam()
+        tree param
 
-        objective_param : ObjectiveParam Object, default: ObjectiveParam()
+    objective_param : ObjectiveParam Object, default: ObjectiveParam()
+        objective param
 
-        learning_rate : float, accepted float, int or long only, the learning rate of secure boost. default: 0.3
+    learning_rate : float, int or long
+        the learning rate of secure boost. default: 0.3
 
-        num_trees : int, accepted int, float only, the max number of trees to build. default: 5
+    num_trees : int or float
+        the max number of trees to build. default: 5
 
-        subsample_feature_rate : float, a float-number in [0, 1], default: 1.0
+    subsample_feature_rate : float
+        a float-number in [0, 1], default: 1.0
 
-        random_seed: seed that controls all random functions
+    random_seed: int
+        seed that controls all random functions
 
-        n_iter_no_change : bool,
-            when True and residual error less than tol, tree building process will stop. default: True
+    n_iter_no_change : bool,
+        when True and residual error less than tol, tree building process will stop. default: True
 
-        encrypt_param : EncodeParam Object, encrypt method use in secure boost, default: EncryptParam(), this parameter
-                        is only for hetero-secureboost
+    encrypt_param : EncodeParam Object
+        encrypt method use in secure boost, default: EncryptParam(), this parameter
+        is only for hetero-secureboost
 
-        bin_num: int, positive integer greater than 1, bin number use in quantile. default: 32
+    bin_num: positive integer greater than 1
+        bin number use in quantile. default: 32
 
-        encrypted_mode_calculator_param: EncryptedModeCalculatorParam object, the calculation mode use in secureboost,
-                                         default: EncryptedModeCalculatorParam(), only for hetero-secureboost
+    encrypted_mode_calculator_param: EncryptedModeCalculatorParam object
+        the calculation mode use in secureboost, default: EncryptedModeCalculatorParam(), only for hetero-secureboost
 
-        use_missing: bool, accepted True, False only, use missing value in training process or not. default: False
+    use_missing: bool
+        use missing value in training process or not. default: False
 
-        zero_as_missing: bool, accepted True, False only, regard 0 as missing value or not,
-                         will be use only if use_missing=True, default: False
+    zero_as_missing: bool
+        regard 0 as missing value or not, will be use only if use_missing=True, default: False
 
-        validation_freqs: None or positive integer or container object in python. Do validation in training process or Not.
-                          if equals None, will not do validation in train process;
-                          if equals positive integer, will validate data every validation_freqs epochs passes;
-                          if container object in python, will validate data if epochs belong to this container.
-                            e.g. validation_freqs = [10, 15], will validate data when epoch equals to 10 and 15.
-                          Default: None
-                          The default value is None, 1 is suggested. You can set it to a number larger than 1 in order to
-                          speed up training by skipping validation rounds. When it is larger than 1, a number which is
-                          divisible by "num_trees" is recommended, otherwise, you will miss the validation scores
-                          of last training iteration.
+    validation_freqs: None or positive integer or container object in python
+        Do validation in training process or Not.
+        if equals None, will not do validation in train process;
+        if equals positive integer, will validate data every validation_freqs epochs passes;
+        if container object in python, will validate data if epochs belong to this container.
+        e.g. validation_freqs = [10, 15], will validate data when epoch equals to 10 and 15.
+        Default: None
+        The default value is None, 1 is suggested. You can set it to a number larger than 1 in order to
+        speed up training by skipping validation rounds. When it is larger than 1, a number which is
+        divisible by "num_trees" is recommended, otherwise, you will miss the validation scores
+        of last training iteration.
 
-        early_stopping_rounds: should be a integer larger than 0，will stop training if one metric of one validation data
-                                doesn’t improve in last early_stopping_round rounds，
-                                need to set validation freqs and will check early_stopping every at every validation epoch,
+    early_stopping_rounds: integer larger than 0
+        will stop training if one metric of one validation data
+        doesn’t improve in last early_stopping_round rounds，
+        need to set validation freqs and will check early_stopping every at every validation epoch,
 
-        metrics: list, default: []
-                 Specify which metrics to be used when performing evaluation during training process.
-                 If set as empty, default metrics will be used. For regression tasks, default metrics are
-                 ['root_mean_squared_error', 'mean_absolute_error']， For binary-classificatiin tasks, default metrics
-                 are ['auc', 'ks']. For multi-classification tasks, default metrics are ['accuracy', 'precision', 'recall']
+    metrics: list, default: []
+        Specify which metrics to be used when performing evaluation during training process.
+        If set as empty, default metrics will be used. For regression tasks, default metrics are
+        ['root_mean_squared_error', 'mean_absolute_error']， For binary-classificatiin tasks, default metrics
+        are ['auc', 'ks']. For multi-classification tasks, default metrics are ['accuracy', 'precision', 'recall']
 
-        use_first_metric_only: use only the first metric for early stopping
+    use_first_metric_only: bool
+        use only the first metric for early stopping
 
-        complete_secure: bool, if use complete_secure, when use complete secure, build first tree using only guest
-                        features
+    complete_secure: bool
+        if use complete_secure, when use complete secure, build first tree using only guest features
 
-        sparse_optimization: bool, Available when encrypted method is 'iterativeAffine'
-                            An optimized mode for high-dimension, sparse data.
+    sparse_optimization: bool
+        Available when encrypted method is 'iterativeAffine'
+        An optimized mode for high-dimension, sparse data.
 
-        run_goss: bool, activate Gradient-based One-Side Sampling, which selects large gradient and small
-                   gradient samples using top_rate and other_rate.
+    run_goss: bool
+        activate Gradient-based One-Side Sampling, which selects large gradient and small
+        gradient samples using top_rate and other_rate.
 
-        top_rate: float, the retain ratio of large gradient data, used when run_goss is True
+    top_rate: float
+        the retain ratio of large gradient data, used when run_goss is True
 
-        other_rate: float, the retain ratio of small gradient data, used when run_goss is True
+    other_rate: float
+        the retain ratio of small gradient data, used when run_goss is True
 
-        cipher_compress_error： int between [0-15], default is None. The parameter to control pallier cipher compressing.
-                        When cipher compressing is enabled, communication cost will be reduced, algorithms may run f
-                        aster due to lower decrypt cost. However, performance will be influenced by the precision
-                        loss caused by cipher compress.
-                        'None' means disable cipher compress.
-                        A specified integer indicates the rounding decimal precision.
-        """
+    cipher_compress_error: {None}
+        This param is now abandoned
+
+    cipher_compress: bool
+        default is True, use cipher compressing to reduce computation cost and transfer cost
+
+    """
 
     def __init__(self, tree_param: DecisionTreeParam = DecisionTreeParam(), task_type=consts.CLASSIFICATION,
                  objective_param=ObjectiveParam(),
@@ -464,7 +509,8 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                  complete_secure=False, metrics=None, use_first_metric_only=False, random_seed=100,
                  binning_error=consts.DEFAULT_RELATIVE_ERROR,
                  sparse_optimization=False, run_goss=False, top_rate=0.2, other_rate=0.1,
-                 cipher_compress_error=None, new_ver=True):
+                 cipher_compress_error=None, cipher_compress=True, new_ver=True,
+                 callback_param=CallbackParam()):
 
         super(HeteroSecureBoostParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                      subsample_feature_rate, n_iter_no_change, tol, encrypt_param,
@@ -474,7 +520,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                                                      random_seed=random_seed,
                                                      binning_error=binning_error)
 
-        self.tree_param = tree_param
+        self.tree_param = copy.deepcopy(tree_param)
         self.zero_as_missing = zero_as_missing
         self.use_missing = use_missing
         self.complete_secure = complete_secure
@@ -483,7 +529,9 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.top_rate = top_rate
         self.other_rate = other_rate
         self.cipher_compress_error = cipher_compress_error
+        self.cipher_compress = cipher_compress
         self.new_ver = new_ver
+        self.callback_param = copy.deepcopy(callback_param)
 
     def check(self):
 
@@ -501,30 +549,38 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.check_positive_number(self.other_rate, 'other_rate')
         self.check_positive_number(self.top_rate, 'top_rate')
         self.check_boolean(self.new_ver, 'code version switcher')
+        self.check_boolean(self.cipher_compress, 'cipher compress')
+
+        for p in ["early_stopping_rounds", "validation_freqs", "metrics",
+                  "use_first_metric_only"]:
+            # if self._warn_to_deprecate_param(p, "", ""):
+            if self._deprecated_params_set.get(p):
+                if "callback_param" in self.get_user_feeded():
+                    raise ValueError(f"{p} and callback param should not be set simultaneously，"
+                                     f"{self._deprecated_params_set}, {self.get_user_feeded()}")
+                else:
+                    self.callback_param.callbacks = ["PerformanceEvaluate"]
+                break
+
+        descr = "boosting_param's"
+
+        if self._warn_to_deprecate_param("validation_freqs", descr, "callback_param's 'validation_freqs'"):
+            self.callback_param.validation_freqs = self.validation_freqs
+
+        if self._warn_to_deprecate_param("early_stopping_rounds", descr, "callback_param's 'early_stopping_rounds'"):
+            self.callback_param.early_stopping_rounds = self.early_stopping_rounds
+
+        if self._warn_to_deprecate_param("metrics", descr, "callback_param's 'metrics'"):
+            self.callback_param.metrics = self.metrics
+
+        if self._warn_to_deprecate_param("use_first_metric_only", descr, "callback_param's 'use_first_metric_only'"):
+            self.callback_param.use_first_metric_only = self.use_first_metric_only
 
         if self.top_rate + self.other_rate >= 1:
             raise ValueError('sum of top rate and other rate should be smaller than 1')
 
-        if self.cipher_compress_error is not None:
-            self.check_positive_integer(self.cipher_compress_error, 'cipher_compress_error')
-            if self.cipher_compress_error > 15:
-                raise ValueError('cipher compress error exceeds max value 15.')
-
-            # safety check
-            if self.encrypt_param.method != consts.PAILLIER:
-                LOGGER.warning('cipher compressing only supports Paillier, however, encrypt method is {}, '
-                               'this function will be disabled automatically'.
-                               format(self.encrypt_param.method))
-                self.cipher_compress_error = None
-
-            if self.task_type != consts.CLASSIFICATION:
-                LOGGER.warning('cipher compressing only supports classification tasks'
-                               'this function will be disabled automatically')
-                self.cipher_compress_error = None
-
-            if not self.new_ver:
-                LOGGER.warning('old version code does not support cipher compressing')
-                self.cipher_compress_error = None
+        if self.sparse_optimization and self.cipher_compress:
+            raise ValueError('cipher compress is not supported in sparse optimization mode')
 
         return True
 
@@ -541,22 +597,24 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                  validation_freqs=None, early_stopping_rounds=None, use_missing=False, zero_as_missing=False,
                  complete_secure=False, tree_num_per_party=1, guest_depth=1, host_depth=1, work_mode='mix', metrics=None,
                  sparse_optimization=False, random_seed=100, binning_error=consts.DEFAULT_RELATIVE_ERROR,
-                 cipher_compress_error=None, new_ver=True, run_goss=False, top_rate=0.2, other_rate=0.1):
+                 cipher_compress_error=None, new_ver=True, run_goss=False, top_rate=0.2, other_rate=0.1,
+                 cipher_compress=True, callback_param=CallbackParam()):
 
         """
-        work_mode：
+        Parameters
+        ----------
+        work_mode: {"mix", "layered"}
             mix:  alternate using guest/host features to build trees. For example, the first 'tree_num_per_party' trees use guest features,
                   the second k trees use host features, and so on
             layered: only support 2 party, when running layered mode, first 'host_depth' layer will use host features,
                      and then next 'guest_depth' will only use guest features
-        tree_num_per_party: every party will alternate build 'tree_num_per_party' trees until reach max tree num, this param is valid when work_mode is
-            mix
-        guest_depth: guest will build last guest_depth of a decision tree using guest features, is valid when work mode
-            is layered
-        host depth: host will build first host_depth of a decision tree using host features, is valid when work mode is
-            layered
+        tree_num_per_party: int
+            every party will alternate build 'tree_num_per_party' trees until reach max tree num, this param is valid when work_mode is mix
+        guest_depth: int
+            guest will build last guest_depth of a decision tree using guest features, is valid when work mode is layered
+        host depth: int
+            host will build first host_depth of a decision tree using host features, is valid when work mode is layered
 
-        other params are the same as HeteroSecureBoost
         """
 
         super(HeteroFastSecureBoostParam, self).__init__(tree_param, task_type, objective_param, learning_rate,
@@ -569,12 +627,15 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                                                          binning_error=binning_error,
                                                          cipher_compress_error=cipher_compress_error,
                                                          new_ver=new_ver,
-                                                         run_goss=run_goss, top_rate=top_rate, other_rate=other_rate)
+                                                         cipher_compress=cipher_compress,
+                                                         run_goss=run_goss, top_rate=top_rate, other_rate=other_rate,
+                                                         )
 
         self.tree_num_per_party = tree_num_per_party
         self.guest_depth = guest_depth
         self.host_depth = host_depth
         self.work_mode = work_mode
+        self.callback_param = copy.deepcopy(callback_param)
 
     def check(self):
 
@@ -594,15 +655,23 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
         return True
 
 
+@deprecated_param(*homo_deprecated_param_list)
 class HomoSecureBoostParam(BoostingParam):
+
+    """
+    Parameters
+    ----------
+    backend: {'distributed', 'memory'}
+        decides which backend to use when computing histograms for homo-sbt
+    """
 
     def __init__(self, tree_param: DecisionTreeParam = DecisionTreeParam(), task_type=consts.CLASSIFICATION,
                  objective_param=ObjectiveParam(),
                  learning_rate=0.3, num_trees=5, subsample_feature_rate=1, n_iter_no_change=True,
                  tol=0.0001, bin_num=32, predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, use_missing=False, zero_as_missing=False, random_seed=100,
-                 binning_error=consts.DEFAULT_RELATIVE_ERROR
-                 ):
+                 binning_error=consts.DEFAULT_RELATIVE_ERROR, backend=consts.DISTRIBUTED_BACKEND,
+                 callback_param=CallbackParam()):
         super(HomoSecureBoostParam, self).__init__(task_type=task_type,
                                                    objective_param=objective_param,
                                                    learning_rate=learning_rate,
@@ -619,13 +688,37 @@ class HomoSecureBoostParam(BoostingParam):
                                                    )
         self.use_missing = use_missing
         self.zero_as_missing = zero_as_missing
-        self.tree_param = tree_param
+        self.tree_param = copy.deepcopy(tree_param)
+        self.backend = backend
+        self.callback_param = copy.deepcopy(callback_param)
 
     def check(self):
+
         super(HomoSecureBoostParam, self).check()
         self.tree_param.check()
         if type(self.use_missing) != bool:
             raise ValueError('use missing should be bool type')
         if type(self.zero_as_missing) != bool:
             raise ValueError('zero as missing should be bool type')
+        if self.backend not in [consts.MEMORY_BACKEND, consts.DISTRIBUTED_BACKEND]:
+            raise ValueError('unsupported backend')
+
+        for p in ["validation_freqs", "metrics"]:
+            # if self._warn_to_deprecate_param(p, "", ""):
+            if self._deprecated_params_set.get(p):
+                if "callback_param" in self.get_user_feeded():
+                    raise ValueError(f"{p} and callback param should not be set simultaneously，"
+                                     f"{self._deprecated_params_set}, {self.get_user_feeded()}")
+                else:
+                    self.callback_param.callbacks = ["PerformanceEvaluate"]
+                break
+
+        descr = "boosting_param's"
+
+        if self._warn_to_deprecate_param("validation_freqs", descr, "callback_param's 'validation_freqs'"):
+            self.callback_param.validation_freqs = self.validation_freqs
+
+        if self._warn_to_deprecate_param("metrics", descr, "callback_param's 'metrics'"):
+            self.callback_param.metrics = self.metrics
+
         return True

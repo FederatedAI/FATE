@@ -1,11 +1,13 @@
-work_mode: 1
 use_registry: false
 use_deserialize_safe_module: false
+dependent_distribution: false
 fateflow:
   # you must set real ip address, 127.0.0.1 and 0.0.0.0 is not supported
   host: 127.0.0.1
   http_port: 9380
   grpc_port: 9360
+  http_app_key:
+  http_secret_key:
   # support rollsite/nginx/fateflow as a coordination proxy
   # rollsite support fate on eggroll, use grpc protocol
   # nginx support fate on eggroll and fate on spark, use http or grpc protocol, default is http
@@ -21,11 +23,6 @@ fateflow:
   proxy: rollsite
   # support default/http/grpc
   protocol: default
-  # It can also be specified in the job configuration using the federated_status_collect_type parameter
-  default_federated_status_collect_type: PULL
-fateboard:
-  host: 127.0.0.1
-  port: 8080
 database:
   name: fate_flow
   user: fate
@@ -34,6 +31,21 @@ database:
   port: 3306
   max_connections: 100
   stale_timeout: 30
+zookeeper:
+  hosts:
+    - 127.0.0.1:2181
+  use_acl: false
+  user: fate
+  password: fate
+# engine services
+default_engines:
+  computing: standalone
+  federation: standalone
+  storage: standalone
+fate_on_standalone:
+  standalone:
+    cores_per_node: 20
+    nodes: 1
 fate_on_eggroll:
   clustermanager:
     cores_per_node: 16
@@ -57,9 +69,7 @@ fate_on_spark:
   hive:
     host: 127.0.0.1
     port: 10000
-    auth:
-    configuration:
-    kerberos_service_name:
+    auth_mechanism:
     username:
     password:
   linkis_hive:
@@ -84,34 +94,54 @@ fate_on_spark:
     cluster: standalone
     # all parties should use a same tenant
     tenant: fl-tenant
-    # message retention in minutes, -1 means unlimited.
-    topic_ttl: -1
+    # message ttl in minutes
+    topic_ttl: 5
     # default conf/pulsar_route_table.yaml
     route_table:
   nginx:
     host: 127.0.0.1
     http_port: 9300
     grpc_port: 9310
-model_store_address:
-  storage: mysql
-  name: model
+# external services
+fateboard:
   host: 127.0.0.1
-  port: 3306
-  user: fate
-  passwd: fate
-  max_connections: 10
-  stale_timeout: 10
+  port: 8080
+
+# on API `/model/load` and `/model/load/do`
+# automatic upload models to the model store if it exists locally but does not exist in the model storage
+# or download models from the model store if it does not exist locally but exists in the model storage
+# this config will not affect API `/model/store` or `/model/restore`
+enable_model_store: false
+model_store_address:
+  # use mysql as the model store engine
+#  storage: mysql
+#  database: fate_model
+#  user: fate
+#  password: fate
+#  host: 127.0.0.1
+#  port: 3306
+  # other optional configs send to the engine
+#  max_connections: 10
+#  stale_timeout: 10
+  # use redis as the model store engine
+#  storage: redis
+#  host: 127.0.0.1
+#  port: 6379
+#  db: 0
+#  password:
+  # the expiry time of keys, in seconds. defaults None (no expiry time)
+#  ex:
+  # use tencent cos as model store engine
+  storage: tencent_cos
+  Region:
+  SecretId:
+  SecretKey:
+  Bucket:
+
 servings:
   hosts:
     - 127.0.0.1:8000
-zookeeper:
-  hosts:
-    - 127.0.0.1:2281
-  use_acl: true
-  user: fate
-  password: fate
 fatemanager:
   host: 127.0.0.1
   port: 8001
   federatedId: 0
-

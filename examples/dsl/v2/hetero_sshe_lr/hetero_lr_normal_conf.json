@@ -1,0 +1,72 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "host": [
+            10000
+        ],
+        "guest": [
+            9999
+        ]
+    },
+    "component_parameters": {
+        "role": {
+            "guest": {
+                "0": {
+                    "data_transform_0": {
+                        "with_label": true
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            },
+            "host": {
+                "0": {
+                    "data_transform_0": {
+                        "with_label": false
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            }
+        },
+        "common": {
+            "data_transform_0": {
+                "output_format": "dense"
+            },
+            "hetero_sshe_lr_0": {
+                "penalty": "L2",
+                "tol": 0.0001,
+                "alpha": 0.01,
+                "optimizer": "rmsprop",
+                "batch_size": -1,
+                "learning_rate": 0.15,
+                "init_param": {
+                    "init_method": "zeros",
+                    "fit_intercept": true
+                },
+                "max_iter": 30,
+                "early_stop": "diff",
+                "encrypt_param": {
+                    "key_length": 1024
+                },
+                "reveal_strategy": "respectively",
+                "reveal_every_iter": true
+            },
+            "evaluation_0": {
+                "eval_type": "binary"
+            }
+        }
+    }
+}

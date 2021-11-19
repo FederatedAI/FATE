@@ -1,48 +1,48 @@
 {
-  "components": {
-    "dataio_0": {
-      "input": {
-        "data": {
-          "data": [
-            "reader_0.data"
-          ]
+    "components": {
+        "data_transform_0": {
+            "input": {
+                "data": {
+                    "data": [
+                        "reader_0.data"
+                    ]
+                },
+                "model": [
+                    "pipeline.data_transform_0.model"
+                ]
+            },
+            "module": "DataTransform",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
         },
-        "model": [
-          "pipeline.dataio_0.model"
-        ]
-      },
-      "module": "DataIO",
-      "output": {
-        "data": [
-          "data"
-        ]
-      }
-    },
-    "homo_nn_0": {
-      "input": {
-        "data": {
-          "test_data": [
-            "dataio_0.data"
-          ]
+        "homo_nn_0": {
+            "input": {
+                "data": {
+                    "test_data": [
+                        "data_transform_0.data"
+                    ]
+                },
+                "model": [
+                    "pipeline.homo_nn_0.model"
+                ]
+            },
+            "module": "HomoNN",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
         },
-        "model": [
-          "pipeline.homo_nn_0.model"
-        ]
-      },
-      "module": "HomoNN",
-      "output": {
-        "data": [
-          "data"
-        ]
-      }
-    },
-    "reader_0": {
-      "module": "Reader",
-      "output": {
-        "data": [
-          "data"
-        ]
-      }
+        "reader_0": {
+            "module": "Reader",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        }
     }
-  }
 }

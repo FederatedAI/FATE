@@ -1,0 +1,81 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "host": [
+            10000
+        ],
+        "guest": [
+            9999
+        ]
+    },
+    "component_parameters": {
+        "role": {
+            "host": {
+                "0": {
+                    "data_transform_0": {
+                        "with_label": false
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "data_transform_0": {
+                        "with_label": true
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "hetero_feature_selection_0": {
+                        "manually_param": {
+                            "left_col_indexes": [
+                                0
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "common": {
+            "data_transform_0": {
+                "output_format": "dense"
+            },
+            "hetero_feature_selection_0": {
+                "select_col_indexes": -1,
+                "filter_methods": [
+                    "manually"
+                ]
+            },
+            "hetero_sshe_lr_0": {
+                "penalty": null,
+                "tol": 0.0001,
+                "alpha": 0.01,
+                "optimizer": "sgd",
+                "batch_size": -1,
+                "learning_rate": 0.15,
+                "init_param": {
+                    "init_method": "random_uniform"
+                },
+                "max_iter": 30,
+                "early_stop": "diff",
+                "reveal_strategy": "encrypted_reveal_in_host",
+                "reveal_every_iter": false
+            },
+            "evaluation_0": {
+                "eval_type": "binary"
+            }
+        }
+    }
+}

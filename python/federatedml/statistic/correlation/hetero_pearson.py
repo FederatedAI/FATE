@@ -17,8 +17,8 @@ import math
 
 import numpy as np
 
-from fate_arch import session
-from fate_flow.entity.metric import MetricMeta
+from fate_arch.session import get_parties
+from federatedml.model_base import MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.param.pearson_param import PearsonParam
 from federatedml.secureprotol.spdz import SPDZ
@@ -55,8 +55,8 @@ class HeteroPearson(ModelBase):
     def _set_parties(self):
         # since multi-host not supported yet, we assume parties are one from guest and one from host
         parties = []
-        guest_parties = session.get_latest_opened().parties.roles_to_parties(["guest"])
-        host_parties = session.get_latest_opened().parties.roles_to_parties(["host"])
+        guest_parties = get_parties().roles_to_parties(["guest"])
+        host_parties = get_parties().roles_to_parties(["host"])
         if len(guest_parties) != 1 or len(host_parties) != 1:
             raise ValueError(
                 f"one guest and one host required, "
@@ -65,7 +65,7 @@ class HeteroPearson(ModelBase):
         parties.extend(guest_parties)
         parties.extend(host_parties)
 
-        local_party = session.get_latest_opened().parties.local_party
+        local_party = get_parties().local_party
         other_party = parties[0] if parties[0] != local_party else parties[1]
 
         self.parties = parties

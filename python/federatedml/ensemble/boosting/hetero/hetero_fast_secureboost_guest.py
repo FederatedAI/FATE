@@ -18,6 +18,7 @@ class HeteroFastSecureBoostingTreeGuest(HeteroSecureBoostingTreeGuest):
         self.guest_depth = 0
         self.host_depth = 0
         self.work_mode = consts.MIX_TREE
+        self.init_tree_plan = False
         self.tree_plan = []
         self.model_param = HeteroFastSecureBoostParam()
         self.model_name = 'HeteroFastSecureBoost'
@@ -31,12 +32,14 @@ class HeteroFastSecureBoostingTreeGuest(HeteroSecureBoostingTreeGuest):
 
     def get_tree_plan(self, idx):
 
-        if len(self.tree_plan) == 0:
-            self.tree_plan = plan.create_tree_plan(self.work_mode, k=self.tree_num_per_party, tree_num=self.boosting_round,
-                                                   host_list=self.component_properties.host_party_idlist,
-                                                   complete_secure=self.complete_secure)
-            LOGGER.info('tree plan is {}'.format(self.tree_plan))
+        if not self.init_tree_plan:
+            tree_plan = plan.create_tree_plan(self.work_mode, k=self.tree_num_per_party, tree_num=self.boosting_round,
+                                              host_list=self.component_properties.host_party_idlist,
+                                              complete_secure=self.complete_secure)
+            self.tree_plan += tree_plan
+            self.init_tree_plan = True
 
+        LOGGER.info('tree plan is {}'.format(self.tree_plan))
         return self.tree_plan[idx]
 
     def check_host_number(self, tree_type):
@@ -69,10 +72,9 @@ class HeteroFastSecureBoostingTreeGuest(HeteroSecureBoostingTreeGuest):
                   runtime_idx=self.component_properties.local_partyid,
                   goss_subsample=self.enable_goss,
                   top_rate=self.top_rate, other_rate=self.other_rate,
+                  task_type=self.task_type,
                   complete_secure=True if (self.cur_epoch_idx == 0 and self.complete_secure) else False,
-                  cipher_compressing=self.round_decimal is not None,
-                  round_decimal=self.round_decimal,
-                  encrypt_key_length=self.encrypt_param.key_length,
+                  cipher_compressing=self.cipher_compressing,
                   max_sample_weight=self.max_sample_weight,
                   new_ver=self.new_ver
                   )

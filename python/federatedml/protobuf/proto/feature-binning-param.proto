@@ -45,15 +45,19 @@ message FeatureBinningResult {
     string party_id = 3;
 }
 
+message MultiClassResult {
+    repeated FeatureBinningResult results = 1;
+    repeated string labels = 2;
+    repeated FeatureBinningResult host_results = 3;
+    repeated string host_party_ids = 4;
+    bool has_host_result = 5;
+}
+
 message BinningSingleFeatureValue {
     repeated double values = 1;
     repeated string col_names = 2;
     string value_name = 3;
 }
-
-//message BinningOnePartyResult {
-//    repeated BinningSingleFeatureValue results = 1;
-//}
 
 message FeatureBinningParam {
     FeatureBinningResult binning_result = 1;
@@ -61,4 +65,5 @@ message FeatureBinningParam {
     repeated string header = 3;
     repeated string header_anonymous = 4;
     string model_name = 5;
+    MultiClassResult multi_class_result=6;
 }

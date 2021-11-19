@@ -2,25 +2,18 @@
     "dsl_version": 2,
     "initiator": {
         "role": "guest",
-        "party_id": 10000
+        "party_id": 9999
     },
     "role": {
         "arbiter": [
-            9999
+            10000
         ],
         "host": [
-            9999
+            10000
         ],
         "guest": [
-            10000
+            9999
         ]
-    },
-    "job_parameters": {
-        "common": {
-            "backend": 0,
-            "work_mode": 0,
-            "job_type": "train"
-        }
     },
     "component_parameters": {
         "role": {
@@ -32,7 +25,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true
                     },
                     "reader_1": {
@@ -51,7 +44,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
                     },
                     "reader_1": {
@@ -64,7 +57,7 @@
             }
         },
         "common": {
-            "dataio_0": {
+            "data_transform_0": {
                 "output_format": "dense"
             },
             "hetero_lr_0": {

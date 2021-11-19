@@ -16,13 +16,13 @@
 import json
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
-from pipeline.component.hetero_feature_binning import HeteroFeatureBinning
-from pipeline.component.intersection import Intersection
-from pipeline.component.one_hot_encoder import OneHotEncoder
-from pipeline.component.reader import Reader
-from pipeline.interface.data import Data
-from pipeline.interface.model import Model
+from pipeline.component import DataTransform
+from pipeline.component import HeteroFeatureBinning
+from pipeline.component import Intersection
+from pipeline.component import OneHotEncoder
+from pipeline.component import Reader
+from pipeline.interface import Data
+from pipeline.interface import Model
 
 
 def prettify(response, verbose=True):
@@ -36,8 +36,6 @@ def make_add_one_hot_dsl(config, namespace, bin_param, is_multi_host=False):
     parties = config.parties
     guest = parties.guest[0]
     hosts = parties.host
-    backend = config.backend
-    work_mode = config.work_mode
 
     guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
     host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
@@ -70,18 +68,18 @@ def make_add_one_hot_dsl(config, namespace, bin_param, is_multi_host=False):
     if is_multi_host:
         reader_1.get_party_instance(role='host', party_id=hosts[1]).component_param(table=host_eval_data)
 
-    # define DataIO components
-    dataio_0 = DataIO(name="dataio_0")  # start component numbering at 0
-    dataio_1 = DataIO(name="dataio_1")
+    # define DataTransform components
+    data_transform_0 = DataTransform(name="data_transform_0")  # start component numbering at 0
+    data_transform_1 = DataTransform(name="data_transform_1")
 
-    # get DataIO party instance of guest
-    dataio_0_guest_party_instance = dataio_0.get_party_instance(role='guest', party_id=guest)
-    # configure DataIO for guest
-    dataio_0_guest_party_instance.component_param(with_label=True, output_format="dense")
-    # get and configure DataIO party instance of host
-    dataio_0.get_party_instance(role='host', party_id=hosts[0]).component_param(with_label=False)
+    # get DataTransform party instance of guest
+    data_transform_0_guest_party_instance = data_transform_0.get_party_instance(role='guest', party_id=guest)
+    # configure DataTransform for guest
+    data_transform_0_guest_party_instance.component_param(with_label=True, output_format="dense")
+    # get and configure DataTransform party instance of host
+    data_transform_0.get_party_instance(role='host', party_id=hosts[0]).component_param(with_label=False)
     if is_multi_host:
-        dataio_0.get_party_instance(role='host', party_id=hosts[1]).component_param(with_label=False)
+        data_transform_0.get_party_instance(role='host', party_id=hosts[1]).component_param(with_label=False)
 
     # define Intersection components
     intersection_0 = Intersection(name="intersection_0")
@@ -97,12 +95,12 @@ def make_add_one_hot_dsl(config, namespace, bin_param, is_multi_host=False):
     # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)
     pipeline.add_component(reader_1)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    # set dataio_1 to replicate model from dataio_0
-    pipeline.add_component(dataio_1, data=Data(data=reader_1.output.data), model=Model(dataio_0.output.model))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    # set data_transform_1 to replicate model from data_transform_0
+    pipeline.add_component(data_transform_1, data=Data(data=reader_1.output.data), model=Model(data_transform_0.output.model))
     # set data input sources of intersection components
-    pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
-    pipeline.add_component(intersection_1, data=Data(data=dataio_1.output.data))
+    pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
+    pipeline.add_component(intersection_1, data=Data(data=data_transform_1.output.data))
     # set train & validate data of hetero_lr_0 component
     pipeline.add_component(hetero_feature_binning_0, data=Data(data=intersection_0.output.data))
     pipeline.add_component(hetero_feature_binning_1, data=Data(data=intersection_1.output.data),
@@ -113,7 +111,7 @@ def make_add_one_hot_dsl(config, namespace, bin_param, is_multi_host=False):
     # compile pipeline once finished adding modules, this step will form conf and dsl files for running job
     pipeline.compile()
 
-    # pipeline.fit(backend=backend, work_mode=work_mode)
+    # pipeline.fit(work_mode=work_mode)
     return pipeline
 
 
@@ -122,8 +120,6 @@ def make_normal_dsl(config, namespace, bin_param, dataset='breast', is_multi_hos
     parties = config.parties
     guest = parties.guest[0]
     hosts = parties.host
-    backend = config.backend
-    work_mode = config.work_mode
 
     if dataset == 'breast':
         guest_table_name = 'breast_hetero_guest'
@@ -156,24 +152,24 @@ def make_normal_dsl(config, namespace, bin_param, dataset='breast', is_multi_hos
     if is_multi_host:
         reader_0.get_party_instance(role='host', party_id=hosts[1]).component_param(table=host_train_data)
 
-    # define DataIO components
-    dataio_0 = DataIO(name="dataio_0")  # start component numbering at 0
+    # define DataTransform components
+    data_transform_0 = DataTransform(name="data_transform_0")  # start component numbering at 0
 
-    # get DataIO party instance of guest
-    dataio_0_guest_party_instance = dataio_0.get_party_instance(role='guest', party_id=guest)
-    # configure DataIO for guest
-    dataio_0_guest_party_instance.component_param(with_label=True, output_format="dense")
-    # get and configure DataIO party instance of host
+    # get DataTransform party instance of guest
+    data_transform_0_guest_party_instance = data_transform_0.get_party_instance(role='guest', party_id=guest)
+    # configure DataTransform for guest
+    data_transform_0_guest_party_instance.component_param(with_label=True, output_format="dense")
+    # get and configure DataTransform party instance of host
     if host_dense_output:
         output_format = 'dense'
     else:
         output_format = 'sparse'
     if is_multi_host:
-        dataio_0.get_party_instance(role='host', party_id=hosts). \
+        data_transform_0.get_party_instance(role='host', party_id=hosts). \
             component_param(with_label=False,
                             output_format=output_format)
     else:
-        dataio_0.get_party_instance(role='host', party_id=hosts[0]). \
+        data_transform_0.get_party_instance(role='host', party_id=hosts[0]). \
             component_param(with_label=False,
                             output_format=output_format)
 
@@ -184,9 +180,9 @@ def make_normal_dsl(config, namespace, bin_param, dataset='breast', is_multi_hos
 
     # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
     # set data input sources of intersection components
-    pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
+    pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
     # set train & validate data of hetero_lr_0 component
     pipeline.add_component(hetero_feature_binning_0, data=Data(data=intersection_0.output.data))
 
@@ -194,7 +190,7 @@ def make_normal_dsl(config, namespace, bin_param, dataset='breast', is_multi_hos
     pipeline.compile()
 
     # fit model
-    # pipeline.fit(backend=backend, work_mode=work_mode)
+    # pipeline.fit(work_mode=work_mode)
     return pipeline
 
 
@@ -235,24 +231,24 @@ def make_asymmetric_dsl(config, namespace, guest_param, host_param, dataset='bre
     if is_multi_host:
         reader_0.get_party_instance(role='host', party_id=hosts[1]).component_param(table=host_train_data)
 
-    # define DataIO components
-    dataio_0 = DataIO(name="dataio_0")  # start component numbering at 0
+    # define DataTransform components
+    data_transform_0 = DataTransform(name="data_transform_0")  # start component numbering at 0
 
-    # get DataIO party instance of guest
-    dataio_0_guest_party_instance = dataio_0.get_party_instance(role='guest', party_id=guest)
-    # configure DataIO for guest
-    dataio_0_guest_party_instance.component_param(with_label=True, output_format="dense")
-    # get and configure DataIO party instance of host
+    # get DataTransform party instance of guest
+    data_transform_0_guest_party_instance = data_transform_0.get_party_instance(role='guest', party_id=guest)
+    # configure DataTransform for guest
+    data_transform_0_guest_party_instance.component_param(with_label=True, output_format="dense")
+    # get and configure DataTransform party instance of host
     if host_dense_output:
         output_format = 'dense'
     else:
         output_format = 'sparse'
     if is_multi_host:
-        dataio_0.get_party_instance(role='host', party_id=hosts). \
+        data_transform_0.get_party_instance(role='host', party_id=hosts). \
             component_param(with_label=False,
                             output_format=output_format)
     else:
-        dataio_0.get_party_instance(role='host', party_id=hosts[0]). \
+        data_transform_0.get_party_instance(role='host', party_id=hosts[0]). \
             component_param(with_label=False,
                             output_format=output_format)
 
@@ -268,9 +264,9 @@ def make_asymmetric_dsl(config, namespace, guest_param, host_param, dataset='bre
 
     # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
     # set data input sources of intersection components
-    pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
+    pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
     # set train & validate data of hetero_lr_0 component
     pipeline.add_component(hetero_feature_binning_0, data=Data(data=intersection_0.output.data))
 
@@ -278,5 +274,5 @@ def make_asymmetric_dsl(config, namespace, guest_param, host_param, dataset='bre
     pipeline.compile()
 
     # fit model
-    # pipeline.fit(backend=backend, work_mode=work_mode)
+    # pipeline.fit(work_mode=work_mode)
     return pipeline

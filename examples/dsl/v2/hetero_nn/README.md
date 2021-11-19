@@ -51,7 +51,7 @@ This section introduces the dsl and conf for different types of tasks.
 
     This feature support since FATE-1.6, please have a look at the param "drop_out_keep_rate"
 
-5. Train Task With Floating Point Precision Optimization:
+6. Train Task With Floating Point Precision Optimization:
 
     example-data: (1) guest: default_credit_hetero_guest.csv  (2) host: default_credit_hetero_host.csv  
     
@@ -61,6 +61,22 @@ This section introduces the dsl and conf for different types of tasks.
 
     This feature support since FATE-1.6, please have a look at the param "floating_point_precision"
 
+7. Train Task With Warm Start:  
+
+    examples-data: (1) guest: breast_hetero_guest.csv  (2) host: breast_hetero_host.csv    
+    
+    dsl: test_hetero_nn_binary_with_warm_start_dsl.json  
+    
+    runtime_conf: test_hetero_nn_binary_with_warm_start_conf.json  
+    
+8. Train Task With CheckPoint:  
+ 
+    script: pipeline-hetero-nn-train-with-check-point.py  
+    
+    dsl: test_hetero_nn_binary_with_check_point_dsl.json    
+    
+    runtime_conf: test_hetero_nn_binary_with_check_point_conf.json  
+    
 Users can use following commands to run a task.
 
     flow job submit -c ${runtime_config} -d ${dsl}

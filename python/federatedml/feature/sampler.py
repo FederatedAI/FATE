@@ -19,8 +19,8 @@ import random
 from sklearn.utils import resample
 
 from fate_arch.session import computing_session as session
-from fate_flow.entity.metric import Metric
-from fate_flow.entity.metric import MetricMeta
+from federatedml.model_base import Metric
+from federatedml.model_base import MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.param.sample_param import SampleParam
 from federatedml.transfer_variable.transfer_class.sample_transfer_variable import SampleTransferVariable
@@ -59,7 +59,7 @@ class RandomSampler(object):
 
         Parameters
         ----------
-        data_inst : DTable
+        data_inst : Table
             The input data
 
         sample_ids : None or list
@@ -68,7 +68,7 @@ class RandomSampler(object):
 
         Returns
         -------
-        new_data_inst: DTable
+        new_data_inst: Table
             the output sample data, same format with input
 
         sample_ids: list, return only if sample_ids is None
@@ -92,7 +92,7 @@ class RandomSampler(object):
 
         Parameters
         ----------
-        data_inst : DTable
+        data_inst : Table
             The input data
 
         sample_ids : None or list
@@ -101,7 +101,7 @@ class RandomSampler(object):
 
         Returns
         -------
-        new_data_inst: DTable
+        new_data_inst: Table
             the output sample data, same format with input
 
         sample_ids: list, return only if sample_ids is None
@@ -218,7 +218,7 @@ class StratifiedSampler(object):
 
         Parameters
         ----------
-        data_inst : DTable
+        data_inst : Table
             The input data
 
         sample_ids : None or list
@@ -227,7 +227,7 @@ class StratifiedSampler(object):
 
         Returns
         -------
-        new_data_inst: DTable
+        new_data_inst: Table
             the output sample data, same format with input
 
         sample_ids: list, return only if sample_ids is None
@@ -245,7 +245,7 @@ class StratifiedSampler(object):
     def __sample(self, data_inst, sample_ids=None):
         """
         Stratified sample method, a line's occur probability is decide by fractions
-            Input should be DTable, every line should be an instance object with label
+            Input should be Table, every line should be an instance object with label
             To use this method, a list of ratio should be give, and the list length
                 equals to the number of distinct labels
             support down sample and up sample
@@ -255,7 +255,7 @@ class StratifiedSampler(object):
 
         Parameters
         ----------
-        data_inst : DTable
+        data_inst : Table
             The input data
 
         sample_ids : None or list
@@ -264,7 +264,7 @@ class StratifiedSampler(object):
 
         Returns
         -------
-        new_data_inst: DTable
+        new_data_inst: Table
             the output sample data, sample format with input
 
         sample_ids: list, return only if sample_ids is None
@@ -438,7 +438,7 @@ class Sampler(ModelBase):
 
         Parameters
         ----------
-        data_inst : DTable
+        data_inst : Table
             The input data
 
         sample_ids : None or list
@@ -447,7 +447,7 @@ class Sampler(ModelBase):
 
         Returns
         -------
-        sample_data: DTable
+        sample_data: Table
             the output sample data, same format with input
 
 
@@ -487,7 +487,7 @@ class Sampler(ModelBase):
 
         Parameters
         ----------
-        data_inst : DTable
+        data_inst : Table
             The input data
 
         task_type : "homo" or "hetero"
@@ -504,7 +504,7 @@ class Sampler(ModelBase):
 
         Returns
         -------
-        sample_data_inst: DTable
+        sample_data_inst: Table
             the output sample data, same format with input
 
         """

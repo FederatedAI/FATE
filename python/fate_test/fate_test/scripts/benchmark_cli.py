@@ -1,3 +1,5 @@
+import os
+import re
 import time
 import uuid
 from datetime import timedelta
@@ -12,6 +14,8 @@ from fate_test.scripts._options import SharedOptions
 from fate_test.scripts._utils import _upload_data, _delete_data, _load_testsuites, _load_module_from_script
 from fate_test.utils import show_data, match_metrics
 
+DATA_DISPLAY_PATTERN = re.compile("^FATE")
+
 
 @click.command(name="benchmark-quality")
 @click.option('-i', '--include', required=True, type=click.Path(exists=True), multiple=True, metavar="<include>",
@@ -23,13 +27,20 @@ from fate_test.utils import show_data, match_metrics
 @click.option('-t', '--tol', type=float,
               help="tolerance (absolute error) for metrics to be considered almost equal. "
                    "Comparison is done by evaluating abs(a-b) <= max(relative_tol * max(abs(a), abs(b)), absolute_tol)")
+@click.option('-s', '--storage-tag', type=str,
+              help="tag for storing metrics, for future metrics info comparison")
+@click.option('-v', '--history-tag', type=str, multiple=True,
+              help="Extract metrics info from history tags for comparison")
+@click.option('-d', '--match-details', type=click.Choice(['all', 'relative', 'absolute', 'none']),
+              default="all", help="Error value display in algorithm comparison")
 @click.option('--skip-data', is_flag=True, default=False,
               help="skip uploading data specified in benchmark conf")
 @click.option("--disable-clean-data", "clean_data", flag_value=False, default=None)
 @click.option("--enable-clean-data", "clean_data", flag_value=True, default=None)
 @SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
-def run_benchmark(ctx, include, exclude, glob, skip_data, tol, clean_data, **kwargs):
+def run_benchmark(ctx, include, exclude, glob, skip_data, tol, clean_data, storage_tag, history_tag, match_details,
+                  **kwargs):
     """
     process benchmark suite, alias: bq
     """
@@ -37,6 +48,8 @@ def run_benchmark(ctx, include, exclude, glob, skip_data, tol, clean_data, **kwa
     ctx.obj.post_process()
     namespace = ctx.obj["namespace"]
     config_inst = ctx.obj["config"]
+    config_inst.extend_sid = ctx.obj["extend_sid"]
+    config_inst.auto_increasing_sid = ctx.obj["auto_increasing_sid"]
     if clean_data is None:
         clean_data = config_inst.clean_data
     data_namespace_mangling = ctx.obj["namespace_mangling"]
@@ -52,6 +65,7 @@ def run_benchmark(ctx, include, exclude, glob, skip_data, tol, clean_data, **kwa
     if not yes and not click.confirm("running?"):
         return
     with Clients(config_inst) as client:
+        fate_version = client["guest_0"].get_version()
         for i, suite in enumerate(suites):
             # noinspection PyBroadException
             try:
@@ -63,7 +77,8 @@ def run_benchmark(ctx, include, exclude, glob, skip_data, tol, clean_data, **kwa
                     except Exception as e:
                         raise RuntimeError(f"exception occur while uploading data for {suite.path}") from e
                 try:
-                    _run_benchmark_pairs(config_inst, suite, tol, namespace, data_namespace_mangling)
+                    _run_benchmark_pairs(config_inst, suite, tol, namespace, data_namespace_mangling, storage_tag,
+                                         history_tag, fate_version, match_details)
                 except Exception as e:
                     raise RuntimeError(f"exception occur while running benchmark jobs for {suite.path}") from e
 
@@ -82,14 +97,17 @@ def run_benchmark(ctx, include, exclude, glob, skip_data, tol, clean_data, **kwa
 
 
 @LOGGER.catch
-def _run_benchmark_pairs(config: Config, suite: BenchmarkSuite, tol: float,
-                         namespace: str, data_namespace_mangling: bool):
+def _run_benchmark_pairs(config: Config, suite: BenchmarkSuite, tol: float, namespace: str,
+                         data_namespace_mangling: bool, storage_tag, history_tag, fate_version, match_details):
     # pipeline demo goes here
     pair_n = len(suite.pairs)
+    fate_base = config.fate_base
+    PYTHONPATH = os.environ.get('PYTHONPATH') + ":"  + os.path.join(fate_base, "python")
+    os.environ['PYTHONPATH'] = PYTHONPATH
     for i, pair in enumerate(suite.pairs):
         echo.echo(f"Running [{i + 1}/{pair_n}] group: {pair.pair_name}")
         results = {}
-        data_summary = None
+        # data_summary = None
         job_n = len(pair.jobs)
         for j, job in enumerate(pair.jobs):
             try:
@@ -112,16 +130,22 @@ def _run_benchmark_pairs(config: Config, suite: BenchmarkSuite, tol: float,
                 else:
                     data, metric = mod.main()
                 results[job_name] = metric
-                echo.echo(f"[{j + 1}/{job_n}] job: {job.job_name} Success!")
-                if job_name == "FATE":
-                    data_summary = data
-                if data_summary is None:
-                    data_summary = data
+                echo.echo(f"[{j + 1}/{job_n}] job: {job.job_name} Success!\n")
+                if data and DATA_DISPLAY_PATTERN.match(job_name):
+                    # data_summary = data
+                    show_data(data)
+                # if data_summary is None:
+                #    data_summary = data
             except Exception as e:
                 exception_id = uuid.uuid1()
-                echo.echo(f"exception while running [{j + 1}/{job_n}] job, exception_id={exception_id}", err=True, fg='red')
+                echo.echo(f"exception while running [{j + 1}/{job_n}] job, exception_id={exception_id}", err=True,
+                          fg='red')
                 LOGGER.exception(f"exception id: {exception_id}, error message: \n{e}")
                 continue
         rel_tol = pair.compare_setting.get("relative_tol")
-        show_data(data_summary)
-        match_metrics(evaluate=True, group_name=pair.pair_name, abs_tol=tol, rel_tol=rel_tol, **results)
+        # show_data(data_summary)
+        match_metrics(evaluate=True, group_name=pair.pair_name, abs_tol=tol, rel_tol=rel_tol,
+                      storage_tag=storage_tag, history_tag=history_tag, fate_version=fate_version,
+                      cache_directory=config.cache_directory, match_details=match_details, **results)
+
+

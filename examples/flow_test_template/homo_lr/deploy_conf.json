@@ -1,0 +1,24 @@
+{
+    "service_id": "test-service",
+    "model_id": "arbiter-10000#guest-9999#host-10000#model",
+    "model_version": "202006122009345696314",
+    "role": "guest",
+    "party_id": 9999,
+    "component_name": "homo_lr_0",
+    "deployment_type": "kfserving",
+    "deployment_parameters": {
+        "protocol_version": "v1",
+        "namespace": "default",
+        "config_file_content": "<content of kube_config file>",
+        "replace": true,
+        "skip_create_storage_secret": false,
+        "model_storage_type": "minio",
+        "model_storage_parameters": {
+            "endpoint": "minio:9000",
+            "access_key": "<acceess_key>",
+            "secret_key": "<secret_key>",
+            "secure": false,
+            "region": ""
+        }
+    }
+}

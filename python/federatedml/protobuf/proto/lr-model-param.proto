@@ -29,6 +29,8 @@ message LRModelParam {
     OneVsRestResult one_vs_rest_result = 7;
     bool need_one_vs_rest = 8;
     int32 best_iteration = 9;
+    map<string, CipherText> encrypted_weight = 10;
+    Cipher cipher = 11;
 }
 
 message SingleModel {
@@ -39,9 +41,32 @@ message SingleModel {
     double intercept = 5;
     repeated string header = 6;
     int32 best_iteration = 7;
+    map<string, CipherText> encrypted_weight = 8;
+    Cipher cipher = 9;
 }
 
 message OneVsRestResult {
     repeated SingleModel completed_models = 1;
     repeated string one_vs_rest_classes = 2;
+}
+
+message Cipher {
+    CipherPublicKey public_key = 1;
+    CipherPrivateKey private_key = 2;
+}
+
+message CipherPublicKey {
+    string n = 1;
+}
+
+message CipherPrivateKey {
+    string p = 1;
+    string q = 2;
+}
+
+message CipherText {
+    CipherPublicKey public_key = 1;
+    string cipher_text = 2;
+    string exponent = 3;
+    bool is_obfuscator = 4;
 }

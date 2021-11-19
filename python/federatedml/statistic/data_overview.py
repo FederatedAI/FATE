@@ -41,6 +41,16 @@ def get_features_shape(data_instances):
         return None
 
 
+def get_instance_shape(instance):
+    if instance is None:
+        return None
+
+    if type(instance.features).__name__ == consts.SPARSE_VECTOR:
+        return instance.features.get_shape()
+    else:
+        return instance.features.shape[0]
+
+
 def max_abs_sample_weight_map_func(kv_iter):
 
     max_weight = -1
@@ -141,7 +151,7 @@ def is_empty_feature(data_instances):
 
 def is_sparse_data(data_instance):
     first_data = data_instance.first()
-    if type(first_data[1]).__name__ in ['ndarray', 'list']:
+    if type(first_data[1]).__name__ in ['ndarray', 'list', 'tuple']:
         return False
 
     data_feature = first_data[1].features
@@ -192,12 +202,30 @@ def get_label_count(data_instances):
     return class_weight
 
 
+def get_predict_result_labels(data):
+    def _get_labels(score_inst):
+        labels = set()
+        for idx, result in score_inst:
+            true_label = result.features[0]
+            predict_label = result.features[1]
+            labels.add(true_label)
+            labels.add(predict_label)
+        return labels
+
+    label_set = data.applyPartitions(_get_labels)
+    label_set = label_set.reduce(lambda x1, x2: x1.union(x2))
+    if len(label_set) > consts.MAX_CLASSNUM:
+        raise ValueError("In Classify Task, max dif classes should be no more than %d" % (consts.MAX_CLASSNUM))
+
+    return label_set
+
+
 def rubbish_clear(rubbish_list):
     """
     Temporary procession for resource recovery. This will be discarded in next version because of our new resource recovery plan
     Parameter
     ----------
-    rubbish_list: list of DTable, each DTable in this will be destroy
+    rubbish_list: list of Table, each Table in this will be destroy
     """
     for r in rubbish_list:
         try:
@@ -205,7 +233,33 @@ def rubbish_clear(rubbish_list):
                 continue
             r.destroy()
         except Exception as e:
-            LOGGER.warning("destroy Dtable error,:{}, but this can be ignored sometimes".format(e))
+            LOGGER.warning("destroy table error,:{}, but this can be ignored sometimes".format(e))
+
+
+def check_with_inst_id(data_instances):
+    instance = data_instances.first()[1]
+    if isinstance(instance, Instance) and instance.with_inst_id:
+        return True
+    return False
+
+
+def scale_sample_weight(data_instances):
+    data_count = data_instances.count()
+    def _sum_all_weight(kv_iterator):
+        weight_sum = 0
+        for _, v in kv_iterator:
+            weight_sum += v.weight
+        return weight_sum
+    total_weight = data_instances.mapPartitions(_sum_all_weight).reduce(lambda x, y: x + y)
+    # LOGGER.debug(f"weight_sum is : {total_weight}")
+    scale_factor = data_count / total_weight
+    # LOGGER.debug(f"scale factor is : {total_weight}")
+    def _replace_weight(instance):
+        new_weight = instance.weight * scale_factor
+        instance.set_weight(new_weight)
+        return instance
+    scaled_instances = data_instances.mapValues(lambda v: _replace_weight(v))
+    return scaled_instances
 
 
 class DataStatistics(object):

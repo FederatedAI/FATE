@@ -2,13 +2,13 @@
     "dsl_version": 2,
     "initiator": {
         "role": "guest",
-        "party_id": 10000
+        "party_id": 9999
     },
     "role": {
-        "guest": [
+        "host": [
             10000
         ],
-        "host": [
+        "guest": [
             9999
         ]
     },
@@ -21,7 +21,7 @@
         "role": {
             "host": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false,
                         "output_format": "dense"
                     },
@@ -30,17 +30,12 @@
                             "name": "default_credit_hetero_host",
                             "namespace": "experiment"
                         }
-                    },
-                    "hetero_feature_binning_0": {
-                        "transform_param": {
-                            "transform_type": null
-                        }
                     }
                 }
             },
             "guest": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true,
                         "output_format": "dense"
                     },
@@ -63,12 +58,12 @@
                 "bin_num": 10,
                 "bin_indexes": -1,
                 "bin_names": null,
-                "local_only": false,
                 "transform_param": {
                     "transform_cols": -1,
                     "transform_names": null,
-                    "transform_type": "woe"
+                    "transform_type": "bin_num"
                 },
+                "local_only": false,
                 "optimal_binning_param": {
                     "metric_method": "iv",
                     "min_bin_pct": 0.05,

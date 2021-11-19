@@ -26,15 +26,12 @@ sys.path.append(cur_path)
 
 from examples.pipeline.hetero_feature_selection import common_tools
 from pipeline.utils.tools import load_job_config
-from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
         config = load_job_config(config)
-    backend = config.backend
-    work_mode = config.work_mode
 
     fast_sbt_param = {
         "name": "fast_secureboost_0",
@@ -76,8 +73,7 @@ def main(config="../../config.yaml", namespace=""):
         }}
     pipeline = common_tools.make_normal_dsl(config, namespace, selection_param,
                                             fast_sbt_param=fast_sbt_param)
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
     common_tools.prettify(pipeline.get_component("hetero_feature_selection_0").get_summary())
 
 

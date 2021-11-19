@@ -56,6 +56,10 @@ This section introduces the Pipeline scripts for different types of tasks.
     
     script: pipeline-hetero-lr-validate.py
 
+14. Warm start task:
+    
+    script: pipeline-hetero-lr-warm-start.py
+    
 Users can run a pipeline job directly:
 
     python ${pipeline_script}

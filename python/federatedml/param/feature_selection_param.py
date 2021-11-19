@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-import copy
-
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -18,7 +15,9 @@ import copy
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from federatedml.param.base_param import BaseParam
+import copy
+
+from federatedml.param.base_param import BaseParam, deprecated_param
 from federatedml.util import consts
 
 
@@ -28,7 +27,7 @@ class UniqueValueParam(BaseParam):
 
     Parameters
     ----------
-    eps: float, default: 1e-5
+    eps : float, default: 1e-5
         The column(s) will be filtered if its difference is smaller than eps.
     """
 
@@ -82,10 +81,8 @@ class IVPercentileSelectionParam(BaseParam):
 
     Parameters
     ----------
-    percentile_threshold: float, 0 <= percentile_threshold <= 1.0, default: 1.0
-        Percentile threshold for iv_percentile method
-
-
+    percentile_threshold: float
+        0 <= percentile_threshold <= 1.0, default: 1.0, Percentile threshold for iv_percentile method
     """
 
     def __init__(self, percentile_threshold=1.0, local_only=False):
@@ -95,7 +92,8 @@ class IVPercentileSelectionParam(BaseParam):
 
     def check(self):
         descr = "IV selection param's"
-        self.check_decimal_float(self.percentile_threshold, descr)
+        if self.percentile_threshold != 0 or self.percentile_threshold != 1:
+            self.check_decimal_float(self.percentile_threshold, descr)
         self.check_boolean(self.local_only, descr)
         return True
 
@@ -106,8 +104,8 @@ class IVTopKParam(BaseParam):
 
     Parameters
     ----------
-    k: int, should be greater than 0, default: 10
-        Percentile threshold for iv_percentile method
+    k: int
+        should be greater than 0, default: 10, Percentile threshold for iv_percentile method
     """
 
     def __init__(self, k=10, local_only=False):
@@ -213,27 +211,8 @@ class CommonFilterParam(BaseParam):
         self.select_federated = select_federated
 
     def check(self):
-        if not isinstance(self.metrics, list):
-            for value_name in ["filter_type", "take_high",
-                               "threshold", "select_federated"]:
-                v = getattr(self, value_name)
-                if isinstance(v, list):
-                    raise ValueError(f"{value_name}: {v} should not be a list when "
-                                     f"metrics: {self.metrics} is not a list")
-                setattr(self, value_name, [v])
-            setattr(self, "metrics", [self.metrics])
-        else:
-            expected_length = len(self.metrics)
-            for value_name in ["filter_type", "take_high",
-                               "threshold", "select_federated"]:
-                v = getattr(self, value_name)
-                if isinstance(v, list):
-                    if len(v) != expected_length:
-                        raise ValueError(f"The parameter {v} should have same length "
-                                         f"with metrics")
-                else:
-                    new_v = [v] * expected_length
-                    setattr(self, value_name, new_v)
+        self._convert_to_list(param_names=["filter_type", "take_high",
+                                           "threshold", "select_federated"])
 
         for v in self.filter_type:
             if v not in ["threshold", "top_k", "top_percentile"]:
@@ -262,6 +241,47 @@ class CommonFilterParam(BaseParam):
         for v in self.select_federated:
             self.check_boolean(v, descr)
 
+    def _convert_to_list(self, param_names):
+        if not isinstance(self.metrics, list):
+            for value_name in param_names:
+                v = getattr(self, value_name)
+                if isinstance(v, list):
+                    raise ValueError(f"{value_name}: {v} should not be a list when "
+                                     f"metrics: {self.metrics} is not a list")
+                setattr(self, value_name, [v])
+            setattr(self, "metrics", [self.metrics])
+        else:
+            expected_length = len(self.metrics)
+            for value_name in param_names:
+                v = getattr(self, value_name)
+                if isinstance(v, list):
+                    if len(v) != expected_length:
+                        raise ValueError(f"The parameter {v} should have same length "
+                                         f"with metrics")
+                else:
+                    new_v = [v] * expected_length
+                    setattr(self, value_name, new_v)
+
+
+class IVFilterParam(CommonFilterParam):
+    """
+    Parameters
+    ----------
+    mul_class_merge_type: str or list, default: "average"
+        Indicate how to merge multi-class iv results. Support "average", "min" and "max".
+
+    """
+
+    def __init__(self, filter_type='threshold', threshold=1,
+                 host_thresholds=None, select_federated=True, mul_class_merge_type="average"):
+        super().__init__(metrics='iv', filter_type=filter_type, take_high=True, threshold=threshold,
+                         host_thresholds=host_thresholds, select_federated=select_federated)
+        self.mul_class_merge_type = mul_class_merge_type
+
+    def check(self):
+        super(IVFilterParam, self).check()
+        self._convert_to_list(param_names=["mul_class_merge_type"])
+
 
 class CorrelationFilterParam(BaseParam):
     """
@@ -281,6 +301,7 @@ class CorrelationFilterParam(BaseParam):
     select_federated: bool, default: True
         Whether select federated with other parties or based on local variables
     """
+
     def __init__(self, sort_metric='iv', threshold=0.1, select_federated=True):
         super().__init__()
         self.sort_metric = sort_metric
@@ -327,6 +348,11 @@ class ManuallyFilterParam(BaseParam):
     """
     Specified columns that need to be filtered. If exist, it will be filtered directly, otherwise, ignore it.
 
+    Both Filter_out or left parameters only works for this specific filter. For instances, if you set some columns left
+    in this filter but those columns are filtered by other filters, those columns will NOT left in final.
+
+    Please note that (left_col_indexes & left_col_names) cannot use with (filter_out_indexes & filter_out_names) simultaneously.
+
     Parameters
     ----------
     filter_out_indexes: list of int, default: None
@@ -341,11 +367,6 @@ class ManuallyFilterParam(BaseParam):
     left_col_names: list of string, default: None
         Specify left col names
 
-    Both Filter_out or left parameters only works for this specific filter. For instances, if you set some columns left
-    in this filter but those columns are filtered by other filters, those columns will NOT left in final.
-
-    Please note that (left_col_indexes & left_col_names) cannot use with
-        (filter_out_indexes & filter_out_names) simultaneously.
 
     """
 
@@ -371,6 +392,12 @@ class ManuallyFilterParam(BaseParam):
         return True
 
 
+deprecated_param_list = ["iv_value_param", "iv_percentile_param",
+                         "iv_top_k_param", "variance_coe_param", "unique_param",
+                         "outlier_param"]
+
+
+@deprecated_param(*deprecated_param_list)
 class FeatureSelectionParam(BaseParam):
     """
     Define the feature selection parameters.
@@ -383,12 +410,7 @@ class FeatureSelectionParam(BaseParam):
     select_names : list of string, default: []
         Specify which columns need to calculated. Each element in the list represent for a column name in header.
 
-    filter_methods: list, ["manually", "iv_filter", "statistic_filter",
-                            "psi_filter", “hetero_sbt_filter", "homo_sbt_filter",
-                             "hetero_fast_sbt_filter", "percentage_value",
-                             "vif_filter", "correlation_filter"],
-                 default: ["manually"]
-
+    filter_methods: list of ["manually", "iv_filter", "statistic_filter", "psi_filter", “hetero_sbt_filter", "homo_sbt_filter", "hetero_fast_sbt_filter", "percentage_value", "vif_filter", "correlation_filter"], default: ["manually"]
         The following methods will be deprecated in future version:
         "unique_value", "iv_value_thres", "iv_percentile",
         "coefficient_of_variation_value_thres", "outlier_cols"
@@ -400,32 +422,41 @@ class FeatureSelectionParam(BaseParam):
         e.g. If you have 10 features at the beginning. After first filter method, you have 8 rest. Then, you want
         top 80% highest iv feature. Here, we will choose floor(0.8 * 8) = 6 features instead of 8.
 
-    unique_param: filter the columns if all values in this feature is the same
+    unique_param: UniqueValueParam
+        filter the columns if all values in this feature is the same
 
-    iv_value_param: Use information value to filter columns. If this method is set, a float threshold need to be provided.
+    iv_value_param: IVValueSelectionParam
+        Use information value to filter columns. If this method is set, a float threshold need to be provided.
         Filter those columns whose iv is smaller than threshold. Will be deprecated in the future.
 
-    iv_percentile_param: Use information value to filter columns. If this method is set, a float ratio threshold
+    iv_percentile_param: IVPercentileSelectionParam
+        Use information value to filter columns. If this method is set, a float ratio threshold
         need to be provided. Pick floor(ratio * feature_num) features with higher iv. If multiple features around
         the threshold are same, all those columns will be keep. Will be deprecated in the future.
 
-    variance_coe_param: Use coefficient of variation to judge whether filtered or not.
+    variance_coe_param: VarianceOfCoeSelectionParam
+        Use coefficient of variation to judge whether filtered or not.
         Will be deprecated in the future.
 
-    outlier_param: Filter columns whose certain percentile value is larger than a threshold.
+    outlier_param: OutlierColsSelectionParam
+        Filter columns whose certain percentile value is larger than a threshold.
         Will be deprecated in the future.
 
-    percentage_value_param: Filter the columns that have a value that exceeds a certain percentage.
+    percentage_value_param: PercentageValueParam
+        Filter the columns that have a value that exceeds a certain percentage.
 
-    iv_param: Setting how to filter base on iv. It support take high mode only. All of "threshold",
+    iv_param: IVFilterParam
+        Setting how to filter base on iv. It support take high mode only. All of "threshold",
         "top_k" and "top_percentile" are accepted. Check more details in CommonFilterParam. To
         use this filter, hetero-feature-binning module has to be provided.
 
-    statistic_param: Setting how to filter base on statistic values. All of "threshold",
+    statistic_param: CommonFilterParam
+        Setting how to filter base on statistic values. All of "threshold",
         "top_k" and "top_percentile" are accepted. Check more details in CommonFilterParam.
         To use this filter, data_statistic module has to be provided.
 
-    psi_param: Setting how to filter base on psi values. All of "threshold",
+    psi_param: CommonFilterParam
+        Setting how to filter base on psi values. All of "threshold",
         "top_k" and "top_percentile" are accepted. Its take_high properties should be False
         to choose lower psi features. Check more details in CommonFilterParam.
         To use this filter, data_statistic module has to be provided.
@@ -444,7 +475,7 @@ class FeatureSelectionParam(BaseParam):
                  outlier_param=OutlierColsSelectionParam(),
                  manually_param=ManuallyFilterParam(),
                  percentage_value_param=PercentageValueParam(),
-                 iv_param=CommonFilterParam(metrics=consts.IV),
+                 iv_param=IVFilterParam(),
                  statistic_param=CommonFilterParam(metrics=consts.MEAN),
                  psi_param=CommonFilterParam(metrics=consts.PSI,
                                              take_high=False),
@@ -543,3 +574,10 @@ class FeatureSelectionParam(BaseParam):
                 raise ValueError("For VIF filter, metrics should be 'vif'")
 
         self.correlation_param.check()
+
+        self._warn_to_deprecate_param("iv_value_param", descr, "iv_param")
+        self._warn_to_deprecate_param("iv_percentile_param", descr, "iv_param")
+        self._warn_to_deprecate_param("iv_top_k_param", descr, "iv_param")
+        self._warn_to_deprecate_param("variance_coe_param", descr, "statistic_param")
+        self._warn_to_deprecate_param("unique_param", descr, "statistic_param")
+        self._warn_to_deprecate_param("outlier_param", descr, "statistic_param")

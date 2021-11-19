@@ -13,7 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
 import os
 import filelock
 from fate_arch.common import file_utils
@@ -28,8 +27,15 @@ def conf_realpath(conf_name):
 
 
 def get_base_config(key, default=None, conf_name=SERVICE_CONF):
-    base_config = file_utils.load_yaml_conf(conf_path=conf_realpath(conf_name=conf_name)) or dict()
-    return base_config.get(key, default)
+    local_path = conf_realpath(f'local.{conf_name}')
+    if os.path.exists(local_path):
+        local_config = file_utils.load_yaml_conf(local_path)
+        if isinstance(local_config, dict) and key in local_config:
+            return local_config[key]
+
+    config = file_utils.load_yaml_conf(conf_realpath(conf_name))
+    if isinstance(config, dict):
+        return config.get(key, default)
 
 
 def update_config(key, value, conf_name=SERVICE_CONF):

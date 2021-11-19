@@ -8,8 +8,8 @@
                 ]
             }
         },
-        "dataio_0": {
-            "module": "DataIO",
+        "data_transform_0": {
+            "module": "DataTransform",
             "input": {
                 "data": {
                     "data": [
@@ -18,21 +18,27 @@
                 }
             },
             "output": {
-                "data": ["train"],
-                "model": ["dataio"]
+                "data": [
+                    "train"
+                ],
+                "model": [
+                    "data_transform"
+                ]
             }
-         },
+        },
         "intersection_0": {
             "module": "Intersection",
             "input": {
                 "data": {
                     "data": [
-                        "dataio_0.train"
+                        "data_transform_0.train"
                     ]
                 }
             },
             "output": {
-                "data": ["train"]
+                "data": [
+                    "train"
+                ]
             }
         },
         "secureboost_0": {
@@ -45,8 +51,12 @@
                 }
             },
             "output": {
-                "data": ["train"],
-                "model": ["train"]
+                "data": [
+                    "train"
+                ],
+                "model": [
+                    "train"
+                ]
             }
         },
         "sbt_feature_transformer_0": {
@@ -62,8 +72,12 @@
                 ]
             },
             "output": {
-                "data": ["train"],
-                "model": ["model"]
+                "data": [
+                    "train"
+                ],
+                "model": [
+                    "model"
+                ]
             }
         }
     }

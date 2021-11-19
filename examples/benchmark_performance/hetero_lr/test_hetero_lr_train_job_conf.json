@@ -15,12 +15,6 @@
             9999
         ]
     },
-    "job_parameters": {
-        "common": {
-            "work_mode": 0,
-            "backend": 0
-        }
-    },
     "component_parameters": {
         "common": {
             "intersection_0": {
@@ -98,9 +92,7 @@
                     "init_method": "zeros"
                 },
                 "max_iter": 5,
-                "early_stop": "diff",
-                "validation_freqs": null,
-                "early_stopping_rounds": null
+                "early_stop": "diff"
             }
         },
         "role": {
@@ -108,11 +100,11 @@
                 "0": {
                     "reader_0": {
                         "table": {
-                            "name": "breast_hetero_host_tag_value",
-                            "namespace": "experiment"
+                            "name": "performance_hetero_host_tag_value",
+                            "namespace": "performance"
                         }
                     },
-                    "dataio_1": {
+                    "data_transform_1": {
                         "input_format": "tag",
                         "delimitor": ";",
                         "tag_with_value": true,
@@ -121,11 +113,11 @@
                     },
                     "reader_1": {
                         "table": {
-                            "name": "breast_hetero_host_tag_value",
-                            "namespace": "experiment"
+                            "name": "performance_hetero_host_tag_value",
+                            "namespace": "performance"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "input_format": "tag",
                         "delimitor": ";",
                         "tag_with_value": true,
@@ -138,11 +130,11 @@
                 "0": {
                     "reader_0": {
                         "table": {
-                            "name": "breast_hetero_guest",
-                            "namespace": "experiment"
+                            "name": "performance_hetero_guest",
+                            "namespace": "performance"
                         }
                     },
-                    "dataio_1": {
+                    "data_transform_1": {
                         "missing_fill": true,
                         "missing_fill_method": "mean",
                         "outlier_replace": false,
@@ -156,11 +148,11 @@
                     },
                     "reader_1": {
                         "table": {
-                            "name": "breast_hetero_guest",
-                            "namespace": "experiment"
+                            "name": "performance_hetero_guest",
+                            "namespace": "performance"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "missing_fill": true,
                         "missing_fill_method": "mean",
                         "outlier_replace": false,

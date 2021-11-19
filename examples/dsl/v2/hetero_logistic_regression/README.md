@@ -60,9 +60,13 @@ This section introduces the dsl and conf for usage of different type of task.
     dsl: hetero-lr-normal-predict-dsl.json
     conf: hetero-lr-normal-predict-conf.json
     deps: Train_task
+    
+15. Warm start task:
+    dsl: hetero_lr_warm_start_dsl.json
+    conf: hetero_lr_warm_start_conf.json
 
 Users can use following commands to running the task.
 
     flow job submit -c ${runtime_config} -d ${dsl}
 
-After having finished a successful training task, you can use it to predict, you can use the obtained model to perform prediction. You need to add the corresponding model id and model version to the configuration [file](./hetero-lr-normal-predict-conf.json)
+After having finished a successful training task, you can use it to predict, you can use the obtained model to perform prediction. You need to add the corresponding model id and model version to the configuration [file](hetero_lr_normal_predict_conf.json)

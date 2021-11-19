@@ -2,36 +2,18 @@
     "dsl_version": 2,
     "initiator": {
         "role": "guest",
-        "party_id": 10000
+        "party_id": 9999
     },
     "role": {
-        "guest": [
+        "host": [
             10000
         ],
-        "host": [
+        "guest": [
             9999
         ]
     },
-    "job_parameters": {
-        "common": {
-            "job_type": "train"
-        }
-    },
     "component_parameters": {
         "role": {
-            "guest": {
-                "0": {
-                    "reader_0": {
-                        "table": {
-                            "name": "breast_hetero_guest",
-                            "namespace": "experiment"
-                        }
-                    },
-                    "dataio_0": {
-                        "with_label": true
-                    }
-                }
-            },
             "host": {
                 "0": {
                     "reader_0": {
@@ -40,8 +22,21 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "data_transform_0": {
+                        "with_label": true
                     }
                 }
             }

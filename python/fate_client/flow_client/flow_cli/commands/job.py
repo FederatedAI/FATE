@@ -149,6 +149,16 @@ def stop(ctx, **kwargs):
     access_server('post', ctx, "job/stop", config_data)
 
 
+@job.command("rerun", short_help="Rerun Job Command")
+@cli_args.JOBID_REQUIRED
+@cli_args.FORCE
+@cli_args.COMPONENT_NAME
+@click.pass_context
+def rerun(ctx, **kwargs):
+    config_data, dsl_data = preprocess(**kwargs)
+    access_server('post', ctx, "job/rerun", config_data)
+
+
 @job.command("config", short_help="Config Job Command")
 @cli_args.JOBID_REQUIRED
 @cli_args.ROLE_REQUIRED
@@ -205,7 +215,7 @@ def log(ctx, **kwargs):
     job_id = config_data['job_id']
     tar_file_name = 'job_{}_log.tar.gz'.format(job_id)
     extract_dir = os.path.join(config_data['output_path'], 'job_{}_log'.format(job_id))
-    with closing(access_server('get', ctx, 'job/log', config_data, False, stream=True)) as response:
+    with closing(access_server('post', ctx, 'job/log/download', config_data, False, stream=True)) as response:
         if response.status_code == 200:
             download_from_request(http_response=response, tar_file_name=tar_file_name, extract_dir=extract_dir)
             res = {'retcode': 0,
@@ -308,3 +318,12 @@ def dsl_generator(ctx, **kwargs):
         prettify(res)
     else:
         access_server('post', ctx, 'job/dsl/generate', config_data)
+
+
+@job.command("parameter-update", short_help="Update Job Components Parameters Command")
+@cli_args.JOBID_REQUIRED
+@cli_args.CONF_PATH
+@click.pass_context
+def update_parameter(ctx, **kwargs):
+    config_data, dsl_data = preprocess(**kwargs)
+    access_server('post', ctx, 'job/parameter/update', config_data)

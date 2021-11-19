@@ -15,11 +15,9 @@
 #
 
 import json
-from pipeline.backend.config import Backend, WorkMode
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import Reader, DataTransform, Intersection, HeteroSecureBoost, Evaluation
 from pipeline.interface import Data
-from pipeline.runtime.entity import JobParameters
 
 # table name & namespace in data storage
 # data should be uploaded before running modeling task
@@ -74,11 +72,7 @@ pipeline.add_component(reader_0)\
 
 
 # compile & fit pipeline
-pipeline.compile().fit(JobParameters(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE))
-# to run this task with cluster deployment, use the following setting instead
-# may change data engine backend according to actual environment
-# pipeline.compile().fit(JobParameters(backend=Backend.EGGROLL, work_mode=WorkMode.CLUSTER))
-
+pipeline.compile().fit()
 
 # query component summary
 print(f"Evaluation summary:\n{json.dumps(pipeline.get_component('evaluation_0').get_summary(), indent=4)}")

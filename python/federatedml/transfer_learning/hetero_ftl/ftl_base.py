@@ -16,10 +16,9 @@ from federatedml.nn.hetero_nn.util import random_number_generator
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 from federatedml.util import consts
-from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
+from federatedml.secureprotol.paillier_tensor import PaillierTensor
 from federatedml.protobuf.generated.ftl_model_param_pb2 import FTLModelParam
 from federatedml.protobuf.generated.ftl_model_meta_pb2 import FTLModelMeta, FTLPredictParam, FTLOptimizerParam
-from federatedml.util.validation_strategy import ValidationStrategy
 
 
 class FTL(ModelBase):
@@ -98,7 +97,7 @@ class FTL(ModelBase):
     @staticmethod
     def debug_data_inst(data_inst):
         collect_data = list(data_inst.collect())
-        LOGGER.debug('showing DTable')
+        LOGGER.debug('showing Table')
         for d in collect_data:
             LOGGER.debug('key {} id {}, features {} label {}'.format(d[0], d[1].inst_id, d[1].features, d[1].label))
 
@@ -157,21 +156,13 @@ class FTL(ModelBase):
             self.encrypt_calculators = [self.generated_encrypted_calculator() for i in range(3)]
         encrypted_tensors = []
         for comp, calculator in zip(components, self.encrypt_calculators):
-            encrypted_tensor = PaillierTensor(ori_data=comp, partitions=self.partitions)
+            encrypted_tensor = PaillierTensor(comp, partitions=self.partitions)
             if return_dtable:
                 encrypted_tensors.append(encrypted_tensor.encrypt(calculator).get_obj())
             else:
                 encrypted_tensors.append(encrypted_tensor.encrypt(calculator))
 
         return encrypted_tensors
-
-    def init_validation_strategy(self, train_data=None, validate_data=None):
-        validation_strategy = ValidationStrategy(self.role, consts.HETERO, self.validation_freqs,
-                                                 self.early_stopping_rounds, self.use_first_metric_only,
-                                                 arbiter_comm=False)
-        validation_strategy.set_train_data(train_data)
-        validation_strategy.set_validate_data(validate_data)
-        return validation_strategy
 
     def learning_rate_decay(self, learning_rate, epoch):
         """
@@ -201,6 +192,7 @@ class FTL(ModelBase):
             data_inst = self.check_label(data_inst)
 
         overlap_samples = intersect_obj.run_intersect(data_inst)  # find intersect ids
+        overlap_samples = intersect_obj.get_value_from_data(overlap_samples, data_inst)
         non_overlap_samples = data_inst.subtractByKey(overlap_samples)
 
         LOGGER.debug('num of overlap/non-overlap sampels: {}/{}'.format(overlap_samples.count(),

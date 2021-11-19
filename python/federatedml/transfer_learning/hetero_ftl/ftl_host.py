@@ -1,10 +1,10 @@
 import numpy as np
 from federatedml.transfer_learning.hetero_ftl.ftl_base import FTL
-from federatedml.statistic.intersect import intersect_host
+from federatedml.statistic.intersect import RsaIntersectionHost
 from federatedml.util import LOGGER
 from federatedml.transfer_learning.hetero_ftl.ftl_dataloder import FTLDataLoader
 from federatedml.util import consts
-from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
+from federatedml.secureprotol.paillier_tensor import PaillierTensor
 from federatedml.util.io_check import assert_io_num_rows_equal
 from federatedml.statistic import data_overview
 
@@ -23,7 +23,7 @@ class FTLHost(FTL):
 
     def init_intersect_obj(self):
         LOGGER.debug('creating intersect obj done')
-        intersect_obj = intersect_host.RsaIntersectionHost()
+        intersect_obj = RsaIntersectionHost()
         intersect_obj.host_party_id = self.component_properties.local_partyid
         intersect_obj.host_party_id_list = self.component_properties.host_party_idlist
         intersect_obj.load_params(self.intersect_param)
@@ -72,7 +72,7 @@ class FTLHost(FTL):
         self.transfer_variable.mapping_comp_b.remote(comp_to_send[2], suffix=(epoch_idx, ))
 
         if self.mode == 'encrypted':
-            guest_paillier_tensors = [PaillierTensor(tb_obj=tb, partitions=self.partitions) for tb in guest_components]
+            guest_paillier_tensors = [PaillierTensor(tb, partitions=self.partitions) for tb in guest_components]
             return guest_paillier_tensors
         else:
             return guest_components
@@ -84,7 +84,7 @@ class FTLHost(FTL):
         grad_table = self.transfer_variable.guest_side_gradients.get(suffix=(epoch_idx, local_round, ),
                                                                      idx=0)
 
-        inter_grad = PaillierTensor(tb_obj=grad_table, partitions=self.partitions)
+        inter_grad = PaillierTensor(grad_table, partitions=self.partitions)
         decrpyted_grad = inter_grad.decrypt(self.encrypter)
         decrypted_const = self.encrypter.recursive_decrypt(encrypted_consts)
 
@@ -95,13 +95,13 @@ class FTLHost(FTL):
 
     def decrypt_inter_result(self, loss_grad_b, epoch_idx, local_round=-1):
 
-        rand_0 = PaillierTensor(ori_data=self.rng_generator.generate_random_number(loss_grad_b.shape), partitions=self.partitions)
+        rand_0 = PaillierTensor(self.rng_generator.generate_random_number(loss_grad_b.shape), partitions=self.partitions)
         grad_a_overlap = loss_grad_b + rand_0
         self.transfer_variable.host_side_gradients.remote(grad_a_overlap.get_obj(),
                                                           suffix=(epoch_idx, local_round, 'host_de_send'))
         de_loss_grad_b = self.transfer_variable.decrypted_host_gradients\
                                                .get(suffix=(epoch_idx, local_round, 'host_de_get'), idx=0)
-        de_loss_grad_b = PaillierTensor(tb_obj=de_loss_grad_b, partitions=self.partitions) - rand_0
+        de_loss_grad_b = PaillierTensor(de_loss_grad_b, partitions=self.partitions) - rand_0
 
         return de_loss_grad_b
 
@@ -167,12 +167,12 @@ class FTLHost(FTL):
         self.initialize_nn(input_shape=self.x_shape)
         self.feat_dim = self.nn._model.output_shape[1]
         self.constant_k = 1 / self.feat_dim
-        self.validation_strategy = self.init_validation_strategy(data_inst, validate_data)
+        self.callback_list.on_train_begin(data_inst, validate_data)
 
         for epoch_idx in range(self.epochs):
 
             LOGGER.debug('fitting epoch {}'.format(epoch_idx))
-
+            self.callback_list.on_epoch_begin(epoch_idx)
             self.overlap_ub, self.overlap_ub_2, self.mapping_comp_b = self.batch_compute_components(data_loader)
             send_components = [self.overlap_ub, self.overlap_ub_2, self.mapping_comp_b]
             guest_components = self.exchange_components(send_components, epoch_idx)
@@ -192,11 +192,7 @@ class FTLHost(FTL):
                 if local_round_idx + 1 != self.local_round:
                     self.overlap_ub, self.overlap_ub_2, self.mapping_comp_b = self.batch_compute_components(data_loader)
 
-            if self.validation_strategy is not None:
-                self.validation_strategy.validate(self, epoch_idx)
-                if self.validation_strategy.need_stop():
-                    LOGGER.debug('early stopping triggered')
-                    break
+            self.callback_list.on_epoch_end(epoch_idx)
 
             if self.n_iter_no_change is True:
                 stop_flag = self.sync_stop_flag(epoch_idx)
@@ -205,11 +201,12 @@ class FTLHost(FTL):
 
             LOGGER.debug('fitting epoch {} done'.format(epoch_idx))
 
+        self.callback_list.on_train_end()
         self.set_summary(self.generate_summary())
 
     def generate_summary(self):
 
-        summary = {"best_iteration": -1 if self.validation_strategy is None else self.validation_strategy.best_iteration}
+        summary = {"best_iteration": self.callback_variables.best_iteration}
         return summary
 
     @assert_io_num_rows_equal

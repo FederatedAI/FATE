@@ -20,6 +20,7 @@ from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.linear_model.linear_regression.hetero_linear_regression.hetero_linr_base import HeteroLinRBase
 from federatedml.optim.gradient import hetero_linr_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
+from federatedml.statistic.data_overview import with_weight, scale_sample_weight
 from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util.io_check import assert_io_num_rows_equal
@@ -43,7 +44,7 @@ class HeteroLinRGuest(HeteroLinRBase):
         return data_instance as original
         Parameters
         ----------
-        data_instance: DTable of Instance, input data
+        data_instance: Table of Instance, input data
         """
         return data_instance
 
@@ -52,16 +53,30 @@ class HeteroLinRGuest(HeteroLinRBase):
         Train linR model of role guest
         Parameters
         ----------
-        data_instances: DTable of Instance, input data
+        data_instances: Table of Instance, input data
         """
 
         LOGGER.info("Enter hetero_linR_guest fit")
         self._abnormal_detection(data_instances)
         self.header = self.get_header(data_instances)
-
-        self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        self.callback_list.on_train_begin(data_instances, validate_data)
+        # self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
 
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
+
+        use_async = False
+        if with_weight(data_instances):
+            if self.model_param.early_stop == "diff":
+                LOGGER.warning("input data with weight, please use 'weight_diff' for 'early_stop'.")
+            data_instances = scale_sample_weight(data_instances)
+            self.gradient_loss_operator.set_use_sample_weight()
+            LOGGER.debug(f"instance weight scaled; use weighted gradient loss operator")
+            # LOGGER.debug(f"data_instances after scale: {[v[1].weight for v in list(data_instances.collect())]}")
+        elif len(self.component_properties.host_party_idlist) == 1:
+            LOGGER.debug(f"set_use_async")
+            self.gradient_loss_operator.set_use_async()
+            use_async = True
+        self.transfer_variable.use_async.remote(use_async)
 
         LOGGER.info("Generate mini-batch from input data")
         self.batch_generator.initialize_batch_generator(data_instances, self.batch_size)
@@ -75,23 +90,23 @@ class HeteroLinRGuest(HeteroLinRBase):
         LOGGER.info("Start initialize model.")
         LOGGER.info("fit_intercept:{}".format(self.init_param_obj.fit_intercept))
         model_shape = self.get_features_shape(data_instances)
-        w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
-        self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept,
-                                                raise_overflow_error=False)
+        if not self.component_properties.is_warm_start:
+            w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
+            self.model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept, raise_overflow_error=False)
+        else:
+            self.callback_warm_start_init_iter(self.n_iter_)
 
         while self.n_iter_ < self.max_iter:
+            self.callback_list.on_epoch_begin(self.n_iter_)
             LOGGER.info("iter:{}".format(self.n_iter_))
             # each iter will get the same batch_data_generator
             batch_data_generator = self.batch_generator.generate_batch_data()
             self.optimizer.set_iters(self.n_iter_)
             batch_index = 0
             for batch_data in batch_data_generator:
-                # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
-                batch_feat_inst = self.transform(batch_data)
-
                 # Start gradient procedure
                 optim_guest_gradient = self.gradient_loss_operator.compute_gradient_procedure(
-                    batch_feat_inst,
+                    batch_data,
                     self.encrypted_calculator,
                     self.model_weights,
                     self.optimizer,
@@ -104,26 +119,19 @@ class HeteroLinRGuest(HeteroLinRBase):
 
                 self.model_weights = self.optimizer.update_model(self.model_weights, optim_guest_gradient)
                 batch_index += 1
-                # LOGGER.debug(
-                #     "model_weights, iters: {}, update_model: {}".format(self.n_iter_, self.model_weights.unboxed))
 
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
             LOGGER.info("iter: {}, is_converged: {}".format(self.n_iter_, self.is_converged))
 
-            # LOGGER.debug("model weights is {}".format(self.model_weights.coef_))
-
-            if self.validation_strategy:
-                LOGGER.debug('LinR guest running validation')
-                self.validation_strategy.validate(self, self.n_iter_)
-                if self.validation_strategy.need_stop():
-                    LOGGER.debug('early stopping triggered')
-                    break
-
+            self.callback_list.on_epoch_end(self.n_iter_)
             self.n_iter_ += 1
+            if self.stop_training:
+                break
+
             if self.is_converged:
                 break
-        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
-            self.load_model(self.validation_strategy.cur_best_model)
+        self.callback_list.on_train_end()
+
         self.set_summary(self.get_model_summary())
 
     @assert_io_num_rows_equal
@@ -132,20 +140,19 @@ class HeteroLinRGuest(HeteroLinRBase):
         Prediction of linR
         Parameters
         ----------
-        data_instances: DTable of Instance, input data
+        data_instances: Table of Instance, input data
         predict_param: PredictParam, the setting of prediction.
 
         Returns
         ----------
-        DTable
+        Table
             include input data label, predict results
         """
         LOGGER.info("Start predict ...")
 
         self._abnormal_detection(data_instances)
         data_instances = self.align_data_header(data_instances, self.header)
-        data_features = self.transform(data_instances)
-        pred = self.compute_wx(data_features, self.model_weights.coef_, self.model_weights.intercept_)
+        pred = self.compute_wx(data_instances, self.model_weights.coef_, self.model_weights.intercept_)
         host_preds = self.transfer_variable.host_partial_prediction.get(idx=-1)
         LOGGER.info("Get prediction from Host")
 

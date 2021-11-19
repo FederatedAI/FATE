@@ -6,21 +6,14 @@
     },
     "role": {
         "arbiter": [
-            9999
+            10000
         ],
         "host": [
-            9998
+            10000
         ],
         "guest": [
             9999
         ]
-    },
-    "job_parameters": {
-        "common": {
-            "job_type": "train",
-            "backend": 0,
-            "work_mode": 0
-        }
     },
     "component_parameters": {
         "common": {
@@ -61,7 +54,7 @@
         "role": {
             "guest": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "missing_fill": true,
                         "outlier_replace": true,
                         "with_label": true
@@ -76,7 +69,7 @@
             },
             "host": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "missing_fill": true,
                         "outlier_replace": true,
                         "with_label": false

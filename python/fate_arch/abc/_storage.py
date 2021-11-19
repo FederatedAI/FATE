@@ -62,7 +62,7 @@ class StorageTableMetaABC(metaclass=abc.ABCMeta):
         ...
 
     @abc.abstractmethod
-    def get_type(self):
+    def get_store_type(self):
         ...
 
     @abc.abstractmethod
@@ -79,6 +79,14 @@ class StorageTableMetaABC(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def get_id_delimiter(self):
+        ...
+
+    @abc.abstractmethod
+    def get_extend_sid(self):
+        ...
+
+    @abc.abstractmethod
+    def get_auto_increasing_sid(self):
         ...
 
     @abc.abstractmethod
@@ -107,40 +115,63 @@ class StorageTableMetaABC(metaclass=abc.ABCMeta):
 
 
 class StorageTableABC(metaclass=abc.ABCMeta):
+    @property
     @abc.abstractmethod
-    def get_name(self):
+    def name(self):
+        ...
+
+    @property
+    @abc.abstractmethod
+    def namespace(self):
+        ...
+
+    @property
+    @abc.abstractmethod
+    def address(self):
+        ...
+
+    @property
+    @abc.abstractmethod
+    def engine(self):
+        ...
+
+    @property
+    @abc.abstractmethod
+    def store_type(self):
+        ...
+
+    @property
+    @abc.abstractmethod
+    def options(self):
+        ...
+
+    @property
+    @abc.abstractmethod
+    def partitions(self):
+        ...
+
+    @property
+    @abc.abstractmethod
+    def meta(self) -> StorageTableMetaABC:
+        ...
+
+    @meta.setter
+    @abc.abstractmethod
+    def meta(self, meta: StorageTableMetaABC):
         ...
 
     @abc.abstractmethod
-    def get_namespace(self):
+    def update_meta(self,
+                    schema=None,
+                    count=None,
+                    part_of_data=None,
+                    description=None,
+                    partitions=None,
+                    **kwargs) -> StorageTableMetaABC:
         ...
 
     @abc.abstractmethod
-    def get_address(self):
-        ...
-
-    @abc.abstractmethod
-    def get_engine(self):
-        ...
-
-    @abc.abstractmethod
-    def get_type(self):
-        ...
-
-    @abc.abstractmethod
-    def get_options(self):
-        ...
-
-    @abc.abstractmethod
-    def get_partitions(self):
-        ...
-
-    @abc.abstractmethod
-    def set_meta(self, meta: StorageTableMetaABC):
-        ...
-
-    @abc.abstractmethod
-    def get_meta(self) -> StorageTableMetaABC:
+    def create_meta(self, **kwargs) -> StorageTableMetaABC:
         ...
 
     @abc.abstractmethod
@@ -163,6 +194,10 @@ class StorageTableABC(metaclass=abc.ABCMeta):
     def destroy(self):
         ...
 
+    @abc.abstractmethod
+    def check_address(self):
+        ...
+
 
 class StorageSessionABC(metaclass=abc.ABCMeta):
     @abc.abstractmethod
@@ -175,11 +210,19 @@ class StorageSessionABC(metaclass=abc.ABCMeta):
         ...
 
     @abc.abstractmethod
-    def get_storage_info(self, name, namespace):
+    def get_table_meta(self, name, namespace) -> StorageTableMetaABC:
         ...
 
+    # @abc.abstractmethod
+    # def table(self, name, namespace, address, partitions, store_type=None, options=None, **kwargs) -> StorageTableABC:
+    #     ...
+
+    # @abc.abstractmethod
+    # def get_storage_info(self, name, namespace):
+    #     ...
+
     @abc.abstractmethod
-    def query_expired_sessions_record(self, ttl) -> []:
+    def destroy(self):
         ...
 
     @abc.abstractmethod
@@ -193,4 +236,9 @@ class StorageSessionABC(metaclass=abc.ABCMeta):
     @property
     @abc.abstractmethod
     def session_id(self) -> str:
+        ...
+
+    @property
+    @abc.abstractmethod
+    def engine(self) -> str:
         ...

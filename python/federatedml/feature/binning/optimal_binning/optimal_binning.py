@@ -21,7 +21,6 @@ import functools
 import math
 import operator
 import time
-import uuid
 
 import numpy as np
 
@@ -39,15 +38,21 @@ from federatedml.util import consts
 
 
 class OptimalBinning(BaseBinning):
-    def __init__(self, params: HeteroFeatureBinningParam, abnormal_list=None):
+    def __init__(self, params, abnormal_list=None):
         super().__init__(params, abnormal_list)
-        self.optimal_param = params.optimal_binning_param
-        self.optimal_param.adjustment_factor = params.adjustment_factor
-        self.optimal_param.max_bin = params.bin_num
-        if math.ceil(1.0 / self.optimal_param.max_bin_pct) > self.optimal_param.max_bin:
-            raise ValueError("Arguments logical error, ceil(1.0/max_bin_pct) should be smaller or equal than bin_num")
+        """The following lines work only in fitting process"""
+        if isinstance(params, HeteroFeatureBinningParam):
+            self.optimal_param = params.optimal_binning_param
+            self.optimal_param.adjustment_factor = params.adjustment_factor
+            self.optimal_param.max_bin = params.bin_num
+            if math.ceil(1.0 / self.optimal_param.max_bin_pct) > self.optimal_param.max_bin:
+                raise ValueError("Arguments logical error, ceil(1.0/max_bin_pct) "
+                                 "should be smaller or equal than bin_num")
 
         self.adjustment_factor = params.adjustment_factor
+        self.event_total = None
+        self.non_event_total = None
+        self.bucket_lists = {}
 
     def fit_split_points(self, data_instances):
         header = data_overview.get_header(data_instances)
@@ -62,6 +67,7 @@ class OptimalBinning(BaseBinning):
         sample_count = data_instances.count()
         self.fit_buckets(bucket_table, sample_count)
         self.fit_category_features(data_instances)
+        return self.bin_results.all_split_points
 
     def fit_buckets(self, bucket_table, sample_count):
         if self.optimal_param.metric_method in ['iv', 'gini', 'chi_square']:
@@ -77,13 +83,14 @@ class OptimalBinning(BaseBinning):
             split_points = np.unique([bucket.right_bound for bucket in bucket_list]).tolist()
 
             self.bin_results.put_col_split_points(col_name, split_points)
-            self.__cal_single_col_result(col_name, bucket_list)
+            # self.__cal_single_col_result(col_name, bucket_list)
+            self.bucket_lists[col_name] = bucket_list
         return result_bucket
 
-    def __cal_single_col_result(self, col_name, bucket_list):
-        result_counts = [[b.event_count, b.non_event_count] for b in bucket_list]
-        col_result_obj = self.woe_1d(result_counts, self.adjustment_factor)
-        self.bin_results.put_col_results(col_name, col_result_obj)
+    # def __cal_single_col_result(self, col_name, bucket_list):
+    #     result_counts = [[b.event_count, b.non_event_count] for b in bucket_list]
+    #     col_result_obj = self.woe_1d(result_counts, self.adjustment_factor)
+    #     self.bin_results.put_col_results(col_name, col_result_obj)
 
     def init_bucket(self, data_instances):
         header = data_overview.get_header(data_instances)
@@ -558,7 +565,7 @@ class OptimalBinning(BaseBinning):
 
         Returns
         -------
-        A DTable whose keys are feature names and values are bucket lists
+        A Table whose keys are feature names and values are bucket lists
         """
         bucket_dict = dict()
         for col_name, bin_res_list in bin_sum.items():

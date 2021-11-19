@@ -6,8 +6,10 @@ class SBTTransformerParam(BaseParam):
     def __init__(self, dense_format=True):
 
         """
-        Args:
-            dense_format: return data in dense vec, otherwise return in sparse vec
+        Parameters
+        ----------
+        dense_format: bool
+            return data in dense vec if True, otherwise return in sparse vec
         """
         super(SBTTransformerParam, self).__init__()
         self.dense_format = dense_format

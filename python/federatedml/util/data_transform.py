@@ -68,6 +68,8 @@ class DenseFeatureTransformer(object):
         self.header = None
         self.sid_name = None
         self.exclusive_data_type_fid_map = {}
+        self.match_id_name = None
+        self.with_match_id = data_transform_param.with_match_id
 
     def generate_header(self, input_data, mode="fit"):
         header = input_data.schema["header"].lower()
@@ -79,27 +81,32 @@ class DenseFeatureTransformer(object):
             raise ValueError("dense input-format should have header schema")
 
         header_gen = None
+        if self.with_match_id:
+            self.match_id_name = header.split(self.delimitor, -1)[0]
+            if self.with_label and self.label_name == self.match_id_name:
+                raise ValueError("Match id column name equals to label column name")
+
         if self.with_label:
             if mode == "fit":
                 if not header:
                     raise ValueError("dense input-format for fit stage should not be None if with_label is true")
 
                 self.label_idx = header.split(self.delimitor, -1).index(self.label_name)
-
-                header_gen = header.split(self.delimitor, -1)[: self.label_idx] + \
-                             header.split(self.delimitor, -1)[self.label_idx + 1:] or None
+                header_list = header.split(self.delimitor, -1)
+                header_gen = header_list[:self.label_idx] + header_list[self.label_idx + 1:]
             elif header:
                 header_list = header.split(self.delimitor, -1)
                 if self.label_name in header_list:
                     self.label_idx = header_list.index(self.label_name)
-
-                    header_gen = header.split(self.delimitor, -1)[: self.label_idx] + \
-                                 header.split(self.delimitor, -1)[self.label_idx + 1:] or None
+                    header_gen = header_list[:self.label_idx] + header_list[self.label_idx + 1:]
                 else:
                     self.label_idx = None
-                    header_gen = header.split(self.delimitor, -1)
+                    header_gen = header_list
         elif header:
             header_gen = header.split(self.delimitor, -1)
+
+        if self.with_match_id:
+            header_gen = header_gen[1:]
 
         self.header = header_gen
         self.sid_name = sid_name
@@ -111,8 +118,36 @@ class DenseFeatureTransformer(object):
                     self.exclusive_data_type_fid_map[i] = self.exclusive_data_type[col_name]
 
     def get_schema(self):
-        schema = make_schema(self.header, self.sid_name, self.label_name)
+        schema = make_schema(self.header, self.sid_name, self.label_name, self.match_id_name)
         return schema
+
+    def extract_feature_value(self, value):
+        value = value.split(self.delimitor, -1)
+        if not self.header:
+            return []
+        elif self.with_match_id and self.label_idx is not None:
+            if len(value) == 2:
+                return []
+            elif len(value) < 2:
+                raise ValueError("Only {} column is found, can not extract match_id and label")
+            else:
+                return value[1: self.label_idx] + value[self.label_idx + 1:]
+        elif self.with_match_id:
+            if len(value) < 1:
+                raise ValueError("Only 0 column is found, can not extract match_id")
+            elif len(value) == 1:
+                return []
+            else:
+                return value[1:]
+        elif self.label_idx is not None:
+            if len(value) < 1:
+                raise ValueError("Only 0 column is found, can not extract label")
+            elif len(value) == 1:
+                return []
+            else:
+                return value[:self.label_idx] + value[self.label_idx + 1:]
+        else:
+            return value
 
     def read_data(self, input_data, mode="fit"):
         LOGGER.info("start to read dense data and change data to instance")
@@ -120,59 +155,56 @@ class DenseFeatureTransformer(object):
         abnormal_detection.empty_table_detection(input_data)
 
         input_data_labels = None
+        input_data_match_id = None
 
         fit_header = None
         if mode == "transform":
             fit_header = self.header
 
         self.generate_header(input_data, mode=mode)
+        input_data_features = input_data.mapValues(self.extract_feature_value)
 
         if self.label_idx is not None:
             data_shape = data_overview.get_data_shape(input_data)
             if not data_shape or self.label_idx >= data_shape:
-                raise ValueError("input data's value is empty, it does not contain a label")
-
-            input_data_features = input_data.mapValues(
-                lambda value: [] if data_shape == 1 else value.split(self.delimitor, -1)[:self.label_idx] + value.split(
-                    self.delimitor, -1)[self.label_idx + 1:])
+                raise ValueError("input data's value is empty or it does not contain a label")
 
             input_data_labels = input_data.mapValues(lambda value: value.split(self.delimitor, -1)[self.label_idx])
 
-        else:
-            input_data_features = input_data.mapValues(
-                lambda value: [] if not self.header else value.split(self.delimitor, -1))
+        if self.with_match_id:
+            input_data_match_id = input_data.mapValues(
+                lambda value: value.split(self.delimitor, -1)[0])
 
         if mode == "fit":
-            data_instance = self.fit(input_data, input_data_features, input_data_labels)
+            data_instance = self.fit(input_data, input_data_features, input_data_labels, input_data_match_id)
         else:
-            data_instance = self.transform(input_data_features, input_data_labels)
-            # data_instance = ModelBase.align_data_header(data_instance, fit_header)
+            data_instance = self.transform(input_data_features, input_data_labels, input_data_match_id)
             data_instance = data_overview.header_alignment(data_instance, fit_header)
 
         return data_instance
 
-    def fit(self, input_data, input_data_features, input_data_labels):
+    def fit(self, input_data, input_data_features, input_data_labels, input_data_match_id):
         schema = self.get_schema()
         set_schema(input_data_features, schema)
 
         input_data_features = self.fill_missing_value(input_data_features, "fit")
         input_data_features = self.replace_outlier_value(input_data_features, "fit")
 
-        data_instance = self.gen_data_instance(input_data_features, input_data_labels)
+        data_instance = self.gen_data_instance(input_data_features, input_data_labels, input_data_match_id)
 
         set_schema(data_instance, schema)
 
         return data_instance
 
     @assert_io_num_rows_equal
-    def transform(self, input_data_features, input_data_labels):
+    def transform(self, input_data_features, input_data_labels, input_data_match_id):
         schema = make_schema(self.header, self.sid_name, self.label_name)
 
         set_schema(input_data_features, schema)
         input_data_features = self.fill_missing_value(input_data_features, "transform")
         input_data_features = self.replace_outlier_value(input_data_features, "transform")
 
-        data_instance = self.gen_data_instance(input_data_features, input_data_labels)
+        data_instance = self.gen_data_instance(input_data_features, input_data_labels, input_data_match_id)
         set_schema(data_instance, schema)
 
         return data_instance
@@ -218,15 +250,21 @@ class DenseFeatureTransformer(object):
 
         return input_data_features
 
-    def gen_data_instance(self, input_data_features, input_data_labels):
+    def gen_data_instance(self, input_data_features, input_data_labels, input_data_match_id):
         if self.label_idx is not None:
             data_instance = input_data_features.join(input_data_labels,
-                                                     lambda features, label:
-                                                     self.to_instance(features, label))
+                                                     lambda features, label: self.to_instance(features, label))
         else:
             data_instance = input_data_features.mapValues(lambda features: self.to_instance(features))
 
+        if self.with_match_id:
+            data_instance = data_instance.join(input_data_match_id, self.append_match_id)
+
         return data_instance
+
+    def append_match_id(self, inst, match_id):
+        inst.inst_id = match_id
+        return inst
 
     def to_instance(self, features, label=None):
         if self.header is None and len(features) != 0:
@@ -240,14 +278,16 @@ class DenseFeatureTransformer(object):
             elif self.label_type in ["float", "float64"]:
                 label = float(label)
 
-            format_features = DenseFeatureTransformer.gen_output_format(features, self.data_type, self.exclusive_data_type_fid_map,
-                                                                   self.output_format,
-                                                                   missing_impute=self.missing_impute)
+            format_features = DenseFeatureTransformer.gen_output_format(features, self.data_type,
+                                                                        self.exclusive_data_type_fid_map,
+                                                                        self.output_format,
+                                                                        missing_impute=self.missing_impute)
 
         else:
-            format_features = DenseFeatureTransformer.gen_output_format(features, self.data_type, self.exclusive_data_type_fid_map,
-                                                                   self.output_format,
-                                                                   missing_impute=self.missing_impute)
+            format_features = DenseFeatureTransformer.gen_output_format(features, self.data_type,
+                                                                        self.exclusive_data_type_fid_map,
+                                                                        self.output_format,
+                                                                        missing_impute=self.missing_impute)
 
         return Instance(inst_id=None,
                         features=format_features,
@@ -336,16 +376,17 @@ class DenseFeatureTransformer(object):
 
     def save_model(self):
         transform_meta, transform_param = save_data_transform_model(input_format="dense",
-                                                       delimitor=self.delimitor,
-                                                       data_type=self.data_type,
-                                                       exclusive_data_type=self.exclusive_data_type,
-                                                       with_label=self.with_label,
-                                                       label_type=self.label_type,
-                                                       output_format=self.output_format,
-                                                       header=self.header,
-                                                       sid_name=self.sid_name,
-                                                       label_name=self.label_name,
-                                                       model_name="DenseFeatureTransformer")
+                                                                    delimitor=self.delimitor,
+                                                                    data_type=self.data_type,
+                                                                    exclusive_data_type=self.exclusive_data_type,
+                                                                    with_label=self.with_label,
+                                                                    label_type=self.label_type,
+                                                                    output_format=self.output_format,
+                                                                    header=self.header,
+                                                                    sid_name=self.sid_name,
+                                                                    label_name=self.label_name,
+                                                                    with_match_id=self.with_match_id,
+                                                                    model_name="DenseFeatureTransformer")
 
         missing_imputer_meta, missing_imputer_param = save_missing_imputer_model(self.missing_fill,
                                                                                  self.missing_fill_method,
@@ -375,7 +416,7 @@ class DenseFeatureTransformer(object):
 
     def load_model(self, model_meta, model_param):
         self.delimitor, self.data_type, self.exclusive_data_type, _1, _2, self.with_label, \
-        self.label_type, self.output_format, self.header, self.sid_name, self.label_name = \
+        self.label_type, self.output_format, self.header, self.sid_name, self.label_name, self.with_match_id = \
             load_data_transform_model("DenseFeatureTransformer", model_meta, model_param)
 
         self.missing_fill, self.missing_fill_method, \
@@ -402,17 +443,25 @@ class SparseFeatureTransformer(object):
         self.output_format = data_transform_param.output_format
         self.header = None
         self.sid_name = "sid"
-        self.label_name = self.label_name = data_transform_param.label_name
+        self.label_name = data_transform_param.label_name
+        self.with_match_id = data_transform_param.with_match_id
+        self.match_id_name = "match_id" if self.with_match_id else None
+        self.with_label = data_transform_param.with_label
 
     def get_max_feature_index(self, line, delimitor=' '):
         if line.strip() == '':
             raise ValueError("find an empty line, please check!!!")
 
         cols = line.split(delimitor, -1)
-        if len(cols) <= 1:
-            return -1
+        offset = 0
+        if self.with_match_id:
+            offset += 1
+        if self.with_label:
+            offset += 1
 
-        return max([int(fid_value.split(":", -1)[0]) for fid_value in cols[1:]])
+        if len(cols) <= offset:
+            return -1
+        return max([int(fid_value.split(":", -1)[0]) for fid_value in cols[offset:]])
 
     def generate_header(self, max_feature):
         self.header = [str(i) for i in range(max_feature + 1)]
@@ -430,7 +479,7 @@ class SparseFeatureTransformer(object):
         else:
             data_instance = self.transform(input_data)
 
-        schema = make_schema(self.header, self.sid_name, self.label_name)
+        schema = make_schema(self.header, self.sid_name, self.label_name, self.match_id_name)
         set_schema(data_instance, schema)
         return data_instance
 
@@ -447,15 +496,15 @@ class SparseFeatureTransformer(object):
         return data_instance
 
     def transform(self, input_data):
-        max_feature = len(self.header)
+        max_feature = len(self.header) - 1
 
         data_instance = self.gen_data_instance(input_data, max_feature)
         return data_instance
 
     def gen_data_instance(self, input_data, max_feature):
         params = [self.delimitor, self.data_type,
-                  self.label_type,
-                  self.output_format, max_feature]
+                  self.label_type, self.with_match_id,
+                  self.output_format, self.with_label, max_feature]
 
         to_instance_with_param = functools.partial(self.to_instance, params)
         data_instance = input_data.mapValues(to_instance_with_param)
@@ -467,22 +516,33 @@ class SparseFeatureTransformer(object):
         delimitor = param_list[0]
         data_type = param_list[1]
         label_type = param_list[2]
-        output_format = param_list[3]
-        max_fid = param_list[4]
+        with_match_id = param_list[3]
+        output_format = param_list[4]
+        with_label = param_list[5]
+        max_fid = param_list[6]
 
         if output_format not in ["dense", "sparse"]:
             raise ValueError("output format {} is not define".format(output_format))
 
         cols = value.split(delimitor, -1)
+        next_idx = 0
+        if with_match_id:
+            match_id = cols[0]
+            next_idx = 1
+        else:
+            match_id = None
 
-        label = cols[0]
-        if label_type == 'int':
-            label = int(label)
-        elif label_type in ["float", "float64"]:
-            label = float(label)
+        label = None
+        if with_label:
+            label = cols[next_idx]
+            if label_type == 'int':
+                label = int(label)
+            elif label_type in ["float", "float64"]:
+                label = float(label)
+            next_idx += 1
 
         fid_value = []
-        for i in range(1, len(cols)):
+        for i in range(next_idx, len(cols)):
             fid, val = cols[i].split(":", -1)
 
             fid = int(fid)
@@ -509,21 +569,23 @@ class SparseFeatureTransformer(object):
 
             features = SparseVector(indices, data, max_fid + 1)
 
-        return Instance(inst_id=None,
+        return Instance(inst_id=match_id,
                         features=features,
                         label=label)
 
     def save_model(self):
 
         transform_meta, transform_param = save_data_transform_model(input_format="sparse",
-                                                       delimitor=self.delimitor,
-                                                       data_type=self.data_type,
-                                                       label_type=self.label_type,
-                                                       output_format=self.output_format,
-                                                       header=self.header,
-                                                       sid_name=self.sid_name,
-                                                       label_name=self.label_name,
-                                                       model_name="SparseFeatureTransformer")
+                                                                    delimitor=self.delimitor,
+                                                                    data_type=self.data_type,
+                                                                    label_type=self.label_type,
+                                                                    output_format=self.output_format,
+                                                                    header=self.header,
+                                                                    sid_name=self.sid_name,
+                                                                    label_name=self.label_name,
+                                                                    with_match_id=self.with_match_id,
+                                                                    with_label=self.with_label,
+                                                                    model_name="SparseFeatureTransformer")
 
         missing_imputer_meta, missing_imputer_param = save_missing_imputer_model(missing_fill=False,
                                                                                  model_name="Imputer")
@@ -541,11 +603,12 @@ class SparseFeatureTransformer(object):
                 }
 
     def load_model(self, model_meta, model_param):
-        self.delimitor, self.data_type, _0, _1, _2, _3, \
-        self.label_type, self.output_format, self.header, self.sid_name, self.label_name = load_data_transform_model(
-            "SparseFeatureTransformer",
-            model_meta,
-            model_param)
+        self.delimitor, self.data_type, _0, _1, _2, self.with_label, \
+        self.label_type, self.output_format, self.header, self.sid_name, self.label_name, self.with_match_id = \
+            load_data_transform_model(
+                "SparseFeatureTransformer",
+                model_meta,
+                model_param)
 
 
 # =============================================================================
@@ -566,17 +629,21 @@ class SparseTagTransformer(object):
         self.missing_fill = data_transform_param.missing_fill
         self.missing_fill_method = data_transform_param.missing_fill_method
         self.default_value = data_transform_param.default_value
+        self.with_match_id = data_transform_param.with_match_id
+        self.match_id_name = "match_id" if self.with_match_id else None
         self.missing_impute_rate = None
         self.missing_impute = None
 
     @staticmethod
-    def agg_tag(kvs, delimitor=' ', with_label=True, tag_with_value=False, tag_value_delimitor=":"):
+    def agg_tag(kvs, delimitor=' ', with_label=True, with_match_id=False, tag_with_value=False,
+                tag_value_delimitor=":"):
         tags_set = set()
+        offset = 1 if with_match_id else 0
         for key, value in kvs:
             if with_label:
-                cols = value.split(delimitor, -1)[1:]
+                cols = value.split(delimitor, -1)[1 + offset:]
             else:
-                cols = value.split(delimitor, -1)[0:]
+                cols = value.split(delimitor, -1)[0 + offset:]
 
             if tag_with_value is False:
                 tags = cols
@@ -602,16 +669,25 @@ class SparseTagTransformer(object):
         else:
             data_instance = self.transform(input_data)
 
-        schema = make_schema(self.header, self.sid_name, self.label_name)
+        schema = make_schema(self.header, self.sid_name, self.label_name, self.match_id_name)
         set_schema(data_instance, schema)
+
+        for k, inst in data_instance.collect():
+            LOGGER.debug(f"mgq-debug : {inst.inst_id}")
         return data_instance
 
     @staticmethod
-    def change_tag_to_str(value, tags_dict=None, delimitor=",", with_label=False, tag_value_delimitor=":"):
+    def change_tag_to_str(value, tags_dict=None, delimitor=",", with_label=False, with_match_id=False,
+                          tag_value_delimitor=":"):
         vals = value.split(delimitor, -1)
         ret = [''] * len(tags_dict)
+        offset = 0
         if with_label:
-            vals = vals[1:]
+            offset += 1
+        if with_match_id:
+            offset += 1
+
+        vals = vals[2:]
 
         for i in range(len(vals)):
             tag, value = vals[i].split(tag_value_delimitor, -1)
@@ -636,10 +712,11 @@ class SparseTagTransformer(object):
                                              tags_dict=tags_dict,
                                              delimitor=self.delimitor,
                                              with_label=self.with_label,
+                                             with_match_id=self.with_match_id,
                                              tag_value_delimitor=self.tag_value_delimitor)
 
         input_data = input_data.mapValues(str_trans_method)
-        schema = make_schema(self.header, self.sid_name, self.label_name)
+        schema = make_schema(self.header, self.sid_name, self.label_name, self.match_id_name)
         set_schema(input_data, schema)
 
         from federatedml.feature.imputer import Imputer
@@ -672,6 +749,7 @@ class SparseTagTransformer(object):
         tag_aggregator = functools.partial(SparseTagTransformer.agg_tag,
                                            delimitor=self.delimitor,
                                            with_label=self.with_label,
+                                           with_match_id=self.with_match_id,
                                            tag_with_value=self.tag_with_value,
                                            tag_value_delimitor=self.tag_value_delimitor)
         tags_set_list = list(input_data.applyPartitions(tag_aggregator).collect())
@@ -708,6 +786,7 @@ class SparseTagTransformer(object):
                   self.tag_with_value,
                   self.tag_value_delimitor,
                   self.with_label,
+                  self.with_match_id,
                   self.label_type,
                   self.output_format,
                   tags_dict]
@@ -735,20 +814,26 @@ class SparseTagTransformer(object):
         tag_with_value = param_list[2]
         tag_value_delimitor = param_list[3]
         with_label = param_list[4]
-        label_type = param_list[5]
-        output_format = param_list[6]
-        tags_dict = param_list[7]
+        with_match_id = param_list[5]
+        label_type = param_list[6]
+        output_format = param_list[7]
+        tags_dict = param_list[8]
 
         if output_format not in ["dense", "sparse"]:
             raise ValueError("output format {} is not define".format(output_format))
 
         cols = value.split(delimitor, -1)
-        start_pos = 0
+        offset = 0
         label = None
+        match_id = None
+
+        if with_match_id:
+            offset += 1
+            match_id = cols[0]
 
         if with_label:
-            start_pos = 1
-            label = cols[0]
+            label = cols[offset]
+            offset += 1
             if label_type == 'int':
                 label = int(label)
             elif label_type in ["float", "float64"]:
@@ -756,7 +841,7 @@ class SparseTagTransformer(object):
 
         if output_format == "dense":
             features = [0 for i in range(len(tags_dict))]
-            for fea in cols[start_pos:]:
+            for fea in cols[offset:]:
                 if tag_with_value:
                     _tag, _val = fea.split(tag_value_delimitor, -1)
                     if _tag in tags_dict:
@@ -769,7 +854,7 @@ class SparseTagTransformer(object):
         else:
             indices = []
             data = []
-            for fea in cols[start_pos:]:
+            for fea in cols[offset:]:
                 if tag_with_value:
                     _tag, _val = fea.split(tag_value_delimitor, -1)
                 else:
@@ -791,23 +876,24 @@ class SparseTagTransformer(object):
 
             features = SparseVector(indices, data, len(tags_dict))
 
-        return Instance(inst_id=None,
+        return Instance(inst_id=match_id,
                         features=features,
                         label=label)
 
     def save_model(self):
         transform_meta, transform_param = save_data_transform_model(input_format="tag",
-                                                       delimitor=self.delimitor,
-                                                       data_type=self.data_type,
-                                                       tag_with_value=self.tag_with_value,
-                                                       tag_value_delimitor=self.tag_value_delimitor,
-                                                       with_label=self.with_label,
-                                                       label_type=self.label_type,
-                                                       output_format=self.output_format,
-                                                       header=self.header,
-                                                       sid_name=self.sid_name,
-                                                       label_name=self.label_name,
-                                                       model_name="Transformer")
+                                                                    delimitor=self.delimitor,
+                                                                    data_type=self.data_type,
+                                                                    tag_with_value=self.tag_with_value,
+                                                                    tag_value_delimitor=self.tag_value_delimitor,
+                                                                    with_label=self.with_label,
+                                                                    label_type=self.label_type,
+                                                                    with_match_id=self.with_match_id,
+                                                                    output_format=self.output_format,
+                                                                    header=self.header,
+                                                                    sid_name=self.sid_name,
+                                                                    label_name=self.label_name,
+                                                                    model_name="Transformer")
 
         missing_imputer_meta, missing_imputer_param = save_missing_imputer_model(self.missing_fill,
                                                                                  self.missing_fill_method,
@@ -832,16 +918,16 @@ class SparseTagTransformer(object):
 
     def load_model(self, model_meta, model_param):
         self.delimitor, self.data_type, _0, self.tag_with_value, self.tag_value_delimitor, self.with_label, \
-        self.label_type, self.output_format, self.header, self.sid_name, self.label_name = load_data_transform_model(
+        self.label_type, self.output_format, self.header, self.sid_name, self.label_name, self.with_match_id = load_data_transform_model(
             "SparseTagTransformer",
             model_meta,
             model_param)
 
         self.missing_fill, self.missing_fill_method, \
         self.missing_impute, self.default_value = load_missing_imputer_model(self.header,
-                                                           "Imputer",
-                                                           model_meta.imputer_meta,
-                                                           model_param.imputer_param)
+                                                                             "Imputer",
+                                                                             model_meta.imputer_meta,
+                                                                             model_param.imputer_param)
 
 
 class DataTransform(ModelBase):
@@ -899,7 +985,7 @@ class DataTransform(ModelBase):
         return model_dict
 
 
-def make_schema(header=None, sid_name=None, label_name=None):
+def make_schema(header=None, sid_name=None, label_name=None, match_id_name=None):
     schema = {}
     if header:
         schema["header"] = header
@@ -909,6 +995,10 @@ def make_schema(header=None, sid_name=None, label_name=None):
 
     if label_name:
         schema["label_name"] = label_name
+
+    if match_id_name:
+        schema["match_id_name"] = match_id_name
+
     ModelBase.check_schema_content(schema)
     return schema
 
@@ -918,18 +1008,19 @@ def set_schema(data_instance, schema):
 
 
 def save_data_transform_model(input_format="dense",
-                       delimitor=",",
-                       data_type="str",
-                       exclusive_data_type=None,
-                       tag_with_value=False,
-                       tag_value_delimitor=":",
-                       with_label=False,
-                       label_name='',
-                       label_type="int",
-                       output_format="dense",
-                       header=None,
-                       sid_name=None,
-                       model_name="DataTransform"):
+                              delimitor=",",
+                              data_type="str",
+                              exclusive_data_type=None,
+                              tag_with_value=False,
+                              tag_value_delimitor=":",
+                              with_label=False,
+                              label_name='',
+                              label_type="int",
+                              output_format="dense",
+                              header=None,
+                              sid_name=None,
+                              with_match_id=False,
+                              model_name="DataTransform"):
     model_meta = DataTransformMeta()
     model_param = DataTransformParam()
 
@@ -942,6 +1033,7 @@ def save_data_transform_model(input_format="dense",
     model_meta.label_name = label_name
     model_meta.label_type = label_type
     model_meta.output_format = output_format
+    model_meta.with_match_id = with_match_id
 
     if header is not None:
         model_param.header.extend(header)
@@ -959,8 +1051,8 @@ def save_data_transform_model(input_format="dense",
 
 
 def load_data_transform_model(model_name="DataTransform",
-                       model_meta=None,
-                       model_param=None):
+                              model_meta=None,
+                              model_param=None):
     delimitor = model_meta.delimitor
     data_type = model_meta.data_type
     tag_with_value = model_meta.tag_with_value
@@ -968,6 +1060,7 @@ def load_data_transform_model(model_name="DataTransform",
     with_label = model_meta.with_label
     label_name = model_meta.label_name
     label_type = model_meta.label_type
+    with_match_id = model_meta.with_match_id
     output_format = model_meta.output_format
 
     header = list(model_param.header) or None
@@ -984,7 +1077,7 @@ def load_data_transform_model(model_name="DataTransform",
             exclusive_data_type[col_name] = model_meta.exclusive_data_type.get(col_name)
 
     return delimitor, data_type, exclusive_data_type, tag_with_value, tag_value_delimitor, with_label, \
-           label_type, output_format, header, sid_name, label_name
+           label_type, output_format, header, sid_name, label_name, with_match_id
 
 
 def save_missing_imputer_model(missing_fill=False,
@@ -1103,5 +1196,3 @@ def load_outlier_model(header=None,
         outlier_replace_value = None
 
     return outlier_replace, outlier_replace_method, outlier_value, outlier_replace_value
-
-

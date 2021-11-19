@@ -17,20 +17,20 @@ import copy
 import getpass
 import json
 import pickle
-import sys
 import time
 from types import SimpleNamespace
 
-from pipeline.backend.config import Backend, WorkMode
 from pipeline.backend.config import Role
 from pipeline.backend.config import StatusCode
 from pipeline.backend.config import VERSION
 from pipeline.backend.config import SystemSetting
+from pipeline.backend._operation import OnlineCommand, ModelConvert
 from pipeline.backend.task_info import TaskInfo
 from pipeline.component.component_base import Component
 from pipeline.component.reader import Reader
 from pipeline.interface import Data
 from pipeline.interface import Model
+from pipeline.interface import Cache
 from pipeline.utils import tools
 from pipeline.utils.invoker.job_submitter import JobInvoker
 from pipeline.utils.logger import LOGGER
@@ -63,12 +63,19 @@ class PipeLine(object):
         self._predict_pipeline = []
         self._deploy = False
         self._system_role = SystemSetting.system_setting().get("role")
+        self.online = OnlineCommand(self)
+        self._load = False
+        self.model_convert = ModelConvert(self)
+        self._global_job_provider = None
 
     @LOGGER.catch(reraise=True)
     def set_initiator(self, role, party_id):
         self._initiator = SimpleNamespace(role=role, party_id=party_id)
 
         return self
+
+    def get_component_list(self):
+        return copy.copy(list(self._components.keys()))
 
     def restore_roles(self, initiator, roles):
         self._initiator = initiator
@@ -87,6 +94,12 @@ class PipeLine(object):
                 "components": self._components,
                 "stage": self._stage
                 }
+
+    def get_predict_model_info(self):
+        return copy.deepcopy(self._predict_model_info)
+
+    def get_model_info(self):
+        return copy.deepcopy(self._model_info)
 
     def get_train_dsl(self):
         return copy.deepcopy(self._train_dsl)
@@ -111,6 +124,10 @@ class PipeLine(object):
                           "party_id": self._initiator.party_id}
 
         return initiator_conf
+
+    def set_global_job_provider(self, provider):
+        self._global_job_provider = provider
+        return self
 
     @LOGGER.catch(reraise=True)
     def set_roles(self, guest=None, host=None, arbiter=None, **kwargs):
@@ -150,7 +167,7 @@ class PipeLine(object):
         return self._roles[role].index(party_id)
 
     @LOGGER.catch(reraise=True)
-    def add_component(self, component, data=None, model=None):
+    def add_component(self, component, data=None, model=None, cache=None):
         if isinstance(component, PipeLine):
             if component.is_deploy() is False:
                 raise ValueError("To use a training pipeline object as predict component, should deploy model first")
@@ -214,24 +231,49 @@ class PipeLine(object):
                     self._components_input[component.name][attr.strip("_")] = val
                 else:
                     self._components_input[component.name][attr.strip("_")] = [val]
+
+        if cache is not None:
+            if not isinstance(cache, Cache):
+                raise ValueError("cache input of component {} should be passed by cache object".format(component.name))
+
+            attr = cache.cache
+            if not isinstance(attr, list):
+                attr = [attr]
+
+            self._components_input[component.name]["cache"] = attr
+
         return self
 
     @LOGGER.catch(reraise=True)
     def add_upload_data(self, file, table_name, namespace, head=1, partition=16,
-                        id_delimiter=",", backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE):
+                        id_delimiter=",", extend_sid=False, auto_increasing_sid=False):
         data_conf = {"file": file,
                      "table_name": table_name,
                      "namespace": namespace,
                      "head": head,
                      "partition": partition,
                      "id_delimiter": id_delimiter,
-                     "backend": backend,
-                     "work_mode": work_mode}
+                     "extend_sid": extend_sid,
+                     "auto_increasing_sid": auto_increasing_sid}
         self._upload_conf.append(data_conf)
 
     def _get_task_inst(self, job_id, name, init_role, party_id):
+        component = None
+        if name in self._components:
+            component = self._components[name]
+
+        if component is None:
+            if self._stage != "predict":
+                raise ValueError(f"Component {component} does not exist")
+            training_meta = self._predict_pipeline[0]["pipeline"].get_predict_meta()
+
+            component = training_meta.get("components").get(name)
+
+            if component is None:
+                raise ValueError(f"Component {name} does not exist")
+
         return TaskInfo(jobid=job_id,
-                        component=self._components[name],
+                        component=component,
                         job_client=self._job_invoker,
                         role=init_role,
                         party_id=party_id)
@@ -259,6 +301,9 @@ class PipeLine(object):
             return component_tasks
 
     def _construct_train_dsl(self):
+        if self._global_job_provider:
+            self._train_dsl["provider"] = self._global_job_provider
+
         self._train_dsl["components"] = {}
         for name, component in self._components.items():
             component_dsl = {"module": component.module}
@@ -267,11 +312,18 @@ class PipeLine(object):
 
             if hasattr(component, "output"):
                 component_dsl["output"] = {}
-                if hasattr(component.output, "data_output"):
-                    component_dsl["output"]["data"] = component.output.data_output
+                output_attrs = {"data": "data_output",
+                                "model": "model_output",
+                                "cache": "cache_output"}
 
-                if hasattr(component.output, "model"):
-                    component_dsl["output"]["model"] = component.output.model_output
+                for output_key, attr in output_attrs.items():
+                    if hasattr(component.output, attr):
+                        component_dsl["output"][output_key] = getattr(component.output, attr)
+
+            if hasattr(component, "provider"):
+                provider = getattr(component, "provider")
+                if provider is not None:
+                    component_dsl["provider"] = provider
 
             self._train_dsl["components"][name] = component_dsl
 
@@ -308,10 +360,9 @@ class PipeLine(object):
         LOGGER.debug(f"self._train_conf: \n {json.dumps(self._train_conf, indent=4, ensure_ascii=False)}")
         return self._train_conf
 
-    def _construct_upload_conf(self, data_conf, backend, work_mode):
+    def _construct_upload_conf(self, data_conf):
         upload_conf = copy.deepcopy(data_conf)
-        upload_conf["backend"] = backend
-        upload_conf["work_mode"] = work_mode
+        # upload_conf["work_mode"] = work_mode
         return upload_conf
 
     def describe(self):
@@ -475,7 +526,7 @@ class PipeLine(object):
         return predict_conf
 
     @LOGGER.catch(reraise=True)
-    def fit(self, job_parameters=None):
+    def fit(self, job_parameters=None, callback_func=None):
 
         if self._stage == "predict":
             raise ValueError("This pipeline is constructed for predicting, cannot use fit interface")
@@ -488,7 +539,7 @@ class PipeLine(object):
         training_conf = self._feed_job_parameters(self._train_conf, job_type="train", job_parameters=job_parameters)
         self._train_conf = training_conf
         LOGGER.debug(f"train_conf is: \n {json.dumps(training_conf, indent=4, ensure_ascii=False)}")
-        self._train_job_id, detail_info = self._job_invoker.submit_job(self._train_dsl, training_conf)
+        self._train_job_id, detail_info = self._job_invoker.submit_job(self._train_dsl, training_conf, callback_func)
         self._train_board_url = detail_info["board_url"]
         self._model_info = SimpleNamespace(model_id=detail_info["model_info"]["model_id"],
                                            model_version=detail_info["model_info"]["model_version"])
@@ -498,7 +549,18 @@ class PipeLine(object):
                                                                 self._initiator.party_id)
 
     @LOGGER.catch(reraise=True)
-    def predict(self, job_parameters=None):
+    def predict(self, job_parameters=None, components_checkpoint=None):
+        """
+
+        Parameters
+        ----------
+        job_parameters: None
+        components_checkpoint: specify which model to take, ex.: {"hetero_lr_0": {"step_index": 8}}
+
+        Returns
+        -------
+
+        """
         if self._stage != "predict":
             raise ValueError(
                 "To use predict function, please deploy component(s) from training pipeline"
@@ -511,7 +573,8 @@ class PipeLine(object):
 
         res_dict = self._job_invoker.model_deploy(model_id=self._model_info.model_id,
                                                   model_version=self._model_info.model_version,
-                                                  predict_dsl=self._predict_dsl)
+                                                  predict_dsl=self._predict_dsl,
+                                                  components_checkpoint=components_checkpoint)
         self._predict_model_info = SimpleNamespace(model_id=res_dict["model_id"],
                                                    model_version=res_dict["model_version"])
         predict_conf = self._feed_job_parameters(self._train_conf,
@@ -528,9 +591,9 @@ class PipeLine(object):
                                              self._initiator.party_id)
 
     @LOGGER.catch(reraise=True)
-    def upload(self, backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE, drop=0):
+    def upload(self, drop=0):
         for data_conf in self._upload_conf:
-            upload_conf = self._construct_upload_conf(data_conf, backend, work_mode)
+            upload_conf = self._construct_upload_conf(data_conf)
             LOGGER.debug(f"upload_conf is {json.dumps(upload_conf)}")
             self._train_job_id, detail_info = self._job_invoker.upload_data(upload_conf, int(drop))
             self._train_board_url = detail_info["board_url"]
@@ -560,7 +623,7 @@ class PipeLine(object):
     @LOGGER.catch(reraise=True)
     def deploy_component(self, components=None):
         if self._train_dsl is None:
-            raise ValueError("Before deploy model, training should be finish!!!")
+            raise ValueError("Before deploy model, training should be finished!!!")
 
         if components is None:
             components = self._components
@@ -579,9 +642,12 @@ class PipeLine(object):
 
             if isinstance(self._components.get(deploy_cpns[-1]), Reader):
                 raise ValueError("Reader should not be include in predict pipeline")
+
         res_dict = self._job_invoker.model_deploy(model_id=self._model_info.model_id,
                                                   model_version=self._model_info.model_version,
                                                   cpn_list=deploy_cpns)
+        self._predict_model_info = SimpleNamespace(model_id=res_dict["model_id"],
+                                                   model_version=res_dict["model_version"])
 
         self._predict_dsl = self._job_invoker.get_predict_dsl(model_id=res_dict["model_id"],
                                                               model_version=res_dict["model_version"])
@@ -593,6 +659,9 @@ class PipeLine(object):
 
     def is_deploy(self):
         return self._deploy
+
+    def is_load(self):
+        return self._load
 
     @LOGGER.catch(reraise=True)
     def init_predict_config(self, config):
@@ -609,7 +678,7 @@ class PipeLine(object):
     @LOGGER.catch(reraise=True)
     def get_component_input_msg(self):
         if VERSION != 2:
-            raise ValueError("In DSL Version 1，only need to config data from args, no need special component")
+            raise ValueError("In DSL Version 1，only need to config data from args, do not need special component")
 
         need_input = {}
         for cpn_name, config in self._predict_dsl["components"].items():

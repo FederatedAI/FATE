@@ -61,7 +61,7 @@ class HeteroGradientBase(object):
         gradient = ∑d*x, where d is fore_gradient which differ from different algorithm
         Parameters
         ----------
-        data: DTable, include fore_gradient and features
+        data: Table, include fore_gradient and features
         fit_intercept: bool, if model has interception or not. Default True
 
         Returns
@@ -147,13 +147,13 @@ class HeteroGradientBase(object):
         Compute hetero-regression gradient
         Parameters
         ----------
-        data_instances: DTable, input data
-        fore_gradient: DTable, fore_gradient
+        data_instances: Table, input data
+        fore_gradient: Table, fore_gradient
         fit_intercept: bool, if model has intercept or not
 
         Returns
         ----------
-        DTable
+        Table
             the hetero regression model's gradient
         """
 
@@ -233,6 +233,8 @@ class Guest(HeteroGradientBase):
         self.host_forwards = self.get_host_forward(suffix=current_suffix)
         fore_gradient = self.half_d
         for host_forward in self.host_forwards:
+            if self.use_sample_weight:
+                host_forward = host_forward.join(data_instances, lambda h, v: h * v.weight)
             fore_gradient = fore_gradient.join(host_forward, lambda x, y: x + y)
         self.remote_fore_gradient(fore_gradient, suffix=current_suffix)
         unilateral_gradient = self.compute_gradient(data_instances, fore_gradient, model_weights.fit_intercept)

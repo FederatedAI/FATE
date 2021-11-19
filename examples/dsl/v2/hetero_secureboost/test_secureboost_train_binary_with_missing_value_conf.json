@@ -12,13 +12,6 @@
             9999
         ]
     },
-    "job_parameters": {
-        "common": {
-            "job_type": "train",
-            "backend": 0,
-            "work_mode": 0
-        }
-    },
     "component_parameters": {
         "common": {
             "hetero_secure_boost_0": {
@@ -49,13 +42,13 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true,
                         "label_name": "label",
                         "label_type": "int",
                         "output_format": "dense"
                     },
-                    "dataio_1": {
+                    "data_transform_1": {
                         "with_label": true,
                         "label_name": "label",
                         "label_type": "int",
@@ -77,10 +70,10 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
                     },
-                    "dataio_1": {
+                    "data_transform_1": {
                         "with_label": false
                     },
                     "reader_0": {

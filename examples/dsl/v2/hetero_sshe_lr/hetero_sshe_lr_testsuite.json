@@ -1,0 +1,120 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_1"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        }
+    ],
+    "tasks": {
+        "hetero_lr_warm_start": {
+            "conf": "hetero_lr_warm_start_conf.json",
+            "dsl": "hetero_lr_warm_start_dsl.json"
+        },
+        "hetero_lr_encrypted_reveal_in_host": {
+            "conf": "hetero_lr_encrypted_reveal_in_host_conf.json",
+            "dsl": "hetero_lr_encrypted_reveal_in_host_dsl.json"
+        },
+        "hetero_lr_ovr_encrypted_reveal_in_host": {
+            "conf": "hetero_lr_ovr_encrypted_reveal_in_host_conf.json",
+            "dsl": "hetero_lr_ovr_encrypted_reveal_in_host_dsl.json"
+        },
+        "hetero_lr_normal": {
+            "conf": "hetero_lr_normal_conf.json",
+            "dsl": "hetero_lr_normal_dsl.json"
+        },
+        "hetero_lr_with_validate": {
+            "conf": "hetero_lr_with_validate_conf.json",
+            "dsl": "hetero_lr_with_validate_dsl.json"
+        },
+        "hetero_lr_cv": {
+            "conf": "hetero_lr_cv_conf.json",
+            "dsl": "hetero_lr_cv_dsl.json"
+        },
+        "hetero_lr_ovr_l1": {
+            "conf": "hetero_lr_ovr_l1_conf.json",
+            "dsl": "hetero_lr_ovr_l1_dsl.json"
+        },
+        "hetero_lr_l1": {
+            "conf": "hetero_lr_l1_conf.json",
+            "dsl": "hetero_lr_l1_dsl.json"
+        },
+        "hetero_lr_compute_loss_not_reveal": {
+            "conf": "hetero_lr_compute_loss_not_reveal_conf.json",
+            "dsl": "hetero_lr_compute_loss_not_reveal_dsl.json"
+        },
+        "hetero_lr_compute_loss": {
+            "conf": "hetero_lr_compute_loss_conf.json",
+            "dsl": "hetero_lr_compute_loss_dsl.json"
+        },
+        "hetero_lr_ovr": {
+            "conf": "hetero_lr_ovr_conf.json",
+            "dsl": "hetero_lr_ovr_dsl.json"
+        },
+        "hetero_lr_large_init_w_compute_loss": {
+            "conf": "hetero_lr_large_init_w_compute_loss_conf.json",
+            "dsl": "hetero_lr_large_init_w_compute_loss_dsl.json"
+        },
+        "hetero_lr_ovr_none_penalty": {
+            "conf": "hetero_lr_ovr_none_penalty_conf.json",
+            "dsl": "hetero_lr_ovr_none_penalty_dsl.json"
+        },
+        "hetero_lr_normal_not_fit_intercept": {
+            "conf": "hetero_lr_normal_not_fit_intercept_conf.json",
+            "dsl": "hetero_lr_normal_not_fit_intercept_dsl.json"
+        },
+        "hetero_lr_normal_predict": {
+            "deps": "hetero_lr_normal",
+            "conf": "hetero_lr_normal_predict_conf.json",
+            "dsl": "hetero_lr_normal_predict_dsl.json"
+        },
+        "hetero_lr_ovr_predict": {
+            "deps": "hetero_lr_ovr",
+            "conf": "hetero_lr_ovr_predict_conf.json",
+            "dsl": "hetero_lr_ovr_predict_dsl.json"
+        },
+        "hetero_lr_converged_weight_diff_respectively_not_reveal": {
+            "conf": "hetero_lr_converged_weight_diff_respectively_not_reveal_conf.json",
+            "dsl": "hetero_lr_converged_weight_diff_respectively_not_reveal_dsl.json"
+        },
+        "hetero_lr_converged_weight_diff_encrypted_not_reveal": {
+            "conf": "hetero_lr_converged_weight_diff_encrypted_not_reveal_conf.json",
+            "dsl": "hetero_lr_converged_weight_diff_encrypted_not_reveal_dsl.json"
+        }
+    }
+}

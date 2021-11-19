@@ -1,0 +1,4 @@
+pandas==1.1.5
+numba==0.50.0
+llvmlite==0.33.0
+cryptography==3.3.2

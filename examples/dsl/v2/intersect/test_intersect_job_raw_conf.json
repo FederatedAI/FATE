@@ -2,33 +2,27 @@
     "dsl_version": 2,
     "initiator": {
         "role": "guest",
-        "party_id": 10000
+        "party_id": 9999
     },
     "role": {
         "guest": [
-            10000
+            9999
         ],
         "host": [
-            9999
+            10000
         ]
-    },
-    "job_parameters": {
-        "common": {
-            "work_mode": 0,
-            "backend": 0
-        }
     },
     "component_parameters": {
         "common": {
             "intersect_0": {
                 "intersect_method": "raw",
                 "sync_intersect_ids": true,
-                "join_role": "host",
-                "with_encode": true,
-                "encode_params": {
-                    "encode_method": "sha256",
+                "raw_params": {
+                    "use_hash": true,
+                    "hash_method": "sha256",
                     "salt": "12345",
-                    "base64": true
+                    "base64": true,
+                    "join_role": "host"
                 },
                 "only_output_key": true
             }
@@ -42,7 +36,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false,
                         "output_format": "dense"
                     }
@@ -56,7 +50,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false,
                         "output_format": "dense"
                     }

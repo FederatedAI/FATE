@@ -1,0 +1,13 @@
+data_guest: "examples/data/epsilon_5k_hetero_guest.csv"
+data_host: "examples/data/epsilon_5k_hetero_host.csv"
+idx: "id"
+label_name: "y"
+penalty: "L2"
+max_iter: 30
+alpha: 0.0001
+learning_rate: 0.3
+optimizer: "adam"
+batch_size: 800
+early_stop: "diff"
+init_method: "zeros"
+reveal_strategy: "respectively"

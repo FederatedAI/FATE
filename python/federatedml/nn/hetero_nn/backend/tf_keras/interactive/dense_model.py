@@ -26,7 +26,7 @@ from tensorflow.python.keras.backend import gradients
 from tensorflow.python.keras.backend import set_session
 
 from fate_arch.session import computing_session as session
-from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
+from federatedml.secureprotol.paillier_tensor import PaillierTensor
 from federatedml.util import LOGGER
 
 
@@ -268,7 +268,7 @@ class HostDenseModel(DenseModel):
                 .filter(lambda k, v: k in id_map)
                 .map(lambda k, v: (id_map[k], v))
             )
-            self.input_cached = PaillierTensor(tb_obj=self.input_cached)
+            self.input_cached = PaillierTensor(self.input_cached)
             # selective_ids_tb = session.parallelize(zip(selective_ids, range(len(selective_ids))), include_key=True,
             #                                        partition=self.input.partitions)
             # self.input_cached = self.input.get_obj().join(selective_ids_tb, lambda v1, v2: (v1, v2))
@@ -286,7 +286,7 @@ class HostDenseModel(DenseModel):
                 .map(lambda k, v: (id_map[k], v))
             )
             self.input_cached = PaillierTensor(
-                tb_obj=self.input_cached.get_obj().union(selective_input)
+                self.input_cached.get_obj().union(selective_input)
             )
             self.activation_cached = np.vstack(
                 (self.activation_cached, self.activation_input[selective_ids])

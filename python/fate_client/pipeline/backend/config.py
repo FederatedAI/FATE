@@ -17,9 +17,9 @@
 from pathlib import Path
 
 from pipeline.backend import get_default_config
-from pipeline.constant import Backend, JobStatus, WorkMode
+from pipeline.constant import JobStatus
 
-__all__ = ["Backend", "WorkMode", "JobStatus", "VERSION", "SERVER_VERSION", "TIME_QUERY_FREQS", "Role", "StatusCode",
+__all__ = ["JobStatus", "VERSION", "SERVER_VERSION", "TIME_QUERY_FREQS", "Role", "StatusCode",
            "LogPath", "LogFormat", "IODataType", "FlowConfig"]
 
 VERSION = 2
@@ -73,6 +73,9 @@ class FlowConfig(object):
     if PORT is None:
         raise ValueError(f"PORT not configured. "
                          f"Please use command line tool pipeline init to set Flow server port")
+
+    APP_KEY = conf.get("app_key", None)
+    SECRET_KEY = conf.get("secret_key", None)
 
 
 class LogPath(object):

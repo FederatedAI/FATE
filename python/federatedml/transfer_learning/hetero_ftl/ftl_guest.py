@@ -2,13 +2,13 @@ import numpy as np
 from fate_arch.session import computing_session as session
 from federatedml.util import consts
 from federatedml.transfer_learning.hetero_ftl.ftl_base import FTL
-from federatedml.statistic.intersect import intersect_guest
 from federatedml.util import LOGGER
 from federatedml.transfer_learning.hetero_ftl.ftl_dataloder import FTLDataLoader
-from fate_flow.entity.metric import Metric
-from fate_flow.entity.metric import MetricMeta
+from federatedml.statistic.intersect import RsaIntersectionGuest
+from federatedml.model_base import Metric
+from federatedml.model_base import MetricMeta
 from federatedml.optim.convergence import converge_func_factory
-from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
+from federatedml.secureprotol.paillier_tensor import PaillierTensor
 from federatedml.optim.activation import sigmoid
 from federatedml.statistic import data_overview
 
@@ -34,7 +34,7 @@ class FTLGuest(FTL):
         self.role = consts.GUEST
 
     def init_intersect_obj(self):
-        intersect_obj = intersect_guest.RsaIntersectionGuest()
+        intersect_obj = RsaIntersectionGuest()
         intersect_obj.guest_party_id = self.component_properties.local_partyid
         intersect_obj.host_party_id_list = self.component_properties.host_party_idlist
         intersect_obj.load_params(self.intersect_param)
@@ -120,7 +120,7 @@ class FTLGuest(FTL):
         host_components = [overlap_ub, overlap_ub_2, mapping_comp_b]
 
         if self.mode == 'encrypted':
-            host_paillier_tensors = [PaillierTensor(tb_obj=tb, partitions=self.partitions) for tb in host_components]
+            host_paillier_tensors = [PaillierTensor(tb, partitions=self.partitions) for tb in host_components]
             return host_paillier_tensors
         else:
             return host_components
@@ -133,7 +133,7 @@ class FTLGuest(FTL):
 
         rand_0 = self.rng_generator.generate_random_number(encrypted_const.shape)
         encrypted_const = encrypted_const + rand_0
-        rand_1 = PaillierTensor(ori_data=self.rng_generator.generate_random_number(grad_a_overlap.shape), partitions=self.partitions)
+        rand_1 = PaillierTensor(self.rng_generator.generate_random_number(grad_a_overlap.shape), partitions=self.partitions)
         grad_a_overlap = grad_a_overlap + rand_1
 
         self.transfer_variable.guest_side_const.remote(encrypted_const, suffix=(epoch_idx,
@@ -143,7 +143,7 @@ class FTLGuest(FTL):
         const = self.transfer_variable.decrypted_guest_const.get(suffix=(epoch_idx, local_round, ), idx=0)
         grad = self.transfer_variable.decrypted_guest_gradients.get(suffix=(epoch_idx, local_round, ), idx=0)
         const = const - rand_0
-        grad_a_overlap = PaillierTensor(tb_obj=grad, partitions=self.partitions) - rand_1
+        grad_a_overlap = PaillierTensor(grad, partitions=self.partitions) - rand_1
 
         return const, grad_a_overlap
 
@@ -152,7 +152,7 @@ class FTLGuest(FTL):
         inter_grad = self.transfer_variable.host_side_gradients.get(suffix=(epoch_idx,
                                                                             local_round,
                                                                             'host_de_send'), idx=0)
-        inter_grad_pt = PaillierTensor(tb_obj=inter_grad, partitions=self.partitions)
+        inter_grad_pt = PaillierTensor(inter_grad, partitions=self.partitions)
         self.transfer_variable.decrypted_host_gradients.remote(inter_grad_pt.decrypt(self.encrypter).get_obj(),
                                                                suffix=(epoch_idx,
                                                                        local_round,
@@ -255,9 +255,8 @@ class FTLGuest(FTL):
     def generate_summary(self):
 
         summary = {'loss_history': self.history_loss,
-                   "best_iteration": -1 if self.validation_strategy is None else self.validation_strategy.best_iteration}
-        if self.validation_strategy:
-            summary['validation_metrics'] = self.validation_strategy.summary()
+                   "best_iteration": self.callback_variables.best_iteration}
+        summary['validation_metrics'] = self.callback_variables.validation_summary
 
         return summary
 
@@ -289,7 +288,7 @@ class FTLGuest(FTL):
         self.initialize_nn(input_shape=self.x_shape)
         self.feat_dim = self.nn._model.output_shape[1]
         self.constant_k = 1 / self.feat_dim
-        self.validation_strategy = self.init_validation_strategy(data_inst, validate_data)
+        self.callback_list.on_train_begin(train_data=data_inst, validate_data=validate_data)
 
         self.callback_meta("loss",
                            "train",
@@ -303,6 +302,8 @@ class FTLGuest(FTL):
         for epoch_idx in range(self.epochs):
 
             LOGGER.debug('fitting epoch {}'.format(epoch_idx))
+
+            self.callback_list.on_epoch_begin(epoch_idx)
 
             host_components = self.exchange_components(self.send_components, epoch_idx=epoch_idx)
 
@@ -335,12 +336,7 @@ class FTLGuest(FTL):
                 self.phi, self.phi_product, self.overlap_ua, self.send_components = self.batch_compute_components(
                     data_loader)
 
-            # check early_stopping_rounds
-            if self.validation_strategy is not None:
-                self.validation_strategy.validate(self, epoch_idx)
-                if self.validation_strategy.need_stop():
-                    LOGGER.debug('early stopping triggered')
-                    break
+            self.callback_list.on_epoch_end(epoch_idx)
 
             # check n_iter_no_change
             if self.n_iter_no_change is True:
@@ -352,6 +348,7 @@ class FTLGuest(FTL):
 
             LOGGER.debug('fitting epoch {} done, loss is {}'.format(epoch_idx, loss))
 
+        self.callback_list.on_train_end()
         self.callback_meta("loss",
                            "train",
                            MetricMeta(name="train",

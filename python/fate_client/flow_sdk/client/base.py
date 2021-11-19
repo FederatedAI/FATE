@@ -13,12 +13,18 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
-import sys
-import json
 import inspect
-import requests
+import json
+import sys
 import traceback
+from base64 import b64encode
+from hmac import HMAC
+from time import time
+from urllib.parse import quote, urlencode
+from uuid import uuid1
+
+import requests
+
 from flow_sdk.client.api.base import BaseFlowAPI
 
 
@@ -38,25 +44,54 @@ class BaseFlowClient:
             setattr(self, name, api)
         return self
 
-    def __init__(self, ip, port, version):
+    def __init__(self, ip, port, version, app_key=None, secret_key=None):
         self._http = requests.Session()
         self.ip = ip
         self.port = port
         self.version = version
 
+        self.app_key = app_key if app_key and secret_key else None
+        self.secret_key = secret_key if app_key and secret_key else None
+
     def _request(self, method, url, **kwargs):
-        request_url = self.API_BASE_URL + url
+        stream = kwargs.pop('stream', self._http.stream)
+        prepped = requests.Request(method, self.API_BASE_URL + url, **kwargs).prepare()
+
+        if self.app_key and self.secret_key:
+            timestamp = str(round(time() * 1000))
+            nonce = str(uuid1())
+            signature = b64encode(HMAC(self.secret_key.encode('ascii'), b'\n'.join([
+                timestamp.encode('ascii'),
+                nonce.encode('ascii'),
+                self.app_key.encode('ascii'),
+                prepped.path_url.encode('ascii'),
+                prepped.body if kwargs.get('json') else b'',
+                urlencode(sorted(kwargs['data'].items()), quote_via=quote, safe='-._~').encode('ascii')
+                if kwargs.get('data') and isinstance(kwargs['data'], dict) else b'',
+            ]), 'sha1').digest()).decode('ascii')
+
+            prepped.headers.update({
+                'TIMESTAMP': timestamp,
+                'NONCE': nonce,
+                'APP_KEY': self.app_key,
+                'SIGNATURE': signature,
+            })
+
         try:
-            response = self._http.request(method=method, url=request_url, **kwargs)
-            return response
+            response = self._http.send(prepped, stream=stream)
         except Exception as e:
-            exc_type, exc_value, exc_traceback_obj = sys.exc_info()
-            response = {'retcode': 100, 'retmsg': str(e),
-                        'traceback': traceback.format_exception(exc_type, exc_value, exc_traceback_obj)}
-            if 'Connection refused' in str(e):
+            response = {
+                'retcode': 100,
+                'retmsg': str(e),
+            }
+
+            if 'connection refused' in response['retmsg'].lower():
                 response['retmsg'] = 'Connection refused, Please check if the fate flow service is started'
-                del response['traceback']
-            return response
+            else:
+                exc_type, exc_value, exc_traceback_obj = sys.exc_info()
+                response['traceback'] = traceback.format_exception(exc_type, exc_value, exc_traceback_obj)
+
+        return response
 
     @staticmethod
     def _decode_result(response):

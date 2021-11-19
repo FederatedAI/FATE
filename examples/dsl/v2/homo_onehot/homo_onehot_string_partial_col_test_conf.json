@@ -2,25 +2,18 @@
     "dsl_version": 2,
     "initiator": {
         "role": "guest",
-        "party_id": 10000
+        "party_id": 9999
     },
     "role": {
         "guest": [
-            10000
+            9999
         ],
         "host": [
-            9999
+            10000
         ],
         "arbiter": [
             9999
         ]
-    },
-    "job_parameters": {
-        "common": {
-            "backend": 0,
-            "work_mode": 0,
-            "job_type": "train"
-        }
     },
     "component_parameters": {
         "role": {
@@ -58,7 +51,7 @@
             }
         },
         "common": {
-            "dataio_0": {
+            "data_transform_0": {
                 "data_type": "str",
                 "with_label": true,
                 "label_name": "y",

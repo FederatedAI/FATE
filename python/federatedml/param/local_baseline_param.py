@@ -22,18 +22,21 @@ import copy
 from federatedml.param.base_param import BaseParam
 from federatedml.param.predict_param import PredictParam
 
+
 class LocalBaselineParam(BaseParam):
     """
     Define the local baseline model param
 
     Parameters
     ----------
-    model_name: str, sklearn model used to train on baseline model
+    model_name : str
+        sklearn model used to train on baseline model
 
-    model_opts: dict or none, default None
+    model_opts : dict or none, default None
         Param to be used as input into baseline model
 
-    predict_param: PredictParam object, default: default PredictParam object
+    predict_param : PredictParam object, default: default PredictParam object
+        predict param
 
     need_run: bool, default True
         Indicate if this module needed to be run
@@ -49,9 +52,9 @@ class LocalBaselineParam(BaseParam):
     def check(self):
         descr = "local baseline param"
 
-        self.mode = self.check_and_change_lower(self.model_name,
-                                                   ["logisticregression"],
-                                                   descr)
+        self.model_name = self.check_and_change_lower(self.model_name,
+                                                      ["logisticregression"],
+                                                      descr)
         self.check_boolean(self.need_run, descr)
         if self.model_opts is not None:
             if not isinstance(self.model_opts, dict):

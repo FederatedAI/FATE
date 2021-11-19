@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import json
 import os
 import time
 import uuid
@@ -23,8 +24,10 @@ import glob
 from fate_test import _config
 from fate_test._client import Clients
 from fate_test._config import Config
+from fate_test.utils import TxtStyle
 from fate_test._flow_client import JobProgress, SubmitJobResponse, QueryJobResponse
 from fate_test._io import LOGGER, echo
+from prettytable import PrettyTable, ORGMODE
 from fate_test._parser import JSON_STRING, Testsuite
 from fate_test.scripts._options import SharedOptions
 from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_data, _load_module_from_script, \
@@ -39,29 +42,37 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
 @click.option('-r', '--replace', default="{}", type=JSON_STRING,
               help="a json string represents mapping for replacing fields in data/conf/dsl")
 @click.option('-m', '--timeout', type=int, default=3600,
-              help="Task timeout duration")
+              help="maximun running time of job")
 @click.option('-e', '--max-iter', type=int, help="When the algorithm model is LR, the number of iterations is set")
 @click.option('-d', '--max-depth', type=int,
               help="When the algorithm model is SecureBoost, set the number of model layers")
-@click.option('-n', '--num-trees', type=int, help="When the algorithm model is SecureBoost, set the number of trees")
+@click.option('-nt', '--num-trees', type=int, help="When the algorithm model is SecureBoost, set the number of trees")
 @click.option('-p', '--task-cores', type=int, help="processors per node")
-@click.option('-j', '--update-job-parameters', default="{}", type=JSON_STRING,
+@click.option('-uj', '--update-job-parameters', default="{}", type=JSON_STRING,
               help="a json string represents mapping for replacing fields in conf.job_parameters")
-@click.option('-c', '--update-component-parameters', default="{}", type=JSON_STRING,
+@click.option('-uc', '--update-component-parameters', default="{}", type=JSON_STRING,
               help="a json string represents mapping for replacing fields in conf.component_parameters")
+@click.option('-s', '--storage-tag', type=str,
+              help="tag for storing performance time consuming, for future comparison")
+@click.option('-v', '--history-tag', type=str, multiple=True,
+              help="Extract performance time consuming from history tags for comparison")
 @click.option("--skip-data", is_flag=True, default=False,
               help="skip uploading data specified in testsuite")
+@click.option("--provider", type=str,
+              help="Select the fat version, for example: fate@1.7")
 @click.option("--disable-clean-data", "clean_data", flag_value=False, default=None)
 @SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
-def run_task(ctx, job_type, include, replace, timeout, update_job_parameters, update_component_parameters,
-             max_iter, max_depth, num_trees, task_cores, skip_data, clean_data, **kwargs):
+def run_task(ctx, job_type, include, replace, timeout, update_job_parameters, update_component_parameters, max_iter,
+             max_depth, num_trees, task_cores, storage_tag, history_tag, skip_data, clean_data, provider, **kwargs):
     """
-    Test the performance of big data tasks
+    Test the performance of big data tasks, alias: bp
     """
     ctx.obj.update(**kwargs)
     ctx.obj.post_process()
     config_inst = ctx.obj["config"]
+    config_inst.extend_sid = ctx.obj["extend_sid"]
+    config_inst.auto_increasing_sid = ctx.obj["auto_increasing_sid"]
     namespace = ctx.obj["namespace"]
     yes = ctx.obj["yes"]
     data_namespace_mangling = ctx.obj["namespace_mangling"]
@@ -80,7 +91,10 @@ def run_task(ctx, job_type, include, replace, timeout, update_job_parameters, up
     echo.welcome()
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
     echo.echo("loading testsuites:")
-    suites = _load_testsuites(includes=include, excludes=tuple(), glob=None)
+    suites = _load_testsuites(includes=include, excludes=tuple(), glob=None, provider=provider)
+    for i, suite in enumerate(suites):
+        echo.echo(f"\tdataset({len(suite.dataset)}) dsl jobs({len(suite.jobs)}) {suite.path}")
+
     if not yes and not click.confirm("running?"):
         return
 
@@ -101,8 +115,9 @@ def run_task(ctx, job_type, include, replace, timeout, update_job_parameters, up
 
                 echo.stdout_newline()
                 try:
-                    _submit_job(client, suite, namespace, config_inst, timeout, update_job_parameters,
-                                update_component_parameters, max_iter, max_depth, num_trees, task_cores)
+                    time_consuming = _submit_job(client, suite, namespace, config_inst, timeout, update_job_parameters,
+                                                 storage_tag, history_tag, update_component_parameters, max_iter,
+                                                 max_depth, num_trees, task_cores)
                 except Exception as e:
                     raise RuntimeError(f"exception occur while submit job for {suite.path}") from e
 
@@ -114,7 +129,7 @@ def run_task(ctx, job_type, include, replace, timeout, update_job_parameters, up
                 echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
                 if not skip_data and clean_data:
                     _delete_data(client, suite)
-                echo.echo(suite.pretty_final_summary(), fg='red')
+                echo.echo(suite.pretty_final_summary(time_consuming), fg='red')
 
             except Exception:
                 exception_id = uuid.uuid1()
@@ -128,14 +143,16 @@ def run_task(ctx, job_type, include, replace, timeout, update_job_parameters, up
 
 
 def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Config, timeout, update_job_parameters,
-                update_component_parameters, max_iter, max_depth, num_trees, task_cores):
+                storage_tag, history_tag, update_component_parameters, max_iter, max_depth, num_trees, task_cores):
     # submit jobs
     with click.progressbar(length=len(suite.jobs),
                            label="jobs",
                            show_eta=False,
                            show_pos=True,
                            width=24) as bar:
+        time_list = []
         for job in suite.jobs_iter():
+            start = time.time()
             job_progress = JobProgress(job.job_name)
 
             def _raise():
@@ -155,8 +172,7 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                     job.job_conf.update_component_parameters('num_trees', num_trees)
                 if task_cores is not None:
                     job.job_conf.update_job_common_parameters(task_cores=task_cores)
-                job.job_conf.update(config.parties, config.work_mode, config.backend, timeout, update_job_parameters,
-                                    update_component_parameters)
+                job.job_conf.update(config.parties, timeout, update_job_parameters, update_component_parameters)
             except Exception:
                 _raise()
                 continue
@@ -202,7 +218,7 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                     if suite.model_in_dep(job.job_name):
                         dependent_jobs = suite.get_dependent_jobs(job.job_name)
                         for predict_job in dependent_jobs:
-                            model_info, table_info = None, None
+                            model_info, table_info, cache_info, model_loader_info = None, None, None, None
                             for i in _config.deps_alter[predict_job.job_name]:
                                 if isinstance(i, dict):
                                     name = i.get('name')
@@ -242,10 +258,38 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                                         _raise()
                                 else:
                                     model_info = response.model_info
+                            if 'cache_deps' in _config.deps_alter[predict_job.job_name]:
+                                cache_dsl = predict_job.job_dsl.as_dict()
+                                cache_info = []
+                                for cpn in cache_dsl.get("components").keys():
+                                    if "CacheLoader" in cache_dsl.get("components").get(cpn).get("module"):
+                                        cache_info.append({cpn: {'job_id': response.job_id}})
+                                cache_info = {'hierarchy': [""], 'cache_info': cache_info}
+                            if 'model_loader_deps' in _config.deps_alter[predict_job.job_name]:
+                                model_loader_dsl = predict_job.job_dsl.as_dict()
+                                model_loader_info = []
+                                for cpn in model_loader_dsl.get("components").keys():
+                                    if "ModelLoader" in model_loader_dsl.get("components").get(cpn).get("module"):
+                                        model_loader_info.append({cpn: response.model_info})
+                                model_loader_info = {'hierarchy': [""], 'model_loader_info': model_loader_info}
 
-                            suite.feed_dep_info(predict_job, name, model_info=model_info, table_info=table_info)
+                            suite.feed_dep_info(predict_job, name, model_info=model_info, table_info=table_info,
+                                                cache_info=cache_info, model_loader_info=model_loader_info)
+                        suite.remove_dependency(job.job_name)
             update_bar(0)
+            time_consuming = time.time() - start
+            performance_dir = "/".join(
+                [os.path.join(os.path.abspath(config.cache_directory), 'benchmark_history', "performance.json")])
+            fate_version = clients["guest_0"].get_version()
+            if history_tag:
+                history_tag = ["_".join([i, job.job_name]) for i in history_tag]
+                comparison_quality(job.job_name, history_tag, performance_dir, time_consuming)
+            if storage_tag:
+                storage_tag = "_".join(['FATE', fate_version, storage_tag, job.job_name])
+                save_quality(storage_tag, performance_dir, time_consuming)
             echo.stdout_newline()
+            time_list.append(time_consuming)
+        return [str(int(i)) + "s" for i in time_list]
 
 
 def _run_pipeline_jobs(config: Config, suite: Testsuite, namespace: str, data_namespace_mangling: bool):
@@ -280,3 +324,42 @@ def _run_pipeline_jobs(config: Config, suite: Testsuite, namespace: str, data_na
         except Exception as e:
             _raise(e, status="not submitted")
             continue
+
+
+def comparison_quality(group_name, history_tags, history_info_dir, time_consuming):
+    assert os.path.exists(history_info_dir), f"Please check the {history_info_dir} Is it deleted"
+    with open(history_info_dir, 'r') as f:
+        benchmark_quality = json.load(f, object_hook=dict)
+    benchmark_performance = {}
+    for history_tag in history_tags:
+        for tag in benchmark_quality:
+            if '_'.join(tag.split("_")[2:]) == history_tag:
+                benchmark_performance[tag] = benchmark_quality[tag]
+    if benchmark_performance is not None:
+        benchmark_performance[group_name] = time_consuming
+
+    table = PrettyTable()
+    table.set_style(ORGMODE)
+    table.field_names = ["Script Model Name", "time consuming"]
+    for script_model_name in benchmark_performance:
+        table.add_row([f"{script_model_name}"] +
+                      [f"{TxtStyle.FIELD_VAL}{benchmark_performance[script_model_name]}{TxtStyle.END}"])
+    print("\n")
+    print(table.get_string(title=f"{TxtStyle.TITLE}Performance comparison results{TxtStyle.END}"))
+    print("#" * 60)
+
+
+def save_quality(storage_tag, save_dir, time_consuming):
+    os.makedirs(os.path.dirname(save_dir), exist_ok=True)
+    if os.path.exists(save_dir):
+        with open(save_dir, 'r') as f:
+            benchmark_quality = json.load(f, object_hook=dict)
+    else:
+        benchmark_quality = {}
+    benchmark_quality.update({storage_tag: time_consuming})
+    try:
+        with open(save_dir, 'w') as fp:
+            json.dump(benchmark_quality, fp, indent=2)
+        print("\n" + "Storage successful, please check: ", save_dir)
+    except Exception:
+        print("\n" + "Storage failed, please check: ", save_dir)

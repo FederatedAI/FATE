@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from federatedml.util import consts
 
 
 class HeteroNNModel(object):
@@ -47,22 +48,22 @@ class HeteroNNModel(object):
 class HeteroNNHostModel(HeteroNNModel):
     def __init__(self):
         super(HeteroNNHostModel, self).__init__()
-        self.role = "host"
+        self.role = consts.HOST
 
     def train(self, x, epoch, batch):
         pass
 
-    def evaluate(self, x, epoch ,batch):
+    def evaluate(self, x, epoch, batch):
         pass
 
 
 class HeteroNNGuestModel(HeteroNNModel):
     def __init__(self):
         super(HeteroNNGuestModel, self).__init__()
-        self.role = "guest"
+        self.role = consts.GUEST
 
     def train(self, x, y, epoch, batch):
         pass
 
-    def evaluate(self, x, y, epoch ,batch):
+    def evaluate(self, x, y, epoch, batch):
         pass

@@ -24,7 +24,7 @@ from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.ensemble import HeteroSecureBoostingTreeGuest, HeteroSecureBoostingTreeHost
 from federatedml.ensemble import HeteroFastSecureBoostingTreeGuest, HeteroFastSecureBoostingTreeHost
-from fate_flow.entity.metric import MetricMeta
+from federatedml.model_base import MetricMeta
 from federatedml.util import abnormal_detection
 from federatedml.param.sbt_feature_transformer_param import SBTTransformerParam
 from federatedml.feature.sparse_vector import SparseVector
@@ -233,7 +233,7 @@ class HeteroSBTFeatureTransformerGuest(HeteroSBTFeatureTransformerBase):
         self._abnormal_detection(data_inst)
         # predict instances to get leaf indexes
         LOGGER.info('tree model running prediction')
-        predict_rs = self.tree_model.predict(data_inst, pred_leaf=True)
+        predict_rs = self.tree_model.predict(data_inst, ret_format='leaf')
         LOGGER.info('tree model prediction done')
 
         # transform pred result to new data table

@@ -1,0 +1,45 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "guest": [
+            9999
+        ]
+    },
+    "component_parameters": {
+        "common": {
+            "union_0": {
+                "allow_missing": false,
+                "keep_duplicate": true
+            },
+            "data_transform_0": {
+                "missing_fill": false,
+                "outlier_replace": false,
+                "with_label": true,
+                "label_name": "y",
+                "output_format": "dense"
+            }
+        },
+        "role": {
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "reader_1": {
+                        "table": {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

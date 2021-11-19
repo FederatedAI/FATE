@@ -26,6 +26,7 @@ from federatedml.secureprotol import gmpy_math
 from federatedml.secureprotol.affine import AffineCipher
 from federatedml.secureprotol.fate_paillier import PaillierKeypair
 from federatedml.secureprotol.iterative_affine import IterativeAffineCipher
+from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
 from federatedml.secureprotol.random import RandomPads
 
 _TORCH_VALID = False
@@ -63,6 +64,12 @@ class Encrypt(object):
     def decrypt(self, value):
         pass
 
+    def raw_encrypt(self, value):
+        pass
+
+    def raw_decrypt(self, value):
+        pass
+
     def encrypt_list(self, values):
         result = [self.encrypt(msg) for msg in values]
         return result
@@ -72,11 +79,11 @@ class Encrypt(object):
         return result
 
     def distribute_decrypt(self, X):
-        decrypt_table = X.mapValues(lambda x: self.decrypt(x))
+        decrypt_table = X.mapValues(lambda x: self.recursive_decrypt(x))
         return decrypt_table
 
     def distribute_encrypt(self, X):
-        encrypt_table = X.mapValues(lambda x: self.encrypt(x))
+        encrypt_table = X.mapValues(lambda x: self.recursive_encrypt(x))
         return encrypt_table
 
     def _recursive_func(self, obj, func):
@@ -101,6 +108,12 @@ class Encrypt(object):
     def recursive_decrypt(self, X):
         return self._recursive_func(X, self.decrypt)
 
+    def recursive_raw_encrypt(self, X):
+        return self._recursive_func(X, self.raw_encrypt)
+
+    def recursive_raw_decrypt(self, X):
+        return self._recursive_func(X, self.raw_decrypt)
+
 
 class RsaEncrypt(Encrypt):
     def __init__(self):
@@ -108,6 +121,8 @@ class RsaEncrypt(Encrypt):
         self.e = None
         self.d = None
         self.n = None
+        self.p = None
+        self.q = None
 
     def generate_key(self, rsa_bit=1024):
         random_generator = Random.new().read
@@ -115,9 +130,11 @@ class RsaEncrypt(Encrypt):
         self.e = rsa.e
         self.d = rsa.d
         self.n = rsa.n
+        self.p = rsa.p
+        self.q = rsa.q
 
     def get_key_pair(self):
-        return self.e, self.d, self.n
+        return self.e, self.d, self.n, self.p, self.q
 
     def set_public_key(self, public_key):
         self.e = public_key["e"]
@@ -134,6 +151,9 @@ class RsaEncrypt(Encrypt):
         return self.d, self.n
 
     def encrypt(self, value):
+        if self.e is not None and self.n is not None and self.p is not None and self.q is not None:
+            cp, cq = gmpy_math.crt_coefficient(self.p, self.q)
+            return gmpy_math.powmod_crt(value, self.e, self.n, self.p, self.q, cp, cq)
         if self.e is not None and self.n is not None:
             return gmpy_math.powmod(value, self.e, self.n)
         else:
@@ -182,16 +202,39 @@ class PaillierEncrypt(Encrypt):
         else:
             return None
 
+    def raw_encrypt(self, plaintext, exponent=0):
+        cipher_int = self.public_key.raw_encrypt(plaintext)
+        paillier_num = PaillierEncryptedNumber(public_key=self.public_key, ciphertext=cipher_int, exponent=exponent)
+        return paillier_num
+
+    def raw_decrypt(self, ciphertext):
+        return self.privacy_key.raw_decrypt(ciphertext.ciphertext())
+
+    def recursive_raw_encrypt(self, X, exponent=0):
+        raw_en_func = functools.partial(self.raw_encrypt, exponent=exponent)
+        return self._recursive_func(X, raw_en_func)
+
 
 class FakeEncrypt(Encrypt):
+
+    def __init__(self):
+        pass
+
     def encrypt(self, value):
         return value
 
     def decrypt(self, value):
         return value
 
+    def raw_decrypt(self, value):
+        return value
+
+    def raw_encrypt(self, value):
+        return value
+
 
 class SymmetricEncrypt(Encrypt):
+
     def __init__(self):
         self.key = None
 
@@ -316,9 +359,12 @@ class IterativeAffineEncrypt(SymmetricEncrypt):
     def __init__(self):
         super(IterativeAffineEncrypt, self).__init__()
 
-    def generate_key(self, key_size=1024, key_round=5, randomized=False):
+    def generate_key(self, key_size=1024, key_round=5, encode_precision=2**100, randomized=False):
         self.key = IterativeAffineCipher.generate_keypair(
-            key_size=key_size, key_round=key_round, randomized=randomized
+            key_size=key_size,
+            key_round=key_round,
+            encode_precision=encode_precision,
+            randomized=randomized
         )
 
     def encrypt(self, plaintext):
@@ -332,3 +378,9 @@ class IterativeAffineEncrypt(SymmetricEncrypt):
             return self.key.decrypt(ciphertext)
         else:
             return None
+
+    def raw_encrypt(self, plaintext):
+        return self.key.raw_encrypt(plaintext)
+
+    def raw_decrypt(self, ciphertext):
+        return self.key.raw_decrypt(ciphertext)

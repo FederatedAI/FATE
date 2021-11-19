@@ -6,21 +6,14 @@
     },
     "role": {
         "arbiter": [
-            9999
+            10000
         ],
         "host": [
-            9998
+            10000
         ],
         "guest": [
             9999
         ]
-    },
-    "job_parameters": {
-        "common": {
-            "job_type": "train",
-            "backend": 0,
-            "work_mode": 0
-        }
     },
     "component_parameters": {
         "common": {
@@ -59,7 +52,7 @@
         "role": {
             "guest": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "missing_fill": true,
                         "outlier_replace": true,
                         "with_label": true
@@ -71,13 +64,24 @@
                         }
                     },
                     "feature_scale_0": {
-                        "feat_upper": [1, 2, 1, 1, 0.5, 1, 2, 2, 1, 1]
+                        "feat_upper": [
+                            1,
+                            2,
+                            1,
+                            1,
+                            0.5,
+                            1,
+                            2,
+                            2,
+                            1,
+                            1
+                        ]
                     }
                 }
             },
             "host": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "missing_fill": true,
                         "outlier_replace": true,
                         "with_label": false

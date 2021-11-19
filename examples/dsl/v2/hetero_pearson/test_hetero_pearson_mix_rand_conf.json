@@ -12,12 +12,6 @@
             9999
         ]
     },
-    "job_parameters": {
-        "common": {
-            "work_mode": 1,
-            "backend": 0
-        }
-    },
     "component_parameters": {
         "common": {
             "hetero_pearson_0": {
@@ -28,7 +22,7 @@
         "role": {
             "host": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
                     },
                     "reader_0": {
@@ -41,7 +35,7 @@
             },
             "guest": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true,
                         "output_format": "dense"
                     },

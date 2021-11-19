@@ -1,5 +1,5 @@
 #
-#  Copyright 2019 The Eggroll Authors. All Rights Reserved.
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -15,7 +15,22 @@
 #
 
 
-class LocalData(object):
-    def __init__(self, path):
+class LocalData():
+    def __init__(self, path, engine=None):
         self.path = path
         self.schema = {"header": [], "sid_name": "id"}
+        self._engine = engine
+
+    @property
+    def engine(self):
+        return self._engine
+
+    @property
+    def partitions(self):
+        return
+
+    def count(self, **kwargs):
+        return 0
+
+    def save(self, address, **kwargs):
+        pass

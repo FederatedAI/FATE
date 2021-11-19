@@ -18,6 +18,7 @@
 #
 
 import math
+import numpy as np
 
 from federatedml.util import consts, LOGGER
 
@@ -57,7 +58,7 @@ class QuantileSummaries(object):
             The observation that prepare to insert
 
         """
-        if x in self.abnormal_list:
+        if x in self.abnormal_list or (isinstance(x, float) and np.isnan(x)):
             self.missing_count += 1
             return
 
@@ -291,7 +292,7 @@ class SparseQuantileSummaries(QuantileSummaries):
         return self._total_count - self.missing_count
 
     def insert(self, x):
-        if x in self.abnormal_list:
+        if x in self.abnormal_list or np.isnan(x):
             self.missing_count += 1
             return
         if x < consts.FLOAT_ZERO:

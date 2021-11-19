@@ -70,25 +70,25 @@ class Data(object):
         for field_name in config.keys():
             if field_name not in ["file", "role"]:
                 kwargs[field_name] = config[field_name]
-
-        file_path = path.parent.joinpath(config["file"]).resolve()
-        if not file_path.exists():
-            kwargs["file"] = config["file"]
-            # raise ValueError(f"loading from data config: {config} in {path} failed, file: {file_path} not exists")
-        else:
-            kwargs["file"] = file_path
+        if config.get("engine", {}) != "PATH":
+            file_path = path.parent.joinpath(config["file"]).resolve()
+            if not file_path.exists():
+                kwargs["file"] = config["file"]
+            else:
+                kwargs["file"] = file_path
         role_str = config.get("role") if config.get("role") != "guest" else "guest_0"
         return Data(config=kwargs, role_str=role_str)
 
     def update(self, config: Config):
-        self.config.update(dict(work_mode=config.work_mode, backend=config.backend))
+        self.config.update(dict(extend_sid=config.extend_sid,
+                                auto_increasing_sid=config.auto_increasing_sid))
 
 
 class JobConf(object):
-    def __init__(self, initiator: dict, role: dict, job_parameters: dict, **kwargs):
+    def __init__(self, initiator: dict, role: dict, job_parameters=None, **kwargs):
         self.initiator = initiator
         self.role = role
-        self.job_parameters = job_parameters
+        self.job_parameters = job_parameters if job_parameters else {}
         self.others_kwargs = kwargs
 
     def as_dict(self):
@@ -110,21 +110,21 @@ class JobConf(object):
         return self.others_kwargs.get("dsl_version", 1)
 
     def update(
-        self,
-        parties: Parties,
-        work_mode,
-        backend,
-        timeout,
-        job_parameters,
-        component_parameters,
+            self,
+            parties: Parties,
+            timeout,
+            job_parameters,
+            component_parameters,
     ):
         self.initiator = parties.extract_initiator_role(self.initiator["role"])
         self.role = parties.extract_role(
             {role: len(parties) for role, parties in self.role.items()}
         )
-        self.update_job_common_parameters(
-            work_mode=work_mode, backend=backend, timeout=timeout
-        )
+        if timeout > 0:
+            self.update_job_common_parameters(timeout=timeout)
+
+        if timeout > 0:
+            self.update_job_common_parameters(timeout=timeout)
 
         for key, value in job_parameters.items():
             self.update_parameters(parameters=self.job_parameters, key=key, value=value)
@@ -156,6 +156,14 @@ class JobConf(object):
         else:
             self.job_parameters.setdefault("common", {}).update(**kwargs)
 
+    def update_job_type(self, job_type="predict"):
+        if self.dsl_version == 1:
+            if self.job_parameters.get("job_type", None) is None:
+                self.job_parameters.update({"job_type": job_type})
+        else:
+            if self.job_parameters.setdefault("common", {}).get("job_type", None) is None:
+                self.job_parameters.setdefault("common", {}).update({"job_type": job_type})
+
     def update_component_parameters(self, key, value, parameters=None):
         if parameters is None:
             if self.dsl_version == 1:
@@ -165,13 +173,19 @@ class JobConf(object):
         if isinstance(parameters, dict):
             for keys in parameters:
                 if keys == key:
-                    parameters.update({key: value})
+                    if isinstance(value, dict):
+                        parameters[keys].update(value)
+                    else:
+                        parameters.update({key: value})
                 elif (
-                    isinstance(parameters[keys], dict) and parameters[keys] is not None
+                        isinstance(parameters[keys], dict) and parameters[keys] is not None
                 ):
                     self.update_component_parameters(key, value, parameters[keys])
 
     def get_component_parameters(self, keys):
+        if len(keys) == 0:
+            return self.others_kwargs.get("component_parameters") if self.dsl_version == 2 else self.others_kwargs.get(
+                "role_parameters")
         if self.dsl_version == 1:
             parameters = self.others_kwargs.get("role_parameters")
         else:
@@ -183,26 +197,31 @@ class JobConf(object):
 
 
 class JobDSL(object):
-    def __init__(self, components: dict):
+    def __init__(self, components: dict, provider=None):
         self.components = components
-
+        self.provider = provider
     @staticmethod
-    def load(path: Path):
+    def load(path: Path, provider):
         with path.open("r") as f:
             kwargs = json.load(f, object_hook=DSL_JSON_HOOK.hook)
+            if provider is not None:
+                kwargs["provider"] = provider
         return JobDSL(**kwargs)
 
     def as_dict(self):
-        return dict(components=self.components)
+        if self.provider is None:
+            return dict(components=self.components)
+        else:
+            return dict(components=self.components, provider=self.provider)
 
 
 class Job(object):
     def __init__(
-        self,
-        job_name: str,
-        job_conf: JobConf,
-        job_dsl: typing.Optional[JobDSL],
-        pre_works: list,
+            self,
+            job_name: str,
+            job_conf: JobConf,
+            job_dsl: typing.Optional[JobDSL],
+            pre_works: list,
     ):
         self.job_name = job_name
         self.job_conf = job_conf
@@ -210,11 +229,11 @@ class Job(object):
         self.pre_works = pre_works
 
     @classmethod
-    def load(cls, job_name, job_configs, base: Path):
+    def load(cls, job_name, job_configs, base: Path, provider):
         job_conf = JobConf.load(base.joinpath(job_configs.get("conf")).resolve())
         job_dsl = job_configs.get("dsl", None)
         if job_dsl is not None:
-            job_dsl = JobDSL.load(base.joinpath(job_dsl).resolve())
+            job_dsl = JobDSL.load(base.joinpath(job_dsl).resolve(), provider)
 
         pre_works = []
         pre_works_value = []
@@ -225,8 +244,12 @@ class Job(object):
             name_dict["data"] = job_configs["data_deps"][assembly]
         if job_configs.get("model_deps", None):
             pre_works_value.append("model_deps")
-        if job_configs.get("deps", None):
+        elif job_configs.get("deps", None):
             pre_works_value.append("model_deps")
+        if job_configs.get("cache_deps", None):
+            pre_works_value.append("cache_deps")
+        if job_configs.get("model_loader_deps", None):
+            pre_works_value.append("model_loader_deps")
 
         if job_configs.get("model_deps", None):
             pre_works.append(job_configs["model_deps"])
@@ -234,9 +257,16 @@ class Job(object):
         elif job_configs.get("deps", None):
             pre_works.append(job_configs["deps"])
             name_dict["name"] = job_configs["deps"]
-        elif job_configs.get("data_deps", None):
+        if job_configs.get("data_deps", None):
             pre_works.append(list(job_configs["data_deps"].keys())[0])
             name_dict["name"] = list(job_configs["data_deps"].keys())[0]
+        if job_configs.get("cache_deps", None):
+            pre_works.append(job_configs["cache_deps"])
+            name_dict["name"] = job_configs["cache_deps"]
+        if job_configs.get("model_loader_deps", None):
+            pre_works.append(job_configs["model_loader_deps"])
+            name_dict["name"] = job_configs["model_loader_deps"]
+
         pre_works_value.append(name_dict)
         _config.deps_alter[job_name] = pre_works_value
 
@@ -253,6 +283,7 @@ class Job(object):
 
     def set_pre_work(self, name, **kwargs):
         self.job_conf.update_job_common_parameters(**kwargs)
+        self.job_conf.update_job_type("predict")
 
     def set_input_data(self, hierarchys, table_info):
         for table_name, hierarchy in zip(table_info, hierarchys):
@@ -276,11 +307,11 @@ class PipelineJob(object):
 
 class Testsuite(object):
     def __init__(
-        self,
-        dataset: typing.List[Data],
-        jobs: typing.List[Job],
-        pipeline_jobs: typing.List[PipelineJob],
-        path: Path,
+            self,
+            dataset: typing.List[Data],
+            jobs: typing.List[Job],
+            pipeline_jobs: typing.List[PipelineJob],
+            path: Path,
     ):
         self.dataset = dataset
         self.jobs = jobs
@@ -302,7 +333,7 @@ class Testsuite(object):
             self._final_status[job.job_name] = FinalStatus(job.job_name)
 
     @staticmethod
-    def load(path: Path):
+    def load(path: Path, provider):
         with path.open("r") as f:
             testsuite_config = json.load(f, object_hook=DATA_JSON_HOOK.hook)
 
@@ -311,14 +342,15 @@ class Testsuite(object):
             if "use_local_data" not in d:
                 d.update({"use_local_data": _config.use_local_data})
             dataset.append(Data.load(d, path))
-
         jobs = []
         for job_name, job_configs in testsuite_config.get("tasks", {}).items():
             jobs.append(
-                Job.load(job_name=job_name, job_configs=job_configs, base=path.parent)
+                Job.load(job_name=job_name, job_configs=job_configs, base=path.parent, provider=provider)
             )
 
         pipeline_jobs = []
+        if testsuite_config.get("pipeline_tasks", None) is not None and provider is not None:
+            print('[Warning]  Pipeline does not support parameter: provider-> {}'.format(provider))
         for job_name, job_configs in testsuite_config.get("pipeline_tasks", {}).items():
             script_path = path.parent.joinpath(job_configs["script"]).resolve()
             pipeline_jobs.append(PipelineJob(job_name, script_path))
@@ -330,9 +362,9 @@ class Testsuite(object):
         while self._ready_jobs:
             yield self._ready_jobs.pop()
 
-    def pretty_final_summary(self):
+    def pretty_final_summary(self, time_consuming):
         table = prettytable.PrettyTable(
-            ["job_name", "job_id", "status", "exception_id", "rest_dependency"]
+            ["job_name", "job_id", "status", "time_consuming", "exception_id", "rest_dependency"]
         )
         for status in self.get_final_status().values():
             table.add_row(
@@ -340,6 +372,7 @@ class Testsuite(object):
                     status.name,
                     status.job_id,
                     status.status,
+                    time_consuming.pop(0) if status.job_id != "-" else "-",
                     status.exception_id,
                     ",".join(status.rest_dependency),
                 ]
@@ -355,33 +388,33 @@ class Testsuite(object):
     def remove_dependency(self, name):
         del self._dependency[name]
 
-    def feed_dep_info(self, job, name, model_info=None, table_info=None):
+    def feed_dep_info(self, job, name, model_info=None, table_info=None, cache_info=None, model_loader_info=None):
         if model_info is not None:
             job.set_pre_work(name, **model_info)
         if table_info is not None:
             job.set_input_data(table_info["hierarchy"], table_info["table_info"])
+        if cache_info is not None:
+            job.set_input_data(cache_info["hierarchy"], cache_info["cache_info"])
+        if model_loader_info is not None:
+            job.set_input_data(model_loader_info["hierarchy"], model_loader_info["model_loader_info"])
         if name in job.pre_works:
             job.pre_works.remove(name)
         if job.is_submit_ready():
             self._ready_jobs.appendleft(job)
 
     def reflash_configs(self, config: Config):
-
-        for data in self.dataset:
-            data.config.update(dict(work_mode=config.work_mode, backend=config.backend))
-
         failed = []
         for job in self.jobs:
             try:
                 job.job_conf.update(
-                    config.parties, config.work_mode, config.backend, None, {}, {}
+                    config.parties, None, {}, {}
                 )
             except ValueError as e:
                 failed.append((job, e))
         return failed
 
     def update_status(
-        self, job_name, job_id: str = None, status: str = None, exception_id: str = None
+            self, job_name, job_id: str = None, status: str = None, exception_id: str = None
     ):
         for k, v in locals().items():
             if k != "job_name" and v is not None:
@@ -396,12 +429,12 @@ class Testsuite(object):
 
 class FinalStatus(object):
     def __init__(
-        self,
-        name: str,
-        job_id: str = "-",
-        status: str = "not submitted",
-        exception_id: str = "-",
-        rest_dependency: typing.List[str] = None,
+            self,
+            name: str,
+            job_id: str = "-",
+            status: str = "not submitted",
+            exception_id: str = "-",
+            rest_dependency: typing.List[str] = None,
     ):
         self.name = name
         self.job_id = job_id
@@ -419,7 +452,7 @@ class BenchmarkJob(object):
 
 class BenchmarkPair(object):
     def __init__(
-        self, pair_name: str, jobs: typing.List[BenchmarkJob], compare_setting: dict
+            self, pair_name: str, jobs: typing.List[BenchmarkJob], compare_setting: dict
     ):
         self.pair_name = pair_name
         self.jobs = jobs
@@ -428,7 +461,7 @@ class BenchmarkPair(object):
 
 class BenchmarkSuite(object):
     def __init__(
-        self, dataset: typing.List[Data], pairs: typing.List[BenchmarkPair], path: Path
+            self, dataset: typing.List[Data], pairs: typing.List[BenchmarkPair], path: Path
     ):
         self.dataset = dataset
         self.pairs = pairs

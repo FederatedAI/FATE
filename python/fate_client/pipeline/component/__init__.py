@@ -31,7 +31,14 @@ from pipeline.component.union import Union
 from pipeline.component.feldman_verifiable_sum import FeldmanVerifiableSum
 from pipeline.component.sample_weight import SampleWeight
 from pipeline.component.sbt_feature_transformer import SBTTransformer
-
+from pipeline.component.feature_imputation import FeatureImputation
+from pipeline.component.label_transform import LabelTransform
+from pipeline.component.hetero_sshe_lr import HeteroSSHELR
+from pipeline.component.secure_information_retrieval import SecureInformationRetrieval
+from pipeline.component.cache_loader import CacheLoader
+from pipeline.component.model_loader import ModelLoader
+from pipeline.component.hetero_kmeans import HeteroKmeans
+from pipeline.component.homo_onehot import HomoOneHotEncoder
 
 __all__ = ["DataStatistics", "DataIO", "Evaluation", "HeteroDataSplit",
            "HeteroFastSecureBoost", "HeteroFeatureBinning", "HeteroFeatureSelection",
@@ -40,5 +47,7 @@ __all__ = ["DataStatistics", "DataIO", "Evaluation", "HeteroDataSplit",
            "HomoLR", "HomoNN", "HomoSecureBoost", "HomoFeatureBinning", "Intersection",
            "LocalBaseline", "OneHotEncoder", "PSI", "Reader", "Scorecard",
            "FederatedSample", "FeatureScale", "Union", "ColumnExpand", "FeldmanVerifiableSum",
-           "SampleWeight", "DataTransform", "SBTTransformer"]
+           "SampleWeight", "DataTransform", "SBTTransformer", "FeatureImputation",
+           "LabelTransform", "SecureInformationRetrieval", "CacheLoader", "ModelLoader",
+           "HeteroSSHELR", "HeteroKmeans", "HomoOneHotEncoder"]
 

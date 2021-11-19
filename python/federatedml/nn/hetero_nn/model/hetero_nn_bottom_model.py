@@ -81,3 +81,8 @@ class HeteroNNBottomModel(object):
 
     def restore_model(self, model_bytes):
         self._model = self._model.restore_model(model_bytes)
+
+    def recompile(self, optimizer):
+        self._model.compile(loss="keep_predict_loss",
+                            optimizer=optimizer,
+                            metrics=None)

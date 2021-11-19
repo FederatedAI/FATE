@@ -2,27 +2,30 @@
     "dsl_version": 2,
     "initiator": {
         "role": "guest",
-        "party_id": 10000
+        "party_id": 9999
     },
     "job_parameters": {
         "common": {
-            "work_mode": 0,
-            "backend": 0,
             "task_cores": 4
         }
     },
     "role": {
         "host": [
-            9998,9999
+            9998,
+            9999
         ],
         "guest": [
-            10000
+            9999
         ]
     },
-    "component_parameters":{
+    "component_parameters": {
         "common": {
             "feldmanverifiablesum_0": {
-                "sum_cols": [1,2,3],
+                "sum_cols": [
+                    1,
+                    2,
+                    3
+                ],
                 "q_n": 6
             }
         },

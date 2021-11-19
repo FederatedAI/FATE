@@ -17,14 +17,14 @@
 import json
 import os
 
-from cachetools import LRUCache
-from cachetools import cached
+from cachetools import LRUCache, cached
 from ruamel import yaml
 
-PROJECT_BASE = os.getenv("FATE_DEPLOY_BASE")
+PROJECT_BASE = os.getenv("FATE_PROJECT_BASE") or os.getenv("FATE_DEPLOY_BASE")
+FATE_BASE = os.getenv("FATE_BASE")
 
 
-def get_project_base_directory():
+def get_project_base_directory(*args):
     global PROJECT_BASE
     if PROJECT_BASE is None:
         PROJECT_BASE = os.path.abspath(
@@ -35,15 +35,33 @@ def get_project_base_directory():
                 os.pardir,
             )
         )
+    if args:
+        return os.path.join(PROJECT_BASE, *args)
     return PROJECT_BASE
 
 
-def get_python_base_directory():
-    return os.path.join(get_project_base_directory(), "python")
+def get_fate_directory(*args):
+    global FATE_BASE
+    if FATE_BASE is None:
+        FATE_BASE = os.path.abspath(
+            os.path.join(
+                os.path.dirname(os.path.realpath(__file__)),
+                os.pardir,
+                os.pardir,
+                os.pardir,
+            )
+        )
+    if args:
+        return os.path.join(FATE_BASE, *args)
+    return FATE_BASE
+
+
+def get_fate_python_directory(*args):
+    return get_fate_directory("python", *args)
 
 
 def get_federatedml_setting_conf_directory():
-    return os.path.join(get_python_base_directory(), 'federatedml', 'conf', 'setting_conf')
+    return os.path.join(get_fate_python_directory(), 'federatedml', 'conf', 'setting_conf')
 
 
 @cached(cache=LRUCache(maxsize=10))

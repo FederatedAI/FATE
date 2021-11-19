@@ -15,15 +15,9 @@
             9999
         ]
     },
-    "job_parameters": {
-        "common": {
-            "work_mode": 1,
-            "backend": 0
-        }
-    },
     "component_parameters": {
         "common": {
-            "dataio_0": {
+            "data_transform_0": {
                 "with_label": true
             },
             "homo_nn_0": {
@@ -102,7 +96,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true
                     }
                 }
@@ -115,7 +109,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true,
                         "output_format": "dense"
                     }

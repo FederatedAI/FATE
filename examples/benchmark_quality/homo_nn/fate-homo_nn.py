@@ -23,7 +23,6 @@ from pipeline.interface import Data, Model
 from pipeline.utils.tools import load_job_config, JobConfig
 import tensorflow.keras.layers
 from tensorflow.keras import optimizers
-from pipeline.runtime.entity import JobParameters
 
 from federatedml.evaluation.metrics import classification_metric
 from fate_test.utils import extract_data, parse_summary_result
@@ -108,8 +107,7 @@ def main(config="../../config.yaml", param="param_conf.yaml", namespace=""):
                            model=Model(homo_nn_0.output.model))
     pipeline.add_component(evaluation_0, data=Data(data=homo_nn_0.output.data))
     pipeline.compile()
-    job_parameters = JobParameters(backend=config.backend, work_mode=config.work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
     metric_summary = parse_summary_result(pipeline.get_component("evaluation_0").get_summary())
     nn_0_data = pipeline.get_component("homo_nn_0").get_output_data().get("data")
     nn_1_data = pipeline.get_component("homo_nn_1").get_output_data().get("data")

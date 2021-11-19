@@ -14,10 +14,14 @@
 #  limitations under the License.
 #
 import os
+from pathlib import Path
+
 import click
 from ruamel import yaml
+
+from flow_client.flow_cli.commands import checkpoint, tracking, component, data, job, model, queue, table, tag, task, provider, \
+    server, service, resource, privilege, test
 from flow_client.flow_cli.utils.cli_utils import prettify
-from flow_client.flow_cli.commands import (component, data, job, model, queue, task, table, tag)
 
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
@@ -30,27 +34,44 @@ def flow_cli(ctx):
     Fate Flow Client
     """
     ctx.ensure_object(dict)
+    if ctx.invoked_subcommand == 'init':
+        return
+
     with open(os.path.join(os.path.dirname(__file__), "settings.yaml"), "r") as fin:
         config = yaml.safe_load(fin)
+    if not config.get('api_version'):
+        raise ValueError('api_version in config is required')
+    ctx.obj['api_version'] = config['api_version']
+
+    is_server_conf_exist = False
     if config.get("server_conf_path"):
-        is_server_conf_exist = os.path.exists(config.get("server_conf_path"))
-    else:
-        is_server_conf_exist = False
+        conf_path = Path(config["server_conf_path"])
+        is_server_conf_exist = conf_path.exists()
 
     if is_server_conf_exist:
-        try:
-            with open(config.get("server_conf_path")) as server_conf_fp:
-                server_conf = yaml.safe_load(server_conf_fp)
-            ip = server_conf.get("fateflow", {}).get("host")
-            ctx.obj["http_port"] = server_conf.get("fateflow", {}).get("http_port")
-            ctx.obj["server_url"] = "http://{}:{}/{}".format(ip, ctx.obj["http_port"], config.get("api_version"))
-        except Exception:
-            return
+        server_conf = yaml.safe_load(conf_path.read_text())["fateflow"]
+
+        local_conf_path = conf_path.with_name(f"local.{conf_path.name}")
+        if local_conf_path.exists():
+            server_conf.update(yaml.safe_load(local_conf_path.read_text()).get("fateflow", {}))
+
+        ctx.obj["ip"] = server_conf["host"]
+        ctx.obj["http_port"] = server_conf["http_port"]
+        ctx.obj["server_url"] = f"http://{ctx.obj['ip']}:{ctx.obj['http_port']}/{ctx.obj['api_version']}"
+
+        if server_conf.get('http_app_key') and server_conf.get('http_secret_key'):
+            ctx.obj['app_key'] = server_conf['http_app_key']
+            ctx.obj['secret_key'] = server_conf['http_secret_key']
+    elif config.get("ip") and config.get("port"):
+        ctx.obj["ip"] = config["ip"]
+        ctx.obj["http_port"] = int(config["port"])
+        ctx.obj["server_url"] = f"http://{ctx.obj['ip']}:{ctx.obj['http_port']}/{config['api_version']}"
+
+        if config.get('app_key') and config.get('secret_key'):
+            ctx.obj['app_key'] = config['app_key']
+            ctx.obj['secret_key'] = config['secret_key']
     else:
-        if config.get("ip") and config.get("port"):
-            ip = config.get("ip")
-            ctx.obj["http_port"] = int(config.get("port"))
-            ctx.obj["server_url"] = "http://{}:{}/{}".format(ip, ctx.obj["http_port"], config.get("api_version"))
+        raise ValueError("Invalid configuration file. Did you run 'flow init'?")
 
     ctx.obj["init"] = is_server_conf_exist or (config.get("ip") and config.get("port"))
 
@@ -60,6 +81,8 @@ def flow_cli(ctx):
               help="Server configuration file absolute path.")
 @click.option("--ip", type=click.STRING, help="Fate flow server ip address.")
 @click.option("--port", type=click.INT, help="Fate flow server port.")
+@click.option("--app-key", type=click.STRING, help="APP key for sign requests.")
+@click.option("--secret-key", type=click.STRING, help="Secret key for sign requests.")
 @click.option("--reset", is_flag=True, default=False,
               help="If specified, initialization settings would be reset to none. Users should init flow again.")
 def initialization(**kwargs):
@@ -80,9 +103,10 @@ def initialization(**kwargs):
         config = yaml.safe_load(fin)
 
     if kwargs.get('reset'):
-        config["server_conf_path"] = None
-        config["ip"] = None
-        config["port"] = None
+        config['api_version'] = 'v1'
+        for i in ('server_conf_path', 'ip', 'port', 'app_key', 'secret_key'):
+            config[i] = None
+
         with open(os.path.join(os.path.dirname(__file__), "settings.yaml"), "w") as fout:
             yaml.dump(config, fout, Dumper=yaml.RoundTripDumper)
         prettify(
@@ -93,13 +117,14 @@ def initialization(**kwargs):
             }
         )
     else:
+        config['api_version'] = 'v1'
         if kwargs.get("server_conf_path"):
-            config["server_conf_path"] = os.path.abspath(kwargs.get("server_conf_path"))
-        if kwargs.get("ip"):
-            config["ip"] = kwargs.get("ip")
-        if kwargs.get("port"):
-            config["port"] = kwargs.get("port")
-        if kwargs.get("server_conf_path") or (kwargs.get("ip") and kwargs.get("port")):
+            config["server_conf_path"] = os.path.abspath(kwargs["server_conf_path"])
+        for i in ('ip', 'port', 'app_key', 'secret_key'):
+            if kwargs.get(i):
+                config[i] = kwargs[i]
+
+        if config.get("server_conf_path") or (config.get("ip") and config.get("port")):
             with open(os.path.join(os.path.dirname(__file__), "settings.yaml"), "w") as fout:
                 yaml.dump(config, fout, Dumper=yaml.RoundTripDumper)
             prettify(
@@ -118,12 +143,23 @@ def initialization(**kwargs):
             )
 
 
+flow_cli.add_command(server.server)
+flow_cli.add_command(service.service)
+flow_cli.add_command(provider.provider)
+flow_cli.add_command(tracking.tracking)
 flow_cli.add_command(component.component)
 flow_cli.add_command(data.data)
 flow_cli.add_command(job.job)
 flow_cli.add_command(model.model)
-# flow_cli.add_command(privilege.privilege)
+flow_cli.add_command(resource.resource)
+flow_cli.add_command(privilege.privilege)
 flow_cli.add_command(queue.queue)
 flow_cli.add_command(task.task)
 flow_cli.add_command(table.table)
 flow_cli.add_command(tag.tag)
+flow_cli.add_command(checkpoint.checkpoint)
+flow_cli.add_command(test.test)
+
+
+if __name__ == '__main__':
+    flow_cli()

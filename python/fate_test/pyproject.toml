@@ -4,7 +4,6 @@ version = "0.1"
 description = "test tools for FATE"
 authors = ["FederatedAI <contact@FedAI.org>"]
 license = "Apache-2.0"
-readme = "README.rst"
 
 homepage = "https://fate.fedai.org/"
 repository = "https://github.com/FederatedAI/FATE"

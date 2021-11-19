@@ -8,8 +8,8 @@
                 ]
             }
         },
-        "dataio_0": {
-            "module": "DataIO",
+        "data_transform_0": {
+            "module": "DataTransform",
             "input": {
                 "data": {
                     "data": [
@@ -31,13 +31,16 @@
             "input": {
                 "data": {
                     "data": [
-                        "dataio_0.data"
+                        "data_transform_0.data"
                     ]
                 }
             },
             "output": {
                 "data": [
                     "data"
+                ],
+                "cache": [
+                    "cache"
                 ]
             }
         },

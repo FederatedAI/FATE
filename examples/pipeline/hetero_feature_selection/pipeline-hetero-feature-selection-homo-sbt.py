@@ -26,16 +26,15 @@ sys.path.append(cur_path)
 
 from examples.pipeline.hetero_feature_selection import common_tools
 from pipeline.utils.tools import load_job_config
-from pipeline.runtime.entity import JobParameters
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
-from pipeline.component.hetero_feature_selection import HeteroFeatureSelection
-from pipeline.component.homo_lr import HomoLR
-from pipeline.component.scale import FeatureScale
-from pipeline.component.homo_secureboost import HomoSecureBoost
-from pipeline.component.evaluation import Evaluation
-from pipeline.component.reader import Reader
+from pipeline.component import DataTransform
+from pipeline.component import HeteroFeatureSelection
+from pipeline.component import HomoLR
+from pipeline.component import FeatureScale
+from pipeline.component import HomoSecureBoost
+from pipeline.component import Evaluation
+from pipeline.component import Reader
 
 from pipeline.interface.data import Data
 from pipeline.interface.model import Model
@@ -63,15 +62,15 @@ def make_normal_dsl(config, namespace):
     # configure Reader for host
     reader_0.get_party_instance(role='host', party_id=hosts).component_param(table=host_train_data)
 
-    # define DataIO components
-    dataio_0 = DataIO(name="dataio_0")  # start component numbering at 0
+    # define DataTransform components
+    data_transform_0 = DataTransform(name="data_transform_0")  # start component numbering at 0
 
-    # get DataIO party instance of guest
-    dataio_0_guest_party_instance = dataio_0.get_party_instance(role='guest', party_id=guest)
-    # configure DataIO for guest
-    dataio_0_guest_party_instance.component_param(with_label=True, output_format="dense")
-    # get and configure DataIO party instance of host
-    dataio_0.get_party_instance(role='host', party_id=hosts).component_param(with_label=True)
+    # get DataTransform party instance of guest
+    data_transform_0_guest_party_instance = data_transform_0.get_party_instance(role='guest', party_id=guest)
+    # configure DataTransform for guest
+    data_transform_0_guest_party_instance.component_param(with_label=True, output_format="dense")
+    # get and configure DataTransform party instance of host
+    data_transform_0.get_party_instance(role='host', party_id=hosts).component_param(with_label=True)
 
     scale_0 = FeatureScale(name='scale_0')
 
@@ -87,8 +86,8 @@ def make_normal_dsl(config, namespace):
 
     # define Intersection components
     pipeline.add_component(reader_0)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(scale_0, data=Data(data=dataio_0.output.data))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(scale_0, data=Data(data=data_transform_0.output.data))
     pipeline.add_component(homo_sbt_0, data=Data(train_data=scale_0.output.data))
 
     selection_param = {
@@ -145,11 +144,8 @@ def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
         config = load_job_config(config)
-    backend = config.backend
-    work_mode = config.work_mode
     pipeline = make_normal_dsl(config, namespace)
-    job_parameters = JobParameters(backend=backend, work_mode=work_mode)
-    pipeline.fit(job_parameters)
+    pipeline.fit()
     common_tools.prettify(pipeline.get_component("hetero_feature_selection_0").get_summary())
     common_tools.prettify(pipeline.get_component("evaluation_0").get_summary())
 

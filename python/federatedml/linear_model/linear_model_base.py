@@ -18,8 +18,8 @@
 
 import numpy as np
 
-from fate_flow.entity.metric import Metric
-from fate_flow.entity.metric import MetricMeta
+from federatedml.model_base import Metric
+from federatedml.model_base import MetricMeta
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.model_base import ModelBase
 from federatedml.model_selection import start_cross_validation
@@ -31,7 +31,7 @@ from federatedml.statistic import data_overview
 from federatedml.util import LOGGER
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
-from federatedml.util.validation_strategy import ValidationStrategy
+from federatedml.callbacks.validation_strategy import ValidationStrategy
 
 
 class BaseLinearModel(ModelBase):
@@ -59,7 +59,6 @@ class BaseLinearModel(ModelBase):
         self.need_one_vs_rest = False
         self.need_call_back_loss = True
         self.init_param_obj = None
-        self.validation_strategy = None
 
     def _init_model(self, params):
         self.model_param = params
@@ -71,11 +70,14 @@ class BaseLinearModel(ModelBase):
         self.optimizer = optimizer_factory(params)
         self.converge_func = converge_func_factory(params.early_stop, params.tol)
         self.encrypted_calculator = None
-        self.validation_freqs = params.validation_freqs
+        self.validation_freqs = params.callback_param.validation_freqs
         self.validation_strategy = None
-        self.early_stopping_rounds = params.early_stopping_rounds
-        self.metrics = params.metrics
-        self.use_first_metric_only = params.use_first_metric_only
+        self.early_stopping_rounds = params.callback_param.early_stopping_rounds
+        self.metrics = params.callback_param.metrics
+        self.use_first_metric_only = params.callback_param.use_first_metric_only
+        # if len(self.component_properties.host_party_idlist) == 1:
+        #     LOGGER.debug(f"set_use_async")
+        #     self.gradient_loss_operator.set_use_async()
 
     def get_features_shape(self, data_instances):
         if self.feature_shape is not None:
@@ -101,6 +103,7 @@ class BaseLinearModel(ModelBase):
         raise NotImplementedError("This method should be be called here")
 
     def export_model(self):
+        LOGGER.debug(f"called export model")
         meta_obj = self._get_meta()
         param_obj = self._get_param()
         result = {
@@ -187,17 +190,14 @@ class BaseLinearModel(ModelBase):
         if header is None:
             return {}
         weight_dict, intercept_ = self.get_weight_intercept_dict(header)
-        best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
 
         summary = {"coef": weight_dict,
                    "intercept": intercept_,
                    "is_converged": self.is_converged,
-                   "best_iteration": best_iteration}
+                   "best_iteration": self.callback_variables.best_iteration}
 
-        if self.validation_strategy:
-            validation_summary = self.validation_strategy.summary()
-            if validation_summary:
-                summary["validation_metrics"] = validation_summary
+        if self.callback_variables.validation_summary is not None:
+            summary["validation_metrics"] = self.callback_variables.validation_summary
         return summary
 
     def check_abnormal_values(self, data_instances):

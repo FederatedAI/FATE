@@ -16,14 +16,13 @@
 
 import copy
 import functools
-import time
 
-from federatedml.protobuf.generated import one_vs_rest_param_pb2
+from federatedml.feature.instance import Instance
 from federatedml.transfer_variable.transfer_class.one_vs_rest_transfer_variable import OneVsRestTransferVariable
+from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util.classify_label_checker import ClassifyLabelChecker
 from federatedml.util.io_check import assert_io_num_rows_equal
-from federatedml.util import LOGGER
 
 
 class OneVsRest(object):
@@ -112,7 +111,7 @@ class OneVsRest(object):
         Fit OneVsRest model
         Parameters:
         ----------
-        data_instances: DTable of instances
+        data_instances: Table of instances
         """
         if self.mode == consts.HOMO:
             raise ValueError("Currently, One vs Rest is not supported for homo algorithm")
@@ -121,13 +120,14 @@ class OneVsRest(object):
 
         LOGGER.info("Total classes:{}".format(self.classes))
 
+        self.classifier.callback_one_vs_rest = True
         current_flow_id = self.classifier.flowid
         summary_dict = {}
         for label_index, label in enumerate(self.classes):
             LOGGER.info("Start to train OneVsRest with label_index:{}, label:{}".format(label_index, label))
             classifier = copy.deepcopy(self.classifier)
             classifier.need_one_vs_rest = False
-            classifier.set_flowid("_".join([current_flow_id, "one_vs_rest", str(label_index)]))
+            classifier.set_flowid(".".join([current_flow_id, "model_" + str(label_index)]))
             if self.has_label:
                 header = data_instances.schema.get("header")
                 data_instances_mask_label = self._mask_data_label(data_instances, label=label)
@@ -142,13 +142,6 @@ class OneVsRest(object):
 
                 LOGGER.info("start classifier fit")
                 classifier.fit_binary(data_instances_mask_label, validate_data=validate_mask_label_data)
-            #     header = data_instances.schema.get("header")
-            #     data_instances_mask_label = self._mask_data_label(data_instances, label=label)
-            #     data_instances_mask_label.schema['header'] = header
-            #     LOGGER.info("finish mask label:{}".format(label))
-            #
-            #     LOGGER.info("start classifier fit")
-            #     classifier.fit_binary(data_instances_mask_label)
             else:
                 LOGGER.info("start classifier fit")
                 classifier.fit_binary(data_instances, validate_data=validate_data)
@@ -164,9 +157,10 @@ class OneVsRest(object):
         prob result is available for guest party only.
         """
         if self.role == consts.GUEST:
-            prob = predict_res_list[0].mapValues(lambda r: [r[2]])
+            # assert 1 == 2, f"predict_res_list: {predict_res_list[0].first()[1].features}"
+            prob = predict_res_list[0].mapValues(lambda r: [r.features[2]])
             for predict_res in predict_res_list[1:]:
-                prob = prob.join(predict_res, lambda p, r: p + [r[2]])
+                prob = prob.join(predict_res, lambda p, r: p + [r.features[2]])
         else:
             prob = None
         return prob
@@ -177,18 +171,18 @@ class OneVsRest(object):
         Predict OneVsRest model
         Parameters:
         ----------
-        data_instances: DTable of instances
+        data_instances: Table of instances
         predict_param: PredictParam of classifier
 
         Returns:
         ----------
-        predict_res: DTable, if has predict_res, it includes ground true label, predict probably and predict label
+        predict_res: Table, if has predict_res, it includes ground true label, predict probably and predict label
         """
         LOGGER.info("Start one_vs_all predict procedure.")
         predict_res_list = []
         for i, model in enumerate(self.models):
             current_flow_id = model.flowid
-            model.set_flowid("_".join([current_flow_id, "one_vs_rest", str(i)]))
+            model.set_flowid(".".join([current_flow_id, "model_" + str(i)]))
 
             LOGGER.info("Start to predict with model:{}".format(i))
             # model.set_flowid("predict_" + str(i))
@@ -200,10 +194,16 @@ class OneVsRest(object):
             f = functools.partial(self.__get_multi_class_res, classes=list(self.classes))
             multi_classes_res = prob.mapValues(f)
             predict_res = data_instances.join(multi_classes_res, lambda d, m: [d.label, m[0], m[1], m[2]])
+
+            def _transfer(instance, pred_res):
+                return Instance(features=pred_res, inst_id=instance.inst_id)
+
+            predict_res = data_instances.join(predict_res, _transfer)
         else:
             predict_res = None
         #
         # LOGGER.info("finish OneVsRest Predict, return predict results.")
+
         return predict_res
 
     def save(self, single_model_pb):

@@ -15,16 +15,9 @@
             9999
         ]
     },
-    "job_parameters": {
-        "common": {
-            "job_type": "train",
-            "backend": 0,
-            "work_mode": 0
-        }
-    },
     "component_parameters": {
         "common": {
-            "dataio_0": {
+            "data_transform_0": {
                 "output_format": "sparse"
             },
             "hetero_poisson_0": {
@@ -59,7 +52,7 @@
                             "namespace": "experiment"
                         }
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true,
                         "label_name": "doctorco",
                         "label_type": "float"
@@ -68,7 +61,7 @@
             },
             "host": {
                 "0": {
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": false
                     },
                     "reader_0": {

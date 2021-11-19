@@ -1,0 +1,74 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "guest": [
+            9999
+        ],
+        "host": [
+            10000
+        ],
+        "arbiter": [
+            9999
+        ]
+    },
+    "component_parameters": {
+        "common": {
+            "data_transform_0": {
+                "output_format": "dense"
+            },
+            "hetero_lr_0": {
+                "penalty": "L2",
+                "tol": 0.001,
+                "alpha": 0.01,
+                "optimizer": "sgd",
+                "batch_size": -1,
+                "learning_rate": 0.15,
+                "decay": 0.0,
+                "decay_sqrt": false,
+                "init_param": {
+                    "init_method": "zeros"
+                },
+                "max_iter": 20,
+                "early_stop": "weight_diff"
+            },
+            "evaluation_0": {
+                "eval_type": "binary"
+            }
+        },
+        "role": {
+            "host": {
+                "0": {
+                    "data_transform_0": {
+                        "with_label": false
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "label_transform_0": {
+                        "need_run": false
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "data_transform_0": {
+                        "with_label": true
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

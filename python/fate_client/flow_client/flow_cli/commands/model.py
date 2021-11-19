@@ -150,7 +150,7 @@ def export_model(ctx, **kwargs):
     \b
     - USAGE:
         flow model export -c fate_flow/examples/export_model.json
-        flow model export -c fate_flow/examplse/store_model.json --to-database
+        flow model export -c fate_flow/examples/store_model.json --to-database
     """
     config_data, dsl_data = preprocess(**kwargs)
     if not config_data.pop('to_database'):
@@ -248,7 +248,7 @@ def get_predict_dsl(ctx, **kwargs):
 
     \b
     - USAGE:
-        flow model get-predict-dsl --model_id $MODEL_ID --model_version $MODEL_VERSION -o ./examples/
+        flow model get-predict-dsl --model-id $MODEL_ID --model-version $MODEL_VERSION -o ./examples/
     """
     config_data, dsl_data = preprocess(**kwargs)
     dsl_filename = "predict_dsl_{}.json".format(datetime.now().strftime('%Y%m%d%H%M%S'))
@@ -288,7 +288,7 @@ def get_predict_conf(ctx, **kwargs):
 
     \b
     - USAGE:
-        flow model get-predict-conf --model_id $MODEL_ID --model_version $MODEL_VERSION -o ./examples/
+        flow model get-predict-conf --model-id $MODEL_ID --model-version $MODEL_VERSION -o ./examples/
 
     """
     config_data, dsl_data = preprocess(**kwargs)
@@ -325,6 +325,12 @@ def get_predict_conf(ctx, **kwargs):
               help="User specifies a file path which records the component list.")
 @click.option("--dsl-path", type=click.Path(exists=True),
               help="User specified predict dsl file")
+@click.option("--cpn-step-index", type=click.STRING, multiple=True,
+              help="Specify a checkpoint model to replace the pipeline model. "
+                   "Use : to separate component name and step index (E.g. --cpn-step-index cpn_a:123)")
+@click.option("--cpn-step-name", type=click.STRING, multiple=True,
+              help="Specify a checkpoint model to replace the pipeline model. "
+                   "Use : to separate component name and step name (E.g. --cpn-step-name cpn_b:foobar)")
 @click.pass_context
 def deploy(ctx, **kwargs):
     """
@@ -334,17 +340,19 @@ def deploy(ctx, **kwargs):
 
     \b
     - USAGE:
-        flow model deploy --model_id $MODEL_ID --model_version $MODEL_VERSION
+        flow model deploy --model-id $MODEL_ID --model-version $MODEL_VERSION
 
     """
-    request_data = {}
-    request_data['model_id'] = kwargs.get('model_id')
-    request_data['model_version'] = kwargs.get('model_version')
+    request_data = {
+        'model_id': kwargs['model_id'],
+        'model_version': kwargs['model_version'],
+    }
+
     if kwargs.get("cpn_list") or kwargs.get("cpn_path"):
         if kwargs.get("cpn_list"):
-            cpn_str = kwargs.get("cpn_list")
+            cpn_str = kwargs["cpn_list"]
         elif kwargs.get("cpn_path"):
-            with open(kwargs.get("cpn_path"), "r") as fp:
+            with open(kwargs["cpn_path"], "r") as fp:
                 cpn_str = fp.read()
         else:
             cpn_str = ""
@@ -358,9 +366,23 @@ def deploy(ctx, **kwargs):
             cpn_list = cpn_str.split(",")
         request_data['cpn_list'] = cpn_list
     elif kwargs.get("dsl_path"):
-        with open(kwargs.get("dsl_path"), "r") as ft:
+        with open(kwargs["dsl_path"], "r") as ft:
             predict_dsl = ft.read()
         request_data['dsl'] = predict_dsl
+
+    request_data['components_checkpoint'] = {}
+    for i in ('cpn_step_index', 'cpn_step_name'):
+        for j in kwargs[i]:
+            component, checkpoint = j.rsplit(':', 1)
+
+            if i == 'cpn_step_index':
+                checkpoint = int(checkpoint)
+            if component in request_data['components_checkpoint']:
+                raise KeyError(f"Duplicated component name '{component}'.")
+
+            request_data['components_checkpoint'][component] = {
+                i[4:]: checkpoint,
+            }
 
     config_data, dsl_data = preprocess(**request_data)
     access_server('post', ctx, 'model/deploy', config_data)
@@ -374,7 +396,7 @@ def deploy(ctx, **kwargs):
 @click.option('--detail', is_flag=True, default=False,
               help="If specified, details of model would be shown.")
 @click.pass_context
-def model_info(ctx, **kwargs):
+def get_model_info(ctx, **kwargs):
     """
     \b
     - DESCRIPTION:
@@ -382,11 +404,68 @@ def model_info(ctx, **kwargs):
 
     \b
     - USAGE:
-        flow model model-info --model_id $MODEL_ID --model_version $MODEL_VERSION
-        flow model model-info --model_id $MODEL_ID --model_version $MODEL_VERSION --detail
+        flow model model-info --model-id $MODEL_ID --model-version $MODEL_VERSION
+        flow model model-info --model-id $MODEL_ID --model-version $MODEL_VERSION --detail
     """
     config_data, dsl_data = preprocess(**kwargs)
     if not config_data.pop('detail'):
         config_data['query_filters'] = ['create_date', 'role', 'party_id', 'roles', 'model_id',
                                         'model_version', 'loaded_times', 'size', 'description', 'parent', 'parent_info']
     access_server('post', ctx, 'model/query', config_data)
+
+
+@model.command("homo-convert", short_help="Convert trained homogenous model")
+@cli_args.CONF_PATH
+@click.pass_context
+def homo_convert_model(ctx, **kwargs):
+    """
+    \b
+    - DESCRIPTION:
+        Convert trained homogenous model to the format of another ML framework. Converted model files
+        will be saved alongside the original model and can be downloaded via model export command.
+        The supported conversions are:
+          HomoLR to `sklearn.linear_model.LogisticRegression`
+          HomoNN to `tf.keras.Sequential` or `torch.nn.Sequential`, depending on the originally-used backend type.
+
+    \b
+    - USAGE:
+        flow model homo-convert -c fate_flow/examples/homo_convert_model.json
+    """
+    config_data, dsl_data = preprocess(**kwargs)
+    access_server('post', ctx, 'model/homo/convert', config_data)
+
+
+@model.command("homo-deploy", short_help="Deploy trained homogenous model")
+@cli_args.CONF_PATH
+@click.pass_context
+def homo_deploy_model(ctx, **kwargs):
+    """
+    \b
+    - DESCRIPTION:
+        Deploy trained homogenous model to a target online serving system. The model must be
+        converted beforehand.
+        Currently the supported target serving system is KFServing. Refer to the example json
+        for detailed parameters.
+
+    \b
+    - USAGE:
+        flow model homo-deploy -c fate_flow/examples/homo_deploy_model.json
+    """
+    config_data, dsl_data = preprocess(**kwargs)
+    if config_data.get('deployment_type') == "kfserving":
+        kube_config = config_data.get('deployment_parameters', {}).get('config_file')
+        if kube_config:
+            if check_abs_path(kube_config):
+                with open(kube_config, 'r') as fp:
+                    config_data['deployment_parameters']['config_file_content'] = fp.read()
+                del config_data['deployment_parameters']['config_file']
+            else:
+                prettify(
+                    {
+                        "retcode": 100,
+                        "retmsg": "The kube_config file is obtained from the fate flow client machine, "
+                                  "but it does not exist. Please check the path: {}".format(kube_config)
+                    }
+                )
+                return
+    access_server('post', ctx, 'model/homo/deploy', config_data)

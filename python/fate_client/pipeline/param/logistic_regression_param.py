@@ -26,6 +26,7 @@ from pipeline.param.init_model_param import InitParam
 from pipeline.param.predict_param import PredictParam
 from pipeline.param.stepwise_param import StepwiseParam
 from pipeline.param.sqn_param import StochasticQuasiNewtonParam
+from pipeline.param.callback_param import CallbackParam
 from pipeline.param import consts
 
 
@@ -35,7 +36,7 @@ class LogisticParam(BaseParam):
 
     Parameters
     ----------
-    penalty : str, 'L1', 'L2' or None. default: 'L2'
+    penalty : {'L2', 'L1' or None}
         Penalty method used in LR. Please note that, when using encrypted version in HomoLR,
         'L1' is not supported.
 
@@ -45,7 +46,7 @@ class LogisticParam(BaseParam):
     alpha : float, default: 1.0
         Regularization strength coefficient.
 
-    optimizer : str, 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd', 'sqn' or 'adagrad', default: 'rmsprop'
+    optimizer : {'rmsprop', 'sgd', 'adam', 'nesterov_momentum_sgd', 'sqn', 'adagrad'}, default: 'rmsprop'
         Optimize method, if 'sqn' has been set, sqn_param will take effect. Currently, 'sqn' support hetero mode only.
 
     batch_size : int, default: -1
@@ -57,7 +58,7 @@ class LogisticParam(BaseParam):
     max_iter : int, default: 100
         The maximum iteration for training.
 
-    early_stop : str, 'diff', 'weight_diff' or 'abs', default: 'diff'
+    early_stop : {'diff', 'weight_diff', 'abs'}, default: 'diff'
         Method used to judge converge or not.
             a)	diff： Use difference of loss between two iterations to judge whether converge.
             b)  weight_diff: Use difference between weights of two consecutive iterations
@@ -70,19 +71,25 @@ class LogisticParam(BaseParam):
         lr = lr0/(1+decay*t) if decay_sqrt is False. If decay_sqrt is True, lr = lr0 / sqrt(1+decay*t)
         where t is the iter number.
 
-    decay_sqrt: Bool, default: True
+    decay_sqrt: bool, default: True
         lr = lr0/(1+decay*t) if decay_sqrt is False, otherwise, lr = lr0 / sqrt(1+decay*t)
 
     encrypt_param: EncryptParam object, default: default EncryptParam object
+        encrypt param
 
     predict_param: PredictParam object, default: default PredictParam object
+        predict param
+
+    callback_param: CallbackParam object
+        callback param
 
     cv_param: CrossValidationParam object, default: default CrossValidationParam object
+        cv param
 
-    multi_class: str, 'ovr', default: 'ovr'
+    multi_class: {'ovr'}, default: 'ovr'
         If it is a multi_class task, indicate what strategy to use. Currently, support 'ovr' short for one_vs_rest only.
 
-    validation_freqs: int, list, tuple, set, or None
+    validation_freqs: int or list or tuple or set, or None, default None
         validation frequency during training.
 
     early_stopping_rounds: int, default: None
@@ -96,9 +103,10 @@ class LogisticParam(BaseParam):
     use_first_metric_only: bool, default: False
         Indicate whether use the first metric only for early stopping judgement.
 
-    floating_point_precision: None or integer, if not None, use floating_point_precision-bit to speed up calculation,
-                               e.g.: convert an x to round(x * 2**floating_point_precision) during Paillier operation, divide
-                                      the result by 2**floating_point_precision in the end.
+    floating_point_precision: None or integer
+        if not None, use floating_point_precision-bit to speed up calculation,
+        e.g.: convert an x to round(x * 2**floating_point_precision) during Paillier operation, divide
+                the result by 2**floating_point_precision in the end.
 
     """
 
@@ -111,7 +119,8 @@ class LogisticParam(BaseParam):
                  multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
                  stepwise_param=StepwiseParam(), floating_point_precision=23,
                  metrics=None,
-                 use_first_metric_only=False
+                 use_first_metric_only=False,
+                 callback_param=CallbackParam()
                  ):
         super(LogisticParam, self).__init__()
         self.penalty = penalty
@@ -135,6 +144,7 @@ class LogisticParam(BaseParam):
         self.metrics = metrics or []
         self.use_first_metric_only = use_first_metric_only
         self.floating_point_precision = floating_point_precision
+        self.callback_param = copy.deepcopy(callback_param)
 
     def check(self):
         descr = "logistic_param's"
@@ -223,7 +233,6 @@ class LogisticParam(BaseParam):
                 raise ValueError("early stopping rounds should be larger than 0 when it's integer")
             if self.validation_freqs is None:
                 raise ValueError("validation freqs must be set when early stopping is enabled")
-
         if self.metrics is not None and not isinstance(self.metrics, list):
             raise ValueError("metrics should be a list")
 
@@ -269,7 +278,7 @@ class HomoLogisticParam(LogisticParam):
                  metrics=['auc', 'ks'],
                  use_first_metric_only=False,
                  use_proximal=False,
-                 mu=0.1
+                 mu=0.1, callback_param=CallbackParam()
                  ):
         super(HomoLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                 batch_size=batch_size,
@@ -280,7 +289,8 @@ class HomoLogisticParam(LogisticParam):
                                                 validation_freqs=validation_freqs,
                                                 decay=decay, decay_sqrt=decay_sqrt,
                                                 early_stopping_rounds=early_stopping_rounds,
-                                                metrics=metrics, use_first_metric_only=use_first_metric_only)
+                                                metrics=metrics, use_first_metric_only=use_first_metric_only,
+                                                callback_param=callback_param)
         self.re_encrypt_batches = re_encrypt_batches
         self.aggregate_iters = aggregate_iters
         self.use_proximal = use_proximal
@@ -325,7 +335,8 @@ class HeteroLogisticParam(LogisticParam):
                  multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
                  metrics=['auc', 'ks'], floating_point_precision=23,
                  encrypt_param=EncryptParam(),
-                 use_first_metric_only=False, stepwise_param=StepwiseParam()
+                 use_first_metric_only=False, stepwise_param=StepwiseParam(),
+                 callback_param=CallbackParam()
                  ):
         super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                   batch_size=batch_size,
@@ -339,7 +350,8 @@ class HeteroLogisticParam(LogisticParam):
                                                   metrics=metrics, floating_point_precision=floating_point_precision,
                                                   encrypt_param=encrypt_param,
                                                   use_first_metric_only=use_first_metric_only,
-                                                  stepwise_param=stepwise_param)
+                                                  stepwise_param=stepwise_param,
+                                                  callback_param=callback_param)
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
         self.sqn_param = copy.deepcopy(sqn_param)
 

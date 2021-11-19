@@ -8,8 +8,8 @@
                 ]
             }
         },
-        "dataio_0": {
-            "module": "DataIO",
+        "data_transform_0": {
+            "module": "DataTransform",
             "input": {
                 "data": {
                     "data": [
@@ -18,21 +18,27 @@
                 }
             },
             "output": {
-                "data": ["train"],
-                "model": ["dataio"]
+                "data": [
+                    "train"
+                ],
+                "model": [
+                    "data_transform"
+                ]
             }
-         },
+        },
         "intersection_0": {
             "module": "Intersection",
             "input": {
                 "data": {
                     "data": [
-                        "dataio_0.train"
+                        "data_transform_0.train"
                     ]
                 }
             },
             "output": {
-                "data": ["train"]
+                "data": [
+                    "train"
+                ]
             }
         },
         "secureboost_0": {
@@ -45,8 +51,12 @@
                 }
             },
             "output": {
-                "data": ["train"],
-                "model": ["train"]
+                "data": [
+                    "train"
+                ],
+                "model": [
+                    "train"
+                ]
             }
         },
         "sbt_feature_transformer_0": {
@@ -62,39 +72,57 @@
                 ]
             },
             "output": {
-                "data": ["train"],
-                "model": ["model"]
+                "data": [
+                    "train"
+                ],
+                "model": [
+                    "model"
+                ]
             }
         },
         "local_baseline_0": {
             "module": "LocalBaseline",
             "input": {
                 "data": {
-                    "train_data": ["sbt_feature_transformer_0.train"]
+                    "train_data": [
+                        "sbt_feature_transformer_0.train"
+                    ]
                 }
             },
             "output": {
-                "data": ["train"],
-                "model": ["local_baseline"]
+                "data": [
+                    "train"
+                ],
+                "model": [
+                    "local_baseline"
+                ]
             }
         },
         "local_baseline_1": {
             "module": "LocalBaseline",
             "input": {
                 "data": {
-                    "train_data": ["intersection_0.train"]
+                    "train_data": [
+                        "intersection_0.train"
+                    ]
                 }
             },
             "output": {
-                "data": ["train"],
-                "model": ["local_baseline"]
+                "data": [
+                    "train"
+                ],
+                "model": [
+                    "local_baseline"
+                ]
             }
         },
         "evaluation_0": {
             "module": "Evaluation",
             "input": {
                 "data": {
-                    "data": ["local_baseline_0.train"]
+                    "data": [
+                        "local_baseline_0.train"
+                    ]
                 }
             }
         },
@@ -102,7 +130,9 @@
             "module": "Evaluation",
             "input": {
                 "data": {
-                    "data": ["local_baseline_1.train"]
+                    "data": [
+                        "local_baseline_1.train"
+                    ]
                 }
             }
         }

@@ -1,0 +1,86 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "host": [
+            10000
+        ],
+        "guest": [
+            9999
+        ]
+    },
+    "component_parameters": {
+        "role": {
+            "host": {
+                "0": {
+                    "data_transform_0": {
+                        "with_label": false
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "data_transform_0": {
+                        "with_label": true
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            }
+        },
+        "common": {
+            "model_loader_0": {
+                "model_id": "",
+                "model_version": "",
+                "component_name": "hetero_feature_binning_0",
+                "step_index": null
+            },
+            "hetero_feature_selection_0": {
+                "select_col_indexes": -1,
+                "select_names": [],
+                "filter_methods": [
+                    "iv_filter"
+                ],
+                "iv_param": {
+                    "metrics": [
+                        "iv",
+                        "iv",
+                        "iv"
+                    ],
+                    "filter_type": [
+                        "threshold",
+                        "top_k",
+                        "top_percentile"
+                    ],
+                    "take_high": true,
+                    "threshold": [
+                        0.03,
+                        15,
+                        0.7
+                    ],
+                    "host_thresholds": [
+                        [
+                            0.15
+                        ],
+                        null,
+                        null
+                    ],
+                    "select_federated": true
+                }
+            }
+        }
+    }
+}

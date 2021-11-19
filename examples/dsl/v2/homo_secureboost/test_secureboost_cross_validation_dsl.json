@@ -8,8 +8,8 @@
                 ]
             }
         },
-        "dataio_0": {
-            "module": "DataIO",
+        "data_transform_0": {
+            "module": "DataTransform",
             "input": {
                 "data": {
                     "data": [
@@ -27,11 +27,11 @@
             }
         },
         "homo_secureboost_0": {
-            "module": "HomoSecureboost",
+            "module": "HomoSecureBoost",
             "input": {
                 "data": {
                     "train_data": [
-                        "dataio_0.data"
+                        "data_transform_0.data"
                     ]
                 }
             },

@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 import click
-from flow_client.flow_cli.utils import detect_utils
+from flow_client.flow_cli.utils import cli_args
 from flow_client.flow_cli.utils.cli_utils import preprocess, access_server
 
 
@@ -29,64 +29,67 @@ def privilege(ctx):
     pass
 
 
-@privilege.command(short_help="Query Privilege Command")
-@click.argument('src_party_id', metavar='<SRC_PARTY_ID>')
-@click.argument('src_role', metavar='<SRC_ROLE>')
-@click.pass_context
-def query(ctx, **kwargs):
-    """
-    - COMMAND DESCRIPTION:
-
-    Query privilege information.
-
-    - REQUIRED ARGUMENTS:
-
-    \b
-    <SRC_PARTY_ID> : Source Party ID
-    <SRC_ROLE> : Source Role
-    """
-    config_data, dsl_data = preprocess(**kwargs)
-    detect_utils.check_config(config=config_data, required_arguments=['src_party_id', 'src_role'])
-    access_server('post', ctx, 'permission/query/privilege', config_data)
-
-
-@privilege.command(short_help="Grant Privilege Command")
-@click.argument('src_party_id', metavar='<SRC_PARTY_ID>')
-@click.argument('src_role', metavar='<SRC_ROLE>')
+@privilege.command("grant", short_help="Grant Privilege Command")
+@cli_args.SRC_PARTY_ID
+@cli_args.SRC_ROLE
+@cli_args.PRIVILEGE_ROLE
+@cli_args.PRIVILEGE_COMMAND
+@cli_args.PRIVILEGE_COMPONENT
 @click.pass_context
 def grant(ctx, **kwargs):
     """
-    - COMMAND DESCRIPTION:
+    - DESCRIPTION:
 
-    Grant privilege command.
-
-    - REQUIRED ARGUMENTS:
 
     \b
-    <SRC_PARTY_ID> : Source Party ID
-    <SRC_ROLE> : Source Role
+    grant role/command/component privilege
+
+    \b
+    - USAGE:
+        flow privilege grant --src-party-id 9999 --src-role guest --privilege-role all
     """
     config_data, dsl_data = preprocess(**kwargs)
-    detect_utils.check_config(config=config_data, required_arguments=['src_party_id', 'src_role'])
     access_server('post', ctx, 'permission/grant/privilege', config_data)
 
 
-@privilege.command(short_help="Delete Privilege Command")
-@click.argument('src_party_id', metavar='<SRC_PARTY_ID>')
-@click.argument('src_role', metavar='<SRC_ROLE>')
+@privilege.command("delete", short_help="Delete Privilege Command")
+@cli_args.SRC_PARTY_ID
+@cli_args.SRC_ROLE
+@cli_args.PRIVILEGE_ROLE
+@cli_args.PRIVILEGE_COMMAND
+@cli_args.PRIVILEGE_COMPONENT
 @click.pass_context
 def delete(ctx, **kwargs):
     """
-    - COMMAND DESCRIPTION:
+    - DESCRIPTION:
 
-    Delete privilege Command.
-
-    - REQUIRED ARGUMENTS:
 
     \b
-    <SRC_PARTY_ID> : Source Party ID
-    <SRC_ROLE> : Source Role
+    delete role/command/component privilege
+
+    \b
+    - USAGE:
+        flow privilege delete --src-party-id 9999 --src-role guest --privilege-role all
     """
     config_data, dsl_data = preprocess(**kwargs)
-    detect_utils.check_config(config=config_data, required_arguments=['src_party_id', 'src_role'])
     access_server('post', ctx, 'permission/delete/privilege', config_data)
+
+
+@privilege.command("query", short_help="Query Privilege Command")
+@cli_args.SRC_PARTY_ID
+@cli_args.SRC_ROLE
+@click.pass_context
+def delete(ctx, **kwargs):
+    """
+    - DESCRIPTION:
+
+
+    \b
+    query role/command/component privilege
+
+    \b
+    - USAGE:
+        flow privilege query --src-party-id 9999 --src-role guest
+    """
+    config_data, dsl_data = preprocess(**kwargs)
+    access_server('post', ctx, 'permission/query/privilege', config_data)

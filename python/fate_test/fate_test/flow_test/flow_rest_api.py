@@ -2,21 +2,24 @@ import json
 import os
 import shutil
 import time
-from datetime import datetime
+import numpy as np
 from pathlib import Path
 
 import requests
 from contextlib import closing
 from prettytable import PrettyTable, ORGMODE
-from fate_test.flow_test.flow_process import Base, get_dict_from_file, download_from_request
+from fate_test.flow_test.flow_process import Base, get_dict_from_file, download_from_request, serving_connect
 
 
 class TestModel(Base):
-    request_api_info_path = './rest_api.log'
-    if os.path.exists(request_api_info_path):
-        os.remove(request_api_info_path)
+    def __init__(self, data_base_dir, server_url, component_name, namespace):
+        super().__init__(data_base_dir, server_url, component_name)
+        self.request_api_info_path = f'./logs/{namespace}/cli_exception.log'
+        os.makedirs(os.path.dirname(self.request_api_info_path), exist_ok=True)
 
     def error_log(self, retmsg):
+        if retmsg is None:
+            return os.path.abspath(self.request_api_info_path)
         with open(self.request_api_info_path, "a") as f:
             f.write(retmsg)
 
@@ -54,7 +57,7 @@ class TestModel(Base):
             return
 
     def job_api(self, command, output_path=None):
-        post_data = {'job_id': self.job_id}
+        post_data = {'job_id': self.job_id, "role": "guest"}
         if command == 'rerun':
             try:
                 response = requests.post("/".join([self.server_url, "job", command]), json=post_data)
@@ -250,7 +253,7 @@ class TestModel(Base):
                 if response.status_code == 200:
                     if response.json().get('retcode'):
                         self.error_log('component parameters: {}'.format(response.json().get('retmsg')) + '\n')
-                    if response.json().get("data").get("HeteroLogisticParam").get("max_iter") == max_iter:
+                    if response.json().get('data', {}).get('ComponentParam', {}).get('max_iter', {}) == max_iter:
                         return response.json().get('retcode')
             except Exception:
                 return
@@ -367,10 +370,13 @@ class TestModel(Base):
             except Exception:
                 return
 
-    def data_upload(self, post_data, work_mode, table_index=None):
-        post_data.update({"drop": 1, "use_local_data": 0, "work_mode": work_mode})
+    def data_upload(self, post_data, table_index=None):
+        post_data['file'] = str(self.data_base_dir.joinpath(post_data['file']).resolve())
+        post_data['drop'] = 1
+        post_data['use_local_data'] = 0
         if table_index is not None:
-            post_data.update({"table_name": post_data["file"] + f'_{table_index}'})
+            post_data['table_name'] = f'{post_data["file"]}_{table_index}'
+
         try:
             response = requests.post("/".join([self.server_url, "data", "upload"]), json=post_data)
             if response.status_code == 200:
@@ -380,12 +386,11 @@ class TestModel(Base):
         except Exception:
             return
 
-    def data_download(self, table_name, output_path, work_mode):
+    def data_download(self, table_name, output_path):
         post_data = {
             "table_name": table_name['table_name'],
             "namespace": table_name['namespace'],
-            "output_path": output_path + '{}download.csv'.format(self.job_id),
-            "work_mode": work_mode
+            "output_path": output_path + '{}download.csv'.format(self.job_id)
         }
         try:
             response = requests.post("/".join([self.server_url, "data", "download"]), json=post_data)
@@ -396,8 +401,8 @@ class TestModel(Base):
         except Exception:
             return
 
-    def data_upload_history(self, conf_file, work_mode):
-        self.data_upload(conf_file, work_mode=work_mode, table_index=1)
+    def data_upload_history(self, conf_file):
+        self.data_upload(conf_file, table_index=1)
         post_data = {"limit": 2}
         try:
             response = requests.post("/".join([self.server_url, "data", "upload/history"]), json=post_data)
@@ -471,14 +476,14 @@ class TestModel(Base):
             except Exception:
                 return
 
-    def model_api(self, command, output_path=None, remove_path=None, model_path=None, arbiter_party_id=None,
-                  tag_name=None):
+    def model_api(self, command, output_path=None, remove_path=None, model_path=None, homo_deploy_path=None,
+                  homo_deploy_kube_config_path=None, arbiter_party_id=None, tag_name=None, model_load_conf=None, servings=None):
+        if model_load_conf is not None:
+            model_load_conf["job_parameters"].update({"model_id": self.model_id,
+                                                      "model_version": self.model_version})
         if command == 'model/load':
-            post_data = {
-                "job_id": self.job_id
-            }
             try:
-                response = requests.post("/".join([self.server_url, "model", "load"]), json=post_data)
+                response = requests.post("/".join([self.server_url, "model", "load"]), json=model_load_conf)
                 if response.status_code == 200:
                     if response.json().get('retcode'):
                         self.error_log('model load: {}'.format(response.json().get('retmsg')) + '\n')
@@ -487,10 +492,8 @@ class TestModel(Base):
                 return
 
         elif command == 'model/bind':
-            post_data = {
-                "job_id": self.job_id,
-                "service_id": f"auto_test_{datetime.strftime(datetime.now(), '%Y%m%d%H%M%S')}"
-            }
+            service_id = "".join([str(i) for i in np.random.randint(9, size=8)])
+            post_data = model_load_conf.update({"service_id": service_id, "servings": [servings]})
             try:
                 response = requests.post("/".join([self.server_url, "model", "bind"]), json=post_data)
                 if response.status_code == 200:
@@ -577,6 +580,45 @@ class TestModel(Base):
                 if response.status_code == 200:
                     self.error_log('model migrate: {}'.format(response.json().get('retmsg')) + '\n')
                 return response.json().get("retcode")
+            except Exception:
+                return
+
+        elif command == 'model/homo/convert':
+            post_data = {
+                'model_id': self.model_id,
+                "model_version": self.model_version,
+                "role": "guest",
+                "party_id": self.guest_party_id[0],
+            }
+            try:
+                response = requests.post("/".join([self.server_url, "model", "homo/convert"]), json=post_data)
+                if response.status_code == 200:
+                    if response.json().get('retcode'):
+                        self.error_log('model homo convert: {}'.format(response.json().get('retmsg')) + '\n')
+                    return response.json().get("retcode")
+            except Exception:
+                return
+
+        elif command == 'model/homo/deploy':
+            job_data = {
+                "model_id": self.model_id,
+                "model_version": self.model_version,
+                "role": "guest",
+                "party_id": self.guest_party_id[0],
+                "component_name": self.component_name
+            }
+            config_data = get_dict_from_file(homo_deploy_path)
+            config_data.update(job_data)
+            if homo_deploy_kube_config_path:
+                with open(homo_deploy_kube_config_path, 'r') as fp:
+                    config_data['deployment_parameters']['config_file_content'] = fp.read()
+                config_data['deployment_parameters'].pop('config_file', None)
+            try:
+                response = requests.post("/".join([self.server_url, "model", "homo/deploy"]), json=config_data)
+                if response.status_code == 200:
+                    if response.json().get('retcode'):
+                        self.error_log('model homo deploy: {}'.format(response.json().get('retmsg')) + '\n')
+                    return response.json().get("retcode")
             except Exception:
                 return
 
@@ -717,7 +759,7 @@ def judging_state(retcode):
         return 'failed'
 
 
-def run_test_api(config_json):
+def run_test_api(config_json, namespace):
     output_path = './output/flow_test_data/'
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     output_path = str(os.path.abspath(output_path)) + '/'
@@ -727,23 +769,25 @@ def run_test_api(config_json):
     train_conf_path = config_json['train_conf_path']
     train_dsl_path = config_json['train_dsl_path']
     upload_file_path = config_json['upload_file_path']
-    work_mode = config_json['work_mode']
-    remove_path = str(config_json[
-                          'data_base_dir']) + '/model_local_cache/guest#{}#arbiter-{}#guest-{}#host-{}#model/'.format(
+    model_file_path = config_json['model_file_path']
+    remove_path = str(config_json['data_base_dir']).split("python")[
+                      0] + '/model_local_cache/guest#{}#arbiter-{}#guest-{}#host-{}#model/'.format(
         guest_party_id[0], arbiter_party_id[0], guest_party_id[0], host_party_id[0])
 
-    test_api = TestModel(config_json['server_url'], component_name=config_json['component_name'])
-    job_conf = test_api.set_config(guest_party_id, host_party_id, arbiter_party_id, train_conf_path, work_mode)
-    max_iter = job_conf['component_parameters']['common']['hetero_lr_0']['max_iter']
+    serving_connect_bool = serving_connect(config_json['serving_setting'])
+    test_api = TestModel(config_json['data_base_dir'], config_json['server_url'],
+                         component_name=config_json['component_name'], namespace=namespace)
+    job_conf = test_api.set_config(guest_party_id, host_party_id, arbiter_party_id, train_conf_path)
+    max_iter = job_conf['component_parameters']['common'][config_json['component_name']]['max_iter']
     test_api.set_dsl(train_dsl_path)
     conf_file = get_dict_from_file(upload_file_path)
 
     data = PrettyTable()
     data.set_style(ORGMODE)
     data.field_names = ['data api name', 'status']
-    data.add_row(['data upload', judging_state(test_api.data_upload(conf_file, work_mode=work_mode))])
-    data.add_row(['data download', judging_state(test_api.data_download(conf_file, output_path, work_mode))])
-    data.add_row(['data upload history', judging_state(test_api.data_upload_history(conf_file, work_mode=work_mode))])
+    data.add_row(['data upload', judging_state(test_api.data_upload(conf_file))])
+    data.add_row(['data download', judging_state(test_api.data_download(conf_file, output_path))])
+    data.add_row(['data upload history', judging_state(test_api.data_upload_history(conf_file))])
     print(data.get_string(title="data api"))
 
     table = PrettyTable()
@@ -803,8 +847,22 @@ def run_test_api(config_json):
     model = PrettyTable()
     model.set_style(ORGMODE)
     model.field_names = ['model api name', 'status']
-    model.add_row(['model load', judging_state(test_api.model_api('model/load'))])
-    model.add_row(['model bind', judging_state(test_api.model_api('model/bind'))])
+    if config_json.get('component_is_homo'):
+        homo_deploy_path = config_json.get('homo_deploy_path')
+        homo_deploy_kube_config_path = config_json.get('homo_deploy_kube_config_path')
+        model.add_row(['model homo convert', judging_state(test_api.model_api('model/homo/convert'))])
+        model.add_row(['model homo deploy',
+                       judging_state(test_api.model_api('model/homo/deploy',
+                                                        homo_deploy_path=homo_deploy_path,
+                                                        homo_deploy_kube_config_path=homo_deploy_kube_config_path))])
+    if not config_json.get('component_is_homo') and serving_connect_bool:
+        model_load_conf = get_dict_from_file(model_file_path)
+        model_load_conf["initiator"]["party_id"] = guest_party_id
+        model_load_conf["role"].update(
+            {"guest": [guest_party_id], "host": [host_party_id], "arbiter": [arbiter_party_id]})
+        model.add_row(['model load', judging_state(test_api.model_api('model/load', model_load_conf=model_load_conf))])
+        model.add_row(['model bind', judging_state(test_api.model_api('model/bind', model_load_conf=model_load_conf,
+                                                                      servings=config_json['serving_setting']))])
     status, model_path = test_api.model_api('model/export', output_path=output_path)
     model.add_row(['model export', judging_state(status)])
     model.add_row(['model  import', (judging_state(
@@ -814,8 +872,9 @@ def run_test_api(config_json):
     model.add_row(
         ['model_tag remove', judging_state(test_api.model_api('model_tag/remove', tag_name='model_tag_create'))])
     model.add_row(['model_tag retrieve', judging_state(len(test_api.model_api('model_tag/retrieve')))])
-    model.add_row(
-        ['model migrate', judging_state(test_api.model_api('model/migrate', arbiter_party_id=arbiter_party_id))])
+    if serving_connect_bool:
+        model.add_row(
+            ['model migrate', judging_state(test_api.model_api('model/migrate', arbiter_party_id=arbiter_party_id))])
     model.add_row(['model query', judging_state(test_api.model_api('model/query'))])
     model.add_row(['model deploy', judging_state(test_api.model_api('model/deploy'))])
     model.add_row(['model conf', judging_state(test_api.model_api('model/conf'))])
@@ -833,3 +892,5 @@ def run_test_api(config_json):
     test_api.submit_job()
     queue.add_row(['clean/queue', judging_state(test_api.job_api('clean/queue'))])
     print(queue.get_string(title="queue job"))
+    print('Please check the error content: {}'.format(test_api.error_log(None)))
+
