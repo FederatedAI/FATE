@@ -305,7 +305,7 @@ component.
 | [Label Transform](../../federatedml_component/label_transform.md)                           | Label Transform              | This component replaces label with designated values                                                                                               | data                                        | data                                      | model                  | model                   |
 | [Hetero SSHE LR](../../federatedml_component/sshe_lr.md)                           | Hetero SSHE LR              | Build hetero logistic regression model without arbiter                                                                                              |train\_data; validate\_data; predict\_input    | data                                      | model                  | model                   |
 
-
+<!-- mkdocs
 ## Params
 
 ::: federatedml.param
@@ -315,3 +315,4 @@ component.
       show_root_heading: true
       show_root_toc_entry: false
       show_root_full_path: false
+-->
