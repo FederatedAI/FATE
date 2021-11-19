@@ -162,7 +162,7 @@ sh service.sh restart
 
 ## 四、接入测试
 ### toy测试
-参考文档:[toy测试](../fate_on_eggroll/Fate-allinone_deployment_guide_install.zh.md#61-toy_example)
+参考文档:[toy测试](../fate_on_eggroll/Fate-allinone_deployment_guide_install.zh.md#61-toy_example部署验证)
 
 ## 五、使用fate on spark
 ### 数据上传
