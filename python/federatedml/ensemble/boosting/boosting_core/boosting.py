@@ -267,7 +267,7 @@ class Boosting(ModelBase, ABC):
     @staticmethod
     def get_label(data_bin):
         """
-        extract y label from DTable
+        extract y label from Table
         """
         y = data_bin.mapValues(lambda instance: instance.label)
         return y

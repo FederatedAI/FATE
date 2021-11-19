@@ -300,7 +300,7 @@ class FeatureHistogram(object):
         zero_as_missing: enable zero as missing
         parent_node_id_map: map current node_id to its parent id, this para is for hist sub
         sibling_node_id_map: map current node_id to its sibling id, this para is for hist sub
-        ret: return type, if 'tb', return histograms stored in DTable
+        ret: return type, if 'tb', return histograms stored in Table
         """
 
         LOGGER.debug("bin_shape is {}, node num is {}".format(bin_split_points.shape, len(node_map)))
@@ -457,7 +457,7 @@ class FeatureHistogram(object):
     def _generate_histogram_key_value_list(node_histograms, node_map, bin_split_points, parent_node_id_map,
                                            sibling_node_id_map, partition_key=None):
 
-        # generate key_value hist list for DTable parallelization
+        # generate key_value hist list for Table parallelization
         ret = []
         inverse_map = FeatureHistogram._inverse_node_map(node_map)
         for node_idx in range(len(node_map)):
@@ -1033,7 +1033,7 @@ class FeatureHistogram(object):
     def _table_subtraction(self, histograms):
 
         """
-        histogram subtraction for dtable format
+        histogram subtraction for table format
         """
 
         LOGGER.debug('joining parent and son histogram tables')

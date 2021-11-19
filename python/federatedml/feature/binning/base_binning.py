@@ -88,7 +88,7 @@ class BaseBinning(object):
 
         Parameters
         ----------
-        data_instances : DTable
+        data_instances : Table
             The input data
 
         Returns
@@ -139,7 +139,7 @@ class BaseBinning(object):
 
         Parameters
         ----------
-        data_instances : DTable
+        data_instances : Table
             The input data
 
         split_points : dict.
@@ -152,7 +152,7 @@ class BaseBinning(object):
 
         Returns
         -------
-        data_bin_table : DTable.
+        data_bin_table : Table.
 
             Each element represent for the corresponding bin number this feature belongs to.
             e.g. it could be:
@@ -398,7 +398,7 @@ class BaseBinning(object):
 
         Parameters
         ----------
-        instance : DTable
+        instance : Table
             The input data
 
         split_points : dict.
@@ -467,8 +467,8 @@ class BaseBinning(object):
 
         Parameters
         ----------
-        data_bin_with_table : DTable
-            The input data, the DTable is like:
+        data_bin_with_table : Table
+            The input data, the Table is like:
             (id, {'x1': 1, 'x2': 5, 'x3': 2}, y)
 
         sparse_bin_points: dict
@@ -477,7 +477,7 @@ class BaseBinning(object):
 
         Returns
         -------
-        result_sum: the result DTable. It is like:
+        result_sum: the result Table. It is like:
             {'x1': [[event_count, total_num], [event_count, total_num] ... ],
              'x2': [[event_count, total_num], [event_count, total_num] ... ],
              ...

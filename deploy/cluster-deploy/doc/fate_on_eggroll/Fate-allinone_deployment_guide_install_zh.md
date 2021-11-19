@@ -529,20 +529,20 @@ tail -f ./logs/deploy-mysql-host.log    （实时打印HOST端mysql的部署情�
 
 ```
 source /data/projects/fate/bin/init_env.sh
-flow test toy --guest-party-id 10000 --host-party-id 10000 
+flow test toy -gid 10000 -hid 10000 
 ```
 
 类似如下结果表示成功：
 
 "2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
 
-提示：如出现max cores per job is 1, please modify job parameters报错提示，需要修改运行时参数task_cores为1，增加命令行参数 '-c 1'.
+提示：如出现max cores per job is 1, please modify job parameters报错提示，需要修改运行时参数task_cores为1，增加命令行参数 '--task-core 1'.
 
 2）192.168.0.2上执行，guest_partyid和host_partyid都设为9999：
 
 ```
 source /data/projects/fate/bin/init_env.sh
-flow test toy --guest-party-id 9999 --host-party-id 9999
+flow test toy -gid 9999 -hid 9999
 ```
 
 类似如下结果表示成功：
@@ -555,7 +555,7 @@ flow test toy --guest-party-id 9999 --host-party-id 9999
 
 ```
 source /data/projects/fate/bin/init_env.sh
-flow test toy --guest-party-id 9999 --host-party-id 10000
+flow test toy -gid 9999 -hid 10000
 ```
 
 类似如下结果表示成功：

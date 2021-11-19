@@ -111,7 +111,7 @@ class OneVsRest(object):
         Fit OneVsRest model
         Parameters:
         ----------
-        data_instances: DTable of instances
+        data_instances: Table of instances
         """
         if self.mode == consts.HOMO:
             raise ValueError("Currently, One vs Rest is not supported for homo algorithm")
@@ -171,12 +171,12 @@ class OneVsRest(object):
         Predict OneVsRest model
         Parameters:
         ----------
-        data_instances: DTable of instances
+        data_instances: Table of instances
         predict_param: PredictParam of classifier
 
         Returns:
         ----------
-        predict_res: DTable, if has predict_res, it includes ground true label, predict probably and predict label
+        predict_res: Table, if has predict_res, it includes ground true label, predict probably and predict label
         """
         LOGGER.info("Start one_vs_all predict procedure.")
         predict_res_list = []

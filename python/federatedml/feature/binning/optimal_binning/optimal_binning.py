@@ -565,7 +565,7 @@ class OptimalBinning(BaseBinning):
 
         Returns
         -------
-        A DTable whose keys are feature names and values are bucket lists
+        A Table whose keys are feature names and values are bucket lists
         """
         bucket_dict = dict()
         for col_name, bin_res_list in bin_sum.items():

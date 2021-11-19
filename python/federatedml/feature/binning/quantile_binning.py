@@ -59,7 +59,7 @@ class QuantileBinning(BaseBinning):
 
         Parameters
         ----------
-        data_instances : DTable
+        data_instances : Table
             The input data
 
         Returns
@@ -190,7 +190,7 @@ class QuantileBinning(BaseBinning):
 
         Parameters
         ----------
-        data_instances : DTable
+        data_instances : Table
             The input data
 
         cols_dict: dict
