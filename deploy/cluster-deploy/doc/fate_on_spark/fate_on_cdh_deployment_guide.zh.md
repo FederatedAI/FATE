@@ -187,14 +187,14 @@ mkdir -p /data/projects/fate/common
 mkdir -p /data/projects/fate/python
 ```
 #### 8.3 安装python
-请参阅部署指南：[安装python](fate_deployment_step_by_step.zh.md##25-部署python)
+请参阅部署指南：[安装python](fate_deployment_step_by_step.zh.md#25-部署python)
 
 #### 8.4 安装fate flow 源码
 将部署Fate机器的目录/data/projects/fate文件夹拷贝到CDH集群的/data/projects/fate
 
 
 ## 10. FATE配置文件修改
-请参阅部署指南：[配置修改](fate_deployment_step_by_step.zh.md#三-更新fate配置)
+请参阅部署指南：[配置修改](spark_on_cluster_access_guide.zh.md#三-更新fate配置)
 ## 11. 启动
 请参阅部署指南：[启动指南](fate_deployment_step_by_step.zh.md#5-启动服务)
 ## 12. 问题定位
