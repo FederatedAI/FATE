@@ -1,4 +1,7 @@
 apsw<3.10
+importlib_metadata<2.0.0
+markdown==3.3.5
+pkginfo==1.7.1
 beautifultable==1.0.0
 cachetools==3.0.0
 cloudpickle==0.6.1
