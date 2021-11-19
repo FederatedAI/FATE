@@ -1,16 +1,18 @@
 # Release 1.7.0
 ## Major Features and Improvements
 > FATE-ARCH
-  * Support EggRoll 2.4.0 
-  * Support Spark-Local Computing Engine
-  * Support Hive Storage
-  * Support LocalFS Storage for Spark-Local Computing Engine 
-  * Optimizing the API interface for Storage session and table
-  * Simplified the API interface for Session, remove backend and workmode parameters
-  * Heterogeneous Engine Support: Federation between Spark-Local and Spark-Cluster
-  * Computing Engine, Storage Engine, Federation Engine are set in conf/service_conf.yaml when FATE is deployed
+
+* Support EggRoll 2.4.0 
+* Support Spark-Local Computing Engine
+* Support Hive Storage
+* Support LocalFS Storage for Spark-Local Computing Engine 
+* Optimizing the API interface for Storage session and table
+* Simplified the API interface for Session, remove backend and workmode parameters
+* Heterogeneous Engine Support: Federation between Spark-Local and Spark-Cluster
+* Computing Engine, Storage Engine, Federation Engine are set in conf/service_conf.yaml when FATE is deployed
   
 > FederatedML
+
 * Optimized Hetero-SecureBoost: with gradient packing、cipher compressing, and sparse point statistics optimization, 4x+ faster
 * Homo-SecureBoost supports memory-based histogram computation for more efficient tree building, 5x+ faster
 * Optimized RSA Intersect with CRT optimization, 3x+ faster
@@ -29,7 +31,24 @@
 * Major training algorithms support warm-start and checkpoint : Homo & Hetero LR, Homo & Hetero-SecureBoost, Homo & Hetero NN
 * Optimized Pailler addition operation, several times faster, Hetero-SecureBoost with Paillier speed up 2x+
 
+> Fate-Client
 
+* Pipeline supports uploading match id functionality
+* Pipeline supports homo model conversion
+* Pipeline supports model push to FATE-Serving
+* Pipeline supports running jobs with specified FATE version
+
+> FATE-Test
+
+* Integrate FederatedML unittest
+* Support for uploading image data
+* Big data generation using storage interface, optimized generation logic
+* Support for historical data comparison
+* cache_deps and model_loader_deps support
+* Run DSL Testsuite with specified FATE version
+
+
+       
 # Release 1.6.1
 ## Major Features and Improvements
 > FederatedML
