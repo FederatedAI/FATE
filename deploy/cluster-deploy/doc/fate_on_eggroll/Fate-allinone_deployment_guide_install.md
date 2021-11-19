@@ -514,7 +514,7 @@ A user must set 3 parameters for this testing: guest\_partyid, host\_partyid.
 
 ```
 source /data/projects/fate/bin/init_env.sh
-flow test toy -gid 10000 -hid 10000 
+flow test toy --guest-party-id 10000 --host-party-id 10000
 ```
 
 A result similar to the following indicates successful operation:
@@ -527,7 +527,7 @@ Tip: If the error "max cores per job is 1, please modify job parameters" appears
 
 ```
 source /data/projects/fate/bin/init_env.sh
-flow test toy -gid 9999 -hid 9999
+flow test toy --guest-party-id 9999 --host-party-id 9999
 ```
 
 A result similar to the following indicates successful operation:
@@ -540,7 +540,7 @@ Select 9999 as the guest and execute on 192.168.0.2:
 
 ```
 source /data/projects/fate/bin/init_env.sh
-flow test toy -gid 9999 -hid 10000
+flow test toy --guest-party-id 9999 --host-party-id 10000
 ```
 
 A result similar to the following indicates successful operation:

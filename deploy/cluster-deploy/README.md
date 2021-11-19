@@ -7,6 +7,8 @@
 - [Install Exchange Step By Step](doc/fate_on_eggroll/Fate-exchange_deployment_guide.md)
 
 ### Deployment for FATE on Spark(Continuous Improvement)
-- [Install FATE on Native Spark](doc/fate_on_spark/fate_on_spark_deployment_guide.md)
-- [Install FATE on CDH](doc/fate_on_spark/fate_on_cdh_deployment_guide.zh.md)
-
+#### standalone 
+- [FATE on Spark local mode deployment guide](doc/fate_on_spark/spark_on_local_access_guide.md)
+#### cluster
+- [FATE on Spark cluster mode deployment guide](doc/fate_on_spark/spark_on_cluster_access_guide.md)
+- [FATE on CDH Deployment Guide](doc/fate_on_spark/fate_on_cdh_deployment_guide.md)

@@ -4,14 +4,15 @@
 FATE已经支持spark单机模式
 
 ## 二. 部署
-需要安装的软件包括: rabbitmq || pulsar(二选一), Nginx
-
-具体部署可参考:
-[rabbitmq部署指南](https://github.com/FederatedAI/FATE/blob/master/cluster-deploy/doc/fate_on_spark/rabbitmq_deployment_guide_zh.md)
-[pulsar部署指南](https://github.com/FederatedAI/FATE/blob/master/cluster-deploy/doc/fate_on_spark/pulsar_deployment_guide_zh.md).
-[Nginx部署指南](https://github.com/FederatedAI/FATE/blob/master/cluster-deploy/doc/fate_on_spark/fate_deployment_step_by_step_zh.md#26-%E9%83%A8%E7%BD%B2nginx)
+需要部署服务包括: FATE、Nginx、RabbitMQ(或Pulsar)、spark单机(可选),可参考以下部署文档:
+- [FATE部署指南](../fate_on_eggroll/Fate-allinone_deployment_guide_install.zh.md)
+- [Nginx部署指南](nginx_deployment_guide.zh.md)
+- [RabbitMQ部署指南](rabbitmq_deployment_guide.zh.md)
+- [Pulsar部署指南](pulsar_deployment_guide.zh.md)
+- [spark单机部署指南](https://www.cnblogs.com/xuxinkun/p/5801662.html)
 
 ### 三. 更新FATE配置
+fate配置路径:/data/projects/fate/conf
 ### 1.修改default_engines
 - "conf/service_conf.yaml"
 ```yaml
@@ -20,11 +21,22 @@ default_engines:
   federation: rabbitmq
   storage: localfs
 ```
-**注: federation可根据部署情况选择**
+**注: 若部署的是pulsar， federation可改为"pulsar"**
 
-### 2.修改rabbitmq或pulsar配置：
+### 2. 修改Nginx配置
+- "conf/service_conf.yaml"
+```yaml
+fate_on_spark
+  nginx:
+    host: 127.0.0.1
+    http_port: 9300
+    grpc_port: 9310
+```
+**注：请填写实际部署的配置**
 
-**(1)rabbitmq模式**:
+
+### 3.修改rabbitmq或pulsar配置：
+####rabbitmq模式：
 - "conf/service_conf.yaml"
 ```yaml
 fate_on_spark
@@ -35,12 +47,18 @@ fate_on_spark
     user: fate
     password: fate
     route_table:
-  nginx:
-    host: 127.0.0.1
-    http_port: 9300
-    grpc_port: 9310
 ```
-- "conf/rabbitmq_route_table.yaml"
+```
+相关配置含义
+    - host: 主机ip
+    - mng_port: 管理端口
+    - port: 服务端口
+    - user：管理员用户
+    - password: 管理员密码
+    - route_table: 路由表信息，默认为空
+```
+
+- 路由表信息:conf/rabbitmq_route_table.yaml,没有则新建
 ```yaml
 10000:
   host: 127.0.0.1
@@ -50,7 +68,7 @@ fate_on_spark
   port: 5672
 ```
 
-**(2)pulsar模式**:
+#### pulsar模式:
 - "conf/service_conf.yaml"
 ```yaml
 fate_on_spark
@@ -61,12 +79,19 @@ fate_on_spark
     topic_ttl: 5
     # default conf/pulsar_route_table.yaml
     route_table:
-  nginx:
-    host: 127.0.0.1
-    http_port: 9300
-    grpc_port: 9310
 ```
-- "conf/pulsar_route_table.yaml"
+```
+相关配置
+    - host: 主机ip
+    - port: brokerServicePort
+    - mng_port: webServicePort
+    - cluster：集群或单机
+    - tenant: 合作方需要使用同一个tenant
+    - topic_ttl： 回收资源参数
+    - route_table: 路由表信息，默认为空
+```
+
+- 路由表信息:conf/pulsar_route_table.yaml,没有则新建
 ```yaml
 9999:
   # host can be a domain like 9999.fate.org
@@ -91,17 +116,6 @@ default:
   port: 6650
   sslPort: 6651
 ```
-### 3. 修改Nginx相关配置
-- "conf/service_conf.yaml"
-```yaml
-fateflow:
-  proxy: nginx
-fate_on_spark:
-  nginx:
-    host: 127.0.0.1
-    http_port: 9300
-    grpc_port: 9310
-```
 
 ### 4.重启fate flow以使配置生效
 ```shell script
@@ -112,20 +126,7 @@ sh service.sh restart
 
 ## 四、接入测试
 ### toy测试
-```shell script
-source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/fateflow/
-flow test toy --guest-party-id 9999 --host-party-id 10000
-```
-若出现"success to calculate secure_sum"字样，则说明接入成功
-
-**注意：上面partyid需要填写实际站点id；若没部署fate clinet可通过下面方式离线部署**
-- 离线部署fate client
-
-```shell script
-source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/fate/python/fate_client && python setup.py install
-```
+参考文档:[toy测试](../fate_on_eggroll/Fate-allinone_deployment_guide_install.zh.md#61-toy_example)
 
 ## 五、使用fate on spark local
 ### 1. 数据上传
@@ -162,5 +163,9 @@ fate_on_spark:
 ```
 系统会使用spark_home提交spark任务
 - 使用fate提交任务
-
 使用上述方式在guest方和host方各自上传一份localfs存储类型数据, 并作为reader组件的输入数据发起任务即可
+```shell script
+cd /data/projects/fate/fateflow/
+flow job submit -c  examples/lr/test_hetero_lr_job_conf.json -d examples/lr/test_hetero_lr_job_dsl.json
+```
+

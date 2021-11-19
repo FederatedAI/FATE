@@ -299,7 +299,7 @@ make && make install
 
 ### 2.8 部署Pulsar(和rabbitmq二选一)
 
-请参阅部署指南：[Pulsar部署](pulsar_deployment_guide_zh.md)
+请参阅部署指南：[Pulsar部署](pulsar_deployment_guide.zh.md)
 
 ## 3 部署FATE
 
@@ -635,10 +635,7 @@ cd /data/projects/fate/proxy
 /data/projects/fate/proxy/nginx/logs
 
 ## 7.测试
-
-
 ### 7.1 Toy_example部署验证
-
 
 此测试您需要设置2个参数："guest-party-id", "host-party-id 10000";
 此外您还需要安装fate client，下面是离线安装方式(若已经安装fate client可忽略)

@@ -9,7 +9,7 @@ As shown in the image, RabbitMQ as a transport service is replaced with Pulsar, 
 
 ## Deployment and Configuration
 ### Cluster Deployment
-For deployment, please refer to [FATE ON Spark Deployment Guide](https://github.com/FederatedAI/FATE/blob/master/cluster-deploy/doc/fate_on_spark/fate_on_spark_deployment_guide.md), where the RabbitMQ section can be skipped and replaced by the Pulsar cluster deployment, see [Pulsar Cluster Deployment](https://github.com/FederatedAI/FATE/blob/develop-1.6-pulsar/cluster-deploy/doc/fate_on_spark/pulsar_deployment_guide.md).
+For deployment, please refer to [FATE ON Spark Deployment Guide](fate_on_spark_deployment_guide.md), where the RabbitMQ section can be skipped and replaced by the Pulsar cluster deployment, see [Pulsar Cluster Deployment](pulsar_deployment_guide.md).
 
 
 ### Update the FATE Flow service configuration
@@ -227,10 +227,10 @@ For more detailed description of the configuration file, please refer to the [of
 Copy the certificate, private key and CA's certificate generated for the ATS in the previous step (in the "proxy.fate.org" directory) to the "/opt/proxy" directory of the host, and start the ATS with the following command:
 ```
 /opt/ts/bin/trafficserver start
-```
+
 
 #### Deploying Pulsar
-Pulsar is deployed in [pulsar_deployment_guide.md](https://github.com/FederatedAI/FATE/blob/develop-1.6-pulsar/cluster-deploy/doc/fate_on_ spark/pulsar_deployment_guide.md) is described in detail and only requires adding a certificate for the broker and opening the secure service port on top of it, as follows.
+Pulsar is deployed in [pulsar_deployment_guide](pulsar_deployment_guide.md) is described in detail and only requires adding a certificate for the broker and opening the secure service port on top of it, as follows.
 1. Log in to the corresponding host and copy the certificate, private key and CA certificate generated for 10000.fate.org to the "/opt/pulsar/certs" directory
 
 2. Modify the conf/standalone.conf file in the pulsar installation directory and add the following contents
