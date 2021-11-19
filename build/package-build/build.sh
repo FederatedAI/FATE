@@ -1,5 +1,4 @@
 #!/bin/bash
-
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -19,6 +18,7 @@
 set -e
 source_dir=$(cd `dirname $0`; cd ../;cd ../;pwd)
 support_modules=(bin conf examples build deploy fate fateflow fateboard eggroll)
+environment_modules=(python36 jdk pypi)
 packaging_modules=()
 echo ${source_dir}
 if [[ -n ${1} ]]; then
@@ -29,16 +29,16 @@ fi
 
 cd ${source_dir}
 echo "[INFO] source dir: ${source_dir}"
-#git submodule foreach --recursive git pull
+git submodule init
+git submodule update
 version=`grep "FATE=" fate.env | awk -F '=' '{print $2}'`
-package_dir_name="FATE_install_"${version}
-#package_dir=${source_dir}/build/package-build/${package_dir_name}
+package_dir_name="FATE_install_${version}_${version_tag}"
 package_dir=${source_dir}/${package_dir_name}
 echo "[INFO] build info"
 echo "[INFO] version: "${version}
 echo "[INFO] version tag: "${version_tag}
 echo "[INFO] package output dir is "${package_dir}
-rm -rf ${package_dir} ${package_dir}_${version_tag}".tar.gz"
+rm -rf ${package_dir} ${package_dir}".tar.gz"
 mkdir -p ${package_dir}
 
 function packaging_bin() {
@@ -86,15 +86,14 @@ function packaging_fate(){
 
 function packaging_fateflow(){
     echo "[INFO] package fateflow start"
-    pull_fateflow
+    #pull_fateflow
     cp -r fateflow ${package_dir}/
     echo "[INFO] package fateflow done"
 }
 
 packaging_fateboard(){
     echo "[INFO] package fateboard start"
-    cd ${source_dir}
-    pull_fateboard
+    #pull_fateboard
     cd ./fateboard
     fateboard_version=$(grep -E -m 1 -o "<version>(.*)</version>" ./pom.xml | tr -d '[\\-a-z<>//]' | awk -F "version" '{print $2}')
     echo "[INFO] fateboard version "${fateboard_version}
@@ -112,8 +111,7 @@ packaging_fateboard(){
 
 packaging_eggroll(){
     echo "[INFO] package eggroll start"
-    cd ${source_dir}
-    pull_eggroll
+    #pull_eggroll
     cd ./eggroll
     cd ./deploy
     sh ./auto-packaging.sh
@@ -221,11 +219,33 @@ pull_eggroll(){
 
 function packaging_proxy(){
     echo "[INFO] package proxy start"
-    cd ${source_dir}
     cd c/proxy
     mkdir -p ${package_dir}/proxy/nginx
     cp -r conf lua ${package_dir}/proxy/nginx
     echo "[INFO] package proxy done"
+}
+
+function packaging_python36(){
+    echo "[INFO] package python36 start"
+    mkdir -p ${package_dir}/python36
+    cd ${package_dir}/python36
+    wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/Miniconda3-4.5.4-Linux-x86_64.sh
+    echo "[INFO] package python36 done"
+}
+
+function packaging_jdk(){
+    echo "[INFO] package jdk start"
+    mkdir -p ${package_dir}/jdk
+    cd ${package_dir}/jdk
+    wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/jdk-8u192.tar.gz
+    echo "[INFO] package jdk done"
+}
+
+function packaging_pypi(){
+    echo "[INFO] package pypi start"
+    mkdir -p ${package_dir}/pypi
+    pip download -r ./python/requirements.txt -d ${package_dir}/pypi/
+    echo "[INFO] package pypi done"
 }
 
 compress(){
@@ -252,7 +272,7 @@ compress(){
     ls -lrt ${package_dir}
     package_dir_parent=$(cd `dirname ${package_dir}`; pwd)
     cd ${package_dir_parent}
-    tar czf ${package_dir_name}_${version_tag}".tar.gz" ${package_dir_name}
+    tar czf ${package_dir_name}".tar.gz" ${package_dir_name}
 }
 
 
@@ -260,6 +280,7 @@ build() {
     echo "[INFO] packaging start------------------------------------------------------------------------"
     for module in "${packaging_modules[@]}";
     do
+        cd ${source_dir}
         packaging_${module}
         echo
     done

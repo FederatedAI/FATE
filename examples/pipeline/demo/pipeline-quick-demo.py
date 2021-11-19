@@ -73,10 +73,6 @@ pipeline.add_component(reader_0)\
 
 # compile & fit pipeline
 pipeline.compile().fit()
-# to run this task with cluster deployment, use the following setting instead
-# may change data engine backend according to actual environment
-# pipeline.compile().fit(JobParameters(backend=Backend.EGGROLL, work_mode=WorkMode.CLUSTER))
-
 
 # query component summary
 print(f"Evaluation summary:\n{json.dumps(pipeline.get_component('evaluation_0').get_summary(), indent=4)}")

@@ -55,13 +55,15 @@ def go_fast(a):  # Function is compiled and runs in machine code
 
 class TestHomoLRGradient(unittest.TestCase):
     def setUp(self):
-        home_dir = os.path.split(os.path.realpath(__file__))[0]
-        data_dir = home_dir + '/../../../../../examples/data/breast_hetero_guest.csv'
-        data_df = pd.read_csv(data_dir)
-        self.X = np.array(data_df.iloc[:, 2:])
-        self.Y = np.array(data_df.iloc[:, 1])
+        # home_dir = os.path.split(os.path.realpath(__file__))[0]
+        # data_dir = home_dir + '/../../../../../examples/data/breast_hetero_guest.csv'
+        # data_df = pd.read_csv(data_dir)
+        # self.X = np.array(data_df.iloc[:, 2:])
+        # self.Y = np.array(data_df.iloc[:, 1])
 
-        self.Y = self.Y.reshape([-1, 1])
+        # self.Y = self.Y.reshape([-1, 1])
+        self.X = np.random.random((569, 30))
+        self.Y = np.random.randint(low=0, high=2, size=(569, 1))
         self.coef = np.zeros(self.X.shape[1])
         self.intercept = 0
         self.fit_intercept = True

@@ -36,17 +36,17 @@ class PoissonParam(BaseParam):
 
     Parameters
     ----------
-    penalty : str, 'L1' or 'L2'. default: 'L2'
+    penalty : {'L2', 'L1'}, default: 'L2'
         Penalty method used in Poisson. Please note that, when using encrypted version in HeteroPoisson,
         'L1' is not supported.
 
-    tol : float, default: 1e-5
+    tol : float, default: 1e-4
         The tolerance of convergence
 
     alpha : float, default: 1.0
         Regularization strength coefficient.
 
-    optimizer : str, 'sgd', 'rmsprop', 'adam' or 'adagrad', default: 'sgd'
+    optimizer : {'rmsprop', 'sgd', 'adam', 'adagrad'}, default: 'rmsprop'
         Optimize method
 
     batch_size : int, default: -1
@@ -55,7 +55,7 @@ class PoissonParam(BaseParam):
     learning_rate : float, default: 0.01
         Learning rate
 
-    max_iter : int, default: 100
+    max_iter : int, default: 20
         The maximum iteration for training.
 
     init_param: InitParam object, default: default InitParam object
@@ -71,21 +71,26 @@ class PoissonParam(BaseParam):
         Name of optional exposure variable in dTable.
 
     predict_param: PredictParam object, default: default PredictParam object
+        predict param
 
     encrypt_param: EncryptParam object, default: default EncryptParam object
+        encrypt param
 
     encrypted_mode_calculator_param: EncryptedModeCalculatorParam object, default: default EncryptedModeCalculatorParam object
+        encrypted mode calculator param
 
     cv_param: CrossValidationParam object, default: default CrossValidationParam object
+        cv param
 
     stepwise_param: StepwiseParam object, default: default StepwiseParam object
+        stepwise param
 
     decay: int or float, default: 1
         Decay rate for learning rate. learning rate will follow the following decay schedule.
         lr = lr0/(1+decay*t) if decay_sqrt is False. If decay_sqrt is True, lr = lr0 / sqrt(1+decay*t)
         where t is the iter number.
 
-    decay_sqrt: Bool, default: True
+    decay_sqrt: bool, default: True
         lr = lr0/(1+decay*t) if decay_sqrt is False, otherwise, lr = lr0 / sqrt(1+decay*t)
 
     validation_freqs: int, list, tuple, set, or None
@@ -104,10 +109,13 @@ class PoissonParam(BaseParam):
     use_first_metric_only: bool, default: False
         Indicate whether to use the first metric in `metrics` as the only criterion for early stopping judgement.
 
-    floating_point_precision: None or integer, if not None, use floating_point_precision-bit to speed up calculation,
-                               e.g.: convert an x to round(x * 2**floating_point_precision) during Paillier operation, divide
-                                      the result by 2**floating_point_precision in the end.
+    floating_point_precision: None or integer
+        if not None, use floating_point_precision-bit to speed up calculation,
+        e.g.: convert an x to round(x * 2**floating_point_precision) during Paillier operation, divide
+                the result by 2**floating_point_precision in the end.
+
     callback_param: CallbackParam object
+        callback param
 
     """
 

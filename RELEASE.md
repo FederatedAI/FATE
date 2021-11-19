@@ -1,3 +1,16 @@
+# Release 1.7.0
+## Major Features and Improvements
+> FATE-ARCH
+  * Support EggRoll 2.4.0 
+  * Support Spark-Local Computing Engine
+  * Support Hive Storage
+  * Support LocalFS Storage for Spark-Local Computing Engine 
+  * Optimizing the API interface for Storage session and table
+  * Simplified the API interface for Session, remove backend and workmode parameters
+  * Heterogeneous Engine Support: Federation between Spark-Local and Spark-Cluster
+  * Computing Engine, Storage Engine, Federation Engine are set in conf/service_conf.yaml when FATE is deployed
+
+
 # Release 1.6.1
 ## Major Features and Improvements
 > FederatedML

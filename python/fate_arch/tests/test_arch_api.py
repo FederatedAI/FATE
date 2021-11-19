@@ -19,9 +19,7 @@ import numpy as np
 from fate_arch import session
 
 
-work_mode = 0
-
-sess = session.Session(work_mode=work_mode)
+sess = session.Session()
 sess.init_computing()
 
 data = []

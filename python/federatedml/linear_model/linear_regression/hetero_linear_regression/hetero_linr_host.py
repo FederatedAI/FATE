@@ -42,7 +42,7 @@ class HeteroLinRHost(HeteroLinRBase):
         Train linear regression model of role host
         Parameters
         ----------
-        data_instances: DTable of Instance, input data
+        data_instances: Table of Instance, input data
         """
 
         LOGGER.info("Enter hetero_linR host")
@@ -118,7 +118,7 @@ class HeteroLinRHost(HeteroLinRBase):
         Prediction of linR
         Parameters
         ----------
-        data_instances:DTable of Instance, input data
+        data_instances:Table of Instance, input data
         """
         self.transfer_variable.host_partial_prediction.disable_auto_clean()
 

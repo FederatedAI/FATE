@@ -64,7 +64,7 @@ class HeteroBaseArbiter(BaseLinearModel):
         Train linear model of role arbiter
         Parameters
         ----------
-        data_instances: DTable of Instance, input data
+        data_instances: Table of Instance, input data
         """
 
         LOGGER.info("Enter hetero linear model arbiter fit")

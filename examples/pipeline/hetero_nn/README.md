@@ -28,6 +28,14 @@ This section introduces the Pipeline scripts for different types of tasks.
 
     script: pipeline-hetero-nn-train-binary-floating_point_precision.py
     
+7. Train Task With Warm Start:  
+    
+    script: pipeline-hetero-nn-train-with-warm_start.py  
+    
+8. Train Task With CheckPoint:  
+ 
+    script: pipeline-hetero-nn-train-with-check-point.py  
+    
 Users can run a pipeline job directly:
 
     python ${pipeline_script}

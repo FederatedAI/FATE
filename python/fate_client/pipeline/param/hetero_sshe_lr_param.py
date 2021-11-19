@@ -40,8 +40,8 @@ class LogisticRegressionParam(BaseParam):
     alpha : float, default: 1.0
         Regularization strength coefficient.
 
-    optimizer : str, 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd', 'sqn' or 'adagrad', default: 'rmsprop'
-        Optimize method, if 'sqn' has been set, sqn_param will take effect. Currently, 'sqn' support hetero mode only.
+    optimizer : str, 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd', or 'adagrad', default: 'sgd'
+        Optimize method
 
     batch_size : int, default: -1
         Batch size when updating model. -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
@@ -69,10 +69,13 @@ class LogisticRegressionParam(BaseParam):
         lr = lr0/(1+decay*t) if decay_sqrt is False, otherwise, lr = lr0 / sqrt(1+decay*t)
 
     encrypt_param: EncryptParam object, default: default EncryptParam object
+        encrypt param
 
     predict_param: PredictParam object, default: default PredictParam object
+        predict param
 
     cv_param: CrossValidationParam object, default: default CrossValidationParam object
+        cv param
 
     multi_class: str, 'ovr', default: 'ovr'
         If it is a multi_class task, indicate what strategy to use. Currently, support 'ovr' short for one_vs_rest only.

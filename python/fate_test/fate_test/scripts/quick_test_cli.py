@@ -6,15 +6,15 @@ from fate_test._io import LOGGER, echo
 from fate_test.scripts._options import SharedOptions
 
 
-@click.group(name="quick-test")
-def quick_test_group():
+@click.group(name="unittest")
+def unittest_group():
     """
-    quick test
+    unit test
     """
     ...
 
 
-@quick_test_group.command("federatedml")
+@unittest_group.command("federatedml")
 @click.option('-i', '--include', type=click.Path(exists=True), multiple=True, metavar="<include>",
               help="Specify federatedml test units for testing")
 @SharedOptions.get_shared_options(hidden=True)
@@ -34,12 +34,11 @@ def unit_test(ctx, include, **kwargs):
         return
 
     error_log_file = f"./logs/{namespace}/error_test.log"
-    unit_test_path = "./python/federatedml/"
     os.makedirs(os.path.dirname(error_log_file), exist_ok=True)
-    run_test(includes=include, conf=config_inst, error_log_file=error_log_file, unit_test_path=unit_test_path)
+    run_test(includes=include, conf=config_inst, error_log_file=error_log_file)
 
 
-def run_test(includes, conf: Config, error_log_file, unit_test_path):
+def run_test(includes, conf: Config, error_log_file):
     def error_log(stdout):
         if stdout is None:
             return os.path.abspath(error_log_file)
@@ -77,12 +76,13 @@ def run_test(includes, conf: Config, error_log_file, unit_test_path):
                     else:
                         run_test(file_fullname_new)
 
+    global failed_count
     failed_count = 0
-    data_base_dir = conf.data_base_dir
-    PYTHONPATH = os.path.join(data_base_dir, "python")
+    fate_base = conf.fate_base
+    ml_dir = os.path.join(fate_base, "python/federatedml")
+    PYTHONPATH = os.environ.get('PYTHONPATH') + ":"  + os.path.join(fate_base, "python")
     os.environ['PYTHONPATH'] = PYTHONPATH
     if len(includes) == 0:
-        ml_dir = conf.federatedml_dir
         traverse_folder(ml_dir)
     else:
         ml_dir = includes
@@ -90,4 +90,5 @@ def run_test(includes, conf: Config, error_log_file, unit_test_path):
             traverse_folder(os.path.abspath(v))
 
     echo.echo(f"there are {failed_count} failed test")
-    print('Please check the error content: {}'.format(error_log(None)))
+    if failed_count > 0:
+        print('Please check the error content: {}'.format(error_log(None)))

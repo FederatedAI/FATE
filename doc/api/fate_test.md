@@ -2,132 +2,6 @@
 
 A collection of useful tools to running FATE's test.
 
-![tutorial](../images/tutorial.gif)
-
-## quick start
-
-1.  (optional) create virtual env
-    
-    ``` sourceCode bash
-    python -m venv venv
-    source venv/bin/activate
-    pip install -U pip
-    ```
-
-2.  install fate\_test
-    
-    ``` sourceCode bash
-    pip install fate_test
-    fate_test --help
-    ```
-
-3.  edit default fate\_test\_config.yaml
-    
-    ``` sourceCode bash
-    # edit priority config file with system default editor
-    # filling some field according to comments
-    fate_test config edit
-    ```
-
-4.  configure FATE-Pipeline and FATE-Flow Commandline server setting
-
-<!-- end list -->
-
-``` sourceCode bash
-# configure FATE-Pipeline server setting
-pipeline init --port 9380 --ip 127.0.0.1
-# configure FATE-Flow Commandline server setting
-flow init --port 9380 --ip 127.0.0.1
-```
-
-5.  run some fate\_test suite
-    
-    ``` sourceCode bash
-    fate_test suite -i <path contains *testsuite.json>
-    ```
-
-6.  run some fate\_test benchmark
-    
-    ``` sourceCode bash
-    fate_test benchmark-quality -i <path contains *benchmark.json>
-    ```
-
-7.  useful logs or exception will be saved to logs dir with namespace
-    shown in last step
-
-## develop install
-
-It is more convenient to use the editable mode during development:
-replace step 2 with flowing
-steps
-
-``` sourceCode bash
-pip install -e ${FATE}/python/fate_client && pip install -e ${FATE}/python/fate_test
-```
-
-## command types
-
-  - suite: used for running testsuites, collection of FATE jobs
-    
-    ``` sourceCode bash
-    fate_test suite -i <path contains *testsuite.json>
-    ```
-
-  - benchmark-quality used for comparing modeling quality between FATE
-    and other machine learning systems
-    
-    ``` sourceCode bash
-    fate_test bq -i <path contains *benchmark.json>
-    ```
-
-## configuration by examples
-
-1.  no need ssh tunnel:
-    
-      - 9999, service: service\_a
-      - 10000, service: service\_b
-    
-    and both service\_a, service\_b can be requested directly:
-    
-    ``` sourceCode yaml
-    data_base_dir: <path_to_data>
-    parties:
-      guest: [10000]
-      host: [9999, 10000]
-      arbiter: [9999]
-    services:
-      - flow_services:
-        - {address: service_a, parties: [9999]}
-        - {address: service_b, parties: [10000]}
-    ```
-
-2.  need ssh tunnel:
-    
-      - 9999, service: service\_a
-      - 10000, service: service\_b
-    
-    service\_a, can be requested directly while service\_b don't, but
-    you can request service\_b in other node, say B:
-    
-    ``` sourceCode yaml
-    data_base_dir: <path_to_data>
-    parties:
-      guest: [10000]
-      host: [9999, 10000]
-      arbiter: [9999]
-    services:
-      - flow_services:
-        - {address: service_a, parties: [9999]}
-      - flow_services:
-        - {address: service_b, parties: [10000]}
-        ssh_tunnel: # optional
-        enable: true
-        ssh_address: <ssh_ip_to_B>:<ssh_port_to_B>
-        ssh_username: <ssh_username_to B>
-        ssh_password: # optional
-        ssh_priv_key: "~/.ssh/id_rsa"
-    ```
-
 ## Testsuite
 
 Testsuite is used for running a collection of jobs in sequence. Data
@@ -277,7 +151,7 @@ fate_test suite --help
     
     will run testsuites in *path1* directly, skipping double check
 
-### testsuite
+### testsuite configuration
 
 Configuration of jobs should be specified in a testsuite whose file name
 ends with "\*testsuite.json". For testsuite examples, please refer [dsl
@@ -613,17 +487,14 @@ fate_test benchmark-quality --help
     testsuites
 
 10. yes:
+    ``` sourceCode bash
+    fate_test benchmark-quality -i <path1 contains *benchmark.json> --yes
+    ```
+ 
+    will run benchmark testsuites in *path1* directly, skipping double
+    check
 
-> 
-> 
-> ``` sourceCode bash
-> fate_test benchmark-quality -i <path1 contains *benchmark.json> --yes
-> ```
-> 
-> will run benchmark testsuites in *path1* directly, skipping double
-> check
-
-### benchmark testsuite
+### benchmark job configuration
 
 Configuration of jobs should be specified in a benchmark testsuite whose
 file name ends with "\*benchmark.json". For benchmark testsuite example,
@@ -754,7 +625,7 @@ to indicate the collection of metrics to be compared.
 Note that `Main` in FATE & non-FATE scripts can also be set to take zero
 input argument.
 
-## performance
+## Benchmark Performance
 
 <span class="title-ref">Performance</span> sub-command is used to test
 efficiency of designated FATE jobs.
@@ -916,7 +787,7 @@ fate_test performance --help
 delete, and generate
     dataset.
 
-### command options
+### data command options
 
 ``` sourceCode bash
 fate_test data --help

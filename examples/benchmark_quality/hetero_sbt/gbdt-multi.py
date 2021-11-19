@@ -18,7 +18,7 @@ import argparse
 import os
 import pandas as pd
 from sklearn.metrics import roc_auc_score, precision_score, accuracy_score, recall_score
-from sklearn.ensemble.gradient_boosting import GradientBoostingClassifier
+from sklearn.ensemble import GradientBoostingClassifier
 from pipeline.utils.tools import JobConfig
 
 

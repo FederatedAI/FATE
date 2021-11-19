@@ -3,11 +3,11 @@ data_host: "examples/data/default_credit_hetero_host.csv"
 idx: "id"
 label_name: "y"
 penalty: "L2"
-max_iter: 30
+max_iter: 20
 alpha: 0.001
 learning_rate: 0.15
 optimizer: "sgd"
-batch_size: 3200
+batch_size: 2000
 early_stop: "diff"
 init_method: "zeros"
-reveal_strategy: "all_reveal_in_guest"
+reveal_strategy: "respectively"

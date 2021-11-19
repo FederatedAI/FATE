@@ -225,7 +225,7 @@ def rubbish_clear(rubbish_list):
     Temporary procession for resource recovery. This will be discarded in next version because of our new resource recovery plan
     Parameter
     ----------
-    rubbish_list: list of DTable, each DTable in this will be destroy
+    rubbish_list: list of Table, each Table in this will be destroy
     """
     for r in rubbish_list:
         try:
@@ -233,7 +233,7 @@ def rubbish_clear(rubbish_list):
                 continue
             r.destroy()
         except Exception as e:
-            LOGGER.warning("destroy Dtable error,:{}, but this can be ignored sometimes".format(e))
+            LOGGER.warning("destroy table error,:{}, but this can be ignored sometimes".format(e))
 
 
 def check_with_inst_id(data_instances):

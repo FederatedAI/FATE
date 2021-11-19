@@ -42,7 +42,7 @@ class HeteroPoissonHost(HeteroPoissonBase):
         Train poisson regression model of role host
         Parameters
         ----------
-        data_instances: DTable of Instance, input data
+        data_instances: Table of Instance, input data
         """
 
         LOGGER.info("Enter hetero_poisson host")
@@ -116,7 +116,7 @@ class HeteroPoissonHost(HeteroPoissonBase):
         Prediction of poisson
         Parameters
         ----------
-        data_instances:DTable of Instance, input data
+        data_instances:Table of Instance, input data
         """
         self.transfer_variable.host_partial_prediction.disable_auto_clean()
         LOGGER.info("Start predict ...")

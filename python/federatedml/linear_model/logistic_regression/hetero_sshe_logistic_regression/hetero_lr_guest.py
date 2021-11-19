@@ -48,7 +48,6 @@ class HeteroLRGuest(HeteroLRBase):
         za_share = self.secure_matrix_obj.secure_matrix_mul(w_remote,
                                                             tensor_name=".".join(za_suffix),
                                                             cipher=cipher,
-                                                            # cipher=self.cipher,
                                                             suffix=za_suffix)
         zb_suffix = ("zb",) + suffix
         zb_share = self.secure_matrix_obj.secure_matrix_mul(features,
@@ -60,24 +59,19 @@ class HeteroLRGuest(HeteroLRBase):
         return z
 
     def _compute_sigmoid(self, z, remote_z):
-        # z_square = z * z
-
-        # complete_z = remote_z + z
         complete_z = z + remote_z
-        # self.z_square = z_square + remote_z_square
-        # self.z_square = self.z_square + 2 * remote_z * z
+
         sigmoid_z = complete_z * 0.25 + 0.5
 
-        # complete_z_cube = remote_z_cube + remote_z_square * z * 3 + remote_z * z_square * 3 + z_cube
-        # sigmoid_z = complete_z * 0.197 - complete_z_cube * 0.004 + 0.5
         return sigmoid_z
 
     def forward(self, weights, features, suffix, cipher):
         if not self.reveal_every_iter:
+            LOGGER.info(f"[forward]: Calculate z in share...")
             w_self, w_remote = weights
             z = self._cal_z_in_share(w_self, w_remote, features, suffix, cipher)
         else:
-            LOGGER.debug(f"Calculate z directly.")
+            LOGGER.info(f"[forward]: Calculate z directly...")
             w = weights.unboxed
             z = features.dot_local(w)
 
@@ -99,31 +93,27 @@ class HeteroLRGuest(HeteroLRBase):
         shared_sigmoid_z = SecureMatrix.from_source(tensor_name,
                                                     sigmoid_z,
                                                     cipher,
-                                                    # self.cipher,
                                                     self.fixedpoint_encoder.n,
                                                     self.fixedpoint_encoder)
         return shared_sigmoid_z
 
     def backward(self, error, features, suffix, cipher):
+        LOGGER.info(f"[backward]: Calculate gradient...")
         batch_num = self.batch_num[int(suffix[1])]
-
         error_1_n = error * (1 / batch_num)
-
-        LOGGER.debug(f"error_1_n: {error_1_n}")
 
         ga2_suffix = ("ga2",) + suffix
         ga2_2 = self.secure_matrix_obj.secure_matrix_mul(error_1_n,
                                                          tensor_name=".".join(ga2_suffix),
                                                          cipher=cipher,
-                                                         # cipher=self.cipher,
                                                          suffix=ga2_suffix,
                                                          is_fixedpoint_table=False)
 
-        LOGGER.debug(f"ga2_2: {ga2_2}")
+        # LOGGER.debug(f"ga2_2: {ga2_2}")
 
         encrypt_g = self.encrypted_error.dot(features) * (1 / batch_num)
 
-        LOGGER.debug(f"encrypt_g: {encrypt_g}")
+        # LOGGER.debug(f"encrypt_g: {encrypt_g}")
 
         tensor_name = ".".join(("encrypt_g",) + suffix)
         gb2 = SecureMatrix.from_source(tensor_name,
@@ -132,7 +122,7 @@ class HeteroLRGuest(HeteroLRBase):
                                        self.fixedpoint_encoder.n,
                                        self.fixedpoint_encoder)
 
-        LOGGER.debug(f"gb2: {gb2}")
+        # LOGGER.debug(f"gb2: {gb2}")
 
         return gb2, ga2_2
 
@@ -142,51 +132,22 @@ class HeteroLRGuest(HeteroLRBase):
           Loss = - y * log(h(x)) - (1-y) * log(1 - h(x)) where h(x) = 1/(1+exp(-wx))
           Then loss' = - (1/N)*∑(log(1/2) - 1/2*wx + ywx -1/8(wx)^2)
         """
+        LOGGER.info(f"[compute_loss]: Calculate loss ...")
         wx = (-0.5 * self.encrypted_wx).reduce(operator.add)
         ywx = (self.encrypted_wx * self.labels).reduce(operator.add)
 
         wx_square = (2 * self.wx_remote * self.wx_self).reduce(operator.add) + \
                     (self.wx_self * self.wx_self).reduce(operator.add)
 
-        LOGGER.debug(f"wx_square: {wx_square}")
-
         wx_remote_square = self.secure_matrix_obj.share_encrypted_matrix(suffix=suffix,
                                                                          is_remote=False,
                                                                          cipher=None,
                                                                          wx_self_square=None)[0]
 
-        LOGGER.debug(f"wx_remote_square.get: {wx_remote_square}")
-
         wx_square = (wx_remote_square + wx_square) * -0.125
-
-        LOGGER.info(f"wx_square: {wx_square}")
-
-        # DEBUG
-        # de_wx = self.host_cipher.recursive_decrypt(wx.value)
-        # de_ywx = self.host_cipher.recursive_decrypt(ywx.value)
-        # de_wx_square = self.host_cipher.recursive_decrypt(wx_square.value)
-        # wx_square1 = (2 * self.wx_remote * self.wx_self).reduce(operator.add)
-        # de_wx_square1 = self.host_cipher.recursive_decrypt(wx_square1.value)
-        # wx_square2 = (self.wx_self * self.wx_self).reduce(operator.add)
-        # de_wx_square2 = self.fixedpoint_encoder.decode(wx_square2.value)
-        # de_wx_square3 = self.host_cipher.recursive_decrypt(wx_remote_square.value)
-        # de_wx_remote = self.host_cipher.recursive_decrypt(self.wx_remote.value.reduce(operator.add))
-        # de_wx_self = self.fixedpoint_encoder.decode(self.wx_self.value.reduce(operator.add))
-        # de_wx_sum = de_wx_remote + de_wx_self
-        # LOGGER.info(f"compute_loss: de_wx: {de_wx}")
-        # LOGGER.info(f"compute_loss: de_ywx: {de_ywx}")
-        # LOGGER.info(f"compute_loss: de_wx_square: {de_wx_square}")
-        # LOGGER.info(f"compute_loss: de_wx_square1: {de_wx_square1}")
-        # LOGGER.info(f"compute_loss: de_wx_square2: {de_wx_square2}")
-        # LOGGER.info(f"compute_loss: de_wx_square3: {de_wx_square3}")
-        # LOGGER.info(f"compute_loss: de_wx_remote: {de_wx_remote}")
-        # LOGGER.info(f"compute_loss: de_wx_self: {de_wx_self}")
-        # LOGGER.info(f"compute_loss: de_wx_sum: {de_wx_sum}")
 
         batch_num = self.batch_num[int(suffix[2])]
         loss = (wx + ywx + wx_square) * (-1 / batch_num) - np.log(0.5)
-
-        LOGGER.debug(f"loss: {loss}")
 
         tensor_name = ".".join(("shared_loss",) + suffix)
         share_loss = SecureMatrix.from_source(tensor_name=tensor_name,
@@ -199,11 +160,8 @@ class HeteroLRGuest(HeteroLRBase):
         loss = share_loss.get(tensor_name=tensor_name,
                               broadcast=False)[0]
 
-        LOGGER.debug(f"share_loss.get: {loss}")
-
         if self.reveal_every_iter:
             loss_norm = self.optimizer.loss_norm(weights)
-            LOGGER.debug(f"loss: {loss}, loss_norm: {loss_norm}")
             if loss_norm:
                 loss += loss_norm
         else:
@@ -214,7 +172,6 @@ class HeteroLRGuest(HeteroLRBase):
 
                 w_encode = np.array([w_encode])
 
-                LOGGER.debug(f"w_encode: {w_encode}")
                 w_tensor_name = ".".join(("loss_norm_w",) + suffix)
                 w_tensor = fixedpoint_numpy.FixedPointTensor(value=w_encode,
                                                              q_field=self.fixedpoint_encoder.n,
@@ -231,8 +188,9 @@ class HeteroLRGuest(HeteroLRBase):
 
                 loss_norm = w_tensor.dot(w_tensor_transpose, target_name=loss_norm_tensor_name).get(broadcast=False)
                 loss_norm = 0.5 * self.optimizer.alpha * loss_norm[0][0]
-                LOGGER.info(f"gradient spdz dot.get loss norm: {loss_norm}")
                 loss = loss + loss_norm
+
+        LOGGER.info(f"[compute_loss]: loss={loss}, reveal_every_iter={self.reveal_every_iter}")
 
         return loss
 
@@ -245,7 +203,7 @@ class HeteroLRGuest(HeteroLRBase):
         is_converge = False
         if weight_diff < self.model_param.tol:
             is_converge = True
-        LOGGER.debug(f"n_iter: {self.n_iter_}, weight_diff: {weight_diff}")
+        LOGGER.info(f"n_iter: {self.n_iter_}, weight_diff: {weight_diff}")
         self.converge_transfer_variable.converge_info.remote(is_converge, role=consts.HOST, suffix=suffix)
         return is_converge
 
@@ -317,7 +275,6 @@ class HeteroLRGuest(HeteroLRBase):
             result["cipher"] = dict(public_key=dict(n=str(self.cipher.public_key.n)),
                                     private_key=dict(p=str(self.cipher.privacy_key.p),
                                                      q=str(self.cipher.privacy_key.q)))
-            # result["cipher"] = (self.cipher.public_key.n, self.cipher.privacy_key.p, self.cipher.privacy_key.q)
         return result
 
     def load_single_model(self, single_model_obj):
@@ -326,9 +283,7 @@ class HeteroLRGuest(HeteroLRBase):
             cipher_info = single_model_obj.cipher
             self.cipher = PaillierEncrypt()
             public_key = PaillierPublicKey(int(cipher_info.public_key.n))
-            # public_key = PaillierPublicKey(cipher_info[0])
             privacy_key = PaillierPrivateKey(public_key, int(cipher_info.private_key.p), int(cipher_info.private_key.q))
-            # privacy_key = PaillierPrivateKey(public_key, cipher_info[1], cipher_info[2])
             self.cipher.set_public_key(public_key=public_key)
             self.cipher.set_privacy_key(privacy_key=privacy_key)
 
