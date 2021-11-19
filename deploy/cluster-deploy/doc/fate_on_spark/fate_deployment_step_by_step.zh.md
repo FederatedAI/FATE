@@ -295,7 +295,7 @@ make && make install
 
 ### 2.7 部署RabbitMQ
 
-请参阅部署指南：[RabbitMQ_deployment_guide_zh](rabbitmq_deployment_guide_zh.md)
+请参阅部署指南：[RabbitMQ_deployment_guide_zh](rabbitmq_deployment_guide.zh.md)
 
 
 ## 3 部署FATE

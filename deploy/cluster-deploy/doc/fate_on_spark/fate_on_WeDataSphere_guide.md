@@ -5,7 +5,7 @@
 
 ### 二. RabbitMQ部署
 
-请参阅部署指南：[rabbitmq_deployment_guide](rabbitmq_deployment_guide_zh.md)
+请参阅部署指南：[rabbitmq_deployment_guide](rabbitmq_deployment_guide.zh.md)
 
 ### 三. WeDataSphere相关组件部署
 

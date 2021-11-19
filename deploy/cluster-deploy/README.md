@@ -1,4 +1,4 @@
-## FATE Cluster Deployment Guide | [中文](./README_zh.md)
+## FATE Cluster Deployment Guide | [中文](./README.zh.md)
 ### BackGround
 - [Architecture](../../doc/architecture/index.md)
 
@@ -8,5 +8,5 @@
 
 ### Deployment for FATE on Spark(Continuous Improvement)
 - [Install FATE on Native Spark](doc/fate_on_spark/fate_on_spark_deployment_guide.md)
-- [Install FATE on CDH](doc/fate_on_spark/fate_on_cdh_deployment_guide_zh.md)
+- [Install FATE on CDH](doc/fate_on_spark/fate_on_cdh_deployment_guide.zh.md)
 
