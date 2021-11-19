@@ -17,10 +17,10 @@
 | ------ | ------- | ------------- | ----------- | ----------------------- | ----------- | --------------------------------- |
 | PartyA | 10000   | VM-0-1-centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 | fate，mysql, nginx | fateflow，fateboard，mysql，nginx |
 | PartyA | 10000   |               |             |                         | Spark、HDFS |                                   |
-| PartyA | 10000   |               |             |                         | RabbitMQ    |                                   |
+| PartyA | 10000   |               |             |                         | RabbitMQ(或pulsar )   |                                   |
 | PartyB | 9999    | VM-0-2-centos | 192.168.0.2 | CentOS 7.2/Ubuntu 16.04 | fate，mysql, nginx | fateflow，fateboard，mysql，nginx |
 | PartyB | 9999    |               |             |                         | Spark、HDFS |                                   |
-| PartyB | 9999    |               |             |                         | RabbitMQ    |                                   |
+| PartyB | 9999    |               |             |                         | RabbitMQ(或pulsar )  |                                   |
 
 架构图：
 
@@ -38,7 +38,7 @@
 | mysql    | mysql     | 3306      | 元数据存储                                            |
 | Spark    |           |           | 计算引擎                                              |
 | HDFS     |           |           | 存储引擎                                              |
-| RabbitMQ |           |           | 跨站点(party)数据交换代理                             |
+| RabbitMQ(或pulsar) |           |           | 跨站点(party)数据交换代理                             |
 
 ## 4 部署Spark & HDFS
 请参阅部署指南：[Hadoop_Spark_deployment_guide_zh](hadoop_spark_deployment_guide_zh.md)

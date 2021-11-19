@@ -121,18 +121,11 @@ fate_on_spark:
 dependent_distribution: true # 推荐使用true
 ```
 
-**注意:**
-若该配置为"false",需要将fate依赖及python依赖拷贝到每个spark work节点。另外需要修改spark配置,具体配操作如下:
+**注意:若该配置为"true"，可忽略下面的操作**
 
+- 依赖准备:整个fate目录拷贝到每个work节点,目录结构保持一致
 
-- 依赖准备:
-
-整个fate目录拷贝到每个work节点,目录结构保持一致
-
-
-- spark配置修改
-
-spark/conf/spark-env.sh
+- spark配置修改：spark/conf/spark-env.sh
 ```shell script
 export PYSPARK_PYTHON=/data/projects/fate/common/python/venv/bin/python
 export PYSPARK_DRIVER_PYTHON=/data/projects/fate/common/python/venv/bin/python

@@ -190,13 +190,8 @@ mkdir -p /data/projects/fate/python
 请参阅部署指南：[fate_deployment_step_by_step_zh](fate_deployment_step_by_step_zh.md)的python部署章节
 
 #### 8.4 安装fate flow 源码
-将部署Fate机器的目录/data/projects/fate/python/下的arch、fate_arch、federatedml三个文件夹拷贝到CDH集群的/data/projects/fate/python目录下
+将部署Fate机器的目录/data/projects/fate文件夹拷贝到CDH集群的/data/projects/fate
 
-```
-#登录部署Fate的机器
-cd /data/projects/fate/python/
-scp -r  arch fate_arch federatedml hdfs@192.168.0.x:/data/projects/fate/python/
-```
 
 ## 10. FATE配置文件修改
 请参阅部署指南：[fate_deployment_step_by_step_zh](fate_deployment_step_by_step_zh.md)的第4章节

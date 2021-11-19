@@ -145,7 +145,7 @@ wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_${v
 scp *.tar.gz app@192.168.0.1:/data/projects/install
 scp *.tar.gz app@192.168.0.2:/data/projects/install
 ```
-
+注意: 当前文档需要部署的FATE version>=1.7.0
 ### 2.2 操作系统参数检查
 
 **在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）app用户下执行**
@@ -271,7 +271,7 @@ cd /data/projects/install
 tar xvf pip-packages-fate-*.tar.gz
 source /data/projects/fate/common/python/venv/bin/activate
 pip install python-env/setuptools-42.0.2-py2.py3-none-any.whl
-pip install -r pip-packages-fate-1.5.1/requirements.txt -f ./pip-packages-fate-1.5.1 --no-index
+pip install -r pip-packages-fate-${version}/requirements.txt -f ./pip-packages-fate-${version} --no-index
 pip list | wc -l
 ```
 
@@ -293,10 +293,13 @@ cd openresty-*
 make && make install
 ```
 
-### 2.7 部署RabbitMQ
+### 2.7 部署RabbitMQ(和pulsar二选一)
 
 请参阅部署指南：[RabbitMQ_deployment_guide_zh](rabbitmq_deployment_guide_zh.md)
 
+### 2.8 部署Pulsar(和rabbitmq二选一)
+
+请参阅部署指南：[Pulsar部署](pulsar_deployment_guide_zh.md)
 
 ## 3 部署FATE
 
@@ -318,12 +321,17 @@ tar xvf proxy.tar.gz -C /data/projects/fate
 #设置环境变量文件
 #在目标服务器（192.168.0.1 192.168.0.2）app用户下执行:
 cat >/data/projects/fate/bin/init_env.sh <<EOF
-export PYTHONPATH=/data/projects/fate/python
-export SPARK_HOME=/data/projects/common/spark/spark-2.4.1-bin-hadoop2.7
+fate_project_base=/data/projects/fate
+export FATE_PROJECT_BASE=$fate_project_base
+export FATE_DEPLOY_BASE=$fate_project_base
+
+export PYTHONPATH=/data/projects/fate/fateflow/python:/data/projects/fate/eggroll/python:/data/projects/fate/fate/python
+export EGGROLL_HOME=/data/projects/fate/eggroll
+export EGGROLL_LOG_LEVEL=INFO
 venv=/data/projects/fate/common/python/venv
-source \${venv}/bin/activate
 export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
-export PATH=\$PATH:\$JAVA_HOME/bin
+export PATH=$PATH:$JAVA_HOME/bin
+source ${venv}/bin/activate
 EOF
 ```
 
@@ -457,9 +465,14 @@ export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
   配置文件：/data/projects/fate/conf/service_conf.yaml
   
 ##### 运行配置
-- work_mode(为1表示集群模式，默认)
+- FATE引擎相关配置:
 
-- independent_scheduling_proxy(使用nginx作为Fate-Flow调度协调代理服务，FATE on Spark下需要设置为true)
+```yaml
+default_engines:
+  computing: spark
+  federation: rabbitmq #(或pulsar)
+  storage: hdfs
+```
 
 - FATE-Flow的监听ip、端口
 
@@ -468,116 +481,129 @@ export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
 - db的连接ip、端口、账号和密码
 
 ##### 依赖服务配置
+
+**conf/service_conf.yaml**
+```yaml
+fate_on_spark:
+  spark:
+    home:
+    cores_per_node: 40
+    nodes: 1
+  hdfs:
+    name_node: hdfs://fate-cluster
+    path_prefix:
+  # rabbitmq和pulsar二选一
+  rabbitmq:
+    host: 127.0.0.1
+    mng_port: 12345
+    port: 5672
+    user: fate
+    password: fate
+    route_table:
+  pulsar:
+    host: 127.0.0.1
+    port: 6650
+    mng_port: 8080
+    cluster: standalone
+    tenant: fl-tenant
+    topic_ttl: 5
+    route_table:     
+
+
+
+```
 - Spark的相关配置
-    - address:home为Spark home绝对路径
+    - home为Spark home绝对路径
     - cores_per_node为Spark集群每个节点的cpu核数
     - nodes为Spark集群节点数量
 
 - HDFS的相关配置
-    - address:name_node为hdfs的namenode完整地址
-    - address:path_prefix为默认存储路径前缀，若不配置则默认为/
+    - name_node为hdfs的namenode完整地址
+    - path_prefix为默认存储路径前缀，若不配置则默认为/
 
 - RabbitMQ相关配置
-    - address:self为本方站点配置
-    - address:$partyid为对方站点配置
-
-- proxy相关配置，监听ip及端口
-
-  此配置文件格式要按照yaml格式配置，不然解析报错，可以参考如下例子手工配置，也可以使用以下指令完成。
-
+    - host: 主机ip
+    - mng_port: 管理端口
+    - port: 服务端口
+    - user：管理员用户
+    - password: 管理员密码
+    - route_table: 路由表信息，默认为空
+    
+- pulsar相关配置
+    - host: 主机ip
+    - port: brokerServicePort
+    - mng_port: webServicePort
+    - cluster：集群或单机
+    - tenant: 合作方需要使用同一个tenant
+    - topic_ttl： 回收资源参数
+    - route_table: 路由表信息，默认为空
+    
+**conf/rabbitmq_route_table.yaml**
+```yaml
+10000:
+  host: 127.0.0.1
+  port: 5672
+9999:
+  host: 127.0.0.2
+  port: 5672
 ```
-#在目标服务器（192.168.0.1）app用户下修改执行
-cat > /data/projects/fate/conf/service_conf.yaml <<EOF
-work_mode: 1
-independent_scheduling_proxy: true
-use_registry: false
-fateflow:
-  host: 192.168.0.1
-  http_port: 9380
-  grpc_port: 9360
-fateboard:
-  host: 192.168.0.1
-  port: 8080
-database:
-  name: fate_flow
-  user: fate
-  passwd: fate_dev
-  host: 192.168.0.1
-  port: 3306
-  max_connections: 100
-  stale_timeout: 30
-SPARK:
-  address:
-    home:
-  cores_per_node: 20
-  nodes: 2
-HDFS:
-  address:
-    name_node: hdfs://fate-cluster
-    path_prefix:
-RABBITMQ:
-  address:
-    self:
-      10000: 192.168.0.3
-      mng_port: 12345
-      port: 5672
-      user: fate
-      password: fate
-    9999:
-      host: 192.168.0.4
-      port: 5672
-PROXY:
-  address:
-    host: 192.168.0.1
-    port: 9390
-EOF
 
-#在目标服务器（192.168.0.2）app用户下修改执行
-cat > /data/projects/fate/conf/service_conf.yaml <<EOF
-work_mode: 1
-independent_scheduling_proxy: true
-use_registry: false
-fateflow:
-  host: 192.168.0.2
-  http_port: 9380
-  grpc_port: 9360
-fateboard:
-  host: 192.168.0.2
-  port: 8080
-database:
-  name: fate_flow
-  user: fate
-  passwd: fate_dev
-  host: 192.168.0.2
-  port: 3306
-  max_connections: 100
-  stale_timeout: 30
-SPARK:
-  address:
-    home:
-  cores_per_node: 20
-  nodes: 2
-HDFS:
-  address:
-    name_node: hdfs://fate-cluster
-    path_prefix:
-RABBITMQ:
-  address:
-    self:
-      9999: 192.168.0.4
-      mng_port: 12345
-      port: 5672
-      user: fate
-      password: fate
-    10000:
-      host: 192.168.0.3
-      port: 5672
-PROXY:
-  address:
-    host: 192.168.0.2
-    port: 9390
-EOF
+**conf/pulsar_route_table.yaml**
+```yml
+9999:
+  # host can be a domain like 9999.fate.org
+  host: 192.168.0.4
+  port: 6650
+  sslPort: 6651
+  # set proxy address for this pulsar cluster
+  proxy: ""
+
+10000:
+  # host can be a domain like 10000.fate.org
+  host: 192.168.0.3
+  port: 6650
+  sslPort: 6651
+  proxy: ""
+
+default:
+  # compose host and proxy for party that does not exist in route table
+  # in this example, the host for party 8888 will be 8888.fate.org
+  proxy: "proxy.fate.org:443"
+  domain: "fate.org"
+  port: 6650
+  sslPort: 6651
 ```
+
+
+
+- proxy相关配置(ip及端口)
+
+**conf/service_conf.yaml**
+```yaml
+fateflow:
+  proxy: nginx
+fate_on_spark:
+  nginx: 
+    host: 127.0.0.1
+    port: 9390
+```
+
+##### spark依赖分发模式
+- "conf/service_conf.yaml"
+```yaml
+dependent_distribution: true # 推荐使用true
+```
+
+**注意:若该配置为"true"，可忽略下面的操作**
+
+- 依赖准备:整个fate目录拷贝到每个work节点,目录结构保持一致
+
+- spark配置修改：spark/conf/spark-env.sh
+```shell script
+export PYSPARK_PYTHON=/data/projects/fate/common/python/venv/bin/python
+export PYSPARK_DRIVER_PYTHON=/data/projects/fate/common/python/venv/bin/python
+```
+
 
 ## 5. 启动服务
 
@@ -586,7 +612,7 @@ EOF
 ```
 #启动FATE服务，FATE-Flow依赖MySQL的启动
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/python/fate_flow
+cd /data/projects/fate/fateflow/bin
 sh service.sh start
 cd /data/projects/fate/fateboard
 sh service.sh start
@@ -598,7 +624,7 @@ cd /data/projects/fate/proxy
 
 1）FATE-Flow日志
 
-/data/projects/fate/logs/fate_flow/
+/data/projects/fate/fateflow/logs
 
 2）FATE-Board日志
 
@@ -614,16 +640,19 @@ cd /data/projects/fate/proxy
 ### 7.1 Toy_example部署验证
 
 
-此测试您需要设置3个参数：`guest_partyid`, `host_partyid`, `work_mode`, `backend`
+此测试您需要设置2个参数："guest-party-id", "host-party-id 10000";
+此外您还需要安装fate client，下面是离线安装方式(若已经安装fate client可忽略)
+```shell script
+source /data/projects/fate/bin/init_env.sh
+cd /data/projects/fate/fate/python/fate_client && python setup.py install
+```
 
 #### 7.1.1 单边测试
 
 1）192.168.0.1上执行，guest_partyid和host_partyid都设为10000：
 
 ```bash
-source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/toy_example/
-python run_toy_example.py 10000 10000 1 -b 1
+flow test toy --guest-party-id 10000 --host-party-id 10000
 ```
 
 类似如下结果表示成功：
@@ -632,10 +661,8 @@ python run_toy_example.py 10000 10000 1 -b 1
 
 2）192.168.0.2上执行，guest_partyid和host_partyid都设为9999:
 
-```
-source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/toy_example/
-python run_toy_example.py 9999 9999 1 -b 1
+```bash
+flow test toy --guest-party-id 9999 --host-party-id 9999
 ```
 
 类似如下结果表示成功：
@@ -646,57 +673,17 @@ python run_toy_example.py 9999 9999 1 -b 1
 
 选定9999为guest方，在192.168.0.2上执行：
 
-```
-source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/toy_example/
-python run_toy_example.py 9999 10000 1 -b 1
+
+```bash
+flow test toy --guest-party-id 9999 --host-party-id 10000
 ```
 
 类似如下结果表示成功：
 
 "2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
 
-### 7.2 最小化测试
 
-
-#### **7.2.1 上传预设数据：**
-
-分别在192.168.0.1和192.168.0.2上执行：
-
-```bash
-source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/scripts/
-python upload_default_data.py -m 1
-```
-
-更多细节信息，敬请参考[脚本README](../../examples/scripts/README.rst)
-
-#### 7.2.2 快速模式
-
-请确保guest和host两方均已分别通过给定脚本上传了预设数据。
-
-快速模式下，最小化测试脚本将使用一个相对较小的数据集，即包含了569条数据的breast数据集。
-
-选定9999为guest方，在192.168.0.2上执行：
-
-```bash
-source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/min_test_task/
-python run_task.py -m 1 -gid 9999 -hid 10000 -aid 10000 -f fast -b 1
-```
-
-其他一些可能有用的参数包括：
-
-1. -f: 使用的文件类型. "fast" 代表 breast数据集, "normal" 代表 default credit 数据集.
-2. --add_sbt: 如果被设置为1, 将在运行完lr以后，启动secureboost任务，设置为0则不启动secureboost任务，不设置此参数系统默认为1。
-
-若数分钟后在结果中显示了“success”字样则表明该操作已经运行成功了。若出现“FAILED”或者程序卡住，则意味着测试失败。
-
-#### 7.2.3 正常模式
-
-只需在命令中将“fast”替换为“normal”，其余部分与快速模式相同。
-
-### 7.3. FateBoard testing
+### 7.2. FateBoard testing
 
 Fate-Voard是一项Web服务。如果成功启动了fateboard服务，则可以通过访问 http://192.168.0.1:8080 和 http://192.168.0.2:8080 来查看任务信息，如果有防火墙需开通。如果fateboard和fateflow没有部署再同一台服务器，需在fateboard页面设置fateflow所部署主机的登陆信息：页面右上侧齿轮按钮--》add--》填写fateflow主机ip，os用户，ssh端口，密码。
 
@@ -714,7 +701,7 @@ Fate-Voard是一项Web服务。如果成功启动了fateboard服务，则可以�
 
 ```bash
 source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/fate_flow
+cd /data/projects/fate/fateflow/bin
 sh service.sh start|stop|status|restart
 ```
 
@@ -774,7 +761,7 @@ netstat -tlnp | grep 9390
 
 | 服务               | 日志路径                                           |
 | ------------------ | -------------------------------------------------- |
-| fate_flow&任务日志 | /data/projects/fate/python/logs                    |
+| fate_flow&任务日志 | /data/projects/fate/fateflow/logs                    |
 | fateboard          | /data/projects/fate/fateboard/logs                 |
 | nginx | /data/projects/fate/proxy/nginx/logs                 |
 | mysql              | /data/projects/fate/common/mysql/mysql-8.0.13/logs |
