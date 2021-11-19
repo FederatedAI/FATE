@@ -44,7 +44,7 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         Train poisson model of role guest
         Parameters
         ----------
-        data_instances: DTable of Instance, input data
+        data_instances: Table of Instance, input data
         """
 
         LOGGER.info("Enter hetero_poisson_guest fit")
@@ -132,11 +132,11 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         Prediction of Poisson
         Parameters
         ----------
-        data_instances: DTable of Instance, input data
+        data_instances: Table of Instance, input data
 
         Returns
         ----------
-        DTable
+        Table
             include input data label, predict results
         """
         LOGGER.info("Start predict ...")

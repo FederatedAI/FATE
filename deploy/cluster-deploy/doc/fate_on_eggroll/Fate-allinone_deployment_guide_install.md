@@ -514,20 +514,20 @@ A user must set 3 parameters for this testing: guest\_partyid, host\_partyid.
 
 ```
 source /data/projects/fate/bin/init_env.sh
-flow test toy --guest-party-id 10000 --host-party-id 10000 
+flow test toy -gid 10000 -hid 10000 
 ```
 
 A result similar to the following indicates successful operation:
 
 "2020-04-28 18:26:20,789 - secure\_add\_guest.py\[line:126] - INFO: success to calculate secure\_sum, it is 1999.9999999999998"
 
-Tip: If the error "max cores per job is 1, please modify job parameters" appears, a user needs to modify the parameter task\_cores to 1, add "-c 1" to run toy test.
+Tip: If the error "max cores per job is 1, please modify job parameters" appears, a user needs to modify the parameter task\_cores to 1, add "--task-core 1" to run toy test.
 
 2\) Execute on 192.168.0.2, with both guest\_partyid and host\_partyid set to 9999:
 
 ```
 source /data/projects/fate/bin/init_env.sh
-flow test toy --guest-party-id 9999 --host-party-id 9999
+flow test toy -gid 9999 -hid 9999
 ```
 
 A result similar to the following indicates successful operation:
@@ -540,7 +540,7 @@ Select 9999 as the guest and execute on 192.168.0.2:
 
 ```
 source /data/projects/fate/bin/init_env.sh
-flow test toy --guest-party-id 9999 --host-party-id 10000
+flow test toy -gid 9999 -hid 10000
 ```
 
 A result similar to the following indicates successful operation:

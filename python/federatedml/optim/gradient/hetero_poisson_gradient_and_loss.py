@@ -81,7 +81,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
 
         Parameters:
         ___________
-        data_instances: DTable, input data
+        data_instances: Table, input data
 
         model_weights: model weight object, stores intercept_ and coef_
 
@@ -169,7 +169,7 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
 
         Parameters:
         ___________
-        data_instances: DTable, input data
+        data_instances: Table, input data
 
         model_weights: model weight object, stores intercept_ and coef_
 

@@ -125,11 +125,11 @@ class EncryptModeCalculator(object):
         
         Parameters 
         ---------- 
-        input_data: DTable
+        input_data: Table
 
         Returns 
         ------- 
-        new_data: DTable, encrypted result of input_data
+        new_data: Table, encrypted result of input_data
 
         """
         encrypt_func = self.get_enc_func(self.encrypter, raw_enc=False)

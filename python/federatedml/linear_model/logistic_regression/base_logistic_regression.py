@@ -140,4 +140,4 @@ class BaseLogisticRegression(BaseLinearModel):
             eval_type = 'multi'
         else:
             eval_type = "binary"
-        return EvaluateParam(eval_type=eval_type)
+        return EvaluateParam(eval_type=eval_type, metrics=self.metrics)

@@ -46,7 +46,7 @@ class HeteroLRHost(HeteroLRBase):
         and b is the interception
         Parameters
         ----------
-        data_instances: DTable of Instance, input data
+        data_instances: Table of Instance, input data
         coef_: list, coefficient of lr
         intercept_: float, the interception of lr
         """
@@ -73,7 +73,7 @@ class HeteroLRHost(HeteroLRBase):
         Train lr model of role host
         Parameters
         ----------
-        data_instances: DTable of Instance, input data
+        data_instances: Table of Instance, input data
         """
 
         LOGGER.info("Enter hetero_logistic_regression host")

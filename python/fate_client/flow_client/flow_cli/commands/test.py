@@ -38,6 +38,7 @@ def test(ctx):
 @cli_args.GUEST_PARTYID_REQUIRED
 @cli_args.HOST_PARTYID_REQUIRED
 @cli_args.TIMEOUT
+@cli_args.TASK_CORES
 @click.pass_context
 def toy(ctx, **kwargs):
     flow_client = FlowClient(ip=ctx.obj["ip"], port=ctx.obj["http_port"], version=ctx.obj["api_version"],
