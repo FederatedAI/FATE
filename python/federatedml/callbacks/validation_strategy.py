@@ -46,11 +46,11 @@ class ValidationStrategy(CallbackBase):
                         e.g. validation_freqs = [10, 15], will validate data when epoch equals to 10 and 15.
                       Default: None
 
-    train_data: None or DTable,
+    train_data: None or Table,
                 if train_data not equal to None, and judge need to validate data according to validation_freqs,
                 training data will be used for evaluating
 
-    validate_data: None or DTable,
+    validate_data: None or Table,
                 if validate_data not equal to None, and judge need to validate data according to validation_freqs,
                 validate data will be used for evaluating
     """

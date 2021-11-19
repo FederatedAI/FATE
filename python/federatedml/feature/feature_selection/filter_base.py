@@ -43,7 +43,7 @@ class BaseFilterMethod(object):
 
         Parameters
         ----------
-        data_instances : DTable,
+        data_instances : Table,
             Input data
 
         suffix : string,

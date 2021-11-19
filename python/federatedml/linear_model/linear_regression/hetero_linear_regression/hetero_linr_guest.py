@@ -44,7 +44,7 @@ class HeteroLinRGuest(HeteroLinRBase):
         return data_instance as original
         Parameters
         ----------
-        data_instance: DTable of Instance, input data
+        data_instance: Table of Instance, input data
         """
         return data_instance
 
@@ -53,7 +53,7 @@ class HeteroLinRGuest(HeteroLinRBase):
         Train linR model of role guest
         Parameters
         ----------
-        data_instances: DTable of Instance, input data
+        data_instances: Table of Instance, input data
         """
 
         LOGGER.info("Enter hetero_linR_guest fit")
@@ -140,12 +140,12 @@ class HeteroLinRGuest(HeteroLinRBase):
         Prediction of linR
         Parameters
         ----------
-        data_instances: DTable of Instance, input data
+        data_instances: Table of Instance, input data
         predict_param: PredictParam, the setting of prediction.
 
         Returns
         ----------
-        DTable
+        Table
             include input data label, predict results
         """
         LOGGER.info("Start predict ...")

@@ -27,12 +27,12 @@ class SigmoidBinaryCrossEntropyLoss(object):
 
         Parameters
         ----------
-        y : DTable
+        y : Table
             The input data's labels
 
         Returns
         -------
-        y_initialize : Dtable, the value of the table is a 1D numpy ndarray,
+        y_initialize : table, the value of the table is a 1D numpy ndarray,
             which filled with zeros
 
         """
@@ -64,10 +64,10 @@ class SigmoidBinaryCrossEntropyLoss(object):
 
         Parameters
         ----------
-        y : DTable
+        y : Table
             The input data's labels
 
-        y_prob : DTable
+        y_prob : Table
             The predict probability.
 
         Returns
@@ -128,14 +128,14 @@ class SoftmaxCrossEntropyLoss(object):
 
         Parameters
         ----------
-        y : DTable
+        y : Table
             The input data's labels
 
         dims: the nums of different category labels
 
         Returns
         -------
-        y_initialize : Dtable, the value of the table is a 1D numpy ndarray
+        y_initialize : table, the value of the table is a 1D numpy ndarray
             with shape equals to dims, which filled with zeros
 
         """
@@ -168,10 +168,10 @@ class SoftmaxCrossEntropyLoss(object):
 
         Parameters
         ----------
-        y : DTable
+        y : Table
             The input data's labels
 
-        y_prob : DTable, value of DTable is ndarray
+        y_prob : Table, value of Table is ndarray
             The predict probability of each category.
 
         Returns
