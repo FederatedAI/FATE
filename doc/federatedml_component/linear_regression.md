@@ -96,5 +96,5 @@ details on the secure model-building process, please refer to this
 
 9.  Support sparse format data as input.
 
-10. Support stepwise. For details on stepwise mode, please refer
+10. Support stepwise. For details on stepwise mode, please refer to
     [stepwise](stepwise.md) .
