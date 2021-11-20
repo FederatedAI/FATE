@@ -521,11 +521,11 @@ tail -f ./logs/deploy-mysql-host.log    （实时打印HOST端mysql的部署情�
 6.1 Toy_example部署验证
 -----------------------
 
-此测试您需要设置2个参数：guest_partyid，host_partyid。
+此测试您需要设置2个参数：gid(guest partyid)，hid(host_partyid)。
 
 ### 6.1.1 单边测试
 
-1）192.168.0.1上执行，guest_partyid和host_partyid都设为10000：
+1）192.168.0.1上执行，gid和hid都设为10000：
 
 ```
 source /data/projects/fate/bin/init_env.sh
@@ -538,7 +538,7 @@ flow test toy -gid 10000 -hid 10000
 
 提示：如出现max cores per job is 1, please modify job parameters报错提示，需要修改运行时参数task_cores为1，增加命令行参数 '--task-core 1'.
 
-2）192.168.0.2上执行，guest_partyid和host_partyid都设为9999：
+2）192.168.0.2上执行，gid和hid都设为9999：
 
 ```
 source /data/projects/fate/bin/init_env.sh
@@ -575,7 +575,7 @@ cd /data/projects/fate/examples/scripts/
 python upload_default_data.py
 ```
 
-更多细节信息，敬请参考[脚本README](../../examples/scripts/README.rst)
+更多细节信息，敬请参考[脚本README](../../../../examples/scripts/README.rst)
 
 ### **6.2.2 快速模式：**
 
