@@ -1,6 +1,6 @@
 # Components
 
-Each `Component` wraps a [FederatedML](../../federatedml_component/index.md)
+Each `Component` wraps a [FederatedML](../../federatedml_component/README.md)
 `Module`. `Modules` implement machine learning algorithms on federated
 learning, while `Components` provide convenient interface for easy model
 building.
@@ -14,7 +14,7 @@ workflow. There are three classes of `input`: `data`, `cache`, and
 `model`. Not all components have all three classes of input, and a
 component may accept only some types of the class. Note that only
 `Intersection` may have `cache` input. For information on each
-components' input, check the [list](#component-list) below.
+components' input, check the [list](../../federatedml_component/README.md#Algorithm List) below.
 
 Here is an example to access a component's input:
 
@@ -32,7 +32,7 @@ Same as `Input`, `Output` encapsulates output `data`, `cache`, and
 `model` of component in a FATE job. Not all components have all classes
 of outputs. Note that only `Intersection` may have `cache` output. For
 information on each components' output, check the
-[list](#component-list) below.
+[list](../../federatedml_component/README.md#Algorithm List) below.
 
 Here is an example to access a component's output:
 
@@ -125,7 +125,7 @@ Data
 
 All input and output data of components need to be wrapped into `Data`
 objects when being passed between components. For information on valid
-data types of each component, check the [list](#component-list) below.
+data types of each component, check the [list](../../federatedml_component/README.md#Algorithm List) below.
 Here is a an example of chaining components with different types of data
 input and output:
 
@@ -186,7 +186,7 @@ Warning
 Please note that when using <span class="title-ref">stepwise</span> or
 <span class="title-ref">cross validation</span> method, components do
 not have `model` output. For information on valid model types of each
-components, check the [list](#component-list) below.
+components, check the [list](../../federatedml_component/README.md#Algorithm List)below.
 
 </div>
 
@@ -261,58 +261,3 @@ extracted from pipeline:
 print(pipeline.get_component("dataio_0").get_output_data(limits=10))
 ```
 
-## Component List
-
-Below lists input and output elements of each
-component.
-
-| Algorithm                                                                                       | Component Name               | Description                                                                                                                                        | Acceptable Input Data                       | Acceptable Output Data                    | Acceptable Input Model | Acceptable Output Model |
-| ----------------------------------------------------------------------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- | ----------------------------------------- | ---------------------- | ----------------------- |
-| Reader                                                                                          | Reader                       | This component is always the first component of a pipeline task(except for upload). It loads raw data from storage.                                | None                                        | data                                      | None                   | None                    |
-| [DataIO](../../federatedml_component/data_transform.md)                                                  | DataIO                       | This component usually follows `Reader`. It transforms user-uploaded date into Instance object(deprecate in FATe-v1.7, use DataTransform instead). | data                                        | data                                      | model                  | model                   |
-| [DataTransform](../../federatedml_component/data_transform.md)                                           | DataTransform                | This component usually follows `Reader`. It transforms user-uploaded date into Instance object.                                                    | data                                        | data                                      | model                  | model                   |
-| [Intersect](../../federatedml_component/intersect.md)                                | Intersection                 | Compute intersect data set of multiple parties without leakage of difference set information. Mainly used in hetero scenario task.                 | data                                        | data                                      | None                   | None                    |
-| [Federated Sampling](../../federatedml_component/sample.md)                                   | FederatedSample              | Federated Sampling data so that its distribution become balance in each party.This module supports standalone and federated versions.              | data                                        | data                                      | model                  | model                   |
-| [Feature Scale](../../federatedml_component/scale.md)                                        | FeatureScale                 | Feature scaling and standardization.                                                                                                               | data                                        | data                                      | model                  | model                   |
-| [Hetero Feature Binning](../../federatedml_component/feature_binning.md)                               | Hetero Feature Binning       | With binning input data, calculates each column's iv and woe and transform data according to the binned information.                               | data                                        | data                                      | model                  | model                   |
-| [Homo Feature Binning](../../federatedml_component/feature_binning.md)                                 | Homo Feature Binning         | Calculate quantile binning through multiple parties                                                                                                | data                                        | data                                      | None                   | model                   |
-| [OneHot Encoder](../../federatedml_component/onehot_encoder.md)                                       | OneHotEncoder                | Transfer a column into one-hot format.                                                                                                             | data                                        | data                                      | model                  | model                   |
-| [Hetero Feature Selection](../../federatedml_component/feature_selection.md)      | HeteroFeatureSelection       | Provide 5 types of filters. Each filters can select columns according to user config                                                               | data                                        | data                                      | model; isometric model | model                   |
-| [Union](../../federatedml_component/union.md)                                        | Union                        | Combine multiple data tables into one.                                                                                                             | List\[data\]                                | data                                      | model                  | model                   |
-| [Hetero-LR](../../federatedml_component/logistic_regression.md)                   | HeteroLR                     | Build hetero logistic regression module through multiple parties.                                                                                  | train\_data; validate\_data; predict\_input | data                                      | model                  | model                   |
-| [Local Baseline](../../federatedml_component/local_baseline.md)                                | LocalBaseline                | Wrapper that runs sklearn(scikit-learn) Logistic Regression model with local data.                                                                 | train\_data; validate\_data; predict\_input | data                                      | None                   | None                    |
-| [Hetero-LinR](../../federatedml_component/linear_regression.md)                   | HeteroLinR                   | Build hetero linear regression module through multiple parties.                                                                                    | train\_data; validate\_data; predict\_input | data                                      | model                  | model                   |
-| [Hetero-Poisson](../../federatedml_component/poisson_regression.md)               | HeteroPoisson                | Build hetero poisson regression module through multiple parties.                                                                                   | train\_data; validate\_data; predict\_input | data                                      | model                  | model                   |
-| [Homo-LR](../../federatedml_component/logistic_regression.md)                     | HomoLR                       | Build homo logistic regression module through multiple parties.                                                                                    | train\_data; validate\_data; predict\_input | data                                      | model                  | model                   |
-| [Homo-NN](../../federatedml_component/homo_nn.md)                                           | HomoNN                       | Build homo neural network module through multiple parties.                                                                                         | train\_data; validate\_data; predict\_input | data                                      | model                  | model                   |
-| [Hetero Secure Boosting](../../federatedml_component/ensemble.md)                              | HeteroSecureBoost            | Build hetero secure boosting module through multiple parties                                                                                       | train\_data; validate\_data; predict\_input | data                                      | model                  | model                   |
-| [Hetero Fast Secure Boosting](../../federatedml_component/ensemble.md)                         | HeteroFastSecureBoost        | Build hetero secure boosting model through multiple parties in layered/mix manners.                                                                | train\_data; validate\_data; predict\_input | data                                      | model                  | model                   |
-| [Hetero Secure Boost Feature Transformer](../../federatedml_component/sbt_feature_transformer.md) | SBT Feature Transformer      | This component can encode sample using Hetero SBT leaf indices.                                                                                    | data                                        | data                                      | model                  | model                   |
-| [Evaluation](../../federatedml_component/evaluation.md)                                        | Evaluation                   | Output the model evaluation metrics for user.                                                                                                      | data; List\[data\]                          | None                                      | model                  | None                    |
-| [Hetero Pearson](../../federatedml_component/correlationmd)                         | HeteroPearson                | Calculate hetero correlation of features from different parties.                                                                                   | data                                        | None                                      | model                  | model                   |
-| [Hetero-NN](../../federatedml_component/hetero_nn.md)                                       | HeteroNN                     | Build hetero neural network module.                                                                                                                | train\_data; validate\_data; predict\_input | data                                      | model                  | model                   |
-| [Homo Secure Boosting](../../federatedml_component/ensemble.md)                                | HomoSecureBoost              | Build homo secure boosting module through multiple parties                                                                                         | train\_data; validate\_data; predict\_input | data                                      | model                  | model                   |
-| [Homo OneHot Encoder](../../federatedml_component/homo_onehot_encoder.md)                                  | HomoOneHotEncoder            | Build homo onehot encoder module through multiple parties.                                                                                         | data                                        | data                                      | model                  | model                   |
-| [Data Split](../../federatedml_component/data_split.md)                        | Data Split                   | Split one data table into 3 tables by given ratio or count                                                                                         | data                                        | train\_data & validate\_data & test\_data | None                   | None                    |
-| [Column Expand](../../federatedml_component/feature_binning.md)                                        | Column Expand                | Add arbitrary number of columns with user-provided values.                                                                                         | data                                        | data                                      | model                  | model                   |
-| [Hetero KMeans](../../federatedml_component/hetero_kmeans.md)                   | Hetero KMeans                | Build Hetero KMeans module through multiple parties                                                                                                | train\_data; validate\_data; predict\_input | data                                      | model                  | model                   |
-| [Data Statistics](../../federatedml_component/statistic.md)                                    | Data Statistics              | Compute Data Statistics                                                                                                                            | data                                        | data                                      | None                   | model                   |
-| [Scorecard](../../federatedml_component/statistic/scorecard.md)                               | Scorecard                    | Scale predict score to credit score by given scaling parameters                                                                                    | data                                        | data                                      | None                   | None                    |
-| [Feldman Verifiable Sum](../../federatedml_component/feldman_verifiable_sum.md)      | Feldman Verifiable Sum       | This component will sum multiple privacy values without exposing data                                                                              | data                                        | data                                      | None                   | None                    |
-| [Secure Information Retrieval](../../federatedml_component/sir.md)               | Secure Information Retrieval | This component will securely retrieve designated feature(s) or label value                                                                         | data                                        | data                                      | None                   | model                   |
-| [Sample Weight](../../federatedml_component/sample_weight.md)                                 | Sample Weight                | This component assigns weight to instances according to user-specified parameters                                                                  | data                                        | data                                      | model                  | model                   |
-| [Feature Imputation](../../federatedml_component/feature_imputation.md)                   | Feature Imputation           | This component imputes missing features using arbitrary methods/values                                                                             | data                                        | data                                      | model                  | model                   |
-| [Label Transform](../../federatedml_component/label_transform.md)                           | Label Transform              | This component replaces label with designated values                                                                                               | data                                        | data                                      | model                  | model                   |
-| [Hetero SSHE LR](../../federatedml_component/sshe_lr.md)                           | Hetero SSHE LR              | Build hetero logistic regression model without arbiter                                                                                              |train\_data; validate\_data; predict\_input    | data                                      | model                  | model                   |
-
-<!-- mkdocs
-## Params
-
-::: federatedml.param
-    rendering:
-      heading_level: 3
-      show_source: true
-      show_root_heading: true
-      show_root_toc_entry: false
-      show_root_full_path: false
--->
