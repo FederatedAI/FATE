@@ -1,4 +1,5 @@
 site_name: FATE
+site_url: http://localhost:8000
 repo_name: FederatedAI/FATE
 repo_url: https://github.com/FederatedAI/FATE
 edit_uri: edit/master/doc
@@ -14,7 +15,7 @@ nav:
       - homo nn demo: tutorial/pipeline/pipeline_tutorial_homo_nn.ipynb
       - match id demo: tutorial/pipeline/pipeline_tutorial_match_id.ipynb
     - DSL:
-      - tutorial/README.md
+      - tutorial/dsl_conf/README.md
       - job conf guide: tutorial/dsl_conf/dsl_conf_v2_setting_guide.md
       - upload guide: tutorial/dsl_conf/upload_data_guide.md
     - model publish: tutorial/model_publish_with_serving_guide.md
@@ -145,10 +146,10 @@ extra:
   alternate:
     - name: English
       lang: en
-      link: ""
+      link: "/"
     - name: 中文
       lang: zh
-      link: "zh/"
+      link: "/zh/"
 
 extra_css:
   - 'mkdocs/css/termynal.css'

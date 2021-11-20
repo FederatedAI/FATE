@@ -1,0 +1,2 @@
+INHERIT: ./mkdocs.yml
+site_url: https://fate.readthedocs.io/en/latest/
