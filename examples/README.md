@@ -3,8 +3,7 @@
 We provide here examples of FATE jobs, including FATE-Pipeline scripts,
 DSL conf files, and modeling quality comparison tasks
 
-For auto-test of FATE, FATE provides auto-test tools  
-[FATE-Test](../doc/api/fate_test.md).
+For auto-test of FATE, FATE provides auto-test tools [FATE-Test](../doc/api/fate_test.md).
 
 To make it easy to submit FL modeling tasks using Pipeline or DSL, we recommend that users install 
 [FATE-Client](../doc/api/fate_client/pipeline.md).
@@ -25,7 +24,7 @@ examples](./pipeline) for each FATE module.
 ## DSL
 DSL is language of building federated modeling tasks based on configuration file for FATE.
 For more information, please refer this
-[dsl setting guide](../doc/tutorial/dsl_conf_v2_setting_guide.md) on DSL.
+[dsl setting guide](../doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.md) on DSL.
 
 Upgraded DSL(DSL v2) by FATE-v1.5 comes with the following major
 features:
