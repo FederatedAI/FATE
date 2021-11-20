@@ -166,7 +166,7 @@ If it looks like this, the initialization is successful, otherwise, please check
    ```
 
 Some use case algorithms are in [examples](../../../examples/dsl/v2) folder, please try to use them.
-Please refer to [here](../../../examples/pipeline/../examples_overview.md) for a quick start tutorial.
+Please refer to [here](../../../examples/pipeline/../README.md) for a quick start tutorial.
 
 You can also experience the algorithm process kanban through your browser, please refer [here](#9-compile-package-to-install-fateboard-optional)
 

@@ -168,7 +168,7 @@ flow init -c conf/service_conf.yaml
    ```
 
 有些用例算法在 [examples](../../../examples/dsl/v2) 文件夹下, 请尝试使用。
-Please refer [here](../../../examples/pipeline/../examples_overview.zh.md) for a quick start tutorial.
+Please refer [here](../../../examples/pipeline/../README.zh.md) for a quick start tutorial.
 
 您还可以通过浏览器体验算法过程看板，请参照[编译包安装fateboard](#9-编译包安装fateboard建议可选)
 
