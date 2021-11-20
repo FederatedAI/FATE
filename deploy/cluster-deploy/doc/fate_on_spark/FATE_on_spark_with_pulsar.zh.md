@@ -1,7 +1,7 @@
 # FATE on Spark with Pulsar 部署指南
 
 ## 概述
-FATE在1.5中支持了使用Spark作为计算服务，与其配套使用的还有作为存储服务的HDFS以及作为传输服务的RabbitMQ。1.6中更新了对使用Pulsar作为了跨站点(party)数据交换代理的支持，其具体架构图如下：
+FATE支持了使用Spark作为计算服务，与其配套使用的还有作为存储服务的HDFS以及作为传输服务的RabbitMQ。1.6中更新了对使用Pulsar作为了跨站点(party)数据交换代理的支持，其具体架构图如下：
 <div style="text-align:center", align=center>
 <img src="../../images/fate_on_spark_with_pulsar.png" />
 </div>
@@ -9,7 +9,9 @@ FATE在1.5中支持了使用Spark作为计算服务，与其配套使用的还�
 
 ## 部署与配置
 ### 集群部署
-具体部署可参考[FATE ON Spark 部署指南](https://github.com/FederatedAI/FATE/blob/master/cluster-deploy/doc/fate_on_spark/fate_on_spark_deployment_guide_zh.md)，其中RabbitMQ部分可略过，取而代之的是Pulsar集群的部署，具体可参考[Pulsar集群部署](https://github.com/FederatedAI/FATE/blob/develop-1.6-pulsar/cluster-deploy/doc/fate_on_spark/pulsar_deployment_guide_zh.md).
+具体部署可参考
+[FATE ON Spark 部署指南](fate_on_spark_deployment_guide.zh.md)，
+其中RabbitMQ部分可略过，取而代之的是Pulsar集群的部署，具体可参考[Pulsar集群部署](pulsar_deployment_guide.zh.md).
 
 
 ### 更新FATE Flow服务配置
@@ -17,11 +19,9 @@ FATE在1.5中支持了使用Spark作为计算服务，与其配套使用的还�
 
 - "conf/service_conf.yaml"
 ```yml
-...
-  hdfs:
-    name_node: hdfs://fate-cluster
-    # default /
-    path_prefix:
+default_engines:
+  federation: pulsar
+fate_on_spark:
   pulsar:
     host: 192.168.0.1
     port: 6650
@@ -65,31 +65,6 @@ default:
 ```
 
 在这个文件中，需要填写各个参与方的pulsar服务的地址信息，对于点对点的链接，一般只需填写`host`和`port`。而`proxy`，`sslPort`和`default`字段用于支持星型组网方式，具体需要配合SSL证书使用，详情请参考下面的星型组网。
-
-### 提交任务
-用户在提交任务时可以在`config`文件中声明使用pulsar作为传输服务，例子如下:
-```json
-   "job_parameters": {
-     "common": {
-       "job_type": "train",
-       "work_mode": 1,
-       "backend": 2,
-       "spark_run": {
-         "num-executors": 1,
-         "executor-cores": 2
-       },
-       "pulsar_run": {
-         "producer": {
-            ...
-         },
-         "consumer": {
-            ...
-         }
-       }
-     }
-   }
-```
-其中`backend: 2`指定使用pulsar作为传输服务，在`pulsar_run`还可以指定创建"producer"和"consumer"时的参数，一般无需配置。至于具体可用配置请参考pulsar的python客户端中的[create_producer](https://pulsar.apache.org/api/python/2.7.0-SNAPSHOT/#pulsar.Client.create_producer)和[subscribe](https://pulsar.apache.org/api/python/2.7.0-SNAPSHOT/#pulsar.Client.subscribe)方法。
 
 ## 星型组网
 
@@ -255,7 +230,7 @@ sni:
 ```
 
 #### 部署Pulsar
-Pulsar的部署在[pulsar_deployment_guide_zh.md](https://github.com/FederatedAI/FATE/blob/develop-1.6-pulsar/cluster-deploy/doc/fate_on_spark/pulsar_deployment_guide_zh.md)详细描述，只需要在其基础上为broker添加证书以及打开安全服务端口，具体操作如下：
+Pulsar的部署在[pulsar_deployment_guide](pulsar_deployment_guide.zh.md)详细描述，只需要在其基础上为broker添加证书以及打开安全服务端口，具体操作如下：
 1. 登录相应主机，把为10000.fate.org生成的证书、私钥以及CA证书拷贝到"/opt/pulsar/certs"目录下
 
 2. 修改pulsar安装目录下的conf/standalone.conf文件，增加以下内容

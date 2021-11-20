@@ -17,10 +17,10 @@
 | ------ | ------- | ------------- | ----------- | ----------------------- | ----------- | --------------------------------- |
 | PartyA | 10000   | VM-0-1-centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 | fate，mysql, nginx | fateflow，fateboard，mysql，nginx |
 | PartyA | 10000   |               |             |                         | Spark、HDFS |                                   |
-| PartyA | 10000   |               |             |                         | RabbitMQ    |                                   |
+| PartyA | 10000   |               |             |                         | RabbitMQ or pulsar    |                                   |
 | PartyB | 9999    | VM-0-2-centos | 192.168.0.2 | CentOS 7.2/Ubuntu 16.04 | fate，mysql, nginx | fateflow，fateboard，mysql，nginx |
 | PartyB | 9999    |               |             |                         | Spark、HDFS |                                   |
-| PartyB | 9999    |               |             |                         | RabbitMQ    |                                   |
+| PartyB | 9999    |               |             |                         | RabbitMQ or pulsar   |                                   |
 
 Architecture:
 
@@ -38,7 +38,7 @@ Architecture:
 | mysql    | mysql     | 3306      | meta table storage                                            |
 | Spark    |           |           | compute engine                                              |
 | HDFS     |           |           | storage engine                                            |
-| RabbitMQ |           |           | proxy for cross-party data exchange                             |
+| RabbitMQ(or Pulsar) |           |           | proxy for cross-party data exchange                             |
 
 ## 4. Deploy Spark & HDFS
 Please refer: [Hadoop_Spark_deployment_guide](hadoop_spark_deployment_guide.md)
