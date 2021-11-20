@@ -1,46 +1,34 @@
-# Example Usage Guide
+# Example 使用指南 | [English](README.md)
+
 
 本章节介绍examples目录，它提供了pipeline样例、dsl的配置、 以及正确性对比验证回归的样例、常规建模模版等。
 
-为方便用户快速使用样例，FATE提供样例执行工具[FATE-Test](../doc/api/fate_test.md)。
+为方便用户对FATE进行自动化测试，FATE提供自动化测试工具[FATE-Test](../doc/api/fate_test.md)。
 
-为方便使用dsl/conf，我们建议用户安装使用[FATE-Client](../doc/api/fate_client/pipeline.md)。
+为方便使用Pipeline或者DSL提交建模任务，我们建议用户安装使用[FATE-Client](../doc/api/fate_client/pipeline.md)。
 
-欢迎参考以下文档，快速上手DSL/Pipeline。
-
-1.  [Pipeline train and predict quick tutorial](../doc/tutorial/pipeline/pipeline_tutorial_hetero_sbt.ipynb).
-2.  [DSL Conf train and predict quick tutorial](../doc/tutorial/dsl_conf/dsl_conf_tutorial.md).
+快速上手Pipeline/DSL，可以参考[快速使用教程](../doc/tutorial/README.md)
 
 下面将具体介绍主要的样例模块。
 
 ## FATE-Pipeline
 
-为了提升联邦建模的易用性，FATE-v1.5 提供了python调用FATE组件的API接口.
-用户可通过python编程快速搭建联邦学习模型，具体教程可参考
+为了提升联邦建模的易用性，FATE-v1.5 开始引入Pipeline模块， 用户可通过python编程快速搭建联邦学习建模流程，具体教程可参考
 [FATE-Pipeline](../doc/api/fate_client/pipeline.md)。
 我们对于每个算法模块也提供了大量的Pipeline搭建联邦学习模型的样例，具体可参考[pipeline](./pipeline)。
 
 ## DSL
 
-DSL是FATE提供的第一代配置和构建联邦建模任务的方式，具体教程可参考
+DSL是FATE提供的根据配置文件来构建联邦建模任务的方式，具体教程可参考
 [DSL配置指引](../doc/tutorial/dsl_conf_v2_setting_guide.md)。
 在FATE-v1.5版本，我们对DSL进行了全新升级.
     主要升级点包括下面几点：
-
 1.  支持按需生成预测DSL，用户可通过FATE-Flow的cli按需生成预测的DSL配置，需要注意的是新版DSL不支持自动预测DSL的生成，用户必须先通过FATE-Flow的cli生成预测DSL，然后再进行预测
 2.  支持预测阶段新组件接入，如在预测阶段接入evaluation组件等。
 3.  统一算法参数配置风格，role\_parameter和algorithm\_parameter规范统一
 
-关于最新的DSL各算法组件样例可参考 [dsl/v2](./dsl/v2)，旧的DSL可参考
-[dsl/v1](./dsl/v1)，此文件夹是在过去版本中对应的"federatedml-1.x-examples"文件夹。
-需要注意的是，在FATE-v1.6或者以后的版本里面，旧版本的DSL将会被逐步移除。
+关于最新的DSL各算法组件样例可参考 [dsl/v2](./dsl/v2)，自从1.7版本开始DSL/v1被删除，不再继续支持，但是会提供DSL/v1构建的模型转换为DSL/v2的工具，方便模型迁移到DSL/v2。
 
-### 交叉验证任务
-
-1.6及以后的版本的交叉验证任务可选输出支持训练/验证过程数据。如需要输出过程数据，请配置CV参数`output_fold_history`；
-输出数据内容可从以下两种选择：1. 训练/预测结果 2. 数据特证。需注意输出的训练/预测结果不可输入下游评估组件Evaluation.
-目前所有建模模型组件的样例集均包括使用[CV参数](../python/federatedml/param/cross_validation_param.py)
-的样例。
 
 ## Benchmark Quality
 
@@ -77,15 +65,14 @@ FATE-Test 同时支持FATE联邦学习模型效率benchmark测试。
 
 ## Upload Default Data
 
-FATE
-提供了部分公开数据集，存放于[data](./data)目录下，并为这些数据集提供了一键上传功能。用户可直接使用脚本一键上传所有的内置数据，
-或者自定义配置文件上传数据，具体上传方法请参考[scripts](./scripts/README.rst)
-
-用户也可使用FATE-Test [data](../doc/api/fate_test.md#data)上传数据。
+用户可使用FATE-Test [data](../doc/api/fate_test.md#data)上传数据。
 
 ## Toy Example
 
-为了方便用户快速体验FATE开发流程和进行部署检测，FATE提供了简洁的toy任务，具体可参考[toy\_example](./toy_example/README.md)
+为了方便用户快速站点间网络连通性，FATE提供了简洁的toy任务，使用方法类似：
+```
+flow test toy -gid 9999 -hid 10000
+```
 
 ## Min-test
 
