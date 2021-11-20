@@ -46,17 +46,6 @@ to lead FATE open-source community, with members from major domestic cloud compu
 - [Algorithm Parameters](./python/federatedml/param)
 - [Paper & Conference](./doc/resources/README.md)
 
-### Association Repository
-
-- [FATE-Flow](https://github.com/FederatedAI/FATE-Flow)
-- [FATE-Board](https://github.com/FederatedAI/FATE-Board)
-- [FATE-Serving](https://github.com/FederatedAI/FATE-Serving)
-- [FATE-Cloud](https://github.com/FederatedAI/FATE-Cloud)
-- [FedVision](https://github.com/FederatedAI/FedVision)
-- [EggRoll](https://github.com/WeBankFinTech/eggroll)
-- [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE)
-- [KubeFATE](https://github.com/FederatedAI/KubeFATE)
-
 ### Contribute to FATE
 
 - [develop guide](doc/develop/develop_guide.md)
@@ -73,6 +62,17 @@ to lead FATE open-source community, with members from major domestic cloud compu
 
 ### Online Courses
 - [Bilibili: @FATEFedAI](https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)
+
+## Association Repository
+
+- [FATE-Flow](https://github.com/FederatedAI/FATE-Flow)
+- [FATE-Board](https://github.com/FederatedAI/FATE-Board)
+- [FATE-Serving](https://github.com/FederatedAI/FATE-Serving)
+- [FATE-Cloud](https://github.com/FederatedAI/FATE-Cloud)
+- [FedVision](https://github.com/FederatedAI/FedVision)
+- [EggRoll](https://github.com/WeBankFinTech/eggroll)
+- [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE)
+- [KubeFATE](https://github.com/FederatedAI/KubeFATE)
 
 ## Getting Involved
 
