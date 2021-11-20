@@ -224,7 +224,7 @@ sh service.sh start
 显示如下类似则为启动成功，否则请依据提示查看日志
 
 ```bash
-JAVA_HOME=/data/jarviszeng/deploy/FATE/env/jdk/jdk-8u192/
+JAVA_HOME=/data/project/deploy/FATE/env/jdk/jdk-8u192/
 service start sucessfully. pid: 116985
 status:
         app      116985  333  1.7 5087004 581460 pts/2  Sl+  14:11   0:06 /xx/FATE/env/jdk/jdk-8u192//bin/java -Dspring.config.location=/xx/FATE/fateboard/conf/application.properties -Dssh_config_file=/xx/FATE/fateboard/ssh/ -Xmx2048m -Xms2048m -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:gc.log -XX:+HeapDumpOnOutOfMemoryError -jar /xx/FATE/fateboard/fateboard.jar
