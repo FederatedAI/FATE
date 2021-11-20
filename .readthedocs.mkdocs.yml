@@ -146,10 +146,10 @@ extra:
   alternate:
     - name: English
       lang: en
-      link: "/"
+      link: "./"
     - name: 中文
       lang: zh
-      link: "/zh/"
+      link: "./zh/"
 
 extra_css:
   - 'mkdocs/css/termynal.css'
