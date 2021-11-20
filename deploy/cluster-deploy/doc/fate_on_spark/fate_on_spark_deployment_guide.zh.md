@@ -314,11 +314,11 @@ pip list | wc -l
 ```
 
 ### 5.6 部署Nginx
-请参阅部署指南：[Nginx部署](nginx_deployment_guide.zh.md)
+请参阅部署指南：[Nginx部署](common/nginx_deployment_guide.zh.md)
 
 ### 5.7 部署RabbitMQ(和pulsar二选一)
 
-请参阅部署指南：[RabbitMQ部署](rabbitmq_deployment_guide.zh.md)
+请参阅部署指南：[RabbitMQ部署](common/rabbitmq_deployment_guide.zh.md)
 
 ### 5.8 部署Pulsar(和rabbitmq二选一)
 
