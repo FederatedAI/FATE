@@ -636,49 +636,7 @@ cd /data/projects/fate/proxy
 
 ## 7.测试
 ### 7.1 Toy_example部署验证
-
-此测试您需要设置2个参数："guest-party-id", "host-party-id 10000";
-此外您还需要安装fate client，下面是离线安装方式(若已经安装fate client可忽略)
-```shell script
-source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/fate/python/fate_client && python setup.py install
-```
-
-#### 7.1.1 单边测试
-
-1）192.168.0.1上执行，guest_partyid和host_partyid都设为10000：
-
-```bash
-flow test toy --guest-party-id 10000 --host-party-id 10000
-```
-
-类似如下结果表示成功：
-
-"2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
-
-2）192.168.0.2上执行，guest_partyid和host_partyid都设为9999:
-
-```bash
-flow test toy --guest-party-id 9999 --host-party-id 9999
-```
-
-类似如下结果表示成功：
-
-"2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
-
-#### 7.1.2 双边测试
-
-选定9999为guest方，在192.168.0.2上执行：
-
-
-```bash
-flow test toy --guest-party-id 9999 --host-party-id 10000
-```
-
-类似如下结果表示成功：
-
-"2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
-
+参考文档:[toy测试](../fate_on_eggroll/Fate-allinone_deployment_guide_install.zh.md#61-toy_example部署验证)
 
 ### 7.2. FateBoard testing
 

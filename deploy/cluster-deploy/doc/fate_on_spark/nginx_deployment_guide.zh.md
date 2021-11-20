@@ -34,7 +34,7 @@ make && make install
 #### 3.2 Nginx路由配置文件修改(需要部署完fate)
 
 配置文件:  /data/projects/fate/proxy/nginx/conf/route_table.yaml
-此配置文件NginX使用，配置路由信息，可以参考如下例子手工配置，也可以使用以下指令完成：
+此配置文件Nginx使用，配置路由信息，可以参考如下例子手工配置，也可以使用以下指令完成：
 
 ```
 #在目标服务器（192.168.0.1）app用户下修改执行

@@ -3,7 +3,7 @@
 ## Overview
 FATE supports the use of Spark as a compute service, HDFS as a storage service, and RabbitMQ as a transport service. 1.6 updates support for the use of Pulsar as a cross-site (party) data exchange agent, with the following architecture diagram.
 <div style="text-align:center", align=center>
-<img src="... /... /images/fate_on_spark_with_pulsar.png" />
+<img src="../../images/fate_on_spark_with_pulsar.png" />
 </div>
 As shown in the image, RabbitMQ as a transport service is replaced with Pulsar, but for FATE, both transport services can also exist in the system, and users can specify which one to use when submitting a task.
 

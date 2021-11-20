@@ -9,7 +9,7 @@ FATE已经支持spark单机模式
 - [Nginx部署指南](nginx_deployment_guide.zh.md)
 - [RabbitMQ部署指南](rabbitmq_deployment_guide.zh.md)
 - [Pulsar部署指南](pulsar_deployment_guide.zh.md)
-- [spark单机部署指南](https://www.cnblogs.com/xuxinkun/p/5801662.html)
+- [spark单机部署指南](spark_standalone_deployment_guide.zh.md)
 
 ### 三. 更新FATE配置
 fate配置路径:/data/projects/fate/conf
@@ -128,7 +128,7 @@ sh service.sh restart
 ### toy测试
 参考文档:[toy测试](../fate_on_eggroll/Fate-allinone_deployment_guide_install.zh.md#61-toy_example部署验证)
 
-## 五、使用fate on spark local
+## 五、使用fate on spark standalone
 ### 1. 数据上传
 
 上传引擎使用"localfs", 配置可参考如下:

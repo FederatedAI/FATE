@@ -535,7 +535,7 @@ cd /data/projects/fate/fate/python/fate_client && python setup.py install
 
 ```
 source /data/projects/fate/bin/init_env.sh
-flow test toy --guest-party-id 10000 --host-party-id 10000
+flow test toy -gid 10000 --hid 10000
 ```
 
 类似如下结果表示成功：
@@ -548,7 +548,7 @@ flow test toy --guest-party-id 10000 --host-party-id 10000
 
 ```
 source /data/projects/fate/bin/init_env.sh
-flow test toy --guest-party-id 9999 --host-party-id 9999
+flow test toy --gid 9999 --hid 9999
 ```
 
 类似如下结果表示成功：
@@ -561,7 +561,7 @@ flow test toy --guest-party-id 9999 --host-party-id 9999
 
 ```
 source /data/projects/fate/bin/init_env.sh
-flow test toy --guest-party-id 9999 --host-party-id 10000
+flow test toy --gid 9999 --hid 10000
 ```
 
 类似如下结果表示成功：

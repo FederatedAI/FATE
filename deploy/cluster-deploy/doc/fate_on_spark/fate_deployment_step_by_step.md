@@ -184,22 +184,22 @@ cp my.cnf /data/projects/fate/common/mysql/mysql-8.0.13/conf
 
 #initialize
 cd /data/projects/fate/common/mysql/mysql-8.0.13/
-. /bin/mysqld --initialize --user=app --basedir=/data/projects/fate/common/mysql/mysql-8.0.13 --datadir=/data/projects/fate/data/mysql > logs/init.log 2>&1
+./bin/mysqld --initialize --user=app --basedir=/data/projects/fate/common/mysql/mysql-8.0.13 --datadir=/data/projects/fate/data/mysql > logs/init.log 2>&1
 cat logs/init.log |grep root@localhost
 #Note that the output message after root@localhost: is the initial password of the mysql user root, which needs to be recorded and used to change the password later
 
 #Start the service
 cd /data/projects/fate/common/mysql/mysql-8.0.13/
-nohup . /bin/mysqld_safe --defaults-file=. /conf/my.cnf --user=app >>logs/mysqld.log 2>&1 &
+nohup ./bin/mysqld_safe --defaults-file=./conf/my.cnf --user=app >>logs/mysqld.log 2>&1 &
 
 #change mysql root user password
 cd /data/projects/fate/common/mysql/mysql-8.0.13/
-. /bin/mysqladmin -h 127.0.0.1 -P 3306 -S . /run/mysql.sock -u root -p password "fate_dev"
+./bin/mysqladmin -h 127.0.0.1 -P 3306 -S ./run/mysql.sock -u root -p password "fate_dev"
 Enter Password: [Enter root initial password]
 
 #Verify login
 cd /data/projects/fate/common/mysql/mysql-8.0.13/
-. /bin/mysql -u root -p -S . /run/mysql.sock
+./bin/mysql -u root -p -S ./run/mysql.sock
 Enter Password: [Enter root modified password:fate_dev]
 ```
 
@@ -207,7 +207,7 @@ Enter Password: [Enter root modified password:fate_dev]
 
 ```bash
 cd /data/projects/fate/common/mysql/mysql-8.0.13/
-. /bin/mysql -u root -p -S . /run/mysql.sock
+./bin/mysql -u root -p -S ./run/mysql.sock
 Enter Password:[fate_dev]
 
 # Create the fate_flow library
@@ -271,7 +271,7 @@ cd /data/projects/install
 tar xvf pip-packages-fate-*.tar.gz
 source /data/projects/fate/common/python/venv/bin/activate
 pip install python-env/setuptools-42.0.2-py2.py3-none-any.whl
-pip install -r pip-packages-fate-${version}/requirements.txt -f . /pip-packages-fate-${version} --no-index
+pip install -r pip-packages-fate-${version}/requirements.txt -f ./pip-packages-fate-${version} --no-index
 pip list | wc -l
 ```
 
@@ -283,7 +283,7 @@ pip list | wc -l
 cd /data/projects/install
 tar xzf openresty-*.tar.gz
 cd openresty-*
-. /configure --prefix=/data/projects/fate/proxy \
+./configure --prefix=/data/projects/fate/proxy \
                    --with-luajit \
                    --with-http_ssl_module \
                      --with-http_v2_module \
@@ -615,7 +615,7 @@ sh service.sh start
 cd /data/projects/fate/fateboard
 sh service.sh start
 cd /data/projects/fate/proxy
-. /nginx/sbin/nginx -c /data/projects/fate/proxy/nginx/conf/nginx.conf
+./nginx/sbin/nginx -c /data/projects/fate/proxy/nginx/conf/nginx.conf
 ```
 
 ## 6. Problem location
@@ -636,48 +636,7 @@ cd /data/projects/fate/proxy
 
 ### 7.1 Toy_example deployment verification
 
-
-For this test you need to set 2 parameters: "guest-party-id", "host-party-id 10000";
-You also need to install the fate client, here is how to install it offline (if you have already installed the fate client, you can ignore it)
-```shell script
-source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/fate/python/fate_client && python setup.py install
-```
-
-#### 7.1.1 One-sided test
-
-1) Execute on 192.168.0.1 with both guest_partyid and host_partyid set to 10000:.
-
-```bash
-flow test toy --guest-party-id 10000 --host-party-id 10000
-```
-
-A result similar to the following indicates success.
-
-"2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.999999999999998"
-
-2) Execute on 192.168.0.2 with both guest_partyid and host_partyid set to 9999:
-
-```bash
-flow test toy --guest-party-id 9999 --host-party-id 9999
-```
-
-A result similar to the following indicates success.
-
-"2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.999999999999998"
-
-#### 7.1.2 Bilateral tests
-
-With 9999 selected as the GUEST side, execute on 192.168.0.2.
-
-
-```bash
-flow test toy --guest-party-id 9999 --host-party-id 10000
-```
-
-A result similar to the following indicates success.
-
-"2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.999999999999998"
+Reference document:[toy test](../fate_on_eggroll/Fate-allinone_deployment_guide_install.md#61-verify-toy_example-deployment)
 
 
 ### 7.2. FateBoard testing
@@ -715,8 +674,8 @@ sh service.sh start|stop|status|restart
 
 ```
 cd /data/projects/fate/proxy
-. /nginx/sbin/nginx -s reload
-. /nginx/sbin/nginx -s stop
+./nginx/sbin/nginx -s reload
+./nginx/sbin/nginx -s stop
 ```
 
 #### 8.1.2 MySQL Service Management
@@ -725,7 +684,7 @@ Start/shutdown/view/restart MySQL services
 
 ```bash
 cd /data/projects/fate/common/mysql/mysql-8.0.13
-sh . /service.sh start|stop|status|restart
+sh ./service.sh start|stop|status|restart
 ```
 
 ### 8.2 Viewing processes and ports

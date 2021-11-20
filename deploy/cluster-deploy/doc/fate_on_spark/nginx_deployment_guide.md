@@ -12,7 +12,7 @@ wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/openresty-1.17.8
 cd /data/projects/install
 tar xzf openresty-*.tar.gz
 cd openresty-*
-. /configure --prefix=/data/projects/fate/proxy \
+./configure --prefix=/data/projects/fate/proxy \
                    --with-luajit \
                    --with-http_ssl_module \
                      --with-http_v2_module \
@@ -34,7 +34,7 @@ If you want to modify it, you can manually modify it by referring to the default
 #### 3.2 Nginx routing configuration file modification (after deploying fate)
 
 Configuration file: /data/projects/fate/proxy/nginx/conf/route_table.yaml
-This configuration file is used by NginX to configure routing information, either manually by referring to the following example, or by using the following command.
+This configuration file is used by Nginx to configure routing information, either manually by referring to the following example, or by using the following command.
 
 ```
 # Modify the execution under the target server (192.168.0.1) app user
@@ -86,7 +86,7 @@ EOF
 #### 4.1 Starting the service
 ```
 cd /data/projects/fate/proxy
-. /nginx/sbin/nginx -c /data/projects/fate/proxy/nginx/conf/nginx.conf
+./nginx/sbin/nginx -c /data/projects/fate/proxy/nginx/conf/nginx.conf
 ```
 
 #### 4.2 Log directory

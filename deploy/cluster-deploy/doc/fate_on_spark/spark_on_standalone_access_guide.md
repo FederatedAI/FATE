@@ -9,7 +9,7 @@ The services to be deployed include: FATE, Nginx, RabbitMQ (or Pulsar), and spar
 - [Nginx Deployment Guide](nginx_deployment_guide.md)
 - [RabbitMQ Deployment Guide](rabbitmq_deployment_guide.md)
 - [Pulsar Deployment Guide](pulsar_deployment_guide.md)
-- [spark standalone deployment guide](https://www.cnblogs.com/xuxinkun/p/5801662.html)
+- [spark standalone deployment guide](spark_standalone_deployment_guide.md)
 
 ### III. Update the FATE configuration
 fate configuration path:/data/projects/fate/conf
@@ -126,9 +126,9 @@ sh service.sh restart
 
 ## IV. Access test
 ### toy test
-Reference document:[toy test](./fate_on_eggroll/Fate-allinone_deployment_guide_install.md#61-verify-toy_example-deployment)
+Reference document:[toy test](../fate_on_eggroll/Fate-allinone_deployment_guide_install.md#61-verify-toy_example-deployment)
 
-## V. Using fate on spark local
+## V. Using fate on spark standalone
 ### 1. data upload
 
 The upload engine uses "localfs", which can be configured as follows:

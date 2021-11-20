@@ -8,7 +8,7 @@
 
 ### Deployment for FATE on Spark(Continuous Improvement)
 #### standalone 
-- [FATE on Spark local mode deployment guide](doc/fate_on_spark/spark_on_local_access_guide.md)
+- [FATE on Spark standalone mode deployment guide](doc/fate_on_spark/spark_on_standalone_access_guide.md)
 #### cluster
 - [FATE on Spark cluster mode deployment guide](doc/fate_on_spark/spark_on_cluster_access_guide.md)
-- [FATE on CDH Deployment Guide](doc/fate_on_spark/fate_on_cdh_deployment_guide.md)
+- [FATE on CDH Deployment Guide](doc/fate_on_spark/fate_on_cdh_deployment_guide.zh.md)
