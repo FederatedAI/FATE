@@ -11,7 +11,7 @@ FATE支持了使用Spark作为计算服务，与其配套使用的还有作为�
 ### 集群部署
 具体部署可参考
 [FATE ON Spark 部署指南](fate_on_spark_deployment_guide.zh.md)，
-其中RabbitMQ部分可略过，取而代之的是Pulsar集群的部署，具体可参考[Pulsar集群部署](pulsar_deployment_guide.zh.md).
+其中RabbitMQ部分可略过，取而代之的是Pulsar集群的部署，具体可参考[Pulsar集群部署](common/pulsar_deployment_guide.zh.md).
 
 
 ### 更新FATE Flow服务配置
@@ -230,7 +230,7 @@ sni:
 ```
 
 #### 部署Pulsar
-Pulsar的部署在[pulsar_deployment_guide](pulsar_deployment_guide.zh.md)详细描述，只需要在其基础上为broker添加证书以及打开安全服务端口，具体操作如下：
+Pulsar的部署在[pulsar_deployment_guide](common/pulsar_deployment_guide.zh.md)详细描述，只需要在其基础上为broker添加证书以及打开安全服务端口，具体操作如下：
 1. 登录相应主机，把为10000.fate.org生成的证书、私钥以及CA证书拷贝到"/opt/pulsar/certs"目录下
 
 2. 修改pulsar安装目录下的conf/standalone.conf文件，增加以下内容

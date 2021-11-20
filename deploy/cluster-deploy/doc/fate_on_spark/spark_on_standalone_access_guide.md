@@ -6,10 +6,10 @@ FATE already supports spark standalone mode
 ## II. Deploying
 The services to be deployed include: FATE, Nginx, RabbitMQ (or Pulsar), and spark standalone (optional), as described in the following deployment documents:
 - [FATE Deployment Guide](../fate_on_eggroll/Fate-allinone_deployment_guide_install.md)
-- [Nginx Deployment Guide](nginx_deployment_guide.md)
+- [Nginx Deployment Guide](common/nginx_deployment_guide.md)
 - [RabbitMQ Deployment Guide](rabbitmq_deployment_guide.md)
-- [Pulsar Deployment Guide](pulsar_deployment_guide.md)
-- [spark standalone deployment guide](spark_standalone_deployment_guide.md)
+- [Pulsar Deployment Guide](common/pulsar_deployment_guide.md)
+- [spark standalone deployment guide](common/spark_standalone_deployment_guide.md)
 
 ### III. Update the FATE configuration
 fate configuration path:/data/projects/fate/conf

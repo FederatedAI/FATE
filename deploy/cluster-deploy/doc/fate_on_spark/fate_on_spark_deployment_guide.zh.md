@@ -41,7 +41,7 @@
 | RabbitMQ(或pulsar) |           |           | 跨站点(party)数据交换代理                             |
 
 ## 4 部署Spark & HDFS
-请参阅部署指南：[Hadoop_Spark_deployment_guide_zh](hadoop_spark_deployment_guide.zh.md)
+请参阅部署指南：[Hadoop_Spark_deployment_guide_zh](common/hadoop_spark_deployment_guide.zh.md)
 
 ## 5. 部署FATE
 请参阅部署指南：[fate_deployment_step_by_step_zh](fate_deployment_step_by_step.zh.md)的1、2、3章节

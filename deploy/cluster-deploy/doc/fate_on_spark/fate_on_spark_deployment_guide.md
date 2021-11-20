@@ -41,7 +41,7 @@ Architecture:
 | RabbitMQ(or Pulsar) |           |           | proxy for cross-party data exchange                             |
 
 ## 4. Deploy Spark & HDFS
-Please refer: [Hadoop_Spark_deployment_guide](hadoop_spark_deployment_guide.md)
+Please refer: [Hadoop_Spark_deployment_guide](common/hadoop_spark_deployment_guide.md)
 
 ## 5. Deploy FATE
 Please refer: [fate_deployment_step_by_step](fate_deployment_step_by_step.md) first/second/third chapter

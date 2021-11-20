@@ -299,7 +299,7 @@ make && make install
 
 ### 2.8 部署Pulsar(和rabbitmq二选一)
 
-请参阅部署指南：[Pulsar部署](pulsar_deployment_guide.zh.md)
+请参阅部署指南：[Pulsar部署](common/pulsar_deployment_guide.zh.md)
 
 ## 3 部署FATE
 

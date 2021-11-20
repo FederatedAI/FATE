@@ -6,10 +6,10 @@ fate on spark集群模式
 ## 二. 部署
 需要部署服务包括: FATE、Nginx、RabbitMQ(或Pulsar)、spark+hadoop,可参考以下部署文档:
 - [FATE部署指南](../fate_on_eggroll/Fate-allinone_deployment_guide_install.zh.md)
-- [Nginx部署指南](nginx_deployment_guide.zh.md)
+- [Nginx部署指南](common/nginx_deployment_guide.zh.md)
 - [RabbitMQ部署指南](rabbitmq_deployment_guide.zh.md)
-- [Pulsar部署指南](pulsar_deployment_guide.zh.md)
-- [spark+hadoop部署指南](hadoop_spark_deployment_guide.zh.md)
+- [Pulsar部署指南](common/pulsar_deployment_guide.zh.md)
+- [spark+hadoop部署指南](common/hadoop_spark_deployment_guide.zh.md)
 
 ## 三. 更新FATE配置
 fate配置路径:/data/projects/fate/conf

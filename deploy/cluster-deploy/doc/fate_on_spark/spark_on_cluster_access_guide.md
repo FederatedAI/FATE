@@ -6,10 +6,10 @@ fate on spark cluster model
 ## II. Deploying
 The services to be deployed include: FATE, Nginx, RabbitMQ (or Pulsar), spark+hadoop, which can be found in the following deployment documents:
 - [FATE Deployment Guide](../fate_on_eggroll/Fate-allinone_deployment_guide_install.md)
-- [Nginx Deployment Guide](nginx_deployment_guide.md)
+- [Nginx Deployment Guide](common/nginx_deployment_guide.md)
 - [RabbitMQ Deployment Guide](rabbitmq_deployment_guide.md)
-- [Pulsar Deployment Guide](pulsar_deployment_guide.md)
-- [spark+hadoop Deployment Guide](hadoop_spark_deployment_guide.md)
+- [Pulsar Deployment Guide](common/pulsar_deployment_guide.md)
+- [spark+hadoop Deployment Guide](common/hadoop_spark_deployment_guide.md)
 
 ## III. Update the FATE configuration
 fate configuration path:/data/projects/fate/conf
