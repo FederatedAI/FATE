@@ -567,7 +567,7 @@ export PYSPARK_DRIVER_PYTHON=/data/projects/fate/common/python/venv/bin/python
 ```
 
 
-## 8. 启动服务
+## 8. 启动FATE服务
 
 **在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
@@ -578,9 +578,6 @@ cd /data/projects/fate/fateflow/bin
 sh service.sh start
 cd /data/projects/fate/fateboard
 sh service.sh start
-cd /data/projects/fate/proxy
-./nginx/sbin/nginx -c /data/projects/fate/proxy/nginx/conf/nginx.conf
-```
 
 ## 9. 问题定位
 
