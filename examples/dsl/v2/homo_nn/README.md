@@ -8,28 +8,49 @@ This section introduces the dsl and conf for usage of different type of task.
 
     1. single_layer:
     
-        dsl : test_homo_dnn_single_layer_dsl.json
+        dsl: homo_nn_dsl.json
         
-        runtime_config: test_homo_dnn_single_layer_conf.json
+        runtime_config: keras_homo_dnn_single_layer.json
        
     2. multi_layer:
     
-        dsl: test_homo_dnn_multi_layer_dsl.json
+        dsl: homo_nn_dsl.json
         
-        runtime_config: test_homo_dnn_multi_layer_conf.json
+        runtime_config: keras_homo_dnn_multi_layer.json
        
     3. multi_label and multi-host:
     
-        dsl: test_homo_dnn_multi_label_dsl.json
+        dsl: homo_nn_dsl.json
         
-        runtime_config: test_homo_dnn_multi_label_conf.json
+        runtime_config: keras_homo_dnn_multi_label.json
     
-    4. predict:
-    
-        dsl: test_homo_dnn_multi_layer_predict_dsl.json
+    4. multi_layer and predict
         
-        runtime_config: test_homo_dnn_multi_layer_predict_conf.json
- 
+        dsl: homo_nn_dsl.json
+        
+        runtime_config: keras_homo_dnn_multi_layer_predict.json
+    
+
+- pytorch backend
+
+    1. single_layer:
+    
+        dsl: homo_nn_dsl.json
+        
+        runtime_config: pytorch_homo_dnn_single_layer.json
+       
+    2. multi_layer:
+    
+        dsl: homo_nn_dsl.json
+        
+        runtime_config: pytorch_homo_dnn_multi_layer.json
+       
+    3. multi_label and multi-host:
+    
+        dsl: homo_nn_dsl.json
+        
+        runtime_config: pytorch_homo_dnn_multi_label.json
+    
 
 Users can use following commands to run a task.
 
