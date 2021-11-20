@@ -43,17 +43,6 @@ FATE于2019年2月首次对外开源，并于2019年6月由微众银行捐献给
 - [算法参数](./python/federatedml/param)
 - [论文与会议资料](./doc/resources/README.zh.md)
 
-### 关联仓库
-
-- [FATE-Flow](https://github.com/FederatedAI/FATE-Flow)
-- [FATE-Board](https://github.com/FederatedAI/FATE-Board)
-- [FATE-Serving](https://github.com/FederatedAI/FATE-Serving)
-- [FATE-Cloud](https://github.com/FederatedAI/FATE-Cloud)
-- [FedVision](https://github.com/FederatedAI/FedVision)
-- [EggRoll](https://github.com/WeBankFinTech/eggroll)
-- [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE)
-- [KubeFATE](https://github.com/FederatedAI/KubeFATE)
-
 ### 贡献代码
 
 - [开发指南](doc/develop/develop_guide.zh.md)
@@ -71,6 +60,16 @@ FATE于2019年2月首次对外开源，并于2019年6月由微众银行捐献给
 ### 在线课程
 - [Bilibili: @FATEFedAI](https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)
 
+## 关联仓库
+
+- [FATE-Flow](https://github.com/FederatedAI/FATE-Flow)
+- [FATE-Board](https://github.com/FederatedAI/FATE-Board)
+- [FATE-Serving](https://github.com/FederatedAI/FATE-Serving)
+- [FATE-Cloud](https://github.com/FederatedAI/FATE-Cloud)
+- [FedVision](https://github.com/FederatedAI/FedVision)
+- [EggRoll](https://github.com/WeBankFinTech/eggroll)
+- [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE)
+- [KubeFATE](https://github.com/FederatedAI/KubeFATE)
 
 ## 了解更多
 

@@ -168,7 +168,7 @@ flow init -c conf/service_conf.yaml
    ```
 
 有些用例算法在 [examples](../../../examples/dsl/v2) 文件夹下, 请尝试使用。
-Please refer [here](../../../examples/pipeline/../examples_overview.zh.md) for a quick start tutorial.
+Please refer [here](../../../examples/pipeline/../README.zh.md) for a quick start tutorial.
 
 您还可以通过浏览器体验算法过程看板，请参照[编译包安装fateboard](#9-编译包安装fateboard建议可选)
 
@@ -224,7 +224,7 @@ sh service.sh start
 显示如下类似则为启动成功，否则请依据提示查看日志
 
 ```bash
-JAVA_HOME=/data/jarviszeng/deploy/FATE/env/jdk/jdk-8u192/
+JAVA_HOME=/data/project/deploy/FATE/env/jdk/jdk-8u192/
 service start sucessfully. pid: 116985
 status:
         app      116985  333  1.7 5087004 581460 pts/2  Sl+  14:11   0:06 /xx/FATE/env/jdk/jdk-8u192//bin/java -Dspring.config.location=/xx/FATE/fateboard/conf/application.properties -Dssh_config_file=/xx/FATE/fateboard/ssh/ -Xmx2048m -Xms2048m -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:gc.log -XX:+HeapDumpOnOutOfMemoryError -jar /xx/FATE/fateboard/fateboard.jar

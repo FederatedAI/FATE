@@ -35,7 +35,7 @@ to lead FATE open-source community, with members from major domestic cloud compu
 - [Train & Predict Hetero SecureBoost with FATE-Pipeline](./doc/tutorial/pipeline/pipeline_tutorial_hetero_sbt.ipynb)
 - [Build Homo NN model with FATE-Pipeline](doc/tutorial/pipeline/pipeline_tutorial_homo_nn.ipynb)
 - [Run Job with DSL json conf](doc/tutorial/dsl_conf/dsl_conf_tutorial.md)
-- [Tutorials](doc/tutorial)
+- [More Tutorials...](doc/tutorial)
 
 ## Documentation 
 
@@ -45,17 +45,6 @@ to lead FATE open-source community, with members from major domestic cloud compu
 - [Components](./doc/federatedml_component/README.md)
 - [Algorithm Parameters](./python/federatedml/param)
 - [Paper & Conference](./doc/resources/README.md)
-
-### Association Repository
-
-- [FATE-Flow](https://github.com/FederatedAI/FATE-Flow)
-- [FATE-Board](https://github.com/FederatedAI/FATE-Board)
-- [FATE-Serving](https://github.com/FederatedAI/FATE-Serving)
-- [FATE-Cloud](https://github.com/FederatedAI/FATE-Cloud)
-- [FedVision](https://github.com/FederatedAI/FedVision)
-- [EggRoll](https://github.com/WeBankFinTech/eggroll)
-- [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE)
-- [KubeFATE](https://github.com/FederatedAI/KubeFATE)
 
 ### Contribute to FATE
 
@@ -73,6 +62,17 @@ to lead FATE open-source community, with members from major domestic cloud compu
 
 ### Online Courses
 - [Bilibili: @FATEFedAI](https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)
+
+## Association Repository
+
+- [FATE-Flow](https://github.com/FederatedAI/FATE-Flow)
+- [FATE-Board](https://github.com/FederatedAI/FATE-Board)
+- [FATE-Serving](https://github.com/FederatedAI/FATE-Serving)
+- [FATE-Cloud](https://github.com/FederatedAI/FATE-Cloud)
+- [FedVision](https://github.com/FederatedAI/FedVision)
+- [EggRoll](https://github.com/WeBankFinTech/eggroll)
+- [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE)
+- [KubeFATE](https://github.com/FederatedAI/KubeFATE)
 
 ## Getting Involved
 
