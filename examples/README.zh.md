@@ -20,7 +20,7 @@
 ## DSL
 
 DSL是FATE提供的根据配置文件来构建联邦建模任务的方式，具体教程可参考
-[DSL配置指引](../doc/tutorial/dsl_conf_v2_setting_guide.md)。
+[DSL配置指引](../doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.md)。
 在FATE-v1.5版本，我们对DSL进行了全新升级.
     主要升级点包括下面几点：
 1.  支持按需生成预测DSL，用户可通过FATE-Flow的cli按需生成预测的DSL配置，需要注意的是新版DSL不支持自动预测DSL的生成，用户必须先通过FATE-Flow的cli生成预测DSL，然后再进行预测
