@@ -14,7 +14,7 @@ workflow. There are three classes of `input`: `data`, `cache`, and
 `model`. Not all components have all three classes of input, and a
 component may accept only some types of the class. Note that only
 `Intersection` may have `cache` input. For information on each
-components' input, check the [list](../../federatedml_component/README.md#Algorithm List) below.
+components' input, check the [list](../../federatedml_component/README.md).
 
 Here is an example to access a component's input:
 
@@ -32,7 +32,7 @@ Same as `Input`, `Output` encapsulates output `data`, `cache`, and
 `model` of component in a FATE job. Not all components have all classes
 of outputs. Note that only `Intersection` may have `cache` output. For
 information on each components' output, check the
-[list](../../federatedml_component/README.md#Algorithm List) below.
+[list](../../federatedml_component/README.md).
 
 Here is an example to access a component's output:
 
@@ -125,7 +125,7 @@ Data
 
 All input and output data of components need to be wrapped into `Data`
 objects when being passed between components. For information on valid
-data types of each component, check the [list](../../federatedml_component/README.md#Algorithm List) below.
+data types of each component, check the [list](../../federatedml_component/README.md).
 Here is a an example of chaining components with different types of data
 input and output:
 
@@ -186,7 +186,7 @@ Warning
 Please note that when using <span class="title-ref">stepwise</span> or
 <span class="title-ref">cross validation</span> method, components do
 not have `model` output. For information on valid model types of each
-components, check the [list](../../federatedml_component/README.md#Algorithm List)below.
+components, check the [list](../../federatedml_component/README.md).
 
 </div>
 
