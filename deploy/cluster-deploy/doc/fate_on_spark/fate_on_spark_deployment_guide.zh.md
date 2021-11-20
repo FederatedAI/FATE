@@ -578,6 +578,7 @@ cd /data/projects/fate/fateflow/bin
 sh service.sh start
 cd /data/projects/fate/fateboard
 sh service.sh start
+```
 
 ## 9. 问题定位
 
