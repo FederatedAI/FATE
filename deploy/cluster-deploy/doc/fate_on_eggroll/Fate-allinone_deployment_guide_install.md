@@ -506,11 +506,11 @@ tail -f ./logs/deploy-mysql-host.log    (Print the deployment status of mysql at
 
 ## 6.1 Verify toy\_example Deployment
 
-A user must set 3 parameters for this testing: guest\_partyid, host\_partyid.
+A user must set 2 parameters for this testing: gid(guest partyid), hid(host partyid).
 
 ### 6.1.1 One-Sided Testing
 
-1\) Execute on 192.168.0.1, with both guest\_partyid and host\_partyid set to 10000:
+1\) Execute on 192.168.0.1, with both gid and hid set to 10000:
 
 ```
 source /data/projects/fate/bin/init_env.sh
@@ -523,7 +523,7 @@ A result similar to the following indicates successful operation:
 
 Tip: If the error "max cores per job is 1, please modify job parameters" appears, a user needs to modify the parameter task\_cores to 1, add "--task-core 1" to run toy test.
 
-2\) Execute on 192.168.0.2, with both guest\_partyid and host\_partyid set to 9999:
+2\) Execute on 192.168.0.2, with both gid and hid set to 9999:
 
 ```
 source /data/projects/fate/bin/init_env.sh
@@ -558,8 +558,8 @@ source /data/projects/fate/bin/init_env.sh
 cd /data/projects/fate/examples/scripts/
 python upload_default_data.py
 ```
-
-For more details, refer to [Script Readme](../../examples/scripts/README.rst)
+examples/scripts/README.rst
+For more details, refer to [Script Readme](../../../../examples/scripts/README.rst)
 
 ### **6.2.2 Fast Mode:**
 
