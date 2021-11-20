@@ -166,7 +166,7 @@ If it looks like this, the initialization is successful, otherwise, please check
    ```
 
 Some use case algorithms are in [examples](../../../examples/dsl/v2) folder, please try to use them.
-Please refer to [here](../../../examples/pipeline/../examples_overview.md) for a quick start tutorial.
+Please refer to [here](../../../examples/pipeline/../README.md) for a quick start tutorial.
 
 You can also experience the algorithm process kanban through your browser, please refer [here](#9-compile-package-to-install-fateboard-optional)
 
@@ -222,7 +222,7 @@ sh service.sh start
 If you see something like the following, you have started successfully, otherwise please check the logs as prompted
 
 ```bash
-JAVA_HOME=/data/jarviszeng/deploy/FATE/env/jdk/jdk-8u192/
+JAVA_HOME=/data/project/deploy/FATE/env/jdk/jdk-8u192/
 service start sucessfully. pid: 116985
 status:
         app 116985 333 1.7 5087004 581460 pts/2 Sl+ 14:11 0:06 /xx/FATE/env/jdk/jdk-8u192//bin/java -Dspring.config.location=/xx/FATE/fateboard/conf/ application.properties -Dssh_config_file=/xx/FATE/fateboard/ssh/ -Xmx2048m -Xms2048m -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc: gc.log -XX:+HeapDumpOnOutOfMemoryError -jar /xx/FATE/fateboard

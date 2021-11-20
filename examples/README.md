@@ -1,36 +1,30 @@
-# Example Usage Guide.
+# Example Usage Guide. | [中文](README.zh.md)
 
 We provide here examples of FATE jobs, including FATE-Pipeline scripts,
 DSL conf files, and modeling quality comparison tasks
 
-We suggest that user use example-runner tool
-[FATE-Test](../doc/api/fate_test.md).
+For auto-test of FATE, FATE provides auto-test tools [FATE-Test](../doc/api/fate_test.md).
 
-Also, for smoother interaction with FATE-Flow, we suggest that user
-install Flow-Client with
+To make it easy to submit FL modeling tasks using Pipeline or DSL, we recommend that users install 
 [FATE-Client](../doc/api/fate_client/pipeline.md).
 
-To quickly start model training and predictions using dsl & pipeline,
-please refer to：
+To quickly start to use pipeline or dsl,
+please refer to [tutorial](../doc/tutorial/README.md)
 
-1.  [Pipeline train and predict quick tutorial](../doc/tutorial/pipeline/pipeline_tutorial_hetero_sbt.ipynb).
-2.  [DSL Conf train and predict quick tutorial](../doc/tutorial/dsl_conf/dsl_conf_tutorial.md).
 
 Below lists included types of examples.
 
 ## FATE-Pipeline
 
-To enhance usability of FATE, starting at FATE-v1.5, FATE provides
-python APIs. User may develop federated learning models conveniently
-with [FATE-Pipeline](../doc/api/fate_client/pipeline.md). We provide a host of Pipeline
-examples for each FATE module and a quick start guide for Pipeline
-[here](./pipeline)
+To enhance usability of FATE, starting at FATE-v1.5, FATE provides 
+Pipeline Module. User may develop federated learning models conveniently using python API.
+Please refer this: [FATE-Pipeline](../doc/api/fate_client/pipeline.md). We provide many [Pipeline
+examples](./pipeline) for each FATE module.
 
 ## DSL
-
-DSL is the first method FATE provides for constructing federated
-modeling jobs. For more information, please refer this
-[guide](../doc/tutorial/dsl_conf_v2_setting_guide.md) on DSL.
+DSL is language of building federated modeling tasks based on configuration file for FATE.
+For more information, please refer this
+[dsl setting guide](../doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.md) on DSL.
 
 Upgraded DSL(DSL v2) by FATE-v1.5 comes with the following major
 features:
@@ -43,20 +37,10 @@ features:
     `evaluation` module may be added to prediction task.
 3.  Standardize style of `role_parameter` and `algorithm_parameter`.
 
-For DSL v2 examples, please refer [dsl/v2](./dsl/v2). For examples of
-the older version, please refer [dsl/v1](./dsl/v1). This is the
-"federatedml-1.x-examples" in older version. Please note that starting
-at version 1.6, FATE may no longer support DSL v1.
+For DSL v2 examples, please refer [dsl/v2](./dsl/v2). Please note that starting
+at version 1.7, FATE may no longer support DSL/v1 and remove related examples. 
+However, tools will be provided to transform DSL/ V1 built models into DSL/ V2 to facilitate model migration to DSL/ V2.  
 
-### Cross Validation Task
-
-Starting at version 1.6, cross validation tasks can output fold history
-data when `output_fold_history` is set to True. Output data contains
-either prediction `score` or original `instance` value. Please note that
-the `score` output from cross validation tasks may not be input to
-Evaluation module. All testsuites of modeling modules include demos on
-setting [cv
-parameters](../python/federatedml/param/cross_validation_param.py).
 
 ## Benchmark Quality
 
@@ -78,7 +62,7 @@ the following common models:
 
 Starting at v1.6, benchmark quality supports matching metrics from the
 same script. For more details, please refer to the
-[guide](../doc/api/fate_test.md#benchmark-quality).
+[benchmark-quality guide](../doc/api/fate_test.md#benchmark-quality).
 
 
 ## Benchmark Performance
@@ -94,25 +78,19 @@ modeling. We include benchmark test suites for the following common models:
     - [benchmark\_performance/intersect_multi](./benchmark_performance/intersect_multi)
   
 For more details, please refer to the
-[guide](../doc/api/fate_test.md#benchmark-performance).
+[benchmark-performance guide](../doc/api/fate_test.md#benchmark-performance).
 
 
 ## Upload Default Data
-
-FATE provides a collection of publicly available data at [data](./data)
-directory, along with a utility script for uploading all data sets. User
-may use the provided script to upload all pre-given data, or modify the
-corresponding configuration file for uploading arbitrary data. Please
-refer [scripts](./scripts/README.rst) for details.
-
-Alternatively, user may use [FATE-Test](../doc/api/fate_test.md#data)
-for uploading data.
+user may use [FATE-Test](../doc/api/fate_test.md#data) for uploading data.
 
 ## Toy Example
 
-FATE provides simple toy job for quick experiment when user developing
-FATE modules or testing for deployment. For details, please refer
-[toy\_example](./toy_example/README.md).
+FATE provides simple toy example for quick testing the network connectivity between sites
+Such as 
+```
+flow test toy -gid 9999 -hid 10000
+```
 
 ## Min-test
 
