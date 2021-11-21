@@ -1,4 +1,4 @@
-## FATE on Spark with Pulsar Deployment Guide
+## FATE on Spark with Pulsar Deployment Guide| [中文](fate-exchange_deployment_with_pulsar.zh.md)
 
 ## Star Networking
 
