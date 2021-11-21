@@ -1,4 +1,4 @@
-# FATE ON Spark 部署指南
+# FATE ON Spark 部署指南 | [English](fate_on_spark_deployment_guide.md)
 
 ## 1.服务器配置
 
@@ -313,14 +313,15 @@ pip install -r pip-packages-fate-${version}/requirements.txt -f ./pip-packages-f
 pip list | wc -l
 ```
 
-### 5.6 部署Nginx
+### 5.6  部署Spark & HDFS
+请参阅部署指南：[Hadoop+Spark集群部署](common/hadoop_spark_deployment_guide.zh.md)
+
+### 5.7 部署Nginx
 请参阅部署指南：[Nginx部署](common/nginx_deployment_guide.zh.md)
 
-### 5.7 部署RabbitMQ(和pulsar二选一)
+### 5.8 部署RabbitMQ(和Pulsar二选一)
 
 请参阅部署指南：[RabbitMQ部署](common/rabbitmq_deployment_guide.zh.md)
-
-### 5.8 部署Pulsar(和rabbitmq二选一)
 
 请参阅部署指南：[Pulsar部署](common/pulsar_deployment_guide.zh.md)
 
@@ -348,9 +349,7 @@ fate_project_base=/data/projects/fate
 export FATE_PROJECT_BASE=$fate_project_base
 export FATE_DEPLOY_BASE=$fate_project_base
 
-export PYTHONPATH=/data/projects/fate/fateflow/python:/data/projects/fate/eggroll/python:/data/projects/fate/fate/python
-export EGGROLL_HOME=/data/projects/fate/eggroll
-export EGGROLL_LOG_LEVEL=INFO
+export PYTHONPATH=/data/projects/fate/fateflow/python:/data/projects/fate/fate/python
 venv=/data/projects/fate/common/python/venv
 export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
 export PATH=$PATH:$JAVA_HOME/bin
@@ -377,43 +376,8 @@ EOF
 
   fateboard.datasource.username：fate
 
-  fateboard.datasource.password：fate_dev
+  fateboard.datasource.password：fate_dev 
   
-  以上参数调整可以参考如下例子手工配置，也可以使用以下指令完成：
-  
-  配置文件：/data/projects/fate/fateboard/conf/application.properties
-
-```
-#在目标服务器（192.168.0.1）app用户下修改执行
-cat > /data/projects/fate/fateboard/conf/application.properties <<EOF
-server.port=8080
-fateflow.url=http://192.168.0.1:9380
-spring.datasource.driver-Class-Name=com.mysql.cj.jdbc.Driver
-spring.http.encoding.charset=UTF-8
-spring.http.encoding.enabled=true
-server.tomcat.uri-encoding=UTF-8
-fateboard.datasource.jdbc-url=jdbc:mysql://192.168.0.1:3306/fate_flow?characterEncoding=utf8&characterSetResults=utf8&autoReconnect=true&failOverReadOnly=false&serverTimezone=GMT%2B8
-fateboard.datasource.username=fate
-fateboard.datasource.password=fate_dev
-server.tomcat.max-threads=1000
-server.tomcat.max-connections=20000
-EOF
-
-#在目标服务器（192.168.0.2）app用户下修改执行
-cat > /data/projects/fate/fateboard/conf/application.properties <<EOF
-server.port=8080
-fateflow.url=http://192.168.0.2:9380
-spring.datasource.driver-Class-Name=com.mysql.cj.jdbc.Driver
-spring.http.encoding.charset=UTF-8
-spring.http.encoding.enabled=true
-server.tomcat.uri-encoding=UTF-8
-fateboard.datasource.jdbc-url=jdbc:mysql://192.168.0.2:3306/fate_flow?characterEncoding=utf8&characterSetResults=utf8&autoReconnect=true&failOverReadOnly=false&serverTimezone=GMT%2B8
-fateboard.datasource.username=fate
-fateboard.datasource.password=fate_dev
-server.tomcat.max-threads=1000
-server.tomcat.max-connections=20000
-EOF
-```
 
 2）service.sh
 
@@ -424,11 +388,11 @@ vi service.sh
 export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
 ```
 
-## 7. FATE配置文件修改
+### 6.3 FATE配置文件修改
  
   配置文件：/data/projects/fate/conf/service_conf.yaml
   
-##### 运行配置
+##### 6.3.1 运行配置
 - FATE引擎相关配置:
 
 ```yaml
@@ -444,7 +408,19 @@ default_engines:
 
 - db的连接ip、端口、账号和密码
 
-##### 依赖服务配置
+- proxy相关配置(ip及端口)
+
+**conf/service_conf.yaml**
+```yaml
+fateflow:
+  proxy: nginx
+fate_on_spark:
+  nginx: 
+    host: 127.0.0.1
+    port: 9390
+```
+
+##### 6.3.2 依赖服务配置
 
 **conf/service_conf.yaml**
 ```yaml
@@ -471,9 +447,7 @@ fate_on_spark:
     cluster: standalone
     tenant: fl-tenant
     topic_ttl: 5
-    route_table:     
-
-
+    route_table:    
 
 ```
 - Spark的相关配置
@@ -501,7 +475,25 @@ fate_on_spark:
     - tenant: 合作方需要使用同一个tenant
     - topic_ttl： 回收资源参数
     - route_table: 路由表信息，默认为空
-    
+
+
+##### 6.3.3 spark依赖分发模式(仅适用spark集群版本)
+- "conf/service_conf.yaml"
+```yaml
+dependent_distribution: true # 推荐使用true
+```
+
+**注意:若该配置为"true"，可忽略下面的操作**
+
+- 依赖准备:整个fate目录拷贝到每个work节点,目录结构保持一致
+
+- spark配置修改：spark/conf/spark-env.sh
+```shell script
+export PYSPARK_PYTHON=/data/projects/fate/common/python/venv/bin/python
+export PYSPARK_DRIVER_PYTHON=/data/projects/fate/common/python/venv/bin/python
+```
+
+##### 6.3.4 路由表配置
 **conf/rabbitmq_route_table.yaml**
 ```yaml
 10000:
@@ -538,36 +530,8 @@ default:
   sslPort: 6651
 ```
 
-- proxy相关配置(ip及端口)
 
-**conf/service_conf.yaml**
-```yaml
-fateflow:
-  proxy: nginx
-fate_on_spark:
-  nginx: 
-    host: 127.0.0.1
-    port: 9390
-```
-
-##### spark依赖分发模式(仅适用spark集群版本)
-- "conf/service_conf.yaml"
-```yaml
-dependent_distribution: true # 推荐使用true
-```
-
-**注意:若该配置为"true"，可忽略下面的操作**
-
-- 依赖准备:整个fate目录拷贝到每个work节点,目录结构保持一致
-
-- spark配置修改：spark/conf/spark-env.sh
-```shell script
-export PYSPARK_PYTHON=/data/projects/fate/common/python/venv/bin/python
-export PYSPARK_DRIVER_PYTHON=/data/projects/fate/common/python/venv/bin/python
-```
-
-
-## 8. 启动FATE服务
+## 7. 启动FATE服务
 
 **在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
@@ -580,7 +544,7 @@ cd /data/projects/fate/fateboard
 sh service.sh start
 ```
 
-## 9. 问题定位
+## 8. 问题定位
 
 1）FATE-Flow日志
 
@@ -594,13 +558,13 @@ sh service.sh start
 
 /data/projects/fate/proxy/nginx/logs
 
-## 10.测试
+## 9.测试
 
-### 10.1 Toy_example部署验证
+### 9.1 Toy_example部署验证
 
 此测试您需要设置2个参数：gid(guest partyid)，hid(host_partyid)。
 
-#### 10.1.1 单边测试
+#### 9.1.1 单边测试
 
 1）192.168.0.1上执行，gid和hid都设为10000：
 
@@ -626,7 +590,7 @@ flow test toy -gid 9999 -hid 9999
 
 "2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
 
-#### 10.1.2 双边测试
+#### 9.1.2 双边测试
 
 选定9999为guest方，在192.168.0.2上执行：
 
@@ -639,10 +603,10 @@ flow test toy -gid 9999 -hid 10000
 
 "2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
 
-### 10.2 最小化测试
+### 9.2 最小化测试
 
 
-#### **10.2.1 上传预设数据：**
+####9.2.1 上传预设数据：
 
 分别在192.168.0.1和192.168.0.2上执行：
 
@@ -654,7 +618,7 @@ python upload_default_data.py
 
 更多细节信息，敬请参考[脚本README](../../../../examples/scripts/README.rst)
 
-#### **10.2.2 快速模式：**
+#### 9.2.2 快速模式：
 
 请确保guest和host两方均已分别通过给定脚本上传了预设数据。
 
@@ -678,21 +642,21 @@ python run_task.py -gid 9999 -hid 10000 -aid 10000 -f fast
 
 若数分钟后在结果中显示了“success”字样则表明该操作已经运行成功了。若出现“FAILED”或者程序卡住，则意味着测试失败。
 
-#### **10.2.3 正常模式**：
+#### 9.2.3 正常模式：
 
 只需在命令中将“fast”替换为“normal”，其余部分与快速模式相同。
 
-### 10.3 FATEBoard testing
+### 9.3 FATEBoard testing
 
 FATEBoard是一项Web服务。如果成功启动了FATEBoard服务，则可以通过访问 http://192.168.0.1:8080 和 http://192.168.0.2:8080 来查看任务信息，如果有防火墙需开通。
 
-## 11.系统运维
+## 10.系统运维
 
-### 11.1 服务管理
+### 10.1 服务管理
 
 **在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
-####  11.1.1 FATE服务管理
+####  10.1.1 FATE服务管理
 
 1) 启动/关闭/查看/重启fate_flow服务
 
@@ -719,7 +683,7 @@ cd /data/projects/fate/proxy
 ./nginx/sbin/nginx -s stop
 ```
 
-#### 11.1.2 MySQL服务管理
+#### 10.1.2 MySQL服务管理
 
 启动/关闭/查看/重启MySQL服务
 
@@ -728,11 +692,11 @@ cd /data/projects/fate/common/mysql/mysql-8.0.13
 sh ./service.sh start|stop|status|restart
 ```
 
-### 11.2 查看进程和端口
+### 10.2 查看进程和端口
 
 **在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
-##### 11.2.1 查看进程
+##### 10.2.1 查看进程
 
 ```
 #根据部署规划查看进程是否启动
@@ -741,7 +705,7 @@ ps -ef | grep -i fateboard
 ps -ef | grep -i nginx
 ```
 
-### 11.2.2 查看进程端口
+### 10.2.2 查看进程端口
 
 ```
 #根据部署规划查看进程端口是否存在
@@ -754,11 +718,11 @@ netstat -tlnp | grep 9390
 ```
 
 
-### 11.3 服务日志
+### 10.3 服务日志
 
 | 服务               | 日志路径                                           |
 | ------------------ | -------------------------------------------------- |
-| fate_flow&任务日志 | /data/projects/fate/fateflow/logs                    |
+| fate_flow任务日志 | /data/projects/fate/fateflow/logs                    |
 | fateboard          | /data/projects/fate/fateboard/logs                 |
 | nginx | /data/projects/fate/proxy/nginx/logs                 |
 | mysql              | /data/projects/fate/common/mysql/mysql-8.0.13/logs |
