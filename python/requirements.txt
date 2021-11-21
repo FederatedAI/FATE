@@ -1,3 +1,4 @@
+pip>=21
 apsw<3.10
 importlib_metadata<2.0.0
 markdown==3.3.5
@@ -46,7 +47,6 @@ filelock==3.3.1
 pulsar-client==2.8.0
 fastavro==1.4.1
 lightgbm==3.3.1
-pip>=21
 
 # python 3.6
 backports-datetime-fromisoformat==1.0.0
