@@ -1,6 +1,5 @@
-# FATE单机部署指南
+# FATE单机部署指南 | [English](README.md)
 
-[TOC]
 
 ## 1. 说明
 
