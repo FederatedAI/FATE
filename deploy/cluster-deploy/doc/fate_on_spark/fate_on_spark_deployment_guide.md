@@ -355,9 +355,7 @@ fate_project_base=/data/projects/fate
 export FATE_PROJECT_BASE=$fate_project_base
 export FATE_DEPLOY_BASE=$fate_project_base
 
-export PYTHONPATH=/data/projects/fate/fateflow/python:/data/projects/fate/eggroll/python:/data/projects/fate/fate/python
-export EGGROLL_HOME=/data/projects/fate/eggroll
-export EGGROLL_LOG_LEVEL=INFO
+export PYTHONPATH=/data/projects/fate/fateflow/python:/data/projects/fate/fate/python
 venv=/data/projects/fate/common/python/venv
 export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
 export PATH=$PATH:$JAVA_HOME/bin
