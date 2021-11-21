@@ -1,6 +1,5 @@
-# FATE Standalone Deployment Guide
+# FATE Standalone Deployment Guide | [中文](README.zh.md)
 
-[TOC]
 
 ## 1. Description
 
