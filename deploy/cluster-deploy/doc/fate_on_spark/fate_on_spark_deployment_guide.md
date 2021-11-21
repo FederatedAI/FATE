@@ -1,4 +1,4 @@
-# FATE ON Spark Deploy Guide
+# FATE ON Spark Deploy Guide | [中文](fate_on_spark_deployment_guide.zh.md)
 
 ## 1.Server Information
 
@@ -25,7 +25,9 @@
 Architecture:
 
 <div style="text-align:center", align=center>
+
 <img src="../../images/fate_on_spark_architecture.png" />
+
 </div>
 
 ## 3.Module Information
@@ -42,9 +44,9 @@ Architecture:
 
 
 
-## 1. Basic Environment Configuration
+## 4. Basic Environment Configuration
 
-### 1.1 hostname configuration (optional)
+### 4.1 hostname configuration (optional)
 
 **1) Modify the hostname**
 
@@ -70,7 +72,7 @@ vim /etc/hosts
 192.168.0.2 VM-0-2-centos
 ```
 
-### 1.2 Shut down SELinux (optional)
+### 4.2 Shut down SELinux (optional)
 
 
 **Execute under the root user of the target server (192.168.0.1 192.168.0.2):**
@@ -95,7 +97,7 @@ If SELinux is already installed, do the following.
 setenforce 0
 ```
 
-### 1.3 Modifying Linux system parameters
+### 4.3 Modifying Linux system parameters
 
 **Execute under the root user on the target server (192.168.0.1 192.168.0.2 192.168.0.3):**
 
@@ -110,7 +112,7 @@ vim /etc/security/limits.d/20-nproc.conf
 * soft nproc unlimited
 ```
 
-### 1.4 Turn off the firewall (optional)
+### 4.4 Turn off the firewall (optional)
 
 
 ** Execute under the root user of the target server (192.168.0.1 192.168.0.2 192.168.0.3) **
@@ -130,7 +132,7 @@ ufw disable
 ufw status
 ```
 
-### 1.5 Software environment initialization
+### 4.5 Software environment initialization
 
 **Execute under the root user of the target server (192.168.0.1 192.168.0.2 192.168.0.3)**
 
@@ -164,11 +166,11 @@ if [ ! -f "libssl.so.10" ];then
 fi
 ```
 
-## 2. Deploy dependent components
+## 5. Deploy dependent components
 
 Note: The default installation directory for this guide is /data/projects/install, and the execution user is app, modify it according to the specific situation when installing.
 
-### 2.1 Get the installation package
+### 5.1 Get the installation package
 
 
 Execute on the target server (192.168.0.1 with extranet environment) under the app user:
@@ -188,7 +190,7 @@ scp *.tar.gz app@192.168.0.1:/data/projects/install
 scp *.tar.gz app@192.168.0.2:/data/projects/install
 ```
 Note: The current document needs to be deployed with FATE version>=1.7.0
-### 2.2 Operating system parameter checking
+### 5.2 Operating system parameter checking
 
 **execute under the target server (192.168.0.1 192.168.0.2 192.168.0.3) app user**
 
@@ -202,7 +204,7 @@ ulimit -u
 65535
 ```
 
-### 2.3 Deploying MySQL
+### 5.3 Deploying MySQL
 
 **Execute under the target server (192.168.0.1 192.168.0.2) app user**
 
@@ -275,7 +277,7 @@ mysql>select * from server_node;
 
 ```
 
-### 2.4 Deploying the JDK
+### 5.4 Deploying the JDK
 
 **execute ** under the target server (192.168.0.1 192.168.0.2) app user:
 
@@ -289,7 +291,7 @@ cd /data/projects/fate/common/jdk
 mv jdk1.8.0_192 jdk-8u192
 ```
 
-### 2.5 Deploying python
+### 5.5 Deploying python
 
 **execute ** under the target server (192.168.0.1 192.168.0.2) app user:
 
@@ -317,35 +319,21 @@ pip install -r pip-packages-fate-${version}/requirements.txt -f ./pip-packages-f
 pip list | wc -l
 ```
 
-### 2.6 Deploying Nginx
+### 5.6  Deploy Spark & HDFS
+See the deployment guide：[Hadoop+Spark deployment](common/hadoop_spark_deployment_guide.md)
 
-**execute ** under the target server (192.168.0.1 192.168.0.2) app user:
+### 5.7 Deploying Nginx
+See the deployment guide：[Nginx deployment](common/nginx_deployment_guide.md)
 
-```bash
-cd /data/projects/install
-tar xzf openresty-*.tar.gz
-cd openresty-*
-./configure --prefix=/data/projects/fate/proxy \
-                   --with-luajit \
-                   --with-http_ssl_module \
-                     --with-http_v2_module \
-                     --with-stream \
-                     --with-stream_ssl_module \
-                     -j12
-make && make install
-```
+### 5.8 Deploying RabbitMQ (or Pulsar)
 
-### 2.7 Deploying RabbitMQ (either with pulsar)
+See the deployment guide: [RabbitMQ_deployment](common/rabbitmq_deployment_guide.md)
 
-See the deployment guide: [RabbitMQ_deployment_guide_zh](rabbitmq_deployment_guide_zh.md)
+See the deployment guide: [Pulsar deployment](common/pulsar_deployment_guide.md)
 
-### 2.8 Deploying Pulsar (either with rabbitmq)
+## 6 Deploying FATE
 
-See the deployment guide: [Pulsar deployment](pulsar_deployment_guide_zh.md)
-
-## 3 Deploying FATE
-
-### 3.1 Software deployment
+### 6.1 Software deployment
 
 ```
 ## Deploy the software
@@ -377,69 +365,9 @@ source ${venv}/bin/activate
 EOF
 ```
 
-### 3.2 Nginx configuration file modifications
-#### 3.2.1 Nginx base configuration file modifications
-Configuration file: /data/projects/fate/proxy/nginx/conf/nginx.conf
-This configuration file is used by Nginx to configure the service base settings and lua code, and generally does not need to be modified.
-If you want to modify it, you can manually modify it by referring to the default nginx.conf, and use the command detect after the modification is done
-```
-/data/projects/fate/proxy/nginx/sbin/nginx -t
-```
+### 6.2 FATE-Board configuration file modification
 
-#### 3.2.2 Nginx routing configuration file modifications
-
-Configuration file: /data/projects/fate/proxy/nginx/conf/route_table.yaml
-This configuration file is used by NginX to configure routing information, either manually by referring to the following example, or by using the following command.
-
-```
-# Modify the execution under the target server (192.168.0.1) app user
-cat > /data/projects/fate/proxy/nginx/conf/route_table.yaml << EOF
-default:
-  proxy:
-    - host: 192.168.0.2
-      port: 9390
-10000:
-  proxy:
-    - host: 192.168.0.1
-      port: 9390
-  fateflow:
-    - host: 192.168.0.1
-      port: 9360
-9999:
-  proxy:
-    - host: 192.168.0.2
-      port: 9390
-  fateflow:
-    - host: 192.168.0.2
-      port: 9360
-EOF
-
-# Modify the execution under the app user of the target server (192.168.0.2)
-cat > /data/projects/fate/proxy/nginx/conf/route_table.yaml << EOF
-default:
-  proxy:
-    - host: 192.168.0.1
-      port: 9390
-10000:
-  proxy:
-    - host: 192.168.0.1
-      port: 9390
-  fateflow:
-    - host: 192.168.0.1
-      port: 9360
-9999:
-  proxy:
-    - host: 192.168.0.2
-      port: 9390
-  fateflow:
-    - host: 192.168.0.2
-      port: 9360
-EOF
-```
-
-### 3.3 FATE-Board configuration file modification
-
-1) conf/application.properties
+**1) conf/application.properties**
 
 - Service port
 
@@ -457,43 +385,8 @@ EOF
 
   fateboard.datasource.password：fate_dev
   
-  The above parameter adjustment can be done manually by referring to the following example, or by using the following command
-  
-  Configuration file: /data/projects/fate/fateboard/conf/application.properties
 
-```
-# Modify the execution under the app user of the target server (192.168.0.1)
-cat > /data/projects/fate/fateboard/conf/application.properties <<EOF
-server.port=8080
-fateflow.url=http://192.168.0.1:9380
-spring.datasource.driver-Class-Name=com.mysql.cj.jdbc.
-spring.http.encoding.charset=UTF-8
-spring.http.encoding.enabled=true
-server.tomcat.uri-encoding=UTF-8
-fateboard.datasource.jdbc-url=jdbc:mysql://192.168.0.1:3306/fate_flow?characterEncoding=utf8&characterSetResults=utf8& autoReconnect=true&failOverReadOnly=false&serverTimezone=GMT%2B8
-fateboard.datasource.username=fate
-fateboard.datasource.password=fate_dev
-server.tomcat.max-threads=1000
-server.tomcat.max-connections=20000
-EOF
-
-# Modify the execution under the target server (192.168.0.2) app user
-cat > /data/projects/fate/fateboard/conf/application.properties <<EOF
-server.port=8080
-fateflow.url=http://192.168.0.2:9380
-spring.datasource.driver-Class-Name=com.mysql.cj.jdbc.
-spring.http.encoding.charset=UTF-8
-spring.http.encoding.enabled=true
-server.tomcat.uri-encoding=UTF-8
-fateboard.datasource.jdbc-url=jdbc:mysql://192.168.0.2:3306/fate_flow?characterEncoding=utf8&characterSetResults=utf8& autoReconnect=true&failOverReadOnly=false&serverTimezone=GMT%2B8
-fateboard.datasource.username=fate
-fateboard.datasource.password=fate_dev
-server.tomcat.max-threads=1000
-server.tomcat.max-connections=20000
-EOF
-```
-
-2) service.sh
+**2) service.sh**
 
 ```
 #Modify the execution under the target server (192.168.0.1 192.168.0.2) app user
@@ -502,11 +395,11 @@ vi service.sh
 export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
 ```
 
-## 4. FATE configuration file modification
+### 6.3 FATE configuration file modification
  
   Configuration file: /data/projects/fate/conf/service_conf.yaml
   
-##### running configuration
+##### 6.3.1 running configuration
 - FATE engine related configuration.
 
 ```yaml
@@ -521,8 +414,19 @@ default_engines:
 - Listening ip, port of FATE-Board
 
 - db's connection ip, port, account and password
+- Proxy related configuration (ip and port)
 
-##### Dependent service configuration
+**conf/service_conf.yaml**
+```yaml
+fateflow.
+  proxy: nginx
+fate_on_spark:
+  nginx: 
+    Host: 127.0.0.1
+    port: 9390
+```
+
+##### 6.3.2 Dependent service configuration
 
 **conf/service_conf.yaml**
 ```yaml
@@ -577,7 +481,24 @@ fate_on_spark:
     - tenant: partner needs to use the same tenant
     - topic_ttl: recycling resource parameter
     - route_table: Routing table information, default is empty.
-    
+   
+##### 6.3.3 spark dependency distribution model(Only for Spark Cluster)
+- "conf/service_conf.yaml"
+```yaml
+dependent_distribution: true # Recommended to use true
+```
+
+**Note:If this configuration is "true", the following actions can be ignored**.
+
+- Dependency preparation:copy the entire fate directory to each working node, keeping the directory structure consistent
+
+- spark configuration modification: spark/conf/spark-env.sh
+```shell script
+export PYSPARK_PYTHON=/data/projects/fate/common/python/venv/bin/python
+export PYSPARK_DRIVER_PYTHON=/data/projects/fate/common/python/venv/bin/python
+```
+
+##### 6.3.4 route table configuration
 **conf/rabbitmq_route_table.yaml**
 ```yaml
 10000:
@@ -615,37 +536,7 @@ default.
 ```
 
 
-
-- Proxy related configuration (ip and port)
-
-**conf/service_conf.yaml**
-```yaml
-fateflow.
-  proxy: nginx
-fate_on_spark:
-  nginx: 
-    Host: 127.0.0.1
-    port: 9390
-```
-
-##### spark dependency distribution model
-- "conf/service_conf.yaml"
-```yaml
-dependent_distribution: true # Recommended to use true
-```
-
-**Note:If this configuration is "true", the following actions can be ignored**.
-
-- Dependency preparation:copy the entire fate directory to each working node, keeping the directory structure consistent
-
-- spark configuration modification: spark/conf/spark-env.sh
-```shell script
-export PYSPARK_PYTHON=/data/projects/fate/common/python/venv/bin/python
-export PYSPARK_DRIVER_PYTHON=/data/projects/fate/common/python/venv/bin/python
-```
-
-
-## 5. Start the service
+## 7. Start the service
 
 execute under the target server (192.168.0.1 192.168.0.2) app user
 
@@ -660,40 +551,121 @@ cd /data/projects/fate/proxy
 ./nginx/sbin/nginx -c /data/projects/fate/proxy/nginx/conf/nginx.conf
 ```
 
-## 6. Problem location
+## 8. Problem location
 
-1) FATE-Flow log
+**1) FATE-Flow log**
 
 /data/projects/fate/fateflow/logs
 
-2) FATE-Board logs
+**2) FATE-Board logs**
 
 /data/projects/fate/fateboard/logs
 
-3) NginX logs
+**3) NginX logs**
 
 /data/projects/fate/proxy/nginx/logs
 
-## 7. Testing
 
-### 7.1 Toy_example deployment verification
+# 9. Testing
 
-Reference document:[toy test](../fate_on_eggroll/Fate-allinone_deployment_guide_install.md#61-verify-toy_example-deployment)
+## 9.1 Verify toy example Deployment
+
+A user must set 2 parameters for this testing: gid(guest partyid), hid(host partyid).
+
+### 9.1.1 One-Sided Testing
+
+**1) Execute on 192.168.0.1, with both gid and hid set to 10000:**
+
+```
+source /data/projects/fate/bin/init_env.sh
+flow test toy -gid 10000 -hid 10000 
+```
+
+A result similar to the following indicates successful operation:
+
+"2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
+
+Tip: If the error "max cores per job is 1, please modify job parameters" appears, a user needs to modify the parameter task_cores to 1, add "--task-core 1" to run toy test.
+
+**2) Execute on 192.168.0.2, with both gid and hid set to 9999:**
+
+```
+source /data/projects/fate/bin/init_env.sh
+flow test toy -gid 9999 -hid 9999
+```
+
+A result similar to the following indicates successful operation:
+
+"2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
+
+### 9.1.2 Two-Sided Testing
+
+Select 9999 as the guest and execute on 192.168.0.2:
+
+```
+source /data/projects/fate/bin/init_env.sh
+flow test toy -gid 9999 -hid 10000
+```
+
+A result similar to the following indicates successful operation:
+
+"2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
+
+## 9.2 Minimization Testing
+
+### **9.2.1 Upload Preset Data:**
+
+Execute on 192.168.0.1 and 192.168.0.2 respectively:
+
+```
+source /data/projects/fate/bin/init_env.sh
+cd /data/projects/fate/examples/scripts/
+python upload_default_data.py
+```
+examples/scripts/README.rst
+For more details, refer to [Script Readme](../../../../examples/scripts/README.rst)
+
+### **9.2.2 Fast Mode:**
+
+Ensure that both the guest and host have uploaded the preset data with the given script.
+
+In fast mode, the minimization testing script will use a relatively small breast dataset containing 569 pieces of data.
+
+Select 9999 as the guest and execute on 192.168.0.2:
+
+```
+source /data/projects/fate/bin/init_env.sh
+cd /data/projects/fate/examples/min_test_task/
+#One-sided testing
+python run_task.py -gid 9999 -hid 9999 -aid 9999 -f fast
+#Two-sided testing
+python run_task.py -gid 9999 -hid 10000 -aid 10000 -f fast
+```
+
+Other parameters that may be useful include:
+
+1. -f: The file type used. Here, "fast" represents the breast dataset, and "normal" represents the default credit dataset.
+2. --add\_sbt: When set to 1, the secureboost task will start after running lr. When set to 0, the secureboost task will not start. When not set, this parameter will default to 1.
+
+The word "success" will display in the result after a few minutes to indicate the operation has been completed successfully. If "FAILED" appears or the program gets stuck, it means that the test has failed.
+
+### **9.2.3 Normal Mode**:
+
+Just replace "fast" with "normal" in the command. All other parts are identical to fast mode.
+
+## 9.3 Fateboard Testing
+
+Fateboard is a web service. When started, it allows a user to view task information by visiting http://192.168.0.1:8080 and http://192.168.0.2:8080. If there is a firewall, a user needs to turn it on.
 
 
-### 7.2. FateBoard testing
-
-Fate-Voard is a web service. If the fateboard service is successfully started, you can view the task information by visiting http://192.168.0.1:8080 and http://192.168.0.2:8080, if there is a firewall in place. If fateboard and fateflow are not deployed on the same server, you need to set the login information of the host where fateflow is deployed on the fateboard page: the gear button on the top right side of the page --> add --> fill in the fateflow host ip, os user, ssh port, password.
-
-
-## 8. System Operation and Maintenance
+## 10. System Operation and Maintenance
 ================
 
-### 8.1 Service Management
+### 10.1 Service Management
 
 execute under the target server (192.168.0.1 192.168.0.2) app user
 
-#### 8.1.1 FATE Service Management
+#### 10.1.1 FATE Service Management
 
 1) Start/shutdown/view/restart the fate_flow service
 
@@ -720,7 +692,7 @@ cd /data/projects/fate/proxy
 ./nginx/sbin/nginx -s stop
 ```
 
-#### 8.1.2 MySQL Service Management
+#### 10.1.2 MySQL Service Management
 
 Start/shutdown/view/restart MySQL services
 
@@ -729,11 +701,11 @@ cd /data/projects/fate/common/mysql/mysql-8.0.13
 sh ./service.sh start|stop|status|restart
 ```
 
-### 8.2 Viewing processes and ports
+### 10.2 Viewing processes and ports
 
 execute under the target server (192.168.0.1 192.168.0.2) app user
 
-##### 8.2.1 View processes
+##### 10.2.1 View processes
 
 ```
 # Check if the process is started according to the deployment plan
@@ -742,7 +714,7 @@ ps -ef | grep -i fateboard
 ps -ef | grep -i nginx
 ```
 
-### 8.2.2 Viewing process ports
+### 10.2.2 Viewing process ports
 
 ```
 ### 8.2.2 Checking the process ports according to the deployment plan
@@ -755,7 +727,7 @@ netstat -tlnp | grep 9390
 ```
 
 
-### 8.3 Service logs
+### 10.3 Service logs
 
 | service | logpath |
 | ------------------ | -------------------------------------------------- |
