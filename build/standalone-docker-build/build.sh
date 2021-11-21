@@ -55,7 +55,7 @@ echo "[INFO] image tag: "${image_tag}
 echo "[INFO] image path: "${image_path}
 echo "[INFO] package output dir is "${package_dir}
 
-rm -rf ${package_dir} ${package_dir}_${version_tag}".tar.gz"
+rm -rf ${package_dir}
 mkdir -p ${package_dir}
 
 build() {
