@@ -554,7 +554,7 @@ sh service.sh start
 
 /data/projects/fate/fateboard/logs
 
-3) NginX日志
+3） NginX日志
 
 /data/projects/fate/proxy/nginx/logs
 
