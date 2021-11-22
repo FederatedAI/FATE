@@ -1,11 +1,10 @@
-#  FATE AllinOne部署指南 | [English](./fate-allinone_deployment_guide.md)
+# FATE AllinOne部署指南 | [English](./fate-allinone_deployment_guide.md)
 
 > 警告：本文档仅用于快速开始，生产环境推荐使用其他部署方式，如 [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE)。
 >
 > 依照本文档同时部署多个 party 会导致 party 间各服务器可以通过 ssh 互相访问，从而产生严重的安全问题。
 
-1.服务器配置
-============
+## 1. 服务器配置
 
 |  服务器  |                                                              |
 | :------: | ------------------------------------------------------------ |
@@ -16,8 +15,7 @@
 |   用户   | 用户：app，属主：apps（app用户需可以sudo su root而无需密码） |
 | 文件系统 | 1.  500G硬盘挂载在 `/data` 目录下； 2.创建 `/data/projects` 目录，目录属主为：`app:apps` |
 
-2.集群规划
-==========
+## 2. 集群规划
 
 | party  | 主机名        | IP地址      | 操作系统                | 安装软件           | 服务                                                         |
 | ------ | ------------- | ----------- | ----------------------- | ------------------ | ------------------------------------------------------------ |
@@ -30,7 +28,7 @@
 <img src="../../images/arch_zh.png" />
 </div>
 
-# 3.组件说明
+## 3. 组件说明
 
 | 软件产品 | 组件           | 端口      | 说明                                                         |
 | -------- | -------------- | --------- | ------------------------------------------------------------ |
@@ -41,11 +39,9 @@
 | eggroll  | rollsite       | 9370      | 跨站点或者说跨party通讯组件，相当于以前版本的proxy+federation |
 | mysql    | mysql          | 3306      | 数据存储，clustermanager和fateflow依赖                       |
 
-4.基础环境配置
-==============
+## 4. 基础环境配置
 
-4.1 hostname配置
-----------------
+### 4.1. hostname配置
 
 **1）修改主机名**
 
@@ -67,8 +63,7 @@ vim /etc/hosts
 
 192.168.0.2 VM_0_2_centos
 
-4.2 关闭selinux（不推荐）
----------------
+### 4.2. 关闭selinux（不推荐）
 
 **在目标服务器（192.168.0.1 192.168.0.2）root用户下执行：**
 
@@ -80,8 +75,7 @@ ubuntu系统执行：apt list --installed | grep selinux
 
 如果已安装了selinux就执行：setenforce 0
 
-4.3 修改Linux系统参数
----------------------------
+### 4.3. 修改Linux系统参数
 
 **在目标服务器（192.168.0.1 192.168.0.2）root用户下执行：**
 
@@ -105,8 +99,7 @@ ls -lrt 20-nproc.conf
 
 重新登陆，ulimit -a查看是否生效
 
-4.4 关闭防火墙（不推荐）
---------------
+### 4.4. 关闭防火墙（不推荐）
 
 **在目标服务器（192.168.0.1 192.168.0.2）root用户下执行**
 
@@ -124,8 +117,7 @@ ufw disable
 
 ufw status
 
-4.5 软件环境初始化
-------------------
+### 4.5. 软件环境初始化
 
 **1）创建用户**
 
@@ -186,7 +178,7 @@ ssh app\@192.168.0.1
 
 ssh app\@192.168.0.2
 
-## 4.6 增加虚拟内存
+### 4.6. 增加虚拟内存
 
 **目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）**
 
@@ -255,13 +247,12 @@ Swap:        131071           0      131071
 
 ```
 
-5.项目部署
-==========
+## 5. 项目部署
+
 
 注：此指导安装目录默认为/data/projects/，执行用户为app，安装时根据具体实际情况修改。
 
-5.1 获取项目
-------------
+### 5.1. 获取项目
 
 **在目标服务器（192.168.0.1 具备外网环境）app用户下执行**
 
@@ -275,7 +266,7 @@ wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_cluster_ins
 tar xzf fate_cluster_install_${version}_release-c7-u18.tar.gz
 ```
 
-## 5.2 部署前检查
+### 5.2. 部署前检查
 
 **在目标服务器（192.168.0.1 192.168.0.2 ）app用户下执行**
 
@@ -293,8 +284,7 @@ sh ./check.sh
 #确认/etc/my.cnf是否存在，存在需要mv；确认是否存在/data/projects/fate目录，存在需把fate目录mv备份。
 ```
 
-5.3 配置文件修改和示例
-----------------
+### 5.3. 配置文件修改和示例
 
 **在目标服务器（192.168.0.1）app用户下执行**
 
@@ -475,8 +465,7 @@ clustermanager_port=4670
 nodemanager_port=4671
 ```
 
-5.4 部署
---------
+### 5.4. 部署
 
 按照上述配置含义修改setup.conf文件对应的配置项后，然后在fate-cluster-install/allInone目录下执行部署脚本：
 
@@ -495,7 +484,7 @@ tail -f ./logs/deploy-host.log    （实时打印HOST端的部署情况）
 tail -f ./logs/deploy-mysql-host.log    （实时打印HOST端mysql的部署情况）
 ```
 
-## 5.5 问题定位
+### 5.5. 问题定位
 
 1）eggroll日志
 
@@ -519,15 +508,13 @@ tail -f ./logs/deploy-mysql-host.log    （实时打印HOST端mysql的部署情�
 
 /data/projects/fate/fateboard/logs
 
-6.测试
-======
+## 6.测试
 
-6.1 Toy_example部署验证
------------------------
+### 6.1. Toy_example部署验证
 
 此测试您需要设置2个参数：gid(guest partyid)，hid(host_partyid)。
 
-### 6.1.1 单边测试
+#### 6.1.1. 单边测试
 
 1）192.168.0.1上执行，gid和hid都设为10000：
 
@@ -553,7 +540,7 @@ flow test toy -gid 9999 -hid 9999
 
 "2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
 
-### 6.1.2 双边测试
+#### 6.1.2 双边测试
 
 选定9999为guest方，在192.168.0.2上执行：
 
@@ -566,14 +553,13 @@ flow test toy -gid 9999 -hid 10000
 
 "2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
 
-6.2 最小化测试
---------------
+### 6.2. 最小化测试
 
-### **6.2.1 上传预设数据：**
+#### 6.2.1. 上传预设数据
 
 分别在192.168.0.1和192.168.0.2上执行：
 
-```
+```bash
 source /data/projects/fate/bin/init_env.sh
 cd /data/projects/fate/examples/scripts/
 python upload_default_data.py
@@ -581,7 +567,7 @@ python upload_default_data.py
 
 更多细节信息，敬请参考[脚本README](../../../../examples/scripts/README.rst)
 
-### **6.2.2 快速模式：**
+#### 6.2.2. 快速模式
 
 请确保guest和host两方均已分别通过给定脚本上传了预设数据。
 
@@ -605,47 +591,44 @@ python run_task.py -gid 9999 -hid 10000 -aid 10000 -f fast
 
 若数分钟后在结果中显示了“success”字样则表明该操作已经运行成功了。若出现“FAILED”或者程序卡住，则意味着测试失败。
 
-### **6.2.3 正常模式**：
+#### 6.2.3. 正常模式
 
 只需在命令中将“fast”替换为“normal”，其余部分与快速模式相同。
 
-6.3 Fateboard testing
-----------------------
+### 6.3. Fateboard 测试
 
 Fateboard是一项Web服务。如果成功启动了fateboard服务，则可以通过访问 http://192.168.0.1:8080 和 http://192.168.0.2:8080 来查看任务信息，如果有防火墙需开通。
 
-7.系统运维
-================
+## 7.系统运维
 
-7.1 服务管理
-------------
+### 7.1. 服务管理
 
 **在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
-### 7.1.1 Eggroll服务管理
+#### 7.1.1. Eggroll服务管理
 
-```
+```bash
 source /data/projects/fate/bin/init_env.sh
 cd /data/projects/fate/eggroll
 ```
 
 启动/关闭/查看/重启所有：
 
-```
+```bash
 sh ./bin/eggroll.sh all start/stop/status/restart
 ```
 
 启动/关闭/查看/重启单个模块(可选：clustermanager，nodemanager，rollsite)：
 
-```
+```bash
 sh ./bin/eggroll.sh clustermanager start/stop/status/restart
 ```
 
-###  7.1.2 Fate服务管理
+#### 7.1.2. Fate服务管理
 
 1) 启动/关闭/查看/重启fate_flow服务
 
-```
+```bash
 source /data/projects/fate/bin/init_env.sh
 cd /data/projects/fate/fateflow/bin
 sh service.sh start|stop|status|restart
@@ -655,28 +638,29 @@ sh service.sh start|stop|status|restart
 
 2) 启动/关闭/重启fateboard服务
 
-```
+```bash
 cd /data/projects/fate/fateboard
 sh service.sh start|stop|status|restart
 ```
 
-### 7.1.3 Mysql服务管理
+#### 7.1.3. Mysql服务管理
 
 启动/关闭/查看/重启mysql服务
 
-```
+```bash
 cd /data/projects/fate/common/mysql/mysql-8.0.13
 sh ./service.sh start|stop|status|restart
 ```
 
-## 7.2 查看进程和端口
+### 7.2. 查看进程和端口
 
 **在目标服务器（192.168.0.1 192.168.0.2 ）app用户下执行**
 
-### 7.2.1 查看进程
+#### 7.2.1. 查看进程
 
-```
-#根据部署规划查看进程是否启动
+根据部署规划查看进程是否启动
+
+```bash
 ps -ef | grep -i clustermanager
 ps -ef | grep -i nodemanager
 ps -ef | grep -i rollsite
@@ -684,10 +668,11 @@ ps -ef | grep -i fate_flow_server.py
 ps -ef | grep -i fateboard
 ```
 
-### 7.2.2 查看进程端口
+#### 7.2.2. 查看进程端口
 
-```
-#根据部署规划查看进程端口是否存在
+根据部署规划查看进程端口是否存在
+
+```bash
 #clustermanager
 netstat -tlnp | grep 4670
 #nodemanager
@@ -700,9 +685,7 @@ netstat -tlnp | grep 9360
 netstat -tlnp | grep 8080
 ```
 
-
-
-## 7.3 服务日志
+### 7.3. 服务日志
 
 | 服务               | 日志路径                                           |
 | ------------------ | -------------------------------------------------- |
@@ -711,78 +694,89 @@ netstat -tlnp | grep 8080
 | fateboard          | /data/projects/fate/fateboard/logs                 |
 | mysql              | /data/projects/fate/common/mysql/mysql-8.0.13/logs |
 
-## 7.4 空间清理规则
+### 7.4. 空间清理规则
 
-### 7.4.1 fateflow作业日志
+#### 7.4.1. fateflow作业日志
 
-所在机器：fate flow服务所在机器 
+所在机器：fate flow服务所在机器 
 
-目录：/data/projects/fate/fateflow/logs
-
-保留期限：N=14天
-
-规则：目录以$jobid开头，清理$jobid为N天前的数据 
-
-参考命令：   rm -rf /data/projects/fate/fateflow/logs/20211116* 
-
-### 7.4.2 fateflow系统日志
-
-所在机器：fate flow服务所在机器 
-
-目录：/data/projects/fate/fateflow/logs/fate_flow
+目录：`/data/projects/fate/fateflow/logs`
 
 保留期限：N=14天
 
-规则：以日期结尾，清理日期为N天前的数据 
+规则：目录以 `$jobid` 开头，清理` $jobid`为 N天前的数据
 
-参考命令：   rm -rf /data/projects/fate/fateflow/logs/fate_flow/*.2021-11-16
+```bash
+rm -rf /data/projects/fate/fateflow/logs/20211116*
+```
 
-### 7.4.3 EggRoll Session日志
+#### 7.4.2. fateflow系统日志
 
-所在机器：eggroll node节点 
+所在机器：fate flow服务所在机器 
 
-目录：/data/projects/fate/eggroll/logs/ 
-
-保留期限：N=14天
-
-规则：目录以$jobid开头，清理$jobid为N天前的数据 
-
-参考命令：   rm -rf /data/projects/fate/eggroll/logs/20211116* 
-
-### 7.4.4 EggRoll系统日志
-
-所在机器：eggroll node节点 
-
-目录：/data/projects/fate/eggroll/logs/eggroll
+目录：`/data/projects/fate/fateflow/logs/fate_flow`
 
 保留期限：N=14天
 
-规则：以日期结尾和以年份建立的历史文件夹中文件，清理N天前的数据 
+规则：以日期结尾，清理日期为 N天前的数据 
 
-参考命令：   rm -rf /data/projects/fate/eggroll/logs/eggroll/\*.2021-11-16_*和
+```bash
+rm -rf /data/projects/fate/fateflow/logs/fate_flow/*.2021-11-16
+```
 
-​                       rm -rf /data/projects/fate/eggroll/logs/eggroll/2021/11/01
+#### 7.4.3. EggRoll Session日志
 
-### 7.4.5 计算临时数据
+所在机器：eggroll node节点 
 
-所在机器：eggroll node节点 
+目录：`/data/projects/fate/eggroll/logs/`
 
-目录：/data/projects/fate/eggroll/data/IN_MEMORY 
+保留期限：N=14天
+
+规则：目录以 `$jobid` 开头，清理 `$jobid` 为 N天前的数据
+
+```bash
+rm -rf /data/projects/fate/eggroll/logs/20211116*
+```
+
+#### 7.4.4. EggRoll系统日志
+
+所在机器：eggroll node节点 
+
+目录：`/data/projects/fate/eggroll/logs/eggroll`
+
+保留期限：N=14天
+
+规则：以日期结尾和以年份建立的历史文件夹中文件，清理N天前的数据
+
+```bash
+rm -rf /data/projects/fate/eggroll/logs/eggroll/*.2021-11-16_*
+rm -rf /data/projects/fate/eggroll/logs/eggroll/2021/11/01
+```
+
+#### 7.4.5. 计算临时数据
+
+所在机器：eggroll node节点 
+
+目录：`/data/projects/fate/eggroll/data/IN_MEMORY`
 
 保留期限：N=7天
 
-规则：namespace以$jobid开头，清理$jobid为N天前的数据 
+规则：namespace以 `$jobid` 开头，清理 `$jobid` 为 N天前的数据
 
-参考命令：   rm -rf /data/projects/fate/eggroll/data/IN_MEMORY/20211116* 
+```bash
+rm -rf /data/projects/fate/eggroll/data/IN_MEMORY/20211116*
+```
 
-### 7.4.6 作业组件输出数据
+#### 7.4.6. 作业组件输出数据
 
-所在机器：eggroll node节点 
+所在机器：eggroll node节点 
 
 目录：/data/projects/fate/eggroll/data/LMDB
 
 保留期限：N=14天
 
-规则：namespace以output_data_$jobid开头，清理$jobid为N天前的数据 
+规则：namespace以 `output_data_$jobid` 开头，清理 `$jobid` 为N天前的数据 
 
-参考命令：   rm -rf /data/projects/fate/eggroll/data/LMDB/output_data_20211116* 
+```bash
+rm -rf /data/projects/fate/eggroll/data/LMDB/output_data_20211116*
+```

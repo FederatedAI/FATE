@@ -13,7 +13,7 @@
 | Operating System| CentOS Linux 7.2+/Ubuntu 18.04 |
 | Dependency Package| Installed automatically during deployment |
 | User| User: app, Owner: apps (the app user should be able to execute sudo su root without entering a password) |
-| File System| 1\. Mount the 500G hard disk in the `/data` directory; 2. Create the ``/data/projects` directory with the directory owner of `app:apps` |
+| File System| 1\. Mount the 500G hard disk in the `/data` directory; 2. Create the `/data/projects` directory with the directory owner of `app:apps` |
 
 # 2\. Cluster Planning
 
@@ -24,7 +24,7 @@
 
 The architecture diagram:
 
-<div style="text-align:center", align=center>
+<div style="text-align:center" align=center>
 <img src="../../images/arch_en.png" />
 </div>
 
