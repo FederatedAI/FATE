@@ -1,5 +1,9 @@
 #  FATE AllinOne部署指南 | [English](./fate-allinone_deployment_guide.md)
 
+> 警告：本文档仅用于快速开始，生产环境推荐使用其他部署方式，如 [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE)。
+>
+> 依照本文档同时部署多个 party 会导致 party 间各服务器可以通过 ssh 互相访问，从而产生严重的安全问题。
+
 1.服务器配置
 ============
 
@@ -10,7 +14,7 @@
 | 操作系统 | CentOS linux 7.2及以上/Ubuntu 18.04                          |
 |  依赖包  | （部署时自动安装）                                           |
 |   用户   | 用户：app，属主：apps（app用户需可以sudo su root而无需密码） |
-| 文件系统 | 1.  500G硬盘挂载在/ data目录下； 2.创建/ data / projects目录，目录属主为：app:apps |
+| 文件系统 | 1.  500G硬盘挂载在 `/data` 目录下； 2.创建 `/data/projects` 目录，目录属主为：`app:apps` |
 
 2.集群规划
 ==========
@@ -22,7 +26,7 @@
 
 架构图：
 
-<div style="text-align:center", align=center>
+<div style="text-align:center" align=center>
 <img src="../../images/arch_zh.png" />
 </div>
 
@@ -63,7 +67,7 @@ vim /etc/hosts
 
 192.168.0.2 VM_0_2_centos
 
-4.2 关闭selinux
+4.2 关闭selinux（不推荐）
 ---------------
 
 **在目标服务器（192.168.0.1 192.168.0.2）root用户下执行：**
@@ -101,7 +105,7 @@ ls -lrt 20-nproc.conf
 
 重新登陆，ulimit -a查看是否生效
 
-4.4 关闭防火墙(可选)
+4.4 关闭防火墙（不推荐）
 --------------
 
 **在目标服务器（192.168.0.1 192.168.0.2）root用户下执行**

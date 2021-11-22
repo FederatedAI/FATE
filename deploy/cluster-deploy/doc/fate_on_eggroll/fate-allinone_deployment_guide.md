@@ -1,5 +1,9 @@
 # FATE AllinOne Deployment Guide | [中文](./fate-allinone_deployment_guide.zh.md)
 
+> Warning: This document is designed for a quick start deployment only. Other deployment methods are recommended for production environments, such as [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE).
+>
+> The parties can access each other through ssh if you deploy multiple parties at the same time following this document. It will cause security problems.
+
 # 1\. Server Configuration
 
 | Server|                |
@@ -9,7 +13,7 @@
 | Operating System| CentOS Linux 7.2+/Ubuntu 18.04 |
 | Dependency Package| Installed automatically during deployment |
 | User| User: app, Owner: apps (the app user should be able to execute sudo su root without entering a password) |
-| File System| 1\. Mount the 500G hard disk in the /data directory; 2. Create the /data/projects directory with the directory owner of app:apps |
+| File System| 1\. Mount the 500G hard disk in the `/data` directory; 2. Create the ``/data/projects` directory with the directory owner of `app:apps` |
 
 # 2\. Cluster Planning
 
@@ -59,7 +63,7 @@ vim /etc/hosts
 
 192.168.0.2 VM\_0\_2\_centos
 
-## 4.2 Shutdown selinux
+## 4.2 Shutdown SELinux (Not Recommended)
 
 **Execute as root user on the destination server (192.168.0.1, 192.168.0.2):**
 
@@ -95,7 +99,7 @@ If this file exists: mv 20-nproc.conf 20-nproc.conf\_bak
 
 Log in again, and execute ulimit -a to check whether the change takes effect
 
-## 4.4 Turn Firewall Off (Optional)
+## 4.4 Turn Firewall Off (Not Recommended)
 
 **Execute as root user on the destination server (192.168.0.1, 192.168.0.2)**
 
