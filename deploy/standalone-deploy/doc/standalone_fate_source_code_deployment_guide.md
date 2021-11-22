@@ -125,7 +125,7 @@ python setup.py install
 Initialize ``fate flow client`''
 
 ```bash
-cd ... /... /.
+cd ../../
 flow init -c conf/service_conf.yaml
 ```
 
@@ -156,7 +156,7 @@ If it looks like this, the initialization is successful, otherwise, please check
 
    ```bash
    cd ${FATE_PROJECT_BASE}
-   bash . /python/federatedml/test/run_test.sh
+   bash python/federatedml/test/run_test.sh
    ```
 
    If successful, the screen displays a statement similar to the following:
@@ -178,8 +178,8 @@ Visualizing FATE Jobs with fateboard
 
 ```bash
 cd ${FATE_PROJECT_BASE}
-mkdir -p . /env/jdk
-cd . /env/jdk
+mkdir -p env/jdk
+cd env/jdk
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/jdk-8u192.tar.gz
 tar xzf jdk-8u192.tar.gz
 ```
