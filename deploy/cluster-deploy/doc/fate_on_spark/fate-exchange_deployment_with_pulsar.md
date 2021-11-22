@@ -20,7 +20,7 @@ proxy.fate.org | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 | ats | ats
 
 The specific architecture is shown below. The pulsar service "10000.fate.org" belongs to the organization with ID 10000, while the pulsar service "9999.fate.org" belongs to the organization with ID 9999, and the "proxy.fate.org" is the ats service, which is the center of the star network.
 <div style="text-align:center", align=center>
-<img src="... /... /images/pulsar_sni_proxy.png" />
+<img src="../../images/pulsar_sni_proxy.png" />
 </div>
 
 #### Certificate Generation
@@ -57,12 +57,12 @@ Among them.
 1. generate the directory to store the certificate file
 ```
 $ mkdir 10000.fate.org
-``` 2.
+``` 
 
 2. Enter the following command to generate the key.
 ```
 $ openssl genrsa -out 10000.fate.org/broker.key.pem 2048
-``` 3.
+``` 
 
 3. The Broker needs the key to be in PKCS 8 format, so enter the following command to convert it.
 ```
@@ -89,7 +89,6 @@ The "9999.fate.org" certificate is generated in the same way as the above steps,
 
 The following operation will default the certificate of "9999.fate.org" has been generated and placed in the directory of "9999.fate.org".
 
-Translated with www.DeepL.com/Translator (free version)
 
 ##### Generate certificate for proxy.fate.org
 The certificate for "proxy.fate.org" is generated in the same way as the above steps, the conversion in part 3 can be omitted, and the `Common Name` in step 5 is entered as **proxy.fate.org**.
@@ -98,6 +97,7 @@ The following operation will default the certificate of "proxy.fate.org" has bee
 
 #### Deploying Apache Traffic Server
 ##### Installing Apache Traffic Server
+
 1. Log in to the "proxy.fate.org" host and prepare the dependencies according to this [documentation](https://github.com/apache/trafficserver/tree/9.0.0) depending on the operating system.
 
 2. Download Apache Traffic server 9.0
@@ -110,7 +110,7 @@ $ wget https://apache.claz.org/trafficserver/trafficserver-9.0.0.tar.bz2
 $ mkdir /opt/ts
 $ tar xf trafficserver-9.0.0.tar.bz2
 $ cd trafficserver-9.0.0
-$ . /configure --prefix /opt/ts
+$ ./configure --prefix /opt/ts
 $ make                   
 $ make install
 $ echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/ts/lib' >> ~/.profile
@@ -163,7 +163,7 @@ For more detailed description of the configuration file, please refer to the [of
 Copy the certificate, private key and CA's certificate generated for the ATS in the previous step (in the "proxy.fate.org" directory) to the "/opt/proxy" directory of the host, and start the ATS with the following command:
 ```
 /opt/ts/bin/trafficserver start
-
+```
 
 #### Deploying Pulsar
 Pulsar is deployed in [pulsar_deployment_guide](common/pulsar_deployment_guide.md) is described in detail and only requires adding a certificate for the broker and opening the secure service port on top of it, as follows.
@@ -190,7 +190,7 @@ Start the pulsar service on host 9999.fate.org with the same steps.
 
 #### Update the routing table of FATE
 
-- Update the ``default`` field in ``conf/pulsar_route_table.yaml` in 10000 as follows:
+- Update the ``default`` field in `conf/pulsar_route_table.yaml` in 10000 as follows:
 ```yml
   
 10000:
@@ -227,5 +227,3 @@ When the above configuration is done, FATE will automatically populate the `host
 ```
 
 At this point, the star deployment is complete, if you need to add participants then issue a new certificate for the participant and add routes.
-
-Translated with www.DeepL.com/Translator (free version)
