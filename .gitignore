@@ -45,6 +45,7 @@ venv
 /FATE_install_*/
 /standalone_fate_install_*/
 /standalone_fate_docker_*/
+/docker_fate_base_*/
 
 # fate_test
 fate_test_config.yaml
