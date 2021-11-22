@@ -125,7 +125,6 @@ plugins:
   - mkdocs-jupyter
 
 markdown_extensions:
-  - lightgallery
   - pymdownx.snippets
   - mdx_math
   - admonition
