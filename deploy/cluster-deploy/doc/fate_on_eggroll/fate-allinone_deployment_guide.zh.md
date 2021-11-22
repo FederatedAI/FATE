@@ -63,7 +63,7 @@ vim /etc/hosts
 
 192.168.0.2 VM_0_2_centos
 
-### 4.2. 关闭selinux（不推荐）
+### 4.2. 关闭 SELinux（不推荐）
 
 **在目标服务器（192.168.0.1 192.168.0.2）root用户下执行：**
 
@@ -75,7 +75,7 @@ ubuntu系统执行：apt list --installed | grep selinux
 
 如果已安装了selinux就执行：setenforce 0
 
-### 4.3. 修改Linux系统参数
+### 4.3. 修改 Linux 系统参数
 
 **在目标服务器（192.168.0.1 192.168.0.2）root用户下执行：**
 
@@ -520,7 +520,7 @@ tail -f ./logs/deploy-mysql-host.log    （实时打印HOST端mysql的部署情�
 
 ```
 source /data/projects/fate/bin/init_env.sh
-flow test toy -gid 10000 -hid 10000 
+flow test toy -gid 10000 -hid 10000
 ```
 
 类似如下结果表示成功：
@@ -698,7 +698,7 @@ netstat -tlnp | grep 8080
 
 #### 7.4.1. fateflow作业日志
 
-所在机器：fate flow服务所在机器 
+所在机器：fate flow服务所在机器
 
 目录：`/data/projects/fate/fateflow/logs`
 
@@ -712,13 +712,13 @@ rm -rf /data/projects/fate/fateflow/logs/20211116*
 
 #### 7.4.2. fateflow系统日志
 
-所在机器：fate flow服务所在机器 
+所在机器：fate flow服务所在机器
 
 目录：`/data/projects/fate/fateflow/logs/fate_flow`
 
 保留期限：N=14天
 
-规则：以日期结尾，清理日期为 N天前的数据 
+规则：以日期结尾，清理日期为 N天前的数据
 
 ```bash
 rm -rf /data/projects/fate/fateflow/logs/fate_flow/*.2021-11-16
@@ -726,7 +726,7 @@ rm -rf /data/projects/fate/fateflow/logs/fate_flow/*.2021-11-16
 
 #### 7.4.3. EggRoll Session日志
 
-所在机器：eggroll node节点 
+所在机器：eggroll node节点
 
 目录：`/data/projects/fate/eggroll/logs/`
 
@@ -740,7 +740,7 @@ rm -rf /data/projects/fate/eggroll/logs/20211116*
 
 #### 7.4.4. EggRoll系统日志
 
-所在机器：eggroll node节点 
+所在机器：eggroll node节点
 
 目录：`/data/projects/fate/eggroll/logs/eggroll`
 
@@ -755,7 +755,7 @@ rm -rf /data/projects/fate/eggroll/logs/eggroll/2021/11/01
 
 #### 7.4.5. 计算临时数据
 
-所在机器：eggroll node节点 
+所在机器：eggroll node节点
 
 目录：`/data/projects/fate/eggroll/data/IN_MEMORY`
 
@@ -769,13 +769,13 @@ rm -rf /data/projects/fate/eggroll/data/IN_MEMORY/20211116*
 
 #### 7.4.6. 作业组件输出数据
 
-所在机器：eggroll node节点 
+所在机器：eggroll node节点
 
 目录：/data/projects/fate/eggroll/data/LMDB
 
 保留期限：N=14天
 
-规则：namespace以 `output_data_$jobid` 开头，清理 `$jobid` 为N天前的数据 
+规则：namespace以 `output_data_$jobid` 开头，清理 `$jobid` 为N天前的数据
 
 ```bash
 rm -rf /data/projects/fate/eggroll/data/LMDB/output_data_20211116*
