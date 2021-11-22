@@ -1,95 +1,4 @@
-# FATE on Spark with Pulsar 部署指南
-
-## 概述
-FATE在1.5中支持了使用Spark作为计算服务，与其配套使用的还有作为存储服务的HDFS以及作为传输服务的RabbitMQ。1.6中更新了对使用Pulsar作为了跨站点(party)数据交换代理的支持，其具体架构图如下：
-<div style="text-align:center", align=center>
-<img src="../../images/fate_on_spark_with_pulsar.png" />
-</div>
-如图所示，作为传输服务的RabbitMQ被替换成了Pulsar。但是对于FATE来说，系统中的这两种传输服务也可以同时存在，用户可以在提交任务时候指定使用哪种。
-
-## 部署与配置
-### 集群部署
-具体部署可参考[FATE ON Spark 部署指南](https://github.com/FederatedAI/FATE/blob/master/cluster-deploy/doc/fate_on_spark/fate_on_spark_deployment_guide_zh.md)，其中RabbitMQ部分可略过，取而代之的是Pulsar集群的部署，具体可参考[Pulsar集群部署](https://github.com/FederatedAI/FATE/blob/develop-1.6-pulsar/cluster-deploy/doc/fate_on_spark/pulsar_deployment_guide_zh.md).
-
-
-### 更新FATE Flow服务配置
-当spark等服务部署完毕后，fate_flow需要更新的配置有两部分，分别为：
-
-- "conf/service_conf.yaml"
-```yml
-...
-  hdfs:
-    name_node: hdfs://fate-cluster
-    # default /
-    path_prefix:
-  pulsar:
-    host: 192.168.0.1
-    port: 6650
-    mng_port: 8080
-    topic_ttl: 5
-    # default conf/pulsar_route_table.yaml
-    route_table:
-  nginx:
-    host: 127.0.0.1
-    http_port: 9300
-    grpc_port: 9310
-...
-```
-其中`pulsar.host`填写Pulsar broker所在的主机IP或域名，`pulsar.port`和`pulsar.mng_port`分别填写broker的"brokerServicePort"和"webServicePort"。
-`topic_ttl`设置topic在若干分钟无活动之后会被标记成不活跃，配合`Pulsar的brokerDeleteInactiveTopicsEnabled`功能来回收资源。
-
-- "conf/pulsar_route_table.yaml"
-```yml
-9999:
-  # host can be a domain like 9999.fate.org
-  host: 192.168.0.4
-  port: 6650
-  sslPort: 6651
-  # set proxy address for this pulsar cluster
-  proxy: ""
-
-10000:
-  # host can be a domain like 10000.fate.org
-  host: 192.168.0.3
-  port: 6650
-  sslPort: 6651
-  proxy: ""
-
-default:
-  # compose host and proxy for party that does not exist in route table
-  # in this example, the host for party 8888 will be 8888.fate.org
-  proxy: "proxy.fate.org:443"
-  domain: "fate.org"
-  port: 6650
-  sslPort: 6651
-```
-
-在这个文件中，需要填写各个参与方的pulsar服务的地址信息，对于点对点的链接，一般只需填写`host`和`port`。而`proxy`，`sslPort`和`default`字段用于支持星型组网方式，具体需要配合SSL证书使用，详情请参考下面的星型组网。
-
-### 提交任务
-用户在提交任务时可以在`config`文件中声明使用pulsar作为传输服务，例子如下:
-```json
-   "job_parameters": {
-     "common": {
-       "job_type": "train",
-       "work_mode": 1,
-       "backend": 2,
-       "spark_run": {
-         "num-executors": 1,
-         "executor-cores": 2
-       },
-       "pulsar_run": {
-         "producer": {
-            ...
-         },
-         "consumer": {
-            ...
-         }
-       }
-     }
-   }
-```
-其中`backend: 2`指定使用pulsar作为传输服务，在`pulsar_run`还可以指定创建"producer"和"consumer"时的参数，一般无需配置。至于具体可用配置请参考pulsar的python客户端中的[create_producer](https://pulsar.apache.org/api/python/2.7.0-SNAPSHOT/#pulsar.Client.create_producer)和[subscribe](https://pulsar.apache.org/api/python/2.7.0-SNAPSHOT/#pulsar.Client.subscribe)方法。
+# FATE Exchange with Pulsar 部署指南| [English](fate-exchange_deployment_with_pulsar.md)
 
 ## 星型组网
 
@@ -255,7 +164,7 @@ sni:
 ```
 
 #### 部署Pulsar
-Pulsar的部署在[pulsar_deployment_guide_zh.md](https://github.com/FederatedAI/FATE/blob/develop-1.6-pulsar/cluster-deploy/doc/fate_on_spark/pulsar_deployment_guide_zh.md)详细描述，只需要在其基础上为broker添加证书以及打开安全服务端口，具体操作如下：
+Pulsar的部署在[pulsar_deployment_guide](common/pulsar_deployment_guide.zh.md)详细描述，只需要在其基础上为broker添加证书以及打开安全服务端口，具体操作如下：
 1. 登录相应主机，把为10000.fate.org生成的证书、私钥以及CA证书拷贝到"/opt/pulsar/certs"目录下
 
 2. 修改pulsar安装目录下的conf/standalone.conf文件，增加以下内容

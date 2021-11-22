@@ -1,4 +1,4 @@
-#                     Fate AllinOne部署指南
+#  FATE AllinOne部署指南 | [English](./fate-allinone_deployment_guide.md)
 
 1.服务器配置
 ============

@@ -1,4 +1,4 @@
-# FATE AllinOne Deployment Guide
+# FATE AllinOne Deployment Guide | [中文](./fate-allinone_deployment_guide.zh.md)
 
 # 1\. Server Configuration
 
