@@ -1,0 +1,8 @@
+{
+    "engine": "PATH",
+    "namespace": "experiment",
+    "name": "mnist_images2",
+    "address": {
+        "path": "$fate_project_base/examples/data/mnist_train"
+    }
+}
