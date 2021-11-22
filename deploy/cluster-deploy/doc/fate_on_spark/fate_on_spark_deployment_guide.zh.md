@@ -303,6 +303,9 @@ sh Miniconda3-4.5.4-Linux-x86_64.sh -b -p /data/projects/fate/common/miniconda3
 /data/projects/fate/common/miniconda3/bin/pip install virtualenv-20.0.18-py2.py3-none-any.whl -f . --no-index
 
 /data/projects/fate/common/miniconda3/bin/virtualenv -p /data/projects/fate/common/miniconda3/bin/python3.6 --no-wheel --no-setuptools --no-download /data/projects/fate/common/python/venv
+
+source /data/projects/fate/common/python/venv/bin/activate
+pip install setuptools-42.0.2-py2.py3-none-any.whl
 ```
 
 ### 5.6  部署Spark & HDFS
@@ -328,6 +331,7 @@ cd /data/projects/install
 tar xf FATE_install_*.tar.gz
 cd FATE_install_*
 cp fate.env /data/projects/fate/
+cp RELEASE.md /data/projects/fate
 tar xvf bin.tar.gz -C /data/projects/fate/
 tar xvf conf.tar.gz -C /data/projects/fate/
 tar xvf build.tar.gz -C /data/projects/fate/
@@ -342,14 +346,14 @@ tar xvf proxy.tar.gz -C /data/projects/fate
 #在目标服务器（192.168.0.1 192.168.0.2）app用户下执行:
 cat >/data/projects/fate/bin/init_env.sh <<EOF
 fate_project_base=/data/projects/fate
-export FATE_PROJECT_BASE=$fate_project_base
-export FATE_DEPLOY_BASE=$fate_project_base
+export FATE_PROJECT_BASE=\$fate_project_base
+export FATE_DEPLOY_BASE=\$fate_project_base
 
 export PYTHONPATH=/data/projects/fate/fateflow/python:/data/projects/fate/fate/python
 venv=/data/projects/fate/common/python/venv
 export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
-export PATH=$PATH:$JAVA_HOME/bin
-source ${venv}/bin/activate
+export PATH=\$PATH:\$JAVA_HOME/bin
+source \${venv}/bin/activate
 export FATE_LOG_LEVEL=DEBUG
 export FATE_PROFILE_LOG_ENABLED=0
 EOF
@@ -359,8 +363,7 @@ cd /data/projects/install
 tar xvf pip-packages-fate-*.tar.gz
 source /data/projects/fate/common/python/venv/bin/activate
 cd pip-packages-fate-*
-pip install setuptools-50.3.2-py3-none-any.whl
-pip install -r /dataprojects/fate/fate/python/requirements.txt -f ./ --no-index
+pip install -r /data/projects/fate/fate/python/requirements.txt -f ./ --no-index
 cd /data/projects/fate/fate/python/fate_client
 python setup.py install
 cd /data/projects/fate/fate/python/fate_test
