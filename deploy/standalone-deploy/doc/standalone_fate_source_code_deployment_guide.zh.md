@@ -242,7 +242,7 @@ status:
   - 对于MacOS, 可以尝试[这里](https://superuser.com/questions/433746/is-there-a-fix-for-the-too-many-open-files-in-system-error-on-os-x-10-7-1)
   - 对于Linux, 可以尝试[这儿](http://woshub.com/too-many-open-files-error-linux/)
 
-- 如果在MacOS下面, 安装`gypm2`这个`python`依赖包失败的话, 尝试先安装如下基础库后, 再安装依赖包
+- 如果在MacOS下面, 安装`gmpy2`这个`python`依赖包失败的话, 尝试先安装如下基础库后, 再安装依赖包
 
    ```bash
    brew install gmp mpfr libmpc
