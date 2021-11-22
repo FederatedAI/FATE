@@ -3,7 +3,5 @@
     "table_name": "breast_hetero_guest",
     "namespace": "experiment",
     "head": 1,
-    "partition": 8,
-    "work_mode": 0,
-    "backend": 0
+    "partition": 8
 }

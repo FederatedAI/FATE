@@ -156,7 +156,7 @@ docker pull federatedai/standalone_fate ${version}
    there are 0 failed test
    ```
 
-有些用例算法在 [examples](../../../examples/dsl/v2) 文件夹下, 请尝试使用。
+有些用例算法在 [examples](../../examples/dsl/v2) 文件夹下, 请尝试使用。
 
 您还可以通过浏览器体验算法过程看板，访问：Http://${ip}:8080, ip为`127.0.0.1`或本机实际ip
 
