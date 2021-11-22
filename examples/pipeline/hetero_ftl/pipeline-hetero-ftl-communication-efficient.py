@@ -72,24 +72,6 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline.fit()
 
-    """
-    # predict
-
-    pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
-                     feed_dict={input_0:
-                                    {"guest":
-                                         {9999: guest_train_data},
-                                     "host": {
-                                         10000: host_train_data[0]
-                                     }
-                                     }
-                                })
-            
-
-    with open("output.pkl", "wb") as fout:
-        fout.write(pipeline.dump())
-    """
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("PIPELINE DEMO")

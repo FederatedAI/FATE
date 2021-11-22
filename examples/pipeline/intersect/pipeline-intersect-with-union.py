@@ -50,13 +50,22 @@ def main(config="../../config.yaml", namespace=""):
     # configure Reader for host
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
+    param = {
+        "intersect_method": "raw",
+        "sync_intersect_ids": True,
+        "only_output_key": True,
+        "raw_params": {
+            "use_hash": True,
+            "hash_method": "sha256",
+            "salt": "12345",
+            "base64": True,
+            "join_role": "host"
+        }
+    }
     # define Intersection components
     intersections = []
     for i in range(200):
-        intersection_tmp = Intersection(name="intersection_" + str(i))
-        intersection_tmp.get_party_instance(role="guest", party_id=guest).component_param(intersect_method="raw",
-                                                                                          sync_intersect_ids=True,
-                                                                                          only_output_key=True)
+        intersection_tmp = Intersection(name="intersection_" + str(i), **param)
         intersections.append(intersection_tmp)
 
     union_0 = Union(name="union_0")

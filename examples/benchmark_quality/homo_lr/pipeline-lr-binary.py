@@ -40,14 +40,6 @@ def main(config="../../config.yaml", param="./breast_lr_config.yaml", namespace=
         param = JobConfig.load_from_file(param)
 
     assert isinstance(param, dict)
-    """
-    guest = 9999
-    host = 10000
-    arbiter = 9999
-    backend = 0
-    work_mode = 1
-    param = {"penalty": "L2", "max_iter": 5}
-    """
     data_set = param.get("data_guest").split('/')[-1]
     if data_set == "default_credit_homo_guest.csv":
         guest_data_table = 'default_credit_guest'
