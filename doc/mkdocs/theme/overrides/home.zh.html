@@ -1,88 +1,33 @@
-{% extends "base.html" %}
 
-<!-- Render landing page under tabs -->
-{% block tabs %}
-{{ super() }}
-
-<!-- Additional styles for landing page -->
-<style>
-
-  /* Application header should be static for the landing page */
-  .md-header {
-    position: initial;
-  }
-
-  /* Remove spacing, as we cannot hide it completely */
-  .md-main__inner {
-    margin: 0;
-  }
-
-  /* Hide main content for now */
-  .md-content {
-    display: none;
-  }
-
-  /* Hide table of contents */
-  @media screen and (min-width: 60em) {
-    .md-sidebar--secondary {
-      display: none;
-    }
-  }
-
-  /* Hide navigation */
-  @media screen and (min-width: 76.25em) {
-    .md-sidebar--primary {
-      display: none;
-    }
-  }
-</style>
-
-<!-- landing page for landing page -->
-<section class="tx-container">
-  <div class="md-grid md-typeset">
-    <div class="tx-landing">
-      <!-- landing image -->
-      <div class="tx-landing__image">
-        <!-- <script src="../mkdocs/js/lottie-player.js"></script>
-        <lottie-player id="lottieAnimation" background="transparent"
-                       style="max-width: 100%; height: auto;"
-                       speed="1" loop autoplay>
-        </lottie-player>
-        <script>
-          let animation = document.getElementById("lottieAnimation");
-          animation.load("../mkdocs/assets/animations/ml.json");
-        </script> -->
+{#-
+    This file was automatically generated - do not edit
+  -#}
+  {% extends "overrides/main.html" %}
+  {% block tabs %}
+    {{ super() }}
+    <style>.md-header{position:initial}.md-main__inner{margin:0}.md-content{display:none}@media screen and (min-width:60em){.md-sidebar--secondary{display:none}}@media screen and (min-width:76.25em){.md-sidebar--primary{display:none}}</style>
+    <section class="mdx-container">
+      <div class="md-grid md-typeset">
+        <div class="mdx-hero">
+          <div class="mdx-hero__image">
+            <img src="../images/illustration.png" alt="" width="1659" height="1200" draggable="false">
+          </div>
+          <div class="mdx-hero__content">
+            <h1>一个工业级联邦学习框架</h1>
+            <p>FATE 系统实现了安全的计算协议，基于同态加密与多方安全计算(MPC)技术。FATE 系统支持联邦学习框架， 并内置保护线性模型，树模型以及神经网络在内的多种机器学习算法。
+              FATE 拥抱开源，于 2019 年 2 月首次在GitHub上开源，而后于 2019 年 6 月捐献给了Linux Foundation。</p> 
+            <p>FATE 致力于让联邦学习技术的创新和应用更简单!</p>
+            <a href="{{ page.next_page.url | url }}" title="{{ page.next_page.title | e }}" class="md-button md-button--primary">
+              了解更多
+            </a>
+            <a href="{{ 'https://github.com/FederatedAI/FATE' | url }}" title="GitHub" class="md-button">
+              代码仓库
+            </a>
+          </div>
+        </div>
       </div>
-
-      <!-- landing content -->
-      <div class="tx-landing__content">
-        <h1>安全，隐私保护的机器学习</h1>
-        <p>FATE 基于
-          <ul>
-            <li>同态加密</li>
-            <li>多方安全计算(MPC)</li>
-          </ul>
-        </p>
-        <p>实现了安全计算协议，支持
-          <ul>
-            <li>联邦学习架构</li>
-            <li>内置多种安全计算协议实现的机器学习算法，包括<em>逻辑回归</em>，
-              <em>树模型</em>，
-              <em>深度学习</em> 以及
-              <em>迁移学习</em>
-            </li>  
-          </ul>  
-        </p>
-        <a href="/tutorial" title="Tutorial" class="md-button"> Learn More</a>
-        <a href="https://github.com/FederatedAI/FATE" title="GitHub" class="md-button">GitHub</a>
-      </div>
-    </div>
-  </div>
-</section>
-{% endblock %}
-
-<!-- Content -->
-{% block content %}{% endblock %}
-
-<!-- Application footer -->
-{% block footer %}{% endblock %}
+    </section>
+  {% endblock %}
+  {% block content %}{% endblock %}
+  {% block footer %}{% endblock %}
+  
