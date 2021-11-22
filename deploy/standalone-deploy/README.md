@@ -1,5 +1,7 @@
 # FATE Standalone Deployment Guide
 
+[中文](README.zh.md)
+
 ## 1. Description
 
 Server Configuration.
