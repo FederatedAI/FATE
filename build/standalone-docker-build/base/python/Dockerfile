@@ -39,7 +39,7 @@ USER root
 WORKDIR /data/projects/fate
 ENV WORKDIR /data/projects/fate
 
-COPY requirements.txt install_os_dependencies.sh init.sh *.repo ${WORKDIR}
+COPY requirements.txt install_os_dependencies.sh init.sh *.repo ${WORKDIR}/
 RUN rm /bin/sh && ln -sf /bin/bash /bin/sh
 
 RUN sh ./init.sh ${repo_file}
