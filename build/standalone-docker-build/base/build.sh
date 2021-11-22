@@ -35,7 +35,11 @@ build_python() {
 
   cd ${source_dir}
 
-  dest_md5=`md5 ./python/requirements.txt | awk '{print $NF}'`
+  if [[ ${kernel} == "Darwin" ]];then
+    dest_md5=`md5 ./python/requirements.txt | awk '{print $NF}'`
+  else
+    dest_md5=`md5sum ./python/requirements.txt | awk '{print $1}'`
+  fi
   image_id=`docker images -q ${image_path}`
   if_build_python_base=1
   if [[ -n ${image_id} ]];then
@@ -56,9 +60,9 @@ build_python() {
   if [[ ${if_build_python_base} -eq 1 ]];then
     echo "[INFO] start build ${module} base image"
     cp ./python/requirements.txt \
-       ./bin/install_os_dependencies.sh \
-       ./build/standalone-docker-build/base/python/init.sh \
-       ./build/standalone-docker-build/base/python/Dockerfile ${package_dir}
+      ./bin/install_os_dependencies.sh \
+      ./build/standalone-docker-build/base/python/init.sh \
+      ./build/standalone-docker-build/base/python/Dockerfile ${package_dir}
     if [[ -f ${repo_file_path} ]];then
       cp ${repo_file_path} ${package_dir}/CentOS-Base.repo
       repo_file="CentOS-Base.repo"
@@ -66,11 +70,11 @@ build_python() {
       repo_file=""
     fi
     cd ${package_dir}
-    docker build -f ./Dockerfile -t ${image_path} . \
-           --build-arg source_dir=${source_dir} \
-           --build-arg pip_index_url=${pip_index_url} \
-           --build-arg repo_file=${repo_file} \
-           --label python-requirements-hash="md5:"${dest_md5}
+    docker build -t ${image_path} . \
+                --build-arg source_dir=${source_dir} \
+                --build-arg pip_index_url=${pip_index_url} \
+                --build-arg repo_file=${repo_file} \
+                --label python-requirements-hash="md5:"${dest_md5}
     echo "[INFO] build ${module} base image done, status code: ${?}"
   else
     echo "[INFO] pass build ${module} base image"

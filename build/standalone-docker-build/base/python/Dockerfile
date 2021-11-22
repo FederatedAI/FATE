@@ -39,7 +39,7 @@ USER root
 WORKDIR /data/projects/fate
 ENV WORKDIR /data/projects/fate
 
-COPY requirements.txt install_os_dependencies.sh init.sh ${WORKDIR}
+COPY requirements.txt install_os_dependencies.sh init.sh *.repo ${WORKDIR}
 RUN rm /bin/sh && ln -sf /bin/bash /bin/sh
 
 RUN sh ./init.sh ${repo_file}
@@ -49,3 +49,5 @@ RUN if [[ -z ${pip_index_url} ]]; then pip install --upgrade pip && pip install 
     else pip_index_host=$(echo ${pip_index_url} | sed "s#http.*://##g" | sed "s#/.*##g") && \
     pip install --upgrade pip -i ${pip_index_url} --trusted-host ${pip_index_host} && \
     pip install -r ./requirements.txt -i ${pip_index_url} --trusted-host ${pip_index_host};fi
+# clean
+RUN rm -rf requirements.txt install_os_dependencies.sh init.sh *.repo
