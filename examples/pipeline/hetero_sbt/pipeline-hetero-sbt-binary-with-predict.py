@@ -110,6 +110,10 @@ def main(config="../../config.yaml", namespace=""):
 
     # run predict model
     predict_pipeline.predict()
+    predict_result = predict_pipeline.get_component("hetero_secure_boost_0").get_output_data()
+    print("Showing 10 data of predict result")
+    for ret in predict_result["data"][:10]:
+        print (ret)
 
 
 if __name__ == "__main__":

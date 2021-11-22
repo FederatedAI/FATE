@@ -20,13 +20,14 @@ set -e
 source_dir=$(cd `dirname $0`; cd ../;cd ../;pwd)
 echo "[INFO] source dir: ${source_dir}"
 cd ${source_dir}
-source ./build/common/var.sh
+source ./bin/common.sh
 
 if [[ -n ${1} ]]; then
     version_tag=$1
 else
     version_tag="rc"
 fi
+replace_repo_file=$2
 
 version=`grep "FATE=" fate.env | awk -F '=' '{print $2}'`
 standalone_install_package_dir_name="standalone_fate_install_${version}_${version_tag}"
@@ -35,19 +36,26 @@ standalone_install_package_dir=${source_dir}/${standalone_install_package_dir_na
 package_dir_name="standalone_fate_docker_${version}_${version_tag}"
 package_dir=${source_dir}/${package_dir_name}
 
+image_namespace="federatedai"
+image_name="standalone_fate"
 if [[ ${version_tag} == ${RELEASE_VERSION_TAG_NAME} ]];then
   image_tag=${version}
 else
   image_tag="${version}-${version_tag}"
 fi
+image_path=${image_namespace}/${image_name}:${image_tag}
 
 echo "[INFO] build info"
 echo "[INFO] version: "${version}
 echo "[INFO] version tag: "${version_tag}
+echo "[INFO] replace repo file: "${replace_repo_file}
+echo "[INFO] image namespace: "${image_namespace}
+echo "[INFO] image name: "${image_name}
 echo "[INFO] image tag: "${image_tag}
+echo "[INFO] image path: "${image_path}
 echo "[INFO] package output dir is "${package_dir}
 
-rm -rf ${package_dir} ${package_dir}_${version_tag}".tar.gz"
+rm -rf ${package_dir}
 mkdir -p ${package_dir}
 
 build() {
@@ -74,20 +82,24 @@ build() {
   echo "[INFO] get standalone install package done"
 
   cd ${workdir}
+  cp ${source_dir}/build/standalone-docker-build/init.sh ./
+  if [[ -f ${replace_repo_file} ]];then
+    cp ${replace_repo_file} ./CentOS-Base.repo
+  fi
   tar -cf ../fate.tar ./*
   cd ../
 
-  a=`docker images | grep "fate" | grep "${image_tag}" | wc -l`
+  a=`docker images | grep "${image_namespace}/${image_name}" | grep "${image_tag} " | wc -l`
   if [[ a -ne 0 ]];then
-    docker rmi fate:${image_tag}
+    docker rmi ${image_path}
     if [[ $? -eq 0 ]];then
-      echo "rm image fate:${image_tag}"
+      echo "rm image ${image_path}"
     else
-      echo "please rm image fate:${image_tag}"
+      echo "please rm image ${image_path}"
       exit 1
     fi
   fi
-  docker build -t fate:${image_tag} .
+  docker build -t ${image_path} .
 
 }
 
@@ -99,11 +111,11 @@ packaging() {
     rm -rf ${image_tar}
   fi
 
-  docker save fate:${image_tag} -o ${image_tar}
+  docker save ${image_path} -o ${image_tar}
 }
 
 usage() {
-    echo "usage: $0 {version_tag}"
+    echo "usage: $0 {version_tag} {replace_repo_file}"
 }
 
 

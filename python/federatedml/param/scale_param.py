@@ -66,8 +66,7 @@ class ScaleParam(BaseParam):
     def __init__(self, method="standard_scale", mode="normal", scale_col_indexes=-1, scale_names=None, feat_upper=None, feat_lower=None,
                  with_mean=True, with_std=True, need_run=True):
         super().__init__()
-        if scale_names is None:
-            scale_names = []
+        self.scale_names = [] if scale_names is None else scale_names
 
         self.method = method
         self.mode = mode
@@ -75,7 +74,6 @@ class ScaleParam(BaseParam):
         # LOGGER.debug("self.feat_upper:{}, type:{}".format(self.feat_upper, type(self.feat_upper)))
         self.feat_lower = feat_lower
         self.scale_col_indexes = scale_col_indexes
-        self.scale_names = scale_names
 
         self.with_mean = with_mean
         self.with_std = with_std
@@ -102,6 +100,8 @@ class ScaleParam(BaseParam):
         if self.scale_col_indexes != -1  and not isinstance(self.scale_col_indexes, list):
             raise ValueError("scale_col_indexes is should be -1 or a list")
 
+        if self.scale_names is None:
+            self.scale_names = []
         if not isinstance(self.scale_names, list):
             raise ValueError("scale_names is should be a list of string")
         else:

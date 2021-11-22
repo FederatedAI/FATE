@@ -317,7 +317,7 @@ class Imputer(object):
         Apply imputer for input data
         Parameters
         ----------
-        data: DTable, each data's value should be list
+        data: Table, each data's value should be list
         replace_method: str, the strategy of imputer, like min, max, mean or designated and so on. Default None
         replace_value: str, if replace_method is designated, you should assign the replace_value which will be used to replace the value in imputer_value_list
         output_format: str, the output data format. The output data can be 'str', 'int', 'float'. Default origin, the original format as input data
@@ -367,7 +367,7 @@ class Imputer(object):
         Transform input data using Imputer with fit results
         Parameters
         ----------
-        data: DTable, each data's value should be list
+        data: Table, each data's value should be list
         transform_value:
         output_format: str, the output data format. The output data can be 'str', 'int', 'float'. Default origin, the original format as input data
 

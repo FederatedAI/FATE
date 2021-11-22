@@ -3,7 +3,5 @@
     "table_name": "tag_value_1",
     "namespace": "experiment",
     "head": 0,
-    "partition": 8,
-    "work_mode": 0,
-    "backend": 0
+    "partition": 8
 }

@@ -32,7 +32,7 @@ def empty_table_detection(data_instances):
 def empty_feature_detection(data_instances):
     is_empty_feature = data_overview.is_empty_feature(data_instances)
     if is_empty_feature:
-        raise ValueError(f"Number of features of DTable is 0: {data_instances}")
+        raise ValueError(f"Number of features of Table is 0: {data_instances}")
 
 
 def column_gathering(iterable, ):

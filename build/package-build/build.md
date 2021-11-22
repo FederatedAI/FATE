@@ -1,4 +1,3 @@
-
 # FATE Packages Build Guide
 
 [TOC]
@@ -19,7 +18,7 @@
 git clone https://github.com/FederatedAI/FATE.git -b $branch --recurse-submodules --depth=1
 ```
 
-Please set the **branch** and the **version_tag**.
+Please set the **branch** parameter, if you use a release branch, then **branch** is v`version number`, e.g. `v1.7.0`
 The **depth** parameter represents the code that only gets the latest commit, which can speed up the clone.
 
 ### 2.2 Get code from Gitee(Try Gitee when you can't connect to Github for code)
@@ -33,7 +32,7 @@ cd FATE
 bash build/package-build/build.sh ${version_tag} all
 ```
 
-The **all** means that modules needs to be deployed, all means all, supports all, python, fateboard, eggroll
+The **all** means that modules needs to be deployed, all means all, supports all, fateflow fateboard eggroll examples
 
 ## 4. Output
 
@@ -58,7 +57,7 @@ You can see the following package:
 | deploy.tar.gz    | deploy scripts                                            |
 | examples.tar.gz  | some algorithm test examples                              |
 | fate.tar.gz      | include federatedml and fate arch                         |
-| fateflow.tar.gz  | include fateflow                                          |
+| fateflow.tar.gz  | fateflow packages                                         |
 | fateboard.tar.gz | fateboard packages                                        |
 | eggroll.tar.gz   | eggroll cluster: cluster manager, node manager, rollsiter |
 | fate.env         | settings for version                                      |
@@ -87,7 +86,7 @@ You can use it like:
 pip install -r FATE/python/requirements.txt --no-index -f FATE_install_${version}_${version_tag}/pypi
 ```
 
-**Ensure that the operating system on which the dependency packages are made and the operating system on which the dependency packages will be installed**
+**Ensure that the operating system on which the dependency packages are made and the operating system on which the dependency packages will be installed are the same**
 **Don't forget to set the value of ${version}**
 
 ## 7. Make python environment install package(Optional)

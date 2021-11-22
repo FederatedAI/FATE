@@ -35,6 +35,7 @@ to lead FATE open-source community, with members from major domestic cloud compu
 - [Train & Predict Hetero SecureBoost with FATE-Pipeline](./doc/tutorial/pipeline/pipeline_tutorial_hetero_sbt.ipynb)
 - [Build Homo NN model with FATE-Pipeline](doc/tutorial/pipeline/pipeline_tutorial_homo_nn.ipynb)
 - [Run Job with DSL json conf](doc/tutorial/dsl_conf/dsl_conf_tutorial.md)
+- [More Tutorials...](doc/tutorial)
 
 ## Documentation 
 
@@ -45,17 +46,6 @@ to lead FATE open-source community, with members from major domestic cloud compu
 - [Algorithm Parameters](./python/federatedml/param)
 - [Paper & Conference](./doc/resources/README.md)
 
-### Association Repository
-
-- [FATE-Flow](https://github.com/FederatedAI/FATE-Flow)
-- [FATE-Board](https://github.com/FederatedAI/FATE-Board)
-- [FATE-Serving](https://github.com/FederatedAI/FATE-Serving)
-- [FATE-Cloud](https://github.com/FederatedAI/FATE-Cloud)
-- [FedVision](https://github.com/FederatedAI/FedVision)
-- [EggRoll](https://github.com/WeBankFinTech/eggroll)
-- [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE)
-- [KubeFATE](https://github.com/FederatedAI/KubeFATE)
-
 ### Contribute to FATE
 
 - [develop guide](doc/develop/develop_guide.md)
@@ -65,13 +55,24 @@ to lead FATE open-source community, with members from major domestic cloud compu
 - [Computing API](doc/api/computing.md)
 - [Federation API](./doc/api/federation.md)
 - [Flow SDK API](doc/api/fate_client/flow_sdk.md)
-- [Flow Client](https://github.com/FederatedAI/FATE-Flow/blob/develop-1.7.0/doc/fate_flow_client.md)
+- [Flow Client](https://fate-flow.readthedocs.io/en/latest/en/fate_flow_client/)
 - [FATE Pipeline](doc/api/fate_client/pipeline.md)
 - [FATE Test](./doc/tutorial/fate_test_tutorial.md)
 - [DSL Conf Setting Guide](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.md)
 
 ### Online Courses
 - [Bilibili: @FATEFedAI](https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)
+
+## Association Repository
+
+- [FATE-Flow](https://github.com/FederatedAI/FATE-Flow)
+- [FATE-Board](https://github.com/FederatedAI/FATE-Board)
+- [FATE-Serving](https://github.com/FederatedAI/FATE-Serving)
+- [FATE-Cloud](https://github.com/FederatedAI/FATE-Cloud)
+- [FedVision](https://github.com/FederatedAI/FedVision)
+- [EggRoll](https://github.com/WeBankFinTech/eggroll)
+- [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE)
+- [KubeFATE](https://github.com/FederatedAI/KubeFATE)
 
 ## Getting Involved
 

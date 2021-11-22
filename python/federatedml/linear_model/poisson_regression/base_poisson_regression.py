@@ -58,7 +58,7 @@ class BasePoissonRegression(BaseLinearModel):
         return data_instance without exposure
         Parameters
         ----------
-        data_instance: DTable of Instances, input data
+        data_instance: Table of Instances, input data
         exposure_index: column index of exposure variable
         """
         if exposure_index == -1:
@@ -75,7 +75,7 @@ class BasePoissonRegression(BaseLinearModel):
         return exposure of a given data_instance
         Parameters
         ----------
-        data_instance: DTable of Instances, input data
+        data_instance: Table of Instances, input data
         exposure_index: column index of exposure variable
         """
         if exposure_index == -1:

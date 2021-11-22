@@ -2,12 +2,12 @@
 
 Logistic Regression(LR) is a widely used statistic model for
 classification problems. FATE provided two kinds of federated LR:
-Homogeneous LR (HomoLR) and Heterogeneous LR (HeteroLR).
+Homogeneous LR (HomoLR) and Heterogeneous LR (HeteroLR and Hetero_SSHE_LR).
 
 We simplified the federation process into three parties. Party A
 represents Guest， party B represents Host while party C, which also
 known as "Arbiter", is a third party that holds a private key for each
-party and work as a coordinator.
+party and work as a coordinator. (Hetero_SSHE_LR have not "Arbiter" role)
 
 ## Homogeneous LR
 
@@ -18,8 +18,7 @@ available for this host any more.
 
 ![Figure 1 (Federated HomoLR Principle)](../images/HomoLR.png)
 
-The HomoLR process is shown in `lr figure 1`. Models of Party A and
-Party B have the same structure. In each iteration, each party trains
+Models of Party A and Party B have the same structure. In each iteration, each party trains
 its model on its own data. After that, all parties upload their
 encrypted (or plain, depends on your configuration) gradients to
 arbiter. The arbiter aggregates these gradients to form a federated
@@ -27,7 +26,7 @@ gradient that will then be distributed to all parties for updating their
 local models. Similar to traditional LR, the training process will stop
 when the federated model converges or the whole training process reaches
 a predefined max-iteration threshold. More details is available in this
-[\[paper\]](https://dl.acm.org/citation.cfm?id=3133982)
+[Practical Secure Aggregation for Privacy-Preserving Machine Learning](https://dl.acm.org/citation.cfm?id=3133982).
 
 ## Heterogeneous LR
 
@@ -38,15 +37,13 @@ samples stored in databases of the two involved parties. The federated
 model is built based on those overlapping samples. The whole sample
 alignment process will **not** leak confidential information (e.g.,
 sample ids) on the two parties since it is conducted in an encrypted
-way. Check out [\[paper 1\]](https://arxiv.org/abs/1711.10677) for more
-details.
+way. 
 
 ![Figure 2 (Federated HeteroLR Principle)](../images/HeteroLR.png)
 
 In the training process, party A and party B compute out the elements
 needed for final gradients. Arbiter aggregate them and compute out the
-gradient and then transfer back to each party. Check out the
-[\[paper 2\]](https://arxiv.org/abs/1711.10677) for more details.
+gradient and then transfer back to each party. More details is available in this: [Private federated learning on vertically partitioned data via entity resolution and additively homomorphic encryption](https://arxiv.org/abs/1711.10677).
 
 ## Multi-host hetero-lr
 
@@ -58,6 +55,25 @@ convergence decision is happening in Arbiter.
 
 ![Figure 3 (Federated Multi-host HeteroLR
 Principle)](../images/hetero_lr_multi_host.png)
+
+# Heterogeneous SSHE Logistic Regression 
+FATE implements a heterogeneous logistic regression without arbiter role
+called for hetero_sshe_lr. More details is available in this
+following paper: [When Homomorphic Encryption Marries Secret Sharing:
+Secure Large-Scale Sparse Logistic Regression and Applications
+in Risk Control](https://arxiv.org/pdf/2008.08753.pdf).
+We have also made some optimization so that the code may not exactly
+same with this paper.
+The training process could be described as the
+following: forward and backward process.
+![Figure 3 (forward)](../images/sshe-lr_forward.png)
+![Figure 4 (backward)](../images/sshe-lr_backward.png)
+
+The training process is based secure matrix multiplication protocol(SMM), 
+which HE and Secret-Sharing hybrid protocol is included.
+![Figure 5 (SMM)](../images/secure_matrix_multiplication.png)
+
+
 
 <!-- mkdocs
 ## Param
@@ -100,8 +116,8 @@ Principle)](../images/hetero_lr_multi_host.png)
 >     >     Nesterov Momentum
 >     > 
 >     >   - sqn  
->     >     stochastic quansi-newton. The algorithm details can refer to
->     >     [\[this paper\]](https://arxiv.org/abs/1912.00513v2)
+>     >     stochastic quansi-newton. More details is available in this
+>     >     [A Quasi-Newton Method Based Vertical Federated Learning Framework for Logistic Regression](https://arxiv.org/abs/1912.00513v2).
 > 
 > 5.  Three converge criteria:
 >     
@@ -115,9 +131,7 @@ Principle)](../images/hetero_lr_multi_host.png)
 >     >   - weight\_diff  
 >     >     use difference of model weights
 > 
-> 6.  Support multi-host modeling task. The detail configuration for
->     multi-host modeling task is located in
->     <span class="title-ref">doc/dsl\_conf\_setting\_guide.md</span>
+> 6.  Support multi-host modeling task.
 > 
 > 7.  Support validation for every arbitrary iterations
 > 
@@ -138,8 +152,8 @@ Principle)](../images/hetero_lr_multi_host.png)
 > 
 > 3.  Support aggregate for every arbitrary iterations.
 > 
-> 4.  Support FedProx mechanism. For more details, please refer to
->     [this paper](https://arxiv.org/abs/1812.06127)
+> 4.  Support FedProx mechanism. More details is available in this
+>     [Federated Optimization in Heterogeneous Networks](https://arxiv.org/abs/1812.06127).
 
   - Hetero-LR extra features
 
@@ -150,4 +164,11 @@ Principle)](../images/hetero_lr_multi_host.png)
 > 4.  Support sparse format data
 > 5.  Support early-stopping mechanism
 > 6.  Support setting arbitrary metrics for validation during training
-> 7.  Support stepwise. For details on stepwise mode, please refer [here](../stepwise.md).
+> 7.  Support stepwise. For details on stepwise mode, please refer [stepwise](stepwise.md).
+
+ - Hetero-SSHE-LR extra features
+  > 1. Support different encrypt-mode to balance speed and security
+  > 2. Support OneVeRest
+  > 3. Support early-stopping mechanism
+  > 4. Support setting arbitrary metrics for validation during training
+  > 5. Support model encryption with host model

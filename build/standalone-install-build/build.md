@@ -19,7 +19,7 @@
 git clone https://github.com/FederatedAI/FATE.git -b $branch --recurse-submodules --depth=1
 ```
 
-Please set the **branch** and the **version_tag**.
+Please set the **branch** parameter, if you use a release branch, then **branch** is v`version number`, e.g. `v1.7.0`
 The **depth** parameter represents the code that only gets the latest commit, which can speed up the clone.
 
 ### 2.2 Get code from Gitee(Try Gitee when you can't connect to Github for code)
@@ -50,21 +50,21 @@ ls -lrt standalone_fate_install_${version}_${version_tag}
 
 You can see the following package:
 
-| Name             | Details                                                   |
-| ---------------- | --------------------------------------------------------- |
-| env              | environment installation packages: python36, pypi, jdk    |
-| init.sh          | fate standalone initialization script                     |
-| bin              | some scripts                                              |
-| conf             | some configuration files                                  |
-| examples         | some algorithm test examples                              |
-| fate             | include federatedml and fate arch                         |
-| fateflow         | include fateflow                                          |
-| fateboard        | fateboard packages                                        |
-| fate.env         | settings for version                                      |
-| requirements.txt | necessary dependency for python environment               |
-| RELEASE.md       | release document                                          |
-| packages_md5.txt | md5 numbers for each package                              |
+| Name             | Details                                                |
+| ---------------- | ------------------------------------------------------ |
+| env              | environment installation packages: python36, pypi, jdk |
+| init.sh          | fate standalone initialization script                  |
+| bin              | some scripts                                           |
+| conf             | some configuration files                               |
+| examples         | some algorithm test examples                           |
+| fate             | include federatedml and fate arch                      |
+| fateflow         | include fateflow                                       |
+| fateboard        | fateboard packages                                     |
+| fate.env         | settings for version                                   |
+| requirements.txt | necessary dependency for python environment            |
+| RELEASE.md       | release document                                       |
+| packages_md5.txt | md5 numbers for each package                           |
 
 ## 6. Using Standalone Install Package Install FATE Stanadlone
 
-Please reference [Fate-standalone_deployment_guide](../deploy/../../deploy/standalone-deploy/doc/Fate-standalone_deployment_guide.md)
+Please reference [standalone fate deployment guide](../deploy/../../deploy/standalone-deploy/README.md)

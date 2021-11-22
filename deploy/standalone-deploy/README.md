@@ -1,168 +1,165 @@
-## ****FATE Stand-alone Deployment Guide****
-
-Server Configuration;
-
-| **Quantity**           |    1                                                  |
-| ---------------------- | ----------------------------------------------------- |
-| **Configuration**      | 8 core / 16G memory / 500G hard disk                  |
-| **Operating System**   | Version: CentOS Linux release 7                       |
-| **Users**              | User: app owner:apps                                  |
-
-The stand-alone version provides 2 deployment methods, which can be selected according to your actual situation:
-
-- Install FATE using Docker  *(Recommended)* 
-
-- Install FATE  in Host 
-
-You can also refer to [Chinese guide](doc/Fate-standalone_deployment_guide_zh.md) 
+# FATE Standalone Deployment Guide | [中文](README.zh.md)
 
 
-#### 1) Install FATE using Docker*(Recommended)* 
+## 1. Description
 
-It is strongly recommended to use docker, which greatly reduces the possibility of encountering problems.
+Server Configuration.
 
-1. The host needs to be able to access the external network,pull the installation package and docker image from the public network.
+| **Number** | 1 |
+| ------------ | ----------------------------------------------------- |
+| **Configuration** | 8 core / 16G memory / 500G hard disk |
+| **OS** | Version: CentOS Linux release 7 |
+| **User** | User: app owner:apps |
 
-2. Dependent on [docker](https://download.docker.com/linux/) , docker recommended version is 18.09, you can use the following command to verify the docker environment: docker --version , docker start and stop and other Please refer to: docker --help.
+The standalone version provides 3 deployment methods, which can be selected according to the actual situation.
 
-3. Keep the 8080 port accessible before executing. If you want to execute again, please delete the previous container and image with the docker command.
+- Install FATE using Docker image
 
-   please follow the below step:
+- Install FATE on the host (using the compiled installer)
 
-    Please replace ${version} below with the real version you want to use， refer to version of FATE in [fate.env](../../fate.env).
+- Install FATE in the host (based on the source code compiled by the package)
 
-```
-#Get code
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone_fate_${version}.tar.gz
-tar -xzvf docker_standalone_fate_${version}.tar.gz
+## 2. Install FATE using a Docker image (recommended)
 
-#Execute the command
-cd docker_standalone_fate_${version}
-bash install_standalone_docker.sh
+It is recommended to use a docker image, which greatly reduces the possibility of encountering problems
+
+Note that the ${version} in the following example, please replace it with the actual version number, refer to [fate.env](../../fate.env) file for the FATE version!
+
+### 2.1 Pre-deployment environment check
+
+- The host needs to be able to access the external network to pull installation packages and docker images from the public network.
+- Dependent on [docker](https://download.docker.com/linux/), the recommended version of docker is 18.09. You can verify the docker environment with the following command: docker --version,docker start-stop and other operations please refer to docker --help
+- Before executing, please check if 8080 is already occupied. If you want to execute it again, please use the docker command to delete the previous containers and images.
+
+### 2.2 Pulling mirrors
+
+#### 2.2.1 Via the public mirror service
+
+```bash
+docker pull federatedai/standalone_fate ${version}
 ```
 
-4. Test
+#### 2.2.2 Via mirror packages
 
-   - Unit Test
+   ```bash
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/standalone_fate_docker_image_${version}_release.tar
 
-   ```
-   CONTAINER_ID=`docker ps -aqf "name=fate"`
-   docker exec -t -i ${CONTAINER_ID} bash
-   bash ./python/federatedml/test/run_test.sh
-   ```
+   docker load < standalone_fate_docker_image_${version}_release.tar
 
-   If success,  the screen shows like blow:
-
-   ```
-   there are 0 failed test
+   docker images | grep federatedai/standalone_fate
    ```
 
-   - Toy_example Test
+   If you can see the image corresponding to ${version}, the image is downloaded successfully
 
-   ```
-   CONTAINER_ID=`docker ps -aqf "name=fate"`
-   docker exec -t -i ${CONTAINER_ID} bash
-   python ./examples/toy_example/run_toy_example.py 10000 10000 0
-   ```
+### 2.3 Boot
 
-   If success,  the screen shows like blow:
-
-   ```
-   success to calculate secure_sum, it is 2000.0
+   ```bash
+   docker run -d --name standalone_fate -p 8080:8080 federatedai/standalone_fate:${version}
+   docker ps -a | grep standalone_fate
    ```
 
-5. Install FATE-Client and FATE-Test
+   If you can see that the container corresponding to ${version} is running, it starts successfully
 
-   To conveniently interact with FATE, we provide tools [FATE-Client](../../python/fate_client) and [FATE-Test](../../python/fate_test).
+### 2.4 Testing
 
-   Install FATE-Client and FATE-Test with the following commands in the container:
+   - Enter the container
 
+   ```bash
+   docker exec -it $(docker ps -aqf "name=standalone_fate") bash
    ```
-    pip install fate-client
-    pip install fate-test
-   ```
-   
 
-There are a few algorithms under [examples](../../examples/dsl/v2) folder, try them out!
+   - [test item](#4-test-items)
 
-You can also experience the fateboard access via a browser:
-Http://hostip:8080.
+## 3. Install FATE in the host (using the compiled installer)
 
+Note that in the following example ${version}, please replace it with the actual version number, refer to [fate.env](../../fate.env) file for the FATE version!
 
+### 3.1 Pre-deployment environment check
 
-#### 2) Install FATE in Host
+Whether local ports 8080, 9360, 9380 are occupied
 
-1. Check whether the local 8080,9360,9380 port is occupied.
-
-   ```
+   ```bash
    netstat -apln|grep 8080
    netstat -apln|grep 9360
    netstat -apln|grep 9380
    ```
 
-2. Download the compressed package of stand-alone version and decompress it.
+### 3.2 Get the installation package
 
-    Please replace ${version} below with the real version you want to use， refer to version of FATE in [fate.env](../../fate.env).
-   ```   
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone_fate_master_${version}.tar.gz
-   tar -xzvf  standalone_fate_master_${version}.tar.gz
+Download the installation package and unpack it
+
+   ```bash
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/1.7.0/release/standalone_fate_install_${version}_release.tar. gz
+   tar -xzvf standalone_fate_install_${version}_release.tar.gz
    ```
 
-3. Enter FATE directory and execute the init.sh.
+### 3.3 Installation
 
-    Please replace ${version} below with the real version you want to use， refer to version of FATE in [fate.env](../../fate.env).
+Go to the unpacked directory and use init.sh to install
 
-   ```   
-   cd standalone_fate_master_${version}
+The script will complete automatically:
+
+- Install the necessary OS dependencies
+- Install python36 environment
+- Install pypi dependencies
+- Install the jdk environment
+- Configure the FATE environment variable script
+- Configure fateflow
+- Configure fateboard
+- Install the fateboard client
+
+   ```bash
+   cd standalone_fate_install_${version}
    sh init.sh init
    ```
 
-4. Test
+### 3.4 Start
 
-    Please replace ${version} below with the real version you want to use， refer to version of FATE in [fate.env](../../fate.env).
-
-   - Unit Test
-
-   ```   
-   cd standalone_fate_master_${version}
-   source bin/init_env.sh
-   bash ./python/federatedml/test/run_test.sh
+   ```bash
+   sh init.sh status
+   sh init.sh start
    ```
 
-   If success,  the screen shows like blow:
+### 3.5 Testing
 
-   ```
-   there are 0 failed test
-   ```
+   - Load environment variables
 
-   - Toy_example Test
-
-   ```   
-   cd standalone_fate_master_${version}
-   source bin/init_env.sh
-   python ./examples/toy_example/run_toy_example.py 10000 10000 0
+   ```bash
+   source ./bin/init_env.sh
    ```
 
-   If success,  the screen shows like blow:
+   - [test items](#4-test-items)
 
+## 4. test items
+
+### 4.1 Toy test
+
+   ```bash
+   flow test toy -gid 10000 -hid 10000
    ```
+
+   If successful, the screen displays a statement similar to the following:
+
+   ```bash
    success to calculate secure_sum, it is 2000.0
    ```
 
-5. Install FATE-Client and FATE-Test
+### 4.2 Unit tests
 
-   To conveniently interact with FATE, we provide tools [FATE-Client](../../python/fate_client) and [FATE-Test](../../python/fate_test).
-
-   Install FATE-Client and FATE-Test with the following commands:
-
-   ```
-   python -m pip install fate-client
-   python -m pip install fate-test
+   ```bash
+   fate_test unittest federatedml --yes
    ```
 
+   If successful, the screen displays a statement like the following:
 
-There are a few algorithms under [examples](../../examples/dsl/v2) folder, try them out!
+   ```bash
+   there are 0 failed tests
+   ```
 
-You can also experience the fateboard access via a browser:
-Http://hostip:8080.
+Some use case algorithms are in [examples](../../examples/dsl/v2) folder, please try using them.
 
+You can also experience the algorithm process kanban through your browser by visiting: Http://${ip}:8080, ip is `127.0.0.1` or the actual ip of the local machine
+
+## 5. install FATE in the host (based on the source code to compile their own package)
+
+Please refer to [standalone fate source code deployment](./doc/standalone_fate_source_code_deployment_guide.md)
