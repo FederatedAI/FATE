@@ -5,67 +5,74 @@ repo_url: https://github.com/FederatedAI/FATE
 edit_uri: edit/master/doc
 docs_dir: doc
 copyright: © Copyright 2020 WeBank Co., Ltd. | All Rights Reserved.
-
 nav:
   - Home: index.md
   - Tutorial:
+    - Usage:
       - tutorial/README.md
       - pipeline:
-          - data upload demo: tutorial/pipeline/pipeline_tutorial_upload.ipynb
-          - sbt demo: tutorial/pipeline/pipeline_tutorial_hetero_sbt.ipynb
-          - homo nn demo: tutorial/pipeline/pipeline_tutorial_homo_nn.ipynb
-          - match id demo: tutorial/pipeline/pipeline_tutorial_match_id.ipynb
+        - tutorial/pipeline/index.md
       - DSL:
-          - tutorial/dsl_conf/README.md
-          - job conf guide: tutorial/dsl_conf/dsl_conf_v2_setting_guide.md
-          - upload guide: tutorial/dsl_conf/upload_data_guide.md
+        - tutorial: tutorial/dsl_conf/README.md
+        - upload guide: tutorial/dsl_conf/upload_data_guide.md
+        - job conf guide: tutorial/dsl_conf/dsl_conf_v2_setting_guide.md
       - model publish: tutorial/model_publish_with_serving_guide.md
       - fate test: tutorial/fate_test_tutorial.md
-
-  - Architecture:
+    
+    - Architecture:
       - architecture/README.md
-
-  - FederatedML:
+    
+    - FederatedML:
       - federatedml_component/README.md
       - Components:
           - ... | flat | federatedml_component/*.md
       - Secure Protocol: federatedml_component/secureprotol.md
-      - Params:
-          - ... | flat | federatedml_component/params/*.md
+    
+    - Resources:
+      - resources/README.md
 
   - Deploy:
-      - standalone:
-          - deploy/standalone-deploy/README.md
-          - ... | flat | deploy/standalone-deploy/doc/*.md
-      - cluster:
-          - deploy/cluster-deploy/README.md
-          - fate_on_eggroll:
-              - ... | flat | deploy/cluster-deploy/doc/fate_on_eggroll/*.md
-          - fate_on_spark:
-              - ... | flat | deploy/cluster-deploy/doc/fate_on_spark/*.md
+    - standalone:
+        - deploy/standalone-deploy/README.md
+        - ... | flat | deploy/standalone-deploy/doc/*.md
+    - cluster:
+        - deploy/cluster-deploy/README.md
+        - fate_on_eggroll:
+            - ... | flat | deploy/cluster-deploy/doc/fate_on_eggroll/*.md
+        - fate_on_spark:
+            - ... | flat | deploy/cluster-deploy/doc/fate_on_spark/*.md
 
-  - API:
-      - api/README.md
-      - Session: api/session.md
-      - Computing: api/computing.md
-      - Federation: api/federation.md
-
-  - Resources:
-      - resources/README.md
+  - Develop:
+    - Develop Guide: develop/develop_guide.md
+    - API:
+        - api/README.md
+        - Session: api/session.md
+        - Computing: api/computing.md
+        - Federation: api/federation.md
+        - Params:
+            - ... | flat | federatedml_component/params/*.md
+  
+  - Release Notes:
+      - release/RELEASE.md
 
 theme:
   name: material
   custom_dir: "doc/mkdocs/theme"
   features:
     - navigation.tabs
-    - navigation.expand
+    # - navigation.expand
     - navigation.indexes
     - navigation.top
     - navigation.instant
+    - navigation.tracking
     - header.autohide
   icon:
     repo: fontawesome/brands/github
   language: en
+  font:
+    text: Roboto
+    code: Roboto Mono
+  favicon: images/logo.png
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
@@ -84,9 +91,9 @@ theme:
         name: Switch to light mode
 
 plugins:
+  - git-revision-date
   - awesome-pages
   - mkdocs-simple-hooks:
-      # generate params's md
       hooks:
         on_page_markdown: "doc.mkdocs.hook:on_page_markdown"
   - search
@@ -118,6 +125,7 @@ plugins:
   - mkdocs-jupyter
 
 markdown_extensions:
+  - lightgallery
   - pymdownx.snippets
   - mdx_math
   - admonition
@@ -151,6 +159,21 @@ extra:
     - name: 中文
       lang: zh
       link: "./zh/"
+
+  analytics:
+    provider: google
+    property: G-XHN446WWRD
+
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/FederatedAI/FATE
+    - icon: fontawesome/brands/docker
+      link: https://hub.docker.com/u/federatedai
+    - icon: octicons/video-16
+      link: https://space.bilibili.com/457797601?from=search&seid=6776229889454067000
+      name: bilibili course
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/FateFedAI
 
 extra_css:
   - "mkdocs/css/termynal.css"

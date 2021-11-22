@@ -1,7 +1,5 @@
 # FATE Standalone Deployment Guide
 
-[TOC]
-
 ## 1. Description
 
 Server Configuration.
