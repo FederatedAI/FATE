@@ -32,6 +32,7 @@ ARG version
 ARG source_dir
 ARG pip_index_url
 ARG pip_index_host
+ARG repo_file
 
 USER root
 
@@ -39,12 +40,12 @@ WORKDIR /data/projects/fate
 ENV WORKDIR /data/projects/fate
 
 COPY requirements.txt install_os_dependencies.sh init.sh ${WORKDIR}
-#./CentOS-Base.repo ${WORKDIR}
 RUN rm /bin/sh && ln -sf /bin/bash /bin/sh
 
-RUN sh ./init.sh
+RUN sh ./init.sh ${repo_file}
 
-# python enviroment and dependencies
+# fate python dependencies
 RUN if [[ -z ${pip_index_url} ]]; then pip install --upgrade pip && pip install -r ./requirements.txt;\
-    else pip install --upgrade pip -i ${pip_index_url} --trusted-host $(echo ${pip_index_url} | sed "s#http.*://##g" | sed "s#/.*##g") && \
-    pip install -r ./requirements.txt -i ${pip_index_url} --trusted-host $(echo ${pip_index_url} | sed "s#http.*://##g" | sed "s#/.*##g");fi
+    else pip_index_host=$(echo ${pip_index_url} | sed "s#http.*://##g" | sed "s#/.*##g") && \
+    pip install --upgrade pip -i ${pip_index_url} --trusted-host ${pip_index_host} && \
+    pip install -r ./requirements.txt -i ${pip_index_url} --trusted-host ${pip_index_host};fi

@@ -1,9 +1,9 @@
 project_base=$(cd `dirname $0`;pwd)
 cd ${project_base}
 
-new_repo_file="CentOS-Base.repo"
+new_repo_file=$1
 
-if [[ -f ${new_repo_file} ]];then
+if [[ -n ${new_repo_file} ]];then
     echo "[INFO] use replace repo file"
     mv /etc/yum.repos.d /etc/yum.repos.d.bak
     mkdir -p /etc/yum.repos.d
