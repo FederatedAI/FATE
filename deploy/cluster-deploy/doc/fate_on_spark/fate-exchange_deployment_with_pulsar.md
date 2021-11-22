@@ -1,68 +1,4 @@
-## FATE on Spark with Pulsar Deployment Guide
-
-## Overview
-FATE supports the use of Spark as a compute service, HDFS as a storage service, and RabbitMQ as a transport service. 1.6 updates support for the use of Pulsar as a cross-site (party) data exchange agent, with the following architecture diagram.
-<div style="text-align:center", align=center>
-<img src="../../images/fate_on_spark_with_pulsar.png" />
-</div>
-As shown in the image, RabbitMQ as a transport service is replaced with Pulsar, but for FATE, both transport services can also exist in the system, and users can specify which one to use when submitting a task.
-
-## Deployment and Configuration
-### Cluster Deployment
-For deployment, please refer to [FATE ON Spark Deployment Guide](fate_on_spark_deployment_guide.md), where the RabbitMQ section can be skipped and replaced by the Pulsar cluster deployment, see [Pulsar Cluster Deployment](pulsar_deployment_guide.md).
-
-
-### Update the FATE Flow service configuration
-When services such as spark are deployed, there are two parts of the configuration that need to be updated for fate_flow, which are.
-
-- "conf/service_conf.yaml"
-```yml
-default_engines:
-  federation: pulsar
-fate_on_spark:
-  pulsar:
-    host: 192.168.0.1
-    port: 6650
-    mng_port: 8080
-    topic_ttl: 5
-    # default conf/pulsar_route_table.yaml
-    route_table:
-  nginx:
-    host: 127.0.0.1
-    http_port: 9300
-    grpc_port: 9310
-...
-```
-Where `pulsar.host` fills in the IP or domain name of the host where the Pulsar broker is located, `pulsar.port` and `pulsar.mng_port` fill in the broker's "brokerServicePort" and "webServicePort" respectively.
-`topic_ttl` sets the topic to be marked as inactive after a few minutes of inactivity, in conjunction with `Pulsar's brokerDeleteInactiveTopicsEnabled` feature to reclaim resources.
-
-- "conf/pulsar_route_table.yaml"
-``yml
-9999:
-  # host can be a domain like 9999.fate.org
-  host: 192.168.0.4
-  port: 6650
-  sslPort: 6651
-  # set proxy address for this pulsar cluster
-  proxy: ""
-
-10000:
-  # host can be a domain like 10000.fate.org
-  host: 192.168.0.3
-  port: 6650
-  sslPort: 6651
-  proxy: ""
-
-default:
-  # compose host and proxy for party that does not exist in route table
-  # in this example, the host for party 8888 will be 8888.fate.org
-  proxy: "proxy.fate.org:443"
-  domain: "fate.org"
-  port: 6650
-  sslPort: 6651
-```
-
-In this file, you need to fill in the address information of the pulsar service of each participating party. For peer-to-peer links, you usually only need to fill in `host` and `port`. The `proxy`, `sslPort` and `default` fields are used to support the star networking method, which needs to be used with SSL certificate, please refer to the following star networking for details.
+## FATE Exchange with Pulsar Deployment Guide| [中文](fate-exchange_deployment_with_pulsar.zh.md)
 
 ## Star Networking
 
@@ -230,7 +166,7 @@ Copy the certificate, private key and CA's certificate generated for the ATS in 
 
 
 #### Deploying Pulsar
-Pulsar is deployed in [pulsar_deployment_guide](pulsar_deployment_guide.md) is described in detail and only requires adding a certificate for the broker and opening the secure service port on top of it, as follows.
+Pulsar is deployed in [pulsar_deployment_guide](common/pulsar_deployment_guide.md) is described in detail and only requires adding a certificate for the broker and opening the secure service port on top of it, as follows.
 1. Log in to the corresponding host and copy the certificate, private key and CA certificate generated for 10000.fate.org to the "/opt/pulsar/certs" directory
 
 2. Modify the conf/standalone.conf file in the pulsar installation directory and add the following contents
