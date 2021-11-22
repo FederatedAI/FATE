@@ -1,4 +1,6 @@
-# Materials | [中文](./README.zh.md)
+# Materials
+
+[中文](./README.zh.md)
 
 
 ## RoadMap and OverView
