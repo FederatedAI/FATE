@@ -279,7 +279,7 @@ mysql>select * from server_node;
 
 ### 5.4 Deploying the JDK
 
-**execute ** under the target server (192.168.0.1 192.168.0.2) app user:
+**execute** under the target server (192.168.0.1 192.168.0.2) app user:
 
 ```bash
 #Create the jdk installation directory
@@ -293,7 +293,7 @@ mv jdk1.8.0_192 jdk-8u192
 
 ### 5.5 Deploying python
 
-**execute ** under the target server (192.168.0.1 192.168.0.2) app user:
+**execute** under the target server (192.168.0.1 192.168.0.2) app user:
 
 ```bash
 #Create the python virtualization installation directory
