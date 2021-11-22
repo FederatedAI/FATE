@@ -3,10 +3,9 @@
 - [Architecture](../../doc/architecture/README.md)
 
 ### Deployment for FATE on EggRoll(Recommended for Production)
-- [Install AllinOne](doc/fate_on_eggroll/Fate-allinone_deployment_guide_install.md)
-- [Install Exchange Step By Step](doc/fate_on_eggroll/Fate-exchange_deployment_guide.md)
+- [AllinOne Deployment Guide](doc/fate_on_eggroll/fate-allinone_deployment_guide.md)
+- [Exchange Deployment Guide](doc/fate_on_eggroll/fate-exchange_deployment_guide.md)
 
 ### Deployment for FATE on Spark(Continuous Improvement)
-- [Install FATE on Native Spark](doc/fate_on_spark/fate_on_spark_deployment_guide.md)
-- [Install FATE on CDH](doc/fate_on_spark/fate_on_cdh_deployment_guide.zh.md)
-
+- [FATE on Spark Deployment Guide](doc/fate_on_spark/fate_on_spark_deployment_guide.md)
+- [Exchange Deployment Guide](doc/fate_on_spark/fate-exchange_deployment_with_pulsar.md)
