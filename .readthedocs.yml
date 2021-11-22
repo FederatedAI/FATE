@@ -9,4 +9,6 @@ formats: all
 python:
   version: 3.7
   install:
+    - method: setuptools
+      path: doc/mkdocs
     - requirements: doc/mkdocs/requirements.txt

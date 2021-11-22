@@ -7,52 +7,51 @@ docs_dir: doc
 copyright: © Copyright 2020 WeBank Co., Ltd. | All Rights Reserved.
 
 nav:
+  - Home: index.md
   - Tutorial:
-    - tutorial/README.md
-    - pipeline: 
-      - data upload demo: tutorial/pipeline/pipeline_tutorial_upload.ipynb
-      - sbt demo: tutorial/pipeline/pipeline_tutorial_hetero_sbt.ipynb
-      - homo nn demo: tutorial/pipeline/pipeline_tutorial_homo_nn.ipynb
-      - match id demo: tutorial/pipeline/pipeline_tutorial_match_id.ipynb
-    - DSL:
-      - tutorial/dsl_conf/README.md
-      - job conf guide: tutorial/dsl_conf/dsl_conf_v2_setting_guide.md
-      - upload guide: tutorial/dsl_conf/upload_data_guide.md
-    - model publish: tutorial/model_publish_with_serving_guide.md
-    - fate test: tutorial/fate_test_tutorial.md
-  
-  - Architecture:
-    - architecture/README.md
-  
-  - FederatedML:
-    - federatedml_component/README.md
-    - Components:
-      - ... | flat | federatedml_component/*.md
-    - Secure Protocol: federatedml_component/secureprotol.md
-    - Params:
-      - ... | flat | federatedml_component/params/*.md
-  
-  - Deploy:
-    - standalone:
-      - deploy/standalone-deploy/README.md
-      - ... | flat | deploy/standalone-deploy/doc/*.md
-    - cluster:
-      - deploy/cluster-deploy/README.md
-      - fate_on_eggroll:
-        - ... | flat | deploy/cluster-deploy/doc/fate_on_eggroll/*.md
-      - fate_on_spark:
-        - ... | flat | deploy/cluster-deploy/doc/fate_on_spark/*.md
-  
-  - API:
-    - api/README.md
-    - Session: api/session.md
-    - Computing: api/computing.md
-    - Federation: api/federation.md
-  
-  - Resources:
-    - resources/README.md
+      - tutorial/README.md
+      - pipeline:
+          - data upload demo: tutorial/pipeline/pipeline_tutorial_upload.ipynb
+          - sbt demo: tutorial/pipeline/pipeline_tutorial_hetero_sbt.ipynb
+          - homo nn demo: tutorial/pipeline/pipeline_tutorial_homo_nn.ipynb
+          - match id demo: tutorial/pipeline/pipeline_tutorial_match_id.ipynb
+      - DSL:
+          - tutorial/dsl_conf/README.md
+          - job conf guide: tutorial/dsl_conf/dsl_conf_v2_setting_guide.md
+          - upload guide: tutorial/dsl_conf/upload_data_guide.md
+      - model publish: tutorial/model_publish_with_serving_guide.md
+      - fate test: tutorial/fate_test_tutorial.md
 
-      
+  - Architecture:
+      - architecture/README.md
+
+  - FederatedML:
+      - federatedml_component/README.md
+      - Components:
+          - ... | flat | federatedml_component/*.md
+      - Secure Protocol: federatedml_component/secureprotol.md
+      - Params:
+          - ... | flat | federatedml_component/params/*.md
+
+  - Deploy:
+      - standalone:
+          - deploy/standalone-deploy/README.md
+          - ... | flat | deploy/standalone-deploy/doc/*.md
+      - cluster:
+          - deploy/cluster-deploy/README.md
+          - fate_on_eggroll:
+              - ... | flat | deploy/cluster-deploy/doc/fate_on_eggroll/*.md
+          - fate_on_spark:
+              - ... | flat | deploy/cluster-deploy/doc/fate_on_spark/*.md
+
+  - API:
+      - api/README.md
+      - Session: api/session.md
+      - Computing: api/computing.md
+      - Federation: api/federation.md
+
+  - Resources:
+      - resources/README.md
 
 theme:
   name: material
@@ -67,26 +66,28 @@ theme:
   icon:
     repo: fontawesome/brands/github
   language: en
-  palette: 
+  palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
+      primary: indigo
+      accent: indigo
       toggle:
         icon: material/lightbulb
         name: Switch to dark mode
+
     - media: "(prefers-color-scheme: dark)"
-      scheme: slate 
-      primary: teal
+      scheme: slate
+      primary: red
+      accent: red
       toggle:
         icon: material/lightbulb-outline
         name: Switch to light mode
 
-
 plugins:
   - awesome-pages
   - mkdocs-simple-hooks:
-    # generate params's md
+      # generate params's md
       hooks:
-        on_pre_build: "doc.mkdocs.hook:pre_build"
         on_page_markdown: "doc.mkdocs.hook:on_page_markdown"
   - search
   - mkdocstrings:
@@ -115,7 +116,7 @@ plugins:
       languages:
         zh: 中文
   - mkdocs-jupyter
-  
+
 markdown_extensions:
   - pymdownx.snippets
   - mdx_math
@@ -152,13 +153,11 @@ extra:
       link: "./zh/"
 
 extra_css:
-  - 'mkdocs/css/termynal.css'
-  - 'mkdocs/css/custom.css'
-  - 'mkdocs/css/extra.css'
-  - 'mkdocs/css/landing.css'
+  - "mkdocs/css/termynal.css"
+  - "mkdocs/css/custom.css"
+  - "mkdocs/css/extra.css"
 
 extra_javascript:
-  - 'mkdocs/js/termynal.js'
-  - 'mkdocs/js/custom.js'
-  - 'mkdocs/js/lottie-player.js'
-  - 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML'
+  - "mkdocs/js/termynal.js"
+  - "mkdocs/js/custom.js"
+  - "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML"

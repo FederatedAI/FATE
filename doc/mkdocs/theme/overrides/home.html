@@ -1,88 +1,32 @@
-{% extends "base.html" %}
-
-<!-- Render landing page under tabs -->
-{% block tabs %}
-{{ super() }}
-
-<!-- Additional styles for landing page -->
-<style>
-
-  /* Application header should be static for the landing page */
-  .md-header {
-    position: initial;
-  }
-
-  /* Remove spacing, as we cannot hide it completely */
-  .md-main__inner {
-    margin: 0;
-  }
-
-  /* Hide main content for now */
-  .md-content {
-    display: none;
-  }
-
-  /* Hide table of contents */
-  @media screen and (min-width: 60em) {
-    .md-sidebar--secondary {
-      display: none;
-    }
-  }
-
-  /* Hide navigation */
-  @media screen and (min-width: 76.25em) {
-    .md-sidebar--primary {
-      display: none;
-    }
-  }
-</style>
-
-<!-- landing page for landing page -->
-<section class="tx-container">
-  <div class="md-grid md-typeset">
-    <div class="tx-landing">
-      <!-- landing image -->
-      <div class="tx-landing__image">
-        <!-- <script src="./mkdocs/js/lottie-player.js"></script>
-        <lottie-player id="lottieAnimation" background="transparent"
-                       style="max-width: 100%; height: auto;"
-                       speed="1" loop autoplay>
-        </lottie-player>
-        <script>
-          let animation = document.getElementById("lottieAnimation");
-          animation.load("mkdocs/assets/animations/ml.json");
-        </script> -->
+{#-
+    This file was automatically generated - do not edit
+  -#}
+  {% extends "overrides/main.html" %}
+  {% block tabs %}
+    {{ super() }}
+    <style>.md-header{position:initial}.md-main__inner{margin:0}.md-content{display:none}@media screen and (min-width:60em){.md-sidebar--secondary{display:none}}@media screen and (min-width:76.25em){.md-sidebar--primary{display:none}}</style>
+    <section class="mdx-container">
+      <div class="md-grid md-typeset">
+        <div class="mdx-hero">
+          <div class="mdx-hero__image">
+            <img src="images/illustration.png" alt="" width="1659" height="1200" draggable="false">
+          </div>
+          <div class="mdx-hero__content">
+            <h1> Multi-Party Machine Learning  without Dataset Leakage</h1>
+            <p><em>FATE</em> implements secure computation protocols based on homomorphic encryption and multi-party computation (MPC).
+                It supports federated learning architecture and secure computation of various machine learning algorithms and 
+                open-sourced for the first time in February 2019, and was donated to Linux Foundation by WeBank in June 2019</p>
+            <a href="{{ page.next_page.url | url }}" title="{{ page.next_page.title | e }}" class="md-button md-button--primary">
+              Tutorial
+            </a>
+            <a href="{{ 'https://github.com/FederatedAI/FATE' | url }}" title="GitHub" class="md-button">
+              GitHub
+            </a>
+          </div>
+        </div>
       </div>
-
-      <!-- landing content -->
-      <div class="tx-landing__content">
-        <h1>Secure, Privacy-preserving Machine Learning</h1>
-        <p>FATE implements secure computation protocols based on
-          <ul>
-            <li>homomorphic encryption</li>
-            <li>multi-party computation (MPC)</li>
-          </ul>  
-        </p>
-        <p>and supports
-          <ul>
-            <li>federated learning architecture</li>
-            <li>secure computation of various machine learning algorithms including <em>logistic regression</em>,
-              <em>tree-based algorithms</em>,
-              <em>deep learning</em>,
-              <em>transfer learning</em>
-            </li>  
-          </ul>  
-        </p>
-        <a href="/tutorial" title="Tutorial" class="md-button"> Learn More</a>
-        <a href="https://github.com/FederatedAI/FATE" title="GitHub" class="md-button">GitHub</a>
-      </div>
-    </div>
-  </div>
-</section>
-{% endblock %}
-
-<!-- Content -->
-{% block content %}{% endblock %}
-
-<!-- Application footer -->
-{% block footer %}{% endblock %}
+    </section>
+  {% endblock %}
+  {% block content %}{% endblock %}
+  {% block footer %}{% endblock %}
+  
