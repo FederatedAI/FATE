@@ -59,7 +59,6 @@ def run_test(includes, conf: Config, error_log_file):
                 error_log(stdout=f"error sequence {failed_count}: {file}")
                 error_log(stdout=stdout)
         except Exception:
-            print (stdout)
             return
 
     def traverse_folder(file_fullname):

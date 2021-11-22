@@ -150,4 +150,4 @@ Principle)](../images/hetero_lr_multi_host.png)
 > 4.  Support sparse format data
 > 5.  Support early-stopping mechanism
 > 6.  Support setting arbitrary metrics for validation during training
-> 7.  Support stepwise. For details on stepwise mode, please refer [here](../stepwise.md).
+> 7.  Support stepwise. For details on stepwise mode, please refer [here](stepwise.md).

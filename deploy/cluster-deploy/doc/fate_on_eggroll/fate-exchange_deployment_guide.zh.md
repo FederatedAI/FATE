@@ -1,4 +1,4 @@
-#                     Fate exchange部署指南
+#  FATE exchange部署指南 | [English](./fate-exchange_deployment_guide.md)
 
 1.服务器配置
 ============

@@ -50,22 +50,27 @@ git clone https://github.com/FederatedAI/FATE.git -b $branch --recurse-submodule
 ### 4.2 为FATE配置虚拟环境
 
 ```bash
-cd(or create) {放置虚拟环境的根目录}
-virtualenv {虚拟环境名称}
-source {虚拟环境名称}/bin/activate
+virtualenv --version
 ```
 
-将虚拟环境目录称之为`FATE_VENV_BASE`, 其为{放置虚拟环境的根目录}/{虚拟环境名称}, 如下文档中将用到
-如果没有`virtualenv`命令，请自行安装，大多情况下可以使用类似命令安装
+若能正常返回版本信息, 则虚拟环境工具已安装, 若提示命令不存在, 请自行安装，大多情况下可以使用类似命令安装
 
 ```bash
 pip install virtualenv
+```
+
+```bash
+cd(or create) {放置虚拟环境的根目录}
+virtualenv {虚拟环境名称}
+export FATE_VENV_BASE={放置虚拟环境的根目录}/{虚拟环境名称}
+source ${FATE_VENV_BASE}/bin/activate
 ```
 
 ### 4.3 安装FATE所需要的Python依赖包
 
 ```bash
 cd ${FATE_PROJECT_BASE}
+sh bin/install_os_dependencies.sh
 source ${FATE_VENV_BASE}/bin/activate
 pip install -r python/requirements.txt
 ```
@@ -79,13 +84,7 @@ pip install -r python/requirements.txt
 ```bash
 cd ${FATE_PROJECT_BASE}
 sed -i.bak "s#PYTHONPATH=.*#PYTHONPATH=$PWD/python:$PWD/fateflow/python#g" ./bin/init_env.sh
-```
-
-同时修改如下环境变量
-
-```bash
-vim bin/init_env.sh
-venv=${FATE_VENV_BASE}
+sed -i.bak "s#venv=.*#venv=${FATE_VENV_BASE}#g" ./bin/init_env.sh
 ```
 
 检查`conf/service_conf.yaml`全局配置文件中是否将基础引擎配置为单机版, 若`default_engines`显示如下，则为单机版
@@ -169,7 +168,7 @@ flow init -c conf/service_conf.yaml
    ```
 
 有些用例算法在 [examples](../../../examples/dsl/v2) 文件夹下, 请尝试使用。
-Please refer [here](../../../examples/pipeline/../examples_overview.zh.md) for a quick start tutorial.
+Please refer [here](../../../examples/pipeline/../README.zh.md) for a quick start tutorial.
 
 您还可以通过浏览器体验算法过程看板，请参照[编译包安装fateboard](#9-编译包安装fateboard建议可选)
 
@@ -225,7 +224,7 @@ sh service.sh start
 显示如下类似则为启动成功，否则请依据提示查看日志
 
 ```bash
-JAVA_HOME=/data/jarviszeng/deploy/FATE/env/jdk/jdk-8u192/
+JAVA_HOME=/data/project/deploy/FATE/env/jdk/jdk-8u192/
 service start sucessfully. pid: 116985
 status:
         app      116985  333  1.7 5087004 581460 pts/2  Sl+  14:11   0:06 /xx/FATE/env/jdk/jdk-8u192//bin/java -Dspring.config.location=/xx/FATE/fateboard/conf/application.properties -Dssh_config_file=/xx/FATE/fateboard/ssh/ -Xmx2048m -Xms2048m -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:gc.log -XX:+HeapDumpOnOutOfMemoryError -jar /xx/FATE/fateboard/fateboard.jar

@@ -181,7 +181,7 @@ export JAVA_HOME=/data/projects/common/jdk/jdk1.8.0_192
 export PATH=$JAVA_HOME/bin:$PATH
 export HADOOP_HOME=/data/projects/common/hadoop
 export PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin
-export SPARK_HOME=/data/projects/common/spark/ spark-2.4.1-bin-hadoop2.7ss
+export SPARK_HOME=/data/projects/common/spark
 export PATH=$SPARK_HOME/bin:$PATH
 ```
 

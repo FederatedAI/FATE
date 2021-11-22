@@ -48,22 +48,27 @@ Please install or use existing Python version 3.6 or 3.7, preferably 3.6.5, whic
 ### 4.2 Configuring a virtual environment for FATE
 
 ```bash
-cd(or create) {root directory for the virtual environment}
-virtualenv {name of virtual environment}
-source {virtual environment name}/bin/activate
+virtualenv --version
 ```
 
-Call the virtual environment directory `FATE_VENV_BASE`, which is {root directory where the virtual environment is placed}/{virtual environment name}, as used in the following document
-If you don't have the `virtualenv` command, please install it yourself, but in most cases you can use a similar command
+If the version information is returned normally, then the virtual environment tool is installed, if the command does not exist, please install it yourself, in most cases you can use a similar command to install
 
 ```bash
 pip install virtualenv
+```
+
+```bash
+cd(or create) {root directory for the virtual environment}
+virtualenv {name of virtual environment}
+export FATE_VENV_BASE={root directory for the virtual environment}/{name of virtual environment}
+source ${FATE_VENV_BASE}/bin/activate
 ```
 
 ### 4.3 Installing Python dependencies for FATE
 
 ```bash
 cd ${FATE_PROJECT_BASE}
+sh bin/install_os_dependencies.sh
 source ${FATE_VENV_BASE}/bin/activate
 pip install -r python/requirements.txt
 ```
@@ -76,14 +81,8 @@ Edit the `bin/init_env.sh` environment variable file
 
 ```bash
 cd ${FATE_PROJECT_BASE}
-sed -i.bak "s#PYTHONPATH=. *#PYTHONPATH=$PWD/python:$PWD/fateflow/python#g" . /bin/init_env.sh
-```
-
-Modify the following environment variables at the same time
-
-```bash
-vim bin/init_env.sh
-venv=${FATE_VENV_BASE}
+sed -i.bak "s#PYTHONPATH=. *#PYTHONPATH=$PWD/python:$PWD/fateflow/python#g" ./bin/init_env.sh
+sed -i.bak "s#venv=.*#venv=${FATE_VENV_BASE}#g" ./bin/init_env.sh
 ```
 
 Check if the `conf/service_conf.yaml` global configuration file has the base engine configured as standalone, if `default_engines` shows the following, then it is standalone
@@ -167,7 +166,7 @@ If it looks like this, the initialization is successful, otherwise, please check
    ```
 
 Some use case algorithms are in [examples](../../../examples/dsl/v2) folder, please try to use them.
-Please refer to [here](../../../examples/pipeline/../examples_overview.md) for a quick start tutorial.
+Please refer to [here](../../../examples/pipeline/../README.md) for a quick start tutorial.
 
 You can also experience the algorithm process kanban through your browser, please refer [here](#9-compile-package-to-install-fateboard-optional)
 
@@ -223,7 +222,7 @@ sh service.sh start
 If you see something like the following, you have started successfully, otherwise please check the logs as prompted
 
 ```bash
-JAVA_HOME=/data/jarviszeng/deploy/FATE/env/jdk/jdk-8u192/
+JAVA_HOME=/data/project/deploy/FATE/env/jdk/jdk-8u192/
 service start sucessfully. pid: 116985
 status:
         app 116985 333 1.7 5087004 581460 pts/2 Sl+ 14:11 0:06 /xx/FATE/env/jdk/jdk-8u192//bin/java -Dspring.config.location=/xx/FATE/fateboard/conf/ application.properties -Dssh_config_file=/xx/FATE/fateboard/ssh/ -Xmx2048m -Xms2048m -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc: gc.log -XX:+HeapDumpOnOutOfMemoryError -jar /xx/FATE/fateboard
