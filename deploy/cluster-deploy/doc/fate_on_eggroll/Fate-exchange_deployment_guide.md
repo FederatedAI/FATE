@@ -19,9 +19,8 @@
 
 The architecture diagram:
 
-<div style="text-align:center", align=center>
-<img src="../../images/proxy_en.png" />
-</div>
+|![](../../images/proxy_en.png)|
+|:--:|
 
 # 3\. Component Description
 

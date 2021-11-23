@@ -21,9 +21,8 @@
 
 架构图：
 
-<div style="text-align:center", align=center>
-<img src="../../images/proxy_zh.png" />
-</div>
+|![](../../images/proxy_zh.png)|
+|:--:|
 
 # 3.组件说明
 

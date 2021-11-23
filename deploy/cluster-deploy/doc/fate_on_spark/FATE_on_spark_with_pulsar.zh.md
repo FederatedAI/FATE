@@ -2,9 +2,10 @@
 
 ## 概述
 FATE在1.5中支持了使用Spark作为计算服务，与其配套使用的还有作为存储服务的HDFS以及作为传输服务的RabbitMQ。1.6中更新了对使用Pulsar作为了跨站点(party)数据交换代理的支持，其具体架构图如下：
-<div style="text-align:center", align=center>
-<img src="../../images/fate_on_spark_with_pulsar.png" />
-</div>
+
+|![](../../images/fate_on_spark_with_pulsar.png)|
+|:--:|
+
 如图所示，作为传输服务的RabbitMQ被替换成了Pulsar。但是对于FATE来说，系统中的这两种传输服务也可以同时存在，用户可以在提交任务时候指定使用哪种。
 
 ## 部署与配置
