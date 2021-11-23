@@ -51,29 +51,40 @@ class LogisticParam(BaseParam):
 
 ```python
 def __init__(self, penalty='L2',
-             eps=1e-5, alpha=1.0, optimizer='sgd', party_weight=1,
-             batch_size=-1, learning_rate=0.01, init_param=InitParam(),
-             max_iter=100, converge_func='diff',
-             encrypt_param=EncryptParam(), re_encrypt_batches=2,
-             encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
-             need_run=True, predict_param=PredictParam(), cv_param=CrossValidationParam()):
-    super(LogisticParam, self).__init__()
-    self.penalty = penalty
-    self.eps = eps
-    self.alpha = alpha
-    self.optimizer = optimizer
-    self.batch_size = batch_size
-    self.learning_rate = learning_rate
-    self.init_param = copy.deepcopy(init_param)
-    self.max_iter = max_iter
-    self.converge_func = converge_func
-    self.encrypt_param = copy.deepcopy(encrypt_param)
-    self.re_encrypt_batches = re_encrypt_batches
-    self.party_weight = party_weight
-    self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
-    self.need_run = need_run
-    self.predict_param = copy.deepcopy(predict_param)
-    self.cv_param = copy.deepcopy(cv_param)
+                 tol=1e-4, alpha=1.0, optimizer='rmsprop',
+                 batch_size=-1, learning_rate=0.01, init_param=InitParam(),
+                 max_iter=100, early_stop='diff', encrypt_param=EncryptParam(),
+                 predict_param=PredictParam(), cv_param=CrossValidationParam(),
+                 decay=1, decay_sqrt=True,
+                 multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
+                 stepwise_param=StepwiseParam(), floating_point_precision=23,
+                 metrics=None,
+                 use_first_metric_only=False,
+                 callback_param=CallbackParam()
+                 ):
+        super(LogisticParam, self).__init__()
+        self.penalty = penalty
+        self.tol = tol
+        self.alpha = alpha
+        self.optimizer = optimizer
+        self.batch_size = batch_size
+        self.learning_rate = learning_rate
+        self.init_param = copy.deepcopy(init_param)
+        self.max_iter = max_iter
+        self.early_stop = early_stop
+        self.encrypt_param = encrypt_param
+        self.predict_param = copy.deepcopy(predict_param)
+        self.cv_param = copy.deepcopy(cv_param)
+        self.decay = decay
+        self.decay_sqrt = decay_sqrt
+        self.multi_class = multi_class
+        self.validation_freqs = validation_freqs
+        self.stepwise_param = copy.deepcopy(stepwise_param)
+        self.early_stopping_rounds = early_stopping_rounds
+        self.metrics = metrics or []
+        self.use_first_metric_only = use_first_metric_only
+        self.floating_point_precision = floating_point_precision
+        self.callback_param = copy.deepcopy(callback_param)
 ```
 
 As the example shown above, the parameter can also be a Param class that
