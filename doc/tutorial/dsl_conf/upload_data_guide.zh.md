@@ -85,7 +85,7 @@ DataTransform(DataIO)模块接受以下输入数据格式，并将其转换为�
 ## 上传命令
 
 使用fate-flow上传数据。从FATE-1.5开始，推荐使用 [FATE-Flow Client Command
-Line](../../api/fate_client/flow_client.md)
+Line](https://github.com/FederatedAI/FATE-Flow/blob/main/doc/cli)
 执行FATE-Flow任务。
 
 上传数据命令如下：
@@ -97,7 +97,7 @@ $ flow data upload -c examples/dsl/v2/upload/upload_conf.json
 同时，用户也可使用旧版的python脚本方式上传数据：
 
 ```bash
-$ python ${your_install_path}/fate_flow/fate_flow_client.py -f upload -c examples/dsl/v2/upload/upload_conf.json
+$ python ${your_install_path}/fate_flow/python/fate_flow/fate_flow_client.py -f upload -c examples/dsl/v2/upload/upload_conf.json
 ```
 
 !!! Note

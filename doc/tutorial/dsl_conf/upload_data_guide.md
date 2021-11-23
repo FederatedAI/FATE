@@ -91,7 +91,7 @@ Field Specifications:
 ## Upload Command
 
 We use fate-flow to upload data. Starting at FATE ver1.5, [FATE-Flow
-Client Command Line](../../api/fate_client/flow_client.md) is
+Client Command Line](https://github.com/FederatedAI/FATE-Flow/blob/main/doc/cli) is
 recommended for interacting with FATE-Flow.
 
 The command is as follows:
@@ -105,7 +105,7 @@ older
 versions:
 
 ```bash
-python ${your_install_path}/fate_flow/fate_flow_client.py -f upload -c examples/dsl/v2/upload/upload_conf.json
+python ${your_install_path}fate_flow/python/fate_flow/fate_flow_client.py -f upload -c examples/dsl/v2/upload/upload_conf.json
 ```
 
 !!! Note
