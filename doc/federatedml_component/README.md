@@ -8,7 +8,7 @@ decoupling modular approach to enhance scalability. Specifically, we
 provide:
 
 1. Federated Statistic: PSI, Union, Pearson Correlation, etc.
-2. Federated Information Retrieval: PIR( SIR) Based OT
+2. Federated Information Retrieval: PIR(SIR) Based OT
 3. Federated Feature Engineering: Feature Sampling, Feature Binning,
     Feature Selection, etc.
 4. Federated Machine Learning Algorithms: LR, GBDT, DNN,
