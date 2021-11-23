@@ -203,6 +203,20 @@ pipeline:
 pipeline.add_component(homo_nn, data=Data(train_data=data_transform_0.output.data))
 ```
 
+## Set job provider 
+
+In version 1.7 and above, user can specify the fate's version to submit the job. If it's not specified, 
+default version will be used.  
+
+a. set global version
+``` sourceCode python
+pipeline.set_global_job_provider("fate@1.7.0")
+```
+b. component with specified version
+``` sourceCode python
+homo_nn.provider = "fate@1.7.0"
+```
+
 ## Init Runtime JobParameters
 
 In version 1.7 and above, user no longer needs to initialize the runtime
