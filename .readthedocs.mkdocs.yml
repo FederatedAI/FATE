@@ -122,10 +122,6 @@ plugins:
       default_language: en
       languages:
         zh: 中文
-      nav_translations:
-        zh:
-          Tutorial: 教程
-          Usage: 教程
   - mkdocs-jupyter
 
 markdown_extensions:
