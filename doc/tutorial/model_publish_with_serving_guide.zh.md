@@ -40,9 +40,9 @@ servings:
 
 **1) 修改服务配置**
 
-其中``zookeeper:hosts``填入在线推理集群实际部署Zookeeper的ip:port
+其中`zookeeper:hosts`填入在线推理集群实际部署Zookeeper的ip:port
 
-- 若zookeeper开启了ACL，则需要修改``use_acl`` ``user`` ``password``，否则略过
+- 若zookeeper开启了ACL，则需要修改`use_acl` `user` `password`，否则略过
 
 ```yaml
 use_registry: true
@@ -61,7 +61,7 @@ zookeeper:
 
 # 4. 推送模型
 
-复制修改FATE源码目录或者部署目录下fate_flow/examples/publish_load_model.json，生成对应模型的*推送模型配置*
+复制修改FATE源码目录或者部署目录下 `fate_flow/examples/model/publish_load_model.json`，生成对应模型的*推送模型配置*
 改配置如下：
 
 ```json
@@ -82,16 +82,16 @@ zookeeper:
 }
 ```
 
-serving服务将从FATE Flow下载模型。默认情况下，serving服务下载模型的地址如下："http：// {FATE_FLOW_IP}：{FATE_FLOW_HTTP_PORT} {FATE_FLOW_MODEL_TRANSFER_ENDPOINT}"。用户也可以把job_parameters['use_transfer_url_on_serving']设置成"true"，serving服务将通过serving-server.properties中的`model.transfer.url`中定义的地址来下载模型。
+serving服务将从FATE Flow下载模型。默认情况下，serving服务下载模型的地址如下：`http://{FATE_FLOW_IP}:{FATE_FLOW_HTTP_PORT}{FATE_FLOW_MODEL_TRANSFER_ENDPOINT}`。用户也可以把job_parameters['use_transfer_url_on_serving']设置成"true"，serving服务将通过serving-server.properties中的`model.transfer.url`中定义的地址来下载模型。
 执行命令：
 
 ```bash
-python fate_flow_client.py -f load -c examples/publish_load_model.json
+flow model load -c fate_flow/examples/model/publish_load_model.json
 ```
 
 # 5. 发布模型
 
-复制修改FATE源码目录或者部署目录下fate_flow/examples/bind_model_service.json，生成对应模型的*发布模型配置*
+复制修改FATE源码目录或者部署目录下 `fate_flow/examples/model/bind_model_service.json`，生成对应模型的*发布模型配置*
 改配置如下：
 
 ```json
@@ -115,19 +115,19 @@ python fate_flow_client.py -f load -c examples/publish_load_model.json
 }
 ```
 
-除了``servings``参数非必填，所有参数均要根据实际情况填入
+除了`servings`参数非必填，所有参数均要根据实际情况填入
 
-当``servings``参数为空，则发布到所有serving-server实例
+当`servings`参数为空，则发布到所有serving-server实例
 
-若``servings``参数不为空，则发布到所配置的serving-server实例
+若`servings`参数不为空，则发布到所配置的serving-server实例
 
 执行命令：
 
 ```bash
-python fate_flow_client.py -f bind -c examples/bind_model_service.json
+flow model bind -c fate_flow/examples/model/bind_model_service.json
 ```
 
 # 6. 在线推理测试
 
 参考[FATE在线推理接口文档](https://github.com/FederatedAI/FATE-Serving/wiki/%E5%9C%A8%E7%BA%BF%E6%8E%A8%E7%90%86%E6%8E%A5%E5%8F%A3%E8%AF%B4%E6%98%8E)
-需要填入上述第5步，发布模型时使用的``service_id``
+需要填入上述第5步，发布模型时使用的`service_id`
