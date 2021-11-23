@@ -779,7 +779,7 @@ A result similar to the following indicates successful operation:
 
 "2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
 
-Tip: If the error "max cores per job is 1, please modify job parameters" appears, a user needs to modify the parameter task_cores to 1, add "--task-core 1" to run toy test.
+Tip: If the error "max cores per job is 1, please modify job parameters" appears, a user needs to modify the parameter task_cores to 1, add "--task-cores 1" to run toy test.
 
 **2) Execute on 192.168.0.2, with both gid and hid set to 9999:**
 
