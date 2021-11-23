@@ -9,11 +9,11 @@ nodes.
 
 ## Accepted Data Type
 
-Data IO module accepts the following input data format and transforms
-them to desired output DTable.
+DataTransform(DataIO) module accepts the following input data format and transforms
+them to desired output Table.
 
   - dense input format  
-    input DTable's value item is a list of single element, e.g. :
+    input Table's value item is a list of single element, e.g. :
 
     ```
     1.0,2.0,3.0,4.5
@@ -22,7 +22,7 @@ them to desired output DTable.
     ```
 
   - svm-light input format  
-    first item of input DTable's value is label, following by a list of
+    first item of input Table's value is label, following by a list of
     complex "feature\_id:value" items, e.g. :
     
     ``` 
@@ -31,7 +31,7 @@ them to desired output DTable.
     ```
 
   - tag input format  
-    the input DTable's value is a list of tag, data io module first
+    the input Table's value is a list of tag, data io module first
     aggregates all tags occurred in input table, then changes all input
     line to one-hot representation in sorting the occurred tags by
     lexicographic order, e.g. assume values is :
@@ -48,7 +48,7 @@ them to desired output DTable.
     1 1 0 1
     ```
 
-  - :tag:value input format: the input DTable's value is a list of
+  - :tag:value input format: the input Table's value is a list of
     <tag:value>, like a mixed svm-light and tag input-format. data io
     module first aggregates all tags occurred in input table, then
     changes all input line to one-hot representation in sorting the
@@ -91,7 +91,7 @@ Field Specifications:
 ## Upload Command
 
 We use fate-flow to upload data. Starting at FATE ver1.5, [FATE-Flow
-Client Command Line](../../api/fate_client/flow_client.md) is
+Client Command Line](https://github.com/FederatedAI/FATE-Flow/blob/main/doc/cli) is
 recommended for interacting with FATE-Flow.
 
 The command is as follows:
@@ -105,7 +105,7 @@ older
 versions:
 
 ```bash
-python ${your_install_path}/fate_flow/fate_flow_client.py -f upload -c examples/dsl/v2/upload/upload_conf.json
+python ${your_install_path}fateflow/python/fate_flow/fate_flow_client.py -f upload -c examples/dsl/v2/upload/upload_conf.json
 ```
 
 !!! Note

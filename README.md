@@ -11,7 +11,7 @@
 FATE (Federated AI Technology Enabler) is the world's first industrial grade federated learning open source framework initiated by Webank's AI Department to enable enterprises and institutions to collaborate on data while protecting data security and privacy. 
 It implements secure computation protocols based on homomorphic encryption and multi-party computation (MPC). 
 Supporting various federated learning scenarios, FATE now provides a host of federated learning algorithms, including logistic regression, tree-based algorithms, deep learning, and transfer learning.
-FATE open-sourced for the first time in February 2019, and was donated to Linux Foundation by WeBank in June 2019. 
+FATE became open-source in February 2019, and was donated to Linux Foundation by WeBank in June 2019. 
 [FATE TSC](https://github.com/FederatedAI/FATE-Community/blob/master/FATE_Project_Technical_Charter.pdf) was established 
 to lead FATE open-source community, with members from major domestic cloud computing and financial service enterprises. 
 
@@ -55,7 +55,7 @@ to lead FATE open-source community, with members from major domestic cloud compu
 - [Computing API](doc/api/computing.md)
 - [Federation API](./doc/api/federation.md)
 - [Flow SDK API](doc/api/fate_client/flow_sdk.md)
-- [Flow Client](https://fate-flow.readthedocs.io/en/latest/en/fate_flow_client/)
+- [Flow Client](https://fate-flow.readthedocs.io/en/latest/fate_flow_client/)
 - [FATE Pipeline](doc/api/fate_client/pipeline.md)
 - [FATE Test](./doc/tutorial/fate_test_tutorial.md)
 - [DSL Conf Setting Guide](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.md)

@@ -53,9 +53,8 @@ DSL 的配置文件采用 json 格式，实际上，整个配置文件就是一�
 
 ### 3. 模块
 
-  - **含义：** 用来指定使用的模块。这
-  - **说明：** 个参数的内容需要和
-    `federatedml/conf/setting\_conf` 下各个模块的文件名保持一致（不包括 .json 后缀）。
+  - **含义：** 用来指定使用的模块。
+  - **说明：** 这个参数的内容需要和[组件注册文件夹](../../../python/federatedml/components)下的python文件里各个组件的ComponentMeta保持一致。
   - **参考：**
 
     ```json
@@ -71,7 +70,7 @@ DSL 的配置文件采用 json 格式，实际上，整个配置文件就是一�
 
 #### 4.1 数据输入
 
-  - **含义：** 上游数据输入，分为三种输入类型：
+  - **含义：** 上游数据输入，分为四种输入类型：
   
     1.  data: 一般被用于 data-transform模块, feature\_engineering 模块或者 evaluation 模块
     2.  train\_data: 一般被用于 homo\_lr, hetero\_lr 和 secure\_boost 模块。如果出现了 train\_data 字段，那么这个任务将会被识别为一个 fit 任务
@@ -152,11 +151,11 @@ Job Runtime Conf用于设置各个参与方的信息, 作业的参数及各个�
 
 ### 2. DSL版本
 
-  - **含义：** 配置版本，默认不配置为1，建议配置为2
+  - **含义：** 配置版本，默认为1，fate 1.7或以上的版本需要设置为2
   - **参考：**
 
     ```json
-    "dsl_version": "2"
+    "dsl_version": 2
     ```
 
 ### 3. 作业参与方
@@ -313,7 +312,7 @@ Job Runtime Conf用于设置各个参与方的信息, 作业的参数及各个�
         "spark_run": {
           "num-executors": 1,
           "executor-cores": 2
-        },
+        }
       }
     }
     ```
@@ -513,9 +512,9 @@ Job Runtime Conf用于设置各个参与方的信息, 作业的参数及各个�
 ##### 5.4.1 说明
 
 DSL V2不会自动为训练任务生成预测dsl。 用户需要首先使用[Flow
-Client](../../api/fate_client/flow_client.md) 部署所需模型中模块。
+Client](https://fate-flow.readthedocs.io/en/latest/zh/fate_flow_client/) 部署所需模型中模块。
 详细命令说明请参考[FATE-Flow
-document](../../api/fate_client/flow_client.md#deploy)
+document](https://github.com/FederatedAI/FATE-Flow/blob/main/doc/cli/model.zh.md#deploy)
 
 ```bash
 $ flow model deploy --model-id $model_id --model-version $model_version --cpn-list ...
@@ -675,7 +674,7 @@ $ flow model deploy --model-id $model_id --model-version $model_version --cpn-li
 ### 6. 基本原理
 
 1.  提交作业后，fateflow获取job dsl与job
-    config，存于数据库`t_job`表对应字段以及`$PROJECT_BASE/jobs/$jobid/`目录
+    config，存于数据库`t_job`表对应字段以及`$PROJECT_BASE/fateflow/jobs/$jobid/`目录
 2.  解析job dsl与job
     config，依据合并参数生成细粒度参数,
     以及处理参数默认值
