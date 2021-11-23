@@ -81,7 +81,7 @@ Edit the `bin/init_env.sh` environment variable file
 
 ```bash
 cd ${FATE_PROJECT_BASE}
-sed -i.bak "s#PYTHONPATH=. *#PYTHONPATH=$PWD/python:$PWD/fateflow/python#g" ./bin/init_env.sh
+sed -i.bak "s#PYTHONPATH=.*#PYTHONPATH=$PWD/python:$PWD/fateflow/python#g" ./bin/init_env.sh
 sed -i.bak "s#venv=.*#venv=${FATE_VENV_BASE}#g" ./bin/init_env.sh
 ```
 
@@ -125,7 +125,7 @@ python setup.py install
 Initialize ``fate flow client`''
 
 ```bash
-cd ... /... /.
+cd ../../
 flow init -c conf/service_conf.yaml
 ```
 
@@ -156,7 +156,7 @@ If it looks like this, the initialization is successful, otherwise, please check
 
    ```bash
    cd ${FATE_PROJECT_BASE}
-   bash . /python/federatedml/test/run_test.sh
+   bash python/federatedml/test/run_test.sh
    ```
 
    If successful, the screen displays a statement similar to the following:
@@ -178,8 +178,8 @@ Visualizing FATE Jobs with fateboard
 
 ```bash
 cd ${FATE_PROJECT_BASE}
-mkdir -p . /env/jdk
-cd . /env/jdk
+mkdir -p env/jdk
+cd env/jdk
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/jdk-8u192.tar.gz
 tar xzf jdk-8u192.tar.gz
 ```
@@ -189,7 +189,7 @@ Configure environment variables
 ```bash
 cd ${FATE_PROJECT_BASE}
 vim bin/init_env.sh
-sed -i.bak "s#JAVA_HOME=. *#JAVA_HOME=$PWD/env/jdk/jdk-8u192/#g" . /bin/init_env.sh
+sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=$PWD/env/jdk/jdk-8u192/#g" ./bin/init_env.sh
 ```
 
 ### 9.2 Download the build package to install fateboard
@@ -199,8 +199,8 @@ cd ${FATE_PROJECT_BASE}
 mv fateboard fateboard_code
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${the version number you need to download}/release/fateboard.tar.gz
 tar xzf fateboard.tar.gz
-sed -i.bak "s#fateboard.datasource.jdbc-url=. *#fateboard.datasource.jdbc-url=jdbc:sqlite:$PWD/fate_sqlite.db#g" $PWD/fateboard/conf/application.properties
-sed -i.bak "s#fateflow.url=. *#fateflow.url=http://localhost:9380#g" $PWD/fateboard/conf/application.properties
+sed -i.bak "s#fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:sqlite:$PWD/fate_sqlite.db#g" $PWD/fateboard/conf/application.properties
+sed -i.bak "s#fateflow.url=.*#fateflow.url=http://localhost:9380#g" $PWD/fateboard/conf/application.properties
 ```
 
 The version number can be obtained like this
@@ -238,7 +238,7 @@ Please refer to the [FATEBoard repository](https://github.com/FederatedAI/FATE-B
   - For MacOS, you can try [here](https://superuser.com/questions/433746/is-there-a-fix-for-the-too-many-open-files-in-system-error-on-os-x-10-7-1 )
   - For Linux, you can try [here](http://woshub.com/too-many-open-files-error-linux/)
 
-- If the installation of the `python` dependency package `gypm2` fails under MacOS, try installing the following base library before installing the dependency package
+- If the installation of the `python` dependency package `gmpy2` fails under MacOS, try installing the following base library before installing the dependency package
 
    ```bash
    brew install gmp mpfr libmpc

@@ -23,7 +23,7 @@ configuration: conf/service_conf.yaml
 
 **1) Modify Service Configuration**
 
-- Fill in ``servings:hosts`` with actual ip:port of serving-server service, for example:
+- Fill in `servings:hosts` with actual ip:port of serving-server service, for example:
 
 ```yaml
 servings:
@@ -40,9 +40,9 @@ servings:
 
 **1) Modify Service Configuration**
 
-Fill in ``zookeeper:hosts`` with actual ip:port of ZooKeeper of online inference cluster
+Fill in `zookeeper:hosts` with actual ip:port of ZooKeeper of online inference cluster
 
-- If ZooKeeper uses ACL, modify ``use_acl`` ``user`` ``password``; otherwise, skip the following step:
+- If ZooKeeper uses ACL, modify `use_acl` `user` `password`; otherwise, skip the following step:
 
 ```yaml
 use_registry: true
@@ -61,7 +61,7 @@ zookeeper:
 
 # 4. Load Model
 
-Copy and modify configuration file fate_flow/examples/publish_load_model.json under deploy directory, which is used to generate *load configuration* for corresponding model
+Copy and modify configuration file `fate_flow/examples/model/publish_load_model.json` under deploy directory, which is used to generate *load configuration* for corresponding model
 Example of modified configuration:
 
 ```json
@@ -83,17 +83,17 @@ Example of modified configuration:
 ```
 
 All parameters should be filled in according to actual setting. 
-The serving server will load model from the fate flow service. By default, the address for serving server to load model is formatted as follows: 'http://{FATE_FLOW_IP}:{FATE_FLOW_HTTP_PORT}{FATE_FLOW_MODEL_TRANSFER_ENDPOINT}'. To load model with `model.transfer.url` defined in serving-server.properties, a user can set job_parameters['use_transfer_url_on_serving'] to `true`.
+The serving server will load model from the fate flow service. By default, the address for serving server to load model is formatted as follows: `http://{FATE_FLOW_IP}:{FATE_FLOW_HTTP_PORT}{FATE_FLOW_MODEL_TRANSFER_ENDPOINT}`. To load model with `model.transfer.url` defined in serving-server.properties, a user can set job_parameters['use_transfer_url_on_serving'] to `true`.
 
 Run command:
 
 ```bash
-python fate_flow_client.py -f load -c examples/publish_load_model.json
+flow model load -c fate_flow/examples/model/publish_load_model.json
 ```
 
 # 5. Publish Model
 
-Copy and modify configuration file fate_flow/examples/bind_model_service.json under deploy directory, which is used to generate *bind configuration* for corresponding model
+Copy and modify configuration file `fate_flow/examples/model/bind_model_service.json` under deploy directory, which is used to generate *bind configuration* for corresponding model
 Example of modified configuration:
 
 ```json
@@ -117,19 +117,19 @@ Example of modified configuration:
 }
 ```
 
-Except for optional parameter ``servings``, all parameters should be filled in according to actual setting. 
+Except for optional parameter `servings`, all parameters should be filled in according to actual setting. 
 
-If parameter ``servings`` is unfilled, model will be published to all serving-server instances
+If parameter `servings` is unfilled, model will be published to all serving-server instances
 
-If ``servings`` is filled, model will only be published to specified serving-server instance(s)
+If `servings` is filled, model will only be published to specified serving-server instance(s)
 
 Run command:
 
 ```bash
-python fate_flow_client.py -f bind -c examples/bind_model_service.json
+flow model bind -c fate_flow/examples/model/bind_model_service.json
 ```
 
 # 6. Testing Online Inference
 
 Please refer to [FATE-Serving document](https://github.com/FederatedAI/FATE-Serving/wiki/%E5%9C%A8%E7%BA%BF%E6%8E%A8%E7%90%86%E6%8E%A5%E5%8F%A3%E8%AF%B4%E6%98%8E)
-Fill in parameter ``service_id`` according to step 5 above. 
+Fill in parameter `service_id` according to step 5 above.

@@ -55,7 +55,7 @@ FATE于2019年2月首次对外开源，并于2019年6月由微众银行捐献给
 - [Computing API](doc/api/computing.md)
 - [Federation API](./doc/api/federation.md)
 - [Flow SDK API](doc/api/fate_client/flow_sdk.md)
-- [Flow Client](https://fate-flow.readthedocs.io/en/latest/en/fate_flow_client/)
+- [Flow Client](https://fate-flow.readthedocs.io/en/latest/zh/fate_flow_client/)
 - [FATE Pipeline](doc/api/fate_client/pipeline.md)
 - [FATE Test](./doc/tutorial/fate_test_tutorial.md)
 - [DSL Conf Setting Guide](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.zh.md)

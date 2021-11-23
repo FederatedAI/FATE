@@ -157,7 +157,7 @@ The script will complete automatically:
    there are 0 failed tests
    ```
 
-Some use case algorithms are in [examples](../../../examples/dsl/v2) folder, please try using them.
+Some use case algorithms are in [examples](../../examples/dsl/v2) folder, please try using them.
 
 You can also experience the algorithm process kanban through your browser by visiting: Http://${ip}:8080, ip is `127.0.0.1` or the actual ip of the local machine
 

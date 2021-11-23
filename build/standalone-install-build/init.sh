@@ -60,7 +60,8 @@ init() {
 
   if [ ! -f ${venv_dir}/bin/python ]; then
     echo "[INFO] install virtualenv"
-    ${miniconda_dir}/bin/pip install virtualenv -f ${pypi_resource} --no-index
+    ${miniconda_dir}/bin/python -m pip install --upgrade pip -f ${pypi_resource} --no-index
+    ${miniconda_dir}/bin/python -m pip install virtualenv -f ${pypi_resource} --no-index
     ${miniconda_dir}/bin/virtualenv -p ${miniconda_dir}/bin/python3.6  --no-wheel --no-setuptools --no-download ${venv_dir}
     source ${venv_dir}/bin/activate
     pip install setuptools --no-index -f ${pypi_resource}

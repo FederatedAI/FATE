@@ -3,10 +3,9 @@
 - [架构](../../doc/architecture/README.md)
 
 ### FATE on EggRoll部署(生产推荐)
-- [AllinOne部署](doc/fate_on_eggroll/Fate-allinone_deployment_guide_install.zh.md)
-- [Exchange模块部署](doc/fate_on_eggroll/Fate-exchange_deployment_guide.zh.md)
+- [AllinOne部署指南](doc/fate_on_eggroll/fate-allinone_deployment_guide.zh.md)
+- [Exchange部署指南](doc/fate_on_eggroll/fate-exchange_deployment_guide.zh.md)
 
 ### FATE on Spark部署(持续改进)
-- [FATE on Native Spark 部署](doc/fate_on_spark/fate_on_spark_deployment_guide.zh.md)
-- [FATE on CDH 部署](doc/fate_on_spark/fate_on_cdh_deployment_guide.zh.md)
-
+- [FATE on Spark部署指南](doc/fate_on_spark/fate_on_spark_deployment_guide.zh.md)
+- [Exchange部署指南](doc/fate_on_spark/fate-exchange_deployment_with_pulsar.zh.md)
