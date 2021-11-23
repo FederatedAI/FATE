@@ -40,7 +40,7 @@ class LogisticRegressionParam(LogisticParam):
     alpha : float, default: 1.0
         Regularization strength coefficient.
 
-    optimizer : str, 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd', or 'adagrad', default: 'rmsprop'
+    optimizer : str, 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd', or 'adagrad', default: 'sgd'
 
     batch_size : int, default: -1
         Batch size when updating model. -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
@@ -56,8 +56,6 @@ class LogisticRegressionParam(LogisticParam):
             a)	diff： Use difference of loss between two iterations to judge whether converge.
             b)  weight_diff: Use difference between weights of two consecutive iterations
             c)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < eps, it is converged.
-
-            Please note that for hetero-lr multi-host situation, this parameter support "weight_diff" only.
 
     decay: int or float, default: 1
         Decay rate for learning rate. learning rate will follow the following decay schedule.
