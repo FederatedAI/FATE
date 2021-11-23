@@ -23,7 +23,6 @@ import numpy as np
 
 from fate_arch.session import get_parties
 from federatedml.framework.hetero.procedure import batch_generator
-from federatedml.linear_model.linear_model_base import BaseLinearModel
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.one_vs_rest.one_vs_rest import one_vs_rest_factory
 from federatedml.param.hetero_sshe_lr_param import LogisticRegressionParam

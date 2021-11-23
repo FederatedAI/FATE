@@ -143,7 +143,7 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
             return self._not_reveal_every_iter_weights_check(last_w, new_w, suffix)
 
     def _reveal_every_iter_weights_check(self, last_w, new_w, suffix):
-        raise NotImplementedError()
+        raise NotImplementedError("Should not be called here")
 
     def _not_reveal_every_iter_weights_check(self, last_w, new_w, suffix):
         last_w_self, last_w_remote = last_w
