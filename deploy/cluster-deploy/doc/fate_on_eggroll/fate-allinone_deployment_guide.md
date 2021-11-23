@@ -24,9 +24,9 @@
 
 The architecture diagram:
 
-<div style="text-align:center" align=center>
-<img src="../../images/arch_en.png" />
-</div>
+|![](../../images/arch_en.png)|
+|:--:|
+|The architecture diagram|
 
 ## 3. Component Description
 

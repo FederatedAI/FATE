@@ -24,9 +24,8 @@
 
 架构图：
 
-<div style="text-align:center", align=center>
-<img src="../../images/fate_on_spark_architecture.png" />
-</div>
+|![](../../images/fate_on_spark_architecture.png)|
+|:--:|
 
 ## 3.组件说明
 
