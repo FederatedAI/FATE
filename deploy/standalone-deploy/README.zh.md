@@ -110,7 +110,7 @@ docker pull federatedai/standalone_fate ${version}
 - 安装fate client
 
    ```bash
-   cd standalone_fate_install_${version}
+   cd standalone_fate_install_${version}_release
    sh init.sh init
    ```
 
