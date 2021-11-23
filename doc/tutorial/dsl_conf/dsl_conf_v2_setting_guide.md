@@ -73,8 +73,8 @@ We use json file which is actually a dictionary as a dsl config file.
 ### 3. Module
 
   - **definition:** Specify which component to use.
-  - **explanation:** This field should strictly match the file name in
-    python/federatedml/conf/setting\_conf except the `.json` suffix.
+  - **explanation:** This field should strictly match the ComponentMeta define in
+    python file under the [fold]((../../../python/federatedml/components))
   - **example:**
 
 
@@ -93,7 +93,7 @@ We use json file which is actually a dictionary as a dsl config file.
 
   - **definition:** Data input from previous modules; there are four
     possible data\_input type:
-    1.  data: typically used in data\_io, feature\_engineering modules
+    1.  data: typically used in data\_transform, feature\_engineering modules
         and evaluation.
     2.  train\_data: uses in training components like HeteroLR、HeteroSBT
         and so on. If this field is provided, the task will be parse as
@@ -130,7 +130,7 @@ We use json file which is actually a dictionary as a dsl config file.
             },
             "output": {
                 "data": ["validate_data"],
-              "model": ["eval_model"]
+                "model": ["eval_model"]
             }
         }
         ```
@@ -188,11 +188,11 @@ participants. Configurable values include:
 
 ### 2. DSL version
 
-  - **definition:** conf version, default 1, 2 is recommended
+  - **definition:** conf version, default 1, 2 must be set if fate's version >= 1.7
   - **example:**
 
     ```json
-    "dsl_version": "2"
+    "dsl_version": 2
     ```
 
 ### 3. Job Participants
@@ -277,9 +277,7 @@ Configurable Job Parameters
 !!! Note
 
     1. Some types of `computing_engine`, `storage_engine` are only compatible with each other. 
-    2. Developer may implement other types of engines and set new engine
-    combinations in runtime
-    conf.
+    2. Developer may implement other types of engines and set new engine combinations in runtime conf.
 
 #### 4.3 Non-Configurable Job Parameters
 
@@ -756,7 +754,7 @@ predict dsl:
 
 1.  After job submission, FATE-Flow obtains job dsl and job config and
     store them inside job folder under corresponding directory
-    `$PROJECT_BASE/jobs/$jobid/`
+    `$PROJECT_BASE/fateflow/jobs/$jobid/`
 2.  Parse job dsl & job config, generate fine-grained configuration
     according to provided settings and
     fill in default parameter values

@@ -11,7 +11,7 @@ python ../../../../scripts/download_mnist_data_as_images.py
 2. bind local path
 
 ```bash
-a. replace $fate_project_base in bind_local_path.json 
+a. replace $PROJECT_BASE in bind_local_path.json 
 b. flow table bind -c bind_local_path.json
 ```
 
