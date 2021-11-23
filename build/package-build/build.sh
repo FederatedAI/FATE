@@ -17,7 +17,7 @@
 
 set -e
 source_dir=$(cd `dirname $0`; cd ../;cd ../;pwd)
-support_modules=(bin conf examples build deploy fate fateflow fateboard eggroll)
+support_modules=(bin conf examples build deploy proxy fate fateflow fateboard eggroll)
 environment_modules=(python36 jdk pypi)
 packaging_modules=()
 echo ${source_dir}
@@ -221,7 +221,7 @@ function packaging_proxy(){
     echo "[INFO] package proxy start"
     cd c/proxy
     mkdir -p ${package_dir}/proxy/nginx
-    cp -r conf lua ${package_dir}/proxy/nginx
+    cp -r conf lua ${package_dir}/proxy/nginx/
     echo "[INFO] package proxy done"
 }
 
