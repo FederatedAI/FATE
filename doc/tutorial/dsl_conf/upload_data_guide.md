@@ -105,7 +105,7 @@ older
 versions:
 
 ```bash
-python ${your_install_path}fate_flow/python/fate_flow/fate_flow_client.py -f upload -c examples/dsl/v2/upload/upload_conf.json
+python ${your_install_path}fateflow/python/fate_flow/fate_flow_client.py -f upload -c examples/dsl/v2/upload/upload_conf.json
 ```
 
 !!! Note

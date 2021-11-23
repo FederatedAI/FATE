@@ -97,7 +97,7 @@ $ flow data upload -c examples/dsl/v2/upload/upload_conf.json
 同时，用户也可使用旧版的python脚本方式上传数据：
 
 ```bash
-$ python ${your_install_path}/fate_flow/python/fate_flow/fate_flow_client.py -f upload -c examples/dsl/v2/upload/upload_conf.json
+$ python ${your_install_path}/fateflow/python/fate_flow/fate_flow_client.py -f upload -c examples/dsl/v2/upload/upload_conf.json
 ```
 
 !!! Note
