@@ -90,7 +90,7 @@ Whether local ports 8080, 9360, 9380 are occupied
 Download the installation package and unpack it
 
    ```bash
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/1.7.0/release/standalone_fate_install_${version}_release.tar. gz
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/1.7.0/release/standalone_fate_install_${version}_release.tar.gz
    tar -xzvf standalone_fate_install_${version}_release.tar.gz
    ```
 
@@ -110,7 +110,7 @@ The script will complete automatically:
 - Install the fateboard client
 
    ```bash
-   cd standalone_fate_install_${version}
+   cd standalone_fate_install_${version}_release
    sh init.sh init
    ```
 
