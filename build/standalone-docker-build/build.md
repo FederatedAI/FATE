@@ -32,11 +32,11 @@ bash build/standalone-docker-build/build.sh ${version_tag}
 
 Optional advanced usage:
 
-- Replace the default image source with a custom yum image source to install dependencies, and restore the default image source after installation
+- Replace the default source with a custom source to install dependencies, and restore the default source after installation
 
-    ```bash
-    bash build/standalone-docker-build/build.sh ${version_tag} {path to your image source}
-    ```
+```bash
+bash build/standalone-docker-build/build.sh ${version_tag} {Optionally, the image source file to be replaced} {Optional, the pip index url to be used}
+```
 
 ## 4. Output
 
