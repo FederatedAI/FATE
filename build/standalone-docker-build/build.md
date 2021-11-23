@@ -35,7 +35,7 @@ Optional advanced usage:
 - Replace the default source with a custom source to install dependencies, and restore the default source after installation
 
 ```bash
-bash build/standalon-docker-build/build.sh ${version_tag} {Optionally, the image source file to be replaced} {Optional, the pip index url to be used}
+bash build/standalone-docker-build/build.sh ${version_tag} {Optionally, the image source file to be replaced} {Optional, the pip index url to be used}
 ```
 
 ## 4. Output
