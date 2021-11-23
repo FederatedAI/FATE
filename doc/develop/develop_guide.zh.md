@@ -4,7 +4,7 @@
 
 本文档描述了如何开发算法模块，使得该模块可以在 FATE 架构下被调用。
 
-要开发模块，需要执行以下 5 个步骤。
+要开发模块，需要执行以下 6 个步骤。
 
 1.  定义将在此模块中使用的 python 参数对象。
 2.  定义模块的 meta 文件。
@@ -13,7 +13,7 @@
 5.  定义模型保存所需的protobuf文件。
 6.  若希望通过python脚本直接启动组件，需要在`fate_client`中定义Pipeline组件。
 
-在以下各节中，我们将通过 `toy_example` 详细描述这 5 个步骤。
+在以下各节中，我们将通过 `hetero_lr` 详细描述这 6 个步骤。
 
 ### 第一步：定义此模块将使用的参数对象
 
@@ -114,7 +114,7 @@ def check(self):
           装饰器方程将引入并返回对应角色的模块object。
    
           以hetero-lr 为例：
-          [python/federatedml/components/hetero_lr.py](../../python/federatedml/conf/setting_conf/HeteroLR.json)
+          [python/federatedml/components/hetero_lr.py](../../python/federatedml/components/hetero_lr.py)
         
           ```python
               @hetero_lr_cpn_meta.bind_runner.on_guest
@@ -130,8 +130,8 @@ def check(self):
                   return HeteroLRHost
           ``` 
         
-      - 使用装饰器 `xxx_cpn_meta.bind_param` 将参数object绑定至step1中定义的各个模块object，
-      装饰器方程将引入并返回对应参数object。
+      - 使用装饰器 `xxx_cpn_meta.bind_param` 将参数object绑定至step1中定义的开发组件，
+      装饰器将返回对应参数object。
         
         ```python
             @hetero_lr_cpn_meta.bind_param
@@ -143,7 +143,7 @@ def check(self):
 
 ### 第三步：定义此模块的传递变量py文件并生成传递变量对象（可选）
 
-仅在此模块被联邦时（即不同参与方之间存在信息交互）才需要执行此步骤。
+仅在此模块需要联邦时（即不同参与方之间存在信息交互）才需要执行此步骤。
 
 !!!Note
 
@@ -193,19 +193,12 @@ class HeteroLRTransferVariable(BaseTransferVariables):
   - dst  
     应为 "guest"，"host"，"arbiter" 的某些组合列表，用于定义将交互信息发送到何处。
 
-在 python 文件编写完成后，运行以下程序，可在
-[`auth_conf`](../../python/federatedml/transfer_variable/auth_conf)
-中生成对应的json配置文件。该配置文件将被`fate_flow`识别并用于后续权限判断。
-
-```bash
-python fate_arch/federation/transfer_variable/scripts/generate_auth_conf.py federatedml federatedml/transfer_variable/auth_conf
-```
 
 ### 第四步：定义您的模块（应继承 `model_base`）
 
 `fate_flow_client` 模块的运行规则是：
 
-1.  检索 `setting_conf` 并找到配置文件的`module`和`role`字段。
+1.  从数据库中检索fate的组件注册信息，获取component的每个`role`对应的运行对象。
 2.  初始化各方的运行对象。
 3.  调用运行对象的 run 方法。
 4.  如果需要，调用 `save_data` 方法。
@@ -347,6 +340,6 @@ python ${your_pipeline.py}
 
 ### 第三步: 检查日志文件  
 
-现在，您可以在以下路径中检查日志：`${your_install_path}/logs/{your jobid}`.
+现在，您可以在以下路径中检查日志：`$PROJECT_BASE/logs/{your jobid}`.
 
 有关 dsl 配置文件和参数配置文件的更多详细信息，请参考此处的`examples/dsl/v2`中查看。

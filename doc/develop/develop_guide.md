@@ -7,7 +7,7 @@
 In this document, it describes how to develop an algorithm component, which
 can be callable under the architecture of FATE.
 
-To develop a component, the following 5 steps are needed.
+To develop a component, the following 6 steps are needed.
 
 1.  define the python parameter object which will be used in this
     component.
@@ -17,8 +17,8 @@ To develop a component, the following 5 steps are needed.
 5.  Define the protobuf file required for model saving.
 6.  (optional) define Pipeline component for your component.
 
-In the following sections we will describe the 5 steps in detail, with
-`toy_example`.
+In the following sections we will describe the 6 steps in detail, with
+`hetero_lr`.
 
 ### Step 1. Define the parameter object this component will use
 
@@ -129,7 +129,7 @@ this file to get the information on  how to start program of the component.
         This function imports and returns the running object of corresponding role.  
   
         Take hetero-lr as an example, users can find it in
-        [python/federatedml/components/hetero_lr.py](../../python/federatedml/conf/setting_conf/HeteroLR.json)
+        [python/federatedml/components/hetero_lr.py](../../python/federatedml/components/hetero_lr.py)
       
         ```python
         @hetero_lr_cpn_meta.bind_runner.on_guest
@@ -212,8 +212,7 @@ class HeteroLRTransferVariable(BaseTransferVariables):
 
 The rule of running a module with `fate_flow_client` is that:
 
-1.  retrieves the `setting_conf` and find the "module" and "role" fields
-    of setting conf.
+1.  retrieves component registration from database and find the running object of each role.
 2.  it initializes the running object of every party.
 3.  calls the fit method of running object.
 4.  calls the `save_data` method if needed.
@@ -402,7 +401,7 @@ python ${your_pipeline.py}
 
 ### 3. Check log files  
 
-Now you can check out the log in the path: `${your_install_path}/logs/${your jobid}`
+Now you can check out the log in the path: `$PROJECT_BASE/logs/${your jobid}`
 
 For more detailed information about dsl configure file and parameter
 configure files, please check out `examples/dsl/v2`
