@@ -512,9 +512,9 @@ Job Runtime Conf用于设置各个参与方的信息, 作业的参数及各个�
 ##### 5.4.1 说明
 
 DSL V2不会自动为训练任务生成预测dsl。 用户需要首先使用[Flow
-Client](../../api/fate_client/flow_client.md) 部署所需模型中模块。
+Client](https://fate-flow.readthedocs.io/en/latest/en/fate_flow_client/) 部署所需模型中模块。
 详细命令说明请参考[FATE-Flow
-document](../../api/fate_client/flow_client.md#deploy)
+document](https://github.com/FederatedAI/FATE-Flow/blob/main/doc/cli/model.zh.md#deploy)
 
 ```bash
 $ flow model deploy --model-id $model_id --model-version $model_version --cpn-list ...
