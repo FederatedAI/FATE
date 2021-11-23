@@ -50,6 +50,8 @@ def main(config="../../config.yaml", param="./hetero_nn_breast_config.yaml"):
     Xb = pandas.read_csv(os.path.join(data_base_dir, data_guest), index_col=idx)
     Xa = pandas.read_csv(os.path.join(data_base_dir, data_host), index_col=idx)
     y = Xb[label_name]
+    out = Xa.drop(Xb.index)
+    Xa = Xa.drop(out.index)
     if param["loss"] == "categorical_crossentropy":
         labels = y.copy()
         label_encoder = LabelEncoder()
@@ -79,9 +81,11 @@ def main(config="../../config.yaml", param="./hetero_nn_breast_config.yaml"):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("BENCHMARK-QUALITY SKLEARN JOB")
+    parser.add_argument("-config", type=str,
+                        help="config file")
     parser.add_argument("-param", type=str,
                         help="config file for params")
     args = parser.parse_args()
     if args.config is not None:
-        main(args.param)
+        main(args.config, args.param)
     main()

@@ -107,10 +107,10 @@ fateboard:
   host: 127.0.0.1
   port: 8080
 
-# on API `/model/load` and `/model/load/do`
+# this option affects API `/model/load`
 # automatic upload models to the model store if it exists locally but does not exist in the model storage
 # or download models from the model store if it does not exist locally but exists in the model storage
-# this config will not affect API `/model/store` or `/model/restore`
+# this option does not affect API `/model/store` or `/model/restore`
 enable_model_store: false
 model_store_address:
   # use mysql as the model store engine

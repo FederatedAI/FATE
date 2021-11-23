@@ -1,4 +1,3 @@
-
 # FATE Standalone Docker Package Build Guide
 
 [TOC]
@@ -17,7 +16,7 @@
 git clone https://github.com/FederatedAI/FATE.git -b $branch --recurse-submodules --depth=1
 ```
 
-Please set the **branch** and the **version_tag**.
+Please set the **branch** parameter, if you use a release branch, then **branch** is v`version number`, e.g. `v1.7.0`
 The **depth** parameter represents the code that only gets the latest commit, which can speed up the clone.
 
 ### 2.2 Get code from Gitee(Try Gitee when you can't connect to Github for code)
@@ -31,7 +30,13 @@ cd FATE
 bash build/standalone-docker-build/build.sh ${version_tag}
 ```
 
-The **all** means that modules needs to be deployed, all means all, supports all, python, fateboard, eggroll
+Optional advanced usage:
+
+- Replace the default source with a custom source to install dependencies, and restore the default source after installation
+
+```bash
+bash build/standalone-docker-build/build.sh ${version_tag} {Optionally, the image source file to be replaced} {Optional, the pip index url to be used}
+```
 
 ## 4. Output
 
@@ -54,4 +59,4 @@ You can see the following package:
 
 ## 6. Using Standalone Docker Package Install FATE Stanadlone
 
-Please reference [Fate-standalone_deployment_guide](../deploy/../../deploy/standalone-deploy/doc/Fate-standalone_deployment_guide.md)
+Please reference [standalone fate deployment guide](../deploy/../../deploy/standalone-deploy/README.md)

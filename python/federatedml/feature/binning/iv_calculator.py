@@ -106,7 +106,7 @@ class IvCalculator(object):
     def cal_bin_label(self, data_bin_table, sparse_bin_points, label_table, label_counts):
         """
 
-        data_bin_table : DTable.
+        data_bin_table : Table.
             Each element represent for the corresponding bin number this feature belongs to.
             e.g. it could be:
             [{'x1': 1, 'x2': 5, 'x3': 2}
@@ -117,7 +117,7 @@ class IvCalculator(object):
             Dict of sparse bin num
                 {"x0": 2, "x1": 3, "x2": 5 ... }
 
-        label_table : DTable
+        label_table : Table
             id with labels
 
         Returns:
@@ -215,8 +215,8 @@ class IvCalculator(object):
 
         Parameters
         ----------
-        data_bin_with_table : DTable
-            The input data, the DTable is like:
+        data_bin_with_table : Table
+            The input data, the Table is like:
             (id, {'x1': 1, 'x2': 5, 'x3': 2}, y)
             where y = [is_label_0, is_label_1, ...]  which is one-hot format array of label
 

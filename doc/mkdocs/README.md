@@ -1,5 +1,13 @@
 # Build
 
+# prepare
+
+We use setup.py to hook docs generation in readthedocs, just run 
+
+```bash
+python doc/mkdocs/setup.py 
+```
+
 ## use docker
 
 At repo root, execute

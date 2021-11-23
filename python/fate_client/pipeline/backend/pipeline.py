@@ -258,8 +258,22 @@ class PipeLine(object):
         self._upload_conf.append(data_conf)
 
     def _get_task_inst(self, job_id, name, init_role, party_id):
+        component = None
+        if name in self._components:
+            component = self._components[name]
+
+        if component is None:
+            if self._stage != "predict":
+                raise ValueError(f"Component {component} does not exist")
+            training_meta = self._predict_pipeline[0]["pipeline"].get_predict_meta()
+
+            component = training_meta.get("components").get(name)
+
+            if component is None:
+                raise ValueError(f"Component {name} does not exist")
+
         return TaskInfo(jobid=job_id,
-                        component=self._components[name],
+                        component=component,
                         job_client=self._job_invoker,
                         role=init_role,
                         party_id=party_id)

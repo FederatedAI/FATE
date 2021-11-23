@@ -48,7 +48,7 @@ class HeteroLRGuest(HeteroLRBase):
         set the negative label to -1
         Parameters
         ----------
-        data_instance: DTable of Instance, input data
+        data_instance: Table of Instance, input data
         """
         data_instance = copy.deepcopy(data_instance)
         if data_instance.label != 1:
@@ -60,7 +60,7 @@ class HeteroLRGuest(HeteroLRBase):
         Train lr model of role guest
         Parameters
         ----------
-        data_instances: DTable of Instance, input data
+        data_instances: Table of Instance, input data
         """
 
         LOGGER.info("Enter hetero_lr_guest fit")
@@ -176,11 +176,11 @@ class HeteroLRGuest(HeteroLRBase):
         Prediction of lr
         Parameters
         ----------
-        data_instances: DTable of Instance, input data
+        data_instances: Table of Instance, input data
 
         Returns
         ----------
-        DTable
+        Table
             include input data label, predict probably, label
         """
         LOGGER.info("Start predict is a one_vs_rest task: {}".format(self.need_one_vs_rest))
