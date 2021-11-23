@@ -13,7 +13,7 @@ nav:
       - pipeline:
         - tutorial/pipeline/index.md
       - DSL:
-        - tutorial: tutorial/dsl_conf/README.md
+        - tutorial: tutorial/dsl_conf/dsl_conf_tutorial.md
         - upload guide: tutorial/dsl_conf/upload_data_guide.md
         - job conf guide: tutorial/dsl_conf/dsl_conf_v2_setting_guide.md
       - model publish: tutorial/model_publish_with_serving_guide.md
@@ -122,10 +122,6 @@ plugins:
       default_language: en
       languages:
         zh: 中文
-      nav_translations:
-        zh:
-          Tutorial: 教程
-          Usage: 教程
   - mkdocs-jupyter
 
 markdown_extensions:
@@ -153,6 +149,10 @@ markdown_extensions:
       custom_checkbox: true
   - pymdownx.tabbed
   - pymdownx.tilde
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+
 
 extra:
   alternate:
