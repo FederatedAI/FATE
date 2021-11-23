@@ -22,9 +22,9 @@
 
 架构图：
 
-<div style="text-align:center", align=center>
-<img src="../../images/arch_zh.png" />
-</div>
+|![](../../images/arch_zh.png)|
+|:--:|
+|架构图|
 
 # 3.组件说明
 
