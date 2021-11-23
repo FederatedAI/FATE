@@ -1,6 +1,6 @@
 # FATE Test Tutorial
 
-A collection of useful tools to running FATE tests and [examples](../../examples).
+A collection of useful tools to running FATE tests and [:file_folder:examples](../../examples).
 
 ## quick start
 
