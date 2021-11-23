@@ -75,7 +75,6 @@ function packaging(){
     for module in "${environment_modules[@]}";
     do
         tar xzf ${module}.tar.gz -C ${env_dir}
-        rm -rf ${module}.tar.gz
     done
     echo "[INFO] deal env packages done"
 
@@ -85,6 +84,7 @@ function packaging(){
         tar xzf ${module}.tar.gz
         rm -rf ${module}.tar.gz
     done
+    rm -rf *.tar.gz
     echo "[INFO] deal system packages done"
 
     echo "[INFO] package done"

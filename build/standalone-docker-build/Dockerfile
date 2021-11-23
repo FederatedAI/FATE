@@ -26,9 +26,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-FROM centos/python-36-centos7
-
 ARG version
+FROM federatedai/fate_python_base:${version}
 
 USER root
 
@@ -47,11 +46,6 @@ COPY docker-entrypoint.sh /usr/local/bin/
 
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-RUN sh ./init.sh
-
-# python enviroment and dependencies
-RUN pip install --upgrade pip -f ./env/pypi --no-index
-RUN pip install -r ./requirements.txt -f ./env/pypi --no-index
 ENV PYTHONPATH ${WORKDIR}/fate/python:${WORKDIR}/fateflow/python
 RUN sed -i "s#PYTHONPATH=.*#PYTHONPATH=${PYTHONPATH}#g" ./bin/init_env.sh
 
@@ -76,8 +70,5 @@ RUN sed -i "s#fateflow.url=.*#fateflow.url=http://localhost:9380#g" ./fateboard/
 # clean up things that don't need to be used in the Docker environment
 RUN sed -i "s#venv=.*##g" ./bin/init_env.sh
 RUN sed -i "s#source.*venv.*##g" ./bin/init_env.sh
-RUN rm -rf ./env/python36
-# not work
-RUN rm -rf ./env/pypi
 
 ENTRYPOINT ["docker-entrypoint.sh"]
