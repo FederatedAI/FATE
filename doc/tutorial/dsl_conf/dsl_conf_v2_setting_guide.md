@@ -589,7 +589,7 @@ role parameters. Common parameters will be copied for every party.
 
 Please note that in dsl v2，predict dsl is not automatically generated
 after training. User should first deploy needed components with [Flow
-Client](https://fate-flow.readthedocs.io/en/latest/en/fate_flow_client/). Please refer to
+Client](https://fate-flow.readthedocs.io/en/latest/fate_flow_client/). Please refer to
 [FATE-Flow
 document](https://github.com/FederatedAI/FATE-Flow/blob/main/doc/cli/model.md#deploy) for
 details on using deploy
