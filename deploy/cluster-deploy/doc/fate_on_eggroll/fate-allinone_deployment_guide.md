@@ -1,4 +1,5 @@
-# FATE AllinOne Deployment Guide | [中文](./fate-allinone_deployment_guide.zh.md)
+# FATE AllinOne Deployment Guide
+[中文](./fate-allinone_deployment_guide.zh.md)
 
 > Warning: This document is designed for a quick start deployment only. Other deployment methods are recommended for production environments, such as [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE).
 >
