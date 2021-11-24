@@ -1,4 +1,5 @@
-# Example Usage Guide. | [中文](README.zh.md)
+# Example Usage Guide
+[中文](README.zh.md)
 
 We provide here examples of FATE jobs, including FATE-Pipeline scripts,
 DSL conf files, and modeling quality comparison tasks
