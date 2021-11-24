@@ -12,23 +12,12 @@
 
 ## 2. Get the source code
 
-### 2.1 Get code from Github
-
-```bash
-git clone https://github.com/FederatedAI/FATE.git -b $branch --recurse-submodules --depth=1
-```
-
-Please set the **branch** parameter, if you use a release branch, then **branch** is v`version number`, e.g. `v1.7.0`
-The **depth** parameter represents the code that only gets the latest commit, which can speed up the clone.
-
-### 2.2 Get code from Gitee(Try Gitee when you can't connect to Github for code)
-
-Please reference [how_to_use_gitee](../common/how_to_use_gitee.md)
+Please refer to [get source code](../common/get_source_code.md)
 
 ## 3. Build
 
 ```bash
-cd FATE
+cd FATE;
 bash build/package-build/build.sh ${version_tag} all
 ```
 
@@ -43,7 +32,7 @@ ls -l FATE_install_${version}_${version_tag}.tar.gz
 ## 5. Check packages
 
 ```bash
-tar xzf FATE_install_${version}_${version_tag}.tar.gz
+tar xzf FATE_install_${version}_${version_tag}.tar.gz;
 ls -lrt FATE_install_${version}_${version_tag}
 ```
 
