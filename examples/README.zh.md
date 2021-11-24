@@ -1,4 +1,5 @@
-# Example 使用指南 | [English](README.md)
+# Example 使用指南 
+[English](README.md)
 
 
 本章节介绍examples目录，它提供了pipeline样例、dsl的配置、 以及正确性对比验证回归的样例、常规建模模版等。
