@@ -30,7 +30,13 @@ Note that the ${version} in the following example, please replace it with the ac
 
 - The host needs to be able to access the external network to pull installation packages and docker images from the public network.
 - Dependent on [docker](https://download.docker.com/linux/), the recommended version of docker is 18.09. You can verify the docker environment with the following command: docker --version,docker start-stop and other operations please refer to docker --help
-- Before executing, please check if 8080 is already occupied. If you want to execute it again, please use the docker command to delete the previous containers and images.
+- Before executing, please check if 8080 is already occupied. If you want to execute it again, please use the docker command to delete the previous containers and images
+
+Set the environment variables required for deployment (note that the environment variables set in the following way are only valid for the current terminal session, if you open a new terminal session, such as a new login or a new window, please set them again)
+
+```bash
+export version={FATE version for this deployment, e.g: 1.7.0}
+```
 
 ### 2.2 Pulling mirrors
 
@@ -126,7 +132,7 @@ The script will complete automatically:
    - Load environment variables
 
    ```bash
-   source ./bin/init_env.sh
+   source bin/init_env.sh
    ```
 
    - [test items](#4-test-items)

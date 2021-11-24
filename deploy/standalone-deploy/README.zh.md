@@ -30,7 +30,13 @@
 
 - 主机需要能够访问外部网络，从公共网络中拉取安装包和docker镜像。
 - 依赖[docker](https://download.docker.com/linux/), docker建议版本为18.09，您可以使用以下命令验证docker环境：docker --version,docker的起停和其他操作请参考docker --help
-- 执行之前，请检查8080是否已被占用。 如果要再次执行，请使用docker命令删除以前的容器和镜像。
+- 执行之前，请检查8080是否已被占用。 如果要再次执行，请使用docker命令删除以前的容器和镜像
+
+设置部署所需环境变量(注意, 通过以下方式设置的环境变量仅在当前终端会话有效, 若打开新的终端会话, 如重新登录或者新窗口, 请重新设置)
+
+```bash
+export version={本次部署的FATE版本号, 如1.7.0}
+```
 
 ### 2.2 拉取镜像
 
@@ -126,7 +132,7 @@ docker pull federatedai/standalone_fate ${version}
    - 加载环境变量
 
    ```bash
-   source ./bin/init_env.sh
+   source bin/init_env.sh
    ```
 
    - [测试项](#4-测试项)
