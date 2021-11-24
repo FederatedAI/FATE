@@ -1,4 +1,5 @@
-# FATE Exchange Deployment Guide | [中文](./fate-exchange_deployment_guide.zh.md)
+# FATE Exchange Deployment Guide 
+[中文](./fate-exchange_deployment_guide.zh.md)
 
 # 1\. Server Configuration
 
