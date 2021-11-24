@@ -1,4 +1,5 @@
-## FATE Exchange with Pulsar Deployment Guide| [中文](fate-exchange_deployment_with_pulsar.zh.md)
+## FATE Exchange with Pulsar Deployment Guide
+[中文](fate-exchange_deployment_with_pulsar.zh.md)
 
 ## Star Networking
 
