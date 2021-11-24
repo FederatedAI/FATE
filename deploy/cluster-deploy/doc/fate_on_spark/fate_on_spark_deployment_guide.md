@@ -1,4 +1,5 @@
-# FATE ON Spark Deployment Guide | [中文](fate_on_spark_deployment_guide.zh.md)
+# FATE ON Spark Deployment Guide 
+[中文](fate_on_spark_deployment_guide.zh.md)
 
 ## 1.Server Information
 
