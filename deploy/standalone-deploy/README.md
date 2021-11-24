@@ -35,8 +35,16 @@ Note that the ${version} in the following example, please replace it with the ac
 Set the environment variables required for deployment (note that the environment variables set in the following way are only valid for the current terminal session, if you open a new terminal session, such as a new login or a new window, please set them again)
 
 ```bash
-export version={FATE version for this deployment, e.g: 1.7.0}
+export version={FATE version for this deployment}
 ```
+
+example:
+
+```bash
+export version=1.7.0
+```
+
+### 2.2 拉取镜像
 
 ### 2.2 Pulling mirrors
 
@@ -49,10 +57,8 @@ docker pull federatedai/standalone_fate ${version}
 #### 2.2.2 Via mirror packages
 
    ```bash
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/standalone_fate_docker_image_${version}_release.tar
-
-   docker load < standalone_fate_docker_image_${version}_release.tar
-
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/standalone_fate_docker_image_${version}_release.tar;
+   docker load < standalone_fate_docker_image_${version}_release.tar;
    docker images | grep federatedai/standalone_fate
    ```
 
@@ -61,7 +67,7 @@ docker pull federatedai/standalone_fate ${version}
 ### 2.3 Boot
 
    ```bash
-   docker run -d --name standalone_fate -p 8080:8080 federatedai/standalone_fate:${version}
+   docker run -d --name standalone_fate -p 8080:8080 federatedai/standalone_fate:${version};
    docker ps -a | grep standalone_fate
    ```
 
@@ -86,8 +92,8 @@ Note that in the following example ${version}, please replace it with the actual
 Whether local ports 8080, 9360, 9380 are occupied
 
    ```bash
-   netstat -apln|grep 8080
-   netstat -apln|grep 9360
+   netstat -apln|grep 8080;
+   netstat -apln|grep 9360;
    netstat -apln|grep 9380
    ```
 
@@ -96,7 +102,7 @@ Whether local ports 8080, 9360, 9380 are occupied
 Download the installation package and unpack it
 
    ```bash
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/1.7.0/release/standalone_fate_install_${version}_release.tar.gz
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/1.7.0/release/standalone_fate_install_${version}_release.tar.gz;
    tar -xzvf standalone_fate_install_${version}_release.tar.gz
    ```
 
@@ -116,14 +122,14 @@ The script will complete automatically:
 - Install the fateboard client
 
    ```bash
-   cd standalone_fate_install_${version}_release
+   cd standalone_fate_install_${version}_release;
    sh init.sh init
    ```
 
 ### 3.4 Start
 
    ```bash
-   sh init.sh status
+   sh init.sh status;
    sh init.sh start
    ```
 

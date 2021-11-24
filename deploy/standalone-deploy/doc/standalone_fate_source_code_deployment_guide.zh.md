@@ -35,7 +35,21 @@ git clone https://github.com/FederatedAI/FATE.git -b $branch --recurse-submodule
 请设置**branch**参数, 若使用某个发布版本分支, 则**branch**为`v版本号`, 如`v1.7.0`
 **depth**参数表示只获取最新提交的代码，这可以加快克隆的速度
 
-将该目录称之为`FATE_PROJECT_BASE`，如下文档中将用到
+设置部署所需环境变量(注意, 通过以下方式设置的环境变量仅在当前终端会话有效, 若打开新的终端会话, 如重新登录或者新窗口, 请重新设置)
+
+```bash
+cd {上述代码的存放目录}
+export FATE_PROJECT_BASE=$PWD
+export version=`grep "FATE=" ${FATE_PROJECT_BASE}/fate.env | awk -F "=" '{print $2}'`
+```
+
+样例:
+
+```bash
+cd /xxx/FATE
+export FATE_PROJECT_BASE=$PWD
+export version=`grep "FATE=" ${FATE_PROJECT_BASE}/fate.env | awk -F "=" '{print $2}'`
+```
 
 ### 3.2 从Gitee获取代码（当你无法连接到Github获取代码时，可以试试Gitee）
 
@@ -69,9 +83,9 @@ source ${FATE_VENV_BASE}/bin/activate
 ### 4.3 安装FATE所需要的Python依赖包
 
 ```bash
-cd ${FATE_PROJECT_BASE}
-sh bin/install_os_dependencies.sh
-source ${FATE_VENV_BASE}/bin/activate
+cd ${FATE_PROJECT_BASE};
+sh bin/install_os_dependencies.sh;
+source ${FATE_VENV_BASE}/bin/activate;
 pip install -r python/requirements.txt
 ```
 
@@ -83,8 +97,8 @@ pip install -r python/requirements.txt
 
 ```bash
 cd ${FATE_PROJECT_BASE}
-sed -i.bak "s#PYTHONPATH=.*#PYTHONPATH=$PWD/python:$PWD/fateflow/python#g" ./bin/init_env.sh
-sed -i.bak "s#venv=.*#venv=${FATE_VENV_BASE}#g" ./bin/init_env.sh
+sed -i.bak "s#PYTHONPATH=.*#PYTHONPATH=$PWD/python:$PWD/fateflow/python#g" bin/init_env.sh;
+sed -i.bak "s#venv=.*#venv=${FATE_VENV_BASE}#g" bin/init_env.sh
 ```
 
 检查`conf/service_conf.yaml`全局配置文件中是否将基础引擎配置为单机版, 若`default_engines`显示如下，则为单机版
@@ -99,10 +113,10 @@ default_engines:
 ## 6. 启动fate flow server
 
 ```bash
-cd ${FATE_PROJECT_BASE}
-source bin/init_env.sh
-cd fateflow
-sh bin/service.sh status
+cd ${FATE_PROJECT_BASE};
+source bin/init_env.sh;
+cd fateflow;
+sh bin/service.sh status;
 sh bin/service.sh start
 ```
 
@@ -118,16 +132,16 @@ python  111907  app   13u  IPv4 3570158827      0t0  TCP localhost:9360 (LISTEN)
 ## 7. 安装fate client
 
 ```bash
-cd ${FATE_PROJECT_BASE}
-source bin/init_env.sh
-cd python/fate_client/
+cd ${FATE_PROJECT_BASE};
+source bin/init_env.sh;
+cd python/fate_client/;
 python setup.py install
 ```
 
 初始化`fate flow client`
 
 ```bash
-cd ../../
+cd ../../;
 flow init -c conf/service_conf.yaml
 ```
 
@@ -157,7 +171,7 @@ flow init -c conf/service_conf.yaml
 ### 8.2 单元测试
 
    ```bash
-   cd ${FATE_PROJECT_BASE}
+   cd ${FATE_PROJECT_BASE};
    bash ./python/federatedml/test/run_test.sh
    ```
 
@@ -179,45 +193,37 @@ Please refer [here](../../../examples/pipeline/../README.zh.md) for a quick star
 ### 9.1 安装并配置Java环境
 
 ```bash
-cd ${FATE_PROJECT_BASE}
-mkdir -p ./env/jdk
-cd ./env/jdk
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/jdk-8u192.tar.gz
+cd ${FATE_PROJECT_BASE};
+mkdir -p env/jdk;
+cd env/jdk
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/jdk-8u192.tar.gz;
 tar xzf jdk-8u192.tar.gz
 ```
 
 配置环境变量
 
 ```bash
-cd ${FATE_PROJECT_BASE}
-vim bin/init_env.sh
-sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=$PWD/env/jdk/jdk-8u192/#g" ./bin/init_env.sh
+cd ${FATE_PROJECT_BASE};
+vim bin/init_env.sh;
+sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=$PWD/env/jdk/jdk-8u192/#g" bin/init_env.sh
 ```
 
 ### 9.2 下载编译包安装fateboard
 
 ```bash
-cd ${FATE_PROJECT_BASE}
-mv fateboard fateboard_code
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${你需要下载的版本号}/release/fateboard.tar.gz
-tar xzf fateboard.tar.gz
-sed -i.bak "s#fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:sqlite:$PWD/fate_sqlite.db#g" $PWD/fateboard/conf/application.properties
+cd ${FATE_PROJECT_BASE};
+mv fateboard fateboard_code;
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/fateboard.tar.gz;
+tar xzf fateboard.tar.gz;
+sed -i.bak "s#fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:sqlite:$PWD/fate_sqlite.db#g" $PWD/fateboard/conf/application.properties;
 sed -i.bak "s#fateflow.url=.*#fateflow.url=http://localhost:9380#g" $PWD/fateboard/conf/application.properties
 ```
-
-版本号可以这样获取
-
-```bash
-grep "FATE=" fate.env | awk -F "=" '{print $2}'
-```
-
-如：wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/1.7.0/release/fateboard.tar.gz
 
 ### 9.3 启动fateboard
 
 ```bash
-cd fateboard
-sh service.sh status
+cd fateboard;
+sh service.sh status;
 sh service.sh start
 ```
 
@@ -244,6 +250,6 @@ status:
 
 - 如果在MacOS下面, 安装`gmpy2`这个`python`依赖包失败的话, 尝试先安装如下基础库后, 再安装依赖包
 
-   ```bash
-   brew install gmp mpfr libmpc
-   ```
+```bash
+brew install gmp mpfr libmpc
+```
