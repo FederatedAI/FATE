@@ -1,4 +1,5 @@
-## FATE Cluster Deployment Guide | [中文](./README.zh.md)
+## FATE Cluster Deployment Guide
+[中文](./README.zh.md)
 ### BackGround
 - [Architecture](../../doc/architecture/README.md)
 
