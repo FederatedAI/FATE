@@ -1,4 +1,5 @@
-## FATE 集群部署指引 | [English](./README.md)
+## FATE 集群部署指引 
+[English](./README.md)
 ### 背景知识
 - [架构](../../doc/architecture/README.md)
 
