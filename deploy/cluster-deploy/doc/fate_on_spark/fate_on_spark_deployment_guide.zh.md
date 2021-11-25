@@ -1,4 +1,5 @@
-# FATE ON Spark 部署指南 | [English](fate_on_spark_deployment_guide.md)
+# FATE ON Spark 部署指南 
+[English](fate_on_spark_deployment_guide.md)
 
 ## 1.服务器配置
 
