@@ -213,18 +213,19 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                 _raise()
             else:
                 job_progress.final(response.status)
-                suite.update_status(job_name=job.job_name, status=response.status.status)
+                job_name = job.job_name
+                suite.update_status(job_name=job_name, status=response.status.status)
                 if response.status.is_success():
-                    if suite.model_in_dep(job.job_name):
-                        dependent_jobs = suite.get_dependent_jobs(job.job_name)
+                    if suite.model_in_dep(job_name):
+                        dependent_jobs = suite.get_dependent_jobs(job_name)
                         for predict_job in dependent_jobs:
                             model_info, table_info, cache_info, model_loader_info = None, None, None, None
-                            for i in _config.deps_alter[predict_job.job_name]:
-                                if isinstance(i, dict):
-                                    name = i.get('name')
-                                    data_pre = i.get('data')
-
-                            if 'data_deps' in _config.deps_alter[predict_job.job_name]:
+                            deps_data = _config.deps_alter[predict_job.job_name]
+                            if 'data_deps' in deps_data.keys() and deps_data.get('data', None) is not None and\
+                                    job_name == deps_data.get('data_deps', None).get('name', None):
+                                for k, v in deps_data.get('data'):
+                                    if job_name == k:
+                                        data_pre = v
                                 roles = list(data_pre.keys())
                                 table_info, hierarchy = [], []
                                 for role_ in roles:
@@ -246,7 +247,8 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                                             hierarchy.append([role, 'args', 'data'])
                                             table_info.append({data_input: [table_name]})
                                 table_info = {'hierarchy': hierarchy, 'table_info': table_info}
-                            if 'model_deps' in _config.deps_alter[predict_job.job_name]:
+                            if 'model_deps' in deps_data.keys() and \
+                                    job_name == deps_data.get('model_deps', None).get('name', None):
                                 if predict_job.job_conf.dsl_version == 2:
                                     # noinspection PyBroadException
                                     try:
@@ -258,14 +260,17 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                                         _raise()
                                 else:
                                     model_info = response.model_info
-                            if 'cache_deps' in _config.deps_alter[predict_job.job_name]:
+                            if 'cache_deps' in deps_data.keys() and \
+                                    job_name == deps_data.get('cache_deps', None).get('name', None):
                                 cache_dsl = predict_job.job_dsl.as_dict()
                                 cache_info = []
                                 for cpn in cache_dsl.get("components").keys():
                                     if "CacheLoader" in cache_dsl.get("components").get(cpn).get("module"):
                                         cache_info.append({cpn: {'job_id': response.job_id}})
                                 cache_info = {'hierarchy': [""], 'cache_info': cache_info}
-                            if 'model_loader_deps' in _config.deps_alter[predict_job.job_name]:
+
+                            if 'model_loader_deps' in deps_data.keys() and \
+                                    job_name == deps_data.get('model_loader_deps', None).get('name', None):
                                 model_loader_dsl = predict_job.job_dsl.as_dict()
                                 model_loader_info = []
                                 for cpn in model_loader_dsl.get("components").keys():
@@ -273,9 +278,9 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                                         model_loader_info.append({cpn: response.model_info})
                                 model_loader_info = {'hierarchy': [""], 'model_loader_info': model_loader_info}
 
-                            suite.feed_dep_info(predict_job, name, model_info=model_info, table_info=table_info,
+                            suite.feed_dep_info(predict_job, job_name, model_info=model_info, table_info=table_info,
                                                 cache_info=cache_info, model_loader_info=model_loader_info)
-                        suite.remove_dependency(job.job_name)
+                        suite.remove_dependency(job_name)
             update_bar(0)
             time_consuming = time.time() - start
             performance_dir = "/".join(

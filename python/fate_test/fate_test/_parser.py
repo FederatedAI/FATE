@@ -236,38 +236,27 @@ class Job(object):
             job_dsl = JobDSL.load(base.joinpath(job_dsl).resolve(), provider)
 
         pre_works = []
-        pre_works_value = []
-        name_dict = {}
-        if job_configs.get("data_deps", None):
-            pre_works_value.append("data_deps")
-            assembly = list(job_configs["data_deps"].keys())[0]
-            name_dict["data"] = job_configs["data_deps"][assembly]
-        if job_configs.get("model_deps", None):
-            pre_works_value.append("model_deps")
-        elif job_configs.get("deps", None):
-            pre_works_value.append("model_deps")
-        if job_configs.get("cache_deps", None):
-            pre_works_value.append("cache_deps")
-        if job_configs.get("model_loader_deps", None):
-            pre_works_value.append("model_loader_deps")
+        pre_works_value = {}
+        deps_dict = {}
 
         if job_configs.get("model_deps", None):
             pre_works.append(job_configs["model_deps"])
-            name_dict["name"] = job_configs["model_deps"]
+            deps_dict["model_deps"] = {'name': job_configs["model_deps"]}
         elif job_configs.get("deps", None):
             pre_works.append(job_configs["deps"])
-            name_dict["name"] = job_configs["deps"]
+            deps_dict["model_deps"] = {'name': job_configs["deps"]}
         if job_configs.get("data_deps", None):
+            deps_dict["data_deps"] = {'data': job_configs["data_deps"]}
             pre_works.append(list(job_configs["data_deps"].keys())[0])
-            name_dict["name"] = list(job_configs["data_deps"].keys())[0]
+            deps_dict["data_deps"].update({'name': list(job_configs["data_deps"].keys())})
         if job_configs.get("cache_deps", None):
             pre_works.append(job_configs["cache_deps"])
-            name_dict["name"] = job_configs["cache_deps"]
+            deps_dict["cache_deps"] = {'name': job_configs["cache_deps"]}
         if job_configs.get("model_loader_deps", None):
             pre_works.append(job_configs["model_loader_deps"])
-            name_dict["name"] = job_configs["model_loader_deps"]
+            deps_dict["model_loader_deps"] = {'name': job_configs["model_loader_deps"]}
 
-        pre_works_value.append(name_dict)
+        pre_works_value.update(deps_dict)
         _config.deps_alter[job_name] = pre_works_value
 
         return Job(
