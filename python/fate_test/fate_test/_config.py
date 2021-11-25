@@ -80,6 +80,8 @@ data_switch = None
 use_local_data = 1
 data_alter = dict()
 deps_alter = dict()
+jobs_num = 0
+jobs_progress = 0
 
 
 def create_config(path: Path, override=False):

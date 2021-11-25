@@ -384,24 +384,28 @@ class JobProgress(object):
         self.start = time.time()
         self.show_str = f"[{self.elapse()}] {self.name}"
         self.job_id = ""
+        self.progress_tracking = ""
 
     def elapse(self):
         return f"{timedelta(seconds=int(time.time() - self.start))}"
 
+    def set_progress_tracking(self, progress_tracking):
+        self.progress_tracking = progress_tracking + " "
+
     def submitted(self, job_id):
         self.job_id = job_id
-        self.show_str = f"[{self.elapse()}]{self.job_id} submitted {self.name}"
+        self.show_str = f"{self.progress_tracking}[{self.elapse()}]{self.job_id} submitted {self.name}"
 
     def running(self, status, progress):
         if progress is None:
             progress = 0
-        self.show_str = f"[{self.elapse()}]{self.job_id} {status} {progress:3}% {self.name}"
+        self.show_str = f"{self.progress_tracking}[{self.elapse()}]{self.job_id} {status} {progress:3}% {self.name}"
 
     def exception(self, exception_id):
-        self.show_str = f"[{self.elapse()}]{self.name} exception({exception_id}): {self.job_id}"
+        self.show_str = f"{self.progress_tracking}[{self.elapse()}]{self.name} exception({exception_id}): {self.job_id}"
 
     def final(self, status):
-        self.show_str = f"[{self.elapse()}]{self.job_id} {status} {self.name}"
+        self.show_str = f"{self.progress_tracking}[{self.elapse()}]{self.job_id} {status} {self.name}"
 
     def show(self):
         return self.show_str

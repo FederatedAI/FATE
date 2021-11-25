@@ -81,6 +81,7 @@ def run_suite(ctx, replace, include, exclude, glob, timeout, update_job_paramete
     echo.echo("loading testsuites:")
     suites = _load_testsuites(includes=include, excludes=exclude, glob=glob, provider=provider)
     for suite in suites:
+        _config.jobs_num += len(suite.jobs)
         echo.echo(f"\tdataset({len(suite.dataset)}) dsl jobs({len(suite.jobs)}) "
                   f"pipeline jobs ({len(suite.pipeline_jobs)}) {suite.path}")
     if not yes and not click.confirm("running?"):
@@ -144,6 +145,7 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
         for job in suite.jobs_iter():
             job_progress = JobProgress(job.job_name)
             start = time.time()
+            _config.jobs_progress += 1
             def _raise():
                 exception_id = str(uuid.uuid1())
                 job_progress.exception(exception_id)
@@ -170,6 +172,9 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
 
             def _call_back(resp: SubmitJobResponse):
                 if isinstance(resp, SubmitJobResponse):
+                    progress_tracking = "/".join([str(_config.jobs_progress), str(_config.jobs_num)])
+                    if _config.jobs_num != len(suite.jobs):
+                        job_progress.set_progress_tracking(progress_tracking)
                     job_progress.submitted(resp.job_id)
                     echo.file(f"[jobs] {resp.job_id} ", nl=False)
                     suite.update_status(job_name=job.job_name, job_id=resp.job_id)
