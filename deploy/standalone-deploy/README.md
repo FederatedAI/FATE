@@ -102,7 +102,7 @@ Whether local ports 8080, 9360, 9380 are occupied
 Download the installation package and unpack it
 
    ```bash
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/1.7.0/release/standalone_fate_install_${version}_release.tar.gz;
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/standalone_fate_install_${version}_release.tar.gz;
    tar -xzvf standalone_fate_install_${version}_release.tar.gz
    ```
 
@@ -166,7 +166,7 @@ The script will complete automatically:
    If successful, the screen displays a statement like the following:
 
    ```bash
-   there are 0 failed tests
+   there are 0 failed test
    ```
 
 Some use case algorithms are in [examples](../../examples/dsl/v2) folder, please try using them.

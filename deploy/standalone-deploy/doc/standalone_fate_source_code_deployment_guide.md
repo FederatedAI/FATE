@@ -176,7 +176,7 @@ If it looks like this, the initialization is successful, otherwise, please check
    If successful, the screen displays a statement similar to the following:
 
    ```bash
-   there are 0 failed tests
+   there are 0 failed test
    ```
 
 Some use case algorithms are in [examples](../../../examples/dsl/v2) folder, please try to use them.

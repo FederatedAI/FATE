@@ -23,7 +23,7 @@ hide:
 * Homo-SecureBoost supports memory-based histogram computation for more efficient tree building, 5x+ faster
 * Optimized RSA Intersect with CRT optimization, 3x+ faster
 * New two-party Hetero Logistic Regression Algorithm: mixed protocol of HE and MPC, without a trusted third party
-• Support data with match-id,  separating match id and sample id
+* Support data with match-id,  separating match id and sample id
 * New DH Intersect based on PH Key-exchange protocol 
 * Intersect support cardinality estimation 
 * Intersect adds optionally preprocessing step
