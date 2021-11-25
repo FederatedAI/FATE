@@ -18,7 +18,7 @@ import json
 import typing
 from collections import deque
 from pathlib import Path
-
+from fate_test._io import echo
 from fate_test import _config
 import click
 import prettytable
@@ -339,7 +339,7 @@ class Testsuite(object):
 
         pipeline_jobs = []
         if testsuite_config.get("pipeline_tasks", None) is not None and provider is not None:
-            print('[Warning]  Pipeline does not support parameter: provider-> {}'.format(provider))
+            echo.echo('[Warning]  Pipeline does not support parameter: provider-> {}'.format(provider))
         for job_name, job_configs in testsuite_config.get("pipeline_tasks", {}).items():
             script_path = path.parent.joinpath(job_configs["script"]).resolve()
             pipeline_jobs.append(PipelineJob(job_name, script_path))
