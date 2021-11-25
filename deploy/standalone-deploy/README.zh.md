@@ -55,7 +55,7 @@ docker pull federatedai/standalone_fate ${version}
 #### 2.2.2 通过镜像包
 
    ```bash
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/standalone_fate_docker_image_${version}_release.tar;
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/standalone_fate_docker_image_${version}_release.tar;
    docker load < standalone_fate_docker_image_${version}_release.tar;
    docker images | grep federatedai/standalone_fate
    ```
