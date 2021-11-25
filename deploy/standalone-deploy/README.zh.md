@@ -100,7 +100,7 @@ docker pull federatedai/standalone_fate ${version}
 下载安装包并解压缩
 
    ```bash
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/1.7.0/release/standalone_fate_install_${version}_release.tar.gz;
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/standalone_fate_install_${version}_release.tar.gz;
    tar -xzvf standalone_fate_install_${version}_release.tar.gz
    ```
 
