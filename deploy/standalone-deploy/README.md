@@ -166,7 +166,7 @@ The script will complete automatically:
    If successful, the screen displays a statement like the following:
 
    ```bash
-   there are 0 failed tests
+   there are 0 failed test
    ```
 
 Some use case algorithms are in [examples](../../examples/dsl/v2) folder, please try using them.
