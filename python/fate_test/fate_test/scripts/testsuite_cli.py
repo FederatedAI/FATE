@@ -24,7 +24,7 @@ from fate_test._client import Clients
 from fate_test._config import Config
 from fate_test._flow_client import JobProgress, SubmitJobResponse, QueryJobResponse
 from fate_test._io import LOGGER, echo
-from fate_test._parser import JSON_STRING, Testsuite
+from fate_test._parser import JSON_STRING, Testsuite, non_success_summary
 from fate_test.scripts._options import SharedOptions
 from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_data, _load_module_from_script, \
     _add_replace_hook
@@ -120,7 +120,8 @@ def run_suite(ctx, replace, include, exclude, glob, timeout, update_job_paramete
                     _delete_data(client, suite)
                 echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
                 if not skip_dsl_jobs or not skip_pipeline_jobs:
-                    echo.echo(suite.pretty_final_summary(time_consuming), fg='red')
+                    suite_file = str(suite.path).split("/")[-1]
+                    echo.echo(suite.pretty_final_summary(time_consuming, suite_file), fg='red')
 
             except Exception:
                 exception_id = uuid.uuid1()
@@ -128,7 +129,7 @@ def run_suite(ctx, replace, include, exclude, glob, timeout, update_job_paramete
                 LOGGER.exception(f"exception id: {exception_id}")
             finally:
                 echo.stdout_newline()
-
+    non_success_summary()
     echo.farewell()
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
 
@@ -146,6 +147,7 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
             job_progress = JobProgress(job.job_name)
             start = time.time()
             _config.jobs_progress += 1
+
             def _raise():
                 exception_id = str(uuid.uuid1())
                 job_progress.exception(exception_id)
@@ -204,15 +206,16 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                 job_progress.final(response.status)
                 job_name = job.job_name
                 suite.update_status(job_name=job_name, status=response.status.status)
-                if response.status.is_success():
-                    if suite.model_in_dep(job_name):
+                if suite.model_in_dep(job_name):
+                    _config.jobs_progress += 1
+                    if not response.status.is_success():
+                        suite.remove_dependency(job_name)
+                    else:
                         dependent_jobs = suite.get_dependent_jobs(job_name)
                         for predict_job in dependent_jobs:
                             model_info, table_info, cache_info, model_loader_info = None, None, None, None
                             deps_data = _config.deps_alter[predict_job.job_name]
-                            for i in _config.deps_alter[predict_job.job_name]:
-                                if isinstance(i, dict):
-                                    print(i.get('name'), i.get('data'))
+
                             if 'data_deps' in deps_data.keys() and deps_data.get('data', None) is not None and\
                                     job_name == deps_data.get('data_deps', None).get('name', None):
                                 for k, v in deps_data.get('data'):

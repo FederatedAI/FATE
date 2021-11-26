@@ -18,11 +18,11 @@ import json
 import typing
 from collections import deque
 from pathlib import Path
-from fate_test._io import echo
-from fate_test import _config
 import click
 import prettytable
 
+from fate_test import _config
+from fate_test._io import echo
 from fate_test._config import Parties, Config
 
 
@@ -351,11 +351,14 @@ class Testsuite(object):
         while self._ready_jobs:
             yield self._ready_jobs.pop()
 
-    def pretty_final_summary(self, time_consuming):
+    def pretty_final_summary(self, time_consuming, suite_file=None):
         table = prettytable.PrettyTable(
             ["job_name", "job_id", "status", "time_consuming", "exception_id", "rest_dependency"]
         )
         for status in self.get_final_status().values():
+            if status.status != "success":
+                status.suite_file = suite_file
+                _config.non_success_jobs.append(status)
             table.add_row(
                 [
                     status.name,
@@ -430,6 +433,7 @@ class FinalStatus(object):
         self.status = status
         self.exception_id = exception_id
         self.rest_dependency = rest_dependency or []
+        self.suite_file = None
 
 
 class BenchmarkJob(object):
@@ -495,6 +499,29 @@ class BenchmarkSuite(object):
             )
         suite = BenchmarkSuite(dataset=dataset, pairs=pairs, path=path)
         return suite
+
+
+def non_success_summary():
+    status = {}
+    for job in _config.non_success_jobs:
+        if job.status not in status.keys():
+            status[job.status] = prettytable.PrettyTable(
+                ["testsuite_name", "job_name", "job_id", "status", "exception_id", "rest_dependency"]
+            )
+
+        status[job.status].add_row(
+            [
+                job.suite_file,
+                job.name,
+                job.job_id,
+                job.status,
+                job.exception_id,
+                ",".join(job.rest_dependency),
+            ]
+        )
+    for k, v in status.items():
+        echo.echo("\n" + "#" * 60)
+        echo.echo(v.get_string(title=f"{k} job record"), fg='red')
 
 
 def _namespace_hook(namespace):

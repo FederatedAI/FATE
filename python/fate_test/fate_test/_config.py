@@ -82,6 +82,7 @@ data_alter = dict()
 deps_alter = dict()
 jobs_num = 0
 jobs_progress = 0
+non_success_jobs = []
 
 
 def create_config(path: Path, override=False):
