@@ -24,14 +24,7 @@ netstat -apln|grep 9380
 
 ## 3. Get the source code
 
-### 3.1 Get the code from Github
-
-```bash
-git clone https://github.com/FederatedAI/FATE.git -b $branch --recurse-submodules --depth=1
-```
-
-Please set the **branch** parameter, if you use a release branch, then **branch** is v`version number`, e.g. `v1.7.0`
-the **depth** parameter means that only the latest commits are fetched, which can speed up cloning
+Please refer to [get source code](../../../build/common/get_source_code.md), and then,
 
 Set the environment variables required for deployment (note that the environment variables set in the following way are only valid for the current terminal session, if you open a new terminal session, such as a new login or a new window, please set them again)
 
@@ -48,10 +41,6 @@ cd /xxx/FATE
 export FATE_PROJECT_BASE=$PWD
 export version=`grep "FATE=" ${FATE_PROJECT_BASE}/fate.env | awk -F "=" '{print $2}'`
 ```
-
-### 3.2 Getting code from Gitee (try Gitee when you can't connect to Github to get code)
-
-Please refer to [how_to_use_gitee](../../../build/common/how_to_use_gitee.zh.md)
 
 ## 4. Install and configure the Python environment
 
