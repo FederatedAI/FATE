@@ -29,7 +29,7 @@ def hetero_linr_param():
 
 @hetero_linr_cpn_meta.bind_runner.on_guest
 def hetero_linr_runner_guest():
-    from federatedml.linear_model.linear_regression.hetero_linear_regression.hetero_linr_guest import (
+    from federatedml.linear_model.coordinated_linear_model.linear_regression.hetero_linear_regression.hetero_linr_guest import (
         HeteroLinRGuest,
     )
 
@@ -38,7 +38,7 @@ def hetero_linr_runner_guest():
 
 @hetero_linr_cpn_meta.bind_runner.on_host
 def hetero_linr_runner_host():
-    from federatedml.linear_model.linear_regression.hetero_linear_regression.hetero_linr_host import (
+    from federatedml.linear_model.coordinated_linear_model.linear_regression.hetero_linear_regression.hetero_linr_host import (
         HeteroLinRHost,
     )
 
@@ -47,7 +47,7 @@ def hetero_linr_runner_host():
 
 @hetero_linr_cpn_meta.bind_runner.on_arbiter
 def hetero_linr_runner_arbiter():
-    from federatedml.linear_model.linear_regression.hetero_linear_regression.hetero_linr_arbiter import (
+    from federatedml.linear_model.coordinated_linear_model.linear_regression.hetero_linear_regression.hetero_linr_arbiter import (
         HeteroLinRArbiter,
     )
 

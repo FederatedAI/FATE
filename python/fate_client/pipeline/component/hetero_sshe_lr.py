@@ -14,14 +14,14 @@
 #  limitations under the License.
 #
 
-from pipeline.param.hetero_sshe_lr_param import LogisticRegressionParam
+from pipeline.param.hetero_sshe_lr_param import HeteroSSHELRParam
 from pipeline.component.component_base import Component
 from pipeline.interface import Input
 from pipeline.interface import Output
 from pipeline.utils.logger import LOGGER
 
 
-class HeteroSSHELR(Component, LogisticRegressionParam):
+class HeteroSSHELR(Component, HeteroSSHELRParam):
     def __init__(self, **kwargs):
         Component.__init__(self, **kwargs)
 
@@ -30,7 +30,7 @@ class HeteroSSHELR(Component, LogisticRegressionParam):
 
         new_kwargs = self.erase_component_base_param(**kwargs)
 
-        LogisticRegressionParam.__init__(self, **new_kwargs)
+        HeteroSSHELRParam.__init__(self, **new_kwargs)
         self.input = Input(self.name, data_type="multi")
         self.output = Output(self.name)
         self._module_name = "HeteroSSHELR"

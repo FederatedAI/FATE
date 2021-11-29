@@ -69,9 +69,6 @@ class PoissonParam(LinearModelParam):
     exposure_colname: str or None, default: None
         Name of optional exposure variable in dTable.
 
-    predict_param: PredictParam object, default: default PredictParam object
-        predict param
-
     encrypt_param: EncryptParam object, default: default EncryptParam object
         encrypt param
 
@@ -149,6 +146,10 @@ class PoissonParam(LinearModelParam):
         if self.encrypt_param.method != consts.PAILLIER:
             raise ValueError(
                 descr + "encrypt method supports 'Paillier' only")
+        if self.optimizer not in ['sgd', 'rmsprop', 'adam', 'adagrad']:
+            raise ValueError(
+                descr + "optimizer not supported, optimizer should be"
+                        " 'sgd', 'rmsprop', 'adam', or 'adagrad'")
         if self.exposure_colname is not None:
             if type(self.exposure_colname).__name__ != "str":
                 raise ValueError(

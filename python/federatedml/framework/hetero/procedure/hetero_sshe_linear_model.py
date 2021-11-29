@@ -22,15 +22,15 @@ from abc import ABC
 import numpy as np
 
 from fate_arch.session import get_parties
-from federatedml.framework.hetero.procedure import batch_generator
 from federatedml.linear_model.linear_model_base import BaseLinearModel
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
-from federatedml.secureprotol import PaillierEncrypt
+from federatedml.param.init_model_param import InitParam
+from federatedml.secureprotol import PaillierEncrypt, EncryptModeCalculator
+from federatedml.secureprotol.fate_paillier import PaillierPublicKey, PaillierPrivateKey, PaillierEncryptedNumber
 from federatedml.secureprotol.fixedpoint import FixedPointEndec
+from federatedml.secureprotol.spdz import SPDZ
 from federatedml.secureprotol.spdz.secure_matrix.secure_matrix import SecureMatrix
-from federatedml.secureprotol.spdz.tensor import fixedpoint_numpy
-from federatedml.transfer_variable.transfer_class.batch_generator_transfer_variable import \
-    BatchGeneratorTransferVariable
+from federatedml.secureprotol.spdz.tensor import fixedpoint_table, fixedpoint_numpy
 from federatedml.transfer_variable.transfer_class.converge_checker_transfer_variable import \
     ConvergeCheckerTransferVariable
 from federatedml.transfer_variable.transfer_class.sshe_model_transfer_variable import SSHEModelTransferVariable
@@ -46,32 +46,21 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
         self.q_field = None
         self.model_param = None
         self.labels = None
+        self.batch_generator = None
         self.batch_num = []
         self.secure_matrix_obj: SecureMatrix
         # self._set_parties()
         self.cipher_tool = None
+        self.parties = None
         self.local_party = None
         self.other_party = None
 
     def _transfer_q_field(self):
-        """
-        if self.role == consts.GUEST:
-            q_field = self.cipher.public_key.n
-            self.transfer_variable.q_field.remote(q_field, role=consts.HOST, suffix=("q_field",))
-
-        else:
-            q_field = self.transfer_variable.q_field.get(role=consts.GUEST, idx=0,
-                                                          suffix=("q_field",))
-
-        return q_field
-        """
         raise NotImplementedError(f"Should not be called here")
 
     def _init_model(self, params):
         super()._init_model(params)
         self.encrypted_mode_calculator_param = params.encrypted_mode_calculator_param
-        if self.role == consts.HOST:
-            self.init_param_obj.fit_intercept = False
         self.cipher = PaillierEncrypt()
         self.cipher.generate_key(self.model_param.encrypt_param.key_length)
         self.transfer_variable = SSHEModelTransferVariable()
@@ -87,8 +76,6 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
             self.self_optimizer = copy.deepcopy(self.optimizer)
             self.remote_optimizer = copy.deepcopy(self.optimizer)
 
-        self.batch_generator = batch_generator.Guest() if self.role == consts.GUEST else batch_generator.Host()
-        self.batch_generator.register_batch_generator(BatchGeneratorTransferVariable(), has_arbiter=False)
         self.fixedpoint_encoder = FixedPointEndec(n=self.q_field)
         self.converge_transfer_variable = ConvergeCheckerTransferVariable()
         self.secure_matrix_obj = SecureMatrix(party=self.local_party,
@@ -98,25 +85,12 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
     def _init_weights(self, model_shape):
         return self.initializer.init_model(model_shape, init_params=self.init_param_obj)
 
-    """
-    def _set_parties(self):
-        parties = []
-        guest_parties = get_parties().roles_to_parties(["guest"])
-        host_parties = get_parties().roles_to_parties(["host"])
-        parties.extend(guest_parties)
-        parties.extend(host_parties)
-
-        local_party = get_parties().local_party
-        other_party = parties[0] if parties[0] != local_party else parties[1]
-
-        self.parties = parties
-        self.local_party = local_party
-        self.other_party = other_party
-    """
-
     @property
     def is_respectively_reveal(self):
         return self.model_param.reveal_strategy == "respectively"
+
+    def _cal_z_in_share(self, w_self, w_remote, features, suffix, cipher):
+        raise NotImplementedError("Should not be called here")
 
     def share_model(self, w, suffix):
         raise NotImplementedError("Should not be called here")
@@ -182,6 +156,16 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
             is_converge = True
         return is_converge
 
+    def get_single_model_weight_dict(self, model_weights=None, header=None):
+        header = header if header else self.header
+        model_weights = model_weights if model_weights else self.model_weights
+        weight_dict = {}
+        for idx, header_name in enumerate(header):
+            coef_i = model_weights.coef_[idx]
+            weight_dict[header_name] = coef_i
+
+        return weight_dict
+
     def get_single_model_param(self, model_weights=None, header=None):
         header = header if header else self.header
         result = {'iters': self.n_iter_,
@@ -192,35 +176,228 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
                   'best_iteration': -1 if self.validation_strategy is None else
                   self.validation_strategy.best_iteration
                   }
-
-        if self.role == consts.GUEST or self.is_respectively_reveal:
-            model_weights = model_weights if model_weights else self.model_weights
-            weight_dict = {}
-            for idx, header_name in enumerate(header):
-                coef_i = model_weights.coef_[idx]
-                weight_dict[header_name] = coef_i
-
-            result['weight'] = weight_dict
-
         return result
 
+    def load_model(self, model_dict):
+        LOGGER.debug("Start Loading model")
+        result_obj = list(model_dict.get('model').values())[0].get(self.model_param_name)
+        meta_obj = list(model_dict.get('model').values())[0].get(self.model_meta_name)
+
+        if self.init_param_obj is None:
+            self.init_param_obj = InitParam()
+        self.init_param_obj.fit_intercept = meta_obj.fit_intercept
+        self.model_param.reveal_strategy = meta_obj.reveal_strategy
+        LOGGER.debug(f"reveal_strategy: {self.model_param.reveal_strategy}, {self.is_respectively_reveal}")
+        self.header = list(result_obj.header)
+        return result_obj, meta_obj
+
     def load_single_model(self, single_model_obj):
-        LOGGER.info("start to load single model")
+        raise NotImplementedError(f"should not be called here")
 
-        if self.role == consts.GUEST or self.is_respectively_reveal:
-            feature_shape = len(self.header)
-            tmp_vars = np.zeros(feature_shape)
-            weight_dict = dict(single_model_obj.weight)
+    def load_single_model_weight(self, single_model_obj):
+        feature_shape = len(self.header)
+        tmp_vars = np.zeros(feature_shape)
+        weight_dict = dict(single_model_obj.weight)
 
-            for idx, header_name in enumerate(self.header):
-                tmp_vars[idx] = weight_dict.get(header_name)
+        for idx, header_name in enumerate(self.header):
+            tmp_vars[idx] = weight_dict.get(header_name)
 
-            if self.fit_intercept:
-                tmp_vars = np.append(tmp_vars, single_model_obj.intercept)
-            self.model_weights = LinearModelWeights(tmp_vars, fit_intercept=self.fit_intercept)
+        if self.fit_intercept:
+            tmp_vars = np.append(tmp_vars, single_model_obj.intercept)
+        self.model_weights = LinearModelWeights(tmp_vars, fit_intercept=self.fit_intercept)
 
-        self.n_iter_ = single_model_obj.iters
-        return self
+    def fit_single_model(self, data_instances, validate_data=None):
+        LOGGER.info(f"Start to train single {self.model_name}")
+        self.callback_list.on_train_begin(data_instances, validate_data)
+
+        model_shape = self.get_features_shape(data_instances)
+        instances_count = data_instances.count()
+
+        if not self.component_properties.is_warm_start:
+            w = self._init_weights(model_shape)
+            self.model_weights = LinearModelWeights(l=w,
+                                                    fit_intercept=self.model_param.init_param.fit_intercept)
+            last_models = copy.deepcopy(self.model_weights)
+        else:
+            last_models = copy.deepcopy(self.model_weights)
+            w = last_models.unboxed
+            self.callback_warm_start_init_iter(self.n_iter_)
+
+        self.batch_generator.initialize_batch_generator(data_instances, batch_size=self.batch_size)
+
+        with SPDZ(
+                "hetero_sshe",
+                local_party=self.local_party,
+                all_parties=self.parties,
+                q_field=self.q_field,
+                use_mix_rand=self.model_param.use_mix_rand,
+        ) as spdz:
+            spdz.set_flowid(self.flowid)
+            self.secure_matrix_obj.set_flowid(self.flowid)
+            if self.role == consts.GUEST:
+                self.labels = data_instances.mapValues(lambda x: np.array([x.label], dtype=int))
+
+            w_self, w_remote = self.share_model(w, suffix="init")
+            last_w_self, last_w_remote = w_self, w_remote
+            LOGGER.debug(f"first_w_self shape: {w_self.shape}, w_remote_shape: {w_remote.shape}")
+
+            batch_data_generator = self.batch_generator.generate_batch_data()
+
+            self.cipher_tool = []
+            encoded_batch_data = []
+            for batch_data in batch_data_generator:
+                if self.fit_intercept:
+                    batch_features = batch_data.mapValues(lambda x: np.hstack((x.features, 1.0)))
+                else:
+                    batch_features = batch_data.mapValues(lambda x: x.features)
+                self.batch_num.append(batch_data.count())
+
+                encoded_batch_data.append(
+                    fixedpoint_table.FixedPointTensor(self.fixedpoint_encoder.encode(batch_features),
+                                                      q_field=self.fixedpoint_encoder.n,
+                                                      endec=self.fixedpoint_encoder))
+
+                self.cipher_tool.append(EncryptModeCalculator(self.cipher,
+                                                              self.encrypted_mode_calculator_param.mode,
+                                                              self.encrypted_mode_calculator_param.re_encrypted_rate))
+
+            while self.n_iter_ < self.max_iter:
+                self.callback_list.on_epoch_begin(self.n_iter_)
+                LOGGER.info(f"start to n_iter: {self.n_iter_}")
+
+                loss_list = []
+
+                self.optimizer.set_iters(self.n_iter_)
+                if not self.reveal_every_iter:
+                    self.self_optimizer.set_iters(self.n_iter_)
+                    self.remote_optimizer.set_iters(self.n_iter_)
+
+                for batch_idx, batch_data in enumerate(encoded_batch_data):
+                    current_suffix = (str(self.n_iter_), str(batch_idx))
+
+                    if self.reveal_every_iter:
+                        y = self.forward(weights=self.model_weights,
+                                         features=batch_data,
+                                         suffix=current_suffix,
+                                         cipher=self.cipher_tool[batch_idx])
+                    else:
+                        y = self.forward(weights=(w_self, w_remote),
+                                         features=batch_data,
+                                         suffix=current_suffix,
+                                         cipher=self.cipher_tool[batch_idx])
+
+                    if self.role == consts.GUEST:
+                        error = y - self.labels
+
+                        self_g, remote_g = self.backward(error=error,
+                                                         features=batch_data,
+                                                         suffix=current_suffix,
+                                                         cipher=self.cipher_tool[batch_idx])
+                    else:
+                        self_g, remote_g = self.backward(error=y,
+                                                         features=batch_data,
+                                                         suffix=current_suffix,
+                                                         cipher=self.cipher_tool[batch_idx])
+
+                    # loss computing;
+                    suffix = ("loss",) + current_suffix
+                    if self.reveal_every_iter:
+                        batch_loss = self.compute_loss(weights=self.model_weights, suffix=suffix, cipher=self.cipher_tool[batch_idx])
+                    else:
+                        batch_loss = self.compute_loss(weights=(w_self, w_remote), suffix=suffix, cipher=self.cipher_tool[batch_idx])
+
+                    if batch_loss is not None:
+                        batch_loss = batch_loss * self.batch_num[batch_idx]
+                    loss_list.append(batch_loss)
+
+                    if self.reveal_every_iter:
+                        # LOGGER.debug(f"before reveal: self_g shape: {self_g.shape}, remote_g_shape: {remote_g}，"
+                        #              f"self_g: {self_g}")
+
+                        new_g = self.reveal_models(self_g, remote_g, suffix=current_suffix)
+
+                        # LOGGER.debug(f"after reveal: new_g shape: {new_g.shape}, new_g: {new_g}"
+                        #              f"self.model_param.reveal_strategy: {self.model_param.reveal_strategy}")
+
+                        if new_g is not None:
+                            self.model_weights = self.optimizer.update_model(self.model_weights, new_g,
+                                                                             has_applied=False)
+
+                        else:
+                            self.model_weights = LinearModelWeights(
+                                l=np.zeros(self_g.shape),
+                                fit_intercept=self.model_param.init_param.fit_intercept)
+                    else:
+                        if self.optimizer.penalty == consts.L2_PENALTY:
+                            self_g = self_g + self.self_optimizer.alpha * w_self
+                            remote_g = remote_g + self.remote_optimizer.alpha * w_remote
+
+                        # LOGGER.debug(f"before optimizer: {self_g}, {remote_g}")
+
+                        self_g = self.self_optimizer.apply_gradients(self_g)
+                        remote_g = self.remote_optimizer.apply_gradients(remote_g)
+
+                        # LOGGER.debug(f"after optimizer: {self_g}, {remote_g}")
+                        w_self -= self_g
+                        w_remote -= remote_g
+
+                    LOGGER.debug(f"w_self shape: {w_self.shape}, w_remote_shape: {w_remote.shape}")
+
+                if self.role == consts.GUEST:
+                    loss = np.sum(loss_list) / instances_count
+                    self.loss_history.append(loss)
+                    if self.need_call_back_loss:
+                        self.callback_loss(self.n_iter_, loss)
+                else:
+                    loss = None
+
+                if self.converge_func_name in ["diff", "abs"]:
+                    self.is_converged = self.check_converge_by_loss(loss, suffix=(str(self.n_iter_),))
+                elif self.converge_func_name == "weight_diff":
+                    if self.reveal_every_iter:
+                        self.is_converged = self.check_converge_by_weights(
+                            last_w=last_models.unboxed,
+                            new_w=self.model_weights.unboxed,
+                            suffix=(str(self.n_iter_),))
+                        last_models = copy.deepcopy(self.model_weights)
+                    else:
+                        self.is_converged = self.check_converge_by_weights(
+                            last_w=(last_w_self, last_w_remote),
+                            new_w=(w_self, w_remote),
+                            suffix=(str(self.n_iter_),))
+                        last_w_self, last_w_remote = copy.deepcopy(w_self), copy.deepcopy(w_remote)
+                else:
+                    raise ValueError(f"Cannot recognize early_stop function: {self.converge_func_name}")
+
+                LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
+                self.callback_list.on_epoch_end(self.n_iter_)
+                self.n_iter_ += 1
+
+                if self.stop_training:
+                    break
+
+                if self.is_converged:
+                    break
+
+            # Finally reconstruct
+            if not self.reveal_every_iter:
+                new_w = self.reveal_models(w_self, w_remote, suffix=("final",))
+                if new_w is not None:
+                    self.model_weights = LinearModelWeights(
+                        l=new_w,
+                        fit_intercept=self.model_param.init_param.fit_intercept)
+
+        LOGGER.debug(f"loss_history: {self.loss_history}")
+        self.set_summary(self.get_model_summary())
+
+    def get_model_summary(self):
+        summary = super().get_model_summary()
+
+        if not self.is_respectively_reveal:
+            del summary["intercept"]
+            del summary["coef"]
+
+        return summary
 
 
 class HeteroSSHEGuestBase(HeteroSSHEBase, ABC):
@@ -229,12 +406,70 @@ class HeteroSSHEGuestBase(HeteroSSHEBase, ABC):
         self.role = consts.GUEST
         self.local_party = get_parties().local_party
         self.other_party = get_parties().roles_to_parties(["host"])[0]
+        self.parties = [self.local_party] + [self.other_party]
+        self.encrypted_error = None
+        self.encrypted_wx = None
+        self.z_square = None
+        self.wx_self = None
+        self.wx_remote = None
+
+    def _init_model(self, params):
+        super()._init_model(params)
+        # self.batch_generator = batch_generator.Guest()
+        # self.batch_generator.register_batch_generator(BatchGeneratorTransferVariable(), has_arbiter=False)
 
     def _transfer_q_field(self):
         q_field = self.cipher.public_key.n
         self.transfer_variable.q_field.remote(q_field, role=consts.HOST, suffix=("q_field",))
 
         return q_field
+
+    def _cal_z_in_share(self, w_self, w_remote, features, suffix, cipher):
+        z1 = features.dot_local(w_self)
+
+        za_suffix = ("za",) + suffix
+
+        za_share = self.secure_matrix_obj.secure_matrix_mul(w_remote,
+                                                            tensor_name=".".join(za_suffix),
+                                                            cipher=cipher,
+                                                            suffix=za_suffix)
+        zb_suffix = ("zb",) + suffix
+        zb_share = self.secure_matrix_obj.secure_matrix_mul(features,
+                                                            tensor_name=".".join(zb_suffix),
+                                                            cipher=None,
+                                                            suffix=zb_suffix)
+
+        z = z1 + za_share + zb_share
+        return z
+
+    def backward(self, error, features, suffix, cipher):
+        LOGGER.info(f"[backward]: Calculate gradient...")
+        batch_num = self.batch_num[int(suffix[1])]
+        error_1_n = error * (1 / batch_num)
+
+        ga2_suffix = ("ga2",) + suffix
+        ga2_2 = self.secure_matrix_obj.secure_matrix_mul(error_1_n,
+                                                         tensor_name=".".join(ga2_suffix),
+                                                         cipher=cipher,
+                                                         suffix=ga2_suffix,
+                                                         is_fixedpoint_table=False)
+
+        # LOGGER.debug(f"ga2_2: {ga2_2}")
+
+        encrypt_g = self.encrypted_error.dot(features) * (1 / batch_num)
+
+        # LOGGER.debug(f"encrypt_g: {encrypt_g}")
+
+        tensor_name = ".".join(("encrypt_g",) + suffix)
+        gb2 = SecureMatrix.from_source(tensor_name,
+                                       encrypt_g,
+                                       self.cipher,
+                                       self.fixedpoint_encoder.n,
+                                       self.fixedpoint_encoder)
+
+        # LOGGER.debug(f"gb2: {gb2}")
+
+        return gb2, ga2_2
 
     def share_model(self, w, suffix):
         source = [w, self.other_party]
@@ -270,11 +505,50 @@ class HeteroSSHEGuestBase(HeteroSSHEBase, ABC):
             raise NotImplementedError(f"reveal strategy: {self.model_param.reveal_strategy} has not been implemented.")
         return new_w
 
+    def _reveal_every_iter_weights_check(self, last_w, new_w, suffix):
+        square_sum = np.sum((last_w - new_w) ** 2)
+        host_sums = self.converge_transfer_variable.square_sum.get(suffix=suffix)
+        for hs in host_sums:
+            square_sum += hs
+        weight_diff = np.sqrt(square_sum)
+        is_converge = False
+        if weight_diff < self.model_param.tol:
+            is_converge = True
+        LOGGER.info(f"n_iter: {self.n_iter_}, weight_diff: {weight_diff}")
+        self.converge_transfer_variable.converge_info.remote(is_converge, role=consts.HOST, suffix=suffix)
+        return is_converge
+
     def check_converge_by_loss(self, loss, suffix):
         self.is_converged = self.converge_func.is_converge(loss)
         self.transfer_variable.is_converged.remote(self.is_converged, suffix=suffix)
 
         return self.is_converged
+
+    def get_single_model_param(self, model_weights=None, header=None):
+        result = super().get_single_model_param(model_weights, header)
+        result['weight'] = self.get_single_model_weight_dict(model_weights, header)
+        if not self.is_respectively_reveal:
+            result["cipher"] = dict(public_key=dict(n=str(self.cipher.public_key.n)),
+                                    private_key=dict(p=str(self.cipher.privacy_key.p),
+                                                     q=str(self.cipher.privacy_key.q)))
+
+        return result
+
+    def load_single_model(self, single_model_obj):
+        LOGGER.info("start to load single model")
+
+        self.load_single_model_weight(single_model_obj)
+        self.n_iter_ = single_model_obj.iters
+
+        if not self.is_respectively_reveal:
+            cipher_info = single_model_obj.cipher
+            self.cipher = PaillierEncrypt()
+            public_key = PaillierPublicKey(int(cipher_info.public_key.n))
+            privacy_key = PaillierPrivateKey(public_key, int(cipher_info.private_key.p), int(cipher_info.private_key.q))
+            self.cipher.set_public_key(public_key=public_key)
+            self.cipher.set_privacy_key(privacy_key=privacy_key)
+
+        return self
 
 
 class HeteroSSHEHostBase(HeteroSSHEBase, ABC):
@@ -283,12 +557,68 @@ class HeteroSSHEHostBase(HeteroSSHEBase, ABC):
         self.role = consts.HOST
         self.local_party = get_parties().local_party
         self.other_party = get_parties().roles_to_parties(["guest"])[0]
+        self.parties = [self.other_party] + [self.local_party]
+        self.wx_self = None
+
+    def _init_model(self, params):
+        super()._init_model(params)
+        self.init_param_obj.fit_intercept = False
+        # self.batch_generator = batch_generator.Host()
+        # self.batch_generator.register_batch_generator(BatchGeneratorTransferVariable(), has_arbiter=False)
 
     def _transfer_q_field(self):
         q_field = self.transfer_variable.q_field.get(role=consts.GUEST, idx=0,
                                                      suffix=("q_field",))
 
         return q_field
+
+    def _cal_z_in_share(self, w_self, w_remote, features, suffix, cipher):
+        z1 = features.dot_local(w_self)
+
+        za_suffix = ("za",) + suffix
+        za_share = self.secure_matrix_obj.secure_matrix_mul(features,
+                                                            tensor_name=".".join(za_suffix),
+                                                            cipher=None,
+                                                            suffix=za_suffix)
+
+        zb_suffix = ("zb",) + suffix
+        zb_share = self.secure_matrix_obj.secure_matrix_mul(w_remote,
+                                                            tensor_name=".".join(zb_suffix),
+                                                            cipher=cipher,
+                                                            suffix=zb_suffix)
+
+        z = z1 + za_share + zb_share
+        return z
+
+    def backward(self, error: fixedpoint_table.FixedPointTensor, features, suffix, cipher):
+        LOGGER.info(f"[backward]: Calculate gradient...")
+        batch_num = self.batch_num[int(suffix[1])]
+
+        ga = features.dot_local(error)
+        # LOGGER.debug(f"ga: {ga}, batch_num: {batch_num}")
+        ga = ga * (1 / batch_num)
+
+        zb_suffix = ("ga2",) + suffix
+        ga2_1 = self.secure_matrix_obj.secure_matrix_mul(features,
+                                                         tensor_name=".".join(zb_suffix),
+                                                         cipher=None,
+                                                         suffix=zb_suffix)
+
+        # LOGGER.debug(f"ga2_1: {ga2_1}")
+
+        ga_new = ga + ga2_1
+
+        tensor_name = ".".join(("encrypt_g",) + suffix)
+        gb1 = SecureMatrix.from_source(tensor_name,
+                                       self.other_party,
+                                       cipher,
+                                       self.fixedpoint_encoder.n,
+                                       self.fixedpoint_encoder,
+                                       is_fixedpoint_table=False)
+
+        # LOGGER.debug(f"gb1: {gb1}")
+
+        return ga_new, gb1
 
     def share_model(self, w, suffix):
         source = [w, self.other_party]
@@ -319,6 +649,49 @@ class HeteroSSHEHostBase(HeteroSSHEBase, ABC):
             raise NotImplementedError(f"reveal strategy: {self.model_param.reveal_strategy} has not been implemented.")
         return new_w
 
+    def _reveal_every_iter_weights_check(self, last_w, new_w, suffix):
+        square_sum = np.sum((last_w - new_w) ** 2)
+        self.converge_transfer_variable.square_sum.remote(square_sum, role=consts.GUEST, idx=0, suffix=suffix)
+        return self.converge_transfer_variable.converge_info.get(idx=0, suffix=suffix)
+
     def check_converge_by_loss(self, loss, suffix):
         self.is_converged = self.transfer_variable.is_converged.get(idx=0, suffix=suffix)
         return self.is_converged
+
+    def get_single_encrypted_model_weight_dict(self, model_weights=None, header=None):
+        raise NotImplementedError(f"should not be called here")
+
+    def get_single_model_param(self, model_weights=None, header=None):
+        result = super().get_single_model_param(model_weights, header)
+        if self.is_respectively_reveal:
+            result['weight'] = self.get_single_model_weight_dict(model_weights, header)
+        else:
+            result["encrypted_weight"] = self.get_single_encrypted_model_weight_dict(model_weights, header)
+        return result
+
+    def load_single_model(self, single_model_obj):
+        LOGGER.info("start to load single model")
+
+        if self.is_respectively_reveal:
+            self.load_single_model_weight(single_model_obj)
+        else:
+            feature_shape = len(self.header)
+            tmp_vars = [None] * feature_shape
+            weight_dict = dict(single_model_obj.encrypted_weight)
+            for idx, header_name in enumerate(self.header):
+                cipher_weight = weight_dict.get(header_name)
+                public_key = PaillierPublicKey(int(cipher_weight.public_key.n))
+                cipher_text = int(cipher_weight.cipher_text)
+                exponent = int(cipher_weight.exponent)
+                is_obfuscator = cipher_weight.is_obfuscator
+                coef_i = PaillierEncryptedNumber(public_key, cipher_text, exponent)
+                if is_obfuscator:
+                    coef_i.apply_obfuscator()
+
+                tmp_vars[idx] = coef_i
+
+            self.model_weights = LinearModelWeights(tmp_vars, fit_intercept=self.fit_intercept)
+
+        self.n_iter_ = single_model_obj.iters
+
+        return self

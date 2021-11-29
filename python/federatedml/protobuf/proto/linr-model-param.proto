@@ -18,6 +18,7 @@ syntax = "proto3";
 
 package com.webank.ai.fate.core.mlmodel.buffer;
 option java_outer_classname = "LinRModelParamProto";
+import "lr-model-param.proto";
 
 message LinRModelParam {
     int32 iters = 1;
@@ -27,4 +28,6 @@ message LinRModelParam {
     double intercept = 5;
     repeated string header = 6;
     int32  best_iteration=7;
+    map<string, CipherText> encrypted_weight = 8;
+    Cipher cipher = 9;
 }

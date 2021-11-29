@@ -137,12 +137,12 @@ class LogisticParam(LinearModelParam):
 
     def check(self):
         descr = "logistic_param's"
-        super(LogisticParam).check()
+        super(LogisticParam, self).check()
         self.predict_param.check()
         if self.encrypt_param.method not in [consts.PAILLIER, None]:
             raise ValueError(
                 "logistic_param's encrypted method support 'Paillier' or None only")
-        self.multi_class = self.check_and_change_lower(self.multi_class, ["multi_class"], f"{descr}")
+        self.multi_class = self.check_and_change_lower(self.multi_class, ["ovr"], f"{descr}")
         return True
 
 

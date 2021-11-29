@@ -45,7 +45,7 @@ class LinearModelParam(BaseParam):
     alpha : float, default: 1.0
         Regularization strength coefficient.
 
-    optimizer : {'sgd', 'rmsprop', 'adam', 'sqn', 'adagrad'}
+    optimizer : {'sgd', 'rmsprop', 'adam', 'sqn', 'adagrad', 'nesterov_momentum_sgd'}
         Optimize method
 
     batch_size : int, default: -1
@@ -145,9 +145,9 @@ class LinearModelParam(BaseParam):
                 descr + "penalty {} not supported, should be str type".format(self.penalty))
 
         self.penalty = self.penalty.upper()
-        if self.penalty not in ['L1', 'L2', 'NONE']:
+        if self.penalty not in [consts.L1_PENALTY, consts.L2_PENALTY, consts.NONE.upper()]:
             raise ValueError(
-                "penalty {} not supported, penalty should be 'L1', 'L2' or 'none'".format(self.penalty))
+                "penalty {} not supported, penalty should be 'L1', 'L2' or 'NONE'".format(self.penalty))
 
         if type(self.tol).__name__ not in ["int", "float"]:
             raise ValueError(
@@ -162,10 +162,10 @@ class LinearModelParam(BaseParam):
                 descr + "optimizer {} not supported, should be str type".format(self.optimizer))
         else:
             self.optimizer = self.optimizer.lower()
-            if self.optimizer not in ['sgd', 'rmsprop', 'adam', 'adagrad', 'sqn']:
+            if self.optimizer not in ['sgd', 'rmsprop', 'adam', 'adagrad', 'sqn', 'nesterov_momentum_sgd']:
                 raise ValueError(
                     descr + "optimizer not supported, optimizer should be"
-                    " 'sgd', 'rmsprop', 'adam', 'sqn' or 'adagrad'")
+                    " 'sgd', 'rmsprop', 'adam', 'sqn', 'adagrad', or 'nesterov_momentum_sgd'")
 
         if type(self.batch_size).__name__ not in ["int", "long"]:
             raise ValueError(

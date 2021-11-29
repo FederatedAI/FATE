@@ -1,4 +1,4 @@
-## Hetero SSHE LR Logistic Regression Configuration Usage Guide.
+## Hetero SSHE Logistic Regression Configuration Usage Guide.
 
 This section introduces the Pipeline scripts for different types of tasks.
 

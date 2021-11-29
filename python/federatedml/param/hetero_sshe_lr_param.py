@@ -25,13 +25,13 @@ from federatedml.param.predict_param import PredictParam
 from federatedml.util import consts
 
 
-class LogisticRegressionParam(LogisticParam):
+class HeteroSSHELRParam(LogisticParam):
     """
     Parameters used for Hetero SSHE Logistic Regression
 
     Parameters
     ----------
-    penalty : str, 'L1', 'L2' or None. default: None
+    penalty : str, 'L1', 'L2' or None. default: 'L2'
         Penalty method used in LR. If it is not None, weights are required to be reconstruct every iter.
 
     tol : float, default: 1e-4
@@ -87,7 +87,7 @@ class LogisticRegressionParam(LogisticParam):
 
     """
 
-    def __init__(self, penalty=None,
+    def __init__(self, penalty='L2',
                  tol=1e-4, alpha=1.0, optimizer='sgd',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, early_stop='diff', encrypt_param=EncryptParam(),
@@ -99,14 +99,14 @@ class LogisticRegressionParam(LogisticParam):
                  callback_param=CallbackParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam()
                  ):
-        super(LogisticRegressionParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
-                                                      batch_size=batch_size,
-                                                      learning_rate=learning_rate,
-                                                      init_param=init_param, max_iter=max_iter, early_stop=early_stop,
-                                                      predict_param=predict_param, cv_param=cv_param,
-                                                      decay=decay,
-                                                      decay_sqrt=decay_sqrt, multi_class=multi_class,
-                                                      encrypt_param=encrypt_param, callback_param=callback_param)
+        super(HeteroSSHELRParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
+                                                batch_size=batch_size,
+                                                learning_rate=learning_rate,
+                                                init_param=init_param, max_iter=max_iter, early_stop=early_stop,
+                                                predict_param=predict_param, cv_param=cv_param,
+                                                decay=decay,
+                                                decay_sqrt=decay_sqrt, multi_class=multi_class,
+                                                encrypt_param=encrypt_param, callback_param=callback_param)
         self.use_mix_rand = use_mix_rand
         self.reveal_strategy = reveal_strategy
         self.reveal_every_iter = reveal_every_iter
@@ -114,7 +114,7 @@ class LogisticRegressionParam(LogisticParam):
 
     def check(self):
         descr = "logistic_param's"
-        super(LogisticRegressionParam, self).check()
+        super(HeteroSSHELRParam, self).check()
         self.check_boolean(self.reveal_every_iter, descr)
         if self.penalty is None:
             pass
@@ -123,11 +123,13 @@ class LogisticRegressionParam(LogisticParam):
                 "logistic_param's penalty {} not supported, should be str type".format(self.penalty))
         else:
             self.penalty = self.penalty.upper()
-            if self.penalty not in [consts.L1_PENALTY, consts.L2_PENALTY]:
+            """
+            if self.penalty not in [consts.L1_PENALTY, consts.L2_PENALTY, consts.NONE.upper()]:
                 raise ValueError(
-                    "logistic_param's penalty not supported, penalty should be 'L1', 'L2' or 'none'")
+                    "logistic_param's penalty not supported, penalty should be 'L1', 'L2' or 'NONE'")
+            """
             if not self.reveal_every_iter:
-                if self.penalty not in [consts.L2_PENALTY]:
+                if self.penalty not in [consts.L2_PENALTY, consts.NONE.upper()]:
                     raise ValueError(
                         f"penalty should be 'L2' or 'none', when reveal_every_iter is False"
                     )

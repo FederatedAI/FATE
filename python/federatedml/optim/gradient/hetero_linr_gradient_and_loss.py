@@ -58,7 +58,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         '''
         Compute hetero linr loss:
             loss = (1/N)*\sum(wx-y)^2 where y is label, w is model weight and x is features
-        log(wx - y)^2 = (wx_h)^2 + (wx_g - y)^2 + 2*(wx_h + wx_g - y)
+        log(wx - y)^2 = (wx_h)^2 + (wx_g - y)^2 + 2 * (wx_h * (wx_g - y))
         '''
         current_suffix = (n_iter_, batch_index)
         n = data_instances.count()

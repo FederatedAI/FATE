@@ -134,6 +134,10 @@ class LinearParam(LinearModelParam):
     def check(self):
         descr = "linear_regression_param's "
         super(LinearParam, self).check()
+        if self.optimizer not in ['sgd', 'rmsprop', 'adam', 'adagrad', 'sqn']:
+            raise ValueError(
+                descr + "optimizer not supported, optimizer should be"
+                        " 'sgd', 'rmsprop', 'adam', 'sqn' or 'adagrad'")
         self.sqn_param.check()
         if self.encrypt_param.method != consts.PAILLIER:
             raise ValueError(
