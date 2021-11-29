@@ -39,12 +39,27 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
+    - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+    - name: Install dependencies
+        run: |
+          apt-get install -y gcc g++ make openssl supervisor libgmp-dev  libmpfr-dev libmpc-dev libaio1 libaio-dev numactl autoconf automake libtool libffi-dev libssl1.0.0 libssl-dev liblz4-1 liblz4-dev liblz4-1-dbg liblz4-tool  zlib1g zlib1g-dbg zlib1g-dev
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ];
+          then pip install -r python/requirements.txt;
+          fi
+          # Set the `CODEQL-PYTHON` environment variable to the Python executable
+          # that includes the dependencies
+          echo "CODEQL_PYTHON=$(which python)" >> $GITHUB_ENV
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v1
       with:
         languages: ${{ matrix.language }}
+        setup-python-dependencies: false
         # If you wish to specify custom queries, you can do so here or in a config file.
         # By default, queries listed here will override any specified in a config file.
         # Prefix the list here with "+" to use these queries and those in the config file.
