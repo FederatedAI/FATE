@@ -6,11 +6,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Check files using the black formatter
-        uses: rickstaa/action-black@v1
-        id: action_black
+      - name: autopep8
+        id: autopep8
+        uses: peter-evans/autopep8@v1
         with:
-          black_args: "."
+          args: --recursive --in-place --aggressive --aggressive .
       - name: Annotate diff changes using reviewdog
         if: steps.action_black.outputs.is_formatted == 'true'
         uses: reviewdog/action-suggester@v1
