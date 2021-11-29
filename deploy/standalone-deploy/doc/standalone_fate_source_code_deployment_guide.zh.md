@@ -26,16 +26,9 @@ netstat -apln|grep 9380
 
 ## 3. 获取源代码
 
-### 3.1 从Github获取代码
+请参考[获取源代码](../../../build/common/get_source_code.zh.md), 完成后,
 
-```bash
-git clone https://github.com/FederatedAI/FATE.git -b $branch --recurse-submodules --depth=1
-```
-
-请设置**branch**参数, 若使用某个发布版本分支, 则**branch**为`v版本号`, 如`v1.7.0`
-**depth**参数表示只获取最新提交的代码，这可以加快克隆的速度
-
-设置部署所需环境变量(注意, 通过以下方式设置的环境变量仅在当前终端会话有效, 若打开新的终端会话, 如重新登录或者新窗口, 请重新设置)
+请设置部署所需环境变量(注意, 通过以下方式设置的环境变量仅在当前终端会话有效, 若打开新的终端会话, 如重新登录或者新窗口, 请重新设置)
 
 ```bash
 cd {上述代码的存放目录}
@@ -50,10 +43,6 @@ cd /xxx/FATE
 export FATE_PROJECT_BASE=$PWD
 export version=`grep "FATE=" ${FATE_PROJECT_BASE}/fate.env | awk -F "=" '{print $2}'`
 ```
-
-### 3.2 从Gitee获取代码（当你无法连接到Github获取代码时，可以试试Gitee）
-
-请参考[how_to_use_gitee](../../../build/common/how_to_use_gitee.zh.md)
 
 ## 4. 安装并配置Python环境
 

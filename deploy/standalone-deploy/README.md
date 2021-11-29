@@ -44,8 +44,6 @@ example:
 export version=1.7.0
 ```
 
-### 2.2 拉取镜像
-
 ### 2.2 Pulling mirrors
 
 #### 2.2.1 Via the public mirror service
