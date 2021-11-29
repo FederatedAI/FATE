@@ -28,7 +28,7 @@ _ml_base = Path(__file__).resolve().parent.parent.parent
 
 
 class _RunnerDecorator:
-    def __init__(self, meta) -> None:
+    def __init__(self,meta) -> None:
         self._roles = set()
         self._meta = meta
 
