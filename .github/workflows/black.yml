@@ -12,7 +12,7 @@ jobs:
         with:
           args: --recursive --in-place --aggressive --aggressive .
       - name: Annotate diff changes using reviewdog
-        if: steps.action_black.outputs.is_formatted == 'true'
+        if: steps.autopep8.outputs.exit-code == 2
         uses: reviewdog/action-suggester@v1
         with:
           tool_name: blackfmt
