@@ -16,6 +16,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from flow_sdk.client import FlowClient
+import submit
 import argparse
 import json
 import os
@@ -28,9 +30,6 @@ for i in range(3):
 print(f'fate_path: {cur_path}')
 # sys.path.append(cur_path)
 sys.path.insert(0, cur_path)
-
-import submit
-from flow_sdk.client import FlowClient
 
 
 def get_flow_info():
@@ -54,7 +53,7 @@ def check_data_count(submitter, table_name, namespace, expect_count):
         if count != expect_count:
             raise AssertionError("Count of upload file is not as expect, count is: {},"
                                  "expect is: {}".format(count, expect_count))
-    except:
+    except BaseException:
         raise RuntimeError(f"check data error, stdout: {stdout}")
 
     print(f"[{time.strftime('%Y-%m-%d %X')}] check_data_out {stdout} \n")

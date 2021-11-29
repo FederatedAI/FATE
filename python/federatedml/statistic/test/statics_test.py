@@ -1,3 +1,5 @@
+from federatedml.statistic.statics import MultivariateStatisticalSummary
+from federatedml.feature.instance import Instance
 import math
 import time
 import unittest
@@ -10,9 +12,6 @@ from federatedml.util import consts
 
 session.init("123")
 
-from federatedml.feature.instance import Instance
-from federatedml.statistic.statics import MultivariateStatisticalSummary
-
 
 class TestStatistics(unittest.TestCase):
     def setUp(self):
@@ -22,7 +21,6 @@ class TestStatistics(unittest.TestCase):
         self.count = 1000
         self.feature_num = 100
         self._dense_table, self._dense_not_inst_table, self._original_data = None, None, None
-
 
     def _gen_table_data(self):
         if self._dense_table is not None:
@@ -162,7 +160,6 @@ class TestStatistics(unittest.TestCase):
         summary_moment_4 = summary_obj.get_statics("moment_4")
         static_skewness = summary_obj.get_statics("skewness")
         static_kurtosis = summary_obj.get_statics("kurtosis")
-
 
         # print(f"moment: {summary_moment_4}, moment_2: {moment_4}")
         for idx, col_name in enumerate(header):

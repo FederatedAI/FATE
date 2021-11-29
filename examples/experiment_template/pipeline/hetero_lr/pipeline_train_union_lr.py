@@ -39,8 +39,8 @@ def main(config="../../config.yaml", namespace=""):
     host = parties.host[0]
     arbiter = parties.arbiter[0]
 
-    guest_train_data_0 = {"name":"breast_hetero_guest", "namespace": "experiment"}
-    guest_train_data_1 = {"name":"breast_hetero_guest", "namespace": "experiment"}
+    guest_train_data_0 = {"name": "breast_hetero_guest", "namespace": "experiment"}
+    guest_train_data_1 = {"name": "breast_hetero_guest", "namespace": "experiment"}
     guest_test_data_0 = {"name": "breast_hetero_guest", "namespace": "experiment"}
     guest_test_data_1 = {"name": "breast_hetero_guest", "namespace": "experiment"}
     host_train_data_0 = {"name": "breast_hetero_host_tag_value", "namespace": "experiment"}
@@ -89,7 +89,7 @@ def main(config="../../config.yaml", namespace=""):
         "delimitor": ";",
         "output_format": "dense"
     }
-    
+
     # define DataIO components
     dataio_0 = DataIO(name="dataio_0")  # start component numbering at 0
     dataio_1 = DataIO(name="dataio_1")  # start component numbering at 1
@@ -141,8 +141,8 @@ def main(config="../../config.yaml", namespace=""):
     hetero_feature_selection_0 = HeteroFeatureSelection(**param)
     hetero_feature_selection_1 = HeteroFeatureSelection(name='hetero_feature_selection_1')
     param = {
-        "name":"hetero_scale_0",
-        "method":"standard_scale"        
+        "name": "hetero_scale_0",
+        "method": "standard_scale"
     }
     hetero_scale_0 = FeatureScale(**param)
     hetero_scale_1 = FeatureScale(name='hetero_scale_1')
@@ -152,7 +152,6 @@ def main(config="../../config.yaml", namespace=""):
         "early_stopping_rounds": None,
         "max_iter": 5
     }
-
 
     hetero_lr_0 = HeteroLR(name='hetero_lr_0', **param)
     evaluation_0 = Evaluation(name='evaluation_0')

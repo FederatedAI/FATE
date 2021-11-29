@@ -9,7 +9,7 @@ def get_g_h_info(task_type, max_sample_weight):
     if task_type == consts.CLASSIFICATION:
         g_offset, h_offset = 1, 0
         g_max, h_max = 2, 1
-        return g_offset*max_sample_weight, h_offset*max_sample_weight, g_max*max_sample_weight, h_max*max_sample_weight
+        return g_offset * max_sample_weight, h_offset * max_sample_weight, g_max * max_sample_weight, h_max * max_sample_weight
     else:
         raise ValueError('task type: {} is not supported by cipher compressing'.format(task_type))
 
@@ -65,8 +65,8 @@ class GuestGradHessEncoder(object):
 
         g_offset, h_offset = self.g_offset, self.h_offset
         decimal_keeping_num = (10**self.round_decimal)
-        g_h_table = g_h_table.mapValues(lambda x: (int((x[0]+g_offset)*decimal_keeping_num),
-                                                   int((x[1]+h_offset)*decimal_keeping_num)))
+        g_h_table = g_h_table.mapValues(lambda x: (int((x[0] + g_offset) * decimal_keeping_num),
+                                                   int((x[1] + h_offset) * decimal_keeping_num)))
         return self.encrypt_mode_calculator.encrypt(g_h_table)
 
 
@@ -111,12 +111,13 @@ class HostSplitInfoCompressor(object):
 
         for node_id, idx in node_map.items():
             sample_num = node_sample_count[idx]
-            max_float = sample_num*(max(self.g_max, self.h_max))
+            max_float = sample_num * (max(self.g_max, self.h_max))
             self.compressors[node_id] = CipherCompressor(self.encrypt_type, max_capacity_int=self.max_capacity_int,
                                                          package_class=self.package_class,
                                                          round_decimal=self.round_decimal,
                                                          max_float=max_float)
-            _, capacity = CipherCompressor.advise(max_float, self.max_capacity_int, self.encrypt_type, self.round_decimal)
+            _, capacity = CipherCompressor.advise(
+                max_float, self.max_capacity_int, self.encrypt_type, self.round_decimal)
             LOGGER.debug('compressor info of node {}: sample num {}, max capacity of a package {}'
                          ', max_float is {}'.format(node_id, sample_num, capacity, max_float))
 
@@ -156,7 +157,7 @@ if __name__ == '__main__':
     def test_padding_num(plain_list, padding_num):
         rs_num = plain_list[0]
         for i in plain_list[1:]:
-            rs_num = rs_num*padding_num + i
+            rs_num = rs_num * padding_num + i
         return rs_num
 
     plain_list = []
@@ -192,5 +193,3 @@ if __name__ == '__main__':
     # compressed_rs = compressor.compress_split_info(0, gen_split_info[:-1], gen_split_info[-1])
     # rs = compressor.unpack_split_info(0, compressed_rs)
     # print(rs)
-
-

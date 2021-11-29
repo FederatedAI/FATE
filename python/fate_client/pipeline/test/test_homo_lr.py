@@ -20,5 +20,5 @@ from pipeline.component.homo_lr import HomoLR
 
 a = HomoLR(name="homo_lr_0")
 
-print (a.output.data)
-print (a.output.model)
+print(a.output.data)
+print(a.output.model)

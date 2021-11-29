@@ -1,3 +1,4 @@
+from sklearn.metrics import fowlkes_mallows_score
 import json
 import os
 import sys
@@ -98,7 +99,7 @@ def do_generated(fold_name='hetero_logistic_regression'):
         json.dump(suite_json, json_file, ensure_ascii=False, indent=4)
 
     # os.system('rm -rf {}'.format(replaced_path))
-from sklearn.metrics import fowlkes_mallows_score
+
 
 if __name__ == '__main__':
     do_generated()

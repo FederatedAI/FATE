@@ -117,7 +117,7 @@ if __name__ == '__main__':
                                         "guest": [
                                             9999
                                         ]
-                                    }
+                                }
                                 })
 
         binning_obj = TestHeteroFeatureBinning()

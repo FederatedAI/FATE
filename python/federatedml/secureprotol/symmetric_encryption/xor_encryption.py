@@ -27,6 +27,7 @@ class XorCipherKey(SymmetricKey):
     Dec(c) = c.message XOR alpha if c.verifier == self.beta, None otherwise
     Note that the maximum size of the plaintext supported is principally determined by len(key) // 2
     """
+
     def __init__(self, key):
         """
         self.alpha and self.beta are str-typed binaries, e.g., '1010'
@@ -63,7 +64,6 @@ class XorCipherKey(SymmetricKey):
         ciphertext_bin = self._all_to_bin(ciphertext.message)
         plaintext_bin = self._xor(ciphertext_bin, self.alpha)
         return self._bin_to_str(plaintext_bin)
-
 
     @staticmethod
     def _xor(str1, str2):
@@ -118,6 +118,7 @@ class XorCiphertext(SymmetricCiphertext):
     """
     ciphertext = (self.message, self.verifier)
     """
+
     def __init__(self, message, verifier):
         super(XorCiphertext, self).__init__()
         self.message = message

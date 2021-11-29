@@ -35,5 +35,5 @@ class PSIParam(BaseParam):
 
         if self.dense_missing_val is not None:
             assert type(self.dense_missing_val) == str or type(self.dense_missing_val) == int or \
-                   type(self.dense_missing_val) == float, \
+                type(self.dense_missing_val) == float, \
                 'missing value type {} not supported'.format(type(self.dense_missing_val))

@@ -33,7 +33,6 @@ def main(config="../../config.yaml", namespace=""):
     guest = parties.guest[0]
     host = parties.host[0]
 
-
     guest_train_data = {"name": "breast_homo_guest", "namespace": f"experiment{namespace}"}
     host_train_data = {"name": "breast_homo_host", "namespace": f"experiment{namespace}"}
 
@@ -45,8 +44,13 @@ def main(config="../../config.yaml", namespace=""):
 
     data_transform_0 = DataTransform(name="data_transform_0")
 
-    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, output_format="dense",
-                                                                              label_name="y", label_type="int")
+    data_transform_0.get_party_instance(
+        role='guest',
+        party_id=guest).component_param(
+        with_label=True,
+        output_format="dense",
+        label_name="y",
+        label_type="int")
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=True)
 
     homo_data_split_0 = HomoDataSplit(name="homo_data_split_0", stratified=True, test_size=0.3, validate_size=0.2)

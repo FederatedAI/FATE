@@ -26,6 +26,7 @@ class DhIntersect(Intersect):
     """
     adapted from Secure Information Retrieval Module
     """
+
     def __init__(self):
         super().__init__()
         self.role = None
@@ -41,7 +42,7 @@ class DhIntersect(Intersect):
         self.salt = self.dh_params.salt
         self.key_length = self.dh_params.key_length
 
-    """    
+    """
     @staticmethod
     def record_original_id(k, v):
         if isinstance(k, str):
@@ -59,7 +60,7 @@ class DhIntersect(Intersect):
 
     @staticmethod
     def _encrypt_id(data_instances, cipher, reserve_original_key=False, hash_operator=None, salt='',
-                          reserve_original_value=False):
+                    reserve_original_value=False):
         """
         Encrypt the key (ID) of input Table
         :param cipher: cipher object

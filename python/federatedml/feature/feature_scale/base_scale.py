@@ -216,7 +216,9 @@ class BaseScale(object):
             if not isinstance(self.column_min_value, Iterable) or not isinstance(self.column_max_value, Iterable):
                 LOGGER.info(
                     "column_min_value type is:{}, column_min_value type is:{} , should be iterable, start to get new one".format(
-                        type(self.column_min_value), type(self.column_max_value)))
+                        type(
+                            self.column_min_value), type(
+                            self.column_max_value)))
                 self.column_min_value, self.column_max_value = self._get_min_max_value(data)
 
             if not self.scale_column_idx:
@@ -238,8 +240,12 @@ class BaseScale(object):
     def get_model_summary(self):
         cols_info = self._get_param().col_scale_param
         return {
-        col_name: {"column_upper": col.column_upper, "column_lower": col.column_lower, "mean": col.mean, "std": col.std} for
-        col_name, col in cols_info.items()}
+            col_name: {
+                "column_upper": col.column_upper,
+                "column_lower": col.column_lower,
+                "mean": col.mean,
+                "std": col.std} for col_name,
+            col in cols_info.items()}
 
     def export_model(self, need_run):
         meta_obj = self._get_meta(need_run)

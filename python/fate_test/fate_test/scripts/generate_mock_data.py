@@ -11,6 +11,8 @@ import pandas as pd
 import numpy as np
 
 from fate_test._config import Config
+
+
 def import_fate():
     from fate_arch import storage
     from fate_flow.utils import data_utils
@@ -184,12 +186,12 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
 
                 elif data_type == 'tag_value':
                     return [(id_encryption(encryption_type, ids, ids + 1)[0], ";".join(
-                                                [f"x{i}" + ':' + str(round(np.random.randn(), 2)) for i in
-                                                                             range(int(v))])) for ids in range(int(k), min(step + int(k), data_num))]
+                        [f"x{i}" + ':' + str(round(np.random.randn(), 2)) for i in
+                         range(int(v))])) for ids in range(int(k), min(step + int(k), data_num))]
                 elif data_type == 'dense':
                     return [(id_encryption(encryption_type, ids, ids + 1)[0],
-                                                     ",".join([str(i) for i in np.random.randint(-100, 100, size=int(v)) / 100]))
-                                                                                 for ids in range(int(k), min(step + int(k), data_num))]
+                             ",".join([str(i) for i in np.random.randint(-100, 100, size=int(v)) / 100]))
+                            for ids in range(int(k), min(step + int(k), data_num))]
         data_num = end_num - start_num
         step = 10000 if data_num > 10000 else int(data_num / 10)
         table_list = [(f"{i * step}", f"{feature_nums}") for i in range(int(data_num / step) + start_num)]
@@ -242,26 +244,44 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
             try:
                 if 'guest' in data_info[data_name]:
                     if not parallelize:
-                        _generate_dens_data(out_path, guest_start_num, guest_end_num, guest_feature_num, label_flag, progress)
+                        _generate_dens_data(out_path, guest_start_num, guest_end_num,
+                                            guest_feature_num, label_flag, progress)
                     else:
-                        _generate_parallelize_data(guest_start_num, guest_end_num, guest_feature_num, table_names[idx],
-                                                   namespaces[idx], label_flag, data_type, partition_list[idx], progress)
+                        _generate_parallelize_data(
+                            guest_start_num,
+                            guest_end_num,
+                            guest_feature_num,
+                            table_names[idx],
+                            namespaces[idx],
+                            label_flag,
+                            data_type,
+                            partition_list[idx],
+                            progress)
                 else:
                     if data_type == 'tag' and not parallelize:
                         _generate_tag_data(out_path, host_start_num, host_end_num, host_feature_num, sparsity, progress)
                     elif data_type == 'tag_value' and not parallelize:
                         _generate_tag_value_data(out_path, host_start_num, host_end_num, host_feature_num, progress)
                     elif data_type == 'dense' and not parallelize:
-                        _generate_dens_data(out_path, host_start_num, host_end_num, host_feature_num, label_flag, progress)
+                        _generate_dens_data(out_path, host_start_num, host_end_num,
+                                            host_feature_num, label_flag, progress)
                     elif parallelize:
-                        _generate_parallelize_data(host_start_num, host_end_num, host_feature_num, table_names[idx],
-                                                   namespaces[idx], label_flag, data_type, partition_list[idx], progress)
+                        _generate_parallelize_data(
+                            host_start_num,
+                            host_end_num,
+                            host_feature_num,
+                            table_names[idx],
+                            namespaces[idx],
+                            label_flag,
+                            data_type,
+                            partition_list[idx],
+                            progress)
                 progress.set_switch(False)
                 time.sleep(1)
                 print()
             except Exception:
-               progress.set_switch(False)
-               raise Exception(f"Output file failed")
+                progress.set_switch(False)
+                raise Exception(f"Output file failed")
 
     def run(p):
         while p.get_switch():
@@ -299,6 +319,14 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
         with session.Session() as sess:
             session_id = str(uuid.uuid1())
             sess.init_computing(session_id)
-            data_save(data_info=date_set, table_names=table_name_list, namespaces=table_namespace_list, partition_list=partition_list)
+            data_save(
+                data_info=date_set,
+                table_names=table_name_list,
+                namespaces=table_namespace_list,
+                partition_list=partition_list)
     else:
-        data_save(data_info=date_set, table_names=table_name_list, namespaces=table_namespace_list, partition_list=partition_list)
+        data_save(
+            data_info=date_set,
+            table_names=table_name_list,
+            namespaces=table_namespace_list,
+            partition_list=partition_list)

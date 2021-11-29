@@ -113,8 +113,8 @@ class Client(homo_binning_base.Client):
                     query_res.append(query_values[idx])
                 else:
                     approx_value = query_values[idx] + (query_values[idx + 1] - query_values[idx]) * \
-                                   ((rank - global_ranks[idx]) /
-                                    (global_ranks[idx + 1] - global_ranks[idx]))
+                        ((rank - global_ranks[idx]) /
+                         (global_ranks[idx + 1] - global_ranks[idx]))
                     query_res.append(approx_value)
         if not self.allow_duplicate:
             query_res = sorted(set(query_res))

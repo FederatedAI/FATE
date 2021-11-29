@@ -30,6 +30,7 @@ class PohligHellmanCipherKey(SymmetricKey):
     Enc(x) = x^a mod p, with public knowledge p being a prime and satisfying that (p - 1) / 2 is also a prime
     Dec(y) = y^(a^(-1) mod phi(p)) mod p
     """
+
     def __init__(self, mod_base, exponent=None):
         """
 
@@ -138,10 +139,11 @@ class PohligHellmanCiphertext(SymmetricCiphertext):
     """
 
     """
+
     def __init__(self, message):
         super(PohligHellmanCiphertext, self).__init__()
         self.message = message
-    
+
     def __hash__(self):
         return self.message.__hash__()
 

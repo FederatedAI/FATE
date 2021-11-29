@@ -196,7 +196,7 @@ class IntersectModelBase(ModelBase):
                     if self.model_param.sample_id_generator != consts.GUEST:
                         self.model_param.sample_id_generator = consts.GUEST
                         LOGGER.warning(f"when not sync_intersect_ids with match id process,"
-                                         f"sample_id_generator is set to Guest")
+                                       f"sample_id_generator is set to Guest")
 
             self.proc_obj = MatchIDIntersect(sample_id_generator=self.model_param.sample_id_generator, role=self.role)
             self.proc_obj.new_sample_id = self.model_param.new_sample_id
@@ -500,9 +500,13 @@ class IntersectGuest(IntersectModelBase):
         filter_list = self.transfer_variable.intersect_filter_from_host.get(idx=-1)
         LOGGER.debug(f"got filter from all host")
 
-        filtered_data_list = [data_instances.filter(lambda k, v: filter.check(
-            hash_operator.compute(k,
-                                  suffix_salt=self.intersect_preprocess_params.preprocess_salt))) for filter in filter_list]
+        filtered_data_list = [
+            data_instances.filter(
+                lambda k,
+                v: filter.check(
+                    hash_operator.compute(
+                        k,
+                        suffix_salt=self.intersect_preprocess_params.preprocess_salt))) for filter in filter_list]
         filtered_data = self.intersection_obj.get_common_intersection(filtered_data_list, False)
 
         return filtered_data

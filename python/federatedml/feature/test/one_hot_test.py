@@ -17,14 +17,14 @@
 #  limitations under the License.
 
 
+import numpy as np
+from federatedml.feature.instance import Instance
+from federatedml.feature.one_hot_encoder import OneHotEncoder
 import unittest
 
 from fate_arch.session import computing_session as session
 
 session.init("123")
-from federatedml.feature.one_hot_encoder import OneHotEncoder
-from federatedml.feature.instance import Instance
-import numpy as np
 
 
 class TestOneHotEncoder(unittest.TestCase):

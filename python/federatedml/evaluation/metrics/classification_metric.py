@@ -411,7 +411,6 @@ class PSI(object):
 
     def compute(self, train_scores: list, validate_scores: list, train_labels=None, validate_labels=None,
                 debug=False, str_intervals=False, round_num=3, pos_label=1):
-
         """
         train/validate scores: predicted scores on train/validate set
         train/validate labels: true labels
@@ -468,14 +467,13 @@ class PSI(object):
 
         if train_labels is None and validate_labels is None:
             return psi_scores, total_psi, expected_interval, expected_percentage, actual_interval, actual_percentage, \
-                   intervals
+                intervals
         else:
             return psi_scores, total_psi, expected_interval, expected_percentage, actual_interval, actual_percentage, \
-                   train_pos_perc, validate_pos_perc, intervals
+                train_pos_perc, validate_pos_perc, intervals
 
     @staticmethod
     def quantile_binning_and_count(scores, quantile_points):
-
         """
         left edge and right edge of last interval are closed
         """

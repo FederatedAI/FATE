@@ -16,6 +16,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from federatedml.statistic.statics import MultivariateStatisticalSummary
+from federatedml.feature.instance import Instance
 import unittest
 
 import numpy as np
@@ -23,9 +25,6 @@ import numpy as np
 from fate_arch.session import computing_session as session
 
 session.init("123")
-
-from federatedml.feature.instance import Instance
-from federatedml.statistic.statics import MultivariateStatisticalSummary
 
 
 class TestBaseBinningFunctions(unittest.TestCase):

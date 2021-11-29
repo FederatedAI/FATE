@@ -14,6 +14,8 @@
 #  limitations under the License.
 #
 
+from pipeline.utils.tools import load_job_config
+from examples.pipeline.hetero_logistic_regression import common_tools
 import argparse
 import os
 import sys
@@ -23,10 +25,6 @@ for i in range(4):
     cur_path = os.path.dirname(cur_path)
 print(f'fate_path: {cur_path}')
 sys.path.append(cur_path)
-
-from examples.pipeline.hetero_logistic_regression import common_tools
-
-from pipeline.utils.tools import load_job_config
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -71,7 +69,6 @@ def main(config="../../config.yaml", namespace=""):
     # import json
     # json.dump(dsl_json, open('./hetero-lr-normal-predict-dsl.json', 'w'), indent=4)
     # json.dump(conf_json, open('./hetero-lr-normal-predict-conf.json', 'w'), indent=4)
-
 
     # fit model
     pipeline.fit()

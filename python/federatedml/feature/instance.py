@@ -1,5 +1,5 @@
-#!/usr/bin/env python    
-# -*- coding: utf-8 -*- 
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
@@ -37,6 +37,7 @@ class Instance(object):
     label: None of float, data label
 
     """
+
     def __init__(self, inst_id=None, weight=None, features=None, label=None):
         self.inst_id = inst_id
         self.weight = weight

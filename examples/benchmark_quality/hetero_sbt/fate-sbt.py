@@ -30,6 +30,7 @@ from pipeline.utils.tools import JobConfig
 from federatedml.evaluation.metrics import regression_metric, classification_metric
 from fate_test.utils import extract_data, parse_summary_result
 
+
 def parse_summary_result(rs_dict):
     for model_key in rs_dict:
         rs_content = rs_dict[model_key]
@@ -139,7 +140,6 @@ def main(config="../../config.yaml", param="./xgb_config_binary.yaml", namespace
                     }
 
     return data_summary, metric_summary
-
 
 
 if __name__ == "__main__":

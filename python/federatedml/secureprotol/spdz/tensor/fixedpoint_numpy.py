@@ -152,7 +152,7 @@ class FixedPointTensor(TensorBase):
             try:
                 share_val %= self.q_field
                 return share_val
-            except:
+            except BaseException:
                 return share_val
 
     def transpose(self):

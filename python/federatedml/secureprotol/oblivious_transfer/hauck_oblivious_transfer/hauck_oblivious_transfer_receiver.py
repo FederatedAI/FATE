@@ -28,6 +28,7 @@ class HauckObliviousTransferReceiver(HauckObliviousTransfer):
     """
     Hauck-OT for the receiver (guest)
     """
+
     def __init__(self):
         super(HauckObliviousTransferReceiver, self).__init__()
 

@@ -51,4 +51,5 @@ class HomoTransferVariable(BaseTransferVariables):
         self.re_encrypted_model = self._create_variable(name='re_encrypted_model', src=['arbiter'], dst=['host'])
         self.to_encrypt_model = self._create_variable(name='to_encrypt_model', src=['host'], dst=['arbiter'])
         self.use_encrypt = self._create_variable(name='use_encrypt', src=['host'], dst=['arbiter'])
-        self.uuid_conflict_flag = self._create_variable(name='uuid_conflict_flag', src=['arbiter'], dst=['guest', 'host'])
+        self.uuid_conflict_flag = self._create_variable(
+            name='uuid_conflict_flag', src=['arbiter'], dst=['guest', 'host'])

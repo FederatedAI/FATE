@@ -1,5 +1,5 @@
-#!/usr/bin/env python 
-# -*- coding: utf-8 -*- 
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
@@ -89,7 +89,7 @@ class SecureAddGuest(ModelBase):
 
     def recv_host_sum_from_host(self):
         host_sum = self.transfer_inst.host_sum.get(idx=0)
-        
+
         return host_sum
 
     def run(self, cpn_input):

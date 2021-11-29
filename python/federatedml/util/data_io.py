@@ -87,14 +87,14 @@ class DenseFeatureReader(object):
                 self.label_idx = header.split(self.delimitor, -1).index(self.label_name)
 
                 header_gen = header.split(self.delimitor, -1)[: self.label_idx] + \
-                             header.split(self.delimitor, -1)[self.label_idx + 1:] or None
+                    header.split(self.delimitor, -1)[self.label_idx + 1:] or None
             elif header:
                 header_list = header.split(self.delimitor, -1)
                 if self.label_name in header_list:
                     self.label_idx = header_list.index(self.label_name)
 
                     header_gen = header.split(self.delimitor, -1)[: self.label_idx] + \
-                                 header.split(self.delimitor, -1)[self.label_idx + 1:] or None
+                        header.split(self.delimitor, -1)[self.label_idx + 1:] or None
                 else:
                     self.label_idx = None
                     header_gen = header.split(self.delimitor, -1)
@@ -240,14 +240,20 @@ class DenseFeatureReader(object):
             elif self.label_type in ["float", "float64"]:
                 label = float(label)
 
-            format_features = DenseFeatureReader.gen_output_format(features, self.data_type, self.exclusive_data_type_fid_map,
-                                                                   self.output_format,
-                                                                   missing_impute=self.missing_impute)
+            format_features = DenseFeatureReader.gen_output_format(
+                features,
+                self.data_type,
+                self.exclusive_data_type_fid_map,
+                self.output_format,
+                missing_impute=self.missing_impute)
 
         else:
-            format_features = DenseFeatureReader.gen_output_format(features, self.data_type, self.exclusive_data_type_fid_map,
-                                                                   self.output_format,
-                                                                   missing_impute=self.missing_impute)
+            format_features = DenseFeatureReader.gen_output_format(
+                features,
+                self.data_type,
+                self.exclusive_data_type_fid_map,
+                self.output_format,
+                missing_impute=self.missing_impute)
 
         return Instance(inst_id=None,
                         features=format_features,
@@ -375,20 +381,20 @@ class DenseFeatureReader(object):
 
     def load_model(self, model_meta, model_param):
         self.delimitor, self.data_type, self.exclusive_data_type, _1, _2, self.with_label, \
-        self.label_type, self.output_format, self.header, self.sid_name, self.label_name = \
+            self.label_type, self.output_format, self.header, self.sid_name, self.label_name = \
             load_data_io_model("DenseFeatureReader", model_meta, model_param)
 
         self.missing_fill, self.missing_fill_method, \
-        self.missing_impute, self.default_value = load_missing_imputer_model(self.header,
-                                                                             "Imputer",
-                                                                             model_meta.imputer_meta,
-                                                                             model_param.imputer_param)
+            self.missing_impute, self.default_value = load_missing_imputer_model(self.header,
+                                                                                 "Imputer",
+                                                                                 model_meta.imputer_meta,
+                                                                                 model_param.imputer_param)
 
         self.outlier_replace, self.outlier_replace_method, \
-        self.outlier_impute, self.outlier_replace_value = load_outlier_model(self.header,
-                                                                             "Outlier",
-                                                                             model_meta.outlier_meta,
-                                                                             model_param.outlier_param)
+            self.outlier_impute, self.outlier_replace_value = load_outlier_model(self.header,
+                                                                                 "Outlier",
+                                                                                 model_meta.outlier_meta,
+                                                                                 model_param.outlier_param)
 
 
 # =============================================================================
@@ -542,10 +548,10 @@ class SparseFeatureReader(object):
 
     def load_model(self, model_meta, model_param):
         self.delimitor, self.data_type, _0, _1, _2, _3, \
-        self.label_type, self.output_format, self.header, self.sid_name, self.label_name = load_data_io_model(
-            "SparseFeatureReader",
-            model_meta,
-            model_param)
+            self.label_type, self.output_format, self.header, self.sid_name, self.label_name = load_data_io_model(
+                "SparseFeatureReader",
+                model_meta,
+                model_param)
 
 
 # =============================================================================
@@ -832,16 +838,16 @@ class SparseTagReader(object):
 
     def load_model(self, model_meta, model_param):
         self.delimitor, self.data_type, _0, self.tag_with_value, self.tag_value_delimitor, self.with_label, \
-        self.label_type, self.output_format, self.header, self.sid_name, self.label_name = load_data_io_model(
-            "SparseTagReader",
-            model_meta,
-            model_param)
+            self.label_type, self.output_format, self.header, self.sid_name, self.label_name = load_data_io_model(
+                "SparseTagReader",
+                model_meta,
+                model_param)
 
         self.missing_fill, self.missing_fill_method, \
-        self.missing_impute, self.default_value = load_missing_imputer_model(self.header,
-                                                           "Imputer",
-                                                           model_meta.imputer_meta,
-                                                           model_param.imputer_param)
+            self.missing_impute, self.default_value = load_missing_imputer_model(self.header,
+                                                                                 "Imputer",
+                                                                                 model_meta.imputer_meta,
+                                                                                 model_param.imputer_param)
 
 
 class DataIO(ModelBase):
@@ -985,7 +991,7 @@ def load_data_io_model(model_name="DataIO",
             exclusive_data_type[col_name] = model_meta.exclusive_data_type.get(col_name)
 
     return delimitor, data_type, exclusive_data_type, tag_with_value, tag_value_delimitor, with_label, \
-           label_type, output_format, header, sid_name, label_name
+        label_type, output_format, header, sid_name, label_name
 
 
 def save_missing_imputer_model(missing_fill=False,
@@ -1104,5 +1110,3 @@ def load_outlier_model(header=None,
         outlier_replace_value = None
 
     return outlier_replace, outlier_replace_method, outlier_value, outlier_replace_value
-
-

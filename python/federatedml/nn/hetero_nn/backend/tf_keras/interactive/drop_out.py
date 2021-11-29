@@ -63,4 +63,3 @@ class DropOut(object):
 
     def do_backward_select_strategy(self):
         self._do_backward_select = True
-

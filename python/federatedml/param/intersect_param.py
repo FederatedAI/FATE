@@ -111,10 +111,10 @@ class RAWParam(BaseParam):
         self.check_string(self.salt, f"{descr}salt")
 
         self.hash_method = self.check_and_change_lower(self.hash_method,
-                                                         ["none", consts.MD5, consts.SHA1, consts.SHA224,
-                                                          consts.SHA256, consts.SHA384, consts.SHA512,
-                                                          consts.SM3],
-                                                         f"{descr}hash_method")
+                                                       ["none", consts.MD5, consts.SHA1, consts.SHA224,
+                                                        consts.SHA256, consts.SHA384, consts.SHA512,
+                                                        consts.SM3],
+                                                       f"{descr}hash_method")
 
         self.check_boolean(self.base64, f"{descr}base_64")
         self.join_role = self.check_and_change_lower(self.join_role, [consts.GUEST, consts.HOST], f"{descr}join_role")
@@ -153,7 +153,7 @@ class RSAParam(BaseParam):
 
     """
 
-    def __init__(self, salt='', hash_method='sha256',  final_hash_method='sha256',
+    def __init__(self, salt='', hash_method='sha256', final_hash_method='sha256',
                  split_calculation=False, random_base_fraction=None, key_length=consts.DEFAULT_KEY_LENGTH,
                  random_bit=DEFAULT_RANDOM_BIT):
         super().__init__()
@@ -339,8 +339,8 @@ class IntersectPreProcessParam(BaseParam):
         descr = "intersect preprocess param's preprocess_method "
         self.preprocess_method = self.check_and_change_lower(self.preprocess_method,
                                                              [consts.MD5, consts.SHA1, consts.SHA224,
-                                                             consts.SHA256, consts.SHA384, consts.SHA512,
-                                                             consts.SM3],
+                                                              consts.SHA256, consts.SHA384, consts.SHA512,
+                                                              consts.SM3],
                                                              descr)
 
         descr = "intersect preprocess param's filter_owner "
@@ -455,16 +455,16 @@ class IntersectParam(BaseParam):
     """
 
     def __init__(self, intersect_method: str = consts.RSA, random_bit=DEFAULT_RANDOM_BIT, sync_intersect_ids=True,
-                 join_role=consts.GUEST, only_output_key: bool=False,
+                 join_role=consts.GUEST, only_output_key: bool = False,
                  with_encode=False, encode_params=EncodeParam(),
                  raw_params=RAWParam(), rsa_params=RSAParam(), dh_params=DHParam(),
                  join_method=consts.INNER_JOIN, new_sample_id: bool = False, sample_id_generator=consts.GUEST,
                  intersect_cache_param=IntersectCache(), run_cache: bool = False,
                  cardinality_only: bool = False, sync_cardinality: bool = False,
-                 run_preprocess:bool = False,
+                 run_preprocess: bool = False,
                  intersect_preprocess_params=IntersectPreProcessParam(),
                  repeated_id_process=False, repeated_id_owner=consts.GUEST,
-                 with_sample_id=False,  allow_info_share: bool = False, info_owner=consts.GUEST):
+                 with_sample_id=False, allow_info_share: bool = False, info_owner=consts.GUEST):
         super().__init__()
         self.intersect_method = intersect_method
         self.random_bit = random_bit
@@ -525,14 +525,14 @@ class IntersectParam(BaseParam):
                                                                [consts.GUEST, consts.HOST],
                                                                f"{descr}sample_id_generator")
 
-        if self.join_method==consts.LEFT_JOIN:
+        if self.join_method == consts.LEFT_JOIN:
             if not self.sync_intersect_ids:
                 raise ValueError(f"Cannot perform left join without sync intersect ids")
 
         self.check_boolean(self.run_cache, f"{descr} run_cache")
 
         if self._warn_to_deprecate_param("encode_params", descr, "raw_params") or \
-            self._warn_to_deprecate_param("with_encode", descr, "raw_params' 'use_hash'"):
+                self._warn_to_deprecate_param("with_encode", descr, "raw_params' 'use_hash'"):
             # self.encode_params.check()
             if "with_encode" in self.get_user_feeded() and "raw_params.use_hash" in self.get_user_feeded():
                 raise ValueError(f"'raw_params' and 'encode_params' should not be set simultaneously.")

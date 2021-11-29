@@ -22,6 +22,7 @@ class GaloisFieldElement(object):
     """
     Element of a finite field
     """
+
     def __init__(self):
         pass
 
@@ -33,6 +34,7 @@ class GaloisFieldArithmetic(object):
     """
     A collection of arithmetic operators for finite field elements
     """
+
     def __init__(self, add_identity, mul_identity):
         self.add_identity = add_identity    # additive identity
         self.mul_identity = mul_identity    # multiplicative identity

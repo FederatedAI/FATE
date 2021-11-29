@@ -48,8 +48,8 @@ def main(config="../../config.yaml", namespace=""):
                                              default_value=42,
                                              missing_impute=[0])
     feature_imputation_0.get_party_instance(role='guest', party_id=guest).component_param(
-                                             col_missing_fill_method={"doctorco": "min",
-                                                                      "hscore": "designated"})
+        col_missing_fill_method={"doctorco": "min",
+                                 "hscore": "designated"})
 
     pipeline.add_component(reader_0)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
@@ -69,8 +69,10 @@ def main(config="../../config.yaml", namespace=""):
     predict_pipeline.add_component(reader_0)
     # add selected components from train pipeline onto predict pipeline
     # specify data source
-    predict_pipeline.add_component(pipeline,
-                                   data=Data(predict_input={pipeline.data_transform_0.input.data: reader_0.output.data}))
+    predict_pipeline.add_component(
+        pipeline, data=Data(
+            predict_input={
+                pipeline.data_transform_0.input.data: reader_0.output.data}))
     # run predict model
     predict_pipeline.predict()
 

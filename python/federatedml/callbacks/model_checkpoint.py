@@ -38,4 +38,3 @@ class ModelCheckpoint(CallbackBase):
         if epoch % self.save_freq == 0:
             self.add_checkpoint(step_index=epoch)
             self.save_count += 1
-

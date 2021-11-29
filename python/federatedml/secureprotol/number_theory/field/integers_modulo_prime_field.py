@@ -24,6 +24,7 @@ class IntegersModuloPrimeElement(GaloisFieldElement):
     """
     A realization of GF: integers modulo a prime
     """
+
     def __init__(self, val, arithmetic=None):
         """
         :param val: int
@@ -42,6 +43,7 @@ class IntegersModuloPrimeArithmetic(GaloisFieldArithmetic):
     """
     For the finite field - integers modulo a prime
     """
+
     def __init__(self, mod):
         add_identity = IntegersModuloPrimeElement(0)
         mul_identity = IntegersModuloPrimeElement(1)
@@ -112,7 +114,7 @@ class IntegersModuloPrimeArithmetic(GaloisFieldArithmetic):
                 return IntegersModuloPrimeElement((a * b.val) % self.mod)
         else:
             raise TypeError("Multiplication only supports two IntegersModuloPrimeElement objects" +
-                             "one int plus one object")
+                            "one int plus one object")
 
     def invert(self, a):
         """

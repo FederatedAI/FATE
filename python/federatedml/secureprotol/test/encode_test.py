@@ -61,59 +61,59 @@ class TestEncode(unittest.TestCase):
             "885f243059019ab15b99452b6f4aace23e595915c009fa4a51466bff84aa688f7a10c267ec0b5f93fcfc24ca03c8ae23",
             "c1dcb4043e7faeb923d8004b7219c258c5c62ba1ca51cf4d336ddc7a951d8045fd8acc71123ca759f5a43707ce6c5a5e"]
 
-        ## test sha256, base64 = 1
+        # test sha256, base64 = 1
         # encode_sha256_base64 = Encode("sha256", base64=1)
         # self.assertEqual(encode_sha256_base64.compute(value_list, pre_salt, postfit_salt)[0], sha256_base64_value_list)
 
-        ## test sha256, base64 = 0
+        # test sha256, base64 = 0
         # encode_sha256 = Encode("sha256", base64=0)
         # self.assertEqual(encode_sha256.compute(value_list, pre_salt, postfit_salt)[0], sha256_value_list)
 
-        ## test md5, base64 = 1
+        # test md5, base64 = 1
         # encode_md5_base64 = Encode("md5", base64=1)
 
         # self.assertEqual(encode_md5_base64.compute(value_list, pre_salt, postfit_salt)[0], md5_base64_value_list)
 
-        ## test md5, base64 = 0
+        # test md5, base64 = 0
         # encode_md5 = Encode("md5", base64=0)
 
         # self.assertEqual(encode_md5.compute(value_list, pre_salt, postfit_salt)[0], md5_value_list)
 
-        ## test sha1, base64 = 1
+        # test sha1, base64 = 1
         # encode_base64_sha1 = Encode("sha1", base64=1)
 
         # self.assertEqual(encode_base64_sha1.compute(value_list, pre_salt, postfit_salt)[0], sha1_base64_value_list)
 
-        ## test sha1, base64 = 0
+        # test sha1, base64 = 0
         # encode_sha1 = Encode("sha1", base64=0)
         # self.assertEqual(encode_sha1.compute(value_list, pre_salt, postfit_salt)[0], sha1_value_list)
 
-        ## test sha1, base64 = 1
+        # test sha1, base64 = 1
         # encode_base_sha224 = Encode("sha224", base64=1)
         # self.assertEqual(encode_base_sha224.compute(value_list, pre_salt, postfit_salt)[0], sha224_base64_value_list)
 
-        ## test sha224, base64 = 0
+        # test sha224, base64 = 0
         # encode_sha224 = Encode("sha224", base64=0)
         # self.assertEqual(encode_sha224.compute(value_list, pre_salt, postfit_salt)[0], sha224_value_list)
 
-        ## test sha512, base64 = 1
+        # test sha512, base64 = 1
         # encode_base_sha512 = Encode("sha512", base64=1)
         # self.assertEqual(encode_base_sha512.compute(value_list, pre_salt, postfit_salt)[0], sha512_base64_value_list)
 
-        ## test sha224, base64 = 0
+        # test sha224, base64 = 0
         # encode_sha512 = Encode("sha512", base64=0)
         # self.assertEqual(encode_sha512.compute(value_list, pre_salt, postfit_salt)[0], sha512_value_list)
 
-        ## test sha384, base64 = 1
+        # test sha384, base64 = 1
         # encode_base_sha384 = Encode("sha384", base64=1)
         # self.assertEqual(encode_base_sha384.compute(value_list, pre_salt, postfit_salt)[0], sha384_base64_value_list)
 
-        ## test sha384, base64 = 0
+        # test sha384, base64 = 0
         # encode_sha384 = Encode("sha384", base64=0)
         # self.assertEqual(encode_sha384.compute(value_list, pre_salt, postfit_salt)[0], sha384_value_list)
 
         #
-        ## test id_map
+        # test id_map
         # encode_sha384 = Encode("sha384", base64=0)
         # sha384_value_list = [
         #    "55063a4b478a3c3eca0582ca781674d18b3c66bd476145b80fd27cda199a0c3064369a2af66bd6721468fe2b2bffd09b",

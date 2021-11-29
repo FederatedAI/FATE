@@ -125,7 +125,7 @@ class PoissonParam(BaseParam):
                  tol=1e-4, alpha=1.0, optimizer='rmsprop',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=20, early_stop='diff',
-                 exposure_colname = None, predict_param=PredictParam(),
+                 exposure_colname=None, predict_param=PredictParam(),
                  encrypt_param=EncryptParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  cv_param=CrossValidationParam(), stepwise_param=StepwiseParam(),
@@ -195,7 +195,7 @@ class PoissonParam(BaseParam):
                 descr + "batch_size {} not supported, should be int type".format(self.batch_size))
         if self.batch_size != -1:
             if type(self.batch_size).__name__ not in ["int", "long"] \
-                or self.batch_size < consts.MIN_BATCH_SIZE:
+                    or self.batch_size < consts.MIN_BATCH_SIZE:
                 raise ValueError(descr + " {} not supported, should be larger than {} or "
                                          "-1 represent for all data".format(self.batch_size, consts.MIN_BATCH_SIZE))
 

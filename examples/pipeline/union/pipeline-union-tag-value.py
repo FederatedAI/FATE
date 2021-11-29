@@ -50,7 +50,7 @@ def main(config="../../config.yaml", namespace=""):
     union_0 = Union(name="union_0", allow_missing=False, keep_duplicate=True, need_run=True)
 
     data_transform_0 = DataTransform(name="data_transform_0", input_format="tag", with_label=False, tag_with_value=True,
-                      delimitor=",", output_format="dense")
+                                     delimitor=",", output_format="dense")
 
     pipeline.add_component(reader_0)
     pipeline.add_component(reader_1)

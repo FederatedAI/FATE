@@ -122,13 +122,13 @@ class EncryptModeCalculator(object):
     def encrypt(self, input_data):
         """
         Encrypt data according to different mode
-        
-        Parameters 
-        ---------- 
+
+        Parameters
+        ----------
         input_data: Table
 
-        Returns 
-        ------- 
+        Returns
+        -------
         new_data: Table, encrypted result of input_data
 
         """

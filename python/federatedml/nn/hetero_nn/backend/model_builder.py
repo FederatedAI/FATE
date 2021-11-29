@@ -27,4 +27,3 @@ def model_builder(role="guest", hetero_nn_param=None, backend="keras"):
         return HeteroNNKerasGuestModel(hetero_nn_param)
     elif role == "host":
         return HeteroNNKerasHostModel(hetero_nn_param)
-

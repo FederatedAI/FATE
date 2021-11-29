@@ -14,6 +14,18 @@
 #  limitations under the License.
 #
 
+from pipeline.interface.model import Model
+from pipeline.interface.data import Data
+from pipeline.component import Reader
+from pipeline.component import Evaluation
+from pipeline.component import HomoSecureBoost
+from pipeline.component import FeatureScale
+from pipeline.component import HomoLR
+from pipeline.component import HeteroFeatureSelection
+from pipeline.component import DataTransform
+from pipeline.backend.pipeline import PipeLine
+from pipeline.utils.tools import load_job_config
+from examples.pipeline.hetero_feature_selection import common_tools
 import argparse
 import os
 import sys
@@ -23,21 +35,6 @@ for i in range(4):
     cur_path = os.path.dirname(cur_path)
 print(f'fate_path: {cur_path}')
 sys.path.append(cur_path)
-
-from examples.pipeline.hetero_feature_selection import common_tools
-from pipeline.utils.tools import load_job_config
-
-from pipeline.backend.pipeline import PipeLine
-from pipeline.component import DataTransform
-from pipeline.component import HeteroFeatureSelection
-from pipeline.component import HomoLR
-from pipeline.component import FeatureScale
-from pipeline.component import HomoSecureBoost
-from pipeline.component import Evaluation
-from pipeline.component import Reader
-
-from pipeline.interface.data import Data
-from pipeline.interface.model import Model
 
 
 def make_normal_dsl(config, namespace):

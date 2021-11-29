@@ -46,6 +46,7 @@ class TwistedEdwardsCurveArithmetic(CyclicGroupArithmetic):
         Bernstein, Daniel J., et al. "High-speed high-security signatures." 2012,
         and https://tools.ietf.org/id/draft-struik-lwig-curve-representations-00.html#dom-parms for more details
     """
+
     def __init__(self,
                  galois_field_arithmetic=IntegersModuloPrimeArithmetic(2 ** 255 - 19),
                  a=IntegersModuloPrimeElement(2 ** 255 - 20),

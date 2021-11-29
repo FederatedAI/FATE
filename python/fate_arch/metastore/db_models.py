@@ -30,7 +30,8 @@ LOGGER = log.getLogger()
 
 DATABASE = get_base_config("database", {})
 is_standalone = conf_utils.get_base_config("default_engines", {}).get(EngineType.FEDERATION).upper() == \
-                FederationEngine.STANDALONE
+    FederationEngine.STANDALONE
+
 
 def singleton(cls, *args, **kw):
     instances = {}

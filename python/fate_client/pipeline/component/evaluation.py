@@ -33,5 +33,3 @@ class Evaluation(Component, EvaluateParam):
         self.input = Input(self.name)
         self.output = Output(self.name, has_model=False)
         self._module_name = "Evaluation"
-
-

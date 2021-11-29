@@ -107,9 +107,20 @@ class TestModel(object):
                 stdout = json.loads(stdout.decode("utf-8"))
                 if stdout.get('retcode'):
                     self.error_log('clean job: {}'.format(stdout.get('retmsg')) + '\n')
-                subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", "component_metrics", "-j", self.job_id,
-                                         "-r", "guest", "-p", str(self.guest_party_id[0]), "-cpn", 'evaluation_0'],
-                                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                subp = subprocess.Popen([self.python_bin,
+                                         self.fate_flow_path,
+                                         "-f",
+                                         "component_metrics",
+                                         "-j",
+                                         self.job_id,
+                                         "-r",
+                                         "guest",
+                                         "-p",
+                                         str(self.guest_party_id[0]),
+                                         "-cpn",
+                                         'evaluation_0'],
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.STDOUT)
                 metric, stderr = subp.communicate()
                 metric = json.loads(metric.decode("utf-8"))
                 if not metric.get('data'):
@@ -222,9 +233,20 @@ class TestModel(object):
 
         elif command == 'component_output_model':
             try:
-                subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", command, "-r", "guest",
-                                         "-j", self.job_id, "-p", str(self.guest_party_id[0]), "-cpn", self.component_name],
-                                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                subp = subprocess.Popen([self.python_bin,
+                                         self.fate_flow_path,
+                                         "-f",
+                                         command,
+                                         "-r",
+                                         "guest",
+                                         "-j",
+                                         self.job_id,
+                                         "-p",
+                                         str(self.guest_party_id[0]),
+                                         "-cpn",
+                                         self.component_name],
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.STDOUT)
                 stdout, stderr = subp.communicate()
                 stdout = json.loads(stdout.decode("utf-8"))
                 if stdout.get('retcode'):
@@ -291,9 +313,20 @@ class TestModel(object):
                 stdout = json.loads(stdout.decode("utf-8"))
                 if stdout.get('retcode'):
                     self.error_log('component metric delete: {}'.format(stdout.get('retmsg')) + '\n')
-                subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", "component_metrics", "-j", self.job_id,
-                                         "-r", "guest", "-p", str(self.guest_party_id[0]), "-cpn", 'evaluation_0'],
-                                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                subp = subprocess.Popen([self.python_bin,
+                                         self.fate_flow_path,
+                                         "-f",
+                                         "component_metrics",
+                                         "-j",
+                                         self.job_id,
+                                         "-r",
+                                         "guest",
+                                         "-p",
+                                         str(self.guest_party_id[0]),
+                                         "-cpn",
+                                         'evaluation_0'],
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.STDOUT)
                 metric, stderr = subp.communicate()
                 metric = json.loads(metric.decode("utf-8"))
                 if not metric.get('data'):
@@ -349,8 +382,8 @@ class TestModel(object):
             json.dump(upload_file, fp)
 
         try:
-            subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", "upload", "-c", upload_path, "-drop", "1"],
-                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", "upload", "-c",
+                                    upload_path, "-drop", "1"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             stdout, stderr = subp.communicate()
             stdout = json.loads(stdout.decode("utf-8"))
             if stdout.get('retcode'):
@@ -552,7 +585,7 @@ def run_test_api(config_json, namespace):
 
     serving_connect_bool = serving_connect(config_json['serving_setting'])
     remove_path = str(config_json['data_base_dir']).split("python")[
-                      0] + '/model_local_cache/guest#{}#arbiter-{}#guest-{}#host-{}#model/'.format(
+        0] + '/model_local_cache/guest#{}#arbiter-{}#guest-{}#host-{}#model/'.format(
         guest_party_id[0], arbiter_party_id[0], guest_party_id[0], host_party_id[0])
     max_iter = test_api.set_config(guest_party_id, host_party_id, arbiter_party_id, conf_path,
                                    config_json['component_name'])

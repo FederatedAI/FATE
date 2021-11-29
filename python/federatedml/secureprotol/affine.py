@@ -100,5 +100,3 @@ class AffineCiphertext(object):
 
     def __truediv__(self, other):
         return self.__mul__(1 / other)
-    
-    

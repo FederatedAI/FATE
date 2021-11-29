@@ -53,6 +53,5 @@ class TestQuantileSummaries(unittest.TestCase):
             self.test_correctness()
 
 
-
 if __name__ == '__main__':
     unittest.main()

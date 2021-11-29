@@ -117,4 +117,3 @@ class FeldmanVerifiableSumGuest(BaseFeldmanVerifiableSum):
         data_output = self.secret_sum
 
         return data_output
-

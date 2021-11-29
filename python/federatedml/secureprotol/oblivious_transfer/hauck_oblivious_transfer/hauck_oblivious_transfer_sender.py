@@ -27,6 +27,7 @@ class HauckObliviousTransferSender(HauckObliviousTransfer):
     """
     Hauck-OT for the sender (host)
     """
+
     def __init__(self):
         super(HauckObliviousTransferSender, self).__init__()
 

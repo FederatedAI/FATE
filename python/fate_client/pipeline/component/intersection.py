@@ -34,5 +34,3 @@ class Intersection(Component, IntersectParam):
         self.input = Input(self.name)
         self.output = Output(self.name, has_model=False, has_cache=True)
         self._module_name = "Intersection"
-
-

@@ -14,6 +14,8 @@
 #  limitations under the License.
 #
 
+from pipeline.utils.tools import load_job_config
+from examples.pipeline.hetero_feature_binning import common_tools
 import argparse
 import os
 import sys
@@ -23,9 +25,6 @@ for i in range(4):
     cur_path = os.path.dirname(cur_path)
 print(f'fate_path: {cur_path}')
 sys.path.append(cur_path)
-
-from examples.pipeline.hetero_feature_binning import common_tools
-from pipeline.utils.tools import load_job_config
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -57,6 +56,7 @@ def main(config="../../config.yaml", namespace=""):
     # summary = pipeline.get_component("hetero_feature_binning_0").get_summary()
     # ivs = {x[0]: x[1] for x in summary["iv"]}
     # common_tools.prettify(ivs)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("PIPELINE DEMO")

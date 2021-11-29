@@ -97,13 +97,13 @@ class IterativeAffineCipherKey(object):
         self.key_round = len(self.a_array)
         self.a_inv_array = self.mod_inverse()
         self.affine_encoder = AffineEncoder(mult=encode_precision)
-        
+
     def mod_inverse(self):
         a_array_inv = [0 for _ in self.a_array]
         for i in range(self.key_round):
             a_array_inv[i] = invert(self.a_array[i], self.n_array[i])
         return a_array_inv
-        
+
     def encrypt(self, plaintext):
         pass
 
@@ -212,8 +212,8 @@ class DeterministicIterativeAffineCipherKey(IterativeAffineCipherKey):
         )
 
     def raw_decrypt_round(self, ciphertext, round_index):
-        plaintext = int((mpz(self.a_inv_array[self.key_round - 1 - round_index]) * ciphertext) \
-                    % self.n_array[self.key_round - 1 - round_index])
+        plaintext = int((mpz(self.a_inv_array[self.key_round - 1 - round_index]) * ciphertext)
+                        % self.n_array[self.key_round - 1 - round_index])
 
         if plaintext / self.n_array[self.key_round - 1 - round_index] > 0.9:
             return plaintext - self.n_array[self.key_round - 1 - round_index]

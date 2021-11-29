@@ -31,9 +31,8 @@ class HomoDataSplitHost(DataSplitter):
         ids = self._get_ids(data_inst)
         y = self._get_y(data_inst)
 
-        id_train, id_test_validate, y_train, y_test_validate = self._split(ids, y,
-                                                                           test_size=self.test_size + self.validate_size,
-                                                                           train_size=self.train_size)
+        id_train, id_test_validate, y_train, y_test_validate = self._split(
+            ids, y, test_size=self.test_size + self.validate_size, train_size=self.train_size)
 
         validate_size, test_size = DataSplitter.get_train_test_size(self.validate_size, self.test_size)
         id_validate, id_test, y_validate, y_test = self._split(id_test_validate, y_test_validate,
@@ -65,13 +64,12 @@ class HomoDataSplitGuest(DataSplitter):
         ids = self._get_ids(data_inst)
         y = self._get_y(data_inst)
 
-        id_train, id_test_validate, y_train, y_test_validate = self._split(ids, y,
-                                                                           test_size=self.test_size + self.validate_size,
-                                                                           train_size=self.train_size)
+        id_train, id_test_validate, y_train, y_test_validate = self._split(
+            ids, y, test_size=self.test_size + self.validate_size, train_size=self.train_size)
 
         validate_size, test_size = DataSplitter.get_train_test_size(self.validate_size, self.test_size)
         id_validate, id_test, y_validate, y_test = self._split(id_test_validate, y_test_validate,
-                                                 test_size=test_size, train_size=validate_size)
+                                                               test_size=test_size, train_size=validate_size)
 
         train_data, validate_data, test_data = self.split_data(data_inst, id_train, id_validate, id_test)
 

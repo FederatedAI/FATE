@@ -49,10 +49,14 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
     data_transform_0 = DataTransform(name="data_transform_0")
-    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, missing_fill=True,
-                                                                                      outlier_replace=True)
+    data_transform_0.get_party_instance(
+        role='guest',
+        party_id=guest).component_param(
+        with_label=True,
+        missing_fill=True,
+        outlier_replace=True)
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False, missing_fill=True,
-                                                                                     outlier_replace=True)
+                                                                                    outlier_replace=True)
 
     intersection_0 = Intersection(name="intersection_0")
     federated_sample_0 = FederatedSample(name="federated_sample_0", mode="stratified", method="upsample",

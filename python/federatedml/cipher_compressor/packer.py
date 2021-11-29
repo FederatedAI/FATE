@@ -165,4 +165,3 @@ class GuestIntegerPacker(object):
         unpack_table = de_table.mapValues(self.unpack_result)
 
         return unpack_table
-

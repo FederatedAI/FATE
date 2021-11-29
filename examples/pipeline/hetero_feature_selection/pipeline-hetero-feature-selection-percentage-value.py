@@ -14,6 +14,8 @@
 #  limitations under the License.
 #
 
+from pipeline.utils.tools import load_job_config
+from examples.pipeline.hetero_feature_selection import common_tools
 import argparse
 import os
 import sys
@@ -23,9 +25,6 @@ for i in range(4):
     cur_path = os.path.dirname(cur_path)
 print(f'fate_path: {cur_path}')
 sys.path.append(cur_path)
-
-from examples.pipeline.hetero_feature_selection import common_tools
-from pipeline.utils.tools import load_job_config
 
 
 def main(config="../../config.yaml", namespace=""):

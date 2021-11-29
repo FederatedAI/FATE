@@ -31,10 +31,14 @@ class HeteroDecisionTreeTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
         self.dispatch_node_host = self._create_variable(name='dispatch_node_host', src=['guest'], dst=['host'])
-        self.dispatch_node_host_result = self._create_variable(name='dispatch_node_host_result', src=['host'], dst=['guest'])
-        self.encrypted_grad_and_hess = self._create_variable(name='encrypted_grad_and_hess', src=['guest'], dst=['host'])
-        self.encrypted_splitinfo_host = self._create_variable(name='encrypted_splitinfo_host', src=['host'], dst=['guest'])
-        self.federated_best_splitinfo_host = self._create_variable(name='federated_best_splitinfo_host', src=['guest'], dst=['host'])
+        self.dispatch_node_host_result = self._create_variable(
+            name='dispatch_node_host_result', src=['host'], dst=['guest'])
+        self.encrypted_grad_and_hess = self._create_variable(
+            name='encrypted_grad_and_hess', src=['guest'], dst=['host'])
+        self.encrypted_splitinfo_host = self._create_variable(
+            name='encrypted_splitinfo_host', src=['host'], dst=['guest'])
+        self.federated_best_splitinfo_host = self._create_variable(
+            name='federated_best_splitinfo_host', src=['guest'], dst=['host'])
         self.final_splitinfo_host = self._create_variable(name='final_splitinfo_host', src=['host'], dst=['guest'])
         self.node_positions = self._create_variable(name='node_positions', src=['guest'], dst=['host'])
         self.predict_data = self._create_variable(name='predict_data', src=['guest'], dst=['host'])
@@ -42,7 +46,8 @@ class HeteroDecisionTreeTransferVariable(BaseTransferVariables):
         self.predict_finish_tag = self._create_variable(name='predict_finish_tag', src=['guest'], dst=['host'])
         self.tree = self._create_variable(name='tree', src=['guest'], dst=['host'])
         self.tree_node_queue = self._create_variable(name='tree_node_queue', src=['guest'], dst=['host'])
-        self.host_cur_to_split_node_num = self._create_variable(name='host_cur_to_split_node_num', src=['host'], dst=['guest'])
+        self.host_cur_to_split_node_num = self._create_variable(
+            name='host_cur_to_split_node_num', src=['host'], dst=['guest'])
         self.host_leafs = self._create_variable(name='host_leafs', src=['host'], dst=['guest'])
         self.sync_flag = self._create_variable(name='sync_flag', src=['guest'], dst=['host'])
         self.cipher_compressor_para = self._create_variable(name='cipher_compressor_para', src=['guest'], dst=['host'])

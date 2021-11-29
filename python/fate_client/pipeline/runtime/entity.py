@@ -19,16 +19,32 @@ from pipeline.utils.tools import extract_explicit_parameter
 
 class JobParameters(object):
     @extract_explicit_parameter
-    def __init__(self, job_type="train", computing_engine=None, federation_engine=None,
-                 storage_engine=None, engines_address=None,federated_mode=None, federation_info=None, task_parallelism=None,
-                 federated_status_collect_type=None, federated_data_exchange_type=None, model_id=None, model_version=None,
-                 dsl_version=None, timeout=None, eggroll_run=None, spark_run=None, adaptation_parameters=None, **kwargs):
+    def __init__(
+            self,
+            job_type="train",
+            computing_engine=None,
+            federation_engine=None,
+            storage_engine=None,
+            engines_address=None,
+            federated_mode=None,
+            federation_info=None,
+            task_parallelism=None,
+            federated_status_collect_type=None,
+            federated_data_exchange_type=None,
+            model_id=None,
+            model_version=None,
+            dsl_version=None,
+            timeout=None,
+            eggroll_run=None,
+            spark_run=None,
+            adaptation_parameters=None,
+            **kwargs):
         explicit_parameters = kwargs["explict_parameters"]
         for param_key, param_value in explicit_parameters.items():
             if param_key == "backend":
-                print ("Please don't use parameter 'backend' in FATE version >= 1.7.")
+                print("Please don't use parameter 'backend' in FATE version >= 1.7.")
             elif param_key == "work_mode":
-                print ("Please don't  use parameter 'work_mode' in FATE version >= 1.7.")
+                print("Please don't  use parameter 'work_mode' in FATE version >= 1.7.")
             else:
                 setattr(self, param_key, param_value)
 
@@ -135,5 +151,3 @@ class JobParameters(object):
             conf["role"] = role_param_conf
 
         return conf
-
-

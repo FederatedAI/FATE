@@ -17,17 +17,17 @@ class TestXgboostCriterion(unittest.TestCase):
         c = PackingCipherTensor(124)
         d = PackingCipherTensor([114514])
 
-        print(a+b)
-        print(b+a)
-        print(c*123)
-        print(d*314)
-        print(12*a)
-        print(a*2)
-        print(a/12)
+        print(a + b)
+        print(b + a)
+        print(c * 123)
+        print(d * 314)
+        print(12 * a)
+        print(a * 2)
+        print(a / 12)
         print(b - a)
-        print(d+3)
+        print(d + 3)
         print('plain test done')
-        print('*'*30)
+        print('*' * 30)
 
     def test_cipher_add_sub_mul(self):
 
@@ -53,7 +53,7 @@ class TestXgboostCriterion(unittest.TestCase):
         print(encrypter.decrypt(rs_5.ciphers))
         print(encrypter.recursive_decrypt(rs_6.ciphers))
         print('cipher test done')
-        print('*'*30)
+        print('*' * 30)
 
 
 if __name__ == '__main__':

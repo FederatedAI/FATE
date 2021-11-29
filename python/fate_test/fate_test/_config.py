@@ -41,7 +41,7 @@ services:
       - {address: 127.0.0.1:9380, parties: [9999, 10000]}
     serving_setting:
       address: 127.0.0.1:8059
-      
+
     ssh_tunnel: # optional
       enable: false
       ssh_address: <remote ip>:<remote port>

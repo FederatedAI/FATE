@@ -14,6 +14,10 @@
 #  limitations under the License.
 #
 
+from federatedml.feature.binning.iv_calculator import IvCalculator
+from federatedml.param.feature_binning_param import FeatureBinningParam
+from federatedml.feature.instance import Instance
+from federatedml.feature.binning.bucket_binning import BucketBinning
 import unittest
 
 import numpy as np
@@ -21,11 +25,6 @@ import numpy as np
 from fate_arch.session import computing_session as session
 
 session.init("123")
-
-from federatedml.feature.binning.bucket_binning import BucketBinning
-from federatedml.feature.instance import Instance
-from federatedml.param.feature_binning_param import FeatureBinningParam
-from federatedml.feature.binning.iv_calculator import IvCalculator
 
 
 class TestBucketBinning(unittest.TestCase):

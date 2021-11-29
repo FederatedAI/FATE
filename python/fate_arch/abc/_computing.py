@@ -124,7 +124,7 @@ class CTableABC(metaclass=ABCMeta):
         object
           a data from table
 
-        
+
         Notes
         -------
         no order guarantee
@@ -324,25 +324,25 @@ class CTableABC(metaclass=ABCMeta):
     def reduce(self, func):
         """
         reduces all value in pair of table by a binary function `func`
-        
+
         Parameters
         ----------
         func: typing.Callable[[object, object], object]
            binary function reduce two value into one
-           
+
         Returns
         -------
         object
            a single object
 
-        
+
 
         Examples
         --------
         >>> from fate_arch.session import computing_session
         >>> a = computing_session.parallelize(range(100), include_key=False, partition=4)
         >>> assert a.reduce(lambda x, y: x + y) == sum(range(100))
-        
+
         Notes
         ------
         `func` should be associative
@@ -395,7 +395,7 @@ class CTableABC(metaclass=ABCMeta):
         >>> x = computing_session.parallelize(range(100), include_key=False, partition=4)
         >>> 6 <= x.sample(fraction=0.1, seed=81).count() <= 14
         True
-        
+
         Notes
         -------
         use one of ``fraction`` and ``num``, not both

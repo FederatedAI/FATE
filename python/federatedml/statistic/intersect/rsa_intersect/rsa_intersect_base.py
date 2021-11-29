@@ -24,6 +24,7 @@ from federatedml.statistic.intersect import Intersect
 from federatedml.transfer_variable.transfer_class.rsa_intersect_transfer_variable import RsaIntersectTransferVariable
 from federatedml.util import consts, LOGGER
 
+
 class RsaIntersect(Intersect):
     def __init__(self):
         super().__init__()
@@ -136,24 +137,29 @@ class RsaIntersect(Intersect):
     def pubkey_id_process_per(hash_sid, v, random_bit, rsa_e, rsa_n, hash_operator=None, salt=''):
         r = random.SystemRandom().getrandbits(random_bit)
         if hash_operator:
-            processed_id = gmpy_math.powmod(r, rsa_e, rsa_n) * int(Intersect.hash(hash_sid, hash_operator, salt), 16) % rsa_n
+            processed_id = gmpy_math.powmod(r, rsa_e, rsa_n) * \
+                int(Intersect.hash(hash_sid, hash_operator, salt), 16) % rsa_n
             return processed_id, (hash_sid, r)
         else:
             processed_id = gmpy_math.powmod(r, rsa_e, rsa_n) * hash_sid % rsa_n
             return processed_id, (v[0], r)
 
     @staticmethod
-    def prvkey_id_process(hash_sid, v, rsa_d, rsa_n, rsa_p, rsa_q, cp, cq, final_hash_operator, salt, first_hash_operator=None):
+    def prvkey_id_process(
+            hash_sid,
+            v,
+            rsa_d,
+            rsa_n,
+            rsa_p,
+            rsa_q,
+            cp,
+            cq,
+            final_hash_operator,
+            salt,
+            first_hash_operator=None):
         if first_hash_operator:
-            processed_id = Intersect.hash(gmpy_math.powmod_crt(int(Intersect.hash(hash_sid, first_hash_operator, salt), 16),
-                                                               rsa_d,
-                                                               rsa_n,
-                                                               rsa_p,
-                                                               rsa_q,
-                                                               cp,
-                                                               cq),
-                                          final_hash_operator,
-                                          salt)
+            processed_id = Intersect.hash(gmpy_math.powmod_crt(int(Intersect.hash(
+                hash_sid, first_hash_operator, salt), 16), rsa_d, rsa_n, rsa_p, rsa_q, cp, cq), final_hash_operator, salt)
             return processed_id, hash_sid
         else:
             processed_id = Intersect.hash(gmpy_math.powmod_crt(hash_sid, rsa_d, rsa_n, rsa_p, rsa_q, cp, cq),

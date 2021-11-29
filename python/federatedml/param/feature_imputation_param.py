@@ -63,7 +63,7 @@ class FeatureImputationParam(BaseParam):
 
         descr = "feature imputation param's "
 
-        self.check_boolean(self.need_run, descr+"need_run")
+        self.check_boolean(self.need_run, descr + "need_run")
 
         if self.missing_fill_method is not None:
             self.missing_fill_method = self.check_and_change_lower(self.missing_fill_method,

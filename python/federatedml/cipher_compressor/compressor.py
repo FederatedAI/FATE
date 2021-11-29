@@ -76,7 +76,7 @@ class PackingCipherTensor(object):
             if self.dim == 1:
                 return PackingCipherTensor(self.ciphers + other.ciphers)
             for c1, c2 in zip(self.ciphers, other.ciphers):
-                new_cipher_list.append(c1+c2)
+                new_cipher_list.append(c1 + c2)
             return PackingCipherTensor(ciphers=new_cipher_list)
         else:
             # scalar / single en num
@@ -101,14 +101,14 @@ class PackingCipherTensor(object):
             return PackingCipherTensor(self.ciphers * other)
         new_cipher_list = []
         for c in self.ciphers:
-            new_cipher_list.append(c*other)
+            new_cipher_list.append(c * other)
         return PackingCipherTensor(new_cipher_list)
 
     def __rmul__(self, other):
         return self.__mul__(other)
 
     def __truediv__(self, other):
-        return self.__mul__(1/other)
+        return self.__mul__(1 / other)
 
     def __repr__(self):
         return "[" + self.ciphers.__repr__() + "], dim {}".format(self.dim)
@@ -210,7 +210,7 @@ class PackingCipherTensorPackage(CipherPackage):
             rs = []
             idx_0, idx_1 = 0, 0
             while idx_0 < len(self.cached_list):
-                rs.append(de_rs[idx_0: idx_0+self.not_compress_len] + [compressed_part[idx_1]])
+                rs.append(de_rs[idx_0: idx_0 + self.not_compress_len] + [compressed_part[idx_1]])
                 idx_0 += self.not_compress_len
                 idx_1 += 1
             return rs
@@ -222,7 +222,6 @@ class PackingCipherTensorPackage(CipherPackage):
 class CipherCompressorHost(object):
 
     def __init__(self, package_class=PackingCipherTensorPackage, sync_para=True):
-
         """
         Parameters
         ----------

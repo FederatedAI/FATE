@@ -93,7 +93,7 @@ class Boosting(ModelBase, ABC):
         self.history_loss = []  # list holds loss history
         self.metrics = None
         self.is_converged = False
-        self.is_warm_start = False # warm start parameter
+        self.is_warm_start = False  # warm start parameter
 
         # cache and header alignment
         self.predict_data_cache = PredictDataCache()
@@ -133,7 +133,6 @@ class Boosting(ModelBase, ABC):
 
     @staticmethod
     def data_format_transform(row):
-
         """
         transform data into sparse format
         """
@@ -194,7 +193,7 @@ class Boosting(ModelBase, ABC):
         LOGGER.info("sample valid features")
 
         self.feature_num = self.bin_split_points.shape[0]
-        choose_feature = random.choice(range(0, self.feature_num), \
+        choose_feature = random.choice(range(0, self.feature_num),
                                        max(1, int(self.subsample_feature_rate * self.feature_num)), replace=False)
 
         valid_features = [False for i in range(self.feature_num)]
@@ -215,7 +214,6 @@ class Boosting(ModelBase, ABC):
         return new_data_inst
 
     def data_and_header_alignment(self, data_inst):
-
         """
         turn data into sparse and align header/ algin data table header
         """
@@ -245,7 +243,6 @@ class Boosting(ModelBase, ABC):
         return feature_name_fid_mapping
 
     def prepare_data(self, data_inst):
-
         """
         prepare data: data alignment, and transform feature to bin id
         Args:
@@ -516,8 +513,3 @@ class Boosting(ModelBase, ABC):
 
     def save_model(self):
         pass
-
-
-
-
-

@@ -34,5 +34,3 @@ class HomoFeatureBinning(Component, HomoFeatureBinningParam):
         self.input = Input(self.name, data_type="multi")
         self.output = Output(self.name)
         self._module_name = "HomoFeatureBinning"
-
-
