@@ -6,6 +6,9 @@ git+git://github.com/mkdocstrings/mkdocstrings@f6cf570#egg=mkdocstrings
 pytkdocs[numpy-style]==0.14.0
 mkdocs-simple-hooks
 mkdocs-awesome-pages-plugin
+mkdocs-git-revision-date-plugin
+GitPython
+
 
 # for FATE api generate
 peewee

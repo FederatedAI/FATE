@@ -5,7 +5,7 @@ parties: # parties default id
     - 9999
     - 10000
   arbiter:
-    - 9999
+    - 10000
 
 work_mode: 0 # 0 for standalone, or 1 for cluster
 

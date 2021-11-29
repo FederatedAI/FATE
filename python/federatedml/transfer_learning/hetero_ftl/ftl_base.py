@@ -97,7 +97,7 @@ class FTL(ModelBase):
     @staticmethod
     def debug_data_inst(data_inst):
         collect_data = list(data_inst.collect())
-        LOGGER.debug('showing DTable')
+        LOGGER.debug('showing Table')
         for d in collect_data:
             LOGGER.debug('key {} id {}, features {} label {}'.format(d[0], d[1].inst_id, d[1].features, d[1].label))
 

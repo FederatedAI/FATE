@@ -7,18 +7,18 @@
 In this document, it describes how to develop an algorithm component, which
 can be callable under the architecture of FATE.
 
-To develop a component, the following 5 steps are needed.
+To develop a component, the following 6 steps are needed.
 
 1.  define the python parameter object which will be used in this
     component.
 2.  register meta of the new component.
-3.  define the transfer\_variable object if the component needs federation.
-4.  define your component which should inherit model\_base class.
+3.  define the `transfer_variable` object if the component needs federation.
+4.  define your component which should inherit `model_base` class.
 5.  Define the protobuf file required for model saving.
 6.  (optional) define Pipeline component for your component.
 
-In the following sections we will describe the 5 steps in detail, with
-toy\_example.
+In the following sections we will describe the 6 steps in detail, with
+`hetero_lr`.
 
 ### Step 1. Define the parameter object this component will use
 
@@ -27,12 +27,12 @@ to the developing component, so every component has it's own parameter object.
 In order to define a usable parameter object, three steps will be
 needed.
 
-1.  Open a new python file, rename it as xxx\_param.py where xxx stands
+1.  Open a new python file, rename it as `xxx_param.py` where xxx stands
     for your component'name, putting it in folder python/federatedm/param/.
-    The class object defined in xxx\_param.py should inherit the
+    The class object defined in `xxx_param.py` should inherit the
     BaseParam class that define in
-    python/federatedml/param/base\_param.py
-2.  \_\_init\_\_ of your parameter class should specify all parameters
+    `python/federatedml/param/base_param.py`
+2.  `__init__` of your parameter class should specify all parameters
     that the component use.
 3.  Override the check interface of BaseParam, without which will cause
     not implemented error. Check method is use to validate the parameter
@@ -41,39 +41,50 @@ needed.
 Take hetero lr's parameter object as example, the python file is
 [here](../../python/federatedml/param/logistic_regression_param.py)
 
-firstly, it inherits BaseParam:
+#### firstly, it inherits BaseParam:
 
-``` sourceCode python
+```python
 class LogisticParam(BaseParam):
 ```
 
-secondly, define all parameter variable in \_\_init\_\_ method:
+#### secondly, define all parameter variable in `__init__` method:
 
-``` sourceCode python
+```python
 def __init__(self, penalty='L2',
-             eps=1e-5, alpha=1.0, optimizer='sgd', party_weight=1,
-             batch_size=-1, learning_rate=0.01, init_param=InitParam(),
-             max_iter=100, converge_func='diff',
-             encrypt_param=EncryptParam(), re_encrypt_batches=2,
-             encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
-             need_run=True, predict_param=PredictParam(), cv_param=CrossValidationParam()):
-    super(LogisticParam, self).__init__()
-    self.penalty = penalty
-    self.eps = eps
-    self.alpha = alpha
-    self.optimizer = optimizer
-    self.batch_size = batch_size
-    self.learning_rate = learning_rate
-    self.init_param = copy.deepcopy(init_param)
-    self.max_iter = max_iter
-    self.converge_func = converge_func
-    self.encrypt_param = copy.deepcopy(encrypt_param)
-    self.re_encrypt_batches = re_encrypt_batches
-    self.party_weight = party_weight
-    self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
-    self.need_run = need_run
-    self.predict_param = copy.deepcopy(predict_param)
-    self.cv_param = copy.deepcopy(cv_param)
+                 tol=1e-4, alpha=1.0, optimizer='rmsprop',
+                 batch_size=-1, learning_rate=0.01, init_param=InitParam(),
+                 max_iter=100, early_stop='diff', encrypt_param=EncryptParam(),
+                 predict_param=PredictParam(), cv_param=CrossValidationParam(),
+                 decay=1, decay_sqrt=True,
+                 multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
+                 stepwise_param=StepwiseParam(), floating_point_precision=23,
+                 metrics=None,
+                 use_first_metric_only=False,
+                 callback_param=CallbackParam()
+                 ):
+        super(LogisticParam, self).__init__()
+        self.penalty = penalty
+        self.tol = tol
+        self.alpha = alpha
+        self.optimizer = optimizer
+        self.batch_size = batch_size
+        self.learning_rate = learning_rate
+        self.init_param = copy.deepcopy(init_param)
+        self.max_iter = max_iter
+        self.early_stop = early_stop
+        self.encrypt_param = encrypt_param
+        self.predict_param = copy.deepcopy(predict_param)
+        self.cv_param = copy.deepcopy(cv_param)
+        self.decay = decay
+        self.decay_sqrt = decay_sqrt
+        self.multi_class = multi_class
+        self.validation_freqs = validation_freqs
+        self.stepwise_param = copy.deepcopy(stepwise_param)
+        self.early_stopping_rounds = early_stopping_rounds
+        self.metrics = metrics or []
+        self.use_first_metric_only = use_first_metric_only
+        self.floating_point_precision = floating_point_precision
+        self.callback_param = copy.deepcopy(callback_param)
 ```
 
 As the example shown above, the parameter can also be a Param class that
@@ -85,9 +96,9 @@ avoid same pointer risk during the task running.
 Once the class defined properly, a provided parameter parser can parse
 the value of each attribute recursively.
 
-thirdly, override the check interface:
+#### thirdly, override the check interface:
 
-``` sourceCode python
+```python
 def check(self):
     descr = "logistic_param's"
 
@@ -118,42 +129,42 @@ this file to get the information on  how to start program of the component.
     
       - inherit from ComponentMeta, and name meta with component's name, 
       like xxx_cpn_meta = ComponentMeta("XXX"). XXX is the module to be used in dsl file.  
-      ``` sourceCode python
+        
+        ```python
           from .components import ComponentMeta
           hetero_lr_cpn_meta = ComponentMeta("HeteroLR")
-      ``` 
-      - use the decorator `xxx_cpn_meta.bind_runner.on_$role` to bind the running object to each role.  
-        $role mainly includes guest\host\arbiter. If component uses the same running module for several roles, syntax like 
-          `xxx_cpn_meta.bind_runner.on_$role1.on_$role2.on_$role3` is also supported.   
-        This function imports and returns the running object of corresponding role.  
-   
-        Take hetero-lr as an example, users can find it in
-        [python/federatedml/components/hetero_lr.py](../../python/federatedml/conf/setting_conf/HeteroLR.json)
-        
-        ``` sourceCode python
-            @hetero_lr_cpn_meta.bind_runner.on_guest
-            def hetero_lr_runner_guest():
-                from federatedml.linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_guest import HeteroLRGuest
-                
-                return HeteroLRGuest
-                
-            @hetero_lr_cpn_meta.bind_runner.on_host
-            def hetero_lr_runner_host():
-                from federatedml.linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_host import HeteroLRHost
-                
-                return HeteroLRHost
         ``` 
-        - use the decorator `xxx_cpn_meta.bind_param` to bind the parameter object to the developing component,
-          which defines in Step 1.  
-          The function imports and returns the parameter object.  
-          
-          ``` sourceCode python
-              @hetero_lr_cpn_meta.bind_param
-              def hetero_lr_param():
-                  from federatedml.param.logistic_regression_param import HeteroLogisticParam
-                  
-                  return HeteroLogisticParam
-          ``` 
+      - use the decorator `xxx_cpn_meta.bind_runner.on_$role` to bind the running object to each role.  
+        $role mainly includes `guest`, `host` and `arbiter`. If component uses the same running module for several roles, syntax like 
+        `xxx_cpn_meta.bind_runner.on_$role1.on_$role2.on_$role3` is also supported.   
+        This function imports and returns the running object of corresponding role.  
+  
+        Take hetero-lr as an example, users can find it in
+        [python/federatedml/components/hetero_lr.py](../../python/federatedml/components/hetero_lr.py)
+      
+        ```python
+        @hetero_lr_cpn_meta.bind_runner.on_guest
+        def hetero_lr_runner_guest():
+            from federatedml.linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_guest import HeteroLRGuest
+            
+            return HeteroLRGuest
+            
+        @hetero_lr_cpn_meta.bind_runner.on_host
+        def hetero_lr_runner_host():
+            from federatedml.linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_host import HeteroLRHost
+            
+            return HeteroLRHost
+        ``` 
+      - use the decorator `xxx_cpn_meta.bind_param` to bind the parameter object to the developing component, which defines in Step 1.  
+        The function imports and returns the parameter object.  
+        
+        ```python
+        @hetero_lr_cpn_meta.bind_param
+        def hetero_lr_param():
+            from federatedml.param.logistic_regression_param import HeteroLogisticParam
+            
+            return HeteroLogisticParam
+        ``` 
         
 ### Step 3. Define the transfer variable object of this module. (Optional)
 
@@ -161,15 +172,14 @@ This step is needed only when module is federated, which means
 there exists information interaction between different parties.
 
 Developing a file to define transfer_class object under the fold
-[transfer\_class](../../python/federatedml/transfer_variable/transfer_class)
+[`transfer_class`](../../python/federatedml/transfer_variable/transfer_class)
 
-In this python file, you would need to create a "transfer\_variable"
+In this python file, you would need to create a `transfer_variable`
 class which inherits `BaseTransferVariables`. Then, define each
 transfer variable as its attributes. Here is an example:
 
-``` sourceCode python
+```python
 from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
-
 
 # noinspection PyAttributeOutsideInit
 class HeteroLRTransferVariable(BaseTransferVariables):
@@ -201,149 +211,142 @@ class HeteroLRTransferVariable(BaseTransferVariables):
     a string represents variable name
 
   - src  
-    list, should be some combinations of "guest", "host", "arbiter", it
+    list, should be some combinations of `guest`, `host`, `arbiter`, it
     stands for where interactive information is sending from.
 
   - dst  
-    list, should be some combinations of "guest", "host", "arbiter",
+    list, should be some combinations of `guest`, `host`, `arbiter`,
     defines where the interactive information is sending to.
 
 
-### Step 4. Define your module, it should inherit model\_base
+### Step 4. Define your module, it should inherit `model_base`
 
-The rule of running a module with fate\_flow\_client is that:
+The rule of running a module with `fate_flow_client` is that:
 
-1.  retrieves the setting\_conf and find the "module" and "role" fields
-    of setting conf.
+1.  retrieves component registration from database and find the running object of each role.
 2.  it initializes the running object of every party.
 3.  calls the fit method of running object.
-4.  calls the save\_data method if needed.
-5.  calls the export\_model method if needed.
+4.  calls the `save_data` method if needed.
+5.  calls the `export_model` method if needed.
 
 In this section, we describe how to do 3-5. Many common interfaces are
 provided in
 [python/federatedml/model\_base.py](../../python/federatedml/model_base.py)
-.
 
   - Override fit interface if needed  
     The fit function holds the form of following.
     
-    ``` sourceCode python
+    ```python
     def fit(self, train_data, validate_data):
     ```
     
-    > Both train\_data and validate\_data(Optional) are Tables from
-    > upstream components(DataIO for example). This is the file where
-    > you fit logic of model or feature-engineering components located.
-    > When starting a training task, this function will be called by
-    > model\_base automatically.
+    Both `train_data` and `validate_data`(Optional) are Tables from 
+    upstream components(DataIO for example). This is the file where
+    you fit logic of model or feature-engineering components located.
+    When starting a training task, this function will be called by
+    `model_base` automatically.
 
   - Override predict interface if needed  
     The predict function holds the form of following.
     
-    ``` sourceCode python
+    ```python
     def predict(self, data_inst):
     ```
     
-    > Data\_inst is a DTable. Similar to fit function, you can define
-    > the prediction procedure in the predict function for different
-    > roles. When starting a predict task, this function will be called
-    > by model\_base automatically. Meanwhile, in training task, this
-    > function will also be called to predict train data and validation
-    > data (if existed). If you are willing to use evaluation component
-    > to evaluate your predict result, it should be designed as the
-    > following format:
-    > 
-    >   -   - for binary, multi-class classification task and regression
-    >         task, result header should be: \["label",
-    >         "predict\_result", "predict\_score", "predict\_detail",
-    >         "type"\]
-    >         
-    >           - label: Provided label
-    >           - predict\_result: Your predict result.
-    >           - predict\_score: For binary classification task, it is
-    >             the score of label "1". For multi-class
-    >             classification, it is the score of highest label. For
-    >             regression task, it is your predict result.
-    >           - predict\_detail: For classification task, it is the
-    >             detail scores of each class. For regression task, it
-    >             is your predict result.
-    >           - type: The source of you input data, eg. train or test.
-    >             It will be added by model\_base automatically.
-    > 
-    >   -   - There are two Table return in clustering task.  
-    >         The format of first Table: \["cluster\_sample\_count",
-    >         "cluster\_inner\_dist", "inter\_cluster\_dist"\]
-    >           - cluster\_sample\_count: The sample count of each
-    >             cluster.
-    >           - cluster\_inner\_dist: The inner distance of each
-    >             cluster.
-    >         \* inter\_cluster\_dist: The inter distance between each
-    >         clusters. The format of second Table:
-    >         \["predicted\_cluster\_index", "distance"\]
-    >           - predicted\_cluster\_index: Your predict label
-    >           - distance: The distance between each sample to its
-    >             center point.
+    `data_inst` is a DTable. Similar to fit function, you can define
+    the prediction procedure in the predict function for different
+    roles. When starting a predict task, this function will be called
+    by `model_base` automatically. Meanwhile, in training task, this
+    function will also be called to predict train data and validation
+    data (if existed). If you are willing to use evaluation component
+    to evaluate your predict result, it should be designed as the
+    following format:
+    
+    - for binary, multi-class classification task and regression task, result header should be: ["label", "predict_result", "predict_score", "predict_detail", "type"]
+       
+      - `label`: Provided label
+      - `predict_result`: Your predict result.
+      - `predict_score`: For binary classification task, it is the score of label "1".
+        For multi-class classification, it is the score of highest label.
+        For regression task, it is your predict result.
+      - `predict_detail`: For classification task, it is the detail scores of each class
+        For regression task, it is your predict result.
+      - `type`: The source of you input data, eg. train or test.
+        It will be added by `model_base` automatically.
+
+  - There are two Table return in clustering task.  
+    
+    The format of first Table: ["cluster_sample_count", "cluster_inner_dist", "inter_cluster_dist"]
+      
+      - `cluster_sample_count`: The sample count of each cluster.
+      - `cluster_inner_dist`: The inner distance of each cluster.
+      - `inter_cluster_dist`: The inter distance between each clusters.
+      
+    The format of second Table:["predicted_cluster_index", "distance"]
+      
+      - `predicted_cluster_index`: Your predict label
+      - `distance`: The distance between each sample to its center point.
 
   - Override transform interface if needed  
     The transform function holds the form of following.
     
-    ``` sourceCode python
+    ```python
     def transform(self, data_inst):
     ```
     
     This function is used for feature-engineering components in predict
     task.
 
-  - Define your save\_data interface  
+  - Define your `save_data` interface  
     so that fate-flow can obtain output data through it when needed.
     
-    ``` sourceCode python
+    ```python
     def save_data(self):
         return self.data_output
     ```
 
 ### Step 5. Define the protobuf file required for model saving
 
+#### define proto buffer
 To use the trained model through different platform, FATE use protobuf
 files to save the parameters and model result of a task. When developing
 your own module, you are supposed to create two proto files which
-defined your model content in [this
-folder](../../python/federatedml/protobuf/proto).
+defined your model content in [this folder](../../python/federatedml/protobuf/proto).
 
 For more details of protobuf, please refer to [this
 tutorial](https://developers.google.com/protocol-buffers/docs/pythontutorial)
 
-The two proto files are 1. File with "meta" as suffix: Save the
-parameters of a task. 2. File with "param" as suffix: Save the model
-result of a task.
+The two proto files are 
+
+1. File with "meta" as suffix: Save the parameters of a task.
+2. File with "param" as suffix: Save the model result of a task.
 
 After defining your proto files, you can use the following script named
 [generate\_py.sh](../../python/fate_arch/protobuf/generate_py.sh) to create
 the corresponding python file:
 
-> 
-> 
-> ``` sourceCode bash
-> bash generate_py.sh
-> ```
+ 
+```bash
+bash generate_py.sh
+```
 
-  - Define export\_model interface  
-    Similar with part b, define your export\_model interface so that
-    fate-flow can obtain output model when needed. The format should be
-    a dict contains both "Meta" and "Param" proto buffer generated. Here
-    is an example showing how to export model.
-    
-    ``` sourceCode python
-    def export_model(self):
-        meta_obj = self._get_meta()
-        param_obj = self._get_param()
-        result = {
-            self.model_meta_name: meta_obj,
-            self.model_param_name: param_obj
-        }
-        return result
-    ```
+#### Define `export_model` interface  
+
+Similar with part b, define your `export_model` interface so that
+fate-flow can obtain output model when needed. The format should be
+a dict contains both "Meta" and "Param" proto buffer generated. Here
+is an example showing how to export model.
+
+```python
+def export_model(self):
+    meta_obj = self._get_meta()
+    param_obj = self._get_param()
+    result = {
+        self.model_meta_name: meta_obj,
+        self.model_param_name: param_obj
+    }
+    return result
+```
 
 ### Step 6. Define Pipeline component for your module
 
@@ -351,13 +354,13 @@ One wrapped into a component, module can be used with FATE Pipeline API.
 To define a Pipeline component, follow these guidelines:
 
 1.  all components reside in
-    [fate\_client/pipeline/component](../../python/fate_client/pipeline/component)
+    [fate_client/pipeline/component](../../python/fate_client/pipeline/component)
     directory
 2.  components should inherit common base `Component`
 3.  as a good practice, components should have the same names as their
     corresponding modules
 4.  components take in parameters at initialization as defined in
-    [fate\_client/pipeline/param](../../python/fate_client/pipeline/param),
+    [fate_client/pipeline/param](../../python/fate_client/pipeline/param),
     where a BaseParam and consts file are provided
 5.  set attributes of component input and output, including whether
     module has output model, or type of data output('single' vs.
@@ -365,60 +368,51 @@ To define a Pipeline component, follow these guidelines:
 
 Then you may use Pipeline to construct and initiate a job with the newly
 defined component. For guide on Pipeline usage, please refer to
-[fate\_client/pipeline](../api/fate_client/pipeline.md).
+[fate_client/pipeline](../api/fate_client/pipeline.md).
 
 ## Start a modeling task
 
 After finished developing, here is a simple example for starting a
 modeling task.
 
-  - 1\. Upload data  
-    Before starting a task, you need to load data among all the
-    data-providers. To do that, a load\_file config is needed to be
-    prepared. Then run the following command:
-    
-    ``` sourceCode bash
-    flow data upload -c upload_data.json
-    ```
-    
-    <div class="note">
-    
-    <div class="admonition-title">
-    
-    Note
-    
-    </div>
-    
-    This step is needed for every data-provide node(i.e. Guest and
-    Host).
-    
-    </div>
+### 1. Upload data  
 
-  - 2\. Start your modeling task  
-    In this step, two config files corresponding to dsl config file and
-    component config file should be prepared. Please make sure that the
-    table\_name and namespace in the conf file match with upload\_data
-    conf. Then run the following
-    command:
+Before starting a task, you need to load data among all the
+data-providers. To do that, a `load_file` config is needed to be
+prepared. Then run the following command:
     
-    ``` sourceCode bash
-    flow job submit -d ${your_dsl_file.json} -c ${your_component_conf_json}
-    ```
+```bash
+flow data upload -c upload_data.json
+```
     
-    If you have defined Pipeline component for your module, you can also
-    make a pipeline script and start your task by:
+!!!Note
+    
+    This step is needed for every data-provide node(i.e. Guest and Host).
+    
 
-<!-- end list -->
+### 2. Start your modeling task  
 
-``` sourceCode bash
+In this step, two config files corresponding to dsl config file and
+component config file should be prepared. Please make sure that the
+`table_name` and `namespace` in the conf file match with `upload_data`
+conf. Then run the following
+command:
+
+```bash
+flow job submit -d ${your_dsl_file.json} -c ${your_component_conf_json}
+```
+
+If you have defined Pipeline component for your module, you can also
+make a pipeline script and start your task by:
+
+
+```bash
 python ${your_pipeline.py}
 ```
 
-  - 3\. Check log files  
-    Now you can check out the log in the following path:
-    <span class="title-ref">${your\_install\_path}/logs/{your
-    jobid}</span>.
+### 3. Check log files  
+
+Now you can check out the log in the path: `$PROJECT_BASE/logs/${your jobid}`
 
 For more detailed information about dsl configure file and parameter
-configure files, please check out
-<span class="title-ref">examples/dsl/v2</span>.
+configure files, please check out `examples/dsl/v2`

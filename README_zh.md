@@ -1,4 +1,7 @@
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![CodeStyle](https://img.shields.io/badge/Check%20Style-Google-brightgreen)](https://checkstyle.sourceforge.io/google_style.html) [![Style](https://img.shields.io/badge/Check%20Style-Black-black)](https://checkstyle.sourceforge.io/google_style.html)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![CodeStyle](https://img.shields.io/badge/Check%20Style-Google-brightgreen)](https://checkstyle.sourceforge.io/google_style.html) [![Style](https://img.shields.io/badge/Check%20Style-Black-black)](https://checkstyle.sourceforge.io/google_style.html) [![Build Status](https://travis-ci.org/FederatedAI/FATE.svg?branch=master)](https://travis-ci.org/FederatedAI/FATE)
+[![codecov](https://codecov.io/gh/FederatedAI/FATE/branch/master/graph/badge.svg)](https://codecov.io/gh/FederatedAI/FATE)
+[![Documentation Status](https://readthedocs.org/projects/fate/badge/?version=latest)](https://fate.readthedocs.io/en/latest/?badge=latest)
+[![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/from-referrer/)
 
 <div align="center">
   <img src="./doc/images/FATE_logo.png">
@@ -32,6 +35,7 @@ FATE于2019年2月首次对外开源，并于2019年6月由微众银行捐献给
 - [使用FATE-Pipeline训练及预测纵向SBT任务](./doc/tutorial/pipeline/pipeline_tutorial_hetero_sbt.ipynb)
 - [使用FATE-Pipeline构建横向NN模型](doc/tutorial/pipeline/pipeline_tutorial_homo_nn.ipynb)
 - [使用DSL json conf运行任务](doc/tutorial/dsl_conf/dsl_conf_tutorial.md)
+- [更多教程](doc/tutorial)
 
 ## 文档
 
@@ -42,17 +46,6 @@ FATE于2019年2月首次对外开源，并于2019年6月由微众银行捐献给
 - [算法参数](./python/federatedml/param)
 - [论文与会议资料](./doc/resources/README.zh.md)
 
-### 关联仓库
-
-- [FATE-Flow](https://github.com/FederatedAI/FATE-Flow)
-- [FATE-Board](https://github.com/FederatedAI/FATE-Board)
-- [FATE-Serving](https://github.com/FederatedAI/FATE-Serving)
-- [FATE-Cloud](https://github.com/FederatedAI/FATE-Cloud)
-- [FedVision](https://github.com/FederatedAI/FedVision)
-- [EggRoll](https://github.com/WeBankFinTech/eggroll)
-- [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE)
-- [KubeFATE](https://github.com/FederatedAI/KubeFATE)
-
 ### 贡献代码
 
 - [开发指南](doc/develop/develop_guide.zh.md)
@@ -62,7 +55,7 @@ FATE于2019年2月首次对外开源，并于2019年6月由微众银行捐献给
 - [Computing API](doc/api/computing.md)
 - [Federation API](./doc/api/federation.md)
 - [Flow SDK API](doc/api/fate_client/flow_sdk.md)
-- [Flow Client](https://github.com/FederatedAI/FATE-Flow/blob/develop-1.7.0/doc/fate_flow_client.md)
+- [Flow Client](https://fate-flow.readthedocs.io/en/latest/zh/fate_flow_client/)
 - [FATE Pipeline](doc/api/fate_client/pipeline.md)
 - [FATE Test](./doc/tutorial/fate_test_tutorial.md)
 - [DSL Conf Setting Guide](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.zh.md)
@@ -70,6 +63,16 @@ FATE于2019年2月首次对外开源，并于2019年6月由微众银行捐献给
 ### 在线课程
 - [Bilibili: @FATEFedAI](https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)
 
+## 关联仓库
+
+- [FATE-Flow](https://github.com/FederatedAI/FATE-Flow)
+- [FATE-Board](https://github.com/FederatedAI/FATE-Board)
+- [FATE-Serving](https://github.com/FederatedAI/FATE-Serving)
+- [FATE-Cloud](https://github.com/FederatedAI/FATE-Cloud)
+- [FedVision](https://github.com/FederatedAI/FedVision)
+- [EggRoll](https://github.com/WeBankFinTech/eggroll)
+- [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE)
+- [KubeFATE](https://github.com/FederatedAI/KubeFATE)
 
 ## 了解更多
 

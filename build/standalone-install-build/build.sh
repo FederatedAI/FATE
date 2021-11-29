@@ -40,7 +40,7 @@ echo "[INFO] build info"
 echo "[INFO] version: "${version}
 echo "[INFO] version tag: "${version_tag}
 echo "[INFO] package output dir is "${package_dir}
-rm -rf ${package_dir} ${package_dir}_${version_tag}".tar.gz"
+rm -rf ${package_dir} ${package_dir}".tar.gz"
 mkdir -p ${package_dir}
 
 echo "${environment_modules[@]}" "${support_modules[@]}"
@@ -75,7 +75,6 @@ function packaging(){
     for module in "${environment_modules[@]}";
     do
         tar xzf ${module}.tar.gz -C ${env_dir}
-        rm -rf ${module}.tar.gz
     done
     echo "[INFO] deal env packages done"
 
@@ -85,6 +84,7 @@ function packaging(){
         tar xzf ${module}.tar.gz
         rm -rf ${module}.tar.gz
     done
+    rm -rf *.tar.gz
     echo "[INFO] deal system packages done"
 
     echo "[INFO] package done"

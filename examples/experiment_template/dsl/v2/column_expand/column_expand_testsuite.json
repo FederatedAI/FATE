@@ -38,9 +38,9 @@
             "dsl": "./test_column_expand_predict_job_dsl.json",
             "model_deps": "column-expand-train",
             "data_deps": {
-                "column-expand": {
+                "column-expand-train": {
                     "guest_0": {
-                        "reader_0": "column_expand_0"
+                        "reader_0": "reader_0"
                     }
                 }
             }

@@ -27,6 +27,8 @@ if [[ -n ${1} ]]; then
 else
     version_tag="rc"
 fi
+repo_file_path=$2
+pip_index_url=$3
 
 version=`grep "FATE=" fate.env | awk -F '=' '{print $2}'`
 standalone_install_package_dir_name="standalone_fate_install_${version}_${version_tag}"
@@ -35,23 +37,33 @@ standalone_install_package_dir=${source_dir}/${standalone_install_package_dir_na
 package_dir_name="standalone_fate_docker_${version}_${version_tag}"
 package_dir=${source_dir}/${package_dir_name}
 
+image_namespace="federatedai"
+image_name="standalone_fate"
 if [[ ${version_tag} == ${RELEASE_VERSION_TAG_NAME} ]];then
   image_tag=${version}
 else
   image_tag="${version}-${version_tag}"
 fi
+image_path=${image_namespace}/${image_name}:${image_tag}
 
 echo "[INFO] build info"
 echo "[INFO] version: "${version}
 echo "[INFO] version tag: "${version_tag}
+echo "[INFO] repo file: "${repo_file_path}
+echo "[INFO] pip index url: "${pip_index_url}
+echo "[INFO] image namespace: "${image_namespace}
+echo "[INFO] image name: "${image_name}
 echo "[INFO] image tag: "${image_tag}
+echo "[INFO] image path: "${image_path}
 echo "[INFO] package output dir is "${package_dir}
 
-rm -rf ${package_dir} ${package_dir}_${version_tag}".tar.gz"
+rm -rf ${package_dir}
 mkdir -p ${package_dir}
 
 build() {
   cd ${source_dir}
+
+  sh build/standalone-docker-build/base/build.sh -m "python" -r ${repo_file_path} -i ${pip_index_url}
 
   cp ${source_dir}/build/standalone-docker-build/docker-entrypoint.sh ${package_dir}/
   cp ${source_dir}/build/standalone-docker-build/Dockerfile ${package_dir}/
@@ -74,21 +86,22 @@ build() {
   echo "[INFO] get standalone install package done"
 
   cd ${workdir}
+  rm -rf env/pypi env/python36
   tar -cf ../fate.tar ./*
   cd ../
 
-  a=`docker images | grep "fate" | grep "${image_tag} " | wc -l`
-  if [[ a -ne 0 ]];then
-    docker rmi fate:${image_tag}
+  image_id=`docker images -q ${image_path}`
+  if [[ -n ${image_id} ]];then
+    echo "[INFO] already have image, image id: ${image_id}"
+    docker rmi ${image_path}
     if [[ $? -eq 0 ]];then
-      echo "rm image fate:${image_tag}"
+      echo "[INFO] delete image ${image_path} ${image_id}"
     else
-      echo "please rm image fate:${image_tag}"
+      echo "please rm image ${image_path} ${image_id}"
       exit 1
     fi
   fi
-  docker build -t fate:${image_tag} .
-
+  docker build -t ${image_path} . --build-arg version=${version}
 }
 
 packaging() {
@@ -99,11 +112,11 @@ packaging() {
     rm -rf ${image_tar}
   fi
 
-  docker save fate:${image_tag} -o ${image_tar}
+  docker save ${image_path} -o ${image_tar}
 }
 
 usage() {
-    echo "usage: $0 {version_tag}"
+    echo "usage: $0 {version_tag} {repo_file_path} {pip_index_url}"
 }
 
 

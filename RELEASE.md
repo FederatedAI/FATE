@@ -1,5 +1,62 @@
-# Release 1.6.1
-## Major Features and Improvements
+---
+hide:
+  - navigation
+---
+
+# Release Notes
+## Release 1.7.0
+### Major Features and Improvements
+> FATE-ARCH
+
+* Support EggRoll 2.4.0 
+* Support Spark-Local Computing Engine
+* Support Hive Storage
+* Support LocalFS Storage for Spark-Local Computing Engine 
+* Optimizing the API interface for Storage session and table
+* Simplified the API interface for Session, remove backend and workmode parameters
+* Heterogeneous Engine Support: Federation between Spark-Local and Spark-Cluster
+* Computing Engine, Storage Engine, Federation Engine are set in conf/service_conf.yaml when FATE is deployed
+  
+> FederatedML
+
+* Optimized Hetero-SecureBoost: with gradient packing、cipher compressing, and sparse point statistics optimization, 4x+ faster
+* Homo-SecureBoost supports memory-based histogram computation for more efficient tree building, 5x+ faster
+* Optimized RSA Intersect with CRT optimization, 3x+ faster
+* New two-party Hetero Logistic Regression Algorithm: mixed protocol of HE and MPC, without a trusted third party
+* Support data with match-id,  separating match id and sample id
+* New DH Intersect based on PH Key-exchange protocol 
+* Intersect support cardinality estimation 
+* Intersect adds optionally preprocessing step
+* RSA and DH Intersect support cache
+* New Feature Imputation module: can apply arbitrary imputation method to each column
+* New Label Transform module: transform categorical label values
+* Homo-LR, Homo-SecureBoost, Homo-NN now can convert models into sklearn、lightgbm、torch & tf-keras framework
+* Hetero Feature Binning supports multi-class task, higher efficiency with label packing
+* Hetero Feature Selection support multi-class iv filter
+* Secure Information Retrieval supports multi-column retrieval
+* Major training algorithms support warm-start and checkpoint : Homo & Hetero LR, Homo & Hetero-SecureBoost, Homo & Hetero NN
+* Optimized Pailler addition operation, several times faster, Hetero-SecureBoost with Paillier speed up 2x+
+
+> Fate-Client
+
+* Pipeline supports uploading match id functionality
+* Pipeline supports homo model conversion
+* Pipeline supports model push to FATE-Serving
+* Pipeline supports running jobs with specified FATE version
+
+> FATE-Test
+
+* Integrate FederatedML unittest
+* Support for uploading image data
+* Big data generation using storage interface, optimized generation logic
+* Support for historical data comparison
+* cache_deps and model_loader_deps support
+* Run DSL Testsuite with specified FATE version
+
+
+       
+## Release 1.6.1
+### Major Features and Improvements
 > FederatedML
 * Support single party prediction
 * SIR support non-ascii id
@@ -28,8 +85,8 @@
 * Some parameters can now take 0 or 1 integer values when valid range is [0, 1]
 
 
-# Release 1.6.0
-## Major Features and Improvements
+## Release 1.6.0
+### Major Features and Improvements
 
 > FederatedML
 
@@ -61,8 +118,8 @@
 * Add Benchmark performance for efficiency comparison; add mock data generation tool; support metrics comparison between training and validation sets
 * FATE-Flow unittest for REST/CLI/SDK API and training-prediction workflow 
 
-# Release 1.5.2
-## Major Features and Improvements
+## Release 1.5.2
+### Major Features and Improvements
 
 > FederatedML
 * SIR support non-ascii id
@@ -90,8 +147,8 @@
 * Some parameters can now take 0 or 1 integer values when valid range is [0, 1]
 
 
-# Release 1.5.1
-## Major Features and Improvements
+## Release 1.5.1
+### Major Features and Improvements
 
 > FederatedML
 * Add Feldman Verifiable Secret Sharing protocol (contributed)
@@ -110,12 +167,12 @@
 > Deploy
 * Support 1.5.0 retain data upgrade to 1.5.1
 
-## Bug Fixes
+### Bug Fixes
 * Fix predict-cache in SecureBoost validation
 * Fix job clean CLI
 
-# Release 1.5.0（LTS）
-## Major Features and Improvements
+## Release 1.5.0（LTS）
+### Major Features and Improvements
 
 > FederatedML
 
@@ -172,25 +229,25 @@
 * Performance Statistics: Log now includes statistics on timing, API usage, and variable transfer
 
 
-# Release 1.4.5
-## Major Features and Improvements
+## Release 1.4.5
+### Major Features and Improvements
 > EggRoll
 * RollSite supports the communication certificates
 
-# Release 1.4.4
-## Major Features and Improvements
+## Release 1.4.4
+### Major Features and Improvements
 > FATE-Flow
 * Task Executor supports monkey patch
 * Add forward API
 
-# Release 1.4.3
-## Major Features and Improvements
+## Release 1.4.3
+### Major Features and Improvements
 > FederatedML
 * Fix bug of Hetero SecureBoost of sending tree weight info from guest to host.
 
 
-# Release 1.4.2
-## Major Features and Improvements
+## Release 1.4.2
+### Major Features and Improvements
 > FederatedML
 * Optimize performance of Pearson which increases efficiency by more than twice.
 * Optimize Min-test module: Add secure-boost as optional test task. Set partyid and work_mode as input parameters. Use pre-import data set as input so that improved test process.
@@ -207,8 +264,8 @@
 * Push the model to the online service to support the specified storage address (local file and FATEFlowServer interface)
 
 
-# Release 1.4.1
-## Major Features and Improvements
+## Release 1.4.1
+### Major Features and Improvements
 > FederatedML
 * Reconstructed Evaluation Module improves efficiency by 60 times
 * Add PSI, confusion matrix, f1-score  and quantile threshold support for Precision/Recall in Evaluation.
@@ -226,8 +283,8 @@
 * Fixed some bugs with abnormal status
 
 
-# Release 1.4.0
-## Major Features and Improvements
+## Release 1.4.0
+### Major Features and Improvements
 > FederatedML
 * Support Homo Secureboost
 * Support AIC/BIC-based Stepwise for Linear Models
@@ -262,8 +319,8 @@
 * Few daemon processes. And they are all JVM applications.
 
 
-# Release 1.3.1
-## Major Features and Improvements
+## Release 1.3.1
+### Major Features and Improvements
 >Deploy
 * Support deploying by MacOS
 * Support using external db
@@ -271,8 +328,8 @@
 * Improve MySQL and FATE Flow service.sh
 * Support more custom deployment configurations in the default_configurations.sh, such as ssh_port, mysql_port and so one.
 
-# Release 1.3.0
-## Major Features and Improvements
+## Release 1.3.0
+### Major Features and Improvements
 >FederatedREC
 * Add federated recommendation submodule
 * Add heterogeneous Factoraization Machine
@@ -296,8 +353,8 @@
 * Improve log system, add more exception and run time status prompts
 
 
-# Release 1.2.0
-## Major Features and Improvements
+## Release 1.2.0
+### Major Features and Improvements
 FederatedML
 * Add heterogeneous Deep Neural Network
 * Add Secret-Sharing Protocol-SPDZ
@@ -330,8 +387,8 @@ FATE-Flow
 
 
 
-# Release 1.1.1
-## Major Features and Improvements
+## Release 1.1.1
+### Major Features and Improvements
 * Add cluster deployment support based on ubuntu operating system。
 * Add union component which support data merging. 
 * Support indicating partial columns in Onehot Encoder
@@ -340,14 +397,14 @@ FATE-Flow
 * Optimizing the deployment process
 
 
-## Bug Fixes
+### Bug Fixes
 * Fix a bug of secureboost' early stop 
 * Fix a bug in download api
 * Fix bugs of spark-backend
 
 
-# Release 1.1
-## Major Features and Improvements
+## Release 1.1
+### Major Features and Improvements
 >FederatedML
 * Provide a general algorithm framework for homogeneous federated learning, which supports Secure Aggregation 
 * Add homogeneous Deep Neural Network
@@ -370,8 +427,8 @@ FATE-Flow
 * Support for storing a job scheduling log in the job log folder
 * Add authentication control Beta version, including component, command, role
 
-# Release 1.0.2
-## Major Features and Improvements
+## Release 1.0.2
+### Major Features and Improvements
 * Python and JDK environment are required only for running standalone version quick experiment
 * Support cluster version docker deployment
 * Add deployment guide in Chinese
@@ -379,14 +436,14 @@ FATE-Flow
 * Python service log will remain for 14 days now.
 
 
-## Bug Fixes
+### Bug Fixes
 * Fix bugs of multi-host support in Cross-Validation
 * Fix bugs of showing up evaluation metrics when both train and eval exist
 * Add links for each algorithm module in FederatedML home page README
 
 
-# Release 1.0.1
-## Bug Fixes
+## Release 1.0.1
+### Bug Fixes
 * Fix bugs for evaluation data type 
 * Fix bugs for feature binning to take abnormal values into consideration
 * Fix bugs for train and eval
@@ -397,8 +454,8 @@ FATE-Flow
 * Support get serviceRoleName from configuration
 
 
-# Release 1.0
-## Major Features and Improvements
+## Release 1.0
+### Major Features and Improvements
 >This version includes two new products of FATE, FATE-Board, and FATE-Flow respectively, FATE-Board as a visual tool for federation modeling, and FATE-Flow is an end to end pipeline platform for federated learning. This version contains important improvements to the FederatedML, which better tracks the running progress of federated learning algorithms.
 
 >FATE-Board
@@ -429,22 +486,22 @@ FATE-Flow
 * Add online federated modeling pipeline DSL parser for online federated inference
 
 
-# Release 0.3.2
-## Bug Fixes
+## Release 0.3.2
+### Bug Fixes
 * Adjust the Logic of Online Service Module
 * Adjust the log format
 * Replace the grpc connection pool of the online service module
 * Improving Model Processing Details
 
 
-# Release 0.3.1
-## Bug Fixes
+## Release 0.3.1
+### Bug Fixes
 * fix feature scale bugs in v0.3
 * fix federated feature selection bugs in v0.3
 
-# Release 0.3
+## Release 0.3
 
-## Major Features and Improvements
+### Major Features and Improvements
 
 > FederatedML
 * Support OneVsALL for multi-label classification task
@@ -478,7 +535,7 @@ FATE-Flow
 * Add Mini-FederatedML test task example
 * Using task manager to submit distributed task for current examples  
 
-## Bug Fixes and Other Changes
+### Bug Fixes and Other Changes
 * fix detect onehot max column overflow bug.
 * fix dataio dense format not reading host data header bug.
 * fix bugs of call of statistics function
@@ -490,9 +547,9 @@ FATE-Flow
 * fix many other bugs.
 
 
-# Release 0.2
+## Release 0.2
 
-## Major Features and Improvements
+### Major Features and Improvements
 > WorkFlow
 * Add Model PipleLine
 * Add Hetero Federated Feature Binning workflow
@@ -554,7 +611,7 @@ FATE-Flow
 * Add task manager examples
 * Add Serving example
 
-## Bug Fixes and Other Changes
+### Bug Fixes and Other Changes
 * Hetero-LR Minibath bugfixed
 * Gradient Average bugfixed
 * One-second latency for proxy bugfixed
@@ -563,11 +620,11 @@ FATE-Flow
 * Many performance improvements
 * Many documentation fixes
 
-# Release 0.1
+## Release 0.1
 
 Initial release of FATE.
 
-## Major Features
+### Major Features
 > WorkFlow
 *	Support Intersection workflow
 *	Support Train workflow

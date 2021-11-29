@@ -6,10 +6,10 @@
 
 ## 接受的数据类型
 
-DataIO模块接受以下输入数据格式，并将其转换为所需的输出DTable。
+DataTransform(DataIO)模块接受以下输入数据格式，并将其转换为所需的输出Table。
 
   - 稠密输入格式  
-    输入的Dtable值是一个包含单个元素的列表，例如:
+    输入的Table值是一个包含单个元素的列表，例如:
 
     ```
     1.0,2.0,3.0,4.5
@@ -18,7 +18,7 @@ DataIO模块接受以下输入数据格式，并将其转换为所需的输出DT
     ```
 
   - svm-light输入格式  
-    输入的Dtable值的第一项是label，其后是一个由键值对"feature-id:value"组成的列表，例如:
+    输入的Table值的第一项是label，其后是一个由键值对"feature-id:value"组成的列表，例如:
 
     ``` 
     1 1:0.5 2:0.6
@@ -27,7 +27,7 @@ DataIO模块接受以下输入数据格式，并将其转换为所需的输出DT
 
   - tag
     输入格式  
-    输入的Dtable值是一个由tag组成的列表，DataIO模块首先统计所有在输入表中出现过的tag，然后将这些tag按字典序排序，并将它们转换成one-hot表示。例如: 
+    输入的Table值是一个由tag组成的列表，DataIO模块首先统计所有在输入表中出现过的tag，然后将这些tag按字典序排序，并将它们转换成one-hot表示。例如: 
     
     假设值是:
 
@@ -45,7 +45,7 @@ DataIO模块接受以下输入数据格式，并将其转换为所需的输出DT
 
 
   - :tag:value 输入格式:
-    输入的Dtable值是一个由键值对"tag:value"组成的列表，类似于svm-light输入格式和tag输入格式的结合。DataIO模块首先统计所有在输入表中出现过的tag，然后将这些tag按字典序排序。排序后的结果作为输出数据的列名，某条数据的每个tag对应的value则作为该条数据在相应列上的值。若该条数据的某个tag没有值，则填入0补充。例如,
+    输入的Table值是一个由键值对"tag:value"组成的列表，类似于svm-light输入格式和tag输入格式的结合。DataIO模块首先统计所有在输入表中出现过的tag，然后将这些tag按字典序排序。排序后的结果作为输出数据的列名，某条数据的每个tag对应的value则作为该条数据在相应列上的值。若该条数据的某个tag没有值，则填入0补充。例如,
     
     假设值是:
 
@@ -85,7 +85,7 @@ DataIO模块接受以下输入数据格式，并将其转换为所需的输出DT
 ## 上传命令
 
 使用fate-flow上传数据。从FATE-1.5开始，推荐使用 [FATE-Flow Client Command
-Line](../../api/fate_client/flow_client.md)
+Line](https://github.com/FederatedAI/FATE-Flow/blob/main/doc/cli)
 执行FATE-Flow任务。
 
 上传数据命令如下：
@@ -97,7 +97,7 @@ $ flow data upload -c examples/dsl/v2/upload/upload_conf.json
 同时，用户也可使用旧版的python脚本方式上传数据：
 
 ```bash
-$ python ${your_install_path}/fate_flow/fate_flow_client.py -f upload -c examples/dsl/v2/upload/upload_conf.json
+$ python ${your_install_path}/fateflow/python/fate_flow/fate_flow_client.py -f upload -c examples/dsl/v2/upload/upload_conf.json
 ```
 
 !!! Note

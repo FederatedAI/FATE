@@ -71,7 +71,7 @@ class PercentageValueFilter(BaseFilterMethod):
 
         Parameters
         ----------
-        data_instances: DTable
+        data_instances: Table
             Original data
 
         k: int

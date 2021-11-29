@@ -1,47 +1,7 @@
 import os
-import shutil
 import re
 import glob
-
-repo_base = os.path.abspath(
-    os.path.join(
-        os.path.abspath(__file__), os.path.pardir, os.path.pardir, os.path.pardir
-    )
-)
-params_source = os.path.join(repo_base, "python", "federatedml", "param")
-params_doc_target = os.path.join(repo_base, "doc", "federatedml_component", "params")
-md_template = """\
-# {name}
-::: federatedml.param.{name}
-    rendering:
-      heading_level: 2
-      show_source: true
-      show_root_heading: true
-      show_root_toc_entry: false
-      show_root_full_path: false
-"""
-
-
-def pre_build(*args, **kwargs):
-    clean_params_doc()
-    create_params_doc()
-
-
-def create_params_doc():
-    os.makedirs(params_doc_target, exist_ok=True)
-    for file_name in os.listdir(params_source):
-        if file_name.endswith(".py") and file_name != "__init__.py":
-            name = file_name[:-3]
-            with open(os.path.join(params_doc_target, f"{name}.md"), "w") as f:
-                f.write(md_template.format(name=name))
-
-
-def clean_params_doc():
-    try:
-        shutil.rmtree(params_doc_target)
-    except Exception as e:
-        print("Error: %s - %s." % (e.filename, e.strerror))
-
+import git
 
 _INCLUDE_EXAMPLES_REGEX = re.compile(
     r"""(?P<_includer_indent>[^\S\r\n]*){\s*%\s*include-examples\s*"(?P<example_name>[^")]+)"\s*%\s*}\s*""",
@@ -62,9 +22,11 @@ _LINT_MAP = {
     ".md": "md",
 }
 
-_EXAMPLES_BASE = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "examples")
+_REPO_BASE = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
 )
+
+_EXAMPLES_BASE = os.path.abspath(os.path.join(_REPO_BASE, "examples"))
 
 
 def sub_include_examples(match):
@@ -137,35 +99,50 @@ def sub_include_example(src_file_path):
                 lines.append(f"{indents_level1}```{lint}\n")
                 head = True
                 for line in f.readlines():
-                   # skip license
+                    # skip license
                     if head:
-                      if line.strip() == "" or line.lstrip().startswith("#"):
-                         continue
+                        if line.strip() == "" or line.lstrip().startswith("#"):
+                            continue
                     head = False
                     lines.append(f"{indents_level1}    {line}")
                 lines.append(f"{indents_level1}\n")
                 lines.append(f"{indents_level1}```\n")
                 lines.append(f"{indents_level1}\n")
-        
+
         return "".join(lines)
 
     return sub
 
 
-_MARKDOWN_URL_REGEX = re.compile(
-    r"""(?P<text>\[[^\(]?\])\((?P<url>[^\)]+)\)""",
+try:
+    repo = git.Repo(search_parent_directories=True)
+    sha = repo.head.object.hexsha
+    url = repo.remote().url
+    if url.endswith(".git"):
+        url = url[:-4]
+    GITHUB_REPO = f"{url}/tree/{sha}"
+except:
+    GITHUB_REPO = "https://github.com/FederatedAI/FATE/tree/master"
+
+_DIR_URL_REGEX = re.compile(
+    r"""(?P<text>\[\s*:file_folder:[^\(]*\])\((?P<url>[^\)]+)\)""",
     flags=re.VERBOSE | re.DOTALL,
 )
 
 
-def _fix_zh_url(match):
-    text = match.group("text")
-    url = match.group("url")
+def _fix_dir_url(src_path):
+    def _replace(match):
+        text = match.group("text")
+        url = match.group("url")
 
-    if not url.startswith("http"):
-        url = os.path.join(os.pardir, url)
-    return f'{text}({url})'
+        if not url.startswith("http"):
+            url_rel_to_repo_base = os.path.relpath(
+                os.path.abspath(os.path.join(src_path, os.path.pardir, url)), _REPO_BASE
+            )
+            url = f"{GITHUB_REPO}/{url_rel_to_repo_base}"
+        return f"{text}({url})"
 
+    return _replace
 
 
 _COMMENT_REGEX = re.compile(
@@ -173,20 +150,18 @@ _COMMENT_REGEX = re.compile(
     flags=re.VERBOSE | re.DOTALL,
 )
 
+
 def _remove_comment(match):
     content = match.group("_content")
     return content
 
-def on_page_markdown(markdown, page, **kwargs):
-    if page.file.abs_src_path.rsplit(".", 2)[-2] == "zh":
-        markdown = re.sub(_MARKDOWN_URL_REGEX, _fix_zh_url, markdown)
 
-    # remove specific commnent    
-    markdown = re.sub(
-        _COMMENT_REGEX,
-        _remove_comment,
-        markdown
-    )
+def on_page_markdown(markdown, page, **kwargs):
+
+    markdown = re.sub(_DIR_URL_REGEX, _fix_dir_url(page.file.abs_src_path), markdown)
+
+    # remove specific commnent
+    markdown = re.sub(_COMMENT_REGEX, _remove_comment, markdown)
 
     markdown = re.sub(
         _INCLUDE_EXAMPLES_REGEX,
@@ -200,4 +175,3 @@ def on_page_markdown(markdown, page, **kwargs):
         markdown,
     )
     return markdown
-

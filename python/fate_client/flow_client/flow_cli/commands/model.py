@@ -106,7 +106,7 @@ def import_model(ctx, **kwargs):
     """
     \b
     - DESCRIPTION:
-        Import Model Command. Users can currently import models from files or databases (including mysql and redis).
+        Import the model from a file or storage engine.
 
     \b
     - USAGE:
@@ -145,7 +145,7 @@ def export_model(ctx, **kwargs):
     """
     \b
     - DESCRIPTION:
-        Export Model Command. Users can currently export models to files or databases (including mysql and redis).
+        Export the model to a file or storage engine.
 
     \b
     - USAGE:
@@ -244,7 +244,7 @@ def get_predict_dsl(ctx, **kwargs):
     """
     \b
     - DESCRIPTION:
-        Get predict dsl of model.
+        Get predict DSL of the model.
 
     \b
     - USAGE:
@@ -284,7 +284,7 @@ def get_predict_conf(ctx, **kwargs):
     """
     \b
     - DESCRIPTION:
-        Get predict conf template.
+        Get the template of predict config.
 
     \b
     - USAGE:
@@ -394,13 +394,13 @@ def deploy(ctx, **kwargs):
 @cli_args.ROLE
 @cli_args.PARTYID
 @click.option('--detail', is_flag=True, default=False,
-              help="If specified, details of model would be shown.")
+              help="If specified, details of model will be shown.")
 @click.pass_context
 def get_model_info(ctx, **kwargs):
     """
     \b
     - DESCRIPTION:
-        Get information of model.
+        Get model information.
 
     \b
     - USAGE:
