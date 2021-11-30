@@ -10,7 +10,7 @@ jobs:
         id: autopep8
         uses: peter-evans/autopep8@v1
         with:
-          args: --exit-code --recursive --in-place --aggressive --aggressive .
+          args: --exit-code --jobs 0 --recursive --in-place --aggressive --aggressive .
       - name: Annotate diff changes using reviewdog
         if: steps.autopep8.outputs.exit-code == 2
         uses: reviewdog/action-suggester@v1

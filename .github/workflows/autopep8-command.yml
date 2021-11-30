@@ -18,7 +18,7 @@ jobs:
         id: autopep8
         uses: peter-evans/autopep8@v1
         with:
-          args: --exit-code --recursive --in-place --aggressive --aggressive .
+          args: --exit-code --jobs 0 --recursive --in-place --aggressive --aggressive .
 
       # Commit the change to the PR branch
       - name: Commit to the PR branch
