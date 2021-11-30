@@ -44,7 +44,8 @@ class BasePoissonRegression(BaseLinearModel):
         self.encrypted_mode_calculator_param = params.encrypted_mode_calculator_param
         self.exposure_colname = params.exposure_colname
 
-    def get_exposure_index(self, header, exposure_colname):
+    @staticmethod
+    def get_exposure_index(header, exposure_colname):
         try:
             exposure_index = header.index(exposure_colname)
         except:
@@ -89,7 +90,8 @@ class BasePoissonRegression(BaseLinearModel):
             return np.log(1e-7)
         return np.log(v)
 
-    def compute_mu(self, data_instances, coef_, intercept_=0, exposure=None):
+    @staticmethod
+    def compute_mu(data_instances, coef_, intercept_=0, exposure=None):
         if exposure is None:
             mu = data_instances.mapValues(
                 lambda v: np.exp(vec_dot(v.features, coef_) + intercept_ ))

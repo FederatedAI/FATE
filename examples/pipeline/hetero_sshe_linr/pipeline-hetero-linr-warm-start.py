@@ -19,7 +19,7 @@ import argparse
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataTransform
 from pipeline.component import Evaluation
-from pipeline.component import HeteroLinR
+from pipeline.component import HeteroSSHELinR
 from pipeline.component import Intersection
 from pipeline.component import Reader
 from pipeline.interface import Data, Model
@@ -34,12 +34,11 @@ def main(config="../../config.yaml", namespace=""):
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
-    arbiter = parties.arbiter[0]
 
     guest_train_data = {"name": "motor_hetero_guest", "namespace": f"experiment{namespace}"}
     host_train_data = {"name": "motor_hetero_host", "namespace": f"experiment{namespace}"}
 
-    pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host, arbiter=arbiter)
+    pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host)
 
     reader_0 = Reader(name="reader_0")
     reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
@@ -51,21 +50,21 @@ def main(config="../../config.yaml", namespace=""):
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0", only_output_key=False)
-    hetero_linr_0 = HeteroLinR(name="hetero_linr_0", penalty="L2", optimizer="sgd", tol=0.001,
-                               alpha=0.01, max_iter=5, early_stop="weight_diff", batch_size=-1,
-                               learning_rate=0.15, decay=0.0, decay_sqrt=False,
-                               callback_param={"callbacks": ["ModelCheckpoint"]},
-                               init_param={"init_method": "zeros"},
-                               encrypted_mode_calculator_param={"mode": "fast"})
+    hetero_linr_0 = HeteroSSHELinR(name="hetero_linr_0", penalty="L2", optimizer="sgd", tol=0.001,
+                                   alpha=0.01, max_iter=5, early_stop="weight_diff", batch_size=-1,
+                                   learning_rate=0.15, decay=0.0, decay_sqrt=False,
+                                   callback_param={"callbacks": ["ModelCheckpoint"]},
+                                   init_param={"init_method": "zeros"},
+                                   encrypted_mode_calculator_param={"mode": "fast"})
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="regression", pos_label=1)
 
-    hetero_linr_1 = HeteroLinR(name="hetero_linr_1", max_iter=15,
-                               penalty="L2", optimizer="sgd", tol=0.001,
-                               alpha=0.01, early_stop="weight_diff", batch_size=-1,
-                               learning_rate=0.15, decay=0.0, decay_sqrt=False,
-                               encrypted_mode_calculator_param={"mode": "fast"}
-                               )
+    hetero_linr_1 = HeteroSSHELinR(name="hetero_linr_1", max_iter=15,
+                                   penalty="L2", optimizer="sgd", tol=0.001,
+                                   alpha=0.01, early_stop="weight_diff", batch_size=-1,
+                                   learning_rate=0.15, decay=0.0, decay_sqrt=False,
+                                   encrypted_mode_calculator_param={"mode": "fast"}
+                                   )
 
     pipeline.add_component(reader_0)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))

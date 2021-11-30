@@ -55,14 +55,14 @@ class HeteroLinRHost(HeteroSSHEHostBase):
                                                       cipher=cipher,
                                                       z=z)
 
-        tensor_name = ".".join(("z",) + suffix)
-        shared_sigmoid_z = SecureMatrix.from_source(tensor_name,
+        tensor_name = ".".join(("complete_z",) + suffix)
+        shared_z = SecureMatrix.from_source(tensor_name,
                                                     self.other_party,
                                                     cipher,
                                                     self.fixedpoint_encoder.n,
                                                     self.fixedpoint_encoder)
 
-        return shared_sigmoid_z
+        return shared_z
 
     def compute_loss(self, weights=None, suffix=None, cipher=None):
         """

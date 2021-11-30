@@ -17,7 +17,8 @@
 from federatedml.framework.hetero.procedure import convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
-from federatedml.linear_model.coordinated_linear_model.poisson_regression.hetero_poisson_regression import HeteroPoissonBase
+from federatedml.linear_model.coordinated_linear_model.poisson_regression.\
+    hetero_poisson_regression.hetero_poisson_base import HeteroPoissonBase
 from federatedml.optim.gradient import hetero_poisson_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.util import LOGGER

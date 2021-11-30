@@ -19,13 +19,14 @@ import operator
 import numpy as np
 
 from federatedml.framework.hetero.procedure import batch_generator
+from federatedml.framework.hetero.procedure.hetero_sshe_linear_model import HeteroSSHEGuestBase
+from federatedml.param.evaluation_param import EvaluateParam
+from federatedml.param.hetero_sshe_linr_param import HeteroSSHELinRParam
+from federatedml.protobuf.generated import linr_model_param_pb2, linr_model_meta_pb2
+from federatedml.secureprotol.spdz.tensor import fixedpoint_numpy
+from federatedml.secureprotol.spdz.secure_matrix.secure_matrix import SecureMatrix
 from federatedml.transfer_variable.transfer_class.batch_generator_transfer_variable import \
     BatchGeneratorTransferVariable
-from federatedml.framework.hetero.procedure.hetero_sshe_linear_model import HeteroSSHEGuestBase
-from federatedml.protobuf.generated import linr_model_param_pb2, linr_model_meta_pb2
-from federatedml.param.hetero_sshe_linr_param import HeteroSSHELinRParam
-from federatedml.secureprotol.spdz.secure_matrix.secure_matrix import SecureMatrix
-from federatedml.secureprotol.spdz.tensor import fixedpoint_numpy
 from federatedml.util import consts, fate_operator, LOGGER
 from federatedml.util.io_check import assert_io_num_rows_equal
 
@@ -38,9 +39,10 @@ class HeteroLinRGuest(HeteroSSHEGuestBase):
         self.model_meta_name = 'HeteroLinearRegressionMeta'
         self.model_param = HeteroSSHELinRParam()
         self.labels = None
+        self.label_type = float
 
     def forward(self, weights, features, suffix, cipher):
-        if not self.reveal_every_iter:
+        """if not self.reveal_every_iter:
             LOGGER.info(f"[forward]: Calculate z in share...")
             w_self, w_remote = weights
             z = self._cal_z_in_share(w_self, w_remote, features, suffix, cipher)
@@ -56,18 +58,20 @@ class HeteroLinRGuest(HeteroSSHEGuestBase):
 
         self.wx_self = z
         self.wx_remote = remote_z
-        complete_z = z + remote_z
+        """
+        self._cal_z(weights, features, suffix, cipher)
+        complete_z = self.wx_self + self.wx_remote
 
-        self.encrypted_wx = self.wx_self + self.wx_remote
+        self.encrypted_wx = complete_z
 
         self.encrypted_error = complete_z - self.labels
 
         tensor_name = ".".join(("complete_z",) + suffix)
         shared_z = SecureMatrix.from_source(tensor_name,
-                                                    complete_z,
-                                                    cipher,
-                                                    self.fixedpoint_encoder.n,
-                                                    self.fixedpoint_encoder)
+                                            complete_z,
+                                            cipher,
+                                            self.fixedpoint_encoder.n,
+                                            self.fixedpoint_encoder)
         return shared_z
 
     def compute_loss(self, weights, suffix, cipher=None):
@@ -80,13 +84,16 @@ class HeteroLinRGuest(HeteroSSHEGuestBase):
         wxy_self = self.wx_self - self.labels
         wxy_self_square = (wxy_self * wxy_self).reduce(operator.add)
 
-        wxy = (wxy_self * self.wx_remote).reduce(operator.add)
+        wxy = (self.wx_remote * wxy_self).reduce(operator.add)
         wx_remote_square = self.secure_matrix_obj.share_encrypted_matrix(suffix=suffix,
                                                                          is_remote=False,
                                                                          cipher=None,
                                                                          wx_self_square=None)[0]
+        loss = (wx_remote_square + wxy_self_square) * -1 + wxy * -2
+
         batch_num = self.batch_num[int(suffix[2])]
-        loss = (wx_remote_square + wxy_self_square + 2 * wxy) / (2 * batch_num)
+        loss = loss * (-1 / (batch_num * 2))
+        # loss = (wx_remote_square + wxy_self_square + 2 * wxy) / (2 * batch_num)
 
         tensor_name = ".".join(("shared_loss",) + suffix)
         share_loss = SecureMatrix.from_source(tensor_name=tensor_name,
@@ -161,7 +168,7 @@ class HeteroLinRGuest(HeteroSSHEGuestBase):
                               intercept=self.model_weights.intercept_)
 
         pred_res = data_instances.mapValues(f)
-        host_preds = self.transfer_variable.host_pred.get(idx=-1)
+        host_preds = self.transfer_variable.host_prob.get(idx=-1)
 
         LOGGER.info("Get probability from Host")
 
@@ -197,7 +204,6 @@ class HeteroLinRGuest(HeteroSSHEGuestBase):
                                                               reveal_strategy=self.model_param.reveal_strategy)
         return meta_protobuf_obj
 
-
     def load_model(self, model_dict):
         result_obj, _ = super().load_model(model_dict)
         self.load_single_model(result_obj)
@@ -212,3 +218,6 @@ class HeteroLinRGuest(HeteroSSHEGuestBase):
         self.check_abnormal_values(validate_data)
 
         self.fit_single_model(data_instances, validate_data)
+
+    def get_metrics_param(self):
+        return EvaluateParam(eval_type="regression", metrics=self.metrics)

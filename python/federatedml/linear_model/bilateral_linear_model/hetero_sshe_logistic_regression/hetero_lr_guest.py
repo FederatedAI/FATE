@@ -25,6 +25,7 @@ from federatedml.framework.hetero.procedure.hetero_sshe_linear_model import Hete
 from federatedml.optim import activation
 from federatedml.one_vs_rest.one_vs_rest import one_vs_rest_factory
 from federatedml.protobuf.generated import lr_model_param_pb2, lr_model_meta_pb2
+from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.param.hetero_sshe_lr_param import HeteroSSHELRParam
 from federatedml.secureprotol.spdz.secure_matrix.secure_matrix import SecureMatrix
 from federatedml.secureprotol.spdz.tensor import fixedpoint_numpy
@@ -33,7 +34,6 @@ from federatedml.util.io_check import assert_io_num_rows_equal
 
 
 class HeteroLRGuest(HeteroSSHEGuestBase):
-
     def __init__(self):
         super().__init__()
         self.model_name = 'HeteroLogisticRegression'
@@ -42,6 +42,7 @@ class HeteroLRGuest(HeteroSSHEGuestBase):
         self.model_param = HeteroSSHELRParam()
         self.labels = None
         self.one_vs_rest_obj = None
+        self.label_type = int
 
     """
     def _cal_z_in_share(self, w_self, w_remote, features, suffix, cipher):
@@ -74,7 +75,7 @@ class HeteroLRGuest(HeteroSSHEGuestBase):
         return sigmoid_z
 
     def forward(self, weights, features, suffix, cipher):
-        if not self.reveal_every_iter:
+        """if not self.reveal_every_iter:
             LOGGER.info(f"[forward]: Calculate z in share...")
             w_self, w_remote = weights
             z = self._cal_z_in_share(w_self, w_remote, features, suffix, cipher)
@@ -90,8 +91,9 @@ class HeteroLRGuest(HeteroSSHEGuestBase):
 
         self.wx_self = z
         self.wx_remote = remote_z
-
-        sigmoid_z = self._compute_sigmoid(z, remote_z)
+        """
+        self._cal_z(weights, features, suffix, cipher)
+        sigmoid_z = self._compute_sigmoid(self.wx_self, self.wx_remote)
 
         self.encrypted_wx = self.wx_self + self.wx_remote
 
@@ -339,3 +341,10 @@ class HeteroLRGuest(HeteroSSHEGuestBase):
         summary = super().get_model_summary()
         summary["one_vs_rest"] = self.need_one_vs_rest
         return summary
+
+    def get_metrics_param(self):
+        if self.need_one_vs_rest:
+            eval_type = 'multi'
+        else:
+            eval_type = "binary"
+        return EvaluateParam(eval_type=eval_type, metrics=self.metrics)

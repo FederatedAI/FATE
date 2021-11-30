@@ -108,7 +108,6 @@ class HeteroLRGuest(HeteroLRBase):
         self.transfer_variable.use_async.remote(use_async)
 
         LOGGER.info("Generate mini-batch from input data")
-        # @TODO: move initialize batch generator & calculator to `fit`
         self.batch_generator.initialize_batch_generator(data_instances, self.batch_size)
         self.gradient_loss_operator.set_total_batch_nums(self.batch_generator.batch_nums)
 

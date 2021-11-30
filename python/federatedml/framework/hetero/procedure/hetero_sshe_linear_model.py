@@ -54,6 +54,7 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
         self.parties = None
         self.local_party = None
         self.other_party = None
+        self.label_type = None
 
     def _transfer_q_field(self):
         raise NotImplementedError(f"Should not be called here")
@@ -235,7 +236,7 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
             spdz.set_flowid(self.flowid)
             self.secure_matrix_obj.set_flowid(self.flowid)
             if self.role == consts.GUEST:
-                self.labels = data_instances.mapValues(lambda x: np.array([x.label], dtype=int))
+                self.labels = data_instances.mapValues(lambda x: np.array([x.label], dtype=self.label_type))
 
             w_self, w_remote = self.share_model(w, suffix="init")
             last_w_self, last_w_remote = w_self, w_remote
@@ -423,6 +424,24 @@ class HeteroSSHEGuestBase(HeteroSSHEBase, ABC):
         self.transfer_variable.q_field.remote(q_field, role=consts.HOST, suffix=("q_field",))
 
         return q_field
+
+    def _cal_z(self, weights, features, suffix, cipher):
+        if not self.reveal_every_iter:
+            LOGGER.info(f"[forward]: Calculate z in share...")
+            w_self, w_remote = weights
+            z = self._cal_z_in_share(w_self, w_remote, features, suffix, cipher)
+        else:
+            LOGGER.info(f"[forward]: Calculate z directly...")
+            w = weights.unboxed
+            z = features.dot_local(w)
+
+        remote_z = self.secure_matrix_obj.share_encrypted_matrix(suffix=suffix,
+                                                                 is_remote=False,
+                                                                 cipher=None,
+                                                                 z=None)[0]
+
+        self.wx_self = z
+        self.wx_remote = remote_z
 
     def _cal_z_in_share(self, w_self, w_remote, features, suffix, cipher):
         z1 = features.dot_local(w_self)

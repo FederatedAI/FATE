@@ -21,7 +21,8 @@ import numpy as np
 from federatedml.framework.homo.procedure import aggregator
 from federatedml.framework.homo.procedure import paillier_cipher
 from federatedml.linear_model.linear_model_weight import LinearModelWeights as LogisticRegressionWeights
-from federatedml.linear_model.coordinated_linear_model.logistic_regression.homo_logistic_regression import HomoLRBase
+from federatedml.linear_model.coordinated_linear_model.\
+    logistic_regression.homo_logistic_regression.homo_lr_base import HomoLRBase
 from federatedml.optim import activation
  
 from federatedml.util import LOGGER
