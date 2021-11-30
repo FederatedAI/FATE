@@ -11,15 +11,13 @@ if [[ -n ${new_repo_file} ]];then
     echo "[INFO] replace repo file"
     echo "[INFO] new repo:"
     cat /etc/yum.repos.d/CentOS-Base.repo
-    #yum makecache
-    #echo "[INFO] macke cache"
-    sh ./install_os_dependencies.sh root
+    bash ./install_os_dependencies.sh
     yum clean all
     rm -rf /etc/yum.repos.d
     mv /etc/yum.repos.d.bak /etc/yum.repos.d
     echo "[INFO] restore repo file"
 else
     echo "[INFO] use default repo file"
-    sh ./install_os_dependencies.sh root
+    bash ./install_os_dependencies.sh
     yum clean all
 fi

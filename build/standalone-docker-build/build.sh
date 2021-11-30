@@ -63,7 +63,7 @@ mkdir -p ${package_dir}
 build() {
   cd ${source_dir}
 
-  sh build/standalone-docker-build/base/build.sh -m "python" -r ${repo_file_path} -i ${pip_index_url}
+  bash build/standalone-docker-build/base/build.sh -m "python" -r ${repo_file_path} -i ${pip_index_url}
 
   cp ${source_dir}/build/standalone-docker-build/docker-entrypoint.sh ${package_dir}/
   cp ${source_dir}/build/standalone-docker-build/Dockerfile ${package_dir}/
@@ -78,7 +78,7 @@ build() {
   if [[ -d ${standalone_install_package_dir} ]];then
     echo "[INFO] standalone install package already exists, skip build"
   else
-    sh build/standalone-install-build/build.sh ${version_tag} 1
+    bash build/standalone-install-build/build.sh ${version_tag} 1
   fi
 
   echo "[INFO] copy standalone install package"

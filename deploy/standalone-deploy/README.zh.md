@@ -121,14 +121,14 @@ docker pull federatedai/standalone_fate ${version}
 
    ```bash
    cd standalone_fate_install_${version}_release;
-   sh init.sh init
+   bash init.sh init
    ```
 
 ### 3.4 启动
 
    ```bash
-   sh init.sh status;
-   sh init.sh start
+   bash init.sh status;
+   bash init.sh start
    ```
 
 ### 3.5 测试

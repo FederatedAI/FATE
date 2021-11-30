@@ -15,12 +15,21 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-if [[ $1 == "root" ]];then
+
+set -e
+
+if [[ ${is_root} -eq 1 ]];then
   command=""
 else
-  command="sudo"
+  sudo -nv 2>&1
+  if [[ $? -eq 0 ]];then
+    command="sudo"
+  else
+    echo "[INFO] no sudo permission"
+    exit
+  fi
 fi
-echo $command
+
 system=`sed -e '/"/s/"//g' /etc/os-release | awk -F= '/^NAME/{print $2}'`
 echo ${system}
 
@@ -31,11 +40,14 @@ case "${system}" in
             ;;
     "Ubuntu")
             echo "Ubuntu System"
-            $command apt-get install -y gcc g++ make  openssl supervisor libgmp-dev  libmpfr-dev libmpc-dev libaio1 libaio-dev numactl autoconf automake libtool libffi-dev libssl1.0.0 libssl-dev  liblz4-1 liblz4-dev liblz4-1-dbg liblz4-tool  zlib1g zlib1g-dbg zlib1g-dev
+            $command apt-get install -y gcc g++ make openssl supervisor libgmp-dev libmpfr-dev libmpc-dev libaio1 libaio-dev numactl autoconf automake libtool libffi-dev libssl-dev liblz4-1 liblz4-dev liblz4-tool zlib1g zlib1g-dev
             cd /usr/lib/x86_64-linux-gnu
-            if [ ! -f "libssl.so.10" ];then
-                 $command ln -s libssl.so.1.0.0 libssl.so.10
-                 $command ln -s libcrypto.so.1.0.0 libcrypto.so.10
+            if [ ! -f "libssl.so.10" ] && [ ! -L "libssl.so.10" ];then
+              $command apt-get install -y libssl1.0.0 || echo ""
+              $command ln -s libssl.so.1.0.0 libssl.so.10
+            fi
+            if [ ! -f "libcrypto.so.10" ] && [ ! -L "libcrypto.so.10" ];then
+              $command ln -s libcrypto.so.1.0.0 libcrypto.so.10
             fi
             ;;
     *)

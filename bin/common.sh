@@ -32,3 +32,11 @@ case "${kernel}" in
 esac
 
 echo "[INFO] os: ${OS}"
+
+if [[ `id -u`  -eq 0 ]];then
+  is_root=1
+  echo "[INFO] is root user"
+else
+  is_root=0
+  echo "[INFO] not root user"
+fi

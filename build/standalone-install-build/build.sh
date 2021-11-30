@@ -57,7 +57,7 @@ function packaging(){
     if [[ -d ${install_package_dir} ]];then
         echo "[INFO] install package already exists, skip build"
     else
-        sh build/package-build/build.sh ${version_tag} "${environment_modules[@]}" "${support_modules[@]}"
+        bash build/package-build/build.sh ${version_tag} "${environment_modules[@]}" "${support_modules[@]}"
     fi
     echo "[INFO] get install packages done"
 

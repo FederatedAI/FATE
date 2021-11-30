@@ -16,6 +16,8 @@
 #  limitations under the License.
 #
 
+set -e
+
 project_base=$(cd `dirname $0`;pwd)
 version=
 env_dir=${project_base}/env
@@ -40,60 +42,67 @@ init() {
   cd ${project_base}
 
   echo "[INFO] install os dependency"
-  sh bin/install_os_dependencies.sh
+  bash bin/install_os_dependencies.sh
   echo "[INFO] install os dependency done"
 
   echo "[INFO] install python36"
-  if [ ! -d ${miniconda_dir} ]; then
-    bash ${python_resouce}/Miniconda3-4.5.4-Linux-x86_64.sh -b -p ${miniconda_dir}
+  if [ -d ${miniconda_dir} ] || [ -f ${miniconda_dir} ]; then
+    rm -rf ${miniconda_dir}
+    echo "[INFO] delete python36: ${miniconda_dir}"
   fi
+  bash ${python_resouce}/Miniconda3-4.5.4-Linux-x86_64.sh -b -p ${miniconda_dir}
   echo "[INFO] install python36 done"
 
   echo "[INFO] install jdk"
-  if [ ! -d ${jdk_dir} ]; then
-    cd ${jdk_resource}
-    tar xzf jdk-8u192.tar.gz
+  if [ -d ${jdk_dir} ] || [ -f ${jdk_dir} ]; then
+    rm -rf ${jdk_dir}
+    echo "[INFO] delete jdk: ${jdk_dir}"
   fi
+  cd ${jdk_resource}
+  tar xzf jdk-8u192.tar.gz
   echo "[INFO] install jdk done"
 
   cd ${project_base}
 
-  if [ ! -f ${venv_dir}/bin/python ]; then
-    echo "[INFO] install virtualenv"
-    ${miniconda_dir}/bin/python -m pip install --upgrade pip -f ${pypi_resource} --no-index
-    ${miniconda_dir}/bin/python -m pip install virtualenv -f ${pypi_resource} --no-index
-    ${miniconda_dir}/bin/virtualenv -p ${miniconda_dir}/bin/python3.6  --no-wheel --no-setuptools --no-download ${venv_dir}
-    source ${venv_dir}/bin/activate
-    pip install setuptools --no-index -f ${pypi_resource}
-    echo "[INFO] install virtualenv done"
-
-    echo "[INFO] install python dependency packages by ${project_base}/requirements.txt using ${pypi_resource}"
-    pip install -r ${project_base}/requirements.txt -f ${pypi_resource} --no-index
-    echo "[INFO] install python dependency packages done"
-
-    echo "[INFO] install fate client"
-    cd ${project_base}/fate/python/fate_client
-    python setup.py install
-    flow init -c ${project_base}/conf/service_conf.yaml
-    echo "[INFO] install fate client done"
-
-    echo "[INFO] install fate test"
-    cd ${project_base}/fate/python/fate_test
-    fate_sed_cmd "s#data_base_dir:.*#data_base_dir: ${project_base}#g" ./fate_test/fate_test_config.yaml
-    fate_sed_cmd "s#fate_base:.*#fate_base: ${project_base}/fate#g" ./fate_test/fate_test_config.yaml
-    python setup.py install
-    echo "[INFO] install fate test done"
+  echo "[INFO] install virtualenv"
+  if [ -d ${venv_dir} ] || [ -f ${venv_dir} ]; then
+    rm -rf ${venv_dir}
+    echo "[INFO] delete venv: ${venv_dir}"
   fi
 
+  ${miniconda_dir}/bin/python -m pip install --upgrade pip -f ${pypi_resource} --no-index
+  ${miniconda_dir}/bin/python -m pip install virtualenv -f ${pypi_resource} --no-index
+  ${miniconda_dir}/bin/virtualenv -p ${miniconda_dir}/bin/python3.6  --no-wheel --no-setuptools --no-download ${venv_dir}
+  source ${venv_dir}/bin/activate
+  pip install setuptools --no-index -f ${pypi_resource}
+  echo "[INFO] install virtualenv done"
+
+  echo "[INFO] install python dependency packages by ${project_base}/requirements.txt using ${pypi_resource}"
+  pip install -r ${project_base}/requirements.txt -f ${pypi_resource} --no-index
+  echo "[INFO] install python dependency packages done"
+
+  echo "[INFO] install fate client"
+  cd ${project_base}/fate/python/fate_client
+  python setup.py install
+  flow init -c ${project_base}/conf/service_conf.yaml
+  echo "[INFO] install fate client done"
+
+  echo "[INFO] install fate test"
+  cd ${project_base}/fate/python/fate_test
+  sed -i "s#data_base_dir:.*#data_base_dir: ${project_base}#g" ./fate_test/fate_test_config.yaml
+  sed -i "s#fate_base:.*#fate_base: ${project_base}/fate#g" ./fate_test/fate_test_config.yaml
+  python setup.py install
+  echo "[INFO] install fate test done"
+
   echo "[INFO] setup fateflow"
-  fate_sed_cmd "s#PYTHONPATH=.*#PYTHONPATH=${project_base}/fate/python:${project_base}/fateflow/python#g" ${project_base}/bin/init_env.sh
-  fate_sed_cmd "s#venv=.*#venv=${venv_dir}#g" ${project_base}/bin/init_env.sh
-  fate_sed_cmd "s#JAVA_HOME=.*#JAVA_HOME=${jdk_dir}/#g" ${project_base}/bin/init_env.sh
+  sed -i "s#PYTHONPATH=.*#PYTHONPATH=${project_base}/fate/python:${project_base}/fateflow/python#g" ${project_base}/bin/init_env.sh
+  sed -i "s#venv=.*#venv=${venv_dir}#g" ${project_base}/bin/init_env.sh
+  sed -i "s#JAVA_HOME=.*#JAVA_HOME=${jdk_dir}/#g" ${project_base}/bin/init_env.sh
   echo "[INFO] setup fateflow done"
 
   echo "[INFO] setup fateboard"
-  fate_sed_cmd "s#fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:sqlite:${project_base}/fate_sqlite.db#g" ${project_base}/fateboard/conf/application.properties
-  fate_sed_cmd "s#fateflow.url=.*#fateflow.url=http://localhost:9380#g" ${project_base}/fateboard/conf/application.properties
+  sed -i "s#fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:sqlite:${project_base}/fate_sqlite.db#g" ${project_base}/fateboard/conf/application.properties
+  sed -i "s#fateflow.url=.*#fateflow.url=http://localhost:9380#g" ${project_base}/fateboard/conf/application.properties
   echo "[INFO] setup fateboard done"
 }
 
@@ -103,10 +112,10 @@ action() {
   source $project_base/bin/init_env.sh
 
 	cd  $project_base/fateflow
-	sh  bin/service.sh $1
+	bash bin/service.sh $1
 
 	cd  $project_base/fateboard
-	sh  service.sh $1
+	bash service.sh $1
 
 	cd $project_base
 }

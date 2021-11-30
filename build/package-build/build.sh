@@ -114,7 +114,7 @@ packaging_eggroll(){
     #pull_eggroll
     cd ./eggroll
     cd ./deploy
-    sh ./auto-packaging.sh
+    bash ./auto-packaging.sh
     mkdir -p ${package_dir}/eggroll
     mv ${source_dir}/eggroll/eggroll.tar.gz ${package_dir}/eggroll/
     cd ${package_dir}/eggroll/
