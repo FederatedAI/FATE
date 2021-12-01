@@ -83,6 +83,10 @@ class FLOWClient(object):
         result = self._output_data_table(job_id=job_id, role=role, party_id=party_id, component_name=component_name)
         return result
 
+    def table_info(self, table_name, namespace):
+        result = self._table_info(table_name=table_name, namespace=namespace)
+        return result
+
     def add_notes(self, job_id, role, party_id, notes):
         self._add_notes(job_id=job_id, role=role, party_id=party_id, notes=notes)
 
@@ -155,6 +159,14 @@ class FLOWClient(object):
                                 f'please check the path: {path}')
             response = self._table_bind(conf)
             return response, None, True
+
+    def _table_info(self, table_name, namespace):
+        param = {
+            'table_name': table_name,
+            'namespace': namespace
+        }
+        response = self.flow_client(request='table/info', param=param)
+        return response
 
     def _delete_data(self, table_name, namespace):
         param = {
@@ -275,6 +287,8 @@ class FLOWClient(object):
             stdout = client.data.upload(config_data=param, verbose=verbose, drop=drop)
         elif request == 'table/delete':
             stdout = client.table.delete(table_name=param['table_name'], namespace=param['namespace'])
+        elif request == 'table/info':
+            stdout = client.table.info(table_name=param['table_name'], namespace=param['namespace'])
         elif request == 'job/submit':
             stdout = client.job.submit(config_data=param['job_runtime_conf'], dsl_data=param['job_dsl'])
         elif request == 'job/query':
