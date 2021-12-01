@@ -12,3 +12,4 @@ jobs:
           token: ${{ secrets.PAT }}
           commands: |
             autopep8
+            fate-test

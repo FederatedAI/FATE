@@ -1,0 +1,44 @@
+name: fate-test-command
+on:
+  repository_dispatch:
+    types: [fate-test-command]
+
+jobs:
+  fate-test-command:
+    runs-on: ubuntu-latest
+    name: A job to exec fate test
+    steps:
+      - name: Create comment
+        uses: peter-evans/create-or-update-comment@v1
+        id: create-comment
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ## Fate Test Action Start
+            Triggered by [Slash Command Comment](${{ github.server_url }}/${{ github.repository }}/pull/${{ github.event.pull_request.number }}#issuecomment-${{ github.event.client_payload.github.payload.comment.id }})
+            [Check Related Action Runs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.event.client_payload.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.client_payload.pull_request.head.ref }}
+          submodules: true
+      
+      - name: fate test
+        id: fate-test
+        uses: weiwee/hello-world-docker-action@v4
+        with:
+          type: ${{ github.event.client_payload.slash_command.args.named.type }} 
+          name: ${{ github.event.client_payload.slash_command.args.named.name }} 
+      
+      - name: Create or update comment
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-id: ${{ steps.create-comment.outputs.comment-id }}
+          edit-mode: append
+          body: |
+            ## Test Results
+            ${{ steps.fate-test.outputs.body }}
