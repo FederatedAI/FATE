@@ -30,6 +30,8 @@ data_base_dir: path(FATE)
 cache_directory: examples/cache/
 performance_template_directory: examples/benchmark_performance/
 flow_test_config_directory: examples/flow_test_template/hetero_lr/flow_test_config.yaml
+min_test_config: examples/data/min_test_testsuite.json
+all_examples_config: examples/data/all_examples_testsuite.json
 fate_base: path(FATE)/fate
 clean_data: true
 parties:
@@ -151,6 +153,8 @@ class Config(object):
         self.cache_directory = os.path.join(config["data_base_dir"], config["cache_directory"])
         self.perf_template_dir = os.path.join(config["data_base_dir"], config["performance_template_directory"])
         self.flow_test_config_dir = os.path.join(config["data_base_dir"], config["flow_test_config_directory"])
+        self.min_test_file = os.path.join(config["data_base_dir"], config["min_test_config"])
+        self.all_examples_file = os.path.join(config["data_base_dir"], config["all_examples_config"])
         self.fate_base = config["fate_base"]
         self.clean_data = config.get("clean_data", True)
         self.parties = Parties.from_dict(config["parties"])
