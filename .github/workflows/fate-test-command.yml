@@ -12,7 +12,7 @@ jobs:
         uses: peter-evans/create-or-update-comment@v1
         id: create-comment
         with:
-          issue-number: ${{ github.event.pull_request.number }}
+          issue-number: ${{ github.event.client_payload.github.payload.issue.number }}
           body: |
             ## Fate Test Action Start
             Triggered by [Slash Command Comment](${{ github.server_url }}/${{ github.repository }}/pull/${{ github.event.pull_request.number }}#issuecomment-${{ github.event.client_payload.github.payload.comment.id }})
@@ -36,7 +36,7 @@ jobs:
       - name: Create or update comment
         uses: peter-evans/create-or-update-comment@v1
         with:
-          issue-number: ${{ github.event.pull_request.number }}
+          issue-number: ${{ github.event.client_payload.github.payload.issue.number }}
           comment-id: ${{ steps.create-comment.outputs.comment-id }}
           edit-mode: append
           body: |
