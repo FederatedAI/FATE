@@ -95,6 +95,12 @@ Whether local ports 8080, 9360, 9380 are occupied
    netstat -apln|grep 9380
    ```
 
+Because need to install the OS dependencies, need root privileges. You can use the root user for subsequent operations. If you do not use the root user, please use the root user to grant sudo privileges to the user you want to use:
+
+```bash
+echo "{username to use} ALL=(ALL) NOPASSWD:ALL" | tee /etc/sudoers.d/{username to use}
+```
+
 ### 3.2 Get the installation package
 
 Download the installation package and unpack it
