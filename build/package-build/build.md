@@ -14,7 +14,7 @@
 
 Please refer to [get source code](../common/get_source_code.md)
 
-## 3. Build
+## 3. Build the FATE system software package
 
 ```bash
 cd FATE;
@@ -29,7 +29,7 @@ The **all** means that modules needs to be deployed, all means all, supports all
 ls -l FATE_install_${version}_${version_tag}.tar.gz
 ```
 
-## 5. Check packages
+## 5. Check package
 
 ```bash
 tar xzf FATE_install_${version}_${version_tag}.tar.gz;
@@ -54,9 +54,9 @@ You can see the following package:
 | RELEASE.md       | release document                                          |
 | packages_md5.txt | md5 numbers for each package                              |
 
-## 6. Make python dependency install package(Optional)
+## 6. Build the python dependency install package(Optional)
 
-You can make python dependency package like:
+You can build python dependency package like:
 
 ```bash
 cd FATE
@@ -78,9 +78,9 @@ pip install -r FATE/python/requirements.txt --no-index -f FATE_install_${version
 **Ensure that the operating system on which the dependency packages are made and the operating system on which the dependency packages will be installed are the same**
 **Don't forget to set the value of ${version}**
 
-## 7. Make python environment install package(Optional)
+## 7. Build the python environment install package(Optional)
 
-You can make it like:
+You can build it like:
 
 ```bash
 cd FATE
@@ -96,9 +96,9 @@ FATE_install_${version}_${version_tag}/python36.tar.gz
 **Ensure that the operating system on which the dependency packages are made and the operating system on which the dependency packages will be installed**
 **Don't forget to set the value of ${version}**
 
-## 8. Make java environment install package(Optional)
+## 8. Build the java environment install package(Optional)
 
-You can make it like:
+You can build it like:
 
 ```bash
 cd FATE
@@ -109,4 +109,11 @@ And then you can use it like:
 
 ```bash
 FATE_install_${version}_${version_tag}/jdk.tar.gz
+```
+
+## 9. Build the whole package with FATE system software and environment dependencies(Optional)
+
+```bash
+cd FATE;
+bash build/package-build/build.sh ${version_tag} bin conf examples build deploy fate fateflow fateboard eggroll proxy jdk python36 pypi
 ```
