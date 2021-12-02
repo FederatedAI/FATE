@@ -167,7 +167,7 @@ def client_fit(self, data_inst):
 
     while self.aggregate_iteration_num + 1 < self.max_aggregate_iteration_num:
         # update iteration num
-        self.aggregate_iteration_num += 1 
+        self.aggregate_iteration_num += 1
 
         self.callback_list.on_epoch_begin(self.aggregate_iteration_num)
         LOGGER.info(f"start {self.aggregate_iteration_num}_th aggregation")

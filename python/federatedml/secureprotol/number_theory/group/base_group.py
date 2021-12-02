@@ -22,6 +22,7 @@ class GroupElement(object):
     """
     Group element
     """
+
     def __init__(self):
         pass
 
@@ -30,6 +31,7 @@ class GroupArithmetic(object):
     """
     A collection of arithmetic operators for groups
     """
+
     def __init__(self, identity):
         self.identity = identity
 

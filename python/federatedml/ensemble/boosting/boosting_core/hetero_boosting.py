@@ -94,7 +94,7 @@ class HeteroBoosting(Boosting, ABC):
                     else:
                         range_from_zero = False
                         break
-                except:
+                except BaseException:
                     range_from_zero = False
 
             classes_ = sorted(classes_)

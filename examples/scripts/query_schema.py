@@ -38,6 +38,7 @@ fate_flow_path = home_dir + "/../../python/fate_flow/fate_flow_client.py"
 fate_flow_home = home_dir + "/../../python/fate_flow"
 flow_client: FlowClient
 
+
 class BaseTask(object):
     def __init__(self, argv=None):
         if argv is not None:

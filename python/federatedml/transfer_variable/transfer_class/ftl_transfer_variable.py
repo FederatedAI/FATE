@@ -44,13 +44,15 @@ class FTLTransferVariable(BaseTransferVariables):
         self.guest_side_const = self._create_variable(name='guest_side_const', src=['guest'], dst=['host'])
         self.encrypted_loss = self._create_variable(name='encrypted_loss', src=['guest'], dst=['host'])
         self.decrypted_loss = self._create_variable(name='decrypted_loss', src=['host'], dst=['guest'])
-        self.decrypted_guest_gradients = self._create_variable(name='decrypted_guest_gradients', src=['host'], dst=['guest'])
+        self.decrypted_guest_gradients = self._create_variable(
+            name='decrypted_guest_gradients', src=['host'], dst=['guest'])
         self.decrypted_guest_const = self._create_variable(name='decrypted_guest_const', src=['host'], dst=['guest'])
-        self.decrypted_host_gradients = self._create_variable(name='decrypted_host_gradients', src=['guest'], dst=['host'])
+        self.decrypted_host_gradients = self._create_variable(
+            name='decrypted_host_gradients', src=['guest'], dst=['host'])
         self.predict_stop_flag = self._create_variable(name='predict_stop_flag', src=['host'], dst=['guest'])
         self.predict_host_u = self._create_variable(name='predict_host_u', src=['host'], dst=['guest'])
-        self.encrypted_predict_score = self._create_variable(name='encrypted_predict_score', src=['guest'], dst=['host'])
+        self.encrypted_predict_score = self._create_variable(
+            name='encrypted_predict_score', src=['guest'], dst=['host'])
         self.masked_predict_score = self._create_variable(name='masked_predict_score', src=['host'], dst=['guest'])
         self.final_predict_score = self._create_variable(name='final_predict_score', src=['guest'], dst=['host'])
         self.predict_batch_num = self._create_variable(name='predict_batch_num', src=['host'], dst=['guest'])
-

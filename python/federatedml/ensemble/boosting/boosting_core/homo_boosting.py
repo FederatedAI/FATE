@@ -3,7 +3,7 @@ import abc
 import numpy as np
 from federatedml.ensemble.boosting.boosting_core import Boosting
 from federatedml.feature.homo_feature_binning.homo_split_points import HomoFeatureBinningClient, \
-                                                                      HomoFeatureBinningServer
+    HomoFeatureBinningServer
 from federatedml.util.classify_label_checker import ClassifyLabelChecker, RegressionLabelChecker
 from federatedml.util import consts
 from federatedml.util.homo_label_encoder import HomoLabelEncoderClient, HomoLabelEncoderArbiter
@@ -32,7 +32,7 @@ class HomoBoostingClient(Boosting, ABC):
         self.mode = consts.HOMO
         self.aggregator, self.binning_obj = None, None
 
-    def federated_binning(self,  data_instance):
+    def federated_binning(self, data_instance):
 
         binning_param = HomoFeatureBinningParam(method=consts.RECURSIVE_QUERY, bin_num=self.bin_num,
                                                 error=self.binning_error)
@@ -90,7 +90,6 @@ class HomoBoostingClient(Boosting, ABC):
         # init aggregator
         self.aggregator = HomoBoostClientAggregator()
         self.binning_obj = HomoFeatureBinningClient()
-
 
         # binning
         self.data_preporcess(data_inst)
@@ -299,5 +298,3 @@ class HomoBoostingArbiter(Boosting, ABC):
     @abc.abstractmethod
     def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
         raise NotImplementedError()
-
-

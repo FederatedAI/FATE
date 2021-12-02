@@ -105,7 +105,10 @@ def make_normal_dsl(config, namespace, selection_param, is_multi_host=False,
         data_transform_1 = DataTransform(name="data_transform_1")
         intersection_1 = Intersection(name="intersection_1")
         pipeline.add_component(reader_1)
-        pipeline.add_component(data_transform_1, data=Data(data=reader_1.output.data), model=Model(data_transform_0.output.model))
+        pipeline.add_component(
+            data_transform_1, data=Data(
+                data=reader_1.output.data), model=Model(
+                data_transform_0.output.model))
         pipeline.add_component(intersection_1, data=Data(data=data_transform_1.output.data))
 
         psi_0 = PSI(**kwargs['psi_param'])
@@ -186,7 +189,10 @@ def make_single_predict_pipeline(config, namespace, selection_param, is_multi_ho
     intersection_1 = Intersection(name="intersection_1")
 
     pipeline.add_component(reader_1)
-    pipeline.add_component(data_transform_1, data=Data(data=reader_1.output.data), model=Model(data_transform_0.output.model))
+    pipeline.add_component(
+        data_transform_1, data=Data(
+            data=reader_1.output.data), model=Model(
+            data_transform_0.output.model))
     pipeline.add_component(intersection_1, data=Data(data=data_transform_1.output.data))
 
     sample_0 = FederatedSample(name='sample_0', fractions=0.9)

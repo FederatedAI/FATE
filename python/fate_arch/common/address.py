@@ -83,7 +83,15 @@ class MysqlAddress(AddressABC):
 
 
 class HiveAddress(AddressABC):
-    def __init__(self, host, name, port=10000, username=None, database='default', auth_mechanism='PLAIN', password=None):
+    def __init__(
+            self,
+            host,
+            name,
+            port=10000,
+            username=None,
+            database='default',
+            auth_mechanism='PLAIN',
+            password=None):
         self.host = host
         self.username = username
         self.port = port
@@ -112,7 +120,7 @@ class LinkisHiveAddress(AddressABC):
         self.name = name
         self.run_type = run_type
         self.execute_application_name = execute_application_name
-        self.source=source
+        self.source = source
         self.params = params
 
     def __hash__(self):

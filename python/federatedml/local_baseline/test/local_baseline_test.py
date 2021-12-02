@@ -49,7 +49,7 @@ class TestLocalBaseline(unittest.TestCase):
         self.y = np.random.randint(0, 2, data_num)
         final_result = []
         for i in range(data_num):
-            tmp = self.X[i,:]
+            tmp = self.X[i, :]
             inst = Instance(inst_id=i, features=tmp, label=self.y[i])
             tmp = (str(i), inst)
             final_result.append(tmp)

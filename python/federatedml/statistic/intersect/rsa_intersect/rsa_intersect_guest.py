@@ -306,7 +306,7 @@ class RsaIntersectionGuest(RsaIntersect):
 
         # filter ids
         intersect_ids_list = [host_sign_guest_ids_list[i].filter(lambda k, v: host_filter_list[i].check(v[1]))
-                                      for i in range(len(self.host_party_id_list))]
+                              for i in range(len(self.host_party_id_list))]
         intersect_ids_list = [ids.map(lambda k, v: (v[0], 1)) for ids in intersect_ids_list]
         intersect_ids = self.get_common_intersection(intersect_ids_list)
         self.intersect_num = intersect_ids.count()
@@ -364,7 +364,6 @@ class RsaIntersectionGuest(RsaIntersect):
                                                            role=consts.HOST,
                                                            idx=i)
             LOGGER.info("Remote guest_pubkey_ids to Host {}".format(i))
-
 
         # Recv signed guest ids
         # table(r^e % n *hash(sid), guest_id_process)

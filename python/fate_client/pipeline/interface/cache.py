@@ -24,4 +24,3 @@ class Cache(object):
             return self._cache
         else:
             raise ValueError("cache key {} not support".format(cache_key))
-

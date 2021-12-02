@@ -43,8 +43,12 @@ def main(config="../../config.yaml", namespace=""):
 
     data_transform_0 = DataTransform(name="data_transform_0")
 
-    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=False, output_format="dense")
-    data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False, output_format="dense")
+    data_transform_0.get_party_instance(
+        role='guest', party_id=guest).component_param(
+        with_label=False, output_format="dense")
+    data_transform_0.get_party_instance(
+        role='host', party_id=host).component_param(
+        with_label=False, output_format="dense")
 
     param = {
         "intersect_method": "rsa",
@@ -77,4 +81,3 @@ if __name__ == "__main__":
         main(args.config)
     else:
         main()
-

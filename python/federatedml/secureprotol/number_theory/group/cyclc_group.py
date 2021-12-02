@@ -23,6 +23,7 @@ class CyclicGroupElement(GroupElement):
     """
     Cyclic group element
     """
+
     def __init__(self):
         super(CyclicGroupElement, self).__init__()
 
@@ -31,6 +32,7 @@ class CyclicGroupArithmetic(GroupArithmetic):
     """
     A collection of arithmetic operators for cyclic groups
     """
+
     def __init__(self, identity, generator):
         super(CyclicGroupArithmetic, self).__init__(identity)
         self.generator = generator

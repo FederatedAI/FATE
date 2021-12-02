@@ -64,30 +64,30 @@ class TestHomoNNConverter(unittest.TestCase):
                                loss="CrossEntropyLoss")
         nn_param.check()
         nn_define = [
-                {
-                    "layer": "Linear",
-                    "name": "line1",
-                    "type": "normal",
-                    "config": [
+            {
+                "layer": "Linear",
+                "name": "line1",
+                "type": "normal",
+                "config": [
                         18,
                         5
-                    ]
-                },
-                {
-                    "layer": "Relu",
-                    "type": "activate",
-                    "name": "relu"
-                },
-                {
-                    "layer": "Linear",
-                    "name": "line2",
-                    "type": "normal",
-                    "config": [
+                ]
+            },
+            {
+                "layer": "Relu",
+                "type": "activate",
+                "name": "relu"
+            },
+            {
+                "layer": "Linear",
+                "name": "line2",
+                "type": "normal",
+                "config": [
                         5,
                         4
-                    ]
-                }
-            ]
+                ]
+            }
+        ]
         self.pytorch_model_param = NNModelParam()
         pytorch_nn_model = build_pytorch(nn_define, nn_param.optimizer, nn_param.loss, nn_param.metrics)
         self.pytorch_model_param.saved_model_bytes = pytorch_nn_model.export_model()
@@ -105,54 +105,54 @@ class TestHomoNNConverter(unittest.TestCase):
                                loss="NLLLoss")
         nn_param.check()
         nn_define = [
-          {
-            "layer": "Conv2d",
-            "in_channels": 1,
-            "out_channels": 10,
-            "kernel_size": [5, 5]
-          },
-          {
-            "layer": "MaxPool2d",
-            "kernel_size": 2
-          },
-          {
-            "layer": "ReLU"
-          },
-          {
-            "layer": "Conv2d",
-            "in_channels": 10,
-            "out_channels": 20,
-            "kernel_size": [5, 5]
-          },
-          {
-            "layer": "Dropout2d"
-          },
-          {
-            "layer": "MaxPool2d",
-            "kernel_size": 2
-          },
-          {
-            "layer": "ReLU"
-          },
-          {
-            "layer": "Flatten"
-          },
-          {
-            "layer": "Linear",
-            "in_features": 320,
-            "out_features": 50
-          },
-          {
-            "layer": "ReLU"
-          },
-          {
-            "layer": "Linear",
-            "in_features": 50,
-            "out_features": 10
-          },
-          {
-            "layer": "LogSoftmax"
-          }
+            {
+                "layer": "Conv2d",
+                "in_channels": 1,
+                "out_channels": 10,
+                "kernel_size": [5, 5]
+            },
+            {
+                "layer": "MaxPool2d",
+                "kernel_size": 2
+            },
+            {
+                "layer": "ReLU"
+            },
+            {
+                "layer": "Conv2d",
+                "in_channels": 10,
+                "out_channels": 20,
+                "kernel_size": [5, 5]
+            },
+            {
+                "layer": "Dropout2d"
+            },
+            {
+                "layer": "MaxPool2d",
+                "kernel_size": 2
+            },
+            {
+                "layer": "ReLU"
+            },
+            {
+                "layer": "Flatten"
+            },
+            {
+                "layer": "Linear",
+                "in_features": 320,
+                "out_features": 50
+            },
+            {
+                "layer": "ReLU"
+            },
+            {
+                "layer": "Linear",
+                "in_features": 50,
+                "out_features": 10
+            },
+            {
+                "layer": "LogSoftmax"
+            }
         ]
         pl_module = FedLightModule(
             None,
@@ -200,10 +200,10 @@ class TestHomoNNConverter(unittest.TestCase):
     @staticmethod
     def _do_convert(model_param, model_meta):
         return model_convert(model_contents={
-                                'HomoNNModelParam': model_param,
-                                'HomoNNModelMeta': model_meta
-                             },
-                             module_name='HomoNN')
+            'HomoNNModelParam': model_param,
+            'HomoNNModelMeta': model_meta
+        },
+            module_name='HomoNN')
 
 
 if __name__ == '__main__':

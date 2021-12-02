@@ -1,5 +1,5 @@
-#!/usr/bin/env python    
-# -*- coding: utf-8 -*- 
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
@@ -55,6 +55,6 @@ class Node(object):
     def __str__(self):
         return "id{}, fid:{},bid:{},weight:{},sum_grad:{},sum_hess:{},left_node:{},right_node:{}, sitename:{}, " \
                "is leaf {}".format(self.id,
-                self.fid, self.bid, self.weight, self.sum_grad, self.sum_hess, self.left_nodeid, self.right_nodeid,
-                self.sitename, self.is_leaf
-        )
+                                   self.fid, self.bid, self.weight, self.sum_grad, self.sum_hess, self.left_nodeid, self.right_nodeid,
+                                   self.sitename, self.is_leaf
+                                   )

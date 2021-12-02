@@ -70,4 +70,3 @@ class DataNode(object):
             self._idx += 1
             self._f = self._f.join(f, lambda pre_scores, score: pre_scores + [score])
         self._round_idx_map[self._boost_round] = self._idx
-

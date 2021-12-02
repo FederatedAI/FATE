@@ -129,7 +129,6 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
 
     @staticmethod
     def traverse_host_local_trees(node_pos, sample, trees: List[HeteroFastDecisionTreeHost]):
-
         """
         in mix mode, a sample can reach leaf directly
         """
@@ -180,7 +179,7 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
         param_name = consts.HETERO_FAST_SBT_HOST_MODEL + "Param"
         model_param.tree_plan.extend(plan.encode_plan(self.tree_plan))
         model_param.model_name = consts.HETERO_FAST_SBT_MIX if self.work_mode == consts.MIX_TREE else \
-                                 consts.HETERO_FAST_SBT_LAYERED
+            consts.HETERO_FAST_SBT_LAYERED
         # in mix mode, host can output feature importance
         feature_importances = list(self.feature_importances_.items())
         feature_importances = sorted(feature_importances, key=itemgetter(1), reverse=True)

@@ -45,7 +45,9 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
     data_transform_0 = DataTransform(name="data_transform_0")
-    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, output_format="dense")
+    data_transform_0.get_party_instance(
+        role='guest', party_id=guest).component_param(
+        with_label=True, output_format="dense")
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
@@ -67,7 +69,6 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.compile()
 
     pipeline.fit()
-
 
     # print(pipeline.get_component("hetero_lr_0").get_summary())
 

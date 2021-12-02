@@ -106,8 +106,8 @@ class HeteroFeatureBinningHost(BaseFeatureBinning):
             }
         }
         self.transfer_variable.optimal_info.remote(send_result,
-                                                        role=consts.GUEST,
-                                                        idx=0)
+                                                   role=consts.GUEST,
+                                                   idx=0)
 
     def __static_encrypted_bin_label(self, data_bin_table, encrypted_label):
         # data_bin_with_label = data_bin_table.join(encrypted_label, lambda x, y: (x, y))

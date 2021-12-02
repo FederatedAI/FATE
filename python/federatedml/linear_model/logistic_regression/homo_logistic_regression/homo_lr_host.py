@@ -213,7 +213,6 @@ class HomoLRHost(HomoLRBase):
             predict_result = self.predict_score_to_output(data_instances, pred_prob, classes=[0, 1],
                                                           threshold=self.model_param.predict_param.threshold)
 
-
         return predict_result
 
     def _get_param(self):

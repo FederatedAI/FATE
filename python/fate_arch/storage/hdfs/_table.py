@@ -57,7 +57,7 @@ class StorageTable(StorageTableBase):
 
     def check_address(self):
         return self._exist()
-    
+
     def _put_all(
         self, kv_list: Iterable, append=True, assume_file_exist=False, **kwargs
     ):

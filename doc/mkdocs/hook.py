@@ -121,7 +121,7 @@ try:
     if url.endswith(".git"):
         url = url[:-4]
     GITHUB_REPO = f"{url}/tree/{sha}"
-except:
+except BaseException:
     GITHUB_REPO = "https://github.com/FederatedAI/FATE/tree/master"
 
 _DIR_URL_REGEX = re.compile(

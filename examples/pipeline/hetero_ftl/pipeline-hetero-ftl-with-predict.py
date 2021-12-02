@@ -46,7 +46,9 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
     data_transform_0 = DataTransform(name="data_transform_0")
-    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, output_format="dense")
+    data_transform_0.get_party_instance(
+        role='guest', party_id=guest).component_param(
+        with_label=True, output_format="dense")
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     hetero_ftl_0 = HeteroFTL(name='hetero_ftl_0',
@@ -77,8 +79,10 @@ def main(config="../../config.yaml", namespace=""):
     predict_pipeline.add_component(reader_0)
     # add selected components from train pipeline onto predict pipeline
     # specify data source
-    predict_pipeline.add_component(pipeline,
-                                   data=Data(predict_input={pipeline.data_transform_0.input.data: reader_0.output.data}))
+    predict_pipeline.add_component(
+        pipeline, data=Data(
+            predict_input={
+                pipeline.data_transform_0.input.data: reader_0.output.data}))
     # run predict model
     predict_pipeline.predict()
 

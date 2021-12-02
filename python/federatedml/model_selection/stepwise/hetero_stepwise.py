@@ -312,8 +312,18 @@ class HeteroStepwise(object):
         metas["direction"] = self.direction
         metas["n_count"] = int(self.n_count)
 
-        host_anonym = [anonymous_generator.generate_anonymous(fid=i, role='host', model=model) for i in range(len(host_mask))]
-        guest_anonym = [anonymous_generator.generate_anonymous(fid=i, role='guest', model=model) for i in range(len(guest_mask))]
+        host_anonym = [
+            anonymous_generator.generate_anonymous(
+                fid=i,
+                role='host',
+                model=model) for i in range(
+                len(host_mask))]
+        guest_anonym = [
+            anonymous_generator.generate_anonymous(
+                fid=i,
+                role='guest',
+                model=model) for i in range(
+                len(guest_mask))]
         metas["host_features_anonym"] = host_anonym
         metas["guest_features_anonym"] = guest_anonym
 

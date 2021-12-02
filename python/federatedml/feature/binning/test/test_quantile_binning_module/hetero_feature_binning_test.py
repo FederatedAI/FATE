@@ -236,7 +236,7 @@ if __name__ == '__main__':
                                         "guest": [
                                             guest_id
                                         ]
-                                    }
+                                }
                                 })
 
         test_obj = TestHeteroFeatureBinning(role, guest_id, host_id)

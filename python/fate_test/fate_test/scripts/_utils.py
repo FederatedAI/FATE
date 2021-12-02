@@ -17,7 +17,7 @@ from fate_test._parser import Testsuite, BenchmarkSuite, DATA_JSON_HOOK, CONF_JS
 def _big_data_task(includes, guest_data_size, host_data_size, guest_feature_num, host_feature_num, host_data_type,
                    config_inst, encryption_type, match_rate, sparsity, force, split_host, output_path, parallelize):
     from fate_test.scripts import generate_mock_data
-    
+
     def _find_testsuite_files(path):
         suffix = ["testsuite.json", "benchmark.json"]
         if isinstance(path, str):
@@ -101,7 +101,8 @@ def _upload_data(clients: Clients, suite, config: Config, output_path=None):
                            width=24) as bar:
         for i, data in enumerate(suite.dataset):
             data.update(config)
-            table_name = data.config['table_name'] if data.config.get('table_name', None) is not None else data.config.get('name')
+            table_name = data.config['table_name'] if data.config.get(
+                'table_name', None) is not None else data.config.get('name')
             data_progress = DataProgress(f"{data.role_str}<-{data.config['namespace']}.{table_name}")
 
             def update_bar(n_step):
@@ -127,7 +128,7 @@ def _upload_data(clients: Clients, suite, config: Config, output_path=None):
                 bar.update(1)
                 if _config.data_switch:
                     from fate_test.scripts import generate_mock_data
-                    
+
                     generate_mock_data.remove_file(data_path)
             except Exception:
                 exception_id = str(uuid.uuid1())
@@ -146,7 +147,8 @@ def _delete_data(clients: Clients, suite: Testsuite):
         for data in suite.dataset:
             # noinspection PyBroadException
             try:
-                table_name = data.config['table_name'] if data.config.get('table_name', None) is not None else data.config.get('name')
+                table_name = data.config['table_name'] if data.config.get(
+                    'table_name', None) is not None else data.config.get('name')
                 bar.item_show_func = \
                     lambda x: f"delete table: name={table_name}, namespace={data.config['namespace']}"
                 clients[data.role_str].delete_data(data)

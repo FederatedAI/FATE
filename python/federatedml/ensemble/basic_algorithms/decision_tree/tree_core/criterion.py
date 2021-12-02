@@ -1,5 +1,5 @@
-#!/usr/bin/env python    
-# -*- coding: utf-8 -*- 
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
@@ -64,8 +64,8 @@ class XgboostCriterion(Criterion):
         left_node_sum_grad, left_node_sum_hess = left_node_sum
         right_node_sum_grad, right_node_sum_hess = right_node_sum
         rs = self.node_gain(left_node_sum_grad, left_node_sum_hess) + \
-             self.node_gain(right_node_sum_grad, right_node_sum_hess) - \
-             self.node_gain(sum_grad, sum_hess)
+            self.node_gain(right_node_sum_grad, right_node_sum_hess) - \
+            self.node_gain(sum_grad, sum_hess)
         return self.truncate(rs)
 
     def node_gain(self, sum_grad, sum_hess):

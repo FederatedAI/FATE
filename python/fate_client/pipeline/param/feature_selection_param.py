@@ -281,6 +281,7 @@ class CorrelationFilterParam(BaseParam):
     select_federated: bool, default: True
         Whether select federated with other parties or based on local variables
     """
+
     def __init__(self, sort_metric='iv', threshold=0.1, select_federated=True):
         super().__init__()
         self.sort_metric = sort_metric

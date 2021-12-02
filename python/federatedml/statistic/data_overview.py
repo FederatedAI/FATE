@@ -245,6 +245,7 @@ def check_with_inst_id(data_instances):
 
 def scale_sample_weight(data_instances):
     data_count = data_instances.count()
+
     def _sum_all_weight(kv_iterator):
         weight_sum = 0
         for _, v in kv_iterator:
@@ -254,6 +255,7 @@ def scale_sample_weight(data_instances):
     # LOGGER.debug(f"weight_sum is : {total_weight}")
     scale_factor = data_count / total_weight
     # LOGGER.debug(f"scale factor is : {total_weight}")
+
     def _replace_weight(instance):
         new_weight = instance.weight * scale_factor
         instance.set_weight(new_weight)

@@ -58,7 +58,6 @@ __all__ = ["HeteroSecureBoostParam", "HomoSecureBoostParam", "HeteroFastSecureBo
            "IntersectParam", "LinearParam", "LocalBaselineParam", "HeteroLogisticParam",
            "HomoLogisticParam", "PearsonParam", "PoissonParam", "PSIParam", "SampleParam",
            "SampleWeightParam", "ScaleParam", "ScorecardParam",
-           "UnionParam", "ObjectiveParam", "DecisionTreeParam", "PredictParam",  "SBTTransformerParam",
+           "UnionParam", "ObjectiveParam", "DecisionTreeParam", "PredictParam", "SBTTransformerParam",
            "FeatureImputationParam", "LabelTransformParam",
-           "SecureInformationRetrievalParam","CacheLoaderParam"]
-
+           "SecureInformationRetrievalParam", "CacheLoaderParam"]

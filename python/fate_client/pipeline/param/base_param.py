@@ -38,18 +38,18 @@ class BaseParam(object):
                      "range": self._range
                      }
         home_dir = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
-        param_validation_path_prefix = home_dir + "/param_validation/";
+        param_validation_path_prefix = home_dir + "/param_validation/"
 
-        param_name = type(self).__name__;
+        param_name = type(self).__name__
         param_validation_path = "/".join([param_validation_path_prefix, param_name + ".json"])
 
         validation_json = None
-        print ("param validation path is {}".format(home_dir))
+        print("param validation path is {}".format(home_dir))
 
         try:
             with open(param_validation_path, "r") as fin:
                 validation_json = json.loads(fin.read())
-        except:
+        except BaseException:
             return
 
         self._validate_param(self, validation_json)
@@ -60,7 +60,7 @@ class BaseParam(object):
 
         for variable in var_list:
             attr = getattr(param_obj, variable)
-            
+
             if type(attr).__name__ in self.builtin_types or attr is None:
                 if variable not in validation_json:
                     continue

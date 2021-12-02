@@ -1,0 +1,38 @@
+name: autopep8-command
+on:
+  repository_dispatch:
+    types: [autopep8-command]
+jobs:
+  autopep8:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the pull request branch
+      - uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.event.client_payload.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.client_payload.pull_request.head.ref }}
+
+      # Run autopep8
+      - name: autopep8
+        id: autopep8
+        uses: peter-evans/autopep8@v1
+        with:
+          args: --exit-code --jobs 0 --recursive --in-place --aggressive --aggressive .
+
+      # Commit the change to the PR branch
+      - name: Commit to the PR branch
+        if: steps.autopep8.outputs.exit-code == 2
+        run: |
+          git config --global user.name 'actions-bot'
+          git config --global user.email '58130806+actions-bot@users.noreply.github.com'
+          git commit -am "[autopep8-command] fixes"
+          git push
+
+      - name: Add reaction
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
+          comment-id: ${{ github.event.client_payload.github.payload.comment.id }}
+          reaction-type: hooray

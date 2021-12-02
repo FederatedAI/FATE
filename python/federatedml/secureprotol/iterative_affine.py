@@ -97,13 +97,13 @@ class IterativeAffineCipherKey(object):
         self.key_round = len(self.a_array)
         self.a_inv_array = self.mod_inverse()
         self.affine_encoder = AffineEncoder(mult=encode_precision)
-        
+
     def mod_inverse(self):
         a_array_inv = [0 for _ in self.a_array]
         for i in range(self.key_round):
             a_array_inv[i] = invert(self.a_array[i], self.n_array[i])
         return a_array_inv
-        
+
     def encrypt(self, plaintext):
         pass
 
@@ -212,8 +212,8 @@ class DeterministicIterativeAffineCipherKey(IterativeAffineCipherKey):
         )
 
     def raw_decrypt_round(self, ciphertext, round_index):
-        plaintext = int((mpz(self.a_inv_array[self.key_round - 1 - round_index]) * ciphertext) \
-                    % self.n_array[self.key_round - 1 - round_index])
+        plaintext = int((mpz(self.a_inv_array[self.key_round - 1 - round_index]) * ciphertext)
+                        % self.n_array[self.key_round - 1 - round_index])
 
         if plaintext / self.n_array[self.key_round - 1 - round_index] > 0.9:
             return plaintext - self.n_array[self.key_round - 1 - round_index]
@@ -264,7 +264,7 @@ class RandomizedIterativeAffineCiphertext(IterativeAffineCiphertext):
                     multiple=self.multiple,
                     mult_times=self.mult_times
                 )
-        elif type(other) is int and other == 0:
+        elif isinstance(other, int) and other == 0:
             return self
         else:
             raise TypeError("Addition only supports RandomizedIterativeAffineCiphertext"
@@ -280,7 +280,7 @@ class RandomizedIterativeAffineCiphertext(IterativeAffineCiphertext):
         return other + (self * -1)
 
     def __mul__(self, other):
-        if type(other) is float or type(other) is np.float32 or type(other) is np.float64:
+        if isinstance(other, float) or isinstance(other, np.float32) or isinstance(other, np.float64):
             return RandomizedIterativeAffineCiphertext(
                 cipher1=self.cipher1 * int(other * self.multiple) % self.n_final,
                 cipher2=self.cipher2 * int(other * self.multiple) % self.n_final,
@@ -288,7 +288,7 @@ class RandomizedIterativeAffineCiphertext(IterativeAffineCiphertext):
                 multiple=self.multiple,
                 mult_times=self.mult_times + 1
             )
-        elif type(other) is int or type(other) is np.int32 or type(other) is np.int64:
+        elif isinstance(other, int) or isinstance(other, np.int32) or isinstance(other, np.int64):
             return RandomizedIterativeAffineCiphertext(
                 cipher1=self.cipher1 * int(other) % self.n_final,
                 cipher2=self.cipher2 * int(other) % self.n_final,
@@ -335,7 +335,7 @@ class DeterministicIterativeAffineCiphertext(IterativeAffineCiphertext):
                     multiple=self.multiple,
                     mult_times=other.mult_times
                 )
-        elif type(other) is int and other == 0:
+        elif isinstance(other, int) and other == 0:
             return self
         else:
             raise TypeError("Addition only supports IterativeAffineCiphertext and initialization with int zero")
@@ -350,14 +350,14 @@ class DeterministicIterativeAffineCiphertext(IterativeAffineCiphertext):
         return other + (self * -1)
 
     def __mul__(self, other):
-        if type(other) is float or type(other) is np.float32 or type(other) is np.float64:
+        if isinstance(other, float) or isinstance(other, np.float32) or isinstance(other, np.float64):
             return DeterministicIterativeAffineCiphertext(
                 cipher=self.cipher * int(other * self.multiple) % self.n_final,
                 n_final=self.n_final,
                 multiple=self.multiple,
                 mult_times=self.mult_times + 1
             )
-        elif type(other) is int or type(other) is np.int32 or type(other) is np.int64:
+        elif isinstance(other, int) or isinstance(other, np.int32) or isinstance(other, np.int64):
             return DeterministicIterativeAffineCiphertext(
                 cipher=self.cipher * int(other) % self.n_final,
                 n_final=self.n_final,

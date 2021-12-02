@@ -51,6 +51,3 @@ class Comparision(object):
             return True
 
         return self._get_size() - self._get_le_count(value) < k
-
-
-

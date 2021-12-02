@@ -89,4 +89,4 @@ class Bucket(object):
             return 0
 
         return 1 - (1.0 * self.event_count / self.total_count) ** 2 - \
-               (1.0 * self.non_event_count / self.total_count) ** 2
+            (1.0 * self.non_event_count / self.total_count) ** 2

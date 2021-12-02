@@ -336,7 +336,7 @@ class SparseQuantileSummaries(QuantileSummaries):
             return ((self._total_count - self.missing_count) / self.count) * quantile
 
         return (quantile - self.zero_upper_bound + self.zero_lower_bound) / (
-                1 - self.zero_upper_bound + self.zero_lower_bound)
+            1 - self.zero_upper_bound + self.zero_lower_bound)
 
     @property
     def zero_lower_bound(self):

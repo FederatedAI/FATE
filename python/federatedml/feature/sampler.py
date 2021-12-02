@@ -313,7 +313,12 @@ class StratifiedSampler(object):
 
                 random.shuffle(sample_ids)
 
-                callback(self.tracker, "stratified", callback_sample_metrics, callback_original_metrics, self._summary_buf)
+                callback(
+                    self.tracker,
+                    "stratified",
+                    callback_sample_metrics,
+                    callback_original_metrics,
+                    self._summary_buf)
 
             sample_dtable = session.parallelize(zip(sample_ids, range(len(sample_ids))),
                                                 include_key=True,
@@ -370,7 +375,12 @@ class StratifiedSampler(object):
 
                 random.shuffle(sample_ids)
 
-                callback(self.tracker, "stratified", callback_sample_metrics, callback_original_metrics, self._summary_buf)
+                callback(
+                    self.tracker,
+                    "stratified",
+                    callback_sample_metrics,
+                    callback_original_metrics,
+                    self._summary_buf)
 
             new_data = []
             for i in range(len(sample_ids)):
@@ -459,7 +469,7 @@ class Sampler(ModelBase):
         try:
             if len(sample_data) == 2:
                 sample_data[0].schema = ori_schema
-        except:
+        except BaseException:
             sample_data.schema = ori_schema
 
         return sample_data
@@ -598,5 +608,3 @@ def callback(tracker, method, callback_metrics, other_metrics=None, summary_dict
         summary_dict["original_count"] = {}
         for sample_metric in other_metrics:
             summary_dict["original_count"][sample_metric.key] = sample_metric.value
-
-

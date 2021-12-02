@@ -1,7 +1,7 @@
 from pipeline.component.column_expand import ColumnExpand
 from pipeline.component.data_statistics import DataStatistics
 from pipeline.component.dataio import DataIO
-from pipeline.component.data_transform import DataTransform 
+from pipeline.component.data_transform import DataTransform
 from pipeline.component.evaluation import Evaluation
 from pipeline.component.hetero_data_split import HeteroDataSplit
 from pipeline.component.hetero_fast_secureboost import HeteroFastSecureBoost
@@ -50,4 +50,3 @@ __all__ = ["DataStatistics", "DataIO", "Evaluation", "HeteroDataSplit",
            "SampleWeight", "DataTransform", "SBTTransformer", "FeatureImputation",
            "LabelTransform", "SecureInformationRetrieval", "CacheLoader", "ModelLoader",
            "HeteroSSHELR", "HeteroKmeans", "HomoOneHotEncoder"]
-
