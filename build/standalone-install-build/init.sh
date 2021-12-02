@@ -18,7 +18,10 @@
 
 set -e
 
-project_base=$(cd `dirname $0`;pwd)
+project_base=$(
+  cd $(dirname $0)
+  pwd
+)
 version=
 env_dir=${project_base}/env
 
@@ -72,7 +75,7 @@ init() {
 
   ${miniconda_dir}/bin/python -m pip install --upgrade pip -f ${pypi_resource} --no-index
   ${miniconda_dir}/bin/python -m pip install virtualenv -f ${pypi_resource} --no-index
-  ${miniconda_dir}/bin/virtualenv -p ${miniconda_dir}/bin/python3.6  --no-wheel --no-setuptools --no-download ${venv_dir}
+  ${miniconda_dir}/bin/virtualenv -p ${miniconda_dir}/bin/python3.6 --no-wheel --no-setuptools --no-download ${venv_dir}
   source ${venv_dir}/bin/activate
   pip install setuptools --no-index -f ${pypi_resource}
   echo "[INFO] install virtualenv done"
@@ -111,33 +114,33 @@ action() {
 
   source $project_base/bin/init_env.sh
 
-	cd  $project_base/fateflow
-	bash bin/service.sh $1
+  cd $project_base/fateflow
+  bash bin/service.sh $1
 
-	cd  $project_base/fateboard
-	bash service.sh $1
+  cd $project_base/fateboard
+  bash service.sh $1
 
-	cd $project_base
+  cd $project_base
 }
 
-
 case "$1" in
-    start)
-        action $@
-        ;;
-		
-    stop)
-        action $@
-        ;;
-		
-    status)
-        action $@
-        ;;
+start)
+  action $@
+  ;;
 
-    init)
-	init
-	;;
-    *)
-        echo "usage: $0 {start|stop|status|init}"
-        exit -1
+stop)
+  action $@
+  ;;
+
+status)
+  action $@
+  ;;
+
+init)
+  init
+  ;;
+*)
+  echo "usage: $0 {start|stop|status|init}"
+  exit -1
+  ;;
 esac
