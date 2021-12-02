@@ -18,9 +18,6 @@ import operator
 
 import numpy as np
 
-from federatedml.framework.hetero.procedure import batch_generator
-from federatedml.transfer_variable.transfer_class.batch_generator_transfer_variable import \
-    BatchGeneratorTransferVariable
 from federatedml.framework.hetero.procedure.hetero_sshe_linear_model import HeteroSSHEGuestBase
 from federatedml.optim import activation
 from federatedml.one_vs_rest.one_vs_rest import one_vs_rest_factory
@@ -314,12 +311,15 @@ class HeteroLRGuest(HeteroSSHEGuestBase):
 
     def fit(self, data_instances, validate_data=None):
         LOGGER.info("Starting to fit hetero_sshe_logistic_regression")
+        """
         self.batch_generator = batch_generator.Guest()
         self.batch_generator.register_batch_generator(BatchGeneratorTransferVariable(), has_arbiter=False)
         self.header = data_instances.schema.get("header", [])
         self._abnormal_detection(data_instances)
         self.check_abnormal_values(data_instances)
         self.check_abnormal_values(validate_data)
+        """
+        self.prepare_fit(data_instances, validate_data)
         classes = self.one_vs_rest_obj.get_data_classes(data_instances)
 
         if len(classes) > 2:

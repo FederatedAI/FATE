@@ -29,7 +29,7 @@ def hetero_poisson_param():
 
 @hetero_poisson_cpn_meta.bind_runner.on_guest
 def hetero_poisson_runner_guest():
-    from federatedml.linear_model.coordinated_linear_model.poisson_regression.hetero_poisson_regression import (
+    from federatedml.linear_model.coordinated_linear_model.poisson_regression.hetero_poisson_regression.hetero_poisson_guest import (
         HeteroPoissonGuest,
     )
 

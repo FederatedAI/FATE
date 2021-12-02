@@ -317,12 +317,15 @@ class HeteroLRHost(HeteroSSHEHostBase):
 
     def fit(self, data_instances, validate_data=None):
         LOGGER.info("Starting to fit hetero_sshe_logistic_regression")
+        """
         self.batch_generator = batch_generator.Host()
         self.batch_generator.register_batch_generator(BatchGeneratorTransferVariable(), has_arbiter=False)
         self.header = data_instances.schema.get("header", [])
         self._abnormal_detection(data_instances)
         self.check_abnormal_values(data_instances)
         self.check_abnormal_values(validate_data)
+        """
+        self.prepare_fit(data_instances, validate_data)
         classes = self.one_vs_rest_obj.get_data_classes(data_instances)
 
         if len(classes) > 2:

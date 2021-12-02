@@ -18,15 +18,12 @@ import operator
 
 import numpy as np
 
-from federatedml.framework.hetero.procedure import batch_generator
 from federatedml.framework.hetero.procedure.hetero_sshe_linear_model import HeteroSSHEGuestBase
 from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.param.hetero_sshe_linr_param import HeteroSSHELinRParam
 from federatedml.protobuf.generated import linr_model_param_pb2, linr_model_meta_pb2
 from federatedml.secureprotol.spdz.tensor import fixedpoint_numpy
 from federatedml.secureprotol.spdz.secure_matrix.secure_matrix import SecureMatrix
-from federatedml.transfer_variable.transfer_class.batch_generator_transfer_variable import \
-    BatchGeneratorTransferVariable
 from federatedml.util import consts, fate_operator, LOGGER
 from federatedml.util.io_check import assert_io_num_rows_equal
 
@@ -210,12 +207,13 @@ class HeteroLinRGuest(HeteroSSHEGuestBase):
 
     def fit(self, data_instances, validate_data=None):
         LOGGER.info("Starting to fit hetero_sshe_linear_regression")
-        self.batch_generator = batch_generator.Guest()
+        """self.batch_generator = batch_generator.Guest()
         self.batch_generator.register_batch_generator(BatchGeneratorTransferVariable(), has_arbiter=False)
         self.header = data_instances.schema.get("header", [])
         self._abnormal_detection(data_instances)
         self.check_abnormal_values(data_instances)
-        self.check_abnormal_values(validate_data)
+        self.check_abnormal_values(validate_data)"""
+        self.prepare_fit(data_instances, validate_data)
 
         self.fit_single_model(data_instances, validate_data)
 

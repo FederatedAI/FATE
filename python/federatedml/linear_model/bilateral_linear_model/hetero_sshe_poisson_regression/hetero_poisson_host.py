@@ -22,34 +22,41 @@ from federatedml.framework.hetero.procedure import batch_generator
 from federatedml.transfer_variable.transfer_class.batch_generator_transfer_variable import \
     BatchGeneratorTransferVariable
 from federatedml.framework.hetero.procedure.hetero_sshe_linear_model import HeteroSSHEHostBase
-from federatedml.param.hetero_sshe_linr_param import HeteroSSHELinRParam
-from federatedml.protobuf.generated import linr_model_param_pb2, linr_model_meta_pb2
+from federatedml.linear_model.coordinated_linear_model.poisson_regression.\
+    base_poisson_regression import BasePoissonRegression
+from federatedml.param.hetero_sshe_poisson_param import HeteroSSHEPoissonParam
+from federatedml.protobuf.generated import poisson_model_param_pb2, poisson_model_meta_pb2
 from federatedml.secureprotol.spdz.secure_matrix.secure_matrix import SecureMatrix
-from federatedml.secureprotol.spdz.tensor import fixedpoint_numpy
-from federatedml.util import consts, fate_operator, LOGGER
+from federatedml.secureprotol.spdz.tensor import fixedpoint_numpy, fixedpoint_table
+from federatedml.util import consts, LOGGER
 
 
-class HeteroLinRHost(HeteroSSHEHostBase):
+class HeteroPoissonHost(HeteroSSHEHostBase):
     def __init__(self):
         super().__init__()
-        self.model_name = 'HeteroLinearRegression'
-        self.model_param_name = 'HeteroLinearRegressionParam'
-        self.model_meta_name = 'HeteroLinearRegressionMeta'
-        self.model_param = HeteroSSHELinRParam()
+        self.model_name = 'HeteroPoissonRegression'
+        self.model_param_name = 'HeteroPoissonRegressionParam'
+        self.model_meta_name = 'HeteroPoissonRegressionMeta'
+        self.model_param = HeteroSSHEPoissonParam()
         self.labels = None
+        self.mu_self = None
 
     def forward(self, weights, features, suffix, cipher):
         if not self.reveal_every_iter:
             LOGGER.info(f"[forward]: Calculate z in share...")
             w_self, w_remote = weights
             z = self._cal_z_in_share(w_self, w_remote, features, suffix, self.cipher)
+            w_self_value = self.fixedpoint_encoder.decode(w_self.value)
+            mu_self = self.fixedpoint_encoder.decode(features.value).mapValues(lambda x: np.array([np.exp(x.dot(w_self_value))]))
         else:
             LOGGER.info(f"[forward]: Calculate z directly...")
             w = weights.unboxed
             z = features.dot_local(w)
-
+            mu_self = self.fixedpoint_encoder.decode(features.value).mapValues(lambda x: np.array([np.exp(x.dot(w))]))
+        self.mu_self = fixedpoint_table.FixedPointTensor(self.fixedpoint_encoder.encode(mu_self),
+                                                         q_field=self.fixedpoint_encoder.n,
+                                                         endec=self.fixedpoint_encoder)
         self.wx_self = z
-
         self.secure_matrix_obj.share_encrypted_matrix(suffix=suffix,
                                                       is_remote=True,
                                                       cipher=cipher,
@@ -57,26 +64,26 @@ class HeteroLinRHost(HeteroSSHEHostBase):
 
         tensor_name = ".".join(("complete_z",) + suffix)
         shared_z = SecureMatrix.from_source(tensor_name,
-                                                    self.other_party,
-                                                    cipher,
-                                                    self.fixedpoint_encoder.n,
-                                                    self.fixedpoint_encoder)
+                                            self.other_party,
+                                            cipher,
+                                            self.fixedpoint_encoder.n,
+                                            self.fixedpoint_encoder)
 
         return shared_z
 
     def compute_loss(self, weights=None, suffix=None, cipher=None):
         """
-         Compute hetero linr loss:
-            loss = (1/N)*\sum(wx-y)^2 where y is label, w is model weight and x is features
-            log(wx - y)^2 = (wx_h)^2 + (wx_g - y)^2 + 2 * (wx_h * (wx_g - y))
+         Compute hetero poisson loss with log link:
+            log loss = (1/N) * \sum(exp(wx) - y * log(exp(wx) * exposure))
+            loss = (1/N) * \sum(exp(wx_g) * exp(wx_h) - y(wx_g + wx_h) + log(exposure))
+            loss = (1/N) * \sum(mu_g * mu_h - y(wx_g + wx_h) + offset)
         """
         LOGGER.info(f"[compute_loss]: Calculate loss ...")
-        wx_self_square = (self.wx_self * self.wx_self).reduce(operator.add)
 
         self.secure_matrix_obj.share_encrypted_matrix(suffix=suffix,
                                                       is_remote=True,
                                                       cipher=cipher,
-                                                      wx_self_square=wx_self_square)
+                                                      mu_self=self.mu_self)
 
         tensor_name = ".".join(("shared_loss",) + suffix)
         share_loss = SecureMatrix.from_source(tensor_name=tensor_name,
@@ -128,17 +135,11 @@ class HeteroLinRHost(HeteroSSHEHostBase):
         LOGGER.debug(f"Before_predict_reveal_strategy: {self.model_param.reveal_strategy},"
                      f" {self.is_respectively_reveal}")
 
-        def _vec_dot(v, coef, intercept):
-            return fate_operator.vec_dot(v.features, coef) + intercept
-
-        f = functools.partial(_vec_dot,
-                              coef=self.model_weights.coef_,
-                              intercept=self.model_weights.intercept_)
-        host_pred = data_instances.mapValues(f)
+        host_pred = BasePoissonRegression.compute_mu(data_instances, self.model_weights.coef_, self.model_weights.intercept_)
         self.transfer_variable.host_prob.remote(host_pred, role=consts.GUEST, idx=0)
         LOGGER.info("Remote probability to Guest")
 
-    def get_single_encrypted_model_weight_dict(self, model_weights=None, header=None):
+    """def get_single_encrypted_model_weight_dict(self, model_weights=None, header=None):
         weight_dict = {}
         model_weights = model_weights if model_weights else self.model_weights
         header = header if header else self.header
@@ -149,25 +150,25 @@ class HeteroLinRHost(HeteroSSHEHostBase):
             if hasattr(coef_i, "__is_obfuscator"):
                 is_obfuscator = getattr(coef_i, "__is_obfuscator")
 
-            public_key = linr_model_param_pb2.CipherPublicKey(n=str(coef_i.public_key.n))
-            weight_dict[header_name] = linr_model_param_pb2.CipherText(public_key=public_key,
+            public_key = poisson_model_param_pb2.CipherPublicKey(n=str(coef_i.public_key.n))
+            weight_dict[header_name] = poisson_model_param_pb2.CipherText(public_key=public_key,
                                                                        cipher_text=str(coef_i.ciphertext()),
                                                                        exponent=str(coef_i.exponent),
                                                                        is_obfuscator=is_obfuscator)
         return weight_dict
-
+    """
     def _get_param(self):
         if self.need_cv:
-            param_protobuf_obj = linr_model_param_pb2.LinRModelParam()
+            param_protobuf_obj = poisson_model_param_pb2.PoissonModelParam()
             return param_protobuf_obj
 
         self.header = self.header if self.header else []
         single_result = self.get_single_model_param()
-        param_protobuf_obj = linr_model_param_pb2.LinRModelParam(**single_result)
+        param_protobuf_obj = poisson_model_param_pb2.PoissonModelParam(**single_result)
         return param_protobuf_obj
 
     def _get_meta(self):
-        meta_protobuf_obj = linr_model_meta_pb2.LinRModelMeta(penalty=self.model_param.penalty,
+        meta_protobuf_obj = poisson_model_meta_pb2.PoissonModelMeta(penalty=self.model_param.penalty,
                                                               tol=self.model_param.tol,
                                                               alpha=self.alpha,
                                                               optimizer=self.model_param.optimizer,
@@ -184,12 +185,11 @@ class HeteroLinRHost(HeteroSSHEHostBase):
 
     def fit(self, data_instances, validate_data=None):
         LOGGER.info("Starting to fit hetero_sshe_linear_regression")
-        """self.batch_generator = batch_generator.Host()
+        self.batch_generator = batch_generator.Host()
         self.batch_generator.register_batch_generator(BatchGeneratorTransferVariable(), has_arbiter=False)
         self.header = data_instances.schema.get("header", [])
         self._abnormal_detection(data_instances)
         self.check_abnormal_values(data_instances)
-        self.check_abnormal_values(validate_data)"""
-        self.prepare_fit(data_instances, validate_data)
+        self.check_abnormal_values(validate_data)
 
         self.fit_single_model(data_instances, validate_data)

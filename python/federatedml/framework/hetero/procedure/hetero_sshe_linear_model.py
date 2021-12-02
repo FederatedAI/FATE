@@ -22,6 +22,7 @@ from abc import ABC
 import numpy as np
 
 from fate_arch.session import get_parties
+from federatedml.framework.hetero.procedure import batch_generator
 from federatedml.linear_model.linear_model_base import BaseLinearModel
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.param.init_model_param import InitParam
@@ -31,6 +32,8 @@ from federatedml.secureprotol.fixedpoint import FixedPointEndec
 from federatedml.secureprotol.spdz import SPDZ
 from federatedml.secureprotol.spdz.secure_matrix.secure_matrix import SecureMatrix
 from federatedml.secureprotol.spdz.tensor import fixedpoint_table, fixedpoint_numpy
+from federatedml.transfer_variable.transfer_class.batch_generator_transfer_variable import \
+    BatchGeneratorTransferVariable
 from federatedml.transfer_variable.transfer_class.converge_checker_transfer_variable import \
     ConvergeCheckerTransferVariable
 from federatedml.transfer_variable.transfer_class.sshe_model_transfer_variable import SSHEModelTransferVariable
@@ -109,6 +112,9 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
         raise NotImplementedError(f"Should not be called here")
 
     def check_converge_by_loss(self, loss, suffix):
+        raise NotImplementedError(f"Should not be called here")
+
+    def prepare_fit(self, data_instances, validate_data):
         raise NotImplementedError(f"Should not be called here")
 
     def check_converge_by_weights(self, last_w, new_w, suffix):
@@ -543,6 +549,15 @@ class HeteroSSHEGuestBase(HeteroSSHEBase, ABC):
 
         return self.is_converged
 
+    def prepare_fit(self, data_instances, validate_data):
+        # self.transfer_variable = SSHEModelTransferVariable()
+        self.batch_generator = batch_generator.Guest()
+        self.batch_generator.register_batch_generator(BatchGeneratorTransferVariable(), has_arbiter=False)
+        self.header = data_instances.schema.get("header", [])
+        self._abnormal_detection(data_instances)
+        self.check_abnormal_values(data_instances)
+        self.check_abnormal_values(validate_data)
+
     def get_single_model_param(self, model_weights=None, header=None):
         result = super().get_single_model_param(model_weights, header)
         result['weight'] = self.get_single_model_weight_dict(model_weights, header)
@@ -679,6 +694,14 @@ class HeteroSSHEHostBase(HeteroSSHEBase, ABC):
 
     def get_single_encrypted_model_weight_dict(self, model_weights=None, header=None):
         raise NotImplementedError(f"should not be called here")
+
+    def prepare_fit(self, data_instances, validate_data):
+        self.batch_generator = batch_generator.Host()
+        self.batch_generator.register_batch_generator(BatchGeneratorTransferVariable(), has_arbiter=False)
+        self.header = data_instances.schema.get("header", [])
+        self._abnormal_detection(data_instances)
+        self.check_abnormal_values(data_instances)
+        self.check_abnormal_values(validate_data)
 
     def get_single_model_param(self, model_weights=None, header=None):
         result = super().get_single_model_param(model_weights, header)
