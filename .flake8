@@ -6,4 +6,5 @@ exclude =
     ./.git,
     ./fateflow,
     ./eggroll,
-    ./fateboard
+    ./fateboard,
+    ./python/federatedml/secureprotol/symmetric_encryption/py_aes_core.py
