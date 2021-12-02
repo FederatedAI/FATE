@@ -129,9 +129,9 @@ class Intersect(object):
             return intersect_ids_list[0]
 
         if keep_encrypt_ids:
-            f = lambda id, v: id + v
+            def f(id, v): return id + v
         else:
-            f = lambda id, v: "id"
+            def f(id, v): return "id"
 
         intersect_ids = None
         for i, value in enumerate(intersect_ids_list):
@@ -150,9 +150,9 @@ class Intersect(object):
     @staticmethod
     def filter_intersect_ids(encrypt_intersect_ids, keep_encrypt_ids=False):
         if keep_encrypt_ids:
-            f = lambda k, v: (v, [k])
+            def f(k, v): return (v, [k])
         else:
-            f = lambda k, v: (v, 1)
+            def f(k, v): return (v, 1)
         if len(encrypt_intersect_ids) > 1:
             raw_intersect_ids = [e.map(f) for e in encrypt_intersect_ids]
             intersect_ids = Intersect.get_common_intersection(raw_intersect_ids, keep_encrypt_ids)

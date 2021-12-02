@@ -33,6 +33,7 @@ class FeldmanVerifiableSumParam(BaseParam):
             the maximum significant digit is 16. The sum of integer and significant decimal digits should
             be less than or equal to 16.
     """
+
     def __init__(self, sum_cols=None, q_n=6):
         self.sum_cols = sum_cols
         if sum_cols is None:

@@ -58,7 +58,7 @@ def toy(ctx, **kwargs):
                         try:
                             for msg in log_msg:
                                 print(msg)
-                        except:
+                        except BaseException:
                             traceback.print_exc()
                     else:
                         print(f"get log failed, please check PROJECT_BASE/logs/{submit_result['jobId']}")

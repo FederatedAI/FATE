@@ -56,6 +56,7 @@ class HeteroDecisionTreeHost(DecisionTree):
     """
     Setting
     """
+
     def report_init_status(self):
 
         LOGGER.info('reporting initialization status')
@@ -105,7 +106,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         """
         randomly generate missing dir mask
         """
-        rn = np.random.choice(range(left_num+right_num), left_num + right_num, replace=False)
+        rn = np.random.choice(range(left_num + right_num), left_num + right_num, replace=False)
         left_dir = rn[0:left_num]
         right_dir = rn[left_num:]
         self.missing_dir_mask_left[dep] = left_dir
@@ -193,7 +194,8 @@ class HeteroDecisionTreeHost(DecisionTree):
                 split_info.best_fid = self.encode("feature_idx", split_info.best_fid)
                 assert split_info.best_fid is not None
                 split_info.best_bid = self.encode("feature_val", split_info.best_bid, self.cur_to_split_nodes[i].id)
-                split_info.missing_dir = self.encode("missing_dir", split_info.missing_dir, self.cur_to_split_nodes[i].id)
+                split_info.missing_dir = self.encode(
+                    "missing_dir", split_info.missing_dir, self.cur_to_split_nodes[i].id)
                 split_info.mask_id = None
             else:
                 LOGGER.debug('this node can not be further split by host feature: {}'.format(split_info))
@@ -401,17 +403,20 @@ class HeteroDecisionTreeHost(DecisionTree):
                                                        sparse_opt=self.run_sparse_opt, hist_sub=True,
                                                        bin_num=self.bin_num)
 
-            split_info_table = self.splitter.host_prepare_split_points(histograms=acc_histograms,
-                                                                       use_missing=self.use_missing,
-                                                                       valid_features=self.valid_features,
-                                                                       sitename=self.sitename,
-                                                                       left_missing_dir=self.missing_dir_mask_left[dep],
-                                                                       right_missing_dir=self.missing_dir_mask_right[dep],
-                                                                       mask_id_mapping=self.fid_bid_random_mapping,
-                                                                       batch_size=self.bin_num,
-                                                                       cipher_compressor=self.cipher_compressor,
-                                                                       shuffle_random_seed=np.abs(hash((dep, batch)))
-                                                                       )
+            split_info_table = self.splitter.host_prepare_split_points(
+                histograms=acc_histograms,
+                use_missing=self.use_missing,
+                valid_features=self.valid_features,
+                sitename=self.sitename,
+                left_missing_dir=self.missing_dir_mask_left[dep],
+                right_missing_dir=self.missing_dir_mask_right[dep],
+                mask_id_mapping=self.fid_bid_random_mapping,
+                batch_size=self.bin_num,
+                cipher_compressor=self.cipher_compressor,
+                shuffle_random_seed=np.abs(
+                    hash(
+                        (dep,
+                         batch))))
 
             # test split info encryption
             self.transfer_inst.encrypted_splitinfo_host.remote(split_info_table,
@@ -419,8 +424,11 @@ class HeteroDecisionTreeHost(DecisionTree):
                                                                idx=-1,
                                                                suffix=(dep, batch))
             best_split_info = self.transfer_inst.federated_best_splitinfo_host.get(suffix=(dep, batch), idx=0)
-            unmasked_split_info = self.unmask_split_info(best_split_info, self.inverse_fid_bid_random_mapping,
-                                                         self.missing_dir_mask_left[dep], self.missing_dir_mask_right[dep])
+            unmasked_split_info = self.unmask_split_info(
+                best_split_info,
+                self.inverse_fid_bid_random_mapping,
+                self.missing_dir_mask_left[dep],
+                self.missing_dir_mask_right[dep])
             return_split_info = self.encode_split_info(unmasked_split_info)
             self.transfer_inst.final_splitinfo_host.remote(return_split_info,
                                                            role=consts.GUEST,
@@ -461,7 +469,7 @@ class HeteroDecisionTreeHost(DecisionTree):
     """
 
     def fit(self):
-        
+
         LOGGER.info("begin to fit host decision tree")
 
         self.init_compressor_and_sync_gh()
@@ -611,8 +619,3 @@ class HeteroDecisionTreeHost(DecisionTree):
 
     def update_tree(self, *args):
         pass
-
-
-
-
-

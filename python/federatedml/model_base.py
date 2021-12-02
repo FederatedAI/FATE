@@ -88,9 +88,10 @@ class Metric:
         self.key = key
         self.value = value
         self.timestamp = timestamp
-    
+
     def to_dict(self):
-        return dict(key=self.key, value=self.value, timestamp = self.timestamp)
+        return dict(key=self.key, value=self.value, timestamp=self.timestamp)
+
 
 class MetricMeta:
     def __init__(self, name: str, metric_type: MetricType, extra_metas: dict = None):
@@ -120,10 +121,15 @@ class WarpedTrackerClient:
     def log_metric_data(
         self, metric_namespace: str, metric_name: str, metrics: typing.List[Metric]
     ):
-        return self._tracker.log_metric_data(metric_namespace=metric_namespace, metric_name=metric_name, metrics = [metric.to_dict() for metric in metrics])
+        return self._tracker.log_metric_data(
+            metric_namespace=metric_namespace, metric_name=metric_name, metrics=[
+                metric.to_dict() for metric in metrics])
 
     def set_metric_meta(self, metric_namespace: str, metric_name: str, metric_meta: MetricMeta):
-        return self._tracker.set_metric_meta(metric_namespace=metric_namespace, metric_name=metric_name, metric_meta=metric_meta.to_dict())
+        return self._tracker.set_metric_meta(
+            metric_namespace=metric_namespace,
+            metric_name=metric_name,
+            metric_meta=metric_meta.to_dict())
 
     def log_component_summary(self, summary_data: dict):
         return self._tracker.log_component_summary(summary_data=summary_data)
@@ -158,7 +164,7 @@ class ModelBase(object):
         if self._tracker is None:
             raise RuntimeError(f"use tracker before set")
         return self._tracker
-    
+
     @tracker.setter
     def tracker(self, value):
         self._tracker = WarpedTrackerClient(value)

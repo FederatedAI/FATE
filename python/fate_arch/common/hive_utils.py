@@ -31,7 +31,8 @@ def serialize_line(k, v):
 
 def read_line(line_data):
     line = [str(i) for i in line_data]
-    return  f'{_DELIMITER}'.join(line) + f"{NEWLINE}"
+    return f'{_DELIMITER}'.join(line) + f"{NEWLINE}"
+
 
 def from_row(r):
     return r.key, pickle.loads(bytes.fromhex(r.value))

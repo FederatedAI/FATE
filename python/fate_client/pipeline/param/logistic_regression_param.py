@@ -240,7 +240,7 @@ class LogisticParam(BaseParam):
             raise ValueError("use_first_metric_only should be a boolean")
 
         if self.floating_point_precision is not None and \
-                (not isinstance(self.floating_point_precision, int) or\
+                (not isinstance(self.floating_point_precision, int) or
                  self.floating_point_precision < 0 or self.floating_point_precision > 63):
             raise ValueError("floating point precision should be null or a integer between 0 and 63")
         return True
@@ -266,6 +266,7 @@ class HomoLogisticParam(LogisticParam):
         To scale the proximal term
 
     """
+
     def __init__(self, penalty='L2',
                  tol=1e-4, alpha=1.0, optimizer='rmsprop',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),

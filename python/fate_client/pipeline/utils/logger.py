@@ -59,7 +59,7 @@ def disable_console_log():
     """
     try:
         LOGGER.remove(console_handler)
-    except:
+    except BaseException:
         pass
 
 

@@ -19,7 +19,7 @@ from pipeline.component.hetero_poisson import HeteroPoisson
 
 
 a = HeteroPoisson(name="hetero_poisson_0", early_stop="diff",
-             early_stopping_rounds=3, validation_freqs=3)
+                  early_stopping_rounds=3, validation_freqs=3)
 
-print (a.output.data)
-print (a.output.model)
+print(a.output.data)
+print(a.output.model)

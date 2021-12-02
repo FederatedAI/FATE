@@ -372,7 +372,9 @@ class Federation(FederationABC):
             for party in parties
         ]
 
-        # the return is formed like this: [[(topic_key1, topic_info1), (topic_key2, topic_info2)...],[(topic_key1, topic_info1), (topic_key2, topic_info2]...]
+        # the return is formed like this: [[(topic_key1, topic_info1),
+        # (topic_key2, topic_info2)...],[(topic_key1, topic_info1), (topic_key2,
+        # topic_info2]...]
         return topic_infos
 
     def _get_or_create_topic(

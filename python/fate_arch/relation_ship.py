@@ -91,7 +91,7 @@ class Relationship(object):
         "fate_on_spark": {
             EngineType.COMPUTING: [(ComputingEngine.SPARK, "spark"), (ComputingEngine.LINKIS_SPARK, "linkis_spark")],
             EngineType.STORAGE: [(StorageEngine.HDFS, "hdfs"), (StorageEngine.HIVE, "hive"),
-                                 (StorageEngine.LINKIS_HIVE, "linkis_hive"),(StorageEngine.LOCALFS, "localfs")],
+                                 (StorageEngine.LINKIS_HIVE, "linkis_hive"), (StorageEngine.LOCALFS, "localfs")],
             EngineType.FEDERATION: [(FederationEngine.RABBITMQ, "rabbitmq"), (FederationEngine.PULSAR, "pulsar")]
         },
     }

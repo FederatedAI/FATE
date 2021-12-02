@@ -14,17 +14,37 @@ from sklearn.preprocessing import LabelEncoder
 
 def build(param, shape1, shape2):
     input1 = tf.keras.layers.Input(shape=(shape1,))
-    x1 = tf.keras.layers.Dense(units=param["bottom_layer_units"], activation='tanh',
-                               kernel_initializer=keras.initializers.RandomUniform(minval=-1, maxval=1, seed=123))(input1)
+    x1 = tf.keras.layers.Dense(
+        units=param["bottom_layer_units"],
+        activation='tanh',
+        kernel_initializer=keras.initializers.RandomUniform(
+            minval=-1,
+            maxval=1,
+            seed=123))(input1)
     input2 = tf.keras.layers.Input(shape=(shape2,))
-    x2 = tf.keras.layers.Dense(units=param["bottom_layer_units"], activation='tanh',
-                               kernel_initializer=keras.initializers.RandomUniform(minval=-1, maxval=1, seed=123))(input2)
+    x2 = tf.keras.layers.Dense(
+        units=param["bottom_layer_units"],
+        activation='tanh',
+        kernel_initializer=keras.initializers.RandomUniform(
+            minval=-1,
+            maxval=1,
+            seed=123))(input2)
 
     concat = tf.keras.layers.Concatenate(axis=-1)([x1, x2])
-    out1 = tf.keras.layers.Dense(units=param["interactive_layer_units"], activation='relu',
-                                 kernel_initializer=keras.initializers.RandomUniform(minval=-1, maxval=1, seed=123))(concat)
-    out2 = tf.keras.layers.Dense(units=param["top_layer_units"], activation=param["top_act"],
-                                 kernel_initializer=keras.initializers.RandomUniform(minval=-1, maxval=1, seed=123))(out1)
+    out1 = tf.keras.layers.Dense(
+        units=param["interactive_layer_units"],
+        activation='relu',
+        kernel_initializer=keras.initializers.RandomUniform(
+            minval=-1,
+            maxval=1,
+            seed=123))(concat)
+    out2 = tf.keras.layers.Dense(
+        units=param["top_layer_units"],
+        activation=param["top_act"],
+        kernel_initializer=keras.initializers.RandomUniform(
+            minval=-1,
+            maxval=1,
+            seed=123))(out1)
     model = tf.keras.models.Model(inputs=[input1, input2], outputs=out2)
     opt = getattr(optimizers, param["opt"])(lr=param["learning_rate"])
     model.compile(optimizer=opt, loss=param["loss"])
@@ -74,7 +94,7 @@ def main(config="../../config.yaml", param="./hetero_nn_breast_config.yaml"):
             acc = metrics.accuracy_score(y_true=labels, y_pred=predict_y)
             eval_result["accuracy"] = acc
 
-    print (eval_result)
+    print(eval_result)
     data_summary = {}
     return data_summary, eval_result
 

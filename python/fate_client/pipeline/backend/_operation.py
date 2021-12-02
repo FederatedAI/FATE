@@ -44,6 +44,7 @@ class OnlineCommand(object):
         conf["job_parameters"] = {"model_id": predict_model_info.model_id,
                                   "model_version": predict_model_info.model_version}
         return conf
+
     @LOGGER.catch(reraise=True)
     def load(self, file_path=None):
         if not self.pipeline_obj.is_deploy():

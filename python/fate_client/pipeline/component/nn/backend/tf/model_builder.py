@@ -26,5 +26,3 @@ def build_model(model_type="sequential"):
 class SequentialModel(object):
     def __init__(self):
         self.__layers = OrderedDict()
-
-

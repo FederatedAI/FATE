@@ -107,7 +107,7 @@ class Base(object):
                 try:
                     download_from_request(http_response=response, tar_file_name=tar_file_name, extract_dir=extract_dir)
                     print(f'get component output path {extract_dir}')
-                except:
+                except BaseException:
                     print(f"get component output data failed")
                     return False
 
@@ -363,8 +363,8 @@ def run_fate_flow_test(config_json):
 
     print('submit train job')
     # train
-    train, train_count = train_job(data_base_dir, guest_party_id, host_party_id, arbiter_party_id, train_conf_path, train_dsl_path,
-                                   server_url, component_name, metric_output_path, model_output_path, constant_auc)
+    train, train_count = train_job(data_base_dir, guest_party_id, host_party_id, arbiter_party_id, train_conf_path,
+                                   train_dsl_path, server_url, component_name, metric_output_path, model_output_path, constant_auc)
     if not train:
         print('train job run failed')
         return False

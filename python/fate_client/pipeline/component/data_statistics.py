@@ -34,5 +34,3 @@ class DataStatistics(Component, StatisticsParam):
         self.input = Input(self.name)
         self.output = Output(self.name, has_model=True)
         self._module_name = "DataStatistics"
-
-

@@ -26,7 +26,6 @@ class HomoDecisionTreeClient(DecisionTree):
     def __init__(self, tree_param: DecisionTreeParam, data_bin=None, bin_split_points: np.array = None,
                  bin_sparse_point=None, g_h=None, valid_feature: dict = None, epoch_idx: int = None,
                  role: str = None, tree_idx: int = None, flow_id: int = None, mode='train'):
-
         """
         Parameters
         ----------
@@ -129,10 +128,10 @@ class HomoDecisionTreeClient(DecisionTree):
         LOGGER.info("start to get node histograms")
         node_map = self.get_node_map(nodes=cur_to_split)
         histograms = FeatureHistogram.calculate_histogram(
-                    table_with_assign, g_h,
-                    split_points, sparse_point,
-                    valid_feature, node_map,
-                    self.use_missing, self.zero_as_missing)
+            table_with_assign, g_h,
+            split_points, sparse_point,
+            valid_feature, node_map,
+            self.use_missing, self.zero_as_missing)
 
         hist_bags = []
         for hist_list in histograms:
@@ -244,9 +243,12 @@ class HomoDecisionTreeClient(DecisionTree):
     def assign_instances_to_new_node(self, table_with_assignment, tree_node: List[Node]):
 
         LOGGER.debug('re-assign instance to new nodes')
-        assign_method = functools.partial(self.assign_an_instance, tree=tree_node, bin_sparse_point=
-                                          self.bin_sparse_points, use_missing=self.use_missing, use_zero_as_missing
-                                          =self.zero_as_missing)
+        assign_method = functools.partial(
+            self.assign_an_instance,
+            tree=tree_node,
+            bin_sparse_point=self.bin_sparse_points,
+            use_missing=self.use_missing,
+            use_zero_as_missing=self.zero_as_missing)
 
         assign_result = table_with_assignment.mapValues(assign_method)
         leaf_val = assign_result.filter(lambda key, value: isinstance(value, tuple) is False)
@@ -289,8 +291,14 @@ class HomoDecisionTreeClient(DecisionTree):
         g_h_dict = self.aggregator.get_aggregated_root_info(suffix=('root_node_sync2', self.epoch_idx))
         global_g_sum, global_h_sum = g_h_dict['g_sum'], g_h_dict['h_sum']
         # initialize node
-        root_node = Node(id=0, sitename=consts.GUEST, sum_grad=global_g_sum, sum_hess=global_h_sum, weight=
-                         self.splitter.node_weight(global_g_sum, global_h_sum))
+        root_node = Node(
+            id=0,
+            sitename=consts.GUEST,
+            sum_grad=global_g_sum,
+            sum_hess=global_h_sum,
+            weight=self.splitter.node_weight(
+                global_g_sum,
+                global_h_sum))
         self.cur_layer_node = [root_node]
 
     """
@@ -347,7 +355,6 @@ class HomoDecisionTreeClient(DecisionTree):
     """
 
     def memory_fit(self):
-
         """
         fitting using memory backend
         """
@@ -357,7 +364,7 @@ class HomoDecisionTreeClient(DecisionTree):
 
         self.init_root_node_and_gh_sum()
         g, h = self.get_g_h_arr()
-        self.init_memory_hist_builder(g, h, self.arr_bin_data, self.bin_num + self.use_missing) # last missing bin
+        self.init_memory_hist_builder(g, h, self.arr_bin_data, self.bin_num + self.use_missing)  # last missing bin
         root_indices = self.init_node2index(len(self.arr_bin_data))
         self.cur_layer_node[0].inst_indices = root_indices  # root node
 
@@ -423,8 +430,8 @@ class HomoDecisionTreeClient(DecisionTree):
                 self.leaf_count[node.id] = len(node.inst_indices)
         LOGGER.debug('leaf count is {}'.format(self.leaf_count))
         sample_id_type = type(self.g_h.take(1)[0][0])
-        self.sample_weights = session.parallelize([(sample_id_type(id_), weight) for id_, weight in zip(sample_id, weights)],
-                                                  include_key=True, partition=self.data_bin.partitions)
+        self.sample_weights = session.parallelize([(sample_id_type(id_), weight) for id_, weight in zip(
+            sample_id, weights)], include_key=True, partition=self.data_bin.partitions)
 
     def fit(self):
         """
@@ -464,7 +471,7 @@ class HomoDecisionTreeClient(DecisionTree):
 
             split_info, agg_histograms = [], []
             for batch_id, i in enumerate(range(0, len(self.cur_layer_node), self.max_split_nodes)):
-                cur_to_split = self.cur_layer_node[i:i+self.max_split_nodes]
+                cur_to_split = self.cur_layer_node[i:i + self.max_split_nodes]
 
                 node_map = self.get_node_map(nodes=cur_to_split)
                 LOGGER.debug('node map is {}'.format(node_map))

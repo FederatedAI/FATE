@@ -48,8 +48,13 @@ def main(config="../../config.yaml", namespace=""):
 
     data_transform_0 = DataTransform(name="data_transform_0")
 
-    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, output_format="dense",
-                                                                              label_type="int", label_name="y")
+    data_transform_0.get_party_instance(
+        role='guest',
+        party_id=guest).component_param(
+        with_label=True,
+        output_format="dense",
+        label_type="int",
+        label_name="y")
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0", intersect_method="rsa", sync_intersect_ids=True,
@@ -84,9 +89,16 @@ def main(config="../../config.yaml", namespace=""):
 
     predict_pipeline = PipeLine()
     predict_pipeline.add_component(reader_0)
-    predict_pipeline.add_component(pipeline,
-                                   data=Data(predict_input={pipeline.data_transform_0.input.data: reader_0.output.data}))
-    predict_pipeline.add_component(evaluation_0, data=Data(data=[hetero_lr_0.output.data, local_baseline_0.output.data]))
+    predict_pipeline.add_component(
+        pipeline, data=Data(
+            predict_input={
+                pipeline.data_transform_0.input.data: reader_0.output.data}))
+    predict_pipeline.add_component(
+        evaluation_0,
+        data=Data(
+            data=[
+                hetero_lr_0.output.data,
+                local_baseline_0.output.data]))
     predict_pipeline.predict()
 
 

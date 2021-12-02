@@ -18,7 +18,7 @@ import typing
 import uuid
 
 import peewee
-from fate_arch.common import  engine_utils, EngineType
+from fate_arch.common import engine_utils, EngineType
 from fate_arch.abc import CSessionABC, FederationABC, CTableABC, StorageSessionABC, StorageTableABC, StorageTableMetaABC
 from fate_arch.common import log, base_utils
 from fate_arch.common import remote_status
@@ -419,7 +419,7 @@ class Session(object):
                 self._logger.info(f"try to destroy computing session {self._computing_session.session_id}")
                 try:
                     self._computing_session.stop()
-                except:
+                except BaseException:
                     self._computing_session.kill()
                 self._logger.info(f"destroy computing session {self._computing_session.session_id} successfully")
             except Exception as e:
@@ -445,13 +445,17 @@ class Session(object):
 def get_session() -> Session:
     return Session.get_global()
 
+
 def get_parties() -> PartiesInfo:
     return get_session().parties
+
 
 def get_computing_session() -> CSessionABC:
     return get_session().computing
 
 # noinspection PyPep8Naming
+
+
 class computing_session(object):
     @staticmethod
     def init(session_id, options=None):
@@ -464,4 +468,3 @@ class computing_session(object):
     @staticmethod
     def stop():
         get_computing_session().stop()
-

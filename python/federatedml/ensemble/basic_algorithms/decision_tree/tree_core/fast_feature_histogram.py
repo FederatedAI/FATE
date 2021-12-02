@@ -46,7 +46,7 @@ class FastFeatureHistogram(object):
         g, h = grad_and_hess.first()[1]
         ghlist = grad_and_hess.take(100)
         cipher_length = len(str(g.cipher))
-        phrase_num = int(np.ceil(float(cipher_length) / cipher_split_num))+1
+        phrase_num = int(np.ceil(float(cipher_length) / cipher_split_num)) + 1
         n_final = g.n_final
 
         # Map-Reduce Functions
@@ -124,7 +124,7 @@ class FastFeatureHistogram(object):
         bin_marker_matrix3d_reshape_sparse = sp.csc_matrix(bin_marker_matrix3d_reshape)
 
         # Cipher Matrix
-        cipher_matrix_reshape = cipher_matrix.transpose((2, 1, 0)).reshape((c, p*t))  # c x p*t
+        cipher_matrix_reshape = cipher_matrix.transpose((2, 1, 0)).reshape((c, p * t))  # c x p*t
 
         # Feature dot Cipher
         bin_sum_matrix4d_reshape = bin_marker_matrix3d_reshape_sparse.dot(cipher_matrix_reshape)  # b*f X p*t

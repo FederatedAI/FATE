@@ -32,4 +32,6 @@ class HomoDecisionTreeTransferVariable(BaseTransferVariables):
         super().__init__(flowid)
         self.best_split_points = self._create_variable(name='best_split_points', src=['arbiter'], dst=['guest', 'host'])
         self.node_sample_num = self._create_variable(name='node_sample_num', src=['guest', 'host'], dst=['arbiter'])
-        self.cur_layer_node_num = self._create_variable(name='cur_layer_node_num', src=['guest', 'host'], dst=['arbiter'])
+        self.cur_layer_node_num = self._create_variable(
+            name='cur_layer_node_num', src=[
+                'guest', 'host'], dst=['arbiter'])

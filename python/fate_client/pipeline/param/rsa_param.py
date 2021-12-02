@@ -32,7 +32,13 @@ class RsaParam(BaseParam):
     save_out_table_name: str, name of dtable where stores the output data. default: None
     """
 
-    def __init__(self, rsa_key_n=None, rsa_key_e=None, rsa_key_d=None, save_out_table_namespace=None, save_out_table_name=None):
+    def __init__(
+            self,
+            rsa_key_n=None,
+            rsa_key_e=None,
+            rsa_key_d=None,
+            save_out_table_namespace=None,
+            save_out_table_name=None):
         self.rsa_key_n = rsa_key_n
         self.rsa_key_e = rsa_key_e
         self.rsa_key_d = rsa_key_d

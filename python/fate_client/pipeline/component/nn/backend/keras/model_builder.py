@@ -55,5 +55,3 @@ class SequentialModel(object):
 
     def get_network_config(self):
         return json.loads(self._model.to_json())
-
-

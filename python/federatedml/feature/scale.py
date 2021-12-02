@@ -74,7 +74,7 @@ class Scale(ModelBase):
             self.callback_meta(metric_name="scale", metric_namespace="train",
                                metric_meta=MetricMeta(name="scale", metric_type="SCALE",
                                                       extra_metas={"method": self.model_param.method}))
-            
+
             LOGGER.info("start to get model summary ...")
             self.set_summary(self.scale_obj.get_model_summary())
             LOGGER.info("Finish getting model summary.")

@@ -28,6 +28,7 @@ class HauckObliviousTransferReceiver(HauckObliviousTransfer):
     """
     Hauck-OT for the receiver (guest)
     """
+
     def __init__(self):
         super(HauckObliviousTransferReceiver, self).__init__()
 
@@ -104,4 +105,4 @@ class HauckObliviousTransferReceiver(HauckObliviousTransfer):
         :return:
         """
         t = self._hash_tec_element(s)
-        return self.tec_arithmetic.is_in_group(s) and type(t) is TwistedEdwardsCurveElement, t
+        return self.tec_arithmetic.is_in_group(s) and isinstance(t, TwistedEdwardsCurveElement), t

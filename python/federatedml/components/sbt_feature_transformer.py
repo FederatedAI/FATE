@@ -39,7 +39,7 @@ def sbt_feature_transformer_guest_runner():
 @sbt_feature_transformer_cpn_meta.bind_runner.on_host
 def sbt_feature_transformer_host_runner():
     from federatedml.feature.sbt_feature_transformer.sbt_feature_transformer import (
-         HeteroSBTFeatureTransformerHost,
+        HeteroSBTFeatureTransformerHost,
     )
 
     return HeteroSBTFeatureTransformerHost

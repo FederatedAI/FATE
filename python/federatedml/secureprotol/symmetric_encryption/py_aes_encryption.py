@@ -69,9 +69,9 @@ class AESEncryptKey(AESKey):
             return self.encrypt_single_val(plaintext)
 
     def encrypt_single_val(self, plaintext):
-        if type(plaintext) is not bytes:
+        if not isinstance(plaintext, bytes):
             plaintext = self._all_to_bytes(plaintext)
-        elif type(plaintext) is bytes:
+        elif isinstance(plaintext, bytes):
             pass
         else:
             raise TypeError("AES encryptor supports bytes/int/float/str")
@@ -117,7 +117,7 @@ class AESDecryptKey(AESKey):
         :param ciphertext: bytes
         :return: str
         """
-        if type(ciphertext) is not bytes:
+        if not isinstance(ciphertext, bytes):
             raise TypeError("AES decryptor supports bytes only")
         plaintext = conversion.bytes_to_str(self.cipher_core.decrypt(ciphertext))
         self._renew()

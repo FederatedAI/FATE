@@ -178,7 +178,7 @@ class DenseModel(object):
         )
         if self.do_backward_selective_strategy:
             self.activation_input = self.activation_cached[: self.batch_size]
-            self.activation_cached = self.activation_cached[self.batch_size :]
+            self.activation_cached = self.activation_cached[self.batch_size:]
 
         return self.sess.run(
             self.activation_gradient_func,
@@ -240,7 +240,7 @@ class GuestDenseModel(DenseModel):
 
         if self.do_backward_selective_strategy:
             self.input = self.input_cached[: self.batch_size]
-            self.input_cached = self.input_cached[self.batch_size :]
+            self.input_cached = self.input_cached[self.batch_size:]
 
         delta_w = np.matmul(delta.T, self.input) / self.input.shape[0]
 

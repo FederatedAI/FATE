@@ -54,7 +54,7 @@ class StorageTableBase(StorageTableABC):
     @property
     def address(self):
         return self._address
-    
+
     @property
     def partitions(self):
         return self._partitions
@@ -69,16 +69,16 @@ class StorageTableBase(StorageTableABC):
 
     @property
     def store_type(self):
-        return self._store_type 
-    
+        return self._store_type
+
     @property
     def meta(self):
         return self._meta
-    
+
     @meta.setter
     def meta(self, meta):
         self._meta = meta
-    
+
     @property
     def read_access_time(self):
         return self._read_access_time
@@ -86,7 +86,7 @@ class StorageTableBase(StorageTableABC):
     @property
     def write_access_time(self):
         return self._write_access_time
-    
+
     def update_meta(self,
                     schema=None,
                     count=None,
@@ -113,24 +113,24 @@ class StorageTableBase(StorageTableABC):
         self._meta = table_meta
 
         return table_meta
-    
+
     def check_address(self):
         return True
 
     def put_all(self, kv_list: Iterable, **kwargs):
         self._update_write_access_time()
         self._put_all(kv_list, **kwargs)
-    
+
     def collect(self, **kwargs) -> list:
         self._update_read_access_time()
         return self._collect(**kwargs)
-    
+
     def count(self):
         self._update_read_access_time()
         count = self._count()
         self.meta.update_metas(count=count)
         return count
-    
+
     def read(self):
         self._update_read_access_time()
         return self._read()
@@ -152,22 +152,22 @@ class StorageTableBase(StorageTableABC):
         write_access_time = current_timestamp() if not write_access_time else write_access_time
         self._meta.update_metas(write_access_time=write_access_time)
 
-    # to be implemented 
+    # to be implemented
     def _put_all(self, kv_list: Iterable, **kwargs):
         raise NotImplementedError()
 
     def _collect(self, **kwargs) -> list:
         raise NotImplementedError()
-    
+
     def _count(self):
         raise NotImplementedError()
-    
+
     def _read(self):
         raise NotImplementedError()
 
     def _destroy(self):
         raise NotImplementedError()
-    
+
     def _save_as(self, address, name, namespace, partitions=None, schema=None, **kwargs):
         raise NotImplementedError()
 

@@ -28,6 +28,7 @@ class UniqueValueFilter(BaseFilterMethod):
     filter the columns if all values in this feature is the same
 
     """
+
     def __init__(self, filter_param: UniqueValueParam):
         super().__init__(filter_param)
         self.statics_obj = None
@@ -56,5 +57,3 @@ class UniqueValueFilter(BaseFilterMethod):
     def get_meta_obj(self):
         result = feature_selection_meta_pb2.FilterMeta()
         return result
-
-

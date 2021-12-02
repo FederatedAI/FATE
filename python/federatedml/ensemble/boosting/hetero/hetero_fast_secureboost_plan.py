@@ -18,7 +18,6 @@ tree_actions = {
 
 
 def create_tree_plan(work_mode: str, k=1, tree_num=10, host_list=None, complete_secure=True):
-
     """
     Args:
         work_mode:
@@ -40,7 +39,7 @@ def create_tree_plan(work_mode: str, k=1, tree_num=10, host_list=None, complete_
         for host_idx, host_id in enumerate(host_list):
             one_round += [(tree_type_dict['host_feat_only'], host_id)] * k
 
-        round_num = (tree_num // (2*k)) + 1
+        round_num = (tree_num // (2 * k)) + 1
         tree_plan = (one_round * round_num)[0:tree_num]
 
     elif work_mode == consts.LAYERED_TREE:
@@ -82,7 +81,7 @@ def encode_plan(p, split_token='_'):
 
     result = []
     for tree_type_or_action, host_id in p:
-        result.append(str(tree_type_or_action)+split_token+str(host_id))
+        result.append(str(tree_type_or_action) + split_token + str(host_id))
     return result
 
 

@@ -27,6 +27,7 @@ from pipeline.utils.tools import load_job_config, JobConfig
 from fate_test.utils import extract_data, parse_summary_result
 from federatedml.evaluation.metrics import classification_metric
 
+
 def main(config="../../config.yaml", param="./breast_lr_config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):

@@ -32,7 +32,8 @@ class PulsarManager():
 
     # create session is used to construct url and request parameters
     def _create_session(self):
-        # retry mechanism refers to https://urllib3.readthedocs.io/en/latest/reference/urllib3.util.html#urllib3.util.Retry
+        # retry mechanism refers to
+        # https://urllib3.readthedocs.io/en/latest/reference/urllib3.util.html#urllib3.util.Retry
         retry = Retry(total=MAX_RETRIES, redirect=MAX_REDIRECT,
                       backoff_factor=BACKOFF_FACTOR)
         s = requests.Session()
@@ -66,7 +67,7 @@ class PulsarManager():
         return response
 
     # service_url need to provide "http://" prefix
-    def create_cluster(self, cluster_name: str,  broker_url: str, service_url: str = '',
+    def create_cluster(self, cluster_name: str, broker_url: str, service_url: str = '',
                        service_url_tls: str = '', broker_url_tls: str = '',
                        proxy_url: str = '', proxy_protocol: str = "SNI", peer_cluster_names: list = [],
                        ):
@@ -87,7 +88,7 @@ class PulsarManager():
             self.service_url + CLUSTER.format(cluster_name), data=json.dumps(data))
         return response
 
-    def update_cluster(self, cluster_name: str,  broker_url: str, service_url: str = '',
+    def update_cluster(self, cluster_name: str, broker_url: str, service_url: str = '',
                        service_url_tls: str = '', broker_url_tls: str = '',
                        proxy_url: str = '', proxy_protocol: str = "SNI", peer_cluster_names: list = [],
                        ):
@@ -196,7 +197,7 @@ class PulsarManager():
         session = self._create_session()
         response = session.post(
             # the API accepts data as seconds
-            self.service_url + 'namespaces/{}/{}/messageTTL'.format(tenant, namespace), json=mintues*60
+            self.service_url + 'namespaces/{}/{}/messageTTL'.format(tenant, namespace), json=mintues * 60
         )
 
         return response

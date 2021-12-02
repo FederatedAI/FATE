@@ -34,5 +34,3 @@ class HeteroFeatureBinning(Component, HeteroFeatureBinningParam):
         self.input = Input(self.name)
         self.output = Output(self.name)
         self._module_name = "HeteroFeatureBinning"
-
-

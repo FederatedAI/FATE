@@ -40,7 +40,6 @@ def main(config="../../config.yaml", namespace=""):
     guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
     host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
 
-
     # initialize pipeline
     pipeline = PipeLine()
     # set job initiator
@@ -56,22 +55,21 @@ def main(config="../../config.yaml", namespace=""):
     data_transform_0_guest_party_instance = data_transform_0.get_party_instance(role="guest", party_id=guest)
     data_transform_0_guest_party_instance.component_param(with_label=True, output_format="dense")
     data_transform_0.get_party_instance(role="host", party_id=host).component_param(with_label=False,
-                                                                            output_format="dense")
+                                                                                    output_format="dense")
     intersection_0 = Intersection(name="intersection_0")
 
     label_transform_0 = LabelTransform(name="label_transform_0")
     label_transform_0.get_party_instance(role="host", party_id=host).component_param(need_run=False)
 
     hetero_lr_0 = HeteroLR(name="hetero_lr_0", penalty="L2", optimizer="sgd", tol=0.001,
-                               alpha=0.01, max_iter=20, early_stop="weight_diff", batch_size=-1,
-                               learning_rate=0.15, decay=0.0, decay_sqrt=False,
-                               init_param={"init_method": "zeros"},
-                               encrypted_mode_calculator_param={"mode": "fast"},
-                               floating_point_precision=23)
+                           alpha=0.01, max_iter=20, early_stop="weight_diff", batch_size=-1,
+                           learning_rate=0.15, decay=0.0, decay_sqrt=False,
+                           init_param={"init_method": "zeros"},
+                           encrypted_mode_calculator_param={"mode": "fast"},
+                           floating_point_precision=23)
 
     label_transform_1 = LabelTransform(name="label_transform_1")
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary", pos_label=1)
-
 
     # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)
@@ -79,7 +77,10 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
     pipeline.add_component(label_transform_0, data=Data(data=intersection_0.output.data))
     pipeline.add_component(hetero_lr_0, data=Data(train_data=label_transform_0.output.data))
-    pipeline.add_component(label_transform_1, data=Data(data=hetero_lr_0.output.data), model=Model(label_transform_0.output.model))
+    pipeline.add_component(
+        label_transform_1, data=Data(
+            data=hetero_lr_0.output.data), model=Model(
+            label_transform_0.output.model))
     pipeline.add_component(evaluation_0, data=Data(data=label_transform_1.output.data))
 
     # compile pipeline once finished adding modules, this step will form conf and dsl files for running job

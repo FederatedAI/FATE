@@ -122,8 +122,8 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
                                                                                        id_list_host_second_only,
                                                                                        keep_value=True)
         # 8. Get (EEright, Eright_guest)
-        id_list_local_first = self.intersection_obj.id_list_local_first[0] # (Eright_guest, id)
-        id_list_local_second = self.intersection_obj.id_list_local_second[0] #(EEright, Eright_guest)
+        id_list_local_first = self.intersection_obj.id_list_local_first[0]  # (Eright_guest, id)
+        id_list_local_second = self.intersection_obj.id_list_local_second[0]  # (EEright, Eright_guest)
 
         # 9. Merge result
         # (Eright_guest, instance)

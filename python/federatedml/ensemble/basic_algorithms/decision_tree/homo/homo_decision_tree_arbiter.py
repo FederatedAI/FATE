@@ -105,7 +105,7 @@ class HomoDecisionTreeArbiter(DecisionTree):
         g_sum, h_sum = self.aggregator.aggregate_root_node_info(suffix=('root_node_sync1', self.epoch_idx))
 
         self.aggregator.broadcast_root_info(g_sum, h_sum, suffix=('root_node_sync2', self.epoch_idx))
-        
+
         if self.max_split_nodes != 0 and self.max_split_nodes % 2 == 1:
             self.max_split_nodes += 1
             LOGGER.warning('an even max_split_nodes value is suggested when using histogram-subtraction, '

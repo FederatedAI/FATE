@@ -54,8 +54,8 @@ class SplitInfoPackage(NormalCipherPackage):
 class GHPacker(object):
 
     def __init__(self, sample_num: int, en_calculator: EncryptModeCalculator,
-                       precision=fix_point_precision, max_sample_weight=1.0, task_type=consts.CLASSIFICATION,
-                       g_min=None, g_max=None, sync_para=True):
+                 precision=fix_point_precision, max_sample_weight=1.0, task_type=consts.CLASSIFICATION,
+                 g_min=None, g_max=None, sync_para=True):
 
         if task_type == consts.CLASSIFICATION:
             g_max = 1.0
@@ -116,8 +116,8 @@ class GHPacker(object):
 
         rs = self.packer.decrypt_cipher_packages(split_info_package_list)
         for split_info in rs:
-            g, h = g_h_recover_post_func(self.packer._unpack_an_int(split_info.sum_grad, self.packer._bit_assignment[0]),
-                                         precision=self.precision)
+            g, h = g_h_recover_post_func(self.packer._unpack_an_int(
+                split_info.sum_grad, self.packer._bit_assignment[0]), precision=self.precision)
             split_info.sum_grad = g - self.g_offset * split_info.sample_count
             split_info.sum_hess = h
 
@@ -134,4 +134,3 @@ class PackedGHCompressor(object):
         split_info_list.append(g_h_sum_info)  # append to end
         rs = self.compressor.compress(split_info_list)
         return rs
-

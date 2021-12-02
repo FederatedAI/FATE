@@ -34,7 +34,10 @@ class RelativeSelector(object):
             self._comparision.add(sample)
 
         for idx, sample in enumerate(samples):
-            select_ret[idx] = max(self._min_prob, np.power(np.random.uniform(0, 1), self._beta)) <= self._comparision.get_rate(sample)
+            select_ret[idx] = max(
+                self._min_prob, np.power(
+                    np.random.uniform(
+                        0, 1), self._beta)) <= self._comparision.get_rate(sample)
 
         return select_ret
 
@@ -48,4 +51,3 @@ class SelectorFactory(object):
             return RelativeSelector(selective_size, beta, random_state=random_rate, min_prob=min_prob)
         else:
             raise ValueError("Back Propagation Selector {} not supported yet")
-

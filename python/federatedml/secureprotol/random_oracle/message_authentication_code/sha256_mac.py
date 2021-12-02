@@ -26,6 +26,7 @@ class Sha256MAC(HashBasedMessageAuthenticationCode):
     """
     Sha256-based MAC
     """
+
     def __init__(self, key):
         self.mode = 'sha256'
         self.key = key

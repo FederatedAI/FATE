@@ -85,7 +85,7 @@ class SummaryStatistics(object):
                 for m in range(3, self.stat_order + 1):
                     exp_sum_m = getattr(self, f"exp_sum_{m}")
                     exp_sum_m[idx] = (self.count[idx] - 1) / self.count[idx] * \
-                                     exp_sum_m[idx] + rows[idx] ** m / self.count[idx]
+                        exp_sum_m[idx] + rows[idx] ** m / self.count[idx]
                     setattr(self, f"exp_sum_{m}", exp_sum_m)
 
     def merge(self, other):
@@ -124,7 +124,7 @@ class SummaryStatistics(object):
 
     @property
     def coefficient_of_variance(self):
-        mean = np.array([consts.FLOAT_ZERO if math.fabs(x) < consts.FLOAT_ZERO else x \
+        mean = np.array([consts.FLOAT_ZERO if math.fabs(x) < consts.FLOAT_ZERO else x
                          for x in self.mean])
         return np.fabs(self.stddev / mean)
 
@@ -139,7 +139,7 @@ class SummaryStatistics(object):
         where the k-th central moment of a data sample is:
         .. math::
 
-            m_k = \frac{1}{n} \sum_{i = 1}^n (x_i - \bar{x})^k
+            m_k = \frac{1}{n} \\sum_{i = 1}^n (x_i - \bar{x})^k
 
         the 3rd central moment is often used to calculate the coefficient of skewness
         """
@@ -157,7 +157,7 @@ class SummaryStatistics(object):
         where the k-th central moment of a data sample is:
         .. math::
 
-            m_k = \frac{1}{n} \ sum_{i = 1}^n (x_i - \bar{x})^k
+            m_k = \frac{1}{n} \\ sum_{i = 1}^n (x_i - \bar{x})^k
 
         the 4th central moment is often used to calculate the coefficient of kurtosis
         """
@@ -179,7 +179,7 @@ class SummaryStatistics(object):
 
         where
         .. math::
-            m_i=\frac{1}{N}\sum_{n=1}^N(x[n]-\bar{x})^i
+            m_i=\frac{1}{N}\\sum_{n=1}^N(x[n]-\bar{x})^i
 
         If the bias is False, return the adjusted Fisher-Pearson standardized moment coefficient
         i.e.
@@ -187,7 +187,7 @@ class SummaryStatistics(object):
         .. math::
 
         G_1=\frac{k_3}{k_2^{3/2}}=
-            \frac{\sqrt{N(N-1)}}{N-2}\frac{m_3}{m_2^{3/2}}.
+            \frac{\\sqrt{N(N-1)}}{N-2}\frac{m_3}{m_2^{3/2}}.
 
         """
         m2 = self.variance
@@ -246,7 +246,7 @@ class MissingStatistic(object):
 
     @staticmethod
     def is_sparse(tb):
-        return type(tb.take(1)[0][1].features) == SparseVector
+        return isinstance(tb.take(1)[0][1].features, SparseVector)
 
     @staticmethod
     def check_table_content(tb):
@@ -254,7 +254,7 @@ class MissingStatistic(object):
         if not tb.count() > 0:
             raise ValueError('input table must contains at least 1 sample')
         first_ = tb.take(1)[0][1]
-        if type(first_) == Instance:
+        if isinstance(first_, Instance):
             return True
         else:
             raise ValueError('unknown input format')

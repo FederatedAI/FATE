@@ -136,7 +136,7 @@ class SampleWeight(ModelBase):
                                          normalize=self.normalize,
                                          need_run=self.need_run)
         param_obj = SampleWeightModelParam(header=self.header,
-                                           weight_mode = self.weight_mode,
+                                           weight_mode=self.weight_mode,
                                            class_weight=self.class_weight_dict)
         result = {
             self.model_meta_name: meta_obj,

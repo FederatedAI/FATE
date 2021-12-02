@@ -34,4 +34,3 @@ class SSHEModelTransferVariable(BaseTransferVariables):
         self.host_prob = self._create_variable(name='host_prob', src=['host'], dst=['guest'])
         self.loss = self._create_variable(name='loss', src=['host'], dst=['guest'])
         self.is_converged = self._create_variable(name='is_converged', src=['guest'], dst=['host'])
-

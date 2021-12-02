@@ -48,7 +48,7 @@ class Table(CTableABC):
         try:
             unmaterialize(self._rdd)
             del self._rdd
-        except:
+        except BaseException:
             return
 
     @computing_profile

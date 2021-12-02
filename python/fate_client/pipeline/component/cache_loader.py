@@ -34,5 +34,3 @@ class CacheLoader(Component, CacheLoaderParam):
         self.input = Input(self.name)
         self.output = Output(self.name, has_model=False, has_cache=True, has_data=False)
         self._module_name = "CacheLoader"
-
-

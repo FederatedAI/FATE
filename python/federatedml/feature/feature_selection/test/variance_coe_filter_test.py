@@ -32,6 +32,7 @@ from federatedml.feature.instance import Instance
 from federatedml.util import consts
 from federatedml.feature.feature_selection.model_adapter.adapter_factory import adapter_factory
 
+
 class TestVarianceCoeFilter(unittest.TestCase):
     def setUp(self):
         self.job_id = str(uuid.uuid1())

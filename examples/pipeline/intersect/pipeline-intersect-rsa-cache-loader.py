@@ -44,8 +44,12 @@ def main(config="../../config.yaml", namespace=""):
 
     data_transform_0 = DataTransform(name="data_transform_0")
 
-    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=False, output_format="dense")
-    data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False, output_format="dense")
+    data_transform_0.get_party_instance(
+        role='guest', party_id=guest).component_param(
+        with_label=False, output_format="dense")
+    data_transform_0.get_party_instance(
+        role='host', party_id=host).component_param(
+        with_label=False, output_format="dense")
 
     param = {
         "intersect_method": "rsa",
@@ -64,7 +68,10 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(reader_0)
     pipeline.add_component(cache_loader_0)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(intersect_0, data=Data(data=data_transform_0.output.data), cache=Cache(cache_loader_0.output.cache))
+    pipeline.add_component(
+        intersect_0, data=Data(
+            data=data_transform_0.output.data), cache=Cache(
+            cache_loader_0.output.cache))
 
     pipeline.compile()
 
@@ -80,4 +87,3 @@ if __name__ == "__main__":
         main(args.config)
     else:
         main()
-

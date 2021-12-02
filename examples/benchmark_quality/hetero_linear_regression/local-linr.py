@@ -55,9 +55,9 @@ def main(config="../../config.yaml", param="./linr_config.yaml"):
     r2 = r2_score(y, y_pred)
     explained_var = explained_variance_score(y, y_pred)
     metric_summary = {"r2_score": r2,
-              "mean_squared_error": mse,
-              "root_mean_squared_error": rmse,
-              "explained_variance": explained_var}
+                      "mean_squared_error": mse,
+                      "root_mean_squared_error": rmse,
+                      "explained_variance": explained_var}
     data_summary = {}
     return data_summary, metric_summary
 
