@@ -223,7 +223,7 @@ class HeteroLRHost(HeteroSSHEHostBase):
             result["encrypted_weight"] = weight_dict
 
         return result
-    """
+    
     def get_single_encrypted_model_weight_dict(self, model_weights=None, header=None):
         weight_dict = {}
         model_weights = model_weights if model_weights else self.model_weights
@@ -241,7 +241,7 @@ class HeteroLRHost(HeteroSSHEHostBase):
                                                                         exponent=str(coef_i.exponent),
                                                                         is_obfuscator=is_obfuscator)
         return weight_dict
-
+    """
     def _get_param(self):
         if self.need_cv:
             param_protobuf_obj = lr_model_param_pb2.LRModelParam()

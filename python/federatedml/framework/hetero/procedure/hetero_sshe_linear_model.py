@@ -26,6 +26,7 @@ from federatedml.framework.hetero.procedure import batch_generator
 from federatedml.linear_model.linear_model_base import BaseLinearModel
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.param.init_model_param import InitParam
+from federatedml.protobuf.generated import sshe_cipher_param_pb2
 from federatedml.secureprotol import PaillierEncrypt, EncryptModeCalculator
 from federatedml.secureprotol.fate_paillier import PaillierPublicKey, PaillierPrivateKey, PaillierEncryptedNumber
 from federatedml.secureprotol.fixedpoint import FixedPointEndec
@@ -693,7 +694,22 @@ class HeteroSSHEHostBase(HeteroSSHEBase, ABC):
         return self.is_converged
 
     def get_single_encrypted_model_weight_dict(self, model_weights=None, header=None):
-        raise NotImplementedError(f"should not be called here")
+        weight_dict = {}
+        model_weights = model_weights if model_weights else self.model_weights
+        header = header if header else self.header
+        for idx, header_name in enumerate(header):
+            coef_i = model_weights.coef_[idx]
+
+            is_obfuscator = False
+            if hasattr(coef_i, "__is_obfuscator"):
+                is_obfuscator = getattr(coef_i, "__is_obfuscator")
+
+            public_key = sshe_cipher_param_pb2.CipherPublicKey(n=str(coef_i.public_key.n))
+            weight_dict[header_name] = sshe_cipher_param_pb2.CipherText(public_key=public_key,
+                                                                        cipher_text=str(coef_i.ciphertext()),
+                                                                        exponent=str(coef_i.exponent),
+                                                                        is_obfuscator=is_obfuscator)
+        return weight_dict
 
     def prepare_fit(self, data_instances, validate_data):
         self.batch_generator = batch_generator.Host()

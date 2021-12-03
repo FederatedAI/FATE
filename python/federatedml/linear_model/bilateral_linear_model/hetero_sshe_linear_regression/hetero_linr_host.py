@@ -20,7 +20,7 @@ import numpy as np
 
 from federatedml.framework.hetero.procedure.hetero_sshe_linear_model import HeteroSSHEHostBase
 from federatedml.param.hetero_sshe_linr_param import HeteroSSHELinRParam
-from federatedml.protobuf.generated import linr_model_param_pb2, linr_model_meta_pb2, sshe_cipher_param_pb2
+from federatedml.protobuf.generated import linr_model_param_pb2, linr_model_meta_pb2
 from federatedml.secureprotol.spdz.secure_matrix.secure_matrix import SecureMatrix
 from federatedml.secureprotol.spdz.tensor import fixedpoint_numpy
 from federatedml.util import consts, fate_operator, LOGGER
@@ -135,6 +135,7 @@ class HeteroLinRHost(HeteroSSHEHostBase):
         self.transfer_variable.host_prob.remote(host_pred, role=consts.GUEST, idx=0)
         LOGGER.info("Remote probability to Guest")
 
+    """
     def get_single_encrypted_model_weight_dict(self, model_weights=None, header=None):
         weight_dict = {}
         model_weights = model_weights if model_weights else self.model_weights
@@ -152,7 +153,7 @@ class HeteroLinRHost(HeteroSSHEHostBase):
                                                                         exponent=str(coef_i.exponent),
                                                                         is_obfuscator=is_obfuscator)
         return weight_dict
-
+    """
     def _get_param(self):
         if self.need_cv:
             param_protobuf_obj = linr_model_param_pb2.LinRModelParam()
