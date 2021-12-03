@@ -21,7 +21,7 @@ import numpy as np
 from federatedml.framework.hetero.procedure.hetero_sshe_linear_model import HeteroSSHEHostBase
 from federatedml.one_vs_rest.one_vs_rest import one_vs_rest_factory
 from federatedml.param.hetero_sshe_lr_param import HeteroSSHELRParam
-from federatedml.protobuf.generated import lr_model_param_pb2, lr_model_meta_pb2, sshe_cipher_param_pb2
+from federatedml.protobuf.generated import lr_model_param_pb2, lr_model_meta_pb2
 from federatedml.secureprotol.spdz.secure_matrix.secure_matrix import SecureMatrix
 from federatedml.secureprotol.spdz.tensor import fixedpoint_numpy
 from federatedml.util import consts, fate_operator, LOGGER
