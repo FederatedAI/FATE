@@ -73,6 +73,20 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline.fit()
 
+    # predict
+    # deploy required components
+    pipeline.deploy_component([data_transform_0, intersection_0, hetero_linr_0])
+
+    predict_pipeline = PipeLine()
+    # add data reader onto predict pipeline
+    predict_pipeline.add_component(reader_0)
+    # add selected components from train pipeline onto predict pipeline
+    # specify data source
+    predict_pipeline.add_component(pipeline,
+                                   data=Data(predict_input={pipeline.data_transform_0.input.data: reader_0.output.data}))
+    # run predict model
+    predict_pipeline.predict()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("PIPELINE DEMO")
