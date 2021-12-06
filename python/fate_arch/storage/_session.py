@@ -100,7 +100,7 @@ class StorageSessionBase(StorageSessionABC):
 
         elif engine == StorageEngine.LINKIS_HIVE:
             address_dict.update({"database": None, "name": f"{namespace}_{name}",
-                                "username": token.get("username", "")})
+                                 "username": token.get("username", "")})
             store_type = LinkisHiveStoreType.DEFAULT if store_type is None else store_type
 
         elif engine == StorageEngine.HDFS:

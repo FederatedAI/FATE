@@ -88,7 +88,7 @@ class Weights(metaclass=segment_transfer_enabled()):
 
     def __mul__(self, other):
         return self.map_values(lambda x: x * other, inplace=False)
-    
+
     def __rmul__(self, other):
         return self * other
 
@@ -98,7 +98,7 @@ class Weights(metaclass=segment_transfer_enabled()):
     def __add__(self, other):
         LOGGER.debug("In binary_op0, _w: {}".format(self._weights))
         return self.binary_op(other, operator.add, inplace=False)
-    
+
     def __radd__(self, other):
         return self + other
 

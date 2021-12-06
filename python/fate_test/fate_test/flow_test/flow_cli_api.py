@@ -383,7 +383,7 @@ class TestModel(object):
 
         try:
             subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", "upload", "-c",
-                                    upload_path, "-drop", "1"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                                     upload_path, "-drop", "1"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             stdout, stderr = subp.communicate()
             stdout = json.loads(stdout.decode("utf-8"))
             if stdout.get('retcode'):
