@@ -95,6 +95,12 @@ docker pull federatedai/standalone_fate ${version}
    netstat -apln|grep 9380
    ```
 
+因为需要安装操作系统依赖包, 所以需要root权限。可以使用root用户执行后续操作, 若不使用root用户, 请使用root用户给要使用的用户赋予sudo权限:
+
+```bash
+echo "{要使用的用户名}  ALL=(ALL) NOPASSWD:ALL" | tee /etc/sudoers.d/{要使用的用户名}
+```
+
 ### 3.2 获取安装包
 
 下载安装包并解压缩
@@ -121,14 +127,14 @@ docker pull federatedai/standalone_fate ${version}
 
    ```bash
    cd standalone_fate_install_${version}_release;
-   sh init.sh init
+   bash init.sh init
    ```
 
 ### 3.4 启动
 
    ```bash
-   sh init.sh status;
-   sh init.sh start
+   bash init.sh status;
+   bash init.sh start
    ```
 
 ### 3.5 测试
