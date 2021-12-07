@@ -6,7 +6,6 @@
 #  You may obtain a copy of the License at
 #
 #      http://www.apache.org/licenses/LICENSE-2.0
-
 #
 #  Unless required by applicable law or agreed to in writing, software
 #  distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,23 +14,7 @@
 #  limitations under the License.
 #
 
-from .components import ComponentMeta
-from federatedml.model_interpret.SHAP import SHAP
-
-shap_cpn_meta = ComponentMeta("SHAP", "shap")
+from federatedml.model_interpret.explainer.explainer_base import Explainer
 
 
-@shap_cpn_meta.bind_param
-def hetero_secure_boost_param():
-    from federatedml.param.shap_param import SHAPParam
-    return SHAPParam
-
-
-@shap_cpn_meta.bind_runner.on_guest
-def hetero_secure_boost_guest_runner():
-    return SHAP
-
-
-@shap_cpn_meta.bind_runner.on_host
-def hetero_secure_boost_host_runner():
-    return SHAP
+__all__ = ["Explainer"]

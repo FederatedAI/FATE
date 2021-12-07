@@ -218,9 +218,9 @@ class TreeSHAP(ModelBase):
             for content_name in model_content:
                 if 'Meta' in content_name:
                     self.tree_meta = model_content[content_name]
+                    self.tree_work_mode = self.tree_meta.work_mode
                 elif 'Param' in content_name:
                     self.tree_param = model_content[content_name]
-                    self.tree_param = self.tree_param.work_mode
                     self.class_num = len(self.tree_param.classes_)
 
     """

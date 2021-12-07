@@ -29,6 +29,9 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 class SHAPTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
+        self.host_node_anonymous = self._create_variable(name='host_node_anonymous', src=['host'], dst=['guest'])
+        self.host_anonymous_list = self._create_variable(name='host_anonymous_list', src=['host'], dst=['guest'])
         self.host_node_route = self._create_variable(name='host_node_route', src=['host'], dst=['guest'])
+        self.host_feat_num = self._create_variable(name='host_feat_num', src=['host'], dst=['guest'])
         self.selected_sample_index = self._create_variable(name='selected_sample_index', src=['guest'], dst=['host'])
         self.random_sample_id = self._create_variable(name='random_sample_id', src=['guest'], dst=['host'])
