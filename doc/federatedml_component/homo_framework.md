@@ -56,7 +56,7 @@ Client:(Guest/Host):
 ```
 
 ##### paillier_cipher
-<img src="../images/paillier_cipher.png" alt="paillier_cipher" width="450" height="600" /><br/>
+![paillier_cipher](../images/paillier_cipher.png)
 
 paillier_cipher.py create a cipher for hosts:
 
