@@ -34,7 +34,7 @@ Guest:
 
 
 ##### random_padding_cipher
-<img src="../images/random_padding_cipher.png" alt="random_padding_cipher" width="600" height="600" /><br/>
+![random_padding_cipher](../images/random_padding_cipher.png)
 
 random_padding_cipher.py create a cipher for each client(Guest/Host):
 
