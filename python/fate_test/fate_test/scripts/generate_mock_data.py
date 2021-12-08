@@ -11,6 +11,7 @@ import pandas as pd
 import numpy as np
 
 from fate_test._config import Config
+from fate_test._io import echo, LOGGER
 def import_fate():
     from fate_arch import storage
     from fate_flow.utils import data_utils
@@ -170,7 +171,7 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
                                    partition, progress):
         def expand_id_range(k, v):
             if label_flag:
-                return [(id_encryption(encryption_type, ids, ids + 1),
+                return [(id_encryption(encryption_type, ids, ids + 1)[0],
                          ",".join([str(round(np.random.random()))] + [str(i) for i in
                                                                       np.random.randint(-100, 100, size=int(v)) / 100]))
                         for ids in range(int(k), min(step + int(k), end_num))]
@@ -178,7 +179,7 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
                 if data_type == 'tag':
                     valid_set = [x for x in range(2019120799, 2019120799 + round(feature_nums / sparsity))]
                     data = list(map(str, valid_set))
-                    return [(id_encryption(encryption_type, ids, ids + 1),
+                    return [(id_encryption(encryption_type, ids, ids + 1)[0],
                              ";".join([random.choice(data) for i in range(int(v))]))
                             for ids in range(int(k), min(step + int(k), data_num))]
 
@@ -212,6 +213,12 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
         s_table = storage_session.get_table(namespace=table_meta.get_namespace(), name=table_meta.get_name())
         if s_table.count() == data_num:
             progress.set_time_percent(100)
+        from fate_flow.manager.data_manager import DataTableTracker
+        DataTableTracker.create_table_tracker(
+            table_name=table_name,
+            table_namespace=namespace,
+            entity_info={}
+        )
 
     def data_save(data_info, table_names, namespaces, partition_list):
         data_count = 0
@@ -260,8 +267,12 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
                 time.sleep(1)
                 print()
             except Exception:
-               progress.set_switch(False)
-               raise Exception(f"Output file failed")
+                exception_id = uuid.uuid1()
+                echo.echo(f"exception_id={exception_id}")
+                LOGGER.exception(f"exception id: {exception_id}")
+            finally:
+                progress.set_switch(False)
+                echo.stdout_newline()
 
     def run(p):
         while p.get_switch():
