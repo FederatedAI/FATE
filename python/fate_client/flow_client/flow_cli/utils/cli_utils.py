@@ -175,9 +175,9 @@ def download_from_request(http_response, tar_file_name, extract_dir):
 
 
 def check_abs_path(path):
-    if not os.path.isabs(path):
-        return os.path.join(os.path.abspath(os.curdir), path).replace("./", "")
-    return path
+    if os.path.isabs(path):
+        return path
+    return os.path.abspath(os.path.join(os.getcwd(), path))
 
 
 def get_project_base_directory():
