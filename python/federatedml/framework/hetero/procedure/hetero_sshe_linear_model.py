@@ -33,6 +33,7 @@ from federatedml.secureprotol.fixedpoint import FixedPointEndec
 from federatedml.secureprotol.spdz import SPDZ
 from federatedml.secureprotol.spdz.secure_matrix.secure_matrix import SecureMatrix
 from federatedml.secureprotol.spdz.tensor import fixedpoint_table, fixedpoint_numpy
+from federatedml.statistic.data_overview import with_weight, scale_sample_weight
 from federatedml.transfer_variable.transfer_class.batch_generator_transfer_variable import \
     BatchGeneratorTransferVariable
 from federatedml.transfer_variable.transfer_class.converge_checker_transfer_variable import \
@@ -50,6 +51,7 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
         self.q_field = None
         self.model_param = None
         self.labels = None
+        self.weight = None
         self.batch_generator = None
         self.batch_num = []
         self.secure_matrix_obj: SecureMatrix
@@ -244,7 +246,12 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
             self.secure_matrix_obj.set_flowid(self.flowid)
             if self.role == consts.GUEST:
                 self.labels = data_instances.mapValues(lambda x: np.array([x.label], dtype=self.label_type))
-
+                if with_weight(data_instances):
+                    LOGGER.info(f"data with sample weight, use sample weight.")
+                    if self.model_param.early_stop == "diff":
+                        LOGGER.warning("input data with weight, please use 'weight_diff' for 'early_stop'.")
+                    data_instances = scale_sample_weight(data_instances)
+                    self.weight = data_instances.mapValues(lambda x: np.array([x.weight], dtype=float))
             w_self, w_remote = self.share_model(w, suffix="init")
             last_w_self, last_w_remote = w_self, w_remote
             LOGGER.debug(f"first_w_self shape: {w_self.shape}, w_remote_shape: {w_remote.shape}")
@@ -295,7 +302,10 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
                                          cipher=self.cipher_tool[batch_idx])
 
                     if self.role == consts.GUEST:
-                        error = y - self.labels
+                        if self.weight:
+                            error = y - self.labels.join(self.weight, lambda y, b: y * b)
+                        else:
+                            error = y - self.labels
 
                         self_g, remote_g = self.backward(error=error,
                                                          features=batch_data,

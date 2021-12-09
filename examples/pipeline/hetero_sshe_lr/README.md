@@ -46,6 +46,9 @@ This section introduces the Pipeline scripts for different types of tasks.
 14. LR Compute Loss without reveal:
     script: pipeline-hetero-lr-compute-loss-not-reveal.py
 
+15. LR with Sample Weight:
+    script: pipeline-hetero-lr-sample-weight.py
+
 
 Users can run a pipeline job directly:
 

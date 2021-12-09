@@ -63,6 +63,10 @@ class HeteroLinRGuest(HeteroSSHEGuestBase):
 
         self.encrypted_error = complete_z - self.labels
 
+        if self.weight:
+            # self.encrypted_wx = self.encrypted_wx * self.weight
+            self.encrypted_error = self.encrypted_error * self.weight
+
         tensor_name = ".".join(("complete_z",) + suffix)
         shared_z = SecureMatrix.from_source(tensor_name,
                                             complete_z,

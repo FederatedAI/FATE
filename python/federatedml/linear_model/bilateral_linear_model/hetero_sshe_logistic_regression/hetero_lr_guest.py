@@ -95,6 +95,10 @@ class HeteroLRGuest(HeteroSSHEGuestBase):
         self.encrypted_wx = self.wx_self + self.wx_remote
 
         self.encrypted_error = sigmoid_z - self.labels
+        if self.weight:
+            sigmoid_z = sigmoid_z * self.weight
+            # self.encrypted_wx = self.encrypted_wx * self.weight
+            self.encrypted_error = self.encrypted_error * self.weight
 
         tensor_name = ".".join(("sigmoid_z",) + suffix)
         shared_sigmoid_z = SecureMatrix.from_source(tensor_name,
