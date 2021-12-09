@@ -65,6 +65,7 @@ class HeteroLinRGuest(HeteroSSHEGuestBase):
 
         if self.weight:
             # self.encrypted_wx = self.encrypted_wx * self.weight
+            complete_z = complete_z * self.weight
             self.encrypted_error = self.encrypted_error * self.weight
 
         tensor_name = ".".join(("complete_z",) + suffix)

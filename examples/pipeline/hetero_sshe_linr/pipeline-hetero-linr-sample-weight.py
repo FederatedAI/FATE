@@ -55,7 +55,7 @@ def main(config="../../config.yaml", namespace=""):
     sample_weight_0.get_party_instance(role='guest', party_id=guest).component_param(need_run=True,
                                                                                      sample_weight_name="pm")
     sample_weight_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)
-    hetero_linr_0 = HeteroSSHELinR(name="hetero_linr_0", penalty="L2", optimizer="sgd", tol=0.001,
+    hetero_linr_0 = HeteroSSHELinR(name="hetero_linr_0", penalty="L2", optimizer="rmsprop", tol=0.001,
                                alpha=0.01, max_iter=20, early_stop="weight_diff", batch_size=-1,
                                learning_rate=0.15, decay=0.0, decay_sqrt=False,
                                init_param={"init_method": "zeros"},
