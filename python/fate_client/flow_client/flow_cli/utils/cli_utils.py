@@ -111,7 +111,7 @@ def access_server(method, ctx, postfix, json_data=None, echo=True, **kwargs):
                 response['retmsg'] = 'Connection aborted. Please make sure that the address of fate flow server ' \
                                      'is configured correctly. The configuration file path is: ' \
                                      '{}.'.format(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                                                  os.pardir, os.pardir, 'settings.yaml')))
+                                                                               os.pardir, os.pardir, 'settings.yaml')))
                 del response['traceback']
             if echo:
                 prettify(response)

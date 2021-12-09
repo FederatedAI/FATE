@@ -760,9 +760,9 @@ def run_test_api(config_json, namespace):
         homo_deploy_kube_config_path = config_json.get('homo_deploy_kube_config_path')
         model.add_row(['model homo convert', judging_state(test_api.model_api('model/homo/convert'))])
         model.add_row(['model homo deploy',
-                      judging_state(test_api.model_api('model/homo/deploy',
-                                                       homo_deploy_path=homo_deploy_path,
-                                                       homo_deploy_kube_config_path=homo_deploy_kube_config_path))])
+                       judging_state(test_api.model_api('model/homo/deploy',
+                                                        homo_deploy_path=homo_deploy_path,
+                                                        homo_deploy_kube_config_path=homo_deploy_kube_config_path))])
     if not config_json.get('component_is_homo') and serving_connect_bool:
         model_load_conf = get_dict_from_file(model_file_path)
         model_load_conf["initiator"]["party_id"] = guest_party_id
