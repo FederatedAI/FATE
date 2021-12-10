@@ -98,3 +98,18 @@ details on the secure model-building process, please refer to this
 
 10. Support stepwise. For details on stepwise mode, please refer to
     [stepwise](stepwise.md) .
+
+
+## Hetero-SSHE-LR features:
+
+1.  L1 & L2 regularization
+
+2.  Mini-batch mechanism
+
+3. Support different encrypt-mode to balance speed and security
+
+4. Support early-stopping mechanism
+
+5. Support setting arbitrary metrics for validation during training
+
+6. Support model encryption with host model
