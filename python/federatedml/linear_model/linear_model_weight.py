@@ -65,7 +65,6 @@ class LinearModelWeights(ListWeights):
             return LinearModelWeights(_w, self.fit_intercept)
 
     def map_values(self, func, inplace):
-        print(self.__class__)
         if inplace:
             for k, v in enumerate(self._weights):
                 self._weights[k] = func(v)
