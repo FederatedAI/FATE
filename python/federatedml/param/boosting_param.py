@@ -37,15 +37,14 @@ class ObjectiveParam(BaseParam):
 
     Parameters
     ----------
-    objective : {None, 'cross_entropy', 'lse', 'lae', 'log_cosh', 'tweedie', 'fair', 'huber'}
-        None in host's config, should be str in guest'config.
-        when task_type is classification, only support 'cross_entropy',
-        other 6 types support in regression task
+    objective : None or str, accepted None,'cross_entropy','lse','lae','log_cosh','tweedie','fair','huber' only,
+                None in host's config, should be str in guest'config.
+                when task_type is classification, only support cross_entropy,
+                other 6 types support in regression task. default: None
 
-    params : None or list
-        should be non empty list when objective is 'tweedie','fair','huber',
-        first element of list shoulf be a float-number large than 0.0 when objective is 'fair', 'huber',
-        first element of list should be a float-number in [1.0, 2.0) when objective is 'tweedie'
+    params : None or list, should be non empty list when objective is 'tweedie','fair','huber',
+             first element of list shoulf be a float-number large than 0.0 when objective is 'fair','huber',
+             first element of list should be a float-number in [1.0, 2.0) when objective is 'tweedie'
     """
 
     def __init__(self, objective='cross_entropy', params=None):
@@ -101,51 +100,40 @@ class DecisionTreeParam(BaseParam):
 
     Parameters
     ----------
-    criterion_method : {"xgboost"}, default: "xgboost"
-        the criterion function to use
+    criterion_method : str, accepted "xgboost" only, the criterion function to use, default: 'xgboost'
 
-    criterion_params: list or dict
-        should be non empty and elements are float-numbers,
-        if a list is offered, the first one is l2 regularization value, and the second one is
-        l1 regularization value.
-        if a dict is offered, make sure it contains key 'l1', and 'l2'.
-        l1, l2 regularization values are non-negative floats.
-        default: [0.1, 0] or {'l1':0, 'l2':0,1}
+    criterion_params: list or dict, should be non empty and elements are float-numbers,
+                      if a list is offered, the first one is l2 regularization value, and the second one is
+                      l1 regularization value.
+                      if a dict is offered, make sure it contains key 'l1', and 'l2'.
+                      l1, l2 regularization values are non-negative floats.
+                      default: [0.1, 0] or {'l1':0, 'l2':0,1}
 
-    max_depth: positive integer
-        the max depth of a decision tree, default: 3
+    max_depth: int, positive integer, the max depth of a decision tree, default: 3
 
-    min_sample_split: int
-        least quantity of nodes to split, default: 2
+    min_sample_split: int, least quantity of nodes to split, default: 2
 
-    min_impurity_split: float
-        least gain of a single split need to reach, default: 1e-3
+    min_impurity_split: float, least gain of a single split need to reach, default: 1e-3
 
-    min_child_weight: float
-        sum of hessian needed in child nodes. default is 0
+    min_child_weight: float, sum of hessian needed in child nodes. default is 0
 
-    min_leaf_node: int
-        when samples no more than min_leaf_node, it becomes a leave, default: 1
+    min_leaf_node: int, when samples no more than min_leaf_node, it becomes a leave, default: 1
 
-    max_split_nodes: positive integer
-        we will use no more than max_split_nodes to
-        parallel finding their splits in a batch, for memory consideration. default is 65536
+    max_split_nodes: int, positive integer, we will use no more than max_split_nodes to
+                      parallel finding their splits in a batch, for memory consideration. default is 65536
 
-    feature_importance_type: {'split', 'gain'}
-        if is 'split', feature_importances calculate by feature split times,
-        if is 'gain', feature_importances calculate by feature split gain.
-        default: 'split'
+    feature_importance_type: str, support 'split', 'gain' only.
+                             if is 'split', feature_importances calculate by feature split times,
+                             if is 'gain', feature_importances calculate by feature split gain.
+                             default: 'split'
 
-    use_missing: bool
-        use missing value in training process or not. default: False
+    use_missing: bool, accepted True, False only, use missing value in training process or not. default: False
 
-    zero_as_missing: bool
-        regard 0 as missing value or not,
-        will be use only if use_missing=True, default: False
+    zero_as_missing: bool, accepted True, False only, regard 0 as missing value or not,
+                     will be use only if use_missing=True, default: False
 
-    deterministic: bool
-        ensure stability when computing histogram. Set this to true to ensure stable result when using
-        same data and same parameter. But it may slow down computation.
+    deterministic: bool, ensure stability when computing histogram. Set this to true to ensure stable result when using
+                         same data and same parameter. But it may slow down computation.
 
     """
 
@@ -238,38 +226,31 @@ class DecisionTreeParam(BaseParam):
 
 class BoostingParam(BaseParam):
     """
-    Basic parameter for Boosting Algorithms
+        Basic parameter for Boosting Algorithms
 
-    Parameters
-    ----------
-    task_type : {'classification', 'regression'}, default: 'classification'
-        task type
+        Parameters
+        ----------
+        task_type : str, accepted 'classification', 'regression' only, default: 'classification'
 
-    objective_param : ObjectiveParam Object, default: ObjectiveParam()
-        objective param
+        objective_param : ObjectiveParam Object, default: ObjectiveParam()
 
-    learning_rate : float, int or long
-        the learning rate of secure boost. default: 0.3
+        learning_rate : float, accepted float, int or long only, the learning rate of secure boost. default: 0.3
 
-    num_trees : int or float
-        the max number of boosting round. default: 5
+        num_trees : int, accepted int, float only, the max number of boosting round. default: 5
 
-    subsample_feature_rate : float
-        a float-number in [0, 1], default: 1.0
+        subsample_feature_rate : float, a float-number in [0, 1], default: 1.0
 
-    n_iter_no_change : bool,
-        when True and residual error less than tol, tree building process will stop. default: True
+        n_iter_no_change : bool,
+            when True and residual error less than tol, tree building process will stop. default: True
 
-    bin_num: positive integer greater than 1
-        bin number use in quantile. default: 32
+        bin_num: int, positive integer greater than 1, bin number use in quantile. default: 32
 
-    validation_freqs: None or positive integer or container object in python
-        Do validation in training process or Not.
-        if equals None, will not do validation in train process;
-        if equals positive integer, will validate data every validation_freqs epochs passes;
-        if container object in python, will validate data if epochs belong to this container.
-        e.g. validation_freqs = [10, 15], will validate data when epoch equals to 10 and 15.
-        Default: None
+        validation_freqs: None or positive integer or container object in python. Do validation in training process or Not.
+                          if equals None, will not do validation in train process;
+                          if equals positive integer, will validate data every validation_freqs epochs passes;
+                          if container object in python, will validate data if epochs belong to this container.
+                            e.g. validation_freqs = [10, 15], will validate data when epoch equals to 10 and 15.
+                          Default: None
         """
 
     def __init__(self,  task_type=consts.CLASSIFICATION,
@@ -349,14 +330,10 @@ class BoostingParam(BaseParam):
 class HeteroBoostingParam(BoostingParam):
 
     """
-    Parameters
-    ----------
-    encrypt_param : EncodeParam Object
-        encrypt method use in secure boost, default: EncryptParam()
+    encrypt_param : EncodeParam Object, encrypt method use in secure boost, default: EncryptParam()
 
-    encrypted_mode_calculator_param: EncryptedModeCalculatorParam object
-        the calculation mode use in secureboost,
-        default: EncryptedModeCalculatorParam()
+    encrypted_mode_calculator_param: EncryptedModeCalculatorParam object, the calculation mode use in secureboost,
+                                     default: EncryptedModeCalculatorParam()
     """
 
     def __init__(self, task_type=consts.CLASSIFICATION,
@@ -403,100 +380,108 @@ class HeteroBoostingParam(BoostingParam):
 @deprecated_param(*hetero_deprecated_param_list)
 class HeteroSecureBoostParam(HeteroBoostingParam):
     """
-    Define boosting tree parameters that used in federated ml.
+        Define boosting tree parameters that used in federated ml.
 
-    Parameters
-    ----------
-    task_type : {'classification', 'regression'}, default: 'classification'
-        task type
+        Parameters
+        ----------
+        task_type : str, accepted 'classification', 'regression' only, default: 'classification'
 
-    tree_param : DecisionTreeParam Object, default: DecisionTreeParam()
-        tree param
+        tree_param : DecisionTreeParam Object, default: DecisionTreeParam()
 
-    objective_param : ObjectiveParam Object, default: ObjectiveParam()
-        objective param
+        objective_param : ObjectiveParam Object, default: ObjectiveParam()
 
-    learning_rate : float, int or long
-        the learning rate of secure boost. default: 0.3
+        learning_rate : float, accepted float, int or long only, the learning rate of secure boost. default: 0.3
 
-    num_trees : int or float
-        the max number of trees to build. default: 5
+        num_trees : int, accepted int, float only, the max number of trees to build. default: 5
 
-    subsample_feature_rate : float
-        a float-number in [0, 1], default: 1.0
+        subsample_feature_rate : float, a float-number in [0, 1], default: 1.0
 
-    random_seed: int
-        seed that controls all random functions
+        random_seed: seed that controls all random functions
 
-    n_iter_no_change : bool,
-        when True and residual error less than tol, tree building process will stop. default: True
+        n_iter_no_change : bool,
+            when True and residual error less than tol, tree building process will stop. default: True
 
-    encrypt_param : EncodeParam Object
-        encrypt method use in secure boost, default: EncryptParam(), this parameter
-        is only for hetero-secureboost
+        encrypt_param : EncodeParam Object, encrypt method use in secure boost, default: EncryptParam(), this parameter
+                        is only for hetero-secureboost
 
-    bin_num: positive integer greater than 1
-        bin number use in quantile. default: 32
+        bin_num: int, positive integer greater than 1, bin number use in quantile. default: 32
 
-    encrypted_mode_calculator_param: EncryptedModeCalculatorParam object
-        the calculation mode use in secureboost, default: EncryptedModeCalculatorParam(), only for hetero-secureboost
+        encrypted_mode_calculator_param: EncryptedModeCalculatorParam object, the calculation mode use in secureboost,
+                                         default: EncryptedModeCalculatorParam(), only for hetero-secureboost
 
-    use_missing: bool
-        use missing value in training process or not. default: False
+        use_missing: bool, accepted True, False only, use missing value in training process or not. default: False
 
-    zero_as_missing: bool
-        regard 0 as missing value or not, will be use only if use_missing=True, default: False
+        zero_as_missing: bool, accepted True, False only, regard 0 as missing value or not,
+                         will be use only if use_missing=True, default: False
 
-    validation_freqs: None or positive integer or container object in python
-        Do validation in training process or Not.
-        if equals None, will not do validation in train process;
-        if equals positive integer, will validate data every validation_freqs epochs passes;
-        if container object in python, will validate data if epochs belong to this container.
-        e.g. validation_freqs = [10, 15], will validate data when epoch equals to 10 and 15.
-        Default: None
-        The default value is None, 1 is suggested. You can set it to a number larger than 1 in order to
-        speed up training by skipping validation rounds. When it is larger than 1, a number which is
-        divisible by "num_trees" is recommended, otherwise, you will miss the validation scores
-        of last training iteration.
+        validation_freqs: None or positive integer or container object in python. Do validation in training process or Not.
+                          if equals None, will not do validation in train process;
+                          if equals positive integer, will validate data every validation_freqs epochs passes;
+                          if container object in python, will validate data if epochs belong to this container.
+                            e.g. validation_freqs = [10, 15], will validate data when epoch equals to 10 and 15.
+                          Default: None
+                          The default value is None, 1 is suggested. You can set it to a number larger than 1 in order to
+                          speed up training by skipping validation rounds. When it is larger than 1, a number which is
+                          divisible by "num_trees" is recommended, otherwise, you will miss the validation scores
+                          of last training iteration.
 
-    early_stopping_rounds: integer larger than 0
-        will stop training if one metric of one validation data
-        doesn’t improve in last early_stopping_round rounds，
-        need to set validation freqs and will check early_stopping every at every validation epoch,
+        early_stopping_rounds: should be a integer larger than 0，will stop training if one metric of one validation data
+                                doesn’t improve in last early_stopping_round rounds，
+                                need to set validation freqs and will check early_stopping every at every validation epoch,
 
-    metrics: list, default: []
-        Specify which metrics to be used when performing evaluation during training process.
-        If set as empty, default metrics will be used. For regression tasks, default metrics are
-        ['root_mean_squared_error', 'mean_absolute_error']， For binary-classificatiin tasks, default metrics
-        are ['auc', 'ks']. For multi-classification tasks, default metrics are ['accuracy', 'precision', 'recall']
+        metrics: list, default: []
+                 Specify which metrics to be used when performing evaluation during training process.
+                 If set as empty, default metrics will be used. For regression tasks, default metrics are
+                 ['root_mean_squared_error', 'mean_absolute_error']， For binary-classificatiin tasks, default metrics
+                 are ['auc', 'ks']. For multi-classification tasks, default metrics are ['accuracy', 'precision', 'recall']
 
-    use_first_metric_only: bool
-        use only the first metric for early stopping
+        use_first_metric_only: use only the first metric for early stopping
 
-    complete_secure: bool
-        if use complete_secure, when use complete secure, build first tree using only guest features
+        complete_secure: bool, if use complete_secure, when use complete secure, build first tree using only guest
+                        features
 
-    sparse_optimization: bool
-        Available when encrypted method is 'iterativeAffine'
-        An optimized mode for high-dimension, sparse data.
+        sparse_optimization: bool, Available when encrypted method is 'iterativeAffine'
+                            An optimized mode for high-dimension, sparse data.
 
-    run_goss: bool
-        activate Gradient-based One-Side Sampling, which selects large gradient and small
-        gradient samples using top_rate and other_rate.
+        run_goss: bool, activate Gradient-based One-Side Sampling, which selects large gradient and small
+                   gradient samples using top_rate and other_rate.
 
-    top_rate: float
-        the retain ratio of large gradient data, used when run_goss is True
+        top_rate: float, the retain ratio of large gradient data, used when run_goss is True
 
-    other_rate: float
-        the retain ratio of small gradient data, used when run_goss is True
+        other_rate: float, the retain ratio of small gradient data, used when run_goss is True
 
-    cipher_compress_error: {None}
-        This param is now abandoned
+        cipher_compress_error： This param is now abandoned
 
-    cipher_compress: bool
-        default is True, use cipher compressing to reduce computation cost and transfer cost
+        cipher_compress: bool, default is True, use cipher compressing to reduce computation cost and transfer cost
 
-    """
+        work_mode：str
+
+            std: standard sbt setting
+
+            mix:  alternate using guest/host features to build trees. For example, the first 'tree_num_per_party' trees
+                  use guest features,
+                  the second k trees use host features, and so on
+
+            layered: only support 2 party, when running layered mode, first 'host_depth' layer will use host features,
+                     and then next 'guest_depth' will only use guest features
+
+        tree_num_per_party: int, every party will alternate build 'tree_num_per_party' trees until reach max tree num, this
+                            param is valid when work_mode is mix
+
+        guest_depth: int, guest will build last guest_depth of a decision tree using guest features, is valid when work mode
+                     is layered
+
+        host_depth: int, host will build first host_depth of a decision tree using host features, is valid when work mode is
+                    layered
+
+
+        multi_mode: str, decide which mode to use when running multi-classification task:
+
+                    single_output standard gbdt multi-classification strategy
+
+                    multi_output every leaf give a multi-dimension predict, using multi_mode can save time
+                                 by learning a model with less trees.
+        """
 
     def __init__(self, tree_param: DecisionTreeParam = DecisionTreeParam(), task_type=consts.CLASSIFICATION,
                  objective_param=ObjectiveParam(),
@@ -509,13 +494,15 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                  complete_secure=False, metrics=None, use_first_metric_only=False, random_seed=100,
                  binning_error=consts.DEFAULT_RELATIVE_ERROR,
                  sparse_optimization=False, run_goss=False, top_rate=0.2, other_rate=0.1,
-                 cipher_compress_error=None, cipher_compress=True, new_ver=True,
-                 callback_param=CallbackParam()):
+                 cipher_compress_error=None, cipher_compress=True, new_ver=True, work_mode=consts.STD_TREE,
+                 tree_num_per_party=1, guest_depth=2, host_depth=3, callback_param=CallbackParam(),
+                 multi_mode=consts.SINGLE_OUTPUT):
 
         super(HeteroSecureBoostParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                      subsample_feature_rate, n_iter_no_change, tol, encrypt_param,
                                                      bin_num, encrypted_mode_calculator_param, predict_param, cv_param,
-                                                     validation_freqs, early_stopping_rounds, metrics=metrics,
+                                                     validation_freqs, early_stopping_rounds,
+                                                     metrics=metrics,
                                                      use_first_metric_only=use_first_metric_only,
                                                      random_seed=random_seed,
                                                      binning_error=binning_error)
@@ -531,7 +518,12 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.cipher_compress_error = cipher_compress_error
         self.cipher_compress = cipher_compress
         self.new_ver = new_ver
+        self.work_mode = work_mode
+        self.tree_num_per_party = tree_num_per_party
+        self.guest_depth = guest_depth
+        self.host_depth = host_depth
         self.callback_param = copy.deepcopy(callback_param)
+        self.multi_mode = multi_mode
 
     def check(self):
 
@@ -601,20 +593,19 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                  cipher_compress=True, callback_param=CallbackParam()):
 
         """
-        Parameters
-        ----------
-        work_mode: {"mix", "layered"}
+        work_mode：
             mix:  alternate using guest/host features to build trees. For example, the first 'tree_num_per_party' trees use guest features,
                   the second k trees use host features, and so on
             layered: only support 2 party, when running layered mode, first 'host_depth' layer will use host features,
                      and then next 'guest_depth' will only use guest features
-        tree_num_per_party: int
-            every party will alternate build 'tree_num_per_party' trees until reach max tree num, this param is valid when work_mode is mix
-        guest_depth: int
-            guest will build last guest_depth of a decision tree using guest features, is valid when work mode is layered
-        host depth: int
-            host will build first host_depth of a decision tree using host features, is valid when work mode is layered
+        tree_num_per_party: every party will alternate build 'tree_num_per_party' trees until reach max tree num, this param is valid when work_mode is
+            mix
+        guest_depth: guest will build last guest_depth of a decision tree using guest features, is valid when work mode
+            is layered
+        host depth: host will build first host_depth of a decision tree using host features, is valid when work mode is
+            layered
 
+        other params are the same as HeteroSecureBoost
         """
 
         super(HeteroFastSecureBoostParam, self).__init__(tree_param, task_type, objective_param, learning_rate,
@@ -647,10 +638,17 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
         if type(self.tree_num_per_party).__name__ not in ["int", "long"] or self.tree_num_per_party <= 0:
             raise ValueError("tree_num_per_party should be larger than 0")
 
-        work_modes = [consts.MIX_TREE, consts.LAYERED_TREE]
+        work_modes = [consts.MIX_TREE, consts.LAYERED_TREE, consts.STD_TREE]
         if self.work_mode not in work_modes:
             raise ValueError('only work_modes: {} are supported, input work mode is {}'.
                              format(work_modes, self.work_mode))
+
+        if self.multi_mode not in [consts.SINGLE_OUTPUT, consts.MULTI_OUTPUT]:
+            raise ValueError('unsupported multi-classification mode')
+
+        if self.multi_mode == consts.MULTI_OUTPUT:
+            if self.task_type == consts.REGRESSION:
+                raise ValueError('regression tasks not support multi-output trees')
 
         return True
 
@@ -671,7 +669,8 @@ class HomoSecureBoostParam(BoostingParam):
                  tol=0.0001, bin_num=32, predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, use_missing=False, zero_as_missing=False, random_seed=100,
                  binning_error=consts.DEFAULT_RELATIVE_ERROR, backend=consts.DISTRIBUTED_BACKEND,
-                 callback_param=CallbackParam()):
+                 callback_param=CallbackParam(), multi_mode=consts.SINGLE_OUTPUT):
+
         super(HomoSecureBoostParam, self).__init__(task_type=task_type,
                                                    objective_param=objective_param,
                                                    learning_rate=learning_rate,
@@ -691,6 +690,7 @@ class HomoSecureBoostParam(BoostingParam):
         self.tree_param = copy.deepcopy(tree_param)
         self.backend = backend
         self.callback_param = copy.deepcopy(callback_param)
+        self.multi_mode = multi_mode
 
     def check(self):
 
@@ -702,6 +702,8 @@ class HomoSecureBoostParam(BoostingParam):
             raise ValueError('zero as missing should be bool type')
         if self.backend not in [consts.MEMORY_BACKEND, consts.DISTRIBUTED_BACKEND]:
             raise ValueError('unsupported backend')
+        if self.multi_mode not in [consts.SINGLE_OUTPUT, consts.MULTI_OUTPUT]:
+            raise ValueError('unsupported multi-classification mode')
 
         for p in ["validation_freqs", "metrics"]:
             # if self._warn_to_deprecate_param(p, "", ""):
@@ -720,5 +722,12 @@ class HomoSecureBoostParam(BoostingParam):
 
         if self._warn_to_deprecate_param("metrics", descr, "callback_param's 'metrics'"):
             self.callback_param.metrics = self.metrics
+
+        if self.multi_mode not in [consts.SINGLE_OUTPUT, consts.MULTI_OUTPUT]:
+            raise ValueError('unsupported multi-classification mode')
+
+        if self.multi_mode == consts.MULTI_OUTPUT:
+            if self.task_type == consts.REGRESSION:
+                raise ValueError('regression tasks not support multi-output trees')
 
         return True

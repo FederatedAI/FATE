@@ -194,8 +194,11 @@ MAX_SPLIT_NODES = 2 ** 16
 MAX_SPLITINFO_TO_COMPUTE = 2 ** 10
 NORMAL_TREE = 'normal'
 COMPLETE_SECURE_TREE = 'complete_secure'
+STD_TREE = 'std'
 MIX_TREE = 'mix'
 LAYERED_TREE = 'layered'
+SINGLE_OUTPUT = 'single_output'
+MULTI_OUTPUT = 'multi_output'
 
 TRAIN_EVALUATE = 'train_evaluate'
 VALIDATE_EVALUATE = 'validate_evaluate'
@@ -301,6 +304,8 @@ HETERO_SBT_GUEST_MODEL = 'HeteroSecureBoostingTreeGuest'
 HETERO_SBT_HOST_MODEL = 'HeteroSecureBoostingTreeHost'
 HETERO_FAST_SBT_GUEST_MODEL = "HeteroFastSecureBoostingTreeGuest"
 HETERO_FAST_SBT_HOST_MODEL = "HeteroFastSecureBoostingTreeHost"
+HOMO_SBT_GUEST_MODEL = "HomoSecureBoostingTreeGuest"
+HOMO_SBT_HOST_MODEL = "HomoSecureBoostingTreeHost"
 
 # tree decimal round to prevent float error
 TREE_DECIMAL_ROUND = 10
@@ -335,3 +340,10 @@ DEFAULT_KEY_LENGTH = 1024
 
 MIN_HASH_FUNC_COUNT = 4
 MAX_HASH_FUNC_COUNT = 32
+
+# shap param
+AUTO = 'auto'
+ZEROS = 'zeros'
+MEDIAN = 'median'
+AVERAGE = 'average'
+

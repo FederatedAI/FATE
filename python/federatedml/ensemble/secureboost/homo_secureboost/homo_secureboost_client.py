@@ -1,23 +1,25 @@
 import numpy as np
 import functools
 import copy
-from federatedml.feature.sparse_vector import SparseVector
+import functools
+import numpy as np
 from typing import List
 from operator import itemgetter
-from federatedml.ensemble.boosting.boosting_core.homo_boosting import HomoBoostingClient
-from federatedml.param.boosting_param import HomoSecureBoostParam
-from federatedml.ensemble.basic_algorithms.decision_tree.homo.homo_decision_tree_client import HomoDecisionTreeClient
+from federatedml.util import LOGGER
 from federatedml.util import consts
-from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
-from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import ObjectiveMeta
-from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta
-from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
-from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
-from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_importance import FeatureImportance
+from federatedml.feature.sparse_vector import SparseVector
+from federatedml.feature.fate_element_type import NoneType
 from federatedml.ensemble import HeteroSecureBoostingTreeGuest
 from federatedml.util.io_check import assert_io_num_rows_equal
-from federatedml.feature.fate_element_type import NoneType
-from federatedml.util import LOGGER
+from federatedml.param.boosting_param import HomoSecureBoostParam
+from federatedml.ensemble.boosting.homo_boosting import HomoBoostingClient
+from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta
+from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import ObjectiveMeta
+from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
+from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
+from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_importance import FeatureImportance
+from federatedml.ensemble.basic_algorithms.decision_tree.homo.homo_decision_tree_client import HomoDecisionTreeClient
 
 
 make_readable_feature_importance = HeteroSecureBoostingTreeGuest.make_readable_feature_importance
@@ -40,6 +42,9 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         self.backend = consts.DISTRIBUTED_BACKEND
         self.bin_arr, self.sample_id_arr = None, None
 
+        # mo tree
+        self.multi_mode = consts.SINGLE_OUTPUT
+
     def _init_model(self, boosting_param: HomoSecureBoostParam):
 
         super(HomoSecureBoostingTreeClient, self)._init_model(boosting_param)
@@ -47,6 +52,7 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         self.zero_as_missing = boosting_param.zero_as_missing
         self.tree_param = boosting_param.tree_param
         self.backend = boosting_param.backend
+        self.multi_mode = boosting_param.multi_mode
 
         if self.use_missing:
             self.tree_param.use_missing = self.use_missing
@@ -181,7 +187,13 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         self.bin_arr = np.asfortranarray(np.stack(bin_arr, axis=0).astype(np.uint8))
         self.sample_id_arr = np.array(id_list)
 
-    def fit_a_booster(self, epoch_idx: int, booster_dim: int):
+    def preprocess(self):
+
+        if self.multi_mode == consts.MULTI_OUTPUT:
+            self.booster_dim = 1
+            LOGGER.debug('multi mode tree dim reset to 1')
+
+    def fit_a_learner(self, epoch_idx: int, booster_dim: int):
 
         valid_features = self.get_valid_features(epoch_idx, booster_dim)
         LOGGER.debug('valid features are {}'.format(valid_features))
@@ -191,12 +203,16 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
             self.grad_and_hess = self.compute_local_grad_and_hess(self.y_hat)
             self.cur_epoch_idx = epoch_idx
 
-        subtree_g_h = self.get_subtree_grad_and_hess(self.grad_and_hess, booster_dim)
+        if self.multi_mode == consts.MULTI_OUTPUT:
+            g_h = self.grad_and_hess
+        else:
+            g_h = self.get_subtree_grad_and_hess(self.grad_and_hess, booster_dim)
+
         flow_id = self.generate_flowid(epoch_idx, booster_dim)
         new_tree = HomoDecisionTreeClient(self.tree_param, self.data_bin, self.bin_split_points,
-                                          self.bin_sparse_points, subtree_g_h, valid_feature=valid_features
-                                          , epoch_idx=epoch_idx, role=self.role, flow_id=flow_id, tree_idx=\
-                                          booster_dim, mode='train')
+                                          self.bin_sparse_points, g_h, valid_feature=valid_features
+                                          , epoch_idx=epoch_idx, role=self.role, flow_id=flow_id, tree_idx=booster_dim,
+                                          mode='train')
 
         if self.backend == consts.DISTRIBUTED_BACKEND:
             new_tree.fit()
@@ -239,7 +255,7 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         rounds = len(self.boosting_model_list) // self.booster_dim
         for idx in range(0, rounds):
             for booster_idx in range(self.booster_dim):
-                model = self.load_booster(self.booster_meta,
+                model = self.load_learner(self.booster_meta,
                                           self.boosting_model_list[idx * self.booster_dim + booster_idx],
                                           idx, booster_idx)
                 tree_list.append(model)
@@ -269,7 +285,7 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
 
         return summary
 
-    def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
+    def load_learner(self, model_meta, model_param, epoch_idx, booster_idx):
         tree_inst = HomoDecisionTreeClient(tree_param=self.tree_param, mode='predict')
         tree_inst.load_model(model_meta=model_meta, model_param=model_param)
         return tree_inst
@@ -356,6 +372,7 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         model_meta.tol = self.tol
         model_meta.use_missing = self.use_missing
         model_meta.zero_as_missing = self.zero_as_missing
+        model_meta.module = 'HomoSecureBoost'
 
         meta_name = "HomoSecureBoostingTreeGuestMeta"
 

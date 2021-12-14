@@ -1,9 +1,10 @@
 import numpy as np
-from federatedml.ensemble.boosting.boosting_core.homo_boosting import HomoBoostingArbiter
-from federatedml.param.boosting_param import HomoSecureBoostParam
-from federatedml.ensemble.basic_algorithms.decision_tree.homo.homo_decision_tree_arbiter import HomoDecisionTreeArbiter
 from numpy import random
 from federatedml.util import LOGGER
+from federatedml.util import consts
+from federatedml.ensemble.boosting.homo_boosting import HomoBoostingArbiter
+from federatedml.param.boosting_param import HomoSecureBoostParam
+from federatedml.ensemble.basic_algorithms.decision_tree.homo.homo_decision_tree_arbiter import HomoDecisionTreeArbiter
 
 
 class HomoSecureBoostingTreeArbiter(HomoBoostingArbiter):
@@ -19,11 +20,14 @@ class HomoSecureBoostingTreeArbiter(HomoBoostingArbiter):
         self.feature_importances_ = {}
         self.model_param = HomoSecureBoostParam()
 
+        self.multi_mode = consts.SINGLE_OUTPUT
+
     def _init_model(self, boosting_param: HomoSecureBoostParam):
         super(HomoSecureBoostingTreeArbiter, self)._init_model(boosting_param)
         self.use_missing = boosting_param.use_missing
         self.zero_as_missing = boosting_param.zero_as_missing
         self.tree_param = boosting_param.tree_param
+        self.multi_mode = boosting_param.multi_mode
         if self.use_missing:
             self.tree_param.use_missing = self.use_missing
             self.tree_param.zero_as_missing = self.zero_as_missing
@@ -42,7 +46,11 @@ class HomoSecureBoostingTreeArbiter(HomoBoostingArbiter):
 
         return valid_features
 
-    def fit_a_booster(self, epoch_idx: int, booster_dim: int):
+    def preprocess(self):
+        if self.multi_mode == consts.MULTI_OUTPUT:
+            self.booster_dim = 1
+
+    def fit_a_learner(self, epoch_idx: int, booster_dim: int):
 
         valid_feature = self.sample_valid_features()
         self.send_valid_features(valid_feature, epoch_idx, booster_dim)
@@ -62,7 +70,7 @@ class HomoSecureBoostingTreeArbiter(HomoBoostingArbiter):
     def get_cur_model(self):
         return None
 
-    def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
+    def load_learner(self, model_meta, model_param, epoch_idx, booster_idx):
         pass
 
     def set_model_param(self, model_param):

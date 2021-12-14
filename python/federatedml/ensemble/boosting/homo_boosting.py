@@ -1,7 +1,7 @@
 from abc import ABC
 import abc
 import numpy as np
-from federatedml.ensemble.boosting.boosting_core import Boosting
+from federatedml.ensemble.boosting.boosting import Boosting
 from federatedml.feature.homo_feature_binning.homo_split_points import HomoFeatureBinningClient, \
                                                                       HomoFeatureBinningServer
 from federatedml.util.classify_label_checker import ClassifyLabelChecker, RegressionLabelChecker
@@ -11,7 +11,7 @@ from federatedml.transfer_variable.transfer_class.homo_boosting_transfer_variabl
 from typing import List
 from federatedml.feature.fate_element_type import NoneType
 from federatedml.util import LOGGER
-from federatedml.ensemble.boosting.boosting_core.homo_boosting_aggregator import HomoBoostArbiterAggregator, \
+from federatedml.ensemble.boosting.homo_boosting_aggregator import HomoBoostArbiterAggregator, \
     HomoBoostClientAggregator
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.param.boosting_param import HomoSecureBoostParam
@@ -29,8 +29,9 @@ class HomoBoostingClient(Boosting, ABC):
         super(HomoBoostingClient, self).__init__()
         self.transfer_inst = HomoBoostingTransferVariable()
         self.model_param = HomoSecureBoostParam()
+        self.aggregator = None
+        self.binning_obj = None
         self.mode = consts.HOMO
-        self.aggregator, self.binning_obj = None, None
 
     def federated_binning(self,  data_instance):
 
@@ -87,10 +88,9 @@ class HomoBoostingClient(Boosting, ABC):
 
     def fit(self, data_inst, validate_data=None):
 
-        # init aggregator
+        # init federation obj
         self.aggregator = HomoBoostClientAggregator()
         self.binning_obj = HomoFeatureBinningClient()
-
 
         # binning
         self.data_preporcess(data_inst)
@@ -149,6 +149,8 @@ class HomoBoostingClient(Boosting, ABC):
         # sync start round and end round
         self.sync_start_round_and_end_round()
 
+        self.preprocess()
+
         LOGGER.info('begin to fit a boosting tree')
         for epoch_idx in range(self.start_round, self.boosting_round):
 
@@ -159,7 +161,7 @@ class HomoBoostingClient(Boosting, ABC):
             for class_idx in range(self.booster_dim):
 
                 # fit a booster
-                model = self.fit_a_booster(epoch_idx, class_idx)
+                model = self.fit_a_learner(epoch_idx, class_idx)
                 booster_meta, booster_param = model.get_model()
                 if booster_meta is not None and booster_param is not None:
                     self.booster_meta = booster_meta
@@ -184,6 +186,7 @@ class HomoBoostingClient(Boosting, ABC):
                     LOGGER.info('n_iter_no_change stop triggered')
                     break
 
+        self.post_process()
         self.callback_list.on_train_end()
         self.set_summary(self.generate_summary())
 
@@ -193,11 +196,11 @@ class HomoBoostingClient(Boosting, ABC):
         raise NotImplementedError('predict func is not implemented')
 
     @abc.abstractmethod
-    def fit_a_booster(self, epoch_idx: int, booster_dim: int):
+    def fit_a_learner(self, epoch_idx: int, booster_dim: int):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
+    def load_learner(self, model_meta, model_param, epoch_idx, booster_idx):
         raise NotImplementedError()
 
 
@@ -205,9 +208,10 @@ class HomoBoostingArbiter(Boosting, ABC):
 
     def __init__(self):
         super(HomoBoostingArbiter, self).__init__()
-        self.aggregator, self.binning_obj = None, None
         self.transfer_inst = HomoBoostingTransferVariable()
         self.check_convergence_func = None
+        self.aggregator = None
+        self.binning_obj = None
 
     def federated_binning(self,):
 
@@ -238,7 +242,7 @@ class HomoBoostingArbiter(Boosting, ABC):
 
     def fit(self, data_inst, validate_data=None):
 
-        # init aggregator
+        # init binning obj
         self.aggregator = HomoBoostArbiterAggregator()
         self.binning_obj = HomoFeatureBinningServer()
 
@@ -258,12 +262,13 @@ class HomoBoostingArbiter(Boosting, ABC):
         self.sync_start_round_and_end_round()
 
         LOGGER.info('begin to fit a boosting tree')
+        self.preprocess()
         for epoch_idx in range(self.start_round, self.boosting_round):
 
             LOGGER.info('cur epoch idx is {}'.format(epoch_idx))
 
             for class_idx in range(self.booster_dim):
-                model = self.fit_a_booster(epoch_idx, class_idx)
+                model = self.fit_a_learner(epoch_idx, class_idx)
 
             global_loss = self.aggregator.aggregate_loss(suffix=(epoch_idx,))
             self.history_loss.append(global_loss)
@@ -285,7 +290,7 @@ class HomoBoostingArbiter(Boosting, ABC):
                            MetricMeta(name="train",
                                       metric_type="LOSS",
                                       extra_metas={"Best": min(self.history_loss)}))
-
+        self.post_process()
         self.callback_list.on_train_end()
         self.set_summary(self.generate_summary())
 
@@ -293,11 +298,12 @@ class HomoBoostingArbiter(Boosting, ABC):
         LOGGER.debug('arbiter skip prediction')
 
     @abc.abstractmethod
-    def fit_a_booster(self, epoch_idx: int, booster_dim: int):
+    def fit_a_learner(self, epoch_idx: int, booster_dim: int):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
+    def load_learner(self, model_meta, model_param, epoch_idx, booster_idx):
         raise NotImplementedError()
+
 
 

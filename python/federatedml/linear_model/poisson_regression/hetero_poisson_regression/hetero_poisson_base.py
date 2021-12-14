@@ -33,10 +33,10 @@ class HeteroPoissonBase(BasePoissonRegression):
         self.batch_generator = None
         self.gradient_loss_operator = None
         self.converge_procedure = None
+        self.transfer_variable = HeteroPoissonTransferVariable()
 
     def _init_model(self, params):
         super(HeteroPoissonBase, self)._init_model(params)
-        self.transfer_variable = HeteroPoissonTransferVariable()
         self.cipher.register_paillier_cipher(self.transfer_variable)
         self.converge_procedure.register_convergence(self.transfer_variable)
         self.batch_generator.register_batch_generator(self.transfer_variable)

@@ -1,3 +1,6 @@
+import copy
+import functools
+import typing
 from abc import ABC
 import abc
 from numpy import random
@@ -8,7 +11,6 @@ from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.model_selection import start_cross_validation
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
-from federatedml.callbacks.validation_strategy import ValidationStrategy
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.model_base import ModelBase
 from federatedml.feature.fate_element_type import NoneType
@@ -22,14 +24,10 @@ from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss import T
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss import SigmoidBinaryCrossEntropyLoss
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss import SoftmaxCrossEntropyLoss
 from federatedml.param.evaluation_param import EvaluateParam
-from federatedml.ensemble.boosting.boosting_core.predict_cache import PredictDataCache
+from federatedml.ensemble.boosting.predict_cache import PredictDataCache
 from federatedml.statistic import data_overview
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.util import LOGGER
-import copy
-
-import functools
-import typing
 
 
 class Boosting(ModelBase, ABC):
@@ -364,6 +362,10 @@ class Boosting(ModelBase, ABC):
 
     @staticmethod
     def accumulate_y_hat(val, new_val, lr=0.1, idx=0):
+        # vector sum
+        if type(new_val) == np.ndarray and len(new_val) == len(val):
+            return val + new_val*lr
+        # accumulate by dimension
         z_vec = np.zeros(len(val))
         z_vec[idx] = lr * new_val
         return z_vec + val
@@ -414,7 +416,7 @@ class Boosting(ModelBase, ABC):
         return y_hat, init_score
 
     @abc.abstractmethod
-    def fit_a_booster(self, *args) -> BasicAlgorithms:
+    def fit_a_learner(self, *args) -> BasicAlgorithms:
         """
         fit a booster and return it
         """
@@ -425,7 +427,7 @@ class Boosting(ModelBase, ABC):
     """
 
     @abc.abstractmethod
-    def load_booster(self, *args):
+    def load_learner(self, *args):
         """
         load a booster
         """
@@ -481,6 +483,12 @@ class Boosting(ModelBase, ABC):
     @abc.abstractmethod
     def set_model_param(self, model_param):
         raise NotImplementedError()
+
+    def preprocess(self):
+        pass
+
+    def post_process(self):
+        pass
 
     def get_cur_model(self):
         meta_name, meta_protobuf = self.get_model_meta()

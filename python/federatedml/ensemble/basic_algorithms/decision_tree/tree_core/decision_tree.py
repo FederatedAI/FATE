@@ -275,7 +275,7 @@ class DecisionTree(BasicAlgorithms, ABC):
         """
         prevent float error
         """
-        return round(num, consts.TREE_DECIMAL_ROUND)
+        return np.round(num, consts.TREE_DECIMAL_ROUND)
 
     def update_feature_importance(self, splitinfo, record_site_name=True):
 
@@ -370,6 +370,27 @@ class DecisionTree(BasicAlgorithms, ABC):
         for node in self.tree_node:
             if node.is_leaf:
                 node.weight = self.float_round(node.weight)
+
+    @staticmethod
+    def mo_weight_extract(node):
+
+        mo_weight = None
+        weight = node.weight
+        if type(node.weight) == np.ndarray and len(node.weight) > 1:
+            weight = -1
+            mo_weight = list(node.weight)  # use multi output
+
+        return weight, mo_weight
+
+    @staticmethod
+    def mo_weight_load(node_param):
+
+        weight = node_param.weight
+        mo_weight = list(node_param.mo_weight)
+        if len(mo_weight) != 0:
+            weight = np.array(list(node_param.mo_weight))
+
+        return weight
 
     """
     To implement

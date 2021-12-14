@@ -29,4 +29,5 @@ message LinRModelMeta {
     int64 max_iter = 7;
     string early_stop = 8;
     bool fit_intercept = 9;
+    string module = 10;
 }

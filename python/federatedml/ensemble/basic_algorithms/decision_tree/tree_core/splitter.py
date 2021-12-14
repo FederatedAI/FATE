@@ -24,7 +24,6 @@
 # =============================================================================
 #
 # =============================================================================
-
 import numpy as np
 import warnings
 import functools
@@ -91,7 +90,11 @@ class Splitter(object):
         self.min_child_weight = min_child_weight
 
     def _check_min_child_weight(self, l_h, r_h):
-        return l_h >= self.min_child_weight and r_h >= self.min_child_weight
+
+        if type(l_h) == np.ndarray:
+            l_h, r_h = np.sum(l_h), np.sum(r_h)
+        rs = l_h >= self.min_child_weight and r_h >= self.min_child_weight
+        return rs
 
     def _check_sample_num(self, l_cnt, r_cnt):
         return l_cnt >= self.min_leaf_node and r_cnt >= self.min_leaf_node
@@ -131,6 +134,9 @@ class Splitter(object):
             if node_cnt < self.min_sample_split:
                 break
 
+            if node_cnt < 1:  # avoid float error
+                break
+
             # last bin will not participate in split find, so bin_num - 1
             for bid in range(bin_num - missing_bin - 1):
 
@@ -143,7 +149,7 @@ class Splitter(object):
                 sum_hess_r = sum_hess - sum_hess_l
                 node_cnt_r = node_cnt - node_cnt_l
 
-                if self._check_sample_num(node_cnt_l, node_cnt_r) and self._check_min_child_weight(sum_hess_l, sum_hess_r):
+                if self._check_min_child_weight(sum_hess_l, sum_hess_r) and self._check_sample_num(node_cnt_l, node_cnt_r):
                     gain = self.criterion.split_gain([sum_grad, sum_hess],
                                                      [sum_grad_l, sum_hess_l], [sum_grad_r, sum_hess_r])
 

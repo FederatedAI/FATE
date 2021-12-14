@@ -19,7 +19,7 @@
 
 from abc import ABC
 import abc
-from federatedml.ensemble.boosting.boosting_core import Boosting
+from federatedml.ensemble.boosting import Boosting
 from federatedml.param.boosting_param import HeteroBoostingParam
 from federatedml.secureprotol import IterativeAffineEncrypt
 from federatedml.secureprotol import PaillierEncrypt
@@ -57,6 +57,15 @@ class HeteroBoosting(Boosting, ABC):
         self.re_encrypted_rate = param.encrypted_mode_calculator_param.re_encrypted_rate
         self.early_stopping_rounds = param.early_stopping_rounds
         self.use_first_metric_only = param.use_first_metric_only
+
+
+class HeteroBoostingGuest(HeteroBoosting, ABC):
+
+    def __init__(self):
+        super(HeteroBoostingGuest, self).__init__()
+
+    def _init_model(self, param):
+        super(HeteroBoostingGuest, self)._init_model(param)
 
     def generate_encrypter(self):
 
@@ -106,15 +115,6 @@ class HeteroBoosting(Boosting, ABC):
             RegressionLabelChecker.validate_label(self.data_bin)
 
         return classes_, num_classes, booster_dim
-
-
-class HeteroBoostingGuest(HeteroBoosting, ABC):
-
-    def __init__(self):
-        super(HeteroBoostingGuest, self).__init__()
-
-    def _init_model(self, param):
-        super(HeteroBoostingGuest, self)._init_model(param)
 
     def sync_booster_dim(self):
         LOGGER.info("sync booster_dim to host")
@@ -183,6 +183,8 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
                                       metric_type="LOSS",
                                       extra_metas={"unit_name": "iters"}))
 
+        self.preprocess()
+
         for epoch_idx in range(self.start_round, self.boosting_round):
 
             LOGGER.info('cur epoch idx is {}'.format(epoch_idx))
@@ -192,7 +194,7 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
             for class_idx in range(self.booster_dim):
 
                 # fit a booster
-                model = self.fit_a_booster(epoch_idx, class_idx)
+                model = self.fit_a_learner(epoch_idx, class_idx)
 
                 booster_meta, booster_param = model.get_model()
 
@@ -227,14 +229,13 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
             if self.stop_training or should_stop:
                 break
 
+        self.post_process()
         self.callback_list.on_train_end()
-
         self.callback_meta("loss",
                            "train",
                            MetricMeta(name="train",
                                       metric_type="LOSS",
                                       extra_metas={"Best": min(self.history_loss)}))
-
         # get summary
         self.set_summary(self.generate_summary())
 
@@ -244,11 +245,11 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
         raise NotImplementedError('predict func is not implemented')
 
     @abc.abstractmethod
-    def fit_a_booster(self, epoch_idx: int, booster_dim: int):
+    def fit_a_learner(self, epoch_idx: int, booster_dim: int):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
+    def load_learner(self, model_meta, model_param, epoch_idx, booster_idx):
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -311,8 +312,9 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
             self.feature_name_fid_mapping = self.gen_feature_fid_mapping(data_inst.schema)
 
         self.sync_booster_dim()
-        self.generate_encrypter()
         self.callback_list.on_train_begin(data_inst, validate_data)
+
+        self.preprocess()
 
         for epoch_idx in range(self.start_round, self.boosting_round):
 
@@ -322,7 +324,7 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
 
             for class_idx in range(self.booster_dim):
                 # fit a booster
-                model = self.fit_a_booster(epoch_idx, class_idx)  # need to implement
+                model = self.fit_a_learner(epoch_idx, class_idx)  # need to implement
                 booster_meta, booster_param = model.get_model()
                 if booster_meta is not None and booster_param is not None:
                     self.booster_meta = booster_meta
@@ -337,6 +339,7 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
             if should_stop:
                 break
 
+        self.post_process()
         self.callback_list.on_train_end()
         self.set_summary(self.generate_summary())
 
@@ -352,7 +355,7 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
 
         for idx in range(predict_start_round, rounds):
             for booster_idx in range(self.booster_dim):
-                model = self.load_booster(self.booster_meta,
+                model = self.load_learner(self.booster_meta,
                                           self.boosting_model_list[idx * self.booster_dim + booster_idx],
                                           idx, booster_idx)
                 model.predict(data_inst)
@@ -365,11 +368,11 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
         self.lazy_predict(data_inst)
 
     @abc.abstractmethod
-    def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
+    def load_learner(self, model_meta, model_param, epoch_idx, booster_idx):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def fit_a_booster(self, epoch_idx: int, booster_dim: int):
+    def fit_a_learner(self, epoch_idx: int, booster_dim: int):
         raise NotImplementedError()
 
     @abc.abstractmethod

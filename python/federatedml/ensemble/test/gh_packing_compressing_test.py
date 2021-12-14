@@ -154,7 +154,7 @@ class TestFeatureHistogram(unittest.TestCase):
                                                                                    en_h_l,
                                                                                    self.max_sample_num)
             de_num = en.raw_decrypt(en_sum)
-            unpack_num = packer.packer._unpack_an_int(de_num, packer.packer._bit_assignment[0])
+            unpack_num = packer.packer._unpack_an_int(de_num, packer.packer.bit_assignment[0])
 
             g_sum_ = unpack_num[0] / fix_point_precision - sample_num * packer.g_offset
             h_sum_ = unpack_num[1] / fix_point_precision
@@ -236,7 +236,7 @@ class TestFeatureHistogram(unittest.TestCase):
             print(case_id)
             case_id += 1
             de_num = en.raw_decrypt(en_gh)
-            unpack_num = packer.packer._unpack_an_int(de_num, packer.packer._bit_assignment[0])
+            unpack_num = packer.packer._unpack_an_int(de_num, packer.packer.bit_assignment[0])
             g_sum_ = unpack_num[0] / fix_point_precision - s.sample_count * packer.g_offset
             h_sum_ = unpack_num[1] / fix_point_precision
 
@@ -284,7 +284,7 @@ class TestFeatureHistogram(unittest.TestCase):
             print(case_id)
             case_id += 1
             de_num = en.raw_decrypt(en_gh)            # make sure packing result close to plaintext sum
-            unpack_num = packer.packer._unpack_an_int(de_num, packer.packer._bit_assignment[0])
+            unpack_num = packer.packer._unpack_an_int(de_num, packer.packer.bit_assignment[0])
             g_sum_ = unpack_num[0] / fix_point_precision - s.sample_count * packer.g_offset
             h_sum_ = unpack_num[1] / fix_point_precision
 

@@ -396,6 +396,7 @@ class ValidationStrategy(CallbackBase):
     def on_epoch_end(self, model, epoch):
         LOGGER.debug('running validation')
         self.validate(model, epoch)
+
         if self.need_stop():
             LOGGER.debug('early stopping triggered')
             model.callback_variables.stop_training = True

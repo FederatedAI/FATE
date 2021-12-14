@@ -69,6 +69,7 @@ class BaseLinearRegression(BaseLinearModel):
                                                               learning_rate=self.model_param.learning_rate,
                                                               max_iter=self.max_iter,
                                                               early_stop=self.model_param.early_stop,
+                                                              module='HeteroLinR',
                                                               fit_intercept=self.fit_intercept)
         return meta_protobuf_obj
 
