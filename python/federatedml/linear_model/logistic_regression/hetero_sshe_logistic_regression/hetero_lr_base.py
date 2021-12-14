@@ -455,6 +455,7 @@ class HeteroLRBase(BaseLinearModel, ABC):
                                                           early_stop=self.model_param.early_stop,
                                                           fit_intercept=self.fit_intercept,
                                                           need_one_vs_rest=self.need_one_vs_rest,
+                                                          module='HeteroSSHELR',
                                                           reveal_strategy=self.model_param.reveal_strategy)
         return meta_protobuf_obj
 
