@@ -1,6 +1,7 @@
 import numpy as np
 from federatedml.util import consts
 
+
 def data_inst_table_to_arr(data_inst, take_num=500):
 
     take_rs = data_inst.take(take_num)
@@ -22,9 +23,6 @@ class Explainer(object):
         self.flow_id = flow_id
 
     def init_model(self, *args):
-        pass
-
-    def init_model_2(self, model_dict):
         pass
 
     def init_background_data(self, *args):
