@@ -28,7 +28,7 @@ _ml_base = Path(__file__).resolve().parent.parent.parent
 
 
 class _RunnerDecorator:
-    def __init__(self, meta) -> None:
+    def __init__(self, meta: "ComponentMeta") -> None:
         self._roles = set()
         self._meta = meta
 
@@ -114,15 +114,17 @@ class ComponentMeta:
 
     def _get_runner(self, role: str):
         if role in self._role_to_runner_cls:
-            return self._role_to_runner_cls[role]
+            runner_class = self._role_to_runner_cls[role]
 
         elif role in self._role_to_runner_cls_getter:
-            return self._role_to_runner_cls_getter[role]()
+            runner_class = self._role_to_runner_cls_getter[role]()
 
         else:
             raise ModuleNotFoundError(
                 f"Runner for component `{self.name}` at role `{role}` not found"
             )
+        runner_class.set_component_name(self.alias[0])
+        return runner_class
 
     def get_run_obj(self, role: str):
         return self._get_runner(role)()
@@ -145,11 +147,8 @@ class ComponentMeta:
 
 def _search_components(path):
     try:
-        module_name = '.'.join(
-            path.absolute()
-            .relative_to(_ml_base)
-            .with_suffix("")
-            .parts
+        module_name = ".".join(
+            path.absolute().relative_to(_ml_base).with_suffix("").parts
         )
         module = importlib.import_module(module_name)
     except ImportError as e:
@@ -185,11 +184,8 @@ class Components:
         else:
             _components_base = Path(__file__).resolve().parent
             for p in _components_base.glob("**/*.py"):
-                module_name = '.'.join(
-                    p.absolute()
-                    .relative_to(_ml_base)
-                    .with_suffix("")
-                    .parts
+                module_name = ".".join(
+                    p.absolute().relative_to(_ml_base).with_suffix("").parts
                 )
                 importlib.import_module(module_name)
 
