@@ -138,7 +138,7 @@ class HeteroNNHost(HeteroNNBase):
         model_meta = HeteroNNMeta()
         model_meta.batch_size = self.batch_size
         model_meta.hetero_nn_model_meta.CopyFrom(self.model.get_hetero_nn_model_meta())
-
+        model_meta.module = 'HeteroNN'
         return model_meta
 
     def _get_model_param(self):

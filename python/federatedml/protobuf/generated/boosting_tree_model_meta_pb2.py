@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='com.webank.ai.fate.core.mlmodel.buffer',
   syntax='proto3',
   serialized_options=_b('B\027BoostTreeModelMetaProto'),
-  serialized_pb=_b('\n\x1e\x62oosting-tree-model-meta.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"1\n\rObjectiveMeta\x12\x11\n\tobjective\x18\x01 \x01(\t\x12\r\n\x05param\x18\x02 \x03(\x01\"B\n\rCriterionMeta\x12\x18\n\x10\x63riterion_method\x18\x01 \x01(\t\x12\x17\n\x0f\x63riterion_param\x18\x02 \x03(\x01\"\xf4\x01\n\x15\x44\x65\x63isionTreeModelMeta\x12M\n\x0e\x63riterion_meta\x18\x01 \x01(\x0b\x32\x35.com.webank.ai.fate.core.mlmodel.buffer.CriterionMeta\x12\x11\n\tmax_depth\x18\x02 \x01(\x05\x12\x18\n\x10min_sample_split\x18\x03 \x01(\x05\x12\x1a\n\x12min_impurity_split\x18\x04 \x01(\x01\x12\x15\n\rmin_leaf_node\x18\x05 \x01(\x05\x12\x13\n\x0buse_missing\x18\x06 \x01(\x08\x12\x17\n\x0fzero_as_missing\x18\x07 \x01(\x08\"8\n\x0cQuantileMeta\x12\x17\n\x0fquantile_method\x18\x01 \x01(\t\x12\x0f\n\x07\x62in_num\x18\x02 \x01(\x05\"\xaa\x03\n\x15\x42oostingTreeModelMeta\x12P\n\ttree_meta\x18\x01 \x01(\x0b\x32=.com.webank.ai.fate.core.mlmodel.buffer.DecisionTreeModelMeta\x12\x15\n\rlearning_rate\x18\x02 \x01(\x01\x12\x11\n\tnum_trees\x18\x03 \x01(\x05\x12K\n\rquantile_meta\x18\x04 \x01(\x0b\x32\x34.com.webank.ai.fate.core.mlmodel.buffer.QuantileMeta\x12M\n\x0eobjective_meta\x18\x05 \x01(\x0b\x32\x35.com.webank.ai.fate.core.mlmodel.buffer.ObjectiveMeta\x12\x11\n\ttask_type\x18\x06 \x01(\t\x12\x18\n\x10n_iter_no_change\x18\x07 \x01(\x08\x12\x0b\n\x03tol\x18\x08 \x01(\x01\x12\x13\n\x0buse_missing\x18\t \x01(\x08\x12\x17\n\x0fzero_as_missing\x18\n \x01(\x08\x12\x11\n\twork_mode\x18\x0b \x01(\t\"w\n\x0fTransformerMeta\x12P\n\ttree_meta\x18\x01 \x01(\x0b\x32=.com.webank.ai.fate.core.mlmodel.buffer.BoostingTreeModelMeta\x12\x12\n\nmodel_name\x18\x02 \x01(\tB\x19\x42\x17\x42oostTreeModelMetaProtob\x06proto3')
+  serialized_pb=_b('\n\x1e\x62oosting-tree-model-meta.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"1\n\rObjectiveMeta\x12\x11\n\tobjective\x18\x01 \x01(\t\x12\r\n\x05param\x18\x02 \x03(\x01\"B\n\rCriterionMeta\x12\x18\n\x10\x63riterion_method\x18\x01 \x01(\t\x12\x17\n\x0f\x63riterion_param\x18\x02 \x03(\x01\"\xf4\x01\n\x15\x44\x65\x63isionTreeModelMeta\x12M\n\x0e\x63riterion_meta\x18\x01 \x01(\x0b\x32\x35.com.webank.ai.fate.core.mlmodel.buffer.CriterionMeta\x12\x11\n\tmax_depth\x18\x02 \x01(\x05\x12\x18\n\x10min_sample_split\x18\x03 \x01(\x05\x12\x1a\n\x12min_impurity_split\x18\x04 \x01(\x01\x12\x15\n\rmin_leaf_node\x18\x05 \x01(\x05\x12\x13\n\x0buse_missing\x18\x06 \x01(\x08\x12\x17\n\x0fzero_as_missing\x18\x07 \x01(\x08\"8\n\x0cQuantileMeta\x12\x17\n\x0fquantile_method\x18\x01 \x01(\t\x12\x0f\n\x07\x62in_num\x18\x02 \x01(\x05\"\xba\x03\n\x15\x42oostingTreeModelMeta\x12P\n\ttree_meta\x18\x01 \x01(\x0b\x32=.com.webank.ai.fate.core.mlmodel.buffer.DecisionTreeModelMeta\x12\x15\n\rlearning_rate\x18\x02 \x01(\x01\x12\x11\n\tnum_trees\x18\x03 \x01(\x05\x12K\n\rquantile_meta\x18\x04 \x01(\x0b\x32\x34.com.webank.ai.fate.core.mlmodel.buffer.QuantileMeta\x12M\n\x0eobjective_meta\x18\x05 \x01(\x0b\x32\x35.com.webank.ai.fate.core.mlmodel.buffer.ObjectiveMeta\x12\x11\n\ttask_type\x18\x06 \x01(\t\x12\x18\n\x10n_iter_no_change\x18\x07 \x01(\x08\x12\x0b\n\x03tol\x18\x08 \x01(\x01\x12\x13\n\x0buse_missing\x18\t \x01(\x08\x12\x17\n\x0fzero_as_missing\x18\n \x01(\x08\x12\x11\n\twork_mode\x18\x0b \x01(\t\x12\x0e\n\x06module\x18\x0c \x01(\t\"w\n\x0fTransformerMeta\x12P\n\ttree_meta\x18\x01 \x01(\x0b\x32=.com.webank.ai.fate.core.mlmodel.buffer.BoostingTreeModelMeta\x12\x12\n\nmodel_name\x18\x02 \x01(\tB\x19\x42\x17\x42oostTreeModelMetaProtob\x06proto3')
 )
 
 
@@ -297,6 +297,13 @@ _BOOSTINGTREEMODELMETA = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='module', full_name='com.webank.ai.fate.core.mlmodel.buffer.BoostingTreeModelMeta.module', index=11,
+      number=12, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -310,7 +317,7 @@ _BOOSTINGTREEMODELMETA = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=499,
-  serialized_end=925,
+  serialized_end=941,
 )
 
 
@@ -347,8 +354,8 @@ _TRANSFORMERMETA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=927,
-  serialized_end=1046,
+  serialized_start=943,
+  serialized_end=1062,
 )
 
 _DECISIONTREEMODELMETA.fields_by_name['criterion_meta'].message_type = _CRITERIONMETA

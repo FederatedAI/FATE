@@ -369,6 +369,7 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         model_meta.tol = self.tol
         model_meta.use_missing = self.use_missing
         model_meta.zero_as_missing = self.zero_as_missing
+        model_meta.module = 'HomoSecureBoost'
 
         meta_name = "HomoSecureBoostingTreeGuestMeta"
 

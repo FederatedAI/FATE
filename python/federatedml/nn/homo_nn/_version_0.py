@@ -268,6 +268,7 @@ def client_get_meta(self):
     meta_pb = nn_model_meta_pb2.NNModelMeta()
     meta_pb.params.CopyFrom(self.model_param.generate_pb())
     meta_pb.aggregate_iter = self.aggregate_iteration_num
+    meta_pb.module = 'HomoNN'
     return meta_pb
 
 

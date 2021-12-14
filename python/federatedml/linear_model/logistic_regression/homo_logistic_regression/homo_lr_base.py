@@ -54,7 +54,7 @@ class HomoLRBase(BaseLogisticRegression):
             self.cipher_operator = FakeEncrypt()
 
         self.transfer_variable = HomoLRTransferVariable()
-        self.aggregator.register_aggregator(self.transfer_variable)
+        # self.aggregator.register_aggregator(self.transfer_variable)
         self.optimizer = optimizer_factory(params)
         self.aggregate_iters = params.aggregate_iters
         self.use_proximal = params.use_proximal
@@ -135,5 +135,6 @@ class HomoLRBase(BaseLogisticRegression):
                                                           early_stop=self.model_param.early_stop,
                                                           fit_intercept=self.fit_intercept,
                                                           re_encrypt_batches=self.re_encrypt_batches,
+                                                          module='HomoLR',
                                                           need_one_vs_rest=self.need_one_vs_rest)
         return meta_protobuf_obj

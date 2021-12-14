@@ -354,6 +354,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         model_meta.n_iter_no_change = self.n_iter_no_change
         model_meta.tol = self.tol
         model_meta.work_mode = self.work_mode
+        model_meta.module = "HeteroSecureBoost"
         meta_name = consts.HETERO_SBT_GUEST_MODEL + "Meta"
 
         return meta_name, model_meta

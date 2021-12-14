@@ -1,5 +1,5 @@
 from federatedml.util import consts
-
+from federatedml.components.components import Components
 """
 Given a model protobuf, return corresponding SHAP explainer, extracted meta and param
 """
@@ -50,6 +50,35 @@ def model_discriminator(model_dict):
                 param = model_content[content_name]
 
     return model_name, meta, param
+
+
+def extract_model(model_dict, role):
+
+    meta, param = None, None
+    key = 'isometric_model'
+
+    for model_key in model_dict[key]:
+        model_content = model_dict[key][model_key]
+
+        for content_name in model_content:
+
+            if 'Meta' in content_name:
+                meta = model_content[content_name]
+
+            elif 'Param' in content_name:
+                param = model_content[content_name]
+
+    module_name = meta.module
+    cpn_meta = Components.get(module_name, None)
+    algo_class = cpn_meta.get_run_obj(role)
+
+    return meta, param, module_name, algo_class
+
+
+def reconstruct_model_dict(model_dict):
+
+    new_model_dict = {'model': model_dict['isometric_model']}
+    return new_model_dict
 
 
 

@@ -20,6 +20,7 @@ from federatedml.linear_model.logistic_regression.hetero_logistic_regression.het
 from federatedml.one_vs_rest.one_vs_rest import one_vs_rest_factory
 from federatedml.optim.gradient import hetero_lr_gradient_and_loss
 from federatedml.param.logistic_regression_param import HeteroLogisticParam
+from federatedml.transfer_variable.transfer_class.hetero_lr_transfer_variable import HeteroLRTransferVariable
 from federatedml.util import LOGGER
 from federatedml.util import consts
 
@@ -38,6 +39,7 @@ class HeteroLRArbiter(HeteroBaseArbiter, HeteroLRBase):
         self.need_one_vs_rest = None
         self.need_call_back_loss = True
         self.mode = consts.HETERO
+        self.transfer_variable = HeteroLRTransferVariable()
 
     def _init_model(self, params):
         super()._init_model(params)

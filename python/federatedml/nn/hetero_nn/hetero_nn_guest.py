@@ -183,6 +183,9 @@ class HeteroNNGuest(HeteroNNBase):
         param = model_dict.get(MODELPARAM)
         meta = model_dict.get(MODELMETA)
 
+        LOGGER.debug('param is {}'.format(param))
+        LOGGER.debug('meta is {}'.format(meta))
+        
         self._build_model()
         self._restore_model_meta(meta)
         self._restore_model_param(param)
@@ -204,7 +207,7 @@ class HeteroNNGuest(HeteroNNBase):
     def _get_model_meta(self):
         model_meta = HeteroNNMeta()
         model_meta.task_type = self.task_type
-
+        model_meta.module = 'HeteroNN'
         model_meta.batch_size = self.batch_size
         model_meta.epochs = self.epochs
         model_meta.early_stop = self.early_stop

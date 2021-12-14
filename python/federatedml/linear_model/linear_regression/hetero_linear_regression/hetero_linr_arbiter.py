@@ -19,6 +19,7 @@ from federatedml.linear_model.linear_regression.hetero_linear_regression.hetero_
 from federatedml.optim.gradient import hetero_linr_gradient_and_loss
 from federatedml.param.linear_regression_param import LinearParam
 from federatedml.util import consts
+from federatedml.transfer_variable.transfer_class.hetero_linr_transfer_variable import HeteroLinRTransferVariable
 
 
 class HeteroLinRArbiter(HeteroBaseArbiter, HeteroLinRBase):
@@ -34,3 +35,4 @@ class HeteroLinRArbiter(HeteroBaseArbiter, HeteroLinRBase):
         self.is_converged = False
         self.mode = consts.HETERO
         self.need_call_back_loss = True
+        self.transfer_variable = HeteroLinRTransferVariable()

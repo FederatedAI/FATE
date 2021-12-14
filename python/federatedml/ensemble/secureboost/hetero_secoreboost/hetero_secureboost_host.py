@@ -196,6 +196,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         model_meta.num_trees = self.boosting_round
         model_meta.quantile_meta.CopyFrom(QuantileMeta(bin_num=self.bin_num))
         model_meta.work_mode = self.work_mode
+        model_meta.module = "HeteroSecureBoost"
         meta_name = "HeteroSecureBoostingTreeHostMeta"
         return meta_name, model_meta
 
