@@ -64,5 +64,17 @@ class LinearModelWeights(ListWeights):
                 _w.append(func(self._weights[k], other._weights[k]))
             return LinearModelWeights(_w, self.fit_intercept)
 
+    def map_values(self, func, inplace):
+        print(self.__class__)
+        if inplace:
+            for k, v in enumerate(self._weights):
+                self._weights[k] = func(v)
+            return self
+        else:
+            _w = []
+            for v in self._weights:
+                _w.append(func(v))
+            return LinearModelWeights(_w, self.fit_intercept)
+
     def __repr__(self):
         return f"weights: {self.coef_}, intercept: {self.intercept_}"
