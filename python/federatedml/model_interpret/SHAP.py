@@ -56,7 +56,7 @@ class SHAP(ModelBase):
         if self.role == consts.ARBITER:
             # arbiter quit
             return
-
+        assert 'isometric_model' in model_dict, 'Did not find key "isometric". Input model must be an isometric model.'
         meta, param, module_name, algo_inst = extract_model(model_dict, self.role)
         # isometric model -> model
         new_model_dict = reconstruct_model_dict(model_dict)
@@ -73,7 +73,8 @@ class SHAP(ModelBase):
             # tree models use TreeSHAP only
             if type(algo_inst) == HeteroSecureBoostingTreeHost or type(algo_inst) == HeteroSecureBoostingTreeGuest:
                 self.explainer = HeteroTreeSHAP(self.role, self.flowid)
-                self.explainer.init_model(new_model_dict, meta, param, copy.deepcopy(self.component_properties))
+                # init tree model
+                self.explainer.init_model(new_model_dict, copy.deepcopy(self.component_properties))
             else:
                 fate_model = HeteroModelAdaptor(self.role, new_model_dict, algo_inst, self.component_properties,
                                                 self.flowid)
