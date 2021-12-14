@@ -28,7 +28,7 @@ _ml_base = Path(__file__).resolve().parent.parent.parent
 
 
 class _RunnerDecorator:
-    def __init__(self, meta) -> None:
+    def __init__(self, meta: "ComponentMeta") -> None:
         self._roles = set()
         self._meta = meta
 
@@ -62,6 +62,7 @@ class _RunnerDecorator:
         else:
             raise NotImplementedError(f"type of {cls} not supported")
 
+        cls.set_component_name(self._meta.alias[0])
         return cls
 
 
