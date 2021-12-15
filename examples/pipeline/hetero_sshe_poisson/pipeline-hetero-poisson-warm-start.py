@@ -61,11 +61,11 @@ def main(config="../../config.yaml", namespace=""):
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="regression", pos_label=1)
 
     hetero_poisson_1 = HeteroSSHEPoisson(name="hetero_poisson_1", max_iter=15,
-                                         penalty="L2", optimizer="sgd", tol=0.001,
+                                         penalty="L2", optimizer="rmsprop", tol=0.001,
                                          alpha=1, early_stop="weight_diff", batch_size=-1,
                                          learning_rate=0.15, decay=0.0, decay_sqrt=False,
-                                         reveal_strategy="encrypted_reveal_in_host",
-                                         reveal_every_iter=False,)
+                                         reveal_strategy="respectively",
+                                         reveal_every_iter=True)
 
     pipeline.add_component(reader_0)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))

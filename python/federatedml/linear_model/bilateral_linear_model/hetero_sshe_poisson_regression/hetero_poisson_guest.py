@@ -54,13 +54,14 @@ class HeteroPoissonGuest(HeteroSSHEGuestBase):
 
     def forward(self, weights, features, suffix, cipher, exposure=None):
         if not self.reveal_every_iter:
-            LOGGER.info(f"[forward]: Calculate z in share...")
+            """LOGGER.info(f"[forward]: Calculate z in share...")
             w_self, w_remote = weights
             wx = self._cal_z_in_share(w_self, w_remote, features, suffix, self.cipher)
             # z = self.fixedpoint_encoder.decode(wx.value).join(exposure, lambda x, b: np.exp(x) * b)
-            """z = fixedpoint_table.FixedPointTensor(self.fixedpoint_encoder.encode(z),
+            z = fixedpoint_table.FixedPointTensor(self.fixedpoint_encoder.encode(z),
                                                   q_field=self.fixedpoint_encoder.n,
                                                   endec=self.fixedpoint_encoder)"""
+            raise ValueError(f"Hetero SSHE Poisson does not support non reveal_every_iter")
 
         else:
             LOGGER.info(f"[forward]: Calculate z directly...")
@@ -70,15 +71,8 @@ class HeteroPoissonGuest(HeteroSSHEGuestBase):
             """z = fixedpoint_table.FixedPointTensor(self.fixedpoint_encoder.encode(z),
                                                   q_field=self.fixedpoint_encoder.n,
                                                   endec=self.fixedpoint_encoder)"""
-            # mu_self = z
-
-        # mu_self = mu_self.join(exposure, lambda x, y: x * y)
-
-        """self.mu_self = fixedpoint_table.FixedPointTensor(self.fixedpoint_encoder.encode(z),
-                                                         q_field=self.fixedpoint_encoder.n,
-                                                         endec=self.fixedpoint_encoder)"""
-        # self.wx_self = wx
         self.wx_self = wx
+        LOGGER.info(f"decoded value: {self.fixedpoint_encoder.decode(wx.value).first()}")
         z = self.fixedpoint_encoder.decode(wx.value).join(exposure, lambda x, b: np.exp(np.array(x, dtype=float)) * b)
         z = fixedpoint_table.FixedPointTensor(self.fixedpoint_encoder.encode(z),
                                               q_field=self.fixedpoint_encoder.n,
@@ -122,8 +116,8 @@ class HeteroPoissonGuest(HeteroSSHEGuestBase):
                                                                   wx_self=None)[0]
         offset = batch_offset
         wx_complete = wx_remote + self.wx_self + offset
-        wxy = (wx_complete * self.labels * -1).reduce(operator.add)
-        mu_loss = self.mu_complete.reduce(operator.add)
+        wxy = (wx_complete * self.labels).reduce(operator.add)
+        mu_loss = self.mu_complete.reduce(operator.add) * -1
 
         loss = wxy + mu_loss
 
@@ -141,7 +135,7 @@ class HeteroPoissonGuest(HeteroSSHEGuestBase):
         loss = share_loss.get(tensor_name=tensor_name,
                               broadcast=False)[0]
 
-        if self.reveal_every_iter:
+        """if self.reveal_every_iter:
             loss_norm = self.optimizer.loss_norm(weights)
             if loss_norm:
                 loss += loss_norm
@@ -170,7 +164,10 @@ class HeteroPoissonGuest(HeteroSSHEGuestBase):
                 loss_norm = w_tensor.dot(w_tensor_transpose, target_name=loss_norm_tensor_name).get(broadcast=False)
                 loss_norm = 0.5 * self.optimizer.alpha * loss_norm[0][0]
                 loss = loss + loss_norm
-
+        """
+        loss_norm = self.optimizer.loss_norm(weights)
+        if loss_norm:
+            loss += loss_norm
         LOGGER.info(f"[compute_loss]: loss={loss}, reveal_every_iter={self.reveal_every_iter}")
 
         return loss
@@ -215,8 +212,8 @@ class HeteroPoissonGuest(HeteroSSHEGuestBase):
         LOGGER.info("Get prediction from Host")
 
         for host_pred in host_preds:
-            if not self.is_respectively_reveal:
-                host_pred = self.cipher.distribute_decrypt(host_pred)
+            # if not self.is_respectively_reveal:
+            #    host_pred = self.cipher.distribute_decrypt(host_pred)
             pred_res = pred_res.join(host_pred, lambda g, h: g + h)
         pred_res = pred_res.join(exposure, lambda x, b: np.exp(x) * b)
         predict_result = self.predict_score_to_output(data_instances=data_instances,
@@ -321,25 +318,25 @@ class HeteroPoissonGuest(HeteroSSHEGuestBase):
                 loss_list = []
 
                 self.optimizer.set_iters(self.n_iter_)
-                if not self.reveal_every_iter:
+                """if not self.reveal_every_iter:
                     self.self_optimizer.set_iters(self.n_iter_)
-                    self.remote_optimizer.set_iters(self.n_iter_)
+                    self.remote_optimizer.set_iters(self.n_iter_)"""
 
                 for batch_idx, batch_data in enumerate(encoded_batch_data):
                     current_suffix = (str(self.n_iter_), str(batch_idx))
 
-                    if self.reveal_every_iter:
-                        y = self.forward(weights=self.model_weights,
-                                         features=batch_data,
-                                         suffix=current_suffix,
-                                         cipher=self.cipher_tool[batch_idx],
-                                         exposure=exposure)
-                    else:
+                    # if self.reveal_every_iter:
+                    y = self.forward(weights=self.model_weights,
+                                     features=batch_data,
+                                     suffix=current_suffix,
+                                     cipher=self.cipher_tool[batch_idx],
+                                     exposure=exposure)
+                    """else:
                         y = self.forward(weights=(w_self, w_remote),
-                                         features=batch_data,
-                                         suffix=current_suffix,
-                                         cipher=self.cipher_tool[batch_idx],
-                                         exposure=exposure)
+                                     features=batch_data,
+                                     suffix=current_suffix,
+                                     cipher=self.cipher_tool[batch_idx],
+                                     exposure=exposure)"""
 
                     error = y - self.labels
                     self_g, remote_g = self.backward(error=error,
@@ -351,35 +348,35 @@ class HeteroPoissonGuest(HeteroSSHEGuestBase):
                     suffix = ("loss",) + current_suffix
                     batch_offset = exposure.join(batch_data.value,
                                                  lambda x, y: np.array([BasePoissonRegression.safe_log(x)]))
-                    if self.reveal_every_iter:
-                        batch_loss = self.compute_loss(weights=self.model_weights, suffix=suffix,
-                                                       cipher=self.cipher_tool[batch_idx], batch_offset=batch_offset)
-                    else:
+                    #if self.reveal_every_iter:
+                    batch_loss = self.compute_loss(weights=self.model_weights, suffix=suffix,
+                                                   cipher=self.cipher_tool[batch_idx], batch_offset=batch_offset)
+                    """else:
                         batch_loss = self.compute_loss(weights=(w_self, w_remote), suffix=suffix,
                                                        cipher=self.cipher_tool[batch_idx], batch_offset=batch_offset)
-
+                    """
                     if batch_loss is not None:
                         batch_loss = batch_loss * self.batch_num[batch_idx]
                     loss_list.append(batch_loss)
 
-                    if self.reveal_every_iter:
-                        # LOGGER.debug(f"before reveal: self_g shape: {self_g.shape}, remote_g_shape: {remote_g}，"
-                        #              f"self_g: {self_g}")
+                    # if self.reveal_every_iter:
+                    # LOGGER.debug(f"before reveal: self_g shape: {self_g.shape}, remote_g_shape: {remote_g}，"
+                    #              f"self_g: {self_g}")
 
-                        new_g = self.reveal_models(self_g, remote_g, suffix=current_suffix)
+                    new_g = self.reveal_models(self_g, remote_g, suffix=current_suffix)
 
-                        # LOGGER.debug(f"after reveal: new_g shape: {new_g.shape}, new_g: {new_g}"
-                        #              f"self.model_param.reveal_strategy: {self.model_param.reveal_strategy}")
+                    # LOGGER.debug(f"after reveal: new_g shape: {new_g.shape}, new_g: {new_g}"
+                    #              f"self.model_param.reveal_strategy: {self.model_param.reveal_strategy}")
 
-                        if new_g is not None:
-                            self.model_weights = self.optimizer.update_model(self.model_weights, new_g,
-                                                                             has_applied=False)
+                    if new_g is not None:
+                        self.model_weights = self.optimizer.update_model(self.model_weights, new_g,
+                                                                         has_applied=False)
 
-                        else:
-                            self.model_weights = LinearModelWeights(
-                                l=np.zeros(self_g.shape),
-                                fit_intercept=self.model_param.init_param.fit_intercept)
                     else:
+                        self.model_weights = LinearModelWeights(
+                            l=np.zeros(self_g.shape),
+                            fit_intercept=self.model_param.init_param.fit_intercept)
+                    """else:
                         if self.optimizer.penalty == consts.L2_PENALTY:
                             self_g = self_g + self.self_optimizer.alpha * w_self
                             remote_g = remote_g + self.remote_optimizer.alpha * w_remote
@@ -391,7 +388,7 @@ class HeteroPoissonGuest(HeteroSSHEGuestBase):
 
                         # LOGGER.debug(f"after optimizer: {self_g}, {remote_g}")
                         w_self -= self_g
-                        w_remote -= remote_g
+                        w_remote -= remote_g"""
 
                     LOGGER.debug(f"w_self shape: {w_self.shape}, w_remote_shape: {w_remote.shape}")
 
@@ -403,18 +400,19 @@ class HeteroPoissonGuest(HeteroSSHEGuestBase):
                 if self.converge_func_name in ["diff", "abs"]:
                     self.is_converged = self.check_converge_by_loss(loss, suffix=(str(self.n_iter_),))
                 elif self.converge_func_name == "weight_diff":
-                    if self.reveal_every_iter:
-                        self.is_converged = self.check_converge_by_weights(
-                            last_w=last_models.unboxed,
-                            new_w=self.model_weights.unboxed,
-                            suffix=(str(self.n_iter_),))
-                        last_models = copy.deepcopy(self.model_weights)
-                    else:
+                    #if self.reveal_every_iter:
+                    self.is_converged = self.check_converge_by_weights(
+                        last_w=last_models.unboxed,
+                        new_w=self.model_weights.unboxed,
+                        suffix=(str(self.n_iter_),))
+                    last_models = copy.deepcopy(self.model_weights)
+                    """else:
                         self.is_converged = self.check_converge_by_weights(
                             last_w=(last_w_self, last_w_remote),
                             new_w=(w_self, w_remote),
                             suffix=(str(self.n_iter_),))
                         last_w_self, last_w_remote = copy.deepcopy(w_self), copy.deepcopy(w_remote)
+                    """
                 else:
                     raise ValueError(f"Cannot recognize early_stop function: {self.converge_func_name}")
 
@@ -428,13 +426,13 @@ class HeteroPoissonGuest(HeteroSSHEGuestBase):
                 if self.is_converged:
                     break
 
-            # Finally reconstruct
+            """# Finally reconstruct
             if not self.reveal_every_iter:
                 new_w = self.reveal_models(w_self, w_remote, suffix=("final",))
                 if new_w is not None:
                     self.model_weights = LinearModelWeights(
                         l=new_w,
-                        fit_intercept=self.model_param.init_param.fit_intercept)
+                        fit_intercept=self.model_param.init_param.fit_intercept)"""
 
         LOGGER.debug(f"loss_history: {self.loss_history}")
         self.set_summary(self.get_model_summary())

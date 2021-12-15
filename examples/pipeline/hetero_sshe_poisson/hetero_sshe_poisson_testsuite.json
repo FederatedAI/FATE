@@ -37,12 +37,6 @@
         },
         "poisson-cv": {
             "script": "./pipeline-hetero-poisson-cv.py"
-        },
-        "poisson-compute-loss-not-reveal": {
-            "script": "./pipeline-hetero-poisson-compute-loss-not-reveal.py"
-        },
-        "poisson-encrypted-reveal-in-host": {
-            "script": "./pipeline-hetero-poisson-encrypted-reveal-in-host.py"
         }
     }
 }

@@ -90,8 +90,7 @@ class HeteroSSHEPoissonParam(LinearModelParam):
         "encrypted_reveal_in_host": not supported in HeteroSSHEPoisson
 
     reveal_every_iter: bool, default: True
-        Whether reconstruct model weights every iteration. If so, Regularization is available.
-        The performance will be better as well since the algorithm process is simplified.
+        Whether reconstruct model weights every iteration; Hetero SSHE Poisson only support reveal_every_iter
 
 
     """
@@ -153,22 +152,16 @@ class HeteroSSHEPoissonParam(LinearModelParam):
                         "When reveal_every_iter is True, "
                         f"{descr} optimizer not supported, optimizer should be"
                         " 'sgd', 'rmsprop', 'adam', or 'adagrad'")
-            else:
-                if self.optimizer not in ['sgd']:
-                    raise ValueError("When reveal_every_iter is False, "
-                                     f"{descr} optimizer not supported, optimizer should be"
-                                     " 'sgd'")
+
         if self.callback_param.validation_freqs is not None:
             if self.reveal_every_iter is False:
                 raise ValueError(f"When reveal_every_iter is False, validation every iter"
                                  f" is not supported.")
 
         self.reveal_strategy = self.check_and_change_lower(self.reveal_strategy,
-                                                           ["respectively", "encrypted_reveal_in_host"],
+                                                           ["respectively"],
                                                            f"{descr} reveal_strategy")
 
-        if self.reveal_strategy == "encrypted_reveal_in_host" and self.reveal_every_iter:
-            raise PermissionError("reveal strategy: encrypted_reveal_in_host mode is not allow to reveal every iter.")
         self.encrypted_mode_calculator_param.check()
 
         if self.exposure_colname is not None:

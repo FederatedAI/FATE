@@ -42,7 +42,7 @@ class HeteroPoissonHost(HeteroSSHEHostBase):
         self.wx_self = None
 
     def forward(self, weights, features, suffix, cipher):
-        if not self.reveal_every_iter:
+        """if not self.reveal_every_iter:
             LOGGER.info(f"[forward]: Calculate z in share...")
             w_self, w_remote = weights
             # z = self._cal_z_in_share(w_self, w_remote, features, suffix, self.cipher)
@@ -51,6 +51,10 @@ class HeteroPoissonHost(HeteroSSHEHostBase):
             wx = self._cal_z_in_share(w_self, w_remote, features, suffix, self.cipher)
             # z = self.fixedpoint_encoder.decode(wx).mapValues(lambda x: np.exp(x))
             # mu_self = self.fixedpoint_encoder.decode(features.value).mapValues(lambda x: np.array([np.exp(x.dot(w_self_value))]))
+        """
+        if not self.reveal_every_iter:
+            raise ValueError(f"Hetero SSHE Poisson does not support non reveal_every_iter")
+
         else:
             LOGGER.info(f"[forward]: Calculate z directly...")
             w = weights.unboxed
@@ -102,14 +106,14 @@ class HeteroPoissonHost(HeteroSSHEHostBase):
                                               encoder=self.fixedpoint_encoder,
                                               is_fixedpoint_table=False)
 
-        if self.reveal_every_iter:
-            loss_norm = self.optimizer.loss_norm(weights)
-            if loss_norm:
-                share_loss += loss_norm
-            LOGGER.debug(f"share_loss+loss_norm: {share_loss}")
-            tensor_name = ".".join(("loss",) + suffix)
-            share_loss.broadcast_reconstruct_share(tensor_name=tensor_name)
-        else:
+        # if self.reveal_every_iter:
+        loss_norm = self.optimizer.loss_norm(weights)
+        if loss_norm:
+            share_loss += loss_norm
+        LOGGER.debug(f"share_loss+loss_norm: {share_loss}")
+        tensor_name = ".".join(("loss",) + suffix)
+        share_loss.broadcast_reconstruct_share(tensor_name=tensor_name)
+        """else:
             tensor_name = ".".join(("loss",) + suffix)
             share_loss.broadcast_reconstruct_share(tensor_name=tensor_name)
             if self.optimizer.penalty == consts.L2_PENALTY:
@@ -134,7 +138,7 @@ class HeteroPoissonHost(HeteroSSHEHostBase):
                 loss_norm_tensor_name = ".".join(("loss_norm",) + suffix)
 
                 loss_norm = w_tensor.dot(w_tensor_transpose, target_name=loss_norm_tensor_name)
-                loss_norm.broadcast_reconstruct_share()
+                loss_norm.broadcast_reconstruct_share()"""
 
     def predict(self, data_instances):
         LOGGER.info("Start predict ...")
@@ -154,7 +158,7 @@ class HeteroPoissonHost(HeteroSSHEHostBase):
         self.transfer_variable.host_prob.remote(prob_host, role=consts.GUEST, idx=0)
         LOGGER.info("Remote prediction to Guest")
 
-    def get_single_encrypted_model_weight_dict(self, model_weights=None, header=None):
+    """def get_single_encrypted_model_weight_dict(self, model_weights=None, header=None):
         weight_dict = {}
         model_weights = model_weights if model_weights else self.model_weights
         header = header if header else self.header
@@ -170,7 +174,7 @@ class HeteroPoissonHost(HeteroSSHEHostBase):
                                                                        cipher_text=str(coef_i.ciphertext()),
                                                                        exponent=str(coef_i.exponent),
                                                                        is_obfuscator=is_obfuscator)
-        return weight_dict
+        return weight_dict"""
 
     def _get_param(self):
         if self.need_cv:

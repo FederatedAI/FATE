@@ -20,14 +20,6 @@ This section introduces the Pipeline scripts for different types of tasks.
 
     script: pipeline-hetero-poisson-cv.py
 
-5. Train & Predict Task without Revealing Loss:
-
-    script: pipeline-hetero-poisson-compute-loss-not-reveal.py
-
-6. Train Task with encrypted_reveal_in_host:
-    
-    script: pipeline-hetero-poisson-encrypted-reveal-in-host.py
-
 
 Users can run a pipeline job directly:
 
