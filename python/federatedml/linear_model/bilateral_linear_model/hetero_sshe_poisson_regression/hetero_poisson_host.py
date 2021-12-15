@@ -28,7 +28,7 @@ from federatedml.param.hetero_sshe_poisson_param import HeteroSSHEPoissonParam
 from federatedml.protobuf.generated import poisson_model_param_pb2, poisson_model_meta_pb2
 from federatedml.secureprotol.spdz.secure_matrix.secure_matrix import SecureMatrix
 from federatedml.secureprotol.spdz.tensor import fixedpoint_numpy, fixedpoint_table
-from federatedml.util import consts, LOGGER
+from federatedml.util import consts, fate_operator, LOGGER
 
 
 class HeteroPoissonHost(HeteroSSHEHostBase):
@@ -39,28 +39,38 @@ class HeteroPoissonHost(HeteroSSHEHostBase):
         self.model_meta_name = 'HeteroPoissonRegressionMeta'
         self.model_param = HeteroSSHEPoissonParam()
         self.labels = None
-        self.mu_self = None
+        self.wx_self = None
 
     def forward(self, weights, features, suffix, cipher):
         if not self.reveal_every_iter:
             LOGGER.info(f"[forward]: Calculate z in share...")
             w_self, w_remote = weights
-            z = self._cal_z_in_share(w_self, w_remote, features, suffix, self.cipher)
-            w_self_value = self.fixedpoint_encoder.decode(w_self.value)
-            mu_self = self.fixedpoint_encoder.decode(features.value).mapValues(lambda x: np.array([np.exp(x.dot(w_self_value))]))
+            # z = self._cal_z_in_share(w_self, w_remote, features, suffix, self.cipher)
+            # w_self_value = self.fixedpoint_encoder.decode(w_self.value)
+            # mu_self = self.fixedpoint_encoder.decode(features.value).mapValues(lambda x: np.array([np.exp(x.dot(w_self_value))]))
+            wx = self._cal_z_in_share(w_self, w_remote, features, suffix, self.cipher)
+            # z = self.fixedpoint_encoder.decode(wx).mapValues(lambda x: np.exp(x))
+            # mu_self = self.fixedpoint_encoder.decode(features.value).mapValues(lambda x: np.array([np.exp(x.dot(w_self_value))]))
         else:
             LOGGER.info(f"[forward]: Calculate z directly...")
             w = weights.unboxed
-            z = features.dot_local(w)
-            mu_self = self.fixedpoint_encoder.decode(features.value).mapValues(lambda x: np.array([np.exp(x.dot(w))]))
-        self.mu_self = fixedpoint_table.FixedPointTensor(self.fixedpoint_encoder.encode(mu_self),
-                                                         q_field=self.fixedpoint_encoder.n,
-                                                         endec=self.fixedpoint_encoder)
-        self.wx_self = z
+            # z = features.dot_local(w)
+            # mu_self = self.fixedpoint_encoder.decode(features.value).mapValues(lambda x: np.array([np.exp(x.dot(w))]))
+            wx = features.dot_local(w)
+        z = self.fixedpoint_encoder.decode(wx.value).mapValues(lambda x: np.exp(np.array(x, dtype=float)))
+        z = fixedpoint_table.FixedPointTensor(self.fixedpoint_encoder.encode(z),
+                                              q_field=self.fixedpoint_encoder.n,
+                                              endec=self.fixedpoint_encoder)
         self.secure_matrix_obj.share_encrypted_matrix(suffix=suffix,
                                                       is_remote=True,
                                                       cipher=cipher,
                                                       z=z)
+        """self.secure_matrix_obj.share_encrypted_matrix(suffix=f"wx.{suffix}",
+                                                      is_remote=True,
+                                                      cipher=cipher,
+                                                      z=wx)"""
+        # self.wx_self = wx
+        self.wx_self = wx
 
         tensor_name = ".".join(("complete_z",) + suffix)
         shared_z = SecureMatrix.from_source(tensor_name,
@@ -73,17 +83,16 @@ class HeteroPoissonHost(HeteroSSHEHostBase):
 
     def compute_loss(self, weights=None, suffix=None, cipher=None):
         """
-         Compute hetero poisson loss with log link:
-            log loss = (1/N) * \sum(exp(wx) - y * log(exp(wx) * exposure))
-            loss = (1/N) * \sum(exp(wx_g) * exp(wx_h) - y(wx_g + wx_h) + log(exposure))
-            loss = (1/N) * \sum(mu_g * mu_h - y(wx_g + wx_h) + offset)
+         Compute loss:
+           loss = 1/N * sum(exp(wx_g)*exp(wx_h) - y(wx_g + wx_h) + log(exposure))
+           loss = 1/N * sum(complete_mu - y(complete_wx) + log(exposure)
         """
         LOGGER.info(f"[compute_loss]: Calculate loss ...")
 
         self.secure_matrix_obj.share_encrypted_matrix(suffix=suffix,
                                                       is_remote=True,
                                                       cipher=cipher,
-                                                      mu_self=self.mu_self)
+                                                      wx_self=self.wx_self)
 
         tensor_name = ".".join(("shared_loss",) + suffix)
         share_loss = SecureMatrix.from_source(tensor_name=tensor_name,
@@ -135,11 +144,17 @@ class HeteroPoissonHost(HeteroSSHEHostBase):
         LOGGER.debug(f"Before_predict_reveal_strategy: {self.model_param.reveal_strategy},"
                      f" {self.is_respectively_reveal}")
 
-        host_pred = BasePoissonRegression.compute_mu(data_instances, self.model_weights.coef_, self.model_weights.intercept_)
-        self.transfer_variable.host_prob.remote(host_pred, role=consts.GUEST, idx=0)
-        LOGGER.info("Remote probability to Guest")
+        def _vec_dot(v, coef, intercept):
+            return fate_operator.vec_dot(v.features, coef) + intercept
 
-    """def get_single_encrypted_model_weight_dict(self, model_weights=None, header=None):
+        f = functools.partial(_vec_dot,
+                              coef=self.model_weights.coef_,
+                              intercept=self.model_weights.intercept_)
+        prob_host = data_instances.mapValues(f)
+        self.transfer_variable.host_prob.remote(prob_host, role=consts.GUEST, idx=0)
+        LOGGER.info("Remote prediction to Guest")
+
+    def get_single_encrypted_model_weight_dict(self, model_weights=None, header=None):
         weight_dict = {}
         model_weights = model_weights if model_weights else self.model_weights
         header = header if header else self.header
@@ -156,7 +171,7 @@ class HeteroPoissonHost(HeteroSSHEHostBase):
                                                                        exponent=str(coef_i.exponent),
                                                                        is_obfuscator=is_obfuscator)
         return weight_dict
-    """
+
     def _get_param(self):
         if self.need_cv:
             param_protobuf_obj = poisson_model_param_pb2.PoissonModelParam()

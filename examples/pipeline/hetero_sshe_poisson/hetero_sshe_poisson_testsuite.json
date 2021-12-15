@@ -41,11 +41,8 @@
         "poisson-compute-loss-not-reveal": {
             "script": "./pipeline-hetero-poisson-compute-loss-not-reveal.py"
         },
-        "poisson-large-init-w-compute-loss": {
-            "script": "./pipeline-hetero-poisson-large-init-w-compute-loss.py"
-        },
-        "poisson-sample-weight": {
-            "script": "./pipeline-hetero-poisson-sample-weight.py"
+        "poisson-encrypted-reveal-in-host": {
+            "script": "./pipeline-hetero-poisson-encrypted-reveal-in-host.py"
         }
     }
 }

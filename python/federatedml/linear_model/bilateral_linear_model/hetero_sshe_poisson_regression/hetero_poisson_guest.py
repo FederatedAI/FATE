@@ -13,8 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import operator
 import copy
+import functools
+import operator
 import numpy as np
 
 from federatedml.framework.hetero.procedure import batch_generator
@@ -43,43 +44,61 @@ class HeteroPoissonGuest(HeteroSSHEGuestBase):
         self.model_meta_name = 'HeteroPoissonRegressionMeta'
         self.model_param = HeteroSSHEPoissonParam()
         self.labels = None
-        self.labels_original = None
         # self.label_type = int
         self.exposure_index = -1
-        self.mu_self = None
+        self.mu_complete = None
 
     def _init_model(self, params):
         super()._init_model(params)
         self.exposure_colname = params.exposure_colname
 
-    def forward(self, weights, features, suffix, cipher, offset=None, log_offset=None):
-        # self._cal_z(weights, features, suffix, cipher)
+    def forward(self, weights, features, suffix, cipher, exposure=None):
         if not self.reveal_every_iter:
             LOGGER.info(f"[forward]: Calculate z in share...")
             w_self, w_remote = weights
-            z = self._cal_z_in_share(w_self, w_remote, features, suffix, self.cipher)
-            w_self_value = self.fixedpoint_encoder.decode(w_self.value)
-            mu_self = self.fixedpoint_encoder.decode(features.value).mapValues(lambda x: np.array([np.exp(x.dot(w_self_value))]))
+            wx = self._cal_z_in_share(w_self, w_remote, features, suffix, self.cipher)
+            # z = self.fixedpoint_encoder.decode(wx.value).join(exposure, lambda x, b: np.exp(x) * b)
+            """z = fixedpoint_table.FixedPointTensor(self.fixedpoint_encoder.encode(z),
+                                                  q_field=self.fixedpoint_encoder.n,
+                                                  endec=self.fixedpoint_encoder)"""
+
         else:
             LOGGER.info(f"[forward]: Calculate z directly...")
             w = weights.unboxed
-            z = features.dot_local(w)
-            mu_self = self.fixedpoint_encoder.decode(features.value).mapValues(lambda x: np.array([np.exp(x.dot(w))]))
+            wx = features.dot_local(w)
+            # z = self.fixedpoint_encoder.decode(wx.value).join(exposure, lambda x, b: np.exp(x.dot(w)) * b)
+            """z = fixedpoint_table.FixedPointTensor(self.fixedpoint_encoder.encode(z),
+                                                  q_field=self.fixedpoint_encoder.n,
+                                                  endec=self.fixedpoint_encoder)"""
+            # mu_self = z
 
-        mu_self = mu_self.join(offset, lambda x, y: x * y)
-        self.mu_self = fixedpoint_table.FixedPointTensor(self.fixedpoint_encoder.encode(mu_self),
-                                                    q_field=self.fixedpoint_encoder.n,
-                                                    endec=self.fixedpoint_encoder)
+        # mu_self = mu_self.join(exposure, lambda x, y: x * y)
+
+        """self.mu_self = fixedpoint_table.FixedPointTensor(self.fixedpoint_encoder.encode(z),
+                                                         q_field=self.fixedpoint_encoder.n,
+                                                         endec=self.fixedpoint_encoder)"""
+        # self.wx_self = wx
+        self.wx_self = wx
+        z = self.fixedpoint_encoder.decode(wx.value).join(exposure, lambda x, b: np.exp(np.array(x, dtype=float)) * b)
+        z = fixedpoint_table.FixedPointTensor(self.fixedpoint_encoder.encode(z),
+                                              q_field=self.fixedpoint_encoder.n,
+                                              endec=self.fixedpoint_encoder)
+
         remote_z = self.secure_matrix_obj.share_encrypted_matrix(suffix=suffix,
                                                                  is_remote=False,
                                                                  cipher=None,
                                                                  z=None)[0]
 
-        self.wx_self = z
-        self.wx_remote = remote_z
-        complete_z = self.wx_self + self.wx_remote + log_offset
+        # self.remote_mu = remote_z
+        complete_z = z + remote_z
+        self.mu_complete = complete_z
 
-        self.encrypted_wx = complete_z
+        """remote_wx = self.secure_matrix_obj.share_encrypted_matrix(suffix=f"wx.{suffix}",
+                                                                  is_remote=False,
+                                                                  cipher=None,
+                                                                  z=None)[0]
+        self.complete_wx = wx + remote_wx"""
+
         self.encrypted_error = complete_z - self.labels
 
         tensor_name = ".".join(("complete_z",) + suffix)
@@ -92,26 +111,21 @@ class HeteroPoissonGuest(HeteroSSHEGuestBase):
 
     def compute_loss(self, weights, suffix, cipher=None, batch_offset=None):
         """
-         Compute hetero poisson loss with log link:
-            log loss = (1/N) * \sum(exp(wx) - y * log(exp(wx) * exposure))
-            loss = (1/N) * \sum(exp(wx_g) * exp(wx_h) - y(wx_g + wx_h) - y * log(exposure))
-            loss = (1/N) * \sum(mu_g * mu_h - y(wx_g + wx_h) - y * offset_log)
+         Compute loss:
+           loss = 1/N * sum(exp(wx_g)*exp(wx_h)*exposure - y(wx_g + wx_h + log(exposure))
+           loss = 1/N * sum(mu_complete - y(complete_wx + offset)
         """
         LOGGER.info(f"[compute_loss]: Calculate loss ...")
-        wx_complete = (self.wx_remote + self.wx_self) * -1
-        wxy = (wx_complete * self.labels_original * -1).reduce(operator.add)
-
-        mu_remote = self.secure_matrix_obj.share_encrypted_matrix(suffix=suffix,
+        wx_remote = self.secure_matrix_obj.share_encrypted_matrix(suffix=suffix,
                                                                   is_remote=False,
                                                                   cipher=None,
-                                                                  mu_self=None)[0]
-        mu_complete = (mu_remote * self.mu_self).reduce(operator.add)
+                                                                  wx_self=None)[0]
+        offset = batch_offset
+        wx_complete = wx_remote + self.wx_self + offset
+        wxy = (wx_complete * self.labels * -1).reduce(operator.add)
+        mu_loss = self.mu_complete.reduce(operator.add)
 
-        offset = 0
-        if batch_offset:
-            offset = (self.labels_original.join(batch_offset, lambda x, y: -x * y)).reduce(operator.add)
-
-        loss = wxy + mu_complete + offset
+        loss = wxy + mu_loss
 
         batch_num = self.batch_num[int(suffix[2])]
         loss = loss * (-1 / batch_num)
@@ -187,16 +201,24 @@ class HeteroPoissonGuest(HeteroSSHEGuestBase):
         LOGGER.debug(
             f"Before_predict_reveal_strategy: {self.model_param.reveal_strategy}, {self.is_respectively_reveal}")
 
-        pred_res = BasePoissonRegression.compute_mu(data_instances, self.model_weights.coef_, self.model_weights.intercept_, exposure)
+        def _vec_dot(v, coef, intercept):
+            return fate_operator.vec_dot(v.features, coef) + intercept
+
+        f = functools.partial(_vec_dot,
+                              coef=self.model_weights.coef_,
+                              intercept=self.model_weights.intercept_)
+
+        pred_res = data_instances.mapValues(f)
 
         host_preds = self.transfer_variable.host_prob.get(idx=-1)
 
-        LOGGER.info("Get probability from Host")
+        LOGGER.info("Get prediction from Host")
 
         for host_pred in host_preds:
             if not self.is_respectively_reveal:
                 host_pred = self.cipher.distribute_decrypt(host_pred)
-            pred_res = pred_res.join(host_pred, lambda g, h: g * h)
+            pred_res = pred_res.join(host_pred, lambda g, h: g + h)
+        pred_res = pred_res.join(exposure, lambda x, b: np.exp(x) * b)
         predict_result = self.predict_score_to_output(data_instances=data_instances,
                                                       predict_score=pred_res,
                                                       classes=None)
@@ -239,6 +261,7 @@ class HeteroPoissonGuest(HeteroSSHEGuestBase):
             self.header.pop(exposure_index)
             LOGGER.info("Guest provides exposure value.")
         exposure = data_instances.mapValues(lambda v: BasePoissonRegression.load_exposure(v, exposure_index))
+        # offset = exposure.mapValues(lambda v: np.array([BasePoissonRegression.safe_log(v)]))
         data_instances = data_instances.mapValues(lambda v: BasePoissonRegression.load_instance(v, exposure_index))
 
         model_shape = self.get_features_shape(data_instances)
@@ -265,8 +288,8 @@ class HeteroPoissonGuest(HeteroSSHEGuestBase):
         ) as spdz:
             spdz.set_flowid(self.flowid)
             self.secure_matrix_obj.set_flowid(self.flowid)
-            self.labels_original = data_instances.mapValues(lambda x: np.array([x.label], dtype=int))
-            self.labels = self.labels_original.mapValues(lambda x: np.array([BasePoissonRegression.safe_log(x[0])], dtype=float))
+            self.labels = data_instances.mapValues(lambda x: np.array([x.label], dtype=float))
+            # self.labels = self.labels_original.mapValues(lambda x: np.array([BasePoissonRegression.safe_log(x[0])], dtype=float))
             w_self, w_remote = self.share_model(w, suffix="init")
             last_w_self, last_w_remote = w_self, w_remote
             LOGGER.debug(f"first_w_self shape: {w_self.shape}, w_remote_shape: {w_remote.shape}")
@@ -304,23 +327,19 @@ class HeteroPoissonGuest(HeteroSSHEGuestBase):
 
                 for batch_idx, batch_data in enumerate(encoded_batch_data):
                     current_suffix = (str(self.n_iter_), str(batch_idx))
-                    batch_offset = exposure.join(batch_data.value, lambda ei, d: np.array([ei]))
-                    batch_offset_log = batch_offset.mapValues(lambda v: np.array([BasePoissonRegression.safe_log(v[0])]))
 
                     if self.reveal_every_iter:
                         y = self.forward(weights=self.model_weights,
                                          features=batch_data,
                                          suffix=current_suffix,
                                          cipher=self.cipher_tool[batch_idx],
-                                         offset=batch_offset,
-                                         log_offset=batch_offset_log)
+                                         exposure=exposure)
                     else:
                         y = self.forward(weights=(w_self, w_remote),
                                          features=batch_data,
                                          suffix=current_suffix,
                                          cipher=self.cipher_tool[batch_idx],
-                                         offset=batch_offset,
-                                         log_offset=batch_offset_log)
+                                         exposure=exposure)
 
                     error = y - self.labels
                     self_g, remote_g = self.backward(error=error,
@@ -330,12 +349,14 @@ class HeteroPoissonGuest(HeteroSSHEGuestBase):
 
                     # loss computing;
                     suffix = ("loss",) + current_suffix
+                    batch_offset = exposure.join(batch_data.value,
+                                                 lambda x, y: np.array([BasePoissonRegression.safe_log(x)]))
                     if self.reveal_every_iter:
                         batch_loss = self.compute_loss(weights=self.model_weights, suffix=suffix,
-                                                       cipher=self.cipher_tool[batch_idx], batch_offset=batch_offset_log)
+                                                       cipher=self.cipher_tool[batch_idx], batch_offset=batch_offset)
                     else:
                         batch_loss = self.compute_loss(weights=(w_self, w_remote), suffix=suffix,
-                                                       cipher=self.cipher_tool[batch_idx], batch_offset=batch_offset_log)
+                                                       cipher=self.cipher_tool[batch_idx], batch_offset=batch_offset)
 
                     if batch_loss is not None:
                         batch_loss = batch_loss * self.batch_num[batch_idx]

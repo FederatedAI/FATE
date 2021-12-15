@@ -21,7 +21,6 @@ from pipeline.component import DataTransform
 from pipeline.component import Evaluation
 from pipeline.component import HeteroSSHEPoisson
 from pipeline.component import Intersection
-from pipeline.component import SampleWeight
 from pipeline.component import Reader
 from pipeline.interface import Data
 
@@ -44,22 +43,21 @@ def main(config="../../config.yaml", namespace=""):
     reader_0 = Reader(name="reader_0")
     reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
+    reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
-    data_transform_0 = DataTransform(name="data_transform_0")
-    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, label_name="doctorco",
-                                                                             label_type="float", output_format="dense")
+    data_transform_0 = DataTransform(name="data_transform_0", output_format="dense", missing_fill=True, outlier_replace=False)
+    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True,
+                                                                              label_name="doctorco",
+                                                                              label_type="float")
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
-    sample_weight_0 = SampleWeight(name="sample_weight_0")
-    sample_weight_0.get_party_instance(role='guest', party_id=guest).component_param(need_run=True,
-                                                                                     sample_weight_name="pm")
-    sample_weight_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)
     hetero_poisson_0 = HeteroSSHEPoisson(name="hetero_poisson_0", penalty="L2", optimizer="sgd", tol=0.001,
-                               alpha=0.01, max_iter=20, early_stop="weight_diff", batch_size=-1,
-                               learning_rate=0.15, decay=0.0, decay_sqrt=False,
-                               init_param={"init_method": "zeros"},
-                               encrypted_mode_calculator_param={"mode": "fast"})
+                                         alpha=100.0, max_iter=2, early_stop="weight_diff", batch_size=100,
+                                         learning_rate=0.3, decay=0.0, decay_sqrt=False,
+                                         init_param={"init_method": "ones"},
+                                         reveal_strategy="encrypted_reveal_in_host",
+                                         reveal_every_iter=False)
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="regression", pos_label=1)
     # evaluation_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)
@@ -67,28 +65,12 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(reader_0)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
-    pipeline.add_component(sample_weight_0, data=Data(data=intersection_0.output.data))
-    pipeline.add_component(hetero_poisson_0, data=Data(train_data=sample_weight_0.output.data))
+    pipeline.add_component(hetero_poisson_0, data=Data(train_data=intersection_0.output.data))
     pipeline.add_component(evaluation_0, data=Data(data=hetero_poisson_0.output.data))
 
     pipeline.compile()
 
     pipeline.fit()
-
-
-    # predict
-    # deploy required components
-    pipeline.deploy_component([data_transform_0, intersection_0, hetero_poisson_0])
-
-    predict_pipeline = PipeLine()
-    # add data reader onto predict pipeline
-    predict_pipeline.add_component(reader_0)
-    # add selected components from train pipeline onto predict pipeline
-    # specify data source
-    predict_pipeline.add_component(pipeline,
-                                   data=Data(predict_input={pipeline.data_transform_0.input.data: reader_0.output.data}))
-    # run predict model
-    predict_pipeline.predict()
 
 
 if __name__ == "__main__":

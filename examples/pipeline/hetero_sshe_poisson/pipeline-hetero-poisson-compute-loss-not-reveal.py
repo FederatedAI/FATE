@@ -47,9 +47,9 @@ def main(config="../../config.yaml", namespace=""):
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
-    hetero_poisson_0 = HeteroSSHEPoisson(name="hetero_poisson_0", penalty=None, optimizer="sgd", tol=0.001,
+    hetero_poisson_0 = HeteroSSHEPoisson(name="hetero_poisson_0", penalty="L2", optimizer="sgd", tol=0.001,
                                          exposure_colname="exposure",
-                                         alpha=50.0, max_iter=20, early_stop="weight_diff", batch_size=-1,
+                                         alpha=100, max_iter=20, early_stop="weight_diff", batch_size=-1,
                                          learning_rate=0.1, decay=0.0, decay_sqrt=False,
                                          init_param={"init_method": "zeros", "fit_intercept": True},
                                          encrypted_mode_calculator_param={"mode": "fast"},

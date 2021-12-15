@@ -122,7 +122,7 @@ class HeteroSSHEPoissonParam(LinearModelParam):
         self.reveal_every_iter = reveal_every_iter
 
     def check(self):
-        descr = "sshe linear_regression_param's "
+        descr = "sshe poisson_regression_param's "
         super(HeteroSSHEPoissonParam, self).check()
         if self.encrypt_param.method != consts.PAILLIER:
             raise ValueError(
@@ -136,11 +136,6 @@ class HeteroSSHEPoissonParam(LinearModelParam):
                 f"{descr} penalty {self.penalty} not supported, should be str type")
         else:
             self.penalty = self.penalty.upper()
-            """
-            if self.penalty not in [consts.L1_PENALTY, consts.L2_PENALTY]:
-                raise ValueError(
-                    "logistic_param's penalty not supported, penalty should be 'L1', 'L2' or 'none'")
-            """
             if not self.reveal_every_iter:
                 if self.penalty not in [consts.L2_PENALTY, consts.NONE.upper()]:
                     raise ValueError(
@@ -172,8 +167,10 @@ class HeteroSSHEPoissonParam(LinearModelParam):
                                                            ["respectively", "encrypted_reveal_in_host"],
                                                            f"{descr} reveal_strategy")
 
-        if self.reveal_strategy == "encrypted_reveal_in_host":
-            raise ValueError("reveal strategy: encrypted_reveal_in_host mode is not supported for HeteroSSHEPoisson.")
+        if self.reveal_strategy == "encrypted_reveal_in_host" and self.reveal_every_iter:
+            raise PermissionError("reveal strategy: encrypted_reveal_in_host mode is not allow to reveal every iter.")
+        self.encrypted_mode_calculator_param.check()
+
         if self.exposure_colname is not None:
             if type(self.exposure_colname).__name__ != "str":
                 raise ValueError(

@@ -152,12 +152,10 @@ class HeteroSSHELRParam(LogisticParam):
                                      "sshe logistic_param's optimizer not supported, optimizer should be"
                                      " 'sgd', 'nesterov_momentum_sgd'")
 
-        self.predict_param.check()
         if self.encrypt_param.method not in [consts.PAILLIER, None]:
             raise ValueError(
                 "logistic_param's encrypted method support 'Paillier' or None only")
 
-        self.callback_param.check()
         if self.callback_param.validation_freqs is not None:
             if self.reveal_every_iter is False:
                 raise ValueError(f"When reveal_every_iter is False, validation every iter"
