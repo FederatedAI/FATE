@@ -124,7 +124,8 @@ class HeteroPoissonHost(HeteroPoissonBase):
 
         self._abnormal_detection(data_instances)
         data_instances = self.align_data_header(data_instances, self.header)
-        pred_host = self.compute_mu(data_instances, self.model_weights.coef_, self.model_weights.intercept_)
+        # pred_host = self.compute_mu(data_instances, self.model_weights.coef_, self.model_weights.intercept_)
+        pred_host = self.compute_wx(data_instances, self.model_weights.coef_, self.model_weights.intercept_)
         self.transfer_variable.host_partial_prediction.remote(pred_host, role=consts.GUEST, idx=0)
 
         LOGGER.info("Remote partial prediction to Guest")

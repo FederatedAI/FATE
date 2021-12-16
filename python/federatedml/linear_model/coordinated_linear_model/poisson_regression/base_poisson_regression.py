@@ -102,6 +102,10 @@ class BasePoissonRegression(BaseLinearModel):
 
         return mu
 
+    @staticmethod
+    def compute_wx(data_instances, coef_, intercept_=0):
+        return data_instances.mapValues(lambda v: vec_dot(v.features, coef_) + intercept_)
+
     def _get_meta(self):
         meta_protobuf_obj = poisson_model_meta_pb2.PoissonModelMeta(
             penalty=self.model_param.penalty,

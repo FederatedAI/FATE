@@ -15,6 +15,7 @@
 #
 
 import copy
+import numpy as np
 
 from federatedml.framework.hetero.procedure import convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
@@ -147,17 +148,21 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         self.exposure_index = self.get_exposure_index(header, self.exposure_colname)
         exposure_index = self.exposure_index
 
-        # OK
         exposure = data_instances.mapValues(lambda v: HeteroPoissonBase.load_exposure(v, exposure_index))
 
         data_instances = self.align_data_header(data_instances, self.header)
+        data_instances = data_instances.mapValues(lambda v: HeteroPoissonBase.load_instance(v, exposure_index))
 
-        pred_guest = self.compute_mu(data_instances, self.model_weights.coef_, self.model_weights.intercept_, exposure)
-        pred_host = self.transfer_variable.host_partial_prediction.get(idx=0)
+        # pred_guest = self.compute_mu(data_instances, self.model_weights.coef_, self.model_weights.intercept_, exposure)
+        # pred_host = self.transfer_variable.host_partial_prediction.get(idx=0)
 
+        wx_guest = self.compute_wx(data_instances, self.model_weights.coef_, self.model_weights.intercept_)
+        wx_host = self.transfer_variable.host_partial_prediction.get(idx=0)
         LOGGER.info("Get prediction from Host")
 
-        pred = pred_guest.join(pred_host, lambda g, h: g * h)
+        # pred = pred_guest.join(pred_host, lambda g, h: g * h)
+        pred = wx_guest.join(wx_host, lambda g, h: np.exp(g + h))
+        pred = pred.join(exposure, lambda mu, b: mu * b)
         # predict_result = data_instances.join(pred, lambda d, p: [d.label, p, p, {"label": p}])
         predict_result = self.predict_score_to_output(data_instances=data_instances, predict_score=pred,
                                                       classes=None)
