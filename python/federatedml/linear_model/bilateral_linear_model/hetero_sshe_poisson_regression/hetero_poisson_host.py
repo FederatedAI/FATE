@@ -14,20 +14,14 @@
 #  limitations under the License.
 
 import functools
-import operator
 
 import numpy as np
 
-from federatedml.framework.hetero.procedure import batch_generator
-from federatedml.transfer_variable.transfer_class.batch_generator_transfer_variable import \
-    BatchGeneratorTransferVariable
 from federatedml.framework.hetero.procedure.hetero_sshe_linear_model import HeteroSSHEHostBase
-from federatedml.linear_model.coordinated_linear_model.poisson_regression.\
-    base_poisson_regression import BasePoissonRegression
 from federatedml.param.hetero_sshe_poisson_param import HeteroSSHEPoissonParam
 from federatedml.protobuf.generated import poisson_model_param_pb2, poisson_model_meta_pb2
 from federatedml.secureprotol.spdz.secure_matrix.secure_matrix import SecureMatrix
-from federatedml.secureprotol.spdz.tensor import fixedpoint_numpy, fixedpoint_table
+from federatedml.secureprotol.spdz.tensor import fixedpoint_table
 from federatedml.util import consts, fate_operator, LOGGER
 
 
@@ -204,11 +198,12 @@ class HeteroPoissonHost(HeteroSSHEHostBase):
 
     def fit(self, data_instances, validate_data=None):
         LOGGER.info("Starting to fit hetero_sshe_linear_regression")
-        self.batch_generator = batch_generator.Host()
+        """self.batch_generator = batch_generator.Host()
         self.batch_generator.register_batch_generator(BatchGeneratorTransferVariable(), has_arbiter=False)
         self.header = data_instances.schema.get("header", [])
         self._abnormal_detection(data_instances)
         self.check_abnormal_values(data_instances)
-        self.check_abnormal_values(validate_data)
+        self.check_abnormal_values(validate_data)"""
+        self.prepare_fit(data_instances, validate_data)
 
         self.fit_single_model(data_instances, validate_data)

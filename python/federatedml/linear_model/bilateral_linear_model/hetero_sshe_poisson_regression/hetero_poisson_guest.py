@@ -18,7 +18,6 @@ import functools
 import operator
 import numpy as np
 
-from federatedml.framework.hetero.procedure import batch_generator
 from federatedml.framework.hetero.procedure.hetero_sshe_linear_model import HeteroSSHEGuestBase
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.linear_model.coordinated_linear_model.poisson_regression.\
@@ -29,10 +28,8 @@ from federatedml.protobuf.generated import poisson_model_param_pb2, poisson_mode
 from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.secureprotol.spdz import SPDZ
 from federatedml.secureprotol.spdz.secure_matrix.secure_matrix import SecureMatrix
-from federatedml.secureprotol.spdz.tensor import fixedpoint_table, fixedpoint_numpy
-from federatedml.transfer_variable.transfer_class.batch_generator_transfer_variable import \
-    BatchGeneratorTransferVariable
-from federatedml.util import consts, fate_operator, LOGGER
+from federatedml.secureprotol.spdz.tensor import fixedpoint_table
+from federatedml.util import fate_operator, LOGGER
 from federatedml.util.io_check import assert_io_num_rows_equal
 
 
@@ -439,12 +436,13 @@ class HeteroPoissonGuest(HeteroSSHEGuestBase):
 
     def fit(self, data_instances, validate_data=None):
         LOGGER.info("Starting to fit hetero_sshe_poisson_regression")
-        self.batch_generator = batch_generator.Guest()
+        """self.batch_generator = batch_generator.Guest()
         self.batch_generator.register_batch_generator(BatchGeneratorTransferVariable(), has_arbiter=False)
         self.header = data_instances.schema.get("header", [])
         self._abnormal_detection(data_instances)
         self.check_abnormal_values(data_instances)
-        self.check_abnormal_values(validate_data)
+        self.check_abnormal_values(validate_data)"""
+        self.prepare_fit(data_instances, validate_data)
 
         self.fit_single_model(data_instances, validate_data)
 
