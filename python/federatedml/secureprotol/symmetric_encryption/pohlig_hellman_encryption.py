@@ -30,6 +30,7 @@ class PohligHellmanCipherKey(SymmetricKey):
     Enc(x) = x^a mod p, with public knowledge p being a prime and satisfying that (p - 1) / 2 is also a prime
     Dec(y) = y^(a^(-1) mod phi(p)) mod p
     """
+
     def __init__(self, mod_base, exponent=None):
         """
 
@@ -93,11 +94,11 @@ class PohligHellmanCipherKey(SymmetricKey):
         :param plaintext: int >= 0 / str / PohligHellmanCiphertext
         :return: PohligHellmanCiphertext
         """
-        if type(plaintext) == str:
+        if isinstance(plaintext, str):
             plaintext = conversion.str_to_int(plaintext)
-        elif type(plaintext) == PohligHellmanCiphertext:
+        elif isinstance(plaintext, PohligHellmanCiphertext):
             plaintext = plaintext.message
-        elif type(plaintext) != int:
+        elif not isinstance(plaintext, int):
             plaintext = conversion.str_to_int(str(plaintext))
 
         ciphertext = powmod(plaintext, self.exponent, self.mod_base)
@@ -119,9 +120,9 @@ class PohligHellmanCipherKey(SymmetricKey):
         :param decode_output: bool
         :return: PohligHellmanCiphertext / str
         """
-        if type(ciphertext) == PohligHellmanCiphertext:
+        if isinstance(ciphertext, PohligHellmanCiphertext):
             ciphertext = ciphertext.message
-        elif type(ciphertext) == str:
+        elif isinstance(ciphertext, str):
             ciphertext = conversion.str_to_int(ciphertext)
 
         if decode_output:
@@ -138,15 +139,16 @@ class PohligHellmanCiphertext(SymmetricCiphertext):
     """
 
     """
+
     def __init__(self, message):
         super(PohligHellmanCiphertext, self).__init__()
         self.message = message
-    
+
     def __hash__(self):
         return self.message.__hash__()
 
     def __eq__(self, other):
-        if type(other) is not PohligHellmanCiphertext:
+        if not isinstance(other, PohligHellmanCiphertext):
             raise TypeError("Can only compare two PohligHellmanCiphertext objects")
 
         if self.message == other.message:

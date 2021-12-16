@@ -1,4 +1,5 @@
-# FATE ON Spark 部署指南 | [English](fate_on_spark_deployment_guide.md)
+# FATE ON Spark 部署指南 
+[English](fate_on_spark_deployment_guide.md)
 
 ## 1.服务器配置
 
@@ -24,9 +25,8 @@
 
 架构图：
 
-<div style="text-align:center", align=center>
-<img src="../../images/fate_on_spark_architecture.png" />
-</div>
+|![](../../images/fate_on_spark_architecture.png)|
+|:--:|
 
 ## 3.组件说明
 

@@ -27,10 +27,10 @@ class TestAffine(unittest.TestCase):
 
     def tearDown(self):
         unittest.TestCase.tearDown(self)
-         
+
     def add_test(self, key):
         x_li = np.ones(100) * np.random.randint(100)
-        y_li = np.ones(100) * np.random.randint(1000)        
+        y_li = np.ones(100) * np.random.randint(1000)
         z_li = np.ones(100) * np.random.rand()
         t_li = range(100)
 
@@ -43,11 +43,11 @@ class TestAffine(unittest.TestCase):
             en_y = key.encrypt(y)
             en_z = key.encrypt(z)
             en_t = key.encrypt(t)
-            
+
             en_res = en_x + en_y + en_z + en_t
-            
+
             res = x + y + z + t
-            
+
             de_en_res = key.decrypt(en_res)
             self.assertAlmostEqual(de_en_res, res)
 

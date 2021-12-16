@@ -55,7 +55,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
                                        batch_index, current_suffix, offset=None):
         '''
         Compute gradients:
-        gradient = (1/N) * \sum(exp(wx) - y) * x
+        gradient = (1/N) * \\sum(exp(wx) - y) * x
 
         Define exp(wx) as mu, named it as guest_forward or host_forward
         Define (mu-y) as fore_gradient

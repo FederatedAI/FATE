@@ -63,21 +63,28 @@ class HeteroFastSecureBoostingTreeGuest(HeteroSecureBoostingTreeGuest):
         g_h = self.get_grad_and_hess(self.grad_and_hess, booster_dim)
 
         tree = HeteroFastDecisionTreeGuest(tree_param=self.tree_param)
-        tree.init(flowid=self.generate_flowid(epoch_idx, booster_dim),
-                  data_bin=self.data_bin, bin_split_points=self.bin_split_points, bin_sparse_points=self.bin_sparse_points,
-                  grad_and_hess=g_h,
-                  encrypter=self.encrypter, encrypted_mode_calculator=self.encrypted_calculator,
-                  valid_features=self.sample_valid_features(),
-                  host_party_list=self.component_properties.host_party_idlist,
-                  runtime_idx=self.component_properties.local_partyid,
-                  goss_subsample=self.enable_goss,
-                  top_rate=self.top_rate, other_rate=self.other_rate,
-                  task_type=self.task_type,
-                  complete_secure=True if (self.cur_epoch_idx == 0 and self.complete_secure) else False,
-                  cipher_compressing=self.cipher_compressing,
-                  max_sample_weight=self.max_sample_weight,
-                  new_ver=self.new_ver
-                  )
+        tree.init(
+            flowid=self.generate_flowid(
+                epoch_idx,
+                booster_dim),
+            data_bin=self.data_bin,
+            bin_split_points=self.bin_split_points,
+            bin_sparse_points=self.bin_sparse_points,
+            grad_and_hess=g_h,
+            encrypter=self.encrypter,
+            encrypted_mode_calculator=self.encrypted_calculator,
+            valid_features=self.sample_valid_features(),
+            host_party_list=self.component_properties.host_party_idlist,
+            runtime_idx=self.component_properties.local_partyid,
+            goss_subsample=self.enable_goss,
+            top_rate=self.top_rate,
+            other_rate=self.other_rate,
+            task_type=self.task_type,
+            complete_secure=True if (
+                self.cur_epoch_idx == 0 and self.complete_secure) else False,
+            cipher_compressing=self.cipher_compressing,
+            max_sample_weight=self.max_sample_weight,
+            new_ver=self.new_ver)
         tree.set_tree_work_mode(tree_type, target_host_id)
         tree.set_layered_depth(self.guest_depth, self.host_depth)
         tree.fit()
@@ -86,7 +93,6 @@ class HeteroFastSecureBoostingTreeGuest(HeteroSecureBoostingTreeGuest):
 
     @staticmethod
     def traverse_guest_local_trees(node_pos, sample, trees: List[HeteroFastDecisionTreeGuest]):
-
         """
         in mix mode, a sample can reach leaf directly
         """
@@ -173,7 +179,7 @@ class HeteroFastSecureBoostingTreeGuest(HeteroSecureBoostingTreeGuest):
         param_name = consts.HETERO_FAST_SBT_GUEST_MODEL + 'Param'
         model_param.tree_plan.extend(plan.encode_plan(self.tree_plan))
         model_param.model_name = consts.HETERO_FAST_SBT_MIX if self.work_mode == consts.MIX_TREE else \
-                                 consts.HETERO_FAST_SBT_LAYERED
+            consts.HETERO_FAST_SBT_LAYERED
 
         return param_name, model_param
 

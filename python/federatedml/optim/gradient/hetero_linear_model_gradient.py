@@ -378,8 +378,8 @@ class Host(HeteroGradientBase):
         define forward_hess = (0.25 * x * s)
         """
         hess_vector = self.compute_gradient(data_instances,
-                                       forward_hess,
-                                       delta_s.fit_intercept)
+                                            forward_hess,
+                                            delta_s.fit_intercept)
         return np.array(hess_vector)
 
     def remote_host_forward(self, host_forward, suffix=tuple()):

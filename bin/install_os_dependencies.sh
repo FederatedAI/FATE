@@ -15,30 +15,55 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-if [[ $1 == "root" ]];then
+
+set -e
+
+if [[ ${is_root} -eq 1 ]]; then
   command=""
 else
-  command="sudo"
+  sudo -nv 2>&1
+  if [[ $? -eq 0 ]]; then
+    command="sudo"
+  else
+    echo "[INFO] no sudo permission"
+    exit
+  fi
 fi
-echo $command
-system=`sed -e '/"/s/"//g' /etc/os-release | awk -F= '/^NAME/{print $2}'`
+
+system=$(sed -e '/"/s/"//g' /etc/os-release | awk -F= '/^NAME/{print $2}')
 echo ${system}
 
+function ln_lib() {
+  local lib_name=$1
+  echo "[INFO] deal $lib_name lib"
+  so_name="lib$lib_name.so"
+  cd /usr/lib/x86_64-linux-gnu
+  if [ ! -f $so_name ] && [ ! -L $so_name ]; then
+    so_file=$(ldd /usr/bin/openssl | grep $so_name | awk '{print $1}')
+    if [[ -n $so_file ]]; then
+      $command ln -s $so_file $so_name
+      echo "[INFO] ln $so_file"
+    else
+      echo "[INFO] can not found openssl $so_name"
+      #$command apt-get install -y libssl1.0.0 || echo ""
+    fi
+  fi
+}
+
 case "${system}" in
-    "CentOS Linux")
-            echo "CentOS System"
-            $command yum -y install gcc gcc-c++ make openssl-devel supervisor gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake libtool libffi-devel snappy snappy-devel zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan lsof
-            ;;
-    "Ubuntu")
-            echo "Ubuntu System"
-            $command apt-get install -y gcc g++ make  openssl supervisor libgmp-dev  libmpfr-dev libmpc-dev libaio1 libaio-dev numactl autoconf automake libtool libffi-dev libssl1.0.0 libssl-dev  liblz4-1 liblz4-dev liblz4-1-dbg liblz4-tool  zlib1g zlib1g-dbg zlib1g-dev
-            cd /usr/lib/x86_64-linux-gnu
-            if [ ! -f "libssl.so.10" ];then
-                 $command ln -s libssl.so.1.0.0 libssl.so.10
-                 $command ln -s libcrypto.so.1.0.0 libcrypto.so.10
-            fi
-            ;;
-    *)
-            echo "Not support this system."
-            exit -1
+"CentOS Linux")
+  echo "CentOS System"
+  $command yum -y install gcc gcc-c++ make openssl-devel supervisor gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake libtool libffi-devel snappy snappy-devel zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan lsof
+  ;;
+"Ubuntu")
+  echo "Ubuntu System"
+  $command apt-get install -y gcc g++ make openssl supervisor libgmp-dev libmpfr-dev libmpc-dev libaio1 libaio-dev numactl autoconf automake libtool libffi-dev libssl-dev liblz4-1 liblz4-dev liblz4-tool zlib1g zlib1g-dev
+  cd /usr/lib/x86_64-linux-gnu
+  ln_lib "ssl"
+  ln_lib "crypto"
+  ;;
+*)
+  echo "Not support this system."
+  exit -1
+  ;;
 esac

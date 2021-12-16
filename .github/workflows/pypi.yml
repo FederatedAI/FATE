@@ -1,30 +1,29 @@
-# use pypi/<version>/develop to test build and publish to pypitest
-# use pypi/<version>/release to publish pypi
-
-name: build-wheel
+name: publish fate_client to PyPI
 
 on:
-  push:
-    branches:
-      - 'pypi/**/develop'
-      - 'pypi/**/release'
+  workflow_dispatch:
+    inputs:
+      source:
+        description: 'source branch'     
+        required: true
+      target:
+        description: 'target package version'
+        required: true
+      type:
+        description: 'publish type, test or release'
+        required: false
+        default: 'test'
 
 jobs:
   build:
-    name: Build fate client and fate_test
+    name: (${{github.event.inputs.type}} build) branch ${{github.event.inputs.source}} -> package version ${{github.event.inputs.target}}
     strategy:
       fail-fast: true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
-      - name: Extract version and name
-        shell: bash
-        run: |
-          # extract version and name from patterm: pypi/<version>/<name>
-          echo ::set-output name=version::$(echo ${GITHUB_REF} | sed -E -e 's/refs\/heads\/pypi\/(.*)\/(develop|release)/\1/g')
-          echo ::set-output name=name::$(echo ${GITHUB_REF} | sed -E -e 's/refs\/heads\/pypi\/(.*)\/(develop|release)/\2/g')
-        id: extract
+        with:
+          ref: ${{github.event.inputs.source}}
 
       - uses: actions/setup-python@v2
         with:
@@ -42,59 +41,41 @@ jobs:
           # clear README.rst
           echo "# fate client" > README.rst
           # bump fate client version
-          poetry version ${{steps.extract.outputs.version}}
-          # build package, saved in dist/
-          poetry build
-
-      - name: Build fate_test
-        run: |
-          cd python/fate_test &&
-          # clear README.rst
-          echo "# fate test" > README.rst
-          # bump fate test version
-          poetry version ${{steps.extract.outputs.version}}
-          # update dependency version
-          sed -E -i "s/(fate_client\s*=\s*)(.*)/\1\"${{steps.extract.outputs.version}}\"/g" pyproject.toml
-          cat pyproject.toml
+          poetry version ${{github.event.inputs.target}}
           # build package, saved in dist/
           poetry build
 
       - name: List dist files
-        run: ls -lh python/fate_client/dist/ python/fate_test/dist/
+        run: ls -lh python/fate_client/dist/ python/fate_client/dist/
 
       - name: Twine check
         run: |
           pip install -U twine
           twine check python/fate_client/dist/*
-          twine check python/fate_test/dist/*
 
       - name: Upload to artifact
         uses: actions/upload-artifact@v2
         with:
           path: |
             python/fate_client/dist/*
-            python/fate_test/dist/*
 
       - name: Test Install
         run: |
           pip install -U pip
-          pip install python/fate_client/dist/fate_client-${{steps.extract.outputs.version}}.tar.gz
-          pip install python/fate_test/dist/fate_test-${{steps.extract.outputs.version}}.tar.gz
+          pip install python/fate_client/dist/fate_client-${{github.event.inputs.target}}.tar.gz
 
       - name: Upload to PyPI Test
-        if: ${{ steps.extract.outputs.name == 'develop' }}
+        if: ${{ github.event.inputs.type == 'test' }}
         run: |
-          twine upload --repository testpypi python/fate_client/dist/*
-          twine upload --repository testpypi python/fate_test/dist/*
+          twine upload --repository testpypi python/fate_client/dist/* --verbose
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.pypitest_token }}
 
       - name: Upload to PyPI
-        if: ${{ steps.extract.outputs.name == 'release' }}
+        if: ${{ github.event.inputs.type == 'release' }}
         run: |
-          twine upload python/fate_client/dist/*
-          twine upload python/fate_test/dist/*
+          twine upload python/fate_client/dist/* --verbose
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.pypi_token }}

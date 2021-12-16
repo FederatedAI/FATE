@@ -86,8 +86,7 @@ def main():
     pipeline.fit()
     # query component summary
     import json
-    print (json.dumps(pipeline.get_component("hetero_lr_0").get_summary(), indent=4))
-
+    print(json.dumps(pipeline.get_component("hetero_lr_0").get_summary(), indent=4))
 
     # predict
     # deploy required components
@@ -110,8 +109,10 @@ def main():
     predict_pipeline.add_component(reader_1)
     # add selected components from train pipeline onto predict pipeline
     # specify data source
-    predict_pipeline.add_component(pipeline,
-                                   data=Data(predict_input={pipeline.data_transform_0.input.data: reader_1.output.data}))
+    predict_pipeline.add_component(
+        pipeline, data=Data(
+            predict_input={
+                pipeline.data_transform_0.input.data: reader_1.output.data}))
     # add evaluation component to predict pipeline
     predict_pipeline.add_component(evaluation_0, data=Data(data=pipeline.hetero_lr_0.output.data))
     # run predict model

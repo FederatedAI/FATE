@@ -42,8 +42,5 @@ class KerasSequenceData(tf.keras.utils.Sequence):
 
 class KerasSequenceDataConverter(object):
     @classmethod
-    def convert_data(cls, x=None, y = None):
+    def convert_data(cls, x=None, y=None):
         return KerasSequenceData(x, y)
-
-
-

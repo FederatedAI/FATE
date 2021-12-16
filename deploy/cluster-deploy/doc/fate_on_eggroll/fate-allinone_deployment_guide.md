@@ -1,4 +1,5 @@
-# FATE AllinOne Deployment Guide | [中文](./fate-allinone_deployment_guide.zh.md)
+# FATE AllinOne Deployment Guide
+[中文](./fate-allinone_deployment_guide.zh.md)
 
 > Warning: This document is designed for a quick start deployment only. Other deployment methods are recommended for production environments, such as [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE).
 >
@@ -24,9 +25,9 @@
 
 The architecture diagram:
 
-<div style="text-align:center" align=center>
-<img src="../../images/arch_en.png" />
-</div>
+|![](../../images/arch_en.png)|
+|:--:|
+|The architecture diagram|
 
 ## 3. Component Description
 

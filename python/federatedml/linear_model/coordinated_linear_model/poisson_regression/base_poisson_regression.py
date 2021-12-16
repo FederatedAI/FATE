@@ -48,7 +48,7 @@ class BasePoissonRegression(BaseLinearModel):
     def get_exposure_index(header, exposure_colname):
         try:
             exposure_index = header.index(exposure_colname)
-        except:
+        except BaseException:
             exposure_index = -1
         return exposure_index
 
@@ -70,7 +70,7 @@ class BasePoissonRegression(BaseLinearModel):
         return data_instance
 
     @staticmethod
-    def load_exposure( data_instance, exposure_index):
+    def load_exposure(data_instance, exposure_index):
         """
         return exposure of a given data_instance
         Parameters
@@ -94,11 +94,11 @@ class BasePoissonRegression(BaseLinearModel):
     def compute_mu(data_instances, coef_, intercept_=0, exposure=None):
         if exposure is None:
             mu = data_instances.mapValues(
-                lambda v: np.exp(vec_dot(v.features, coef_) + intercept_ ))
+                lambda v: np.exp(vec_dot(v.features, coef_) + intercept_))
         else:
             offset = exposure.mapValues(lambda v: BasePoissonRegression.safe_log(v))
             mu = data_instances.join(offset,
-                lambda v, m: np.exp(vec_dot(v.features, coef_) + intercept_ + m))
+                                     lambda v, m: np.exp(vec_dot(v.features, coef_) + intercept_ + m))
 
         return mu
 

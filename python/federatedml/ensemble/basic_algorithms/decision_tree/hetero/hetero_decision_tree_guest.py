@@ -167,9 +167,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
     def get_encrypt_type(self):
 
-        if type(self.encrypter) == PaillierEncrypt:
+        if isinstance(self.encrypter, PaillierEncrypt):
             return consts.PAILLIER
-        elif type(self.encrypter) == IterativeAffineEncrypt:
+        elif isinstance(self.encrypter, IterativeAffineEncrypt):
             return consts.ITERATIVEAFFINE
         else:
             raise ValueError('unknown encrypter type: {}'.format(type(self.encrypter)))
@@ -235,9 +235,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
             # so need type checking here
             if need_decrypt:
                 best_splitinfo.sum_grad = self.decrypt(best_splitinfo.sum_grad) \
-                    if type(best_splitinfo.sum_grad) != int else best_splitinfo.sum_grad
+                    if not isinstance(best_splitinfo.sum_grad, int) else best_splitinfo.sum_grad
                 best_splitinfo.sum_hess = self.decrypt(best_splitinfo.sum_hess) \
-                    if type(best_splitinfo.sum_hess) != int else best_splitinfo.sum_hess
+                    if not isinstance(best_splitinfo.sum_hess, int) else best_splitinfo.sum_hess
                 best_splitinfo.gain = best_gain_host
 
         return best_splitinfo
@@ -291,8 +291,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
             max_nodes = max(len(encrypted_splitinfo_host[host_idx][j]) for j in range(len(self.cur_to_split_nodes)))
             # batch split point finding for every cur to split nodes
             for k in range(0, max_nodes, consts.MAX_SPLITINFO_TO_COMPUTE):
-                batch_splitinfo_host = [encrypted_splitinfo[k: k + consts.MAX_SPLITINFO_TO_COMPUTE] for encrypted_splitinfo
-                                        in encrypted_splitinfo_host[host_idx]]
+                batch_splitinfo_host = [encrypted_splitinfo[k: k + consts.MAX_SPLITINFO_TO_COMPUTE]
+                                        for encrypted_splitinfo in encrypted_splitinfo_host[host_idx]]
 
                 encrypted_splitinfo_host_table = session.parallelize(zip(self.cur_to_split_nodes, batch_splitinfo_host),
                                                                      include_key=False,
@@ -346,9 +346,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         for host_idx, split_info_table in enumerate(host_split_info_tables):
 
-            host_split_info = self.splitter.find_host_best_split_info(split_info_table, self.get_host_sitename(host_idx),
-                                                                      self.encrypter,
-                                                                      gh_packer=self.packer)
+            host_split_info = self.splitter.find_host_best_split_info(
+                split_info_table, self.get_host_sitename(host_idx), self.encrypter, gh_packer=self.packer)
             split_info_list = [None for i in range(len(host_split_info))]
             for key in host_split_info:
                 split_info_list[node_map[key]] = host_split_info[key]
@@ -627,9 +626,15 @@ class HeteroDecisionTreeGuest(DecisionTree):
         else:
             if tree_[nodeid].sitename == sitename:
 
-                next_layer_nid = HeteroDecisionTreeGuest.go_next_layer(tree_[nodeid], value[0], use_missing,
-                                                                       zero_as_missing, bin_sparse_points, split_maskdict,
-                                                                       missing_dir_maskdict, decoder)
+                next_layer_nid = HeteroDecisionTreeGuest.go_next_layer(
+                    tree_[nodeid],
+                    value[0],
+                    use_missing,
+                    zero_as_missing,
+                    bin_sparse_points,
+                    split_maskdict,
+                    missing_dir_maskdict,
+                    decoder)
                 return 1, next_layer_nid
 
             else:
@@ -741,7 +746,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.sample_weights_post_process()
         LOGGER.info("fitting guest decision tree done")
 
-
     @staticmethod
     def traverse_tree(predict_state, data_inst, tree_=None,
                       decoder=None, sitename=consts.GUEST, split_maskdict=None,
@@ -799,7 +803,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 predict_data = predict_data.join(predict_data_host[i],
                                                  lambda state1_nodeid1, state2_nodeid2:
                                                  state1_nodeid1 if state1_nodeid1[
-                                                                       1] == 0 else state2_nodeid2)
+                    1] == 0 else state2_nodeid2)
 
             site_host_send_times += 1
 
@@ -822,7 +826,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
         model_meta.min_leaf_node = self.min_leaf_node
         model_meta.use_missing = self.use_missing
         model_meta.zero_as_missing = self.zero_as_missing
-
 
         return model_meta
 
@@ -873,4 +876,3 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         self.split_maskdict = dict(model_param.split_maskdict)
         self.missing_dir_maskdict = dict(model_param.missing_dir_maskdict)
-

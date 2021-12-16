@@ -34,4 +34,3 @@ class SecureAddExampleParam(BaseParam):
 
         if type(self.data_num).__name__ != "int" or self.data_num < 1:
             raise ValueError("data_num should be an integer large than 0")
-

@@ -1,4 +1,5 @@
-# FATE Exchange Deployment Guide | [中文](./fate-exchange_deployment_guide.zh.md)
+# FATE Exchange Deployment Guide 
+[中文](./fate-exchange_deployment_guide.zh.md)
 
 # 1\. Server Configuration
 
@@ -19,9 +20,8 @@
 
 The architecture diagram:
 
-<div style="text-align:center", align=center>
-<img src="../../images/proxy_en.png" />
-</div>
+|![](../../images/proxy_en.png)|
+|:--:|
 
 # 3\. Component Description
 

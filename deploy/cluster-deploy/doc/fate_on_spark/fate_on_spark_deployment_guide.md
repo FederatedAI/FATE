@@ -1,4 +1,5 @@
-# FATE ON Spark Deployment Guide | [中文](fate_on_spark_deployment_guide.zh.md)
+# FATE ON Spark Deployment Guide 
+[中文](fate_on_spark_deployment_guide.zh.md)
 
 ## 1.Server Information
 
@@ -24,11 +25,8 @@
 
 Architecture:
 
-<div style="text-align:center", align=center>
-
-<img src="../../images/fate_on_spark_architecture.png" />
-
-</div>
+|![](../../images/fate_on_spark_architecture.png)|
+|:--:|
 
 ## 3.Module Information
 

@@ -123,7 +123,7 @@ if __name__ == '__main__':
                                         "guest": [
                                             9999
                                         ]
-                                    }
+                                }
                                 })
         selection_obj = TestHeteroFeatureSelection()
         selection_obj.test_feature_selection()

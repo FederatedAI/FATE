@@ -6,4 +6,3 @@ from pipeline.interface.cache import Cache
 
 
 __all__ = ["Data", "Input", "Output", "Model", "Cache"]
-

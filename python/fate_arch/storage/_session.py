@@ -16,7 +16,7 @@
 import os.path
 import typing
 
-from fate_arch.abc import StorageSessionABC,  CTableABC
+from fate_arch.abc import StorageSessionABC, CTableABC
 from fate_arch.common import EngineType, engine_utils
 from fate_arch.common.data_utils import default_output_fs_path
 from fate_arch.common.log import getLogger
@@ -67,10 +67,17 @@ class StorageSessionBase(StorageSessionABC):
                    part_of_data=None, engine=None, engine_address=None,
                    store_type=None, token: typing.Dict = None) -> StorageTableMeta:
         if engine:
-            if engine != StorageEngine.PATH and engine not in Relationship.Computing.get(computing_table.engine, {}).get(EngineType.STORAGE, {}).get("support", []):
+            if engine != StorageEngine.PATH and engine not in Relationship.Computing.get(
+                    computing_table.engine, {}).get(EngineType.STORAGE, {}).get("support", []):
                 raise Exception(f"storage engine {engine} not supported with computing engine {computing_table.engine}")
         else:
-            engine = Relationship.Computing.get(computing_table.engine, {}).get(EngineType.STORAGE, {}).get("default", None)
+            engine = Relationship.Computing.get(
+                computing_table.engine,
+                {}).get(
+                EngineType.STORAGE,
+                {}).get(
+                "default",
+                None)
             if not engine:
                 raise Exception(f"can not found {computing_table.engine} default storage engine")
         if engine_address is None:
@@ -92,17 +99,20 @@ class StorageSessionBase(StorageSessionABC):
             store_type = HiveStoreType.DEFAULT if store_type is None else store_type
 
         elif engine == StorageEngine.LINKIS_HIVE:
-            address_dict.update({"database": None, "name": f"{namespace}_{name}", "username": token.get("username", "")})
+            address_dict.update({"database": None, "name": f"{namespace}_{name}",
+                                 "username": token.get("username", "")})
             store_type = LinkisHiveStoreType.DEFAULT if store_type is None else store_type
 
         elif engine == StorageEngine.HDFS:
             if not address_dict.get("path"):
-                address_dict.update({"path": default_output_fs_path(name=name, namespace=namespace, prefix=address_dict.get("path_prefix"))})
+                address_dict.update({"path": default_output_fs_path(
+                    name=name, namespace=namespace, prefix=address_dict.get("path_prefix"))})
             store_type = HDFSStoreType.DISK if store_type is None else store_type
 
         elif engine == StorageEngine.LOCALFS:
             if not address_dict.get("path"):
-                address_dict.update({"path": default_output_fs_path(name=name, namespace=namespace, storage_engine=StorageEngine.LOCALFS)})
+                address_dict.update({"path": default_output_fs_path(
+                    name=name, namespace=namespace, storage_engine=StorageEngine.LOCALFS)})
             store_type = LocalFSStoreType.DISK if store_type is None else store_type
 
         elif engine == StorageEngine.PATH:

@@ -82,7 +82,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
     def check_run_sp_opt(self):
         # if run fast hist, generate dense d_dtable and set related variables
         self.run_sparse_opt = (self.encrypt_param.method.lower() == consts.ITERATIVEAFFINE.lower()) and \
-                              self.sparse_opt_para
+            self.sparse_opt_para
 
         if self.run_sparse_opt:
             LOGGER.info('host is running fast histogram mode')

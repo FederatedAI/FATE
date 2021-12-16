@@ -9,10 +9,10 @@ from federatedml.transfer_variable.transfer_class.cipher_compressor_transfer_var
 
 def get_homo_encryption_max_int(encrypter):
 
-    if type(encrypter) == PaillierEncrypt:
+    if isinstance(encrypter, PaillierEncrypt):
         max_pos_int = encrypter.public_key.max_int
         min_neg_int = -max_pos_int
-    elif type(encrypter) == IterativeAffineEncrypt:
+    elif isinstance(encrypter, IterativeAffineEncrypt):
         n_array = encrypter.key.n_array
         allowed_max_int = n_array[0]
         max_pos_int = int(allowed_max_int * 0.9) - 1  # the other 0.1 part is for negative num
@@ -54,7 +54,7 @@ class PackingCipherTensor(object):
 
     def __init__(self, ciphers):
 
-        if type(ciphers) == list:
+        if isinstance(ciphers, list):
             if len(ciphers) == 1:
                 self.ciphers = ciphers[0]
             else:
@@ -70,13 +70,13 @@ class PackingCipherTensor(object):
     def __add__(self, other):
 
         new_cipher_list = []
-        if type(other) == PackingCipherTensor:
+        if isinstance(other, PackingCipherTensor):
             assert self.dim == other.dim
 
             if self.dim == 1:
                 return PackingCipherTensor(self.ciphers + other.ciphers)
             for c1, c2 in zip(self.ciphers, other.ciphers):
-                new_cipher_list.append(c1+c2)
+                new_cipher_list.append(c1 + c2)
             return PackingCipherTensor(ciphers=new_cipher_list)
         else:
             # scalar / single en num
@@ -101,14 +101,14 @@ class PackingCipherTensor(object):
             return PackingCipherTensor(self.ciphers * other)
         new_cipher_list = []
         for c in self.ciphers:
-            new_cipher_list.append(c*other)
+            new_cipher_list.append(c * other)
         return PackingCipherTensor(new_cipher_list)
 
     def __rmul__(self, other):
         return self.__mul__(other)
 
     def __truediv__(self, other):
-        return self.__mul__(1/other)
+        return self.__mul__(1 / other)
 
     def __repr__(self):
         return "[" + self.ciphers.__repr__() + "], dim {}".format(self.dim)
@@ -141,10 +141,10 @@ class NormalCipherPackage(CipherPackage):
 
     def unpack(self, decrypter):
 
-        if type(decrypter) == PaillierEncrypt:
+        if isinstance(decrypter, PaillierEncrypt):
             LOGGER.debug(f"cipher_text: {self._cipher_text}")
             compressed_plain_text = decrypter.privacy_key.raw_decrypt(self._cipher_text.ciphertext())
-        elif type(decrypter) == IterativeAffineEncrypt:
+        elif isinstance(decrypter, IterativeAffineEncrypt):
             compressed_plain_text = decrypter.key.raw_decrypt(self._cipher_text)
         else:
             raise ValueError('unknown decrypter: {}'.format(type(decrypter)))
@@ -210,7 +210,7 @@ class PackingCipherTensorPackage(CipherPackage):
             rs = []
             idx_0, idx_1 = 0, 0
             while idx_0 < len(self.cached_list):
-                rs.append(de_rs[idx_0: idx_0+self.not_compress_len] + [compressed_part[idx_1]])
+                rs.append(de_rs[idx_0: idx_0 + self.not_compress_len] + [compressed_part[idx_1]])
                 idx_0 += self.not_compress_len
                 idx_1 += 1
             return rs
@@ -222,7 +222,6 @@ class PackingCipherTensorPackage(CipherPackage):
 class CipherCompressorHost(object):
 
     def __init__(self, package_class=PackingCipherTensorPackage, sync_para=True):
-
         """
         Parameters
         ----------

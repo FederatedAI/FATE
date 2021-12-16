@@ -73,7 +73,7 @@ def load_json_conf(conf_path):
     try:
         with open(json_conf_path) as f:
             return json.load(f)
-    except:
+    except BaseException:
         raise EnvironmentError(
             "loading json file config from '{}' failed!".format(json_conf_path)
         )
@@ -87,7 +87,7 @@ def dump_json_conf(config_data, conf_path):
     try:
         with open(json_conf_path, "w") as f:
             json.dump(config_data, f, indent=4)
-    except:
+    except BaseException:
         raise EnvironmentError(
             "loading json file config from '{}' failed!".format(json_conf_path)
         )
@@ -101,7 +101,7 @@ def load_json_conf_real_time(conf_path):
     try:
         with open(json_conf_path) as f:
             return json.load(f)
-    except:
+    except BaseException:
         raise EnvironmentError(
             "loading json file config from '{}' failed!".format(json_conf_path)
         )

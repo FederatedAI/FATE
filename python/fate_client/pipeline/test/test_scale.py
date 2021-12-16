@@ -20,4 +20,4 @@ from pipeline.component.scale import FeatureScale
 
 a = FeatureScale(name="scale_0")
 
-print (a.output.data)
+print(a.output.data)

@@ -91,4 +91,3 @@ class TaskInfo(object):
         dict
         '''
         return self._job_client.get_summary(self._jobid, self._component.name, self._role, self._party_id)
-

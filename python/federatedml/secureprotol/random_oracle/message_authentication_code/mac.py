@@ -23,5 +23,6 @@ class MessageAuthenticationCode(RandomOracle):
     """
     MAC
     """
+
     def __init__(self):
         super(MessageAuthenticationCode, self).__init__()

@@ -20,5 +20,5 @@ from pipeline.component.homo_nn import HomoNN
 
 a = HomoNN(name="homo_nn_0")
 
-print (a.output.data)
-print (a.output.model)
+print(a.output.data)
+print(a.output.model)

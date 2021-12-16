@@ -1,5 +1,5 @@
-#!/usr/bin/env python    
-# -*- coding: utf-8 -*- 
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
@@ -69,8 +69,13 @@ class DecisionTree(BasicAlgorithms, ABC):
         self.tree_node_num = 0
         self.runtime_idx = None
         self.valid_features = None
-        self.splitter = Splitter(self.criterion_method, self.criterion_params, self.min_impurity_split,
-                                 self.min_sample_split, self.min_leaf_node, self.min_child_weight)  # splitter for finding splits
+        self.splitter = Splitter(
+            self.criterion_method,
+            self.criterion_params,
+            self.min_impurity_split,
+            self.min_sample_split,
+            self.min_leaf_node,
+            self.min_child_weight)  # splitter for finding splits
         self.inst2node_idx = None  # record the internal node id an instance belongs to
         self.sample_leaf_pos = None  # record the final leaf id of samples
         self.sample_weights = None  # leaf weights of samples
@@ -134,7 +139,7 @@ class DecisionTree(BasicAlgorithms, ABC):
     def set_flowid(self, flowid=0):
         LOGGER.info("set flowid, flowid is {}".format(flowid))
         self.transfer_inst.set_flowid(flowid)
-    
+
     def set_runtime_idx(self, runtime_idx):
         self.runtime_idx = runtime_idx
         self.sitename = ":".join([self.sitename, str(self.runtime_idx)])
@@ -143,6 +148,7 @@ class DecisionTree(BasicAlgorithms, ABC):
     Node encode/ decode
     """
     # add node split-val/missing-dir to mask dict, hetero tree only
+
     def encode(self, etype="feature_idx", val=None, nid=None):
         if etype == "feature_idx":
             return val
@@ -181,8 +187,18 @@ class DecisionTree(BasicAlgorithms, ABC):
     Histogram interface
     """
 
-    def get_local_histograms(self, dep, data_with_pos, g_h, node_sample_count, cur_to_split_nodes, node_map, ret='tensor', sparse_opt=False
-                             , hist_sub=True, bin_num=None):
+    def get_local_histograms(
+            self,
+            dep,
+            data_with_pos,
+            g_h,
+            node_sample_count,
+            cur_to_split_nodes,
+            node_map,
+            ret='tensor',
+            sparse_opt=False,
+            hist_sub=True,
+            bin_num=None):
 
         LOGGER.info("start to compute node histograms")
         acc_histograms = self.hist_computer.compute_histogram(dep,
@@ -236,7 +252,7 @@ class DecisionTree(BasicAlgorithms, ABC):
         # record node sample number in count_arr
         count_arr = np.zeros(len(node_map))
         for k, v in kv:
-            if type(v) == int:  # leaf node format: (leaf_node_id)
+            if isinstance(v, int):  # leaf node format: (leaf_node_id)
                 key = v
             else:  # internal node format: (1, node_id)
                 key = v[1]

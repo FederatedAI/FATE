@@ -1,5 +1,5 @@
-#!/usr/bin/env python    
-# -*- coding: utf-8 -*- 
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
@@ -37,6 +37,7 @@ class SparseVector(object):
     shape : the real feature shape of data
 
     """
+
     def __init__(self, indices=None, data=None, shape=0):
         self.sparse_vec = dict(zip(indices, data))
         self.shape = shape

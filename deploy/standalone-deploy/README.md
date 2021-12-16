@@ -30,7 +30,19 @@ Note that the ${version} in the following example, please replace it with the ac
 
 - The host needs to be able to access the external network to pull installation packages and docker images from the public network.
 - Dependent on [docker](https://download.docker.com/linux/), the recommended version of docker is 18.09. You can verify the docker environment with the following command: docker --version,docker start-stop and other operations please refer to docker --help
-- Before executing, please check if 8080 is already occupied. If you want to execute it again, please use the docker command to delete the previous containers and images.
+- Before executing, please check if 8080 is already occupied. If you want to execute it again, please use the docker command to delete the previous containers and images
+
+Set the environment variables required for deployment (note that the environment variables set in the following way are only valid for the current terminal session, if you open a new terminal session, such as a new login or a new window, please set them again)
+
+```bash
+export version={FATE version for this deployment}
+```
+
+example:
+
+```bash
+export version=1.7.0
+```
 
 ### 2.2 Pulling mirrors
 
@@ -43,10 +55,8 @@ docker pull federatedai/standalone_fate ${version}
 #### 2.2.2 Via mirror packages
 
    ```bash
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/standalone_fate_docker_image_${version}_release.tar
-
-   docker load < standalone_fate_docker_image_${version}_release.tar
-
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/standalone_fate_docker_image_${version}_release.tar;
+   docker load < standalone_fate_docker_image_${version}_release.tar;
    docker images | grep federatedai/standalone_fate
    ```
 
@@ -55,7 +65,7 @@ docker pull federatedai/standalone_fate ${version}
 ### 2.3 Boot
 
    ```bash
-   docker run -d --name standalone_fate -p 8080:8080 federatedai/standalone_fate:${version}
+   docker run -d --name standalone_fate -p 8080:8080 federatedai/standalone_fate:${version};
    docker ps -a | grep standalone_fate
    ```
 
@@ -80,17 +90,23 @@ Note that in the following example ${version}, please replace it with the actual
 Whether local ports 8080, 9360, 9380 are occupied
 
    ```bash
-   netstat -apln|grep 8080
-   netstat -apln|grep 9360
+   netstat -apln|grep 8080;
+   netstat -apln|grep 9360;
    netstat -apln|grep 9380
    ```
+
+Because need to install the OS dependencies, need root privileges. You can use the root user for subsequent operations. If you do not use the root user, please use the root user to grant sudo privileges to the user you want to use:
+
+```bash
+echo "{username to use} ALL=(ALL) NOPASSWD:ALL" | tee /etc/sudoers.d/{username to use}
+```
 
 ### 3.2 Get the installation package
 
 Download the installation package and unpack it
 
    ```bash
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/1.7.0/release/standalone_fate_install_${version}_release.tar. gz
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/standalone_fate_install_${version}_release.tar.gz;
    tar -xzvf standalone_fate_install_${version}_release.tar.gz
    ```
 
@@ -110,15 +126,15 @@ The script will complete automatically:
 - Install the fateboard client
 
    ```bash
-   cd standalone_fate_install_${version}
-   sh init.sh init
+   cd standalone_fate_install_${version}_release;
+   bash init.sh init
    ```
 
 ### 3.4 Start
 
    ```bash
-   sh init.sh status
-   sh init.sh start
+   bash init.sh status;
+   bash init.sh start
    ```
 
 ### 3.5 Testing
@@ -126,7 +142,7 @@ The script will complete automatically:
    - Load environment variables
 
    ```bash
-   source ./bin/init_env.sh
+   source bin/init_env.sh
    ```
 
    - [test items](#4-test-items)
@@ -154,7 +170,7 @@ The script will complete automatically:
    If successful, the screen displays a statement like the following:
 
    ```bash
-   there are 0 failed tests
+   there are 0 failed test
    ```
 
 Some use case algorithms are in [examples](../../examples/dsl/v2) folder, please try using them.

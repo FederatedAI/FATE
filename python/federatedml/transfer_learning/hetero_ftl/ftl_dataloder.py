@@ -6,7 +6,7 @@ from federatedml.util import LOGGER
 
 class FTLDataLoader(tf.keras.utils.Sequence):
 
-    def __init__(self, non_overlap_samples, overlap_samples, batch_size,  guest_side=True):
+    def __init__(self, non_overlap_samples, overlap_samples, batch_size, guest_side=True):
 
         self.batch_size = batch_size
         self.guest_side = guest_side
@@ -91,5 +91,5 @@ class FTLDataLoader(tf.keras.utils.Sequence):
 
     def data_basic_info(self):
         return 'total sample num is {}, overlap sample num is {}, non_overlap sample is {},'\
-                     'x_shape is {}'.format(self.size, len(self._overlap_index), len(self._non_overlap_index),
-                                            self.x_shape)
+            'x_shape is {}'.format(self.size, len(self._overlap_index), len(self._non_overlap_index),
+                                   self.x_shape)

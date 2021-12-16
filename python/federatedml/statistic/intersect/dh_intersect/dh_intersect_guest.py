@@ -68,14 +68,14 @@ class DhIntersectionGuest(DhIntersect):
 
     def _get_remote_cipher_intersect_ids(self, intersect_ids):
         host_count = len(self.id_list_local_first)
-        first_cipher_local_ids_list = [intersect_ids.map(lambda k, v: (v[i], 1)) for i in range(host_count)] # Ei
+        first_cipher_local_ids_list = [intersect_ids.map(lambda k, v: (v[i], 1)) for i in range(host_count)]  # Ei
         doubly_encrypted_ids_list = [self.map_raw_id_to_encrypt_id(first_cipher_local_ids_list[i],           # EEi
                                                                    self.id_list_local_second[i]) for i in
                                      range(host_count)]
         # EEi to Eh
         first_remote_cipher_ids_list = [self.map_cipher_cipher_to_cipher_id(doubly_encrypted_ids_list[i],
                                                                             self.id_list_remote_second[i]) for i in
-                                       range(host_count)]
+                                        range(host_count)]
         return first_remote_cipher_ids_list
 
     def send_intersect_ids(self, intersect_ids):
@@ -146,7 +146,7 @@ class DhIntersectionGuest(DhIntersect):
         cipher_core = self.commutative_cipher[idx].cipher_core
 
         intersect_key = {"mod_base": str(cipher_core.mod_base),
-                        "exponent": str(cipher_core.exponent)}
+                         "exponent": str(cipher_core.exponent)}
 
         return intersect_key
 

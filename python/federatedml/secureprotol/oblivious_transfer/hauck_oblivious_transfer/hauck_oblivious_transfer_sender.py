@@ -27,6 +27,7 @@ class HauckObliviousTransferSender(HauckObliviousTransfer):
     """
     Hauck-OT for the sender (host)
     """
+
     def __init__(self):
         super(HauckObliviousTransferSender, self).__init__()
 
@@ -100,7 +101,7 @@ class HauckObliviousTransferSender(HauckObliviousTransfer):
             y = self._gen_random_scalar()
             s = self.tec_arithmetic.mul(scalar=y, a=self.tec_arithmetic.get_generator())  # S = yG
             t = self._hash_tec_element(s)
-            if self.tec_arithmetic.is_in_group(s) and type(t) != int:
+            if self.tec_arithmetic.is_in_group(s) and not isinstance(t, int):
                 # Both S and T are legal
                 LOGGER.info("randomly generated y, S, T")
                 return y, s, t

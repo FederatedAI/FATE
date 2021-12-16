@@ -24,20 +24,23 @@ netstat -apln|grep 9380
 
 ## 3. Get the source code
 
-### 3.1 Get the code from Github
+Please refer to [get source code](../../../build/common/get_source_code.md), and then,
+
+Set the environment variables required for deployment (note that the environment variables set in the following way are only valid for the current terminal session, if you open a new terminal session, such as a new login or a new window, please set them again)
 
 ```bash
-git clone https://github.com/FederatedAI/FATE.git -b $branch --recurse-submodules --depth=1
+cd {The directory where the above code is stored}
+export FATE_PROJECT_BASE=$PWD
+export version=`grep "FATE=" ${FATE_PROJECT_BASE}/fate.env | awk -F "=" '{print $2}'`
 ```
 
-Please set the **branch** parameter, if you use a release branch, then **branch** is v`version number`, e.g. `v1.7.0`
-the **depth** parameter means that only the latest commits are fetched, which can speed up cloning
+example:
 
-Call this directory `FATE_PROJECT_BASE`, which will be used in the following document
-
-### 3.2 Getting code from Gitee (try Gitee when you can't connect to Github to get code)
-
-Please refer to [how_to_use_gitee](../../../build/common/how_to_use_gitee.zh.md)
+```bash
+cd /xxx/FATE
+export FATE_PROJECT_BASE=$PWD
+export version=`grep "FATE=" ${FATE_PROJECT_BASE}/fate.env | awk -F "=" '{print $2}'`
+```
 
 ## 4. Install and configure the Python environment
 
@@ -67,9 +70,9 @@ source ${FATE_VENV_BASE}/bin/activate
 ### 4.3 Installing Python dependencies for FATE
 
 ```bash
-cd ${FATE_PROJECT_BASE}
-sh bin/install_os_dependencies.sh
-source ${FATE_VENV_BASE}/bin/activate
+cd ${FATE_PROJECT_BASE};
+bash bin/install_os_dependencies.sh;
+source ${FATE_VENV_BASE}/bin/activate;
 pip install -r python/requirements.txt
 ```
 
@@ -80,9 +83,9 @@ In case of problems, you can first refer to [Possible problems](#11-problems-tha
 Edit the `bin/init_env.sh` environment variable file
 
 ```bash
-cd ${FATE_PROJECT_BASE}
-sed -i.bak "s#PYTHONPATH=.*#PYTHONPATH=$PWD/python:$PWD/fateflow/python#g" ./bin/init_env.sh
-sed -i.bak "s#venv=.*#venv=${FATE_VENV_BASE}#g" ./bin/init_env.sh
+cd ${FATE_PROJECT_BASE};
+sed -i.bak "s#PYTHONPATH=.*#PYTHONPATH=$PWD/python:$PWD/fateflow/python#g" bin/init_env.sh;
+sed -i.bak "s#venv=.*#venv=${FATE_VENV_BASE}#g" bin/init_env.sh
 ```
 
 Check if the `conf/service_conf.yaml` global configuration file has the base engine configured as standalone, if `default_engines` shows the following, then it is standalone
@@ -97,11 +100,11 @@ default_engines:
 ## 6. start fate flow server
 
 ```bash
-cd ${FATE_PROJECT_BASE}
-source bin/init_env.sh
-cd fateflow
-sh bin/service.sh status
-sh bin/service.sh start
+cd ${FATE_PROJECT_BASE};
+source bin/init_env.sh;
+cd fateflow;
+bash bin/service.sh status;
+bash bin/service.sh start
 ```
 
 If it shows something like this, it is started successfully, otherwise please check the logs according to the prompt
@@ -116,16 +119,16 @@ python 111907 app 13u IPv4 3570158827 0t0 TCP localhost:9360 (LISTEN)
 ## 7. install fate client
 
 ```bash
-cd ${FATE_PROJECT_BASE}
-source bin/init_env.sh
-cd python/fate_client/
+cd ${FATE_PROJECT_BASE};
+source bin/init_env.sh;
+cd python/fate_client/;
 python setup.py install
 ```
 
 Initialize ``fate flow client`''
 
 ```bash
-cd ../../
+cd ../../;
 flow init -c conf/service_conf.yaml
 ```
 
@@ -155,14 +158,14 @@ If it looks like this, the initialization is successful, otherwise, please check
 ### 8.2 Unit tests
 
    ```bash
-   cd ${FATE_PROJECT_BASE}
+   cd ${FATE_PROJECT_BASE};
    bash python/federatedml/test/run_test.sh
    ```
 
    If successful, the screen displays a statement similar to the following:
 
    ```bash
-   there are 0 failed tests
+   there are 0 failed test
    ```
 
 Some use case algorithms are in [examples](../../../examples/dsl/v2) folder, please try to use them.
@@ -177,46 +180,38 @@ Visualizing FATE Jobs with fateboard
 ### 9.1 Installing and configuring the Java environment
 
 ```bash
-cd ${FATE_PROJECT_BASE}
-mkdir -p env/jdk
-cd env/jdk
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/jdk-8u192.tar.gz
+cd ${FATE_PROJECT_BASE};
+mkdir -p env/jdk;
+cd env/jdk;
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/jdk-8u192.tar.gz;
 tar xzf jdk-8u192.tar.gz
 ```
 
 Configure environment variables
 
 ```bash
-cd ${FATE_PROJECT_BASE}
-vim bin/init_env.sh
-sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=$PWD/env/jdk/jdk-8u192/#g" ./bin/init_env.sh
+cd ${FATE_PROJECT_BASE};
+vim bin/init_env.sh;
+sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=$PWD/env/jdk/jdk-8u192/#g" bin/init_env.sh
 ```
 
 ### 9.2 Download the build package to install fateboard
 
 ```bash
-cd ${FATE_PROJECT_BASE}
-mv fateboard fateboard_code
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${the version number you need to download}/release/fateboard.tar.gz
-tar xzf fateboard.tar.gz
-sed -i.bak "s#fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:sqlite:$PWD/fate_sqlite.db#g" $PWD/fateboard/conf/application.properties
+cd ${FATE_PROJECT_BASE};
+mv fateboard fateboard_code;
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/fateboard.tar.gz;
+tar xzf fateboard.tar.gz;
+sed -i.bak "s#fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:sqlite:$PWD/fate_sqlite.db#g" $PWD/fateboard/conf/application.properties;
 sed -i.bak "s#fateflow.url=.*#fateflow.url=http://localhost:9380#g" $PWD/fateboard/conf/application.properties
 ```
-
-The version number can be obtained like this
-
-```bash
-grep "FATE=" fate.env | awk -F "=" '{print $2}'
-```
-
-e.g. wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/1.7.0/release/fateboard.tar.gz
 
 ### 9.3 Starting fateboard
 
 ```bash
-cd fateboard
-sh service.sh status
-sh service.sh start
+cd fateboard;
+bash service.sh status;
+bash service.sh start
 ```
 
 If you see something like the following, you have started successfully, otherwise please check the logs as prompted
@@ -240,6 +235,6 @@ Please refer to the [FATEBoard repository](https://github.com/FederatedAI/FATE-B
 
 - If the installation of the `python` dependency package `gmpy2` fails under MacOS, try installing the following base library before installing the dependency package
 
-   ```bash
-   brew install gmp mpfr libmpc
-   ```
+```bash
+brew install gmp mpfr libmpc
+```

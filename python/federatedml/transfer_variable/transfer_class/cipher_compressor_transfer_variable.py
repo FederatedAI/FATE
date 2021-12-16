@@ -31,5 +31,3 @@ class CipherCompressorTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
         self.compress_para = self._create_variable(name='compress_para', src=['guest'], dst=['host'])
-
-

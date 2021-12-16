@@ -36,6 +36,7 @@ class BaseSecureInformationRetrieval(ModelBase):
     """
 
     """
+
     def __init__(self):
         super(BaseSecureInformationRetrieval, self).__init__()
         self.model_param = SecureInformationRetrievalParam()
@@ -78,7 +79,7 @@ class BaseSecureInformationRetrieval(ModelBase):
         abnormal_detection.empty_table_detection(data_instances)
         abnormal_detection.empty_feature_detection(data_instances)
 
-    """    
+    """
     @staticmethod
     def record_original_id(k, v):
         if isinstance(k, str):
@@ -229,7 +230,7 @@ class BaseSecureInformationRetrieval(ModelBase):
     """
     @staticmethod
     def _set_schema(data_instance, id_name=None, label_name=None, feature_name=None):
-    
+
         if id_name is not None:
             data_instance.schema['sid_name'] = id_name
         if label_name is not None:
@@ -252,6 +253,6 @@ class BaseSecureInformationRetrieval(ModelBase):
 
     @staticmethod
     def log_schema(tab):
-        
+
         LOGGER.debug("tab schema = {}".format(tab.schema))
     """

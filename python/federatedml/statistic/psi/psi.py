@@ -47,7 +47,7 @@ def psi_computer(expect_counter_list, actual_counter_list, expect_sample_count, 
     for exp_counter, acu_counter in zip(expect_counter_list, actual_counter_list):
         feat_psi = {}
         for key in exp_counter:
-            feat_psi[key] = psi_val(exp_counter[key]/expect_sample_count, acu_counter[key]/actual_sample_count)
+            feat_psi[key] = psi_val(exp_counter[key] / expect_sample_count, acu_counter[key] / actual_sample_count)
 
         total_psi = 0
         for k in feat_psi:
@@ -74,7 +74,7 @@ def psi_val_arr(expected_arr, actual_arr, sample_num):
     actual_arr = actual_arr / sample_num
     expected_arr[expected_arr == 0] = 1e-6
     actual_arr[actual_arr == 0] = 1e-6
-    psi_rs = (actual_arr - expected_arr) * np.log(actual_arr/expected_arr)
+    psi_rs = (actual_arr - expected_arr) * np.log(actual_arr / expected_arr)
     return psi_rs
 
 
@@ -137,14 +137,14 @@ class PSI(ModelBase):
         if not tb.count() > 0:
             raise ValueError('input table must contains at least 1 sample')
         first_ = tb.take(1)[0][1]
-        if type(first_) == Instance:
+        if isinstance(first_, Instance):
             return True
         else:
             raise ValueError('unknown input format')
 
     @staticmethod
     def is_sparse(tb):
-        return type(tb.take(1)[0][1].features) == SparseVector
+        return isinstance(tb.take(1)[0][1].features, SparseVector)
 
     @staticmethod
     def check_duplicates(l_):
@@ -351,5 +351,3 @@ class PSI(ModelBase):
         meta.max_bin_num = self.max_bin_num
 
         return {'PSIParam': psi_summary, 'PSIMeta': meta}
-
-

@@ -75,7 +75,7 @@ class AffineCiphertext(object):
     def __add__(self, other):
         if isinstance(other, AffineCiphertext):
             return AffineCiphertext(self.cipher + other.cipher, self.multiplier + other.multiplier)
-        elif type(other) is int and other == 0:
+        elif isinstance(other, int) and other == 0:
             return self
         else:
             raise TypeError("Addition only supports AffineCiphertext and initialization with int zero")
@@ -84,7 +84,7 @@ class AffineCiphertext(object):
         return self.__add__(other)
 
     def __mul__(self, other):
-        if type(other) is int:
+        if isinstance(other, int):
             return AffineCiphertext(self.cipher * other, self.multiplier * other)
         else:
             raise TypeError("Multiplication only supports int.")
@@ -100,5 +100,3 @@ class AffineCiphertext(object):
 
     def __truediv__(self, other):
         return self.__mul__(1 / other)
-    
-    

@@ -71,7 +71,7 @@ class StorageTable(StorageTableBase):
             # self.con.commit()
             ret = self._cur.fetchall()
             count = ret[0][0]
-        except:
+        except BaseException:
             count = 0
         return count
 

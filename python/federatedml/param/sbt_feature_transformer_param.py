@@ -4,7 +4,6 @@ from federatedml.param.base_param import BaseParam
 class SBTTransformerParam(BaseParam):
 
     def __init__(self, dense_format=True):
-
         """
         Parameters
         ----------

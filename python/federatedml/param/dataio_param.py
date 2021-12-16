@@ -39,7 +39,7 @@ class DataIOParam(BaseParam):
         the data type of data input
 
     exclusive_data_type : dict
-        the key of dict is col_name, the value is data_type, use to specified special data type 
+        the key of dict is col_name, the value is data_type, use to specified special data type
         of some features.
 
     tag_with_value: bool

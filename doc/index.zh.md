@@ -1,4 +1,4 @@
 ---
 template: overrides/home.zh.html
-title: FATE
+title: 主页
 ---

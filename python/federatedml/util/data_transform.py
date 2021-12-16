@@ -416,20 +416,20 @@ class DenseFeatureTransformer(object):
 
     def load_model(self, model_meta, model_param):
         self.delimitor, self.data_type, self.exclusive_data_type, _1, _2, self.with_label, \
-        self.label_type, self.output_format, self.header, self.sid_name, self.label_name, self.with_match_id = \
+            self.label_type, self.output_format, self.header, self.sid_name, self.label_name, self.with_match_id = \
             load_data_transform_model("DenseFeatureTransformer", model_meta, model_param)
 
         self.missing_fill, self.missing_fill_method, \
-        self.missing_impute, self.default_value = load_missing_imputer_model(self.header,
-                                                                             "Imputer",
-                                                                             model_meta.imputer_meta,
-                                                                             model_param.imputer_param)
+            self.missing_impute, self.default_value = load_missing_imputer_model(self.header,
+                                                                                 "Imputer",
+                                                                                 model_meta.imputer_meta,
+                                                                                 model_param.imputer_param)
 
         self.outlier_replace, self.outlier_replace_method, \
-        self.outlier_impute, self.outlier_replace_value = load_outlier_model(self.header,
-                                                                             "Outlier",
-                                                                             model_meta.outlier_meta,
-                                                                             model_param.outlier_param)
+            self.outlier_impute, self.outlier_replace_value = load_outlier_model(self.header,
+                                                                                 "Outlier",
+                                                                                 model_meta.outlier_meta,
+                                                                                 model_param.outlier_param)
 
 
 # =============================================================================
@@ -604,7 +604,7 @@ class SparseFeatureTransformer(object):
 
     def load_model(self, model_meta, model_param):
         self.delimitor, self.data_type, _0, _1, _2, self.with_label, \
-        self.label_type, self.output_format, self.header, self.sid_name, self.label_name, self.with_match_id = \
+            self.label_type, self.output_format, self.header, self.sid_name, self.label_name, self.with_match_id = \
             load_data_transform_model(
                 "SparseFeatureTransformer",
                 model_meta,
@@ -918,16 +918,16 @@ class SparseTagTransformer(object):
 
     def load_model(self, model_meta, model_param):
         self.delimitor, self.data_type, _0, self.tag_with_value, self.tag_value_delimitor, self.with_label, \
-        self.label_type, self.output_format, self.header, self.sid_name, self.label_name, self.with_match_id = load_data_transform_model(
-            "SparseTagTransformer",
-            model_meta,
-            model_param)
+            self.label_type, self.output_format, self.header, self.sid_name, self.label_name, self.with_match_id = load_data_transform_model(
+                "SparseTagTransformer",
+                model_meta,
+                model_param)
 
         self.missing_fill, self.missing_fill_method, \
-        self.missing_impute, self.default_value = load_missing_imputer_model(self.header,
-                                                                             "Imputer",
-                                                                             model_meta.imputer_meta,
-                                                                             model_param.imputer_param)
+            self.missing_impute, self.default_value = load_missing_imputer_model(self.header,
+                                                                                 "Imputer",
+                                                                                 model_meta.imputer_meta,
+                                                                                 model_param.imputer_param)
 
 
 class DataTransform(ModelBase):
@@ -1077,7 +1077,7 @@ def load_data_transform_model(model_name="DataTransform",
             exclusive_data_type[col_name] = model_meta.exclusive_data_type.get(col_name)
 
     return delimitor, data_type, exclusive_data_type, tag_with_value, tag_value_delimitor, with_label, \
-           label_type, output_format, header, sid_name, label_name, with_match_id
+        label_type, output_format, header, sid_name, label_name, with_match_id
 
 
 def save_missing_imputer_model(missing_fill=False,

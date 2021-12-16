@@ -43,7 +43,7 @@ class BaseFeldmanVerifiableSum(ModelBase):
         encrypt_result = self.x.mapValues(self.generate_shares)
         sub_key_table = encrypt_result.mapValues(lambda x: x[0])
         self.commitments = encrypt_result.mapValues(lambda x: x[1])
-        for i in range(self.host_count+1):
+        for i in range(self.host_count + 1):
             sub_key = sub_key_table.mapValues(lambda y: y[:, i])
             self.sub_key.append(sub_key)
 
@@ -88,4 +88,3 @@ class BaseFeldmanVerifiableSum(ModelBase):
             if not res:
                 raise ValueError(f"Get wrong {key_type} from {party_id}")
         return True
-

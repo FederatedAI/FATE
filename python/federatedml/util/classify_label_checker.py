@@ -1,5 +1,5 @@
-#!/usr/bin/env python    
-# -*- coding: utf-8 -*- 
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
@@ -90,5 +90,5 @@ class RegressionLabelChecker(object):
     def test_numeric_data(value):
         try:
             label = float(value.label)
-        except:
+        except BaseException:
             raise ValueError("In Regression Task, all label should be numeric!!")

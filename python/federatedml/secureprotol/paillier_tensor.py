@@ -245,4 +245,3 @@ class PaillierTensor(object):
 
     def select_columns(self, select_table):
         return PaillierTensor(self._obj.join(select_table, lambda v1, v2: v1[v2]))
-

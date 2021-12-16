@@ -49,8 +49,13 @@ def main(config="../../config.yaml", namespace=""):
 
     data_transform_0 = DataTransform(name="data_transform_0")
 
-    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, output_format="dense",
-                                                                              label_type="int", label_name="y")
+    data_transform_0.get_party_instance(
+        role='guest',
+        party_id=guest).component_param(
+        with_label=True,
+        output_format="dense",
+        label_type="int",
+        label_name="y")
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0", intersect_method="rsa", sync_intersect_ids=True,

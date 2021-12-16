@@ -119,9 +119,9 @@ class EvaluateParam(BaseParam):
 
         descr = "evaluate param's "
         self.eval_type = self.check_and_change_lower(self.eval_type,
-                                                       [consts.BINARY, consts.MULTY, consts.REGRESSION,
-                                                        consts.CLUSTERING],
-                                                       descr)
+                                                     [consts.BINARY, consts.MULTY, consts.REGRESSION,
+                                                      consts.CLUSTERING],
+                                                     descr)
 
         if type(self.pos_label).__name__ not in ["str", "float", "int"]:
             raise ValueError(
@@ -135,7 +135,7 @@ class EvaluateParam(BaseParam):
 
         if self.metrics is None or len(self.metrics) == 0:
             self.metrics = self.default_metrics[self.eval_type]
-            LOGGER.warning('use default metric {} for eval type {}'.format(self.metrics, self.eval_type)) 
+            LOGGER.warning('use default metric {} for eval type {}'.format(self.metrics, self.eval_type))
 
         self.check_boolean(self.unfold_multi_result, 'multi_result_unfold')
 
@@ -158,5 +158,3 @@ class EvaluateParam(BaseParam):
             if metric in ban_metric:
                 self.metrics.remove(metric)
         self.check()
-
-

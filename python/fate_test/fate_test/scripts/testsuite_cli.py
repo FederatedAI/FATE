@@ -144,6 +144,7 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
         for job in suite.jobs_iter():
             job_progress = JobProgress(job.job_name)
             start = time.time()
+
             def _raise():
                 exception_id = str(uuid.uuid1())
                 job_progress.exception(exception_id)

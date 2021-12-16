@@ -28,4 +28,3 @@ class Table(BaseFlowAPI):
         kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
         return self._post(url='table/delete', json=config_data)
-

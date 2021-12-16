@@ -52,7 +52,7 @@ def main(config="../../config.yaml", param="./gbdt_config_multi.yaml"):
 
     try:
         auc_score = roc_auc_score(y, y_pred)
-    except:
+    except BaseException:
         print(f"no auc score available")
 
     acc = accuracy_score(y, y_pred)

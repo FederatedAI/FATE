@@ -34,5 +34,3 @@ class HeteroKmeans(Component, KmeansParam):
         self.input = Input(self.name, data_type="multi")
         self.output = Output(self.name, data_type="no_limit", output_unit=2)
         self._module_name = "HeteroKmeans"
-
-

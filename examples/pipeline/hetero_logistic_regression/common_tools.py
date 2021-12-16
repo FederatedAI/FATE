@@ -204,7 +204,7 @@ def make_feature_engineering_dsl(config, namespace, lr_param, is_multi_host=Fals
     pipeline.add_component(feature_scale_0, data=Data(data=intersection_0.output.data))
     train_line.append(feature_scale_0)
 
-    binning_param =  {
+    binning_param = {
         "method": "quantile",
         "compress_thres": 10000,
         "head_size": 10000,

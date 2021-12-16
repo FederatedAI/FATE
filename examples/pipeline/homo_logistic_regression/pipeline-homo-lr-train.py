@@ -54,7 +54,10 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
     # define DataTransform components
-    data_transform_0 = DataTransform(name="data_transform_0", with_label=True, output_format="dense")  # start component numbering at 0
+    data_transform_0 = DataTransform(
+        name="data_transform_0",
+        with_label=True,
+        output_format="dense")  # start component numbering at 0
 
     scale_0 = FeatureScale(name='scale_0')
     param = {
@@ -108,8 +111,10 @@ def main(config="../../config.yaml", namespace=""):
     predict_pipeline.add_component(reader_0)
     # # add selected components from train pipeline onto predict pipeline
     # # specify data source
-    predict_pipeline.add_component(pipeline,
-                                   data=Data(predict_input={pipeline.data_transform_0.input.data: reader_0.output.data}))
+    predict_pipeline.add_component(
+        pipeline, data=Data(
+            predict_input={
+                pipeline.data_transform_0.input.data: reader_0.output.data}))
     predict_pipeline.compile()
     predict_pipeline.predict()
 
@@ -118,7 +123,6 @@ def main(config="../../config.yaml", namespace=""):
     # import json
     json.dump(dsl_json, open('./homo-lr-normal-predict-dsl.json', 'w'), indent=4)
     json.dump(conf_json, open('./homo-lr-normal-predict-conf.json', 'w'), indent=4)
-
 
     # query component summary
     print(json.dumps(pipeline.get_component("homo_lr_0").get_summary(), indent=4, ensure_ascii=False))

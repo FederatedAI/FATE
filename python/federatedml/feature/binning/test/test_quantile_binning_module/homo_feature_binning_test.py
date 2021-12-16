@@ -171,7 +171,7 @@ if __name__ == '__main__':
                                             '9999'
                                         ],
                                         "arbiter": ['9998']
-                                    }
+                                }
                                 })
 
         test_obj = TestHomoFeatureBinning(role, own_party_id)

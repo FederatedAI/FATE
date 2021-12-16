@@ -1,4 +1,5 @@
-#  FATE exchange部署指南 | [English](./fate-exchange_deployment_guide.md)
+#  FATE exchange部署指南 
+[English](./fate-exchange_deployment_guide.md)
 
 1.服务器配置
 ============
@@ -21,9 +22,8 @@
 
 架构图：
 
-<div style="text-align:center", align=center>
-<img src="../../images/proxy_zh.png" />
-</div>
+|![](../../images/proxy_zh.png)|
+|:--:|
 
 # 3.组件说明
 

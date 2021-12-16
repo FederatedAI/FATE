@@ -44,5 +44,3 @@ class Host(object):
 class Arbiter(object):
     def compute_gradient_procedure(self, *args, **kwargs):
         raise NotImplementedError("This method should be be called here")
-
-
