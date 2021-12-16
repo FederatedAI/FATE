@@ -1,0 +1,174 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_homo_guest.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "breast_homo_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_homo_host.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "breast_homo_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_guest.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "vehicle_scale_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_host.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "vehicle_scale_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/student_hetero_guest.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "student_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/student_hetero_host.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "student_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/dvisit_hetero_guest.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "dvisit_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/dvisit_hetero_host.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "dvisit_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/motor_hetero_guest.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "motor_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/motor_hetero_host_1.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "motor_hetero_host_1",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/motor_hetero_host_2.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "motor_hetero_host_2",
+            "namespace": "experiment",
+            "role": "host_1"
+        }
+    ],
+    "tasks": {
+        "homo_treeshap": {
+            "conf": "./homo_treeshap_conf.json",
+            "dsl": "./homo_treeshap_dsl.json"
+        },
+        "homo_nn_binary_task_with_kernelshap": {
+            "conf": "./homo_nn_bin_shap_conf.json",
+            "dsl": "./homo_nn_shap_dsl.json"
+        },
+        "homo_nn_multi_task_with_kernelshap": {
+            "conf": "./homo_nn_multi_shap_conf.json",
+            "dsl": "./homo_nn_shap_dsl.json"
+        },
+        "homo_lr_with_kernelshap": {
+            "conf": "./homo_lr_shap_conf.json",
+            "dsl": "./homo_lr_shap_dsl.json"
+        },
+        "hetero_treeshap_binary_task": {
+            "conf": "./hetero_treeshap_conf.json",
+            "dsl": "./hetero_treeshap_dsl.json"
+        },
+	    "hetero_treeshap_regression_task": {
+            "conf": "./hetero_treeshap_regression_conf.json",
+            "dsl": "./hetero_treeshap_dsl.json"
+        },
+        "hetero_treeshap_multi_task": {
+            "conf": "./hetero_treeshap_multi_conf.json",
+            "dsl": "./hetero_treeshap_dsl.json"
+        },
+        "hetero_lr_with_kernelshap": {
+            "conf": "./hetero_lr_shap_conf.json",
+            "dsl": "./hetero_lr_shap_dsl.json"
+        },
+        "hetero_linr_with_kernelshap": {
+            "conf": "./hetero_linr_shap_conf.json",
+            "dsl": "./hetero_linr_shap_dsl.json"
+        },
+        "hetero_poisson_with_kernelshap": {
+            "conf": "./hetero_poisson_shap_conf.json",
+            "dsl": "./hetero_poisson_shap_dsl.json"
+        },
+        "hetero_sshe_lr_with_kernelshap": {
+            "conf": "./sshe_lr_shap_conf.json",
+            "dsl": "./sshe_lr_shap_dsl.json"
+        },
+	    "hetero_nn_with_kernelshap": {
+            "conf": "./hetero_nn_shap_conf.json",
+            "dsl": "./hetero_nn_shap_dsl.json"
+        },
+        "hetero_treeshap_explain_all_host_features": {
+            "conf": "./hetero_treeshap_explain_all_host_features_conf.json",
+            "dsl": "./hetero_treeshap_dsl.json"
+        }，
+        "hetero_treeshap_multi_host": {
+            "conf": "./hetero_treeshap_multi_host_conf.json",
+            "dsl": "./hetero_treeshap_dsl.json"
+        }
+    }
+}

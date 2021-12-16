@@ -1,0 +1,69 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 10000
+    },
+    "role": {
+        "guest": [
+            10000
+        ],
+        "host": [
+            9999
+        ],
+        "arbiter": [
+            9999
+        ]
+    },
+    "job_parameters": {
+        "common": {
+            "backend": 0,
+            "work_mode": 0,
+            "job_type": "train"
+        }
+    },
+    "component_parameters": {
+        "role": {
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_homo_guest",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_0": {
+                        "with_label": true
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_homo_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "dataio_0": {
+                        "with_label": true,
+                        "output_format": "dense"
+                    }
+                }
+            }
+        },
+        "common": {
+            "homo_secureboost_0": {
+                "task_type": "classification",
+                "objective_param": {
+                    "objective": "cross_entropy"
+                },
+                "num_trees": 3,
+                "validation_freqs": 1,
+                "tree_param": {
+                    "max_depth": 3
+                }, "backend": "memory"
+            }
+        }
+    }
+}

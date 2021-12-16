@@ -1,0 +1,53 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 10000
+    },
+    "role": {
+        "host": [
+            9999
+        ],
+        "guest": [
+            10000
+        ]
+    },
+    "component_parameters": {
+        "common": {   
+	    "model_loader_0": {
+	    	"model_id": "",
+                "model_version": "",
+                "component_name": ""
+	    },	
+	    "SHAP_0": {"explain_all_host_feature": false}
+	},
+        "role": {
+            "guest": {
+                "0": {                    
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "data_transform_0": {
+                        "with_label": true,
+                        "output_format": "dense"
+                    }
+		}
+            },
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "data_transform_0": {
+                        "with_label": false
+                    }                }
+            }
+        }
+    }
+}
