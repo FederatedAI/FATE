@@ -14,7 +14,7 @@ explainable machine learning. It is developed mainly on two basic concepts: Addi
 and Shapley Values. Here we briefly introduce SHAP and Federated SHAP developed based on SHAP.
 
 Additive feature attribution methods have an explanation model that is a linear 
-function of binary variables[2]. Assuming we have an instance with *M* features, 
+function of binary variables[2]. Assuming we have an instance with *M* features, φ
 To explain the predict result *g(z')* 
 
 Below formula shows the definition of additive feature attribution methods:
