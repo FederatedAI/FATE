@@ -51,6 +51,8 @@ from pipeline.param.label_transform_param import LabelTransformParam
 from pipeline.param.sir_param import SecureInformationRetrievalParam
 from pipeline.param.cache_loader_param import CacheLoaderParam
 from pipeline.param.hetero_sshe_lr_param import HeteroSSHELRParam
+from pipeline.param.hetero_sshe_linr_param import HeteroSSHELinRParam
+from pipeline.param.hetero_sshe_poisson_param import HeteroSSHEPoissonParam
 
 __all__ = ["HeteroSecureBoostParam", "HomoSecureBoostParam", "HeteroFastSecureBoostParam",
            "ColumnExpandParam", "DataSplitParam", "DataIOParam", "EncryptParam",
@@ -61,5 +63,6 @@ __all__ = ["HeteroSecureBoostParam", "HomoSecureBoostParam", "HeteroFastSecureBo
            "SampleWeightParam", "ScaleParam", "ScorecardParam",
            "UnionParam", "ObjectiveParam", "DecisionTreeParam", "PredictParam",  "SBTTransformerParam",
            "FeatureImputationParam", "LabelTransformParam",
-           "SecureInformationRetrievalParam","CacheLoaderParam", "HeteroSSHELRParam"]
+           "SecureInformationRetrievalParam","CacheLoaderParam", "HeteroSSHELRParam",
+           "HeteroSSHELinRParam", "HeteroSSHEPoissonParam"]
 
