@@ -76,4 +76,7 @@ class HeteroModelAdaptor(object):
         self.predict_suffix += 1
         return self.fate_model.predict(data_inst)
 
+    def __repr__(self):
+        return 'Hetero Adaptor with {}'.format(self.fate_model)
+
 

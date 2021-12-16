@@ -7,7 +7,8 @@ from federatedml.util import consts
 from federatedml.util import LOGGER
 from sklearn.linear_model import LinearRegression
 from federatedml.statistic.statics import MultivariateStatisticalSummary
-from federatedml.model_interpret.explainer.explainer_base import Explainer, data_inst_table_to_arr
+from federatedml.model_interpret.explainer.explainer_base import Explainer, data_inst_table_to_arr, \
+    take_inst_in_sorted_order
 from federatedml.transfer_variable.transfer_class.shap_transfer_variable import SHAPTransferVariable
 from federatedml.feature.instance import Instance
 from federatedml.param.shap_param import SHAPParam
@@ -56,6 +57,10 @@ class KernelSHAP(Explainer):
     def set_reference_type(self, ref_type):
         assert ref_type in [consts.MEDIAN, consts.AVERAGE, consts.ZEROS]
         self.reference_vec_type = ref_type
+        LOGGER.info('kernel explainer set ref vec type to {}'.format(ref_type))
+
+    def __repr__(self):
+        return 'KernelSHAP, contains model: {}'.format(self.model)
 
 
 class HomoKernelSHAP(KernelSHAP):
@@ -76,15 +81,14 @@ class HomoKernelSHAP(KernelSHAP):
         elif self.reference_vec_type == consts.AVERAGE:
             ref_vec = np.array([data_arr.mean(axis=0)])
         elif self.reference_vec_type == consts.MEDIAN:
-            ref_vec = np.array([np.median(axis=0)])
+            ref_vec = np.array([np.median(data_arr, axis=0)])
 
         LOGGER.debug('ref vec is {}'.format(ref_vec))
-        LOGGER.debug('pred rs is {}'.format(self.model.predict(data_arr)))
         shap_kernel = shap.KernelExplainer(self.model.predict, ref_vec)
         LOGGER.debug('kernel shap on running')
         explain_rs = shap_kernel.shap_values(data_arr)
         explain_rs = handle_result(data_arr, explain_rs, shap_kernel.expected_value)
-        LOGGER.debug('homo kernel shap explain rs is {}'.format(explain_rs))
+        return explain_rs
 
 
 class HeteroKernelSHAP(KernelSHAP):
@@ -118,11 +122,14 @@ class HeteroKernelSHAP(KernelSHAP):
 
     def _get_reference_vec_from_background_data(self, data_inst, reference_type=consts.MEDIAN):
 
-        reference_data_point = None
         header = data_inst.schema['header']
+        statistics = MultivariateStatisticalSummary(data_inst, cols_index=-1)
         if reference_type == consts.MEDIAN:
-            statistics = MultivariateStatisticalSummary(data_inst, cols_index=-1)
             reference_data_point = statistics.get_median()
+        elif reference_type == consts.AVERAGE:
+            reference_data_point = statistics.get_mean()
+        else:
+            raise ValueError('unknown reference type {}'.format(reference_type))
 
         ret = []
         for h in header:
@@ -197,8 +204,6 @@ class HeteroKernelSHAP(KernelSHAP):
         last_var = X[::, -1]
         y_label = y_label - y_diff * last_var
         new_X = X[::, :-1] - X[::, -1:]
-
-        LOGGER.debug('y label is {}, training x is {}'.format(y_label, new_X))
         linear_model.fit(new_X, y_label, sample_weight=weights)
         phi_partial = list(linear_model.coef_)
         phi_last = (pred_val - base_val) - sum(phi_partial)
@@ -206,8 +211,6 @@ class HeteroKernelSHAP(KernelSHAP):
         phi_partial += list(phi_last)
         phi_partial += list(phi_bias)
         phi = phi_partial
-        LOGGER.debug('phi {}'.format(phi))
-        LOGGER.debug('sample sum {}'.format(sum(phi)))
 
         return phi
 
@@ -446,7 +449,6 @@ class HeteroKernelSHAP(KernelSHAP):
         pred_rs = [(k, v.features) for k, v in pred_collect]
 
         y, pred_val, base_val = self._reformat_pred_rs(pred_rs)
-        LOGGER.debug('pred val {}, based val {}'.format(pred_val, base_val))
         # fitting SHAP value here
         phi = self._fitting_shap(subset_masks, y, sample_weights, base_val, pred_val)
         return phi
@@ -497,7 +499,7 @@ class HeteroKernelSHAP(KernelSHAP):
                 self.host_side_feat_num = sum(host_feat_num_list)
                 self.host_side_feat_list = host_feat_num_list
                 self.sync_host_feat_num = False
-                LOGGER.debug('host side anonymous feat num is {}'.format(self.host_side_feat_num))
+                LOGGER.info('host side anonymous feat num is {}'.format(self.host_side_feat_num))
 
             host_num = len(self.component_properties.host_party_idlist)
             shap_rs = self.guest_explain_row(x, data_inst, host_num=host_num)
@@ -535,11 +537,21 @@ class HeteroKernelSHAP(KernelSHAP):
         self.schema = copy.deepcopy(data_inst.schema)
         self.table_partitions = data_inst.partitions
         # test example
-        X = data_inst.take(n)
+        X = take_inst_in_sorted_order(data_inst, n, False)
+        total_num = len(X)
+        finished_num = 0
+        idx = 1
+        shap_rs = []
         for inst in X:
             x = inst[1].features
             rs = self.explain_row(x, data_inst)
-        
+            shap_rs.append(rs)
+            finished_num += 1
+            if finished_num > (total_num//10) * idx:
+                LOGGER.info('report progress: {}/{}'.format(finished_num, total_num))
+                idx += 1
+
+        return shap_rs
     
         
         

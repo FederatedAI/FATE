@@ -4,7 +4,8 @@ from federatedml.util import LOGGER
 from shap import TreeExplainer
 import copy
 import numpy as np
-from federatedml.model_interpret.explainer.explainer_base import Explainer, data_inst_table_to_arr
+from federatedml.model_interpret.explainer.explainer_base import Explainer, data_inst_table_to_arr, \
+    take_inst_in_sorted_order
 from federatedml.protobuf.homo_model_convert.lightgbm.gbdt import sbt_to_lgb
 from federatedml.transfer_variable.transfer_class.shap_transfer_variable import SHAPTransferVariable
 from federatedml.ensemble.boosting.boosting import Boosting
@@ -58,28 +59,20 @@ class HomoTreeSHAP(TreeSHAP):
 
     def explain(self, data_inst, n=500):
 
-        if self.role == consts.GUEST or self.role == consts.HOST:
-            ids, header, arr = data_inst_table_to_arr(data_inst=data_inst, take_num=n)
-            lgb_model = self.convert_sbt_to_lgb(self.tree_model_param, self.tree_model_meta)
-            contrib = lgb_model.predict(arr, pred_contrib=True)
-            if self.class_num > 2:
-                contrib = self.handle_multi_rs(contrib)
-            LOGGER.debug('Homo TreeSHAP explain result {}'.format(contrib))
-        else:
-            # arbiters don't explain anything
-            return None
+        ids, header, arr = data_inst_table_to_arr(data_inst, n)
+        lgb_model = self.convert_sbt_to_lgb(self.tree_model_param, self.tree_model_meta)
+        contrib = lgb_model.predict(arr, pred_contrib=True)
+        if self.class_num > 2:
+            contrib = self.handle_multi_rs(contrib)
+        return contrib
 
     def explain_interaction(self, data_inst, n=500):
 
-        if self.role == consts.GUEST or self.role == consts.HOST:
-            ids, header, arr = data_inst_table_to_arr(data_inst=data_inst, take_num=n)
-            lgb_model = self.convert_sbt_to_lgb(self.tree_model_param, self.tree_model_meta)
-            shap_tree_explainer = TreeExplainer(lgb_model)
-            interaction_rs = shap_tree_explainer.shap_interaction_values(arr)
-            LOGGER.debug('Homo TreeSHAP interaction result {}'.format(interaction_rs))
-        else:
-            # arbiters don't explain anything
-            return None
+        ids, header, arr = data_inst_table_to_arr(data_inst=data_inst, take_num=n)
+        lgb_model = self.convert_sbt_to_lgb(self.tree_model_param, self.tree_model_meta)
+        shap_tree_explainer = TreeExplainer(lgb_model)
+        interaction_rs = shap_tree_explainer.shap_interaction_values(arr)
+        return interaction_rs
 
 
 """
@@ -241,15 +234,15 @@ class HeteroTreeSHAP(TreeSHAP):
         # running host code
         if self.role == consts.HOST:
 
-            interpret_sample = data_inst.take(n)
+            interpret_sample = take_inst_in_sorted_order(data_inst, take_num=n, ret_arr=False)
             self.load_host_boosting_model()
             self.generate_anonymous_map()
             sample_route_map = {}
+            idx = 0
             for sample_id, sample in interpret_sample:
                 route, self.host_node_anonymous = self.extract_host_route(sample)
-                sample_route_map[sample_id] = route
-            # LOGGER.debug('sample route map {}'.format(sample_route_map))
-
+                sample_route_map[idx] = route
+                idx += 1
             if self.full_explain:
                 self.transfer_variable.host_anonymous_list.remote(list(self.anonymous_mapping.values()))
                 self.transfer_variable.host_node_anonymous.remote(self.host_node_anonymous)
@@ -259,7 +252,7 @@ class HeteroTreeSHAP(TreeSHAP):
         # running guest code
         elif self.role == consts.GUEST:
 
-            ids, header, arr = data_inst_table_to_arr(data_inst=data_inst, take_num=n)
+            ids, header, arr = take_inst_in_sorted_order(data_inst=data_inst, take_num=n)
 
             # for non full explain
             host_fed_feat_idx = None
@@ -284,9 +277,9 @@ class HeteroTreeSHAP(TreeSHAP):
                 self.add_anonymous_feat_mapping(anonymous_fid_map)
 
             contribs = []
-
-            for sample_id, feat in zip(ids, arr):
-                routes = [host_route[sample_id] for host_route in hosts_sample_route_map]
+            for sample_idx in range(len(ids)):
+                feat = arr[sample_idx]
+                routes = [host_route[sample_idx] for host_route in hosts_sample_route_map]
                 contrib = self.explain_row(feat, self.tree_model_param, routes, host_fed_feat_idx,
                                            anonymous_fid_map, host_node_anonymous)
                 contribs.append(contrib)
@@ -296,8 +289,8 @@ class HeteroTreeSHAP(TreeSHAP):
                 contribs = contribs.reshape((arr.shape[0], -1))
                 contribs = self.handle_multi_rs(contribs)
 
-            LOGGER.debug('contrib {}'.format(contribs))
             LOGGER.info('explain model done')
+            return contribs
 
     def add_fed_feat_to_tree_node(self, tree_param: BoostingTreeModelParam, route, fed_host_idx):
 

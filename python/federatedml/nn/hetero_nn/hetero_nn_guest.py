@@ -30,6 +30,7 @@ from federatedml.protobuf.generated.hetero_nn_model_meta_pb2 import HeteroNNMeta
 from federatedml.protobuf.generated.hetero_nn_model_param_pb2 import HeteroNNParam
 from federatedml.util import consts, LOGGER
 from federatedml.util.io_check import assert_io_num_rows_equal
+from federatedml.param.hetero_nn_param import HeteroNNParam as NNParameter
 
 MODELMETA = "HeteroNNGuestMeta"
 MODELPARAM = "HeteroNNGuestParam"
@@ -179,13 +180,14 @@ class HeteroNNGuest(HeteroNNBase):
                 MODELPARAM: self._get_model_param()}
 
     def load_model(self, model_dict):
+
         model_dict = list(model_dict["model"].values())[0]
         param = model_dict.get(MODELPARAM)
         meta = model_dict.get(MODELMETA)
-
-        LOGGER.debug('param is {}'.format(param))
-        LOGGER.debug('meta is {}'.format(meta))
-        
+        if self.hetero_nn_param is None:
+            self.hetero_nn_param = NNParameter()
+            self.hetero_nn_param.check()
+            self.predict_param = self.hetero_nn_param.predict_param
         self._build_model()
         self._restore_model_meta(meta)
         self._restore_model_param(param)

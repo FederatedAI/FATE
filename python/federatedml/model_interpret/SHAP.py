@@ -1,4 +1,6 @@
 import copy
+import time
+import numpy as np
 from federatedml.model_base import ModelBase
 from federatedml.param.shap_param import SHAPParam
 from federatedml.util import LOGGER
@@ -8,7 +10,8 @@ from federatedml.model_interpret.explainer.explainer_base import Explainer
 from federatedml.model_interpret.model_adaptor import HeteroModelAdaptor, HomoModelAdaptor
 from federatedml.model_interpret.explainer.tree_shap_explainer import HeteroTreeSHAP, HomoTreeSHAP
 from federatedml.model_interpret.explainer.kernel_shap_explainer import HeteroKernelSHAP, HomoKernelSHAP
-from federatedml.ensemble import HeteroSecureBoostingTreeGuest, HeteroSecureBoostingTreeHost, HomoSecureBoostingTreeClient
+from federatedml.ensemble import HeteroSecureBoostingTreeGuest, HeteroSecureBoostingTreeHost, \
+    HomoSecureBoostingTreeClient
 from federatedml.linear_model.linear_model_base import BaseLinearModel
 
 
@@ -21,7 +24,7 @@ class SHAP(ModelBase):
         self.explainer: Explainer = None
         self.ref_type = None
         self.explain_all = True
-        self.interpret_limit = 10
+        self.interpret_limit = 500
 
     def _init_model(self, param: SHAPParam):
         self.ref_type = param.reference_type
@@ -67,7 +70,7 @@ class SHAP(ModelBase):
             fed_type = consts.HETERO
         else:
             raise ValueError('illegal algo module: {}'.format(module_name))
-        LOGGER.debug('fed type is {}'.format(fed_type))
+        LOGGER.info('fed type is {}'.format(fed_type))
 
         if fed_type == consts.HETERO:
             # tree models use TreeSHAP only
@@ -80,13 +83,17 @@ class SHAP(ModelBase):
                                                 self.flowid)
                 self.explainer = HeteroKernelSHAP(self.role, self.flowid)
                 self.explainer.init_model(fate_model, copy.deepcopy(self.component_properties))
+                self.explainer.set_reference_type(self.ref_type)
 
             if issubclass(type(algo_inst), BaseLinearModel):
-                LOGGER.debug('linear model detected, not support full explain')
+                LOGGER.warning('linear model detected, not support full explain')
                 self.explain_all = False
 
             if self.explain_all:
                 self.explainer.set_full_explain()
+                LOGGER.info('explainer {} set explain all'.format(self.explainer))
+
+            LOGGER.info('explain_all_host_features is {}'.format(self.explain_all))
 
         elif fed_type == consts.HOMO:
 
@@ -98,7 +105,7 @@ class SHAP(ModelBase):
                 self.explainer = HomoKernelSHAP(self.role, self.flowid)
                 homo_model = HomoModelAdaptor(new_model_dict, algo_inst)
                 self.explainer.init_model(homo_model)
-                LOGGER.debug('homo model is {}'.format(homo_model))
+                self.explainer.set_reference_type(self.ref_type)
 
         LOGGER.info('using explainer {}, role is {}'.format(self.explainer, self.role))
 
@@ -108,14 +115,8 @@ class SHAP(ModelBase):
 
     def fit(self, data_inst):
 
-        # arbiter quit
-        if self.role == consts.ARBITER:
-            return
-
-        LOGGER.debug('self role is {}'.format(self.role))
-        import time
         s = time.time()
         explain_rs = self.explainer.explain(data_inst, self.interpret_limit)
-        # interaction_rs = self.explainer.explain_interaction(data_inst, self.interpret_limit)
         e = time.time()
         LOGGER.debug('running takes {}'.format(e-s))
+        LOGGER.debug('explain rs shape is {}'.format(np.array(explain_rs).shape))

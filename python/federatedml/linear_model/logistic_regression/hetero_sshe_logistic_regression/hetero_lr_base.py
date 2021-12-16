@@ -60,6 +60,7 @@ class HeteroLRBase(BaseLinearModel, ABC):
         self.secure_matrix_obj: SecureMatrix
         self._set_parties()
         self.cipher_tool = None
+        self.transfer_variable = SSHEModelTransferVariable()
 
     def _transfer_q_field(self):
         if self.role == consts.GUEST:
@@ -79,7 +80,6 @@ class HeteroLRBase(BaseLinearModel, ABC):
             self.init_param_obj.fit_intercept = False
         self.cipher = PaillierEncrypt()
         self.cipher.generate_key(self.model_param.encrypt_param.key_length)
-        self.transfer_variable = SSHEModelTransferVariable()
         self.one_vs_rest_obj = one_vs_rest_factory(self, role=self.role, mode=self.mode, has_arbiter=False)
 
         self.converge_func_name = params.early_stop
