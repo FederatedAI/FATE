@@ -29,17 +29,13 @@ def hetero_secure_boost_param():
 
 @hetero_secure_boost_cpn_meta.bind_runner.on_guest
 def hetero_secure_boost_guest_runner():
-    from federatedml.ensemble.boosting.hetero.hetero_fast_secureboost_guest import (
-        HeteroSecureBoostingTreeGuest,
-    )
+    from federatedml.ensemble import (HeteroSecureBoostingTreeGuest)
 
     return HeteroSecureBoostingTreeGuest
 
 
 @hetero_secure_boost_cpn_meta.bind_runner.on_host
 def hetero_secure_boost_host_runner():
-    from federatedml.ensemble.boosting.hetero.hetero_fast_secureboost_host import (
-        HeteroSecureBoostingTreeHost,
-    )
+    from federatedml.ensemble import (HeteroSecureBoostingTreeHost)
 
     return HeteroSecureBoostingTreeHost

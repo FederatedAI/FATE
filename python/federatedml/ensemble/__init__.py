@@ -25,40 +25,22 @@ from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_histo
 from federatedml.ensemble.basic_algorithms.decision_tree.hetero.hetero_decision_tree_host import HeteroDecisionTreeHost
 from federatedml.ensemble.basic_algorithms.decision_tree.hetero.hetero_decision_tree_guest import HeteroDecisionTreeGuest
 
-from federatedml.ensemble.boosting.hetero.hetero_secureboost_guest import HeteroSecureBoostingTreeGuest
-from federatedml.ensemble.boosting.hetero.hetero_secureboost_host import HeteroSecureBoostingTreeHost
-from federatedml.ensemble.boosting.hetero.hetero_fast_secureboost_guest import HeteroFastSecureBoostingTreeGuest
-from federatedml.ensemble.boosting.hetero.hetero_fast_secureboost_host import HeteroFastSecureBoostingTreeHost
+from federatedml.ensemble.secureboost.hetero_secoreboost.hetero_secureboost_guest import HeteroSecureBoostingTreeGuest
+from federatedml.ensemble.secureboost.hetero_secoreboost.hetero_secureboost_host import HeteroSecureBoostingTreeHost
 
-from federatedml.ensemble.boosting.homo.homo_secureboosting_aggregator import SecureBoostClientAggregator, \
+from federatedml.ensemble.secureboost.homo_secureboost.homo_secureboosting_aggregator import SecureBoostClientAggregator, \
     SecureBoostArbiterAggregator,\
     DecisionTreeClientAggregator, DecisionTreeArbiterAggregator
 from federatedml.ensemble.basic_algorithms.decision_tree.homo.homo_decision_tree_client import HomoDecisionTreeClient
 from federatedml.ensemble.basic_algorithms.decision_tree.homo.homo_decision_tree_arbiter import HomoDecisionTreeArbiter
-from federatedml.ensemble.boosting.homo.homo_secureboost_client import HomoSecureBoostingTreeClient
-from federatedml.ensemble.boosting.homo.homo_secureboost_arbiter import HomoSecureBoostingTreeArbiter
+from federatedml.ensemble.secureboost.homo_secureboost.homo_secureboost_client import HomoSecureBoostingTreeClient
+from federatedml.ensemble.secureboost.homo_secureboost.homo_secureboost_arbiter  import HomoSecureBoostingTreeArbiter
 
 
-__all__ = [
-    "Node",
-    "HeteroDecisionTreeHost",
-    "HeteroDecisionTreeGuest",
-    "Splitter",
-    "FeatureHistogram",
-    "XgboostCriterion",
-    "DecisionTree",
-    'SplitInfo',
-    "HomoDecisionTreeClient",
-    "HomoDecisionTreeArbiter",
-    "SecureBoostArbiterAggregator",
-    "SecureBoostClientAggregator",
-    "DecisionTreeArbiterAggregator",
-    'DecisionTreeClientAggregator',
-    "HeteroSecureBoostingTreeGuest",
-    "HeteroSecureBoostingTreeHost",
-    "HomoSecureBoostingTreeArbiter",
-    "HomoSecureBoostingTreeClient",
-    "HistogramBag",
-    "FeatureHistogramWeights",
-    "HeteroFastSecureBoostingTreeGuest",
-    "HeteroFastSecureBoostingTreeHost"]
+__all__ = ["Node",
+           "HeteroDecisionTreeHost", "HeteroDecisionTreeGuest", "Splitter",
+           "FeatureHistogram", "XgboostCriterion", "DecisionTree", 'SplitInfo',
+           "HomoDecisionTreeClient", "HomoDecisionTreeArbiter", "SecureBoostArbiterAggregator", "SecureBoostClientAggregator"
+           , "DecisionTreeArbiterAggregator", 'DecisionTreeClientAggregator',
+           "HeteroSecureBoostingTreeGuest", "HeteroSecureBoostingTreeHost", "HomoSecureBoostingTreeArbiter",
+           "HomoSecureBoostingTreeClient", "HistogramBag", "FeatureHistogramWeights"]

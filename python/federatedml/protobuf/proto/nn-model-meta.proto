@@ -45,5 +45,6 @@ message HomoNNParam {
 
 message NNModelMeta {
     int32 aggregate_iter = 1;
+    string module = 2;
     HomoNNParam params = 100;
 }

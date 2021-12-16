@@ -24,7 +24,9 @@
 # =============================================================================
 # Criterion
 # =============================================================================
-import math
+
+import copy
+import numpy as np
 from federatedml.util import LOGGER
 from federatedml.util import consts
 
@@ -47,31 +49,46 @@ class XgboostCriterion(Criterion):
         LOGGER.info('splitter criterion setting done: l1 {}, l2 {}'.format(self.reg_alpha, self.reg_lambda))
 
     @staticmethod
+    def is_tensor(data):
+        return type(data) == np.ndarray
+
+    @staticmethod
     def _g_alpha_cmp(gradient, reg_alpha):
-        if gradient < - reg_alpha:
-            return gradient + reg_alpha
-        elif gradient > reg_alpha:
-            return gradient - reg_alpha
+        if XgboostCriterion.is_tensor(gradient):
+            new_grad = copy.copy(gradient)
+            new_grad[new_grad < -reg_alpha] += reg_alpha
+            new_grad[new_grad > reg_alpha] -= reg_alpha
+            new_grad[(new_grad <= reg_alpha) & (new_grad >= -reg_alpha)] = 0
+            return gradient
         else:
-            return 0
+            if gradient < - reg_alpha:
+                return gradient + reg_alpha
+            elif gradient > reg_alpha:
+                return gradient - reg_alpha
+            else:
+                return 0
 
     @staticmethod
     def truncate(f, n=consts.TREE_DECIMAL_ROUND):
-        return math.floor(f * 10 ** n) / 10 ** n
+        return np.floor(f * 10 ** n) / 10 ** n
 
     def split_gain(self, node_sum, left_node_sum, right_node_sum):
         sum_grad, sum_hess = node_sum
         left_node_sum_grad, left_node_sum_hess = left_node_sum
         right_node_sum_grad, right_node_sum_hess = right_node_sum
         rs = self.node_gain(left_node_sum_grad, left_node_sum_hess) + \
-            self.node_gain(right_node_sum_grad, right_node_sum_hess) - \
-            self.node_gain(sum_grad, sum_hess)
+             self.node_gain(right_node_sum_grad, right_node_sum_hess) - \
+             self.node_gain(sum_grad, sum_hess)
         return self.truncate(rs)
 
     def node_gain(self, sum_grad, sum_hess):
         sum_grad, sum_hess = self.truncate(sum_grad), self.truncate(sum_hess)
         num = self._g_alpha_cmp(sum_grad, self.reg_alpha)
-        return self.truncate(num * num / (sum_hess + self.reg_lambda))
+        structure_score = self.truncate(num * num / (sum_hess + self.reg_lambda))
+        if XgboostCriterion.is_tensor(structure_score):
+            structure_score = np.sum(structure_score)
+        return structure_score
 
     def node_weight(self, sum_grad, sum_hess):
-        return self.truncate(-(self._g_alpha_cmp(sum_grad, self.reg_alpha)) / (sum_hess + self.reg_lambda))
+        weight = self.truncate(-(self._g_alpha_cmp(sum_grad, self.reg_alpha)) / (sum_hess + self.reg_lambda))
+        return weight

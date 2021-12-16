@@ -10,7 +10,6 @@ from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import Decisio
 from federatedml.transfer_variable.transfer_class.hetero_decision_tree_transfer_variable import \
     HeteroDecisionTreeTransferVariable
 from federatedml.secureprotol import PaillierEncrypt, IterativeAffineEncrypt
-from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.subsample import goss_sampling
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.g_h_optim import GHPacker
 from federatedml.statistic.statics import MultivariateStatisticalSummary
 from federatedml.util import consts
@@ -34,7 +33,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         # goss subsample
         self.run_goss = False
-        self.top_rate, self.other_rate = 0.2, 0.1  # goss sampling rate
 
         # cipher compressing
         self.task_type = None
@@ -44,6 +42,10 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         # code version control
         self.new_ver = True
+
+        # mo tree
+        self.mo_tree = False
+        self.class_num = 1
 
     """
     Node Encode/ Decode
@@ -96,8 +98,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
         if self.complete_secure_tree:
             LOGGER.info('running complete secure')
         if self.run_goss:
-            LOGGER.info('run goss is {}, top rate is {}, other rate is {}'.format(self.run_goss, self.top_rate,
-                                                                                  self.other_rate))
             LOGGER.info('sampled g_h count is {}, total sample num is {}'.format(self.grad_and_hess.count(),
                                                                                  self.data_bin.count()))
         if self.run_cipher_compressing:
@@ -112,13 +112,14 @@ class HeteroDecisionTreeGuest(DecisionTree):
              encrypter, encrypted_mode_calculator,
              host_party_list,
              task_type,
+             class_num=1,
              complete_secure=False,
              goss_subsample=False,
-             top_rate=0.1,
-             other_rate=0.2,
              cipher_compressing=False,
              max_sample_weight=1,
-             new_ver=True):
+             new_ver=True,
+             mo_tree=False
+             ):
 
         super(HeteroDecisionTreeGuest, self).init_data_and_variable(flowid, runtime_idx, data_bin, bin_split_points,
                                                                     bin_sparse_points, valid_features, grad_and_hess)
@@ -129,15 +130,15 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.encrypted_mode_calculator = encrypted_mode_calculator
         self.complete_secure_tree = complete_secure
         self.host_party_idlist = host_party_list
-
         self.run_goss = goss_subsample
-        self.top_rate = top_rate
-        self.other_rate = other_rate
-
         self.run_cipher_compressing = cipher_compressing
         self.max_sample_weight = max_sample_weight
-
         self.task_type = task_type
+        self.mo_tree = mo_tree
+        if self.mo_tree:  # when mo mode is activated, need class number
+            self.class_num = class_num
+        else:
+            self.class_num = 1
 
         # initializing goss settings
         if self.run_goss:
@@ -145,12 +146,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
             if self.encrypted_mode_calculator.mode != 'strict':
                 if self.encrypted_mode_calculator.enc_zeros is None:
-                    self.encrypted_mode_calculator.init_enc_zero(self.grad_and_hess,
+                    self.encrypted_mode_calculator.init_enc_zero(data_bin,
                                                                  raw_en=self.run_cipher_compressing, exponent=0)
                     LOGGER.info('fast/balance encrypt mode, initialize enc zeros for goss sampling')
-
-            self.goss_sampling()
-            self.max_sample_weight = self.max_sample_weight * ((1 - top_rate) / other_rate)
 
         self.new_ver = new_ver
         self.report_init_status()
@@ -167,9 +165,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
     def get_encrypt_type(self):
 
-        if isinstance(self.encrypter, PaillierEncrypt):
+        if type(self.encrypter) == PaillierEncrypt:
             return consts.PAILLIER
-        elif isinstance(self.encrypter, IterativeAffineEncrypt):
+        elif type(self.encrypter) == IterativeAffineEncrypt:
             return consts.ITERATIVEAFFINE
         else:
             raise ValueError('unknown encrypter type: {}'.format(type(self.encrypter)))
@@ -235,9 +233,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
             # so need type checking here
             if need_decrypt:
                 best_splitinfo.sum_grad = self.decrypt(best_splitinfo.sum_grad) \
-                    if not isinstance(best_splitinfo.sum_grad, int) else best_splitinfo.sum_grad
+                    if type(best_splitinfo.sum_grad) != int else best_splitinfo.sum_grad
                 best_splitinfo.sum_hess = self.decrypt(best_splitinfo.sum_hess) \
-                    if not isinstance(best_splitinfo.sum_hess, int) else best_splitinfo.sum_hess
+                    if type(best_splitinfo.sum_hess) != int else best_splitinfo.sum_hess
                 best_splitinfo.gain = best_gain_host
 
         return best_splitinfo
@@ -291,8 +289,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
             max_nodes = max(len(encrypted_splitinfo_host[host_idx][j]) for j in range(len(self.cur_to_split_nodes)))
             # batch split point finding for every cur to split nodes
             for k in range(0, max_nodes, consts.MAX_SPLITINFO_TO_COMPUTE):
-                batch_splitinfo_host = [encrypted_splitinfo[k: k + consts.MAX_SPLITINFO_TO_COMPUTE]
-                                        for encrypted_splitinfo in encrypted_splitinfo_host[host_idx]]
+                batch_splitinfo_host = [encrypted_splitinfo[k: k + consts.MAX_SPLITINFO_TO_COMPUTE] for encrypted_splitinfo
+                                        in encrypted_splitinfo_host[host_idx]]
 
                 encrypted_splitinfo_host_table = session.parallelize(zip(self.cur_to_split_nodes, batch_splitinfo_host),
                                                                      include_key=False,
@@ -346,8 +344,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         for host_idx, split_info_table in enumerate(host_split_info_tables):
 
-            host_split_info = self.splitter.find_host_best_split_info(
-                split_info_table, self.get_host_sitename(host_idx), self.encrypter, gh_packer=self.packer)
+            host_split_info = self.splitter.find_host_best_split_info(split_info_table, self.get_host_sitename(host_idx),
+                                                                      self.encrypter,
+                                                                      gh_packer=self.packer)
             split_info_list = [None for i in range(len(host_split_info))]
             for key in host_split_info:
                 split_info_list[node_map[key]] = host_split_info[key]
@@ -415,7 +414,10 @@ class HeteroDecisionTreeGuest(DecisionTree):
                                    max_sample_weight=self.max_sample_weight,
                                    en_calculator=self.encrypted_mode_calculator,
                                    g_min=g_min,
-                                   g_max=g_max)
+                                   g_max=g_max,
+                                   mo_mode=self.mo_tree,  # mo packing
+                                   class_num=self.class_num  # no mo packing
+                                   )
             en_grad_hess = self.packer.pack_and_encrypt(self.grad_and_hess)
 
         else:
@@ -449,8 +451,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
                                                  suffix=(dep,))
 
     def sync_encrypted_splitinfo_host(self, dep=-1, batch=-1, idx=-1):
-        LOGGER.info("get encrypted splitinfo of depth {}, batch {}".format(dep, batch))
 
+        LOGGER.info("get encrypted splitinfo of depth {}, batch {}".format(dep, batch))
         LOGGER.debug('host idx is {}'.format(idx))
         encrypted_splitinfo_host = self.transfer_inst.encrypted_splitinfo_host.get(idx=idx,
                                                                                    suffix=(dep, batch,))
@@ -518,10 +520,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
     """
     Pre-porcess / Post-Process
     """
-
-    def goss_sampling(self,):
-        new_g_h = goss_sampling(self.grad_and_hess, self.top_rate, self.other_rate)
-        self.grad_and_hess = new_g_h
 
     def remove_sensitive_info(self):
         """
@@ -626,15 +624,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
         else:
             if tree_[nodeid].sitename == sitename:
 
-                next_layer_nid = HeteroDecisionTreeGuest.go_next_layer(
-                    tree_[nodeid],
-                    value[0],
-                    use_missing,
-                    zero_as_missing,
-                    bin_sparse_points,
-                    split_maskdict,
-                    missing_dir_maskdict,
-                    decoder)
+                next_layer_nid = HeteroDecisionTreeGuest.go_next_layer(tree_[nodeid], value[0], use_missing,
+                                                                       zero_as_missing, bin_sparse_points, split_maskdict,
+                                                                       missing_dir_maskdict, decoder)
                 return 1, next_layer_nid
 
             else:
@@ -802,8 +794,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
             for i in range(len(predict_data_host)):
                 predict_data = predict_data.join(predict_data_host[i],
                                                  lambda state1_nodeid1, state2_nodeid2:
-                                                 state1_nodeid1 if state1_nodeid1[
-                    1] == 0 else state2_nodeid2)
+                                                 state1_nodeid1 if state1_nodeid1[1] == 0 else state2_nodeid2)
 
             site_host_send_times += 1
 
@@ -844,16 +835,19 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         model_param = DecisionTreeModelParam()
         for node in self.tree_node:
+            weight, mo_weight = self.mo_weight_extract(node)
+            LOGGER.debug('cwj weight {}, mo weight {}'.format(weight, mo_weight))
             model_param.tree_.add(id=node.id,
                                   sitename=node.sitename,
                                   fid=node.fid,
                                   bid=node.bid,
-                                  weight=node.weight,
+                                  weight=weight,
                                   is_leaf=node.is_leaf,
                                   left_nodeid=node.left_nodeid,
                                   right_nodeid=node.right_nodeid,
-                                  missing_dir=node.missing_dir)
-
+                                  missing_dir=node.missing_dir,
+                                  mo_weight=mo_weight
+                                  )
         model_param.split_maskdict.update(self.split_maskdict)
         model_param.missing_dir_maskdict.update(self.missing_dir_maskdict)
         model_param.leaf_count.update(self.leaf_count)
@@ -862,11 +856,12 @@ class HeteroDecisionTreeGuest(DecisionTree):
     def set_model_param(self, model_param):
         self.tree_node = []
         for node_param in model_param.tree_:
+            weight = self.mo_weight_load(node_param)
             _node = Node(id=node_param.id,
                          sitename=node_param.sitename,
                          fid=node_param.fid,
                          bid=node_param.bid,
-                         weight=node_param.weight,
+                         weight=weight,
                          is_leaf=node_param.is_leaf,
                          left_nodeid=node_param.left_nodeid,
                          right_nodeid=node_param.right_nodeid,

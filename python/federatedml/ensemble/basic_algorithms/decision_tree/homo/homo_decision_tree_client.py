@@ -64,7 +64,7 @@ class HomoDecisionTreeClient(DecisionTree):
 
         # memory backend
         self.arr_bin_data = None
-        self.memory_hist_builder = None
+        self.memory_hist_builder_list = []
         self.sample_id_arr = None
         self.bin_num = 0
 
@@ -319,21 +319,60 @@ class HomoDecisionTreeClient(DecisionTree):
         return root_sample_idx
 
     def init_memory_hist_builder(self, g, h, bin_data, bin_num):
-        self.memory_hist_builder = HistogramBuilder(bin_data, bin_num, g, h, False)
+
+        if len(g.shape) == 2:  # mo case
+            idx_end = g.shape[1]
+            for i in range(0, idx_end):
+                g_arr = np.ascontiguousarray(g[::, i], dtype=np.float32)
+                h_arr = np.ascontiguousarray(h[::, i], dtype=np.float32)
+                hist_builder = HistogramBuilder(bin_data, bin_num, g_arr, h_arr, False)
+                self.memory_hist_builder_list.append(hist_builder)
+        else:
+            self.memory_hist_builder_list.append(HistogramBuilder(bin_data, bin_num, g, h, False))
 
     def sklearn_compute_agg_hist(self, data_indices):
-        hist_memory_view = self.memory_hist_builder.compute_histograms_brute(data_indices)
-        hist_arr = np.array(hist_memory_view)
-        g = hist_arr['sum_gradients'].cumsum(axis=1)
-        h = hist_arr['sum_hessians'].cumsum(axis=1)
-        count = hist_arr['count'].cumsum(axis=1)
 
-        final_hist = []
-        for feat_idx in range(len(g)):
-            arr = np.array([g[feat_idx], h[feat_idx], count[feat_idx]]).transpose()
-            final_hist.append(arr)
+        hist = []
+        for memory_hist_builder in self.memory_hist_builder_list:
+            hist_memory_view = memory_hist_builder.compute_histograms_brute(data_indices)
+            hist_arr = np.array(hist_memory_view)
+            g = hist_arr['sum_gradients'].cumsum(axis=1)
+            h = hist_arr['sum_hessians'].cumsum(axis=1)
+            count = hist_arr['count'].cumsum(axis=1)
 
-        return np.array(final_hist)
+            final_hist = []
+            for feat_idx in range(len(g)):
+                arr = np.array([g[feat_idx], h[feat_idx], count[feat_idx]]).transpose()
+                final_hist.append(arr)
+            hist.append(np.array(final_hist))
+
+        # non-mo case, return nd array
+        if len(hist) == 1:
+            return hist[0]
+
+        # handle mo case, return list
+        multi_dim_g, multi_dim_h, count = None, None, None
+        for dimension_hist in hist:
+            cur_g, cur_h = dimension_hist[::, ::, 0], dimension_hist[::, ::, 1]
+            cur_g = cur_g.reshape(cur_g.shape[0], cur_g.shape[1], 1)
+            cur_h = cur_h.reshape(cur_h.shape[0], cur_h.shape[1], 1)
+            if multi_dim_g is None and multi_dim_h is None:
+                multi_dim_g = cur_g
+                multi_dim_h = cur_h
+            else:
+                multi_dim_g = np.concatenate([multi_dim_g, cur_g], axis=-1)
+                multi_dim_h = np.concatenate([multi_dim_h, cur_h], axis=-1)
+
+            if count is None:
+                count = dimension_hist[::, ::, 2]
+
+        # is a slow realization, to improve
+        rs = []
+        for feat_g, feat_h, feat_c in zip(multi_dim_g, multi_dim_h, count):
+            feat_hist = [[g_arr, h_arr, c] for g_arr, h_arr, c in zip(feat_g, feat_h, feat_c)]
+            rs.append(feat_hist)
+
+        return rs
 
     def assign_arr_inst(self, node, data_arr, data_indices, missing_bin_index=None):
 
@@ -389,7 +428,7 @@ class HomoDecisionTreeClient(DecisionTree):
                 for node in cur_to_split:
                     if node.id in node_map:
                         hist = self.sklearn_compute_agg_hist(node.inst_indices)
-                        hist_bag = HistogramBag(hist, tensor_type='array')
+                        hist_bag = HistogramBag(hist)
                         hist_bag.hid = node.id
                         hist_bag.p_hid = node.parent_nodeid
                         node_hists.append(hist_bag)
@@ -564,26 +603,35 @@ class HomoDecisionTreeClient(DecisionTree):
     def get_model_param(self):
         model_param = DecisionTreeModelParam()
         for node in self.tree_node:
+
+            weight, mo_weight = self.mo_weight_extract(node)
+
             model_param.tree_.add(id=node.id,
                                   sitename=self.role,
                                   fid=node.fid,
                                   bid=node.bid,
-                                  weight=node.weight,
+                                  weight=weight,
                                   is_leaf=node.is_leaf,
                                   left_nodeid=node.left_nodeid,
                                   right_nodeid=node.right_nodeid,
-                                  missing_dir=node.missing_dir)
+                                  missing_dir=node.missing_dir,
+                                  mo_weight=mo_weight
+                                  )
+
         model_param.leaf_count.update(self.leaf_count)
         return model_param
 
     def set_model_param(self, model_param):
         self.tree_node = []
         for node_param in model_param.tree_:
+
+            weight = self.mo_weight_load(node_param)
+
             _node = Node(id=node_param.id,
                          sitename=node_param.sitename,
                          fid=node_param.fid,
                          bid=node_param.bid,
-                         weight=node_param.weight,
+                         weight=weight,
                          is_leaf=node_param.is_leaf,
                          left_nodeid=node_param.left_nodeid,
                          right_nodeid=node_param.right_nodeid,

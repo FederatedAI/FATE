@@ -30,7 +30,7 @@ feature_names={}
 feature_infos={}
 """
 
-TREE_TEMPLATE = """Tree={}
+TREE_TEMPLATE = """Tree={}  
 num_leaves={}
 num_cat={}
 split_feature={}
@@ -72,13 +72,18 @@ PARA_OBJECTIVE = {
 }
 
 
-def get_decision_type(node: NodeParam, zero_as_missing):
+def get_decision_type(node: NodeParam, use_missing, zero_as_missing):
 
     # 00                     0                         0
     # Nan,0 or None         default left or right?    cat feature or not？
     default_type = 0  # 0000 None, default right, not cat feat
+
+    if not use_missing:
+        return default_type
+
     if node.missing_dir == -1:
         default_type = default_type | 2   # 0010
+
     if zero_as_missing:
         default_type = default_type | 4   # 0100 0
     else:
@@ -112,12 +117,12 @@ def parse_header(param: BoostingTreeModelParam, meta: BoostingTreeModelMeta):
     label_index = 0  # by default
     max_feature_idx = len(param.feature_name_fid_mapping) - 1
     feature_names = ''
-    for name in [param.feature_name_fid_mapping[i] for i in range(max_feature_idx + 1)]:
+    for name in [param.feature_name_fid_mapping[i] for i in range(max_feature_idx+1)]:
         if ' ' in name:  # space is not allowed
             name = name.replace(' ', '-')
-        feature_names += name + ' '
+        feature_names += name+' '
     feature_names = feature_names[:-1]
-    feature_info = FAKE_FEATURE_INFO_STR * (max_feature_idx + 1)  # need to make fake feature info
+    feature_info = FAKE_FEATURE_INFO_STR * (max_feature_idx+1)  # need to make fake feature info
     feature_info = feature_info[:-1]
     result_str = HEADER_TEMPLATE.format(num_classes, num_tree_per_iteration, label_index, max_feature_idx,
                                         objective, feature_names, feature_info)
@@ -156,12 +161,7 @@ def update_leaf_count(param):
             param.leaf_count[i] += 1
 
 
-def parse_a_tree(
-        param: DecisionTreeModelParam,
-        tree_idx: int,
-        zero_as_missing=False,
-        learning_rate=0.1,
-        init_score=None):
+def parse_a_tree(param: DecisionTreeModelParam, tree_idx: int, use_missing=False, zero_as_missing=False, learning_rate=0.1, init_score=None):
 
     split_feature = []
     split_threshold = []
@@ -225,7 +225,7 @@ def parse_a_tree(
                 right.append(sbt_lgb_node_map[node.right_nodeid])
 
             # get lgb decision type
-            decision_type.append(get_decision_type(node, zero_as_missing))
+            decision_type.append(get_decision_type(node, use_missing, zero_as_missing))
         else:
             # regression model need to add init score
             if init_score is not None:
@@ -261,7 +261,7 @@ def parse_feature_importance(param):
         try:
             if impt.main == 'split':
                 impt_val = int(impt_val)
-        except BaseException:
+        except:
             LOGGER.warning("old version protobuf contains no filed 'main'")
         feat_importance_str += '{}={}\n'.format(mapping[impt.fid], impt_val)
 
@@ -289,6 +289,7 @@ def parse_parameter(param, meta):
 def sbt_to_lgb(model_param: BoostingTreeModelParam,
                model_meta: BoostingTreeModelMeta,
                load_feature_importance=True):
+
     """
     Transform sbt model to lgb model
     """
@@ -296,6 +297,7 @@ def sbt_to_lgb(model_param: BoostingTreeModelParam,
     result = ''
     # parse header
     header_str = parse_header(model_param, model_meta)
+    use_missing = model_meta.tree_meta.use_missing
     zero_as_missing = model_meta.tree_meta.zero_as_missing
     learning_rate = model_meta.learning_rate
     tree_str_list = []
@@ -307,7 +309,7 @@ def sbt_to_lgb(model_param: BoostingTreeModelParam,
             init_score = model_param.init_score[0]
         else:
             init_score = 0
-        tree_str_list.append(parse_a_tree(param, idx, zero_as_missing, learning_rate, init_score))
+        tree_str_list.append(parse_a_tree(param, idx, use_missing, zero_as_missing, learning_rate, init_score))
 
     # add header and tree str to result
     result += header_str + '\n'
@@ -319,11 +321,11 @@ def sbt_to_lgb(model_param: BoostingTreeModelParam,
     # handle feature importance
     if load_feature_importance:
         feat_importance_str = parse_feature_importance(model_param)
-        result += SPLIT + feat_importance_str
+        result += SPLIT+feat_importance_str
 
     # parameters
     para_str = parse_parameter(model_param, model_meta)
-    result += '\n' + para_str + '\n' + END_OF_PARA + '\n'
+    result += '\n'+para_str+'\n'+END_OF_PARA+'\n'
     result += '\npandas_categorical:[]\n'
 
     return result
