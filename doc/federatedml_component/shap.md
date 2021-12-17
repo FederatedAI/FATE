@@ -32,11 +32,21 @@ The Shapley value is a game theory concept that involves fairly distributing gai
  describes the total expected sum of payoffs the members of *S* can obtain by cooperation. Then, the gain a player
  can get in this coalition game can be computed as:
  
- ![Figure 2: shapely](../images/shapely_value.png)
+![Figure 2: shapely](../images/shapely_value.png)
  
 By enumerating all possible subsets we are able to compute the gains of all participated players.
+
+By combining additive feature attribution method and the shapley value we are able to estimate the contributions a 
+feature contribute to a predict result. The contribution φ of a certain feature value *i* can be computed as:
       
-                        
+![Figure 3: SHAP](../images/SHAP.png)
+
+Where *f<sub>x</sub>* is a function gives an expected predicted value given a feature subset. 
+
+However, the exact computation of SHAP values is somehow costly because you have to enumerate all the feature subsets. 
+Therefore, in [2],[3] they offer one approximation method and one fast method specially designed for Tree algorithms:
+KernelSHAP and TreeSHAP. We firstly develop the federation version of KernelSHAP and TreeSHAP.
+           
                        
 ## Hetero and Homo Kernel SHAP
 
