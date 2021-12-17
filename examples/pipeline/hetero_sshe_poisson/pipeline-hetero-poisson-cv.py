@@ -44,21 +44,23 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
     data_transform_0 = DataTransform(name="data_transform_0")
-    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, label_name="doctorco",
-                                                                             label_type="float", output_format="dense")
+    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True,
+                                                                                      label_name="doctorco",
+                                                                                      label_type="float",
+                                                                                      output_format="dense")
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
     hetero_poisson_0 = HeteroSSHEPoisson(name="hetero_poisson_0", penalty="L2", optimizer="sgd", tol=0.001,
-                               alpha=100.0, max_iter=5, early_stop="weight_diff", batch_size=-1,
-                               learning_rate=0.01, decay=0.0, decay_sqrt=False,
-                               init_param={"init_method": "zeros"},
-                               encrypted_mode_calculator_param={"mode": "fast"},
-                               cv_param={"n_splits": 5,
-                                         "shuffle": False,
-                                         "random_seed": 42,
-                                         "need_cv": True
-                                         })
+                                         alpha=100.0, max_iter=5, early_stop="weight_diff", batch_size=-1,
+                                         learning_rate=0.01, decay=0.0, decay_sqrt=False,
+                                         init_param={"init_method": "zeros"},
+                                         encrypted_mode_calculator_param={"mode": "fast"},
+                                         cv_param={"n_splits": 5,
+                                                   "shuffle": False,
+                                                   "random_seed": 42,
+                                                   "need_cv": True
+                                                   })
 
     pipeline.add_component(reader_0)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))

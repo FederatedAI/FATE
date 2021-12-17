@@ -45,18 +45,19 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
-    data_transform_0 = DataTransform(name="data_transform_0", output_format="dense", missing_fill=True, outlier_replace=False)
+    data_transform_0 = DataTransform(name="data_transform_0", output_format="dense", missing_fill=True,
+                                     outlier_replace=False)
     data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True,
-                                                                              label_name="motor_speed",
-                                                                              label_type="float")
+                                                                                      label_name="motor_speed",
+                                                                                      label_type="float")
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
     hetero_linr_0 = HeteroSSHELinR(name="hetero_linr_0", penalty="L2", optimizer="sgd", tol=0.001,
-                               alpha=0.01, max_iter=2, early_stop="weight_diff", batch_size=100,
-                               learning_rate=0.3, decay=0.0, decay_sqrt=False,
-                               init_param={"init_method": "const", "init_const": 200},
-                               encrypted_mode_calculator_param={"mode": "fast"})
+                                   alpha=0.01, max_iter=2, early_stop="weight_diff", batch_size=100,
+                                   learning_rate=0.3, decay=0.0, decay_sqrt=False,
+                                   init_param={"init_method": "const", "init_const": 200},
+                                   encrypted_mode_calculator_param={"mode": "fast"})
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="regression", pos_label=1)
     # evaluation_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)

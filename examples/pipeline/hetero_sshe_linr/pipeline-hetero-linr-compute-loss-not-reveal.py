@@ -34,7 +34,6 @@ def main(config="../../config.yaml", namespace=""):
     guest_train_data = {"name": "motor_hetero_guest", "namespace": f"experiment{namespace}"}
     host_train_data = {"name": "motor_hetero_host", "namespace": f"experiment{namespace}"}
 
-
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host)
 
     reader_0 = Reader(name="reader_0")
@@ -42,18 +41,20 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
     data_transform_0 = DataTransform(name="data_transform_0")
-    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, label_name="motor_speed",
-                                                                             label_type="float", output_format="dense")
+    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True,
+                                                                                      label_name="motor_speed",
+                                                                                      label_type="float",
+                                                                                      output_format="dense")
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
     hetero_linr_0 = HeteroSSHELinR(name="hetero_linr_0", penalty=None, optimizer="sgd", tol=0.001,
-                               alpha=0.01, max_iter=20, early_stop="weight_diff", batch_size=-1,
-                               learning_rate=0.15, decay=0.0, decay_sqrt=False,
-                               init_param={"init_method": "zeros","fit_intercept": True},
-                               encrypted_mode_calculator_param={"mode": "fast"},
-                               reveal_every_iter=False, reveal_strategy= "respectively"
-                               )
+                                   alpha=0.01, max_iter=20, early_stop="weight_diff", batch_size=-1,
+                                   learning_rate=0.15, decay=0.0, decay_sqrt=False,
+                                   init_param={"init_method": "zeros", "fit_intercept": True},
+                                   encrypted_mode_calculator_param={"mode": "fast"},
+                                   reveal_every_iter=False, reveal_strategy="respectively"
+                                   )
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="regression", pos_label=1)
 
@@ -77,7 +78,8 @@ def main(config="../../config.yaml", namespace=""):
     # add selected components from train pipeline onto predict pipeline
     # specify data source
     predict_pipeline.add_component(pipeline,
-                                   data=Data(predict_input={pipeline.data_transform_0.input.data: reader_0.output.data}))
+                                   data=Data(
+                                       predict_input={pipeline.data_transform_0.input.data: reader_0.output.data}))
     # run predict model
     predict_pipeline.predict()
 

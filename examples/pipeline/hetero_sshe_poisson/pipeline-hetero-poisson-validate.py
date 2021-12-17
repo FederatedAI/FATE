@@ -50,48 +50,52 @@ def main(config="../../config.yaml", namespace=""):
     reader_1.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data[1])
     reader_1.get_party_instance(role='host', party_id=host).component_param(table=host_train_data[1])
 
-
     data_transform_0 = DataTransform(name="data_transform_0")
     data_transform_1 = DataTransform(name="data_transform_1")
 
-    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, label_name="doctorco",
-                                                                             label_type="float", output_format="dense")
+    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True,
+                                                                                      label_name="doctorco",
+                                                                                      label_type="float",
+                                                                                      output_format="dense")
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
-    data_transform_1.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, label_name="doctorco",
-                                                                             label_type="float", output_format="dense")
+    data_transform_1.get_party_instance(role='guest', party_id=guest).component_param(with_label=True,
+                                                                                      label_name="doctorco",
+                                                                                      label_type="float",
+                                                                                      output_format="dense")
     data_transform_1.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
     intersect_1 = Intersection(name="intersection_1")
 
     hetero_poisson_0 = HeteroSSHEPoisson(name="hetero_poisson_0", penalty="L2", optimizer="rmsprop", tol=0.001,
-                                       alpha=100, max_iter=20, early_stop="weight_diff", batch_size=-1,
-                                       learning_rate=0.15, decay=0.0, decay_sqrt=False,
-                                       init_param={"init_method": "zeros"},
-                                       encrypted_mode_calculator_param={"mode": "fast"},
-                                       callback_param={"callbacks": ["EarlyStopping", "PerformanceEvaluate"],
-                                                       "validation_freqs": 1,
-                                                       "early_stopping_rounds": 5,
-                                                       "metrics": [
-                                                           "mean_absolute_error",
-                                                           "root_mean_squared_error"
-                                                       ],
-                                                       "use_first_metric_only": False,
-                                                       "save_freq": 1
-                                                       }
-                                       )
+                                         alpha=100, max_iter=20, early_stop="weight_diff", batch_size=-1,
+                                         learning_rate=0.15, decay=0.0, decay_sqrt=False,
+                                         init_param={"init_method": "zeros"},
+                                         encrypted_mode_calculator_param={"mode": "fast"},
+                                         callback_param={"callbacks": ["EarlyStopping", "PerformanceEvaluate"],
+                                                         "validation_freqs": 1,
+                                                         "early_stopping_rounds": 5,
+                                                         "metrics": [
+                                                             "mean_absolute_error",
+                                                             "root_mean_squared_error"
+                                                         ],
+                                                         "use_first_metric_only": False,
+                                                         "save_freq": 1
+                                                         }
+                                         )
 
     pipeline.add_component(reader_0)
     pipeline.add_component(reader_1)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(data_transform_1, data=Data(data=reader_1.output.data), model=Model(data_transform_0.output.model))
+    pipeline.add_component(data_transform_1, data=Data(data=reader_1.output.data),
+                           model=Model(data_transform_0.output.model))
 
     pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
     pipeline.add_component(intersect_1, data=Data(data=data_transform_1.output.data))
 
     pipeline.add_component(hetero_poisson_0, data=Data(train_data=intersection_0.output.data,
-                                                    validate_data=intersect_1.output.data))
+                                                       validate_data=intersect_1.output.data))
 
     pipeline.compile()
 
