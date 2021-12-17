@@ -16,7 +16,6 @@
 #
 
 from .components import ComponentMeta
-from federatedml.model_interpret.SHAP import SHAP
 
 shap_cpn_meta = ComponentMeta("SHAP", "shap")
 
@@ -24,14 +23,12 @@ shap_cpn_meta = ComponentMeta("SHAP", "shap")
 @shap_cpn_meta.bind_param
 def hetero_secure_boost_param():
     from federatedml.param.shap_param import SHAPParam
+
     return SHAPParam
 
 
-@shap_cpn_meta.bind_runner.on_guest
-def hetero_secure_boost_guest_runner():
-    return SHAP
+@shap_cpn_meta.bind_runner.on_guest.on_host
+def hetero_secure_boost_runner():
+    from federatedml.model_interpret.SHAP import SHAP
 
-
-@shap_cpn_meta.bind_runner.on_host
-def hetero_secure_boost_host_runner():
     return SHAP

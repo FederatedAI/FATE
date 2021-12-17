@@ -214,6 +214,40 @@ class ModelBase(object):
         )
         method(cpn_input)
 
+        return ComponentOutput(self.save_data(), self._export(), self.save_cache())
+
+    def _export(self):
+        # export model
+        try:
+            model = self._export_model()
+            meta = self._export_meta()
+            export_dict = {"Meta": meta, "Param": model}
+        except NotImplementedError:
+            export_dict = self.export_model()
+            try:
+                meta_name = [k for k in export_dict if k.endswith("Meta")][0]
+            except:
+                raise KeyError("Meta not found in export model")
+
+            try:
+                param_name = [k for k in export_dict if k.endswith("Param")][0]
+            except:
+                raise KeyError("Param not found in export model")
+
+            meta = export_dict[meta_name]
+
+        # set component name
+        if hasattr(meta, "component"):
+            meta.component = self.get_component_name()
+        else:
+            import warnings
+
+            warnings.warn(f"{meta} should add `component` field")
+        return export_dict
+
+    def _export_meta(self):
+        raise NotImplementedError("_export_meta not implemented")
+
         return ComponentOutput(self.save_data(), self.export_model(), self.save_cache())
 
     def _run(self, cpn_input):
