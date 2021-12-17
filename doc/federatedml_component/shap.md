@@ -32,7 +32,8 @@ The Shapley value is a game theory concept that involves fairly distributing gai
  describes the total expected sum of payoffs the members of *S* can obtain by cooperation. Then, the gain a player
  can get in this coalition game can be computed as:
  
-![Figure 2: shapely](../images/shapely_value.png =1300*130)
+
+![Figure 2: shapely](../images/shapely_value.png)
  
 By enumerating all possible subsets we are able to compute the gains of all participated players.
 
