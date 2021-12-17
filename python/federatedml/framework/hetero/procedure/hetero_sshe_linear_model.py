@@ -236,11 +236,11 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
         self.batch_generator.initialize_batch_generator(data_instances, batch_size=self.batch_size)
 
         with SPDZ(
-                "hetero_sshe",
-                local_party=self.local_party,
-                all_parties=self.parties,
-                q_field=self.q_field,
-                use_mix_rand=self.model_param.use_mix_rand,
+            "hetero_sshe",
+            local_party=self.local_party,
+            all_parties=self.parties,
+            q_field=self.q_field,
+            use_mix_rand=self.model_param.use_mix_rand,
         ) as spdz:
             spdz.set_flowid(self.flowid)
             self.secure_matrix_obj.set_flowid(self.flowid)
@@ -320,9 +320,11 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
                     # loss computing;
                     suffix = ("loss",) + current_suffix
                     if self.reveal_every_iter:
-                        batch_loss = self.compute_loss(weights=self.model_weights, suffix=suffix, cipher=self.cipher_tool[batch_idx])
+                        batch_loss = self.compute_loss(weights=self.model_weights, suffix=suffix,
+                                                       cipher=self.cipher_tool[batch_idx])
                     else:
-                        batch_loss = self.compute_loss(weights=(w_self, w_remote), suffix=suffix, cipher=self.cipher_tool[batch_idx])
+                        batch_loss = self.compute_loss(weights=(w_self, w_remote), suffix=suffix,
+                                                       cipher=self.cipher_tool[batch_idx])
 
                     if batch_loss is not None:
                         batch_loss = batch_loss * self.batch_num[batch_idx]

@@ -59,6 +59,7 @@ class HeteroLRHost(HeteroSSHEHostBase):
         z = z1 + za_share + zb_share
         return z
     """
+
     def forward(self, weights, features, suffix, cipher):
         if not self.reveal_every_iter:
             LOGGER.info(f"[forward]: Calculate z in share...")
@@ -242,6 +243,7 @@ class HeteroLRHost(HeteroSSHEHostBase):
                                                                         is_obfuscator=is_obfuscator)
         return weight_dict
     """
+
     def _get_param(self):
         if self.need_cv:
             param_protobuf_obj = lr_model_param_pb2.LRModelParam()
@@ -298,6 +300,7 @@ class HeteroLRHost(HeteroSSHEHostBase):
 
             self.model_weights = LinearModelWeights(tmp_vars, fit_intercept=self.fit_intercept)
     """
+
     def load_model(self, model_dict):
         result_obj, _ = super().load_model(model_dict)
         need_one_vs_rest = result_obj.need_one_vs_rest

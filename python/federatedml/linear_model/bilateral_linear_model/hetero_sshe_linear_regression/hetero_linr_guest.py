@@ -22,8 +22,8 @@ from federatedml.framework.hetero.procedure.hetero_sshe_linear_model import Hete
 from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.param.hetero_sshe_linr_param import HeteroSSHELinRParam
 from federatedml.protobuf.generated import linr_model_param_pb2, linr_model_meta_pb2
-from federatedml.secureprotol.spdz.tensor import fixedpoint_numpy
 from federatedml.secureprotol.spdz.secure_matrix.secure_matrix import SecureMatrix
+from federatedml.secureprotol.spdz.tensor import fixedpoint_numpy
 from federatedml.util import consts, fate_operator, LOGGER
 from federatedml.util.io_check import assert_io_num_rows_equal
 

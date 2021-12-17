@@ -182,16 +182,17 @@ class HeteroPoissonHost(HeteroSSHEHostBase):
 
     def _get_meta(self):
         meta_protobuf_obj = poisson_model_meta_pb2.PoissonModelMeta(penalty=self.model_param.penalty,
-                                                              tol=self.model_param.tol,
-                                                              alpha=self.alpha,
-                                                              optimizer=self.model_param.optimizer,
-                                                              batch_size=self.batch_size,
-                                                              learning_rate=self.model_param.learning_rate,
-                                                              max_iter=self.max_iter,
-                                                              early_stop=self.model_param.early_stop,
-                                                              fit_intercept=self.fit_intercept,
-                                                              reveal_strategy=self.model_param.reveal_strategy)
+                                                                    tol=self.model_param.tol,
+                                                                    alpha=self.alpha,
+                                                                    optimizer=self.model_param.optimizer,
+                                                                    batch_size=self.batch_size,
+                                                                    learning_rate=self.model_param.learning_rate,
+                                                                    max_iter=self.max_iter,
+                                                                    early_stop=self.model_param.early_stop,
+                                                                    fit_intercept=self.fit_intercept,
+                                                                    reveal_strategy=self.model_param.reveal_strategy)
         return meta_protobuf_obj
+
     def load_model(self, model_dict):
         result_obj, _ = super().load_model(model_dict)
         self.load_single_model(result_obj)

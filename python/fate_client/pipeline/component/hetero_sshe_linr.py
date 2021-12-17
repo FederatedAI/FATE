@@ -34,5 +34,3 @@ class HeteroSSHELinR(Component, HeteroSSHELinRParam):
         self.input = Input(self.name, data_type="multi")
         self.output = Output(self.name)
         self._module_name = "HeteroSSHELinR"
-
-

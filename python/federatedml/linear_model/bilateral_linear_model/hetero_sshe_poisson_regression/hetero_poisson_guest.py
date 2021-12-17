@@ -16,12 +16,13 @@
 import copy
 import functools
 import operator
+
 import numpy as np
 
 from federatedml.framework.hetero.procedure.hetero_sshe_linear_model import HeteroSSHEGuestBase
-from federatedml.linear_model.linear_model_weight import LinearModelWeights
-from federatedml.linear_model.coordinated_linear_model.poisson_regression.\
+from federatedml.linear_model.coordinated_linear_model.poisson_regression. \
     base_poisson_regression import BasePoissonRegression
+from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.param.hetero_sshe_poisson_param import HeteroSSHEPoissonParam
 from federatedml.protobuf.generated import poisson_model_param_pb2, poisson_model_meta_pb2
@@ -230,15 +231,15 @@ class HeteroPoissonGuest(HeteroSSHEGuestBase):
 
     def _get_meta(self):
         meta_protobuf_obj = poisson_model_meta_pb2.PoissonModelMeta(penalty=self.model_param.penalty,
-                                                              tol=self.model_param.tol,
-                                                              alpha=self.alpha,
-                                                              optimizer=self.model_param.optimizer,
-                                                              batch_size=self.batch_size,
-                                                              learning_rate=self.model_param.learning_rate,
-                                                              max_iter=self.max_iter,
-                                                              early_stop=self.model_param.early_stop,
-                                                              fit_intercept=self.fit_intercept,
-                                                              reveal_strategy=self.model_param.reveal_strategy)
+                                                                    tol=self.model_param.tol,
+                                                                    alpha=self.alpha,
+                                                                    optimizer=self.model_param.optimizer,
+                                                                    batch_size=self.batch_size,
+                                                                    learning_rate=self.model_param.learning_rate,
+                                                                    max_iter=self.max_iter,
+                                                                    early_stop=self.model_param.early_stop,
+                                                                    fit_intercept=self.fit_intercept,
+                                                                    reveal_strategy=self.model_param.reveal_strategy)
         return meta_protobuf_obj
 
     def load_model(self, model_dict):
@@ -274,11 +275,11 @@ class HeteroPoissonGuest(HeteroSSHEGuestBase):
         self.batch_generator.initialize_batch_generator(data_instances, batch_size=self.batch_size)
 
         with SPDZ(
-                "hetero_sshe",
-                local_party=self.local_party,
-                all_parties=self.parties,
-                q_field=self.q_field,
-                use_mix_rand=self.model_param.use_mix_rand,
+            "hetero_sshe",
+            local_party=self.local_party,
+            all_parties=self.parties,
+            q_field=self.q_field,
+            use_mix_rand=self.model_param.use_mix_rand,
         ) as spdz:
             spdz.set_flowid(self.flowid)
             self.secure_matrix_obj.set_flowid(self.flowid)
@@ -345,7 +346,7 @@ class HeteroPoissonGuest(HeteroSSHEGuestBase):
                     suffix = ("loss",) + current_suffix
                     batch_offset = exposure.join(batch_data.value,
                                                  lambda x, y: np.array([BasePoissonRegression.safe_log(x)]))
-                    #if self.reveal_every_iter:
+                    # if self.reveal_every_iter:
                     batch_loss = self.compute_loss(weights=self.model_weights, suffix=suffix,
                                                    cipher=self.cipher_tool[batch_idx], batch_offset=batch_offset)
                     """else:
@@ -397,7 +398,7 @@ class HeteroPoissonGuest(HeteroSSHEGuestBase):
                 if self.converge_func_name in ["diff", "abs"]:
                     self.is_converged = self.check_converge_by_loss(loss, suffix=(str(self.n_iter_),))
                 elif self.converge_func_name == "weight_diff":
-                    #if self.reveal_every_iter:
+                    # if self.reveal_every_iter:
                     self.is_converged = self.check_converge_by_weights(
                         last_w=last_models.unboxed,
                         new_w=self.model_weights.unboxed,

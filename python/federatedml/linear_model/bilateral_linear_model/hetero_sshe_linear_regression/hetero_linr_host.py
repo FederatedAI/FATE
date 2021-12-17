@@ -54,10 +54,10 @@ class HeteroLinRHost(HeteroSSHEHostBase):
 
         tensor_name = ".".join(("complete_z",) + suffix)
         shared_z = SecureMatrix.from_source(tensor_name,
-                                                    self.other_party,
-                                                    cipher,
-                                                    self.fixedpoint_encoder.n,
-                                                    self.fixedpoint_encoder)
+                                            self.other_party,
+                                            cipher,
+                                            self.fixedpoint_encoder.n,
+                                            self.fixedpoint_encoder)
 
         return shared_z
 
@@ -154,6 +154,7 @@ class HeteroLinRHost(HeteroSSHEHostBase):
                                                                         is_obfuscator=is_obfuscator)
         return weight_dict
     """
+
     def _get_param(self):
         if self.need_cv:
             param_protobuf_obj = linr_model_param_pb2.LinRModelParam()
@@ -176,6 +177,7 @@ class HeteroLinRHost(HeteroSSHEHostBase):
                                                               fit_intercept=self.fit_intercept,
                                                               reveal_strategy=self.model_param.reveal_strategy)
         return meta_protobuf_obj
+
     def load_model(self, model_dict):
         result_obj, _ = super().load_model(model_dict)
         self.load_single_model(result_obj)
