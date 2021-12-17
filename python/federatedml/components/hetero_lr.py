@@ -30,8 +30,7 @@ def hetero_lr_param():
 @hetero_lr_cpn_meta.bind_runner.on_guest
 def hetero_lr_runner_guest():
     from federatedml.linear_model.coordinated_linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_guest import (
-        HeteroLRGuest,
-    )
+        HeteroLRGuest, )
 
     return HeteroLRGuest
 
@@ -39,8 +38,7 @@ def hetero_lr_runner_guest():
 @hetero_lr_cpn_meta.bind_runner.on_host
 def hetero_lr_runner_host():
     from federatedml.linear_model.coordinated_linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_host import (
-        HeteroLRHost,
-    )
+        HeteroLRHost, )
 
     return HeteroLRHost
 
@@ -48,7 +46,6 @@ def hetero_lr_runner_host():
 @hetero_lr_cpn_meta.bind_runner.on_arbiter
 def hetero_lr_runner_arbiter():
     from federatedml.linear_model.coordinated_linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_arbiter import (
-        HeteroLRArbiter,
-    )
+        HeteroLRArbiter, )
 
     return HeteroLRArbiter

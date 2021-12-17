@@ -65,4 +65,3 @@ __all__ = ["HeteroSecureBoostParam", "HomoSecureBoostParam", "HeteroFastSecureBo
            "FeatureImputationParam", "LabelTransformParam",
            "SecureInformationRetrievalParam", "CacheLoaderParam", "HeteroSSHELRParam",
            "HeteroSSHELinRParam", "HeteroSSHEPoissonParam"]
-

@@ -174,7 +174,7 @@ class HeteroLRHost(HeteroSSHEHostBase):
                 loss_norm = w_tensor.dot(w_tensor_transpose, target_name=loss_norm_tensor_name)
                 loss_norm.broadcast_reconstruct_share()
 
-    """    
+    """
     def _reveal_every_iter_weights_check(self, last_w, new_w, suffix):
         square_sum = np.sum((last_w - new_w) ** 2)
         self.converge_transfer_variable.square_sum.remote(square_sum, role=consts.GUEST, idx=0, suffix=suffix)
@@ -224,7 +224,7 @@ class HeteroLRHost(HeteroSSHEHostBase):
             result["encrypted_weight"] = weight_dict
 
         return result
-    
+
     def get_single_encrypted_model_weight_dict(self, model_weights=None, header=None):
         weight_dict = {}
         model_weights = model_weights if model_weights else self.model_weights

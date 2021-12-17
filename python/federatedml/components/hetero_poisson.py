@@ -30,8 +30,7 @@ def hetero_poisson_param():
 @hetero_poisson_cpn_meta.bind_runner.on_guest
 def hetero_poisson_runner_guest():
     from federatedml.linear_model.coordinated_linear_model.poisson_regression.hetero_poisson_regression.hetero_poisson_guest import (
-        HeteroPoissonGuest,
-    )
+        HeteroPoissonGuest, )
 
     return HeteroPoissonGuest
 
@@ -39,8 +38,7 @@ def hetero_poisson_runner_guest():
 @hetero_poisson_cpn_meta.bind_runner.on_host
 def hetero_poisson_runner_host():
     from federatedml.linear_model.coordinated_linear_model.poisson_regression.hetero_poisson_regression.hetero_poisson_host import (
-        HeteroPoissonHost,
-    )
+        HeteroPoissonHost, )
 
     return HeteroPoissonHost
 
@@ -48,7 +46,6 @@ def hetero_poisson_runner_host():
 @hetero_poisson_cpn_meta.bind_runner.on_arbiter
 def hetero_poisson_runner_arbiter():
     from federatedml.linear_model.coordinated_linear_model.poisson_regression.hetero_poisson_regression.hetero_poisson_arbiter import (
-        HeteroPoissonArbiter,
-    )
+        HeteroPoissonArbiter, )
 
     return HeteroPoissonArbiter

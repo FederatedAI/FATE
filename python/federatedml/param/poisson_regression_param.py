@@ -119,7 +119,7 @@ class PoissonParam(LinearModelParam):
                  tol=1e-4, alpha=1.0, optimizer='rmsprop',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=20, early_stop='diff',
-                 exposure_colname = None,
+                 exposure_colname=None,
                  encrypt_param=EncryptParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  cv_param=CrossValidationParam(), stepwise_param=StepwiseParam(),
