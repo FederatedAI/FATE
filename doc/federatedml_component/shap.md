@@ -1,9 +1,9 @@
 # Explainable Federated Learning
 
 Understanding why a model makes a certain prediction and how a feature value contributes to the
-predict result are as the same importance as training a accurate model. For a better understanding
-of trained federated models, in FATE-1.8 we provides a brand new module 'Model Interpret' which
-offers novel model-interpretation algorithms specifically designed for federated machine learning.
+predict result are as the same importance as training a accurate model. For a better understandingof trained federated 
+models, in FATE-1.8 we provides a brand new module 'Model Interpret' which offers novel model-interpretation algorithms 
+specifically designed for federated machine learning.
 
 
 
@@ -19,17 +19,22 @@ assuming we have an instance *x* with *M* features, φ denotes the contribution 
 *z* is a vector of *M* dimension and it only contains 0 and 1, indicating a feature exists or not. *z'* is a 
 all 1 vector. *g* is a explainable additive model and we have *f(x)=g(z')*.To explain the predict result, we use
 definition:
-![Figure 1: Framework of Federated SecureBoost](../images/additive_model.png)
 
-to represent an additive feature attribution model. In a nutshell, in the perspective of the additive feature attribution method, instance feature values contribute 
+![Figure 1: add model](../images/additive_model.png)
+
+to represent an additive feature attribution model. 
+In a nutshell, in the perspective of the additive feature attribution method, instance feature values contribute 
 to the predict result, and their contributions sum up to get the predict result. From this simple additive method, 
 we are able to have a straight view of feature importance and relate features with a realistic interpretation.
 
-
-Below formula shows the definition of additive feature attribution methods:
-
-The Shapley value is a game theory concept that involves fairly 
-distributing both gains to several players working in a coalition.  
+The Shapley value is a game theory concept that involves fairly distributing gains to several players working in a coalition.  Formally, a coalition game is defined as: There is a set *N* (of *n* players) and a contribution estimation function *v*
+ that maps subsets of players to the gain values in real numbers. *S* is a set of players, then *v(S)*, 
+ describes the total expected sum of payoffs the members of *S* can obtain by cooperation. Then, the gain a player
+ can get in this coalition game can be computed as:
+ 
+ ![Figure 2: shapely](../images/shapely_value.png)
+ 
+By enumerating all possible subsets we are able to compute the gains of all participated players.
       
                         
                        
