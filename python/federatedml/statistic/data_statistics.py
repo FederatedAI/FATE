@@ -16,6 +16,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import numpy as np
+
+from federatedml.feature.fate_element_type import NoneType
 from federatedml.model_base import ModelBase
 from federatedml.param.statistics_param import StatisticsParam
 from federatedml.protobuf.generated import statistic_meta_pb2, statistic_param_pb2
@@ -27,6 +30,7 @@ from federatedml.util import consts
 
 MODEL_PARAM_NAME = 'StatisticParam'
 MODEL_META_NAME = 'StatisticMeta'
+SYSTEM_ABNORMAL_VALUES = [None, NoneType, np.nan]
 
 
 class StatisticInnerParam(object):
@@ -113,6 +117,10 @@ class DataStatistics(ModelBase):
 
         return self
 
+    @staticmethod
+    def _merge_abnormal_list(abnormal_list):
+        return abnormal_list.extend(SYSTEM_ABNORMAL_VALUES)
+
     def fit(self, data_instances):
         self._init_param(data_instances)
         self._abnormal_detection(data_instances)
@@ -123,9 +131,10 @@ class DataStatistics(ModelBase):
         else:
             stat_order = 2
 
+        abnormal_list = self._merge_abnormal_list(self.model_param.abnormal_list)
         self.statistic_obj = MultivariateStatisticalSummary(data_instances,
                                                             cols_index=self.inner_param.static_indices,
-                                                            abnormal_list=self.model_param.abnormal_list,
+                                                            abnormal_list=abnormal_list,
                                                             error=self.model_param.quantile_error,
                                                             stat_order=stat_order,
                                                             bias=self.model_param.bias)
