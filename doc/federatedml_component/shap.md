@@ -55,6 +55,9 @@ How
 
 ## Hetero and Homo Tree SHAP
 
+Unlike KernelSHAP which is an approximation method, TreeSHAP is specifically designed for tree algorithms. 
+With this properties, it speeds up SHAP values computation by utilizing the structure of trees.
+
 ## Reference
 [1]https://christophm.github.io/interpretable-ml-book/local-methods.html
 
