@@ -41,6 +41,7 @@ class HeteroSSHELRParam(LogisticParam):
         Regularization strength coefficient.
 
     optimizer : str, 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd', or 'adagrad', default: 'sgd'
+        Optimizer
 
     batch_size : int, default: -1
         Batch size when updating model. -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
