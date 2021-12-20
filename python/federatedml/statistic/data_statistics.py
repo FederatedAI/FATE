@@ -30,7 +30,7 @@ from federatedml.util import consts
 
 MODEL_PARAM_NAME = 'StatisticParam'
 MODEL_META_NAME = 'StatisticMeta'
-SYSTEM_ABNORMAL_VALUES = [None, NoneType, np.nan]
+SYSTEM_ABNORMAL_VALUES = [None, np.nan, NoneType]
 
 
 class StatisticInnerParam(object):
@@ -119,7 +119,9 @@ class DataStatistics(ModelBase):
 
     @staticmethod
     def _merge_abnormal_list(abnormal_list):
-        return abnormal_list.extend(SYSTEM_ABNORMAL_VALUES)
+        if abnormal_list is None:
+            return SYSTEM_ABNORMAL_VALUES
+        return abnormal_list + SYSTEM_ABNORMAL_VALUES
 
     def fit(self, data_instances):
         self._init_param(data_instances)
