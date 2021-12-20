@@ -23,7 +23,6 @@ from pipeline.component import HeteroSSHELinR
 from pipeline.component import Intersection
 from pipeline.component import Reader
 from pipeline.interface import Data, Model
-
 from pipeline.utils.tools import load_job_config
 
 

@@ -23,7 +23,6 @@ from pipeline.component import Intersection
 from pipeline.component import Reader
 from pipeline.interface import Data
 from pipeline.interface import Model
-
 from pipeline.utils.tools import load_job_config
 
 
@@ -79,10 +78,10 @@ def main(config="../../config.yaml", namespace=""):
                                                    "metrics": [
                                                        "mean_absolute_error",
                                                        "root_mean_squared_error"
-                                   ],
-                                       "use_first_metric_only": False,
-                                       "save_freq": 1
-                                   }
+                                                   ],
+                                                   "use_first_metric_only": False,
+                                                   "save_freq": 1
+                                                   }
                                    )
 
     pipeline.add_component(reader_0)

@@ -21,10 +21,9 @@ from pipeline.component import DataTransform
 from pipeline.component import Evaluation
 from pipeline.component import HeteroSSHELinR
 from pipeline.component import Intersection
-from pipeline.component import SampleWeight
 from pipeline.component import Reader
+from pipeline.component import SampleWeight
 from pipeline.interface import Data
-
 from pipeline.utils.tools import load_job_config
 
 
