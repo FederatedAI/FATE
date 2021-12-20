@@ -85,7 +85,7 @@ class SummaryStatistics(object):
                 for m in range(3, self.stat_order + 1):
                     exp_sum_m = getattr(self, f"exp_sum_{m}")
                     exp_sum_m[idx] = (self.count[idx] - 1) / self.count[idx] * \
-                                     exp_sum_m[idx] + rows[idx] ** m / self.count[idx]
+                        exp_sum_m[idx] + rows[idx] ** m / self.count[idx]
                     setattr(self, f"exp_sum_{m}", exp_sum_m)
 
     def merge(self, other):
