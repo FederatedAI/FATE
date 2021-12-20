@@ -78,10 +78,10 @@ def main(config="../../config.yaml", namespace=""):
                                                          "metrics": [
                                                              "mean_absolute_error",
                                                              "root_mean_squared_error"
-                                                         ],
-                                                         "use_first_metric_only": False,
-                                                         "save_freq": 1
-                                                         }
+                                         ],
+                                             "use_first_metric_only": False,
+                                             "save_freq": 1
+                                         }
                                          )
 
     pipeline.add_component(reader_0)
