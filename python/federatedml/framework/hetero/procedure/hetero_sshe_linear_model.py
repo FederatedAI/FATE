@@ -117,9 +117,6 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
     def check_converge_by_loss(self, loss, suffix):
         raise NotImplementedError(f"Should not be called here")
 
-    def prepare_fit(self, data_instances, validate_data):
-        raise NotImplementedError(f"Should not be called here")
-
     def check_converge_by_weights(self, last_w, new_w, suffix):
         if self.reveal_every_iter:
             return self._reveal_every_iter_weights_check(last_w, new_w, suffix)
@@ -566,7 +563,7 @@ class HeteroSSHEGuestBase(HeteroSSHEBase, ABC):
         # self.transfer_variable = SSHEModelTransferVariable()
         self.batch_generator = batch_generator.Guest()
         self.batch_generator.register_batch_generator(BatchGeneratorTransferVariable(), has_arbiter=False)
-        self.header = data_instances.schema.get("header", [])
+        self.header = copy.deepcopy(data_instances.schema.get("header", []))
         self._abnormal_detection(data_instances)
         self.check_abnormal_values(data_instances)
         self.check_abnormal_values(validate_data)
@@ -726,7 +723,7 @@ class HeteroSSHEHostBase(HeteroSSHEBase, ABC):
     def prepare_fit(self, data_instances, validate_data):
         self.batch_generator = batch_generator.Host()
         self.batch_generator.register_batch_generator(BatchGeneratorTransferVariable(), has_arbiter=False)
-        self.header = data_instances.schema.get("header", [])
+        self.header = copy.deepcopy(data_instances.schema.get("header", []))
         self._abnormal_detection(data_instances)
         self.check_abnormal_values(data_instances)
         self.check_abnormal_values(validate_data)

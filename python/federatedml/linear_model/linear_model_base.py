@@ -16,6 +16,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import copy
 import numpy as np
 
 from federatedml.model_base import Metric
@@ -224,3 +225,9 @@ class BaseLinearModel(ModelBase):
             raise OverflowError("The value range of features is too large for GLM, please have "
                                 "a check for input data")
         LOGGER.info("Check for abnormal value passed")
+
+    def prepare_fit(self, data_instances, validate_data):
+        self.header = copy.deepcopy(data_instances.schema.get("header", []))
+        self._abnormal_detection(data_instances)
+        self.check_abnormal_values(data_instances)
+        self.check_abnormal_values(validate_data)

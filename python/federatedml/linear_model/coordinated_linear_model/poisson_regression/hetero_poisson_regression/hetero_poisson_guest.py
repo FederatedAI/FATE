@@ -50,11 +50,11 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         """
 
         LOGGER.info("Enter hetero_poisson_guest fit")
-        self._abnormal_detection(data_instances)
-        self.header = copy.deepcopy(self.get_header(data_instances))
+        # self._abnormal_detection(data_instances)
+        # self.header = copy.deepcopy(self.get_header(data_instances))
+        self.prepare_fit(data_instances, validate_data)
         self.callback_list.on_train_begin(data_instances, validate_data)
 
-        # self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
         if with_weight(data_instances):
             LOGGER.warning("input data with weight. Poisson regression does not support weighted training.")
 
