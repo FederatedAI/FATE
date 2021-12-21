@@ -96,7 +96,35 @@ The Homo KernelSHAP is the same as ordinary non-federation KernelSHAP.
 ## Hetero and Homo Tree SHAP
 
 Unlike KernelSHAP which is an approximation method, TreeSHAP is specifically designed for tree algorithms. 
-With this properties, it speeds up SHAP values computation by utilizing the structure of trees.
+In tree models, ewe can estimate the model expected output without reference vector, given a certain feature set *S*.
+The model expected output can be computed as:
+
+![Figure 3: SHAP](../images/TreeSHAP_algo1.png)
+
+Where v is a vector of node values, a and b represent the left and right node indexes for each tree node. The vector t contains the thresholds for
+each tree node, and d is a vector of indexes of the features. The vector r represents the cover
+of each node (instances fall in that sub-tree).
+
+Based on this properties, in [3] proposed an algorithms for fast tree models SHAP values computation. TreeSHAP is able
+to compute exact SHAP values in the time complexity of *O(TLD<sup>2</sup>)*, where T is tree number, L is the 
+maximum leaf number and D is the depth. For the details of this algorithms, please refer to [3].
+
+In FATE, we implement a Hetero version of TreeSHAP. In Hetero SecureBoost, the Guest and Host hold the same tree structures,
+but node information(real feature name and split point) and leaves information is private: Each party only knows the information 
+of the node that belongs to itself and leaves weights are only available to Guest. In order to run TreeSHAP on SecureBoost
+and explain an instance, we conduct these steps in Hetero TreeSHAP:
+
+1. Given an input instance, host firstly extract node routes: host masks host nodes' features with anonymous, and get 
+directions(go left or right), anonymous and direction of all host nodes together form a route table.
+
+2. Guest receives route table from host, and constructs a fake tree and an fake instance contains Guest features and Host
+Anonymous features. This fake tree will output the same results as a united tree when running algorithm 1.
+
+3. Running TreeSHAP on fake tree to get SHAP values of Guest features and Host anonymous features.
+
+Figure below illustrates the process of Hetero TreeSHAP:
+
+![Figure 3: SHAP](../images/FakeTree.png)
 
 The Homo TreeSHAP is the same as ordinary non-federation TreeSHAP. We transform Homo-sbt models into lightgbm models
 and call built-in TreeSHAP.
