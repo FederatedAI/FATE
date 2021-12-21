@@ -45,7 +45,7 @@ class HeteroLRBase(BaseLogisticRegression):
         super()._init_model(params)
         self.encrypted_mode_calculator_param = params.encrypted_mode_calculator_param
         self.cipher_operator = PaillierEncrypt()
-        # self.transfer_variable = HeteroLRTransferVariable()
+        self.transfer_variable = HeteroLRTransferVariable()
         self.cipher.register_paillier_cipher(self.transfer_variable)
         self.converge_procedure.register_convergence(self.transfer_variable)
         self.batch_generator.register_batch_generator(self.transfer_variable)

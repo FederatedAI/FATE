@@ -91,7 +91,7 @@ class BaseLinearModel(ModelBase):
     def get_header(self, data_instances):
         if self.header is not None:
             return self.header
-        return data_instances.schema.get("header")
+        return data_instances.schema.get("header", [])
 
     @property
     def fit_intercept(self):
@@ -227,7 +227,7 @@ class BaseLinearModel(ModelBase):
         LOGGER.info("Check for abnormal value passed")
 
     def prepare_fit(self, data_instances, validate_data):
-        self.header = copy.deepcopy(data_instances.schema.get("header", []))
+        self.header = self.get_header(data_instances)
         self._abnormal_detection(data_instances)
         self.check_abnormal_values(data_instances)
         self.check_abnormal_values(validate_data)

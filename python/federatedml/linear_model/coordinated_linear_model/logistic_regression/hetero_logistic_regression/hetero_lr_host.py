@@ -77,7 +77,8 @@ class HeteroLRHost(HeteroLRBase):
         """
 
         LOGGER.info("Enter hetero_logistic_regression host")
-        self.header = self.get_header(data_instances)
+        # self.header = self.get_header(data_instances)
+        self.prepare_fit(data_instances, validate_data)
 
         classes = self.one_vs_rest_obj.get_data_classes(data_instances)
 
@@ -90,9 +91,9 @@ class HeteroLRHost(HeteroLRBase):
             self.fit_binary(data_instances, validate_data)
 
     def fit_binary(self, data_instances, validate_data):
-        self._abnormal_detection(data_instances)
-        self.check_abnormal_values(data_instances)
-        self.check_abnormal_values(validate_data)
+        # self._abnormal_detection(data_instances)
+        # self.check_abnormal_values(data_instances)
+        # self.check_abnormal_values(validate_data)
         # self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
         self.callback_list.on_train_begin(data_instances, validate_data)
 
