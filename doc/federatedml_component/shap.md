@@ -1,7 +1,7 @@
 # Explainable Federated Learning
 
 Understanding why a model makes a certain prediction and how a feature value contributes to the
-predict result are as the same importance as training a accurate model. For a better understandingof trained federated 
+predict result are as the same importance as training an accurate model. For a better understandingof trained federated 
 models, in FATE-1.8 we provides a brand new module 'Model Interpret' which offers novel model-interpretation algorithms 
 specifically designed for federated machine learning. We initially tried to develop several algorithms to implement 
 interpretation algorithms on federated learning.
