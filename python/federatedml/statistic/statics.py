@@ -275,8 +275,8 @@ class MissingStatistic(object):
 
         feature_count_rs = self.count_feature_ratio(tb, self.tag_id_mapping, not self.is_sparse(tb),
                                                     missing_val=self.missing_val)
+        total_count = tb.count()
         for idx, count_val in enumerate(feature_count_rs):
-            total_count = tb.count()
             self.feature_summary[self.id_tag_mapping[idx]] = 1 - (count_val / total_count)
             self.count_summary[self.id_tag_mapping[idx]] = int(total_count - count_val)
             if (count_val / total_count) == 0:
