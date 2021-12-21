@@ -116,7 +116,7 @@ and explain an instance, we conduct these steps in Hetero TreeSHAP:
 directions(go left or right), anonymous and directions of all host nodes together form a route table.
 
 2. Guest receives route table from host, and constructs a fake tree and an fake instance contains Guest features and Host
-Anonymous features. This fake tree will output the same results as an united tree when running algorithm 1.
+Anonymous features. This fake tree will output the same results as a united tree when running algorithm 1.
 
 3. Running TreeSHAP on fake tree to get SHAP values of Guest features and Host anonymous features.
 
