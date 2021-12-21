@@ -49,7 +49,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.other_rate = None
         self.new_ver = True
 
-        self.work_mode = consts.STD_TREE  # default work mode is std
+        self.boosting_strategy = consts.STD_TREE  # default work mode is std
 
         # fast sbt param
         self.tree_num_per_party = 1
@@ -76,7 +76,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
 
         # fast sbt param
         self.tree_num_per_party = param.tree_num_per_party
-        self.work_mode = param.work_mode
+        self.boosting_strategy = param.boosting_strategy
         self.guest_depth = param.guest_depth
         self.host_depth = param.host_depth
 
@@ -104,7 +104,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
     def get_tree_plan(self, idx):
 
         if not self.init_tree_plan:
-            tree_plan = plan.create_tree_plan(self.work_mode, k=self.tree_num_per_party, tree_num=self.boosting_round,
+            tree_plan = plan.create_tree_plan(self.boosting_strategy, k=self.tree_num_per_party, tree_num=self.boosting_round,
                                               host_list=self.component_properties.host_party_idlist,
                                               complete_secure=self.complete_secure)
             self.tree_plan += tree_plan
@@ -197,7 +197,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         complete_secure = True if (self.cur_epoch_idx == 0 and self.complete_secure) else False
 
         tree_type, target_host_id = None, None
-        fast_sbt = (self.work_mode != consts.STD_TREE)
+        fast_sbt = (self.boosting_strategy != consts.STD_TREE)
         if fast_sbt:
             tree_type, target_host_id = self.get_tree_plan(epoch_idx)
             self.check_host_number(tree_type)
@@ -228,7 +228,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         flow_id = self.generate_flowid(epoch_idx, booster_idx)
         runtime_idx = self.component_properties.local_partyid
         host_list = self.component_properties.host_party_idlist
-        fast_sbt = (self.work_mode != consts.STD_TREE)
+        fast_sbt = (self.boosting_strategy != consts.STD_TREE)
         tree_type, target_host_id = None, None
 
         if fast_sbt:
@@ -308,7 +308,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         if tree_num == 0 and predict_cache is not None and not (ret_format == 'leaf'):
             return self.score_to_predict_result(data_inst, predict_cache)
 
-        if self.work_mode == consts.MIX_TREE:
+        if self.boosting_strategy == consts.MIX_TREE:
             pred_func = mix_sbt_guest_predict
         else:
             pred_func = sbt_guest_predict
@@ -353,7 +353,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         model_meta.task_type = self.task_type
         model_meta.n_iter_no_change = self.n_iter_no_change
         model_meta.tol = self.tol
-        model_meta.work_mode = self.work_mode
+        model_meta.boosting_strategy = self.boosting_strategy
         model_meta.module = "HeteroSecureBoost"
         meta_name = consts.HETERO_SBT_GUEST_MODEL + "Meta"
 
@@ -411,7 +411,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.objective_param.objective = model_meta.objective_meta.objective
         self.objective_param.params = list(model_meta.objective_meta.param)
         self.task_type = model_meta.task_type
-        self.work_mode = model_meta.work_mode
+        self.boosting_strategy = model_meta.boosting_strategy
 
     def set_model_param(self, model_param):
 

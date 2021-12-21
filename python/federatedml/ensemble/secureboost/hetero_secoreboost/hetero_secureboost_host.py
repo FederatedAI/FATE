@@ -41,7 +41,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.round_decimal = None
         self.new_ver = True
 
-        self.work_mode = consts.STD_TREE
+        self.boosting_strategy = consts.STD_TREE
 
         # fast sbt param
         self.tree_num_per_party = 1
@@ -68,7 +68,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.new_ver = param.new_ver
 
         self.tree_num_per_party = param.tree_num_per_party
-        self.work_mode = param.work_mode
+        self.boosting_strategy = param.boosting_strategy
         self.guest_depth = param.guest_depth
         self.host_depth = param.host_depth
         self.multi_mode = param.multi_mode
@@ -80,7 +80,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
     def get_tree_plan(self, idx):
 
         if not self.init_tree_plan:
-            tree_plan = plan.create_tree_plan(self.work_mode, k=self.tree_num_per_party, tree_num=self.boosting_round,
+            tree_plan = plan.create_tree_plan(self.boosting_strategy, k=self.tree_num_per_party, tree_num=self.boosting_round,
                                               host_list=self.component_properties.host_party_idlist,
                                               complete_secure=self.complete_secure)
             self.tree_plan += tree_plan
@@ -115,7 +115,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
         flow_id = self.generate_flowid(epoch_idx, booster_dim)
         complete_secure = True if (self.cur_epoch_idx == 0 and self.complete_secure) else False
-        fast_sbt = (self.work_mode != consts.STD_TREE)
+        fast_sbt = (self.boosting_strategy != consts.STD_TREE)
 
         tree_type, target_host_id = None, None
         if fast_sbt:
@@ -135,7 +135,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
                                            )
         tree.fit()
 
-        if self.work_mode == consts.MIX_TREE:
+        if self.boosting_strategy == consts.MIX_TREE:
             self.update_feature_importance(tree.get_feature_importance())
 
         return tree
@@ -144,7 +144,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
         flow_id = self.generate_flowid(epoch_idx, booster_idx)
         runtime_idx = self.component_properties.local_partyid
-        fast_sbt = (self.work_mode != consts.STD_TREE)
+        fast_sbt = (self.boosting_strategy != consts.STD_TREE)
         tree_type, target_host_id = None, None
 
         if fast_sbt:
@@ -185,7 +185,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
             LOGGER.info('no tree for predicting, prediction done')
             return
 
-        if self.work_mode == consts.MIX_TREE:
+        if self.boosting_strategy == consts.MIX_TREE:
             mix_sbt_host_predict(processed_data, self.predict_transfer_inst, trees)
         else:
             sbt_host_predict(processed_data, self.predict_transfer_inst, trees)
@@ -195,7 +195,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         model_meta.tree_meta.CopyFrom(self.booster_meta)
         model_meta.num_trees = self.boosting_round
         model_meta.quantile_meta.CopyFrom(QuantileMeta(bin_num=self.bin_num))
-        model_meta.work_mode = self.work_mode
+        model_meta.boosting_strategy = self.boosting_strategy
         model_meta.module = "HeteroSecureBoost"
         meta_name = "HeteroSecureBoostingTreeHostMeta"
         return meta_name, model_meta
@@ -222,7 +222,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         model_param.best_iteration = self.callback_variables.best_iteration
         model_param.tree_plan.extend(plan.encode_plan(self.tree_plan))
 
-        if self.work_mode == consts.MIX_TREE:
+        if self.boosting_strategy == consts.MIX_TREE:
             # in mix mode, host can output feature importance
             feature_importances = list(self.feature_importances_.items())
             feature_importances = sorted(feature_importances, key=itemgetter(1), reverse=True)
@@ -244,14 +244,14 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
             self.boosting_round = model_meta.num_trees
         self.booster_meta = model_meta.tree_meta
         self.bin_num = model_meta.quantile_meta.bin_num
-        self.work_mode = model_meta.work_mode
+        self.boosting_strategy = model_meta.boosting_strategy
 
     def set_model_param(self, model_param):
         self.boosting_model_list = list(model_param.trees_)
         self.booster_dim = model_param.tree_dim
         self.feature_name_fid_mapping.update(model_param.feature_name_fid_mapping)
         self.tree_plan = plan.decode_plan(model_param.tree_plan)
-        if self.work_mode == consts.MIX_TREE:
+        if self.boosting_strategy == consts.MIX_TREE:
             self.load_feature_importance(model_param.feature_importances)
 
     # implement abstract function
