@@ -2,8 +2,7 @@
 
 Understanding why a model makes a certain prediction and how a feature value contributes to the
 predict result are as the same importance as training an accurate model. For a better understanding of trained federated 
-models, in FATE-1.8 we provides a brand new module 'Model Interpret' which offers novel model-interpretation algorithms 
-specifically designed for federated machine learning. We initially tried to develop several algorithms to implement 
+models, in FATE-1.8 we provides a brand new module 'Model Interpret'. We initially tried to develop several algorithms to implement 
 interpretation algorithms on federated learning.
 
 
@@ -19,8 +18,7 @@ Firstly we show the basic definitions of this additive feature attribution metho
 Given a machine learning model *f*, we have an instance *x* with *M* features, φ denotes the contribution  made by a certain feature value. 
 *z'* is a coalition vector of *M* dimension and it only contains 0 and 1, indicating a feature value exists or not.
 *h* is a mapping function that map *z'* to an instance *x'* in the instance spaces(Sometimes absent feature values will
-be replaced by 0s or some reference values). We have *f(h(z'))=f(x')=g(z')*.
-*z* is an all 1 vector. *g* is an explainable additive model and we have *f(x)=g(z)*.
+be replaced by 0s or some reference values). *g* is an explainable additive model and we have*f(h(z'))=f(x')=g(z')*..
 To explain the predict result, we use definition:
 
 ![Figure 1: add model](../images/additive_model.png)
@@ -54,7 +52,7 @@ KernelSHAP and TreeSHAP. We firstly develop the federation version of KernelSHAP
                        
 ## Hetero and Homo Kernel SHAP
 
-KernelSHAP is an approximation method for SHAP values computation proposed in [2]. As mentioned above, vector *z'*s
+KernelSHAP is an approximation method for SHAP values computation proposed in [2]. As mentioned above, vectors *z'* 
 are vectors of *M* dimension and it only contains 0 and 1, indicating a feature exists or not, so every *z'* vector
 corresponds to a feature subset, and function *g* maps *z'* to model output. Instead of enumerating all coalition vectors 
 and computing exact SHAP values, the key idea of Kernel SHAP is to randomly subsample coalition vectors to estimate SHAP 
@@ -68,10 +66,10 @@ The weights of the trained linea
 r regression model will be the estimated SHAP values φ. For more details of 
 Kernel SHAP pleaser refer to [2].
 
-In FATE, inspired by Federated Shapely Value proposed in [4], we develop a hetero explain methods based on KernelSHAP.
-The process of Hetero KernelSHAP in FATE can be described in following steps
+In FATE, inspired by Federated Shapely Value proposed in [4], we develop a hetero model explaining methods based on KernelSHAP.
+The process of Hetero KernelSHAP in FATE can be described in following steps:
 
-1. Guest and Host preprocess input model and an instances to be explained. Generate local reference vector(all zeros, features'  
+1. Guest and Host preprocess input model and instances to be explained. Generate local reference vector(all zeros, features'  
 average, or features' median), when mapping coalition vectors to instances, absent features values in the generated 
 instances will be replaced by the feature values in the reference vector. Hosts send their feature numbers to Guest.
 
@@ -87,7 +85,7 @@ Guest sends corresponding dimensions to hosts.
 For the concern of privacy protection, when running KernelSHAP on linear models, **for every host, we combine their feature
 space as one united federated feature**[4].
 
-Figure above demonstrate the process of Hetero KernelSHAP
+Figure below demonstrate the process of Hetero KernelSHAP
 
 ![Figure 3: SHAP](../images/KernelSHAPProcess.png)
 
@@ -96,7 +94,7 @@ The Homo KernelSHAP is the same as ordinary non-federation KernelSHAP.
 ## Hetero and Homo Tree SHAP
 
 Unlike KernelSHAP which is an approximation method, TreeSHAP is specifically designed for tree algorithms. 
-In tree models, ewe can estimate the model expected output without reference vector, given a certain feature set *S*.
+In tree models, we can estimate the model expected output without reference vector, given a certain feature set *S*.
 The model expected output can be computed as:
 
 ![Figure 3: SHAP](../images/TreeSHAP_algo1.png)
@@ -115,10 +113,10 @@ of the node that belongs to itself and leaves weights are only available to Gues
 and explain an instance, we conduct these steps in Hetero TreeSHAP:
 
 1. Given an input instance, host firstly extract node routes: host masks host nodes' features with anonymous, and get 
-directions(go left or right), anonymous and direction of all host nodes together form a route table.
+directions(go left or right), anonymous and directions of all host nodes together form a route table.
 
 2. Guest receives route table from host, and constructs a fake tree and an fake instance contains Guest features and Host
-Anonymous features. This fake tree will output the same results as a united tree when running algorithm 1.
+Anonymous features. This fake tree will output the same results as an united tree when running algorithm 1.
 
 3. Running TreeSHAP on fake tree to get SHAP values of Guest features and Host anonymous features.
 
