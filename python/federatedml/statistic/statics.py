@@ -70,7 +70,7 @@ class SummaryStatistics(object):
                 setattr(self, f"exp_sum_{m}", exp_sum_m)
         else:
             for idx, value in enumerate(rows):
-                if value in self.abnormal_list:
+                if value in self.abnormal_list or np.isnan(value):
                     continue
                 try:
                     value = float(value)
@@ -239,6 +239,7 @@ class MissingStatistic(object):
 
         self.missing_val = None
         self.feature_summary = {}
+        self.count_summary = {}
         self.missing_feature = []
         self.all_feature_list = []
         self.tag_id_mapping, self.id_tag_mapping = {}, {}
@@ -274,9 +275,11 @@ class MissingStatistic(object):
 
         feature_count_rs = self.count_feature_ratio(tb, self.tag_id_mapping, not self.is_sparse(tb),
                                                     missing_val=self.missing_val)
+        total_count = tb.count()
         for idx, count_val in enumerate(feature_count_rs):
-            self.feature_summary[self.id_tag_mapping[idx]] = 1 - (count_val / tb.count())
-            if (count_val / tb.count()) == 0:
+            self.feature_summary[self.id_tag_mapping[idx]] = 1 - (count_val / total_count)
+            self.count_summary[self.id_tag_mapping[idx]] = int(total_count - count_val)
+            if (count_val / total_count) == 0:
                 self.missing_feature.append(self.id_tag_mapping[idx])
 
         return self.feature_summary
@@ -343,6 +346,7 @@ class MultivariateStatisticalSummary(object):
         self.__init_cols(data_instances, cols_index, stat_order, bias)
         self.label_summary = None
         self.error = error
+        self.missing_static_obj: MissingStatistic = None
 
     def __init_cols(self, data_instances, cols_index, stat_order, bias):
         header = data_overview.get_header(data_instances)
@@ -578,15 +582,20 @@ class MultivariateStatisticalSummary(object):
 
     @property
     def missing_ratio(self):
-        missing_static_obj = MissingStatistic()
-        all_missing_ratio = missing_static_obj.fit(self.data_instances)
+        self.missing_static_obj = MissingStatistic()
+        all_missing_ratio = self.missing_static_obj.fit(self.data_instances)
         return np.array([all_missing_ratio[self.header[idx]] for idx in self.cols_index])
 
     @property
     def missing_count(self):
-        missing_ratio = self.missing_ratio
-        missing_count = missing_ratio * self.data_instances.count()
-        return missing_count.astype(int)
+        # missing_ratio = self.missing_ratio
+        # missing_count = missing_ratio * self.data_instances.count()
+        # return missing_count.astype(int)
+        if self.missing_static_obj is None:
+            self.missing_static_obj = MissingStatistic()
+            self.missing_static_obj.fit(self.data_instances)
+        all_missing_count = self.missing_static_obj.count_summary
+        return np.array([all_missing_count[self.header[idx]] for idx in self.cols_index])
 
     @staticmethod
     def get_label_static_dict(data_instances):
