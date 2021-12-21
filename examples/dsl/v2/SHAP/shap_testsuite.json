@@ -165,7 +165,7 @@
         "hetero_treeshap_explain_all_host_features": {
             "conf": "./hetero_treeshap_explain_all_host_features_conf.json",
             "dsl": "./hetero_treeshap_dsl.json"
-        }，
+        },
         "hetero_treeshap_multi_host": {
             "conf": "./hetero_treeshap_multi_host_conf.json",
             "dsl": "./hetero_treeshap_dsl.json"
