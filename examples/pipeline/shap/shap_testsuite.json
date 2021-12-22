@@ -1,0 +1,86 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_guest.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "vehicle_scale_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_host.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "vehicle_scale_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/motor_hetero_guest.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "motor_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/motor_hetero_host_1.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "motor_hetero_host_1",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/motor_hetero_host_2.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "motor_hetero_host_2",
+            "namespace": "experiment",
+            "role": "host_1"
+        }
+    ],
+    "pipeline_tasks": {
+        "hetero-lr-kernelshap": {
+            "script": "./pipeline-hetero-lr-kernelshap.py"
+        },
+        "hetero-nn-kernelshap": {
+            "script": "./pipeline-hetero-nn-kernelshap.py"
+        },
+        "hetero-treeshap": {
+            "script": "./pipeline-hetero-treeshap.py"
+        },
+        "hetero-treeshap-explain-all-feature": {
+            "script": "./pipeline-hetero-treeshap-explain-all-feature.py"
+        },
+        "hetero-treeshap-multi-task": {
+            "script": "./pipeline-hetero-treeshap-multi-task.py"
+        },
+        "homo-lr-kernelshap": {
+            "script": "./pipeline-homo-lr-kernelshap.py"
+        },
+        "homo-sbt-treeshap": {
+            "script": "./pipeline-homo-sbt-treeshap.py"
+        },
+        "treeshap-multi-host": {
+            "script": "./pipeline-treeshap-multi-host.py"
+        }
+    }
+}
