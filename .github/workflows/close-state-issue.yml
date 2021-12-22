@@ -1,0 +1,24 @@
+name: 'Close stale issues'
+on:
+  schedule:
+    - cron: '30 9 * * *'
+  workflow_dispatch:
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v4
+        with:
+          repo-token: ${{ secrets.PAT }}
+          stale-issue-label: stale
+          stale-issue-message: >
+            Looks like this issue hasn't been updated in a while so we're going to go ahead and mark this as `Stale`. <br>
+            Feel free to remove the `Stale` label if you feel this was a mistake. <br>
+            If you are unable to remove the `Stale` label please contact a maintainer in order to do so. <br>
+            `Stale` issue will automatically be closed 5 days after being marked `Stale` <br>
+          stale-pr-message: 'This PR is stale because it has been open 30 days with no activity.'
+          close-issue-message: 'This issue was closed because it has been stalled for 5 days with no activity. Feel free to reopen if this issue not be resoloved.'
+          days-before-stale: 30
+          days-before-close: 5
+          days-before-pr-close: -1
