@@ -21,8 +21,8 @@ import numpy as np
 from sklearn import metrics
 
 from fate_arch.session import computing_session as session
-from federatedml.loss import SigmoidBinaryCrossEntropyLoss
-from federatedml.loss import SoftmaxCrossEntropyLoss
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss.cross_entropy import SigmoidBinaryCrossEntropyLoss
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss.cross_entropy import SoftmaxCrossEntropyLoss
 from federatedml.util import consts
 
 
