@@ -240,7 +240,7 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
         :return: id_list_array: List[Table] with disjoint (ENC_id, -1) Tables
         """
         intersect_count = id_list_intersect.count()
-        self.target_block_index = random.randint(0, self.block_num - 1)
+        self.target_block_index = random.SystemRandom().randint(0, self.block_num - 1)
         for i in range(self.block_num):
             if i == self.target_block_index:
                 id_block = id_list_intersect.join(id_list_host, lambda x, y: y)
