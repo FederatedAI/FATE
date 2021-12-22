@@ -16,7 +16,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from federatedml.linear_model.coordinated_linear_model.logistic_regression.base_logistic_regression import BaseLogisticRegression
+from federatedml.linear_model.coordinated_linear_model.logistic_regression.base_logistic_regression import \
+    BaseLogisticRegression
 from federatedml.optim.gradient.hetero_sqn_gradient import sqn_factory
 from federatedml.param.logistic_regression_param import HeteroLogisticParam
 from federatedml.protobuf.generated import lr_model_meta_pb2

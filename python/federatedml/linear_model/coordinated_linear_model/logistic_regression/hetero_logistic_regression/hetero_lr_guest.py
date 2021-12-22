@@ -19,7 +19,8 @@ import copy
 from federatedml.framework.hetero.procedure import convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
-from federatedml.linear_model.coordinated_linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_base import HeteroLRBase
+from federatedml.linear_model.coordinated_linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_base import \
+    HeteroLRBase
 from federatedml.optim import activation
 from federatedml.optim.gradient import hetero_lr_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator

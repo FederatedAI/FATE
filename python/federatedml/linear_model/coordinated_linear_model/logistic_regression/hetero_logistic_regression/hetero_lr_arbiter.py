@@ -16,7 +16,8 @@
 
 from federatedml.linear_model.coordinated_linear_model.base_linear_model_arbiter import HeteroBaseArbiter
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
-from federatedml.linear_model.coordinated_linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_base import HeteroLRBase
+from federatedml.linear_model.coordinated_linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_base import \
+    HeteroLRBase
 from federatedml.one_vs_rest.one_vs_rest import one_vs_rest_factory
 from federatedml.optim.gradient import hetero_lr_gradient_and_loss
 from federatedml.param.logistic_regression_param import HeteroLogisticParam

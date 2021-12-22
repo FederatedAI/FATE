@@ -15,7 +15,8 @@
 #
 
 from federatedml.linear_model.coordinated_linear_model.base_linear_model_arbiter import HeteroBaseArbiter
-from federatedml.linear_model.coordinated_linear_model.linear_regression.hetero_linear_regression.hetero_linr_base import HeteroLinRBase
+from federatedml.linear_model.coordinated_linear_model.linear_regression.hetero_linear_regression.hetero_linr_base import \
+    HeteroLinRBase
 from federatedml.optim.gradient import hetero_linr_gradient_and_loss
 from federatedml.param.linear_regression_param import LinearParam
 from federatedml.util import consts

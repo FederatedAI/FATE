@@ -15,7 +15,7 @@
 #
 
 from federatedml.linear_model.coordinated_linear_model.base_linear_model_arbiter import HeteroBaseArbiter
-from federatedml.linear_model.coordinated_linear_model.poisson_regression.\
+from federatedml.linear_model.coordinated_linear_model.poisson_regression. \
     hetero_poisson_regression.hetero_poisson_base import HeteroPoissonBase
 from federatedml.optim.gradient import hetero_poisson_gradient_and_loss
 from federatedml.param.poisson_regression_param import PoissonParam

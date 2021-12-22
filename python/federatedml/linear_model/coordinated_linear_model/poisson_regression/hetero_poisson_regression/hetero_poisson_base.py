@@ -16,7 +16,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from federatedml.linear_model.coordinated_linear_model.poisson_regression.base_poisson_regression import BasePoissonRegression
+from federatedml.linear_model.coordinated_linear_model.poisson_regression.base_poisson_regression import \
+    BasePoissonRegression
 from federatedml.transfer_variable.transfer_class.hetero_poisson_transfer_variable import HeteroPoissonTransferVariable
 from federatedml.util import consts
 
