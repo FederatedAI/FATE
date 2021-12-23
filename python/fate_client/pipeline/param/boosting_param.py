@@ -15,6 +15,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+#
 
 from pipeline.param.base_param import BaseParam
 from pipeline.param.encrypt_param import EncryptParam
@@ -25,6 +26,9 @@ from pipeline.param import consts
 from pipeline.param.callback_param import CallbackParam
 import copy
 import collections
+
+hetero_deprecated_param_list = ["early_stopping_rounds", "validation_freqs", "metrics", "use_first_metric_only"]
+homo_deprecated_param_list = ["validation_freqs", "metrics"]
 
 
 class ObjectiveParam(BaseParam):
@@ -288,8 +292,7 @@ class BoostingParam(BaseParam):
 
         if type(self.subsample_feature_rate).__name__ not in ["float", "int", "long"] or \
                 self.subsample_feature_rate < 0 or self.subsample_feature_rate > 1:
-            raise ValueError("boosting_core tree param's subsample_feature_rate should be a numeric number between"
-                             " 0 and 1")
+            raise ValueError("boosting_core tree param's subsample_feature_rate should be a numeric number between 0 and 1")
 
         if type(self.n_iter_no_change).__name__ != "bool":
             raise ValueError("boosting_core tree param's n_iter_no_change {} not supported, should be bool type".format(
@@ -448,7 +451,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
 
         cipher_compress: bool, default is True, use cipher compressing to reduce computation cost and transfer cost
 
-        work_mode：str
+        boosting_strategy：str
 
             std: standard sbt setting
 
@@ -488,7 +491,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                  complete_secure=False, metrics=None, use_first_metric_only=False, random_seed=100,
                  binning_error=consts.DEFAULT_RELATIVE_ERROR,
                  sparse_optimization=False, run_goss=False, top_rate=0.2, other_rate=0.1,
-                 cipher_compress_error=None, cipher_compress=True, new_ver=True, work_mode=consts.STD_TREE,
+                 cipher_compress_error=None, cipher_compress=True, new_ver=True, boosting_strategy=consts.STD_TREE,
                  tree_num_per_party=1, guest_depth=2, host_depth=3, callback_param=CallbackParam(),
                  multi_mode=consts.SINGLE_OUTPUT):
 
@@ -512,7 +515,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.cipher_compress_error = cipher_compress_error
         self.cipher_compress = cipher_compress
         self.new_ver = new_ver
-        self.work_mode = work_mode
+        self.boosting_strategy = boosting_strategy
         self.tree_num_per_party = tree_num_per_party
         self.guest_depth = guest_depth
         self.host_depth = host_depth
@@ -537,26 +540,22 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.check_boolean(self.new_ver, 'code version switcher')
         self.check_boolean(self.cipher_compress, 'cipher compress')
 
+        if self.multi_mode not in [consts.SINGLE_OUTPUT, consts.MULTI_OUTPUT]:
+            raise ValueError('unsupported multi-classification mode')
+        if self.multi_mode == consts.MULTI_OUTPUT:
+            if self.boosting_strategy != consts.STD_TREE:
+                raise ValueError('MO trees only works when boosting strategy is std tree')
+
+        if self.boosting_strategy not in [consts.STD_TREE, consts.LAYERED_TREE, consts.MIX_TREE]:
+            raise ValueError('unknown sbt boosting strategy{}'.format(self.boosting_strategy))
+
+        descr = "boosting_param's"
+
         if self.top_rate + self.other_rate >= 1:
             raise ValueError('sum of top rate and other rate should be smaller than 1')
 
         if self.sparse_optimization and self.cipher_compress:
             raise ValueError('cipher compress is not supported in sparse optimization mode')
-
-        if type(self.guest_depth).__name__ not in ["int", "long"] or self.guest_depth <= 0:
-            raise ValueError("guest_depth should be larger than 0")
-        if type(self.host_depth).__name__ not in ["int", "long"] or self.host_depth <= 0:
-            raise ValueError("host_depth should be larger than 0")
-        if type(self.tree_num_per_party).__name__ not in ["int", "long"] or self.tree_num_per_party <= 0:
-            raise ValueError("tree_num_per_party should be larger than 0")
-
-        work_modes = [consts.MIX_TREE, consts.LAYERED_TREE, consts.STD_TREE]
-        if self.work_mode not in work_modes:
-            raise ValueError('only work_modes: {} are supported, input work mode is {}'.
-                             format(work_modes, self.work_mode))
-
-        if self.multi_mode not in [consts.SINGLE_OUTPUT, consts.MULTI_OUTPUT]:
-            raise ValueError('unsupported multi-classification mode')
 
         return True
 
@@ -564,8 +563,10 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
 class HomoSecureBoostParam(BoostingParam):
 
     """
-    backend: str, defalt is 'distributed', allowed values are: 'distributed', 'memory'
-            decides which backend to use when computing histograms for homo-sbt
+    Parameters
+    ----------
+    backend: {'distributed', 'memory'}
+        decides which backend to use when computing histograms for homo-sbt
     """
 
     def __init__(self, tree_param: DecisionTreeParam = DecisionTreeParam(), task_type=consts.CLASSIFICATION,
@@ -609,5 +610,12 @@ class HomoSecureBoostParam(BoostingParam):
             raise ValueError('unsupported backend')
         if self.multi_mode not in [consts.SINGLE_OUTPUT, consts.MULTI_OUTPUT]:
             raise ValueError('unsupported multi-classification mode')
+
+        if self.multi_mode not in [consts.SINGLE_OUTPUT, consts.MULTI_OUTPUT]:
+            raise ValueError('unsupported multi-classification mode')
+
+        if self.multi_mode == consts.MULTI_OUTPUT:
+            if self.task_type == consts.REGRESSION:
+                raise ValueError('regression tasks not support multi-output trees')
 
         return True
