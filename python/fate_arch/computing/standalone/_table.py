@@ -30,6 +30,8 @@ class Table(CTableABC):
         self._table = table
         self._engine = ComputingEngine.STANDALONE
 
+        self._count = None
+
     @property
     def engine(self):
         return self._engine
@@ -67,7 +69,9 @@ class Table(CTableABC):
 
     @computing_profile
     def count(self) -> int:
-        return self._table.count()
+        if self._count is None:
+            self._count = self._table.count()
+        return self._count
 
     @computing_profile
     def collect(self, **kwargs):
