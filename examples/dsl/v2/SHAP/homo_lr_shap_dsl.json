@@ -44,7 +44,7 @@
                 ]
             }
         },
-        "shap_0": {
+        "SHAP_0": {
            "module": "shap",
             "input": {
                 "data": {

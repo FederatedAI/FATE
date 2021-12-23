@@ -78,7 +78,7 @@
             }
         },
         "SHAP_0": {
-            "module": "shap",
+            "module": "SHAP",
             "input": {
                 "data": {
                     "data": [

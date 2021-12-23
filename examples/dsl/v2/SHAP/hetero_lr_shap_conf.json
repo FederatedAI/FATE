@@ -73,7 +73,7 @@
                     "random_seed": null
                 }
             },
-	        "shap_0": {"reference_type":"average"},
+	        "SHAP_0": {"reference_type":"average"},
             "sample_0": {"fractions": 0.1}
         }
     }

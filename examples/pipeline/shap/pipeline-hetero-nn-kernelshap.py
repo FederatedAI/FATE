@@ -79,7 +79,7 @@ def main(config="../../config.yaml", namespace=""):
     hetero_nn_0.compile(optimizer=optimizers.SGD(lr=0.15), loss="binary_crossentropy")
 
     # evaluation component
-    shap_0 = SHAP(name="shap_0")
+    shap_0 = SHAP(name="SHAP_0")
     pipeline.add_component(reader_0)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(intersect_0, data=Data(data=data_transform_0.output.data))

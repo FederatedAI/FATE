@@ -28,7 +28,9 @@
                     "max_depth": 3
                 }
             },
-	    "SHAP_0": {"explain_all_host_feature": true}
+	    "SHAP_0": {
+            "explain_all_host_feature": true
+        }
 	    },
         "role": {
             "guest": {

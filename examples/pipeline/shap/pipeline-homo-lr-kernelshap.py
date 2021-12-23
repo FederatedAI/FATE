@@ -81,7 +81,7 @@ def main(config="../../config.yaml", namespace=""):
     }
 
     homo_lr_0 = HomoLR(name='homo_lr_0', **param)
-    shap_0 = SHAP(name="shap_0")
+    shap_0 = SHAP(name="SHAP_0")
     # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))

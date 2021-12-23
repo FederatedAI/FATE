@@ -70,9 +70,9 @@
                 ],
                 "max_iter": 10
             },
-	    "shap_0": {
-	    	"reference_type": "median"
-	    }
+            "SHAP_0": {
+                "reference_type": "median"
+            }
         },
         "role": {
             "host": {

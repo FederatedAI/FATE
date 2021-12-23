@@ -36,7 +36,7 @@
                 "exposure_colname": "exposure"
             },
             "sample_0": {"fraction": 0.01}
-	},
+	    },
         "role": {
             "guest": {
                 "0": {

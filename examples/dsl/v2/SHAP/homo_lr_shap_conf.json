@@ -75,8 +75,7 @@
                     "need_cv": false
                 },
                 "decay": 1,
-                "decay_sqrt": true,
-		"encrypt_param": {"method": "Paillier"}
+                "decay_sqrt": true
             }
         }
     }
