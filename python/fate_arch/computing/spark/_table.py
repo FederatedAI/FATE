@@ -161,6 +161,10 @@ class Table(CTableABC):
         return self._rdd.values().reduce(func)
 
     @computing_profile
+    def treeReduce(self, func, depth=2, **kwargs):
+        return self._rdd.values().treeReduce(func, depth=depth)
+
+    @computing_profile
     def collect(self, **kwargs):
         #         return iter(self._rdd.collect())
         return self._rdd.toLocalIterator()

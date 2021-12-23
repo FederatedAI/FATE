@@ -91,6 +91,11 @@ class Table(CTableABC):
         return self._table.reduce(func)
 
     @computing_profile
+    def treeReduce(self, func, depth=2, **kwargs):
+        # TODO: temporary work around
+        return self._table.reduce(func)
+
+    @computing_profile
     def map(self, func):
         return Table(self._table.map(func))
 

@@ -106,6 +106,11 @@ class Table(CTableABC):
         return self._rp.reduce(func)
 
     @computing_profile
+    def treeReduce(self, func, depth=2, **kwargs):
+        # TODO: temporary work around
+        return self._rp.reduce(func)
+
+    @computing_profile
     def join(self, other: 'Table', func, **kwargs):
         return Table(self._rp.join(other._rp, func=func))
 
