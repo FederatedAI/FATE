@@ -12,7 +12,7 @@
             "file": "examples/data/performance_hetero_host_tag_value.csv",
             "head": 0,
             "partition": 4,
-            "table_name": "performance_hetero_host",
+            "table_name": "performance_hetero_host_tag_value",
             "namespace": "performance",
             "role": "host_0"
         }
