@@ -238,7 +238,8 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
                 if force:
                     remove_file(out_path)
                 else:
-                    raise Exception('{} Already exists'.format(out_path))
+                    echo.echo('{} Already exists'.format(out_path))
+                    continue
             data_i = (idx + 1) / len(data_info)
             downLoad = f'dataget  [{"#" * int(24 * data_i)}{"-" * (24 - int(24 * data_i))}]  {idx + 1}/{len(data_info)}'
             start = time.time()
