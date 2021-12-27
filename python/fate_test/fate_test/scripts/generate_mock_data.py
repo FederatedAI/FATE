@@ -83,10 +83,11 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
     global big_data_dir
 
     def list_tag_value(feature_nums, head):
-        data = ''
-        for f in range(feature_nums):
-            data += head[f] + ':' + str(round(np.random.randn(), 2)) + ";"
-        return data[:-1]
+        # data = ''
+        # for f in range(feature_nums):
+        #     data += head[f] + ':' + str(round(np.random.randn(), 4)) + ";"
+        # return data[:-1]
+        return ";".join([head[k] + ':' + str(round(v, 4)) for k, v in enumerate(np.random.randn(feature_nums))])
 
     def list_tag(feature_nums, data_list):
         data = ''
@@ -134,13 +135,14 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
                                                 section_data_size * (batch + 1) + start_num)
                 slicing_data_size = section_data_size
             elif section_data_size * batch < data_num:
+                df_data_1 = pd.DataFrame(columns=head_1)
                 df_data_1["id"] = id_encryption(encryption_type, section_data_size * batch + start_num, end_num)
                 slicing_data_size = data_num - section_data_size * batch
             else:
                 break
             if label_flag:
                 df_data_1["y"] = [round(np.random.random()) for x in range(slicing_data_size)]
-            feature = np.random.randint(-100, 100, size=[slicing_data_size, feature_nums]) / 100
+            feature = np.random.randint(-10000, 10000, size=[slicing_data_size, feature_nums]) / 10000
             df_data_2 = pd.DataFrame(feature, columns=head_2)
             output_data = pd.concat([df_data_1, df_data_2], axis=1)
             output_data.to_csv(data_path, mode='a+', index=False, header=False)
@@ -172,8 +174,7 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
         def expand_id_range(k, v):
             if label_flag:
                 return [(id_encryption(encryption_type, ids, ids + 1)[0],
-                         ",".join([str(round(np.random.random()))] + [str(i) for i in
-                                                                      np.random.randint(-100, 100, size=int(v)) / 100]))
+                         ",".join([str(round(np.random.random()))] + [str(round(i, 4)) for i in np.random.randn(v)]))
                         for ids in range(int(k), min(step + int(k), end_num))]
             else:
                 if data_type == 'tag':
@@ -184,13 +185,13 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
                             for ids in range(int(k), min(step + int(k), data_num))]
 
                 elif data_type == 'tag_value':
-                    return [(id_encryption(encryption_type, ids, ids + 1)[0], ";".join(
-                                                [f"x{i}" + ':' + str(round(np.random.randn(), 2)) for i in
-                                                                             range(int(v))])) for ids in range(int(k), min(step + int(k), data_num))]
+                    return [(id_encryption(encryption_type, ids, ids + 1)[0],
+                             ";".join([f"x{i}" + ':' + str(round(i, 4)) for i in np.random.randn(v)]))
+                            for ids in range(int(k), min(step + int(k), data_num))]
                 elif data_type == 'dense':
                     return [(id_encryption(encryption_type, ids, ids + 1)[0],
-                                                     ",".join([str(i) for i in np.random.randint(-100, 100, size=int(v)) / 100]))
-                                                                                 for ids in range(int(k), min(step + int(k), data_num))]
+                             ",".join([str(round(i, 4)) for i in np.random.randn(v)]))
+                            for ids in range(int(k), min(step + int(k), data_num))]
         data_num = end_num - start_num
         step = 10000 if data_num > 10000 else int(data_num / 10)
         table_list = [(f"{i * step}", f"{feature_nums}") for i in range(int(data_num / step) + start_num)]
@@ -266,7 +267,6 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
                                                    namespaces[idx], label_flag, data_type, partition_list[idx], progress)
                 progress.set_switch(False)
                 time.sleep(1)
-                print()
             except Exception:
                 exception_id = uuid.uuid1()
                 echo.echo(f"exception_id={exception_id}")
@@ -314,3 +314,4 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
             data_save(data_info=date_set, table_names=table_name_list, namespaces=table_namespace_list, partition_list=partition_list)
     else:
         data_save(data_info=date_set, table_names=table_name_list, namespaces=table_namespace_list, partition_list=partition_list)
+        echo.echo(f'Data storage address, please check{big_data_dir}')
