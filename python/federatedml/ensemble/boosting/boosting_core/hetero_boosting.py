@@ -64,7 +64,7 @@ class HeteroBoosting(Boosting, ABC):
             self.encrypter = PaillierEncrypt()
             self.encrypter.generate_key(self.encrypt_param.key_length)
         else:
-            raise NotImplementedError("unknown encrypt type {}".format(type(self.encrypt_param.method.lower())))
+            raise NotImplementedError("unknown encrypt type {}".format(self.encrypt_param.method.lower()))
         self.encrypted_calculator = EncryptModeCalculator(self.encrypter, self.calculated_mode, self.re_encrypted_rate)
 
     def check_label(self):
