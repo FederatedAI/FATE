@@ -19,7 +19,8 @@ import uuid
 
 from federatedml.param.intersect_param import IntersectParam
 from federatedml.statistic.intersect.intersect_preprocess import BitArray
-from federatedml.transfer_variable.transfer_class.intersection_func_transfer_variable import IntersectionFuncTransferVariable
+from federatedml.transfer_variable.transfer_class.intersection_func_transfer_variable import \
+    IntersectionFuncTransferVariable
 from federatedml.util import LOGGER
 
 
@@ -224,7 +225,7 @@ class Intersect(object):
         LOGGER.debug(f"filter bit count is: {filter.bit_count}")
         LOGGER.debug(f"filter hash func count: {filter.hash_func_count}")
         f = functools.partial(Intersect.insert_key, filter=filter, hash_operator=hash_operator, salt=salt)
-        new_array = data.mapPartitions(f).reduce(lambda x, y: x | y)
+        new_array = data.mapPartitions(f).treeReduce(lambda x, y: x | y)
         LOGGER.debug(f"filter array obtained")
         filter.set_array(new_array)
         # LOGGER.debug(f"after insert, filter sparsity is: {filter.sparsity}")
