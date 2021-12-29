@@ -8,7 +8,6 @@ from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.model_selection import start_cross_validation
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
-from federatedml.callbacks.validation_strategy import ValidationStrategy
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.model_base import ModelBase
 from federatedml.feature.fate_element_type import NoneType

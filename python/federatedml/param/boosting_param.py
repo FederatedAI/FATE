@@ -476,9 +476,8 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
     complete_secure: bool
         if use complete_secure, when use complete secure, build first tree using only guest features
 
-    sparse_optimization: bool
-        Available when encrypted method is 'iterativeAffine'
-        An optimized mode for high-dimension, sparse data.
+    sparse_optimization:
+        this parameter is abandoned in FATE-1.7.1
 
     run_goss: bool
         activate Gradient-based One-Side Sampling, which selects large gradient and small
@@ -542,7 +541,6 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         if type(self.zero_as_missing) != bool:
             raise ValueError('zero as missing should be bool type')
         self.check_boolean(self.complete_secure, 'complete_secure')
-        self.check_boolean(self.sparse_optimization, 'sparse optimization')
         self.check_boolean(self.run_goss, 'run goss')
         self.check_decimal_float(self.top_rate, 'top rate')
         self.check_decimal_float(self.other_rate, 'other rate')
@@ -578,9 +576,6 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
 
         if self.top_rate + self.other_rate >= 1:
             raise ValueError('sum of top rate and other rate should be smaller than 1')
-
-        if self.sparse_optimization and self.cipher_compress:
-            raise ValueError('cipher compress is not supported in sparse optimization mode')
 
         return True
 

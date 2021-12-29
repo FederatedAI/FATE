@@ -79,41 +79,13 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         new_data.features = sp.csc_matrix(np.array(new_feature_sparse_point_array) + offset)
         return new_data
 
-    def check_run_sp_opt(self):
-        # if run fast hist, generate dense d_dtable and set related variables
-        self.run_sparse_opt = (self.encrypt_param.method.lower() == consts.ITERATIVEAFFINE.lower()) and \
-                              self.sparse_opt_para
-
-        if self.run_sparse_opt:
-            LOGGER.info('host is running fast histogram mode')
-
-        # for fast hist computation, data preparation
-        if self.run_sparse_opt and not self.has_transformed_data:
-            # start data transformation for fast histogram mode
-            if not self.use_missing or (self.use_missing and not self.zero_as_missing):
-                feature_sparse_point_array = [self.bin_sparse_points[i] for i in range(len(self.bin_sparse_points))]
-            else:
-                feature_sparse_point_array = [-1 for i in range(len(self.bin_sparse_points))]
-            sparse_to_array = functools.partial(
-                HeteroSecureBoostingTreeHost.sparse_to_array,
-                feature_sparse_point_array=feature_sparse_point_array,
-                use_missing=self.use_missing,
-                zero_as_missing=self.zero_as_missing
-            )
-            self.data_bin_dense = self.data_bin.mapValues(sparse_to_array)
-
-            self.has_transformed_data = True
-
     def fit_a_booster(self, epoch_idx: int, booster_dim: int):
 
-        self.check_run_sp_opt()
         tree = HeteroDecisionTreeHost(tree_param=self.tree_param)
         tree.init(flowid=self.generate_flowid(epoch_idx, booster_dim),
                   valid_features=self.sample_valid_features(),
                   data_bin=self.data_bin, bin_split_points=self.bin_split_points,
                   bin_sparse_points=self.bin_sparse_points,
-                  run_sprase_opt=self.run_sparse_opt,
-                  data_bin_dense=self.data_bin_dense,
                   runtime_idx=self.component_properties.local_partyid,
                   goss_subsample=self.enable_goss,
                   bin_num=self.bin_num,

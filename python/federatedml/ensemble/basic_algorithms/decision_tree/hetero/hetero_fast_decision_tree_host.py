@@ -96,14 +96,9 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
         if tree_action == plan.tree_actions['host_only'] and target_host_id == self.self_host_id:
 
             data = self.data_with_node_assignments
-            if self.run_sparse_opt:
-                data = self.data_bin_dense_with_position
-
             acc_histograms = self.get_local_histograms(dep, data, self.grad_and_hess,
                                                        None, cur_to_split_nodes, node_map, ret='tb',
-                                                       hist_sub=False, sparse_opt=self.run_sparse_opt,
-                                                       bin_num=self.bin_num)
-
+                                                       hist_sub=False)
             splitinfo_host, encrypted_splitinfo_host = self.splitter.find_split_host(histograms=acc_histograms,
                                                                                      node_map=node_map,
                                                                                      use_missing=self.use_missing,
@@ -133,16 +128,12 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
 
         if tree_action == plan.tree_actions['host_only'] and target_host_id == self.self_host_id:
             data = self.data_with_node_assignments
-            if self.run_sparse_opt:
-                data = self.data_bin_dense_with_position
-
             inst2node_idx = self.get_computing_inst2node_idx()
             node_sample_count = self.count_node_sample_num(inst2node_idx, node_map)
             LOGGER.debug('sample count is {}'.format(node_sample_count))
             acc_histograms = self.get_local_histograms(dep, data, self.grad_and_hess, node_sample_count,
                                                        cur_to_split_nodes, node_map, ret='tb',
-                                                       sparse_opt=self.run_sparse_opt, hist_sub=True,
-                                                       bin_num=self.bin_num)
+                                                       hist_sub=True)
 
             split_info_table = self.splitter.host_prepare_split_points(histograms=acc_histograms,
                                                                        use_missing=self.use_missing,
@@ -270,14 +261,10 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
                                                tree_=self.tree_node,
                                                bin_sparse_points=self.bin_sparse_points,
                                                use_missing=self.use_missing,
-                                               zero_as_missing=self.zero_as_missing,
-                                               dense_format=self.run_sparse_opt
+                                               zero_as_missing=self.zero_as_missing
                                                )
 
-        if not self.run_sparse_opt:
-            assign_result = self.data_with_node_assignments.mapValues(assign_node_method)
-        else:
-            assign_result = self.data_bin_dense_with_position.mapValues(assign_node_method)
+        assign_result = self.data_with_node_assignments.mapValues(assign_node_method)
         leaf = assign_result.filter(lambda key, value: isinstance(value, tuple) is False)
 
         if self.sample_leaf_pos is None:
