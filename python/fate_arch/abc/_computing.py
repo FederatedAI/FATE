@@ -61,6 +61,10 @@ class CTableABC(metaclass=ABCMeta):
         """
         ...
 
+   @abc.abstractmethod
+   def copy(self):
+      ...
+
     @abc.abstractmethod
     def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
         """
