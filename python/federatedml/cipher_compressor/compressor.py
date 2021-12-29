@@ -2,7 +2,7 @@ import math
 from abc import ABC
 from abc import abstractmethod
 from federatedml.util import LOGGER
-from federatedml.secureprotol import PaillierEncrypt, IterativeAffineEncrypt
+from federatedml.secureprotol import PaillierEncrypt
 from federatedml.transfer_variable.transfer_class.cipher_compressor_transfer_variable \
     import CipherCompressorTransferVariable
 
@@ -12,11 +12,6 @@ def get_homo_encryption_max_int(encrypter):
     if type(encrypter) == PaillierEncrypt:
         max_pos_int = encrypter.public_key.max_int
         min_neg_int = -max_pos_int
-    elif type(encrypter) == IterativeAffineEncrypt:
-        n_array = encrypter.key.n_array
-        allowed_max_int = n_array[0]
-        max_pos_int = int(allowed_max_int * 0.9) - 1  # the other 0.1 part is for negative num
-        min_neg_int = (max_pos_int - allowed_max_int) + 1
     else:
         raise ValueError('unknown encryption type')
 
@@ -144,8 +139,6 @@ class NormalCipherPackage(CipherPackage):
         if type(decrypter) == PaillierEncrypt:
             LOGGER.debug(f"cipher_text: {self._cipher_text}")
             compressed_plain_text = decrypter.privacy_key.raw_decrypt(self._cipher_text.ciphertext())
-        elif type(decrypter) == IterativeAffineEncrypt:
-            compressed_plain_text = decrypter.key.raw_decrypt(self._cipher_text)
         else:
             raise ValueError('unknown decrypter: {}'.format(type(decrypter)))
 

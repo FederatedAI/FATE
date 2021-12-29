@@ -9,7 +9,6 @@ from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import Decision
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import DecisionTreeModelParam
 from federatedml.transfer_variable.transfer_class.hetero_decision_tree_transfer_variable import \
     HeteroDecisionTreeTransferVariable
-from federatedml.secureprotol import PaillierEncrypt, IterativeAffineEncrypt
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.subsample import goss_sampling
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.g_h_optim import GHPacker
 from federatedml.statistic.statics import MultivariateStatisticalSummary
@@ -164,15 +163,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
     def decrypt(self, val):
         return self.encrypter.decrypt(val)
-
-    def get_encrypt_type(self):
-
-        if type(self.encrypter) == PaillierEncrypt:
-            return consts.PAILLIER
-        elif type(self.encrypter) == IterativeAffineEncrypt:
-            return consts.ITERATIVEAFFINE
-        else:
-            raise ValueError('unknown encrypter type: {}'.format(type(self.encrypter)))
 
     """
     Node Splitting

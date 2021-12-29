@@ -21,7 +21,6 @@ from abc import ABC
 import abc
 from federatedml.ensemble.boosting.boosting_core import Boosting
 from federatedml.param.boosting_param import HeteroBoostingParam
-from federatedml.secureprotol import IterativeAffineEncrypt
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 from federatedml.util import consts
@@ -64,14 +63,6 @@ class HeteroBoosting(Boosting, ABC):
         if self.encrypt_param.method.lower() == consts.PAILLIER.lower():
             self.encrypter = PaillierEncrypt()
             self.encrypter.generate_key(self.encrypt_param.key_length)
-        elif self.encrypt_param.method.lower() == consts.ITERATIVEAFFINE.lower():
-            self.encrypter = IterativeAffineEncrypt()
-            self.encrypter.generate_key(key_size=self.encrypt_param.key_length,
-                                        randomized=False)
-        elif self.encrypt_param.method.lower() == consts.RANDOM_ITERATIVEAFFINE.lower():
-            self.encrypter = IterativeAffineEncrypt()
-            self.encrypter.generate_key(key_size=self.encrypt_param.key_length,
-                                        randomized=True)
         else:
             raise NotImplementedError("unknown encrypt type {}".format(type(self.encrypt_param.method.lower())))
         self.encrypted_calculator = EncryptModeCalculator(self.encrypter, self.calculated_mode, self.re_encrypted_rate)
