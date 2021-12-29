@@ -68,7 +68,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.new_ver = param.new_ver
 
         self.tree_num_per_party = param.tree_num_per_party
-        self.work_mode = param.work_mode
+        self.work_mode = param.boosting_strategy
         self.guest_depth = param.guest_depth
         self.host_depth = param.host_depth
         self.multi_mode = param.multi_mode

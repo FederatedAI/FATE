@@ -29,8 +29,8 @@ from federatedml.util import consts
 
 
 class Node(object):
-    def __init__(self, id=None, sitename=None, fid=None,
-                 bid=None, weight=0, is_leaf=False, sum_grad=None,
+    def __init__(self, id=None, sitename=None, fid=-1,
+                 bid=-1, weight=0, is_leaf=False, sum_grad=None,
                  sum_hess=None, left_nodeid=-1, right_nodeid=-1,
                  missing_dir=1, sample_num=0, parent_nodeid=None, is_left_node=False, sibling_nodeid=None,
                  inst_indices=None):

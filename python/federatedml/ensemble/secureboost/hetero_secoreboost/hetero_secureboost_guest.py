@@ -76,7 +76,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
 
         # fast sbt param
         self.tree_num_per_party = param.tree_num_per_party
-        self.work_mode = param.work_mode
+        self.work_mode = param.boosting_strategy
         self.guest_depth = param.guest_depth
         self.host_depth = param.host_depth
 
