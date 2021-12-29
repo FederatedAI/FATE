@@ -160,7 +160,7 @@ class DhIntersectionGuest(DhIntersect):
             self.send_intersect_ids(encrypt_intersect_ids, intersect_ids)
         else:
             LOGGER.info("Skip sync intersect ids with Host(s).")
-        intersect_ids =  intersect_ids.mapValues(lambda v: 1)
+        intersect_ids = intersect_ids.mapValues(lambda v: 1)
         return intersect_ids
 
     def get_intersect_key(self, party_id):

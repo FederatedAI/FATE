@@ -194,7 +194,7 @@ class Intersect(object):
         if keep_encrypt_id:
             raw_id = encrypt_id_raw_id.map(lambda k, v: (v[0], k))
         else:
-            raw_id = encrypt_id_raw_id.map(lambda k, v:  (v[0], 1))
+            raw_id = encrypt_id_raw_id.map(lambda k, v: (v[0], 1))
         return raw_id
 
     @staticmethod
