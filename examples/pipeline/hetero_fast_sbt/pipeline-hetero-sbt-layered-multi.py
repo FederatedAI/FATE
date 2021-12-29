@@ -71,7 +71,7 @@ def main(config="../../config.yaml", namespace=""):
                                                        num_trees=3,
                                                        task_type='classification',
                                                        objective_param={"objective": "cross_entropy"},
-                                                       encrypt_param={"method": "iterativeAffine"},
+                                                       encrypt_param={"method": "Paillier"},
                                                        guest_depth=1,
                                                        host_depth=2,
                                                        validation_freqs=1,
