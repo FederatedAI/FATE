@@ -115,7 +115,8 @@ class HeteroKernelSHAP(KernelSHAP):
         self.component_properties = component_properties
 
     def set_full_explain(self):
-        self.full_explain = True
+        # Not support full explain for the concern of safety
+        pass
         
     def _generate_subset_sample_ids(self, sample_num):
         return [str(i) for i in range(sample_num)]
@@ -475,24 +476,7 @@ class HeteroKernelSHAP(KernelSHAP):
 
     def explain_row(self, x, data_inst):
 
-        from federatedml.model_interpret.test.correctness_test import send_real_data, get_real_data, extract_host_route, \
-            merge_hetero_model
-        from federatedml.model_interpret.explainer.tree_shap_explainer import TreeSHAP
-
         if self.role == consts.GUEST:
-            # debug codes
-            # host_sample = get_real_data(self.transfer_variable.host_node_route)
-            # bid_fid = get_real_data(self.transfer_variable.host_node_route, suffix='hostmodel')[0]
-            # host_feat_num = len(host_sample[0])
-            # guest_feat_num = len(data_inst.schema['header'])
-            # test_tree_param = copy.deepcopy(self.model.param)
-            # tree_param = merge_hetero_model(test_tree_param, bid_fid[0], bid_fid[1], bid_fid[2],
-            #                                 guest_feat_num, host_feat_num)
-            # test_lgb_model = TreeSHAP(self.role, None).convert_sbt_to_lgb(tree_param, self.model.meta)
-            # combined_sample = np.concatenate([x, host_sample[0]])
-            # from shap import KernelExplainer
-            # local_shap = KernelExplainer(test_lgb_model.predict, data=np.zeros((1, len(combined_sample))))
-            # local_shap_rs = local_shap.shap_values(combined_sample)
 
             if self.full_explain and self.sync_host_feat_num:
                 host_feat_num_list = self.transfer_variable.host_feat_num.get(idx=-1)
@@ -504,26 +488,9 @@ class HeteroKernelSHAP(KernelSHAP):
             host_num = len(self.component_properties.host_party_idlist)
             shap_rs = self.guest_explain_row(x, data_inst, host_num=host_num)
 
-            # LOGGER.debug('shap1 rs is {} {}'.format(local_shap_rs, local_shap.expected_value))
-            # LOGGER.debug('shap2 rs is {}'.format(shap_rs))
-            # LOGGER.debug('diff is {}'.format(local_shap_rs - np.array(shap_rs[:-1])))
             return shap_rs
 
         elif self.role == consts.HOST:
-
-            # debug codes
-            # from federatedml.ensemble import HeteroDecisionTreeHost
-            # decision_tree_list = []
-            # boosting_model = self.model.fate_model
-            # for tidx, tree_param in enumerate(boosting_model.boosting_model_list):
-            #     # load host decision tree
-            #     tree = HeteroDecisionTreeHost(boosting_model.tree_param)
-            #     tree.load_model(boosting_model.booster_meta, tree_param)
-            #     tree.set_runtime_idx(self.component_properties.local_partyid)
-            #     decision_tree_list.append(tree)
-            # send_real_data(self.transfer_variable.host_node_route, x)
-            # host_bid, host_fid, missing_dir = extract_host_route(decision_tree_list)
-            # send_real_data(self.transfer_variable.host_node_route, (host_bid, host_fid, missing_dir), suffix='hostmodel')
 
             if self.full_explain and self.sync_host_feat_num:
                 self.transfer_variable.host_feat_num.remote(len(data_inst.schema['header']))
@@ -552,6 +519,3 @@ class HeteroKernelSHAP(KernelSHAP):
                 idx += 1
 
         return shap_rs
-    
-        
-        
