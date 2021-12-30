@@ -78,9 +78,7 @@ class Table(CTableABC):
 
     @computing_profile
     def take(self, n=1, **kwargs):
-        if n <= 0:
-            raise ValueError(f"{n} <= 0")
-        return list(itertools.islice(self._table.collect(**kwargs), n))
+        return self._table.take(n=n, **kwargs)
 
     @computing_profile
     def first(self, **kwargs):
