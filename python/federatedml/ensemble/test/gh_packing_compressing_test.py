@@ -19,7 +19,7 @@ import functools
 import math
 from fate_arch.session import computing_session as session
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.g_h_optim import PackedGHCompressor, GHPacker, fix_point_precision
-from federatedml.secureprotol.encrypt import IterativeAffineEncrypt, PaillierEncrypt, FakeEncrypt
+from federatedml.secureprotol.encrypt import PaillierEncrypt, FakeEncrypt
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.splitter import SplitInfo
 from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 from federatedml.util import consts
@@ -117,11 +117,6 @@ class TestFeatureHistogram(unittest.TestCase):
         # classification data
         cls.g, cls.h = generate_bin_gh(cls.max_sample_num)
 
-        cls.iter_en = IterativeAffineEncrypt()
-        cls.iter_en.generate_key(key_length)
-        cls.iter_packer, cls.iter_en_g_l, cls.iter_en_h_l, cls.iter_en_table, cls.iter_collected_gh = \
-            cls.prepare_testing_data(cls.g, cls.h, cls.iter_en, cls.max_sample_num, sample_id, consts.CLASSIFICATION)
-
         cls.p_en = PaillierEncrypt()
         cls.p_en.generate_key(key_length)
 
@@ -184,14 +179,6 @@ class TestFeatureHistogram(unittest.TestCase):
     def test_pack_gh_accumulate(self):
 
         # test the correctness of gh packing(in comparision to plaintext)
-
-        # Iterative Affine
-        self.run_gh_accumulate_test(self.test_num, self.iter_collected_gh, self.iter_en_g_l, self.iter_en_h_l, self.iter_packer,
-                                    self.iter_en, self.g, self.h)
-
-        print('*'*30)
-        print('test iter done')
-        print('*'*30)
 
         # Paillier
         self.run_gh_accumulate_test(self.test_num, self.p_collected_gh, self.p_en_g_l, self.p_en_h_l, self.p_packer,
