@@ -5,8 +5,13 @@ from fate_arch.session import computing_session as session
 
 
 def data_inst_table_to_arr(data_inst, take_num=500):
-
-    take_rs = data_inst.take(take_num)
+    """
+    if take num = -1, take all
+    """
+    if take_num == -1:
+        take_rs = data_inst.collect()
+    else:
+        take_rs = data_inst.take(take_num)
     header = data_inst.schema['header']
     ids = []
     data_list = []
@@ -18,16 +23,23 @@ def data_inst_table_to_arr(data_inst, take_num=500):
 
 
 def take_inst_in_sorted_order(data_inst, take_num=500, ret_arr=True):
-
+    """
+    if take num = -1, take all
+    """
     generator = data_inst.collect()
     header = data_inst.schema['header']
-    ids = [i[0] for i in generator]
-    sorted_id = sorted(ids)
-    target_id = sorted_id[0:take_num]
-    join_table = session.parallelize([(id_, 1) for id_ in target_id], partition=data_inst.partitions, include_key=True)
-    result = data_inst.join(join_table, lambda x1, x2: x1)
-    collect_result = list(result.collect())
-    collect_result = sorted(collect_result, key=lambda x: x[0])
+
+    if take_num != -1:
+        ids = [i[0] for i in generator]
+        sorted_id = sorted(ids)
+        target_id = sorted_id[0:take_num]
+        join_table = session.parallelize([(id_, 1) for id_ in target_id], partition=data_inst.partitions, include_key=True)
+        result = data_inst.join(join_table, lambda x1, x2: x1)
+        collect_result = list(result.collect())
+        collect_result = sorted(collect_result, key=lambda x: x[0])
+    else:
+        collect_result = list(generator)
+        collect_result = sorted(collect_result, key=lambda x: x[0])
 
     if ret_arr:
         ids = []

@@ -24,7 +24,7 @@ class SHAP(ModelBase):
         self.explainer: Explainer = None
         self.ref_type = None
         self.explain_all = True
-        self.interpret_limit = 500
+        self.interpret_limit = -1
 
     def _init_model(self, param: SHAPParam):
         self.ref_type = param.reference_type
