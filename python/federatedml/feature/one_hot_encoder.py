@@ -277,7 +277,7 @@ class OneHotEncoder(ModelBase):
 
     @staticmethod
     def transfer_one_instance(instance, col_maps, header, result_header, result_header_index_mapping):
-        new_inst = copy.deepcopy(instance)
+        new_inst = instance.copy(exclusive_attr={"features"})
         feature = instance.features
         # _transformed_value = {}
 
