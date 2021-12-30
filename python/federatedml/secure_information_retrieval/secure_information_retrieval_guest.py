@@ -122,8 +122,8 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
                                                                                        id_list_host_second_only,
                                                                                        keep_value=True)
         # 8. Get (EEright, Eright_guest)
-        id_list_local_first = self.intersection_obj.id_list_local_first[0] # (Eright_guest, id)
-        id_list_local_second = self.intersection_obj.id_list_local_second[0] #(EEright, Eright_guest)
+        id_list_local_first = self.intersection_obj.id_list_local_first[0]  # (Eright_guest, id)
+        id_list_local_second = self.intersection_obj.id_list_local_second[0]  # (EEright, Eright_guest)
 
         # 9. Merge result
         # (Eright_guest, instance)
@@ -240,7 +240,7 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
         :return: id_list_array: List[Table] with disjoint (ENC_id, -1) Tables
         """
         intersect_count = id_list_intersect.count()
-        self.target_block_index = random.randint(0, self.block_num - 1)
+        self.target_block_index = random.SystemRandom().randint(0, self.block_num - 1)
         for i in range(self.block_num):
             if i == self.target_block_index:
                 id_block = id_list_intersect.join(id_list_host, lambda x, y: y)
