@@ -1,6 +1,5 @@
 import numpy as np
 from federatedml.util import consts
-from federatedml.util import LOGGER
 from fate_arch.session import computing_session as session
 
 
