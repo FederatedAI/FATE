@@ -270,7 +270,7 @@ def profile_ends():
     # logging
     profile_driver_time = profile_total_time-timer_aggregator.total_time
     profile_logger.info(
-        "Total: {:.4f}, Driver: {:.4f}s({:.2%}), Federation: {:.4f}s({:.2%}), Computing: {:.4f}s({:.2%})".format(
+        "Total: {:.4f}s, Driver: {:.4f}s({:.2%}), Federation: {:.4f}s({:.2%}), Computing: {:.4f}s({:.2%})".format(
             profile_total_time, 
             profile_driver_time,
             profile_driver_time / profile_total_time,
