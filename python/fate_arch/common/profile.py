@@ -26,6 +26,8 @@ from fate_arch.abc import CTableABC
 
 profile_logger = getLogger("PROFILING")
 _PROFILE_LOG_ENABLED = False
+_START_TIME = None
+_END_TIME = None
 
 
 class _TimerItem(object):
@@ -93,7 +95,7 @@ class _ComputingTimer(object):
             profile_logger.debug(f"[computing#{self._hash}]done, elapse: {elapse}, function: {function_string}")
 
     @classmethod
-    def computing_statistics_table(cls):
+    def computing_statistics_table(cls, timer_aggregator: _TimerItem=None):
         stack_table = beautifultable.BeautifulTable(110, precision=4, detect_numerics=False)
         stack_table.columns.header = ["function", "n", "sum(s)", "mean(s)", "max(s)", "stack_hash", "stack"]
         stack_table.columns.alignment["stack"] = beautifultable.ALIGN_LEFT
@@ -127,6 +129,9 @@ class _ComputingTimer(object):
         base_table.rows.append(["function", function_table])
         base_table.rows.append(["total", total])
 
+        if timer_aggregator:
+            timer_aggregator.union(total)
+
         return base_table.get_string(), detailed_base_table.get_string()
 
 
@@ -135,7 +140,7 @@ class _FederationTimer(object):
     _REMOTE_STATS: typing.MutableMapping[str, _TimerItem] = {}
 
     @classmethod
-    def federation_statistics_table(cls):
+    def federation_statistics_table(cls, timer_aggregator: _TimerItem=None):
         total = _TimerItem()
         get_table = beautifultable.BeautifulTable(110)
         get_table.columns.header = ["name", "n", "sum(s)", "mean(s)", "max(s)"]
@@ -162,6 +167,9 @@ class _FederationTimer(object):
         base_table.rows.append(["get", get_table])
         base_table.rows.append(["remote", remote_table])
         base_table.rows.append(["total", total])
+
+        if timer_aggregator:
+            timer_aggregator.union(total)
         return base_table.get_string()
 
 
@@ -241,14 +249,43 @@ def profile_start():
     global _PROFILE_LOG_ENABLED
     _PROFILE_LOG_ENABLED = True
 
+    global _START_TIME
+    _START_TIME = time.time()
+
 
 def profile_ends():
-    computing_base_table, computing_detailed_table = _ComputingTimer.computing_statistics_table()
-    federation_base_table = _FederationTimer.federation_statistics_table()
+    global _END_TIME
+    _END_TIME = time.time()
+    profile_total_time = _END_TIME - _START_TIME 
+
+    # gather computing and federation profile statistics
+    timer_aggregator = _TimerItem()
+    computing_timer_aggregator = _TimerItem()
+    federation_timer_aggregator = _TimerItem()
+    computing_base_table, computing_detailed_table = _ComputingTimer.computing_statistics_table(timer_aggregator=computing_timer_aggregator)
+    federation_base_table = _FederationTimer.federation_statistics_table(timer_aggregator=federation_timer_aggregator)
+    timer_aggregator.union(computing_timer_aggregator)
+    timer_aggregator.union(federation_timer_aggregator)
+
+    # logging
+    profile_driver_time = profile_total_time-timer_aggregator.total_time
+    profile_logger.info(
+        "Total: {:.4f}, Driver: {:.4f}s({:.2%}), Federation: {:.4f}s({:.2%}), Computing: {:.4f}s({:.2%})".format(
+            profile_total_time, 
+            profile_driver_time,
+            profile_driver_time / profile_total_time,
+            federation_timer_aggregator.total_time,
+            federation_timer_aggregator.total_time / profile_total_time,
+            computing_timer_aggregator.total_time,
+            computing_timer_aggregator.total_time / profile_total_time
+        )
+    )
     profile_logger.info(f"\nComputing:\n{computing_base_table}\n\nFederation:\n{federation_base_table}\n")
     profile_logger.debug(f"\nDetailed Computing:\n{computing_detailed_table}\n")
+    
     global _PROFILE_LOG_ENABLED
     _PROFILE_LOG_ENABLED = False
+
 
 
 def _pretty_table_str(v):
