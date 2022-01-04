@@ -139,8 +139,8 @@ class StorageTableBase(StorageTableABC):
         self.meta.destroy_metas()
         self._destroy()
 
-    def save_as(self, address, name, namespace, partitions=None, schema=None, **kwargs):
-        table = self._save_as(address, name, namespace, partitions, schema, **kwargs)
+    def save_as(self, address, name, namespace, partitions=None, **kwargs):
+        table = self._save_as(address, name, namespace, partitions, **kwargs)
         table.create_meta(**kwargs)
         return table
 
@@ -168,7 +168,7 @@ class StorageTableBase(StorageTableABC):
     def _destroy(self):
         raise NotImplementedError()
     
-    def _save_as(self, address, name, namespace, partitions=None, schema=None, **kwargs):
+    def _save_as(self, address, name, namespace, partitions, **kwargs):
         raise NotImplementedError()
 
 

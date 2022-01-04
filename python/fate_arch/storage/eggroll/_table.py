@@ -46,17 +46,16 @@ class StorageTable(StorageTableBase):
             namespace=self._namespace, name=self._name, options=self._options
         )
 
-    def _save_as(self, address, name, namespace, partitions=None, schema=None, **kwargs):
+    def _save_as(self, address, name, namespace, partitions=None, **kwargs):
         self._table.save_as(name=name, namespace=namespace)
 
         table = StorageTable(
+            context=self._context,
             address=address,
             partitions=partitions,
             name=name,
-            namespace=namespace,
-            **kwargs,
+            namespace=namespace
         )
-
         return table
 
     def _put_all(self, kv_list: Iterable, **kwargs):
