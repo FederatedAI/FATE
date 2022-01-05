@@ -154,6 +154,7 @@ def get_role(conf: Config):
                    'upload_file_path': os.path.abspath(conf.data_base_dir) + flow_test_template['upload_conf_path'],
                    'server_url': "http://{}/{}".format(flow_services, config['api_version']),
                    'train_auc': config['train_auc'],
+                   'phone_num': config['phone_num'],
                    'component_name': config['component_name'],
                    'metric_output_path': config['metric_output_path'],
                    'model_output_path': config['model_output_path'],

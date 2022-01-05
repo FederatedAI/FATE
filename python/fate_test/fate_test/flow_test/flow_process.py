@@ -314,7 +314,7 @@ class UtilizeModel:
                             f"details: {resp_data.get('retmsg')}")
         raise Exception(f"Request model bind api failed, status code: {response.status_code}")
 
-    def online_predict(self, online_serving):
+    def online_predict(self, online_serving, phone_num):
         serving_url = f"http://{online_serving}/federation/1.0/inference"
         post_data = {
             "head": {
@@ -322,11 +322,11 @@ class UtilizeModel:
             },
             "body": {
                 "featureData": {
-                    "phone_num": "18576635456",
+                    "phone_num": phone_num,
                 },
                 "sendToRemoteFeatureData": {
                     "device_type": "imei",
-                    "phone_num": "18576635456",
+                    "phone_num": phone_num,
                     "encrypt_type": "raw"
                 }
             }
@@ -353,6 +353,7 @@ def run_fate_flow_test(config_json):
     component_name = config_json['component_name']
     metric_output_path = config_json['metric_output_path']
     model_output_path = config_json['model_output_path']
+    phone_num = config_json['phone_num']
     print('submit train job')
     # train
     train, train_count = train_job(guest_party_id, host_party_id, arbiter_party_id, train_conf_path, train_dsl_path,
@@ -391,4 +392,4 @@ def run_fate_flow_test(config_json):
     utilize.bind_model()
 
     # online predict
-    utilize.online_predict(online_serving=online_serving)
+    utilize.online_predict(online_serving=online_serving, phone_num=phone_num)
