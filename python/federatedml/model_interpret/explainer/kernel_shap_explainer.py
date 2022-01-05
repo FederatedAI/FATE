@@ -20,20 +20,28 @@ PRED_VAL = 'pred_val'
 BASE_VAL = 'base_val'
 
 
-def handle_result(data_arr, shap_result, expected_val):
+def handle_result(data_arr, shap_result, expected_val, header):
 
     # multi classification case
-    if type(expected_val) == np.ndarray or type(expected_val) == list:
+    if len(shap_result) > 1:
         rs = []
+        new_header = []
+        idx = 0
         for sub_shap_rs, val in zip(shap_result, expected_val):
             expected_val_col = np.zeros((data_arr.shape[0], 1)) + val
             explain_rs = np.concatenate([sub_shap_rs, expected_val_col], axis=1)
             rs.append(explain_rs)
-        return rs
+            sub_header = [h+'_class_{}'.format(idx) for h in header]
+            sub_header.append('BASE_VALUE_class_{}'.format(idx))
+            idx += 1
+            new_header += sub_header
+        return np.concatenate(rs, axis=-1), new_header
     else:
+        # binary/ regression case
         expected_val_col = np.zeros((data_arr.shape[0], 1)) + expected_val
-        explain_rs = np.concatenate([shap_result, expected_val_col], axis=1)
-        return explain_rs
+        explain_rs = np.concatenate([shap_result[0], expected_val_col], axis=1)
+        header.append("BASE_VALUE")
+        return explain_rs, header
 
 
 class KernelSHAP(Explainer):
@@ -50,6 +58,7 @@ class KernelSHAP(Explainer):
         self.schema = None
         self.table_partitions = 4
         self.component_properties = None
+        self.class_num = 1
 
     def set_component_properties(self, component_properties):
         self.component_properties = component_properties
@@ -85,10 +94,11 @@ class HomoKernelSHAP(KernelSHAP):
 
         LOGGER.debug('ref vec is {}'.format(ref_vec))
         shap_kernel = shap.KernelExplainer(self.model.predict, ref_vec)
-        LOGGER.debug('kernel shap on running')
+        LOGGER.debug('kernel shap is running')
         explain_rs = shap_kernel.shap_values(data_arr)
-        explain_rs = handle_result(data_arr, explain_rs, shap_kernel.expected_value)
-        return explain_rs
+        LOGGER.debug('origin format is {}'.format(explain_rs))
+        explain_rs, header = handle_result(data_arr, explain_rs, shap_kernel.expected_value, header)
+        return ids, explain_rs, header
 
 
 class HeteroKernelSHAP(KernelSHAP):

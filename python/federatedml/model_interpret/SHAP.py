@@ -1,7 +1,9 @@
 import copy
 import time
-import numpy as np
+from federatedml.model_base import MetricMeta
+from fate_arch.session import computing_session as session
 from federatedml.model_base import ModelBase
+from federatedml.feature.instance import Instance
 from federatedml.param.shap_param import SHAPParam
 from federatedml.util import LOGGER
 from federatedml.util import consts
@@ -25,6 +27,7 @@ class SHAP(ModelBase):
         self.ref_type = None
         self.explain_all = True
         self.interpret_limit = -1
+        self.data_partition = 4
 
     def _init_model(self, param: SHAPParam):
         self.ref_type = param.reference_type
@@ -109,6 +112,26 @@ class SHAP(ModelBase):
 
         LOGGER.info('using explainer {}, role is {}'.format(self.explainer, self.role))
 
+    def callback_result(self, ids, shap_result, header):
+        # callback 100 data only
+        limit = 100
+        ids = ids[0: limit]
+        shap_result = shap_result[0: limit]
+        callback_data = {'sample_id': ids, 'shap': shap_result.tolist(), 'header': header,
+                         'class_num': shap_result.shape[1]//len(header)}
+        meta = MetricMeta(name='shap', metric_type='shap', extra_metas=callback_data)
+        self.tracker.set_metric_meta('shap', 'shap_result', meta)
+
+    def make_output_table(self, sample_ids, explain_rs, header):
+
+        data_list = []
+        for id_, shap_rs in zip(sample_ids, explain_rs):
+            data_list.append((id_, Instance(features=shap_rs)))
+        data_table = session.parallelize(data_list, self.data_partition, include_key=True)
+        data_table.schema = {'header': header}
+
+        return data_table
+
     """
     fit
     """
@@ -116,7 +139,11 @@ class SHAP(ModelBase):
     def fit(self, data_inst):
 
         s = time.time()
-        explain_rs = self.explainer.explain(data_inst, self.interpret_limit)
+        self.data_partition = data_inst.partitions
+        sample_ids, explain_rs, header = self.explainer.explain(data_inst, self.interpret_limit)
         e = time.time()
-        LOGGER.debug('running takes {}'.format(e-s))
-        LOGGER.debug('explain rs shape is {}'.format(np.array(explain_rs).shape))
+        ret_table = self.make_output_table(sample_ids, explain_rs, header)
+        self.callback_result(sample_ids, explain_rs, header)
+        LOGGER.debug('explain rs shape is {}'.format(explain_rs.shape))
+
+        return ret_table

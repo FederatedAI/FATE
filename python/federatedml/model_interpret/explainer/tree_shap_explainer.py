@@ -42,6 +42,15 @@ class TreeSHAP(Explainer):
 
         return shap_rs_by_class
 
+    def reformat_header(self, header):
+        new_header = []
+        for class_idx in range(self.class_num):
+            for feat_name in header:
+                new_header.append(feat_name+'_class_{}'.format(class_idx))
+            new_header.append('BASE_VALUE_class_{}'.format(class_idx))
+        return new_header
+
+
 """
 Homo TreeSHAP
 """
@@ -63,8 +72,11 @@ class HomoTreeSHAP(TreeSHAP):
         lgb_model = self.convert_sbt_to_lgb(self.tree_model_param, self.tree_model_meta)
         contrib = lgb_model.predict(arr, pred_contrib=True)
         if self.class_num > 2:
-            contrib = self.handle_multi_rs(contrib)
-        return contrib
+            header = self.reformat_header(header)
+        else:
+            header.append('BASE_VALUE')
+
+        return ids, contrib, header
 
     def explain_interaction(self, data_inst, n=500):
 
@@ -243,6 +255,7 @@ class HeteroTreeSHAP(TreeSHAP):
                 route, self.host_node_anonymous = self.extract_host_route(sample)
                 sample_route_map[idx] = route
                 idx += 1
+
             if self.full_explain:
                 self.transfer_variable.host_anonymous_list.remote(list(self.anonymous_mapping.values()))
                 self.transfer_variable.host_node_anonymous.remote(self.host_node_anonymous)
