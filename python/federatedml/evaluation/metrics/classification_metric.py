@@ -78,6 +78,12 @@ class ThresholdCutter(object):
         return score_threshold, cuts
 
     @staticmethod
+    def fixed_interval_threshold(steps=0.01):
+        intervals = np.array([i for i in range(0, 100)])
+        intervals = intervals*steps
+        return intervals
+
+    @staticmethod
     def cut_by_index(sorted_scores):
         cuts = np.array([c / 100 for c in range(100)])
         data_size = len(sorted_scores)
@@ -115,14 +121,12 @@ class ThresholdCutter(object):
 class KS(object):
 
     @staticmethod
-    def compute(labels, pred_scores, pos_label=1):
+    def compute(labels, pred_scores, pos_label=1, fixed_interval_threshold=True):
         sorted_labels, sorted_scores = sort_score_and_label(labels, pred_scores)
 
-        score_threshold, cuts = ThresholdCutter.cut_by_index(sorted_scores)
-
-        confusion_mat = ConfusionMatrix.compute(sorted_labels, sorted_scores, score_threshold, ret=['tp', 'fp'],
+        threshold, cuts = ThresholdCutter.cut_by_index(sorted_scores)
+        confusion_mat = ConfusionMatrix.compute(sorted_labels, sorted_scores, threshold, ret=['tp', 'fp'],
                                                 pos_label=pos_label)
-
         pos_num, neg_num = neg_pos_count(sorted_labels, pos_label=pos_label)
 
         assert pos_num > 0 and neg_num > 0, "error when computing KS metric, pos sample number and neg sample number" \
@@ -138,7 +142,7 @@ class KS(object):
         ks_curve = tpr[:-1] - fpr[:-1]
         ks_val = np.max(ks_curve)
 
-        return ks_val, fpr, tpr, score_threshold, cuts
+        return ks_val, fpr, tpr, threshold, cuts
 
 
 class BiClassMetric(object):
@@ -387,10 +391,10 @@ class FScore(object):
     @staticmethod
     def compute(labels, pred_scores, beta=1, pos_label=1):
         sorted_labels, sorted_scores = sort_score_and_label(labels, pred_scores)
-        score_threshold, cuts = ThresholdCutter.cut_by_step(sorted_scores, steps=0.01)
-        score_threshold.append(0)
+        _, cuts = ThresholdCutter.cut_by_step(sorted_scores, steps=0.01)
+        fixed_interval_threshold = ThresholdCutter.fixed_interval_threshold()
         confusion_mat = ConfusionMatrix.compute(sorted_labels, sorted_scores,
-                                                score_threshold,
+                                                fixed_interval_threshold,
                                                 ret=['tp', 'fp', 'fn', 'tn'], pos_label=pos_label)
 
         precision_computer = BiClassPrecision()
@@ -404,7 +408,7 @@ class FScore(object):
         numerator = (1 + beta_2) * (p_score * r_score)
         f_score = numerator / denominator
 
-        return f_score, score_threshold, cuts
+        return f_score, fixed_interval_threshold, cuts
 
 
 class PSI(object):
