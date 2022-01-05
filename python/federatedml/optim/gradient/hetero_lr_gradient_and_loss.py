@@ -74,14 +74,29 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         current_suffix = (n_iter_, batch_index)
         n = data_instances.count()
 
+        host_wx_y = self.host_forwards[0].join(data_instances, lambda x, y: (x, y.label))
+        self_wx_y = self.half_d.join(data_instances, lambda x, y: (x, y.label))
+
+        def _sum_ywx(wx_y):
+            sum1, sum2 = 0, 0
+            for _, (x, y) in wx_y:
+                if y == 1:
+                    sum1 += x
+                else:
+                    sum2 -= x
+            return sum1 + sum2
+
+        ywx = host_wx_y.applyPartitions(_sum_ywx).reduce(reduce_add) + \
+              self_wx_y.applyPartitions(_sum_ywx).reduce(reduce_add)
+        ywx = ywx * 4 + 2 * n
+
+        # quarter_wx = self.host_forwards[0].join(self.half_d, lambda x, y: x + y)
+        # ywx = quarter_wx.join(data_instances, lambda wx, d: wx * (4 * d.label) + 2).reduce(reduce_add)
+
         self_wx_square = data_instances.mapValues(
             lambda v: np.square(vec_dot(v.features, w.coef_) + w.intercept_)).reduce(reduce_add)
         half_wx = data_instances.mapValues(
             lambda v: vec_dot(v.features, w.coef_) + w.intercept_)
-        # self.host_forwards[0] = 0.25 * wx_host
-        # wx = wx_host + wx_guest
-        wx = self.host_forwards[0].join(half_wx, lambda x,y: x * 4 + y)
-        ywx = wx.join(data_instances, lambda x,y :x * y.label).reduce(reduce_add)
 
         loss_list = []
         wx_squares = self.get_host_loss_intermediate(suffix=current_suffix)
@@ -99,7 +114,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
             wx_square = wx_squares[0]
             wxg_wxh = half_wx.join(host_forward, lambda wxg, wxh: wxg * wxh).reduce(reduce_add)
             loss = np.log(2) - 0.5 * (1 / n) * ywx + 0.125 * (1 / n) * \
-                   (self_wx_square + wx_square + 2 * wxg_wxh)
+                   (self_wx_square + wx_square + 8 * wxg_wxh)
             if loss_norm is not None:
                 loss += loss_norm
                 loss += host_loss_regular[0]
