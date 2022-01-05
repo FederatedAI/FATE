@@ -41,6 +41,9 @@ class Table(CTableABC):
     def partitions(self):
         return self._table.partitions
 
+    def copy(self):
+        return Table(self._table.mapValues(lambda x: x))
+
     @computing_profile
     def save(self, address, partitions, schema, **kwargs):
         from fate_arch.common.address import StandaloneAddress
