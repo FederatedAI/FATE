@@ -70,7 +70,7 @@ FATE-Test 同时支持FATE联邦学习模型效率benchmark测试。
 
 ## Toy Example
 
-为了方便用户快速站点间网络连通性，FATE提供了简洁的toy任务，使用方法类似：
+为了方便用户快速测试站点间网络连通性，FATE提供了简洁的toy任务，使用方法类似：
 ```
 flow test toy -gid 9999 -hid 10000
 ```
