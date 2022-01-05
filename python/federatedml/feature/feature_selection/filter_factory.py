@@ -53,7 +53,7 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
         new_param.check()
         iso_model = model.isometric_models.get(consts.STATISTIC_MODEL)
         if iso_model is None:
-            raise ValueError("None of statistic model has provided when using unique filter")
+            raise ValueError("Missing statistic model to use unique filter")
         return IsoModelFilter(new_param, iso_model)
 
     elif filter_name == consts.IV_VALUE_THRES:
@@ -67,7 +67,7 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
         iv_param.check()
         iso_model = model.isometric_models.get(consts.BINNING_MODEL)
         if iso_model is None:
-            raise ValueError("None of binning model has provided when using iv filter")
+            raise ValueError("Missing binning model to use iv filter")
         return IVFilter(iv_param, iso_model,
                         role=role, cpp=model.component_properties)
 
@@ -81,7 +81,7 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
         iv_param.check()
         iso_model = model.isometric_models.get(consts.BINNING_MODEL)
         if iso_model is None:
-            raise ValueError("None of binning model has provided when using iv filter")
+            raise ValueError("Missing binning model to use iv filter")
         return IVFilter(iv_param, iso_model,
                         role=role, cpp=model.component_properties)
 
@@ -95,7 +95,7 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
         iv_param.check()
         iso_model = model.isometric_models.get(consts.BINNING_MODEL)
         if iso_model is None:
-            raise ValueError("None of binning model has provided when using iv filter")
+            raise ValueError("Missing binning model to use iv filter")
         return IVFilter(iv_param, iso_model,
                         role=role, cpp=model.component_properties)
 
@@ -110,7 +110,7 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
         coe_param.check()
         iso_model = model.isometric_models.get(consts.STATISTIC_MODEL)
         if iso_model is None:
-            raise ValueError("None of statistic model has provided when using coef_of_var filter")
+            raise ValueError("Missing statistic model to use coef_of_var filter")
         return IsoModelFilter(coe_param, iso_model)
 
     elif filter_name == consts.OUTLIER_COLS:
@@ -124,7 +124,7 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
         new_param.check()
         iso_model = model.isometric_models.get(consts.STATISTIC_MODEL)
         if iso_model is None:
-            raise ValueError("None of statistic model has provided when using outlier filter")
+            raise ValueError("Missing statistic model to use outlier filter")
         return IsoModelFilter(new_param, iso_model)
 
         # outlier_param = model_param.outlier_param
@@ -144,7 +144,7 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
 
         iso_model = model.isometric_models.get(consts.BINNING_MODEL)
         if iso_model is None:
-            raise ValueError("None of iv model has provided when using iv filter")
+            raise ValueError("Missing iv model to use iv filter")
         return IVFilter(this_param, iso_model,
                         role=role, cpp=model.component_properties)
 
@@ -153,7 +153,7 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
         this_param = _obtain_single_param(sbt_param, idx)
         iso_model = model.isometric_models.get(consts.HETERO_SBT)
         if iso_model is None:
-            raise ValueError("None of sbt model has provided when using sbt filter")
+            raise ValueError("Missing sbt model for use sbt filter")
         return FederatedIsoModelFilter(this_param, iso_model,
                                        role=role, cpp=model.component_properties)
 
@@ -161,8 +161,8 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
         sbt_param = model_param.sbt_param
         this_param = _obtain_single_param(sbt_param, idx)
         if consts.HETERO_FAST_SBT_LAYERED in model.isometric_models and \
-                consts.HETERO_FAST_SBT_MIX in model.isometric_models:
-            raise ValueError("Should not provide both layered and mixed fast sbt simultaneously")
+            consts.HETERO_FAST_SBT_MIX in model.isometric_models:
+            raise ValueError("Should not provide layered and mixed fast sbt model simultaneously")
         elif consts.HETERO_FAST_SBT_LAYERED in model.isometric_models:
             iso_model = model.isometric_models.get(consts.HETERO_FAST_SBT_LAYERED)
             return FederatedIsoModelFilter(this_param, iso_model,
@@ -171,14 +171,14 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
             iso_model = model.isometric_models.get(consts.HETERO_FAST_SBT_MIX)
             return IsoModelFilter(this_param, iso_model)
         else:
-            raise ValueError("None of Fast sbt model has been provided")
+            raise ValueError("Missing Fast sbt model")
 
     elif filter_name == consts.HOMO_SBT_FILTER:
         sbt_param = model_param.sbt_param
         this_param = _obtain_single_param(sbt_param, idx)
         iso_model = model.isometric_models.get(consts.HOMO_SBT)
         if iso_model is None:
-            raise ValueError("None of sbt model has provided when using sbt filter")
+            raise ValueError("Missing sbt model to use sbt filter")
         return IsoModelFilter(this_param, iso_model)
 
     elif filter_name == consts.STATISTIC_FILTER:
@@ -186,7 +186,7 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
         this_param = _obtain_single_param(statistic_param, idx)
         iso_model = model.isometric_models.get(consts.STATISTIC_MODEL)
         if iso_model is None:
-            raise ValueError("None of statistic model has provided when using statistic filter")
+            raise ValueError("Missing statistic model to use statistic filter")
         return IsoModelFilter(this_param, iso_model)
 
     elif filter_name == consts.PSI_FILTER:
@@ -195,27 +195,27 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
 
         iso_model = model.isometric_models.get(consts.PSI)
         if iso_model is None:
-            raise ValueError("None of psi model has provided when using psi filter")
+            raise ValueError("Missing psi model to use psi filter")
         return IsoModelFilter(this_param, iso_model)
     elif filter_name == consts.VIF_FILTER:
         vif_param = model_param.vif_param
         this_param = _obtain_single_param(vif_param, idx)
         iso_model = model.isometric_models.get("HeteroPearson")
         if iso_model is None:
-            raise ValueError("None of Hetero Pearson model has provided when using VIF filter")
+            raise ValueError("Missing Hetero Pearson model to use VIF filter")
         return IsoModelFilter(this_param, iso_model)
     elif filter_name == consts.CORRELATION_FILTER:
         correlation_param = model_param.correlation_param
         if correlation_param.sort_metric == 'iv':
             external_model = model.isometric_models.get(consts.BINNING_MODEL)
             if external_model is None:
-                raise ValueError("None of binning model has provided when using correlation filter")
+                raise ValueError("Missing binning model to use correlation filter")
         else:
             raise ValueError(f"sort_metric: {correlation_param.sort_metric} is not supported")
         iso_model = model.isometric_models.get("HeteroPearson")
         correlation_model = iso_model.get_metric_info(consts.PEARSON)
         if iso_model is None:
-            raise ValueError("None of Hetero Pearson model has provided when using Correlation filter")
+            raise ValueError("Missing Hetero Pearson model to use correlation filter")
         return CorrelationFilter(correlation_param, external_model=external_model,
                                  correlation_model=correlation_model, role=role,
                                  cpp=model.component_properties)

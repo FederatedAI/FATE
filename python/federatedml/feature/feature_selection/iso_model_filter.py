@@ -205,9 +205,9 @@ class FederatedIsoModelFilter(IsoModelFilter):
         #              f"all_feature_values: {all_feature_values}")
 
         for v_idx, v in enumerate(all_feature_values):
-            LOGGER.debug(f"all_feature_values: {all_feature_values},"
-                         f"col_names: {col_names},"
-                         f"v_idx: {v_idx}")
+            # LOGGER.debug(f"all_feature_values: {all_feature_values},"
+                         # f"col_names: {col_names},"
+            #             f"v_idx: {v_idx}")
             col_name = col_names[v_idx]
             if col_name[0] == consts.GUEST:
                 self.selection_properties.add_feature_value(col_name[1], v)
@@ -269,7 +269,7 @@ class FederatedIsoModelFilter(IsoModelFilter):
         self.sync_obj.sync_select_results(self.selection_properties,
                                           decode_func=self.decode_func,
                                           suffix=suffix)
-        LOGGER.debug("In fit selected result, left_col_names: {}".format(self.selection_properties.left_col_names))
+        # LOGGER.debug("In fit selected result, left_col_names: {}".format(self.selection_properties.left_col_names))
         return self
 
     def decode_func(self, encoded_name):
@@ -289,8 +289,8 @@ class FederatedIsoModelFilter(IsoModelFilter):
                 encoded_names.append(anonymous_generator.generate_anonymous(
                     fid=fid, role=self.role, party_id=self.party_id
                 ))
-            LOGGER.debug(f"Before send, encoded_names: {encoded_names},"
-                         f"select_names: {self.selection_properties.select_col_names}")
+            # LOGGER.debug(f"Before send, encoded_names: {encoded_names},"
+            #             f"select_names: {self.selection_properties.select_col_names}")
             self.sync_obj.sync_select_cols(encoded_names, suffix=suffix)
 
     def set_transfer_variable(self, transfer_variable):

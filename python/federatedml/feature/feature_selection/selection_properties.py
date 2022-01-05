@@ -47,11 +47,12 @@ class SelectionProperties(object):
         self.select_col_names = self.header
 
     def add_select_col_indexes(self, select_col_indexes):
+        last_left_col_indexes = set(self.last_left_col_indexes)
         for idx in select_col_indexes:
             if idx >= len(self.header):
-                LOGGER.warning("Adding a index that out of header's bound")
+                LOGGER.warning("Adding an index out of header's bound")
                 continue
-            if idx not in self.last_left_col_indexes:
+            if idx not in last_left_col_indexes:
                 continue
 
             if idx not in self.select_col_indexes:
@@ -59,12 +60,13 @@ class SelectionProperties(object):
                 self.select_col_names.append(self.header[idx])
 
     def add_select_col_names(self, select_col_names):
+        last_left_col_indexes = set(self.last_left_col_indexes)
         for col_name in select_col_names:
             idx = self.col_name_maps.get(col_name)
             if idx is None:
                 LOGGER.warning("Adding a col_name that is not exist in header")
                 continue
-            if idx not in self.last_left_col_indexes:
+            if idx not in last_left_col_indexes:
                 continue
             if idx not in self.select_col_indexes:
                 self.select_col_indexes.append(idx)
@@ -73,8 +75,8 @@ class SelectionProperties(object):
     def add_left_col_name(self, left_col_name):
         idx = self.col_name_maps.get(left_col_name)
         if idx is None:
-            LOGGER.debug(f"left_col_name: {left_col_name}, col_name_maps: {self.col_name_maps}")
-            LOGGER.warning("Adding a col_name that is not exist in header")
+            # LOGGER.debug(f"left_col_name: {left_col_name}, col_name_maps: {self.col_name_maps}")
+            LOGGER.warning("Adding a col_name that does not exist in header")
             return
         if idx not in self.left_col_indexes:
             self.left_col_indexes.append(idx)
@@ -89,11 +91,13 @@ class SelectionProperties(object):
     @property
     def all_left_col_indexes(self):
         result = []
+        select_col_indexes = set(self.select_col_indexes)
+        left_col_indexes = set(self.left_col_indexes)
         for idx in self.last_left_col_indexes:
-            if idx not in self.select_col_indexes:
+            if (idx not in select_col_indexes) or (idx in left_col_indexes):
                 result.append(idx)
-            elif idx in self.left_col_indexes:
-                result.append(idx)
+            # elif idx in left_col_indexes:
+            #    result.append(idx)
         return result
 
     @property
@@ -150,32 +154,36 @@ class CompletedSelectionResults(object):
         host_feature_values = []
         host_left_cols = []
         for idx, host_result in enumerate(host_select_properties):
-            LOGGER.debug("In add_filter_results, idx: {}, host_all_left_col_names: {}, "
-                         "__host_pass_filter_nums_list: {}".format(idx, host_result.all_left_col_names,
-                                                                   self.__host_pass_filter_nums_list))
+            host_all_left_col_names = set(host_result.all_left_col_names)
+            # LOGGER.debug("In add_filter_results, idx: {}, host_all_left_col_names: {}, "
+            #              "__host_pass_filter_nums_list: {}".format(idx, host_all_left_col_names,
+            #                                                       self.__host_pass_filter_nums_list))
             if idx >= len(self.__host_pass_filter_nums_list):
                 _host_pass_filter_nums = {}
                 self.__host_pass_filter_nums_list.append(_host_pass_filter_nums)
             else:
                 _host_pass_filter_nums = self.__host_pass_filter_nums_list[idx]
-            for col_name in host_result.last_left_col_names:
+            host_last_left_col_names = host_result.last_left_col_names
+            for col_name in host_last_left_col_names:
                 _host_pass_filter_nums.setdefault(col_name, 0)
-                if col_name in host_result.all_left_col_names:
+                if col_name in host_all_left_col_names:
                     _host_pass_filter_nums[col_name] += 1
 
             feature_value_pb = feature_selection_param_pb2.FeatureValue(feature_values=host_result.feature_values)
             host_feature_values.append(feature_value_pb)
-            left_col_pb = feature_selection_param_pb2.LeftCols(original_cols=host_result.last_left_col_names,
+            left_col_pb = feature_selection_param_pb2.LeftCols(original_cols=host_last_left_col_names,
                                                                left_cols=host_result.left_col_dicts)
             host_left_cols.append(left_col_pb)
 
         # for col_name in select_properties.all_left_col_names:
-        for col_name in select_properties.last_left_col_names:
+        self_all_left_col_names = set(select_properties.all_left_col_names)
+        self_last_left_col_names = select_properties.last_left_col_names
+        for col_name in self_last_left_col_names:
             self.__guest_pass_filter_nums.setdefault(col_name, 0)
-            if col_name in select_properties.all_left_col_names:
+            if col_name in self_all_left_col_names:
                 self.__guest_pass_filter_nums[col_name] += 1
 
-        left_cols_pb = feature_selection_param_pb2.LeftCols(original_cols=select_properties.last_left_col_names,
+        left_cols_pb = feature_selection_param_pb2.LeftCols(original_cols=self_last_left_col_names,
                                                             left_cols=select_properties.left_col_dicts)
 
         this_filter_result = {
@@ -197,7 +205,7 @@ class CompletedSelectionResults(object):
         for pass_name_dict in self.__host_pass_filter_nums_list:
             sorted_list = sorted(pass_name_dict.items(), key=operator.itemgetter(1), reverse=True)
             result.append([x for x, _ in sorted_list])
-        LOGGER.debug(f"In get_host_sorted_col_names,"
-                     f" pass_counter: {self.__host_pass_filter_nums_list},"
-                     f"result: {result}")
+        # LOGGER.debug(f"In get_host_sorted_col_names,"
+        #             f" pass_counter: {self.__host_pass_filter_nums_list},"
+        #             f"result: {result}")
         return result

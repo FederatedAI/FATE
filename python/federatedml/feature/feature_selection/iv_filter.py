@@ -49,8 +49,8 @@ class IVFilter(FederatedIsoModelFilter):
         if self.merge_type == 'average':
             values /= len(metric_infos)
             host_values /= len(metric_infos)
-        LOGGER.debug(f"After merge, iv_values: {values}, host_values: {host_values},"
-                     f" merge_type:{self.merge_type}")
+        # LOGGER.debug(f"After merge, iv_values: {values}, host_values: {host_values},"
+        #              f" merge_type:{self.merge_type}")
         single_info = isometric_model.SingleMetricInfo(
             values=values,
             col_names=col_names,

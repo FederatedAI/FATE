@@ -35,7 +35,7 @@ class BinningAdapter(BaseAdapter):
         for n, v in values_sorted_dict:
             values.append(v.iv)
             col_names.append(n)
-        LOGGER.debug(f"When loading iv, values: {values}, col_names: {col_names}")
+        # LOGGER.debug(f"When loading iv, values: {values}, col_names: {col_names}")
         host_party_ids = [int(x.party_id) for x in remote_results]
         host_values = []
         host_col_names = []
@@ -48,8 +48,9 @@ class BinningAdapter(BaseAdapter):
                 h_col_names.append(n)
             host_values.append(np.array(h_values))
             host_col_names.append(h_col_names)
-        LOGGER.debug(f"host_party_ids: {host_party_ids}, host_values: {host_values},"
-                     f"host_col_names: {host_col_names}")
+        # LOGGER.debug(f"host_party_ids: {host_party_ids}, host_values: {host_values},"
+        #             f"host_col_names: {host_col_names}")
+        LOGGER.debug(f"host_party_ids: {host_party_ids}")
         single_info = isometric_model.SingleMetricInfo(
             values=np.array(values),
             col_names=col_names,
