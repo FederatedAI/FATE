@@ -325,7 +325,7 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
             self.callback_list.on_epoch_end(epoch_idx)
             should_stop = self.sync_stop_flag(epoch_idx)
             self.is_converged = should_stop
-            if should_stop:
+            if should_stop or self.stop_training:
                 break
 
         self.callback_list.on_train_end()
