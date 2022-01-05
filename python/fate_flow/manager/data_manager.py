@@ -16,7 +16,6 @@
 import operator
 
 from fate_arch import storage
-from fate_flow.settings import stat_logger
 from fate_flow.db.db_models import DB, TrackingMetric
 
 
@@ -54,38 +53,21 @@ def delete_tables_by_table_infos(output_data_table_infos):
 
 
 def delete_metric_data(metric_info):
-    if metric_info.get('model'):
-        sql = drop_metric_data_mode(metric_info.get('model'))
-    else:
-        sql = delete_metric_data_from_db(metric_info)
-    return sql
-
-
-@DB.connection_context()
-def drop_metric_data_mode(model):
-    try:
-        drop_sql = 'drop table t_tracking_metric_{}'.format(model)
-        DB.execute_sql(drop_sql)
-        stat_logger.info(drop_sql)
-        return drop_sql
-    except Exception as e:
-        stat_logger.exception(e)
-        raise e
+    status = delete_metric_data_from_db(metric_info)
+    return f"delete status: {status}"
 
 
 @DB.connection_context()
 def delete_metric_data_from_db(metric_info):
-    try:
-        job_id = metric_info['job_id']
-        metric_info.pop('job_id')
-        delete_sql = 'delete from t_tracking_metric_{}  where f_job_id="{}"'.format(job_id[:8], job_id)
-        for k, v in metric_info.items():
-            if hasattr(TrackingMetric, "f_" + k):
-                connect_str = " and f_"
-                delete_sql = delete_sql + connect_str + k + '="{}"'.format(v)
-        DB.execute_sql(delete_sql)
-        stat_logger.info(delete_sql)
-        return delete_sql
-    except Exception as e:
-        stat_logger.exception(e)
-        raise e
+    tracking_metric_model = type(TrackingMetric.model(table_index=metric_info.get("job_id")[:8]))
+    operate = tracking_metric_model.delete().where(*get_delete_filters(tracking_metric_model, metric_info))
+    return operate.execute() > 0
+
+
+def get_delete_filters(tracking_metric_model, metric_info):
+    delete_filters = []
+    primary_keys = ["job_id", "role", "party_id", "component_name"]
+    for key in primary_keys:
+        if key in metric_info:
+            delete_filters.append(operator.attrgetter("f_%s" % key)(tracking_metric_model) == metric_info[key])
+    return delete_filters
