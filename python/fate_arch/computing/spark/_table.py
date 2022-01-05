@@ -51,6 +51,10 @@ class Table(CTableABC):
         except:
             return
 
+    def copy(self):
+        """rdd is immutable, yet, inside content could be modify in some case"""
+        return Table(_map_value(self._rdd, lambda x: x))
+
     @computing_profile
     def save(self, address, partitions, schema, **kwargs):
         from fate_arch.common.address import HDFSAddress

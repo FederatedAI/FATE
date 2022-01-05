@@ -39,6 +39,9 @@ class Table(CTableABC):
     def partitions(self):
         return self._rp.get_partitions()
 
+    def copy(self):
+        return Table(self._rp.map_values(lambda x: x))
+
     @computing_profile
     def save(self, address, partitions, schema: dict, **kwargs):
         options = kwargs.get("options", {})

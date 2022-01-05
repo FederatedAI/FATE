@@ -182,7 +182,7 @@ class FixedPointTensor(TensorBase):
     def rescontruct(self, tensor_name=None, broadcast=True):
         from federatedml.secureprotol.spdz import SPDZ
         spdz = SPDZ.get_instance()
-        share_val = self.value
+        share_val = self.value.copy()
         name = tensor_name or self.tensor_name
 
         if name is None:
