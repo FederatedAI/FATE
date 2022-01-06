@@ -64,13 +64,14 @@ class SelectionProperties(object):
         for col_name in select_col_names:
             idx = self.col_name_maps.get(col_name)
             if idx is None:
-                LOGGER.warning("Adding a col_name that is not exist in header")
+                LOGGER.warning("Adding a col_name that does not exist in header")
                 continue
             if idx not in last_left_col_indexes:
                 continue
             if idx not in self.select_col_indexes:
                 self.select_col_indexes.append(idx)
-                self.select_col_names.append(self.header[idx])
+                # self.select_col_names.append(self.header[idx])
+                self.select_col_names.append(col_name)
 
     def add_left_col_name(self, left_col_name):
         idx = self.col_name_maps.get(left_col_name)
@@ -80,7 +81,8 @@ class SelectionProperties(object):
             return
         if idx not in self.left_col_indexes:
             self.left_col_indexes.append(idx)
-            self.left_col_names.append(self.header[idx])
+            # self.left_col_names.append(self.header[idx])
+            self.left_col_names.append(left_col_name)
         # LOGGER.debug("After add_left_col_name, select_col_indexes: {}, select_col_names: {}".format(
         #     self.left_col_indexes, self.left_col_names
         # ))

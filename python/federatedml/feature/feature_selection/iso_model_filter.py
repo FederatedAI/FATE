@@ -200,7 +200,8 @@ class FederatedIsoModelFilter(IsoModelFilter):
             results = self._top_k_fit(all_feature_values, threshold, take_high)
         else:
             results = self._percentile_fit(all_feature_values, threshold, take_high)
-
+        # LOGGER.debug(f"results length: {len(results)}, type of results is: {type(results)}")
+        results = set(results)
         # LOGGER.debug(f"filter_type: {filter_type}, results: {results}, "
         #              f"all_feature_values: {all_feature_values}")
 
