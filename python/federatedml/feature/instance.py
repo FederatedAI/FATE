@@ -56,7 +56,7 @@ class Instance(object):
     def copy(self, exclusive_attr=None):
         keywords = {"inst_id", "weight", "features", "label"}
         if exclusive_attr:
-            keywords -= set(keywords)
+            keywords -= set(exclusive_att)
         copy_obj = Instance()
         for key in keywords:
             if key in exclusive_attr:
