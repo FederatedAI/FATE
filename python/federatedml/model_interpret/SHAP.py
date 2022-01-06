@@ -1,5 +1,6 @@
 import copy
 import time
+import numpy as np
 from federatedml.model_base import MetricMeta
 from fate_arch.session import computing_session as session
 from federatedml.model_base import ModelBase
@@ -112,13 +113,20 @@ class SHAP(ModelBase):
 
         LOGGER.info('using explainer {}, role is {}'.format(self.explainer, self.role))
 
-    def callback_result(self, ids, shap_result, header):
+    def compute_shap_abs_average(self, shap_arr):
+        shap_abs = np.array(shap_arr)
+        shap_avg = np.mean(shap_abs, axis=0)
+        return shap_avg.tolist()
+
+    def callback_result(self, ids, shap_result, features, header):
         # callback 100 data only
         limit = 100
         ids = ids[0: limit]
         shap_result = shap_result[0: limit]
+        shap_abs_avg = self.compute_shap_abs_average(shap_result.tolist())
         callback_data = {'sample_id': ids, 'shap': shap_result.tolist(), 'header': header,
-                         'class_num': shap_result.shape[1]//len(header)}
+                         'class_num': shap_result.shape[1]//len(header), 'shap_abs_avg': shap_abs_avg,
+                         'features': features.tolist()}
         meta = MetricMeta(name='shap', metric_type='shap', extra_metas=callback_data)
         self.tracker.set_metric_meta('shap', 'shap_result', meta)
 
@@ -142,8 +150,9 @@ class SHAP(ModelBase):
         self.data_partition = data_inst.partitions
         sample_ids, explain_rs, header = self.explainer.explain(data_inst, self.interpret_limit)
         e = time.time()
+        data_arr = self.explainer.cache_data_arr
         ret_table = self.make_output_table(sample_ids, explain_rs, header)
-        self.callback_result(sample_ids, explain_rs, header)
+        self.callback_result(sample_ids, explain_rs, data_arr, header)
         LOGGER.debug('explain rs shape is {}'.format(explain_rs.shape))
 
         return ret_table

@@ -60,6 +60,7 @@ class Explainer(object):
         assert role in [consts.GUEST, consts.HOST, consts.ARBITER]
         self.role = role
         self.flow_id = flow_id
+        self.cache_data_arr = None
 
     def init_model(self, *args):
         pass

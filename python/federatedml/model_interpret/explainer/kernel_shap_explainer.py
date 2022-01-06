@@ -83,6 +83,7 @@ class HomoKernelSHAP(KernelSHAP):
     def explain(self, data_inst, n=500):
 
         ids, header, data_arr = data_inst_table_to_arr(data_inst, n)
+        self.cache_data_arr = data_arr
 
         ref_vec = None
         if self.reference_vec_type == consts.ZEROS:
@@ -515,17 +516,19 @@ class HeteroKernelSHAP(KernelSHAP):
         self.table_partitions = data_inst.partitions
         # test example
         X = take_inst_in_sorted_order(data_inst, n, False)
+        data_arr = []
         total_num = len(X)
         finished_num = 0
         idx = 1
         shap_rs = []
         for inst in X:
             x = inst[1].features
+            data_arr.append(x)
             rs = self.explain_row(x, data_inst)
             shap_rs.append(rs)
             finished_num += 1
             if finished_num > (total_num//10) * idx:
                 LOGGER.info('report progress: {}/{}'.format(finished_num, total_num))
                 idx += 1
-
+        self.cache_data_arr = np.array(data_arr)
         return shap_rs

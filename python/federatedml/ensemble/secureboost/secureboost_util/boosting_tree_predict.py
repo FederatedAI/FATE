@@ -172,7 +172,6 @@ def sbt_guest_predict(data_inst, transfer_var: HeteroSecureBoostTransferVariable
     while True:
 
         # LOGGER.info('cur predict round is {}'.format(comm_round))
-
         node_pos_tb = node_pos_tb.join(data_inst, traverse_func)
         node_pos_tb, final_leaf_pos = save_leaf_pos_and_mask_leaf_pos(node_pos_tb, final_leaf_pos)
 

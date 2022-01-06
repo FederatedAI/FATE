@@ -69,6 +69,7 @@ class HomoTreeSHAP(TreeSHAP):
     def explain(self, data_inst, n=500):
 
         ids, header, arr = data_inst_table_to_arr(data_inst, n)
+        self.cache_data_arr = arr
         lgb_model = self.convert_sbt_to_lgb(self.tree_model_param, self.tree_model_meta)
         contrib = lgb_model.predict(arr, pred_contrib=True)
         if self.class_num > 2:
@@ -266,6 +267,7 @@ class HeteroTreeSHAP(TreeSHAP):
         elif self.role == consts.GUEST:
 
             ids, header, arr = take_inst_in_sorted_order(data_inst=data_inst, take_num=n)
+            self.cache_data_arr = arr
 
             # for non full explain
             host_fed_feat_idx = None
