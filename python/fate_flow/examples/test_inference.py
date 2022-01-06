@@ -37,10 +37,10 @@ def inference(ids, ip, port):
 
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("--ids", type=str, nargs='+', help="path of pipeline files", required=False,
+    arg_parser.add_argument("--ids", type=str, nargs='+', help="Data identification", required=False,
                             default=["123", "456"])
-    arg_parser.add_argument("--ip", type=str, help="test template", required=False, default="127.0.0.1")
-    arg_parser.add_argument("--port", type=str, help="test template", required=False, default="8059")
+    arg_parser.add_argument("--ip", type=str, help="serving ip", required=False, default="127.0.0.1")
+    arg_parser.add_argument("--port", type=str, help="serving port", required=False, default="8059")
     args = arg_parser.parse_args()
     ids = args.ids
     ip = args.ip
