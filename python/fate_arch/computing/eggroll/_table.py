@@ -70,7 +70,7 @@ class Table(CTableABC):
     def count(self, **kwargs) -> int:
         if self._count is None:
             self._count = self._rp.count()
-        return self._count()
+        return self._count
 
     @computing_profile
     def take(self, n=1, **kwargs):
