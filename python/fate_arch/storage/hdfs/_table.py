@@ -97,7 +97,7 @@ class StorageTable(StorageTableBase):
         return count
 
     def _save_as(
-        self, address, partitions=None, name=None, namespace=None, schema=None, **kwargs
+        self, address, partitions=None, name=None, namespace=None, **kwargs
     ):
         self._hdfs_client.copy_file(src=self.path, dst=address.path)
         table = StorageTable(

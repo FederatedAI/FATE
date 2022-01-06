@@ -115,3 +115,5 @@ SRC_ROLE =  click.option("--src-role", type=click.Choice(role_choices_list), req
 PRIVILEGE_ROLE =  click.option("--privilege-role", type=click.STRING, help="privilege role.")
 PRIVILEGE_COMMAND =  click.option("--privilege-command", type=click.STRING, help="privilege command.")
 PRIVILEGE_COMPONENT =  click.option("--privilege-component", type=click.STRING, help="privilege component.")
+
+MIN_DATA =  click.option("--min-data", type=click.INT, help="min data")
