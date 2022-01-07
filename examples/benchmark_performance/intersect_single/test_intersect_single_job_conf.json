@@ -15,14 +15,13 @@
     "component_parameters": {
         "common": {
             "intersect_0": {
-                "intersect_method": "raw",
+                "intersect_method": "rsa",
                 "sync_intersect_ids": true,
-                "raw_params": {
-                    "use_hash": false,
+                "rsa_params": {
                     "hash_method": "sha256",
-                    "salt": "12345",
-                    "base64": false,
-                    "join_role": "host"
+                    "final_hash_method": "sha256",
+                    "split_calculation": false,
+                    "key_length": 2048
                 },
                 "only_output_key": true
             }

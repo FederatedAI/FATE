@@ -162,6 +162,7 @@ def get_role(conf: Config):
                    'model_file_path': os.path.abspath(conf.data_base_dir) + flow_test_template['model_conf_path'],
                    'server_url': "http://{}/{}".format(flow_services, config['api_version']),
                    'train_auc': config['train_auc'],
+                   'phone_num': config['phone_num'],
                    'component_name': config['component_name'],
                    'component_is_homo': config.get('component_is_homo', False),
                    'serving_setting': conf.serving_setting['serving_setting']['address'],

@@ -3,6 +3,7 @@ api_version: v1
 component_name: hetero_lr_0
 metric_output_path: ./output/metric/{}_hetero_lr_0.json
 model_output_path: ./output/model/{}_hetero_lr_0.json
+phone_num: 12345678900
 
 flow_test_template:
   train_conf_path: /examples/flow_test_template/hetero_lr/hetero_lr_normal_conf.json
