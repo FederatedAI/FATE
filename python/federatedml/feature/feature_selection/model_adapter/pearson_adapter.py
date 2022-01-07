@@ -44,14 +44,14 @@ class PearsonAdapter(BaseAdapter):
         from federatedml.util import LOGGER
         for idx in range(local_corr.shape[0]):
             corr_col = local_corr[idx, :]
-            LOGGER.debug(f"local_col_idx: {idx}, corr_col: {corr_col}")
+            # LOGGER.debug(f"local_col_idx: {idx}, corr_col: {corr_col}")
 
         if model_param.corr:
             corr = np.array(model_param.corr).reshape(*model_param.shapes)
 
             for idx in range(corr.shape[1]):
                 corr_col = corr[:, idx]
-                LOGGER.debug(f"col_idx: {idx}, corr_col: {corr_col}")
+                # LOGGER.debug(f"col_idx: {idx}, corr_col: {corr_col}")
 
             host_names = list(list(model_param.all_names)[1].names)
             parties = list(model_param.parties)
