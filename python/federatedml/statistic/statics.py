@@ -74,7 +74,7 @@ class SummaryStatistics(object):
             filter_rows = []
             filter_idx = []
             for idx, value in enumerate(rows):
-                if value in self.abnormal_list:
+                if value in self.abnormal_list or (isinstance(value, float) and np.isnan(value)):
                     continue
                 try:
                     value = float(value)
@@ -88,7 +88,7 @@ class SummaryStatistics(object):
             if not filter_idx:
                 return
 
-            filter_rows = np.array(rows, dtype=float)
+            filter_rows = np.array(filter_rows, dtype=float)
             filter_idx = np.array(filter_idx)
 
             self.count[filter_idx] += 1
@@ -295,7 +295,7 @@ class MissingStatistic(object):
 
     @staticmethod
     def is_sparse(tb):
-        return type(tb.take(1)[0][1].features) == SparseVector
+        return isinstance(tb.take(1)[0][1].features, SparseVector)
 
     @staticmethod
     def check_table_content(tb):
@@ -303,7 +303,7 @@ class MissingStatistic(object):
         if not tb.count() > 0:
             raise ValueError('input table must contains at least 1 sample')
         first_ = tb.take(1)[0][1]
-        if type(first_) == Instance:
+        if isinstance(first_, Instance):
             return True
         else:
             raise ValueError('unknown input format')
