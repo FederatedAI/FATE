@@ -30,6 +30,8 @@ class Table(CTableABC):
         self._table = table
         self._engine = ComputingEngine.STANDALONE
 
+        self._count = None
+
     @property
     def engine(self):
         return self._engine
@@ -70,7 +72,9 @@ class Table(CTableABC):
 
     @computing_profile
     def count(self) -> int:
-        return self._table.count()
+        if self._count is None:
+            self._count = self._table.count()
+        return self._count
 
     @computing_profile
     def collect(self, **kwargs):
@@ -78,9 +82,7 @@ class Table(CTableABC):
 
     @computing_profile
     def take(self, n=1, **kwargs):
-        if n <= 0:
-            raise ValueError(f"{n} <= 0")
-        return list(itertools.islice(self._table.collect(**kwargs), n))
+        return self._table.take(n=n, **kwargs)
 
     @computing_profile
     def first(self, **kwargs):

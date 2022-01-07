@@ -135,7 +135,7 @@ class StorageTable(StorageTableBase):
             selector = fs.FileSelector(self.path)
             file_infos = self._local_fs_client.get_file_info(selector)
             for file_info in file_infos:
-                if file_info.base_name == "_SUCCESS":
+                if file_info.base_name.startswith(".") or file_info.base_name.startswith("_"):
                     continue
                 assert (
                     file_info.is_file

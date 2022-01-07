@@ -1,10 +1,8 @@
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
-
 import numpy as np
-from federatedml.util import consts
 import logging
-from federatedml.util import LOGGER
+from federatedml.util import consts
 from federatedml.evaluation.metrics import classification_metric
 from federatedml.evaluation.metrics import regression_metric
 from federatedml.evaluation.metrics import clustering_metric
@@ -335,10 +333,10 @@ class MetricInterface(object):
         if self.eval_type == consts.BINARY:
 
             sorted_labels, sorted_scores = classification_metric.sort_score_and_label(labels, pred_scores)
-            score_threshold, cuts = classification_metric.ThresholdCutter.cut_by_step(sorted_scores, steps=0.01)
-            score_threshold.append(0)
+            _, cuts = classification_metric.ThresholdCutter.cut_by_step(sorted_scores, steps=0.01)
+            fixed_interval_threshold = classification_metric.ThresholdCutter.fixed_interval_threshold()
             confusion_mat = classification_metric.ConfusionMatrix.compute(sorted_labels, sorted_scores,
-                                                                          score_threshold,
+                                                                          fixed_interval_threshold,
                                                                           ret=['tp', 'fp', 'fn', 'tn'])
 
             confusion_mat['tp'] = self.__to_int_list(confusion_mat['tp'])
@@ -346,7 +344,7 @@ class MetricInterface(object):
             confusion_mat['fn'] = self.__to_int_list(confusion_mat['fn'])
             confusion_mat['tn'] = self.__to_int_list(confusion_mat['tn'])
 
-            return confusion_mat, cuts, score_threshold
+            return confusion_mat, cuts, fixed_interval_threshold
         else:
             logging.warning('error: f-score metric is for binary classification only')
 
