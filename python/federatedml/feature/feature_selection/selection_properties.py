@@ -61,6 +61,9 @@ class SelectionProperties(object):
 
     def add_select_col_names(self, select_col_names):
         last_left_col_indexes = set(self.last_left_col_indexes)
+        select_col_indexes = set(self.select_col_indexes)
+        added_select_col_indexes = set()
+
         for col_name in select_col_names:
             idx = self.col_name_maps.get(col_name)
             if idx is None:
@@ -68,10 +71,11 @@ class SelectionProperties(object):
                 continue
             if idx not in last_left_col_indexes:
                 continue
-            if idx not in self.select_col_indexes:
+            if idx not in select_col_indexes and idx not in added_select_col_indexes:
                 self.select_col_indexes.append(idx)
                 # self.select_col_names.append(self.header[idx])
                 self.select_col_names.append(col_name)
+                added_select_col_indexes.add(idx)
 
     def add_left_col_name(self, left_col_name):
         idx = self.col_name_maps.get(left_col_name)
