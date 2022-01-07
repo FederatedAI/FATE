@@ -57,7 +57,8 @@ class SummaryStatistics(object):
 
         where i is the current count, and S_i is the current expectation of x
         """
-        if self.abnormal_list is None:
+        #if self.abnormal_list is None:
+        if not self.abnormal_list:
             rows = np.array(rows, dtype=float)
             self.count += 1
             self.sum += rows
@@ -66,11 +67,45 @@ class SummaryStatistics(object):
             self.min_value = np.min([self.min_value, rows], axis=0)
             for m in range(3, self.stat_order + 1):
                 exp_sum_m = getattr(self, f"exp_sum_{m}")
+                # exp_sum_m += rows ** m
                 exp_sum_m = (self.count - 1) / self.count * exp_sum_m + rows ** m / self.count
                 setattr(self, f"exp_sum_{m}", exp_sum_m)
         else:
+            filter_rows = []
+            filter_idx = []
             for idx, value in enumerate(rows):
-                if value in self.abnormal_list or np.isnan(value):
+                if value in self.abnormal_list or (isinstance(value, float) and np.isnan(value)):
+                    continue
+                try:
+                    value = float(value)
+                except ValueError as e:
+                    raise ValueError(f"In add func, value should be either a numeric input or be listed in "
+                                     f"abnormal list. Error info: {e}")
+
+                filter_rows.append(value)
+                filter_idx.append(idx)
+
+            if not filter_idx:
+                return
+
+            filter_rows = np.array(rows, dtype=float)
+            filter_idx = np.array(filter_idx)
+
+            self.count[filter_idx] += 1
+            self.sum[filter_idx] += filter_rows
+            self.sum_square[filter_idx] += filter_rows ** 2
+            self.max_value[filter_idx] = np.max([self.max_value[filter_idx], filter_rows], axis=0)
+            self.min_value[filter_idx] = np.min([self.min_value[filter_idx], filter_rows], axis=0)
+            for m in range(3, self.stat_order + 1):
+                exp_sum_m = getattr(self, f"exp_sum_{m}")
+                # exp_sum_m[filter_idx] += filter_rows ** m
+                exp_sum_m = (self.count[filter_idx] - 1) / self.count[filter_idx] * exp_sum_m[filter_idx] + \
+                    filter_rows ** m / self.count[filter_idx]
+                setattr(self, f"exp_sum_{m}", exp_sum_m)
+
+            """
+            for idx, value in enumerate(rows):
+                if value in self.abnormal_list:
                     continue
                 try:
                     value = float(value)
@@ -85,8 +120,9 @@ class SummaryStatistics(object):
                 for m in range(3, self.stat_order + 1):
                     exp_sum_m = getattr(self, f"exp_sum_{m}")
                     exp_sum_m[idx] = (self.count[idx] - 1) / self.count[idx] * \
-                        exp_sum_m[idx] + rows[idx] ** m / self.count[idx]
+                                     exp_sum_m[idx] + rows[idx] ** m / self.count[idx]
                     setattr(self, f"exp_sum_{m}", exp_sum_m)
+            """
 
     def merge(self, other):
         if self.stat_order != other.stat_order:
@@ -102,6 +138,18 @@ class SummaryStatistics(object):
             setattr(self, f"exp_sum_{m}", exp_sum)
         self.count += other.count
         return self
+
+    """
+    def summary(self):
+        for m in range(3, self.stat_order + 1):
+            exp_sum_m = getattr(self, f"exp_sum_{m}")
+            for idx, cnt in enumerate(self.count):
+                if np.abs(cnt) < consts.FLOAT_ZERO:
+                    continue
+                exp_sum_m[idx] /= cnt
+
+            setattr(self, f"exp_sum_{m}", exp_sum_m)
+    """
 
     @property
     def mean(self):
@@ -139,7 +187,7 @@ class SummaryStatistics(object):
         where the k-th central moment of a data sample is:
         .. math::
 
-            m_k = \frac{1}{n} \\sum_{i = 1}^n (x_i - \bar{x})^k
+            m_k = \frac{1}{n} \sum_{i = 1}^n (x_i - \bar{x})^k
 
         the 3rd central moment is often used to calculate the coefficient of skewness
         """
@@ -157,7 +205,7 @@ class SummaryStatistics(object):
         where the k-th central moment of a data sample is:
         .. math::
 
-            m_k = \frac{1}{n} \\ sum_{i = 1}^n (x_i - \bar{x})^k
+            m_k = \frac{1}{n} \ sum_{i = 1}^n (x_i - \bar{x})^k
 
         the 4th central moment is often used to calculate the coefficient of kurtosis
         """
@@ -179,7 +227,7 @@ class SummaryStatistics(object):
 
         where
         .. math::
-            m_i=\frac{1}{N}\\sum_{n=1}^N(x[n]-\bar{x})^i
+            m_i=\frac{1}{N}\sum_{n=1}^N(x[n]-\bar{x})^i
 
         If the bias is False, return the adjusted Fisher-Pearson standardized moment coefficient
         i.e.
@@ -187,7 +235,7 @@ class SummaryStatistics(object):
         .. math::
 
         G_1=\frac{k_3}{k_2^{3/2}}=
-            \frac{\\sqrt{N(N-1)}}{N-2}\frac{m_3}{m_2^{3/2}}.
+            \frac{\sqrt{N(N-1)}}{N-2}\frac{m_3}{m_2^{3/2}}.
 
         """
         m2 = self.variance
@@ -416,6 +464,7 @@ class MultivariateStatisticalSummary(object):
 
         """
 
+        cols_index_set = set(cols_index)
         for k, instances in data_instances:
             if not is_sparse:
                 if isinstance(instances, Instance):
@@ -427,12 +476,15 @@ class MultivariateStatisticalSummary(object):
                     # except ValueError as e:
                     #     raise ValueError(f"Static Module accept numeric input only. Error info: {e}")
                 # LOGGER.debug(f"In statics, features: {features}")
-                row_values = [x for idx, x in enumerate(features) if idx in cols_index]
+                # row_values = [x for idx, x in enumerate(features) if idx in cols_index]
+                row_values = [x for idx, x in enumerate(features) if idx in cols_index_set]
                 # row_values = features[cols_index]
             else:
                 sparse_data = instances.features.get_sparse_vector()
                 row_values = np.array([sparse_data.get(x, 0) for x in cols_index])
             summary_statistics.add_rows(row_values)
+
+        # summary_statistics.summary()
         return summary_statistics
 
     @staticmethod
