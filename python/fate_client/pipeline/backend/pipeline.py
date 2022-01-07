@@ -320,10 +320,32 @@ class PipeLine(object):
                     if hasattr(component.output, attr):
                         component_dsl["output"][output_key] = getattr(component.output, attr)
 
+            provider_name = None
+            provider_version = None
+            if not hasattr(component, "source_provider"):
+                raise ValueError(f"Can not retrieval source provider of component {name}, "
+                                 f"refer to pipeline/component/component_base.py")
+            else:
+                provider_name = getattr(component, "source_provider")
+                if provider_name is None:
+                    raise ValueError(f"Can not retrieval source provider of component {name}")
+
             if hasattr(component, "provider"):
                 provider = getattr(component, "provider")
                 if provider is not None:
-                    component_dsl["provider"] = provider
+                    if provider.find("@") != -1:
+                        provider_name, provider_version = provider.split("@", -1)
+                    else:
+                        provider_name = provider
+                    # component_dsl["provider"] = provider
+
+            if getattr(component, "provider_version") is not None:
+                provider_version = getattr(component, "provider_version")
+
+            if provider_name and provider_version:
+                component_dsl["provider"] = "@".join([provider_name, provider_version])
+            elif provider_name:
+                component_dsl["provider"] = provider_name
 
             self._train_dsl["components"][name] = component_dsl
 

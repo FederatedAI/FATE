@@ -18,7 +18,7 @@ import random
 import functools
 import numpy as np
 from collections import Iterable
-from federatedml.secureprotol import PaillierEncrypt, IterativeAffineEncrypt
+from federatedml.secureprotol import PaillierEncrypt
 from federatedml.util import consts
 
 

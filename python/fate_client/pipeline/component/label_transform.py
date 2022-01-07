@@ -15,15 +15,15 @@
 #
 
 from pipeline.param.label_transform_param import LabelTransformParam
-from pipeline.component.component_base import Component
+from pipeline.component.component_base import FateComponent
 from pipeline.interface import Input
 from pipeline.interface import Output
 from pipeline.utils.logger import LOGGER
 
 
-class LabelTransform(Component, LabelTransformParam):
+class LabelTransform(FateComponent, LabelTransformParam):
     def __init__(self, **kwargs):
-        Component.__init__(self, **kwargs)
+        FateComponent.__init__(self, **kwargs)
 
         #print (self.name)
         LOGGER.debug(f"{self.name} component created")

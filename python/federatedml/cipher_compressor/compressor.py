@@ -137,7 +137,6 @@ class NormalCipherPackage(CipherPackage):
     def unpack(self, decrypter):
 
         if type(decrypter) == PaillierEncrypt:
-            LOGGER.debug(f"cipher_text: {self._cipher_text}")
             compressed_plain_text = decrypter.privacy_key.raw_decrypt(self._cipher_text.ciphertext())
         else:
             raise ValueError('unknown decrypter: {}'.format(type(decrypter)))

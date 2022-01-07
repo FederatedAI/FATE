@@ -15,14 +15,14 @@
 #
 
 from pipeline.param.sample_weight_param import SampleWeightParam
-from pipeline.component.component_base import Component
+from pipeline.component.component_base import FateComponent
 from pipeline.interface import Input
 from pipeline.interface import Output
 
 
-class SampleWeight(Component, SampleWeightParam):
+class SampleWeight(FateComponent, SampleWeightParam):
     def __init__(self, **kwargs):
-        Component.__init__(self, **kwargs)
+        FateComponent.__init__(self, **kwargs)
 
         new_kwargs = self.erase_component_base_param(**kwargs)
 

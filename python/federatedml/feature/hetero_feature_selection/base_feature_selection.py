@@ -94,10 +94,10 @@ class BaseHeteroFeatureSelection(ModelBase):
         return meta_protobuf_obj
 
     def _get_param(self):
-        LOGGER.debug("curt_select_properties.left_col_name: {}, completed_selection_result: {}".format(
-            self.curt_select_properties.left_col_names, self.completed_selection_result.all_left_col_names
-        ))
-        LOGGER.debug("Length of left cols: {}".format(len(self.completed_selection_result.all_left_col_names)))
+        # LOGGER.debug("curt_select_properties.left_col_name: {}, completed_selection_result: {}".format(
+        #     self.curt_select_properties.left_col_names, self.completed_selection_result.all_left_col_names
+        # ))
+        # LOGGER.debug("Length of left cols: {}".format(len(self.completed_selection_result.all_left_col_names)))
         # left_cols = {x: True for x in self.curt_select_properties.left_col_names}
         left_cols = {x: True for x in self.completed_selection_result.all_left_col_names}
         final_left_cols = feature_selection_param_pb2.LeftCols(
@@ -109,7 +109,7 @@ class BaseHeteroFeatureSelection(ModelBase):
         if self.role == consts.GUEST:
             for host_id, this_host_name in enumerate(self.completed_selection_result.get_host_sorted_col_names()):
                 party_id = self.component_properties.host_party_idlist[host_id]
-                LOGGER.debug("In _get_param, this_host_name: {}, party_id: {}".format(this_host_name, party_id))
+                # LOGGER.debug("In _get_param, this_host_name: {}, party_id: {}".format(this_host_name, party_id))
 
                 host_col_names.append(feature_selection_param_pb2.HostColNames(col_names=this_host_name,
                                                                                party_id=str(party_id)))
@@ -136,9 +136,9 @@ class BaseHeteroFeatureSelection(ModelBase):
         return self.data_output
 
     def export_model(self):
-        LOGGER.debug("Model output is : {}".format(self.model_output))
+        # LOGGER.debug("Model output is : {}".format(self.model_output))
         if self.model_output is not None:
-            LOGGER.debug("model output is already exist, return directly")
+            LOGGER.debug("model output already exists, return directly")
             return self.model_output
 
         meta_obj = self._get_meta()
@@ -171,7 +171,7 @@ class BaseHeteroFeatureSelection(ModelBase):
         self.curt_select_properties.add_select_col_names(header)
 
         final_left_cols_names = dict(model_param.final_left_cols.left_cols)
-        LOGGER.debug("final_left_cols_names: {}".format(final_left_cols_names))
+        # LOGGER.debug("final_left_cols_names: {}".format(final_left_cols_names))
         for col_name, _ in final_left_cols_names.items():
             self.curt_select_properties.add_left_col_name(col_name)
         self.completed_selection_result.add_filter_results(filter_name='conclusion',
@@ -216,22 +216,22 @@ class BaseHeteroFeatureSelection(ModelBase):
 
     def _transfer_data(self, data_instances):
 
-        before_one_data = data_instances.first()
+        # before_one_data = data_instances.first()
         f = functools.partial(self.select_cols,
                               left_col_idx=self.completed_selection_result.all_left_col_indexes)
 
         new_data = data_instances.mapValues(f)
 
-        LOGGER.debug("When transfering, all left_col_names: {}".format(
-            self.completed_selection_result.all_left_col_names
-        ))
+        # LOGGER.debug("When transfering, all left_col_names: {}".format(
+        #    self.completed_selection_result.all_left_col_names
+        #))
         new_data = self.set_schema(new_data, self.completed_selection_result.all_left_col_names)
 
-        one_data = new_data.first()[1]
-        LOGGER.debug(
-            "In feature selection transform, Before transform: {}, length: {} After transform: {}, length: {}".format(
-                before_one_data[1].features, len(before_one_data[1].features),
-                one_data.features, len(one_data.features)))
+        # one_data = new_data.first()[1]
+        # LOGGER.debug(
+        #    "In feature selection transform, Before transform: {}, length: {} After transform: {}, length: {}".format(
+        #        before_one_data[1].features, len(before_one_data[1].features),
+        #        one_data.features, len(one_data.features)))
 
         return new_data
 
@@ -339,7 +339,7 @@ class BaseHeteroFeatureSelection(ModelBase):
         })
 
         new_data = self._transfer_data(data_instances)
-        LOGGER.debug(f"Final summary: {self.summary()}")
+        # LOGGER.debug(f"Final summary: {self.summary()}")
         LOGGER.info("Finish Hetero Selection Fit and transform.")
         return new_data
 

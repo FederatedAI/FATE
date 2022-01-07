@@ -105,7 +105,7 @@ class HeteroPoissonGuest(HeteroPoissonBase):
                 )
                 # LOGGER.debug("iteration:{} Guest's gradient: {}".format(self.n_iter_, optimized_gradient))
                 loss_norm = self.optimizer.loss_norm(self.model_weights)
-                self.gradient_loss_operator.compute_loss(data_instances, self.model_weights, self.n_iter_,
+                self.gradient_loss_operator.compute_loss(batch_data, self.model_weights, self.n_iter_,
                                                          batch_index, batch_offset, loss_norm)
 
                 self.model_weights = self.optimizer.update_model(self.model_weights, optimized_gradient)
