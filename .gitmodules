@@ -9,4 +9,4 @@
 [submodule "fateflow"]
 	path = fateflow
 	url = https://github.com/FederatedAI/FATE-Flow.git
-	branch = v1.7.1
+	branch = develop-1.7.1
