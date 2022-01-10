@@ -1,0 +1,5 @@
+component_name: spdz_secure_0
+
+flow_test_template:
+  train_conf_path: /examples/flow_test_template/spdz/spdz_conf.json
+  train_dsl_path: /examples/flow_test_template/spdz/spdz_dsl.json

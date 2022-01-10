@@ -1,0 +1,7 @@
+{
+    "components" : {
+        "spdz_secure_0": {
+            "module": "SPDZSecure"
+        }
+    }
+}

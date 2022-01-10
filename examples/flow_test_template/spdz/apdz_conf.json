@@ -1,0 +1,22 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 10000
+    },
+    "role": {
+        "guest": [
+            10000
+        ],
+        "host": [
+            9999
+        ]
+    },
+    "component_parameters": {
+        "common": {
+            "spdz_secure_0": {
+                "calls_count": 1000
+            }
+        }
+    }
+}
