@@ -122,11 +122,16 @@ class DecisionTreeParam(BaseParam):
     max_split_nodes: int, positive integer, we will use no more than max_split_nodes to
                       parallel finding their splits in a batch, for memory consideration. default is 65536
 
-    feature_importance_type: str, due to the safety concern, we adjust training strategy of Hetero-SBT in FATE-1.8,
-                             feature importance will support 'split' only.
+    feature_importance_type: str,
                              if is 'split', feature_importances calculate by feature split times,
-                             if is 'gain', this option will be IGNORED AND RESET TO 'split'
+                             if is 'gain', feature_importances calculate by feature split gain.
                              default: 'split'
+
+                             Due to the safety concern, we adjust training strategy of Hetero-SBT in FATE-1.8,
+                             When running Hetero-SBT, this parameter is now abandoned.
+                             In Hetero-SBT of FATE-1.8, guest side will compute split, gain of local features,
+                             and receive anonymous feature importance results from hosts. Hosts will compute split
+                             importance of local features.
 
     use_missing: bool, accepted True, False only, use missing value in training process or not. default: False
 
@@ -140,7 +145,7 @@ class DecisionTreeParam(BaseParam):
 
     def __init__(self, criterion_method="xgboost", criterion_params=[0.1, 0], max_depth=3,
                  min_sample_split=2, min_impurity_split=1e-3, min_leaf_node=1,
-                 max_split_nodes=consts.MAX_SPLIT_NODES, feature_importance_type="split",
+                 max_split_nodes=consts.MAX_SPLIT_NODES, feature_importance_type=None,
                  n_iter_no_change=True, tol=0.001, min_child_weight=0,
                  use_missing=False, zero_as_missing=False, deterministic=False):
 
@@ -215,13 +220,9 @@ class DecisionTreeParam(BaseParam):
         if type(self.tol).__name__ not in ["float", "int", "long"]:
             raise ValueError("decision tree param's tol {} not supported, should be numeric".format(self.tol))
 
-        if self.feature_importance_type == 'gain':
-            self.feature_importance_type = 'split'
-            LOGGER.warning('feature importance type of Hetero-SecureBoost does not support "gain" in FATE-1.8')
         self.feature_importance_type = self.check_and_change_lower(self.feature_importance_type,
-                                                                    ["split"],
+                                                                    ["split", "gain"],
                                                                     descr)
-
         self.check_nonnegative_number(self.min_child_weight, 'min_child_weight')
         self.check_boolean(self.deterministic, 'deterministic')
 

@@ -22,7 +22,6 @@
 # =============================================================================
 import abc
 from abc import ABC
-
 import numpy as np
 import functools
 from federatedml.ensemble.basic_algorithms.algorithm_prototype import BasicAlgorithms

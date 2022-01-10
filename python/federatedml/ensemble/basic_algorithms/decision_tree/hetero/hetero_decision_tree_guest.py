@@ -20,6 +20,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
     def __init__(self, tree_param):
         super(HeteroDecisionTreeGuest, self).__init__(tree_param)
 
+        # In FATE-1.8 reset feature importance to 'split'
+        self.feature_importance_type = 'split'
+
         self.encrypter = None
         self.encrypted_mode_calculator = None
         self.transfer_inst = HeteroDecisionTreeTransferVariable()
