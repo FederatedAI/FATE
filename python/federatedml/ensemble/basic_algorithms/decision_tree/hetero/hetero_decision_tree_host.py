@@ -4,7 +4,6 @@ from federatedml.util import LOGGER
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import DecisionTreeModelMeta
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import DecisionTreeModelParam
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.decision_tree import DecisionTree
-from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.splitter import SplitInfo
 from federatedml.transfer_variable.transfer_class.hetero_decision_tree_transfer_variable import \
     HeteroDecisionTreeTransferVariable
 from federatedml.util import consts
@@ -18,6 +17,8 @@ class HeteroDecisionTreeHost(DecisionTree):
 
         super(HeteroDecisionTreeHost, self).__init__(tree_param)
 
+        # add host side feature importance support
+        self.feature_importance_type = 'split'
         self.encrypted_grad_and_hess = None
         self.runtime_idx = 0
         self.sitename = consts.HOST  # will be modified in self.set_runtime_idx()

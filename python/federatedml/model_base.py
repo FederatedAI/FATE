@@ -136,6 +136,17 @@ class WarpedTrackerClient:
 
 
 class ModelBase(object):
+
+    component_name = None
+
+    @classmethod
+    def set_component_name(cls, name):
+        cls.component_name = name
+
+    @classmethod
+    def get_component_name(cls):
+        return cls.component_name
+
     def __init__(self):
         self.model_output = None
         self.mode = None
