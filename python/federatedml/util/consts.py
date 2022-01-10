@@ -31,6 +31,9 @@ ONE_VS_REST = 'one_vs_rest'
 PAILLIER = 'Paillier'
 RANDOM_PADS = "RandomPads"
 NONE = "None"
+AFFINE = 'Affine'
+ITERATIVEAFFINE = 'IterativeAffine'
+RANDOM_ITERATIVEAFFINE = 'RandomIterativeAffine'
 L1_PENALTY = 'L1'
 L2_PENALTY = 'L2'
 
