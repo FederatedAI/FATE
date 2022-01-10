@@ -20,6 +20,7 @@
 #
 #
 ################################################################################
+import copy
 
 
 class Instance(object):
@@ -51,6 +52,19 @@ class Instance(object):
 
     def set_feature(self, features):
         self.features = features
+
+    def copy(self, exclusive_attr=None):
+        keywords = {"inst_id", "weight", "features", "label"}
+        if exclusive_attr:
+            keywords -= set(exclusive_attr)
+        copy_obj = Instance()
+        for key in keywords:
+            if key in exclusive_attr:
+                continue
+            attr = getattr(self, key)
+            setattr(copy_obj, key, attr)
+
+        return copy_obj
 
     @property
     def with_inst_id(self):

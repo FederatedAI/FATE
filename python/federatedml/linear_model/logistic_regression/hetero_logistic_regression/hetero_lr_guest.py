@@ -128,9 +128,7 @@ class HeteroLRGuest(HeteroLRBase):
             self.optimizer.set_iters(self.n_iter_)
             batch_index = 0
             for batch_data in batch_data_generator:
-                # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
                 batch_feat_inst = batch_data
-                # LOGGER.debug(f"MODEL_STEP In Batch {batch_index}, batch data count: {batch_feat_inst.count()}")
 
                 # Start gradient procedure
                 LOGGER.debug("iter: {}, before compute gradient, data count: {}".format(self.n_iter_,
@@ -144,7 +142,7 @@ class HeteroLRGuest(HeteroLRBase):
                     batch_index)
 
                 loss_norm = self.optimizer.loss_norm(self.model_weights)
-                self.gradient_loss_operator.compute_loss(data_instances, self.model_weights, self.n_iter_, batch_index,
+                self.gradient_loss_operator.compute_loss(batch_feat_inst, self.model_weights, self.n_iter_, batch_index,
                                                          loss_norm)
 
                 self.model_weights = self.optimizer.update_model(self.model_weights, optim_guest_gradient)

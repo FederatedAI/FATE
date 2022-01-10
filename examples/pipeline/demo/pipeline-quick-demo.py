@@ -51,7 +51,7 @@ hetero_secureboost_0 = HeteroSecureBoost(name="hetero_secureboost_0",
                                          bin_num=16,
                                          task_type="classification",
                                          objective_param={"objective": "cross_entropy"},
-                                         encrypt_param={"method": "iterativeAffine"},
+                                         encrypt_param={"method": "paillier"},
                                          tree_param={"max_depth": 3})
 
 # To show the evaluation result, an "Evaluation" component is needed.

@@ -115,7 +115,7 @@ class HeteroLinRGuest(HeteroLinRBase):
                 )
 
                 loss_norm = self.optimizer.loss_norm(self.model_weights)
-                self.gradient_loss_operator.compute_loss(data_instances, self.n_iter_, batch_index, loss_norm)
+                self.gradient_loss_operator.compute_loss(batch_data, self.n_iter_, batch_index, loss_norm)
 
                 self.model_weights = self.optimizer.update_model(self.model_weights, optim_guest_gradient)
                 batch_index += 1

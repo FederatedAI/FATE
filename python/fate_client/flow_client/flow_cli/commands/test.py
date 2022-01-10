@@ -14,7 +14,6 @@
 #  limitations under the License.
 #
 import time
-import traceback
 
 import click
 
@@ -41,28 +40,34 @@ def test(ctx):
 @cli_args.TASK_CORES
 @click.pass_context
 def toy(ctx, **kwargs):
-    flow_client = FlowClient(ip=ctx.obj["ip"], port=ctx.obj["http_port"], version=ctx.obj["api_version"],
+    flow_sdk = FlowClient(ip=ctx.obj["ip"], port=ctx.obj["http_port"], version=ctx.obj["api_version"],
                              app_key=ctx.obj.get("app_key"), secret_key=ctx.obj.get("secret_key"))
-    submit_result = flow_client.test.toy(**kwargs)
+    submit_result = flow_sdk.test.toy(**kwargs)
     if submit_result["retcode"] == 0:
         for t in range(kwargs["timeout"]):
             job_id = submit_result["jobId"]
-            r = flow_client.job.query(job_id=job_id, role="guest", party_id=kwargs["guest_party_id"])
+            r = flow_sdk.job.query(job_id=job_id, role="guest", party_id=kwargs["guest_party_id"])
             if r["retcode"] == 0 and len(r["data"]):
                 job_status = r["data"][0]["f_status"]
                 print(f"toy test job {job_id} is {job_status}")
                 if job_status in {"success", "failed", "canceled"}:
-                    r = flow_client.job.log(job_id=job_id, output_path="./")
-                    if r["retcode"] == 0:
-                        log_msg = flow_client.test.check_toy(kwargs["guest_party_id"], job_status, r["directory"])
-                        try:
-                            for msg in log_msg:
-                                print(msg)
-                        except:
-                            traceback.print_exc()
-                    else:
-                        print(f"get log failed, please check PROJECT_BASE/logs/{submit_result['jobId']}")
+                    check_log(flow_sdk, kwargs["guest_party_id"], job_id, job_status)
                     break
             time.sleep(1)
+        else:
+            print(f"check job status timeout")
+            check_log(flow_sdk, kwargs["guest_party_id"], job_id, job_status)
     else:
         prettify(submit_result)
+
+def check_log(flow_sdk, party_id, job_id, job_status):
+    r = flow_sdk.job.log(job_id=job_id, output_path="./logs/toy")
+    if r["retcode"] == 0:
+        log_msg = flow_sdk.test.check_toy(party_id, job_status, r["directory"])
+        try:
+            for msg in log_msg:
+                print(msg)
+        except:
+            print(f"auto check log failed, please check {r['directory']}")
+    else:
+        print(f"get log failed, please check PROJECT_BASE/logs/{job_id} on the fateflow server machine")

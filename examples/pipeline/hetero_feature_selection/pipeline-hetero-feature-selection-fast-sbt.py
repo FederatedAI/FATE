@@ -50,7 +50,7 @@ def main(config="../../config.yaml", namespace=""):
             "objective": "cross_entropy"
         },
         "encrypt_param": {
-            "method": "iterativeAffine"
+            "method": "paillier"
         },
         "predict_param": {
             "threshold": 0.5

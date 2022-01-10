@@ -15,15 +15,15 @@
 #
 
 from pipeline.param.local_baseline_param import LocalBaselineParam
-from pipeline.component.component_base import Component
+from pipeline.component.component_base import FateComponent
 from pipeline.interface import Input
 from pipeline.interface import Output
 from pipeline.utils.logger import LOGGER
 
 
-class LocalBaseline(Component, LocalBaselineParam):
+class LocalBaseline(FateComponent, LocalBaselineParam):
     def __init__(self, **kwargs):
-        Component.__init__(self, **kwargs)
+        FateComponent.__init__(self, **kwargs)
 
         # print (self.name)
         LOGGER.debug(f"{self.name} component created")
