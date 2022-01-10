@@ -220,6 +220,24 @@ class FLOWClient(object):
             raise RuntimeError(f"output data table error: {response}") from e
         return result
 
+    def _get_summary(self, job_id, role, party_id, component_name):
+        post_data = {'job_id': job_id,
+                     'role': role,
+                     'party_id': party_id,
+                     'component_name': component_name}
+        response = self.flow_client(request='component/get_summary', param=post_data)
+        try:
+            retcode = response['retcode']
+            retmsg = response['retmsg']
+            result = {}
+            if retcode != 0 or retmsg != 'success':
+                raise RuntimeError(f"deploy model error: {response}")
+            result["summary_dir"] = retmsg  # 获取summary文件位置
+        except Exception as e:
+            raise RuntimeError(f"output data table error: {response}") from e
+        return result
+
+
     def _query_job(self, job_id, role):
         param = {
             'job_id': job_id,
@@ -300,6 +318,10 @@ class FLOWClient(object):
             stdout = client.component.output_data_table(job_id=param['job_id'], role=param['role'],
                                                         party_id=param['party_id'],
                                                         component_name=param['component_name'])
+        elif request == 'component/get_summary':
+            stdout = client.component.get_summary(job_id=param['job_id'], role=param['role'],
+                                                  party_id=param['party_id'],
+                                                  component_name=param['component_name'])
 
         else:
             stdout = {"retcode": None}
