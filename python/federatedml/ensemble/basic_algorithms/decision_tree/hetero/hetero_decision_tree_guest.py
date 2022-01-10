@@ -29,8 +29,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         self.sitename = consts.GUEST  # will be modified in self.set_runtime_idx()
         self.complete_secure_tree = False
-        self.split_maskdict = {}
-        self.missing_dir_maskdict = {}
+        self.split_maskdict = {}  # save split value
+        self.missing_dir_maskdict = {}  # save missing dir
         self.host_party_idlist = []
         self.compressor = None
 
@@ -225,7 +225,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 best_gain_host = gain_host_i
                 best_gain_host_idx = i
 
-        # if merge_host_split_only is True, guest hists is None
+        # if merge_host_split_only is True, guest split-info is None
+        # first one at 0 index is the best split of guest
         if splitinfo_guest_host[0] is not None and \
                 splitinfo_guest_host[0].gain >= best_gain_host - consts.FLOAT_ZERO:
             best_splitinfo = splitinfo_guest_host[0]
@@ -325,7 +326,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
             inst2node_idx = self.inst2node_idx
         return inst2node_idx
 
-    def compute_best_splits2(self, cur_to_split_nodes, node_map, dep, batch_idx):
+    def compute_best_splits(self, cur_to_split_nodes, node_map, dep, batch_idx):
 
         LOGGER.info('solving node batch {}, node num is {}'.format(batch_idx, len(cur_to_split_nodes)))
         inst2node_idx = self.get_computing_inst2node_idx()
@@ -360,42 +361,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
                                                                     suffix=(dep, batch_idx), idx=host_idx,
                                                                     role=consts.HOST)
             best_splits_of_all_hosts.append(split_info_list)
-
-        # get encoded split-info from hosts
-        final_host_split_info = self.sync_final_split_host(dep, batch_idx)
-        for masked_split_info, encoded_split_info in zip(best_splits_of_all_hosts, final_host_split_info):
-            for s1, s2 in zip(masked_split_info, encoded_split_info):
-                s2.gain = s1.gain
-                s2.sum_grad = s1.sum_grad
-                s2.sum_hess = s1.sum_hess
-
-        final_best_splits = self.merge_splitinfo(best_split_info_guest, final_host_split_info, need_decrypt=False)
+        final_best_splits = self.merge_splitinfo(best_split_info_guest, best_splits_of_all_hosts, need_decrypt=False)
 
         return final_best_splits
-
-    def compute_best_splits(self, cur_to_split_nodes, node_map, dep, batch_idx):
-
-        acc_histograms = self.get_local_histograms(dep, self.data_with_node_assignments, self.grad_and_hess,
-                                                   None, cur_to_split_nodes, node_map, ret='tensor',
-                                                   hist_sub=False)
-
-        best_split_info_guest = self.splitter.find_split(acc_histograms, self.valid_features,
-                                                         self.data_bin.partitions, self.sitename,
-                                                         self.use_missing, self.zero_as_missing)
-        LOGGER.debug('computing local splits done')
-
-        if self.complete_secure_tree:
-            return best_split_info_guest
-
-        self.federated_find_split(dep, batch_idx)
-        host_split_info = self.sync_final_split_host(dep, batch_idx)
-
-        # compare host best split points with guest split points
-        cur_best_split = self.merge_splitinfo(splitinfo_guest=best_split_info_guest,
-                                              splitinfo_host=host_split_info,
-                                              merge_host_split_only=False)
-
-        return cur_best_split
 
     """
     Federation Functions
@@ -533,6 +501,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
             node.weight = None
             node.sum_grad = None
             node.sum_hess = None
+            node.fid = -1
+            node.bid = -1
 
         return new_tree_
 
@@ -604,9 +574,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
                     self.cur_layer_nodes[i].missing_dir = self.encode("missing_dir",
                                                                       split_info[i].missing_dir,
                                                                       self.cur_layer_nodes[i].id)
-                else:
-                    self.cur_layer_nodes[i].fid = split_info[i].best_fid
-                    self.cur_layer_nodes[i].bid = split_info[i].best_bid
 
                 self.update_feature_importance(split_info[i])
 
@@ -721,12 +688,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
                 self.cur_to_split_nodes = self.cur_layer_nodes[i: i + self.max_split_nodes]
                 node_map = self.get_node_map(self.cur_to_split_nodes)
-
-                if self.new_ver:
-                    cur_splitinfos = self.compute_best_splits2(self.cur_to_split_nodes, node_map, dep, batch_idx)
-                else:
-                    cur_splitinfos = self.compute_best_splits(self.cur_to_split_nodes, node_map, dep, batch_idx)
-
+                cur_splitinfos = self.compute_best_splits(self.cur_to_split_nodes, node_map, dep, batch_idx)
                 split_info.extend(cur_splitinfos)
 
             self.update_tree(split_info, False)

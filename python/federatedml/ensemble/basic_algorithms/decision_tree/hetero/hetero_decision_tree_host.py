@@ -28,8 +28,9 @@ class HeteroDecisionTreeHost(DecisionTree):
         self.feature_num = -1
         self.missing_dir_mask_left = {}  # mask for left direction
         self.missing_dir_mask_right = {}  # mask for right direction
-        self.split_maskdict = {}  # mask for split value
-        self.missing_dir_maskdict = {}
+        self.split_maskdict = {}  # save split value
+        self.split_feature_dict = {}  # save split feature idx
+        self.missing_dir_maskdict = {} # save missing dir
         self.fid_bid_random_mapping = {}
         self.inverse_fid_bid_random_mapping = {}
 
@@ -131,10 +132,11 @@ class HeteroDecisionTreeHost(DecisionTree):
 
         return mapping
 
-    def encode(self, etype="feature_idx", val=None, nid=None):
+    def save_split_info(self, etype="feature_idx", val=None, nid=None):
 
         if etype == "feature_idx":
-            return val
+            self.split_feature_dict[nid] = val
+            return None
 
         if etype == "feature_val":
             self.split_maskdict[nid] = val
@@ -186,7 +188,7 @@ class HeteroDecisionTreeHost(DecisionTree):
 
         return split_info_list
 
-    def encode_split_info(self, split_info_list):
+    def record_split_info(self, split_info_list):
 
         final_split_info = []
         for i, split_info in enumerate(split_info_list):
@@ -195,11 +197,10 @@ class HeteroDecisionTreeHost(DecisionTree):
                 LOGGER.debug('sitename is {}, self.sitename is {}'
                              .format(split_info.sitename, self.sitename))
                 assert split_info.sitename == self.sitename
-                split_info.best_fid = self.encode("feature_idx", split_info.best_fid)
+                self.save_split_info("feature_idx", split_info.best_fid, self.cur_to_split_nodes[i].id)
                 assert split_info.best_fid is not None
-                split_info.best_bid = self.encode("feature_val", split_info.best_bid, self.cur_to_split_nodes[i].id)
-                split_info.missing_dir = self.encode(
-                    "missing_dir", split_info.missing_dir, self.cur_to_split_nodes[i].id)
+                self.save_split_info("feature_val", split_info.best_bid, self.cur_to_split_nodes[i].id)
+                self.save_split_info("missing_dir", split_info.missing_dir, self.cur_to_split_nodes[i].id)
                 split_info.mask_id = None
             else:
                 LOGGER.debug('this node can not be further split by host feature: {}'.format(split_info))
@@ -243,32 +244,6 @@ class HeteroDecisionTreeHost(DecisionTree):
         federated_best_splitinfo_host = self.transfer_inst.federated_best_splitinfo_host.get(idx=0,
                                                                                              suffix=(dep, batch,))
         return federated_best_splitinfo_host
-
-    def sync_final_splitinfo_host(self, splitinfo_host, federated_best_splitinfo_host, dep=-1, batch=-1):
-
-        LOGGER.info("send host final splitinfo of depth {}, batch {}".format(dep, batch))
-        final_splitinfos = []
-        for i in range(len(splitinfo_host)):
-            best_idx, best_gain = federated_best_splitinfo_host[i]
-            if best_idx != -1:
-                LOGGER.debug('sitename is {}, self.sitename is {}'
-                             .format(splitinfo_host[i][best_idx].sitename, self.sitename))
-                assert splitinfo_host[i][best_idx].sitename == self.sitename
-                splitinfo = splitinfo_host[i][best_idx]
-                splitinfo.best_fid = self.encode("feature_idx", splitinfo.best_fid)
-                assert splitinfo.best_fid is not None
-                splitinfo.best_bid = self.encode("feature_val", splitinfo.best_bid, self.cur_to_split_nodes[i].id)
-                splitinfo.missing_dir = self.encode("missing_dir", splitinfo.missing_dir, self.cur_to_split_nodes[i].id)
-                splitinfo.gain = best_gain
-            else:
-                splitinfo = SplitInfo(sitename=self.sitename, best_fid=-1, best_bid=-1, gain=best_gain)
-
-            final_splitinfos.append(splitinfo)
-
-        self.transfer_inst.final_splitinfo_host.remote(final_splitinfos,
-                                                       role=consts.GUEST,
-                                                       idx=-1,
-                                                       suffix=(dep, batch,))
 
     def sync_dispatch_node_host(self, dep):
         LOGGER.info("get node from host to dispath, depth is {}".format(dep))
@@ -314,6 +289,7 @@ class HeteroDecisionTreeHost(DecisionTree):
 
     @staticmethod
     def assign_an_instance(value1, value2, sitename=None, decoder=None,
+                           split_feature_dict=None,
                            bin_sparse_points=None,
                            use_missing=False, zero_as_missing=False,
                            split_maskdict=None,
@@ -323,7 +299,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         if node_sitename != sitename:
             return value1
 
-        fid = decoder("feature_idx", fid, nodeid, split_maskdict=split_maskdict)
+        fid = split_feature_dict[nodeid]
         bid = decoder("feature_val", bid, nodeid, split_maskdict=split_maskdict)
         missing_dir = decoder("missing_dir", 1, nodeid, missing_dir_maskdict=missing_dir_maskdict)
         direction = HeteroDecisionTreeHost.make_decision(value2, fid, bid, missing_dir, use_missing, zero_as_missing,
@@ -338,6 +314,7 @@ class HeteroDecisionTreeHost(DecisionTree):
                                                  sitename=self.sitename,
                                                  decoder=self.decode,
                                                  split_maskdict=self.split_maskdict,
+                                                 split_feature_dict=self.split_feature_dict,
                                                  bin_sparse_points=self.bin_sparse_points,
                                                  use_missing=self.use_missing,
                                                  zero_as_missing=self.zero_as_missing,
@@ -357,13 +334,13 @@ class HeteroDecisionTreeHost(DecisionTree):
     Pre-Process / Post-Process
     """
 
-    def remove_duplicated_split_nodes(self, split_nid_used):
+    def remove_redundant_splitinfo_in_split_maskdict(self, split_nid_used):
         LOGGER.info("remove duplicated nodes from split mask dict")
         duplicated_nodes = set(self.split_maskdict.keys()) - set(split_nid_used)
         for nid in duplicated_nodes:
             del self.split_maskdict[nid]
 
-    def convert_bin_to_real(self, decode_func, split_maskdict):
+    def convert_bin_to_real(self, split_maskdict):
         LOGGER.info("convert tree node bins to real value")
         split_nid_used = []
 
@@ -371,15 +348,15 @@ class HeteroDecisionTreeHost(DecisionTree):
             if self.tree_node[i].is_leaf is True:
                 continue
             if self.tree_node[i].sitename == self.sitename:
-                fid = decode_func("feature_idx", self.tree_node[i].fid, self.tree_node[i].id, split_maskdict)
-                bid = decode_func("feature_val", self.tree_node[i].bid, self.tree_node[i].id, split_maskdict)
-                LOGGER.debug("shape of bin_split_points is {}".format(len(self.bin_split_points[fid])))
-                real_splitval = self.encode("feature_val", self.bin_split_points[fid][bid], self.tree_node[i].id)
-                self.tree_node[i].bid = real_splitval
+                fid = self.split_feature_dict[self.tree_node[i].id]
+                bid = self.decode("feature_val", self.tree_node[i].bid, self.tree_node[i].id, split_maskdict)
+                # recover real split value
+                real_splitval = self.bin_split_points[fid][bid]
+                self.split_maskdict[self.tree_node[i].id] = real_splitval
                 self.tree_node[i].fid = fid
                 split_nid_used.append(self.tree_node[i].id)
 
-        self.remove_duplicated_split_nodes(split_nid_used)
+        self.remove_redundant_splitinfo_in_split_maskdict(split_nid_used)
 
     """
     Split finding
@@ -392,7 +369,7 @@ class HeteroDecisionTreeHost(DecisionTree):
             inst2node_idx = self.inst2node_idx
         return inst2node_idx
 
-    def compute_best_splits2(self, cur_to_split_nodes: list, node_map, dep, batch):
+    def compute_best_splits(self, cur_to_split_nodes: list, node_map, dep, batch):
 
         LOGGER.info('solving node batch {}, node num is {}'.format(batch, len(cur_to_split_nodes)))
         if not self.complete_secure_tree:
@@ -408,19 +385,16 @@ class HeteroDecisionTreeHost(DecisionTree):
                                                        bin_num=self.bin_num)
 
             split_info_table = self.splitter.host_prepare_split_points(
-                histograms=acc_histograms,
-                use_missing=self.use_missing,
-                valid_features=self.valid_features,
-                sitename=self.sitename,
-                left_missing_dir=self.missing_dir_mask_left[dep],
-                right_missing_dir=self.missing_dir_mask_right[dep],
-                mask_id_mapping=self.fid_bid_random_mapping,
-                batch_size=self.bin_num,
-                cipher_compressor=self.cipher_compressor,
-                shuffle_random_seed=np.abs(
-                    hash(
-                        (dep,
-                         batch))))
+                            histograms=acc_histograms,
+                            use_missing=self.use_missing,
+                            valid_features=self.valid_features,
+                            sitename=self.sitename,
+                            left_missing_dir=self.missing_dir_mask_left[dep],
+                            right_missing_dir=self.missing_dir_mask_right[dep],
+                            mask_id_mapping=self.fid_bid_random_mapping,
+                            batch_size=self.bin_num,
+                            cipher_compressor=self.cipher_compressor,
+                            shuffle_random_seed=np.abs(hash((dep, batch))))
 
             # test split info encryption
             self.transfer_inst.encrypted_splitinfo_host.remote(split_info_table,
@@ -433,38 +407,8 @@ class HeteroDecisionTreeHost(DecisionTree):
                 self.inverse_fid_bid_random_mapping,
                 self.missing_dir_mask_left[dep],
                 self.missing_dir_mask_right[dep])
-            return_split_info = self.encode_split_info(unmasked_split_info)
-            self.transfer_inst.final_splitinfo_host.remote(return_split_info,
-                                                           role=consts.GUEST,
-                                                           idx=-1,
-                                                           suffix=(dep, batch,))
-        else:
-            LOGGER.debug('skip splits computation')
-
-    def compute_best_splits(self, cur_to_split_nodes: list, node_map: dict, dep: int, batch: int):
-
-        if not self.complete_secure_tree:
-
-            data = self.data_with_node_assignments
-            if self.run_sparse_opt:
-                data = self.data_bin_dense_with_position
-
-            acc_histograms = self.get_local_histograms(dep, data, self.grad_and_hess,
-                                                       None, cur_to_split_nodes, node_map, ret='tb',
-                                                       hist_sub=False, sparse_opt=self.run_sparse_opt,
-                                                       bin_num=self.bin_num)
-
-            splitinfo_host, encrypted_splitinfo_host = self.splitter.find_split_host(histograms=acc_histograms,
-                                                                                     node_map=node_map,
-                                                                                     use_missing=self.use_missing,
-                                                                                     zero_as_missing=self.zero_as_missing,
-                                                                                     valid_features=self.valid_features,
-                                                                                     sitename=self.sitename,)
-
-            self.sync_encrypted_splitinfo_host(encrypted_splitinfo_host, dep, batch)
-            federated_best_splitinfo_host = self.sync_federated_best_splitinfo_host(dep, batch)
-            self.sync_final_splitinfo_host(splitinfo_host, federated_best_splitinfo_host, dep, batch)
-            LOGGER.debug('computing host splits done')
+            self.record_split_info(unmasked_split_info)
+            LOGGER.debug('split mask dict is {}'.format(self.split_maskdict))
         else:
             LOGGER.debug('skip splits computation')
 
@@ -494,20 +438,17 @@ class HeteroDecisionTreeHost(DecisionTree):
             batch = 0
             for i in range(0, len(self.cur_layer_nodes), self.max_split_nodes):
                 self.cur_to_split_nodes = self.cur_layer_nodes[i: i + self.max_split_nodes]
-                if self.new_ver:
-                    self.compute_best_splits2(self.cur_to_split_nodes,
-                                              node_map=self.get_node_map(self.cur_to_split_nodes),
-                                              dep=dep, batch=batch)
-                else:
-                    self.compute_best_splits(self.cur_to_split_nodes,
-                                             node_map=self.get_node_map(self.cur_to_split_nodes), dep=dep, batch=batch)
+                self.compute_best_splits(self.cur_to_split_nodes,
+                                        node_map=self.get_node_map(self.cur_to_split_nodes),
+                                        dep=dep, batch=batch)
                 batch += 1
-
             dispatch_node_host = self.sync_dispatch_node_host(dep)
             self.assign_instances_to_new_node(dispatch_node_host, dep=dep)
 
         self.sync_tree()
-        self.convert_bin_to_real(decode_func=self.decode, split_maskdict=self.split_maskdict)
+        self.print_leafs()
+        # convert bin index to real split-value, and remove redundant nid in split mask dict
+        self.convert_bin_to_real(split_maskdict=self.split_maskdict)
         LOGGER.info("fitting host decision tree done")
 
     @staticmethod

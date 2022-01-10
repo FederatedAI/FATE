@@ -144,45 +144,6 @@ class DecisionTree(BasicAlgorithms, ABC):
         self.sitename = ":".join([self.sitename, str(self.runtime_idx)])
 
     """
-    Node encode/ decode
-    """
-    # add node split-val/missing-dir to mask dict, hetero tree only
-
-    def encode(self, etype="feature_idx", val=None, nid=None):
-        if etype == "feature_idx":
-            return val
-
-        if etype == "feature_val":
-            self.split_maskdict[nid] = val
-            return None
-
-        if etype == "missing_dir":
-            self.missing_dir_maskdict[nid] = val
-            return None
-
-        raise TypeError("encode type %s is not support!" % (str(etype)))
-
-    # recover node split-val/missing-dir from mask dict, hetero tree only
-    @staticmethod
-    def decode(dtype="feature_idx", val=None, nid=None, split_maskdict=None, missing_dir_maskdict=None):
-        if dtype == "feature_idx":
-            return val
-
-        if dtype == "feature_val":
-            if nid in split_maskdict:
-                return split_maskdict[nid]
-            else:
-                raise ValueError("decode val %s cause error, can't recognize it!" % (str(val)))
-
-        if dtype == "missing_dir":
-            if nid in missing_dir_maskdict:
-                return missing_dir_maskdict[nid]
-            else:
-                raise ValueError("decode val %s cause error, can't recognize it!" % (str(val)))
-
-        return TypeError("decode type %s is not support!" % (str(dtype)))
-
-    """
     Histogram interface
     """
 

@@ -387,13 +387,12 @@ class Splitter(object):
         else:
             nid, package = value
             split_info_list = gh_packer.decompress_and_unpack(package)
-            g_sum, h_sum = split_info_list[-1].sum_grad, split_info_list[-1].sum_hess  # g/h is at last index
+            g_sum, h_sum = split_info_list[-1].sum_grad, split_info_list[-1].sum_hess  # g/h sum is at last index
             split_info_list = split_info_list[:-1]
 
         for idx, split_info in enumerate(split_info_list):
 
             l_g, l_h = split_info.sum_grad, split_info.sum_hess
-
             r_g, r_h = g_sum - l_g, h_sum - l_h
             gain = self.split_gain(g_sum, h_sum, l_g, l_h, r_g, r_h)
 
