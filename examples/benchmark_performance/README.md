@@ -12,7 +12,7 @@ Follow the following steps to run benchmark tests:
 2. Run Test Task using [FATE-Test](../../doc/api/fate_test.md#performance)
 
     ``` sourceCode bash
-    fate_test suite -i examples/benchmark_performance/hetero_lr/hetero_lr_testsuite.json -m 36000 --skip-data
+    fate_test suite -i examples/benchmark_performance/hetero_lr/hetero_lr_testsuite.json -m 360000 --skip-data
     ```
 
 ### Example Tests
