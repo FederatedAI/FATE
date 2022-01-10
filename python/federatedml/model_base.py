@@ -245,14 +245,19 @@ class ModelBase(object):
             export_dict = {"Meta": meta, "Param": model}
         except NotImplementedError:
             export_dict = self.export_model()
+
+            # export nothing, return
+            if export_dict is None:
+                return export_dict
+
             try:
                 meta_name = [k for k in export_dict if k.endswith("Meta")][0]
-            except:
+            except BaseException:
                 raise KeyError("Meta not found in export model")
 
             try:
                 param_name = [k for k in export_dict if k.endswith("Param")][0]
-            except:
+            except BaseException:
                 raise KeyError("Param not found in export model")
 
             meta = export_dict[meta_name]
