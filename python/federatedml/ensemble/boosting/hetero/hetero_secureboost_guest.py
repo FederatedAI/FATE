@@ -306,8 +306,6 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
 
         while True:
 
-            LOGGER.info('cur predict round is {}'.format(comm_round))
-
             node_pos_tb = node_pos_tb.join(data_inst, traverse_func)
             node_pos_tb, final_leaf_pos = self.save_leaf_pos_and_mask_leaf_pos(node_pos_tb, final_leaf_pos)
 
@@ -319,9 +317,9 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                 self.predict_transfer_inst.predict_stop_flag.remote(True, idx=-1, suffix=(comm_round, ))
                 break
 
+            LOGGER.info('cur predict round is {}'.format(comm_round))
             self.predict_transfer_inst.predict_stop_flag.remote(False, idx=-1, suffix=(comm_round, ))
             self.predict_transfer_inst.guest_predict_data.remote(node_pos_tb, idx=-1, suffix=(comm_round, ))
-
             host_pos_tbs = self.predict_transfer_inst.host_predict_data.get(idx=-1, suffix=(comm_round, ))
 
             for host_pos_tb in host_pos_tbs:
