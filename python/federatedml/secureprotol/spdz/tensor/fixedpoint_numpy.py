@@ -162,7 +162,7 @@ class FixedPointTensor(TensorBase):
     def broadcast_reconstruct_share(self, tensor_name=None):
         from federatedml.secureprotol.spdz import SPDZ
         spdz = SPDZ.get_instance()
-        share_val = self.value
+        share_val = self.value.copy()
         name = tensor_name or self.tensor_name
         if name is None:
             raise ValueError("name not specified")
@@ -271,7 +271,7 @@ class PaillierFixedPointTensor(TensorBase):
     def broadcast_reconstruct_share(self, tensor_name=None):
         from federatedml.secureprotol.spdz import SPDZ
         spdz = SPDZ.get_instance()
-        share_val = self.value
+        share_val = self.value.copy()
         name = tensor_name or self.tensor_name
         if name is None:
             raise ValueError("name not specified")

@@ -88,7 +88,7 @@ class SummaryStatistics(object):
             if not filter_idx:
                 return
 
-            filter_rows = np.array(rows, dtype=float)
+            filter_rows = np.array(filter_rows, dtype=float)
             filter_idx = np.array(filter_idx)
 
             self.count[filter_idx] += 1
