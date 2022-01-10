@@ -7,7 +7,7 @@ Follow the following steps to run benchmark tests:
 1. Generate & upload data using [FATE-Test](../../doc/api/fate_test.md#data):
 
     ``` sourceCode bash
-    fate_test data generate -i examples/benchmark_performance/hetero_lr/hetero_lr_testsuite.json -ng 1000 -nh 1000 -fg 20 -fh 200 -m 360000 -o examples/data/ --upload-data    
+    fate_test data generate -i examples/benchmark_performance/hetero_lr/hetero_lr_testsuite.json -ng 1000 -nh 1000 -fg 20 -fh 200 -o examples/data/ --upload-data    
     ```
 2. Run Test Task using [FATE-Test](../../doc/api/fate_test.md#performance)
 
