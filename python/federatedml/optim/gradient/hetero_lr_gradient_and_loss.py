@@ -93,10 +93,13 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         # quarter_wx = self.host_forwards[0].join(self.half_d, lambda x, y: x + y)
         # ywx = quarter_wx.join(data_instances, lambda wx, d: wx * (4 * d.label) + 2).reduce(reduce_add)
 
-        self_wx_square = data_instances.mapValues(
-            lambda v: np.square(vec_dot(v.features, w.coef_) + w.intercept_)).reduce(reduce_add)
         half_wx = data_instances.mapValues(
             lambda v: vec_dot(v.features, w.coef_) + w.intercept_)
+        self_wx_square = half_wx.mapValues(
+            lambda v: np.square(v)).reduce(reduce_add)
+
+        # self_wx_square = data_instances.mapValues(
+        #    lambda v: np.square(vec_dot(v.features, w.coef_) + w.intercept_)).reduce(reduce_add)
 
         loss_list = []
         wx_squares = self.get_host_loss_intermediate(suffix=current_suffix)
