@@ -21,12 +21,12 @@ import numpy as np
 from sklearn import metrics
 
 from fate_arch.session import computing_session as session
-from federatedml.loss import LeastSquaredErrorLoss
-from federatedml.loss.regression_loss import LeastAbsoluteErrorLoss
-from federatedml.loss.regression_loss import HuberLoss
-from federatedml.loss.regression_loss import FairLoss
-from federatedml.loss.regression_loss import LogCoshLoss
-from federatedml.loss.regression_loss import TweedieLoss
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss.regression_loss import LeastSquaredErrorLoss
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss.regression_loss  import LeastAbsoluteErrorLoss
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss.regression_loss import HuberLoss
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss.regression_loss import FairLoss
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss.regression_loss import LogCoshLoss
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss.regression_loss  import TweedieLoss
 from federatedml.util import consts
 
 
