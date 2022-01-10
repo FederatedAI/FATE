@@ -162,6 +162,7 @@ def get_role(conf: Config):
                    'model_file_path': os.path.abspath(conf.data_base_dir) + flow_test_template['model_conf_path'],
                    'server_url': "http://{}/{}".format(flow_services, config['api_version']),
                    'train_auc': config['train_auc'],
+                   'phone_num': config['phone_num'],
                    'component_name': config['component_name'],
                    'component_is_homo': config.get('component_is_homo', False),
                    'serving_setting': conf.serving_setting['serving_setting']['address'],
@@ -170,9 +171,4 @@ def get_role(conf: Config):
                    'cache_directory': conf.cache_directory,
                    'data_base_dir': conf.data_base_dir
                    }
-    if flow_test_template.get('homo_deploy_path'):
-        config_json['homo_deploy_path'] = os.path.abspath(conf.data_base_dir) + flow_test_template['homo_deploy_path']
-    if flow_test_template.get('homo_deploy_kube_config_path'):
-        config_json['homo_deploy_kube_config_path'] = os.path.abspath(conf.data_base_dir) + \
-                                                      flow_test_template['homo_deploy_kube_config_path']
     return config_json
