@@ -117,7 +117,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
             wx_square = wx_squares[0]
             wxg_wxh = half_wx.join(host_forward, lambda wxg, wxh: wxg * wxh).reduce(reduce_add)
             loss = np.log(2) - 0.5 * (1 / n) * ywx + 0.125 * (1 / n) * \
-                   (self_wx_square + wx_square + 2 * wxg_wxh)
+                   (self_wx_square + wx_square + 8 * wxg_wxh)
             if loss_norm is not None:
                 loss += loss_norm
                 loss += host_loss_regular[0]
