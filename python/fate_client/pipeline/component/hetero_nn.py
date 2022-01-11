@@ -95,7 +95,7 @@ class HeteroNN(Component):
         if hasattr(self, "_bottom_nn_model") and not self._bottom_nn_model.is_empty():
             self.bottom_nn_define = self._bottom_nn_model.get_network_config()
             self._component_param["bottom_nn_define"] = self.bottom_nn_define
-        
+
         if hasattr(self, "_top_nn_model") and not self._top_nn_model.is_empty():
             self.top_nn_define = self._top_nn_model.get_network_config()
             self._component_param["top_nn_define"] = self.top_nn_define
@@ -134,4 +134,3 @@ class HeteroNN(Component):
             del state["_top_nn_model"]
 
         return state
-

@@ -220,7 +220,7 @@ class LinearParam(BaseParam):
                 descr + "encrypt method supports 'Paillier' only")
 
         self.encrypted_mode_calculator_param.check()
-        
+
         if type(self.decay).__name__ not in ["int", "float"]:
             raise ValueError(
                 descr + "decay {} not supported, should be 'int' or 'float'".format(self.decay)

@@ -23,4 +23,3 @@ class BasicAlgorithms(ABC):
     @abc.abstractmethod
     def load_model(self, *args):
         pass
-

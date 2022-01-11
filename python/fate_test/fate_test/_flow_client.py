@@ -58,7 +58,8 @@ class FLOWClient(object):
 
     def delete_data(self, data: Data):
         try:
-            table_name = data.config['table_name'] if data.config.get('table_name', None) is not None else data.config.get('name')
+            table_name = data.config['table_name'] if data.config.get(
+                'table_name', None) is not None else data.config.get('name')
             self._delete_data(table_name=table_name, namespace=data.config['namespace'])
         except Exception as e:
             raise RuntimeError(f"delete data failed") from e

@@ -34,5 +34,3 @@ class ModelLoader(Component, CheckpointParam):
         self.input = Input(self.name)
         self.output = Output(self.name, has_model=True, has_cache=False, has_data=False)
         self._module_name = "ModelLoader"
-
-

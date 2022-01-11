@@ -62,9 +62,9 @@ class ObjectiveParam(BaseParam):
 
         if task_type not in [consts.CLASSIFICATION, consts.REGRESSION]:
             self.objective = self.check_and_change_lower(self.objective,
-                                                   ["cross_entropy", "lse", "lae", "huber", "fair",
-                                                    "log_cosh", "tweedie"],
-                                                       descr)
+                                                         ["cross_entropy", "lse", "lae", "huber", "fair",
+                                                          "log_cosh", "tweedie"],
+                                                         descr)
 
         if task_type == consts.CLASSIFICATION:
             if self.objective != "cross_entropy":
@@ -72,8 +72,8 @@ class ObjectiveParam(BaseParam):
 
         elif task_type == consts.REGRESSION:
             self.objective = self.check_and_change_lower(self.objective,
-                                                               ["lse", "lae", "huber", "fair", "log_cosh", "tweedie"],
-                                                               descr)
+                                                         ["lse", "lae", "huber", "fair", "log_cosh", "tweedie"],
+                                                         descr)
 
             params = self.params
             if self.objective in ["huber", "fair", "tweedie"]:
@@ -176,19 +176,19 @@ class DecisionTreeParam(BaseParam):
         descr = "decision tree param"
 
         self.criterion_method = self.check_and_change_lower(self.criterion_method,
-                                                             ["xgboost"],
-                                                             descr)
+                                                            ["xgboost"],
+                                                            descr)
 
         if len(self.criterion_params) == 0:
             raise ValueError("decisition tree param's criterio_params should be non empty")
 
-        if type(self.criterion_params) == list:
+        if isinstance(self.criterion_params, list):
             assert len(self.criterion_params) == 2, 'length of criterion_param should be 2: l1, l2 regularization ' \
                                                     'values are needed'
             self.check_nonnegative_number(self.criterion_params[0], 'l2 reg value')
             self.check_nonnegative_number(self.criterion_params[1], 'l1 reg value')
 
-        elif type(self.criterion_params) == dict:
+        elif isinstance(self.criterion_params, dict):
             assert 'l1' in self.criterion_params and 'l2' in self.criterion_params, 'l1 and l2 keys are needed in ' \
                                                                                     'criterion_params dict'
             self.criterion_params = [self.criterion_params['l2'], self.criterion_params['l1']]
@@ -215,7 +215,7 @@ class DecisionTreeParam(BaseParam):
                 self.min_leaf_node))
 
         if type(self.max_split_nodes).__name__ not in ["int", "long"] or self.max_split_nodes < 1:
-            raise ValueError("decision tree param's max_split_nodes {} not supported, " + \
+            raise ValueError("decision tree param's max_split_nodes {} not supported, " +
                              "should be positive integer between 1 and {}".format(self.max_split_nodes,
                                                                                   consts.MAX_SPLIT_NODES))
 
@@ -227,8 +227,8 @@ class DecisionTreeParam(BaseParam):
             raise ValueError("decision tree param's tol {} not supported, should be numeric".format(self.tol))
 
         self.feature_importance_type = self.check_and_change_lower(self.feature_importance_type,
-                                                                    ["split", "gain"],
-                                                                    descr)
+                                                                   ["split", "gain"],
+                                                                   descr)
 
         self.check_nonnegative_number(self.min_child_weight, 'min_child_weight')
         self.check_boolean(self.deterministic, 'deterministic')
@@ -272,7 +272,7 @@ class BoostingParam(BaseParam):
         Default: None
         """
 
-    def __init__(self,  task_type=consts.CLASSIFICATION,
+    def __init__(self, task_type=consts.CLASSIFICATION,
                  objective_param=ObjectiveParam(),
                  learning_rate=0.3, num_trees=5, subsample_feature_rate=1, n_iter_no_change=True,
                  tol=0.0001, bin_num=32,
@@ -313,7 +313,8 @@ class BoostingParam(BaseParam):
 
         if type(self.subsample_feature_rate).__name__ not in ["float", "int", "long"] or \
                 self.subsample_feature_rate < 0 or self.subsample_feature_rate > 1:
-            raise ValueError("boosting_core tree param's subsample_feature_rate should be a numeric number between 0 and 1")
+            raise ValueError(
+                "boosting_core tree param's subsample_feature_rate should be a numeric number between 0 and 1")
 
         if type(self.n_iter_no_change).__name__ != "bool":
             raise ValueError("boosting_core tree param's n_iter_no_change {} not supported, should be bool type".format(
@@ -339,7 +340,7 @@ class BoostingParam(BaseParam):
             raise ValueError("metrics should be a list")
 
         if self.random_seed is not None:
-            assert type(self.random_seed) == int and self.random_seed >= 0, 'random seed must be an integer >= 0'
+            assert isinstance(self.random_seed, int) and self.random_seed >= 0, 'random seed must be an integer >= 0'
 
         self.check_decimal_float(self.binning_error, descr)
 
@@ -537,9 +538,9 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
 
         super(HeteroSecureBoostParam, self).check()
         self.tree_param.check()
-        if type(self.use_missing) != bool:
+        if not isinstance(self.use_missing, bool):
             raise ValueError('use missing should be bool type')
-        if type(self.zero_as_missing) != bool:
+        if not isinstance(self.zero_as_missing, bool):
             raise ValueError('zero as missing should be bool type')
         self.check_boolean(self.complete_secure, 'complete_secure')
         self.check_boolean(self.sparse_optimization, 'sparse optimization')
@@ -587,19 +588,41 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
 
 class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
 
-    def __init__(self, tree_param: DecisionTreeParam = DecisionTreeParam(), task_type=consts.CLASSIFICATION,
-                 objective_param=ObjectiveParam(),
-                 learning_rate=0.3, num_trees=5, subsample_feature_rate=1, n_iter_no_change=True,
-                 tol=0.0001, encrypt_param=EncryptParam(),
-                 bin_num=32,
-                 encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
-                 predict_param=PredictParam(), cv_param=CrossValidationParam(),
-                 validation_freqs=None, early_stopping_rounds=None, use_missing=False, zero_as_missing=False,
-                 complete_secure=False, tree_num_per_party=1, guest_depth=1, host_depth=1, work_mode='mix', metrics=None,
-                 sparse_optimization=False, random_seed=100, binning_error=consts.DEFAULT_RELATIVE_ERROR,
-                 cipher_compress_error=None, new_ver=True, run_goss=False, top_rate=0.2, other_rate=0.1,
-                 cipher_compress=True, callback_param=CallbackParam()):
-
+    def __init__(
+            self,
+            tree_param: DecisionTreeParam = DecisionTreeParam(),
+            task_type=consts.CLASSIFICATION,
+            objective_param=ObjectiveParam(),
+            learning_rate=0.3,
+            num_trees=5,
+            subsample_feature_rate=1,
+            n_iter_no_change=True,
+            tol=0.0001,
+            encrypt_param=EncryptParam(),
+            bin_num=32,
+            encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
+            predict_param=PredictParam(),
+            cv_param=CrossValidationParam(),
+            validation_freqs=None,
+            early_stopping_rounds=None,
+            use_missing=False,
+            zero_as_missing=False,
+            complete_secure=False,
+            tree_num_per_party=1,
+            guest_depth=1,
+            host_depth=1,
+            work_mode='mix',
+            metrics=None,
+            sparse_optimization=False,
+            random_seed=100,
+            binning_error=consts.DEFAULT_RELATIVE_ERROR,
+            cipher_compress_error=None,
+            new_ver=True,
+            run_goss=False,
+            top_rate=0.2,
+            other_rate=0.1,
+            cipher_compress=True,
+            callback_param=CallbackParam()):
         """
         Parameters
         ----------
@@ -617,19 +640,38 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
 
         """
 
-        super(HeteroFastSecureBoostParam, self).__init__(tree_param, task_type, objective_param, learning_rate,
-                                                         num_trees, subsample_feature_rate, n_iter_no_change, tol,
-                                                         encrypt_param, bin_num, encrypted_mode_calculator_param,
-                                                         predict_param, cv_param, validation_freqs, early_stopping_rounds,
-                                                         use_missing, zero_as_missing, complete_secure, metrics=metrics,
-                                                         random_seed=random_seed,
-                                                         sparse_optimization=sparse_optimization,
-                                                         binning_error=binning_error,
-                                                         cipher_compress_error=cipher_compress_error,
-                                                         new_ver=new_ver,
-                                                         cipher_compress=cipher_compress,
-                                                         run_goss=run_goss, top_rate=top_rate, other_rate=other_rate,
-                                                         )
+        super(
+            HeteroFastSecureBoostParam,
+            self).__init__(
+            tree_param,
+            task_type,
+            objective_param,
+            learning_rate,
+            num_trees,
+            subsample_feature_rate,
+            n_iter_no_change,
+            tol,
+            encrypt_param,
+            bin_num,
+            encrypted_mode_calculator_param,
+            predict_param,
+            cv_param,
+            validation_freqs,
+            early_stopping_rounds,
+            use_missing,
+            zero_as_missing,
+            complete_secure,
+            metrics=metrics,
+            random_seed=random_seed,
+            sparse_optimization=sparse_optimization,
+            binning_error=binning_error,
+            cipher_compress_error=cipher_compress_error,
+            new_ver=new_ver,
+            cipher_compress=cipher_compress,
+            run_goss=run_goss,
+            top_rate=top_rate,
+            other_rate=other_rate,
+        )
 
         self.tree_num_per_party = tree_num_per_party
         self.guest_depth = guest_depth
@@ -696,9 +738,9 @@ class HomoSecureBoostParam(BoostingParam):
 
         super(HomoSecureBoostParam, self).check()
         self.tree_param.check()
-        if type(self.use_missing) != bool:
+        if not isinstance(self.use_missing, bool):
             raise ValueError('use missing should be bool type')
-        if type(self.zero_as_missing) != bool:
+        if not isinstance(self.zero_as_missing, bool):
             raise ValueError('zero as missing should be bool type')
         if self.backend not in [consts.MEMORY_BACKEND, consts.DISTRIBUTED_BACKEND]:
             raise ValueError('unsupported backend')

@@ -27,12 +27,12 @@ class TestParamExtract(unittest.TestCase):
         self.init_param = InitParam()
         self.boosting_tree_param = HeteroSecureBoostParam()
         self.config_dict = \
-                {"ComponentParam": {
-                    "init_param": {"init_method": "test_init", "fit_intercept": False},
-                    "tree_param": {"criterion_method": "test_decisiontree"},
-                    "task_type": "test_boostingtree",
-                    "test_variable": "test"}
-                }
+            {"ComponentParam": {
+                "init_param": {"init_method": "test_init", "fit_intercept": False},
+                "tree_param": {"criterion_method": "test_decisiontree"},
+                "task_type": "test_boostingtree",
+                "test_variable": "test"}
+             }
 
     def test_directly_extract(self):
         boosting_tree_param = HeteroSecureBoostParam()
@@ -50,7 +50,8 @@ class TestParamExtract(unittest.TestCase):
         boosting_tree_param = HeteroSecureBoostParam()
         extractor = ParamExtract()
         boosting_tree_param = extractor.parse_param_from_config(boosting_tree_param, self.config_dict)
-        print ("boosting_tree_param.tree_param.criterion_method {}".format(boosting_tree_param.tree_param.criterion_method))
+        print("boosting_tree_param.tree_param.criterion_method {}".format(
+            boosting_tree_param.tree_param.criterion_method))
         self.assertTrue(boosting_tree_param.tree_param.criterion_method == "test_decisiontree")
 
 

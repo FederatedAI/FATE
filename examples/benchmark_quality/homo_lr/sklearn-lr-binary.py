@@ -65,7 +65,6 @@ def main(config="../../config.yaml", param="./lr_config.yaml"):
     # x_test = df_test.drop(label_name, axis=1)
     x_test, y_test = x_train, y_train
 
-
     # lm = LogisticRegression(max_iter=20)
     lm = SGDClassifier(loss="log", **config_param)
     lm_fit = lm.fit(x_train, y_train)

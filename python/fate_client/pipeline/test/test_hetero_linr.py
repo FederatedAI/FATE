@@ -21,5 +21,5 @@ from pipeline.component.hetero_linr import HeteroLinR
 a = HeteroLinR(name="hetero_linr_0", early_stop="weight_diff",
                stepwise_param={"max_step": 3, "need_stepwise": True})
 
-print (a.output.data)
-print (a.output.model)
+print(a.output.data)
+print(a.output.model)

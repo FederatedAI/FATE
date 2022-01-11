@@ -46,16 +46,19 @@ class RandomNumberGenerator(object):
             ret = [0] * size
             for i in range(size):
                 if keep[i]:
-                    rng = random.SystemRandom().uniform(self.lower_bound,
-                                                        self.upper_bound) if np.random.rand() < mixed_rate else np.random.uniform(
+                    rng = random.SystemRandom().uniform(
+                        self.lower_bound, self.upper_bound) if np.random.rand() < mixed_rate else np.random.uniform(
                         self.lower_bound, self.upper_bound)
                     ret[i] = rng
 
             return np.array(ret)[keep]
         else:
-            return [random.SystemRandom().uniform(self.lower_bound,
-                                                  self.upper_bound) if np.random.rand() < mixed_rate else np.random.uniform(
-                self.lower_bound, self.upper_bound) for _ in range(size)]
+            return [
+                random.SystemRandom().uniform(
+                    self.lower_bound,
+                    self.upper_bound) if np.random.rand() < mixed_rate else np.random.uniform(
+                    self.lower_bound,
+                    self.upper_bound) for _ in range(size)]
 
     def generate_random_number(self, shape=None, mixed_rate=MIXED_RATE, keep=None):
         if keep is not None:

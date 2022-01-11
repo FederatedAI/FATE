@@ -30,9 +30,6 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 class HomoOneHotTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
-        self.aligned_columns = self._create_variable(name='aligned_columns', src=['arbiter'], dst=['guest','host'])
-        self.guest_columns = self._create_variable(name='guest_columns',  src=['guest'], dst=['arbiter'])
-        self.host_columns = self._create_variable(name='host_columns',  src=['host'], dst=['arbiter'])
-
-
- 
+        self.aligned_columns = self._create_variable(name='aligned_columns', src=['arbiter'], dst=['guest', 'host'])
+        self.guest_columns = self._create_variable(name='guest_columns', src=['guest'], dst=['arbiter'])
+        self.host_columns = self._create_variable(name='host_columns', src=['host'], dst=['arbiter'])

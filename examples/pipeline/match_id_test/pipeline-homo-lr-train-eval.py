@@ -62,7 +62,7 @@ def main(config="../../config.yaml", namespace=""):
     reader_1.get_party_instance(role='host', party_id=host).component_param(table=host_eval_data)
     # define DataTransform components
     data_transform_0 = DataTransform(name="data_transform_0", with_match_id=True,
-                             with_label=True, output_format="dense")
+                                     with_label=True, output_format="dense")
     data_transform_1 = DataTransform(name="data_transform_1")  # start component numbering at 0
 
     scale_0 = FeatureScale(name='scale_0')

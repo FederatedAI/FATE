@@ -37,7 +37,8 @@ RUN mkdir -p /venv && chown gitpod:gitpod /venv
 USER gitpod
 RUN sudo install-packages python3-pip
 
-COPY python/requirements.txt /venv/
+COPY python/requirements.txt /tmp/requirements.txt
+COPY doc/mkdocs/requirements.txt /tmp/requirements_mkdocs.txt
 ENV PIP_USER=
 ENV PYTHONUSERBASE=
 ENV PATH=$HOME/.pyenv/bin:$HOME/.pyenv/shims:$PATH
@@ -47,14 +48,17 @@ RUN curl -fsSL https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-ins
         echo 'eval "$(pyenv virtualenv-init -)"'; } >> /home/gitpod/.bashrc.d/60-python \
     && pyenv update \
     && pyenv install 3.6.15 \
-    && pyenv global 3.6.15 \
-    && python3 -m venv /venv/py36 --system-site-packages \
+    && $HOME/.pyenv/versions/3.6.15/bin/python -m venv /venv/py36 --system-site-packages \
     && /venv/py36/bin/python -m pip install --no-cache-dir --upgrade pip \
     && /venv/py36/bin/python -m pip install --no-cache-dir --upgrade setuptools wheel virtualenv pipenv pylint rope flake8 \
         mypy autopep8 pep8 pylama pydocstyle bandit notebook twine jedi black isort \
-    && /venv/py36/bin/python -m pip install --no-cache-dir -r /venv/requirements.txt \
+    && /venv/py36/bin/python -m pip install --no-cache-dir -r /tmp/requirements.txt \
+    && pyenv install 3.7.12 \
+    && $HOME/.pyenv/versions/3.7.12/bin/python -m venv /venv/mkdocs --system-site-packages \
+    && /venv/mkdocs/bin/python -m pip install --no-cache-dir --upgrade pip \
+    && /venv/mkdocs/bin/python -m pip install --no-cache-dir -r /tmp/requirements_mkdocs.txt \
     && sudo rm -rf /tmp/* \
-    && sudo rm /venv/requirements.txt
+    && pyenv global 3.6.15
 
 COPY python/fate_client /venv/fate_client
 RUN /venv/py36/bin/python -m pip install --no-cache-dir /venv/fate_client \

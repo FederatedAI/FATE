@@ -58,6 +58,7 @@ def main(config="../../config.yaml", namespace=""):
     # ivs = {x[0]: x[1] for x in summary["iv"]}
     # common_tools.prettify(ivs)
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("PIPELINE DEMO")
     parser.add_argument("-config", type=str,

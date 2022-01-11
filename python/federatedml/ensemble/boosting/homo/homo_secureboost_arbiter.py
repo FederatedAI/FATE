@@ -76,6 +76,3 @@ class HomoSecureBoostingTreeArbiter(HomoBoostingArbiter):
 
     def get_model_meta(self):
         pass
-
-
-

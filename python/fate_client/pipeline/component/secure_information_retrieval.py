@@ -34,5 +34,3 @@ class SecureInformationRetrieval(Component, SecureInformationRetrievalParam):
         self.input = Input(self.name, data_type="single")
         self.output = Output(self.name)
         self._module_name = "SecureInformationRetrieval"
-
-

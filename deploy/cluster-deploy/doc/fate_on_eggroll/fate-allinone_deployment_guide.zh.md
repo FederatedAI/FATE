@@ -1,4 +1,5 @@
-# FATE AllinOne部署指南 | [English](./fate-allinone_deployment_guide.md)
+# FATE AllinOne部署指南 
+[English](./fate-allinone_deployment_guide.md)
 
 > 警告：本文档仅用于快速开始，生产环境推荐使用其他部署方式，如 [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE)。
 >

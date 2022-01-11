@@ -30,7 +30,13 @@ class StorageSession(StorageSessionBase):
         self.address = address
         if isinstance(address, LinkisHiveAddress):
             from fate_arch.storage.linkis_hive._table import StorageTable
-            return StorageTable(address=address, name=name, namespace=namespace, storage_type=storage_type, partitions=partitions, options=options)
+            return StorageTable(
+                address=address,
+                name=name,
+                namespace=namespace,
+                storage_type=storage_type,
+                partitions=partitions,
+                options=options)
         raise NotImplementedError(f"address type {type(address)} not supported with eggroll storage")
 
     def cleanup(self, name, namespace):

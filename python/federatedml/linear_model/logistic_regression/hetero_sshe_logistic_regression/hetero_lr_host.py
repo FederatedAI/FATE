@@ -252,4 +252,3 @@ class HeteroLRHost(HeteroLRBase):
                 tmp_vars[idx] = coef_i
 
             self.model_weights = LinearModelWeights(tmp_vars, fit_intercept=self.fit_intercept)
-

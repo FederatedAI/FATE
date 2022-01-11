@@ -251,7 +251,7 @@ class FixedPointTensor(TensorBase):
         elif is_table(other):
             z_value = _table_binary_mod_op(other, self.value, self.q_field, operator.sub)
         else:
-            z_value = _table_scalar_mod_op(self.value, other,  self.q_field, -1 * operator.sub)
+            z_value = _table_scalar_mod_op(self.value, other, self.q_field, -1 * operator.sub)
         return self._boxed(z_value)
 
     def __mul__(self, other):
@@ -291,7 +291,7 @@ class PaillierFixedPointTensor(TensorBase):
                 ret = np.array([ret])
             return ret
 
-        if isinstance(other, (FixedPointTensor,fixedpoint_numpy.FixedPointTensor)):
+        if isinstance(other, (FixedPointTensor, fixedpoint_numpy.FixedPointTensor)):
             other = other.value
 
         if isinstance(other, np.ndarray):
@@ -396,4 +396,3 @@ class PaillierFixedPointTensor(TensorBase):
                                     tensor_name=tensor_name)
         else:
             raise ValueError(f"type={type(source)}")
-

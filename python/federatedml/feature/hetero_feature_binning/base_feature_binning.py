@@ -96,7 +96,6 @@ class BaseFeatureBinning(ModelBase):
 
     @staticmethod
     def data_format_transform(row):
-
         """
         transform data into sparse format
         """
@@ -277,7 +276,7 @@ class BaseFeatureBinning(ModelBase):
                 assert len(host_pbs) % len(self.labels) == 0
                 i = 0
                 while i < len(host_pbs):
-                    this_pbs = host_pbs[i: i+len(self.labels)]
+                    this_pbs = host_pbs[i: i + len(self.labels)]
                     self.host_results.append(MultiClassBinResult.reconstruct(this_pbs, self.labels))
                     i += len(self.labels)
 

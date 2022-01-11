@@ -33,5 +33,3 @@ class HomoDataSplit(Component, DataSplitParam):
         self.input = Input(self.name)
         self.output = Output(self.name, has_model=False, data_type="multi")
         self._module_name = "HomoDataSplit"
-
-

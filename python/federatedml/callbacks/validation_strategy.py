@@ -54,6 +54,7 @@ class ValidationStrategy(CallbackBase):
                 if validate_data not equal to None, and judge need to validate data according to validation_freqs,
                 validate data will be used for evaluating
     """
+
     def __init__(self, role=None, mode=None, validation_freqs=None, early_stopping_rounds=None,
                  use_first_metric_only=False, arbiter_comm=True):
 
@@ -156,11 +157,11 @@ class ValidationStrategy(CallbackBase):
 
         first_metric = True
         if self.role == consts.GUEST:
-            LOGGER.info('showing early stopping status, {} shows cur best performances: {}'.format(self.role,
-                                                                                                   self.performance_recorder.cur_best_performance))
+            LOGGER.info('showing early stopping status, {} shows cur best performances: {}'.format(
+                self.role, self.performance_recorder.cur_best_performance))
 
-        LOGGER.info('showing early stopping status, {} shows early stopping no improve rounds: {}'.format(self.role,
-                                                                                                          self.performance_recorder.no_improvement_round))
+        LOGGER.info('showing early stopping status, {} shows early stopping no improve rounds: {}'.format(
+            self.role, self.performance_recorder.no_improvement_round))
 
         for metric, no_improve_round in self.performance_recorder.no_improvement_round.items():
             if no_improve_round == 0:
@@ -269,7 +270,7 @@ class ValidationStrategy(CallbackBase):
 
         eval_obj._init_model(evaluate_param)
         eval_obj.set_tracker(model.tracker)
-        data_set_name = self.make_data_set_name(model.need_cv, model.callback_one_vs_rest, model.flowid,  epoch)
+        data_set_name = self.make_data_set_name(model.need_cv, model.callback_one_vs_rest, model.flowid, epoch)
         eval_data = {data_set_name: predicts}
         eval_result_dict = eval_obj.fit(eval_data, return_result=True)
         epoch_summary = eval_obj.summary()
@@ -334,13 +335,14 @@ class ValidationStrategy(CallbackBase):
         self.cached_validate_scores = validate_scores
 
     def validate(self, model, epoch):
-
         """
         :param model: model instance, which has predict function
         :param epoch: int, epoch idx for generating flow id
         """
 
-        LOGGER.debug("begin to check validate status, need_run_validation is {}".format(self.need_run_validation(epoch)))
+        LOGGER.debug(
+            "begin to check validate status, need_run_validation is {}".format(
+                self.need_run_validation(epoch)))
 
         if not self.need_run_validation(epoch):
             return
@@ -372,7 +374,8 @@ class ValidationStrategy(CallbackBase):
             if self.early_stopping_rounds:
 
                 if len(eval_result_dict) == 0:
-                    raise ValueError("eval_result len is 0, no single value metric detected for early stopping checking")
+                    raise ValueError(
+                        "eval_result len is 0, no single value metric detected for early stopping checking")
 
                 if self.use_first_metric_only:
                     if self.first_metric:

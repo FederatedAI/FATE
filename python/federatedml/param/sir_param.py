@@ -28,7 +28,7 @@ class SecureInformationRetrievalParam(BaseParam):
     """
     Parameters
     ----------
-    security_level: float, default 0.5 
+    security_level: float, default 0.5
         security level, should set value in [0, 1]
         if security_level equals 0.0 means raw data retrieval
 
@@ -58,6 +58,7 @@ class SecureInformationRetrievalParam(BaseParam):
         default None
 
     """
+
     def __init__(self, security_level=0.5,
                  oblivious_transfer_protocol=consts.OT_HAUCK,
                  commutative_encryption=consts.CE_PH,
@@ -78,7 +79,7 @@ class SecureInformationRetrievalParam(BaseParam):
 
     def check(self):
         descr = "secure information retrieval param's "
-        self.check_decimal_float(self.security_level, descr+"security_level")
+        self.check_decimal_float(self.security_level, descr + "security_level")
         self.oblivious_transfer_protocol = self.check_and_change_lower(self.oblivious_transfer_protocol,
                                                                        [consts.OT_HAUCK.lower()],
                                                                        descr + "oblivious_transfer_protocol")
@@ -92,10 +93,10 @@ class SecureInformationRetrievalParam(BaseParam):
             self.dh_params.key_length = self.key_size
         self.dh_params.check()
         if self._warn_to_deprecate_param("raw_retrieval", descr, "dh_param's security_level = 0"):
-           self.check_boolean(self.raw_retrieval, descr)
+            self.check_boolean(self.raw_retrieval, descr)
         if not isinstance(self.target_cols, list):
             self.target_cols = [self.target_cols]
         for col in self.target_cols:
-            self.check_string(col, descr+"target_cols")
+            self.check_string(col, descr + "target_cols")
         if len(self.target_cols) == 0:
             LOGGER.warning(f"Both 'target_cols' and 'target_indexes' are empty. Label will be retrieved.")

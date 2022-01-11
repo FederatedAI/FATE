@@ -81,7 +81,7 @@ class TestPercentageValueFilter(unittest.TestCase):
 
             sparse_vec = SparseVector(indices=[i for i in range(len(features))], data=features, shape=len(features))
             inst_2 = Instance(inst_id=key, features=sparse_vec, label=key % 2)
-            data_2.append((key,inst_2))
+            data_2.append((key, inst_2))
 
         result = session.parallelize(data, include_key=True, partition=partition)
         result_2 = session.parallelize(data_2, include_key=True, partition=partition)
@@ -111,7 +111,6 @@ class TestPercentageValueFilter(unittest.TestCase):
 
     def tearDown(self):
         session.stop()
-
 
 
 if __name__ == '__main__':

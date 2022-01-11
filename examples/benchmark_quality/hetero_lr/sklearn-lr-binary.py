@@ -67,7 +67,7 @@ def main(config="../../config.yaml", param="./vechile_config.yaml"):
     y_prob = lm_fit.predict_proba(x_test)[:, 1]
     try:
         auc_score = roc_auc_score(y_test, y_prob)
-    except:
+    except BaseException:
         print(f"no auc score available")
         return
     recall = recall_score(y_test, y_pred, average="macro")
@@ -89,4 +89,3 @@ if __name__ == "__main__":
                         help="config file for params")
     args = parser.parse_args()
     main(param=args.param)
-

@@ -251,20 +251,38 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
             try:
                 if 'guest' in data_info[data_name]:
                     if not parallelize:
-                        _generate_dens_data(out_path, guest_start_num, guest_end_num, guest_feature_num, label_flag, progress)
+                        _generate_dens_data(out_path, guest_start_num, guest_end_num,
+                                            guest_feature_num, label_flag, progress)
                     else:
-                        _generate_parallelize_data(guest_start_num, guest_end_num, guest_feature_num, table_names[idx],
-                                                   namespaces[idx], label_flag, data_type, partition_list[idx], progress)
+                        _generate_parallelize_data(
+                            guest_start_num,
+                            guest_end_num,
+                            guest_feature_num,
+                            table_names[idx],
+                            namespaces[idx],
+                            label_flag,
+                            data_type,
+                            partition_list[idx],
+                            progress)
                 else:
                     if data_type == 'tag' and not parallelize:
                         _generate_tag_data(out_path, host_start_num, host_end_num, host_feature_num, sparsity, progress)
                     elif data_type == 'tag_value' and not parallelize:
                         _generate_tag_value_data(out_path, host_start_num, host_end_num, host_feature_num, progress)
                     elif data_type == 'dense' and not parallelize:
-                        _generate_dens_data(out_path, host_start_num, host_end_num, host_feature_num, label_flag, progress)
+                        _generate_dens_data(out_path, host_start_num, host_end_num,
+                                            host_feature_num, label_flag, progress)
                     elif parallelize:
-                        _generate_parallelize_data(host_start_num, host_end_num, host_feature_num, table_names[idx],
-                                                   namespaces[idx], label_flag, data_type, partition_list[idx], progress)
+                        _generate_parallelize_data(
+                            host_start_num,
+                            host_end_num,
+                            host_feature_num,
+                            table_names[idx],
+                            namespaces[idx],
+                            label_flag,
+                            data_type,
+                            partition_list[idx],
+                            progress)
                 progress.set_switch(False)
                 time.sleep(1)
             except Exception:
@@ -311,7 +329,12 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
         with session.Session() as sess:
             session_id = str(uuid.uuid1())
             sess.init_computing(session_id)
-            data_save(data_info=date_set, table_names=table_name_list, namespaces=table_namespace_list, partition_list=partition_list)
+            data_save(
+                data_info=date_set,
+                table_names=table_name_list,
+                namespaces=table_namespace_list,
+                partition_list=partition_list)
     else:
         data_save(data_info=date_set, table_names=table_name_list, namespaces=table_namespace_list, partition_list=partition_list)
         echo.echo(f'Data storage address, please check{big_data_dir}')
+

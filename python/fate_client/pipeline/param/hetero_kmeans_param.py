@@ -19,6 +19,7 @@
 
 from pipeline.param.base_param import BaseParam
 
+
 class KmeansParam(BaseParam):
     """
     Parameters used for K-means.
@@ -30,6 +31,7 @@ class KmeansParam(BaseParam):
     tol : float, default 0.001。
 
     """
+
     def __init__(self, k=5, max_iter=300, tol=0.001):
         super(KmeansParam, self).__init__()
         self.k = k
@@ -39,14 +41,14 @@ class KmeansParam(BaseParam):
     def check(self):
         descr = "Kmeans_param's"
 
-        if not isinstance(self.k,int):
+        if not isinstance(self.k, int):
             raise ValueError(
                 descr + "k {} not supported, should be int type".format(self.k))
         elif self.k <= 1:
             raise ValueError(
                 descr + "k {} not supported, should be larger than 1")
 
-        if not isinstance(self.max_iter,int):
+        if not isinstance(self.max_iter, int):
             raise ValueError(
                 descr + "max_iter not supported, should be int type".format(self.max_iter))
         elif self.max_iter <= 0:
@@ -59,6 +61,3 @@ class KmeansParam(BaseParam):
         elif self.tol < 0:
             raise ValueError(
                 descr + "tol not supported, should be larger than or equal to 0".format(self.tol))
-
-
-

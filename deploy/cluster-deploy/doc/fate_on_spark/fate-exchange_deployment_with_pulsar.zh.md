@@ -1,4 +1,5 @@
-# FATE Exchange with Pulsar 部署指南| [English](fate-exchange_deployment_with_pulsar.md)
+# FATE Exchange with Pulsar 部署指南
+[English](fate-exchange_deployment_with_pulsar.md)
 
 ## 星型组网
 

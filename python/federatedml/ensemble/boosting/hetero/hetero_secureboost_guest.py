@@ -82,13 +82,13 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         LOGGER.info("compute grad and hess")
         loss_method = self.loss
         if self.task_type == consts.CLASSIFICATION:
-            grad_and_hess = y.join(y_hat, lambda y, f_val: \
-                (loss_method.compute_grad(y, loss_method.predict(f_val)), \
-                 loss_method.compute_hess(y, loss_method.predict(f_val))))
+            grad_and_hess = y.join(y_hat, lambda y, f_val:
+                                   (loss_method.compute_grad(y, loss_method.predict(f_val)),
+                                    loss_method.compute_hess(y, loss_method.predict(f_val))))
         else:
             grad_and_hess = y.join(y_hat, lambda y, f_val:
-            (loss_method.compute_grad(y, f_val),
-             loss_method.compute_hess(y, f_val)))
+                                   (loss_method.compute_grad(y, f_val),
+                                    loss_method.compute_hess(y, f_val)))
 
         grad_and_hess = self.process_sample_weights(grad_and_hess, data_with_sample_weight)
 
@@ -196,12 +196,13 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         new_fi = {}
         for id_ in feature_importances:
 
-            if type(id_) == tuple:
+            if isinstance(id_, tuple):
                 if consts.GUEST in id_[0]:
                     new_fi[fid_mapping[id_[1]]] = feature_importances[id_].importance
                 else:
                     role, party_id = id_[0].split(':')
-                    new_fi[generate_anonymous(role=role, fid=id_[1], party_id=party_id)] = feature_importances[id_].importance
+                    new_fi[generate_anonymous(role=role, fid=id_[1], party_id=party_id)
+                           ] = feature_importances[id_].importance
             else:
                 new_fi[fid_mapping[id_]] = feature_importances[id_].importance
 
@@ -252,8 +253,13 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         return np.sum(weights * learning_rate, axis=0) + init_score
 
     @staticmethod
-    def get_predict_scores(leaf_pos, learning_rate, init_score, trees: List[HeteroDecisionTreeGuest]
-                           , multi_class_num=-1, predict_cache=None):
+    def get_predict_scores(
+            leaf_pos,
+            learning_rate,
+            init_score,
+            trees: List[HeteroDecisionTreeGuest],
+            multi_class_num=-1,
+            predict_cache=None):
 
         if predict_cache:
             init_score = 0  # prevent init_score re-add
@@ -264,7 +270,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         predict_result = leaf_pos.mapValues(predict_func)
 
         if predict_cache:
-            predict_result = predict_result.join(predict_cache, lambda v1, v2: v1+v2)
+            predict_result = predict_result.join(predict_cache, lambda v1, v2: v1 + v2)
 
         return predict_result
 
@@ -300,7 +306,11 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         tree_num = len(trees)
         generate_func = functools.partial(self.generate_leaf_pos_dict, tree_num=tree_num)
         node_pos_tb = data_inst.mapValues(generate_func)  # record node pos
-        final_leaf_pos = data_inst.mapValues(lambda x: np.zeros(tree_num, dtype=np.int64) + np.nan)  # record final leaf pos
+        final_leaf_pos = data_inst.mapValues(
+            lambda x: np.zeros(
+                tree_num,
+                dtype=np.int64) +
+            np.nan)  # record final leaf pos
         traverse_func = functools.partial(self.traverse_trees, trees=trees)
         comm_round = 0
 
@@ -436,7 +446,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         feature_importances = list(self.feature_importances_.items())
         feature_importances = sorted(feature_importances, key=itemgetter(1), reverse=True)
         feature_importance_param = []
-        
+
         for (sitename, fid), importance in feature_importances:
             if consts.GUEST in sitename:
                 fullname = self.feature_name_fid_mapping[fid]

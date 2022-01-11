@@ -200,6 +200,7 @@ class JobDSL(object):
     def __init__(self, components: dict, provider=None):
         self.components = components
         self.provider = provider
+
     @staticmethod
     def load(path: Path, provider):
         with path.open("r") as f:

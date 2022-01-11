@@ -12,7 +12,7 @@ print(f"cur_dir: {cur_dir}")
 def insert_extract_code(file_path):
     code_lines = []
     code = \
-    """
+        """
 import json
 import os
 def extract(my_pipeline, file_name, output_path='generated_conf_and_dsl'):
@@ -39,7 +39,7 @@ def extract(my_pipeline, file_name, output_path='generated_conf_and_dsl'):
     with open(file_path, 'r') as f:
         lines = f.readlines()
         for l in lines:
-            if ".predict(" in l or ".fit(" in l :
+            if ".predict(" in l or ".fit(" in l:
                 code_lines.append(f"# {l}")
 
             elif 'if __name__ == "__main__":' in l:

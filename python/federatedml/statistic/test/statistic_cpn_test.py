@@ -8,6 +8,7 @@ from federatedml.param.statistics_param import StatisticsParam
 from federatedml.statistic.data_statistics import DataStatistics
 from federatedml.feature.instance import Instance
 
+
 class TestStatisticCpn(unittest.TestCase):
     def setUp(self):
         self.job_id = str(uuid.uuid1())

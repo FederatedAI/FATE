@@ -109,7 +109,6 @@ class FTL(ModelBase):
 
     @staticmethod
     def check_label(data_inst):
-
         """
         check label. FTL only supports binary classification, and labels should be 1 or -1
         """
@@ -118,7 +117,8 @@ class FTL(ModelBase):
         label_checker = ClassifyLabelChecker()
         num_class, class_set = label_checker.validate_label(data_inst)
         if num_class != 2:
-            raise ValueError('ftl only support binary classification, however {} labels are provided.'.format(num_class))
+            raise ValueError(
+                'ftl only support binary classification, however {} labels are provided.'.format(num_class))
 
         if 1 in class_set and -1 in class_set:
             return data_inst
@@ -147,7 +147,6 @@ class FTL(ModelBase):
         return encrypted_calculator
 
     def encrypt_tensor(self, components, return_dtable=True):
-
         """
         transform numpy array into Paillier tensor and encrypt
         """
@@ -184,7 +183,6 @@ class FTL(ModelBase):
             return self.transfer_variable.stop_flag.get(idx=0, suffix=(num_round, ))
 
     def prepare_data(self, intersect_obj, data_inst, guest_side=False):
-
         """
         find intersect ids and prepare dataloader
         """
@@ -220,7 +218,6 @@ class FTL(ModelBase):
         return data_loader, data_loader.x_shape, data_inst.count(), len(data_loader.get_overlap_indexes())
 
     def initialize_nn(self, input_shape):
-
         """
         initializing nn weights
         """
@@ -248,7 +245,6 @@ class FTL(ModelBase):
         self.nn.train(data)
 
     def _get_mini_batch_gradient(self, X_batch, backward_grads_batch):
-
         """
         compute gradient for a mini batch
         """
@@ -256,7 +252,6 @@ class FTL(ModelBase):
         return grads
 
     def update_nn_weights(self, backward_grads, data_loader: FTLDataLoader, epoch_idx, decay=False):
-
         """
         updating bottom nn model weights using backward gradients
         """

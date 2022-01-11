@@ -32,15 +32,15 @@ nav:
       - resources/README.md
 
   - Deploy:
-    - standalone:
-        - deploy/standalone-deploy/README.md
-        - ... | flat | deploy/standalone-deploy/doc/*.md
     - cluster:
         - deploy/cluster-deploy/README.md
         - fate_on_eggroll:
             - ... | flat | deploy/cluster-deploy/doc/fate_on_eggroll/*.md
         - fate_on_spark:
             - ... | flat | deploy/cluster-deploy/doc/fate_on_spark/*.md
+    - standalone:
+        - deploy/standalone-deploy/README.md
+        - ... | flat | deploy/standalone-deploy/doc/*.md
 
   - Develop:
     - Develop Guide: develop/develop_guide.md

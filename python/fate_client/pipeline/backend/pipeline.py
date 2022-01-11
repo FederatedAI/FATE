@@ -354,8 +354,8 @@ class PipeLine(object):
                     self._train_conf["component_parameters"] = {}
                 if "role" not in self._train_conf["component_parameters"]:
                     self._train_conf["component_parameters"]["role"] = {}
-                self._train_conf["component_parameters"]["role"] = tools.merge_dict(role_param_conf,
-                                                                                               self._train_conf["component_parameters"]["role"])
+                self._train_conf["component_parameters"]["role"] = tools.merge_dict(
+                    role_param_conf, self._train_conf["component_parameters"]["role"])
 
         LOGGER.debug(f"self._train_conf: \n {json.dumps(self._train_conf, indent=4, ensure_ascii=False)}")
         return self._train_conf
@@ -635,7 +635,8 @@ class PipeLine(object):
                 deploy_cpns.append(cpn.name)
             else:
                 raise ValueError(
-                    "deploy component parameters is wrong, expect str or Component object, but {} find".format(type(cpn)))
+                    "deploy component parameters is wrong, expect str or Component object, but {} find".format(
+                        type(cpn)))
 
             if deploy_cpns[-1] not in self._components:
                 raise ValueError("Component {} does not exist in pipeline".format(deploy_cpns[-1]))

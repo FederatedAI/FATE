@@ -49,7 +49,7 @@ class HomoOneHotBase(one_hot_encoder.OneHotEncoder):
         super(HomoOneHotBase, self)._init_params(data_instances)
 
     def fit(self, data_instances):
-        """This function allows for one-hot-encoding of the 
+        """This function allows for one-hot-encoding of the
         columns with or without alignment with the other parties
         in the federated learning.
 

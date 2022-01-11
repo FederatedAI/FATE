@@ -48,8 +48,13 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
     data_transform_0 = DataTransform(name="data_transform_0")
-    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, label_name="y",
-                                                                             label_type="int", output_format="dense")
+    data_transform_0.get_party_instance(
+        role='guest',
+        party_id=guest).component_param(
+        with_label=True,
+        label_name="y",
+        label_type="int",
+        output_format="dense")
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
@@ -61,9 +66,9 @@ def main(config="../../config.yaml", namespace=""):
     sample_weight_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)
 
     hetero_lr_0 = HeteroLR(name="hetero_lr_0", optimizer="sgd", tol=0.001,
-                               alpha=0.01, max_iter=20, early_stop="weight_diff", batch_size=-1,
-                               learning_rate=0.1,
-                               init_param={"init_method": "random_uniform"})
+                           alpha=0.01, max_iter=20, early_stop="weight_diff", batch_size=-1,
+                           learning_rate=0.1,
+                           init_param={"init_method": "random_uniform"})
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary", pos_label=1)
     # evaluation_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)
@@ -89,10 +94,13 @@ def main(config="../../config.yaml", namespace=""):
     predict_pipeline.add_component(reader_0)
     # add selected components from train pipeline onto predict pipeline
     # specify data source
-    predict_pipeline.add_component(pipeline,
-                                   data=Data(predict_input={pipeline.data_transform_0.input.data: reader_0.output.data}))
+    predict_pipeline.add_component(
+        pipeline, data=Data(
+            predict_input={
+                pipeline.data_transform_0.input.data: reader_0.output.data}))
     # run predict model
     predict_pipeline.predict()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("PIPELINE DEMO")

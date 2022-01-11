@@ -54,7 +54,7 @@ def check_data_count(submitter, table_name, namespace, expect_count):
         if count != expect_count:
             raise AssertionError("Count of upload file is not as expect, count is: {},"
                                  "expect is: {}".format(count, expect_count))
-    except:
+    except BaseException:
         raise RuntimeError(f"check data error, stdout: {stdout}")
 
     print(f"[{time.strftime('%Y-%m-%d %X')}] check_data_out {stdout} \n")

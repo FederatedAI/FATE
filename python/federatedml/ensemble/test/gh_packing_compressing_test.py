@@ -33,7 +33,7 @@ def generate_bin_gh(num):
     # (-1, 1)
     g = np.random.random(num)
     h = np.random.random(num)
-    g = g*2 - 1
+    g = g * 2 - 1
     return g, h
 
 
@@ -63,7 +63,7 @@ def truncate(f, n=consts.TREE_DECIMAL_ROUND):
 
 def make_random_sum(collected_gh, g, h, en_g_l, en_h_l, max_sample_num):
 
-    selected_sample_num = np.random.randint(max_sample_num) + 1# at least 1 sample
+    selected_sample_num = np.random.randint(max_sample_num) + 1  # at least 1 sample
 
     idx = np.random.random(selected_sample_num)
     idx = np.unique((idx * max_sample_num).astype(int))
@@ -186,20 +186,27 @@ class TestFeatureHistogram(unittest.TestCase):
         # test the correctness of gh packing(in comparision to plaintext)
 
         # Iterative Affine
-        self.run_gh_accumulate_test(self.test_num, self.iter_collected_gh, self.iter_en_g_l, self.iter_en_h_l, self.iter_packer,
-                                    self.iter_en, self.g, self.h)
+        self.run_gh_accumulate_test(
+            self.test_num,
+            self.iter_collected_gh,
+            self.iter_en_g_l,
+            self.iter_en_h_l,
+            self.iter_packer,
+            self.iter_en,
+            self.g,
+            self.h)
 
-        print('*'*30)
+        print('*' * 30)
         print('test iter done')
-        print('*'*30)
+        print('*' * 30)
 
         # Paillier
         self.run_gh_accumulate_test(self.test_num, self.p_collected_gh, self.p_en_g_l, self.p_en_h_l, self.p_packer,
                                     self.p_en, self.g, self.h)
 
-        print('*'*30)
+        print('*' * 30)
         print('test paillier done')
-        print('*'*30)
+        print('*' * 30)
 
     def test_split_info_cipher_compress(self):
 
@@ -232,7 +239,7 @@ class TestFeatureHistogram(unittest.TestCase):
         unpack_rs = packer.decompress_and_unpack(packages)
         case_id = 0
         for s, g, h, en_gh in zip(unpack_rs, g_sum_list, h_sum_list, pack_en_list):
-            print('*'*10)
+            print('*' * 10)
             print(case_id)
             case_id += 1
             de_num = en.raw_decrypt(en_gh)
@@ -300,8 +307,16 @@ class TestFeatureHistogram(unittest.TestCase):
     def test_regression_gh_packing(self):
 
         # Paillier
-        self.run_gh_accumulate_test(self.test_num, self.reg_p_collected_gh, self.reg_p_en_g_l, self.reg_p_en_h_l, self.reg_p_packer,
-                                    self.p_en, self.g_reg, self.h_reg, check=False)  # float error in regression is not controllable
+        self.run_gh_accumulate_test(
+            self.test_num,
+            self.reg_p_collected_gh,
+            self.reg_p_en_g_l,
+            self.reg_p_en_h_l,
+            self.reg_p_packer,
+            self.p_en,
+            self.g_reg,
+            self.h_reg,
+            check=False)  # float error in regression is not controllable
 
     @classmethod
     def tearDownClass(self):
@@ -311,4 +326,3 @@ class TestFeatureHistogram(unittest.TestCase):
 if __name__ == '__main__':
 
     unittest.main()
-

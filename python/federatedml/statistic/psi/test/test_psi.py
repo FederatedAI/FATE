@@ -9,6 +9,7 @@ from federatedml.feature.sparse_vector import SparseVector
 from federatedml.statistic.psi.psi import PSI
 from federatedml.param.psi_param import PSIParam
 
+
 class TestPSI(unittest.TestCase):
 
     def setUp(self):
@@ -26,7 +27,7 @@ class TestPSI(unittest.TestCase):
             inst.features = np.random.random(20)
             l2.append(inst)
         self.dense_table1, self.dense_table2 = session.parallelize(l1, partition=4, include_key=False), \
-                                               session.parallelize(l2, partition=4, include_key=False)
+            session.parallelize(l2, partition=4, include_key=False)
         self.dense_table1.schema['header'] = copy.deepcopy(col)
         self.dense_table2.schema['header'] = copy.deepcopy(col)
         print('generating done')
@@ -43,7 +44,7 @@ class TestPSI(unittest.TestCase):
             inst.features = SparseVector(indices=copy.deepcopy(col), data=list(np.random.random(20)))
             l2.append(inst)
         self.sp_table1, self.sp_table2 = session.parallelize(l1, partition=4, include_key=False), \
-                                               session.parallelize(l2, partition=4, include_key=False)
+            session.parallelize(l2, partition=4, include_key=False)
         self.sp_table1.schema['header'] = copy.deepcopy(col)
         self.sp_table2.schema['header'] = copy.deepcopy(col)
         print('generating done')

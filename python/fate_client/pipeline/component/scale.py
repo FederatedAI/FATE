@@ -34,5 +34,3 @@ class FeatureScale(Component, ScaleParam):
         self.input = Input(self.name)
         self.output = Output(self.name)
         self._module_name = "FeatureScale"
-
-

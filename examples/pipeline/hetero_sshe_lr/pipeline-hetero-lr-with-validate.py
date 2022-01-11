@@ -115,7 +115,7 @@ def main(config="../../config.yaml", namespace=""):
 
     hetero_sshe_lr_0 = HeteroSSHELR(**lr_param)
     pipeline.add_component(hetero_sshe_lr_0, data=Data(train_data=intersection_0.output.data,
-                                                  validate_data=intersection_1.output.data))
+                                                       validate_data=intersection_1.output.data))
 
     evaluation_data = [hetero_sshe_lr_0.output.data]
     hetero_sshe_lr_1 = HeteroSSHELR(name='hetero_sshe_lr_1')
