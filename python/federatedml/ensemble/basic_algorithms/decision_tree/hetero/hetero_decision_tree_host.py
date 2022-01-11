@@ -408,8 +408,9 @@ class HeteroDecisionTreeHost(DecisionTree):
                 self.inverse_fid_bid_random_mapping,
                 self.missing_dir_mask_left[dep],
                 self.missing_dir_mask_right[dep])
+            for s in unmasked_split_info:
+                self.update_feature_importance(s, record_site_name=False)
             self.record_split_info(unmasked_split_info)
-            LOGGER.debug('split mask dict is {}'.format(self.split_maskdict))
         else:
             LOGGER.debug('skip splits computation')
 

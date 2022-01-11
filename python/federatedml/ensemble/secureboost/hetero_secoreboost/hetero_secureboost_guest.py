@@ -37,7 +37,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.model_param = HeteroSecureBoostParam()
         self.complete_secure = False
         self.data_alignment_map = {}
-        self.predict_transfer_inst = HeteroSecureBoostTransferVariable()
+        self.hetero_sbt_transfer_variable = HeteroSecureBoostTransferVariable()
         self.model_name = 'HeteroSecureBoost'
         self.max_sample_weight = 1
         self.max_sample_weight_computed = False
@@ -184,6 +184,13 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
             # re-set dimension
             self.booster_dim = 1
 
+    def postprocess(self):
+        host_feature_importance_list = self.hetero_sbt_transfer_variable.host_feature_importance.get(idx=-1)
+        for i in host_feature_importance_list:
+            self.feature_importances_.update(i)
+
+        LOGGER.debug('self feature importance is {}'.format(self.feature_importances_))
+
     def fit_a_learner(self, epoch_idx: int, booster_dim: int):
 
         self.on_epoch_prepare(epoch_idx)
@@ -259,7 +266,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         """
         new_fi = {}
         for id_ in feature_importances:
-
+            LOGGER.debug('fp id is {}'.format(id_))
             if type(id_) == tuple:
                 if consts.GUEST in id_[0]:
                     new_fi[fid_mapping[id_[1]]] = feature_importances[id_].importance
@@ -313,7 +320,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         else:
             pred_func = sbt_guest_predict
 
-        predict_rs = pred_func(processed_data, self.predict_transfer_inst, trees, self.learning_rate,
+        predict_rs = pred_func(processed_data, self.hetero_sbt_transfer_variable, trees, self.learning_rate,
                                self.init_score, self.booster_dim, predict_cache,
                                pred_leaf=(ret_format == 'leaf'))
 

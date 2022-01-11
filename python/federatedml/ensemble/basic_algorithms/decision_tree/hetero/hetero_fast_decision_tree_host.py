@@ -128,6 +128,8 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
                                                          self.missing_dir_mask_right[dep])
 
             if mode == consts.LAYERED_TREE:
+                for s in unmasked_split_info:
+                    self.update_feature_importance(s, record_site_name=False)
                 self.record_split_info(unmasked_split_info)
             elif mode == consts.MIX_TREE:
                 return unmasked_split_info

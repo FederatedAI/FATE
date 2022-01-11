@@ -574,8 +574,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
                     self.cur_layer_nodes[i].missing_dir = self.encode("missing_dir",
                                                                       split_info[i].missing_dir,
                                                                       self.cur_layer_nodes[i].id)
-
-                self.update_feature_importance(split_info[i])
+                if split_info[i].sitename == self.sitename:
+                    self.update_feature_importance(split_info[i])
 
             self.tree_node.append(self.cur_layer_nodes[i])
 

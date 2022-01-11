@@ -484,7 +484,7 @@ class Boosting(ModelBase, ABC):
     def preprocess(self):
         pass
 
-    def post_process(self):
+    def postprocess(self):
         pass
 
     def get_cur_model(self):

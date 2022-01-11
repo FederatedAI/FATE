@@ -229,7 +229,7 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
             if self.stop_training or should_stop:
                 break
 
-        self.post_process()
+        self.postprocess()
         self.callback_list.on_train_end()
         self.callback_meta("loss",
                            "train",
@@ -339,7 +339,7 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
             if should_stop:
                 break
 
-        self.post_process()
+        self.postprocess()
         self.callback_list.on_train_end()
         self.set_summary(self.generate_summary())
 

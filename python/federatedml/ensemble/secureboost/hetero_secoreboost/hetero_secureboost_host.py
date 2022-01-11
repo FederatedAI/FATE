@@ -53,7 +53,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
         self.multi_mode = consts.SINGLE_OUTPUT
 
-        self.predict_transfer_inst = HeteroSecureBoostTransferVariable()
+        self.hetero_sbt_transfer_variable = HeteroSecureBoostTransferVariable()
 
     def _init_model(self, param: HeteroSecureBoostParam):
 
@@ -111,6 +111,14 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         if self.multi_mode == consts.MULTI_OUTPUT:
             self.booster_dim = 1
 
+    def postprocess(self):
+        # generate anonymous
+        new_feat_importance = {}
+        sitename = 'host:' + str(self.component_properties.local_partyid)
+        for key in self.feature_importances_:
+            new_feat_importance[(sitename, key)] = self.feature_importances_[key]
+        self.hetero_sbt_transfer_variable.host_feature_importance.remote(new_feat_importance)
+
     def fit_a_learner(self, epoch_idx: int, booster_dim: int):
 
         flow_id = self.generate_flowid(epoch_idx, booster_dim)
@@ -134,9 +142,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
                                            mo_tree=(self.multi_mode == consts.MULTI_OUTPUT), bin_num=self.bin_num
                                            )
         tree.fit()
-
-        if self.boosting_strategy == consts.MIX_TREE:
-            self.update_feature_importance(tree.get_feature_importance())
+        self.update_feature_importance(tree.get_feature_importance())
 
         return tree
 
@@ -186,9 +192,9 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
             return
 
         if self.boosting_strategy == consts.MIX_TREE:
-            mix_sbt_host_predict(processed_data, self.predict_transfer_inst, trees)
+            mix_sbt_host_predict(processed_data, self.hetero_sbt_transfer_variable, trees)
         else:
-            sbt_host_predict(processed_data, self.predict_transfer_inst, trees)
+            sbt_host_predict(processed_data, self.hetero_sbt_transfer_variable, trees)
 
     def get_model_meta(self):
         model_meta = BoostingTreeModelMeta()
@@ -222,18 +228,16 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         model_param.best_iteration = self.callback_variables.best_iteration
         model_param.tree_plan.extend(plan.encode_plan(self.tree_plan))
 
-        if self.boosting_strategy == consts.MIX_TREE:
-            # in mix mode, host can output feature importance
-            feature_importances = list(self.feature_importances_.items())
-            feature_importances = sorted(feature_importances, key=itemgetter(1), reverse=True)
-            feature_importance_param = []
-            LOGGER.debug('host feat importance is {}'.format(feature_importances))
-            for fid, importance in feature_importances:
-                feature_importance_param.append(FeatureImportanceInfo(sitename=self.role,
-                                                                      fid=fid,
-                                                                      importance=importance.importance,
-                                                                      fullname=self.feature_name_fid_mapping[fid]))
-            model_param.feature_importances.extend(feature_importance_param)
+        feature_importances = list(self.feature_importances_.items())
+        feature_importances = sorted(feature_importances, key=itemgetter(1), reverse=True)
+        feature_importance_param = []
+        LOGGER.debug('host feat importance is {}'.format(feature_importances))
+        for fid, importance in feature_importances:
+            feature_importance_param.append(FeatureImportanceInfo(sitename=self.role,
+                                                                  fid=fid,
+                                                                  importance=importance.importance,
+                                                                  fullname=self.feature_name_fid_mapping[fid]))
+        model_param.feature_importances.extend(feature_importance_param)
         
         param_name = "HeteroSecureBoostingTreeHostParam"
 
