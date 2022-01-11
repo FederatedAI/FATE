@@ -104,7 +104,12 @@ class MetricMeta:
         self.metas.update(metas)
 
     def to_dict(self):
-        return dict(name=self.name, metric_type=self.metric_type, metas=self.metas, extra_metas=self.extra_metas)
+        return dict(
+            name=self.name,
+            metric_type=self.metric_type,
+            metas=self.metas,
+            extra_metas=self.extra_metas,
+        )
 
 
 class CallbacksVariable(object):
@@ -122,21 +127,25 @@ class WarpedTrackerClient:
         self, metric_namespace: str, metric_name: str, metrics: typing.List[Metric]
     ):
         return self._tracker.log_metric_data(
-            metric_namespace=metric_namespace, metric_name=metric_name, metrics=[
-                metric.to_dict() for metric in metrics])
+            metric_namespace=metric_namespace,
+            metric_name=metric_name,
+            metrics=[metric.to_dict() for metric in metrics],
+        )
 
-    def set_metric_meta(self, metric_namespace: str, metric_name: str, metric_meta: MetricMeta):
+    def set_metric_meta(
+        self, metric_namespace: str, metric_name: str, metric_meta: MetricMeta
+    ):
         return self._tracker.set_metric_meta(
             metric_namespace=metric_namespace,
             metric_name=metric_name,
-            metric_meta=metric_meta.to_dict())
+            metric_meta=metric_meta.to_dict(),
+        )
 
     def log_component_summary(self, summary_data: dict):
         return self._tracker.log_component_summary(summary_data=summary_data)
 
 
 class ModelBase(object):
-
     component_name = None
 
     @classmethod
@@ -166,7 +175,7 @@ class ModelBase(object):
         self._summary = dict()
         self._align_cache = dict()
         self._tracker = None
-        self.step_name = 'step_name'
+        self.step_name = "step_name"
         self.callback_list: CallbackList
         self.callback_variables = CallbacksVariable()
 
@@ -213,17 +222,18 @@ class ModelBase(object):
         self.tracker = cpn_input.tracker
         self.checkpoint_manager = cpn_input.checkpoint_manager
 
-        # deserialize models
         deserialize_models(cpn_input.models)
 
-        method = (
+        # retry
+        if (
             self._retry
-            if retry
             and self.checkpoint_manager is not None
             and self.checkpoint_manager.latest_checkpoint is not None
-            else self._run
-        )
-        method(cpn_input)
+        ):
+            self._retry(cpn_input=cpn_input)
+        # normal
+        else:
+            self._run(cpn_input=cpn_input)
 
         return ComponentOutput(self.save_data(), self._export(), self.save_cache())
 
@@ -235,14 +245,19 @@ class ModelBase(object):
             export_dict = {"Meta": meta, "Param": model}
         except NotImplementedError:
             export_dict = self.export_model()
+
+            # export nothing, return
+            if export_dict is None:
+                return export_dict
+
             try:
                 meta_name = [k for k in export_dict if k.endswith("Meta")][0]
-            except:
+            except BaseException:
                 raise KeyError("Meta not found in export model")
 
             try:
                 param_name = [k for k in export_dict if k.endswith("Param")][0]
-            except:
+            except BaseException:
                 raise KeyError("Param not found in export model")
 
             meta = export_dict[meta_name]
@@ -259,9 +274,10 @@ class ModelBase(object):
     def _export_meta(self):
         raise NotImplementedError("_export_meta not implemented")
 
-        return ComponentOutput(self.save_data(), self.export_model(), self.save_cache())
+    def _export_model(self):
+        raise NotImplementedError("_export_model not implemented")
 
-    def _run(self, cpn_input):
+    def _run(self, cpn_input) -> None:
         # paramters
         self.model_param.update(cpn_input.parameters)
         self.model_param.check()
@@ -311,9 +327,7 @@ class ModelBase(object):
         # self.check_consistency()
         self.save_summary()
 
-        return ComponentOutput(self.save_data(), self.export_model(), self.save_cache())
-
-    def _retry(self, cpn_input):
+    def _retry(self, cpn_input) -> None:
         self.model_param.update(cpn_input.parameters)
         self.model_param.check()
         self.component_properties.parse_component_param(
@@ -330,7 +344,12 @@ class ModelBase(object):
             callback_param = getattr(self.model_param, "callback_param")
             self.callback_list.init_callback_list(callback_param)
 
-        train_data, validate_data, test_data, data = self.component_properties.extract_input_data(
+        (
+            train_data,
+            validate_data,
+            test_data,
+            data,
+        ) = self.component_properties.extract_input_data(
             datasets=cpn_input.datasets, model=self
         )
 
@@ -338,7 +357,8 @@ class ModelBase(object):
         latest_checkpoint = self.get_latest_checkpoint()
         running_funcs.add_func(self.load_model, [latest_checkpoint])
         running_funcs = self.component_properties.warm_start_process(
-            running_funcs, self, train_data, validate_data)
+            running_funcs, self, train_data, validate_data
+        )
         LOGGER.debug(f"running_funcs: {running_funcs.todo_func_list}")
         self._execute_running_funcs(running_funcs)
 
@@ -364,7 +384,11 @@ class ModelBase(object):
 
         if len(saved_result) == 1:
             self.data_output = saved_result[0]
-        LOGGER.debug("saved_result is : {}, data_output: {}".format(saved_result, self.data_output))
+        LOGGER.debug(
+            "saved_result is : {}, data_output: {}".format(
+                saved_result, self.data_output
+            )
+        )
         self.save_summary()
 
     def export_serialized_models(self):
@@ -467,7 +491,7 @@ class ModelBase(object):
                     "type",
                 ],
                 "sid_name": schema.get("sid_name"),
-                "content_type": "predict_result"
+                "content_type": "predict_result",
             }
         return predict_data
 
@@ -558,7 +582,9 @@ class ModelBase(object):
             metric_meta=metric_meta,
         )
 
-    def callback_metric(self, metric_name, metric_namespace, metric_data: typing.List[Metric]):
+    def callback_metric(
+        self, metric_name, metric_namespace, metric_data: typing.List[Metric]
+    ):
         if self.need_cv:
             metric_name = ".".join([metric_name, str(self.cv_fold)])
 
@@ -569,16 +595,22 @@ class ModelBase(object):
         )
 
     def callback_warm_start_init_iter(self, iter_num):
-        metric_meta = MetricMeta(name='train',
-                                 metric_type="init_iter",
-                                 extra_metas={
-                                     "unit_name": "iters",
-                                 })
+        metric_meta = MetricMeta(
+            name="train",
+            metric_type="init_iter",
+            extra_metas={
+                "unit_name": "iters",
+            },
+        )
 
-        self.callback_meta(metric_name='init_iter', metric_namespace='train', metric_meta=metric_meta)
-        self.callback_metric(metric_name='init_iter',
-                             metric_namespace='train',
-                             metric_data=[Metric("init_iter", iter_num)])
+        self.callback_meta(
+            metric_name="init_iter", metric_namespace="train", metric_meta=metric_meta
+        )
+        self.callback_metric(
+            metric_name="init_iter",
+            metric_namespace="train",
+            metric_data=[Metric("init_iter", iter_num)],
+        )
 
     def get_latest_checkpoint(self):
         return self.checkpoint_manager.latest_checkpoint.read()
