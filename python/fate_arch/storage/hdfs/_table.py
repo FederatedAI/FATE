@@ -92,6 +92,9 @@ class StorageTable(StorageTableBase):
 
     def _count(self):
         count = 0
+        if self._meta.get_count() and self._hdfs_client.get_file_info(self.path).size \
+                > 1024 * 1024 * 1024:
+            return self._meta.get_count()
         for _ in self._as_generator():
             count += 1
         return count
@@ -141,6 +144,7 @@ class StorageTable(StorageTableBase):
                         break
                     elif not block_buffer:
                         block_buffer = margin_buffer
+                        margin_buffer = b""
                     elif not margin_buffer:
                         if block_buffer.endswith(b"\n"):
                             pass
@@ -151,10 +155,12 @@ class StorageTable(StorageTableBase):
                     else:
                         if block_buffer.endswith(b"\n"):
                             block_buffer = margin_buffer + block_buffer
+                            margin_buffer = b""
                         else:
                             buffer_list = block_buffer.split(b"\n")
                             block_buffer = margin_buffer + b"\n".join(buffer_list)
                             margin_buffer = buffer_list[1]
+                    print(block_buffer, margin_buffer)
                     with io.TextIOWrapper(
                         buffer=io.BytesIO(block_buffer), encoding="utf-8"
                     ) as reader:
