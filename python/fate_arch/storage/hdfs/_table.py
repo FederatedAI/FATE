@@ -92,6 +92,8 @@ class StorageTable(StorageTableBase):
 
     def _count(self):
         count = 0
+        if self._meta.get_count():
+            return self._meta.get_count()
         for _ in self._as_generator():
             count += 1
         return count
@@ -126,40 +128,12 @@ class StorageTable(StorageTableBase):
             raise FileNotFoundError(f"file {self.path} not found")
 
         elif info.type == fs.FileType.File:
-            if info.size <= 1024 * 1024 * 1024:
-                with io.TextIOWrapper(
-                        buffer=self._hdfs_client.open_input_stream(self.path), encoding="utf-8"
-                ) as reader:
-                    for line in reader:
-                        yield line
-            else:
-                buffer = self._hdfs_client.open_input_stream(self.path)
-                margin_buffer = b""
-                while True:
-                    block_buffer = buffer.read(1024 * 1024 * 1024)
-                    if not block_buffer and not margin_buffer:
-                        break
-                    elif not block_buffer:
-                        block_buffer = margin_buffer
-                    elif not margin_buffer:
-                        if block_buffer.endswith(b"\n"):
-                            pass
-                        else:
-                            buffer_list = block_buffer.split(b"\n")
-                            block_buffer = b"\n".join(buffer_list)
-                            margin_buffer = buffer_list[1]
-                    else:
-                        if block_buffer.endswith(b"\n"):
-                            block_buffer = margin_buffer + block_buffer
-                        else:
-                            buffer_list = block_buffer.split(b"\n")
-                            block_buffer = margin_buffer + b"\n".join(buffer_list)
-                            margin_buffer = buffer_list[1]
-                    with io.TextIOWrapper(
-                        buffer=io.BytesIO(block_buffer), encoding="utf-8"
-                    ) as reader:
-                        for line in reader:
-                            yield line
+            # todo:
+            with io.TextIOWrapper(
+                    buffer=self._hdfs_client.open_input_stream(self.path), encoding="utf-8"
+            ) as reader:
+                for line in reader:
+                    yield line
         else:
             selector = fs.FileSelector(os.path.join("/", self._address.path))
             file_infos = self._hdfs_client.get_file_info(selector)
