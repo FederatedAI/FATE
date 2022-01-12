@@ -359,7 +359,6 @@ class FeatureHistogram(object):
             # ciphertext cumsum skipping
             if histograms[i][2] == 0:
                 new_hist[i] = new_hist[i - 1]
-                LOGGER.debug('skipping')
                 continue
 
             for j in range(len(histograms[i])):
