@@ -42,8 +42,8 @@ def main(config="../../config.yaml", namespace=""):
     guest = parties.guest[0]
     hosts = parties.host[0]
 
-    guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
+    guest_train_data = {"name": "ionosphere_scale_hetero_guest", "namespace": f"experiment{namespace}"}
+    host_train_data = {"name": "ionosphere_scale_hetero_host", "namespace": f"experiment{namespace}"}
     # guest_train_data = {"name": "default_credit_hetero_guest", "namespace": f"experiment{namespace}"}
     # host_train_data = {"name": "default_credit_hetero_host", "namespace": f"experiment{namespace}"}
 
@@ -66,7 +66,7 @@ def main(config="../../config.yaml", namespace=""):
     # get DataTransform party instance of guest
     data_transform_0_guest_party_instance = data_transform_0.get_party_instance(role='guest', party_id=guest)
     # configure DataTransform for guest
-    data_transform_0_guest_party_instance.component_param(with_label=True)
+    data_transform_0_guest_party_instance.component_param(with_label=True, label_name="label")
     # get and configure DataTransform party instance of host
     data_transform_0.get_party_instance(role='host', party_id=hosts).component_param(with_label=False)
 
