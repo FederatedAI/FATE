@@ -130,7 +130,7 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
         """
         in mix mode, a sample can reach leaf directly
         """
-
+        new_node_pos = node_pos + 0
         for i in range(len(trees)):
 
             tree = trees[i]
@@ -138,9 +138,9 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
                 continue
             leaf_id = tree.host_local_traverse_tree(sample, tree.tree_node, use_missing=tree.use_missing,
                                                     zero_as_missing=tree.zero_as_missing)
-            node_pos[i] = leaf_id
+            new_node_pos[i] = leaf_id
 
-        return node_pos
+        return new_node_pos
 
     # this func will be called by super class's predict()
     def boosting_fast_predict(self, data_inst, trees: List[HeteroFastDecisionTreeHost]):
