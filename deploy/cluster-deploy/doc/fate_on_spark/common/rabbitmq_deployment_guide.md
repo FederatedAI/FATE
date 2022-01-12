@@ -44,8 +44,9 @@
 
    ```bash
    cat >> /etc/profile << EOF
-   > export ERL_HOME=/data/projects/common/erlang
-   > export PATH=$PATH:/data/projects/common/erlang/bin
+   export ERL_HOME=/data/projects/common/erlang
+   export PATH=$PATH:/data/projects/common/erlang/bin
+   EOF
    ```
 
 5.  Check
@@ -67,7 +68,6 @@
 
    ```bash
    cd /data/projects/common/rabbitmq_server-3.6.15 && ./sbin/rabbitmq-server -detached
-   
    ```
 
 3. **Change File Permissions**
@@ -84,18 +84,18 @@
 
    2. Synchronise cookie: 
 
-   		After installation by the above steps, Erlang cookie file should locate at /home/app/.erlang.cookie
+      After installation by the above steps, Erlang cookie file should locate at /home/app/.erlang.cookie
 
-   		Copy cookie from any host in the cluster to other hosts to replace original cookies
+      	Copy cookie from any host in the cluster to other hosts to replace original cookies
 
    3. Cluster Start：
 
-   		Based on mq1
+      Based on mq1
 
-   		(1) Stop Erlang node for mq2, mq3
+      (1) Stop Erlang node for mq2, mq3
 
     ```bash
-   ​ sbin/rabbitmqctl stop
+    sbin/rabbitmqctl stop
     ```
 
    ​	(2) Start Erlang node for mq2, mq3
@@ -107,7 +107,7 @@
    ​	(3) Stop the RabbitMQ application on mq2、mq3
 
      ```bash
-   ​  sbin/rabbitmqctl stop_app
+    sbin/rabbitmqctl stop_app
      ```
 
    ​	(4) Join mq2, mq3 to mq1 as a cluster
@@ -126,30 +126,30 @@
    1. Check cluster status
 
    ```bash
-   ​rabbitmqctl cluster_status
+    rabbitmqctl cluster_status
    ```
 
    2. Enable federation (enable/disable):
 
    ```bash
-   rabbitmq-plugins enable rabbitmq_management
-   ​rabbitmq-plugins enable rabbitmq_federation
-   ​rabbitmq-plugins enable rabbitmq_federation_management  
+    rabbitmq-plugins enable rabbitmq_management
+    rabbitmq-plugins enable rabbitmq_federation
+    rabbitmq-plugins enable rabbitmq_federation_management  
    ```
 
    3. Add user:
 
    ```bash
-   ​rabbitmqctl add_user username password
+    rabbitmqctl add_user username password
    ```
    4. Add role:
 
    ```bash
-   ​rabbitmqctl set_user_tags username administrator
+    rabbitmqctl set_user_tags username administrator
    ```
 
    5. Set permissions:
 
    ```bash
-   rabbitmqctl set_permissions -p / username ".*" ".*" ".*" 
+   ​ rabbitmqctl set_permissions -p / username ".*" ".*" ".*" 
    ```
