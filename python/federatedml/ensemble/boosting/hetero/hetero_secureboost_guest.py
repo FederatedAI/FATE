@@ -1,5 +1,6 @@
 from operator import itemgetter
 import numpy as np
+import copy
 from federatedml.util import LOGGER
 from typing import List
 import functools
@@ -210,12 +211,17 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
     @staticmethod
     def traverse_trees(node_pos, sample, trees: List[HeteroDecisionTreeGuest]):
 
+        LOGGER.debug('reach leaf node is {}'.format(node_pos))
         if node_pos['reach_leaf_node'].all():
             return node_pos
 
+        # avoid inplace memory manipulate when running on spark
+        new_node_pos = {'node_pos': node_pos['node_pos'] + 0,
+                        'reach_leaf_node': node_pos['reach_leaf_node'] + False}
+
         for t_idx, tree in enumerate(trees):
 
-            cur_node_idx = node_pos['node_pos'][t_idx]
+            cur_node_idx = new_node_pos['node_pos'][t_idx]
 
             # reach leaf
             if cur_node_idx == -1:
@@ -224,11 +230,11 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
             rs, reach_leaf = HeteroSecureBoostingTreeGuest.traverse_a_tree(tree, sample, cur_node_idx)
 
             if reach_leaf:
-                node_pos['reach_leaf_node'][t_idx] = True
+                new_node_pos['reach_leaf_node'][t_idx] = True
 
-            node_pos['node_pos'][t_idx] = rs
+            new_node_pos['node_pos'][t_idx] = rs
 
-        return node_pos
+        return new_node_pos
 
     @staticmethod
     def merge_predict_pos(node_pos1, node_pos2):
@@ -236,8 +242,8 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         pos_arr1 = node_pos1['node_pos']
         pos_arr2 = node_pos2['node_pos']
         stack_arr = np.stack([pos_arr1, pos_arr2])
-        node_pos1['node_pos'] = np.max(stack_arr, axis=0)
-        return node_pos1
+        new_pos = {'node_pos': np.max(stack_arr, axis=0), 'reach_leaf_node': node_pos1['reach_leaf_node'] + False}
+        return new_pos
 
     @staticmethod
     def add_y_hat(leaf_pos, init_score, learning_rate, trees: List[HeteroDecisionTreeGuest], multi_class_num=None):
@@ -273,15 +279,17 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
 
         reach_leaf_idx = v2['reach_leaf_node']
         select_idx = reach_leaf_idx & (v2['node_pos'] != -1)  # reach leaf and are not recorded( if recorded idx is -1)
-        v1[select_idx] = v2['node_pos'][select_idx]
-        return v1
+        new_v1 = v1 + 0  # get a new array to avoid inplace memory manipulation
+        new_v1[select_idx] = v2['node_pos'][select_idx]
+        return new_v1
 
     @staticmethod
     def mask_leaf_pos(v):
 
-        reach_leaf_idx = v['reach_leaf_node']
-        v['node_pos'][reach_leaf_idx] = -1
-        return v
+        new_v = copy.deepcopy(v)
+        reach_leaf_idx = new_v['reach_leaf_node']
+        new_v['node_pos'][reach_leaf_idx] = -1
+        return new_v
 
     def save_leaf_pos_and_mask_leaf_pos(self, node_pos_tb, final_leaf_pos):
 
@@ -306,8 +314,6 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
 
         while True:
 
-            LOGGER.info('cur predict round is {}'.format(comm_round))
-
             node_pos_tb = node_pos_tb.join(data_inst, traverse_func)
             node_pos_tb, final_leaf_pos = self.save_leaf_pos_and_mask_leaf_pos(node_pos_tb, final_leaf_pos)
 
@@ -319,9 +325,9 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                 self.predict_transfer_inst.predict_stop_flag.remote(True, idx=-1, suffix=(comm_round, ))
                 break
 
+            LOGGER.info('cur predict round is {}'.format(comm_round))
             self.predict_transfer_inst.predict_stop_flag.remote(False, idx=-1, suffix=(comm_round, ))
             self.predict_transfer_inst.guest_predict_data.remote(node_pos_tb, idx=-1, suffix=(comm_round, ))
-
             host_pos_tbs = self.predict_transfer_inst.host_predict_data.get(idx=-1, suffix=(comm_round, ))
 
             for host_pos_tb in host_pos_tbs:

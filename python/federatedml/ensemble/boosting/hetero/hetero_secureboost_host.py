@@ -93,7 +93,6 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
                   cipher_compressing=self.cipher_compressing,
                   new_ver=self.new_ver
                   )
-
         tree.fit()
         return tree
 
@@ -107,7 +106,6 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
     def generate_summary(self) -> dict:
 
         summary = {'best_iteration': self.callback_variables.best_iteration, 'is_converged': self.is_converged}
-
         LOGGER.debug('summary is {}'.format(summary))
 
         return summary
@@ -126,16 +124,17 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
     @staticmethod
     def traverse_trees(leaf_pos, sample, trees: List[HeteroDecisionTreeHost]):
 
+        new_leaf_pos = {'node_pos': leaf_pos['node_pos'], 'reach_leaf_node': leaf_pos['reach_leaf_node'] + False}
         for t_idx, tree in enumerate(trees):
 
-            cur_node_idx = leaf_pos['node_pos'][t_idx]
+            cur_node_idx = new_leaf_pos['node_pos'][t_idx]
             # idx is set as -1 when a sample reaches leaf
             if cur_node_idx == -1:
                 continue
             nid, _ = HeteroSecureBoostingTreeHost.traverse_a_tree(tree, sample, cur_node_idx)
-            leaf_pos['node_pos'][t_idx] = nid
+            new_leaf_pos['node_pos'][t_idx] = nid
 
-        return leaf_pos
+        return new_leaf_pos
 
     def boosting_fast_predict(self, data_inst, trees: List[HeteroDecisionTreeHost]):
 
