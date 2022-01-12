@@ -120,7 +120,7 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
             encrypted_bin_sum = encrypted_bin_sum_infos[host_idx]
             # assert 1 == 2, f"encrypted_bin_sum: {list(encrypted_bin_sum.collect())}"
             result_counts_table = self._packer.decrypt_cipher_package_and_unpack(encrypted_bin_sum)
-            LOGGER.debug(f"unpack result: {result_counts_table.first()}")
+            # LOGGER.debug(f"unpack result: {result_counts_table.first()}")
 
             bin_result = self.cal_bin_results(data_instances=data_instances,
                                               host_idx=host_idx,
@@ -171,7 +171,7 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
             for col_name, counts in result_counts_dict.items():
                 if col_name in category_names:
                     optimal_counts[col_name] = counts
-            LOGGER.debug(f"optimal_counts: {optimal_counts}")
+            # LOGGER.debug(f"optimal_counts: {optimal_counts}")
             bin_res = self.iv_calculator.cal_iv_from_counts(optimal_counts, labels=label_elements,
                                                             role=consts.HOST, party_id=host_party_id)
         else:

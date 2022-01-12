@@ -57,7 +57,8 @@ class SummaryStatistics(object):
 
         where i is the current count, and S_i is the current expectation of x
         """
-        if self.abnormal_list is None:
+        #if self.abnormal_list is None:
+        if not self.abnormal_list:
             rows = np.array(rows, dtype=float)
             self.count += 1
             self.sum += rows
@@ -66,9 +67,43 @@ class SummaryStatistics(object):
             self.min_value = np.min([self.min_value, rows], axis=0)
             for m in range(3, self.stat_order + 1):
                 exp_sum_m = getattr(self, f"exp_sum_{m}")
+                # exp_sum_m += rows ** m
                 exp_sum_m = (self.count - 1) / self.count * exp_sum_m + rows ** m / self.count
                 setattr(self, f"exp_sum_{m}", exp_sum_m)
         else:
+            filter_rows = []
+            filter_idx = []
+            for idx, value in enumerate(rows):
+                if value in self.abnormal_list or (isinstance(value, float) and np.isnan(value)):
+                    continue
+                try:
+                    value = float(value)
+                except ValueError as e:
+                    raise ValueError(f"In add func, value should be either a numeric input or be listed in "
+                                     f"abnormal list. Error info: {e}")
+
+                filter_rows.append(value)
+                filter_idx.append(idx)
+
+            if not filter_idx:
+                return
+
+            filter_rows = np.array(filter_rows, dtype=float)
+            filter_idx = np.array(filter_idx)
+
+            self.count[filter_idx] += 1
+            self.sum[filter_idx] += filter_rows
+            self.sum_square[filter_idx] += filter_rows ** 2
+            self.max_value[filter_idx] = np.max([self.max_value[filter_idx], filter_rows], axis=0)
+            self.min_value[filter_idx] = np.min([self.min_value[filter_idx], filter_rows], axis=0)
+            for m in range(3, self.stat_order + 1):
+                exp_sum_m = getattr(self, f"exp_sum_{m}")
+                # exp_sum_m[filter_idx] += filter_rows ** m
+                exp_sum_m = (self.count[filter_idx] - 1) / self.count[filter_idx] * exp_sum_m[filter_idx] + \
+                    filter_rows ** m / self.count[filter_idx]
+                setattr(self, f"exp_sum_{m}", exp_sum_m)
+
+            """
             for idx, value in enumerate(rows):
                 if value in self.abnormal_list:
                     continue
@@ -87,6 +122,7 @@ class SummaryStatistics(object):
                     exp_sum_m[idx] = (self.count[idx] - 1) / self.count[idx] * \
                                      exp_sum_m[idx] + rows[idx] ** m / self.count[idx]
                     setattr(self, f"exp_sum_{m}", exp_sum_m)
+            """
 
     def merge(self, other):
         if self.stat_order != other.stat_order:
@@ -102,6 +138,18 @@ class SummaryStatistics(object):
             setattr(self, f"exp_sum_{m}", exp_sum)
         self.count += other.count
         return self
+
+    """
+    def summary(self):
+        for m in range(3, self.stat_order + 1):
+            exp_sum_m = getattr(self, f"exp_sum_{m}")
+            for idx, cnt in enumerate(self.count):
+                if np.abs(cnt) < consts.FLOAT_ZERO:
+                    continue
+                exp_sum_m[idx] /= cnt
+
+            setattr(self, f"exp_sum_{m}", exp_sum_m)
+    """
 
     @property
     def mean(self):
@@ -124,7 +172,7 @@ class SummaryStatistics(object):
 
     @property
     def coefficient_of_variance(self):
-        mean = np.array([consts.FLOAT_ZERO if math.fabs(x) < consts.FLOAT_ZERO else x \
+        mean = np.array([consts.FLOAT_ZERO if math.fabs(x) < consts.FLOAT_ZERO else x
                          for x in self.mean])
         return np.fabs(self.stddev / mean)
 
@@ -239,6 +287,7 @@ class MissingStatistic(object):
 
         self.missing_val = None
         self.feature_summary = {}
+        self.count_summary = {}
         self.missing_feature = []
         self.all_feature_list = []
         self.tag_id_mapping, self.id_tag_mapping = {}, {}
@@ -246,7 +295,7 @@ class MissingStatistic(object):
 
     @staticmethod
     def is_sparse(tb):
-        return type(tb.take(1)[0][1].features) == SparseVector
+        return isinstance(tb.take(1)[0][1].features, SparseVector)
 
     @staticmethod
     def check_table_content(tb):
@@ -254,7 +303,7 @@ class MissingStatistic(object):
         if not tb.count() > 0:
             raise ValueError('input table must contains at least 1 sample')
         first_ = tb.take(1)[0][1]
-        if type(first_) == Instance:
+        if isinstance(first_, Instance):
             return True
         else:
             raise ValueError('unknown input format')
@@ -274,9 +323,11 @@ class MissingStatistic(object):
 
         feature_count_rs = self.count_feature_ratio(tb, self.tag_id_mapping, not self.is_sparse(tb),
                                                     missing_val=self.missing_val)
+        total_count = tb.count()
         for idx, count_val in enumerate(feature_count_rs):
-            self.feature_summary[self.id_tag_mapping[idx]] = 1 - (count_val / tb.count())
-            if (count_val / tb.count()) == 0:
+            self.feature_summary[self.id_tag_mapping[idx]] = 1 - (count_val / total_count)
+            self.count_summary[self.id_tag_mapping[idx]] = int(total_count - count_val)
+            if (count_val / total_count) == 0:
                 self.missing_feature.append(self.id_tag_mapping[idx])
 
         return self.feature_summary
@@ -343,6 +394,7 @@ class MultivariateStatisticalSummary(object):
         self.__init_cols(data_instances, cols_index, stat_order, bias)
         self.label_summary = None
         self.error = error
+        self.missing_static_obj: MissingStatistic = None
 
     def __init_cols(self, data_instances, cols_index, stat_order, bias):
         header = data_overview.get_header(data_instances)
@@ -412,6 +464,7 @@ class MultivariateStatisticalSummary(object):
 
         """
 
+        cols_index_set = set(cols_index)
         for k, instances in data_instances:
             if not is_sparse:
                 if isinstance(instances, Instance):
@@ -423,12 +476,15 @@ class MultivariateStatisticalSummary(object):
                     # except ValueError as e:
                     #     raise ValueError(f"Static Module accept numeric input only. Error info: {e}")
                 # LOGGER.debug(f"In statics, features: {features}")
-                row_values = [x for idx, x in enumerate(features) if idx in cols_index]
+                # row_values = [x for idx, x in enumerate(features) if idx in cols_index]
+                row_values = [x for idx, x in enumerate(features) if idx in cols_index_set]
                 # row_values = features[cols_index]
             else:
                 sparse_data = instances.features.get_sparse_vector()
                 row_values = np.array([sparse_data.get(x, 0) for x in cols_index])
             summary_statistics.add_rows(row_values)
+
+        # summary_statistics.summary()
         return summary_statistics
 
     @staticmethod
@@ -578,15 +634,20 @@ class MultivariateStatisticalSummary(object):
 
     @property
     def missing_ratio(self):
-        missing_static_obj = MissingStatistic()
-        all_missing_ratio = missing_static_obj.fit(self.data_instances)
+        self.missing_static_obj = MissingStatistic()
+        all_missing_ratio = self.missing_static_obj.fit(self.data_instances)
         return np.array([all_missing_ratio[self.header[idx]] for idx in self.cols_index])
 
     @property
     def missing_count(self):
-        missing_ratio = self.missing_ratio
-        missing_count = missing_ratio * self.data_instances.count()
-        return missing_count.astype(int)
+        # missing_ratio = self.missing_ratio
+        # missing_count = missing_ratio * self.data_instances.count()
+        # return missing_count.astype(int)
+        if self.missing_static_obj is None:
+            self.missing_static_obj = MissingStatistic()
+            self.missing_static_obj.fit(self.data_instances)
+        all_missing_count = self.missing_static_obj.count_summary
+        return np.array([all_missing_count[self.header[idx]] for idx in self.cols_index])
 
     @staticmethod
     def get_label_static_dict(data_instances):

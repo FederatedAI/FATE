@@ -110,7 +110,7 @@ class SingleMetricInfo(object):
             party_idx = self.host_party_ids.index(party_id)
             col_name_map = {name: idx for idx, name in
                             enumerate(self.host_col_names[party_idx])}
-            LOGGER.debug(f"col_name_map: {col_name_map}")
+            # LOGGER.debug(f"col_name_map: {col_name_map}")
 
             values = []
             host_values = np.array(self.host_values[party_idx])

@@ -49,7 +49,7 @@ export version=1.7.0
 #### 2.2.1 通过公共镜像服务
 
 ```bash
-docker pull federatedai/standalone_fate ${version}
+docker pull federatedai/standalone_fate:${version}
 ```
 
 #### 2.2.2 通过镜像包

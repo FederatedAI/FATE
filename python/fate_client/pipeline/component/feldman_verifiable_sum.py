@@ -15,15 +15,15 @@
 #
 
 from pipeline.param.feldman_verifiable_sum_param import FeldmanVerifiableSumParam
-from pipeline.component.component_base import Component
+from pipeline.component.component_base import FateComponent
 from pipeline.interface import Input
 from pipeline.interface import Output
 from pipeline.utils.logger import LOGGER
 
 
-class FeldmanVerifiableSum(Component, FeldmanVerifiableSumParam):
+class FeldmanVerifiableSum(FateComponent, FeldmanVerifiableSumParam):
     def __init__(self, **kwargs):
-        Component.__init__(self, **kwargs)
+        FateComponent.__init__(self, **kwargs)
 
         LOGGER.debug(f"{self.name} component created")
         new_kwargs = self.erase_component_base_param(**kwargs)

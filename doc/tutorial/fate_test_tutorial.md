@@ -75,7 +75,7 @@ A collection of useful tools to running FATE tests and [:file_folder:examples](.
 
     ```bash
     fate_test data generate -i <path contains *benchmark.json> -ng 10000 -fg 10 -fh 10 -m 1.0 --upload-data
-    fate_test performance -i <path contains *benchmark.json>
+    fate_test performance -i <path contains *benchmark.json> --skip-data
     ```
     
 ## Usage 

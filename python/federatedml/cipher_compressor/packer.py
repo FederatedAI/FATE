@@ -4,7 +4,6 @@ from federatedml.cipher_compressor.compressor import get_homo_encryption_max_int
 from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 from federatedml.cipher_compressor.compressor import PackingCipherTensor
 from federatedml.cipher_compressor.compressor import CipherPackage
-from federatedml.secureprotol.encrypt import IterativeAffineEncrypt
 from federatedml.transfer_variable.transfer_class.cipher_compressor_transfer_variable \
     import CipherCompressorTransferVariable
 from federatedml.util import consts
@@ -66,8 +65,6 @@ class GuestIntegerPacker(object):
                                                                                           compress_parameter))
 
     def cipher_compress_suggest(self):
-        if type(self.calculator.encrypter) == IterativeAffineEncrypt:  # iterativeAffine not support cipher compress
-            return 1, 1
         compressible = self._bit_assignment[-1]
         total_bit_count = sum(compressible)
         compress_num = self._max_bit // total_bit_count

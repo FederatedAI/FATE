@@ -15,15 +15,15 @@
 #
 
 from pipeline.param.psi_param import PSIParam
-from pipeline.component.component_base import Component
+from pipeline.component.component_base import FateComponent
 from pipeline.interface import Input
 from pipeline.interface import Output
 from pipeline.utils.logger import LOGGER
 
 
-class PSI(Component, PSIParam):
+class PSI(FateComponent, PSIParam):
     def __init__(self, **kwargs):
-        Component.__init__(self, **kwargs)
+        FateComponent.__init__(self, **kwargs)
 
         # print(self.name)
         LOGGER.debug(f"{self.name} component created")

@@ -159,7 +159,7 @@ class FixedPointTensor(TensorBase):
         else:
             base = kwargs['base'] if 'base' in kwargs else 10
             frac = kwargs['frac'] if 'frac' in kwargs else 4
-            encoder = FixedPointEndec(field=q_field, base=base, precision_fractional=frac)
+            encoder = FixedPointEndec(n=q_field, field=q_field, base=base, precision_fractional=frac)
         if is_table(source):
             source = encoder.encode(source)
             _pre = urand_tensor(q_field, source, use_mix=spdz.use_mix_rand)
@@ -182,7 +182,7 @@ class FixedPointTensor(TensorBase):
     def rescontruct(self, tensor_name=None, broadcast=True):
         from federatedml.secureprotol.spdz import SPDZ
         spdz = SPDZ.get_instance()
-        share_val = self.value
+        share_val = self.value.copy()
         name = tensor_name or self.tensor_name
 
         if name is None:
@@ -200,7 +200,7 @@ class FixedPointTensor(TensorBase):
     def broadcast_reconstruct_share(self, tensor_name=None):
         from federatedml.secureprotol.spdz import SPDZ
         spdz = SPDZ.get_instance()
-        share_val = self.value
+        share_val = self.value.copy()
         name = tensor_name or self.tensor_name
         if name is None:
             raise ValueError("name not specified")
@@ -366,7 +366,7 @@ class PaillierFixedPointTensor(TensorBase):
         else:
             base = kwargs['base'] if 'base' in kwargs else 10
             frac = kwargs['frac'] if 'frac' in kwargs else 4
-            encoder = FixedPointEndec(field=q_field, base=base, precision_fractional=frac)
+            encoder = FixedPointEndec(n=q_field, field=q_field, base=base, precision_fractional=frac)
 
         if is_table(source):
             _pre = urand_tensor(q_field, source, use_mix=spdz.use_mix_rand)

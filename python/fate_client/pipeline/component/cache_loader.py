@@ -15,15 +15,15 @@
 #
 
 from pipeline.param.cache_loader_param import CacheLoaderParam
-from pipeline.component.component_base import Component
+from pipeline.component.component_base import FateFlowComponent
 from pipeline.interface import Input
 from pipeline.interface import Output
 from pipeline.utils.logger import LOGGER
 
 
-class CacheLoader(Component, CacheLoaderParam):
+class CacheLoader(FateFlowComponent, CacheLoaderParam):
     def __init__(self, **kwargs):
-        Component.__init__(self, **kwargs)
+        FateFlowComponent.__init__(self, **kwargs)
 
         # print (self.name)
         LOGGER.debug(f"{self.name} component created")
