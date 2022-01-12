@@ -99,7 +99,7 @@ class StorageTableMetaModel(DataBaseModel):
     f_auto_increasing_sid = BooleanField(default=False)
 
     f_schema = SerializedField()
-    f_count = IntegerField(null=True)
+    f_count = BigIntegerField(null=True)
     f_part_of_data = SerializedField()
     f_description = TextField(default='')
 
