@@ -71,7 +71,7 @@ def main(config="../../config.yaml", namespace=""):
                                                        num_trees=4,
                                                        tree_num_per_party=1, task_type='regression',
                                                        objective_param={"objective": "lse"},
-                                                       encrypt_param={"method": "iterativeAffine"},
+                                                       encrypt_param={"method": "Paillier"},
                                                        validation_freqs=1,
                                                        tree_param={"max_depth": 3},
                                                        work_mode='mix')

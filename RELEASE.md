@@ -4,6 +4,26 @@ hide:
 ---
 
 # Release Notes
+## Release 1.7.1
+### Major Features and Improvements
+> FederatedML
+* Iterative Affine is disabled
+* Speed up Hetero Feature Selection, 100x+ faster when feature dimension is high
+* Speed up OneHot, 60x+ faster when feature dimension is high
+* Data Statistics supports missing value, with improved efficiency
+* Fix bug of quantile binning: may lose data when partitions hold too many instances
+* Fix reconstruction reuse problem of SPDZ
+* Fix Host's ineffective decay rate of Homo Logistic Regression
+* Improved strategy for handling missing values when converting Homo SecureBoost using homo model convertor
+* Improved presentation of Evaluation's confusing matrix
+
+> FATE-Client
+* Add Source Provider attribute to Pipeline components
+
+> Eggroll
+* Support Eggroll v2.4.2, fixed Log4j security bug
+
+
 ## Release 1.7.0
 ### Major Features and Improvements
 > FATE-ARCH

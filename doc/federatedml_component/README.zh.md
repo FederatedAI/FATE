@@ -58,8 +58,6 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 
   - [Encrypt](secureprotol.md#encrypt)
       - [Paillier encryption](secureprotol.md#paillier-encryption)
-      - [Affine Homomorphic Encryption](secureprotol.md#affine-homomorphic-encryption)
-      - [IterativeAffine Homomorphic Encryption](secureprotol.md#iterativeaffine-homomorphic-encryption)
       - [RSA encryption](secureprotol.md#rsa-encryption)
   - [Hash](secureprotol.md#hash-factory)
   - [Diffne Hellman Key Exchange](secureprotol.md#diffne-hellman-key-exchange)

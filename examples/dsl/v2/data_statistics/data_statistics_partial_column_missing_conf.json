@@ -1,0 +1,66 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "host": [
+            10000
+        ],
+        "guest": [
+            9999
+        ]
+    },
+    "component_parameters": {
+        "role": {
+            "guest": {
+                "0": {
+                    "data_transform_0": {
+                        "with_label": true,
+                        "label_name": "label"
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "ionosphere_scale_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            },
+            "host": {
+                "0": {
+                    "data_transform_0": {
+                        "with_label": false
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "ionosphere_scale_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            }
+        },
+        "common": {
+            "data_transform_0": {
+                "output_format": "dense",
+                "missing_fill": false
+            },
+            "statistic_0": {
+                "statistics": [
+                    "95%",
+                    "coefficient_of_variance",
+                    "stddev"
+                ],
+                "column_names": [
+                    "x3"
+                ],
+                "column_indexes": [
+                    1,
+                    2
+                ]
+            }
+        }
+    }
+}

@@ -13,7 +13,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
+import copy
 import functools
 import math
 
@@ -93,13 +93,13 @@ class TransferPair(object):
                              .format(consts.ONE_HOT_LIMIT))
 
         self._transformed_headers[value] = self.__encode_new_header(value)
-        LOGGER.debug(f"transformed_header: {self._transformed_headers}")
+        # LOGGER.debug(f"transformed_header: {self._transformed_headers}")
 
     @property
     def values(self):
         if self._ordered_header is None:
             return list(self._values)
-        if len(self._ordered_header) != len(list(self._values)):
+        if len(self._ordered_header) != len(self._values):
             raise ValueError("Indicated order header length is not equal to value set,"
                              f" ordered_header: {self._ordered_header}, values: {self._values}")
         return self._ordered_header
@@ -169,7 +169,10 @@ class OneHotEncoder(ModelBase):
 
         f = functools.partial(self.transfer_one_instance,
                               col_maps=self.col_maps,
-                              inner_param=self.inner_param)
+                              header=self.inner_param.header,
+                              result_header=self.inner_param.result_header,
+                              result_header_index_mapping=dict(zip(self.inner_param.result_header,
+                                                                   range(len(self.inner_param.result_header)))))
 
         new_data = data_instances.mapValues(f)
         self.set_schema(new_data)
@@ -273,16 +276,18 @@ class OneHotEncoder(ModelBase):
         return col_map1
 
     @staticmethod
-    def transfer_one_instance(instance, col_maps, inner_param):
+    def transfer_one_instance(instance, col_maps, header, result_header, result_header_index_mapping):
+        new_inst = instance.copy(exclusive_attr={"features"})
         feature = instance.features
-        result_header = inner_param.result_header
-        # new_feature = [0 for _ in result_header]
-        _transformed_value = {}
+        # _transformed_value = {}
 
-        for idx, col_name in enumerate(inner_param.header):
+        new_feature = [0] * len(result_header)
+        for idx, col_name in enumerate(header):
             value = feature[idx]
-            if col_name in result_header:
-                _transformed_value[col_name] = value
+            if col_name in result_header_index_mapping:
+                result_idx = result_header_index_mapping.get(col_name)
+                new_feature[result_idx] = value
+                # _transformed_value[col_name] = value
             elif col_name not in col_maps:
                 continue
             else:
@@ -290,14 +295,15 @@ class OneHotEncoder(ModelBase):
                 new_col_name = pair_obj.query_name_by_value(value)
                 if new_col_name is None:
                     continue
-                _transformed_value[new_col_name] = 1
+                result_idx = result_header_index_mapping.get(new_col_name)
+                new_feature[result_idx] = 1
+                # _transformed_value[new_col_name] = 1
 
-        new_feature = [_transformed_value[x] if x in _transformed_value else 0 for x in result_header]
+        # new_feature = [_transformed_value[x] if x in _transformed_value else 0 for x in result_header]
 
-        # feature_array = np.array(new_feature, dtype='float64')
         feature_array = np.array(new_feature)
-        instance.features = feature_array
-        return instance
+        new_inst.features = feature_array
+        return new_inst
 
     def set_schema(self, data_instance):
         self.schema['header'] = self.inner_param.result_header

@@ -90,18 +90,18 @@ class HeteroFastSecureBoostingTreeGuest(HeteroSecureBoostingTreeGuest):
         """
         in mix mode, a sample can reach leaf directly
         """
-
+        new_node_pos = node_pos + 0  # avoid inplace manipulate
         for t_idx, tree in enumerate(trees):
 
-            cur_node_idx = node_pos[t_idx]
+            cur_node_idx = new_node_pos[t_idx]
 
             if not tree.use_guest_feat_only_predict_mode:
                 continue
 
             rs, reach_leaf = HeteroSecureBoostingTreeGuest.traverse_a_tree(tree, sample, cur_node_idx)
-            node_pos[t_idx] = rs
+            new_node_pos[t_idx] = rs
 
-        return node_pos
+        return new_node_pos
 
     @staticmethod
     def merge_leaf_pos(pos1, pos2):

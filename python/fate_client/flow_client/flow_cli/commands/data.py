@@ -50,8 +50,8 @@ def upload(ctx, **kwargs):
 
     \b
     - Usage:
-        flow data upload -c fate_flow/examples/upload_guest.json
-        flow data upload -c fate_flow/examples/upload_host.json --verbose --drop
+        flow data upload -c fateflow/examples/upload/upload_guest.json
+        flow data upload -c fateflow/examples/upload/upload_host.json --verbose --drop
     """
     kwargs['drop'] = 1 if kwargs['drop'] else 0
     kwargs['verbose'] = int(kwargs['verbose'])
@@ -100,10 +100,27 @@ def download(ctx, **kwargs):
 
     \b
     - Usage:
-        flow data download -c fate_flow/examples/download_host.json
+        flow data download -c fateflow/examples/download/download_table.json
     """
     config_data, dsl_data = preprocess(**kwargs)
     access_server('post', ctx, "data/download", config_data)
+
+
+@data.command("writer", short_help="write Table Command")
+@cli_args.CONF_PATH
+@click.pass_context
+def writer(ctx, **kwargs):
+    """
+    \b
+    - DESCRIPTION:
+        Download Data Table.
+
+    \b
+    - Usage:
+        flow data download -c fateflow/examples/writer/external_storage.json
+    """
+    config_data, dsl_data = preprocess(**kwargs)
+    access_server('post', ctx, "data/writer", config_data)
 
 
 @data.command("upload-history", short_help="Upload History Command")

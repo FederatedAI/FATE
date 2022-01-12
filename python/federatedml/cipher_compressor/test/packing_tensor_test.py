@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 from federatedml.cipher_compressor.compressor import PackingCipherTensor
-from federatedml.secureprotol import PaillierEncrypt, IterativeAffineEncrypt
+from federatedml.secureprotol import PaillierEncrypt
 
 
 class TestXgboostCriterion(unittest.TestCase):

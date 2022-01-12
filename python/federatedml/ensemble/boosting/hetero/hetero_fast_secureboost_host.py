@@ -78,14 +78,11 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
 
         tree_type, target_host_id = self.get_tree_plan(epoch_idx)
         self.check_host_number(tree_type)
-        self.check_run_sp_opt()
         tree = HeteroFastDecisionTreeHost(tree_param=self.tree_param)
         tree.init(flowid=self.generate_flowid(epoch_idx, booster_dim),
                   valid_features=self.sample_valid_features(),
                   data_bin=self.data_bin, bin_split_points=self.bin_split_points,
                   bin_sparse_points=self.bin_sparse_points,
-                  run_sprase_opt=self.run_sparse_opt,
-                  data_bin_dense=self.data_bin_dense,
                   runtime_idx=self.component_properties.local_partyid,
                   goss_subsample=self.enable_goss,
                   bin_num=self.bin_num,
@@ -133,7 +130,7 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
         """
         in mix mode, a sample can reach leaf directly
         """
-
+        new_node_pos = node_pos + 0
         for i in range(len(trees)):
 
             tree = trees[i]
@@ -141,9 +138,9 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
                 continue
             leaf_id = tree.host_local_traverse_tree(sample, tree.tree_node, use_missing=tree.use_missing,
                                                     zero_as_missing=tree.zero_as_missing)
-            node_pos[i] = leaf_id
+            new_node_pos[i] = leaf_id
 
-        return node_pos
+        return new_node_pos
 
     # this func will be called by super class's predict()
     def boosting_fast_predict(self, data_inst, trees: List[HeteroFastDecisionTreeHost]):
