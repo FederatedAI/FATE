@@ -96,7 +96,7 @@
     sbin/rabbitmqctl stop
    ```
 
-     	（2）启动mq2、mq3
+   ​        （2）启动mq2、mq3
 
      ```
     sbin/rabbitmq-server -detached
