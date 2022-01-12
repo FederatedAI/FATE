@@ -241,7 +241,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         pos_arr1 = node_pos1['node_pos']
         pos_arr2 = node_pos2['node_pos']
         stack_arr = np.stack([pos_arr1, pos_arr2])
-        new_pos = {'node_pos': np.max(stack_arr, axis=0)}
+        new_pos = {'node_pos': np.max(stack_arr, axis=0), 'reach_leaf_node': node_pos1['reach_leaf_node'] + False}
         return new_pos
 
     @staticmethod
