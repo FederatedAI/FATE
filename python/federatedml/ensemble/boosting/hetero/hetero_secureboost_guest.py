@@ -211,7 +211,6 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
     @staticmethod
     def traverse_trees(node_pos, sample, trees: List[HeteroDecisionTreeGuest]):
 
-        LOGGER.debug('reach leaf node is {}'.format(node_pos))
         if node_pos['reach_leaf_node'].all():
             return node_pos
 
