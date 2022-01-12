@@ -211,11 +211,12 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
     @staticmethod
     def traverse_trees(node_pos, sample, trees: List[HeteroDecisionTreeGuest]):
 
+        LOGGER.debug('reach leaf node is {}'.format(node_pos))
         if node_pos['reach_leaf_node'].all():
             return node_pos
 
         # avoid inplace memory manipulate when running on spark
-        new_node_pos = {'node_pos': node_pos['reach_leaf_node'] + 0,
+        new_node_pos = {'node_pos': node_pos['node_pos'] + 0,
                         'reach_leaf_node': node_pos['reach_leaf_node'] + False}
 
         for t_idx, tree in enumerate(trees):
