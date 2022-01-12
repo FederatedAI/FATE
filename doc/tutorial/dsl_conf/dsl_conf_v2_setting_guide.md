@@ -260,6 +260,7 @@ configuration
 
 | Parameter Name                   | Default Value       | Acceptable Values             | Information                                                                                                                                          |
 | -------------------------------- | ------------------- | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| inheritance\_info                |                     | job_id, component_list        | jobid and component list of job that need to be inherited                                                                                                                                             |
 | job\_type                        | train               | train, predict                | job type                                                                                                                                             |
 | task\_cores                      | 4                   | positive integer              | total cpu cores requested                                                                                                                            |
 | task\_parallelism                | 1                   | positive int                  | maximum number of tasks allowed to run in parallel                                                                                                   |
