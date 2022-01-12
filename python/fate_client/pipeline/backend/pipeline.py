@@ -323,12 +323,13 @@ class PipeLine(object):
             provider_name = None
             provider_version = None
             if not hasattr(component, "source_provider"):
-                raise ValueError(f"Can not retrieval source provider of component {name}, "
-                                 f"refer to pipeline/component/component_base.py")
+                LOGGER.warning(f"Can not retrieval source provider of component {name}, "
+                               f"refer to pipeline/component/component_base.py")
             else:
                 provider_name = getattr(component, "source_provider")
                 if provider_name is None:
-                    raise ValueError(f"Can not retrieval source provider of component {name}")
+                    LOGGER.warning(f"Source provider of component {name} is None, "
+                                   f"refer to pipeline/component/component_base.py")
 
             if hasattr(component, "provider"):
                 provider = getattr(component, "provider")

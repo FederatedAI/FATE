@@ -99,7 +99,7 @@ class SummaryStatistics(object):
             for m in range(3, self.stat_order + 1):
                 exp_sum_m = getattr(self, f"exp_sum_{m}")
                 # exp_sum_m[filter_idx] += filter_rows ** m
-                exp_sum_m = (self.count[filter_idx] - 1) / self.count[filter_idx] * exp_sum_m[filter_idx] + \
+                exp_sum_m[filter_idx] = (self.count[filter_idx] - 1) / self.count[filter_idx] * exp_sum_m[filter_idx] + \
                     filter_rows ** m / self.count[filter_idx]
                 setattr(self, f"exp_sum_{m}", exp_sum_m)
 
