@@ -1,7 +1,3 @@
----
-hide:
-  - navigation
----
 
 # Release Notes
 ## Release 1.7.1
