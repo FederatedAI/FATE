@@ -136,7 +136,7 @@ class StorageTable(StorageTableBase):
                 buffer = self._hdfs_client.open_input_stream(self.path)
                 margin_buffer = b""
                 while True:
-                    block_buffer = buffer.read(1024*1024*1024)
+                    block_buffer = buffer.read(1024 * 1024 * 1024)
                     if not block_buffer and not margin_buffer:
                         break
                     elif not block_buffer:

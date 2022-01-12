@@ -32,6 +32,7 @@ def template(ctx):
     """
     pass
 
+
 @template.command("download", short_help="Template Download Command")
 @cli_args.MIN_DATA
 @cli_args.OUTPUT_PATH
