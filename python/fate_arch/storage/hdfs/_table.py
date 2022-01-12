@@ -160,7 +160,6 @@ class StorageTable(StorageTableBase):
                             buffer_list = block_buffer.split(b"\n")
                             block_buffer = margin_buffer + b"\n".join(buffer_list)
                             margin_buffer = buffer_list[1]
-                    print(block_buffer, margin_buffer)
                     with io.TextIOWrapper(
                         buffer=io.BytesIO(block_buffer), encoding="utf-8"
                     ) as reader:
