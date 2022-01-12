@@ -124,8 +124,7 @@ Enter password: fate_dev
 
 ```bash
 cat ~/.ssh/id_rsa.pub >> /home/app/.ssh/authorized_keys
-scp ~/.ssh/authorized_keys
-> [app@192.168.0.3:/home/app/.ssh](mailto:app@172.16.153.70:/home/app/.ssh)
+scp ~/.ssh/authorized_keys app@192.168.0.3:/home/app/.ssh
 ```
 
 Enter password: fate_dev
@@ -147,7 +146,7 @@ Enter password: fate_dev
 ```bash
 ssh app@192.168.0.1
 ssh app@192.168.0.2
-ssh <app@192.168.0.3>
+ssh app@192.168.0.3
 ```
 
 ## 3. Prepare Packages

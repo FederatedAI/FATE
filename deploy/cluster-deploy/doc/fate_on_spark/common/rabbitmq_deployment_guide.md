@@ -73,7 +73,7 @@
 3. **Change File Permissions**
 
    Set cookie file permission to 400:
-   
+
    ```bash
    chmod -R 400 .erlang.cookie 
    ```
@@ -84,16 +84,16 @@
 
    2. Synchronise cookie: 
 
-   ​	After installation by the above steps, Erlang cookie file should locate at /home/app/.erlang.cookie
+   		After installation by the above steps, Erlang cookie file should locate at /home/app/.erlang.cookie
 
-   ​	Copy cookie from any host in the cluster to other hosts to replace original cookies
+   		Copy cookie from any host in the cluster to other hosts to replace original cookies
 
    3. Cluster Start：
 
-   ​	Based on mq1
-   
-   ​	(1) Stop Erlang node for mq2, mq3
-   
+   		Based on mq1
+
+   		(1) Stop Erlang node for mq2, mq3
+
     ```bash
    ​ sbin/rabbitmqctl stop
     ```
@@ -103,17 +103,17 @@
     ```bash
    ​ sbin/rabbitmq-server -detached
     ```
-   
+
    ​	(3) Stop the RabbitMQ application on mq2、mq3
 
      ```bash
    ​  sbin/rabbitmqctl stop_app
      ```
-   
+
    ​	(4) Join mq2, mq3 to mq1 as a cluster
 
    ​   On mq2、mq3 run:
-   
+
      ```bash
      sbin/rabbitmqctl join_cluster rabbit@mq1
      ```
@@ -121,35 +121,35 @@
    ​	(5) Start the RabbitMQ application mq2, mq3
    ​                     
 
-   5. **Commands for rabbitmq**
+   ### 4. rabbitmq configuration 
 
-      (1)Check cluster status
+   1. Check cluster status
 
-      ```bash
-      ​rabbitmqctl cluster_status
-      ```
+   ```bash
+   ​rabbitmqctl cluster_status
+   ```
 
-      (2) Enable management (enable/disable):
+   2. Enable federation (enable/disable):
 
-      ```bash
-      rabbitmq-plugins enable rabbitmq_management
-      ​rabbitmq-plugins enable rabbitmq_federation
-      ​rabbitmq-plugins enable rabbitmq_federation_management  
-      ```
+   ```bash
+   rabbitmq-plugins enable rabbitmq_management
+   ​rabbitmq-plugins enable rabbitmq_federation
+   ​rabbitmq-plugins enable rabbitmq_federation_management  
+   ```
 
-      (3) Add user:
-      
-      ```bash
-      ​rabbitmqctl add_user username password
-      ```
-      (4) Add role:
-      
-      ```bash
-      ​rabbitmqctl set_user_tags username administrator
-      ```
-      
-      (5) Set permissions:
+   3. Add user:
 
-      ```bash
-      ​rabbitmqctl set_permissions -p / username ".*" ".*" ".*" 
-      ``` 
+   ```bash
+   ​rabbitmqctl add_user username password
+   ```
+   4. Add role:
+
+   ```bash
+   ​rabbitmqctl set_user_tags username administrator
+   ```
+
+   5. Set permissions:
+
+   ```bash
+   rabbitmqctl set_permissions -p / username ".*" ".*" ".*" 
+   ```

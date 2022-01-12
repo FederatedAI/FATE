@@ -71,7 +71,7 @@
 3. **修改权限**
 
    把cookie文件的权限设置为400：
-   
+
    ```bash
    chmod -R 400 .erlang.cookie 
    ```
@@ -94,61 +94,59 @@
    ​  ```bash
    ​  sbin/rabbitmqctl stop
      ```
-
-   ​	（2）启动mq2、mq3
-
+   
+   	（2）启动mq2、mq3
+   
     ```bash
-   ​ sbin/rabbitmq-server -detached
-    ```
+    sbin/rabbitmq-server -detached
+     ```
 
    ​	（3）停mq2、mq3应用
 
       ```bash
    ​  sbin/rabbitmqctl stop_app
-     ```
+      ```
 
    ​	（4）将mq2、mq3加到mq1中
 
    ​        	在mq2、mq3上执行
-   
+
       ```bash
       sbin/rabbitmqctl join_cluster rabbit@mq1
       ```
 
-   ​	（5）启动mq2、mq3应用
+   ​	（5）启动mq2、mq3应用             
 
-   ​                     
+   ### 四. rabbitmq配置
 
-   5. **rabbitmq的相关命令**
+   1. 确认集群状态
 
-      （1）集群状态
+   ```bash
+   rabbitmqctl cluster_status
+   ```
 
-      ```bash
-      ​rabbitmqctl cluster_status
-      ```
-      
-      （2）启动管理服务（enable/disable）:
+   2. 启动federation服务（enable/disable）:
 
-      ```bash
-      rabbitmq-plugins enable rabbitmq_management
-      ​rabbitmq-plugins enable rabbitmq_federation
-      ​rabbitmq-plugins enable rabbitmq_federation_management  
-      ```
-      
-      （3）添加用户
+   ```bash
+   rabbitmq-plugins enable rabbitmq_management
+   rabbitmq-plugins enable rabbitmq_federation
+   rabbitmq-plugins enable rabbitmq_federation_management  
+   ```
 
-      ```bash
-      ​rabbitmqctl add_user username password
-      ```
-            
-      （4）添加角色：
+   3. 添加用户
 
-      ```bash
-      ​rabbitmqctl set_user_tags username administrator
-      ```
-            
-      （5）设置权限：
+   ```bash
+   rabbitmqctl add_user username password
+   ```
 
-      ```bash
-      ​rabbitmqctl set_permissions -p / username ".*" ".*" ".*" 
-      ``` 
+   4. 添加角色：
+
+   ```bash
+   ​rabbitmqctl set_user_tags username administrator
+   ```
+
+   5. 设置权限：
+
+   ```bash
+   rabbitmqctl set_permissions -p / username ".*" ".*" ".*" 
+   ```
