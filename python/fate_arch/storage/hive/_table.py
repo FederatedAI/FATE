@@ -121,6 +121,10 @@ class StorageTable(StorageTableBase):
         sql = "drop table {}".format(self._name)
         return self.execute(sql)
 
+    def _save_as(self, address, name, namespace, partitions=None, **kwargs):
+        sql = "create table {}.{} like {}.{};".format(namespace, name, self._namespace, self._name)
+        return self.execute(sql)
+
     def check_address(self):
         schema = self.meta.get_schema()
         if schema:

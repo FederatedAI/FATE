@@ -99,8 +99,8 @@ class StorageTable(StorageTableBase):
             count += 1
         return count
 
-    def save_as(
-        self, address, partitions=None, name=None, namespace=None, schema=None, **kwargs
+    def _save_as(
+        self, address, partitions=None, name=None, namespace=None, **kwargs
     ):
         self._local_fs_client.copy_file(src=self.path, dst=address.path)
         return StorageTable(
