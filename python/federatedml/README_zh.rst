@@ -326,8 +326,6 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 * `Encrypt`_
 
   - `Paillier encryption`_
-  - `Affine Homomorphic Encryption`_
-  - `IterativeAffine Homomorphic Encryption`_
   - `RSA encryption`_
   - `Fake encryption`_
 
@@ -344,8 +342,6 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 
 .. _Encrypt: secureprotol/README.rst#encrypt
 .. _Paillier encryption: secureprotol/README.rst#paillier-encryption
-.. _Affine Homomorphic Encryption: secureprotol/README.rst#affine-homomorphic-encryption
-.. _IterativeAffine Homomorphic Encryption: secureprotol/README.rst#iterativeaffine-homomorphic-encryption
 .. _RSA encryption: secureprotol/README.rst#rst-encryption
 .. _Fake encryption: secureprotol/README.rst#fake-encryption
 .. _Encode: secureprotol/README.rst#encode

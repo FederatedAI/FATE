@@ -25,9 +25,7 @@ import hashlib
 
 from federatedml.feature.instance import Instance
 from federatedml.secureprotol import gmpy_math
-from federatedml.secureprotol.affine import AffineCipher
 from federatedml.secureprotol.fate_paillier import PaillierKeypair
-from federatedml.secureprotol.iterative_affine import IterativeAffineCipher
 from federatedml.secureprotol.random import RandomPads
 
 
@@ -180,34 +178,6 @@ class FakeEncrypt(Encrypt):
         return value
 
 
-class SymmetricEncrypt(Encrypt):
-    def __init__(self):
-        self.key = None
-
-    def encrypt(self, plaintext):
-        pass
-
-
-class AffineEncrypt(SymmetricEncrypt):
-    def __init__(self):
-        super(AffineEncrypt, self).__init__()
-
-    def generate_key(self, key_size=1024):
-        self.key = AffineCipher.generate_keypair(key_size=key_size)
-
-    def encrypt(self, plaintext):
-        if self.key is not None:
-            return self.key.encrypt(plaintext)
-        else:
-            return None
-
-    def decrypt(self, ciphertext):
-        if self.key is not None:
-            return self.key.decrypt(ciphertext)
-        else:
-            return None
-
-
 class PadsCipher(Encrypt):
 
     def __init__(self):
@@ -294,23 +264,3 @@ class PadsCipher(Encrypt):
         return value
 
 
-class IterativeAffineEncrypt(SymmetricEncrypt):
-    def __init__(self):
-        super(IterativeAffineEncrypt, self).__init__()
-
-    def generate_key(self, key_size=1024, key_round=5, randomized=False):
-        self.key = IterativeAffineCipher.generate_keypair(key_size=key_size,
-                                                          key_round=key_round,
-                                                          randomized=randomized)
-
-    def encrypt(self, plaintext):
-        if self.key is not None:
-            return self.key.encrypt(plaintext)
-        else:
-            return None
-
-    def decrypt(self, ciphertext):
-        if self.key is not None:
-            return self.key.decrypt(ciphertext)
-        else:
-            return None

@@ -325,8 +325,6 @@ Secure Protocol
 * `Encrypt`_
 
   - `Paillier encryption`_
-  - `Affine Homomorphic Encryption`_
-  - `IterativeAffine Homomorphic Encryption`_
   - `RSA encryption`_
   - `Fake encryption`_
 
@@ -343,8 +341,6 @@ Secure Protocol
 
 .. _Encrypt: secureprotol/README.rst#encrypt
 .. _Paillier encryption: secureprotol/README.rst#paillier-encryption
-.. _Affine Homomorphic Encryption: secureprotol/README.rst#affine-homomorphic-encryption
-.. _IterativeAffine Homomorphic Encryption: secureprotol/README.rst#iterativeaffine-homomorphic-encryption
 .. _RSA encryption: secureprotol/README.rst#rst-encryption
 .. _Fake encryption: secureprotol/README.rst#fake-encryption
 .. _Encode: secureprotol/README.rst#encode
