@@ -147,7 +147,7 @@ class DecisionTree(BasicAlgorithms, ABC):
         self.bin_split_points = bin_split_points
         self.bin_sparse_points = bin_sparse_points
 
-    def get_local_histograms(self, dep, data_with_pos, g_h, node_sample_count, cur_to_split_nodes, node_map, ret='tensor', sparse_opt=False
+    def get_local_histograms(self, dep, data_with_pos, g_h, node_sample_count, cur_to_split_nodes, node_map, ret='tensor'
                              , hist_sub=True, bin_num=None):
 
         LOGGER.info("start to compute node histograms")
@@ -162,7 +162,6 @@ class DecisionTree(BasicAlgorithms, ABC):
                                                               zero_as_missing=self.zero_as_missing,
                                                               ret=ret,
                                                               hist_sub=hist_sub,
-                                                              sparse_optimization=sparse_opt,
                                                               cur_to_split_nodes=cur_to_split_nodes,
                                                               bin_num=bin_num)
         return acc_histograms
