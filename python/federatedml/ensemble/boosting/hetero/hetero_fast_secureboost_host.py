@@ -65,7 +65,6 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
 
         tree_type, target_host_id = self.get_tree_plan(epoch_idx)
         self.check_host_number(tree_type)
-        self.check_run_sp_opt()
         tree = HeteroFastDecisionTreeHost(tree_param=self.tree_param)
         tree.set_input_data(data_bin=self.data_bin, bin_split_points=self.bin_split_points, bin_sparse_points=
                             self.bin_sparse_points)
@@ -77,14 +76,9 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
         tree.set_layered_depth(self.guest_depth, self.host_depth)
         tree.set_self_host_id(self.component_properties.local_partyid)
 
-        if self.run_sparse_opt:
-            tree.activate_sparse_hist_opt()
-            tree.set_dense_data_for_sparse_opt(data_bin_dense=self.data_bin_dense, bin_num=self.bin_num)
-
         LOGGER.debug('tree work mode is {}'.format(tree_type))
         tree.fit()
         self.update_feature_importance(tree.get_feature_importance())
-        # tree.print_leafs()
         return tree
 
     def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):

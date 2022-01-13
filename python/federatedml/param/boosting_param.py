@@ -412,8 +412,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         complete_secure: bool, if use complete_secure, when use complete secure, build first tree using only guest
                         features
 
-        sparse_optimization: bool, Available when encrypted method is 'iterativeAffine'
-                            An optimized mode for high-dimension, sparse data.
+        sparse_optimization: This parameter is abandoned due to the removal of IterativeAffine
 
         """
 
@@ -426,8 +425,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, early_stopping_rounds=None, use_missing=False, zero_as_missing=False,
                  complete_secure=False, metrics=None, use_first_metric_only=False, subsample_random_seed=None,
-                 binning_error=consts.DEFAULT_RELATIVE_ERROR,
-                 sparse_optimization=False):
+                 binning_error=consts.DEFAULT_RELATIVE_ERROR, sparse_optimization=False):
 
         super(HeteroSecureBoostParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                      subsample_feature_rate, n_iter_no_change, tol, encrypt_param,
@@ -452,7 +450,6 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         if type(self.zero_as_missing) != bool:
             raise ValueError('zero as missing should be bool type')
         self.check_boolean(self.complete_secure, 'complete_secure')
-        self.check_boolean(self.sparse_optimization, 'sparse optimization')
 
         return True
 
