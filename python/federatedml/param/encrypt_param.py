@@ -50,7 +50,7 @@ class EncryptParam(BaseParam):
             if user_input == "paillier":
                 self.method = consts.PAILLIER
             elif user_input == consts.ITERATIVEAFFINE.lower() or user_input == consts.RANDOM_ITERATIVEAFFINE:
-                LOGGER.warning('Iterative Affine and Random Iterative Affine are not supported in version>=1.7.1 '
+                LOGGER.warning('Iterative Affine and Random Iterative Affine are not supported in this version '
                                'due to safety concerns, encrypt method will be reset to Paillier')
                 self.method = consts.PAILLIER
             else:
