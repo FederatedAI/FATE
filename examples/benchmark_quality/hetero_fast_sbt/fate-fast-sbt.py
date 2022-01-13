@@ -80,7 +80,7 @@ def main(config="../../config.yaml", param="./xgb_config_binary.yaml", namespace
                                               num_trees=param['tree_num'],
                                               task_type=param['task_type'],
                                               objective_param={"objective": param['loss_func']},
-                                              encrypt_param={"method": "iterativeAffine"},
+                                              encrypt_param={"method": "paillier"},
                                               tree_param={"max_depth": param['tree_depth']},
                                               validation_freqs=1,
                                               subsample_feature_rate=1,
