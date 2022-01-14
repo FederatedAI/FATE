@@ -23,18 +23,14 @@ from federatedml.util import consts, LOGGER
 class EncryptParam(BaseParam):
     """
     Define encryption method that used in federated ml.
-
     Parameters
     ----------
-    method : str, default: 'Paillier'
+    method : {'Paillier'}
         If method is 'Paillier', Paillier encryption will be used for federated ml.
         To use non-encryption version in HomoLR, set this to None.
         For detail of Paillier encryption, please check out the paper mentioned in README file.
-        Accepted values: {'Paillier', 'IterativeAffine', 'RandomIterativeAffine'}
-
     key_length : int, default: 1024
         Used to specify the length of key in this encryption method.
-
     """
 
     def __init__(self, method=consts.PAILLIER, key_length=1024):
@@ -53,10 +49,10 @@ class EncryptParam(BaseParam):
             user_input = self.method.lower()
             if user_input == "paillier":
                 self.method = consts.PAILLIER
-            elif user_input == "iterativeaffine":
-                self.method = consts.ITERATIVEAFFINE
-            elif user_input == "randomiterativeaffine":
-                self.method = consts.RANDOM_ITERATIVEAFFINE
+            elif user_input == consts.ITERATIVEAFFINE.lower() or user_input == consts.RANDOM_ITERATIVEAFFINE:
+                LOGGER.warning('Iterative Affine and Random Iterative Affine are not supported in this version '
+                               'due to safety concerns, encrypt method will be reset to Paillier')
+                self.method = consts.PAILLIER
             else:
                 raise ValueError(
                     "encrypt_param's method {} not supported".format(user_input))
