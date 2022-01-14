@@ -116,7 +116,7 @@ class CipherCompressor(object):
         round_decimal: decimal rounding setting
         """
 
-        if cipher_type != consts.PAILLIER and cipher_type != consts.ITERATIVEAFFINE:
+        if cipher_type != consts.PAILLIER:
             raise ValueError('encrypt type {} is not supported by cipher compressing'.format(cipher_type))
 
         self._ciper_type = cipher_type

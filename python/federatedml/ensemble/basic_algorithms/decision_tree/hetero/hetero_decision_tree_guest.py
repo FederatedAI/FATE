@@ -12,7 +12,7 @@ from federatedml.transfer_variable.transfer_class.hetero_decision_tree_transfer_
     HeteroDecisionTreeTransferVariable
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.splitinfo_cipher_compressor import \
     GuestSplitInfoDecompressor, GuestGradHessEncoder
-from federatedml.secureprotol import PaillierEncrypt, IterativeAffineEncrypt
+from federatedml.secureprotol import PaillierEncrypt
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.subsample import goss_sampling
 from federatedml.util import consts
 
@@ -169,8 +169,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         if type(self.encrypter) == PaillierEncrypt:
             return consts.PAILLIER
-        elif type(self.encrypter) == IterativeAffineEncrypt:
-            return consts.ITERATIVEAFFINE
         else:
             raise ValueError('unknown encrypter type: {}'.format(type(self.encrypter)))
 
