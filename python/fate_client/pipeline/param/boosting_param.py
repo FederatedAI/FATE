@@ -39,7 +39,7 @@ class ObjectiveParam(BaseParam):
                 other 6 types support in regression task. default: None
 
     params : None or list, should be non empty list when objective is 'tweedie','fair','huber',
-             first element of list shoulf be a float-number large than 0.0 when objective is 'fair','huber',
+             first element of list should be a float-number large than 0.0 when objective is 'fair','huber',
              first element of list should be a float-number in [1.0, 2.0) when objective is 'tweedie'
     """
 
