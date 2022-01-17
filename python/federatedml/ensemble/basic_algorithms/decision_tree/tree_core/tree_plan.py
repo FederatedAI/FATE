@@ -49,7 +49,7 @@ def create_tree_plan(work_mode: str, k=1, tree_num=10, host_list=None, complete_
     return tree_plan
 
 
-def create_node_plan(tree_type, target_host_id, max_depth, ) -> List[Tuple[int, int]]:
+def create_node_plan(tree_type, target_host_id, max_depth) -> List[Tuple[int, int]]:
     LOGGER.debug('cur tree working mode is {}'.format((tree_type, target_host_id)))
     node_plan = []
 
