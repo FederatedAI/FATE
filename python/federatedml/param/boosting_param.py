@@ -470,13 +470,16 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
             layered: only support 2 party, when running layered mode, first 'host_depth' layer will use host features,
                      and then next 'guest_depth' will only use guest features
 
-        tree_num_per_party: int, every party will alternate build 'tree_num_per_party' trees until reach max tree num, this
-                            param is valid when work_mode is mix
+        work_mode: str
+                   This parameter has the same function as boosting_strategy, but is deprecated
 
-        guest_depth: int, guest will build last guest_depth of a decision tree using guest features, is valid when work mode
+        tree_num_per_party: int, every party will alternate build 'tree_num_per_party' trees until reach max tree num, this
+                            param is valid when boosting_strategy is mix
+
+        guest_depth: int, guest will build last guest_depth of a decision tree using guest features, is valid when boosting_strategy
                      is layered
 
-        host_depth: int, host will build first host_depth of a decision tree using host features, is valid when work mode is
+        host_depth: int, host will build first host_depth of a decision tree using host features, is valid when work boosting_strategy
                     layered
 
 
@@ -500,7 +503,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                  binning_error=consts.DEFAULT_RELATIVE_ERROR,
                  sparse_optimization=False, run_goss=False, top_rate=0.2, other_rate=0.1,
                  cipher_compress_error=None, cipher_compress=True, new_ver=True, boosting_strategy=consts.STD_TREE,
-                 tree_num_per_party=1, guest_depth=2, host_depth=3, callback_param=CallbackParam(),
+                 work_mode=None, tree_num_per_party=1, guest_depth=2, host_depth=3, callback_param=CallbackParam(),
                  multi_mode=consts.SINGLE_OUTPUT):
 
         super(HeteroSecureBoostParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
@@ -547,6 +550,9 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.check_positive_number(self.top_rate, 'top_rate')
         self.check_boolean(self.new_ver, 'code version switcher')
         self.check_boolean(self.cipher_compress, 'cipher compress')
+
+        if self.work_mode is not None:
+            self.boosting_strategy = self.work_mode
 
         if self.multi_mode not in [consts.SINGLE_OUTPUT, consts.MULTI_OUTPUT]:
             raise ValueError('unsupported multi-classification mode')

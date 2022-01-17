@@ -447,7 +447,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
 
         cipher_compress: bool, default is True, use cipher compressing to reduce computation cost and transfer cost
 
-        work_mode：str
+        boosting_strategy：str
 
             std: standard sbt setting
 
@@ -458,15 +458,17 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
             layered: only support 2 party, when running layered mode, first 'host_depth' layer will use host features,
                      and then next 'guest_depth' will only use guest features
 
+        work_mode: str
+           This parameter has the same function as boosting_strategy, but is deprecated
+
         tree_num_per_party: int, every party will alternate build 'tree_num_per_party' trees until reach max tree num, this
-                            param is valid when work_mode is mix
+                            param is valid when boosting_strategy is mix
 
-        guest_depth: int, guest will build last guest_depth of a decision tree using guest features, is valid when work mode
-                     is layered
+        guest_depth: int, guest will build last guest_depth of a decision tree using guest features, is valid when
+                     boosting_strategy is layered
 
-        host_depth: int, host will build first host_depth of a decision tree using host features, is valid when work mode is
-                    layered
-
+        host_depth: int, host will build first host_depth of a decision tree using host features, is valid when boosting_strategy
+                    is layered
 
         multi_mode: str, decide which mode to use when running multi-classification task:
 
@@ -487,8 +489,8 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                  complete_secure=False, metrics=None, use_first_metric_only=False, random_seed=100,
                  binning_error=consts.DEFAULT_RELATIVE_ERROR,
                  sparse_optimization=False, run_goss=False, top_rate=0.2, other_rate=0.1,
-                 cipher_compress_error=None, cipher_compress=True, new_ver=True, work_mode=consts.STD_TREE,
-                 tree_num_per_party=1, guest_depth=2, host_depth=3, callback_param=CallbackParam(),
+                 cipher_compress_error=None, cipher_compress=True, new_ver=True, boosting_strategy=consts.STD_TREE,
+                 work_mode=None, tree_num_per_party=1, guest_depth=2, host_depth=3, callback_param=CallbackParam(),
                  multi_mode=consts.SINGLE_OUTPUT):
 
         super(HeteroSecureBoostParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
@@ -512,6 +514,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.cipher_compress = cipher_compress
         self.new_ver = new_ver
         self.work_mode = work_mode
+        self.boosting_strategy = boosting_strategy
         self.tree_num_per_party = tree_num_per_party
         self.guest_depth = guest_depth
         self.host_depth = host_depth
@@ -536,6 +539,9 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.check_boolean(self.new_ver, 'code version switcher')
         self.check_boolean(self.cipher_compress, 'cipher compress')
 
+        if self.work_mode is not None:
+            self.boosting_strategy = self.work_mode
+
         if self.top_rate + self.other_rate >= 1:
             raise ValueError('sum of top rate and other rate should be smaller than 1')
 
@@ -550,9 +556,9 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
             raise ValueError("tree_num_per_party should be larger than 0")
 
         work_modes = [consts.MIX_TREE, consts.LAYERED_TREE, consts.STD_TREE]
-        if self.work_mode not in work_modes:
-            raise ValueError('only work_modes: {} are supported, input work mode is {}'.
-                             format(work_modes, self.work_mode))
+        if self.boosting_strategy not in work_modes:
+            raise ValueError('only boosting_strategy: {} are supported, input work mode is {}'.
+                             format(work_modes, self.boosting_strategy))
 
         if self.multi_mode not in [consts.SINGLE_OUTPUT, consts.MULTI_OUTPUT]:
             raise ValueError('unsupported multi-classification mode')
