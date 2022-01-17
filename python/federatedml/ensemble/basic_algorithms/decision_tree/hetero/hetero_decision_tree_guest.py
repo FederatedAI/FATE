@@ -803,7 +803,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
         model_param = DecisionTreeModelParam()
         for node in self.tree_node:
             weight, mo_weight = self.mo_weight_extract(node)
-            LOGGER.debug('cwj weight {}, mo weight {}'.format(weight, mo_weight))
             model_param.tree_.add(id=node.id,
                                   sitename=node.sitename,
                                   fid=node.fid,
