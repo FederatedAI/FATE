@@ -341,9 +341,3 @@ DEFAULT_KEY_LENGTH = 1024
 MIN_HASH_FUNC_COUNT = 4
 MAX_HASH_FUNC_COUNT = 32
 
-# shap param
-AUTO = 'auto'
-ZEROS = 'zeros'
-MEDIAN = 'median'
-AVERAGE = 'average'
-
