@@ -1,4 +1,5 @@
 import numpy as np
+import functools
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.node import Node
 from federatedml.util import LOGGER
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import DecisionTreeModelMeta
@@ -8,7 +9,7 @@ from federatedml.transfer_variable.transfer_class.hetero_decision_tree_transfer_
     HeteroDecisionTreeTransferVariable
 from federatedml.util import consts
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.g_h_optim import PackedGHCompressor
-import functools
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.splitter import SplitInfo
 
 
 class HeteroDecisionTreeHost(DecisionTree):
@@ -346,7 +347,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         split_nid_used = []
 
         for i in range(len(self.tree_node)):
-            if self.tree_node[i].is_leaf is True:
+            if self.tree_node[i].is_leaf:
                 continue
             if self.tree_node[i].sitename == self.sitename:
                 fid = self.split_feature_dict[self.tree_node[i].id]
@@ -358,6 +359,16 @@ class HeteroDecisionTreeHost(DecisionTree):
                 split_nid_used.append(self.tree_node[i].id)
 
         self.remove_redundant_splitinfo_in_split_maskdict(split_nid_used)
+
+    def collect_host_split_feat_importance(self):
+
+        for node in self.tree_node:
+            if node.is_leaf:
+                continue
+            elif node.sitename == self.sitename:
+                LOGGER.debug('sitename are {} {}'.format(node.sitename, self.sitename))
+                fid = self.split_feature_dict[node.id]
+                self.update_feature_importance(SplitInfo(sitename=self.sitename, best_fid=fid), False)
 
     """
     Split finding
@@ -408,8 +419,6 @@ class HeteroDecisionTreeHost(DecisionTree):
                 self.inverse_fid_bid_random_mapping,
                 self.missing_dir_mask_left[dep],
                 self.missing_dir_mask_right[dep])
-            for s in unmasked_split_info:
-                self.update_feature_importance(s, record_site_name=False)
             self.record_split_info(unmasked_split_info)
         else:
             LOGGER.debug('skip splits computation')
@@ -451,6 +460,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         self.print_leafs()
         # convert bin index to real split-value, and remove redundant nid in split mask dict
         self.convert_bin_to_real(split_maskdict=self.split_maskdict)
+        self.collect_host_split_feat_importance()
         LOGGER.info("fitting host decision tree done")
 
     @staticmethod
