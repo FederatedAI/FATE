@@ -80,7 +80,8 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
     def get_tree_plan(self, idx):
 
         if not self.init_tree_plan:
-            tree_plan = plan.create_tree_plan(self.boosting_strategy, k=self.tree_num_per_party, tree_num=self.boosting_round,
+            tree_plan = plan.create_tree_plan(self.boosting_strategy, k=self.tree_num_per_party,
+                                              tree_num=self.boosting_round,
                                               host_list=self.component_properties.host_party_idlist,
                                               complete_secure=self.complete_secure)
             self.tree_plan += tree_plan
@@ -216,7 +217,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         anonymous_name_mapping = {}
         party_id = self.component_properties.local_partyid
         for fid, name in self.feature_name_fid_mapping.items():
-            anonymous_name_mapping[generate_anonymous(fid, role=consts.HOST, party_id=party_id,)] = name
+            anonymous_name_mapping[generate_anonymous(fid, role=consts.HOST, party_id=party_id, )] = name
 
         model_param.anonymous_name_mapping.update(anonymous_name_mapping)
         model_param.feature_name_fid_mapping.update(self.feature_name_fid_mapping)
@@ -238,7 +239,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
                                                                   importance=importance.importance,
                                                                   fullname=self.feature_name_fid_mapping[fid]))
         model_param.feature_importances.extend(feature_importance_param)
-        
+
         param_name = "HeteroSecureBoostingTreeHostParam"
 
         return param_name, model_param

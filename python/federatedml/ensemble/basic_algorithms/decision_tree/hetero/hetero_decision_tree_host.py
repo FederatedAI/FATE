@@ -32,7 +32,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         self.missing_dir_mask_right = {}  # mask for right direction
         self.split_maskdict = {}  # save split value
         self.split_feature_dict = {}  # save split feature idx
-        self.missing_dir_maskdict = {} # save missing dir
+        self.missing_dir_maskdict = {}  # save missing dir
         self.fid_bid_random_mapping = {}
         self.inverse_fid_bid_random_mapping = {}
 
@@ -261,7 +261,7 @@ class HeteroDecisionTreeHost(DecisionTree):
                                                             idx=-1,
                                                             suffix=(dep,))
 
-    def sync_tree(self,):
+    def sync_tree(self, ):
         LOGGER.info("sync tree from guest")
         self.tree_node = self.transfer_inst.tree.get(idx=0)
 
@@ -397,16 +397,16 @@ class HeteroDecisionTreeHost(DecisionTree):
                                                        bin_num=self.bin_num)
 
             split_info_table = self.splitter.host_prepare_split_points(
-                            histograms=acc_histograms,
-                            use_missing=self.use_missing,
-                            valid_features=self.valid_features,
-                            sitename=self.sitename,
-                            left_missing_dir=self.missing_dir_mask_left[dep],
-                            right_missing_dir=self.missing_dir_mask_right[dep],
-                            mask_id_mapping=self.fid_bid_random_mapping,
-                            batch_size=self.bin_num,
-                            cipher_compressor=self.cipher_compressor,
-                            shuffle_random_seed=np.abs(hash((dep, batch))))
+                histograms=acc_histograms,
+                use_missing=self.use_missing,
+                valid_features=self.valid_features,
+                sitename=self.sitename,
+                left_missing_dir=self.missing_dir_mask_left[dep],
+                right_missing_dir=self.missing_dir_mask_right[dep],
+                mask_id_mapping=self.fid_bid_random_mapping,
+                batch_size=self.bin_num,
+                cipher_compressor=self.cipher_compressor,
+                shuffle_random_seed=np.abs(hash((dep, batch))))
 
             # test split info encryption
             self.transfer_inst.encrypted_splitinfo_host.remote(split_info_table,
@@ -450,8 +450,8 @@ class HeteroDecisionTreeHost(DecisionTree):
             for i in range(0, len(self.cur_layer_nodes), self.max_split_nodes):
                 self.cur_to_split_nodes = self.cur_layer_nodes[i: i + self.max_split_nodes]
                 self.compute_best_splits(self.cur_to_split_nodes,
-                                        node_map=self.get_node_map(self.cur_to_split_nodes),
-                                        dep=dep, batch=batch)
+                                         node_map=self.get_node_map(self.cur_to_split_nodes),
+                                         dep=dep, batch=batch)
                 batch += 1
             dispatch_node_host = self.sync_dispatch_node_host(dep)
             self.assign_instances_to_new_node(dispatch_node_host, dep=dep)
@@ -474,7 +474,6 @@ class HeteroDecisionTreeHost(DecisionTree):
             return predict_state
 
         while tree_[nid].sitename == sitename:
-
             nid = HeteroDecisionTreeHost.go_next_layer(tree_[nid], data_inst, use_missing, zero_as_missing,
                                                        None, split_maskdict, missing_dir_maskdict, decoder)
 

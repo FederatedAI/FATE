@@ -84,9 +84,9 @@ class Boosting(ModelBase, ABC):
         self.num_classes = 1  # number of classes
         self.convergence = None  # function to check loss convergence
         self.classes_ = []  # list of class indices
-        self.y = None   # label
+        self.y = None  # label
         self.y_hat = None  # accumulated predict value
-        self.loss = None   # loss func
+        self.loss = None  # loss func
         self.predict_y_hat = None  # accumulated predict value for predicting mode
         self.history_loss = []  # list holds loss history
         self.metrics = None
@@ -177,7 +177,7 @@ class Boosting(ModelBase, ABC):
         param_obj = FeatureBinningParam(bin_num=self.bin_num, error=self.binning_error)
 
         if handle_missing_value:
-            self.binning_obj = self.binning_class(param_obj, abnormal_list=[NoneType()],)
+            self.binning_obj = self.binning_class(param_obj, abnormal_list=[NoneType()], )
         else:
             self.binning_obj = self.binning_class(param_obj)
 
@@ -278,7 +278,7 @@ class Boosting(ModelBase, ABC):
 
         previous_model_feat_name = set(feat_name_fid_mapping.values())
         cur_data_feat_name = set(data_inst.schema['header'])
-        assert previous_model_feat_name == cur_data_feat_name, 'feature alignment failed, diff: {}'\
+        assert previous_model_feat_name == cur_data_feat_name, 'feature alignment failed, diff: {}' \
             .format(previous_model_feat_name.symmetric_difference(cur_data_feat_name))
         LOGGER.debug('warm start feat name {}, {}'.format(previous_model_feat_name, cur_data_feat_name))
 
@@ -361,7 +361,7 @@ class Boosting(ModelBase, ABC):
     def accumulate_y_hat(val, new_val, lr=0.1, idx=0):
         # vector sum
         if type(new_val) == np.ndarray and len(new_val) == len(val):
-            return val + new_val*lr
+            return val + new_val * lr
         # accumulate by dimension
         z_vec = np.zeros(len(val))
         z_vec[idx] = lr * new_val

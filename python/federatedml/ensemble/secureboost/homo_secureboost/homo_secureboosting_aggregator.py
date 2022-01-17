@@ -7,7 +7,7 @@ from federatedml.framework.homo.blocks import secure_sum_aggregator, loss_scatte
 
 class SecureBoostArbiterAggregator(object):
 
-    def __init__(self,):
+    def __init__(self, ):
         """
         Args:
             transfer_variable:
@@ -30,7 +30,7 @@ class SecureBoostArbiterAggregator(object):
 
 class SecureBoostClientAggregator(object):
 
-    def __init__(self,):
+    def __init__(self, ):
         self.loss_scatter = loss_scatter.Client()
         self.has_converged = has_converged.Client()
 

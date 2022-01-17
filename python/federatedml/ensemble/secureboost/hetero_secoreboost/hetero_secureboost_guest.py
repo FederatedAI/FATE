@@ -104,7 +104,8 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
     def get_tree_plan(self, idx):
 
         if not self.init_tree_plan:
-            tree_plan = plan.create_tree_plan(self.boosting_strategy, k=self.tree_num_per_party, tree_num=self.boosting_round,
+            tree_plan = plan.create_tree_plan(self.boosting_strategy, k=self.tree_num_per_party,
+                                              tree_num=self.boosting_round,
                                               host_list=self.component_properties.host_party_idlist,
                                               complete_secure=self.complete_secure)
             self.tree_plan += tree_plan
@@ -124,8 +125,8 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         LOGGER.info("compute grad and hess")
         loss_method = self.loss
         if self.task_type == consts.CLASSIFICATION:
-            grad_and_hess = y.join(y_hat, lambda y, f_val:\
-                (loss_method.compute_grad(y, loss_method.predict(f_val)),\
+            grad_and_hess = y.join(y_hat, lambda y, f_val: \
+                (loss_method.compute_grad(y, loss_method.predict(f_val)), \
                  loss_method.compute_hess(y, loss_method.predict(f_val))))
         else:
             grad_and_hess = y.join(y_hat, lambda y, f_val:
@@ -272,7 +273,8 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                     new_fi[fid_mapping[id_[1]]] = feature_importances[id_].importance
                 else:
                     role, party_id = id_[0].split(':')
-                    new_fi[generate_anonymous(role=role, fid=id_[1], party_id=party_id)] = feature_importances[id_].importance
+                    new_fi[generate_anonymous(role=role, fid=id_[1], party_id=party_id)] = feature_importances[
+                        id_].importance
             else:
                 new_fi[fid_mapping[id_]] = feature_importances[id_].importance
 
@@ -382,7 +384,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         feature_importances = list(self.feature_importances_.items())
         feature_importances = sorted(feature_importances, key=itemgetter(1), reverse=True)
         feature_importance_param = []
-        
+
         for (sitename, fid), importance in feature_importances:
             if consts.GUEST in sitename:
                 fullname = self.feature_name_fid_mapping[fid]

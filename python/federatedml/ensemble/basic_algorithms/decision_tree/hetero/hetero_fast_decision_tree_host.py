@@ -252,7 +252,7 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
     def sync_sample_leaf_pos(self, sample_leaf_pos):
         LOGGER.debug('final sample pos sent')
         self.transfer_inst.dispatch_node_host_result.remote(sample_leaf_pos, idx=0,
-                                                            suffix=('final sample pos', ), role=consts.GUEST)
+                                                            suffix=('final sample pos',), role=consts.GUEST)
 
     def sync_leaf_nodes(self):
         leaves = []
@@ -322,7 +322,7 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
         self.inst2node_idx = self.assign_instance_to_root_node(self.data_bin,
                                                                root_node_id=0)  # root node id is 0
 
-        self.cur_layer_nodes = [Node(id=0, sitename=self.sitename, sum_grad=root_sum_grad, sum_hess=root_sum_hess,)]
+        self.cur_layer_nodes = [Node(id=0, sitename=self.sitename, sum_grad=root_sum_grad, sum_hess=root_sum_hess, )]
 
         for dep in range(self.max_depth):
 
@@ -340,7 +340,8 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
             for i in range(0, len(self.cur_layer_nodes), self.max_split_nodes):
                 self.cur_to_split_nodes = self.cur_layer_nodes[i: i + self.max_split_nodes]
                 batch_split_info = self.compute_best_splits_with_node_plan(
-                    tree_action, layer_target_host_id, cur_to_split_nodes=self.cur_to_split_nodes, node_map=self.get_node_map(
+                    tree_action, layer_target_host_id, cur_to_split_nodes=self.cur_to_split_nodes,
+                    node_map=self.get_node_map(
                         self.cur_to_split_nodes), dep=dep, batch=batch, mode=consts.MIX_TREE)
                 batch += 1
                 split_info.extend(batch_split_info)

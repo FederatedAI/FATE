@@ -566,7 +566,7 @@ class HomoDecisionTreeClient(DecisionTree):
         traverse_tree = functools.partial(self.traverse_tree,
                                           tree=self.tree_node,
                                           use_missing=self.use_missing,
-                                          zero_as_missing=self.zero_as_missing,)
+                                          zero_as_missing=self.zero_as_missing, )
 
         predicted_weights = data_inst.mapValues(traverse_tree)
 
@@ -603,7 +603,6 @@ class HomoDecisionTreeClient(DecisionTree):
     def get_model_param(self):
         model_param = DecisionTreeModelParam()
         for node in self.tree_node:
-
             weight, mo_weight = self.mo_weight_extract(node)
 
             model_param.tree_.add(id=node.id,
@@ -624,7 +623,6 @@ class HomoDecisionTreeClient(DecisionTree):
     def set_model_param(self, model_param):
         self.tree_node = []
         for node_param in model_param.tree_:
-
             weight = self.mo_weight_load(node_param)
 
             _node = Node(id=node_param.id,

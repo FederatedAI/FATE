@@ -9,6 +9,7 @@ def random_sampling():
     """
     pass
 
+
 def goss_sampling(grad_and_hess, top_rate, other_rate):
     """
     sampling method introduced in LightGBM

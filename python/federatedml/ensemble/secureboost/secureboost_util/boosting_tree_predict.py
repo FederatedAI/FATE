@@ -8,7 +8,6 @@ from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict
     HeteroSecureBoostTransferVariable
 from federatedml.util import consts
 
-
 """
 Hetero guest predict utils
 """
@@ -25,7 +24,6 @@ def generate_leaf_pos_dict(x, tree_num):
 
 
 def guest_traverse_a_tree(tree: HeteroDecisionTreeGuest, sample, cur_node_idx):
-
     reach_leaf = False
     # only need nid here, predict state is not needed
     rs = tree.traverse_tree(tree_=tree.tree_node, data_inst=sample, predict_state=(cur_node_idx, -1),
@@ -43,7 +41,6 @@ def guest_traverse_a_tree(tree: HeteroDecisionTreeGuest, sample, cur_node_idx):
 
 
 def guest_traverse_trees(node_pos, sample, trees: List[HeteroDecisionTreeGuest]):
-
     if node_pos['reach_leaf_node'].all():
         return node_pos
 
@@ -66,7 +63,6 @@ def guest_traverse_trees(node_pos, sample, trees: List[HeteroDecisionTreeGuest])
 
 
 def merge_predict_pos(node_pos1, node_pos2):
-
     pos_arr1 = node_pos1['node_pos']
     pos_arr2 = node_pos2['node_pos']
     stack_arr = np.stack([pos_arr1, pos_arr2])
@@ -75,7 +71,6 @@ def merge_predict_pos(node_pos1, node_pos2):
 
 
 def add_y_hat(leaf_pos, init_score, learning_rate, trees: List[HeteroDecisionTreeGuest], multi_class_num=None):
-
     # finally node pos will hold weights
     weights = []
     for leaf_idx, tree in zip(leaf_pos, trees):
@@ -88,7 +83,6 @@ def add_y_hat(leaf_pos, init_score, learning_rate, trees: List[HeteroDecisionTre
 
 def get_predict_scores(leaf_pos, learning_rate, init_score, trees: List[HeteroDecisionTreeGuest]
                        , multi_class_num=-1, predict_cache=None):
-
     if predict_cache:
         init_score = 0  # prevent init_score re-add
 
@@ -98,13 +92,12 @@ def get_predict_scores(leaf_pos, learning_rate, init_score, trees: List[HeteroDe
     predict_result = leaf_pos.mapValues(predict_func)
 
     if predict_cache:
-        predict_result = predict_result.join(predict_cache, lambda v1, v2: v1+v2)
+        predict_result = predict_result.join(predict_cache, lambda v1, v2: v1 + v2)
 
     return predict_result
 
 
 def save_leaf_pos_helper(v1, v2):
-
     reach_leaf_idx = v2['reach_leaf_node']
     select_idx = reach_leaf_idx & (v2['node_pos'] != -1)  # reach leaf and are not recorded( if recorded idx is -1)
     v1[select_idx] = v2['node_pos'][select_idx]
@@ -112,14 +105,12 @@ def save_leaf_pos_helper(v1, v2):
 
 
 def mask_leaf_pos(v):
-
     reach_leaf_idx = v['reach_leaf_node']
     v['node_pos'][reach_leaf_idx] = -1
     return v
 
 
 def save_leaf_pos_and_mask_leaf_pos(node_pos_tb, final_leaf_pos):
-
     # save leaf pos
     saved_leaf_pos = final_leaf_pos.join(node_pos_tb, save_leaf_pos_helper)
     rest_part = final_leaf_pos.subtractByKey(saved_leaf_pos)
@@ -135,7 +126,6 @@ def merge_leaf_pos(pos1, pos2):
 
 
 def traverse_guest_local_trees(node_pos, sample, trees: List[HeteroFastDecisionTreeGuest]):
-
     """
     in mix mode, a sample can reach leaf directly
     """
@@ -161,7 +151,6 @@ Hetero guest predict function
 def sbt_guest_predict(data_inst, transfer_var: HeteroSecureBoostTransferVariable,
                       trees: List[HeteroDecisionTreeGuest], learning_rate, init_score, booster_dim,
                       predict_cache=None, pred_leaf=False):
-
     tree_num = len(trees)
     generate_func = functools.partial(generate_leaf_pos_dict, tree_num=tree_num)
     node_pos_tb = data_inst.mapValues(generate_func)  # record node pos
@@ -206,9 +195,8 @@ def sbt_guest_predict(data_inst, transfer_var: HeteroSecureBoostTransferVariable
 
 
 def mix_sbt_guest_predict(data_inst, transfer_var: HeteroSecureBoostTransferVariable,
-                           trees: List[HeteroDecisionTreeGuest], learning_rate, init_score, booster_dim,
-                           predict_cache=None, pred_leaf=False):
-
+                          trees: List[HeteroDecisionTreeGuest], learning_rate, init_score, booster_dim,
+                          predict_cache=None, pred_leaf=False):
     LOGGER.info('running mix mode predict')
 
     tree_num = len(trees)
@@ -262,7 +250,6 @@ def host_traverse_trees(leaf_pos, sample, trees: List[HeteroDecisionTreeHost]):
 
 
 def traverse_host_local_trees(node_pos, sample, trees: List[HeteroFastDecisionTreeHost]):
-
     """
     in mix mode, a sample can reach leaf directly
     """
@@ -285,7 +272,6 @@ Hetero host predict function
 
 
 def sbt_host_predict(data_inst, transfer_var: HeteroSecureBoostTransferVariable, trees: List[HeteroDecisionTreeHost]):
-
     comm_round = 0
 
     traverse_func = functools.partial(host_traverse_trees, trees=trees)
@@ -310,7 +296,6 @@ def sbt_host_predict(data_inst, transfer_var: HeteroSecureBoostTransferVariable,
 
 def mix_sbt_host_predict(data_inst, transfer_var: HeteroSecureBoostTransferVariable,
                          trees: List[HeteroDecisionTreeHost]):
-
     LOGGER.info('running mix mode predict')
 
     tree_num = len(trees)
@@ -318,6 +303,3 @@ def mix_sbt_host_predict(data_inst, transfer_var: HeteroSecureBoostTransferVaria
     local_traverse_func = functools.partial(traverse_host_local_trees, trees=trees)
     leaf_pos = node_pos.join(data_inst, local_traverse_func)
     transfer_var.host_predict_data.remote(leaf_pos, idx=0, role=consts.GUEST)
-
-
-

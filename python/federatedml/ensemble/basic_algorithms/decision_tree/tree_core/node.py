@@ -34,7 +34,6 @@ class Node(object):
                  sum_hess=None, left_nodeid=-1, right_nodeid=-1,
                  missing_dir=1, sample_num=0, parent_nodeid=None, is_left_node=False, sibling_nodeid=None,
                  inst_indices=None):
-
         self.id = id
         self.sitename = sitename
         self.fid = fid
@@ -55,6 +54,7 @@ class Node(object):
     def __str__(self):
         return "id{}, fid:{},bid:{},weight:{},sum_grad:{},sum_hess:{},left_node:{},right_node:{}, sitename:{}, " \
                "is leaf {}".format(self.id,
-                                   self.fid, self.bid, self.weight, self.sum_grad, self.sum_hess, self.left_nodeid, self.right_nodeid,
+                                   self.fid, self.bid, self.weight, self.sum_grad, self.sum_hess, self.left_nodeid,
+                                   self.right_nodeid,
                                    self.sitename, self.is_leaf
                                    )

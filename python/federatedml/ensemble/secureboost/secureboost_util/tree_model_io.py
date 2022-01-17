@@ -18,7 +18,6 @@ def produce_hetero_tree_learner(role, tree_param: DecisionTreeParam, flow_id, da
                                 tree_type=None, target_host_id=None,  # fast sbt only
                                 guest_depth=2, host_depth=3  # fast sbt only
                                 ):
-
     if role == consts.GUEST:
         if not fast_sbt:
             tree = HeteroDecisionTreeGuest(tree_param)
@@ -78,7 +77,6 @@ def produce_hetero_tree_learner(role, tree_param: DecisionTreeParam, flow_id, da
 
 def load_hetero_tree_learner(role, tree_param, model_meta, model_param, flow_id, runtime_idx, host_party_list=None,
                              fast_sbt=False, tree_type=None, target_host_id=None):
-
     if role == consts.HOST:
 
         if fast_sbt:

@@ -3,7 +3,7 @@ import abc
 import numpy as np
 from federatedml.ensemble.boosting.boosting import Boosting
 from federatedml.feature.homo_feature_binning.homo_split_points import HomoFeatureBinningClient, \
-                                                                      HomoFeatureBinningServer
+    HomoFeatureBinningServer
 from federatedml.util.classify_label_checker import ClassifyLabelChecker, RegressionLabelChecker
 from federatedml.util import consts
 from federatedml.util.homo_label_encoder import HomoLabelEncoderClient, HomoLabelEncoderArbiter
@@ -33,7 +33,7 @@ class HomoBoostingClient(Boosting, ABC):
         self.binning_obj = None
         self.mode = consts.HOMO
 
-    def federated_binning(self,  data_instance):
+    def federated_binning(self, data_instance):
 
         binning_param = HomoFeatureBinningParam(method=consts.RECURSIVE_QUERY, bin_num=self.bin_num,
                                                 error=self.binning_error)
@@ -75,7 +75,7 @@ class HomoBoostingClient(Boosting, ABC):
                                  'but got {} and {}'.format(prev, aft))
 
     def sync_feature_num(self):
-        self.transfer_inst.feature_number.remote(self.feature_num, role=consts.ARBITER, idx=-1, suffix=('feat_num', ))
+        self.transfer_inst.feature_number.remote(self.feature_num, role=consts.ARBITER, idx=-1, suffix=('feat_num',))
 
     def sync_start_round_and_end_round(self):
         self.transfer_inst.start_and_end_round.remote((self.start_round, self.boosting_round),
@@ -121,7 +121,7 @@ class HomoBoostingClient(Boosting, ABC):
 
             aligned_label, new_label_mapping = HomoLabelEncoderClient().label_alignment(local_classes)
             if self.is_warm_start:
-                assert set(aligned_label) == set(self.classes_), 'warm start label alignment failed, differences: {}'.\
+                assert set(aligned_label) == set(self.classes_), 'warm start label alignment failed, differences: {}'. \
                     format(set(aligned_label).symmetric_difference(set(self.classes_)))
             self.classes_ = aligned_label
             self.check_label_starts_from_zero(self.classes_)
@@ -213,7 +213,7 @@ class HomoBoostingArbiter(Boosting, ABC):
         self.aggregator = None
         self.binning_obj = None
 
-    def federated_binning(self,):
+    def federated_binning(self, ):
 
         binning_param = HomoFeatureBinningParam(method=consts.RECURSIVE_QUERY, bin_num=self.bin_num,
                                                 error=self.binning_error)
@@ -304,6 +304,3 @@ class HomoBoostingArbiter(Boosting, ABC):
     @abc.abstractmethod
     def load_learner(self, model_meta, model_param, epoch_idx, booster_idx):
         raise NotImplementedError()
-
-
-

@@ -242,7 +242,7 @@ class DecisionTree(BasicAlgorithms, ABC):
         # return sample weights to boosting class
         return self.sample_weights
 
-    @ staticmethod
+    @staticmethod
     def assign_instance_to_root_node(data_bin, root_node_id):
         return data_bin.mapValues(lambda inst: (1, root_node_id))
 

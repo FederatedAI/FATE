@@ -8,8 +8,9 @@ from federatedml.util import consts
 from federatedml.cipher_compressor.compressor import CipherCompressorHost, NormalCipherPackage
 from federatedml.cipher_compressor.compressor import PackingCipherTensorPackage
 from federatedml.util import LOGGER
-fix_point_precision = 2**52
-REGRESSION_MAX_GRADIENT = 10**9
+
+fix_point_precision = 2 ** 52
+REGRESSION_MAX_GRADIENT = 10 ** 9
 
 
 def post_func(x):
@@ -38,7 +39,6 @@ class SplitInfoPackage(NormalCipherPackage):
         self._cur_splitinfo_contains = 0
 
     def add(self, split_info):
-
         split_info_cp = SplitInfo(sitename=split_info.sitename, best_bid=split_info.best_bid,
                                   best_fid=split_info.best_fid, missing_dir=split_info.missing_dir,
                                   mask_id=split_info.mask_id, sample_count=split_info.sample_count)
@@ -64,7 +64,6 @@ class SplitInfoPackage2(PackingCipherTensorPackage):
         self._cur_splitinfo_contains = 0
 
     def add(self, split_info):
-
         split_info_cp = SplitInfo(sitename=split_info.sitename, best_bid=split_info.best_bid,
                                   best_fid=split_info.best_fid, missing_dir=split_info.missing_dir,
                                   mask_id=split_info.mask_id, sample_count=split_info.sample_count)
@@ -143,21 +142,22 @@ class GHPacker(object):
             en_list.append(h_encoding)
 
         return en_list
-    
+
     @staticmethod
     def to_fixedpoint(gh, mul, g_offset):
         g, h = gh
-        return [GHPacker.fixedpoint_encode(g+g_offset, mul), GHPacker.fixedpoint_encode(h, mul)]
+        return [GHPacker.fixedpoint_encode(g + g_offset, mul), GHPacker.fixedpoint_encode(h, mul)]
 
     def pack_and_encrypt(self, gh):
-        
+
         fixedpoint_encode_func = self.to_fixedpoint
         if self.mo_mode:
             fixedpoint_encode_func = self.to_fixedpoint_arr_format
         fixed_int_encode_func = functools.partial(fixedpoint_encode_func, mul=self.precision, g_offset=self.g_offset)
         large_int_gh = gh.mapValues(fixed_int_encode_func)
         if not self.mo_mode:
-            en_g_h = self.packer.pack_and_encrypt(large_int_gh, post_process_func=post_func) # take cipher out from list
+            en_g_h = self.packer.pack_and_encrypt(large_int_gh,
+                                                  post_process_func=post_func)  # take cipher out from list
         else:
             en_g_h = self.packer.pack_and_encrypt(large_int_gh)
             en_g_h = en_g_h.mapValues(lambda x: (x, 0))  # add 0 to occupy h position
@@ -188,8 +188,6 @@ class PackedGHCompressor(object):
         self.compressor = CipherCompressorHost(package_class=package_class, sync_para=sync_para)
 
     def compress_split_info(self, split_info_list, g_h_sum_info):
-
         split_info_list.append(g_h_sum_info)  # append to end
         rs = self.compressor.compress(split_info_list)
         return rs
-

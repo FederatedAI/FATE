@@ -293,7 +293,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
             max_nodes = max(len(encrypted_splitinfo_host[host_idx][j]) for j in range(len(self.cur_to_split_nodes)))
             # batch split point finding for every cur to split nodes
             for k in range(0, max_nodes, consts.MAX_SPLITINFO_TO_COMPUTE):
-                batch_splitinfo_host = [encrypted_splitinfo[k: k + consts.MAX_SPLITINFO_TO_COMPUTE] for encrypted_splitinfo
+                batch_splitinfo_host = [encrypted_splitinfo[k: k + consts.MAX_SPLITINFO_TO_COMPUTE] for
+                                        encrypted_splitinfo
                                         in encrypted_splitinfo_host[host_idx]]
 
                 encrypted_splitinfo_host_table = session.parallelize(zip(self.cur_to_split_nodes, batch_splitinfo_host),
@@ -348,7 +349,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         for host_idx, split_info_table in enumerate(host_split_info_tables):
 
-            host_split_info = self.splitter.find_host_best_split_info(split_info_table, self.get_host_sitename(host_idx),
+            host_split_info = self.splitter.find_host_best_split_info(split_info_table,
+                                                                      self.get_host_sitename(host_idx),
                                                                       self.encrypter,
                                                                       gh_packer=self.packer)
             split_info_list = [None for i in range(len(host_split_info))]
@@ -406,7 +408,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         for i in range(len(mask_tree_node_queue)):
             mask_tree_node_queue[i] = Node(id=mask_tree_node_queue[i].id,
                                            parent_nodeid=mask_tree_node_queue[i].parent_nodeid,
-                                           is_left_node=mask_tree_node_queue[i].is_left_node,)
+                                           is_left_node=mask_tree_node_queue[i].is_left_node, )
 
         self.transfer_inst.tree_node_queue.remote(mask_tree_node_queue,
                                                   role=consts.HOST,
@@ -506,7 +508,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         return new_tree_
 
-    def initialize_root_node(self,):
+    def initialize_root_node(self, ):
         LOGGER.info('initializing root node')
         root_sum_grad, root_sum_hess = self.get_grad_hess_sum(self.grad_and_hess)
         root_node = Node(id=0, sitename=self.sitename, sum_grad=root_sum_grad, sum_hess=root_sum_hess,
@@ -595,7 +597,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
             if tree_[nodeid].sitename == sitename:
 
                 next_layer_nid = HeteroDecisionTreeGuest.go_next_layer(tree_[nodeid], value[0], use_missing,
-                                                                       zero_as_missing, bin_sparse_points, split_maskdict,
+                                                                       zero_as_missing, bin_sparse_points,
+                                                                       split_maskdict,
                                                                        missing_dir_maskdict, decoder)
                 return 1, next_layer_nid
 
@@ -644,7 +647,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 self.inst2node_idx = self.inst2node_idx.join(dispatch_node_host_result[idx],
                                                              lambda unleaf_state_nodeid1, unleaf_state_nodeid2:
                                                              unleaf_state_nodeid1 if len(
-                                                             unleaf_state_nodeid1) == 2 else unleaf_state_nodeid2)
+                                                                 unleaf_state_nodeid1) == 2 else unleaf_state_nodeid2)
 
         self.inst2node_idx = self.inst2node_idx.union(dispatch_guest_result)
 
@@ -685,7 +688,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
             split_info = []
             for batch_idx, i in enumerate(range(0, len(self.cur_layer_nodes), self.max_split_nodes)):
-
                 self.cur_to_split_nodes = self.cur_layer_nodes[i: i + self.max_split_nodes]
                 node_map = self.get_node_map(self.cur_to_split_nodes)
                 cur_splitinfos = self.compute_best_splits(self.cur_to_split_nodes, node_map, dep, batch_idx)

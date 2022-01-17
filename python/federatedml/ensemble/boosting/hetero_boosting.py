@@ -131,9 +131,9 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
                                                 idx=-1,
                                                 suffix=(num_round,))
 
-    def sync_predict_round(self, predict_round,):
+    def sync_predict_round(self, predict_round, ):
         LOGGER.info("sync predict start round {}".format(predict_round))
-        self.transfer_variable.predict_start_round.remote(predict_round, role=consts.HOST, idx=-1,)
+        self.transfer_variable.predict_start_round.remote(predict_round, role=consts.HOST, idx=-1, )
 
     def prepare_warm_start(self, data_inst, classes):
         # adjust parameter for warm start
@@ -288,8 +288,8 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
                                                          suffix=(num_round,))
         return stop_flag
 
-    def sync_predict_start_round(self,):
-        return self.transfer_variable.predict_start_round.get(idx=0,)
+    def sync_predict_start_round(self, ):
+        return self.transfer_variable.predict_start_round.get(idx=0, )
 
     def prepare_warm_start(self, data_inst):
         self.predict(data_inst)

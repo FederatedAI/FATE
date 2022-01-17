@@ -61,9 +61,9 @@ class ObjectiveParam(BaseParam):
 
         if task_type not in [consts.CLASSIFICATION, consts.REGRESSION]:
             self.objective = self.check_and_change_lower(self.objective,
-                                                   ["cross_entropy", "lse", "lae", "huber", "fair",
-                                                    "log_cosh", "tweedie"],
-                                                       descr)
+                                                         ["cross_entropy", "lse", "lae", "huber", "fair",
+                                                          "log_cosh", "tweedie"],
+                                                         descr)
 
         if task_type == consts.CLASSIFICATION:
             if self.objective != "cross_entropy":
@@ -71,8 +71,8 @@ class ObjectiveParam(BaseParam):
 
         elif task_type == consts.REGRESSION:
             self.objective = self.check_and_change_lower(self.objective,
-                                                               ["lse", "lae", "huber", "fair", "log_cosh", "tweedie"],
-                                                               descr)
+                                                         ["lse", "lae", "huber", "fair", "log_cosh", "tweedie"],
+                                                         descr)
 
             params = self.params
             if self.objective in ["huber", "fair", "tweedie"]:
@@ -170,8 +170,8 @@ class DecisionTreeParam(BaseParam):
         descr = "decision tree param"
 
         self.criterion_method = self.check_and_change_lower(self.criterion_method,
-                                                             ["xgboost"],
-                                                             descr)
+                                                            ["xgboost"],
+                                                            descr)
 
         if len(self.criterion_params) == 0:
             raise ValueError("decisition tree param's criterio_params should be non empty")
@@ -221,8 +221,8 @@ class DecisionTreeParam(BaseParam):
             raise ValueError("decision tree param's tol {} not supported, should be numeric".format(self.tol))
 
         self.feature_importance_type = self.check_and_change_lower(self.feature_importance_type,
-                                                                    ["split", "gain"],
-                                                                    descr)
+                                                                   ["split", "gain"],
+                                                                   descr)
         self.check_nonnegative_number(self.min_child_weight, 'min_child_weight')
         self.check_boolean(self.deterministic, 'deterministic')
 
@@ -258,7 +258,7 @@ class BoostingParam(BaseParam):
                           Default: None
         """
 
-    def __init__(self,  task_type=consts.CLASSIFICATION,
+    def __init__(self, task_type=consts.CLASSIFICATION,
                  objective_param=ObjectiveParam(),
                  learning_rate=0.3, num_trees=5, subsample_feature_rate=1, n_iter_no_change=True,
                  tol=0.0001, bin_num=32,
@@ -299,7 +299,8 @@ class BoostingParam(BaseParam):
 
         if type(self.subsample_feature_rate).__name__ not in ["float", "int", "long"] or \
                 self.subsample_feature_rate < 0 or self.subsample_feature_rate > 1:
-            raise ValueError("boosting_core tree param's subsample_feature_rate should be a numeric number between 0 and 1")
+            raise ValueError(
+                "boosting_core tree param's subsample_feature_rate should be a numeric number between 0 and 1")
 
         if type(self.n_iter_no_change).__name__ != "bool":
             raise ValueError("boosting_core tree param's n_iter_no_change {} not supported, should be bool type".format(
@@ -333,7 +334,6 @@ class BoostingParam(BaseParam):
 
 
 class HeteroBoostingParam(BoostingParam):
-
     """
     encrypt_param : EncodeParam Object, encrypt method use in secure boost, default: EncryptParam()
 
@@ -593,7 +593,6 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
 
 @deprecated_param(*homo_deprecated_param_list)
 class HomoSecureBoostParam(BoostingParam):
-
     """
     Parameters
     ----------

@@ -45,7 +45,6 @@ TABLE = 'tb'
 
 
 class HistogramBag(object):
-
     """
     holds histograms
     """
@@ -423,7 +422,7 @@ class FeatureHistogram(object):
 
         partition_id_list_1, hist_val_list_1 = fid_histogram1
         partition_id_list_2, hist_val_list_2 = fid_histogram2
-        value = [partition_id_list_1+partition_id_list_2, hist_val_list_1+hist_val_list_2]
+        value = [partition_id_list_1 + partition_id_list_2, hist_val_list_1 + hist_val_list_2]
         return value
 
     @staticmethod

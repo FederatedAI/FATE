@@ -21,7 +21,6 @@ from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import Boostin
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_importance import FeatureImportance
 from federatedml.ensemble.basic_algorithms.decision_tree.homo.homo_decision_tree_client import HomoDecisionTreeClient
 
-
 make_readable_feature_importance = HeteroSecureBoostingTreeGuest.make_readable_feature_importance
 
 
@@ -66,13 +65,13 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
 
         loss_method = self.loss
         if self.task_type == consts.CLASSIFICATION:
-            grad_and_hess = self.y.join(y_hat, lambda y,  f_val:\
-                 (loss_method.compute_grad(y,  loss_method.predict(f_val)),\
-                 loss_method.compute_hess(y,  loss_method.predict(f_val))))
+            grad_and_hess = self.y.join(y_hat, lambda y, f_val: \
+                (loss_method.compute_grad(y, loss_method.predict(f_val)), \
+                 loss_method.compute_hess(y, loss_method.predict(f_val))))
         else:
-            grad_and_hess = self.y.join(y_hat, lambda y,  f_val:
-            (loss_method.compute_grad(y,  f_val),
-             loss_method.compute_hess(y,  f_val)))
+            grad_and_hess = self.y.join(y_hat, lambda y, f_val:
+            (loss_method.compute_grad(y, f_val),
+             loss_method.compute_hess(y, f_val)))
 
         return grad_and_hess
 
@@ -143,7 +142,7 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         """
         override parent function
         """
-        need_transform_to_sparse = self.backend == consts.DISTRIBUTED_BACKEND or\
+        need_transform_to_sparse = self.backend == consts.DISTRIBUTED_BACKEND or \
                                    (self.backend == consts.MEMORY_BACKEND and self.use_missing and self.zero_as_missing)
 
         backup_schema = copy.deepcopy(data_inst.schema)
@@ -276,7 +275,6 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
     def predict(self, data_inst, ret_format='std'):
         return self.fast_homo_tree_predict(data_inst, ret_format=ret_format)
 
-
     def generate_summary(self) -> dict:
 
         summary = {'feature_importance': make_readable_feature_importance(self.feature_name_fid_mapping,
@@ -291,7 +289,7 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         return tree_inst
 
     def load_feature_importance(self, feat_importance_param):
-        
+
         param = list(feat_importance_param)
         rs_dict = {}
         for fp in param:
@@ -377,4 +375,3 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         meta_name = "HomoSecureBoostingTreeGuestMeta"
 
         return meta_name, model_meta
-
