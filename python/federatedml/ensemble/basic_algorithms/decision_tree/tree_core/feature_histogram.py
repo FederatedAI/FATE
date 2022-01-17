@@ -50,7 +50,6 @@ class HistogramBag(object):
     """
 
     def __init__(self, tensor: list, hid: int = -1, p_hid: int = -1):
-
         """
         :param tensor: list returned by calculate_histogram
         :param hid: histogram id
@@ -156,7 +155,7 @@ class FeatureHistogramWeights(Weights):
 
     def axpy(self, a, y: 'FeatureHistogramWeights'):
 
-        func = lambda x1, x2: x1 + a * x2
+        def func(x1, x2): return x1 + a * x2
         self.binary_op(y, func, inplace=True)
 
         return self
@@ -198,7 +197,6 @@ class FeatureHistogram(object):
                           cur_to_split_nodes=None,
                           bin_num=32
                           ):
-
         """
         This the new interface for histogram computation
         """
@@ -290,7 +288,6 @@ class FeatureHistogram(object):
                             parent_node_id_map=None,
                             sibling_node_id_map=None,
                             ret=TENSOR):
-
         """
         This is the old interface for histogram computation
 
@@ -314,7 +311,7 @@ class FeatureHistogram(object):
         # histogram template will be adjusted when running mo tree
         mo_dim = None
         g_h_example = grad_and_hess.take(1)
-        if type(g_h_example[0][1][0]) == np.ndarray and len(g_h_example[0][1][0]) > 1:
+        if isinstance(g_h_example[0][1][0], np.ndarray) and len(g_h_example[0][1][0]) > 1:
             mo_dim = len(g_h_example[0][1][0])
 
         # reformat, now format is: key, ((data_instance, node position), (g, h))
@@ -581,22 +578,22 @@ class FeatureHistogram(object):
                         # add 0 g/h sum to sparse point
                         sparse_point = bin_sparse_points[fid]
                         node_histograms[node_idx][fid][sparse_point][0] += zero_opt_node_sum[node_idx][0] - \
-                                                                           zero_optim[node_idx][fid][
-                                                                               0]
+                            zero_optim[node_idx][fid][
+                            0]
                         node_histograms[node_idx][fid][sparse_point][1] += zero_opt_node_sum[node_idx][1] - \
-                                                                           zero_optim[node_idx][fid][
-                                                                               1]
+                            zero_optim[node_idx][fid][
+                            1]
                         node_histograms[node_idx][fid][sparse_point][2] += zero_opt_node_sum[node_idx][2] - \
-                                                                           zero_optim[node_idx][fid][
-                                                                               2]
+                            zero_optim[node_idx][fid][
+                            2]
                     else:
                         # if 0 is regarded as missing value, add to missing bin
                         node_histograms[node_idx][fid][-1][0] += zero_opt_node_sum[node_idx][0] - \
-                                                                 zero_optim[node_idx][fid][0]
+                            zero_optim[node_idx][fid][0]
                         node_histograms[node_idx][fid][-1][1] += zero_opt_node_sum[node_idx][1] - \
-                                                                 zero_optim[node_idx][fid][1]
+                            zero_optim[node_idx][fid][1]
                         node_histograms[node_idx][fid][-1][2] += zero_opt_node_sum[node_idx][2] - \
-                                                                 zero_optim[node_idx][fid][2]
+                            zero_optim[node_idx][fid][2]
 
         ret = FeatureHistogram._generate_histogram_key_value_list(node_histograms, node_map, bin_split_points,
                                                                   parent_nid_map, sibling_node_id_map,
@@ -619,7 +616,7 @@ class FeatureHistogram(object):
         return histograms_table
 
     """
-    Histogram with sparse optimization 
+    Histogram with sparse optimization
     """
 
     @staticmethod
@@ -884,14 +881,12 @@ class FeatureHistogram(object):
 
     @staticmethod
     def _is_root_node(node_map):
-
         """
         check if current to split is root node
         """
         return 0 in node_map
 
     def _update_cached_histograms(self, dep, ret='tensor'):
-
         """
         update cached parent histograms
         """
@@ -934,7 +929,6 @@ class FeatureHistogram(object):
         return self._cur_to_split_node_info[node_id]['is_left_node']
 
     def _get_parent_nid_map(self, ):
-
         """
         get a map that can map a node to its parent node
         """
@@ -948,7 +942,6 @@ class FeatureHistogram(object):
 
     @staticmethod
     def _trim_node_map(node_map, leaf_sample_counts):
-
         """
         Only keep the nodes with fewer sample and remove their siblings, for accelerating hist computation
         """
@@ -1013,7 +1006,6 @@ class FeatureHistogram(object):
         return res
 
     def _tensor_subtraction(self, histograms, node_map):
-
         """
         histogram subtraction for tensor format
         """
@@ -1050,7 +1042,6 @@ class FeatureHistogram(object):
         return result_nid, result
 
     def _table_subtraction(self, histograms):
-
         """
         histogram subtraction for table format
         """

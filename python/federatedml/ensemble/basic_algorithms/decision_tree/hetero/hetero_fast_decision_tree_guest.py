@@ -96,8 +96,8 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
             if mode == consts.MIX_TREE:
                 for split_info in split_info_list:
                     split_info.sum_grad, split_info.sum_hess, split_info.gain = self.encrypt(split_info.sum_grad), \
-                                                                                self.encrypt(split_info.sum_hess), \
-                                                                                self.encrypt(split_info.gain)
+                        self.encrypt(split_info.sum_hess), \
+                        self.encrypt(split_info.gain)
                 return_split_info = split_info_list
             else:
                 return_split_info = copy.deepcopy(split_info_list)
@@ -160,7 +160,7 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
                 else:
                     self.inst2node_idx = self.inst2node_idx.join(dispatch_node_host_result[idx],
                                                                  lambda unleaf_state_nodeid1,
-                                                                        unleaf_state_nodeid2:
+                                                                 unleaf_state_nodeid2:
                                                                  unleaf_state_nodeid1 if len(
                                                                      unleaf_state_nodeid1) == 2 else
                                                                  unleaf_state_nodeid2)

@@ -61,7 +61,7 @@ class GuestIntegerPacker(object):
 
     def cipher_compress_suggest(self):
         # iterativeAffine does not support cipher compress
-        if type(self.calculator.encrypter) == IterativeAffineEncrypt:
+        if isinstance(self.calculator.encrypter, IterativeAffineEncrypt):
             return 1, 1
         compressible = self.bit_assignment[-1]
         total_bit_count = sum(compressible)
@@ -141,7 +141,7 @@ class GuestIntegerPacker(object):
 
     def decrypt_cipher_packages(self, content):
 
-        if type(content) == list:
+        if isinstance(content, list):
 
             assert issubclass(type(content[0]), CipherPackage), 'content is not CipherPackages'
             decrypt_rs = []
@@ -160,4 +160,3 @@ class GuestIntegerPacker(object):
         unpack_table = de_table.mapValues(self.unpack_result)
 
         return unpack_table
-

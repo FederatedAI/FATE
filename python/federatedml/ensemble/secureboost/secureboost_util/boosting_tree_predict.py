@@ -81,8 +81,13 @@ def add_y_hat(leaf_pos, init_score, learning_rate, trees: List[HeteroDecisionTre
     return np.sum(weights * learning_rate, axis=0) + init_score
 
 
-def get_predict_scores(leaf_pos, learning_rate, init_score, trees: List[HeteroDecisionTreeGuest]
-                       , multi_class_num=-1, predict_cache=None):
+def get_predict_scores(
+        leaf_pos,
+        learning_rate,
+        init_score,
+        trees: List[HeteroDecisionTreeGuest],
+        multi_class_num=-1,
+        predict_cache=None):
     if predict_cache:
         init_score = 0  # prevent init_score re-add
 

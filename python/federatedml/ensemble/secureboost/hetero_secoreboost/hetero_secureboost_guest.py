@@ -125,13 +125,13 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         LOGGER.info("compute grad and hess")
         loss_method = self.loss
         if self.task_type == consts.CLASSIFICATION:
-            grad_and_hess = y.join(y_hat, lambda y, f_val: \
-                (loss_method.compute_grad(y, loss_method.predict(f_val)), \
-                 loss_method.compute_hess(y, loss_method.predict(f_val))))
+            grad_and_hess = y.join(y_hat, lambda y, f_val:
+                                   (loss_method.compute_grad(y, loss_method.predict(f_val)),
+                                    loss_method.compute_hess(y, loss_method.predict(f_val))))
         else:
             grad_and_hess = y.join(y_hat, lambda y, f_val:
-            (loss_method.compute_grad(y, f_val),
-             loss_method.compute_hess(y, f_val)))
+                                   (loss_method.compute_grad(y, f_val),
+                                    loss_method.compute_hess(y, f_val)))
 
         grad_and_hess = self.process_sample_weights(grad_and_hess, data_with_sample_weight)
 
@@ -268,7 +268,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         new_fi = {}
         for id_ in feature_importances:
             LOGGER.debug('fp id is {}'.format(id_))
-            if type(id_) == tuple:
+            if isinstance(id_, tuple):
                 if consts.GUEST in id_[0]:
                     new_fi[fid_mapping[id_[1]]] = feature_importances[id_].importance
                 else:
