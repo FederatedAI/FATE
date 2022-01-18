@@ -241,7 +241,7 @@ def host_traverse_a_tree(tree: HeteroDecisionTreeHost, sample, cur_node_idx):
     return nid, _
 
 
-def host_traverse_trees(leaf_pos, sample, trees: List[HeteroDecisionTreeHost]):
+def host_traverse_trees(sample, leaf_pos, trees: List[HeteroDecisionTreeHost]):
     for t_idx, tree in enumerate(trees):
 
         cur_node_idx = leaf_pos['node_pos'][t_idx]
@@ -290,7 +290,7 @@ def sbt_host_predict(data_inst, transfer_var: HeteroSecureBoostTransferVariable,
             break
 
         guest_node_pos = transfer_var.guest_predict_data.get(idx=0, suffix=(comm_round,))
-        host_node_pos = guest_node_pos.join(data_inst, traverse_func)
+        host_node_pos = data_inst.join(guest_node_pos, traverse_func)
         if guest_node_pos.count() != host_node_pos.count():
             raise ValueError('sample count mismatch: guest table {}, host table {}'.format(guest_node_pos.count(),
                                                                                            host_node_pos.count()))
