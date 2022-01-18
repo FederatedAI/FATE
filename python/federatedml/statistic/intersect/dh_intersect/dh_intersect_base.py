@@ -34,23 +34,11 @@ class DhIntersect(Intersect):
         self.commutative_cipher = None
 
     def load_params(self, param):
-        # self.only_output_key = param.only_output_key
-        # self.sync_intersect_ids = param.sync_intersect_ids
         super().load_params(param=param)
         self.dh_params = param.dh_params
         self.hash_operator = Hash(param.dh_params.hash_method)
         self.salt = self.dh_params.salt
         self.key_length = self.dh_params.key_length
-
-    """
-    @staticmethod
-    def record_original_id(k, v):
-        if isinstance(k, str):
-            restored_id = conversion.int_to_str(conversion.str_to_int(k))
-        else:
-            restored_id = k
-        return (restored_id, k)
-    """
 
     def get_intersect_method_meta(self):
         dh_meta = {"intersect_method": self.intersect_method,
