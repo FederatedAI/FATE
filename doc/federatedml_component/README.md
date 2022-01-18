@@ -67,8 +67,6 @@ provide:
 
   - [Encrypt](secureprotol.md#encrypt)
       - [Paillier encryption](secureprotol.md#paillier-encryption)
-      - [Affine Homomorphic Encryption](secureprotol.md#affine-homomorphic-encryption)
-      - [IterativeAffine Homomorphic Encryption](secureprotol.md#iterativeaffine-homomorphic-encryption)
       - [RSA encryption](secureprotol.md#rsa-encryption)
   - [Hash](secureprotol.md#hash-factory)
   - [Diffne Hellman Key Exchange](secureprotol.md#diffne-hellman-key-exchange)

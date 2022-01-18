@@ -27,7 +27,7 @@ class EncryptParam(BaseParam):
 
     Parameters
     ----------
-    method : {'Paillier', 'IterativeAffine', 'RandomIterativeAffine'}
+    method : {'Paillier'}
         If method is 'Paillier', Paillier encryption will be used for federated ml.
         To use non-encryption version in HomoLR, set this to None.
         For detail of Paillier encryption, please check out the paper mentioned in README file.
@@ -43,29 +43,4 @@ class EncryptParam(BaseParam):
         self.key_length = key_length
 
     def check(self):
-        if self.method is not None and type(self.method).__name__ != "str":
-            raise ValueError(
-                "encrypt_param's method {} not supported, should be str type".format(
-                    self.method))
-        elif self.method is None:
-            pass
-        else:
-            user_input = self.method.lower()
-            if user_input == "paillier":
-                self.method = consts.PAILLIER
-            elif user_input == "iterativeaffine":
-                self.method = consts.ITERATIVEAFFINE
-            elif user_input == "randomiterativeaffine":
-                self.method = consts.RANDOM_ITERATIVEAFFINE
-            else:
-                raise ValueError(
-                    "encrypt_param's method {} not supported".format(user_input))
-
-        if type(self.key_length).__name__ != "int":
-            raise ValueError(
-                "encrypt_param's key_length {} not supported, should be int type".format(self.key_length))
-        elif self.key_length <= 0:
-            raise ValueError(
-                "encrypt_param's key_length must be greater or equal to 1")
-
         return True

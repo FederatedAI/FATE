@@ -92,12 +92,14 @@ class StorageTable(StorageTableBase):
 
     def _count(self):
         count = 0
+        if self._meta.get_count():
+            return self._meta.get_count()
         for _ in self._as_generator():
             count += 1
         return count
 
     def _save_as(
-        self, address, partitions=None, name=None, namespace=None, schema=None, **kwargs
+        self, address, partitions=None, name=None, namespace=None, **kwargs
     ):
         self._hdfs_client.copy_file(src=self.path, dst=address.path)
         table = StorageTable(
@@ -126,12 +128,12 @@ class StorageTable(StorageTableBase):
             raise FileNotFoundError(f"file {self.path} not found")
 
         elif info.type == fs.FileType.File:
+            # todo:
             with io.TextIOWrapper(
-                buffer=self._hdfs_client.open_input_stream(self.path), encoding="utf-8"
+                    buffer=self._hdfs_client.open_input_stream(self.path), encoding="utf-8"
             ) as reader:
                 for line in reader:
                     yield line
-
         else:
             selector = fs.FileSelector(os.path.join("/", self._address.path))
             file_infos = self._hdfs_client.get_file_info(selector)

@@ -534,7 +534,7 @@ def run_test_api(config_json, namespace):
     output_path = './output/flow_test_data/'
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-    fate_flow_path = config_json['data_base_dir'].parent.parent / 'fate_flow' / 'fate_flow_client.py'
+    fate_flow_path = config_json['data_base_dir'] / 'fateflow' / 'python'  / 'fate_flow' / 'fate_flow_client.py'
     if not fate_flow_path.exists():
         raise FileNotFoundError(f'fate_flow not found. filepath: {fate_flow_path}')
     test_api = TestModel(config_json['data_base_dir'], str(fate_flow_path), config_json['component_name'], namespace)

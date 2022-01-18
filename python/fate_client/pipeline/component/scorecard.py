@@ -15,15 +15,15 @@
 #
 
 from pipeline.param.scorecard_param import ScorecardParam
-from pipeline.component.component_base import Component
+from pipeline.component.component_base import FateComponent
 from pipeline.interface import Input
 from pipeline.interface import Output
 from pipeline.utils.logger import LOGGER
 
 
-class Scorecard(Component, ScorecardParam):
+class Scorecard(FateComponent, ScorecardParam):
     def __init__(self, **kwargs):
-        Component.__init__(self, **kwargs)
+        FateComponent.__init__(self, **kwargs)
 
         LOGGER.debug(f"{self.name} component created")
         new_kwargs = self.erase_component_base_param(**kwargs)

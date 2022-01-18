@@ -202,7 +202,7 @@ class BaseFeatureBinning(ModelBase):
         split_points_result = self.binning_obj.bin_results.split_results
 
         multi_class_result = self.bin_result.generated_pb_list(split_points_result)
-        LOGGER.debug(f"split_points_result: {split_points_result}")
+        # LOGGER.debug(f"split_points_result: {split_points_result}")
         host_multi_class_result = []
         host_single_results = []
         for host_res in self.host_results:
@@ -303,7 +303,7 @@ class BaseFeatureBinning(ModelBase):
     def set_schema(self, data_instance):
         self.schema['header'] = self.header
         data_instance.schema = self.schema
-        LOGGER.debug("After Binning, when setting schema, schema is : {}".format(data_instance.schema))
+        # LOGGER.debug("After Binning, when setting schema, schema is : {}".format(data_instance.schema))
 
     def _abnormal_detection(self, data_instances):
         """

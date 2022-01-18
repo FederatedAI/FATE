@@ -60,3 +60,16 @@ class StorageTable(StorageTableBase):
 
     def _destroy(self):
         return self._table.destroy()
+
+    def _save_as(self, address, name, namespace, partitions=None, **kwargs):
+        self._table.save_as(name=name, namespace=namespace)
+
+        table = StorageTable(
+            session=self._session,
+            address=address,
+            partitions=partitions,
+            name=name,
+            namespace=namespace,
+            **kwargs,
+        )
+        return table

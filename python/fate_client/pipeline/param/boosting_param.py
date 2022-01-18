@@ -434,8 +434,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         complete_secure: bool, if use complete_secure, when use complete secure, build first tree using only guest
                         features
 
-        sparse_optimization: bool, Available when encrypted method is 'iterativeAffine'
-                            An optimized mode for high-dimension, sparse data.
+        sparse_optimization: this parameter is now abandoned
 
         run_goss: bool, activate Gradient-based One-Side Sampling, which selects large gradient and small
                    gradient samples using top_rate and other_rate.

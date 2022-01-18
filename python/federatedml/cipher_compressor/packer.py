@@ -4,7 +4,6 @@ from federatedml.cipher_compressor.compressor import get_homo_encryption_max_int
 from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 from federatedml.cipher_compressor.compressor import PackingCipherTensor
 from federatedml.cipher_compressor.compressor import CipherPackage
-from federatedml.secureprotol.encrypt import IterativeAffineEncrypt
 from federatedml.transfer_variable.transfer_class.cipher_compressor_transfer_variable \
     import CipherCompressorTransferVariable
 from federatedml.util import consts
@@ -19,6 +18,12 @@ class GuestIntegerPacker(object):
 
     def __init__(self, pack_num: int, pack_num_range: list, encrypt_mode_calculator: EncryptModeCalculator,
                  sync_para=True):
+        """
+        max_int: max int allowed for packing result
+        pack_num: number of int to pack, they must be POSITIVE integer
+        pack_num_range: list of integer, it gives range of every integer to pack
+        need_cipher_compress: if dont need cipher compress, related parameter will be set to 1
+        """
 
         self._pack_num = pack_num
         assert len(pack_num_range) == self._pack_num, 'list len must equal to pack_num'
@@ -32,22 +37,22 @@ class GuestIntegerPacker(object):
 
         # sometimes max_int is not able to hold all num need to be packed, so we
         # use more than one large integer to pack them all
-        self.bit_assignment = []
+        self._bit_assignment = []
         tmp_list = []
         bit_count = 0
         for bit_len in self._pack_num_bit:
             if bit_count + bit_len >= self._max_bit:
                 if bit_count == 0:
                     raise ValueError('unable to pack this num using in current int capacity')
-                self.bit_assignment.append(tmp_list)
+                self._bit_assignment.append(tmp_list)
                 tmp_list = []
                 bit_count = 0
             bit_count += bit_len
             tmp_list.append(bit_len)
 
         if len(tmp_list) != 0:
-            self.bit_assignment.append(tmp_list)
-        self._pack_int_needed = len(self.bit_assignment)
+            self._bit_assignment.append(tmp_list)
+        self._pack_int_needed = len(self._bit_assignment)
 
         # transfer variable
         compress_parameter = self.cipher_compress_suggest()
@@ -56,14 +61,11 @@ class GuestIntegerPacker(object):
             self.trans_var = CipherCompressorTransferVariable()
             self.trans_var.compress_para.remote(compress_parameter, role=consts.HOST, idx=-1)
 
-        LOGGER.debug('int packer init done, bit assign is {}, compress para is {}'.format(self.bit_assignment,
+        LOGGER.debug('int packer init done, bit assign is {}, compress para is {}'.format(self._bit_assignment,
                                                                                           compress_parameter))
 
     def cipher_compress_suggest(self):
-        # iterativeAffine does not support cipher compress
-        if type(self.calculator.encrypter) == IterativeAffineEncrypt:
-            return 1, 1
-        compressible = self.bit_assignment[-1]
+        compressible = self._bit_assignment[-1]
         total_bit_count = sum(compressible)
         compress_num = self._max_bit // total_bit_count
         padding_bit = total_bit_count
@@ -74,7 +76,7 @@ class GuestIntegerPacker(object):
         assert len(int_list) == self._pack_num, 'list length is not equal to pack_num'
         start_idx = 0
         rs = []
-        for bit_assign_of_one_int in self.bit_assignment:
+        for bit_assign_of_one_int in self._bit_assignment:
             to_pack = int_list[start_idx: start_idx + len(bit_assign_of_one_int)]
             packing_rs = self._pack_fix_len_int_list(to_pack, bit_assign_of_one_int)
             rs.append(packing_rs)
@@ -91,7 +93,7 @@ class GuestIntegerPacker(object):
 
         return result
 
-    def unpack_an_int(self, integer: int, bit_assign_list: list):
+    def _unpack_an_int(self, integer: int, bit_assign_list: list):
 
         rs_list = []
         for bit_assign in reversed(bit_assign_list[1:]):
@@ -129,10 +131,10 @@ class GuestIntegerPacker(object):
 
     def unpack_an_int_list(self, int_list, post_func=None):
 
-        assert len(int_list) == len(self.bit_assignment), 'length of integer list is not equal to bit_assignment'
+        assert len(int_list) == len(self._bit_assignment), 'length of integer list is not equal to bit_assignment'
         rs_list = []
         for idx, integer in enumerate(int_list):
-            unpack_list = self.unpack_an_int(integer, self.bit_assignment[idx])
+            unpack_list = self._unpack_an_int(integer, self._bit_assignment[idx])
             if post_func:
                 unpack_list = post_func(unpack_list)
             rs_list.extend(unpack_list)

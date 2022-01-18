@@ -80,7 +80,7 @@ class ThresholdCutter(object):
     @staticmethod
     def fixed_interval_threshold(steps=0.01):
         intervals = np.array([i for i in range(0, 100)])
-        intervals = intervals*steps
+        intervals = intervals * steps
         return intervals
 
     @staticmethod
@@ -409,7 +409,6 @@ class FScore(object):
         f_score = numerator / denominator
 
         return f_score, fixed_interval_threshold, cuts
-
 
 
 class PSI(object):
