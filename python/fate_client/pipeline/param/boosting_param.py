@@ -164,13 +164,13 @@ class DecisionTreeParam(BaseParam):
         if len(self.criterion_params) == 0:
             raise ValueError("decisition tree param's criterio_params should be non empty")
 
-        if type(self.criterion_params) == list:
+        if isinstance(self.criterion_params, list):
             assert len(self.criterion_params) == 2, 'length of criterion_param should be 2: l1, l2 regularization ' \
                                                     'values are needed'
             self.check_nonnegative_number(self.criterion_params[0], 'l2 reg value')
             self.check_nonnegative_number(self.criterion_params[1], 'l1 reg value')
 
-        elif type(self.criterion_params) == dict:
+        elif isinstance(self.criterion_params, dict):
             assert 'l1' in self.criterion_params and 'l2' in self.criterion_params, 'l1 and l2 keys are needed in ' \
                                                                                     'criterion_params dict'
             self.criterion_params = [self.criterion_params['l2'], self.criterion_params['l1']]
@@ -197,7 +197,7 @@ class DecisionTreeParam(BaseParam):
                 self.min_leaf_node))
 
         if type(self.max_split_nodes).__name__ not in ["int", "long"] or self.max_split_nodes < 1:
-            raise ValueError("decision tree param's max_split_nodes {} not supported, " + \
+            raise ValueError("decision tree param's max_split_nodes {} not supported, " +
                              "should be positive integer between 1 and {}".format(self.max_split_nodes,
                                                                                   consts.MAX_SPLIT_NODES))
 
@@ -315,7 +315,7 @@ class BoostingParam(BaseParam):
             raise ValueError("metrics should be a list")
 
         if self.random_seed is not None:
-            assert type(self.random_seed) == int and self.random_seed >= 0, 'random seed must be an integer >= 0'
+            assert isinstance(self.random_seed, int) and self.random_seed >= 0, 'random seed must be an integer >= 0'
 
         self.check_decimal_float(self.binning_error, descr)
 
@@ -525,9 +525,9 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
 
         super(HeteroSecureBoostParam, self).check()
         self.tree_param.check()
-        if type(self.use_missing) != bool:
+        if not isinstance(self.use_missing, bool):
             raise ValueError('use missing should be bool type')
-        if type(self.zero_as_missing) != bool:
+        if not isinstance(self.zero_as_missing, bool):
             raise ValueError('zero as missing should be bool type')
         self.check_boolean(self.complete_secure, 'complete_secure')
         self.check_boolean(self.sparse_optimization, 'sparse optimization')
@@ -605,9 +605,9 @@ class HomoSecureBoostParam(BoostingParam):
 
         super(HomoSecureBoostParam, self).check()
         self.tree_param.check()
-        if type(self.use_missing) != bool:
+        if not isinstance(self.use_missing, bool):
             raise ValueError('use missing should be bool type')
-        if type(self.zero_as_missing) != bool:
+        if not isinstance(self.zero_as_missing, bool):
             raise ValueError('zero as missing should be bool type')
         if self.backend not in [consts.MEMORY_BACKEND, consts.DISTRIBUTED_BACKEND]:
             raise ValueError('unsupported backend')

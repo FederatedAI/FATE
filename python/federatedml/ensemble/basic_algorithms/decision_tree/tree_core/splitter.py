@@ -53,8 +53,8 @@ class SplitInfo(object):
     def __str__(self):
         return '(fid {} bid {}, sum_grad {}, sum_hess {}, gain {}, sitename {}, missing dir {}, mask_id {}, ' \
                'sample_count {})\n'.format(
-            self.best_fid, self.best_bid, self.sum_grad, self.sum_hess, self.gain, self.sitename, self.missing_dir,
-            self.mask_id, self.sample_count)
+                   self.best_fid, self.best_bid, self.sum_grad, self.sum_hess, self.gain, self.sitename, self.missing_dir,
+                   self.mask_id, self.sample_count)
 
     def __repr__(self):
         return self.__str__()
@@ -75,11 +75,11 @@ class Splitter(object):
             else:
                 try:
                     reg_lambda, reg_alpha = 0, 0
-                    if type(criterion_params) is list:
+                    if isinstance(criterion_params, list):
                         reg_lambda = float(criterion_params[0])
                         reg_alpha = float(criterion_params[1])
                     self.criterion = XgboostCriterion(reg_lambda=reg_lambda, reg_alpha=reg_alpha)
-                except:
+                except BaseException:
                     warnings.warn("criterion_params' first criterion_params should be numeric")
                     self.criterion = XgboostCriterion()
 
@@ -90,7 +90,7 @@ class Splitter(object):
 
     def _check_min_child_weight(self, l_h, r_h):
 
-        if type(l_h) == np.ndarray:
+        if isinstance(l_h, np.ndarray):
             l_h, r_h = np.sum(l_h), np.sum(r_h)
         rs = l_h >= self.min_child_weight and r_h >= self.min_child_weight
         return rs
@@ -506,7 +506,7 @@ class Splitter(object):
         return self.criterion.node_weight(grad, hess)
 
     def split_gain(self, sum_grad, sum_hess, sum_grad_l, sum_hess_l, sum_grad_r, sum_hess_r):
-        gain = self.criterion.split_gain([sum_grad, sum_hess], \
+        gain = self.criterion.split_gain([sum_grad, sum_hess],
                                          [sum_grad_l, sum_hess_l], [sum_grad_r, sum_hess_r])
         return gain
 

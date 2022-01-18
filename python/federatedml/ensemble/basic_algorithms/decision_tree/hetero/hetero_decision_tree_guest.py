@@ -168,9 +168,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
     def get_encrypt_type(self):
 
-        if type(self.encrypter) == PaillierEncrypt:
+        if isinstance(self.encrypter, PaillierEncrypt):
             return consts.PAILLIER
-        elif type(self.encrypter) == IterativeAffineEncrypt:
+        elif isinstance(self.encrypter, IterativeAffineEncrypt):
             return consts.ITERATIVEAFFINE
         else:
             raise ValueError('unknown encrypter type: {}'.format(type(self.encrypter)))
@@ -237,9 +237,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
             # so need type checking here
             if need_decrypt:
                 best_splitinfo.sum_grad = self.decrypt(best_splitinfo.sum_grad) \
-                    if type(best_splitinfo.sum_grad) != int else best_splitinfo.sum_grad
+                    if not isinstance(best_splitinfo.sum_grad, int) else best_splitinfo.sum_grad
                 best_splitinfo.sum_hess = self.decrypt(best_splitinfo.sum_hess) \
-                    if type(best_splitinfo.sum_hess) != int else best_splitinfo.sum_hess
+                    if not isinstance(best_splitinfo.sum_hess, int) else best_splitinfo.sum_hess
                 best_splitinfo.gain = best_gain_host
 
         return best_splitinfo

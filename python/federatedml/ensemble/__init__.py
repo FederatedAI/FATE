@@ -43,7 +43,6 @@ __all__ = ["Node",
            "HeteroDecisionTreeHost", "HeteroDecisionTreeGuest", "Splitter",
            "FeatureHistogram", "XgboostCriterion", "DecisionTree", 'SplitInfo',
            "HomoDecisionTreeClient", "HomoDecisionTreeArbiter", "SecureBoostArbiterAggregator",
-           "SecureBoostClientAggregator"
-    , "DecisionTreeArbiterAggregator", 'DecisionTreeClientAggregator',
+           "SecureBoostClientAggregator", "DecisionTreeArbiterAggregator", 'DecisionTreeClientAggregator',
            "HeteroSecureBoostingTreeGuest", "HeteroSecureBoostingTreeHost", "HomoSecureBoostingTreeArbiter",
            "HomoSecureBoostingTreeClient", "HistogramBag", "FeatureHistogramWeights"]
