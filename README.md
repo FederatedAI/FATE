@@ -10,7 +10,7 @@
 
 [DOC](./doc) | [Quick Start](doc/tutorial/pipeline/pipeline_tutorial_hetero_sbt.ipynb) | [中文](./README_zh.md)
 
-FATE (Federated AI Technology Enabler) is the world's first industrial grade federated learning open source frameworkto enable enterprises and institutions to collaborate on data while protecting data security and privacy. 
+FATE (Federated AI Technology Enabler) is the world's first industrial grade federated learning open source framework to enable enterprises and institutions to collaborate on data while protecting data security and privacy. 
 It implements secure computation protocols based on homomorphic encryption and multi-party computation (MPC). 
 Supporting various federated learning scenarios, FATE now provides a host of federated learning algorithms, including logistic regression, tree-based algorithms, deep learning, and transfer learning.
 FATE became open-source in February 2019.
