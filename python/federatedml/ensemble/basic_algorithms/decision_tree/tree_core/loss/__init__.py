@@ -13,7 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss.cross_entropy import SigmoidBinaryCrossEntropyLoss
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss.cross_entropy import \
+    SigmoidBinaryCrossEntropyLoss
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss.cross_entropy import SoftmaxCrossEntropyLoss
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss.regression_loss import LeastSquaredErrorLoss
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss.regression_loss import LeastAbsoluteErrorLoss

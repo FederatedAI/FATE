@@ -2,7 +2,6 @@ from typing import Tuple, List
 from federatedml.util import LOGGER
 from federatedml.util import consts
 
-
 tree_type_dict = {
     'guest_feat_only': 0,  # use only guest feature to build this tree
     'host_feat_only': 1,  # use only host feature to build this tree
@@ -50,8 +49,7 @@ def create_tree_plan(work_mode: str, k=1, tree_num=10, host_list=None, complete_
     return tree_plan
 
 
-def create_node_plan(tree_type, target_host_id, max_depth,) -> List[Tuple[int, int]]:
-
+def create_node_plan(tree_type, target_host_id, max_depth) -> List[Tuple[int, int]]:
     LOGGER.debug('cur tree working mode is {}'.format((tree_type, target_host_id)))
     node_plan = []
 
@@ -65,7 +63,6 @@ def create_node_plan(tree_type, target_host_id, max_depth,) -> List[Tuple[int, i
 
 
 def create_layered_tree_node_plan(guest_depth=0, host_depth=0, host_list=None):
-
     assert guest_depth > 0 and host_depth > 0
     assert len(host_list) > 0
 
@@ -78,7 +75,6 @@ def create_layered_tree_node_plan(guest_depth=0, host_depth=0, host_list=None):
 
 
 def encode_plan(p, split_token='_'):
-
     result = []
     for tree_type_or_action, host_id in p:
         result.append(str(tree_type_or_action) + split_token + str(host_id))
@@ -86,7 +82,6 @@ def encode_plan(p, split_token='_'):
 
 
 def decode_plan(s, split_token='_'):
-
     result = []
     for string in s:
         t = string.split(split_token)

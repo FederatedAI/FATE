@@ -64,9 +64,6 @@ class PackingCipherTensor(object):
             self.ciphers = ciphers
             self.dim = 1
 
-    # def __len__(self):
-    #     return self.dim
-
     def __add__(self, other):
 
         new_cipher_list = []
@@ -142,7 +139,6 @@ class NormalCipherPackage(CipherPackage):
     def unpack(self, decrypter):
 
         if isinstance(decrypter, PaillierEncrypt):
-            LOGGER.debug(f"cipher_text: {self._cipher_text}")
             compressed_plain_text = decrypter.privacy_key.raw_decrypt(self._cipher_text.ciphertext())
         elif isinstance(decrypter, IterativeAffineEncrypt):
             compressed_plain_text = decrypter.key.raw_decrypt(self._cipher_text)

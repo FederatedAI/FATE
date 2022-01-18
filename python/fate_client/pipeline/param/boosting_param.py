@@ -15,7 +15,6 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-#
 
 from pipeline.param.base_param import BaseParam
 from pipeline.param.encrypt_param import EncryptParam
@@ -40,7 +39,7 @@ class ObjectiveParam(BaseParam):
                 other 6 types support in regression task. default: None
 
     params : None or list, should be non empty list when objective is 'tweedie','fair','huber',
-             first element of list shoulf be a float-number large than 0.0 when objective is 'fair','huber',
+             first element of list should be a float-number large than 0.0 when objective is 'fair','huber',
              first element of list should be a float-number in [1.0, 2.0) when objective is 'tweedie'
     """
 
@@ -289,8 +288,8 @@ class BoostingParam(BaseParam):
 
         if type(self.subsample_feature_rate).__name__ not in ["float", "int", "long"] or \
                 self.subsample_feature_rate < 0 or self.subsample_feature_rate > 1:
-            raise ValueError(
-                "boosting_core tree param's subsample_feature_rate should be a numeric number between 0 and 1")
+            raise ValueError("boosting_core tree param's subsample_feature_rate should be a numeric number between"
+                             " 0 and 1")
 
         if type(self.n_iter_no_change).__name__ != "bool":
             raise ValueError("boosting_core tree param's n_iter_no_change {} not supported, should be bool type".format(
@@ -324,7 +323,6 @@ class BoostingParam(BaseParam):
 
 
 class HeteroBoostingParam(BoostingParam):
-
     """
     encrypt_param : EncodeParam Object, encrypt method use in secure boost, default: EncryptParam()
 
@@ -449,6 +447,35 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
 
         cipher_compress: bool, default is True, use cipher compressing to reduce computation cost and transfer cost
 
+        boosting_strategy：str
+
+            std: standard sbt setting
+
+            mix:  alternate using guest/host features to build trees. For example, the first 'tree_num_per_party' trees
+                  use guest features,
+                  the second k trees use host features, and so on
+
+            layered: only support 2 party, when running layered mode, first 'host_depth' layer will use host features,
+                     and then next 'guest_depth' will only use guest features
+
+        work_mode: str
+           This parameter has the same function as boosting_strategy, but is deprecated
+
+        tree_num_per_party: int, every party will alternate build 'tree_num_per_party' trees until reach max tree num, this
+                            param is valid when boosting_strategy is mix
+
+        guest_depth: int, guest will build last guest_depth of a decision tree using guest features, is valid when
+                     boosting_strategy is layered
+
+        host_depth: int, host will build first host_depth of a decision tree using host features, is valid when boosting_strategy
+                    is layered
+
+        multi_mode: str, decide which mode to use when running multi-classification task:
+
+                    single_output standard gbdt multi-classification strategy
+
+                    multi_output every leaf give a multi-dimension predict, using multi_mode can save time
+                                 by learning a model with less trees.
         """
 
     def __init__(self, tree_param: DecisionTreeParam = DecisionTreeParam(), task_type=consts.CLASSIFICATION,
@@ -462,13 +489,15 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                  complete_secure=False, metrics=None, use_first_metric_only=False, random_seed=100,
                  binning_error=consts.DEFAULT_RELATIVE_ERROR,
                  sparse_optimization=False, run_goss=False, top_rate=0.2, other_rate=0.1,
-                 cipher_compress_error=None, cipher_compress=True, new_ver=True,
-                 callback_param=CallbackParam()):
+                 cipher_compress_error=None, cipher_compress=True, new_ver=True, boosting_strategy=consts.STD_TREE,
+                 work_mode=None, tree_num_per_party=1, guest_depth=2, host_depth=3, callback_param=CallbackParam(),
+                 multi_mode=consts.SINGLE_OUTPUT):
 
         super(HeteroSecureBoostParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                      subsample_feature_rate, n_iter_no_change, tol, encrypt_param,
                                                      bin_num, encrypted_mode_calculator_param, predict_param, cv_param,
-                                                     validation_freqs, early_stopping_rounds, metrics=metrics,
+                                                     validation_freqs, early_stopping_rounds,
+                                                     metrics=metrics,
                                                      use_first_metric_only=use_first_metric_only,
                                                      random_seed=random_seed,
                                                      binning_error=binning_error)
@@ -484,7 +513,13 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.cipher_compress_error = cipher_compress_error
         self.cipher_compress = cipher_compress
         self.new_ver = new_ver
+        self.work_mode = work_mode
+        self.boosting_strategy = boosting_strategy
+        self.tree_num_per_party = tree_num_per_party
+        self.guest_depth = guest_depth
+        self.host_depth = host_depth
         self.callback_param = copy.deepcopy(callback_param)
+        self.multi_mode = multi_mode
 
     def check(self):
 
@@ -504,109 +539,15 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.check_boolean(self.new_ver, 'code version switcher')
         self.check_boolean(self.cipher_compress, 'cipher compress')
 
+        if self.work_mode is not None:
+            self.boosting_strategy = self.work_mode
+
         if self.top_rate + self.other_rate >= 1:
             raise ValueError('sum of top rate and other rate should be smaller than 1')
 
         if self.sparse_optimization and self.cipher_compress:
             raise ValueError('cipher compress is not supported in sparse optimization mode')
 
-        return True
-
-
-class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
-
-    def __init__(
-            self,
-            tree_param: DecisionTreeParam = DecisionTreeParam(),
-            task_type=consts.CLASSIFICATION,
-            objective_param=ObjectiveParam(),
-            learning_rate=0.3,
-            num_trees=5,
-            subsample_feature_rate=1,
-            n_iter_no_change=True,
-            tol=0.0001,
-            encrypt_param=EncryptParam(),
-            bin_num=32,
-            encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
-            predict_param=PredictParam(),
-            cv_param=CrossValidationParam(),
-            validation_freqs=None,
-            early_stopping_rounds=None,
-            use_missing=False,
-            zero_as_missing=False,
-            complete_secure=False,
-            tree_num_per_party=1,
-            guest_depth=1,
-            host_depth=1,
-            work_mode='mix',
-            metrics=None,
-            sparse_optimization=False,
-            random_seed=100,
-            binning_error=consts.DEFAULT_RELATIVE_ERROR,
-            cipher_compress_error=None,
-            new_ver=True,
-            run_goss=False,
-            top_rate=0.2,
-            other_rate=0.1,
-            cipher_compress=True,
-            callback_param=CallbackParam()):
-        """
-        work_mode：
-            mix:  alternate using guest/host features to build trees. For example, the first 'tree_num_per_party' trees use guest features,
-                  the second k trees use host features, and so on
-            layered: only support 2 party, when running layered mode, first 'host_depth' layer will use host features,
-                     and then next 'guest_depth' will only use guest features
-        tree_num_per_party: every party will alternate build 'tree_num_per_party' trees until reach max tree num, this param is valid when work_mode is
-            mix
-        guest_depth: guest will build last guest_depth of a decision tree using guest features, is valid when work mode
-            is layered
-        host depth: host will build first host_depth of a decision tree using host features, is valid when work mode is
-            layered
-
-        other params are the same as HeteroSecureBoost
-        """
-
-        super(
-            HeteroFastSecureBoostParam,
-            self).__init__(
-            tree_param,
-            task_type,
-            objective_param,
-            learning_rate,
-            num_trees,
-            subsample_feature_rate,
-            n_iter_no_change,
-            tol,
-            encrypt_param,
-            bin_num,
-            encrypted_mode_calculator_param,
-            predict_param,
-            cv_param,
-            validation_freqs,
-            early_stopping_rounds,
-            use_missing,
-            zero_as_missing,
-            complete_secure,
-            metrics=metrics,
-            random_seed=random_seed,
-            sparse_optimization=sparse_optimization,
-            binning_error=binning_error,
-            cipher_compress_error=cipher_compress_error,
-            new_ver=new_ver,
-            cipher_compress=cipher_compress,
-            run_goss=run_goss,
-            top_rate=top_rate,
-            other_rate=other_rate)
-
-        self.tree_num_per_party = tree_num_per_party
-        self.guest_depth = guest_depth
-        self.host_depth = host_depth
-        self.work_mode = work_mode
-        self.callback_param = copy.deepcopy(callback_param)
-
-    def check(self):
-
-        super(HeteroFastSecureBoostParam, self).check()
         if type(self.guest_depth).__name__ not in ["int", "long"] or self.guest_depth <= 0:
             raise ValueError("guest_depth should be larger than 0")
         if type(self.host_depth).__name__ not in ["int", "long"] or self.host_depth <= 0:
@@ -614,16 +555,18 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
         if type(self.tree_num_per_party).__name__ not in ["int", "long"] or self.tree_num_per_party <= 0:
             raise ValueError("tree_num_per_party should be larger than 0")
 
-        work_modes = [consts.MIX_TREE, consts.LAYERED_TREE]
-        if self.work_mode not in work_modes:
-            raise ValueError('only work_modes: {} are supported, input work mode is {}'.
-                             format(work_modes, self.work_mode))
+        work_modes = [consts.MIX_TREE, consts.LAYERED_TREE, consts.STD_TREE]
+        if self.boosting_strategy not in work_modes:
+            raise ValueError('only boosting_strategy: {} are supported, input work mode is {}'.
+                             format(work_modes, self.boosting_strategy))
+
+        if self.multi_mode not in [consts.SINGLE_OUTPUT, consts.MULTI_OUTPUT]:
+            raise ValueError('unsupported multi-classification mode')
 
         return True
 
 
 class HomoSecureBoostParam(BoostingParam):
-
     """
     backend: str, defalt is 'distributed', allowed values are: 'distributed', 'memory'
             decides which backend to use when computing histograms for homo-sbt
@@ -635,7 +578,8 @@ class HomoSecureBoostParam(BoostingParam):
                  tol=0.0001, bin_num=32, predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, use_missing=False, zero_as_missing=False, random_seed=100,
                  binning_error=consts.DEFAULT_RELATIVE_ERROR, backend=consts.DISTRIBUTED_BACKEND,
-                 callback_param=CallbackParam()):
+                 callback_param=CallbackParam(), multi_mode=consts.SINGLE_OUTPUT):
+
         super(HomoSecureBoostParam, self).__init__(task_type=task_type,
                                                    objective_param=objective_param,
                                                    learning_rate=learning_rate,
@@ -655,8 +599,10 @@ class HomoSecureBoostParam(BoostingParam):
         self.tree_param = copy.deepcopy(tree_param)
         self.backend = backend
         self.callback_param = copy.deepcopy(callback_param)
+        self.multi_mode = multi_mode
 
     def check(self):
+
         super(HomoSecureBoostParam, self).check()
         self.tree_param.check()
         if not isinstance(self.use_missing, bool):
@@ -665,4 +611,7 @@ class HomoSecureBoostParam(BoostingParam):
             raise ValueError('zero as missing should be bool type')
         if self.backend not in [consts.MEMORY_BACKEND, consts.DISTRIBUTED_BACKEND]:
             raise ValueError('unsupported backend')
+        if self.multi_mode not in [consts.SINGLE_OUTPUT, consts.MULTI_OUTPUT]:
+            raise ValueError('unsupported multi-classification mode')
+
         return True
