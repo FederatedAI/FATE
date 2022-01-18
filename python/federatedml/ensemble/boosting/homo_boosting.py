@@ -186,7 +186,7 @@ class HomoBoostingClient(Boosting, ABC):
                     LOGGER.info('n_iter_no_change stop triggered')
                     break
 
-        self.post_process()
+        self.postprocess()
         self.callback_list.on_train_end()
         self.set_summary(self.generate_summary())
 
@@ -290,7 +290,7 @@ class HomoBoostingArbiter(Boosting, ABC):
                            MetricMeta(name="train",
                                       metric_type="LOSS",
                                       extra_metas={"Best": min(self.history_loss)}))
-        self.post_process()
+        self.postprocess()
         self.callback_list.on_train_end()
         self.set_summary(self.generate_summary())
 
