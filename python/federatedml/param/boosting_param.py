@@ -527,6 +527,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.cipher_compress = cipher_compress
         self.new_ver = new_ver
         self.boosting_strategy = boosting_strategy
+        self.work_mode = work_mode
         self.tree_num_per_party = tree_num_per_party
         self.guest_depth = guest_depth
         self.host_depth = host_depth

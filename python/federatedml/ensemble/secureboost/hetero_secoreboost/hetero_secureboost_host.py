@@ -237,7 +237,9 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
             feature_importance_param.append(FeatureImportanceInfo(sitename=self.role,
                                                                   fid=fid,
                                                                   importance=importance.importance,
-                                                                  fullname=self.feature_name_fid_mapping[fid]))
+                                                                  fullname=self.feature_name_fid_mapping[fid],
+                                                                  main=importance.main_type
+                                                                  ))
         model_param.feature_importances.extend(feature_importance_param)
 
         param_name = "HeteroSecureBoostingTreeHostParam"
@@ -256,8 +258,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.booster_dim = model_param.tree_dim
         self.feature_name_fid_mapping.update(model_param.feature_name_fid_mapping)
         self.tree_plan = plan.decode_plan(model_param.tree_plan)
-        if self.boosting_strategy == consts.MIX_TREE:
-            self.load_feature_importance(model_param.feature_importances)
+        self.load_feature_importance(model_param.feature_importances)
 
     # implement abstract function
     def check_label(self, *args):
