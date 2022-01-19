@@ -14,7 +14,7 @@ _sym_db = _symbol_database.Default()
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(name='poisson-model-meta.proto', package='com.webank.ai.fate.core.mlmodel.buffer', syntax='proto3', serialized_options=_b('B\025PoissonModelMetaProto'), serialized_pb=_b(
-    '\n\x18poisson-model-meta.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\xe4\x01\n\x10PoissonModelMeta\x12\x0f\n\x07penalty\x18\x01 \x01(\t\x12\x0b\n\x03tol\x18\x02 \x01(\x01\x12\r\n\x05\x61lpha\x18\x03 \x01(\x01\x12\x11\n\toptimizer\x18\x04 \x01(\t\x12\x12\n\nbatch_size\x18\x05 \x01(\x03\x12\x15\n\rlearning_rate\x18\x06 \x01(\x01\x12\x10\n\x08max_iter\x18\x07 \x01(\x03\x12\x12\n\nearly_stop\x18\x08 \x01(\t\x12\x15\n\rfit_intercept\x18\t \x01(\x08\x12\x18\n\x10\x65xposure_colname\x18\n \x01(\t\x12\x0e\n\x06module\x18\x0b \x01(\tB\x17\x42\x15PoissonModelMetaProtob\x06proto3'))
+    '\n\x18poisson-model-meta.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\xed\x01\n\x10PoissonModelMeta\x12\x0f\n\x07penalty\x18\x01 \x01(\t\x12\x0b\n\x03tol\x18\x02 \x01(\x01\x12\r\n\x05\x61lpha\x18\x03 \x01(\x01\x12\x11\n\toptimizer\x18\x04 \x01(\t\x12\x12\n\nbatch_size\x18\x05 \x01(\x03\x12\x15\n\rlearning_rate\x18\x06 \x01(\x01\x12\x10\n\x08max_iter\x18\x07 \x01(\x03\x12\x12\n\nearly_stop\x18\x08 \x01(\t\x12\x15\n\rfit_intercept\x18\t \x01(\x08\x12\x18\n\x10\x65xposure_colname\x18\n \x01(\t\x12\x17\n\x0freveal_strategy\x18\x0b \x01(\tB\x17\x42\x15PoissonModelMetaProtob\x06proto3'))
 
 
 _POISSONMODELMETA = _descriptor.Descriptor(
@@ -95,7 +95,7 @@ _POISSONMODELMETA = _descriptor.Descriptor(
             is_extension=False, extension_scope=None,
             serialized_options=None, file=DESCRIPTOR),
         _descriptor.FieldDescriptor(
-            name='module', full_name='com.webank.ai.fate.core.mlmodel.buffer.PoissonModelMeta.module', index=10,
+            name='reveal_strategy', full_name='com.webank.ai.fate.core.mlmodel.buffer.PoissonModelMeta.reveal_strategy', index=10,
             number=11, type=9, cpp_type=9, label=1,
             has_default_value=False, default_value=_b("").decode('utf-8'),
             message_type=None, enum_type=None, containing_type=None,
@@ -114,7 +114,7 @@ _POISSONMODELMETA = _descriptor.Descriptor(
     oneofs=[
     ],
     serialized_start=69,
-    serialized_end=297,
+    serialized_end=306,
 )
 
 DESCRIPTOR.message_types_by_name['PoissonModelMeta'] = _POISSONMODELMETA

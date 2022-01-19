@@ -125,7 +125,7 @@ class KFold(BaseCrossValidator):
             self._arbiter_run(original_model)
             return
         total_data_count = data_inst.count()
-        LOGGER.debug("data_inst count: {}".format(data_inst.count()))
+        LOGGER.debug(f"data_inst count: {total_data_count}")
         if self.output_fold_history:
             if total_data_count * self.n_splits > consts.MAX_SAMPLE_OUTPUT_LIMIT:
                 LOGGER.warning(
@@ -149,11 +149,13 @@ class KFold(BaseCrossValidator):
                 LOGGER.info("Train data Synchronized")
                 test_data = self._align_data_index(test_data, model.flowid, consts.TEST_DATA)
                 LOGGER.info("Test data Synchronized")
-            LOGGER.debug("train_data count: {}".format(train_data.count()))
-            if train_data.count() + test_data.count() != total_data_count:
+            train_data_count = train_data.count()
+            test_data_count = test_data.count()
+            LOGGER.debug(f"train_data count: {train_data_count}")
+            if train_data_count + test_data_count != total_data_count:
                 raise EnvironmentError("In cv fold: {}, train count: {}, test count: {}, original data count: {}."
                                        "Thus, 'train count + test count = total count' condition is not satisfied"
-                                       .format(fold_num, train_data.count(), test_data.count(), total_data_count))
+                                       .format(fold_num, train_data_count, test_data_count, total_data_count))
             this_flowid = 'train.' + str(fold_num)
             LOGGER.debug("In CV, set_flowid flowid is : {}".format(this_flowid))
             model.set_flowid(this_flowid)
@@ -209,8 +211,8 @@ class KFold(BaseCrossValidator):
         original_model.set_summary(summary_res)
         if self.output_fold_history:
             LOGGER.debug(f"output data schema: {self.fold_history.schema}")
-            #LOGGER.debug(f"output data: {list(self.fold_history.collect())}")
-            LOGGER.debug(f"output data is: {self.fold_history}")
+            # LOGGER.debug(f"output data: {list(self.fold_history.collect())}")
+            # LOGGER.debug(f"output data is: {self.fold_history}")
             return self.fold_history
         else:
             return data_inst

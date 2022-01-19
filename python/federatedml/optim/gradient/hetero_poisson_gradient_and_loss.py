@@ -136,8 +136,7 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
                                    n_iter_, batch_index):
         """
         Linear model gradient procedure
-        Step 1: get host forwards which differ from different algorithm
-                For Logistic Regression: forwards = wx
+        Step 1: get host forwards which differ for different algorithms
         """
         current_suffix = (n_iter_, batch_index)
 

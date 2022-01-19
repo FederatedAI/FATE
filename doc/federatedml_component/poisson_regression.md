@@ -107,3 +107,15 @@ suggestions on modeling:
 4.  The current version does not include over-dispersion term.
 
 </div>
+
+## Hetero-SSHE-Poisson features:
+
+1.  L1 & L2 regularization
+
+2.  Mini-batch mechanism
+
+3. Support different encrypt-mode to balance speed and security
+
+4. Support early-stopping mechanism
+
+5. Support setting arbitrary metrics for validation during training

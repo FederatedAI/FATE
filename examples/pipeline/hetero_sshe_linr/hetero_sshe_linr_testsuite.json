@@ -1,0 +1,54 @@
+{
+    "data": [
+        {
+            "file": "examples/data/motor_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "motor_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/motor_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "motor_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/motor_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "motor_hetero_host",
+            "namespace": "experiment",
+            "role": "host_1"
+        }
+    ],
+    "pipeline_tasks": {
+        "linr-train": {
+            "script": "./pipeline-hetero-linr.py"
+        },
+        "linr-warm-start": {
+            "script": "./pipeline-hetero-linr-warm-start.py"
+        },
+        "linr-validate": {
+            "script": "./pipeline-hetero-linr-validate.py"
+        },
+        "linr-cv": {
+            "script": "./pipeline-hetero-linr-cv.py"
+        },
+        "linr-compute-loss-not-reveal": {
+            "script": "./pipeline-hetero-linr-compute-loss-not-reveal.py"
+        },
+        "linr-encrypted-reveal-in-host": {
+            "script": "./pipeline-hetero-linr-encrypted-reveal-in-host.py"
+        },
+        "linr-large-init-w-compute-loss": {
+            "script": "./pipeline-hetero-linr-large-init-w-compute-loss.py"
+        },
+        "linr-sample-weight": {
+            "script": "./pipeline-hetero-linr-sample-weight.py"
+        }
+    }
+}

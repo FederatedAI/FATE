@@ -19,18 +19,17 @@
 
 import copy
 
-from pipeline.param.base_param import BaseParam
+from pipeline.param.glm_param import LinearModelParam
 from pipeline.param.callback_param import CallbackParam
 from pipeline.param.encrypt_param import EncryptParam
 from pipeline.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from pipeline.param.cross_validation_param import CrossValidationParam
 from pipeline.param.init_model_param import InitParam
-from pipeline.param.predict_param import PredictParam
 from pipeline.param.stepwise_param import StepwiseParam
 from pipeline.param import consts
 
 
-class PoissonParam(BaseParam):
+class PoissonParam(LinearModelParam):
     """
     Parameters used for Poisson Regression.
 
@@ -69,9 +68,6 @@ class PoissonParam(BaseParam):
 
     exposure_colname: str or None, default: None
         Name of optional exposure variable in dTable.
-
-    predict_param: PredictParam object, default: default PredictParam object
-        predict param
 
     encrypt_param: EncryptParam object, default: default EncryptParam object
         encrypt param
@@ -120,158 +116,43 @@ class PoissonParam(BaseParam):
     """
 
     def __init__(self, penalty='L2',
-                 tol=1e-5, alpha=1.0, optimizer='sgd',
+                 tol=1e-4, alpha=1.0, optimizer='rmsprop',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
-                 max_iter=100, early_stop='diff',
-                 exposure_colname=None, predict_param=PredictParam(),
+                 max_iter=20, early_stop='diff',
+                 exposure_colname=None,
                  encrypt_param=EncryptParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  cv_param=CrossValidationParam(), stepwise_param=StepwiseParam(),
                  decay=1, decay_sqrt=True,
                  validation_freqs=None, early_stopping_rounds=None, metrics=None, use_first_metric_only=False,
                  floating_point_precision=23, callback_param=CallbackParam()):
-        super(PoissonParam, self).__init__()
-        self.penalty = penalty
-        self.tol = tol
-        self.alpha = alpha
-        self.optimizer = optimizer
-        self.batch_size = batch_size
-        self.learning_rate = learning_rate
-        self.init_param = copy.deepcopy(init_param)
-
-        self.max_iter = max_iter
-        self.early_stop = early_stop
-        self.encrypt_param = encrypt_param
+        super(PoissonParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
+                                           batch_size=batch_size, learning_rate=learning_rate,
+                                           init_param=init_param, max_iter=max_iter,
+                                           early_stop=early_stop, cv_param=cv_param, decay=decay,
+                                           decay_sqrt=decay_sqrt, validation_freqs=validation_freqs,
+                                           early_stopping_rounds=early_stopping_rounds, metrics=metrics,
+                                           floating_point_precision=floating_point_precision,
+                                           encrypt_param=encrypt_param,
+                                           use_first_metric_only=use_first_metric_only,
+                                           stepwise_param=stepwise_param,
+                                           callback_param=callback_param)
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
-        self.cv_param = copy.deepcopy(cv_param)
-        self.predict_param = copy.deepcopy(predict_param)
-        self.decay = decay
-        self.decay_sqrt = decay_sqrt
         self.exposure_colname = exposure_colname
-        self.validation_freqs = validation_freqs
-        self.stepwise_param = stepwise_param
-        self.early_stopping_rounds = early_stopping_rounds
-        self.metrics = metrics or []
-        self.use_first_metric_only = use_first_metric_only
-        self.floating_point_precision = floating_point_precision
-        self.callback_param = copy.deepcopy(callback_param)
 
     def check(self):
         descr = "poisson_regression_param's "
-
-        if self.penalty is None:
-            self.penalty = 'NONE'
-        elif type(self.penalty).__name__ != "str":
-            raise ValueError(
-                descr + "penalty {} not supported, should be str type".format(self.penalty))
-
-        self.penalty = self.penalty.upper()
-        if self.penalty not in ['L1', 'L2', 'NONE']:
-            raise ValueError(
-                "penalty {} not supported, penalty should be 'L1', 'L2' or 'none'".format(self.penalty))
-
-        if type(self.tol).__name__ not in ["int", "float"]:
-            raise ValueError(
-                descr + "tol {} not supported, should be float type".format(self.tol))
-
-        if type(self.alpha).__name__ not in ["int", "float"]:
-            raise ValueError(
-                descr + "alpha {} not supported, should be float type".format(self.alpha))
-
-        if type(self.optimizer).__name__ != "str":
-            raise ValueError(
-                descr + "optimizer {} not supported, should be str type".format(self.optimizer))
-        else:
-            self.optimizer = self.optimizer.lower()
-            if self.optimizer not in ['sgd', 'rmsprop', 'adam', 'adagrad', 'nesterov_momentum_sgd']:
-                raise ValueError(
-                    descr + "optimizer not supported, optimizer should be"
-                    " 'sgd', 'rmsprop', 'adam', 'adagrad' or 'nesterov_momentum_sgd'")
-
-        if type(self.batch_size).__name__ not in ["int", "long"]:
-            raise ValueError(
-                descr + "batch_size {} not supported, should be int type".format(self.batch_size))
-        if self.batch_size != -1:
-            if type(self.batch_size).__name__ not in ["int", "long"] \
-                    or self.batch_size < consts.MIN_BATCH_SIZE:
-                raise ValueError(descr + " {} not supported, should be larger than {} or "
-                                         "-1 represent for all data".format(self.batch_size, consts.MIN_BATCH_SIZE))
-
-        if type(self.learning_rate).__name__ not in ["int", "float"]:
-            raise ValueError(
-                descr + "learning_rate {} not supported, should be float type".format(
-                    self.learning_rate))
-
-        self.init_param.check()
+        super(PoissonParam, self).check()
         if self.encrypt_param.method != consts.PAILLIER:
             raise ValueError(
                 descr + "encrypt method supports 'Paillier' only")
-
-        if type(self.max_iter).__name__ != "int":
+        if self.optimizer not in ['sgd', 'rmsprop', 'adam', 'adagrad']:
             raise ValueError(
-                descr + "max_iter {} not supported, should be int type".format(self.max_iter))
-        elif self.max_iter <= 0:
-            raise ValueError(
-                descr + "max_iter must be greater or equal to 1")
-
+                descr + "optimizer not supported, optimizer should be"
+                        " 'sgd', 'rmsprop', 'adam', or 'adagrad'")
         if self.exposure_colname is not None:
             if type(self.exposure_colname).__name__ != "str":
                 raise ValueError(
                     descr + "exposure_colname {} not supported, should be string type".format(self.exposure_colname))
-
-        if type(self.early_stop).__name__ != "str":
-            raise ValueError(
-                descr + "early_stop {} not supported, should be str type".format(
-                    self.early_stop))
-        else:
-            self.early_stop = self.early_stop.lower()
-            if self.early_stop not in ['diff', 'abs', 'weight_diff']:
-                raise ValueError(
-                    descr + "early_stop not supported, early_stop should be"
-                    " 'diff' or 'abs'")
-
-        self.encrypt_param.check()
-        if self.encrypt_param.method != consts.PAILLIER:
-            raise ValueError(
-                descr + "encrypt method supports 'Paillier' or None only"
-            )
-
         self.encrypted_mode_calculator_param.check()
-        if type(self.decay).__name__ not in ["int", "float"]:
-            raise ValueError(
-                descr + "decay {} not supported, should be 'int' or 'float'".format(self.decay)
-            )
-        if type(self.decay_sqrt).__name__ not in ["bool"]:
-            raise ValueError(
-                descr + "decay_sqrt {} not supported, should be 'bool'".format(self.decay)
-            )
-        if self.validation_freqs is not None:
-            if type(self.validation_freqs).__name__ not in ["int", "list", "tuple", "set"]:
-                raise ValueError(
-                    "validation strategy param's validate_freqs's type not supported , should be int or list or tuple or set"
-                )
-            if type(self.validation_freqs).__name__ == "int" and self.validation_freqs <= 0:
-                raise ValueError("validation strategy param's validate_freqs should greater than 0")
-        self.stepwise_param.check()
-
-        if self.early_stopping_rounds is None:
-            pass
-        elif isinstance(self.early_stopping_rounds, int):
-            if self.early_stopping_rounds < 1:
-                raise ValueError("early stopping rounds should be larger than 0 when it's integer")
-            if self.validation_freqs is None:
-                raise ValueError("validation freqs must be set when early stopping is enabled")
-
-        if self.metrics is not None and not isinstance(self.metrics, list):
-            raise ValueError("metrics should be a list")
-
-        if not isinstance(self.use_first_metric_only, bool):
-            raise ValueError("use_first_metric_only should be a boolean")
-
-        if self.floating_point_precision is not None and \
-                (not isinstance(self.floating_point_precision, int) or
-                 self.floating_point_precision < 0 or self.floating_point_precision > 64):
-            raise ValueError("floating point precision should be null or a integer between 0 and 64")
-
-        self.callback_param.check()
         return True

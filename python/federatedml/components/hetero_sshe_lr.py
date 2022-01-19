@@ -17,28 +17,28 @@
 
 from .components import ComponentMeta
 
-hetero_lr_cpn_meta = ComponentMeta("HeteroSSHELR")
+hetero_sshe_lr_cpn_meta = ComponentMeta("HeteroSSHELR")
 
 
-@hetero_lr_cpn_meta.bind_param
+@hetero_sshe_lr_cpn_meta.bind_param
 def hetero_sshe_lr_param():
-    from federatedml.param.hetero_sshe_lr_param import LogisticRegressionParam
+    from federatedml.param.hetero_sshe_lr_param import HeteroSSHELRParam
 
-    return LogisticRegressionParam
+    return HeteroSSHELRParam
 
 
-@hetero_lr_cpn_meta.bind_runner.on_guest
+@hetero_sshe_lr_cpn_meta.bind_runner.on_guest
 def hetero_sshe_lr_runner_guest():
-    from federatedml.linear_model.logistic_regression.hetero_sshe_logistic_regression.hetero_lr_guest import (
+    from federatedml.linear_model.bilateral_linear_model.hetero_sshe_logistic_regression.hetero_lr_guest import (
         HeteroLRGuest,
     )
 
     return HeteroLRGuest
 
 
-@hetero_lr_cpn_meta.bind_runner.on_host
-def hetero_lr_runner_host():
-    from federatedml.linear_model.logistic_regression.hetero_sshe_logistic_regression.hetero_lr_host import (
+@hetero_sshe_lr_cpn_meta.bind_runner.on_host
+def hetero_sshe_lr_runner_host():
+    from federatedml.linear_model.bilateral_linear_model.hetero_sshe_logistic_regression.hetero_lr_host import (
         HeteroLRHost,
     )
 

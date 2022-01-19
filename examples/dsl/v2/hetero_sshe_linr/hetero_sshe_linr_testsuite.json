@@ -1,0 +1,59 @@
+{
+    "data": [
+        {
+            "file": "examples/data/motor_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "motor_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/motor_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "motor_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        }
+    ],
+    "tasks": {
+        "hetero_linr_compute_loss_not_reveal": {
+            "conf": "hetero_linr_compute_loss_not_reveal_conf.json",
+            "dsl": "hetero_linr_compute_loss_not_reveal_dsl.json"
+        },
+        "hetero_linr_large_init_w_compute_loss": {
+            "conf": "hetero_linr_large_init_w_compute_loss_conf.json",
+            "dsl": "hetero_linr_large_init_w_compute_loss_dsl.json"
+        },
+        "hetero_linr_encrypted_reveal_in_host": {
+            "conf": "hetero_linr_encrypted_reveal_in_host_conf.json",
+            "dsl": "hetero_linr_encrypted_reveal_in_host_dsl.json"
+        },
+        "hetero_linr_validate": {
+            "conf": "hetero_linr_validate_conf.json",
+            "dsl": "hetero_linr_validate_dsl.json"
+        },
+        "hetero_linr_cv": {
+            "conf": "hetero_linr_cv_conf.json",
+            "dsl": "hetero_linr_cv_dsl.json"
+        },
+        "hetero_linr_warm_start": {
+            "conf": "hetero_linr_warm_start_conf.json",
+            "dsl": "hetero_linr_warm_start_dsl.json"
+        },
+        "hetero_linr": {
+            "conf": "hetero_linr_conf.json",
+            "dsl": "hetero_linr_dsl.json"
+        },
+        "linr_predict": {
+            "deps": "hetero_linr",
+            "conf": "hetero_linr_predict_conf.json",
+            "dsl": "hetero_linr_predict_dsl.json"
+        },
+        "hetero_linr_sample_weight": {
+            "conf": "hetero_linr_sample_weight_conf.json",
+            "dsl": "hetero_linr_sample_weight_dsl.json"
+        }
+    }
+}

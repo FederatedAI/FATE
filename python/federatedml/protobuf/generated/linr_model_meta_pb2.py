@@ -14,7 +14,7 @@ _sym_db = _symbol_database.Default()
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(name='linr-model-meta.proto', package='com.webank.ai.fate.core.mlmodel.buffer', syntax='proto3', serialized_options=_b('B\022LinRModelMetaProto'), serialized_pb=_b(
-    '\n\x15linr-model-meta.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\xc7\x01\n\rLinRModelMeta\x12\x0f\n\x07penalty\x18\x01 \x01(\t\x12\x0b\n\x03tol\x18\x02 \x01(\x01\x12\r\n\x05\x61lpha\x18\x03 \x01(\x01\x12\x11\n\toptimizer\x18\x04 \x01(\t\x12\x12\n\nbatch_size\x18\x05 \x01(\x03\x12\x15\n\rlearning_rate\x18\x06 \x01(\x01\x12\x10\n\x08max_iter\x18\x07 \x01(\x03\x12\x12\n\nearly_stop\x18\x08 \x01(\t\x12\x15\n\rfit_intercept\x18\t \x01(\x08\x12\x0e\n\x06module\x18\n \x01(\tB\x14\x42\x12LinRModelMetaProtob\x06proto3'))
+    '\n\x15linr-model-meta.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\xd0\x01\n\rLinRModelMeta\x12\x0f\n\x07penalty\x18\x01 \x01(\t\x12\x0b\n\x03tol\x18\x02 \x01(\x01\x12\r\n\x05\x61lpha\x18\x03 \x01(\x01\x12\x11\n\toptimizer\x18\x04 \x01(\t\x12\x12\n\nbatch_size\x18\x05 \x01(\x03\x12\x15\n\rlearning_rate\x18\x06 \x01(\x01\x12\x10\n\x08max_iter\x18\x07 \x01(\x03\x12\x12\n\nearly_stop\x18\x08 \x01(\t\x12\x15\n\rfit_intercept\x18\t \x01(\x08\x12\x17\n\x0freveal_strategy\x18\n \x01(\tB\x14\x42\x12LinRModelMetaProtob\x06proto3'))
 
 
 _LINRMODELMETA = _descriptor.Descriptor(
@@ -88,7 +88,7 @@ _LINRMODELMETA = _descriptor.Descriptor(
             is_extension=False, extension_scope=None,
             serialized_options=None, file=DESCRIPTOR),
         _descriptor.FieldDescriptor(
-            name='module', full_name='com.webank.ai.fate.core.mlmodel.buffer.LinRModelMeta.module', index=9,
+            name='reveal_strategy', full_name='com.webank.ai.fate.core.mlmodel.buffer.LinRModelMeta.reveal_strategy', index=9,
             number=10, type=9, cpp_type=9, label=1,
             has_default_value=False, default_value=_b("").decode('utf-8'),
             message_type=None, enum_type=None, containing_type=None,
@@ -107,7 +107,7 @@ _LINRMODELMETA = _descriptor.Descriptor(
     oneofs=[
     ],
     serialized_start=66,
-    serialized_end=265,
+    serialized_end=274,
 )
 
 DESCRIPTOR.message_types_by_name['LinRModelMeta'] = _LINRMODELMETA
