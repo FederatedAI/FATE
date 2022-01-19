@@ -229,10 +229,29 @@ The rule of running a module with `fate_flow_client` is that:
 4.  calls the `save_data` method if needed.
 5.  calls the `export_model` method if needed.
 
-In this section, we describe how to do 3-5. Many common interfaces are
+In this section, we describe how to do 2-5. Many common interfaces are
 provided in
 [python/federatedml/model\_base.py](../../python/federatedml/model_base.py)
-
+ 
+  - Override `__init__` interface    
+    Specify the class of model parameter which is already defined in [Step1](#step-1-define-the-parameter-object-this-component-will-use).  
+    Take `hetero_lr_base.py` as an example, the last line specify the parameter class of the your model.
+    
+      ```python
+        def __init__(self):
+        super().__init__()
+        self.model_name = 'HeteroLogisticRegression'
+        self.model_param_name = 'HeteroLogisticRegressionParam'
+        self.model_meta_name = 'HeteroLogisticRegressionMeta'
+        self.mode = consts.HETERO
+        self.aggregator = None
+        self.cipher = None
+        self.batch_generator = None
+        self.gradient_loss_operator = None
+        self.converge_procedure = None
+        self.model_param = HeteroLogisticParam()
+      ```
+    Note: This step is mandatory. If you do not assign the vale of `self.model_param`, you will not be able to access the value of the model parameter in function `_init_model(self, params)`. 
   - Override fit interface if needed  
     The fit function holds the form of following.
     

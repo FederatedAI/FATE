@@ -215,7 +215,26 @@ class HeteroLRTransferVariable(BaseTransferVariables):
 4.  如果需要，调用 `save_data` 方法。
 5.  如果需要，调用 `export_model` 方法。
 
-在本节中，我们讲解如何执行规则 3 至 5。需要被继承的`model_base`类位于：[python/federatedml/model\_base.py](../../python/federatedml/model_base.py)。
+在本节中，我们讲解如何执行规则 2 至 5。需要被继承的`model_base`类位于：[python/federatedml/model\_base.py](../../python/federatedml/model_base.py)。
+  - 重载 `__init__` 接口    
+    指定模块参数类型为第一步中定义的类.  
+    以 `hetero_lr_base.py` 为例, 最后一行代码指定了新定义的模块的参数类型。
+    
+      ```python
+        def __init__(self):
+        super().__init__()
+        self.model_name = 'HeteroLogisticRegression'
+        self.model_param_name = 'HeteroLogisticRegressionParam'
+        self.model_meta_name = 'HeteroLogisticRegressionMeta'
+        self.mode = consts.HETERO
+        self.aggregator = None
+        self.cipher = None
+        self.batch_generator = None
+        self.gradient_loss_operator = None
+        self.converge_procedure = None
+        self.model_param = HeteroLogisticParam()
+      ```
+    注: 这一步是强制的. 如果你不指定 `self.model_param`的值, 在 `_init_model(self, params)`方法中将不能获取params的值. 
 
   - 在需要时重载 fit 接口  
     

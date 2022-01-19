@@ -135,5 +135,6 @@ class HomoLRBase(BaseLogisticRegression):
                                                           early_stop=self.model_param.early_stop,
                                                           fit_intercept=self.fit_intercept,
                                                           re_encrypt_batches=self.re_encrypt_batches,
+                                                          module='HomoLR',
                                                           need_one_vs_rest=self.need_one_vs_rest)
         return meta_protobuf_obj

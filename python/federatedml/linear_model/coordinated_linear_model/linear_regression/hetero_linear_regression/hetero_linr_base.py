@@ -39,7 +39,6 @@ class HeteroLinRBase(BaseLinearRegression):
 
     def _init_model(self, params):
         super(HeteroLinRBase, self)._init_model(params)
-        self.transfer_variable = HeteroLinRTransferVariable()
         self.cipher.register_paillier_cipher(self.transfer_variable)
         self.converge_procedure.register_convergence(self.transfer_variable)
         self.batch_generator.register_batch_generator(self.transfer_variable)

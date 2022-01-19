@@ -72,13 +72,18 @@ PARA_OBJECTIVE = {
 }
 
 
-def get_decision_type(node: NodeParam, zero_as_missing):
+def get_decision_type(node: NodeParam, use_missing, zero_as_missing):
 
     # 00                     0                         0
     # Nan,0 or None         default left or right?    cat feature or not？
     default_type = 0  # 0000 None, default right, not cat feat
+
+    if not use_missing:
+        return default_type
+
     if node.missing_dir == -1:
         default_type = default_type | 2   # 0010
+
     if zero_as_missing:
         default_type = default_type | 4   # 0100 0
     else:
@@ -159,6 +164,7 @@ def update_leaf_count(param):
 def parse_a_tree(
         param: DecisionTreeModelParam,
         tree_idx: int,
+        use_missing=False,
         zero_as_missing=False,
         learning_rate=0.1,
         init_score=None):
@@ -225,7 +231,7 @@ def parse_a_tree(
                 right.append(sbt_lgb_node_map[node.right_nodeid])
 
             # get lgb decision type
-            decision_type.append(get_decision_type(node, zero_as_missing))
+            decision_type.append(get_decision_type(node, use_missing, zero_as_missing))
         else:
             # regression model need to add init score
             if init_score is not None:
@@ -296,6 +302,7 @@ def sbt_to_lgb(model_param: BoostingTreeModelParam,
     result = ''
     # parse header
     header_str = parse_header(model_param, model_meta)
+    use_missing = model_meta.tree_meta.use_missing
     zero_as_missing = model_meta.tree_meta.zero_as_missing
     learning_rate = model_meta.learning_rate
     tree_str_list = []
@@ -307,7 +314,7 @@ def sbt_to_lgb(model_param: BoostingTreeModelParam,
             init_score = model_param.init_score[0]
         else:
             init_score = 0
-        tree_str_list.append(parse_a_tree(param, idx, zero_as_missing, learning_rate, init_score))
+        tree_str_list.append(parse_a_tree(param, idx, use_missing, zero_as_missing, learning_rate, init_score))
 
     # add header and tree str to result
     result += header_str + '\n'

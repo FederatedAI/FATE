@@ -49,7 +49,7 @@ export version=1.7.0
 #### 2.2.1 Via the public mirror service
 
 ```bash
-docker pull federatedai/standalone_fate ${version}
+docker pull federatedai/standalone_fate:${version}
 ```
 
 #### 2.2.2 Via mirror packages

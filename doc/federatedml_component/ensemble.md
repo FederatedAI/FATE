@@ -355,3 +355,38 @@ Fast SBT supports the following applications.
   - In layered mode, model exporting setting is the same as the
     normal-SBT.
   - The time consumption of FAST SBT is reduced by 30% ~ 50% on average.
+
+## Hetero SecureBoost with Multi-Output(SBT-MO)
+
+In the traditional GBDT setting, the strategy of multi-classification learning is to separate the gradient/hessian of
+each class and learn a tree for each class independently. Each tree is responsible for predicting a single variable. In the vertical federated
+scenario, using a traditional single-output-tree-based multi-classification strategy has its limitations: All the computation costs and communication overheads are amplified by
+the times of the number of labels. It will be extremely time-consuming if we are training on a dataset with many types
+of labels. 
+
+![SBTMO](../images/SBT-MO.png)
+
+To address the efficiency problem, in FATE-1.8,
+we propose a novel multi-output-tree based vertical boosting tree techniques for multi-classification tasks.
+Leaves of multi-output-tree give multi-dimension output, corresponding to every class. Instead of learning trees for 
+every class separately, now we only need to fit one tree at every boosting epoch. We also combines our cipher
+optimization techniques with SBT-MO. According to our preliminary experiments, on the conditions of reaching the 
+same accuracy, SBT-MO reduces tree building time(ignoring data preprocessing and evaluation time) by over 50%+.
+For more details of SBT-MO, please refer to [SecureBoost+ : A High Performance Gradient Boosting Tree Framework for
+Large Scale Vertical Federated Learning](https://arxiv.org/pdf/2110.10927.pdf).
+
+### Optimization in learning
+
+SBT-MO solve multi-classification tasks with multi-output decision trees. Save time when training on a dataset with many types
+of labels. 
+
+### Applications
+
+  - multi classification, the objective function is softmax
+    cross-entropy
+
+
+
+
+
+

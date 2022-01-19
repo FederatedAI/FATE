@@ -22,7 +22,6 @@
 # =============================================================================
 import abc
 from abc import ABC
-
 import numpy as np
 import functools
 from federatedml.ensemble.basic_algorithms.algorithm_prototype import BasicAlgorithms
@@ -145,45 +144,6 @@ class DecisionTree(BasicAlgorithms, ABC):
         self.sitename = ":".join([self.sitename, str(self.runtime_idx)])
 
     """
-    Node encode/ decode
-    """
-    # add node split-val/missing-dir to mask dict, hetero tree only
-
-    def encode(self, etype="feature_idx", val=None, nid=None):
-        if etype == "feature_idx":
-            return val
-
-        if etype == "feature_val":
-            self.split_maskdict[nid] = val
-            return None
-
-        if etype == "missing_dir":
-            self.missing_dir_maskdict[nid] = val
-            return None
-
-        raise TypeError("encode type %s is not support!" % (str(etype)))
-
-    # recover node split-val/missing-dir from mask dict, hetero tree only
-    @staticmethod
-    def decode(dtype="feature_idx", val=None, nid=None, split_maskdict=None, missing_dir_maskdict=None):
-        if dtype == "feature_idx":
-            return val
-
-        if dtype == "feature_val":
-            if nid in split_maskdict:
-                return split_maskdict[nid]
-            else:
-                raise ValueError("decode val %s cause error, can't recognize it!" % (str(val)))
-
-        if dtype == "missing_dir":
-            if nid in missing_dir_maskdict:
-                return missing_dir_maskdict[nid]
-            else:
-                raise ValueError("decode val %s cause error, can't recognize it!" % (str(val)))
-
-        return TypeError("decode type %s is not support!" % (str(dtype)))
-
-    """
     Histogram interface
     """
 
@@ -282,7 +242,7 @@ class DecisionTree(BasicAlgorithms, ABC):
         # return sample weights to boosting class
         return self.sample_weights
 
-    @ staticmethod
+    @staticmethod
     def assign_instance_to_root_node(data_bin, root_node_id):
         return data_bin.mapValues(lambda inst: (1, root_node_id))
 
@@ -291,7 +251,7 @@ class DecisionTree(BasicAlgorithms, ABC):
         """
         prevent float error
         """
-        return round(num, consts.TREE_DECIMAL_ROUND)
+        return np.round(num, consts.TREE_DECIMAL_ROUND)
 
     def update_feature_importance(self, splitinfo, record_site_name=True):
 
@@ -386,6 +346,27 @@ class DecisionTree(BasicAlgorithms, ABC):
         for node in self.tree_node:
             if node.is_leaf:
                 node.weight = self.float_round(node.weight)
+
+    @staticmethod
+    def mo_weight_extract(node):
+
+        mo_weight = None
+        weight = node.weight
+        if isinstance(node.weight, np.ndarray) and len(node.weight) > 1:
+            weight = -1
+            mo_weight = list(node.weight)  # use multi output
+
+        return weight, mo_weight
+
+    @staticmethod
+    def mo_weight_load(node_param):
+
+        weight = node_param.weight
+        mo_weight = list(node_param.mo_weight)
+        if len(mo_weight) != 0:
+            weight = np.array(list(node_param.mo_weight))
+
+        return weight
 
     """
     To implement

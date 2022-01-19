@@ -46,7 +46,6 @@ class HeteroLRBase(BaseLogisticRegression):
         super()._init_model(params)
         self.encrypted_mode_calculator_param = params.encrypted_mode_calculator_param
         self.cipher_operator = PaillierEncrypt()
-        self.transfer_variable = HeteroLRTransferVariable()
         self.cipher.register_paillier_cipher(self.transfer_variable)
         self.converge_procedure.register_convergence(self.transfer_variable)
         self.batch_generator.register_batch_generator(self.transfer_variable)
@@ -75,6 +74,7 @@ class HeteroLRBase(BaseLogisticRegression):
                                                           max_iter=self.max_iter,
                                                           early_stop=self.model_param.early_stop,
                                                           fit_intercept=self.fit_intercept,
+                                                          module='HeteroLR',
                                                           need_one_vs_rest=self.need_one_vs_rest)
         return meta_protobuf_obj
 

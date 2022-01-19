@@ -117,6 +117,7 @@ class BasePoissonRegression(BaseLinearModel):
             max_iter=self.max_iter,
             early_stop=self.model_param.early_stop,
             fit_intercept=self.fit_intercept,
+            module='HeteroPoisson',
             exposure_colname=self.exposure_colname)
         return meta_protobuf_obj
 
