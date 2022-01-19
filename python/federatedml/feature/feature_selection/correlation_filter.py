@@ -52,7 +52,7 @@ class CorrelationFilter(FederatedIsoModelFilter):
     def _guest_fit(self, suffix):
         sorted_idx, col_names = self.__sort_features()
         filtered_name, host_filtered_name = self.__select_corr(sorted_idx, col_names)
-        LOGGER.debug(f"select_col_name: {self.selection_properties.select_col_names}")
+        # LOGGER.debug(f"select_col_name: {self.selection_properties.select_col_names}")
         for name in self.selection_properties.select_col_names:
             if name not in filtered_name:
                 self.selection_properties.add_left_col_name(name)
@@ -90,14 +90,14 @@ class CorrelationFilter(FederatedIsoModelFilter):
                 corr = self.correlation_model.corr[row, :]
                 host_filtered_name = self.__get_filtered_column(corr, host_filtered_name,
                                                                 host_col_names, name, False)
-                LOGGER.debug(f"guest_col_name: {name}, filtered_name: {filtered_name}, "
-                             f"host_filtered_name: {host_filtered_name}")
+                # LOGGER.debug(f"guest_col_name: {name}, filtered_name: {filtered_name}, "
+                #             f"host_filtered_name: {host_filtered_name}")
             else:
                 column = host_col_names.index(name)
                 corr = self.correlation_model.corr[:, column]
                 filtered_name = self.__get_filtered_column(corr, filtered_name, guest_col_names, name, False)
-                LOGGER.debug(f"host_col_name: {name}, filtered_name: {filtered_name}, "
-                             f"host_filtered_name: {host_filtered_name}")
+                # LOGGER.debug(f"host_col_name: {name}, filtered_name: {filtered_name}, "
+                #             f"host_filtered_name: {host_filtered_name}")
         return filtered_name, host_filtered_name
 
     def __get_filtered_column(self, corr, filtered_name, all_names, curt_name, is_local=True):

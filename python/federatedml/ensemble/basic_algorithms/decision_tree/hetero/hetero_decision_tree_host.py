@@ -35,12 +35,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         self.missing_dir_maskdict = {}  # save missing dir
         self.fid_bid_random_mapping = {}
         self.inverse_fid_bid_random_mapping = {}
-
-        # For fast histogram
-        self.run_sparse_opt = False
         self.bin_num = None
-        self.data_bin_dense = None
-        self.data_bin_dense_with_position = None
 
         # goss subsample
         self.run_goss = False
@@ -66,8 +61,6 @@ class HeteroDecisionTreeHost(DecisionTree):
 
         LOGGER.info('reporting initialization status')
         LOGGER.info('using new version code {}'.format(self.new_ver))
-        if self.run_sparse_opt:
-            LOGGER.info('running sparse optimization')
         if self.complete_secure_tree:
             LOGGER.info('running complete secure')
         if self.run_goss:
@@ -76,11 +69,10 @@ class HeteroDecisionTreeHost(DecisionTree):
             LOGGER.info('running cipher compressing')
         LOGGER.debug('bin num and feature num: {}/{}'.format(self.bin_num, self.feature_num))
 
-    def init(self, flowid, runtime_idx, data_bin, bin_split_points, bin_sparse_points, data_bin_dense, bin_num,
+    def init(self, flowid, runtime_idx, data_bin, bin_split_points, bin_sparse_points, bin_num,
              valid_features,
              complete_secure=False,
              goss_subsample=False,
-             run_sprase_opt=False,
              cipher_compressing=False,
              new_ver=True,
              mo_tree=False
@@ -92,8 +84,6 @@ class HeteroDecisionTreeHost(DecisionTree):
         self.check_max_split_nodes()
         self.complete_secure_tree = complete_secure
         self.run_goss = goss_subsample
-        self.run_sparse_opt = run_sprase_opt
-        self.data_bin_dense = data_bin_dense
         self.bin_num = bin_num
         self.run_cipher_compressing = cipher_compressing
         self.feature_num = self.bin_split_points.shape[0]
@@ -327,10 +317,7 @@ class HeteroDecisionTreeHost(DecisionTree):
     def update_instances_node_positions(self):
 
         # join data and inst2node_idx to update current node positions of samples
-        if self.run_sparse_opt:
-            self.data_bin_dense_with_position = self.data_bin_dense.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
-        else:
-            self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
+        self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
 
     """
     Pre-Process / Post-Process
@@ -386,15 +373,12 @@ class HeteroDecisionTreeHost(DecisionTree):
         LOGGER.info('solving node batch {}, node num is {}'.format(batch, len(cur_to_split_nodes)))
         if not self.complete_secure_tree:
             data = self.data_with_node_assignments
-            if self.run_sparse_opt:
-                data = self.data_bin_dense_with_position
             inst2node_idx = self.get_computing_inst2node_idx()
             node_sample_count = self.count_node_sample_num(inst2node_idx, node_map)
             LOGGER.debug('sample count is {}'.format(node_sample_count))
             acc_histograms = self.get_local_histograms(dep, data, self.grad_and_hess, node_sample_count,
                                                        cur_to_split_nodes, node_map, ret='tb',
-                                                       sparse_opt=self.run_sparse_opt, hist_sub=True,
-                                                       bin_num=self.bin_num)
+                                                       hist_sub=True)
 
             split_info_table = self.splitter.host_prepare_split_points(
                 histograms=acc_histograms,

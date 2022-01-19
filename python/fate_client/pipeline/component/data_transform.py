@@ -15,15 +15,15 @@
 #
 
 from pipeline.param.data_transform_param import DataTransformParam
-from pipeline.component.component_base import Component
+from pipeline.component.component_base import FateComponent
 from pipeline.interface import Input
 from pipeline.interface import Output
 from pipeline.utils.logger import LOGGER
 
 
-class DataTransform(Component, DataTransformParam):
+class DataTransform(FateComponent, DataTransformParam):
     def __init__(self, **kwargs):
-        Component.__init__(self, **kwargs)
+        FateComponent.__init__(self, **kwargs)
 
         #print (self.name)
         LOGGER.debug(f"{self.name} component created")

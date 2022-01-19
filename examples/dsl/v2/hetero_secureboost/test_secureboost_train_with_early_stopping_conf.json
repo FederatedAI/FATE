@@ -22,7 +22,7 @@
                 "num_trees": 3,
                 "validation_freqs": 1,
                 "encrypt_param": {
-                    "method": "iterativeAffine"
+                    "method": "Paillier"
                 },
                 "early_stopping_rounds": 1,
                 "tree_param": {

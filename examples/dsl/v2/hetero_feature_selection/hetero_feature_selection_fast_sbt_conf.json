@@ -65,7 +65,7 @@
                     "roc"
                 ],
                 "encrypt_param": {
-                    "method": "iterativeAffine"
+                    "method": "paillier"
                 },
                 "guest_depth": 2,
                 "host_depth": 3,

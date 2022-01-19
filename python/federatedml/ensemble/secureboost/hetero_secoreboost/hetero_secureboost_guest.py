@@ -1,26 +1,25 @@
 import numpy as np
 from operator import itemgetter
-from federatedml.util import consts
+import numpy as np
+import copy
 from federatedml.util import LOGGER
-from federatedml.ensemble.boosting import HeteroBoostingGuest
-from federatedml.param.boosting_param import HeteroSecureBoostParam, DecisionTreeParam
-from federatedml.util.io_check import assert_io_num_rows_equal
-from federatedml.util.anonymous_generator import generate_anonymous
-from federatedml.statistic.data_overview import with_weight, get_max_sample_weight
-from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_importance import FeatureImportance
-from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict_transfer_variable import \
-    HeteroSecureBoostTransferVariable
-from federatedml.ensemble.basic_algorithms.decision_tree.tree_core import tree_plan as plan
+from typing import List
+import functools
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import ObjectiveMeta
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
-from federatedml.ensemble.secureboost.secureboost_util.tree_model_io import load_hetero_tree_learner, \
-    produce_hetero_tree_learner
-from federatedml.ensemble.secureboost.secureboost_util.boosting_tree_predict import sbt_guest_predict, \
-    mix_sbt_guest_predict
-from federatedml.ensemble.secureboost.secureboost_util.subsample import goss_sampling
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_importance import FeatureImportance
+from federatedml.ensemble.boosting.boosting_core import HeteroBoostingGuest
+from federatedml.param.boosting_param import HeteroSecureBoostParam, DecisionTreeParam
+from federatedml.ensemble.basic_algorithms import HeteroDecisionTreeGuest
+from federatedml.util import consts
+from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict_transfer_variable import \
+    HeteroSecureBoostTransferVariable
+from federatedml.util.io_check import assert_io_num_rows_equal
+from federatedml.util.anonymous_generator import generate_anonymous
+from federatedml.statistic.data_overview import with_weight, get_max_sample_weight
 
 
 class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
@@ -125,9 +124,9 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         LOGGER.info("compute grad and hess")
         loss_method = self.loss
         if self.task_type == consts.CLASSIFICATION:
-            grad_and_hess = y.join(y_hat, lambda y, f_val:
-                                   (loss_method.compute_grad(y, loss_method.predict(f_val)),
-                                    loss_method.compute_hess(y, loss_method.predict(f_val))))
+            grad_and_hess = y.join(y_hat, lambda y, f_val: \
+                (loss_method.compute_grad(y, loss_method.predict(f_val)), \
+                 loss_method.compute_hess(y, loss_method.predict(f_val))))
         else:
             grad_and_hess = y.join(y_hat, lambda y, f_val:
                                    (loss_method.compute_grad(y, f_val),
@@ -267,7 +266,6 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         """
         new_fi = {}
         for id_ in feature_importances:
-            LOGGER.debug('fp id is {}'.format(id_))
             if isinstance(id_, tuple):
                 if consts.GUEST in id_[0]:
                     new_fi[fid_mapping[id_[1]]] = feature_importances[id_].importance

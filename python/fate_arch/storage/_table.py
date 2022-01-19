@@ -54,7 +54,7 @@ class StorageTableBase(StorageTableABC):
     @property
     def address(self):
         return self._address
-
+    
     @property
     def partitions(self):
         return self._partitions
@@ -113,24 +113,24 @@ class StorageTableBase(StorageTableABC):
         self._meta = table_meta
 
         return table_meta
-
+    
     def check_address(self):
         return True
 
     def put_all(self, kv_list: Iterable, **kwargs):
         self._update_write_access_time()
         self._put_all(kv_list, **kwargs)
-
+    
     def collect(self, **kwargs) -> list:
         self._update_read_access_time()
         return self._collect(**kwargs)
-
+    
     def count(self):
         self._update_read_access_time()
         count = self._count()
         self.meta.update_metas(count=count)
         return count
-
+    
     def read(self):
         self._update_read_access_time()
         return self._read()
@@ -139,8 +139,8 @@ class StorageTableBase(StorageTableABC):
         self.meta.destroy_metas()
         self._destroy()
 
-    def save_as(self, address, name, namespace, partitions=None, schema=None, **kwargs):
-        table = self._save_as(address, name, namespace, partitions, schema, **kwargs)
+    def save_as(self, address, name, namespace, partitions=None, **kwargs):
+        table = self._save_as(address, name, namespace, partitions, **kwargs)
         table.create_meta(**kwargs)
         return table
 

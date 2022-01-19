@@ -173,3 +173,9 @@ class TagOperation(object):
     UPDATE = "update"
     DESTROY = "destroy"
     LIST = "list"
+
+
+class ProviderType(object):
+    FATE = "fate"
+    FATE_FLOW = "fate_flow"
+    FATE_SQL = "fate_sql"

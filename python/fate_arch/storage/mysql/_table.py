@@ -109,6 +109,11 @@ class StorageTable(StorageTableBase):
         self._cur.execute(sql)
         self._con.commit()
 
+    def _save_as(self, address, name, namespace, partitions=None, **kwargs):
+        sql = "create table {}.{} select * from {};".format(namespace, name, self._address.name)
+        self._cur.execute(sql)
+        self._con.commit()
+
     def execute(self, sql, select=True):
         self._cur.execute(sql)
         if select:

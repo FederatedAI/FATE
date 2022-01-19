@@ -15,15 +15,15 @@
 #
 
 from pipeline.param.homo_onehot_encoder_param import HomoOneHotParam
-from pipeline.component.component_base import Component
+from pipeline.component.component_base import FateComponent
 from pipeline.interface import Input
 from pipeline.interface import Output
 from pipeline.utils.logger import LOGGER
 
 
-class HomoOneHotEncoder(Component, HomoOneHotParam):
+class HomoOneHotEncoder(FateComponent, HomoOneHotParam):
     def __init__(self, **kwargs):
-        Component.__init__(self, **kwargs)
+        FateComponent.__init__(self, **kwargs)
 
         # print (self.name)
         LOGGER.debug(f"{self.name} component created")

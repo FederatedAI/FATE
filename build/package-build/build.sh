@@ -257,16 +257,20 @@ compress() {
     echo "[INFO] compress start"
     cd ${package_dir}
     touch ./packages_md5.txt
-    os_kernel=$(uname -s)
-    for module in "${packaging_modules[@]}"; do
-        tar czf ${module}.tar.gz ./${module}
+    os_kernel=`uname -s`
+    find ./ -name ".*" | grep "DS_Store" | xargs -n1 rm -rf
+    find ./ -name ".*" | grep "pytest_cache" | xargs -n1 rm -rf
+    for module in "${packaging_modules[@]}";
+    do
         case "${os_kernel}" in
-        Darwin)
-            md5_value=$(md5 ${module}.tar.gz | awk '{print $4}')
-            ;;
-        Linux)
-            md5_value=$(md5sum ${module}.tar.gz | awk '{print $1}')
-            ;;
+            Darwin)
+                gtar czf ${module}.tar.gz ./${module}
+                md5_value=`md5 ${module}.tar.gz | awk '{print $4}'`
+                ;;
+            Linux)
+                tar czf ${module}.tar.gz ./${module}
+                md5_value=`md5sum ${module}.tar.gz | awk '{print $1}'`
+                ;;
         esac
         echo "${module}:${md5_value}" >>./packages_md5.txt
         rm -rf ./${module}
