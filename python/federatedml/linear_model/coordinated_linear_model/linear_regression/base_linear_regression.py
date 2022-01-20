@@ -26,7 +26,6 @@ from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.param.linear_regression_param import LinearParam
 from federatedml.protobuf.generated import linr_model_param_pb2, linr_model_meta_pb2
 from federatedml.secureprotol import PaillierEncrypt
-from federatedml.util import LOGGER
 from federatedml.util.fate_operator import vec_dot
 
 
@@ -69,7 +68,6 @@ class BaseLinearRegression(BaseLinearModel):
                                                               learning_rate=self.model_param.learning_rate,
                                                               max_iter=self.max_iter,
                                                               early_stop=self.model_param.early_stop,
-                                                              module='HeteroLinR',
                                                               fit_intercept=self.fit_intercept)
         return meta_protobuf_obj
 
