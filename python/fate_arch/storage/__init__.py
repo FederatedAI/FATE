@@ -5,4 +5,3 @@ from fate_arch.storage._types import StandaloneStoreType, EggRollStoreType, \
 from fate_arch.storage._types import DEFAULT_ID_DELIMITER
 from fate_arch.storage._session import StorageSessionBase
 from fate_arch.storage._table import StorageTableBase, StorageTableMeta
-from fate_arch.storage._utils import StorageConnector

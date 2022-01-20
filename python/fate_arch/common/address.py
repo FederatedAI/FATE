@@ -1,5 +1,6 @@
 from fate_arch.abc import AddressABC
-from fate_arch.storage import StorageEngine, StorageConnector
+from fate_arch.metastore.db_utils import StorageConnector
+from fate_arch.storage import StorageEngine
 
 
 class AddressBase(AddressABC):
@@ -7,8 +8,8 @@ class AddressBase(AddressABC):
         self.connector_name = connector_name
         if connector_name:
             connector = StorageConnector(connector_name=connector_name, engine=self.get_name)
-            if connector.info:
-                for k, v in connector.info.items():
+            if connector.get_info():
+                for k, v in connector.get_info().items():
                     if hasattr(self, k):
                         self.__setattr__(k, v)
 
