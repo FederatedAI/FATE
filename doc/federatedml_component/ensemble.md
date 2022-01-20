@@ -120,7 +120,6 @@ Hetero SecureBoost supports the following applications.
   - Support missing value in train and predict process
   - Support evaluate training and validate data during training process
   - Support another homomorphic encryption method called "Iterative
-    Affine" since FATE-1.1
   - Support early stopping in FATE-1.4, to use early stopping, see
     [Boosting Tree Param](../../python/federatedml/param/boosting_param.py)
   - Support sparse data optimization in FATE-1.5. You can activate it by

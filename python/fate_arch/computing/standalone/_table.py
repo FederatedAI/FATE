@@ -43,6 +43,9 @@ class Table(CTableABC):
     def partitions(self):
         return self._table.partitions
 
+    def copy(self):
+        return Table(self._table.mapValues(lambda x: x))
+
     @computing_profile
     def save(self, address, partitions, schema, **kwargs):
         from fate_arch.common.address import StandaloneAddress
@@ -79,9 +82,7 @@ class Table(CTableABC):
 
     @computing_profile
     def take(self, n=1, **kwargs):
-        if n <= 0:
-            raise ValueError(f"{n} <= 0")
-        return list(itertools.islice(self._table.collect(**kwargs), n))
+        return self._table.take(n=n, **kwargs)
 
     @computing_profile
     def first(self, **kwargs):

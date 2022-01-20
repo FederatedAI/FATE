@@ -33,9 +33,9 @@ def process(ctx, **kwargs):
     config_inst = ctx.obj["config"]
     yes = ctx.obj["yes"]
 
-    echo.welcome("benchmark")
+    echo.welcome()
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
-    echo.echo("loading testsuites:")
+
     if not yes and not click.confirm("running?"):
         return
     try:
@@ -46,6 +46,8 @@ def process(ctx, **kwargs):
         exception_id = uuid.uuid1()
         echo.echo(f"exception_id={exception_id}")
         LOGGER.exception(f"exception id: {exception_id}")
+    echo.farewell()
+    echo.echo(f"testsuite namespace: {namespace}", fg='red')
 
 
 @flow_group.command("rest")
@@ -61,9 +63,9 @@ def api(ctx, **kwargs):
     config_inst = ctx.obj["config"]
     yes = ctx.obj["yes"]
 
-    echo.welcome("benchmark")
+    echo.welcome()
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
-    echo.echo("loading testsuites:")
+
     if not yes and not click.confirm("running?"):
         return
     try:
@@ -74,6 +76,8 @@ def api(ctx, **kwargs):
         exception_id = uuid.uuid1()
         echo.echo(f"exception_id={exception_id}")
         LOGGER.exception(f"exception id: {exception_id}")
+    echo.farewell()
+    echo.echo(f"testsuite namespace: {namespace}", fg='red')
 
 
 @flow_group.command("sdk")
@@ -89,9 +93,9 @@ def api(ctx, **kwargs):
     config_inst = ctx.obj["config"]
     yes = ctx.obj["yes"]
 
-    echo.welcome("benchmark")
+    echo.welcome()
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
-    echo.echo("loading testsuites:")
+
     if not yes and not click.confirm("running?"):
         return
     try:
@@ -102,6 +106,8 @@ def api(ctx, **kwargs):
         exception_id = uuid.uuid1()
         echo.echo(f"exception_id={exception_id}")
         LOGGER.exception(f"exception id: {exception_id}")
+    echo.farewell()
+    echo.echo(f"testsuite namespace: {namespace}", fg='red')
 
 
 @flow_group.command("cli")
@@ -117,9 +123,9 @@ def api(ctx, **kwargs):
     config_inst = ctx.obj["config"]
     yes = ctx.obj["yes"]
 
-    echo.welcome("benchmark")
+    echo.welcome()
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
-    echo.echo("loading testsuites:")
+
     if not yes and not click.confirm("running?"):
         return
     try:
@@ -130,6 +136,8 @@ def api(ctx, **kwargs):
         exception_id = uuid.uuid1()
         echo.echo(f"exception_id={exception_id}")
         LOGGER.exception(f"exception id: {exception_id}")
+    echo.farewell()
+    echo.echo(f"testsuite namespace: {namespace}", fg='red')
 
 
 def get_role(conf: Config):
@@ -154,6 +162,7 @@ def get_role(conf: Config):
                    'model_file_path': os.path.abspath(conf.data_base_dir) + flow_test_template['model_conf_path'],
                    'server_url': "http://{}/{}".format(flow_services, config['api_version']),
                    'train_auc': config['train_auc'],
+                   'phone_num': config['phone_num'],
                    'component_name': config['component_name'],
                    'component_is_homo': config.get('component_is_homo', False),
                    'serving_setting': conf.serving_setting['serving_setting']['address'],

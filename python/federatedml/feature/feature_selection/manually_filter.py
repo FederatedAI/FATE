@@ -59,15 +59,16 @@ class ManuallyFilter(BaseFilterMethod):
         all_filter_out_names = []
         for col_idx, col_name in zip(self.selection_properties.select_col_indexes,
                                      self.selection_properties.select_col_names):
-            LOGGER.debug("Col_idx: {}, col_names: {}, filter_out_indexes: {}, filter_out_names: {}".format(
-                col_idx, col_name, self.filter_out_indexes, self.filter_out_names
-            ))
+            # LOGGER.debug("Col_idx: {}, col_names: {}, filter_out_indexes: {}, filter_out_names: {}".format(
+            #    col_idx, col_name, self.filter_out_indexes, self.filter_out_names
+            # ))
             if col_idx not in self.filter_out_indexes and col_name not in self.filter_out_names:
                 self.selection_properties.add_left_col_name(col_name)
             else:
                 all_filter_out_names.append(col_name)
         self._keep_one_feature()
         self.filter_out_names = all_filter_out_names
+        # LOGGER.debug(f"filter out names are: {self.filter_out_names}")
         return self
 
     # def get_meta_obj(self, meta_dicts):

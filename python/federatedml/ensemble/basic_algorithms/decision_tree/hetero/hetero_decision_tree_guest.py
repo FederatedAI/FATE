@@ -9,7 +9,7 @@ from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import Decision
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import DecisionTreeModelParam
 from federatedml.transfer_variable.transfer_class.hetero_decision_tree_transfer_variable import \
     HeteroDecisionTreeTransferVariable
-from federatedml.secureprotol import PaillierEncrypt, IterativeAffineEncrypt
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.subsample import goss_sampling
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.g_h_optim import GHPacker
 from federatedml.statistic.statics import MultivariateStatisticalSummary
 from federatedml.util import consts
@@ -165,15 +165,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
     def decrypt(self, val):
         return self.encrypter.decrypt(val)
-
-    def get_encrypt_type(self):
-
-        if isinstance(self.encrypter, PaillierEncrypt):
-            return consts.PAILLIER
-        elif isinstance(self.encrypter, IterativeAffineEncrypt):
-            return consts.ITERATIVEAFFINE
-        else:
-            raise ValueError('unknown encrypter type: {}'.format(type(self.encrypter)))
 
     """
     Node Splitting
@@ -408,7 +399,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         for i in range(len(mask_tree_node_queue)):
             mask_tree_node_queue[i] = Node(id=mask_tree_node_queue[i].id,
                                            parent_nodeid=mask_tree_node_queue[i].parent_nodeid,
-                                           is_left_node=mask_tree_node_queue[i].is_left_node, )
+                                           is_left_node=mask_tree_node_queue[i].is_left_node)
 
         self.transfer_inst.tree_node_queue.remote(mask_tree_node_queue,
                                                   role=consts.HOST,
@@ -508,7 +499,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         return new_tree_
 
-    def initialize_root_node(self, ):
+    def initialize_root_node(self):
         LOGGER.info('initializing root node')
         root_sum_grad, root_sum_hess = self.get_grad_hess_sum(self.grad_and_hess)
         root_node = Node(id=0, sitename=self.sitename, sum_grad=root_sum_grad, sum_hess=root_sum_hess,
@@ -761,7 +752,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
             for i in range(len(predict_data_host)):
                 predict_data = predict_data.join(predict_data_host[i],
                                                  lambda state1_nodeid1, state2_nodeid2:
-                                                 state1_nodeid1 if state1_nodeid1[1] == 0 else state2_nodeid2)
+                                                 state1_nodeid1 if state1_nodeid1[
+                                                                       1] == 0 else state2_nodeid2)
 
             site_host_send_times += 1
 
@@ -837,3 +829,4 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         self.split_maskdict = dict(model_param.split_maskdict)
         self.missing_dir_maskdict = dict(model_param.missing_dir_maskdict)
+

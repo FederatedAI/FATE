@@ -31,7 +31,7 @@ $ tar -C /data/projects/common -xvfz apache-pulsar-2.7.0-bin.tar.gz
 $ cd /data/projects/common/apache-pulsar-2.7.0
 ```
 
-## 三. 启动单机版Pulsar集群
+## 三. 启动单机版Pulsar
 
 1. 编辑"conf/standalone.conf"文件, 修改如下：
 
@@ -53,22 +53,22 @@ maxMessageSize=134217728
 ```
 更多关于配置字段的描述可以参考配置文件的注释。
 
-2. 启动pulsar集群
+2. 启动单机版pulsar
 
 ``` bash
-$ bin/pulsar standalone -nss 2>&1 > logs/standalone.log &
+$ bin/pulsar-daemon start standalone -nss
 ```
-上述命令会把pulsar的日志导出到“logs/standalone.log”文件。
+运行日志在pulsar软件部署目录下层的logs目录下。
 
-3. 停止pulsar集群
+3. 停止pulsar
 
-当pulsar集群不再需要时可用以下命令停止。
+当pulsar不再需要时可用以下命令停止。
 
 ``` bash
-$ kill $(ps -aux | grep pulsar | grep -v "grep" | awk '{print $2}')
+$ bin/pulsar-daemon stop standalone
 ```
 
-当不需要pulsar集群产生的数据时可以移出除"apache-pulsar-2.7.0"下的"data"目录。
+当不需要pulsar产生的数据时可以移出除"apache-pulsar-2.7.0"下的"data"目录。
 
 更多关于单机版Pulsar的配置，请参考Pulsar官方文档[Set up a standalone Pulsar locally](https://pulsar.apache.org/docs/zh-CN/standalone/)
 

@@ -15,15 +15,15 @@
 #
 
 from pipeline.param.feature_selection_param import FeatureSelectionParam
-from pipeline.component.component_base import Component
+from pipeline.component.component_base import FateComponent
 from pipeline.interface import Input
 from pipeline.interface import Output
 from pipeline.utils.logger import LOGGER
 
 
-class HeteroFeatureSelection(Component, FeatureSelectionParam):
+class HeteroFeatureSelection(FateComponent, FeatureSelectionParam):
     def __init__(self, **kwargs):
-        Component.__init__(self, **kwargs)
+        FateComponent.__init__(self, **kwargs)
 
         # print (self.name)
         LOGGER.debug(f"{self.name} component created")
