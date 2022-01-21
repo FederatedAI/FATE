@@ -11,7 +11,7 @@ from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import Quantile
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_importance import FeatureImportance
-from federatedml.ensemble.boosting.boosting_core import HeteroBoostingGuest
+from federatedml.ensemble.boosting.hetero_boosting import HeteroBoostingGuest
 from federatedml.param.boosting_param import HeteroSecureBoostParam, DecisionTreeParam
 from federatedml.ensemble.basic_algorithms import HeteroDecisionTreeGuest
 from federatedml.util import consts
