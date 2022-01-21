@@ -38,7 +38,7 @@ venv
 /audit/
 .vscode/*
 /eggroll/
-/fateboard/
+# /fateboard/
 /doc/federatedml_component/params/
 
 # build dir
