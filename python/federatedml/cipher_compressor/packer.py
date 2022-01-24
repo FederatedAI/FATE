@@ -65,7 +65,7 @@ class GuestIntegerPacker(object):
                                                                                           compress_parameter))
 
     def cipher_compress_suggest(self):
-        compressible = self._bit_assignment[-1]
+        compressible = self.bit_assignment[-1]
         total_bit_count = sum(compressible)
         compress_num = self._max_bit // total_bit_count
         padding_bit = total_bit_count

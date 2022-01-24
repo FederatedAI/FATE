@@ -1,7 +1,3 @@
-from typing import List
-import functools
-import copy
-import numpy as np
 from operator import itemgetter
 from federatedml.util import LOGGER
 from federatedml.util import consts

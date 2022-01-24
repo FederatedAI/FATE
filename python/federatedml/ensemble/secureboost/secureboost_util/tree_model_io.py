@@ -65,7 +65,6 @@ def produce_hetero_tree_learner(role, tree_param: DecisionTreeParam, flow_id, da
                   complete_secure=complete_secure,
                   cipher_compressing=cipher_compress,
                   bin_num=bin_num,
-                  data_bin_dense=None,
                   mo_tree=mo_tree
                   )
 
