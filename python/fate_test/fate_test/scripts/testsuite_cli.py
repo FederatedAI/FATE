@@ -119,7 +119,7 @@ def run_suite(ctx, replace, include, exclude, glob, timeout, update_job_paramete
                     _delete_data(client, suite)
                 echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
                 if not skip_dsl_jobs or not skip_pipeline_jobs:
-                    echo.echo(suite.pretty_final_summary(time_consuming), fg='red')
+                    echo.echo(suite.pretty_final_summary(time_consuming))
 
             except Exception:
                 exception_id = uuid.uuid1()
