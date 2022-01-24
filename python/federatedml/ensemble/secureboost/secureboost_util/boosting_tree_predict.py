@@ -317,16 +317,26 @@ Fed-EINI predict func
 """
 
 
-def get_leaf_node_info(trees: List[DecisionTree]):
+def get_leaf_idx_map(trees: List[DecisionTree]):
 
-    node_id_pos_map = {}
+    id_pos_map_list = []
 
+    for tree in trees:
+        array_idx = 0
+        id_pos_map = {}
+        for node in tree.tree_node:
+            if node.is_leaf:
+                id_pos_map[node.id] = array_idx
+                array_idx += 1
+        id_pos_map_list.append(id_pos_map)
+
+    return id_pos_map_list
 
 
 def go_to_children_branches(data_inst, tree_node: Node, tree, sitename: str, candidate_list: List):
 
     if tree_node.is_leaf:
-        candidate_list.append(tree_node)
+        candidate_list.append(tree_node.id)
     else:
         tree_node_list = tree.tree_node
         if tree_node.sitename != sitename:
@@ -359,10 +369,13 @@ def generate_leaf_candidates(data_inst, sitename, trees: List[DecisionTree]):
 def EINI_guest_predict(data_inst, transfer_var: HeteroSecureBoostTransferVariable,
                        trees: List[HeteroDecisionTreeGuest], learning_rate, init_score, booster_dim,
                        predict_cache=None, pred_leaf=False):
-    pass
+
+    id_pos_map_list = get_leaf_idx_map(trees)
 
 
 def EINI_host_predict(data_inst, transfer_var: HeteroSecureBoostTransferVariable, trees: List[HeteroDecisionTreeHost]):
-    pass
+
+    id_pos_map_list = get_leaf_idx_map(trees)
+
 
 
