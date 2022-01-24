@@ -3,6 +3,7 @@ import numpy as np
 from typing import List
 from federatedml.ensemble.basic_algorithms import HeteroDecisionTreeGuest, HeteroDecisionTreeHost, \
     HeteroFastDecisionTreeGuest, HeteroFastDecisionTreeHost
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.decision_tree import DecisionTree, Node
 from federatedml.util import LOGGER
 from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict_transfer_variable import \
     HeteroSecureBoostTransferVariable
@@ -88,6 +89,7 @@ def get_predict_scores(
         trees: List[HeteroDecisionTreeGuest],
         multi_class_num=-1,
         predict_cache=None):
+
     if predict_cache:
         init_score = 0  # prevent init_score re-add
 
@@ -308,3 +310,59 @@ def mix_sbt_host_predict(data_inst, transfer_var: HeteroSecureBoostTransferVaria
     local_traverse_func = functools.partial(traverse_host_local_trees, trees=trees)
     leaf_pos = node_pos.join(data_inst, local_traverse_func)
     transfer_var.host_predict_data.remote(leaf_pos, idx=0, role=consts.GUEST)
+
+
+"""
+Fed-EINI predict func
+"""
+
+
+def get_leaf_node_info(trees: List[DecisionTree]):
+
+    node_id_pos_map = {}
+
+
+
+def go_to_children_branches(data_inst, tree_node: Node, tree, sitename: str, candidate_list: List):
+
+    if tree_node.is_leaf:
+        candidate_list.append(tree_node)
+    else:
+        tree_node_list = tree.tree_node
+        if tree_node.sitename != sitename:
+            go_to_children_branches(data_inst, tree_node_list[tree_node.left_nodeid], tree_node_list, sitename,
+                                    candidate_list)
+            go_to_children_branches(data_inst, tree_node_list[tree_node.right_nodeid], tree_node_list, sitename,
+                                    candidate_list)
+        else:
+            next_layer_node_id = tree.go_next_layer(tree_node.id, data_inst, use_missing=tree.use_missing,
+                                                    zero_as_missing=tree.zero_as_missing, decoder=tree.decode,
+                                                    split_maskdict=tree.split_maskdict,
+                                                    missing_dir_maskdict=tree.missing_dir_maskdict,
+                                                    bin_sparse_point=None
+                                                    )
+            go_to_children_branches(data_inst, tree_node_list[next_layer_node_id], tree_node_list, sitename,
+                                    candidate_list)
+
+
+def generate_leaf_candidates(data_inst, sitename, trees: List[DecisionTree]):
+
+    candidate_nodes_of_all_tree = []
+    for tree in trees:
+        candidate_list = []
+        go_to_children_branches(data_inst, tree.tree_node[0], tree, sitename, candidate_list)
+        candidate_nodes_of_all_tree.append(candidate_list)
+
+    return candidate_nodes_of_all_tree
+
+
+def EINI_guest_predict(data_inst, transfer_var: HeteroSecureBoostTransferVariable,
+                       trees: List[HeteroDecisionTreeGuest], learning_rate, init_score, booster_dim,
+                       predict_cache=None, pred_leaf=False):
+    pass
+
+
+def EINI_host_predict(data_inst, transfer_var: HeteroSecureBoostTransferVariable, trees: List[HeteroDecisionTreeHost]):
+    pass
+
+
