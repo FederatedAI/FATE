@@ -57,7 +57,7 @@ class SummaryStatistics(object):
 
         where i is the current count, and S_i is the current expectation of x
         """
-        #if self.abnormal_list is None:
+        # if self.abnormal_list is None:
         if not self.abnormal_list:
             rows = np.array(rows, dtype=float)
             self.count += 1
@@ -99,8 +99,8 @@ class SummaryStatistics(object):
             for m in range(3, self.stat_order + 1):
                 exp_sum_m = getattr(self, f"exp_sum_{m}")
                 # exp_sum_m[filter_idx] += filter_rows ** m
-                exp_sum_m[filter_idx] = (self.count[filter_idx] - 1) / self.count[filter_idx] * exp_sum_m[filter_idx] + \
-                    filter_rows ** m / self.count[filter_idx]
+                exp_sum_m[filter_idx] = (self.count[filter_idx] - 1) / self.count[filter_idx] * \
+                    exp_sum_m[filter_idx] + filter_rows ** m / self.count[filter_idx]
                 setattr(self, f"exp_sum_{m}", exp_sum_m)
 
             """

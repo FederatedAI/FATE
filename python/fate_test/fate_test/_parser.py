@@ -377,7 +377,7 @@ class Testsuite(object):
         table.set_style(prettytable.ORGMODE)
         # table = prettytable.PrettyTable(
         #    ["job_name", "job_id", "status", "time_consuming", "exception_id", "rest_dependency"]
-        #)
+        # )
         field_names = ["job_name", "job_id", "status", "time_consuming", "exception_id", "rest_dependency"]
         table.field_names = field_names
         for status in self.get_final_status().values():

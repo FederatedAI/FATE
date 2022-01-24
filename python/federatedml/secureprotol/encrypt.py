@@ -322,5 +322,3 @@ class PadsCipher(Encrypt):
 
     def decrypt(self, value):
         return value
-
-
