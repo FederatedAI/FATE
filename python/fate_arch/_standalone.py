@@ -343,9 +343,9 @@ class Table(object):
 
 # noinspection PyMethodMayBeStatic
 class Session(object):
-    def __init__(self, session_id):
+    def __init__(self, session_id, max_workers=None):
         self.session_id = session_id
-        self._pool = Executor()
+        self._pool = Executor(max_workers=max_workers)
 
     def __getstate__(self):
         # session won't be pickled
