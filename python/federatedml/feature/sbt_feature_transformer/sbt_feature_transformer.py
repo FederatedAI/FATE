@@ -23,7 +23,6 @@ from federatedml.model_base import ModelBase
 from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.ensemble import HeteroSecureBoostingTreeGuest, HeteroSecureBoostingTreeHost
-from federatedml.ensemble import HeteroFastSecureBoostingTreeGuest, HeteroFastSecureBoostingTreeHost
 from federatedml.model_base import MetricMeta
 from federatedml.util import abnormal_detection
 from federatedml.param.sbt_feature_transformer_param import SBTTransformerParam
@@ -73,9 +72,6 @@ class HeteroSBTFeatureTransformerBase(ModelBase):
 
         if tree_model_type == consts.HETERO_SBT:
             self.tree_model = HeteroSecureBoostingTreeGuest() if self.role == consts.GUEST else HeteroSecureBoostingTreeHost()
-        elif tree_model_type == consts.HETERO_FAST_SBT:
-            self.tree_model = HeteroFastSecureBoostingTreeGuest() if self.role == consts.GUEST \
-                else HeteroFastSecureBoostingTreeHost()
 
     def _load_tree_model(self, model_dict, key_name='isometric_model'):
         """
