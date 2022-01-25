@@ -174,7 +174,7 @@ class ResourceManager(object):
             operate_msg = "successfully" if operate_status else "failed"
             schedule_logger(job_id=job_id).info(
                 f"{operation_type} job {job_id} resource(cores {cores} memory {memory}) on {role} {party_id} {operate_msg}, remaining cores: {remaining_cores} remaining memory: {remaining_memory}")
-            return operate_status
+        return operate_status
 
     @classmethod
     def adapt_engine_parameters(cls, role, job_parameters: RunParameters, create_initiator_baseline=False):
@@ -324,8 +324,7 @@ class ResourceManager(object):
                 remaining_cores, remaining_memory = objs[0].f_remaining_cores, objs[0].f_remaining_memory
         except Exception as e:
             schedule_logger().exception(e)
-        finally:
-            return remaining_cores, remaining_memory
+        return remaining_cores, remaining_memory
 
     @classmethod
     @DB.connection_context()

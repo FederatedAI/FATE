@@ -152,8 +152,8 @@ class Federation(FederationABC):
         self._mq = mq
         self._pulsar_manager = pulsar_manager
 
-        self._topic_map: typing.MutableMapping[_TopicKey, _TopicPair] = {}
-        self._channels_map: typing.MutableMapping[_TopicKey, MQChannel] = {}
+        self._topic_map = {}  # typing.MutableMapping[_TopicKey, _TopicPair]
+        self._channels_map = {}  # typing.MutableMapping[_TopicKey, MQChannel]
 
         self._name_dtype_map = {}
         self._message_cache = {}

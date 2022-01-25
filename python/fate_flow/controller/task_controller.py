@@ -128,8 +128,7 @@ class TaskController(object):
             cls.report_task_to_initiator(task_info=task_info)
         except Exception as e:
             schedule_logger(job_id=task_info["job_id"]).exception(e)
-        finally:
-            return update_status
+        return update_status
 
     @classmethod
     def update_task_status(cls, task_info):
@@ -203,7 +202,7 @@ class TaskController(object):
                                                                        task.f_party_id,
                                                                        task.f_run_pid,
                                                                        'success' if kill_status else 'failed'))
-            return kill_status
+        return kill_status
 
     @classmethod
     def clean_task(cls, job_id, task_id, task_version, role, party_id, content_type):

@@ -47,5 +47,5 @@ class RuntimeConfig(object):
         return RuntimeConfig.ENV.get(key, None)
 
     @classmethod
-    def set_process_role(cls, process_role: PROCESS_ROLE):
+    def set_process_role(cls, process_role):
         RuntimeConfig.PROCESS_ROLE = process_role

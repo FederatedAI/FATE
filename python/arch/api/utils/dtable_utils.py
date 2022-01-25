@@ -35,11 +35,7 @@ def get_table_info(config, create=False):
 
 
 def gen_party_version(namespace, branch='master', create=False):
-    if create:
-        table_name = get_commit_id()
-    else:
-        table_name = get_latest_commit(data_table_namespace=namespace, branch=branch)
-
+    table_name = get_commit_id()
     return table_name
 
 

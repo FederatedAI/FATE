@@ -19,20 +19,6 @@ from fate_arch import storage
 from fate_flow.db.db_models import DB, TrackingMetric
 
 
-@DB.connection_context()
-def query_data_view(**kwargs):
-    filters = []
-    for f_n, f_v in kwargs.items():
-        attr_name = 'f_%s' % f_n
-        if hasattr(DataView, attr_name):
-            filters.append(operator.attrgetter('f_%s' % f_n)(DataView) == f_v)
-    if filters:
-        data_views = DataView.select().where(*filters)
-    else:
-        data_views = []
-    return [data_view for data_view in data_views]
-
-
 def delete_tables_by_table_infos(output_data_table_infos):
     data = []
     status = False

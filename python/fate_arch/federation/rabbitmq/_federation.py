@@ -174,8 +174,8 @@ class Federation(FederationABC):
         self._mq = mq
         self._rabbit_manager = rabbit_manager
 
-        self._queue_map: typing.MutableMapping[_QueueKey, _QueueNames] = {}
-        self._channels_map: typing.MutableMapping[_QueueKey, MQChannel] = {}
+        self._queue_map = {}  # typing.MutableMapping[_QueueKey, _QueueNames]
+        self._channels_map = {}  # typing.MutableMapping[_QueueKey, MQChannel]
         self._vhost_set = set()
         self._name_dtype_map = {}
         self._message_cache = {}
@@ -744,6 +744,6 @@ class Federation(FederationABC):
                     channel_info.cancel()
                     return all_data
             else:
-                ValueError(
+                raise ValueError(
                     f"[rabbitmq._partition_receive]properties.content_type is {properties.content_type}, but must be application/json"
                 )

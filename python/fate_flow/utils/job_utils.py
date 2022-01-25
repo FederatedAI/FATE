@@ -481,15 +481,3 @@ def get_board_url(job_id, role, party_id):
         ServiceUtils.get_item("fateboard", "port"),
         FATE_BOARD_DASHBOARD_ENDPOINT).format(job_id, role, party_id)
     return board_url
-
-if __name__ == "__main__":
-    from concurrent.futures import ThreadPoolExecutor, as_completed
-    with ThreadPoolExecutor(max_workers=50) as t:
-        obj_list = []
-        for page in range(1, 50):
-            obj = t.submit(new_generate_job_id)
-            obj_list.append(obj)
-
-        for future in as_completed(obj_list):
-            data = future.result()
-            print(f"main: {data}")
