@@ -74,8 +74,10 @@ class TestStepwise(unittest.TestCase):
         mask_generator = HeteroStepwise.drop_one(self.mask)
         i = 0
         for mask in mask_generator:
-            np.testing.assert_array_equal(mask, real_masks[i],
-                                          f"In stepwise_test drop one: mask{mask} not equal to expected {real_masks[i]}")
+            np.testing.assert_array_equal(
+                mask,
+                real_masks[i],
+                f"In stepwise_test drop one: mask{mask} not equal to expected {real_masks[i]}")
             i += 1
 
     def test_add_one(self):

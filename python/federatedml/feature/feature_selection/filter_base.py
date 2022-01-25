@@ -43,7 +43,7 @@ class BaseFilterMethod(object):
 
         Parameters
         ----------
-        data_instances : DTable,
+        data_instances : Table,
             Input data
 
         suffix : string,
@@ -60,7 +60,7 @@ class BaseFilterMethod(object):
         raise NotImplementedError("Should not call this function directly")
 
     def set_selection_properties(self, selection_properties):
-        LOGGER.debug(f"In set_selection_properties, header: {selection_properties.header}")
+        # LOGGER.debug(f"In set_selection_properties, header: {selection_properties.header}")
         self.selection_properties = selection_properties
 
     def _keep_one_feature(self, pick_high=True, selection_properties=None, feature_values=None):

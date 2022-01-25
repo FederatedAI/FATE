@@ -213,7 +213,7 @@ class BaseParam(metaclass=_StaticDefaultMeta):
         try:
             with open(param_validation_path, "r") as fin:
                 validation_json = json.loads(fin.read())
-        except:
+        except BaseException:
             return
 
         self._validate_param(self, validation_json)

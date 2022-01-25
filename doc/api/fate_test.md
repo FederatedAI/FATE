@@ -11,13 +11,13 @@ release test.
 
 ### command options
 
-``` sourceCode bash
+```bash
 fate_test suite --help
 ```
 
 1.  include:
     
-    ``` sourceCode bash
+    ```bash
     fate_test suite -i <path1 contains *testsuite.json>
     ```
     
@@ -26,7 +26,7 @@ fate_test suite --help
 
 2.  exclude:
     
-    ``` sourceCode bash
+    ```bash
     fate_test suite -i <path1 contains *testsuite.json> -e <path2 to exclude> -e <path3 to exclude> ...
     ```
     
@@ -34,7 +34,7 @@ fate_test suite --help
 
 3.  glob:
     
-    ``` sourceCode bash
+    ```bash
     fate_test suite -i <path1 contains *testsuite.json> -g "hetero*"
     ```
     
@@ -43,7 +43,7 @@ fate_test suite --help
 
 4.  replace:
     
-    ``` sourceCode bash
+    ```bash
     fate_test suite -i <path1 contains *testsuite.json> -r '{"maxIter": 5}'
     ```
     
@@ -54,7 +54,7 @@ fate_test suite --help
 
 5.  timeout:
     
-    ``` sourceCode bash
+    ```bash
     fate_test suite -i <path1 contains *testsuite.json> -m 3600
     ```
     
@@ -63,7 +63,7 @@ fate_test suite --help
 
 6.  task-cores
     
-    ``` sourceCode bash
+    ```bash
     fate_test suite -i <path1 contains *testsuite.json> -p 4
     ```
     
@@ -72,7 +72,7 @@ fate_test suite --help
 
 7.  update-job-parameters
     
-    ``` sourceCode bash
+    ```bash
     fate_test suite -i <path1 contains *testsuite.json> -uj {}
     ```
     
@@ -81,7 +81,7 @@ fate_test suite --help
 
 8.  update-component-parameters
     
-    ``` sourceCode bash
+    ```bash
     fate_test suite -i <path1 contains *testsuite.json> -uc {}
     ```
     
@@ -90,7 +90,7 @@ fate_test suite --help
 
 9.  skip-dsl-jobs:
     
-    ``` sourceCode bash
+    ```bash
     fate_test suite -i <path1 contains *testsuite.json> --skip-dsl-jobs
     ```
     
@@ -100,7 +100,7 @@ fate_test suite --help
 
 10. skip-pipeline-jobs:
     
-    ``` sourceCode bash
+    ```bash
     fate_test suite -i <path1 contains *testsuite.json> --skip-pipeline-jobs
     ```
     
@@ -109,7 +109,7 @@ fate_test suite --help
 
 11. skip-data:
     
-    ``` sourceCode bash
+    ```bash
     fate_test suite -i <path1 contains *testsuite.json> --skip-data
     ```
     
@@ -118,7 +118,7 @@ fate_test suite --help
 
 12. data only:
     
-    ``` sourceCode bash
+    ```bash
     fate_test suite -i <path1 contains *testsuite.json> --data-only
     ```
     
@@ -127,7 +127,7 @@ fate_test suite --help
 
 13. disable-clean-data:
     
-    ``` sourceCode bash
+    ```bash
     fate_test suite -i <path1 contains *testsuite.json> --disable-clean-data
     ```
     
@@ -137,7 +137,7 @@ fate_test suite --help
 
 14. enable-clean-data:
     
-    ``` sourceCode bash
+    ```bash
     fate_test suite -i <path1 contains *testsuite.json> --enable-clean-data
     ```
     
@@ -145,7 +145,7 @@ fate_test suite --help
 
 15. yes:
     
-    ``` sourceCode bash
+    ```bash
     fate_test suite -i <path1 contains *testsuite.json> --yes
     ```
     
@@ -172,9 +172,7 @@ A testsuite includes the following elements:
         fate\_test.config; naming format is:
         "{role\_type}\_{role\_index}", index starts at 0
     
-    <!-- end list -->
-    
-    ``` sourceCode json
+    ```json
     "data": [
         {
             "file": "examples/data/motor_hetero_host.csv",
@@ -196,9 +194,8 @@ A testsuite includes the following elements:
           - conf: path to conf filw, should be relative to testsuite
           - dsl: path to dsl file, should be relative to testsuite
         
-        <!-- end list -->
         
-        ``` sourceCode json
+        ```json
         "tasks": {
              "cv": {
                  "conf": "hetero_lr_cv_conf.json",
@@ -220,9 +217,8 @@ A testsuite includes the following elements:
           - script: path to pipeline script, should be relative to
             testsuite
         
-        <!-- end list -->
         
-        ``` sourceCode json
+        ```json
         "pipeline_tasks": {
              "cv": {
                  "script": "pipeline-hetero-lr-cv.py"
@@ -235,7 +231,7 @@ A testsuite includes the following elements:
     
       - model\_deps(deps): model to be used for prediction task
         
-        ``` sourceCode json
+        ```json
         "tasks": {
              "cv": {
                  "conf": "hetero_lr_cv_conf.json",
@@ -256,7 +252,7 @@ A testsuite includes the following elements:
       - data\_deps: component output data from previous task to be used
         as designated input for current task(only used for dsl tasks)
         
-        ``` sourceCode json
+        ```json
         "tasks": {
         "column-expand": {
             "conf": "./test_column_expand_job_conf.json",
@@ -281,7 +277,7 @@ A testsuite includes the following elements:
         used as designated cache loader input for current task(only used
         for intersect dsl tasks)
         
-        ``` sourceCode json
+        ```json
         "tasks": {
         "intersect-cache": {
             "conf": "./test_intersect_cache_job_conf.json",
@@ -302,7 +298,7 @@ A testsuite includes the following elements:
         to be used as designated model loader input for current
         task(only used for dsl tasks)
         
-        ``` sourceCode json
+        ```json
         "tasks": {
         "hetero-lr": {
             "conf": "./test_hetero_lr_job_conf.json",
@@ -330,11 +326,11 @@ script/PipeLine job. Please refer to the [script writing
 guide](#testing-script) below for
 instructions.
 
-``` sourceCode bash
+```bash
 fate_test benchmark-quality -i examples/benchmark_quality/hetero_linear_regression
 ```
 
-``` sourceCode bash
+```bash
 |----------------------------------------------------------------------|
 |                             Data Summary                             |
 |-------+--------------------------------------------------------------|
@@ -387,13 +383,13 @@ fate_test benchmark-quality -i examples/benchmark_quality/hetero_linear_regressi
 
 use the following command to show help message
 
-``` sourceCode bash
+```bash
 fate_test benchmark-quality --help
 ```
 
 1.  include:
     
-    ``` sourceCode bash
+    ```bash
     fate_test benchmark-quality -i <path1 contains *benchmark.json>
     ```
     
@@ -402,7 +398,7 @@ fate_test benchmark-quality --help
 
 2.  exclude:
     
-    ``` sourceCode bash
+    ```bash
     fate_test benchmark-quality -i <path1 contains *benchmark.json> -e <path2 to exclude> -e <path3 to exclude> ...
     ```
     
@@ -411,7 +407,7 @@ fate_test benchmark-quality --help
 
 3.  glob:
     
-    ``` sourceCode bash
+    ```bash
     fate_test benchmark-quality -i <path1 contains *benchmark.json> -g "hetero*"
     ```
     
@@ -421,7 +417,7 @@ fate_test benchmark-quality --help
 
 4.  tol:
     
-    ``` sourceCode bash
+    ```bash
     fate_test benchmark-quality -i <path1 contains *benchmark.json> -t 1e-3
     ```
     
@@ -433,33 +429,33 @@ fate_test benchmark-quality --help
 
 5.  storage-tag
     
-    > 
-    > 
-    > ``` sourceCode bash
-    > fate_test performance -i <path1 contains *benchmark.json> -s test
-    > ```
-    > 
-    > will run benchmark testsuites in *path1* with performance stored
-    > under provided tag for future comparison; note that FATE-Test
-    > always records the most recent run for each tag; if the same tag
-    > is used more than once, only metrics from the latest job is
-    > kept
+    
+    
+    ```bash
+    fate_test performance -i <path1 contains *benchmark.json> -s test
+    ```
+    
+    will run benchmark testsuites in *path1* with performance stored
+    under provided tag for future comparison; note that FATE-Test
+    always records the most recent run for each tag; if the same tag
+    is used more than once, only metrics from the latest job is
+    kept
 
 6.  history-tag
     
-    > 
-    > 
-    > ``` sourceCode bash
-    > fate_test performance -i <path1 contains *benchmark.json> -v test1 -v test2
-    > ```
-    > 
-    > will run benchmark testsuites in *path1* with performance compared
-    > to history jobs under provided
+    
+    
+    ```bash
+    fate_test performance -i <path1 contains *benchmark.json> -v test1 -v test2
+    ```
+    
+    will run benchmark testsuites in *path1* with performance compared
+    to history jobs under provided
     tag(s)
 
 7.  skip-data:
     
-    ``` sourceCode bash
+    ```bash
     fate_test benchmark-quality -i <path1 contains *benchmark.json> --skip-data
     ```
     
@@ -469,7 +465,7 @@ fate_test benchmark-quality --help
 
 8.  disable-clean-data:
     
-    ``` sourceCode bash
+    ```bash
     fate_test suite -i <path1 contains *benchmark.json> --disable-clean-data
     ```
     
@@ -479,7 +475,7 @@ fate_test benchmark-quality --help
 
 9.  enable-clean-data:
     
-    ``` sourceCode bash
+    ```bash
     fate_test suite -i <path1 contains *benchmark.json> --enable-clean-data
     ```
     
@@ -487,7 +483,7 @@ fate_test benchmark-quality --help
     testsuites
 
 10. yes:
-    ``` sourceCode bash
+    ```bash
     fate_test benchmark-quality -i <path1 contains *benchmark.json> --yes
     ```
  
@@ -514,9 +510,8 @@ A benchmark testsuite includes the following elements:
         fate\_test.config; naming format is:
         "{role\_type}\_{role\_index}", index starts at 0
     
-    <!-- end list -->
     
-    ``` sourceCode json
+    ```json
     "data": [
         {
             "file": "examples/data/motor_hetero_host.csv",
@@ -540,9 +535,8 @@ A benchmark testsuite includes the following elements:
           - conf: path to job configuration file for script, should be
             relative to testsuite
         
-        <!-- end list -->
         
-        ``` sourceCode json
+        ```json
         "local": {
              "script": "./local-linr.py",
              "conf": "./linr_config.yaml"
@@ -560,9 +554,8 @@ A benchmark testsuite includes the following elements:
         their relative difference is smaller than *0.05 \*
         max(abs(local\_metric), abs(pipeline\_metric)*.
     
-    <!-- end list -->
     
-    ``` sourceCode json
+    ```json
     "linear_regression-regression": {
         "local": {
             "script": "./local-linr.py",
@@ -627,20 +620,20 @@ input argument.
 
 ## Benchmark Performance
 
-<span class="title-ref">Performance</span> sub-command is used to test
+`Performance` sub-command is used to test
 efficiency of designated FATE jobs.
 
 Example tests may be found [here](../../examples/benchmark_performance).
 
 ### command options
 
-``` sourceCode bash
+```bash
 fate_test performance --help
 ```
 
 1.  job-type:
     
-    ``` sourceCode bash
+    ```bash
     fate_test performance -t intersect
     ```
     
@@ -651,7 +644,7 @@ fate_test performance --help
 
 2.  include:
     
-    ``` sourceCode bash
+    ```bash
     fate_test performance -i <path1 contains *testsuite.json>; note that only one of ``task`` and ``include`` needs to be specified.
     ```
     
@@ -662,7 +655,7 @@ fate_test performance --help
 
 3.  replace:
     
-    ``` sourceCode bash
+    ```bash
     fate_test performance -i <path1 contains *testsuite.json> -r '{"maxIter": 5}'
     ```
     
@@ -673,7 +666,7 @@ fate_test performance --help
 
 4.  timeout:
     
-    ``` sourceCode bash
+    ```bash
     fate_test performance -i <path1 contains *testsuite.json> -m 3600
     ```
     
@@ -682,7 +675,7 @@ fate_test performance --help
 
 5.  max-iter:
     
-    ``` sourceCode bash
+    ```bash
     fate_test performance -i <path1 contains *testsuite.json> -e 5
     ```
     
@@ -691,7 +684,7 @@ fate_test performance --help
 
 6.  max-depth
     
-    ``` sourceCode bash
+    ```bash
     fate_test performance -i <path1 contains *testsuite.json> -d 4
     ```
     
@@ -700,7 +693,7 @@ fate_test performance --help
 
 7.  num-trees
     
-    ``` sourceCode bash
+    ```bash
     fate_test performance -i <path1 contains *testsuite.json> -nt 5
     ```
     
@@ -709,7 +702,7 @@ fate_test performance --help
 
 8.  task-cores
     
-    ``` sourceCode bash
+    ```bash
     fate_test performance -i <path1 contains *testsuite.json> -p 4
     ```
     
@@ -717,7 +710,7 @@ fate_test performance --help
 
 9.  update-job-parameters
     
-    ``` sourceCode bash
+    ```bash
     fate_test performance -i <path1 contains *testsuite.json> -uj {}
     ```
     
@@ -726,7 +719,7 @@ fate_test performance --help
 
 10. update-component-parameters
     
-    ``` sourceCode bash
+    ```bash
     fate_test performance -i <path1 contains *testsuite.json> -uc {}
     ```
     
@@ -735,7 +728,7 @@ fate_test performance --help
 
 11. storage-tag
     
-    ``` sourceCode bash
+    ```bash
     fate_test performance -i <path1 contains *testsuite.json> -s test
     ```
     
@@ -747,7 +740,7 @@ fate_test performance --help
 
 12. history-tag
     
-    ``` sourceCode bash
+    ```bash
     fate_test performance -i <path1 contains *testsuite.json> -v test1 -v test2
     ```
     
@@ -757,7 +750,7 @@ fate_test performance --help
 
 13. skip-data:
     
-    ``` sourceCode bash
+    ```bash
     fate_test performance -i <path1 contains *testsuite.json> --skip-data
     ```
     
@@ -766,7 +759,7 @@ fate_test performance --help
 
 14. disable-clean-data:
     
-    ``` sourceCode bash
+    ```bash
     fate_test performance -i <path1 contains *testsuite.json> --disable-clean-data
     ```
     
@@ -775,7 +768,7 @@ fate_test performance --help
 
 15. yes:
     
-    ``` sourceCode bash
+    ```bash
     fate_test performance -i <path1 contains *testsuite.json> --yes
     ```
     
@@ -783,19 +776,19 @@ fate_test performance --help
 
 ## data
 
-<span class="title-ref">Data</span> sub-command is used for upload,
+`Data` sub-command is used for upload,
 delete, and generate
     dataset.
 
 ### data command options
 
-``` sourceCode bash
+```bash
 fate_test data --help
 ```
 
 1.  include:
     
-    ``` sourceCode bash
+    ```bash
     fate_test data [upload|delete] -i <path1 contains *testsuite.json | *benchmark.json>
     ```
     
@@ -804,7 +797,7 @@ fate_test data --help
 
 2.  exclude:
     
-    ``` sourceCode bash
+    ```bash
     fate_test data [upload|delete] -i <path1 contains *testsuite.json | *benchmark.json> -e <path2 to exclude> -e <path3 to exclude> ...
     ```
     
@@ -814,7 +807,7 @@ fate_test data --help
 
 3.  glob:
     
-    ``` sourceCode bash
+    ```bash
     fate_test data [upload|delete] -i <path1 contains \*testsuite.json | \*benchmark.json> -g "hetero*"
     ```
     
@@ -824,13 +817,13 @@ fate_test data --help
 
 ### generate command options
 
-``` sourceCode bash
+```bash
 fate_test data --help
 ```
 
 1.  include:
     
-    ``` sourceCode bash
+    ```bash
     fate_test data generate -i <path1 contains *testsuite.json | *benchmark.json>
     ```
     
@@ -840,7 +833,7 @@ fate_test data --help
 
 2.  host-data-type:
     
-    ``` sourceCode bash
+    ```bash
     fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -ht {tag-value | dense | tag }
     ```
     
@@ -850,7 +843,7 @@ fate_test data --help
 
 3.  sparsity:
     
-    ``` sourceCode bash
+    ```bash
     fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -s 0.2
     ```
     
@@ -860,7 +853,7 @@ fate_test data --help
 
 4.  encryption-type:
     
-    ``` sourceCode bash
+    ```bash
     fate_test data generate -i <path1 contains *testsuite.json | *benchmark.json> -p {sha256 | md5}
     ```
     
@@ -870,7 +863,7 @@ fate_test data --help
 
 5.  match-rate:
     
-    ``` sourceCode bash
+    ```bash
     fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -m 1.0
     ```
     
@@ -880,7 +873,7 @@ fate_test data --help
 
 6.  guest-data-size:
     
-    ``` sourceCode bash
+    ```bash
     fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -ng 10000
     ```
     
@@ -890,7 +883,7 @@ fate_test data --help
 
 7.  host-data-size:
     
-    ``` sourceCode bash
+    ```bash
     fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -nh 10000
     ```
     
@@ -900,7 +893,7 @@ fate_test data --help
 
 8.  guest-feature-num:
     
-    ``` sourceCode bash
+    ```bash
     fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -fg 20
     ```
     
@@ -909,7 +902,7 @@ fate_test data --help
 
 9.  host-feature-num:
     
-    ``` sourceCode bash
+    ```bash
     fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -fh 200
     ```
     
@@ -918,7 +911,7 @@ fate_test data --help
 
 10. output-path:
     
-    ``` sourceCode bash
+    ```bash
     fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -o <path2>
     ```
     
@@ -927,7 +920,7 @@ fate_test data --help
 
 11. force:
     
-    ``` sourceCode bash
+    ```bash
     fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -o <path2> --force
     ```
     
@@ -938,7 +931,7 @@ fate_test data --help
 
 12. split-host:
     
-    ``` sourceCode bash
+    ```bash
     fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -nh 10000 --split-host
     ```
     
@@ -948,7 +941,7 @@ fate_test data --help
 
 13. upload-data
     
-    ``` sourceCode bash
+    ```bash
     fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> --upload-data
     ```
     
@@ -958,7 +951,7 @@ fate_test data --help
 
 14. remove-data
     
-    ``` sourceCode bash
+    ```bash
     fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> --remove-data
     ```
     
@@ -968,18 +961,10 @@ fate_test data --help
 
 15. use-local-data
     
-    ``` sourceCode bash
+    ```bash
     fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> --use-local-data
     ```
     
     (effective with `upload-data` set to True) will generate dataset in
     testsuites *path1* and upload data from local server; use this
     option if flow and data storage are deployed to the same server
-
-## full command options
-
-<div class="click">
-
-fate\_test.scripts.cli:cli
-
-</div>

@@ -7,7 +7,7 @@ Encrypt module provides some encryption methods for data. It contains
 [RSA](https://en.wikipedia.org/wiki/RSA_\(cryptosystem\)), and Fake
 method.
 
-## Paillier encryption
+### Paillier encryption
 
 Paillier encryption is a kind of addition homomorphic encryption which
 belongs to probabilistic asymmetric algorithm.
@@ -46,63 +46,7 @@ belongs to probabilistic asymmetric algorithm.
     
     Please refer to the links above with encrypt step for details.
 
-## Affine Homomorphic Encryption
-
-Affine homomorphic encryption is another kind of addition homomorphic
-encryption.
-
-  - keygen
-      
-      First generate a big integer $n$, then generate another three big
-      integers $$ a, a^{-1}, b, $$
-      where $(a, n) = 1$, and $a * a^{-1}\equiv 1\pmod{n}$.
-
-  - Encrypt
-    
-    $$ E(x) = (a * x + b)\pmod{n}, $$
-    recorded as pair $(E(x), 1)$, $E(x)$ is ciphertext, 1 means the bias $b$ is 1.
-  
-  - Addition and Scalar Multiplication
-    $$ E(x + y) = (E(x), 1) + (E(y), 1) = ((a * x + b) + (a * y + b), 1 + 1) = ((a * (x + y) + 2 * b), 2) = (E(x + y), 2) $$
-    $$ Scalar * E(x) = Scalar * (E(x), 1) = (E(scalar * x), scalar * 1) $$
-
-  - Decrypt  
-    Decrypt $(E(x), k)$:
-    remember that
-    $$ (E(x), k) = a * x + k * b $$
-    $$ \begin{align} Dec((E(x), k) &= a^{-1} * (E(x) - k * b) \pmod{n} \\
-                                   &= a^{-1} * (a * x) \pmod{n}\\
-                                   &= x \pmod{n} \end{align}$$
-
-## IterativeAffine Homomorphic Encryption
-
-Iterative Affine homomorphic encryption is another kind of addition
-homomorphic encryption.
-
-  - keygen  
-    Generate an key-tuple array, the element in the array is a tuple
-    $$ (a, a^{-1}, n), $$
-    where $(a, n) = 1$, $a^{-1} * a \equiv 1\pmod{n}$. The array is sorted by $n$.
-
-  - Encrypt  
-    $$ E(x) = (Enc_n \circ\dots\circ Enc_1)(x) $$
-    
-    where $Enc_r(x) = a_r * x % n_r. a_r$, $n_r$ is the r-th element
-    of key-tuple array.
-
-  - Addition and Scalar Multiplication
-    
-    $$ E(x + y) = E(x) + E(y) = (Enc_n \circ\dots\circ Enc_1)(x + y) $$
-
-    $$ \begin{align} scalar * E(x) &= scalar * ((Enc_n\circ\dots\circ Enc_1)(x))\\
-                                   &= (Enc_n\circ\dots\circ Enc_1)(scalar * x) \end{align}$$
-
-  - Decrypt  
-    $$ Dec(E(x)) = (Dec_1 \circ Dec_2 \circ \dots \circ Dec_n)(x) $$
-    
-    where $Dec_r(x) = a_r^{-1} * (a_r * x) \pmod{n_r} = x \pmod{n_r}$
-
-## RSA encryption
+### RSA encryption
 
 This encryption method generates three very large positive integers
 $e$, $d$ and $n$. Let $e$, $n$ as the public-key and $d$ as the
@@ -111,7 +55,7 @@ $$ enc(v) = v^e \pmod{n}, $$
 and the decrypt operator will do
 $$ dec(v) = enc(v) ^ d \pmod{n} $$
 
-## Fake encryption
+### Fake encryption
 
 It will do nothing and return input data during encryption and
 decryption.
@@ -127,7 +71,7 @@ It also supports adding salt and outputing results to base64 format.
 Diffie–Hellman key exchange is a method to exchange cryptographic keys
 over a public channel securely
 
-## Protocol
+### Protocol
 
 1.  keygen: generate big prime number $p$ and $g$, where $g$ is a
     primitive root modulo $p$
@@ -140,7 +84,7 @@ over a public channel securely
     $(g^{r_1})^{r_2}\pmod{p} = g^{r_1 r_2} \pmod{p}$;
     $g^{r_1 r_2}\pmod{p}$ is the share key.
 
-## How to use
+### How to use
 
 ```python
 from federatedml.secureprotol.diffie_hellman import DiffieHellman
@@ -153,14 +97,14 @@ key2 = DiffieHellman.decrypt(DiffieHellman.encrypt(g, r2, p), r1, p)
 assert key1 == key2
 ```
 
-# SecretShare MPC Protocol(SPDZ)
+## SecretShare MPC Protocol(SPDZ)
 
 SPDZ([Ivan Damg˚ard](https://eprint.iacr.org/2011/535.pdf),
 [Marcel Keller](https://eprint.iacr.org/2017/1230.pdf)) is a
 multiparty computation scheme based on somewhat homomorphic encryption
 (SHE).
 
-## How To Use
+### How To Use
 
   - init
   
@@ -281,20 +225,20 @@ multiparty computation scheme based on somewhat homomorphic encryption
     x.einsum(y, "ij,kj->ik")  # dot
     ```
 
-# Oblivious Transfer
+## Oblivious Transfer
 
 FATE implements Oblivious Transfer(OT) protocol based on work by Eduard
 Hauck and Julian Loss. For more information, please refer
 [here](https://eprint.iacr.org/2017/1011).
 
-# Feldman Verifiable secret sharing
+## Feldman Verifiable secret sharing
 
 Feldman Verifiable secret sharing
 [VSS](https://www.cs.umd.edu/~gasarch/TOPICS/secretsharing/feldmanVSS.pdf)
 is an information-theoretic secure method to share secrets between
 multi-parties.
 
-## Protocol
+### Protocol
 
 1.  System parameters
     
@@ -318,7 +262,7 @@ multi-parties.
 
 4.  Using Lagrange interpolation to recover secret.
 
-## How to use
+### How to use
 
 ```python
 from federatedml.secureprotol.secret_sharing.verifiable_secret_sharing.feldman_verifiable_secret_sharing import FeldmanVerifiableSecretSharing

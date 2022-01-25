@@ -54,10 +54,14 @@ def main(config="../../config.yaml", namespace=""):
     data_transform_0 = DataTransform(name="data_transform_0")
     data_transform_1 = DataTransform(name="data_transform_1")
 
-    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, output_format="dense")
+    data_transform_0.get_party_instance(
+        role='guest', party_id=guest).component_param(
+        with_label=True, output_format="dense")
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
-    data_transform_1.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, output_format="dense")
+    data_transform_1.get_party_instance(
+        role='guest', party_id=guest).component_param(
+        with_label=True, output_format="dense")
     data_transform_1.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     intersect_0 = Intersection(name="intersection_0")
@@ -74,7 +78,10 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(reader_0)
     pipeline.add_component(reader_1)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(data_transform_1, data=Data(data=reader_1.output.data), model=Model(data_transform_0.output.model))
+    pipeline.add_component(
+        data_transform_1, data=Data(
+            data=reader_1.output.data), model=Model(
+            data_transform_0.output.model))
     pipeline.add_component(intersect_0, data=Data(data=data_transform_0.output.data))
     pipeline.add_component(intersect_1, data=Data(data=data_transform_1.output.data))
     pipeline.add_component(union_0, data=Data(data=[intersect_0.output.data, intersect_1.output.data]))

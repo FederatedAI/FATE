@@ -110,7 +110,7 @@ class ColumnExpand(ModelBase):
             append_header=self.append_header,
             method=self.method,
             fill_value=[str(v) for v in self.fill_value],
-            need_run = self.need_run
+            need_run=self.need_run
         )
         return meta
 

@@ -84,7 +84,11 @@ def main():
     pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
     pipeline.add_component(intersection_1, data=Data(data=dataio_1.output.data))
     # set train & validate data of hetero_lr_0 component
-    pipeline.add_component(hetero_lr_0, data=Data(train_data=intersection_0.output.data, validate_data=intersection_1.output.data))
+    pipeline.add_component(
+        hetero_lr_0,
+        data=Data(
+            train_data=intersection_0.output.data,
+            validate_data=intersection_1.output.data))
 
     # compile pipeline once finished adding modules, this step will form conf and dsl files for running job
     pipeline.compile()

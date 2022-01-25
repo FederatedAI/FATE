@@ -177,7 +177,7 @@ class HeteroSBTFeatureTransformerGuest(HeteroSBTFeatureTransformerBase):
             feat_name_prefix = self.feature_title + '_' + str(tree_idx) + '_'
             sorted_leaf_ids = sorted(list(mapping.keys()))
             for leaf_id in sorted_leaf_ids:
-                header.append(feat_name_prefix+str(leaf_id))
+                header.append(feat_name_prefix + str(leaf_id))
 
         return header
 
@@ -192,8 +192,11 @@ class HeteroSBTFeatureTransformerGuest(HeteroSBTFeatureTransformerBase):
     def _transform_pred_result(self, data_inst, pred_result):
 
         self.leaf_mapping_list, self.vec_len = self._extract_leaf_mapping()
-        join_func = functools.partial(self.join_feature_with_label, vec_len=self.vec_len, leaf_mapping_list=self.leaf_mapping_list,
-                                      dense=self.dense_format)
+        join_func = functools.partial(
+            self.join_feature_with_label,
+            vec_len=self.vec_len,
+            leaf_mapping_list=self.leaf_mapping_list,
+            dense=self.dense_format)
         rs = data_inst.join(pred_result, join_func)
         # add schema for new data table
         rs.schema['header'] = self._generate_header(self.leaf_mapping_list)
@@ -264,4 +267,3 @@ class HeteroSBTFeatureTransformerHost(HeteroSBTFeatureTransformerBase):
 
     def transform(self, data_inst):
         self.fit(data_inst)
-

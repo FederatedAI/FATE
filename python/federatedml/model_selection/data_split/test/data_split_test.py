@@ -34,8 +34,8 @@ class TestDataSplit(unittest.TestCase):
         session.init("test_random_sampler_" + self.job_id)
         self.data_splitter = data_split.DataSplitter()
         param_dict = {"random_state": 42,
-                  "test_size": 0.2, "train_size": 0.6, "validate_size": 0.2,
-                  "stratified": True, "shuffle": True, "split_points": [0.5, 0.2]}
+                      "test_size": 0.2, "train_size": 0.6, "validate_size": 0.2,
+                      "stratified": True, "shuffle": True, "split_points": [0.5, 0.2]}
         params = DataSplitParam(**param_dict)
         self.data_splitter._init_model(params)
 
@@ -76,7 +76,7 @@ class TestDataSplit(unittest.TestCase):
         expect_freq_1 = 30
         expect_freq_2 = 15
 
-        freq_dict = data_split.DataSplitter.get_class_freq(y, label_names = [0, 1, 2])
+        freq_dict = data_split.DataSplitter.get_class_freq(y, label_names=[0, 1, 2])
 
         self.assertAlmostEqual(expect_freq_0, freq_dict[0])
         self.assertAlmostEqual(expect_freq_1, freq_dict[1])

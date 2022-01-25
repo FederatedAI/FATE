@@ -27,7 +27,7 @@ class TestInitialize(unittest.TestCase):
 
         eps = 0.00001
 
-        ## 1: alpha = 0, no regularization
+        # 1: alpha = 0, no regularization
         learning_rate = 0.2
         alpha = 0
         penalty = "L2"
@@ -40,7 +40,7 @@ class TestInitialize(unittest.TestCase):
         loss_norm = optimizer.loss_norm(model_weights, prev_model_weights_null)
         self.assertTrue(math.fabs(loss_norm) <= eps)  # == 0
 
-        ## 2
+        # 2
         alpha = 0.1
         init_params = [learning_rate, alpha, penalty, decay, decay_sqrt, mu]
         optimizer = _SgdOptimizer(*init_params)
@@ -48,7 +48,7 @@ class TestInitialize(unittest.TestCase):
         print("loss_norm = {}".format(loss_norm))
         self.assertTrue(math.fabs(loss_norm - 0.47661579875266186) <= eps)
 
-        ##3 
+        # 3
         loss_norm = optimizer.loss_norm(model_weights, prev_model_weights)
         print("loss_norm = {}".format(loss_norm))
         self.assertTrue(math.fabs(loss_norm - 0.47661583737200075) <= eps)

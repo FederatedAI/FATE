@@ -62,7 +62,7 @@ class Test(BaseFlowAPI):
                 },
                 "common": {
                     "secure_add_example_0": {
-                        "partition": 48,
+                        "partition": 4,
                         "data_num": 1000
                     }
                 }
@@ -74,9 +74,12 @@ class Test(BaseFlowAPI):
         }
         job_conf["role"]["guest"] = [guest_party_id]
         job_conf["role"]["host"] = [host_party_id]
+        job_conf["job_parameters"]["common"] = {
+            "task_cores": task_cores
+        }
         job_conf["job_parameters"]["role"] = {
-            "guest": {"0": {"user": guest_user_name, "task_cores": task_cores}},
-            "host": {"0": {"user": host_user_name, "task_cores": task_cores}}
+            "guest": {"0": {"user": guest_user_name}},
+            "host": {"0": {"user": host_user_name}}
         }
         return job_conf
 
@@ -104,4 +107,3 @@ class Test(BaseFlowAPI):
             with open(error_log, "r") as fin:
                 for line in fin:
                     yield line.strip()
-

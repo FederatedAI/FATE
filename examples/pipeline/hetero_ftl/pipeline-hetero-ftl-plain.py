@@ -46,7 +46,9 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
     data_transform_0 = DataTransform(name="data_transform_0")
-    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, output_format="dense")
+    data_transform_0.get_party_instance(
+        role='guest', party_id=guest).component_param(
+        with_label=True, output_format="dense")
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     hetero_ftl_0 = HeteroFTL(name='hetero_ftl_0',
@@ -67,24 +69,6 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.compile()
 
     pipeline.fit()
-
-    """
-    # predict
-
-    pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
-                     feed_dict={input_0:
-                                    {"guest":
-                                         {9999: guest_train_data},
-                                     "host": {
-                                         10000: host_train_data[0]
-                                     }
-                                     }
-                                })
-            
-
-    with open("output.pkl", "wb") as fout:
-        fout.write(pipeline.dump())
-    """
 
 
 if __name__ == "__main__":

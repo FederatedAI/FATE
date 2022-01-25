@@ -2,14 +2,14 @@
     "dsl_version": 2,
     "initiator": {
         "role": "guest",
-        "party_id": 10000
+        "party_id": 9999
     },
     "role": {
         "host": [
-            9999
+            10000
         ],
         "guest": [
-            10000
+            9999
         ]
     },
     "component_parameters": {
@@ -65,7 +65,7 @@
                     "roc"
                 ],
                 "encrypt_param": {
-                    "method": "iterativeAffine"
+                    "method": "paillier"
                 },
                 "guest_depth": 2,
                 "host_depth": 3,

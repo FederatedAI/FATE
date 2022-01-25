@@ -22,7 +22,7 @@ class PerformanceRecorder(object):
                                consts.RECALL,
                                consts.ACCURACY,
                                consts.KS
-                             ]
+                               ]
 
         self.larger_is_better = [consts.AUC,
                                  consts.R2_SCORE,

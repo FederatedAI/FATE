@@ -31,7 +31,7 @@ class Guest(object):
 
     def sync_select_cols(self, suffix=tuple()):
         host_select_col_names = self._host_select_cols_transfer.get(idx=-1, suffix=suffix)
-        LOGGER.debug(f"In sync_select_cols, host_names: {host_select_col_names}")
+        # LOGGER.debug(f"In sync_select_cols, host_names: {host_select_col_names}")
         host_selection_params = []
         for host_id, select_names in enumerate(host_select_col_names):
             host_selection_properties = SelectionProperties()
@@ -43,7 +43,7 @@ class Guest(object):
 
     def sync_select_results(self, host_selection_inner_params, suffix=tuple()):
         for host_id, host_select_results in enumerate(host_selection_inner_params):
-            LOGGER.debug("Send host selected result, left_col_names: {}".format(host_select_results.left_col_names))
+            # LOGGER.debug("Send host selected result, left_col_names: {}".format(host_select_results.left_col_names))
             self._result_left_cols_transfer.remote(host_select_results.left_col_names,
                                                    role=consts.HOST,
                                                    idx=host_id,

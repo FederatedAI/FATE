@@ -63,7 +63,7 @@ class TestModel(object):
             if stdout.get('retcode'):
                 self.error_log('job dsl generate: {}'.format(stdout.get('retmsg')) + '\n')
             if stdout.get('data')['components']['dataio_0']['input']['model'][
-                0] == 'pipeline.dataio_0.hetero_lr':
+                    0] == 'pipeline.dataio_0.hetero_lr':
                 return stdout.get('retcode')
         except Exception:
             return
@@ -688,7 +688,7 @@ def run_test_api(config_json, namespace):
     conf_file = get_dict_from_file(upload_file_path)
     serving_connect_bool = serving_connect(config_json['serving_setting'])
     remove_path = str(config_json['data_base_dir']).split("python")[
-                          0] + '/model_local_cache/guest#{}#arbiter-{}#guest-{}#host-{}#model/'.format(
+        0] + '/model_local_cache/guest#{}#arbiter-{}#guest-{}#host-{}#model/'.format(
         guest_party_id[0], arbiter_party_id[0], guest_party_id[0], host_party_id[0])
     max_iter = test_api.set_config(guest_party_id, host_party_id, arbiter_party_id, conf_path,
                                    config_json['component_name'])
@@ -760,9 +760,9 @@ def run_test_api(config_json, namespace):
         homo_deploy_kube_config_path = config_json.get('homo_deploy_kube_config_path')
         model.add_row(['model homo convert', judging_state(test_api.model_api('model/homo/convert'))])
         model.add_row(['model homo deploy',
-                      judging_state(test_api.model_api('model/homo/deploy',
-                                                       homo_deploy_path=homo_deploy_path,
-                                                       homo_deploy_kube_config_path=homo_deploy_kube_config_path))])
+                       judging_state(test_api.model_api('model/homo/deploy',
+                                                        homo_deploy_path=homo_deploy_path,
+                                                        homo_deploy_kube_config_path=homo_deploy_kube_config_path))])
     if not config_json.get('component_is_homo') and serving_connect_bool:
         model_load_conf = get_dict_from_file(model_file_path)
         model_load_conf["initiator"]["party_id"] = guest_party_id

@@ -4,7 +4,6 @@ from pipeline.param.base_param import BaseParam
 class SBTTransformerParam(BaseParam):
 
     def __init__(self, dense_format=True):
-
         """
         Args:
             dense_format: return data in dense vec, otherwise return in sparse vec

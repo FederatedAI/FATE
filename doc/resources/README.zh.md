@@ -1,4 +1,6 @@
-# 资料 | [English](./README.md)
+# 资料
+
+[English](./README.md)
 
 
 ## 里程碑 & 总览

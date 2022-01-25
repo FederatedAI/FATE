@@ -14,14 +14,14 @@
 #  limitations under the License.
 #
 
-from pipeline.component.component_base import Component
+from pipeline.component.component_base import FateComponent
 from pipeline.component.nn.models.sequantial import Sequential
 from pipeline.interface import Input
 from pipeline.interface import Output
 from pipeline.utils.tools import extract_explicit_parameter
 
 
-class HeteroNN(Component):
+class HeteroNN(FateComponent):
 
     @extract_explicit_parameter
     def __init__(self, task_type="classification", epochs=None, batch_size=-1, early_stop="diff",
@@ -35,7 +35,7 @@ class HeteroNN(Component):
         explicit_parameters["top_nn_define"] = None
         explicit_parameters["interactive_layer_define"] = None
         explicit_parameters["config_type"] = "keras"
-        Component.__init__(self, **explicit_parameters)
+        FateComponent.__init__(self, **explicit_parameters)
 
         if "name" in explicit_parameters:
             del explicit_parameters["name"]
@@ -95,7 +95,7 @@ class HeteroNN(Component):
         if hasattr(self, "_bottom_nn_model") and not self._bottom_nn_model.is_empty():
             self.bottom_nn_define = self._bottom_nn_model.get_network_config()
             self._component_param["bottom_nn_define"] = self.bottom_nn_define
-        
+
         if hasattr(self, "_top_nn_model") and not self._top_nn_model.is_empty():
             self.top_nn_define = self._top_nn_model.get_network_config()
             self._component_param["top_nn_define"] = self.top_nn_define
@@ -134,4 +134,3 @@ class HeteroNN(Component):
             del state["_top_nn_model"]
 
         return state
-

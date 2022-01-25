@@ -15,15 +15,15 @@
 #
 
 from pipeline.param.linear_regression_param import LinearParam
-from pipeline.component.component_base import Component
+from pipeline.component.component_base import FateComponent
 from pipeline.interface import Input
 from pipeline.interface import Output
 from pipeline.utils.logger import LOGGER
 
 
-class HeteroLinR(Component, LinearParam):
+class HeteroLinR(FateComponent, LinearParam):
     def __init__(self, **kwargs):
-        Component.__init__(self, **kwargs)
+        FateComponent.__init__(self, **kwargs)
 
         # print (self.name)
         LOGGER.debug(f"{self.name} component created")
@@ -34,5 +34,3 @@ class HeteroLinR(Component, LinearParam):
         self.input = Input(self.name, data_type="multi")
         self.output = Output(self.name)
         self._module_name = "HeteroLinR"
-
-

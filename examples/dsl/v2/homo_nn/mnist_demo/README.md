@@ -8,14 +8,15 @@
 python ../../../../scripts/download_mnist_data_as_images.py
 ```
 
-2. upload data
+2. bind local path
 
 ```bash
-python ../../../../../python/fate_flow/fate_flow_client.py -f upload -c upload.json
+a. replace $PROJECT_BASE in bind_local_path.json 
+b. flow table bind -c bind_local_path.json
 ```
 
 3. submit job
 
 ```bash
-python ../../../../../python/fate_flow/fate_flow_client.py -f submit_job -c mnist_conf.json -d mnist_dsl.json
+flow job submit -c -c mnist_conf.json -d mnist_dsl.json
 ```

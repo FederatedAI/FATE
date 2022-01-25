@@ -18,7 +18,7 @@ import random
 import functools
 import numpy as np
 from collections import Iterable
-from federatedml.secureprotol import PaillierEncrypt, IterativeAffineEncrypt
+from federatedml.secureprotol import PaillierEncrypt
 from federatedml.util import consts
 
 
@@ -112,7 +112,7 @@ class EncryptModeCalculator(object):
         if not raw_enc:
             return encrypter.recursive_encrypt
         else:
-            if type(self.encrypter) == PaillierEncrypt:
+            if isinstance(self.encrypter, PaillierEncrypt):
                 raw_en_func = functools.partial(self.encrypter.recursive_raw_encrypt, exponent=exponent)
             else:
                 raw_en_func = self.encrypter.recursive_raw_encrypt
@@ -122,14 +122,14 @@ class EncryptModeCalculator(object):
     def encrypt(self, input_data):
         """
         Encrypt data according to different mode
-        
-        Parameters 
-        ---------- 
-        input_data: DTable
 
-        Returns 
-        ------- 
-        new_data: DTable, encrypted result of input_data
+        Parameters
+        ----------
+        input_data: Table
+
+        Returns
+        -------
+        new_data: Table, encrypted result of input_data
 
         """
         encrypt_func = self.get_enc_func(self.encrypter, raw_enc=False)

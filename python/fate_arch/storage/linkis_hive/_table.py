@@ -27,7 +27,6 @@ from fate_arch.storage.linkis_hive._settings import (
 )
 
 
-
 class StorageTable(StorageTableBase):
     def __init__(
         self,
@@ -52,7 +51,7 @@ class StorageTable(StorageTableBase):
         sql = "select count(*) from {}".format(self._address.name)
         try:
             count = self.execute(sql)
-        except:
+        except BaseException:
             count = 0
         return count
 
@@ -84,6 +83,9 @@ class StorageTable(StorageTableBase):
     def _destroy(self):
         sql = "drop table {}.{}".format(self._address.database, self._address.name)
         return self.execute(sql)
+
+    def _save_as(self, address, name, namespace, partitions, **kwargs):
+        pass
 
     def execute(self, sql):
         exec_id = self._execute_entrance(sql)

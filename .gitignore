@@ -38,13 +38,14 @@ venv
 /audit/
 .vscode/*
 /eggroll/
-/fateboard/
+# /fateboard/
 /doc/federatedml_component/params/
 
 # build dir
 /FATE_install_*/
 /standalone_fate_install_*/
 /standalone_fate_docker_*/
+/docker_fate_base_*/
 
 # fate_test
 fate_test_config.yaml

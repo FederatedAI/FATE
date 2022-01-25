@@ -39,4 +39,3 @@ def _build_dropout(rate, noise_shape=None, seed=None, **kwargs):
 
 def _build_flatten(data_format=None, **kwargs):
     return layers.Flatten(data_format=data_format, **kwargs)
-

@@ -15,15 +15,15 @@
 #
 
 from pipeline.param.sample_param import SampleParam
-from pipeline.component.component_base import Component
+from pipeline.component.component_base import FateComponent
 from pipeline.interface import Input
 from pipeline.interface import Output
 from pipeline.utils.logger import LOGGER
 
 
-class FederatedSample(Component, SampleParam):
+class FederatedSample(FateComponent, SampleParam):
     def __init__(self, **kwargs):
-        Component.__init__(self, **kwargs)
+        FateComponent.__init__(self, **kwargs)
 
         # print (self.name)
         LOGGER.debug(f"{self.name} component created")
@@ -33,5 +33,3 @@ class FederatedSample(Component, SampleParam):
         self.input = Input(self.name)
         self.output = Output(self.name, has_model=False)
         self._module_name = "FederatedSample"
-
-

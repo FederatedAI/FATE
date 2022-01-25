@@ -55,7 +55,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
                                        batch_index, current_suffix, offset=None):
         '''
         Compute gradients:
-        gradient = (1/N) * \sum(exp(wx) - y) * x
+        gradient = (1/N) * \\sum(exp(wx) - y) * x
 
         Define exp(wx) as mu, named it as guest_forward or host_forward
         Define (mu-y) as fore_gradient
@@ -81,7 +81,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
 
         Parameters:
         ___________
-        data_instances: DTable, input data
+        data_instances: Table, input data
 
         model_weights: model weight object, stores intercept_ and coef_
 
@@ -136,8 +136,7 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
                                    n_iter_, batch_index):
         """
         Linear model gradient procedure
-        Step 1: get host forwards which differ from different algorithm
-                For Logistic Regression: forwards = wx
+        Step 1: get host forwards which differ for different algorithms
         """
         current_suffix = (n_iter_, batch_index)
 
@@ -169,7 +168,7 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
 
         Parameters:
         ___________
-        data_instances: DTable, input data
+        data_instances: Table, input data
 
         model_weights: model weight object, stores intercept_ and coef_
 

@@ -33,6 +33,7 @@ class HauckObliviousTransfer(ObliviousTransfer):
         from the CDH assumption."  2017
     Currently supports only 1-N scenarios
     """
+
     def __init__(self):
         super(HauckObliviousTransfer, self).__init__()
         self.tec_arithmetic = TwistedEdwardsCurveArithmetic()

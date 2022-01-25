@@ -36,6 +36,7 @@ class Backend(IntEnum):
         return self.value == self.SPARK_PULSAR
 """
 
+
 class StoreEngine(IntEnum):
     EGGROLL = 0
     HDFS = 1
@@ -76,7 +77,8 @@ class FederatedSchedulingStatusCode(object):
 class BaseStatus(object):
     @classmethod
     def status_list(cls):
-        return [cls.__dict__[k] for k in cls.__dict__.keys() if not callable(getattr(cls, k)) and not k.startswith("__")]
+        return [cls.__dict__[k] for k in cls.__dict__.keys() if not callable(getattr(cls, k))
+                and not k.startswith("__")]
 
     @classmethod
     def contains(cls, status):
@@ -171,3 +173,9 @@ class TagOperation(object):
     UPDATE = "update"
     DESTROY = "destroy"
     LIST = "list"
+
+
+class ProviderType(object):
+    FATE = "fate"
+    FATE_FLOW = "fate_flow"
+    FATE_SQL = "fate_sql"

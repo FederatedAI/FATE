@@ -48,8 +48,8 @@ def main(config="../../config.yaml", namespace=""):
     data_transform_0 = DataTransform(name="data_transform_0", output_format="sparse")
 
     data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True,
-                                                                              label_name="doctorco",
-                                                                              label_type="float")
+                                                                                      label_name="doctorco",
+                                                                                      label_type="float")
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")

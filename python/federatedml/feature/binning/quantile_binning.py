@@ -59,7 +59,7 @@ class QuantileBinning(BaseBinning):
 
         Parameters
         ----------
-        data_instances : DTable
+        data_instances : Table
             The input data
 
         Returns
@@ -84,7 +84,7 @@ class QuantileBinning(BaseBinning):
         percentile_rate = [i * percent_value for i in range(1, self.bin_num)]
         percentile_rate.append(1.0)
         is_sparse = data_overview.is_sparse_data(data_instances)
-    
+
         self._fit_split_point(data_instances, is_sparse, percentile_rate)
 
         self.fit_category_features(data_instances)
@@ -190,7 +190,7 @@ class QuantileBinning(BaseBinning):
 
         Parameters
         ----------
-        data_instances : DTable
+        data_instances : Table
             The input data
 
         cols_dict: dict

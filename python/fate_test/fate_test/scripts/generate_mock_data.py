@@ -11,6 +11,7 @@ import pandas as pd
 import numpy as np
 
 from fate_test._config import Config
+from fate_test._io import echo, LOGGER
 def import_fate():
     from fate_arch import storage
     from fate_flow.utils import data_utils
@@ -82,10 +83,11 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
     global big_data_dir
 
     def list_tag_value(feature_nums, head):
-        data = ''
-        for f in range(feature_nums):
-            data += head[f] + ':' + str(round(np.random.randn(), 2)) + ";"
-        return data[:-1]
+        # data = ''
+        # for f in range(feature_nums):
+        #     data += head[f] + ':' + str(round(np.random.randn(), 4)) + ";"
+        # return data[:-1]
+        return ";".join([head[k] + ':' + str(round(v, 4)) for k, v in enumerate(np.random.randn(feature_nums))])
 
     def list_tag(feature_nums, data_list):
         data = ''
@@ -133,13 +135,14 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
                                                 section_data_size * (batch + 1) + start_num)
                 slicing_data_size = section_data_size
             elif section_data_size * batch < data_num:
+                df_data_1 = pd.DataFrame(columns=head_1)
                 df_data_1["id"] = id_encryption(encryption_type, section_data_size * batch + start_num, end_num)
                 slicing_data_size = data_num - section_data_size * batch
             else:
                 break
             if label_flag:
                 df_data_1["y"] = [round(np.random.random()) for x in range(slicing_data_size)]
-            feature = np.random.randint(-100, 100, size=[slicing_data_size, feature_nums]) / 100
+            feature = np.random.randint(-10000, 10000, size=[slicing_data_size, feature_nums]) / 10000
             df_data_2 = pd.DataFrame(feature, columns=head_2)
             output_data = pd.concat([df_data_1, df_data_2], axis=1)
             output_data.to_csv(data_path, mode='a+', index=False, header=False)
@@ -170,26 +173,25 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
                                    partition, progress):
         def expand_id_range(k, v):
             if label_flag:
-                return [(id_encryption(encryption_type, ids, ids + 1),
-                         ",".join([str(round(np.random.random()))] + [str(i) for i in
-                                                                      np.random.randint(-100, 100, size=int(v)) / 100]))
+                return [(id_encryption(encryption_type, ids, ids + 1)[0],
+                         ",".join([str(round(np.random.random()))] + [str(round(i, 4)) for i in np.random.randn(v)]))
                         for ids in range(int(k), min(step + int(k), end_num))]
             else:
                 if data_type == 'tag':
                     valid_set = [x for x in range(2019120799, 2019120799 + round(feature_nums / sparsity))]
                     data = list(map(str, valid_set))
-                    return [(id_encryption(encryption_type, ids, ids + 1),
+                    return [(id_encryption(encryption_type, ids, ids + 1)[0],
                              ";".join([random.choice(data) for i in range(int(v))]))
                             for ids in range(int(k), min(step + int(k), data_num))]
 
                 elif data_type == 'tag_value':
-                    return [(id_encryption(encryption_type, ids, ids + 1)[0], ";".join(
-                                                [f"x{i}" + ':' + str(round(np.random.randn(), 2)) for i in
-                                                                             range(int(v))])) for ids in range(int(k), min(step + int(k), data_num))]
+                    return [(id_encryption(encryption_type, ids, ids + 1)[0],
+                             ";".join([f"x{i}" + ':' + str(round(i, 4)) for i in np.random.randn(v)]))
+                            for ids in range(int(k), min(step + int(k), data_num))]
                 elif data_type == 'dense':
                     return [(id_encryption(encryption_type, ids, ids + 1)[0],
-                                                     ",".join([str(i) for i in np.random.randint(-100, 100, size=int(v)) / 100]))
-                                                                                 for ids in range(int(k), min(step + int(k), data_num))]
+                             ",".join([str(round(i, 4)) for i in np.random.randn(v)]))
+                            for ids in range(int(k), min(step + int(k), data_num))]
         data_num = end_num - start_num
         step = 10000 if data_num > 10000 else int(data_num / 10)
         table_list = [(f"{i * step}", f"{feature_nums}") for i in range(int(data_num / step) + start_num)]
@@ -212,6 +214,12 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
         s_table = storage_session.get_table(namespace=table_meta.get_namespace(), name=table_meta.get_name())
         if s_table.count() == data_num:
             progress.set_time_percent(100)
+        from fate_flow.manager.data_manager import DataTableTracker
+        DataTableTracker.create_table_tracker(
+            table_name=table_name,
+            table_namespace=namespace,
+            entity_info={}
+        )
 
     def data_save(data_info, table_names, namespaces, partition_list):
         data_count = 0
@@ -231,7 +239,8 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
                 if force:
                     remove_file(out_path)
                 else:
-                    raise Exception('{} Already exists'.format(out_path))
+                    echo.echo('{} Already exists'.format(out_path))
+                    continue
             data_i = (idx + 1) / len(data_info)
             downLoad = f'dataget  [{"#" * int(24 * data_i)}{"-" * (24 - int(24 * data_i))}]  {idx + 1}/{len(data_info)}'
             start = time.time()
@@ -258,10 +267,13 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
                                                    namespaces[idx], label_flag, data_type, partition_list[idx], progress)
                 progress.set_switch(False)
                 time.sleep(1)
-                print()
             except Exception:
-               progress.set_switch(False)
-               raise Exception(f"Output file failed")
+                exception_id = uuid.uuid1()
+                echo.echo(f"exception_id={exception_id}")
+                LOGGER.exception(f"exception id: {exception_id}")
+            finally:
+                progress.set_switch(False)
+                echo.stdout_newline()
 
     def run(p):
         while p.get_switch():
@@ -302,3 +314,4 @@ def get_big_data(guest_data_size, host_data_size, guest_feature_num, host_featur
             data_save(data_info=date_set, table_names=table_name_list, namespaces=table_namespace_list, partition_list=partition_list)
     else:
         data_save(data_info=date_set, table_names=table_name_list, namespaces=table_namespace_list, partition_list=partition_list)
+        echo.echo(f'Data storage address, please check{big_data_dir}')

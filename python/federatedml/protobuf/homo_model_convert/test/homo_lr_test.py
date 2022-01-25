@@ -55,11 +55,11 @@ class TestHomoLRConverter(unittest.TestCase):
 
     def test_sklearn_converter(self):
         target_framework, model = model_convert(model_contents={
-                                                    'HomoLogisticRegressionParam': self.model_param,
-                                                    'HomoLogisticRegressionMeta': self.model_meta
-                                                },
-                                                module_name='HomoLR',
-                                                framework_name='sklearn')
+            'HomoLogisticRegressionParam': self.model_param,
+            'HomoLogisticRegressionMeta': self.model_meta
+        },
+            module_name='HomoLR',
+            framework_name='sklearn')
         self.assertTrue(target_framework == 'sklearn')
         self.assertTrue(isinstance(model, LogisticRegression))
         self.assertTrue(model.intercept_[0] == self.model_param.intercept)

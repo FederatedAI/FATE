@@ -63,7 +63,11 @@ def main(config="../../config.yaml", namespace=""):
     reader_1.get_party_instance(role='host', party_id=host).component_param(table=host_eval_data)
 
     # define DataTransform components
-    data_transform_0 = DataTransform(name="data_transform_0", with_label=True, output_format="dense", label_name='target')  # start component numbering at 0
+    data_transform_0 = DataTransform(
+        name="data_transform_0",
+        with_label=True,
+        output_format="dense",
+        label_name='target')  # start component numbering at 0
     data_transform_1 = DataTransform(name="data_transform_1")
 
     homo_onehot_param = {
@@ -111,7 +115,10 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(reader_1)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
     # set data_transform_1 to replicate model from data_transform_0
-    pipeline.add_component(data_transform_1, data=Data(data=reader_1.output.data), model=Model(data_transform_0.output.model))
+    pipeline.add_component(
+        data_transform_1, data=Data(
+            data=reader_1.output.data), model=Model(
+            data_transform_0.output.model))
 
     pipeline.add_component(homo_onehot_0, data=Data(data=data_transform_0.output.data))
     pipeline.add_component(homo_onehot_1, data=Data(data=data_transform_1.output.data),

@@ -101,7 +101,7 @@
                     "ks"
                 ],
                 "encrypt_param": {
-                    "method": "iterativeAffine"
+                    "method": "Paillier"
                 },
                 "early_stopping_rounds": 5,
                 "tree_param": {

@@ -71,7 +71,7 @@ class Component(BaseFlowAPI):
                     response = {'retcode': 0,
                                 'directory': extract_dir,
                                 'retmsg': 'download successfully, please check {} directory'.format(extract_dir)}
-                except:
+                except BaseException:
                     response = {'retcode': 100,
                                 'retmsg': 'download failed, please check if the parameters are correct'}
             else:

@@ -394,7 +394,8 @@ class InteractiveHostDenseLayer(object):
             mask_table = self.get_interactive_layer_drop_out_table(epoch, batch)
 
         if mask_table:
-            decrypted_guest_forward_with_noise = decrypted_guest_forward + (host_input * self.acc_noise).select_columns(mask_table)
+            decrypted_guest_forward_with_noise = decrypted_guest_forward + \
+                (host_input * self.acc_noise).select_columns(mask_table)
             self.mask_table = mask_table
         else:
             decrypted_guest_forward_with_noise = decrypted_guest_forward + (host_input * self.acc_noise)

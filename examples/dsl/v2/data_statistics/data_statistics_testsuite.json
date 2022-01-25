@@ -23,6 +23,22 @@
             "table_name": "breast_hetero_host",
             "namespace": "experiment",
             "role": "host_1"
+        },
+        {
+            "file": "examples/data/ionosphere_scale_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "ionosphere_scale_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/ionosphere_scale_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "ionosphere_scale_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
         }
     ],
     "tasks": {
@@ -37,6 +53,10 @@
         "data_statistics_partial_column_name": {
             "conf": "data_statistics_partial_column_name_conf.json",
             "dsl": "data_statistics_partial_column_name_dsl.json"
+        },
+        "data_statistics_partial_column_missing": {
+            "conf": "data_statistics_partial_column_missing_conf.json",
+            "dsl": "data_statistics_partial_column_missing_dsl.json"
         }
     }
 }

@@ -1,0 +1,43 @@
+{
+    "data": [
+        {
+            "file": "examples/data/dvisits_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "dvisits_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/dvisits_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "dvisits_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        }
+    ],
+    "tasks": {
+        "hetero_poisson_cv": {
+            "conf": "hetero_poisson_cv_conf.json",
+            "dsl": "hetero_poisson_cv_dsl.json"
+        },
+        "hetero_poisson": {
+            "conf": "hetero_poisson_conf.json",
+            "dsl": "hetero_poisson_dsl.json"
+        },
+        "poisson_predict": {
+            "deps": "hetero_poisson",
+            "conf": "hetero_poisson_predict_conf.json",
+            "dsl": "hetero_poisson_predict_dsl.json"
+        },
+        "hetero_poisson_validate": {
+            "conf": "hetero_poisson_validate_conf.json",
+            "dsl": "hetero_poisson_validate_dsl.json"
+        },
+        "hetero_poisson_warm_start": {
+            "conf": "hetero_poisson_warm_start_conf.json",
+            "dsl": "hetero_poisson_warm_start_dsl.json"
+        }
+    }
+}

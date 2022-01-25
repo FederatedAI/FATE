@@ -71,7 +71,7 @@ class StorageTable(StorageTableBase):
             # self.con.commit()
             ret = self._cur.fetchall()
             count = ret[0][0]
-        except:
+        except BaseException:
             count = 0
         return count
 
@@ -106,6 +106,11 @@ class StorageTable(StorageTableBase):
 
     def _destroy(self):
         sql = "drop table {}".format(self._address.name)
+        self._cur.execute(sql)
+        self._con.commit()
+
+    def _save_as(self, address, name, namespace, partitions=None, **kwargs):
+        sql = "create table {}.{} select * from {};".format(namespace, name, self._address.name)
         self._cur.execute(sql)
         self._con.commit()
 

@@ -1,4 +1,8 @@
+pip>=21
 apsw<3.10
+importlib_metadata<2.0.0
+markdown==3.3.5
+pkginfo==1.7.1
 beautifultable==1.0.0
 cachetools==3.0.0
 cloudpickle==0.6.1
@@ -21,8 +25,8 @@ PyMySQL==0.9.3
 pyspark==3.1.2
 python-dotenv==0.13.0
 redis==3.5.3
-urllib3==1.25.11
-requests==2.24.0
+urllib3==1.26.5
+requests<2.26.0
 requests_toolbelt==0.9.1
 ruamel-yaml==0.16.10
 scikit-learn==0.24.2
@@ -43,7 +47,6 @@ filelock==3.3.1
 pulsar-client==2.8.0
 fastavro==1.4.1
 lightgbm==3.3.1
-pip>=21
 
 # python 3.6
 backports-datetime-fromisoformat==1.0.0

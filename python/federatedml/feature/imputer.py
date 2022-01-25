@@ -75,7 +75,7 @@ class Imputer(object):
 
     @staticmethod
     def replace_missing_value_with_cols_transform_value_format(data, transform_list, missing_value_list,
-                                                                 output_format, skip_cols):
+                                                               output_format, skip_cols):
         _data = copy.deepcopy(data)
         replace_cols_index_list = []
         if isinstance(_data, Instance):
@@ -157,7 +157,7 @@ class Imputer(object):
             replace_method_per_col = {col_name: col_replace_method.get(col_name, replace_method) for col_name in header}
         else:
             replace_method_per_col = {col_name: replace_method for col_name in header}
-        skip_cols = [v for v in header if replace_method_per_col [v] is None]
+        skip_cols = [v for v in header if replace_method_per_col[v] is None]
 
         return replace_method_per_col, skip_cols
 
@@ -179,7 +179,8 @@ class Imputer(object):
         cols_transform_value = {}
         if isinstance(replace_value, list):
             if len(replace_value) != len(header):
-                raise ValueError(f"replace value {replace_value} length does not match with header {header}, please check.")
+                raise ValueError(
+                    f"replace value {replace_value} length does not match with header {header}, please check.")
         for i, feature in enumerate(header):
             if replace_method[feature] is None:
                 transform_value = 0
@@ -317,7 +318,7 @@ class Imputer(object):
         Apply imputer for input data
         Parameters
         ----------
-        data: DTable, each data's value should be list
+        data: Table, each data's value should be list
         replace_method: str, the strategy of imputer, like min, max, mean or designated and so on. Default None
         replace_value: str, if replace_method is designated, you should assign the replace_value which will be used to replace the value in imputer_value_list
         output_format: str, the output data format. The output data can be 'str', 'int', 'float'. Default origin, the original format as input data
@@ -357,7 +358,7 @@ class Imputer(object):
                                                                 col_replace_method=col_replace_method)
 
         self.cols_fit_impute_rate = self.__get_impute_rate_from_replace_data(process_data)
-        process_data = process_data.mapValues(lambda v:v[0])
+        process_data = process_data.mapValues(lambda v: v[0])
         process_data.schema = data.schema
 
         return process_data, cols_transform_value
@@ -367,7 +368,7 @@ class Imputer(object):
         Transform input data using Imputer with fit results
         Parameters
         ----------
-        data: DTable, each data's value should be list
+        data: Table, each data's value should be list
         transform_value:
         output_format: str, the output data format. The output data can be 'str', 'int', 'float'. Default origin, the original format as input data
 

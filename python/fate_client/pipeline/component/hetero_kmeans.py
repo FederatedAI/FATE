@@ -15,15 +15,15 @@
 #
 
 from pipeline.param.hetero_kmeans_param import KmeansParam
-from pipeline.component.component_base import Component
+from pipeline.component.component_base import FateComponent
 from pipeline.interface import Input
 from pipeline.interface import Output
 from pipeline.utils.logger import LOGGER
 
 
-class HeteroKmeans(Component, KmeansParam):
+class HeteroKmeans(FateComponent, KmeansParam):
     def __init__(self, **kwargs):
-        Component.__init__(self, **kwargs)
+        FateComponent.__init__(self, **kwargs)
 
         # print (self.name)
         LOGGER.debug(f"{self.name} component created")
@@ -34,5 +34,3 @@ class HeteroKmeans(Component, KmeansParam):
         self.input = Input(self.name, data_type="multi")
         self.output = Output(self.name, data_type="no_limit", output_unit=2)
         self._module_name = "HeteroKmeans"
-
-

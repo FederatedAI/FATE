@@ -36,6 +36,7 @@ class ComponentMeta(metaclass=ABCMeta):
 class Components(metaclass=ABCMeta):
     provider_version = None
     provider_name = None
+    provider_path = None
 
     @classmethod
     def get_names(cls) -> typing.Dict[str, dict]:

@@ -76,10 +76,11 @@ def run_test(includes, conf: Config, error_log_file):
                     else:
                         run_test(file_fullname_new)
 
+    global failed_count
     failed_count = 0
     fate_base = conf.fate_base
     ml_dir = os.path.join(fate_base, "python/federatedml")
-    PYTHONPATH = os.environ.get('PYTHONPATH') + ":"  + os.path.join(fate_base, "python")
+    PYTHONPATH = os.environ.get('PYTHONPATH') + ":" + os.path.join(fate_base, "python")
     os.environ['PYTHONPATH'] = PYTHONPATH
     if len(includes) == 0:
         traverse_folder(ml_dir)
@@ -89,4 +90,5 @@ def run_test(includes, conf: Config, error_log_file):
             traverse_folder(os.path.abspath(v))
 
     echo.echo(f"there are {failed_count} failed test")
-    print('Please check the error content: {}'.format(error_log(None)))
+    if failed_count > 0:
+        print('Please check the error content: {}'.format(error_log(None)))

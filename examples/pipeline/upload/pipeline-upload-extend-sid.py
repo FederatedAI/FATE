@@ -19,6 +19,7 @@ import os
 from pipeline.backend.pipeline import PipeLine
 from pipeline.utils.tools import load_job_config
 
+
 def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):

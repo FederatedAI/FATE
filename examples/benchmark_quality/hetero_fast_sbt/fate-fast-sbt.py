@@ -43,7 +43,6 @@ def main(config="../../config.yaml", param="./xgb_config_binary.yaml", namespace
     guest = parties.guest[0]
     host = parties.host[0]
 
-
     # data sets
     guest_train_data = {"name": param['data_guest_train'], "namespace": f"experiment{namespace}"}
     host_train_data = {"name": param['data_host_train'], "namespace": f"experiment{namespace}"}
@@ -77,7 +76,7 @@ def main(config="../../config.yaml", param="./xgb_config_binary.yaml", namespace
                                               num_trees=param['tree_num'],
                                               task_type=param['task_type'],
                                               objective_param={"objective": param['loss_func']},
-                                              encrypt_param={"method": "iterativeAffine"},
+                                              encrypt_param={"method": "Paillier"},
                                               tree_param={"max_depth": param['tree_depth']},
                                               validation_freqs=1,
                                               subsample_feature_rate=1,

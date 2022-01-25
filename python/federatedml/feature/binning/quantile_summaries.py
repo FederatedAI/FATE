@@ -62,10 +62,7 @@ class QuantileSummaries(object):
             self.missing_count += 1
             return
 
-        try:
-            x = float(x)
-        except ValueError:
-            return
+        x = float(x)
 
         self.head_sampled.append(x)
         if len(self.head_sampled) >= self.head_size:
@@ -100,6 +97,8 @@ class QuantileSummaries(object):
             new_stats = Stats(current_sample, 1, delta)
             new_sampled.append(new_stats)
             ops_idx += 1
+
+        new_sampled += self.sampled[sample_idx:]
         self.sampled = new_sampled
         self.head_sampled = []
         self.count = current_count
@@ -336,7 +335,7 @@ class SparseQuantileSummaries(QuantileSummaries):
             return ((self._total_count - self.missing_count) / self.count) * quantile
 
         return (quantile - self.zero_upper_bound + self.zero_lower_bound) / (
-                1 - self.zero_upper_bound + self.zero_lower_bound)
+            1 - self.zero_upper_bound + self.zero_lower_bound)
 
     @property
     def zero_lower_bound(self):

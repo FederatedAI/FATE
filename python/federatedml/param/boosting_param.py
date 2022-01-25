@@ -62,9 +62,9 @@ class ObjectiveParam(BaseParam):
 
         if task_type not in [consts.CLASSIFICATION, consts.REGRESSION]:
             self.objective = self.check_and_change_lower(self.objective,
-                                                   ["cross_entropy", "lse", "lae", "huber", "fair",
-                                                    "log_cosh", "tweedie"],
-                                                       descr)
+                                                         ["cross_entropy", "lse", "lae", "huber", "fair",
+                                                          "log_cosh", "tweedie"],
+                                                         descr)
 
         if task_type == consts.CLASSIFICATION:
             if self.objective != "cross_entropy":
@@ -72,8 +72,8 @@ class ObjectiveParam(BaseParam):
 
         elif task_type == consts.REGRESSION:
             self.objective = self.check_and_change_lower(self.objective,
-                                                               ["lse", "lae", "huber", "fair", "log_cosh", "tweedie"],
-                                                               descr)
+                                                         ["lse", "lae", "huber", "fair", "log_cosh", "tweedie"],
+                                                         descr)
 
             params = self.params
             if self.objective in ["huber", "fair", "tweedie"]:
@@ -136,8 +136,13 @@ class DecisionTreeParam(BaseParam):
         if is 'gain', feature_importances calculate by feature split gain.
         default: 'split'
 
-    use_missing: bool
-        use missing value in training process or not. default: False
+                             Due to the safety concern, we adjust training strategy of Hetero-SBT in FATE-1.8,
+                             When running Hetero-SBT, this parameter is now abandoned.
+                             In Hetero-SBT of FATE-1.8, guest side will compute split, gain of local features,
+                             and receive anonymous feature importance results from hosts. Hosts will compute split
+                             importance of local features.
+
+    use_missing: bool, accepted True, False only, use missing value in training process or not. default: False
 
     zero_as_missing: bool
         regard 0 as missing value or not,
@@ -151,7 +156,7 @@ class DecisionTreeParam(BaseParam):
 
     def __init__(self, criterion_method="xgboost", criterion_params=[0.1, 0], max_depth=3,
                  min_sample_split=2, min_impurity_split=1e-3, min_leaf_node=1,
-                 max_split_nodes=consts.MAX_SPLIT_NODES, feature_importance_type="split",
+                 max_split_nodes=consts.MAX_SPLIT_NODES, feature_importance_type='split',
                  n_iter_no_change=True, tol=0.001, min_child_weight=0,
                  use_missing=False, zero_as_missing=False, deterministic=False):
 
@@ -176,19 +181,19 @@ class DecisionTreeParam(BaseParam):
         descr = "decision tree param"
 
         self.criterion_method = self.check_and_change_lower(self.criterion_method,
-                                                             ["xgboost"],
-                                                             descr)
+                                                            ["xgboost"],
+                                                            descr)
 
         if len(self.criterion_params) == 0:
             raise ValueError("decisition tree param's criterio_params should be non empty")
 
-        if type(self.criterion_params) == list:
+        if isinstance(self.criterion_params, list):
             assert len(self.criterion_params) == 2, 'length of criterion_param should be 2: l1, l2 regularization ' \
                                                     'values are needed'
             self.check_nonnegative_number(self.criterion_params[0], 'l2 reg value')
             self.check_nonnegative_number(self.criterion_params[1], 'l1 reg value')
 
-        elif type(self.criterion_params) == dict:
+        elif isinstance(self.criterion_params, dict):
             assert 'l1' in self.criterion_params and 'l2' in self.criterion_params, 'l1 and l2 keys are needed in ' \
                                                                                     'criterion_params dict'
             self.criterion_params = [self.criterion_params['l2'], self.criterion_params['l1']]
@@ -215,7 +220,7 @@ class DecisionTreeParam(BaseParam):
                 self.min_leaf_node))
 
         if type(self.max_split_nodes).__name__ not in ["int", "long"] or self.max_split_nodes < 1:
-            raise ValueError("decision tree param's max_split_nodes {} not supported, " + \
+            raise ValueError("decision tree param's max_split_nodes {} not supported, " +
                              "should be positive integer between 1 and {}".format(self.max_split_nodes,
                                                                                   consts.MAX_SPLIT_NODES))
 
@@ -227,9 +232,8 @@ class DecisionTreeParam(BaseParam):
             raise ValueError("decision tree param's tol {} not supported, should be numeric".format(self.tol))
 
         self.feature_importance_type = self.check_and_change_lower(self.feature_importance_type,
-                                                                    ["split", "gain"],
-                                                                    descr)
-
+                                                                   ["split", "gain"],
+                                                                   descr)
         self.check_nonnegative_number(self.min_child_weight, 'min_child_weight')
         self.check_boolean(self.deterministic, 'deterministic')
 
@@ -272,7 +276,7 @@ class BoostingParam(BaseParam):
         Default: None
         """
 
-    def __init__(self,  task_type=consts.CLASSIFICATION,
+    def __init__(self, task_type=consts.CLASSIFICATION,
                  objective_param=ObjectiveParam(),
                  learning_rate=0.3, num_trees=5, subsample_feature_rate=1, n_iter_no_change=True,
                  tol=0.0001, bin_num=32,
@@ -313,7 +317,8 @@ class BoostingParam(BaseParam):
 
         if type(self.subsample_feature_rate).__name__ not in ["float", "int", "long"] or \
                 self.subsample_feature_rate < 0 or self.subsample_feature_rate > 1:
-            raise ValueError("boosting_core tree param's subsample_feature_rate should be a numeric number between 0 and 1")
+            raise ValueError(
+                "boosting_core tree param's subsample_feature_rate should be a numeric number between 0 and 1")
 
         if type(self.n_iter_no_change).__name__ != "bool":
             raise ValueError("boosting_core tree param's n_iter_no_change {} not supported, should be bool type".format(
@@ -339,7 +344,7 @@ class BoostingParam(BaseParam):
             raise ValueError("metrics should be a list")
 
         if self.random_seed is not None:
-            assert type(self.random_seed) == int and self.random_seed >= 0, 'random seed must be an integer >= 0'
+            assert isinstance(self.random_seed, int) and self.random_seed >= 0, 'random seed must be an integer >= 0'
 
         self.check_decimal_float(self.binning_error, descr)
 
@@ -347,7 +352,6 @@ class BoostingParam(BaseParam):
 
 
 class HeteroBoostingParam(BoostingParam):
-
     """
     Parameters
     ----------
@@ -476,27 +480,52 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
     complete_secure: bool
         if use complete_secure, when use complete secure, build first tree using only guest features
 
-    sparse_optimization: bool
-        Available when encrypted method is 'iterativeAffine'
-        An optimized mode for high-dimension, sparse data.
+    sparse_optimization:
+        this parameter is abandoned in FATE-1.7.1
 
     run_goss: bool
         activate Gradient-based One-Side Sampling, which selects large gradient and small
         gradient samples using top_rate and other_rate.
 
-    top_rate: float
-        the retain ratio of large gradient data, used when run_goss is True
+        top_rate: float, the retain ratio of large gradient data, used when run_goss is True
 
-    other_rate: float
-        the retain ratio of small gradient data, used when run_goss is True
+        other_rate: float, the retain ratio of small gradient data, used when run_goss is True
 
-    cipher_compress_error: {None}
-        This param is now abandoned
+        cipher_compress_error： This param is now abandoned
 
-    cipher_compress: bool
-        default is True, use cipher compressing to reduce computation cost and transfer cost
+        cipher_compress: bool, default is True, use cipher compressing to reduce computation cost and transfer cost
 
-    """
+        boosting_strategy：str
+
+            std: standard sbt setting
+
+            mix:  alternate using guest/host features to build trees. For example, the first 'tree_num_per_party' trees
+                  use guest features,
+                  the second k trees use host features, and so on
+
+            layered: only support 2 party, when running layered mode, first 'host_depth' layer will use host features,
+                     and then next 'guest_depth' will only use guest features
+
+        work_mode: str
+                   This parameter has the same function as boosting_strategy, but is deprecated
+
+        tree_num_per_party: int, every party will alternate build 'tree_num_per_party' trees until reach max tree num, this
+                            param is valid when boosting_strategy is mix
+
+        guest_depth: int, guest will build last guest_depth of a decision tree using guest features, is valid when boosting_strategy
+                     is layered
+
+        host_depth: int, host will build first host_depth of a decision tree using host features, is valid when work boosting_strategy
+                    layered
+
+
+        multi_mode: str, decide which mode to use when running multi-classification task:
+
+                    single_output standard gbdt multi-classification strategy
+
+                    multi_output every leaf give a multi-dimension predict, using multi_mode can save time
+                                 by learning a model with less trees.
+        """
 
     def __init__(self, tree_param: DecisionTreeParam = DecisionTreeParam(), task_type=consts.CLASSIFICATION,
                  objective_param=ObjectiveParam(),
@@ -509,8 +538,9 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                  complete_secure=False, metrics=None, use_first_metric_only=False, random_seed=100,
                  binning_error=consts.DEFAULT_RELATIVE_ERROR,
                  sparse_optimization=False, run_goss=False, top_rate=0.2, other_rate=0.1,
-                 cipher_compress_error=None, cipher_compress=True, new_ver=True,
-                 callback_param=CallbackParam()):
+                 cipher_compress_error=None, cipher_compress=True, new_ver=True, boosting_strategy=consts.STD_TREE,
+                 work_mode=None, tree_num_per_party=1, guest_depth=2, host_depth=3, callback_param=CallbackParam(),
+                 multi_mode=consts.SINGLE_OUTPUT):
 
         super(HeteroSecureBoostParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                      subsample_feature_rate, n_iter_no_change, tol, encrypt_param,
@@ -531,18 +561,23 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.cipher_compress_error = cipher_compress_error
         self.cipher_compress = cipher_compress
         self.new_ver = new_ver
+        self.boosting_strategy = boosting_strategy
+        self.work_mode = work_mode
+        self.tree_num_per_party = tree_num_per_party
+        self.guest_depth = guest_depth
+        self.host_depth = host_depth
         self.callback_param = copy.deepcopy(callback_param)
+        self.multi_mode = multi_mode
 
     def check(self):
 
         super(HeteroSecureBoostParam, self).check()
         self.tree_param.check()
-        if type(self.use_missing) != bool:
+        if not isinstance(self.use_missing, bool):
             raise ValueError('use missing should be bool type')
-        if type(self.zero_as_missing) != bool:
+        if not isinstance(self.zero_as_missing, bool):
             raise ValueError('zero as missing should be bool type')
         self.check_boolean(self.complete_secure, 'complete_secure')
-        self.check_boolean(self.sparse_optimization, 'sparse optimization')
         self.check_boolean(self.run_goss, 'run goss')
         self.check_decimal_float(self.top_rate, 'top rate')
         self.check_decimal_float(self.other_rate, 'other rate')
@@ -550,6 +585,18 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.check_positive_number(self.top_rate, 'top_rate')
         self.check_boolean(self.new_ver, 'code version switcher')
         self.check_boolean(self.cipher_compress, 'cipher compress')
+
+        if self.work_mode is not None:
+            self.boosting_strategy = self.work_mode
+
+        if self.multi_mode not in [consts.SINGLE_OUTPUT, consts.MULTI_OUTPUT]:
+            raise ValueError('unsupported multi-classification mode')
+        if self.multi_mode == consts.MULTI_OUTPUT:
+            if self.boosting_strategy != consts.STD_TREE:
+                raise ValueError('MO trees only works when boosting strategy is std tree')
+
+        if self.boosting_strategy not in [consts.STD_TREE, consts.LAYERED_TREE, consts.MIX_TREE]:
+            raise ValueError('unknown sbt boosting strategy{}'.format(self.boosting_strategy))
 
         for p in ["early_stopping_rounds", "validation_freqs", "metrics",
                   "use_first_metric_only"]:
@@ -579,85 +626,11 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         if self.top_rate + self.other_rate >= 1:
             raise ValueError('sum of top rate and other rate should be smaller than 1')
 
-        if self.sparse_optimization and self.cipher_compress:
-            raise ValueError('cipher compress is not supported in sparse optimization mode')
-
-        return True
-
-
-class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
-
-    def __init__(self, tree_param: DecisionTreeParam = DecisionTreeParam(), task_type=consts.CLASSIFICATION,
-                 objective_param=ObjectiveParam(),
-                 learning_rate=0.3, num_trees=5, subsample_feature_rate=1, n_iter_no_change=True,
-                 tol=0.0001, encrypt_param=EncryptParam(),
-                 bin_num=32,
-                 encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
-                 predict_param=PredictParam(), cv_param=CrossValidationParam(),
-                 validation_freqs=None, early_stopping_rounds=None, use_missing=False, zero_as_missing=False,
-                 complete_secure=False, tree_num_per_party=1, guest_depth=1, host_depth=1, work_mode='mix', metrics=None,
-                 sparse_optimization=False, random_seed=100, binning_error=consts.DEFAULT_RELATIVE_ERROR,
-                 cipher_compress_error=None, new_ver=True, run_goss=False, top_rate=0.2, other_rate=0.1,
-                 cipher_compress=True, callback_param=CallbackParam()):
-
-        """
-        Parameters
-        ----------
-        work_mode: {"mix", "layered"}
-            mix:  alternate using guest/host features to build trees. For example, the first 'tree_num_per_party' trees use guest features,
-                  the second k trees use host features, and so on
-            layered: only support 2 party, when running layered mode, first 'host_depth' layer will use host features,
-                     and then next 'guest_depth' will only use guest features
-        tree_num_per_party: int
-            every party will alternate build 'tree_num_per_party' trees until reach max tree num, this param is valid when work_mode is mix
-        guest_depth: int
-            guest will build last guest_depth of a decision tree using guest features, is valid when work mode is layered
-        host depth: int
-            host will build first host_depth of a decision tree using host features, is valid when work mode is layered
-
-        """
-
-        super(HeteroFastSecureBoostParam, self).__init__(tree_param, task_type, objective_param, learning_rate,
-                                                         num_trees, subsample_feature_rate, n_iter_no_change, tol,
-                                                         encrypt_param, bin_num, encrypted_mode_calculator_param,
-                                                         predict_param, cv_param, validation_freqs, early_stopping_rounds,
-                                                         use_missing, zero_as_missing, complete_secure, metrics=metrics,
-                                                         random_seed=random_seed,
-                                                         sparse_optimization=sparse_optimization,
-                                                         binning_error=binning_error,
-                                                         cipher_compress_error=cipher_compress_error,
-                                                         new_ver=new_ver,
-                                                         cipher_compress=cipher_compress,
-                                                         run_goss=run_goss, top_rate=top_rate, other_rate=other_rate,
-                                                         )
-
-        self.tree_num_per_party = tree_num_per_party
-        self.guest_depth = guest_depth
-        self.host_depth = host_depth
-        self.work_mode = work_mode
-        self.callback_param = copy.deepcopy(callback_param)
-
-    def check(self):
-
-        super(HeteroFastSecureBoostParam, self).check()
-        if type(self.guest_depth).__name__ not in ["int", "long"] or self.guest_depth <= 0:
-            raise ValueError("guest_depth should be larger than 0")
-        if type(self.host_depth).__name__ not in ["int", "long"] or self.host_depth <= 0:
-            raise ValueError("host_depth should be larger than 0")
-        if type(self.tree_num_per_party).__name__ not in ["int", "long"] or self.tree_num_per_party <= 0:
-            raise ValueError("tree_num_per_party should be larger than 0")
-
-        work_modes = [consts.MIX_TREE, consts.LAYERED_TREE]
-        if self.work_mode not in work_modes:
-            raise ValueError('only work_modes: {} are supported, input work mode is {}'.
-                             format(work_modes, self.work_mode))
-
         return True
 
 
 @deprecated_param(*homo_deprecated_param_list)
 class HomoSecureBoostParam(BoostingParam):
-
     """
     Parameters
     ----------
@@ -671,7 +644,8 @@ class HomoSecureBoostParam(BoostingParam):
                  tol=0.0001, bin_num=32, predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, use_missing=False, zero_as_missing=False, random_seed=100,
                  binning_error=consts.DEFAULT_RELATIVE_ERROR, backend=consts.DISTRIBUTED_BACKEND,
-                 callback_param=CallbackParam()):
+                 callback_param=CallbackParam(), multi_mode=consts.SINGLE_OUTPUT):
+
         super(HomoSecureBoostParam, self).__init__(task_type=task_type,
                                                    objective_param=objective_param,
                                                    learning_rate=learning_rate,
@@ -691,17 +665,20 @@ class HomoSecureBoostParam(BoostingParam):
         self.tree_param = copy.deepcopy(tree_param)
         self.backend = backend
         self.callback_param = copy.deepcopy(callback_param)
+        self.multi_mode = multi_mode
 
     def check(self):
 
         super(HomoSecureBoostParam, self).check()
         self.tree_param.check()
-        if type(self.use_missing) != bool:
+        if not isinstance(self.use_missing, bool):
             raise ValueError('use missing should be bool type')
-        if type(self.zero_as_missing) != bool:
+        if not isinstance(self.zero_as_missing, bool):
             raise ValueError('zero as missing should be bool type')
         if self.backend not in [consts.MEMORY_BACKEND, consts.DISTRIBUTED_BACKEND]:
             raise ValueError('unsupported backend')
+        if self.multi_mode not in [consts.SINGLE_OUTPUT, consts.MULTI_OUTPUT]:
+            raise ValueError('unsupported multi-classification mode')
 
         for p in ["validation_freqs", "metrics"]:
             # if self._warn_to_deprecate_param(p, "", ""):
@@ -720,5 +697,12 @@ class HomoSecureBoostParam(BoostingParam):
 
         if self._warn_to_deprecate_param("metrics", descr, "callback_param's 'metrics'"):
             self.callback_param.metrics = self.metrics
+
+        if self.multi_mode not in [consts.SINGLE_OUTPUT, consts.MULTI_OUTPUT]:
+            raise ValueError('unsupported multi-classification mode')
+
+        if self.multi_mode == consts.MULTI_OUTPUT:
+            if self.task_type == consts.REGRESSION:
+                raise ValueError('regression tasks not support multi-output trees')
 
         return True

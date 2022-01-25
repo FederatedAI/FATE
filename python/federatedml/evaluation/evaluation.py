@@ -101,7 +101,6 @@ class Evaluation(ModelBase):
         return split_result
 
     def _classification_and_regression_extract(self, data):
-
         """
         extract labels and predict results from data in classification/regression type format
         """
@@ -126,7 +125,6 @@ class Evaluation(ModelBase):
         return labels, pred_results
 
     def _clustering_extract(self, data):
-
         """
         extract data according to data format
         """
@@ -138,7 +136,7 @@ class Evaluation(ModelBase):
         if len(data[0][1]) == 3:
             # [int int] -> [true_label, predicted label] -> outer metric
             # [int np.array] - > [predicted label, distance] -> need no metric computation
-            if not (type(data[0][1][0]) == int and type(data[0][1][1]) == int):
+            if not (isinstance(data[0][1][0], int) and isinstance(data[0][1][1], int)):
                 return None, None, run_intra_metrics
 
         if len(data[0][1]) == 5:  # the input format is for intra metrics
@@ -178,7 +176,7 @@ class Evaluation(ModelBase):
                         if math.isinf(res):
                             res = float(-9999999)
                             LOGGER.info("res is inf, set to {}".format(res))
-                    except:
+                    except BaseException:
                         pass
 
                     eval_result[eval_metric].append(mode)
@@ -211,7 +209,7 @@ class Evaluation(ModelBase):
             return eval_result
 
         if not run_outer_metric:
-            no_label = (np.array(rs0) == None).all()
+            no_label = (np.array(rs0) is None).all()
             if no_label:
                 LOGGER.debug('no label found in clustering result, skip metric computation')
                 return eval_result
@@ -219,7 +217,7 @@ class Evaluation(ModelBase):
         for eval_metric in self.metrics:
 
             # if input format and required metrics matches ? XNOR
-            if not ((not (eval_metric in self.clustering_intra_metric_list) and not run_outer_metric) + \
+            if not ((not (eval_metric in self.clustering_intra_metric_list) and not run_outer_metric) +
                     ((eval_metric in self.clustering_intra_metric_list) and run_outer_metric)):
                 LOGGER.warning('input data format does not match current clustering metric: {}'.format(eval_metric))
                 continue
@@ -266,7 +264,7 @@ class Evaluation(ModelBase):
                 bin_predicted_label = 1 if str(multi_label) == str(predicted_label) else 0
                 bin_score = multi_score[multi_label]
                 neg_bin_score = 1 - bin_score
-                result_list = [bin_label, bin_predicted_label, bin_score, {1: bin_score,  0: neg_bin_score}, data_type]
+                result_list = [bin_label, bin_predicted_label, bin_score, {1: bin_score, 0: neg_bin_score}, data_type]
                 if multi_label not in binary_result:
                     binary_result[multi_label] = []
                 binary_result[multi_label].append((key, result_list))
@@ -300,7 +298,7 @@ class Evaluation(ModelBase):
                     continue
                 sample = eval_data.take(1)[0]
                 # label, predict_type, predict_score, predict_detail, type
-                if type(sample[1].features) != list or len(sample[1].features) != 5:
+                if not isinstance(sample[1].features, list) or len(sample[1].features) != 5:
                     raise ValueError('length of table header mismatch, expected length is 5, got:{},'
                                      'please check the input of the Evaluation Module, result of '
                                      'cross validation is not supported.'.format(sample))
@@ -610,7 +608,7 @@ class Evaluation(ModelBase):
     def __save_psi_table(self, metric, metric_res, metric_name, metric_namespace):
 
         psi_scores, total_psi, expected_interval, expected_percentage, actual_interval, actual_percentage, \
-        train_pos_perc, validate_pos_perc, intervals = metric_res[1]
+            train_pos_perc, validate_pos_perc, intervals = metric_res[1]
 
         extra_metas = {'psi_scores': list(np.round(psi_scores, self.round_num)),
                        'total_psi': round(total_psi, self.round_num),
@@ -686,7 +684,7 @@ class Evaluation(ModelBase):
             origin_model_name_list = split_list[:-2]  # remove ' "class" label_index'
             origin_model_name = ''
             for s in origin_model_name_list:
-                origin_model_name += (s+'_')
+                origin_model_name += (s + '_')
             origin_model_name = origin_model_name[:-1]
 
             for rs_dict in eval_rs:
@@ -700,10 +698,10 @@ class Evaluation(ModelBase):
                         callback_meta = validate_callback_meta
                     callback_meta[label][metric_name] = metric_rs[1]
 
-            self.tracker.set_metric_meta("train", model_name+'_'+'ovr',
+            self.tracker.set_metric_meta("train", model_name + '_' + 'ovr',
                                          MetricMeta(name=origin_model_name, metric_type='ovr',
                                                     extra_metas=train_callback_meta))
-            self.tracker.set_metric_meta("validate", model_name+'_'+'ovr',
+            self.tracker.set_metric_meta("validate", model_name + '_' + 'ovr',
                                          MetricMeta(name=origin_model_name, metric_type='ovr',
                                                     extra_metas=validate_callback_meta))
 
@@ -736,8 +734,7 @@ class Evaluation(ModelBase):
 
                     if single_val_metric is not None:
                         self.__save_single_value(single_val_metric, metric_name=data_type,
-                                                 metric_namespace=metric_namespace
-                                                 , eval_name=metric)
+                                                 metric_namespace=metric_namespace, eval_name=metric)
                         collect_dict[metric] = single_val_metric
                         # update pipeline summary
                         self.__update_summary(data_type, metric_namespace, metric, single_val_metric)

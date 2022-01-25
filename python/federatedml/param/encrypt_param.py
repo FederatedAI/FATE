@@ -26,7 +26,7 @@ class EncryptParam(BaseParam):
 
     Parameters
     ----------
-    method : {'Paillier', 'IterativeAffine', 'RandomIterativeAffine'}
+    method : {'Paillier'}
         If method is 'Paillier', Paillier encryption will be used for federated ml.
         To use non-encryption version in HomoLR, set this to None.
         For detail of Paillier encryption, please check out the paper mentioned in README file.
@@ -52,10 +52,10 @@ class EncryptParam(BaseParam):
             user_input = self.method.lower()
             if user_input == "paillier":
                 self.method = consts.PAILLIER
-            elif user_input == "iterativeaffine":
-                self.method = consts.ITERATIVEAFFINE
-            elif user_input == "randomiterativeaffine":
-                self.method = consts.RANDOM_ITERATIVEAFFINE
+            elif user_input == consts.ITERATIVEAFFINE.lower() or user_input == consts.RANDOM_ITERATIVEAFFINE:
+                LOGGER.warning('Iterative Affine and Random Iterative Affine are not supported in version>=1.7.1 '
+                               'due to safety concerns, encrypt method will be reset to Paillier')
+                self.method = consts.PAILLIER
             else:
                 raise ValueError(
                     "encrypt_param's method {} not supported".format(user_input))

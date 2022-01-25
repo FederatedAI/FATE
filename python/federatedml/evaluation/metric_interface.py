@@ -1,10 +1,8 @@
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
-
 import numpy as np
-from federatedml.util import consts
 import logging
-from federatedml.util import LOGGER
+from federatedml.util import consts
 from federatedml.evaluation.metrics import classification_metric
 from federatedml.evaluation.metrics import regression_metric
 from federatedml.evaluation.metrics import clustering_metric
@@ -38,7 +36,7 @@ class MetricInterface(object):
         elif self.eval_type == consts.ONE_VS_REST:
             try:
                 score = roc_auc_score(labels, pred_scores)
-            except:
+            except BaseException:
                 score = 0  # in case all labels are 0 or 1
                 logging.warning("all true labels are 0/1 when running ovr AUC")
             return score
@@ -177,7 +175,6 @@ class MetricInterface(object):
             return fpr, tpr, thresholds, cuts
 
     def ks(self, labels, pred_scores):
-
         """
         Compute Kolmogorov-Smirnov
         Parameters
@@ -193,7 +190,7 @@ class MetricInterface(object):
         if self.eval_type == consts.ONE_VS_REST:
             try:
                 rs = classification_metric.KS().compute(labels, pred_scores)
-            except:
+            except BaseException:
                 rs = [0, [0], [0], [0], [0]]   # in case all labels are 0 or 1
                 logging.warning("all true labels are 0/1 when running ovr KS")
             return rs
@@ -315,7 +312,6 @@ class MetricInterface(object):
             logging.warning("error:can not find classification type:".format(self.eval_type))
 
     def f1_score(self, labels, pred_scores):
-
         """
         compute f1_score for binary classification result
         """
@@ -327,7 +323,6 @@ class MetricInterface(object):
             logging.warning('error: f-score metric is for binary classification only')
 
     def confusion_mat(self, labels, pred_scores):
-
         """
         compute confusion matrix
         """
@@ -335,10 +330,10 @@ class MetricInterface(object):
         if self.eval_type == consts.BINARY:
 
             sorted_labels, sorted_scores = classification_metric.sort_score_and_label(labels, pred_scores)
-            score_threshold, cuts = classification_metric.ThresholdCutter.cut_by_step(sorted_scores, steps=0.01)
-            score_threshold.append(0)
+            _, cuts = classification_metric.ThresholdCutter.cut_by_step(sorted_scores, steps=0.01)
+            fixed_interval_threshold = classification_metric.ThresholdCutter.fixed_interval_threshold()
             confusion_mat = classification_metric.ConfusionMatrix.compute(sorted_labels, sorted_scores,
-                                                                          score_threshold,
+                                                                          fixed_interval_threshold,
                                                                           ret=['tp', 'fp', 'fn', 'tn'])
 
             confusion_mat['tp'] = self.__to_int_list(confusion_mat['tp'])
@@ -346,7 +341,7 @@ class MetricInterface(object):
             confusion_mat['fn'] = self.__to_int_list(confusion_mat['fn'])
             confusion_mat['tn'] = self.__to_int_list(confusion_mat['tn'])
 
-            return confusion_mat, cuts, score_threshold
+            return confusion_mat, cuts, fixed_interval_threshold
         else:
             logging.warning('error: f-score metric is for binary classification only')
 
@@ -364,19 +359,18 @@ class MetricInterface(object):
         if self.eval_type == consts.BINARY:
             psi_computer = classification_metric.PSI()
             psi_scores, total_psi, expected_interval, expected_percentage, actual_interval, actual_percentage, \
-            train_pos_perc, validate_pos_perc, intervals = psi_computer.compute(train_scores, validate_scores,
-                                                                                  debug=debug, str_intervals=True,
-                                                                                  round_num=6, train_labels=train_labels
-                                                                                  ,validate_labels=validate_labels)
+                train_pos_perc, validate_pos_perc, intervals = psi_computer.compute(train_scores, validate_scores,
+                                                                                    debug=debug, str_intervals=True,
+                                                                                    round_num=6, train_labels=train_labels, validate_labels=validate_labels)
 
-            len_list = np.array([len(psi_scores), len(expected_interval), len(expected_percentage), len(actual_interval)
-                                 , len(actual_percentage), len(intervals)])
+            len_list = np.array([len(psi_scores), len(expected_interval), len(expected_percentage),
+                                 len(actual_interval), len(actual_percentage), len(intervals)])
 
             assert (len_list == len(psi_scores)).all()
 
             return list(psi_scores), total_psi, self.__to_int_list(expected_interval), list(expected_percentage), \
-                   self.__to_int_list(actual_interval), list(actual_percentage), list(train_pos_perc), \
-                   list(validate_pos_perc), intervals
+                self.__to_int_list(actual_interval), list(actual_percentage), list(train_pos_perc), \
+                list(validate_pos_perc), intervals
 
         else:
             logging.warning('error: psi metric is for binary classification only')
@@ -449,7 +443,7 @@ class MetricInterface(object):
         Parameters
 
         """
-        ## process data from evaluation
+        # process data from evaluation
         return clustering_metric.DaviesBouldinIndex().compute(cluster_avg_intra_dist, cluster_inter_dist)
 
     @staticmethod
@@ -466,4 +460,3 @@ class MetricInterface(object):
 
         """
         return clustering_metric.DistanceMeasure().compute(cluster_avg_intra_dist, cluster_inter_dist, max_radius)
-

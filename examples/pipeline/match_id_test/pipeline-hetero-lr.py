@@ -34,7 +34,6 @@ def main(config="../../config.yaml", namespace=""):
     host = parties.host[0]
     arbiter = parties.arbiter[0]
 
-
     guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment_sid{namespace}"}
     host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment_sid{namespace}"}
 

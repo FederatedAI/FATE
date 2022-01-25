@@ -167,7 +167,7 @@ def client_fit(self, data_inst):
 
     while self.aggregate_iteration_num + 1 < self.max_aggregate_iteration_num:
         # update iteration num
-        self.aggregate_iteration_num += 1 
+        self.aggregate_iteration_num += 1
 
         self.callback_list.on_epoch_begin(self.aggregate_iteration_num)
         LOGGER.info(f"start {self.aggregate_iteration_num}_th aggregation")
@@ -268,6 +268,7 @@ def client_get_meta(self):
     meta_pb = nn_model_meta_pb2.NNModelMeta()
     meta_pb.params.CopyFrom(self.model_param.generate_pb())
     meta_pb.aggregate_iter = self.aggregate_iteration_num
+    meta_pb.module = 'HomoNN'
     return meta_pb
 
 

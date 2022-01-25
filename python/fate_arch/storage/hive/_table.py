@@ -66,7 +66,7 @@ class StorageTable(StorageTableBase):
             self._con.commit()
             ret = self._cur.fetchall()
             count = ret[0][0]
-        except:
+        except BaseException:
             count = 0
         return count
 
@@ -84,7 +84,6 @@ class StorageTable(StorageTableBase):
         data = self.execute(sql)
         for line in data:
             yield hive_utils.read_line(line)
-
 
     def _put_all(self, kv_list, **kwargs):
         id_name, feature_name_list, id_delimiter = self.get_id_feature_name()
@@ -119,6 +118,10 @@ class StorageTable(StorageTableBase):
 
     def _destroy(self):
         sql = "drop table {}".format(self._name)
+        return self.execute(sql)
+
+    def _save_as(self, address, name, namespace, partitions=None, **kwargs):
+        sql = "create table {}.{} like {}.{};".format(namespace, name, self._namespace, self._name)
         return self.execute(sql)
 
     def check_address(self):

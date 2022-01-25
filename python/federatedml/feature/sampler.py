@@ -59,7 +59,7 @@ class RandomSampler(object):
 
         Parameters
         ----------
-        data_inst : DTable
+        data_inst : Table
             The input data
 
         sample_ids : None or list
@@ -68,7 +68,7 @@ class RandomSampler(object):
 
         Returns
         -------
-        new_data_inst: DTable
+        new_data_inst: Table
             the output sample data, same format with input
 
         sample_ids: list, return only if sample_ids is None
@@ -92,7 +92,7 @@ class RandomSampler(object):
 
         Parameters
         ----------
-        data_inst : DTable
+        data_inst : Table
             The input data
 
         sample_ids : None or list
@@ -101,7 +101,7 @@ class RandomSampler(object):
 
         Returns
         -------
-        new_data_inst: DTable
+        new_data_inst: Table
             the output sample data, same format with input
 
         sample_ids: list, return only if sample_ids is None
@@ -218,7 +218,7 @@ class StratifiedSampler(object):
 
         Parameters
         ----------
-        data_inst : DTable
+        data_inst : Table
             The input data
 
         sample_ids : None or list
@@ -227,7 +227,7 @@ class StratifiedSampler(object):
 
         Returns
         -------
-        new_data_inst: DTable
+        new_data_inst: Table
             the output sample data, same format with input
 
         sample_ids: list, return only if sample_ids is None
@@ -245,7 +245,7 @@ class StratifiedSampler(object):
     def __sample(self, data_inst, sample_ids=None):
         """
         Stratified sample method, a line's occur probability is decide by fractions
-            Input should be DTable, every line should be an instance object with label
+            Input should be Table, every line should be an instance object with label
             To use this method, a list of ratio should be give, and the list length
                 equals to the number of distinct labels
             support down sample and up sample
@@ -255,7 +255,7 @@ class StratifiedSampler(object):
 
         Parameters
         ----------
-        data_inst : DTable
+        data_inst : Table
             The input data
 
         sample_ids : None or list
@@ -264,7 +264,7 @@ class StratifiedSampler(object):
 
         Returns
         -------
-        new_data_inst: DTable
+        new_data_inst: Table
             the output sample data, sample format with input
 
         sample_ids: list, return only if sample_ids is None
@@ -313,7 +313,12 @@ class StratifiedSampler(object):
 
                 random.shuffle(sample_ids)
 
-                callback(self.tracker, "stratified", callback_sample_metrics, callback_original_metrics, self._summary_buf)
+                callback(
+                    self.tracker,
+                    "stratified",
+                    callback_sample_metrics,
+                    callback_original_metrics,
+                    self._summary_buf)
 
             sample_dtable = session.parallelize(zip(sample_ids, range(len(sample_ids))),
                                                 include_key=True,
@@ -370,7 +375,12 @@ class StratifiedSampler(object):
 
                 random.shuffle(sample_ids)
 
-                callback(self.tracker, "stratified", callback_sample_metrics, callback_original_metrics, self._summary_buf)
+                callback(
+                    self.tracker,
+                    "stratified",
+                    callback_sample_metrics,
+                    callback_original_metrics,
+                    self._summary_buf)
 
             new_data = []
             for i in range(len(sample_ids)):
@@ -438,7 +448,7 @@ class Sampler(ModelBase):
 
         Parameters
         ----------
-        data_inst : DTable
+        data_inst : Table
             The input data
 
         sample_ids : None or list
@@ -447,7 +457,7 @@ class Sampler(ModelBase):
 
         Returns
         -------
-        sample_data: DTable
+        sample_data: Table
             the output sample data, same format with input
 
 
@@ -459,7 +469,7 @@ class Sampler(ModelBase):
         try:
             if len(sample_data) == 2:
                 sample_data[0].schema = ori_schema
-        except:
+        except BaseException:
             sample_data.schema = ori_schema
 
         return sample_data
@@ -487,7 +497,7 @@ class Sampler(ModelBase):
 
         Parameters
         ----------
-        data_inst : DTable
+        data_inst : Table
             The input data
 
         task_type : "homo" or "hetero"
@@ -504,7 +514,7 @@ class Sampler(ModelBase):
 
         Returns
         -------
-        sample_data_inst: DTable
+        sample_data_inst: Table
             the output sample data, same format with input
 
         """
@@ -598,5 +608,3 @@ def callback(tracker, method, callback_metrics, other_metrics=None, summary_dict
         summary_dict["original_count"] = {}
         for sample_metric in other_metrics:
             summary_dict["original_count"][sample_metric.key] = sample_metric.value
-
-

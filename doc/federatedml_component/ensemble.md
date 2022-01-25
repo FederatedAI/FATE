@@ -5,8 +5,7 @@
 Gradient Boosting Decision Tree(GBDT) is a widely used statistic model
 for classification and regression problems. FATE provides a novel
 lossless privacy-preserving tree-boosting system known as
-[\[SecureBoost: A Lossless Federated Learning
-Framework\].](https://arxiv.org/abs/1901.08755)
+[SecureBoost: A Lossless Federated Learning Framework.](https://arxiv.org/abs/1901.08755)
 
 This federated learning system allows a learning process to be jointly
 conducted over multiple parties with partially common user samples but
@@ -17,25 +16,24 @@ information on private data.
 
 The following figure shows the proposed Federated SecureBoost framework.
 
-![Figure 1: Framework of Federated
-SecureBoost](../images/secureboost.png)
+![Figure 1: Framework of Federated SecureBoost](../images/secureboost.png)
 
   - Active Party
 
-> We define the active party as the data provider who holds both a data
-> matrix and the class label. Since the class label information is
-> indispensable for supervised learning, there must be an active party
-> with access to the label y. The active party naturally takes the
-> responsibility as a dominating server in federated learning.
+    > We define the active party as the data provider who holds both a data
+    > matrix and the class label. Since the class label information is
+    > indispensable for supervised learning, there must be an active party
+    > with access to the label y. The active party naturally takes the
+    > responsibility as a dominating server in federated learning.
 
   - Passive Party
 
-> We define the data provider which has only a data matrix as a passive
-> party. Passive parties play the role of clients in the federated
-> learning setting. They are also in need of building a model to predict
-> the class label y for their prediction purposes. Thus they must
-> collaborate with the active party to build their model to predict y
-> for their future users using their own features.
+    > We define the data provider which has only a data matrix as a passive
+    > party. Passive parties play the role of clients in the federated
+    > learning setting. They are also in need of building a model to predict
+    > the class label y for their prediction purposes. Thus they must
+    > collaborate with the active party to build their model to predict y
+    > for their future users using their own features.
 
 We align the data samples under an encryption scheme by using the
 privacy-preserving protocol for inter-database intersections to find the
@@ -47,8 +45,8 @@ hessian directly. We use a "XGBoost" like tree-learning algorithm. In
 order to keep gradient and hessian confidential, we require that the
 active party encrypt gradient and hessian before sending them to passive
 parties. After encrypted the gradient and hessian, active party will
-send the encrypted \[\[gradient\]\] and \[\[hessian\]\] to passive
-party. Each passive party uses \[\[gradient\]\] and \[\[hessian\]\] to
+send the encrypted [gradient] and [hessian] to passive
+party. Each passive party uses [gradient] and [hessian] to
 calculate the encrypted feature histograms, then encodes the (feature,
 split\_bin\_val) and constructs a (feature, split\_bin\_val) lookup
 table; it then sends the encoded value of (feature, split\_bin\_val)
@@ -59,8 +57,7 @@ party, the active party sends the encoded (feature, split\_bin\_val) to
 back to the owner party. The following figure shows the process of
 finding split in federated tree building.
 
-![Figure 2: Process of Federated Split
-Finding](../images/split_finding.png)
+![Figure 2: Process of Federated Split Finding](../images/split_finding.png)
 
 The parties continue the split finding process until tree construction
 finishes. Each party only knows the detailed split information of the
@@ -79,8 +76,7 @@ which branch should the current node goes to. This process stops until
 the current node is a leave. The following figure shows the federated
 inference process.
 
-![Figure 4: Process of Federated
-Inference](../images/federated_inference.png)
+![Figure 4: Process of Federated Inference](../images/federated_inference.png)
 
 By following the SecureBoost framework, multiple parties can jointly
 build tree ensemble model without leaking privacy in federated learning.
@@ -124,9 +120,8 @@ Hetero SecureBoost supports the following applications.
   - Support missing value in train and predict process
   - Support evaluate training and validate data during training process
   - Support another homomorphic encryption method called "Iterative
-    Affine" since FATE-1.1
   - Support early stopping in FATE-1.4, to use early stopping, see
-    [\[Boosting Tree Param\]](../../python/federatedml/param/boosting_param.py)
+    [Boosting Tree Param](../../python/federatedml/param/boosting_param.py)
   - Support sparse data optimization in FATE-1.5. You can activate it by
     setting "sparse\_optimization" as true in conf. Notice that this
     feature may increase memory consumption. See
@@ -146,8 +141,7 @@ without leaking any data sample.
 The figure below shows the overall framework of the homo SecureBoost
 algorithm.
 
-![Figure 1: Framework of Homo
-SecureBoost](../images/homo_framework.png)
+![Figure 1: Framework of Homo SecureBoost](../images/homo_framework.png)
 
   - Client  
     Clients are the participants who hold their labeled samples. Samples
@@ -172,32 +166,30 @@ The key steps of learning a Homo SecureBoost model are described below:
     apply homo feature binning to get binning points for all features
     and then to pre-process local samples.
 2.  Clients and Server build a decision tree collaboratively:
-    1)  Clients compute local histograms for cur leaf nodes (left nodes
-        or root node)
     
-    2)  The server applies secure aggregations: every local histogram
-        plus a random number, and these numbers can cancel each other
-        out. By this way server can get the global histogram without
-        knowing any local histograms and data leakage is prevented.
-        Figure below shows how histogram secure aggregations are
-        conducted.
+    a. Clients compute local histograms for cur leaf nodes (left nodes or root node)
+    
+    b. The server applies secure aggregations: every local histogram plus a random number, 
+      and these numbers can cancel each other out. 
+      By this way server can get the global histogram without knowing any local histograms and data leakage is prevented. 
+      Figure below shows how histogram secure aggregations are conducted.
         
-        ![Figure 2: Secure aggregation](../images/secure_agg.png)
+      ![Figure 2: Secure aggregation](../images/secure_agg.png)
     
-    3)  The server commit histogram subtractions: getting the right node
-        histograms by subtracting left node local histogram from parent
-        node histogram. Then, the server will find the best splits
-        points and broadcast them to clients.
+    c. The server commit histogram subtractions: getting the right node
+      histograms by subtracting left node local histogram from parent
+      node histogram. Then, the server will find the best splits
+      points and broadcast them to clients.
     
-    4)  After getting the best split points, clients build the next
-        layer for the current decision tree and re-assign samples. If
-        current decision tree reaches the max depth or stop conditions
-        are fulfilled, stop build the current tree, else go back to step
-        (1). Figure below shows the procedure of fitting a decision
-        tree.
+    d. After getting the best split points, clients build the next
+      layer for the current decision tree and re-assign samples. If
+      current decision tree reaches the max depth or stop conditions
+      are fulfilled, stop build the current tree, else go back to step
+      (1). Figure below shows the procedure of fitting a decision
+      tree.
         
-        ![Figure 3: Example of bulding a two-layer homo-decision
-        tree](../images/homo_fit.png)
+      ![Figure 3: Example of bulding a two-layer homo-decision tree](../images/homo_fit.png)
+
 3.  If tree number reaches the max number, or loss is converged, Homo
     SecureBoost Fitting process stops.
 
@@ -265,10 +257,9 @@ Homo SecureBoost supports the following applications:
 Now Hetero SecureBoost adds a new option: complete\_secure. Once
 enabled, the boosting model will only use guest features to build the
 first decision tree. This can avoid label leakages, accord to
-[\[SecureBoost: A Lossless Federated Learning
-Framework\].](https://arxiv.org/abs/1901.08755)
+[SecureBoost: A Lossless Federated Learning Framework.](https://arxiv.org/abs/1901.08755)
 
-> ![Figure 4: complete secure boost](../images/complete_secure.png)
+![Figure 4: complete secure boost](../images/complete_secure.png)
 
 
 <!-- mkdocs
@@ -301,15 +292,14 @@ be preserved on the host side while leaf weights will be preserved on
 the guest side. In this way, encryption and communication costs are
 reduced by half. (If there are two parties)
 
-> ![Figure 5: mix mode introduction](../images/mix_tree.png)
+![Figure 5: mix mode introduction](../images/mix_tree.png)
 
 While conducting inference, every party will traverse its trees locally.
 All hosts will send the final leaf id to guests and the guest retrieves
 leaf weights using received leaf id. The prediction only needs one
 communication in mix mode.
 
-> ![Figure 6: mix mode training ('tree\_num\_per\_party'=1) and
-> predicting](../images/mix_procedure.png)
+![Figure 6: mix mode training ('tree\_num\_per\_party'=1) and predicting](../images/mix_procedure.png)
 
 ### LAYERED mode
 
@@ -319,15 +309,14 @@ with the help of the guest, and the guest will be responsible for the
 next "guest\_depth" layers. All trees will be built in this 'layered'
 manner.
 
-> ![Figure 7: layered mode introduction](../images/layered_tree.png)
+![Figure 7: layered mode introduction](../images/layered_tree.png)
 
 The benefits of layered mod is obvious, like the mix mode, parts of
 communication costs and encryption costs will be saved in the process of
 training. When predicting, we only need one communication because all
 host can conduct inferences of host layers locally.
 
-> ![Figure 8: layered mode training and
-> predicting](../images/layered_procedure.png)
+![Figure 8: layered mode training and predicting](../images/layered_procedure.png)
 
 According to experiments on our standard data sets, mix mode and layered
 mode of Fast SBT can still give performances (sometimes even better)
@@ -339,7 +328,7 @@ average.**
 
 ### Optimization in learning
 
-\* Fast SBT uses guest features and host features alternately by
+Fast SBT uses guest features and host features alternately by
 trees/layers to reduce encryption and communication costs.
 
   - Prediction only needs one communication round.
@@ -365,3 +354,38 @@ Fast SBT supports the following applications.
   - In layered mode, model exporting setting is the same as the
     normal-SBT.
   - The time consumption of FAST SBT is reduced by 30% ~ 50% on average.
+
+## Hetero SecureBoost with Multi-Output(SBT-MO)
+
+In the traditional GBDT setting, the strategy of multi-classification learning is to separate the gradient/hessian of
+each class and learn a tree for each class independently. Each tree is responsible for predicting a single variable. In the vertical federated
+scenario, using a traditional single-output-tree-based multi-classification strategy has its limitations: All the computation costs and communication overheads are amplified by
+the times of the number of labels. It will be extremely time-consuming if we are training on a dataset with many types
+of labels. 
+
+![SBTMO](../images/SBT-MO.png)
+
+To address the efficiency problem, in FATE-1.8,
+we propose a novel multi-output-tree based vertical boosting tree techniques for multi-classification tasks.
+Leaves of multi-output-tree give multi-dimension output, corresponding to every class. Instead of learning trees for 
+every class separately, now we only need to fit one tree at every boosting epoch. We also combines our cipher
+optimization techniques with SBT-MO. According to our preliminary experiments, on the conditions of reaching the 
+same accuracy, SBT-MO reduces tree building time(ignoring data preprocessing and evaluation time) by over 50%+.
+For more details of SBT-MO, please refer to [SecureBoost+ : A High Performance Gradient Boosting Tree Framework for
+Large Scale Vertical Federated Learning](https://arxiv.org/pdf/2110.10927.pdf).
+
+### Optimization in learning
+
+SBT-MO solve multi-classification tasks with multi-output decision trees. Save time when training on a dataset with many types
+of labels. 
+
+### Applications
+
+  - multi classification, the objective function is softmax
+    cross-entropy
+
+
+
+
+
+

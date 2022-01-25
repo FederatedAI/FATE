@@ -2,17 +2,17 @@
     "dsl_version": 2,
     "initiator": {
         "role": "guest",
-        "party_id": 10000
+        "party_id": 9999
     },
     "role": {
         "arbiter": [
             9999
         ],
         "host": [
-            9999
+            10000
         ],
         "guest": [
-            10000
+            9999
         ]
     },
     "component_parameters": {
@@ -55,7 +55,7 @@
                 },
                 "num_trees": 3,
                 "encrypt_param": {
-                    "method": "iterativeAffine"
+                    "method": "Paillier"
                 },
                 "tree_param": {
                     "max_depth": 3
@@ -68,7 +68,7 @@
                 },
                 "num_trees": 3,
                 "encrypt_param": {
-                    "method": "iterativeAffine"
+                    "method": "Paillier"
                 },
                 "tree_param": {
                     "max_depth": 3

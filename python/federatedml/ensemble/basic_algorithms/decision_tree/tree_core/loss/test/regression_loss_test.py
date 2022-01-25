@@ -21,12 +21,12 @@ import numpy as np
 from sklearn import metrics
 
 from fate_arch.session import computing_session as session
-from federatedml.loss import LeastSquaredErrorLoss
-from federatedml.loss.regression_loss import LeastAbsoluteErrorLoss
-from federatedml.loss.regression_loss import HuberLoss
-from federatedml.loss.regression_loss import FairLoss
-from federatedml.loss.regression_loss import LogCoshLoss
-from federatedml.loss.regression_loss import TweedieLoss
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss.regression_loss import LeastSquaredErrorLoss
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss.regression_loss import LeastAbsoluteErrorLoss
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss.regression_loss import HuberLoss
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss.regression_loss import FairLoss
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss.regression_loss import LogCoshLoss
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss.regression_loss import TweedieLoss
 from federatedml.util import consts
 
 
@@ -261,7 +261,7 @@ class TestTweedieLoss(unittest.TestCase):
         for y, y_pred in zip(self.y_list, self.predict_list):
             tweedie_loss_hess = self.tweedie_loss.compute_hess(y, y_pred)
             hess = -y * (1 - self.rho) * np.exp(1 - self.rho) * y_pred + \
-                   (2 - self.rho) * np.exp(2 - self.rho) * y_pred
+                (2 - self.rho) * np.exp(2 - self.rho) * y_pred
 
             self.assertTrue(np.fabs(tweedie_loss_hess - hess) < consts.FLOAT_ZERO)
 

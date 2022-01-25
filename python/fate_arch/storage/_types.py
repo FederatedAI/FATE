@@ -94,4 +94,3 @@ class StorageTableMetaType(object):
     PART_OF_DATA = "part_of_data"
     COUNT = "count"
     PARTITIONS = "partitions"
-

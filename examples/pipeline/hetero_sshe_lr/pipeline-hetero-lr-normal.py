@@ -18,9 +18,9 @@ import argparse
 import json
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component import HeteroSSHELR
 from pipeline.component import DataTransform
 from pipeline.component import Evaluation
+from pipeline.component import HeteroSSHELR
 from pipeline.component import Intersection
 from pipeline.component import Reader
 from pipeline.interface import Data
@@ -119,8 +119,10 @@ def main(config="../../config.yaml", namespace=""):
     predict_pipeline.add_component(reader_0)
     # # add selected components from train pipeline onto predict pipeline
     # # specify data source
-    predict_pipeline.add_component(pipeline,
-                                   data=Data(predict_input={pipeline.data_transform_0.input.data: reader_0.output.data}))
+    predict_pipeline.add_component(
+        pipeline, data=Data(
+            predict_input={
+                pipeline.data_transform_0.input.data: reader_0.output.data}))
     # # run predict model
     predict_pipeline.predict()
 

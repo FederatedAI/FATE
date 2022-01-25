@@ -5,8 +5,8 @@ label_name: "y"
 penalty: "L2"
 max_iter: 30
 alpha: 0.0001
-learning_rate: 0.15
-optimizer: "rmsprop"
+learning_rate: 0.3
+optimizer: "adam"
 batch_size: 800
 early_stop: "diff"
 init_method: "zeros"

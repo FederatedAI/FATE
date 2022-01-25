@@ -30,4 +30,5 @@ message PoissonModelMeta {
     string early_stop = 8;
     bool fit_intercept = 9;
     string exposure_colname = 10;
+    string reveal_strategy = 11;
 }

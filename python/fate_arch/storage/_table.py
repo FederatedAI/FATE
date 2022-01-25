@@ -69,16 +69,16 @@ class StorageTableBase(StorageTableABC):
 
     @property
     def store_type(self):
-        return self._store_type 
-    
+        return self._store_type
+
     @property
     def meta(self):
         return self._meta
-    
+
     @meta.setter
     def meta(self, meta):
         self._meta = meta
-    
+
     @property
     def read_access_time(self):
         return self._read_access_time
@@ -86,7 +86,7 @@ class StorageTableBase(StorageTableABC):
     @property
     def write_access_time(self):
         return self._write_access_time
-    
+
     def update_meta(self,
                     schema=None,
                     count=None,
@@ -139,8 +139,8 @@ class StorageTableBase(StorageTableABC):
         self.meta.destroy_metas()
         self._destroy()
 
-    def save_as(self, address, name, namespace, partitions=None, schema=None, **kwargs):
-        table = self._save_as(address, name, namespace, partitions, schema, **kwargs)
+    def save_as(self, address, name, namespace, partitions=None, **kwargs):
+        table = self._save_as(address, name, namespace, partitions, **kwargs)
         table.create_meta(**kwargs)
         return table
 
@@ -152,22 +152,22 @@ class StorageTableBase(StorageTableABC):
         write_access_time = current_timestamp() if not write_access_time else write_access_time
         self._meta.update_metas(write_access_time=write_access_time)
 
-    # to be implemented 
+    # to be implemented
     def _put_all(self, kv_list: Iterable, **kwargs):
         raise NotImplementedError()
 
     def _collect(self, **kwargs) -> list:
         raise NotImplementedError()
-    
+
     def _count(self):
         raise NotImplementedError()
-    
+
     def _read(self):
         raise NotImplementedError()
 
     def _destroy(self):
         raise NotImplementedError()
-    
+
     def _save_as(self, address, name, namespace, partitions=None, schema=None, **kwargs):
         raise NotImplementedError()
 

@@ -52,7 +52,15 @@ class ScorecardParam(BaseParam):
 
     """
 
-    def __init__(self, method="credit", offset=500, factor=20, factor_base=2, upper_limit_ratio=3, lower_limit_value=0, need_run=True):
+    def __init__(
+            self,
+            method="credit",
+            offset=500,
+            factor=20,
+            factor_base=2,
+            upper_limit_ratio=3,
+            lower_limit_value=0,
+            need_run=True):
         super(ScorecardParam, self).__init__()
         self.method = method
         self.offset = offset
@@ -93,6 +101,6 @@ class ScorecardParam(BaseParam):
             raise ValueError(f"{descr} lower_limit_value must be numeric,"
                              f"received {type(self.lower_limit_value)} instead.")
 
-        BaseParam.check_boolean(self.need_run, descr=descr+"need_run ")
+        BaseParam.check_boolean(self.need_run, descr=descr + "need_run ")
 
         return True

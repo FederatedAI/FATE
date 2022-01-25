@@ -37,6 +37,8 @@ class Table(CTableABC):
         self._rdd: pyspark.RDD = rdd
         self._engine = ComputingEngine.SPARK
 
+        self._count = None
+
     @property
     def engine(self):
         return self._engine
@@ -48,8 +50,12 @@ class Table(CTableABC):
         try:
             unmaterialize(self._rdd)
             del self._rdd
-        except:
+        except BaseException:
             return
+
+    def copy(self):
+        """rdd is immutable, yet, inside content could be modify in some case"""
+        return Table(_map_value(self._rdd, lambda x: x))
 
     @computing_profile
     def save(self, address, partitions, schema, **kwargs):
@@ -178,7 +184,9 @@ class Table(CTableABC):
 
     @computing_profile
     def count(self, **kwargs):
-        return self._rdd.count()
+        if self._count is None:
+            self._count = self._rdd.count()
+        return self._count
 
     @computing_profile
     def join(self, other: "Table", func=None, **kwargs):

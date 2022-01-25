@@ -4,6 +4,7 @@ component_name: homo_lr_0
 component_is_homo: true
 metric_output_path: ./output/metric/{}_homo_lr_0.json
 model_output_path: ./output/model/{}_homo_lr_0.json
+phone_num: 12345678900
 
 flow_test_template:
   train_conf_path: /examples/flow_test_template/homo_lr/homo_lr_train_conf.json

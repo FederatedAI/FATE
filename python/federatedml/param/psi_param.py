@@ -13,12 +13,12 @@ class PSIParam(BaseParam):
         self.binning_error = binning_error
 
     def check(self):
-        assert type(self.max_bin_num) == int and self.max_bin_num > 0, 'max bin must be an integer larger than 0'
-        assert type(self.need_run) == bool
+        assert isinstance(self.max_bin_num, int) and self.max_bin_num > 0, 'max bin must be an integer larger than 0'
+        assert isinstance(self.need_run, bool)
 
         if self.dense_missing_val is not None:
-            assert type(self.dense_missing_val) == str or type(self.dense_missing_val) == int or \
-                   type(self.dense_missing_val) == float, \
-                   'missing value type {} not supported'.format(type(self.dense_missing_val))
+            assert isinstance(self.dense_missing_val, str) or isinstance(self.dense_missing_val, int) or \
+                isinstance(self.dense_missing_val, float), \
+                'missing value type {} not supported'.format(type(self.dense_missing_val))
 
         self.check_decimal_float(self.binning_error, "psi's param")

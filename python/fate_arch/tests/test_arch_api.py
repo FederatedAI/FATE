@@ -41,7 +41,10 @@ for k, v in s_table.collect():
     print(v)
 print()
 
-t2 = session.get_session().computing.load(table_meta.get_address(), partitions=table_meta.get_partitions(), schema=table_meta.get_schema())
+t2 = session.get_session().computing.load(
+    table_meta.get_address(),
+    partitions=table_meta.get_partitions(),
+    schema=table_meta.get_schema())
 for k, v in t2.collect():
     print(v)
 

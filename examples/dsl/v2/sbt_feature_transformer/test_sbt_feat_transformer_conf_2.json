@@ -23,7 +23,7 @@
                 "validation_freqs": 1,
                 "random_seed": 1000,
                 "encrypt_param": {
-                    "method": "iterativeAffine"
+                    "method": "paillier"
                 },
                 "tree_param": {
                     "max_depth": 3

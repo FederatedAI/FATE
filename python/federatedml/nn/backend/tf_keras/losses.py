@@ -27,5 +27,3 @@ from tensorflow.python.util.tf_export import keras_export
 def keep_predict_loss(y_true, y_pred):
     y_pred = ops.convert_to_tensor(y_pred)
     return K.sum(y_true * y_pred)
-
-

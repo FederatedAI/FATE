@@ -15,15 +15,15 @@
 #
 
 from pipeline.param.statistics_param import StatisticsParam
-from pipeline.component.component_base import Component
+from pipeline.component.component_base import FateComponent
 from pipeline.interface import Input
 from pipeline.interface import Output
 from pipeline.utils.logger import LOGGER
 
 
-class DataStatistics(Component, StatisticsParam):
+class DataStatistics(FateComponent, StatisticsParam):
     def __init__(self, **kwargs):
-        Component.__init__(self, **kwargs)
+        FateComponent.__init__(self, **kwargs)
 
         #print (self.name)
         LOGGER.debug(f"{self.name} component created")
@@ -34,5 +34,3 @@ class DataStatistics(Component, StatisticsParam):
         self.input = Input(self.name)
         self.output = Output(self.name, has_model=True)
         self._module_name = "DataStatistics"
-
-

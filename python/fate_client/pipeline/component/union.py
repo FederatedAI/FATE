@@ -15,15 +15,15 @@
 #
 
 from pipeline.param.union_param import UnionParam
-from pipeline.component.component_base import Component
+from pipeline.component.component_base import FateComponent
 from pipeline.interface import Input
 from pipeline.interface import Output
 from pipeline.utils.logger import LOGGER
 
 
-class Union(Component, UnionParam):
+class Union(FateComponent, UnionParam):
     def __init__(self, **kwargs):
-        Component.__init__(self, **kwargs)
+        FateComponent.__init__(self, **kwargs)
 
         # print (self.name)
         LOGGER.debug(f"{self.name} component created")
@@ -34,5 +34,3 @@ class Union(Component, UnionParam):
         self.input = Input(self.name)
         self.output = Output(self.name, has_model=False)
         self._module_name = "Union"
-
-

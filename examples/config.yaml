@@ -1,11 +1,11 @@
 parties: # parties default id
   guest:
-    - 10000
+    - 9999
   host:
-    - 9999
     - 10000
-  arbiter:
     - 9999
+  arbiter:
+    - 10000
 
 work_mode: 0 # 0 for standalone, or 1 for cluster
 

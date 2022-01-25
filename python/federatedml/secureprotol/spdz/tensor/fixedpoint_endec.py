@@ -21,7 +21,7 @@ from fate_arch.session import is_table
 
 
 class FixedPointEndec(object):
-    def __init__(self, field: int, base: int, precision_fractional: int):
+    def __init__(self, field: int, base: int, precision_fractional: int, *args, **kwargs):
         self.field = field
         self.base = base
         self.precision_fractional = precision_fractional
@@ -30,8 +30,8 @@ class FixedPointEndec(object):
         upscaled = (float_tensor * self.base ** self.precision_fractional).astype(np.int64)
         if check_range:
             assert (np.abs(upscaled) < (self.field / 2)).all(), (
-                    f"{float_tensor} cannot be correctly embedded: choose bigger field or a lower precision"
-                )
+                f"{float_tensor} cannot be correctly embedded: choose bigger field or a lower precision"
+            )
 
         field_element = upscaled % self.field
         return field_element
@@ -71,7 +71,7 @@ class FixedPointEndec(object):
             return integer_tensor.mapValues(lambda x: f)
         else:
             raise ValueError(f"unsupported type: {type(integer_tensor)}")
-    
+
     def truncate(self, integer_tensor, idx=0):
         if isinstance(integer_tensor, (int, np.int16, np.int32, np.int64)):
             integer_tensor = np.array(integer_tensor)
@@ -82,5 +82,3 @@ class FixedPointEndec(object):
             return integer_tensor.mapValues(f)
         else:
             raise ValueError(f"unsupported type: {type(integer_tensor)}")
-        
-         

@@ -96,7 +96,6 @@ class BaseFeatureBinning(ModelBase):
 
     @staticmethod
     def data_format_transform(row):
-
         """
         transform data into sparse format
         """
@@ -202,7 +201,7 @@ class BaseFeatureBinning(ModelBase):
         split_points_result = self.binning_obj.bin_results.split_results
 
         multi_class_result = self.bin_result.generated_pb_list(split_points_result)
-        LOGGER.debug(f"split_points_result: {split_points_result}")
+        # LOGGER.debug(f"split_points_result: {split_points_result}")
         host_multi_class_result = []
         host_single_results = []
         for host_res in self.host_results:
@@ -233,9 +232,10 @@ class BaseFeatureBinning(ModelBase):
         self.bin_inner_param = BinInnerParam()
         multi_class_result = model_param.multi_class_result
         self.labels = list(multi_class_result.labels)
-        if not self.labels:
-            self.labels = [0, 1]
-        self.bin_result = MultiClassBinResult.reconstruct(list(multi_class_result.results), self.labels)
+        # if not self.labels:
+        #     self.labels = [0, 1]
+        if self.labels:
+            self.bin_result = MultiClassBinResult.reconstruct(list(multi_class_result.results), self.labels)
 
         assert isinstance(model_meta, feature_binning_meta_pb2.FeatureBinningMeta)
         assert isinstance(model_param, feature_binning_param_pb2.FeatureBinningParam)
@@ -267,17 +267,21 @@ class BaseFeatureBinning(ModelBase):
 
         self.host_results = []
         host_pbs = list(model_param.multi_class_result.host_results)
-        if len(self.labels) == 2:
-            for host_pb in host_pbs:
-                self.host_results.append(MultiClassBinResult.reconstruct(
-                    host_pb, self.labels))
-        else:
-            assert len(host_pbs) % len(self.labels) == 0
-            i = 0
-            while i < len(host_pbs):
-                this_pbs = host_pbs[i: i+len(self.labels)]
-                self.host_results.append(MultiClassBinResult.reconstruct(this_pbs, self.labels))
-                i += len(self.labels)
+        if len(host_pbs):
+            if len(self.labels) == 2:
+                for host_pb in host_pbs:
+                    self.host_results.append(MultiClassBinResult.reconstruct(
+                        host_pb, self.labels))
+            else:
+                assert len(host_pbs) % len(self.labels) == 0
+                i = 0
+                while i < len(host_pbs):
+                    this_pbs = host_pbs[i: i + len(self.labels)]
+                    self.host_results.append(MultiClassBinResult.reconstruct(this_pbs, self.labels))
+                    i += len(self.labels)
+
+        if list(model_param.header_anonymous):
+            self.header_anonymous = list(model_param.header_anonymous)
 
     def export_model(self):
         if self.model_output is not None:
@@ -298,7 +302,7 @@ class BaseFeatureBinning(ModelBase):
     def set_schema(self, data_instance):
         self.schema['header'] = self.header
         data_instance.schema = self.schema
-        LOGGER.debug("After Binning, when setting schema, schema is : {}".format(data_instance.schema))
+        # LOGGER.debug("After Binning, when setting schema, schema is : {}".format(data_instance.schema))
 
     def _abnormal_detection(self, data_instances):
         """

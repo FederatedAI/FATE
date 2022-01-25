@@ -1,5 +1,5 @@
-#!/usr/bin/env python    
-# -*- coding: utf-8 -*- 
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
@@ -22,7 +22,6 @@
 # =============================================================================
 import abc
 from abc import ABC
-
 import numpy as np
 import functools
 from federatedml.ensemble.basic_algorithms.algorithm_prototype import BasicAlgorithms
@@ -69,8 +68,13 @@ class DecisionTree(BasicAlgorithms, ABC):
         self.tree_node_num = 0
         self.runtime_idx = None
         self.valid_features = None
-        self.splitter = Splitter(self.criterion_method, self.criterion_params, self.min_impurity_split,
-                                 self.min_sample_split, self.min_leaf_node, self.min_child_weight)  # splitter for finding splits
+        self.splitter = Splitter(
+            self.criterion_method,
+            self.criterion_params,
+            self.min_impurity_split,
+            self.min_sample_split,
+            self.min_leaf_node,
+            self.min_child_weight)  # splitter for finding splits
         self.inst2node_idx = None  # record the internal node id an instance belongs to
         self.sample_leaf_pos = None  # record the final leaf id of samples
         self.sample_weights = None  # leaf weights of samples
@@ -134,55 +138,17 @@ class DecisionTree(BasicAlgorithms, ABC):
     def set_flowid(self, flowid=0):
         LOGGER.info("set flowid, flowid is {}".format(flowid))
         self.transfer_inst.set_flowid(flowid)
-    
+
     def set_runtime_idx(self, runtime_idx):
         self.runtime_idx = runtime_idx
         self.sitename = ":".join([self.sitename, str(self.runtime_idx)])
 
     """
-    Node encode/ decode
-    """
-    # add node split-val/missing-dir to mask dict, hetero tree only
-    def encode(self, etype="feature_idx", val=None, nid=None):
-        if etype == "feature_idx":
-            return val
-
-        if etype == "feature_val":
-            self.split_maskdict[nid] = val
-            return None
-
-        if etype == "missing_dir":
-            self.missing_dir_maskdict[nid] = val
-            return None
-
-        raise TypeError("encode type %s is not support!" % (str(etype)))
-
-    # recover node split-val/missing-dir from mask dict, hetero tree only
-    @staticmethod
-    def decode(dtype="feature_idx", val=None, nid=None, split_maskdict=None, missing_dir_maskdict=None):
-        if dtype == "feature_idx":
-            return val
-
-        if dtype == "feature_val":
-            if nid in split_maskdict:
-                return split_maskdict[nid]
-            else:
-                raise ValueError("decode val %s cause error, can't recognize it!" % (str(val)))
-
-        if dtype == "missing_dir":
-            if nid in missing_dir_maskdict:
-                return missing_dir_maskdict[nid]
-            else:
-                raise ValueError("decode val %s cause error, can't recognize it!" % (str(val)))
-
-        return TypeError("decode type %s is not support!" % (str(dtype)))
-
-    """
     Histogram interface
     """
 
-    def get_local_histograms(self, dep, data_with_pos, g_h, node_sample_count, cur_to_split_nodes, node_map, ret='tensor', sparse_opt=False
-                             , hist_sub=True, bin_num=None):
+    def get_local_histograms(self, dep, data_with_pos, g_h, node_sample_count, cur_to_split_nodes, node_map,
+                             ret='tensor', hist_sub=True):
 
         LOGGER.info("start to compute node histograms")
         acc_histograms = self.hist_computer.compute_histogram(dep,
@@ -196,9 +162,7 @@ class DecisionTree(BasicAlgorithms, ABC):
                                                               zero_as_missing=self.zero_as_missing,
                                                               ret=ret,
                                                               hist_sub=hist_sub,
-                                                              sparse_optimization=sparse_opt,
-                                                              cur_to_split_nodes=cur_to_split_nodes,
-                                                              bin_num=bin_num)
+                                                              cur_to_split_nodes=cur_to_split_nodes)
         LOGGER.info("compute node histograms done")
 
         return acc_histograms
@@ -236,7 +200,7 @@ class DecisionTree(BasicAlgorithms, ABC):
         # record node sample number in count_arr
         count_arr = np.zeros(len(node_map))
         for k, v in kv:
-            if type(v) == int:  # leaf node format: (leaf_node_id)
+            if isinstance(v, int):  # leaf node format: (leaf_node_id)
                 key = v
             else:  # internal node format: (1, node_id)
                 key = v[1]
@@ -266,7 +230,7 @@ class DecisionTree(BasicAlgorithms, ABC):
         # return sample weights to boosting class
         return self.sample_weights
 
-    @ staticmethod
+    @staticmethod
     def assign_instance_to_root_node(data_bin, root_node_id):
         return data_bin.mapValues(lambda inst: (1, root_node_id))
 
@@ -275,7 +239,7 @@ class DecisionTree(BasicAlgorithms, ABC):
         """
         prevent float error
         """
-        return round(num, consts.TREE_DECIMAL_ROUND)
+        return np.round(num, consts.TREE_DECIMAL_ROUND)
 
     def update_feature_importance(self, splitinfo, record_site_name=True):
 
@@ -370,6 +334,27 @@ class DecisionTree(BasicAlgorithms, ABC):
         for node in self.tree_node:
             if node.is_leaf:
                 node.weight = self.float_round(node.weight)
+
+    @staticmethod
+    def mo_weight_extract(node):
+
+        mo_weight = None
+        weight = node.weight
+        if isinstance(node.weight, np.ndarray) and len(node.weight) > 1:
+            weight = -1
+            mo_weight = list(node.weight)  # use multi output
+
+        return weight, mo_weight
+
+    @staticmethod
+    def mo_weight_load(node_param):
+
+        weight = node_param.weight
+        mo_weight = list(node_param.mo_weight)
+        if len(mo_weight) != 0:
+            weight = np.array(list(node_param.mo_weight))
+
+        return weight
 
     """
     To implement

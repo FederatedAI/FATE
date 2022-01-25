@@ -91,6 +91,9 @@ def add(ctx, **kwargs):
 
 @table.command("bind", short_help="Bind Table Command")
 @cli_args.CONF_PATH
+@click.option('--drop', is_flag=True, default=False,
+              help="If specified, data of old version would be replaced by the current version. "
+                   "Otherwise, current upload task would be rejected. (default: False)")
 @click.pass_context
 def bind(ctx, **kwargs):
     """
