@@ -44,14 +44,9 @@ class HomoLRGuest(HomoLRBase):
     def _init_model(self, params):
         super()._init_model(params)
 
-    def fit(self, data_instances, validate_data=None):
+    def fit_binary(self, data_instances, validate_data=None):
         self.aggregator = aggregator.Guest()
         self.aggregator.register_aggregator(self.transfer_variable)
-
-        self._abnormal_detection(data_instances)
-        self.check_abnormal_values(data_instances)
-        self.init_schema(data_instances)
-        self._client_check_data(data_instances)
 
         self.callback_list.on_train_begin(data_instances, validate_data)
 
@@ -133,6 +128,12 @@ class HomoLRGuest(HomoLRBase):
         self.init_schema(data_instances)
 
         data_instances = self.align_data_header(data_instances, self.header)
+
+        LOGGER.info("Start predict is a one_vs_rest task: {}".format(self.need_one_vs_rest))
+        if self.need_one_vs_rest:
+            predict_result = self.one_vs_rest_obj.predict(data_instances)
+            return predict_result
+
         # predict_wx = self.compute_wx(data_instances, self.model_weights.coef_, self.model_weights.intercept_)
         pred_prob = data_instances.mapValues(lambda v: activation.sigmoid(vec_dot(v.features, self.model_weights.coef_)
                                                                           + self.model_weights.intercept_))

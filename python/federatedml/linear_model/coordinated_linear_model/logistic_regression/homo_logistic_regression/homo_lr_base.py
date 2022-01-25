@@ -66,20 +66,45 @@ class HomoLRBase(BaseLogisticRegression):
             return False
         return True
 
+    def fit(self, data_instances, validate_data=None):
+        classes = self.one_vs_rest_obj.get_data_classes(data_instances)
+
+        if self.role == consts.ARBITER:
+            self._server_check_data()
+        else:
+            self._client_check_data(data_instances)
+
+        if len(classes) > 2:
+            self.need_one_vs_rest = True
+            self.need_call_back_loss = False
+            self.one_vs_rest_fit(train_data=data_instances, validate_data=validate_data)
+            if self.header is None:
+                self.header = self.one_vs_rest_obj.header
+        else:
+            self.need_one_vs_rest = False
+            self.fit_binary(data_instances, validate_data)
+
+    def fit_binary(self, data_instances, validate_data):
+        raise NotImplementedError("Should not called here")
+
     def _client_check_data(self, data_instances):
         self._abnormal_detection(data_instances)
         self.check_abnormal_values(data_instances)
         self.init_schema(data_instances)
 
+        # Support multi-class now
+        """
         num_classes, classes_ = ClassifyLabelChecker.validate_label(data_instances)
         aligned_label, new_label_mapping = HomoLabelEncoderClient().label_alignment(classes_)
         if len(aligned_label) > 2:
             raise ValueError("Homo LR support binary classification only now")
         elif len(aligned_label) <= 1:
             raise ValueError("Number of classes should be equal to 2")
+        """
 
     def _server_check_data(self):
-        HomoLabelEncoderArbiter().label_alignment()
+        # HomoLabelEncoderArbiter().label_alignment()
+        pass
 
     def classify(self, predict_wx, threshold):
         """

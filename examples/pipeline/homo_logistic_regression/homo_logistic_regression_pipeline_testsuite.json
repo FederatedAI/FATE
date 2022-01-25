@@ -47,9 +47,28 @@
             "table_name": "homo_breast_test",
             "namespace": "experiment",
             "role": "host_1"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_homo_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_homo_host",
+            "namespace": "experiment",
+            "role": "host_0"
         }
     ],
     "pipeline_tasks": {
+        "homo-lr-one-vs-all": {
+            "script": "pipeline-homo-lr-one-vs-all.py"
+        },
         "homo-lr-eval": {
             "script": "pipeline-homo-lr-eval.py"
         },
@@ -64,6 +83,15 @@
         },
         "homo-lr-train-eval": {
             "script": "pipeline-homo-lr-train-eval.py"
+        },
+        "homo-lr-warm-start": {
+            "script": "pipeline-homo-lr-warm-start.py"
+        },
+        "homo-lr-sample-weights": {
+            "script": "pipeline-homo-lr-sample-weights.py"
+        },
+        "homo-lr-one-vs-all-encrypted-host": {
+            "script": "pipeline-homo-lr-one-vs-all-encrypted-host.py"
         }
     }
 }
