@@ -19,7 +19,7 @@ from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import Feature
 from federatedml.ensemble.secureboost.secureboost_util.tree_model_io import load_hetero_tree_learner, \
     produce_hetero_tree_learner
 from federatedml.ensemble.secureboost.secureboost_util.boosting_tree_predict import sbt_guest_predict, \
-    mix_sbt_guest_predict
+    mix_sbt_guest_predict, EINI_guest_predict
 from federatedml.ensemble.secureboost.secureboost_util.subsample import goss_sampling
 
 
@@ -321,6 +321,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         else:
             pred_func = sbt_guest_predict
 
+        EINI_guest_predict(processed_data, self.hetero_sbt_transfer_variable, trees)
         predict_rs = pred_func(processed_data, self.hetero_sbt_transfer_variable, trees, self.learning_rate,
                                self.init_score, self.booster_dim, predict_cache,
                                pred_leaf=(ret_format == 'leaf'))

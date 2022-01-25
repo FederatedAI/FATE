@@ -336,7 +336,7 @@ def get_leaf_idx_map(trees: List[DecisionTree]):
 def go_to_children_branches(data_inst, tree_node: Node, tree, sitename: str, candidate_list: List):
 
     if tree_node.is_leaf:
-        candidate_list.append(tree_node.id)
+        candidate_list.append(tree_node)
     else:
         tree_node_list = tree.tree_node
         if tree_node.sitename != sitename:
@@ -355,25 +355,37 @@ def go_to_children_branches(data_inst, tree_node: Node, tree, sitename: str, can
                                     candidate_list)
 
 
-def generate_leaf_candidates(data_inst, sitename, trees: List[DecisionTree]):
+def generate_leaf_candidates(data_inst, sitename, trees: List[DecisionTree], node_pos_map_list, with_weight=False):
 
     candidate_nodes_of_all_tree = []
-    for tree in trees:
+    for tree, node_pos_map in zip(trees, node_pos_map_list):
+        result_vec = [0 for i in range(node_pos_map)]
         candidate_list = []
         go_to_children_branches(data_inst, tree.tree_node[0], tree, sitename, candidate_list)
-        candidate_nodes_of_all_tree.append(candidate_list)
+        for node in candidate_list:
+            result_vec[node_pos_map[node.id]] = 1 if not with_weight else node.weight
+        candidate_nodes_of_all_tree.extend(candidate_list)
 
     return candidate_nodes_of_all_tree
 
 
 def EINI_guest_predict(data_inst, transfer_var: HeteroSecureBoostTransferVariable,
                        trees: List[HeteroDecisionTreeGuest], learning_rate, init_score, booster_dim,
-                       predict_cache=None, pred_leaf=False):
+                       predict_cache=None, pred_leaf=False, sitename=None):
 
+    if sitename is None:
+        raise ValueError('input sitename is None, not able to run EINI predict algorithm')
+
+    # EINI algorithms
     id_pos_map_list = get_leaf_idx_map(trees)
+    map_func = functools.partial(generate_leaf_candidates, sitename=sitename, trees=trees,
+                                 node_pos_map_list=id_pos_map_list, with_weight=True)
+    position_vec = data_inst.mapValues(map_func)
+    # post-process
 
 
-def EINI_host_predict(data_inst, transfer_var: HeteroSecureBoostTransferVariable, trees: List[HeteroDecisionTreeHost]):
+def EINI_host_predict(data_inst, transfer_var: HeteroSecureBoostTransferVariable, trees: List[HeteroDecisionTreeHost],
+                      sitename=None):
 
     id_pos_map_list = get_leaf_idx_map(trees)
 
