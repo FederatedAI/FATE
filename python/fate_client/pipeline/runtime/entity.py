@@ -91,7 +91,6 @@ class JobParameters(object):
             if None in self.__party_instance[role]["party"]:
                 role_all_party_conf = self.__party_instance[role]["party"][None].get_job_param()
                 if "all" not in role_param_conf:
-                    role_param_conf[role]["all"] = {}
                     role_param_conf[role]["all"] = role_all_party_conf
 
             valid_partyids = roles.get(role)

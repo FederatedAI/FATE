@@ -131,13 +131,10 @@ class EvaluateParam(BaseParam):
 
         if self.metrics is None or len(self.metrics) == 0:
             self.metrics = self.default_metrics[self.eval_type]
-            LOGGER.warning('use default metric {} for eval type {}'.format(self.metrics, self.eval_type))
 
         self.check_boolean(self.unfold_multi_result, 'multi_result_unfold')
 
         self.metrics = self._check_valid_metric(self.metrics)
-
-        LOGGER.info("Finish evaluation parameter check!")
 
         return True
 
@@ -147,7 +144,6 @@ class EvaluateParam(BaseParam):
         # in validation strategy, psi f1-score and confusion-mat pr-quantile are not supported in cur version
         if self.metrics is None or len(self.metrics) == 0:
             self.metrics = self.default_metrics[self.eval_type]
-            LOGGER.warning('use default metric {} for eval type {}'.format(self.metrics, self.eval_type))
 
         ban_metric = [consts.PSI, consts.F1_SCORE, consts.CONFUSION_MAT, consts.QUANTILE_PR]
         for metric in self.metrics:

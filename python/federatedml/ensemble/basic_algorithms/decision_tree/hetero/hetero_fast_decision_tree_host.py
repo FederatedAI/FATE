@@ -75,10 +75,10 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
                              .format(splitinfo_host[i][best_idx].sitename, self.sitename))
                 assert splitinfo_host[i][best_idx].sitename == self.sitename
                 splitinfo = splitinfo_host[i][best_idx]
-                splitinfo.best_fid = splitinfo.best_fid
+                # splitinfo.best_fid = splitinfo.best_fid
                 assert splitinfo.best_fid is not None
-                splitinfo.best_bid = splitinfo.best_bid
-                splitinfo.missing_dir = splitinfo.missing_dir
+                # splitinfo.best_bid = splitinfo.best_bid
+                # splitinfo.missing_dir = splitinfo.missing_dir
                 splitinfo.gain = best_gain
             else:
                 splitinfo = SplitInfo(sitename=self.sitename, best_fid=-1, best_bid=-1, gain=best_gain)

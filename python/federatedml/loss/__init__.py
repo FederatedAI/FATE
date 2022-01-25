@@ -25,7 +25,7 @@ from federatedml.loss.regression_loss import TweedieLoss
 
 __all__ = ["SigmoidBinaryCrossEntropyLoss",
            "SoftmaxCrossEntropyLoss",
-           "LeastSquaredEroorLoss",
+           "LeastSquaredErrorLoss",
            "LeastAbsoluteErrorLoss",
            "HuberLoss",
            "FairLoss",

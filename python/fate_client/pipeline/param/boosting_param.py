@@ -53,8 +53,6 @@ class ObjectiveParam(BaseParam):
 
         descr = "objective param's"
 
-        LOGGER.debug('check objective {}'.format(self.objective))
-
         if task_type not in [consts.CLASSIFICATION, consts.REGRESSION]:
             self.objective = self.check_and_change_lower(self.objective,
                                                    ["cross_entropy", "lse", "lae", "huber", "fair",
@@ -509,18 +507,12 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
 
             # safety check
             if self.encrypt_param.method != consts.PAILLIER:
-                LOGGER.warning('cipher compressing only supports Paillier, however, encrypt method is {}, '
-                               'this function will be disabled automatically'.
-                               format(self.encrypt_param.method))
                 self.cipher_compress_error = None
 
             if self.task_type != consts.CLASSIFICATION:
-                LOGGER.warning('cipher compressing only supports classification tasks'
-                               'this function will be disabled automatically')
                 self.cipher_compress_error = None
 
             if not self.new_ver:
-                LOGGER.warning('old version code does not support cipher compressing')
                 self.cipher_compress_error = None
 
         return True

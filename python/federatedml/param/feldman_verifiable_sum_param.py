@@ -46,17 +46,13 @@ class FeldmanVerifiableSumParam(BaseParam):
         if isinstance(self.sum_cols, list):
             for idx in self.sum_cols:
                 if not isinstance(idx, int):
-                    raise ValueError(f"type mismatch, column_indexes with element {idx}(type is {type(idx)})")
+                    raise ValueError(
+                        f"type mismatch, column_indexes with element {idx} should be int type, not {type(idx)}")
 
         if not isinstance(self.q_n, int):
-            raise ValueError(f"Init param's q_n {self.q_n} not supported, should be int type", type is {type(self.q_n)})
+            raise ValueError(f"Init param's q_n {self.q_n} not supported, should be int type, not {type(self.q_n)}")
 
         if self.q_n < 0:
             raise ValueError(f"param's q_n {self.q_n} not supported, should be non-negative int value")
         elif self.q_n > 16:
             raise ValueError(f"param's q_n {self.q_n} not supported, should be less than or equal to 16")
-
-
-
-
-
