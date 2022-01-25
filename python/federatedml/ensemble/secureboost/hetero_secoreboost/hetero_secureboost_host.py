@@ -25,7 +25,6 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         super(HeteroSecureBoostingTreeHost, self).__init__()
         self.use_missing = False
         self.zero_as_missing = False
-        self.cur_epoch_idx = -1
         self.grad_and_hess = None
         self.tree_param = DecisionTreeParam()  # decision tree param
         self.model_param = HeteroSecureBoostParam()
@@ -119,7 +118,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
     def fit_a_learner(self, epoch_idx: int, booster_dim: int):
 
         flow_id = self.generate_flowid(epoch_idx, booster_dim)
-        complete_secure = True if (self.cur_epoch_idx == 0 and self.complete_secure) else False
+        complete_secure = True if (epoch_idx == 0 and self.complete_secure) else False
         fast_sbt = (self.boosting_strategy != consts.STD_TREE)
 
         tree_type, target_host_id = None, None
