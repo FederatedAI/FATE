@@ -49,7 +49,7 @@
     
     This example also contains another two feature since FATE-1.1.  
     (1) evaluate data during training process, check the "validation_freqs" field in runtime_config  
-    
+
 6. Early stopping example
 
     example-data: (1) guest: student_hetero_guest.csv
