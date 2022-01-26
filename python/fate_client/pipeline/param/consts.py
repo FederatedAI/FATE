@@ -13,7 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-ALLOW_REVEAL_GUEST_ONLY = True
 
 ARBITER = 'arbiter'
 HOST = 'host'
@@ -28,6 +27,7 @@ MULTY = 'multi'
 CLASSIFICATION = "classification"
 REGRESSION = 'regression'
 CLUSTERING = 'clustering'
+ONE_VS_REST = 'one_vs_rest'
 PAILLIER = 'Paillier'
 RANDOM_PADS = "RandomPads"
 NONE = "None"
@@ -39,9 +39,9 @@ L2_PENALTY = 'L2'
 
 FLOAT_ZERO = 1e-8
 OVERFLOW_THRESHOLD = 1e8
-
 OT_HAUCK = 'OT_Hauck'
 CE_PH = 'CommutativeEncryptionPohligHellman'
+XOR = 'xor'
 AES = 'aes'
 
 PARAM_MAXDEPTH = 5
@@ -207,7 +207,7 @@ VALIDATE_EVALUATE = 'validate_evaluate'
 G_BIN_NUM = 10
 DEFAULT_COMPRESS_THRESHOLD = 10000
 DEFAULT_HEAD_SIZE = 10000
-DEFAULT_RELATIVE_ERROR = 0.001
+DEFAULT_RELATIVE_ERROR = 1e-4
 ONE_HOT_LIMIT = 1024   # No more than 10 possible values
 PERCENTAGE_VALUE_LIMIT = 0.1
 SECURE_AGG_AMPLIFY_FACTOR = 1000
@@ -233,6 +233,7 @@ STATISTIC_FILTER = 'statistic_filter'
 PSI_FILTER = 'psi_filter'
 VIF_FILTER = 'vif_filter'
 CORRELATION_FILTER = 'correlation_filter'
+SECUREBOOST = 'sbt'
 HETERO_SBT_FILTER = 'hetero_sbt_filter'
 HOMO_SBT_FILTER = 'homo_sbt_filter'
 HETERO_FAST_SBT_FILTER = 'hetero_fast_sbt_filter'
@@ -294,10 +295,22 @@ KURTOSIS = 'kurtosis'
 # adapters model name
 HOMO_SBT = 'homo_sbt'
 HETERO_SBT = 'hetero_sbt'
+HETERO_FAST_SBT = 'hetero_fast_sbt'
 HETERO_FAST_SBT_MIX = 'hetero_fast_sbt_mix'
 HETERO_FAST_SBT_LAYERED = 'hetero_fast_sbt_layered'
 
-# homo sbt backend
+# tree protobuf model name
+HETERO_SBT_GUEST_MODEL = 'HeteroSecureBoostingTreeGuest'
+HETERO_SBT_HOST_MODEL = 'HeteroSecureBoostingTreeHost'
+HETERO_FAST_SBT_GUEST_MODEL = "HeteroFastSecureBoostingTreeGuest"
+HETERO_FAST_SBT_HOST_MODEL = "HeteroFastSecureBoostingTreeHost"
+HOMO_SBT_GUEST_MODEL = "HomoSecureBoostingTreeGuest"
+HOMO_SBT_HOST_MODEL = "HomoSecureBoostingTreeHost"
+
+# tree decimal round to prevent float error
+TREE_DECIMAL_ROUND = 10
+
+# homm sbt backend
 MEMORY_BACKEND = 'memory'
 DISTRIBUTED_BACKEND = 'distributed'
 
@@ -310,6 +323,10 @@ CREDIT = 'credit'
 # sample weight
 BALANCED = 'balanced'
 
+# min r base fraction
+MIN_BASE_FRACTION = 0.01
+MAX_BASE_FRACTION = 0.99
+
 MAX_SAMPLE_OUTPUT_LIMIT = 10 ** 6
 
 # Hetero NN Selective BP Strategy
@@ -320,3 +337,6 @@ INNER_JOIN = "inner_join"
 LEFT_JOIN = "left_join"
 
 DEFAULT_KEY_LENGTH = 1024
+
+MIN_HASH_FUNC_COUNT = 4
+MAX_HASH_FUNC_COUNT = 32
