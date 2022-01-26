@@ -191,11 +191,14 @@ CONST = 'const'
 
 # decision tree
 MAX_SPLIT_NODES = 2 ** 16
-MAX_FEDERATED_NODES = 2 ** 10
+MAX_SPLITINFO_TO_COMPUTE = 2 ** 10
 NORMAL_TREE = 'normal'
 COMPLETE_SECURE_TREE = 'complete_secure'
+STD_TREE = 'std'
 MIX_TREE = 'mix'
 LAYERED_TREE = 'layered'
+SINGLE_OUTPUT = 'single_output'
+MULTI_OUTPUT = 'multi_output'
 
 TRAIN_EVALUATE = 'train_evaluate'
 VALIDATE_EVALUATE = 'validate_evaluate'
@@ -294,7 +297,7 @@ HETERO_SBT = 'hetero_sbt'
 HETERO_FAST_SBT_MIX = 'hetero_fast_sbt_mix'
 HETERO_FAST_SBT_LAYERED = 'hetero_fast_sbt_layered'
 
-# homm sbt backend
+# homo sbt backend
 MEMORY_BACKEND = 'memory'
 DISTRIBUTED_BACKEND = 'distributed'
 

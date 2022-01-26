@@ -96,7 +96,7 @@ def load_hetero_tree_learner(role, tree_param, model_meta, model_param, flow_id,
         if fast_sbt:
             tree = HeteroFastDecisionTreeGuest(tree_param)
         else:
-            tree = HeteroFastDecisionTreeGuest(tree_param)
+            tree = HeteroDecisionTreeGuest(tree_param)
 
         tree.load_model(model_meta, model_param)
         tree.set_flowid(flow_id)
