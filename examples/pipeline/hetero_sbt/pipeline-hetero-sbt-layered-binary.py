@@ -18,12 +18,12 @@ import argparse
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataTransform
-from pipeline.component.hetero_fast_secureboost import HeteroFastSecureBoost
-from pipeline.component.intersection import Intersection
-from pipeline.component.reader import Reader
-from pipeline.interface.data import Data
-from pipeline.component.evaluation import Evaluation
-from pipeline.interface.model import Model
+from pipeline.component import HeteroSecureBoost
+from pipeline.component import Intersection
+from pipeline.component import Reader
+from pipeline.interface import Data
+from pipeline.component import Evaluation
+from pipeline.interface import Model
 
 from pipeline.utils.tools import load_job_config
 
@@ -35,6 +35,7 @@ def main(config="../../config.yaml", namespace=""):
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
+
 
     # data sets
     guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
@@ -56,13 +57,9 @@ def main(config="../../config.yaml", namespace=""):
 
     data_transform_0, data_transform_1 = DataTransform(name="data_transform_0"), DataTransform(name="data_transform_1")
 
-    data_transform_0.get_party_instance(
-        role="guest", party_id=guest).component_param(
-        with_label=True, output_format="dense")
+    data_transform_0.get_party_instance(role="guest", party_id=guest).component_param(with_label=True, output_format="dense")
     data_transform_0.get_party_instance(role="host", party_id=host).component_param(with_label=False)
-    data_transform_1.get_party_instance(
-        role="guest", party_id=guest).component_param(
-        with_label=True, output_format="dense")
+    data_transform_1.get_party_instance(role="guest", party_id=guest).component_param(with_label=True, output_format="dense")
     data_transform_1.get_party_instance(role="host", party_id=host).component_param(with_label=False)
 
     # data intersect component
@@ -70,14 +67,14 @@ def main(config="../../config.yaml", namespace=""):
     intersect_1 = Intersection(name="intersection_1")
 
     # secure boost component
-    hetero_fast_secure_boost_0 = HeteroFastSecureBoost(name="hetero_fast_secure_boost_0",
-                                                       num_trees=4,
-                                                       tree_num_per_party=1, task_type='classification',
-                                                       objective_param={"objective": "cross_entropy"},
-                                                       encrypt_param={"method": "Paillier"},
-                                                       tree_param={"max_depth": 3},
-                                                       validation_freqs=1,
-                                                       work_mode='mix')
+    hetero_secure_boost_0 = HeteroSecureBoost(name="hetero_secure_boost_0",
+                                              num_trees=10,
+                                              task_type="classification",
+                                              objective_param={"objective": "cross_entropy"},
+                                              encrypt_param={"method": "iterativeAffine"},
+                                              tree_param={"max_depth": 3},
+                                              boosting_strategy='layered',
+                                              validation_freqs=1)
 
     # evaluation component
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary")
@@ -85,38 +82,18 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(reader_0)
     pipeline.add_component(reader_1)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(
-        data_transform_1, data=Data(
-            data=reader_1.output.data), model=Model(
-            data_transform_0.output.model))
+    pipeline.add_component(data_transform_1, data=Data(data=reader_1.output.data), model=Model(data_transform_0.output.model))
     pipeline.add_component(intersect_0, data=Data(data=data_transform_0.output.data))
     pipeline.add_component(intersect_1, data=Data(data=data_transform_1.output.data))
-    pipeline.add_component(hetero_fast_secure_boost_0, data=Data(train_data=intersect_0.output.data,
-                                                                 validate_data=intersect_1.output.data))
-
-    pipeline.add_component(evaluation_0, data=Data(data=hetero_fast_secure_boost_0.output.data))
+    pipeline.add_component(hetero_secure_boost_0, data=Data(train_data=intersect_0.output.data,
+                                                            validate_data=intersect_1.output.data))
+    pipeline.add_component(evaluation_0, data=Data(data=hetero_secure_boost_0.output.data))
 
     pipeline.compile()
     pipeline.fit()
 
-    print("fitting hetero fast secureboost done, result:")
-    print(pipeline.get_component("hetero_fast_secure_boost_0").get_summary())
-
-    # predict
-    # deploy required components
-    pipeline.deploy_component([data_transform_0, intersect_0, hetero_fast_secure_boost_0])
-
-    predict_pipeline = PipeLine()
-    # add data reader onto predict pipeline
-    predict_pipeline.add_component(reader_0)
-    # add selected components from train pipeline onto predict pipeline
-    # specify data source
-    predict_pipeline.add_component(
-        pipeline, data=Data(
-            predict_input={
-                pipeline.data_transform_0.input.data: reader_0.output.data}))
-    # run predict model
-    predict_pipeline.predict()
+    print("fitting hetero secureboost done, result:")
+    print(pipeline.get_component("hetero_secure_boost_0").get_summary())
 
 
 if __name__ == "__main__":

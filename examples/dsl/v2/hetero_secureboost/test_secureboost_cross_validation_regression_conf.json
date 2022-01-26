@@ -28,7 +28,7 @@
                 },
                 "validation_freqs": 1,
                 "encrypt_param": {
-                    "method": "Paillier"
+                    "method": "iterativeAffine"
                 },
                 "tree_param": {
                     "max_depth": 3
