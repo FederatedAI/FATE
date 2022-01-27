@@ -23,7 +23,7 @@ from federatedml.optim.initialize import Initializer
 from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.param.logistic_regression_param import InitParam
 from federatedml.protobuf.generated import lr_model_param_pb2
-from federatedml.util import LOGGER
+from federatedml.util import LOGGER, consts
 from federatedml.util.fate_operator import vec_dot
 
 
@@ -101,12 +101,9 @@ class BaseLogisticRegression(BaseLinearModel):
             self.init_param_obj = InitParam()
         self.init_param_obj.fit_intercept = meta_obj.fit_intercept
         self.header = list(result_obj.header)
-        # For hetero-lr arbiter predict function
-        if self.header is None:
-            return
 
         need_one_vs_rest = result_obj.need_one_vs_rest
-        LOGGER.debug("in _load_model need_one_vs_rest: {}".format(need_one_vs_rest))
+
         if need_one_vs_rest:
             one_vs_rest_result = result_obj.one_vs_rest_result
             self.one_vs_rest_obj = one_vs_rest_factory(classifier=self, role=self.role,

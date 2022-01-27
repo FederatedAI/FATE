@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from pipeline.param.boosting_param import HeteroSecureBoostParam, HomoSecureBoostParam, HeteroFastSecureBoostParam
+from pipeline.param.boosting_param import HeteroSecureBoostParam, HomoSecureBoostParam
 from pipeline.param.column_expand_param import ColumnExpandParam
 from pipeline.param.data_split_param import DataSplitParam
 from pipeline.param.dataio_param import DataIOParam

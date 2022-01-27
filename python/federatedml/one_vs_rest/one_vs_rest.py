@@ -113,8 +113,6 @@ class OneVsRest(object):
         ----------
         data_instances: Table of instances
         """
-        if self.mode == consts.HOMO:
-            raise ValueError("Currently, One vs Rest is not supported for homo algorithm")
 
         LOGGER.info("mode is {}, role is {}, start to one_vs_rest fit".format(self.mode, self.role))
 
@@ -149,6 +147,10 @@ class OneVsRest(object):
             _summary['one_vs_rest'] = True
             summary_dict[label] = _summary
             self.models.append(classifier)
+            if hasattr(self, "header"):
+                header = getattr(self, "header")
+                if header is None:
+                    setattr(self, "header", getattr(classifier, "header"))
             LOGGER.info("Finish model_{} training!".format(label_index))
         self.classifier.set_summary(summary_dict)
 
@@ -238,6 +240,13 @@ class OneVsRest(object):
 
 
 class HomoOneVsRest(OneVsRest):
+
+    def __init__(self, classifier, role, mode, has_arbiter):
+        super().__init__(classifier, role, mode, has_arbiter)
+        self.header = None
+
+    def set_header(self, header):
+        self.header = header
 
     @property
     def has_label(self):

@@ -202,7 +202,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
             g_h = self.get_grad_and_hess(self.grad_and_hess, booster_dim)
 
         flow_id = self.generate_flowid(epoch_idx, booster_dim)
-        complete_secure = True if (self.cur_epoch_idx == 0 and self.complete_secure) else False
+        complete_secure = True if (epoch_idx == 0 and self.complete_secure) else False
 
         tree_type, target_host_id = None, None
         fast_sbt = (self.boosting_strategy != consts.STD_TREE)

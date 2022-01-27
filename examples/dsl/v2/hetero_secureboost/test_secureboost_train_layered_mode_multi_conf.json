@@ -14,21 +14,20 @@
     },
     "component_parameters": {
         "common": {
-            "hetero_fast_secure_boost_0": {
+            "hetero_secure_boost_0": {
                 "task_type": "classification",
                 "objective_param": {
                     "objective": "cross_entropy"
                 },
-                "num_trees": 4,
+                "num_trees": 3,
                 "validation_freqs": 1,
                 "encrypt_param": {
                     "method": "Paillier"
                 },
-                "tree_num_per_party": 1,
-                "work_mode": "mix",
                 "tree_param": {
                     "max_depth": 3
-                }
+                },
+                "boosting_strategy": "layered"
             },
             "evaluation_0": {
                 "eval_type": "binary"
@@ -37,6 +36,18 @@
         "role": {
             "guest": {
                 "0": {
+                    "reader_1": {
+                        "table": {
+                            "name": "vehicle_scale_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "vehicle_scale_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    },
                     "data_transform_0": {
                         "with_label": true,
                         "output_format": "dense"
@@ -44,40 +55,28 @@
                     "data_transform_1": {
                         "with_label": true,
                         "output_format": "dense"
-                    },
-                    "reader_0": {
-                        "table": {
-                            "name": "breast_hetero_guest",
-                            "namespace": "experiment"
-                        }
-                    },
-                    "reader_1": {
-                        "table": {
-                            "name": "breast_hetero_guest",
-                            "namespace": "experiment"
-                        }
                     }
                 }
             },
             "host": {
                 "0": {
+                    "reader_1": {
+                        "table": {
+                            "name": "vehicle_scale_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "vehicle_scale_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    },
                     "data_transform_0": {
                         "with_label": false
                     },
                     "data_transform_1": {
                         "with_label": false
-                    },
-                    "reader_0": {
-                        "table": {
-                            "name": "breast_hetero_host",
-                            "namespace": "experiment"
-                        }
-                    },
-                    "reader_1": {
-                        "table": {
-                            "name": "breast_hetero_host",
-                            "namespace": "experiment"
-                        }
                     }
                 }
             }

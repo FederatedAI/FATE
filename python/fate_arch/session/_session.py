@@ -104,7 +104,8 @@ class Session(object):
         if self._computing_type == ComputingEngine.STANDALONE:
             from fate_arch.computing.standalone import CSession
 
-            self._computing_session = CSession(session_id=computing_session_id)
+            options = kwargs.get("options", {})
+            self._computing_session = CSession(session_id=computing_session_id, options=options)
             self._computing_type = ComputingEngine.STANDALONE
             return self
 
