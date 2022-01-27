@@ -178,7 +178,7 @@ mkdir -p /data/projects/install
 cd /data/projects/install
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-miniconda3-4.5.4.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-fate-8.0.13.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-fate-8.0.28.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/openresty-1.17.8.2.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/pip-packages-fate-${version}.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_${version}_release.tar.gz
@@ -215,32 +215,32 @@ mkdir -p /data/projects/fate/data/mysql
 
 #Unpack the package
 cd /data/projects/install
-tar xzvf mysql-*.tar.gz
+tar xf mysql-*.tar.gz
 cd mysql
-tar xf mysql-8.0.13.tar.gz -C /data/projects/fate/common/mysql
+tar xf mysql-8.0.28.tar.gz -C /data/projects/fate/common/mysql
 
 #Configuration settings
-mkdir -p /data/projects/fate/common/mysql/mysql-8.0.13/{conf,run,logs}
-cp service.sh /data/projects/fate/common/mysql/mysql-8.0.13/
-cp my.cnf /data/projects/fate/common/mysql/mysql-8.0.13/conf
+mkdir -p /data/projects/fate/common/mysql/mysql-8.0.28/{conf,run,logs}
+cp service.sh /data/projects/fate/common/mysql/mysql-8.0.28/
+cp my.cnf /data/projects/fate/common/mysql/mysql-8.0.28/conf
 
 #initialize
-cd /data/projects/fate/common/mysql/mysql-8.0.13/
-./bin/mysqld --initialize --user=app --basedir=/data/projects/fate/common/mysql/mysql-8.0.13 --datadir=/data/projects/fate/data/mysql > logs/init.log 2>&1
+cd /data/projects/fate/common/mysql/mysql-8.0.28/
+./bin/mysqld --initialize --user=app --basedir=/data/projects/fate/common/mysql/mysql-8.0.28 --datadir=/data/projects/fate/data/mysql > logs/init.log 2>&1
 cat logs/init.log |grep root@localhost
 #Note that the output message after root@localhost: is the initial password of the mysql user root, which needs to be recorded and used to change the password later
 
 #Start the service
-cd /data/projects/fate/common/mysql/mysql-8.0.13/
+cd /data/projects/fate/common/mysql/mysql-8.0.28/
 nohup ./bin/mysqld_safe --defaults-file=./conf/my.cnf --user=app >>logs/mysqld.log 2>&1 &
 
 #change mysql root user password
-cd /data/projects/fate/common/mysql/mysql-8.0.13/
+cd /data/projects/fate/common/mysql/mysql-8.0.28/
 ./bin/mysqladmin -h 127.0.0.1 -P 3306 -S ./run/mysql.sock -u root -p password "fate_dev"
 Enter Password: [Enter root initial password]
 
 #Verify login
-cd /data/projects/fate/common/mysql/mysql-8.0.13/
+cd /data/projects/fate/common/mysql/mysql-8.0.28/
 ./bin/mysql -u root -p -S ./run/mysql.sock
 Enter Password: [Enter root modified password:fate_dev]
 ```
@@ -248,7 +248,7 @@ Enter Password: [Enter root modified password:fate_dev]
 **2) Build authorization and business configuration**
 
 ```bash
-cd /data/projects/fate/common/mysql/mysql-8.0.13/
+cd /data/projects/fate/common/mysql/mysql-8.0.28/
 ./bin/mysql -u root -p -S ./run/mysql.sock
 Enter Password:[fate_dev]
 
