@@ -2,16 +2,8 @@
 
 [English](./README.md)
 
-
-## 里程碑 & 总览
-
-- [2021. FATE-OverView-2021](FATE-OverView-2021.pdf)
-
 ## 演讲 & 会议
 - [2021. 杨强教授：2021联邦学习专题研讨会](杨强教授：2021联邦学习专题研讨会.pdf)
-- [2021. FATE：工业级联邦学习开源生态建设经验分享-COSCon'21-1030](FATE：工业级联邦学习开源生态建设经验分享-COSCon'21-1030.pdf)
-- [2019. FATE：新一代联邦学习技术及应用实战](FATE：新一代联邦学习技术及应用实战2019.pdf)
-- [2019. 构建端到端的联邦学习Pipeline生产服务](构建端到端的联邦学习Pipeline生产服务2019.pdf)
 - [2019. SecureBoost-ijcai2019-workshop](SecureBoost-ijcai2019-workshop.pdf)
 - [2019. GDPR_Data_Shortage_and_AI-AAAI_2019_PPT](GDPR_Data_Shortage_and_AI-AAAI_2019_PPT.pdf)
 
