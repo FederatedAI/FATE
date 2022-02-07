@@ -340,18 +340,18 @@ def go_to_children_branches(data_inst, tree_node: Node, tree, sitename: str, can
     else:
         tree_node_list = tree.tree_node
         if tree_node.sitename != sitename:
-            go_to_children_branches(data_inst, tree_node_list[tree_node.left_nodeid], tree_node_list, sitename,
+            go_to_children_branches(data_inst, tree_node_list[tree_node.left_nodeid], tree, sitename,
                                     candidate_list)
-            go_to_children_branches(data_inst, tree_node_list[tree_node.right_nodeid], tree_node_list, sitename,
+            go_to_children_branches(data_inst, tree_node_list[tree_node.right_nodeid], tree, sitename,
                                     candidate_list)
         else:
-            next_layer_node_id = tree.go_next_layer(tree_node.id, data_inst, use_missing=tree.use_missing,
+            next_layer_node_id = tree.go_next_layer(tree_node, data_inst, use_missing=tree.use_missing,
                                                     zero_as_missing=tree.zero_as_missing, decoder=tree.decode,
                                                     split_maskdict=tree.split_maskdict,
                                                     missing_dir_maskdict=tree.missing_dir_maskdict,
                                                     bin_sparse_point=None
                                                     )
-            go_to_children_branches(data_inst, tree_node_list[next_layer_node_id], tree_node_list, sitename,
+            go_to_children_branches(data_inst, tree_node_list[next_layer_node_id], tree, sitename,
                                     candidate_list)
 
 
@@ -359,12 +359,12 @@ def generate_leaf_candidates(data_inst, sitename, trees: List[DecisionTree], nod
 
     candidate_nodes_of_all_tree = []
     for tree, node_pos_map in zip(trees, node_pos_map_list):
-        result_vec = [0 for i in range(node_pos_map)]
+        result_vec = [0 for i in range(len(node_pos_map))]
         candidate_list = []
         go_to_children_branches(data_inst, tree.tree_node[0], tree, sitename, candidate_list)
         for node in candidate_list:
             result_vec[node_pos_map[node.id]] = 1 if not with_weight else node.weight
-        candidate_nodes_of_all_tree.extend(candidate_list)
+        candidate_nodes_of_all_tree.extend(result_vec)
 
     return candidate_nodes_of_all_tree
 

@@ -190,6 +190,9 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         if self.boosting_strategy == consts.MIX_TREE:
             mix_sbt_host_predict(processed_data, self.hetero_sbt_transfer_variable, trees)
         else:
+            from federatedml.ensemble.secureboost.secureboost_util.boosting_tree_predict import EINI_host_predict
+            sitename = self.role + ':' + str(self.component_properties.local_partyid)
+            EINI_host_predict(processed_data, self.hetero_sbt_transfer_variable, trees, sitename)
             sbt_host_predict(processed_data, self.hetero_sbt_transfer_variable, trees)
 
     def get_model_meta(self):

@@ -322,7 +322,8 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
             pred_func = sbt_guest_predict
 
         sitename = str(self.role) + ':' + str(self.component_properties.local_partyid)
-        EINI_guest_predict(processed_data, self.hetero_sbt_transfer_variable, trees)
+        EINI_guest_predict(processed_data, self.hetero_sbt_transfer_variable, trees, self.learning_rate, self.init_score,
+                           self.booster_dim, predict_cache, False, sitename)
         predict_rs = pred_func(processed_data, self.hetero_sbt_transfer_variable, trees, self.learning_rate,
                                self.init_score, self.booster_dim, predict_cache,
                                pred_leaf=(ret_format == 'leaf'))
