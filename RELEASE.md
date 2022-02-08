@@ -1,3 +1,11 @@
+## Release 1.7.1.1
+### Major Features and Improvements
+> Deploy
+* upgrade mysql to version 8.0.28
+
+> Eggroll
+* Support Eggroll v2.4.3, upgrade com.h2database:h2 to version 2.1.210, com.google.protobuf:protobuf-java to version 3.16.1
+
 ## Release 1.7.1
 ### Major Features and Improvements
 > FederatedML
