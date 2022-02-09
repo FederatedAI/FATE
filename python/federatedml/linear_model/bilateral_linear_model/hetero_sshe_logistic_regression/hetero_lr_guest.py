@@ -18,7 +18,7 @@ import operator
 
 import numpy as np
 
-from federatedml.framework.hetero.procedure.hetero_sshe_linear_model import HeteroSSHEGuestBase
+from federatedml.linear_model.bilateral_linear_model.hetero_sshe_linear_model import HeteroSSHEGuestBase
 from federatedml.one_vs_rest.one_vs_rest import one_vs_rest_factory
 from federatedml.optim import activation
 from federatedml.param.evaluation_param import EvaluateParam
