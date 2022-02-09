@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 
+import random
 from fate_arch.session import computing_session as session
 from federatedml.model_selection import indices
 
@@ -21,19 +22,21 @@ from federatedml.util import LOGGER
 
 
 class MiniBatch:
-    def __init__(self, data_inst, batch_size=320):
+    def __init__(self, data_inst, batch_size=320, shuffle=False):
         self.batch_data_sids = None
         self.batch_nums = 0
         self.data_inst = data_inst
         self.all_batch_data = None
         self.all_index_data = None
+        self.data_sids_iter = None
+        self.shuffle = shuffle
 
         if batch_size == -1:
             self.batch_size = data_inst.count()
         else:
             self.batch_size = batch_size
 
-        self.__mini_batch_data_seperator(data_inst, batch_size)
+        self.__mini_batch_data_seperator(data_inst, self.batch_size)
         # LOGGER.debug("In mini batch init, batch_num:{}".format(self.batch_nums))
 
     def mini_batch_data_generator(self, result='data'):
@@ -49,7 +52,7 @@ class MiniBatch:
         -------
         A generator that might generate data or index.
         """
-        LOGGER.debug("Currently, len of all_batch_data: {}".format(len(self.all_batch_data)))
+        LOGGER.debug("Currently, batch_num is: {}".format(self.batch_nums))
         if result == 'index':
             for index_table in self.all_index_data:
                 yield index_table
@@ -58,25 +61,55 @@ class MiniBatch:
                 yield batch_data
 
     def __mini_batch_data_seperator(self, data_insts, batch_size):
-        data_sids_iter, data_size = indices.collect_index(data_insts)
+        self.data_sids_iter, data_size = indices.collect_index(data_insts)
 
         if batch_size > data_size:
             batch_size = data_size
             self.batch_size = batch_size
 
-        batch_nums = (data_size + batch_size - 1) // batch_size
+        self.batch_nums = (data_size + batch_size - 1) // batch_size
 
+        if self.shuffle is False:
+            self.__generate_batch_data(data_insts)
+
+    def generate_batch_data(self):
+        if self.shuffle:
+            self.__generate_batch_data(data_insts=self.data_inst)
+
+    def __generate_batch_data(self, data_insts):
+        if self.shuffle:
+            random.SystemRandom().shuffle(self.data_sids_iter)
+
+        self.all_batch_data = []
+        self.all_index_data = []
+
+        for bid in range(self.batch_nums):
+            batch_ids = self.data_sids_iter[bid * self.batch_size:(bid + 1) * self.batch_size]
+            index_table = session.parallelize(batch_ids,
+                                              include_key=True,
+                                              partition=data_insts.partitions)
+            batch_data = index_table.join(data_insts, lambda x, y: y)
+            LOGGER.debug(f"mgq-debug, batch data size is {batch_data.count()}, "
+                         f"data_inst size is {data_insts.count()}, "
+                         f"index table size is {index_table.count()}, "
+                         f"index table is {list(index_table.collect())}, "
+                         f"batch_ids is : {batch_ids}")
+            self.all_index_data.append(index_table)
+            self.all_batch_data.append(batch_data)
+
+        """
         batch_data_sids = []
         curt_data_num = 0
         curt_batch = 0
         curt_batch_ids = []
-        for sid, values in data_sids_iter:
+        data_size = len(self.data_sids_iter)
+        for sid, values in self.data_sids_iter:
             # print('sid is {}, values is {}'.format(sid, values))
             curt_batch_ids.append((sid, None))
             curt_data_num += 1
-            if curt_data_num % batch_size == 0:
+            if curt_data_num % self.batch_size == 0:
                 curt_batch += 1
-                if curt_batch < batch_nums:
+                if curt_batch < self.batch_nums:
                     batch_data_sids.append(curt_batch_ids)
                     curt_batch_ids = []
             if curt_data_num == data_size and len(curt_batch_ids) != 0:
@@ -96,3 +129,4 @@ class MiniBatch:
             all_index_data.append(index_table)
         self.all_batch_data = all_batch_data
         self.all_index_data = all_index_data
+        """

@@ -66,6 +66,8 @@ class BaseLinearModel(ModelBase):
         self.init_param_obj = params.init_param
         # self.fit_intercept = self.init_param_obj.fit_intercept
         self.batch_size = params.batch_size
+        if hasattr(params, "shuffle"):
+            self.shuffle = params.shuffle
         self.max_iter = params.max_iter
         self.optimizer = optimizer_factory(params)
         self.converge_func = converge_func_factory(params.early_stop, params.tol)

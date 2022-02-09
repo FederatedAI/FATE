@@ -105,7 +105,7 @@ class HeteroLRHost(HeteroLRBase):
             LOGGER.debug(f"set_use_async")
             self.gradient_loss_operator.set_use_async()
 
-        self.batch_generator.initialize_batch_generator(data_instances)
+        self.batch_generator.initialize_batch_generator(data_instances, shuffle=self.shuffle)
         self.gradient_loss_operator.set_total_batch_nums(self.batch_generator.batch_nums)
 
         self.encrypted_calculator = [EncryptModeCalculator(self.cipher_operator,
@@ -127,8 +127,8 @@ class HeteroLRHost(HeteroLRBase):
         while self.n_iter_ < self.max_iter:
             self.callback_list.on_epoch_begin(self.n_iter_)
 
-            LOGGER.info("iter:" + str(self.n_iter_))
-            batch_data_generator = self.batch_generator.generate_batch_data()
+            LOGGER.info("iter: " + str(self.n_iter_))
+            batch_data_generator = self.batch_generator.generate_batch_data(suffix=(self.n_iter_, ))
             batch_index = 0
             self.optimizer.set_iters(self.n_iter_)
             for batch_data in batch_data_generator:
@@ -136,6 +136,9 @@ class HeteroLRHost(HeteroLRBase):
                 batch_feat_inst = batch_data
                 # LOGGER.debug(f"MODEL_STEP In Batch {batch_index}, batch data count: {batch_feat_inst.count()}")
 
+                LOGGER.debug("iter: {}, batch: {}, before compute gradient, data count: {}".format(self.n_iter_,
+                                                                                                   batch_index,
+                                                                                                   batch_feat_inst.count()))
                 optim_host_gradient = self.gradient_loss_operator.compute_gradient_procedure(
                     batch_feat_inst, self.encrypted_calculator, self.model_weights, self.optimizer, self.n_iter_,
                     batch_index)

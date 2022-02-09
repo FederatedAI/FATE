@@ -104,7 +104,7 @@ class HeteroLRGuest(HeteroLRBase):
         self.transfer_variable.use_async.remote(use_async)
 
         LOGGER.info("Generate mini-batch from input data")
-        self.batch_generator.initialize_batch_generator(data_instances, self.batch_size)
+        self.batch_generator.initialize_batch_generator(data_instances, self.batch_size, shuffle=self.shuffle)
         self.gradient_loss_operator.set_total_batch_nums(self.batch_generator.batch_nums)
 
         self.encrypted_calculator = [EncryptModeCalculator(self.cipher_operator,
@@ -123,16 +123,17 @@ class HeteroLRGuest(HeteroLRBase):
 
         while self.n_iter_ < self.max_iter:
             self.callback_list.on_epoch_begin(self.n_iter_)
-            LOGGER.info("iter:{}".format(self.n_iter_))
-            batch_data_generator = self.batch_generator.generate_batch_data()
+            LOGGER.info("iter: {}".format(self.n_iter_))
+            batch_data_generator = self.batch_generator.generate_batch_data(suffix=(self.n_iter_, ))
             self.optimizer.set_iters(self.n_iter_)
             batch_index = 0
             for batch_data in batch_data_generator:
                 batch_feat_inst = batch_data
 
                 # Start gradient procedure
-                LOGGER.debug("iter: {}, before compute gradient, data count: {}".format(self.n_iter_,
-                                                                                        batch_feat_inst.count()))
+                LOGGER.debug("iter: {}, batch: {}, before compute gradient, data count: {}".format(self.n_iter_,
+                                                                                                   batch_index,
+                                                                                                   batch_feat_inst.count()))
                 optim_guest_gradient = self.gradient_loss_operator.compute_gradient_procedure(
                     batch_feat_inst,
                     self.encrypted_calculator,
