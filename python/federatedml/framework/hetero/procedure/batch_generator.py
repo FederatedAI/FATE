@@ -94,8 +94,6 @@ class Host(batch_info_sync.Host):
             batch_data_inst = data_inst.join(batch_data_index, lambda d, g: d)
             self.batch_data_insts.append(batch_data_inst)
 
-            LOGGER.debug(f"mgq-debug5: batch_data_index is {list(batch_data_index.collect())}")
-
     def generate_batch_data(self, suffix=tuple()):
         if self.shuffle:
             self.prepare_batch_data(data_inst=self.data_inst, suffix=suffix)

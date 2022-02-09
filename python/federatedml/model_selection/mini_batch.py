@@ -89,11 +89,6 @@ class MiniBatch:
                                               include_key=True,
                                               partition=data_insts.partitions)
             batch_data = index_table.join(data_insts, lambda x, y: y)
-            LOGGER.debug(f"mgq-debug, batch data size is {batch_data.count()}, "
-                         f"data_inst size is {data_insts.count()}, "
-                         f"index table size is {index_table.count()}, "
-                         f"index table is {list(index_table.collect())}, "
-                         f"batch_ids is : {batch_ids}")
             self.all_index_data.append(index_table)
             self.all_batch_data.append(batch_data)
 

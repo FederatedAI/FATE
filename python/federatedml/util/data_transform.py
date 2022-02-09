@@ -672,8 +672,6 @@ class SparseTagTransformer(object):
         schema = make_schema(self.header, self.sid_name, self.label_name, self.match_id_name)
         set_schema(data_instance, schema)
 
-        for k, inst in data_instance.collect():
-            LOGGER.debug(f"mgq-debug : {inst.inst_id}")
         return data_instance
 
     @staticmethod
