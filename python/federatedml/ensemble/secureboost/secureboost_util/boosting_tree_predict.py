@@ -1,13 +1,14 @@
 import functools
 import numpy as np
 from typing import List
+from federatedml.util import consts
+from federatedml.secureprotol import PaillierEncrypt
 from federatedml.ensemble.basic_algorithms import HeteroDecisionTreeGuest, HeteroDecisionTreeHost, \
     HeteroFastDecisionTreeGuest, HeteroFastDecisionTreeHost
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.decision_tree import DecisionTree, Node
 from federatedml.util import LOGGER
 from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict_transfer_variable import \
     HeteroSecureBoostTransferVariable
-from federatedml.util import consts
 
 """
 Hetero guest predict utils
@@ -89,7 +90,6 @@ def get_predict_scores(
         trees: List[HeteroDecisionTreeGuest],
         multi_class_num=-1,
         predict_cache=None):
-
     if predict_cache:
         init_score = 0  # prevent init_score re-add
 
@@ -181,15 +181,12 @@ def sbt_guest_predict(data_inst, transfer_var: HeteroSecureBoostTransferVariable
 
         transfer_var.predict_stop_flag.remote(False, idx=-1, suffix=(comm_round,))
         transfer_var.guest_predict_data.remote(node_pos_tb, idx=-1, suffix=(comm_round,))
-
         host_pos_tbs = transfer_var.host_predict_data.get(idx=-1, suffix=(comm_round,))
 
         for host_pos_tb in host_pos_tbs:
             node_pos_tb = node_pos_tb.join(host_pos_tb, merge_predict_pos)
 
         comm_round += 1
-
-    # LOGGER.info('federated prediction process done')
 
     if pred_leaf:  # return leaf position only
         return final_leaf_pos
@@ -198,6 +195,7 @@ def sbt_guest_predict(data_inst, transfer_var: HeteroSecureBoostTransferVariable
         predict_result = get_predict_scores(leaf_pos=final_leaf_pos, learning_rate=learning_rate,
                                             init_score=init_score, trees=trees,
                                             multi_class_num=booster_dim, predict_cache=predict_cache)
+        LOGGER.debug('predict result 2 is {}'.format(list(predict_result.collect())))
         return predict_result
 
 
@@ -318,7 +316,6 @@ Fed-EINI predict func
 
 
 def get_leaf_idx_map(trees: List[DecisionTree]):
-
     id_pos_map_list = []
 
     for tree in trees:
@@ -334,7 +331,6 @@ def get_leaf_idx_map(trees: List[DecisionTree]):
 
 
 def go_to_children_branches(data_inst, tree_node: Node, tree, sitename: str, candidate_list: List):
-
     if tree_node.is_leaf:
         candidate_list.append(tree_node)
     else:
@@ -355,39 +351,148 @@ def go_to_children_branches(data_inst, tree_node: Node, tree, sitename: str, can
                                     candidate_list)
 
 
-def generate_leaf_candidates(data_inst, sitename, trees: List[DecisionTree], node_pos_map_list, with_weight=False):
-
+def generate_leaf_candidates_guest(data_inst, sitename, trees: List[DecisionTree], node_pos_map_list,
+                                   init_score, learning_rate, booster_dim):
     candidate_nodes_of_all_tree = []
+
+    if booster_dim > 2:
+        epoch_num = len(trees) // booster_dim
+    else:
+        epoch_num = len(trees)
+    init_score = init_score / epoch_num
+    score_idx = 0
+
     for tree, node_pos_map in zip(trees, node_pos_map_list):
+        if booster_dim > 2:
+            tree_init_score = init_score[score_idx]
+            score_idx += 1
+            if score_idx == booster_dim:
+                score_idx = 0
+        else:
+            tree_init_score = init_score
         result_vec = [0 for i in range(len(node_pos_map))]
         candidate_list = []
         go_to_children_branches(data_inst, tree.tree_node[0], tree, sitename, candidate_list)
         for node in candidate_list:
-            result_vec[node_pos_map[node.id]] = 1 if not with_weight else node.weight
+            result_vec[node_pos_map[node.id]] = float(node.weight * learning_rate + tree_init_score)
         candidate_nodes_of_all_tree.extend(result_vec)
 
-    return candidate_nodes_of_all_tree
+    return np.array(candidate_nodes_of_all_tree)
+
+
+def generate_leaf_candidates_host(data_inst, sitename, trees: List[DecisionTree], node_pos_map_list):
+    candidate_nodes_of_all_tree = []
+
+    for tree, node_pos_map in zip(trees, node_pos_map_list):
+
+        result_vec = [0 for i in range(len(node_pos_map))]
+        candidate_list = []
+        go_to_children_branches(data_inst, tree.tree_node[0], tree, sitename, candidate_list)
+        for node in candidate_list:
+            result_vec[node_pos_map[node.id]] = 1  # create 0-1 vector
+        candidate_nodes_of_all_tree.extend(result_vec)
+
+    return np.array(candidate_nodes_of_all_tree)
+
+
+def generate_leaf_idx_dimension_map(trees, booster_dim):
+    cur_dim = 0
+    leaf_dim_map = {}
+    leaf_idx = 0
+    for tree in trees:
+        for node in tree.tree_node:
+            if node.is_leaf:
+                leaf_dim_map[leaf_idx] = cur_dim
+                leaf_idx += 1
+        cur_dim += 1
+        if cur_dim == booster_dim:
+            cur_dim = 0
+    return leaf_dim_map
+
+
+def merge_position_vec(host_vec, guest_encrypt_vec, booster_dim=1, leaf_idx_dim_map=None):
+    leaf_idx = -1
+    rs = [0 for i in range(booster_dim)]
+    for en_num, vec_value in zip(guest_encrypt_vec, host_vec):
+        leaf_idx += 1
+        if vec_value == 0:
+            continue
+        else:
+            dim = leaf_idx_dim_map[leaf_idx]
+            rs[dim] += en_num
+    return rs
+
+
+def position_vec_element_wise_mul(guest_encrypt_vec, host_vec):
+    new_vec = []
+    for en_num, vec_value in zip(guest_encrypt_vec, host_vec):
+        new_vec.append(en_num * vec_value)
+    return new_vec
 
 
 def EINI_guest_predict(data_inst, transfer_var: HeteroSecureBoostTransferVariable,
                        trees: List[HeteroDecisionTreeGuest], learning_rate, init_score, booster_dim,
-                       predict_cache=None, pred_leaf=False, sitename=None):
+                       sitename=None, party_list=None, predict_cache=None, pred_leaf=False):
 
     if sitename is None:
         raise ValueError('input sitename is None, not able to run EINI predict algorithm')
 
+    if pred_leaf:
+        raise ValueError('EINI predict mode does not support leaf idx prediction')
+
     # EINI algorithms
     id_pos_map_list = get_leaf_idx_map(trees)
-    map_func = functools.partial(generate_leaf_candidates, sitename=sitename, trees=trees,
-                                 node_pos_map_list=id_pos_map_list, with_weight=True)
+    map_func = functools.partial(generate_leaf_candidates_guest, sitename=sitename, trees=trees,
+                                 node_pos_map_list=id_pos_map_list, init_score=init_score,
+                                 learning_rate=learning_rate, booster_dim=booster_dim)
     position_vec = data_inst.mapValues(map_func)
-    # post-process
+
+    # encryption
+    encrypter = PaillierEncrypt()
+    encrypter.generate_key(1024)
+    encrypter_vec_table = position_vec.mapValues(encrypter.recursive_encrypt)
+
+    # federation part
+    transfer_var.guest_predict_data.remote(booster_dim, idx=-1, suffix='booster_dim')
+    # send to first host party
+    transfer_var.guest_predict_data.remote(encrypter_vec_table, idx=0, suffix='position_vec')
+    # get from last host party
+    result_table = transfer_var.host_predict_data.get(idx=len(party_list)-1, suffix='merge_result')
+
+    # decode result
+    result = result_table.mapValues(encrypter.recursive_decrypt)
+
+    # result = result_table
+    if booster_dim == 1:
+        result = result.mapValues(lambda x: x[0])
+    else:
+        result = result.mapValues(lambda x: np.array(x))
+
+    if predict_cache:
+        result = result.join(predict_cache, lambda v1, v2: v1 + v2)
+
+    return result
 
 
 def EINI_host_predict(data_inst, transfer_var: HeteroSecureBoostTransferVariable, trees: List[HeteroDecisionTreeHost],
-                      sitename=None):
-
+                      sitename, self_party_id, party_list):
     id_pos_map_list = get_leaf_idx_map(trees)
+    map_func = functools.partial(generate_leaf_candidates_host, sitename=sitename, trees=trees,
+                                 node_pos_map_list=id_pos_map_list)
+    position_vec = data_inst.mapValues(map_func)
 
-
-
+    booster_dim = transfer_var.guest_predict_data.get(idx=0, suffix='booster_dim')
+    # if is first host party, get encrypt vec from guest, else from previous host party
+    if self_party_id == party_list[0]:
+        guest_position_vec = transfer_var.guest_predict_data.get(idx=0, suffix='position_vec')
+        leaf_idx_dim_map = generate_leaf_idx_dimension_map(trees, booster_dim)
+        # merge predict result
+        merge_func = functools.partial(merge_position_vec, booster_dim=booster_dim, leaf_idx_dim_map=leaf_idx_dim_map)
+        result_table = position_vec.join(guest_position_vec, merge_func)
+        transfer_var.host_predict_data.remote(result_table, suffix='merge_result')
+    else:
+        self_idx = party_list.index(self_party_id)
+        guest_position_vec = transfer_var.inter_host_data.get(idx=self_idx-1, suffix='position_vec')
+        # element wise mul
+        result_table = position_vec.join(guest_position_vec, position_vec_element_wise_mul)
+        transfer_var.inter_host_data.remote(result_table, idx=self_idx+1, suffix='position_vec')
