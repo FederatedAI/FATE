@@ -455,9 +455,9 @@ def EINI_guest_predict(data_inst, transfer_var: HeteroSecureBoostTransferVariabl
     # federation part
     transfer_var.guest_predict_data.remote(booster_dim, idx=-1, suffix='booster_dim')
     # send to first host party
-    transfer_var.guest_predict_data.remote(encrypter_vec_table, idx=0, suffix='position_vec')
+    transfer_var.guest_predict_data.remote(encrypter_vec_table, idx=0, suffix='position_vec', role=consts.HOST)
     # get from last host party
-    result_table = transfer_var.host_predict_data.get(idx=len(party_list)-1, suffix='merge_result')
+    result_table = transfer_var.host_predict_data.get(idx=len(party_list)-1, suffix='merge_result', role=consts.HOST)
 
     # decode result
     result = result_table.mapValues(encrypter.recursive_decrypt)
@@ -482,17 +482,23 @@ def EINI_host_predict(data_inst, transfer_var: HeteroSecureBoostTransferVariable
     position_vec = data_inst.mapValues(map_func)
 
     booster_dim = transfer_var.guest_predict_data.get(idx=0, suffix='booster_dim')
-    # if is first host party, get encrypt vec from guest, else from previous host party
-    if self_party_id == party_list[0]:
+
+    self_idx = party_list.index(self_party_id)
+    if len(party_list) == 1:
         guest_position_vec = transfer_var.guest_predict_data.get(idx=0, suffix='position_vec')
         leaf_idx_dim_map = generate_leaf_idx_dimension_map(trees, booster_dim)
-        # merge predict result
         merge_func = functools.partial(merge_position_vec, booster_dim=booster_dim, leaf_idx_dim_map=leaf_idx_dim_map)
         result_table = position_vec.join(guest_position_vec, merge_func)
-        transfer_var.host_predict_data.remote(result_table, suffix='merge_result')
+        transfer_var.inter_host_data.remote(result_table, idx=self_idx + 1, suffix='position_vec', role=consts.HOST)
     else:
-        self_idx = party_list.index(self_party_id)
-        guest_position_vec = transfer_var.inter_host_data.get(idx=self_idx-1, suffix='position_vec')
-        # element wise mul
+        # multi host case
+        # if is first host party, get encrypt vec from guest, else from previous host party
+        if self_party_id == party_list[0]:
+            guest_position_vec = transfer_var.guest_predict_data.get(idx=0, suffix='position_vec')
+        else:
+            guest_position_vec = transfer_var.inter_host_data.get(idx=self_idx - 1, suffix='position_vec')
         result_table = position_vec.join(guest_position_vec, position_vec_element_wise_mul)
-        transfer_var.inter_host_data.remote(result_table, idx=self_idx+1, suffix='position_vec')
+        if self_party_id == party_list[-1]:
+            transfer_var.host_predict_data.remote(result_table, suffix='merge_result')
+        else:
+            transfer_var.inter_host_data.remote(result_table, idx=self_idx + 1, suffix='position_vec', role=consts.HOST)

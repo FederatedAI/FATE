@@ -192,7 +192,8 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         else:
             from federatedml.ensemble.secureboost.secureboost_util.boosting_tree_predict import EINI_host_predict
             sitename = self.role + ':' + str(self.component_properties.local_partyid)
-            EINI_host_predict(processed_data, self.hetero_sbt_transfer_variable, trees, sitename)
+            EINI_host_predict(processed_data, self.hetero_sbt_transfer_variable, trees, sitename,
+                              self.component_properties.local_partyid, self.component_properties.host_party_idlist)
             sbt_host_predict(processed_data, self.hetero_sbt_transfer_variable, trees)
 
     def get_model_meta(self):
