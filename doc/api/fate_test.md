@@ -864,7 +864,7 @@ fate_test data --help
 5.  match-rate:
     
     ```bash
-    fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -m 1.0
+    fate_test data generate -i <path1 contains *testsuite.json | *benchmark.json> -m 1.0
     ```
     
     will generate dataset in testsuites in *path1* where generated host
@@ -874,7 +874,7 @@ fate_test data --help
 6.  guest-data-size:
     
     ```bash
-    fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -ng 10000
+    fate_test data generate -i <path1 contains *testsuite.json | *benchmark.json> -ng 10000
     ```
     
     will generate dataset in testsuites *path1* where guest data each
@@ -884,7 +884,7 @@ fate_test data --help
 7.  host-data-size:
     
     ```bash
-    fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -nh 10000
+    fate_test data generate -i <path1 contains *testsuite.json | *benchmark.json> -nh 10000
     ```
     
     will generate dataset in testsuites *path1* where host data have
@@ -894,7 +894,7 @@ fate_test data --help
 8.  guest-feature-num:
     
     ```bash
-    fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -fg 20
+    fate_test data generate -i <path1 contains *testsuite.json | *benchmark.json> -fg 20
     ```
     
     will generate dataset in testsuites *path1* where guest data have 20
@@ -903,7 +903,7 @@ fate_test data --help
 9.  host-feature-num:
     
     ```bash
-    fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -fh 200
+    fate_test data generate -i <path1 contains *testsuite.json | *benchmark.json> -fh 200
     ```
     
     will generate dataset in testsuites *path1* where host data have 200
@@ -912,7 +912,7 @@ fate_test data --help
 10. output-path:
     
     ```bash
-    fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -o <path2>
+    fate_test data generate -i <path1 contains *testsuite.json | *benchmark.json> -o <path2>
     ```
     
     will generate dataset in testsuites *path1* and write file to
@@ -921,7 +921,7 @@ fate_test data --help
 11. force:
     
     ```bash
-    fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -o <path2> --force
+    fate_test data generate -i <path1 contains *testsuite.json | *benchmark.json> -o <path2> --force
     ```
     
     will generate dataset in testsuites *path1* and write file to
@@ -932,7 +932,7 @@ fate_test data --help
 12. split-host:
     
     ```bash
-    fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -nh 10000 --split-host
+    fate_test data generate -i <path1 contains *testsuite.json | *benchmark.json> -nh 10000 --split-host
     ```
     
     will generate dataset in testsuites *path1*; 10000 entries will be
@@ -942,7 +942,7 @@ fate_test data --help
 13. upload-data
     
     ```bash
-    fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> --upload-data
+    fate_test data generate  -i <path1 contains *testsuite.json | *benchmark.json> --upload-data
     ```
     
     will generate dataset in testsuites *path1* and upload generated
@@ -952,7 +952,7 @@ fate_test data --help
 14. remove-data
     
     ```bash
-    fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> --remove-data
+    fate_test data generate -i <path1 contains *testsuite.json | *benchmark.json> --upload-data --remove-data
     ```
     
     (effective with `upload-data` set to True) will delete generated
@@ -962,7 +962,7 @@ fate_test data --help
 15. use-local-data
     
     ```bash
-    fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> --use-local-data
+    fate_test data generate -i <path1 contains *testsuite.json | *benchmark.json> --upload-data  --use-local-data
     ```
     
     (effective with `upload-data` set to True) will generate dataset in

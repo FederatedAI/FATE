@@ -53,7 +53,7 @@ from pipeline.param.cache_loader_param import CacheLoaderParam
 from pipeline.param.hetero_sshe_lr_param import HeteroSSHELRParam
 from pipeline.param.hetero_sshe_linr_param import HeteroSSHELinRParam
 
-__all__ = ["HeteroSecureBoostParam", "HomoSecureBoostParam", "HeteroFastSecureBoostParam",
+__all__ = ["HeteroSecureBoostParam", "HomoSecureBoostParam",
            "ColumnExpandParam", "DataSplitParam", "DataIOParam", "EncryptParam",
            "EvaluateParam", "FeatureBinningParam", "FeldmanVerifiableSumParam", "FTLParam",
            "KmeansParam", "HeteroNNParam", "HomoNNParam", "HomoOneHotParam", "InitParam",
