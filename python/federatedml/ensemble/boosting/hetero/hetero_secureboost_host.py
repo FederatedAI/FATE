@@ -35,13 +35,14 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.max_sample_weight = None
         self.round_decimal = None
         self.new_ver = True
+        self.feature_importances_ = {}
 
         # for fast hist
         self.sparse_opt_para = False
         self.run_sparse_opt = False
         self.has_transformed_data = False
         self.data_bin_dense = None
-        self.predict_transfer_inst = HeteroSecureBoostTransferVariable()
+        self.hetero_sbt_transfer_variable = HeteroSecureBoostTransferVariable()
 
     def _init_model(self, param: HeteroSecureBoostParam):
 
@@ -79,6 +80,22 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         new_data.features = sp.csc_matrix(np.array(new_feature_sparse_point_array) + offset)
         return new_data
 
+    def update_feature_importance(self, tree_feature_importance):
+        for fid in tree_feature_importance:
+            if fid not in self.feature_importances_:
+                self.feature_importances_[fid] = tree_feature_importance[fid]
+            else:
+                self.feature_importances_[fid] += tree_feature_importance[fid]
+        LOGGER.debug('cur feature importance {}'.format(self.feature_importances_))
+
+    def sync_feature_importance(self):
+        # generate anonymous
+        new_feat_importance = {}
+        sitename = 'host:' + str(self.component_properties.local_partyid)
+        for key in self.feature_importances_:
+            new_feat_importance[(sitename, key)] = self.feature_importances_[key]
+        self.hetero_sbt_transfer_variable.host_feature_importance.remote(new_feat_importance)
+
     def fit_a_booster(self, epoch_idx: int, booster_dim: int):
 
         tree = HeteroDecisionTreeHost(tree_param=self.tree_param)
@@ -94,6 +111,8 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
                   new_ver=self.new_ver
                   )
         tree.fit()
+        self.update_feature_importance(tree.get_feature_importance())
+
         return tree
 
     def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
@@ -146,16 +165,16 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
             LOGGER.debug('cur predict round is {}'.format(comm_round))
 
-            stop_flag = self.predict_transfer_inst.predict_stop_flag.get(idx=0, suffix=(comm_round, ))
+            stop_flag = self.hetero_sbt_transfer_variable.predict_stop_flag.get(idx=0, suffix=(comm_round,))
             if stop_flag:
                 break
 
-            guest_node_pos = self.predict_transfer_inst.guest_predict_data.get(idx=0, suffix=(comm_round, ))
+            guest_node_pos = self.hetero_sbt_transfer_variable.guest_predict_data.get(idx=0, suffix=(comm_round,))
             host_node_pos = guest_node_pos.join(data_inst, traverse_func)
             if guest_node_pos.count() != host_node_pos.count():
                 raise ValueError('sample count mismatch: guest table {}, host table {}'.format(guest_node_pos.count(),
                                                                                                host_node_pos.count()))
-            self.predict_transfer_inst.host_predict_data.remote(host_node_pos, idx=-1, suffix=(comm_round, ))
+            self.hetero_sbt_transfer_variable.host_predict_data.remote(host_node_pos, idx=-1, suffix=(comm_round,))
 
             comm_round += 1
 
@@ -253,29 +272,33 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
                                      node_pos_map_list=id_pos_map_list)
         position_vec = data_inst.mapValues(map_func)
 
-        booster_dim = self.predict_transfer_inst.guest_predict_data.get(idx=0, suffix='booster_dim')
+        booster_dim = self.hetero_sbt_transfer_variable.guest_predict_data.get(idx=0, suffix='booster_dim')
 
         self_idx = party_list.index(self_party_id)
         if len(party_list) == 1:
-            guest_position_vec = self.predict_transfer_inst.guest_predict_data.get(idx=0, suffix='position_vec')
+            guest_position_vec = self.hetero_sbt_transfer_variable.guest_predict_data.get(idx=0, suffix='position_vec')
             leaf_idx_dim_map = self.generate_leaf_idx_dimension_map(trees, booster_dim)
             merge_func = functools.partial(self.merge_position_vec, booster_dim=booster_dim,
                                            leaf_idx_dim_map=leaf_idx_dim_map)
             result_table = position_vec.join(guest_position_vec, merge_func)
-            self.predict_transfer_inst.inter_host_data.remote(result_table, idx=self_idx + 1, suffix='position_vec', role=consts.HOST)
+            self.hetero_sbt_transfer_variable.inter_host_data.remote(result_table, idx=self_idx + 1,
+                                                                     suffix='position_vec', role=consts.HOST)
         else:
             # multi host case
             # if is first host party, get encrypt vec from guest, else from previous host party
             if self_party_id == party_list[0]:
-                guest_position_vec = self.predict_transfer_inst.guest_predict_data.get(idx=0, suffix='position_vec')
+                guest_position_vec = self.hetero_sbt_transfer_variable.guest_predict_data.get(idx=0,
+                                                                                              suffix='position_vec')
             else:
-                guest_position_vec = self.predict_transfer_inst.inter_host_data.get(idx=self_idx - 1, suffix='position_vec')
+                guest_position_vec = self.hetero_sbt_transfer_variable.inter_host_data.get(idx=self_idx - 1,
+                                                                                           suffix='position_vec')
             result_table = position_vec.join(guest_position_vec, self.position_vec_element_wise_mul)
             if self_party_id == party_list[-1]:
-                self.predict_transfer_inst.host_predict_data.remote(result_table, suffix='merge_result')
+                self.hetero_sbt_transfer_variable.host_predict_data.remote(result_table, suffix='merge_result')
             else:
-                self.predict_transfer_inst.inter_host_data.remote(result_table, idx=self_idx + 1, suffix='position_vec',
-                                                                  role=consts.HOST)
+                self.hetero_sbt_transfer_variable.inter_host_data.remote(result_table, idx=self_idx + 1,
+                                                                         suffix='position_vec',
+                                                                         role=consts.HOST)
 
     @assert_io_num_rows_equal
     def predict(self, data_inst):

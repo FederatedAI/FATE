@@ -36,7 +36,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.model_param = HeteroSecureBoostParam()
         self.complete_secure = False
         self.data_alignment_map = {}
-        self.predict_transfer_inst = HeteroSecureBoostTransferVariable()
+        self.hetero_sbt_transfer_variable = HeteroSecureBoostTransferVariable()
         self.model_name = 'HeteroSecureBoost'
         self.max_sample_weight = 1
         self.max_sample_weight_computed = False
@@ -110,6 +110,13 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
             else:
                 self.feature_importances_[fid] += tree_feature_importance[fid]
         LOGGER.debug('cur feature importance {}'.format(self.feature_importances_))
+
+    def sync_feature_importance(self):
+        host_feature_importance_list = self.hetero_sbt_transfer_variable.host_feature_importance.get(idx=-1)
+        for i in host_feature_importance_list:
+            self.feature_importances_.update(i)
+
+        LOGGER.debug('self feature importance is {}'.format(self.feature_importances_))
 
     def fit_a_booster(self, epoch_idx: int, booster_dim: int):
 
@@ -322,13 +329,13 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
             node_pos_tb = node_pos_tb.subtractByKey(reach_leaf_samples)
 
             if node_pos_tb.count() == 0:
-                self.predict_transfer_inst.predict_stop_flag.remote(True, idx=-1, suffix=(comm_round, ))
+                self.hetero_sbt_transfer_variable.predict_stop_flag.remote(True, idx=-1, suffix=(comm_round,))
                 break
 
             LOGGER.info('cur predict round is {}'.format(comm_round))
-            self.predict_transfer_inst.predict_stop_flag.remote(False, idx=-1, suffix=(comm_round, ))
-            self.predict_transfer_inst.guest_predict_data.remote(node_pos_tb, idx=-1, suffix=(comm_round, ))
-            host_pos_tbs = self.predict_transfer_inst.host_predict_data.get(idx=-1, suffix=(comm_round, ))
+            self.hetero_sbt_transfer_variable.predict_stop_flag.remote(False, idx=-1, suffix=(comm_round,))
+            self.hetero_sbt_transfer_variable.guest_predict_data.remote(node_pos_tb, idx=-1, suffix=(comm_round,))
+            host_pos_tbs = self.hetero_sbt_transfer_variable.host_predict_data.get(idx=-1, suffix=(comm_round,))
 
             for host_pos_tb in host_pos_tbs:
                 node_pos_tb = node_pos_tb.join(host_pos_tb, self.merge_predict_pos)
@@ -434,12 +441,12 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         encrypter_vec_table = position_vec.mapValues(encrypter.recursive_encrypt)
 
         # federation part
-        self.predict_transfer_inst.guest_predict_data.remote(booster_dim, idx=-1, suffix='booster_dim')
+        self.hetero_sbt_transfer_variable.guest_predict_data.remote(booster_dim, idx=-1, suffix='booster_dim')
         # send to first host party
-        self.predict_transfer_inst.guest_predict_data.remote(encrypter_vec_table, idx=0, suffix='position_vec', role=consts.HOST)
+        self.hetero_sbt_transfer_variable.guest_predict_data.remote(encrypter_vec_table, idx=0, suffix='position_vec', role=consts.HOST)
         # get from last host party
-        result_table = self.predict_transfer_inst.host_predict_data.get(idx=len(party_list) - 1, suffix='merge_result',
-                                                                        role=consts.HOST)
+        result_table = self.hetero_sbt_transfer_variable.host_predict_data.get(idx=len(party_list) - 1, suffix='merge_result',
+                                                                               role=consts.HOST)
 
         # decode result
         result = result_table.mapValues(encrypter.recursive_decrypt)
