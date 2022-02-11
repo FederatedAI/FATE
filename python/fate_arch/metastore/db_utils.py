@@ -4,7 +4,7 @@ from fate_arch.common.base_utils import current_timestamp
 from fate_arch.metastore.db_models import DB, StorageConnectorModel
 
 
-class StorageConnector():
+class StorageConnector:
     def __init__(self, connector_name, engine=None, connector_info=None):
         self.name = connector_name
         self.engine = engine
