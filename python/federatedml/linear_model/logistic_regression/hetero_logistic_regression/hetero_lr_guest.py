@@ -133,7 +133,7 @@ class HeteroLRGuest(HeteroLRBase):
             batch_index = 0
             for batch_data, index_data in batch_data_generator:
                 batch_feat_inst = batch_data
-                if self.batch_generator.batch_masked:
+                if not self.batch_generator.batch_masked:
                     index_data = None
 
                 # Start gradient procedure

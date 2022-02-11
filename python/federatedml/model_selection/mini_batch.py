@@ -167,12 +167,12 @@ class RandomBatchDataGenerator(object):
         if self.masked_dataset_size == self.batch_size:
             batch_data = data_insts.sample(num=self.batch_size)
             index_data = batch_data.mapValues(lambda value: None)
-            return index_data, batch_data
+            return [index_data], [batch_data]
         else:
             masked_data = data_insts.sample(num=self.masked_dataset_size)
             batch_data = masked_data.sample(num=self.batch_size)
             masked_index_table = masked_data.mapValues(lambda value: None)
-            return masked_index_table, batch_data
+            return [masked_index_table], [batch_data]
 
     def batch_mutable(self):
         return True
