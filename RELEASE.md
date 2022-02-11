@@ -1,9 +1,3 @@
----
-hide:
-  - navigation
----
-
-# Release Notes
 ## Release 1.7.1
 ### Major Features and Improvements
 > FederatedML

@@ -2,17 +2,9 @@
 
 [中文](./README.zh.md)
 
-
-## RoadMap and OverView
-
-- [2021. FATE-OverView-2021](FATE-OverView-2021.pdf)
-
 ## Speech and Conference
 
 - [2021. Professor Yang's Seminar Presentation: An Introducton to Federated Learning (2021)](杨强教授：2021联邦学习专题研讨会.pdf)
-- [2021. FATE: Industrial Grade federated learning open source ecological construction experience sharing-COSCon'21-1030](FATE：工业级联邦学习开源生态建设经验分享-COSCon'21-1030.pdf)
-- [2019. FATE: A new generation of federated learning technologies and practical applications](FATE：新一代联邦学习技术及应用实战2019.pdf)
-- [2019. End to end federated modeling Pipeline Services](构建端到端的联邦学习Pipeline生产服务2019.pdf)
 - [2019. SecureBoost-ijcai2019-workshop](SecureBoost-ijcai2019-workshop.pdf)
 - [2019. GDPR_Data_Shortage_and_AI-AAAI_2019_PPT](GDPR_Data_Shortage_and_AI-AAAI_2019_PPT.pdf)
 
