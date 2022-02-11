@@ -39,7 +39,8 @@ class Guest(batch_info_sync.Guest):
                                         batch_strategy=batch_strategy, masked_rate=masked_rate)
         self.batch_nums = self.mini_batch_obj.batch_nums
         self.batch_masked = self.mini_batch_obj.batch_masked
-        batch_info = {"batch_size": batch_size, "batch_num": self.batch_nums, "batch_mutable": True, "batch_masked": self.batch_masked}
+        batch_info = {"batch_size": batch_size, "batch_num":
+                      self.batch_nums, "batch_mutable": self.mini_batch_obj.batch_mutable, "batch_masked": self.batch_masked}
         self.sync_batch_info(batch_info, suffix)
 
         if not self.mini_batch_obj.batch_mutable:
