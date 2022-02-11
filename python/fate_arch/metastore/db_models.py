@@ -83,6 +83,15 @@ def init_database_tables():
     DB.create_tables(table_objs)
 
 
+class StorageConnectorModel(DataBaseModel):
+    f_name = CharField(max_length=100, primary_key=True)
+    f_engine = CharField(max_length=100, index=True)  # 'MYSQL'
+    f_connector_info = JSONField()
+
+    class Meta:
+        db_table = "t_storage_connector"
+
+
 class StorageTableMetaModel(DataBaseModel):
     f_name = CharField(max_length=100, index=True)
     f_namespace = CharField(max_length=100, index=True)
