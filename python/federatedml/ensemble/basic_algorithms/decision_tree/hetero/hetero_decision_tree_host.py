@@ -179,10 +179,10 @@ class HeteroDecisionTreeHost(DecisionTree):
                 LOGGER.debug('sitename is {}, self.sitename is {}'
                              .format(split_info.sitename, self.sitename))
                 assert split_info.sitename == self.sitename
-                split_info.best_fid = self.encode("feature_idx", split_info.best_fid)
+                self.encode("feature_idx", split_info.best_fid)
                 assert split_info.best_fid is not None
-                split_info.best_bid = self.encode("feature_val", split_info.best_bid, self.cur_to_split_nodes[i].id)
-                split_info.missing_dir = self.encode("missing_dir", split_info.missing_dir, self.cur_to_split_nodes[i].id)
+                self.encode("feature_val", split_info.best_bid, self.cur_to_split_nodes[i].id)
+                self.encode("missing_dir", split_info.missing_dir, self.cur_to_split_nodes[i].id)
                 split_info.mask_id = None
             else:
                 LOGGER.debug('this node can not be further split by host feature: {}'.format(split_info))
@@ -417,18 +417,15 @@ class HeteroDecisionTreeHost(DecisionTree):
         if not self.complete_secure_tree:
 
             data = self.data_with_node_assignments
-
             acc_histograms = self.get_local_histograms(dep, data, self.grad_and_hess,
                                                        None, cur_to_split_nodes, node_map, ret='tb',
                                                        hist_sub=False)
-
             splitinfo_host, encrypted_splitinfo_host = self.splitter.find_split_host(histograms=acc_histograms,
                                                                                      node_map=node_map,
                                                                                      use_missing=self.use_missing,
                                                                                      zero_as_missing=self.zero_as_missing,
                                                                                      valid_features=self.valid_features,
                                                                                      sitename=self.sitename,)
-
             self.sync_encrypted_splitinfo_host(encrypted_splitinfo_host, dep, batch)
             federated_best_splitinfo_host = self.sync_federated_best_splitinfo_host(dep, batch)
             self.sync_final_splitinfo_host(splitinfo_host, federated_best_splitinfo_host, dep, batch)

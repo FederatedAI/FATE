@@ -598,7 +598,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
                     self.cur_layer_nodes[i].fid = split_info[i].best_fid
                     self.cur_layer_nodes[i].bid = split_info[i].best_bid
 
-                self.update_feature_importance(split_info[i])
+                if self.sitename == split_info[i].sitename:
+                    self.update_feature_importance(split_info[i])
 
             self.tree_node.append(self.cur_layer_nodes[i])
 
