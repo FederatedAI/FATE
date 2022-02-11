@@ -195,7 +195,6 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
     def fit_a_learner(self, epoch_idx: int, booster_dim: int):
 
         self.on_epoch_prepare(epoch_idx)
-        self.component_properties.host_party_idlist
         if self.multi_mode == consts.MULTI_OUTPUT:
             g_h = self.grad_and_hess
         else:
