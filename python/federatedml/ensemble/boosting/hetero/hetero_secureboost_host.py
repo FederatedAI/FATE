@@ -159,6 +159,124 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
             comm_round += 1
 
+    @staticmethod
+    def go_to_children_branches(data_inst, tree_node, tree, sitename: str, candidate_list: List):
+        if tree_node.is_leaf:
+            candidate_list.append(tree_node)
+        else:
+            tree_node_list = tree.tree_node
+            if tree_node.sitename != sitename:
+                HeteroSecureBoostingTreeHost.go_to_children_branches(data_inst, tree_node_list[tree_node.left_nodeid],
+                                                                     tree, sitename, candidate_list)
+                HeteroSecureBoostingTreeHost.go_to_children_branches(data_inst, tree_node_list[tree_node.right_nodeid],
+                                                                     tree, sitename, candidate_list)
+            else:
+                next_layer_node_id = tree.go_next_layer(tree_node, data_inst, use_missing=tree.use_missing,
+                                                        zero_as_missing=tree.zero_as_missing, decoder=tree.decode,
+                                                        split_maskdict=tree.split_maskdict,
+                                                        missing_dir_maskdict=tree.missing_dir_maskdict,
+                                                        bin_sparse_point=None
+                                                        )
+                HeteroSecureBoostingTreeHost.go_to_children_branches(data_inst, tree_node_list[next_layer_node_id],
+                                                                     tree, sitename, candidate_list)
+
+    @staticmethod
+    def generate_leaf_candidates_host(data_inst, sitename, trees, node_pos_map_list):
+        candidate_nodes_of_all_tree = []
+
+        for tree, node_pos_map in zip(trees, node_pos_map_list):
+
+            result_vec = [0 for i in range(len(node_pos_map))]
+            candidate_list = []
+            HeteroSecureBoostingTreeHost.go_to_children_branches(data_inst, tree.tree_node[0], tree, sitename,
+                                                                 candidate_list)
+            for node in candidate_list:
+                result_vec[node_pos_map[node.id]] = 1  # create 0-1 vector
+            candidate_nodes_of_all_tree.extend(result_vec)
+
+        return np.array(candidate_nodes_of_all_tree)
+
+    @staticmethod
+    def generate_leaf_idx_dimension_map(trees, booster_dim):
+        cur_dim = 0
+        leaf_dim_map = {}
+        leaf_idx = 0
+        for tree in trees:
+            for node in tree.tree_node:
+                if node.is_leaf:
+                    leaf_dim_map[leaf_idx] = cur_dim
+                    leaf_idx += 1
+            cur_dim += 1
+            if cur_dim == booster_dim:
+                cur_dim = 0
+        return leaf_dim_map
+
+    @staticmethod
+    def merge_position_vec(host_vec, guest_encrypt_vec, booster_dim=1, leaf_idx_dim_map=None):
+        leaf_idx = -1
+        rs = [0 for i in range(booster_dim)]
+        for en_num, vec_value in zip(guest_encrypt_vec, host_vec):
+            leaf_idx += 1
+            if vec_value == 0:
+                continue
+            else:
+                dim = leaf_idx_dim_map[leaf_idx]
+                rs[dim] += en_num
+        return rs
+
+    @staticmethod
+    def position_vec_element_wise_mul(guest_encrypt_vec, host_vec):
+        new_vec = []
+        for en_num, vec_value in zip(guest_encrypt_vec, host_vec):
+            new_vec.append(en_num * vec_value)
+        return new_vec
+
+    @staticmethod
+    def get_leaf_idx_map(trees):
+        id_pos_map_list = []
+
+        for tree in trees:
+            array_idx = 0
+            id_pos_map = {}
+            for node in tree.tree_node:
+                if node.is_leaf:
+                    id_pos_map[node.id] = array_idx
+                    array_idx += 1
+            id_pos_map_list.append(id_pos_map)
+
+        return id_pos_map_list
+
+    def EINI_host_predict(self, data_inst, trees: List[HeteroDecisionTreeHost], sitename, self_party_id, party_list):
+
+        id_pos_map_list = self.get_leaf_idx_map(trees)
+        map_func = functools.partial(self.generate_leaf_candidates_host, sitename=sitename, trees=trees,
+                                     node_pos_map_list=id_pos_map_list)
+        position_vec = data_inst.mapValues(map_func)
+
+        booster_dim = self.predict_transfer_inst.guest_predict_data.get(idx=0, suffix='booster_dim')
+
+        self_idx = party_list.index(self_party_id)
+        if len(party_list) == 1:
+            guest_position_vec = self.predict_transfer_inst.guest_predict_data.get(idx=0, suffix='position_vec')
+            leaf_idx_dim_map = self.generate_leaf_idx_dimension_map(trees, booster_dim)
+            merge_func = functools.partial(self.merge_position_vec, booster_dim=booster_dim,
+                                           leaf_idx_dim_map=leaf_idx_dim_map)
+            result_table = position_vec.join(guest_position_vec, merge_func)
+            self.predict_transfer_inst.inter_host_data.remote(result_table, idx=self_idx + 1, suffix='position_vec', role=consts.HOST)
+        else:
+            # multi host case
+            # if is first host party, get encrypt vec from guest, else from previous host party
+            if self_party_id == party_list[0]:
+                guest_position_vec = self.predict_transfer_inst.guest_predict_data.get(idx=0, suffix='position_vec')
+            else:
+                guest_position_vec = self.predict_transfer_inst.inter_host_data.get(idx=self_idx - 1, suffix='position_vec')
+            result_table = position_vec.join(guest_position_vec, self.position_vec_element_wise_mul)
+            if self_party_id == party_list[-1]:
+                self.predict_transfer_inst.host_predict_data.remote(result_table, suffix='merge_result')
+            else:
+                self.predict_transfer_inst.inter_host_data.remote(result_table, idx=self_idx + 1, suffix='position_vec',
+                                                                  role=consts.HOST)
+
     @assert_io_num_rows_equal
     def predict(self, data_inst):
 
