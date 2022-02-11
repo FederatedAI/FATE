@@ -323,6 +323,9 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
             return
 
         self.boosting_fast_predict(processed_data, trees=trees)
+        sitename = self.role + ':' + str(self.component_properties.local_partyid)
+        self.EINI_host_predict(processed_data, trees, sitename, self.component_properties.local_partyid,
+                               self.component_properties.host_party_idlist)
 
     def get_model_meta(self):
         model_meta = BoostingTreeModelMeta()

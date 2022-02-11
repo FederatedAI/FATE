@@ -501,6 +501,10 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
 
         predict_rs = self.boosting_fast_predict(processed_data, trees=trees, predict_cache=predict_cache,
                                                 pred_leaf=(ret_format == 'leaf'))
+        sitename = self.role + ':' + str(self.component_properties.local_partyid)
+        predict_rs_2 = self.EINI_guest_predict(processed_data, trees, self.learning_rate, self.init_score,
+                                               self.booster_dim, sitename, self.component_properties.host_party_idlist,
+                                               predict_cache, False)
 
         if ret_format == 'leaf':
             return predict_rs  # predict result is leaf position
