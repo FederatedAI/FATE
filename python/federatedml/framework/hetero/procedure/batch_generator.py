@@ -26,23 +26,24 @@ class Guest(batch_info_sync.Guest):
         self.mini_batch_obj = None
         self.finish_sycn = False
         self.batch_nums = None
+        self.batch_masked = False
 
     def register_batch_generator(self, transfer_variables, has_arbiter=True):
         self._register_batch_data_index_transfer(transfer_variables.batch_info,
                                                  transfer_variables.batch_data_index,
                                                  has_arbiter)
 
-    def initialize_batch_generator(self, data_instances, batch_size, suffix=tuple(), shuffle=False):
-        self.mini_batch_obj = MiniBatch(data_instances, batch_size=batch_size, shuffle=shuffle)
+    def initialize_batch_generator(self, data_instances, batch_size, suffix=tuple(),
+                                   shuffle=False, batch_strategy="full", masked_rate=0):
+        self.mini_batch_obj = MiniBatch(data_instances, batch_size=batch_size, shuffle=shuffle,
+                                        batch_strategy=batch_strategy, masked_rate=masked_rate)
         self.batch_nums = self.mini_batch_obj.batch_nums
-        batch_info = {"batch_size": batch_size, "batch_num": self.batch_nums}
+        self.batch_masked = self.mini_batch_obj.batch_masked
+        batch_info = {"batch_size": batch_size, "batch_num": self.batch_nums, "batch_mutable": True, "batch_masked": self.batch_masked}
         self.sync_batch_info(batch_info, suffix)
 
-        """if need shuffle, batch_data will be generated during every iteration"""
-        if shuffle is True:
-            return
-
-        self.prepare_batch_data(suffix)
+        if not self.mini_batch_obj.batch_mutable:
+            self.prepare_batch_data(suffix)
 
     def prepare_batch_data(self, suffix=tuple()):
         self.mini_batch_obj.generate_batch_data()
@@ -53,13 +54,18 @@ class Guest(batch_info_sync.Guest):
             self.sync_batch_index(batch_data_index, batch_suffix)
             batch_index += 1
 
-    def generate_batch_data(self, suffix=tuple()):
-        if self.mini_batch_obj.shuffle:
-            self.prepare_batch_data(suffix=suffix)
+    def generate_batch_data(self, with_index=False, suffix=tuple()):
+        if self.mini_batch_obj.batch_mutable:
+            self.prepare_batch_data(suffix)
 
-        data_generator = self.mini_batch_obj.mini_batch_data_generator(result='data')
-        for batch_data in data_generator:
-            yield batch_data
+        if with_index:
+            data_generator = self.mini_batch_obj.mini_batch_data_generator(result='both')
+            for batch_data, index_data in data_generator:
+                yield batch_data, index_data
+        else:
+            data_generator = self.mini_batch_obj.mini_batch_data_generator(result='data')
+            for batch_data in data_generator:
+                yield batch_data
 
 
 class Host(batch_info_sync.Host):
@@ -68,7 +74,8 @@ class Host(batch_info_sync.Host):
         self.batch_data_insts = []
         self.batch_nums = None
         self.data_inst = None
-        self.shuffle = False
+        self.batch_mutable = False
+        self.batch_masked = False
 
     def register_batch_generator(self, transfer_variables, has_arbiter=None):
         self._register_batch_data_index_transfer(transfer_variables.batch_info, transfer_variables.batch_data_index)
@@ -76,14 +83,13 @@ class Host(batch_info_sync.Host):
     def initialize_batch_generator(self, data_instances, suffix=tuple(), **kwargs):
         batch_info = self.sync_batch_info(suffix)
         self.batch_nums = batch_info.get('batch_num')
+        self.batch_mutable = batch_info.get("batch_mutable")
+        self.batch_masked = batch_info.get("batch_masked")
 
-        """if need shuffle, batch_data will be generated during every iteration"""
-        self.shuffle = kwargs.get("shuffle", False)
-        if self.shuffle is True:
+        if not self.batch_mutable:
+            self.prepare_batch_data(data_instances, suffix)
+        else:
             self.data_inst = data_instances
-            return
-
-        self.prepare_batch_data(data_instances, suffix)
 
     def prepare_batch_data(self, data_inst, suffix=tuple()):
         self.batch_data_insts = []
@@ -95,7 +101,7 @@ class Host(batch_info_sync.Host):
             self.batch_data_insts.append(batch_data_inst)
 
     def generate_batch_data(self, suffix=tuple()):
-        if self.shuffle:
+        if self.batch_mutable:
             self.prepare_batch_data(data_inst=self.data_inst, suffix=suffix)
 
         batch_index = 0

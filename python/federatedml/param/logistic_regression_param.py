@@ -116,7 +116,7 @@ class LogisticParam(BaseParam):
 
     def __init__(self, penalty='L2',
                  tol=1e-4, alpha=1.0, optimizer='rmsprop',
-                 batch_size=-1, shuffle=True,
+                 batch_size=-1, shuffle=True, batch_strategy="full", masked_rate=5,
                  learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, early_stop='diff', encrypt_param=EncryptParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
@@ -133,6 +133,9 @@ class LogisticParam(BaseParam):
         self.alpha = alpha
         self.optimizer = optimizer
         self.batch_size = batch_size
+        self.shuffle = shuffle
+        self.batch_strategy = batch_strategy
+        self.masked_rate = masked_rate
         self.learning_rate = learning_rate
         self.init_param = copy.deepcopy(init_param)
         self.max_iter = max_iter
@@ -150,7 +153,6 @@ class LogisticParam(BaseParam):
         self.use_first_metric_only = use_first_metric_only
         self.floating_point_precision = floating_point_precision
         self.callback_param = copy.deepcopy(callback_param)
-        self.shuffle = shuffle
 
     def check(self):
         descr = "logistic_param's"
@@ -358,7 +360,7 @@ class HomoLogisticParam(LogisticParam):
 class HeteroLogisticParam(LogisticParam):
     def __init__(self, penalty='L2',
                  tol=1e-4, alpha=1.0, optimizer='rmsprop',
-                 batch_size=-1, shuffle=True,
+                 batch_size=-1, shuffle=True, batch_strategy="full", masked_rate=5,
                  learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, early_stop='diff',
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
@@ -371,7 +373,8 @@ class HeteroLogisticParam(LogisticParam):
                  callback_param=CallbackParam()
                  ):
         super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
-                                                  batch_size=batch_size, shuffle=shuffle,
+                                                  batch_size=batch_size, shuffle=shuffle, batch_strategy=batch_strategy,
+                                                  masked_rate=masked_rate,
                                                   learning_rate=learning_rate,
                                                   init_param=init_param, max_iter=max_iter, early_stop=early_stop,
                                                   predict_param=predict_param, cv_param=cv_param,
