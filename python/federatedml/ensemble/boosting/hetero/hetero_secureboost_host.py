@@ -223,7 +223,8 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         return leaf_dim_map
 
     @staticmethod
-    def merge_position_vec(host_vec, guest_encrypt_vec, booster_dim=1, leaf_idx_dim_map=None):
+    def merge_position_vec(host_vec, guest_encrypt_vec, booster_dim=1, leaf_idx_dim_map=None, confusion_number=None):
+
         leaf_idx = -1
         rs = [0 for i in range(booster_dim)]
         for en_num, vec_value in zip(guest_encrypt_vec, host_vec):
@@ -233,6 +234,11 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
             else:
                 dim = leaf_idx_dim_map[leaf_idx]
                 rs[dim] += en_num
+
+        if confusion_number:
+            for i in range(len(rs)):
+                rs[i] = rs[i] * confusion_number  # a pos random mask btw 1 and 2
+
         return rs
 
     @staticmethod
@@ -244,8 +250,8 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
     @staticmethod
     def get_leaf_idx_map(trees):
-        id_pos_map_list = []
 
+        id_pos_map_list = []
         for tree in trees:
             array_idx = 0
             id_pos_map = {}
@@ -266,12 +272,14 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
         booster_dim = self.hetero_sbt_transfer_variable.guest_predict_data.get(idx=0, suffix='booster_dim')
 
+        random_mask = float(np.random.random()) + 1  # generate a random mask btw 1 and 2
+
         self_idx = party_list.index(self_party_id)
         if len(party_list) == 1:
             guest_position_vec = self.hetero_sbt_transfer_variable.guest_predict_data.get(idx=0, suffix='position_vec')
             leaf_idx_dim_map = self.generate_leaf_idx_dimension_map(trees, booster_dim)
             merge_func = functools.partial(self.merge_position_vec, booster_dim=booster_dim,
-                                           leaf_idx_dim_map=leaf_idx_dim_map)
+                                           leaf_idx_dim_map=leaf_idx_dim_map, random_mask=random_mask)
             result_table = position_vec.join(guest_position_vec, merge_func)
             self.hetero_sbt_transfer_variable.host_predict_data.remote(result_table, suffix='merge_result')
         else:
@@ -287,7 +295,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
             if self_party_id == party_list[-1]:
                 leaf_idx_dim_map = self.generate_leaf_idx_dimension_map(trees, booster_dim)
                 func = functools.partial(self.merge_position_vec, booster_dim=booster_dim,
-                                         leaf_idx_dim_map=leaf_idx_dim_map)
+                                         leaf_idx_dim_map=leaf_idx_dim_map, random_mask=random_mask)
                 result_table = position_vec.join(guest_position_vec, func)
                 self.hetero_sbt_transfer_variable.host_predict_data.remote(result_table, suffix='merge_result')
             else:
