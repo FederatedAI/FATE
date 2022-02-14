@@ -50,9 +50,6 @@ class HeteroDecisionTreeHost(DecisionTree):
         # code version control
         self.new_ver = True
 
-        # multi mode
-        self.mo_tree = False
-
     """
     Setting
     """
@@ -209,7 +206,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         LOGGER.info("get encrypted grad and hess")
 
         if self.run_cipher_compressing:
-            self.cipher_compressor = PackedGHCompressor(mo_mode=self.mo_tree)
+            self.cipher_compressor = PackedGHCompressor()
 
         self.grad_and_hess = self.transfer_inst.encrypted_grad_and_hess.get(idx=0)
 
