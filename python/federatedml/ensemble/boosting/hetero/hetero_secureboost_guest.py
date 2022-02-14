@@ -443,19 +443,18 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         # federation part
         self.hetero_sbt_transfer_variable.guest_predict_data.remote(booster_dim, idx=-1, suffix='booster_dim')
         # send to first host party
-        self.hetero_sbt_transfer_variable.guest_predict_data.remote(encrypter_vec_table, idx=0, suffix='position_vec', role=consts.HOST)
+        self.hetero_sbt_transfer_variable.guest_predict_data.remote(encrypter_vec_table, idx=0, suffix='position_vec',
+                                                                    role=consts.HOST)
         # get from last host party
-        result_table = self.hetero_sbt_transfer_variable.host_predict_data.get(idx=len(party_list) - 1, suffix='merge_result',
+        result_table = self.hetero_sbt_transfer_variable.host_predict_data.get(idx=len(party_list) - 1,
+                                                                               suffix='merge_result',
                                                                                role=consts.HOST)
 
         # decode result
         result = result_table.mapValues(encrypter.recursive_decrypt)
 
-        # result = result_table
-        if booster_dim == 1:
-            result = result.mapValues(lambda x: x[0])
-        else:
-            result = result.mapValues(lambda x: np.array(x))
+        # reformat
+        result = result.mapValues(lambda x: np.array(x))
 
         if predict_cache:
             result = result.join(predict_cache, lambda v1, v2: v1 + v2)

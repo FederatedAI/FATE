@@ -281,8 +281,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
             merge_func = functools.partial(self.merge_position_vec, booster_dim=booster_dim,
                                            leaf_idx_dim_map=leaf_idx_dim_map)
             result_table = position_vec.join(guest_position_vec, merge_func)
-            self.hetero_sbt_transfer_variable.inter_host_data.remote(result_table, idx=self_idx + 1,
-                                                                     suffix='position_vec', role=consts.HOST)
+            self.hetero_sbt_transfer_variable.host_predict_data.remote(result_table, suffix='merge_result')
         else:
             # multi host case
             # if is first host party, get encrypt vec from guest, else from previous host party
@@ -292,10 +291,15 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
             else:
                 guest_position_vec = self.hetero_sbt_transfer_variable.inter_host_data.get(idx=self_idx - 1,
                                                                                            suffix='position_vec')
-            result_table = position_vec.join(guest_position_vec, self.position_vec_element_wise_mul)
+
             if self_party_id == party_list[-1]:
+                leaf_idx_dim_map = self.generate_leaf_idx_dimension_map(trees, booster_dim)
+                func = functools.partial(self.merge_position_vec, booster_dim=booster_dim,
+                                         leaf_idx_dim_map=leaf_idx_dim_map)
+                result_table = position_vec.join(guest_position_vec, func)
                 self.hetero_sbt_transfer_variable.host_predict_data.remote(result_table, suffix='merge_result')
             else:
+                result_table = position_vec.join(guest_position_vec, self.position_vec_element_wise_mul)
                 self.hetero_sbt_transfer_variable.inter_host_data.remote(result_table, idx=self_idx + 1,
                                                                          suffix='position_vec',
                                                                          role=consts.HOST)
