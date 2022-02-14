@@ -88,14 +88,6 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
                 self.feature_importances_[fid] += tree_feature_importance[fid]
         LOGGER.debug('cur feature importance {}'.format(self.feature_importances_))
 
-    def sync_feature_importance(self):
-        # generate anonymous
-        new_feat_importance = {}
-        sitename = 'host:' + str(self.component_properties.local_partyid)
-        for key in self.feature_importances_:
-            new_feat_importance[(sitename, key)] = self.feature_importances_[key]
-        self.hetero_sbt_transfer_variable.host_feature_importance.remote(new_feat_importance)
-
     def fit_a_booster(self, epoch_idx: int, booster_dim: int):
 
         tree = HeteroDecisionTreeHost(tree_param=self.tree_param)

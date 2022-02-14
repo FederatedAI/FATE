@@ -111,13 +111,6 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                 self.feature_importances_[fid] += tree_feature_importance[fid]
         LOGGER.debug('cur feature importance {}'.format(self.feature_importances_))
 
-    def sync_feature_importance(self):
-        host_feature_importance_list = self.hetero_sbt_transfer_variable.host_feature_importance.get(idx=-1)
-        for i in host_feature_importance_list:
-            self.feature_importances_.update(i)
-
-        LOGGER.debug('self feature importance is {}'.format(self.feature_importances_))
-
     def fit_a_booster(self, epoch_idx: int, booster_dim: int):
 
         if self.cur_epoch_idx != epoch_idx:
