@@ -201,9 +201,6 @@ class HeteroLRBase(BaseLinearModel, ABC):
         ) as spdz:
             spdz.set_flowid(self.flowid)
             self.secure_matrix_obj.set_flowid(self.flowid)
-            # if self.role == consts.GUEST:
-            #     self.labels = data_instances.mapValues(lambda x: np.array([x.label], dtype=int))
-
             w_self, w_remote = self.share_model(w, suffix="init")
             last_w_self, last_w_remote = w_self, w_remote
             LOGGER.debug(f"first_w_self shape: {w_self.shape}, w_remote_shape: {w_remote.shape}")
@@ -221,7 +218,6 @@ class HeteroLRBase(BaseLinearModel, ABC):
                     batch_features = batch_data.mapValues(lambda x: x.features)
 
                 if self.role == consts.GUEST:
-                    # add batch labels for replacing labels;
                     batch_labels = batch_data.mapValues(lambda x: np.array([x.label], dtype=int))
                     batch_labels_list.append(batch_labels)
 
