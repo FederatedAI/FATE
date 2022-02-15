@@ -104,8 +104,12 @@ class HeteroLRGuest(HeteroLRBase):
         self.transfer_variable.use_async.remote(use_async)
 
         LOGGER.info("Generate mini-batch from input data")
-        self.batch_generator.initialize_batch_generator(data_instances, self.batch_size)
+        self.batch_generator.initialize_batch_generator(data_instances, self.batch_size,
+                                                        batch_strategy=self.batch_strategy,
+                                                        masked_rate=self.masked_rate, shuffle=self.shuffle)
         self.gradient_loss_operator.set_total_batch_nums(self.batch_generator.batch_nums)
+        if self.batch_generator.batch_masked:
+            self.gradient_loss_operator.set_use_sync()
 
         self.encrypted_calculator = [EncryptModeCalculator(self.cipher_operator,
                                                            self.encrypted_mode_calculator_param.mode,
@@ -123,27 +127,33 @@ class HeteroLRGuest(HeteroLRBase):
 
         while self.n_iter_ < self.max_iter:
             self.callback_list.on_epoch_begin(self.n_iter_)
-            LOGGER.info("iter:{}".format(self.n_iter_))
-            batch_data_generator = self.batch_generator.generate_batch_data()
+            LOGGER.info("iter: {}".format(self.n_iter_))
+            batch_data_generator = self.batch_generator.generate_batch_data(suffix=(self.n_iter_, ), with_index=True)
             self.optimizer.set_iters(self.n_iter_)
             batch_index = 0
-            for batch_data in batch_data_generator:
+            for batch_data, index_data in batch_data_generator:
                 batch_feat_inst = batch_data
+                if not self.batch_generator.batch_masked:
+                    index_data = None
 
                 # Start gradient procedure
-                LOGGER.debug("iter: {}, before compute gradient, data count: {}".format(self.n_iter_,
-                                                                                        batch_feat_inst.count()))
+                LOGGER.debug("iter: {}, batch: {}, before compute gradient, data count: {}".format(self.n_iter_,
+                                                                                                   batch_index,
+                                                                                                   batch_feat_inst.count()))
+
                 optim_guest_gradient = self.gradient_loss_operator.compute_gradient_procedure(
                     batch_feat_inst,
                     self.encrypted_calculator,
                     self.model_weights,
                     self.optimizer,
                     self.n_iter_,
-                    batch_index)
+                    batch_index,
+                    masked_index=index_data
+                )
 
                 loss_norm = self.optimizer.loss_norm(self.model_weights)
                 self.gradient_loss_operator.compute_loss(batch_feat_inst, self.model_weights, self.n_iter_, batch_index,
-                                                         loss_norm)
+                                                         loss_norm, batch_masked=self.batch_generator.batch_masked)
 
                 self.model_weights = self.optimizer.update_model(self.model_weights, optim_guest_gradient)
                 batch_index += 1
