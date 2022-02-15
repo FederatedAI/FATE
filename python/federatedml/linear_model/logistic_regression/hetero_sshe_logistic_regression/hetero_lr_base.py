@@ -247,6 +247,7 @@ class HeteroLRBase(BaseLinearModel, ABC):
                     self.remote_optimizer.set_iters(self.n_iter_)
 
                 for batch_idx, batch_data in enumerate(encoded_batch_data):
+                    LOGGER.info(f"start to n_iter: {self.n_iter_}, batch idx: {batch_idx}")
                     current_suffix = (str(self.n_iter_), str(batch_idx))
                     if self.role == consts.GUEST:
                         batch_labels = batch_labels_list[batch_idx]
