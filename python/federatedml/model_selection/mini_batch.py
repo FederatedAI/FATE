@@ -99,15 +99,18 @@ def get_batch_generator(data_size, batch_size, batch_strategy, masked_rate, shuf
     else:
         if shuffle:
             LOGGER.warning("if use random select batch strategy, shuffle will not work")
-        return RandomBatchDataGenerator(batch_size, masked_rate)
+        return RandomBatchDataGenerator(data_size, batch_size, masked_rate)
 
 
 class FullBatchDataGenerator(object):
     def __init__(self, data_size, batch_size, shuffle=False, masked_rate=0):
-        self.batch_nums = (data_size + batch_size  - 1) // batch_size
-        self.masked_dataset_size = min(data_size, round((1 + masked_rate) * self.batch_nums))
+        self.batch_nums = (data_size + batch_size - 1) // batch_size
+        self.masked_dataset_size = min(data_size, round((1 + masked_rate) * batch_size))
         self.batch_size = batch_size
         self.shuffle = shuffle
+
+        LOGGER.debug(f"Init Full Batch Data Generator, batch_nums: {self.batch_nums}, batch_size: {self.batch_size}, "
+                     f"masked_dataset_size: {self.masked_dataset_size}, shuffle: {self.shuffle}")
 
     def generate_data(self, data_insts, data_sids):
         if self.shuffle:
@@ -157,10 +160,13 @@ class FullBatchDataGenerator(object):
 
 
 class RandomBatchDataGenerator(object):
-    def __init__(self, batch_size, masked_rate=0):
+    def __init__(self, data_size, batch_size, masked_rate=0):
         self.batch_nums = 1
         self.batch_size = batch_size
-        self.masked_dataset_size = min(batch_size, round((1 + masked_rate) * self.batch_size))
+        self.masked_dataset_size = min(data_size, round((1 + masked_rate) * self.batch_size))
+
+        LOGGER.debug(f"Init Random Batch Data Generator, batch_nums: {self.batch_nums}, batch_size: {self.batch_size}, "
+                     f"masked_dataset_size: {self.masked_dataset_size}")
 
     def generate_data(self, data_insts, *args, **kwargs):
         if self.masked_dataset_size == self.batch_size:

@@ -53,8 +53,19 @@ class LogisticParam(BaseParam):
     optimizer : {'rmsprop', 'sgd', 'adam', 'nesterov_momentum_sgd', 'sqn', 'adagrad'}, default: 'rmsprop'
         Optimize method, if 'sqn' has been set, sqn_param will take effect. Currently, 'sqn' support hetero mode only.
 
+    batch_strategy : str, {'full', 'random'}, default: "full"
+        Strategy to generate batch data.
+            a) full: use full data to generate batch_data, batch_nums every iteration is ceil(data_size /  batch_size)
+            b) random: select data randomly from full data, batch_num will be 1 every iteration.
+
     batch_size : int, default: -1
         Batch size when updating model. -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
+
+    shuffle : bool, default: True
+        Work only in hetero logistic regression, batch data will be shuffle in every iteration.
+
+    masked_rate: int, float: default: 5
+        Use masked data to enhance security of hetero logistic regression
 
     learning_rate : float, default: 0.01
         Learning rate
@@ -191,6 +202,14 @@ class LogisticParam(BaseParam):
                     or self.batch_size < consts.MIN_BATCH_SIZE:
                 raise ValueError(descr + " {} not supported, should be larger than {} or "
                                          "-1 represent for all data".format(self.batch_size, consts.MIN_BATCH_SIZE))
+
+        if not isinstance(self.masked_rate, (float, int)) or self.masked_rate < 0:
+            raise ValueError("masked rate should be non-negative numeric number")
+        if not isinstance(self.batch_strategy, str) or self.batch_strategy.lower() not in ["full", "random"]:
+            raise ValueError("batch strategy should be full or random")
+        self.batch_strategy = self.batch_strategy.lower()
+        if not isinstance(self.shuffle, bool):
+            raise ValueError("shuffle define in batch should be boolean type")
 
         if not isinstance(self.learning_rate, (float, int)):
             raise ValueError(
