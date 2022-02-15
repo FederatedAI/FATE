@@ -73,7 +73,7 @@ class HeteroStochasticQuansiNewton(hetero_linear_model_gradient.HeteroGradientBa
         else:
             self.this_w_tilde += model_weights
 
-    def compute_gradient_procedure(self, *args):
+    def compute_gradient_procedure(self, *args, **kwargs):
         data_instances = args[0]
         encrypted_calculator = args[1]
         model_weights = args[2]
@@ -102,7 +102,7 @@ class HeteroStochasticQuansiNewton(hetero_linear_model_gradient.HeteroGradientBa
 
         return gradient_results
 
-    def compute_loss(self, *args):
+    def compute_loss(self, *args, **kwargs):
         loss = self.gradient_computer.compute_loss(*args)
         return loss
 
