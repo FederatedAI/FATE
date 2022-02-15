@@ -278,8 +278,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
                                      node_pos_map_list=id_pos_map_list)
         position_vec = data_inst.mapValues(map_func)
 
-        booster_dim = self.hetero_sbt_transfer_variable.guest_predict_data.get(idx=0, suffix='booster_dim')
-
+        booster_dim = self.booster_dim
         random_mask = random.SystemRandom().random() + 1 if random_mask else 0  # generate a random mask btw 1 and 2
 
         self_idx = party_list.index(self_party_id)

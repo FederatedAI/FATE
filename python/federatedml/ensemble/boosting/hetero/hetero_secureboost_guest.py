@@ -440,7 +440,6 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         encrypter_vec_table = position_vec.mapValues(encrypter.recursive_encrypt)
 
         # federation part
-        self.hetero_sbt_transfer_variable.guest_predict_data.remote(booster_dim, idx=-1, suffix='booster_dim')
         # send to first host party
         self.hetero_sbt_transfer_variable.guest_predict_data.remote(encrypter_vec_table, idx=0, suffix='position_vec',
                                                                     role=consts.HOST)
