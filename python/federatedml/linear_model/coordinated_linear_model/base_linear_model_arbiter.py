@@ -73,7 +73,6 @@ class HeteroBaseArbiter(BaseLinearModel):
         self.batch_generator.initialize_batch_generator()
         self.gradient_loss_operator.set_total_batch_nums(self.batch_generator.batch_num)
 
-        # self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
         self.callback_list.on_train_begin(data_instances, validate_data)
 
         if self.component_properties.is_warm_start:
@@ -143,8 +142,7 @@ class HeteroBaseArbiter(BaseLinearModel):
         summary = {"loss_history": self.loss_history,
                    "is_converged": self.is_converged,
                    "best_iteration": self.best_iteration}
-        # if self.validation_strategy and self.validation_strategy.has_saved_best_model():
-        #     self.load_model(self.validation_strategy.cur_best_model)
+
         if self.loss_history is not None and len(self.loss_history) > 0:
             summary["best_iter_loss"] = self.loss_history[self.best_iteration]
 

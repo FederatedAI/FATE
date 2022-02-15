@@ -65,10 +65,6 @@ class HeteroLRGuest(HeteroLRBase):
         """
 
         LOGGER.info("Enter hetero_lr_guest fit")
-        # self._abnormal_detection(data_instances)
-        # self.check_abnormal_values(data_instances)
-        # self.check_abnormal_values(validate_data)
-        # self.header = self.get_header(data_instances)
         self.prepare_fit(data_instances, validate_data)
 
         classes = self.one_vs_rest_obj.get_data_classes(data_instances)
@@ -100,8 +96,6 @@ class HeteroLRGuest(HeteroLRBase):
         if with_weight(data_instances):
             if self.model_param.early_stop == "diff":
                 LOGGER.warning("input data with weight, please use 'weight_diff' for 'early_stop'.")
-            # data_instances = scale_sample_weight(data_instances)
-            # self.gradient_loss_operator.set_use_sample_weight()
             # LOGGER.debug(f"data_instances after scale: {[v[1].weight for v in list(data_instances.collect())]}")
         elif len(self.component_properties.host_party_idlist) == 1:
             LOGGER.debug(f"set_use_async")
@@ -200,13 +194,6 @@ class HeteroLRGuest(HeteroLRBase):
             pred_prob = pred_prob.join(host_prob, lambda g, h: g + h)
         pred_prob = pred_prob.mapValues(lambda p: activation.sigmoid(p))
         threshold = self.model_param.predict_param.threshold
-
-        # pred_label = pred_prob.mapValues(lambda x: 1 if x > threshold else 0)
-
-        # predict_result = data_instances.mapValues(lambda x: x.label)
-        # predict_result = predict_result.join(pred_prob, lambda x, y: (x, y))
-        # predict_result = predict_result.join(pred_label, lambda x, y: [x[0], y, x[1],
-        #                                                               {"0": (1 - x[1]), "1": x[1]}])
         predict_result = self.predict_score_to_output(data_instances, pred_prob, classes=[0, 1], threshold=threshold)
 
         return predict_result

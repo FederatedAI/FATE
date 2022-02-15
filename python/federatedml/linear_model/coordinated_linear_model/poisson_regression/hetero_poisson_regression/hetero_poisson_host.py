@@ -47,10 +47,7 @@ class HeteroPoissonHost(HeteroPoissonBase):
         """
 
         LOGGER.info("Enter hetero_poisson host")
-        # self._abnormal_detection(data_instances)
-        # self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
 
-        # self.header = self.get_header(data_instances)
         self.prepare_fit(data_instances, validate_data)
         self.callback_list.on_train_begin(data_instances, validate_data)
 
@@ -125,7 +122,6 @@ class HeteroPoissonHost(HeteroPoissonBase):
 
         self._abnormal_detection(data_instances)
         data_instances = self.align_data_header(data_instances, self.header)
-        # pred_host = self.compute_mu(data_instances, self.model_weights.coef_, self.model_weights.intercept_)
         pred_host = self.compute_wx(data_instances, self.model_weights.coef_, self.model_weights.intercept_)
         self.transfer_variable.host_partial_prediction.remote(pred_host, role=consts.GUEST, idx=0)
 

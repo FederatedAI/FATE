@@ -39,23 +39,6 @@ class HeteroLinRGuest(HeteroSSHEGuestBase):
         self.label_type = float
 
     def forward(self, weights, features, suffix, cipher):
-        """if not self.reveal_every_iter:
-            LOGGER.info(f"[forward]: Calculate z in share...")
-            w_self, w_remote = weights
-            z = self._cal_z_in_share(w_self, w_remote, features, suffix, cipher)
-        else:
-            LOGGER.info(f"[forward]: Calculate z directly...")
-            w = weights.unboxed
-            z = features.dot_local(w)
-
-        remote_z = self.secure_matrix_obj.share_encrypted_matrix(suffix=suffix,
-                                                                 is_remote=False,
-                                                                 cipher=None,
-                                                                 z=None)[0]
-
-        self.wx_self = z
-        self.wx_remote = remote_z
-        """
         self._cal_z(weights, features, suffix, cipher)
         complete_z = self.wx_self + self.wx_remote
 
@@ -95,7 +78,6 @@ class HeteroLinRGuest(HeteroSSHEGuestBase):
 
         batch_num = self.batch_num[int(suffix[2])]
         loss = loss * (-1 / (batch_num * 2))
-        # loss = (wx_remote_square + wxy_self_square + 2 * wxy) / (2 * batch_num)
 
         tensor_name = ".".join(("shared_loss",) + suffix)
         share_loss = SecureMatrix.from_source(tensor_name=tensor_name,
@@ -212,12 +194,6 @@ class HeteroLinRGuest(HeteroSSHEGuestBase):
 
     def fit(self, data_instances, validate_data=None):
         LOGGER.info("Starting to fit hetero_sshe_linear_regression")
-        """self.batch_generator = batch_generator.Guest()
-        self.batch_generator.register_batch_generator(BatchGeneratorTransferVariable(), has_arbiter=False)
-        self.header = data_instances.schema.get("header", [])
-        self._abnormal_detection(data_instances)
-        self.check_abnormal_values(data_instances)
-        self.check_abnormal_values(validate_data)"""
         self.prepare_fit(data_instances, validate_data)
 
         self.fit_single_model(data_instances, validate_data)
