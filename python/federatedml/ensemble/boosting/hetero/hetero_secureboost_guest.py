@@ -47,6 +47,10 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.other_rate = None
         self.new_ver = True
 
+        # EINI predict param
+        self.EINI_inference = False
+        self.EINI_random_mask = False
+
     def _init_model(self, param: HeteroSecureBoostParam):
 
         super(HeteroSecureBoostingTreeGuest, self)._init_model(param)
@@ -59,6 +63,8 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.other_rate = param.other_rate
         self.cipher_compressing = param.cipher_compress
         self.new_ver = param.new_ver
+        self.EINI_inference = param.EINI_inference
+        self.EINI_random_mask = param.EINI_random_mask
 
         if self.use_missing:
             self.tree_param.use_missing = self.use_missing
@@ -442,13 +448,10 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         result_table = self.hetero_sbt_transfer_variable.host_predict_data.get(idx=len(party_list) - 1,
                                                                                suffix='merge_result',
                                                                                role=consts.HOST)
-
         # decode result
         result = result_table.mapValues(encrypter.recursive_decrypt)
-
         # reformat
         result = result.mapValues(lambda x: np.array(x))
-
         if predict_cache:
             result = result.join(predict_cache, lambda v1, v2: v1 + v2)
 
@@ -491,12 +494,15 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         if tree_num == 0 and predict_cache is not None and not (ret_format == 'leaf'):
             return self.score_to_predict_result(data_inst, predict_cache)
 
-        predict_rs = self.boosting_fast_predict(processed_data, trees=trees, predict_cache=predict_cache,
-                                                pred_leaf=(ret_format == 'leaf'))
-        sitename = self.role + ':' + str(self.component_properties.local_partyid)
-        predict_rs_2 = self.EINI_guest_predict(processed_data, trees, self.learning_rate, self.init_score,
-                                               self.booster_dim, sitename, self.component_properties.host_party_idlist,
-                                               predict_cache, False)
+        if self.EINI_inference:
+            sitename = self.role + ':' + str(self.component_properties.local_partyid)
+            predict_rs = self.EINI_guest_predict(processed_data, trees, self.learning_rate, self.init_score,
+                                                 self.booster_dim, sitename,
+                                                 self.component_properties.host_party_idlist,
+                                                 predict_cache, False)
+        else:
+            predict_rs = self.boosting_fast_predict(processed_data, trees=trees, predict_cache=predict_cache,
+                                                    pred_leaf=(ret_format == 'leaf'))
 
         if ret_format == 'leaf':
             return predict_rs  # predict result is leaf position

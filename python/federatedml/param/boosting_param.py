@@ -509,7 +509,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                  binning_error=consts.DEFAULT_RELATIVE_ERROR,
                  sparse_optimization=False, run_goss=False, top_rate=0.2, other_rate=0.1,
                  cipher_compress_error=None, cipher_compress=True, new_ver=True,
-                 callback_param=CallbackParam()):
+                 callback_param=CallbackParam(), EINI_inference=True, EINI_random_mask=False):
 
         super(HeteroSecureBoostParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                      subsample_feature_rate, n_iter_no_change, tol, encrypt_param,
@@ -530,6 +530,8 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.cipher_compress_error = cipher_compress_error
         self.cipher_compress = cipher_compress
         self.new_ver = new_ver
+        self.EINI_inference = EINI_inference
+        self.EINI_random_mask = EINI_random_mask
         self.callback_param = copy.deepcopy(callback_param)
 
     def check(self):
@@ -548,6 +550,8 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.check_positive_number(self.top_rate, 'top_rate')
         self.check_boolean(self.new_ver, 'code version switcher')
         self.check_boolean(self.cipher_compress, 'cipher compress')
+        self.check_boolean(self.EINI_inference, 'eini inference')
+        self.check_boolean(self.EINI_random_mask, 'eini random mask')
 
         for p in ["early_stopping_rounds", "validation_freqs", "metrics",
                   "use_first_metric_only"]:
@@ -593,18 +597,19 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                  complete_secure=False, tree_num_per_party=1, guest_depth=1, host_depth=1, work_mode='mix', metrics=None,
                  sparse_optimization=False, random_seed=100, binning_error=consts.DEFAULT_RELATIVE_ERROR,
                  cipher_compress_error=None, new_ver=True, run_goss=False, top_rate=0.2, other_rate=0.1,
-                 cipher_compress=True, callback_param=CallbackParam()):
+                 cipher_compress=True, callback_param=CallbackParam(), EINI_inference=True, EINI_random_mask=False):
 
         """
         Parameters
         ----------
         work_mode: {"mix", "layered"}
-            mix:  alternate using guest/host features to build trees. For example, the first 'tree_num_per_party' trees use guest features,
-                  the second k trees use host features, and so on
+            mix:  alternate using guest/host features to build trees. For example, the first 'tree_num_per_party' trees
+                  use guest features, the second k trees use host features, and so on
             layered: only support 2 party, when running layered mode, first 'host_depth' layer will use host features,
                      and then next 'guest_depth' will only use guest features
         tree_num_per_party: int
-            every party will alternate build 'tree_num_per_party' trees until reach max tree num, this param is valid when work_mode is mix
+            every party will alternate build 'tree_num_per_party' trees until reach max tree num, this param is valid
+             when work_mode is mix
         guest_depth: int
             guest will build last guest_depth of a decision tree using guest features, is valid when work mode is layered
         host depth: int
@@ -624,6 +629,8 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                                                          new_ver=new_ver,
                                                          cipher_compress=cipher_compress,
                                                          run_goss=run_goss, top_rate=top_rate, other_rate=other_rate,
+                                                         EINI_inference=EINI_inference,
+                                                         EINI_random_mask=EINI_random_mask
                                                          )
 
         self.tree_num_per_party = tree_num_per_party

@@ -1,6 +1,7 @@
 from typing import List
 import functools
 import copy
+import random
 import numpy as np
 from scipy import sparse as sp
 from federatedml.util import LOGGER
@@ -44,6 +45,10 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.data_bin_dense = None
         self.hetero_sbt_transfer_variable = HeteroSecureBoostTransferVariable()
 
+        # EINI predict param
+        self.EINI_inference = False
+        self.EINI_random_mask = False
+
     def _init_model(self, param: HeteroSecureBoostParam):
 
         super(HeteroSecureBoostingTreeHost, self)._init_model(param)
@@ -55,6 +60,8 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.sparse_opt_para = param.sparse_optimization
         self.cipher_compressing = param.cipher_compress
         self.new_ver = param.new_ver
+        self.EINI_inference = param.EINI_inference
+        self.EINI_random_mask = param.EINI_random_mask
 
         if self.use_missing:
             self.tree_param.use_missing = self.use_missing
@@ -223,7 +230,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         return leaf_dim_map
 
     @staticmethod
-    def merge_position_vec(host_vec, guest_encrypt_vec, booster_dim=1, leaf_idx_dim_map=None, confusion_number=None):
+    def merge_position_vec(host_vec, guest_encrypt_vec, booster_dim=1, leaf_idx_dim_map=None, random_mask=None):
 
         leaf_idx = -1
         rs = [0 for i in range(booster_dim)]
@@ -235,9 +242,9 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
                 dim = leaf_idx_dim_map[leaf_idx]
                 rs[dim] += en_num
 
-        if confusion_number:
+        if random_mask:
             for i in range(len(rs)):
-                rs[i] = rs[i] * confusion_number  # a pos random mask btw 1 and 2
+                rs[i] = rs[i] * random_mask  # a pos random mask btw 1 and 2
 
         return rs
 
@@ -263,7 +270,8 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
         return id_pos_map_list
 
-    def EINI_host_predict(self, data_inst, trees: List[HeteroDecisionTreeHost], sitename, self_party_id, party_list):
+    def EINI_host_predict(self, data_inst, trees: List[HeteroDecisionTreeHost], sitename, self_party_id, party_list,
+                          random_mask=False):
 
         id_pos_map_list = self.get_leaf_idx_map(trees)
         map_func = functools.partial(self.generate_leaf_candidates_host, sitename=sitename, trees=trees,
@@ -272,7 +280,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
         booster_dim = self.hetero_sbt_transfer_variable.guest_predict_data.get(idx=0, suffix='booster_dim')
 
-        random_mask = float(np.random.random()) + 1  # generate a random mask btw 1 and 2
+        random_mask = random.SystemRandom().random() + 1 if random_mask else 0  # generate a random mask btw 1 and 2
 
         self_idx = party_list.index(self_party_id)
         if len(party_list) == 1:
@@ -326,10 +334,12 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
             LOGGER.info('no tree for predicting, prediction done')
             return
 
-        self.boosting_fast_predict(processed_data, trees=trees)
-        sitename = self.role + ':' + str(self.component_properties.local_partyid)
-        self.EINI_host_predict(processed_data, trees, sitename, self.component_properties.local_partyid,
-                               self.component_properties.host_party_idlist)
+        if self.EINI_inference:
+            sitename = self.role + ':' + str(self.component_properties.local_partyid)
+            self.EINI_host_predict(processed_data, trees, sitename, self.component_properties.local_partyid,
+                                   self.component_properties.host_party_idlist)
+        else:
+            self.boosting_fast_predict(processed_data, trees=trees)
 
     def get_model_meta(self):
         model_meta = BoostingTreeModelMeta()
