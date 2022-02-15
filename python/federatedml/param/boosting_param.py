@@ -495,6 +495,15 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
     cipher_compress: bool
         default is True, use cipher compressing to reduce computation cost and transfer cost
 
+    EINI_inference: bool
+        default is True, a secure prediction method that hides decision path to enhance security in the inference
+        step. This method is insprired by EINI inference algorithm.
+
+    EINI_random_mask: bool
+        default is False
+        multiply predict result by a random float number to confuse original predict result. This operation further
+        enhances the security of naive EINI algorithm.
+
     """
 
     def __init__(self, tree_param: DecisionTreeParam = DecisionTreeParam(), task_type=consts.CLASSIFICATION,

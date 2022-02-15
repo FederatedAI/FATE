@@ -337,7 +337,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         if self.EINI_inference:
             sitename = self.role + ':' + str(self.component_properties.local_partyid)
             self.EINI_host_predict(processed_data, trees, sitename, self.component_properties.local_partyid,
-                                   self.component_properties.host_party_idlist)
+                                   self.component_properties.host_party_idlist, self.EINI_random_mask)
         else:
             self.boosting_fast_predict(processed_data, trees=trees)
 
