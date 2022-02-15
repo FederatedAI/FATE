@@ -24,7 +24,6 @@
 # =============================================================================
 #
 # =============================================================================
-
 import numpy as np
 import warnings
 import functools
@@ -41,7 +40,6 @@ LOGGER = log.getLogger()
 class SplitInfo(object):
     def __init__(self, sitename=consts.GUEST, best_fid=None, best_bid=None,
                  sum_grad=0, sum_hess=0, gain=None, missing_dir=1, mask_id=None, sample_count=-1):
-
         self.sitename = sitename
         self.best_fid = best_fid
         self.best_bid = best_bid
@@ -55,8 +53,8 @@ class SplitInfo(object):
     def __str__(self):
         return '(fid {} bid {}, sum_grad {}, sum_hess {}, gain {}, sitename {}, missing dir {}, mask_id {}, ' \
                'sample_count {})\n'.format(
-                self.best_fid, self.best_bid, self.sum_grad, self.sum_hess, self.gain, self.sitename, self.missing_dir,
-                self.mask_id, self.sample_count)
+                   self.best_fid, self.best_bid, self.sum_grad, self.sum_hess, self.gain, self.sitename, self.missing_dir,
+                   self.mask_id, self.sample_count)
 
     def __repr__(self):
         return self.__str__()
@@ -77,11 +75,11 @@ class Splitter(object):
             else:
                 try:
                     reg_lambda, reg_alpha = 0, 0
-                    if type(criterion_params) is list:
+                    if isinstance(criterion_params, list):
                         reg_lambda = float(criterion_params[0])
                         reg_alpha = float(criterion_params[1])
                     self.criterion = XgboostCriterion(reg_lambda=reg_lambda, reg_alpha=reg_alpha)
-                except:
+                except BaseException:
                     warnings.warn("criterion_params' first criterion_params should be numeric")
                     self.criterion = XgboostCriterion()
 
@@ -91,7 +89,11 @@ class Splitter(object):
         self.min_child_weight = min_child_weight
 
     def _check_min_child_weight(self, l_h, r_h):
-        return l_h >= self.min_child_weight and r_h >= self.min_child_weight
+
+        if isinstance(l_h, np.ndarray):
+            l_h, r_h = np.sum(l_h), np.sum(r_h)
+        rs = l_h >= self.min_child_weight and r_h >= self.min_child_weight
+        return rs
 
     def _check_sample_num(self, l_cnt, r_cnt):
         return l_cnt >= self.min_leaf_node and r_cnt >= self.min_leaf_node
@@ -131,6 +133,9 @@ class Splitter(object):
             if node_cnt < self.min_sample_split:
                 break
 
+            if node_cnt < 1:  # avoid float error
+                break
+
             # last bin will not participate in split find, so bin_num - 1
             for bid in range(bin_num - missing_bin - 1):
 
@@ -143,7 +148,8 @@ class Splitter(object):
                 sum_hess_r = sum_hess - sum_hess_l
                 node_cnt_r = node_cnt - node_cnt_l
 
-                if self._check_sample_num(node_cnt_l, node_cnt_r) and self._check_min_child_weight(sum_hess_l, sum_hess_r):
+                if self._check_min_child_weight(sum_hess_l, sum_hess_r) and self._check_sample_num(node_cnt_l,
+                                                                                                   node_cnt_r):
                     gain = self.criterion.split_gain([sum_grad, sum_hess],
                                                      [sum_grad_l, sum_hess_l], [sum_grad_r, sum_hess_r])
 
@@ -168,7 +174,8 @@ class Splitter(object):
                     node_cnt_r -= histogram[fid][-1][2] - histogram[fid][-2][2]
 
                     # if have a better gain value, missing dir is left
-                    if self._check_sample_num(node_cnt_l, node_cnt_r) and self._check_min_child_weight(sum_hess_l, sum_hess_r):
+                    if self._check_sample_num(node_cnt_l, node_cnt_r) and self._check_min_child_weight(sum_hess_l,
+                                                                                                       sum_hess_r):
 
                         gain = self.criterion.split_gain([sum_grad, sum_hess],
                                                          [sum_grad_l, sum_hess_l], [sum_grad_r, sum_hess_r])
@@ -319,8 +326,10 @@ class Splitter(object):
             if partition_key is None:
                 partition_key = str((nid, fid))
 
-            split_info_list, g_h_sum_info = self.construct_feature_split_points(value, valid_features, sitename, use_missing,
-                                                                                left_missing_dir, right_missing_dir, mask_id_mapping)
+            split_info_list, g_h_sum_info = self.construct_feature_split_points(value, valid_features, sitename,
+                                                                                use_missing,
+                                                                                left_missing_dir, right_missing_dir,
+                                                                                mask_id_mapping)
             # collect all splitinfo of a node
             if nid not in split_info_dict:
                 split_info_dict[nid] = []
@@ -335,7 +344,8 @@ class Splitter(object):
 
             split_info_list = split_info_dict[nid]
             if len(split_info_list) == 0:
-                result_list.append(((nid, partition_key+'-empty'), []))  # add an empty split info list if no split info available
+                result_list.append(
+                    ((nid, partition_key + '-empty'), []))  # add an empty split info list if no split info available
                 continue
 
             if shuffle_random_seed:
@@ -348,10 +358,10 @@ class Splitter(object):
             batch_start_idx = range(0, len(split_info_list), batch_size)
             batch_idx = 0
             for i in batch_start_idx:
-                key = (nid, (partition_key+'-{}'.format(batch_idx)))  # nid, batch_id
+                key = (nid, (partition_key + '-{}'.format(batch_idx)))  # nid, batch_id
                 batch_idx += 1
                 g_h_sum_info = g_h_sum_dict[nid]
-                batch_split_info_list = split_info_list[i: i+batch_size]
+                batch_split_info_list = split_info_list[i: i + batch_size]
                 # compress ciphers
                 if cipher_compressor is not None:
                     compressed_packages = cipher_compressor.compress_split_info(batch_split_info_list, g_h_sum_info)
@@ -376,18 +386,18 @@ class Splitter(object):
         if gh_packer is None:
             split_info_list, g_h_info = value
             for split_info in split_info_list:
-                split_info.sum_grad, split_info.sum_hess = decrypter.decrypt(split_info.sum_grad), decrypter.decrypt(split_info.sum_hess)
+                split_info.sum_grad, split_info.sum_hess = decrypter.decrypt(split_info.sum_grad), decrypter.decrypt(
+                    split_info.sum_hess)
             g_sum, h_sum = decrypter.decrypt(g_h_info.sum_grad), decrypter.decrypt(g_h_info.sum_hess)
         else:
             nid, package = value
             split_info_list = gh_packer.decompress_and_unpack(package)
-            g_sum, h_sum = split_info_list[-1].sum_grad, split_info_list[-1].sum_hess  # g/h is at last index
+            g_sum, h_sum = split_info_list[-1].sum_grad, split_info_list[-1].sum_hess  # g/h sum is at last index
             split_info_list = split_info_list[:-1]
 
         for idx, split_info in enumerate(split_info_list):
 
             l_g, l_h = split_info.sum_grad, split_info.sum_hess
-
             r_g, r_h = g_sum - l_g, h_sum - l_h
             gain = self.split_gain(g_sum, h_sum, l_g, l_h, r_g, r_h)
 
@@ -496,7 +506,7 @@ class Splitter(object):
         return self.criterion.node_weight(grad, hess)
 
     def split_gain(self, sum_grad, sum_hess, sum_grad_l, sum_hess_l, sum_grad_r, sum_hess_r):
-        gain = self.criterion.split_gain([sum_grad, sum_hess], \
+        gain = self.criterion.split_gain([sum_grad, sum_hess],
                                          [sum_grad_l, sum_hess_l], [sum_grad_r, sum_hess_r])
         return gain
 
