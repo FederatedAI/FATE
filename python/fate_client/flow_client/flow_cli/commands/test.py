@@ -41,7 +41,7 @@ def test(ctx):
 @click.pass_context
 def toy(ctx, **kwargs):
     flow_sdk = FlowClient(ip=ctx.obj["ip"], port=ctx.obj["http_port"], version=ctx.obj["api_version"],
-                             app_key=ctx.obj.get("app_key"), secret_key=ctx.obj.get("secret_key"))
+                          app_key=ctx.obj.get("app_key"), secret_key=ctx.obj.get("secret_key"))
     submit_result = flow_sdk.test.toy(**kwargs)
     if submit_result["retcode"] == 0:
         for t in range(kwargs["timeout"]):
@@ -60,6 +60,7 @@ def toy(ctx, **kwargs):
     else:
         prettify(submit_result)
 
+
 def check_log(flow_sdk, party_id, job_id, job_status):
     r = flow_sdk.job.log(job_id=job_id, output_path="./logs/toy")
     if r["retcode"] == 0:
@@ -67,7 +68,7 @@ def check_log(flow_sdk, party_id, job_id, job_status):
         try:
             for msg in log_msg:
                 print(msg)
-        except:
+        except BaseException:
             print(f"auto check log failed, please check {r['directory']}")
     else:
         print(f"get log failed, please check PROJECT_BASE/logs/{job_id} on the fateflow server machine")

@@ -125,9 +125,9 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         LOGGER.info("compute grad and hess")
         loss_method = self.loss
         if self.task_type == consts.CLASSIFICATION:
-            grad_and_hess = y.join(y_hat, lambda y, f_val: \
-                (loss_method.compute_grad(y, loss_method.predict(f_val)), \
-                 loss_method.compute_hess(y, loss_method.predict(f_val))))
+            grad_and_hess = y.join(y_hat, lambda y, f_val:
+                                   (loss_method.compute_grad(y, loss_method.predict(f_val)),
+                                    loss_method.compute_hess(y, loss_method.predict(f_val))))
         else:
             grad_and_hess = y.join(y_hat, lambda y, f_val:
                                    (loss_method.compute_grad(y, f_val),
