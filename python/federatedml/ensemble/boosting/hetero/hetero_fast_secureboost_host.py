@@ -188,15 +188,16 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
         feature_importances = list(self.feature_importances_.items())
         feature_importances = sorted(feature_importances, key=itemgetter(1), reverse=True)
         feature_importance_param = []
-        LOGGER.debug('host feat importance is {}'.format(feature_importances))
-        for fid, importance in feature_importances:
-            feature_importance_param.append(FeatureImportanceInfo(sitename=self.role,
-                                                                  fid=fid,
-                                                                  importance=importance.importance,
-                                                                  fullname=self.feature_name_fid_mapping[fid],
-                                                                  main=importance.main_type
-                                                                  ))
-        model_param.feature_importances.extend(feature_importance_param)
+        if self.work_mode == consts.MIX_TREE:
+            LOGGER.debug('host feat importance is {}'.format(feature_importances))
+            for fid, importance in feature_importances:
+                feature_importance_param.append(FeatureImportanceInfo(sitename=self.role,
+                                                                      fid=fid,
+                                                                      importance=importance.importance,
+                                                                      fullname=self.feature_name_fid_mapping[fid],
+                                                                      main=importance.main_type
+                                                                      ))
+            model_param.feature_importances.extend(feature_importance_param)
 
         return param_name, model_param
 
