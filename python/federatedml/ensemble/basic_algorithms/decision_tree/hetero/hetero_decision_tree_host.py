@@ -72,7 +72,6 @@ class HeteroDecisionTreeHost(DecisionTree):
              goss_subsample=False,
              cipher_compressing=False,
              new_ver=True,
-             mo_tree=False
              ):
 
         super(HeteroDecisionTreeHost, self).init_data_and_variable(flowid, runtime_idx, data_bin, bin_split_points,
