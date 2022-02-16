@@ -102,6 +102,8 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
         LOGGER.debug('tree work mode is {}'.format(tree_type))
         tree.fit()
         self.update_feature_importance(tree.get_feature_importance())
+        if self.work_mode == consts.LAYERED_TREE:
+            self.sync_feature_importance()
         return tree
 
     def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):

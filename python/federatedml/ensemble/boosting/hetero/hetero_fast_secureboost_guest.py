@@ -86,6 +86,8 @@ class HeteroFastSecureBoostingTreeGuest(HeteroSecureBoostingTreeGuest):
         tree.set_layered_depth(self.guest_depth, self.host_depth)
         tree.fit()
         self.update_feature_importance(tree.get_feature_importance())
+        if self.work_mode == consts.LAYERED_TREE:
+            self.sync_feature_importance()
         return tree
 
     @staticmethod
