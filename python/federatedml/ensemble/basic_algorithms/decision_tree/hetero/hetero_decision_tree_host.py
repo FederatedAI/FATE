@@ -72,7 +72,6 @@ class HeteroDecisionTreeHost(DecisionTree):
              goss_subsample=False,
              cipher_compressing=False,
              new_ver=True,
-             mo_tree=False
              ):
 
         super(HeteroDecisionTreeHost, self).init_data_and_variable(flowid, runtime_idx, data_bin, bin_split_points,
@@ -85,7 +84,6 @@ class HeteroDecisionTreeHost(DecisionTree):
         self.run_cipher_compressing = cipher_compressing
         self.feature_num = self.bin_split_points.shape[0]
         self.new_ver = new_ver
-        self.mo_tree = mo_tree
 
         self.report_init_status()
 
