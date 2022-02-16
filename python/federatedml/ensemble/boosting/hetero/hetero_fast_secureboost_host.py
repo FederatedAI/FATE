@@ -38,6 +38,10 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
         self.guest_depth = param.guest_depth
         self.host_depth = param.host_depth
 
+        if self.work_mode == consts.MIX_TREE and self.EINI_inference:
+            LOGGER.info('Mix mode of fast-sbt does not support EINI predict, reset to False')
+            self.EINI_inference = False
+
     def get_tree_plan(self, idx):
 
         if not self.init_tree_plan:
@@ -155,7 +159,7 @@ class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
             node_pos = data_inst.mapValues(lambda x: np.zeros(tree_num, dtype=np.int64))
             local_traverse_func = functools.partial(self.traverse_host_local_trees, trees=trees)
             leaf_pos = node_pos.join(data_inst, local_traverse_func)
-            self.predict_transfer_inst.host_predict_data.remote(leaf_pos, idx=0, role=consts.GUEST)
+            self.hetero_sbt_transfer_variable.host_predict_data.remote(leaf_pos, idx=0, role=consts.GUEST)
 
         else:
 
