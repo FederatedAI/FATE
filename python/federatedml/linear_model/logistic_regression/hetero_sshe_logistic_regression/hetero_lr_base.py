@@ -145,13 +145,13 @@ class HeteroLRBase(BaseLinearModel, ABC):
             )
             return wa, wb
 
-    def forward(self, weights, features, suffix, cipher):
+    def forward(self, weights, features, labels, suffix, cipher):
         raise NotImplementedError("Should not call here")
 
     def backward(self, error, features, suffix, cipher):
         raise NotImplementedError("Should not call here")
 
-    def compute_loss(self, weights, suffix, cipher):
+    def compute_loss(self, weights, labels, suffix, cipher):
         raise NotImplementedError("Should not call here")
 
     def fit(self, data_instances, validate_data=None):
@@ -201,9 +201,6 @@ class HeteroLRBase(BaseLinearModel, ABC):
         ) as spdz:
             spdz.set_flowid(self.flowid)
             self.secure_matrix_obj.set_flowid(self.flowid)
-            if self.role == consts.GUEST:
-                self.labels = data_instances.mapValues(lambda x: np.array([x.label], dtype=int))
-
             w_self, w_remote = self.share_model(w, suffix="init")
             last_w_self, last_w_remote = w_self, w_remote
             LOGGER.debug(f"first_w_self shape: {w_self.shape}, w_remote_shape: {w_remote.shape}")
@@ -212,18 +209,24 @@ class HeteroLRBase(BaseLinearModel, ABC):
 
             self.cipher_tool = []
             encoded_batch_data = []
+            batch_labels_list = []
+
             for batch_data in batch_data_generator:
                 if self.fit_intercept:
                     batch_features = batch_data.mapValues(lambda x: np.hstack((x.features, 1.0)))
                 else:
                     batch_features = batch_data.mapValues(lambda x: x.features)
+
+                if self.role == consts.GUEST:
+                    batch_labels = batch_data.mapValues(lambda x: np.array([x.label], dtype=int))
+                    batch_labels_list.append(batch_labels)
+
                 self.batch_num.append(batch_data.count())
 
                 encoded_batch_data.append(
                     fixedpoint_table.FixedPointTensor(self.fixedpoint_encoder.encode(batch_features),
                                                       q_field=self.fixedpoint_encoder.n,
                                                       endec=self.fixedpoint_encoder))
-
                 self.cipher_tool.append(EncryptModeCalculator(self.cipher,
                                                               self.encrypted_mode_calculator_param.mode,
                                                               self.encrypted_mode_calculator_param.re_encrypted_rate))
@@ -240,21 +243,28 @@ class HeteroLRBase(BaseLinearModel, ABC):
                     self.remote_optimizer.set_iters(self.n_iter_)
 
                 for batch_idx, batch_data in enumerate(encoded_batch_data):
+                    LOGGER.info(f"start to n_iter: {self.n_iter_}, batch idx: {batch_idx}")
                     current_suffix = (str(self.n_iter_), str(batch_idx))
+                    if self.role == consts.GUEST:
+                        batch_labels = batch_labels_list[batch_idx]
+                    else:
+                        batch_labels = None
 
                     if self.reveal_every_iter:
                         y = self.forward(weights=self.model_weights,
                                          features=batch_data,
+                                         labels=batch_labels,
                                          suffix=current_suffix,
                                          cipher=self.cipher_tool[batch_idx])
                     else:
                         y = self.forward(weights=(w_self, w_remote),
                                          features=batch_data,
+                                         labels=batch_labels,
                                          suffix=current_suffix,
                                          cipher=self.cipher_tool[batch_idx])
 
                     if self.role == consts.GUEST:
-                        error = y - self.labels
+                        error = y - batch_labels
 
                         self_g, remote_g = self.backward(error=error,
                                                          features=batch_data,
@@ -269,9 +279,9 @@ class HeteroLRBase(BaseLinearModel, ABC):
                     # loss computing;
                     suffix = ("loss",) + current_suffix
                     if self.reveal_every_iter:
-                        batch_loss = self.compute_loss(weights=self.model_weights, suffix=suffix, cipher=self.cipher_tool[batch_idx])
+                        batch_loss = self.compute_loss(weights=self.model_weights, labels=batch_labels, suffix=suffix, cipher=self.cipher_tool[batch_idx])
                     else:
-                        batch_loss = self.compute_loss(weights=(w_self, w_remote), suffix=suffix, cipher=self.cipher_tool[batch_idx])
+                        batch_loss = self.compute_loss(weights=(w_self, w_remote), labels=batch_labels, suffix=suffix, cipher=self.cipher_tool[batch_idx])
 
                     if batch_loss is not None:
                         batch_loss = batch_loss * self.batch_num[batch_idx]
