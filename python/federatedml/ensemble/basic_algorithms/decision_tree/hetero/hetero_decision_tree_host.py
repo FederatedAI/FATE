@@ -85,7 +85,6 @@ class HeteroDecisionTreeHost(DecisionTree):
         self.run_cipher_compressing = cipher_compressing
         self.feature_num = self.bin_split_points.shape[0]
         self.new_ver = new_ver
-        self.mo_tree = mo_tree
 
         self.report_init_status()
 
