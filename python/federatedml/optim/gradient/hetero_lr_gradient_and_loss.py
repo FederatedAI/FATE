@@ -74,7 +74,8 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         current_suffix = (n_iter_, batch_index)
         n = data_instances.count()
 
-        host_wx_y = self.host_forwards[0].join(data_instances, lambda x, y: (x, y.label))
+        # host_wx_y = self.host_forwards[0].join(data_instances, lambda x, y: (x, y.label))
+        host_wx_y = data_instances.join(self.host_forwards[0], lambda y, x: (x, y.label))
         self_wx_y = self.half_d.join(data_instances, lambda x, y: (x, y.label))
 
         def _sum_ywx(wx_y):

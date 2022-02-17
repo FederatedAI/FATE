@@ -89,6 +89,11 @@ class HeteroLRGuest(HeteroLRBase):
         LOGGER.debug(f"MODEL_STEP After load data, data count: {data_instances.count()}")
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
+        self.batch_generator.initialize_batch_generator(data_instances, self.batch_size,
+                                                        batch_strategy=self.batch_strategy,
+                                                        masked_rate=self.masked_rate, shuffle=self.shuffle)
+        self.gradient_loss_operator.set_total_batch_nums(self.batch_generator.batch_nums)
+
         use_async = False
         if with_weight(data_instances):
             if self.model_param.early_stop == "diff":
@@ -97,19 +102,13 @@ class HeteroLRGuest(HeteroLRBase):
             self.gradient_loss_operator.set_use_sample_weight()
             LOGGER.debug(f"instance weight scaled; use weighted gradient loss operator")
             # LOGGER.debug(f"data_instances after scale: {[v[1].weight for v in list(data_instances.collect())]}")
-        elif len(self.component_properties.host_party_idlist) == 1:
+        elif len(self.component_properties.host_party_idlist) == 1 and not self.batch_generator.batch_masked:
             LOGGER.debug(f"set_use_async")
             self.gradient_loss_operator.set_use_async()
             use_async = True
         self.transfer_variable.use_async.remote(use_async)
 
         LOGGER.info("Generate mini-batch from input data")
-        self.batch_generator.initialize_batch_generator(data_instances, self.batch_size,
-                                                        batch_strategy=self.batch_strategy,
-                                                        masked_rate=self.masked_rate, shuffle=self.shuffle)
-        self.gradient_loss_operator.set_total_batch_nums(self.batch_generator.batch_nums)
-        if self.batch_generator.batch_masked:
-            self.gradient_loss_operator.set_use_sync()
 
         self.encrypted_calculator = [EncryptModeCalculator(self.cipher_operator,
                                                            self.encrypted_mode_calculator_param.mode,

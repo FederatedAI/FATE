@@ -64,9 +64,8 @@ class MiniBatch:
             for batch_data, index_table in zip(self.all_batch_data, self.all_index_data):
                 yield batch_data, index_table
 
-        if self.batch_mutable:
-            self.__generate_batch_data()
-
+        # if self.batch_mutable:
+        #     self.__generate_batch_data()
     def __init_mini_batch_data_seperator(self, data_insts, batch_size, batch_strategy, masked_rate, shuffle):
         self.data_sids_iter, data_size = indices.collect_index(data_insts)
 
@@ -95,6 +94,9 @@ def get_batch_generator(data_size, batch_size, batch_strategy, masked_rate, shuf
         # LOGGER.warning("Masked dataset's batch_size >= data size, batch shuffle will be disabled")
         # return FullBatchDataGenerator(data_size, data_size, shuffle=False, masked_rate=masked_rate)
     if batch_strategy == "full":
+        if masked_rate > 0:
+            LOGGER.warning("If using full batch strategy and masked rate > 0, shuffle will always be true")
+            shuffle = True
         return FullBatchDataGenerator(data_size, batch_size, shuffle=shuffle, masked_rate=masked_rate)
     else:
         if shuffle:
@@ -102,12 +104,39 @@ def get_batch_generator(data_size, batch_size, batch_strategy, masked_rate, shuf
         return RandomBatchDataGenerator(data_size, batch_size, masked_rate)
 
 
-class FullBatchDataGenerator(object):
+class BatchDataGenerator(object):
     def __init__(self, data_size, batch_size, shuffle=False, masked_rate=0):
-        self.batch_nums = (data_size + batch_size - 1) // batch_size
+        self.batch_nums = None
         self.masked_dataset_size = min(data_size, round((1 + masked_rate) * batch_size))
         self.batch_size = batch_size
         self.shuffle = shuffle
+
+    def batch_masked(self):
+        return self.masked_dataset_size != self.batch_size
+
+    def batch_mutable(self):
+        return True
+
+    @staticmethod
+    def _generate_batch_data_with_batch_ids(data_insts, batch_ids, masked_ids=None):
+        batch_index_table = session.parallelize(batch_ids,
+                                                include_key=True,
+                                                partition=data_insts.partitions)
+        batch_data_table = batch_index_table.join(data_insts, lambda x, y: y)
+
+        if masked_ids:
+            masked_index_table = session.parallelize(masked_ids,
+                                                     include_key=True,
+                                                     partition=data_insts.partitions)
+            return masked_index_table, batch_data_table
+        else:
+            return batch_index_table, batch_data_table
+
+
+class FullBatchDataGenerator(BatchDataGenerator):
+    def __init__(self, data_size, batch_size, shuffle=False, masked_rate=0):
+        super(FullBatchDataGenerator, self).__init__(data_size, batch_size, shuffle, masked_rate=masked_rate)
+        self.batch_nums = (data_size + batch_size - 1) // batch_size
 
         LOGGER.debug(f"Init Full Batch Data Generator, batch_nums: {self.batch_nums}, batch_size: {self.batch_size}, "
                      f"masked_dataset_size: {self.masked_dataset_size}, shuffle: {self.shuffle}")
@@ -121,32 +150,26 @@ class FullBatchDataGenerator(object):
         if self.batch_size != self.masked_dataset_size:
             for bid in range(self.batch_nums):
                 batch_ids = data_sids[bid * self.batch_size:(bid + 1) * self.batch_size]
-                masked_ids = set()
+                masked_ids_set = set()
                 for sid, _ in batch_ids:
-                    masked_ids.add(sid)
+                    masked_ids_set.add(sid)
                 possible_ids = random.SystemRandom().sample(data_sids, self.masked_dataset_size)
                 for pid, _ in possible_ids:
-                    if pid not in masked_ids:
-                        masked_ids.add(pid)
-                        if len(masked_ids) == self.masked_dataset_size:
+                    if pid not in masked_ids_set:
+                        masked_ids_set.add(pid)
+                        if len(masked_ids_set) == self.masked_dataset_size:
                             break
 
-                masked_index_table = session.parallelize(zip(list(masked_ids), [None] * len(masked_ids)),
-                                                         include_key=True,
-                                                         partition=data_insts.partitions)
-                batch_index_table = session.parallelize(batch_ids,
-                                                        include_key=True,
-                                                        partition=data_insts.partitions)
-                batch_data_table = batch_index_table.join(data_insts, lambda x, y: y)
+                masked_ids = zip(list(masked_ids_set), [None] * len(masked_ids_set))
+                masked_index_table, batch_data_table = self._generate_batch_data_with_batch_ids(data_insts,
+                                                                                                batch_ids,
+                                                                                                masked_ids)
                 index_table.append(masked_index_table)
                 batch_data.append(batch_data_table)
         else:
             for bid in range(self.batch_nums):
-                batch_ids = data_sids[bid * self.batch_size : (bid + 1) * self.batch_size]
-                batch_index_table = session.parallelize(batch_ids,
-                                                        include_key=True,
-                                                        partition=data_insts.partitions)
-                batch_data_table = batch_index_table.join(data_insts, lambda x, y: y)
+                batch_ids = data_sids[bid * self.batch_size: (bid + 1) * self.batch_size]
+                batch_index_table, batch_data_table = self._generate_batch_data_with_batch_ids(data_insts, batch_ids)
                 index_table.append(batch_index_table)
                 batch_data.append(batch_data_table)
 
@@ -155,32 +178,26 @@ class FullBatchDataGenerator(object):
     def batch_mutable(self):
         return self.masked_dataset_size > self.batch_size or self.shuffle
 
-    def batch_masked(self):
-        return self.masked_dataset_size != self.batch_size
 
-
-class RandomBatchDataGenerator(object):
+class RandomBatchDataGenerator(BatchDataGenerator):
     def __init__(self, data_size, batch_size, masked_rate=0):
+        super(RandomBatchDataGenerator, self).__init__(data_size, batch_size, shuffle=False, masked_rate=masked_rate)
         self.batch_nums = 1
-        self.batch_size = batch_size
-        self.masked_dataset_size = min(data_size, round((1 + masked_rate) * self.batch_size))
 
         LOGGER.debug(f"Init Random Batch Data Generator, batch_nums: {self.batch_nums}, batch_size: {self.batch_size}, "
                      f"masked_dataset_size: {self.masked_dataset_size}")
 
-    def generate_data(self, data_insts, *args, **kwargs):
+    def generate_data(self, data_insts, data_sids):
         if self.masked_dataset_size == self.batch_size:
-            batch_data = data_insts.sample(num=self.batch_size)
-            index_data = batch_data.mapValues(lambda value: None)
-            return [index_data], [batch_data]
+            batch_ids = random.SystemRandom().sample(data_sids, self.batch_size)
+            batch_index_table, batch_data_table = self._generate_batch_data_with_batch_ids(data_insts, batch_ids)
+            batch_data_table = batch_index_table.join(data_insts, lambda x, y: y)
+            return [batch_index_table], [batch_data_table]
         else:
-            masked_data = data_insts.sample(num=self.masked_dataset_size)
-            batch_data = masked_data.sample(num=self.batch_size)
-            masked_index_table = masked_data.mapValues(lambda value: None)
-            return [masked_index_table], [batch_data]
+            masked_ids = random.SystemRandom().sample(data_sids, self.masked_dataset_size)
+            batch_ids = masked_ids[: self.batch_size]
+            masked_index_table, batch_data_table = self._generate_batch_data_with_batch_ids(data_insts,
+                                                                                            batch_ids,
+                                                                                            masked_ids)
+            return [masked_index_table], [batch_data_table]
 
-    def batch_mutable(self):
-        return True
-
-    def batch_masked(self):
-        return self.masked_dataset_size != self.batch_size
