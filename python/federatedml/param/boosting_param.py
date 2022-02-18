@@ -562,6 +562,11 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.check_boolean(self.EINI_inference, 'eini inference')
         self.check_boolean(self.EINI_random_mask, 'eini random mask')
 
+        if self.EINI_inference and self.EINI_random_mask:
+            LOGGER.warning('To protect the inference decision path, notice that current setting will multiply'
+                           ' predict result by a random number, hence SecureBoost will return confused predict scores'
+                           ' that is not the same as the original predict scores')
+
         for p in ["early_stopping_rounds", "validation_freqs", "metrics",
                   "use_first_metric_only"]:
             # if self._warn_to_deprecate_param(p, "", ""):

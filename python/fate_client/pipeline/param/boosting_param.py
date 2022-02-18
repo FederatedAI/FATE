@@ -511,6 +511,8 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.check_positive_number(self.top_rate, 'top_rate')
         self.check_boolean(self.new_ver, 'code version switcher')
         self.check_boolean(self.cipher_compress, 'cipher compress')
+        self.check_boolean(self.EINI_inference, 'eini inference')
+        self.check_boolean(self.EINI_random_mask, 'eini random mask')
 
         if self.top_rate + self.other_rate >= 1:
             raise ValueError('sum of top rate and other rate should be smaller than 1')
