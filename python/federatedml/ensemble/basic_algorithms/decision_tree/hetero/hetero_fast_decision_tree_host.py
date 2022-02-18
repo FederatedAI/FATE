@@ -273,8 +273,9 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
             node.sum_hess = None
             if node.is_leaf:
                 node.sitename = consts.GUEST
-            self.split_maskdict[node.id] = node.bid
-            self.missing_dir_maskdict[node.id] = node.missing_dir
+            else:
+                self.split_maskdict[node.id] = node.bid
+                self.missing_dir_maskdict[node.id] = node.missing_dir
 
     def mask_node_id(self, nodes):
         for n in nodes:
