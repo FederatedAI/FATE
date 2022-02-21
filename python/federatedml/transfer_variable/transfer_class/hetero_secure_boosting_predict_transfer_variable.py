@@ -33,3 +33,5 @@ class HeteroSecureBoostTransferVariable(BaseTransferVariables):
         self.predict_stop_flag = self._create_variable(name='predict_stop_flag', src=['guest'], dst=['host'])
         self.guest_predict_data = self._create_variable(name='guest_predict_data', src=['guest'], dst=['host'])
         self.host_predict_data = self._create_variable(name='host_predict_data', src=['host'], dst=['guest'])
+        self.inter_host_data = self._create_variable(name='inter_host_data', src=['host'], dst=['host'])
+        self.host_feature_importance = self._create_variable(name='host_feature_importance', src=['host'], dst=['guest'])

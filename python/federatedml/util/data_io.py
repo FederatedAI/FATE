@@ -59,8 +59,8 @@ class DenseFeatureReader(object):
         self.outlier_impute = data_io_param.outlier_impute
         self.outlier_replace_value = data_io_param.outlier_replace_value
         self.with_label = data_io_param.with_label
-        self.label_name = data_io_param.label_name
-        self.label_type = data_io_param.label_type
+        self.label_name = data_io_param.label_name if self.with_label else None
+        self.label_type = data_io_param.label_type if self.with_label else None
         self.output_format = data_io_param.output_format
         self.missing_impute_rate = None
         self.outlier_replace_rate = None
@@ -402,7 +402,7 @@ class SparseFeatureReader(object):
         self.output_format = data_io_param.output_format
         self.header = None
         self.sid_name = "sid"
-        self.label_name = self.label_name = data_io_param.label_name
+        self.label_name = data_io_param.label_name
 
     def get_max_feature_index(self, line, delimitor=' '):
         if line.strip() == '':
@@ -558,11 +558,11 @@ class SparseTagReader(object):
         self.tag_with_value = data_io_param.tag_with_value
         self.tag_value_delimitor = data_io_param.tag_value_delimitor
         self.with_label = data_io_param.with_label
-        self.label_type = data_io_param.label_type
+        self.label_type = data_io_param.label_type if self.with_label else None
         self.output_format = data_io_param.output_format
         self.header = None
         self.sid_name = "sid"
-        self.label_name = self.label_name = data_io_param.label_name
+        self.label_name = data_io_param.label_name if self.with_label else None
         self.missing_fill = data_io_param.missing_fill
         self.missing_fill_method = data_io_param.missing_fill_method
         self.default_value = data_io_param.default_value
@@ -940,8 +940,9 @@ def save_data_io_model(input_format="dense",
     model_meta.tag_with_value = tag_with_value
     model_meta.tag_value_delimitor = tag_value_delimitor
     model_meta.with_label = with_label
-    model_meta.label_name = label_name
-    model_meta.label_type = label_type
+    if with_label:
+        model_meta.label_name = label_name
+        model_meta.label_type = label_type
     model_meta.output_format = output_format
 
     if header is not None:
@@ -967,8 +968,8 @@ def load_data_io_model(model_name="DataIO",
     tag_with_value = model_meta.tag_with_value
     tag_value_delimitor = model_meta.tag_value_delimitor
     with_label = model_meta.with_label
-    label_name = model_meta.label_name
-    label_type = model_meta.label_type
+    label_name = model_meta.label_name if with_label else None
+    label_type = model_meta.label_type if with_label else None
     output_format = model_meta.output_format
 
     header = list(model_param.header) or None
