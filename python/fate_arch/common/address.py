@@ -10,7 +10,7 @@ class AddressBase(AddressABC):
             connector = StorageConnector(connector_name=connector_name, engine=self.get_name)
             if connector.get_info():
                 for k, v in connector.get_info().items():
-                    if hasattr(self, k):
+                    if hasattr(self, k) and v:
                         self.__setattr__(k, v)
 
     @property
@@ -138,7 +138,7 @@ class MysqlAddress(AddressBase):
 
     @property
     def connector(self):
-        return {"user": self.user, "passwd": self.passwd, "host": self.host, "port": self.port}
+        return {"user": self.user, "passwd": self.passwd, "host": self.host, "port": self.port, "db": self.db}
 
     @property
     def get_name(self):
@@ -168,7 +168,7 @@ class HiveAddress(AddressBase):
 
     @property
     def connector(self):
-        return {"host": self.host, "port": self.port, "username": self.username, "password": self.password, "auth_mechanism": self.auth_mechanism}
+        return {"host": self.host, "port": self.port, "username": self.username, "password": self.password, "auth_mechanism": self.auth_mechanism, "database": self.database}
 
     @property
     def get_name(self):

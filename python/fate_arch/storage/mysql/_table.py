@@ -129,15 +129,13 @@ class StorageTable(StorageTableBase):
 
     def _get_id_feature_name(self):
         id = self.meta.get_schema().get("sid", "id")
-        header = self.meta.get_schema().get("header")
+        header = self.meta.get_schema().get("header", [])
         id_delimiter = self.meta.get_id_delimiter()
-        if header:
-            if isinstance(header, str):
-                feature_list = header.split(id_delimiter)
-            elif isinstance(header, list):
-                feature_list = header
-            else:
-                feature_list = [header]
+
+        if isinstance(header, str):
+            feature_list = header.split(id_delimiter)
+        elif isinstance(header, list):
+            feature_list = header
         else:
-            raise Exception("mysql table need data header")
+            feature_list = [header]
         return id, feature_list, id_delimiter
