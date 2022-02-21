@@ -69,7 +69,8 @@ class MiniBatch:
     def __init_mini_batch_data_seperator(self, data_insts, batch_size, batch_strategy, masked_rate, shuffle):
         self.data_sids_iter, data_size = indices.collect_index(data_insts)
 
-        self.batch_data_generator = get_batch_generator(data_size, batch_size, batch_strategy, masked_rate, shuffle=shuffle)
+        self.batch_data_generator = get_batch_generator(
+            data_size, batch_size, batch_strategy, masked_rate, shuffle=shuffle)
         self.batch_nums = self.batch_data_generator.batch_nums
         self.batch_mutable = self.batch_data_generator.batch_mutable()
         self.masked_batch_size = self.batch_data_generator.masked_batch_size
