@@ -22,13 +22,13 @@ from peewee import CharField, IntegerField, BigIntegerField, TextField, Composit
 from fate_arch.federation import FederationEngine
 from fate_arch.metastore.base_model import DateTimeField
 from fate_arch.common import file_utils, log, EngineType, conf_utils
-from fate_arch.common.conf_utils import get_base_config
+from fate_arch.common.conf_utils import decrypt_database_config
 from fate_arch.metastore.base_model import JSONField, SerializedField, BaseModel
 
 
 LOGGER = log.getLogger()
 
-DATABASE = get_base_config("database", {})
+DATABASE = decrypt_database_config()
 is_standalone = conf_utils.get_base_config("default_engines", {}).get(EngineType.FEDERATION).upper() == \
                 FederationEngine.STANDALONE
 
