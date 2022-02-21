@@ -45,9 +45,14 @@ class StorageTable(StorageTableBase):
     def check_address(self):
         schema = self.meta.get_schema()
         if schema:
-            sql = "SELECT {},{} FROM {}".format(
-                schema.get("sid"), schema.get("header"), self._address.name
-            )
+            if schema.get("sid") and schema.get("header"):
+                sql = "SELECT {},{} FROM {}".format(
+                    schema.get("sid"), schema.get("header"), self._address.name
+                )
+            else:
+                sql = "SELECT {} FROM {}".format(
+                    schema.get("sid"), self._address.name
+                )
             feature_data = self.execute(sql)
             for feature in feature_data:
                 if feature:
@@ -131,8 +136,9 @@ class StorageTable(StorageTableBase):
         id = self.meta.get_schema().get("sid", "id")
         header = self.meta.get_schema().get("header", [])
         id_delimiter = self.meta.get_id_delimiter()
-
-        if isinstance(header, str):
+        if not header:
+            feature_list = []
+        elif isinstance(header, str):
             feature_list = header.split(id_delimiter)
         elif isinstance(header, list):
             feature_list = header
