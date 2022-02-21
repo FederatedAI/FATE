@@ -444,7 +444,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
 
         # encryption
         encrypter = PaillierEncrypt()
-        encrypter.generate_key(1024)
+        encrypter.generate_key(self.encrypt_param.key_length)
         encrypter_vec_table = position_vec.mapValues(encrypter.recursive_encrypt)
 
         # federation part
