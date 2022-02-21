@@ -92,6 +92,9 @@ class HeteroLRGuest(HeteroLRBase):
         self.batch_generator.initialize_batch_generator(data_instances, self.batch_size,
                                                         batch_strategy=self.batch_strategy,
                                                         masked_rate=self.masked_rate, shuffle=self.shuffle)
+        if self.batch_generator.batch_masked:
+            self.batch_generator.verify_batch_legality()
+
         self.gradient_loss_operator.set_total_batch_nums(self.batch_generator.batch_nums)
 
         use_async = False

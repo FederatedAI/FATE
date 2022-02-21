@@ -72,7 +72,7 @@ class MiniBatch:
         self.batch_data_generator = get_batch_generator(data_size, batch_size, batch_strategy, masked_rate, shuffle=shuffle)
         self.batch_nums = self.batch_data_generator.batch_nums
         self.batch_mutable = self.batch_data_generator.batch_mutable()
-        self.batch_masked = self.batch_data_generator.batch_masked()
+        self.masked_batch_size = self.batch_data_generator.masked_batch_size
 
         if self.batch_mutable is False:
             self.__generate_batch_data()
@@ -107,12 +107,9 @@ def get_batch_generator(data_size, batch_size, batch_strategy, masked_rate, shuf
 class BatchDataGenerator(object):
     def __init__(self, data_size, batch_size, shuffle=False, masked_rate=0):
         self.batch_nums = None
-        self.masked_dataset_size = min(data_size, round((1 + masked_rate) * batch_size))
+        self.masked_batch_size = min(data_size, round((1 + masked_rate) * batch_size))
         self.batch_size = batch_size
         self.shuffle = shuffle
-
-    def batch_masked(self):
-        return self.masked_dataset_size != self.batch_size
 
     def batch_mutable(self):
         return True
@@ -139,7 +136,7 @@ class FullBatchDataGenerator(BatchDataGenerator):
         self.batch_nums = (data_size + batch_size - 1) // batch_size
 
         LOGGER.debug(f"Init Full Batch Data Generator, batch_nums: {self.batch_nums}, batch_size: {self.batch_size}, "
-                     f"masked_dataset_size: {self.masked_dataset_size}, shuffle: {self.shuffle}")
+                     f"masked_batch_size: {self.masked_batch_size}, shuffle: {self.shuffle}")
 
     def generate_data(self, data_insts, data_sids):
         if self.shuffle:
@@ -147,17 +144,17 @@ class FullBatchDataGenerator(BatchDataGenerator):
 
         index_table = []
         batch_data = []
-        if self.batch_size != self.masked_dataset_size:
+        if self.batch_size != self.masked_batch_size:
             for bid in range(self.batch_nums):
                 batch_ids = data_sids[bid * self.batch_size:(bid + 1) * self.batch_size]
                 masked_ids_set = set()
                 for sid, _ in batch_ids:
                     masked_ids_set.add(sid)
-                possible_ids = random.SystemRandom().sample(data_sids, self.masked_dataset_size)
+                possible_ids = random.SystemRandom().sample(data_sids, self.masked_batch_size)
                 for pid, _ in possible_ids:
                     if pid not in masked_ids_set:
                         masked_ids_set.add(pid)
-                        if len(masked_ids_set) == self.masked_dataset_size:
+                        if len(masked_ids_set) == self.masked_batch_size:
                             break
 
                 masked_ids = zip(list(masked_ids_set), [None] * len(masked_ids_set))
@@ -176,7 +173,7 @@ class FullBatchDataGenerator(BatchDataGenerator):
         return index_table, batch_data
 
     def batch_mutable(self):
-        return self.masked_dataset_size > self.batch_size or self.shuffle
+        return self.masked_batch_size > self.batch_size or self.shuffle
 
 
 class RandomBatchDataGenerator(BatchDataGenerator):
@@ -185,16 +182,16 @@ class RandomBatchDataGenerator(BatchDataGenerator):
         self.batch_nums = 1
 
         LOGGER.debug(f"Init Random Batch Data Generator, batch_nums: {self.batch_nums}, batch_size: {self.batch_size}, "
-                     f"masked_dataset_size: {self.masked_dataset_size}")
+                     f"masked_batch_size: {self.masked_batch_size}")
 
     def generate_data(self, data_insts, data_sids):
-        if self.masked_dataset_size == self.batch_size:
+        if self.masked_batch_size == self.batch_size:
             batch_ids = random.SystemRandom().sample(data_sids, self.batch_size)
             batch_index_table, batch_data_table = self._generate_batch_data_with_batch_ids(data_insts, batch_ids)
             batch_data_table = batch_index_table.join(data_insts, lambda x, y: y)
             return [batch_index_table], [batch_data_table]
         else:
-            masked_ids = random.SystemRandom().sample(data_sids, self.masked_dataset_size)
+            masked_ids = random.SystemRandom().sample(data_sids, self.masked_batch_size)
             batch_ids = masked_ids[: self.batch_size]
             masked_index_table, batch_data_table = self._generate_batch_data_with_batch_ids(data_insts,
                                                                                             batch_ids,

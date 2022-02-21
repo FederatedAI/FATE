@@ -31,6 +31,7 @@ class Guest(batch_info_sync.Guest):
     def register_batch_generator(self, transfer_variables, has_arbiter=True):
         self._register_batch_data_index_transfer(transfer_variables.batch_info,
                                                  transfer_variables.batch_data_index,
+                                                 getattr(transfer_variables, "batch_validate_info", None),
                                                  has_arbiter)
 
     def initialize_batch_generator(self, data_instances, batch_size, suffix=tuple(),
@@ -38,9 +39,10 @@ class Guest(batch_info_sync.Guest):
         self.mini_batch_obj = MiniBatch(data_instances, batch_size=batch_size, shuffle=shuffle,
                                         batch_strategy=batch_strategy, masked_rate=masked_rate)
         self.batch_nums = self.mini_batch_obj.batch_nums
-        self.batch_masked = self.mini_batch_obj.batch_masked
-        batch_info = {"batch_size": batch_size, "batch_num":
-                      self.batch_nums, "batch_mutable": self.mini_batch_obj.batch_mutable, "batch_masked": self.batch_masked}
+        self.batch_masked = self.mini_batch_obj.batch_size != self.mini_batch_obj.masked_batch_size
+        batch_info = {"batch_size": self.mini_batch_obj.batch_size, "batch_num": self.batch_nums,
+                      "batch_mutable": self.mini_batch_obj.batch_mutable,
+                      "masked_batch_size": self.mini_batch_obj.masked_batch_size}
         self.sync_batch_info(batch_info, suffix)
 
         if not self.mini_batch_obj.batch_mutable:
@@ -68,6 +70,19 @@ class Guest(batch_info_sync.Guest):
             for batch_data in data_generator:
                 yield batch_data
 
+    def verify_batch_legality(self, suffix=tuple()):
+        validate_infos = self.sync_batch_validate_info(suffix)
+        least_batch_size = 0
+        is_legal = True
+        for validate_info in validate_infos:
+            legality = validate_info.get("legality")
+            if not legality:
+                is_legal = False
+                least_batch_size = max(least_batch_size, validate_info.get("least_batch_size"))
+
+        if not is_legal:
+            raise ValueError(f"To use batch masked strategy, (masked_rate + 1) * batch_size should >= {least_batch_size}")
+
 
 class Host(batch_info_sync.Host):
     def __init__(self):
@@ -77,15 +92,20 @@ class Host(batch_info_sync.Host):
         self.data_inst = None
         self.batch_mutable = False
         self.batch_masked = False
+        self.masked_batch_size = None
 
     def register_batch_generator(self, transfer_variables, has_arbiter=None):
-        self._register_batch_data_index_transfer(transfer_variables.batch_info, transfer_variables.batch_data_index)
+        self._register_batch_data_index_transfer(transfer_variables.batch_info,
+                                                 transfer_variables.batch_data_index,
+                                                 getattr(transfer_variables, "batch_validate_info", None))
 
     def initialize_batch_generator(self, data_instances, suffix=tuple(), **kwargs):
         batch_info = self.sync_batch_info(suffix)
+        batch_size = batch_info.get("batch_size")
         self.batch_nums = batch_info.get('batch_num')
         self.batch_mutable = batch_info.get("batch_mutable")
-        self.batch_masked = batch_info.get("batch_masked")
+        self.masked_batch_size = batch_info.get("masked_batch_size")
+        self.batch_masked = self.masked_batch_size != batch_size
 
         if not self.batch_mutable:
             self.prepare_batch_data(data_instances, suffix)
@@ -111,6 +131,16 @@ class Host(batch_info_sync.Host):
                 batch_index, batch_data_inst.count()))
             yield batch_data_inst
             batch_index += 1
+
+    def verify_batch_legality(self, least_batch_size, suffix=tuple()):
+        if least_batch_size > self.masked_batch_size:
+            batch_validate_info = {"legality": False,
+                                   "least_batch_size": least_batch_size}
+            LOGGER.warning(f"masked_batch_size {self.masked_batch_size} is illegal, should >= {least_batch_size}")
+        else:
+            batch_validate_info = {"legality": True}
+
+        self.sync_batch_validate_info(batch_validate_info, suffix)
 
 
 class Arbiter(batch_info_sync.Arbiter):
