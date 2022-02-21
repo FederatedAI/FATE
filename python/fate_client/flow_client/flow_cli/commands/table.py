@@ -111,7 +111,7 @@ def bind(ctx, **kwargs):
     access_server('post', ctx, 'table/bind', config_data)
 
 
-@table.command("connector-create", short_help="create connector")
+@table.command("connector-create", short_help="create or update connector")
 @cli_args.CONF_PATH
 @click.pass_context
 def connector_create_or_update(ctx, **kwargs):
