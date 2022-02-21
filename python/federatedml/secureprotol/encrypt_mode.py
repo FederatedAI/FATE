@@ -29,7 +29,6 @@ class EncryptModeCalculator(object):
 
     mode: str, accpet 'strict', 'fast', 'balance'. "confusion_opt", "confusion_opt_balance"
           'strict': means that re-encrypted every function call.
-    re_encrypted_rate: float or float, numeric, use if mode equals to "balance" or "confusion_opt_balance"
 
     """
 
@@ -44,6 +43,7 @@ class EncryptModeCalculator(object):
         self.align_to_input_data = True
 
         if self.mode != "strict":
+            self.mode = "strict"
             LOGGER.warning("encrypted_mode_calculator will be remove in later version, "
                            "but in current version user can still use it, but it only supports strict mode, "
                            "other mode will be reset to strict for compatibility")
