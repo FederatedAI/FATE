@@ -104,7 +104,7 @@ class HeteroLRHost(HeteroLRBase):
 
         self.batch_generator.initialize_batch_generator(data_instances, shuffle=self.shuffle)
         if self.batch_generator.batch_masked:
-            self.batch_generator.verify_batch_legality(least_batch_size=model_shape + 1)
+            self.batch_generator.verify_batch_legality(least_batch_size=model_shape)
 
         if self.transfer_variable.use_async.get(idx=0):
             LOGGER.debug(f"set_use_async")

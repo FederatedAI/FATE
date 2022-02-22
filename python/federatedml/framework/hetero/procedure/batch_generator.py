@@ -81,8 +81,8 @@ class Guest(batch_info_sync.Guest):
                 least_batch_size = max(least_batch_size, validate_info.get("least_batch_size"))
 
         if not is_legal:
-            raise ValueError(
-                f"To use batch masked strategy, (masked_rate + 1) * batch_size should >= {least_batch_size}")
+            raise ValueError(f"To use batch masked strategy, "
+                             f"(masked_rate + 1) * batch_size should > {least_batch_size}")
 
 
 class Host(batch_info_sync.Host):
@@ -134,10 +134,10 @@ class Host(batch_info_sync.Host):
             batch_index += 1
 
     def verify_batch_legality(self, least_batch_size, suffix=tuple()):
-        if least_batch_size > self.masked_batch_size:
+        if self.masked_batch_size <= least_batch_size:
             batch_validate_info = {"legality": False,
                                    "least_batch_size": least_batch_size}
-            LOGGER.warning(f"masked_batch_size {self.masked_batch_size} is illegal, should >= {least_batch_size}")
+            LOGGER.warning(f"masked_batch_size {self.masked_batch_size} is illegal, should > {least_batch_size}")
         else:
             batch_validate_info = {"legality": True}
 
