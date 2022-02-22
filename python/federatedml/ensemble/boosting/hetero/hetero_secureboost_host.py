@@ -48,6 +48,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         # EINI predict param
         self.EINI_inference = False
         self.EINI_random_mask = False
+        self.EINI_complexity_check = False
 
     def _init_model(self, param: HeteroSecureBoostParam):
 
@@ -62,6 +63,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.new_ver = param.new_ver
         self.EINI_inference = param.EINI_inference
         self.EINI_random_mask = param.EINI_random_mask
+        self.EINI_complexity_check = param.EINI_complexity_check
 
         if self.use_missing:
             self.tree_param.use_missing = self.use_missing
@@ -307,10 +309,12 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
     def EINI_host_predict(self, data_inst, trees: List[HeteroDecisionTreeHost], sitename, self_party_id, party_list,
                           random_mask=False):
 
-        complexity = self.count_complexity(trees)
-        if complexity < consts.EINI_TREE_COMPLEXITY:
-            raise ValueError('tree complexity: {}, is lower than safe '
-                             'threshold, inference is not allowed.'.format(complexity))
+        if self.EINI_complexity_check:
+            complexity = self.count_complexity(trees)
+            LOGGER.debug('checking EINI complexity: {}'.format(complexity))
+            if complexity < consts.EINI_TREE_COMPLEXITY:
+                raise ValueError('tree complexity: {}, is lower than safe '
+                                 'threshold, inference is not allowed.'.format(complexity))
         id_pos_map_list = self.get_leaf_idx_map(trees)
         map_func = functools.partial(self.generate_leaf_candidates_host, sitename=sitename, trees=trees,
                                      node_pos_map_list=id_pos_map_list)
