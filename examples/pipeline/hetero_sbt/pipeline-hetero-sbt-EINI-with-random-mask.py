@@ -83,7 +83,10 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(reader_0)
     pipeline.add_component(reader_1)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(data_transform_1, data=Data(data=reader_1.output.data), model=Model(data_transform_0.output.model))
+    pipeline.add_component(
+        data_transform_1, data=Data(
+            data=reader_1.output.data), model=Model(
+            data_transform_0.output.model))
     pipeline.add_component(intersect_0, data=Data(data=data_transform_0.output.data))
     pipeline.add_component(intersect_1, data=Data(data=data_transform_1.output.data))
     pipeline.add_component(hetero_secure_boost_0, data=Data(train_data=intersect_0.output.data,
