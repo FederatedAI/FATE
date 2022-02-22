@@ -279,6 +279,30 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
         return id_pos_map_list
 
+    def count_complexity_helper(self, node, node_list, host_sitename, meet_host_node):
+
+        if node.is_leaf:
+            return 1 if meet_host_node else 0
+        if node.sitename == host_sitename:
+            meet_host_node = True
+
+        return self.count_complexity_helper(node_list[node.left_nodeid], node_list, host_sitename, meet_host_node) + \
+               self.count_complexity_helper(node_list[node.right_nodeid], node_list, host_sitename, meet_host_node)
+
+    def count_complexity(self, trees):
+
+        tree_valid_leaves_num = []
+        sitename = self.role + ":" + str(self.component_properties.local_partyid)
+        for tree in trees:
+            valid_leaf_num = self.count_complexity_helper(tree[0], tree.tree_node, sitename, False)
+            tree_valid_leaves_num.append(valid_leaf_num)
+
+        complexity = 1
+        for num in tree_valid_leaves_num:
+            complexity *= num
+
+        return complexity
+
     def EINI_host_predict(self, data_inst, trees: List[HeteroDecisionTreeHost], sitename, self_party_id, party_list,
                           random_mask=False):
 

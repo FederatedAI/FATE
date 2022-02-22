@@ -469,7 +469,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                  binning_error=consts.DEFAULT_RELATIVE_ERROR,
                  sparse_optimization=False, run_goss=False, top_rate=0.2, other_rate=0.1,
                  cipher_compress_error=None, cipher_compress=True, new_ver=True,
-                 callback_param=CallbackParam(), EINI_inference=True, EINI_random_mask=False):
+                 callback_param=CallbackParam(), EINI_inference=False, EINI_random_mask=False):
 
         super(HeteroSecureBoostParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                      subsample_feature_rate, n_iter_no_change, tol, encrypt_param,
