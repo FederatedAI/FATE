@@ -81,7 +81,8 @@ class Guest(batch_info_sync.Guest):
                 least_batch_size = max(least_batch_size, validate_info.get("least_batch_size"))
 
         if not is_legal:
-            raise ValueError(f"To use batch masked strategy, (masked_rate + 1) * batch_size should >= {least_batch_size}")
+            raise ValueError(
+                f"To use batch masked strategy, (masked_rate + 1) * batch_size should >= {least_batch_size}")
 
 
 class Host(batch_info_sync.Host):
