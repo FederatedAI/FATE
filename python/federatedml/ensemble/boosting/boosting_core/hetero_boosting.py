@@ -145,6 +145,8 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
 
         self.start_round = 0
 
+        self.on_training = True
+
         self.data_inst = data_inst
 
         self.data_bin, self.bin_split_points, self.bin_sparse_points = self.prepare_data(data_inst)
@@ -293,6 +295,8 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
         LOGGER.info('begin to fit a hetero boosting model, model is {}'.format(self.model_name))
 
         self.start_round = 0
+
+        self.on_training = True
 
         self.data_bin, self.bin_split_points, self.bin_sparse_points = self.prepare_data(data_inst)
 

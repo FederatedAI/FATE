@@ -444,7 +444,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
 
         # encryption
         encrypter = PaillierEncrypt()
-        encrypter.generate_key(1024)
+        encrypter.generate_key(self.encrypt_param.key_length)
         encrypter_vec_table = position_vec.mapValues(encrypter.recursive_encrypt)
 
         # federation part
@@ -501,7 +501,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         if tree_num == 0 and predict_cache is not None and not (ret_format == 'leaf'):
             return self.score_to_predict_result(data_inst, predict_cache)
 
-        if self.EINI_inference:
+        if self.EINI_inference and not self.on_training:  # EINI is for inference stage
             sitename = self.role + ':' + str(self.component_properties.local_partyid)
             predict_rs = self.EINI_guest_predict(processed_data, trees, self.learning_rate, self.init_score,
                                                  self.booster_dim, sitename,
