@@ -496,13 +496,20 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         default is True, use cipher compressing to reduce computation cost and transfer cost
 
     EINI_inference: bool
-        default is False, a secure prediction method that hides decision path to enhance security in the inference
+        default is False, this option changes the inference algorithm used in predict tasks.
+        a secure prediction method that hides decision path to enhance security in the inference
         step. This method is insprired by EINI inference algorithm.
 
     EINI_random_mask: bool
         default is False
         multiply predict result by a random float number to confuse original predict result. This operation further
         enhances the security of naive EINI algorithm.
+
+    EINI_complexity_check: bool
+        default is False
+        check the complexity of tree models when running EINI algorithms. Complexity models are easy to hide their
+        decision path, while simple tree models are not, therefore if a tree model is too simple, it is not allowed
+        to run EINI predict algorithms.
 
     """
 
@@ -518,7 +525,8 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                  binning_error=consts.DEFAULT_RELATIVE_ERROR,
                  sparse_optimization=False, run_goss=False, top_rate=0.2, other_rate=0.1,
                  cipher_compress_error=None, cipher_compress=True, new_ver=True,
-                 callback_param=CallbackParam(), EINI_inference=False, EINI_random_mask=False):
+                 callback_param=CallbackParam(), EINI_inference=False, EINI_random_mask=False,
+                 EINI_complexity_check=False):
 
         super(HeteroSecureBoostParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                      subsample_feature_rate, n_iter_no_change, tol, encrypt_param,
@@ -541,6 +549,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.new_ver = new_ver
         self.EINI_inference = EINI_inference
         self.EINI_random_mask = EINI_random_mask
+        self.EINI_complexity_check = EINI_complexity_check
         self.callback_param = copy.deepcopy(callback_param)
 
     def check(self):
@@ -561,6 +570,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.check_boolean(self.cipher_compress, 'cipher compress')
         self.check_boolean(self.EINI_inference, 'eini inference')
         self.check_boolean(self.EINI_random_mask, 'eini random mask')
+        self.check_boolean(self.EINI_complexity_check, 'eini complexity check')
 
         if self.EINI_inference and self.EINI_random_mask:
             LOGGER.warning('To protect the inference decision path, notice that current setting will multiply'
@@ -611,7 +621,8 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                  complete_secure=False, tree_num_per_party=1, guest_depth=1, host_depth=1, work_mode='mix', metrics=None,
                  sparse_optimization=False, random_seed=100, binning_error=consts.DEFAULT_RELATIVE_ERROR,
                  cipher_compress_error=None, new_ver=True, run_goss=False, top_rate=0.2, other_rate=0.1,
-                 cipher_compress=True, callback_param=CallbackParam(), EINI_inference=True, EINI_random_mask=False):
+                 cipher_compress=True, callback_param=CallbackParam(), EINI_inference=True, EINI_random_mask=False,
+                 EINI_complexity_check=False):
 
         """
         Parameters
@@ -644,7 +655,8 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                                                          cipher_compress=cipher_compress,
                                                          run_goss=run_goss, top_rate=top_rate, other_rate=other_rate,
                                                          EINI_inference=EINI_inference,
-                                                         EINI_random_mask=EINI_random_mask
+                                                         EINI_random_mask=EINI_random_mask,
+                                                         EINI_complexity_check=EINI_complexity_check
                                                          )
 
         self.tree_num_per_party = tree_num_per_party

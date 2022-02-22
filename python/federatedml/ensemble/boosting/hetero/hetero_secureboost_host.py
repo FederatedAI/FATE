@@ -294,8 +294,9 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         tree_valid_leaves_num = []
         sitename = self.role + ":" + str(self.component_properties.local_partyid)
         for tree in trees:
-            valid_leaf_num = self.count_complexity_helper(tree[0], tree.tree_node, sitename, False)
-            tree_valid_leaves_num.append(valid_leaf_num)
+            valid_leaf_num = self.count_complexity_helper(tree.tree_node[0], tree.tree_node, sitename, False)
+            if valid_leaf_num != 0:
+                tree_valid_leaves_num.append(valid_leaf_num)
 
         complexity = 1
         for num in tree_valid_leaves_num:
@@ -306,6 +307,10 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
     def EINI_host_predict(self, data_inst, trees: List[HeteroDecisionTreeHost], sitename, self_party_id, party_list,
                           random_mask=False):
 
+        complexity = self.count_complexity(trees)
+        if complexity < consts.EINI_TREE_COMPLEXITY:
+            raise ValueError('tree complexity: {}, is lower than safe '
+                             'threshold, inference is not allowed.'.format(complexity))
         id_pos_map_list = self.get_leaf_idx_map(trees)
         map_func = functools.partial(self.generate_leaf_candidates_host, sitename=sitename, trees=trees,
                                      node_pos_map_list=id_pos_map_list)
@@ -366,7 +371,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
             LOGGER.info('no tree for predicting, prediction done')
             return
 
-        if self.EINI_inference:
+        if self.EINI_inference and not self.on_training:  # EINI is designed for inference stage
             sitename = self.role + ':' + str(self.component_properties.local_partyid)
             self.EINI_host_predict(processed_data, trees, sitename, self.component_properties.local_partyid,
                                    self.component_properties.host_party_idlist, self.EINI_random_mask)
