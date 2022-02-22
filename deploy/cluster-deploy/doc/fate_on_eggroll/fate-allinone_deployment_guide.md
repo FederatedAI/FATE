@@ -263,6 +263,8 @@ Note: Replace ${version} with specific FATE version number,can be viewed on the 
 cd /data/projects/
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_cluster_install_${version}_release-c7-u18.tar.gz
 tar xzf fate_cluster_install_${version}_release-c7-u18.tar.gz
+
+Note: version without character v, such as fate_cluster_install_1.x.x_release-c7-u18.tar.gz 
 ```
 
 ### 5.2. Pre-Deployment Check
