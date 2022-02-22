@@ -7,7 +7,7 @@ class AddressBase(AddressABC):
     def __init__(self, connector_name=None):
         self.connector_name = connector_name
         if connector_name:
-            connector = StorageConnector(connector_name=connector_name, engine=self.get_name)
+            connector = StorageConnector(connector_name=connector_name, engine=self.storage_engine)
             if connector.get_info():
                 for k, v in connector.get_info().items():
                     if hasattr(self, k) and v:
@@ -18,7 +18,7 @@ class AddressBase(AddressABC):
         return {}
 
     @property
-    def get_name(self):
+    def storage_engine(self):
         return
 
 
@@ -44,7 +44,7 @@ class StandaloneAddress(AddressBase):
         return {"home": self.home}
 
     @property
-    def get_name(self):
+    def storage_engine(self):
         return StorageEngine.STANDALONE
 
 
@@ -69,7 +69,7 @@ class EggRollAddress(AddressBase):
         return {"home": self.home}
 
     @property
-    def get_name(self):
+    def storage_engine(self):
         return StorageEngine.EGGROLL
 
 
@@ -93,7 +93,7 @@ class HDFSAddress(AddressBase):
         return {"name_node": self.name_node}
 
     @property
-    def get_name(self):
+    def storage_engine(self):
         return StorageEngine.HDFS
 
 
@@ -112,7 +112,7 @@ class PathAddress(AddressBase):
         return self.__str__()
 
     @property
-    def get_name(self):
+    def storage_engine(self):
         return StorageEngine.PATH
 
 
@@ -141,7 +141,7 @@ class MysqlAddress(AddressBase):
         return {"user": self.user, "passwd": self.passwd, "host": self.host, "port": self.port, "db": self.db}
 
     @property
-    def get_name(self):
+    def storage_engine(self):
         return StorageEngine.MYSQL
 
 
@@ -171,7 +171,7 @@ class HiveAddress(AddressBase):
         return {"host": self.host, "port": self.port, "username": self.username, "password": self.password, "auth_mechanism": self.auth_mechanism, "database": self.database}
 
     @property
-    def get_name(self):
+    def storage_engine(self):
         return StorageEngine.HIVE
 
 
@@ -199,7 +199,7 @@ class LinkisHiveAddress(AddressBase):
         return self.__str__()
 
     @property
-    def get_name(self):
+    def storage_engine(self):
         return StorageEngine.LINKIS_HIVE
 
 
@@ -218,5 +218,5 @@ class LocalFSAddress(AddressBase):
         return self.__str__()
 
     @property
-    def get_name(self):
+    def storage_engine(self):
         return StorageEngine.LOCALFS
