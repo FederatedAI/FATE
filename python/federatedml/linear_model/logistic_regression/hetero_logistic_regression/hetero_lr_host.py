@@ -99,9 +99,12 @@ class HeteroLRHost(HeteroLRBase):
         LOGGER.debug(f"MODEL_STEP Start fin_binary, data count: {data_instances.count()}")
 
         self.header = self.get_header(data_instances)
+        model_shape = self.get_features_shape(data_instances)
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
         self.batch_generator.initialize_batch_generator(data_instances, shuffle=self.shuffle)
+        if self.batch_generator.batch_masked:
+            self.batch_generator.verify_batch_legality(least_batch_size=model_shape)
 
         if self.transfer_variable.use_async.get(idx=0):
             LOGGER.debug(f"set_use_async")
@@ -115,7 +118,7 @@ class HeteroLRHost(HeteroLRBase):
                                      in range(self.batch_generator.batch_nums)]
 
         LOGGER.info("Start initialize model.")
-        model_shape = self.get_features_shape(data_instances)
+        # model_shape = self.get_features_shape(data_instances)
         if self.init_param_obj.fit_intercept:
             self.init_param_obj.fit_intercept = False
 
