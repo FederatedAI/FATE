@@ -139,6 +139,8 @@ Note: Replace ${version} with the specific FATE version number.
 cd /data/projects/install
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_${version}_release.tar.gz
+
+Note: version without character v, such as FATE_install_1.x.x_release.tar.gz
 ```
 
 ## 5.2 Check OS Parameters
