@@ -61,7 +61,9 @@ def main(config="../../config.yaml", namespace=""):
         role="guest", party_id=guest).component_param(
         with_label=True, output_format="dense")
     data_transform_0.get_party_instance(role="host", party_id=host).component_param(with_label=False)
-    data_transform_1.get_party_instance(role="guest", party_id=guest).component_param(with_label=True, output_format="dense")
+    data_transform_1.get_party_instance(
+        role="guest", party_id=guest).component_param(
+        with_label=True, output_format="dense")
     data_transform_1.get_party_instance(role="host", party_id=host).component_param(with_label=False)
 
     # data intersect component
