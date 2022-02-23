@@ -53,7 +53,7 @@ class SplitPointNode(object):
         if np.fabs(value - self.value) <= consts.FLOAT_ZERO * 0.1:
             self.fixed = True
             return self
-        max_value = self.value
+        max_value = self.max_value
         return SplitPointNode(value, self.min_value, max_value, self.aim_rank, self.allow_error_rank)
 
 
