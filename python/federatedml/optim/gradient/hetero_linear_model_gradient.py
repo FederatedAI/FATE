@@ -47,76 +47,15 @@ class HeteroGradientBase(object):
     def set_use_async(self):
         self.use_async = True
 
+    def set_use_sync(self):
+        self.use_async = False
+
     def set_use_sample_weight(self):
         self.use_sample_weight = True
 
     def set_fixed_float_precision(self, floating_point_precision):
         if floating_point_precision is not None:
             self.fixed_point_encoder = FixedPointEncoder(2**floating_point_precision)
-
-    @staticmethod
-    def __compute_partition_gradient(data, fit_intercept=True, is_sparse=False):
-        """
-        Compute hetero regression gradient for:
-        gradient = ∑d*x, where d is fore_gradient which differ from different algorithm
-        Parameters
-        ----------
-        data: Table, include fore_gradient and features
-        fit_intercept: bool, if model has interception or not. Default True
-
-        Returns
-        ----------
-        numpy.ndarray
-            hetero regression model gradient
-        """
-        feature = []
-        fore_gradient = []
-
-        if is_sparse:
-            row_indice = []
-            col_indice = []
-            data_value = []
-
-            row = 0
-            feature_shape = None
-            for key, (sparse_features, d) in data:
-                fore_gradient.append(d)
-                assert isinstance(sparse_features, SparseVector)
-                if feature_shape is None:
-                    feature_shape = sparse_features.get_shape()
-                for idx, v in sparse_features.get_all_data():
-                    col_indice.append(idx)
-                    row_indice.append(row)
-                    data_value.append(v)
-                row += 1
-            if feature_shape is None or feature_shape == 0:
-                return 0
-            sparse_matrix = sp.csr_matrix((data_value, (row_indice, col_indice)), shape=(row, feature_shape))
-            fore_gradient = np.array(fore_gradient)
-
-            # gradient = sparse_matrix.transpose().dot(fore_gradient).tolist()
-            gradient = fate_operator.dot(sparse_matrix.transpose(), fore_gradient).tolist()
-            if fit_intercept:
-                bias_grad = np.sum(fore_gradient)
-                gradient.append(bias_grad)
-                # LOGGER.debug("In first method, gradient: {}, bias_grad: {}".format(gradient, bias_grad))
-            return np.array(gradient)
-
-        else:
-            for key, value in data:
-                feature.append(value[0])
-                fore_gradient.append(value[1])
-            feature = np.array(feature)
-            fore_gradient = np.array(fore_gradient)
-            if feature.shape[0] <= 0:
-                return 0
-
-            gradient = fate_operator.dot(feature.transpose(), fore_gradient)
-            gradient = gradient.tolist()
-            if fit_intercept:
-                bias_grad = np.sum(fore_gradient)
-                gradient.append(bias_grad)
-            return np.array(gradient)
 
     @staticmethod
     def __apply_cal_gradient(data, fixed_point_encoder, is_sparse):
@@ -142,7 +81,7 @@ class HeteroGradientBase(object):
             all_g = fixed_point_encoder.decode(all_g)
         return all_g
 
-    def compute_gradient(self, data_instances, fore_gradient, fit_intercept):
+    def compute_gradient(self, data_instances, fore_gradient, fit_intercept, need_average=True):
         """
         Compute hetero-regression gradient
         Parameters
@@ -150,6 +89,7 @@ class HeteroGradientBase(object):
         data_instances: Table, input data
         fore_gradient: Table, fore_gradient
         fit_intercept: bool, if model has intercept or not
+        need_average: bool, gradient needs to be averaged or not
 
         Returns
         ----------
@@ -157,25 +97,29 @@ class HeteroGradientBase(object):
             the hetero regression model's gradient
         """
 
-        feature_num = data_overview.get_features_shape(data_instances)
-        data_count = data_instances.count()
+        # feature_num = data_overview.get_features_shape(data_instances)
+        # data_count = data_instances.count()
         is_sparse = data_overview.is_sparse_data(data_instances)
 
-        if data_count * feature_num > 100:
-            LOGGER.debug("Use apply partitions")
-            feat_join_grad = data_instances.join(fore_gradient,
-                                                 lambda d, g: (d.features, g))
-            f = functools.partial(self.__apply_cal_gradient,
-                                  fixed_point_encoder=self.fixed_point_encoder,
-                                  is_sparse=is_sparse)
-            gradient_sum = feat_join_grad.applyPartitions(f)
-            gradient_sum = gradient_sum.reduce(lambda x, y: x + y)
-            if fit_intercept:
-                # bias_grad = np.sum(fore_gradient)
-                bias_grad = fore_gradient.reduce(lambda x, y: x + y)
-                gradient_sum = np.append(gradient_sum, bias_grad)
-            gradient = gradient_sum / data_count
+        LOGGER.debug("Use apply partitions")
+        feat_join_grad = data_instances.join(fore_gradient,
+                                             lambda d, g: (d.features, g))
+        f = functools.partial(self.__apply_cal_gradient,
+                              fixed_point_encoder=self.fixed_point_encoder,
+                              is_sparse=is_sparse)
+        gradient_sum = feat_join_grad.applyPartitions(f)
+        gradient_sum = gradient_sum.reduce(lambda x, y: x + y)
+        if fit_intercept:
+            # bias_grad = np.sum(fore_gradient)
+            bias_grad = fore_gradient.reduce(lambda x, y: x + y)
+            gradient_sum = np.append(gradient_sum, bias_grad)
 
+        if need_average:
+            gradient = gradient_sum / data_instances.count()
+        else:
+            gradient = gradient_sum
+
+        """
         else:
             LOGGER.debug(f"Original_method")
             feat_join_grad = data_instances.join(fore_gradient,
@@ -187,7 +131,7 @@ class HeteroGradientBase(object):
             gradient_partition = gradient_partition.reduce(lambda x, y: x + y)
 
             gradient = gradient_partition / data_count
-
+        """
         return gradient
 
 
@@ -229,19 +173,41 @@ class Guest(HeteroGradientBase):
             unilateral_gradient = np.append(unilateral_gradient, intercept)
         return unilateral_gradient
 
-    def _centralized_compute_gradient(self, data_instances, model_weights, cipher, current_suffix):
+    def _centralized_compute_gradient(self, data_instances, model_weights, cipher, current_suffix, masked_index=None):
         self.host_forwards = self.get_host_forward(suffix=current_suffix)
         fore_gradient = self.half_d
+
+        batch_size = data_instances.count()
+        partial_masked_index_enc = None
+        if masked_index:
+            masked_index = masked_index.mapValues(lambda value: 0)
+            masked_index_to_encrypt = masked_index.subtractByKey(self.half_d)
+            partial_masked_index_enc = cipher.encrypt(masked_index_to_encrypt)
+
         for host_forward in self.host_forwards:
             if self.use_sample_weight:
-                host_forward = host_forward.join(data_instances, lambda h, v: h * v.weight)
+                # host_forward = host_forward.join(data_instances, lambda h, v: h * v.weight)
+                host_forward = data_instances.join(host_forward, lambda v, h: h * v.weight)
             fore_gradient = fore_gradient.join(host_forward, lambda x, y: x + y)
-        self.remote_fore_gradient(fore_gradient, suffix=current_suffix)
-        unilateral_gradient = self.compute_gradient(data_instances, fore_gradient, model_weights.fit_intercept)
+
+        def _apply_obfuscate(val):
+            val.apply_obfuscator()
+            return val
+        fore_gradient = fore_gradient.mapValues(lambda val: _apply_obfuscate(val) / batch_size)
+
+        if partial_masked_index_enc:
+            masked_fore_gradient = partial_masked_index_enc.union(fore_gradient)
+            self.remote_fore_gradient(masked_fore_gradient, suffix=current_suffix)
+        else:
+            self.remote_fore_gradient(fore_gradient, suffix=current_suffix)
+
+        # self.remote_fore_gradient(fore_gradient, suffix=current_suffix)
+        unilateral_gradient = self.compute_gradient(data_instances, fore_gradient,
+                                                    model_weights.fit_intercept, need_average=False)
         return unilateral_gradient
 
     def compute_gradient_procedure(self, data_instances, encrypted_calculator, model_weights, optimizer,
-                                   n_iter_, batch_index, offset=None):
+                                   n_iter_, batch_index, offset=None, masked_index=None):
         """
           Linear model gradient procedure
           Step 1: get host forwards which differ from different algorithm
@@ -267,7 +233,8 @@ class Guest(HeteroGradientBase):
         else:
             unilateral_gradient = self._centralized_compute_gradient(data_instances, model_weights,
                                                                      cipher=encrypted_calculator[batch_index],
-                                                                     current_suffix=current_suffix)
+                                                                     current_suffix=current_suffix,
+                                                                     masked_index=masked_index)
 
         if optimizer is not None:
             unilateral_gradient = optimizer.add_regular_to_grad(unilateral_gradient, model_weights)
@@ -325,7 +292,7 @@ class Host(HeteroGradientBase):
         fore_gradient = self.fore_gradient_transfer.get(idx=0, suffix=current_suffix)
 
         # Host case, never fit-intercept
-        unilateral_gradient = self.compute_gradient(data_instances, fore_gradient, False)
+        unilateral_gradient = self.compute_gradient(data_instances, fore_gradient, False, need_average=False)
         return unilateral_gradient
 
     def compute_gradient_procedure(self, data_instances, encrypted_calculator, model_weights,

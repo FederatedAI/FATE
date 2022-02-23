@@ -13,8 +13,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from tensorflow.keras.models import Sequential
 import json
+
+_TF_KERAS_VALID = False
+try:
+    from tensorflow.keras.models import Sequential
+    _TF_KERAS_VALID = True
+except ImportError:
+    pass
 
 
 def build_model(model_type="sequential"):
@@ -26,9 +32,16 @@ def build_model(model_type="sequential"):
 
 class SequentialModel(object):
     def __init__(self):
-        self._model = Sequential()
+        if _TF_KERAS_VALID:
+            self._model = Sequential()
+        else:
+            self._model = None
 
     def add(self, layer):
+        if not _TF_KERAS_VALID:
+            raise ImportError("Please install tensorflow first, "
+                              "can not import sequential model from tensorflow.keras.model !!!")
+
         self._model.add(layer)
 
     @staticmethod
@@ -54,6 +67,10 @@ class SequentialModel(object):
         return opt_config
 
     def get_network_config(self):
+        if not _TF_KERAS_VALID:
+            raise ImportError("Please install tensorflow first, "
+                              "can not import sequential model from tensorflow.keras.model !!!")
+
         return json.loads(self._model.to_json())
 
 

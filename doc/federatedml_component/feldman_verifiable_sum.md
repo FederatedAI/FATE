@@ -6,7 +6,7 @@ Verifiable secret sharing mechanism is an efficient and practical secret
 sharing mechanism. Feldman Verifiable sum is a multi-party private data
 summation module based on verifiable secret sharing.This component can
 sum the same feature of common users among different participants
-without exposing private data.
+without exposing private data.（This module is still in the research stage, has not yet been put into production）
 
 Here, three participants of the federation process is given, Party A
 represents Guest, party B and party C represent Host. The process of

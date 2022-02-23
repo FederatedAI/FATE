@@ -14,35 +14,46 @@
     },
     "component_parameters": {
         "common": {
-            "secureboost_0": {
+            "hetero_secure_boost_0": {
                 "task_type": "classification",
                 "objective_param": {
                     "objective": "cross_entropy"
                 },
-                "num_trees": 2,
+                "num_trees": 3,
                 "validation_freqs": 1,
-                "random_seed": 1000,
                 "encrypt_param": {
-                    "method": "paillier"
+                    "method": "Paillier"
                 },
                 "tree_param": {
                     "max_depth": 3
-                }
+                },
+                "EINI_inference": true,
+                "EINI_random_mask": true
             },
-            "sbt_feature_transformer_0": {
-                "dense_format": true
+            "evaluation_0": {
+                "eval_type": "binary"
             }
         },
         "role": {
             "guest": {
                 "0": {
+                    "reader_1": {
+                        "table": {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    },
                     "reader_0": {
                         "table": {
-                            "name": "vehicle_scale_hetero_guest",
+                            "name": "breast_hetero_guest",
                             "namespace": "experiment"
                         }
                     },
                     "data_transform_0": {
+                        "with_label": true,
+                        "output_format": "dense"
+                    },
+                    "data_transform_1": {
                         "with_label": true,
                         "output_format": "dense"
                     }
@@ -50,13 +61,22 @@
             },
             "host": {
                 "0": {
+                    "reader_1": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    },
                     "reader_0": {
                         "table": {
-                            "name": "vehicle_scale_hetero_host",
+                            "name": "breast_hetero_host",
                             "namespace": "experiment"
                         }
                     },
                     "data_transform_0": {
+                        "with_label": false
+                    },
+                    "data_transform_1": {
                         "with_label": false
                     }
                 }
