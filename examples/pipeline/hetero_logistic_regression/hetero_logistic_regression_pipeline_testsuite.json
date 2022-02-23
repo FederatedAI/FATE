@@ -89,6 +89,9 @@
         },
         "hetero-lr-warm-start": {
             "script": "pipeline-hetero-lr-warm-start.py"
+        },
+        "hetero-lr-batch-random-strategy": {
+            "script": "pipeline-hetero-lr-batch-random-strategy.py"
         }
     }
 }

@@ -1,0 +1,82 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "arbiter": [
+            10000
+        ],
+        "host": [
+            10000
+        ],
+        "guest": [
+            9999
+        ]
+    },
+    "component_parameters": {
+        "role": {
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "data_transform_0": {
+                        "with_label": false
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "data_transform_0": {
+                        "with_label": true
+                    }
+                }
+            }
+        },
+        "common": {
+            "data_transform_0": {
+                "output_format": "dense"
+            },
+            "hetero_lr_0": {
+                "penalty": "L2",
+                "tol": 0.0001,
+                "alpha": 0.01,
+                "optimizer": "rmsprop",
+                "batch_size": 320,
+                "batch_strategy": "random",
+                "learning_rate": 0.15,
+                "init_param": {
+                    "init_method": "zeros"
+                },
+                "max_iter": 30,
+                "early_stop": "diff",
+                "cv_param": {
+                    "n_splits": 5,
+                    "shuffle": false,
+                    "random_seed": 103,
+                    "need_cv": false
+                },
+                "sqn_param": {
+                    "update_interval_L": 3,
+                    "memory_M": 5,
+                    "sample_size": 5000,
+                    "random_seed": null
+                }
+            },
+            "evaluation_0": {
+                "eval_type": "binary"
+            }
+        }
+    }
+}
