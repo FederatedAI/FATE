@@ -46,8 +46,8 @@ class LogisticParam(BaseParam):
     alpha : float, default: 1.0
         Regularization strength coefficient.
 
-    optimizer : {'rmsprop', 'sgd', 'adam', 'nesterov_momentum_sgd', 'adagrad'}, default: 'rmsprop'
-        Optimize method.
+    optimizer : {'rmsprop', 'sgd', 'adam', 'nesterov_momentum_sgd', 'sqn', 'adagrad'}, default: 'rmsprop'
+        Optimize method, if 'sqn' has been set, sqn_param will take effect. Currently, 'sqn' support hetero mode only.
 
     batch_size : int, default: -1
         Batch size when updating model. -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
@@ -151,4 +151,121 @@ class LogisticParam(BaseParam):
         self.callback_param = copy.deepcopy(callback_param)
 
     def check(self):
+        return True
+
+
+class HomoLogisticParam(LogisticParam):
+    """
+    Parameters
+    ----------
+    re_encrypt_batches : int, default: 2
+        Required when using encrypted version HomoLR. Since multiple batch updating coefficient may cause
+        overflow error. The model need to be re-encrypt for every several batches. Please be careful when setting
+        this parameter. Too large batches may cause training failure.
+
+    aggregate_iters : int, default: 1
+        Indicate how many iterations are aggregated once.
+
+    use_proximal: bool, default: False
+        Whether to turn on additional proximial term. For more details of FedProx, Please refer to
+        https://arxiv.org/abs/1812.06127
+
+    mu: float, default 0.1
+        To scale the proximal term
+
+    """
+    def __init__(self, penalty='L2',
+                 tol=1e-4, alpha=1.0, optimizer='rmsprop',
+                 batch_size=-1, learning_rate=0.01, init_param=InitParam(),
+                 max_iter=100, early_stop='diff',
+                 encrypt_param=EncryptParam(method=None), re_encrypt_batches=2,
+                 predict_param=PredictParam(), cv_param=CrossValidationParam(),
+                 decay=1, decay_sqrt=True,
+                 aggregate_iters=1, multi_class='ovr', validation_freqs=None,
+                 early_stopping_rounds=None,
+                 metrics=['auc', 'ks'],
+                 use_first_metric_only=False,
+                 use_proximal=False,
+                 mu=0.1, callback_param=CallbackParam()
+                 ):
+        super(HomoLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
+                                                batch_size=batch_size,
+                                                learning_rate=learning_rate,
+                                                init_param=init_param, max_iter=max_iter, early_stop=early_stop,
+                                                encrypt_param=encrypt_param, predict_param=predict_param,
+                                                cv_param=cv_param, multi_class=multi_class,
+                                                validation_freqs=validation_freqs,
+                                                decay=decay, decay_sqrt=decay_sqrt,
+                                                early_stopping_rounds=early_stopping_rounds,
+                                                metrics=metrics, use_first_metric_only=use_first_metric_only,
+                                                callback_param=callback_param)
+        self.re_encrypt_batches = re_encrypt_batches
+        self.aggregate_iters = aggregate_iters
+        self.use_proximal = use_proximal
+        self.mu = mu
+
+    def check(self):
+        super().check()
+        if type(self.re_encrypt_batches).__name__ != "int":
+            raise ValueError(
+                "logistic_param's re_encrypt_batches {} not supported, should be int type".format(
+                    self.re_encrypt_batches))
+        elif self.re_encrypt_batches < 0:
+            raise ValueError(
+                "logistic_param's re_encrypt_batches must be greater or equal to 0")
+
+        if not isinstance(self.aggregate_iters, int):
+            raise ValueError(
+                "logistic_param's aggregate_iters {} not supported, should be int type".format(
+                    self.aggregate_iters))
+
+        if self.encrypt_param.method == consts.PAILLIER:
+            if self.optimizer != 'sgd':
+                raise ValueError("Paillier encryption mode supports 'sgd' optimizer method only.")
+
+            if self.penalty == consts.L1_PENALTY:
+                raise ValueError("Paillier encryption mode supports 'L2' penalty or None only.")
+
+        if self.optimizer == 'sqn':
+            raise ValueError("'sqn' optimizer is supported for hetero mode only.")
+
+        return True
+
+
+class HeteroLogisticParam(LogisticParam):
+    def __init__(self, penalty='L2',
+                 tol=1e-4, alpha=1.0, optimizer='rmsprop',
+                 batch_size=-1, shuffle=True, batch_strategy="full", masked_rate=5,
+                 learning_rate=0.01, init_param=InitParam(),
+                 max_iter=100, early_stop='diff',
+                 encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
+                 predict_param=PredictParam(), cv_param=CrossValidationParam(),
+                 decay=1, decay_sqrt=True, sqn_param=StochasticQuasiNewtonParam(),
+                 multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
+                 metrics=['auc', 'ks'], floating_point_precision=23,
+                 encrypt_param=EncryptParam(),
+                 use_first_metric_only=False, stepwise_param=StepwiseParam(),
+                 callback_param=CallbackParam()
+                 ):
+        super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
+                                                  batch_size=batch_size, shuffle=shuffle, batch_strategy=batch_strategy, masked_rate=masked_rate,
+                                                  learning_rate=learning_rate,
+                                                  init_param=init_param, max_iter=max_iter, early_stop=early_stop,
+                                                  predict_param=predict_param, cv_param=cv_param,
+                                                  decay=decay,
+                                                  decay_sqrt=decay_sqrt, multi_class=multi_class,
+                                                  validation_freqs=validation_freqs,
+                                                  early_stopping_rounds=early_stopping_rounds,
+                                                  metrics=metrics, floating_point_precision=floating_point_precision,
+                                                  encrypt_param=encrypt_param,
+                                                  use_first_metric_only=use_first_metric_only,
+                                                  stepwise_param=stepwise_param,
+                                                  callback_param=callback_param)
+        self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
+        self.sqn_param = copy.deepcopy(sqn_param)
+
+    def check(self):
+        super().check()
+        self.encrypted_mode_calculator_param.check()
+        self.sqn_param.check()
         return True
