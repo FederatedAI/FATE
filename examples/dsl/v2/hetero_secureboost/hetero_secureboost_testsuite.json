@@ -111,6 +111,11 @@
             "dsl": "./test_predict_dsl.json",
             "deps": "train_binary"
         },
+        "train_binary_EINI_predict": {
+            "conf": "./test_EINI_predict_conf.json",
+            "dsl": "./test_predict_dsl.json",
+            "deps": "train_binary"
+        },
         "train_multi": {
             "conf": "./test_secureboost_train_multi_conf.json",
             "dsl": "./test_secureboost_train_dsl.json"
