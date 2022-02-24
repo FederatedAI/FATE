@@ -102,6 +102,9 @@
         "train_binary_predict": {
             "script": "./pipeline-hetero-sbt-binary-with-predict.py"
         },
+        "train_binary_EINI_predict": {
+            "script": "./pipeline-hetero-sbt-EINI-with-random-mask.py"
+        },
         "train_multi": {
             "script": "./pipeline-hetero-sbt-multi.py"
         },
