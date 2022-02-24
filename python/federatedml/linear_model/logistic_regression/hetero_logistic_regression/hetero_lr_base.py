@@ -54,15 +54,6 @@ class HeteroLRBase(BaseLogisticRegression):
         #     self.gradient_loss_operator.set_use_async()
         self.gradient_loss_operator.set_fixed_float_precision(self.model_param.floating_point_precision)
 
-        if params.optimizer == 'sqn':
-            gradient_loss_operator = sqn_factory(self.role, params.sqn_param)
-            gradient_loss_operator.register_gradient_computer(self.gradient_loss_operator)
-            gradient_loss_operator.register_transfer_variable(self.transfer_variable)
-            self.gradient_loss_operator = gradient_loss_operator
-            LOGGER.debug("In _init_model, optimizer: {}, gradient_loss_operator: {}".format(
-                params.optimizer, self.gradient_loss_operator
-            ))
-
     def _get_meta(self):
         meta_protobuf_obj = lr_model_meta_pb2.LRModelMeta(penalty=self.model_param.penalty,
                                                           tol=self.model_param.tol,
