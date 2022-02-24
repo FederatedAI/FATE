@@ -106,6 +106,10 @@
             "conf": "hetero_lr_warm_start_conf.json",
             "dsl": "hetero_lr_warm_start_dsl.json"
         },
+        "hetero_lr_batch_random_strategy": {
+            "conf": "hetero_lr_batch_random_strategy_conf.json",
+            "dsl": "hetero_lr_batch_random_strategy_dsl.json"
+        },
         "hetero_lr_normal_predict": {
             "deps": "hetero_lr_normal",
             "conf": "hetero_lr_normal_predict_conf.json",

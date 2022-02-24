@@ -82,7 +82,7 @@ class LogisticRegressionParam(BaseParam):
         "respectively": Means guest and host can reveal their own part of weights only.
         "encrypted_reveal_in_host": Means host can be revealed his weights in encrypted mode, and guest can be revealed in normal mode.
 
-    reveal_every_iter: bool, default: True
+    reveal_every_iter: bool, default: False
         Whether reconstruct model weights every iteration. If so, Regularization is available.
         The performance will be better as well since the algorithm process is simplified.
 
@@ -96,7 +96,7 @@ class LogisticRegressionParam(BaseParam):
                  decay=1, decay_sqrt=True,
                  multi_class='ovr', use_mix_rand=True,
                  reveal_strategy="respectively",
-                 reveal_every_iter=True,
+                 reveal_every_iter=False,
                  callback_param=CallbackParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam()
                  ):
