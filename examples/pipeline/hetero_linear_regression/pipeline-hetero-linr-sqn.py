@@ -21,7 +21,6 @@ from pipeline.component import DataTransform
 from pipeline.component import Evaluation
 from pipeline.component import HeteroLinR
 from pipeline.component import Intersection
-from pipeline.component import SampleWeight
 from pipeline.component import Reader
 from pipeline.interface import Data
 
@@ -52,15 +51,17 @@ def main(config="../../config.yaml", namespace=""):
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
-    sample_weight_0 = SampleWeight(name="sample_weight_0")
-    sample_weight_0.get_party_instance(role='guest', party_id=guest).component_param(need_run=True,
-                                                                                     sample_weight_name="pm")
-    sample_weight_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)
-    hetero_linr_0 = HeteroLinR(name="hetero_linr_0", penalty="L2", optimizer="sgd", tol=0.001,
+    hetero_linr_0 = HeteroLinR(name="hetero_linr_0", penalty="L2", optimizer="sqn", tol=0.001,
                                alpha=0.01, max_iter=20, early_stop="weight_diff", batch_size=-1,
                                learning_rate=0.15, decay=0.0, decay_sqrt=False,
                                init_param={"init_method": "zeros"},
-                               floating_point_precision=23)
+                               floating_point_precision=23,
+                               sqn_param={
+                                   "update_interval_L": 3,
+                                   "memory_M": 5,
+                                   "sample_size": 5000,
+                                   "random_seed": None
+                               })
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="regression", pos_label=1)
     # evaluation_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)
@@ -68,8 +69,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(reader_0)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
-    pipeline.add_component(sample_weight_0, data=Data(data=intersection_0.output.data))
-    pipeline.add_component(hetero_linr_0, data=Data(train_data=sample_weight_0.output.data))
+    pipeline.add_component(hetero_linr_0, data=Data(train_data=intersection_0.output.data))
     pipeline.add_component(evaluation_0, data=Data(data=hetero_linr_0.output.data))
 
     pipeline.compile()

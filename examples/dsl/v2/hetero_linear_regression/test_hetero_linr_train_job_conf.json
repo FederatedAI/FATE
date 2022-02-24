@@ -29,9 +29,6 @@
                 },
                 "max_iter": 20,
                 "early_stop": "weight_diff",
-                "encrypted_mode_calculator_param": {
-                    "mode": "fast"
-                },
                 "decay": 0.0,
                 "decay_sqrt": false,
                 "floating_point_precision": 23

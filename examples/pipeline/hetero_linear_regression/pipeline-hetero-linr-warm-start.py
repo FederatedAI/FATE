@@ -56,7 +56,6 @@ def main(config="../../config.yaml", namespace=""):
                                learning_rate=0.15, decay=0.0, decay_sqrt=False,
                                callback_param={"callbacks": ["ModelCheckpoint"]},
                                init_param={"init_method": "zeros"},
-                               encrypted_mode_calculator_param={"mode": "fast"},
                                floating_point_precision=23)
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="regression", pos_label=1)
@@ -65,7 +64,6 @@ def main(config="../../config.yaml", namespace=""):
                                penalty="L2", optimizer="sgd", tol=0.001,
                                alpha=0.01, early_stop="weight_diff", batch_size=-1,
                                learning_rate=0.15, decay=0.0, decay_sqrt=False,
-                               encrypted_mode_calculator_param={"mode": "fast"},
                                floating_point_precision=23
                                )
 

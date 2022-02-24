@@ -55,8 +55,7 @@ def main(config="../../config.yaml", namespace=""):
     hetero_poisson_0 = HeteroPoisson(name="hetero_poisson_0", early_stop="weight_diff", max_iter=10,
                                      alpha=100.0, batch_size=-1, learning_rate=0.01, optimizer="rmsprop",
                                      exposure_colname="exposure", decay_sqrt=False, tol=0.001,
-                                     init_param={"init_method": "zeros"}, penalty="L2",
-                                     encrypted_mode_calculator_param={"mode": "fast"})
+                                     init_param={"init_method": "zeros"}, penalty="L2")
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="regression", pos_label=1)
     evaluation_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)

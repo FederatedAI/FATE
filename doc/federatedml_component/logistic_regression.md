@@ -115,9 +115,6 @@ which HE and Secret-Sharing hybrid protocol is included.
 >     >   - nesterov\_momentum\_sgd  
 >     >     Nesterov Momentum
 >     > 
->     >   - sqn  
->     >     stochastic quansi-newton. More details is available in this
->     >     [A Quasi-Newton Method Based Vertical Federated Learning Framework for Logistic Regression](https://arxiv.org/abs/1912.00513v2).
 > 
 > 5.  Three converge criteria:
 >     
