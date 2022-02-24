@@ -182,6 +182,7 @@
                 ]
             }
         },
+
         "hetero_scale_1": {
             "module": "FeatureScale",
             "input": {
