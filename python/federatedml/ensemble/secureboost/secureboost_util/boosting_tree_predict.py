@@ -517,49 +517,48 @@ def count_complexity(trees, sitename):
 
 
 def EINI_host_predict(data_inst, trees: List[HeteroDecisionTreeHost], sitename, self_party_id, party_list,
-                      random_mask=False):
+                      booster_dim, transfer_var: HeteroSecureBoostTransferVariable,
+                      complexity_check=False, random_mask=False):
 
-    if self.EINI_complexity_check:
-        complexity = self.count_complexity(trees)
+    if complexity_check:
+        complexity = count_complexity(trees, sitename)
         LOGGER.debug('checking EINI complexity: {}'.format(complexity))
         if complexity < consts.EINI_TREE_COMPLEXITY:
             raise ValueError('tree complexity: {}, is lower than safe '
                              'threshold, inference is not allowed.'.format(complexity))
-    id_pos_map_list = self.get_leaf_idx_map(trees)
-    map_func = functools.partial(self.generate_leaf_candidates_host, sitename=sitename, trees=trees,
+    id_pos_map_list = get_leaf_idx_map(trees)
+    map_func = functools.partial(generate_leaf_candidates_host, sitename=sitename, trees=trees,
                                  node_pos_map_list=id_pos_map_list)
     position_vec = data_inst.mapValues(map_func)
-
-    booster_dim = self.booster_dim
+    booster_dim = booster_dim
     random_mask = random.SystemRandom().random() + 1 if random_mask else 0  # generate a random mask btw 1 and 2
 
     self_idx = party_list.index(self_party_id)
     if len(party_list) == 1:
-        guest_position_vec = self.hetero_sbt_transfer_variable.guest_predict_data.get(idx=0, suffix='position_vec')
-        leaf_idx_dim_map = self.generate_leaf_idx_dimension_map(trees, booster_dim)
-        merge_func = functools.partial(self.merge_position_vec, booster_dim=booster_dim,
+        guest_position_vec = transfer_var.guest_predict_data.get(idx=0, suffix='position_vec')
+        leaf_idx_dim_map = generate_leaf_idx_dimension_map(trees, booster_dim)
+        merge_func = functools.partial(merge_position_vec, booster_dim=booster_dim,
                                        leaf_idx_dim_map=leaf_idx_dim_map, random_mask=random_mask)
         result_table = position_vec.join(guest_position_vec, merge_func)
-        self.hetero_sbt_transfer_variable.host_predict_data.remote(result_table, suffix='merge_result')
+        transfer_var.host_predict_data.remote(result_table, suffix='merge_result')
     else:
         # multi host case
         # if is first host party, get encrypt vec from guest, else from previous host party
         if self_party_id == party_list[0]:
-            guest_position_vec = self.hetero_sbt_transfer_variable.guest_predict_data.get(idx=0,
-                                                                                          suffix='position_vec')
+            guest_position_vec = transfer_var.guest_predict_data.get(idx=0, suffix='position_vec')
+
         else:
-            guest_position_vec = self.hetero_sbt_transfer_variable.inter_host_data.get(idx=self_idx - 1,
-                                                                                       suffix='position_vec')
+            guest_position_vec = transfer_var.inter_host_data.get(idx=self_idx - 1, suffix='position_vec')
 
         if self_party_id == party_list[-1]:
-            leaf_idx_dim_map = self.generate_leaf_idx_dimension_map(trees, booster_dim)
-            func = functools.partial(self.merge_position_vec, booster_dim=booster_dim,
+            leaf_idx_dim_map = generate_leaf_idx_dimension_map(trees, booster_dim)
+            func = functools.partial(merge_position_vec, booster_dim=booster_dim,
                                      leaf_idx_dim_map=leaf_idx_dim_map, random_mask=random_mask)
             result_table = position_vec.join(guest_position_vec, func)
-            self.hetero_sbt_transfer_variable.host_predict_data.remote(result_table, suffix='merge_result')
+            transfer_var.host_predict_data.remote(result_table, suffix='merge_result')
         else:
-            result_table = position_vec.join(guest_position_vec, self.position_vec_element_wise_mul)
-            self.hetero_sbt_transfer_variable.inter_host_data.remote(result_table, idx=self_idx + 1,
-                                                                     suffix='position_vec',
-                                                                     role=consts.HOST)
+            result_table = position_vec.join(guest_position_vec, position_vec_element_wise_mul)
+            transfer_var.inter_host_data.remote(result_table, idx=self_idx + 1, suffix='position_vec', role=consts.HOST)
+
+
 
