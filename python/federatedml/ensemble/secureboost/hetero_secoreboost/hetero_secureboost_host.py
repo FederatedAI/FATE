@@ -12,7 +12,7 @@ from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict
 from federatedml.ensemble.secureboost.secureboost_util.tree_model_io import produce_hetero_tree_learner, \
     load_hetero_tree_learner
 from federatedml.ensemble.secureboost.secureboost_util.boosting_tree_predict import sbt_host_predict, \
-    mix_sbt_host_predict
+    mix_sbt_host_predict, EINI_host_predict
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
@@ -46,6 +46,11 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.tree_plan = []
         self.feature_importances_ = {}
 
+        # EINI predict param
+        self.EINI_inference = False
+        self.EINI_random_mask = False
+        self.EINI_complexity_check = False
+
         self.multi_mode = consts.SINGLE_OUTPUT
 
         self.hetero_sbt_transfer_variable = HeteroSecureBoostTransferVariable()
@@ -67,6 +72,9 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.guest_depth = param.guest_depth
         self.host_depth = param.host_depth
         self.multi_mode = param.multi_mode
+        self.EINI_inference = param.EINI_inference
+        self.EINI_random_mask = param.EINI_random_mask
+        self.EINI_complexity_check = param.EINI
 
         if self.use_missing:
             self.tree_param.use_missing = self.use_missing
@@ -190,11 +198,11 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         if self.boosting_strategy == consts.MIX_TREE:
             mix_sbt_host_predict(processed_data, self.hetero_sbt_transfer_variable, trees)
         else:
-            from federatedml.ensemble.secureboost.secureboost_util.boosting_tree_predict import EINI_host_predict
-            sitename = self.role + ':' + str(self.component_properties.local_partyid)
-            EINI_host_predict(processed_data, self.hetero_sbt_transfer_variable, trees, sitename,
-                              self.component_properties.local_partyid, self.component_properties.host_party_idlist)
-            sbt_host_predict(processed_data, self.hetero_sbt_transfer_variable, trees)
+            if self.EINI_inference and not self.on_training:
+                sitename = self.role + ':' + str(self.component_properties.local_partyid)
+
+            else:
+                sbt_host_predict(processed_data, self.hetero_sbt_transfer_variable, trees)
 
     def get_model_meta(self):
         model_meta = BoostingTreeModelMeta()

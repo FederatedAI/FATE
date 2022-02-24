@@ -58,6 +58,10 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.init_tree_plan = False
         self.tree_plan = []
 
+        # EINI predict param
+        self.EINI_inference = False
+        self.EINI_random_mask = False
+
         # multi-classification mode
         self.multi_mode = consts.SINGLE_OUTPUT
 
@@ -79,12 +83,13 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.boosting_strategy = param.boosting_strategy
         self.guest_depth = param.guest_depth
         self.host_depth = param.host_depth
+        self.EINI_inference = param.EINI_inference
+        self.EINI_random_mask = param.EINI_random_mask
+        self.multi_mode = param.multi_mode
 
         if self.use_missing:
             self.tree_param.use_missing = self.use_missing
             self.tree_param.zero_as_missing = self.zero_as_missing
-
-        self.multi_mode = param.multi_mode
 
     def process_sample_weights(self, grad_and_hess, data_with_sample_weight=None):
 
@@ -316,23 +321,26 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
             return self.score_to_predict_result(data_inst, predict_cache)
 
         if self.boosting_strategy == consts.MIX_TREE:
-            pred_func = mix_sbt_guest_predict
+            predict_rs = mix_sbt_guest_predict(processed_data, self.hetero_sbt_transfer_variable, trees, self.learning_rate,
+                                              self.init_score, self.booster_dim, predict_cache,
+                                              pred_leaf=(ret_format == 'leaf'))
         else:
-            pred_func = sbt_guest_predict
 
-        sitename = str(self.role) + ':' + str(self.component_properties.local_partyid)
-        EINI_guest_predict(processed_data, self.hetero_sbt_transfer_variable, trees, self.learning_rate, self.init_score,
-                           self.booster_dim, sitename, self.component_properties.host_party_idlist,
-                           predict_cache, False)
-        predict_rs = pred_func(processed_data, self.hetero_sbt_transfer_variable, trees, self.learning_rate,
-                               self.init_score, self.booster_dim, predict_cache,
-                               pred_leaf=(ret_format == 'leaf'))
+            if self.EINI_inference and not self.on_training:
+                sitename = str(self.role) + ':' + str(self.component_properties.local_partyid)
+                predict_rs = EINI_guest_predict(processed_data, trees, self.learning_rate, self.init_score,
+                                                self.booster_dim, self.encrypt_param.key_length,
+                                                self.hetero_sbt_transfer_variable, sitename,
+                                                self.component_properties.host_party_idlist, None, False)
+            else:
+                predict_rs = sbt_guest_predict(processed_data, self.hetero_sbt_transfer_variable, trees, self.learning_rate,
+                                               self.init_score, self.booster_dim, predict_cache,
+                                               pred_leaf=(ret_format == 'leaf'))
 
         if ret_format == 'leaf':
             return predict_rs  # predict result is leaf position
 
         self.predict_data_cache.add_data(cache_dataset_key, predict_rs, cur_boosting_round=rounds)
-        LOGGER.debug('adding predict rs {}'.format(predict_rs))
         LOGGER.debug('last round is {}'.format(self.predict_data_cache.predict_data_last_round(cache_dataset_key)))
 
         if ret_format == 'raw':
