@@ -74,7 +74,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.multi_mode = param.multi_mode
         self.EINI_inference = param.EINI_inference
         self.EINI_random_mask = param.EINI_random_mask
-        self.EINI_complexity_check = param.EINI
+        self.EINI_complexity_check = param.EINI_complexity_check
 
         if self.use_missing:
             self.tree_param.use_missing = self.use_missing
@@ -200,7 +200,9 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         else:
             if self.EINI_inference and not self.on_training:
                 sitename = self.role + ':' + str(self.component_properties.local_partyid)
-
+                EINI_host_predict(processed_data, trees, sitename, self.component_properties.local_partyid,
+                                  self.component_properties.host_party_idlist, self.booster_dim,
+                                  self.hetero_sbt_transfer_variable, self.EINI_inference, self.EINI_random_mask)
             else:
                 sbt_host_predict(processed_data, self.hetero_sbt_transfer_variable, trees)
 

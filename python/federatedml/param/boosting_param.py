@@ -585,6 +585,9 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.guest_depth = guest_depth
         self.host_depth = host_depth
         self.callback_param = copy.deepcopy(callback_param)
+        self.EINI_inference = EINI_inference
+        self.EINI_random_mask = EINI_random_mask
+        self.EINI_complexity_check = EINI_complexity_check
         self.multi_mode = multi_mode
 
     def check(self):

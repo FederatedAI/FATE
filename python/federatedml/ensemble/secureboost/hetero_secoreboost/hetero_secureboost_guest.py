@@ -322,10 +322,9 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
 
         if self.boosting_strategy == consts.MIX_TREE:
             predict_rs = mix_sbt_guest_predict(processed_data, self.hetero_sbt_transfer_variable, trees, self.learning_rate,
-                                              self.init_score, self.booster_dim, predict_cache,
-                                              pred_leaf=(ret_format == 'leaf'))
+                                               self.init_score, self.booster_dim, predict_cache,
+                                               pred_leaf=(ret_format == 'leaf'))
         else:
-
             if self.EINI_inference and not self.on_training:
                 sitename = str(self.role) + ':' + str(self.component_properties.local_partyid)
                 predict_rs = EINI_guest_predict(processed_data, trees, self.learning_rate, self.init_score,
