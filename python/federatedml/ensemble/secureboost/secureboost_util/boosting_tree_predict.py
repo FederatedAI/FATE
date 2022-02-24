@@ -1,5 +1,6 @@
 import functools
 import numpy as np
+import random
 from typing import List
 from federatedml.util import consts
 from federatedml.secureprotol import PaillierEncrypt
@@ -327,7 +328,7 @@ Fed-EINI predict func
 """
 
 
-def get_leaf_idx_map(trees: List[DecisionTree]):
+def get_leaf_idx_map(trees):
     id_pos_map_list = []
 
     for tree in trees:
@@ -342,16 +343,16 @@ def get_leaf_idx_map(trees: List[DecisionTree]):
     return id_pos_map_list
 
 
-def go_to_children_branches(data_inst, tree_node: Node, tree, sitename: str, candidate_list: List):
+def go_to_children_branches(data_inst, tree_node, tree, sitename: str, candidate_list: List):
     if tree_node.is_leaf:
         candidate_list.append(tree_node)
     else:
         tree_node_list = tree.tree_node
         if tree_node.sitename != sitename:
-            go_to_children_branches(data_inst, tree_node_list[tree_node.left_nodeid], tree, sitename,
-                                    candidate_list)
-            go_to_children_branches(data_inst, tree_node_list[tree_node.right_nodeid], tree, sitename,
-                                    candidate_list)
+            go_to_children_branches(data_inst, tree_node_list[tree_node.left_nodeid],
+                                                                  tree, sitename, candidate_list)
+            go_to_children_branches(data_inst, tree_node_list[tree_node.right_nodeid],
+                                                                  tree, sitename, candidate_list)
         else:
             next_layer_node_id = tree.go_next_layer(tree_node, data_inst, use_missing=tree.use_missing,
                                                     zero_as_missing=tree.zero_as_missing, decoder=tree.decode,
@@ -359,11 +360,11 @@ def go_to_children_branches(data_inst, tree_node: Node, tree, sitename: str, can
                                                     missing_dir_maskdict=tree.missing_dir_maskdict,
                                                     bin_sparse_point=None
                                                     )
-            go_to_children_branches(data_inst, tree_node_list[next_layer_node_id], tree, sitename,
-                                    candidate_list)
+            go_to_children_branches(data_inst, tree_node_list[next_layer_node_id],
+                                                                  tree, sitename, candidate_list)
 
 
-def generate_leaf_candidates_guest(data_inst, sitename, trees: List[DecisionTree], node_pos_map_list,
+def generate_leaf_candidates_guest(data_inst, sitename, trees, node_pos_map_list,
                                    init_score, learning_rate, booster_dim):
     candidate_nodes_of_all_tree = []
 
@@ -384,7 +385,8 @@ def generate_leaf_candidates_guest(data_inst, sitename, trees: List[DecisionTree
             tree_init_score = init_score
         result_vec = [0 for i in range(len(node_pos_map))]
         candidate_list = []
-        go_to_children_branches(data_inst, tree.tree_node[0], tree, sitename, candidate_list)
+        go_to_children_branches(data_inst, tree.tree_node[0], tree,
+                                                              sitename, candidate_list)
         for node in candidate_list:
             result_vec[node_pos_map[node.id]] = float(node.weight * learning_rate + tree_init_score)
         candidate_nodes_of_all_tree.extend(result_vec)
@@ -392,7 +394,46 @@ def generate_leaf_candidates_guest(data_inst, sitename, trees: List[DecisionTree
     return np.array(candidate_nodes_of_all_tree)
 
 
-def generate_leaf_candidates_host(data_inst, sitename, trees: List[DecisionTree], node_pos_map_list):
+def EINI_guest_predict(data_inst, trees: List[HeteroDecisionTreeGuest], learning_rate, init_score, booster_dim,
+                       encrypt_key_length, transfer_var: HeteroSecureBoostTransferVariable,
+                       sitename=None, party_list=None, predict_cache=None, pred_leaf=False):
+
+    if sitename is None:
+        raise ValueError('input sitename is None, not able to run EINI predict algorithm')
+
+    if pred_leaf:
+        raise ValueError('EINI predict mode does not support leaf idx prediction')
+
+    # EINI algorithms
+    id_pos_map_list = get_leaf_idx_map(trees)
+    map_func = functools.partial(generate_leaf_candidates_guest, sitename=sitename, trees=trees,
+                                 node_pos_map_list=id_pos_map_list, init_score=init_score,
+                                 learning_rate=learning_rate, booster_dim=booster_dim)
+    position_vec = data_inst.mapValues(map_func)
+
+    # encryption
+    encrypter = PaillierEncrypt()
+    encrypter.generate_key(encrypt_key_length)
+    encrypter_vec_table = position_vec.mapValues(encrypter.recursive_encrypt)
+
+    # federation part
+    # send to first host party
+    transfer_var.guest_predict_data.remote(encrypter_vec_table, idx=0, suffix='position_vec', role=consts.HOST)
+
+    # get from last host party
+    result_table = transfer_var.host_predict_data.get(idx=len(party_list) - 1, suffix='merge_result', role=consts.HOST)
+
+    # decode result
+    result = result_table.mapValues(encrypter.recursive_decrypt)
+    # reformat
+    result = result.mapValues(lambda x: np.array(x))
+    if predict_cache:
+        result = result.join(predict_cache, lambda v1, v2: v1 + v2)
+
+    return result
+
+
+def generate_leaf_candidates_host(data_inst, sitename, trees, node_pos_map_list):
     candidate_nodes_of_all_tree = []
 
     for tree, node_pos_map in zip(trees, node_pos_map_list):
@@ -400,6 +441,7 @@ def generate_leaf_candidates_host(data_inst, sitename, trees: List[DecisionTree]
         result_vec = [0 for i in range(len(node_pos_map))]
         candidate_list = []
         go_to_children_branches(data_inst, tree.tree_node[0], tree, sitename, candidate_list)
+
         for node in candidate_list:
             result_vec[node_pos_map[node.id]] = 1  # create 0-1 vector
         candidate_nodes_of_all_tree.extend(result_vec)
@@ -422,7 +464,8 @@ def generate_leaf_idx_dimension_map(trees, booster_dim):
     return leaf_dim_map
 
 
-def merge_position_vec(host_vec, guest_encrypt_vec, booster_dim=1, leaf_idx_dim_map=None):
+def merge_position_vec(host_vec, guest_encrypt_vec, booster_dim=1, leaf_idx_dim_map=None, random_mask=None):
+
     leaf_idx = -1
     rs = [0 for i in range(booster_dim)]
     for en_num, vec_value in zip(guest_encrypt_vec, host_vec):
@@ -432,6 +475,11 @@ def merge_position_vec(host_vec, guest_encrypt_vec, booster_dim=1, leaf_idx_dim_
         else:
             dim = leaf_idx_dim_map[leaf_idx]
             rs[dim] += en_num
+
+    if random_mask:
+        for i in range(len(rs)):
+            rs[i] = rs[i] * random_mask  # a pos random mask btw 1 and 2
+
     return rs
 
 
@@ -442,75 +490,76 @@ def position_vec_element_wise_mul(guest_encrypt_vec, host_vec):
     return new_vec
 
 
-def EINI_guest_predict(data_inst, transfer_var: HeteroSecureBoostTransferVariable,
-                       trees: List[HeteroDecisionTreeGuest], learning_rate, init_score, booster_dim,
-                       sitename=None, party_list=None, predict_cache=None, pred_leaf=False):
+def count_complexity_helper(node, node_list, host_sitename, meet_host_node):
 
-    if sitename is None:
-        raise ValueError('input sitename is None, not able to run EINI predict algorithm')
+    if node.is_leaf:
+        return 1 if meet_host_node else 0
+    if node.sitename == host_sitename:
+        meet_host_node = True
 
-    if pred_leaf:
-        raise ValueError('EINI predict mode does not support leaf idx prediction')
-
-    # EINI algorithms
-    id_pos_map_list = get_leaf_idx_map(trees)
-    map_func = functools.partial(generate_leaf_candidates_guest, sitename=sitename, trees=trees,
-                                 node_pos_map_list=id_pos_map_list, init_score=init_score,
-                                 learning_rate=learning_rate, booster_dim=booster_dim)
-    position_vec = data_inst.mapValues(map_func)
-
-    # encryption
-    encrypter = PaillierEncrypt()
-    encrypter.generate_key(1024)
-    encrypter_vec_table = position_vec.mapValues(encrypter.recursive_encrypt)
-
-    # federation part
-    transfer_var.guest_predict_data.remote(booster_dim, idx=-1, suffix='booster_dim')
-    # send to first host party
-    transfer_var.guest_predict_data.remote(encrypter_vec_table, idx=0, suffix='position_vec', role=consts.HOST)
-    # get from last host party
-    result_table = transfer_var.host_predict_data.get(idx=len(party_list)-1, suffix='merge_result', role=consts.HOST)
-
-    # decode result
-    result = result_table.mapValues(encrypter.recursive_decrypt)
-
-    # result = result_table
-    if booster_dim == 1:
-        result = result.mapValues(lambda x: x[0])
-    else:
-        result = result.mapValues(lambda x: np.array(x))
-
-    if predict_cache:
-        result = result.join(predict_cache, lambda v1, v2: v1 + v2)
-
-    return result
+    return count_complexity_helper(node_list[node.left_nodeid], node_list, host_sitename, meet_host_node) + \
+           count_complexity_helper(node_list[node.right_nodeid], node_list, host_sitename, meet_host_node)
 
 
-def EINI_host_predict(data_inst, transfer_var: HeteroSecureBoostTransferVariable, trees: List[HeteroDecisionTreeHost],
-                      sitename, self_party_id, party_list):
-    id_pos_map_list = get_leaf_idx_map(trees)
-    map_func = functools.partial(generate_leaf_candidates_host, sitename=sitename, trees=trees,
+def count_complexity(trees, sitename):
+
+    tree_valid_leaves_num = []
+    for tree in trees:
+        valid_leaf_num = count_complexity_helper(tree.tree_node[0], tree.tree_node, sitename, False)
+        if valid_leaf_num != 0:
+            tree_valid_leaves_num.append(valid_leaf_num)
+
+    complexity = 1
+    for num in tree_valid_leaves_num:
+        complexity *= num
+
+    return complexity
+
+
+def EINI_host_predict(data_inst, trees: List[HeteroDecisionTreeHost], sitename, self_party_id, party_list,
+                      random_mask=False):
+
+    if self.EINI_complexity_check:
+        complexity = self.count_complexity(trees)
+        LOGGER.debug('checking EINI complexity: {}'.format(complexity))
+        if complexity < consts.EINI_TREE_COMPLEXITY:
+            raise ValueError('tree complexity: {}, is lower than safe '
+                             'threshold, inference is not allowed.'.format(complexity))
+    id_pos_map_list = self.get_leaf_idx_map(trees)
+    map_func = functools.partial(self.generate_leaf_candidates_host, sitename=sitename, trees=trees,
                                  node_pos_map_list=id_pos_map_list)
     position_vec = data_inst.mapValues(map_func)
 
-    booster_dim = transfer_var.guest_predict_data.get(idx=0, suffix='booster_dim')
+    booster_dim = self.booster_dim
+    random_mask = random.SystemRandom().random() + 1 if random_mask else 0  # generate a random mask btw 1 and 2
 
     self_idx = party_list.index(self_party_id)
     if len(party_list) == 1:
-        guest_position_vec = transfer_var.guest_predict_data.get(idx=0, suffix='position_vec')
-        leaf_idx_dim_map = generate_leaf_idx_dimension_map(trees, booster_dim)
-        merge_func = functools.partial(merge_position_vec, booster_dim=booster_dim, leaf_idx_dim_map=leaf_idx_dim_map)
+        guest_position_vec = self.hetero_sbt_transfer_variable.guest_predict_data.get(idx=0, suffix='position_vec')
+        leaf_idx_dim_map = self.generate_leaf_idx_dimension_map(trees, booster_dim)
+        merge_func = functools.partial(self.merge_position_vec, booster_dim=booster_dim,
+                                       leaf_idx_dim_map=leaf_idx_dim_map, random_mask=random_mask)
         result_table = position_vec.join(guest_position_vec, merge_func)
-        transfer_var.inter_host_data.remote(result_table, idx=self_idx + 1, suffix='position_vec', role=consts.HOST)
+        self.hetero_sbt_transfer_variable.host_predict_data.remote(result_table, suffix='merge_result')
     else:
         # multi host case
         # if is first host party, get encrypt vec from guest, else from previous host party
         if self_party_id == party_list[0]:
-            guest_position_vec = transfer_var.guest_predict_data.get(idx=0, suffix='position_vec')
+            guest_position_vec = self.hetero_sbt_transfer_variable.guest_predict_data.get(idx=0,
+                                                                                          suffix='position_vec')
         else:
-            guest_position_vec = transfer_var.inter_host_data.get(idx=self_idx - 1, suffix='position_vec')
-        result_table = position_vec.join(guest_position_vec, position_vec_element_wise_mul)
+            guest_position_vec = self.hetero_sbt_transfer_variable.inter_host_data.get(idx=self_idx - 1,
+                                                                                       suffix='position_vec')
+
         if self_party_id == party_list[-1]:
-            transfer_var.host_predict_data.remote(result_table, suffix='merge_result')
+            leaf_idx_dim_map = self.generate_leaf_idx_dimension_map(trees, booster_dim)
+            func = functools.partial(self.merge_position_vec, booster_dim=booster_dim,
+                                     leaf_idx_dim_map=leaf_idx_dim_map, random_mask=random_mask)
+            result_table = position_vec.join(guest_position_vec, func)
+            self.hetero_sbt_transfer_variable.host_predict_data.remote(result_table, suffix='merge_result')
         else:
-            transfer_var.inter_host_data.remote(result_table, idx=self_idx + 1, suffix='position_vec', role=consts.HOST)
+            result_table = position_vec.join(guest_position_vec, self.position_vec_element_wise_mul)
+            self.hetero_sbt_transfer_variable.inter_host_data.remote(result_table, idx=self_idx + 1,
+                                                                     suffix='position_vec',
+                                                                     role=consts.HOST)
+
