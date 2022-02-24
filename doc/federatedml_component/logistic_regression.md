@@ -157,14 +157,15 @@ which HE and Secret-Sharing hybrid protocol is included.
 
   - Hetero-LR extra features
 
-> 1.  Support different encrypt-mode to balance speed and security
-> 2.  Support OneVeRest
-> 3.  When modeling a multi-host task, "weight\_diff" converge criteria
+1. Support different encrypt-mode to balance speed and security
+2. Support OneVeRest
+3. When modeling a multi-host task, "weight\_diff" converge criteria
 >     is supported only.
-> 4.  Support sparse format data
-> 5.  Support early-stopping mechanism
-> 6.  Support setting arbitrary metrics for validation during training
-> 7.  Support stepwise. For details on stepwise mode, please refer [stepwise](stepwise.md).
+4. Support sparse format data
+5. Support early-stopping mechanism
+6. Support setting arbitrary metrics for validation during training
+7. Support stepwise. For details on stepwise mode, please refer [stepwise](stepwise.md).
+8. Support batch shuffle and batch masked strategy.
 
  - Hetero-SSHE-LR extra features
   > 1. Support different encrypt-mode to balance speed and security
