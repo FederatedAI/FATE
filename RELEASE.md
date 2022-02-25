@@ -9,6 +9,11 @@
 > Bug-Fix
 * Fixed Bug for HeteroPearson with changing default q_field value for spdz
 * Fix Data Transform's schema label name setting problem when `with_label` is False
+* Add testing examples for new algorithm features, and delete deprecated params in algorithm examples.
+
+> FATE-ARCH
+* Support loading of custom password encryption module
+* Separate the base connection address of the data storage table from the data table information, and compatible with historical versions
 
 
 ## Release 1.7.1.1
