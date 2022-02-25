@@ -28,6 +28,7 @@ from federatedml.param.predict_param import PredictParam
 from federatedml.param.sqn_param import StochasticQuasiNewtonParam
 from federatedml.param.stepwise_param import StepwiseParam
 from federatedml.util import consts
+from federatedml.util import LOGGER
 
 deprecated_param_list = ["early_stopping_rounds", "validation_freqs", "metrics",
                          "use_first_metric_only"]
@@ -50,8 +51,8 @@ class LogisticParam(BaseParam):
     alpha : float, default: 1.0
         Regularization strength coefficient.
 
-    optimizer : {'rmsprop', 'sgd', 'adam', 'nesterov_momentum_sgd', 'sqn', 'adagrad'}, default: 'rmsprop'
-        Optimize method, if 'sqn' has been set, sqn_param will take effect. Currently, 'sqn' support hetero mode only.
+    optimizer : {'rmsprop', 'sgd', 'adam', 'nesterov_momentum_sgd', 'adagrad'}, default: 'rmsprop'
+        Optimize method.
 
     batch_strategy : str, {'full', 'random'}, default: "full"
         Strategy to generate batch data.
@@ -192,10 +193,14 @@ class LogisticParam(BaseParam):
                 "logistic_param's optimizer {} not supported, should be str type".format(self.optimizer))
         else:
             self.optimizer = self.optimizer.lower()
-            if self.optimizer not in ['sgd', 'rmsprop', 'adam', 'adagrad', 'nesterov_momentum_sgd', 'sqn']:
+            if self.optimizer == "sqn":
+                LOGGER.warning("sqn is deprecated in fate-v1.7.x, optimizer will be reset to sgd for compatibility")
+                self.optimizer = "sgd"
+
+            if self.optimizer not in ['sgd', 'rmsprop', 'adam', 'adagrad', 'nesterov_momentum_sgd']:
                 raise ValueError(
                     "logistic_param's optimizer not supported, optimizer should be"
-                    " 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd', 'sqn' or 'adagrad'")
+                    " 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd' or 'adagrad'")
 
         if self.batch_size != -1:
             if type(self.batch_size).__name__ not in ["int"] \
@@ -369,9 +374,6 @@ class HomoLogisticParam(LogisticParam):
 
             if self.penalty == consts.L1_PENALTY:
                 raise ValueError("Paillier encryption mode supports 'L2' penalty or None only.")
-
-        if self.optimizer == 'sqn':
-            raise ValueError("'sqn' optimizer is supported for hetero mode only.")
 
         return True
 

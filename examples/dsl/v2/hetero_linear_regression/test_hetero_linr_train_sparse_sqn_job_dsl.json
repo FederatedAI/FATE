@@ -41,8 +41,8 @@
                 ]
             }
         },
-        "hetero_lr_0": {
-            "module": "HeteroLR",
+        "hetero_linr_0": {
+            "module": "HeteroLinR",
             "input": {
                 "data": {
                     "train_data": [
@@ -64,7 +64,7 @@
             "input": {
                 "data": {
                     "data": [
-                        "hetero_lr_0.data"
+                        "hetero_linr_0.data"
                     ]
                 }
             },

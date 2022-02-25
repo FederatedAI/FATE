@@ -29,6 +29,9 @@
         "linr-train": {
             "script": "./pipeline-hetero-linr.py"
         },
+        "linr-train-sqn": {
+            "script": "./pipeline-hetero-linr-sqn.py"
+        },
         "linr-warm-start": {
             "script": "./pipeline-hetero-linr-warm-start.py"
         },
@@ -46,6 +49,9 @@
         },
         "linr_sparse": {
             "script": "./pipeline-hetero-linr-sparse.py"
+        },
+        "linr_sparse-sqn": {
+            "script": "./pipeline-hetero-linr-sparse-sqn.py"
         },
         "linr_sample-weight": {
             "script": "./pipeline-hetero-linr-sample-weight.py"

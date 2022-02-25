@@ -29,9 +29,6 @@
                 },
                 "max_iter": 3,
                 "early_stop": "weight_diff",
-                "encrypted_mode_calculator_param": {
-                    "mode": "fast"
-                },
                 "decay_sqrt": false,
                 "exposure_colname": "exposure",
                 "callback_param": {

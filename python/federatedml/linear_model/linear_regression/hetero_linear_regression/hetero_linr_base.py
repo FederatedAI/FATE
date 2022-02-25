@@ -49,6 +49,7 @@ class HeteroLinRBase(BaseLinearRegression):
             gradient_loss_operator = sqn_factory(self.role, params.sqn_param)
             gradient_loss_operator.register_gradient_computer(self.gradient_loss_operator)
             gradient_loss_operator.register_transfer_variable(self.transfer_variable)
+            gradient_loss_operator.unset_raise_weight_overflow_error()
             self.gradient_loss_operator = gradient_loss_operator
             LOGGER.debug("In _init_model, optimizer: {}, gradient_loss_operator: {}".format(
                 params.optimizer, self.gradient_loss_operator

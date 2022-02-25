@@ -29,9 +29,6 @@
                 },
                 "max_iter": 5,
                 "early_stop": "diff",
-                "encrypted_mode_calculator_param": {
-                    "mode": "fast"
-                },
                 "decay": 0.0,
                 "decay_sqrt": false,
                 "stepwise_param": {

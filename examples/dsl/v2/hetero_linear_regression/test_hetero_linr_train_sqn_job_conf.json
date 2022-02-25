@@ -17,20 +17,27 @@
     },
     "component_parameters": {
         "common": {
-            "hetero_poisson_0": {
+            "hetero_linr_0": {
                 "penalty": "L2",
                 "tol": 0.001,
-                "alpha": 100.0,
-                "optimizer": "rmsprop",
+                "alpha": 0.01,
+                "optimizer": "sqn",
                 "batch_size": -1,
-                "learning_rate": 0.01,
+                "learning_rate": 0.15,
                 "init_param": {
                     "init_method": "zeros"
                 },
-                "max_iter": 10,
+                "sqn_param": {
+                    "update_interval_L": 3,
+                    "memory_M": 5,
+                    "sample_size": 5000,
+                    "random_seed": null
+                },
+                "max_iter": 20,
                 "early_stop": "weight_diff",
+                "decay": 0.0,
                 "decay_sqrt": false,
-                "exposure_colname": "exposure"
+                "floating_point_precision": 23
             },
             "evaluation_0": {
                 "eval_type": "regression",
@@ -38,35 +45,32 @@
             }
         },
         "role": {
-            "guest": {
-                "0": {
-                    "data_transform_0": {
-                        "with_label": true,
-                        "label_name": "doctorco",
-                        "label_type": "float",
-                        "output_format": "dense"
-                    },
-                    "reader_0": {
-                        "table": {
-                            "name": "dvisits_hetero_guest",
-                            "namespace": "experiment"
-                        }
-                    }
-                }
-            },
             "host": {
                 "0": {
-                    "evaluation_0": {
-                        "need_run": false
+                    "reader_0": {
+                        "table": {
+                            "name": "motor_hetero_host",
+                            "namespace": "experiment"
+                        }
                     },
                     "data_transform_0": {
                         "with_label": false
-                    },
+                    }
+                }
+            },
+            "guest": {
+                "0": {
                     "reader_0": {
                         "table": {
-                            "name": "dvisits_hetero_host",
+                            "name": "motor_hetero_guest",
                             "namespace": "experiment"
                         }
+                    },
+                    "data_transform_0": {
+                        "with_label": true,
+                        "label_name": "motor_speed",
+                        "label_type": "float",
+                        "output_format": "dense"
                     }
                 }
             }
