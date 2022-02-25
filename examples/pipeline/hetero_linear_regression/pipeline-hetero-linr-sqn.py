@@ -81,7 +81,6 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline.fit()
 
-
     # predict
     # deploy required components
     pipeline.deploy_component([data_transform_0, intersection_0, hetero_linr_0])
