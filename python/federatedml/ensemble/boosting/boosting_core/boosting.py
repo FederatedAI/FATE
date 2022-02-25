@@ -93,6 +93,7 @@ class Boosting(ModelBase, ABC):
         self.metrics = None
         self.is_converged = False
         self.is_warm_start = False # warm start parameter
+        self.on_training = False
 
         # cache and header alignment
         self.predict_data_cache = PredictDataCache()

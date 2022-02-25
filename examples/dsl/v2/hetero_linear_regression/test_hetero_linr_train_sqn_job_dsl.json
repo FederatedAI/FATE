@@ -19,10 +19,10 @@
             },
             "output": {
                 "data": [
-                    "train"
+                    "data"
                 ],
                 "model": [
-                    "data_transform"
+                    "model"
                 ]
             }
         },
@@ -31,49 +31,28 @@
             "input": {
                 "data": {
                     "data": [
-                        "data_transform_0.train"
+                        "data_transform_0.data"
                     ]
                 }
             },
             "output": {
                 "data": [
-                    "train"
+                    "data"
                 ]
             }
         },
-        "secureboost_0": {
-            "module": "HeteroSecureBoost",
+        "hetero_linr_0": {
+            "module": "HeteroLinR",
             "input": {
                 "data": {
                     "train_data": [
-                        "intersection_0.train"
+                        "intersection_0.data"
                     ]
                 }
             },
             "output": {
                 "data": [
-                    "train"
-                ],
-                "model": [
-                    "train"
-                ]
-            }
-        },
-        "sbt_feature_transformer_0": {
-            "module": "SBTFeatureTransformer",
-            "input": {
-                "data": {
-                    "data": [
-                        "intersection_0.train"
-                    ]
-                },
-                "isometric_model": [
-                    "secureboost_0.train"
-                ]
-            },
-            "output": {
-                "data": [
-                    "train"
+                    "data"
                 ],
                 "model": [
                     "model"

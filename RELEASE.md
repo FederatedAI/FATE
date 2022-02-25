@@ -1,3 +1,21 @@
+## Release 1.7.2
+### Major Features and Improvements
+> FederatedML
+* New batch strategy in coordinated Hetero LR: support masked batch data and batch shuffle
+* Model inference protection enhancement for Hetero SecureBoost with FED-EINI algorithm
+* Hetero SecureBoost supports split feature importance on host side, disables gain feature importance
+* Offline SBT Feature transform component 
+
+> Bug-Fix
+* Fixed Bug for HeteroPearson with changing default q_field value for spdz
+* Fix Data Transform's schema label name setting problem when `with_label` is False
+* Add testing examples for new algorithm features, and delete deprecated params in algorithm examples.
+
+> FATE-ARCH
+* Support the loading of custom password encryption modules through plug-ins
+* Separate the base connection address of the data storage table from the data table information, and compatible with historical versions
+
+
 ## Release 1.7.1.1
 ### Major Features and Improvements
 > Deploy

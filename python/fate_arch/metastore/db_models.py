@@ -22,13 +22,13 @@ from peewee import CharField, IntegerField, BigIntegerField, TextField, Composit
 from fate_arch.federation import FederationEngine
 from fate_arch.metastore.base_model import DateTimeField
 from fate_arch.common import file_utils, log, EngineType, conf_utils
-from fate_arch.common.conf_utils import get_base_config
+from fate_arch.common.conf_utils import decrypt_database_config
 from fate_arch.metastore.base_model import JSONField, SerializedField, BaseModel
 
 
 LOGGER = log.getLogger()
 
-DATABASE = get_base_config("database", {})
+DATABASE = decrypt_database_config()
 is_standalone = conf_utils.get_base_config("default_engines", {}).get(EngineType.FEDERATION).upper() == \
                 FederationEngine.STANDALONE
 
@@ -77,18 +77,37 @@ class DataBaseModel(BaseModel):
 def init_database_tables():
     members = inspect.getmembers(sys.modules[__name__], inspect.isclass)
     table_objs = []
+    create_failed_list = []
     for name, obj in members:
         if obj != DataBaseModel and issubclass(obj, DataBaseModel):
             table_objs.append(obj)
-    DB.create_tables(table_objs)
+            LOGGER.info(f"start create table {obj.__name__}")
+            try:
+                obj.create_table()
+                LOGGER.info(f"create table success: {obj.__name__}")
+            except Exception as e:
+                LOGGER.exception(e)
+                create_failed_list.append(obj.__name__)
+    if create_failed_list:
+        LOGGER.info(f"create tables failed: {create_failed_list}")
+        raise Exception(f"create tables failed: {create_failed_list}")
+
+
+class StorageConnectorModel(DataBaseModel):
+    f_name = CharField(max_length=100, primary_key=True)
+    f_engine = CharField(max_length=100, index=True)  # 'MYSQL'
+    f_connector_info = JSONField()
+
+    class Meta:
+        db_table = "t_storage_connector"
 
 
 class StorageTableMetaModel(DataBaseModel):
     f_name = CharField(max_length=100, index=True)
     f_namespace = CharField(max_length=100, index=True)
     f_address = JSONField()
-    f_engine = CharField(max_length=100, index=True)  # 'EGGROLL', 'MYSQL'
-    f_store_type = CharField(max_length=50, index=True, null=True)  # store type
+    f_engine = CharField(max_length=100)  # 'EGGROLL', 'MYSQL'
+    f_store_type = CharField(max_length=50, null=True)  # store type
     f_options = JSONField()
     f_partitions = IntegerField(null=True)
 
@@ -114,8 +133,8 @@ class StorageTableMetaModel(DataBaseModel):
 
 
 class SessionRecord(DataBaseModel):
-    f_engine_session_id = CharField(max_length=150, null=False, index=True)
-    f_manager_session_id = CharField(max_length=150, null=False, index=True)
+    f_engine_session_id = CharField(max_length=150, null=False)
+    f_manager_session_id = CharField(max_length=150, null=False)
     f_engine_type = CharField(max_length=10, index=True)
     f_engine_name = CharField(max_length=50, index=True)
     f_engine_address = JSONField()

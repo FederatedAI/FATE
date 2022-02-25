@@ -97,8 +97,6 @@ def main(config="../../config.yaml", namespace=""):
         "reveal_every_iter": True,
         "callback_param": {
             "callbacks": ["ModelCheckpoint"],
-            "validation_freqs": 1,
-            "early_stopping_rounds": 1,
             "metrics": None,
             "use_first_metric_only": False,
             "save_freq": 1

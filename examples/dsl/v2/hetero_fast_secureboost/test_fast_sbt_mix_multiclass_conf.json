@@ -39,7 +39,7 @@
                 "0": {
                     "reader_0": {
                         "table": {
-                            "name": "breast_hetero_guest",
+                            "name": "vehicle_scale_hetero_guest",
                             "namespace": "experiment"
                         }
                     },
@@ -49,7 +49,7 @@
                     },
                     "reader_1": {
                         "table": {
-                            "name": "breast_hetero_guest",
+                            "name": "vehicle_scale_hetero_guest",
                             "namespace": "experiment"
                         }
                     },
@@ -63,7 +63,7 @@
                 "0": {
                     "reader_0": {
                         "table": {
-                            "name": "breast_hetero_host",
+                            "name": "vehicle_scale_hetero_host",
                             "namespace": "experiment"
                         }
                     },
@@ -72,7 +72,7 @@
                     },
                     "reader_1": {
                         "table": {
-                            "name": "breast_hetero_host",
+                            "name": "vehicle_scale_hetero_host",
                             "namespace": "experiment"
                         }
                     },

@@ -112,7 +112,8 @@ class LogisticParam(BaseParam):
 
     def __init__(self, penalty='L2',
                  tol=1e-4, alpha=1.0, optimizer='rmsprop',
-                 batch_size=-1, learning_rate=0.01, init_param=InitParam(),
+                 batch_size=-1, shuffle=True, batch_strategy="full", masked_rate=5,
+                 learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, early_stop='diff', encrypt_param=EncryptParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True,
@@ -128,6 +129,9 @@ class LogisticParam(BaseParam):
         self.alpha = alpha
         self.optimizer = optimizer
         self.batch_size = batch_size
+        self.shuffle = shuffle
+        self.batch_strategy = batch_strategy
+        self.masked_rate = masked_rate
         self.learning_rate = learning_rate
         self.init_param = copy.deepcopy(init_param)
         self.max_iter = max_iter
@@ -147,102 +151,6 @@ class LogisticParam(BaseParam):
         self.callback_param = copy.deepcopy(callback_param)
 
     def check(self):
-        descr = "logistic_param's"
-
-        if self.penalty is None:
-            pass
-        elif type(self.penalty).__name__ != "str":
-            raise ValueError(
-                "logistic_param's penalty {} not supported, should be str type".format(self.penalty))
-        else:
-            self.penalty = self.penalty.upper()
-            if self.penalty not in [consts.L1_PENALTY, consts.L2_PENALTY, 'NONE']:
-                raise ValueError(
-                    "logistic_param's penalty not supported, penalty should be 'L1', 'L2' or 'none'")
-
-        if not isinstance(self.tol, (int, float)):
-            raise ValueError(
-                "logistic_param's tol {} not supported, should be float type".format(self.tol))
-
-        if type(self.alpha).__name__ not in ["float", 'int']:
-            raise ValueError(
-                "logistic_param's alpha {} not supported, should be float or int type".format(self.alpha))
-
-        if type(self.optimizer).__name__ != "str":
-            raise ValueError(
-                "logistic_param's optimizer {} not supported, should be str type".format(self.optimizer))
-        else:
-            self.optimizer = self.optimizer.lower()
-            if self.optimizer not in ['sgd', 'rmsprop', 'adam', 'adagrad', 'nesterov_momentum_sgd', 'sqn']:
-                raise ValueError(
-                    "logistic_param's optimizer not supported, optimizer should be"
-                    " 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd', 'sqn' or 'adagrad'")
-
-        if self.batch_size != -1:
-            if type(self.batch_size).__name__ not in ["int"] \
-                    or self.batch_size < consts.MIN_BATCH_SIZE:
-                raise ValueError(descr + " {} not supported, should be larger than {} or "
-                                         "-1 represent for all data".format(self.batch_size, consts.MIN_BATCH_SIZE))
-
-        if not isinstance(self.learning_rate, (float, int)):
-            raise ValueError(
-                "logistic_param's learning_rate {} not supported, should be float or int type".format(
-                    self.learning_rate))
-
-        self.init_param.check()
-
-        if type(self.max_iter).__name__ != "int":
-            raise ValueError(
-                "logistic_param's max_iter {} not supported, should be int type".format(self.max_iter))
-        elif self.max_iter <= 0:
-            raise ValueError(
-                "logistic_param's max_iter must be greater or equal to 1")
-
-        if type(self.early_stop).__name__ != "str":
-            raise ValueError(
-                "logistic_param's early_stop {} not supported, should be str type".format(
-                    self.early_stop))
-        else:
-            self.early_stop = self.early_stop.lower()
-            if self.early_stop not in ['diff', 'abs', 'weight_diff']:
-                raise ValueError(
-                    "logistic_param's early_stop not supported, converge_func should be"
-                    " 'diff', 'weight_diff' or 'abs'")
-
-        self.encrypt_param.check()
-        self.predict_param.check()
-        if self.encrypt_param.method not in [consts.PAILLIER, None]:
-            raise ValueError(
-                "logistic_param's encrypted method support 'Paillier' or None only")
-
-        if type(self.decay).__name__ not in ["int", 'float']:
-            raise ValueError(
-                "logistic_param's decay {} not supported, should be 'int' or 'float'".format(
-                    self.decay))
-
-        if type(self.decay_sqrt).__name__ not in ['bool']:
-            raise ValueError(
-                "logistic_param's decay_sqrt {} not supported, should be 'bool'".format(
-                    self.decay_sqrt))
-        self.stepwise_param.check()
-
-        if self.early_stopping_rounds is None:
-            pass
-        elif isinstance(self.early_stopping_rounds, int):
-            if self.early_stopping_rounds < 1:
-                raise ValueError("early stopping rounds should be larger than 0 when it's integer")
-            if self.validation_freqs is None:
-                raise ValueError("validation freqs must be set when early stopping is enabled")
-        if self.metrics is not None and not isinstance(self.metrics, list):
-            raise ValueError("metrics should be a list")
-
-        if not isinstance(self.use_first_metric_only, bool):
-            raise ValueError("use_first_metric_only should be a boolean")
-
-        if self.floating_point_precision is not None and \
-                (not isinstance(self.floating_point_precision, int) or\
-                 self.floating_point_precision < 0 or self.floating_point_precision > 63):
-            raise ValueError("floating point precision should be null or a integer between 0 and 63")
         return True
 
 
@@ -327,7 +235,8 @@ class HomoLogisticParam(LogisticParam):
 class HeteroLogisticParam(LogisticParam):
     def __init__(self, penalty='L2',
                  tol=1e-4, alpha=1.0, optimizer='rmsprop',
-                 batch_size=-1, learning_rate=0.01, init_param=InitParam(),
+                 batch_size=-1, shuffle=True, batch_strategy="full", masked_rate=5,
+                 learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, early_stop='diff',
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
@@ -339,7 +248,7 @@ class HeteroLogisticParam(LogisticParam):
                  callback_param=CallbackParam()
                  ):
         super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
-                                                  batch_size=batch_size,
+                                                  batch_size=batch_size, shuffle=shuffle, batch_strategy=batch_strategy, masked_rate=masked_rate,
                                                   learning_rate=learning_rate,
                                                   init_param=init_param, max_iter=max_iter, early_stop=early_stop,
                                                   predict_param=predict_param, cv_param=cv_param,

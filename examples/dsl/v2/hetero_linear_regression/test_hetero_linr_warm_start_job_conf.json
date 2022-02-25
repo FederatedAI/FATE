@@ -29,9 +29,6 @@
                 },
                 "max_iter": 5,
                 "early_stop": "weight_diff",
-                "encrypted_mode_calculator_param": {
-                    "mode": "fast"
-                },
                 "callback_param": {
                     "callbacks": [
                         "ModelCheckpoint"

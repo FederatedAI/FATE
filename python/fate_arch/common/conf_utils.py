@@ -38,6 +38,22 @@ def get_base_config(key, default=None, conf_name=SERVICE_CONF):
         return config.get(key, default)
 
 
+def decrypt_database_config(database=None, passwd_key="passwd"):
+    import importlib
+    if not database:
+        database = get_base_config("database", {})
+    encrypt_password = get_base_config("encrypt_password", False)
+    encrypt_module = get_base_config("encrypt_module", False)
+    private_key = get_base_config("private_key", None)
+    if encrypt_password:
+        if not private_key:
+            raise Exception("private key is null")
+        module_fun = encrypt_module.split("#")
+        pwdecrypt_fun = getattr(importlib.import_module(module_fun[0]), module_fun[1])
+        database[passwd_key] = pwdecrypt_fun(private_key, database.get(passwd_key))
+    return database
+
+
 def update_config(key, value, conf_name=SERVICE_CONF):
     conf_path = conf_realpath(conf_name=conf_name)
     if not os.path.isabs(conf_path):
