@@ -12,7 +12,7 @@
 * Add testing examples for new algorithm features, and delete deprecated params in algorithm examples.
 
 > FATE-ARCH
-* Support loading of custom password encryption module
+* Support the loading of custom password encryption modules through plug-ins.
 * Separate the base connection address of the data storage table from the data table information, and compatible with historical versions
 
 
