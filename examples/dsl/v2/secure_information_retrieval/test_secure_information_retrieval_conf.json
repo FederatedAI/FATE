@@ -14,7 +14,7 @@
     },
     "component_parameters": {
         "role": {
-            "guest": {
+            "host": {
                 "0": {
                     "reader_0": {
                         "table": {
@@ -27,7 +27,7 @@
                     }
                 }
             },
-            "host": {
+            "guest": {
                 "0": {
                     "reader_0": {
                         "table": {
