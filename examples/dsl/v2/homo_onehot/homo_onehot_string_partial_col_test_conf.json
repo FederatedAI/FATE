@@ -1,0 +1,83 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 10000
+    },
+    "role": {
+        "guest": [
+            10000
+        ],
+        "host": [
+            9999
+        ],
+        "arbiter": [
+            9999
+        ]
+    },
+    "job_parameters": {
+        "common": {
+            "backend": 0,
+            "work_mode": 0,
+            "job_type": "train"
+        }
+    },
+    "component_parameters": {
+        "role": {
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "mock_string",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "reader_1": {
+                        "table": {
+                            "name": "mock_string",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "mock_string",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "reader_1": {
+                        "table": {
+                            "name": "mock_string",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            }
+        },
+        "common": {
+            "dataio_0": {
+                "data_type": "str",
+                "with_label": true,
+                "label_name": "y",
+                "output_format": "dense"
+            },
+            "homo_onehot_0": {
+                "transform_col_indexes": [
+                    1,
+                    2,
+                    5,
+                    6,
+                    8,
+                    10,
+                    11,
+                    12
+                ],
+                "transform_col_names": [],
+                "need_alignment": true
+            }
+        }
+    }
+}

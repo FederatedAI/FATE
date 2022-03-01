@@ -1,0 +1,107 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 10000
+    },
+    "role": {
+        "guest": [
+            10000
+        ],
+        "host": [
+            9999
+        ],
+        "arbiter": [
+            9999
+        ]
+    },
+    "job_parameters": {
+        "common": {
+            "backend": 0,
+            "work_mode": 0,
+            "job_type": "train"
+        }
+    },
+    "component_parameters": {
+        "role": {
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "mock_string",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "reader_1": {
+                        "table": {
+                            "name": "mock_string",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            },
+            "host": {
+                "0": {
+                    "evaluation_0": {
+                        "need_run": false
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "mock_string",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "reader_1": {
+                        "table": {
+                            "name": "mock_string",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            }
+        },
+        "common": {
+            "dataio_0": {
+                "data_type": "str",
+                "with_label": true,
+                "label_name": "y",
+                "output_format": "dense"
+            },
+            "homo_onehot_0": {
+                "transform_col_indexes": -1,
+                "transform_col_names": [],
+                "need_alignment": true
+            },
+            "scale_0": {
+                "method": "standard_scale"
+            },
+            "homo_lr_0": {
+                "penalty": "L2",
+                "tol": 1e-05,
+                "alpha": 0.01,
+                "optimizer": "sgd",
+                "batch_size": 500,
+                "learning_rate": 0.15,
+                "init_param": {
+                    "init_method": "zeros"
+                },
+                "max_iter": 3,
+                "early_stop": "diff",
+                "encrypt_param": {
+                    "method": "Paillier"
+                },
+                "cv_param": {
+                    "n_splits": 4,
+                    "shuffle": true,
+                    "random_seed": 33,
+                    "need_cv": false
+                },
+                "decay": 1,
+                "decay_sqrt": true
+            },
+            "evaluation_0": {
+                "eval_type": "binary"
+            }
+        }
+    }
+}

@@ -17,12 +17,49 @@
     },
     "job_parameters": {
         "common": {
-            "job_type": "train",
             "backend": 0,
-            "work_mode": 0
+            "work_mode": 0,
+            "job_type": "train"
         }
     },
     "component_parameters": {
+        "role": {
+            "host": {
+                "0": {
+                    "reader_1": {
+                        "table": {
+                            "name": "heart_nonscaled_hetero_test",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "heart_nonscaled_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "evaluation_0": {
+                        "need_run": false
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "reader_1": {
+                        "table": {
+                            "name": "heart_nonscaled_hetero_test",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "heart_nonscaled_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            }
+        },
         "common": {
             "dataio_0": {
                 "with_label": true,
@@ -72,43 +109,6 @@
             },
             "evaluation_0": {
                 "eval_type": "binary"
-            }
-        },
-        "role": {
-            "host": {
-                "0": {
-                    "reader_1": {
-                        "table": {
-                            "name": "heart_nonscaled_hetero_test",
-                            "namespace": "experiment"
-                        }
-                    },
-                    "evaluation_0": {
-                        "need_run": false
-                    },
-                    "reader_0": {
-                        "table": {
-                            "name": "heart_nonscaled_hetero_host",
-                            "namespace": "experiment"
-                        }
-                    }
-                }
-            },
-            "guest": {
-                "0": {
-                    "reader_1": {
-                        "table": {
-                            "name": "heart_nonscaled_hetero_test",
-                            "namespace": "experiment"
-                        }
-                    },
-                    "reader_0": {
-                        "table": {
-                            "name": "heart_nonscaled_hetero_guest",
-                            "namespace": "experiment"
-                        }
-                    }
-                }
             }
         }
     }

@@ -36,6 +36,10 @@ def get_python_base_directory():
     return os.path.join(get_project_base_directory(), "python")
 
 
+def get_federatedml_setting_conf_directory():
+    return os.path.join(get_python_base_directory(), 'federatedml', 'conf', 'setting_conf')
+
+
 @cached(cache=LRUCache(maxsize=10))
 def load_json_conf(conf_path):
     if os.path.isabs(conf_path):

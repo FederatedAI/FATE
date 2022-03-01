@@ -38,14 +38,13 @@ def get_job_dsl_parser(dsl=None, runtime_conf=None, pipeline_dsl=None, train_run
     dsl_parser = get_dsl_parser_by_version(parser_version)
     default_runtime_conf_path = os.path.join(file_utils.get_python_base_directory(),
                                              *['federatedml', 'conf', 'default_runtime_conf'])
-    setting_conf_path = os.path.join(file_utils.get_python_base_directory(), *['federatedml', 'conf', 'setting_conf'])
     job_type = JobRuntimeConfigAdapter(runtime_conf).get_job_type()
     dsl_parser.run(dsl=dsl,
                    runtime_conf=runtime_conf,
                    pipeline_dsl=pipeline_dsl,
                    pipeline_runtime_conf=train_runtime_conf,
                    default_runtime_conf_prefix=default_runtime_conf_path,
-                   setting_conf_prefix=setting_conf_path,
+                   setting_conf_prefix=file_utils.get_federatedml_setting_conf_directory(),
                    mode=job_type)
     return dsl_parser
 

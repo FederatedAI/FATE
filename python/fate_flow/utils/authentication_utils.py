@@ -289,8 +289,11 @@ def check_component_constraint(job_runtime_conf, job_dsl):
                 roles = job_runtime_conf.get('role')
                 if 'guest' in roles.keys() and 'arbiter' in roles.keys() and 'host' in roles.keys():
                     for party_id in set(roles['guest']) & set(roles['arbiter']):
-                        if party_id not in roles['host'] or len(set(roles['guest']) & set(roles['arbiter'])) != len(roles['host']):
-                            raise Exception("{} component constraint party id, please check role config:{}".format(cpn, job_runtime_conf.get('role')))
+                        if party_id not in roles['host'] or len(set(roles['guest']) & set(roles['arbiter'])) != len(
+                                roles['host']):
+                            raise Exception(
+                                f"Please check roles {roles}\n:party id {party_id} not in host: {roles['host']} or"
+                                f" len(set(roles['guest']) & set(roles['arbiter'])) != len(roles['host'])")
 
 
 def get_all_components(dsl):
