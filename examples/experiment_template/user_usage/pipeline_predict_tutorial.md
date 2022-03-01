@@ -42,7 +42,7 @@ Codes below give details of building a model
                                              bin_num=16,
                                              task_type="classification",
                                              objective_param={"objective": "cross_entropy"},
-                                             encrypt_param={"method": "iterativeAffine"},
+                                             encrypt_param={"method": "paillier"},
                                              tree_param={"max_depth": 3})
 
     # add components to pipeline, in the order of task execution

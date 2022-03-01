@@ -412,8 +412,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         complete_secure: bool, if use complete_secure, when use complete secure, build first tree using only guest
                         features
 
-        sparse_optimization: bool, Available when encrypted method is 'iterativeAffine'
-                            An optimized mode for high-dimension, sparse data.
+        sparse_optimization: This parameter is abandoned due to the removal of IterativeAffine
 
         """
 
