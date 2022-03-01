@@ -1,6 +1,7 @@
 from fate_arch.abc import AddressABC
 from fate_arch.metastore.db_utils import StorageConnector
 
+
 class AddressBase(AddressABC):
     def __init__(self, connector_name=None):
         self.connector_name = connector_name
@@ -146,8 +147,13 @@ class HiveAddress(AddressBase):
 
     @property
     def connector(self):
-        return {"host": self.host, "port": self.port, "username": self.username, "password": self.password, "auth_mechanism": self.auth_mechanism, "database": self.database}
-
+        return {
+            "host": self.host,
+            "port": self.port,
+            "username": self.username,
+            "password": self.password,
+            "auth_mechanism": self.auth_mechanism,
+            "database": self.database}
 
 class LinkisHiveAddress(AddressBase):
     def __init__(self, host="127.0.0.1", port=9001, username='', database='', name='', run_type='hql',
