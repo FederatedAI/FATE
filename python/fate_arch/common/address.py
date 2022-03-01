@@ -1,13 +1,12 @@
 from fate_arch.abc import AddressABC
 from fate_arch.metastore.db_utils import StorageConnector
-from fate_arch.storage import StorageEngine
 
 
 class AddressBase(AddressABC):
     def __init__(self, connector_name=None):
         self.connector_name = connector_name
         if connector_name:
-            connector = StorageConnector(connector_name=connector_name, engine=self.storage_engine)
+            connector = StorageConnector(connector_name=connector_name)
             if connector.get_info():
                 for k, v in connector.get_info().items():
                     if hasattr(self, k) and v:
@@ -43,10 +42,6 @@ class StandaloneAddress(AddressBase):
     def connector(self):
         return {"home": self.home}
 
-    @property
-    def storage_engine(self):
-        return StorageEngine.STANDALONE
-
 
 class EggRollAddress(AddressBase):
     def __init__(self, home=None, name=None, namespace=None, connector_name=None):
@@ -68,10 +63,6 @@ class EggRollAddress(AddressBase):
     def connector(self):
         return {"home": self.home}
 
-    @property
-    def storage_engine(self):
-        return StorageEngine.EGGROLL
-
 
 class HDFSAddress(AddressBase):
     def __init__(self, name_node=None, path=None, connector_name=None):
@@ -92,10 +83,6 @@ class HDFSAddress(AddressBase):
     def connector(self):
         return {"name_node": self.name_node}
 
-    @property
-    def storage_engine(self):
-        return StorageEngine.HDFS
-
 
 class PathAddress(AddressBase):
     def __init__(self, path=None, connector_name=None):
@@ -110,10 +97,6 @@ class PathAddress(AddressBase):
 
     def __repr__(self):
         return self.__str__()
-
-    @property
-    def storage_engine(self):
-        return StorageEngine.PATH
 
 
 class MysqlAddress(AddressBase):
@@ -140,10 +123,6 @@ class MysqlAddress(AddressBase):
     def connector(self):
         return {"user": self.user, "passwd": self.passwd, "host": self.host, "port": self.port, "db": self.db}
 
-    @property
-    def storage_engine(self):
-        return StorageEngine.MYSQL
-
 
 class HiveAddress(AddressBase):
     def __init__(self, host=None, name=None, port=10000, username=None, database='default', auth_mechanism='PLAIN',
@@ -168,12 +147,13 @@ class HiveAddress(AddressBase):
 
     @property
     def connector(self):
-        return {"host": self.host, "port": self.port, "username": self.username, "password": self.password, "auth_mechanism": self.auth_mechanism, "database": self.database}
-
-    @property
-    def storage_engine(self):
-        return StorageEngine.HIVE
-
+        return {
+            "host": self.host,
+            "port": self.port,
+            "username": self.username,
+            "password": self.password,
+            "auth_mechanism": self.auth_mechanism,
+            "database": self.database}
 
 class LinkisHiveAddress(AddressBase):
     def __init__(self, host="127.0.0.1", port=9001, username='', database='', name='', run_type='hql',
@@ -198,10 +178,6 @@ class LinkisHiveAddress(AddressBase):
     def __repr__(self):
         return self.__str__()
 
-    @property
-    def storage_engine(self):
-        return StorageEngine.LINKIS_HIVE
-
 
 class LocalFSAddress(AddressBase):
     def __init__(self, path=None, connector_name=None):
@@ -216,7 +192,3 @@ class LocalFSAddress(AddressBase):
 
     def __repr__(self):
         return self.__str__()
-
-    @property
-    def storage_engine(self):
-        return StorageEngine.LOCALFS
