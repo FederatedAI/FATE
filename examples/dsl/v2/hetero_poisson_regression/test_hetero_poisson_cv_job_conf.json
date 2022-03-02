@@ -29,9 +29,6 @@
                 },
                 "max_iter": 10,
                 "early_stop": "weight_diff",
-                "encrypted_mode_calculator_param": {
-                    "mode": "fast"
-                },
                 "cv_param": {
                     "n_splits": 5,
                     "shuffle": false,

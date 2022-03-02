@@ -18,10 +18,8 @@ import argparse
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataTransform
-from pipeline.component import HeteroFastSecureBoost
+from pipeline.component import HeteroSecureBoost
 from pipeline.component import Intersection
-from pipeline.component import SBTTransformer
-from pipeline.component import LocalBaseline
 from pipeline.component import Reader
 from pipeline.interface import Data
 from pipeline.component import Evaluation
@@ -49,6 +47,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline = PipeLine().set_initiator(role="guest", party_id=guest).set_roles(guest=guest, host=host,)
 
     # set data reader and data-io
+
     reader_0, reader_1 = Reader(name="reader_0"), Reader(name="reader_1")
     reader_0.get_party_instance(role="guest", party_id=guest).component_param(table=guest_train_data)
     reader_0.get_party_instance(role="host", party_id=host).component_param(table=host_train_data)
@@ -71,40 +70,19 @@ def main(config="../../config.yaml", namespace=""):
     intersect_1 = Intersection(name="intersection_1")
 
     # secure boost component
-    hetero_fast_sbt_0 = HeteroFastSecureBoost(name="hetero_fast_sbt_0",
+    hetero_secure_boost_0 = HeteroSecureBoost(name="hetero_secure_boost_0",
                                               num_trees=3,
                                               task_type="classification",
                                               objective_param={"objective": "cross_entropy"},
-                                              encrypt_param={"method": "paillier"},
+                                              encrypt_param={"method": "Paillier"},
                                               tree_param={"max_depth": 3},
                                               validation_freqs=1,
-                                              work_mode='mix',
-                                              tree_num_per_party=1
+                                              EINI_inference=True,
+                                              EINI_random_mask=True
                                               )
 
     # evaluation component
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary")
-    evaluation_1 = Evaluation(name="evaluation_1", eval_type="binary")
-
-    # transformer
-    transformer_0 = SBTTransformer(name='sbt_transformer_0', dense_format=True)
-    transformer_1 = SBTTransformer(name='sbt_transformer_1', dense_format=True)
-
-    # local baseline
-    def get_local_baseline(idx):
-        return LocalBaseline(name="local_baseline_{}".format(idx), model_name="LogisticRegression",
-                             model_opts={"penalty": "l2", "tol": 0.0001, "C": 1.0, "fit_intercept": True,
-                                         "solver": "lbfgs", "max_iter": 50})
-
-    local_baseline_0 = get_local_baseline(0)
-    local_baseline_0.get_party_instance(role='guest', party_id=guest).component_param(need_run=True)
-    local_baseline_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)
-
-    local_baseline_1 = get_local_baseline(1)
-    local_baseline_1.get_party_instance(role='guest', party_id=guest).component_param(need_run=True)
-    local_baseline_1.get_party_instance(role='host', party_id=host).component_param(need_run=False)
-
-    evaluation_1.get_party_instance(role='host', party_id=host).component_param(need_run=False)
 
     pipeline.add_component(reader_0)
     pipeline.add_component(reader_1)
@@ -115,21 +93,38 @@ def main(config="../../config.yaml", namespace=""):
             data_transform_0.output.model))
     pipeline.add_component(intersect_0, data=Data(data=data_transform_0.output.data))
     pipeline.add_component(intersect_1, data=Data(data=data_transform_1.output.data))
-    pipeline.add_component(hetero_fast_sbt_0, data=Data(train_data=intersect_0.output.data,
-                                                        validate_data=intersect_1.output.data))
-    pipeline.add_component(transformer_0, data=Data(data=intersect_0.output.data),
-                           model=Model(isometric_model=hetero_fast_sbt_0.output.model))
-    pipeline.add_component(transformer_1, data=Data(data=intersect_0.output.data),
-                           model=Model(model=transformer_0.output.model))
-
-    pipeline.add_component(local_baseline_0, data=Data(data=transformer_0.output.data))
-    pipeline.add_component(local_baseline_1, data=Data(data=intersect_0.output.data))
-
-    pipeline.add_component(evaluation_0, data=Data(data=local_baseline_0.output.data))
-    pipeline.add_component(evaluation_1, data=Data(data=local_baseline_1.output.data))
+    pipeline.add_component(hetero_secure_boost_0, data=Data(train_data=intersect_0.output.data,
+                                                            validate_data=intersect_1.output.data))
+    pipeline.add_component(evaluation_0, data=Data(data=hetero_secure_boost_0.output.data))
 
     pipeline.compile()
     pipeline.fit()
+
+    print("fitting hetero secureboost done, result:")
+    print(pipeline.get_component("hetero_secure_boost_0").get_summary())
+
+    print('start to predict')
+
+    # predict
+    # deploy required components
+    pipeline.deploy_component([data_transform_0, intersect_0, hetero_secure_boost_0, evaluation_0])
+
+    predict_pipeline = PipeLine()
+    # add data reader onto predict pipeline
+    predict_pipeline.add_component(reader_0)
+    # add selected components from train pipeline onto predict pipeline
+    # specify data source
+    predict_pipeline.add_component(
+        pipeline, data=Data(
+            predict_input={
+                pipeline.data_transform_0.input.data: reader_0.output.data}))
+
+    # run predict model
+    predict_pipeline.predict()
+    predict_result = predict_pipeline.get_component("hetero_secure_boost_0").get_output_data()
+    print("Showing 10 data of predict result")
+    for ret in predict_result["data"][:10]:
+        print(ret)
 
 
 if __name__ == "__main__":

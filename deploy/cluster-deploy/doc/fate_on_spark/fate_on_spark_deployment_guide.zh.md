@@ -174,7 +174,7 @@ mkdir -p /data/projects/install
 cd /data/projects/install
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-miniconda3-4.5.4.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-fate-8.0.13.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-fate-8.0.28.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/openresty-1.17.8.2.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/pip-packages-fate-${version}.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_${version}_release.tar.gz
@@ -211,32 +211,32 @@ mkdir -p /data/projects/fate/data/mysql
 
 #解压缩软件包
 cd /data/projects/install
-tar xzvf mysql-*.tar.gz
+tar xf mysql-*.tar.gz
 cd mysql
-tar xf mysql-8.0.13.tar.gz -C /data/projects/fate/common/mysql
+tar xf mysql-8.0.28.tar.gz -C /data/projects/fate/common/mysql
 
 #配置设置
-mkdir -p /data/projects/fate/common/mysql/mysql-8.0.13/{conf,run,logs}
-cp service.sh /data/projects/fate/common/mysql/mysql-8.0.13/
-cp my.cnf /data/projects/fate/common/mysql/mysql-8.0.13/conf
+mkdir -p /data/projects/fate/common/mysql/mysql-8.0.28/{conf,run,logs}
+cp service.sh /data/projects/fate/common/mysql/mysql-8.0.28/
+cp my.cnf /data/projects/fate/common/mysql/mysql-8.0.28/conf
 
 #初始化
-cd /data/projects/fate/common/mysql/mysql-8.0.13/
-./bin/mysqld --initialize --user=app --basedir=/data/projects/fate/common/mysql/mysql-8.0.13 --datadir=/data/projects/fate/data/mysql > logs/init.log 2>&1
+cd /data/projects/fate/common/mysql/mysql-8.0.28/
+./bin/mysqld --initialize --user=app --basedir=/data/projects/fate/common/mysql/mysql-8.0.28 --datadir=/data/projects/fate/data/mysql > logs/init.log 2>&1
 cat logs/init.log |grep root@localhost
 #注意输出信息中root@localhost:后的是mysql用户root的初始密码，需要记录，后面修改密码需要用到
 
 #启动服务
-cd /data/projects/fate/common/mysql/mysql-8.0.13/
+cd /data/projects/fate/common/mysql/mysql-8.0.28/
 nohup ./bin/mysqld_safe --defaults-file=./conf/my.cnf --user=app >>logs/mysqld.log 2>&1 &
 
 #修改mysql root用户密码
-cd /data/projects/fate/common/mysql/mysql-8.0.13/
+cd /data/projects/fate/common/mysql/mysql-8.0.28/
 ./bin/mysqladmin -h 127.0.0.1 -P 3306 -S ./run/mysql.sock -u root -p password "fate_dev"
 Enter Password:【输入root初始密码】
 
 #验证登陆
-cd /data/projects/fate/common/mysql/mysql-8.0.13/
+cd /data/projects/fate/common/mysql/mysql-8.0.28/
 ./bin/mysql -u root -p -S ./run/mysql.sock
 Enter Password:【输入root修改后密码:fate_dev】
 ```
@@ -244,7 +244,7 @@ Enter Password:【输入root修改后密码:fate_dev】
 **2）建库授权和业务配置**
 
 ```bash
-cd /data/projects/fate/common/mysql/mysql-8.0.13/
+cd /data/projects/fate/common/mysql/mysql-8.0.28/
 ./bin/mysql -u root -p -S ./run/mysql.sock
 Enter Password:【fate_dev】
 

@@ -48,7 +48,6 @@ from federatedml.param.psi_param import PSIParam
 from federatedml.param.rsa_param import RsaParam
 from federatedml.param.sample_param import SampleParam
 from federatedml.param.sample_weight_param import SampleWeightParam
-from federatedml.param.sbt_feature_transformer_param import SBTTransformerParam
 from federatedml.param.scale_param import ScaleParam
 from federatedml.param.scorecard_param import ScorecardParam
 from federatedml.param.secure_add_example_param import SecureAddExampleParam
@@ -99,6 +98,5 @@ __all__ = [
     "ScorecardParam",
     "SecureInformationRetrievalParam",
     "SampleWeightParam",
-    "FeldmanVerifiableSumParam",
-    "SBTTransformerParam"
+    "FeldmanVerifiableSumParam"
 ]

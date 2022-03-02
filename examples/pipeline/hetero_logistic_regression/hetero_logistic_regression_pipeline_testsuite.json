@@ -45,14 +45,8 @@
         "hetero-lr-sample-weights": {
             "script": "pipeline-hetero-lr-sample-weights.py"
         },
-        "hetero-lr-sqn": {
-            "script": "pipeline-hetero-lr-sqn.py"
-        },
         "hetero-lr-sparse": {
             "script": "pipeline-hetero-lr-sparse.py"
-        },
-        "hetero-lr-ovr-sqn": {
-            "script": "pipeline-hetero-lr-ovr-sqn.py"
         },
         "hetero-lr-feature-engineering": {
             "script": "pipeline-hetero-lr-feature-engineering.py"
@@ -84,11 +78,11 @@
         "hetero-lr-early-stop": {
             "script": "pipeline-hetero-lr-early-stop.py"
         },
-        "hetero-lr-sparse-sqn": {
-            "script": "pipeline-hetero-lr-sparse-sqn.py"
-        },
         "hetero-lr-warm-start": {
             "script": "pipeline-hetero-lr-warm-start.py"
+        },
+        "hetero-lr-batch-random-strategy": {
+            "script": "pipeline-hetero-lr-batch-random-strategy.py"
         }
     }
 }

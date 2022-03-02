@@ -105,7 +105,7 @@ class HeteroNNParam(BaseParam):
                  early_stop="diff",
                  tol=1e-5,
                  encrypt_param=EncryptParam(),
-                 encrypted_mode_calculator_param=EncryptedModeCalculatorParam(mode="confusion_opt"),
+                 encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  predict_param=PredictParam(),
                  cv_param=CrossValidationParam(),
                  validation_freqs=None,

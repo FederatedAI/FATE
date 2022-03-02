@@ -37,7 +37,7 @@ venv
 /jobs/
 /audit/
 .vscode/*
-/eggroll/
+# /eggroll/
 # /fateboard/
 /doc/federatedml_component/params/
 

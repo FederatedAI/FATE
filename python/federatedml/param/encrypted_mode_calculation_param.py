@@ -17,6 +17,7 @@
 #  limitations under the License.
 #
 from federatedml.param.base_param import BaseParam
+from federatedml.util import LOGGER
 
 
 class EncryptedModeCalculatorParam(BaseParam):
@@ -42,11 +43,10 @@ class EncryptedModeCalculatorParam(BaseParam):
                                                 ["strict", "fast", "balance", "confusion_opt", "confusion_opt_balance"],
                                                 descr)
 
-        if self.mode in ["balance", "confusion_opt_balance"]:
-            if type(self.re_encrypted_rate).__name__ not in ["int", "long", "float"]:
-                raise ValueError("re_encrypted_rate should be a numeric number")
-
-            if not 0.0 <= self.re_encrypted_rate <= 1:
-                raise ValueError("re_encrypted_rate should  in [0, 1]")
+        if self.mode != "strict":
+            LOGGER.warning("encrypted_mode_calculator will be remove in later version, "
+                           "but in current version user can still use it, but it only supports strict mode, "
+                           "other mode will be reset to strict for compatibility")
+            self.mode = "strict"
 
         return True

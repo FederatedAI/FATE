@@ -112,7 +112,8 @@ class LogisticParam(LinearModelParam):
 
     def __init__(self, penalty='L2',
                  tol=1e-4, alpha=1.0, optimizer='rmsprop',
-                 batch_size=-1, learning_rate=0.01, init_param=InitParam(),
+                 batch_size=-1, shuffle=True, batch_strategy="full", masked_rate=5,
+                 learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, early_stop='diff', encrypt_param=EncryptParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True,
@@ -122,18 +123,32 @@ class LogisticParam(LinearModelParam):
                  use_first_metric_only=False,
                  callback_param=CallbackParam()
                  ):
-        super(LogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
-                                            batch_size=batch_size, learning_rate=learning_rate,
-                                            init_param=init_param, max_iter=max_iter, early_stop=early_stop,
-                                            encrypt_param=encrypt_param, cv_param=cv_param, decay=decay,
-                                            decay_sqrt=decay_sqrt, validation_freqs=validation_freqs,
-                                            early_stopping_rounds=early_stopping_rounds,
-                                            stepwise_param=stepwise_param, metrics=metrics,
-                                            use_first_metric_only=use_first_metric_only,
-                                            floating_point_precision=floating_point_precision,
-                                            callback_param=callback_param)
+        super(LogisticParam, self).__init__()
+        self.penalty = penalty
+        self.tol = tol
+        self.alpha = alpha
+        self.optimizer = optimizer
+        self.batch_size = batch_size
+        self.learning_rate = learning_rate
+        self.init_param = copy.deepcopy(init_param)
+        self.max_iter = max_iter
+        self.early_stop = early_stop
+        self.encrypt_param = encrypt_param
+        self.shuffle = shuffle
+        self.batch_strategy = batch_strategy
+        self.masked_rate = masked_rate
         self.predict_param = copy.deepcopy(predict_param)
+        self.cv_param = copy.deepcopy(cv_param)
+        self.decay = decay
+        self.decay_sqrt = decay_sqrt
         self.multi_class = multi_class
+        self.validation_freqs = validation_freqs
+        self.stepwise_param = copy.deepcopy(stepwise_param)
+        self.early_stopping_rounds = early_stopping_rounds
+        self.metrics = metrics or []
+        self.use_first_metric_only = use_first_metric_only
+        self.floating_point_precision = floating_point_precision
+        self.callback_param = copy.deepcopy(callback_param)
 
     def check(self):
         descr = "logistic_param's"
@@ -174,7 +189,7 @@ class HomoLogisticParam(LogisticParam):
                  encrypt_param=EncryptParam(method=None), re_encrypt_batches=2,
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True,
-                 aggregate_iters=1, validation_freqs=None,
+                 aggregate_iters=1, multi_class='ovr', validation_freqs=None,
                  early_stopping_rounds=None,
                  metrics=['auc', 'ks'],
                  use_first_metric_only=False,
@@ -186,7 +201,7 @@ class HomoLogisticParam(LogisticParam):
                                                 learning_rate=learning_rate,
                                                 init_param=init_param, max_iter=max_iter, early_stop=early_stop,
                                                 encrypt_param=encrypt_param, predict_param=predict_param,
-                                                cv_param=cv_param,
+                                                cv_param=cv_param, multi_class=multi_class,
                                                 validation_freqs=validation_freqs,
                                                 decay=decay, decay_sqrt=decay_sqrt,
                                                 early_stopping_rounds=early_stopping_rounds,
@@ -228,7 +243,8 @@ class HomoLogisticParam(LogisticParam):
 class HeteroLogisticParam(LogisticParam):
     def __init__(self, penalty='L2',
                  tol=1e-4, alpha=1.0, optimizer='rmsprop',
-                 batch_size=-1, learning_rate=0.01, init_param=InitParam(),
+                 batch_size=-1, shuffle=True, batch_strategy="full", masked_rate=5,
+                 learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, early_stop='diff',
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
@@ -240,7 +256,7 @@ class HeteroLogisticParam(LogisticParam):
                  callback_param=CallbackParam()
                  ):
         super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
-                                                  batch_size=batch_size,
+                                                  batch_size=batch_size, shuffle=shuffle, batch_strategy=batch_strategy, masked_rate=masked_rate,
                                                   learning_rate=learning_rate,
                                                   init_param=init_param, max_iter=max_iter, early_stop=early_stop,
                                                   predict_param=predict_param, cv_param=cv_param,

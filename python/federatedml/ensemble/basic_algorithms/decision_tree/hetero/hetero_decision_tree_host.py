@@ -1,5 +1,4 @@
 import numpy as np
-import functools
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.node import Node
 from federatedml.util import LOGGER
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import DecisionTreeModelMeta

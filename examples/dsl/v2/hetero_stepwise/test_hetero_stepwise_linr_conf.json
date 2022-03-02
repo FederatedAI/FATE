@@ -31,9 +31,6 @@
                 },
                 "max_iter": 3,
                 "early_stop": "diff",
-                "encrypted_mode_calculator_param": {
-                    "mode": "fast"
-                },
                 "stepwise_param": {
                     "score_name": "AIC",
                     "direction": "backward",

@@ -65,8 +65,6 @@
                     "callbacks": [
                         "ModelCheckpoint"
                     ],
-                    "validation_freqs": 1,
-                    "early_stopping_rounds": 1,
                     "metrics": null,
                     "use_first_metric_only": false,
                     "save_freq": 1

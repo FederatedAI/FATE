@@ -41,6 +41,7 @@ def main(config="../../config.yaml", namespace=""):
     host_train_data = [{"name": "dvisits_hetero_host", "namespace": f"experiment{namespace}"},
                        {"name": "dvisits_hetero_host", "namespace": f"experiment{namespace}"}]
 
+
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host, arbiter=arbiter)
 
     reader_0 = Reader(name="reader_0")
@@ -75,12 +76,11 @@ def main(config="../../config.yaml", namespace=""):
                                                      "metrics": [
                                                          "mean_absolute_error",
                                                          "root_mean_squared_error"
-                                     ],
-                                         "use_first_metric_only": False,
-                                         "save_freq": 1
-                                     },
-                                     init_param={"init_method": "zeros"},
-                                     encrypted_mode_calculator_param={"mode": "fast"})
+                                                     ],
+                                                     "use_first_metric_only": False,
+                                                     "save_freq": 1
+                                                     },
+                                     init_param={"init_method": "zeros"})
 
     pipeline.add_component(reader_0)
     pipeline.add_component(reader_1)
