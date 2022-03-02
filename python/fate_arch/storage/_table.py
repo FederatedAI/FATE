@@ -191,6 +191,7 @@ class StorageTableMeta(StorageTableMetaABC):
         self.count = None
         self.part_of_data = None
         self.description = None
+        self.origin = None
         self.create_time = None
         self.update_time = None
         self.read_access_time = None

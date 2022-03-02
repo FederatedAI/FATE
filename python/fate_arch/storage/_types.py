@@ -16,6 +16,13 @@
 DEFAULT_ID_DELIMITER = ","
 
 
+class StorageTableOrigin(object):
+    TABLE_BIND = "table_bind"
+    READER = "reader"
+    UPLOAD = "upload"
+    OUTPUT = "output"
+
+
 class StorageEngine(object):
     STANDALONE = 'STANDALONE'
     EGGROLL = 'EGGROLL'

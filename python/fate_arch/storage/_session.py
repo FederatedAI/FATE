@@ -22,7 +22,7 @@ from fate_arch.common.data_utils import default_output_fs_path
 from fate_arch.common.log import getLogger
 from fate_arch.storage._table import StorageTableMeta
 from fate_arch.storage._types import StorageEngine, EggRollStoreType, StandaloneStoreType, HDFSStoreType, HiveStoreType, \
-    LinkisHiveStoreType, LocalFSStoreType, PathStoreType
+    LinkisHiveStoreType, LocalFSStoreType, PathStoreType, StorageTableOrigin
 from fate_arch.relation_ship import Relationship
 from fate_arch.common.base_utils import current_timestamp
 
@@ -123,6 +123,7 @@ class StorageSessionBase(StorageSessionABC):
         table_meta.part_of_data = part_of_data if part_of_data else {}
         table_meta.count = table_count
         table_meta.write_access_time = current_timestamp()
+        table_meta.origin = StorageTableOrigin.OUTPUT
         table_meta.create()
         return table_meta
 
