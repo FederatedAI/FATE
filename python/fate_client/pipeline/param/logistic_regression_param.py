@@ -103,7 +103,8 @@ class LogisticParam(BaseParam):
 
     def __init__(self, penalty='L2',
                  tol=1e-5, alpha=1.0, optimizer='sgd',
-                 batch_size=-1, learning_rate=0.01, init_param=InitParam(),
+                 batch_size=-1, shuffle=True, batch_strategy="full", masked_rate=5,
+                 learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, early_stop='diff', encrypt_param=EncryptParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True,
@@ -118,6 +119,9 @@ class LogisticParam(BaseParam):
         self.alpha = alpha
         self.optimizer = optimizer
         self.batch_size = batch_size
+        self.shuffle = shuffle
+        self.batch_strategy = batch_strategy
+        self.masked_rate = masked_rate
         self.learning_rate = learning_rate
         self.init_param = copy.deepcopy(init_param)
         self.max_iter = max_iter

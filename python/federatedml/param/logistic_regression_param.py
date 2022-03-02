@@ -27,6 +27,7 @@ from federatedml.param.predict_param import PredictParam
 from federatedml.param.stepwise_param import StepwiseParam
 from federatedml.param.sqn_param import StochasticQuasiNewtonParam
 from federatedml.util import consts
+from federatedml.util import LOGGER
 
 
 class LogisticParam(BaseParam):
@@ -48,8 +49,19 @@ class LogisticParam(BaseParam):
     optimizer : str, 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd', 'sqn' or 'adagrad', default: 'rmsprop'
         Optimize method, if 'sqn' has been set, sqn_param will take effect. Currently, 'sqn' support hetero mode only.
 
+    batch_strategy : str, {'full', 'random'}, default: "full"
+        Strategy to generate batch data.
+            a) full: use full data to generate batch_data, batch_nums every iteration is ceil(data_size /  batch_size)
+            b) random: select data randomly from full data, batch_num will be 1 every iteration.
+
     batch_size : int, default: -1
         Batch size when updating model. -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
+
+    shuffle : bool, default: True
+        Work only in hetero logistic regression, batch data will be shuffle in every iteration.
+
+    masked_rate: int, float: default: 5
+        Use masked data to enhance security of hetero logistic regression
 
     learning_rate : float, default: 0.01
         Learning rate
@@ -103,7 +115,8 @@ class LogisticParam(BaseParam):
 
     def __init__(self, penalty='L2',
                  tol=1e-4, alpha=1.0, optimizer='rmsprop',
-                 batch_size=-1, learning_rate=0.01, init_param=InitParam(),
+                 batch_size=-1, shuffle=True, batch_strategy="full", masked_rate=5,
+                 learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, early_stop='diff', encrypt_param=EncryptParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True,
@@ -118,6 +131,9 @@ class LogisticParam(BaseParam):
         self.alpha = alpha
         self.optimizer = optimizer
         self.batch_size = batch_size
+        self.shuffle = shuffle
+        self.batch_strategy = batch_strategy
+        self.masked_rate = masked_rate
         self.learning_rate = learning_rate
         self.init_param = copy.deepcopy(init_param)
         self.max_iter = max_iter
@@ -161,16 +177,27 @@ class LogisticParam(BaseParam):
                 "logistic_param's optimizer {} not supported, should be str type".format(self.optimizer))
         else:
             self.optimizer = self.optimizer.lower()
-            if self.optimizer not in ['sgd', 'rmsprop', 'adam', 'adagrad', 'nesterov_momentum_sgd', 'sqn']:
+            if self.optimizer == "sqn":
+                LOGGER.warning("sqn is deprecated in fate-v1.5.x, optimizer will be reset to sgd for compatibility")
+                self.optimizer = "sgd"
+            if self.optimizer not in ['sgd', 'rmsprop', 'adam', 'adagrad', 'nesterov_momentum_sgd']:
                 raise ValueError(
                     "logistic_param's optimizer not supported, optimizer should be"
-                    " 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd', 'sqn' or 'adagrad'")
+                    " 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd' or 'adagrad'")
 
         if self.batch_size != -1:
             if type(self.batch_size).__name__ not in ["int"] \
                     or self.batch_size < consts.MIN_BATCH_SIZE:
                 raise ValueError(descr + " {} not supported, should be larger than {} or "
                                          "-1 represent for all data".format(self.batch_size, consts.MIN_BATCH_SIZE))
+
+        if not isinstance(self.masked_rate, (float, int)) or self.masked_rate < 0:
+            raise ValueError("masked rate should be non-negative numeric number")
+        if not isinstance(self.batch_strategy, str) or self.batch_strategy.lower() not in ["full", "random"]:
+            raise ValueError("batch strategy should be full or random")
+        self.batch_strategy = self.batch_strategy.lower()
+        if not isinstance(self.shuffle, bool):
+            raise ValueError("shuffle define in batch should be boolean type")
 
         if not isinstance(self.learning_rate, (float, int)):
             raise ValueError(
@@ -302,16 +329,14 @@ class HomoLogisticParam(LogisticParam):
             if self.penalty == consts.L1_PENALTY:
                 raise ValueError("Paillier encryption mode supports 'L2' penalty or None only.")
 
-        if self.optimizer == 'sqn':
-            raise ValueError("'sqn' optimizer is supported for hetero mode only.")
-
         return True
 
 
 class HeteroLogisticParam(LogisticParam):
     def __init__(self, penalty='L2',
                  tol=1e-4, alpha=1.0, optimizer='rmsprop',
-                 batch_size=-1, learning_rate=0.01, init_param=InitParam(),
+                 batch_size=-1, shuffle=True, batch_strategy="full", masked_rate=5,
+                 learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, early_stop='diff',
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
@@ -321,7 +346,8 @@ class HeteroLogisticParam(LogisticParam):
                  use_first_metric_only=False, stepwise_param=StepwiseParam()
                  ):
         super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
-                                                  batch_size=batch_size,
+                                                  batch_size=batch_size, shuffle=True,
+                                                  batch_strategy="full", masked_rate=5,
                                                   learning_rate=learning_rate,
                                                   init_param=init_param, max_iter=max_iter, early_stop=early_stop,
                                                   predict_param=predict_param, cv_param=cv_param,

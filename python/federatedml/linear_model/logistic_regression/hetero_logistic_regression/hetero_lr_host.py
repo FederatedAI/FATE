@@ -99,7 +99,11 @@ class HeteroLRHost(HeteroLRBase):
         self.header = self.get_header(data_instances)
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
-        self.batch_generator.initialize_batch_generator(data_instances)
+        model_shape = self.get_features_shape(data_instances)
+        self.batch_generator.initialize_batch_generator(data_instances, shuffle=self.shuffle)
+        if self.batch_generator.batch_masked:
+            self.batch_generator.verify_batch_legality(least_batch_size=model_shape)
+
         self.gradient_loss_operator.set_total_batch_nums(self.batch_generator.batch_nums)
 
         self.encrypted_calculator = [EncryptModeCalculator(self.cipher_operator,
@@ -108,7 +112,6 @@ class HeteroLRHost(HeteroLRBase):
                                      in range(self.batch_generator.batch_nums)]
 
         LOGGER.info("Start initialize model.")
-        model_shape = self.get_features_shape(data_instances)
         if self.init_param_obj.fit_intercept:
             self.init_param_obj.fit_intercept = False
         w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
@@ -134,7 +137,8 @@ class HeteroLRHost(HeteroLRBase):
                 self.update_local_model(fore_gradient, data_instances, self.model_weights.coef_, **training_info)
 
                 self.gradient_loss_operator.compute_loss(self.model_weights, self.optimizer,
-                                                         self.n_iter_, batch_index, self.cipher_operator)
+                                                         self.n_iter_, batch_index, self.cipher_operator,
+                                                         batch_masked=self.batch_generator.batch_masked)
 
                 self.model_weights = self.optimizer.update_model(self.model_weights, optim_host_gradient)
                 batch_index += 1
