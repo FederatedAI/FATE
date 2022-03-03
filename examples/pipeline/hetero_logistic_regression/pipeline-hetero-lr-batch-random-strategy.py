@@ -37,15 +37,14 @@ def main(config="../../config.yaml", namespace=""):
     lr_param = {
         "name": "hetero_lr_0",
         "penalty": "L2",
-        "optimizer": "sqn",
+        "optimizer": "rmsprop",
         "tol": 0.0001,
-        "alpha": 1e-05,
+        "alpha": 0.01,
         "max_iter": 30,
         "early_stop": "diff",
-        "batch_size": 5000,
+        "batch_size": 320,
+        "batch_strategy": "random",
         "learning_rate": 0.15,
-        "decay": 0.3,
-        "decay_sqrt": True,
         "init_param": {
             "init_method": "zeros"
         },
@@ -60,10 +59,20 @@ def main(config="../../config.yaml", namespace=""):
             "shuffle": False,
             "random_seed": 103,
             "need_cv": False
+        },
+        "callback_param": {
+            "callbacks": ["ModelCheckpoint"],
+            "save_freq": "epoch"
         }
     }
 
-    pipeline = common_tools.make_normal_dsl(config, namespace, lr_param, is_dense=False)
+    pipeline = common_tools.make_normal_dsl(config, namespace, lr_param)
+    # dsl_json = predict_pipeline.get_predict_dsl()
+    # conf_json = predict_pipeline.get_predict_conf()
+    # import json
+    # json.dump(dsl_json, open('./hetero-lr-normal-predict-dsl.json', 'w'), indent=4)
+    # json.dump(conf_json, open('./hetero-lr-normal-predict-conf.json', 'w'), indent=4)
+
     # fit model
     pipeline.fit()
     # query component summary

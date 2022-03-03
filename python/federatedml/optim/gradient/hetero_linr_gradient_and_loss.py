@@ -93,14 +93,14 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         define forward_hess = (1/N)*∑(x * s)
         """
         forwards = data_instances.mapValues(
-            lambda v: (np.dot(v.features, delta_s.coef_) + delta_s.intercept_))
+            lambda v: (vec_dot(v.features, delta_s.coef_) + delta_s.intercept_))
         for host_forward in host_forwards:
             forwards = forwards.join(host_forward, lambda g, h: g + h)
         if self.use_sample_weight:
             forwards = forwards.join(data_instances, lambda h, d: h * d.weight)
-        hess_vector = hetero_linear_model_gradient.compute_gradient(data_instances,
-                                                                    forwards,
-                                                                    delta_s.fit_intercept)
+        hess_vector = self.compute_gradient(data_instances,
+                                            forwards,
+                                            delta_s.fit_intercept)
         return forwards, np.array(hess_vector)
 
 

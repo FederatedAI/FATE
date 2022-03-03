@@ -61,7 +61,6 @@ def main(config="../../config.yaml", namespace=""):
                                      batch_size=-1, learning_rate=0.15, decay=0.0,
                                      decay_sqrt=False, alpha=0.01,
                                      init_param={"init_method": "zeros"},
-                                     encrypted_mode_calculator_param={"mode": "fast"},
                                      stepwise_param={"score_name": "AIC", "direction": "both",
                                                      "need_stepwise": True, "max_step": 1, "nvmin": 2
                                                      })

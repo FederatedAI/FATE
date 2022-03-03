@@ -35,6 +35,10 @@
             "conf": "./test_hetero_linr_predict_job_conf.json",
             "dsl": "./test_hetero_linr_predict_job_dsl.json"
         },
+        "linr-train-sqn": {
+            "conf": "./test_hetero_linr_train_sqn_job_conf.json",
+            "dsl": "./test_hetero_linr_train_sqn_job_dsl.json"
+        },
         "linr-warm-start": {
             "conf": "./test_hetero_linr_warm_start_job_conf.json",
             "dsl": "./test_hetero_linr_warm_start_job_dsl.json"
@@ -63,6 +67,10 @@
         "linr_sparse": {
             "conf": "./test_hetero_linr_train_sparse_job_conf.json",
             "dsl": "./test_hetero_linr_train_sparse_job_dsl.json"
+        },
+        "linr_sparse_sqn": {
+            "conf": "./test_hetero_linr_train_sparse_sqn_job_conf.json",
+            "dsl": "./test_hetero_linr_train_sparse_sqn_job_dsl.json"
         },
         "linr_sample_weight": {
             "conf": "./test_hetero_linr_train_sample_weight_job_conf.json",

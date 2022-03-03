@@ -79,8 +79,7 @@ def main(config="../../config.yaml", namespace=""):
                                          "use_first_metric_only": False,
                                          "save_freq": 1
                                      },
-                                     init_param={"init_method": "zeros"},
-                                     encrypted_mode_calculator_param={"mode": "fast"})
+                                     init_param={"init_method": "zeros"})
 
     pipeline.add_component(reader_0)
     pipeline.add_component(reader_1)

@@ -79,7 +79,6 @@ def main(config="../../config.yaml", namespace=""):
                                alpha=0.01, max_iter=20, early_stop="weight_diff", batch_size=-1,
                                learning_rate=0.15, decay=0.0, decay_sqrt=False,
                                init_param={"init_method": "zeros"},
-                               encrypted_mode_calculator_param={"mode": "fast"},
                                callback_param={"callbacks": ["EarlyStopping", "PerformanceEvaluate"],
                                                "validation_freqs": 1,
                                                "early_stopping_rounds": 5,

@@ -59,8 +59,8 @@ class DenseFeatureTransformer(object):
         self.outlier_impute = data_transform_param.outlier_impute
         self.outlier_replace_value = data_transform_param.outlier_replace_value
         self.with_label = data_transform_param.with_label
-        self.label_name = data_transform_param.label_name.lower()
-        self.label_type = data_transform_param.label_type
+        self.label_name = data_transform_param.label_name.lower() if self.with_label else None
+        self.label_type = data_transform_param.label_type if self.with_label else None
         self.output_format = data_transform_param.output_format
         self.missing_impute_rate = None
         self.outlier_replace_rate = None
@@ -443,10 +443,10 @@ class SparseFeatureTransformer(object):
         self.output_format = data_transform_param.output_format
         self.header = None
         self.sid_name = "sid"
-        self.label_name = data_transform_param.label_name
         self.with_match_id = data_transform_param.with_match_id
         self.match_id_name = "match_id" if self.with_match_id else None
         self.with_label = data_transform_param.with_label
+        self.label_name = data_transform_param.label_name if self.with_label else None
 
     def get_max_feature_index(self, line, delimitor=' '):
         if line.strip() == '':
@@ -621,7 +621,7 @@ class SparseTagTransformer(object):
         self.tag_with_value = data_transform_param.tag_with_value
         self.tag_value_delimitor = data_transform_param.tag_value_delimitor
         self.with_label = data_transform_param.with_label
-        self.label_type = data_transform_param.label_type
+        self.label_type = data_transform_param.label_type if self.with_label else None
         self.output_format = data_transform_param.output_format
         self.header = None
         self.sid_name = "sid"
@@ -672,8 +672,6 @@ class SparseTagTransformer(object):
         schema = make_schema(self.header, self.sid_name, self.label_name, self.match_id_name)
         set_schema(data_instance, schema)
 
-        for k, inst in data_instance.collect():
-            LOGGER.debug(f"mgq-debug : {inst.inst_id}")
         return data_instance
 
     @staticmethod
@@ -1030,8 +1028,9 @@ def save_data_transform_model(input_format="dense",
     model_meta.tag_with_value = tag_with_value
     model_meta.tag_value_delimitor = tag_value_delimitor
     model_meta.with_label = with_label
-    model_meta.label_name = label_name
-    model_meta.label_type = label_type
+    if with_label:
+        model_meta.label_name = label_name
+        model_meta.label_type = label_type
     model_meta.output_format = output_format
     model_meta.with_match_id = with_match_id
 
@@ -1058,8 +1057,8 @@ def load_data_transform_model(model_name="DataTransform",
     tag_with_value = model_meta.tag_with_value
     tag_value_delimitor = model_meta.tag_value_delimitor
     with_label = model_meta.with_label
-    label_name = model_meta.label_name
-    label_type = model_meta.label_type
+    label_name = model_meta.label_name if with_label else None
+    label_type = model_meta.label_type if with_label else None
     with_match_id = model_meta.with_match_id
     output_format = model_meta.output_format
 

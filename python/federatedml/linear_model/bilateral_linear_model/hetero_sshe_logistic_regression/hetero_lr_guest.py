@@ -72,8 +72,9 @@ class HeteroLRGuest(HeteroSSHEGuestBase):
 
         return sigmoid_z
 
-    def forward(self, weights, features, suffix, cipher):
-        """if not self.reveal_every_iter:
+    def forward(self, weights, features, labels, suffix, cipher):
+    """
+        if not self.reveal_every_iter:
             LOGGER.info(f"[forward]: Calculate z in share...")
             w_self, w_remote = weights
             z = self._cal_z_in_share(w_self, w_remote, features, suffix, cipher)
@@ -90,24 +91,20 @@ class HeteroLRGuest(HeteroSSHEGuestBase):
         self.wx_self = z
         self.wx_remote = remote_z
         """
-        self._cal_z(weights, features, suffix, cipher)
-        sigmoid_z = self._compute_sigmoid(self.wx_self, self.wx_remote)
+    self._cal_z(weights, features, suffix, cipher)
+    sigmoid_z = self._compute_sigmoid(self.wx_self, self.wx_remote)
 
-        self.encrypted_wx = self.wx_self + self.wx_remote
+    self.encrypted_wx = self.wx_self + self.wx_remote
 
-        self.encrypted_error = sigmoid_z - self.labels
-        if self.weight:
-            sigmoid_z = sigmoid_z * self.weight
-            # self.encrypted_wx = self.encrypted_wx * self.weight
-            self.encrypted_error = self.encrypted_error * self.weight
+    self.encrypted_error = sigmoid_z - labels
 
-        tensor_name = ".".join(("sigmoid_z",) + suffix)
-        shared_sigmoid_z = SecureMatrix.from_source(tensor_name,
-                                                    sigmoid_z,
-                                                    cipher,
-                                                    self.fixedpoint_encoder.n,
-                                                    self.fixedpoint_encoder)
-        return shared_sigmoid_z
+    tensor_name = ".".join(("sigmoid_z",) + suffix)
+    shared_sigmoid_z = SecureMatrix.from_source(tensor_name,
+                                                sigmoid_z,
+                                                cipher,
+                                                self.fixedpoint_encoder.n,
+                                                self.fixedpoint_encoder)
+    return shared_sigmoid_z
 
     """
     def backward(self, error, features, suffix, cipher):
@@ -140,7 +137,7 @@ class HeteroLRGuest(HeteroSSHEGuestBase):
         return gb2, ga2_2
     """
 
-    def compute_loss(self, weights, suffix, cipher=None):
+    def compute_loss(self, weights, labels, suffix, cipher=None):
         """
           Use Taylor series expand log loss:
           Loss = - y * log(h(x)) - (1-y) * log(1 - h(x)) where h(x) = 1/(1+exp(-wx))
@@ -148,7 +145,7 @@ class HeteroLRGuest(HeteroSSHEGuestBase):
         """
         LOGGER.info(f"[compute_loss]: Calculate loss ...")
         wx = (-0.5 * self.encrypted_wx).reduce(operator.add)
-        ywx = (self.encrypted_wx * self.labels).reduce(operator.add)
+        ywx = (self.encrypted_wx * labels).reduce(operator.add)
 
         wx_square = (2 * self.wx_remote * self.wx_self).reduce(operator.add) + \
                     (self.wx_self * self.wx_self).reduce(operator.add)

@@ -62,7 +62,7 @@ class LinearModelWeights(ListWeights):
             _w = []
             for k, v in enumerate(self._weights):
                 _w.append(func(self._weights[k], other._weights[k]))
-            return LinearModelWeights(_w, self.fit_intercept)
+            return LinearModelWeights(_w, self.fit_intercept, self.raise_overflow_error)
 
     def map_values(self, func, inplace):
         if inplace:

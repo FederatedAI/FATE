@@ -66,7 +66,6 @@ def main(config="../../config.yaml", namespace=""):
                                      alpha=100.0, batch_size=-1, learning_rate=0.01,
                                      exposure_colname="exposure", decay_sqrt=False,
                                      init_param={"init_method": "zeros"},
-                                     encrypted_mode_calculator_param={"mode": "fast"},
                                      cv_param={
                                          "n_splits": 5,
                                          "shuffle": False,

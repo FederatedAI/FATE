@@ -58,7 +58,6 @@ def main(config="../../config.yaml", namespace=""):
                                      exposure_colname="exposure", optimizer="rmsprop",
                                      penalty="L2", decay_sqrt=False, tol=0.001,
                                      init_param={"init_method": "zeros"},
-                                     encrypted_mode_calculator_param={"mode": "fast"}
                                      )
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="regression", pos_label=1)

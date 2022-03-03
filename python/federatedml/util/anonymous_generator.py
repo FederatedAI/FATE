@@ -33,6 +33,6 @@ def generate_anonymous(fid, party_id=None, role=None, model=None):
 def reconstruct_fid(encoded_name):
     try:
         col_index = int(encoded_name.split('_')[-1])
-    except IndexError or ValueError:
+    except (IndexError, ValueError):
         raise RuntimeError(f"Decode name: {encoded_name} is not a valid value")
     return col_index

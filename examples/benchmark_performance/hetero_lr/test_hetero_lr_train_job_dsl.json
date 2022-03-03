@@ -169,7 +169,7 @@
             "input": {
                 "data": {
                     "data": [
-                        "hetero_feature_selection_0.data"
+                        "intersection_0.data"
                     ]
                 }
             },
@@ -182,12 +182,13 @@
                 ]
             }
         },
+
         "hetero_scale_1": {
             "module": "FeatureScale",
             "input": {
                 "data": {
                     "data": [
-                        "hetero_feature_selection_1.data"
+                        "intersection_1.data"
                     ]
                 },
                 "model": [

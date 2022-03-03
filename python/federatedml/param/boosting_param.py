@@ -525,7 +525,24 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
 
                     multi_output every leaf give a multi-dimension predict, using multi_mode can save time
                                  by learning a model with less trees.
-        """
+
+        EINI_inference: bool
+            default is False, this option changes the inference algorithm used in predict tasks.
+            a secure prediction method that hides decision path to enhance security in the inference
+            step. This method is insprired by EINI inference algorithm.
+
+        EINI_random_mask: bool
+            default is False
+            multiply predict result by a random float number to confuse original predict result. This operation further
+            enhances the security of naive EINI algorithm.
+
+        EINI_complexity_check: bool
+            default is False
+            check the complexity of tree models when running EINI algorithms. Complexity models are easy to hide their
+            decision path, while simple tree models are not, therefore if a tree model is too simple, it is not allowed
+            to run EINI predict algorithms.
+
+    """
 
     def __init__(self, tree_param: DecisionTreeParam = DecisionTreeParam(), task_type=consts.CLASSIFICATION,
                  objective_param=ObjectiveParam(),
@@ -540,7 +557,8 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                  sparse_optimization=False, run_goss=False, top_rate=0.2, other_rate=0.1,
                  cipher_compress_error=None, cipher_compress=True, new_ver=True, boosting_strategy=consts.STD_TREE,
                  work_mode=None, tree_num_per_party=1, guest_depth=2, host_depth=3, callback_param=CallbackParam(),
-                 multi_mode=consts.SINGLE_OUTPUT):
+                 multi_mode=consts.SINGLE_OUTPUT, EINI_inference=False, EINI_random_mask=False,
+                 EINI_complexity_check=False):
 
         super(HeteroSecureBoostParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                      subsample_feature_rate, n_iter_no_change, tol, encrypt_param,
@@ -561,6 +579,9 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.cipher_compress_error = cipher_compress_error
         self.cipher_compress = cipher_compress
         self.new_ver = new_ver
+        self.EINI_inference = EINI_inference
+        self.EINI_random_mask = EINI_random_mask
+        self.EINI_complexity_check = EINI_complexity_check
         self.boosting_strategy = boosting_strategy
         self.work_mode = work_mode
         self.tree_num_per_party = tree_num_per_party
@@ -585,6 +606,14 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.check_positive_number(self.top_rate, 'top_rate')
         self.check_boolean(self.new_ver, 'code version switcher')
         self.check_boolean(self.cipher_compress, 'cipher compress')
+        self.check_boolean(self.EINI_inference, 'eini inference')
+        self.check_boolean(self.EINI_random_mask, 'eini random mask')
+        self.check_boolean(self.EINI_complexity_check, 'eini complexity check')
+
+        if self.EINI_inference and self.EINI_random_mask:
+            LOGGER.warning('To protect the inference decision path, notice that current setting will multiply'
+                           ' predict result by a random number, hence SecureBoost will return confused predict scores'
+                           ' that is not the same as the original predict scores')
 
         if self.work_mode is not None:
             self.boosting_strategy = self.work_mode

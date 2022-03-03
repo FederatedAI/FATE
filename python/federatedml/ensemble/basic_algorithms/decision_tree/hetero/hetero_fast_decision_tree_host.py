@@ -266,12 +266,16 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
     def process_leaves_info(self):
 
         # remove g/h info and rename leaves
+        # record node info
 
         for node in self.tree_node:
             node.sum_grad = None
             node.sum_hess = None
             if node.is_leaf:
                 node.sitename = consts.GUEST
+            else:
+                self.split_maskdict[node.id] = node.bid
+                self.missing_dir_maskdict[node.id] = node.missing_dir
 
     def mask_node_id(self, nodes):
         for n in nodes:
