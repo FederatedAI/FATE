@@ -513,7 +513,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
             if self.tree_node[i].sitename == self.sitename:
                 fid = self.decode("feature_idx", self.tree_node[i].fid, split_maskdict=self.split_maskdict)
                 bid = self.decode("feature_val", self.tree_node[i].bid, self.tree_node[i].id, self.split_maskdict)
-                real_split_val = self.bin_split_points[fid][bid]
+                real_split_val = self.encode("feature_val", self.bin_split_points[fid][bid], self.tree_node[i].id)
                 self.tree_node[i].bid = real_split_val
 
     """
