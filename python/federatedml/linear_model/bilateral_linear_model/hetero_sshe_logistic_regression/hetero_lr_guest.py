@@ -91,20 +91,20 @@ class HeteroLRGuest(HeteroSSHEGuestBase):
         self.wx_self = z
         self.wx_remote = remote_z
         """
-        self._cal_z(weights, features, suffix, cipher)
-        sigmoid_z = self._compute_sigmoid(self.wx_self, self.wx_remote)
+    self._cal_z(weights, features, suffix, cipher)
+    sigmoid_z = self._compute_sigmoid(self.wx_self, self.wx_remote)
 
-        self.encrypted_wx = self.wx_self + self.wx_remote
+    self.encrypted_wx = self.wx_self + self.wx_remote
 
-        self.encrypted_error = sigmoid_z - labels
+    self.encrypted_error = sigmoid_z - labels
 
-        tensor_name = ".".join(("sigmoid_z",) + suffix)
-        shared_sigmoid_z = SecureMatrix.from_source(tensor_name,
-                                                    sigmoid_z,
-                                                    cipher,
-                                                    self.fixedpoint_encoder.n,
-                                                    self.fixedpoint_encoder)
-        return shared_sigmoid_z
+    tensor_name = ".".join(("sigmoid_z",) + suffix)
+    shared_sigmoid_z = SecureMatrix.from_source(tensor_name,
+                                                sigmoid_z,
+                                                cipher,
+                                                self.fixedpoint_encoder.n,
+                                                self.fixedpoint_encoder)
+    return shared_sigmoid_z
 
     """
     def backward(self, error, features, suffix, cipher):

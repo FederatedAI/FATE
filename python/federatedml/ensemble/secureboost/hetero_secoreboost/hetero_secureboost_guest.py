@@ -134,9 +134,9 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         LOGGER.info("compute grad and hess")
         loss_method = self.loss
         if self.task_type == consts.CLASSIFICATION:
-            grad_and_hess = y.join(y_hat, lambda y, f_val: \
-                (loss_method.compute_grad(y, loss_method.predict(f_val)), \
-                 loss_method.compute_hess(y, loss_method.predict(f_val))))
+            grad_and_hess = y.join(y_hat, lambda y, f_val:
+                                   (loss_method.compute_grad(y, loss_method.predict(f_val)),
+                                    loss_method.compute_hess(y, loss_method.predict(f_val))))
         else:
             grad_and_hess = y.join(y_hat, lambda y, f_val:
                                    (loss_method.compute_grad(y, f_val),
@@ -333,9 +333,16 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
             return self.score_to_predict_result(data_inst, predict_cache)
 
         if self.boosting_strategy == consts.MIX_TREE:
-            predict_rs = mix_sbt_guest_predict(processed_data, self.hetero_sbt_transfer_variable, trees, self.learning_rate,
-                                   self.init_score, self.booster_dim, predict_cache,
-                                   pred_leaf=(ret_format == 'leaf'))
+            predict_rs = mix_sbt_guest_predict(
+                processed_data,
+                self.hetero_sbt_transfer_variable,
+                trees,
+                self.learning_rate,
+                self.init_score,
+                self.booster_dim,
+                predict_cache,
+                pred_leaf=(
+                    ret_format == 'leaf'))
         else:
             if self.EINI_inference and not self.on_training:  # EINI is for inference stage
                 sitename = self.role + ':' + str(self.component_properties.local_partyid)

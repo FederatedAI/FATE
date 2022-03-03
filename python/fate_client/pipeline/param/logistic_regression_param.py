@@ -255,20 +255,34 @@ class HeteroLogisticParam(LogisticParam):
                  use_first_metric_only=False, stepwise_param=StepwiseParam(),
                  callback_param=CallbackParam()
                  ):
-        super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
-                                                  batch_size=batch_size, shuffle=shuffle, batch_strategy=batch_strategy, masked_rate=masked_rate,
-                                                  learning_rate=learning_rate,
-                                                  init_param=init_param, max_iter=max_iter, early_stop=early_stop,
-                                                  predict_param=predict_param, cv_param=cv_param,
-                                                  decay=decay,
-                                                  decay_sqrt=decay_sqrt, multi_class=multi_class,
-                                                  validation_freqs=validation_freqs,
-                                                  early_stopping_rounds=early_stopping_rounds,
-                                                  metrics=metrics, floating_point_precision=floating_point_precision,
-                                                  encrypt_param=encrypt_param,
-                                                  use_first_metric_only=use_first_metric_only,
-                                                  stepwise_param=stepwise_param,
-                                                  callback_param=callback_param)
+        super(
+            HeteroLogisticParam,
+            self).__init__(
+            penalty=penalty,
+            tol=tol,
+            alpha=alpha,
+            optimizer=optimizer,
+            batch_size=batch_size,
+            shuffle=shuffle,
+            batch_strategy=batch_strategy,
+            masked_rate=masked_rate,
+            learning_rate=learning_rate,
+            init_param=init_param,
+            max_iter=max_iter,
+            early_stop=early_stop,
+            predict_param=predict_param,
+            cv_param=cv_param,
+            decay=decay,
+            decay_sqrt=decay_sqrt,
+            multi_class=multi_class,
+            validation_freqs=validation_freqs,
+            early_stopping_rounds=early_stopping_rounds,
+            metrics=metrics,
+            floating_point_precision=floating_point_precision,
+            encrypt_param=encrypt_param,
+            use_first_metric_only=use_first_metric_only,
+            stepwise_param=stepwise_param,
+            callback_param=callback_param)
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
         self.sqn_param = copy.deepcopy(sqn_param)
 

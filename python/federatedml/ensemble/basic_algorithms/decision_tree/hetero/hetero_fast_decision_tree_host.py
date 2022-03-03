@@ -290,7 +290,6 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
             if not node.is_leaf:
                 node.bid = self.bin_split_points[node.fid][node.bid]
 
-
     """
     Mix Mode
     """

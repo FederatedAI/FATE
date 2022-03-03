@@ -83,7 +83,8 @@ class MiniBatch:
             self.__generate_batch_data()
 
     def __generate_batch_data(self):
-        self.all_index_data, self.all_batch_data = self.batch_data_generator.generate_data(self.data_inst, self.data_sids_iter)
+        self.all_index_data, self.all_batch_data = self.batch_data_generator.generate_data(
+            self.data_inst, self.data_sids_iter)
 
 
 def get_batch_generator(data_size, batch_size, batch_strategy, masked_rate, shuffle):
@@ -198,4 +199,3 @@ class RandomBatchDataGenerator(BatchDataGenerator):
                                                                                             batch_ids,
                                                                                             masked_ids)
             return [masked_index_table], [batch_data_table]
-

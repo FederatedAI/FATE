@@ -82,4 +82,3 @@ class SPDZ(object):
 
     def set_flowid(self, flowid):
         self.communicator.set_flowid(flowid)
-

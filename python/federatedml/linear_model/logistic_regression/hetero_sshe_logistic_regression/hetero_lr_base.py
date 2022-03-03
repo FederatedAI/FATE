@@ -68,7 +68,7 @@ class HeteroLRBase(BaseLinearModel, ABC):
 
         else:
             q_field = self.transfer_variable.q_field.get(role=consts.GUEST, idx=0,
-                                                          suffix=("q_field",))
+                                                         suffix=("q_field",))
 
         return q_field
 
@@ -279,9 +279,19 @@ class HeteroLRBase(BaseLinearModel, ABC):
                     # loss computing;
                     suffix = ("loss",) + current_suffix
                     if self.reveal_every_iter:
-                        batch_loss = self.compute_loss(weights=self.model_weights, labels=batch_labels, suffix=suffix, cipher=self.cipher_tool[batch_idx])
+                        batch_loss = self.compute_loss(
+                            weights=self.model_weights,
+                            labels=batch_labels,
+                            suffix=suffix,
+                            cipher=self.cipher_tool[batch_idx])
                     else:
-                        batch_loss = self.compute_loss(weights=(w_self, w_remote), labels=batch_labels, suffix=suffix, cipher=self.cipher_tool[batch_idx])
+                        batch_loss = self.compute_loss(
+                            weights=(
+                                w_self,
+                                w_remote),
+                            labels=batch_labels,
+                            suffix=suffix,
+                            cipher=self.cipher_tool[batch_idx])
 
                     if batch_loss is not None:
                         batch_loss = batch_loss * self.batch_num[batch_idx]
@@ -555,7 +565,3 @@ class HeteroLRBase(BaseLinearModel, ABC):
 
         self.n_iter_ = single_model_obj.iters
         return self
-
-
-
-

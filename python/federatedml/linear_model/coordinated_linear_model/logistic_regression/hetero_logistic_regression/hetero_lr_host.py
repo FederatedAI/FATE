@@ -142,9 +142,9 @@ class HeteroLRHost(HeteroLRBase):
                 batch_feat_inst = batch_data
                 # LOGGER.debug(f"MODEL_STEP In Batch {batch_index}, batch data count: {batch_feat_inst.count()}")
 
-                LOGGER.debug("iter: {}, batch: {}, before compute gradient, data count: {}".format(self.n_iter_,
-                                                                                                   batch_index,
-                                                                                                   batch_feat_inst.count()))
+                LOGGER.debug(
+                    "iter: {}, batch: {}, before compute gradient, data count: {}".format(
+                        self.n_iter_, batch_index, batch_feat_inst.count()))
                 optim_host_gradient = self.gradient_loss_operator.compute_gradient_procedure(
                     batch_feat_inst, self.encrypted_calculator, self.model_weights, self.optimizer, self.n_iter_,
                     batch_index)

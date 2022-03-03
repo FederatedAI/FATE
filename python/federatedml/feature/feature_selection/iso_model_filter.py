@@ -207,7 +207,7 @@ class FederatedIsoModelFilter(IsoModelFilter):
 
         for v_idx, v in enumerate(all_feature_values):
             # LOGGER.debug(f"all_feature_values: {all_feature_values},"
-                         # f"col_names: {col_names},"
+            # f"col_names: {col_names},"
             #             f"v_idx: {v_idx}")
             col_name = col_names[v_idx]
             if col_name[0] == consts.GUEST:
