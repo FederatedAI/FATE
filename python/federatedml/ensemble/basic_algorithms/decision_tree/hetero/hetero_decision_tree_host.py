@@ -128,17 +128,15 @@ class HeteroDecisionTreeHost(DecisionTree):
 
         if etype == "feature_idx":
             self.split_feature_dict[nid] = val
-            return None
 
-        if etype == "feature_val":
+        elif etype == "feature_val":
             self.split_maskdict[nid] = val
-            return None
 
-        if etype == "missing_dir":
+        elif etype == "missing_dir":
             self.missing_dir_maskdict[nid] = val
-            return None
 
-        raise TypeError("encode type %s is not support!" % (str(etype)))
+        else:
+            raise TypeError("encode type %s is not support!" % (str(etype)))
 
     @staticmethod
     def decode(dtype="feature_idx", val=None, nid=None, split_maskdict=None, missing_dir_maskdict=None):
