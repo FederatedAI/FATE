@@ -50,15 +50,6 @@ class HeteroLRBase(BaseLogisticRegression):
         self.batch_generator.register_batch_generator(self.transfer_variable)
         self.gradient_loss_operator.register_gradient_procedure(self.transfer_variable)
 
-        if params.optimizer == 'sqn':
-            gradient_loss_operator = sqn_factory(self.role, params.sqn_param)
-            gradient_loss_operator.register_gradient_computer(self.gradient_loss_operator)
-            gradient_loss_operator.register_transfer_variable(self.transfer_variable)
-            self.gradient_loss_operator = gradient_loss_operator
-            LOGGER.debug("In _init_model, optimizer: {}, gradient_loss_operator: {}".format(
-                params.optimizer, self.gradient_loss_operator
-            ))
-
     def update_local_model(self, fore_gradient, data_inst, coef, **training_info):
         """
         update local model that transforms features of raw input

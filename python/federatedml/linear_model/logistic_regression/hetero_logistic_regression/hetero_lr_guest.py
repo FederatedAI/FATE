@@ -47,7 +47,7 @@ class HeteroLRGuest(HeteroLRBase):
         set the negative label to -1
         Parameters
         ----------
-        data_instance: DTable of Instance, input data
+        data_instance: Table of Instance, input data
         """
         data_instance = copy.deepcopy(data_instance)
         if data_instance.label != 1:
@@ -59,7 +59,7 @@ class HeteroLRGuest(HeteroLRBase):
         Train lr model of role guest
         Parameters
         ----------
-        data_instances: DTable of Instance, input data
+        data_instances: Table of Instance, input data
         """
 
         LOGGER.info("Enter hetero_lr_guest fit")
@@ -88,7 +88,12 @@ class HeteroLRGuest(HeteroLRBase):
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
         LOGGER.info("Generate mini-batch from input data")
-        self.batch_generator.initialize_batch_generator(data_instances, self.batch_size)
+        self.batch_generator.initialize_batch_generator(data_instances, self.batch_size,
+                                                        batch_strategy=self.batch_strategy,
+                                                        masked_rate=self.masked_rate, shuffle=self.shuffle)
+        if self.batch_generator.batch_masked:
+            self.batch_generator.verify_batch_legality()
+
         self.gradient_loss_operator.set_total_batch_nums(self.batch_generator.batch_nums)
 
         self.encrypted_calculator = [EncryptModeCalculator(self.cipher_operator,
@@ -104,12 +109,14 @@ class HeteroLRGuest(HeteroLRBase):
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:{}".format(self.n_iter_))
-            batch_data_generator = self.batch_generator.generate_batch_data()
+            batch_data_generator = self.batch_generator.generate_batch_data(suffix=(self.n_iter_,), with_index=True)
             self.optimizer.set_iters(self.n_iter_)
             batch_index = 0
-            for batch_data in batch_data_generator:
+            for batch_data, index_data in batch_data_generator:
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
                 batch_feat_inst = self.transform(batch_data)
+                if not self.batch_generator.batch_masked:
+                    index_data = None
                 LOGGER.debug(f"MODEL_STEP In Batch {batch_index}, batch data count: {batch_feat_inst.count()}")
 
                 # Start gradient procedure
@@ -122,14 +129,16 @@ class HeteroLRGuest(HeteroLRBase):
                     self.model_weights,
                     self.optimizer,
                     self.n_iter_,
-                    batch_index
+                    batch_index,
+                    masked_index=index_data
                 )
                 # LOGGER.debug('optim_guest_gradient: {}'.format(optim_guest_gradient))
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
-                self.update_local_model(fore_gradient, data_instances, self.model_weights.coef_, **training_info)
+                self.update_local_model(fore_gradient, batch_feat_inst, self.model_weights.coef_, **training_info)
 
                 loss_norm = self.optimizer.loss_norm(self.model_weights)
-                self.gradient_loss_operator.compute_loss(data_instances, self.n_iter_, batch_index, loss_norm)
+                self.gradient_loss_operator.compute_loss(batch_feat_inst, self.n_iter_, batch_index, loss_norm,
+                                                         batch_masked=self.batch_generator.batch_masked)
 
                 self.model_weights = self.optimizer.update_model(self.model_weights, optim_guest_gradient)
                 batch_index += 1
@@ -160,11 +169,11 @@ class HeteroLRGuest(HeteroLRBase):
         Prediction of lr
         Parameters
         ----------
-        data_instances: DTable of Instance, input data
+        data_instances: Table of Instance, input data
 
         Returns
         ----------
-        DTable
+        Table
             include input data label, predict probably, label
         """
         LOGGER.info("Start predict is a one_vs_rest task: {}".format(self.need_one_vs_rest))
