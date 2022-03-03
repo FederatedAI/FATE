@@ -360,8 +360,7 @@ def go_to_children_branches(data_inst, tree_node, tree, sitename: str, candidate
                                                     missing_dir_maskdict=tree.missing_dir_maskdict,
                                                     bin_sparse_point=None
                                                     )
-            go_to_children_branches(data_inst, tree_node_list[next_layer_node_id],
-                                                                  tree, sitename, candidate_list)
+            go_to_children_branches(data_inst, tree_node_list[next_layer_node_id], tree, sitename, candidate_list)
 
 
 def generate_leaf_candidates_guest(data_inst, sitename, trees, node_pos_map_list,
@@ -383,12 +382,21 @@ def generate_leaf_candidates_guest(data_inst, sitename, trees, node_pos_map_list
                 score_idx = 0
         else:
             tree_init_score = init_score
-        result_vec = [0 for i in range(len(node_pos_map))]
         candidate_list = []
-        go_to_children_branches(data_inst, tree.tree_node[0], tree,
-                                                              sitename, candidate_list)
+        go_to_children_branches(data_inst, tree.tree_node[0], tree, sitename, candidate_list)
+
+        # check if it is mo tree:
+        if len(candidate_list) < 1:
+            raise ValueError('incorrect candidate list length,: {}'.format(len(candidate_list)))
+        node = candidate_list[0]
+        if isinstance(node.weight, np.ndarray):
+            if len(node.weight) > 1:
+                result_vec = [np.array([0 for i in range(len(node.weight))]) for i in range(len(node_pos_map))]
+            else:
+                result_vec = [0 for i in range(len(node_pos_map))]  # normal tree
+
         for node in candidate_list:
-            result_vec[node_pos_map[node.id]] = float(node.weight * learning_rate + tree_init_score)
+            result_vec[node_pos_map[node.id]] = node.weight * learning_rate + tree_init_score
         candidate_nodes_of_all_tree.extend(result_vec)
 
     return np.array(candidate_nodes_of_all_tree)
