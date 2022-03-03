@@ -752,7 +752,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 predict_data = predict_data.join(predict_data_host[i],
                                                  lambda state1_nodeid1, state2_nodeid2:
                                                  state1_nodeid1 if state1_nodeid1[
-                                                                       1] == 0 else state2_nodeid2)
+                    1] == 0 else state2_nodeid2)
 
             site_host_send_times += 1
 
@@ -828,4 +828,3 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         self.split_maskdict = dict(model_param.split_maskdict)
         self.missing_dir_maskdict = dict(model_param.missing_dir_maskdict)
-

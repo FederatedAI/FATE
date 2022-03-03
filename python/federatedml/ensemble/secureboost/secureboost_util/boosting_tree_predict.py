@@ -157,9 +157,9 @@ Hetero guest predict function
 
 
 def get_dtype(max_int):
-    if max_int < (2**8)/2:
+    if max_int < (2**8) / 2:
         return np.int8
-    elif max_int < (2**16)/2:
+    elif max_int < (2**16) / 2:
         return np.int16
     else:
         return np.int64
@@ -350,9 +350,9 @@ def go_to_children_branches(data_inst, tree_node, tree, sitename: str, candidate
         tree_node_list = tree.tree_node
         if tree_node.sitename != sitename:
             go_to_children_branches(data_inst, tree_node_list[tree_node.left_nodeid],
-                                                                  tree, sitename, candidate_list)
+                                    tree, sitename, candidate_list)
             go_to_children_branches(data_inst, tree_node_list[tree_node.right_nodeid],
-                                                                  tree, sitename, candidate_list)
+                                    tree, sitename, candidate_list)
         else:
             next_layer_node_id = tree.go_next_layer(tree_node, data_inst, use_missing=tree.use_missing,
                                                     zero_as_missing=tree.zero_as_missing, decoder=tree.decode,
@@ -506,7 +506,7 @@ def count_complexity_helper(node, node_list, host_sitename, meet_host_node):
         meet_host_node = True
 
     return count_complexity_helper(node_list[node.left_nodeid], node_list, host_sitename, meet_host_node) + \
-           count_complexity_helper(node_list[node.right_nodeid], node_list, host_sitename, meet_host_node)
+        count_complexity_helper(node_list[node.right_nodeid], node_list, host_sitename, meet_host_node)
 
 
 def count_complexity(trees, sitename):
@@ -567,6 +567,3 @@ def EINI_host_predict(data_inst, trees: List[HeteroDecisionTreeHost], sitename, 
         else:
             result_table = position_vec.join(guest_position_vec, position_vec_element_wise_mul)
             transfer_var.inter_host_data.remote(result_table, idx=self_idx + 1, suffix='position_vec', role=consts.HOST)
-
-
-

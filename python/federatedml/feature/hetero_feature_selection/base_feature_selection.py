@@ -224,7 +224,7 @@ class BaseHeteroFeatureSelection(ModelBase):
 
         # LOGGER.debug("When transfering, all left_col_names: {}".format(
         #    self.completed_selection_result.all_left_col_names
-        #))
+        # ))
         new_data = self.set_schema(new_data, self.completed_selection_result.all_left_col_names)
 
         # one_data = new_data.first()[1]
