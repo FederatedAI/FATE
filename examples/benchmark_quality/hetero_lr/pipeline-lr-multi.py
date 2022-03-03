@@ -89,6 +89,8 @@ def main(config="../../config.yaml", param="./vehicle_config.yaml", namespace=""
         "learning_rate": param["learning_rate"],
         "optimizer": param["optimizer"],
         "batch_size": param["batch_size"],
+        "masked_rate": 0,
+        "shuffle": False,
         "early_stop": "diff",
         "init_param": {
             "init_method": param.get("init_method", 'random_uniform'),

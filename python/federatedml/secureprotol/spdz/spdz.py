@@ -20,6 +20,9 @@ from federatedml.secureprotol.spdz.utils import NamingService
 from federatedml.secureprotol.spdz.utils import naming
 
 
+Q = 293973345475167247070445277780365744413 ** 2
+
+
 class SPDZ(object):
     __instance = None
 
@@ -37,14 +40,7 @@ class SPDZ(object):
     def has_instance(cls):
         return cls.__instance is not None
 
-    def __init__(
-            self,
-            name="ss",
-            q_field=2 << 60,
-            local_party=None,
-            all_parties=None,
-            use_mix_rand=False,
-            n_length=1024):
+    def __init__(self, name="ss", q_field=Q, local_party=None, all_parties=None, use_mix_rand=False, n_length=1024):
         self.name_service = naming.NamingService(name)
         self._prev_name_service = None
         self._pre_instance = None
@@ -56,7 +52,12 @@ class SPDZ(object):
         if len(self.other_parties) > 1:
             raise EnvironmentError("support 2-party secret share only")
         self.public_key, self.private_key = PaillierKeypair.generate_keypair(n_length=n_length)
-        self.q_field = q_field
+
+        if q_field is None or q_field < self.public_key.n:
+            self.q_field = self.public_key.n
+        else:
+            self.q_field = q_field
+
         self.use_mix_rand = use_mix_rand
 
     def __enter__(self):

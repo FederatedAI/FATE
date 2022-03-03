@@ -1,5 +1,7 @@
 import numpy as np
 from operator import itemgetter
+from typing import List
+import functools
 from federatedml.util import consts
 from federatedml.util import LOGGER
 from federatedml.ensemble.boosting import HeteroBoostingGuest
@@ -11,6 +13,7 @@ from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_impor
 from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict_transfer_variable import \
     HeteroSecureBoostTransferVariable
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core import tree_plan as plan
+from federatedml.secureprotol import PaillierEncrypt
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import ObjectiveMeta
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta
@@ -19,7 +22,7 @@ from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import Feature
 from federatedml.ensemble.secureboost.secureboost_util.tree_model_io import load_hetero_tree_learner, \
     produce_hetero_tree_learner
 from federatedml.ensemble.secureboost.secureboost_util.boosting_tree_predict import sbt_guest_predict, \
-    mix_sbt_guest_predict, EINI_guest_predict
+    mix_sbt_guest_predict
 from federatedml.ensemble.secureboost.secureboost_util.subsample import goss_sampling
 
 
@@ -58,12 +61,12 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.init_tree_plan = False
         self.tree_plan = []
 
+        # multi-classification mode
+        self.multi_mode = consts.SINGLE_OUTPUT
+
         # EINI predict param
         self.EINI_inference = False
         self.EINI_random_mask = False
-
-        # multi-classification mode
-        self.multi_mode = consts.SINGLE_OUTPUT
 
     def _init_model(self, param: HeteroSecureBoostParam):
 
@@ -77,19 +80,20 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.other_rate = param.other_rate
         self.cipher_compressing = param.cipher_compress
         self.new_ver = param.new_ver
+        self.EINI_inference = param.EINI_inference
+        self.EINI_random_mask = param.EINI_random_mask
 
         # fast sbt param
         self.tree_num_per_party = param.tree_num_per_party
         self.boosting_strategy = param.boosting_strategy
         self.guest_depth = param.guest_depth
         self.host_depth = param.host_depth
-        self.EINI_inference = param.EINI_inference
-        self.EINI_random_mask = param.EINI_random_mask
-        self.multi_mode = param.multi_mode
 
         if self.use_missing:
             self.tree_param.use_missing = self.use_missing
             self.tree_param.zero_as_missing = self.zero_as_missing
+
+        self.multi_mode = param.multi_mode
 
     def process_sample_weights(self, grad_and_hess, data_with_sample_weight=None):
 
@@ -130,9 +134,9 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         LOGGER.info("compute grad and hess")
         loss_method = self.loss
         if self.task_type == consts.CLASSIFICATION:
-            grad_and_hess = y.join(y_hat, lambda y, f_val: \
-                (loss_method.compute_grad(y, loss_method.predict(f_val)), \
-                 loss_method.compute_hess(y, loss_method.predict(f_val))))
+            grad_and_hess = y.join(y_hat, lambda y, f_val:
+                                   (loss_method.compute_grad(y, loss_method.predict(f_val)),
+                                    loss_method.compute_hess(y, loss_method.predict(f_val))))
         else:
             grad_and_hess = y.join(y_hat, lambda y, f_val:
                                    (loss_method.compute_grad(y, f_val),
@@ -162,6 +166,13 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         sampled_gh = goss_sampling(self.grad_and_hess, self.top_rate, self.other_rate)
         return sampled_gh
 
+    def sync_feature_importance(self):
+        host_feature_importance_list = self.hetero_sbt_transfer_variable.host_feature_importance.get(idx=-1)
+        for i in host_feature_importance_list:
+            self.feature_importances_.update(i)
+
+        LOGGER.debug('self feature importance is {}'.format(self.feature_importances_))
+
     def on_epoch_prepare(self, epoch_idx):
         """
 
@@ -175,7 +186,6 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         Prepare g, h, sample weights, sampling at the beginning of every epoch
 
         """
-
         if self.cur_epoch_idx != epoch_idx:
             self.grad_and_hess = self.compute_grad_and_hess(self.y_hat, self.y, self.data_inst)
             self.cur_epoch_idx = epoch_idx
@@ -200,6 +210,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
     def fit_a_learner(self, epoch_idx: int, booster_dim: int):
 
         self.on_epoch_prepare(epoch_idx)
+
         if self.multi_mode == consts.MULTI_OUTPUT:
             g_h = self.grad_and_hess
         else:
@@ -232,6 +243,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
 
         tree.fit()
         self.update_feature_importance(tree.get_feature_importance())
+        self.sync_feature_importance()
 
         return tree
 
@@ -321,25 +333,32 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
             return self.score_to_predict_result(data_inst, predict_cache)
 
         if self.boosting_strategy == consts.MIX_TREE:
-            predict_rs = mix_sbt_guest_predict(processed_data, self.hetero_sbt_transfer_variable, trees, self.learning_rate,
-                                               self.init_score, self.booster_dim, predict_cache,
-                                               pred_leaf=(ret_format == 'leaf'))
+            predict_rs = mix_sbt_guest_predict(
+                processed_data,
+                self.hetero_sbt_transfer_variable,
+                trees,
+                self.learning_rate,
+                self.init_score,
+                self.booster_dim,
+                predict_cache,
+                pred_leaf=(
+                    ret_format == 'leaf'))
         else:
-            if self.EINI_inference and not self.on_training:
-                sitename = str(self.role) + ':' + str(self.component_properties.local_partyid)
-                predict_rs = EINI_guest_predict(processed_data, trees, self.learning_rate, self.init_score,
-                                                self.booster_dim, self.encrypt_param.key_length,
-                                                self.hetero_sbt_transfer_variable, sitename,
-                                                self.component_properties.host_party_idlist, None, False)
+            if self.EINI_inference and not self.on_training:  # EINI is for inference stage
+                sitename = self.role + ':' + str(self.component_properties.local_partyid)
+                predict_rs = self.EINI_guest_predict(processed_data, trees, self.learning_rate, self.init_score,
+                                                     self.booster_dim, sitename,
+                                                     self.component_properties.host_party_idlist,
+                                                     predict_cache, False)
             else:
-                predict_rs = sbt_guest_predict(processed_data, self.hetero_sbt_transfer_variable, trees, self.learning_rate,
-                                               self.init_score, self.booster_dim, predict_cache,
-                                               pred_leaf=(ret_format == 'leaf'))
+                predict_rs = self.boosting_fast_predict(processed_data, trees=trees, predict_cache=predict_cache,
+                                                        pred_leaf=(ret_format == 'leaf'))
 
         if ret_format == 'leaf':
             return predict_rs  # predict result is leaf position
 
         self.predict_data_cache.add_data(cache_dataset_key, predict_rs, cur_boosting_round=rounds)
+        LOGGER.debug('adding predict rs {}'.format(predict_rs))
         LOGGER.debug('last round is {}'.format(self.predict_data_cache.predict_data_last_round(cache_dataset_key)))
 
         if ret_format == 'raw':

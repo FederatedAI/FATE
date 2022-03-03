@@ -118,3 +118,4 @@ PRIVILEGE_COMMAND = click.option("--privilege-command", type=click.STRING, help=
 PRIVILEGE_COMPONENT = click.option("--privilege-component", type=click.STRING, help="privilege component.")
 
 MIN_DATA = click.option("--min-data", type=click.INT, help="min data")
+CONNECTOR_NAME = click.option("--connector-name", type=click.STRING, required=True, help="connector name")

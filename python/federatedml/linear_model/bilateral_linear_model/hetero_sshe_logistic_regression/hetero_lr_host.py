@@ -60,7 +60,7 @@ class HeteroLRHost(HeteroSSHEHostBase):
         return z
     """
 
-    def forward(self, weights, features, suffix, cipher):
+    def forward(self, weights, features, labels, suffix, cipher):
         if not self.reveal_every_iter:
             LOGGER.info(f"[forward]: Calculate z in share...")
             w_self, w_remote = weights
@@ -118,7 +118,7 @@ class HeteroLRHost(HeteroSSHEHostBase):
         return ga_new, gb1
     """
 
-    def compute_loss(self, weights=None, suffix=None, cipher=None):
+    def compute_loss(self, weights=None, labels=None, suffix=None, cipher=None):
         """
           Use Taylor series expand log loss:
           Loss = - y * log(h(x)) - (1-y) * log(1 - h(x)) where h(x) = 1/(1+exp(-wx))

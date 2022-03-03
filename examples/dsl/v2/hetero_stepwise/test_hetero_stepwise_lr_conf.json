@@ -36,9 +36,6 @@
                     "need_stepwise": true,
                     "max_step": 2,
                     "nvmin": 2
-                },
-                "encrypted_mode_calculator_param": {
-                    "mode": "fast"
                 }
             }
         },

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fate_client"
-version = "0.1"
+version = "1.7.2"
 description = "Clients for FATE, including flow_client and pipeline"
 authors = ["FederatedAI <contact@FedAI.org>"]
 license = "Apache-2.0"
@@ -34,8 +34,6 @@ requests = ">=2.24.0"
 click = "^7.1.2"
 "ruamel.yaml" = "^0.16.10"
 loguru = "^0.5.1"
-tensorflow = "==2.3.4"
-torch = "1.4.0"
 flask = "^1.0.2"
 setuptools = "^50.0"
 

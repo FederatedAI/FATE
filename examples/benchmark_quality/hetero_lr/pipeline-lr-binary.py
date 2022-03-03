@@ -101,6 +101,8 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
         "learning_rate": param["learning_rate"],
         "optimizer": param["optimizer"],
         "batch_size": param["batch_size"],
+        "shuffle": False,
+        "masked_rate": 0,
         "early_stop": "diff",
         "tol": 1e-5,
         "floating_point_precision": param.get("floating_point_precision"),

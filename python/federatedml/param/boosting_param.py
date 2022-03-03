@@ -518,6 +518,14 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         host_depth: int, host will build first host_depth of a decision tree using host features, is valid when work boosting_strategy
                     layered
 
+
+        multi_mode: str, decide which mode to use when running multi-classification task:
+
+                    single_output standard gbdt multi-classification strategy
+
+                    multi_output every leaf give a multi-dimension predict, using multi_mode can save time
+                                 by learning a model with less trees.
+
         EINI_inference: bool
             default is False, this option changes the inference algorithm used in predict tasks.
             a secure prediction method that hides decision path to enhance security in the inference
@@ -534,15 +542,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
             decision path, while simple tree models are not, therefore if a tree model is too simple, it is not allowed
             to run EINI predict algorithms.
 
-        multi_mode: str, decide which mode to use when running multi-classification task:
-
-                    single_output standard gbdt multi-classification strategy
-
-                    multi_output every leaf give a multi-dimension predict, using multi_mode can save time
-                                 by learning a model with less trees.
-
-
-        """
+    """
 
     def __init__(self, tree_param: DecisionTreeParam = DecisionTreeParam(), task_type=consts.CLASSIFICATION,
                  objective_param=ObjectiveParam(),
@@ -557,8 +557,8 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                  sparse_optimization=False, run_goss=False, top_rate=0.2, other_rate=0.1,
                  cipher_compress_error=None, cipher_compress=True, new_ver=True, boosting_strategy=consts.STD_TREE,
                  work_mode=None, tree_num_per_party=1, guest_depth=2, host_depth=3, callback_param=CallbackParam(),
-                 EINI_inference=False, EINI_random_mask=False, EINI_complexity_check=False,
-                 multi_mode=consts.SINGLE_OUTPUT):
+                 multi_mode=consts.SINGLE_OUTPUT, EINI_inference=False, EINI_random_mask=False,
+                 EINI_complexity_check=False):
 
         super(HeteroSecureBoostParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                      subsample_feature_rate, n_iter_no_change, tol, encrypt_param,
@@ -579,15 +579,15 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.cipher_compress_error = cipher_compress_error
         self.cipher_compress = cipher_compress
         self.new_ver = new_ver
+        self.EINI_inference = EINI_inference
+        self.EINI_random_mask = EINI_random_mask
+        self.EINI_complexity_check = EINI_complexity_check
         self.boosting_strategy = boosting_strategy
         self.work_mode = work_mode
         self.tree_num_per_party = tree_num_per_party
         self.guest_depth = guest_depth
         self.host_depth = host_depth
         self.callback_param = copy.deepcopy(callback_param)
-        self.EINI_inference = EINI_inference
-        self.EINI_random_mask = EINI_random_mask
-        self.EINI_complexity_check = EINI_complexity_check
         self.multi_mode = multi_mode
 
     def check(self):
@@ -606,10 +606,6 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.check_positive_number(self.top_rate, 'top_rate')
         self.check_boolean(self.new_ver, 'code version switcher')
         self.check_boolean(self.cipher_compress, 'cipher compress')
-
-        if self.work_mode is not None:
-            self.boosting_strategy = self.work_mode
-
         self.check_boolean(self.EINI_inference, 'eini inference')
         self.check_boolean(self.EINI_random_mask, 'eini random mask')
         self.check_boolean(self.EINI_complexity_check, 'eini complexity check')
@@ -618,6 +614,9 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
             LOGGER.warning('To protect the inference decision path, notice that current setting will multiply'
                            ' predict result by a random number, hence SecureBoost will return confused predict scores'
                            ' that is not the same as the original predict scores')
+
+        if self.work_mode is not None:
+            self.boosting_strategy = self.work_mode
 
         if self.multi_mode not in [consts.SINGLE_OUTPUT, consts.MULTI_OUTPUT]:
             raise ValueError('unsupported multi-classification mode')
