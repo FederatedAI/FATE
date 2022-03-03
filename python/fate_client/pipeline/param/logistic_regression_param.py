@@ -314,7 +314,8 @@ class HomoLogisticParam(LogisticParam):
 class HeteroLogisticParam(LogisticParam):
     def __init__(self, penalty='L2',
                  tol=1e-5, alpha=1.0, optimizer='sgd',
-                 batch_size=-1, learning_rate=0.01, init_param=InitParam(),
+                 batch_size=-1, shuffle=True, batch_strategy="full", masked_rate=5,
+                 learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, early_stop='diff',
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
@@ -324,7 +325,8 @@ class HeteroLogisticParam(LogisticParam):
                  use_first_metric_only=False, stepwise_param=StepwiseParam()
                  ):
         super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
-                                                  batch_size=batch_size,
+                                                  batch_size=batch_size, shuffle=shuffle,
+                                                  batch_strategy=batch_strategy, masked_rate=masked_rate,
                                                   learning_rate=learning_rate,
                                                   init_param=init_param, max_iter=max_iter, early_stop=early_stop,
                                                   predict_param=predict_param, cv_param=cv_param,

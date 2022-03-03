@@ -120,7 +120,7 @@ class HeteroLRHost(HeteroLRBase):
 
         while self.n_iter_ < self.max_iter:
             LOGGER.info("iter:" + str(self.n_iter_))
-            batch_data_generator = self.batch_generator.generate_batch_data()
+            batch_data_generator = self.batch_generator.generate_batch_data(suffix=(self.n_iter_, ))
             batch_index = 0
             self.optimizer.set_iters(self.n_iter_)
             for batch_data in batch_data_generator:
@@ -134,7 +134,7 @@ class HeteroLRHost(HeteroLRBase):
                 # LOGGER.debug('optim_host_gradient: {}'.format(optim_host_gradient))
 
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
-                self.update_local_model(fore_gradient, data_instances, self.model_weights.coef_, **training_info)
+                self.update_local_model(fore_gradient, batch_feat_inst, self.model_weights.coef_, **training_info)
 
                 self.gradient_loss_operator.compute_loss(self.model_weights, self.optimizer,
                                                          self.n_iter_, batch_index, self.cipher_operator,

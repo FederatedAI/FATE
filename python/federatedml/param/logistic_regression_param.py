@@ -346,8 +346,8 @@ class HeteroLogisticParam(LogisticParam):
                  use_first_metric_only=False, stepwise_param=StepwiseParam()
                  ):
         super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
-                                                  batch_size=batch_size, shuffle=True,
-                                                  batch_strategy="full", masked_rate=5,
+                                                  batch_size=batch_size, shuffle=shuffle,
+                                                  batch_strategy=batch_strategy, masked_rate=masked_rate,
                                                   learning_rate=learning_rate,
                                                   init_param=init_param, max_iter=max_iter, early_stop=early_stop,
                                                   predict_param=predict_param, cv_param=cv_param,

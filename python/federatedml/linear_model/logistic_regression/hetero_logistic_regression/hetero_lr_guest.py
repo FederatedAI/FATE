@@ -91,6 +91,9 @@ class HeteroLRGuest(HeteroLRBase):
         self.batch_generator.initialize_batch_generator(data_instances, self.batch_size,
                                                         batch_strategy=self.batch_strategy,
                                                         masked_rate=self.masked_rate, shuffle=self.shuffle)
+        if self.batch_generator.batch_masked:
+            self.batch_generator.verify_batch_legality()
+
         self.gradient_loss_operator.set_total_batch_nums(self.batch_generator.batch_nums)
 
         self.encrypted_calculator = [EncryptModeCalculator(self.cipher_operator,
@@ -131,10 +134,10 @@ class HeteroLRGuest(HeteroLRBase):
                 )
                 # LOGGER.debug('optim_guest_gradient: {}'.format(optim_guest_gradient))
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
-                self.update_local_model(fore_gradient, data_instances, self.model_weights.coef_, **training_info)
+                self.update_local_model(fore_gradient, batch_feat_inst, self.model_weights.coef_, **training_info)
 
                 loss_norm = self.optimizer.loss_norm(self.model_weights)
-                self.gradient_loss_operator.compute_loss(data_instances, self.n_iter_, batch_index, loss_norm,
+                self.gradient_loss_operator.compute_loss(batch_feat_inst, self.n_iter_, batch_index, loss_norm,
                                                          batch_masked=self.batch_generator.batch_masked)
 
                 self.model_weights = self.optimizer.update_model(self.model_weights, optim_guest_gradient)
