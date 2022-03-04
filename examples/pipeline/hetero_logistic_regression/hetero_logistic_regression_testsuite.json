@@ -54,6 +54,9 @@
         "train": {
             "script": "pipeline-hetero-lr-normal.py"
         },
+        "hetero-lr-batch-random-strategy": {
+            "script": "pipeline-hetero-lr-batch-random-strategy.py"
+        },
         "multi-host": {
             "script": "pipeline-hetero-lr-multi-host.py"
         },

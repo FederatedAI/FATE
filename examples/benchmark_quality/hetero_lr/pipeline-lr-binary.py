@@ -102,10 +102,14 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
         "learning_rate": param["learning_rate"],
         "optimizer": param["optimizer"],
         "batch_size": param["batch_size"],
+        "batch_strategy": "full",
+        "masked_rate": 0,
+        "shuffle": False,
         "early_stop": "diff",
         "tol": 1e-5,
         "init_param": {
-            "init_method": param.get("init_method", 'random_uniform')
+            "init_method": param.get("init_method", 'random_uniform'),
+            "random_seed": param.get("random_seed", 103)
         }
     }
     lr_param.update(config_param)

@@ -92,7 +92,7 @@ def __compute_partition_gradient(data, fit_intercept=True, is_sparse=False):
         return np.array(gradient)
 
 
-def compute_gradient(data_instances, fore_gradient, fit_intercept):
+def compute_gradient(data_instances, fore_gradient, fit_intercept, need_average=True):
     """
     Compute hetero-regression gradient
     Parameters
@@ -115,7 +115,9 @@ def compute_gradient(data_instances, fore_gradient, fit_intercept):
     gradient_partition = feat_join_grad.applyPartitions(f)
     gradient_partition = gradient_partition.reduce(lambda x, y: x + y)
 
-    gradient = gradient_partition / data_instances.count()
+    gradient = gradient_partition
+    if need_average:
+        gradient = gradient_partition / data_instances.count()
 
     return gradient
 
@@ -168,6 +170,13 @@ class Guest(HeteroGradientBase):
         fore_gradient = self.compute_and_aggregate_forwards(data_instances, model_weights, encrypted_calculator,
                                                             batch_index, current_suffix, offset)
 
+        def _apply_obfuscate(val):
+            val.apply_obfuscator()
+            return val
+
+        batch_size = self.forwards.count()
+        fore_gradient = fore_gradient.mapValues(lambda val: _apply_obfuscate(val) / batch_size)
+
         if not masked_index:
             self.remote_fore_gradient(fore_gradient, suffix=current_suffix)
         else:
@@ -180,7 +189,8 @@ class Guest(HeteroGradientBase):
 
         unilateral_gradient = compute_gradient(data_instances,
                                                fore_gradient,
-                                               model_weights.fit_intercept)
+                                               model_weights.fit_intercept,
+                                               need_average=False)
         if optimizer is not None:
             unilateral_gradient = optimizer.add_regular_to_grad(unilateral_gradient, model_weights)
 
@@ -238,7 +248,8 @@ class Host(HeteroGradientBase):
 
         unilateral_gradient = compute_gradient(data_instances,
                                                fore_gradient,
-                                               model_weights.fit_intercept)
+                                               model_weights.fit_intercept,
+                                               need_average=False)
         if optimizer is not None:
             unilateral_gradient = optimizer.add_regular_to_grad(unilateral_gradient, model_weights)
 
