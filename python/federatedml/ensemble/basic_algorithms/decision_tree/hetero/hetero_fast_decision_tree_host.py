@@ -183,38 +183,16 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
         self.cur_layer_nodes = new_tree_node_queue
 
     @staticmethod
-    def host_assign_an_instance(value, tree_, bin_sparse_points, use_missing, zero_as_missing, dense_format=False):
+    def host_assign_an_instance(value, tree_, bin_sparse_points, use_missing, zero_as_missing):
 
         unleaf_state, nodeid = value[1]
 
         if tree_[nodeid].is_leaf is True:
             return nodeid
+        next_layer_nid = HeteroFastDecisionTreeHost.go_next_layer(tree_[nodeid], value[0], use_missing,
+                                                                  zero_as_missing, bin_sparse_points)
 
-        fid = tree_[nodeid].fid
-        bid = tree_[nodeid].bid
-
-        if not dense_format:
-
-            next_layer_nid = HeteroFastDecisionTreeHost.go_next_layer(tree_[nodeid], value[0], use_missing,
-                                                                      zero_as_missing, bin_sparse_points)
-
-            return 1, next_layer_nid
-
-        else:
-            # this branch is for fast histogram
-            # will get scipy sparse matrix if using fast histogram
-            if not use_missing:
-                sample_feat = value[0].features[0, fid]  # value.features is a scipy sparse matrix
-                return (1, tree_[nodeid].left_nodeid) if sample_feat <= bid else (1, tree_[nodeid].right_nodeid)
-            else:
-                missing_dir = tree_[nodeid].missing_dir
-                sample_feat = value[0].features[0, fid]
-                if zero_as_missing:  # zero_as_missing and use_missing, 0 and missing value are marked as -1
-                    sample_feat -= 1  # remove offset
-                if sample_feat == -1:
-                    return (1, tree_[nodeid].right_nodeid) if missing_dir == 1 else (1, tree_[nodeid].left_nodeid)
-                else:
-                    return (1, tree_[nodeid].left_nodeid) if sample_feat <= bid else (1, tree_[nodeid].right_nodeid)
+        return 1, next_layer_nid
 
     def host_local_assign_instances_to_new_node(self):
 
