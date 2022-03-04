@@ -55,13 +55,6 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
             self.aggregated_forwards = self.aggregated_forwards.join(host_forward, lambda g, h: g + h)
         fore_gradient = self.aggregated_forwards.join(data_instances, lambda wx, d: 0.25 * wx - 0.5 * d.label)
 
-        def _apply_obfuscate(val):
-            val.apply_obfuscator()
-            return val
-
-        batch_size = self.forwards.count()
-        fore_gradient = fore_gradient.mapValues(lambda val: _apply_obfuscate(val) / batch_size)
-
         return fore_gradient
 
     def compute_loss(self, data_instances, n_iter_, batch_index, loss_norm=None, batch_masked=False):
