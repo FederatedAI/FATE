@@ -264,9 +264,9 @@ class QuantileSummaries(object):
     def value_to_rank(self, value):
         min_rank, max_rank = 0, 0
         for sample in self.sampled:
-            if sample.value < value:
-                min_rank += sample.g
-                max_rank = min_rank + sample.delta
+            if sample[0] < value:
+                min_rank += sample[1]
+                max_rank = min_rank + sample[2]
             else:
                 return (min_rank + max_rank) // 2
         return (min_rank + max_rank) // 2
@@ -284,9 +284,9 @@ class QuantileSummaries(object):
         while sample_idx < len(self.sampled):
             v = values[idx]
             sample = self.sampled[sample_idx]
-            if sample.value < v:
-                min_rank += sample.g
-                max_rank = min_rank + sample.delta
+            if sample[0] < v:
+                min_rank += sample[1]
+                max_rank = min_rank + sample[2]
                 sample_idx += 1
             else:
                 res.append((min_rank + max_rank) // 2)
