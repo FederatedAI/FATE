@@ -22,16 +22,17 @@ import numpy as np
 
 from federatedml.util import consts, LOGGER
 
+"""
+Structure of compressed object, for memory saving we use tuple (value, g, delta) in fate>=v1.8
+"""
 
+"""
 class Stats(object):
-    """
-    Structure of compressed object, for memory saving we use tuple (value, g, delta) in fate>=v1.8
-    """
-
     def __init__(self, value, g: int, delta: int):
         self.value = value
         self.g = g
         self.delta = delta
+"""
 
 
 class QuantileSummaries(object):
