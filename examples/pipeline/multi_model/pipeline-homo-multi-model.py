@@ -110,9 +110,13 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(homo_secureboost_1, data=Data(data=homo_onehot_1.output.data),
                            model=Model(model=homo_secureboost_0.output.model))
 
-    pipeline.add_component(evaluation_0, data=Data(data=[homo_lr_0.output.data, homo_lr_1.output.data,
-                                                         local_baseline_0.output.data, local_baseline_1.output.data]))
-    pipeline.add_component(evaluation_1, data=Data(data=[homo_secureboost_0.output.data, homo_secureboost_1.output.data]))
+    pipeline.add_component(evaluation_0,
+                           data=Data(
+                               data=[homo_lr_0.output.data, homo_lr_1.output.data,
+                                     local_baseline_0.output.data, local_baseline_1.output.data]))
+    pipeline.add_component(evaluation_1,
+                           data=Data(
+                               data=[homo_secureboost_0.output.data, homo_secureboost_1.output.data]))
 
     pipeline.compile()
 

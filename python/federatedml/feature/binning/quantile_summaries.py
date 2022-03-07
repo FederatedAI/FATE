@@ -27,6 +27,7 @@ class Stats(object):
     """
     Structure of compressed object, for memory saving we use tuple (value, g, delta) in fate>=v1.8
     """
+
     def __init__(self, value, g: int, delta: int):
         self.value = value
         self.g = g
@@ -396,7 +397,7 @@ class SparseQuantileSummaries(QuantileSummaries):
             return ((self._total_count - self.missing_count) / self.count) * quantile
 
         return (quantile - self.zero_upper_bound + self.zero_lower_bound) / (
-                1 - self.zero_upper_bound + self.zero_lower_bound)
+            1 - self.zero_upper_bound + self.zero_lower_bound)
 
     @property
     def zero_lower_bound(self):

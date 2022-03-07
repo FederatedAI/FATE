@@ -225,10 +225,14 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(hetero_sshe_poisson_1, data=Data(test_data=one_hot_1.output.data),
                            model=Model(model=hetero_sshe_poisson_0.output.model))
 
-    pipeline.add_component(evaluation_1, data=Data(data=[hetero_linr_0.output.data, hetero_linr_1.output.data,
-                                                         hetero_sshe_linr_0.output.data, hetero_linr_1.output.data]))
-    pipeline.add_component(evaluation_2, data=Data(data=[hetero_poisson_0.output.data, hetero_poisson_1.output.data,
-                                                         hetero_sshe_poisson_0.output.data, hetero_sshe_poisson_1.output.data]))
+    pipeline.add_component(evaluation_1,
+                           data=Data(
+                               data=[hetero_linr_0.output.data, hetero_linr_1.output.data,
+                                     hetero_sshe_linr_0.output.data, hetero_linr_1.output.data]))
+    pipeline.add_component(evaluation_2,
+                           data=Data(
+                               data=[hetero_poisson_0.output.data, hetero_poisson_1.output.data,
+                                     hetero_sshe_poisson_0.output.data, hetero_sshe_poisson_1.output.data]))
 
     pipeline.compile()
 
