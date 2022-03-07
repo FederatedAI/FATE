@@ -24,6 +24,9 @@ from federatedml.util import consts, LOGGER
 
 
 class Stats(object):
+    """
+    Structure of compressed object, for memory saving we use tuple (value, g, delta) in fate>=v1.8
+    """
     def __init__(self, value, g: int, delta: int):
         self.value = value
         self.g = g
@@ -75,27 +78,28 @@ class QuantileSummaries(object):
             return
         current_count = self.count
         sorted_head = sorted(self.head_sampled)
+        head_len = len(sorted_head)
+        sample_len = len(self.sampled)
         new_sampled = []
         sample_idx = 0
         ops_idx = 0
-        while ops_idx < len(sorted_head):
+        while ops_idx < head_len:
             current_sample = sorted_head[ops_idx]
-            while sample_idx < len(self.sampled) and self.sampled[sample_idx].value <= current_sample:
+            while sample_idx < sample_len and self.sampled[sample_idx][0] <= current_sample:
                 new_sampled.append(self.sampled[sample_idx])
                 sample_idx += 1
 
             current_count += 1
 
             # If it is the first one to insert or if it is the last one
-            if not new_sampled or (sample_idx == len(self.sampled) and
-                                   ops_idx == len(sorted_head) - 1):
+            if not new_sampled or (sample_idx == sample_len and
+                                   ops_idx == head_len - 1):
                 delta = 0
             else:
                 # delta = math.floor(2 * self.error * current_count) - 1
                 delta = math.floor(2 * self.error * current_count)
 
-            new_stats = Stats(current_sample, 1, delta)
-            new_sampled.append(new_stats)
+            new_sampled.append((current_sample, 1, delta))
             ops_idx += 1
 
         new_sampled += self.sampled[sample_idx:]
@@ -135,8 +139,10 @@ class QuantileSummaries(object):
         # merge two sorted array
         new_sample = []
         i, j = 0, 0
-        while i < len(self.sampled) and j < len(other.sampled):
-            if self.sampled[i].value < other.sampled[j].value:
+        self_sample_len = len(self.sampled)
+        other_sample_len = len(other.sampled)
+        while i < self_sample_len and j < other_sample_len:
+            if self.sampled[i][0] < other.sampled[j][0]:
                 new_sample.append(self.sampled[i])
                 i += 1
             else:
@@ -183,10 +189,10 @@ class QuantileSummaries(object):
             return 0
 
         if quantile <= self.error:
-            return self.sampled[0].value
+            return self.sampled[0][0]
 
         if quantile >= 1 - self.error:
-            return self.sampled[-1].value
+            return self.sampled[-1][0]
 
         rank = math.ceil(quantile * self.count)
         target_error = math.ceil(self.error * self.count)
@@ -194,12 +200,64 @@ class QuantileSummaries(object):
         i = 1
         while i < len(self.sampled) - 1:
             cur_sample = self.sampled[i]
-            min_rank += cur_sample.g
-            max_rank = min_rank + cur_sample.delta
+            min_rank += cur_sample[1]
+            max_rank = min_rank + cur_sample[2]
             if max_rank - target_error <= rank <= min_rank + target_error:
-                return cur_sample.value
+                return cur_sample[0]
             i += 1
-        return self.sampled[-1].value
+        return self.sampled[-1][0]
+
+    def query_percentile_rate_list(self, percentile_rate_list):
+        if self.head_sampled:
+            self.compress()
+
+        if np.min(percentile_rate_list) < 0 or np.max(percentile_rate_list) > 1:
+            raise ValueError("Quantile should be in range [0.0, 1.0]")
+
+        if self.count == 0:
+            return [0] * len(percentile_rate_list)
+
+        split_points = []
+        i, j = 0, len(percentile_rate_list) - 1
+        while i < len(percentile_rate_list) and percentile_rate_list[i] <= self.error:
+            split_points.append(self.sampled[0][0])
+            # split_points.append(self.sampled[0].value)
+            i += 1
+
+        while j >= 0 and percentile_rate_list[i] >= 1 - self.error:
+            j -= 1
+
+        k = 1
+        min_rank = 0
+        while i <= j:
+            quantile = percentile_rate_list[i]
+            rank = math.ceil(quantile * self.count)
+            target_error = math.ceil(self.error * self.count)
+            while k < len(self.sampled) - 1:
+                # cur_sample = self.sampled[k]
+                # min_rank += cur_sample.g
+                # max_rank = min_rank + cur_sample.delta
+                cur_sample_value = self.sampled[k][0]
+                min_rank += self.sampled[k][1]
+                max_rank = min_rank + self.sampled[k][2]
+                if max_rank - target_error <= rank <= min_rank + target_error:
+                    split_points.append(cur_sample_value)
+                    min_rank -= self.sampled[k][1]
+                    break
+                k += 1
+
+            if k == len(self.sampled) - 1:
+                # split_points.append(self.sampled[-1].value)
+                split_points.append(self.sampled[-1][0])
+
+            i += 1
+
+        while j + 1 < len(percentile_rate_list):
+            j += 1
+            split_points.append(self.sampled[-1][0])
+
+        assert len(percentile_rate_list) == len(split_points)
+        return split_points
 
     def value_to_rank(self, value):
         min_rank, max_rank = 0, 0
@@ -247,22 +305,25 @@ class QuantileSummaries(object):
 
         # Start from the last element
         head = self.sampled[-1]
+        sum_g_delta = head[1] + head[2]
         i = len(self.sampled) - 2  # Do not merge the last element
 
         while i >= 1:
             this_sample = self.sampled[i]
-            if this_sample.g + head.g + head.delta < merge_threshold:
-                head.g = head.g + this_sample.g
+            if this_sample[1] + sum_g_delta < merge_threshold:
+                head = (head[0], head[1] + this_sample[1], head[2])
+                sum_g_delta += this_sample[1]
             else:
                 res.append(head)
                 head = this_sample
+                sum_g_delta = head[1] + head[2]
             i -= 1
         res.append(head)
 
         # If head of current sample is smaller than this new res's head
         # Add current head into res
         current_head = self.sampled[0]
-        if current_head.value <= head.value and len(self.sampled) > 1:
+        if current_head[0] <= head[0] and len(self.sampled) > 1:
             res.append(current_head)
 
         # Python do not support prepend, thus, use reverse instead
@@ -335,7 +396,7 @@ class SparseQuantileSummaries(QuantileSummaries):
             return ((self._total_count - self.missing_count) / self.count) * quantile
 
         return (quantile - self.zero_upper_bound + self.zero_lower_bound) / (
-            1 - self.zero_upper_bound + self.zero_lower_bound)
+                1 - self.zero_upper_bound + self.zero_lower_bound)
 
     @property
     def zero_lower_bound(self):
