@@ -346,10 +346,18 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         else:
             if self.EINI_inference and not self.on_training:  # EINI is for inference stage
                 sitename = self.role + ':' + str(self.component_properties.local_partyid)
-                predict_rs = EINI_guest_predict(processed_data, trees, self.learning_rate, self.init_score,
-                                                self.booster_dim, self.encrypt_param.key_length, self.hetero_sbt_transfer_variable,
-                                                sitename, self.component_properties.host_party_idlist, predict_cache,
-                                                False)
+                predict_rs = EINI_guest_predict(
+                    processed_data,
+                    trees,
+                    self.learning_rate,
+                    self.init_score,
+                    self.booster_dim,
+                    self.encrypt_param.key_length,
+                    self.hetero_sbt_transfer_variable,
+                    sitename,
+                    self.component_properties.host_party_idlist,
+                    predict_cache,
+                    False)
             else:
                 predict_rs = sbt_guest_predict(
                     processed_data,
@@ -360,7 +368,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                     self.booster_dim,
                     predict_cache,
                     pred_leaf=(
-                            ret_format == 'leaf'))
+                        ret_format == 'leaf'))
 
         if ret_format == 'leaf':
             return predict_rs  # predict result is leaf position
