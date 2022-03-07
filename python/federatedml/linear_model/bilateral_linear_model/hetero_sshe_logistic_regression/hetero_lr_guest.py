@@ -37,29 +37,9 @@ class HeteroLRGuest(HeteroSSHEGuestBase):
         self.model_param_name = 'HeteroLogisticRegressionParam'
         self.model_meta_name = 'HeteroLogisticRegressionMeta'
         self.model_param = HeteroSSHELRParam()
-        self.labels = None
+        # self.labels = None
         self.one_vs_rest_obj = None
         self.label_type = int
-
-    """
-    def _cal_z_in_share(self, w_self, w_remote, features, suffix, cipher):
-        z1 = features.dot_local(w_self)
-
-        za_suffix = ("za",) + suffix
-
-        za_share = self.secure_matrix_obj.secure_matrix_mul(w_remote,
-                                                            tensor_name=".".join(za_suffix),
-                                                            cipher=cipher,
-                                                            suffix=za_suffix)
-        zb_suffix = ("zb",) + suffix
-        zb_share = self.secure_matrix_obj.secure_matrix_mul(features,
-                                                            tensor_name=".".join(zb_suffix),
-                                                            cipher=None,
-                                                            suffix=zb_suffix)
-
-        z = z1 + za_share + zb_share
-        return z
-    """
 
     def _init_model(self, params):
         super()._init_model(params)
@@ -72,70 +52,24 @@ class HeteroLRGuest(HeteroSSHEGuestBase):
 
         return sigmoid_z
 
-    def forward(self, weights, features, labels, suffix, cipher):
-    """
-        if not self.reveal_every_iter:
-            LOGGER.info(f"[forward]: Calculate z in share...")
-            w_self, w_remote = weights
-            z = self._cal_z_in_share(w_self, w_remote, features, suffix, cipher)
-        else:
-            LOGGER.info(f"[forward]: Calculate z directly...")
-            w = weights.unboxed
-            z = features.dot_local(w)
+    def forward(self, weights, features, labels, suffix, cipher, batch_weight):
+        self._cal_z(weights, features, suffix, cipher)
+        sigmoid_z = self._compute_sigmoid(self.wx_self, self.wx_remote)
 
-        remote_z = self.secure_matrix_obj.share_encrypted_matrix(suffix=suffix,
-                                                                 is_remote=False,
-                                                                 cipher=None,
-                                                                 z=None)[0]
+        self.encrypted_wx = self.wx_self + self.wx_remote
 
-        self.wx_self = z
-        self.wx_remote = remote_z
-        """
-    self._cal_z(weights, features, suffix, cipher)
-    sigmoid_z = self._compute_sigmoid(self.wx_self, self.wx_remote)
+        self.encrypted_error = sigmoid_z - labels
+        if batch_weight:
+            sigmoid_z = sigmoid_z * batch_weight
+            self.encrypted_error = self.encrypted_error * batch_weight
 
-    self.encrypted_wx = self.wx_self + self.wx_remote
-
-    self.encrypted_error = sigmoid_z - labels
-
-    tensor_name = ".".join(("sigmoid_z",) + suffix)
-    shared_sigmoid_z = SecureMatrix.from_source(tensor_name,
-                                                sigmoid_z,
-                                                cipher,
-                                                self.fixedpoint_encoder.n,
-                                                self.fixedpoint_encoder)
-    return shared_sigmoid_z
-
-    """
-    def backward(self, error, features, suffix, cipher):
-        LOGGER.info(f"[backward]: Calculate gradient...")
-        batch_num = self.batch_num[int(suffix[1])]
-        error_1_n = error * (1 / batch_num)
-
-        ga2_suffix = ("ga2",) + suffix
-        ga2_2 = self.secure_matrix_obj.secure_matrix_mul(error_1_n,
-                                                         tensor_name=".".join(ga2_suffix),
-                                                         cipher=cipher,
-                                                         suffix=ga2_suffix,
-                                                         is_fixedpoint_table=False)
-
-        # LOGGER.debug(f"ga2_2: {ga2_2}")
-
-        encrypt_g = self.encrypted_error.dot(features) * (1 / batch_num)
-
-        # LOGGER.debug(f"encrypt_g: {encrypt_g}")
-
-        tensor_name = ".".join(("encrypt_g",) + suffix)
-        gb2 = SecureMatrix.from_source(tensor_name,
-                                       encrypt_g,
-                                       self.cipher,
-                                       self.fixedpoint_encoder.n,
-                                       self.fixedpoint_encoder)
-
-        # LOGGER.debug(f"gb2: {gb2}")
-
-        return gb2, ga2_2
-    """
+        tensor_name = ".".join(("sigmoid_z",) + suffix)
+        shared_sigmoid_z = SecureMatrix.from_source(tensor_name,
+                                                    sigmoid_z,
+                                                    cipher,
+                                                    self.fixedpoint_encoder.n,
+                                                    self.fixedpoint_encoder)
+        return shared_sigmoid_z
 
     def compute_loss(self, weights, labels, suffix, cipher=None):
         """
@@ -204,21 +138,6 @@ class HeteroLRGuest(HeteroSSHEGuestBase):
         LOGGER.info(f"[compute_loss]: loss={loss}, reveal_every_iter={self.reveal_every_iter}")
 
         return loss
-
-    """
-    def _reveal_every_iter_weights_check(self, last_w, new_w, suffix):
-        square_sum = np.sum((last_w - new_w) ** 2)
-        host_sums = self.converge_transfer_variable.square_sum.get(suffix=suffix)
-        for hs in host_sums:
-            square_sum += hs
-        weight_diff = np.sqrt(square_sum)
-        is_converge = False
-        if weight_diff < self.model_param.tol:
-            is_converge = True
-        LOGGER.info(f"n_iter: {self.n_iter_}, weight_diff: {weight_diff}")
-        self.converge_transfer_variable.converge_info.remote(is_converge, role=consts.HOST, suffix=suffix)
-        return is_converge
-    """
 
     @assert_io_num_rows_equal
     def predict(self, data_instances):
@@ -313,14 +232,6 @@ class HeteroLRGuest(HeteroSSHEGuestBase):
 
     def fit(self, data_instances, validate_data=None):
         LOGGER.info("Starting to fit hetero_sshe_logistic_regression")
-        """
-        self.batch_generator = batch_generator.Guest()
-        self.batch_generator.register_batch_generator(BatchGeneratorTransferVariable(), has_arbiter=False)
-        self.header = data_instances.schema.get("header", [])
-        self._abnormal_detection(data_instances)
-        self.check_abnormal_values(data_instances)
-        self.check_abnormal_values(validate_data)
-        """
         self.prepare_fit(data_instances, validate_data)
         classes = self.one_vs_rest_obj.get_data_classes(data_instances)
 

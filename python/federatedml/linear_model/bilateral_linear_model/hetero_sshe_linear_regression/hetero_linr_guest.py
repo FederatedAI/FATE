@@ -35,38 +35,19 @@ class HeteroLinRGuest(HeteroSSHEGuestBase):
         self.model_param_name = 'HeteroLinearRegressionParam'
         self.model_meta_name = 'HeteroLinearRegressionMeta'
         self.model_param = HeteroSSHELinRParam()
-        self.labels = None
+        # self.labels = None
         self.label_type = float
 
-    def forward(self, weights, features, suffix, cipher):
-        """if not self.reveal_every_iter:
-            LOGGER.info(f"[forward]: Calculate z in share...")
-            w_self, w_remote = weights
-            z = self._cal_z_in_share(w_self, w_remote, features, suffix, cipher)
-        else:
-            LOGGER.info(f"[forward]: Calculate z directly...")
-            w = weights.unboxed
-            z = features.dot_local(w)
-
-        remote_z = self.secure_matrix_obj.share_encrypted_matrix(suffix=suffix,
-                                                                 is_remote=False,
-                                                                 cipher=None,
-                                                                 z=None)[0]
-
-        self.wx_self = z
-        self.wx_remote = remote_z
-        """
+    def forward(self, weights, features, labels, suffix, cipher, batch_weight):
         self._cal_z(weights, features, suffix, cipher)
         complete_z = self.wx_self + self.wx_remote
 
         self.encrypted_wx = complete_z
 
-        self.encrypted_error = complete_z - self.labels
-
-        if self.weight:
-            # self.encrypted_wx = self.encrypted_wx * self.weight
-            complete_z = complete_z * self.weight
-            self.encrypted_error = self.encrypted_error * self.weight
+        self.encrypted_error = complete_z - labels
+        if batch_weight:
+            complete_z = complete_z * batch_weight
+            self.encrypted_error = self.encrypted_error * batch_weight
 
         tensor_name = ".".join(("complete_z",) + suffix)
         shared_z = SecureMatrix.from_source(tensor_name,
@@ -76,14 +57,14 @@ class HeteroLinRGuest(HeteroSSHEGuestBase):
                                             self.fixedpoint_encoder)
         return shared_z
 
-    def compute_loss(self, weights, suffix, cipher=None):
+    def compute_loss(self, weights, labels, suffix, cipher=None):
         """
          Compute hetero linr loss:
             loss = (1/N)*\sum(wx-y)^2 where y is label, w is model weight and x is features
             log(wx - y)^2 = (wx_h)^2 + (wx_g - y)^2 + 2 * (wx_h * (wx_g - y))
         """
         LOGGER.info(f"[compute_loss]: Calculate loss ...")
-        wxy_self = self.wx_self - self.labels
+        wxy_self = self.wx_self - labels
         wxy_self_square = (wxy_self * wxy_self).reduce(operator.add)
 
         wxy = (self.wx_remote * wxy_self).reduce(operator.add)
@@ -212,12 +193,6 @@ class HeteroLinRGuest(HeteroSSHEGuestBase):
 
     def fit(self, data_instances, validate_data=None):
         LOGGER.info("Starting to fit hetero_sshe_linear_regression")
-        """self.batch_generator = batch_generator.Guest()
-        self.batch_generator.register_batch_generator(BatchGeneratorTransferVariable(), has_arbiter=False)
-        self.header = data_instances.schema.get("header", [])
-        self._abnormal_detection(data_instances)
-        self.check_abnormal_values(data_instances)
-        self.check_abnormal_values(validate_data)"""
         self.prepare_fit(data_instances, validate_data)
 
         self.fit_single_model(data_instances, validate_data)
