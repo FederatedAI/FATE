@@ -45,7 +45,6 @@ from pipeline.param.union_param import UnionParam
 from pipeline.param.boosting_param import ObjectiveParam
 from pipeline.param.boosting_param import DecisionTreeParam
 from pipeline.param.predict_param import PredictParam
-from pipeline.param.sbt_feature_transformer_param import SBTTransformerParam
 from pipeline.param.feature_imputation_param import FeatureImputationParam
 from pipeline.param.label_transform_param import LabelTransformParam
 from pipeline.param.sir_param import SecureInformationRetrievalParam

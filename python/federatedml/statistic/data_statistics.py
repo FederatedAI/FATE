@@ -166,7 +166,6 @@ class DataStatistics(ModelBase):
             #     LOGGER.debug(f"stat_name: {stat_name}, value: {value}, type: {type(value)}")
             self.add_summary(k, v)
         LOGGER.debug(f"Before return, summary: {self.summary()}")
-        return data_instances
 
     def _convert_pb(self, stat_res, stat_name):
         values = [stat_res[col_name] for col_name in self.inner_param.static_names]

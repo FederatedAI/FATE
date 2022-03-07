@@ -41,26 +41,7 @@ class HeteroLRHost(HeteroSSHEHostBase):
         super()._init_model(params)
         self.one_vs_rest_obj = one_vs_rest_factory(self, role=self.role, mode=self.mode, has_arbiter=False)
 
-    """def _cal_z_in_share(self, w_self, w_remote, features, suffix):
-        z1 = features.dot_local(w_self)
-
-        za_suffix = ("za",) + suffix
-        za_share = self.secure_matrix_obj.secure_matrix_mul(features,
-                                                            tensor_name=".".join(za_suffix),
-                                                            cipher=None,
-                                                            suffix=za_suffix)
-
-        zb_suffix = ("zb",) + suffix
-        zb_share = self.secure_matrix_obj.secure_matrix_mul(w_remote,
-                                                            tensor_name=".".join(zb_suffix),
-                                                            cipher=self.cipher,
-                                                            suffix=zb_suffix)
-
-        z = z1 + za_share + zb_share
-        return z
-    """
-
-    def forward(self, weights, features, labels, suffix, cipher):
+    def forward(self, weights, features, labels, suffix, cipher, batch_weight=None):
         if not self.reveal_every_iter:
             LOGGER.info(f"[forward]: Calculate z in share...")
             w_self, w_remote = weights
@@ -85,38 +66,6 @@ class HeteroLRHost(HeteroSSHEHostBase):
                                                     self.fixedpoint_encoder)
 
         return shared_sigmoid_z
-
-    """
-    def backward(self, error: fixedpoint_table.FixedPointTensor, features, suffix, cipher):
-        LOGGER.info(f"[backward]: Calculate gradient...")
-        batch_num = self.batch_num[int(suffix[1])]
-
-        ga = features.dot_local(error)
-        # LOGGER.debug(f"ga: {ga}, batch_num: {batch_num}")
-        ga = ga * (1 / batch_num)
-
-        zb_suffix = ("ga2",) + suffix
-        ga2_1 = self.secure_matrix_obj.secure_matrix_mul(features,
-                                                         tensor_name=".".join(zb_suffix),
-                                                         cipher=None,
-                                                         suffix=zb_suffix)
-
-        # LOGGER.debug(f"ga2_1: {ga2_1}")
-
-        ga_new = ga + ga2_1
-
-        tensor_name = ".".join(("encrypt_g",) + suffix)
-        gb1 = SecureMatrix.from_source(tensor_name,
-                                       self.other_party,
-                                       cipher,
-                                       self.fixedpoint_encoder.n,
-                                       self.fixedpoint_encoder,
-                                       is_fixedpoint_table=False)
-
-        # LOGGER.debug(f"gb1: {gb1}")
-
-        return ga_new, gb1
-    """
 
     def compute_loss(self, weights=None, labels=None, suffix=None, cipher=None):
         """
@@ -174,13 +123,6 @@ class HeteroLRHost(HeteroSSHEHostBase):
                 loss_norm = w_tensor.dot(w_tensor_transpose, target_name=loss_norm_tensor_name)
                 loss_norm.broadcast_reconstruct_share()
 
-    """
-    def _reveal_every_iter_weights_check(self, last_w, new_w, suffix):
-        square_sum = np.sum((last_w - new_w) ** 2)
-        self.converge_transfer_variable.square_sum.remote(square_sum, role=consts.GUEST, idx=0, suffix=suffix)
-        return self.converge_transfer_variable.converge_info.get(idx=0, suffix=suffix)
-    """
-
     def predict(self, data_instances):
         LOGGER.info("Start predict ...")
         self._abnormal_detection(data_instances)
@@ -201,48 +143,6 @@ class HeteroLRHost(HeteroSSHEHostBase):
         prob_host = data_instances.mapValues(f)
         self.transfer_variable.host_prob.remote(prob_host, role=consts.GUEST, idx=0)
         LOGGER.info("Remote probability to Guest")
-
-    """
-    def get_single_model_param(self, model_weights=None, header=None):
-        result = super().get_single_model_param(model_weights, header)
-        if not self.is_respectively_reveal:
-            weight_dict = {}
-            model_weights = model_weights if model_weights else self.model_weights
-            header = header if header else self.header
-            for idx, header_name in enumerate(header):
-                coef_i = model_weights.coef_[idx]
-
-                is_obfuscator = False
-                if hasattr(coef_i, "__is_obfuscator"):
-                    is_obfuscator = getattr(coef_i, "__is_obfuscator")
-
-                public_key = lr_model_param_pb2.CipherPublicKey(n=str(coef_i.public_key.n))
-                weight_dict[header_name] = lr_model_param_pb2.CipherText(public_key=public_key,
-                                                                         cipher_text=str(coef_i.ciphertext()),
-                                                                         exponent=str(coef_i.exponent),
-                                                                         is_obfuscator=is_obfuscator)
-            result["encrypted_weight"] = weight_dict
-
-        return result
-
-    def get_single_encrypted_model_weight_dict(self, model_weights=None, header=None):
-        weight_dict = {}
-        model_weights = model_weights if model_weights else self.model_weights
-        header = header if header else self.header
-        for idx, header_name in enumerate(header):
-            coef_i = model_weights.coef_[idx]
-
-            is_obfuscator = False
-            if hasattr(coef_i, "__is_obfuscator"):
-                is_obfuscator = getattr(coef_i, "__is_obfuscator")
-
-            public_key = sshe_cipher_param_pb2.CipherPublicKey(n=str(coef_i.public_key.n))
-            weight_dict[header_name] = sshe_cipher_param_pb2.CipherText(public_key=public_key,
-                                                                        cipher_text=str(coef_i.ciphertext()),
-                                                                        exponent=str(coef_i.exponent),
-                                                                        is_obfuscator=is_obfuscator)
-        return weight_dict
-    """
 
     def _get_param(self):
         if self.need_cv:
@@ -279,28 +179,6 @@ class HeteroLRHost(HeteroSSHEHostBase):
                                                           reveal_strategy=self.model_param.reveal_strategy)
         return meta_protobuf_obj
 
-    """
-    def load_single_model(self, single_model_obj):
-        super(HeteroLRHost, self).load_single_model(single_model_obj)
-        if not self.is_respectively_reveal:
-            feature_shape = len(self.header)
-            tmp_vars = [None] * feature_shape
-            weight_dict = dict(single_model_obj.encrypted_weight)
-            for idx, header_name in enumerate(self.header):
-                cipher_weight = weight_dict.get(header_name)
-                public_key = PaillierPublicKey(int(cipher_weight.public_key.n))
-                cipher_text = int(cipher_weight.cipher_text)
-                exponent = int(cipher_weight.exponent)
-                is_obfuscator = cipher_weight.is_obfuscator
-                coef_i = PaillierEncryptedNumber(public_key, cipher_text, exponent)
-                if is_obfuscator:
-                    coef_i.apply_obfuscator()
-
-                tmp_vars[idx] = coef_i
-
-            self.model_weights = LinearModelWeights(tmp_vars, fit_intercept=self.fit_intercept)
-    """
-
     def load_model(self, model_dict):
         result_obj, _ = super().load_model(model_dict)
         need_one_vs_rest = result_obj.need_one_vs_rest
@@ -317,14 +195,6 @@ class HeteroLRHost(HeteroSSHEHostBase):
 
     def fit(self, data_instances, validate_data=None):
         LOGGER.info("Starting to fit hetero_sshe_logistic_regression")
-        """
-        self.batch_generator = batch_generator.Host()
-        self.batch_generator.register_batch_generator(BatchGeneratorTransferVariable(), has_arbiter=False)
-        self.header = data_instances.schema.get("header", [])
-        self._abnormal_detection(data_instances)
-        self.check_abnormal_values(data_instances)
-        self.check_abnormal_values(validate_data)
-        """
         self.prepare_fit(data_instances, validate_data)
         classes = self.one_vs_rest_obj.get_data_classes(data_instances)
 
