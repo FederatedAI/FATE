@@ -16,12 +16,13 @@ Hetero guest predict utils
 """
 
 
-def generate_leaf_pos_dict(x, tree_num):
+def generate_leaf_pos_dict(x, tree_num, np_int_type=np.int8):
     """
     x: just occupy the first parameter position
     return: a numpy array record sample pos, and a counter counting how many trees reach a leaf node
     """
-    node_pos = np.zeros(tree_num, dtype=np.int64)
+
+    node_pos = np.zeros(tree_num, dtype=np_int_type)
     reach_leaf_node = np.zeros(tree_num, dtype=np.bool)
     return {'node_pos': node_pos, 'reach_leaf_node': reach_leaf_node}
 
@@ -169,11 +170,12 @@ def sbt_guest_predict(data_inst, transfer_var: HeteroSecureBoostTransferVariable
                       trees: List[HeteroDecisionTreeGuest], learning_rate, init_score, booster_dim,
                       predict_cache=None, pred_leaf=False):
     tree_num = len(trees)
-    generate_func = functools.partial(generate_leaf_pos_dict, tree_num=tree_num)
-    node_pos_tb = data_inst.mapValues(generate_func)  # record node pos
     max_depth = trees[0].max_depth
     max_int = 2 ** max_depth
     dtype = get_dtype(max_int)
+    LOGGER.debug('chosen np dtype is {}'.format(dtype))
+    generate_func = functools.partial(generate_leaf_pos_dict, tree_num=tree_num, np_int_type=dtype)
+    node_pos_tb = data_inst.mapValues(generate_func)  # record node pos
     final_leaf_pos = data_inst.mapValues(lambda x: np.zeros(tree_num, dtype=dtype) + np.nan)  # record final leaf pos
     traverse_func = functools.partial(guest_traverse_trees, trees=trees)
     comm_round = 0
