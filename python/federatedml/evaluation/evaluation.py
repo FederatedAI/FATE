@@ -209,7 +209,7 @@ class Evaluation(ModelBase):
             return eval_result
 
         if not run_outer_metric:
-            no_label = (np.array(rs0) is None).all()
+            no_label = set(rs0) == {None}
             if no_label:
                 LOGGER.debug('no label found in clustering result, skip metric computation')
                 return eval_result
