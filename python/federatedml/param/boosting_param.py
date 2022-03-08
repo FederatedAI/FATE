@@ -142,7 +142,8 @@ class DecisionTreeParam(BaseParam):
                              and receive anonymous feature importance results from hosts. Hosts will compute split
                              importance of local features.
 
-    use_missing: bool, accepted True, False only, use missing value in training process or not. default: False
+    use_missing: bool, accepted True, False only, default: False
+        use missing value in training process or not.
 
     zero_as_missing: bool
         regard 0 as missing value or not,
