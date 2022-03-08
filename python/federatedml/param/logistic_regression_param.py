@@ -169,6 +169,13 @@ class LogisticParam(LinearModelParam):
             raise ValueError(
                 "logistic_param's encrypted method support 'Paillier' or None only")
         self.multi_class = self.check_and_change_lower(self.multi_class, ["ovr"], f"{descr}")
+        if not isinstance(self.masked_rate, (float, int)) or self.masked_rate < 0:
+            raise ValueError("masked rate should be non-negative numeric number")
+        if not isinstance(self.batch_strategy, str) or self.batch_strategy.lower() not in ["full", "random"]:
+            raise ValueError("batch strategy should be full or random")
+        self.batch_strategy = self.batch_strategy.lower()
+        if not isinstance(self.shuffle, bool):
+            raise ValueError("shuffle should be boolean type")
         return True
 
 
