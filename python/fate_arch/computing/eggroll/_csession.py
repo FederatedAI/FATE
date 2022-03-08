@@ -33,6 +33,8 @@ class CSession(CSessionABC):
             options = {}
         if "eggroll.session.deploy.mode" not in options:
             options["eggroll.session.deploy.mode"] = "cluster"
+        if "eggroll.rollpair.inmemory_output" not in options:
+            options["eggroll.rollpair.inmemory_output"] = True
         self._rp_session = session_init(session_id=session_id, options=options)
         self._rpc = runtime_init(session=self._rp_session)
         self._session_id = self._rp_session.get_session_id()

@@ -391,14 +391,15 @@ def generate_leaf_candidates_guest(data_inst, sitename, trees, node_pos_map_list
         if len(candidate_list) < 1:
             raise ValueError('incorrect candidate list length,: {}'.format(len(candidate_list)))
         node = candidate_list[0]
+
+        result_vec = np.zeros(len(node_pos_map))
         if isinstance(node.weight, np.ndarray):
             if len(node.weight) > 1:
                 result_vec = [np.array([0 for i in range(len(node.weight))]) for i in range(len(node_pos_map))]
-            else:
-                result_vec = [0 for i in range(len(node_pos_map))]  # normal tree
 
         for node in candidate_list:
             result_vec[node_pos_map[node.id]] = node.weight * learning_rate + tree_init_score
+
         candidate_nodes_of_all_tree.extend(result_vec)
 
     return np.array(candidate_nodes_of_all_tree)
