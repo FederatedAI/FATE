@@ -166,13 +166,6 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         sampled_gh = goss_sampling(self.grad_and_hess, self.top_rate, self.other_rate)
         return sampled_gh
 
-    def sync_feature_importance(self):
-        host_feature_importance_list = self.hetero_sbt_transfer_variable.host_feature_importance.get(idx=-1)
-        for i in host_feature_importance_list:
-            self.feature_importances_.update(i)
-
-        LOGGER.debug('self feature importance is {}'.format(self.feature_importances_))
-
     def on_epoch_prepare(self, epoch_idx):
         """
 
@@ -201,6 +194,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
             self.booster_dim = 1
 
     def postprocess(self):
+
         host_feature_importance_list = self.hetero_sbt_transfer_variable.host_feature_importance.get(idx=-1)
         for i in host_feature_importance_list:
             self.feature_importances_.update(i)
@@ -243,7 +237,6 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
 
         tree.fit()
         self.update_feature_importance(tree.get_feature_importance())
-        self.sync_feature_importance()
 
         return tree
 
