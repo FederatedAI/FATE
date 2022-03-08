@@ -231,8 +231,10 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         model_param.feature_name_fid_mapping.update(self.feature_name_fid_mapping)
         if self.boosting_strategy == consts.STD_TREE:
             model_param.model_name = consts.HETERO_SBT
-        elif self.boosting_strategy == consts.MIX_TREE or self.boosting_strategy == consts.LAYERED_TREE:
-            model_param.model_name = consts.HETERO_FAST_SBT
+        elif self.boosting_strategy == consts.LAYERED_TREE:
+            model_param.model_name = consts.HETERO_FAST_SBT_LAYERED
+        elif self.boosting_strategy == consts.MIX_TREE:
+            model_param.model_name = consts.HETERO_FAST_SBT_MIX
         model_param.best_iteration = self.callback_variables.best_iteration
         model_param.tree_plan.extend(plan.encode_plan(self.tree_plan))
 
