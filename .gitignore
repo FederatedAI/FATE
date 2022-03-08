@@ -14,6 +14,7 @@ venv
 *.tar.gz
 *.db
 *.db-journal
+.env
 
 # excluded paths
 /arch/core/target/

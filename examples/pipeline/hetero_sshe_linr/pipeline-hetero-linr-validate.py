@@ -81,7 +81,9 @@ def main(config="../../config.yaml", namespace=""):
                                    ],
                                        "use_first_metric_only": False,
                                        "save_freq": 1
-                                   }
+                                   },
+                                   reveal_every_iter=True,
+                                   reveal_strategy="respectively"
                                    )
 
     pipeline.add_component(reader_0)

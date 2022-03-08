@@ -22,7 +22,7 @@ from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import Feature
 from federatedml.ensemble.secureboost.secureboost_util.tree_model_io import load_hetero_tree_learner, \
     produce_hetero_tree_learner
 from federatedml.ensemble.secureboost.secureboost_util.boosting_tree_predict import sbt_guest_predict, \
-    mix_sbt_guest_predict
+    mix_sbt_guest_predict, EINI_guest_predict
 from federatedml.ensemble.secureboost.secureboost_util.subsample import goss_sampling
 
 
@@ -346,13 +346,29 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         else:
             if self.EINI_inference and not self.on_training:  # EINI is for inference stage
                 sitename = self.role + ':' + str(self.component_properties.local_partyid)
-                predict_rs = self.EINI_guest_predict(processed_data, trees, self.learning_rate, self.init_score,
-                                                     self.booster_dim, sitename,
-                                                     self.component_properties.host_party_idlist,
-                                                     predict_cache, False)
+                predict_rs = EINI_guest_predict(
+                    processed_data,
+                    trees,
+                    self.learning_rate,
+                    self.init_score,
+                    self.booster_dim,
+                    self.encrypt_param.key_length,
+                    self.hetero_sbt_transfer_variable,
+                    sitename,
+                    self.component_properties.host_party_idlist,
+                    predict_cache,
+                    False)
             else:
-                predict_rs = self.boosting_fast_predict(processed_data, trees=trees, predict_cache=predict_cache,
-                                                        pred_leaf=(ret_format == 'leaf'))
+                predict_rs = sbt_guest_predict(
+                    processed_data,
+                    self.hetero_sbt_transfer_variable,
+                    trees,
+                    self.learning_rate,
+                    self.init_score,
+                    self.booster_dim,
+                    predict_cache,
+                    pred_leaf=(
+                        ret_format == 'leaf'))
 
         if ret_format == 'leaf':
             return predict_rs  # predict result is leaf position

@@ -85,6 +85,8 @@
                 "early_stop": "weight_diff",
                 "decay": 0.0,
                 "decay_sqrt": false,
+                "reveal_every_iter": true,
+                "reveal_strategy": "respectively",
                 "callback_param": {
                     "callbacks": [
                         "EarlyStopping",
@@ -96,8 +98,8 @@
                         "mean_absolute_error",
                         "root_mean_squared_error"
                     ],
-                    "use_first_metric_only": false,
-                    "save_freq": 1
+                    "save_freq": 1,
+                    "use_first_metric_only": false
                 },
                 "encrypted_mode_calculator_param": {
                     "mode": "fast"

@@ -16,12 +16,13 @@ Hetero guest predict utils
 """
 
 
-def generate_leaf_pos_dict(x, tree_num):
+def generate_leaf_pos_dict(x, tree_num, np_int_type=np.int8):
     """
     x: just occupy the first parameter position
     return: a numpy array record sample pos, and a counter counting how many trees reach a leaf node
     """
-    node_pos = np.zeros(tree_num, dtype=np.int64)
+
+    node_pos = np.zeros(tree_num, dtype=np_int_type)
     reach_leaf_node = np.zeros(tree_num, dtype=np.bool)
     return {'node_pos': node_pos, 'reach_leaf_node': reach_leaf_node}
 
@@ -157,9 +158,9 @@ Hetero guest predict function
 
 
 def get_dtype(max_int):
-    if max_int < (2**8)/2:
+    if max_int < (2**8) / 2:
         return np.int8
-    elif max_int < (2**16)/2:
+    elif max_int < (2**16) / 2:
         return np.int16
     else:
         return np.int64
@@ -169,11 +170,12 @@ def sbt_guest_predict(data_inst, transfer_var: HeteroSecureBoostTransferVariable
                       trees: List[HeteroDecisionTreeGuest], learning_rate, init_score, booster_dim,
                       predict_cache=None, pred_leaf=False):
     tree_num = len(trees)
-    generate_func = functools.partial(generate_leaf_pos_dict, tree_num=tree_num)
-    node_pos_tb = data_inst.mapValues(generate_func)  # record node pos
     max_depth = trees[0].max_depth
     max_int = 2 ** max_depth
     dtype = get_dtype(max_int)
+    LOGGER.debug('chosen np dtype is {}'.format(dtype))
+    generate_func = functools.partial(generate_leaf_pos_dict, tree_num=tree_num, np_int_type=dtype)
+    node_pos_tb = data_inst.mapValues(generate_func)  # record node pos
     final_leaf_pos = data_inst.mapValues(lambda x: np.zeros(tree_num, dtype=dtype) + np.nan)  # record final leaf pos
     traverse_func = functools.partial(guest_traverse_trees, trees=trees)
     comm_round = 0
@@ -350,9 +352,9 @@ def go_to_children_branches(data_inst, tree_node, tree, sitename: str, candidate
         tree_node_list = tree.tree_node
         if tree_node.sitename != sitename:
             go_to_children_branches(data_inst, tree_node_list[tree_node.left_nodeid],
-                                                                  tree, sitename, candidate_list)
+                                    tree, sitename, candidate_list)
             go_to_children_branches(data_inst, tree_node_list[tree_node.right_nodeid],
-                                                                  tree, sitename, candidate_list)
+                                    tree, sitename, candidate_list)
         else:
             next_layer_node_id = tree.go_next_layer(tree_node, data_inst, use_missing=tree.use_missing,
                                                     zero_as_missing=tree.zero_as_missing, decoder=tree.decode,
@@ -389,14 +391,15 @@ def generate_leaf_candidates_guest(data_inst, sitename, trees, node_pos_map_list
         if len(candidate_list) < 1:
             raise ValueError('incorrect candidate list length,: {}'.format(len(candidate_list)))
         node = candidate_list[0]
+
+        result_vec = np.zeros(len(node_pos_map))
         if isinstance(node.weight, np.ndarray):
             if len(node.weight) > 1:
                 result_vec = [np.array([0 for i in range(len(node.weight))]) for i in range(len(node_pos_map))]
-            else:
-                result_vec = [0 for i in range(len(node_pos_map))]  # normal tree
 
         for node in candidate_list:
             result_vec[node_pos_map[node.id]] = node.weight * learning_rate + tree_init_score
+
         candidate_nodes_of_all_tree.extend(result_vec)
 
     return np.array(candidate_nodes_of_all_tree)
@@ -506,7 +509,7 @@ def count_complexity_helper(node, node_list, host_sitename, meet_host_node):
         meet_host_node = True
 
     return count_complexity_helper(node_list[node.left_nodeid], node_list, host_sitename, meet_host_node) + \
-           count_complexity_helper(node_list[node.right_nodeid], node_list, host_sitename, meet_host_node)
+        count_complexity_helper(node_list[node.right_nodeid], node_list, host_sitename, meet_host_node)
 
 
 def count_complexity(trees, sitename):
@@ -567,6 +570,3 @@ def EINI_host_predict(data_inst, trees: List[HeteroDecisionTreeHost], sitename, 
         else:
             result_table = position_vec.join(guest_position_vec, position_vec_element_wise_mul)
             transfer_var.inter_host_data.remote(result_table, idx=self_idx + 1, suffix='position_vec', role=consts.HOST)
-
-
-

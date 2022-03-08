@@ -35,7 +35,7 @@ class HeteroLinRHost(HeteroSSHEHostBase):
         self.model_param = HeteroSSHELinRParam()
         self.labels = None
 
-    def forward(self, weights, features, suffix, cipher):
+    def forward(self, weights, features, labels, suffix, cipher, batch_weight=None):
         if not self.reveal_every_iter:
             LOGGER.info(f"[forward]: Calculate z in share...")
             w_self, w_remote = weights
@@ -61,7 +61,7 @@ class HeteroLinRHost(HeteroSSHEHostBase):
 
         return shared_z
 
-    def compute_loss(self, weights=None, suffix=None, cipher=None):
+    def compute_loss(self, weights=None, labels=None, suffix=None, cipher=None):
         """
          Compute hetero linr loss:
             loss = (1/N)*\sum(wx-y)^2 where y is label, w is model weight and x is features
@@ -135,26 +135,6 @@ class HeteroLinRHost(HeteroSSHEHostBase):
         self.transfer_variable.host_prob.remote(host_pred, role=consts.GUEST, idx=0)
         LOGGER.info("Remote probability to Guest")
 
-    """
-    def get_single_encrypted_model_weight_dict(self, model_weights=None, header=None):
-        weight_dict = {}
-        model_weights = model_weights if model_weights else self.model_weights
-        header = header if header else self.header
-        for idx, header_name in enumerate(header):
-            coef_i = model_weights.coef_[idx]
-
-            is_obfuscator = False
-            if hasattr(coef_i, "__is_obfuscator"):
-                is_obfuscator = getattr(coef_i, "__is_obfuscator")
-
-            public_key = sshe_cipher_param_pb2.CipherPublicKey(n=str(coef_i.public_key.n))
-            weight_dict[header_name] = sshe_cipher_param_pb2.CipherText(public_key=public_key,
-                                                                        cipher_text=str(coef_i.ciphertext()),
-                                                                        exponent=str(coef_i.exponent),
-                                                                        is_obfuscator=is_obfuscator)
-        return weight_dict
-    """
-
     def _get_param(self):
         if self.need_cv:
             param_protobuf_obj = linr_model_param_pb2.LinRModelParam()
@@ -184,12 +164,6 @@ class HeteroLinRHost(HeteroSSHEHostBase):
 
     def fit(self, data_instances, validate_data=None):
         LOGGER.info("Starting to fit hetero_sshe_linear_regression")
-        """self.batch_generator = batch_generator.Host()
-        self.batch_generator.register_batch_generator(BatchGeneratorTransferVariable(), has_arbiter=False)
-        self.header = data_instances.schema.get("header", [])
-        self._abnormal_detection(data_instances)
-        self.check_abnormal_values(data_instances)
-        self.check_abnormal_values(validate_data)"""
         self.prepare_fit(data_instances, validate_data)
 
         self.fit_single_model(data_instances, validate_data)
