@@ -123,14 +123,6 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
             new_feat_importance[(sitename, key)] = self.feature_importances_[key]
         self.hetero_sbt_transfer_variable.host_feature_importance.remote(new_feat_importance)
 
-    def sync_feature_importance(self):
-        # generate anonymous
-        new_feat_importance = {}
-        sitename = 'host:' + str(self.component_properties.local_partyid)
-        for key in self.feature_importances_:
-            new_feat_importance[(sitename, key)] = self.feature_importances_[key]
-        self.hetero_sbt_transfer_variable.host_feature_importance.remote(new_feat_importance)
-
     def fit_a_learner(self, epoch_idx: int, booster_dim: int):
 
         flow_id = self.generate_flowid(epoch_idx, booster_dim)
@@ -155,8 +147,6 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
                                            )
         tree.fit()
         self.update_feature_importance(tree.get_feature_importance())
-        self.sync_feature_importance()
-
         return tree
 
     def load_learner(self, model_meta, model_param, epoch_idx, booster_idx):
