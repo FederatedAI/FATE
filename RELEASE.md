@@ -1,3 +1,11 @@
+# Release 1.5.3
+## Major Features and Improvements
+
+> FederatedML
+* New batch strategy in coordinated Hetero LR: support masked batch data and batch shuffle
+* Iterative Affine is disabled
+
+
 # Release 1.5.2
 ## Major Features and Improvements
 
