@@ -38,7 +38,7 @@ class Union(ModelBase):
         self.allow_missing = params.allow_missing
         self.keep_duplicate = params.keep_duplicate
         self.feature_count = 0
-        self.is_data_instance = False
+        self.is_data_instance = None
         self.is_empty_feature = False
 
     @staticmethod
@@ -123,7 +123,7 @@ class Union(ModelBase):
                 continue
 
             local_is_data_instance = self.check_is_data_instance(local_table)
-            if combined_table is None:
+            if self.is_data_instance is None or combined_table is None:
                 self.is_data_instance = local_is_data_instance
             LOGGER.debug(f"self.is_data_instance is {self.is_data_instance}, "
                          f"local_is_data_instance is {local_is_data_instance}")
@@ -137,8 +137,8 @@ class Union(ModelBase):
                 else:
                     self.check_schema_content(local_table.schema)
 
-            if combined_table is None:
-                # first table to combine
+            if combined_table is None or combined_table.count() == 0:
+                # first non-empty table to combine
                 combined_table = local_table
                 combined_schema = local_table.schema
                 if self.keep_duplicate:
@@ -149,10 +149,6 @@ class Union(ModelBase):
                 self.check_label_name(local_table, combined_table)
                 self.check_header(local_table, combined_table)
                 if self.keep_duplicate:
-                    # repeated_ids = combined_table.join(local_table, lambda v1, v2: 1)
-                    # self.repeated_ids = [v[0] for v in repeated_ids.collect()]
-                    # self.key = key
-                    # local_table = local_table.flatMap(self._renew_id)
                     local_table = local_table.map(lambda k, v: (f"{k}_{key}", v))
 
                 combined_table = combined_table.union(local_table, self._keep_first)
