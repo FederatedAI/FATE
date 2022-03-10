@@ -15,7 +15,7 @@
     "component_parameters": {
         "common": {
             "hetero_ftl_0": {
-                "epochs": 10,
+                "epochs": 3,
                 "alpha": 1,
                 "batch_size": -1,
                 "mode": "encrypted",

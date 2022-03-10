@@ -102,6 +102,10 @@ packaging_fateboard() {
     cd ./fateboard
     fateboard_version=$(grep -E -m 1 -o "<version>(.*)</version>" ./pom.xml | tr -d '[\\-a-z<>//]' | awk -F "version" '{print $2}')
     echo "[INFO] fateboard version "${fateboard_version}
+    cd ./resources-front-end
+    npm install
+    npm run build
+    cd ../
     mvn clean package -DskipTests
     mkdir -p ${package_dir}/fateboard/conf
     mkdir -p ${package_dir}/fateboard/ssh
