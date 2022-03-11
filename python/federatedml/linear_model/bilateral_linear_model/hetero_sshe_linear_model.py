@@ -215,6 +215,8 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
 
     def fit_single_model(self, data_instances, validate_data=None):
         LOGGER.info(f"Start to train single {self.model_name}")
+        if len(self.component_properties.host_party_idlist) > 1:
+            raise ValueError(f"Hetero SSHE Model does not support multi-host training.")
         self.callback_list.on_train_begin(data_instances, validate_data)
 
         model_shape = self.get_features_shape(data_instances)
