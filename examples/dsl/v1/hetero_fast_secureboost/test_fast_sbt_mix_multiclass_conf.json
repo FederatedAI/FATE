@@ -56,7 +56,7 @@
                 "objective": "cross_entropy"
             },
             "encrypt_param": {
-                "method": "iterativeAffine"
+                "method": "Paillier"
             },
             "predict_param": {
                 "threshold": 0.5

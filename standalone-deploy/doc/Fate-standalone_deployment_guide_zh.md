@@ -30,11 +30,11 @@
 
    ```
    #获取安装包
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone_fate_1.5.2.tar.gz
-   tar -xzvf docker_standalone_fate_1.5.2.tar.gz
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone_fate_1.5.3.tar.gz
+   tar -xzvf docker_standalone_fate_1.5.3.tar.gz
    
    #执行部署
-   cd docker_standalone_fate_1.5.2
+   cd docker_standalone_fate_1.5.3
    bash install_standalone_docker.sh
    ```
 
@@ -99,14 +99,14 @@
 2. 下载独立版本的压缩包并解压缩。
 
    ```
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone_fate_master_1.5.2.tar.gz
-   tar -xzvf  standalone_fate_master_1.5.2.tar.gz
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone_fate_master_1.5.3.tar.gz
+   tar -xzvf  standalone_fate_master_1.5.3.tar.gz
    ```
 
 3. 进入FATE目录并执行init.sh。
 
    ```
-   cd standalone_fate_master_1.5.2
+   cd standalone_fate_master_1.5.3
    sh init.sh init
    ```
 
@@ -115,7 +115,7 @@
    - 单元测试
 
    ```
-   cd standalone_fate_master_1.5.2
+   cd standalone_fate_master_1.5.3
    source bin/init_env.sh
    bash ./python/federatedml/test/run_test.sh
    ```
@@ -129,7 +129,7 @@
    - Toy测试
 
    ```
-   cd standalone_fate_master_1.5.2
+   cd standalone_fate_master_1.5.3
    source bin/init_env.sh
    python ./examples/toy_example/run_toy_example.py 10000 10000 0
    ```

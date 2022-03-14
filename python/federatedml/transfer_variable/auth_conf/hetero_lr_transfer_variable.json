@@ -17,6 +17,14 @@
         "arbiter"
       ]
     },
+    "batch_validate_info": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
     "converge_flag": {
       "src": [
         "arbiter"

@@ -8,7 +8,6 @@ from federatedml.transfer_variable.transfer_class.hetero_decision_tree_transfer_
     HeteroDecisionTreeTransferVariable
 from federatedml.util import consts
 from federatedml.feature.fate_element_type import NoneType
-from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.fast_feature_histogram import FastFeatureHistogram
 import functools
 
 
@@ -26,20 +25,11 @@ class HeteroDecisionTreeHost(DecisionTree):
         self.complete_secure_tree = False
         self.host_party_idlist = []
 
-        # For fast histogram
-        self.run_sparse_opt = False
-        self.bin_num = None
-        self.data_bin_dense = None
-        self.data_bin_dense_with_position = None
-
         self.transfer_inst = HeteroDecisionTreeTransferVariable()
 
     """
     Setting
     """
-
-    def activate_sparse_hist_opt(self):
-        self.run_sparse_opt = True
 
     def set_dense_data_for_sparse_opt(self, data_bin_dense, bin_num):
         # a dense dtable and bin_num for fast hist computation
@@ -259,10 +249,7 @@ class HeteroDecisionTreeHost(DecisionTree):
     def update_instances_node_positions(self):
 
         # join data and inst2node_idx to update current node positions of samples
-        if self.run_sparse_opt:
-            self.data_bin_dense_with_position = self.data_bin_dense.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
-        else:
-            self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
+        self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
 
     """
     Pre-Process / Post-Process
@@ -293,26 +280,6 @@ class HeteroDecisionTreeHost(DecisionTree):
         self.remove_duplicated_split_nodes(split_nid_used)
 
     """
-    Fast histogram
-    """
-
-    def fast_get_histograms(self, node_map):
-        LOGGER.info("start to get node histograms in fast mode")
-        acc_histograms = FastFeatureHistogram.calculate_histogram(
-            data_bin=self.data_bin_dense_with_position,
-            grad_and_hess=self.grad_and_hess,
-            bin_split_points=self.bin_split_points,
-            cipher_split_num=14,
-            node_map=node_map,
-            bin_num=self.bin_num,
-            valid_features=self.valid_features,
-            use_missing=self.use_missing,
-            zero_as_missing=self.zero_as_missing
-        )
-
-        return acc_histograms
-
-    """
     Split finding
     """
 
@@ -320,11 +287,7 @@ class HeteroDecisionTreeHost(DecisionTree):
 
         if not self.complete_secure_tree:
 
-            if self.run_sparse_opt:
-                acc_histograms = self.fast_get_histograms(node_map)
-            else:
-                acc_histograms = self.get_local_histograms(node_map, ret='tb')
-
+            acc_histograms = self.get_local_histograms(node_map, ret='tb')
             splitinfo_host, encrypted_splitinfo_host = self.splitter.find_split_host(histograms=acc_histograms,
                                                                                      node_map=node_map,
                                                                                      use_missing=self.use_missing,

@@ -13,13 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
-import random
-from collections import Iterable
-
-import numpy as np
-
-from federatedml.util import consts
+from federatedml.util import LOGGER
 
 
 class EncryptModeCalculator(object):
@@ -32,10 +26,6 @@ class EncryptModeCalculator(object):
 
     mode: str, accpet 'strict', 'fast', 'balance'. "confusion_opt", "confusion_opt_balance"
           'strict': means that re-encrypted every function call.
-          'fast/confusion_opt": one record use only on confusion in encryption once during iteration.
-          'balance/confusion_opt_balance":  balance of 'confusion_opt', will use new confusion according to probability
-                                    decides by 're_encrypted_rate'
-    re_encrypted_rate: float or float, numeric, use if mode equals to "balance" or "confusion_opt_balance"
 
     """
 
@@ -47,35 +37,11 @@ class EncryptModeCalculator(object):
         self.prev_encrypted_data = None
         self.enc_zeros = None
 
-        self.soft_link_mode()
-
-    def soft_link_mode(self):
-        if self.mode == "strict":
-            return
-
-        if self.mode in ["confusion_opt", "fast"]:
-            self.mode = "fast"
-
-        if self.mode in ["confusion_opt_balance", "balance"]:
-            self.mode = "balance"
-
-    @staticmethod
-    def add_enc_zero(obj, enc_zero):
-        if isinstance(obj, np.ndarray):
-            return obj + enc_zero
-        elif isinstance(obj, Iterable):
-            return type(obj)(
-                EncryptModeCalculator.add_enc_zero(o, enc_zero) if isinstance(o, Iterable) else o + enc_zero for o in
-                obj)
-        else:
-            return obj + enc_zero
-
-    @staticmethod
-    def gen_random_number():
-        return random.random()
-
-    def should_re_encrypted(self):
-        return self.gen_random_number() <= self.re_encrypted_rate + consts.FLOAT_ZERO
+        if self.mode != "strict":
+            self.mode = "strict"
+            LOGGER.warning("encrypted_mode_calculator will be remove in later version, "
+                           "but in current version user can still use it, but it only supports strict mode, "
+                           "other mode will be reset to strict for compatibility")
 
     def encrypt(self, input_data):
         """
@@ -83,23 +49,12 @@ class EncryptModeCalculator(object):
         
         Parameters 
         ---------- 
-        input_data: DTable
+        input_data: Table
 
         Returns 
         ------- 
-        new_data: DTable, encrypted result of input_data
+        new_data: Table, encrypted result of input_data
 
         """
-        if self.mode == "strict":
-            new_data = input_data.mapValues(self.encrypter.recursive_encrypt)
-            return new_data
-        else:
-            if self.enc_zeros is None or (
-                self.mode == "balance" and self.should_re_encrypted()) \
-                    or self.enc_zeros.count() != input_data.count():
-                self.enc_zeros = input_data.mapValues(lambda val: self.encrypter.encrypt(0))
-
-            new_data = input_data.join(self.enc_zeros, self.add_enc_zero)
-            return new_data
-
-
+        new_data = input_data.mapValues(self.encrypter.recursive_encrypt)
+        return new_data

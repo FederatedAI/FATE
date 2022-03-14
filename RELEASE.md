@@ -1,3 +1,14 @@
+# Release 1.5.3
+## Major Features and Improvements
+
+> FederatedML
+* New batch strategy in coordinated Hetero LR: support masked batch data and batch shuffle
+* Iterative Affine is disabled
+
+> Eggroll
+* Support Eggroll v2.2.3, upgrade com.h2database:h2 to version 2.1.210, com.google.protobuf:protobuf-java to version 3.16.1, spring to version 5.1.20.RELEASE
+
+
 # Release 1.5.2
 ## Major Features and Improvements
 

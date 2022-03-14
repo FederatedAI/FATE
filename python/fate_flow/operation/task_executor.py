@@ -55,6 +55,7 @@ class TaskExecutor(object):
             args = parser.parse_args()
             schedule_logger(args.job_id).info('enter task process')
             schedule_logger(args.job_id).info(args)
+            RuntimeConfig.init_env()
             # init function args
             if args.job_server:
                 RuntimeConfig.init_config(JOB_SERVER_HOST=args.job_server.split(':')[0],

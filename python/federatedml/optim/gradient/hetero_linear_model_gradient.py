@@ -92,7 +92,7 @@ def __compute_partition_gradient(data, fit_intercept=True, is_sparse=False):
         return np.array(gradient)
 
 
-def compute_gradient(data_instances, fore_gradient, fit_intercept):
+def compute_gradient(data_instances, fore_gradient, fit_intercept, need_average=True):
     """
     Compute hetero-regression gradient
     Parameters
@@ -115,7 +115,9 @@ def compute_gradient(data_instances, fore_gradient, fit_intercept):
     gradient_partition = feat_join_grad.applyPartitions(f)
     gradient_partition = gradient_partition.reduce(lambda x, y: x + y)
 
-    gradient = gradient_partition / data_instances.count()
+    gradient = gradient_partition
+    if need_average:
+        gradient = gradient_partition / data_instances.count()
 
     return gradient
 
@@ -149,7 +151,7 @@ class Guest(HeteroGradientBase):
         raise NotImplementedError("Function should not be called here")
 
     def compute_gradient_procedure(self, data_instances, encrypted_calculator, model_weights, optimizer,
-                                   n_iter_, batch_index, offset=None):
+                                   n_iter_, batch_index, offset=None, masked_index=None):
         """
           Linear model gradient procedure
           Step 1: get host forwards which differ from different algorithm
@@ -168,11 +170,27 @@ class Guest(HeteroGradientBase):
         fore_gradient = self.compute_and_aggregate_forwards(data_instances, model_weights, encrypted_calculator,
                                                             batch_index, current_suffix, offset)
 
-        self.remote_fore_gradient(fore_gradient, suffix=current_suffix)
+        def _apply_obfuscate(val):
+            val.apply_obfuscator()
+            return val
+
+        batch_size = self.forwards.count()
+        fore_gradient = fore_gradient.mapValues(lambda val: _apply_obfuscate(val) / batch_size)
+
+        if not masked_index:
+            self.remote_fore_gradient(fore_gradient, suffix=current_suffix)
+        else:
+            if masked_index:
+                masked_index = masked_index.mapValues(lambda value: 0)
+                masked_index_to_encrypt = masked_index.subtractByKey(self.forwards)
+                partial_masked_index_enc = encrypted_calculator[batch_index].encrypt(masked_index_to_encrypt)
+                masked_fore_gradient = partial_masked_index_enc.union(fore_gradient)
+                self.remote_fore_gradient(masked_fore_gradient, suffix=current_suffix)
 
         unilateral_gradient = compute_gradient(data_instances,
                                                fore_gradient,
-                                               model_weights.fit_intercept)
+                                               model_weights.fit_intercept,
+                                               need_average=False)
         if optimizer is not None:
             unilateral_gradient = optimizer.add_regular_to_grad(unilateral_gradient, model_weights)
 
@@ -230,7 +248,8 @@ class Host(HeteroGradientBase):
 
         unilateral_gradient = compute_gradient(data_instances,
                                                fore_gradient,
-                                               model_weights.fit_intercept)
+                                               model_weights.fit_intercept,
+                                               need_average=False)
         if optimizer is not None:
             unilateral_gradient = optimizer.add_regular_to_grad(unilateral_gradient, model_weights)
 

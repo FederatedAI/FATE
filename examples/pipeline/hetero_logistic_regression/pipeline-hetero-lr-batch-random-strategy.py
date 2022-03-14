@@ -40,38 +40,39 @@ def main(config="../../config.yaml", namespace=""):
     lr_param = {
         "name": "hetero_lr_0",
         "penalty": "L2",
-        "optimizer": "sqn",
+        "optimizer": "rmsprop",
         "tol": 0.0001,
-        "alpha": 1e-05,
-        "max_iter": 10,
+        "alpha": 0.01,
+        "max_iter": 30,
         "early_stop": "diff",
-        "batch_size": 5000,
+        "batch_size": 256,
+        "batch_strategy": "random",
         "learning_rate": 0.15,
-        "decay": 0.3,
-        "decay_sqrt": True,
         "init_param": {
             "init_method": "zeros"
         },
-        "sqn_param": {
-            "update_interval_L": 3,
-            "memory_M": 5,
-            "sample_size": 5000,
-            "random_seed": None
-        },
         "cv_param": {
-            "n_splits": 3,
+            "n_splits": 5,
             "shuffle": False,
             "random_seed": 103,
             "need_cv": False
         }
     }
 
-    pipeline = common_tools.make_normal_dsl(config, namespace, lr_param, is_ovr=True)
+    pipeline = common_tools.make_normal_dsl(config, namespace, lr_param)
+    # dsl_json = predict_pipeline.get_predict_dsl()
+    # conf_json = predict_pipeline.get_predict_conf()
+    # import json
+    # json.dump(dsl_json, open('./hetero-lr-normal-predict-dsl.json', 'w'), indent=4)
+    # json.dump(conf_json, open('./hetero-lr-normal-predict-conf.json', 'w'), indent=4)
+
+
     # fit model
     job_parameters = JobParameters(backend=backend, work_mode=work_mode)
     pipeline.fit(job_parameters)
     # query component summary
     common_tools.prettify(pipeline.get_component("hetero_lr_0").get_summary())
+    common_tools.prettify(pipeline.get_component("evaluation_0").get_summary())
 
 
 if __name__ == "__main__":
