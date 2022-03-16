@@ -24,6 +24,7 @@ from federatedml.model_base import ModelBase
 from federatedml.param.base_param import BaseParam
 from federatedml.util import LOGGER
 
+_ml_base = Path(__file__).resolve().parent.parent.parent
 
 class _RunnerDecorator:
     def __init__(self, meta) -> None:
@@ -186,9 +187,16 @@ class Components:
     def get(cls, name: str, cache) -> ComponentMeta:
         if cache:
             importlib.import_module(cache[name]["module"])
+
         else:
-            for p in cls._components_base().glob("**/*.py"):
-                module_name = _get_module_name_by_path(p, cls._module_base())
+            _components_base = Path(__file__).resolve().parent
+            for p in _components_base.glob("**/*.py"):
+                module_name = '.'.join(
+                    p.absolute()
+                    .relative_to(_ml_base)
+                    .with_suffix("")
+                    .parts
+                )
                 importlib.import_module(module_name)
 
         return ComponentMeta.get_meta(name)
