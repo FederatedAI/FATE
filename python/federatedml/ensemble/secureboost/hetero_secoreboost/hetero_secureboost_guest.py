@@ -433,7 +433,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                 role_name, party_id = sitename.split(':')
                 fullname = generate_anonymous(fid=fid, party_id=party_id, role=role_name)
 
-            feature_importance_param.append(FeatureImportanceInfo(sitename=sitename,
+            feature_importance_param.append(FeatureImportanceInfo(sitename=sitename,  # sitename to distinguish sites
                                                                   fid=fid,
                                                                   importance=importance.importance,
                                                                   fullname=fullname,

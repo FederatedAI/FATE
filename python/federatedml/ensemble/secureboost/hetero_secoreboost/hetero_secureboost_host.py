@@ -238,19 +238,18 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         model_param.best_iteration = self.callback_variables.best_iteration
         model_param.tree_plan.extend(plan.encode_plan(self.tree_plan))
 
-        if self.boosting_strategy == consts.MIX_TREE:
-            feature_importances = list(self.feature_importances_.items())
-            feature_importances = sorted(feature_importances, key=itemgetter(1), reverse=True)
-            feature_importance_param = []
-            LOGGER.debug('host feat importance is {}'.format(feature_importances))
-            for fid, importance in feature_importances:
-                feature_importance_param.append(FeatureImportanceInfo(sitename=self.role,
-                                                                      fid=fid,
-                                                                      importance=importance.importance,
-                                                                      fullname=self.feature_name_fid_mapping[fid],
-                                                                      main=importance.main_type
-                                                                      ))
-            model_param.feature_importances.extend(feature_importance_param)
+        feature_importances = list(self.feature_importances_.items())
+        feature_importances = sorted(feature_importances, key=itemgetter(1), reverse=True)
+        feature_importance_param = []
+        LOGGER.debug('host feat importance is {}'.format(feature_importances))
+        for fid, importance in feature_importances:
+            feature_importance_param.append(FeatureImportanceInfo(sitename=consts.HOST_LOCAL,  # host local feat
+                                                                  fid=fid,
+                                                                  importance=importance.importance,
+                                                                  fullname=self.feature_name_fid_mapping[fid],
+                                                                  main=importance.main_type
+                                                                  ))
+        model_param.feature_importances.extend(feature_importance_param)
 
         param_name = "HeteroSecureBoostingTreeHostParam"
 
