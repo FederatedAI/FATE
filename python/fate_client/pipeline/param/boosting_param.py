@@ -603,6 +603,13 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.check_boolean(self.EINI_random_mask, 'eini random mask')
         self.check_boolean(self.EINI_complexity_check, 'eini complexity check')
 
+        if self.EINI_inference and self.EINI_random_mask:
+            LOGGER.warning('To protect the inference decision path, notice that current setting will multiply'
+                           ' predict result by a random number, hence SecureBoost will return confused predict scores'
+                           ' that is not the same as the original predict scores')
+            if self.work_mode == consts.MIX_TREE:
+                LOGGER.warning('Mix tree mode does not support EINI, use default predict setting')
+
         if self.work_mode is not None:
             self.boosting_strategy = self.work_mode
 
@@ -611,6 +618,8 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         if self.multi_mode == consts.MULTI_OUTPUT:
             if self.boosting_strategy != consts.STD_TREE:
                 raise ValueError('MO trees only works when boosting strategy is std tree')
+            if not self.cipher_compress:
+                raise ValueError('Mo trees only works when cipher compress is enabled')
 
         if self.boosting_strategy not in [consts.STD_TREE, consts.LAYERED_TREE, consts.MIX_TREE]:
             raise ValueError('unknown sbt boosting strategy{}'.format(self.boosting_strategy))
