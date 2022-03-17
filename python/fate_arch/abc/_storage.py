@@ -110,6 +110,14 @@ class StorageTableMetaABC(metaclass=abc.ABCMeta):
         ...
 
     @abc.abstractmethod
+    def get_origin(self):
+        ...
+
+    @abc.abstractmethod
+    def get_disable(self):
+        ...
+
+    @abc.abstractmethod
     def to_dict(self) -> dict:
         ...
 

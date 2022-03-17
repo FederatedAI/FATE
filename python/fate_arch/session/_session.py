@@ -289,10 +289,12 @@ class Session(object):
 
         return storage_session
 
-    def get_table(self, name, namespace) -> typing.Union[StorageTableABC, None]:
+    def get_table(self, name, namespace, ignore_disable=False) -> typing.Union[StorageTableABC, None]:
         meta = Session.get_table_meta(name=name, namespace=namespace)
         if meta is None:
             return None
+        if meta.get_disable() and not ignore_disable:
+            raise Exception(f"table {namespace} {name} disable: {meta.get_disable()}")
         engine = meta.get_engine()
         storage_session = self._get_or_create_storage(storage_engine=engine)
         table = storage_session.get_table(name=name, namespace=namespace)

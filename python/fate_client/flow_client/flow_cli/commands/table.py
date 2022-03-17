@@ -70,6 +70,58 @@ def delete(ctx, **kwargs):
     access_server('post', ctx, 'table/delete', config_data)
 
 
+@table.command("disable", short_help="Disable Table Command")
+@cli_args.NAMESPACE
+@cli_args.TABLE_NAME
+@click.pass_context
+def disable(ctx, **kwargs):
+    """
+    \b
+    - DESCRIPTION:
+        Disable A Specified Table.
+
+    \b
+    - USAGE:
+        flow table disable -n $NAMESPACE -t $TABLE_NAME
+    """
+    config_data, dsl_data = preprocess(**kwargs)
+    access_server('post', ctx, 'table/disable', config_data)
+
+
+@table.command("enable", short_help="Disable Table Command")
+@cli_args.NAMESPACE
+@cli_args.TABLE_NAME
+@click.pass_context
+def disable(ctx, **kwargs):
+    """
+    \b
+    - DESCRIPTION:
+        Enable A Specified Table.
+
+    \b
+    - USAGE:
+        flow table enable -n $NAMESPACE -t $TABLE_NAME
+    """
+    config_data, dsl_data = preprocess(**kwargs)
+    access_server('post', ctx, 'table/enable', config_data)
+
+
+@table.command("disable-delete", short_help="Delete Disable Table Command")
+@click.pass_context
+def disable(ctx, **kwargs):
+    """
+    \b
+    - DESCRIPTION:
+        Delete Disable A Specified Table.
+
+    \b
+    - USAGE:
+        flow table disable-delete
+    """
+    config_data, dsl_data = preprocess(**kwargs)
+    access_server('post', ctx, 'table/disable/delete', config_data)
+
+
 @table.command("add", short_help="Add Table Command")
 @cli_args.CONF_PATH
 @click.pass_context

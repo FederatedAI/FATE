@@ -121,6 +121,7 @@ class StorageTableMetaModel(DataBaseModel):
     f_count = BigIntegerField(null=True)
     f_part_of_data = SerializedField()
     f_origin = CharField(max_length=50, default='')
+    f_disable = BooleanField(default=False)
     f_description = TextField(default='')
 
     f_read_access_time = BigIntegerField(null=True)
