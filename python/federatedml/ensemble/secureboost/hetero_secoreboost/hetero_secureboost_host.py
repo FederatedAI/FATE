@@ -244,7 +244,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
             feature_importance_param = []
             LOGGER.debug('host feat importance is {}'.format(feature_importances))
             for fid, importance in feature_importances:
-                feature_importance_param.append(FeatureImportanceInfo(sitename=self.role,
+                feature_importance_param.append(FeatureImportanceInfo(sitename=consts.HOST_LOCAL,  # host local feat
                                                                       fid=fid,
                                                                       importance=importance.importance,
                                                                       fullname=self.feature_name_fid_mapping[fid],
