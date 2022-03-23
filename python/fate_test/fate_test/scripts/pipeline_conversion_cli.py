@@ -207,7 +207,7 @@ def convert(pipeline_file, temp_file_path, config_yaml_file, output_path, config
 def insert_extract_code(file_path):
     code_lines = []
     code = \
-    """
+        """
 import json
 import os
 def extract(my_pipeline, file_name, output_path='generated_conf_and_dsl'):
