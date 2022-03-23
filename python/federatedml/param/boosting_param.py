@@ -614,8 +614,9 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
             LOGGER.warning('To protect the inference decision path, notice that current setting will multiply'
                            ' predict result by a random number, hence SecureBoost will return confused predict scores'
                            ' that is not the same as the original predict scores')
-            if self.work_mode == consts.MIX_TREE:
-                LOGGER.warning('Mix tree mode does not support EINI, use default predict setting')
+
+        if self.work_mode == consts.MIX_TREE & self.EINI_inference:
+            LOGGER.warning('Mix tree mode does not support EINI, use default predict setting')
 
         if self.work_mode is not None:
             self.boosting_strategy = self.work_mode
