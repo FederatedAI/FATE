@@ -83,6 +83,3 @@ class Metric(object):
         abs_acc, relative_acc, log_acc = self.accuracy(real_ret, decrypt_ret)
         return [op_name, '%.10f' % single_op_time + 's', '%.10f' % many_round_time + 's',
                 relative_acc, log_acc, int(cals_per_second), int(plaintext_per_second)]
-
-
-

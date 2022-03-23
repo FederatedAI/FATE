@@ -82,4 +82,3 @@ class SPDZTest(object):
             tables.append(table.get_string(title=f"SPDZ {tensor_type} Computational performance"))
 
         return tables
-

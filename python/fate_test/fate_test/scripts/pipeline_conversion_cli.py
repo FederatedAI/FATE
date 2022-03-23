@@ -220,7 +220,7 @@ def extract(my_pipeline, file_name, output_path='generated_conf_and_dsl'):
     dsl_name = os.path.join(cur_dir, output_path, f"{out_name}_dsl.json")
     json.dump(conf, open(conf_name, 'w'), indent=4)
     json.dump(dsl, open(dsl_name, 'w'), indent=4)
-    """
+        """
 
     code_lines.append(code)
     screen_keywords = [".predict(", ".fit(", ".deploy_component(", "predict_pipeline ",

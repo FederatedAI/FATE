@@ -31,5 +31,3 @@ def spdz_test_runner():
     from federatedml.test.spdz_test.spdz_test import SPDZTest
 
     return SPDZTest
-
-
