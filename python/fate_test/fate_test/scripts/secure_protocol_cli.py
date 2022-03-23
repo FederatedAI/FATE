@@ -90,4 +90,3 @@ def spdz_test(ctx, data_num, seed, data_partition, test_round,
         echo.echo(table)
     echo.farewell()
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
-
