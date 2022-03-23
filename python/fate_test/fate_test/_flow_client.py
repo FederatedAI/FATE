@@ -84,6 +84,10 @@ class FLOWClient(object):
         result = self._output_data_table(job_id=job_id, role=role, party_id=party_id, component_name=component_name)
         return result
 
+    def table_info(self, table_name, namespace):
+        result = self._table_info(table_name=table_name, namespace=namespace)
+        return result
+
     def add_notes(self, job_id, role, party_id, notes):
         self._add_notes(job_id=job_id, role=role, party_id=party_id, notes=notes)
 
@@ -157,6 +161,14 @@ class FLOWClient(object):
             response = self._table_bind(conf)
             return response, None, True
 
+    def _table_info(self, table_name, namespace):
+        param = {
+            'table_name': table_name,
+            'namespace': namespace
+        }
+        response = self.flow_client(request='table/info', param=param)
+        return response
+
     def _delete_data(self, table_name, namespace):
         param = {
             'table_name': table_name,
@@ -205,6 +217,23 @@ class FLOWClient(object):
                 raise RuntimeError(f"deploy model error: {response}")
             result["name"] = response["data"][0]["table_name"]
             result["namespace"] = response["data"][0]["table_namespace"]
+        except Exception as e:
+            raise RuntimeError(f"output data table error: {response}") from e
+        return result
+
+    def _get_summary(self, job_id, role, party_id, component_name):
+        post_data = {'job_id': job_id,
+                     'role': role,
+                     'party_id': party_id,
+                     'component_name': component_name}
+        response = self.flow_client(request='component/get_summary', param=post_data)
+        try:
+            retcode = response['retcode']
+            retmsg = response['retmsg']
+            result = {}
+            if retcode != 0 or retmsg != 'success':
+                raise RuntimeError(f"deploy model error: {response}")
+            result["summary_dir"] = retmsg  # 获取summary文件位置
         except Exception as e:
             raise RuntimeError(f"output data table error: {response}") from e
         return result
@@ -276,6 +305,8 @@ class FLOWClient(object):
             stdout = client.data.upload(config_data=param, verbose=verbose, drop=drop)
         elif request == 'table/delete':
             stdout = client.table.delete(table_name=param['table_name'], namespace=param['namespace'])
+        elif request == 'table/info':
+            stdout = client.table.info(table_name=param['table_name'], namespace=param['namespace'])
         elif request == 'job/submit':
             stdout = client.job.submit(config_data=param['job_runtime_conf'], dsl_data=param['job_dsl'])
         elif request == 'job/query':
@@ -287,6 +318,10 @@ class FLOWClient(object):
             stdout = client.component.output_data_table(job_id=param['job_id'], role=param['role'],
                                                         party_id=param['party_id'],
                                                         component_name=param['component_name'])
+        elif request == 'component/get_summary':
+            stdout = client.component.get_summary(job_id=param['job_id'], role=param['role'],
+                                                  party_id=param['party_id'],
+                                                  component_name=param['component_name'])
 
         else:
             stdout = {"retcode": None}
@@ -385,24 +420,28 @@ class JobProgress(object):
         self.start = time.time()
         self.show_str = f"[{self.elapse()}] {self.name}"
         self.job_id = ""
+        self.progress_tracking = ""
 
     def elapse(self):
         return f"{timedelta(seconds=int(time.time() - self.start))}"
 
+    def set_progress_tracking(self, progress_tracking):
+        self.progress_tracking = progress_tracking + " "
+
     def submitted(self, job_id):
         self.job_id = job_id
-        self.show_str = f"[{self.elapse()}]{self.job_id} submitted {self.name}"
+        self.show_str = f"{self.progress_tracking}[{self.elapse()}]{self.job_id} submitted {self.name}"
 
     def running(self, status, progress):
         if progress is None:
             progress = 0
-        self.show_str = f"[{self.elapse()}]{self.job_id} {status} {progress:3}% {self.name}"
+        self.show_str = f"{self.progress_tracking}[{self.elapse()}]{self.job_id} {status} {progress:3}% {self.name}"
 
     def exception(self, exception_id):
-        self.show_str = f"[{self.elapse()}]{self.name} exception({exception_id}): {self.job_id}"
+        self.show_str = f"{self.progress_tracking}[{self.elapse()}]{self.name} exception({exception_id}): {self.job_id}"
 
     def final(self, status):
-        self.show_str = f"[{self.elapse()}]{self.job_id} {status} {self.name}"
+        self.show_str = f"{self.progress_tracking}[{self.elapse()}]{self.job_id} {status} {self.name}"
 
     def show(self):
         return self.show_str

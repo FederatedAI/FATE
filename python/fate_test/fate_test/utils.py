@@ -19,7 +19,7 @@ import os
 from colorama import init, deinit, Fore, Style
 import math
 import numpy as np
-
+from fate_test._io import echo
 from prettytable import PrettyTable, ORGMODE
 
 SCRIPT_METRICS = "script_metrics"
@@ -45,8 +45,8 @@ def show_data(data):
     for name, table_name in data.items():
         row = [name, f"{TxtStyle.DATA_FIELD_VAL}{table_name}{TxtStyle.END}"]
         data_table.add_row(row)
-    print(data_table.get_string(title=f"{TxtStyle.TITLE}Data Summary{TxtStyle.END}"))
-    print("\n")
+    echo.echo(data_table.get_string(title=f"{TxtStyle.TITLE}Data Summary{TxtStyle.END}"))
+    echo.echo("\n")
 
 
 def _get_common_metrics(**results):
@@ -125,8 +125,8 @@ def _distribution_metrics(**results):
             row = [f"{script}-{script_model_name}"] + [f"{TxtStyle.FIELD_VAL}{v}{TxtStyle.END}" for v in
                                                        filtered_results[script_model_name]]
             table.add_row(row)
-        print(table.get_string(title=f"{TxtStyle.TITLE}{script} distribution metrics{TxtStyle.END}"))
-        print("\n" + "#" * 60)
+        echo.echo(table.get_string(title=f"{TxtStyle.TITLE}{script} distribution metrics{TxtStyle.END}"))
+        echo.echo("\n" + "#" * 60)
 
 
 def match_script_metrics(abs_tol, rel_tol, match_details, **results):
@@ -143,7 +143,7 @@ def match_script_metrics(abs_tol, rel_tol, match_details, **results):
             row = [f"{script_model_name}-{script}"] + [f"{TxtStyle.FIELD_VAL}{v}{TxtStyle.END}" for v in
                                                        filtered_results[script_model_name]]
             table.add_row(row)
-        print(table.get_string(title=f"{TxtStyle.TITLE}{script} Script Metrics Summary{TxtStyle.END}"))
+        echo.echo(table.get_string(title=f"{TxtStyle.TITLE}{script} Script Metrics Summary{TxtStyle.END}"))
         _all_match(common_metrics, filtered_results, abs_tol, rel_tol, script, match_details=match_details)
 
 
@@ -178,7 +178,7 @@ def match_metrics(evaluate, group_name, abs_tol=None, rel_tol=None, storage_tag=
         row = [f"{model_name}-{group_name}"] + [f"{TxtStyle.FIELD_VAL}{v}{TxtStyle.END}" for v in
                                                 filtered_results[model_name]]
         table.add_row(row)
-    print(table.get_string(title=f"{TxtStyle.TITLE}Metrics Summary{TxtStyle.END}"))
+    echo.echo(table.get_string(title=f"{TxtStyle.TITLE}Metrics Summary{TxtStyle.END}"))
 
     if evaluate and len(filtered_results.keys()) > 1:
         _all_match(common_metrics, filtered_results, abs_tol, rel_tol, match_details=match_details)
@@ -227,12 +227,12 @@ def _all_match(common_metrics, filtered_results, abs_tol, rel_tol, script=None, 
         eval_table.add_row(row)
     eval_table.field_names = field_names
 
-    print(style_table(eval_table.get_string(title=f"{TxtStyle.TITLE}Match Results{TxtStyle.END}")))
+    echo.echo(style_table(eval_table.get_string(title=f"{TxtStyle.TITLE}Match Results{TxtStyle.END}")))
     script = "" if script is None else f"{script} "
     if all_match:
-        print(f"All {script}Metrics Match: {TxtStyle.TRUE_VAL}{all_match}{TxtStyle.END}")
+        echo.echo(f"All {script}Metrics Match: {TxtStyle.TRUE_VAL}{all_match}{TxtStyle.END}")
     else:
-        print(f"All {script}Metrics Match: {TxtStyle.FALSE_VAL}{all_match}{TxtStyle.END}")
+        echo.echo(f"All {script}Metrics Match: {TxtStyle.FALSE_VAL}{all_match}{TxtStyle.END}")
 
 
 def comparison_quality(group_name, history_tags, cache_directory, abs_tol, rel_tol, match_details, **results):
@@ -270,18 +270,17 @@ def comparison_quality(group_name, history_tags, cache_directory, abs_tol, rel_t
                 class_quality[tag] = class_group(benchmark_quality[tag]['FATE'])
 
     if SCRIPT_METRICS in results["FATE"] and regression_metric:
-        print()
         regression_metric[group_name] = regression_group(results['FATE'])
         metric_compare(abs_tol, rel_tol, match_details, **regression_metric)
         for key, value in _filter_results([SCRIPT_METRICS], **results)['FATE'][0].items():
             regression_quality["_".join([group_name, key])] = value
         metric_compare(abs_tol, rel_tol, match_details, **regression_quality)
-        print("\n" + "#" * 60)
+        echo.echo("\n" + "#" * 60)
     elif DISTRIBUTION_METRICS in results["FATE"] and class_quality:
 
         class_quality[group_name] = class_group(results['FATE'])
         metric_compare(abs_tol, rel_tol, match_details, **class_quality)
-        print("\n" + "#" * 60)
+        echo.echo("\n" + "#" * 60)
 
 
 def metric_compare(abs_tol, rel_tol, match_details, **metric_results):

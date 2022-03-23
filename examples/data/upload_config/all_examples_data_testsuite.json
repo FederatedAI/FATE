@@ -1,0 +1,325 @@
+{
+  "data": [
+    {
+      "file": "examples/data/breast_hetero_guest.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "breast_hetero_guest",
+      "namespace": "experiment",
+      "count": 569
+    },
+    {
+      "file": "examples/data/breast_hetero_host.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "breast_hetero_host",
+      "namespace": "experiment",
+      "count": 569
+    },
+    {
+      "file": "examples/data/default_credit_hetero_guest.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "default_credit_hetero_guest",
+      "namespace": "experiment",
+      "count": 30000
+    },
+    {
+      "file": "examples/data/default_credit_hetero_host.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "default_credit_hetero_host",
+      "namespace": "experiment",
+      "count": 30000
+    },
+    {
+      "file": "examples/data/motor_hetero_guest.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "motor_hetero_guest",
+      "namespace": "experiment",
+      "count": 800
+    },
+    {
+      "file": "examples/data/motor_hetero_host.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "motor_hetero_host",
+      "namespace": "experiment",
+      "count": 800
+    },
+    {
+      "file": "examples/data/vehicle_scale_hetero_guest.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "vehicle_scale_hetero_guest",
+      "namespace": "experiment",
+      "count": 846
+    },
+    {
+      "file": "examples/data/vehicle_scale_hetero_host.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "vehicle_scale_hetero_host",
+      "namespace": "experiment",
+      "count": 846
+    },
+    {
+      "file": "examples/data/dvisits_hetero_guest.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "dvisits_hetero_guest",
+      "namespace": "experiment",
+      "count": 5190
+    },
+    {
+      "file": "examples/data/dvisits_hetero_host.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "dvisits_hetero_host",
+      "namespace": "experiment",
+      "count": 5190
+    },
+    {
+      "file": "examples/data/student_hetero_guest.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "student_hetero_guest",
+      "namespace": "experiment",
+      "count": 395
+    },
+    {
+      "file": "examples/data/student_hetero_host.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "student_hetero_host",
+      "namespace": "experiment",
+      "count": 395
+    },
+    {
+      "file": "examples/data/ionosphere_scale_hetero_guest.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "ionosphere_scale_hetero_guest",
+      "namespace": "experiment",
+      "count": 351
+    },
+    {
+      "file": "examples/data/ionosphere_scale_hetero_host.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "ionosphere_scale_hetero_host",
+      "namespace": "experiment",
+      "count": 351
+    },
+    {
+      "file": "examples/data/motor_hetero_host_1.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "motor_hetero_host_1",
+      "namespace": "experiment",
+      "count": 800
+    },
+    {
+      "file": "examples/data/motor_hetero_host_2.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "motor_hetero_host_2",
+      "namespace": "experiment",
+      "count": 800
+    },
+    {
+      "file": "examples/data/breast_hetero_mini_guest.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "breast_hetero_mini_guest",
+      "namespace": "experiment",
+      "count": 569
+    },
+    {
+      "file": "examples/data/breast_hetero_mini_host.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "breast_hetero_mini_host",
+      "namespace": "experiment",
+      "count": 569
+    },
+    {
+      "file": "examples/data/motor_hetero_mini_guest.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "motor_hetero_mini_guest",
+      "namespace": "experiment",
+      "count": 800
+    },
+    {
+      "file": "examples/data/motor_hetero_mini_host.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "motor_hetero_mini_host",
+      "namespace": "experiment",
+      "count": 800
+    },
+    {
+      "file": "examples/data/breast_homo_guest.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "breast_homo_guest",
+      "namespace": "experiment",
+      "count": 227
+    },
+    {
+      "file": "examples/data/breast_homo_host.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "breast_homo_host",
+      "namespace": "experiment",
+      "count": 228
+    },
+    {
+      "file": "examples/data/breast_homo_test.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "breast_homo_test",
+      "namespace": "experiment",
+      "count": 114
+    },
+    {
+      "file": "examples/data/vehicle_scale_homo_guest.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "vehicle_scale_homo_guest",
+      "namespace": "experiment",
+      "count": 413
+    },
+    {
+      "file": "examples/data/vehicle_scale_homo_host.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "vehicle_scale_homo_host",
+      "namespace": "experiment",
+      "count": 433
+    },
+    {
+      "file": "examples/data/vehicle_scale_homo_test.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "vehicle_scale_homo_test",
+      "namespace": "experiment",
+      "count": 169
+    },
+    {
+      "file": "examples/data/student_homo_guest.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "student_homo_guest",
+      "namespace": "experiment",
+      "count": 158
+    },
+    {
+      "file": "examples/data/student_homo_host.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "student_homo_host",
+      "namespace": "experiment",
+      "count": 158
+    },
+    {
+      "file": "examples/data/student_homo_test.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "student_homo_test",
+      "namespace": "experiment",
+      "count": 79
+    },
+    {
+      "file": "examples/data/default_credit_homo_guest.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "default_credit_guest",
+      "namespace": "experiment",
+      "count": 8000
+    },
+    {
+      "file": "examples/data/default_credit_homo_host_1.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "default_credit_host1",
+      "namespace": "experiment",
+      "count": 8000
+    },
+    {
+      "file": "examples/data/default_credit_homo_host_2.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "default_credit_host2",
+      "namespace": "experiment",
+      "count": 8000
+    },
+    {
+      "file": "examples/data/default_credit_homo_test.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "default_credit_test",
+      "namespace": "experiment",
+      "count": 6000
+    },
+    {
+      "file": "examples/data/tag_value_1000_140.csv",
+      "head": 0,
+      "partition": 16,
+      "table_name": "tag_value_1",
+      "namespace": "experiment",
+      "count": 1000
+    },
+    {
+      "file": "examples/data/tag_value_1000_140.csv",
+      "head": 0,
+      "partition": 16,
+      "table_name": "tag_value_2",
+      "namespace": "experiment",
+      "count": 1000
+    },
+    {
+      "file": "examples/data/tag_value_1000_140.csv",
+      "head": 0,
+      "partition": 16,
+      "table_name": "tag_value_3",
+      "namespace": "experiment",
+      "count": 1000
+    },
+
+    {
+      "file": "examples/data/nus_wide_train_guest.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "nus_wide_guest",
+      "namespace": "experiment",
+      "count": 10000
+    },
+    {
+      "file": "examples/data/nus_wide_train_host.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "nus_wide_host",
+      "namespace": "experiment",
+      "count": 1000
+    },
+    {
+      "file": "examples/data/nus_wide_validate_guest.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "nus_wide_guest_val",
+      "namespace": "experiment",
+      "count": 900
+    },
+    {
+      "file": "examples/data/nus_wide_validate_host.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "nus_wide_host_val",
+      "namespace": "experiment",
+      "count": 900
+    }
+  ]
+}

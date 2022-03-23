@@ -1,0 +1,7 @@
+{
+    "components": {
+        "spdz_test_0": {
+            "module": "SPDZTest"
+        }
+    }
+}
