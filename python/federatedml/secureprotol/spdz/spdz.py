@@ -86,8 +86,3 @@ class SPDZ(object):
         other_q_field.append(q_field)
         max_q_field = max(other_q_field)
         return max_q_field
-
-
-
-
-
