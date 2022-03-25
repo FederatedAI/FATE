@@ -24,6 +24,7 @@ class Communicator(object):
         self._rescontruct_variable = self._transfer_variable.rescontruct.set_preserve_num(3)
         self._mul_triplets_encrypted_variable = self._transfer_variable.multiply_triplets_encrypted.set_preserve_num(3)
         self._mul_triplets_cross_variable = self._transfer_variable.multiply_triplets_cross.set_preserve_num(3)
+        self._q_field_variable = self._transfer_variable.q_field.disable_auto_clean()
 
         self._local_party = self._transfer_variable.local_party() if local_party is None else local_party
         self._all_parties = self._transfer_variable.all_parties() if all_parties is None else all_parties
@@ -45,6 +46,12 @@ class Communicator(object):
     @property
     def party_idx(self):
         return self._party_idx
+
+    def remote_q_field(self, q_field, party):
+        return self._q_field_variable.remote_parties(q_field, party, suffix=("q_field",))
+
+    def get_q_field(self, party):
+        return self._q_field_variable.get_parties(party, suffix=("q_field",))
 
     def get_rescontruct_shares(self, tensor_name):
         return self._rescontruct_variable.get_parties(self._other_parties, suffix=(tensor_name,))
@@ -77,6 +84,7 @@ class Communicator(object):
         self._rescontruct_variable.clean()
         self._mul_triplets_encrypted_variable.clean()
         self._mul_triplets_cross_variable.clean()
+        self._q_field_variable.clean()
 
     def set_flowid(self, flowid):
         self._transfer_variable.set_flowid(flowid)

@@ -44,3 +44,7 @@ class SecretShareTransferVariable(BaseTransferVariables):
             name='encrypted_share_matrix', src=[
                 'guest', "host"], dst=[
                 'host', "guest"])
+        self.q_field = self._create_variable(
+            name='q_field', src=[
+                'guest', "host"], dst=[
+                'host', "guest"])
