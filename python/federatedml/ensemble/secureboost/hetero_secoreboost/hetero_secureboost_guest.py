@@ -225,7 +225,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                                            host_party_list=self.component_properties.host_party_idlist,
                                            runtime_idx=self.component_properties.local_partyid,
                                            cipher_compress=self.cipher_compressing,
-                                           g_h=g_h, encrypter=self.encrypter, en_calculator=self.encrypted_calculator,
+                                           g_h=g_h, encrypter=self.encrypter,
                                            goss_subsample=self.enable_goss,
                                            complete_secure=complete_secure, max_sample_weights=self.max_sample_weight,
                                            fast_sbt=fast_sbt, tree_type=tree_type, target_host_id=target_host_id,

@@ -1,5 +1,6 @@
 import functools
 from federatedml.util import LOGGER
+from federatedml.secureprotol import PaillierEncrypt
 from federatedml.cipher_compressor.compressor import get_homo_encryption_max_int
 from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 from federatedml.cipher_compressor.compressor import PackingCipherTensor
@@ -16,7 +17,7 @@ def cipher_list_to_cipher_tensor(cipher_list: list):
 
 class GuestIntegerPacker(object):
 
-    def __init__(self, pack_num: int, pack_num_range: list, encrypt_mode_calculator: EncryptModeCalculator,
+    def __init__(self, pack_num: int, pack_num_range: list, encrypter: PaillierEncrypt,
                  sync_para=True):
         """
         max_int: max int allowed for packing result
@@ -29,9 +30,9 @@ class GuestIntegerPacker(object):
         assert len(pack_num_range) == self._pack_num, 'list len must equal to pack_num'
         self._pack_num_range = pack_num_range
         self._pack_num_bit = [i.bit_length() for i in pack_num_range]
-        self.calculator = encrypt_mode_calculator
+        self.encrypter = encrypter
 
-        max_pos_int, _ = get_homo_encryption_max_int(self.calculator.encrypter)
+        max_pos_int, _ = get_homo_encryption_max_int(self.encrypter)
         self._max_int = max_pos_int
         self._max_bit = self._max_int.bit_length() - 1  # reserve 1 bit, in case overflow
 
@@ -112,7 +113,7 @@ class GuestIntegerPacker(object):
     def pack_and_encrypt(self, data_table, post_process_func=cipher_list_to_cipher_tensor):
 
         packing_data_table = self.pack(data_table)
-        en_packing_data_table = self.calculator.raw_encrypt(packing_data_table)
+        en_packing_data_table = self.encrypter.distribute_raw_encrypt(packing_data_table)
 
         if post_process_func:
             en_packing_data_table = en_packing_data_table.mapValues(post_process_func)
@@ -148,7 +149,7 @@ class GuestIntegerPacker(object):
             assert issubclass(type(content[0]), CipherPackage), 'content is not CipherPackages'
             decrypt_rs = []
             for i in content:
-                unpack_ = i.unpack(self.calculator.encrypter)
+                unpack_ = i.unpack(self.encrypter)
                 decrypt_rs += unpack_
             return decrypt_rs
 
