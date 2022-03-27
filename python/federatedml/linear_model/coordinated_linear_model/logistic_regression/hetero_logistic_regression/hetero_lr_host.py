@@ -22,8 +22,6 @@ from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.linear_model.coordinated_linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_base import \
     HeteroLRBase
 from federatedml.optim.gradient import hetero_lr_gradient_and_loss
-from federatedml.secureprotol import EncryptModeCalculator
-from federatedml.statistic.data_overview import rubbish_clear
 from federatedml.util import LOGGER
 from federatedml.util import consts
 
@@ -39,35 +37,6 @@ class HeteroLRHost(HeteroLRBase):
         self.batch_generator = batch_generator.Host()
         self.gradient_loss_operator = hetero_lr_gradient_and_loss.Host()
         self.converge_procedure = convergence.Host()
-        self.encrypted_calculator = None
-
-    def compute_forward(self, data_instances, coef_, intercept_, batch_index=-1):
-        """
-        Compute W * X + b and (W * X + b)^2, where X is the input data, W is the coefficient of lr,
-        and b is the interception
-        Parameters
-        ----------
-        data_instances: Table of Instance, input data
-        coef_: list, coefficient of lr
-        intercept_: float, the interception of lr
-        """
-        wx = self.compute_wx(data_instances, coef_, intercept_)
-
-        en_wx = self.encrypted_calculator[batch_index].encrypt(wx)
-        wx_square = wx.mapValues(lambda v: np.square(v))
-        en_wx_square = self.encrypted_calculator[batch_index].encrypt(wx_square)
-
-        host_forward = en_wx.join(en_wx_square, lambda wx, wx_square: (wx, wx_square))
-
-        # temporary resource recovery and will be removed in the future
-        rubbish_list = [wx,
-                        en_wx,
-                        wx_square,
-                        en_wx_square
-                        ]
-        rubbish_clear(rubbish_list)
-
-        return host_forward
 
     def fit(self, data_instances, validate_data=None):
         """
@@ -114,11 +83,6 @@ class HeteroLRHost(HeteroLRBase):
 
         self.gradient_loss_operator.set_total_batch_nums(self.batch_generator.batch_nums)
 
-        self.encrypted_calculator = [EncryptModeCalculator(self.cipher_operator,
-                                                           self.encrypted_mode_calculator_param.mode,
-                                                           self.encrypted_mode_calculator_param.re_encrypted_rate) for _
-                                     in range(self.batch_generator.batch_nums)]
-
         LOGGER.info("Start initialize model.")
         # model_shape = self.get_features_shape(data_instances)
         if self.init_param_obj.fit_intercept:
@@ -146,7 +110,7 @@ class HeteroLRHost(HeteroLRBase):
                     "iter: {}, batch: {}, before compute gradient, data count: {}".format(
                         self.n_iter_, batch_index, batch_feat_inst.count()))
                 optim_host_gradient = self.gradient_loss_operator.compute_gradient_procedure(
-                    batch_feat_inst, self.encrypted_calculator, self.model_weights, self.optimizer, self.n_iter_,
+                    batch_feat_inst, self.cipher_operator, self.model_weights, self.optimizer, self.n_iter_,
                     batch_index)
                 # LOGGER.debug('optim_host_gradient: {}'.format(optim_host_gradient))
 
