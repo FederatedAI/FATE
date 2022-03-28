@@ -41,7 +41,6 @@ class BasePoissonRegression(BaseLinearModel):
 
     def _init_model(self, params):
         super()._init_model(params)
-        self.encrypted_mode_calculator_param = params.encrypted_mode_calculator_param
         self.exposure_colname = params.exposure_colname
 
     @staticmethod

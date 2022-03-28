@@ -20,7 +20,6 @@ from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.linear_model.coordinated_linear_model.linear_regression.hetero_linear_regression.hetero_linr_base import \
     HeteroLinRBase
 from federatedml.optim.gradient import hetero_linr_gradient_and_loss
-from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.util import LOGGER
 from federatedml.util import consts
 
@@ -36,7 +35,6 @@ class HeteroLinRHost(HeteroLinRBase):
         self.batch_generator = batch_generator.Host()
         self.gradient_loss_operator = hetero_linr_gradient_and_loss.Host()
         self.converge_procedure = convergence.Host()
-        self.encrypted_calculator = None
 
     def fit(self, data_instances, validate_data=None):
         """
@@ -61,11 +59,6 @@ class HeteroLinRHost(HeteroLinRBase):
         self.batch_generator.initialize_batch_generator(data_instances)
         self.gradient_loss_operator.set_total_batch_nums(self.batch_generator.batch_nums)
 
-        self.encrypted_calculator = [EncryptModeCalculator(self.cipher_operator,
-                                                           self.encrypted_mode_calculator_param.mode,
-                                                           self.encrypted_mode_calculator_param.re_encrypted_rate) for _
-                                     in range(self.batch_generator.batch_nums)]
-
         LOGGER.info("Start initialize model.")
         model_shape = self.get_features_shape(data_instances)
         if self.init_param_obj.fit_intercept:
@@ -86,7 +79,7 @@ class HeteroLinRHost(HeteroLinRBase):
             for batch_data in batch_data_generator:
                 optim_host_gradient = self.gradient_loss_operator.compute_gradient_procedure(
                     batch_data,
-                    self.encrypted_calculator,
+                    self.cipher_operator,
                     self.model_weights,
                     self.optimizer,
                     self.n_iter_,

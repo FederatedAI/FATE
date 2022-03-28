@@ -20,7 +20,6 @@ from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.linear_model.coordinated_linear_model.poisson_regression. \
     hetero_poisson_regression.hetero_poisson_base import HeteroPoissonBase
 from federatedml.optim.gradient import hetero_poisson_gradient_and_loss
-from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.util import LOGGER
 from federatedml.util import consts
 
@@ -36,7 +35,6 @@ class HeteroPoissonHost(HeteroPoissonBase):
         self.batch_generator = batch_generator.Host()
         self.gradient_loss_operator = hetero_poisson_gradient_and_loss.Host()
         self.converge_procedure = convergence.Host()
-        self.encrypted_calculator = None
 
     def fit(self, data_instances, validate_data=None):
         """
@@ -57,11 +55,6 @@ class HeteroPoissonHost(HeteroPoissonBase):
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
         self.batch_generator.initialize_batch_generator(data_instances)
-
-        self.encrypted_calculator = [EncryptModeCalculator(self.cipher_operator,
-                                                           self.encrypted_mode_calculator_param.mode,
-                                                           self.encrypted_mode_calculator_param.re_encrypted_rate) for _
-                                     in range(self.batch_generator.batch_nums)]
 
         LOGGER.info("Start initialize model.")
         model_shape = self.get_features_shape(data_instances)
@@ -85,14 +78,14 @@ class HeteroPoissonHost(HeteroPoissonBase):
                 LOGGER.info("iter:" + str(self.n_iter_))
                 optim_host_gradient = self.gradient_loss_operator.compute_gradient_procedure(
                     batch_data,
-                    self.encrypted_calculator,
+                    self.cipher_operator,
                     self.model_weights,
                     self.optimizer,
                     self.n_iter_,
                     batch_index)
 
                 self.gradient_loss_operator.compute_loss(batch_data, self.model_weights,
-                                                         self.encrypted_calculator, self.optimizer,
+                                                         self.optimizer,
                                                          self.n_iter_, batch_index, self.cipher_operator)
 
                 self.model_weights = self.optimizer.update_model(self.model_weights, optim_host_gradient)

@@ -34,10 +34,10 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
                                  transfer_variables.loss,
                                  transfer_variables.loss_intermediate)
 
-    def compute_gradient_procedure(self, data_instances, encrypted_calculator, model_weights, optimizer,
+    def compute_gradient_procedure(self, data_instances, cipher, model_weights, optimizer,
                                    n_iter_, batch_index, offset=None):
         current_suffix = (n_iter_, batch_index)
-        fore_gradient = self.compute_and_aggregate_forwards(data_instances, model_weights, encrypted_calculator,
+        fore_gradient = self.compute_and_aggregate_forwards(data_instances, model_weights, cipher,
                                                             batch_index, current_suffix, offset)
 
         self.remote_fore_gradient(fore_gradient, suffix=current_suffix)
@@ -51,7 +51,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         optimized_gradient = self.update_gradient(unilateral_gradient, suffix=current_suffix)
         return optimized_gradient
 
-    def compute_and_aggregate_forwards(self, data_instances, model_weights, encrypted_calculator,
+    def compute_and_aggregate_forwards(self, data_instances, model_weights, cipher,
                                        batch_index, current_suffix, offset=None):
         '''
         Compute gradients:
@@ -131,7 +131,7 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
                                  transfer_variables.loss,
                                  transfer_variables.loss_intermediate)
 
-    def compute_gradient_procedure(self, data_instances, encrypted_calculator, model_weights,
+    def compute_gradient_procedure(self, data_instances, cipher, model_weights,
                                    optimizer,
                                    n_iter_, batch_index):
         """
@@ -141,7 +141,7 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
         current_suffix = (n_iter_, batch_index)
 
         self.forwards = self.compute_forwards(data_instances, model_weights)
-        encrypted_forward = encrypted_calculator[batch_index].encrypt(self.forwards)
+        encrypted_forward = cipher.distribute_encrypt(self.forwards)
 
         self.remote_host_forward(encrypted_forward, suffix=current_suffix)
         fore_gradient = self.get_fore_gradient(suffix=current_suffix)
@@ -160,8 +160,8 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
             lambda v: np.exp(vec_dot(v.features, model_weights.coef_) + model_weights.intercept_))
         return mu
 
-    def compute_loss(self, data_instances, model_weights, encrypted_calculator,
-                     optimizer, n_iter_, batch_index, cipher_operator):
+    def compute_loss(self, data_instances, model_weights,
+                     optimizer, n_iter_, batch_index, cipher):
         '''
         Compute hetero poisson loss:
             h_loss = sum(exp(mu_h))
@@ -172,26 +172,22 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
 
         model_weights: model weight object, stores intercept_ and coef_
 
-        encrypted_calculator: ecnrypted calculator object
-
         optimizer: optimizer object
 
         n_iter_: int, current number of iter.
 
-        batch_index: int, use to obtain current encrypted_calculator index
-
-        cipher_operator: cipher for encrypt intermediate loss and loss_regular
+        cipher: cipher for encrypt intermediate loss and loss_regular
 
         '''
         current_suffix = (n_iter_, batch_index)
         self_wx = data_instances.mapValues(
             lambda v: vec_dot(v.features, model_weights.coef_) + model_weights.intercept_)
-        en_wx = encrypted_calculator[batch_index].encrypt(self_wx)
+        en_wx = cipher.distribute_encrypt(self_wx)
         self.remote_loss_intermediate(en_wx, suffix=current_suffix)
 
         loss_regular = optimizer.loss_norm(model_weights)
         if loss_regular is not None:
-            en_loss_regular = cipher_operator.encrypt(loss_regular)
+            en_loss_regular = cipher.encrypt(loss_regular)
             self.remote_loss_regular(en_loss_regular, suffix=current_suffix)
 
 

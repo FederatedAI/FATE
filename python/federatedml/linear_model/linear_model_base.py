@@ -78,7 +78,6 @@ class BaseLinearModel(ModelBase):
         self.max_iter = params.max_iter
         self.optimizer = optimizer_factory(params)
         self.converge_func = converge_func_factory(params.early_stop, params.tol)
-        self.encrypted_calculator = None
         self.validation_freqs = params.callback_param.validation_freqs
         self.validation_strategy = None
         self.early_stopping_rounds = params.callback_param.early_stopping_rounds

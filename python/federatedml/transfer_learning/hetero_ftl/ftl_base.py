@@ -14,7 +14,6 @@ from federatedml.transfer_learning.hetero_ftl.ftl_dataloder import FTLDataLoader
 from federatedml.nn.hetero_nn.backend.tf_keras.data_generator import KerasSequenceDataConverter
 from federatedml.nn.hetero_nn.util import random_number_generator
 from federatedml.secureprotol import PaillierEncrypt
-from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 from federatedml.util import consts
 from federatedml.secureprotol.paillier_tensor import PaillierTensor
 from federatedml.protobuf.generated.ftl_model_param_pb2 import FTLModelParam
@@ -41,8 +40,6 @@ class FTL(ModelBase):
         self.comm_eff = None
         self.local_round = 1
 
-        self.encrypted_mode_calculator_param = None
-
         # runtime variable
         self.verbose = False
         self.nn: KerasNNModel = None
@@ -55,7 +52,6 @@ class FTL(ModelBase):
         self.transfer_variable = FTLTransferVariable()
         self.data_convertor = KerasSequenceDataConverter()
         self.mode = 'plain'
-        self.encrypt_calculators = []
         self.encrypter = None
         self.partitions = 16
         self.batch_size = None
@@ -89,7 +85,6 @@ class FTL(ModelBase):
             self.local_round = 1
             LOGGER.debug('communication efficient mode is not enabled, local_round set as 1')
 
-        self.encrypted_mode_calculator_param = param.encrypted_mode_calculator_param
         self.encrypter = self.generate_encrypter(param)
         self.predict_param = param.predict_param
         self.rng_generator = random_number_generator.RandomNumberGenerator()
@@ -140,26 +135,18 @@ class FTL(ModelBase):
 
         return encrypter
 
-    def generated_encrypted_calculator(self):
-        encrypted_calculator = EncryptModeCalculator(self.encrypter,
-                                                     self.encrypted_mode_calculator_param.mode,
-                                                     self.encrypted_mode_calculator_param.re_encrypted_rate)
-        return encrypted_calculator
-
     def encrypt_tensor(self, components, return_dtable=True):
         """
         transform numpy array into Paillier tensor and encrypt
         """
 
-        if len(self.encrypt_calculators) == 0:
-            self.encrypt_calculators = [self.generated_encrypted_calculator() for i in range(3)]
         encrypted_tensors = []
-        for comp, calculator in zip(components, self.encrypt_calculators):
+        for comp in components:
             encrypted_tensor = PaillierTensor(comp, partitions=self.partitions)
             if return_dtable:
-                encrypted_tensors.append(encrypted_tensor.encrypt(calculator).get_obj())
+                encrypted_tensors.append(encrypted_tensor.encrypt(self.encrypter).get_obj())
             else:
-                encrypted_tensors.append(encrypted_tensor.encrypt(calculator))
+                encrypted_tensors.append(encrypted_tensor.encrypt(self.encrypter))
 
         return encrypted_tensors
 

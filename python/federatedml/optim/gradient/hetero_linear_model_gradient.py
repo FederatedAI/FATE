@@ -151,7 +151,7 @@ class Guest(HeteroGradientBase):
         self.unilateral_optim_gradient_transfer = guest_optim_gradient_transfer
 
     def compute_and_aggregate_forwards(self, data_instances, model_weights,
-                                       encrypted_calculator, batch_index, current_suffix, offset=None):
+                                       cipher, batch_index, current_suffix, offset=None):
         raise NotImplementedError("Function should not be called here")
 
     def compute_half_d(self, data_instances, w, cipher, batch_index, current_suffix):
@@ -159,7 +159,7 @@ class Guest(HeteroGradientBase):
 
     def _asynchronous_compute_gradient(self, data_instances, model_weights, cipher, current_suffix):
         LOGGER.debug("Called asynchronous gradient")
-        encrypted_half_d = cipher.encrypt(self.half_d)
+        encrypted_half_d = cipher.distribute_encrypt(self.half_d)
         self.remote_fore_gradient(encrypted_half_d, suffix=current_suffix)
 
         half_g = self.compute_gradient(data_instances, self.half_d, False)
@@ -182,7 +182,7 @@ class Guest(HeteroGradientBase):
         if masked_index:
             masked_index = masked_index.mapValues(lambda value: 0)
             masked_index_to_encrypt = masked_index.subtractByKey(self.half_d)
-            partial_masked_index_enc = cipher.encrypt(masked_index_to_encrypt)
+            partial_masked_index_enc = cipher.distribute_encrypt(masked_index_to_encrypt)
 
         for host_forward in self.host_forwards:
             if self.use_sample_weight:
@@ -206,7 +206,7 @@ class Guest(HeteroGradientBase):
                                                     model_weights.fit_intercept, need_average=False)
         return unilateral_gradient
 
-    def compute_gradient_procedure(self, data_instances, encrypted_calculator, model_weights, optimizer,
+    def compute_gradient_procedure(self, data_instances, cipher, model_weights, optimizer,
                                    n_iter_, batch_index, offset=None, masked_index=None):
         """
           Linear model gradient procedure
@@ -224,15 +224,15 @@ class Guest(HeteroGradientBase):
         # self.host_forwards = self.get_host_forward(suffix=current_suffix)
 
         # Compute Guest's partial d
-        self.compute_half_d(data_instances, model_weights, encrypted_calculator,
+        self.compute_half_d(data_instances, model_weights, cipher,
                             batch_index, current_suffix)
         if self.use_async:
             unilateral_gradient = self._asynchronous_compute_gradient(data_instances, model_weights,
-                                                                      cipher=encrypted_calculator[batch_index],
+                                                                      cipher=cipher,
                                                                       current_suffix=current_suffix)
         else:
             unilateral_gradient = self._centralized_compute_gradient(data_instances, model_weights,
-                                                                     cipher=encrypted_calculator[batch_index],
+                                                                     cipher=cipher,
                                                                      current_suffix=current_suffix,
                                                                      masked_index=masked_index)
 
@@ -276,7 +276,7 @@ class Host(HeteroGradientBase):
         raise NotImplementedError("Function should not be called here")
 
     def _asynchronous_compute_gradient(self, data_instances, cipher, current_suffix):
-        encrypted_forward = cipher.encrypt(self.forwards)
+        encrypted_forward = cipher.distribute_encrypt(self.forwards)
         self.remote_host_forward(encrypted_forward, suffix=current_suffix)
 
         half_g = self.compute_gradient(data_instances, self.forwards, False)
@@ -286,7 +286,7 @@ class Host(HeteroGradientBase):
         return unilateral_gradient
 
     def _centralized_compute_gradient(self, data_instances, cipher, current_suffix):
-        encrypted_forward = cipher.encrypt(self.forwards)
+        encrypted_forward = cipher.distribute_encrypt(self.forwards)
         self.remote_host_forward(encrypted_forward, suffix=current_suffix)
 
         fore_gradient = self.fore_gradient_transfer.get(idx=0, suffix=current_suffix)
@@ -295,7 +295,7 @@ class Host(HeteroGradientBase):
         unilateral_gradient = self.compute_gradient(data_instances, fore_gradient, False, need_average=False)
         return unilateral_gradient
 
-    def compute_gradient_procedure(self, data_instances, encrypted_calculator, model_weights,
+    def compute_gradient_procedure(self, data_instances, cipher, model_weights,
                                    optimizer,
                                    n_iter_, batch_index):
         """
@@ -311,11 +311,11 @@ class Host(HeteroGradientBase):
 
         if self.use_async:
             unilateral_gradient = self._asynchronous_compute_gradient(data_instances,
-                                                                      encrypted_calculator[batch_index],
+                                                                      cipher,
                                                                       current_suffix)
         else:
             unilateral_gradient = self._centralized_compute_gradient(data_instances,
-                                                                     encrypted_calculator[batch_index],
+                                                                     cipher,
                                                                      current_suffix)
 
         if optimizer is not None:
@@ -325,7 +325,7 @@ class Host(HeteroGradientBase):
         LOGGER.debug(f"Before return compute_gradient_procedure")
         return optimized_gradient
 
-    def compute_sqn_forwards(self, data_instances, delta_s, cipher_operator):
+    def compute_sqn_forwards(self, data_instances, delta_s, cipher):
         """
         To compute Hessian matrix, y, s are needed.
         g = (1/N)*∑(0.25 * wx - 0.5 * y) * x
@@ -333,7 +333,7 @@ class Host(HeteroGradientBase):
         define forward_hess = ∑(0.25 * x * s)
         """
         sqn_forwards = data_instances.mapValues(
-            lambda v: cipher_operator.encrypt(fate_operator.vec_dot(v.features, delta_s.coef_) + delta_s.intercept_))
+            lambda v: cipher.encrypt(fate_operator.vec_dot(v.features, delta_s.coef_) + delta_s.intercept_))
         # forward_sum = sqn_forwards.reduce(reduce_add)
         return sqn_forwards
 
@@ -374,19 +374,19 @@ class Arbiter(HeteroGradientBase):
         self.guest_optim_gradient_transfer = guest_optim_gradient_transfer
         self.host_optim_gradient_transfer = host_optim_gradient_transfer
 
-    def compute_gradient_procedure(self, cipher_operator, optimizer, n_iter_, batch_index):
+    def compute_gradient_procedure(self, cipher, optimizer, n_iter_, batch_index):
         """
         Compute gradients.
         Received local_gradients from guest and hosts. Merge and optimize, then separate and remote back.
         Parameters
         ----------
-        cipher_operator: Use for encryption
+        cipher: Use for encryption
 
         optimizer: optimizer that get delta gradient of this iter
 
         n_iter_: int, current iter nums
 
-        batch_index: int, use to obtain current encrypted_calculator
+        batch_index: int
 
         """
         current_suffix = (n_iter_, batch_index)
@@ -405,7 +405,7 @@ class Arbiter(HeteroGradientBase):
         gradient = np.hstack((h for h in host_gradients))
         gradient = np.hstack((gradient, guest_gradient))
 
-        grad = np.array(cipher_operator.decrypt_list(gradient))
+        grad = np.array(cipher.decrypt_list(gradient))
 
         # LOGGER.debug("In arbiter compute_gradient_procedure, before apply grad: {}, size_list: {}".format(
         #     grad, size_list

@@ -40,7 +40,6 @@ class HeteroLRGuest(HeteroLRBase):
         self.batch_generator = batch_generator.Guest()
         self.gradient_loss_operator = hetero_lr_gradient_and_loss.Guest()
         self.converge_procedure = convergence.Guest()
-        self.encrypted_calculator = None
         # self.need_one_vs_rest = None
 
     @staticmethod
@@ -119,11 +118,6 @@ class HeteroLRGuest(HeteroLRBase):
 
         LOGGER.info("Generate mini-batch from input data")
 
-        self.encrypted_calculator = [EncryptModeCalculator(self.cipher_operator,
-                                                           self.encrypted_mode_calculator_param.mode,
-                                                           self.encrypted_mode_calculator_param.re_encrypted_rate) for _
-                                     in range(self.batch_generator.batch_nums)]
-
         LOGGER.info("Start initialize model.")
         LOGGER.info("fit_intercept:{}".format(self.init_param_obj.fit_intercept))
         model_shape = self.get_features_shape(data_instances)
@@ -151,7 +145,7 @@ class HeteroLRGuest(HeteroLRBase):
 
                 optim_guest_gradient = self.gradient_loss_operator.compute_gradient_procedure(
                     batch_feat_inst,
-                    self.encrypted_calculator,
+                    self.cipher_operator,
                     self.model_weights,
                     self.optimizer,
                     self.n_iter_,
