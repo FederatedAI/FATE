@@ -10,7 +10,7 @@ def produce_hetero_tree_learner(role, tree_param: DecisionTreeParam, flow_id, da
                                 cipher_compress=True,
                                 mo_tree=False,
                                 class_num=1,
-                                g_h=None, encrypter=None, en_calculator=None,  # guest only
+                                g_h=None, encrypter=None,  # guest only
                                 goss_subsample=False, complete_secure=False,
                                 max_sample_weights=1.0,
                                 bin_num=None,  # host only
@@ -32,7 +32,6 @@ def produce_hetero_tree_learner(role, tree_param: DecisionTreeParam, flow_id, da
                   bin_sparse_points=bin_sparse_points,
                   grad_and_hess=g_h,
                   encrypter=encrypter,
-                  encrypted_mode_calculator=en_calculator,
                   task_type=task_type,
                   valid_features=valid_features,
                   host_party_list=host_party_list,

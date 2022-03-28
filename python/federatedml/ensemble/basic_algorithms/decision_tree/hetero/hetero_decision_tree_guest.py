@@ -23,7 +23,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.feature_importance_type = 'split'
 
         self.encrypter = None
-        self.encrypted_mode_calculator = None
         self.transfer_inst = HeteroDecisionTreeTransferVariable()
 
         self.sitename = consts.GUEST  # will be modified in self.set_runtime_idx()
@@ -111,7 +110,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
     def init(self, flowid, runtime_idx, data_bin, bin_split_points, bin_sparse_points, valid_features,
              grad_and_hess,
-             encrypter, encrypted_mode_calculator,
+             encrypter,
              host_party_list,
              task_type,
              class_num=1,
@@ -129,7 +128,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.check_max_split_nodes()
 
         self.encrypter = encrypter
-        self.encrypted_mode_calculator = encrypted_mode_calculator
         self.complete_secure_tree = complete_secure
         self.host_party_idlist = host_party_list
         self.run_goss = goss_subsample
@@ -141,16 +139,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
             self.class_num = class_num
         else:
             self.class_num = 1
-
-        # initializing goss settings
-        if self.run_goss:
-            self.encrypted_mode_calculator.align_to_input_data = False
-
-            if self.encrypted_mode_calculator.mode != 'strict':
-                if self.encrypted_mode_calculator.enc_zeros is None:
-                    self.encrypted_mode_calculator.init_enc_zero(data_bin,
-                                                                 raw_en=self.run_cipher_compressing, exponent=0)
-                    LOGGER.info('fast/balance encrypt mode, initialize enc zeros for goss sampling')
 
         self.new_ver = new_ver
         self.report_init_status()
@@ -375,7 +363,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
             self.packer = GHPacker(sample_num=self.grad_and_hess.count(),
                                    task_type=self.task_type,
                                    max_sample_weight=self.max_sample_weight,
-                                   en_calculator=self.encrypted_mode_calculator,
+                                   encrypter=self.encrypter,
                                    g_min=g_min,
                                    g_max=g_max,
                                    mo_mode=self.mo_tree,  # mo packing
@@ -384,7 +372,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
             en_grad_hess = self.packer.pack_and_encrypt(self.grad_and_hess)
 
         else:
-            en_grad_hess = self.encrypted_mode_calculator.encrypt(self.grad_and_hess)
+            en_grad_hess = self.encrypter.distribute_encrypt(self.grad_and_hess)
 
         LOGGER.info('sending g/h to host')
         self.transfer_inst.encrypted_grad_and_hess.remote(en_grad_hess,

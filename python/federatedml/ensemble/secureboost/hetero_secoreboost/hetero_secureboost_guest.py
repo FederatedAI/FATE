@@ -1,7 +1,5 @@
 import numpy as np
 from operator import itemgetter
-from typing import List
-import functools
 from federatedml.util import consts
 from federatedml.util import LOGGER
 from federatedml.ensemble.boosting import HeteroBoostingGuest
@@ -13,7 +11,6 @@ from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_impor
 from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict_transfer_variable import \
     HeteroSecureBoostTransferVariable
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core import tree_plan as plan
-from federatedml.secureprotol import PaillierEncrypt
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import ObjectiveMeta
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta
@@ -225,7 +222,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                                            host_party_list=self.component_properties.host_party_idlist,
                                            runtime_idx=self.component_properties.local_partyid,
                                            cipher_compress=self.cipher_compressing,
-                                           g_h=g_h, encrypter=self.encrypter, en_calculator=self.encrypted_calculator,
+                                           g_h=g_h, encrypter=self.encrypter,
                                            goss_subsample=self.enable_goss,
                                            complete_secure=complete_secure, max_sample_weights=self.max_sample_weight,
                                            fast_sbt=fast_sbt, tree_type=tree_type, target_host_id=target_host_id,
