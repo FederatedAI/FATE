@@ -371,6 +371,20 @@ class SparseQuantileSummaries(QuantileSummaries):
         result = super(SparseQuantileSummaries, self).query(non_zero_quantile)
         return result
 
+    def query_percentile_rate_list(self, percentile_rate_list):
+        result = []
+        non_zero_quantile_list = list()
+        for quantile in percentile_rate_list:
+            if self.zero_lower_bound < quantile < self.zero_upper_bound:
+                result.append(0.0)
+            else:
+                non_zero_quantile_list.append(self._convert_query_percentile(quantile))
+
+        if non_zero_quantile_list:
+            result += super(SparseQuantileSummaries, self).query_percentile_rate_list(non_zero_quantile_list)
+
+        return result
+
     def value_to_rank(self, value):
         quantile_rank = super().value_to_rank(value)
         zeros_count = self.zero_counts
