@@ -15,7 +15,7 @@ WORKING_DIR=$(pwd)
 source_dir=$(cd `dirname $0`; cd ../;cd ../;pwd)
 cd ${source_dir}
 #git submodule foreach --recursive git pull
-version=`grep "FATE=" fate.env | awk -F '=' '{print $2}'`
+version=$(grep "FATE=" fate.env | awk -F '=' '{print $2}')
 cd ${WORKING_DIR}
 
 
@@ -44,7 +44,7 @@ package() {
         [ -d ../package-build/build_docker.sh  ] && rm -rf ../package-build/build_docker.sh 
         cp ../package-build/build.sh ../package-build/build_docker.sh 
         sed -i 's#mvn clean package -DskipTests#docker run --rm -u $(id -u):$(id -g) -v ${source_dir}/fateboard:/data/projects/fate/fateboard --entrypoint="" maven:3.6-jdk-8 /bin/bash -c "cd /data/projects/fate/fateboard \&\& mvn clean package -DskipTests"#g' ../package-build/build_docker.sh 
-        sed -i 's#sh ./auto-packaging.sh#docker run --rm -u $(id -u):$(id -g) -v ${source_dir}/eggroll:/data/projects/fate/eggroll --entrypoint="" maven:3.6-jdk-8 /bin/bash -c "cd /data/projects/fate/eggroll/deploy \&\& bash auto-packaging.sh"#g' ../package-build/build_docker.sh 
+        sed -i 's#bash ./auto-packaging.sh#docker run --rm -u $(id -u):$(id -g) -v ${source_dir}/eggroll:/data/projects/fate/eggroll --entrypoint="" maven:3.6-jdk-8 /bin/bash -c "cd /data/projects/fate/eggroll/deploy \&\& bash auto-packaging.sh"#g' ../package-build/build_docker.sh 
 
         # package all
         source ../package-build/build_docker.sh release all
