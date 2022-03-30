@@ -99,6 +99,24 @@ class PathAddress(AddressBase):
         return self.__str__()
 
 
+class ApiAddress(AddressBase):
+    def __init__(self, method="POST", url=None, header=None, body=None, connector_name=None):
+        self.method = method
+        self.url = url
+        self.header = header if header else {}
+        self.body = body if body else {}
+        super(ApiAddress, self).__init__(connector_name=connector_name)
+
+    def __hash__(self):
+        return (self.method, self.url).__hash__()
+
+    def __str__(self):
+        return f"ApiAddress(url={self.url})"
+
+    def __repr__(self):
+        return self.__str__()
+
+
 class MysqlAddress(AddressBase):
     def __init__(self, user=None, passwd=None, host=None, port=None, db=None, name=None, connector_name=None):
         self.user = user
