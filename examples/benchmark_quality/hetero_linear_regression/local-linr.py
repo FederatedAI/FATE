@@ -45,7 +45,7 @@ def main(config="../../config.yaml", param="./linr_config.yaml"):
     df = df_guest.join(df_host, rsuffix="host")
     y = df[label_name]
     X = df.drop(label_name, axis=1)
-    lm = SGDRegressor(loss="squared_loss", penalty=param["penalty"],
+    lm = SGDRegressor(loss="squared_loss", penalty=param["penalty"], random_state=42,
                       fit_intercept=True, max_iter=param["max_iter"], average=param["batch_size"])
     lm_fit = lm.fit(X, y)
     y_pred = lm_fit.predict(X)
