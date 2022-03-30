@@ -32,7 +32,7 @@ class HeteroFastSecureBoost(FateComponent, HeteroSecureBoostParam):
 
         new_kwargs = self.erase_component_base_param(**kwargs)
 
-        HeteroFastSecureBoostParam.__init__(self, **new_kwargs)
+        HeteroSecureBoostParam.__init__(self, **new_kwargs)
         self.input = Input(self.name, data_type="multi")
         self.output = Output(self.name)
         self._module_name = "HeteroFastSecureBoost"
