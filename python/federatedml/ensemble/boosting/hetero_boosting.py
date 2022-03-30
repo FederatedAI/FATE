@@ -22,7 +22,6 @@ import abc
 from federatedml.ensemble.boosting import Boosting
 from federatedml.param.boosting_param import HeteroBoostingParam
 from federatedml.secureprotol import PaillierEncrypt
-from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 from federatedml.util import consts
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.util.classify_label_checker import ClassifyLabelChecker
