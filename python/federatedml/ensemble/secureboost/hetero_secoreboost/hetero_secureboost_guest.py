@@ -241,7 +241,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         flow_id = self.generate_flowid(epoch_idx, booster_idx)
         runtime_idx = self.component_properties.local_partyid
         host_list = self.component_properties.host_party_idlist
-        fast_sbt = (self.boosting_strategy != consts.STD_TREE)
+        fast_sbt = (self.boosting_strategy == consts.MIX_TREE or self.boosting_strategy == consts.LAYERED_TREE)
         tree_type, target_host_id = None, None
 
         if fast_sbt:
