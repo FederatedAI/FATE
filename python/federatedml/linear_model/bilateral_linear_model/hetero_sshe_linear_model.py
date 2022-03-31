@@ -251,6 +251,11 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
             last_w_self, last_w_remote = w_self, w_remote
             LOGGER.debug(f"first_w_self shape: {w_self.shape}, w_remote_shape: {w_remote.shape}")
 
+            # not sharing the model when reveal_every_iter
+            if not self.reveal_every_iter:
+                w_self, w_remote = self.share_model(w, suffix="init")
+                last_w_self, last_w_remote = w_self, w_remote
+                LOGGER.debug(f"first_w_self shape: {w_self.shape}, w_remote_shape: {w_remote.shape}")
             batch_data_generator = self.batch_generator.generate_batch_data()
 
             encoded_batch_data = []
@@ -377,7 +382,7 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
                         w_self -= self_g
                         w_remote -= remote_g
 
-                    LOGGER.debug(f"w_self shape: {w_self.shape}, w_remote_shape: {w_remote.shape}")
+                        LOGGER.debug(f"w_self shape: {w_self.shape}, w_remote_shape: {w_remote.shape}")
 
                 if self.role == consts.GUEST:
                     loss = np.sum(loss_list) / instances_count
