@@ -62,8 +62,7 @@ def main(config="../../config.yaml", namespace=""):
     hetero_linr_0 = HeteroLinR(name="hetero_linr_0", penalty="L2", optimizer="sgd", tol=0.001,
                                alpha=0.01, max_iter=10, early_stop="weight_diff", batch_size=-1,
                                learning_rate=0.15, decay=0.0, decay_sqrt=False,
-                               init_param={"init_method": "zeros"},
-                               encrypted_mode_calculator_param={"mode": "fast"})
+                               init_param={"init_method": "zeros"})
     hetero_linr_1 = HeteroLinR()
 
     pipeline.add_component(reader_0)

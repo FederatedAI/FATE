@@ -72,10 +72,7 @@
                 "decay": 0.0,
                 "decay_sqrt": false,
                 "reveal_every_iter": true,
-                "reveal_strategy": "respectively",
-                "encrypted_mode_calculator_param": {
-                    "mode": "fast"
-                }
+                "reveal_strategy": "respectively"
             },
             "evaluation_0": {
                 "eval_type": "regression",

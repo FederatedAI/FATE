@@ -35,7 +35,7 @@ commands = {
     "flow-test": flow_group,
     "unittest": unittest_group,
     "convert": convert_group,
-    "op_test": secure_protocol_group
+    "op-test": secure_protocol_group
 }
 
 commands_alias = {

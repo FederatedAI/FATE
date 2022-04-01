@@ -8,7 +8,7 @@ We will take hetero-secureboost as an example.
 Before running jobs, data need to be uploaded to data storage. Please refer [here](./upload_data_guide.md) for an example.
 
 ## Submit a training task
-We can start a training job by submitting conf & dsl through [Flow Client](../api/fate_client/flow_client.rst),
+We can start a training job by submitting conf & dsl through [Flow Client](../../api/fate_client/flow_client.rst),
 Here we submit a hetero-secureboost binary classification task, whose conf and dsl are in [hetero secureboost example 
 folder.](../../../examples/dsl/v2/hetero_secureboost)
 

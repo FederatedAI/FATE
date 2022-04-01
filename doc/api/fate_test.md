@@ -968,3 +968,27 @@ fate_test data --help
     (effective with `upload-data` set to True) will generate dataset in
     testsuites *path1* and upload data from local server; use this
     option if flow and data storage are deployed to the same server
+
+
+## MPC Operation Test
+`op_test` sub-command is used to test
+efficiency and accuracy of secure multiparty computation protocols like Paillier and SPDZ.
+
+1. paillier:
+    
+    ```bash
+    fate_test op-test paillier
+    ```
+    
+    will generate performance and accuracy table for Paillier Protocol, including encryption，decryption, addition and 
+    addition and scalar multiplication.
+
+2. spdz
+   
+    ```bash
+    fate_test op-test spdz
+    ```
+    
+    will generate performance and accuracy table for SPDZ Protocol, including encryption，decryption, addition and 
+    addition and scalar multiplication.
+
