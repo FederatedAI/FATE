@@ -16,8 +16,9 @@ To develop a component, the following 6 steps are needed.
 4.  define your component which should inherit `model_base` class.
 5.  Define the protobuf file required for model saving.
 6.  (optional) define Pipeline component for your component.
+7.  Restart fate flow service
 
-In the following sections we will describe the 6 steps in detail, with
+In the following sections we will describe the 7 steps in detail, with
 `hetero_lr`.
 
 ### Step 1. Define the parameter object this component will use
@@ -272,7 +273,7 @@ provided in
     def predict(self, data_inst):
     ```
     
-    `data_inst` is a DTable. Similar to fit function, you can define
+    `data_inst` is a Table. Similar to fit function, you can define
     the prediction procedure in the predict function for different
     roles. When starting a predict task, this function will be called
     by `model_base` automatically. Meanwhile, in training task, this
@@ -389,6 +390,12 @@ Then you may use Pipeline to construct and initiate a job with the newly
 defined component. For guide on Pipeline usage, please refer to
 [fate_client/pipeline](../api/fate_client/pipeline.md).
 
+### Step 7. Restart fate flow service
+
+If above developing steps are all finished, please restart fate flow service, otherwise some errors will occur 
+when running jobs like "new component's provider does not found."
+
+
 ## Start a modeling task
 
 After finished developing, here is a simple example for starting a
@@ -431,7 +438,7 @@ python ${your_pipeline.py}
 
 ### 3. Check log files  
 
-Now you can check out the log in the path: `$PROJECT_BASE/logs/${your jobid}`
+Now you can check out the log in the path: `$PROJECT_BASE/fateflow/logs/${your jobid}`
 
 For more detailed information about dsl configure file and parameter
 configure files, please check out `examples/dsl/v2`

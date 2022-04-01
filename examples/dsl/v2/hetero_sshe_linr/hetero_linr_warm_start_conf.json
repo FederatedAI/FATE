@@ -71,9 +71,6 @@
                     "callbacks": [
                         "ModelCheckpoint"
                     ]
-                },
-                "encrypted_mode_calculator_param": {
-                    "mode": "fast"
                 }
             },
             "hetero_linr_1": {

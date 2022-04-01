@@ -74,7 +74,7 @@ We use json file which is actually a dictionary as a dsl config file.
 
   - **definition:** Specify which component to use.
   - **explanation:** This field should strictly match the ComponentMeta define in
-    python file under the [fold]((../../../python/federatedml/components))
+    python file under the [fold](../../../python/federatedml/components)
   - **example:**
 
 
@@ -173,7 +173,7 @@ We use json file which is actually a dictionary as a dsl config file.
     1.  data: normal data output
     2.  train\_data: only for Data Split
     3.  validate\_data: only for Data Split
-    4.  test\_data： only for Data Split
+    4.  test\_data：only for Data Split
 
 #### 5.2 Model Output
 
