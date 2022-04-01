@@ -1,4 +1,4 @@
-name: Docker
+name: Docker build and push
 
 on:
   push:
@@ -28,14 +28,14 @@ jobs:
           if [ $VERSION = "master" ]; then
             TAG=latest
           fi
-
+          echo "::notice col=5 title=print tag::TAG=$TAG"
           echo "::set-output name=tag::$TAG"
 
       - name: Build image
-        run: TAG=${{steps.prepare-the-tag.outputs.tag}} bash docker-build/build_cluster_docker.sh all
+        run: TAG=${{steps.prepare-the-tag.outputs.tag}} bash build/docker-build/build_cluster_docker.sh all
 
       - name: Log into DockerHub
         run: docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Push image
-        run: TAG=${{steps.prepare-the-tag.outputs.tag}} bash docker-build/build_cluster_docker.sh push
+        run: TAG=${{steps.prepare-the-tag.outputs.tag}} bash build/docker-build/build_cluster_docker.sh push
