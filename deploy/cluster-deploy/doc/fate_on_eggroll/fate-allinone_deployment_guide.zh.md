@@ -564,11 +564,8 @@ flow test toy -gid 9999 -hid 10000
 
 ```bash
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/scripts/
-python upload_default_data.py
+fate_test data upload -t min_test
 ```
-
-更多细节信息，敬请参考[脚本README](../../../../examples/scripts/README.rst)
 
 #### 6.2.2. 快速模式
 
