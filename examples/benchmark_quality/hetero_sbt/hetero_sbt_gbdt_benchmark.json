@@ -109,9 +109,13 @@
             "script": "./gbdt-multi.py",
             "conf": "./gbdt_config_multi.yaml"
         },
-        "FATE": {
+        "FATE-mo": {
             "script": "./fate-sbt.py",
-            "conf": "./fate_sbt_multi.yaml"
+            "conf": "./fate_sbt_multi_mo.yaml"
+        },
+        "FATE-so": {
+            "script": "./fate-sbt.py",
+            "conf": "./fate_sbt_multi_so.yaml"
         },
         "compare_setting": {
             "relative_tol": 0.01

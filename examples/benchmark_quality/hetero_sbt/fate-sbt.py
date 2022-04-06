@@ -81,6 +81,9 @@ def main(config="../../config.yaml", param="./xgb_config_binary.yaml", namespace
     intersect_1 = Intersection(name="intersection_1")
 
     # secure boost component
+    multi_mode = 'single_output'
+    if 'multi_mode' in param:
+        multi_mode = param['multi_mode']
     hetero_secure_boost_0 = HeteroSecureBoost(name="hetero_secure_boost_0",
                                               num_trees=param['tree_num'],
                                               task_type=param['task_type'],
@@ -88,7 +91,8 @@ def main(config="../../config.yaml", param="./xgb_config_binary.yaml", namespace
                                               encrypt_param={"method": "Paillier"},
                                               tree_param={"max_depth": param['tree_depth']},
                                               validation_freqs=1,
-                                              learning_rate=param['learning_rate']
+                                              learning_rate=param['learning_rate'],
+                                              multi_mode=multi_mode
                                               )
     hetero_secure_boost_1 = HeteroSecureBoost(name="hetero_secure_boost_1")
     # evaluation component
