@@ -266,7 +266,7 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
                 else:
                     batch_features = batch_data.mapValues(lambda x: x.features)
                 if self.role == consts.GUEST:
-                    batch_labels = batch_data.mapValues(lambda x: np.array([x.label], dtype=int))
+                    batch_labels = batch_data.mapValues(lambda x: np.array([x.label], dtype=self.label_type))
                     batch_labels_list.append(batch_labels)
                     if self.weight:
                         batch_weight = batch_data.mapValues(lambda x: np.array([x.weight], dtype=float))
