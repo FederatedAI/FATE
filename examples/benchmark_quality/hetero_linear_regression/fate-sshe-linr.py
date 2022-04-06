@@ -113,8 +113,10 @@ def main(config="../../config.yaml", param="./sshe_linr_config.yaml", namespace=
 
     metric_summary = parse_summary_result(pipeline.get_component("evaluation_0").get_summary())
 
-    data_linr_0 = extract_data(pipeline.get_component("hetero_sshe_linr_0").get_output_data().get("data"), "predict_result")
-    data_linr_1 = extract_data(pipeline.get_component("hetero_sshe_linr_1").get_output_data().get("data"), "predict_result")
+    data_linr_0 = extract_data(pipeline.get_component(
+        "hetero_sshe_linr_0").get_output_data().get("data"), "predict_result")
+    data_linr_1 = extract_data(pipeline.get_component(
+        "hetero_sshe_linr_1").get_output_data().get("data"), "predict_result")
     desc_linr_0 = regression_metric.Describe().compute(data_linr_0)
     desc_linr_1 = regression_metric.Describe().compute(data_linr_1)
 
