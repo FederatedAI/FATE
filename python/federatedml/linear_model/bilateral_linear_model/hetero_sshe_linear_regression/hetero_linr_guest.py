@@ -61,7 +61,7 @@ class HeteroLinRGuest(HeteroSSHEGuestBase):
         """
          Compute hetero linr loss:
             loss = (1/N)*\sum(wx-y)^2 where y is label, w is model weight and x is features
-            log(wx - y)^2 = (wx_h)^2 + (wx_g - y)^2 + 2 * (wx_h * (wx_g - y))
+            (wx - y)^2 = (wx_h)^2 + (wx_g - y)^2 + 2 * (wx_h * (wx_g - y))
         """
         LOGGER.info(f"[compute_loss]: Calculate loss ...")
         wxy_self = self.wx_self - labels
@@ -72,10 +72,10 @@ class HeteroLinRGuest(HeteroSSHEGuestBase):
                                                                          is_remote=False,
                                                                          cipher=None,
                                                                          wx_self_square=None)[0]
-        loss = (wx_remote_square + wxy_self_square) * -1 + wxy * -2
+        loss = (wx_remote_square + wxy_self_square) + wxy * 2
 
         batch_num = self.batch_num[int(suffix[2])]
-        loss = loss * (-1 / (batch_num * 2))
+        loss = loss * (1 / (batch_num * 2))
         # loss = (wx_remote_square + wxy_self_square + 2 * wxy) / (2 * batch_num)
 
         tensor_name = ".".join(("shared_loss",) + suffix)
