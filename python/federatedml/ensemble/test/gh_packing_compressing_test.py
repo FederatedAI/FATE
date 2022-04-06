@@ -21,7 +21,6 @@ from fate_arch.session import computing_session as session
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.g_h_optim import PackedGHCompressor, GHPacker, fix_point_precision
 from federatedml.secureprotol.encrypt import PaillierEncrypt, FakeEncrypt
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.splitter import SplitInfo
-from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 from federatedml.util import consts
 import numpy as np
 
@@ -90,8 +89,7 @@ class TestFeatureHistogram(unittest.TestCase):
     @staticmethod
     def prepare_testing_data(g, h, en, max_sample_num, sample_id, task_type, g_min=None, g_max=None):
 
-        calculator = EncryptModeCalculator(encrypter=en)
-        packer = GHPacker(max_sample_num, en_calculator=calculator, sync_para=False, task_type=task_type,
+        packer = GHPacker(max_sample_num, encrypter=en, sync_para=False, task_type=task_type,
                           g_min=g_min, g_max=g_max)
         en_g_l, en_h_l = en_gh_list(g, h, en)
         data_list = [(id_, (g_, h_)) for id_, g_, h_ in zip(sample_id, g, h)]
