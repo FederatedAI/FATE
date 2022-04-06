@@ -84,6 +84,12 @@ class Encrypt(object):
         encrypt_table = X.mapValues(lambda x: self.recursive_encrypt(x))
         return encrypt_table
 
+    def distribute_raw_decrypt(self, X):
+        return X.mapValues(lambda x: self.recursive_raw_decrypt(x))
+
+    def distribute_raw_encrypt(self, X):
+        return X.mapValues(lambda x: self.recursive_raw_encrypt(x))
+
     def _recursive_func(self, obj, func):
         if isinstance(obj, np.ndarray):
             if len(obj.shape) == 1:

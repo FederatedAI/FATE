@@ -198,7 +198,7 @@ echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab
 Or create by using the code package script in Section 5.1, and execute as app user:
 
 ```
-sh /data/projects/fate-cluster-install/tools-install/makeVirtualDisk.sh
+sh /data/projects/fate-cluster-install-${version}/tools-install/makeVirtualDisk.sh
 Waring: please make sure has enough space of your disk first!!! (Please make sure there is enough storage space)
 current user has sudo privilege(yes|no):yes      (Whether the user has sudo privilege; enter yes and do not abbreviate it)
 Enter store directory:/data    (Set the storage path for virtual memory files; make sure the directory exists and do not set it to the root directory)
@@ -264,14 +264,14 @@ cd /data/projects/
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_cluster_install_${version}_release-c7-u18.tar.gz
 tar xzf fate_cluster_install_${version}_release-c7-u18.tar.gz
 
-Note: version without character v, such as fate_cluster_install_1.x.x_release-c7-u18.tar.gz 
+Note: version without character v, such as fate_cluster_install_1.x.x_release-c7-u18.tar.gz
 ```
 
 ### 5.2. Pre-Deployment Check
 
 **Execute as app user on the destination server (192.168.0.1, 192.168.0.2)**
 
-Copy the check script fate-cluster-install/tools-install/check.sh from 192.168.0.1 to 192.168.0.2
+Copy the check script fate-cluster-install-${version}/tools-install/check.sh from 192.168.0.1 to 192.168.0.2
 
 ```
 #Execute the script check on the servers 192.168.0.1 and 192.168.0.2 respectively
@@ -289,10 +289,10 @@ sh ./check.sh
 
 **Execute as app user on the destination server (192.168.0.1)**
 
-Modify the profile: fate-cluster-install/allInone/conf/setup.conf.
+Modify the profile: fate-cluster-install-${version}/allInone/conf/setup.conf.
 
 ```
-vi fate-cluster-install/allInone/conf/setup.conf
+vi fate-cluster-install-${version}/allInone/conf/setup.conf
 ```
 
 Description of Profile setup.conf
@@ -468,14 +468,14 @@ nodemanager_port=4671
 
 ### 5.4 Deployment
 
-Modify the corresponding configuration items in the setup.conf file according to the above configuration definition, then execute the deployment script under the fate-cluster-install/allInone directory:
+Modify the corresponding configuration items in the setup.conf file according to the above configuration definition, then execute the deployment script under the fate-cluster-install-${version}/allInone directory:
 
 ```
-cd fate-cluster-install/allInone
+cd fate-cluster-install-${version}/allInone
 nohup sh ./deploy.sh > logs/boot.log 2>&1 &
 ```
 
-The deployment log is located in the fate-cluster-install/allInone/logs directory. A user can check it in real time to see if there are any errors:
+The deployment log is located in the fate-cluster-install-${version}/allInone/logs directory. A user can check it in real time to see if there are any errors:
 
 ```
 tail -f ./logs/deploy.log (Just check it when the deployment is completed)
@@ -521,7 +521,7 @@ A user must set 2 parameters for this testing: gid(guest partyid), hid(host part
 
 ```
 source /data/projects/fate/bin/init_env.sh
-flow test toy -gid 10000 -hid 10000 
+flow test toy -gid 10000 -hid 10000
 ```
 
 A result similar to the following indicates successful operation:
@@ -562,11 +562,8 @@ Execute on 192.168.0.1 and 192.168.0.2 respectively:
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/scripts/
-python upload_default_data.py
+fate_test data upload -t min_test
 ```
-examples/scripts/README.rst
-For more details, refer to [Script Readme](../../../../examples/scripts/README.rst)
 
 #### 6.2.2. Fast Mode
 
@@ -695,88 +692,88 @@ netstat -tlnp | grep 8080
 | fateboard             | /data/projects/fate/fateboard/logs                 |
 | mysql                 | /data/projects/fate/common/mysql/mysql-8.0.13/logs |
 
-### 7.4. Space Clearance Rules 
+### 7.4. Space Clearance Rules
 
-#### 7.4.1. fateflow job log 
+#### 7.4.1. fateflow job log
 
-Machine: The machine where the fate flow service is located 
+Machine: The machine where the fate flow service is located
 
 Directory: `/data/projects/fate/fateflow/logs`
 
-Retention period: N=14 days 
+Retention period: N=14 days
 
-Rule: The directory starts with jobid, and the data whose jobid is N days ago is cleaned up 
+Rule: The directory starts with jobid, and the data whose jobid is N days ago is cleaned up
 
 ```bash
 rm -rf /data/projects/fate/fateflow/logs/20211116*
 ```
 
-#### 7.4.2. fateflow system log 
+#### 7.4.2. fateflow system log
 
-Machine: The machine where the fate flow service is located 
+Machine: The machine where the fate flow service is located
 
-Directory: /data/projects/fate/fateflow/logs/fate_flow 
+Directory: /data/projects/fate/fateflow/logs/fate_flow
 
-Retention period: N=14 days 
+Retention period: N=14 days
 
-Rule: End with the date, clean up the data N days ago 
+Rule: End with the date, clean up the data N days ago
 
 ```bash
 rm -rf /data/projects/fate/fateflow/logs/fate_flow/\*.2021-11-16
 ```
 
-#### 7.4.3. EggRoll Session log 
+#### 7.4.3. EggRoll Session log
 
-Machine: eggroll node node 
+Machine: eggroll node node
 
-Directory: /data/projects/fate/eggroll/logs/ 
+Directory: /data/projects/fate/eggroll/logs/
 
-Retention period: N=14 days 
+Retention period: N=14 days
 
-Rule: The directory starts with jobid, and the data whose jobid is N days ago is cleaned up 
+Rule: The directory starts with jobid, and the data whose jobid is N days ago is cleaned up
 
 ```bash
 rm -rf /data/projects/fate/eggroll/logs/20211116*
 ```
 
-#### 7.4.4. EggRoll system log 
+#### 7.4.4. EggRoll system log
 
-Machine: eggroll node node 
+Machine: eggroll node node
 
 Directory: `/data/projects/fate/eggroll/logs/eggroll`
 
-Retention period: N=14 days 
+Retention period: N=14 days
 
-Rule: files in the history folder established by the end of the date and the year, and clean up the data N days ago 
+Rule: files in the history folder established by the end of the date and the year, and clean up the data N days ago
 
 ```bash
 rm -rf /data/projects/fate/eggroll/logs/eggroll/\*.2021-11-16_*
 rm -rf /data/projects/fate/eggroll/logs/eggroll/2021/11/01
 ```
 
-#### 7.4.5. Calculating temporary data 
+#### 7.4.5. Calculating temporary data
 
-Machine: eggroll node node 
+Machine: eggroll node node
 
-Directory: /data/projects/fate/eggroll/data/IN_MEMORY 
+Directory: /data/projects/fate/eggroll/data/IN_MEMORY
 
-Retention period: N=7 days 
+Retention period: N=7 days
 
-Rule: namespace starts with jobid, clean up data whose jobid is N days ago 
+Rule: namespace starts with jobid, clean up data whose jobid is N days ago
 
 ```bash
 rm -rf /data/projects/fate/eggroll/data/IN_MEMORY/20211116*
 ```
 
-#### 7.4.6. Job component output data 
+#### 7.4.6. Job component output data
 
-Machine: eggroll node node 
+Machine: eggroll node node
 
-Directory: /data/projects/fate/eggroll/data/LMDB 
+Directory: /data/projects/fate/eggroll/data/LMDB
 
-Retention period: N=14 days 
+Retention period: N=14 days
 
-Rule: namespace starts with output_data_jobid, clean up data whose jobid is N days ago 
+Rule: namespace starts with output_data_jobid, clean up data whose jobid is N days ago
 
 ```bash
 rm -rf /data/projects/fate/eggroll/data/LMDB/output_data_20211116*

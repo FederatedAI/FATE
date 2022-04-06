@@ -20,7 +20,6 @@ from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.linear_model.coordinated_linear_model.linear_regression.hetero_linear_regression.hetero_linr_base import \
     HeteroLinRBase
 from federatedml.optim.gradient import hetero_linr_gradient_and_loss
-from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.statistic.data_overview import with_weight, scale_sample_weight
 from federatedml.util import LOGGER
 from federatedml.util import consts
@@ -37,7 +36,6 @@ class HeteroLinRGuest(HeteroLinRBase):
         self.batch_generator = batch_generator.Guest()
         self.gradient_loss_operator = hetero_linr_gradient_and_loss.Guest()
         self.converge_procedure = convergence.Guest()
-        self.encrypted_calculator = None
 
     @staticmethod
     def load_data(data_instance):
@@ -83,11 +81,6 @@ class HeteroLinRGuest(HeteroLinRBase):
         self.batch_generator.initialize_batch_generator(data_instances, self.batch_size)
         self.gradient_loss_operator.set_total_batch_nums(self.batch_generator.batch_nums)
 
-        self.encrypted_calculator = [EncryptModeCalculator(self.cipher_operator,
-                                                           self.encrypted_mode_calculator_param.mode,
-                                                           self.encrypted_mode_calculator_param.re_encrypted_rate) for _
-                                     in range(self.batch_generator.batch_nums)]
-
         LOGGER.info("Start initialize model.")
         LOGGER.info("fit_intercept:{}".format(self.init_param_obj.fit_intercept))
         model_shape = self.get_features_shape(data_instances)
@@ -108,7 +101,7 @@ class HeteroLinRGuest(HeteroLinRBase):
                 # Start gradient procedure
                 optim_guest_gradient = self.gradient_loss_operator.compute_gradient_procedure(
                     batch_data,
-                    self.encrypted_calculator,
+                    self.cipher_operator,
                     self.model_weights,
                     self.optimizer,
                     self.n_iter_,

@@ -65,9 +65,6 @@
                 "early_stop": "weight_diff",
                 "decay": 0.0,
                 "decay_sqrt": false,
-                "encrypted_mode_calculator_param": {
-                    "mode": "fast"
-                },
                 "reveal_strategy": "respectively",
                 "reveal_every_iter": false
             },

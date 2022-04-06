@@ -53,7 +53,6 @@ class BaseLinearRegression(BaseLinearModel):
 
     def _init_model(self, params):
         super()._init_model(params)
-        self.encrypted_mode_calculator_param = params.encrypted_mode_calculator_param
 
     def compute_wx(self, data_instances, coef_, intercept_=0):
         return data_instances.mapValues(

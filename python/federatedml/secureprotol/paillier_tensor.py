@@ -166,7 +166,7 @@ class PaillierTensor(object):
         return self._ori_data
 
     def encrypt(self, encrypt_tool):
-        return PaillierTensor(encrypt_tool.encrypt(self._obj))
+        return PaillierTensor(encrypt_tool.distribute_encrypt(self._obj))
 
     def decrypt(self, decrypt_tool):
         return PaillierTensor(self._obj.mapValues(lambda val: decrypt_tool.recursive_decrypt(val)))

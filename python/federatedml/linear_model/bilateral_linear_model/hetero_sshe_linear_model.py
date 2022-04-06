@@ -27,7 +27,7 @@ from federatedml.linear_model.linear_model_base import BaseLinearModel
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.param.init_model_param import InitParam
 from federatedml.protobuf.generated import sshe_cipher_param_pb2
-from federatedml.secureprotol import PaillierEncrypt, EncryptModeCalculator
+from federatedml.secureprotol import PaillierEncrypt
 from federatedml.secureprotol.fate_paillier import PaillierPublicKey, PaillierPrivateKey, PaillierEncryptedNumber
 from federatedml.secureprotol.fixedpoint import FixedPointEndec
 from federatedml.secureprotol.spdz import SPDZ
@@ -56,7 +56,6 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
         self.batch_num = []
         self.secure_matrix_obj: SecureMatrix
         # self._set_parties()
-        self.cipher_tool = None
         self.parties = None
         self.local_party = None
         self.other_party = None
@@ -67,7 +66,6 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
 
     def _init_model(self, params):
         super()._init_model(params)
-        self.encrypted_mode_calculator_param = params.encrypted_mode_calculator_param
         self.cipher = PaillierEncrypt()
         self.cipher.generate_key(self.model_param.encrypt_param.key_length)
         self.transfer_variable = SSHEModelTransferVariable()
@@ -249,13 +247,13 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
         ) as spdz:
             spdz.set_flowid(self.flowid)
             self.secure_matrix_obj.set_flowid(self.flowid)
-            w_self, w_remote = self.share_model(w, suffix="init")
-            last_w_self, last_w_remote = w_self, w_remote
-            LOGGER.debug(f"first_w_self shape: {w_self.shape}, w_remote_shape: {w_remote.shape}")
-
+            # not sharing the model when reveal_every_iter
+            if not self.reveal_every_iter:
+                w_self, w_remote = self.share_model(w, suffix="init")
+                last_w_self, last_w_remote = w_self, w_remote
+                LOGGER.debug(f"first_w_self shape: {w_self.shape}, w_remote_shape: {w_remote.shape}")
             batch_data_generator = self.batch_generator.generate_batch_data()
 
-            self.cipher_tool = []
             encoded_batch_data = []
             batch_labels_list = []
             batch_weight_list = []
@@ -280,10 +278,6 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
                     fixedpoint_table.FixedPointTensor(self.fixedpoint_encoder.encode(batch_features),
                                                       q_field=self.fixedpoint_encoder.n,
                                                       endec=self.fixedpoint_encoder))
-
-                self.cipher_tool.append(EncryptModeCalculator(self.cipher,
-                                                              self.encrypted_mode_calculator_param.mode,
-                                                              self.encrypted_mode_calculator_param.re_encrypted_rate))
 
             while self.n_iter_ < self.max_iter:
                 self.callback_list.on_epoch_begin(self.n_iter_)
@@ -310,14 +304,14 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
                                          features=batch_data,
                                          labels=batch_labels,
                                          suffix=current_suffix,
-                                         cipher=self.cipher_tool[batch_idx],
+                                         cipher=self.cipher,
                                          batch_weight=batch_weight)
                     else:
                         y = self.forward(weights=(w_self, w_remote),
                                          features=batch_data,
                                          labels=batch_labels,
                                          suffix=current_suffix,
-                                         cipher=self.cipher_tool[batch_idx],
+                                         cipher=self.cipher,
                                          batch_weight=batch_weight)
 
                     if self.role == consts.GUEST:
@@ -329,12 +323,12 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
                         self_g, remote_g = self.backward(error=error,
                                                          features=batch_data,
                                                          suffix=current_suffix,
-                                                         cipher=self.cipher_tool[batch_idx])
+                                                         cipher=self.cipher)
                     else:
                         self_g, remote_g = self.backward(error=y,
                                                          features=batch_data,
                                                          suffix=current_suffix,
-                                                         cipher=self.cipher_tool[batch_idx])
+                                                         cipher=self.cipher)
 
                     # loss computing;
                     suffix = ("loss",) + current_suffix
@@ -342,12 +336,12 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
                         batch_loss = self.compute_loss(weights=self.model_weights,
                                                        labels=batch_labels,
                                                        suffix=suffix,
-                                                       cipher=self.cipher_tool[batch_idx])
+                                                       cipher=self.cipher)
                     else:
                         batch_loss = self.compute_loss(weights=(w_self, w_remote),
                                                        labels=batch_labels,
                                                        suffix=suffix,
-                                                       cipher=self.cipher_tool[batch_idx])
+                                                       cipher=self.cipher)
 
                     if batch_loss is not None:
                         batch_loss = batch_loss * self.batch_num[batch_idx]
@@ -384,7 +378,7 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
                         w_self -= self_g
                         w_remote -= remote_g
 
-                    LOGGER.debug(f"w_self shape: {w_self.shape}, w_remote_shape: {w_remote.shape}")
+                        LOGGER.debug(f"w_self shape: {w_self.shape}, w_remote_shape: {w_remote.shape}")
 
                 if self.role == consts.GUEST:
                     loss = np.sum(loss_list) / instances_count

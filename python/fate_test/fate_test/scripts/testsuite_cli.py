@@ -24,7 +24,7 @@ from fate_test._client import Clients
 from fate_test._config import Config
 from fate_test._flow_client import JobProgress, SubmitJobResponse, QueryJobResponse
 from fate_test._io import LOGGER, echo
-from fate_test._parser import JSON_STRING, Testsuite
+from fate_test._parser import JSON_STRING, Testsuite, non_success_summary
 from fate_test.scripts._options import SharedOptions
 from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_data, _load_module_from_script, \
     _add_replace_hook
@@ -81,6 +81,7 @@ def run_suite(ctx, replace, include, exclude, glob, timeout, update_job_paramete
     echo.echo("loading testsuites:")
     suites = _load_testsuites(includes=include, excludes=exclude, glob=glob, provider=provider)
     for suite in suites:
+        _config.jobs_num += len(suite.jobs)
         echo.echo(f"\tdataset({len(suite.dataset)}) dsl jobs({len(suite.jobs)}) "
                   f"pipeline jobs ({len(suite.pipeline_jobs)}) {suite.path}")
     if not yes and not click.confirm("running?"):
@@ -119,7 +120,8 @@ def run_suite(ctx, replace, include, exclude, glob, timeout, update_job_paramete
                     _delete_data(client, suite)
                 echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
                 if not skip_dsl_jobs or not skip_pipeline_jobs:
-                    echo.echo(suite.pretty_final_summary(time_consuming))
+                    suite_file = str(suite.path).split("/")[-1]
+                    echo.echo(suite.pretty_final_summary(time_consuming, suite_file), fg='red')
 
             except Exception:
                 exception_id = uuid.uuid1()
@@ -127,7 +129,7 @@ def run_suite(ctx, replace, include, exclude, glob, timeout, update_job_paramete
                 LOGGER.exception(f"exception id: {exception_id}")
             finally:
                 echo.stdout_newline()
-
+    non_success_summary()
     echo.farewell()
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
 
@@ -144,6 +146,7 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
         for job in suite.jobs_iter():
             job_progress = JobProgress(job.job_name)
             start = time.time()
+            _config.jobs_progress += 1
 
             def _raise():
                 exception_id = str(uuid.uuid1())
@@ -171,6 +174,9 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
 
             def _call_back(resp: SubmitJobResponse):
                 if isinstance(resp, SubmitJobResponse):
+                    progress_tracking = "/".join([str(_config.jobs_progress), str(_config.jobs_num)])
+                    if _config.jobs_num != len(suite.jobs):
+                        job_progress.set_progress_tracking(progress_tracking)
                     job_progress.submitted(resp.job_id)
                     echo.file(f"[jobs] {resp.job_id} ", nl=False)
                     suite.update_status(job_name=job.job_name, job_id=resp.job_id)
@@ -198,18 +204,23 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                 _raise()
             else:
                 job_progress.final(response.status)
-                suite.update_status(job_name=job.job_name, status=response.status.status)
-                if response.status.is_success():
-                    if suite.model_in_dep(job.job_name):
-                        dependent_jobs = suite.get_dependent_jobs(job.job_name)
+                job_name = job.job_name
+                suite.update_status(job_name=job_name, status=response.status.status)
+                if suite.model_in_dep(job_name):
+                    _config.jobs_progress += 1
+                    if not response.status.is_success():
+                        suite.remove_dependency(job_name)
+                    else:
+                        dependent_jobs = suite.get_dependent_jobs(job_name)
                         for predict_job in dependent_jobs:
                             model_info, table_info, cache_info, model_loader_info = None, None, None, None
-                            for i in _config.deps_alter[predict_job.job_name]:
-                                if isinstance(i, dict):
-                                    name = i.get('name')
-                                    data_pre = i.get('data')
+                            deps_data = _config.deps_alter[predict_job.job_name]
 
-                            if 'data_deps' in _config.deps_alter[predict_job.job_name]:
+                            if 'data_deps' in deps_data.keys() and deps_data.get('data', None) is not None and\
+                                    job_name == deps_data.get('data_deps', None).get('name', None):
+                                for k, v in deps_data.get('data'):
+                                    if job_name == k:
+                                        data_pre = v
                                 roles = list(data_pre.keys())
                                 table_info, hierarchy = [], []
                                 for role_ in roles:
@@ -231,7 +242,8 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                                             hierarchy.append([role, 'args', 'data'])
                                             table_info.append({data_input: [table_name]})
                                 table_info = {'hierarchy': hierarchy, 'table_info': table_info}
-                            if 'model_deps' in _config.deps_alter[predict_job.job_name]:
+                            if 'model_deps' in deps_data.keys() and \
+                                    job_name == deps_data.get('model_deps', None).get('name', None):
                                 if predict_job.job_conf.dsl_version == 2:
                                     # noinspection PyBroadException
                                     try:
@@ -243,7 +255,8 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                                         _raise()
                                 else:
                                     model_info = response.model_info
-                            if 'cache_deps' in _config.deps_alter[predict_job.job_name]:
+                            if 'cache_deps' in deps_data.keys() and \
+                                    job_name == deps_data.get('cache_deps', None).get('name', None):
                                 cache_dsl = predict_job.job_dsl.as_dict()
                                 cache_info = []
                                 for cpn in cache_dsl.get("components").keys():
@@ -251,7 +264,8 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                                         cache_info.append({cpn: {'job_id': response.job_id}})
                                 cache_info = {'hierarchy': [""], 'cache_info': cache_info}
 
-                            if 'model_loader_deps' in _config.deps_alter[predict_job.job_name]:
+                            if 'model_loader_deps' in deps_data.keys() and \
+                                    job_name == deps_data.get('model_loader_deps', None).get('name', None):
                                 model_loader_dsl = predict_job.job_dsl.as_dict()
                                 model_loader_info = []
                                 for cpn in model_loader_dsl.get("components").keys():
@@ -259,9 +273,9 @@ def _submit_job(clients: Clients, suite: Testsuite, namespace: str, config: Conf
                                         model_loader_info.append({cpn: response.model_info})
                                 model_loader_info = {'hierarchy': [""], 'model_loader_info': model_loader_info}
 
-                            suite.feed_dep_info(predict_job, name, model_info=model_info, table_info=table_info,
+                            suite.feed_dep_info(predict_job, job_name, model_info=model_info, table_info=table_info,
                                                 cache_info=cache_info, model_loader_info=model_loader_info)
-                        suite.remove_dependency(job.job_name)
+                        suite.remove_dependency(job_name)
             update_bar(0)
             echo.stdout_newline()
             time_list.append(time.time() - start)

@@ -70,9 +70,6 @@
                 },
                 "decay": 0.0,
                 "decay_sqrt": false,
-                "encrypted_mode_calculator_param": {
-                    "mode": "fast"
-                },
                 "reveal_strategy": "encrypted_reveal_in_host",
                 "reveal_every_iter": false
             }

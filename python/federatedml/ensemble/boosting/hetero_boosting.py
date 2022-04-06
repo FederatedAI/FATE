@@ -22,7 +22,6 @@ import abc
 from federatedml.ensemble.boosting import Boosting
 from federatedml.param.boosting_param import HeteroBoostingParam
 from federatedml.secureprotol import PaillierEncrypt
-from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 from federatedml.util import consts
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.util.classify_label_checker import ClassifyLabelChecker
@@ -40,7 +39,6 @@ class HeteroBoosting(Boosting, ABC):
     def __init__(self):
         super(HeteroBoosting, self).__init__()
         self.encrypter = None
-        self.encrypted_calculator = None
         self.early_stopping_rounds = None
         self.binning_class = QuantileBinning
         self.model_param = HeteroBoostingParam()
@@ -51,9 +49,6 @@ class HeteroBoosting(Boosting, ABC):
         LOGGER.debug('in hetero boosting, objective param is {}'.format(param.objective_param.objective))
         super(HeteroBoosting, self)._init_model(param)
         self.encrypt_param = param.encrypt_param
-        self.re_encrypt_rate = param.encrypted_mode_calculator_param
-        self.calculated_mode = param.encrypted_mode_calculator_param.mode
-        self.re_encrypted_rate = param.encrypted_mode_calculator_param.re_encrypted_rate
         self.early_stopping_rounds = param.early_stopping_rounds
         self.use_first_metric_only = param.use_first_metric_only
 
@@ -74,7 +69,6 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
             self.encrypter.generate_key(self.encrypt_param.key_length)
         else:
             raise NotImplementedError("unknown encrypt type {}".format(self.encrypt_param.method.lower()))
-        self.encrypted_calculator = EncryptModeCalculator(self.encrypter, self.calculated_mode, self.re_encrypted_rate)
 
     def check_label(self):
 

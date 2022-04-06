@@ -1,7 +1,7 @@
 import functools
 import numpy as np
 from federatedml.secureprotol.fixedpoint import FixedPointNumber
-from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
+from federatedml.secureprotol import PaillierEncrypt
 from federatedml.cipher_compressor.packer import GuestIntegerPacker, cipher_list_to_cipher_tensor
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.splitter import SplitInfo
 from federatedml.util import consts
@@ -83,7 +83,7 @@ class SplitInfoPackage2(PackingCipherTensorPackage):
 
 class GHPacker(object):
 
-    def __init__(self, sample_num: int, en_calculator: EncryptModeCalculator,
+    def __init__(self, sample_num: int, encrypter: PaillierEncrypt,
                  precision=fix_point_precision, max_sample_weight=1.0, task_type=consts.CLASSIFICATION,
                  g_min=None, g_max=None, class_num=1, mo_mode=False, sync_para=True):
 
@@ -111,7 +111,7 @@ class GHPacker(object):
         self.class_num = class_num
         self.mo_mode = mo_mode
         self.packer = GuestIntegerPacker(class_num * 2, [self.g_max_int, self.h_max_int] * class_num,
-                                         encrypt_mode_calculator=en_calculator,
+                                         encrypter=encrypter,
                                          sync_para=sync_para)
 
     def _compute_packing_parameter(self, sample_num: int, precision=2 ** 53):
