@@ -707,7 +707,7 @@ netstat -tlnp | grep 8080
 规则：目录以 `$jobid` 开头，清理` $jobid`为 N天前的数据
 
 ```bash
-rm -rf /data/projects/fate/fateflow/logs/20211116*
+find /data/projects/fate/fateflow/logs/ -maxdepth 1 -mindepth 1 -mtime +N -type d ! -path "*/fate_flow" | xargs rm -rf
 ```
 
 #### 7.4.2. fateflow系统日志
@@ -721,7 +721,7 @@ rm -rf /data/projects/fate/fateflow/logs/20211116*
 规则：以日期结尾，清理日期为 N天前的数据
 
 ```bash
-rm -rf /data/projects/fate/fateflow/logs/fate_flow/*.2021-11-16
+find /data/projects/fate/fateflow/logs/fate_flow/ -maxdepth 1 -mtime +N -name "*.log.*" | xargs rm -rf
 ```
 
 #### 7.4.3. EggRoll Session日志
@@ -735,7 +735,7 @@ rm -rf /data/projects/fate/fateflow/logs/fate_flow/*.2021-11-16
 规则：目录以 `$jobid` 开头，清理 `$jobid` 为 N天前的数据
 
 ```bash
-rm -rf /data/projects/fate/eggroll/logs/20211116*
+find /data/projects/fate/eggroll/logs/ -maxdepth 1 -mindepth 1 -mtime +N -type d ! -path "*/eggroll" | xargs rm -rf
 ```
 
 #### 7.4.4. EggRoll系统日志
@@ -749,8 +749,7 @@ rm -rf /data/projects/fate/eggroll/logs/20211116*
 规则：以日期结尾和以年份建立的历史文件夹中文件，清理N天前的数据
 
 ```bash
-rm -rf /data/projects/fate/eggroll/logs/eggroll/*.2021-11-16_*
-rm -rf /data/projects/fate/eggroll/logs/eggroll/2021/11/01
+find /data/projects/fate/eggroll/logs/eggroll/ -maxdepth 1 -mtime +N -name "*.log.*" | xargs rm -rf
 ```
 
 #### 7.4.5. 计算临时数据
@@ -764,7 +763,7 @@ rm -rf /data/projects/fate/eggroll/logs/eggroll/2021/11/01
 规则：namespace以 `$jobid` 开头，清理 `$jobid` 为 N天前的数据
 
 ```bash
-rm -rf /data/projects/fate/eggroll/data/IN_MEMORY/20211116*
+find /data/projects/fate/eggroll/data/IN_MEMORY/ -maxdepth 1 -mindepth 1 -mtime +N -type d | xargs rm -rf
 ```
 
 #### 7.4.6. 作业组件输出数据
@@ -778,5 +777,6 @@ rm -rf /data/projects/fate/eggroll/data/IN_MEMORY/20211116*
 规则：namespace以 `output_data_$jobid` 开头，清理 `$jobid` 为N天前的数据
 
 ```bash
-rm -rf /data/projects/fate/eggroll/data/LMDB/output_data_20211116*
+find /data/projects/fate/eggroll/data/LMDB/ -maxdepth 1 -mindepth 1 -mtime +N -type d -name "output_data_*" | xargs rm -rf
 ```
+

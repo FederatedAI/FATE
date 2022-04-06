@@ -705,7 +705,7 @@ Retention period: N=14 days
 Rule: The directory starts with jobid, and the data whose jobid is N days ago is cleaned up
 
 ```bash
-rm -rf /data/projects/fate/fateflow/logs/20211116*
+find /data/projects/fate/fateflow/logs/ -maxdepth 1 -mindepth 1 -mtime +N -type d ! -path "*/fate_flow" | xargs rm -rf
 ```
 
 #### 7.4.2. fateflow system log
@@ -719,7 +719,7 @@ Retention period: N=14 days
 Rule: End with the date, clean up the data N days ago
 
 ```bash
-rm -rf /data/projects/fate/fateflow/logs/fate_flow/\*.2021-11-16
+find /data/projects/fate/fateflow/logs/fate_flow/ -maxdepth 1 -mtime +N -name "*.log.*" | xargs rm -rf
 ```
 
 #### 7.4.3. EggRoll Session log
@@ -733,7 +733,7 @@ Retention period: N=14 days
 Rule: The directory starts with jobid, and the data whose jobid is N days ago is cleaned up
 
 ```bash
-rm -rf /data/projects/fate/eggroll/logs/20211116*
+find /data/projects/fate/eggroll/logs/ -maxdepth 1 -mindepth 1 -mtime +N -type d ! -path "*/eggroll" | xargs rm -rf
 ```
 
 #### 7.4.4. EggRoll system log
@@ -747,8 +747,7 @@ Retention period: N=14 days
 Rule: files in the history folder established by the end of the date and the year, and clean up the data N days ago
 
 ```bash
-rm -rf /data/projects/fate/eggroll/logs/eggroll/\*.2021-11-16_*
-rm -rf /data/projects/fate/eggroll/logs/eggroll/2021/11/01
+find /data/projects/fate/eggroll/logs/eggroll/ -maxdepth 1 -mtime +N -name "*.log.*" | xargs rm -rf
 ```
 
 #### 7.4.5. Calculating temporary data
@@ -762,7 +761,7 @@ Retention period: N=7 days
 Rule: namespace starts with jobid, clean up data whose jobid is N days ago
 
 ```bash
-rm -rf /data/projects/fate/eggroll/data/IN_MEMORY/20211116*
+find /data/projects/fate/eggroll/data/IN_MEMORY/ -maxdepth 1 -mindepth 1 -mtime +N -type d | xargs rm -rf
 ```
 
 #### 7.4.6. Job component output data
@@ -776,5 +775,5 @@ Retention period: N=14 days
 Rule: namespace starts with output_data_jobid, clean up data whose jobid is N days ago
 
 ```bash
-rm -rf /data/projects/fate/eggroll/data/LMDB/output_data_20211116*
+find /data/projects/fate/eggroll/data/LMDB/ -maxdepth 1 -mindepth 1 -mtime +N -type d -name "output_data_*" | xargs rm -rf
 ```
