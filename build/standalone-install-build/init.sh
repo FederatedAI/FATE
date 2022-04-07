@@ -18,6 +18,9 @@
 
 set -e
 
+export LC_ALL=C.UTF-8
+export LANG=C.UTF-8
+
 project_base=$(
   cd $(dirname $0)
   pwd
@@ -53,7 +56,7 @@ init() {
     rm -rf ${miniconda_dir}
     echo "[INFO] delete python36: ${miniconda_dir}"
   fi
-  bash ${python_resouce}/Miniconda3-4.5.4-Linux-x86_64.sh -b -p ${miniconda_dir}
+  bash ${python_resouce}/Miniconda3-4.5.4-Linux-x86_64.sh -b -f -p ${miniconda_dir}
   echo "[INFO] install python36 done"
 
   echo "[INFO] install jdk"
@@ -62,7 +65,7 @@ init() {
     echo "[INFO] delete jdk: ${jdk_dir}"
   fi
   cd ${jdk_resource}
-  tar xzf jdk-8u192.tar.gz
+  tar xzf *.tar.gz
   echo "[INFO] install jdk done"
 
   cd ${project_base}
