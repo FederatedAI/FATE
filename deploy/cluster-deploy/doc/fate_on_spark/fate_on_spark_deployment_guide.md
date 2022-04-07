@@ -811,11 +811,8 @@ Execute on 192.168.0.1 and 192.168.0.2 respectively:
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/scripts/
-python upload_default_data.py
+fate_test data upload -t min_test
 ```
-examples/scripts/README.rst
-For more details, refer to [Script Readme](../../../../examples/scripts/README.rst)
 
 ### **10.2.2 Fast Mode:**
 

@@ -57,6 +57,13 @@ A collection of useful tools to running FATE tests and [:file_folder:examples](.
       ```bash
       fate_test data [upload|delete] -i <path1 contains *testsuite.json | *benchmark.json>
       ```
+    - [upload example data of min_test/all_examples](../api/fate_test.md#data-command-options) command:
+
+      ```bash
+      fate_test data upload -t min_test
+      fate_test data upload -t all_examples
+      ```
+
     - [generate data](../api/fate_test.md#generate-command-options) command:
     
       ```bash
@@ -79,10 +86,19 @@ A collection of useful tools to running FATE tests and [:file_folder:examples](.
     ```
     
   - [op-test](../api/fate_test.md#mpc-operation-test): used for testing FATE's mpc protocol. 
+
     ```bash
     fate_test op-test paillier
     fate_test op-test spdz
     ```
+
+  - [convert](../api/fate_test.md#convert-tools): used for converting pipeline to dsl&conf. 
+
+    ```bash
+    fate_test convert pipeline-to-dsl -i ${your pipeline file}
+    fate_test convert pipeline-testsuite-to-dsl-testsuite -i {your pipeline testsuite folder}
+    ```
+  
 
 ## Usage 
 
