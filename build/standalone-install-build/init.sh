@@ -107,7 +107,6 @@ init() {
   echo "[INFO] setup fateflow done"
 
   echo "[INFO] setup fateboard"
-  sed -i "s#fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:sqlite:${project_base}/fate_sqlite.db#g" ${project_base}/fateboard/conf/application.properties
   sed -i "s#fateflow.url=.*#fateflow.url=http://localhost:9380#g" ${project_base}/fateboard/conf/application.properties
   echo "[INFO] setup fateboard done"
 }
