@@ -187,7 +187,7 @@ class SummaryStatistics(object):
         where the k-th central moment of a data sample is:
         .. math::
 
-            m_k = \frac{1}{n} \sum_{i = 1}^n (x_i - \bar{x})^k
+            m_k = \frac{1}{n} \\sum_{i = 1}^n (x_i - \bar{x})^k
 
         the 3rd central moment is often used to calculate the coefficient of skewness
         """
@@ -205,7 +205,7 @@ class SummaryStatistics(object):
         where the k-th central moment of a data sample is:
         .. math::
 
-            m_k = \frac{1}{n} \ sum_{i = 1}^n (x_i - \bar{x})^k
+            m_k = \frac{1}{n} \\ sum_{i = 1}^n (x_i - \bar{x})^k
 
         the 4th central moment is often used to calculate the coefficient of kurtosis
         """
@@ -227,7 +227,7 @@ class SummaryStatistics(object):
 
         where
         .. math::
-            m_i=\frac{1}{N}\sum_{n=1}^N(x[n]-\bar{x})^i
+            m_i=\frac{1}{N}\\sum_{n=1}^N(x[n]-\bar{x})^i
 
         If the bias is False, return the adjusted Fisher-Pearson standardized moment coefficient
         i.e.
@@ -235,7 +235,7 @@ class SummaryStatistics(object):
         .. math::
 
         G_1=\frac{k_3}{k_2^{3/2}}=
-            \frac{\sqrt{N(N-1)}}{N-2}\frac{m_3}{m_2^{3/2}}.
+            \frac{\\sqrt{N(N-1)}}{N-2}\frac{m_3}{m_2^{3/2}}.
 
         """
         m2 = self.variance

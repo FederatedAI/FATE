@@ -1,7 +1,8 @@
 mkdocs-material==7.3.0
 mkdocs-jupyter==0.18.0
+ipython_genutils
 python-markdown-math==0.8
-git+git://github.com/weiwee/mkdocs-static-i18n@main#egg=mkdocs-static-i18n
+mkdocs-static-i18n
 mkdocstrings
 pytkdocs[numpy-style]==0.14.0
 mkdocs-simple-hooks

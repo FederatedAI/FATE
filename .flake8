@@ -7,4 +7,5 @@ exclude =
     ./fateflow,
     ./eggroll,
     ./fateboard,
-    ./python/federatedml/secureprotol/symmetric_encryption/py_aes_core.py
+    ./python/federatedml/secureprotol/symmetric_encryption/py_aes_core.py,
+    ./python/federatedml/protobuf/generated
