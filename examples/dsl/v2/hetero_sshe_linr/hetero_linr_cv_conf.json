@@ -69,10 +69,7 @@
                     "need_cv": true
                 },
                 "decay": 0.0,
-                "decay_sqrt": false,
-                "encrypted_mode_calculator_param": {
-                    "mode": "fast"
-                }
+                "decay_sqrt": false
             }
         }
     }

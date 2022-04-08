@@ -68,10 +68,7 @@
                 "max_iter": 2,
                 "early_stop": "weight_diff",
                 "decay": 0.0,
-                "decay_sqrt": false,
-                "encrypted_mode_calculator_param": {
-                    "mode": "fast"
-                }
+                "decay_sqrt": false
             },
             "evaluation_0": {
                 "eval_type": "regression",

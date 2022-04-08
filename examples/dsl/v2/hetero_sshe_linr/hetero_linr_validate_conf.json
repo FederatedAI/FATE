@@ -100,9 +100,6 @@
                     ],
                     "save_freq": 1,
                     "use_first_metric_only": false
-                },
-                "encrypted_mode_calculator_param": {
-                    "mode": "fast"
                 }
             }
         }

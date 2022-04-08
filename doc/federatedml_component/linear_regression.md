@@ -100,7 +100,7 @@ details on the secure model-building process, please refer to this
     [stepwise](stepwise.md) .
 
 
-## Hetero-SSHE-LR features:
+## Hetero-SSHE-LinR features:
 
 1.  L1 & L2 regularization
 

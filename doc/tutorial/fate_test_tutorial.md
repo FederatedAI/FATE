@@ -78,6 +78,12 @@ A collection of useful tools to running FATE tests and [:file_folder:examples](.
     fate_test performance -i <path contains *benchmark.json> --skip-data
     ```
     
+  - [op-test](../api/fate_test.md#mpc-operation-test): used for testing FATE's mpc protocol. 
+    ```bash
+    fate_test op-test paillier
+    fate_test op-test spdz
+    ```
+
 ## Usage 
 
 ![tutorial](../images/tutorial.gif)
