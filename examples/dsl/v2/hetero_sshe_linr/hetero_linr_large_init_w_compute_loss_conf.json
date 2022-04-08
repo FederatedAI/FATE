@@ -60,12 +60,12 @@
                 "alpha": 0.01,
                 "optimizer": "sgd",
                 "batch_size": 100,
-                "learning_rate": 0.3,
+                "learning_rate": 0.2,
                 "init_param": {
                     "init_method": "const",
-                    "init_const": 200
+                    "init_const": 100
                 },
-                "max_iter": 2,
+                "max_iter": 20,
                 "early_stop": "weight_diff",
                 "decay": 0.0,
                 "decay_sqrt": false
