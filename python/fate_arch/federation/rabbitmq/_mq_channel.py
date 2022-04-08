@@ -30,14 +30,25 @@ def connection_retry(func):
         """wrapper
         """
         res = None
+        exception = None
         for ntry in range(60):
             try:
                 res = func(self, *args, **kwargs)
+                exception = None
                 break
             except Exception as e:
                 LOGGER.error("function %s error" % func.__name__, exc_info=True)
+                exception = e
                 time.sleep(0.1)
+
+        if exception is not None:
+            LOGGER.exception(
+                f"failed",
+                exc_info=exception)
+            raise exception
+
         return res
+
     return wrapper
 
 
