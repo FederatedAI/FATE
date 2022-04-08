@@ -60,7 +60,7 @@ class HeteroLinRGuest(HeteroSSHEGuestBase):
     def compute_loss(self, weights, labels, suffix, cipher=None):
         """
          Compute hetero linr loss:
-            loss = (1/N)*\sum(wx-y)^2 where y is label, w is model weight and x is features
+            loss = (1/N)*\\sum(wx-y)^2 where y is label, w is model weight and x is features
             (wx - y)^2 = (wx_h)^2 + (wx_g - y)^2 + 2 * (wx_h * (wx_g - y))
         """
         LOGGER.info(f"[compute_loss]: Calculate loss ...")
