@@ -695,8 +695,8 @@ class Federation(FederationABC):
                     f"[pulsar._receive_obj] require {name}.{tag}, got {properties['message_id']}.{properties['correlation_id']}"
                 )
                 # just ack and continue
-                channel_info.basic_ack(message.message_id())
-                continue
+                # channel_info.basic_ack(message.message_id())
+                # continue
 
             cache_key = self._get_message_cache_key(
                 properties["message_id"], properties["correlation_id"], party_id, role
