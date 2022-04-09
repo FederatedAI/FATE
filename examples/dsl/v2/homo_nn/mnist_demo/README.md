@@ -18,5 +18,5 @@ b. flow table bind -c bind_local_path.json
 3. submit job
 
 ```bash
-flow job submit -c -c mnist_conf.json -d mnist_dsl.json
+flow job submit -c mnist_conf.json -d mnist_dsl.json
 ```
