@@ -49,14 +49,19 @@ export version=1.7.0
 #### 2.2.1 Via the public mirror service
 
 ```bash
+# Docker Hub
 docker pull federatedai/standalone_fate:${version}
+
+# Tencent Container Registry
+docker pull ccr.ccs.tencentyun.com/federatedai/standalone_fate:${version}
+docker tag ccr.ccs.tencentyun.com/federatedai/standalone_fate:${version} federatedai/standalone_fate:${version}
 ```
 
 #### 2.2.2 Via mirror packages
 
    ```bash
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/standalone_fate_docker_image_${version}_release.tar;
-   docker load < standalone_fate_docker_image_${version}_release.tar;
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/standalone_fate_docker_image_${version}_release.tar.gz
+   docker load -i standalone_fate_docker_image_${version}_release.tar.gz
    docker images | grep federatedai/standalone_fate
    ```
 
