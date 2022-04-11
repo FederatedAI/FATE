@@ -5,16 +5,16 @@
 
 ### 2. Install Erlang
 
-1. Downlaod Erlang source code(otp_src_19.3.tar.gz), and extract to /data/projects/common
+1. Downlaod Erlang source code(otp_src_19.3.tar.gz), and extract to /data/fate/projects/common
 
    ```bash
-   tar -zxvf otp_src_19.3.tar.gz
+   tar -zxvf otp_src_19.3.tar.gz  -C /data/projects/fate/common
    ```
 
 2. Configure ERL_TOP
 
    ```bash
-   cd  /data/projects/common/otp_src_19.3/
+   cd  /data/projects/fate/common/otp_src_19.3/
    export ERL_TOP=`pwd`
    ```
 
@@ -23,7 +23,7 @@
    Use the following command:
 
    ```bash
-   ./configure --prefix=/data/projects/common/erlang
+   ./configure --prefix=/data/projects/fate/common/erlang
    make
    make install
    ```
@@ -44,8 +44,8 @@
 
    ```bash
    cat >> /etc/profile << EOF
-   export ERL_HOME=/data/projects/common/erlang
-   export PATH=$PATH:/data/projects/common/erlang/bin
+   export ERL_HOME=/data/projects/fate/common/erlang
+   export PATH=$PATH:/data/projects/fate/common/erlang/bin
    EOF
    ```
 
@@ -61,13 +61,13 @@
 
    ```bash
    xz -d rabbitmq-server-generic-unix-3.6.15.tar.xz
-   tar xvf rabbitmq-server-generic-unix-3.6.15.tar
+   tar xvf rabbitmq-server-generic-unix-3.6.15.tar  -C /data/projects/fate/common
    ```
 
 2. **Start standalone RabbitMQ, generate cookie**
 
    ```bash
-   cd /data/projects/common/rabbitmq_server-3.6.15 && ./sbin/rabbitmq-server -detached
+   cd /data/projects/fate/common/rabbitmq_server-3.6.15 && ./sbin/rabbitmq-server -detached
    ```
 
 3. **Change File Permissions**
@@ -140,16 +140,16 @@
    3. Add user:
 
    ```bash
-    rabbitmqctl add_user username password
+    rabbitmqctl add_user fate fate
    ```
    4. Add role:
 
    ```bash
-    rabbitmqctl set_user_tags username administrator
+    rabbitmqctl set_user_tags fate administrator
    ```
 
    5. Set permissions:
 
    ```bash
-   ​ rabbitmqctl set_permissions -p / username ".*" ".*" ".*" 
+    rabbitmqctl set_permissions -p / fate ".*" ".*" ".*" 
    ```

@@ -4,42 +4,84 @@
 
 **Upload the following packages to the server**
 
+```
 1. jdk-8u192-linux-x64.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
 2. spark-2.4.1-bin-hadoop2.7.tar.gz
+wget https://archive.apache.org/dist/spark/spark-2.4.1/spark-2.4.1-bin-hadoop2.7.tgz
+```
 
 **unzip**
 
 ```bash
-tar xvf jdk-8u192-linux-x64.tar.gz -C /data/projects/common
-tar xvf spark-2.4.1-bin-hadoop2.7.tar.gz -C /data/projects/common
+#If /data/projects/fate/common is not available, create a new mkdir -P /data/projects /fate/common
+#Unzip spark
+tar xvf spark-2.4.1-bin-hadoop2.7.tgz -C /data/projects/fate/common
+
+#If JDK is not deployed in the current environment, execute
+mkdir -p /data/projects/fate/common/jdk
+#decompression
+tar xzf jdk-8u192-linux-x64.tar.gz -C /data/projects/fate/common/jdk
+cd /data/projects/fate/common/jdk
+mv jdk1.8.0_192 jdk-8u192
 ```
 
-**configure/etc/profile**
+**configure ~/.bash_profile**
 
 ```bash
-export JAVA_HOME=/data/projects/common/jdk1.8.0_192
+export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
 export PATH=$JAVA_HOME/bin:$PATH
-export SPARK_HOME=/data/projects/common/spark-2.4.1-bin-hadoop2.7
+export SPARK_HOME=/data/projects/fate/common/spark-2.4.1-bin-hadoop2.7
 export PATH=$SPARK_HOME/bin:$PATH
 ```
 
+**Set spark parameter**
 
-### 2. Run the spark service
-- Start master
-```bash
-source /etc/profile
-cd /data/projects/common/spark-2.4.1-bin-hadoop2.7 && ./sbin/start-master.sh
 ```
-- Start the spark node service
+cd /data/projects/fate/common/spark-2.4.1-bin-hadoop2.7/conf
+cp spark-env.sh.template spark-env.sh
+#Add parameters
+export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
+export SPARK_MASTER_IP={Host IP}
+export SPARK_MASTER_PORT=7077
+export SPARK_MASTER_WEBUI_PORT=9080
+export SPARK_WORKER_WEBUI_PORT=9081
+export PYSPARK_PYTHON=/data/projects/fate/common/python/venv/bin/python
+export PYSPARK_DRIVER_PYTHON=/data/projects/fate/common/python/venv/bin/python
+export SPARK_PID_DIR=/data/projects/fate/common/spark-2.4.1-bin-hadoop2.7/conf
+```
+
+### 2. Manage spark
+
+- Start service
+```bash
+source ~/.bash_profile
+cd /data/projects/fate/common/spark-2.4.1-bin-hadoop2.7 
+./sbin/start-all.sh
+```
+- Stop service
 ```bash
 
-cd /data/projects/common/spark-2.4.1-bin-hadoop2.7 && ./sbin/start-slave.sh spark://node:7077
+source ~/.bash_profile
+cd /data/projects/fate/common/spark-2.4.1-bin-hadoop2.7 
+./sbin/stop-all.sh
 ```
-Note: node is the machine name, please change it according to the actual machine name
+- Master Web UI access
+
+```
+http://{ip}:9080
+```
 
 ### 3. spark test
 ```bash
 cd /data/projects/common/spark-2.4.1-bin-hadoop2.7/bin
+#spark shell test
+./spark-shell --master spark://{Host IP}:7077
+scala> var distFile = sc.textFile("/etc/profile")
+scala> distFile.count()
+res0: Long = 86
+
+#pyspark test
 ./pyspark --master local[2]
 # Import data
 distFile = sc.textFile("/etc/profile")

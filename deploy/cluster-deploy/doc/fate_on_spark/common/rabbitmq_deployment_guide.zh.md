@@ -5,16 +5,16 @@
 
 ### 二. 安装Erlang
 
-1. 下载Erlang源码(otp_src_19.3.tar.gz)，并解压至/data/projects/common
+1. 下载Erlang源码(otp_src_19.3.tar.gz)，并解压至/data/projects/fate/common
 
    ```bash
-   tar -zxvf otp_src_19.3.tar.gz
+   tar -zxvf otp_src_19.3.tar.gz -C /data/projects/fate/common
    ```
 
 2. 配置ERL_TOP
 
    ```bash
-   cd  /data/projects/common/otp_src_19.3/
+   cd  /data/projects/fate/common/otp_src_19.3/
    export ERL_TOP=`pwd`
    ```
 
@@ -23,7 +23,7 @@
    使用以下命令编译:
 
    ```bash
-   ./configure --prefix=/data/projects/common/erlang
+   ./configure --prefix=/data/projects/fate/common/erlang
    make
    make install
    ```
@@ -44,8 +44,8 @@
 
    ```bash
    cat >> /etc/profile << EOF
-   export ERL_HOME=/data/projects/common/erlang
-   export PATH=$PATH:/data/projects/common/erlang/bin
+   export ERL_HOME=/data/projects/fate/common/erlang
+   export PATH=$PATH:/data/projects/fate/common/erlang/bin
    EOF
    ```
 
@@ -55,7 +55,7 @@
 
 ### 三. 安装RabbitMQ
 
-1. **下载RabbitMq Server安装包，并解压至/data/projects/common**
+1. **下载RabbitMq Server安装包，并解压至/data/projects/fate/common**
 
    ```bash
    xz -d rabbitmq-server-generic-unix-3.6.15.tar.xz
@@ -65,8 +65,7 @@
 2. **启动单机RabbitMQ，生成cookie**
 
    ```bash
-   cd /data/projects/common/rabbitmq_server-3.6.15 && ./sbin/rabbitmq-server -detached
-   
+   cd /data/projects/fate/common/rabbitmq_server-3.6.15 && ./sbin/rabbitmq-server -detached
    ```
 
 3. **修改权限**
