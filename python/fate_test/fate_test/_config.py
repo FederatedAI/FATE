@@ -34,10 +34,10 @@ performance_template_directory: examples/benchmark_performance/
 # directory stores flow test config, default location={FATE}/examples/flow_test_template/hetero_lr/flow_test_config.yaml
 flow_test_config_directory: examples/flow_test_template/hetero_lr/flow_test_config.yaml
 
-# directory stores testsuite file with min_test data sets to upload, 
+# directory stores testsuite file with min_test data sets to upload,
 # default location={FATE}/examples/data/upload_config/min_test_data_testsuite.json
 min_test_data_config: examples/data/upload_config/min_test_data_testsuite.json
-# directory stores testsuite file with all example data sets to upload, 
+# directory stores testsuite file with all example data sets to upload,
 # default location={FATE}/examples/data/upload_config/all_examples_data_testsuite.json
 all_examples_data_config: examples/data/upload_config/all_examples_data_testsuite.json
 
