@@ -26,7 +26,7 @@ cd /data/projects/fate/common/jdk
 mv jdk1.8.0_192 jdk-8u192
 ```
 
-**配置~/.bash_profile**
+**配置/etc/profile**
 
 ```bash
 export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
@@ -55,14 +55,14 @@ export SPARK_PID_DIR=/data/projects/fate/common/spark-2.4.1-bin-hadoop2.7/conf
 
 - 启动服务
 ```bash
-source ~/.bash_profile
+source /etc/profile
 cd /data/projects/fate/common/spark-2.4.1-bin-hadoop2.7 
 ./sbin/start-all.sh
 ```
 - 停止服务
 
 ```
-source ~/.bash_profile
+source /etc/profile
 cd /data/projects/fate/common/spark-2.4.1-bin-hadoop2.7 
 ./sbin/stop-all.sh
 ```

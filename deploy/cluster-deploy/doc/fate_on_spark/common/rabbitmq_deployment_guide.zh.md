@@ -136,17 +136,17 @@
    3、添加用户
 
    ```bash
-    rabbitmqctl add_user username password
+    rabbitmqctl add_user fate fate
    ```
 
    4、添加角色：
 
    ```bash
-   ​ rabbitmqctl set_user_tags username administrator
+    rabbitmqctl set_user_tags fate administrator
    ```
 
    5、设置权限：
 
    ```bash
-    rabbitmqctl set_permissions -p / username ".*" ".*" ".*" 
+    rabbitmqctl set_permissions -p / fate ".*" ".*" ".*" 
    ```
