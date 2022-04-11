@@ -609,7 +609,7 @@ fate_on_spark:
   spark:
     home:
     cores_per_node: 20
-    nodes: 2
+    nodes: 1
   hdfs:
     name_node: hdfs://fate-cluster
     path_prefix:
@@ -666,7 +666,7 @@ fate_on_spark:
   spark:
     home:
     cores_per_node: 20
-    nodes: 2
+    nodes: 1
   hdfs:
     name_node: hdfs://fate-cluster
     path_prefix:
@@ -697,10 +697,10 @@ EOF
 **conf/rabbitmq_route_table.yaml**
 ```yaml
 10000:
-  host: 192.168.0.3
+  host: 192.168.0.1
   port: 5672
 9999:
-  host: 192.168.0.4
+  host: 192.168.0.2
   port: 5672
 ```
 
@@ -708,7 +708,7 @@ EOF
 ```yml
 9999:
   # host can be a domain like 9999.fate.org
-  host: 192.168.0.4
+  host: 192.168.0.2
   port: 6650
   sslPort: 6651
   # set proxy address for this pulsar cluster
@@ -716,7 +716,7 @@ EOF
 
 10000:
   # host can be a domain like 10000.fate.org
-  host: 192.168.0.3
+  host: 192.168.0.1
   port: 6650
   sslPort: 6651
   proxy: ""
