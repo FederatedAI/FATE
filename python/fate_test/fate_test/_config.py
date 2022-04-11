@@ -38,8 +38,8 @@ flow_test_config_directory: examples/flow_test_template/hetero_lr/flow_test_conf
 # default location={FATE}/examples/data/upload_config/min_test_data_testsuite.json
 min_test_data_config: examples/data/upload_config/min_test_data_testsuite.json
 # directory stores testsuite file with all example data sets to upload, 
-# default location={FATE}/examples/data/upload_config/all_test_data_testsuite.json
-all_examples_data_config: examples/data/upload_config/all_test_data_testsuite.json
+# default location={FATE}/examples/data/upload_config/all_examples_data_testsuite.json
+all_examples_data_config: examples/data/upload_config/all_examples_data_testsuite.json
 
 # directory where FATE code locates, default installation location={FATE}/fate
 # python/federatedml -> $fate_base/python/federatedml
