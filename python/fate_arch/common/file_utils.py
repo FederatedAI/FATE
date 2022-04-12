@@ -33,6 +33,7 @@ def get_project_base_directory(*args):
                 os.pardir,
                 os.pardir,
                 os.pardir,
+                os.pardir
             )
         )
     if args:
