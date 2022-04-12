@@ -284,7 +284,7 @@ class QuantileSummaries(object):
         while sample_idx < len(self.sampled):
             v = values[idx]
             sample = self.sampled[sample_idx]
-            if sample[0] < v:
+            if sample[0] <= v:
                 min_rank += sample[1]
                 max_rank = min_rank + sample[2]
                 sample_idx += 1
