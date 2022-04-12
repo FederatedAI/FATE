@@ -118,7 +118,7 @@ def main(config="../../config.yaml", param='./xgb_config_binary.yaml', namespace
         metric_summary["distribution_metrics"] = {"homo_sbt": metric_sbt}
 
     data_summary = {"train": {"guest": guest_train_data["name"], "host": host_train_data["name"]},
-                    "test": {"guest": guest_train_data["name"], "host": host_train_data["name"]}
+                    "test": {"guest": guest_validate_data["name"], "host": host_validate_data["name"]}
                     }
 
     return data_summary, metric_summary
