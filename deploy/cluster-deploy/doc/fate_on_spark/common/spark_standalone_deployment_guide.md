@@ -74,7 +74,7 @@ http://{ip}:9080
 
 ### 3. spark test
 ```bash
-cd /data/projects/common/spark-2.4.1-bin-hadoop2.7/bin
+cd /data/projects/fate/common/spark-2.4.1-bin-hadoop2.7/bin
 #spark shell test
 ./spark-shell --master spark://{Host IP}:7077
 scala> var distFile = sc.textFile("/etc/profile")
