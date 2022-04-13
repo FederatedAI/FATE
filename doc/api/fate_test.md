@@ -830,8 +830,11 @@ fate_test data --help
     [2020-06-12 14:19:42]2020061214193960279930 success, elapse: 0:00:02
     [2020-06-12 14:19:42] check_data_out {'data': {'count': 569, 'namespace': 'experiment', 'partition': 16, 'table_name': 'breast_hetero_guest'}, 'retcode': 0, 'retmsg': 'success'}
     ```
+   
+    Note: uploading configurations are [min_test_config](../../examples/data/upload_config/min_test_data_testsuite.json) and [all_examples](../../examples/data/upload_config/all_examples_data_testsuite.json),
+          user can add more data by modifying them or check out the example data's name and namespace.
 
-5. download mnist data:
+6. download mnist data:
 
     ```bash
     fate_test data download -t mnist -o ${mnist_data_dir}

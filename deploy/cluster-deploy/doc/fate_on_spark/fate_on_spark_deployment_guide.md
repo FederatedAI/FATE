@@ -269,9 +269,6 @@ mysql>flush privileges;
 # verify
 mysql>select User,Host from mysql.user;
 mysql>show databases;
-mysql>use eggroll_meta;
-mysql>show tables;
-mysql>select * from server_node;
 
 ```
 
@@ -613,16 +610,24 @@ fate_on_spark:
   spark:
     home:
     cores_per_node: 20
-    nodes: 2
+    nodes: 1
   hdfs:
     name_node: hdfs://fate-cluster
     path_prefix:
   rabbitmq:
     host: 192.168.0.3
-    mng_port: 12345
+    mng_port: 15672
     port: 5672
     user: fate
     password: fate
+    route_table:
+  pulsar:
+    host: 192.168.0.1
+    port: 6650
+    mng_port: 8080
+    cluster: standalone
+    tenant: fl-tenant
+    topic_ttl: 5
     route_table:
   nginx:
     host: 192.168.0.1
@@ -662,16 +667,24 @@ fate_on_spark:
   spark:
     home:
     cores_per_node: 20
-    nodes: 2
+    nodes: 1
   hdfs:
     name_node: hdfs://fate-cluster
     path_prefix:
   rabbitmq:
     host: 192.168.0.4
-    mng_port: 12345
+    mng_port: 15672
     port: 5672
     user: fate
     password: fate
+    route_table:
+  pulsar:
+    host: 192.168.0.1
+    port: 6650
+    mng_port: 8080
+    cluster: standalone
+    tenant: fl-tenant
+    topic_ttl: 5
     route_table:
   nginx:
     host: 192.168.0.2
@@ -685,10 +698,10 @@ EOF
 **conf/rabbitmq_route_table.yaml**
 ```yaml
 10000:
-  Host: 192.168.0.3
+  Host: 192.168.0.1
   port. 5672
 9999:
-  Host: 192.168.0.4
+  Host: 192.168.0.2
   port. 5672
 ```
 
@@ -696,7 +709,7 @@ EOF
 ```yaml
 9999:
   # host can be a domain name, e.g. 9999.fate.org
-  host: 192.168.0.4
+  host: 192.168.0.2
   port. 6650
   sslPort: 6651
   # Set proxy address for this pulsar cluster
@@ -704,7 +717,7 @@ EOF
 
 10000:
   # The host can be a domain name, such as 10000.fate.org
-  host: 192.168.0.3
+  host: 192.168.0.1
   port: 6650
   sslPort: 6651
   proxy.""
@@ -734,13 +747,34 @@ cd /data/projects/fate/proxy
 ./nginx/sbin/nginx -c /data/projects/fate/proxy/nginx/conf/nginx.conf
 ```
 
-## 8. Initialize the fate client  
+## 8. Fate client and Fate test configuration   
 
 **Execute under the target server (192.168.0.1 192.168.0.2) app user**
 
 ```
+#Configure the fate client
 source /data/projects/fate/bin/init_env.sh
 flow init -c /data/projects/fate/conf/service_conf.yaml
+
+#Configure the fate test
+source /data/projects/fate/bin/init_env.sh
+fate_test config edit
+
+#192.168.0.1 parameters are modified as follows
+data_base_dir: /data/projects/fate
+fate_base: /data/projects/fate/fate
+parties:
+  guest: [10000]
+  - flow_services:
+      - {address: 192.168.0.1:9380, parties: [10000]}
+      
+#192.168.0.2 parameters are modified as follows
+data_base_dir: /data/projects/fate
+fate_base: /data/projects/fate/fate
+parties:
+  guest: [9999]
+  - flow_services:
+      - {address: 192.168.0.2:9380, parties: [9999]}
 ```
 
 ## 9. Problem location
@@ -813,7 +847,6 @@ Execute on 192.168.0.1 and 192.168.0.2 respectively:
 source /data/projects/fate/bin/init_env.sh
 fate_test data upload -t min_test
 ```
-
 ### **10.2.2 Fast Mode:**
 
 Ensure that both the guest and host have uploaded the preset data with the given script.
