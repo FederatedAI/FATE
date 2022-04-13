@@ -375,8 +375,10 @@ defined component. For the guide on Pipeline usage, please refer to
 
 ### Step 7. Restart fate flow service
 
-If above developing steps are all finished, please restart fate flow service, otherwise some errors will occur 
-when running jobs like "new component's provider does not found."
+When the above development steps are completed, the fate flow service needs to be restarted, otherwise the subsequent 
+submission tasks may report some errors such as "the provider of the new component cannot be found". 
+The fate flow service can also be started in debug mode, the start method: "python fate_flow_server.py --debug",
+The debug mode allows the modified code to take effect without restarting.
 
 
 ## Start a modeling task

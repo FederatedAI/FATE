@@ -341,7 +341,10 @@ def export_model(self):
 
 ### 第七步：重启fate flow服务
 
-当上面的开发步骤都完成后，需要重启fate flow服务，否则后续提交任务可能会报一些错误如"新组件的provider找不到"
+当上面的开发步骤都完成后，需要重启fate flow服务，否则后续提交任务可能会报一些错误如"新组件的provider找不到"。
+fate flow服务也可通过debug模式启动，启动方式: "python fate_flow_server.py --debug",
+debug模式可以让修改的代码不重启也生效。
+
 
 ## 开始建模任务
 
