@@ -1,5 +1,5 @@
 RELEASE_VERSION_TAG_NAME="release"
-
+shopt -s expand_aliases
 kernel=$(uname -s)
 echo "[INFO] kernel: ${kernel}"
 case "${kernel}" in
