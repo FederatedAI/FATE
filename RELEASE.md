@@ -1,3 +1,34 @@
+## Release 1.8.0
+### Major Features and Improvements
+> FederatedML
+* Add non-coordinated-version Hetero Linear Regression, based on integrated Hetero GLM framework, with mixed protocol of HE and SPDZ
+* Homo LR support one-vs-rest
+* Add SecureBoost-MO algorithm to speed up multi-class classification of Hetero & Homo SecureBoost, 1.5x-5x faster
+* Optimize Hetero SecureBoost Predict Transmission Data Size，reduce 75% bandwidth consumption if tree's max depth is small
+* Speed up DH Intersection implementation, 30%+ faster
+* Optimized Quantile Binning gk-summary structure & split point query，20%+ faster, less memory cost
+* Support weighted training in non-coordinated Hetero Logistic Regression & Linear Regression
+* Merge Hetero FastSecureBoost into Hetero SecureBoost as a boosting strategy option
+
+> Fate-ARCH
+* Adjustable task_cores for standalone FATE
+* Enable Eggroll option to make computing output "IN_MEMORY" by default
+
+> Fate-Test
+* Include Paillier encryption performance evaluation
+* Include SPDZ performance evaluation
+* Optimized testsuite printout
+* Include examples data upload and mnist download
+* Provide pipeline to dsl convert tools
+
+> Bug-Fix
+* Fix bug for SPDZ when using default q_filed
+* Fix multiple get problem of SPDZ
+* Fix bugs of recursive-query homo feature binning
+* Fix homo_nn's model aggregation problem
+* Fix bug for hetero feature selection when using federated filter but some party's feature is empty.
+
+
 ## Release 1.7.2
 ### Major Features and Improvements
 > FederatedML
