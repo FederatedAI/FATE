@@ -421,10 +421,11 @@ class Session(object):
             try:
                 self._logger.info(f"try to destroy computing session {self._computing_session.session_id}")
                 try:
-                    self._computing_session.stop()
+                    ret = self._computing_session.stop()
                 except BaseException:
-                    self._computing_session.kill()
-                self._logger.info(f"destroy computing session {self._computing_session.session_id} successfully")
+                    ret = self._computing_session.kill()
+                self._logger.info(f"destroy computing session {self._computing_session.session_id} successfully, "
+                                  f"ret={ret}")
             except Exception as e:
                 self._logger.info(f"destroy computing session {self._computing_session.session_id} failed", e)
             self.delete_session_record(engine_session_id=self._computing_session.session_id)
