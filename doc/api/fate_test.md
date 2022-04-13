@@ -786,7 +786,7 @@ delete, and generate
 fate_test data --help
 ```
 
-1.  include:
+1. include:
     
     ```bash
     fate_test data [upload|delete] -i <path1 contains *testsuite.json | *benchmark.json>
@@ -795,7 +795,7 @@ fate_test data --help
     will upload/delete dataset in testsuites in
     *path1*
 
-2.  exclude:
+2. exclude:
     
     ```bash
     fate_test data [upload|delete] -i <path1 contains *testsuite.json | *benchmark.json> -e <path2 to exclude> -e <path3 to exclude> ...
@@ -805,7 +805,7 @@ fate_test data --help
     *path2* and
     *path3*
 
-3.  glob:
+3. glob:
     
     ```bash
     fate_test data [upload|delete] -i <path1 contains \*testsuite.json | \*benchmark.json> -g "hetero*"
@@ -814,6 +814,34 @@ fate_test data --help
     will upload/delete dataset in testsuites in sub directory start with
     *hetero* of
     *path1*
+
+4. upload example data:
+
+    ```bash
+    fate_test data upload -t [min_test|all_examples]
+    ```
+   
+    will upload dataset for min_test or all examples of fate. Once command is executed successfully, 
+    you are expected to see the following feedback which showing the table information for you:  
+
+    ```bash
+    [2020-06-12 14:19:39]uploading @examples/data/breast_hetero_guest.csv >> experiment.breast_hetero_guest
+    [2020-06-12 14:19:39]upload done @examples/data/breast_hetero_guest.csv >> experiment.breast_hetero_guest, job_id=2020061214193960279930
+    [2020-06-12 14:19:42]2020061214193960279930 success, elapse: 0:00:02
+    [2020-06-12 14:19:42] check_data_out {'data': {'count': 569, 'namespace': 'experiment', 'partition': 16, 'table_name': 'breast_hetero_guest'}, 'retcode': 0, 'retmsg': 'success'}
+    ```
+   
+    Note: uploading configurations are [min_test_config](../../examples/data/upload_config/min_test_data_testsuite.json) and [all_examples](../../examples/data/upload_config/all_examples_data_testsuite.json),
+          user can add more data by modifying them or check out the example data's name and namespace.
+
+6. download mnist data:
+
+    ```bash
+    fate_test data download -t mnist -o ${mnist_data_dir}
+    ```
+   
+    -t: if not specified, default is "mnist"
+    -o: directory of download data, default is "examples/data"
 
 ### generate command options
 
@@ -971,7 +999,7 @@ fate_test data --help
 
 
 ## MPC Operation Test
-`op_test` sub-command is used to test
+`op-test` sub-command is used to test
 efficiency and accuracy of secure multiparty computation protocols like Paillier and SPDZ.
 
 1. paillier:
@@ -992,3 +1020,24 @@ efficiency and accuracy of secure multiparty computation protocols like Paillier
     will generate performance and accuracy table for SPDZ Protocol, including encryption，decryption, addition and 
     addition and scalar multiplication.
 
+
+## Convert tools
+
+`convert` sub-command is used to convert pipeline to dsl.
+
+1. pipeline-to-dsl
+
+    ```bash
+    fate_test convert pipeline-to-dsl -i ${your pipeline file}
+    ```
+   
+    will generate dsl & conf under the same folder of your pipeline file,
+    before executing the command, make sure the running data of pipeline is already uploaded.
+
+2. pipeline-testsuite-to-dsl-testsuite
+
+    ```bash
+    fate_test convert pipeline-testsuite-to-dsl-testsuite -i {your pipeline testsuite folder}
+    ```
+    
+    will transform pipeline testsuite to dsl testsuite under the {your pipeline testsuite folder}/dsl_testsuite

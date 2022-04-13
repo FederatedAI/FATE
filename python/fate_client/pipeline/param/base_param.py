@@ -27,7 +27,7 @@ class BaseParam(object):
         pass
 
     def check(self):
-        raise NotImplementedError("Parameter Object should have be check")
+        raise NotImplementedError("Parameter Object should be checked.")
 
     def validate(self):
         self.builtin_types = dir(builtins)

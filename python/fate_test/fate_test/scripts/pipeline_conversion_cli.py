@@ -58,7 +58,7 @@ def to_dsl(ctx, include, output_path, **kwargs):
     echo.echo(f"converting namespace: {namespace}", fg='red')
 
 
-@convert_group.command("pipeline-testsuite-to-testsuite")
+@convert_group.command("pipeline-testsuite-to-dsl-testsuite")
 @click.option('-i', '--include', required=True, type=click.Path(exists=True), metavar="<include>",
               help="include is the pipeline test folder containing *testsuite.py")
 @click.option('-t', '--template-path', required=False, type=click.Path(exists=True), metavar="<include>",
@@ -210,7 +210,7 @@ def insert_extract_code(file_path):
         """
 import json
 import os
-def extract(my_pipeline, file_name, output_path='generated_conf_and_dsl'):
+def extract(my_pipeline, file_name, output_path='dsl_testsuite'):
     out_name = file_name.split('/')[-1]
     out_name = out_name.replace('pipeline-', '').replace('.py', '').replace('-', '_')
     conf = my_pipeline.get_train_conf()
@@ -295,7 +295,7 @@ def do_generated(file_path, fold_name, template_path, config: Config):
     suite_json["tasks"] = {}
     pipeline_suite["pipeline_tasks"] = {}
     replaced_path = os.path.join(file_path, 'replaced_code')
-    generated_path = os.path.join(file_path, 'generated_conf_and_dsl')
+    generated_path = os.path.join(file_path, 'dsl_testsuite')
 
     if not os.path.exists(replaced_path):
         os.system('mkdir {}'.format(replaced_path))
@@ -340,8 +340,8 @@ def do_generated(file_path, fold_name, template_path, config: Config):
                         "conf": exe_conf_file,
                         "dsl": exe_dsl_file
                     }
-            echo.echo('conf name is {}'.format(os.path.join(file_path, "generated_conf_and_dsl", exe_conf_file)))
-            echo.echo('dsl name is {}'.format(os.path.join(file_path, "generated_conf_and_dsl", exe_dsl_file)))
+            echo.echo('conf name is {}'.format(os.path.join(file_path, "dsl_testsuite", exe_conf_file)))
+            echo.echo('dsl name is {}'.format(os.path.join(file_path, "dsl_testsuite", exe_dsl_file)))
         else:
             echo.echo('profile generation failed')
             fail_job_count += 1

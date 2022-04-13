@@ -201,7 +201,9 @@ def generate(ctx, include, host_data_type, encryption_type, match_rate, sparsity
         client_upload(suites=suites, config_inst=config_inst, namespace=namespace, output_path=output_path)
 
 
-@data_group.command("download_mnist")
+@data_group.command("download")
+@click.option("-t", "--type", type=click.Choice(["mnist"]), default="mnist",
+              help="config file")
 @click.option('-o', '--output-path', type=click.Path(exists=True),
               help="output path of mnist data, the default path is examples/data")
 @SharedOptions.get_shared_options(hidden=True)
