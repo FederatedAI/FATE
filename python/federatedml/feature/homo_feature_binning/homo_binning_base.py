@@ -42,8 +42,8 @@ class SplitPointNode(object):
 
     def create_right_new(self):
         value = (self.value + self.max_value) / 2
-        if np.fabs(value - self.value) <= consts.FLOAT_ZERO:
-            self.value += consts.FLOAT_ZERO
+        if np.fabs(value - self.value) <= consts.FLOAT_ZERO * 0.9:
+            self.value += consts.FLOAT_ZERO * 0.9
             self.fixed = True
             return self
         min_value = self.value
@@ -51,8 +51,8 @@ class SplitPointNode(object):
 
     def create_left_new(self):
         value = (self.value + self.min_value) / 2
-        if np.fabs(value - self.value) <= consts.FLOAT_ZERO:
-            self.value += consts.FLOAT_ZERO
+        if np.fabs(value - self.value) <= consts.FLOAT_ZERO * 0.9:
+            self.value += consts.FLOAT_ZERO * 0.9
             self.fixed = True
             return self
         max_value = self.value
