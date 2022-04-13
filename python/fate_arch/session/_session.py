@@ -470,4 +470,4 @@ class computing_session(object):
 
     @staticmethod
     def stop():
-        get_computing_session().stop()
+        return get_computing_session().stop()
