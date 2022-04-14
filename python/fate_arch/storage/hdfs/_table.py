@@ -29,13 +29,13 @@ LOGGER = getLogger()
 
 class StorageTable(StorageTableBase):
     def __init__(
-        self,
-        address=None,
-        name: str = None,
-        namespace: str = None,
-        partitions: int = 1,
-        store_type: HDFSStoreType = HDFSStoreType.DISK,
-        options=None,
+            self,
+            address=None,
+            name: str = None,
+            namespace: str = None,
+            partitions: int = 1,
+            store_type: HDFSStoreType = HDFSStoreType.DISK,
+            options=None,
     ):
         super(StorageTable, self).__init__(
             name=name,
@@ -59,7 +59,7 @@ class StorageTable(StorageTableBase):
         return self._exist()
 
     def _put_all(
-        self, kv_list: Iterable, append=True, assume_file_exist=False, **kwargs
+            self, kv_list: Iterable, append=True, assume_file_exist=False, **kwargs
     ):
         LOGGER.info(f"put in hdfs file: {self.path}")
         if append and (assume_file_exist or self._exist()):
@@ -99,7 +99,7 @@ class StorageTable(StorageTableBase):
         return count
 
     def _save_as(
-        self, address, partitions=None, name=None, namespace=None, **kwargs
+            self, address, partitions=None, name=None, namespace=None, **kwargs
     ):
         self._hdfs_client.copy_file(src=self.path, dst=address.path)
         table = StorageTable(
@@ -128,12 +128,16 @@ class StorageTable(StorageTableBase):
             raise FileNotFoundError(f"file {self.path} not found")
 
         elif info.type == fs.FileType.File:
-            # todo:
-            with io.TextIOWrapper(
-                    buffer=self._hdfs_client.open_input_stream(self.path), encoding="utf-8"
-            ) as reader:
-                for line in reader:
-                    yield line
+            buffer = self._hdfs_client.open_input_file(self.path)
+            offset = 0
+            while offset < buffer.size():
+                buffer_block = buffer.read_at(1024, offset)
+                while not buffer_block.endswith(b"\n"):
+                    buffer_block = buffer_block[:-1]
+                with io.TextIOWrapper(buffer=io.BytesIO(buffer_block), encoding="utf-8") as reader:
+                    for line in reader:
+                        yield line
+                offset += len(buffer_block)
         else:
             selector = fs.FileSelector(os.path.join("/", self._address.path))
             file_infos = self._hdfs_client.get_file_info(selector)
@@ -144,10 +148,10 @@ class StorageTable(StorageTableBase):
                     file_info.is_file
                 ), f"{self.path} is directory contains a subdirectory: {file_info.path}"
                 with io.TextIOWrapper(
-                    buffer=self._hdfs_client.open_input_stream(
-                        f"{self._address.name_node}/{file_info.path}"
-                    ),
-                    encoding="utf-8",
+                        buffer=self._hdfs_client.open_input_stream(
+                            f"{self._address.name_node}/{file_info.path}"
+                        ),
+                        encoding="utf-8",
                 ) as reader:
                     for line in reader:
                         yield line
