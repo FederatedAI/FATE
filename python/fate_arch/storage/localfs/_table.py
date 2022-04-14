@@ -124,13 +124,16 @@ class StorageTable(StorageTableBase):
             raise FileNotFoundError(f"file {self.path} not found")
 
         elif info.type == fs.FileType.File:
-            with io.TextIOWrapper(
-                buffer=self._local_fs_client.open_input_stream(self.path),
-                encoding="utf-8",
-            ) as reader:
-                for line in reader:
-                    yield line
-
+            buffer = self._local_fs_client.open_input_file(self.path)
+            offset = 0
+            while offset < buffer.size():
+                buffer_block = buffer.read_at(1024, offset)
+                while not buffer_block.endswith(b"\n"):
+                    buffer_block = buffer_block[:-1]
+                with io.TextIOWrapper(buffer=io.BytesIO(buffer_block), encoding="utf-8") as reader:
+                    for line in reader:
+                        yield line
+                offset += len(buffer_block)
         else:
             selector = fs.FileSelector(self.path)
             file_infos = self._local_fs_client.get_file_info(selector)
