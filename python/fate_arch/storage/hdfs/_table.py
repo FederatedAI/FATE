@@ -130,10 +130,15 @@ class StorageTable(StorageTableBase):
         elif info.type == fs.FileType.File:
             buffer = self._hdfs_client.open_input_file(self.path)
             offset = 0
+            block_size = 1024
             while offset < buffer.size():
-                buffer_block = buffer.read_at(1024, offset)
+                block_index = 1
+                buffer_block = buffer.read_at(block_size, offset)
                 while not buffer_block.endswith(b"\n"):
                     buffer_block = buffer_block[:-1]
+                    if len(buffer_block) % block_size == 0:
+                        block_index += 1
+                        buffer_block = buffer.read_at(block_index*block_size, offset)
                 with io.TextIOWrapper(buffer=io.BytesIO(buffer_block), encoding="utf-8") as reader:
                     for line in reader:
                         yield line
