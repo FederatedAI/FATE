@@ -127,7 +127,7 @@ def main(config="../../config.yaml", param="./breast_lr_config.yaml", namespace=
             classification_metric.Distribution.compute(lr_0_score_label, lr_1_score_label)}
     result_summary["distribution_metrics"] = {"homo_lr": metric_lr}
 
-    print (result_summary)
+    print(result_summary)
 
     return data_summary, result_summary
 
