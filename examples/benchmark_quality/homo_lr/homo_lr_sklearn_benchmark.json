@@ -63,6 +63,22 @@
       "table_name": "epsilon_5k_homo_host",
       "namespace": "experiment",
       "role": "host_0"
+    },
+    {
+      "file": "../../data/vehicle_scale_homo_guest.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "vehicle_scale_homo_guest",
+      "namespace": "experiment",
+      "role": "guest_0"
+    },
+    {
+      "file": "../../data/vehicle_scale_homo_host.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "vehicle_scale_homo_host",
+      "namespace": "experiment",
+      "role": "host_0"
     }
   ],
   "homo_lr-binary-0": {
@@ -115,6 +131,19 @@
     },
     "compare_setting": {
       "relative_tol": 0.05
+    }
+  },
+  "homo_lr-multi-0": {
+    "local": {
+      "script": "./sklearn-lr-multi.py",
+      "conf": "./vehicle_lr_config.yaml"
+    },
+    "FATE": {
+      "script": "./pipeline-lr-multi.py",
+      "conf": "./vehicle_lr_config.yaml"
+    },
+    "compare_setting": {
+      "relative_tol": 1e-2
     }
   }
 }

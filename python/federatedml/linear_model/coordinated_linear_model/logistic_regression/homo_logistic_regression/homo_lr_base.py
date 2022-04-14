@@ -24,7 +24,7 @@ from federatedml.optim import activation
 from federatedml.optim.optimizer import optimizer_factory
 from federatedml.param.logistic_regression_param import HomoLogisticParam
 from federatedml.protobuf.generated import lr_model_meta_pb2
-from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
+from federatedml.secureprotol import PaillierEncrypt
 from federatedml.util.classify_label_checker import ClassifyLabelChecker
 from federatedml.util.homo_label_encoder import HomoLabelEncoderClient, HomoLabelEncoderArbiter
 from federatedml.statistic import data_overview
@@ -51,7 +51,7 @@ class HomoLRBase(BaseLogisticRegression):
         if params.encrypt_param.method == consts.PAILLIER:
             self.cipher_operator = PaillierEncrypt()
         else:
-            self.cipher_operator = FakeEncrypt()
+            self.cipher_operator = None
 
         self.transfer_variable = HomoLRTransferVariable()
         # self.aggregator.register_aggregator(self.transfer_variable)
@@ -145,7 +145,8 @@ class HomoLRBase(BaseLogisticRegression):
         if loss_norm is not None:
             loss += loss_norm
         loss /= data_instances.count()
-        self.callback_loss(self.n_iter_, loss)
+        if self.need_call_back_loss:
+            self.callback_loss(self.n_iter_, loss)
         self.loss_history.append(loss)
         return loss
 
