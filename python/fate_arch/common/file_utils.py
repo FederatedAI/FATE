@@ -22,10 +22,12 @@ from ruamel import yaml
 
 PROJECT_BASE = os.getenv("FATE_PROJECT_BASE") or os.getenv("FATE_DEPLOY_BASE")
 FATE_BASE = os.getenv("FATE_BASE")
+READTHEDOC = os.getenv("READTHEDOC")
 
 
 def get_project_base_directory(*args):
     global PROJECT_BASE
+    global READTHEDOC
     if PROJECT_BASE is None:
         PROJECT_BASE = os.path.abspath(
             os.path.join(
@@ -33,9 +35,15 @@ def get_project_base_directory(*args):
                 os.pardir,
                 os.pardir,
                 os.pardir,
-                os.pardir
             )
         )
+        if READTHEDOC is None:
+            PROJECT_BASE = os.path.abspath(
+                os.path.join(
+                    PROJECT_BASE,
+                    os.pardir,
+                )
+            )
     if args:
         return os.path.join(PROJECT_BASE, *args)
     return PROJECT_BASE
