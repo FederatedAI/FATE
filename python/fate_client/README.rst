@@ -26,7 +26,7 @@ Pipeline
 
 A high-level python API that allows user to design, start,
 and query FATE jobs in a sequential manner. For more information,
-please refer to this `guide <../doc/api/fate_client/pipeline.md>`__
+please refer to this `guide <../../doc/api/fate_client/pipeline.md>`__
 
 Initial Configuration
 ---------------------
