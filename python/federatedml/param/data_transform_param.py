@@ -32,14 +32,14 @@ class DataTransformParam(BaseParam):
             svm-light input format data should be set to "sparse",
             tag or tag:value input format data should be set to "tag".
 
-    delimitor : str 
+    delimitor : str
         the delimitor of data input, default: ','
 
     data_type : int
         {'float64','float','int','int64','str','long'}
         the data type of data input
 
-    exclusive_data_type : dict 
+    exclusive_data_type : dict
         the key of dict is col_name, the value is data_type, use to specified special data type
         of some features.
 
@@ -101,6 +101,7 @@ class DataTransformParam(BaseParam):
         True if dataset has match_id, default: False
 
     """
+
     def __init__(self, input_format="dense", delimitor=',', data_type='float64',
                  exclusive_data_type=None,
                  tag_with_value=False, tag_value_delimitor=":",

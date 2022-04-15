@@ -14,8 +14,9 @@ To develop a component, follow the below steps:
 4.  Create the component which should inherit the class `model_base`.
 5.  Create the protobuf file required for saving models.
 6.  (Optional) If the component needs to be invoked directly through the python script, define the Pipeline component in fate_client.
+7.  Restart fate flow service
 
-In the following sections, we describe the above steps in detail by the example of `hetero_lr`.
+In the following sections we will describe the 7 steps in detail, with `hetero_lr`.
 
 ### Step 1. Define the python parameter object to be used by this component
 
@@ -136,13 +137,13 @@ this file to get the information on how to launch the component.
         ```python
         @hetero_lr_cpn_meta.bind_runner.on_guest
         def hetero_lr_runner_guest():
-            from federatedml.linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_guest import HeteroLRGuest
+            from federatedml.linear_model.coordinated_linear_model.logistic_regression import HeteroLRGuest
             
             return HeteroLRGuest
             
         @hetero_lr_cpn_meta.bind_runner.on_host
         def hetero_lr_runner_host():
-            from federatedml.linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_host import HeteroLRHost
+            from federatedml.linear_model.coordinated_linear_model.logistic_regression import HeteroLRHost
             
             return HeteroLRHost
         ``` 
@@ -371,6 +372,14 @@ To define a Pipeline component, follow these steps:
 Then you may use Pipeline to construct and initiate a job with the newly
 defined component. For the guide on Pipeline usage, please refer to
 [fate_client/pipeline](../api/fate_client/pipeline.md).
+
+### Step 7. Restart fate flow service
+
+When the above development steps are completed, the fate flow service needs to be restarted, otherwise the subsequent 
+submission tasks may report some errors such as "the provider of the new component cannot be found". 
+The fate flow service can also be started in debug mode, the start method: "python fate_flow_server.py --debug",
+The debug mode allows the modified code to take effect without restarting.
+
 
 ## Start a modeling task
 

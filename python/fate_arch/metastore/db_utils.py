@@ -29,7 +29,8 @@ class StorageConnector:
 
     @DB.connection_context()
     def get_info(self):
-        connectors = [connector for connector in StorageConnectorModel.select().where(operator.attrgetter("f_name")(StorageConnectorModel) == self.name)]
+        connectors = [connector for connector in StorageConnectorModel.select().where(
+            operator.attrgetter("f_name")(StorageConnectorModel) == self.name)]
         if connectors:
             return connectors[0].f_connector_info
         else:

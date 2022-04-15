@@ -54,6 +54,17 @@ with Pohlig–Hellman commutative cipher. DH Intersection is also used in
 [Secure Information Retrieval(SIR)
 module](sir.md).
 
+Below is an illustration for single-host-guest DH intersection.
+
+![Figure 2 (DH
+Intersection)](../images/dh_intersection.png)
+
+Here is an illustration for DH intersection with multiple hosts.
+
+![Figure 3 (Multi-host DH
+Intersection)](../images/multi_host_dh_intersection.png)
+
+
 ## Intersection With Cache
 
 Intersection may be conducted as online/offline phases. Both RSA and DH
@@ -65,7 +76,7 @@ RSA, RAW, and DH intersection support multi-host scenario. It means a
 guest can perform intersection with more than one host simultaneously
 and get the common ids among all participants.
 
-![Figure 2 (multi-hosts
+![Figure 4 (multi-hosts
 Intersection)](../images/multi_host_intersect.png)
 
 Refer to <span class="title-ref">figure 2</span> for a demonstration of

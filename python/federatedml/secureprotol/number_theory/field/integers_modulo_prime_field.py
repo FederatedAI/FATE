@@ -24,6 +24,7 @@ class IntegersModuloPrimeElement(GaloisFieldElement):
     """
     A realization of GF: integers modulo a prime
     """
+
     def __init__(self, val, arithmetic=None):
         """
         :param val: int
@@ -42,6 +43,7 @@ class IntegersModuloPrimeArithmetic(GaloisFieldArithmetic):
     """
     For the finite field - integers modulo a prime
     """
+
     def __init__(self, mod):
         add_identity = IntegersModuloPrimeElement(0)
         mul_identity = IntegersModuloPrimeElement(1)
@@ -64,7 +66,7 @@ class IntegersModuloPrimeArithmetic(GaloisFieldArithmetic):
         :param b: IntegersModuloPrimeElement
         :return: IntegersModuloPrimeElement
         """
-        if type(a) != IntegersModuloPrimeElement or type(b) != IntegersModuloPrimeElement:
+        if not isinstance(a, IntegersModuloPrimeElement) or not isinstance(b, IntegersModuloPrimeElement):
             raise TypeError("Addition only supports IntegersModuloPrimeElement objects")
         return IntegersModuloPrimeElement((a.val + b.val) % self.mod)
 
@@ -74,7 +76,7 @@ class IntegersModuloPrimeArithmetic(GaloisFieldArithmetic):
         :param a: IntegersModuloPrimeElement
         :return: IntegersModuloPrimeElement
         """
-        if type(a) != IntegersModuloPrimeElement:
+        if not isinstance(a, IntegersModuloPrimeElement):
             raise TypeError("Negative only supports IntegersModuloPrimeElement objects")
         return IntegersModuloPrimeElement(self.mod - a.val)
 
@@ -94,16 +96,16 @@ class IntegersModuloPrimeArithmetic(GaloisFieldArithmetic):
         :param b: IntegersModuloPrimeElement
         :return: IntegersModuloPrimeElement
         """
-        if type(a) == IntegersModuloPrimeElement and type(b) == IntegersModuloPrimeElement:
+        if isinstance(a, IntegersModuloPrimeElement) and isinstance(b, IntegersModuloPrimeElement):
             return IntegersModuloPrimeElement((a.val * b.val) % self.mod)
-        elif type(a) == IntegersModuloPrimeElement and type(b) == int:
+        elif isinstance(a, IntegersModuloPrimeElement) and isinstance(b, int):
             if b == 0:
                 return self.add_identity
             elif b < 0:
                 raise ValueError("Scalars in multiplication must be non-negative")
             else:
                 return IntegersModuloPrimeElement((a.val * b) % self.mod)
-        elif type(a) == int and type(b) == IntegersModuloPrimeElement:
+        elif isinstance(a, int) and isinstance(b, IntegersModuloPrimeElement):
             if a == 0:
                 return self.add_identity
             elif a < 0:
@@ -112,7 +114,7 @@ class IntegersModuloPrimeArithmetic(GaloisFieldArithmetic):
                 return IntegersModuloPrimeElement((a * b.val) % self.mod)
         else:
             raise TypeError("Multiplication only supports two IntegersModuloPrimeElement objects" +
-                             "one int plus one object")
+                            "one int plus one object")
 
     def invert(self, a):
         """
@@ -120,7 +122,7 @@ class IntegersModuloPrimeArithmetic(GaloisFieldArithmetic):
         :param a: IntegersModuloPrimeElement
         :return: IntegersModuloPrimeElement
         """
-        if type(a) != IntegersModuloPrimeElement:
+        if not isinstance(a, IntegersModuloPrimeElement):
             raise TypeError("Invert only supports IntegersModuloPrimeElement objects")
         return IntegersModuloPrimeElement(invert(a.val, self.mod))
 
@@ -130,7 +132,7 @@ class IntegersModuloPrimeArithmetic(GaloisFieldArithmetic):
         :param a: IntegersModuloPrimeElement
         :return: IntegersModuloPrimeElement
         """
-        if type(a) != IntegersModuloPrimeElement or type(b) != IntegersModuloPrimeElement:
+        if not isinstance(a, IntegersModuloPrimeElement) or not isinstance(b, IntegersModuloPrimeElement):
             raise TypeError("Division only supports IntegersModuloPrimeElement objects")
         return self.mul(a, self.invert(b))
 
@@ -141,7 +143,7 @@ class IntegersModuloPrimeArithmetic(GaloisFieldArithmetic):
         :param e: int
         :return: IntegersModuloPrimeElement
         """
-        if type(a) != IntegersModuloPrimeElement or type(e) != int:
+        if not isinstance(a, IntegersModuloPrimeElement) or not isinstance(e, int):
             raise TypeError("Power only supports IntegersModuloPrimeElement to the int's")
         if e == 0:
             return self.mul_identity
@@ -157,7 +159,7 @@ class IntegersModuloPrimeArithmetic(GaloisFieldArithmetic):
         :return: Output -1 if a is not a quadratic residue, otherwise the correct square roots (root, -root)
                 Note root < self.mod / 2
         """
-        if type(a) != IntegersModuloPrimeElement:
+        if not isinstance(a, IntegersModuloPrimeElement):
             raise TypeError("Square root only supports an object")
         if self.is_a_quadratic_residue(a):
             root_raw = tonelli(a.val, self.mod)
@@ -175,7 +177,7 @@ class IntegersModuloPrimeArithmetic(GaloisFieldArithmetic):
         :param a: IntegersModuloPrimeElement
         :return:
         """
-        if type(a) != IntegersModuloPrimeElement:
+        if not isinstance(a, IntegersModuloPrimeElement):
             raise ValueError("Only check an object")
         return legendre(a.val, self.mod) == 1
 

@@ -52,6 +52,7 @@ class HeteroNNBase(ModelBase):
         self.data_y = []
         self.transfer_variable = HeteroNNTransferVariable()
         self.model_param = HeteroNNParam()
+
         self.mode = consts.HETERO
 
         self.selector_param = None

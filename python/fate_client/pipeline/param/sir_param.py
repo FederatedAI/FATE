@@ -56,6 +56,7 @@ class SecureInformationRetrievalParam(BaseParam):
         default None
 
     """
+
     def __init__(self, security_level=0.5,
                  oblivious_transfer_protocol=consts.OT_HAUCK,
                  commutative_encryption=consts.CE_PH,
@@ -76,23 +77,23 @@ class SecureInformationRetrievalParam(BaseParam):
 
     def check(self):
         descr = "secure information retrieval param's "
-        self.check_decimal_float(self.security_level, descr+"security_level")
+        self.check_decimal_float(self.security_level, descr + "security_level")
         self.oblivious_transfer_protocol = self.check_and_change_lower(self.oblivious_transfer_protocol,
                                                                        [consts.OT_HAUCK.lower()],
-                                                                       descr+"oblivious_transfer_protocol")
+                                                                       descr + "oblivious_transfer_protocol")
         self.commutative_encryption = self.check_and_change_lower(self.commutative_encryption,
                                                                   [consts.CE_PH.lower()],
-                                                                  descr+"commutative_encryption")
+                                                                  descr + "commutative_encryption")
         self.non_committing_encryption = self.check_and_change_lower(self.non_committing_encryption,
                                                                      [consts.AES.lower()],
-                                                                     descr+"non_committing_encryption")
+                                                                     descr + "non_committing_encryption")
         self.dh_params.check()
         if self.key_size:
-            self.check_positive_integer(self.key_size, descr+"key_size")
+            self.check_positive_integer(self.key_size, descr + "key_size")
             if self.key_size < 1024:
                 raise ValueError(f"key size must be >= 1024")
         self.check_boolean(self.raw_retrieval, descr)
         if not isinstance(self.target_cols, list):
             self.target_cols = [self.target_cols]
         for col in self.target_cols:
-            self.check_string(col, descr+"target_cols")
+            self.check_string(col, descr + "target_cols")

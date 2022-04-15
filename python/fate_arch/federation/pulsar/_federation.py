@@ -372,7 +372,9 @@ class Federation(FederationABC):
             for party in parties
         ]
 
-        # the return is formed like this: [[(topic_key1, topic_info1), (topic_key2, topic_info2)...],[(topic_key1, topic_info1), (topic_key2, topic_info2]...]
+        # the return is formed like this: [[(topic_key1, topic_info1),
+        # (topic_key2, topic_info2)...],[(topic_key1, topic_info1), (topic_key2,
+        # topic_info2]...]
         return topic_infos
 
     def _get_or_create_topic(
@@ -693,8 +695,8 @@ class Federation(FederationABC):
                     f"[pulsar._receive_obj] require {name}.{tag}, got {properties['message_id']}.{properties['correlation_id']}"
                 )
                 # just ack and continue
-                channel_info.basic_ack(message.message_id())
-                continue
+                # channel_info.basic_ack(message.message_id())
+                # continue
 
             cache_key = self._get_message_cache_key(
                 properties["message_id"], properties["correlation_id"], party_id, role

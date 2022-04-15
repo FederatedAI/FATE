@@ -59,7 +59,7 @@ class HeteroSBTConverter(ProtoConverterBase):
                 new_party_id = replacer.plain_replace(party_id, role=consts.HOST)
             else:
                 new_party_id = party_id
-            new_tree_plan.append(tree_mode+tree_plan_delimiter+new_party_id)
+            new_tree_plan.append(tree_mode + tree_plan_delimiter + new_party_id)
         param.tree_plan.extend(new_tree_plan)
 
         return param, meta

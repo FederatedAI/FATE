@@ -137,7 +137,7 @@ DSL 的配置文件采用 json 格式，实际上，整个配置文件就是一�
 1.  data: 常规模块数据输出
 2.  train\_data: 仅用于Data Split
 3.  validate\_data: 仅用于Data Split
-4.  test\_data： 仅用于Data Split
+4.  test\_data：仅用于Data Split
 
 #### 5.2 模型输出
 

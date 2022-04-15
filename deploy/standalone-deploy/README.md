@@ -49,14 +49,19 @@ export version=1.7.0
 #### 2.2.1 Via the public mirror service
 
 ```bash
+# Docker Hub
 docker pull federatedai/standalone_fate:${version}
+
+# Tencent Container Registry
+docker pull ccr.ccs.tencentyun.com/federatedai/standalone_fate:${version}
+docker tag ccr.ccs.tencentyun.com/federatedai/standalone_fate:${version} federatedai/standalone_fate:${version}
 ```
 
 #### 2.2.2 Via mirror packages
 
    ```bash
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/standalone_fate_docker_image_${version}_release.tar;
-   docker load < standalone_fate_docker_image_${version}_release.tar;
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/standalone_fate_docker_image_${version}_release.tar.gz
+   docker load -i standalone_fate_docker_image_${version}_release.tar.gz
    docker images | grep federatedai/standalone_fate
    ```
 
@@ -95,6 +100,12 @@ Whether local ports 8080, 9360, 9380 are occupied
    netstat -apln|grep 9380
    ```
 
+Because need to install the OS dependencies, need root privileges. You can use the root user for subsequent operations. If you do not use the root user, please use the root user to grant sudo privileges to the user you want to use:
+
+```bash
+echo "{username to use} ALL=(ALL) NOPASSWD:ALL" | tee /etc/sudoers.d/{username to use}
+```
+
 ### 3.2 Get the installation package
 
 Download the installation package and unpack it
@@ -121,14 +132,14 @@ The script will complete automatically:
 
    ```bash
    cd standalone_fate_install_${version}_release;
-   sh init.sh init
+   bash init.sh init
    ```
 
 ### 3.4 Start
 
    ```bash
-   sh init.sh status;
-   sh init.sh start
+   bash init.sh status;
+   bash init.sh start
    ```
 
 ### 3.5 Testing

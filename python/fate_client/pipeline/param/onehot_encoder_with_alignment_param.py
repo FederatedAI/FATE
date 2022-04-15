@@ -26,7 +26,7 @@ class OHEAlignmentParam(BaseParam):
 
     need_alignment: bool, default True
         Indicated whether alignment of features is turned on
-    
+
     encrypt_param: EncryptParam object, default: default EncryptParam object
 
     """

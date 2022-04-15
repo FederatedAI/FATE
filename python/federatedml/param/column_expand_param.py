@@ -68,7 +68,7 @@ class ColumnExpandParam(BaseParam):
             raise ValueError(f"{descr} append_header must be None or list of str. "
                              f"Received {type(self.append_header)} instead.")
         for feature_name in self.append_header:
-            BaseParam.check_string(feature_name, descr+"append_header values")
+            BaseParam.check_string(feature_name, descr + "append_header values")
 
         if isinstance(self.fill_value, list):
             if len(self.append_header) != len(self.fill_value):

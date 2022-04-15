@@ -66,7 +66,7 @@ def main(config="../../config.yaml", param="./linr_config.yaml", namespace=""):
     data_transform_0_guest_party_instance = data_transform_0.get_party_instance(role='guest', party_id=guest)
     # configure DataTransform for guest
     data_transform_0_guest_party_instance.component_param(with_label=True, output_format="dense",
-                                                  label_name=param["label_name"], label_type="float")
+                                                          label_name=param["label_name"], label_type="float")
     # get and configure DataTransform party instance of host
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
@@ -97,7 +97,7 @@ def main(config="../../config.yaml", param="./linr_config.yaml", namespace=""):
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
     pipeline.add_component(hetero_linr_0, data=Data(train_data=intersection_0.output.data))
-    pipeline.add_component(hetero_linr_1,data=Data(test_data=intersection_0.output.data),
+    pipeline.add_component(hetero_linr_1, data=Data(test_data=intersection_0.output.data),
                            model=Model(hetero_linr_0.output.model))
     pipeline.add_component(evaluation_0, data=Data(data=hetero_linr_0.output.data))
 

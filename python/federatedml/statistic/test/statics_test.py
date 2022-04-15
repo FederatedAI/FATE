@@ -23,7 +23,6 @@ class TestStatistics(unittest.TestCase):
         self.feature_num = 100
         self._dense_table, self._dense_not_inst_table, self._original_data = None, None, None
 
-
     def _gen_table_data(self):
         if self._dense_table is not None:
             return self._dense_table, self._dense_not_inst_table, self._original_data
@@ -162,7 +161,6 @@ class TestStatistics(unittest.TestCase):
         summary_moment_4 = summary_obj.get_statics("moment_4")
         static_skewness = summary_obj.get_statics("skewness")
         static_kurtosis = summary_obj.get_statics("kurtosis")
-
 
         # print(f"moment: {summary_moment_4}, moment_2: {moment_4}")
         for idx, col_name in enumerate(header):

@@ -69,22 +69,22 @@ def main(config="../../config.yaml", namespace=""):
 
     param = {
         "penalty": "L2",
-          "optimizer": "nesterov_momentum_sgd",
-          "tol": 0.0001,
-          "alpha": 0.01,
-          "max_iter": 5,
-          "early_stop": "weight_diff",
-          "batch_size": -1,
-          "learning_rate": 0.15,
-          "init_param": {
+        "optimizer": "nesterov_momentum_sgd",
+        "tol": 0.0001,
+        "alpha": 0.01,
+        "max_iter": 5,
+        "early_stop": "weight_diff",
+        "batch_size": -1,
+        "learning_rate": 0.15,
+        "init_param": {
             "init_method": "random_uniform"
-          },
-          "sqn_param": {
+        },
+        "sqn_param": {
             "update_interval_L": 3,
             "memory_M": 5,
             "sample_size": 5000,
             "random_seed": None
-          }
+        }
     }
 
     hetero_lr_0 = HeteroLR(name="hetero_lr_0", **param)
@@ -109,7 +109,6 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(hetero_lr_0, data=Data(train_data=intersection_0.output.data))
 
     pipeline.add_component(scorecard_0, data=Data(data=hetero_lr_0.output.data))
-
 
     # compile pipeline once finished adding modules, this step will form conf and dsl files for running job
     pipeline.compile()

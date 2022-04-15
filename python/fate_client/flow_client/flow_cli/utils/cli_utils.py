@@ -45,7 +45,8 @@ def check_config(config: typing.Dict, required_arguments: typing.List):
         elif require_argument not in config:
             no_arguments.append(require_argument)
     if no_arguments or error_arguments:
-        raise Exception('the following arguments are required: {} {}'.format(','.join(no_arguments), ','.join(['{}={}'.format(a[0], a[1]) for a in error_arguments])))
+        raise Exception('the following arguments are required: {} {}'.format(
+            ','.join(no_arguments), ','.join(['{}={}'.format(a[0], a[1]) for a in error_arguments])))
 
 
 def prettify(response, verbose=True):
@@ -110,7 +111,7 @@ def access_server(method, ctx, postfix, json_data=None, echo=True, **kwargs):
                 response['retmsg'] = 'Connection aborted. Please make sure that the address of fate flow server ' \
                                      'is configured correctly. The configuration file path is: ' \
                                      '{}.'.format(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                                                  os.pardir, os.pardir, 'settings.yaml')))
+                                                                               os.pardir, os.pardir, 'settings.yaml')))
                 del response['traceback']
             if echo:
                 prettify(response)
@@ -119,13 +120,13 @@ def access_server(method, ctx, postfix, json_data=None, echo=True, **kwargs):
                 return Response(json.dumps(response), status=500, mimetype='application/json')
     else:
         response = {
-                'retcode': 100,
-                'retmsg': "Fate flow CLI has not been initialized yet or configured incorrectly. "
-                          "Please initialize it before using CLI at the first time. And make sure "
-                          "the address of fate flow server is configured correctly. The configuration "
-                          "file path is: {}.".format(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                                                     os.pardir, os.pardir, 'settings.yaml')))
-                }
+            'retcode': 100,
+            'retmsg': "Fate flow CLI has not been initialized yet or configured incorrectly. "
+            "Please initialize it before using CLI at the first time. And make sure "
+            "the address of fate flow server is configured correctly. The configuration "
+            "file path is: {}.".format(os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                                                    os.pardir, os.pardir, 'settings.yaml')))
+        }
         if echo:
             prettify(response)
         else:
@@ -174,9 +175,9 @@ def download_from_request(http_response, tar_file_name, extract_dir):
 
 
 def check_abs_path(path):
-    if not os.path.isabs(path):
-        return os.path.join(os.path.abspath(os.curdir), path).replace("./", "")
-    return path
+    if os.path.isabs(path):
+        return path
+    return os.path.abspath(os.path.join(os.getcwd(), path))
 
 
 def get_project_base_directory():

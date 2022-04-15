@@ -35,5 +35,3 @@ class SequentialModel(object):
             self._model = nn.Sequential()
         else:
             self._model = None
-
-

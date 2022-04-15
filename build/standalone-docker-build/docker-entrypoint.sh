@@ -1,11 +1,11 @@
 #!/bin/bash
 set -e
-cd ${WORKDIR}
 
 cd ${WORKDIR}/fateflow
-sh bin/service.sh start
+bash bin/service.sh start
 
 cd ${WORKDIR}/fateboard
-sh service.sh starting
+bash service.sh starting
 
+cd ${WORKDIR}
 exec "$@"

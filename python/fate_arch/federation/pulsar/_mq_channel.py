@@ -20,18 +20,30 @@ DEFAULT_SUBSCRIPTION_NAME = "unique"
 
 
 def connection_retry(func):
-    """retry connection"""
+    """retry connection
+    """
 
     def wrapper(self, *args, **kwargs):
-        """wrapper"""
+        """wrapper
+        """
         res = None
+        exception = None
         for ntry in range(60):
             try:
                 res = func(self, *args, **kwargs)
+                exception = None
                 break
             except Exception as e:
-                LOGGER.debug(e)
-                time.sleep(3)
+                LOGGER.error("function %s error" % func.__name__, exc_info=True)
+                exception = e
+                time.sleep(0.1)
+
+        if exception is not None:
+            LOGGER.exception(
+                f"failed",
+                exc_info=exception)
+            raise exception
+
         return res
 
     return wrapper

@@ -86,7 +86,7 @@ def bin_to_str(bin_str_arr):
     """
     res = ''
     for i in range(0, len(bin_str_arr), 8):
-        res += chr(int(bin_str_arr[i:i+8], 2))
+        res += chr(int(bin_str_arr[i:i + 8], 2))
     return res
 
 

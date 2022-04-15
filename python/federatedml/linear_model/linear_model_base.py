@@ -16,6 +16,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import copy
 import numpy as np
 
 from federatedml.model_base import Metric
@@ -77,7 +78,6 @@ class BaseLinearModel(ModelBase):
         self.max_iter = params.max_iter
         self.optimizer = optimizer_factory(params)
         self.converge_func = converge_func_factory(params.early_stop, params.tol)
-        self.encrypted_calculator = None
         self.validation_freqs = params.callback_param.validation_freqs
         self.validation_strategy = None
         self.early_stopping_rounds = params.callback_param.early_stopping_rounds
@@ -98,7 +98,7 @@ class BaseLinearModel(ModelBase):
     def get_header(self, data_instances):
         if self.header is not None:
             return self.header
-        return data_instances.schema.get("header")
+        return data_instances.schema.get("header", [])
 
     @property
     def fit_intercept(self):
@@ -232,3 +232,9 @@ class BaseLinearModel(ModelBase):
             raise OverflowError("The value range of features is too large for GLM, please have "
                                 "a check for input data")
         LOGGER.info("Check for abnormal value passed")
+
+    def prepare_fit(self, data_instances, validate_data):
+        self.header = self.get_header(data_instances)
+        self._abnormal_detection(data_instances)
+        self.check_abnormal_values(data_instances)
+        self.check_abnormal_values(validate_data)

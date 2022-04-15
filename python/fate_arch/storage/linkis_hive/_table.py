@@ -27,7 +27,6 @@ from fate_arch.storage.linkis_hive._settings import (
 )
 
 
-
 class StorageTable(StorageTableBase):
     def __init__(
         self,
@@ -52,7 +51,7 @@ class StorageTable(StorageTableBase):
         sql = "select count(*) from {}".format(self._address.name)
         try:
             count = self.execute(sql)
-        except:
+        except BaseException:
             count = 0
         return count
 

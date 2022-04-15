@@ -12,8 +12,9 @@
 4.  您的算法模块需要继承`model_base`类，并完成几个指定的函数。
 5.  定义模型保存所需的protobuf文件。
 6.  若希望通过python脚本直接启动组件，需要在`fate_client`中定义Pipeline组件。
+7.  重启fate flow服务。
 
-在以下各节中，我们将通过 `hetero_lr` 详细描述这 6 个步骤。
+在以下各节中，我们将通过 `hetero_lr` 详细描述这 7 个步骤。
 
 ### 第一步：定义此模块将使用的参数对象
 
@@ -130,13 +131,13 @@ def check(self):
           ```python
               @hetero_lr_cpn_meta.bind_runner.on_guest
               def hetero_lr_runner_guest():
-                  from federatedml.linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_guest import HeteroLRGuest
+                  from federatedml.linear_model.coordinated_linear_model.logistic_regression import HeteroLRGuest
                   
                   return HeteroLRGuest
                   
               @hetero_lr_cpn_meta.bind_runner.on_host
               def hetero_lr_runner_host():
-                  from federatedml.linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_host import HeteroLRHost
+                  from federatedml.linear_model.coordinated_linear_model.logistic_regression import HeteroLRHost
                   
                   return HeteroLRHost
           ``` 
@@ -338,6 +339,13 @@ def export_model(self):
 中添加自己的组件。详情请参考Pipeline的
 [文档](../api/fate_client/pipeline.md)
 
+### 第七步：重启fate flow服务
+
+当上面的开发步骤都完成后，需要重启fate flow服务，否则后续提交任务可能会报一些错误如"新组件的provider找不到"。
+fate flow服务也可通过debug模式启动，启动方式: "python fate_flow_server.py --debug",
+debug模式可以让修改的代码不重启也生效。
+
+
 ## 开始建模任务
 
 这里给出开发完成后，启动建模任务的一个简单示例。
@@ -370,6 +378,6 @@ python ${your_pipeline.py}
 
 ### 第三步: 检查日志文件  
 
-现在，您可以在以下路径中检查日志：`$PROJECT_BASE/logs/{your jobid}`.
+现在，您可以在以下路径中检查日志：`$PROJECT_BASE/fateflow/logs/{your jobid}`.
 
 有关 dsl 配置文件和参数配置文件的更多详细信息，请参考此处的`examples/dsl/v2`中查看。

@@ -27,4 +27,3 @@ def collect_index(data_insts):
     data_sids_iter = sorted(data_sids_iter, key=lambda x: x[0])
     data_size = len(data_sids_iter)
     return data_sids_iter, data_size
-

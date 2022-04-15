@@ -84,6 +84,12 @@ class Encrypt(object):
         encrypt_table = X.mapValues(lambda x: self.recursive_encrypt(x))
         return encrypt_table
 
+    def distribute_raw_decrypt(self, X):
+        return X.mapValues(lambda x: self.recursive_raw_decrypt(x))
+
+    def distribute_raw_encrypt(self, X):
+        return X.mapValues(lambda x: self.recursive_raw_encrypt(x))
+
     def _recursive_func(self, obj, func):
         if isinstance(obj, np.ndarray):
             if len(obj.shape) == 1:
@@ -213,24 +219,6 @@ class PaillierEncrypt(Encrypt):
         return self._recursive_func(X, raw_en_func)
 
 
-class FakeEncrypt(Encrypt):
-
-    def __init__(self):
-        pass
-
-    def encrypt(self, value):
-        return value
-
-    def decrypt(self, value):
-        return value
-
-    def raw_decrypt(self, value):
-        return value
-
-    def raw_encrypt(self, value):
-        return value
-
-
 class PadsCipher(Encrypt):
     def __init__(self):
         super().__init__()
@@ -322,5 +310,3 @@ class PadsCipher(Encrypt):
 
     def decrypt(self, value):
         return value
-
-

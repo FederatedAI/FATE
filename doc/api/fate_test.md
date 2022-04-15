@@ -786,7 +786,7 @@ delete, and generate
 fate_test data --help
 ```
 
-1.  include:
+1. include:
     
     ```bash
     fate_test data [upload|delete] -i <path1 contains *testsuite.json | *benchmark.json>
@@ -795,7 +795,7 @@ fate_test data --help
     will upload/delete dataset in testsuites in
     *path1*
 
-2.  exclude:
+2. exclude:
     
     ```bash
     fate_test data [upload|delete] -i <path1 contains *testsuite.json | *benchmark.json> -e <path2 to exclude> -e <path3 to exclude> ...
@@ -805,7 +805,7 @@ fate_test data --help
     *path2* and
     *path3*
 
-3.  glob:
+3. glob:
     
     ```bash
     fate_test data [upload|delete] -i <path1 contains \*testsuite.json | \*benchmark.json> -g "hetero*"
@@ -814,6 +814,34 @@ fate_test data --help
     will upload/delete dataset in testsuites in sub directory start with
     *hetero* of
     *path1*
+
+4. upload example data:
+
+    ```bash
+    fate_test data upload -t [min_test|all_examples]
+    ```
+   
+    will upload dataset for min_test or all examples of fate. Once command is executed successfully, 
+    you are expected to see the following feedback which showing the table information for you:  
+
+    ```bash
+    [2020-06-12 14:19:39]uploading @examples/data/breast_hetero_guest.csv >> experiment.breast_hetero_guest
+    [2020-06-12 14:19:39]upload done @examples/data/breast_hetero_guest.csv >> experiment.breast_hetero_guest, job_id=2020061214193960279930
+    [2020-06-12 14:19:42]2020061214193960279930 success, elapse: 0:00:02
+    [2020-06-12 14:19:42] check_data_out {'data': {'count': 569, 'namespace': 'experiment', 'partition': 16, 'table_name': 'breast_hetero_guest'}, 'retcode': 0, 'retmsg': 'success'}
+    ```
+   
+    Note: uploading configurations are [min_test_config](../../examples/data/upload_config/min_test_data_testsuite.json) and [all_examples](../../examples/data/upload_config/all_examples_data_testsuite.json),
+          user can add more data by modifying them or check out the example data's name and namespace.
+
+6. download mnist data:
+
+    ```bash
+    fate_test data download -t mnist -o ${mnist_data_dir}
+    ```
+   
+    -t: if not specified, default is "mnist"
+    -o: directory of download data, default is "examples/data"
 
 ### generate command options
 
@@ -864,7 +892,7 @@ fate_test data --help
 5.  match-rate:
     
     ```bash
-    fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -m 1.0
+    fate_test data generate -i <path1 contains *testsuite.json | *benchmark.json> -m 1.0
     ```
     
     will generate dataset in testsuites in *path1* where generated host
@@ -874,7 +902,7 @@ fate_test data --help
 6.  guest-data-size:
     
     ```bash
-    fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -ng 10000
+    fate_test data generate -i <path1 contains *testsuite.json | *benchmark.json> -ng 10000
     ```
     
     will generate dataset in testsuites *path1* where guest data each
@@ -884,7 +912,7 @@ fate_test data --help
 7.  host-data-size:
     
     ```bash
-    fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -nh 10000
+    fate_test data generate -i <path1 contains *testsuite.json | *benchmark.json> -nh 10000
     ```
     
     will generate dataset in testsuites *path1* where host data have
@@ -894,7 +922,7 @@ fate_test data --help
 8.  guest-feature-num:
     
     ```bash
-    fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -fg 20
+    fate_test data generate -i <path1 contains *testsuite.json | *benchmark.json> -fg 20
     ```
     
     will generate dataset in testsuites *path1* where guest data have 20
@@ -903,7 +931,7 @@ fate_test data --help
 9.  host-feature-num:
     
     ```bash
-    fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -fh 200
+    fate_test data generate -i <path1 contains *testsuite.json | *benchmark.json> -fh 200
     ```
     
     will generate dataset in testsuites *path1* where host data have 200
@@ -912,7 +940,7 @@ fate_test data --help
 10. output-path:
     
     ```bash
-    fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -o <path2>
+    fate_test data generate -i <path1 contains *testsuite.json | *benchmark.json> -o <path2>
     ```
     
     will generate dataset in testsuites *path1* and write file to
@@ -921,7 +949,7 @@ fate_test data --help
 11. force:
     
     ```bash
-    fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -o <path2> --force
+    fate_test data generate -i <path1 contains *testsuite.json | *benchmark.json> -o <path2> --force
     ```
     
     will generate dataset in testsuites *path1* and write file to
@@ -932,7 +960,7 @@ fate_test data --help
 12. split-host:
     
     ```bash
-    fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> -nh 10000 --split-host
+    fate_test data generate -i <path1 contains *testsuite.json | *benchmark.json> -nh 10000 --split-host
     ```
     
     will generate dataset in testsuites *path1*; 10000 entries will be
@@ -942,7 +970,7 @@ fate_test data --help
 13. upload-data
     
     ```bash
-    fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> --upload-data
+    fate_test data generate  -i <path1 contains *testsuite.json | *benchmark.json> --upload-data
     ```
     
     will generate dataset in testsuites *path1* and upload generated
@@ -952,7 +980,7 @@ fate_test data --help
 14. remove-data
     
     ```bash
-    fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> --remove-data
+    fate_test data generate -i <path1 contains *testsuite.json | *benchmark.json> --upload-data --remove-data
     ```
     
     (effective with `upload-data` set to True) will delete generated
@@ -962,9 +990,54 @@ fate_test data --help
 15. use-local-data
     
     ```bash
-    fate_test suite -i <path1 contains *testsuite.json | *benchmark.json> --use-local-data
+    fate_test data generate -i <path1 contains *testsuite.json | *benchmark.json> --upload-data  --use-local-data
     ```
     
     (effective with `upload-data` set to True) will generate dataset in
     testsuites *path1* and upload data from local server; use this
     option if flow and data storage are deployed to the same server
+
+
+## MPC Operation Test
+`op-test` sub-command is used to test
+efficiency and accuracy of secure multiparty computation protocols like Paillier and SPDZ.
+
+1. paillier:
+    
+    ```bash
+    fate_test op-test paillier
+    ```
+    
+    will generate performance and accuracy table for Paillier Protocol, including encryption，decryption, addition and 
+    addition and scalar multiplication.
+
+2. spdz
+   
+    ```bash
+    fate_test op-test spdz
+    ```
+    
+    will generate performance and accuracy table for SPDZ Protocol, including encryption，decryption, addition and 
+    addition and scalar multiplication.
+
+
+## Convert tools
+
+`convert` sub-command is used to convert pipeline to dsl.
+
+1. pipeline-to-dsl
+
+    ```bash
+    fate_test convert pipeline-to-dsl -i ${your pipeline file}
+    ```
+   
+    will generate dsl & conf under the same folder of your pipeline file,
+    before executing the command, make sure the running data of pipeline is already uploaded.
+
+2. pipeline-testsuite-to-dsl-testsuite
+
+    ```bash
+    fate_test convert pipeline-testsuite-to-dsl-testsuite -i {your pipeline testsuite folder}
+    ```
+    
+    will transform pipeline testsuite to dsl testsuite under the {your pipeline testsuite folder}/dsl_testsuite

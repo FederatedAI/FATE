@@ -18,9 +18,9 @@ import argparse
 import json
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.hetero_sshe_lr import HeteroSSHELR
 from pipeline.component import DataTransform
 from pipeline.component.evaluation import Evaluation
+from pipeline.component.hetero_sshe_lr import HeteroSSHELR
 from pipeline.component.intersection import Intersection
 from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
@@ -115,7 +115,7 @@ def main(config="../../config.yaml", namespace=""):
 
     hetero_sshe_lr_0 = HeteroSSHELR(**lr_param)
     pipeline.add_component(hetero_sshe_lr_0, data=Data(train_data=intersection_0.output.data,
-                                                  validate_data=intersection_1.output.data))
+                                                       validate_data=intersection_1.output.data))
 
     evaluation_data = [hetero_sshe_lr_0.output.data]
     hetero_sshe_lr_1 = HeteroSSHELR(name='hetero_sshe_lr_1')

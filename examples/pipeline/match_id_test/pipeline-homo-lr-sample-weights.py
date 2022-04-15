@@ -56,7 +56,7 @@ def main(config="../../config.yaml", namespace=""):
 
     # define DataTransform components
     data_transform_0 = DataTransform(name="data_transform_0", with_match_id=True,
-                             with_label=True, output_format="dense")  # start component numbering at 0
+                                     with_label=True, output_format="dense")  # start component numbering at 0
 
     scale_0 = FeatureScale(name='scale_0')
     sample_weight_0 = SampleWeight(name="sample_weight_0", class_weight={"0": 1, "1": 2})

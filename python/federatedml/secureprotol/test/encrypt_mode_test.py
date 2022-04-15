@@ -40,22 +40,22 @@ class TestEncryptModeCalculator(unittest.TestCase):
         self.data_list = session.parallelize(self.list_data, include_key=False, partition=10)
         self.data_tuple = session.parallelize(self.tuple_data, include_key=False, partition=10)
         self.data_numpy = session.parallelize(self.numpy_data, include_key=False, partition=10)
-       
+
     def test_data_type(self, mode="strict", re_encrypted_rate=0.2):
         from federatedml.secureprotol import PaillierEncrypt
         from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
         encrypter = PaillierEncrypt()
         encrypter.generate_key(1024)
-        encrypted_calculator = EncryptModeCalculator(encrypter, mode, re_encrypted_rate)        
+        encrypted_calculator = EncryptModeCalculator(encrypter, mode, re_encrypted_rate)
 
         data_list = dict(encrypted_calculator.encrypt(self.data_list).collect())
         data_tuple = dict(encrypted_calculator.encrypt(self.data_tuple).collect())
         data_numpy = dict(encrypted_calculator.encrypt(self.data_numpy).collect())
-        
+
         for key, value in data_list.items():
             self.assertTrue(isinstance(value, list))
             self.assertTrue(len(value) == len(self.list_data[key]))
-        
+
         for key, value in data_tuple.items():
             self.assertTrue(isinstance(value, tuple))
             self.assertTrue(len(value) == len(self.tuple_data[key]))
@@ -74,15 +74,16 @@ class TestEncryptModeCalculator(unittest.TestCase):
         from federatedml.secureprotol import PaillierEncrypt
         encrypter = PaillierEncrypt()
         encrypter.generate_key(1024)
-        encrypted_calculator = EncryptModeCalculator(encrypter, mode, re_encrypted_rate)        
+        encrypted_calculator = EncryptModeCalculator(encrypter, mode, re_encrypted_rate)
 
         for i in range(round):
             data_i = self.data_numpy.mapValues(lambda v: v + i)
             data_i = encrypted_calculator.encrypt(data_i)
-            decrypt_data_i = dict(data_i.mapValues(lambda arr: np.array([encrypter.decrypt(val) for val in arr])).collect())
+            decrypt_data_i = dict(data_i.mapValues(lambda arr: np.array(
+                [encrypter.decrypt(val) for val in arr])).collect())
             for j in range(30):
                 self.assertTrue(np.fabs(self.numpy_data[j] - decrypt_data_i[j] + i).all() < 1e-5)
-           
+
 
 if __name__ == '__main__':
     unittest.main()

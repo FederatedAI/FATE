@@ -155,6 +155,7 @@ class HiveAddress(AddressBase):
             "auth_mechanism": self.auth_mechanism,
             "database": self.database}
 
+
 class LinkisHiveAddress(AddressBase):
     def __init__(self, host="127.0.0.1", port=9001, username='', database='', name='', run_type='hql',
                  execute_application_name='hive', source={}, params={}, connector_name=None):
@@ -165,7 +166,7 @@ class LinkisHiveAddress(AddressBase):
         self.name = name
         self.run_type = run_type
         self.execute_application_name = execute_application_name
-        self.source=source
+        self.source = source
         self.params = params
         super(LinkisHiveAddress, self).__init__(connector_name=connector_name)
 

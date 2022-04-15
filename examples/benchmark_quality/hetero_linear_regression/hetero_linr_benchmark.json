@@ -22,9 +22,13 @@
             "script": "./local-linr.py",
             "conf": "./linr_config.yaml"
         },
-        "FATE": {
+        "FATE-hetero-linr": {
             "script": "./fate-linr.py",
             "conf": "./linr_config.yaml"
+        },
+        "FATE-hetero-sshe-linr": {
+            "script": "./fate-sshe-linr.py",
+            "conf": "./sshe_linr_config.yaml"
         },
         "compare_setting": {
             "relative_tol": 0.01

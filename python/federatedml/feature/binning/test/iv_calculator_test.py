@@ -73,7 +73,7 @@ class TestIvCalculator(unittest.TestCase):
     #         s_ps = s_ps.tolist()
     #         self.assertListEqual(s_ps, expect_split_points)
     #
-    
+
     def _bin_obj_generator(self, abnormal_list: list = None, this_bin_num=bin_num):
 
         bin_param = FeatureBinningParam(method='quantile', compress_thres=consts.DEFAULT_COMPRESS_THRESHOLD,

@@ -21,4 +21,3 @@ class ReaderParam:
 
     def check(self):
         return True
-

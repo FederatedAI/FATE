@@ -80,12 +80,11 @@ class HeteroStochasticQuansiNewton(hetero_linear_model_gradient.HeteroGradientBa
 
     def compute_gradient_procedure(self, *args, **kwargs):
         data_instances = args[0]
-        encrypted_calculator = args[1]
+        cipher = args[1]
         model_weights = args[2]
         optimizer = args[3]
         self.batch_index = args[5]
         self.n_iter = args[4]
-        cipher_operator = encrypted_calculator[0].encrypter
 
         gradient_results = self.gradient_computer.compute_gradient_procedure(*args)
         self._update_w_tilde(model_weights)
@@ -98,7 +97,7 @@ class HeteroStochasticQuansiNewton(hetero_linear_model_gradient.HeteroGradientBa
 
             if self.count_t > 0:
                 LOGGER.info("iter_k: {}, count_t: {}, start to update hessian".format(self.iter_k, self.count_t))
-                self._update_hessian(data_instances, optimizer, cipher_operator)
+                self._update_hessian(data_instances, optimizer, cipher)
             self.last_w_tilde = self.this_w_tilde
             self.this_w_tilde = LinearModelWeights(np.zeros_like(self.last_w_tilde.unboxed),
                                                    self.last_w_tilde.fit_intercept,

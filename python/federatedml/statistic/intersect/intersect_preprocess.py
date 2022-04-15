@@ -24,6 +24,7 @@ from federatedml.util import consts, LOGGER
 
 SALT_LENGTH = 8
 
+
 class BitArray(object):
     def __init__(self, bit_count, hash_func_count, hash_method, random_state, salt=None):
         self.bit_count = bit_count
@@ -40,6 +41,7 @@ class BitArray(object):
 
     def _generate_salt(self):
         random_state = np.random.RandomState(self.random_state)
+
         def f(n):
             return str(n)[2:]
         return list(map(f, np.round(random_state.random(self.hash_func_count), SALT_LENGTH)))

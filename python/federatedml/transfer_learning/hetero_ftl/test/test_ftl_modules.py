@@ -32,6 +32,7 @@ from federatedml.param.ftl_param import FTLParam
 from federatedml.feature.instance import Instance
 import json
 
+
 class TestFTL(unittest.TestCase):
 
     def setUp(self):
@@ -78,6 +79,7 @@ class TestFTL(unittest.TestCase):
         rs = FTL().check_label(table)
         new_label = [i[1].label for i in list(rs.collect())]
         print(new_label)
+
 
 if __name__ == '__main__':
     unittest.main()

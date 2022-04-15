@@ -36,7 +36,7 @@ class MetricInterface(object):
         elif self.eval_type == consts.ONE_VS_REST:
             try:
                 score = roc_auc_score(labels, pred_scores)
-            except:
+            except BaseException:
                 score = 0  # in case all labels are 0 or 1
                 logging.warning("all true labels are 0/1 when running ovr AUC")
             return score
@@ -175,7 +175,6 @@ class MetricInterface(object):
             return fpr, tpr, thresholds, cuts
 
     def ks(self, labels, pred_scores):
-
         """
         Compute Kolmogorov-Smirnov
         Parameters
@@ -191,7 +190,7 @@ class MetricInterface(object):
         if self.eval_type == consts.ONE_VS_REST:
             try:
                 rs = classification_metric.KS().compute(labels, pred_scores)
-            except:
+            except BaseException:
                 rs = [0, [0], [0], [0], [0]]   # in case all labels are 0 or 1
                 logging.warning("all true labels are 0/1 when running ovr KS")
             return rs
@@ -313,7 +312,6 @@ class MetricInterface(object):
             logging.warning("error:can not find classification type:".format(self.eval_type))
 
     def f1_score(self, labels, pred_scores):
-
         """
         compute f1_score for binary classification result
         """
@@ -325,7 +323,6 @@ class MetricInterface(object):
             logging.warning('error: f-score metric is for binary classification only')
 
     def confusion_mat(self, labels, pred_scores):
-
         """
         compute confusion matrix
         """
@@ -362,19 +359,18 @@ class MetricInterface(object):
         if self.eval_type == consts.BINARY:
             psi_computer = classification_metric.PSI()
             psi_scores, total_psi, expected_interval, expected_percentage, actual_interval, actual_percentage, \
-            train_pos_perc, validate_pos_perc, intervals = psi_computer.compute(train_scores, validate_scores,
-                                                                                  debug=debug, str_intervals=True,
-                                                                                  round_num=6, train_labels=train_labels
-                                                                                  ,validate_labels=validate_labels)
+                train_pos_perc, validate_pos_perc, intervals = psi_computer.compute(train_scores, validate_scores,
+                                                                                    debug=debug, str_intervals=True,
+                                                                                    round_num=6, train_labels=train_labels, validate_labels=validate_labels)
 
-            len_list = np.array([len(psi_scores), len(expected_interval), len(expected_percentage), len(actual_interval)
-                                 , len(actual_percentage), len(intervals)])
+            len_list = np.array([len(psi_scores), len(expected_interval), len(expected_percentage),
+                                 len(actual_interval), len(actual_percentage), len(intervals)])
 
             assert (len_list == len(psi_scores)).all()
 
             return list(psi_scores), total_psi, self.__to_int_list(expected_interval), list(expected_percentage), \
-                   self.__to_int_list(actual_interval), list(actual_percentage), list(train_pos_perc), \
-                   list(validate_pos_perc), intervals
+                self.__to_int_list(actual_interval), list(actual_percentage), list(train_pos_perc), \
+                list(validate_pos_perc), intervals
 
         else:
             logging.warning('error: psi metric is for binary classification only')
@@ -447,7 +443,7 @@ class MetricInterface(object):
         Parameters
 
         """
-        ## process data from evaluation
+        # process data from evaluation
         return clustering_metric.DaviesBouldinIndex().compute(cluster_avg_intra_dist, cluster_inter_dist)
 
     @staticmethod
@@ -464,4 +460,3 @@ class MetricInterface(object):
 
         """
         return clustering_metric.DistanceMeasure().compute(cluster_avg_intra_dist, cluster_inter_dist, max_radius)
-

@@ -1,0 +1,14 @@
+data_guest: "examples/data/motor_hetero_guest.csv"
+data_host: "examples/data/motor_hetero_host.csv"
+idx: "idx"
+label_name: "motor_speed"
+penalty: "L2"
+max_iter: 6
+alpha: 0.01
+learning_rate: 0.13
+optimizer: "sgd"
+batch_size: 100
+early_stop: "diff"
+reveal_strategy: "respectively"
+init_param:
+  init_method: "zeros"

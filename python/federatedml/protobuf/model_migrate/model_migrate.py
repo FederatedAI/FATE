@@ -8,7 +8,7 @@ def generate_id_mapping(old_id, new_id):
 
     if old_id is None and new_id is None:
         return {}
-    elif not (type(old_id) == list and type(new_id) == list):
+    elif not (isinstance(old_id, list) and isinstance(new_id, list)):
         raise ValueError('illegal input format: id lists type should be list, however got: \n'
                          'content: {}/ type: {} \n'
                          'content: {}/ type: {}'.format(old_id, type(old_id), new_id, type(new_id)))
@@ -18,7 +18,7 @@ def generate_id_mapping(old_id, new_id):
 
     mapping = {}
     for id0, id1 in zip(old_id, new_id):
-        if type(id0) != int or type(id1) != int:
+        if not isinstance(id0, int) or not isinstance(id1, int):
             raise ValueError('party id must be an integer, got {}:{} and {}:{}'.format(id0, type(id0),
                                                                                        id1, type(id1)))
         mapping[id0] = id1

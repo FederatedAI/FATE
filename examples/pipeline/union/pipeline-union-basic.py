@@ -44,16 +44,19 @@ def main(config="../../config.yaml", namespace=""):
     reader_1.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
 
     data_transform_0 = DataTransform(name="data_transform_0", with_label=True, output_format="dense", label_name="y",
-                      missing_fill=False, outlier_replace=False)
+                                     missing_fill=False, outlier_replace=False)
     data_transform_1 = DataTransform(name="data_transform_1", with_label=True, output_format="dense", label_name="y",
-                      missing_fill=False, outlier_replace=False)
+                                     missing_fill=False, outlier_replace=False)
 
     union_0 = Union(name="union_0", allow_missing=False, need_run=True)
 
     pipeline.add_component(reader_0)
     pipeline.add_component(reader_1)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(data_transform_1, data=Data(data=reader_1.output.data), model=Model(data_transform_0.output.model))
+    pipeline.add_component(
+        data_transform_1, data=Data(
+            data=reader_1.output.data), model=Model(
+            data_transform_0.output.model))
     pipeline.add_component(union_0, data=Data(data=[data_transform_0.output.data, data_transform_1.output.data]))
     pipeline.compile()
 

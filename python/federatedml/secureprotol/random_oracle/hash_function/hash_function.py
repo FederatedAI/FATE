@@ -23,6 +23,7 @@ class HashFunction(RandomOracle):
     """
     Cryptographic hash functions
     """
+
     def __init__(self, function):
         super(HashFunction, self).__init__()
         self.function = function

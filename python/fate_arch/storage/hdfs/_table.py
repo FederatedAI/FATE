@@ -29,13 +29,13 @@ LOGGER = getLogger()
 
 class StorageTable(StorageTableBase):
     def __init__(
-        self,
-        address=None,
-        name: str = None,
-        namespace: str = None,
-        partitions: int = 1,
-        store_type: HDFSStoreType = HDFSStoreType.DISK,
-        options=None,
+            self,
+            address=None,
+            name: str = None,
+            namespace: str = None,
+            partitions: int = 1,
+            store_type: HDFSStoreType = HDFSStoreType.DISK,
+            options=None,
     ):
         super(StorageTable, self).__init__(
             name=name,
@@ -57,9 +57,9 @@ class StorageTable(StorageTableBase):
 
     def check_address(self):
         return self._exist()
-    
+
     def _put_all(
-        self, kv_list: Iterable, append=True, assume_file_exist=False, **kwargs
+            self, kv_list: Iterable, append=True, assume_file_exist=False, **kwargs
     ):
         LOGGER.info(f"put in hdfs file: {self.path}")
         if append and (assume_file_exist or self._exist()):
@@ -99,7 +99,7 @@ class StorageTable(StorageTableBase):
         return count
 
     def _save_as(
-        self, address, partitions=None, name=None, namespace=None, **kwargs
+            self, address, partitions=None, name=None, namespace=None, **kwargs
     ):
         self._hdfs_client.copy_file(src=self.path, dst=address.path)
         table = StorageTable(
@@ -128,12 +128,8 @@ class StorageTable(StorageTableBase):
             raise FileNotFoundError(f"file {self.path} not found")
 
         elif info.type == fs.FileType.File:
-            # todo:
-            with io.TextIOWrapper(
-                    buffer=self._hdfs_client.open_input_stream(self.path), encoding="utf-8"
-            ) as reader:
-                for line in reader:
-                    yield line
+            for line in self._read_buffer_lines():
+                yield line
         else:
             selector = fs.FileSelector(os.path.join("/", self._address.path))
             file_infos = self._hdfs_client.get_file_info(selector)
@@ -144,10 +140,49 @@ class StorageTable(StorageTableBase):
                     file_info.is_file
                 ), f"{self.path} is directory contains a subdirectory: {file_info.path}"
                 with io.TextIOWrapper(
-                    buffer=self._hdfs_client.open_input_stream(
-                        f"{self._address.name_node}/{file_info.path}"
-                    ),
-                    encoding="utf-8",
+                        buffer=self._hdfs_client.open_input_stream(
+                            f"{self._address.name_node}/{file_info.path}"
+                        ),
+                        encoding="utf-8",
                 ) as reader:
                     for line in reader:
                         yield line
+
+    def _read_buffer_lines(self, path=None):
+        if not path:
+            path = self.path
+        buffer = self._hdfs_client.open_input_file(path)
+        offset = 0
+        block_size = 1024 * 1024 * 10
+        size = buffer.size()
+
+        while offset < size:
+            block_index = 1
+            buffer_block = buffer.read_at(block_size, offset)
+            if offset + block_size >= size:
+                for line in self._read_lines(buffer_block):
+                    yield line
+                break
+            if buffer_block.endswith(b"\n"):
+                for line in self._read_lines(buffer_block):
+                    yield line
+                offset += block_size
+                continue
+            end_index = -1
+            buffer_len = len(buffer_block)
+            while not buffer_block[:end_index].endswith(b"\n"):
+                if offset + block_index * block_size >= size:
+                    break
+                end_index -= 1
+                if abs(end_index) == buffer_len:
+                    block_index += 1
+                    buffer_block = buffer.read_at(block_index * block_size, offset)
+                    end_index = block_index * block_size
+            for line in self._read_lines(buffer_block[:end_index]):
+                yield line
+            offset += len(buffer_block[:end_index])
+
+    def _read_lines(self, buffer_block):
+        with io.TextIOWrapper(buffer=io.BytesIO(buffer_block), encoding="utf-8") as reader:
+            for line in reader:
+                yield line

@@ -129,9 +129,9 @@ class Intersect(object):
             return intersect_ids_list[0]
 
         if keep_encrypt_ids:
-            f = lambda id, v: id + v
+            def f(v_prev, v): return v_prev + v
         else:
-            f = lambda id, v: "id"
+            def f(v_prev, v): return "id"
 
         intersect_ids = None
         for i, value in enumerate(intersect_ids_list):
@@ -143,16 +143,19 @@ class Intersect(object):
         return intersect_ids
 
     @staticmethod
-    def extract_intersect_ids(intersect_ids, all_ids):
-        intersect_ids = intersect_ids.join(all_ids, lambda e, h: h)
+    def extract_intersect_ids(intersect_ids, all_ids, keep_both=False):
+        if keep_both:
+            intersect_ids = intersect_ids.join(all_ids, lambda e, h: [e, h])
+        else:
+            intersect_ids = intersect_ids.join(all_ids, lambda e, h: h)
         return intersect_ids
 
     @staticmethod
     def filter_intersect_ids(encrypt_intersect_ids, keep_encrypt_ids=False):
         if keep_encrypt_ids:
-            f = lambda k, v: (v, [k])
+            def f(k, v): return (v, [k])
         else:
-            f = lambda k, v: (v, 1)
+            def f(k, v): return (v, 1)
         if len(encrypt_intersect_ids) > 1:
             raw_intersect_ids = [e.map(f) for e in encrypt_intersect_ids]
             intersect_ids = Intersect.get_common_intersection(raw_intersect_ids, keep_encrypt_ids)
@@ -173,13 +176,14 @@ class Intersect(object):
         return encrypt_common_id
 
     @staticmethod
-    def map_encrypt_id_to_raw_id(encrypt_id_data, raw_id_data):
+    def map_encrypt_id_to_raw_id(encrypt_id_data, raw_id_data, keep_encrypt_id=True):
         """
 
         Parameters
         ----------
         encrypt_id_data: E(id)
         raw_id_data: (E(id), (id, v))
+        keep_encrypt_id: bool
 
         Returns
         -------
@@ -187,7 +191,10 @@ class Intersect(object):
 
         """
         encrypt_id_raw_id = raw_id_data.join(encrypt_id_data, lambda r, e: r)
-        raw_id = encrypt_id_raw_id.map(lambda k, v: (v[0], k))
+        if keep_encrypt_id:
+            raw_id = encrypt_id_raw_id.map(lambda k, v: (v[0], k))
+        else:
+            raw_id = encrypt_id_raw_id.map(lambda k, v: (v[0], 1))
         return raw_id
 
     @staticmethod

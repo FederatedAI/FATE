@@ -72,7 +72,6 @@ def main(config="../../config.yaml", namespace=""):
     # json.dump(dsl_json, open('./hetero-lr-normal-predict-dsl.json', 'w'), indent=4)
     # json.dump(conf_json, open('./hetero-lr-normal-predict-conf.json', 'w'), indent=4)
 
-
     # fit model
     pipeline.fit()
     # query component summary

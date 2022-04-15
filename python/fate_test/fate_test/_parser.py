@@ -18,12 +18,13 @@ import json
 import typing
 from collections import deque
 from pathlib import Path
-
-from fate_test import _config
 import click
 import prettytable
 
+from fate_test import _config
+from fate_test._io import echo
 from fate_test._config import Parties, Config
+from fate_test.utils import TxtStyle
 
 
 # noinspection PyPep8Naming
@@ -200,6 +201,7 @@ class JobDSL(object):
     def __init__(self, components: dict, provider=None):
         self.components = components
         self.provider = provider
+
     @staticmethod
     def load(path: Path, provider):
         with path.open("r") as f:
@@ -236,38 +238,27 @@ class Job(object):
             job_dsl = JobDSL.load(base.joinpath(job_dsl).resolve(), provider)
 
         pre_works = []
-        pre_works_value = []
-        name_dict = {}
-        if job_configs.get("data_deps", None):
-            pre_works_value.append("data_deps")
-            assembly = list(job_configs["data_deps"].keys())[0]
-            name_dict["data"] = job_configs["data_deps"][assembly]
-        if job_configs.get("model_deps", None):
-            pre_works_value.append("model_deps")
-        elif job_configs.get("deps", None):
-            pre_works_value.append("model_deps")
-        if job_configs.get("cache_deps", None):
-            pre_works_value.append("cache_deps")
-        if job_configs.get("model_loader_deps", None):
-            pre_works_value.append("model_loader_deps")
+        pre_works_value = {}
+        deps_dict = {}
 
         if job_configs.get("model_deps", None):
             pre_works.append(job_configs["model_deps"])
-            name_dict["name"] = job_configs["model_deps"]
+            deps_dict["model_deps"] = {'name': job_configs["model_deps"]}
         elif job_configs.get("deps", None):
             pre_works.append(job_configs["deps"])
-            name_dict["name"] = job_configs["deps"]
+            deps_dict["model_deps"] = {'name': job_configs["deps"]}
         if job_configs.get("data_deps", None):
+            deps_dict["data_deps"] = {'data': job_configs["data_deps"]}
             pre_works.append(list(job_configs["data_deps"].keys())[0])
-            name_dict["name"] = list(job_configs["data_deps"].keys())[0]
+            deps_dict["data_deps"].update({'name': list(job_configs["data_deps"].keys())})
         if job_configs.get("cache_deps", None):
             pre_works.append(job_configs["cache_deps"])
-            name_dict["name"] = job_configs["cache_deps"]
+            deps_dict["cache_deps"] = {'name': job_configs["cache_deps"]}
         if job_configs.get("model_loader_deps", None):
             pre_works.append(job_configs["model_loader_deps"])
-            name_dict["name"] = job_configs["model_loader_deps"]
+            deps_dict["model_loader_deps"] = {'name': job_configs["model_loader_deps"]}
 
-        pre_works_value.append(name_dict)
+        pre_works_value.update(deps_dict)
         _config.deps_alter[job_name] = pre_works_value
 
         return Job(
@@ -317,6 +308,7 @@ class Testsuite(object):
         self.jobs = jobs
         self.pipeline_jobs = pipeline_jobs
         self.path = path
+        self.suite_name = Path(self.path).stem
 
         self._dependency: typing.MutableMapping[str, typing.List[Job]] = {}
         self._final_status: typing.MutableMapping[str, FinalStatus] = {}
@@ -350,7 +342,7 @@ class Testsuite(object):
 
         pipeline_jobs = []
         if testsuite_config.get("pipeline_tasks", None) is not None and provider is not None:
-            print('[Warning]  Pipeline does not support parameter: provider-> {}'.format(provider))
+            echo.echo('[Warning]  Pipeline does not support parameter: provider-> {}'.format(provider))
         for job_name, job_configs in testsuite_config.get("pipeline_tasks", {}).items():
             script_path = path.parent.joinpath(job_configs["script"]).resolve()
             pipeline_jobs.append(PipelineJob(job_name, script_path))
@@ -362,22 +354,41 @@ class Testsuite(object):
         while self._ready_jobs:
             yield self._ready_jobs.pop()
 
-    def pretty_final_summary(self, time_consuming):
-        table = prettytable.PrettyTable(
+    @staticmethod
+    def style_table(txt):
+        colored_txt = txt.replace("success", f"{TxtStyle.TRUE_VAL}success{TxtStyle.END}")
+        colored_txt = colored_txt.replace("failed", f"{TxtStyle.FALSE_VAL}failed{TxtStyle.END}")
+        colored_txt = colored_txt.replace("not submitted", f"{TxtStyle.FALSE_VAL}not submitted{TxtStyle.END}")
+        return colored_txt
+
+    def pretty_final_summary(self, time_consuming, suite_file=None):
+        """table = prettytable.PrettyTable(
             ["job_name", "job_id", "status", "time_consuming", "exception_id", "rest_dependency"]
-        )
+        )"""
+        table = prettytable.PrettyTable()
+        table.set_style(prettytable.ORGMODE)
+        field_names = ["job_name", "job_id", "status", "time_consuming", "exception_id", "rest_dependency"]
+        table.field_names = field_names
         for status in self.get_final_status().values():
+            if status.status != "success":
+                status.suite_file = suite_file
+                _config.non_success_jobs.append(status)
+            if status.exception_id != "-":
+                exception_id_txt = f"{TxtStyle.FALSE_VAL}{status.exception_id}{TxtStyle.END}"
+            else:
+                exception_id_txt = f"{TxtStyle.FIELD_VAL}{status.exception_id}{TxtStyle.END}"
             table.add_row(
                 [
-                    status.name,
-                    status.job_id,
-                    status.status,
-                    time_consuming.pop(0) if status.job_id != "-" else "-",
-                    status.exception_id,
-                    ",".join(status.rest_dependency),
+                    f"{TxtStyle.FIELD_VAL}{status.name}{TxtStyle.END}",
+                    f"{TxtStyle.FIELD_VAL}{status.job_id}{TxtStyle.END}",
+                    self.style_table(status.status),
+                    f"{TxtStyle.FIELD_VAL}{time_consuming.pop(0) if status.job_id != '-' else '-'}{TxtStyle.END}",
+                    f"{exception_id_txt}",
+                    f"{TxtStyle.FIELD_VAL}{','.join(status.rest_dependency)}{TxtStyle.END}",
                 ]
             )
-        return table.get_string()
+
+        return table.get_string(title=f"{TxtStyle.TITLE}Testsuite Summary: {self.suite_name}{TxtStyle.END}")
 
     def model_in_dep(self, name):
         return name in self._dependency
@@ -441,6 +452,7 @@ class FinalStatus(object):
         self.status = status
         self.exception_id = exception_id
         self.rest_dependency = rest_dependency or []
+        self.suite_file = None
 
 
 class BenchmarkJob(object):
@@ -506,6 +518,29 @@ class BenchmarkSuite(object):
             )
         suite = BenchmarkSuite(dataset=dataset, pairs=pairs, path=path)
         return suite
+
+
+def non_success_summary():
+    status = {}
+    for job in _config.non_success_jobs:
+        if job.status not in status.keys():
+            status[job.status] = prettytable.PrettyTable(
+                ["testsuite_name", "job_name", "job_id", "status", "exception_id", "rest_dependency"]
+            )
+
+        status[job.status].add_row(
+            [
+                job.suite_file,
+                job.name,
+                job.job_id,
+                job.status,
+                job.exception_id,
+                ",".join(job.rest_dependency),
+            ]
+        )
+    for k, v in status.items():
+        echo.echo("\n" + "#" * 60)
+        echo.echo(v.get_string(title=f"{k} job record"), fg='red')
 
 
 def _namespace_hook(namespace):

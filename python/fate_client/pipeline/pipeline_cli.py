@@ -63,8 +63,8 @@ def _init(**kwargs):
 
     if config_path is None and (ip is None or port is None):
         print(
-               "\nPipeline configuration failed. \nPlease provides configuration file path "
-                "or server http ip address & port information."
+            "\nPipeline configuration failed. \nPlease provides configuration file path "
+            "or server http ip address & port information."
         )
         return
 
@@ -145,6 +145,7 @@ def _check():
         click.echo(f"Flow server not responsive. Please check flow server ip and port setting.")
     else:
         click.echo(f"Flow server status normal, Flow version: {version}")
+
 
 cli.add_command(_init)
 cli.add_command(config_group)

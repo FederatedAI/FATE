@@ -15,7 +15,7 @@
 
 import copy
 
-from federatedml.param.base_param import BaseParam
+from federatedml.param.logistic_regression_param import LogisticParam
 from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.callback_param import CallbackParam
 from federatedml.param.encrypt_param import EncryptParam
@@ -25,13 +25,13 @@ from federatedml.param.predict_param import PredictParam
 from federatedml.util import consts
 
 
-class LogisticRegressionParam(BaseParam):
+class HeteroSSHELRParam(LogisticParam):
     """
     Parameters used for Hetero SSHE Logistic Regression
 
     Parameters
     ----------
-    penalty : str, 'L1', 'L2' or None. default: None
+    penalty : str, 'L1', 'L2' or None. default: 'L2'
         Penalty method used in LR. If it is not None, weights are required to be reconstruct every iter.
 
     tol : float, default: 1e-4
@@ -41,7 +41,7 @@ class LogisticRegressionParam(BaseParam):
         Regularization strength coefficient.
 
     optimizer : str, 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd', or 'adagrad', default: 'sgd'
-        Optimize method
+        Optimizer
 
     batch_size : int, default: -1
         Batch size when updating model. -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
@@ -88,7 +88,7 @@ class LogisticRegressionParam(BaseParam):
 
     """
 
-    def __init__(self, penalty=None,
+    def __init__(self, penalty='L2',
                  tol=1e-4, alpha=1.0, optimizer='sgd',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
                  max_iter=100, early_stop='diff', encrypt_param=EncryptParam(),
@@ -100,31 +100,23 @@ class LogisticRegressionParam(BaseParam):
                  callback_param=CallbackParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam()
                  ):
-        super(LogisticRegressionParam, self).__init__()
-        self.penalty = penalty
-        self.tol = tol
-        self.alpha = alpha
-        self.optimizer = optimizer
-        self.batch_size = batch_size
-        self.learning_rate = learning_rate
-        self.init_param = copy.deepcopy(init_param)
-        self.max_iter = max_iter
-        self.early_stop = early_stop
-        self.encrypt_param = encrypt_param
-        self.predict_param = copy.deepcopy(predict_param)
-        self.decay = decay
-        self.decay_sqrt = decay_sqrt
-        self.multi_class = multi_class
+        super(HeteroSSHELRParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
+                                                batch_size=batch_size,
+                                                learning_rate=learning_rate,
+                                                init_param=init_param, max_iter=max_iter, early_stop=early_stop,
+                                                predict_param=predict_param, cv_param=cv_param,
+                                                decay=decay,
+                                                decay_sqrt=decay_sqrt, multi_class=multi_class,
+                                                encrypt_param=encrypt_param, callback_param=callback_param)
         self.use_mix_rand = use_mix_rand
         self.reveal_strategy = reveal_strategy
         self.reveal_every_iter = reveal_every_iter
-        self.callback_param = copy.deepcopy(callback_param)
-        self.cv_param = copy.deepcopy(cv_param)
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
 
     def check(self):
         descr = "logistic_param's"
-
+        super(HeteroSSHELRParam, self).check()
+        self.check_boolean(self.reveal_every_iter, descr)
         if self.penalty is None:
             pass
         elif type(self.penalty).__name__ != "str":
@@ -132,22 +124,16 @@ class LogisticRegressionParam(BaseParam):
                 "logistic_param's penalty {} not supported, should be str type".format(self.penalty))
         else:
             self.penalty = self.penalty.upper()
-            if self.penalty not in [consts.L1_PENALTY, consts.L2_PENALTY]:
+            """
+            if self.penalty not in [consts.L1_PENALTY, consts.L2_PENALTY, consts.NONE.upper()]:
                 raise ValueError(
-                    "logistic_param's penalty not supported, penalty should be 'L1', 'L2' or 'none'")
+                    "logistic_param's penalty not supported, penalty should be 'L1', 'L2' or 'NONE'")
+            """
             if not self.reveal_every_iter:
-                if self.penalty not in [consts.L2_PENALTY]:
+                if self.penalty not in [consts.L2_PENALTY, consts.NONE.upper()]:
                     raise ValueError(
                         f"penalty should be 'L2' or 'none', when reveal_every_iter is False"
                     )
-
-        if not isinstance(self.tol, (int, float)):
-            raise ValueError(
-                "logistic_param's tol {} not supported, should be float type".format(self.tol))
-
-        if type(self.alpha).__name__ not in ["float", 'int']:
-            raise ValueError(
-                "logistic_param's alpha {} not supported, should be float or int type".format(self.alpha))
 
         if type(self.optimizer).__name__ != "str":
             raise ValueError(
@@ -166,87 +152,20 @@ class LogisticRegressionParam(BaseParam):
                                      "sshe logistic_param's optimizer not supported, optimizer should be"
                                      " 'sgd', 'nesterov_momentum_sgd'")
 
-        if self.batch_size != -1:
-            if type(self.batch_size).__name__ not in ["int"] \
-                    or self.batch_size < consts.MIN_BATCH_SIZE:
-                raise ValueError(descr + " {} not supported, should be larger than {} or "
-                                         "-1 represent for all data".format(self.batch_size, consts.MIN_BATCH_SIZE))
-
-        if not isinstance(self.learning_rate, (float, int)):
-            raise ValueError(
-                "logistic_param's learning_rate {} not supported, should be float or int type".format(
-                    self.learning_rate))
-
-        self.init_param.check()
-
-        if type(self.max_iter).__name__ != "int":
-            raise ValueError(
-                "logistic_param's max_iter {} not supported, should be int type".format(self.max_iter))
-        elif self.max_iter <= 0:
-            raise ValueError(
-                "logistic_param's max_iter must be greater or equal to 1")
-
-        if type(self.early_stop).__name__ != "str":
-            raise ValueError(
-                "logistic_param's early_stop {} not supported, should be str type".format(
-                    self.early_stop))
-        else:
-            self.early_stop = self.early_stop.lower()
-            if self.early_stop not in ['diff', 'abs', 'weight_diff']:
-                raise ValueError(
-                    "logistic_param's early_stop not supported, converge_func should be"
-                    " 'diff', 'weight_diff' or 'abs'")
-
-        self.encrypt_param.check()
-        self.predict_param.check()
         if self.encrypt_param.method not in [consts.PAILLIER, None]:
             raise ValueError(
                 "logistic_param's encrypted method support 'Paillier' or None only")
 
-        if type(self.decay).__name__ not in ["int", 'float']:
-            raise ValueError(
-                "logistic_param's decay {} not supported, should be 'int' or 'float'".format(
-                    self.decay))
-
-        if type(self.decay_sqrt).__name__ not in ['bool']:
-            raise ValueError(
-                "logistic_param's decay_sqrt {} not supported, should be 'bool'".format(
-                    self.decay_sqrt))
-
         if self.callback_param.validation_freqs is not None:
-            if type(self.callback_param.validation_freqs).__name__ not in ["int", "list", "tuple", "set"]:
-                raise ValueError(
-                    "validation strategy param's validate_freqs's type not supported ,"
-                    " should be int or list or tuple or set"
-                )
-            if type(self.callback_param.validation_freqs).__name__ == "int" and \
-                    self.callback_param.validation_freqs <= 0:
-                raise ValueError("validation strategy param's validate_freqs should greater than 0")
             if self.reveal_every_iter is False:
                 raise ValueError(f"When reveal_every_iter is False, validation every iter"
                                  f" is not supported.")
 
-        if self.callback_param.early_stopping_rounds is None:
-            pass
-        elif isinstance(self.callback_param.early_stopping_rounds, int):
-            if self.callback_param.early_stopping_rounds < 1:
-                raise ValueError("early stopping rounds should be larger than 0 when it's integer")
-            if self.callback_param.validation_freqs is None:
-                raise ValueError("validation freqs must be set when early stopping is enabled")
-
-        if self.callback_param.metrics is not None and \
-                not isinstance(self.callback_param.metrics, list):
-            raise ValueError("metrics should be a list")
-
-        if not isinstance(self.callback_param.use_first_metric_only, bool):
-            raise ValueError("use_first_metric_only should be a boolean")
-
-        self.reveal_strategy = self.reveal_strategy.lower()
-        self.check_valid_value(self.reveal_strategy, descr, ["respectively", "encrypted_reveal_in_host"])
+        self.reveal_strategy = self.check_and_change_lower(self.reveal_strategy,
+                                                           ["respectively", "encrypted_reveal_in_host"],
+                                                           f"{descr} reveal_strategy")
 
         if self.reveal_strategy == "encrypted_reveal_in_host" and self.reveal_every_iter:
             raise PermissionError("reveal strategy: encrypted_reveal_in_host mode is not allow to reveal every iter.")
-        self.check_boolean(self.reveal_every_iter, descr)
-        self.callback_param.check()
-        self.cv_param.check()
+        self.encrypted_mode_calculator_param.check()
         return True

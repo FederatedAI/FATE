@@ -30,4 +30,3 @@ def _get_initializer(initializer, seed):
         return initializer_instance
 
     return initializer
-

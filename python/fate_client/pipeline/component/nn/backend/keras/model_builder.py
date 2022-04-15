@@ -72,5 +72,3 @@ class SequentialModel(object):
                               "can not import sequential model from tensorflow.keras.model !!!")
 
         return json.loads(self._model.to_json())
-
-

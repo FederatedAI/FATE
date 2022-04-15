@@ -34,4 +34,5 @@ class RawIntersectTransferVariable(BaseTransferVariables):
         self.intersect_ids_host = self._create_variable(name='intersect_ids_host', src=['host'], dst=['guest'])
         self.send_ids_guest = self._create_variable(name='send_ids_guest', src=['guest'], dst=['host'])
         self.send_ids_host = self._create_variable(name='send_ids_host', src=['host'], dst=['guest'])
-        self.sync_intersect_ids_multi_hosts = self._create_variable(name='sync_intersect_ids_multi_hosts', src=['guest'], dst=['host'])
+        self.sync_intersect_ids_multi_hosts = self._create_variable(
+            name='sync_intersect_ids_multi_hosts', src=['guest'], dst=['host'])

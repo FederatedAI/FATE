@@ -203,7 +203,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(hetero_secureboost_0, data=Data(train_data=hetero_feature_selection_0.output.data,
                                                            validate_data=hetero_feature_selection_1.output.data))
     pipeline.add_component(hetero_secureboost_1, data=Data(test_data=hetero_feature_selection_2.output.data),
-                            model=Model(hetero_secureboost_0.output.model))
+                           model=Model(hetero_secureboost_0.output.model))
 
     pipeline.add_component(evaluation_0,
                            data=Data(data=[hetero_secureboost_0.output.data, hetero_secureboost_1.output.data]))

@@ -36,8 +36,7 @@ class FTLParam(BaseParam):
 
     def __init__(self, alpha=1, tol=0.000001,
                  n_iter_no_change=False, validation_freqs=None, optimizer={'optimizer': 'Adam', 'learning_rate': 0.01},
-                 nn_define={}, epochs=1
-                 , intersect_param=IntersectParam(consts.RSA), config_type='keras', batch_size=-1,
+                 nn_define={}, epochs=1, intersect_param=IntersectParam(consts.RSA), config_type='keras', batch_size=-1,
                  encrypte_param=EncryptParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(mode="confusion_opt"),
                  predict_param=PredictParam(), mode='plain', communication_efficient=False,
@@ -164,8 +163,10 @@ class FTLParam(BaseParam):
         elif not isinstance(self.validation_freqs, collections.Container):
             raise ValueError("validation_freqs should be None or positive integer or container")
 
-        assert type(self.communication_efficient) is bool, 'communication efficient must be a boolean'
-        assert self.mode in ['encrypted', 'plain'], 'mode options: encrpyted or plain, but {} is offered'.format(self.mode)
+        assert isinstance(self.communication_efficient, bool), 'communication efficient must be a boolean'
+        assert self.mode in [
+            'encrypted', 'plain'], 'mode options: encrpyted or plain, but {} is offered'.format(
+            self.mode)
 
         self.check_positive_integer(self.epochs, 'epochs')
         self.check_positive_number(self.alpha, 'alpha')
@@ -194,4 +195,3 @@ class FTLParam(BaseParam):
             return SimpleNamespace(optimizer=optimizer, kwargs=kwargs)
         else:
             raise ValueError(f"invalid type for optimize: {type(opt)}")
-

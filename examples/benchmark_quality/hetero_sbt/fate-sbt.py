@@ -30,6 +30,7 @@ from pipeline.utils.tools import JobConfig
 from federatedml.evaluation.metrics import regression_metric, classification_metric
 from fate_test.utils import extract_data, parse_summary_result
 
+
 def parse_summary_result(rs_dict):
     for model_key in rs_dict:
         rs_content = rs_dict[model_key]
@@ -80,6 +81,9 @@ def main(config="../../config.yaml", param="./xgb_config_binary.yaml", namespace
     intersect_1 = Intersection(name="intersection_1")
 
     # secure boost component
+    multi_mode = 'single_output'
+    if 'multi_mode' in param:
+        multi_mode = param['multi_mode']
     hetero_secure_boost_0 = HeteroSecureBoost(name="hetero_secure_boost_0",
                                               num_trees=param['tree_num'],
                                               task_type=param['task_type'],
@@ -87,7 +91,8 @@ def main(config="../../config.yaml", param="./xgb_config_binary.yaml", namespace
                                               encrypt_param={"method": "Paillier"},
                                               tree_param={"max_depth": param['tree_depth']},
                                               validation_freqs=1,
-                                              learning_rate=param['learning_rate']
+                                              learning_rate=param['learning_rate'],
+                                              multi_mode=multi_mode
                                               )
     hetero_secure_boost_1 = HeteroSecureBoost(name="hetero_secure_boost_1")
     # evaluation component
@@ -139,7 +144,6 @@ def main(config="../../config.yaml", param="./xgb_config_binary.yaml", namespace
                     }
 
     return data_summary, metric_summary
-
 
 
 if __name__ == "__main__":

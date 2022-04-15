@@ -3,8 +3,6 @@ import numpy as np
 from federatedml.feature.feature_selection.model_adapter import isometric_model
 from federatedml.feature.feature_selection.model_adapter.adapter_base import BaseAdapter
 from federatedml.util import consts
-# from federatedml.util.fate_operator import generate_anonymous
-from federatedml.util.anonymous_generator import generate_anonymous
 
 
 def feature_importance_converter(model_meta, model_param):
@@ -44,8 +42,8 @@ def feature_importance_with_anonymous_converter(model_meta, model_param):
 
     fid_mapping = dict(model_param.feature_name_fid_mapping)
     feat_importance_list = list(model_param.feature_importances)
-    guest_fids = list(fid_mapping.keys())
-    guest_cols, guest_val = [], []
+    local_fids = list(fid_mapping.keys())
+    local_cols, local_val = [], []
 
     # key is int party id, value is a dict, which has two key: col_name and value
     host_side_data = {}
@@ -54,37 +52,25 @@ def feature_importance_with_anonymous_converter(model_meta, model_param):
         fid = feat_importance.fid
         importance = feat_importance.importance
         site_name = feat_importance.sitename
-        site_name = site_name.split(':')
-        if site_name[0] == consts.HOST:
-            host_id = int(site_name[1])
-            if host_id not in host_side_data:
-                host_side_data[host_id] = {'col_name': [], 'value': []}
-            host_col_name = generate_anonymous(fid, host_id, role=consts.HOST)
-            host_side_data[host_id]['col_name'].append(host_col_name)
-            host_side_data[host_id]['value'].append(importance)
+        if site_name == consts.HOST_LOCAL:
+            local_cols.append(fid_mapping[fid])
+            local_val.append(importance)
         else:
-            guest_cols.append(fid_mapping[fid])
-            guest_val.append(importance)
+            site_name = site_name.split(':')
+            if site_name[0] == consts.HOST:
+                continue
+            else:
+                local_cols.append(fid_mapping[fid])
+                local_val.append(importance)
 
-    for fid in guest_fids:
-        if fid_mapping[fid] not in guest_cols:
-            guest_cols.append(fid_mapping[fid])
-            guest_val.append(0)
-
-    host_party_ids = []
-    host_values = []
-    host_col_names = []
-    for hid in host_side_data:
-        host_party_ids.append(hid)
-        host_values.append(host_side_data[hid]['value'])
-        host_col_names.append(host_side_data[hid]['col_name'])
+    for fid in local_fids:
+        if fid_mapping[fid] not in local_cols:
+            local_cols.append(fid_mapping[fid])
+            local_val.append(0)
 
     single_info = isometric_model.SingleMetricInfo(
-        values=np.array(guest_val),
-        col_names=guest_cols,
-        host_party_ids=host_party_ids,
-        host_values=host_values,
-        host_col_names=host_col_names
+        values=np.array(local_val),
+        col_names=local_cols
     )
     result = isometric_model.IsometricModel()
     result.add_metric_value(metric_name=consts.FEATURE_IMPORTANCE, metric_info=single_info)
