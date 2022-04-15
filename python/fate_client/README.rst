@@ -26,7 +26,7 @@ Pipeline
 
 A high-level python API that allows user to design, start,
 and query FATE jobs in a sequential manner. For more information,
-please refer to this `guide <./pipeline/README.rst>`__
+please refer to this `guide <../doc/api/fate_client/pipeline.md>`__
 
 Initial Configuration
 ---------------------
@@ -45,7 +45,8 @@ FATE Flow Command Line Interface (CLI) v2
 =========================================
 
 A command line interface providing series of commands for user to design, start,
-and query FATE jobs. For more information, please refer to this `guide <./flow_client/README.rst>`__
+and query FATE jobs. For more information,
+please refer to this `guide <https://github.com/FederatedAI/FATE-Flow/blob/main/doc/fate_flow_client.md>`__
 
 Initial Configuration
 ---------------------
