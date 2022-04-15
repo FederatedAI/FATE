@@ -128,21 +128,8 @@ class StorageTable(StorageTableBase):
             raise FileNotFoundError(f"file {self.path} not found")
 
         elif info.type == fs.FileType.File:
-            buffer = self._hdfs_client.open_input_file(self.path)
-            offset = 0
-            block_size = 1024
-            while offset < buffer.size():
-                block_index = 1
-                buffer_block = buffer.read_at(block_size, offset)
-                while not buffer_block.endswith(b"\n"):
-                    buffer_block = buffer_block[:-1]
-                    if len(buffer_block) % block_size == 0:
-                        block_index += 1
-                        buffer_block = buffer.read_at(block_index*block_size, offset)
-                with io.TextIOWrapper(buffer=io.BytesIO(buffer_block), encoding="utf-8") as reader:
-                    for line in reader:
-                        yield line
-                offset += len(buffer_block)
+            for line in self._read_buffer_lines():
+                yield line
         else:
             selector = fs.FileSelector(os.path.join("/", self._address.path))
             file_infos = self._hdfs_client.get_file_info(selector)
@@ -160,3 +147,42 @@ class StorageTable(StorageTableBase):
                 ) as reader:
                     for line in reader:
                         yield line
+
+    def _read_buffer_lines(self, path=None):
+        if not path:
+            path = self.path
+        buffer = self._hdfs_client.open_input_file(path)
+        offset = 0
+        block_size = 1024 * 1024 * 10
+        size = buffer.size()
+
+        while offset < size:
+            block_index = 1
+            buffer_block = buffer.read_at(block_size, offset)
+            if offset + block_size >= size:
+                for line in self._read_lines(buffer_block):
+                    yield line
+                break
+            if buffer_block.endswith(b"\n"):
+                for line in self._read_lines(buffer_block):
+                    yield line
+                offset += block_size
+                continue
+            end_index = -1
+            buffer_len = len(buffer_block)
+            while not buffer_block[:end_index].endswith(b"\n"):
+                if offset + block_index * block_size >= size:
+                    break
+                end_index -= 1
+                if abs(end_index) == buffer_len:
+                    block_index += 1
+                    buffer_block = buffer.read_at(block_index * block_size, offset)
+                    end_index = block_index * block_size
+            for line in self._read_lines(buffer_block[:end_index]):
+                yield line
+            offset += len(buffer_block[:end_index])
+
+    def _read_lines(self, buffer_block):
+        with io.TextIOWrapper(buffer=io.BytesIO(buffer_block), encoding="utf-8") as reader:
+            for line in reader:
+                yield line
