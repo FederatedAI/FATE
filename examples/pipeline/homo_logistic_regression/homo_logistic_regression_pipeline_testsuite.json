@@ -49,7 +49,7 @@
             "role": "host_1"
         },
         {
-            "file": "examples/data/vehicle_scale_hetero_guest.csv",
+            "file": "examples/data/vehicle_scale_homo_guest.csv",
             "head": 1,
             "partition": 16,
             "table_name": "vehicle_scale_homo_guest",
@@ -57,7 +57,7 @@
             "role": "guest_0"
         },
         {
-            "file": "examples/data/vehicle_scale_hetero_host.csv",
+            "file": "examples/data/vehicle_scale_homo_host.csv",
             "head": 1,
             "partition": 16,
             "table_name": "vehicle_scale_homo_host",
