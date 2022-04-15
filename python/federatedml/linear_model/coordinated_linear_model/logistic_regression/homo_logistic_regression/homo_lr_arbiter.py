@@ -71,7 +71,8 @@ class HomoLRArbiter(HomoLRBase):
                 merged_model = self.aggregator.aggregate_and_broadcast(ciphers_dict=host_ciphers,
                                                                        suffix=suffix)
                 total_loss = self.aggregator.aggregate_loss(host_has_no_cipher_ids, suffix)
-                self.callback_loss(self.n_iter_, total_loss)
+                if self.need_call_back_loss:
+                    self.callback_loss(self.n_iter_, total_loss)
                 self.loss_history.append(total_loss)
                 if self.use_loss:
                     converge_var = total_loss

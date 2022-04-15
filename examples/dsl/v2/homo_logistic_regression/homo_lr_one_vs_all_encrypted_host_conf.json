@@ -1,0 +1,86 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "guest": [
+            9999
+        ],
+        "host": [
+            10000
+        ],
+        "arbiter": [
+            9999
+        ]
+    },
+    "job_parameters": {
+        "common": {
+            "job_type": "train"
+        }
+    },
+    "component_parameters": {
+        "role": {
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "vehicle_scale_homo_host",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "vehicle_scale_homo_guest",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            }
+        },
+        "common": {
+            "data_transform_0": {
+                "with_label": true,
+                "output_format": "dense"
+            },
+            "homo_lr_0": {
+                "penalty": "L2",
+                "tol": 1e-05,
+                "alpha": 0.01,
+                "optimizer": "sgd",
+                "batch_size": -1,
+                "learning_rate": 0.15,
+                "init_param": {
+                    "init_method": "zeros"
+                },
+                "max_iter": 1,
+                "early_stop": "diff",
+                "encrypt_param": {
+                    "method": "Paillier"
+                },
+                "cv_param": {
+                    "n_splits": 4,
+                    "shuffle": true,
+                    "random_seed": 33,
+                    "need_cv": false
+                },
+                "decay": 1,
+                "decay_sqrt": true,
+                "callback_param": {
+                    "callbacks": [
+                        "ModelCheckpoint",
+                        "EarlyStopping"
+                    ]
+                }
+            },
+            "evaluation_0": {
+                "eval_type": "multi"
+            }
+        }
+    }
+}

@@ -219,24 +219,6 @@ class PaillierEncrypt(Encrypt):
         return self._recursive_func(X, raw_en_func)
 
 
-class FakeEncrypt(Encrypt):
-
-    def __init__(self):
-        pass
-
-    def encrypt(self, value):
-        return value
-
-    def decrypt(self, value):
-        return value
-
-    def raw_decrypt(self, value):
-        return value
-
-    def raw_encrypt(self, value):
-        return value
-
-
 class PadsCipher(Encrypt):
     def __init__(self):
         super().__init__()

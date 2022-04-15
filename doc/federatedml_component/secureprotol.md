@@ -4,8 +4,7 @@
 
 Encrypt module provides some encryption methods for data. It contains
 [Paillier](https://en.wikipedia.org/wiki/Paillier_cryptosystem),
-[RSA](https://en.wikipedia.org/wiki/RSA_\(cryptosystem\)), and Fake
-method.
+[RSA](https://en.wikipedia.org/wiki/RSA_\(cryptosystem\))
 
 ### Paillier encryption
 
@@ -54,11 +53,6 @@ privacy-key. While giving data $v$, the encrypt operator will do
 $$ enc(v) = v^e \pmod{n}, $$
 and the decrypt operator will do
 $$ dec(v) = enc(v) ^ d \pmod{n} $$
-
-### Fake encryption
-
-It will do nothing and return input data during encryption and
-decryption.
 
 ## Hash Factory
 

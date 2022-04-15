@@ -73,7 +73,10 @@ class HomoLRHost(HomoLRBase):
 
         if not self.component_properties.is_warm_start:
             self.model_weights = self._init_model_variables(data_instances)
-            w = self.cipher_operator.encrypt_list(self.model_weights.unboxed)
+            if self.use_encrypt:
+                w = self.cipher_operator.encrypt_list(self.model_weights.unboxed)
+            else:
+                w = list(self.model_weights.unboxed)
             self.model_weights = LogisticRegressionWeights(w, self.model_weights.fit_intercept)
         else:
             self.callback_warm_start_init_iter(self.n_iter_)

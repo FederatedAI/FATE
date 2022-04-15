@@ -19,7 +19,7 @@ import functools
 import math
 from fate_arch.session import computing_session as session
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.g_h_optim import PackedGHCompressor, GHPacker, fix_point_precision
-from federatedml.secureprotol.encrypt import PaillierEncrypt, FakeEncrypt
+from federatedml.secureprotol.encrypt import PaillierEncrypt
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.splitter import SplitInfo
 from federatedml.util import consts
 import numpy as np

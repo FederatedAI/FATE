@@ -47,6 +47,22 @@
             "table_name": "homo_breast_test",
             "namespace": "experiment",
             "role": "host_1"
+        },
+        {
+            "file": "examples/data/vehicle_scale_homo_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_homo_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_homo_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_homo_host",
+            "namespace": "experiment",
+            "role": "host_0"
         }
     ],
     "tasks": {
@@ -74,6 +90,14 @@
         "multi-host": {
             "conf": "homo_lr_multi_host_conf.json",
             "dsl": "homo_lr_multi_host_dsl.json"
+        },
+        "one_vs_all": {
+            "conf": "homo_lr_one_vs_all_conf.json",
+            "dsl": "homo_lr_one_vs_all_dsl.json"
+        },
+        "one_vs_all_encrypted": {
+            "conf": "homo_lr_one_vs_all_encrypted_host_conf.json",
+            "dsl": "homo_lr_one_vs_all_encrypted_host_dsl.json"
         }
     }
 }

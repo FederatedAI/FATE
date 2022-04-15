@@ -98,7 +98,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(homo_lr_1, data=Data(test_data=data_transform_0.output.data),
                            model=Model(model=homo_lr_0.output.model))
 
-    evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary")
+    evaluation_0 = Evaluation(name="evaluation_0", eval_type="multi")
     pipeline.add_component(evaluation_0, data=Data(data=[homo_lr_0.output.data,
                                                          homo_lr_1.output.data]))
 
