@@ -20,6 +20,8 @@ from pipeline.component import DataTransform
 from pipeline.component import Reader
 from pipeline.interface import Data
 from pipeline.utils.tools import load_job_config
+from pipeline.component.dataio import DataIO
+from pipeline.runtime.entity import JobParameters
 
 
 # noinspection PyPep8Naming
@@ -104,6 +106,85 @@ def run_homo_nn_pipeline(config, namespace, data: dict, nn_component, num_host):
     )
     # run predict model
     predict_pipeline.predict()
+
+
+def run_graphnn_pipeline(config, data: dict, nn_component):
+    if isinstance(config, str):
+        config = load_job_config(config)
+
+    guest_feats = data["guest"]["feats"]
+    guest_adj = data["guest"]["adj"]
+    host_feats = data["host"]["feats"]
+    host_adj = data["host"]["adj"]
+
+    hosts = config.parties.host[:1]
+    pipeline = (
+        PipeLine()
+        .set_initiator(role="guest", party_id=config.parties.guest[0])
+        .set_roles(
+            guest=config.parties.guest[0], host=hosts, arbiter=config.parties.arbiter
+        )
+    )
+
+    # read feature table on host and guest
+    reader_feats = Reader(name="reader_feats")
+    reader_feats.get_party_instance(role="guest", party_id=config.parties.guest[0]).component_param(
+        table=guest_feats
+    )
+
+    reader_feats.get_party_instance(role="host", party_id=hosts[0]).component_param(
+        table=host_feats
+    )
+
+    dataio_feats = DataIO(name="dataio_feats", with_label=True)
+    dataio_feats.get_party_instance(
+        role="guest", party_id=config.parties.guest[0]
+    ).component_param(with_label=True, output_format="dense")
+    dataio_feats.get_party_instance(role="host", party_id=hosts).component_param(
+        with_label=True
+    )
+
+    # read adjcent table on host and guest
+    reader_adj = Reader(name="reader_adj")
+    reader_adj.get_party_instance(role="guest", party_id=config.parties.guest[0]).component_param(
+        table=guest_adj
+    )
+    reader_adj.get_party_instance(role="host", party_id=hosts[0]).component_param(
+        table=host_adj
+    )
+    dataio_adj = DataIO(name="dataio_adj", with_label=False)
+    dataio_adj.get_party_instance(role="guest", party_id=config.parties.guest[0]
+    ).component_param(with_label=False, output_format="dense")
+    dataio_adj.get_party_instance(role="host", party_id=hosts
+    ).component_param(with_label=False, output_format="dense")
+
+
+    pipeline.add_component(reader_feats)
+    pipeline.add_component(dataio_feats, data=Data(data=reader_feats.output.data))
+    pipeline.add_component(reader_adj)
+    pipeline.add_component(dataio_adj, data=Data(data=reader_adj.output.data))
+    pipeline.add_component(nn_component, data=Data(train_data=[dataio_feats.output.data, dataio_adj.output.data]))
+
+    pipeline.compile()
+    job_parameters = JobParameters(backend=config.backend, work_mode=config.work_mode)
+    pipeline.fit(job_parameters)
+    print(pipeline.get_component("GraphNN").get_summary())
+
+    pipeline.deploy_component([dataio_feats, dataio_adj, nn_component])
+
+    # predict
+    predict_pipeline = PipeLine()
+    predict_pipeline.add_component(reader_feats)
+    predict_pipeline.add_component(reader_adj)
+    predict_pipeline.add_component(
+        pipeline,
+        data=Data(predict_input={
+            pipeline.dataio_feats.input.data: reader_feats.output.data,
+            pipeline.dataio_adj.input.data: reader_adj.output.data,
+        }),
+    )
+    # run predict model
+    predict_pipeline.predict(job_parameters)
 
 
 def runner(main_func):

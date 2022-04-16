@@ -73,6 +73,8 @@ class ComponentProperties(object):
         self.caches = None
         self.is_warm_start = False
         self.has_arbiter = False
+        self.has_graph_data = False
+
 
     def parse_caches(self, caches):
         self.caches = caches
@@ -203,7 +205,10 @@ class ComponentProperties(object):
             for data_type in ["train_data", "eval_data", "validate_data", "test_data"]:
                 if data_type in data_dict:
                     d_table = data_dict.get(data_type)
-                    model_data[data_type] = model.obtain_data(d_table)
+                    if data_type in model_data:
+                        model_data[data_type].append(model.obtain_data(d_table))
+                    else:
+                        model_data[data_type] = [model.obtain_data(d_table)]
                     del data_dict[data_type]
 
             if len(data_dict) > 0:
@@ -232,11 +237,14 @@ class ComponentProperties(object):
             test_data = model_data.get("eval_data")
             self.has_test_data = True
 
+        graph_data = model_data.get("adjcent_matrix") if model_data.get("adjcent_matrix") else None 
+        self.has_graph_data = True if graph_data else False
+
         if validate_data or (self.has_train_data and self.has_eval_data):
             self.has_validate_data = True
 
-        if self.has_train_data and is_table(train_data):
-            self.input_data_count = train_data.count()
+        if self.has_train_data and is_table(train_data[0]):
+            self.input_data_count = train_data[0].count()
         elif self.has_normal_input_data:
             for data_key, data_table in data.items():
                 if is_table(data_table):
@@ -250,7 +258,13 @@ class ComponentProperties(object):
             f"train_data: {train_data}, validate_data: {validate_data}, "
             f"test_data: {test_data}, data: {data}"
         )
-        return train_data, validate_data, test_data, data
+
+        if isinstance(train_data, list) and len(train_data) == 1:
+            train_data = train_data[0]
+
+        if isinstance(test_data, list) and len(test_data) == 1:
+            test_data = test_data[0]
+        return train_data, validate_data, test_data, data, graph_data
 
     def warm_start_process(self, running_funcs, model, train_data, validate_data, schema=None):
         if schema is None:
@@ -262,31 +276,48 @@ class ComponentProperties(object):
                                             test_data=None, schema=schema)
         return running_funcs
 
-    def _train_process(self, running_funcs, model, train_data, validate_data, test_data, schema):
+    def _train_process(self, running_funcs, model, train_data, validate_data, test_data, graph_data, schema):
         if self.has_train_data and self.has_validate_data:
-
             running_funcs.add_func(model.set_flowid, ['fit'])
-            running_funcs.add_func(model.fit, [train_data, validate_data])
+            if self.has_graph_data:
+                running_funcs.add_func(model.fit, [train_data, validate_data, graph_data])
+            else:
+                running_funcs.add_func(model.fit, [train_data, validate_data])
             running_funcs.add_func(model.set_flowid, ['validate'])
-            running_funcs.add_func(model.predict, [train_data], save_result=True)
+            if self.has_graph_data:
+                running_funcs.add_func(model.fit, [train_data, graph_data], save_result=True)
+            else:
+                running_funcs.add_func(model.predict, [train_data], save_result=True)
             running_funcs.add_func(model.set_flowid, ['predict'])
-            running_funcs.add_func(model.predict, [validate_data], save_result=True)
+            if self.has_graph_data:
+                running_funcs.add_func(model.predict, [validate_data, graph_data], save_result=True)
+            else:
+                running_funcs.add_func(model.predict, [validate_data], save_result=True)
             running_funcs.add_func(self.union_data, ["train", "validate"], use_previews=True, save_result=True)
             running_funcs.add_func(model.set_predict_data_schema, [schema],
                                    use_previews=True, save_result=True)
 
         elif self.has_train_data:
             running_funcs.add_func(model.set_flowid, ['fit'])
-            running_funcs.add_func(model.fit, [train_data])
+            if self.has_graph_data:
+                running_funcs.add_func(model.fit, [train_data, graph_data])
+            else:
+                running_funcs.add_func(model.fit, [train_data])
             running_funcs.add_func(model.set_flowid, ['validate'])
-            running_funcs.add_func(model.predict, [train_data], save_result=True)
+            if self.has_graph_data:
+                running_funcs.add_func(model.predict, [train_data, graph_data], save_result=True)
+            else:
+                running_funcs.add_func(model.predict, [train_data], save_result=True)
             running_funcs.add_func(self.union_data, ["train"], use_previews=True, save_result=True)
             running_funcs.add_func(model.set_predict_data_schema, [schema],
                                    use_previews=True, save_result=True)
 
         elif self.has_test_data:
             running_funcs.add_func(model.set_flowid, ['predict'])
-            running_funcs.add_func(model.predict, [test_data], save_result=True)
+            if self.has_graph_data:
+                running_funcs.add_func(model.predict, [test_data, graph_data], save_result=True)
+            else:
+                running_funcs.add_func(model.predict, [test_data], save_result=True)
             running_funcs.add_func(self.union_data, ["predict"], use_previews=True, save_result=True)
             running_funcs.add_func(model.set_predict_data_schema, [schema],
                                    use_previews=True, save_result=True)
@@ -295,16 +326,19 @@ class ComponentProperties(object):
     def extract_running_rules(self, datasets, models, cpn):
 
         # train_data, eval_data, data = self.extract_input_data(args)
-        train_data, validate_data, test_data, data = self.extract_input_data(
+        train_data, validate_data, test_data, data, graph_data = self.extract_input_data(
             datasets, cpn
         )
 
         running_funcs = RunningFuncs()
         schema = None
         for d in [train_data, validate_data, test_data]:
-            if d is not None:
+            if isinstance(d, list):
+                if d[0] is not None:
+                    schema = d[0].schema
+                    break
+            elif d is not None:
                 schema = d.schema
-                break
 
         if not self.need_run:
             running_funcs.add_func(cpn.pass_data, [data], save_result=True)
@@ -325,9 +359,9 @@ class ComponentProperties(object):
             running_funcs.add_func(cpn.load_model, [models])
 
         if self.is_warm_start:
-            return self.warm_start_process(running_funcs, cpn, train_data, validate_data, schema)
+            return self.warm_start_process(running_funcs, cpn, train_data, validate_data, graph_data, schema)
 
-        running_funcs = self._train_process(running_funcs, cpn, train_data, validate_data, test_data, schema)
+        running_funcs = self._train_process(running_funcs, cpn, train_data, validate_data, test_data, graph_data, schema)
 
         if self.has_normal_input_data and not self.has_model:
             running_funcs.add_func(cpn.extract_data, [data], save_result=True)

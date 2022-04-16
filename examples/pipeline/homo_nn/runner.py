@@ -57,12 +57,12 @@ if __name__ == '__main__':
         main(**kwargs)
 
     elif example == HomoNNExample.MULTI_LAYER:
-        from homo_nn.pipeline_homo_nn_multy_layer import main
+        from homo_nn.pipeline_homo_nn_multi_layer import main
 
         main(**kwargs)
 
     elif example == HomoNNExample.MULTI_LABEL:
-        from homo_nn.pipeline_homo_nn_multy_label import main
+        from homo_nn.pipeline_homo_nn_multi_label import main
 
         main(**kwargs)
 
