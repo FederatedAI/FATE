@@ -40,7 +40,8 @@ class HeteroPoissonTransferVariable(BaseTransferVariables):
         self.host_gradient = self._create_variable(name='host_gradient', src=['host'], dst=['arbiter'])
         self.host_loss_regular = self._create_variable(name='host_loss_regular', src=['host'], dst=['guest'])
         self.host_optim_gradient = self._create_variable(name='host_optim_gradient', src=['arbiter'], dst=['host'])
-        self.host_partial_prediction = self._create_variable(name='host_partial_prediction', src=['host'], dst=['guest'])
+        self.host_partial_prediction = self._create_variable(
+            name='host_partial_prediction', src=['host'], dst=['guest'])
         self.loss = self._create_variable(name='loss', src=['guest'], dst=['arbiter'])
         self.loss_intermediate = self._create_variable(name='loss_intermediate', src=['host'], dst=['guest'])
         self.paillier_pubkey = self._create_variable(name='paillier_pubkey', src=['arbiter'], dst=['host', 'guest'])

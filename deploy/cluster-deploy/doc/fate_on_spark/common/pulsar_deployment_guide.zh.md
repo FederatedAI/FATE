@@ -24,11 +24,11 @@ $ wget https://archive.apache.org/dist/pulsar/pulsar-2.7.0/apache-pulsar-2.7.0-b
 ```
 
 
-下载好压缩文件后，解压缩至 **"/data/projects/common"** 并使用`cd`命令进入文件所在位置：
+下载好压缩文件后，解压缩至 **"/data/projects/fate/common"** 并使用`cd`命令进入文件所在位置：
 
 ``` bash
-$ tar -C /data/projects/common -xvfz apache-pulsar-2.7.0-bin.tar.gz
-$ cd /data/projects/common/apache-pulsar-2.7.0
+$ tar -xvzf apache-pulsar-2.7.0-bin.tar.gz -C /data/projects/fate/common
+$ cd /data/projects/fate/common/apache-pulsar-2.7.0
 ```
 
 ## 三. 启动单机版Pulsar

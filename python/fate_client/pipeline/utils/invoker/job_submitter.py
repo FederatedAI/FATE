@@ -112,7 +112,7 @@ class JobInvoker(object):
 
             job_id = result["jobId"]
             data = result["data"]
-        except:
+        except BaseException:
             raise ValueError("job submit failed, err msg: {}".format(result))
         return job_id, data
 
@@ -354,7 +354,6 @@ class JobInvoker(object):
         data_dict = {"data": data, "meta": meta}
         return data_dict
 
-
     @staticmethod
     def extract_output_data(output_data, limits):
         data = []
@@ -385,7 +384,7 @@ class JobInvoker(object):
             if "data" not in result:
                 raise ValueError(f"job {job_id}, component {cpn_name} has no output model param")
             return result["data"]
-        except:
+        except BaseException:
             raise ValueError("Cannot get output model, err msg: ")
             # raise
 
@@ -398,7 +397,7 @@ class JobInvoker(object):
             if "data" not in result:
                 raise ValueError(f"job {job_id}, component {cpn_name} has no output metric")
             return result["data"]
-        except:
+        except BaseException:
             raise ValueError("Cannot get ouput model, err msg: ")
             # raise
 
@@ -412,7 +411,7 @@ class JobInvoker(object):
                 # print("job {}, component {} has no output metric".format(job_id, cpn_name))
                 raise ValueError(f"Job {job_id}, component {cpn_name} has no output metric")
             return result["data"]
-        except:
+        except BaseException:
             raise ValueError("Cannot get output model, err msg: ")
 
     def model_deploy(self, model_id, model_version, cpn_list=None, predict_dsl=None, components_checkpoint=None):

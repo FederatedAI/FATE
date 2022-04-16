@@ -56,10 +56,12 @@ class TestLabelTransform(unittest.TestCase):
         replaced_data.join(self.table, lambda x, y: self.assertEqual(x.label, self.label_encoder[y.label]))
 
     def test_replace_predict_label(self):
-        true_label, predict_label, predict_score, predict_detail, predict_type = 1, 0, 0.1, {"1": 0.1, "0": 0.9}, "train"
+        true_label, predict_label, predict_score, predict_detail, predict_type = 1, 0, 0.1, {
+            "1": 0.1, "0": 0.9}, "train"
         predict_result = Instance(inst_id=0,
                                   features=[true_label, predict_label, predict_score, predict_detail, predict_type])
-        r_predict_instance = self.label_transformer_obj.replace_predict_label(predict_result, self.predict_label_encoder)
+        r_predict_instance = self.label_transformer_obj.replace_predict_label(
+            predict_result, self.predict_label_encoder)
         r_predict_result = r_predict_instance.features
         c_predict_result = ["yes", "no", predict_score, {"yes": 0.1, "no": 0.9}, predict_type]
         self.assertEqual(r_predict_result, c_predict_result)

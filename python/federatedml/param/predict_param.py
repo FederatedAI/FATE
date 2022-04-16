@@ -22,6 +22,7 @@ from federatedml.param.base_param import BaseParam
 
 from federatedml.util import LOGGER
 
+
 class PredictParam(BaseParam):
     """
     Define the predict method of HomoLR, HeteroLR, SecureBoosting

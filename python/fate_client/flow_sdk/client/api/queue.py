@@ -19,5 +19,3 @@ from flow_sdk.client.api.base import BaseFlowAPI
 class Queue(BaseFlowAPI):
     def clean(self):
         return self._post(url='job/clean/queue')
-
-

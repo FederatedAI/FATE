@@ -79,8 +79,8 @@ class Server(secure_sum_aggregator.Server, secure_mean_aggregator.Server):
 
         self.enable_secure_aggregate = enable_secure_aggregate
         # if enable_secure_aggregate:
-            # table_random_padding_cipher.Server(trans_var=trans_var.random_padding_cipher_trans_var) \
-            #     .exchange_secret_keys()
+        # table_random_padding_cipher.Server(trans_var=trans_var.random_padding_cipher_trans_var) \
+        #     .exchange_secret_keys()
         self._table_sync = TableTransferServer()
 
     def aggregate_tables(self, suffix=tuple()):

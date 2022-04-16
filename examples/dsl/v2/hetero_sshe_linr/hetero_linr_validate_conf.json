@@ -1,0 +1,107 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 10000
+    },
+    "role": {
+        "guest": [
+            10000
+        ],
+        "host": [
+            9999
+        ]
+    },
+    "job_parameters": {
+        "common": {
+            "job_type": "train"
+        }
+    },
+    "component_parameters": {
+        "role": {
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "motor_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "data_transform_1": {
+                        "with_label": false
+                    },
+                    "data_transform_0": {
+                        "with_label": false
+                    },
+                    "reader_1": {
+                        "table": {
+                            "name": "motor_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "motor_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "data_transform_1": {
+                        "with_label": true,
+                        "label_name": "motor_speed",
+                        "label_type": "float",
+                        "output_format": "dense"
+                    },
+                    "data_transform_0": {
+                        "with_label": true,
+                        "label_name": "motor_speed",
+                        "label_type": "float",
+                        "output_format": "dense"
+                    },
+                    "reader_1": {
+                        "table": {
+                            "name": "motor_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            }
+        },
+        "common": {
+            "hetero_linr_0": {
+                "penalty": "L2",
+                "tol": 0.001,
+                "alpha": 0.01,
+                "optimizer": "sgd",
+                "batch_size": -1,
+                "learning_rate": 0.15,
+                "init_param": {
+                    "init_method": "zeros"
+                },
+                "max_iter": 20,
+                "early_stop": "weight_diff",
+                "decay": 0.0,
+                "decay_sqrt": false,
+                "reveal_every_iter": true,
+                "reveal_strategy": "respectively",
+                "callback_param": {
+                    "callbacks": [
+                        "EarlyStopping",
+                        "PerformanceEvaluate"
+                    ],
+                    "validation_freqs": 1,
+                    "early_stopping_rounds": 5,
+                    "metrics": [
+                        "mean_absolute_error",
+                        "root_mean_squared_error"
+                    ],
+                    "save_freq": 1,
+                    "use_first_metric_only": false
+                }
+            }
+        }
+    }
+}

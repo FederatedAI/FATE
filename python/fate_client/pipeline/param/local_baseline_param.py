@@ -22,6 +22,7 @@ import copy
 from pipeline.param.base_param import BaseParam
 from pipeline.param.predict_param import PredictParam
 
+
 class LocalBaselineParam(BaseParam):
     """
     Define the local baseline model param

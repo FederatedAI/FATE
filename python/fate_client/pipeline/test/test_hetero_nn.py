@@ -20,5 +20,5 @@ from pipeline.component.hetero_nn import HeteroNN
 
 a = HeteroNN(name="hetero_nn_0", epochs=3)
 
-print (a.output.data)
-print (a.output.model)
+print(a.output.data)
+print(a.output.model)

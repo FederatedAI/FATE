@@ -23,11 +23,11 @@ Use the `wget` command to download:
 $ wget https://archive.apache.org/dist/pulsar/pulsar-2.7.0/apache-pulsar-2.7.0-bin.tar.gz
 ```
 
-After downloading the compressed file, unzip it to **"/data/projects/common"** and use the `cd` command to enter the target directory:
+After downloading the compressed file, unzip it to **"/data/projects/fate/common"** and use the `cd` command to enter the target directory:
 
 ``` bash
-$ tar -C /data/projects/common -xvfz apache-pulsar-2.7.0-bin.tar.gz
-$ cd /data/projects/common/apache-pulsar-2.7.0
+$ tar -xvfz apache-pulsar-2.7.0-bin.tar.gz -C /data/projects/fate/common
+$ cd /data/projects/fate/common/apache-pulsar-2.7.0
 ```
 
 ## 3. Start the Standalone Pulsar Service

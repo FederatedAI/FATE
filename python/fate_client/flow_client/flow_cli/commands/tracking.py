@@ -126,10 +126,12 @@ def output_data(ctx, **kwargs):
         if response.status_code == 200:
             try:
                 download_from_request(http_response=response, tar_file_name=tar_file_name, extract_dir=extract_dir)
-                res = {'retcode': 0,
-                       'directory': os.path.abspath(extract_dir),
-                       'retmsg': 'Download successfully, please check {} directory'.format(os.path.abspath(extract_dir))}
-            except:
+                res = {
+                    'retcode': 0,
+                    'directory': os.path.abspath(extract_dir),
+                    'retmsg': 'Download successfully, please check {} directory'.format(
+                        os.path.abspath(extract_dir))}
+            except BaseException:
                 res = {'retcode': 100,
                        'retmsg': 'Download failed, please check if the parameters are correct.'}
         else:
@@ -209,7 +211,8 @@ def get_summary(ctx, **kwargs):
         else:
             config_data["filename"] = "summary_{}_{}.json".format(config_data['component_name'],
                                                                   datetime.now().strftime('%Y%m%d%H%M%S'))
-            config_data["output_path"] = os.path.join(check_abs_path(config_data["output_path"]), config_data["filename"])
+            config_data["output_path"] = os.path.join(check_abs_path(
+                config_data["output_path"]), config_data["filename"])
             with closing(access_server("post", ctx, "tracking/component/summary/download",
                                        config_data, False, stream=True)) as response:
                 if response.status_code == 200:

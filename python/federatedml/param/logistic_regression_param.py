@@ -18,7 +18,7 @@
 #
 import copy
 
-from federatedml.param.base_param import BaseParam, deprecated_param
+from federatedml.param.glm_param import LinearModelParam
 from federatedml.param.callback_param import CallbackParam
 from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.encrypt_param import EncryptParam
@@ -28,14 +28,9 @@ from federatedml.param.predict_param import PredictParam
 from federatedml.param.sqn_param import StochasticQuasiNewtonParam
 from federatedml.param.stepwise_param import StepwiseParam
 from federatedml.util import consts
-from federatedml.util import LOGGER
-
-deprecated_param_list = ["early_stopping_rounds", "validation_freqs", "metrics",
-                         "use_first_metric_only"]
 
 
-@deprecated_param(*deprecated_param_list)
-class LogisticParam(BaseParam):
+class LogisticParam(LinearModelParam):
     """
     Parameters used for Logistic Regression both for Homo mode or Hetero mode.
 
@@ -145,14 +140,14 @@ class LogisticParam(BaseParam):
         self.alpha = alpha
         self.optimizer = optimizer
         self.batch_size = batch_size
-        self.shuffle = shuffle
-        self.batch_strategy = batch_strategy
-        self.masked_rate = masked_rate
         self.learning_rate = learning_rate
         self.init_param = copy.deepcopy(init_param)
         self.max_iter = max_iter
         self.early_stop = early_stop
         self.encrypt_param = encrypt_param
+        self.shuffle = shuffle
+        self.batch_strategy = batch_strategy
+        self.masked_rate = masked_rate
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
         self.decay = decay
@@ -168,137 +163,19 @@ class LogisticParam(BaseParam):
 
     def check(self):
         descr = "logistic_param's"
-
-        if self.penalty is None:
-            pass
-        elif type(self.penalty).__name__ != "str":
+        super(LogisticParam, self).check()
+        self.predict_param.check()
+        if self.encrypt_param.method not in [consts.PAILLIER, None]:
             raise ValueError(
-                "logistic_param's penalty {} not supported, should be str type".format(self.penalty))
-        else:
-            self.penalty = self.penalty.upper()
-            if self.penalty not in [consts.L1_PENALTY, consts.L2_PENALTY, 'NONE']:
-                raise ValueError(
-                    "logistic_param's penalty not supported, penalty should be 'L1', 'L2' or 'none'")
-
-        if not isinstance(self.tol, (int, float)):
-            raise ValueError(
-                "logistic_param's tol {} not supported, should be float type".format(self.tol))
-
-        if type(self.alpha).__name__ not in ["float", 'int']:
-            raise ValueError(
-                "logistic_param's alpha {} not supported, should be float or int type".format(self.alpha))
-
-        if type(self.optimizer).__name__ != "str":
-            raise ValueError(
-                "logistic_param's optimizer {} not supported, should be str type".format(self.optimizer))
-        else:
-            self.optimizer = self.optimizer.lower()
-            if self.optimizer == "sqn":
-                LOGGER.warning("sqn is deprecated in fate-v1.7.x, optimizer will be reset to sgd for compatibility")
-                self.optimizer = "sgd"
-
-            if self.optimizer not in ['sgd', 'rmsprop', 'adam', 'adagrad', 'nesterov_momentum_sgd']:
-                raise ValueError(
-                    "logistic_param's optimizer not supported, optimizer should be"
-                    " 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd' or 'adagrad'")
-
-        if self.batch_size != -1:
-            if type(self.batch_size).__name__ not in ["int"] \
-                    or self.batch_size < consts.MIN_BATCH_SIZE:
-                raise ValueError(descr + " {} not supported, should be larger than {} or "
-                                         "-1 represent for all data".format(self.batch_size, consts.MIN_BATCH_SIZE))
-
+                "logistic_param's encrypted method support 'Paillier' or None only")
+        self.multi_class = self.check_and_change_lower(self.multi_class, ["ovr"], f"{descr}")
         if not isinstance(self.masked_rate, (float, int)) or self.masked_rate < 0:
             raise ValueError("masked rate should be non-negative numeric number")
         if not isinstance(self.batch_strategy, str) or self.batch_strategy.lower() not in ["full", "random"]:
             raise ValueError("batch strategy should be full or random")
         self.batch_strategy = self.batch_strategy.lower()
         if not isinstance(self.shuffle, bool):
-            raise ValueError("shuffle define in batch should be boolean type")
-
-        if not isinstance(self.learning_rate, (float, int)):
-            raise ValueError(
-                "logistic_param's learning_rate {} not supported, should be float or int type".format(
-                    self.learning_rate))
-
-        self.init_param.check()
-
-        if type(self.max_iter).__name__ != "int":
-            raise ValueError(
-                "logistic_param's max_iter {} not supported, should be int type".format(self.max_iter))
-        elif self.max_iter <= 0:
-            raise ValueError(
-                "logistic_param's max_iter must be greater or equal to 1")
-
-        if type(self.early_stop).__name__ != "str":
-            raise ValueError(
-                "logistic_param's early_stop {} not supported, should be str type".format(
-                    self.early_stop))
-        else:
-            self.early_stop = self.early_stop.lower()
-            if self.early_stop not in ['diff', 'abs', 'weight_diff']:
-                raise ValueError(
-                    "logistic_param's early_stop not supported, converge_func should be"
-                    " 'diff', 'weight_diff' or 'abs'")
-
-        self.encrypt_param.check()
-        self.predict_param.check()
-        if self.encrypt_param.method not in [consts.PAILLIER, None]:
-            raise ValueError(
-                "logistic_param's encrypted method support 'Paillier' or None only")
-
-        if type(self.decay).__name__ not in ["int", 'float']:
-            raise ValueError(
-                "logistic_param's decay {} not supported, should be 'int' or 'float'".format(
-                    self.decay))
-
-        if type(self.decay_sqrt).__name__ not in ['bool']:
-            raise ValueError(
-                "logistic_param's decay_sqrt {} not supported, should be 'bool'".format(
-                    self.decay_sqrt))
-        self.stepwise_param.check()
-
-        if self.early_stopping_rounds is None:
-            pass
-        elif isinstance(self.early_stopping_rounds, int):
-            if self.early_stopping_rounds < 1:
-                raise ValueError("early stopping rounds should be larger than 0 when it's integer")
-            if self.validation_freqs is None:
-                raise ValueError("validation freqs must be set when early stopping is enabled")
-
-        if self.metrics is not None and not isinstance(self.metrics, list):
-            raise ValueError("metrics should be a list")
-
-        if not isinstance(self.use_first_metric_only, bool):
-            raise ValueError("use_first_metric_only should be a boolean")
-
-        if self.floating_point_precision is not None and \
-                (not isinstance(self.floating_point_precision, int) or \
-                 self.floating_point_precision < 0 or self.floating_point_precision > 63):
-            raise ValueError("floating point precision should be null or a integer between 0 and 63")
-
-        for p in ["early_stopping_rounds", "validation_freqs", "metrics",
-                  "use_first_metric_only"]:
-            # if self._warn_to_deprecate_param(p, "", ""):
-            if self._deprecated_params_set.get(p):
-                if "callback_param" in self.get_user_feeded():
-                    raise ValueError(f"{p} and callback param should not be set simultaneously，"
-                                     f"{self._deprecated_params_set}, {self.get_user_feeded()}")
-                else:
-                    self.callback_param.callbacks = ["PerformanceEvaluate"]
-                break
-
-        if self._warn_to_deprecate_param("validation_freqs", descr, "callback_param's 'validation_freqs'"):
-            self.callback_param.validation_freqs = self.validation_freqs
-
-        if self._warn_to_deprecate_param("early_stopping_rounds", descr, "callback_param's 'early_stopping_rounds'"):
-            self.callback_param.early_stopping_rounds = self.early_stopping_rounds
-
-        if self._warn_to_deprecate_param("metrics", descr, "callback_param's 'metrics'"):
-            self.callback_param.metrics = self.metrics
-
-        if self._warn_to_deprecate_param("use_first_metric_only", descr, "callback_param's 'use_first_metric_only'"):
-            self.callback_param.use_first_metric_only = self.use_first_metric_only
+            raise ValueError("shuffle should be boolean type")
         return True
 
 

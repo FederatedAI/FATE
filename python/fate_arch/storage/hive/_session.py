@@ -45,12 +45,12 @@ class StorageSession(StorageSessionBase):
             else:
                 self._create_db_if_not_exists(address)
                 con = connect(host=address.host,
-                               port=address.port,
-                               database=address.database,
-                               auth_mechanism=address.auth_mechanism,
-                               password=address.password,
-                               user=address.username
-                               )
+                              port=address.port,
+                              database=address.database,
+                              auth_mechanism=address.auth_mechanism,
+                              password=address.password,
+                              user=address.username
+                              )
                 cur = con.cursor()
                 self._db_con[address_key] = (con, cur)
             return StorageTable(cur=cur, con=con, address=address, name=name, namespace=namespace,
@@ -75,11 +75,11 @@ class StorageSession(StorageSessionBase):
 
     def _create_db_if_not_exists(self, address):
         connection = connect(host=address.host,
-                       port=address.port,
-                       user=address.username,
-                       auth_mechanism=address.auth_mechanism,
-                       password=address.password
-                       )
+                             port=address.port,
+                             user=address.username,
+                             auth_mechanism=address.auth_mechanism,
+                             password=address.password
+                             )
         with connection:
             with connection.cursor() as cursor:
                 cursor.execute("create database if not exists {}".format(address.database))

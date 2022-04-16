@@ -47,6 +47,6 @@ class FeatureImportance(object):
                                                                             self.importance_2)
 
     def __add__(self, other):
-        new_importance = FeatureImportance(main_type=self.main_type, importance=self.importance+other.importance,
-                                           importance_2=self.importance_2+other.importance_2)
+        new_importance = FeatureImportance(main_type=self.main_type, importance=self.importance + other.importance,
+                                           importance_2=self.importance_2 + other.importance_2)
         return new_importance

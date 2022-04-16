@@ -265,9 +265,6 @@ mysql>flush privileges;
 #校验
 mysql>select User,Host from mysql.user;
 mysql>show databases;
-mysql>use eggroll_meta;
-mysql>show tables;
-mysql>select * from server_node;
 
 ```
 
@@ -612,20 +609,28 @@ fate_on_spark:
   spark:
     home:
     cores_per_node: 20
-    nodes: 2
+    nodes: 1
   hdfs:
     name_node: hdfs://fate-cluster
     path_prefix:
   rabbitmq:
-    host: 192.168.0.3
-    mng_port: 12345
+    host: 192.168.0.1
+    mng_port: 15672
     port: 5672
     user: fate
     password: fate
     route_table:
+  pulsar:
+    host: 192.168.0.1
+    port: 6650
+    mng_port: 8080
+    cluster: standalone
+    tenant: fl-tenant
+    topic_ttl: 5
+    route_table:
   nginx:
     host: 192.168.0.1
-    http_port: 9390
+    http_port: 9300
     grpc_port: 9310
 EOF
 
@@ -661,20 +666,28 @@ fate_on_spark:
   spark:
     home:
     cores_per_node: 20
-    nodes: 2
+    nodes: 1
   hdfs:
     name_node: hdfs://fate-cluster
     path_prefix:
   rabbitmq:
-    host: 192.168.0.4
-    mng_port: 12345
+    host: 192.168.0.2
+    mng_port: 15672
     port: 5672
     user: fate
     password: fate
     route_table:
+  pulsar:
+    host: 192.168.0.2
+    port: 6650
+    mng_port: 8080
+    cluster: standalone
+    tenant: fl-tenant
+    topic_ttl: 5
+    route_table:
   nginx:
     host: 192.168.0.2
-    http_port: 9390
+    http_port: 9300
     grpc_port: 9310
 EOF
 ```
@@ -684,10 +697,10 @@ EOF
 **conf/rabbitmq_route_table.yaml**
 ```yaml
 10000:
-  host: 192.168.0.3
+  host: 192.168.0.1
   port: 5672
 9999:
-  host: 192.168.0.4
+  host: 192.168.0.2
   port: 5672
 ```
 
@@ -695,7 +708,7 @@ EOF
 ```yml
 9999:
   # host can be a domain like 9999.fate.org
-  host: 192.168.0.4
+  host: 192.168.0.2
   port: 6650
   sslPort: 6651
   # set proxy address for this pulsar cluster
@@ -703,7 +716,7 @@ EOF
 
 10000:
   # host can be a domain like 10000.fate.org
-  host: 192.168.0.3
+  host: 192.168.0.1
   port: 6650
   sslPort: 6651
   proxy: ""
@@ -731,13 +744,35 @@ cd /data/projects/fate/fateboard
 sh service.sh start
 ```
 
-## 8. 初始化fate client
+## 8. Fate client和Fate test配置
 
 **在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
 ```
+#配置fate client
 source /data/projects/fate/bin/init_env.sh
 flow init -c /data/projects/fate/conf/service_conf.yaml
+
+#配置fate test
+source /data/projects/fate/bin/init_env.sh
+fate_test config edit
+
+#192.168.0.1参数修改如下
+data_base_dir: /data/projects/fate
+fate_base: /data/projects/fate/fate
+parties:
+  guest: [10000]
+  - flow_services:
+      - {address: 192.168.0.1:9380, parties: [10000]}
+      
+#192.168.0.2参数修改如下
+data_base_dir: /data/projects/fate
+fate_base: /data/projects/fate/fate
+parties:
+  guest: [9999]
+  - flow_services:
+      - {address: 192.168.0.2:9380, parties: [9999]}
+
 ```
 
 ## 9. 问题定位
@@ -808,11 +843,8 @@ flow test toy -gid 9999 -hid 10000
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/scripts/
-python upload_default_data.py
+fate_test data upload -t min_test
 ```
-
-更多细节信息，敬请参考[脚本README](../../../../examples/scripts/README.rst)
 
 #### 10.2.2 快速模式：
 

@@ -20,5 +20,5 @@ from pipeline.component.hetero_secureboost import HeteroSecureBoost
 
 a = HeteroSecureBoost(name="hetero_secureboost_0")
 
-print (a.output.data)
-print (a.output.model)
+print(a.output.data)
+print(a.output.model)

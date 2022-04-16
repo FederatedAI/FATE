@@ -20,4 +20,4 @@ from pipeline.component.union import Union
 
 a = Union(name="union_0")
 
-print (a.output.data)
+print(a.output.data)

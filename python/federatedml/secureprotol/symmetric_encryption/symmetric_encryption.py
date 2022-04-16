@@ -20,6 +20,7 @@ class SymmetricKey(object):
     """
     Symmetric encryption key
     """
+
     def __init__(self):
         pass
 

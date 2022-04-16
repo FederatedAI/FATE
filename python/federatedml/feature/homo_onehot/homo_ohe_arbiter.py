@@ -37,7 +37,7 @@ class HomoOneHotArbiter(HomoOneHotBase):
         guest and host and send the new aligned headers back.
 
         Returns:
-            Combine all the column headers from guest and host 
+            Combine all the column headers from guest and host
             if there is alignment is used
         """
         all_cols_dict = defaultdict(list)

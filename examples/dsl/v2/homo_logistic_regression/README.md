@@ -4,7 +4,7 @@ This section introduces the dsl and conf for usage of different type of task.
 
 #### Example Task.
 
-1. Train_task:
+1. Train Task:
     dsl: homo_lr_train_dsl.json
     runtime_config : homo_lr_train_conf.json
    
@@ -29,7 +29,15 @@ This section introduces the dsl and conf for usage of different type of task.
 6. single_eval:
     dsl: homo_lr_eval_dsl.json
     conf: homo_lr_eval_conf.json
-    
+
+7. Multi-Class Train Task:
+   dsl: homo_lr_one_vs_all_dsl.json
+   conf: homo_lr_one_vs_all_conf.json
+
+8. Multi-Class Train With Paillier Task:
+   dsl: homo_lr_one_vs_all_encrypted_host_dsl.json
+   conf: homo_lr_one_vs_all_encrypted_host_conf.json
+
 Users can use following commands to running the task.
     
     flow job submit -c ${runtime_config} -d ${dsl}

@@ -119,7 +119,7 @@ class HuberLoss(object):
 
     def compute_loss(self, y, y_pred):
         huber_loss = y.join(y_pred, lambda y, yp:
-        (self.delta ** 2 * (np.sqrt(1 + ((yp - y) / self.delta) ** 2) - 1), 1))
+                            (self.delta ** 2 * (np.sqrt(1 + ((yp - y) / self.delta) ** 2) - 1), 1))
         huber_sum, sample_num = huber_loss.reduce(lambda tuple1, tuple2: (tuple1[0] + tuple2[0], tuple1[1] + tuple2[1]))
         return huber_sum / sample_num
 
@@ -160,7 +160,7 @@ class FairLoss(object):
 
     def compute_loss(self, y, y_pred):
         fair_loss = y.join(y_pred, lambda y, yp:
-        (self.c * np.abs(yp - y) - self.c ** 2 * np.log(np.abs(yp - y) / self.c + 1), 1))
+                           (self.c * np.abs(yp - y) - self.c ** 2 * np.log(np.abs(yp - y) / self.c + 1), 1))
         fair_loss_sum, sample_num = fair_loss.reduce(
             lambda tuple1, tuple2: (tuple1[0] + tuple2[0], tuple1[1] + tuple2[1]))
         return fair_loss_sum / sample_num

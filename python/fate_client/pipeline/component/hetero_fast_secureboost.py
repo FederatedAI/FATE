@@ -15,7 +15,7 @@
 #
 
 
-from pipeline.param.boosting_param import HeteroFastSecureBoostParam
+from pipeline.param.boosting_param import HeteroSecureBoostParam
 from pipeline.component.component_base import FateComponent
 from pipeline.constant import ProviderType
 from pipeline.interface import Input
@@ -23,7 +23,7 @@ from pipeline.interface import Output
 from pipeline.utils.logger import LOGGER
 
 
-class HeteroFastSecureBoost(FateComponent, HeteroFastSecureBoostParam):
+class HeteroFastSecureBoost(FateComponent, HeteroSecureBoostParam):
     def __init__(self, **kwargs):
         FateComponent.__init__(self, **kwargs)
 
@@ -32,7 +32,7 @@ class HeteroFastSecureBoost(FateComponent, HeteroFastSecureBoostParam):
 
         new_kwargs = self.erase_component_base_param(**kwargs)
 
-        HeteroFastSecureBoostParam.__init__(self, **new_kwargs)
+        HeteroSecureBoostParam.__init__(self, **new_kwargs)
         self.input = Input(self.name, data_type="multi")
         self.output = Output(self.name)
         self._module_name = "HeteroFastSecureBoost"

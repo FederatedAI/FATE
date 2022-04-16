@@ -32,7 +32,8 @@ class HeteroKmeansTransferVariable(BaseTransferVariables):
         super().__init__(flowid)
         self.arbiter_tol = self._create_variable(name='arbiter_tol', src=['arbiter'], dst=['host', 'guest'])
         self.cluster_result = self._create_variable(name='cluster_result', src=['arbiter'], dst=['host', 'guest'])
-        self.cluster_evaluation = self._create_variable(name='cluster_evaluation', src=['arbiter'], dst=['host', 'guest'])
+        self.cluster_evaluation = self._create_variable(
+            name='cluster_evaluation', src=['arbiter'], dst=['host', 'guest'])
         self.guest_dist = self._create_variable(name='guest_dist', src=['guest'], dst=['arbiter'])
         self.guest_tol = self._create_variable(name='guest_tol', src=['guest'], dst=['arbiter'])
         self.host_dist = self._create_variable(name='host_dist', src=['host'], dst=['arbiter'])

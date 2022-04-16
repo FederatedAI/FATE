@@ -65,7 +65,7 @@ class BaseParam(metaclass=_StaticDefaultMeta):
         return self
 
     def check(self):
-        raise NotImplementedError("Parameter Object should have be check")
+        raise NotImplementedError("Parameter Object should be checked.")
 
     @classmethod
     def _get_or_init_deprecated_params_set(cls):
@@ -213,7 +213,7 @@ class BaseParam(metaclass=_StaticDefaultMeta):
         try:
             with open(param_validation_path, "r") as fin:
                 validation_json = json.loads(fin.read())
-        except:
+        except BaseException:
             return
 
         self._validate_param(self, validation_json)

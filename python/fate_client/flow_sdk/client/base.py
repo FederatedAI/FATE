@@ -112,8 +112,8 @@ class BaseFlowClient:
                 return self._decode_result(response)
         except json.decoder.JSONDecodeError:
             res = {'retcode': 100,
-                        'retmsg': "Internal server error. Nothing in response. You may check out the configuration in "
-                                  "'FATE/conf/service_conf.yaml' and restart fate flow server."}
+                   'retmsg': "Internal server error. Nothing in response. You may check out the configuration in "
+                   "'FATE/conf/service_conf.yaml' and restart fate flow server."}
             return res
 
     def get(self, url, **kwargs):

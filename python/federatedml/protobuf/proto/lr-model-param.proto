@@ -18,6 +18,7 @@ syntax = "proto3";
 
 package com.webank.ai.fate.core.mlmodel.buffer;
 option java_outer_classname = "LRModelParamProto";
+import "sshe-cipher-param.proto";
 
 message LRModelParam {
     int32 iters = 1;
@@ -48,25 +49,4 @@ message SingleModel {
 message OneVsRestResult {
     repeated SingleModel completed_models = 1;
     repeated string one_vs_rest_classes = 2;
-}
-
-message Cipher {
-    CipherPublicKey public_key = 1;
-    CipherPrivateKey private_key = 2;
-}
-
-message CipherPublicKey {
-    string n = 1;
-}
-
-message CipherPrivateKey {
-    string p = 1;
-    string q = 2;
-}
-
-message CipherText {
-    CipherPublicKey public_key = 1;
-    string cipher_text = 2;
-    string exponent = 3;
-    bool is_obfuscator = 4;
 }

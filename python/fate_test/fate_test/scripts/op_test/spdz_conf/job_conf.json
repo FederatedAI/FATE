@@ -1,0 +1,27 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "guest": [
+            9999
+        ],
+		"host": [
+			10000
+		]
+    },
+    "component_parameters": {
+		"common": {
+			"spdz_test_0": {
+				"seed": 1,
+				"data_partition": 4,
+				"data_lower_bound": -1024,
+				"data_upper_bound": 1024,
+				"test_round": 1,
+                "data_num": 10000
+			}
+		}
+    }
+}

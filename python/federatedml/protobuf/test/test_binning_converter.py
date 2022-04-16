@@ -33,7 +33,7 @@ guest_new = [1919]
 
 param = FeatureBinningParam()
 
-old_header = ['host_10000_0','host_10000_1','host_10000_2','host_10000_3']
+old_header = ['host_10000_0', 'host_10000_1', 'host_10000_2', 'host_10000_3']
 param.header_anonymous = old_header
 
 rs = model_migration({'HelloParam': param, 'HelloMeta': {}}, 'HeteroSecureBoost', old_guest_list=guest_old,

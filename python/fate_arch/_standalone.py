@@ -89,12 +89,12 @@ class Table(object):
         _get_meta_table().delete(table_key)
         path = _get_storage_dir(self._namespace, self._name)
         shutil.rmtree(path, ignore_errors=True)
-    
+
     def take(self, n, **kwargs):
         if n <= 0:
             raise ValueError(f"{n} <= 0")
         return list(itertools.islice(self.collect(**kwargs), n))
-    
+
     def count(self):
         cnt = 0
         for p in range(self._partitions):
@@ -343,9 +343,9 @@ class Table(object):
 
 # noinspection PyMethodMayBeStatic
 class Session(object):
-    def __init__(self, session_id):
+    def __init__(self, session_id, max_workers=None):
         self.session_id = session_id
-        self._pool = Executor()
+        self._pool = Executor(max_workers=max_workers)
 
     def __getstate__(self):
         # session won't be pickled

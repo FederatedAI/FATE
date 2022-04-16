@@ -23,6 +23,7 @@ class HashBasedMessageAuthenticationCode(MessageAuthenticationCode):
     """
     Hash-based MAC
     """
+
     def __init__(self, function):
         super(HashBasedMessageAuthenticationCode, self).__init__()
         self.function = function

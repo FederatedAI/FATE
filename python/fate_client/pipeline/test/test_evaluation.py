@@ -20,4 +20,4 @@ from pipeline.component.evaluation import Evaluation
 
 a = Evaluation(name="evaluation_0")
 
-print (a.output.data)
+print(a.output.data)

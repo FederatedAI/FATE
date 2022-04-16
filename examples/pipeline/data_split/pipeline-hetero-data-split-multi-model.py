@@ -47,8 +47,13 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
     data_transform_0 = DataTransform(name="data_transform_0")
-    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, label_name="motor_speed",
-                                                                              label_type="float", output_format="dense")
+    data_transform_0.get_party_instance(
+        role='guest',
+        party_id=guest).component_param(
+        with_label=True,
+        label_name="motor_speed",
+        label_type="float",
+        output_format="dense")
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
@@ -57,8 +62,7 @@ def main(config="../../config.yaml", namespace=""):
     hetero_linr_0 = HeteroLinR(name="hetero_linr_0", penalty="L2", optimizer="sgd", tol=0.001,
                                alpha=0.01, max_iter=10, early_stop="weight_diff", batch_size=-1,
                                learning_rate=0.15, decay=0.0, decay_sqrt=False,
-                               init_param={"init_method": "zeros"},
-                               encrypted_mode_calculator_param={"mode": "fast"})
+                               init_param={"init_method": "zeros"})
     hetero_linr_1 = HeteroLinR()
 
     pipeline.add_component(reader_0)

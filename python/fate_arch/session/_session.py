@@ -18,7 +18,7 @@ import typing
 import uuid
 
 import peewee
-from fate_arch.common import  engine_utils, EngineType
+from fate_arch.common import engine_utils, EngineType
 from fate_arch.abc import CSessionABC, FederationABC, CTableABC, StorageSessionABC, StorageTableABC, StorageTableMetaABC
 from fate_arch.common import log, base_utils
 from fate_arch.common import remote_status
@@ -104,7 +104,8 @@ class Session(object):
         if self._computing_type == ComputingEngine.STANDALONE:
             from fate_arch.computing.standalone import CSession
 
-            self._computing_session = CSession(session_id=computing_session_id)
+            options = kwargs.get("options", {})
+            self._computing_session = CSession(session_id=computing_session_id, options=options)
             self._computing_type = ComputingEngine.STANDALONE
             return self
 
@@ -289,10 +290,12 @@ class Session(object):
 
         return storage_session
 
-    def get_table(self, name, namespace) -> typing.Union[StorageTableABC, None]:
+    def get_table(self, name, namespace, ignore_disable=False) -> typing.Union[StorageTableABC, None]:
         meta = Session.get_table_meta(name=name, namespace=namespace)
         if meta is None:
             return None
+        if meta.get_disable() and not ignore_disable:
+            raise Exception(f"table {namespace} {name} disable: {meta.get_disable()}")
         engine = meta.get_engine()
         storage_session = self._get_or_create_storage(storage_engine=engine)
         table = storage_session.get_table(name=name, namespace=namespace)
@@ -418,10 +421,11 @@ class Session(object):
             try:
                 self._logger.info(f"try to destroy computing session {self._computing_session.session_id}")
                 try:
-                    self._computing_session.stop()
-                except:
-                    self._computing_session.kill()
-                self._logger.info(f"destroy computing session {self._computing_session.session_id} successfully")
+                    ret = self._computing_session.stop()
+                except BaseException:
+                    ret = self._computing_session.kill()
+                self._logger.info(f"destroy computing session {self._computing_session.session_id} successfully, "
+                                  f"ret={ret}")
             except Exception as e:
                 self._logger.info(f"destroy computing session {self._computing_session.session_id} failed", e)
             self.delete_session_record(engine_session_id=self._computing_session.session_id)
@@ -445,13 +449,17 @@ class Session(object):
 def get_session() -> Session:
     return Session.get_global()
 
+
 def get_parties() -> PartiesInfo:
     return get_session().parties
+
 
 def get_computing_session() -> CSessionABC:
     return get_session().computing
 
 # noinspection PyPep8Naming
+
+
 class computing_session(object):
     @staticmethod
     def init(session_id, options=None):
@@ -463,5 +471,4 @@ class computing_session(object):
 
     @staticmethod
     def stop():
-        get_computing_session().stop()
-
+        return get_computing_session().stop()

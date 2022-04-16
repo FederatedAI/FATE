@@ -17,29 +17,25 @@
 
 from .components import ComponentMeta
 
-hetero_fast_secure_boost_cpn_meta = ComponentMeta("HeteroFastSecureBoost")
+hetero_secure_boost_cpn_meta = ComponentMeta("HeteroFastSecureBoost")
 
 
-@hetero_fast_secure_boost_cpn_meta.bind_param
-def hetero_fast_secure_boost_param():
-    from federatedml.param.boosting_param import HeteroFastSecureBoostParam
+@hetero_secure_boost_cpn_meta.bind_param
+def hetero_secure_boost_param():
+    from federatedml.param.boosting_param import HeteroSecureBoostParam
 
-    return HeteroFastSecureBoostParam
-
-
-@hetero_fast_secure_boost_cpn_meta.bind_runner.on_guest
-def hetero_fast_secure_boost_guest_runner():
-    from federatedml.ensemble.boosting.hetero.hetero_fast_secureboost_guest import (
-        HeteroFastSecureBoostingTreeGuest,
-    )
-
-    return HeteroFastSecureBoostingTreeGuest
+    return HeteroSecureBoostParam
 
 
-@hetero_fast_secure_boost_cpn_meta.bind_runner.on_host
-def hetero_fast_secure_boost_host_runner():
-    from federatedml.ensemble.boosting.hetero.hetero_fast_secureboost_host import (
-        HeteroFastSecureBoostingTreeHost,
-    )
+@hetero_secure_boost_cpn_meta.bind_runner.on_guest
+def hetero_secure_boost_guest_runner():
+    from federatedml.ensemble import (HeteroSecureBoostingTreeGuest)
 
-    return HeteroFastSecureBoostingTreeHost
+    return HeteroSecureBoostingTreeGuest
+
+
+@hetero_secure_boost_cpn_meta.bind_runner.on_host
+def hetero_secure_boost_host_runner():
+    from federatedml.ensemble import (HeteroSecureBoostingTreeHost)
+
+    return HeteroSecureBoostingTreeHost

@@ -30,7 +30,8 @@ LOGGER = log.getLogger()
 
 DATABASE = decrypt_database_config()
 is_standalone = conf_utils.get_base_config("default_engines", {}).get(EngineType.FEDERATION).upper() == \
-                FederationEngine.STANDALONE
+    FederationEngine.STANDALONE
+
 
 def singleton(cls, *args, **kw):
     instances = {}
@@ -120,6 +121,8 @@ class StorageTableMetaModel(DataBaseModel):
     f_schema = SerializedField()
     f_count = BigIntegerField(null=True)
     f_part_of_data = SerializedField()
+    f_origin = CharField(max_length=50, default='')
+    f_disable = BooleanField(default=False)
     f_description = TextField(default='')
 
     f_read_access_time = BigIntegerField(null=True)

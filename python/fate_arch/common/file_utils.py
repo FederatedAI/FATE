@@ -22,10 +22,12 @@ from ruamel import yaml
 
 PROJECT_BASE = os.getenv("FATE_PROJECT_BASE") or os.getenv("FATE_DEPLOY_BASE")
 FATE_BASE = os.getenv("FATE_BASE")
+READTHEDOC = os.getenv("READTHEDOC")
 
 
 def get_project_base_directory(*args):
     global PROJECT_BASE
+    global READTHEDOC
     if PROJECT_BASE is None:
         PROJECT_BASE = os.path.abspath(
             os.path.join(
@@ -35,6 +37,13 @@ def get_project_base_directory(*args):
                 os.pardir,
             )
         )
+        if READTHEDOC is None:
+            PROJECT_BASE = os.path.abspath(
+                os.path.join(
+                    PROJECT_BASE,
+                    os.pardir,
+                )
+            )
     if args:
         return os.path.join(PROJECT_BASE, *args)
     return PROJECT_BASE
@@ -73,7 +82,7 @@ def load_json_conf(conf_path):
     try:
         with open(json_conf_path) as f:
             return json.load(f)
-    except:
+    except BaseException:
         raise EnvironmentError(
             "loading json file config from '{}' failed!".format(json_conf_path)
         )
@@ -87,7 +96,7 @@ def dump_json_conf(config_data, conf_path):
     try:
         with open(json_conf_path, "w") as f:
             json.dump(config_data, f, indent=4)
-    except:
+    except BaseException:
         raise EnvironmentError(
             "loading json file config from '{}' failed!".format(json_conf_path)
         )
@@ -101,7 +110,7 @@ def load_json_conf_real_time(conf_path):
     try:
         with open(json_conf_path) as f:
             return json.load(f)
-    except:
+    except BaseException:
         raise EnvironmentError(
             "loading json file config from '{}' failed!".format(json_conf_path)
         )

@@ -30,7 +30,6 @@ class FTLHost(FTL):
         return intersect_obj
 
     def batch_compute_components(self, data_loader: FTLDataLoader):
-
         """
         compute host components
         """
@@ -52,7 +51,6 @@ class FTLHost(FTL):
         return overlap_ub, overlap_ub_2, mapping_comp_b
 
     def exchange_components(self, comp_to_send, epoch_idx):
-
         """
         compute host components and sent to guest
         """
@@ -95,7 +93,10 @@ class FTLHost(FTL):
 
     def decrypt_inter_result(self, loss_grad_b, epoch_idx, local_round=-1):
 
-        rand_0 = PaillierTensor(self.rng_generator.generate_random_number(loss_grad_b.shape), partitions=self.partitions)
+        rand_0 = PaillierTensor(
+            self.rng_generator.generate_random_number(
+                loss_grad_b.shape),
+            partitions=self.partitions)
         grad_a_overlap = loss_grad_b + rand_0
         self.transfer_variable.host_side_gradients.remote(grad_a_overlap.get_obj(),
                                                           suffix=(epoch_idx, local_round, 'host_de_send'))
@@ -106,7 +107,6 @@ class FTLHost(FTL):
         return de_loss_grad_b
 
     def compute_backward_gradients(self, guest_components, data_loader: FTLDataLoader, epoch_idx, local_round=-1):
-
         """
         compute host bottom model gradients
         """
@@ -138,7 +138,6 @@ class FTLHost(FTL):
             return loss_grad_b.numpy()
 
     def compute_loss(self, epoch_idx):
-
         """
         help guest compute ftl loss. plain mode will skip/ in encrypted mode will decrypt received loss
         """
@@ -257,7 +256,3 @@ class FTLHost(FTL):
 
         self.set_model_meta(model_meta)
         self.set_model_param(model_param)
-
-
-
-

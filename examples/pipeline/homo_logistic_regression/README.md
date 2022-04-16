@@ -20,9 +20,17 @@ This section introduces the Pipeline scripts for different types of tasks.
     
     script: pipeline-homo-lr-eval.py
 
-5. Train with validate Task:
+5. Train with validate Task:  
     
     script: pipeline-homo-lr-train-eval.py
+
+6. Multi-Class Train Task:  
+
+   script: pipeline-homo-lr-one-vs-all.py
+    
+7. Multi-Class Train Task With Paillier:  
+
+   script: pipeline-homo-lr-one-vs-all-encrypted-host.py
 
 Users can run a pipeline job directly:
 

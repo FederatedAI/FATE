@@ -43,7 +43,7 @@ class TestSampleWeight(unittest.TestCase):
 
     def test_get_class_weight(self):
         class_weight = self.sample_weight_obj.get_class_weight(self.table)
-        c_class_weight = {"1": 10/4, "0": 10/16}
+        c_class_weight = {"1": 10 / 4, "0": 10 / 16}
         self.assertDictEqual(class_weight, c_class_weight)
 
     def test_replace_weight(self):
@@ -62,7 +62,6 @@ class TestSampleWeight(unittest.TestCase):
 
     def tearDown(self):
         session.stop()
-
 
 
 if __name__ == '__main__':

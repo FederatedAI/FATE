@@ -42,7 +42,8 @@ class SplitPointNode(object):
 
     def create_right_new(self):
         value = (self.value + self.max_value) / 2
-        if np.fabs(value - self.value) <= consts.FLOAT_ZERO * 0.1:
+        if np.fabs(value - self.value) <= consts.FLOAT_ZERO * 0.9:
+            self.value += consts.FLOAT_ZERO * 0.9
             self.fixed = True
             return self
         min_value = self.value
@@ -50,10 +51,11 @@ class SplitPointNode(object):
 
     def create_left_new(self):
         value = (self.value + self.min_value) / 2
-        if np.fabs(value - self.value) <= consts.FLOAT_ZERO * 0.1:
+        if np.fabs(value - self.value) <= consts.FLOAT_ZERO * 0.9:
+            self.value += consts.FLOAT_ZERO * 0.9
             self.fixed = True
             return self
-        max_value = self.max_value
+        max_value = self.value
         return SplitPointNode(value, self.min_value, max_value, self.aim_rank, self.allow_error_rank)
 
 
@@ -72,7 +74,7 @@ class RankArray(object):
         else:
             self.fixed_array = abs(self.rank_array - self.last_rank_array) < self.error_rank
             assert isinstance(self.fixed_array, np.ndarray)
-            if (self.fixed_array == True).all():
+            if (self.fixed_array).all():
                 self.all_fix = True
 
     def __iadd__(self, other: 'RankArray'):
@@ -194,7 +196,7 @@ class Client(BaseBinning):
         self.transfer_variable.local_static_values.remote(local_min_max_values,
                                                           suffix=(self.suffix, "min-max"))
         self.max_values, self.min_values = self.transfer_variable.global_static_values.get(
-                                        idx=0, suffix=(self.suffix, "min-max"))
+            idx=0, suffix=(self.suffix, "min-max"))
         return self.max_values, self.min_values
 
     def init_query_points(self, partitions, split_num, error_rank=1, need_first=True):
@@ -231,4 +233,3 @@ class Client(BaseBinning):
         ranks = summary.query_value_list(queries)
         ranks = np.array(ranks)[original_idx]
         return np.array(ranks, dtype=int)
-

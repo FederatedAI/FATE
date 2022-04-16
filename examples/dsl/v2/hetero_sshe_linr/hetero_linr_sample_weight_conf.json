@@ -1,0 +1,83 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 10000
+    },
+    "role": {
+        "guest": [
+            10000
+        ],
+        "host": [
+            9999
+        ]
+    },
+    "job_parameters": {
+        "common": {
+            "job_type": "train"
+        }
+    },
+    "component_parameters": {
+        "role": {
+            "host": {
+                "0": {
+                    "sample_weight_0": {
+                        "need_run": false
+                    },
+                    "data_transform_0": {
+                        "with_label": false
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "motor_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "sample_weight_0": {
+                        "sample_weight_name": "pm",
+                        "need_run": true
+                    },
+                    "data_transform_0": {
+                        "with_label": true,
+                        "label_name": "motor_speed",
+                        "label_type": "float",
+                        "output_format": "dense"
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "motor_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            }
+        },
+        "common": {
+            "hetero_linr_0": {
+                "penalty": "L2",
+                "tol": 0.001,
+                "alpha": 0.01,
+                "optimizer": "rmsprop",
+                "batch_size": -1,
+                "learning_rate": 0.15,
+                "init_param": {
+                    "init_method": "zeros"
+                },
+                "max_iter": 20,
+                "early_stop": "weight_diff",
+                "decay": 0.0,
+                "decay_sqrt": false,
+                "reveal_every_iter": true,
+                "reveal_strategy": "respectively"
+            },
+            "evaluation_0": {
+                "eval_type": "regression",
+                "pos_label": 1
+            }
+        }
+    }
+}

@@ -37,7 +37,6 @@ def main(config="../../config.yaml", namespace=""):
     guest = parties.guest[0]
     host = parties.host[0]
 
-
     guest_train_data = {"name": "vehicle_scale_hetero_guest", "namespace": f"experiment{namespace}"}
     guest_validate_data = {"name": "vehicle_scale_hetero_guest", "namespace": f"experiment{namespace}"}
 
@@ -51,13 +50,21 @@ def main(config="../../config.yaml", namespace=""):
 
     reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
-    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, output_format="dense")
-    data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False, output_format="dense")
+    data_transform_0.get_party_instance(
+        role='guest', party_id=guest).component_param(
+        with_label=True, output_format="dense")
+    data_transform_0.get_party_instance(
+        role='host', party_id=host).component_param(
+        with_label=False, output_format="dense")
 
     reader_1.get_party_instance(role='guest', party_id=guest).component_param(table=guest_validate_data)
     reader_1.get_party_instance(role='host', party_id=host).component_param(table=host_validate_data)
-    data_transform_1.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, output_format="dense")
-    data_transform_1.get_party_instance(role='host', party_id=host).component_param(with_label=True, output_format="dense")
+    data_transform_1.get_party_instance(
+        role='guest', party_id=guest).component_param(
+        with_label=True, output_format="dense")
+    data_transform_1.get_party_instance(
+        role='host', party_id=host).component_param(
+        with_label=True, output_format="dense")
 
     intersection_0 = Intersection(name="intersection_0")
     intersection_1 = Intersection(name="intersection_1")
@@ -109,7 +116,10 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(reader_0)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(reader_1)
-    pipeline.add_component(data_transform_1, data=Data(data=reader_1.output.data), model=Model(data_transform_0.output.model))
+    pipeline.add_component(
+        data_transform_1, data=Data(
+            data=reader_1.output.data), model=Model(
+            data_transform_0.output.model))
     pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
     pipeline.add_component(intersection_1, data=Data(data=data_transform_1.output.data))
     pipeline.add_component(hetero_feature_binning_0, data=Data(data=intersection_0.output.data))
@@ -131,8 +141,10 @@ def main(config="../../config.yaml", namespace=""):
     predict_pipeline.add_component(reader_1)
     # add selected components from train pipeline onto predict pipeline
     # specify data source
-    predict_pipeline.add_component(pipeline,
-                                   data=Data(predict_input={pipeline.data_transform_0.input.data: reader_1.output.data}))
+    predict_pipeline.add_component(
+        pipeline, data=Data(
+            predict_input={
+                pipeline.data_transform_0.input.data: reader_1.output.data}))
     # run predict model
     predict_pipeline.predict()
 

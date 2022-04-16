@@ -23,7 +23,8 @@ from fate_arch.common import conf_utils, EngineType
 from fate_arch.common.base_utils import current_timestamp, serialize_b64, deserialize_b64, timestamp_to_date, date_string_to_timestamp, json_dumps, json_loads
 from fate_arch.federation import FederationEngine
 
-is_standalone = conf_utils.get_base_config("default_engines", {}).get(EngineType.FEDERATION).upper() == FederationEngine.STANDALONE
+is_standalone = conf_utils.get_base_config("default_engines", {}).get(
+    EngineType.FEDERATION).upper() == FederationEngine.STANDALONE
 if is_standalone:
     from playhouse.apsw_ext import DateTimeField
 else:
@@ -125,6 +126,10 @@ def auto_date_timestamp_db_field():
     return {f"f_{f}_time" for f in AUTO_DATE_TIMESTAMP_FIELD_PREFIX}
 
 
+def remove_field_name_prefix(field_name):
+    return field_name[2:] if field_name.startswith('f_') else field_name
+
+
 class BaseModel(Model):
     f_create_time = BigIntegerField(null=True)
     f_create_date = DateTimeField(null=True)
@@ -139,16 +144,16 @@ class BaseModel(Model):
         return self.__dict__['__data__']
 
     def to_human_model_dict(self, only_primary_with: list = None):
-        model_dict = self.__dict__["__data__"]
-        human_model_dict = {}
+        model_dict = self.__dict__['__data__']
+
         if not only_primary_with:
-            for k, v in model_dict.items():
-                human_model_dict[k.lstrip("f").lstrip("_")] = v
-        else:
-            for k in self._meta.primary_key.field_names:
-                human_model_dict[k.lstrip("f").lstrip("_")] = model_dict[k]
-            for k in only_primary_with:
-                human_model_dict[k] = model_dict["f_%s" % k]
+            return {remove_field_name_prefix(k): v for k, v in model_dict.items()}
+
+        human_model_dict = {}
+        for k in self._meta.primary_key.field_names:
+            human_model_dict[remove_field_name_prefix(k)] = model_dict[k]
+        for k in only_primary_with:
+            human_model_dict[k] = model_dict[f'f_{k}']
         return human_model_dict
 
     @property
@@ -157,7 +162,8 @@ class BaseModel(Model):
 
     @classmethod
     def get_primary_keys_name(cls):
-        return cls._meta.primary_key.field_names if isinstance(cls._meta.primary_key, CompositeKey) else [cls._meta.primary_key.name]
+        return cls._meta.primary_key.field_names if isinstance(cls._meta.primary_key, CompositeKey) else [
+            cls._meta.primary_key.name]
 
     @classmethod
     def getter_by(cls, attr):

@@ -36,7 +36,6 @@ def main(config="../../config.yaml", namespace=""):
     guest = parties.guest[0]
     host = parties.host[0]
 
-
     # data sets
     guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
     host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
@@ -57,9 +56,13 @@ def main(config="../../config.yaml", namespace=""):
 
     data_transform_0, data_transform_1 = DataTransform(name="data_transform_0"), DataTransform(name="data_transform_1")
 
-    data_transform_0.get_party_instance(role="guest", party_id=guest).component_param(with_label=True, output_format="dense")
+    data_transform_0.get_party_instance(
+        role="guest", party_id=guest).component_param(
+        with_label=True, output_format="dense")
     data_transform_0.get_party_instance(role="host", party_id=host).component_param(with_label=False)
-    data_transform_1.get_party_instance(role="guest", party_id=guest).component_param(with_label=True, output_format="dense")
+    data_transform_1.get_party_instance(
+        role="guest", party_id=guest).component_param(
+        with_label=True, output_format="dense")
     data_transform_1.get_party_instance(role="host", party_id=host).component_param(with_label=False)
 
     # data intersect component
@@ -81,7 +84,10 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(reader_0)
     pipeline.add_component(reader_1)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(data_transform_1, data=Data(data=reader_1.output.data), model=Model(data_transform_0.output.model))
+    pipeline.add_component(
+        data_transform_1, data=Data(
+            data=reader_1.output.data), model=Model(
+            data_transform_0.output.model))
     pipeline.add_component(intersect_0, data=Data(data=data_transform_0.output.data))
     pipeline.add_component(intersect_1, data=Data(data=data_transform_1.output.data))
     pipeline.add_component(hetero_secure_boost_0, data=Data(train_data=intersect_0.output.data,
@@ -105,15 +111,17 @@ def main(config="../../config.yaml", namespace=""):
     predict_pipeline.add_component(reader_0)
     # add selected components from train pipeline onto predict pipeline
     # specify data source
-    predict_pipeline.add_component(pipeline,
-                                   data=Data(predict_input={pipeline.data_transform_0.input.data: reader_0.output.data}))
+    predict_pipeline.add_component(
+        pipeline, data=Data(
+            predict_input={
+                pipeline.data_transform_0.input.data: reader_0.output.data}))
 
     # run predict model
     predict_pipeline.predict()
     predict_result = predict_pipeline.get_component("hetero_secure_boost_0").get_output_data()
     print("Showing 10 data of predict result")
     for ret in predict_result["data"][:10]:
-        print (ret)
+        print(ret)
 
 
 if __name__ == "__main__":

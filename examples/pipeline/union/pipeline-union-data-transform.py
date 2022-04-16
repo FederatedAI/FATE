@@ -46,7 +46,7 @@ def main(config="../../config.yaml", namespace=""):
     union_0 = Union(name="union_0", allow_missing=False, keep_duplicate=True)
 
     data_transform_0 = DataTransform(name="data_transform_0", with_label=True, output_format="dense", label_name="y",
-                      missing_fill=False, outlier_replace=False)
+                                     missing_fill=False, outlier_replace=False)
 
     pipeline.add_component(reader_0)
     pipeline.add_component(reader_1)

@@ -54,7 +54,9 @@ class DhIntersectionHost(DhIntersect):
     def get_intersect_ids(self):
         first_cipher_intersect_ids = self.transfer_variable.intersect_ids.get(idx=0)
         LOGGER.info(f"obtained cipher intersect ids from guest")
-        intersect_ids = self.map_encrypt_id_to_raw_id(first_cipher_intersect_ids, self.id_list_local_first)
+        intersect_ids = self.map_encrypt_id_to_raw_id(first_cipher_intersect_ids,
+                                                      self.id_list_local_first,
+                                                      keep_encrypt_id=False)
         return intersect_ids
 
     def get_intersect_doubly_encrypted_id(self, data_instances):

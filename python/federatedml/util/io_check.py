@@ -71,7 +71,8 @@ def assert_match_id_consistent(func):
         if input_with_inst_id is not None and is_table(result):
             if check_is_instance(result):
                 result_with_inst_id = check_with_inst_id(result)
-                LOGGER.debug(f"Input with match id: {input_with_inst_id} -> output with match id: {result_with_inst_id}")
+                LOGGER.debug(
+                    f"Input with match id: {input_with_inst_id} -> output with match id: {result_with_inst_id}")
                 if input_with_inst_id and not result_with_inst_id:
                     raise EnvironmentError(
                         f"Input with match id: {input_with_inst_id} -> output with match id: {result_with_inst_id}，"

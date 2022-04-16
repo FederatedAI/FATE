@@ -41,8 +41,11 @@ class TestValidationStrategy(unittest.TestCase):
             if self.early_stopping_round <= 0:
                 continue
 
-            validation_strategy = ValidationStrategy(self.role, self.mode, early_stopping_rounds=self.early_stopping_round,
-                                                     use_first_metric_only=self.use_first_metric_only)
+            validation_strategy = ValidationStrategy(
+                self.role,
+                self.mode,
+                early_stopping_rounds=self.early_stopping_round,
+                use_first_metric_only=self.use_first_metric_only)
 
             for idx, eval_res in enumerate(eval_dicts):
                 validation_strategy.performance_recorder.update(eval_res)
@@ -109,7 +112,7 @@ class TestValidationStrategy(unittest.TestCase):
                 check_rs = validation_strategy.check_early_stopping()
                 if check_rs:
                     best_perform = validation_strategy.performance_recorder.cur_best_performance
-                    self.assertDictEqual(best_perform, eval_dicts[test_round-decrease_round-1])
+                    self.assertDictEqual(best_perform, eval_dicts[test_round - decrease_round - 1])
                     print('best iter checking passed')
                     break
 

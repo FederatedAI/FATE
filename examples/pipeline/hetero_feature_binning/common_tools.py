@@ -97,7 +97,10 @@ def make_add_one_hot_dsl(config, namespace, bin_param, is_multi_host=False):
     pipeline.add_component(reader_1)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
     # set data_transform_1 to replicate model from data_transform_0
-    pipeline.add_component(data_transform_1, data=Data(data=reader_1.output.data), model=Model(data_transform_0.output.model))
+    pipeline.add_component(
+        data_transform_1, data=Data(
+            data=reader_1.output.data), model=Model(
+            data_transform_0.output.model))
     # set data input sources of intersection components
     pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
     pipeline.add_component(intersection_1, data=Data(data=data_transform_1.output.data))

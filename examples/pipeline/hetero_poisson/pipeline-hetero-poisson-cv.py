@@ -38,18 +38,27 @@ def main(config="../../config.yaml", namespace=""):
     guest_train_data = {"name": "dvisits_hetero_guest", "namespace": f"experiment{namespace}"}
     host_train_data = {"name": "dvisits_hetero_host", "namespace": f"experiment{namespace}"}
 
-
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host, arbiter=arbiter)
     reader_0 = Reader(name="reader_0")
     reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
     data_transform_0 = DataTransform(name="data_transform_0")
-    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, label_name="doctorco",
-                                                                             label_type="float", output_format="dense",
-                                                                              missing_fill=True, outlier_replace=False)
-    data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False, output_format="dense",
-                                                                            outlier_replace=False)
+    data_transform_0.get_party_instance(
+        role='guest',
+        party_id=guest).component_param(
+        with_label=True,
+        label_name="doctorco",
+        label_type="float",
+        output_format="dense",
+        missing_fill=True,
+        outlier_replace=False)
+    data_transform_0.get_party_instance(
+        role='host',
+        party_id=host).component_param(
+        with_label=False,
+        output_format="dense",
+        outlier_replace=False)
 
     intersection_0 = Intersection(name="intersection_0")
     hetero_poisson_0 = HeteroPoisson(name="hetero_poisson_0", early_stop="weight_diff", max_iter=10,
