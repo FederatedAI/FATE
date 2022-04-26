@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package com.webank.ai.fate.core.mlmodel.buffer;
+option java_outer_classname = "FeatureTransformMetaProto";
+
+message Op {
+    string name = 1;
+    double val = 2;
+}
+
+message Transform {
+    repeated Op ops = 1;
+    int32 label = 2;
+}
+
+message Rule {
+    string src_name = 1;
+    string dst_name = 2;
+    repeated Transform transforms = 3;
+}
+
+message FeatureTransformMeta {
+    repeated Rule rules = 1;
+    bool need_run = 2;
+}
