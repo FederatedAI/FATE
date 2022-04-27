@@ -14,7 +14,6 @@
 #  limitations under the License.
 #
 
-from ast import operator
 import copy
 
 from federatedml.model_base import ModelBase
