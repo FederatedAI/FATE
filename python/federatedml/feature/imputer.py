@@ -208,37 +208,27 @@ class Imputer(object):
         LOGGER.debug(f"cols_transform value is: {cols_transform_value}")
         return cols_transform_value
 
+    @staticmethod
+    def _transform_nan(instance):
+        feature_shape = instance.features.shape[0]
+        new_features = []
+
+        for i in range(feature_shape):
+            if instance.features[i] != instance.features[i]:
+                new_features.append(NoneType())
+            else:
+                new_features.append(instance.features[i])
+        new_instance = copy.deepcopy(instance)
+        new_instance.features = np.array(new_features)
+        return new_instance
+
     def __fit_replace(self, data, replace_method, replace_value=None, output_format=None,
                       col_replace_method=None):
         replace_method_per_col, skip_cols = self.__get_cols_transform_method(data, replace_method, col_replace_method)
 
-        """
-        def _transform_nan(instance):
-            feature_shape = instance.features.shape[0]
-            new_features = copy.deepcopy(instance.features)
-
-            for i in range(feature_shape):
-                if np.isnan(instance.features[i]):
-                    new_features[i] = NoneType()
-            new_instance = copy.deepcopy(instance)
-            new_instance.features = new_features
-            return new_instance
-        """
-        def _transform_nan(instance):
-            feature_shape = instance.features.shape[0]
-            new_features = []
-
-            for i in range(feature_shape):
-                if instance.features[i] != instance.features[i]:
-                    new_features.append(NoneType())
-                else:
-                    new_features.append(instance.features[i])
-            new_instance = copy.deepcopy(instance)
-            new_instance.features = np.array(new_features)
-            return new_instance
         schema = data.schema
         if isinstance(data.first()[1], Instance):
-            data = data.mapValues(lambda v: _transform_nan(v))
+            data = data.mapValues(lambda v: Imputer._transform_nan(v))
             data.schema = schema
         cols_transform_value = self.__get_cols_transform_value(data, replace_method_per_col,
                                                                replace_value=replace_value)
@@ -261,6 +251,12 @@ class Imputer(object):
 
     def __transform_replace(self, data, transform_value, replace_area, output_format, skip_cols):
         skip_cols = [get_header(data).index(v) for v in skip_cols]
+
+        schema = data.schema
+        if isinstance(data.first()[1], Instance):
+            data = data.mapValues(lambda v: Imputer._transform_nan(v))
+            data.schema = schema
+
         if replace_area == 'all':
             if output_format is not None:
                 f = functools.partial(Imputer.replace_missing_value_with_replace_value_format,
