@@ -28,6 +28,7 @@ from federatedml.statistic.data_overview import with_weight, scale_sample_weight
 from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util.io_check import assert_io_num_rows_equal
+from federatedml.secureprotol.encrypt import PaillierEncrypt
 
 
 class HeteroLRGuest(HeteroLRBase):
@@ -127,10 +128,13 @@ class HeteroLRGuest(HeteroLRBase):
         else:
             self.callback_warm_start_init_iter(self.n_iter_)
 
+        PaillierEncrypt.set_acceleration_device(self.model_param.acceleration_device)
+        key_dict = []
+        start_iter = self.n_iter_
         while self.n_iter_ < self.max_iter:
             self.callback_list.on_epoch_begin(self.n_iter_)
             LOGGER.info("iter: {}".format(self.n_iter_))
-            batch_data_generator = self.batch_generator.generate_batch_data(suffix=(self.n_iter_, ), with_index=True)
+            batch_data_generator = self.batch_generator.generate_batch_data(suffix=(self.n_iter_,), with_index=True)
             self.optimizer.set_iters(self.n_iter_)
             batch_index = 0
             for batch_data, index_data in batch_data_generator:
@@ -142,20 +146,46 @@ class HeteroLRGuest(HeteroLRBase):
                 LOGGER.debug(
                     "iter: {}, batch: {}, before compute gradient, data count: {}".format(
                         self.n_iter_, batch_index, batch_feat_inst.count()))
+                if self.model_param.acceleration_device == 'gpu':
+                    if self.n_iter_ == start_iter:
+                        key_sorted = [k for k, _ in sorted(batch_data.collect(), key=lambda x: x[0])]
+                        key_index = dict(zip(key_sorted, [x for x in range(batch_data.count())]))
+                        key_dict.append(key_index)
+                    else:
+                        key_index = key_dict[batch_index]
 
-                optim_guest_gradient = self.gradient_loss_operator.compute_gradient_procedure(
-                    batch_feat_inst,
-                    self.cipher_operator,
-                    self.model_weights,
-                    self.optimizer,
-                    self.n_iter_,
-                    batch_index,
-                    masked_index=index_data
-                )
+                    # Variable.set_key_dict(key_index)
+                    optim_guest_gradient = self.gradient_loss_operator.compute_gradient_procedure_hp(
+                        batch_feat_inst,
+                        self.cipher_operator,
+                        self.model_weights,
+                        self.optimizer,
+                        self.n_iter_,
+                        batch_index,
+                        key_index)
 
-                loss_norm = self.optimizer.loss_norm(self.model_weights)
-                self.gradient_loss_operator.compute_loss(batch_feat_inst, self.model_weights, self.n_iter_, batch_index,
-                                                         loss_norm, batch_masked=self.batch_generator.batch_masked)
+                    # LOGGER.debug('optim_guest_gradient: {}'.format(optim_guest_gradient))
+                    # training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
+                    # self.update_local_model(fore_gradient, data_instances, self.model_weights.coef_, **training_info)
+
+                    loss_norm = self.optimizer.loss_norm(self.model_weights)
+                    self.gradient_loss_operator.compute_loss_hp(data_instances, batch_feat_inst, self.model_weights,
+                                                                self.n_iter_, batch_index, loss_norm)
+                else:
+                    optim_guest_gradient = self.gradient_loss_operator.compute_gradient_procedure(
+                        batch_feat_inst,
+                        self.cipher_operator,
+                        self.model_weights,
+                        self.optimizer,
+                        self.n_iter_,
+                        batch_index,
+                        masked_index=index_data
+                    )
+
+                    loss_norm = self.optimizer.loss_norm(self.model_weights)
+                    self.gradient_loss_operator.compute_loss(batch_feat_inst, self.model_weights, self.n_iter_,
+                                                             batch_index,
+                                                             loss_norm, batch_masked=self.batch_generator.batch_masked)
 
                 self.model_weights = self.optimizer.update_model(self.model_weights, optim_guest_gradient)
                 batch_index += 1

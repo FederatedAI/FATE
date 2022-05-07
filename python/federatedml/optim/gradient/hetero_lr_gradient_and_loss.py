@@ -88,7 +88,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
             return sum1 + sum2
 
         ywx = host_wx_y.applyPartitions(_sum_ywx).reduce(reduce_add) + \
-            self_wx_y.applyPartitions(_sum_ywx).reduce(reduce_add)
+              self_wx_y.applyPartitions(_sum_ywx).reduce(reduce_add)
         ywx = ywx * 4 + 2 * n
 
         # quarter_wx = self.host_forwards[0].join(self.half_d, lambda x, y: x + y)
@@ -111,9 +111,9 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
                 square_sum = data_instances.join(
                     square_table,
                     lambda inst,
-                    enc_h_squares: enc_h_squares).reduce(
+                           enc_h_squares: enc_h_squares).reduce(
                     lambda x,
-                    y: x + y)
+                           y: x + y)
                 wx_squares_sum.append(square_sum)
 
             wx_squares = wx_squares_sum
@@ -131,12 +131,58 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
             wx_square = wx_squares[0]
             wxg_wxh = half_wx.join(host_forward, lambda wxg, wxh: wxg * wxh).reduce(reduce_add)
             loss = np.log(2) - 0.5 * (1 / n) * ywx + 0.125 * (1 / n) * \
-                (self_wx_square + wx_square + 8 * wxg_wxh)
+                   (self_wx_square + wx_square + 8 * wxg_wxh)
             if loss_norm is not None:
                 loss += loss_norm
                 loss += host_loss_regular[0]
             loss_list.append(loss)
         LOGGER.debug("In compute_loss, loss list are: {}".format(loss_list))
+        self.sync_loss_info(loss_list, suffix=current_suffix)
+
+    def compute_loss_hp(self, data_instances, batch_data_instances, w, n_iter_, batch_index, loss_norm=None):
+        """
+        Compute hetero-lr loss for:
+        loss = (1/N)*∑(log2 - 1/2*ywx + 1/8*(wx)^2), where y is label, w is model weight and x is features
+        where (wx)^2 = (Wg * Xg + Wh * Xh)^2 = (Wg*Xg)^2 + (Wh*Xh)^2 + 2 * Wg*Xg * Wh*Xh
+
+        Then loss = log2 - (1/N)*0.5*∑ywx + (1/N)*0.125*[∑(Wg*Xg)^2 + ∑(Wh*Xh)^2 + 2 * ∑(Wg*Xg * Wh*Xh)]
+
+        where Wh*Xh is a table obtain from host and ∑(Wh*Xh)^2 is a sum number get from host.
+        """
+        current_suffix = (n_iter_, batch_index)
+        n = data_instances.count()
+        quarter_wx = self.host_forwards[0] + self.half_d_list
+        ywx = (quarter_wx * (4 * np.array(self.label_list)) + 2).sum()
+        # self_wx_square = self.forwards.mapValues(lambda x: np.square(x)).reduce(reduce_add)
+        half_wx = batch_data_instances.mapValues(
+            lambda v: vec_dot(v.features, w.coef_) + w.intercept_)
+        # self_wx_square = half_wx.mapValues(
+        #     lambda v: np.square(v)).reduce(reduce_add)
+        self_wx_square = data_instances.mapValues(
+            lambda v: np.square(vec_dot(v.features, w.coef_) + w.intercept_)).reduce(reduce_add)
+        half_wx_list = [None] * half_wx.count()
+        for key, value in half_wx.collect():
+            half_wx_list[self.key_index[key]] = value
+        loss_list = []
+        wx_squares = self.get_host_loss_intermediate(suffix=current_suffix)
+        if loss_norm is not None:
+            host_loss_regular = self.get_host_loss_regular(suffix=current_suffix)
+        else:
+            host_loss_regular = []
+        # for host_idx, host_forward in enumerate(self.host_forwards):
+        if len(self.host_forwards) > 1:
+            LOGGER.info("More than one host exist, loss is not available")
+        else:
+            host_forward = self.host_forwards[0]
+            wx_square = wx_squares[0]
+            wxg_wxh = (host_forward * half_wx_list).sum()
+            loss = np.log(2) - 0.5 * (1 / n) * ywx + 0.125 * (1 / n) * \
+                   (self_wx_square + wx_square + 2 * wxg_wxh)
+            if loss_norm is not None:
+                loss += loss_norm
+                loss += host_loss_regular[0]
+            loss_list = loss
+        # LOGGER.debug("In compute_loss, loss list are: {}".format(loss_list))
         self.sync_loss_info(loss_list, suffix=current_suffix)
 
     def compute_forward_hess(self, data_instances, delta_s, host_forwards):
@@ -211,6 +257,26 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
         if loss_regular is not None:
             en_loss_regular = cipher_operator.encrypt(loss_regular)
             self.remote_loss_regular(en_loss_regular, suffix=current_suffix)
+
+    def compute_loss_hp(self, lr_weights, optimizer, n_iter_, batch_index, cipher_operator):
+        """
+        Compute hetero-lr loss for:
+        loss = (1/N)*∑(log2 - 1/2*ywx + 1/8*(wx)^2), where y is label, w is model weight and x is features
+        where (wx)^2 = (Wg * Xg + Wh * Xh)^2 = (Wg*Xg)^2 + (Wh*Xh)^2 + 2 * Wg*Xg * Wh*Xh
+
+        Then loss = log2 - (1/N)*0.5*∑ywx + (1/N)*0.125*[∑(Wg*Xg)^2 + ∑(Wh*Xh)^2 + 2 * ∑(Wg*Xg * Wh*Xh)]
+
+        where Wh*Xh is a table obtain from host and ∑(Wh*Xh)^2 is a sum number get from host.
+        """
+        current_suffix = (n_iter_, batch_index)
+        self_wx_square = self.forwards.mapValues(lambda x: np.square(4 * x)).reduce(reduce_add)
+        en_wx_square = cipher_operator.encrypt_list(self_wx_square, 1)
+        self.remote_loss_intermediate(en_wx_square, suffix=current_suffix)
+
+        loss_regular = optimizer.loss_norm(lr_weights)
+        if loss_regular is not None:
+            loss_regular = cipher_operator.encrypt_list(loss_regular, 1)
+            self.remote_loss_regular(loss_regular, suffix=current_suffix)
 
 
 class Arbiter(hetero_linear_model_gradient.Arbiter, loss_sync.Arbiter):

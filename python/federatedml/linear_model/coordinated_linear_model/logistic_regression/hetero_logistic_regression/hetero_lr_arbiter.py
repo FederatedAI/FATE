@@ -24,6 +24,7 @@ from federatedml.param.logistic_regression_param import HeteroLogisticParam
 from federatedml.transfer_variable.transfer_class.hetero_lr_transfer_variable import HeteroLRTransferVariable
 from federatedml.util import LOGGER
 from federatedml.util import consts
+from federatedml.secureprotol.encrypt import PaillierEncrypt
 
 
 class HeteroLRArbiter(HeteroBaseArbiter, HeteroLRBase):
@@ -51,6 +52,7 @@ class HeteroLRArbiter(HeteroBaseArbiter, HeteroLRBase):
         LOGGER.debug("Has loss_history: {}".format(hasattr(self, 'loss_history')))
         LOGGER.debug("Need one_vs_rest: {}".format(self.need_one_vs_rest))
         classes = self.one_vs_rest_obj.get_data_classes(data_instances)
+        PaillierEncrypt.set_acceleration_device(self.model_param.acceleration_device)
         if len(classes) > 2:
             self.need_one_vs_rest = True
             self.need_call_back_loss = False

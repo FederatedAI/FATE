@@ -17,6 +17,7 @@
 import functools
 import hashlib
 from collections import Iterable
+import importlib
 
 import numpy as np
 from Cryptodome import Random
@@ -171,6 +172,8 @@ class RsaEncrypt(Encrypt):
 
 
 class PaillierEncrypt(Encrypt):
+    __acceleration_device = "gpu"
+
     def __init__(self):
         super(PaillierEncrypt, self).__init__()
 
@@ -217,6 +220,67 @@ class PaillierEncrypt(Encrypt):
     def recursive_raw_encrypt(self, X, exponent=0):
         raw_en_func = functools.partial(self.raw_encrypt, exponent=exponent)
         return self._recursive_func(X, raw_en_func)
+
+    @classmethod
+    def set_acceleration_device(cls, acceleration_device):
+        cls.__acceleration_device = acceleration_device
+
+    def _encrypt_hp(self, value, apply_obfuscation=None, apply_alignment=False):
+        '''
+           Encrypt rewritten to suit the gpu model
+           ---------------------------------------
+           Parameters:
+           value: list or ndarray
+
+           return: A list containing only one PEN_store
+           This is due to the consideration that upper levels always use iterator to process a list,
+           because the expected return value of the encrypted_list is a list.
+           So here we just process the result as a list
+        '''
+        if self.public_key is not None:
+            if isinstance(value, np.ndarray):
+                pass
+            elif isinstance(value, list):
+                value = np.array(value)
+            elif isinstance(value, int) or isinstance(value, float):
+                value = np.array([value])
+            else:
+                raise RuntimeError(f"illegal encrypt value type : {type(value)}")
+            lib_path = "federatedml.secureprotol.FATE_Engine.python.bigintengine." + self.__acceleration_device + '.' + self.__acceleration_device + "_store"
+            module_name = 'FPN_store_' + self.__acceleration_device
+            lib_module = importlib.import_module(lib_path)
+
+            FPN_store_device = getattr(lib_module, module_name)
+            fpn_store = FPN_store_device.init_from_arr(value, self.public_key.n, self.public_key.max_int,
+                                                       apply_alignment)
+            # LOGGER.info(f"generated fpn_store")
+            res_store = fpn_store.encrypt(self.public_key)
+            # LOGGER.info(f"the result is {res_store}")
+            if apply_obfuscation is not None:
+                res_store = res_store.obfuscation()
+            return res_store
+        else:
+            return None
+
+    def encrypt_hp(self, input_data):
+        return self._encrypt_hp(input_data, 1)
+
+    def decrypt_hp(self, value):
+        '''
+            Decrypt using GPU model
+            ------------------------------
+            value: PEN_store
+
+            return: list of decryped elements
+        '''
+        if self.privacy_key and self.public_key:
+            if isinstance(value, PEN_store):
+                res_array = value.decrypt(self.privacy_key)
+                return res_array.tolist()
+            else:
+                return super().decrypt_list(value)
+        else:
+            return None
 
 
 class PadsCipher(Encrypt):

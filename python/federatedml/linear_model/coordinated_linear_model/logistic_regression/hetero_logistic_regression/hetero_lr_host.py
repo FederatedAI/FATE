@@ -24,6 +24,7 @@ from federatedml.linear_model.coordinated_linear_model.logistic_regression.heter
 from federatedml.optim.gradient import hetero_lr_gradient_and_loss
 from federatedml.util import LOGGER
 from federatedml.util import consts
+from federatedml.secureprotol.encrypt import PaillierEncrypt
 
 
 class HeteroLRHost(HeteroLRBase):
@@ -93,12 +94,15 @@ class HeteroLRHost(HeteroLRBase):
             self.model_weights = LinearModelWeights(w, fit_intercept=self.init_param_obj.fit_intercept)
         else:
             self.callback_warm_start_init_iter(self.n_iter_)
+        PaillierEncrypt.set_acceleration_device(self.model_param.acceleration_device)
 
+        key_dict = []
+        start_iter = self.n_iter_
         while self.n_iter_ < self.max_iter:
             self.callback_list.on_epoch_begin(self.n_iter_)
 
             LOGGER.info("iter: " + str(self.n_iter_))
-            batch_data_generator = self.batch_generator.generate_batch_data(suffix=(self.n_iter_, ))
+            batch_data_generator = self.batch_generator.generate_batch_data(suffix=(self.n_iter_,))
             batch_index = 0
             self.optimizer.set_iters(self.n_iter_)
             for batch_data in batch_data_generator:
@@ -109,14 +113,34 @@ class HeteroLRHost(HeteroLRBase):
                 LOGGER.debug(
                     "iter: {}, batch: {}, before compute gradient, data count: {}".format(
                         self.n_iter_, batch_index, batch_feat_inst.count()))
-                optim_host_gradient = self.gradient_loss_operator.compute_gradient_procedure(
-                    batch_feat_inst, self.cipher_operator, self.model_weights, self.optimizer, self.n_iter_,
-                    batch_index)
-                # LOGGER.debug('optim_host_gradient: {}'.format(optim_host_gradient))
+                if self.model_param.acceleration_device == 'gpu':
+                    # get the index of each key in the sorted list
+                    if self.n_iter_ == start_iter:
+                        key_sorted = [k for k, _ in sorted(batch_data.collect(), key=lambda x: x[0])]
+                        key_index = dict(zip(key_sorted, [x for x in range(batch_data.count())]))
+                        key_dict.append(key_index)
+                    else:
+                        key_index = key_dict[batch_index]
 
-                self.gradient_loss_operator.compute_loss(self.model_weights, self.optimizer,
-                                                         self.n_iter_, batch_index, self.cipher_operator,
-                                                         batch_masked=self.batch_generator.batch_masked)
+                    # Variable.set_key_dict(key_index)
+
+                    optim_host_gradient = self.gradient_loss_operator.compute_gradient_procedure_hp(
+                        batch_feat_inst, self.cipher_operator, self.model_weights, self.optimizer, self.n_iter_,
+                        batch_index, key_index)
+                    # LOGGER.debug('optim_host_gradient: {}'.format(optim_host_gradient))
+
+                    self.gradient_loss_operator.compute_loss_hp(self.model_weights, self.optimizer,
+                                                                self.n_iter_, batch_index, self.cipher_operator)
+
+                else:
+                    optim_host_gradient = self.gradient_loss_operator.compute_gradient_procedure(
+                        batch_feat_inst, self.cipher_operator, self.model_weights, self.optimizer, self.n_iter_,
+                        batch_index)
+                    # LOGGER.debug('optim_host_gradient: {}'.format(optim_host_gradient))
+
+                    self.gradient_loss_operator.compute_loss(self.model_weights, self.optimizer,
+                                                             self.n_iter_, batch_index, self.cipher_operator,
+                                                             batch_masked=self.batch_generator.batch_masked)
 
                 self.model_weights = self.optimizer.update_model(self.model_weights, optim_host_gradient)
                 batch_index += 1

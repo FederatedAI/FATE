@@ -55,7 +55,7 @@ class HeteroGradientBase(object):
 
     def set_fixed_float_precision(self, floating_point_precision):
         if floating_point_precision is not None:
-            self.fixed_point_encoder = FixedPointEncoder(2**floating_point_precision)
+            self.fixed_point_encoder = FixedPointEncoder(2 ** floating_point_precision)
 
     @staticmethod
     def __apply_cal_gradient(data, fixed_point_encoder, is_sparse):
@@ -97,41 +97,69 @@ class HeteroGradientBase(object):
             the hetero regression model's gradient
         """
 
-        # feature_num = data_overview.get_features_shape(data_instances)
-        # data_count = data_instances.count()
-        is_sparse = data_overview.is_sparse_data(data_instances)
+        if isinstance(data_instances, list):
+            # high performance mode: data_instances is list of features, fore_gradient is PEN_store
+            feature_num = data_overview.get_features_shape_hp(data_instances)
+            data_count = len(data_instances)
+            is_sparse = data_overview.is_sparse_data_hp(data_instances)
 
-        LOGGER.debug("Use apply partitions")
-        feat_join_grad = data_instances.join(fore_gradient,
-                                             lambda d, g: (d.features, g))
-        f = functools.partial(self.__apply_cal_gradient,
-                              fixed_point_encoder=self.fixed_point_encoder,
-                              is_sparse=is_sparse)
-        gradient_sum = feat_join_grad.applyPartitions(f)
-        gradient_sum = gradient_sum.reduce(lambda x, y: x + y)
-        if fit_intercept:
-            # bias_grad = np.sum(fore_gradient)
-            bias_grad = fore_gradient.reduce(lambda x, y: x + y)
-            gradient_sum = np.append(gradient_sum, bias_grad)
+            if data_count * feature_num > 100:
+                feat_join_grad = (data_instances, fore_gradient)
+                gradient_sum = self.__apply_cal_gradient_hp(feat_join_grad,
+                                                            fixed_point_encoder=self.fixed_point_encoder,
+                                                            is_sparse=is_sparse)
 
-        if need_average:
-            gradient = gradient_sum / data_instances.count()
+                if fit_intercept:
+                    # bias_grad = np.sum(fore_gradient)
+                    bias_grad = fore_gradient.sum()
+                    gradient_sum = gradient_sum.cat(bias_grad, 1)
+                gradient = gradient_sum / data_count
+
+            else:
+                feat_join_grad = (data_instances, fore_gradient)
+                gradient_partition = self.__compute_partition_gradient_hp(feat_join_grad,
+                                                                          fit_intercept=fit_intercept,
+                                                                          is_sparse=is_sparse)
+
+                gradient = gradient_partition / data_count
+
         else:
-            gradient = gradient_sum
 
-        """
-        else:
-            LOGGER.debug(f"Original_method")
+            # feature_num = data_overview.get_features_shape(data_instances)
+            # data_count = data_instances.count()
+            is_sparse = data_overview.is_sparse_data(data_instances)
+
+            LOGGER.debug("Use apply partitions")
             feat_join_grad = data_instances.join(fore_gradient,
                                                  lambda d, g: (d.features, g))
-            f = functools.partial(self.__compute_partition_gradient,
-                                  fit_intercept=fit_intercept,
+            f = functools.partial(self.__apply_cal_gradient,
+                                  fixed_point_encoder=self.fixed_point_encoder,
                                   is_sparse=is_sparse)
-            gradient_partition = feat_join_grad.applyPartitions(f)
-            gradient_partition = gradient_partition.reduce(lambda x, y: x + y)
+            gradient_sum = feat_join_grad.applyPartitions(f)
+            gradient_sum = gradient_sum.reduce(lambda x, y: x + y)
+            if fit_intercept:
+                # bias_grad = np.sum(fore_gradient)
+                bias_grad = fore_gradient.reduce(lambda x, y: x + y)
+                gradient_sum = np.append(gradient_sum, bias_grad)
 
-            gradient = gradient_partition / data_count
-        """
+            if need_average:
+                gradient = gradient_sum / data_instances.count()
+            else:
+                gradient = gradient_sum
+
+            """
+            else:
+                LOGGER.debug(f"Original_method")
+                feat_join_grad = data_instances.join(fore_gradient,
+                                                     lambda d, g: (d.features, g))
+                f = functools.partial(self.__compute_partition_gradient,
+                                      fit_intercept=fit_intercept,
+                                      is_sparse=is_sparse)
+                gradient_partition = feat_join_grad.applyPartitions(f)
+                gradient_partition = gradient_partition.reduce(lambda x, y: x + y)
+    
+                gradient = gradient_partition / data_count
+            """
         return gradient
 
 
@@ -173,6 +201,35 @@ class Guest(HeteroGradientBase):
             unilateral_gradient = np.append(unilateral_gradient, intercept)
         return unilateral_gradient
 
+    def _asynchronous_compute_gradient_hp(self, data_instances, feature_list, model_weights, cipher, current_suffix,
+                                          key_index):
+        LOGGER.debug("Called asynchronous gradient")
+        key_list = [None] * self.half_d.count()
+        self.half_d_list = [None] * self.half_d.count()
+        for key, value in self.half_d.collect():
+            key_list[key_index[key]] = key
+            self.half_d_list[key_index[key]] = value
+
+        encrypted_half_d = cipher.encrypt_hp(self.half_d_list)
+        encrypted_half_d.key = key_list
+        self.remote_fore_gradient(encrypted_half_d, suffix=current_suffix)
+
+        half_g = self.compute_gradient(data_instances, self.half_d, False)
+
+        self.host_forwards = self.get_host_forward(suffix=current_suffix)  # PEN_store
+        host_forward = self.host_forwards[0]  # there is only one host
+
+        host_half_g = self.compute_gradient(feature_list, host_forward, False)
+        unilateral_gradient = host_half_g + half_g
+        LOGGER.debug(
+            f"unilateral_gradient is {unilateral_gradient}, host_half_g is {host_half_g}, host_half_g_length is {host_half_g.shape.to_tuple()}")
+        if model_weights.fit_intercept:
+            n = data_instances.count()
+            intercept = (host_forward.sum() + self.half_d.reduce(lambda x, y: x + y)) / n
+            unilateral_gradient = unilateral_gradient.cat(intercept, 1)
+        unilateral_gradient.key = key_list
+        return unilateral_gradient
+
     def _centralized_compute_gradient(self, data_instances, model_weights, cipher, current_suffix, masked_index=None):
         self.host_forwards = self.get_host_forward(suffix=current_suffix)
         fore_gradient = self.half_d
@@ -193,6 +250,7 @@ class Guest(HeteroGradientBase):
         def _apply_obfuscate(val):
             val.apply_obfuscator()
             return val
+
         fore_gradient = fore_gradient.mapValues(lambda val: _apply_obfuscate(val) / batch_size)
 
         if partial_masked_index_enc:
@@ -204,6 +262,25 @@ class Guest(HeteroGradientBase):
         # self.remote_fore_gradient(fore_gradient, suffix=current_suffix)
         unilateral_gradient = self.compute_gradient(data_instances, fore_gradient,
                                                     model_weights.fit_intercept, need_average=False)
+        return unilateral_gradient
+
+    def _centralized_compute_gradient_hp(self, data_instances, feature_list, model_weights, cipher, current_suffix,
+                                         key_index):
+        self.host_forwards = self.get_host_forward(suffix=current_suffix)  # PEN_store
+
+        key_list = [None] * self.half_d.count()
+        self.half_d_list = [None] * self.half_d.count()
+        for key, value in self.half_d.collect():
+            key_list[key_index[key]] = key
+            self.half_d_list[key_index[key]] = value
+
+        fore_gradient = self.half_d_list
+        for host_forward in self.host_forwards:
+            fore_gradient = fore_gradient + host_forward
+        fore_gradient.key = key_list
+        self.remote_fore_gradient(fore_gradient, suffix=current_suffix)
+        unilateral_gradient = self.compute_gradient(feature_list, fore_gradient, model_weights.fit_intercept)
+        unilateral_gradient.key = key_list
         return unilateral_gradient
 
     def compute_gradient_procedure(self, data_instances, cipher, model_weights, optimizer,
@@ -235,6 +312,50 @@ class Guest(HeteroGradientBase):
                                                                      cipher=cipher,
                                                                      current_suffix=current_suffix,
                                                                      masked_index=masked_index)
+
+        if optimizer is not None:
+            unilateral_gradient = optimizer.add_regular_to_grad(unilateral_gradient, model_weights)
+
+        optimized_gradient = self.update_gradient(unilateral_gradient, suffix=current_suffix)
+        # LOGGER.debug(f"Before return, optimized_gradient: {optimized_gradient}")
+        return optimized_gradient
+
+    def compute_gradient_procedure_hp(self, data_instances, cipher, model_weights, optimizer,
+                                      n_iter_, batch_index, key_index=None, offset=None):
+        """
+          Linear model gradient procedure
+          Step 1: get host forwards which differ from different algorithm
+                  For Logistic Regression and Linear Regression: forwards = wx
+                  For Poisson Regression, forwards = exp(wx)
+
+          Step 2: Compute self forwards and aggregate host forwards and get d = fore_gradient
+
+          Step 3: Compute unilateral gradient = ∑d*x,
+
+          Step 4: Send unilateral gradients to arbiter and received the optimized and decrypted gradient.
+          """
+        current_suffix = (n_iter_, batch_index)
+        # self.host_forwards = self.get_host_forward(suffix=current_suffix)
+        self.key_index = key_index
+        data_instance_dict = data_instances.collect()
+        feature_list = [None] * data_instances.count()
+        self.label_list = [None] * data_instances.count()
+        for key, value in data_instance_dict:
+            feature_list[key_index[key]] = value.features
+            self.label_list[key_index[key]] = value.label
+        # Compute Guest's partial d
+        self.compute_half_d(data_instances, model_weights, cipher,
+                            batch_index, current_suffix)
+        if self.use_async:
+            unilateral_gradient = self._asynchronous_compute_gradient_hp(data_instances, feature_list, model_weights,
+                                                                         cipher=cipher,
+                                                                         current_suffix=current_suffix,
+                                                                         key_index=key_index)
+        else:
+            unilateral_gradient = self._centralized_compute_gradient_hp(data_instances, feature_list, model_weights,
+                                                                        cipher=cipher,
+                                                                        current_suffix=current_suffix,
+                                                                        key_index=key_index)
 
         if optimizer is not None:
             unilateral_gradient = optimizer.add_regular_to_grad(unilateral_gradient, model_weights)
@@ -285,6 +406,28 @@ class Host(HeteroGradientBase):
         unilateral_gradient = half_g + guest_half_g
         return unilateral_gradient
 
+    def _asynchronous_compute_gradient_hp(self, data_instances, feature_list, cipher, current_suffix, key_index):
+        key_list = [None] * self.forwards.count()
+        half_d_list = [None] * self.forwards.count()
+        for key, value in self.forwards.collect():
+            key_list[key_index[key]] = key
+            half_d_list[key_index[key]] = value
+        encrypted_forward = cipher.encrypt_hp(half_d_list)
+        encrypted_forward.key = key_list
+
+        self.remote_host_forward(encrypted_forward, suffix=current_suffix)
+
+        half_g = self.compute_gradient(data_instances, self.forwards, False)
+
+        guest_half_d = self.get_fore_gradient(suffix=current_suffix)
+
+        guest_half_g = self.compute_gradient(feature_list, guest_half_d, False)
+
+        unilateral_gradient = guest_half_g + half_g
+        unilateral_gradient.key = guest_half_d.key
+
+        return unilateral_gradient
+
     def _centralized_compute_gradient(self, data_instances, cipher, current_suffix):
         encrypted_forward = cipher.distribute_encrypt(self.forwards)
         self.remote_host_forward(encrypted_forward, suffix=current_suffix)
@@ -293,6 +436,24 @@ class Host(HeteroGradientBase):
 
         # Host case, never fit-intercept
         unilateral_gradient = self.compute_gradient(data_instances, fore_gradient, False, need_average=False)
+        return unilateral_gradient
+
+    def _centralized_compute_gradient_hp(self, data_instances, feature_list, cipher, current_suffix, key_index):
+        key_list = [None] * self.forwards.count()
+        half_wx_list = [None] * self.forwards.count()
+        for key, value in self.forwards.collect():
+            key_list[key_index[key]] = key
+            half_wx_list[key_index[key]] = value
+
+        encrypted_forward = cipher.encrypt_hp(half_wx_list)
+        encrypted_forward.key = key_list
+        self.remote_host_forward(encrypted_forward, suffix=current_suffix)
+
+        fore_gradient = self.fore_gradient_transfer.get(idx=0, suffix=current_suffix)
+
+        # Host case, never fit-intercept
+        unilateral_gradient = self.compute_gradient(feature_list, fore_gradient, False)
+        unilateral_gradient.key = key_list
         return unilateral_gradient
 
     def compute_gradient_procedure(self, data_instances, cipher, model_weights,
@@ -317,6 +478,43 @@ class Host(HeteroGradientBase):
             unilateral_gradient = self._centralized_compute_gradient(data_instances,
                                                                      cipher,
                                                                      current_suffix)
+
+        if optimizer is not None:
+            unilateral_gradient = optimizer.add_regular_to_grad(unilateral_gradient, model_weights)
+
+        optimized_gradient = self.update_gradient(unilateral_gradient, suffix=current_suffix)
+        LOGGER.debug(f"Before return compute_gradient_procedure")
+        return optimized_gradient
+
+    def compute_gradient_procedure_hp(self, data_instances, cipher, model_weights,
+                                      optimizer,
+                                      n_iter_, batch_index, key_index):
+        """
+        Linear model gradient procedure
+        Step 1: get host forwards which differ from different algorithm
+                For Logistic Regression: forwards = wx
+
+
+        """
+        current_suffix = (n_iter_, batch_index)
+        self.key_index = key_index
+        data_instance_dict = data_instances.collect()
+        # key_list = [None] * data_instances.count()
+        feature_list = [None] * data_instances.count()
+        # LOGGER.debug(f"key_index is {key_index}")
+        for key, value in data_instance_dict:
+            # key_list[key_index[key]] = key
+            feature_list[key_index[key]] = value.features
+
+        self.forwards = self.compute_forwards(data_instances, model_weights)
+        if self.use_async:
+            unilateral_gradient = self._asynchronous_compute_gradient_hp(data_instances, feature_list,
+                                                                         cipher,
+                                                                         current_suffix, key_index)
+        else:
+            unilateral_gradient = self._centralized_compute_gradient_hp(data_instances, feature_list,
+                                                                        cipher,
+                                                                        current_suffix, key_index)
 
         if optimizer is not None:
             unilateral_gradient = optimizer.add_regular_to_grad(unilateral_gradient, model_weights)
@@ -420,6 +618,68 @@ class Arbiter(HeteroGradientBase):
         # LOGGER.debug("In arbiter compute_gradient_procedure, separated gradient: {}".format(
         #     separate_optim_gradient
         # ))
+        host_optim_gradients = separate_optim_gradient[: -1]
+        guest_optim_gradient = separate_optim_gradient[-1]
+
+        self.remote_local_gradient(host_optim_gradients, guest_optim_gradient, current_suffix)
+        return delta_grad
+
+    def compute_gradient_procedure_hp(self, cipher_operator, optimizer, n_iter_, batch_index):
+        """
+        Compute gradients.
+        Received local_gradients from guest and hosts. Merge and optimize, then separate and remote back.
+        Parameters
+        ----------
+        cipher_operator: Use for encryption
+
+        optimizer: optimizer that get delta gradient of this iter
+
+        n_iter_: int, current iter nums
+
+        batch_index: int, use to obtain current encrypted_calculator
+
+        """
+        current_suffix = (n_iter_, batch_index)
+
+        host_gradients, guest_gradient = self.get_local_gradient(current_suffix)
+
+        if len(host_gradients) > 1:
+            self.has_multiple_hosts = True
+
+        # host_gradients = [np.array(h) for h in host_gradients]
+        # guest_gradient = np.array(guest_gradient)
+
+        size_list = [h_g.shape[0] for h_g in host_gradients]
+        size_list.append(guest_gradient.shape[0])
+
+        # gradient = np.hstack((h for h in host_gradients))
+        # gradient = np.hstack((gradient, guest_gradient))
+
+        # gradient : PEN_store
+        gradient = None
+        for h in host_gradients:
+            if gradient is None:
+                gradient = h
+            else:
+                gradient = gradient.cat(h)
+        gradient = gradient.cat(guest_gradient, 1)
+
+        # grad = np.array(cipher_operator.decrypt_list(gradient))
+        grad = np.array(cipher_operator.decrypt_hp(gradient))
+
+        LOGGER.debug("In arbiter compute_gradient_procedure, before apply grad: {}, size_list: {}".format(
+            grad, size_list
+        ))
+
+        delta_grad = optimizer.apply_gradients(grad)
+
+        LOGGER.debug("In arbiter compute_gradient_procedure, delta_grad: {}".format(
+            delta_grad
+        ))
+        separate_optim_gradient = self.separate(delta_grad, size_list)
+        LOGGER.debug("In arbiter compute_gradient_procedure, separated gradient: {}".format(
+            separate_optim_gradient
+        ))
         host_optim_gradients = separate_optim_gradient[: -1]
         guest_optim_gradient = separate_optim_gradient[-1]
 

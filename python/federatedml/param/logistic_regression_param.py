@@ -268,7 +268,7 @@ class HeteroLogisticParam(LogisticParam):
                  metrics=['auc', 'ks'], floating_point_precision=23,
                  encrypt_param=EncryptParam(),
                  use_first_metric_only=False, stepwise_param=StepwiseParam(),
-                 callback_param=CallbackParam()
+                 callback_param=CallbackParam(), acceleration_device="fpga"
                  ):
         super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                   batch_size=batch_size, shuffle=shuffle, batch_strategy=batch_strategy,
@@ -287,9 +287,13 @@ class HeteroLogisticParam(LogisticParam):
                                                   callback_param=callback_param)
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
         self.sqn_param = copy.deepcopy(sqn_param)
+        self.acceleration_device = acceleration_device
 
     def check(self):
         super().check()
         self.encrypted_mode_calculator_param.check()
         self.sqn_param.check()
+        if self.acceleration_device not in ['fpga', 'cpu']:
+            raise ValueError("Device {} not supported. Only cpu and fpga are supported".format(
+                self.acceleration_device))
         return True

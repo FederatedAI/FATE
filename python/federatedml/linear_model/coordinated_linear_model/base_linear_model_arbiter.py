@@ -87,10 +87,18 @@ class HeteroBaseArbiter(BaseLinearModel):
             self.optimizer.set_iters(self.n_iter_)
             for batch_index in batch_data_generator:
                 # Compute and Transfer gradient info
-                gradient = self.gradient_loss_operator.compute_gradient_procedure(self.cipher_operator,
-                                                                                  self.optimizer,
-                                                                                  self.n_iter_,
-                                                                                  batch_index)
+
+                if self.model_param.acceleration_device != 'cpu':
+                    gradient = self.gradient_loss_operator.compute_gradient_procedure_hp(self.cipher_operator,
+                                                                                         self.optimizer,
+                                                                                         self.n_iter_,
+                                                                                         batch_index)
+                else:
+
+                    gradient = self.gradient_loss_operator.compute_gradient_procedure(self.cipher_operator,
+                                                                                      self.optimizer,
+                                                                                      self.n_iter_,
+                                                                                      batch_index)
                 if total_gradient is None:
                     total_gradient = gradient
                 else:
