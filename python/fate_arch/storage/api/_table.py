@@ -61,12 +61,6 @@ class StorageTable(StorageTableBase):
                             fw.write(chunk)
                 with open(self.path, "r") as f:
                     while True:
-                        if self._meta.get_have_head():
-                            header_line = f.readline().strip("\n")
-                            sid = header_line.split(id_delimiter)[0]
-                            head = id_delimiter.join(header_line.split(id_delimiter)[1:])
-                            self._meta.update_metas(schema={'header': head, 'sid': sid})
-
                         lines = f.readlines(1024*1024*1024)
                         if lines:
                             for line in lines:
