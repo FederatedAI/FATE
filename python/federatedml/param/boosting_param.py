@@ -362,6 +362,12 @@ class HeteroBoostingParam(BoostingParam):
     encrypted_mode_calculator_param: EncryptedModeCalculatorParam object
         the calculation mode use in secureboost,
         default: EncryptedModeCalculatorParam()
+
+    pu_mode: {'standard', 'two_step'}
+        Switch positive unlabeled learning mode.
+
+    unlabeled_digit: None or integer, default: None
+        Whether have unlabeled data. If it has, declaring the unlabeled digit.
     """
 
     def __init__(self, task_type=consts.CLASSIFICATION,
@@ -372,7 +378,8 @@ class HeteroBoostingParam(BoostingParam):
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, early_stopping_rounds=None, metrics=None, use_first_metric_only=False,
-                 random_seed=100, binning_error=consts.DEFAULT_RELATIVE_ERROR):
+                 random_seed=100, binning_error=consts.DEFAULT_RELATIVE_ERROR,
+                 pu_mode="standard", unlabeled_digit=None):
 
         super(HeteroBoostingParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                   subsample_feature_rate, n_iter_no_change, tol, bin_num,
@@ -384,6 +391,8 @@ class HeteroBoostingParam(BoostingParam):
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
         self.early_stopping_rounds = early_stopping_rounds
         self.use_first_metric_only = use_first_metric_only
+        self.pu_mode = pu_mode
+        self.unlabeled_digit = unlabeled_digit
 
     def check(self):
 
@@ -401,6 +410,12 @@ class HeteroBoostingParam(BoostingParam):
 
         if not isinstance(self.use_first_metric_only, bool):
             raise ValueError("use_first_metric_only should be a boolean")
+
+        if self.pu_mode not in ['standard', 'two_step']:
+            raise ValueError("logistic_param's pu_mode not supported, pu_mode should be 'standard' or 'two_step'")
+
+        if self.unlabeled_digit is not None and type(self.unlabeled_digit).__name__ != "int":
+            raise ValueError("unlabeled_digit should be an integer")
 
         return True
 

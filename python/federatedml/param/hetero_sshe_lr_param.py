@@ -86,6 +86,12 @@ class HeteroSSHELRParam(LogisticParam):
         Whether reconstruct model weights every iteration. If so, Regularization is available.
         The performance will be better as well since the algorithm process is simplified.
 
+    pu_mode: {'standard', 'two_step'}
+        Switch positive unlabeled learning mode.
+
+    unlabeled_digit: None or integer, default: None
+        Whether have unlabeled data. If it has, declaring the unlabeled digit.
+
     """
 
     def __init__(self, penalty='L2',
@@ -98,7 +104,9 @@ class HeteroSSHELRParam(LogisticParam):
                  reveal_strategy="respectively",
                  reveal_every_iter=False,
                  callback_param=CallbackParam(),
-                 encrypted_mode_calculator_param=EncryptedModeCalculatorParam()
+                 encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
+                 pu_mode="standard",
+                 unlabeled_digit=None
                  ):
         super(HeteroSSHELRParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                 batch_size=batch_size,
@@ -112,6 +120,8 @@ class HeteroSSHELRParam(LogisticParam):
         self.reveal_strategy = reveal_strategy
         self.reveal_every_iter = reveal_every_iter
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
+        self.pu_mode = pu_mode
+        self.unlabeled_digit = unlabeled_digit
 
     def check(self):
         descr = "logistic_param's"
@@ -168,4 +178,10 @@ class HeteroSSHELRParam(LogisticParam):
         if self.reveal_strategy == "encrypted_reveal_in_host" and self.reveal_every_iter:
             raise PermissionError("reveal strategy: encrypted_reveal_in_host mode is not allow to reveal every iter.")
         self.encrypted_mode_calculator_param.check()
+
+        if self.pu_mode not in ['standard', 'two_step']:
+            raise ValueError("logistic_param's pu_mode not supported, pu_mode should be 'standard' or 'two_step'")
+
+        if self.unlabeled_digit is not None and type(self.unlabeled_digit).__name__ != "int":
+            raise ValueError("unlabeled_digit should be an integer")
         return True

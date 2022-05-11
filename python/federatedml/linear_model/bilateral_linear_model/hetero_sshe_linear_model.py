@@ -215,6 +215,12 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
         LOGGER.info(f"Start to train single {self.model_name}")
         if len(self.component_properties.host_party_idlist) > 1:
             raise ValueError(f"Hetero SSHE Model does not support multi-host training.")
+
+        LOGGER.info("Filter labeled instances")
+        if self.role == consts.GUEST:
+            data_instances = data_instances.filter(
+                lambda k, v: v.label != self.model_param.unlabeled_digit if self.model_param.pu_mode == "two_step" else v.label != None)
+
         self.callback_list.on_train_begin(data_instances, validate_data)
 
         model_shape = self.get_features_shape(data_instances)

@@ -256,6 +256,16 @@ class HomoLogisticParam(LogisticParam):
 
 
 class HeteroLogisticParam(LogisticParam):
+    """
+    Parameters
+    ----------
+    pu_mode: {'standard', 'two_step'}
+        Switch positive unlabeled learning mode.
+
+    unlabeled_digit: None or integer, default: None
+        Whether have unlabeled data. If it has, declaring the unlabeled digit.
+
+    """
     def __init__(self, penalty='L2',
                  tol=1e-4, alpha=1.0, optimizer='rmsprop',
                  batch_size=-1, shuffle=True, batch_strategy="full", masked_rate=5,
@@ -268,7 +278,9 @@ class HeteroLogisticParam(LogisticParam):
                  metrics=['auc', 'ks'], floating_point_precision=23,
                  encrypt_param=EncryptParam(),
                  use_first_metric_only=False, stepwise_param=StepwiseParam(),
-                 callback_param=CallbackParam()
+                 callback_param=CallbackParam(),
+                 pu_mode="standard",
+                 unlabeled_digit=None
                  ):
         super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                   batch_size=batch_size, shuffle=shuffle, batch_strategy=batch_strategy,
@@ -287,9 +299,18 @@ class HeteroLogisticParam(LogisticParam):
                                                   callback_param=callback_param)
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
         self.sqn_param = copy.deepcopy(sqn_param)
+        self.pu_mode = pu_mode
+        self.unlabeled_digit = unlabeled_digit
 
     def check(self):
         super().check()
         self.encrypted_mode_calculator_param.check()
         self.sqn_param.check()
+
+        if self.pu_mode not in ['standard', 'two_step']:
+            raise ValueError("logistic_param's pu_mode not supported, pu_mode should be 'standard' or 'two_step'")
+
+        if self.unlabeled_digit is not None and type(self.unlabeled_digit).__name__ != "int":
+            raise ValueError("unlabeled_digit should be an integer")
+
         return True
