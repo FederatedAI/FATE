@@ -50,7 +50,9 @@ class HeteroLRHost(HeteroLRBase):
         # self.header = self.get_header(data_instances)
         self.prepare_fit(data_instances, validate_data)
 
-        classes = self.one_vs_rest_obj.get_data_classes(data_instances)
+        classes = self.one_vs_rest_obj.get_data_classes(data_instances,
+                                                        pu_mode=self.model_param.pu_mode,
+                                                        unlabeled_digit=self.model_param.unlabeled_digit)
 
         if len(classes) > 2:
             self.need_one_vs_rest = True

@@ -50,7 +50,9 @@ class HeteroLRArbiter(HeteroBaseArbiter, HeteroLRBase):
     def fit(self, data_instances=None, validate_data=None):
         LOGGER.debug("Has loss_history: {}".format(hasattr(self, 'loss_history')))
         LOGGER.debug("Need one_vs_rest: {}".format(self.need_one_vs_rest))
-        classes = self.one_vs_rest_obj.get_data_classes(data_instances)
+        classes = self.one_vs_rest_obj.get_data_classes(data_instances,
+                                                        pu_mode=self.model_param.pu_mode,
+                                                        unlabeled_digit=self.model_param.unlabeled_digit)
         if len(classes) > 2:
             self.need_one_vs_rest = True
             self.need_call_back_loss = False
