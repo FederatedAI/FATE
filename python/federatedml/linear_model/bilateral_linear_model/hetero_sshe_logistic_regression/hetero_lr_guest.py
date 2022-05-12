@@ -233,7 +233,9 @@ class HeteroLRGuest(HeteroSSHEGuestBase):
     def fit(self, data_instances, validate_data=None):
         LOGGER.info("Starting to fit hetero_sshe_logistic_regression")
         self.prepare_fit(data_instances, validate_data)
-        classes = self.one_vs_rest_obj.get_data_classes(data_instances)
+        classes = self.one_vs_rest_obj.get_data_classes(data_instances,
+                                                        pu_mode=self.model_param.pu_mode,
+                                                        unlabeled_digit=self.model_param.unlabeled_digit)
 
         if len(classes) > 2:
             self.need_one_vs_rest = True
