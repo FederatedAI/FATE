@@ -167,7 +167,7 @@ class DataSplitter(ModelBase):
         freq_dict = collections.Counter(y)
         freq_keys = freq_dict.keys()
         # continuous label
-        if split_points is not None:
+        if split_points is not None and len(split_points) > 0:
             label_count = len(split_points) + 1
             # fill in count for missing bins
             if len(freq_keys) < label_count:
