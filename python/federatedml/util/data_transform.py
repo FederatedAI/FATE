@@ -302,21 +302,21 @@ class DenseFeatureTransformer(object):
 
         if output_format == "dense":
             format_features = copy.deepcopy(features)
-            if data_type in ["int", "int64", "long", "float", "float64", "double"]:
-                for i in range(len(features)):
-                    if (missing_impute is not None and features[i] in missing_impute) or \
-                            (missing_impute is None and features[i] in ['', 'NULL', 'null', "NA"]):
-                        format_features[i] = np.nan
+            for fid in range(len(features)):
+                if exclusive_data_type_fid_map is not None and fid in exclusive_data_type_fid_map:
+                    dtype = exclusive_data_type_fid_map[fid]
+                else:
+                    dtype = data_type
+
+                if dtype in ["int", "int64", "long", "float", "float64", "double"]:
+                    if (missing_impute is not None and features[fid] in missing_impute) or \
+                            (missing_impute is None and features[fid] in ['', 'NULL', 'null', "NA"]):
+                        format_features[fid] = np.nan
+                        continue
+
+                format_features[fid] = getattr(np, dtype)(features[fid])
 
             if exclusive_data_type_fid_map:
-                for fid in range(len(features)):
-                    if fid in exclusive_data_type_fid_map:
-                        dtype = exclusive_data_type_fid_map[fid]
-                    else:
-                        dtype = data_type
-
-                    format_features[fid] = getattr(np, dtype)(features[fid])
-
                 return np.asarray(format_features, dtype=object)
             else:
                 return np.asarray(format_features, dtype=data_type)
