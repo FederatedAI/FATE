@@ -100,10 +100,17 @@ class Imputer(object):
         _data = copy.deepcopy(data)
         replace_cols_index_list = []
         if isinstance(_data, Instance):
+            new_features = []
             for i, v in enumerate(_data.features):
                 if v in missing_value_list and i not in skip_cols:
-                    _data.features[i] = transform_list[i]
+                    # _data.features[i] = transform_list[i]
+                    new_features.append(transform_list[i])
                     replace_cols_index_list.append(i)
+                else:
+                    new_features.append(v)
+            if replace_cols_index_list:
+                # new features array will have lowest compatible dtype
+                _data.features = np.array(new_features)
         else:
             for i, v in enumerate(_data):
                 if str(v) in missing_value_list and i not in skip_cols:
@@ -138,10 +145,17 @@ class Imputer(object):
         _data = copy.deepcopy(data)
         replace_cols_index_list = []
         if isinstance(_data, Instance):
+            new_features = []
             for i, v in enumerate(_data.features):
                 if v in missing_value_list:
-                    _data.features[i] = replace_value
+                    # _data.features[i] = replace_value
+                    new_features.append(replace_value)
                     replace_cols_index_list.append(i)
+                else:
+                    new_features.append(v)
+            if replace_cols_index_list:
+                # make sure new features array has lowest compatible dtype
+                _data.features = np.array(new_features)
         else:
             for i, v in enumerate(_data):
                 if str(v) in missing_value_list:
