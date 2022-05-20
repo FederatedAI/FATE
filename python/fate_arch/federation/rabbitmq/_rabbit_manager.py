@@ -408,7 +408,7 @@ class RabbitManager:
         return True    
     
     def clean(self, vhost):
-        time.sleep(0.1)
+        time.sleep(1)
         queue_names = self.get_queues(vhost)
         if queue_names is not None:
             for name in queue_names:
@@ -425,5 +425,5 @@ class RabbitManager:
                 self.delete_policy(vhost, name)              
                        
         self.delete_vhost(vhost=vhost)
-        time.sleep(0.1)
+        time.sleep(1)
         self.delete_connections(vhost=vhost)      
