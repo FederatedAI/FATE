@@ -28,24 +28,6 @@ C_COMMON_HTTP_HEADER = {'Content-Type': 'application/json'}
 APIs are refered to https://rawcdn.githack.com/rabbitmq/rabbitmq-management/v3.8.3/priv/www/api/index.html
 """
 
-def connection_retry(func):
-    """retry connection
-    """
-    def wrapper(self, *args, **kwargs):
-        """wrapper
-        """
-        res = False
-        for ntry in range(60):
-            try:
-                res = func(self, *args, **kwargs)
-                if res is True:
-                    break
-            except Exception as e:
-                LOGGER.error("[rabbitmanager]function %s error" % func.__name__, exc_info=True)
-                time.sleep(1)
-        return res 
-    return wrapper
-
 
 class RabbitManager:
     def __init__(self, user, password, endpoint, runtime_config=None):
@@ -54,10 +36,7 @@ class RabbitManager:
         self.endpoint = endpoint
         # The runtime_config defines the parameters to create queue, exchange .etc
         self.runtime_config = runtime_config if runtime_config is not None else {}
-        
 
-    # return a requests.Response object in case someone need more info about the Response
-    @connection_retry 
     def create_user(self, user, password):
         url = C_HTTP_TEMPLATE.format(self.endpoint, "users/" + user)
         body = {
