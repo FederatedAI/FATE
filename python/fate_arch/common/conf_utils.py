@@ -26,7 +26,7 @@ def conf_realpath(conf_name):
     return os.path.join(file_utils.get_project_base_directory(), conf_path)
 
 
-def get_base_config(key, default=None, conf_name=SERVICE_CONF) -> dict:
+def get_base_config(key, default=None, conf_name=SERVICE_CONF):
     local_path = conf_realpath(f'local.{conf_name}')
     if os.path.exists(local_path):
         local_config = file_utils.load_yaml_conf(local_path)
