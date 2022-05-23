@@ -14,9 +14,9 @@
 #  limitations under the License.
 #
 import os
-import uuid
 
 from fate_arch.common import hive_utils
+from fate_arch.common.base_utils import fate_uuid
 from fate_arch.common.file_utils import get_project_base_directory
 from fate_arch.storage import StorageEngine, HiveStoreType
 from fate_arch.storage import StorageTableBase
@@ -91,7 +91,7 @@ class StorageTable(StorageTableBase):
                        " '{}'".format(self._address.name, id_delimiter)
         self._cur.execute(create_table)
         # load local file or hdfs file
-        temp_path = os.path.join(get_project_base_directory(), 'temp_data', uuid.uuid1().hex)
+        temp_path = os.path.join(get_project_base_directory(), 'temp_data', fate_uuid())
         os.makedirs(os.path.dirname(temp_path), exist_ok=True)
         with open(temp_path, 'w') as f:
             for k, v in kv_list:
