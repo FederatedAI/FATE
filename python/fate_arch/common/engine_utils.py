@@ -13,7 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import typing
 
 from fate_arch.common import FederatedMode, conf_utils
 from fate_arch.computing import ComputingEngine

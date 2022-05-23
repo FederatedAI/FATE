@@ -1,12 +1,12 @@
 import os
-import uuid
 
 from fate_arch.common import file_utils
+from fate_arch.common.base_utils import fate_uuid
 from fate_arch.storage import StorageEngine
 
 
 def default_output_info(task_id, task_version, output_type):
-    return f"output_{output_type}_{task_id}_{task_version}", uuid.uuid1().hex
+    return f"output_{output_type}_{task_id}_{task_version}", fate_uuid()
 
 
 def default_input_fs_path(name, namespace, prefix=None, storage_engine=StorageEngine.HDFS):
