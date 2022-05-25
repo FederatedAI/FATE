@@ -379,7 +379,7 @@ class Federation(FederationABC):
 
     def _get_or_create_topic(
         self, party: Party, name=None, partitions=None, dtype=None, client_type=None
-    ) -> typing.Tuple:
+    ) -> typing.List:
         topic_key_list = []
         topic_infos = []
 

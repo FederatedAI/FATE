@@ -356,7 +356,7 @@ class Federation(FederationABC):
 
     def _get_or_create_queue(
         self, party: Party, name=None, partitions=None, dtype=None
-    ) -> typing.Tuple:
+    ) -> typing.List:
         queue_key_list = []
         queue_infos = []
 
