@@ -82,7 +82,7 @@ class PaillierPublicKey(object):
             raise TypeError("plaintext should be int, but got: %s" %
                             type(plaintext))
 
-        if plaintext >= (self.n - self.max_int) and plaintext < self.n:
+        if (self.n - self.max_int) <= plaintext < self.n:
             # Very large plaintext, take a sneaky shortcut using inverses
             neg_plaintext = self.n - plaintext  # = abs(plaintext - nsquare)
             neg_ciphertext = (self.n * neg_plaintext + 1) % self.nsquare

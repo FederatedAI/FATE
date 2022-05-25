@@ -39,7 +39,7 @@ class TestRandomSampler(unittest.TestCase):
         sampler.set_tracker(tracker)
         sample_data, sample_ids = sampler.sample(self.table)
 
-        self.assertTrue(sample_data.count() > 25 and sample_data.count() < 35)
+        self.assertTrue(25 < sample_data.count() < 35)
         self.assertTrue(len(set(sample_ids)) == len(sample_ids))
 
         new_data = list(sample_data.collect())
@@ -69,7 +69,7 @@ class TestRandomSampler(unittest.TestCase):
         sampler.set_tracker(tracker)
         sample_data, sample_ids = sampler.sample(self.table)
 
-        self.assertTrue(sample_data.count() > 250 and sample_data.count() < 350)
+        self.assertTrue(250 < sample_data.count() < 350)
 
         data_dict = dict(self.data)
         new_data = list(sample_data.collect())
@@ -115,7 +115,7 @@ class TestStratifiedSampler(unittest.TestCase):
 
         for id, inst in new_data:
             count_label[inst.label] += 1
-            self.assertTrue(type(id).__name__ == 'int' and id >= 0 and id < 1000)
+            self.assertTrue(type(id).__name__ == 'int' and 0 <= id < 1000)
             self.assertTrue(inst.label == self.data[id][1].label and inst.features == self.data[id][1].features)
 
         for i in range(4):
@@ -144,7 +144,7 @@ class TestStratifiedSampler(unittest.TestCase):
 
         for id, inst in new_data:
             count_label[inst.label] += 1
-            self.assertTrue(type(id).__name__ == 'int' and id >= 0 and id < len(sample_ids))
+            self.assertTrue(type(id).__name__ == 'int' and 0 <= id < len(sample_ids))
             real_id = sample_ids[id]
             self.assertTrue(inst.label == self.data[real_id][1].label and
                             inst.features == self.data[real_id][1].features)
