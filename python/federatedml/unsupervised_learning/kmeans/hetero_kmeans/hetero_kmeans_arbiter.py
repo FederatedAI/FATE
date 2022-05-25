@@ -53,7 +53,8 @@ class HeteroKmeansArbiter(BaseKmeansModel):
                              metric_namespace='train',
                              metric_data=[Metric(iter_num, dbi)])
 
-    def sum_in_cluster(self, iterator):
+    @staticmethod
+    def sum_in_cluster(iterator):
         sum_result = dict()
         for k, v in iterator:
             if v[1] not in sum_result:

@@ -262,7 +262,8 @@ class DenseFeatureTransformer(object):
 
         return data_instance
 
-    def append_match_id(self, inst, match_id):
+    @staticmethod
+    def append_match_id(inst, match_id):
         inst.inst_id = match_id
         return inst
 

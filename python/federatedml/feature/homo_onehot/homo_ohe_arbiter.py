@@ -79,7 +79,8 @@ class HomoOneHotArbiter(HomoOneHotBase):
     def _get_param(self):
         pass
 
-    def export_model(self):
+    @staticmethod
+    def export_model():
 
         return None
 

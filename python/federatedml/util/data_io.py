@@ -410,7 +410,8 @@ class SparseFeatureReader(object):
         self.sid_name = "sid"
         self.label_name = data_io_param.label_name
 
-    def get_max_feature_index(self, line, delimitor=' '):
+    @staticmethod
+    def get_max_feature_index(line, delimitor=' '):
         if line.strip() == '':
             raise ValueError("find an empty line, please check!!!")
 

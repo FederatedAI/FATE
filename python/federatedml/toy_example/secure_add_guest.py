@@ -56,7 +56,8 @@ class SecureAddGuest(ModelBase):
         kvs = [(i, 1) for i in range(self.data_num)]
         self.x = session.parallelize(kvs, include_key=True, partition=self.partition)
 
-    def share(self, x):
+    @staticmethod
+    def share(x):
         first = np.random.uniform(x, -x)
         return first, x - first
 
@@ -70,7 +71,8 @@ class SecureAddGuest(ModelBase):
         guest_sum = self.x1_plus_y1.reduce(lambda x, y: x + y)
         return guest_sum
 
-    def reconstruct(self, guest_sum, host_sum):
+    @staticmethod
+    def reconstruct(guest_sum, host_sum):
         print("host sum is %.4f" % host_sum)
         print("guest sum is %.4f" % guest_sum)
         secure_sum = host_sum + guest_sum

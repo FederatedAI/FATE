@@ -7,7 +7,8 @@ from federatedml.util import consts
 
 class PSIAdapter(BaseAdapter):
 
-    def convert(self, model_meta, model_param):
+    @staticmethod
+    def convert(model_meta, model_param):
 
         psi_scores = dict(model_param.total_score)
 

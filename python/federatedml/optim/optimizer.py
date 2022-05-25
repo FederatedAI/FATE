@@ -70,7 +70,8 @@ class _Optimizer(object):
         # ))
         return new_param
 
-    def _l2_updator(self, lr_weights: LinearModelWeights, gradient):
+    @staticmethod
+    def _l2_updator(lr_weights: LinearModelWeights, gradient):
         """
         For l2 regularization, the regular term has been added in gradients.
         """

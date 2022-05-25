@@ -179,7 +179,8 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
         self.forwards = data_instances.mapValues(lambda v: 0.25 * vec_dot(v.features, model_weights.coef_))
         return self.forwards
 
-    def compute_half_g(self, data_instances, w, cipher, batch_index):
+    @staticmethod
+    def compute_half_g(data_instances, w, cipher, batch_index):
         half_g = data_instances.mapValues(
             lambda v: vec_dot(v.features, w.coef_) * 0.25 + w.intercept_)
         encrypt_half_g = cipher[batch_index].encrypt(half_g)

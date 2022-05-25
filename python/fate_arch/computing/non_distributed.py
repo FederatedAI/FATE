@@ -29,7 +29,8 @@ class LocalData():
     def partitions(self):
         return
 
-    def count(self, **kwargs):
+    @staticmethod
+    def count(**kwargs):
         return 0
 
     def save(self, address, **kwargs):

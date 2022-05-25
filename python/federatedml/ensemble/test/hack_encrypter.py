@@ -1,7 +1,9 @@
 class HackDecrypter():
 
-    def encrypt(self, val):
+    @staticmethod
+    def encrypt(val):
         return val
 
-    def decrypt(self, val):
+    @staticmethod
+    def decrypt(val):
         return val

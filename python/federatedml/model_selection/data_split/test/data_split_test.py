@@ -39,7 +39,8 @@ class TestDataSplit(unittest.TestCase):
         params = DataSplitParam(**param_dict)
         self.data_splitter._init_model(params)
 
-    def prepare_data(self, data_num, feature_num):
+    @staticmethod
+    def prepare_data(data_num, feature_num):
         final_result = []
         for i in range(data_num):
             tmp = i * np.ones(feature_num)

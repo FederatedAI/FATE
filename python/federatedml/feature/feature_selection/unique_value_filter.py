@@ -54,6 +54,7 @@ class UniqueValueFilter(BaseFilterMethod):
         self._keep_one_feature(pick_high=True)
         return self
 
-    def get_meta_obj(self):
+    @staticmethod
+    def get_meta_obj():
         result = feature_selection_meta_pb2.FilterMeta()
         return result

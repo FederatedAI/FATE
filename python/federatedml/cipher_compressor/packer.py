@@ -85,7 +85,8 @@ class GuestIntegerPacker(object):
 
         return rs
 
-    def _pack_fix_len_int_list(self, int_list: list, bit_assign: list):
+    @staticmethod
+    def _pack_fix_len_int_list(int_list: list, bit_assign: list):
 
         result = int_list[0]
         for i, offset in zip(int_list[1:], bit_assign[1:]):
@@ -94,7 +95,8 @@ class GuestIntegerPacker(object):
 
         return result
 
-    def unpack_an_int(self, integer: int, bit_assign_list: list):
+    @staticmethod
+    def unpack_an_int(integer: int, bit_assign_list: list):
 
         rs_list = []
         for bit_assign in reversed(bit_assign_list[1:]):

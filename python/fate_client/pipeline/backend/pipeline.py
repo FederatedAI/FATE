@@ -383,7 +383,8 @@ class PipeLine(object):
         LOGGER.debug(f"self._train_conf: \n {json.dumps(self._train_conf, indent=4, ensure_ascii=False)}")
         return self._train_conf
 
-    def _construct_upload_conf(self, data_conf):
+    @staticmethod
+    def _construct_upload_conf(data_conf):
         upload_conf = copy.deepcopy(data_conf)
         # upload_conf["work_mode"] = work_mode
         return upload_conf

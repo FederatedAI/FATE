@@ -107,7 +107,8 @@ class IsoModelFilter(BaseFilterMethod):
                     result.append(idx)
         return result
 
-    def _top_k_fit(self, values, k, take_high):
+    @staticmethod
+    def _top_k_fit(values, k, take_high):
         sorted_idx = np.argsort(values)
         result = []
         if take_high:

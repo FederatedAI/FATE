@@ -53,7 +53,8 @@ class BaseScale(object):
 
         return self.data_shape
 
-    def _get_header(self, data):
+    @staticmethod
+    def _get_header(data):
         header = get_header(data)
         return header
 
@@ -104,7 +105,8 @@ class BaseScale(object):
 
         return scale_column_idx
 
-    def __check_equal(self, size1, size2):
+    @staticmethod
+    def __check_equal(size1, size2):
         if size1 != size2:
             raise ValueError("Check equal failed, {} != {}".format(size1, size2))
 

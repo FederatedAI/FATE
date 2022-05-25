@@ -267,7 +267,8 @@ class KFold(BaseCrossValidator):
             join_data_insts.schema = schema
             return join_data_insts
 
-    def evaluate(self, validate_data, fold_name, model):
+    @staticmethod
+    def evaluate(validate_data, fold_name, model):
 
         if validate_data is None:
             return

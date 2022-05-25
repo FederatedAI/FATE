@@ -76,6 +76,7 @@ class ManuallyFilter(BaseFilterMethod):
     #     meta_dicts['manually_meta'] = result
     #     return meta_dicts
 
-    def get_meta_obj(self):
+    @staticmethod
+    def get_meta_obj():
         result = feature_selection_meta_pb2.FilterMeta()
         return result

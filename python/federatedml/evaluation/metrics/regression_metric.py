@@ -57,7 +57,8 @@ class IC(object):
         when k = log(n), results is BIC, also called SBC, SIC, SBIC.
     """
 
-    def compute(self, k, n, dfe, loss):
+    @staticmethod
+    def compute(k, n, dfe, loss):
         aic_score = k * dfe + 2 * n * loss
         return aic_score
 
@@ -70,7 +71,8 @@ class IC_Approx(object):
         Note that this formula for linear regression dismisses the constant term n * np.log(2 * np.pi) for sake of simplicity, so the absolute value of result will be small.
     """
 
-    def compute(self, k, n, dfe, loss):
+    @staticmethod
+    def compute(k, n, dfe, loss):
         aic_score = k * dfe + n * np.log(loss * 2)
         return aic_score
 

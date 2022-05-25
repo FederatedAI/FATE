@@ -255,7 +255,8 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
                 self.split_maskdict[node.id] = node.bid
                 self.missing_dir_maskdict[node.id] = node.missing_dir
 
-    def mask_node_id(self, nodes):
+    @staticmethod
+    def mask_node_id(nodes):
         for n in nodes:
             n.id = -1
         return nodes

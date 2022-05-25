@@ -22,7 +22,8 @@ from federatedml.feature.feature_selection.model_adapter.adapter_base import Bas
 
 class StatisticAdapter(BaseAdapter):
 
-    def convert(self, model_meta, model_param):
+    @staticmethod
+    def convert(model_meta, model_param):
         result = isometric_model.IsometricModel()
         self_values = model_param.self_values
         for value_obj in list(self_values.results):

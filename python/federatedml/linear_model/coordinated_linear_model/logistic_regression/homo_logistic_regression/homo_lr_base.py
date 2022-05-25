@@ -106,7 +106,8 @@ class HomoLRBase(BaseLogisticRegression):
         # HomoLabelEncoderArbiter().label_alignment()
         pass
 
-    def classify(self, predict_wx, threshold):
+    @staticmethod
+    def classify(predict_wx, threshold):
         """
         convert a probability table into a predicted class table.
         """

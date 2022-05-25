@@ -74,7 +74,8 @@ class DataSplitter(ModelBase):
                                                               shuffle=self.shuffle, stratify=stratify)
         return id_train, id_test, y_train, y_test
 
-    def _get_ids(self, data_inst):
+    @staticmethod
+    def _get_ids(data_inst):
         ids = sorted([i for i, v in data_inst.mapValues(lambda v: None).collect()])
         return ids
 

@@ -340,5 +340,6 @@ class PytorchData(data.Dataset):
 
 
 class PytorchDataConverter(DataConverter):
-    def convert(self, data, *args, **kwargs):
+    @staticmethod
+    def convert(data, *args, **kwargs):
         return PytorchData(data, *args, **kwargs)

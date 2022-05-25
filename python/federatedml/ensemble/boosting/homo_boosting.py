@@ -294,7 +294,8 @@ class HomoBoostingArbiter(Boosting, ABC):
         self.callback_list.on_train_end()
         self.set_summary(self.generate_summary())
 
-    def predict(self, data_inst=None):
+    @staticmethod
+    def predict(data_inst=None):
         LOGGER.debug('arbiter skip prediction')
 
     @abc.abstractmethod

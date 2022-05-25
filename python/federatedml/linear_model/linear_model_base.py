@@ -138,7 +138,8 @@ class BaseLinearModel(ModelBase):
                              metric_namespace='train',
                              metric_data=[Metric(iter_num, loss)])
 
-    def _abnormal_detection(self, data_instances):
+    @staticmethod
+    def _abnormal_detection(data_instances):
         """
         Make sure input data_instances is valid.
         """
@@ -208,7 +209,8 @@ class BaseLinearModel(ModelBase):
             summary["validation_metrics"] = self.callback_variables.validation_summary
         return summary
 
-    def check_abnormal_values(self, data_instances):
+    @staticmethod
+    def check_abnormal_values(data_instances):
 
         if data_instances is None:
             return

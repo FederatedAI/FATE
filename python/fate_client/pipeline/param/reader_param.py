@@ -19,5 +19,6 @@ class ReaderParam:
     def __init__(self, table=None):
         self.table = table
 
-    def check(self):
+    @staticmethod
+    def check():
         return True

@@ -26,7 +26,8 @@ from federatedml.protobuf.model_migrate.converter.converter_base import ProtoCon
 
 class HeteroSBTConverter(ProtoConverterBase):
 
-    def convert(self, param: BoostingTreeModelParam, meta: BoostingTreeModelMeta,
+    @staticmethod
+    def convert(param: BoostingTreeModelParam, meta: BoostingTreeModelMeta,
                 guest_id_mapping: Dict,
                 host_id_mapping: Dict,
                 arbiter_id_mapping: Dict,

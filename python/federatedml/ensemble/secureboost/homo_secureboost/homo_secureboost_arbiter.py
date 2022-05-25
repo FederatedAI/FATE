@@ -67,7 +67,8 @@ class HomoSecureBoostingTreeArbiter(HomoBoostingArbiter):
         return summary
 
     # homo tree arbiter doesnt save model
-    def get_cur_model(self):
+    @staticmethod
+    def get_cur_model():
         return None
 
     def load_learner(self, model_meta, model_param, epoch_idx, booster_idx):

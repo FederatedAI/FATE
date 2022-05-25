@@ -52,7 +52,8 @@ class EncryptModeCalculator(object):
     def add_enc_zero(obj, enc_zero):
         pass
 
-    def encrypt_data(self, input_data, enc_func):
+    @staticmethod
+    def encrypt_data(input_data, enc_func):
         return input_data.mapValues(enc_func)
 
     def get_enc_func(self, encrypter, raw_enc=False, exponent=0):

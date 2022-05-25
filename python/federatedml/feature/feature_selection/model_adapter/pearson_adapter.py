@@ -36,7 +36,8 @@ class PearsonMetricInfo(object):
 
 class PearsonAdapter(BaseAdapter):
 
-    def convert(self, model_meta, model_param):
+    @staticmethod
+    def convert(model_meta, model_param):
         local_vif = model_param.local_vif
         col_names = list(model_param.names)
         local_corr = np.array(model_param.local_corr).reshape(model_param.shape, model_param.shape)
