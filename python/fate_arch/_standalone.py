@@ -35,6 +35,7 @@ import lmdb
 import numpy as np
 
 from fate_arch.common import Party, file_utils
+from fate_arch.common.base_utils import fate_uuid
 from fate_arch.common.log import getLogger
 
 LOGGER = getLogger()
@@ -613,7 +614,7 @@ class Federation(object):
 
 _meta_table: typing.Optional[Table] = None
 
-_SESSION = Session(uuid.uuid1().hex)
+_SESSION = Session(fate_uuid())
 
 
 def _get_meta_table():
