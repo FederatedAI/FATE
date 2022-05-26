@@ -46,8 +46,7 @@ class BaseLogisticRegression(BaseLinearModel):
         super()._init_model(params)
         self.one_vs_rest_obj = one_vs_rest_factory(self, role=self.role, mode=self.mode, has_arbiter=True)
 
-    @staticmethod
-    def compute_wx(data_instances, coef_, intercept_=0):
+    def compute_wx(self, data_instances, coef_, intercept_=0):
         return data_instances.mapValues(lambda v: vec_dot(v.features, coef_) + intercept_)
 
     def get_single_model_param(self):

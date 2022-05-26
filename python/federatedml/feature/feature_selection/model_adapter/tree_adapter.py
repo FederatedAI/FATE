@@ -79,22 +79,19 @@ def feature_importance_with_anonymous_converter(model_meta, model_param):
 
 class HomoSBTAdapter(BaseAdapter):
 
-    @staticmethod
-    def convert(model_meta, model_param):
+    def convert(self, model_meta, model_param):
         return feature_importance_converter(model_meta, model_param)
 
 
 class HeteroSBTAdapter(BaseAdapter):
 
-    @staticmethod
-    def convert(model_meta, model_param):
+    def convert(self, model_meta, model_param):
         return feature_importance_with_anonymous_converter(model_meta, model_param)
 
 
 class HeteroFastSBTAdapter(BaseAdapter):
 
-    @staticmethod
-    def convert(model_meta, model_param):
+    def convert(self, model_meta, model_param):
         model_name = model_param.model_name
 
         if model_name == consts.HETERO_FAST_SBT_LAYERED:

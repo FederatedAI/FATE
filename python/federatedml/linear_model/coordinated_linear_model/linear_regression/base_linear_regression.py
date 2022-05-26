@@ -54,8 +54,7 @@ class BaseLinearRegression(BaseLinearModel):
     def _init_model(self, params):
         super()._init_model(params)
 
-    @staticmethod
-    def compute_wx(data_instances, coef_, intercept_=0):
+    def compute_wx(self, data_instances, coef_, intercept_=0):
         return data_instances.mapValues(
             lambda v: vec_dot(v.features, coef_) + intercept_)
 

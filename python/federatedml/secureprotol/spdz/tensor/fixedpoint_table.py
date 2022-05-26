@@ -353,8 +353,7 @@ class PaillierFixedPointTensor(TensorBase):
     def __rmul__(self, other):
         return self.__mul__(other)
 
-    @staticmethod
-    def _boxed(value, tensor_name=None):
+    def _boxed(self, value, tensor_name=None):
         return PaillierFixedPointTensor(value=value, tensor_name=tensor_name)
 
     @classmethod

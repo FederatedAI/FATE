@@ -124,8 +124,7 @@ class FixedPointNumber(object):
 
         return FixedPointNumber(new_encoding, new_exponent, self.n, self.max_int)
 
-    @staticmethod
-    def __align_exponent(x, y):
+    def __align_exponent(self, x, y):
         """return x,y with same exponent
         """
         if x.exponent < y.exponent:
@@ -349,8 +348,7 @@ class FixedPointEndec(object):
                                        max_int=self.max_int,
                                        precision=self.precision)
 
-    @staticmethod
-    def _decode(number):
+    def _decode(self, number):
         return number.decode()
 
     def _truncate(self, number):

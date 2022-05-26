@@ -72,8 +72,7 @@ class StorageSession(StorageSessionBase):
     def kill(self):
         return self.stop()
 
-    @staticmethod
-    def _create_db_if_not_exists(address):
+    def _create_db_if_not_exists(self, address):
         connection = pymysql.connect(host=address.host,
                                      user=address.user,
                                      password=address.passwd,

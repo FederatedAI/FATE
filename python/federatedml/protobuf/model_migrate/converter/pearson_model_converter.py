@@ -22,8 +22,7 @@ from federatedml.protobuf.model_migrate.converter.converter_base import ProtoCon
 
 class HeteroPearsonConverter(ProtoConverterBase):
 
-    @staticmethod
-    def convert(param: PearsonModelParam, meta: PearsonModelMeta,
+    def convert(self, param: PearsonModelParam, meta: PearsonModelMeta,
                 guest_id_mapping: Dict,
                 host_id_mapping: Dict,
                 arbiter_id_mapping: Dict

@@ -45,8 +45,7 @@ class HeteroLRGuest(HeteroSSHEGuestBase):
         super()._init_model(params)
         self.one_vs_rest_obj = one_vs_rest_factory(self, role=self.role, mode=self.mode, has_arbiter=False)
 
-    @staticmethod
-    def _compute_sigmoid(z, remote_z):
+    def _compute_sigmoid(self, z, remote_z):
         complete_z = z + remote_z
 
         sigmoid_z = complete_z * 0.25 + 0.5

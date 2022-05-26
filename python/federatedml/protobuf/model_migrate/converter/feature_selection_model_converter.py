@@ -24,8 +24,7 @@ from federatedml.protobuf.model_migrate.converter.converter_base import ProtoCon
 
 
 class HeteroFeatureSelectionConverter(ProtoConverterBase):
-    @staticmethod
-    def convert(param: FeatureSelectionParam, meta: FeatureSelectionMeta,
+    def convert(self, param: FeatureSelectionParam, meta: FeatureSelectionMeta,
                 guest_id_mapping: Dict,
                 host_id_mapping: Dict,
                 arbiter_id_mapping: Dict

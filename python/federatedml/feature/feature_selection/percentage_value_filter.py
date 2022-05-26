@@ -203,7 +203,6 @@ class PercentageValueFilter(BaseFilterMethod):
     #     meta_dicts['pencentage_value_meta'] = result
     #     return meta_dicts
 
-    @staticmethod
-    def get_meta_obj():
+    def get_meta_obj(self):
         result = feature_selection_meta_pb2.FilterMeta()
         return result

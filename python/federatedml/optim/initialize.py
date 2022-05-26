@@ -23,8 +23,7 @@ from federatedml.util import LOGGER
 
 
 class Initializer(object):
-    @staticmethod
-    def zeros(data_shape, fit_intercept, data_instances):
+    def zeros(self, data_shape, fit_intercept, data_instances):
         """
         If fit intercept, use the following formula to initialize b can get a faster converge rate
             b = log(P(1)/P(0))
@@ -41,29 +40,25 @@ class Initializer(object):
             inits[-1] = init_intercept
         return inits
 
-    @staticmethod
-    def random_normal(data_shape):
+    def random_normal(self, data_shape):
         if isinstance(data_shape, Iterable):
             inits = np.random.randn(*data_shape)
         else:
             inits = np.random.randn(data_shape)
         return inits
 
-    @staticmethod
-    def random_uniform(data_shape):
+    def random_uniform(self, data_shape):
         if isinstance(data_shape, Iterable):
             inits = np.random.rand(*data_shape)
         else:
             inits = np.random.rand(data_shape)
         return inits
 
-    @staticmethod
-    def constant(data_shape, const):
+    def constant(self, data_shape, const):
         inits = np.ones(data_shape) * const
         return inits
 
-    @staticmethod
-    def ones(data_shape):
+    def ones(self, data_shape):
         inits = np.ones(data_shape)
         return inits
 

@@ -164,8 +164,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         self.fid_bid_random_mapping = self.generate_fid_bid_random_mapping(self.feature_num, self.bin_num)
         self.inverse_fid_bid_random_mapping = {v: k for k, v in self.fid_bid_random_mapping.items()}
 
-    @staticmethod
-    def unmask_split_info(split_info_list, inverse_mask_id_mapping, left_missing_dir, right_missing_dir):
+    def unmask_split_info(self, split_info_list, inverse_mask_id_mapping, left_missing_dir, right_missing_dir):
 
         for split_info in split_info_list:
             if split_info.mask_id is not None:

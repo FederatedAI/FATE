@@ -374,6 +374,5 @@ class KerasSequenceData(tf.keras.utils.Sequence):
 
 
 class KerasSequenceDataConverter(DataConverter):
-    @staticmethod
-    def convert(data, *args, **kwargs):
+    def convert(self, data, *args, **kwargs):
         return KerasSequenceData(data, *args, **kwargs)

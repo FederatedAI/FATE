@@ -440,8 +440,7 @@ class Session(object):
                 self._logger.exception(f"destroy storage session {session_id} failed", e)
             self.delete_session_record(engine_session_id=session_id)
 
-    @staticmethod
-    def wait_remote_all_done(timeout=None):
+    def wait_remote_all_done(self, timeout=None):
         LOGGER.info(f"remote futures: {remote_status._remote_futures}, waiting...")
         remote_status.wait_all_remote_done(timeout)
         LOGGER.info(f"remote futures: {remote_status._remote_futures}, all done")

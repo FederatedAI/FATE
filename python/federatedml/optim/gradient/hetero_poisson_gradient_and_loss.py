@@ -155,8 +155,7 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
         optimized_gradient = self.update_gradient(unilateral_gradient, suffix=current_suffix)
         return optimized_gradient
 
-    @staticmethod
-    def compute_forwards(data_instances, model_weights):
+    def compute_forwards(self, data_instances, model_weights):
         mu = data_instances.mapValues(
             lambda v: np.exp(vec_dot(v.features, model_weights.coef_) + model_weights.intercept_))
         return mu

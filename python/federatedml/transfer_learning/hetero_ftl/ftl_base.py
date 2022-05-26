@@ -150,8 +150,7 @@ class FTL(ModelBase):
 
         return encrypted_tensors
 
-    @staticmethod
-    def learning_rate_decay(learning_rate, epoch):
+    def learning_rate_decay(self, learning_rate, epoch):
         """
         learning_rate decay
         """

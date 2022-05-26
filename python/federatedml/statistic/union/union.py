@@ -54,8 +54,7 @@ class Union(ModelBase):
             result.append((k, v))
         return result
 
-    @staticmethod
-    def check_id(local_table, combined_table):
+    def check_id(self, local_table, combined_table):
         local_schema, combined_schema = local_table.schema, combined_table.schema
         local_sid_name = local_schema.get("sid")
         combined_sid_name = combined_schema.get("sid")
@@ -78,8 +77,7 @@ class Union(ModelBase):
             raise ValueError("Label names do not match. "
                              "Please check label column names.")
 
-    @staticmethod
-    def check_header(local_table, combined_table):
+    def check_header(self, local_table, combined_table):
         local_schema, combined_schema = local_table.schema, combined_table.schema
         local_header = local_schema.get("header")
         combined_header = combined_schema.get("header")
@@ -186,6 +184,5 @@ class Union(ModelBase):
     def check_consistency(self):
         pass
 
-    @staticmethod
-    def obtain_data(data_list):
+    def obtain_data(self, data_list):
         return data_list

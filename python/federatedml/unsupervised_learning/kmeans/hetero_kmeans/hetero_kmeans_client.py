@@ -51,8 +51,7 @@ class HeteroKmeansClient(BaseKmeansModel):
             random_key.append(key[k][0])
         return random_key
 
-    @staticmethod
-    def cluster_sum(iterator):
+    def cluster_sum(self, iterator):
         cluster_result = dict()
         for k, v in iterator:
             if v[1] not in cluster_result:
@@ -79,8 +78,7 @@ class HeteroKmeansClient(BaseKmeansModel):
                 cluster_count_list.append([k, count, count / count_all])
         return centroid_list, cluster_count_list
 
-    @staticmethod
-    def centroid_dist(centroid_list):
+    def centroid_dist(self, centroid_list):
         cluster_dist_list = []
         for i in range(0, len(centroid_list)):
             for j in range(0, len(centroid_list)):

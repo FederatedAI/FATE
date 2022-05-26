@@ -394,8 +394,7 @@ class ModelBase(object):
     def export_serialized_models(self):
         return serialize_models(self.export_model())
 
-    @staticmethod
-    def get_metrics_param():
+    def get_metrics_param(self):
         return EvaluateParam(eval_type="binary", pos_label=1)
 
     def check_consistency(self):
@@ -740,8 +739,7 @@ class ModelBase(object):
             data = list(data.values())[0]
         return data
 
-    @staticmethod
-    def obtain_data(data_list):
+    def obtain_data(self, data_list):
         if isinstance(data_list, list):
             return data_list[0]
         return data_list

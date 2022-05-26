@@ -114,8 +114,7 @@ class FLOWClient(object):
                 callback(response)
             time.sleep(1)
 
-    @staticmethod
-    def _save_json(file, file_name):
+    def _save_json(self, file, file_name):
         """
         file = json.dumps(file, indent=4)
         file_path = os.path.join(str(self._cache_directory), file_name)

@@ -27,8 +27,7 @@ from federatedml.util import consts
 
 class BinningAdapter(BaseAdapter):
 
-    @staticmethod
-    def _load_one_class(local_result, remote_results):
+    def _load_one_class(self, local_result, remote_results):
         values_dict = dict(local_result.binning_result)
         values_sorted_dict = sorted(values_dict.items(), key=operator.itemgetter(0))
         values = []

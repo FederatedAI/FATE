@@ -325,8 +325,7 @@ class Host(HeteroGradientBase):
         LOGGER.debug(f"Before return compute_gradient_procedure")
         return optimized_gradient
 
-    @staticmethod
-    def compute_sqn_forwards(data_instances, delta_s, cipher):
+    def compute_sqn_forwards(self, data_instances, delta_s, cipher):
         """
         To compute Hessian matrix, y, s are needed.
         g = (1/N)*∑(0.25 * wx - 0.5 * y) * x

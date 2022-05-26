@@ -435,9 +435,8 @@ class Federation(FederationABC):
         )
         return upstream_uri
 
-    @staticmethod
     def _get_channel(
-            mq, queue_names: _QueueNames, party_id, role, connection_conf: dict
+        self, mq, queue_names: _QueueNames, party_id, role, connection_conf: dict
     ):
         return MQChannel(
             host=mq.host,
@@ -492,8 +491,7 @@ class Federation(FederationABC):
             channel_infos.append(info)
         return channel_infos
 
-    @staticmethod
-    def _send_obj(name, tag, data, channel_infos):
+    def _send_obj(self, name, tag, data, channel_infos):
         for info in channel_infos:
             properties = pika.BasicProperties(
                 content_type="text/plain",
@@ -505,8 +503,7 @@ class Federation(FederationABC):
             LOGGER.debug(f"[rabbitmq._send_obj]properties:{properties}.")
             info.basic_publish(body=data, properties=properties)
 
-    @staticmethod
-    def _get_message_cache_key(name, tag, party_id, role):
+    def _get_message_cache_key(self, name, tag, party_id, role):
         cache_key = _SPLIT_.join([name, tag, str(party_id), role])
         return cache_key
 
@@ -546,9 +543,8 @@ class Federation(FederationABC):
                     f"[rabbitmq._receive_obj] properties.content_type is {properties.content_type}, but must be text/plain"
                 )
 
-    @staticmethod
     def _send_kv(
-            name, tag, data, channel_infos, partition_size, partitions, message_key
+        self, name, tag, data, channel_infos, partition_size, partitions, message_key
     ):
         headers = {
             "partition_size": partition_size,

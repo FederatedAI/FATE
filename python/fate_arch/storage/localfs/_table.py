@@ -178,8 +178,7 @@ class StorageTable(StorageTableBase):
                 yield line
             offset += len(buffer_block[:end_index])
 
-    @staticmethod
-    def _read_lines(buffer_block):
+    def _read_lines(self, buffer_block):
         with io.TextIOWrapper(buffer=io.BytesIO(buffer_block), encoding="utf-8") as reader:
             for line in reader:
                 yield line

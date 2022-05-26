@@ -89,8 +89,7 @@ class TestHeteroFeatureBinning():
         self.table_list.append(result)
         return result
 
-    @staticmethod
-    def __gen_label(value, label_count: dict, expect_ratio: dict):
+    def __gen_label(self, value, label_count: dict, expect_ratio: dict):
         """
         Generate label according to expect event and non-event ratio
         """
@@ -211,8 +210,7 @@ class TestHeteroFeatureBinning():
             assert all(fit_v == v.features)
         return fit_model, transform_obj
 
-    @staticmethod
-    def tearDown():
+    def tearDown(self):
         # for table in self.table_list:
         #     table.destroy()
         print("Finish testing")

@@ -390,8 +390,7 @@ class HeteroStepwise(object):
         pred_result = model.predict(data_instances)
         return pred_result
 
-    @staticmethod
-    def get_IC_computer(model):
+    def get_IC_computer(self, model):
         if model.model_name == 'HeteroLinearRegression':
             return IC_Approx()
         else:

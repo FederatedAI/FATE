@@ -73,8 +73,7 @@ class StorageSession(StorageSessionBase):
     def kill(self):
         return self.stop()
 
-    @staticmethod
-    def _create_db_if_not_exists(address):
+    def _create_db_if_not_exists(self, address):
         connection = connect(host=address.host,
                              port=address.port,
                              user=address.username,

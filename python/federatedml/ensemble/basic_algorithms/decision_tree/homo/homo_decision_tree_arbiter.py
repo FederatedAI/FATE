@@ -142,8 +142,7 @@ class HomoDecisionTreeArbiter(DecisionTree):
             self.sync_best_splits(split_info, suffix=(dep, self.epoch_idx))
             LOGGER.debug('best_splits_sent')
 
-    @staticmethod
-    def predict(data_inst=None):
+    def predict(self, data_inst=None):
         """
         Do nothing
         """

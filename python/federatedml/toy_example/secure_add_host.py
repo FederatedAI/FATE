@@ -53,8 +53,7 @@ class SecureAddHost(ModelBase):
         kvs = [(i, 1) for i in range(self.data_num)]
         self.y = session.parallelize(kvs, include_key=True, partition=self.partition)
 
-    @staticmethod
-    def share(y):
+    def share(self, y):
         first = np.random.uniform(y, -y)
         return first, y - first
 
