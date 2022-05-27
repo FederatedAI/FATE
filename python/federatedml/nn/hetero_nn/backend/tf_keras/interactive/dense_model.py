@@ -76,6 +76,9 @@ class DenseModel(object):
     def set_backward_selective_strategy(self):
         self.do_backward_selective_strategy = True
 
+    def set_batch(self, batch_size):
+        self.batch_size = batch_size
+
     def forward_dense(self, x):
         pass
 
@@ -319,10 +322,11 @@ class HostDenseModel(DenseModel):
     def get_weight_gradient(self, delta, encoder=None):
         # delta_w = self.input.fast_matmul_2d(delta) / self.input.shape[0]
         if self.do_backward_selective_strategy:
-            self.input = self.input_cached.filter(lambda k, v: k < self.batch_size)
-            self.input_cached = self.input_cached.filter(
-                lambda k, v: k >= self.batch_size
-            ).map(lambda kv: (kv[0] - self.batch_size, kv[1]))
+            batch_size = self.batch_size
+            self.input = PaillierTensor(self.input_cached.get_obj().filter(lambda k, v: k < batch_size))
+            self.input_cached = PaillierTensor(self.input_cached.get_obj().filter(
+                lambda k, v: k >= batch_size
+            ).map(lambda k, v: (k - batch_size, v)))
             # self.input_cached = self.input_cached.subtractByKey(self.input).map(lambda kv: (kv[0] - self.batch_size, kv[1]))
 
         if encoder:
