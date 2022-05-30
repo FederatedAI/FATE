@@ -73,6 +73,10 @@
         "intersect_cardinality": {
             "conf": "./test_intersect_job_cardinality_conf.json",
             "dsl": "./test_intersect_job_dsl.json"
+        },
+        "intersect_exact_cardinality": {
+            "conf": "./test_intersect_job_exact_cardinality_conf.json",
+            "dsl": "./test_intersect_job_dsl.json"
         }
     }
 }
