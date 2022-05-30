@@ -72,6 +72,9 @@
         },
         "intersect_cardinality": {
             "script": "./pipeline-intersect-cardinality.py"
+        },
+        "intersect_exact_cardinality": {
+            "script": "./pipeline-intersect-exact-cardinality.py"
         }
     }
 }

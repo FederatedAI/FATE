@@ -33,10 +33,10 @@ class EncodeParam(BaseParam):
     Parameters
     ----------
     salt: str
-        the src data string will be str = str + salt, default by empty string
+        the src id will be str = str + salt, default by empty string
 
     encode_method: {"none", "md5", "sha1", "sha224", "sha256", "sha384", "sha512", "sm3"}
-        the hash method of src data string, support md5, sha1, sha224, sha256, sha384, sha512, sm3, default by None
+        the hash method of src id, support md5, sha1, sha224, sha256, sha384, sha512, sm3, default by None
 
     base64: bool
         if True, the result of hash will be changed to base64, default by False
@@ -82,10 +82,10 @@ class RAWParam(BaseParam):
         whether to hash ids for raw intersect
 
     salt: str
-        the src data string will be str = str + salt, default by empty string
+        the src id will be str = str + salt, default by empty string
 
     hash_method: str
-        the hash method of src data string, support md5, sha1, sha224, sha256, sha384, sha512, sm3, default by None
+        the hash method of src id, support md5, sha1, sha224, sha256, sha384, sha512, sm3, default by None
 
     base64: bool
         if True, the result of hash will be changed to base64, default by False
@@ -130,10 +130,10 @@ class RSAParam(BaseParam):
     Parameters
     ----------
     salt: str
-        the src data string will be str = str + salt, default ''
+        the src id will be str = str + salt, default ''
 
     hash_method: str
-        the hash method of src data string, support sha256, sha384, sha512, sm3, default sha256
+        the hash method of src id, support sha256, sha384, sha512, sm3, default sha256
 
     final_hash_method: str
         the hash method of result data string, support md5, sha1, sha224, sha256, sha384, sha512, sm3, default sha256
@@ -201,10 +201,10 @@ class DHParam(BaseParam):
     Parameters
     ----------
     salt: str
-        the src data string will be str = str + salt, default ''
+        the src id will be str = str + salt, default ''
 
     hash_method: str
-        the hash method of src data string, support none, md5, sha1, sha 224, sha256, sha384, sha512, sm3, default sha256
+        the hash method of src id, support none, md5, sha1, sha 224, sha256, sha384, sha512, sm3, default sha256
 
     key_length: int, value >= 1024
         the key length of the commutative cipher p, default 1024
@@ -361,7 +361,7 @@ class IntersectParam(BaseParam):
     Parameters
     ----------
     intersect_method: str
-        it supports 'rsa', 'raw', and 'dh', default by 'rsa'
+        it supports 'rsa', 'raw', 'dh', default by 'rsa'
 
     random_bit: positive int
         it will define the size of blinding factor in rsa algorithm, default 128
@@ -426,6 +426,11 @@ class IntersectParam(BaseParam):
         whether to output estimated intersection count(cardinality);
         if sync_cardinality is True, then sync cardinality count with host(s)
 
+    cardinality_method: string
+        specify which intersect method to use for coutning cardinality;
+        note that with "rsa", estimated cardinality will be produced;
+        while "dh" method outputs exact cardinality, it only supports single-host task
+
     sync_cardinality: bool
         whether to sync cardinality with all participants, default False,
         only effective when cardinality_only set to True
@@ -460,7 +465,7 @@ class IntersectParam(BaseParam):
                  raw_params=RAWParam(), rsa_params=RSAParam(), dh_params=DHParam(),
                  join_method=consts.INNER_JOIN, new_sample_id: bool = False, sample_id_generator=consts.GUEST,
                  intersect_cache_param=IntersectCache(), run_cache: bool = False,
-                 cardinality_only: bool = False, sync_cardinality: bool = False,
+                 cardinality_only: bool = False, sync_cardinality: bool = False, cardinality_method=consts.DH,
                  run_preprocess: bool = False,
                  intersect_preprocess_params=IntersectPreProcessParam(),
                  repeated_id_process=False, repeated_id_owner=consts.GUEST,
@@ -488,6 +493,7 @@ class IntersectParam(BaseParam):
         self.dh_params = copy.deepcopy(dh_params)
         self.cardinality_only = cardinality_only
         self.sync_cardinality = sync_cardinality
+        self.cardinality_method = cardinality_method
         self.run_preprocess = run_preprocess
         self.intersect_preprocess_params = copy.deepcopy(intersect_preprocess_params)
 
@@ -547,15 +553,14 @@ class IntersectParam(BaseParam):
         self.raw_params.check()
         self.rsa_params.check()
         self.dh_params.check()
-        # self.intersect_cache_param.check()
         self.check_boolean(self.cardinality_only, f"{descr}cardinality_only")
         self.check_boolean(self.sync_cardinality, f"{descr}sync_cardinality")
         self.check_boolean(self.run_preprocess, f"{descr}run_preprocess")
         self.intersect_preprocess_params.check()
         if self.cardinality_only:
-            if self.intersect_method not in [consts.RSA]:
-                raise ValueError(f"cardinality-only mode only support rsa.")
-            if self.intersect_method == consts.RSA and self.rsa_params.split_calculation:
+            if self.cardinality_method not in [consts.RSA, consts.DH]:
+                raise ValueError(f"cardinality-only mode only support rsa, dh.")
+            if self.cardinality_method == consts.RSA and self.rsa_params.split_calculation:
                 raise ValueError(f"cardinality-only mode only supports unified calculation.")
         if self.run_preprocess:
             if self.intersect_preprocess_params.false_positive_rate < 0.01:

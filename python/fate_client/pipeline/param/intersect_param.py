@@ -347,7 +347,7 @@ class IntersectParam(BaseParam):
     Parameters
     ----------
     intersect_method: str
-        it supports 'rsa', 'raw', and 'dh', default by 'rsa'
+        it supports 'rsa', 'raw', 'dh', default by 'rsa'
 
     random_bit: positive int
         it will define the size of blinding factor in rsa algorithm, default 128
@@ -409,8 +409,13 @@ class IntersectParam(BaseParam):
         whether to store Host's encrypted ids, only valid when intersect method is 'rsa' or 'dh', default False
 
     cardinality_only: bool
-        whether to output estimated intersection count(cardinality);
+        whether to output intersection count(cardinality);
         if sync_cardinality is True, then sync cardinality count with host(s)
+
+    cardinality_method: string
+        specify which intersect method to use for coutning cardinality;
+        note that with "rsa", estimated cardinality will be produced;
+        while "dh" method outputs exact cardinality, it only supports single-host task
 
     sync_cardinality: bool
         whether to sync cardinality with all participants, default False,
@@ -446,7 +451,7 @@ class IntersectParam(BaseParam):
                  raw_params=RAWParam(), rsa_params=RSAParam(), dh_params=DHParam(),
                  join_method=consts.INNER_JOIN, new_sample_id: bool = False, sample_id_generator=consts.GUEST,
                  intersect_cache_param=IntersectCache(), run_cache: bool = False,
-                 cardinality_only: bool = False, sync_cardinality: bool = False,
+                 cardinality_only: bool = False, sync_cardinality: bool = False, cardinality_method=consts.DH,
                  run_preprocess: bool = False,
                  intersect_preprocess_params=IntersectPreProcessParam(),
                  repeated_id_process=False, repeated_id_owner=consts.GUEST,
@@ -474,6 +479,7 @@ class IntersectParam(BaseParam):
         self.dh_params = copy.deepcopy(dh_params)
         self.cardinality_only = cardinality_only
         self.sync_cardinality = sync_cardinality
+        self.cardinality_method = cardinality_method
         self.run_preprocess = run_preprocess
         self.intersect_preprocess_params = copy.deepcopy(intersect_preprocess_params)
 
@@ -491,23 +497,6 @@ class IntersectParam(BaseParam):
                                                      f"{descr}join_role")
         self.check_boolean(self.with_encode, f"{descr}with_encode")
         self.check_boolean(self.only_output_key, f"{descr}only_output_key")
-        """
-        if type(self.repeated_id_process).__name__ != "bool":
-        raise ValueError(
-            "intersect param's repeated_id_process {} not supported, should be bool type".format(
-                self.repeated_id_process))
-        self.repeated_id_owner = self.check_and_change_lower(self.repeated_id_owner,
-                                                             [consts.GUEST],
-                                                             f"{descr}repeated_id_owner")
-        if type(self.allow_info_share).__name__ != "bool":
-            raise ValueError(
-                "intersect param's allow_info_sync {} not supported, should be bool type".format(
-                    self.allow_info_share))
-        self.info_owner = self.check_and_change_lower(self.info_owner,
-                                                      [consts.GUEST, consts.HOST],
-                                                      f"{descr}info_owner")
-        self.check_boolean(self.with_sample_id, f"{descr}with_sample_id")
-        """
 
         self.join_method = self.check_and_change_lower(self.join_method, [consts.INNER_JOIN, consts.LEFT_JOIN],
                                                        f"{descr}join_method")
@@ -525,16 +514,16 @@ class IntersectParam(BaseParam):
         self.raw_params.check()
         self.rsa_params.check()
         self.dh_params.check()
-        self.intersect_cache_param.check()
         self.check_boolean(self.cardinality_only, f"{descr}cardinality_only")
         self.check_boolean(self.sync_cardinality, f"{descr}sync_cardinality")
         self.check_boolean(self.run_preprocess, f"{descr}run_preprocess")
         self.intersect_preprocess_params.check()
         if self.cardinality_only:
-            if self.intersect_method not in [consts.RSA]:
-                raise ValueError(f"cardinality-only mode only support rsa.")
-            if self.intersect_method == consts.RSA and self.rsa_params.split_calculation:
+            if self.cardinality_method not in [consts.RSA, consts.DH]:
+                raise ValueError(f"cardinality-only mode only support rsa, dh.")
+            if self.cardinality_method == consts.RSA and self.rsa_params.split_calculation:
                 raise ValueError(f"cardinality-only mode only supports unified calculation.")
+
         if self.run_preprocess:
             if self.intersect_preprocess_params.false_positive_rate < 0.01:
                 raise ValueError(f"for preprocessing ids, false_positive_rate must be no less than 0.01")

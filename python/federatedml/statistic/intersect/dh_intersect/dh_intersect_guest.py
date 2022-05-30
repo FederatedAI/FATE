@@ -54,40 +54,6 @@ class DhIntersectionGuest(DhIntersect):
         LOGGER.info("got doubly encrypted id list from all host")
         return id_list_guest
 
-    """
-    @staticmethod
-    def map_cipher_cipher_to_cipher_id(id_cipher_cipher, id_cipher):
-        common_cipher_id = id_cipher.join(id_cipher_cipher, lambda r, e: r)
-        cipher_id = common_cipher_id.map(lambda k, v: (v, k))
-        return cipher_id
-
-    def get_intersect_cipher(self, id_list_intersect_cipher_cipher):
-        id_list_intersect_cipher = [
-            self.map_cipher_cipher_to_cipher_id(id_list_intersect_cipher_cipher[i],
-                                                self.id_list_local_second[i]) for i in range(self.host_count)]
-        return id_list_intersect_cipher
-
-    def _get_remote_cipher_intersect_ids(self, intersect_ids):
-        host_count = len(self.id_list_local_first)
-        first_cipher_local_ids_list = [intersect_ids.map(lambda k, v: (v[i], 1)) for i in range(host_count)] # Ei
-        doubly_encrypted_ids_list = [self.map_raw_id_to_encrypt_id(first_cipher_local_ids_list[i],           # EEi
-                                                                   self.id_list_local_second[i]) for i in
-                                     range(host_count)]
-        # EEi to Eh
-        first_remote_cipher_ids_list = [self.map_cipher_cipher_to_cipher_id(doubly_encrypted_ids_list[i],
-                                                                            self.id_list_remote_second[i]) for i in
-                                        range(host_count)]
-        return first_remote_cipher_ids_list
-
-    def send_intersect_ids(self, intersect_ids):
-        remote_intersect_id_list = self._get_remote_cipher_intersect_ids(intersect_ids)
-        for i, host_party_id in enumerate(self.host_party_id_list):
-            self.transfer_variable.intersect_ids.remote(remote_intersect_id_list[i],
-                                                        role=consts.HOST,
-                                                        idx=i)
-            LOGGER.info(f"Remote intersect ids to Host {host_party_id}!")
-    """
-
     def send_intersect_ids(self, encrypt_intersect_ids_list, intersect_ids):
         if len(self.host_party_id_list) > 1:
             for i, host_party_id in enumerate(self.host_party_id_list):
@@ -103,7 +69,7 @@ class DhIntersectionGuest(DhIntersect):
                                                         idx=0)
             LOGGER.info(f"Remote intersect ids to Host!")
 
-    def get_intersect_doubly_encrypted_id(self, data_instances):
+    def get_intersect_doubly_encrypted_id(self, data_instances, keep_key=True):
         self._generate_commutative_cipher()
         self._sync_commutative_cipher_public_knowledge()
         self.host_count = len(self.commutative_cipher)
@@ -124,7 +90,8 @@ class DhIntersectionGuest(DhIntersect):
         # 2nd ID encrypt & receive doubly encrypted ID list: # (EEh, Eh)
         self.id_list_remote_second = [self._encrypt_id(id_list_remote_first[i],
                                                        self.commutative_cipher[i],
-                                                       reserve_original_key=True) for i in range(self.host_count)]
+                                                       reserve_original_key=keep_key)
+                                      for i in range(self.host_count)]
         LOGGER.info("encrypted remote id for the 2nd time")
 
         # receive doubly encrypted ID list from all host:
@@ -133,7 +100,7 @@ class DhIntersectionGuest(DhIntersect):
         # find intersection per host
         id_list_intersect_cipher_cipher = [self.extract_intersect_ids(self.id_list_remote_second[i],
                                                                       self.id_list_local_second[i],
-                                                                      keep_both=True)
+                                                                      keep_both=keep_key)
                                            for i in range(self.host_count)]  # (EEi, [Eh, Eg])
         LOGGER.info("encrypted intersection ids found")
 
@@ -247,3 +214,16 @@ class DhIntersectionGuest(DhIntersect):
         self.id_list_remote_second = cache_list
 
         return id_list_intersect_cipher_cipher
+
+    def run_cardinality(self, data_instances):
+        LOGGER.info(f"run cardinality_only with DH")
+        if len(self.host_party_id_list) > 1:
+            raise ValueError(f"cardinality_only with DH only supports single-host task.")
+        id_intersect_cipher_cipher = self.get_intersect_doubly_encrypted_id(data_instances, keep_key=False)[0]
+        self.intersect_num = id_intersect_cipher_cipher.count()
+        if self.sync_cardinality:
+            self.transfer_variable.cardinality.remote(self.intersect_num, role=consts.HOST, idx=-1)
+            LOGGER.info("Sent intersect cardinality to host.")
+        else:
+            LOGGER.info("Skip sync intersect cardinality with host")
+        return

@@ -159,7 +159,11 @@ RAW intersection supports the following extra feature:
 
 1.  base64 encoding may be used for all hashing methods.
 
-RSA intersection is used for intersection cardinality estimation.
+Cardinality Computation:
+
+1. Set `cardinality_method` to `rsa` will produce estimated intersection cardinality;
+
+2. Set `cardinality_method` to `dh` will compute exact intersection cardinality
 
 <!-- 
 ## Examples

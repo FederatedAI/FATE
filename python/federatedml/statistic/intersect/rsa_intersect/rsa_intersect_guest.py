@@ -317,7 +317,7 @@ class RsaIntersectionGuest(RsaIntersect):
         else:
             LOGGER.info("Skip sync intersect cardinality with host(s)")
 
-        return data_instances
+        return None
 
     def generate_cache(self, data_instances):
         LOGGER.info("Run RSA intersect cache")

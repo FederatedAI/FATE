@@ -19,7 +19,7 @@ from federatedml.secureprotol.symmetric_encryption.cryptor_executor import Crypt
 from federatedml.secureprotol.symmetric_encryption.pohlig_hellman_encryption import PohligHellmanCipherKey
 from federatedml.statistic.intersect.base_intersect import Intersect
 from federatedml.transfer_variable.transfer_class.dh_intersect_transfer_variable import DhIntersectTransferVariable
-from federatedml.util import LOGGER
+from federatedml.util import LOGGER, consts
 
 
 class DhIntersect(Intersect):
@@ -41,7 +41,7 @@ class DhIntersect(Intersect):
         self.key_length = self.dh_params.key_length
 
     def get_intersect_method_meta(self):
-        dh_meta = {"intersect_method": self.intersect_method,
+        dh_meta = {"intersect_method": consts.DH,
                    "hash_method": self.dh_params.hash_method,
                    "salt": self.salt}
         return dh_meta
@@ -116,7 +116,7 @@ class DhIntersect(Intersect):
         """
         pass
 
-    def get_intersect_doubly_encrypted_id(self, data_instances):
+    def get_intersect_doubly_encrypted_id(self, data_instances, keep_key=True):
         raise NotImplementedError("This method should not be called here")
 
     def decrypt_intersect_doubly_encrypted_id(self, id_list_intersect_cipher_cipher):

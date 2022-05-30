@@ -268,7 +268,7 @@ class RsaIntersectionHost(RsaIntersect):
             self.intersect_num = self.transfer_variable.cardinality.get(idx=0)
             LOGGER.info("Got intersect cardinality from guest.")
 
-        return data_instances
+        return None
 
     def generate_cache(self, data_instances):
         LOGGER.info("Run RSA intersect cache.")

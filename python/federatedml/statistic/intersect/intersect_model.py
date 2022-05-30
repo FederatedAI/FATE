@@ -48,6 +48,7 @@ class IntersectModelBase(ModelBase):
         self.model_param = IntersectParam()
         self.use_match_id_process = False
         self.role = None
+        self.intersect_method = None
 
         self.guest_party_id = None
         self.host_party_id = None
@@ -60,7 +61,12 @@ class IntersectModelBase(ModelBase):
         self.intersect_preprocess_params = params.intersect_preprocess_params
 
     def init_intersect_method(self):
-        LOGGER.info("Using {} intersection, role is {}".format(self.model_param.intersect_method, self.role))
+        if self.model_param.cardinality_only:
+            self.intersect_method = self.model_param.cardinality_method
+        else:
+            self.intersect_method = self.model_param.intersect_method
+        LOGGER.info("Using {} intersection, role is {}".format(self.intersect_method, self.role))
+
         self.host_party_id_list = self.component_properties.host_party_idlist
         self.guest_party_id = self.component_properties.guest_partyid
 
@@ -147,7 +153,7 @@ class IntersectModelBase(ModelBase):
         return result_data
 
     def callback(self):
-        meta_info = {"intersect_method": self.model_param.intersect_method,
+        meta_info = {"intersect_method": self.intersect_method,
                      "join_method": self.model_param.join_method}
         self.callback_metric(metric_name=self.metric_name,
                              metric_namespace=self.metric_namespace,
@@ -187,7 +193,7 @@ class IntersectModelBase(ModelBase):
         if self.use_match_id_process:
             if len(self.host_party_id_list) > 1 and self.model_param.sample_id_generator != consts.GUEST:
                 raise ValueError("While multi-host, sample_id_generator should be guest.")
-            if self.model_param.intersect_method == consts.RAW:
+            if self.intersect_method == consts.RAW:
                 if self.model_param.sample_id_generator != self.intersection_obj.join_role:
                     raise ValueError(f"When using raw intersect with match id process,"
                                      f"'join_role' should be same role as 'sample_id_generator'")
@@ -240,7 +246,7 @@ class IntersectModelBase(ModelBase):
             # self.model = self.intersection_obj.get_model()
             self.set_summary(self.get_model_summary())
             self.callback()
-            return data
+            return None
 
         if self.use_match_id_process:
             if self.model_param.sync_intersect_ids:
@@ -330,7 +336,7 @@ class IntersectModelBase(ModelBase):
         if self.use_match_id_process:
             if len(self.host_party_id_list) > 1 and self.model_param.sample_id_generator != consts.GUEST:
                 raise ValueError("While multi-host, sample_id_generator should be guest.")
-            if self.model_param.intersect_method == consts.RAW:
+            if self.intersect_method == consts.RAW:
                 if self.model_param.sample_id_generator != self.intersection_obj.join_role:
                     raise ValueError(f"When using raw intersect with match id process,"
                                      f"'join_role' should be same role as 'sample_id_generator'")
@@ -419,19 +425,19 @@ class IntersectHost(IntersectModelBase):
         super().init_intersect_method()
         self.host_party_id = self.component_properties.local_partyid
 
-        if self.model_param.intersect_method == consts.RSA:
+        if self.intersect_method == consts.RSA:
             self.intersection_obj = RsaIntersectionHost()
 
-        elif self.model_param.intersect_method == consts.RAW:
+        elif self.intersect_method == consts.RAW:
             self.intersection_obj = RawIntersectionHost()
             self.intersection_obj.tracker = self.tracker
             self.intersection_obj.task_version_id = self.task_version_id
 
-        elif self.model_param.intersect_method == consts.DH:
+        elif self.intersect_method == consts.DH:
             self.intersection_obj = DhIntersectionHost()
 
         else:
-            raise ValueError("intersect_method {} is not support yet".format(self.model_param.intersect_method))
+            raise ValueError("intersect_method {} is not support yet".format(self.intersect_method))
 
         self.intersection_obj.host_party_id = self.host_party_id
         self.intersection_obj.guest_party_id = self.guest_party_id
@@ -466,19 +472,19 @@ class IntersectGuest(IntersectModelBase):
     def init_intersect_method(self):
         super().init_intersect_method()
 
-        if self.model_param.intersect_method == consts.RSA:
+        if self.intersect_method == consts.RSA:
             self.intersection_obj = RsaIntersectionGuest()
 
-        elif self.model_param.intersect_method == consts.RAW:
+        elif self.intersect_method == consts.RAW:
             self.intersection_obj = RawIntersectionGuest()
             self.intersection_obj.tracker = self.tracker
             self.intersection_obj.task_version_id = self.task_version_id
 
-        elif self.model_param.intersect_method == consts.DH:
+        elif self.intersect_method == consts.DH:
             self.intersection_obj = DhIntersectionGuest()
 
         else:
-            raise ValueError("intersect_method {} is not support yet".format(self.model_param.intersect_method))
+            raise ValueError("intersect_method {} is not support yet".format(self.intersect_method))
 
         self.intersection_obj.guest_party_id = self.guest_party_id
         self.intersection_obj.host_party_id_list = self.host_party_id_list
