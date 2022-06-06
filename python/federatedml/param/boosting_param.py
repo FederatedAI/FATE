@@ -367,7 +367,7 @@ class HeteroBoostingParam(BoostingParam):
         Switch positive unlabeled learning mode.
 
     unlabeled_digit: None or integer, default: None
-        Whether have unlabeled data. If it has, declaring the unlabeled digit.
+        Whether it has unlabeled data. If true, declaring the unlabeled digit.
     """
 
     def __init__(self, task_type=consts.CLASSIFICATION,
@@ -412,10 +412,10 @@ class HeteroBoostingParam(BoostingParam):
             raise ValueError("use_first_metric_only should be a boolean")
 
         if self.pu_mode not in ['standard', 'two_step']:
-            raise ValueError("logistic_param's pu_mode not supported, pu_mode should be 'standard' or 'two_step'")
+            raise ValueError("pu_mode not supported, pu_mode should be 'standard' or 'two_step'")
 
         if self.unlabeled_digit is not None and type(self.unlabeled_digit).__name__ != "int":
-            raise ValueError("unlabeled_digit should be an integer")
+            raise ValueError("unlabeled_digit should be None or an integer")
 
         return True
 

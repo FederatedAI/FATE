@@ -34,10 +34,10 @@ class PositiveUnlabeled(ModelBase):
         self.metric_namespace = "train"
 
     def _init_model(self, model_param):
-        self.lr_param = model_param.lr_param
-        self.sbt_param = model_param.sbt_param
         self.reverse_order = model_param.reverse_order
         self.threshold_percent = model_param.threshold_percent
+        self.pu_mode = model_param.pu_mode
+
         if self.reverse_order:
             self.replaced_value = 1
         else:
@@ -74,7 +74,7 @@ class PositiveUnlabeled(ModelBase):
 
             LOGGER.info("Replace label based on threshold index")
             replaced_label_list = []
-            if self.lr_param.pu_mode == "two_step" or self.sbt_param.pu_mode == "two_step":
+            if self.pu_mode == "two_step" or self.pu_mode == "two_step":
                 LOGGER.info("Execute two-step mode")
                 unlabeled_to_positive_count, unlabeled_to_negative_count = 0, 0
                 for idx, (k, v) in enumerate(label_score_list):
@@ -91,8 +91,10 @@ class PositiveUnlabeled(ModelBase):
                 self.add_summary("count of unlabeled to negative", unlabeled_to_negative_count)
                 self.callback_metric(metric_name=self.metric_name,
                                      metric_namespace=self.metric_namespace,
-                                     metric_data=[Metric("count of unlabeled to positive", unlabeled_to_positive_count),
-                                                  Metric("count of unlabeled to negative", unlabeled_to_negative_count)])
+                                     metric_data=[Metric("count of unlabeled to positive",
+                                                         unlabeled_to_positive_count),
+                                                  Metric("count of unlabeled to negative",
+                                                         unlabeled_to_negative_count)])
             else:
                 LOGGER.info("Execute standard mode")
                 converted_unlabeled_count = 0
