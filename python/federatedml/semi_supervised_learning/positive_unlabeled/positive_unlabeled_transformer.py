@@ -74,7 +74,7 @@ class PositiveUnlabeled(ModelBase):
 
             LOGGER.info("Replace label based on threshold index")
             replaced_label_list = []
-            if self.pu_mode == "two_step" or self.pu_mode == "two_step":
+            if self.pu_mode == "two_step":
                 LOGGER.info("Execute two-step mode")
                 unlabeled_to_positive_count, unlabeled_to_negative_count = 0, 0
                 for idx, (k, v) in enumerate(label_score_list):
