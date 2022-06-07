@@ -122,7 +122,7 @@ def check(self):
         ``` 
       
       - 使用装饰器 `xxx_cpn_meta.bind_runner.on_$role`将模块object绑定至每个角色。
-          $role 包括 guest\host\arbiter. 如果多个角色使用同一模块object，可以使用 `xxx_cpn_meta.bind_runner.on_$role1.on_$role2.on_$role3` 格式注明。 
+          $role 包括 local\guest\host\arbiter. 如果多个角色使用同一模块object，可以使用 `xxx_cpn_meta.bind_runner.on_$role1.on_$role2.on_$role3` 格式注明。 
           装饰器方程将引入并返回对应角色的模块object。
    
           以hetero-lr 为例：
