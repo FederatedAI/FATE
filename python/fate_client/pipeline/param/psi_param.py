@@ -30,10 +30,10 @@ class PSIParam(BaseParam):
         self.dense_missing_val = dense_missing_val
 
     def check(self):
-        assert type(self.max_bin_num) == int and self.max_bin_num > 0, 'max bin must be an integer larger than 0'
-        assert type(self.need_run) == bool
+        assert isinstance(self.max_bin_num, int) and self.max_bin_num > 0, 'max bin must be an integer larger than 0'
+        assert isinstance(self.need_run, bool)
 
         if self.dense_missing_val is not None:
-            assert type(self.dense_missing_val) == str or type(self.dense_missing_val) == int or \
-                   type(self.dense_missing_val) == float, \
+            assert isinstance(self.dense_missing_val, str) or isinstance(self.dense_missing_val, int) or \
+                isinstance(self.dense_missing_val, float), \
                 'missing value type {} not supported'.format(type(self.dense_missing_val))

@@ -18,19 +18,19 @@
 #
 import copy
 
-from pipeline.param.base_param import BaseParam
+from pipeline.param.glm_param import LinearModelParam
+from pipeline.param.callback_param import CallbackParam
 from pipeline.param.cross_validation_param import CrossValidationParam
 from pipeline.param.encrypt_param import EncryptParam
 from pipeline.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from pipeline.param.init_model_param import InitParam
 from pipeline.param.predict_param import PredictParam
-from pipeline.param.stepwise_param import StepwiseParam
 from pipeline.param.sqn_param import StochasticQuasiNewtonParam
-from pipeline.param.callback_param import CallbackParam
+from pipeline.param.stepwise_param import StepwiseParam
 from pipeline.param import consts
 
 
-class LogisticParam(BaseParam):
+class LogisticParam(LinearModelParam):
     """
     Parameters used for Logistic Regression both for Homo mode or Hetero mode.
 
@@ -129,14 +129,14 @@ class LogisticParam(BaseParam):
         self.alpha = alpha
         self.optimizer = optimizer
         self.batch_size = batch_size
-        self.shuffle = shuffle
-        self.batch_strategy = batch_strategy
-        self.masked_rate = masked_rate
         self.learning_rate = learning_rate
         self.init_param = copy.deepcopy(init_param)
         self.max_iter = max_iter
         self.early_stop = early_stop
         self.encrypt_param = encrypt_param
+        self.shuffle = shuffle
+        self.batch_strategy = batch_strategy
+        self.masked_rate = masked_rate
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
         self.decay = decay
@@ -151,6 +151,13 @@ class LogisticParam(BaseParam):
         self.callback_param = copy.deepcopy(callback_param)
 
     def check(self):
+        descr = "logistic_param's"
+        super(LogisticParam, self).check()
+        self.predict_param.check()
+        if self.encrypt_param.method not in [consts.PAILLIER, None]:
+            raise ValueError(
+                "logistic_param's encrypted method support 'Paillier' or None only")
+        self.multi_class = self.check_and_change_lower(self.multi_class, ["ovr"], f"{descr}")
         return True
 
 
@@ -174,6 +181,7 @@ class HomoLogisticParam(LogisticParam):
         To scale the proximal term
 
     """
+
     def __init__(self, penalty='L2',
                  tol=1e-4, alpha=1.0, optimizer='rmsprop',
                  batch_size=-1, learning_rate=0.01, init_param=InitParam(),
@@ -247,20 +255,34 @@ class HeteroLogisticParam(LogisticParam):
                  use_first_metric_only=False, stepwise_param=StepwiseParam(),
                  callback_param=CallbackParam()
                  ):
-        super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
-                                                  batch_size=batch_size, shuffle=shuffle, batch_strategy=batch_strategy, masked_rate=masked_rate,
-                                                  learning_rate=learning_rate,
-                                                  init_param=init_param, max_iter=max_iter, early_stop=early_stop,
-                                                  predict_param=predict_param, cv_param=cv_param,
-                                                  decay=decay,
-                                                  decay_sqrt=decay_sqrt, multi_class=multi_class,
-                                                  validation_freqs=validation_freqs,
-                                                  early_stopping_rounds=early_stopping_rounds,
-                                                  metrics=metrics, floating_point_precision=floating_point_precision,
-                                                  encrypt_param=encrypt_param,
-                                                  use_first_metric_only=use_first_metric_only,
-                                                  stepwise_param=stepwise_param,
-                                                  callback_param=callback_param)
+        super(
+            HeteroLogisticParam,
+            self).__init__(
+            penalty=penalty,
+            tol=tol,
+            alpha=alpha,
+            optimizer=optimizer,
+            batch_size=batch_size,
+            shuffle=shuffle,
+            batch_strategy=batch_strategy,
+            masked_rate=masked_rate,
+            learning_rate=learning_rate,
+            init_param=init_param,
+            max_iter=max_iter,
+            early_stop=early_stop,
+            predict_param=predict_param,
+            cv_param=cv_param,
+            decay=decay,
+            decay_sqrt=decay_sqrt,
+            multi_class=multi_class,
+            validation_freqs=validation_freqs,
+            early_stopping_rounds=early_stopping_rounds,
+            metrics=metrics,
+            floating_point_precision=floating_point_precision,
+            encrypt_param=encrypt_param,
+            use_first_metric_only=use_first_metric_only,
+            stepwise_param=stepwise_param,
+            callback_param=callback_param)
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
         self.sqn_param = copy.deepcopy(sqn_param)
 

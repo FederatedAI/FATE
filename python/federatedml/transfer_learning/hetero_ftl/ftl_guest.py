@@ -48,7 +48,6 @@ class FTLGuest(FTL):
         return self.convergence.is_converge(loss)
 
     def compute_phi_and_overlap_ua(self, data_loader: FTLDataLoader):
-
         """
         compute Φ and ua of overlap samples
         """
@@ -76,7 +75,6 @@ class FTLGuest(FTL):
         return phi, overlap_ua
 
     def batch_compute_components(self, data_loader: FTLDataLoader):
-
         """
         compute guest components
         """
@@ -100,7 +98,6 @@ class FTLGuest(FTL):
         return phi, phi_product, overlap_ua, [y_overlap_2_phi_2, y_overlap_phi, mapping_comp_a]
 
     def exchange_components(self, comp_to_send, epoch_idx):
-
         """
         send guest components and get host components
         """
@@ -126,14 +123,16 @@ class FTLGuest(FTL):
             return host_components
 
     def decrypt_inter_result(self, encrypted_const, grad_a_overlap, epoch_idx, local_round=-1):
-
         """
         add random mask to encrypted inter-result, get decrypted data from host add subtract random mask
         """
 
         rand_0 = self.rng_generator.generate_random_number(encrypted_const.shape)
         encrypted_const = encrypted_const + rand_0
-        rand_1 = PaillierTensor(self.rng_generator.generate_random_number(grad_a_overlap.shape), partitions=self.partitions)
+        rand_1 = PaillierTensor(
+            self.rng_generator.generate_random_number(
+                grad_a_overlap.shape),
+            partitions=self.partitions)
         grad_a_overlap = grad_a_overlap + rand_1
 
         self.transfer_variable.guest_side_const.remote(encrypted_const, suffix=(epoch_idx,
@@ -165,7 +164,6 @@ class FTLGuest(FTL):
         return decrypted_loss
 
     def compute_backward_gradients(self, host_components, data_loader: FTLDataLoader, epoch_idx, local_round=-1):
-
         """
         compute backward gradients using host components
         """
@@ -182,7 +180,8 @@ class FTLGuest(FTL):
 
             const = np.sum(loss_grads_const_part1, axis=0) - 0.5 * np.sum(loss_grads_const_part2, axis=0)
 
-            grad_a_nonoverlap = self.alpha * const * data_loader.y[data_loader.get_non_overlap_indexes()] / self.data_num
+            grad_a_nonoverlap = self.alpha * const * \
+                data_loader.y[data_loader.get_non_overlap_indexes()] / self.data_num
             grad_a_overlap = self.alpha * const * self.overlap_y / self.data_num + mapping_comp_b
 
             return np.concatenate([grad_a_overlap, grad_a_nonoverlap], axis=0)
@@ -199,19 +198,20 @@ class FTLGuest(FTL):
 
             encrypted_const = loss_grads_const_part1.reduce_sum() - 0.5 * loss_grads_const_part2.reduce_sum()
 
-            grad_a_overlap = self.overlap_y_pt.map_ndarray_product((self.alpha/self.data_num * encrypted_const)) + mapping_comp_b
+            grad_a_overlap = self.overlap_y_pt.map_ndarray_product(
+                (self.alpha / self.data_num * encrypted_const)) + mapping_comp_b
 
-            const, grad_a_overlap = self.decrypt_inter_result(encrypted_const, grad_a_overlap, epoch_idx=epoch_idx
-                                                              , local_round=local_round)
+            const, grad_a_overlap = self.decrypt_inter_result(
+                encrypted_const, grad_a_overlap, epoch_idx=epoch_idx, local_round=local_round)
 
             self.decrypt_host_data(epoch_idx, local_round=local_round)
 
-            grad_a_nonoverlap = self.alpha * const * data_loader.y[data_loader.get_non_overlap_indexes()]/self.data_num
+            grad_a_nonoverlap = self.alpha * const * \
+                data_loader.y[data_loader.get_non_overlap_indexes()] / self.data_num
 
             return np.concatenate([grad_a_overlap.numpy(), grad_a_nonoverlap], axis=0)
 
     def compute_loss(self, host_components, epoch_idx, overlap_num):
-
         """
         compute training loss
         """
@@ -223,26 +223,26 @@ class FTLGuest(FTL):
             loss_overlap = np.sum((-self.overlap_ua * self.constant_k) * overlap_ub)
 
             ub_phi = np.matmul(overlap_ub, self.phi.transpose())
-            part1 = -0.5*np.sum(self.overlap_y*ub_phi)
-            part2 = 1.0/8*np.sum(ub_phi * ub_phi)
-            part3 = len(self.overlap_y)*np.log(2)
+            part1 = -0.5 * np.sum(self.overlap_y * ub_phi)
+            part2 = 1.0 / 8 * np.sum(ub_phi * ub_phi)
+            part3 = len(self.overlap_y) * np.log(2)
             loss_y = part1 + part2 + part3
-            return self.alpha * (loss_y/overlap_num) + loss_overlap/overlap_num
+            return self.alpha * (loss_y / overlap_num) + loss_overlap / overlap_num
 
         elif self.mode == 'encrypted':
 
-            loss_overlap = overlap_ub.element_wise_product((-self.overlap_ua*self.constant_k))
+            loss_overlap = overlap_ub.element_wise_product((-self.overlap_ua * self.constant_k))
             sum = np.sum(loss_overlap.reduce_sum())
             ub_phi = overlap_ub.T.fast_matmul_2d(self.phi.transpose())
 
             part1 = -0.5 * np.sum((self.overlap_y * ub_phi))
             ub_2 = overlap_ub_2.reduce_sum()
             enc_phi_uB_2_phi = np.matmul(np.matmul(self.phi, ub_2), self.phi.transpose())
-            part2 = 1/8 * np.sum(enc_phi_uB_2_phi)
-            part3 = len(self.overlap_y)*np.log(2)
+            part2 = 1 / 8 * np.sum(enc_phi_uB_2_phi)
+            part3 = len(self.overlap_y) * np.log(2)
 
             loss_y = part1 + part2 + part3
-            en_loss = (self.alpha/self.overlap_num) * loss_y + sum / overlap_num
+            en_loss = (self.alpha / self.overlap_num) * loss_y + sum / overlap_num
 
             loss_val = self.decrypt_loss_val(en_loss, epoch_idx)
 
@@ -384,7 +384,6 @@ class FTLGuest(FTL):
 
         threshold = self.predict_param.threshold
         predict_result = self.predict_score_to_output(data_inst_, predict_tb, classes=[0, 1], threshold=threshold)
-
 
         LOGGER.debug('ftl guest prediction done')
 

@@ -17,7 +17,7 @@
 # source: fate-data-structure.proto
 
 import sys
-_b=sys.version_info[0]<3 and (lambda x:x) or (lambda x:x.encode('latin1'))
+_b = sys.version_info[0] < 3 and (lambda x: x) or (lambda x: x.encode('latin1'))
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
 from google.protobuf import reflection as _reflection
@@ -27,153 +27,144 @@ from google.protobuf import symbol_database as _symbol_database
 _sym_db = _symbol_database.Default()
 
 
-
-
-DESCRIPTOR = _descriptor.FileDescriptor(
-  name='fate-data-structure.proto',
-  package='com.webank.ai.fate.api.core',
-  syntax='proto3',
-  serialized_options=_b('B\rDataStructure'),
-  serialized_pb=_b('\n\x19\x66\x61te-data-structure.proto\x12\x1b\x63om.webank.ai.fate.api.core\"&\n\x08RawEntry\x12\x0b\n\x03key\x18\x01 \x01(\x0c\x12\r\n\x05value\x18\x02 \x01(\x0c\"@\n\x06RawMap\x12\x36\n\x07\x65ntries\x18\x01 \x03(\x0b\x32%.com.webank.ai.fate.api.core.RawEntry\"n\n\x04\x44ict\x12\x39\n\x04\x64ict\x18\x01 \x03(\x0b\x32+.com.webank.ai.fate.api.core.Dict.DictEntry\x1a+\n\tDictEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x0c:\x02\x38\x01\x42\x0f\x42\rDataStructureb\x06proto3')
-)
-
-
+DESCRIPTOR = _descriptor.FileDescriptor(name='fate-data-structure.proto', package='com.webank.ai.fate.api.core', syntax='proto3', serialized_options=_b('B\rDataStructure'), serialized_pb=_b(
+    '\n\x19\x66\x61te-data-structure.proto\x12\x1b\x63om.webank.ai.fate.api.core\"&\n\x08RawEntry\x12\x0b\n\x03key\x18\x01 \x01(\x0c\x12\r\n\x05value\x18\x02 \x01(\x0c\"@\n\x06RawMap\x12\x36\n\x07\x65ntries\x18\x01 \x03(\x0b\x32%.com.webank.ai.fate.api.core.RawEntry\"n\n\x04\x44ict\x12\x39\n\x04\x64ict\x18\x01 \x03(\x0b\x32+.com.webank.ai.fate.api.core.Dict.DictEntry\x1a+\n\tDictEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x0c:\x02\x38\x01\x42\x0f\x42\rDataStructureb\x06proto3'))
 
 
 _RAWENTRY = _descriptor.Descriptor(
-  name='RawEntry',
-  full_name='com.webank.ai.fate.api.core.RawEntry',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='key', full_name='com.webank.ai.fate.api.core.RawEntry.key', index=0,
-      number=1, type=12, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b(""),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='value', full_name='com.webank.ai.fate.api.core.RawEntry.value', index=1,
-      number=2, type=12, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b(""),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=58,
-  serialized_end=96,
+    name='RawEntry',
+    full_name='com.webank.ai.fate.api.core.RawEntry',
+    filename=None,
+    file=DESCRIPTOR,
+    containing_type=None,
+    fields=[
+        _descriptor.FieldDescriptor(
+            name='key', full_name='com.webank.ai.fate.api.core.RawEntry.key', index=0,
+            number=1, type=12, cpp_type=9, label=1,
+            has_default_value=False, default_value=_b(""),
+            message_type=None, enum_type=None, containing_type=None,
+            is_extension=False, extension_scope=None,
+            serialized_options=None, file=DESCRIPTOR),
+        _descriptor.FieldDescriptor(
+            name='value', full_name='com.webank.ai.fate.api.core.RawEntry.value', index=1,
+            number=2, type=12, cpp_type=9, label=1,
+            has_default_value=False, default_value=_b(""),
+            message_type=None, enum_type=None, containing_type=None,
+            is_extension=False, extension_scope=None,
+            serialized_options=None, file=DESCRIPTOR),
+    ],
+    extensions=[
+    ],
+    nested_types=[],
+    enum_types=[
+    ],
+    serialized_options=None,
+    is_extendable=False,
+    syntax='proto3',
+    extension_ranges=[],
+    oneofs=[
+    ],
+    serialized_start=58,
+    serialized_end=96,
 )
 
 
 _RAWMAP = _descriptor.Descriptor(
-  name='RawMap',
-  full_name='com.webank.ai.fate.api.core.RawMap',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='entries', full_name='com.webank.ai.fate.api.core.RawMap.entries', index=0,
-      number=1, type=11, cpp_type=10, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=98,
-  serialized_end=162,
+    name='RawMap',
+    full_name='com.webank.ai.fate.api.core.RawMap',
+    filename=None,
+    file=DESCRIPTOR,
+    containing_type=None,
+    fields=[
+        _descriptor.FieldDescriptor(
+            name='entries', full_name='com.webank.ai.fate.api.core.RawMap.entries', index=0,
+            number=1, type=11, cpp_type=10, label=3,
+            has_default_value=False, default_value=[],
+            message_type=None, enum_type=None, containing_type=None,
+            is_extension=False, extension_scope=None,
+            serialized_options=None, file=DESCRIPTOR),
+    ],
+    extensions=[
+    ],
+    nested_types=[],
+    enum_types=[
+    ],
+    serialized_options=None,
+    is_extendable=False,
+    syntax='proto3',
+    extension_ranges=[],
+    oneofs=[
+    ],
+    serialized_start=98,
+    serialized_end=162,
 )
 
 
 _DICT_DICTENTRY = _descriptor.Descriptor(
-  name='DictEntry',
-  full_name='com.webank.ai.fate.api.core.Dict.DictEntry',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='key', full_name='com.webank.ai.fate.api.core.Dict.DictEntry.key', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='value', full_name='com.webank.ai.fate.api.core.Dict.DictEntry.value', index=1,
-      number=2, type=12, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b(""),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=_b('8\001'),
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=231,
-  serialized_end=274,
+    name='DictEntry',
+    full_name='com.webank.ai.fate.api.core.Dict.DictEntry',
+    filename=None,
+    file=DESCRIPTOR,
+    containing_type=None,
+    fields=[
+        _descriptor.FieldDescriptor(
+            name='key', full_name='com.webank.ai.fate.api.core.Dict.DictEntry.key', index=0,
+            number=1, type=9, cpp_type=9, label=1,
+            has_default_value=False, default_value=_b("").decode('utf-8'),
+            message_type=None, enum_type=None, containing_type=None,
+            is_extension=False, extension_scope=None,
+            serialized_options=None, file=DESCRIPTOR),
+        _descriptor.FieldDescriptor(
+            name='value', full_name='com.webank.ai.fate.api.core.Dict.DictEntry.value', index=1,
+            number=2, type=12, cpp_type=9, label=1,
+            has_default_value=False, default_value=_b(""),
+            message_type=None, enum_type=None, containing_type=None,
+            is_extension=False, extension_scope=None,
+            serialized_options=None, file=DESCRIPTOR),
+    ],
+    extensions=[
+    ],
+    nested_types=[],
+    enum_types=[
+    ],
+    serialized_options=_b('8\001'),
+    is_extendable=False,
+    syntax='proto3',
+    extension_ranges=[],
+    oneofs=[
+    ],
+    serialized_start=231,
+    serialized_end=274,
 )
 
 _DICT = _descriptor.Descriptor(
-  name='Dict',
-  full_name='com.webank.ai.fate.api.core.Dict',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='dict', full_name='com.webank.ai.fate.api.core.Dict.dict', index=0,
-      number=1, type=11, cpp_type=10, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[_DICT_DICTENTRY, ],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=164,
-  serialized_end=274,
+    name='Dict',
+    full_name='com.webank.ai.fate.api.core.Dict',
+    filename=None,
+    file=DESCRIPTOR,
+    containing_type=None,
+    fields=[
+        _descriptor.FieldDescriptor(
+            name='dict', full_name='com.webank.ai.fate.api.core.Dict.dict', index=0,
+            number=1, type=11, cpp_type=10, label=3,
+            has_default_value=False, default_value=[],
+            message_type=None, enum_type=None, containing_type=None,
+            is_extension=False, extension_scope=None,
+            serialized_options=None, file=DESCRIPTOR),
+    ],
+    extensions=[
+    ],
+    nested_types=[_DICT_DICTENTRY, ],
+    enum_types=[
+    ],
+    serialized_options=None,
+    is_extendable=False,
+    syntax='proto3',
+    extension_ranges=[],
+    oneofs=[
+    ],
+    serialized_start=164,
+    serialized_end=274,
 )
 
 _RAWMAP.fields_by_name['entries'].message_type = _RAWENTRY
@@ -185,31 +176,30 @@ DESCRIPTOR.message_types_by_name['Dict'] = _DICT
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 RawEntry = _reflection.GeneratedProtocolMessageType('RawEntry', (_message.Message,), dict(
-  DESCRIPTOR = _RAWENTRY,
-  __module__ = 'fate_data_structure_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.api.core.RawEntry)
-  ))
+    DESCRIPTOR=_RAWENTRY,
+    __module__='fate_data_structure_pb2'
+    # @@protoc_insertion_point(class_scope:com.webank.ai.fate.api.core.RawEntry)
+))
 _sym_db.RegisterMessage(RawEntry)
 
 RawMap = _reflection.GeneratedProtocolMessageType('RawMap', (_message.Message,), dict(
-  DESCRIPTOR = _RAWMAP,
-  __module__ = 'fate_data_structure_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.api.core.RawMap)
-  ))
+    DESCRIPTOR=_RAWMAP,
+    __module__='fate_data_structure_pb2'
+    # @@protoc_insertion_point(class_scope:com.webank.ai.fate.api.core.RawMap)
+))
 _sym_db.RegisterMessage(RawMap)
 
 Dict = _reflection.GeneratedProtocolMessageType('Dict', (_message.Message,), dict(
 
-  DictEntry = _reflection.GeneratedProtocolMessageType('DictEntry', (_message.Message,), dict(
-    DESCRIPTOR = _DICT_DICTENTRY,
-    __module__ = 'fate_data_structure_pb2'
-    # @@protoc_insertion_point(class_scope:com.webank.ai.fate.api.core.Dict.DictEntry)
-    ))
-  ,
-  DESCRIPTOR = _DICT,
-  __module__ = 'fate_data_structure_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.api.core.Dict)
-  ))
+    DictEntry=_reflection.GeneratedProtocolMessageType('DictEntry', (_message.Message,), dict(
+        DESCRIPTOR=_DICT_DICTENTRY,
+        __module__='fate_data_structure_pb2'
+        # @@protoc_insertion_point(class_scope:com.webank.ai.fate.api.core.Dict.DictEntry)
+    )),
+    DESCRIPTOR=_DICT,
+    __module__='fate_data_structure_pb2'
+    # @@protoc_insertion_point(class_scope:com.webank.ai.fate.api.core.Dict)
+))
 _sym_db.RegisterMessage(Dict)
 _sym_db.RegisterMessage(Dict.DictEntry)
 

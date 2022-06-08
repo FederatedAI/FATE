@@ -91,7 +91,7 @@ class LocalBaseline(ModelBase):
         ovr_pb_classes = []
 
         for i, label in enumerate(classes):
-            coef = coef_all[i,]
+            coef = coef_all[i, ]
             weight_dict = dict(zip(self.header, list(coef)))
             intercept = intercept_all[i] if model.fit_intercept else intercept_all
             result = {'iters': n_iter,
@@ -181,7 +181,7 @@ class LocalBaseline(ModelBase):
             summary = {}
 
             for i, label in enumerate(classes):
-                coef = coef_all[i,]
+                coef = coef_all[i, ]
                 weight_dict = dict(zip(self.header, [float(i) for i in coef]))
                 intercept = float(intercept_all[i]) if model.fit_intercept else float(intercept_all)
                 single_summary = {
@@ -189,7 +189,7 @@ class LocalBaseline(ModelBase):
                     'intercept': intercept,
                     'is_converged': is_converged,
                     'iters': n_iter
-                    }
+                }
                 single_key = f"{label}"
                 summary[single_key] = single_summary
                 summary['one_vs_rest'] = True
@@ -225,7 +225,7 @@ class LocalBaseline(ModelBase):
         for i, label in enumerate(classes):
             model = models[i]
             coef = self._load_single_coef(model)
-            coef_all[i,] = coef
+            coef_all[i, ] = coef
             intercept_all[i] = model.intercept
             iters = model.iters
 

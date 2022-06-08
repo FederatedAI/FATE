@@ -1,0 +1,76 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 10000
+    },
+    "role": {
+        "guest": [
+            10000
+        ],
+        "host": [
+            9999
+        ]
+    },
+    "job_parameters": {
+        "common": {
+            "job_type": "train"
+        }
+    },
+    "component_parameters": {
+        "role": {
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "motor_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "data_transform_0": {
+                        "with_label": false
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "motor_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "data_transform_0": {
+                        "with_label": true,
+                        "label_name": "motor_speed",
+                        "label_type": "float",
+                        "output_format": "dense"
+                    }
+                }
+            }
+        },
+        "common": {
+            "hetero_linr_0": {
+                "penalty": "None",
+                "tol": 0.001,
+                "alpha": 0.01,
+                "optimizer": "sgd",
+                "batch_size": -1,
+                "learning_rate": 0.15,
+                "init_param": {
+                    "init_method": "zeros"
+                },
+                "max_iter": 20,
+                "early_stop": "weight_diff",
+                "cv_param": {
+                    "n_splits": 5,
+                    "shuffle": false,
+                    "random_seed": 42,
+                    "need_cv": true
+                },
+                "decay": 0.0,
+                "decay_sqrt": false
+            }
+        }
+    }
+}

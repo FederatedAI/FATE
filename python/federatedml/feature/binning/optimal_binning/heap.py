@@ -99,7 +99,7 @@ class GiniHeapNode(HeapNode):
         #     self.score = -math.inf
         #     return
         merged_gini = 1 - (1.0 * self.event_count / self.total_count) ** 2 - \
-                      (1.0 * self.non_event_count / self.total_count) ** 2
+            (1.0 * self.non_event_count / self.total_count) ** 2
         self.score = merged_gini - self.left_bucket.gini - self.right_bucket.gini
 
 
@@ -131,9 +131,9 @@ class ChiSquareHeapNode(HeapNode):
         e_right_0 = (self.right_bucket.total_count / self.total_count) * c0
 
         chi_square = np.square(self.left_bucket.event_count - e_left_1) / e_left_1 + \
-                     np.square(self.left_bucket.non_event_count - e_left_0) / e_left_0 + \
-                     np.square(self.right_bucket.event_count - e_right_1) / e_right_1 + \
-                     np.square(self.right_bucket.non_event_count - e_right_0) / e_right_0
+            np.square(self.left_bucket.non_event_count - e_left_0) / e_left_0 + \
+            np.square(self.right_bucket.event_count - e_right_1) / e_right_1 + \
+            np.square(self.right_bucket.non_event_count - e_right_0) / e_right_0
         LOGGER.debug("chi_sqaure: {}".format(chi_square))
 
         self.score = chi_square

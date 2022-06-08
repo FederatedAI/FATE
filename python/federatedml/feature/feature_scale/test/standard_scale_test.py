@@ -224,7 +224,8 @@ class TestStandardScaler(unittest.TestCase):
         self.assertEqual(column_max_value, [1, 2, 2, 2, 2, 2])
         self.assertEqual(column_min_value, [1, 1, 1, 2, 2, 1])
 
-    # test with (area="col", upper=[2,2,2,2,2,2], lower=[1,1,1,1,1,1], scale_column_idx=[1,2,4], with_mean=True, with_std=True):
+    # test with (area="col", upper=[2,2,2,2,2,2], lower=[1,1,1,1,1,1],
+    # scale_column_idx=[1,2,4], with_mean=True, with_std=True):
     def test_fit9(self):
         scale_column_idx = [1, 2, 4]
 

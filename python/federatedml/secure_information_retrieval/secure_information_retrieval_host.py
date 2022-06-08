@@ -215,6 +215,7 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
 
         return id_blocks
 
+
 def _restore_value(id_list_host, id_blocks, target_indexes, need_label):
     """
 

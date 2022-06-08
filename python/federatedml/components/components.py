@@ -24,9 +24,11 @@ from federatedml.model_base import ModelBase
 from federatedml.param.base_param import BaseParam
 from federatedml.util import LOGGER
 
+_ml_base = Path(__file__).resolve().parent.parent.parent
+
 
 class _RunnerDecorator:
-    def __init__(self, meta) -> None:
+    def __init__(self, meta: "ComponentMeta") -> None:
         self._roles = set()
         self._meta = meta
 
@@ -112,15 +114,17 @@ class ComponentMeta:
 
     def _get_runner(self, role: str):
         if role in self._role_to_runner_cls:
-            return self._role_to_runner_cls[role]
+            runner_class = self._role_to_runner_cls[role]
 
         elif role in self._role_to_runner_cls_getter:
-            return self._role_to_runner_cls_getter[role]()
+            runner_class = self._role_to_runner_cls_getter[role]()
 
         else:
             raise ModuleNotFoundError(
                 f"Runner for component `{self.name}` at role `{role}` not found"
             )
+        runner_class.set_component_name(self.alias[0])
+        return runner_class
 
     def get_run_obj(self, role: str):
         return self._get_runner(role)()

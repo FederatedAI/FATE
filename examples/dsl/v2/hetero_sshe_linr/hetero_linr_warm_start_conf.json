@@ -1,0 +1,97 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 10000
+    },
+    "role": {
+        "guest": [
+            10000
+        ],
+        "host": [
+            9999
+        ]
+    },
+    "job_parameters": {
+        "common": {
+            "job_type": "train"
+        }
+    },
+    "component_parameters": {
+        "role": {
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "motor_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "data_transform_0": {
+                        "with_label": false
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "motor_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "data_transform_0": {
+                        "with_label": true,
+                        "label_name": "motor_speed",
+                        "label_type": "float",
+                        "output_format": "dense"
+                    }
+                }
+            }
+        },
+        "common": {
+            "intersection_0": {
+                "only_output_key": false
+            },
+            "hetero_linr_0": {
+                "penalty": "L2",
+                "tol": 0.001,
+                "alpha": 0.01,
+                "optimizer": "sgd",
+                "batch_size": -1,
+                "learning_rate": 0.15,
+                "init_param": {
+                    "init_method": "zeros"
+                },
+                "max_iter": 5,
+                "early_stop": "weight_diff",
+                "decay": 0.0,
+                "decay_sqrt": false,
+                "callback_param": {
+                    "callbacks": [
+                        "ModelCheckpoint"
+                    ]
+                }
+            },
+            "hetero_linr_1": {
+                "penalty": "L2",
+                "tol": 0.001,
+                "alpha": 0.01,
+                "optimizer": "sgd",
+                "batch_size": -1,
+                "learning_rate": 0.15,
+                "max_iter": 15,
+                "early_stop": "weight_diff",
+                "decay": 0.0,
+                "decay_sqrt": false,
+                "encrypted_mode_calculator_param": {
+                    "mode": "fast"
+                }
+            },
+            "evaluation_0": {
+                "eval_type": "regression",
+                "pos_label": 1
+            }
+        }
+    }
+}

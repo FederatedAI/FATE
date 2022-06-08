@@ -50,8 +50,13 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
     data_transform_0 = DataTransform(name="data_transform_0")
-    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, label_name="y",
-                                                                             label_type="int", output_format="dense")
+    data_transform_0.get_party_instance(
+        role='guest',
+        party_id=guest).component_param(
+        with_label=True,
+        label_name="y",
+        label_type="int",
+        output_format="dense")
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
@@ -99,9 +104,9 @@ def main(config="../../config.yaml", namespace=""):
     feature_scale_0 = FeatureScale(name="feature_scale_0", method="standard_scale", need_run=True)
 
     hetero_lr_0 = HeteroLR(name="hetero_lr_0", optimizer="nesterov_momentum_sgd", tol=0.001,
-                               alpha=0.01, max_iter=20, early_stop="weight_diff", batch_size=-1,
-                               learning_rate=0.15,
-                               init_param={"init_method": "zeros"})
+                           alpha=0.01, max_iter=20, early_stop="weight_diff", batch_size=-1,
+                           learning_rate=0.15,
+                           init_param={"init_method": "zeros"})
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary", pos_label=1)
     # evaluation_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)
@@ -120,6 +125,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.compile()
 
     pipeline.fit()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("PIPELINE DEMO")

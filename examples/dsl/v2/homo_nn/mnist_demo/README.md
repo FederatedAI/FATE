@@ -5,8 +5,9 @@
 1. download and parse mnist data by
 
 ```bash
-python ../../../../scripts/download_mnist_data_as_images.py
+fate_test data download -t mnist
 ```
+make sure that fate_test is installed, refer to [fate_test guide](../../../../../doc/tutorial/fate_test_tutorial.md)
 
 2. bind local path
 
@@ -18,5 +19,5 @@ b. flow table bind -c bind_local_path.json
 3. submit job
 
 ```bash
-flow job submit -c -c mnist_conf.json -d mnist_dsl.json
+flow job submit -c mnist_conf.json -d mnist_dsl.json
 ```

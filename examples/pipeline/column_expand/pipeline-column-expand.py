@@ -46,10 +46,11 @@ def main(config="../../config.yaml", namespace=""):
 
     # define ColumnExpand components
     column_expand_0 = ColumnExpand(name="column_expand_0")
-    column_expand_0.get_party_instance(role="guest", party_id=guest).component_param(need_run=True,
-                                                                                     method="manual",
-                                                                                     append_header=["x_0", "x_1", "x_2", "x_3"],
-                                                                                     fill_value=[0, 0.2, 0.5, 1])
+    column_expand_0.get_party_instance(
+        role="guest", party_id=guest).component_param(
+        need_run=True, method="manual", append_header=[
+            "x_0", "x_1", "x_2", "x_3"], fill_value=[
+                0, 0.2, 0.5, 1])
     # define DataTransform components
     data_transform_0 = DataTransform(name="data_transform_0")  # start component numbering at 0
     # get DataTransform party instance of guest

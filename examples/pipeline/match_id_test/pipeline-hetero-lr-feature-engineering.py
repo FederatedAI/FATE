@@ -40,7 +40,6 @@ def main(config="../../config.yaml", namespace=""):
     host = parties.host[0]
     arbiter = parties.arbiter[0]
 
-
     guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment_sid{namespace}"}
     host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment_sid{namespace}"}
 
@@ -59,7 +58,7 @@ def main(config="../../config.yaml", namespace=""):
     feature_scale_0 = FeatureScale(name='feature_scale_0', method="standard_scale",
                                    need_run=True)
 
-    binning_param =  {
+    binning_param = {
         "method": "quantile",
         "compress_thres": 10000,
         "head_size": 10000,

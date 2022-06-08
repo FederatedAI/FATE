@@ -27,4 +27,3 @@ class Model(object):
             return self._isometric_model
         else:
             raise ValueError("model key {} not support".format(model_key))
-

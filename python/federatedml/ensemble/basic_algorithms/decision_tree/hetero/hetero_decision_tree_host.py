@@ -50,6 +50,9 @@ class HeteroDecisionTreeHost(DecisionTree):
         # code version control
         self.new_ver = True
 
+        # multi mode
+        self.mo_tree = False
+
     """
     Setting
     """
@@ -72,6 +75,7 @@ class HeteroDecisionTreeHost(DecisionTree):
              goss_subsample=False,
              cipher_compressing=False,
              new_ver=True,
+             mo_tree=False
              ):
 
         super(HeteroDecisionTreeHost, self).init_data_and_variable(flowid, runtime_idx, data_bin, bin_split_points,
@@ -84,6 +88,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         self.run_cipher_compressing = cipher_compressing
         self.feature_num = self.bin_split_points.shape[0]
         self.new_ver = new_ver
+        self.mo_tree = mo_tree
 
         self.report_init_status()
 
@@ -123,17 +128,15 @@ class HeteroDecisionTreeHost(DecisionTree):
 
         if etype == "feature_idx":
             self.split_feature_dict[nid] = val
-            return None
 
-        if etype == "feature_val":
+        elif etype == "feature_val":
             self.split_maskdict[nid] = val
-            return None
 
-        if etype == "missing_dir":
+        elif etype == "missing_dir":
             self.missing_dir_maskdict[nid] = val
-            return None
 
-        raise TypeError("encode type %s is not support!" % (str(etype)))
+        else:
+            raise TypeError("encode type %s is not support!" % (str(etype)))
 
     @staticmethod
     def decode(dtype="feature_idx", val=None, nid=None, split_maskdict=None, missing_dir_maskdict=None):
@@ -204,7 +207,7 @@ class HeteroDecisionTreeHost(DecisionTree):
         LOGGER.info("get encrypted grad and hess")
 
         if self.run_cipher_compressing:
-            self.cipher_compressor = PackedGHCompressor()
+            self.cipher_compressor = PackedGHCompressor(mo_mode=self.mo_tree)
 
         self.grad_and_hess = self.transfer_inst.encrypted_grad_and_hess.get(idx=0)
 

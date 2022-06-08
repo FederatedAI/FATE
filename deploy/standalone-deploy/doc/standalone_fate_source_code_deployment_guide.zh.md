@@ -73,7 +73,7 @@ source ${FATE_VENV_BASE}/bin/activate
 
 ```bash
 cd ${FATE_PROJECT_BASE};
-sh bin/install_os_dependencies.sh;
+bash bin/install_os_dependencies.sh;
 source ${FATE_VENV_BASE}/bin/activate;
 pip install -r python/requirements.txt
 ```
@@ -105,8 +105,8 @@ default_engines:
 cd ${FATE_PROJECT_BASE};
 source bin/init_env.sh;
 cd fateflow;
-sh bin/service.sh status;
-sh bin/service.sh start
+bash bin/service.sh status;
+bash bin/service.sh start
 ```
 
 显示如下类似则为启动成功，否则请依据提示查看日志
@@ -212,8 +212,8 @@ sed -i.bak "s#fateflow.url=.*#fateflow.url=http://localhost:9380#g" $PWD/fateboa
 
 ```bash
 cd fateboard;
-sh service.sh status;
-sh service.sh start
+bash service.sh status;
+bash service.sh start
 ```
 
 显示如下类似则为启动成功，否则请依据提示查看日志

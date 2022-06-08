@@ -22,6 +22,7 @@ class ObliviousTransfer(object):
     """
     Base OT class
     """
+
     def __init__(self):
         pass
 
@@ -30,6 +31,7 @@ class ObliviousTransferKey(object):
     """
     A key structure used in OT protocols
     """
+
     def __init__(self, index, key):
         """
 
@@ -38,4 +40,3 @@ class ObliviousTransferKey(object):
         """
         self.index = index
         self.key = key
-

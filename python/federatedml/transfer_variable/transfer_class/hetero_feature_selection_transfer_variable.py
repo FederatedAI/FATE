@@ -32,3 +32,4 @@ class HeteroFeatureSelectionTransferVariable(BaseTransferVariables):
         super().__init__(flowid)
         self.host_select_cols = self._create_variable(name='host_select_cols', src=['host'], dst=['guest'])
         self.result_left_cols = self._create_variable(name='result_left_cols', src=['guest'], dst=['host'])
+        self.host_empty_cols = self._create_variable(name='host_empty_cols', src=['host'], dst=['guest'])

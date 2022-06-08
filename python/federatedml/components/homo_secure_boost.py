@@ -29,17 +29,13 @@ def homo_secure_boost_param():
 
 @homo_secure_boost_cpn_meta.bind_runner.on_guest.on_host
 def homo_secure_boost_runner_client():
-    from federatedml.ensemble.boosting.homo.homo_secureboost_client import (
-        HomoSecureBoostingTreeClient,
-    )
+    from federatedml.ensemble import (HomoSecureBoostingTreeClient)
 
     return HomoSecureBoostingTreeClient
 
 
 @homo_secure_boost_cpn_meta.bind_runner.on_arbiter
 def homo_secure_boost_runner_arbiter():
-    from federatedml.ensemble.boosting.homo.homo_secureboost_arbiter import (
-        HomoSecureBoostingTreeArbiter,
-    )
+    from federatedml.ensemble import (HomoSecureBoostingTreeArbiter)
 
     return HomoSecureBoostingTreeArbiter

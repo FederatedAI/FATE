@@ -26,7 +26,7 @@ jobs:
         run: |
           git config --global user.name 'actions-bot'
           git config --global user.email '58130806+actions-bot@users.noreply.github.com'
-          git commit -am "[autopep8-command] fixes"
+          git commit -am "[autopep8-command] fixes" -s
           git push
 
       - name: Add reaction

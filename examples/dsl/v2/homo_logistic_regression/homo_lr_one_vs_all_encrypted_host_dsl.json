@@ -1,0 +1,90 @@
+{
+    "components": {
+        "reader_0": {
+            "module": "Reader",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            },
+            "provider": "fate_flow"
+        },
+        "data_transform_0": {
+            "module": "DataTransform",
+            "input": {
+                "data": {
+                    "data": [
+                        "reader_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            },
+            "provider": "fate"
+        },
+        "homo_lr_0": {
+            "module": "HomoLR",
+            "input": {
+                "data": {
+                    "train_data": [
+                        "data_transform_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            },
+            "provider": "fate"
+        },
+        "homo_lr_1": {
+            "module": "HomoLR",
+            "input": {
+                "data": {
+                    "test_data": [
+                        "data_transform_0.data"
+                    ]
+                },
+                "model": [
+                    "homo_lr_0.model"
+                ]
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            },
+            "provider": "fate"
+        },
+        "evaluation_0": {
+            "module": "Evaluation",
+            "input": {
+                "data": {
+                    "data": [
+                        "homo_lr_0.data",
+                        "homo_lr_1.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ]
+            },
+            "provider": "fate"
+        }
+    }
+}

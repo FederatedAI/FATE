@@ -93,8 +93,7 @@ class BaseScale(object):
                 idx_from_name = list(map(lambda n: header.index(n), scale_names))
 
                 scale_column_idx = scale_column_idx + idx_from_name
-                scale_column_idx = list(set(scale_column_idx))
-                scale_column_idx.sort()
+                scale_column_idx = sorted(set(scale_column_idx))
             else:
                 LOGGER.warning(
                     "parameter scale_column_idx should be a list, but not:{}, set scale column to all columns".format(
@@ -216,7 +215,9 @@ class BaseScale(object):
             if not isinstance(self.column_min_value, Iterable) or not isinstance(self.column_max_value, Iterable):
                 LOGGER.info(
                     "column_min_value type is:{}, column_min_value type is:{} , should be iterable, start to get new one".format(
-                        type(self.column_min_value), type(self.column_max_value)))
+                        type(
+                            self.column_min_value), type(
+                            self.column_max_value)))
                 self.column_min_value, self.column_max_value = self._get_min_max_value(data)
 
             if not self.scale_column_idx:
@@ -238,8 +239,12 @@ class BaseScale(object):
     def get_model_summary(self):
         cols_info = self._get_param().col_scale_param
         return {
-        col_name: {"column_upper": col.column_upper, "column_lower": col.column_lower, "mean": col.mean, "std": col.std} for
-        col_name, col in cols_info.items()}
+            col_name: {
+                "column_upper": col.column_upper,
+                "column_lower": col.column_lower,
+                "mean": col.mean,
+                "std": col.std} for col_name,
+            col in cols_info.items()}
 
     def export_model(self, need_run):
         meta_obj = self._get_meta(need_run)

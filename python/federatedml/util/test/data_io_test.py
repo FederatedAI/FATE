@@ -41,15 +41,14 @@ class TestDenseFeatureReader(unittest.TestCase):
         self.table2.schema = schema
 
         self.dataset1 = {"data_io_0": {
-                             "data": self.table1
-                        }
-                        }
+            "data": self.table1
+        }
+        }
 
         self.dataset2 = {"data_io_1": {
-                "data": self.table2
-            }
-            }
-
+            "data": self.table2
+        }
+        }
 
     def test_dense_output_format(self):
         dataio = DataIO()
@@ -109,7 +108,7 @@ class TestDenseFeatureReader(unittest.TestCase):
                             "input_format": "dense",
                             "with_label": True,
                             "label_name": "x3"
-                           }
+                            }
         cpn_input = get_cpn_input(self.dataset1, component_params)
         dataio.run(cpn_input)
         data = dataio.save_data().collect()
@@ -150,7 +149,7 @@ class TestSparseFeatureReader(unittest.TestCase):
         self.dataset = {"data_io_0": {
                         "data": self.table
                         }
-                       }
+                        }
 
     def test_dense_output_format(self):
         dataio = DataIO()
@@ -227,12 +226,12 @@ class TestSparseTagReader(unittest.TestCase):
         self.dataset1 = {"data_io_0": {
                          "data": self.table1
                          }
-                        }
+                         }
 
         self.dataset2 = {"data_io_1": {
                          "data": self.table2
                          }
-                        }
+                         }
 
     def test_tag_sparse_output_format(self):
         dataio = DataIO()

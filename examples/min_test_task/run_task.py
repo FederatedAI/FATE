@@ -230,7 +230,7 @@ class TrainTask(TaskManager):
 
             time_print("Current task status: {}".format(task_status))
             return task_status
-        except:
+        except BaseException:
             return None
 
     def _deploy_model(self):
@@ -469,4 +469,3 @@ if __name__ == "__main__":
     if add_sbt:
         task = TrainSBTTask(file_type, guest_id, host_id)
         task.run()
-

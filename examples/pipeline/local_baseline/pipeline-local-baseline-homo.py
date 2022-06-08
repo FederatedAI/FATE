@@ -45,7 +45,7 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
     data_transform_0 = DataTransform(name="data_transform_0", with_label=True, output_format="dense",
-                      label_type="int", label_name="y")
+                                     label_type="int", label_name="y")
 
     homo_lr_0 = HomoLR(name="homo_lr_0", penalty="L2", optimizer="sgd",
                        tol=0.0001, alpha=0.01, max_iter=30, batch_size=-1,
@@ -76,8 +76,10 @@ def main(config="../../config.yaml", namespace=""):
 
     predict_pipeline = PipeLine()
     predict_pipeline.add_component(reader_0)
-    predict_pipeline.add_component(pipeline,
-                                   data=Data(predict_input={pipeline.data_transform_0.input.data: reader_0.output.data}))
+    predict_pipeline.add_component(
+        pipeline, data=Data(
+            predict_input={
+                pipeline.data_transform_0.input.data: reader_0.output.data}))
     predict_pipeline.add_component(evaluation_0, data=Data(data=[homo_lr_0.output.data, local_baseline_0.output.data]))
     predict_pipeline.predict()
 

@@ -1,7 +1,7 @@
 from pipeline.component.column_expand import ColumnExpand
 from pipeline.component.data_statistics import DataStatistics
 from pipeline.component.dataio import DataIO
-from pipeline.component.data_transform import DataTransform 
+from pipeline.component.data_transform import DataTransform
 from pipeline.component.evaluation import Evaluation
 from pipeline.component.hetero_data_split import HeteroDataSplit
 from pipeline.component.hetero_fast_secureboost import HeteroFastSecureBoost
@@ -38,6 +38,7 @@ from pipeline.component.cache_loader import CacheLoader
 from pipeline.component.model_loader import ModelLoader
 from pipeline.component.hetero_kmeans import HeteroKmeans
 from pipeline.component.homo_onehot import HomoOneHotEncoder
+from pipeline.component.hetero_sshe_linr import HeteroSSHELinR
 
 __all__ = ["DataStatistics", "DataIO", "Evaluation", "HeteroDataSplit",
            "HeteroFastSecureBoost", "HeteroFeatureBinning", "HeteroFeatureSelection",
@@ -48,5 +49,4 @@ __all__ = ["DataStatistics", "DataIO", "Evaluation", "HeteroDataSplit",
            "FederatedSample", "FeatureScale", "Union", "ColumnExpand", "FeldmanVerifiableSum",
            "SampleWeight", "DataTransform", "FeatureImputation",
            "LabelTransform", "SecureInformationRetrieval", "CacheLoader", "ModelLoader",
-           "HeteroSSHELR", "HeteroKmeans", "HomoOneHotEncoder"]
-
+           "HeteroSSHELR", "HeteroKmeans", "HomoOneHotEncoder", "HeteroSSHELinR"]

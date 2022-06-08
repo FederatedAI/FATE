@@ -32,7 +32,5 @@ class DataStatistics(FateComponent, StatisticsParam):
 
         StatisticsParam.__init__(self, **new_kwargs)
         self.input = Input(self.name)
-        self.output = Output(self.name, has_model=True)
+        self.output = Output(self.name, has_model=True, has_data=False)
         self._module_name = "DataStatistics"
-
-

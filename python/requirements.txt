@@ -7,7 +7,6 @@ beautifultable==1.0.0
 cachetools==3.0.0
 cloudpickle==0.6.1
 cos-python-sdk-v5==1.9.10
-dataclasses;python_version < "3.7"
 Flask==1.0.2
 gmpy2==2.0.8
 joblib==1.0.1
@@ -50,7 +49,8 @@ lightgbm==3.3.1
 pyparsing<3.0.8
 
 # python 3.6
-backports-datetime-fromisoformat==1.0.0
+dataclasses; python_version < '3.7'
+backports-datetime-fromisoformat==1.0.0; python_version < '3.7'
 
 # addtional requirements for eggroll
 grpcio==1.24.3

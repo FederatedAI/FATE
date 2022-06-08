@@ -89,6 +89,9 @@
         },
         "hetero-lr-converged-weight-diff-encrypted-not-reveal": {
             "script": "pipeline-hetero-lr-converged-weight-diff-encrypted-not-reveal.py"
+        },
+        "hetero-lr-sample-weight": {
+            "script": "pipeline-hetero-lr-sample-weight.py"
         }
     }
 }

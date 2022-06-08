@@ -44,6 +44,7 @@ class SelectorParam(object):
             selective probability is max(min_prob, rank_rate)
 
     """
+
     def __init__(self, method=None, beta=1, selective_size=consts.SELECTIVE_SIZE, min_prob=0, random_state=None):
         self.method = method
         self.selective_size = selective_size
@@ -192,7 +193,7 @@ class HeteroNNParam(BaseParam):
             raise ValueError("metrics should be a list")
 
         if self.floating_point_precision is not None and \
-                (not isinstance(self.floating_point_precision, int) or\
+                (not isinstance(self.floating_point_precision, int) or
                  self.floating_point_precision < 0 or self.floating_point_precision > 63):
             raise ValueError("floating point precision should be null or a integer between 0 and 63")
 
@@ -255,5 +256,3 @@ class HeteroNNParam(BaseParam):
             return None
         else:
             raise ValueError(f"invalid type for optimize: {type(opt)}")
-
-

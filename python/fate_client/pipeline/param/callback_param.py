@@ -17,7 +17,6 @@
 #  limitations under the License.
 #
 from pipeline.param.base_param import BaseParam
-from pipeline.param import consts
 
 
 class CallbackParam(BaseParam):
@@ -69,6 +68,16 @@ class CallbackParam(BaseParam):
                 raise ValueError("early stopping rounds should be larger than 0 when it's integer")
             if self.validation_freqs is None:
                 raise ValueError("validation freqs must be set when early stopping is enabled")
+
+        if self.validation_freqs is not None:
+            if type(self.validation_freqs).__name__ not in ["int", "list", "tuple", "set"]:
+                raise ValueError(
+                    "validation strategy param's validate_freqs's type not supported ,"
+                    " should be int or list or tuple or set"
+                )
+            if type(self.validation_freqs).__name__ == "int" and \
+                    self.validation_freqs <= 0:
+                raise ValueError("validation strategy param's validate_freqs should greater than 0")
 
         if self.metrics is not None and not isinstance(self.metrics, list):
             raise ValueError("metrics should be a list")

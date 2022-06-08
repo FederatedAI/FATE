@@ -46,6 +46,7 @@ class TwistedEdwardsCurveArithmetic(CyclicGroupArithmetic):
         Bernstein, Daniel J., et al. "High-speed high-security signatures." 2012,
         and https://tools.ietf.org/id/draft-struik-lwig-curve-representations-00.html#dom-parms for more details
     """
+
     def __init__(self,
                  galois_field_arithmetic=IntegersModuloPrimeArithmetic(2 ** 255 - 19),
                  a=IntegersModuloPrimeElement(2 ** 255 - 20),
@@ -94,7 +95,7 @@ class TwistedEdwardsCurveArithmetic(CyclicGroupArithmetic):
         :param b: TwistedEdwardsCurveElement
         :return:
         """
-        if type(a) != TwistedEdwardsCurveElement or type(b) != TwistedEdwardsCurveElement:
+        if not isinstance(a, TwistedEdwardsCurveElement) or not isinstance(b, TwistedEdwardsCurveElement):
             raise TypeError("Addition only supports two objects")
         x1 = a.x
         y1 = a.y
@@ -126,7 +127,7 @@ class TwistedEdwardsCurveArithmetic(CyclicGroupArithmetic):
         :param a: TwistedEdwardsCurveElement
         :return:
         """
-        if type(a) != TwistedEdwardsCurveElement:
+        if not isinstance(a, TwistedEdwardsCurveElement):
             raise TypeError("Negative only supports an object")
         x = a.x
         y = a.y
@@ -148,7 +149,7 @@ class TwistedEdwardsCurveArithmetic(CyclicGroupArithmetic):
         :param a: TwistedEdwardsCurveElement
         :return:
         """
-        if type(scalar) != int or type(a) != TwistedEdwardsCurveElement:
+        if not isinstance(scalar, int) or not isinstance(a, TwistedEdwardsCurveElement):
             raise TypeError("Multiplication only supports a scalar with an object")
         if scalar == 0:
             return self.get_identity()
@@ -167,7 +168,7 @@ class TwistedEdwardsCurveArithmetic(CyclicGroupArithmetic):
         :param a: TwistedEdwardsCurveElement
         :return:
         """
-        if type(a) != TwistedEdwardsCurveElement:
+        if not isinstance(a, TwistedEdwardsCurveElement):
             raise TypeError("Double only supports an object")
         x = a.x
         y = a.y
@@ -234,7 +235,7 @@ class TwistedEdwardsCurveArithmetic(CyclicGroupArithmetic):
         x_pos, x_neg = self.FA.sqrt(self.FA.div(numerator, denominator))
 
         # if the decoded object is invalid, return -1
-        if type(x_pos) is int and x_pos == -1:
+        if isinstance(x_pos, int) and x_pos == -1:
             return -1
 
         # if the first byte of the byte_arr is less than half a byte's bit-length,

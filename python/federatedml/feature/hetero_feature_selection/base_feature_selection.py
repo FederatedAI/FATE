@@ -17,7 +17,7 @@
 #  limitations under the License.
 
 import functools
-
+import random
 from google.protobuf import json_format
 
 from federatedml.feature.feature_selection import filter_factory
@@ -224,7 +224,7 @@ class BaseHeteroFeatureSelection(ModelBase):
 
         # LOGGER.debug("When transfering, all left_col_names: {}".format(
         #    self.completed_selection_result.all_left_col_names
-        #))
+        # ))
         new_data = self.set_schema(new_data, self.completed_selection_result.all_left_col_names)
 
         # one_data = new_data.first()[1]
@@ -305,31 +305,52 @@ class BaseHeteroFeatureSelection(ModelBase):
 
         original_col_nums = len(self.curt_select_properties.last_left_col_names)
 
+        empty_cols = False
         if len(self.curt_select_properties.select_col_indexes) == 0:
-            LOGGER.warning("None of columns has been set to select")
+            LOGGER.warning("None of columns has been set to select, "
+                           "will randomly select one column to participate in fitting filter(s). "
+                           "All columns will be kept, "
+                           "but be aware that this may lead to unexpected behavior.")
+            header = data_instances.schema.get("header")
+            select_idx = random.choice(range(len(header)))
+            self.curt_select_properties.select_col_indexes = [select_idx]
+            self.curt_select_properties.select_col_names = [header[select_idx]]
+            empty_cols = True
+        suffix = self.filter_methods
+        if self.role == consts.HOST:
+            self.transfer_variable.host_empty_cols.remote(empty_cols, role=consts.GUEST, idx=0, suffix=suffix)
         else:
-            for filter_idx, method in enumerate(self.filter_methods):
-                if method in [consts.STATISTIC_FILTER, consts.IV_FILTER, consts.PSI_FILTER,
-                              consts.HETERO_SBT_FILTER, consts.HOMO_SBT_FILTER, consts.HETERO_FAST_SBT_FILTER,
-                              consts.VIF_FILTER]:
-                    if method == consts.STATISTIC_FILTER:
-                        metrics = self.model_param.statistic_param.metrics
-                    elif method == consts.IV_FILTER:
-                        metrics = self.model_param.iv_param.metrics
-                    elif method == consts.PSI_FILTER:
-                        metrics = self.model_param.psi_param.metrics
-                    elif method in [consts.HETERO_SBT_FILTER, consts.HOMO_SBT_FILTER, consts.HETERO_FAST_SBT_FILTER]:
-                        metrics = self.model_param.sbt_param.metrics
-                    elif method == consts.VIF_FILTER:
-                        metrics = self.model_param.vif_param.metrics
-                    else:
-                        raise ValueError(f"method: {method} is not supported")
-                    for idx, _ in enumerate(metrics):
-                        self._filter(data_instances, method,
-                                     suffix=(str(filter_idx), str(idx)), idx=idx)
-                else:
-                    self._filter(data_instances, method, suffix=str(filter_idx))
+            host_empty_cols_list = self.transfer_variable.host_empty_cols.get(idx=-1, suffix=suffix)
+            host_list = self.component_properties.host_party_idlist
+            for idx, res in enumerate(host_empty_cols_list):
+                if res:
+                    LOGGER.warning(f"Host {host_list[idx]}'s select columns are empty;"
+                                   f"host {host_list[idx]} will randomly select one "
+                                   f"column to participate in fitting filter(s). "
+                                   f"All columns from this host will be kept, "
+                                   f"but be aware that this may lead to unexpected behavior.")
 
+        for filter_idx, method in enumerate(self.filter_methods):
+            if method in [consts.STATISTIC_FILTER, consts.IV_FILTER, consts.PSI_FILTER,
+                          consts.HETERO_SBT_FILTER, consts.HOMO_SBT_FILTER, consts.HETERO_FAST_SBT_FILTER,
+                          consts.VIF_FILTER]:
+                if method == consts.STATISTIC_FILTER:
+                    metrics = self.model_param.statistic_param.metrics
+                elif method == consts.IV_FILTER:
+                    metrics = self.model_param.iv_param.metrics
+                elif method == consts.PSI_FILTER:
+                    metrics = self.model_param.psi_param.metrics
+                elif method in [consts.HETERO_SBT_FILTER, consts.HOMO_SBT_FILTER, consts.HETERO_FAST_SBT_FILTER]:
+                    metrics = self.model_param.sbt_param.metrics
+                elif method == consts.VIF_FILTER:
+                    metrics = self.model_param.vif_param.metrics
+                else:
+                    raise ValueError(f"method: {method} is not supported")
+                for idx, _ in enumerate(metrics):
+                    self._filter(data_instances, method,
+                                 suffix=(str(filter_idx), str(idx)), idx=idx)
+            else:
+                self._filter(data_instances, method, suffix=str(filter_idx))
         last_col_nums = self.curt_select_properties.last_left_col_names
 
         self.add_summary("all", {

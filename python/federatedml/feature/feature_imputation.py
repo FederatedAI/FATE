@@ -58,10 +58,10 @@ class FeatureImputation(ModelBase):
         meta_obj = list(model_dict.get('model').values())[0].get(self.model_meta_name)
         self.header = param_obj.header
         self.missing_fill, self.missing_fill_method, \
-        self.missing_impute, self.default_value, self.skip_cols = load_feature_imputer_model(self.header,
-                                                                                             "Imputer",
-                                                                                             meta_obj.imputer_meta,
-                                                                                             param_obj.imputer_param)
+            self.missing_impute, self.default_value, self.skip_cols = load_feature_imputer_model(self.header,
+                                                                                                 "Imputer",
+                                                                                                 meta_obj.imputer_meta,
+                                                                                                 param_obj.imputer_param)
 
     def save_model(self):
         meta_obj, param_obj = save_feature_imputer_model(missing_fill=True,
@@ -71,7 +71,6 @@ class FeatureImputation(ModelBase):
                                                          missing_replace_rate=self.missing_impute_rate,
                                                          header=self.header,
                                                          skip_cols=self.skip_cols)
-
 
         return meta_obj, param_obj
 
@@ -192,7 +191,6 @@ def load_feature_imputer_model(header=None,
     missing_fill_value = model_param.missing_replace_value
     missing_fill_value_type = model_param.missing_replace_value_type
     skip_cols = list(model_param.skip_cols)
-
 
     if missing_fill:
         if not missing_replace_method:

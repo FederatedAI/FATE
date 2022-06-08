@@ -86,14 +86,13 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
         if self.model_param.encrypt_param.method == consts.PAILLIER:
             paillier_encryptor = PaillierEncrypt()
             paillier_encryptor.generate_key(self.model_param.encrypt_param.key_length)
-            cipher = EncryptModeCalculator(encrypter=paillier_encryptor)
         else:
             raise NotImplementedError("encrypt method not supported yet")
         self._packer = GuestIntegerPacker(pack_num=len(self.labels), pack_num_range=label_counts,
-                                          encrypt_mode_calculator=cipher)
+                                          encrypter=paillier_encryptor)
 
         self.federated_iv(data_instances=data_instances, label_table=label_table,
-                          cipher=cipher, result_counts=label_counts_dict, label_elements=self.labels)
+                          result_counts=label_counts_dict, label_elements=self.labels)
 
         total_summary = self.bin_result.summary()
         for host_res in self.host_results:
@@ -105,7 +104,7 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
         self.set_summary(total_summary)
         return self.data_output
 
-    def federated_iv(self, data_instances, label_table, cipher, result_counts, label_elements):
+    def federated_iv(self, data_instances, label_table, result_counts, label_elements):
 
         converted_label_table = label_table.mapValues(lambda x: [int(i) for i in x])
         encrypted_label_table = self._packer.pack_and_encrypt(converted_label_table)

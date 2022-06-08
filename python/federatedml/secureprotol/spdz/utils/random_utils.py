@@ -86,4 +86,3 @@ def urand_tensor(q_field, tensor, use_mix=False):
             view[i] = random.SystemRandom().randint(1, q_field)
         return arr
     raise NotImplementedError(f"type={type(tensor)}")
-

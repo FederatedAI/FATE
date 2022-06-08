@@ -88,7 +88,7 @@ def main(config="../../config.yaml", param="./vehicle_sshe_lr_config.yaml", name
         "max_iter": param["max_iter"],
         "alpha": param["alpha"],
         "learning_rate": param["learning_rate"],
-        "optimizer": param["optimizer"], # use sgd
+        "optimizer": param["optimizer"],  # use sgd
         "batch_size": param["batch_size"],
         "early_stop": "diff",
         "init_param": {

@@ -26,12 +26,29 @@ template = """\
 # base dir for data upload conf eg, data_base_dir={FATE}
 # examples/data/breast_hetero_guest.csv -> $data_base_dir/examples/data/breast_hetero_guest.csv
 data_base_dir: path(FATE)
-# fate_test job Dedicated directory, File storage location,cache_directory={FATE}/examples/fate_test/cache/
+
+# directory dedicated to fate_test job file storage, default cache location={FATE}/examples/cache/
 cache_directory: examples/cache/
+# directory stores performance benchmark suites, default location={FATE}/examples/benchmark_performance
 performance_template_directory: examples/benchmark_performance/
+# directory stores flow test config, default location={FATE}/examples/flow_test_template/hetero_lr/flow_test_config.yaml
 flow_test_config_directory: examples/flow_test_template/hetero_lr/flow_test_config.yaml
+
+# directory stores testsuite file with min_test data sets to upload,
+# default location={FATE}/examples/data/upload_config/min_test_data_testsuite.json
+min_test_data_config: examples/data/upload_config/min_test_data_testsuite.json
+# directory stores testsuite file with all example data sets to upload,
+# default location={FATE}/examples/data/upload_config/all_examples_data_testsuite.json
+all_examples_data_config: examples/data/upload_config/all_examples_data_testsuite.json
+
+# directory where FATE code locates, default installation location={FATE}/fate
+# python/federatedml -> $fate_base/python/federatedml
 fate_base: path(FATE)/fate
+
+# whether to delete data in suites after all jobs done
 clean_data: true
+
+# participating parties' id and correponding flow service ip & port information
 parties:
   guest: [9999]
   host: [10000, 9999]
@@ -41,7 +58,7 @@ services:
       - {address: 127.0.0.1:9380, parties: [9999, 10000]}
     serving_setting:
       address: 127.0.0.1:8059
-      
+
     ssh_tunnel: # optional
       enable: false
       ssh_address: <remote ip>:<remote port>
@@ -80,6 +97,9 @@ data_switch = None
 use_local_data = 1
 data_alter = dict()
 deps_alter = dict()
+jobs_num = 0
+jobs_progress = 0
+non_success_jobs = []
 
 
 def create_config(path: Path, override=False):
@@ -148,6 +168,8 @@ class Config(object):
         self.cache_directory = os.path.join(config["data_base_dir"], config["cache_directory"])
         self.perf_template_dir = os.path.join(config["data_base_dir"], config["performance_template_directory"])
         self.flow_test_config_dir = os.path.join(config["data_base_dir"], config["flow_test_config_directory"])
+        self.min_test_data_config = os.path.join(config["data_base_dir"], config["min_test_data_config"])
+        self.all_examples_data_config = os.path.join(config["data_base_dir"], config["all_examples_data_config"])
         self.fate_base = config["fate_base"]
         self.clean_data = config.get("clean_data", True)
         self.parties = Parties.from_dict(config["parties"])

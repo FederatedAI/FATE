@@ -36,8 +36,15 @@ class CSession(CSessionABC):
     def load(self, address: AddressABC, partitions, schema, **kwargs):
         from fate_arch.common.address import HDFSAddress
         if isinstance(address, HDFSAddress):
-            table = from_hdfs(paths=f"{address.name_node}/{address.path}", partitions=partitions,
-                              in_serialized=kwargs.get("in_serialized", True), id_delimiter=kwargs.get("id_delimiter", ','))
+            table = from_hdfs(
+                paths=f"{address.name_node}/{address.path}",
+                partitions=partitions,
+                in_serialized=kwargs.get(
+                    "in_serialized",
+                    True),
+                id_delimiter=kwargs.get(
+                    "id_delimiter",
+                    ','))
             table.schema = schema
             return table
 
@@ -59,8 +66,10 @@ class CSession(CSessionABC):
             return table
 
         if isinstance(address, LocalFSAddress):
-            table = from_localfs(paths=address.path, partitions=partitions,
-                              in_serialized=kwargs.get("in_serialized", True), id_delimiter=kwargs.get("id_delimiter", ','))
+            table = from_localfs(
+                paths=address.path, partitions=partitions, in_serialized=kwargs.get(
+                    "in_serialized", True), id_delimiter=kwargs.get(
+                    "id_delimiter", ','))
             table.schema = schema
             return table
 

@@ -51,7 +51,7 @@ class TestModel(Base):
                 if response.json().get('retcode'):
                     self.error_log('job dsl generate: {}'.format(response.json().get('retmsg')) + '\n')
                 if response.json().get('data')['components']['dataio_0']['input']['model'][
-                    0] == 'pipeline.dataio_0.hetero_lr':
+                        0] == 'pipeline.dataio_0.hetero_lr':
                     return response.json().get('retcode')
         except Exception:
             return
@@ -476,8 +476,18 @@ class TestModel(Base):
             except Exception:
                 return
 
-    def model_api(self, command, output_path=None, remove_path=None, model_path=None, homo_deploy_path=None,
-                  homo_deploy_kube_config_path=None, arbiter_party_id=None, tag_name=None, model_load_conf=None, servings=None):
+    def model_api(
+            self,
+            command,
+            output_path=None,
+            remove_path=None,
+            model_path=None,
+            homo_deploy_path=None,
+            homo_deploy_kube_config_path=None,
+            arbiter_party_id=None,
+            tag_name=None,
+            model_load_conf=None,
+            servings=None):
         if model_load_conf is not None:
             model_load_conf["job_parameters"].update({"model_id": self.model_id,
                                                       "model_version": self.model_version})
@@ -771,7 +781,7 @@ def run_test_api(config_json, namespace):
     upload_file_path = config_json['upload_file_path']
     model_file_path = config_json['model_file_path']
     remove_path = str(config_json['data_base_dir']).split("python")[
-                      0] + '/model_local_cache/guest#{}#arbiter-{}#guest-{}#host-{}#model/'.format(
+        0] + '/model_local_cache/guest#{}#arbiter-{}#guest-{}#host-{}#model/'.format(
         guest_party_id[0], arbiter_party_id[0], guest_party_id[0], host_party_id[0])
 
     serving_connect_bool = serving_connect(config_json['serving_setting'])
@@ -893,4 +903,3 @@ def run_test_api(config_json, namespace):
     queue.add_row(['clean/queue', judging_state(test_api.job_api('clean/queue'))])
     print(queue.get_string(title="queue job"))
     print('Please check the error content: {}'.format(test_api.error_log(None)))
-

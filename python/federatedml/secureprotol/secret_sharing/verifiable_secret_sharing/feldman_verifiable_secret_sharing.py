@@ -13,7 +13,7 @@ class FeldmanVerifiableSecretSharing(object):
         self.commitments = []
 
     def set_share_amount(self, host_count):
-        self.share_amount = host_count+1
+        self.share_amount = host_count + 1
 
     def encrypt(self, secret):
         coefficient = [self.encode(secret)]
@@ -22,7 +22,7 @@ class FeldmanVerifiableSecretSharing(object):
             coefficient.append(random_coefficient)
 
         f_x = []
-        for x in range(1, self.share_amount+1):
+        for x in range(1, self.share_amount + 1):
             y = 0
             for c in reversed(coefficient):
                 y *= x % self.q
@@ -79,7 +79,7 @@ class FeldmanVerifiableSecretSharing(object):
         neg_nums = (s - self.q) * gate
         pos_nums = s * (1 - gate)
         integer, fraction = divmod((neg_nums + pos_nums), (10 ** self.Q_n))
-        result = integer if fraction == 0 else integer + fraction/(10**self.Q_n)
+        result = integer if fraction == 0 else integer + fraction / (10**self.Q_n)
         return result
 
     @staticmethod

@@ -76,6 +76,7 @@ class CrossValidationParam(BaseParam):
         self.check_valid_value(self.role, model_param_descr, valid_values=[consts.HOST, consts.GUEST, consts.ARBITER])
         self.check_boolean(self.shuffle, model_param_descr)
         self.check_boolean(self.output_fold_history, model_param_descr)
-        self.history_value_type = self.check_and_change_lower(self.history_value_type, ["instance", "score"], model_param_descr)
+        self.history_value_type = self.check_and_change_lower(
+            self.history_value_type, ["instance", "score"], model_param_descr)
         if self.random_seed is not None:
             self.check_positive_integer(self.random_seed, model_param_descr)

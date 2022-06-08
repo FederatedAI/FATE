@@ -43,7 +43,6 @@ def main(config="../../config.yaml", param="./xgb_config_binary.yaml", namespace
     guest = parties.guest[0]
     host = parties.host[0]
 
-
     # data sets
     guest_train_data = {"name": param['data_guest_train'], "namespace": f"experiment{namespace}"}
     host_train_data = {"name": param['data_host_train'], "namespace": f"experiment{namespace}"}

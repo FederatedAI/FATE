@@ -20,4 +20,4 @@ from pipeline.component.intersection import Intersection
 
 a = Intersection(name="intersection_0")
 
-print (a.output.data)
+print(a.output.data)

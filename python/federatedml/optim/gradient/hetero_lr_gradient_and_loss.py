@@ -88,7 +88,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
             return sum1 + sum2
 
         ywx = host_wx_y.applyPartitions(_sum_ywx).reduce(reduce_add) + \
-              self_wx_y.applyPartitions(_sum_ywx).reduce(reduce_add)
+            self_wx_y.applyPartitions(_sum_ywx).reduce(reduce_add)
         ywx = ywx * 4 + 2 * n
 
         # quarter_wx = self.host_forwards[0].join(self.half_d, lambda x, y: x + y)
@@ -108,7 +108,12 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         if batch_masked:
             wx_squares_sum = []
             for square_table in wx_squares:
-                square_sum = data_instances.join(square_table, lambda inst, enc_h_squares: enc_h_squares).reduce(lambda x, y: x + y)
+                square_sum = data_instances.join(
+                    square_table,
+                    lambda inst,
+                    enc_h_squares: enc_h_squares).reduce(
+                    lambda x,
+                    y: x + y)
                 wx_squares_sum.append(square_sum)
 
             wx_squares = wx_squares_sum
@@ -126,7 +131,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
             wx_square = wx_squares[0]
             wxg_wxh = half_wx.join(host_forward, lambda wxg, wxh: wxg * wxh).reduce(reduce_add)
             loss = np.log(2) - 0.5 * (1 / n) * ywx + 0.125 * (1 / n) * \
-                   (self_wx_square + wx_square + 8 * wxg_wxh)
+                (self_wx_square + wx_square + 8 * wxg_wxh)
             if loss_norm is not None:
                 loss += loss_norm
                 loss += host_loss_regular[0]

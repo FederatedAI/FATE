@@ -20,5 +20,6 @@ class RandomOracle(object):
     """
     Base random oracle class
     """
+
     def __init__(self):
         pass

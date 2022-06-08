@@ -69,7 +69,9 @@ class LabelTransformer(ModelBase):
             self.encoder_key_type = {str(k): type(k).__name__ for k in self.label_encoder.keys()}
         self.encoder_value_type = {str(k): type(v).__name__ for k, v in self.label_encoder.items()}
 
-        self.label_encoder = {load_value_to_type(k, self.encoder_key_type[str(k)]): v for k, v in self.label_encoder.items()}
+        self.label_encoder = {load_value_to_type(k,
+                                                 self.encoder_key_type[str(k)]): v for k,
+                              v in self.label_encoder.items()}
 
     def _get_meta(self):
         meta = label_transform_meta_pb2.LabelTransformMeta(
@@ -140,7 +142,8 @@ class LabelTransformer(ModelBase):
         transform_predict_inst = copy.deepcopy(predict_inst)
         true_label, predict_label, predict_score, predict_detail, result_type = transform_predict_inst.features
         # true_label, predict_label = label_encoder[true_label], label_encoder[predict_label]
-        true_label_replace_val, predict_label_replace_val = label_encoder.get(true_label), label_encoder.get(predict_label)
+        true_label_replace_val, predict_label_replace_val = label_encoder.get(
+            true_label), label_encoder.get(predict_label)
         if true_label_replace_val is None:
             raise ValueError(f"{true_label_replace_val} not found in given label encoder")
         if predict_label_replace_val is None:
@@ -203,6 +206,8 @@ class LabelTransformer(ModelBase):
         return result_data
 
 # also used in feature imputation, to be moved to common util
+
+
 def load_value_to_type(value, value_type):
     if value is None:
         loaded_value = None

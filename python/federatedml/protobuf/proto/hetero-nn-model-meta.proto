@@ -46,4 +46,5 @@ message HeteroNNMeta {
     int32 epochs = 4;
     string early_stop = 5;
     double tol = 6;
+    string module = 7;
 }

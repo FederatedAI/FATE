@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from pipeline.param.boosting_param import HeteroSecureBoostParam, HomoSecureBoostParam, HeteroFastSecureBoostParam
+from pipeline.param.boosting_param import HeteroSecureBoostParam, HomoSecureBoostParam
 from pipeline.param.column_expand_param import ColumnExpandParam
 from pipeline.param.data_split_param import DataSplitParam
 from pipeline.param.dataio_param import DataIOParam
@@ -49,8 +49,10 @@ from pipeline.param.feature_imputation_param import FeatureImputationParam
 from pipeline.param.label_transform_param import LabelTransformParam
 from pipeline.param.sir_param import SecureInformationRetrievalParam
 from pipeline.param.cache_loader_param import CacheLoaderParam
+from pipeline.param.hetero_sshe_lr_param import HeteroSSHELRParam
+from pipeline.param.hetero_sshe_linr_param import HeteroSSHELinRParam
 
-__all__ = ["HeteroSecureBoostParam", "HomoSecureBoostParam", "HeteroFastSecureBoostParam",
+__all__ = ["HeteroSecureBoostParam", "HomoSecureBoostParam",
            "ColumnExpandParam", "DataSplitParam", "DataIOParam", "EncryptParam",
            "EvaluateParam", "FeatureBinningParam", "FeldmanVerifiableSumParam", "FTLParam",
            "KmeansParam", "HeteroNNParam", "HomoNNParam", "HomoOneHotParam", "InitParam",
@@ -59,5 +61,5 @@ __all__ = ["HeteroSecureBoostParam", "HomoSecureBoostParam", "HeteroFastSecureBo
            "SampleWeightParam", "ScaleParam", "ScorecardParam",
            "UnionParam", "ObjectiveParam", "DecisionTreeParam", "PredictParam",
            "FeatureImputationParam", "LabelTransformParam",
-           "SecureInformationRetrievalParam","CacheLoaderParam"]
-
+           "SecureInformationRetrievalParam", "CacheLoaderParam", "HeteroSSHELRParam",
+           "HeteroSSHELinRParam"]

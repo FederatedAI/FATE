@@ -35,6 +35,7 @@ class StochasticQuasiNewtonParam(BaseParam):
         Sample size of data that used to update Hess matrix
 
     """
+
     def __init__(self, update_interval_L=3, memory_M=5, sample_size=5000, random_seed=None):
         super().__init__()
         self.update_interval_L = update_interval_L
