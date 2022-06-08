@@ -16,17 +16,17 @@
 
 import uuid
 
-from federatedml.model_base import Metric, MetricMeta
 from federatedml.feature.instance import Instance
+from federatedml.model_base import Metric, MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.param.intersect_param import IntersectParam
+from federatedml.secureprotol.hash.hash_factory import Hash
+from federatedml.statistic import data_overview
 from federatedml.statistic.intersect import RawIntersectionHost, RawIntersectionGuest, RsaIntersectionHost, \
     RsaIntersectionGuest, DhIntersectionGuest, DhIntersectionHost, EcdhIntersectionHost, EcdhIntersectionGuest
 from federatedml.statistic.intersect.match_id_process import MatchIDIntersect
-from federatedml.statistic import data_overview
 from federatedml.transfer_variable.transfer_class.intersection_func_transfer_variable import \
     IntersectionFuncTransferVariable
-from federatedml.secureprotol.hash.hash_factory import Hash
 from federatedml.util import consts, LOGGER
 
 
@@ -512,7 +512,7 @@ class IntersectGuest(IntersectModelBase):
         filtered_data_list = [
             data_instances.filter(
                 lambda k,
-                v: filter.check(
+                       v: filter.check(
                     hash_operator.compute(
                         k,
                         suffix_salt=self.intersect_preprocess_params.preprocess_salt))) for filter in filter_list]

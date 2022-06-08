@@ -29,8 +29,8 @@ class EcdhIntersectionGuest(EcdhIntersect):
     def _exchange_id(self, id):
         id_only = id.mapValues(lambda v: None)
         self.transfer_variable.id_ciphertext_exchange_g2h.remote(id_only,
-                                                                      role=consts.HOST,
-                                                                      idx=0)
+                                                                 role=consts.HOST,
+                                                                 idx=0)
         LOGGER.info(f"sent id 1st ciphertext to host")
         id_remote = self.transfer_variable.id_ciphertext_exchange_h2g.get(idx=-1)
 
@@ -74,7 +74,7 @@ class EcdhIntersectionGuest(EcdhIntersect):
         # find intersection per host
         id_intersect_cipher_cipher = self.extract_intersect_ids(self.id_remote_second,
                                                                 self.id_local_second,
-                                                                keep_both=keep_key) # (EEi, [Eh, Eg])
+                                                                keep_both=keep_key)  # (EEi, [Eh, Eg])
         LOGGER.info("encrypted intersection ids found")
 
         return id_intersect_cipher_cipher
@@ -103,7 +103,7 @@ class EcdhIntersectionGuest(EcdhIntersect):
         return intersect_key
 
     def load_intersect_key(self, cache_meta):
-        host_party =  self.host_party_id_list[0]
+        host_party = self.host_party_id_list[0]
         intersect_key = cache_meta[str(host_party)]["intersect_key"]
         curve_key = intersect_key["curve_key"].encode("latin1")
         self.init_curve(curve_key)
