@@ -65,6 +65,14 @@ Here is an illustration for DH intersection with multiple hosts.
 Intersection)](../images/multi_host_dh_intersection.png)
 
 
+## ECDH Intersection
+
+This mode implements secure intersection 
+based on [elliptic curve Diffie-Hellman scheme](https://en.wikipedia.org/wiki/Elliptic-curve_Diffie–Hellman). 
+ECDH mode currently uses [Curve25519](https://en.wikipedia.org/wiki/Curve25519),  
+which offers 128 bits of security with key size of 256 bits.
+
+
 ## Intersection With Cache
 
 Intersection may be conducted as online/offline phases. Both RSA and DH

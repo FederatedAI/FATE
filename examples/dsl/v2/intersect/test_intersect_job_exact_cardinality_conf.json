@@ -15,12 +15,12 @@
     "component_parameters": {
         "common": {
             "intersect_0": {
-                "cardinality_method": "dh",
+                "cardinality_method": "ecdh",
                 "cardinality_only": true,
                 "sync_cardinality": false,
-                "dh_params": {
+                "ecdh_params": {
                     "hash_method": "sha256",
-                    "key_length": 1024
+                    "curve": "curve25519"
                 }
             }
         },

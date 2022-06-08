@@ -20,7 +20,7 @@ from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataTransform
 from pipeline.component import Intersection
 from pipeline.component import Reader
-from pipeline.interface import Data
+from pipeline.interface import Data, Cache
 from pipeline.utils.tools import load_job_config
 
 
@@ -50,20 +50,29 @@ def main(config="../../config.yaml", namespace=""):
         role='host', party_id=host).component_param(
         with_label=False, output_format="dense")
 
-    param = {
-        "cardinality_method": "ecdh",
-        "cardinality_only": True,
-        "sync_cardinality": True,
+    param_0 = {
+        "intersect_method": "ecdh",
         "ecdh_params": {
             "hash_method": "sha256",
             "curve": "curve25519"
-        }
+        },
+        "run_cache": True
     }
-    intersect_0 = Intersection(name="intersect_0", **param)
+    param_1 = {
+        "intersect_method": "ecdh",
+        "sync_intersect_ids": False,
+        "only_output_key": True
+    }
+    intersect_0 = Intersection(name="intersect_0", **param_0)
+    intersect_1 = Intersection(name="intersect_1", **param_1)
 
     pipeline.add_component(reader_0)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(intersect_0, data=Data(data=data_transform_0.output.data))
+    pipeline.add_component(
+        intersect_1, data=Data(
+            data=data_transform_0.output.data), cache=Cache(
+            intersect_0.output.cache))
 
     pipeline.compile()
 

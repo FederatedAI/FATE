@@ -226,4 +226,3 @@ class DhIntersectionGuest(DhIntersect):
             LOGGER.info("Sent intersect cardinality to host.")
         else:
             LOGGER.info("Skip sync intersect cardinality with host")
-        return

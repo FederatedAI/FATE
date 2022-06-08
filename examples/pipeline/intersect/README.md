@@ -33,28 +33,36 @@ This section introduces the Pipeline scripts for different types of tasks.
     script: pipeline-intersect-multi-raw.py
 
 8. DH Intersection:
-
     script: pipeline-intersect-dh.py
 
 9. DH Multi-host Intersection:  
     script: pipeline-intersect-dh-multi.py
 
-10. RAW Intersect of 200 Union Components as Input:
+10. ECDH Intersection:
+    script: pipeline-intersect-ecdh.py
+
+11. ECDH Intersection with Preprocessing:
+    script: pipeline-intersect-ecdh-w-preprocess.py
+
+12. RAW Intersect of 200 Union Components as Input:
     script: pipeline-intersect-with-union.py
 
-11. RSA Intersect with Cache:
+13. RSA Intersect with Cache:
     script: pipeline-intersect-rsa-cache.py
  
-12. DH Intersect with Cache:
+14. DH Intersect with Cache:
     script: pipeline-intersect-dh-cache.py   
-    
-13. RSA Intersect with Cache Loader:
+
+15. ECDH Intersect with Cache:
+    script: pipeline-intersect-ecdh-cache.py   
+      
+16. RSA Intersect with Cache Loader:
     script: pipeline-intersect-rsa-cache-loader.py
     
-14. Intersect Cardinality:
+17. Intersect Cardinality:
     script: pipeline-intersect-cardinality.py
 
-15. Exact Intersect Cardinality:
+18. Exact Intersect Cardinality with ECDH:
     script": pipeline-intersect-exact-cardinality.py
 
 Users can run a pipeline job directly:

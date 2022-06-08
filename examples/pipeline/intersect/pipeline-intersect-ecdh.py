@@ -51,11 +51,12 @@ def main(config="../../config.yaml", namespace=""):
         with_label=False, output_format="dense")
 
     param = {
-        "cardinality_method": "ecdh",
-        "cardinality_only": True,
-        "sync_cardinality": True,
+        "intersect_method": "ecdh",
+        "sync_intersect_ids": True,
+        "only_output_key": True,
         "ecdh_params": {
             "hash_method": "sha256",
+            "salt": "12345",
             "curve": "curve25519"
         }
     }

@@ -21,7 +21,7 @@ from federatedml.feature.instance import Instance
 from federatedml.model_base import ModelBase
 from federatedml.param.intersect_param import IntersectParam
 from federatedml.statistic.intersect import RawIntersectionHost, RawIntersectionGuest, RsaIntersectionHost, \
-    RsaIntersectionGuest, DhIntersectionGuest, DhIntersectionHost
+    RsaIntersectionGuest, DhIntersectionGuest, DhIntersectionHost, EcdhIntersectionHost, EcdhIntersectionGuest
 from federatedml.statistic.intersect.match_id_process import MatchIDIntersect
 from federatedml.statistic import data_overview
 from federatedml.transfer_variable.transfer_class.intersection_func_transfer_variable import \
@@ -169,11 +169,6 @@ class IntersectModelBase(ModelBase):
                                      )
 
     def callback_cache_meta(self, intersect_meta):
-        """
-        self.callback_metric(f"{self.metric_name}_cache_meta",
-                             f"{self.metric_namespace}_CACHE",
-                             metric_data=[Metric("intersect_cache_meta", 0)])
-        """
         metric_name = f"{self.metric_name}_cache_meta"
         self.tracker.set_metric_meta(metric_namespace=self.metric_namespace,
                                      metric_name=metric_name,
@@ -184,6 +179,7 @@ class IntersectModelBase(ModelBase):
 
     def fit(self, data):
         if self.component_properties.caches:
+            LOGGER.info(f"Cache provided, will enter intersect online process.")
             return self.intersect_online_process(data, self.component_properties.caches)
         self.init_intersect_method()
         if data_overview.check_with_inst_id(data):
@@ -243,7 +239,6 @@ class IntersectModelBase(ModelBase):
                 self.intersect_rate = self.intersect_num / data_count
                 self.unmatched_num = data_count - self.intersect_num
                 self.unmatched_rate = 1 - self.intersect_rate
-            # self.model = self.intersection_obj.get_model()
             self.set_summary(self.get_model_summary())
             self.callback()
             return None
@@ -288,18 +283,20 @@ class IntersectModelBase(ModelBase):
         pass
 
     def load_intersect_meta(self, intersect_meta):
+        if self.model_param.intersect_method != intersect_meta.get("intersect_method"):
+            raise ValueError(f"Current intersect method must match to cache record.")
         if self.model_param.intersect_method == consts.RSA:
-            if intersect_meta["intersect_method"] != consts.RSA:
-                raise ValueError(f"Current intersect method must match to cache record.")
             self.model_param.rsa_params.hash_method = intersect_meta["hash_method"]
             self.model_param.rsa_params.final_hash_method = intersect_meta["final_hash_method"]
             self.model_param.rsa_params.salt = intersect_meta["salt"]
             self.model_param.rsa_params.random_bit = intersect_meta["random_bit"]
         elif self.model_param.intersect_method == consts.DH:
-            if intersect_meta["intersect_method"] != consts.DH:
-                raise ValueError(f"Current intersect method must match to cache record.")
             self.model_param.dh_params.hash_method = intersect_meta["hash_method"]
             self.model_param.dh_params.salt = intersect_meta["salt"]
+        elif self.model_param.intersect_method == consts.ECDH:
+            self.model_param.ecdh_params.hash_method = intersect_meta["hash_method"]
+            self.model_param.ecdh_params.salt = intersect_meta["salt"]
+            self.model_param.ecdh_params.curve = intersect_meta["curve"]
         else:
             raise ValueError(f"{self.model_param.intersect_method} does not support cache.")
 
@@ -436,6 +433,9 @@ class IntersectHost(IntersectModelBase):
         elif self.intersect_method == consts.DH:
             self.intersection_obj = DhIntersectionHost()
 
+        elif self.intersect_method == consts.ECDH:
+            self.intersection_obj = EcdhIntersectionHost()
+
         else:
             raise ValueError("intersect_method {} is not support yet".format(self.intersect_method))
 
@@ -482,6 +482,9 @@ class IntersectGuest(IntersectModelBase):
 
         elif self.intersect_method == consts.DH:
             self.intersection_obj = DhIntersectionGuest()
+
+        elif self.intersect_method == consts.ECDH:
+            self.intersection_obj = EcdhIntersectionGuest()
 
         else:
             raise ValueError("intersect_method {} is not support yet".format(self.intersect_method))

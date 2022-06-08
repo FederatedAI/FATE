@@ -27,6 +27,9 @@ from federatedml.statistic.intersect.dh_intersect.dh_intersect_base import DhInt
 from federatedml.statistic.intersect.dh_intersect.dh_intersect_guest import DhIntersectionGuest
 from federatedml.statistic.intersect.dh_intersect.dh_intersect_host import DhIntersectionHost
 
+from federatedml.statistic.intersect.ecdh_intersect.ecdh_intersect_base import EcdhIntersect
+from federatedml.statistic.intersect.ecdh_intersect.ecdh_intersect_guest import EcdhIntersectionGuest
+from federatedml.statistic.intersect.ecdh_intersect.ecdh_intersect_host import EcdhIntersectionHost
 
 __all__ = ['Intersect',
            'RawIntersect',
@@ -37,4 +40,7 @@ __all__ = ['Intersect',
            'RawIntersectionHost',
            'RawIntersectionGuest',
            'DhIntersectionGuest',
-           'DhIntersectionHost']
+           'DhIntersectionHost',
+           'EcdhIntersect',
+           'EcdhIntersectionGuest',
+           'EcdhIntersectionHost']

@@ -166,5 +166,3 @@ class DhIntersectionHost(DhIntersect):
         if self.sync_cardinality:
             self.intersect_num = self.transfer_variable.cardinality.get(idx=0)
             LOGGER.info("Got intersect cardinality from guest.")
-
-        return None
