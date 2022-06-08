@@ -218,8 +218,9 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
 
         LOGGER.info("Filter labeled instances")
         if self.role == consts.GUEST:
-            data_instances = data_instances.filter(
-                lambda k, v: v.label != self.model_param.unlabeled_digit if self.model_param.pu_mode == "two_step" else v.label != None)
+            data_instances = data_instances.filter(lambda k, v: v.label != self.model_param.pu_param.unlabeled_digit
+                                                   if self.model_param.pu_param.mode == "two_step"
+                                                   else v.label is not None)
 
         self.callback_list.on_train_begin(data_instances, validate_data)
 

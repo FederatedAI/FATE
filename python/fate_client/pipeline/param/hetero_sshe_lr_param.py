@@ -22,6 +22,7 @@ from pipeline.param.encrypt_param import EncryptParam
 from pipeline.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from pipeline.param.init_model_param import InitParam
 from pipeline.param.predict_param import PredictParam
+from federatedml.param.positive_unlabeled_param import PositiveUnlabeledParam
 from pipeline.param import consts
 
 
@@ -86,6 +87,9 @@ class HeteroSSHELRParam(LogisticParam):
         Whether reconstruct model weights every iteration. If so, Regularization is available.
         The performance will be better as well since the algorithm process is simplified.
 
+    pu_param: PositiveUnlabeledParam object, default: default PositiveUnlabeledParam object
+        positive unlabeled param
+
     """
 
     def __init__(self, penalty='L2',
@@ -98,7 +102,8 @@ class HeteroSSHELRParam(LogisticParam):
                  reveal_strategy="respectively",
                  reveal_every_iter=False,
                  callback_param=CallbackParam(),
-                 encrypted_mode_calculator_param=EncryptedModeCalculatorParam()
+                 encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
+                 pu_param=PositiveUnlabeledParam()
                  ):
         super(HeteroSSHELRParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                 batch_size=batch_size,
@@ -112,6 +117,7 @@ class HeteroSSHELRParam(LogisticParam):
         self.reveal_strategy = reveal_strategy
         self.reveal_every_iter = reveal_every_iter
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
+        self.pu_param = copy.deepcopy(pu_param)
 
     def check(self):
         descr = "logistic_param's"
@@ -169,4 +175,7 @@ class HeteroSSHELRParam(LogisticParam):
         if self.reveal_strategy == "encrypted_reveal_in_host" and self.reveal_every_iter:
             raise PermissionError("reveal strategy: encrypted_reveal_in_host mode is not allow to reveal every iter.")
         self.encrypted_mode_calculator_param.check()
+
+        self.pu_param.check()
+
         return True

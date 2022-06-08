@@ -55,7 +55,7 @@ class OneVsRest(object):
 
         return classes[max_prob_index], max_prob, instance_with_class
 
-    def get_data_classes(self, data_instances, pu_mode="standard", unlabeled_digit=None):
+    def get_data_classes(self, data_instances):
         """
         get all classes in data_instances
         """
@@ -63,10 +63,6 @@ class OneVsRest(object):
         if self.has_label:
             num_class, class_list = ClassifyLabelChecker.validate_label(data_instances)
             class_set = set(class_list)
-
-        if class_set and pu_mode == "two_step" and unlabeled_digit:
-            class_set.remove(unlabeled_digit)
-
         self._synchronize_classes_list(class_set)
         return self.classes
 

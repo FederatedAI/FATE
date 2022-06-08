@@ -22,19 +22,22 @@
             },
             "hetero_lr_0": {
                 "max_iter": 2,
-                "pu_mode": "two_step",
-                "unlabeled_digit": -1
+                "pu_param": {
+                    "mode": "two_step",
+                    "unlabeled_digit": -1
+                }
             },
             "positive_unlabeled_0": {
                 "threshold_percent": 0.1,
-                "lr_param": {
-                    "pu_mode": "two_step"
-                }
+                "mode": "two_step",
+                "unlabeled_digit": -1
             },
             "hetero_lr_1": {
                 "max_iter": 1,
-                "pu_mode": "two_step",
-                "unlabeled_digit": -1
+                "pu_param": {
+                    "mode": "two_step",
+                    "unlabeled_digit": -1
+                }
             }
         },
         "role": {

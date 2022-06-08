@@ -139,8 +139,8 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
         schema = data_inst.schema
 
         LOGGER.info("Filter labeled instances")
-        data_inst = data_inst.filter(
-            lambda k, v: v.label != self.model_param.unlabeled_digit if self.model_param.pu_mode == "two_step" else v.label != None)
+        data_inst = data_inst.filter(lambda k, v: v.label != self.model_param.pu_param.unlabeled_digit
+                                     if self.model_param.pu_param.mode == "two_step" else v.label is not None)
         data_inst.schema = schema
 
         self.start_round = 0

@@ -24,6 +24,7 @@ from pipeline.component.local_baseline import LocalBaseline
 from pipeline.component.one_hot_encoder import OneHotEncoder
 from pipeline.component.psi import PSI
 from pipeline.component.reader import Reader
+from pipeline.component.positive_unlabeled import PositiveUnlabeled
 from pipeline.component.scorecard import Scorecard
 from pipeline.component.sampler import FederatedSample
 from pipeline.component.scale import FeatureScale
@@ -45,7 +46,7 @@ __all__ = ["DataStatistics", "DataIO", "Evaluation", "HeteroDataSplit",
            "HeteroFTL", "HeteroLinR", "HeteroLR", "HeteroNN",
            "HeteroPearson", "HeteroPoisson", "HeteroSecureBoost", "HomoDataSplit",
            "HomoLR", "HomoNN", "HomoSecureBoost", "HomoFeatureBinning", "Intersection",
-           "LocalBaseline", "OneHotEncoder", "PSI", "Reader", "Scorecard",
+           "LocalBaseline", "OneHotEncoder", "PSI", "Reader", "PositiveUnlabeled", "Scorecard",
            "FederatedSample", "FeatureScale", "Union", "ColumnExpand", "FeldmanVerifiableSum",
            "SampleWeight", "DataTransform", "FeatureImputation",
            "LabelTransform", "SecureInformationRetrieval", "CacheLoader", "ModelLoader",

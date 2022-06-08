@@ -23,6 +23,7 @@ from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalc
 from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.predict_param import PredictParam
 from federatedml.param.callback_param import CallbackParam
+from federatedml.param.positive_unlabeled_param import PositiveUnlabeledParam
 from federatedml.util import consts, LOGGER
 import copy
 import collections
@@ -363,11 +364,9 @@ class HeteroBoostingParam(BoostingParam):
         the calculation mode use in secureboost,
         default: EncryptedModeCalculatorParam()
 
-    pu_mode: {'standard', 'two_step'}
-        Switch positive unlabeled learning mode.
+    pu_param: PositiveUnlabeledParam object, default: default PositiveUnlabeledParam object
+        positive unlabeled param
 
-    unlabeled_digit: None or integer, default: None
-        Whether it has unlabeled data. If true, declaring the unlabeled digit.
     """
 
     def __init__(self, task_type=consts.CLASSIFICATION,
@@ -379,7 +378,7 @@ class HeteroBoostingParam(BoostingParam):
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, early_stopping_rounds=None, metrics=None, use_first_metric_only=False,
                  random_seed=100, binning_error=consts.DEFAULT_RELATIVE_ERROR,
-                 pu_mode="standard", unlabeled_digit=None):
+                 pu_param=PositiveUnlabeledParam()):
 
         super(HeteroBoostingParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                   subsample_feature_rate, n_iter_no_change, tol, bin_num,
@@ -391,8 +390,7 @@ class HeteroBoostingParam(BoostingParam):
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
         self.early_stopping_rounds = early_stopping_rounds
         self.use_first_metric_only = use_first_metric_only
-        self.pu_mode = pu_mode
-        self.unlabeled_digit = unlabeled_digit
+        self.pu_param = copy.deepcopy(pu_param)
 
     def check(self):
 
@@ -411,11 +409,7 @@ class HeteroBoostingParam(BoostingParam):
         if not isinstance(self.use_first_metric_only, bool):
             raise ValueError("use_first_metric_only should be a boolean")
 
-        if self.pu_mode not in ['standard', 'two_step']:
-            raise ValueError("pu_mode not supported, pu_mode should be 'standard' or 'two_step'")
-
-        if self.unlabeled_digit is not None and type(self.unlabeled_digit).__name__ != "int":
-            raise ValueError("unlabeled_digit should be None or an integer")
+        self.pu_param.check()
 
         return True
 

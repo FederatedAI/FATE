@@ -16,8 +16,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
-from federatedml.param.base_param import BaseParam
+from pipeline.param.base_param import BaseParam
 
 
 class PositiveUnlabeledParam(BaseParam):

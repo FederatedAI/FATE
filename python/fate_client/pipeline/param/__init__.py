@@ -35,6 +35,7 @@ from pipeline.param.local_baseline_param import LocalBaselineParam
 from pipeline.param.logistic_regression_param import HeteroLogisticParam, HomoLogisticParam
 from pipeline.param.pearson_param import PearsonParam
 from pipeline.param.poisson_regression_param import PoissonParam
+from pipeline.param.positive_unlabeled_param import PositiveUnlabeledParam
 from pipeline.param.psi_param import PSIParam
 from pipeline.param.sample_param import SampleParam
 from pipeline.param.sample_weight_param import SampleWeightParam
@@ -57,8 +58,8 @@ __all__ = ["HeteroSecureBoostParam", "HomoSecureBoostParam",
            "EvaluateParam", "FeatureBinningParam", "FeldmanVerifiableSumParam", "FTLParam",
            "KmeansParam", "HeteroNNParam", "HomoNNParam", "HomoOneHotParam", "InitParam",
            "IntersectParam", "LinearParam", "LocalBaselineParam", "HeteroLogisticParam",
-           "HomoLogisticParam", "PearsonParam", "PoissonParam", "PSIParam", "SampleParam",
-           "SampleWeightParam", "ScaleParam", "ScorecardParam",
+           "HomoLogisticParam", "PearsonParam", "PoissonParam", "PositiveUnlabeledParam", "PSIParam",
+           "SampleParam", "SampleWeightParam", "ScaleParam", "ScorecardParam",
            "UnionParam", "ObjectiveParam", "DecisionTreeParam", "PredictParam",
            "FeatureImputationParam", "LabelTransformParam",
            "SecureInformationRetrievalParam", "CacheLoaderParam", "HeteroSSHELRParam",

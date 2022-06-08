@@ -27,6 +27,7 @@ from federatedml.param.init_model_param import InitParam
 from federatedml.param.predict_param import PredictParam
 from federatedml.param.sqn_param import StochasticQuasiNewtonParam
 from federatedml.param.stepwise_param import StepwiseParam
+from federatedml.param.positive_unlabeled_param import PositiveUnlabeledParam
 from federatedml.util import consts
 
 
@@ -259,11 +260,8 @@ class HeteroLogisticParam(LogisticParam):
     """
     Parameters
     ----------
-    pu_mode: {'standard', 'two_step'}
-        Switch positive unlabeled learning mode.
-
-    unlabeled_digit: None or integer, default: None
-        Whether it has unlabeled data. If true, declaring the unlabeled digit.
+    pu_param: PositiveUnlabeledParam object, default: default PositiveUnlabeledParam object
+        positive unlabeled param
 
     """
 
@@ -280,8 +278,7 @@ class HeteroLogisticParam(LogisticParam):
                  encrypt_param=EncryptParam(),
                  use_first_metric_only=False, stepwise_param=StepwiseParam(),
                  callback_param=CallbackParam(),
-                 pu_mode="standard",
-                 unlabeled_digit=None
+                 pu_param=PositiveUnlabeledParam()
                  ):
         super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                   batch_size=batch_size, shuffle=shuffle, batch_strategy=batch_strategy,
@@ -300,18 +297,12 @@ class HeteroLogisticParam(LogisticParam):
                                                   callback_param=callback_param)
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
         self.sqn_param = copy.deepcopy(sqn_param)
-        self.pu_mode = pu_mode
-        self.unlabeled_digit = unlabeled_digit
+        self.pu_param = copy.deepcopy(pu_param)
 
     def check(self):
         super().check()
         self.encrypted_mode_calculator_param.check()
         self.sqn_param.check()
-
-        if self.pu_mode not in ['standard', 'two_step']:
-            raise ValueError("pu_mode not supported, pu_mode should be 'standard' or 'two_step'")
-
-        if self.unlabeled_digit is not None and type(self.unlabeled_digit).__name__ != "int":
-            raise ValueError("unlabeled_digit should be None or an integer")
+        self.pu_param.check()
 
         return True

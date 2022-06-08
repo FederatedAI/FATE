@@ -30,13 +30,15 @@
                 "tree_param": {
                     "max_depth": 3
                 },
-                "pu_mode": "standard"
+                "pu_param": {
+                    "mode": "standard",
+                    "unlabeled_digit": 0
+                }
             },
             "positive_unlabeled_0": {
                 "threshold_percent": 0.1,
-                "sbt_param": {
-                    "pu_mode": "standard"
-                }
+                "mode": "standard",
+                "unlabeled_digit": 0
             },
             "hetero_secure_boost_1": {
                 "task_type": "classification",
@@ -51,7 +53,10 @@
                 "tree_param": {
                     "max_depth": 2
                 },
-                "pu_mode": "standard"
+                "pu_param": {
+                    "mode": "standard",
+                    "unlabeled_digit": 0
+                }
             }
         },
         "role": {

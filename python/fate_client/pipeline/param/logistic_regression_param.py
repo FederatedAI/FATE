@@ -27,6 +27,7 @@ from pipeline.param.init_model_param import InitParam
 from pipeline.param.predict_param import PredictParam
 from pipeline.param.sqn_param import StochasticQuasiNewtonParam
 from pipeline.param.stepwise_param import StepwiseParam
+from federatedml.param.positive_unlabeled_param import PositiveUnlabeledParam
 from pipeline.param import consts
 
 
@@ -241,6 +242,14 @@ class HomoLogisticParam(LogisticParam):
 
 
 class HeteroLogisticParam(LogisticParam):
+    """
+    Parameters
+    ----------
+    pu_param: PositiveUnlabeledParam object, default: default PositiveUnlabeledParam object
+        positive unlabeled param
+
+    """
+
     def __init__(self, penalty='L2',
                  tol=1e-4, alpha=1.0, optimizer='rmsprop',
                  batch_size=-1, shuffle=True, batch_strategy="full", masked_rate=5,
@@ -253,7 +262,7 @@ class HeteroLogisticParam(LogisticParam):
                  metrics=['auc', 'ks'], floating_point_precision=23,
                  encrypt_param=EncryptParam(),
                  use_first_metric_only=False, stepwise_param=StepwiseParam(),
-                 callback_param=CallbackParam()
+                 callback_param=CallbackParam(), pu_param=PositiveUnlabeledParam()
                  ):
         super(
             HeteroLogisticParam,
@@ -285,9 +294,11 @@ class HeteroLogisticParam(LogisticParam):
             callback_param=callback_param)
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
         self.sqn_param = copy.deepcopy(sqn_param)
+        self.pu_param = copy.deepcopy(pu_param)
 
     def check(self):
         super().check()
         self.encrypted_mode_calculator_param.check()
         self.sqn_param.check()
+        self.pu_param.check()
         return True

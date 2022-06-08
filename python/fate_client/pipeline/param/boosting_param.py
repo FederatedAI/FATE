@@ -23,6 +23,7 @@ from pipeline.param.cross_validation_param import CrossValidationParam
 from pipeline.param.predict_param import PredictParam
 from pipeline.param import consts
 from pipeline.param.callback_param import CallbackParam
+from federatedml.param.positive_unlabeled_param import PositiveUnlabeledParam
 import copy
 import collections
 
@@ -355,6 +356,10 @@ class HeteroBoostingParam(BoostingParam):
     encrypted_mode_calculator_param: EncryptedModeCalculatorParam object
         the calculation mode use in secureboost,
         default: EncryptedModeCalculatorParam()
+
+     pu_param: PositiveUnlabeledParam object, default: default PositiveUnlabeledParam object
+        positive unlabeled param
+
     """
 
     def __init__(self, task_type=consts.CLASSIFICATION,
@@ -365,7 +370,8 @@ class HeteroBoostingParam(BoostingParam):
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, early_stopping_rounds=None, metrics=None, use_first_metric_only=False,
-                 random_seed=100, binning_error=consts.DEFAULT_RELATIVE_ERROR):
+                 random_seed=100, binning_error=consts.DEFAULT_RELATIVE_ERROR,
+                 pu_param=PositiveUnlabeledParam()):
 
         super(HeteroBoostingParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                   subsample_feature_rate, n_iter_no_change, tol, bin_num,
@@ -377,6 +383,7 @@ class HeteroBoostingParam(BoostingParam):
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
         self.early_stopping_rounds = early_stopping_rounds
         self.use_first_metric_only = use_first_metric_only
+        self.pu_param = copy.deepcopy(pu_param)
 
     def check(self):
 
@@ -394,6 +401,8 @@ class HeteroBoostingParam(BoostingParam):
 
         if not isinstance(self.use_first_metric_only, bool):
             raise ValueError("use_first_metric_only should be a boolean")
+
+        self.pu_param.check()
 
         return True
 

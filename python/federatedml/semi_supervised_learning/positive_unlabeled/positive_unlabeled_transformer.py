@@ -36,7 +36,8 @@ class PositiveUnlabeled(ModelBase):
     def _init_model(self, model_param):
         self.reverse_order = model_param.reverse_order
         self.threshold_percent = model_param.threshold_percent
-        self.pu_mode = model_param.pu_mode
+        self.mode = model_param.mode
+        self.unlabeled_digit = model_param.unlabeled_digit
 
         if self.reverse_order:
             self.replaced_value = 1
@@ -74,14 +75,14 @@ class PositiveUnlabeled(ModelBase):
 
             LOGGER.info("Replace label based on threshold index")
             replaced_label_list = []
-            if self.pu_mode == "two_step":
+            if self.mode == "two_step":
                 LOGGER.info("Execute two-step mode")
                 unlabeled_to_positive_count, unlabeled_to_negative_count = 0, 0
                 for idx, (k, v) in enumerate(label_score_list):
-                    if idx < threshold_idx and v[0] == -1:
+                    if idx < threshold_idx and v[0] == self.unlabeled_digit:
                         replaced_label_list.append((k, self.replaced_value))
                         unlabeled_to_positive_count += 1
-                    elif idx > (label_score_num - threshold_idx) and v[0] == -1:
+                    elif idx > (label_score_num - threshold_idx) and v[0] == self.unlabeled_digit:
                         replaced_label_list.append((k, 1 - self.replaced_value))
                         unlabeled_to_negative_count += 1
                     else:
@@ -99,7 +100,7 @@ class PositiveUnlabeled(ModelBase):
                 LOGGER.info("Execute standard mode")
                 converted_unlabeled_count = 0
                 for idx, (k, v) in enumerate(label_score_list):
-                    if idx < threshold_idx and v[0] == 0:
+                    if idx < threshold_idx and v[0] == self.unlabeled_digit:
                         replaced_label_list.append((k, self.replaced_value))
                         converted_unlabeled_count += 1
                     else:

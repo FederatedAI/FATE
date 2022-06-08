@@ -22,6 +22,7 @@ from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from federatedml.param.init_model_param import InitParam
 from federatedml.param.predict_param import PredictParam
+from federatedml.param.positive_unlabeled_param import PositiveUnlabeledParam
 from federatedml.util import consts
 
 
@@ -86,11 +87,8 @@ class HeteroSSHELRParam(LogisticParam):
         Whether reconstruct model weights every iteration. If so, Regularization is available.
         The performance will be better as well since the algorithm process is simplified.
 
-    pu_mode: {'standard', 'two_step'}
-        Switch positive unlabeled learning mode.
-
-    unlabeled_digit: None or integer, default: None
-        Whether it has unlabeled data. If true, declaring the unlabeled digit.
+    pu_param: PositiveUnlabeledParam object, default: default PositiveUnlabeledParam object
+        positive unlabeled param
 
     """
 
@@ -105,8 +103,7 @@ class HeteroSSHELRParam(LogisticParam):
                  reveal_every_iter=False,
                  callback_param=CallbackParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
-                 pu_mode="standard",
-                 unlabeled_digit=None
+                 pu_param=PositiveUnlabeledParam()
                  ):
         super(HeteroSSHELRParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                 batch_size=batch_size,
@@ -120,8 +117,7 @@ class HeteroSSHELRParam(LogisticParam):
         self.reveal_strategy = reveal_strategy
         self.reveal_every_iter = reveal_every_iter
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
-        self.pu_mode = pu_mode
-        self.unlabeled_digit = unlabeled_digit
+        self.pu_param = copy.deepcopy(pu_param)
 
     def check(self):
         descr = "logistic_param's"
@@ -179,10 +175,6 @@ class HeteroSSHELRParam(LogisticParam):
             raise PermissionError("reveal strategy: encrypted_reveal_in_host mode is not allow to reveal every iter.")
         self.encrypted_mode_calculator_param.check()
 
-        if self.pu_mode not in ['standard', 'two_step']:
-            raise ValueError("pu_mode not supported, pu_mode should be 'standard' or 'two_step'")
-
-        if self.unlabeled_digit is not None and type(self.unlabeled_digit).__name__ != "int":
-            raise ValueError("unlabeled_digit should be None or an integer")
+        self.pu_param.check()
 
         return True
