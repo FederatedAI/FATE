@@ -449,6 +449,67 @@ class Session(object):
         remote_status.wait_all_remote_done(timeout)
         LOGGER.info(f"remote futures: {remote_status._remote_futures}, all done")
 
+    def clean(self,
+              role,
+              party_id,
+              computing_namespace,
+              federation_namespace,
+              computing_engine,
+              federation_engine,
+              federation_session_id,
+              runtime_conf,
+              service_conf,
+              ):
+        try:
+            import copy
+            from fate_arch.common import Party
+            # clean up temporary tables
+            if computing_engine == ComputingEngine.EGGROLL:
+                session_options = {"eggroll.session.processors.per.node": 1}
+            else:
+                session_options = {}
+            try:
+                if computing_engine != ComputingEngine.LINKIS_SPARK:
+                    self.init_computing(computing_session_id=f"{computing_namespace}_clean",
+                                        options=session_options)
+                    self.computing.cleanup(namespace=computing_namespace, name="*")
+
+                    self._logger.info('clean table by namespace {} on {} {} done'.format(computing_namespace,
+                                                                                         role, party_id))
+                    # clean up the last tables of the federation
+                    self.computing.cleanup(namespace=federation_namespace, name="*")
+                    self._logger.info('clean table by namespace {} on {} {} done'.format(federation_namespace, role, party_id))
+                if federation_engine == FederationEngine.RABBITMQ and role != "local":
+                    self._logger.info('rabbitmq start clean up')
+                    parties = [Party(k, p) for k, v in runtime_conf['role'].items() for p in v]
+                    component_parameters_on_party = copy.deepcopy(runtime_conf)
+                    component_parameters_on_party["local"] = {"role": role, "party_id": party_id}
+                    self.init_federation(federation_session_id=federation_session_id,
+                                         runtime_conf=component_parameters_on_party,
+                                         service_conf=service_conf)
+                    self._federation_session.cleanup(parties)
+                    self._logger.info('rabbitmq clean up success')
+
+                # TODO optimize the clean process
+                if federation_engine == FederationEngine.PULSAR and role != "local":
+                    self._logger.info('start to clean up pulsar topics')
+                    parties = [Party(k, p) for k, v in runtime_conf['role'].items() for p in v]
+                    component_parameters_on_party = copy.deepcopy(runtime_conf)
+                    component_parameters_on_party["local"] = {"role": role, "party_id": party_id}
+                    self.init_federation(federation_session_id=federation_session_id,
+                                         runtime_conf=component_parameters_on_party,
+                                         service_conf=service_conf)
+                    self._federation_session.cleanup(parties)
+                    self._logger.info('pulsar topic clean up success')
+            except Exception as e:
+                self._logger.exception(f"cleanup error: {e}")
+            finally:
+                self.destroy_all_sessions()
+            return True
+        except Exception as e:
+            self._logger.exception(e)
+            return False
+
 
 def get_session() -> Session:
     return Session.get_global()
