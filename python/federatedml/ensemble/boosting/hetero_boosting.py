@@ -133,14 +133,19 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
         self.feat_name_check(data_inst, self.feature_name_fid_mapping)
         self.callback_warm_start_init_iter(self.start_round)
 
+    def filter_labeled_samples(self):
+        if self.model_param.pu_param.mode == "two_step":
+            return lambda k, v: v.label != self.model_param.pu_param.unlabeled_digit
+        else:
+            return lambda k, v: v.label is not None
+
     def fit(self, data_inst, validate_data=None):
 
         LOGGER.info('begin to fit a hetero boosting model, model is {}'.format(self.model_name))
         schema = data_inst.schema
 
         LOGGER.info("Filter labeled instances")
-        data_inst = data_inst.filter(lambda k, v: v.label != self.model_param.pu_param.unlabeled_digit
-                                     if self.model_param.pu_param.mode == "two_step" else v.label is not None)
+        data_inst = data_inst.filter(self.filter_labeled_samples())
         data_inst.schema = schema
 
         self.start_round = 0

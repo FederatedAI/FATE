@@ -88,3 +88,9 @@ class HeteroLRBase(BaseLogisticRegression):
         #     if validation_summary:
         #         summary["validation_metrics"] = validation_summary
         return summary
+
+    def filter_labeled_samples(self):
+        if self.model_param.pu_param.mode == "two_step":
+            return lambda k, v: v.label != self.model_param.pu_param.unlabeled_digit
+        else:
+            return lambda k, v: v.label is not None

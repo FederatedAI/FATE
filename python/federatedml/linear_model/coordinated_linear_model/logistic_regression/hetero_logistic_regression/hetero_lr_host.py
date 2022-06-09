@@ -49,12 +49,8 @@ class HeteroLRHost(HeteroLRBase):
         LOGGER.info("Enter hetero_logistic_regression host")
         # self.header = self.get_header(data_instances)
         self.prepare_fit(data_instances, validate_data)
-
-        if self.model_param.pu_param.mode == "two_step":
-            data_instances = data_instances.filter(lambda k, v: v.label != self.model_param.pu_param.unlabeled_digit)
-            classes = self.one_vs_rest_obj.get_data_classes(data_instances)
-        else:
-            classes = self.one_vs_rest_obj.get_data_classes(data_instances)
+        data_instances_filtered = data_instances.filter(self.filter_labeled_samples())
+        classes = self.one_vs_rest_obj.get_data_classes(data_instances_filtered)
 
         if len(classes) > 2:
             self.need_one_vs_rest = True

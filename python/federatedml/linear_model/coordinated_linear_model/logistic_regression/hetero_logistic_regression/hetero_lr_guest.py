@@ -69,11 +69,8 @@ class HeteroLRGuest(HeteroLRBase):
         # self.check_abnormal_values(validate_data)
         # self.header = self.get_header(data_instances)
         self.prepare_fit(data_instances, validate_data)
-        if self.model_param.pu_param.mode == "two_step":
-            data_instances = data_instances.filter(lambda k, v: v.label != self.model_param.pu_param.unlabeled_digit)
-            classes = self.one_vs_rest_obj.get_data_classes(data_instances)
-        else:
-            classes = self.one_vs_rest_obj.get_data_classes(data_instances)
+        data_instances_filtered = data_instances.filter(self.filter_labeled_samples())
+        classes = self.one_vs_rest_obj.get_data_classes(data_instances_filtered)
 
         if with_weight(data_instances):
             data_instances = scale_sample_weight(data_instances)
@@ -93,8 +90,7 @@ class HeteroLRGuest(HeteroLRBase):
         self.header = self.get_header(data_instances)
 
         LOGGER.info("Filter labeled instances")
-        data_instances = data_instances.filter(lambda k, v: v.label != self.model_param.pu_param.unlabeled_digit
-                                               if self.model_param.pu_param.mode == "two_step" else v.label is not None)
+        data_instances = data_instances.filter(self.filter_labeled_samples())
 
         self.callback_list.on_train_begin(data_instances, validate_data)
 

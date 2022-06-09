@@ -183,6 +183,12 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
                   }
         return result
 
+    def filter_labeled_samples(self):
+        if self.model_param.pu_param.mode == "two_step":
+            return lambda k, v: v.label != self.model_param.pu_param.unlabeled_digit
+        else:
+            return lambda k, v: v.label is not None
+
     def load_model(self, model_dict):
         LOGGER.debug("Start Loading model")
         result_obj = list(model_dict.get('model').values())[0].get(self.model_param_name)
@@ -218,9 +224,7 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
 
         LOGGER.info("Filter labeled instances")
         if self.role == consts.GUEST:
-            data_instances = data_instances.filter(lambda k, v: v.label != self.model_param.pu_param.unlabeled_digit
-                                                   if self.model_param.pu_param.mode == "two_step"
-                                                   else v.label is not None)
+            data_instances = data_instances.filter(self.filter_labeled_samples())
 
         self.callback_list.on_train_begin(data_instances, validate_data)
 
@@ -246,11 +250,11 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
         self.batch_generator.initialize_batch_generator(data_instances, batch_size=self.batch_size)
 
         with SPDZ(
-            "hetero_sshe",
-            local_party=self.local_party,
-            all_parties=self.parties,
-            q_field=self.q_field,
-            use_mix_rand=self.model_param.use_mix_rand,
+                "hetero_sshe",
+                local_party=self.local_party,
+                all_parties=self.parties,
+                q_field=self.q_field,
+                use_mix_rand=self.model_param.use_mix_rand,
         ) as spdz:
             spdz.set_flowid(self.flowid)
             self.secure_matrix_obj.set_flowid(self.flowid)
