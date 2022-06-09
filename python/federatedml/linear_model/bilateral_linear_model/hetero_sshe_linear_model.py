@@ -250,11 +250,11 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
         self.batch_generator.initialize_batch_generator(data_instances, batch_size=self.batch_size)
 
         with SPDZ(
-                "hetero_sshe",
-                local_party=self.local_party,
-                all_parties=self.parties,
-                q_field=self.q_field,
-                use_mix_rand=self.model_param.use_mix_rand,
+            "hetero_sshe",
+            local_party=self.local_party,
+            all_parties=self.parties,
+            q_field=self.q_field,
+            use_mix_rand=self.model_param.use_mix_rand,
         ) as spdz:
             spdz.set_flowid(self.flowid)
             self.secure_matrix_obj.set_flowid(self.flowid)
