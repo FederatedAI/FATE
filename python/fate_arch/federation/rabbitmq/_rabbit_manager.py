@@ -283,8 +283,7 @@ class RabbitManager:
         result = requests.delete(url, auth=(self.user, self.password))
         LOGGER.debug(result)
         return result
-    
-    @connection_retry
+
     def _set_federated_upstream(self, upstream_host, vhost, receive_queue_name):
         url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/{}/{}".format("parameters",
                                                                          "federation-upstream",
@@ -319,8 +318,7 @@ class RabbitManager:
         result = requests.delete(url, auth=(self.user, self.password))
         LOGGER.debug(result)
         return result
-    
-    @connection_retry
+
     def _set_federated_queue_policy(self, vhost, receive_queue_name):
         url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/{}".format("policies",
                                                                       vhost,
