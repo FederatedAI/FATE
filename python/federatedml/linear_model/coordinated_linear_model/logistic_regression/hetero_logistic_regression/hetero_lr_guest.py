@@ -69,7 +69,7 @@ class HeteroLRGuest(HeteroLRBase):
         # self.check_abnormal_values(validate_data)
         # self.header = self.get_header(data_instances)
         self.prepare_fit(data_instances, validate_data)
-        data_instances_filtered = data_instances.filter(self.filter_labeled_samples())
+        data_instances_filtered = self.filter_labeled_samples(data_instances)
         classes = self.one_vs_rest_obj.get_data_classes(data_instances_filtered)
 
         if with_weight(data_instances):
@@ -90,7 +90,7 @@ class HeteroLRGuest(HeteroLRBase):
         self.header = self.get_header(data_instances)
 
         LOGGER.info("Filter labeled instances")
-        data_instances = data_instances.filter(self.filter_labeled_samples())
+        data_instances = self.filter_labeled_samples(data_instances)
 
         self.callback_list.on_train_begin(data_instances, validate_data)
 

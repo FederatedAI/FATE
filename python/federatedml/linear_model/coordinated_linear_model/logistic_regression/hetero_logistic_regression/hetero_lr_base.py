@@ -16,6 +16,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import functools
+
 from federatedml.linear_model.coordinated_linear_model.logistic_regression.base_logistic_regression import \
     BaseLogisticRegression
 from federatedml.optim.gradient.hetero_sqn_gradient import sqn_factory
@@ -89,8 +91,9 @@ class HeteroLRBase(BaseLogisticRegression):
         #         summary["validation_metrics"] = validation_summary
         return summary
 
-    def filter_labeled_samples(self):
+    def filter_labeled_samples(self, data_inst):
         if self.model_param.pu_param.mode == "two_step":
-            return lambda k, v: v.label != self.model_param.pu_param.unlabeled_digit
+            func = functools.partial(lambda k, v: v.label != self.model_param.pu_param.unlabeled_digit)
         else:
-            return lambda k, v: v.label is not None
+            func = functools.partial(lambda k, v: v.label is not None)
+        return data_inst.filter(func)

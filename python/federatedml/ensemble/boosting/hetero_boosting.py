@@ -19,6 +19,8 @@
 
 from abc import ABC
 import abc
+import functools
+
 from federatedml.ensemble.boosting import Boosting
 from federatedml.param.boosting_param import HeteroBoostingParam
 from federatedml.secureprotol import PaillierEncrypt
@@ -133,11 +135,12 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
         self.feat_name_check(data_inst, self.feature_name_fid_mapping)
         self.callback_warm_start_init_iter(self.start_round)
 
-    def filter_labeled_samples(self):
+    def filter_labeled_samples(self, data_inst):
         if self.model_param.pu_param.mode == "two_step":
-            return lambda k, v: v.label != self.model_param.pu_param.unlabeled_digit
+            func = functools.partial(lambda k, v: v.label != self.model_param.pu_param.unlabeled_digit)
         else:
-            return lambda k, v: v.label is not None
+            func = functools.partial(lambda k, v: v.label is not None)
+        return data_inst.filter(func)
 
     def fit(self, data_inst, validate_data=None):
 
@@ -145,7 +148,7 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
         schema = data_inst.schema
 
         LOGGER.info("Filter labeled instances")
-        data_inst = data_inst.filter(self.filter_labeled_samples())
+        data_inst = self.filter_labeled_samples(data_inst)
         data_inst.schema = schema
 
         self.start_round = 0

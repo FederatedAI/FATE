@@ -18,7 +18,7 @@
 
 import copy
 from abc import ABC
-
+import functools
 import numpy as np
 
 from fate_arch.session import get_parties
@@ -183,11 +183,12 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
                   }
         return result
 
-    def filter_labeled_samples(self):
+    def filter_labeled_samples(self, data_inst):
         if self.model_param.pu_param.mode == "two_step":
-            return lambda k, v: v.label != self.model_param.pu_param.unlabeled_digit
+            func = functools.partial(lambda k, v: v.label != self.model_param.pu_param.unlabeled_digit)
         else:
-            return lambda k, v: v.label is not None
+            func = functools.partial(lambda k, v: v.label is not None)
+        return data_inst.filter(func)
 
     def load_model(self, model_dict):
         LOGGER.debug("Start Loading model")
@@ -224,7 +225,7 @@ class HeteroSSHEBase(BaseLinearModel, ABC):
 
         LOGGER.info("Filter labeled instances")
         if self.role == consts.GUEST:
-            data_instances = data_instances.filter(self.filter_labeled_samples())
+            data_instances = self.filter_labeled_samples(data_instances)
 
         self.callback_list.on_train_begin(data_instances, validate_data)
 

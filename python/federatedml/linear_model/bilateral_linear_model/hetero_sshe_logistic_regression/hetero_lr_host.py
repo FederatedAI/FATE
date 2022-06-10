@@ -196,7 +196,7 @@ class HeteroLRHost(HeteroSSHEHostBase):
     def fit(self, data_instances, validate_data=None):
         LOGGER.info("Starting to fit hetero_sshe_logistic_regression")
         self.prepare_fit(data_instances, validate_data)
-        data_instances_filtered = data_instances.filter(self.filter_labeled_samples())
+        data_instances_filtered = self.filter_labeled_samples(data_instances)
         classes = self.one_vs_rest_obj.get_data_classes(data_instances_filtered)
 
         if len(classes) > 2:
