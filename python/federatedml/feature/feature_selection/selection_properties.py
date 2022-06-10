@@ -30,6 +30,7 @@ class SelectionProperties(object):
         self.last_left_col_indexes = []
         self.select_col_indexes = []
         self.select_col_names = []
+        self.left_col_indexes_added = set()
         self.left_col_indexes = []
         self.left_col_names = []
         self.feature_values = {}
@@ -48,6 +49,7 @@ class SelectionProperties(object):
 
     def add_select_col_indexes(self, select_col_indexes):
         last_left_col_indexes = set(self.last_left_col_indexes)
+        added_select_col_index = set(self.select_col_indexes)
         for idx in select_col_indexes:
             if idx >= len(self.header):
                 LOGGER.warning("Adding an index out of header's bound")
@@ -55,14 +57,14 @@ class SelectionProperties(object):
             if idx not in last_left_col_indexes:
                 continue
 
-            if idx not in self.select_col_indexes:
+            if idx not in added_select_col_index:
                 self.select_col_indexes.append(idx)
                 self.select_col_names.append(self.header[idx])
+                added_select_col_index.add(idx)
 
     def add_select_col_names(self, select_col_names):
         last_left_col_indexes = set(self.last_left_col_indexes)
-        select_col_indexes = set(self.select_col_indexes)
-        added_select_col_indexes = set()
+        added_select_col_indexes = set(self.select_col_indexes)
 
         for col_name in select_col_names:
             idx = self.col_name_maps.get(col_name)
@@ -71,25 +73,20 @@ class SelectionProperties(object):
                 continue
             if idx not in last_left_col_indexes:
                 continue
-            if idx not in select_col_indexes and idx not in added_select_col_indexes:
+            if idx not in added_select_col_indexes:
                 self.select_col_indexes.append(idx)
-                # self.select_col_names.append(self.header[idx])
                 self.select_col_names.append(col_name)
                 added_select_col_indexes.add(idx)
 
     def add_left_col_name(self, left_col_name):
         idx = self.col_name_maps.get(left_col_name)
         if idx is None:
-            # LOGGER.debug(f"left_col_name: {left_col_name}, col_name_maps: {self.col_name_maps}")
             LOGGER.warning("Adding a col_name that does not exist in header")
             return
-        if idx not in self.left_col_indexes:
+        if idx not in self.left_col_indexes_added:
             self.left_col_indexes.append(idx)
-            # self.left_col_names.append(self.header[idx])
+            self.left_col_indexes_added.add(idx)
             self.left_col_names.append(left_col_name)
-        # LOGGER.debug("After add_left_col_name, select_col_indexes: {}, select_col_names: {}".format(
-        #     self.left_col_indexes, self.left_col_names
-        # ))
 
     def add_feature_value(self, col_name, feature_value):
         self.feature_values[col_name] = feature_value
@@ -161,9 +158,6 @@ class CompletedSelectionResults(object):
         host_left_cols = []
         for idx, host_result in enumerate(host_select_properties):
             host_all_left_col_names = set(host_result.all_left_col_names)
-            # LOGGER.debug("In add_filter_results, idx: {}, host_all_left_col_names: {}, "
-            #              "__host_pass_filter_nums_list: {}".format(idx, host_all_left_col_names,
-            #                                                       self.__host_pass_filter_nums_list))
             if idx >= len(self.__host_pass_filter_nums_list):
                 _host_pass_filter_nums = {}
                 self.__host_pass_filter_nums_list.append(_host_pass_filter_nums)
@@ -211,7 +205,4 @@ class CompletedSelectionResults(object):
         for pass_name_dict in self.__host_pass_filter_nums_list:
             sorted_list = sorted(pass_name_dict.items(), key=operator.itemgetter(1), reverse=True)
             result.append([x for x, _ in sorted_list])
-        # LOGGER.debug(f"In get_host_sorted_col_names,"
-        #             f" pass_counter: {self.__host_pass_filter_nums_list},"
-        #             f"result: {result}")
         return result
