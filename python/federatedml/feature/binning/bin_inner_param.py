@@ -31,12 +31,15 @@ class BinInnerParam(object):
     def __init__(self):
         self.bin_indexes = []
         self.bin_names = []
+        self.bin_indexes_added_set = set()
         self.col_name_maps = {}
         self.header = []
         self.transform_bin_indexes = []
         self.transform_bin_names = []
+        self.transform_bin_indexes_added_set = set()
         self.category_indexes = []
         self.category_names = []
+        self.category_indexes_added_set = set()
 
     def set_header(self, header):
         self.header = copy.deepcopy(header)
@@ -48,6 +51,7 @@ class BinInnerParam(object):
         Called when user set to bin all columns
         """
         self.bin_indexes = [i for i in range(len(self.header))]
+        self.bin_indexes_added_set = set(self.bin_indexes)
         self.bin_names = copy.deepcopy(self.header)
 
     def set_transform_all(self):
@@ -55,6 +59,7 @@ class BinInnerParam(object):
         self.transform_bin_names = self.bin_names
         self.transform_bin_indexes.extend(self.category_indexes)
         self.transform_bin_names.extend(self.category_names)
+        self.transform_bin_indexes_added_set = set(self.transform_bin_indexes)
 
     def add_bin_indexes(self, bin_indexes):
         if bin_indexes is None:
@@ -64,8 +69,9 @@ class BinInnerParam(object):
                 # LOGGER.warning("Adding a index that out of header's bound")
                 # continue
                 raise ValueError("Adding a index that out of header's bound")
-            if idx not in self.bin_indexes:
+            if idx not in self.bin_indexes_added_set:
                 self.bin_indexes.append(idx)
+                self.bin_indexes_added_set.add(idx)
                 self.bin_names.append(self.header[idx])
 
     def add_bin_names(self, bin_names):
@@ -77,8 +83,9 @@ class BinInnerParam(object):
             if idx is None:
                 LOGGER.warning("Adding a col_name that is not exist in header")
                 continue
-            if idx not in self.bin_indexes:
+            if idx not in self.bin_indexes_added_set:
                 self.bin_indexes.append(idx)
+                self.bin_indexes_added_set.add(idx)
                 self.bin_names.append(self.header[idx])
 
     def add_transform_bin_indexes(self, transform_indexes):
@@ -90,8 +97,9 @@ class BinInnerParam(object):
                 raise ValueError("Adding a index that out of header's bound")
                 # LOGGER.warning("Adding a index that out of header's bound")
                 # continue
-            if idx not in self.transform_bin_indexes:
+            if idx not in self.transform_bin_indexes_added_set:
                 self.transform_bin_indexes.append(idx)
+                self.transform_bin_indexes_added_set.add(idx)
                 self.transform_bin_names.append(self.header[idx])
 
     def add_transform_bin_names(self, transform_names):
@@ -102,8 +110,9 @@ class BinInnerParam(object):
             if idx is None:
                 raise ValueError("Adding a col_name that is not exist in header")
 
-            if idx not in self.transform_bin_indexes:
+            if idx not in self.transform_bin_indexes_added_set:
                 self.transform_bin_indexes.append(idx)
+                self.transform_bin_indexes_added_set.add(idx)
                 self.transform_bin_names.append(self.header[idx])
 
     def add_category_indexes(self, category_indexes):
@@ -116,12 +125,15 @@ class BinInnerParam(object):
             if idx >= len(self.header):
                 LOGGER.warning("Adding a index that out of header's bound")
                 continue
-            if idx not in self.category_indexes:
+            if idx not in self.category_indexes_added_set:
                 self.category_indexes.append(idx)
+                self.category_indexes_added_set.add(idx)
                 self.category_names.append(self.header[idx])
-            if idx in self.bin_indexes:
-                self.bin_indexes.remove(idx)
-                self.bin_names.remove(self.header[idx])
+
+            if idx in self.bin_indexes_added_set:
+                self.bin_indexes_added_set.remove(idx)
+
+        self._align_bin_index()
 
     def add_category_names(self, category_names):
         if category_names is None:
@@ -132,12 +144,26 @@ class BinInnerParam(object):
             if idx is None:
                 LOGGER.warning("Adding a col_name that is not exist in header")
                 continue
-            if idx not in self.category_indexes:
+            if idx not in self.category_indexes_added_set:
                 self.category_indexes.append(idx)
+                self.category_indexes_added_set.add(idx)
                 self.category_names.append(self.header[idx])
-            if idx in self.bin_indexes:
-                self.bin_indexes.remove(idx)
-                self.bin_names.remove(self.header[idx])
+            if idx in self.bin_indexes_added_set:
+                self.bin_indexes_added_set.remove(idx)
+
+        self._align_bin_index()
+
+    def _align_bin_index(self):
+        if len(self.bin_indexes_added_set) != len(self.bin_indexes):
+            new_bin_indexes = []
+            new_bin_names = []
+            for idx in self.bin_indexes:
+                if idx in self.bin_indexes_added_set:
+                    new_bin_indexes.append(idx)
+                    new_bin_names.append(self.header[idx])
+
+            self.bin_indexes = new_bin_indexes
+            self.bin_names = new_bin_names
 
     def get_need_cal_iv_cols_map(self):
         names = self.bin_names + self.category_names
@@ -162,18 +188,7 @@ class BinInnerParam(object):
             result.append(anonymous_generator.generate_anonymous(col_index, model=model))
         return result
 
-    # def __encode_col_name(self, col_name):
-    #     col_index = self.col_name_maps.get(col_name)
-    #     if col_index is None:
-    #         LOGGER.warning("Encoding a non-exist column name")
-    #         return None
-    #     return '.'.join(['host', str(col_index)])
-
     def decode_col_name(self, encoded_name: str):
         col_index = anonymous_generator.reconstruct_fid(encoded_name)
 
-        # try:
-        #     col_index = int(encoded_name.split('.')[1])
-        # except IndexError or ValueError:
-        #     raise RuntimeError("Bin inner param is trying to decode an invalid col_name.")
         return self.header[col_index]
