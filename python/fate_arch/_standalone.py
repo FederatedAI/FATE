@@ -89,12 +89,12 @@ class Table(object):
         _get_meta_table().delete(table_key)
         path = _get_storage_dir(self._namespace, self._name)
         shutil.rmtree(path, ignore_errors=True)
-
+    
     def take(self, n, **kwargs):
         if n <= 0:
             raise ValueError(f"{n} <= 0")
         return list(itertools.islice(self.collect(**kwargs), n))
-
+    
     def count(self):
         cnt = 0
         for p in range(self._partitions):
@@ -160,6 +160,17 @@ class Table(object):
 
     def mapPartitions(self, func, preserves_partitioning=False):
         un_shuffled = self._unary(func, _do_map_partitions)
+        if preserves_partitioning:
+            return un_shuffled
+        return un_shuffled.save_as(
+            name=str(uuid.uuid1()),
+            namespace=un_shuffled.namespace,
+            partition=self._partitions,
+            need_cleanup=True,
+        )
+
+    def mapPartitionsWithIndex(self, func, preserves_partitioning=False):
+        un_shuffled = self._unary(func, _do_map_partitions_with_index)
         if preserves_partitioning:
             return un_shuffled
         return un_shuffled.save_as(
@@ -387,6 +398,7 @@ class Session(object):
 
         # e.g.: '/fate/data/202109081519036144070_reader_0_0_host_10000'
         namespace_dir = data_path.joinpath(namespace)
+
         if not namespace_dir.is_dir():
             # remove role and party_id
             # e.g.: '202109081519036144070_reader_0_0'
@@ -399,13 +411,19 @@ class Session(object):
                 LOGGER.warning(f"namespace dir {namespace_dir} does not exist")
                 return
 
+        if name == "*":
+            shutil.rmtree(namespace_dir)
+            return
+
         for table in namespace_dir.glob(name):
             shutil.rmtree(table)
 
     def stop(self):
+        self.cleanup(name="*", namespace=self.session_id)
         self._pool.shutdown()
 
     def kill(self):
+        self.cleanup(name="*", namespace=self.session_id)
         self._pool.shutdown()
 
     def _submit_unary(self, func, _do_func, partitions, name, namespace):
@@ -904,6 +922,27 @@ def _do_map_partitions(p: _UnaryProcess):
 
         cursor = s.enter_context(source_txn.cursor())
         v = p.get_func()(_generator_from_cursor(cursor))
+
+        if isinstance(v, Iterable):
+            for k1, v1 in v:
+                dst_txn.put(serialize(k1), serialize(v1))
+        else:
+            k_bytes = cursor.key()
+            dst_txn.put(k_bytes, serialize(v))
+    return rtn
+
+
+def _do_map_partitions_with_index(p: _UnaryProcess):
+    with ExitStack() as s:
+        rtn = p.output_operand()
+        source_env = s.enter_context(p.operand.as_env())
+        dst_env = s.enter_context(rtn.as_env(write=True))
+
+        source_txn = s.enter_context(source_env.begin())
+        dst_txn = s.enter_context(dst_env.begin(write=True))
+
+        cursor = s.enter_context(source_txn.cursor())
+        v = p.get_func()(p.operand.partition, _generator_from_cursor(cursor))
 
         if isinstance(v, Iterable):
             for k1, v1 in v:
