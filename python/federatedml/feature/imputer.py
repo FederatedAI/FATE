@@ -1,14 +1,15 @@
 import copy
 import functools
+
 import numpy as np
 
-from federatedml.feature.instance import Instance
 from federatedml.feature.fate_element_type import NoneType
+from federatedml.feature.instance import Instance
+from federatedml.statistic import data_overview
 from federatedml.statistic.data_overview import get_header
 from federatedml.statistic.statics import MultivariateStatisticalSummary
-from federatedml.util import consts
 from federatedml.util import LOGGER
-from federatedml.statistic import data_overview
+from federatedml.util import consts
 
 
 class Imputer(object):
