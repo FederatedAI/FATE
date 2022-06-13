@@ -34,7 +34,7 @@ class Imputer(object):
             if v != v:
                 self.missing_value_list[i] = np.nan
                 self.abnormal_value_list[i] = NoneType()
-
+        self.abnormal_value_set = set(self.abnormal_value_list)
         self.support_replace_method = ['min', 'max', 'mean', 'median', 'designated']
         self.support_output_format = {
             'str': str,
@@ -250,11 +250,11 @@ class Imputer(object):
         skip_cols = [get_header(data).index(v) for v in skip_cols]
         if output_format is not None:
             f = functools.partial(Imputer.replace_missing_value_with_cols_transform_value_format,
-                                  transform_list=cols_transform_value, missing_value_list=self.abnormal_value_list,
+                                  transform_list=cols_transform_value, missing_value_list=self.abnormal_value_set,
                                   output_format=output_format, skip_cols=set(skip_cols))
         else:
             f = functools.partial(Imputer.replace_missing_value_with_cols_transform_value,
-                                  transform_list=cols_transform_value, missing_value_list=self.abnormal_value_list,
+                                  transform_list=cols_transform_value, missing_value_list=self.abnormal_value_set,
                                   skip_cols=set(skip_cols))
 
         transform_data = data.mapValues(f)
@@ -274,20 +274,20 @@ class Imputer(object):
         if replace_area == 'all':
             if output_format is not None:
                 f = functools.partial(Imputer.replace_missing_value_with_replace_value_format,
-                                      replace_value=transform_value, missing_value_list=self.abnormal_value_list,
+                                      replace_value=transform_value, missing_value_list=self.abnormal_value_set,
                                       output_format=output_format)
             else:
                 f = functools.partial(Imputer.replace_missing_value_with_replace_value,
-                                      replace_value=transform_value, missing_value_list=self.abnormal_value_list)
+                                      replace_value=transform_value, missing_value_list=self.abnormal_value_set)
         elif replace_area == 'col':
             if output_format is not None:
                 f = functools.partial(Imputer.replace_missing_value_with_cols_transform_value_format,
-                                      transform_list=transform_value, missing_value_list=self.abnormal_value_list,
+                                      transform_list=transform_value, missing_value_list=self.abnormal_value_set,
                                       output_format=output_format,
                                       skip_cols=set(skip_cols))
             else:
                 f = functools.partial(Imputer.replace_missing_value_with_cols_transform_value,
-                                      transform_list=transform_value, missing_value_list=self.abnormal_value_list,
+                                      transform_list=transform_value, missing_value_list=self.abnormal_value_set,
                                       skip_cols=set(skip_cols))
         else:
             raise ValueError("Unknown replace area {} in Imputer".format(replace_area))

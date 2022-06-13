@@ -66,6 +66,6 @@ class LabelTransformParam(BaseParam):
             if self.label_encoder and self.label_list and len(self.label_list) != len(self.label_encoder.keys()):
                 raise ValueError(f"label_list's length not matching label_encoder key count.")
             if len(self.label_list) == 0:
-                self.label_list =  None
+                self.label_list = None
 
         return True
