@@ -19,7 +19,7 @@ import json
 from fate_arch.common import Party
 from fate_arch.common import file_utils
 from fate_arch.common.log import getLogger
-from fate_arch.federation._federation_base import FederationBase
+from fate_arch.federation._federation import FederationBase
 from fate_arch.federation.rabbitmq._mq_channel import MQChannel
 from fate_arch.federation.rabbitmq._rabbit_manager import RabbitManager
 

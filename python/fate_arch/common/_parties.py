@@ -27,17 +27,6 @@ class Role:
 
     def __getitem__(self, key):
         return self._parties[key]
-        # if isinstance(key, int):
-        #     if key < 0 or key >= len(self._parties):
-        #         raise KeyError(
-        #             f"key should be an integer ranging from 0 to {self._size - 1}(inclusive)"
-        #         )
-        #     return self._parties[key]
-        #
-        # if isinstance(key, slice):
-        #     return self._parties[slice]
-        #
-        # raise KeyError(f"unsupported key: {key}")
 
 
 class _PartiesMeta(type):

@@ -17,7 +17,7 @@
 from fate_arch.common import Party
 from fate_arch.common import file_utils
 from fate_arch.common.log import getLogger
-from fate_arch.federation._federation_base import FederationBase
+from fate_arch.federation._federation import FederationBase
 from fate_arch.federation.pulsar._mq_channel import (
     MQChannel,
     DEFAULT_TENANT,
@@ -28,7 +28,7 @@ from fate_arch.federation.pulsar._pulsar_manager import PulsarManager
 
 LOGGER = getLogger()
 # default message max size in bytes = 50MB
-DEFAULT_MESSAGE_MAX_SIZE = 104857
+DEFAULT_MESSAGE_MAX_SIZE = 104857 * 50
 
 
 class MQ(object):
