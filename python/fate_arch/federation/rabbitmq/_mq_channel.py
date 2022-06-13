@@ -15,7 +15,6 @@
 #
 
 import json
-
 import pika
 
 from fate_arch.common import log

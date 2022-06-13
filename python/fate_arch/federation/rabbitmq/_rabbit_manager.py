@@ -127,7 +127,7 @@ class RabbitManager:
                 return exchange_names
             else:
                 return None
-        except:
+        except BaseException:
             return None
 
     def create_exchange(self, vhost, exchange_name):
@@ -168,7 +168,7 @@ class RabbitManager:
                 return policies_names
             else:
                 return None
-        except:
+        except BaseException:
             return None
     
     def delete_policy(self, vhost, policy_name):
@@ -177,8 +177,7 @@ class RabbitManager:
         result = requests.delete(url, auth=(self.user, self.password))
         LOGGER.debug(f"[rabbitmanager.delete_policy] vhost={vhost}, policy_name={policy_name}, {result}")
         return result        
-    
-    @connection_retry
+
     def create_queue(self, vhost, queue_name):
         url = C_HTTP_TEMPLATE.format(
             self.endpoint, "{}/{}/{}".format("queues", vhost, queue_name))
