@@ -189,15 +189,7 @@ class Session(object):
             return self
 
         if self._federation_type == FederationEngine.RABBITMQ:
-            # from fate_arch.computing.spark import CSession
             from fate_arch.federation.rabbitmq import Federation
-
-            # if not self.is_computing_valid or not isinstance(
-            #         self._computing_session, CSession
-            # ):
-            #     raise RuntimeError(
-            #         f"require computing with type {ComputingEngine.SPARK} valid"
-            #     )
 
             self._federation_session = Federation.from_conf(
                 federation_session_id=federation_session_id,
@@ -209,15 +201,7 @@ class Session(object):
 
         # Add pulsar support
         if self._federation_type == FederationEngine.PULSAR:
-            # from fate_arch.computing.spark import CSession
             from fate_arch.federation.pulsar import Federation
-
-            # if not self.is_computing_valid or not isinstance(
-            #         self._computing_session, CSession
-            # ):
-            #     raise RuntimeError(
-            #         f"require computing with type {ComputingEngine.SPARK} valid"
-            #     )
 
             self._federation_session = Federation.from_conf(
                 federation_session_id=federation_session_id,
@@ -230,6 +214,7 @@ class Session(object):
         # Add firework support
         if self._federation_type == FederationEngine.FIREWORK:
             from fate_arch.federation.firework import Federation
+
             self._federation_session = Federation.from_conf(
                     federation_session_id=federation_session_id,
                     party=parties_info.local_party,
