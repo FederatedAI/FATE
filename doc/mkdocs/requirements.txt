@@ -1,10 +1,11 @@
-mkdocs-material==7.3.0
-mkdocs-jupyter==0.18.0
+mkdocs-material
+mkdocs-jupyter
 ipython_genutils
-python-markdown-math==0.8
+python-markdown-math
 mkdocs-static-i18n
 mkdocstrings
-pytkdocs[numpy-style]==0.14.0
+mkdocstrings-python-legacy
+pytkdocs[numpy-style]
 mkdocs-simple-hooks
 mkdocs-awesome-pages-plugin
 mkdocs-git-revision-date-plugin
