@@ -283,6 +283,10 @@ class Session(object):
             from fate_arch.storage.localfs import StorageSession
             storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
 
+        elif storage_engine == StorageEngine.API:
+            from fate_arch.storage.api import StorageSession
+            storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
+
         else:
             raise NotImplementedError(f"can not be initialized with storage engine: {storage_engine}")
 

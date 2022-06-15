@@ -18,7 +18,7 @@ from fate_arch.federation import FederationEngine
 from fate_arch.storage import StorageEngine
 from fate_arch.common.address import StandaloneAddress, EggRollAddress, HDFSAddress, \
     MysqlAddress, \
-    PathAddress, LocalFSAddress, HiveAddress, LinkisHiveAddress
+    PathAddress, LocalFSAddress, HiveAddress, LinkisHiveAddress, ApiAddress
 from fate_arch.common import EngineType
 
 
@@ -74,7 +74,8 @@ class Relationship(object):
         StorageEngine.HIVE: HiveAddress,
         StorageEngine.LINKIS_HIVE: LinkisHiveAddress,
         StorageEngine.LOCALFS: LocalFSAddress,
-        StorageEngine.PATH: PathAddress
+        StorageEngine.PATH: PathAddress,
+        StorageEngine.API: ApiAddress
     }
 
     EngineConfMap = {

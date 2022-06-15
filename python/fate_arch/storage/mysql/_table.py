@@ -144,4 +144,8 @@ class StorageTable(StorageTableBase):
             feature_list = header
         else:
             feature_list = [header]
+        if self.meta.get_extend_sid():
+            id = feature_list[0]
+            if len(feature_list) > 1:
+                feature_list = feature_list[1:]
         return id, feature_list, id_delimiter
