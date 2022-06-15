@@ -54,12 +54,12 @@ with Pohlig–Hellman commutative cipher. DH Intersection is also used in
 [Secure Information Retrieval(SIR)
 module](sir.md).
 
-Below is an illustration for single-host-guest DH intersection.
+Below is an illustration of single-host-guest DH intersection.
 
 ![Figure 2 (DH
 Intersection)](../images/dh_intersection.png)
 
-Here is an illustration for DH intersection with multiple hosts.
+Here is an illustration of DH intersection with multiple hosts.
 
 ![Figure 3 (Multi-host DH
 Intersection)](../images/multi_host_dh_intersection.png)
@@ -71,6 +71,14 @@ This mode implements secure intersection
 based on [elliptic curve Diffie-Hellman scheme](https://en.wikipedia.org/wiki/Elliptic-curve_Diffie–Hellman). 
 ECDH mode currently uses [Curve25519](https://en.wikipedia.org/wiki/Curve25519),  
 which offers 128 bits of security with key size of 256 bits.
+
+Below is an illustration of ECDH intersection. Note that currently ECDH method only supports single-host scenario.
+
+![Figure 4 (ECDH
+Intersection)](../images/ecdh_intersection.png)
+
+For details on how to hash value to given curve, 
+please refer [here](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-hash-to-curve-10#section-6.7.1).
 
 
 ## Intersection With Cache
@@ -84,7 +92,7 @@ RSA, RAW, and DH intersection support multi-host scenario. It means a
 guest can perform intersection with more than one host simultaneously
 and get the common ids among all participants.
 
-![Figure 4 (multi-hosts
+![Figure 5 (multi-hosts
 Intersection)](../images/multi_host_intersect.png)
 
 Refer to <span class="title-ref">figure 2</span> for a demonstration of
