@@ -493,6 +493,8 @@ class ModelBase(object):
                 "sid_name": schema.get("sid_name"),
                 "content_type": "predict_result",
             }
+            if "match_id_name" in schema:
+                predict_data.schema["match_id_name"] = schema["match_id_name"]
         return predict_data
 
     @staticmethod
