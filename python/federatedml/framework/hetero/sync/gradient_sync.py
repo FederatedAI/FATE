@@ -20,11 +20,11 @@ import abc
 
 
 class Guest(object):
-    @abc.abstractclassmethod
+    @abc.abstractmethod
     def compute_intermediate(self, *args, **kwargs):
         raise NotImplementedError("This method should be be called here")
 
-    @abc.abstractclassmethod
+    @abc.abstractmethod
     def aggregate_host_result(self, *args, **kwargs):
         raise NotImplementedError("This method should be be called here")
 
@@ -33,7 +33,7 @@ class Guest(object):
 
 
 class Host(object):
-    @abc.abstractclassmethod
+    @abc.abstractmethod
     def compute_intermediate(self, *args, **kwargs):
         raise NotImplementedError("This method should be be called here")
 
