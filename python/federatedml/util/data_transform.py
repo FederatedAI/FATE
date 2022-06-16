@@ -198,7 +198,7 @@ class DenseFeatureTransformer(object):
 
     @assert_io_num_rows_equal
     def transform(self, input_data_features, input_data_labels, input_data_match_id):
-        schema = make_schema(self.header, self.sid_name, self.label_name)
+        schema = self.get_schema()
 
         set_schema(input_data_features, schema)
         input_data_features = self.fill_missing_value(input_data_features, "transform")
