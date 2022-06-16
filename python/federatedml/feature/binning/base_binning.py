@@ -261,7 +261,7 @@ class BaseBinning(object):
         data_shape = instances.features.get_shape()
         indice = []
         sparse_value = []
-        transform_cols_idx_set = bin_inner_param.transform_bin_indexes_added_set()
+        transform_cols_idx_set = bin_inner_param.transform_bin_indexes_added_set
         split_points_dict = bin_results.all_split_points
 
         for col_idx, col_value in all_data:
