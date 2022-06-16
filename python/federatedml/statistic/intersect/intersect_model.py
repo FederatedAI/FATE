@@ -218,6 +218,8 @@ class IntersectModelBase(ModelBase):
                     intersect_data = self.run_preprocess(match_data)
                 self.intersect_ids = self.intersection_obj.run_intersect(intersect_data)
         else:
+            if self.intersection_obj.join_method == consts.LEFT_JOIN:
+                raise ValueError(f"Only data with match_id may apply left_join method. Please check input data format")
             if self.intersection_obj.run_cache:
                 self.cache_output = self.intersection_obj.generate_cache(data)
                 intersect_meta = self.intersection_obj.get_intersect_method_meta()
@@ -269,9 +271,13 @@ class IntersectModelBase(ModelBase):
         self.callback()
 
         result_data = self.intersect_ids
-        if not self.use_match_id_process and not self.intersection_obj.only_output_key and result_data:
-            result_data = self.intersection_obj.get_value_from_data(result_data, data)
-            LOGGER.debug(f"not only_output_key, restore value called")
+        if not self.use_match_id_process and result_data:
+            if self.intersection_obj.only_output_key:
+                result_data.schema = {"sid_name": data.schema["sid_name"]}
+                LOGGER.debug(f"non-match-id & only_output_key, add sid_name to schema")
+            else:
+                result_data = self.intersection_obj.get_value_from_data(result_data, data)
+                LOGGER.debug(f"not only_output_key, restore instance value")
 
         if self.model_param.join_method == consts.LEFT_JOIN:
             result_data = self.__sync_join_id(data, self.intersect_ids)
