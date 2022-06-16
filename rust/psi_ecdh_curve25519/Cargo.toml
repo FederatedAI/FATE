@@ -12,6 +12,7 @@ crate-type = ["cdylib"]
 pyo3 = { version = "0.15.2", features = ["extension-module"] }
 curve25519-dalek = { version = "3.2.1" }
 sha2 = { version = "0.9.9" }
+rand = "0.8.5"
 
 [features]
 default = ["std", "u64_backend"]
