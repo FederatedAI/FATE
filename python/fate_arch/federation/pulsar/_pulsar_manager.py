@@ -1,7 +1,18 @@
-########################################################
-# Copyright 2019-2021 program was created VMware, Inc. #
-# SPDX-License-Identifier: Apache-2.0                  #
-########################################################
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
 
 import logging
 import json
@@ -32,8 +43,7 @@ class PulsarManager():
 
     # create session is used to construct url and request parameters
     def _create_session(self):
-        # retry mechanism refers to
-        # https://urllib3.readthedocs.io/en/latest/reference/urllib3.util.html#urllib3.util.Retry
+        # retry mechanism refers to https://urllib3.readthedocs.io/en/latest/reference/urllib3.util.html#urllib3.util.Retry
         retry = Retry(total=MAX_RETRIES, redirect=MAX_REDIRECT,
                       backoff_factor=BACKOFF_FACTOR)
         s = requests.Session()
@@ -67,7 +77,7 @@ class PulsarManager():
         return response
 
     # service_url need to provide "http://" prefix
-    def create_cluster(self, cluster_name: str, broker_url: str, service_url: str = '',
+    def create_cluster(self, cluster_name: str,  broker_url: str, service_url: str = '',
                        service_url_tls: str = '', broker_url_tls: str = '',
                        proxy_url: str = '', proxy_protocol: str = "SNI", peer_cluster_names: list = [],
                        ):
@@ -88,7 +98,7 @@ class PulsarManager():
             self.service_url + CLUSTER.format(cluster_name), data=json.dumps(data))
         return response
 
-    def update_cluster(self, cluster_name: str, broker_url: str, service_url: str = '',
+    def update_cluster(self, cluster_name: str,  broker_url: str, service_url: str = '',
                        service_url_tls: str = '', broker_url_tls: str = '',
                        proxy_url: str = '', proxy_protocol: str = "SNI", peer_cluster_names: list = [],
                        ):
@@ -197,7 +207,7 @@ class PulsarManager():
         session = self._create_session()
         response = session.post(
             # the API accepts data as seconds
-            self.service_url + 'namespaces/{}/{}/messageTTL'.format(tenant, namespace), json=mintues * 60
+            self.service_url + 'namespaces/{}/{}/messageTTL'.format(tenant, namespace), json=mintues*60
         )
 
         return response
