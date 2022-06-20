@@ -8,7 +8,7 @@ use pyo3::ToPyObject;
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
 
-#[pyclass(module = "psi_ecdh_curve25519", name = "ECDHCurve25519")]
+#[pyclass(module = "fate_crypto.psi", name = "Curve25519")]
 struct Secret(Scalar);
 
 #[pymethods]
@@ -74,8 +74,7 @@ impl Secret {
     }
 }
 
-#[pymodule]
-fn psi_ecdh_curve25519(_py: Python, m: &PyModule) -> PyResult<()> {
+pub(crate) fn register(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<Secret>()?;
     Ok(())
 }

@@ -1,4 +1,4 @@
-class ECDHCurve25519(object):
+class Curve25519(object):
     def get_private_key(self) -> bytes: ...
     def encrypt(self, m: bytes) -> bytes:
         """encrypt message.
