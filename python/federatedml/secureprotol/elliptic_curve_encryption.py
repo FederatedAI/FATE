@@ -18,7 +18,7 @@
 #
 
 
-from psi_ecdh_curve25519 import ECDHCurve25519
+from fate_crypto.psi import Curve25519
 
 
 class EllipticCurve(object):
@@ -31,7 +31,7 @@ class EllipticCurve(object):
 
     @staticmethod
     def __get_curve_instance(curve_name, curve_key):
-        return ECDHCurve25519(curve_key)
+        return Curve25519(curve_key)
 
     def get_curve_key(self):
         return self.curve.get_private_key()
