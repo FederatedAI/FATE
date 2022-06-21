@@ -4,10 +4,10 @@ build-backend = "maturin"
 
 [project]
 name = "fate_crypto"
+description = "crypto implemented or wrapped using rust"
+readme = "README.md"
 requires-python = ">=3.6"
 classifiers = [
     "Programming Language :: Rust",
     "Programming Language :: Python :: Implementation :: CPython",
-    "Programming Language :: Python :: Implementation :: PyPy",
 ]
-

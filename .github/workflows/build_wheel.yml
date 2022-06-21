@@ -81,7 +81,7 @@ jobs:
       - name: Test Install
         run: |
           pip install -U pip
-          pip install --find-link=. fate_crypto
+          pip install --find-link=dist/ fate_crypto
       - name: Upload to PyPI Test
         if: ${{ github.event.inputs.type == 'testpypi' }}
         run: |
