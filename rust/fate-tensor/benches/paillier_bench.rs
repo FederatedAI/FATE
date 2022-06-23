@@ -1,28 +1,34 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use fate_tensor::fixedpoint;
+use fate_tensor::math::BInt;
 use fate_tensor::paillier;
-use rug::Integer;
 use std::time::Duration;
 
 fn paillier_benchmark(c: &mut Criterion) {
-    let (prikey, pubkey) = paillier::keygen(1024);
-    let plaintext = Integer::from_str_radix("1234567890987654321", 10).unwrap();
-    let ciphertext = pubkey.encrypt(&plaintext);
+    let (sk, pk) = paillier::keygen(1024);
+    let plaintext = paillier::PT(BInt::from_str_radix("1234567890987654321", 10));
+    let ciphertext = pk.encrypt(&plaintext, true);
     let mut group = c.benchmark_group("paillier");
+
+    group.bench_function("keygen-1024", |b| {
+        b.iter(|| paillier::keygen(black_box(1024)))
+    });
+    group.bench_function("keygen-2048", |b| {
+        b.iter(|| paillier::keygen(black_box(1024)))
+    });
     group.bench_function("encrypt", |b| {
-        b.iter(|| black_box(&pubkey).encrypt(black_box(&plaintext)))
+        b.iter(|| black_box(&pk).encrypt(black_box(&plaintext), true))
     });
     group.bench_function("decrypt", |b| {
-        b.iter(|| black_box(&prikey).decrypt(black_box(&ciphertext)))
+        b.iter(|| black_box(&sk).decrypt(black_box(&ciphertext)))
     });
-    let (prikey, pubkey) = fixedpoint::keygen(1024);
-    let plaintext = 0.125;
-    let ciphertext = pubkey.encrypt(&plaintext);
-    group.bench_function("encrypt_fixed", |b| {
-        b.iter(|| black_box(&pubkey).encrypt(black_box(&plaintext)))
+    group.bench_function("add ciphertext", |b| {
+        b.iter(|| black_box(&ciphertext).add_ct(black_box(&ciphertext), black_box(&pk)))
     });
-    group.bench_function("decrypt_fixed", |b| {
-        b.iter(|| black_box(&prikey).decrypt(black_box(&ciphertext)))
+    group.bench_function("mul plaintext", |b| {
+        b.iter(|| black_box(&ciphertext).mul_pt(black_box(&plaintext), black_box(&pk)))
+    });
+    group.bench_function("obfuscate", |b| {
+        b.iter(|| black_box(&ciphertext).to_owned().obfuscate(black_box(&pk)))
     });
 }
 

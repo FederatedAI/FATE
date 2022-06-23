@@ -11,6 +11,9 @@ pub struct BInt(pub Integer);
 pub(crate) const ONE: u8 = 1u8;
 
 impl BInt {
+    pub fn from_str_radix(src: &str, radix: i32) -> BInt {
+        BInt(Integer::from_str_radix(src, radix).unwrap())
+    }
     pub fn significant_bits(&self) -> u32 {
         self.0.significant_bits()
     }

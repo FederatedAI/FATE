@@ -97,6 +97,13 @@ impl CT {
         let b = pk.encrypt(b);
         self.add(&b, pk)
     }
+    pub fn sub_pt(&self, b: &PT, pk: &PK) -> CT {
+        let b = pk.encrypt(b);
+        self.sub(&b, pk)
+    }
+    pub fn sub(&self, b: &CT, pk: &PK) -> CT {
+        self.add(&b.neg(pk), pk)
+    }
     pub fn add(&self, b: &CT, pk: &PK) -> CT {
         let a = self;
         if a.exp > b.exp {

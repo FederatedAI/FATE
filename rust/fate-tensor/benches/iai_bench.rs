@@ -1,10 +1,10 @@
-use rug::Integer;
-use rust_tensor::paillier::keygen;
+use fate_tensor::math::BInt;
+use fate_tensor::paillier;
 
 fn encrypt() {
-    let (prikey, pubkey) = keygen(1024);
-    let plaintext = Integer::from_str_radix("1234567890987654321", 10).unwrap();
-    pubkey.encrypt(&plaintext);
+    let (_sk, pk) = paillier::keygen(1024);
+    let plaintext = paillier::PT(BInt::from_str_radix("1234567890987654321", 10));
+    pk.encrypt(&plaintext, true);
 }
 
 iai::main!(encrypt);

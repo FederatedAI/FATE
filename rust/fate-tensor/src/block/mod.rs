@@ -23,6 +23,42 @@ impl Cipherblock {
             shape: self.shape.clone(),
         }
     }
+    pub fn ops_cb_cb<F>(lhs: &Cipherblock, rhs: &Cipherblock, func: F) -> Cipherblock
+    where
+        F: Fn(&fixedpoint::CT, &fixedpoint::CT, &fixedpoint::PK) -> fixedpoint::CT,
+    {
+        assert_eq!(lhs.shape, rhs.shape);
+        assert_eq!(lhs.pubkey, rhs.pubkey);
+        let lhs_iter = lhs.data.iter();
+        let rhs_iter = rhs.data.iter();
+        let data: Vec<fixedpoint::CT> = lhs_iter
+            .zip(rhs_iter)
+            .map(|(l, r)| func(l, r, &lhs.pubkey))
+            .collect();
+        Cipherblock {
+            pubkey: lhs.pubkey.clone(),
+            data,
+            shape: lhs.shape.clone(),
+        }
+    }
+    pub fn ops_cb_pt<F, T>(lhs: &Cipherblock, rhs: ArrayViewD<T>, func: F) -> Cipherblock
+    where
+        F: Fn(&fixedpoint::CT, &fixedpoint::PT, &fixedpoint::PK) -> fixedpoint::CT,
+        T: CouldCode,
+    {
+        assert_eq!(lhs.shape, rhs.shape().to_vec());
+        let lhs_iter = lhs.data.iter();
+        let rhs_iter = rhs.iter();
+        let data: Vec<fixedpoint::CT> = lhs_iter
+            .zip(rhs_iter)
+            .map(|(l, r)| func(l, &r.encode(&lhs.pubkey.coder), &lhs.pubkey))
+            .collect();
+        Cipherblock {
+            pubkey: lhs.pubkey.clone(),
+            data,
+            shape: lhs.shape.clone(),
+        }
+    }
     pub fn neg(&self) -> Cipherblock {
         self.map(|x| x.neg(&self.pubkey))
     }
@@ -114,28 +150,41 @@ impl fixedpoint::SK {
 
 #[cfg(feature = "rayon")]
 impl Cipherblock {
-    pub fn add_cipherblock_par(&self, rhs: &Cipherblock) -> Cipherblock {
-        assert_eq!(self.shape, rhs.shape);
-        assert_eq!(self.pubkey, rhs.pubkey);
-        let data: Vec<fixedpoint::CT> = self
-            .data
-            .par_iter()
-            .zip(rhs.data.par_iter())
-            .map(|(l, r)| l.add(r, &self.pubkey))
+    pub fn ops_cb_cb_par<F>(lhs: &Cipherblock, rhs: &Cipherblock, func: F) -> Cipherblock
+    where
+        F: Fn(&fixedpoint::CT, &fixedpoint::CT, &fixedpoint::PK) -> fixedpoint::CT + Sync,
+    {
+        assert_eq!(lhs.shape, rhs.shape);
+        assert_eq!(lhs.pubkey, rhs.pubkey);
+        let lhs_iter = lhs.data.par_iter();
+        let rhs_iter = rhs.data.par_iter();
+        let data: Vec<fixedpoint::CT> = lhs_iter
+            .zip(rhs_iter)
+            .map(|(l, r)| func(l, r, &lhs.pubkey))
             .collect();
         Cipherblock {
-            pubkey: self.pubkey.clone(),
+            pubkey: lhs.pubkey.clone(),
             data,
-            shape: self.shape.clone(),
+            shape: lhs.shape.clone(),
         }
     }
-    pub fn add_plaintext_par<T>(&self, rhs: ArrayViewD<T>) -> Cipherblock
+    pub fn ops_cb_pt_par<F, T>(lhs: &Cipherblock, rhs: ArrayViewD<T>, func: F) -> Cipherblock
     where
-        T: CouldCode,
+        F: Fn(&fixedpoint::CT, &fixedpoint::PT, &fixedpoint::PK) -> fixedpoint::CT + Sync,
+        T: CouldCode + Sync + Send,
     {
-        assert_eq!(self.shape, rhs.shape().to_vec());
-        let rhs = self.pubkey.encrypt_array(rhs);
-        self.add_cipherblock_par(&rhs)
+        assert_eq!(lhs.shape, rhs.shape().to_vec());
+        let lhs_iter = lhs.data.par_iter();
+        let rhs_iter = rhs.as_slice().unwrap().into_par_iter();
+        let data: Vec<fixedpoint::CT> = lhs_iter
+            .zip(rhs_iter)
+            .map(|(l, r)| func(l, &r.encode(&lhs.pubkey.coder), &lhs.pubkey))
+            .collect();
+        Cipherblock {
+            pubkey: lhs.pubkey.clone(),
+            data,
+            shape: lhs.shape.clone(),
+        }
     }
 }
 

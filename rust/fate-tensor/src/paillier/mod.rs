@@ -143,7 +143,7 @@ fn keygen_odd_size() {
 fn decrypt() {
     let (private, public) = keygen(1024);
     let plaintext = PT(BInt::from(25519u32));
-    let ciphertext = public.encrypt(&plaintext);
+    let ciphertext = public.encrypt(&plaintext, true);
     let decrypted = private.decrypt(&ciphertext);
     assert_eq!(plaintext, decrypted)
 }
