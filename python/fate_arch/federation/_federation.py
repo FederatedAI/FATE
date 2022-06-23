@@ -472,10 +472,10 @@ class FederationBase(FederationABC):
         return cache_key
 
     def _get_consume_message(self, channel_info):
-        pass
+        raise NotImplementedError()
 
     def _consume_ack(self, channel_info, id):
-        pass
+        raise NotImplementedError()
 
     def _query_receive_topic(self, channel_info):
         return channel_info
@@ -487,7 +487,9 @@ class FederationBase(FederationABC):
         wish_cache_key = self._get_message_cache_key(name, tag, party_id, role)
 
         if wish_cache_key in self._message_cache:
-            return self._message_cache[wish_cache_key]
+            recv_obj = self._message_cache[wish_cache_key]
+            del self._message_cache[wish_cache_key]
+            return recv_obj
 
         channel_info = self._query_receive_topic(channel_info)
 
@@ -506,7 +508,7 @@ class FederationBase(FederationABC):
             )
             # object
             if properties["content_type"] == "text/plain":
-                self._message_cache[cache_key] = p_loads(body)
+                recv_obj = p_loads(body)
                 self._consume_ack(channel_info, id)
                 LOGGER.debug(
                     f"[federation._receive_obj] cache_key: {cache_key}, wish_cache_key: {wish_cache_key}"
@@ -516,7 +518,10 @@ class FederationBase(FederationABC):
                     LOGGER.debug(
                         f"[federation._receive_obj] cache_key: {cache_key}, obj: {self._message_cache[cache_key]}"
                     )
-                    return self._message_cache[cache_key]
+                    return recv_obj
+                else:
+                    self._message_cache[cache_key] = recv_obj
+                    return None
             else:
                 raise ValueError(
                     f"[federation._receive_obj] properties.content_type is {properties['content_type']}, but must be text/plain"
