@@ -24,12 +24,6 @@ from eggroll.roll_site.roll_site import RollSiteContext
 from fate_arch.abc import FederationABC
 from fate_arch.common.log import getLogger
 from fate_arch.computing.eggroll import Table
-from fate_arch.federation._split import (
-    _is_split_head,
-    _split_get,
-    _is_splitable_obj,
-    _get_splits,
-)
 from fate_arch.common import remote_status
 
 LOGGER = getLogger()
@@ -81,16 +75,6 @@ def _remote(v, name, tag, parties, rsc, gc):
         _push_with_exception_handle(rsc, v, name, tag, parties)
         return
 
-    if t == _FederationValueType.SPLIT_OBJECT:
-        LOGGER.debug(f"[{log_str}]remote split object with type: {type(v)}")
-        head, tails = _get_splits(v)
-        _push_with_exception_handle(rsc, head, name, tag, parties)
-
-        for k, tail in enumerate(tails):
-            _push_with_exception_handle(rsc, tail, name, f"{tag}.__part_{k}", parties)
-
-        return
-
     if t == _FederationValueType.OBJECT:
         LOGGER.debug(f"[{log_str}]remote object with type: {type(v)}")
         _push_with_exception_handle(rsc, v, name, tag, parties)
@@ -106,14 +90,13 @@ def _get(name, tag, parties, rsc, gc):
     for future in concurrent.futures.as_completed(future_map):
         party = future_map[future]
         v = future.result()
-        rtn[party] = _get_value_post_process(v, name, tag, party, rsc, gc)
+        rtn[party] = _get_value_post_process(v, name, tag, party, gc)
     return [rtn[party] for party in parties]
 
 
 class _FederationValueType(Enum):
     OBJECT = 1
     ROLL_PAIR = 2
-    SPLIT_OBJECT = 3
 
 
 _remote_history = set()
@@ -130,8 +113,6 @@ def _remote_tag_not_duplicate(name, tag, parties):
 def _get_type(v):
     if isinstance(v, RollPair):
         return _FederationValueType.ROLL_PAIR
-    if _is_splitable_obj(v):
-        return _FederationValueType.SPLIT_OBJECT
     return _FederationValueType.OBJECT
 
 
@@ -182,7 +163,7 @@ def _get_tag_not_duplicate(name, tag, party):
     return True
 
 
-def _get_value_post_process(v, name, tag, party, rsc, gc):
+def _get_value_post_process(v, name, tag, party, gc):
     log_str = f"federation.eggroll.get.{name}.{tag}"
     if v is None:
         raise ValueError(f"[{log_str}]get `None` from {party}")
@@ -197,23 +178,6 @@ def _get_value_post_process(v, name, tag, party, rsc, gc):
         )
         gc.add_gc_action(tag, v, "destroy", {})
         return v
-
-    # got large object in splits
-    if _is_split_head(v):
-        num_split = v.num_split()
-        LOGGER.debug(f"[{log_str}]is split object, num_split={num_split}")
-        split_objs = []
-        for k in range(num_split):
-            split_obj = _split_rs = (
-                rsc.load(name, tag=f"{tag}.__part_{k}").pull([party])[0].result()
-            )
-            LOGGER.debug(f"[{log_str}]got split ({k}/{num_split})")
-            split_objs.append(split_obj)
-        obj = _split_get(split_objs)
-
-        LOGGER.debug(f"[{log_str}] got split object with type: {type(obj)}")
-        return obj
-
     # others
     LOGGER.debug(f"[{log_str}] got object with type: {type(v)}")
     return v
