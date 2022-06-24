@@ -515,13 +515,9 @@ class FederationBase(FederationABC):
                 )
                 if cache_key == wish_cache_key:
                     channel_info.cancel()
-                    LOGGER.debug(
-                        f"[federation._receive_obj] cache_key: {cache_key}, obj: {self._message_cache[cache_key]}"
-                    )
                     return recv_obj
                 else:
                     self._message_cache[cache_key] = recv_obj
-                    return None
             else:
                 raise ValueError(
                     f"[federation._receive_obj] properties.content_type is {properties['content_type']}, but must be text/plain"
