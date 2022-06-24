@@ -52,10 +52,10 @@ class CallbackParam(BaseParam):
     def __init__(self, callbacks=None, validation_freqs=None, early_stopping_rounds=None,
                  metrics=None, use_first_metric_only=False, save_freq=1):
         super(CallbackParam, self).__init__()
-        self.callbacks = callbacks if callbacks else []
+        self.callbacks = callbacks or []
         self.validation_freqs = validation_freqs
         self.early_stopping_rounds = early_stopping_rounds
-        self.metrics = metrics
+        self.metrics = metrics or []
         self.use_first_metric_only = use_first_metric_only
         self.save_freq = save_freq
 
