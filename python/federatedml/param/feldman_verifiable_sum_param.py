@@ -36,12 +36,10 @@ class FeldmanVerifiableSumParam(BaseParam):
 
     def __init__(self, sum_cols=None, q_n=6):
         self.sum_cols = sum_cols
-        if sum_cols is None:
-            self.sum_cols = []
-
         self.q_n = q_n
 
     def check(self):
+        self.sum_cols = [] if self.sum_cols is None else self.sum_cols
         if isinstance(self.sum_cols, list):
             for idx in self.sum_cols:
                 if not isinstance(idx, int):

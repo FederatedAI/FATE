@@ -75,7 +75,7 @@ class SecureInformationRetrievalParam(BaseParam):
         self.dh_params = dh_params
         self.key_size = key_size
         self.raw_retrieval = raw_retrieval
-        self.target_cols = [] if target_cols is None else target_cols
+        self.target_cols = target_cols
 
     def check(self):
         descr = "secure information retrieval param's "
@@ -94,6 +94,8 @@ class SecureInformationRetrievalParam(BaseParam):
         self.dh_params.check()
         if self._warn_to_deprecate_param("raw_retrieval", descr, "dh_param's security_level = 0"):
             self.check_boolean(self.raw_retrieval, descr)
+
+        self.target_cols = [] if self.target_cols is None else self.target_cols
         if not isinstance(self.target_cols, list):
             self.target_cols = [self.target_cols]
         for col in self.target_cols:
