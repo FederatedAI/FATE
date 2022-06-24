@@ -21,7 +21,7 @@ from pipeline.component import DataTransform
 from pipeline.component import FeatureImputation
 from pipeline.component import Intersection
 from pipeline.component import Reader
-from pipeline.interface import Data
+from pipeline.interface import Data, Model
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -45,11 +45,15 @@ def main(config="../../config.yaml", namespace=""):
 
     intersection_0 = Intersection(name="intersection_0")
     feature_imputation_0 = FeatureImputation(name="feature_imputation_0", missing_fill_method="max", missing_impute=[0])
+    feature_imputation_1 = FeatureImputation(name="feature_imputation_1")
 
     pipeline.add_component(reader_0)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
     pipeline.add_component(feature_imputation_0, data=Data(data=intersection_0.output.data))
+    pipeline.add_component(feature_imputation_1,
+                           data=Data(data=intersection_0.output.data),
+                           model=Model(model=feature_imputation_0.output.model))
     pipeline.compile()
 
     pipeline.fit()

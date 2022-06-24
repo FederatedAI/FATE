@@ -70,8 +70,10 @@ class HomoDataSplitGuest(DataSplitter):
         validate_size, test_size = DataSplitter.get_train_test_size(self.validate_size, self.test_size)
         id_validate, id_test, y_validate, y_test = self._split(id_test_validate, y_test_validate,
                                                                test_size=test_size, train_size=validate_size)
+        LOGGER.info(f"Split ids obtained.")
 
         train_data, validate_data, test_data = self.split_data(data_inst, id_train, id_validate, id_test)
+        LOGGER.info(f"Split data finished.")
 
         all_metas = {}
 
@@ -80,5 +82,6 @@ class HomoDataSplitGuest(DataSplitter):
             all_metas = self.callback_label_info(y_train, y_validate, y_test, all_metas)
         self.callback(all_metas)
         self.set_summary(all_metas)
+        LOGGER.info(f"Callback given.")
 
         return [train_data, validate_data, test_data]
