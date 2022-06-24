@@ -27,6 +27,7 @@ from federatedml.feature.binning.bin_inner_param import BinInnerParam
 from federatedml.feature.binning.bin_result import BinColResults, SplitPointsResult
 from federatedml.statistic.data_overview import get_header
 from federatedml.feature.sparse_vector import SparseVector
+from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.statistic import data_overview
 from federatedml.util import LOGGER
 from federatedml.feature.fate_element_type import NoneType
@@ -45,7 +46,11 @@ class BaseBinning(object):
         self.bin_results = SplitPointsResult()
         if params is None:
             return
-        self.params = params
+        if isinstance(params, FeatureBinningParam):
+            self.params = params
+        else:
+            self.params = None
+
         self.bin_num = params.bin_num
         if abnormal_list is None:
             self.abnormal_list = []
@@ -122,7 +127,7 @@ class BaseBinning(object):
     def transform(self, data_instances, transform_type):
         # self._init_cols(data_instances)
         for col_name in self.bin_inner_param.transform_bin_names:
-            if col_name not in self.header:
+            if col_name not in self.bin_inner_param.col_name_maps:
                 raise ValueError("Transform col_name: {} is not existed".format(col_name))
 
         if transform_type == 'bin_num':
@@ -260,11 +265,11 @@ class BaseBinning(object):
         data_shape = instances.features.get_shape()
         indice = []
         sparse_value = []
-        transform_cols_idx = bin_inner_param.transform_bin_indexes
+        transform_cols_idx_set = bin_inner_param.transform_bin_indexes_added_set
         split_points_dict = bin_results.all_split_points
 
         for col_idx, col_value in all_data:
-            if col_idx in transform_cols_idx:
+            if col_idx in transform_cols_idx_set:
                 if col_value in abnormal_list:
                     indice.append(col_idx)
                     sparse_value.append(col_value)
@@ -309,10 +314,8 @@ class BaseBinning(object):
                             abnormal_list: list, convert_type: str = 'bin_num'):
         instances = copy.deepcopy(instances)
         features = instances.features
-        transform_cols_idx = bin_inner_param.transform_bin_indexes
+        transform_cols_idx_set = bin_inner_param.transform_bin_indexes_added_set
         split_points_dict = bin_results.all_split_points
-
-        transform_cols_idx_set = set(transform_cols_idx)
 
         for col_idx, col_value in enumerate(features):
             if col_idx in transform_cols_idx_set:

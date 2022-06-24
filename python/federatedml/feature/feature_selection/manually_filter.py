@@ -57,12 +57,14 @@ class ManuallyFilter(BaseFilterMethod):
     def fit(self, data_instances, suffix):
         self._transfer_params()
         all_filter_out_names = []
+        filter_out_indexes_set = set(self.filter_out_indexes)
+        filter_out_names_set = set(self.filter_out_names)
         for col_idx, col_name in zip(self.selection_properties.select_col_indexes,
                                      self.selection_properties.select_col_names):
             # LOGGER.debug("Col_idx: {}, col_names: {}, filter_out_indexes: {}, filter_out_names: {}".format(
             #    col_idx, col_name, self.filter_out_indexes, self.filter_out_names
             # ))
-            if col_idx not in self.filter_out_indexes and col_name not in self.filter_out_names:
+            if col_idx not in filter_out_indexes_set and col_name not in filter_out_names_set:
                 self.selection_properties.add_left_col_name(col_name)
             else:
                 all_filter_out_names.append(col_name)

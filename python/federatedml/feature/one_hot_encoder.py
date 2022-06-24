@@ -40,6 +40,7 @@ class OneHotInnerParam(object):
         self.transform_indexes = []
         self.transform_names = []
         self.result_header = []
+        self.transform_index_set = set()
 
     def set_header(self, header):
         self.header = header
@@ -52,16 +53,19 @@ class OneHotInnerParam(object):
     def set_transform_all(self):
         self.transform_indexes = [i for i in range(len(self.header))]
         self.transform_names = self.header
+        self.transform_index_set = set(self.transform_indexes)
 
     def add_transform_indexes(self, transform_indexes):
         if transform_indexes is None:
             return
+
         for idx in transform_indexes:
             if idx >= len(self.header):
                 LOGGER.warning("Adding a index that out of header's bound")
                 continue
-            if idx not in self.transform_indexes:
+            if idx not in self.transform_index_set:
                 self.transform_indexes.append(idx)
+                self.transform_index_set.add(idx)
                 self.transform_names.append(self.header[idx])
 
     def add_transform_names(self, transform_names):
@@ -72,8 +76,9 @@ class OneHotInnerParam(object):
             if idx is None:
                 LOGGER.warning("Adding a col_name that is not exist in header")
                 continue
-            if idx not in self.transform_indexes:
+            if idx not in self.transform_index_set:
                 self.transform_indexes.append(idx)
+                self.transform_index_set.add(idx)
                 self.transform_names.append(self.header[idx])
 
 
@@ -89,10 +94,10 @@ class TransferPair(object):
             return
         self._values.add(value)
         if len(self._values) > consts.ONE_HOT_LIMIT:
-            raise ValueError("Input data should not have more than {} possible value when doing one-hot encode"
-                             .format(consts.ONE_HOT_LIMIT))
+            raise ValueError(f"Input data should not have more than {consts.ONE_HOT_LIMIT} "
+                             f"possible value when doing one-hot encode")
 
-        self._transformed_headers[value] = self.__encode_new_header(value)
+        # self._transformed_headers[value] = self.__encode_new_header(value)
         # LOGGER.debug(f"transformed_header: {self._transformed_headers}")
 
     @property
@@ -112,9 +117,11 @@ class TransferPair(object):
         return [self._transformed_headers[x] for x in self.values]
 
     def query_name_by_value(self, value):
-        if value not in self._values:
-            return None
-        return self._transformed_headers.get(value)
+        return self._transformed_headers.get(value, None)
+
+    def encode_new_headers(self):
+        for value in self._values:
+            self._transformed_headers[value] = "_".join(map(str, [self.name, value]))
 
     def __encode_new_header(self, value):
         return '_'.join([str(x) for x in [self.name, value]])
@@ -150,6 +157,10 @@ class OneHotEncoder(ModelBase):
         self.col_maps = data_instances.applyPartitions(f1).reduce(self.merge_col_maps)
         LOGGER.debug("Before set_schema in fit, schema is : {}, header: {}".format(self.schema,
                                                                                    self.inner_param.header))
+
+        for col_name, pair_obj in self.col_maps.items():
+            pair_obj.encode_new_headers()
+
         self._transform_schema()
         data_instances = self.transform(data_instances)
         LOGGER.debug("After transform in fit, schema is : {}, header: {}".format(self.schema,
@@ -238,6 +249,7 @@ class OneHotEncoder(ModelBase):
         for col_name in inner_param.transform_names:
             col_maps[col_name] = TransferPair(col_name)
 
+        # col_idx_name_pairs = list(zip(inner_param.transform_indexes, inner_param.transform_names))
         for _, instance in data:
             feature = instance.features
             for col_idx, col_name in zip(inner_param.transform_indexes, inner_param.transform_names):
@@ -288,18 +300,16 @@ class OneHotEncoder(ModelBase):
                 result_idx = result_header_index_mapping.get(col_name)
                 new_feature[result_idx] = value
                 # _transformed_value[col_name] = value
-            elif col_name not in col_maps:
-                continue
             else:
-                pair_obj = col_maps.get(col_name)
+                pair_obj = col_maps.get(col_name, None)
+                if not pair_obj:
+                    continue
                 new_col_name = pair_obj.query_name_by_value(value)
                 if new_col_name is None:
                     continue
                 result_idx = result_header_index_mapping.get(new_col_name)
                 new_feature[result_idx] = 1
                 # _transformed_value[new_col_name] = 1
-
-        # new_feature = [_transformed_value[x] if x in _transformed_value else 0 for x in result_header]
 
         feature_array = np.array(new_feature)
         new_inst.features = feature_array
