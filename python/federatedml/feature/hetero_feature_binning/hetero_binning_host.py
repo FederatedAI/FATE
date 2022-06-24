@@ -30,10 +30,6 @@ class HeteroFeatureBinningHost(BaseFeatureBinning):
         self.compressor = None
 
     def fit(self, data_instances):
-        """
-        Apply binning method for both data instances in local party as well as the other one. Afterwards, calculate
-        the specific metric value for specific columns.
-        """
         self._abnormal_detection(data_instances)
 
         # self._parse_cols(data_instances)
@@ -45,11 +41,25 @@ class HeteroFeatureBinningHost(BaseFeatureBinning):
                 if idx in has_missing_value:
                     raise ValueError(f"Optimal Binning do not support missing value now.")
 
-        # Calculates split points of datas in self party
+        # Calculates split points of data in self party
         split_points = self.binning_obj.fit_split_points(data_instances)
+
+        return self.stat_and_transform(data_instances, split_points)
+
+    def transform(self, data_instances):
+        self._setup_bin_inner_param(data_instances, self.model_param)
+        split_points = self.binning_obj.bin_results.all_split_points
+
+        return self.stat_and_transform(data_instances, split_points)
+
+    def stat_and_transform(self, data_instances, split_points):
+        """
+        Apply binning method for both data instances in local party as well as the other one. Afterwards, calculate
+        the specific metric value for specific columns.
+        """
         if self.model_param.skip_static:
             if self.transform_type != 'woe':
-                data_instances = self.transform(data_instances)
+                data_instances = self.transform_data(data_instances)
             else:
                 raise ValueError("Woe transform is not supported in host parties.")
             self.set_schema(data_instances)
@@ -57,13 +67,18 @@ class HeteroFeatureBinningHost(BaseFeatureBinning):
             return data_instances
 
         if not self.model_param.local_only:
-            self.compressor = CipherCompressorHost()
-            self._sync_init_bucket(data_instances, split_points)
-            if self.model_param.method == consts.OPTIMAL:
-                self.optimal_binning_sync()
+            has_label = True
+            if self._stage == "transform":
+                self.transfer_variable.transform_stage_has_label.get(idx=0)
+            if has_label:
+                self.compressor = CipherCompressorHost()
+                self._sync_init_bucket(data_instances, split_points)
+                if self.model_param.method == consts.OPTIMAL and self._stage == "fit":
+                    self.optimal_binning_sync()
 
         if self.transform_type != 'woe':
-            data_instances = self.transform(data_instances)
+            data_instances = self.transform_data(data_instances)
+
         self.set_schema(data_instances)
         self.data_output = data_instances
         total_summary = self.binning_obj.bin_results.to_json()

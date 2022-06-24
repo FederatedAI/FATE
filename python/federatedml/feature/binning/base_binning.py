@@ -27,6 +27,7 @@ from federatedml.feature.binning.bin_inner_param import BinInnerParam
 from federatedml.feature.binning.bin_result import BinColResults, SplitPointsResult
 from federatedml.statistic.data_overview import get_header
 from federatedml.feature.sparse_vector import SparseVector
+from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.statistic import data_overview
 from federatedml.util import LOGGER
 from federatedml.feature.fate_element_type import NoneType
@@ -45,7 +46,11 @@ class BaseBinning(object):
         self.bin_results = SplitPointsResult()
         if params is None:
             return
-        self.params = params
+        if isinstance(params, FeatureBinningParam):
+            self.params = params
+        else:
+            self.params = None
+
         self.bin_num = params.bin_num
         if abnormal_list is None:
             self.abnormal_list = []
