@@ -128,7 +128,6 @@ class BaseBinning(object):
         # self._init_cols(data_instances)
         for col_name in self.bin_inner_param.transform_bin_names:
             if col_name not in self.bin_inner_param.col_name_maps:
-            # if col_name not in self.header:
                 raise ValueError("Transform col_name: {} is not existed".format(col_name))
 
         if transform_type == 'bin_num':

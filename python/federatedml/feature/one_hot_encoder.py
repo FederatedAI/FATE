@@ -253,7 +253,6 @@ class OneHotEncoder(ModelBase):
         for _, instance in data:
             feature = instance.features
             for col_idx, col_name in zip(inner_param.transform_indexes, inner_param.transform_names):
-            # for col_idx, col_name in col_idx_name_pairs:
                 pair_obj = col_maps.get(col_name)
                 feature_value = feature[col_idx]
                 if not isinstance(feature_value, str):

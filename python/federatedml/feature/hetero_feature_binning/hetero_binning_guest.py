@@ -93,8 +93,8 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
             has_label = False
 
         self.transfer_variable.transform_stage_has_label.remote(has_label,
-                                                                  role=consts.HOST,
-                                                                  idx=-1)
+                                                                role=consts.HOST,
+                                                                idx=-1)
         if not has_label:
             self.transform_data(data_instances)
             return self.data_output
@@ -115,8 +115,11 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
             self.set_summary(self.bin_result.summary())
             return self.data_output
 
-        self.transform_host_results = self.federated_iv(data_instances=data_instances, label_table=label_table,
-                                                        result_counts=label_counts_dict, label_elements=self.labels, label_counts=label_counts)
+        self.transform_host_results = self.federated_iv(data_instances=data_instances,
+                                                        label_table=label_table,
+                                                        result_counts=label_counts_dict,
+                                                        label_elements=self.labels,
+                                                        label_counts=label_counts)
 
         total_summary = self.transform_bin_result.summary()
         for host_res in self.transform_host_results:
@@ -145,11 +148,11 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
 
     def cal_local_iv(self, data_instances, split_points, label_counts, label_table):
         bin_result = self.iv_calculator.cal_local_iv(data_instances=data_instances,
-                                                          split_points=split_points,
-                                                          labels=self.labels,
-                                                          label_counts=label_counts,
-                                                          bin_cols_map=self.bin_inner_param.get_need_cal_iv_cols_map(),
-                                                          label_table=label_table)
+                                                     split_points=split_points,
+                                                     labels=self.labels,
+                                                     label_counts=label_counts,
+                                                     bin_cols_map=self.bin_inner_param.get_need_cal_iv_cols_map(),
+                                                     label_table=label_table)
 
         return bin_result
 
