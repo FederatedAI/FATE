@@ -71,6 +71,7 @@ class Federation(FederationBase):
         mng_port = rabbitmq_config.get("mng_port")
         base_user = rabbitmq_config.get("user")
         base_password = rabbitmq_config.get("password")
+        mode = rabbitmq_config.get("mode", "replication")
 
         union_name = federation_session_id
         policy_id = federation_session_id
@@ -96,13 +97,14 @@ class Federation(FederationBase):
         )
 
         return Federation(
-            federation_session_id, party, mq, rabbit_manager, max_message_size, conf
+            federation_session_id, party, mq, rabbit_manager, max_message_size, conf, mode
         )
 
-    def __init__(self, session_id, party: Party, mq: MQ, rabbit_manager: RabbitManager, max_message_size, conf):
+    def __init__(self, session_id, party: Party, mq: MQ, rabbit_manager: RabbitManager, max_message_size, conf, mode):
         super().__init__(session_id=session_id, party=party, mq=mq, max_message_size=max_message_size, conf=conf)
         self._rabbit_manager = rabbit_manager
         self._vhost_set = set()
+        self._mode = mode
 
     def __getstate__(self):
         pass
@@ -130,6 +132,43 @@ class Federation(FederationBase):
         return vhost
 
     def _maybe_create_topic_and_replication(self, party, topic_suffix):
+        if self._mode == "replication":
+            return self._create_topic_by_replication_mode(party, topic_suffix)
+
+        if self._mode == "client":
+            return self._create_topic_by_client_mode(party, topic_suffix)
+
+        raise ValueError("mode={self._mode} is not support!")
+
+    def _create_topic_by_client_mode(self, party, topic_suffix):
+        # gen names
+        vhost_name = self._get_vhost(party)
+        send_queue_name = f"{self._session_id}-{self._party.role}-{self._party.party_id}-{party.role}-{party.party_id}-{topic_suffix}"
+        receive_queue_name = f"{self._session_id}-{party.role}-{party.party_id}-{self._party.role}-{self._party.party_id}-{topic_suffix}"
+
+        topic_pair = _TopicPair(
+            namespace=self._session_id,
+            vhost=vhost_name,
+            send=send_queue_name,
+            receive=receive_queue_name
+        )
+
+        # initial vhost
+        if topic_pair.vhost not in self._vhost_set:
+            self._rabbit_manager.create_vhost(topic_pair.vhost)
+            self._rabbit_manager.add_user_to_vhost(
+                self._mq.union_name, topic_pair.vhost
+            )
+            self._vhost_set.add(topic_pair.vhost)
+
+        # initial send queue, the name is send-${vhost}
+        self._rabbit_manager.create_queue(topic_pair.vhost, topic_pair.send)
+        # initial receive queue, the name is receive-${vhost}
+        self._rabbit_manager.create_queue(topic_pair.vhost, topic_pair.receive)
+
+        return topic_pair
+
+    def _create_topic_by_replication_mode(self, party, topic_suffix):
         # gen names
         vhost_name = self._get_vhost(party)
         send_queue_name = f"send-{self._session_id}-{self._party.role}-{self._party.party_id}-{party.role}-{party.party_id}-{topic_suffix}"
