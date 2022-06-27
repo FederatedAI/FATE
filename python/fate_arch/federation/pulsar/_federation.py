@@ -181,6 +181,15 @@ class Federation(FederationBase):
         else:
             LOGGER.error(response.text)
 
+        # # 4. remove namespace
+        # response = self._pulsar_manager.delete_namespace(
+        #     self._tenant, self._session_id
+        # )
+        # if response.ok:
+        #     LOGGER.debug(f"successfully delete namespace={self._session_id}")
+        # else:
+        #     LOGGER.error(response.text)
+
     def _maybe_create_topic_and_replication(self, party, topic_suffix):
         if self._mode == "replication":
             return self._create_topic_by_replication_mode(party, topic_suffix)
