@@ -1,85 +1,86 @@
+import operator
+
 import fate_tensor
-import pickle
-import unittest
 import numpy as np
+import pytest
+
+shape = (2, 2)
+testdata = {
+    (0, "f64"): np.random.random(shape).astype(np.float64),
+    (1, "f64"): np.random.random(shape).astype(np.float64),
+    (0, "f32"): np.random.random(shape).astype(np.float32),
+    (1, "f32"): np.random.random(shape).astype(np.float32),
+    (0, "i64"): np.random.randint(low=2147483648, high=9223372036854775807, size=shape, dtype=np.int64),
+    (1, "i64"): np.random.randint(low=-9223372036854775808, high=-2147483648, size=shape, dtype=np.int64),
+    (0, "i32"): np.random.randint(low=-100, high=100, size=shape, dtype=np.int32),
+    (1, "i32"): np.random.randint(low=-100, high=100, size=shape, dtype=np.int32),
+}
+pk, sk = fate_tensor.keygen(1024)
 
 
-class TestBaseMethods(unittest.TestCase):
-    def setUp(self):
-        self.af64 = np.random.random((10, 10)).astype(np.float64)
-        self.bf64 = np.random.random((10, 10)).astype(np.float64)
-        self.af32 = np.random.random((10, 10)).astype(np.float32)
-        self.bf32 = np.random.random((10, 10)).astype(np.float32)
-        self.pk, self.sk = fate_tensor.keygen(1024)
-
-    def encrypt(self, fp, par, data):
-        return getattr(self.pk, f"encrypt_{fp}{par}")(data)
-
-    def decrypt(self, fp, par, data):
-        return getattr(self.sk, f"decrypt_{fp}{par}")(data)
-
-    def data(self, fp, index):
-        return getattr(self, "{}{}".format(["a", "b"][index], fp))
-
-    def test_keygen(self):
-        fate_tensor.keygen(1024)
-
-    def test_cipher(self):
-        for par in ["", "_par"]:
-            for fp in ["f64", "f32"]:
-                diff = self.decrypt(fp, par, self.encrypt(fp, par, self.data(fp, 0))) - self.data(fp, 0)
-                self.assertTrue(np.isclose(diff, 0).all())
-
-    def test_add_cipher(self):
-        for par in ["", "_par"]:
-            for fp in ["f64", "f32"]:
-                ea = self.encrypt(fp, par, self.data(fp, 0))
-                eb = self.encrypt(fp, par, self.data(fp, 1))
-                ec = getattr(ea, f"add_cipherblock{par}")(eb)
-                c = self.data(fp, 0) + self.data(fp, 1)
-                diff = self.decrypt(fp, par, ec) - c
-                self.assertTrue(np.isclose(diff, 0).all())
-
-    def test_add_plaintext(self):
-        for par in ["", "_par"]:
-            for fp in ["f64", "f32"]:
-                ea = self.encrypt(fp, par, self.data(fp, 0))
-                b = self.data(fp, 1)
-                ec = getattr(ea, f"add_plaintext_{fp}{par}")(b)
-                c = self.data(fp, 0) + self.data(fp, 1)
-                diff = self.decrypt(fp, par, ec) - c
-                self.assertTrue(np.isclose(diff, 0).all())
-
-    def test_sub_cipher(self):
-        for par in ["", "_par"]:
-            for fp in ["f64", "f32"]:
-                ea = self.encrypt(fp, par, self.data(fp, 0))
-                eb = self.encrypt(fp, par, self.data(fp, 1))
-                ec = getattr(ea, f"sub_cipherblock{par}")(eb)
-                c = self.data(fp, 0) - self.data(fp, 1)
-                diff = self.decrypt(fp, par, ec) - c
-                self.assertTrue(np.isclose(diff, 0).all())
-
-    def test_sub_plaintext(self):
-        for par in ["", "_par"]:
-            for fp in ["f64", "f32"]:
-                ea = self.encrypt(fp, par, self.data(fp, 0))
-                b = self.data(fp, 1)
-                ec = getattr(ea, f"sub_plaintext_{fp}{par}")(b)
-                c = self.data(fp, 0) - self.data(fp, 1)
-                diff = self.decrypt(fp, par, ec) - c
-                self.assertTrue(np.isclose(diff, 0).all())
-
-    def test_mul(self):
-        for par in ["", "_par"]:
-            for fp in ["f64", "f32"]:
-                ea = self.encrypt(fp, par, self.data(fp, 0))
-                b = self.data(fp, 1)
-                ec = getattr(ea, f"mul_plaintext_{fp}{par}")(b)
-                c = self.data(fp, 0) * self.data(fp, 1)
-                diff = self.decrypt(fp, par, ec) - c
-                self.assertTrue(np.isclose(diff, 0).all())
+def encrypt(fp, par, data):
+    if par:
+        return getattr(pk, f"encrypt_{fp}_par")(data)
+    else:
+        return getattr(pk, f"encrypt_{fp}")(data)
 
 
-if __name__ == "__main__":
-    unittest.main()
+def decrypt(fp, par, data):
+    if par:
+        return getattr(sk, f"decrypt_{fp}_par")(data)
+    else:
+        return getattr(sk, f"decrypt_{fp}")(data)
+
+
+def data(fp, index):
+    return testdata[(index, fp)]
+
+
+def test_keygen():
+    fate_tensor.keygen(1024)
+
+
+def cipher_op(ciphertext, op, par):
+    if par:
+        return getattr(ciphertext, f"{op.__name__}_cipherblock_par")
+    else:
+        return getattr(ciphertext, f"{op.__name__}_cipherblock")
+
+
+def plaintest_op(ciphertext, op, par, fp):
+    if par:
+        return getattr(ciphertext, f"{op.__name__}_plaintext_{fp}_par")
+    else:
+        return getattr(ciphertext, f"{op.__name__}_plaintext_{fp}")
+
+
+@pytest.mark.parametrize("par", [False, True])
+@pytest.mark.parametrize("fp", ["f64", "f32", "i32", "i64"])
+def test_cipher(par, fp):
+    e = decrypt(fp, par, encrypt(fp, par, data(fp, 0)))
+    c = data(fp, 0)
+    assert np.isclose(e, c).all()
+
+
+@pytest.mark.parametrize("par", [False, True])
+@pytest.mark.parametrize("fp", ["f64", "f32", "i64", "i32"])
+@pytest.mark.parametrize("op", [operator.add, operator.sub])
+def test_cipher_op(par, fp, op):
+    ea = encrypt(fp, par, data(fp, 0))
+    eb = encrypt(fp, par, data(fp, 1))
+    result = cipher_op(ea, op, par)(eb)
+    expect = op(data(fp, 0), data(fp, 1))
+    diff = decrypt(fp, par, result) - expect
+    assert np.isclose(diff, 0).all()
+
+
+@pytest.mark.parametrize("par", [False, True])
+@pytest.mark.parametrize("fp", ["f64", "f32", "i64", "i32"])
+@pytest.mark.parametrize("op", [operator.add, operator.sub, operator.mul])
+def test_plaintext_op(par, fp, op):
+    ea = encrypt(fp, par, data(fp, 0))
+    b = data(fp, 1)
+    result = plaintest_op(ea, op, par, fp)(b)
+    expect = op(data(fp, 0), data(fp, 1))
+    diff = decrypt(fp, par, result) - expect
+    assert np.isclose(diff, 0).all()

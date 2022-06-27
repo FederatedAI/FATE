@@ -1,7 +1,8 @@
-import phe
 import time
+
 import fate_tensor
 import numpy as np
+import phe
 
 shape = 1000
 data = np.random.random((shape, 1))

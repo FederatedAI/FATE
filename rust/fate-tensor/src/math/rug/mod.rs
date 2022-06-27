@@ -43,4 +43,10 @@ impl BInt {
     pub fn to_f64(&self) -> f64 {
         self.0.to_f64()
     }
+    pub fn to_i64(&self) -> i64 {
+        self.0.to_i64().expect("cant't convert to i64")
+    }
+    pub fn to_i128(&self) -> i128 {
+        self.0.to_i128().expect("cant't convert to i128")
+    }
 }

@@ -1,5 +1,5 @@
 use super::BInt;
-use core::ops::{Add, Div, Mul, Rem, Sub};
+use core::ops::{Add, Div, Mul, Rem, Shl, Shr, Sub};
 use rug::Integer;
 
 /// macro for implementitions of Add, Sub, Mul, Div
@@ -103,3 +103,23 @@ impl Mul<rug::Float> for BInt {
         self.0 * rhs
     }
 }
+
+macro_rules! impl_sh {
+    ( $($int_type: ty),* ) => {
+        $(
+            impl Shl<$int_type> for BInt {
+                type Output = BInt;
+                fn shl(self, rhs: $int_type) -> Self::Output {
+                    BInt(self.0 << rhs)
+                }
+            }
+            impl Shr<$int_type> for BInt {
+                type Output = BInt;
+                fn shr(self, rhs: $int_type) -> Self::Output {
+                    BInt(self.0 >> rhs)
+                }
+            }
+        )*
+    }
+}
+impl_sh!(i32, u32);

@@ -140,3 +140,25 @@ impl CT {
         }
     }
 }
+
+macro_rules! encrypt_decrypt_tests {
+    ($name: ident, $type: ty, $v: expr) => {
+        #[test]
+        fn $name() {
+            let (sk, pk) = keygen(1024);
+            let encoded = ($v).encode(&pk.coder);
+            let ciphertext = pk.encrypt(&encoded);
+            let decrypted = sk.decrypt(&ciphertext);
+            let decoded = <$type>::decode(&decrypted, &sk.coder);
+            assert_eq!(decoded, $v)
+        }
+    };
+}
+encrypt_decrypt_tests!(test_f64, f64, 0.1f64);
+encrypt_decrypt_tests!(test_f64_neg, f64, -0.1f64);
+encrypt_decrypt_tests!(test_f32_neg, f32, -0.1f32);
+encrypt_decrypt_tests!(test_f32, f32, 0.1f32);
+encrypt_decrypt_tests!(test_i64, i64, 12345i64);
+encrypt_decrypt_tests!(test_i64_neg, i64, -12345i64);
+encrypt_decrypt_tests!(test_i32, i32, 12345i32);
+encrypt_decrypt_tests!(test_i32_neg, i32, -12345i32);

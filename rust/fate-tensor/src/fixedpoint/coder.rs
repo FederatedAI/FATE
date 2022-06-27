@@ -26,7 +26,7 @@ impl FixedpointCoder {
     }
     pub fn encode_i64(&self, plaintext: i64) -> PT {
         let significant = paillier::PT(if plaintext < 0 {
-            BInt::from(&self.n - plaintext)
+            BInt::from(&self.n + plaintext)
         } else {
             BInt::from(plaintext)
         });
@@ -35,6 +35,35 @@ impl FixedpointCoder {
             exp: 0,
         }
     }
+    pub fn encode_i32(&self, plaintext: i32) -> PT {
+        let significant = paillier::PT(if plaintext < 0 {
+            BInt::from(&self.n + plaintext)
+        } else {
+            BInt::from(plaintext)
+        });
+        PT {
+            significant,
+            exp: 0,
+        }
+    }
+    pub fn decode_i64(&self, encoded: &PT) -> i64 {
+        let significant = encoded.significant.0.clone();
+        let mantissa = if significant > self.n {
+            panic!("Attempted to decode corrupted number")
+        } else if significant <= self.max_int {
+            significant
+        } else if significant >= BInt::from(&self.n - &self.max_int) {
+            significant - &self.n
+        } else {
+            panic!("Overflow detected in decrypted number")
+        };
+        (mantissa << (LOG2_BASE as i32 * encoded.exp)).to_i128() as i64
+    }
+    pub fn decode_i32(&self, encoded: &PT) -> i32 {
+        // Todo: could be improved
+        self.decode_f64(encoded) as i32
+    }
+
     pub fn encode_f64(&self, plaintext: f64) -> PT {
         let bin_flt_exponent = plaintext.frexp().1;
         let bin_lsb_exponent = bin_flt_exponent - (FLOAT_MANTISSA_BITS as i32);
@@ -68,7 +97,7 @@ impl FixedpointCoder {
             panic!("Overflow detected in decrypted number")
         };
         if encoded.exp >= 0 {
-            (mantissa * BInt::from(BASE).pow(encoded.exp as u32)).to_f64()
+            (mantissa << (LOG2_BASE as i32 * encoded.exp)).to_f64()
         } else {
             (mantissa * rug::Float::with_val(FLOAT_MANTISSA_BITS, BASE).pow(encoded.exp)).to_f64()
         }
@@ -94,6 +123,22 @@ impl CouldCode for f64 {
     }
 }
 
+impl CouldCode for i64 {
+    fn encode(&self, coder: &FixedpointCoder) -> PT {
+        coder.encode_i64(*self)
+    }
+    fn decode(pt: &PT, coder: &FixedpointCoder) -> Self {
+        coder.decode_i64(pt)
+    }
+}
+impl CouldCode for i32 {
+    fn encode(&self, coder: &FixedpointCoder) -> PT {
+        coder.encode_i32(*self)
+    }
+    fn decode(pt: &PT, coder: &FixedpointCoder) -> Self {
+        coder.decode_i32(pt)
+    }
+}
 impl CouldCode for f32 {
     fn encode(&self, coder: &FixedpointCoder) -> PT {
         coder.encode_f32(*self)

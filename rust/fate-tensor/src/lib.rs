@@ -37,6 +37,12 @@ impl PK {
     fn encrypt_f32(&self, a: PyReadonlyArrayDyn<f32>) -> Cipherblock {
         Cipherblock(Some(self.pk.encrypt_array(a.as_array())))
     }
+    fn encrypt_i64(&self, a: PyReadonlyArrayDyn<i64>) -> Cipherblock {
+        Cipherblock(Some(self.pk.encrypt_array(a.as_array())))
+    }
+    fn encrypt_i32(&self, a: PyReadonlyArrayDyn<i32>) -> Cipherblock {
+        Cipherblock(Some(self.pk.encrypt_array(a.as_array())))
+    }
     #[cfg(feature = "rayon")]
     fn encrypt_f64_par(&self, a: PyReadonlyArrayDyn<f64>) -> Cipherblock {
         Cipherblock(Some(self.pk.encrypt_array_par(a.as_array())))
@@ -44,6 +50,14 @@ impl PK {
     #[cfg(feature = "rayon")]
     fn encrypt_f32_par(&self, a: PyReadonlyArrayDyn<f32>) -> Cipherblock {
         Cipherblock(Some(self.pk.encrypt_array_par(a.as_array())))
+    }
+    #[cfg(feature = "rayon")]
+    fn encrypt_i64_par(&self, a: PyReadonlyArrayDyn<i64>) -> Cipherblock {
+        Cipherblock(Some(self.pk.encrypt_array(a.as_array())))
+    }
+    #[cfg(feature = "rayon")]
+    fn encrypt_i32_par(&self, a: PyReadonlyArrayDyn<i32>) -> Cipherblock {
+        Cipherblock(Some(self.pk.encrypt_array(a.as_array())))
     }
 }
 
@@ -57,6 +71,14 @@ impl SK {
         let array = a.0.as_ref().unwrap();
         self.sk.decrypt_array(array).into_pyarray(py)
     }
+    fn decrypt_i64<'py>(&self, a: &Cipherblock, py: Python<'py>) -> &'py PyArrayDyn<i64> {
+        let array = a.0.as_ref().unwrap();
+        self.sk.decrypt_array(array).into_pyarray(py)
+    }
+    fn decrypt_i32<'py>(&self, a: &Cipherblock, py: Python<'py>) -> &'py PyArrayDyn<i32> {
+        let array = a.0.as_ref().unwrap();
+        self.sk.decrypt_array(array).into_pyarray(py)
+    }
     #[cfg(feature = "rayon")]
     fn decrypt_f64_par<'py>(&self, a: &Cipherblock, py: Python<'py>) -> &'py PyArrayDyn<f64> {
         let array = a.0.as_ref().unwrap();
@@ -66,6 +88,16 @@ impl SK {
     fn decrypt_f32_par<'py>(&self, a: &Cipherblock, py: Python<'py>) -> &'py PyArrayDyn<f32> {
         let array = a.0.as_ref().unwrap();
         self.sk.decrypt_array_par(array).into_pyarray(py)
+    }
+    #[cfg(feature = "rayon")]
+    fn decrypt_i64_par<'py>(&self, a: &Cipherblock, py: Python<'py>) -> &'py PyArrayDyn<i64> {
+        let array = a.0.as_ref().unwrap();
+        self.sk.decrypt_array(array).into_pyarray(py)
+    }
+    #[cfg(feature = "rayon")]
+    fn decrypt_i32_par<'py>(&self, a: &Cipherblock, py: Python<'py>) -> &'py PyArrayDyn<i32> {
+        let array = a.0.as_ref().unwrap();
+        self.sk.decrypt_array(array).into_pyarray(py)
     }
 }
 
@@ -87,61 +119,117 @@ impl Cipherblock {
             Err(e) => Err(e),
         }
     }
+
+    // add
     pub fn add_cipherblock(&self, other: &Cipherblock) -> Cipherblock {
         self._add_cipherblock(other)
     }
+    pub fn add_plaintext_f64(&self, other: PyReadonlyArrayDyn<f64>) -> Cipherblock {
+        self._add_plaintext(other)
+    }
+    pub fn add_plaintext_f32(&self, other: PyReadonlyArrayDyn<f32>) -> Cipherblock {
+        self._add_plaintext(other)
+    }
+    pub fn add_plaintext_i64(&self, other: PyReadonlyArrayDyn<i64>) -> Cipherblock {
+        self._add_plaintext(other)
+    }
+    pub fn add_plaintext_i32(&self, other: PyReadonlyArrayDyn<i32>) -> Cipherblock {
+        self._add_plaintext(other)
+    }
+
+    // sub
     pub fn sub_cipherblock(&self, other: &Cipherblock) -> Cipherblock {
         self._sub_cipherblock(other)
     }
-    pub fn add_plaintext_f64(&self, other: PyReadonlyArrayDyn<f64>) -> Cipherblock {
-        self._add_plaintext_f64(other)
-    }
     pub fn sub_plaintext_f64(&self, other: PyReadonlyArrayDyn<f64>) -> Cipherblock {
-        self._sub_plaintext_f64(other)
-    }
-    pub fn mul_plaintext_f64(&self, other: PyReadonlyArrayDyn<f64>) -> Cipherblock {
-        self._mul_plaintext_f64(other)
-    }
-    pub fn add_plaintext_f32(&self, other: PyReadonlyArrayDyn<f32>) -> Cipherblock {
-        self._add_plaintext_f32(other)
+        self._sub_plaintext(other)
     }
     pub fn sub_plaintext_f32(&self, other: PyReadonlyArrayDyn<f32>) -> Cipherblock {
-        self._sub_plaintext_f32(other)
+        self._sub_plaintext(other)
+    }
+    pub fn sub_plaintext_i64(&self, other: PyReadonlyArrayDyn<i64>) -> Cipherblock {
+        self._sub_plaintext(other)
+    }
+    pub fn sub_plaintext_i32(&self, other: PyReadonlyArrayDyn<i32>) -> Cipherblock {
+        self._sub_plaintext(other)
+    }
+
+    // mul
+    pub fn mul_plaintext_f64(&self, other: PyReadonlyArrayDyn<f64>) -> Cipherblock {
+        self._mul_plaintext(other)
     }
     pub fn mul_plaintext_f32(&self, other: PyReadonlyArrayDyn<f32>) -> Cipherblock {
-        self._mul_plaintext_f32(other)
+        self._mul_plaintext(other)
     }
+    pub fn mul_plaintext_i64(&self, other: PyReadonlyArrayDyn<i64>) -> Cipherblock {
+        self._mul_plaintext(other)
+    }
+    pub fn mul_plaintext_i32(&self, other: PyReadonlyArrayDyn<i32>) -> Cipherblock {
+        self._mul_plaintext(other)
+    }
+
+    // rayon
+
+    // add
     #[cfg(feature = "rayon")]
     pub fn add_cipherblock_par(&self, other: &Cipherblock) -> Cipherblock {
-        self._add_cipherblock(other)
-    }
-    #[cfg(feature = "rayon")]
-    pub fn sub_cipherblock_par(&self, other: &Cipherblock) -> Cipherblock {
-        self._sub_cipherblock(other)
+        self._add_cipherblock_par(other)
     }
     #[cfg(feature = "rayon")]
     pub fn add_plaintext_f64_par(&self, other: PyReadonlyArrayDyn<f64>) -> Cipherblock {
-        self._add_plaintext_f64(other)
-    }
-    #[cfg(feature = "rayon")]
-    pub fn sub_plaintext_f64_par(&self, other: PyReadonlyArrayDyn<f64>) -> Cipherblock {
-        self._sub_plaintext_f64(other)
-    }
-    #[cfg(feature = "rayon")]
-    pub fn mul_plaintext_f64_par(&self, other: PyReadonlyArrayDyn<f64>) -> Cipherblock {
-        self._mul_plaintext_f64(other)
+        self._add_plaintext_par(other)
     }
     #[cfg(feature = "rayon")]
     pub fn add_plaintext_f32_par(&self, other: PyReadonlyArrayDyn<f32>) -> Cipherblock {
-        self._add_plaintext_f32_par(other)
+        self._add_plaintext_par(other)
+    }
+    #[cfg(feature = "rayon")]
+    pub fn add_plaintext_i64_par(&self, other: PyReadonlyArrayDyn<i64>) -> Cipherblock {
+        self._add_plaintext(other)
+    }
+    #[cfg(feature = "rayon")]
+    pub fn add_plaintext_i32_par(&self, other: PyReadonlyArrayDyn<i32>) -> Cipherblock {
+        self._add_plaintext(other)
+    }
+
+    // sub
+    #[cfg(feature = "rayon")]
+    pub fn sub_cipherblock_par(&self, other: &Cipherblock) -> Cipherblock {
+        self._sub_cipherblock_par(other)
+    }
+    #[cfg(feature = "rayon")]
+    pub fn sub_plaintext_f64_par(&self, other: PyReadonlyArrayDyn<f64>) -> Cipherblock {
+        self._sub_plaintext_par(other)
     }
     #[cfg(feature = "rayon")]
     pub fn sub_plaintext_f32_par(&self, other: PyReadonlyArrayDyn<f32>) -> Cipherblock {
-        self._sub_plaintext_f32_par(other)
+        self._sub_plaintext_par(other)
+    }
+    #[cfg(feature = "rayon")]
+    pub fn sub_plaintext_i64_par(&self, other: PyReadonlyArrayDyn<i64>) -> Cipherblock {
+        self._sub_plaintext_par(other)
+    }
+    #[cfg(feature = "rayon")]
+    pub fn sub_plaintext_i32_par(&self, other: PyReadonlyArrayDyn<i32>) -> Cipherblock {
+        self._sub_plaintext_par(other)
+    }
+
+    // mul
+    #[cfg(feature = "rayon")]
+    pub fn mul_plaintext_f64_par(&self, other: PyReadonlyArrayDyn<f64>) -> Cipherblock {
+        self._mul_plaintext_par(other)
     }
     #[cfg(feature = "rayon")]
     pub fn mul_plaintext_f32_par(&self, other: PyReadonlyArrayDyn<f32>) -> Cipherblock {
-        self._mul_plaintext_f32_par(other)
+        self._mul_plaintext_par(other)
+    }
+    #[cfg(feature = "rayon")]
+    pub fn mul_plaintext_i64_par(&self, other: PyReadonlyArrayDyn<i64>) -> Cipherblock {
+        self._mul_plaintext_par(other)
+    }
+    #[cfg(feature = "rayon")]
+    pub fn mul_plaintext_i32_par(&self, other: PyReadonlyArrayDyn<i32>) -> Cipherblock {
+        self._mul_plaintext(other)
     }
 }
 macro_rules! impl_ops_cipher {
@@ -162,16 +250,22 @@ macro_rules! impl_ops_cipher {
     };
 }
 macro_rules! impl_ops_plain {
-    ($name:ident,$fn:expr,$T:ty) => {
-        pub fn $name(&self, other: PyReadonlyArrayDyn<$T>) -> Cipherblock {
+    ($name:ident,$fn:expr) => {
+        pub fn $name<T>(&self, other: PyReadonlyArrayDyn<T>) -> Cipherblock
+        where
+            T: numpy::Element + fixedpoint::CouldCode,
+        {
             Cipherblock::binary_plain(self, other, |lhs, rhs| {
                 block::Cipherblock::ops_cb_pt(lhs, rhs, $fn)
             })
         }
     };
-    ($name:ident,$fn:expr,$T:ty,$feature:ident) => {
+    ($name:ident,$fn:expr,$feature:ident) => {
         #[cfg(feature = "rayon")]
-        pub fn $name(&self, other: PyReadonlyArrayDyn<$T>) -> Cipherblock {
+        pub fn $name<T>(&self, other: PyReadonlyArrayDyn<T>) -> Cipherblock
+        where
+            T: numpy::Element + fixedpoint::CouldCode + Sync,
+        {
             Cipherblock::binary_plain(self, other, |lhs, rhs| {
                 block::Cipherblock::ops_cb_pt_par(lhs, rhs, $fn)
             })
@@ -200,24 +294,19 @@ impl Cipherblock {
     fn get_cb(&self) -> &block::Cipherblock {
         self.0.as_ref().unwrap()
     }
+
     impl_ops_cipher!(_add_cipherblock, fixedpoint::CT::add);
     impl_ops_cipher!(_sub_cipherblock, fixedpoint::CT::sub);
-    impl_ops_plain!(_add_plaintext_f64, fixedpoint::CT::add_pt, f64);
-    impl_ops_plain!(_sub_plaintext_f64, fixedpoint::CT::sub_pt, f64);
-    impl_ops_plain!(_mul_plaintext_f64, fixedpoint::CT::mul, f64);
-    impl_ops_plain!(_add_plaintext_f32, fixedpoint::CT::add_pt, f32);
-    impl_ops_plain!(_sub_plaintext_f32, fixedpoint::CT::sub_pt, f32);
-    impl_ops_plain!(_mul_plaintext_f32, fixedpoint::CT::mul, f32);
+    impl_ops_plain!(_add_plaintext, fixedpoint::CT::add_pt);
+    impl_ops_plain!(_sub_plaintext, fixedpoint::CT::sub_pt);
+    impl_ops_plain!(_mul_plaintext, fixedpoint::CT::mul);
 
     //par
     impl_ops_cipher!(_add_cipherblock_par, fixedpoint::CT::add, rayon);
     impl_ops_cipher!(_sub_cipherblock_par, fixedpoint::CT::sub, rayon);
-    impl_ops_plain!(_add_plaintext_f64_par, fixedpoint::CT::add_pt, f64, rayon);
-    impl_ops_plain!(_sub_plaintext_f64_par, fixedpoint::CT::sub_pt, f64, rayon);
-    impl_ops_plain!(_mul_plaintext_f64_par, fixedpoint::CT::mul, f64, rayon);
-    impl_ops_plain!(_add_plaintext_f32_par, fixedpoint::CT::add_pt, f32, rayon);
-    impl_ops_plain!(_sub_plaintext_f32_par, fixedpoint::CT::sub_pt, f32, rayon);
-    impl_ops_plain!(_mul_plaintext_f32_par, fixedpoint::CT::mul, f32, rayon);
+    impl_ops_plain!(_add_plaintext_par, fixedpoint::CT::add_pt, rayon);
+    impl_ops_plain!(_sub_plaintext_par, fixedpoint::CT::sub_pt, rayon);
+    impl_ops_plain!(_mul_plaintext_par, fixedpoint::CT::mul, rayon);
 }
 #[pymodule]
 fn fate_tensor(_py: Python, m: &PyModule) -> PyResult<()> {
