@@ -90,6 +90,8 @@ fate_on_spark:
     password: fate
     # default conf/rabbitmq_route_table.yaml
     route_table:
+    # mode: replication / client, default: replication
+    mode: replication
   pulsar:
     host: 192.168.0.5
     port: 6650
@@ -101,6 +103,8 @@ fate_on_spark:
     topic_ttl: 5
     # default conf/pulsar_route_table.yaml
     route_table:
+   # mode: replication / client, default: replication
+    mode: replication
   nginx:
     host: 127.0.0.1
     http_port: 9300

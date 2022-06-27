@@ -93,6 +93,7 @@ class Federation(FederationBase):
         # TODO add credential to connections
         base_user = pulsar_config.get("user")
         base_password = pulsar_config.get("password")
+        mode = pulsar_config.get("mode", "replication")
 
         pulsar_manager = PulsarManager(
             host=host, port=mng_port, runtime_config=pulsar_run
@@ -114,6 +115,8 @@ class Federation(FederationBase):
             "connection", {}
         )
 
+        LOGGER.debug(f"federation mode={mode}")
+
         return Federation(
             federation_session_id,
             party,
@@ -123,17 +126,19 @@ class Federation(FederationBase):
             topic_ttl,
             cluster,
             tenant,
-            conf
+            conf,
+            mode
         )
 
     def __init__(self, session_id, party: Party, mq: MQ, pulsar_manager: PulsarManager, max_message_size, topic_ttl,
-                 cluster, tenant, conf):
+                 cluster, tenant, conf, mode):
         super().__init__(session_id=session_id, party=party, mq=mq, max_message_size=max_message_size, conf=conf)
 
         self._pulsar_manager = pulsar_manager
         self._topic_ttl = topic_ttl
         self._cluster = cluster
         self._tenant = tenant
+        self._mode = mode
 
     def __getstate__(self):
         pass
@@ -176,7 +181,81 @@ class Federation(FederationBase):
         else:
             LOGGER.error(response.text)
 
+        # # 4. remove namespace
+        # response = self._pulsar_manager.delete_namespace(
+        #     self._tenant, self._session_id
+        # )
+        # if response.ok:
+        #     LOGGER.debug(f"successfully delete namespace={self._session_id}")
+        # else:
+        #     LOGGER.error(response.text)
+
     def _maybe_create_topic_and_replication(self, party, topic_suffix):
+        if self._mode == "replication":
+            return self._create_topic_by_replication_mode(party, topic_suffix)
+
+        if self._mode == "client":
+            return self._create_topic_by_client_mode(party, topic_suffix)
+
+        raise ValueError("mode={self._mode} is not support!")
+
+    def _create_topic_by_client_mode(self, party, topic_suffix):
+        send_topic_name = f"{self._party.role}-{self._party.party_id}-{party.role}-{party.party_id}-{topic_suffix}"
+        receive_topic_name = f"{party.role}-{party.party_id}-{self._party.role}-{self._party.party_id}-{topic_suffix}"
+
+        # topic_pair is a pair of topic for sending and receiving message respectively
+        topic_pair = _TopicPair(
+            tenant=self._tenant,
+            namespace=self._session_id,
+            send=send_topic_name,
+            receive=receive_topic_name,
+        )
+
+        # init pulsar namespace
+        namespaces = self._pulsar_manager.get_namespace(
+            self._tenant).json()
+        # create namespace
+        if f"{self._tenant}/{self._session_id}" not in namespaces:
+            # append target cluster to the pulsar namespace
+            code = self._pulsar_manager.create_namespace(
+                self._tenant, self._session_id
+            ).status_code
+
+            # according to https://pulsar.apache.org/admin-rest-api/?version=2.7.0&apiversion=v2#operation/getPolicies
+            # return 409 if existed
+            # return 204 if ok
+            if code == 204 or code == 409:
+                LOGGER.debug(
+                    "successfully create pulsar namespace: %s", self._session_id
+                )
+            else:
+                raise Exception(
+                    "unable to create pulsar namespace with status code: {}".format(
+                        code
+                    )
+                )
+
+            # set message ttl for the namespace
+            response = self._pulsar_manager.set_retention(
+                self._tenant,
+                self._session_id,
+                retention_time_in_minutes=int(self._topic_ttl),
+                retention_size_in_MB=-1,
+            )
+
+            LOGGER.debug(response.text)
+            if response.ok:
+                LOGGER.debug(
+                    "successfully set message ttl to namespace: {} about {} mintues".format(
+                        self._session_id, self._topic_ttl
+                    )
+                )
+            else:
+                LOGGER.debug("failed to set message ttl to namespace")
+
+        return topic_pair
+
+    def _create_topic_by_replication_mode(self, party, topic_suffix):
         send_topic_name = f"{self._party.role}-{self._party.party_id}-{party.role}-{party.party_id}-{topic_suffix}"
         receive_topic_name = f"{party.role}-{party.party_id}-{self._party.role}-{self._party.party_id}-{topic_suffix}"
 

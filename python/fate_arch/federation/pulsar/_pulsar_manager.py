@@ -33,6 +33,7 @@ BACKOFF_FACTOR = 1
 CLUSTER = 'clusters/{}'
 TENANT = 'tenants/{}'
 
+
 # APIs are refer to https://pulsar.apache.org/admin-rest-api/?version=2.7.0&apiversion=v2
 
 
@@ -77,7 +78,7 @@ class PulsarManager():
         return response
 
     # service_url need to provide "http://" prefix
-    def create_cluster(self, cluster_name: str,  broker_url: str, service_url: str = '',
+    def create_cluster(self, cluster_name: str, broker_url: str, service_url: str = '',
                        service_url_tls: str = '', broker_url_tls: str = '',
                        proxy_url: str = '', proxy_protocol: str = "SNI", peer_cluster_names: list = [],
                        ):
@@ -98,7 +99,7 @@ class PulsarManager():
             self.service_url + CLUSTER.format(cluster_name), data=json.dumps(data))
         return response
 
-    def update_cluster(self, cluster_name: str,  broker_url: str, service_url: str = '',
+    def update_cluster(self, cluster_name: str, broker_url: str, service_url: str = '',
                        service_url_tls: str = '', broker_url_tls: str = '',
                        proxy_url: str = '', proxy_protocol: str = "SNI", peer_cluster_names: list = [],
                        ):
@@ -160,7 +161,7 @@ class PulsarManager():
             self.service_url + 'namespaces/{}'.format(tenant))
         return response
 
-     # 'replication_clusters' is always required
+    # 'replication_clusters' is always required
     def create_namespace(self, tenant: str, namespace: str, policies: dict = {}):
         session = self._create_session()
         response = session.put(
@@ -169,12 +170,11 @@ class PulsarManager():
         )
         return response
 
-    def delete_namespace(self, tenant: str, namespace: str, force: bool = False):
+    def delete_namespace(self, tenant: str, namespace: str):
         session = self._create_session()
         response = session.delete(
             self.service_url +
-            'namespace/{}/{}?force={}'.format(tenant,
-                                              namespace, str(force).lower())
+            'namespaces/{}/{}'.format(tenant, namespace)
         )
         return response
 
@@ -207,7 +207,7 @@ class PulsarManager():
         session = self._create_session()
         response = session.post(
             # the API accepts data as seconds
-            self.service_url + 'namespaces/{}/{}/messageTTL'.format(tenant, namespace), json=mintues*60
+            self.service_url + 'namespaces/{}/{}/messageTTL'.format(tenant, namespace), json=mintues * 60
         )
 
         return response

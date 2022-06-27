@@ -194,7 +194,7 @@ class MQChannel(object):
                 self._producer_conn = None
 
     def _get_or_create_consumer(self):
-        if self._check_consumer_alive() != True:
+        if not self._check_consumer_alive():
             try:
                 self._consumer_conn = pulsar.Client(
                     service_url="pulsar://{}:{}".format(
