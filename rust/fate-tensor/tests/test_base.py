@@ -84,3 +84,12 @@ def test_plaintext_op(par, fp, op):
     expect = op(data(fp, 0), data(fp, 1))
     diff = decrypt(fp, par, result) - expect
     assert np.isclose(diff, 0).all()
+
+
+def test_matmul():
+    a = np.random.random((5, 8))
+    b = np.random.random((8, 4))
+    ca = pk.encrypt_f64(a)
+    cab = ca.matmul_plaintext_i2x_f64(b)
+    ab = sk.decrypt_f64(cab)
+    assert np.isclose(ab, a @ b).all()

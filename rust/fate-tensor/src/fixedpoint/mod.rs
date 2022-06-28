@@ -75,6 +75,12 @@ impl SK {
 }
 
 impl CT {
+    pub fn zero() -> CT {
+        CT {
+            significant_encryped: paillier::CT::zero(),
+            exp: 0,
+        }
+    }
     fn decrese_exp_to(&self, exp: i32, pk: &paillier::PK) -> CT {
         assert!(exp < self.exp);
         let factor = BInt::from(BASE).pow((self.exp - exp) as u32);
@@ -103,6 +109,10 @@ impl CT {
     }
     pub fn sub(&self, b: &CT, pk: &PK) -> CT {
         self.add(&b.neg(pk), pk)
+    }
+    pub fn add_assign(&mut self, b: &CT, pk: &PK) {
+        // FIXME
+        *self = self.add(b, pk);
     }
     pub fn add(&self, b: &CT, pk: &PK) -> CT {
         let a = self;

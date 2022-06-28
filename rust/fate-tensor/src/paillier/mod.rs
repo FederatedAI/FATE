@@ -5,6 +5,9 @@ use serde::{Deserialize, Serialize};
 pub struct CT(pub BInt); //ciphertext
 
 impl CT {
+    pub fn zero() -> CT {
+        CT(BInt::from(ONE))
+    }
     pub fn obfuscate(self, pk: &PK) -> CT {
         let rn = pk.random_rn();
         CT(self.0 * rn % &pk.ns)

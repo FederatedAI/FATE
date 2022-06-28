@@ -1,6 +1,6 @@
 use super::fixedpoint;
 use super::fixedpoint::CouldCode;
-use ndarray::{ArrayD, ArrayViewD};
+use ndarray::{ArrayD, ArrayView2, ArrayViewD};
 #[cfg(feature = "rayon")]
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -111,6 +111,38 @@ impl Cipherblock {
             pubkey: self.pubkey.clone(),
             data,
             shape: self.shape.clone(),
+        }
+    }
+    pub fn matmul_plaintext_i2x_f64(&self, rhs: ArrayView2<f64>) -> Cipherblock {
+        match self.shape.as_slice() {
+            &[m, k1] => {
+                let (k2, n) = rhs.dim();
+                if k1 != k2 || m.checked_mul(n).is_none() {
+                    panic!("dot shape error: ({}, {}) x ({}, {})", m, k1, k2, n);
+                }
+                let mut c: Vec<fixedpoint::CT> = vec![fixedpoint::CT::zero(); m * n];
+                let coder = &self.pubkey.coder;
+                let pk = &self.pubkey;
+                for i in 0..m {
+                    for j in 0..n {
+                        (0..k1).for_each(|k| {
+                            unsafe {
+                                let l = self.data.get_unchecked(i * k1 + k); // (i, k)
+                                let r = rhs.uget((k, j)).encode(coder); // (k, j)
+                                let d = l.mul(&r, &pk); // l * r
+                                c.get_unchecked_mut(i * n + j).add_assign(&d, &pk);
+                                // acc += l * r
+                            }
+                        });
+                    }
+                }
+                Cipherblock {
+                    pubkey: pk.clone(),
+                    data: c,
+                    shape: vec![m, n],
+                }
+            }
+            not_dim2 @ _ => panic!("dot shape error: (?) x {:?}", not_dim2),
         }
     }
 }

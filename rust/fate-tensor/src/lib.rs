@@ -6,7 +6,7 @@ pub mod paillier;
 use bincode::{deserialize, serialize};
 use ndarray::ArrayViewD;
 use numpy::convert::IntoPyArray;
-use numpy::{PyArrayDyn, PyReadonlyArrayDyn};
+use numpy::{PyArrayDyn, PyReadonlyArray2, PyReadonlyArrayDyn};
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 
@@ -166,6 +166,12 @@ impl Cipherblock {
     }
     pub fn mul_plaintext_i32(&self, other: PyReadonlyArrayDyn<i32>) -> Cipherblock {
         self._mul_plaintext(other)
+    }
+
+    pub fn matmul_plaintext_i2x_f64(&self, other: PyReadonlyArray2<f64>) -> Cipherblock {
+        let a = self.get_cb();
+        let b = other.as_array();
+        Cipherblock(Some(a.matmul_plaintext_i2x_f64(b)))
     }
 
     // rayon
