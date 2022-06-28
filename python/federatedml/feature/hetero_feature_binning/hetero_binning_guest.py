@@ -70,8 +70,12 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
             self.set_summary(self.bin_result.summary())
             return self.data_output
 
-        self.host_results = self.federated_iv(data_instances=data_instances, label_table=label_table,
-                                              result_counts=label_counts_dict, label_elements=self.labels, label_counts=label_counts)
+        self.host_results = self.federated_iv(
+            data_instances=data_instances,
+            label_table=label_table,
+            result_counts=label_counts_dict,
+            label_elements=self.labels,
+            label_counts=label_counts)
 
         total_summary = self.bin_result.summary()
         for host_res in self.host_results:
