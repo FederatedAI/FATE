@@ -3,18 +3,8 @@ import operator
 import fate_tensor
 import numpy as np
 import pytest
+import cachetools
 
-shape = (2, 2)
-testdata = {
-    (0, "f64"): np.random.random(shape).astype(np.float64),
-    (1, "f64"): np.random.random(shape).astype(np.float64),
-    (0, "f32"): np.random.random(shape).astype(np.float32),
-    (1, "f32"): np.random.random(shape).astype(np.float32),
-    (0, "i64"): np.random.randint(low=2147483648, high=9223372036854775807, size=shape, dtype=np.int64),
-    (1, "i64"): np.random.randint(low=-9223372036854775808, high=-2147483648, size=shape, dtype=np.int64),
-    (0, "i32"): np.random.randint(low=-100, high=100, size=shape, dtype=np.int32),
-    (1, "i32"): np.random.randint(low=-100, high=100, size=shape, dtype=np.int32),
-}
 pk, sk = fate_tensor.keygen(1024)
 
 
@@ -32,8 +22,16 @@ def decrypt(fp, par, data):
         return getattr(sk, f"decrypt_{fp}")(data)
 
 
-def data(fp, index):
-    return testdata[(index, fp)]
+@cachetools.cached({})
+def data(fp, index, shape=(3, 5)) -> np.ndarray:
+    if fp == "f64":
+        return np.random.random(shape).astype(np.float64)
+    if fp == "f32":
+        return np.random.random(shape).astype(np.float32)
+    if fp == "i64":
+        return np.random.randint(low=2147483648, high=2147483648000, size=shape, dtype=np.int64)
+    if fp == "i32":
+        return np.random.randint(low=-100, high=100, size=shape, dtype=np.int32)
 
 
 def test_keygen():
@@ -86,10 +84,12 @@ def test_plaintext_op(par, fp, op):
     assert np.isclose(diff, 0).all()
 
 
-def test_matmul():
-    a = np.random.random((5, 8))
-    b = np.random.random((8, 4))
-    ca = pk.encrypt_f64(a)
-    cab = ca.matmul_plaintext_i2x_f64(b)
-    ab = sk.decrypt_f64(cab)
+@pytest.mark.parametrize("par", [False, True])
+@pytest.mark.parametrize("fp", ["f64", "f32", "i64", "i32"])
+def test_matmul(par, fp):
+    a = data(fp, 0, (11, 17))
+    b = data(fp, 0, (17, 5))
+    ca = encrypt(fp, par, a)
+    cab = getattr(ca, f"matmul_plaintext_i2x_{fp}")(b)
+    ab = decrypt(fp, par, cab)
     assert np.isclose(ab, a @ b).all()

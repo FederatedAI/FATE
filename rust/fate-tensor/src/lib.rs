@@ -4,6 +4,7 @@ pub mod math;
 pub mod paillier;
 
 use bincode::{deserialize, serialize};
+use fixedpoint::CouldCode;
 use ndarray::ArrayViewD;
 use numpy::convert::IntoPyArray;
 use numpy::{PyArrayDyn, PyReadonlyArray2, PyReadonlyArrayDyn};
@@ -168,10 +169,18 @@ impl Cipherblock {
         self._mul_plaintext(other)
     }
 
+    // matmul
     pub fn matmul_plaintext_i2x_f64(&self, other: PyReadonlyArray2<f64>) -> Cipherblock {
-        let a = self.get_cb();
-        let b = other.as_array();
-        Cipherblock(Some(a.matmul_plaintext_i2x_f64(b)))
+        self._matmul_plaintext_i2x(other)
+    }
+    pub fn matmul_plaintext_i2x_f32(&self, other: PyReadonlyArray2<f32>) -> Cipherblock {
+        self._matmul_plaintext_i2x(other)
+    }
+    pub fn matmul_plaintext_i2x_i64(&self, other: PyReadonlyArray2<i64>) -> Cipherblock {
+        self._matmul_plaintext_i2x(other)
+    }
+    pub fn matmul_plaintext_i2x_i32(&self, other: PyReadonlyArray2<i32>) -> Cipherblock {
+        self._matmul_plaintext_i2x(other)
     }
 
     // rayon
@@ -237,6 +246,24 @@ impl Cipherblock {
     pub fn mul_plaintext_i32_par(&self, other: PyReadonlyArrayDyn<i32>) -> Cipherblock {
         self._mul_plaintext(other)
     }
+
+    // matmul
+    #[cfg(feature = "rayon")]
+    pub fn matmul_plaintext_i2x_f64_par(&self, other: PyReadonlyArray2<f64>) -> Cipherblock {
+        self._matmul_plaintext_i2x(other)
+    }
+    #[cfg(feature = "rayon")]
+    pub fn matmul_plaintext_i2x_f32_par(&self, other: PyReadonlyArray2<f32>) -> Cipherblock {
+        self._matmul_plaintext_i2x(other)
+    }
+    #[cfg(feature = "rayon")]
+    pub fn matmul_plaintext_i2x_i64_par(&self, other: PyReadonlyArray2<i64>) -> Cipherblock {
+        self._matmul_plaintext_i2x(other)
+    }
+    #[cfg(feature = "rayon")]
+    pub fn matmul_plaintext_i2x_i32_par(&self, other: PyReadonlyArray2<i32>) -> Cipherblock {
+        self._matmul_plaintext_i2x(other)
+    }
 }
 macro_rules! impl_ops_cipher {
     ($name:ident,$fn:expr) => {
@@ -299,6 +326,23 @@ impl Cipherblock {
     }
     fn get_cb(&self) -> &block::Cipherblock {
         self.0.as_ref().unwrap()
+    }
+
+    pub fn _matmul_plaintext_i2x<T>(&self, other: PyReadonlyArray2<T>) -> Cipherblock
+    where
+        T: numpy::Element + CouldCode,
+    {
+        let a = self.get_cb();
+        let b = other.as_array();
+        Cipherblock(Some(a.matmul_plaintext_i2x(b)))
+    }
+    pub fn _matmul_plaintext_i2x_par<T>(&self, other: PyReadonlyArray2<T>) -> Cipherblock
+    where
+        T: numpy::Element + CouldCode + Sync,
+    {
+        let a = self.get_cb();
+        let b = other.as_array();
+        Cipherblock(Some(a.matmul_plaintext_i2x_par(b)))
     }
 
     impl_ops_cipher!(_add_cipherblock, fixedpoint::CT::add);
