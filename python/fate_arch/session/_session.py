@@ -13,12 +13,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import copy
 import threading
 import typing
 import uuid
 
 import peewee
-from fate_arch.common import engine_utils, EngineType
+from fate_arch.common import engine_utils, EngineType, Party
 from fate_arch.abc import CSessionABC, FederationABC, CTableABC, StorageSessionABC, StorageTableABC, StorageTableMetaABC
 from fate_arch.common import log, base_utils
 from fate_arch.common import remote_status
@@ -62,6 +63,7 @@ class Session(object):
         self._federation_session: typing.Optional[FederationABC] = None
         self._storage_session: typing.Dict[StorageSessionABC] = {}
         self._parties_info: typing.Optional[PartiesInfo] = None
+        self._all_party_info: typing.List[Party] = []
         self._session_id = str(uuid.uuid1()) if not session_id else session_id
         self._logger = LOGGER if options.get("logger", None) is None else options.get("logger", None)
 
@@ -140,13 +142,18 @@ class Session(object):
             runtime_conf: typing.Optional[dict] = None,
             parties_info: typing.Optional[PartiesInfo] = None,
             service_conf: typing.Optional[dict] = None,
+            record: bool = True,
     ):
-
+        if record:
+            self.save_record(engine_type=EngineType.FEDERATION,
+                             engine_name=self._federation_type,
+                             engine_session_id=federation_session_id)
         if parties_info is None:
             if runtime_conf is None:
                 raise RuntimeError(f"`party_info` and `runtime_conf` are both `None`")
             parties_info = PartiesInfo.from_conf(runtime_conf)
         self._parties_info = parties_info
+        self._all_parties_info =  [Party(k, p) for k, v in runtime_conf['role'].items() for p in v]
 
         if self.is_federation_valid:
             raise RuntimeError("federation session already valid")
@@ -418,6 +425,7 @@ class Session(object):
         self.get_session_from_record(**kwargs)
         self.destroy_storage_session()
         self.destroy_computing_session()
+        self.destroy_federation_session()
         self._logger.info(f"finish destroy manager session {self._session_id} all sessions")
 
     def destroy_computing_session(self):
@@ -444,6 +452,16 @@ class Session(object):
                 self._logger.exception(f"destroy storage session {session_id} failed", e)
             self.delete_session_record(engine_session_id=session_id)
 
+    def destroy_federation_session(self):
+        if self.is_federation_valid:
+            try:
+                self._logger.info(f"try to destroy federation session {self._federation_session.session_id}")
+                self._federation_session.destroy(parties=self._all_party_info)
+                self._logger.info(f"try to destroy federation session {self._federation_session.session_id} done")
+            except Exception as e:
+                self._logger.info(f"destroy federation failed: {e}")
+            self.delete_session_record(engine_session_id=self._federation_session.session_id)
+
     def wait_remote_all_done(self, timeout=None):
         LOGGER.info(f"remote futures: {remote_status._remote_futures}, waiting...")
         remote_status.wait_all_remote_done(timeout)
@@ -452,62 +470,29 @@ class Session(object):
     def clean(self,
               role,
               party_id,
-              computing_namespace,
-              computing_engine,
-              federation_namespace,
-              federation_engine,
               federation_session_id,
               runtime_conf,
               service_conf,
               ):
         try:
-            import copy
-            from fate_arch.common import Party
             # clean up temporary tables
-            if computing_engine == ComputingEngine.EGGROLL:
-                session_options = {"eggroll.session.processors.per.node": 1}
-            else:
-                session_options = {}
-            try:
-                if computing_engine != ComputingEngine.LINKIS_SPARK:
-                    self.init_computing(computing_session_id=f"{computing_namespace}_clean",
-                                        options=session_options)
-                    self.computing.cleanup(namespace=computing_namespace, name="*")
+            federation_namespace = federation_session_id
+            self._logger.info('clean table by namespace {} on {} {}'.format(federation_namespace, role, party_id))
+            storage = self.storage(storage_session_id=f"{federation_namespace}_{role}_{party_id}_clean")
+            storage.cleanup(namespace=federation_namespace, name="*")
+            self._logger.info('clean table by namespace {} on {} {} done'.format(federation_namespace, role, party_id))
 
-                    self._logger.info('clean table by namespace {} on {} {} done'.format(computing_namespace,
-                                                                                         role, party_id))
-                    # clean up the last tables of the federation
-                    self.computing.cleanup(namespace=federation_namespace, name="*")
-                    self._logger.info('clean table by namespace {} on {} {} done'.format(federation_namespace, role, party_id))
-                if federation_engine == FederationEngine.RABBITMQ and role != "local":
-                    self._logger.info('rabbitmq start clean up')
-                    parties = [Party(k, p) for k, v in runtime_conf['role'].items() for p in v]
-                    component_parameters_on_party = copy.deepcopy(runtime_conf)
-                    component_parameters_on_party["local"] = {"role": role, "party_id": party_id}
-                    self.init_federation(federation_session_id=federation_session_id,
-                                         runtime_conf=component_parameters_on_party,
-                                         service_conf=service_conf)
-                    self._federation_session.cleanup(parties)
-                    self._logger.info('rabbitmq clean up success')
-
-                # TODO optimize the clean process
-                if federation_engine == FederationEngine.PULSAR and role != "local":
-                    self._logger.info('start to clean up pulsar topics')
-                    parties = [Party(k, p) for k, v in runtime_conf['role'].items() for p in v]
-                    component_parameters_on_party = copy.deepcopy(runtime_conf)
-                    component_parameters_on_party["local"] = {"role": role, "party_id": party_id}
-                    self.init_federation(federation_session_id=federation_session_id,
-                                         runtime_conf=component_parameters_on_party,
-                                         service_conf=service_conf)
-                    self._federation_session.cleanup(parties)
-                    self._logger.info('pulsar topic clean up success')
-            except Exception as e:
-                self._logger.exception(f"cleanup error: {e}")
-            finally:
-                self.destroy_all_sessions()
+            # clean federation session after task end
+            if role != "local" and EngineType.FEDERATION in [FederationEngine.PULSAR, FederationEngine.RABBITMQ]:
+                component_parameters_on_party = copy.deepcopy(runtime_conf)
+                component_parameters_on_party["local"] = {"role": role, "party_id": party_id}
+                self.init_federation(federation_session_id=federation_session_id,
+                                     runtime_conf=component_parameters_on_party,
+                                     service_conf=service_conf)
+                self.destroy_federation_session()
             return True
         except Exception as e:
-            self._logger.exception(e)
+            self._logger.exception(f"cleanup error:{e}")
             return False
 
 

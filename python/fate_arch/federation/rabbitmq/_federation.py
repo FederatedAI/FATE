@@ -169,6 +169,10 @@ class Federation(FederationABC):
     def __getstate__(self):
         pass
 
+    @property
+    def session_id(self) -> str:
+        return self._session_id
+
     def get(
         self, name: str, tag: str, parties: typing.List[Party], gc: GarbageCollectionABC
     ) -> typing.List:
@@ -324,6 +328,9 @@ class Federation(FederationABC):
             )
 
         LOGGER.debug(f"[{log_str}]finish to remote")
+
+    def destroy(self, parties):
+        return self.cleanup(parties)
 
     def cleanup(self, parties):
         LOGGER.debug("[rabbitmq.cleanup]start to cleanup...")
