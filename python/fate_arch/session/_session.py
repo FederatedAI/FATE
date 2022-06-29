@@ -27,7 +27,7 @@ from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
 from fate_arch.storage import StorageEngine, StorageSessionBase
 from fate_arch.metastore.db_models import DB, SessionRecord, init_database_tables
-from fate_arch.session._parties import PartiesInfo
+from fate_arch.common._parties import PartiesInfo
 
 LOGGER = log.getLogger()
 
@@ -196,15 +196,7 @@ class Session(object):
             return self
 
         if self._federation_type == FederationEngine.RABBITMQ:
-            from fate_arch.computing.spark import CSession
             from fate_arch.federation.rabbitmq import Federation
-
-            if not self.is_computing_valid or not isinstance(
-                    self._computing_session, CSession
-            ):
-                raise RuntimeError(
-                    f"require computing with type {ComputingEngine.SPARK} valid"
-                )
 
             self._federation_session = Federation.from_conf(
                 federation_session_id=federation_session_id,
@@ -216,15 +208,7 @@ class Session(object):
 
         # Add pulsar support
         if self._federation_type == FederationEngine.PULSAR:
-            from fate_arch.computing.spark import CSession
             from fate_arch.federation.pulsar import Federation
-
-            if not self.is_computing_valid or not isinstance(
-                    self._computing_session, CSession
-            ):
-                raise RuntimeError(
-                    f"require computing with type {ComputingEngine.SPARK} valid"
-                )
 
             self._federation_session = Federation.from_conf(
                 federation_session_id=federation_session_id,
@@ -232,6 +216,18 @@ class Session(object):
                 runtime_conf=runtime_conf,
                 pulsar_config=service_conf,
             )
+            return self
+
+        # Add firework support
+        if self._federation_type == FederationEngine.FIREWORK:
+            from fate_arch.federation.firework import Federation
+
+            self._federation_session = Federation.from_conf(
+                    federation_session_id=federation_session_id,
+                    party=parties_info.local_party,
+                    runtime_conf=runtime_conf,
+                    firework_config=service_conf,
+                )
             return self
 
         raise RuntimeError(f"{self._federation_type} not supported")
@@ -507,9 +503,8 @@ def get_parties() -> PartiesInfo:
 def get_computing_session() -> CSessionABC:
     return get_session().computing
 
+
 # noinspection PyPep8Naming
-
-
 class computing_session(object):
     @staticmethod
     def init(session_id, options=None):
