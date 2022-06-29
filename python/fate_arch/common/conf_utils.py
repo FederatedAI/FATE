@@ -26,16 +26,26 @@ def conf_realpath(conf_name):
     return os.path.join(file_utils.get_project_base_directory(), conf_path)
 
 
-def get_base_config(key, default=None, conf_name=SERVICE_CONF):
+def get_base_config(key, default=None, conf_name=SERVICE_CONF) -> dict:
+    local_config = {}
     local_path = conf_realpath(f'local.{conf_name}')
+
     if os.path.exists(local_path):
         local_config = file_utils.load_yaml_conf(local_path)
-        if isinstance(local_config, dict) and key in local_config:
+        if not isinstance(local_config, dict):
+            raise ValueError(f'Invalid config file: "{local_path}".')
+
+        if key is not None and key in local_config:
             return local_config[key]
 
-    config = file_utils.load_yaml_conf(conf_realpath(conf_name))
-    if isinstance(config, dict):
-        return config.get(key, default)
+    config_path = conf_realpath(conf_name)
+    config = file_utils.load_yaml_conf(config_path)
+
+    if not isinstance(config, dict):
+        raise ValueError(f'Invalid config file: "{config_path}".')
+
+    config.update(local_config)
+    return config.get(key, default) if key is not None else config
 
 
 def decrypt_database_config(database=None, passwd_key="passwd"):

@@ -119,20 +119,20 @@ class BaseScale(object):
         column_max_value = self.summary_obj.get_max()
         column_max_value = [column_max_value[key] for key in header]
 
-        scale_column_idx = self._get_scale_column_idx(data)
+        scale_column_idx_set = set(self._get_scale_column_idx(data))
 
         if self.feat_upper is not None:
             if isinstance(self.feat_upper, list):
                 self.__check_equal(data_shape, len(self.feat_upper))
                 for i in range(data_shape):
-                    if i in scale_column_idx:
+                    if i in scale_column_idx_set:
                         if column_max_value[i] > self.feat_upper[i]:
                             column_max_value[i] = self.feat_upper[i]
                         if column_min_value[i] > self.feat_upper[i]:
                             column_min_value[i] = self.feat_upper[i]
             else:
                 for i in range(data_shape):
-                    if i in scale_column_idx:
+                    if i in scale_column_idx_set:
                         if column_max_value[i] > self.feat_upper:
                             column_max_value[i] = self.feat_upper
                         if column_min_value[i] > self.feat_upper:
@@ -142,14 +142,14 @@ class BaseScale(object):
             if isinstance(self.feat_lower, list):
                 self.__check_equal(data_shape, len(self.feat_lower))
                 for i in range(data_shape):
-                    if i in scale_column_idx:
+                    if i in scale_column_idx_set:
                         if column_min_value[i] < self.feat_lower[i]:
                             column_min_value[i] = self.feat_lower[i]
                         if column_max_value[i] < self.feat_lower[i]:
                             column_max_value[i] = self.feat_lower[i]
             else:
                 for i in range(data_shape):
-                    if i in scale_column_idx:
+                    if i in scale_column_idx_set:
                         if column_min_value[i] < self.feat_lower:
                             column_min_value[i] = self.feat_lower
                         if column_max_value[i] < self.feat_lower:

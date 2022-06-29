@@ -87,6 +87,8 @@ class IsoModelFilter(BaseFilterMethod):
         else:
             results = self._percentile_fit(all_feature_values, threshold, take_high)
 
+        results = set(results)
+
         for v_idx, v in enumerate(all_feature_values):
             col_name = col_names[v_idx]
             self.selection_properties.add_feature_value(col_name, v)
