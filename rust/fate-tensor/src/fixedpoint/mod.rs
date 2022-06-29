@@ -54,9 +54,9 @@ pub fn keygen(bit_lenght: u32) -> (SK, PK) {
 }
 
 impl PK {
-    pub fn encrypt(&self, plaintext: &PT) -> CT {
+    pub fn encrypt(&self, plaintext: &PT, obfuscate: bool) -> CT {
         let exp = plaintext.exp;
-        let encode = self.pk.encrypt(&plaintext.significant, true);
+        let encode = self.pk.encrypt(&plaintext.significant, obfuscate);
         CT {
             significant_encryped: encode,
             exp,
@@ -91,20 +91,17 @@ impl CT {
         }
     }
     pub fn neg(&self, pk: &PK) -> CT {
-        self.mul(
-            &PT {
-                significant: paillier::PT(&pk.pk.n - 1),
-                exp: 0,
-            },
-            pk,
-        )
+        CT {
+            significant_encryped: paillier::CT(self.significant_encryped.0.invert_ref(&pk.pk.ns)),
+            exp: self.exp,
+        }
     }
     pub fn add_pt(&self, b: &PT, pk: &PK) -> CT {
-        let b = pk.encrypt(b);
+        let b = pk.encrypt(b, false);
         self.add(&b, pk)
     }
     pub fn sub_pt(&self, b: &PT, pk: &PK) -> CT {
-        let b = pk.encrypt(b);
+        let b = pk.encrypt(b, false);
         self.sub(&b, pk)
     }
     pub fn sub(&self, b: &CT, pk: &PK) -> CT {
@@ -142,10 +139,18 @@ impl CT {
         }
     }
     pub fn mul(&self, b: &PT, pk: &PK) -> CT {
-        let encode =
-            paillier::CT((&self.significant_encryped.0).pow_mod_ref(&b.significant.0, &pk.pk.ns));
+        let inside = if &pk.coder.n - &pk.coder.max_int <= b.significant.0 {
+            // large plaintext
+            let neg_c = self.significant_encryped.0.invert_ref(&pk.pk.ns);
+            let neg_scalar = &pk.pk.n - &b.significant.0;
+            neg_c.pow_mod_ref(&neg_scalar, &pk.pk.ns)
+        } else if b.significant.0 <= pk.coder.max_int {
+            (&self.significant_encryped.0).pow_mod_ref(&b.significant.0, &pk.pk.ns)
+        } else {
+            panic!("invalid plaintext: {:?}", b)
+        };
         CT {
-            significant_encryped: encode,
+            significant_encryped: paillier::CT(inside),
             exp: self.exp + b.exp,
         }
     }
@@ -157,7 +162,7 @@ macro_rules! encrypt_decrypt_tests {
         fn $name() {
             let (sk, pk) = keygen(1024);
             let encoded = ($v).encode(&pk.coder);
-            let ciphertext = pk.encrypt(&encoded);
+            let ciphertext = pk.encrypt(&encoded, true);
             let decrypted = sk.decrypt(&ciphertext);
             let decoded = <$type>::decode(&decrypted, &sk.coder);
             assert_eq!(decoded, $v)

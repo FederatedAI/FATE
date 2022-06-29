@@ -25,9 +25,9 @@ def decrypt(fp, par, data):
 @cachetools.cached({})
 def data(fp, index, shape=(3, 5)) -> np.ndarray:
     if fp == "f64":
-        return np.random.random(shape).astype(np.float64)
+        return np.random.random(shape).astype(np.float64) - 0.5
     if fp == "f32":
-        return np.random.random(shape).astype(np.float32)
+        return np.random.random(shape).astype(np.float32) - 0.5
     if fp == "i64":
         return np.random.randint(low=2147483648, high=2147483648000, size=shape, dtype=np.int64)
     if fp == "i32":
@@ -90,6 +90,6 @@ def test_matmul(par, fp):
     a = data(fp, 0, (11, 17))
     b = data(fp, 0, (17, 5))
     ca = encrypt(fp, par, a)
-    cab = getattr(ca, f"matmul_plaintext_i2x_{fp}")(b)
+    cab = getattr(ca, f"matmul_plaintext_ix2_{fp}")(b)
     ab = decrypt(fp, par, cab)
     assert np.isclose(ab, a @ b).all()

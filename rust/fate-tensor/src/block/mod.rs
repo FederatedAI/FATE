@@ -114,7 +114,7 @@ impl Cipherblock {
             shape: self.shape.clone(),
         }
     }
-    pub fn matmul_plaintext_i2x<T>(&self, rhs: ArrayView2<T>) -> Cipherblock
+    pub fn matmul_plaintext_ix2<T>(&self, rhs: ArrayView2<T>) -> Cipherblock
     where
         T: CouldCode,
     {
@@ -148,7 +148,7 @@ impl Cipherblock {
     }
 
     #[cfg(feature = "rayon")]
-    pub fn matmul_plaintext_i2x_par<T>(&self, rhs: ArrayView2<T>) -> Cipherblock
+    pub fn matmul_plaintext_ix2_par<T>(&self, rhs: ArrayView2<T>) -> Cipherblock
     where
         T: CouldCode + Sync,
     {
@@ -192,7 +192,7 @@ impl fixedpoint::PK {
         let shape = array.shape().to_vec();
         let data: Vec<fixedpoint::CT> = array
             .iter()
-            .map(|e| self.encrypt(&e.encode(&self.coder)))
+            .map(|e| self.encrypt(&e.encode(&self.coder), true))
             .collect();
         Cipherblock {
             pubkey: self.clone(),
@@ -266,7 +266,7 @@ impl fixedpoint::PK {
         let shape = array.shape().to_vec();
         let data: Vec<fixedpoint::CT> = array
             .into_par_iter()
-            .map(|e| self.encrypt(&e.encode(&self.coder)))
+            .map(|e| self.encrypt(&e.encode(&self.coder), true))
             .collect();
         Cipherblock {
             pubkey: self.clone(),

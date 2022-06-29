@@ -1,63 +1,135 @@
-import time
-
 import fate_tensor
 import numpy as np
+import pytest
+import operator
 import phe
 
-shape = 1000
-data = np.random.random((shape, 1))
+
+class PHESuite:
+    def __init__(self, a, b, c) -> None:
+        self.a = a
+        self.b = b
+        self.c = c
+        self.pk, self.sk = phe.generate_paillier_keypair(n_length=1024)
+        self.ea = np.vectorize(self.pk.encrypt)(self.a)
+        self.eb = np.vectorize(self.pk.encrypt)(self.b)
+        self.ec = np.vectorize(self.pk.encrypt)(self.c)
+
+    def get(self, name):
+        return getattr(self, name)
+
+    def encrypt(self):
+        return np.vectorize(self.pk.encrypt)(self.a)
+
+    def decrypt(self):
+        return np.vectorize(self.sk.decrypt)(self.ea)
+
+    def add_cipher(self):
+        np.vectorize(operator.add)(self.ea, self.eb)
+
+    def sub_cipher(self):
+        np.vectorize(operator.sub)(self.ea, self.eb)
+
+    def add_plain(self):
+        return np.vectorize(operator.add)(self.ea, self.b)
+
+    def sub_plain(self):
+        return np.vectorize(operator.sub)(self.ea, self.b)
+
+    def mul_plain(self):
+        return np.vectorize(operator.mul)(self.ea, self.b)
+
+    def matmul_plain(self):
+        return self.ea @ self.c
 
 
-def bench(name, func, repeat_num):
-    t = time.time()
-    for _ in range(repeat_num):
-        func()
-    cost = (time.time() - t) / float(repeat_num * shape)
-    print(f"{name}: {1 / cost} each secends, {cost} each run")
-    return cost
+class CPUBlockSuite:
+    _mix = ""
+
+    def __init__(self, a, b, c) -> None:
+        self.a = a
+        self.b = b
+        self.c = c
+        self.pk, self.sk = fate_tensor.keygen(1024)
+        self.ea = self.pk.encrypt_f64(self.a)
+        self.eb = self.pk.encrypt_f64(self.b)
+        self.ec = self.pk.encrypt_f64(self.c)
+
+    def mix(self, name):
+        return f"{name}{self._mix}"
+
+    def get(self, name):
+        return getattr(self, name)
+
+    def encrypt(self):
+        getattr(self.pk, self.mix("encrypt_f64"))(self.a)
+
+    def decrypt(self):
+        getattr(self.sk, self.mix("decrypt_f64"))(self.ea)
+
+    def add_cipher(self):
+        getattr(self.ea, self.mix("add_cipherblock"))(self.eb)
+
+    def sub_cipher(self):
+        getattr(self.ea, self.mix("sub_cipherblock"))(self.eb)
+
+    def add_plain(self):
+        getattr(self.ea, self.mix("add_plaintext_f64"))(self.b)
+
+    def sub_plain(self):
+        getattr(self.ea, self.mix("sub_plaintext_f64"))(self.b)
+
+    def mul_plain(self):
+        getattr(self.ea, self.mix("mul_plaintext_f64"))(self.b)
+
+    def matmul_plain(self):
+        getattr(self.ea, self.mix("matmul_plaintext_ix2_f64"))(self.c)
 
 
-pubkey, prikey = phe.generate_paillier_keypair(n_length=1024)
-phe_plaintext = data.reshape((shape,)).tolist()
-phe_ciphertext = [pubkey.encrypt(x) for x in phe_plaintext]
+class CPUBlockParSuite(CPUBlockSuite):
+    _mix = "_par"
 
 
-def encrypt():
-    for i in range(shape):
-        pubkey.encrypt(phe_plaintext[i])
+class Suites:
+    def __init__(self, a, b, c) -> None:
+        self.suites = {
+            "phe": PHESuite(a, b, c),
+            "block": CPUBlockSuite(a, b, c),
+            "block_par": CPUBlockParSuite(a, b, c),
+        }
+
+    def get(self, name):
+        return self.suites[name]
 
 
-def decrypt():
-    for i in range(shape):
-        prikey.decrypt(phe_ciphertext[i])
+@pytest.fixture
+def shape():
+    return (11, 13)
 
 
-def add():
-    for i in range(shape):
-        phe_ciphertext + phe_ciphertext
+@pytest.fixture
+def suites(shape):
+    a = np.random.random(size=shape).astype(dtype=np.float64) - 0.5
+    b = np.random.random(size=shape).astype(dtype=np.float64) - 0.5
+    c = np.random.random(size=(shape[1], shape[0])).astype(dtype=np.float64) - 0.5
+    return Suites(a, b, c)
 
 
-repeat_num = 10
-bench("phe_encrypt", encrypt, repeat_num)
-bench("phe_decrypt", decrypt, repeat_num)
-bench("phe_add", decrypt, repeat_num)
+def create_tests(func_name):
+    # @pytest.mark.benchmark(group=func_name)
+    @pytest.mark.parametrize("name", ["phe", "block", "block_par"])
+    def f(name, suites, benchmark):
+        benchmark(suites.get(name).get(func_name))
 
-repeat_num = 10
-pk, ek = fate_tensor.keygen(1024)
-rust_plaintext = data
-rust_ciphertext = pk.encrypt_f64(data)
-bench("rust_encrypt", lambda: pk.encrypt_f64(rust_plaintext), repeat_num)
-bench("rust_decrypt", lambda: ek.decrypt_f64(rust_ciphertext), repeat_num)
-bench("rust_add", lambda: rust_ciphertext.add_cipherblock(rust_ciphertext), repeat_num)
+    f.__name__ = f"test_{func_name}"
+    return f
 
-repeat_num = 10
-pk, ek = fate_tensor.keygen(1024)
-rust_plaintext = data
-rust_ciphertext = pk.encrypt_f64_par(data)
-bench("rust_par_encrypt", lambda: pk.encrypt_f64_par(rust_plaintext), repeat_num)
-bench("rust_par_decrypt", lambda: ek.decrypt_f64_par(rust_ciphertext), repeat_num)
-bench(
-    "rust_par_add",
-    lambda: rust_ciphertext.add_cipherblock_par(rust_ciphertext),
-    repeat_num,
-)
+
+test_encrypt = create_tests("encrypt")
+test_decrypt = create_tests("decrypt")
+test_add_cipher = create_tests("add_cipher")
+test_sub_cipher = create_tests("sub_cipher")
+test_add_plain = create_tests("add_plain")
+test_sub_plain = create_tests("sub_plain")
+test_mul_plain = create_tests("mul_plain")
+test_matmul_plain = create_tests("matmul_plain")

@@ -71,11 +71,20 @@ impl PK {
     /// (plaintext \cdot n + 1)r^n \pmod{n^2}
     /// ```
     pub fn encrypt(&self, plaintext: &PT, obfuscate: bool) -> CT {
+        let nude_ciphertext = {
+            if plaintext.0 > self.n.clone() >> 2u32 {
+                let neg_plaintext = &self.n - &plaintext.0;
+                let neg_ciphertext = (&self.n * neg_plaintext + ONE) % &self.ns;
+                neg_ciphertext.invert(&self.ns)
+            } else {
+                (&plaintext.0 * &self.n + 1) % &self.ns
+            }
+        };
         let e = if obfuscate {
             let rn = self.random_rn();
-            ((&plaintext.0 * &self.n + 1) * rn) % &self.ns
+            nude_ciphertext * rn % &self.ns
         } else {
-            (&plaintext.0 * &self.n + 1) % &self.ns
+            nude_ciphertext
         };
         CT(e)
     }

@@ -13,8 +13,8 @@ const MAX_INT_FRACTION: u8 = 3;
 /// fixedpoint encoder
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct FixedpointCoder {
-    n: BInt,
-    max_int: BInt,
+    pub n: BInt,
+    pub max_int: BInt,
 }
 
 impl FixedpointCoder {
