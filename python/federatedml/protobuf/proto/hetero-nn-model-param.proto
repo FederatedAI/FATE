@@ -23,8 +23,8 @@ option java_outer_classname = "HeteroNNModelParamProto";
 message InteractiveLayerParam {
     bytes acc_noise = 1;
     bytes interactive_guest_saved_model_bytes = 2;
-    bytes interactive_host_saved_model_bytes = 3;
-    int32 host_input_shape = 4;
+    repeated bytes interactive_host_saved_model_bytes = 3;
+    repeated int32 host_input_shape = 4;
     int32 guest_input_shape= 5;
 }
 

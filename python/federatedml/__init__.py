@@ -13,3 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
+from federatedml.nn.backend import fate_torch
+
+__all__ = ["fate_torch"]

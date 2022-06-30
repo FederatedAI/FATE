@@ -18,19 +18,30 @@
 #
 
 import numpy as np
+from federatedml.util import consts
 from federatedml.util import LOGGER
+from federatedml.nn.backend.tf_keras.nn_model import build_keras, KerasNNModel
+from federatedml.nn.hetero_nn.backend.pytorch.pytorch_nn_model import PytorchNNModel, PytorchDataConvertor
+from federatedml.nn.hetero_nn.backend.tf_keras.data_generator import KerasSequenceDataConverter
 
 
 class HeteroNNTopModel(object):
-    def __init__(self, input_shape=None, loss=None, optimizer="SGD", metrics=None, model_builder=None,
-                 layer_config=None):
-        self._model = model_builder(input_shape=input_shape,
-                                    nn_define=layer_config,
-                                    optimizer=optimizer,
-                                    loss=loss,
-                                    metrics=metrics)
+    def __init__(self, input_shape, loss, optimizer, metrics, layer_config, config_type):
 
-        self.data_converter = None
+        self.config_type = config_type
+
+        if self.config_type == consts.keras_backend:
+            self._model: KerasNNModel = build_keras(input_shape=input_shape, loss=loss,
+                                                    optimizer=optimizer, nn_define=layer_config, metrics=metrics)
+            self.data_converter = KerasSequenceDataConverter()
+
+        elif self.config_type == consts.pytorch_backend:
+            self._model: PytorchNNModel = PytorchNNModel(nn_define=layer_config, optimizer_define=optimizer,
+                                                         loss_fn_define=loss)
+            self.data_converter = PytorchDataConvertor()
+
+        LOGGER.debug('top model is {}'.format(self._model))
+
         self.batch_size = None
         self.selector = None
         self.batch_data_cached_X = []
@@ -76,18 +87,17 @@ class HeteroNNTopModel(object):
             data = self.data_converter.convert_data(x, y)
             self._model.train(data)
             loss = self._model.get_loss()[0]
+            LOGGER.debug('input gradient is {}'.format(input_gradient))
 
         return selective_id, input_gradient, loss
 
     def predict(self, input_data):
-        LOGGER.debug("top model start to backward propagation")
         output_data = self._model.predict(input_data)
 
         return output_data
 
     def evaluate(self, x, y):
         data = self.data_converter.convert_data(x, y)
-
         return self._model.evaluate(data)
 
     def export_model(self):
