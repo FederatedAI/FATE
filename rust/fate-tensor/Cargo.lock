@@ -200,7 +200,6 @@ dependencies = [
  "bincode",
  "criterion",
  "iai",
- "itertools",
  "ndarray",
  "numpy",
  "pyo3",

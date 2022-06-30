@@ -86,10 +86,43 @@ def test_plaintext_op(par, fp, op):
 
 @pytest.mark.parametrize("par", [False, True])
 @pytest.mark.parametrize("fp", ["f64", "f32", "i64", "i32"])
-def test_matmul(par, fp):
+def test_matmul_ix2(par, fp):
     a = data(fp, 0, (11, 17))
     b = data(fp, 0, (17, 5))
-    ca = encrypt(fp, par, a)
-    cab = getattr(ca, f"matmul_plaintext_ix2_{fp}")(b)
-    ab = decrypt(fp, par, cab)
+    ea = encrypt(fp, par, a)
+    eab = getattr(ea, f"matmul_plaintext_ix2_{fp}")(b)
+    ab = decrypt(fp, par, eab)
     assert np.isclose(ab, a @ b).all()
+
+
+@pytest.mark.parametrize("par", [False, True])
+@pytest.mark.parametrize("fp", ["f64", "f32", "i64", "i32"])
+def test_matmul_ix1(par, fp):
+    a = data(fp, 0, (11, 17))
+    b = data(fp, 0, 17)
+    ea = encrypt(fp, par, a)
+    eab = getattr(ea, f"matmul_plaintext_ix1_{fp}")(b)
+    ab = decrypt(fp, par, eab)
+    assert np.isclose(ab, (a @ b).reshape(ab.shape)).all()
+
+
+@pytest.mark.parametrize("par", [False, True])
+@pytest.mark.parametrize("fp", ["f64", "f32", "i64", "i32"])
+def test_rmatmul_ix2(par, fp):
+    a = data(fp, 0, (11, 17))
+    b = data(fp, 0, (17, 5))
+    eb = encrypt(fp, par, b)
+    reab = getattr(eb, f"rmatmul_plaintext_ix2_{fp}")(a)
+    rab = decrypt(fp, par, reab)
+    assert np.isclose(rab, a @ b).all()
+
+
+@pytest.mark.parametrize("par", [False, True])
+@pytest.mark.parametrize("fp", ["f64", "f32", "i64", "i32"])
+def test_rmatmul_ix1(par, fp):
+    a = data(fp, 0, 17)
+    b = data(fp, 0, (17, 5))
+    eb = encrypt(fp, par, b)
+    reab = getattr(eb, f"rmatmul_plaintext_ix1_{fp}")(a)
+    rab = decrypt(fp, par, reab)
+    assert np.isclose(rab, (a @ b).reshape(rab.shape)).all()

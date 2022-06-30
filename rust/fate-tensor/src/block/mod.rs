@@ -1,25 +1,35 @@
+use std::ops::Index;
+
 use super::fixedpoint;
 use super::fixedpoint::CouldCode;
-use itertools;
-use ndarray::{ArrayD, ArrayView2, ArrayViewD};
+use ndarray::{ArrayD, ArrayViewD};
 #[cfg(feature = "rayon")]
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
+mod matmul;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Cipherblock {
-    pub pubkey: fixedpoint::PK,
+    pub pk: fixedpoint::PK,
     pub data: Vec<fixedpoint::CT>,
     pub shape: Vec<usize>,
 }
 
+impl Index<(usize, usize)> for Cipherblock {
+    type Output = fixedpoint::CT;
+
+    #[inline]
+    fn index(&self, index: (usize, usize)) -> &Self::Output {
+        &self.data[index.0 * self.shape[1] + index.1]
+    }
+}
 impl Cipherblock {
     pub fn map<F>(&self, func: F) -> Cipherblock
     where
         F: Fn(&fixedpoint::CT) -> fixedpoint::CT,
     {
         Cipherblock {
-            pubkey: self.pubkey.clone(),
+            pk: self.pk.clone(),
             data: self.data.iter().map(func).collect(),
             shape: self.shape.clone(),
         }
@@ -29,15 +39,15 @@ impl Cipherblock {
         F: Fn(&fixedpoint::CT, &fixedpoint::CT, &fixedpoint::PK) -> fixedpoint::CT,
     {
         assert_eq!(lhs.shape, rhs.shape);
-        assert_eq!(lhs.pubkey, rhs.pubkey);
+        assert_eq!(lhs.pk, rhs.pk);
         let lhs_iter = lhs.data.iter();
         let rhs_iter = rhs.data.iter();
         let data: Vec<fixedpoint::CT> = lhs_iter
             .zip(rhs_iter)
-            .map(|(l, r)| func(l, r, &lhs.pubkey))
+            .map(|(l, r)| func(l, r, &lhs.pk))
             .collect();
         Cipherblock {
-            pubkey: lhs.pubkey.clone(),
+            pk: lhs.pk.clone(),
             data,
             shape: lhs.shape.clone(),
         }
@@ -52,28 +62,28 @@ impl Cipherblock {
         let rhs_iter = rhs.iter();
         let data: Vec<fixedpoint::CT> = lhs_iter
             .zip(rhs_iter)
-            .map(|(l, r)| func(l, &r.encode(&lhs.pubkey.coder), &lhs.pubkey))
+            .map(|(l, r)| func(l, &r.encode(&lhs.pk.coder), &lhs.pk))
             .collect();
         Cipherblock {
-            pubkey: lhs.pubkey.clone(),
+            pk: lhs.pk.clone(),
             data,
             shape: lhs.shape.clone(),
         }
     }
     pub fn neg(&self) -> Cipherblock {
-        self.map(|x| x.neg(&self.pubkey))
+        self.map(|x| x.neg(&self.pk))
     }
     pub fn add_cipherblock(&self, rhs: &Cipherblock) -> Cipherblock {
         assert_eq!(self.shape, rhs.shape);
-        assert_eq!(self.pubkey, rhs.pubkey);
+        assert_eq!(self.pk, rhs.pk);
         let data: Vec<fixedpoint::CT> = self
             .data
             .iter()
             .zip(rhs.data.iter())
-            .map(|(l, r)| l.add(r, &self.pubkey))
+            .map(|(l, r)| l.add(r, &self.pk))
             .collect();
         Cipherblock {
-            pubkey: self.pubkey.clone(),
+            pk: self.pk.clone(),
             data,
             shape: self.shape.clone(),
         }
@@ -86,7 +96,7 @@ impl Cipherblock {
         T: CouldCode,
     {
         assert_eq!(self.shape, rhs.shape().to_vec());
-        let rhs = self.pubkey.encrypt_array(rhs);
+        let rhs = self.pk.encrypt_array(rhs);
         self.add_cipherblock(&rhs)
     }
     pub fn sub_plaintext<T>(&self, rhs: ArrayViewD<T>) -> Cipherblock
@@ -94,7 +104,7 @@ impl Cipherblock {
         T: CouldCode,
     {
         assert_eq!(self.shape, rhs.shape().to_vec());
-        let rhs = self.pubkey.encrypt_array(rhs);
+        let rhs = self.pk.encrypt_array(rhs);
         self.sub_cipherblock(&rhs)
     }
     pub fn mul_plaintext<T>(&self, rhs: ArrayViewD<T>) -> Cipherblock
@@ -106,84 +116,15 @@ impl Cipherblock {
             .data
             .iter()
             .zip(rhs.iter())
-            .map(|(l, r)| l.mul(&r.encode(&self.pubkey.coder), &self.pubkey))
+            .map(|(l, r)| l.mul(&r.encode(&self.pk.coder), &self.pk))
             .collect();
         Cipherblock {
-            pubkey: self.pubkey.clone(),
+            pk: self.pk.clone(),
             data,
             shape: self.shape.clone(),
         }
     }
-    pub fn matmul_plaintext_ix2<T>(&self, rhs: ArrayView2<T>) -> Cipherblock
-    where
-        T: CouldCode,
-    {
-        match self.shape.as_slice() {
-            &[m, k1] => {
-                let (k2, n) = rhs.dim();
-                if k1 != k2 || m.checked_mul(n).is_none() {
-                    panic!("dot shape error: ({}, {}) x ({}, {})", m, k1, k2, n);
-                }
-                let mut c: Vec<fixedpoint::CT> = vec![fixedpoint::CT::zero(); m * n];
-                let coder = &self.pubkey.coder;
-                let pk = &self.pubkey;
-                itertools::iproduct!(0..m, 0..n)
-                    .zip(c.iter_mut())
-                    .for_each(|((i, j), v)| {
-                        (0..k1).for_each(|k| {
-                            let l = &self.data[i * k1 + k]; // (i, k)
-                            let r = rhs[(k, j)].encode(coder); // (k, j)
-                            let d = l.mul(&r, &pk); // l * r
-                            v.add_assign(&d, &pk); // acc += l * r
-                        })
-                    });
-                Cipherblock {
-                    pubkey: pk.clone(),
-                    data: c,
-                    shape: vec![m, n],
-                }
-            }
-            not_dim2 @ _ => panic!("dot shape error: (?) x {:?}", not_dim2),
-        }
-    }
-
-    #[cfg(feature = "rayon")]
-    pub fn matmul_plaintext_ix2_par<T>(&self, rhs: ArrayView2<T>) -> Cipherblock
-    where
-        T: CouldCode + Sync,
-    {
-        match self.shape.as_slice() {
-            &[m, k1] => {
-                let (k2, n) = rhs.dim();
-                if k1 != k2 || m.checked_mul(n).is_none() {
-                    panic!("dot shape error: ({}, {}) x ({}, {})", m, k1, k2, n);
-                }
-                let mut c: Vec<fixedpoint::CT> = vec![fixedpoint::CT::zero(); m * n];
-                let coder = &self.pubkey.coder;
-                let pk = &self.pubkey;
-                let indexes: Vec<(usize, usize)> = itertools::iproduct!(0..m, 0..n).collect();
-                indexes
-                    .par_iter()
-                    .zip(c.par_iter_mut())
-                    .for_each(|((i, j), v)| {
-                        (0..k1).for_each(|k| {
-                            let l = &self.data[i * k1 + k]; // (i, k)
-                            let r = rhs[(k, *j)].encode(coder); // (k, j)
-                            let d = l.mul(&r, &pk); // l * r
-                            v.add_assign(&d, &pk); // acc += l * r
-                        });
-                    });
-                Cipherblock {
-                    pubkey: pk.clone(),
-                    data: c,
-                    shape: vec![m, n],
-                }
-            }
-            not_dim2 @ _ => panic!("dot shape error: (?) x {:?}", not_dim2),
-        }
-    }
 }
-
 impl fixedpoint::PK {
     pub fn encrypt_array<T>(&self, array: ArrayViewD<T>) -> Cipherblock
     where
@@ -195,7 +136,7 @@ impl fixedpoint::PK {
             .map(|e| self.encrypt(&e.encode(&self.coder), true))
             .collect();
         Cipherblock {
-            pubkey: self.clone(),
+            pk: self.clone(),
             data,
             shape,
         }
@@ -224,15 +165,15 @@ impl Cipherblock {
         F: Fn(&fixedpoint::CT, &fixedpoint::CT, &fixedpoint::PK) -> fixedpoint::CT + Sync,
     {
         assert_eq!(lhs.shape, rhs.shape);
-        assert_eq!(lhs.pubkey, rhs.pubkey);
+        assert_eq!(lhs.pk, rhs.pk);
         let lhs_iter = lhs.data.par_iter();
         let rhs_iter = rhs.data.par_iter();
         let data: Vec<fixedpoint::CT> = lhs_iter
             .zip(rhs_iter)
-            .map(|(l, r)| func(l, r, &lhs.pubkey))
+            .map(|(l, r)| func(l, r, &lhs.pk))
             .collect();
         Cipherblock {
-            pubkey: lhs.pubkey.clone(),
+            pk: lhs.pk.clone(),
             data,
             shape: lhs.shape.clone(),
         }
@@ -247,10 +188,10 @@ impl Cipherblock {
         let rhs_iter = rhs.as_slice().unwrap().into_par_iter();
         let data: Vec<fixedpoint::CT> = lhs_iter
             .zip(rhs_iter)
-            .map(|(l, r)| func(l, &r.encode(&lhs.pubkey.coder), &lhs.pubkey))
+            .map(|(l, r)| func(l, &r.encode(&lhs.pk.coder), &lhs.pk))
             .collect();
         Cipherblock {
-            pubkey: lhs.pubkey.clone(),
+            pk: lhs.pk.clone(),
             data,
             shape: lhs.shape.clone(),
         }
@@ -269,7 +210,7 @@ impl fixedpoint::PK {
             .map(|e| self.encrypt(&e.encode(&self.coder), true))
             .collect();
         Cipherblock {
-            pubkey: self.clone(),
+            pk: self.clone(),
             data,
             shape,
         }
