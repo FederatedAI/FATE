@@ -128,7 +128,7 @@ this file to get the information on how to launch the component.
         ``` 
       - use the decorator `xxx_cpn_meta.bind_runner.on_$role` to bind the running object to each role.  
         $role mainly includes `local`, `guest`, `host` and `arbiter`. If the component uses the same running module for several roles, syntax like 
-        `xxx_cpn_meta.bind_runner.on_$role1.on_$role2.on_$role3` is also supported.   
+        `xxx_cpn_meta.bind_runner.on_$role1.on_$role2.on_$role3` is also supported.  
         This function imports and returns the running object of the corresponding role.   
   
         Take `hetero-lr` as an example, it can be found in
