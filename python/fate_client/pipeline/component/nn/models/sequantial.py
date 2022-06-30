@@ -30,11 +30,17 @@ class Sequential(object):
         return self._model is None
 
     def add(self, layer):
+
+        from federatedml.nn.backend.fate_torch.nn import Sequential as tSeq
+
         if _TF_KERAS_VALID and isinstance(layer, base_layer.Layer):
             layer_type = "keras"
         elif isinstance(layer, dict):
             layer_type = "nn"
-        elif hasattr(layer, "__module__") and getattr(layer, "__module__").startswith("torch.nn.modules"):
+        elif hasattr(layer, "__module__"):
+            if 'fate_torch' in getattr(layer, "__module__"):
+                layer_type = "pytorch"
+        elif isinstance(layer, tSeq):
             layer_type = "pytorch"
         else:
             raise ValueError("Layer type {} not support yet".format(type(layer)))
@@ -75,9 +81,10 @@ def _build_model(type):
         return model_builder.build_model()
 
     if type == "pytorch":
-        from pipeline.component.nn.backend.pytorch import model_builder
-        return model_builder.build_model()
+        from federatedml.nn.backend.fate_torch.nn import Sequential
+        return Sequential()
 
     if type == "nn":
         from pipeline.component.nn.backend.tf import model_builder
         return model_builder.build_model()
+
