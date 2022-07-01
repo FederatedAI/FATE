@@ -374,8 +374,12 @@ class Session(object):
             f"save session record for manager {self._session_id}, {engine_type} {engine_name} {engine_session_id} successfully")
 
     @DB.connection_context()
-    def delete_session_record(self, engine_session_id):
-        rows = SessionRecord.delete().where(SessionRecord.f_engine_session_id == engine_session_id).execute()
+    def delete_session_record(self, engine_session_id, manager_session_id=None):
+        if not manager_session_id:
+            rows = SessionRecord.delete().where(SessionRecord.f_engine_session_id == engine_session_id).execute()
+        else:
+            rows = SessionRecord.delete().where(SessionRecord.f_engine_session_id == engine_session_id,
+                                                SessionRecord.f_manager_session_id == manager_session_id).execute()
         if rows > 0:
             self._logger.info(f"delete session {engine_session_id} record successfully")
         else:
@@ -389,7 +393,7 @@ class Session(object):
     @DB.connection_context()
     def get_session_from_record(self, **kwargs):
         self._logger.info(f"query by manager session id {self._session_id}")
-        session_records = self.query_sessions(manager_session_id=self._session_id, **kwargs)
+        session_records = self.query_sessions(manager_session_id=self.session_id, **kwargs)
         self._logger.info([session_record.f_engine_session_id for session_record in session_records])
         for session_record in session_records:
             try:
@@ -442,6 +446,7 @@ class Session(object):
     def destroy_all_sessions(self, **kwargs):
         self._logger.info(f"start destroy manager session {self._session_id} all sessions")
         self.get_session_from_record(**kwargs)
+        self.cleanup()
         self.destroy_federation_session()
         self.destroy_storage_session()
         self.destroy_computing_session()
@@ -479,28 +484,26 @@ class Session(object):
                         f"try to destroy federation session {self._federation_session.session_id} type"
                         f" {EngineType.FEDERATION} role {self._parties_info.local_party.role}")
                     self._federation_session.destroy(parties=self._all_party_info)
-                    self._logger.info(f"try to destroy federation session {self._federation_session.session_id} done")
+                    self._logger.info(f"destroy federation session {self._federation_session.session_id} done")
             except Exception as e:
                 self._logger.info(f"destroy federation failed: {e}")
-            self.delete_session_record(engine_session_id=self._federation_session.session_id)
+            self.delete_session_record(engine_session_id=self._federation_session.session_id, manager_session_id=self.session_id)
 
     def wait_remote_all_done(self, timeout=None):
         LOGGER.info(f"remote futures: {remote_status._remote_futures}, waiting...")
         remote_status.wait_all_remote_done(timeout)
         LOGGER.info(f"remote futures: {remote_status._remote_futures}, all done")
 
-    def clean(self, federation_namespace, computing_namespace):
+    def cleanup(self):
         try:
-            # clean up temporary tables
-            self._logger.info('clean table by namespace {}'.format(federation_namespace))
-            storage = self.storage()
-            storage.cleanup(namespace=federation_namespace, name="*")
-            self._logger.info('clean table by namespace {}'.format(computing_namespace))
-            storage.cleanup(namespace=computing_namespace, name="*")
-            return True
+            # clean up session temporary tables
+            if self._storage_engine in [StorageEngine.STANDALONE, StorageEngine.EGGROLL]:
+                self._logger.info('clean table by namespace {}'.format(self.session_id))
+                storage = self.storage()
+                storage.cleanup(namespace=self.session_id, name="*")
+                self._logger.info(f'clean table namespace {self.session_id} done')
         except Exception as e:
-            self._logger.exception(f"cleanup error:{e}")
-            return False
+            self._logger.warning(f"no found table namespace {self.session_id}")
 
 
 def get_session() -> Session:
