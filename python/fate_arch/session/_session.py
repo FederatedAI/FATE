@@ -495,15 +495,23 @@ class Session(object):
         LOGGER.info(f"remote futures: {remote_status._remote_futures}, all done")
 
     def cleanup(self):
-        try:
-            # clean up session temporary tables
-            if self._storage_engine in [StorageEngine.STANDALONE, StorageEngine.EGGROLL]:
-                self._logger.info('clean table by namespace {}'.format(self.session_id))
-                storage = self.storage()
-                storage.cleanup(namespace=self.session_id, name="*")
-                self._logger.info(f'clean table namespace {self.session_id} done')
-        except Exception as e:
-            self._logger.warning(f"no found table namespace {self.session_id}")
+        # clean up session temporary tables
+        if self._storage_engine in [StorageEngine.STANDALONE, StorageEngine.EGGROLL]:
+            storage = self.storage()
+            if self.is_computing_valid:
+                try:
+                    self._logger.info('clean table by namespace {}'.format(self._computing_session.session_id))
+                    storage.cleanup(namespace=self._computing_session.session_id, name="*")
+                    self._logger.info(f'clean table namespace {self._computing_session.session_id} done')
+                except Exception as e:
+                    self._logger.warning(f"no found table namespace {self._computing_session.session_id}")
+            if self.is_federation_valid:
+                try:
+                    self._logger.info('clean table by namespace {}'.format(self._federation_session.session_id))
+                    storage.cleanup(namespace=self._federation_session.session_id, name="*")
+                    self._logger.info(f'clean table namespace {self._federation_session.session_id} done')
+                except Exception as e:
+                    self._logger.warning(f"no found table namespace {self._federation_session.session_id}")
 
 
 def get_session() -> Session:
