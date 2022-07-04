@@ -1,14 +1,18 @@
 use super::{block, fixedpoint, fixedpoint::CouldCode, Cipherblock, PK, SK};
 use ndarray::{ArrayD, ArrayView1, ArrayView2, ArrayViewD};
 
-fn binary_plain<F, T>(this: &Cipherblock, other: ArrayViewD<T>, func: F) -> Cipherblock
+fn operation_with_arrayview_dyn<F, T>(
+    this: &Cipherblock,
+    other: ArrayViewD<T>,
+    func: F,
+) -> Cipherblock
 where
     F: Fn(&block::Cipherblock, ArrayViewD<T>) -> block::Cipherblock,
 {
     Cipherblock::new(func(this.unwrap(), other))
 }
 
-fn binary_cipher<F>(this: &Cipherblock, other: &Cipherblock, func: F) -> Cipherblock
+fn operation_with_cipherblock<F>(this: &Cipherblock, other: &Cipherblock, func: F) -> Cipherblock
 where
     F: Fn(&block::Cipherblock, &block::Cipherblock) -> block::Cipherblock,
 {
@@ -17,19 +21,66 @@ where
     Cipherblock::new(func(a, b))
 }
 
+fn operation_with_scalar<F, T>(this: &Cipherblock, other: T, func: F) -> Cipherblock
+where
+    F: Fn(&block::Cipherblock, T) -> block::Cipherblock,
+{
+    Cipherblock::new(func(this.unwrap(), other))
+}
+
+macro_rules! impl_ops_cipher_scalar {
+    ($name:ident,$fn:expr) => {
+        pub fn $name(&self, other: &fixedpoint::CT) -> Cipherblock {
+            operation_with_scalar(self, other, |lhs, rhs| {
+                block::Cipherblock::map(lhs, |c| $fn(c, rhs, &lhs.pk))
+            })
+        }
+    };
+    ($name:ident,$fn:expr,$feature:ident) => {
+        #[cfg(feature = "rayon")]
+        pub fn $name(&self, other: &fixedpoint::CT) -> Cipherblock {
+            operation_with_scalar(self, other, |lhs, rhs| {
+                block::Cipherblock::map_par(lhs, |c| $fn(c, rhs, &lhs.pk))
+            })
+        }
+    };
+}
+macro_rules! impl_ops_plaintext_scalar {
+    ($name:ident,$fn:expr) => {
+        pub fn $name<T>(&self, other: T) -> Cipherblock
+        where
+            T: CouldCode,
+        {
+            operation_with_scalar(self, other, |lhs, rhs| {
+                block::Cipherblock::map(lhs, |c| $fn(c, &rhs.encode(&lhs.pk.coder), &lhs.pk))
+            })
+        }
+    };
+    ($name:ident,$fn:expr,$feature:ident) => {
+        #[cfg(feature = "rayon")]
+        pub fn $name<T>(&self, other: T) -> Cipherblock
+        where
+            T: CouldCode + Sync,
+        {
+            operation_with_scalar(self, other, |lhs, rhs| {
+                block::Cipherblock::map_par(lhs, |c| $fn(c, &rhs.encode(&lhs.pk.coder), &lhs.pk))
+            })
+        }
+    };
+}
 macro_rules! impl_ops_cipher {
     ($name:ident,$fn:expr) => {
         pub fn $name(&self, other: &Cipherblock) -> Cipherblock {
-            binary_cipher(self, other, |lhs, rhs| {
-                block::Cipherblock::ops_cb_cb(lhs, rhs, $fn)
+            operation_with_cipherblock(self, other, |lhs, rhs| {
+                block::Cipherblock::binary_cipherblock_cipherblock(lhs, rhs, $fn)
             })
         }
     };
     ($name:ident,$fn:expr,$feature:ident) => {
         #[cfg(feature = "rayon")]
         pub fn $name(&self, other: &Cipherblock) -> Cipherblock {
-            binary_cipher(self, other, |lhs, rhs| {
-                block::Cipherblock::ops_cb_cb_par(lhs, rhs, $fn)
+            operation_with_cipherblock(self, other, |lhs, rhs| {
+                block::Cipherblock::binary_cipherblock_cipherblock_par(lhs, rhs, $fn)
             })
         }
     };
@@ -40,8 +91,8 @@ macro_rules! impl_ops_plain {
         where
             T: fixedpoint::CouldCode,
         {
-            binary_plain(self, other, |lhs, rhs| {
-                block::Cipherblock::ops_cb_pt(lhs, rhs, $fn)
+            operation_with_arrayview_dyn(self, other, |lhs, rhs| {
+                block::Cipherblock::binary_cipherblock_plaintext(lhs, rhs, $fn)
             })
         }
     };
@@ -51,8 +102,8 @@ macro_rules! impl_ops_plain {
         where
             T: fixedpoint::CouldCode + Sync + Send,
         {
-            binary_plain(self, other, |lhs, rhs| {
-                block::Cipherblock::ops_cb_pt_par(lhs, rhs, $fn)
+            operation_with_arrayview_dyn(self, other, |lhs, rhs| {
+                block::Cipherblock::binary_cipherblock_plaintext_par(lhs, rhs, $fn)
             })
         }
     };
@@ -77,12 +128,16 @@ impl Cipherblock {
     fn unwrap(&self) -> &block::Cipherblock {
         self.0.as_ref().unwrap()
     }
-
     impl_ops_cipher!(add_cb, fixedpoint::CT::add);
-    impl_ops_cipher!(sub_cb, fixedpoint::CT::sub);
     impl_ops_plain!(add_plaintext, fixedpoint::CT::add_pt);
+    impl_ops_cipher_scalar!(add_cipher_scalar, fixedpoint::CT::add);
+    impl_ops_plaintext_scalar!(add_plaintext_scalar, fixedpoint::CT::add_pt);
+    impl_ops_cipher!(sub_cb, fixedpoint::CT::sub);
     impl_ops_plain!(sub_plaintext, fixedpoint::CT::sub_pt);
+    impl_ops_cipher_scalar!(sub_cipher_scalar, fixedpoint::CT::sub);
+    impl_ops_plaintext_scalar!(sub_plaintext_scalar, fixedpoint::CT::sub_pt);
     impl_ops_plain!(mul_plaintext, fixedpoint::CT::mul);
+    impl_ops_plaintext_scalar!(mul_plaintext_scalar, fixedpoint::CT::mul);
 
     // matmul
     impl_ops_matmul!(
@@ -108,10 +163,17 @@ impl Cipherblock {
 
     //par
     impl_ops_cipher!(add_cb_par, fixedpoint::CT::add, rayon);
-    impl_ops_cipher!(sub_cb_par, fixedpoint::CT::sub, rayon);
     impl_ops_plain!(add_plaintext_par, fixedpoint::CT::add_pt, rayon);
+    impl_ops_cipher_scalar!(add_cipher_scalar_par, fixedpoint::CT::add, rayon);
+    impl_ops_plaintext_scalar!(add_plaintext_scalar_par, fixedpoint::CT::add_pt, rayon);
+
+    impl_ops_cipher!(sub_cb_par, fixedpoint::CT::sub, rayon);
     impl_ops_plain!(sub_plaintext_par, fixedpoint::CT::sub_pt, rayon);
+    impl_ops_cipher_scalar!(sub_cipher_scalar_par, fixedpoint::CT::add, rayon);
+    impl_ops_plaintext_scalar!(sub_plaintext_scalar_par, fixedpoint::CT::sub_pt, rayon);
+
     impl_ops_plain!(mul_plaintext_par, fixedpoint::CT::mul, rayon);
+    impl_ops_plaintext_scalar!(mul_plaintext_scalar_par, fixedpoint::CT::mul, rayon);
 
     // matmul
     impl_ops_matmul!(

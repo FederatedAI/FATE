@@ -140,6 +140,18 @@ impl Cipherblock {
     pub fn add_plaintext_i32(&self, other: PyReadonlyArrayDyn<i32>) -> Cipherblock {
         self.add_plaintext(other.as_array())
     }
+    pub fn add_plaintext_scalar_f64(&self, other: f64) -> Cipherblock {
+        self.add_plaintext_scalar(other)
+    }
+    pub fn add_plaintext_scalar_f32(&self, other: f32) -> Cipherblock {
+        self.add_plaintext_scalar(other)
+    }
+    pub fn add_plaintext_scalar_i64(&self, other: i64) -> Cipherblock {
+        self.add_plaintext_scalar(other)
+    }
+    pub fn add_plaintext_scalar_i32(&self, other: i32) -> Cipherblock {
+        self.add_plaintext_scalar(other)
+    }
 
     // sub
     pub fn sub_cipherblock(&self, other: &Cipherblock) -> Cipherblock {
@@ -157,6 +169,18 @@ impl Cipherblock {
     pub fn sub_plaintext_i32(&self, other: PyReadonlyArrayDyn<i32>) -> Cipherblock {
         self.sub_plaintext(other.as_array())
     }
+    pub fn sub_plaintext_scalar_f64(&self, other: f64) -> Cipherblock {
+        self.sub_plaintext_scalar(other)
+    }
+    pub fn sub_plaintext_scalar_f32(&self, other: f32) -> Cipherblock {
+        self.sub_plaintext_scalar(other)
+    }
+    pub fn sub_plaintext_scalar_i64(&self, other: i64) -> Cipherblock {
+        self.sub_plaintext_scalar(other)
+    }
+    pub fn sub_plaintext_scalar_i32(&self, other: i32) -> Cipherblock {
+        self.sub_plaintext_scalar(other)
+    }
 
     // mul
     pub fn mul_plaintext_f64(&self, other: PyReadonlyArrayDyn<f64>) -> Cipherblock {
@@ -170,6 +194,18 @@ impl Cipherblock {
     }
     pub fn mul_plaintext_i32(&self, other: PyReadonlyArrayDyn<i32>) -> Cipherblock {
         self.mul_plaintext(other.as_array())
+    }
+    pub fn mul_plaintext_scalar_f64(&self, other: f64) -> Cipherblock {
+        self.mul_plaintext_scalar(other)
+    }
+    pub fn mul_plaintext_scalar_f32(&self, other: f32) -> Cipherblock {
+        self.mul_plaintext_scalar(other)
+    }
+    pub fn mul_plaintext_scalar_i64(&self, other: i64) -> Cipherblock {
+        self.mul_plaintext_scalar(other)
+    }
+    pub fn mul_plaintext_scalar_i32(&self, other: i32) -> Cipherblock {
+        self.mul_plaintext_scalar(other)
     }
 
     // matmul
@@ -245,6 +281,22 @@ impl Cipherblock {
     pub fn add_plaintext_i32_par(&self, other: PyReadonlyArrayDyn<i32>) -> Cipherblock {
         self.add_plaintext_par(other.as_array())
     }
+    #[cfg(feature = "rayon")]
+    pub fn add_plaintext_scalar_f64_par(&self, other: f64) -> Cipherblock {
+        self.add_plaintext_scalar_par(other)
+    }
+    #[cfg(feature = "rayon")]
+    pub fn add_plaintext_scalar_f32_par(&self, other: f32) -> Cipherblock {
+        self.add_plaintext_scalar_par(other)
+    }
+    #[cfg(feature = "rayon")]
+    pub fn add_plaintext_scalar_i64_par(&self, other: i64) -> Cipherblock {
+        self.add_plaintext_scalar_par(other)
+    }
+    #[cfg(feature = "rayon")]
+    pub fn add_plaintext_scalar_i32_par(&self, other: i32) -> Cipherblock {
+        self.add_plaintext_scalar_par(other)
+    }
 
     // sub
     #[cfg(feature = "rayon")]
@@ -267,6 +319,22 @@ impl Cipherblock {
     pub fn sub_plaintext_i32_par(&self, other: PyReadonlyArrayDyn<i32>) -> Cipherblock {
         self.sub_plaintext_par(other.as_array())
     }
+    #[cfg(feature = "rayon")]
+    pub fn sub_plaintext_scalar_f64_par(&self, other: f64) -> Cipherblock {
+        self.sub_plaintext_scalar_par(other)
+    }
+    #[cfg(feature = "rayon")]
+    pub fn sub_plaintext_scalar_f32_par(&self, other: f32) -> Cipherblock {
+        self.sub_plaintext_scalar_par(other)
+    }
+    #[cfg(feature = "rayon")]
+    pub fn sub_plaintext_scalar_i64_par(&self, other: i64) -> Cipherblock {
+        self.sub_plaintext_scalar_par(other)
+    }
+    #[cfg(feature = "rayon")]
+    pub fn sub_plaintext_scalar_i32_par(&self, other: i32) -> Cipherblock {
+        self.sub_plaintext_scalar_par(other)
+    }
 
     // mul
     #[cfg(feature = "rayon")]
@@ -284,6 +352,22 @@ impl Cipherblock {
     #[cfg(feature = "rayon")]
     pub fn mul_plaintext_i32_par(&self, other: PyReadonlyArrayDyn<i32>) -> Cipherblock {
         self.mul_plaintext_par(other.as_array())
+    }
+    #[cfg(feature = "rayon")]
+    pub fn mul_plaintext_scalar_f64_par(&self, other: f64) -> Cipherblock {
+        self.mul_plaintext_scalar_par(other)
+    }
+    #[cfg(feature = "rayon")]
+    pub fn mul_plaintext_scalar_f32_par(&self, other: f32) -> Cipherblock {
+        self.mul_plaintext_scalar_par(other)
+    }
+    #[cfg(feature = "rayon")]
+    pub fn mul_plaintext_scalar_i64_par(&self, other: i64) -> Cipherblock {
+        self.mul_plaintext_scalar_par(other)
+    }
+    #[cfg(feature = "rayon")]
+    pub fn mul_plaintext_scalar_i32_par(&self, other: i32) -> Cipherblock {
+        self.mul_plaintext_scalar_par(other)
     }
 
     // matmul

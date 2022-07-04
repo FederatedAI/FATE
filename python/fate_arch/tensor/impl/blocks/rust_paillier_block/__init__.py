@@ -57,6 +57,14 @@ class PaillierBlock(PHEBlockABC):
             raise NotImplemented(f"dtype {other.dtype} not supported")
         if isinstance(other, PaillierBlock):
             return self.create(self._cb.add_cipherblock(other._cb))
+        if isinstance(other, (float, np.float64)):
+            return self.create(self._cb.add_plaintext_scalar_f64(other))
+        if isinstance(other, np.float32):
+            return self.create(self._cb.add_plaintext_scalar_f32(other))
+        if isinstance(other, (int, np.int64)):
+            return self.create(self._cb.add_plaintext_scalar_i64(other))
+        if isinstance(other, np.int32):
+            return self.create(self._cb.add_plaintext_scalar_i32(other))
         raise NotImplemented(f"type {other} not supported")
 
     def __radd__(self, other) -> "PaillierBlock":
@@ -77,6 +85,14 @@ class PaillierBlock(PHEBlockABC):
             raise NotImplemented(f"dtype {other.dtype} not supported")
         if isinstance(other, PaillierBlock):
             return self.create(self._cb.sub_cipherblock(other._cb))
+        if isinstance(other, (float, np.float64)):
+            return self.create(self._cb.sub_plaintext_scalar_f64(other))
+        if isinstance(other, np.float32):
+            return self.create(self._cb.sub_plaintext_scalar_f32(other))
+        if isinstance(other, (int, np.int64)):
+            return self.create(self._cb.sub_plaintext_scalar_i64(other))
+        if isinstance(other, np.int32):
+            return self.create(self._cb.sub_plaintext_scalar_i32(other))
         raise NotImplemented(f"type {other} not supported")
 
     def __rsub__(self, other) -> "PaillierBlock":
@@ -95,6 +111,14 @@ class PaillierBlock(PHEBlockABC):
             if other.dtype == np.int32:
                 return self.create(self._cb.mul_plaintext_i32(other))
             raise NotImplemented(f"dtype {other.dtype} not supported")
+        if isinstance(other, (float, np.float64)):
+            return self.create(self._cb.mul_plaintext_scalar_f64(other))
+        if isinstance(other, np.float32):
+            return self.create(self._cb.mul_plaintext_scalar_f32(other))
+        if isinstance(other, (int, np.int64)):
+            return self.create(self._cb.mul_plaintext_scalar_i64(other))
+        if isinstance(other, np.int32):
+            return self.create(self._cb.mul_plaintext_scalar_i32(other))
         raise NotImplemented(f"type {other} not supported")
 
     def __rmul__(self, other) -> "PaillierBlock":
@@ -158,7 +182,7 @@ class BlockPaillierEncryptor(PHEBlockEncryptorABC):
 
     def encrypt(self, other) -> PaillierBlock:
         if isinstance(other, FPBlock):
-            self._encrypt_numpy(other.numpy())
+            return PaillierBlock(self._encrypt_numpy(other.numpy()))
 
         raise NotImplementedError(f"type {other} not supported")
 
@@ -172,6 +196,7 @@ class BlockPaillierEncryptor(PHEBlockEncryptorABC):
                 return self._pk.encrypt_i64(other)
             if other.dtype == np.int32:
                 return self._pk.encrypt_i32(other)
+        raise NotImplementedError(f"type {other} {other.dtype} not supported")
 
 
 class BlockPaillierDecryptor(PHEBlockDecryptorABC):

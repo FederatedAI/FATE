@@ -23,15 +23,25 @@ def decrypt(fp, par, data):
 
 
 @cachetools.cached({})
-def data(fp, index, shape=(3, 5)) -> np.ndarray:
-    if fp == "f64":
-        return np.random.random(shape).astype(np.float64) - 0.5
-    if fp == "f32":
-        return np.random.random(shape).astype(np.float32) - 0.5
-    if fp == "i64":
-        return np.random.randint(low=2147483648, high=2147483648000, size=shape, dtype=np.int64)
-    if fp == "i32":
-        return np.random.randint(low=-100, high=100, size=shape, dtype=np.int32)
+def data(fp, index, shape=(3, 5), scalar=False) -> np.ndarray:
+    if not scalar:
+        if fp == "f64":
+            return np.random.random(shape).astype(np.float64) - 0.5
+        if fp == "f32":
+            return np.random.random(shape).astype(np.float32) - 0.5
+        if fp == "i64":
+            return np.random.randint(low=2147483648, high=2147483648000, size=shape, dtype=np.int64)
+        if fp == "i32":
+            return np.random.randint(low=-100, high=100, size=shape, dtype=np.int32)
+    else:
+        if fp == "f64":
+            return np.random.random(1).astype(np.float64)[0] - 0.5
+        if fp == "f32":
+            return np.random.random(1).astype(np.float32)[0] - 0.5
+        if fp == "i64":
+            return np.random.randint(low=2147483648, high=2147483648000, size=1, dtype=np.int64)[0]
+        if fp == "i32":
+            return np.random.randint(low=-100, high=100, size=1, dtype=np.int32)[0]
 
 
 def test_keygen():
@@ -45,11 +55,17 @@ def cipher_op(ciphertext, op, par):
         return getattr(ciphertext, f"{op.__name__}_cipherblock")
 
 
-def plaintest_op(ciphertext, op, par, fp):
+def plaintest_op(ciphertext, op, par, fp, scalar=False):
     if par:
-        return getattr(ciphertext, f"{op.__name__}_plaintext_{fp}_par")
+        if scalar:
+            return getattr(ciphertext, f"{op.__name__}_plaintext_scalar_{fp}_par")
+        else:
+            return getattr(ciphertext, f"{op.__name__}_plaintext_{fp}_par")
     else:
-        return getattr(ciphertext, f"{op.__name__}_plaintext_{fp}")
+        if scalar:
+            return getattr(ciphertext, f"{op.__name__}_plaintext_scalar_{fp}")
+        else:
+            return getattr(ciphertext, f"{op.__name__}_plaintext_{fp}")
 
 
 @pytest.mark.parametrize("par", [False, True])
@@ -80,6 +96,18 @@ def test_plaintext_op(par, fp, op):
     b = data(fp, 1)
     result = plaintest_op(ea, op, par, fp)(b)
     expect = op(data(fp, 0), data(fp, 1))
+    diff = decrypt(fp, par, result) - expect
+    assert np.isclose(diff, 0).all()
+
+
+@pytest.mark.parametrize("par", [False, True])
+@pytest.mark.parametrize("fp", ["f64", "f32", "i64", "i32"])
+@pytest.mark.parametrize("op", [operator.add, operator.sub, operator.mul])
+def test_plaintext_op_scalar(par, fp, op):
+    ea = encrypt(fp, par, data(fp, 0))
+    b = data(fp, 1, scalar=True)
+    result = plaintest_op(ea, op, par, fp, True)(b)
+    expect = op(data(fp, 0), data(fp, 1, scalar=True))
     diff = decrypt(fp, par, result) - expect
     assert np.isclose(diff, 0).all()
 
