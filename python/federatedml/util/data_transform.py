@@ -134,7 +134,7 @@ class DenseFeatureTransformer(object):
             schema["meta"] = meta
             generated_header = DataFormatPreProcess.generate_header(input_data, schema)
             schema.update(generated_header)
-            schema = self.anonymous_generator.generate_anonymous_header(input_data, schema)
+            schema = self.anonymous_generator.generate_anonymous_header(schema)
             set_schema(input_data, schema)
         else:
             self._update_param(schema)
@@ -460,7 +460,7 @@ class SparseFeatureTransformer(object):
             schema["meta"] = meta
             generated_header = DataFormatPreProcess.generate_header(input_data, schema)
             schema.update(generated_header)
-            schema = self.anonymous_generator.generate_anonymous_header(input_data, schema)
+            schema = self.anonymous_generator.generate_anonymous_header(schema)
             set_schema(input_data, schema)
         else:
             self._update_param(schema["meta"])
@@ -661,7 +661,7 @@ class SparseTagTransformer(object):
             schema["meta"] = meta
             generated_header = DataFormatPreProcess.generate_header(input_data, schema)
             schema.update(generated_header)
-            schema = self.anonymous_generator.generate_anonymous_header(input_data, schema)
+            schema = self.anonymous_generator.generate_anonymous_header(schema)
             set_schema(input_data, schema)
         else:
             self._update_param(schema["meta"])

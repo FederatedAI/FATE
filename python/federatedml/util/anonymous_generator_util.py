@@ -28,16 +28,16 @@ class Anonymous(object):
         self._party_id = party_id
 
     @staticmethod
-    def anonymous_migrate(anonymous_header, role, original_party_id, new_party_id):
-        """
-        split, replace party_id, then concat
-        """
-        pass
+    def anonymous_migrate(anonymous_header, original_party_id, new_party_id):
+        migrate_anonymous_header = []
+        for column in anonymous_header:
+            role, party_id, suf = column.split("_", 2)
+            if party_id == str(original_party_id):
+                migrate_anonymous_header.append("_".join([role, str(new_party_id), suf]))
+            else:
+                migrate_anonymous_header.append(column)
 
     def extend_columns(self, original_anonymous_header, extend_header):
-        """
-        一些比较复杂的情况：exp_i_0, exp_i_1... exp_k
-        """
         extend_anonymous_header = []
         exp_start_idx = 0
         for anonymous_col_name in original_anonymous_header:
@@ -47,7 +47,7 @@ class Anonymous(object):
             exp_start_idx = max(exp_start_idx, self.get_expand_idx(anonymous_col_name) + 1)
 
         for i in range(len(extend_header)):
-            extend_anonymous_header.append(self.generate_expand_anonymous_column(exp_start_idx + i))
+            extend_anonymous_header.append(self.__generate_expand_anonymous_column(exp_start_idx + i))
 
         return original_anonymous_header + extend_anonymous_header
 
@@ -78,7 +78,7 @@ class Anonymous(object):
 
         return new_anonymous_header
 
-    def generate_expand_anonymous_column(self, fid):
+    def __generate_expand_anonymous_column(self, fid):
         return "_".join(map(str, [self._role, self._party_id, "exp", fid]))
 
     @staticmethod
@@ -100,12 +100,11 @@ class Anonymous(object):
             new_schema["anonymous_header"] = new_anonymous_header
 
         if "label_name" in schema:
-            new_schema["anonymous_label"] = ANONYMOUS_LABEL
+            new_schema["anonymous_label"] = "_".join([role, party_id, ANONYMOUS_LABEL])
 
-    def generate_anonymous_header(self, data, schema):
-        if "meta" not in schema:
-            raise ValueError("Can not find data's meta, fail to generate_anonymous_header")
+        return new_schema
 
+    def generate_anonymous_header(self, schema):
         new_schema = copy.deepcopy(schema)
         header = schema["header"]
         if self._role:
@@ -118,6 +117,9 @@ class Anonymous(object):
         new_schema["anonymous_header"] = anonymous_header
 
         if "label_name" in schema:
-            new_schema["anonymous_label"] = ANONYMOUS_LABEL
+            if self._role:
+                new_schema["anonymous_label"] = "_".join([self._role, str(self._party_id), ANONYMOUS_LABEL])
+            else:
+                new_schema["anonymous_header"] = ANONYMOUS_LABEL
 
         return new_schema
