@@ -136,7 +136,7 @@ def main(config="../../config.yaml", namespace=""):
         ],
             "filter_out_names": [
                 "x3"
-            ]
+        ]
         })
 
     pipeline.add_component(hetero_feature_selection_0,

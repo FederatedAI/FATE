@@ -96,10 +96,10 @@ def main(config="../../config.yaml", namespace=""):
     hetero_feature_binning_0 = HeteroFeatureBinning(name="hetero_feature_binning_0", **param)
     hetero_feature_binning_0.get_party_instance(role='host', party_id=host). \
         component_param(transform_param={
-        "transform_cols": -1,
-        "transform_names": None,
-        "transform_type": "bin_num"
-    })
+            "transform_cols": -1,
+            "transform_names": None,
+            "transform_type": "bin_num"
+        })
     hetero_feature_binning_0.get_party_instance(role="guest", party_id=guest).component_param(category_indexe=[0, 1, 2])
 
     hetero_feature_binning_1 = HeteroFeatureBinning(name='hetero_feature_binning_1')

@@ -67,12 +67,12 @@ def main(config="../../config.yaml", namespace=""):
     hetero_feature_binning_0.get_party_instance(role="guest",
                                                 party_id=guest). \
         component_param(transform_param={"transform_cols": [
-        0,
-        1,
-        2
-    ],
-        "transform_names": None,
-        "transform_type": "woe"})
+            0,
+            1,
+            2
+        ],
+            "transform_names": None,
+            "transform_type": "woe"})
 
     pipeline.add_component(reader_0)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
