@@ -116,13 +116,13 @@ class PHETensorDistributed(PHETensorABC):
     def __matmul__(
         self, other: Union["PHETensorDistributed", FPTensorDistributed, int, float]
     ) -> "PHETensorDistributed":
-        # todo: impl me
+        # TODO: impl me
         ...
 
     def __rmatmul__(
         self, other: Union["PHETensorDistributed", FPTensorDistributed, int, float]
     ) -> "PHETensorDistributed":
-        # todo: impl me
+        # TODO: impl me
         ...
 
     def T(self) -> "PHETensorDistributed":
@@ -131,7 +131,7 @@ class PHETensorDistributed(PHETensorABC):
         return transposed
 
     def serialize(self):
-        # todo: impl me
+        # TODO: impl me
         ...
 
     def _binary_op(self, other, func_name):

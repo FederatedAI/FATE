@@ -177,8 +177,9 @@ class PaillierBlock(PHEBlockABC):
 
 
 class BlockPaillierEncryptor(PHEBlockEncryptorABC):
-    def __init__(self, pk: fate_tensor.PK) -> None:
+    def __init__(self, pk: fate_tensor.PK, multithread = False) -> None:
         self._pk = pk
+        self._multithread = multithread
 
     def encrypt(self, other) -> PaillierBlock:
         if isinstance(other, FPBlock):
@@ -187,41 +188,63 @@ class BlockPaillierEncryptor(PHEBlockEncryptorABC):
         raise NotImplementedError(f"type {other} not supported")
 
     def _encrypt_numpy(self, other):
-        if isinstance(other, np.ndarray):
-            if other.dtype == np.float64:
-                return self._pk.encrypt_f64(other)
-            if other.dtype == np.float32:
-                return self._pk.encrypt_f32(other)
-            if other.dtype == np.int64:
-                return self._pk.encrypt_i64(other)
-            if other.dtype == np.int32:
-                return self._pk.encrypt_i32(other)
+        if self._multithread:
+            if isinstance(other, np.ndarray):
+                if other.dtype == np.float64:
+                    return self._pk.encrypt_f64_par(other)
+                if other.dtype == np.float32:
+                    return self._pk.encrypt_f32_par(other)
+                if other.dtype == np.int64:
+                    return self._pk.encrypt_i64_par(other)
+                if other.dtype == np.int32:
+                    return self._pk.encrypt_i32_par(other)
+        else:
+            if isinstance(other, np.ndarray):
+                if other.dtype == np.float64:
+                    return self._pk.encrypt_f64(other)
+                if other.dtype == np.float32:
+                    return self._pk.encrypt_f32(other)
+                if other.dtype == np.int64:
+                    return self._pk.encrypt_i64(other)
+                if other.dtype == np.int32:
+                    return self._pk.encrypt_i32(other)
         raise NotImplementedError(f"type {other} {other.dtype} not supported")
 
 
 class BlockPaillierDecryptor(PHEBlockDecryptorABC):
-    def __init__(self, sk: fate_tensor.SK) -> None:
+    def __init__(self, sk: fate_tensor.SK, multithread=False) -> None:
         self._sk = sk
+        self._multithread = multithread
 
     def decrypt(self, other: PaillierBlock, dtype=np.float64):
         return torch.from_numpy(self._decrypt_numpy(other._cb, dtype))
 
     def _decrypt_numpy(self, cb: Cipherblock, dtype=np.float64):
-        if dtype == np.float64:
-            return self._sk.decrypt_f64(cb)
-        if dtype == np.float32:
-            return self._sk.decrypt_f32(cb)
-        if dtype == np.int64:
-            return self._sk.decrypt_i64(cb)
-        if dtype == np.int32:
-            return self._sk.decrypt_i32(cb)
+        if self._multithread:
+            if dtype == np.float64:
+                return self._sk.decrypt_f64_par(cb)
+            if dtype == np.float32:
+                return self._sk.decrypt_f32_par(cb)
+            if dtype == np.int64:
+                return self._sk.decrypt_i64_par(cb)
+            if dtype == np.int32:
+                return self._sk.decrypt_i32_par(cb)
+        else:
+            if dtype == np.float64:
+                return self._sk.decrypt_f64(cb)
+            if dtype == np.float32:
+                return self._sk.decrypt_f32(cb)
+            if dtype == np.int64:
+                return self._sk.decrypt_i64(cb)
+            if dtype == np.int32:
+                return self._sk.decrypt_i32(cb)
         raise NotImplementedError("dtype = {dtype}")
 
 
 class BlockPaillierCipher(PHEBlockCipherABC):
     @classmethod
     def keygen(
-        cls, n_length=1024, **kwargs
+            cls, key_length=1024, multithread=False,
     ) -> typing.Tuple[BlockPaillierEncryptor, BlockPaillierDecryptor]:
-        pubkey, prikey = fate_tensor.keygen(bit_size=n_length)
-        return (BlockPaillierEncryptor(pubkey), BlockPaillierDecryptor(prikey))
+        pubkey, prikey = fate_tensor.keygen(bit_size=key_length)
+        return (BlockPaillierEncryptor(pubkey, multithread), BlockPaillierDecryptor(prikey, multithread))
