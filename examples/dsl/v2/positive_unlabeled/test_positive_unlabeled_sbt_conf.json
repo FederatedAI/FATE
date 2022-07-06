@@ -23,10 +23,6 @@
                     "objective": "cross_entropy"
                 },
                 "num_trees": 2,
-                "validation_freqs": 1,
-                "encrypt_param": {
-                    "method": "iterativeAffine"
-                },
                 "tree_param": {
                     "max_depth": 3
                 },
@@ -36,9 +32,10 @@
                 }
             },
             "positive_unlabeled_0": {
-                "threshold_percent": 0.1,
                 "mode": "standard",
-                "unlabeled_digit": 0
+                "unlabeled_digit": 0,
+                "labeling_strategy": "proportion",
+                "threshold_percent": 0.1
             },
             "hetero_secure_boost_1": {
                 "task_type": "classification",
@@ -46,10 +43,6 @@
                     "objective": "cross_entropy"
                 },
                 "num_trees": 1,
-                "validation_freqs": 1,
-                "encrypt_param": {
-                    "method": "iterativeAffine"
-                },
                 "tree_param": {
                     "max_depth": 2
                 },

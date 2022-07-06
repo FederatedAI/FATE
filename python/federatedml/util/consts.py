@@ -343,3 +343,11 @@ MIN_HASH_FUNC_COUNT = 4
 MAX_HASH_FUNC_COUNT = 32
 
 EINI_TREE_COMPLEXITY = 1000000000
+
+# positive unlabeled
+STANDARD = "standard"
+TWO_STEP = "two_step"
+
+PROPORTION = "proportion"
+QUANTITY = "quantity"
+PROBABILITY = "probability"

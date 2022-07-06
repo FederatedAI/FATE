@@ -24,36 +24,55 @@ class PositiveUnlabeledParam(BaseParam):
     """
     Parameters used for positive unlabeled.
     ----------
-    reverse_order: bool, default: True
-        Need to reverse predict score or not.
-
-    threshold_percent: float, default: 0.1
-        The threshold percent of converting unlabeled value.
-
-    mode: {'standard', 'two_step'}
+    mode: {"standard", "two_step"}
         Switch positive unlabeled learning mode.
 
     unlabeled_digit: None or integer, default: None
         Whether it has unlabeled data. If true, declaring the unlabeled digit.
+
+    labeling_strategy: {"proportion", "quantity", "probability", "interval"}
+        Switch converting unlabeled value strategy.
+
+    threshold_percent: float, default: 0.1
+        The threshold percent in proportion strategy.
+
+    threshold_amount: float, default: 10
+        The threshold amount in quantity strategy.
+
+    threshold_proba: float, default: 0.9
+        The threshold proba in probability strategy.
     """
 
-    def __init__(self, reverse_order=True, threshold_percent=0.1, mode="standard", unlabeled_digit=None):
+    def __init__(self, mode="standard", unlabeled_digit=None, labeling_strategy="proportion",
+                 threshold_percent=0.1, threshold_amount=10, threshold_proba=0.9):
         super(PositiveUnlabeledParam, self).__init__()
-        self.reverse_order = reverse_order
-        self.threshold_percent = threshold_percent
         self.mode = mode
         self.unlabeled_digit = unlabeled_digit
+        self.labeling_strategy = labeling_strategy
+        self.threshold_percent = threshold_percent
+        self.threshold_amount = threshold_amount
+        self.threshold_proba = threshold_proba
 
     def check(self):
-        if self.threshold_percent is not None and type(self.threshold_percent).__name__ != "float":
-            raise ValueError("threshold_percent should be a float")
-
-        BaseParam.check_boolean(self.reverse_order, descr="positive unlabeled param reverse_order")
-
-        if self.mode not in ['standard', 'two_step']:
-            raise ValueError("mode not supported, mode should be 'standard' or 'two_step'")
+        if self.mode not in ["standard", "two_step"]:
+            raise ValueError("mode not supported, it should be 'standard' or 'two_step'")
 
         if self.unlabeled_digit is not None and type(self.unlabeled_digit).__name__ != "int":
             raise ValueError("unlabeled_digit should be None or an integer")
 
+        if self.labeling_strategy not in ["proportion", "quantity", "probability", "interval"]:
+            raise ValueError(
+                "labeling_strategy not supported, it should be 'proportion', 'quantity', 'probability' or 'interval'")
+
+        if self.threshold_percent is not None and type(self.threshold_percent).__name__ != "float":
+            raise ValueError("threshold_percent should be a float")
+
+        if self.threshold_amount is not None and type(self.threshold_amount).__name__ != "int":
+            raise ValueError("threshold_amount should be an integer")
+
+        if self.threshold_proba is not None and type(self.threshold_proba).__name__ != "float":
+            raise ValueError("threshold_proba should be a float")
+
+        if self.mode != "two_step" and self.labeling_strategy == "interval":
+            raise ValueError("Interval strategy only adapted to two-step mode")
         return True

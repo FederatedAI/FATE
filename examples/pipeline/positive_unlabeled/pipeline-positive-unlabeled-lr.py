@@ -79,9 +79,10 @@ def main(config="../../config.yaml", namespace=""):
     }
     pu_0_param = {
         "name": "positive_unlabeled_0",
-        "threshold_percent": 0.1,
         "mode": "two_step",
-        "unlabeled_digit": -1
+        "unlabeled_digit": -1,
+        "labeling_strategy": "proportion",
+        "threshold_percent": 0.1
     }
     lr_1_param = {
         "name": "hetero_lr_1",

@@ -76,10 +76,6 @@ def main(config="../../config.yaml", namespace=""):
             "objective": "cross_entropy"
         },
         "num_trees": 2,
-        "validation_freqs": 1,
-        "encrypt_param": {
-            "method": "iterativeAffine"
-        },
         "tree_param": {
             "max_depth": 3
         },
@@ -90,9 +86,10 @@ def main(config="../../config.yaml", namespace=""):
     }
     pu_0_param = {
         "name": "positive_unlabeled_0",
-        "threshold_percent": 0.1,
-        "mode": "two_step",
-        "unlabeled_digit": -1
+        "mode": "standard",
+        "unlabeled_digit": 0,
+        "labeling_strategy": "proportion",
+        "threshold_percent": 0.1
     }
     sbt_1_param = {
         "name": "hetero_sbt_1",
@@ -101,10 +98,6 @@ def main(config="../../config.yaml", namespace=""):
             "objective": "cross_entropy"
         },
         "num_trees": 1,
-        "validation_freqs": 1,
-        "encrypt_param": {
-            "method": "iterativeAffine"
-        },
         "tree_param": {
             "max_depth": 2
         },
