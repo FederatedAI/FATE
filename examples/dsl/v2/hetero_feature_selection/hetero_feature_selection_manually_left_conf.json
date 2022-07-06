@@ -24,6 +24,17 @@
                     },
                     "data_transform_0": {
                         "with_label": false
+                    },
+                    "hetero_feature_selection_0": {
+                        "manually_param": {
+                            "filter_out_indexes": null,
+                            "filter_out_names": null,
+                            "left_col_indexes": [
+                                0,
+                                1,
+                                2
+                            ]
+                        }
                     }
                 }
             },
@@ -38,6 +49,20 @@
                     "data_transform_0": {
                         "with_label": true,
                         "output_format": "dense"
+                    },
+                    "hetero_feature_selection_0": {
+                        "manually_param": {
+                            "filter_out_indexes": null,
+                            "filter_out_names": null,
+                            "left_col_indexes": [
+                                0,
+                                1,
+                                2
+                            ],
+                            "left_col_names": [
+                                "x3"
+                            ]
+                        }
                     }
                 }
             }
@@ -48,19 +73,7 @@
                 "select_names": [],
                 "filter_methods": [
                     "manually"
-                ],
-                "manually_param": {
-                    "filter_out_indexes": null,
-                    "filter_out_names": null,
-                    "left_col_indexes": [
-                        0,
-                        1,
-                        2
-                    ],
-                    "left_col_names": [
-                        "x3"
-                    ]
-                }
+                ]
             }
         }
     }
