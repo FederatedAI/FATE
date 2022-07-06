@@ -258,6 +258,14 @@ impl Cipherblock {
         self.rmatmul_plaintext_ix1(other.as_array())
     }
 
+    // agg
+    pub fn sum(&self) -> Cipherblock {
+        self.sum_cb()
+    }
+    pub fn mean(&self) -> Cipherblock {
+        self.sum_cb()
+    }
+
     // rayon
 
     // add
@@ -434,6 +442,15 @@ impl Cipherblock {
     #[cfg(feature = "rayon")]
     pub fn rmatmul_plaintext_ix1_i32_par(&self, other: PyReadonlyArray1<i32>) -> Cipherblock {
         self.rmatmul_plaintext_ix1_par(other.as_array())
+    }
+    // agg
+    #[cfg(feature = "rayon")]
+    pub fn sum_par(&self) -> Cipherblock {
+        self.sum_cb_par()
+    }
+    #[cfg(feature = "rayon")]
+    pub fn mean_par(&self) -> Cipherblock {
+        self.sum_cb_par()
     }
 }
 #[pymodule]

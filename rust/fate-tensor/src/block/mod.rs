@@ -34,6 +34,12 @@ impl Cipherblock {
             shape: self.shape.clone(),
         }
     }
+    pub fn agg<F, T>(&self, init: T, f: F) -> T
+    where
+        F: Fn(T, &fixedpoint::CT) -> T,
+    {
+        self.data.iter().fold(init, f)
+    }
     pub fn binary_cipherblock_cipherblock<F>(
         lhs: &Cipherblock,
         rhs: &Cipherblock,
@@ -114,6 +120,18 @@ impl fixedpoint::SK {
 
 #[cfg(feature = "rayon")]
 impl Cipherblock {
+    pub fn agg_par<F, T, ID, OP>(&self, identity: ID, f: F, op: OP) -> T
+    where
+        F: Fn(T, &fixedpoint::CT) -> T + Send + Sync,
+        ID: Fn() -> T + Send + Sync,
+        OP: Fn(T, T) -> T + Send + Sync,
+        T: Send,
+    {
+        self.data
+            .par_iter()
+            .fold(&identity, f)
+            .reduce(&identity, op)
+    }
     pub fn map_par<F>(&self, func: F) -> Cipherblock
     where
         F: Fn(&fixedpoint::CT) -> fixedpoint::CT + Sync + Send,

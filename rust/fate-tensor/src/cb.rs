@@ -202,6 +202,60 @@ impl Cipherblock {
     );
 }
 
+impl Cipherblock {
+    pub fn sum_cb(&self) -> Cipherblock {
+        let cb = self.unwrap();
+        let sum = cb.agg(fixedpoint::CT::zero(), |s, c| s.add(c, &cb.pk));
+        Cipherblock::new(block::Cipherblock {
+            pk: cb.pk.clone(),
+            data: vec![sum],
+            shape: vec![1],
+        })
+    }
+    pub fn mean_cb(&self) -> Cipherblock {
+        let cb = self.unwrap();
+        let (s, n) = cb.agg((fixedpoint::CT::zero(), 0usize), |s, c| {
+            (s.0.add(c, &cb.pk), s.1 + 1)
+        });
+        let mean = s.mul(&(1.0f64 / (n as f64)).encode(&cb.pk.coder), &cb.pk);
+        Cipherblock::new(block::Cipherblock {
+            pk: cb.pk.clone(),
+            data: vec![mean],
+            shape: vec![1],
+        })
+    }
+
+    #[cfg(feature = "rayon")]
+    pub fn sum_cb_par(&self) -> Cipherblock {
+        let cb = self.unwrap();
+        let sum = cb.agg_par(
+            fixedpoint::CT::zero,
+            |s, c| s.add(c, &cb.pk),
+            |s1, s2| s1.add(&s2, &cb.pk),
+        );
+        Cipherblock::new(block::Cipherblock {
+            pk: cb.pk.clone(),
+            data: vec![sum],
+            shape: vec![1],
+        })
+    }
+    #[cfg(feature = "rayon")]
+    pub fn mean_cb_par(&self) -> Cipherblock {
+        let cb = self.unwrap();
+        let (s, n) = cb.agg_par(
+            || (fixedpoint::CT::zero(), 0usize),
+            |s, c| (s.0.add(c, &cb.pk), s.1 + 1),
+            |s1, s2| (s1.0.add(&s2.0, &cb.pk), s1.1 + s2.1),
+        );
+        let mean = s.mul(&(1.0f64 / (n as f64)).encode(&cb.pk.coder), &cb.pk);
+        Cipherblock::new(block::Cipherblock {
+            pk: cb.pk.clone(),
+            data: vec![mean],
+            shape: vec![1],
+        })
+    }
+}
+
 impl SK {
     pub fn decrypt_array<T: CouldCode + numpy::Element>(&self, a: &Cipherblock) -> ArrayD<T> {
         let array = a.0.as_ref().unwrap();
