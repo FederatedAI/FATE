@@ -103,7 +103,6 @@ def main(config="../../config.yaml", namespace=""):
     statistic_0 = DataStatistics(name="statistic_0", **statistic_param)
     pipeline.add_component(statistic_0, data=Data(data=intersection_0.output.data))
 
-
     reader_1 = Reader(name="reader_1")
     reader_1.get_party_instance(role='guest', party_id=guest).component_param(table=guest_eval_data)
     reader_1.get_party_instance(role='host', party_id=hosts).component_param(table=host_eval_data)
