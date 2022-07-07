@@ -64,14 +64,26 @@
         "dh_interect_mutli": {
             "script": "./pipeline-intersect-dh-multi.py"
         },
+        "ecdh_interect": {
+            "script": "./pipeline-intersect-ecdh.py"
+        },
+        "ecdh_interect-with-preprocess": {
+            "script": "./pipeline-intersect-ecdh-w-preprocess.py"
+        },
         "rsa_intersect_cache": {
             "script": "./pipeline-intersect-rsa-cache.py"
         },
         "dh_intersect_cache": {
             "script": "./pipeline-intersect-dh-cache.py"
         },
+        "ecdh_intersect_cache": {
+            "script": "./pipeline-intersect-ecdh-cache.py"
+        },
         "intersect_cardinality": {
             "script": "./pipeline-intersect-cardinality.py"
+        },
+        "intersect_exact_cardinality": {
+            "script": "./pipeline-intersect-exact-cardinality.py"
         }
     }
 }

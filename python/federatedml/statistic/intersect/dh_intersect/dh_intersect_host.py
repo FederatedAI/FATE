@@ -59,7 +59,7 @@ class DhIntersectionHost(DhIntersect):
                                                       keep_encrypt_id=False)
         return intersect_ids
 
-    def get_intersect_doubly_encrypted_id(self, data_instances):
+    def get_intersect_doubly_encrypted_id(self, data_instances, keep_key=True):
         self._sync_commutative_cipher_public_knowledge()
         self.commutative_cipher.init()
 
@@ -77,7 +77,7 @@ class DhIntersectionHost(DhIntersect):
         # 2nd ID encrypt & send doubly encrypted guest ID list to guest
         id_list_remote_second = self._encrypt_id(id_list_remote_first,
                                                  self.commutative_cipher,
-                                                 reserve_original_key=True)  # (EEg, Eg)
+                                                 reserve_original_key=keep_key)  # (EEg, Eg)
         LOGGER.info("encrypted guest id for the 2nd time")
         self._sync_doubly_encrypted_id_list(id_list_remote_second)
 
@@ -141,15 +141,7 @@ class DhIntersectionHost(DhIntersect):
                                                                       role=consts.GUEST,
                                                                       idx=0)
         LOGGER.info("sent id 1st ciphertext list to guest")
-        """
-        cache_set = {
-            self.guest_party_id: {
-                "data": id_list_local_first,
-                "cache_id": cache_id,
-                "intersect_meta": self.get_intersect_method_meta(),
-                "intersect_key": self.get_intersect_key()
-            }}
-        """
+
         cache_data = {self.guest_party_id: id_list_local_first}
         cache_meta = {self.guest_party_id: {"cache_id": cache_id,
                                             "intersect_meta": self.get_intersect_method_meta(),
@@ -167,3 +159,10 @@ class DhIntersectionHost(DhIntersect):
         LOGGER.info("encrypted guest id for the 2nd time")
         self.id_list_local_first = self.extract_cache_list(cache_data, self.guest_party_id)[0]
         self._sync_doubly_encrypted_id_list(id_list_remote_second)
+
+    def run_cardinality(self, data_instances):
+        LOGGER.info(f"run exact_cardinality with DH")
+        self.get_intersect_doubly_encrypted_id(data_instances, keep_key=False)
+        if self.sync_cardinality:
+            self.intersect_num = self.transfer_variable.cardinality.get(idx=0)
+            LOGGER.info("Got intersect cardinality from guest.")

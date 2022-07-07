@@ -62,6 +62,14 @@
             "conf": "./test_intersect_job_dh_multi_conf.json",
             "dsl": "./test_intersect_job_dsl.json"
         },
+        "ecdh_intersect": {
+            "conf": "./test_intersect_job_ecdh_conf.json",
+            "dsl": "./test_intersect_job_dsl.json"
+        },
+        "ecdh_intersect_w_preprocess": {
+            "conf": "./test_intersect_job_ecdh_w_preprocess_conf.json",
+            "dsl": "./test_intersect_job_dsl.json"
+        },
         "rsa_cache_intersect": {
             "conf": "./test_intersect_job_rsa_cache_conf.json",
             "dsl": "./test_intersect_job_cache_dsl.json"
@@ -70,8 +78,16 @@
             "conf": "./test_intersect_job_dh_cache_conf.json",
             "dsl": "./test_intersect_job_cache_dsl.json"
         },
+        "ecdh_cache_intersect": {
+            "conf": "./test_intersect_job_ecdh_cache_conf.json",
+            "dsl": "./test_intersect_job_cache_dsl.json"
+        },
         "intersect_cardinality": {
             "conf": "./test_intersect_job_cardinality_conf.json",
+            "dsl": "./test_intersect_job_dsl.json"
+        },
+        "intersect_exact_cardinality": {
+            "conf": "./test_intersect_job_exact_cardinality_conf.json",
             "dsl": "./test_intersect_job_dsl.json"
         }
     }

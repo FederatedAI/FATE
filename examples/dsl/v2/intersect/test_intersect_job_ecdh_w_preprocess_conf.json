@@ -15,28 +15,27 @@
     "component_parameters": {
         "common": {
             "intersect_0": {
-                "cardinality_method": "rsa",
-                "cardinality_only": true,
-                "sync_cardinality": false,
-                "rsa_params": {
+                "intersect_method": "ecdh",
+                "sync_intersect_ids": true,
+                "ecdh_params": {
                     "hash_method": "sha256",
-                    "final_hash_method": "sha256",
-                    "split_calculation": false,
-                    "key_length": 2048
+                    "salt": "12345",
+                    "curve": "curve25519"
                 },
+                "only_output_key": true,
                 "intersect_preprocess_params": {
-                    "false_positive_rate": 1e-4,
-                    "encrypt_method": "rsa",
-                    "hash_method": "sha256"
-                }
+                    "preprocess_method": "sha256",
+                    "false_positive_rate": 0.2
+                },
+                "run_preprocess": true
             }
         },
         "role": {
-            "guest": {
+            "host": {
                 "0": {
                     "reader_0": {
                         "table": {
-                            "name": "breast_hetero_guest",
+                            "name": "breast_hetero_host",
                             "namespace": "experiment"
                         }
                     },
@@ -46,11 +45,11 @@
                     }
                 }
             },
-            "host": {
+            "guest": {
                 "0": {
                     "reader_0": {
                         "table": {
-                            "name": "breast_hetero_host",
+                            "name": "breast_hetero_guest",
                             "namespace": "experiment"
                         }
                     },
