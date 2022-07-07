@@ -177,7 +177,7 @@ class PaillierBlock(PHEBlockABC):
 
 
 class BlockPaillierEncryptor(PHEBlockEncryptorABC):
-    def __init__(self, pk: fate_tensor.PK, multithread = False) -> None:
+    def __init__(self, pk: fate_tensor.PK, multithread=False) -> None:
         self._pk = pk
         self._multithread = multithread
 

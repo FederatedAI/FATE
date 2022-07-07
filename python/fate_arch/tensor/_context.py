@@ -23,15 +23,19 @@ class ExcutionState:
     def generate_tag(self) -> str:
         return self._tag
 
+
 class DefaultState(ExcutionState):
     def __init__(self) -> None:
         super().__init__("default")
 
+
 class FitState(ExcutionState):
     ...
 
+
 class PredictState(ExcutionState):
     ...
+
 
 class IterationState(ExcutionState):
     def __init__(self, tag: str, index: int = -1) -> None:
@@ -41,13 +45,21 @@ class IterationState(ExcutionState):
     def generate_tag(self) -> str:
         return self._tag
 
+
 class CipherKind(Enum):
     PHE = 1
     PHE_PAILLIER = 2
 
 
+class Device(Enum):
+    CPU = 1
+    GPU = 2
+    FPGA = 3
+
+
 class Context:
     def __init__(self, start_iter_num=-1) -> None:
+        self._device = None
         self._iter_num = start_iter_num
         self._push_gc_dict = {}
         self._pull_gc_dict = {}
@@ -60,6 +72,14 @@ class Context:
 
         self._cypher_utils = CypherUtils(self)
         self._tensor_utils = TensorUtils(self)
+
+    def device_init(self, **kwargs):
+        self._device = Device.CPU
+
+    def device(self) -> Device:
+        if self._device is None:
+            raise RuntimeError(f"init device first")
+        return self._device
 
     @property
     def cypher_utils(self):
@@ -101,7 +121,7 @@ class Context:
 
     def _push(self, parties: List[Party], key, value):
         if key not in self._push_gc_dict:
-            self._pull_gc_dict[key] = IterationGC()
+            self._push_gc_dict[key] = IterationGC()
         get_session().federation.remote(
             v=value,
             name=key,
@@ -196,12 +216,13 @@ class CypherUtils:
 
     def keygen(self, kind, key_length: int, **kwargs):
         if kind == CipherKind.PHE or kind == CipherKind.PHE_PAILLIER:
-            from .impl.tensor.multithread import PaillierPHECipherLocal
+            if self._ctx._device == Device.CPU:
+                from .impl.tensor.multithread import PaillierPHECipherLocal
 
-            encryptor, decryptor = PaillierPHECipherLocal().keygen(
-                key_length=key_length
-            )
-            return PHEEncryptor(encryptor), PHEDecryptor(decryptor)
+                encryptor, decryptor = PaillierPHECipherLocal().keygen(
+                    key_length=key_length
+                )
+                return PHEEncryptor(encryptor), PHEDecryptor(decryptor)
         else:
             raise NotImplementedError(f"keygen for kind `{kind}` is not implemented")
 

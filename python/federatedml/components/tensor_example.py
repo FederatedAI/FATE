@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -8,6 +6,7 @@
 #  You may obtain a copy of the License at
 #
 #      http://www.apache.org/licenses/LICENSE-2.0
+
 #
 #  Unless required by applicable law or agreed to in writing, software
 #  distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,20 +15,27 @@
 #  limitations under the License.
 #
 
-from federatedml.model_base import ModelBase
-from fate_arch.tensor import Context
+from .components import ComponentMeta
 
-"""
-bridge to old modelbase
-"""
+tensor_example_cpn_meta = ComponentMeta("TensorExample")
 
 
-class MLBase(ModelBase):
-    def __init__(self):
-        self.ctx = Context()
+@tensor_example_cpn_meta.bind_param
+def tensor_example_param():
+    from federatedml.ml.toy.params import TensorExampleParam
 
-    def fit(self, *args):
-        return self._fit(self.ctx, *args)
+    return TensorExampleParam
 
-    def _fit(self, ctx: Context, *args):
-        ...
+
+@tensor_example_cpn_meta.bind_runner.on_guest
+def tensor_example_guest_runner():
+    from federatedml.ml.toy.enterpoint import TensorExampleGuest
+
+    return TensorExampleGuest
+
+
+@tensor_example_cpn_meta.bind_runner.on_host
+def secure_add_example_host_runner():
+    from federatedml.ml.toy.enterpoint import TensorExampleHost
+
+    return TensorExampleHost

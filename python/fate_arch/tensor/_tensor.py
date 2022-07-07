@@ -54,6 +54,10 @@ class FPTensor:
     def remote(self, target: _Parties, name: str):
         return self._ctx.remote(target, name, self)
 
+    @classmethod
+    def get(cls, ctx: Context, source: _Parties, name: str) -> "FPTensor":
+        return ctx.get(source, name)
+
     def _binary_op(self, other, func):
         if isinstance(other, FPTensor):
             return FPTensor(self._ctx, func(other._tensor))
@@ -61,6 +65,10 @@ class FPTensor:
             return FPTensor(self._ctx, func(other))
         else:
             return NotImplemented
+
+    @property
+    def T(self):
+        return FPTensor(self._ctx, self._tensor.T)
 
 
 class PHETensor:
@@ -114,6 +122,10 @@ class PHETensor:
 
     def remote(self, target: _Parties, name: str):
         return self._ctx.remote(target, name, self)
+
+    @classmethod
+    def get(cls, ctx: Context, source: _Parties, name: str) -> "PHETensor":
+        return ctx.get(source, name)
 
     def _binary_op(self, other, func):
         if isinstance(other, (PHETensor, FPTensor)):

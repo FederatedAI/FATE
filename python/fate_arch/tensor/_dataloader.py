@@ -28,6 +28,7 @@ class LabeledDataloaderWrapper:
     def has_next(self) -> bool:
         ...
 
+
 class UnlabeledDataloaderWrapper:
     """
     wrapper to transform data_instance to tensor-frendly Dataloader
@@ -42,6 +43,7 @@ class UnlabeledDataloaderWrapper:
         shuffle=False,
     ):
         ...
+
     @property
     def shape(self) -> typing.Tuple[int, int]:
         ...

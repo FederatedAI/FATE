@@ -84,12 +84,12 @@ class PHETensorLocal(PHETensorABC):
 
     def __matmul__(self, other: FPTensorLocal) -> "PHETensorLocal":
         if isinstance(other, FPTensorLocal):
-            return operator.matmul(self._block, other)
+            return PHETensorLocal(operator.matmul(self._block, other))
         return NotImplemented
 
     def __rmatmul__(self, other: FPTensorLocal) -> "PHETensorLocal":
         if isinstance(other, FPTensorLocal):
-            return operator.matmul(other, self._block)
+            return PHETensorLocal(operator.matmul(other, self._block))
         return NotImplemented
 
     def T(self) -> "PHETensorLocal":

@@ -22,20 +22,20 @@ secure_add_example_cpn_meta = ComponentMeta("SecureAddExample")
 
 @secure_add_example_cpn_meta.bind_param
 def secure_add_example_param():
-    from federatedml.param.secure_add_example_param import SecureAddExampleParam
+    from federatedml.ml.toy.params import TensorExampleParam as SecureAddExampleParam
 
     return SecureAddExampleParam
 
 
 @secure_add_example_cpn_meta.bind_runner.on_guest
 def secure_add_example_guest_runner():
-    from federatedml.toy_example.secure_add_guest import SecureAddGuest
+    from federatedml.ml.toy.enterpoint import TensorExampleGuest as SecureAddGuest
 
     return SecureAddGuest
 
 
 @secure_add_example_cpn_meta.bind_runner.on_host
 def secure_add_example_host_runner():
-    from federatedml.toy_example.secure_add_host import SecureAddHost
+    from federatedml.ml.toy.enterpoint import TensorExampleHost as SecureAddHost
 
     return SecureAddHost
