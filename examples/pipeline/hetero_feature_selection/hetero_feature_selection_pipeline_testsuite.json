@@ -66,6 +66,9 @@
         }
     ],
     "pipeline_tasks": {
+        "hetero-feature-selection-select-anonymous-col-names": {
+            "script": "pipeline-hetero-feature-selection-select-anonymous-col-names.py"
+        },
         "hetero-feature-selection-select-cols": {
             "script": "pipeline-hetero-feature-selection-select-cols.py"
         },

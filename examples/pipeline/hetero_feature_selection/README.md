@@ -52,6 +52,10 @@ This section introduces the Pipeline scripts for different types of tasks.
     
     script: pipeline-hetero-feature-selection-single-predict.py
 
+13. Selection with Setting Anonymous Col-names Task:
+    
+    script: pipeline-hetero-feature-selection-select-anonymous-col-names.py
+
 
 Users can run a pipeline job directly:
 
