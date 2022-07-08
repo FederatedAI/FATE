@@ -16,16 +16,19 @@
 #
 
 from .components import ComponentMeta
+
 positive_unlabeled_cpn_meta = ComponentMeta("PositiveUnlabeled")
 
 
 @positive_unlabeled_cpn_meta.bind_param
 def positive_unlabeled_param():
     from federatedml.param.positive_unlabeled_param import PositiveUnlabeledParam
+
     return PositiveUnlabeledParam
 
 
 @positive_unlabeled_cpn_meta.bind_runner.on_guest.on_host
 def positive_unlabeled_client_runner():
     from federatedml.semi_supervised_learning.positive_unlabeled.positive_unlabeled_transformer import PositiveUnlabeled
+
     return PositiveUnlabeled
