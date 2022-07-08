@@ -136,7 +136,7 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
         self.callback_warm_start_init_iter(self.start_round)
 
     def filter_labeled_samples(self, data_inst):
-        if self.model_param.pu_param.mode == "two_step":
+        if self.model_param.pu_param.mode == consts.TWO_STEP:
             func = functools.partial(lambda k, v: v.label != -1)
         else:
             func = functools.partial(lambda k, v: v.label is not None)
