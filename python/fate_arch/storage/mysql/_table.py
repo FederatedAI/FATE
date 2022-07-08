@@ -1,21 +1,7 @@
-#
-#  Copyright 2019 The FATE Authors. All Rights Reserved.
-#
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
-#
-
 from fate_arch.storage import StorageEngine, MySQLStoreType
 from fate_arch.storage import StorageTableBase
+from fate_arch.common.log import getLogger
+
 
 
 class StorageTable(StorageTableBase):
@@ -137,7 +123,14 @@ class StorageTable(StorageTableBase):
         header = self.meta.get_schema().get("header", [])
         id_delimiter = self.meta.get_id_delimiter()
         if not header:
-            feature_list = []
+            sql = "select * from {}".format(self._address.name)
+            self._cur.execute(sql)
+            desc = self._cur.description
+            feature_list = [x[0] for x in desc]
+            if id in feature_list:
+                feature_list.remove(id)
+            self.meta.get_schema()["header"] = ",".join(feature_list)
+            self.meta.get_schema()["sid"] = id
         elif isinstance(header, str):
             feature_list = header.split(id_delimiter)
         elif isinstance(header, list):
@@ -145,3 +138,6 @@ class StorageTable(StorageTableBase):
         else:
             feature_list = [header]
         return id, feature_list, id_delimiter
+
+
+
