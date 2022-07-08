@@ -23,21 +23,18 @@
             "hetero_lr_0": {
                 "max_iter": 2,
                 "pu_param": {
-                    "mode": "two_step",
-                    "unlabeled_digit": -1
+                    "mode": "two_step"
                 }
             },
             "positive_unlabeled_0": {
                 "mode": "two_step",
-                "unlabeled_digit": -1,
                 "labeling_strategy": "proportion",
                 "threshold_percent": 0.1
             },
             "hetero_lr_1": {
                 "max_iter": 1,
                 "pu_param": {
-                    "mode": "two_step",
-                    "unlabeled_digit": -1
+                    "mode": "two_step"
                 }
             }
         },
@@ -52,6 +49,9 @@
                     },
                     "data_transform_0": {
                         "with_label": false
+                    },
+                    "label_transform_0": {
+                        "need_run": false
                     }
                 }
             },
@@ -65,6 +65,18 @@
                     },
                     "data_transform_0": {
                         "with_label": true
+                    },
+                    "label_transform_0": {
+                        "label_encoder": {
+                            "0": 0,
+                            "1": 1,
+                            "-1": -1
+                        },
+                        "label_list": [0, 1, -1],
+                        "unlabeled_digit": -1,
+                        "pu_param": {
+                            "mode": "two_step"
+                        }
                     }
                 }
             }

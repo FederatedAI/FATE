@@ -41,12 +41,30 @@
                 ]
             }
         },
+        "label_transform_0": {
+            "module": "LabelTransform",
+            "input": {
+                "data": {
+                    "data": [
+                        "intersection_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            }
+        },
         "hetero_secure_boost_0": {
             "module": "HeteroSecureBoost",
             "input": {
                 "data": {
                     "train_data": [
-                        "intersection_0.data"
+                        "label_transform_0.data"
                     ]
                 }
             },
@@ -64,7 +82,7 @@
             "input": {
                 "data": {
                     "data": [
-                        "intersection_0.data",
+                        "label_transform_0.data",
                         "hetero_secure_boost_0.data"
                     ]
                 }

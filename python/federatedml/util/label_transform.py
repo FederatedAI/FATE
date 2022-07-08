@@ -25,6 +25,7 @@ from federatedml.param.label_transform_param import LabelTransformParam
 from federatedml.protobuf.generated import label_transform_meta_pb2, label_transform_param_pb2
 from federatedml.statistic.data_overview import get_label_count, get_predict_result_labels
 from federatedml.util import LOGGER
+from federatedml.util import consts
 
 
 class LabelTransformer(ModelBase):
@@ -46,6 +47,7 @@ class LabelTransformer(ModelBase):
         self.model_param = params
         self.label_encoder = params.label_encoder
         self.label_list = params.label_list
+        self.unlabeled_digit = params.unlabeled_digit
         self.need_run = params.need_run
 
     def update_label_encoder(self, data):
@@ -72,6 +74,20 @@ class LabelTransformer(ModelBase):
         self.label_encoder = {load_value_to_type(k,
                                                  self.encoder_key_type[str(k)]): v for k,
                               v in self.label_encoder.items()}
+
+        if self.unlabeled_digit is not None:
+            new_label_encoder = copy.deepcopy(self.label_encoder)
+            new_label_encoder.pop(self.unlabeled_digit, None)
+            if self.model_param.pu_param.mode == consts.TWO_STEP:
+                LOGGER.info(f"unlabeled digit converted to -1 in two-step mode")
+                if -1 in new_label_encoder.values():
+                    raise ValueError(f"-1 should only be used for unlabeled digit")
+                self.label_encoder[self.unlabeled_digit] = -1
+            else:
+                LOGGER.info(f"unlabeled digit converted to 0 in standard mode")
+                if 0 in new_label_encoder.values():
+                    raise ValueError(f"0 should only be used for unlabeled digit")
+                self.label_encoder[self.unlabeled_digit] = 0
 
     def _get_meta(self):
         meta = label_transform_meta_pb2.LabelTransformMeta(

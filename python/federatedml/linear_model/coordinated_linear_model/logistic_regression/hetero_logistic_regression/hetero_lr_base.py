@@ -93,7 +93,7 @@ class HeteroLRBase(BaseLogisticRegression):
 
     def filter_labeled_samples(self, data_inst):
         if self.model_param.pu_param.mode == "two_step":
-            func = functools.partial(lambda k, v: v.label != self.model_param.pu_param.unlabeled_digit)
+            func = functools.partial(lambda k, v: v.label != -1)
         else:
             func = functools.partial(lambda k, v: v.label is not None)
         return data_inst.filter(func)

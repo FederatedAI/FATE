@@ -27,13 +27,11 @@
                     "max_depth": 3
                 },
                 "pu_param": {
-                    "mode": "standard",
-                    "unlabeled_digit": 0
+                    "mode": "standard"
                 }
             },
             "positive_unlabeled_0": {
                 "mode": "standard",
-                "unlabeled_digit": 0,
                 "labeling_strategy": "proportion",
                 "threshold_percent": 0.1
             },
@@ -47,8 +45,7 @@
                     "max_depth": 2
                 },
                 "pu_param": {
-                    "mode": "standard",
-                    "unlabeled_digit": 0
+                    "mode": "standard"
                 }
             }
         },
@@ -63,6 +60,9 @@
                     },
                     "data_transform_0": {
                         "with_label": false
+                    },
+                    "label_transform_0": {
+                        "need_run": false
                     }
                 }
             },
@@ -76,6 +76,17 @@
                     },
                     "data_transform_0": {
                         "with_label": true
+                    },
+                    "label_transform_0": {
+                        "label_encoder": {
+                            "0": 0,
+                            "1": 1
+                        },
+                        "label_list": [0, 1],
+                        "unlabeled_digit": 0,
+                        "pu_param": {
+                            "mode": "standard"
+                        }
                     }
                 }
             }

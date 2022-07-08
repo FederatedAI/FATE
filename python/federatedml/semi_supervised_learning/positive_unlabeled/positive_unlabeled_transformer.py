@@ -38,7 +38,6 @@ class PositiveUnlabeled(ModelBase):
 
     def _init_model(self, model_param):
         self.mode = model_param.mode
-        self.unlabeled_digit = model_param.unlabeled_digit
         self.labeling_strategy = model_param.labeling_strategy
         self.threshold_percent = model_param.threshold_percent
         self.threshold_amount = model_param.threshold_amount
@@ -73,10 +72,10 @@ class PositiveUnlabeled(ModelBase):
                 LOGGER.warning("Param 'threshold_percent' should no larger than 50% in two-step mode")
 
             for idx, (k, v) in enumerate(label_score_list):
-                if idx < threshold_idx and v[0] == self.unlabeled_digit:
+                if idx < threshold_idx and v[0] == -1:
                     self.replaced_label_list.append((k, 1))
                     self.unlabeled_to_positive_count += 1
-                elif idx >= (label_score_num - threshold_idx) and v[0] == self.unlabeled_digit:
+                elif idx >= (label_score_num - threshold_idx) and v[0] == -1:
                     self.replaced_label_list.append((k, 0))
                     self.unlabeled_to_negative_count += 1
                 else:
@@ -84,7 +83,7 @@ class PositiveUnlabeled(ModelBase):
         else:
             LOGGER.info("Execute standard mode")
             for idx, (k, v) in enumerate(label_score_list):
-                if idx < threshold_idx and v[0] == self.unlabeled_digit:
+                if idx < threshold_idx and v[0] == 0:
                     self.replaced_label_list.append((k, 1))
                     self.converted_unlabeled_count += 1
                 else:
@@ -97,16 +96,17 @@ class PositiveUnlabeled(ModelBase):
 
         LOGGER.info("Count unlabeled samples")
         label_list = [v[0] for (_, v) in label_score_list]
-        unlabeled_count = label_list.count(self.unlabeled_digit)
-        if self.threshold_amount > unlabeled_count:
-            LOGGER.warning("Param 'threshold_amount' should no larger than unlabeled count")
 
         if self.mode == consts.TWO_STEP:
             LOGGER.info("Execute two-step mode")
+            unlabeled_count = label_list.count(-1)
+            if self.threshold_amount > unlabeled_count:
+                LOGGER.warning("Param 'threshold_amount' should no larger than unlabeled count")
+
             reversed_label_score_list = []
             accumulated_count = 0
             for (k, v) in label_score_list:
-                if accumulated_count < int(self.threshold_amount / 2) and v[0] == self.unlabeled_digit:
+                if accumulated_count < int(self.threshold_amount / 2) and v[0] == -1:
                     reversed_label_score_list.append((k, [1, v[1]]))
                     self.unlabeled_to_positive_count += 1
                     accumulated_count += 1
@@ -116,7 +116,7 @@ class PositiveUnlabeled(ModelBase):
             reversed_label_score_list.sort(key=lambda x: x[1][1], reverse=False)
             accumulated_count = 0
             for (k, v) in reversed_label_score_list:
-                if accumulated_count < int(self.threshold_amount / 2) and v[0] == self.unlabeled_digit:
+                if accumulated_count < int(self.threshold_amount / 2) and v[0] == -1:
                     self.replaced_label_list.append((k, 0))
                     self.unlabeled_to_negative_count += 1
                     accumulated_count += 1
@@ -124,9 +124,13 @@ class PositiveUnlabeled(ModelBase):
                     self.replaced_label_list.append((k, int(v[0])))
         else:
             LOGGER.info("Execute standard mode")
+            unlabeled_count = label_list.count(0)
+            if self.threshold_amount > unlabeled_count:
+                LOGGER.warning("Param 'threshold_amount' should no larger than unlabeled count")
+
             accumulated_count = 0
             for idx, (k, v) in enumerate(label_score_list):
-                if accumulated_count < self.threshold_amount and v[0] == self.unlabeled_digit:
+                if accumulated_count < self.threshold_amount and v[0] == 0:
                     self.replaced_label_list.append((k, 1))
                     self.converted_unlabeled_count += 1
                     accumulated_count += 1
@@ -141,17 +145,17 @@ class PositiveUnlabeled(ModelBase):
                 LOGGER.warning("Param 'threshold_proba' should no less than 0.5 in two-step mode")
 
             def replaced_func(x):
-                if x[1] >= self.threshold_proba and x[0] == self.unlabeled_digit:
+                if x[1] >= self.threshold_proba and x[0] == -1:
                     return 1
-                elif x[1] <= 1 - self.threshold_proba and x[0] == self.unlabeled_digit:
+                elif x[1] <= 1 - self.threshold_proba and x[0] == -1:
                     return 0
                 else:
                     return x[0]
 
             def summarized_func(r, l):
-                if r == 1 and l[0] == self.unlabeled_digit:
+                if r == 1 and l[0] == -1:
                     return 1
-                elif r == 0 and l[0] == self.unlabeled_digit:
+                elif r == 0 and l[0] == -1:
                     return 0
                 else:
                     return -1
@@ -164,13 +168,13 @@ class PositiveUnlabeled(ModelBase):
             LOGGER.info("Execute standard mode")
 
             def replaced_func(x):
-                if x[1] >= self.threshold_proba and x[0] == self.unlabeled_digit:
+                if x[1] >= self.threshold_proba and x[0] == 0:
                     return 1
                 else:
                     return x[0]
 
             def summarized_func(r, l):
-                if r == 1 and l[0] == self.unlabeled_digit:
+                if r == 1 and l[0] == 0:
                     return 1
                 else:
                     return 0
@@ -192,10 +196,10 @@ class PositiveUnlabeled(ModelBase):
             start_idx, end_idx = min(idx_list), max(idx_list)
 
             for idx, (k, v) in enumerate(label_score_list):
-                if idx < start_idx and v[0] == self.unlabeled_digit:
+                if idx < start_idx and v[0] == -1:
                     self.replaced_label_list.append((k, 1))
                     self.unlabeled_to_positive_count += 1
-                elif idx > end_idx and v[0] == self.unlabeled_digit:
+                elif idx > end_idx and v[0] == -1:
                     self.replaced_label_list.append((k, 0))
                     self.unlabeled_to_negative_count += 1
                 else:
@@ -212,6 +216,23 @@ class PositiveUnlabeled(ModelBase):
             return self.probability_processing(label_score_table)
         else:
             self.interval_processing(label_score_table)
+
+    def callback_info(self):
+        if self.mode == consts.TWO_STEP:
+            self.add_summary("all", {"count of unlabeled to positive": self.unlabeled_to_positive_count,
+                                     "count of unlabeled to negative": self.unlabeled_to_negative_count})
+            self.callback_metric(metric_name=self.metric_name,
+                                 metric_namespace=self.metric_namespace,
+                                 metric_data=[Metric("count of unlabeled to positive",
+                                                     self.unlabeled_to_positive_count),
+                                              Metric("count of unlabeled to negative",
+                                                     self.unlabeled_to_negative_count)])
+        else:
+            self.add_summary("count of converted unlabeled", self.converted_unlabeled_count)
+            self.callback_metric(metric_name=self.metric_name,
+                                 metric_namespace=self.metric_namespace,
+                                 metric_data=[Metric("count of converted unlabeled",
+                                                     self.converted_unlabeled_count)])
 
     def fit(self, data_insts):
         LOGGER.info("Convert labels by positive unlabeled transformer")
@@ -244,21 +265,7 @@ class PositiveUnlabeled(ModelBase):
             replaced_label_feature_table = self.assign_properties(replaced_label_feature_table, intersect_table)
             replaced_label_feature_table.schema = intersect_table.schema
 
-            if self.mode == consts.TWO_STEP:
-                self.add_summary("all", {"count of unlabeled to positive": self.unlabeled_to_positive_count,
-                                         "count of unlabeled to negative": self.unlabeled_to_negative_count})
-                self.callback_metric(metric_name=self.metric_name,
-                                     metric_namespace=self.metric_namespace,
-                                     metric_data=[Metric("count of unlabeled to positive",
-                                                         self.unlabeled_to_positive_count),
-                                                  Metric("count of unlabeled to negative",
-                                                         self.unlabeled_to_negative_count)])
-            else:
-                self.add_summary("count of converted unlabeled", self.converted_unlabeled_count)
-                self.callback_metric(metric_name=self.metric_name,
-                                     metric_namespace=self.metric_namespace,
-                                     metric_data=[Metric("count of converted unlabeled",
-                                                         self.converted_unlabeled_count)])
+            self.callback_info()
             return replaced_label_feature_table
 
         elif self.role == consts.HOST:
