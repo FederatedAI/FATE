@@ -155,19 +155,35 @@ And for Host:
 
 ## Feature
 
+Below lists features of each ECDH, RSA, DH, and RAW intersection methods.
+
+| Features              	| ECDH                     	| RSA                      	| DH                       	| Raw                      	|
+|-----------------------	|--------------------------	|--------------------------	|--------------------------	|--------------------------	|
+| PSI                   	| :heavy_check_mark:       	| :heavy_check_mark:       	| :heavy_check_mark:       	| :heavy_check_mark:       	|
+| Match-ID Support      	| :heavy_check_mark:       	| :heavy_check_mark:       	| :heavy_check_mark:       	| :heavy_check_mark:       	|
+| Exact Cardinality     	| :heavy_check_mark:       	| :heavy_multiplication_x: 	| :heavy_multiplication_x: 	| :heavy_multiplication_x: 	|
+| Estimated Cardinality 	| :heavy_multiplication_x: 	| :heavy_check_mark:       	| :heavy_multiplication_x: 	| :heavy_multiplication_x: 	|
+| Preprocessing         	| :heavy_check_mark:       	| :heavy_check_mark:       	| :heavy_check_mark:       	| :heavy_check_mark:       	|
+| Cache                 	| :heavy_check_mark:       	| :heavy_check_mark:       	| :heavy_check_mark:       	| :heavy_multiplication_x: 	|
+| Multi-Host            	| :heavy_multiplication_x: 	| :heavy_check_mark:       	| :heavy_check_mark:       	| :heavy_check_mark:       	|
+|                       	|                          	|                          	|                          	|                          	|
+
+All four methods support:
+
+1.  Automatically match ID intersection using ID expanding (when data contains instance id).
+2.  Configurable hashing methods, including sha256, md5, and sm3; hash
+    operators of RSA intersection can be configured separately, please
+    refer [here](../../python/federatedml/param/intersect_param.py)
+    for more details.
+3.  Preprocessing step to pre-filter Host's data for faster PSI
+
 RSA, RAW, and DH intersection methods support:
 
 1.  Multi-host PSI task. The detailed configuration for multi-host task
     can be found
     [here](../tutorial/dsl_conf/dsl_conf_v2_setting_guide.md#multi-host-configuration).
-2.  Automatically match ID intersection using ID expanding (when data contains instance id).
-3.  Configurable hashing methods, including sha256, md5, and sm3; hash
-    operators of RSA intersection can be configured separately, please
-    refer [here](../../python/federatedml/param/intersect_param.py)
-    for more details.
-4.  Preprocessing step to pre-filter Host's data for faster PSI
 
-RSA and DH intersection methods also support:
+RSA, DH, ECDH intersection methods also support:
 
 1.  PSI with cache
 
