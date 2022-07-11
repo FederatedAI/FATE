@@ -57,13 +57,13 @@ class DhIntersectionGuest(DhIntersect):
     def send_intersect_ids(self, encrypt_intersect_ids_list, intersect_ids):
         if len(self.host_party_id_list) > 1:
             for i, host_party_id in enumerate(self.host_party_id_list):
-                remote_intersect_id = intersect_ids.map(lambda k, v: (v[i], 1))
+                remote_intersect_id = intersect_ids.map(lambda k, v: (v[i], None))
                 self.transfer_variable.intersect_ids.remote(remote_intersect_id,
                                                             role=consts.HOST,
                                                             idx=i)
                 LOGGER.info(f"Remote intersect ids to Host {host_party_id}!")
         else:
-            remote_intersect_id = encrypt_intersect_ids_list[0].mapValues(lambda v: 1)
+            remote_intersect_id = encrypt_intersect_ids_list[0].mapValues(lambda v: None)
             self.transfer_variable.intersect_ids.remote(remote_intersect_id,
                                                         role=consts.HOST,
                                                         idx=0)
@@ -127,7 +127,7 @@ class DhIntersectionGuest(DhIntersect):
             self.send_intersect_ids(encrypt_intersect_ids, intersect_ids)
         else:
             LOGGER.info("Skip sync intersect ids with Host(s).")
-        intersect_ids = intersect_ids.mapValues(lambda v: 1)
+        intersect_ids = intersect_ids.mapValues(lambda v: None)
         return intersect_ids
 
     def get_intersect_key(self, party_id):

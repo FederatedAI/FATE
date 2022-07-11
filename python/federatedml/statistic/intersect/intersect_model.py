@@ -218,7 +218,7 @@ class IntersectModelBase(ModelBase):
                     intersect_data = self.run_preprocess(match_data)
                 self.intersect_ids = self.intersection_obj.run_intersect(intersect_data)
         else:
-            if self.intersection_obj.join_method == consts.LEFT_JOIN:
+            if self.model_param.join_method == consts.LEFT_JOIN:
                 raise ValueError(f"Only data with match_id may apply left_join method. Please check input data format")
             if self.intersection_obj.run_cache:
                 self.cache_output = self.intersection_obj.generate_cache(data)
@@ -256,7 +256,7 @@ class IntersectModelBase(ModelBase):
             if self.model_param.only_output_key and self.intersect_ids:
                 self.intersect_ids = self.intersect_ids.mapValues(lambda v: Instance(inst_id=v.inst_id))
                 self.intersect_ids.schema = {"match_id_name": data.schema["match_id_name"],
-                                             "sid_name": data.schema["sid_name"]}
+                                             "sid": data.schema.get("sid")}
 
         LOGGER.info("Finish intersection")
 
@@ -273,8 +273,8 @@ class IntersectModelBase(ModelBase):
         result_data = self.intersect_ids
         if not self.use_match_id_process and result_data:
             if self.intersection_obj.only_output_key:
-                result_data.schema = {"sid_name": data.schema["sid_name"]}
-                LOGGER.debug(f"non-match-id & only_output_key, add sid_name to schema")
+                result_data.schema = {"sid": data.schema.get("sid")}
+                LOGGER.debug(f"non-match-id & only_output_key, add sid to schema")
             else:
                 result_data = self.intersection_obj.get_value_from_data(result_data, data)
                 LOGGER.debug(f"not only_output_key, restore instance value")
@@ -386,7 +386,7 @@ class IntersectModelBase(ModelBase):
             if self.intersect_ids and self.model_param.only_output_key:
                 self.intersect_ids = self.intersect_ids.mapValues(lambda v: Instance(inst_id=v.inst_id))
                 self.intersect_ids.schema = {"match_id_name": data_inst.schema["match_id_name"],
-                                             "sid_name": data_inst.schema["sid_name"]}
+                                             "sid": data_inst.schema.get("sid")}
 
         LOGGER.info("Finish intersection")
 
@@ -407,8 +407,8 @@ class IntersectModelBase(ModelBase):
                 self.intersect_ids.schema = result_data.schema
                 LOGGER.debug(f"not only_output_key, restore value called")
             if self.intersection_obj.only_output_key and result_data:
-                schema = {"sid_name": data_inst.schema["sid_name"]}
-                result_data = result_data.mapValues(lambda v: 1)
+                schema = {"sid": data_inst.schema.get("sid")}
+                result_data = result_data.mapValues(lambda v: None)
                 result_data.schema = schema
                 self.intersect_ids.schema = schema
 

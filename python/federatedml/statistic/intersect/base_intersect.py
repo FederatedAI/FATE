@@ -133,7 +133,7 @@ class Intersect(object):
         if keep_encrypt_ids:
             def f(v_prev, v): return v_prev + v
         else:
-            def f(v_prev, v): return "id"
+            def f(v_prev, v): return None
 
         intersect_ids = None
         for i, value in enumerate(intersect_ids_list):
@@ -157,7 +157,7 @@ class Intersect(object):
         if keep_encrypt_ids:
             def f(k, v): return (v, [k])
         else:
-            def f(k, v): return (v, 1)
+            def f(k, v): return (v, None)
         if len(encrypt_intersect_ids) > 1:
             raw_intersect_ids = [e.map(f) for e in encrypt_intersect_ids]
             intersect_ids = Intersect.get_common_intersection(raw_intersect_ids, keep_encrypt_ids)
@@ -173,7 +173,7 @@ class Intersect(object):
         if keep_value:
             encrypt_common_id = encrypt_raw_id.map(lambda k, v: (v[0], v[1]))
         else:
-            encrypt_common_id = encrypt_raw_id.map(lambda k, v: (v[0], "id"))
+            encrypt_common_id = encrypt_raw_id.map(lambda k, v: (v[0], None))
 
         return encrypt_common_id
 
@@ -196,7 +196,7 @@ class Intersect(object):
         if keep_encrypt_id:
             raw_id = encrypt_id_raw_id.map(lambda k, v: (v[0], k))
         else:
-            raw_id = encrypt_id_raw_id.map(lambda k, v: (v[0], 1))
+            raw_id = encrypt_id_raw_id.map(lambda k, v: (v[0], None))
         return raw_id
 
     @staticmethod

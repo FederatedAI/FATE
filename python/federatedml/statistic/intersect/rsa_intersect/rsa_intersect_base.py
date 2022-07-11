@@ -189,6 +189,8 @@ class RsaIntersect(Intersect):
             intersect_ids = self.split_calculation_process(hash_data_instances)
         else:
             intersect_ids = self.unified_calculation_process(data_instances)
+        if intersect_ids is not None:
+            intersect_ids = intersect_ids.mapValues(lambda v: None)
         return intersect_ids
 
     def run_cache_intersect(self, data_instances, cache_data):
@@ -196,4 +198,6 @@ class RsaIntersect(Intersect):
         if self.split_calculation:
             LOGGER.warning(f"split_calculation not applicable to cache-enabled RSA intersection.")
         intersect_ids = self.cache_unified_calculation_process(data_instances, cache_data)
+        if intersect_ids is not None:
+            intersect_ids = intersect_ids.mapValues(lambda v: None)
         return intersect_ids

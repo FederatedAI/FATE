@@ -31,6 +31,8 @@ class EllipticCurve(object):
 
     @staticmethod
     def __get_curve_instance(curve_name, curve_key):
+        if curve_key is None:
+            return Curve25519()
         return Curve25519(curve_key)
 
     def get_curve_key(self):
