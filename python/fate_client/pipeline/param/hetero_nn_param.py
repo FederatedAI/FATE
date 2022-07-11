@@ -17,7 +17,6 @@
 #  limitations under the License.
 #
 import copy
-import collections
 from types import SimpleNamespace
 
 from pipeline.param.base_param import BaseParam
@@ -30,6 +29,19 @@ from pipeline.param import consts
 
 
 class SelectorParam(object):
+    """
+    Args:
+        method: None or str
+            back propagation select method, accept "relative" only, default: None
+        selective_size: int
+            deque size to use, store the most recent selective_size historical loss, default: 1024
+        beta: int
+            sample whose selective probability >= power(np.random, beta) will be selected
+        min_prob: Numeric
+            selective probability is max(min_prob, rank_rate)
+
+    """
+
     def __init__(self, method=None, beta=1, selective_size=consts.SELECTIVE_SIZE, min_prob=0, random_state=None):
         self.method = method
         self.selective_size = selective_size
@@ -41,10 +53,69 @@ class SelectorParam(object):
         if self.method is not None and self.method not in ["relative"]:
             raise ValueError('selective method should be None be "relative"')
 
+        if not isinstance(self.selective_size, int) or self.selective_size <= 0:
+            raise ValueError("selective size should be a positive integer")
+
+        if not isinstance(self.beta, int):
+            raise ValueError("beta should be integer")
+
+        if not isinstance(self.min_prob, (float, int)):
+            raise ValueError("min_prob should be numeric")
+
+
+class CoAEConfuserParam(BaseParam):
+    """
+    A label protect mechanism proposed in paper: "Batch Label Inference and Replacement Attacks in Black-Boxed Vertical Federated Learning"
+    paper link: https://arxiv.org/abs/2112.05409
+    Convert true labels to fake soft labels by using an auto-encoder.
+
+    Args:
+        enable: boolean
+            run CoAE or not
+        epoch: None or str
+            auto-encoder training epochs
+        lr: int
+            auto-encoder learning rate
+        lambda1: int
+            parameter to control the difference between true labels and fake soft labels. Larger the parameter,
+            autoencoder will give more attention to making true labels and fake soft label different.
+        lambda2: Numeric
+            parameter to control entropy loss, see original paper for details
+        verbose: boolean
+            print loss log while training auto encoder
+    """
+
+    def __init__(self, enable=False, epoch=50, lr=0.001, lambda1=1.0, lambda2=2.0, verbose=False):
+        super(CoAEConfuserParam, self).__init__()
+        self.enable = enable
+        self.epoch = epoch
+        self.lr = lr
+        self.lambda1 = lambda1
+        self.lambda2 = lambda2
+        self.verbose = verbose
+
+    def check(self):
+
+        self.check_boolean(self.enable, 'enable')
+
+        if not isinstance(self.epoch, int) or self.epoch <= 0:
+            raise ValueError("epoch should be a positive integer")
+
+        if not isinstance(self.lr, float):
+            raise ValueError('lr should be a float number')
+
+        if not isinstance(self.lambda1, float):
+            raise ValueError('lambda1 should be a float number')
+
+        if not isinstance(self.lambda2, float):
+            raise ValueError('lambda2 should be a float number')
+
+        self.check_boolean(self.verbose, 'verbose')
+
 
 class HeteroNNParam(BaseParam):
     """
-    Parameters used for Homo Neural Network.
+    Parameters used for Hetero Neural Network.
 
     Args:
         task_type: str, task type of hetero nn model, one of 'classification', 'regression'.
@@ -59,15 +130,6 @@ class HeteroNNParam(BaseParam):
                 with optional key-value pairs such as learning rate.
             defaults to "SGD"
         loss:  str, a string to define loss function used
-        early_stopping_rounds: int, default: None
-        Will stop training if one metric doesn’t improve in last early_stopping_round rounds
-        metrics: list, default: None
-            Indicate when executing evaluation during train process, which metrics will be used. If not set,
-            default metrics for specific task type will be used. As for binary classification, default metrics are
-            ['auc', 'ks'], for regression tasks, default metrics are ['root_mean_squared_error', 'mean_absolute_error'],
-            [ACCURACY, PRECISION, RECALL] for multi-classification task
-        use_first_metric_only: bool, default: False
-            Indicate whether to use the first metric in `metrics` as the only criterion for early stopping judgement.
         epochs: int, the maximum iteration for aggregation in training.
         batch_size : int, batch size when updating model.
             -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
@@ -75,20 +137,11 @@ class HeteroNNParam(BaseParam):
         early_stop : str, accept 'diff' only in this version, default: 'diff'
             Method used to judge converge or not.
                 a)	diff： Use difference of loss between two iterations to judge whether converge.
-        validation_freqs: None or positive integer or container object in python. Do validation in training process or Not.
-                  if equals None, will not do validation in train process;
-                  if equals positive integer, will validate data every validation_freqs epochs passes;
-                  if container object in python, will validate data if epochs belong to this container.
-                    e.g. validation_freqs = [10, 15], will validate data when epoch equals to 10 and 15.
-                  Default: None
-                  The default value is None, 1 is suggested. You can set it to a number larger than 1 in order to
-                  speed up training by skipping validation rounds. When it is larger than 1, a number which is
-                  divisible by "epochs" is recommended, otherwise, you will miss the validation scores
-                  of last training epoch.
         floating_point_precision: None or integer, if not None, means use floating_point_precision-bit to speed up calculation,
                                    e.g.: convert an x to round(x * 2**floating_point_precision) during Paillier operation, divide
                                           the result by 2**floating_point_precision in the end.
         drop_out_keep_rate: float, should betweend 0 and 1, if not equals to 1.0, will enabled drop out
+        callback_param: CallbackParam object
     """
 
     def __init__(self,
@@ -115,7 +168,10 @@ class HeteroNNParam(BaseParam):
                  selector_param=SelectorParam(),
                  floating_point_precision=23,
                  drop_out_keep_rate=1.0,
-                 callback_param=CallbackParam()):
+                 callback_param=CallbackParam(),
+                 coae_param=CoAEConfuserParam()
+                 ):
+
         super(HeteroNNParam, self).__init__()
 
         self.task_type = task_type
@@ -147,6 +203,8 @@ class HeteroNNParam(BaseParam):
 
         self.callback_param = copy.deepcopy(callback_param)
 
+        self.coae_param = coae_param
+
     def check(self):
 
         supported_config_type = ["keras", "pytorch", "torch"]
@@ -158,9 +216,6 @@ class HeteroNNParam(BaseParam):
 
         if self.task_type not in ["classification", "regression"]:
             raise ValueError("config_type should be classification or regression")
-
-        if self.config_type not in supported_config_type:
-            raise ValueError(f"config_type should be one of {supported_config_type}")
 
         if not isinstance(self.tol, (int, float)):
             raise ValueError("tol should be numeric")
@@ -187,36 +242,23 @@ class HeteroNNParam(BaseParam):
         if self.early_stop != "diff":
             raise ValueError("early stop should be diff in this version")
 
-        if self.validation_freqs is None:
-            pass
-        elif isinstance(self.validation_freqs, int):
-            if self.validation_freqs < 1:
-                raise ValueError("validation_freqs should be larger than 0 when it's integer")
-        elif not isinstance(self.validation_freqs, collections.Container):
-            raise ValueError("validation_freqs should be None or positive integer or container")
-
-        if self.early_stopping_rounds and not isinstance(self.early_stopping_rounds, int):
-            raise ValueError("early stopping rounds should be None or int larger than 0")
-        if self.early_stopping_rounds and isinstance(self.early_stopping_rounds, int):
-            if self.early_stopping_rounds < 1:
-                raise ValueError("early stopping should be larger than 0 when it's integer")
-            if not self.validation_freqs:
-                raise ValueError("If early stopping rounds is setting, validation_freqs should not be null")
-
         if self.metrics is not None and not isinstance(self.metrics, list):
             raise ValueError("metrics should be a list")
 
-        if not isinstance(self.use_first_metric_only, bool):
-            raise ValueError("use_first_metric_only should be a boolean")
-
         if self.floating_point_precision is not None and \
                 (not isinstance(self.floating_point_precision, int) or
-                 self.floating_point_precision < 0 or self.floating_point_precision > 64):
-            raise ValueError("floating point precision should be null or a integer between 0 and 64")
+                 self.floating_point_precision < 0 or self.floating_point_precision > 63):
+            raise ValueError("floating point precision should be null or a integer between 0 and 63")
+
+        if not isinstance(self.drop_out_keep_rate, (float, int)) or self.drop_out_keep_rate < 0.0 or \
+                self.drop_out_keep_rate > 1.0:
+            raise ValueError("drop_out_keep_rate should be in range [0.0, 1.0]")
 
         self.encrypt_param.check()
         self.encrypted_model_calculator_param.check()
         self.predict_param.check()
+        self.selector_param.check()
+        self.coae_param.check()
 
     @staticmethod
     def _parse_optimizer(opt):
@@ -243,3 +285,4 @@ class HeteroNNParam(BaseParam):
             return None
         else:
             raise ValueError(f"invalid type for optimize: {type(opt)}")
+
