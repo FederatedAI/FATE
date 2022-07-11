@@ -247,7 +247,7 @@ class ECDHParam(BaseParam):
         super().__init__()
         self.salt = salt
         self.hash_method = hash_method
-        self.curve= curve
+        self.curve = curve
 
     def check(self):
         descr = "ecdh param's "
@@ -258,7 +258,7 @@ class ECDHParam(BaseParam):
                                                         consts.SM3],
                                                        f"{descr}hash_method")
 
-        self.curve = self.check_and_change_lower(self.curve,[consts.CURVE25519], f"{descr}curve")
+        self.curve = self.check_and_change_lower(self.curve, [consts.CURVE25519], f"{descr}curve")
 
         return True
 

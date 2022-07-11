@@ -518,7 +518,7 @@ class IntersectGuest(IntersectModelBase):
         filtered_data_list = [
             data_instances.filter(
                 lambda k,
-                       v: filter.check(
+                v: filter.check(
                     hash_operator.compute(
                         k,
                         suffix_salt=self.intersect_preprocess_params.preprocess_salt))) for filter in filter_list]

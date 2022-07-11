@@ -146,7 +146,7 @@ class Hash:
             raise ValueError("Hash does not support method:{}".format(self.method))
 
         self.base64 = base64
-        self.hex_output=hex_output
+        self.hex_output = hex_output
 
         if self.base64:
             self.hash_operator = HASH_BASE64_FUNCTION[self.method]
