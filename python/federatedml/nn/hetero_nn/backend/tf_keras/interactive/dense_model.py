@@ -197,7 +197,6 @@ class DenseModel(object):
 
     def forward_activation(self, input_data):
         self.activation_input = input_data
-        LOGGER.debug('interactive activation func is {}'.format(input_data))
         output = self.activation_func(input_data)
         if not isinstance(output, np.ndarray):
             output = self.sess.run(output)

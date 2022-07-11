@@ -35,6 +35,7 @@ message HeteroNNModelParam {
     bool is_empty = 4;
     int32 bottom_model_input_shape = 5;
     int32 top_model_input_shape = 6;
+    bytes coae_bytes = 7;
 }
 
 message HeteroNNParam {

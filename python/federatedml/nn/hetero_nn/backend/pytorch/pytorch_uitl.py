@@ -56,6 +56,14 @@ def keras_nn_model_to_torch_linear(keras_model: KerasNNModel):
     return tSequential(linear)
 
 
+def pytorch_label_reformat(labels):
+
+    if labels.shape[1] == 1:  # binary classification
+        return labels
+    else:
+        return t.Tensor(labels).argmax(dim=1).flatten().numpy()  # multi classification
+
+
 if __name__ == '__main__':
 
     import numpy as np

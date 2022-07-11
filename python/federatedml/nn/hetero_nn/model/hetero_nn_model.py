@@ -18,6 +18,7 @@ import copy
 import json
 from federatedml.util import LOGGER
 from federatedml.util import consts
+from federatedml.param.hetero_nn_param import HeteroNNParam
 from federatedml.nn.hetero_nn.strategy.selector import SelectorFactory
 from federatedml.nn.hetero_nn.model.hetero_nn_bottom_model import HeteroNNBottomModel
 from federatedml.nn.hetero_nn.model.hetero_nn_top_model import HeteroNNTopModel
@@ -82,6 +83,7 @@ class HeteroNNGuestModel(HeteroNNModel):
         self.top_model_input_shape = None
         self.batch_size = None
         self.is_empty = False
+        self.coae_param = None
         self.set_nn_meta(hetero_nn_param)
         self.component_properties = component_properties
 
@@ -93,7 +95,7 @@ class HeteroNNGuestModel(HeteroNNModel):
 
         LOGGER.debug('config type is {}'.format(self.config_type))
 
-    def set_nn_meta(self, hetero_nn_param):
+    def set_nn_meta(self, hetero_nn_param: HeteroNNParam):
         self.bottom_nn_define = hetero_nn_param.bottom_nn_define
         self.top_nn_define = hetero_nn_param.top_nn_define
         self.interactive_layer_define = hetero_nn_param.interactive_layer_define
@@ -102,6 +104,10 @@ class HeteroNNGuestModel(HeteroNNModel):
         self.loss = hetero_nn_param.loss
         self.hetero_nn_param = hetero_nn_param
         self.batch_size = hetero_nn_param.batch_size
+
+        coae_param = hetero_nn_param.coae_param
+        if coae_param.enable:
+            self.coae_param = coae_param
 
     def set_empty(self):
         self.is_empty = True
@@ -161,19 +167,23 @@ class HeteroNNGuestModel(HeteroNNModel):
         return metrics
 
     def get_hetero_nn_model_param(self):
+
         model_param = HeteroNNModelParam()
         model_param.is_empty = self.is_empty
         if not self.is_empty:
             model_param.bottom_saved_model_bytes = self.bottom_model.export_model()
         model_param.top_saved_model_bytes = self.top_model.export_model()
         model_param.interactive_layer_param.CopyFrom(self.interactive_model.export_model())
-
         model_param.bottom_model_input_shape = self.bottom_model_input_shape
         model_param.top_model_input_shape = self.top_model_input_shape
+        coae_bytes = self.top_model.export_coae()
+        if coae_bytes is not None:
+            model_param.coae_bytes = coae_bytes
 
         return model_param
 
     def set_hetero_nn_model_param(self, model_param):
+
         self.is_empty = model_param.is_empty
         self.top_model_input_shape = model_param.top_model_input_shape
         self.bottom_model_input_shape = model_param.bottom_model_input_shape
@@ -181,6 +191,7 @@ class HeteroNNGuestModel(HeteroNNModel):
             self._restore_bottom_model(model_param.bottom_saved_model_bytes)
         self._restore_interactive_model(model_param.interactive_layer_param)
         self._restore_top_model(model_param.top_saved_model_bytes)
+        self.top_model.restore_coae(model_param.coae_bytes)
 
     def get_hetero_nn_model_meta(self):
         model_meta = HeteroNNModelMeta()
@@ -277,12 +288,15 @@ class HeteroNNGuestModel(HeteroNNModel):
         self.bottom_model.restore_model(model_bytes)
 
     def _build_top_model(self):
+
         self.top_model = HeteroNNTopModel(input_shape=self.top_model_input_shape,
                                           optimizer=self.optimizer,
                                           layer_config=self.top_nn_define,
                                           loss=self.loss,
                                           metrics=self.metrics,
-                                          config_type=self.config_type)
+                                          config_type=self.config_type,
+                                          coae_config=self.coae_param
+                                          )
 
         if self.selector:
             self.top_model.set_backward_selector_strategy(selector=self.selector)

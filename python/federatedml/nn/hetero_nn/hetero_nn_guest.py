@@ -37,6 +37,7 @@ MODELPARAM = "HeteroNNGuestParam"
 
 
 class HeteroNNGuest(HeteroNNBase):
+
     def __init__(self):
         super(HeteroNNGuest, self).__init__()
         self.task_type = None
@@ -292,7 +293,7 @@ class HeteroNNGuest(HeteroNNBase):
         transform_y = []
         self.num_label = diff_label.shape[0]
 
-        if self.task_type == "regression" or self.num_label <= 2 or self.config_type == 'pytorch':
+        if self.task_type == "regression" or self.num_label <= 2:
             for batch_y in self.data_y:
                 new_batch_y = np.zeros((batch_y.shape[0], 1))
                 for idx in range(new_batch_y.shape[0]):

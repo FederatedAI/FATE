@@ -41,8 +41,6 @@ class PytorchNNModel(object):
 
     def __init__(self, nn_define: dict, optimizer_define: dict=None, loss_fn_define: dict = None):
 
-        torch.random.manual_seed(996)
-
         self.model = s.recover_sequential_from_dict(nn_define)
         if optimizer_define is None:  # default optimizer
             self.optimizer = optim.SGD(lr=0.01)
@@ -84,7 +82,7 @@ class PytorchNNModel(object):
 
     def train(self, data_x_and_y, ret_input_gradient=False):
 
-        x, y = data_x_and_y # this is a tuple
+        x, y = data_x_and_y  # this is a tuple
         input_grad = None
         self.opt_inst.zero_grad()
         yt = label_convert(y, self.loss_fn)
@@ -112,6 +110,7 @@ class PytorchNNModel(object):
         x = t.Tensor(x)
         forward_rs = self.model(x)
         self.forward_cache = forward_rs
+
         return forward_rs.detach().numpy()
 
     def backward(self, backward_gradients):
@@ -147,7 +146,7 @@ class PytorchNNModel(object):
         fw = self.model(xt)
         loss = self.loss_fn(fw, yt)
         grad = autograd.grad(loss, xt)
-        LOGGER.debug('grad is {}'.format(grad))
+
         return (grad[0].detach().numpy(), )
 
     def get_loss(self):
