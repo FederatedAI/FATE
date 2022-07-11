@@ -157,16 +157,12 @@ And for Host:
 
 Below lists features of each ECDH, RSA, DH, and RAW intersection methods.
 
-| Features              	| ECDH                     	| RSA                      	| DH                       	| Raw                      	|
-|-----------------------	|--------------------------	|--------------------------	|--------------------------	|--------------------------	|
-| PSI                   	| :heavy_check_mark:       	| :heavy_check_mark:       	| :heavy_check_mark:       	| :heavy_check_mark:       	|
-| Match-ID Support      	| :heavy_check_mark:       	| :heavy_check_mark:       	| :heavy_check_mark:       	| :heavy_check_mark:       	|
-| Exact Cardinality     	| :heavy_check_mark:       	| :heavy_multiplication_x: 	| :heavy_multiplication_x: 	| :heavy_multiplication_x: 	|
-| Estimated Cardinality 	| :heavy_multiplication_x: 	| :heavy_check_mark:       	| :heavy_multiplication_x: 	| :heavy_multiplication_x: 	|
-| Preprocessing         	| :heavy_check_mark:       	| :heavy_check_mark:       	| :heavy_check_mark:       	| :heavy_check_mark:       	|
-| Cache                 	| :heavy_check_mark:       	| :heavy_check_mark:       	| :heavy_check_mark:       	| :heavy_multiplication_x: 	|
-| Multi-Host            	| :heavy_multiplication_x: 	| :heavy_check_mark:       	| :heavy_check_mark:       	| :heavy_check_mark:       	|
-|                       	|                          	|                          	|                          	|                          	|
+| Intersect Methods 	| PSI                	| Match-ID Support   	| Multi-Host               	| Exact-Cardinality        	| Estimated Cardinality    	| Preprocessing      	| Cache                    	|
+|-------------------	|--------------------	|--------------------	|--------------------------	|--------------------------	|--------------------------	|--------------------	|--------------------------	|
+| ECDH              	| :heavy_check_mark: 	| :heavy_check_mark: 	| :heavy_multiplication_x: 	| :heavy_check_mark:       	| :heavy_multiplication_x: 	| :heavy_check_mark: 	| :heavy_check_mark:       	|
+| RSA               	| :heavy_check_mark: 	| :heavy_check_mark: 	| :heavy_check_mark:       	| :heavy_multiplication_x: 	| :heavy_check_mark:       	| :heavy_check_mark: 	| :heavy_check_mark:       	|
+| DH                	| :heavy_check_mark: 	| :heavy_check_mark: 	| :heavy_check_mark:       	| :heavy_check_mark:       	| :heavy_multiplication_x: 	| :heavy_check_mark: 	| :heavy_check_mark:       	|
+| RAW               	| :heavy_check_mark: 	| :heavy_check_mark: 	| :heavy_check_mark:       	| :heavy_multiplication_x: 	| :heavy_multiplication_x: 	| :heavy_check_mark: 	| :heavy_multiplication_x: 	|
 
 All four methods support:
 
