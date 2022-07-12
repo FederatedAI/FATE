@@ -128,6 +128,6 @@ class Anonymous(object):
             if self._role:
                 new_schema["anonymous_label"] = "_".join([self._role, str(self._party_id), ANONYMOUS_LABEL])
             else:
-                new_schema["anonymous_header"] = ANONYMOUS_LABEL
+                new_schema["anonymous_label"] = ANONYMOUS_LABEL
 
         return new_schema
