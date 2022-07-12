@@ -171,7 +171,7 @@ class OneHotEncoder(ModelBase):
     @assert_io_num_rows_equal
     def transform(self, data_instances):
         self._init_params(data_instances)
-        LOGGER.debug("In Onehot transform, ori_header: {}, transfered_header: {}".format(
+        LOGGER.debug("In OneHot transform, ori_header: {}, transfered_header: {}".format(
             self.inner_param.header, self.inner_param.result_header
         ))
 
@@ -316,7 +316,17 @@ class OneHotEncoder(ModelBase):
         return new_inst
 
     def set_schema(self, data_instance):
+        derived_header = dict()
+        for col_name, pair_obj in self.col_maps.items():
+            derived_header[col_name] = pair_obj.transformed_headers
+
+        self.schema["anonymous_header"] = self.anonymous_generator.generate_derived_header(
+            self.schema["header"],
+            self.schema["anonymous_header"],
+            derived_header)
+
         self.schema['header'] = self.inner_param.result_header
+
         data_instance.schema = self.schema
 
     def _get_meta(self):
@@ -377,5 +387,7 @@ class OneHotEncoder(ModelBase):
                 except NameError:
                     pass
                 pair_obj.add_value(feature_value)
+
+            pair_obj.encode_new_headers()
 
         self.inner_param.set_result_header(list(model_param.result_header))
