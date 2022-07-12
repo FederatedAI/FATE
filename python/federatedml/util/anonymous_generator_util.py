@@ -23,19 +23,27 @@ ANONYMOUS_LABEL = "y"
 
 
 class Anonymous(object):
-    def __init__(self, role=None, party_id=None):
+    def __init__(self, role=None, party_id=None, migrate_mapping=None):
         self._role = role
         self._party_id = party_id
+        self._migrate_mapping = migrate_mapping
 
-    @staticmethod
-    def anonymous_migrate(anonymous_header, original_party_id, new_party_id):
+    def migrate_anonymous(self, anonymous_header):
         migrate_anonymous_header = []
         for column in anonymous_header:
             role, party_id, suf = column.split("_", 2)
-            if party_id == str(original_party_id):
-                migrate_anonymous_header.append("_".join([role, str(new_party_id), suf]))
-            else:
-                migrate_anonymous_header.append(column)
+            migrate_party_id = self._migrate_mapping[role][int(party_id)]
+            migrate_anonymous_header.append("_".join([role, str(migrate_party_id), suf]))
+
+        return migrate_anonymous_header
+
+    def is_anonymous(self, column):
+        splits = column.split("_", -1)
+        if len(splits) < 3:
+            return False
+        role, party_id = splits[0], splits[1]
+
+        return role in self._migrate_mapping and int(party_id) in self._migrate_mapping[role]
 
     def extend_columns(self, original_anonymous_header, extend_header):
         extend_anonymous_header = []

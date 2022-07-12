@@ -18,7 +18,7 @@
 
 from abc import ABC, abstractmethod
 from typing import Dict, Tuple
-from federatedml.util.anonymous_generator import generate_anonymous
+from federatedml.util.anonymous_generator_util import Anonymous
 from federatedml.util import consts
 
 
@@ -30,18 +30,12 @@ class AutoReplace(object):
             consts.HOST: host_mapping,
             consts.ARBITER: arbiter_mapping
         }
+        self._anonymous_generator = Anonymous(migrate_mapping=self._mapping)
 
     def get_mapping(self, role: str):
         if role not in self._mapping:
             raise ValueError('this role contains no site name {}'.format(role))
         return self._mapping[role]
-
-    def anonymous_format(self, string: str):
-        """{role}_{party_id}_{idx}"""
-        role, party_id, idx = string.split('_')
-        mapping = self.get_mapping(role)
-        new_party_id = mapping[int(party_id)]
-        return generate_anonymous(idx, new_party_id, role)
 
     def party_tuple_format(self, string: str):
         """({role},{party_id})"""
@@ -56,9 +50,9 @@ class AutoReplace(object):
         return role + ':' + str(new_party_id)
 
     def maybe_anonymous_format(self, string: str):
-        try:
-            return self.anonymous_format(string)
-        except Exception:
+        if self._anonymous_generator.is_anonymous(string):
+            return self.migrate_anonymous_header([string])[0]
+        else:
             return string
 
     def plain_replace(self, old_party_id, role):
@@ -68,12 +62,16 @@ class AutoReplace(object):
             return str(mapping[int(old_party_id)])
         return str(old_party_id)
 
+    def migrate_anonymous_header(self, anonymous_header):
+        if isinstance(anonymous_header, list):
+            return self._anonymous_generator.migrate_anonymous(anonymous_header)
+        else:
+            return self._anonymous_generator.migrate_anonymous([anonymous_header])[0]
+
     def replace(self, string):
 
         if ':' in string:
             return self.colon_format(string)
-        elif '_' in string:
-            return self.anonymous_format(string)
         else:
             # nothing to replace
             return string

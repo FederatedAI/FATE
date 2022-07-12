@@ -16,20 +16,23 @@
 
 from typing import Dict, Tuple
 
-from federatedml.protobuf.generated.feature_binning_meta_pb2 import FeatureBinningMeta
-from federatedml.protobuf.generated.feature_binning_param_pb2 import FeatureBinningParam
+from federatedml.protobuf.generated.data_transform_meta_pb2 import DataTransformMeta
+from federatedml.protobuf.generated.data_transform_param_pb2 import DataTransformParam
 from federatedml.protobuf.model_migrate.converter.converter_base import AutoReplace
 from federatedml.protobuf.model_migrate.converter.converter_base import ProtoConverterBase
 
 
-class FeatureBinningConverter(ProtoConverterBase):
-    def convert(self, param: FeatureBinningParam, meta: FeatureBinningMeta,
+class DataTransformConverter(ProtoConverterBase):
+    def convert(self, param: DataTransformParam, meta: DataTransformMeta,
                 guest_id_mapping: Dict,
                 host_id_mapping: Dict,
                 arbiter_id_mapping: Dict
                 ) -> Tuple:
-        header_anonymous = list(param.header_anonymous)
+        if not getattr(param, "anonymous_header"):
+            return param, meta
+
+        anonymous_header = list(param.anonymous_header)
         replacer = AutoReplace(guest_id_mapping, host_id_mapping, arbiter_id_mapping)
 
-        param.header_anonymous[:] = replacer.migrate_anonymous_header(header_anonymous)
+        param.anonymous_header[:] = replacer.migrate_anonymous_header(anonymous_header)
         return param, meta

@@ -146,6 +146,11 @@ def get_header(data_instances):
     return header
 
 
+def get_anonymous_header(data_instances):
+    header = data_instances.schema.get('anonymous_header')  # ['x1', 'x2', 'x3' ... ]
+    return header
+
+
 def is_empty_feature(data_instances):
     shape_of_feature = get_features_shape(data_instances)
     if shape_of_feature is None or shape_of_feature == 0:
