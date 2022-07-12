@@ -4,13 +4,28 @@ dependent_distribution: false
 encrypt_password: false
 encrypt_module: fate_arch.common.encrypt_utils#pwdecrypt
 private_key:
+party_id:
+hook_module:
+  client_authentication: fate_flow.hook.flow.client_authentication
+  site_authentication: fate_flow.hook.flow.site_authentication
+  permission: fate_flow.hook.flow.permission
+hook_server_name:
+authentication:
+  client:
+    switch: false
+    http_app_key:
+    http_secret_key:
+  site:
+    switch: false
+permission:
+  switch: false
+  component: false
+  dataset: false
 fateflow:
   # you must set real ip address, 127.0.0.1 and 0.0.0.0 is not supported
   host: 127.0.0.1
   http_port: 9380
   grpc_port: 9360
-  http_app_key:
-  http_secret_key:
   # support rollsite/nginx/fateflow as a coordination proxy
   # rollsite support fate on eggroll, use grpc protocol
   # nginx support fate on eggroll and fate on spark, use http or grpc protocol, default is http
