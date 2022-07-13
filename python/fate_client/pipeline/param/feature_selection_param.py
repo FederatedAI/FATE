@@ -374,7 +374,6 @@ class ManuallyFilterParam(BaseParam):
         self.check_defined_type(self.left_col_names, descr, ['list', 'NoneType'])
         self.check_boolean(self.use_anonymous, f"{descr} use_anonymous")
 
-
         if (self.filter_out_indexes or self.filter_out_names) is not None and \
                 (self.left_col_names or self.left_col_indexes) is not None:
             raise ValueError("(left_col_indexes & left_col_names) cannot use with"
