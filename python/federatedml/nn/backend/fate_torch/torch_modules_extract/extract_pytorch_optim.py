@@ -1,6 +1,6 @@
 import inspect
 from torch import optim
-from federatedml.nn.backend.fate_torch.torch_modules_extract import extract_init_param, Required
+from federatedml.nn.backend.fate_torch.torch_modules_extract.extract_pytorch_modules import extract_init_param, Required
 from torch.optim.optimizer import required
 
 
@@ -40,6 +40,7 @@ def code_assembly(param, nn_class):
         FateTorchOptimizer.__init__(self){}
         self.register_optimizer(fate_torch_component)
         # optim.{}.__init__(self, **self.param_dict)
+        self.torch_class = TORCH_DICT[type(self).__name__]
     """.format(para_str, init_str, nn_class, nn_class)
 
     code = """
@@ -55,7 +56,7 @@ if __name__ == '__main__':
     memb = inspect.getmembers(optim)
 
     module_str = """"""
-    module_str += "from torch import optim\n\nfrom federatedml.fate_torch.base import FateTorchOptimizer"
+    module_str += "import inspect\nfrom torch import optim\nfrom federatedml.nn.backend.fate_torch.base import FateTorchOptimizer\nTORCH_DICT = dict(inspect.getmembers(optim))\n\n"
     for k, v in memb:
         if inspect.isclass(v) and k != 'Optimizer':
             param = extract_init_param(v)

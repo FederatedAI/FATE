@@ -42,6 +42,7 @@ class FateTorchOptimizer(object):
 
     def __init__(self):
         self.param_dict = dict()
+        self.torch_class = None
 
     def to_dict(self):
         import copy
@@ -57,11 +58,7 @@ class FateTorchOptimizer(object):
         fate_torch_component.add_optimizer(self)
 
     def to_torch_instance(self, parameters):
-        import inspect
-        from torch import optim
-        torch_dict = dict(inspect.getmembers(optim))
-        torch_class = torch_dict[type(self).__name__]
-        return torch_class(parameters, **self.param_dict)
+        return self.torch_class(parameters, **self.param_dict)
 
 
 class Sequential(tSequential):

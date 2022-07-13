@@ -1,6 +1,9 @@
+import inspect
 from torch import optim
-
 from federatedml.nn.backend.fate_torch.base import FateTorchOptimizer
+TORCH_DICT = dict(inspect.getmembers(optim))
+
+
 class ASGD(FateTorchOptimizer):
         
     def __init__(self, fate_torch_component=None, lr=0.01, lambd=0.0001, alpha=0.75, t0=1000000.0, weight_decay=0, ):
@@ -12,6 +15,7 @@ class ASGD(FateTorchOptimizer):
         self.param_dict['weight_decay'] = weight_decay
         self.register_optimizer(fate_torch_component)
         # optim.ASGD.__init__(self, **self.param_dict)
+        self.torch_class = TORCH_DICT[type(self).__name__]
     
     
 class Adadelta(FateTorchOptimizer):
@@ -24,6 +28,7 @@ class Adadelta(FateTorchOptimizer):
         self.param_dict['weight_decay'] = weight_decay
         self.register_optimizer(fate_torch_component)
         # optim.Adadelta.__init__(self, **self.param_dict)
+        self.torch_class = TORCH_DICT[type(self).__name__]
     
     
 class Adagrad(FateTorchOptimizer):
@@ -37,6 +42,7 @@ class Adagrad(FateTorchOptimizer):
         self.param_dict['eps'] = eps
         self.register_optimizer(fate_torch_component)
         # optim.Adagrad.__init__(self, **self.param_dict)
+        self.torch_class = TORCH_DICT[type(self).__name__]
     
     
 class Adam(FateTorchOptimizer):
@@ -50,6 +56,7 @@ class Adam(FateTorchOptimizer):
         self.param_dict['amsgrad'] = amsgrad
         self.register_optimizer(fate_torch_component)
         # optim.Adam.__init__(self, **self.param_dict)
+        self.torch_class = TORCH_DICT[type(self).__name__]
     
     
 class AdamW(FateTorchOptimizer):
@@ -63,6 +70,7 @@ class AdamW(FateTorchOptimizer):
         self.param_dict['amsgrad'] = amsgrad
         self.register_optimizer(fate_torch_component)
         # optim.AdamW.__init__(self, **self.param_dict)
+        self.torch_class = TORCH_DICT[type(self).__name__]
     
     
 class Adamax(FateTorchOptimizer):
@@ -75,6 +83,7 @@ class Adamax(FateTorchOptimizer):
         self.param_dict['weight_decay'] = weight_decay
         self.register_optimizer(fate_torch_component)
         # optim.Adamax.__init__(self, **self.param_dict)
+        self.torch_class = TORCH_DICT[type(self).__name__]
     
     
 class LBFGS(FateTorchOptimizer):
@@ -90,6 +99,7 @@ class LBFGS(FateTorchOptimizer):
         self.param_dict['line_search_fn'] = line_search_fn
         self.register_optimizer(fate_torch_component)
         # optim.LBFGS.__init__(self, **self.param_dict)
+        self.torch_class = TORCH_DICT[type(self).__name__]
     
     
 class RMSprop(FateTorchOptimizer):
@@ -104,6 +114,7 @@ class RMSprop(FateTorchOptimizer):
         self.param_dict['centered'] = centered
         self.register_optimizer(fate_torch_component)
         # optim.RMSprop.__init__(self, **self.param_dict)
+        self.torch_class = TORCH_DICT[type(self).__name__]
     
     
 class Rprop(FateTorchOptimizer):
@@ -115,6 +126,7 @@ class Rprop(FateTorchOptimizer):
         self.param_dict['step_sizes'] = step_sizes
         self.register_optimizer(fate_torch_component)
         # optim.Rprop.__init__(self, **self.param_dict)
+        self.torch_class = TORCH_DICT[type(self).__name__]
     
     
 class SGD(FateTorchOptimizer):
@@ -128,6 +140,7 @@ class SGD(FateTorchOptimizer):
         self.param_dict['nesterov'] = nesterov
         self.register_optimizer(fate_torch_component)
         # optim.SGD.__init__(self, **self.param_dict)
+        self.torch_class = TORCH_DICT[type(self).__name__]
     
     
 class SparseAdam(FateTorchOptimizer):
@@ -139,5 +152,6 @@ class SparseAdam(FateTorchOptimizer):
         self.param_dict['eps'] = eps
         self.register_optimizer(fate_torch_component)
         # optim.SparseAdam.__init__(self, **self.param_dict)
+        self.torch_class = TORCH_DICT[type(self).__name__]
     
     

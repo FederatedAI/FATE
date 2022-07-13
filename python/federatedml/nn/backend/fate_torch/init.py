@@ -129,55 +129,55 @@ Init Func
 
 
 def uniform_(layer, a=0, b=1, init='weight'):
-    run_init(torch_init.uniform_, copy.deepcopy(locals()), init, layer)
+    run_init(str_init_func_map['uniform'], copy.deepcopy(locals()), init, layer)
 
 
 def normal_(layer, mean=0, std=1, init='weight'):
-    run_init(torch_init.normal_, copy.deepcopy(locals()), init, layer)
+    run_init(str_init_func_map['normal'], copy.deepcopy(locals()), init, layer)
 
 
 def constant_(layer, val, init='weight'):
-    run_init(torch_init.constant_, copy.deepcopy(locals()), init, layer)
+    run_init(str_init_func_map['constant'], copy.deepcopy(locals()), init, layer)
 
 
 def ones_(layer, init='weight'):
-    run_init(torch_init.ones_, copy.deepcopy(locals()), init, layer)
+    run_init(str_init_func_map['ones'], copy.deepcopy(locals()), init, layer)
 
 
 def zeros_(layer, init='weight'):
-    run_init(torch_init.zeros_, copy.deepcopy(locals()), init, layer)
+    run_init(str_init_func_map['zeros'], copy.deepcopy(locals()), init, layer)
 
 
 def eye_(layer, init='weight'):
-    run_init(torch_init.eye_, copy.deepcopy(locals()), init, layer)
+    run_init(str_init_func_map['eye'], copy.deepcopy(locals()), init, layer)
 
 
 def dirac_(layer, group=1, init='weight'):
-    run_init(torch_init.dirac_, copy.deepcopy(locals()), init, layer)
+    run_init(str_init_func_map['dirac'], copy.deepcopy(locals()), init, layer)
 
 
 def xavier_uniform_(layer, gain=1.0, init='weight'):
-    run_init(torch_init.xavier_uniform_, copy.deepcopy(locals()), init, layer)
+    run_init(str_init_func_map['xavier_uniform'], copy.deepcopy(locals()), init, layer)
 
 
 def xavier_normal_(layer, gain=1.0, init='weight'):
-    run_init(torch_init.xavier_normal_, copy.deepcopy(locals()), init, layer)
+    run_init(str_init_func_map['xavier_normal'], copy.deepcopy(locals()), init, layer)
 
 
 def kaiming_uniform_(layer, a=0, mode='fan_in', nonlinearity='leaky_relu', init='weight'):
-    run_init(torch_init.kaiming_uniform_, copy.deepcopy(locals()), init, layer)
+    run_init(str_init_func_map['kaiming_uniform'], copy.deepcopy(locals()), init, layer)
 
 
 def kaiming_normal_(layer, a=0, mode='fan_in', nonlinearity='leaky_relu', init='weight'):
-    run_init(torch_init.kaiming_normal_, copy.deepcopy(locals()), init, layer)
+    run_init(str_init_func_map['kaiming_normal'], copy.deepcopy(locals()), init, layer)
 
 
 def orthogonal_(layer, gain=1, init='weight'):
-    run_init(torch_init.orthogonal_, copy.deepcopy(locals()), init, layer)
+    run_init(str_init_func_map['orthogonal'], copy.deepcopy(locals()), init, layer)
 
 
 def sparse_(layer, sparsity, std=0.01, init='weight'):
-    run_init(torch_init.kaiming_normal_, copy.deepcopy(locals()), init, layer)
+    run_init(str_init_func_map['sparse'], copy.deepcopy(locals()), init, layer)
 
 
 str_fate_torch_init_func_map = {
