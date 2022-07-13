@@ -15,5 +15,6 @@
 #
 
 from federatedml.nn.backend import fate_torch
+from federatedml.nn.backend.fate_torch.import_hook import fate_torch_hook
 
-__all__ = ["fate_torch"]
+__all__ = ["fate_torch", "fate_torch_hook"]
