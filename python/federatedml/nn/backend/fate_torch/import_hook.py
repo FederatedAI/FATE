@@ -25,14 +25,16 @@ def fate_torch_hook(torch_module_var):
         monkey_patch(torch_module_var.nn.init, init_)
 
     elif torch_module_var.__name__ == 'torch.nn':
-        return nn_
+        monkey_patch(torch_module_var, nn_)
 
     elif torch_module_var.__name__ == 'torch.optim':
-        return optim_
+        monkey_patch(torch_module_var, optim_)
 
     elif torch_module_var.__name__ == 'torch.nn.init':
-        return init_
+        monkey_patch(torch_module_var, init_)
+
+    else:
+        raise ValueError('this module: {} does not support fate torch hook'.format(torch_module_var))
 
     return torch_module_var
-
 
