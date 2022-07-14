@@ -57,6 +57,18 @@
         },
         "hetero_nn_train_with_check_point": {
             "script": "./pipeline-hetero-nn-train-with-check-point.py"
+        },
+        "train_binary_with_torch_backend": {
+            "script": "./pipeline-hetero-nn-train-binary-torch.py"
+        },
+        "train_multi_with_torch_backend": {
+            "script": "./pipeline-hetero-nn-train-binary-floating_point_precision.py"
+        },
+        "train_binary_with_multi_host": {
+            "script": "./pipeline-hetero-nn-train-binary-multi-host.py"
+        },
+        "train_binary_with_coae_label_confuser": {
+            "script": "./pipeline-hetero-nn-train-binary-coae.py"
         }
     }
 }

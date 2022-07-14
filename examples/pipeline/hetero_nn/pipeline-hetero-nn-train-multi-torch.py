@@ -80,7 +80,7 @@ def main(config="../../config.yaml", namespace=""):
     seq2 = nn.Sequential(
         ReLU(),
         Linear(2, 4, True),
-        nn.Softmax()
+        nn.Softmax(dim=1)
     )
 
     # define host model
