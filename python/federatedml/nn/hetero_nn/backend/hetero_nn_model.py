@@ -266,6 +266,7 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
         self.interactive_model.set_partition(self.partition)
         if self.selector:
             self.interactive_model.set_backward_select_strategy()
+            self.interactive_model.set_batch(self.batch_size)
 
     def _restore_interactive_model(self, interactive_model_param):
         self._build_interactive_model()

@@ -7,4 +7,3 @@ class FederationEngine(object):
     STANDALONE = 'STANDALONE'
     PULSAR = 'PULSAR'
     FIREWORK = 'FIREWORK'
-

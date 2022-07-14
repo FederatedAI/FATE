@@ -27,8 +27,8 @@ from fate_arch.federation.pulsar._mq_channel import (
 from fate_arch.federation.pulsar._pulsar_manager import PulsarManager
 
 LOGGER = getLogger()
-# default message max size in bytes = 50MB
-DEFAULT_MESSAGE_MAX_SIZE = 104857 * 50
+# default message max size in bytes = 1MB
+DEFAULT_MESSAGE_MAX_SIZE = 104857
 
 
 class MQ(object):
@@ -46,9 +46,6 @@ class MQ(object):
 
     def __repr__(self):
         return self.__str__()
-
-
-# to locate pulsar topic
 
 
 class _TopicPair(object):
@@ -77,13 +74,16 @@ class Federation(FederationBase):
         # tenant name should be unified between parties
         tenant = pulsar_config.get("tenant", DEFAULT_TENANT)
 
-        # pulsar runtime config
+        # max_message_size；
+        max_message_size = int(pulsar_config.get("max_message_size", DEFAULT_MESSAGE_MAX_SIZE))
+
         pulsar_run = runtime_conf.get(
             "job_parameters", {}).get("pulsar_run", {})
         LOGGER.debug(f"pulsar_run: {pulsar_run}")
 
-        max_message_size = pulsar_run.get(
-            "max_message_size", DEFAULT_MESSAGE_MAX_SIZE)
+        max_message_size = int(pulsar_run.get(
+            "max_message_size", max_message_size))
+
         LOGGER.debug(f"set max message size to {max_message_size} Bytes")
 
         # topic ttl could be overwritten by run time config
