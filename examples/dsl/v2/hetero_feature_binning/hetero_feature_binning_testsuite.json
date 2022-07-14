@@ -114,6 +114,10 @@
             "conf": "hetero_binning_bucket_binning_conf.json",
             "dsl": "hetero_binning_bucket_binning_dsl.json"
         },
+        "hetero_binning_bucket_binning_missing_value": {
+            "conf": "hetero_binning_bucket_binning_missing_value_conf.json",
+            "dsl": "hetero_binning_bucket_binning_missing_value_dsl.json"
+        },
         "hetero_binning_category_binning": {
             "conf": "hetero_binning_category_binning_conf.json",
             "dsl": "hetero_binning_category_binning_dsl.json"

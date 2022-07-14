@@ -40,6 +40,10 @@ This section introduces the dsl and conf for usage of different type of task.
         "conf": "hetero_binning_bucket_binning_conf.json",
         "dsl": "hetero_binning_bucket_binning_dsl.json"
     
+    "bucket_binning_missing_value"
+        "conf": "hetero_binning_bucket_binning_missing_value_conf.json",
+        "dsl": "hetero_binning_bucket_binning_missing_value_dsl.json"
+    
     "sparse_bucket_binning"
         "conf": "hetero_binning_sparse_bucket_binning_conf.json",
         "dsl": "hetero_binning_sparse_bucket_binning_dsl.json"
