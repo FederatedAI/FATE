@@ -15,7 +15,6 @@
 #
 
 import argparse
-import copy
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataTransform
@@ -32,7 +31,7 @@ def main(config="../../config.yaml", namespace=""):
         config = load_job_config(config)
     parties = config.parties
     guest = parties.guest[0]
-    host = parties.host[0]
+    host = parties.host
 
     guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
     host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
@@ -50,39 +49,21 @@ def main(config="../../config.yaml", namespace=""):
     intersection_0 = Intersection(name="intersection_0")
 
     param = {
-        "method": "quantile",
-        "optimal_binning_param": {
-            "metric_method": "gini",
-            "min_bin_pct": 0.05,
-            "max_bin_pct": 0.8,
-            "init_bucket_method": "quantile",
-            "init_bin_nums": 100,
-            "mixture": True
-        },
+        "method": "bucket",
         "compress_thres": 10000,
         "head_size": 10000,
         "error": 0.001,
         "bin_num": 10,
         "bin_indexes": -1,
         "bin_names": None,
+        "category_indexes": None,
         "category_names": None,
         "adjustment_factor": 0.5,
-        "local_only": False,
-        "transform_param": {
-            "transform_cols": -1,
-            "transform_names": None,
-            "transform_type": "bin_num"
-        }
+        "local_only": False
     }
-
-    guest_param = copy.deepcopy(param)
-    guest_param["method"] = "optimal"
-    guest_param["category_indexes"] = [0, 1, 2]
-    host_param = copy.deepcopy(param)
-    host_param["method"] = "quantile"
     hetero_feature_binning_0 = HeteroFeatureBinning(name="hetero_feature_binning_0", **param)
-    hetero_feature_binning_0.get_party_instance(role="guest", party_id=guest).component_param(**guest_param)
-    hetero_feature_binning_0.get_party_instance(role="host", party_id=host).component_param(**host_param)
+    hetero_feature_binning_0.get_party_instance(role="guest",
+                                                party_id=guest).component_param(category_indexes=[0, 1, 2])
 
     pipeline.add_component(reader_0)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))

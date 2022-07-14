@@ -15,7 +15,6 @@
 #
 
 import argparse
-import copy
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataTransform
@@ -30,6 +29,7 @@ def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
         config = load_job_config(config)
+
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
@@ -41,7 +41,8 @@ def main(config="../../config.yaml", namespace=""):
 
     reader_0 = Reader(name="reader_0")
     reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
-    reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
+    reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data,
+                                                                            output_format="sparse")
 
     data_transform_0 = DataTransform(name="data_transform_0")
     data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True)
@@ -51,20 +52,13 @@ def main(config="../../config.yaml", namespace=""):
 
     param = {
         "method": "quantile",
-        "optimal_binning_param": {
-            "metric_method": "gini",
-            "min_bin_pct": 0.05,
-            "max_bin_pct": 0.8,
-            "init_bucket_method": "quantile",
-            "init_bin_nums": 100,
-            "mixture": True
-        },
         "compress_thres": 10000,
         "head_size": 10000,
         "error": 0.001,
         "bin_num": 10,
         "bin_indexes": -1,
         "bin_names": None,
+        "category_indexes": None,
         "category_names": None,
         "adjustment_factor": 0.5,
         "local_only": False,
@@ -75,14 +69,7 @@ def main(config="../../config.yaml", namespace=""):
         }
     }
 
-    guest_param = copy.deepcopy(param)
-    guest_param["method"] = "optimal"
-    guest_param["category_indexes"] = [0, 1, 2]
-    host_param = copy.deepcopy(param)
-    host_param["method"] = "quantile"
     hetero_feature_binning_0 = HeteroFeatureBinning(name="hetero_feature_binning_0", **param)
-    hetero_feature_binning_0.get_party_instance(role="guest", party_id=guest).component_param(**guest_param)
-    hetero_feature_binning_0.get_party_instance(role="host", party_id=host).component_param(**host_param)
 
     pipeline.add_component(reader_0)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))

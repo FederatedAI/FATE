@@ -126,8 +126,14 @@
         "hetero-binning-multi-host": {
             "script": "pipeline-hetero-binning-multi-host.py"
         },
+        "hetero-binning-multi-host-bucket": {
+            "script": "pipeline-hetero-binning-multi-host-bucket.py"
+        },
         "hetero-binning-sparse-bucket-binning": {
             "script": "pipeline-hetero-binning-sparse-bucket-binning.py"
+        },
+        "hetero-binning-sparse-quantile-binning": {
+            "script": "pipeline-hetero-binning-sparse-quantile-binning.py"
         },
         "hetero-binning-sparse-optimal-ks": {
             "script": "pipeline-hetero-binning-sparse-optimal-ks.py"
@@ -158,6 +164,9 @@
         },
         "hetero-binning-missing-value": {
             "script": "pipeline-hetero-binning-missing-value.py"
+        },
+        "hetero-binning-missing-value-optim": {
+            "script": "pipeline-hetero-binning-missing-value-optim.py"
         }
     }
 }
