@@ -44,7 +44,8 @@ class PulsarManager():
 
     # create session is used to construct url and request parameters
     def _create_session(self):
-        # retry mechanism refers to https://urllib3.readthedocs.io/en/latest/reference/urllib3.util.html#urllib3.util.Retry
+        # retry mechanism refers to
+        # https://urllib3.readthedocs.io/en/latest/reference/urllib3.util.html#urllib3.util.Retry
         retry = Retry(total=MAX_RETRIES, redirect=MAX_REDIRECT,
                       backoff_factor=BACKOFF_FACTOR)
         s = requests.Session()
