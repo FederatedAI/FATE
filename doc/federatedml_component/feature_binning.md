@@ -45,9 +45,9 @@ Below lists all metrics of optimal binning:
 | Optimal Binning Metric Type 	| Input Data Case                                                                                                                                                                                                                    	|
 |-----------------------------	|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|
 | chi-square                  	| [dense input](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-optim-chi-square.py) <br> [sparse input](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-sparse-optimal-chi-square.py) 	|
-| gini                        	| [dense input](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-optim-gini.py) [sparse input](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-sparse-optimal-gini.py)                  	|
-| iv                          	| [dense input](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-optim-iv.py) [sparse input](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-sparse-optimal-iv.py)                      	|
-| ks                          	| [dense input](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-optim-ks.py) [sparse input](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-sparse-optimal-ks.py)                      	|
+| gini                        	| [dense input](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-optim-gini.py) <br> [sparse input](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-sparse-optimal-gini.py)             	|
+| iv                          	| [dense input](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-optim-iv.py) <br> [sparse input](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-sparse-optimal-iv.py)                 	|
+| ks                          	| [dense input](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-optim-ks.py) <br> [sparse input](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-sparse-optimal-ks.py)                 	|
 
 Binning module supports multi-class data to calculate iv and woe too. To
 achieve it, one-vs-rest mechanism is used. Each label will be chosen
