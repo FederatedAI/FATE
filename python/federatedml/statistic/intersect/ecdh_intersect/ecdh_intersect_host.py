@@ -64,7 +64,8 @@ class EcdhIntersectionHost(EcdhIntersect):
                                                self.curve_instance,
                                                reserve_original_key=keep_key,
                                                hash_operator=self.hash_operator,
-                                               salt=self.salt)
+                                               salt=self.salt,
+                                               reserve_original_value=keep_key)
         LOGGER.info("encrypted local id for the 1st time")
         # send (Eh, -1), get (Eg, -1)
         id_remote_first = self._exchange_id(self.id_local_first, keep_key)

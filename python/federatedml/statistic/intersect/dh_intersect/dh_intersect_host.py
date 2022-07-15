@@ -62,7 +62,7 @@ class DhIntersectionHost(DhIntersect):
                                                       keep_encrypt_id=False)
         return intersect_ids
 
-    def get_intersect_doubly_encrypted_id(self, data_instances, keep_key=True, keep_val=False):
+    def get_intersect_doubly_encrypted_id(self, data_instances, keep_key=True):
         self._sync_commutative_cipher_public_knowledge()
         self.commutative_cipher.init()
 
@@ -72,7 +72,7 @@ class DhIntersectionHost(DhIntersect):
                                                     reserve_original_key=keep_key,
                                                     hash_operator=self.hash_operator,
                                                     salt=self.salt,
-                                                    reserve_original_value=keep_val)
+                                                    reserve_original_value=keep_key)
         LOGGER.info("encrypted local id for the 1st time")
         # send (Eh, -1), get (Eg, -1)
         id_list_remote_first = self._exchange_id_list(self.id_list_local_first, keep_key)
