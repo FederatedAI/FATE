@@ -15,17 +15,17 @@
     "component_parameters": {
         "common": {
             "intersect_0": {
-                "intersect_method": "dh",
-                "dh_params": {
+                "intersect_method": "ecdh",
+                "ecdh_params": {
                     "hash_method": "sha256",
-                    "salt": "12345",
-                    "key_length": 1024
+                    "curve": "curve25519"
                 },
                 "run_cache": true
             },
             "intersect_1": {
-                "intersect_method": "dh",
-                "only_output_key": true
+                "intersect_method": "ecdh",
+                "only_output_key": true,
+                "sync_intersect_ids": false
             }
         },
         "role": {

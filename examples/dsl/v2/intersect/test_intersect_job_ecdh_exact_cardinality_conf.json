@@ -15,25 +15,21 @@
     "component_parameters": {
         "common": {
             "intersect_0": {
-                "intersect_method": "dh",
-                "dh_params": {
+                "cardinality_method": "ecdh",
+                "cardinality_only": true,
+                "sync_cardinality": false,
+                "ecdh_params": {
                     "hash_method": "sha256",
-                    "salt": "12345",
-                    "key_length": 1024
-                },
-                "run_cache": true
-            },
-            "intersect_1": {
-                "intersect_method": "dh",
-                "only_output_key": true
+                    "curve": "curve25519"
+                }
             }
         },
         "role": {
-            "host": {
+            "guest": {
                 "0": {
                     "reader_0": {
                         "table": {
-                            "name": "breast_hetero_host",
+                            "name": "breast_hetero_guest",
                             "namespace": "experiment"
                         }
                     },
@@ -43,11 +39,11 @@
                     }
                 }
             },
-            "guest": {
+            "host": {
                 "0": {
                     "reader_0": {
                         "table": {
-                            "name": "breast_hetero_guest",
+                            "name": "breast_hetero_host",
                             "namespace": "experiment"
                         }
                     },
