@@ -26,8 +26,11 @@ class EcdhIntersectionHost(EcdhIntersect):
         self.role = consts.HOST
         self.id_local_first = None
 
-    def _exchange_id(self, id):
-        id_only = id.mapValues(lambda v: None)
+    def _exchange_id(self, id, replace_val=True):
+        if replace_val:
+            id_only = id.mapValues(lambda v: None)
+        else:
+            id_only = id
         self.transfer_variable.id_ciphertext_exchange_h2g.remote(id_only,
                                                                  role=consts.GUEST,
                                                                  idx=0)
@@ -59,13 +62,12 @@ class EcdhIntersectionHost(EcdhIntersect):
         # 1st ID encrypt: (Eh, (h, Instance))
         self.id_local_first = self._encrypt_id(data_instances,
                                                self.curve_instance,
-                                               reserve_original_key=True,
+                                               reserve_original_key=keep_key,
                                                hash_operator=self.hash_operator,
-                                               salt=self.salt,
-                                               reserve_original_value=True)
+                                               salt=self.salt)
         LOGGER.info("encrypted local id for the 1st time")
         # send (Eh, -1), get (Eg, -1)
-        id_remote_first = self._exchange_id(self.id_local_first)
+        id_remote_first = self._exchange_id(self.id_local_first, keep_key)
 
         # 2nd ID encrypt & send doubly encrypted guest ID list to guest
         id_remote_second = self._sign_id(id_remote_first,

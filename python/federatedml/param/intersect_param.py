@@ -245,7 +245,7 @@ class ECDHParam(BaseParam):
         the src id will be str = str + salt, default ''
 
     hash_method: str
-        the hash method of src id, support none, md5, sha1, sha 224, sha256, sha384, sha512, sm3, default sha256
+        the hash method of src id, support sha256, sha384, sha512, sm3, default sha256
 
     curve: str
         the name of curve, currently only support 'curve25519', which offers 128 bits of security

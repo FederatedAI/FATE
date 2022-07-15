@@ -101,7 +101,7 @@ class DhIntersect(Intersect):
         """
         pass
 
-    def _exchange_id_list(self, id_list):
+    def _exchange_id_list(self, id_list, replace_val=True):
         """
         :param id_list: Table in the form (id, 0)
         :return:

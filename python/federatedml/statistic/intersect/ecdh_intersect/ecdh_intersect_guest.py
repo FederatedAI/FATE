@@ -26,8 +26,11 @@ class EcdhIntersectionGuest(EcdhIntersect):
         self.id_remote_second = None
         self.id_local_second = None
 
-    def _exchange_id(self, id):
-        id_only = id.mapValues(lambda v: None)
+    def _exchange_id(self, id, replace_val=True):
+        if replace_val:
+            id_only = id.mapValues(lambda v: None)
+        else:
+            id_only = id
         self.transfer_variable.id_ciphertext_exchange_g2h.remote(id_only,
                                                                  role=consts.HOST,
                                                                  idx=0)
@@ -60,7 +63,7 @@ class EcdhIntersectionGuest(EcdhIntersect):
                                                hash_operator=self.hash_operator,
                                                salt=self.salt)
         LOGGER.info("encrypted guest id for the 1st time")
-        id_remote_first = self._exchange_id(self.id_local_first)[0]
+        id_remote_first = self._exchange_id(self.id_local_first, keep_key)[0]
 
         # 2nd ID encrypt & receive doubly encrypted ID list: # (EEh, Eh)
         self.id_remote_second = self._sign_id(id_remote_first,

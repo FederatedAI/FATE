@@ -85,7 +85,7 @@ class SecureInformationRetrievalHost(BaseSecureInformationRetrieval):
             self._failure_response()
 
         # 2. Guest find intersection
-        self.intersection_obj.get_intersect_doubly_encrypted_id(match_data)
+        self.intersection_obj.get_intersect_doubly_encrypted_id(match_data, keep_val=True)
         id_list_host_first = self.intersection_obj.id_list_local_first
 
         # 3. Get the re-indexed doubly encrypted ID from guest

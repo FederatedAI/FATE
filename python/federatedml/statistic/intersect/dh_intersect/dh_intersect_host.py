@@ -33,8 +33,11 @@ class DhIntersectionHost(DhIntersect):
 
         LOGGER.info(f"got commutative cipher public knowledge from guest")
 
-    def _exchange_id_list(self, id_list):
-        id_only = id_list.mapValues(lambda v: None)
+    def _exchange_id_list(self, id_list, replace_val=True):
+        if replace_val:
+            id_only = id_list.mapValues(lambda v: None)
+        else:
+            id_only = id_list
         self.transfer_variable.id_ciphertext_list_exchange_h2g.remote(id_only,
                                                                       role=consts.GUEST,
                                                                       idx=0)
@@ -59,20 +62,20 @@ class DhIntersectionHost(DhIntersect):
                                                       keep_encrypt_id=False)
         return intersect_ids
 
-    def get_intersect_doubly_encrypted_id(self, data_instances, keep_key=True):
+    def get_intersect_doubly_encrypted_id(self, data_instances, keep_key=True, keep_val=False):
         self._sync_commutative_cipher_public_knowledge()
         self.commutative_cipher.init()
 
         # 1st ID encrypt: (Eh, (h, Instance))
         self.id_list_local_first = self._encrypt_id(data_instances,
                                                     self.commutative_cipher,
-                                                    reserve_original_key=True,
+                                                    reserve_original_key=keep_key,
                                                     hash_operator=self.hash_operator,
                                                     salt=self.salt,
-                                                    reserve_original_value=True)
+                                                    reserve_original_value=keep_val)
         LOGGER.info("encrypted local id for the 1st time")
         # send (Eh, -1), get (Eg, -1)
-        id_list_remote_first = self._exchange_id_list(self.id_list_local_first)
+        id_list_remote_first = self._exchange_id_list(self.id_list_local_first, keep_key)
 
         # 2nd ID encrypt & send doubly encrypted guest ID list to guest
         id_list_remote_second = self._encrypt_id(id_list_remote_first,

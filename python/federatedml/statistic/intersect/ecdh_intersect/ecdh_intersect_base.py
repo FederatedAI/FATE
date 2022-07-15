@@ -52,7 +52,7 @@ class EcdhIntersect(Intersect):
         self.curve_instance = EllipticCurve(self.curve, curve_key)
 
     @staticmethod
-    def _get_mode(reserve_original_key=False, reserve_original_value=False):
+    def get_mode(reserve_original_key=False, reserve_original_value=False):
         if reserve_original_key and reserve_original_value:
             return 5
         if reserve_original_key:
@@ -76,7 +76,7 @@ class EcdhIntersect(Intersect):
             (ori_key, (enc_key, val)) for only reserve_original_value == True.
         :return:
         """
-        mode = EcdhIntersect._get_mode(reserve_original_key, reserve_original_value)
+        mode = EcdhIntersect.get_mode(reserve_original_key, reserve_original_value)
         if hash_operator is not None:
             return curve_instance.map_hash_encrypt(data_instances, mode=mode, hash_operator=hash_operator, salt=salt)
         return curve_instance.map_encrypt(data_instances, mode=mode)
@@ -93,10 +93,10 @@ class EcdhIntersect(Intersect):
             (ori_key, (enc_key, val)) for only reserve_original_value == True.
         :return:
         """
-        mode = EcdhIntersect._get_mode(reserve_original_key, reserve_original_value)
+        mode = EcdhIntersect.get_mode(reserve_original_key, reserve_original_value)
         return curve_instance.map_sign(data_instances, mode=mode)
 
-    def _exchange_id(self, id):
+    def _exchange_id(self, id, replace_val=True):
         """
         :param id: Table in the form (id, 0)
         :return:

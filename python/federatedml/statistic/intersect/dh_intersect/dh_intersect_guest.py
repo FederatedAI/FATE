@@ -37,9 +37,12 @@ class DhIntersectionGuest(DhIntersect):
                                                                               idx=i)
             LOGGER.info(f"sent commutative cipher public knowledge to {i}th host")
 
-    def _exchange_id_list(self, id_list):
+    def _exchange_id_list(self, id_list, replace_val=True):
         for i, id in enumerate(id_list):
-            id_only = id.mapValues(lambda v: None)
+            if replace_val:
+                id_only = id.mapValues(lambda v: None)
+            else:
+                id_only = id
             self.transfer_variable.id_ciphertext_list_exchange_g2h.remote(id_only,
                                                                           role=consts.HOST,
                                                                           idx=i)
@@ -81,11 +84,11 @@ class DhIntersectionGuest(DhIntersect):
         # 1st ID encrypt: # (Eg, -1)
         self.id_list_local_first = [self._encrypt_id(data_instances,
                                                      cipher,
-                                                     reserve_original_key=True,
+                                                     reserve_original_key=keep_key,
                                                      hash_operator=self.hash_operator,
                                                      salt=self.salt) for cipher in self.commutative_cipher]
         LOGGER.info("encrypted guest id for the 1st time")
-        id_list_remote_first = self._exchange_id_list(self.id_list_local_first)
+        id_list_remote_first = self._exchange_id_list(self.id_list_local_first, keep_key)
 
         # 2nd ID encrypt & receive doubly encrypted ID list: # (EEh, Eh)
         self.id_list_remote_second = [self._encrypt_id(id_list_remote_first[i],
