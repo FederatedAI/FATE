@@ -24,6 +24,13 @@
                     },
                     "data_transform_0": {
                         "with_label": false
+                    },
+                    "hetero_feature_selection_0": {
+                        "select_col_indexes": [
+                            0,
+                            2,
+                            3
+                        ]
                     }
                 }
             },
@@ -38,6 +45,13 @@
                     "data_transform_0": {
                         "with_label": true,
                         "output_format": "dense"
+                    },
+                    "hetero_feature_selection_0": {
+                        "select_col_indexes": [
+                            0,
+                            1,
+                            3
+                        ]
                     }
                 }
             }
@@ -71,12 +85,6 @@
                 "column_indexes": -1
             },
             "hetero_feature_selection_0": {
-                "select_col_indexes": [
-                    1,
-                    2,
-                    3,
-                    4
-                ],
                 "select_names": [],
                 "filter_methods": [
                     "manually",

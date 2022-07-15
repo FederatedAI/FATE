@@ -57,6 +57,7 @@ class InterActiveGuestDenseLayer(object):
         self.guest_model = None
         self.host_model = None
 
+        self.batch_size = None
         self.partitions = 0
         self.do_backward_select_strategy = False
         self.encrypted_host_input_cached = None
@@ -74,6 +75,9 @@ class InterActiveGuestDenseLayer(object):
     def set_backward_select_strategy(self):
         self.do_backward_select_strategy = True
 
+    def set_batch(self, batch_size):
+        self.batch_size = batch_size
+
     def set_partition(self, partition):
         self.partitions = partition
 
@@ -85,6 +89,12 @@ class InterActiveGuestDenseLayer(object):
         self.guest_model = GuestDenseModel()
         self.guest_model.build(self.guest_input_shape, self.layer_config, self.model_builder, restore_stage)
         self.guest_model.set_learning_rate(self.learning_rate)
+
+        if self.do_backward_select_strategy:
+            self.guest_model.set_backward_selective_strategy()
+            self.guest_model.set_batch(self.batch_size)
+            self.host_model.set_backward_selective_strategy()
+            self.host_model.set_batch(self.batch_size)
 
     def forward(self, guest_input, epoch=0, batch=0, train=True):
         LOGGER.info("interactive layer start forward propagation of epoch {} batch {}".format(epoch, batch))

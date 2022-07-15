@@ -20,22 +20,31 @@ from federatedml.util.data_format_preprocess import DataFormatPreProcess
 
 ANONYMOUS_COLUMN_PREFIX = "x"
 ANONYMOUS_LABEL = "y"
+SPLICES = "_"
 
 
 class Anonymous(object):
-    def __init__(self, role=None, party_id=None):
+    def __init__(self, role=None, party_id=None, migrate_mapping=None):
         self._role = role
         self._party_id = party_id
+        self._migrate_mapping = migrate_mapping
 
-    @staticmethod
-    def anonymous_migrate(anonymous_header, original_party_id, new_party_id):
+    def migrate_anonymous(self, anonymous_header):
         migrate_anonymous_header = []
         for column in anonymous_header:
-            role, party_id, suf = column.split("_", 2)
-            if party_id == str(original_party_id):
-                migrate_anonymous_header.append("_".join([role, str(new_party_id), suf]))
-            else:
-                migrate_anonymous_header.append(column)
+            role, party_id, suf = column.split(SPLICES, 2)
+            migrate_party_id = self._migrate_mapping[role][int(party_id)]
+            migrate_anonymous_header.append(self.generate_anonymous_column(role, migrate_party_id, suf))
+
+        return migrate_anonymous_header
+
+    def is_anonymous(self, column):
+        splits = self.get_anonymous_column_splits(column)
+        if len(splits) < 3:
+            return False
+        role, party_id = splits[0], splits[1]
+
+        return role in self._migrate_mapping and int(party_id) in self._migrate_mapping[role]
 
     def extend_columns(self, original_anonymous_header, extend_header):
         extend_anonymous_header = []
@@ -73,22 +82,30 @@ class Anonymous(object):
                 new_anonymous_header.append(anonymous_column)
             else:
                 for i in range(len(derived_dict[column])):
-                    new_anonymous_column = "_".join([anonymous_column, str(i)])
+                    new_anonymous_column = SPLICES.join([anonymous_column, str(i)])
                     new_anonymous_header.append(new_anonymous_column)
 
         return new_anonymous_header
 
     def __generate_expand_anonymous_column(self, fid):
-        return "_".join(map(str, [self._role, self._party_id, "exp", fid]))
+        return SPLICES.join(map(str, [self._role, self._party_id, "exp", fid]))
+
+    @staticmethod
+    def generate_anonymous_column(role, party_id, suf):
+        return SPLICES.join([role, str(party_id), suf])
+
+    @staticmethod
+    def get_anonymous_column_splits(column, num=-1):
+        return column.split(SPLICES, num)
 
     @staticmethod
     def is_expand_column(column_name):
-        splits = column_name.split("_", -1)
+        splits = Anonymous.get_anonymous_column_splits(column_name)
         return splits[-2] == "exp"
 
     @staticmethod
-    def get_expand_idx(col_name):
-        return int(col_name.split("_", -1)[-1])
+    def get_expand_idx(column_name):
+        return int(Anonymous.get_anonymous_column_splits(column_name)[-1])
 
     @staticmethod
     def update_anonymous_header_with_role(schema, role, party_id):
@@ -96,11 +113,12 @@ class Anonymous(object):
         new_schema = copy.deepcopy(schema)
         if "anonymous_header" in schema:
             old_anonymous_header = schema["anonymous_header"]
-            new_anonymous_header = ["_".join([role, party_id, col_name]) for col_name in old_anonymous_header]
+            new_anonymous_header = [Anonymous.generate_anonymous_column(role, party_id, col_name)
+                                    for col_name in old_anonymous_header]
             new_schema["anonymous_header"] = new_anonymous_header
 
         if "label_name" in schema:
-            new_schema["anonymous_label"] = "_".join([role, party_id, ANONYMOUS_LABEL])
+            new_schema["anonymous_label"] = Anonymous.generate_anonymous_column(role, party_id, ANONYMOUS_LABEL)
 
         return new_schema
 
@@ -108,9 +126,10 @@ class Anonymous(object):
         new_schema = copy.deepcopy(schema)
         header = schema["header"]
         if self._role:
-            anonymous_header = ["_".join(map(str, [self._role, self._party_id, ANONYMOUS_COLUMN_PREFIX + str(i)]))
-                                for i in range(len(header))
-                                ]
+            anonymous_header = [Anonymous.generate_anonymous_column(self._role,
+                                                                    self._party_id,
+                                                                    ANONYMOUS_COLUMN_PREFIX + str(i))
+                                for i in range(len(header))]
         else:
             anonymous_header = [ANONYMOUS_COLUMN_PREFIX + str(i) for i in range(len(header))]
 
@@ -118,8 +137,10 @@ class Anonymous(object):
 
         if "label_name" in schema:
             if self._role:
-                new_schema["anonymous_label"] = "_".join([self._role, str(self._party_id), ANONYMOUS_LABEL])
+                new_schema["anonymous_label"] = self.generate_anonymous_column(self._role,
+                                                                               self._party_id,
+                                                                               ANONYMOUS_LABEL)
             else:
-                new_schema["anonymous_header"] = ANONYMOUS_LABEL
+                new_schema["anonymous_label"] = ANONYMOUS_LABEL
 
         return new_schema

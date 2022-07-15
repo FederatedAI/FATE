@@ -15,16 +15,14 @@
 #
 
 import argparse
-import os
-import sys
 
-cur_path = os.path.realpath(__file__)
-for i in range(4):
-    cur_path = os.path.dirname(cur_path)
-print(f'fate_path: {cur_path}')
-sys.path.append(cur_path)
-
-from examples.pipeline.hetero_feature_binning import common_tools
+from pipeline.backend.pipeline import PipeLine
+from pipeline.component import DataTransform
+from pipeline.component import HeteroFeatureBinning
+from pipeline.component import Intersection
+from pipeline.component import OneHotEncoder
+from pipeline.component import Reader
+from pipeline.interface import Data, Model
 from pipeline.utils.tools import load_job_config
 
 
@@ -32,8 +30,49 @@ def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
         config = load_job_config(config)
+    parties = config.parties
+    guest = parties.guest[0]
+    host = parties.host[0]
+
+    guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
+    host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
+
+    guest_eval_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
+    host_eval_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
+
+    # initialize pipeline
+    pipeline = PipeLine()
+    # set job initiator
+    pipeline.set_initiator(role='guest', party_id=guest)
+    pipeline.set_roles(guest=guest, host=host)
+
+    # define Reader components to read in data
+    reader_0 = Reader(name="reader_0")
+    # configure Reader for guest
+    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
+    # configure Reader for host
+    reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
+
+    reader_1 = Reader(name="reader_1")
+    reader_1.get_party_instance(role='guest', party_id=guest).component_param(table=guest_eval_data)
+    reader_1.get_party_instance(role='host', party_id=host).component_param(table=host_eval_data)
+
+    # define DataTransform components
+    data_transform_0 = DataTransform(name="data_transform_0")  # start component numbering at 0
+    data_transform_1 = DataTransform(name="data_transform_1")
+
+    # get DataTransform party instance of guest
+    data_transform_0_guest_party_instance = data_transform_0.get_party_instance(role='guest', party_id=guest)
+    # configure DataTransform for guest
+    data_transform_0_guest_party_instance.component_param(with_label=True, output_format="dense")
+    # get and configure DataTransform party instance of host
+    data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
+
+    # define Intersection components
+    intersection_0 = Intersection(name="intersection_0")
+    intersection_1 = Intersection(name="intersection_1")
+
     param = {
-        "name": "hetero_feature_binning_0",
         "method": "quantile",
         "compress_thres": 10000,
         "head_size": 10000,
@@ -52,7 +91,34 @@ def main(config="../../config.yaml", namespace=""):
             "transform_type": "bin_num"
         }
     }
-    pipeline = common_tools.make_add_one_hot_dsl(config, namespace, param)
+
+    hetero_feature_binning_0 = HeteroFeatureBinning(name="hetero_feature_binning_0", **param)
+    hetero_feature_binning_1 = HeteroFeatureBinning(name='hetero_feature_binning_1')
+
+    one_hot_encoder_0 = OneHotEncoder(name='one_hot_encoder_0',
+                                      transform_col_indexes=-1,
+                                      transform_col_names=None,
+                                      need_run=True)
+    # add components to pipeline, in order of task execution
+    pipeline.add_component(reader_0)
+    pipeline.add_component(reader_1)
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    # set data_transform_1 to replicate model from data_transform_0
+    pipeline.add_component(
+        data_transform_1, data=Data(
+            data=reader_1.output.data), model=Model(
+            data_transform_0.output.model))
+    # set data input sources of intersection components
+    pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
+    pipeline.add_component(intersection_1, data=Data(data=data_transform_1.output.data))
+    # set train & validate data of hetero_lr_0 component
+    pipeline.add_component(hetero_feature_binning_0, data=Data(data=intersection_0.output.data))
+    pipeline.add_component(hetero_feature_binning_1, data=Data(data=intersection_1.output.data),
+                           model=Model(hetero_feature_binning_0.output.model))
+
+    pipeline.add_component(one_hot_encoder_0, data=Data(data=hetero_feature_binning_0.output.data))
+
+    pipeline.compile()
     pipeline.fit()
     # common_tools.prettify(pipeline.get_component("hetero_feature_binning_0").get_summary())
 

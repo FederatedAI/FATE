@@ -20,7 +20,6 @@
 import copy
 
 from federatedml.util import LOGGER
-from federatedml.util import anonymous_generator
 
 
 class BinInnerParam(object):
@@ -33,7 +32,10 @@ class BinInnerParam(object):
         self.bin_names = []
         self.bin_indexes_added_set = set()
         self.col_name_maps = {}
+        self.anonymous_col_name_maps = {}
+        self.col_name_anonymous_maps = {}
         self.header = []
+        self.anonymous_header = []
         self.transform_bin_indexes = []
         self.transform_bin_names = []
         self.transform_bin_indexes_added_set = set()
@@ -41,10 +43,14 @@ class BinInnerParam(object):
         self.category_names = []
         self.category_indexes_added_set = set()
 
-    def set_header(self, header):
+    def set_header(self, header, anonymous_header):
         self.header = copy.deepcopy(header)
+        self.anonymous_header = copy.deepcopy(anonymous_header)
         for idx, col_name in enumerate(self.header):
             self.col_name_maps[col_name] = idx
+
+        self.anonymous_col_name_maps = dict(zip(self.anonymous_header, self.header))
+        self.col_name_anonymous_maps = dict(zip(self.header, self.anonymous_header))
 
     def set_bin_all(self):
         """
@@ -177,18 +183,15 @@ class BinInnerParam(object):
         return dict(zip(self.bin_names, self.bin_indexes))
 
     @staticmethod
-    def encode_col_name_dict(col_name, v, model, col_name_maps: dict):
-        col_index = col_name_maps.get(col_name)
-        return anonymous_generator.generate_anonymous(col_index, model=model), v
+    def change_to_anonymous(col_name, v, col_name_anonymous_maps: dict):
+        anonymous_col = col_name_anonymous_maps.get(col_name)
+        return anonymous_col, v
 
-    def encode_col_name_list(self, col_name_list: list, model):
+    def get_anonymous_col_name_list(self, col_name_list: list):
         result = []
         for x in col_name_list:
-            col_index = self.col_name_maps.get(x)
-            result.append(anonymous_generator.generate_anonymous(col_index, model=model))
+            result.append(self.col_name_anonymous_maps[x])
         return result
 
-    def decode_col_name(self, encoded_name: str):
-        col_index = anonymous_generator.reconstruct_fid(encoded_name)
-
-        return self.header[col_index]
+    def get_col_name_by_anonymous(self, anonymous_col_name: str):
+        return self.anonymous_col_name_maps.get(anonymous_col_name)

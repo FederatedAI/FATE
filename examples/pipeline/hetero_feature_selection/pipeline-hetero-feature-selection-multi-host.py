@@ -15,16 +15,16 @@
 #
 
 import argparse
-import os
-import sys
 
-cur_path = os.path.realpath(__file__)
-for i in range(4):
-    cur_path = os.path.dirname(cur_path)
-print(f'fate_path: {cur_path}')
-sys.path.append(cur_path)
-
-from examples.pipeline.hetero_feature_selection import common_tools
+from pipeline.backend.pipeline import PipeLine
+from pipeline.component import DataStatistics
+from pipeline.component import DataTransform
+from pipeline.component import HeteroFeatureBinning
+from pipeline.component import HeteroFeatureSelection
+from pipeline.component import Intersection
+from pipeline.component import Reader
+from pipeline.interface import Data
+from pipeline.interface import Model
 from pipeline.utils.tools import load_job_config
 
 
@@ -32,9 +32,44 @@ def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
         config = load_job_config(config)
+    parties = config.parties
+    guest = parties.guest[0]
+    hosts = parties.host
+
+    guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
+    host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
+
+    # initialize pipeline
+    pipeline = PipeLine()
+    # set job initiator
+    pipeline.set_initiator(role='guest', party_id=guest)
+    # set participants information
+    pipeline.set_roles(guest=guest, host=hosts)
+
+    # define Reader components to read in data
+    reader_0 = Reader(name="reader_0")
+    # configure Reader for guest
+    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
+    # configure Reader for host
+    reader_0.get_party_instance(role='host', party_id=hosts).component_param(table=host_train_data)
+
+    # define DataTransform components
+    data_transform_0 = DataTransform(name="data_transform_0")  # start component numbering at 0
+
+    # get DataTransform party instance of guest
+    data_transform_0_guest_party_instance = data_transform_0.get_party_instance(role='guest', party_id=guest)
+    # configure DataTransform for guest
+    data_transform_0_guest_party_instance.component_param(with_label=True, output_format="dense")
+    # get and configure DataTransform party instance of host
+    data_transform_0.get_party_instance(role='host', party_id=hosts).component_param(with_label=False)
+
+    # define Intersection components
+    intersection_0 = Intersection(name="intersection_0")
+    pipeline.add_component(reader_0)
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
 
     binning_param = {
-        "name": 'hetero_feature_binning_0',
         "method": "quantile",
         "compress_thres": 10000,
         "head_size": 10000,
@@ -52,16 +87,18 @@ def main(config="../../config.yaml", namespace=""):
             "transform_type": "bin_num"
         }
     }
+    hetero_feature_binning_0 = HeteroFeatureBinning(name="hetero_feature_binning_0", **binning_param)
+    pipeline.add_component(hetero_feature_binning_0, data=Data(data=intersection_0.output.data))
 
     statistic_param = {
-        "name": "statistic_0",
         "statistics": ["95%", "coefficient_of_variance", "stddev"],
         "column_indexes": -1,
         "column_names": []
     }
+    statistic_0 = DataStatistics(name="statistic_0", **statistic_param)
+    pipeline.add_component(statistic_0, data=Data(data=intersection_0.output.data))
 
     selection_param = {
-        "name": "hetero_feature_selection_0",
         "select_col_indexes": -1,
         "select_names": [],
         "filter_methods": [
@@ -88,12 +125,14 @@ def main(config="../../config.yaml", namespace=""):
             "upper_threshold": 2.0
         }
     }
-    pipeline = common_tools.make_normal_dsl(config, namespace, selection_param,
-                                            binning_param=binning_param,
-                                            statistic_param=statistic_param,
-                                            is_multi_host=True)
+
+    hetero_feature_selection_0 = HeteroFeatureSelection(name="hetero_feature_selection_0", **selection_param)
+    pipeline.add_component(hetero_feature_selection_0, data=Data(data=intersection_0.output.data),
+                           model=Model(isometric_model=[hetero_feature_binning_0.output.model,
+                                                        statistic_0.output.model]))
+    # compile pipeline once finished adding modules, this step will form conf and dsl files for running job
+    pipeline.compile()
     pipeline.fit()
-    common_tools.prettify(pipeline.get_component("hetero_feature_selection_0").get_summary())
 
 
 if __name__ == "__main__":

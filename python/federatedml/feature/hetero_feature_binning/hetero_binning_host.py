@@ -97,20 +97,18 @@ class HeteroFeatureBinningHost(BaseFeatureBinning):
         encrypted_bin_sum = self.__static_encrypted_bin_label(data_bin_table, encrypted_label_table)
         encrypted_bin_sum = self.compressor.compress_dtable(encrypted_bin_sum)
 
-        encode_name_f = functools.partial(self.bin_inner_param.encode_col_name_dict,
-                                          model=self,
-                                          col_name_maps=self.bin_inner_param.col_name_maps)
+        encode_name_f = functools.partial(self.bin_inner_param.change_to_anonymous,
+                                          col_name_anonymous_maps=self.bin_inner_param.col_name_anonymous_maps)
         # encrypted_bin_sum = self.bin_inner_param.encode_col_name_dict(encrypted_bin_sum, self)
         encrypted_bin_sum = encrypted_bin_sum.map(encode_name_f)
 
-        self.header_anonymous = self.bin_inner_param.encode_col_name_list(self.header, self)
         # encrypted_bin_sum = self.cipher_compress(encrypted_bin_sum, data_bin_table.count())
         self.transfer_variable.encrypted_bin_sum.remote(encrypted_bin_sum,
                                                         role=consts.GUEST,
                                                         idx=0)
         send_result = {
-            "category_names": self.bin_inner_param.encode_col_name_list(
-                self.bin_inner_param.category_names, self),
+            "category_names": self.bin_inner_param.get_anonymous_col_name_list(
+                self.bin_inner_param.category_names),
             "bin_method": self.model_param.method,
             "optimal_params": {
                 "metric_method": self.model_param.optimal_binning_param.metric_method,
@@ -169,8 +167,8 @@ class HeteroFeatureBinningHost(BaseFeatureBinning):
         bucket_idx = self.transfer_variable.bucket_idx.get(idx=0)
         LOGGER.debug("In optimal_binning_sync, received bucket_idx: {}".format(bucket_idx))
         original_split_points = self.binning_obj.bin_results.all_split_points
-        for encoded_col_name, b_idx in bucket_idx.items():
-            col_name = self.bin_inner_param.decode_col_name(encoded_col_name)
+        for anonymous_col_name, b_idx in bucket_idx.items():
+            col_name = self.bin_inner_param.get_col_name_by_anonymous(anonymous_col_name)
             ori_sp_list = original_split_points.get(col_name)
             optimal_result = [ori_sp_list[i] for i in b_idx]
             self.binning_obj.bin_results.put_col_split_points(col_name, optimal_result)
