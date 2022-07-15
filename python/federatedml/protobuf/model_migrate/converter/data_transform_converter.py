@@ -36,4 +36,3 @@ class DataTransformConverter(ProtoConverterBase):
             return param, meta
         except AttributeError:
             return param, meta
-

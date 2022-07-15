@@ -43,7 +43,8 @@ class TeskClassifyLabelChecker(unittest.TestCase):
         self.assertTrue(len(anonymous_header2) == len(anonymous_header) + len(extend_columns1) + len(extend_columns2))
         for i in range(len(extend_columns2)):
             idx = i + len(anonymous_header) + len(extend_columns1)
-            self.assertTrue(anonymous_header2[idx] == "_".join(["guest", "10000", "exp", str(i + len(extend_columns1))]))
+            self.assertTrue(anonymous_header2[idx] == "_".join(
+                ["guest", "10000", "exp", str(i + len(extend_columns1))]))
 
     def test_anonymous_header_generate_with_party_id(self):
         anonymous_generator = Anonymous(role="guest", party_id=10000)
@@ -96,9 +97,10 @@ class TeskClassifyLabelChecker(unittest.TestCase):
         derived_dict = {"e0": ["feature5_f0", "feature5_f1", "feature5_f2", "feature5_f3"],
                         "e3": ["feature6_e1", "feature6_e2", "feature6_e3"]}
 
-        derived_anonymous_header = anonymous_generator.generate_derived_header(original_header=extend_header,
-                                                                               original_anonymous_header=anonymous_header1,
-                                                                               derived_dict=derived_dict)
+        derived_anonymous_header = anonymous_generator.generate_derived_header(
+            original_header=extend_header,
+            original_anonymous_header=anonymous_header1,
+            derived_dict=derived_dict)
 
         for i in range(100, 104):
             self.assertTrue(derived_anonymous_header[i] == anonymous_header1[100] + "_" + str(i - 100))

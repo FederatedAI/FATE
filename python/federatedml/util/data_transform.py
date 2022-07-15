@@ -75,7 +75,8 @@ class DenseFeatureTransformer(object):
         self.anonymous_header = None
 
         if data_transform_param.exclusive_data_type:
-            self.exclusive_data_type = dict([(k.lower(), v) for k, v in data_transform_param.exclusive_data_type.items()])
+            self.exclusive_data_type = dict([(k.lower(), v)
+                                             for k, v in data_transform_param.exclusive_data_type.items()])
         else:
             self.exclusive_data_type = None
 
@@ -152,6 +153,7 @@ class DenseFeatureTransformer(object):
         extract_feature_func = functools.partial(self.extract_feature_value,
                                                  header_index=header_index)
         input_data_features = input_data.mapValues(extract_feature_func)
+        input_data_features.schema = input_data.schema
 
         input_data_labels = None
         input_data_match_id = None
@@ -183,14 +185,12 @@ class DenseFeatureTransformer(object):
 
     @assert_io_num_rows_equal
     def transform(self, input_data_features, input_data_labels, input_data_match_id):
-        schema = make_schema(self.header, self.sid_name, self.label_name)
-
-        set_schema(input_data_features, schema)
+        schema = input_data_features.schema
         input_data_features = self.fill_missing_value(input_data_features, "transform")
         input_data_features = self.replace_outlier_value(input_data_features, "transform")
 
         data_instance = self.gen_data_instance(input_data_features, input_data_labels, input_data_match_id)
-        set_schema(data_instance, schema)
+        data_instance.schema = schema
 
         return data_instance
 
@@ -977,24 +977,6 @@ class DataTransform(ModelBase):
         model_dict = self.transformer.save_model()
         model_dict["DataTransformMeta"].need_run = self.need_run
         return model_dict
-
-
-def make_schema(header=None, sid_name=None, label_name=None, match_id_name=None):
-    schema = {}
-    if header:
-        schema["header"] = header
-
-    if sid_name:
-        schema["sid_name"] = sid_name
-
-    if label_name:
-        schema["label_name"] = label_name
-
-    if match_id_name:
-        schema["match_id_name"] = match_id_name
-
-    ModelBase.check_schema_content(schema)
-    return schema
 
 
 def set_schema(data_instance, schema):
