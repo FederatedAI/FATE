@@ -5,6 +5,8 @@ markdown==3.3.5
 pkginfo==1.7.1
 beautifultable==1.0.0
 cachetools==3.0.0
+casbin==1.16.6
+casbin-sqlalchemy-adapter==0.4.2
 cloudpickle==0.6.1
 cos-python-sdk-v5==1.9.10
 Flask==1.0.2
