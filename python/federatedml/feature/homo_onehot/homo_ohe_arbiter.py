@@ -18,7 +18,7 @@
 
 #
 #  added by jsweng
-#  alignemnet arbiter
+#  alignment arbiter
 
 from collections import defaultdict
 
@@ -40,22 +40,22 @@ class HomoOneHotArbiter(HomoOneHotBase):
             Combine all the column headers from guest and host
             if there is alignment is used
         """
-        all_cols_dict = defaultdict(list)
+        all_cols_dict = defaultdict(set)
 
         # Obtain all the guest headers
         for guest_cols in guest_columns:
             for k, v in guest_cols.items():
-                all_cols_dict[k] = list(set(all_cols_dict[k] + v))
+                all_cols_dict[k].update(v)
 
         # Obtain all the host headers
         for host_cols in host_columns:
             for k, v in host_cols.items():
-                all_cols_dict[k] = list(set(all_cols_dict[k] + v))
+                all_cols_dict[k].update(v)
 
         # Align all of them together
         combined_all_cols = {}
         for el in all_cols_dict.keys():
-            combined_all_cols[el] = all_cols_dict[el]
+            combined_all_cols[el] = list(all_cols_dict[el])
 
         LOGGER.debug("{} combined cols: {}".format(self.role, combined_all_cols))
 
