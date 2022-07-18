@@ -18,9 +18,12 @@ import argparse
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataTransform
-from pipeline.component import HomoDataSplit
+from pipeline.component import HeteroPearson
+from pipeline.component import HeteroFeatureSelection
+from pipeline.component import Intersection
 from pipeline.component import Reader
 from pipeline.interface import Data
+from pipeline.interface import Model
 
 from pipeline.utils.tools import load_job_config
 
@@ -33,8 +36,8 @@ def main(config="../../config.yaml", namespace=""):
     guest = parties.guest[0]
     host = parties.host[0]
 
-    guest_train_data = {"name": "breast_homo_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = {"name": "breast_homo_host", "namespace": f"experiment{namespace}"}
+    guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
+    host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
 
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host)
 
@@ -43,27 +46,44 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
     data_transform_0 = DataTransform(name="data_transform_0")
+    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True)
+    data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
-    data_transform_0.get_party_instance(
-        role='guest',
-        party_id=guest).component_param(
-        with_label=True,
-        output_format="dense",
-        label_name="y",
-        label_type="int")
-    data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=True)
+    intersection_0 = Intersection(name="intersection_0")
 
-    homo_data_split_0 = HomoDataSplit(name="homo_data_split_0", stratified=False, test_size=0.3, validate_size=0.2)
+    hetero_pearson_0 = HeteroPearson(name='hetero_pearson_0', column_indexes=-1)
 
+    selection_param = {
+        "name": "hetero_feature_selection_0",
+        "select_col_indexes": [],
+        "select_names": [],
+        "filter_methods": [
+            "vif_filter"
+        ],
+        "vif_param": {
+            "threshold": 5
+        }
+    }
+
+    hetero_feature_selection_0 = HeteroFeatureSelection(**selection_param)
+    host_param = {
+        "select_names": [
+            f"host_{host}_x0",
+            f"host_{host}_x1",
+            f"host_{host}_x3"
+        ],
+        "use_anonymous": True}
+    hetero_feature_selection_0.get_party_instance(role="host", party_id=host).component_param(**host_param)
     pipeline.add_component(reader_0)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(homo_data_split_0, data=Data(data=data_transform_0.output.data))
+    pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
+    pipeline.add_component(hetero_pearson_0, data=Data(train_data=intersection_0.output.data))
+    pipeline.add_component(hetero_feature_selection_0, data=Data(data=intersection_0.output.data),
+                           model=Model(isometric_model=hetero_pearson_0.output.model))
 
     pipeline.compile()
 
     pipeline.fit()
-
-    print(pipeline.get_component("homo_data_split_0").get_summary())
 
 
 if __name__ == "__main__":

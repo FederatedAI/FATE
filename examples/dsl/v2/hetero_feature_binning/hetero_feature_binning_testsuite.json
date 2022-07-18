@@ -193,10 +193,6 @@
         "hetero_binning_missing_value": {
             "conf": "hetero_binning_missing_value_conf.json",
             "dsl": "hetero_binning_missing_value_dsl.json"
-        },
-        "hetero_binning_missing_value_optimal": {
-            "conf": "hetero_binning_missing_value_optim_conf.json",
-            "dsl": "hetero_binning_missing_value_dsl.json"
         }
     }
 }

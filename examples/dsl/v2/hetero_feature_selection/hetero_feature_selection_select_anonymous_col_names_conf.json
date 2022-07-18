@@ -1,0 +1,68 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "host": [
+            10000
+        ],
+        "guest": [
+            9999
+        ]
+    },
+    "component_parameters": {
+        "role": {
+            "host": {
+                "0": {
+                    "data_transform_0": {
+                        "with_label": false
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "hetero_feature_selection_0": {
+                        "select_names": [
+                            "host_10000_x0",
+                            "host_10000_x1",
+                            "host_10000_x3"
+                        ],
+                        "use_anonymous": true
+                    }
+                }
+            },
+            "guest": {
+                "0": {
+                    "data_transform_0": {
+                        "with_label": true
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            }
+        },
+        "common": {
+            "hetero_pearson_0": {
+                "column_indexes": -1
+            },
+            "hetero_feature_selection_0": {
+                "vif_param": {
+                    "threshold": 5
+                },
+                "select_col_indexes": [],
+                "select_names": [],
+                "filter_methods": [
+                    "vif_filter"
+                ]
+            }
+        }
+    }
+}

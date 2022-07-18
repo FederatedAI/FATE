@@ -13,24 +13,27 @@
         ]
     },
     "component_parameters": {
-        "common": {
-            "homo_data_split_0": {
-                "test_size": 0.3,
-                "validate_size": 0.2,
-                "stratified": false
-            }
-        },
         "role": {
             "host": {
                 "0": {
                     "reader_0": {
                         "table": {
-                            "name": "breast_homo_host",
+                            "name": "breast_hetero_host",
                             "namespace": "experiment"
                         }
                     },
                     "data_transform_0": {
-                        "with_label": true
+                        "with_label": false
+                    },
+                    "hetero_feature_selection_0": {
+                        "use_anonymous": true,
+                        "manually_param": {
+                            "filter_out_indexes": null,
+                            "filter_out_names": null,
+                            "left_col_names": [
+                                "host_10000_x3"
+                            ]
+                        }
                     }
                 }
             },
@@ -38,16 +41,27 @@
                 "0": {
                     "reader_0": {
                         "table": {
-                            "name": "breast_homo_guest",
+                            "name": "breast_hetero_guest",
                             "namespace": "experiment"
                         }
                     },
                     "data_transform_0": {
                         "with_label": true,
-                        "label_name": "y",
-                        "label_type": "int",
                         "output_format": "dense"
                     }
+                }
+            }
+        },
+        "common": {
+            "hetero_feature_selection_0": {
+                "select_col_indexes": -1,
+                "select_names": [],
+                "filter_methods": [
+                    "manually"
+                ],
+                "manually_param": {
+                    "filter_out_indexes": null,
+                    "filter_out_names": null
                 }
             }
         }

@@ -164,9 +164,6 @@
         },
         "hetero-binning-missing-value": {
             "script": "pipeline-hetero-binning-missing-value.py"
-        },
-        "hetero-binning-missing-value-optim": {
-            "script": "pipeline-hetero-binning-missing-value-optim.py"
         }
     }
 }
