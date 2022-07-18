@@ -20,13 +20,13 @@ def code_assembly(param, nn_class):
             new_para = "\n        self.param_dict['{}'] = {}".format(k, k)
             init_str += new_para
 
-        if type(v) == Required or v == required:
+        if isinstance(v, Required) or v == required:
             non_default_param += str(k)
             non_default_param += ', '
             continue
 
         para_str += str(k)
-        if type(v) == str:
+        if isinstance(v, str):
             para_str += "='{}'".format(v)
         else:
             para_str += "={}".format(str(v))

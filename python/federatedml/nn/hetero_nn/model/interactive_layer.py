@@ -110,7 +110,6 @@ class InterActiveGuestDenseLayer(object):
                 host_model.set_backward_selective_strategy()
                 host_model.set_batch(self.batch_size)
 
-
     def forward(self, guest_input, epoch=0, batch=0, train=True):
 
         LOGGER.info("interactive layer start forward propagation of epoch {} batch {}".format(epoch, batch))

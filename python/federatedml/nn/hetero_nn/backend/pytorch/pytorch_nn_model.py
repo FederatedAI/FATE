@@ -39,7 +39,7 @@ def label_convert(y, loss_fn):
 
 class PytorchNNModel(object):
 
-    def __init__(self, nn_define: dict, optimizer_define: dict=None, loss_fn_define: dict = None):
+    def __init__(self, nn_define: dict, optimizer_define: dict = None, loss_fn_define: dict = None):
 
         self.model = s.recover_sequential_from_dict(nn_define)
         if optimizer_define is None:  # default optimizer
@@ -183,4 +183,3 @@ class PytorchNNModel(object):
 
     def compile(self, *args, **kwargs):
         pass
-
