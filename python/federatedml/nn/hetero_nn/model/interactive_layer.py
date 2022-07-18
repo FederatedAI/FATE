@@ -61,7 +61,7 @@ class InterActiveGuestDenseLayer(object):
         self.drop_out = None
 
         self.fixed_point_encoder = None if params.floating_point_precision is None else FixedPointEncoder(
-            2**params.floating_point_precision)
+            2 ** params.floating_point_precision)
 
         self.sync_output_unit = False
 
@@ -177,7 +177,8 @@ class InterActiveGuestDenseLayer(object):
             LOGGER.debug('update host model weights')
             for idx, host_model in enumerate(self.host_model_list):
                 # update host models
-                host_weight_gradient, acc_noise = self.backward_interactive(host_model, activation_gradient, epoch, batch,
+                host_weight_gradient, acc_noise = self.backward_interactive(host_model, activation_gradient, epoch,
+                                                                            batch,
                                                                             host_idx=idx)
                 host_input_gradient = self.update_host(host_model, activation_gradient, host_weight_gradient, acc_noise)
                 self.send_host_backward_to_host(host_input_gradient.get_obj(), epoch, batch, idx=idx)
@@ -317,7 +318,8 @@ class InterActiveGuestDenseLayer(object):
         return self.transfer_variable.encrypted_host_forward.get(idx=idx,
                                                                  suffix=(epoch, batch,))
 
-    def send_guest_encrypted_forward_output_with_noise_to_host(self, encrypted_guest_forward_with_noise, epoch, batch, idx):
+    def send_guest_encrypted_forward_output_with_noise_to_host(self, encrypted_guest_forward_with_noise, epoch, batch,
+                                                               idx):
         return self.transfer_variable.encrypted_guest_forward.remote(encrypted_guest_forward_with_noise,
                                                                      role=consts.HOST,
                                                                      idx=idx,
@@ -337,12 +339,11 @@ class InterActiveGuestDenseLayer(object):
         return self.transfer_variable.encrypted_acc_noise.get(idx=idx,
                                                               suffix=(epoch, batch,))
 
-
     @staticmethod
     def expand_columns(tensor, keep_array):
         shape = keep_array.shape
-        tensor = np.reshape(tensor, (tensor.size, ))
-        keep = np.reshape(keep_array, (keep_array.size, ))
+        tensor = np.reshape(tensor, (tensor.size,))
+        keep = np.reshape(keep_array, (keep_array.size,))
         ret_tensor = []
         idx = 0
         for x in keep:
@@ -390,7 +391,7 @@ class InteractiveHostDenseLayer(object):
         self.drop_out_keep_rate = params.drop_out_keep_rate
 
         self.fixed_point_encoder = None if params.floating_point_precision is None else FixedPointEncoder(
-            2**params.floating_point_precision)
+            2 ** params.floating_point_precision)
         self.mask_table = None
 
     def set_transfer_variable(self, transfer_variable):
@@ -431,7 +432,7 @@ class InteractiveHostDenseLayer(object):
 
         if mask_table:
             decrypted_guest_forward_with_noise = decrypted_guest_forward + \
-                (host_input * self.acc_noise).select_columns(mask_table)
+                                                 (host_input * self.acc_noise).select_columns(mask_table)
             self.mask_table = mask_table
         else:
             decrypted_guest_forward_with_noise = decrypted_guest_forward + (host_input * self.acc_noise)
@@ -492,7 +493,8 @@ class InteractiveHostDenseLayer(object):
 
     def get_guest_encrypted_weight_gradient_from_guest(self, epoch, batch):
         encrypted_guest_weight_gradient = self.transfer_variable.encrypted_guest_weight_gradient.get(idx=0,
-                                                                                                     suffix=(epoch, batch,))
+                                                                                                     suffix=(
+                                                                                                     epoch, batch,))
         return encrypted_guest_weight_gradient
 
     def get_interactive_layer_drop_out_table(self, epoch, batch):

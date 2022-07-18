@@ -28,7 +28,6 @@ from federatedml.protobuf.generated.hetero_nn_model_meta_pb2 import HeteroNNMode
 from federatedml.protobuf.generated.hetero_nn_model_meta_pb2 import OptimizerParam
 from federatedml.protobuf.generated.hetero_nn_model_param_pb2 import HeteroNNModelParam
 
-
 from federatedml.util import consts
 
 

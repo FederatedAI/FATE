@@ -5,7 +5,6 @@ from torch.optim.optimizer import required
 
 
 def code_assembly(param, nn_class):
-
     para_str = ""
     non_default_param = ""
     init_str = """"""
@@ -63,6 +62,3 @@ if __name__ == '__main__':
             module_str += code
 
     open('../optim.py', 'w').write(module_str)
-
-
-

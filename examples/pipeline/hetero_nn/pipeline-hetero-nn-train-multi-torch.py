@@ -40,7 +40,6 @@ fate_torch_hook(t)
 
 
 def main(config="../../config.yaml", namespace=""):
-
     # obtain config
     if isinstance(config, str):
         config = load_job_config(config)

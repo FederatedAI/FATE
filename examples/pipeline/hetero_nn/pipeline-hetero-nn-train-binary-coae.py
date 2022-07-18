@@ -77,7 +77,7 @@ def main(config="../../config.yaml", namespace=""):
         ReLU(),
         Linear(8, 2, True),
         nn.Softmax(dim=1)  # to use coae in binary task, output unit is 2, and need use softmax to compute probability
-    )                      # so that we can compute loss using fake labels and 2-dim outputs
+    )  # so that we can compute loss using fake labels and 2-dim outputs
 
     # define host model
     seq3 = nn.Sequential(

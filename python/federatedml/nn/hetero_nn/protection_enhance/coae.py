@@ -29,11 +29,11 @@ def cross_entropy_for_one_hot(pred, target, reduce="mean"):
 
 
 def coae_loss(label, fake_label, reconstruct_label, lambda_1=10, lambda_2=2, verbose=False):
-
     loss_a = cross_entropy(reconstruct_label, label) - lambda_1 * cross_entropy(fake_label, label)
     loss_b = entropy(fake_label)
     if verbose:
-        LOGGER.debug('loss a is {} {}'.format(cross_entropy(reconstruct_label, label), cross_entropy(fake_label, label)))
+        LOGGER.debug(
+            'loss a is {} {}'.format(cross_entropy(reconstruct_label, label), cross_entropy(fake_label, label)))
         LOGGER.debug('loss b is {}'.format(loss_b))
     return loss_a - lambda_2 * loss_b
 
@@ -45,7 +45,7 @@ class CoAE(nn.Module):
         self.d = input_dim
 
         if encode_dim is None:
-            encode_dim = (6 * input_dim)**2
+            encode_dim = (6 * input_dim) ** 2
 
         self.encoder = nn.Sequential(
             nn.Linear(input_dim, encode_dim),
@@ -76,7 +76,6 @@ class CoAE(nn.Module):
 
 
 def train_an_autoencoder_confuser(label_num, epoch=50, lambda1=1, lambda2=2, lr=0.001, verbose=False):
-
     coae = CoAE(label_num, )
     labels = torch.eye(label_num)
     opt = torch.optim.Adam(coae.parameters(), lr=lr)
@@ -90,14 +89,15 @@ def train_an_autoencoder_confuser(label_num, epoch=50, lambda1=1, lambda2=2, lr=
         opt.step()
 
     if verbose:
-        LOGGER.debug('origin labels {}, fake labels {}, reconstruct labels {}'.format(labels, coae.encode(labels).detach().numpy(),
-                                                                                    coae.decode(coae.encode(labels)).detach().numpy()))
+        LOGGER.debug('origin labels {}, fake labels {}, reconstruct labels {}'.format(labels, coae.encode(
+            labels).detach().numpy(),
+                                                                                      coae.decode(coae.encode(
+                                                                                          labels)).detach().numpy()))
 
     return coae
 
 
 def coae_label_reformat(labels):
-
     if labels.shape[1] == 1:
         return nn.functional.one_hot(t.Tensor(labels).flatten().type(t.int64), 2).numpy()
     else:
@@ -105,5 +105,4 @@ def coae_label_reformat(labels):
 
 
 if __name__ == '__main__':
-
     coae = train_an_autoencoder_confuser(2, )

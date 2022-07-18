@@ -28,7 +28,6 @@ def get_all_class_obj(module, key_word=''):
 
 
 def extract_init_param(class_):
-
     args = inspect.getargspec(class_.__init__)
     keys = args[0][1:]
     if len(keys) == 0:
@@ -47,7 +46,6 @@ def extract_init_param(class_):
 
 
 def code_assembly(param, nn_class, module_name):
-
     if module_name == 'loss':
         parent_class = 'FateTorchLoss'
     else:
@@ -117,5 +115,3 @@ if __name__ == '__main__':
     module_str = module_str
 
     open('../nn.py', 'w').write(module_str)
-
-

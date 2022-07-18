@@ -24,7 +24,7 @@ from federatedml.nn.backend.tf_keras.nn_model import build_keras, KerasNNModel
 from federatedml.nn.hetero_nn.backend.pytorch.pytorch_nn_model import PytorchNNModel, PytorchDataConvertor
 from federatedml.nn.hetero_nn.backend.pytorch.pytorch_uitl import pytorch_label_reformat
 from federatedml.nn.hetero_nn.backend.tf_keras.data_generator import KerasSequenceDataConverter
-from federatedml.nn.hetero_nn.protection_enhance.coae import train_an_autoencoder_confuser, CoAE, coae_label_reformat,\
+from federatedml.nn.hetero_nn.protection_enhance.coae import train_an_autoencoder_confuser, CoAE, coae_label_reformat, \
     cross_entropy
 
 
@@ -108,7 +108,8 @@ class HeteroNNTopModel(object):
                 data = self.data_converter.convert_data(np.array(self.batch_data_cached_X[: self.batch_size]),
                                                         np.array(self.batch_data_cached_y[: self.batch_size]))
                 input_gradient = self._model.get_input_gradients(np.array(self.batch_data_cached_X[: self.batch_size]),
-                                                                 np.array(self.batch_data_cached_y[: self.batch_size]))[0]
+                                                                 np.array(self.batch_data_cached_y[: self.batch_size]))[
+                    0]
                 self._model.train(data)
                 self.batch_data_cached_X = self.batch_data_cached_X[self.batch_size:]
                 self.batch_data_cached_y = self.batch_data_cached_y[self.batch_size:]

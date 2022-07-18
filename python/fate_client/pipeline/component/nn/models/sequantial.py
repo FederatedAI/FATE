@@ -14,9 +14,11 @@
 #  limitations under the License.
 #
 from pipeline.component.nn.backend.fate_torch.base import Sequential as tSeq
+
 _TF_KERAS_VALID = False
 try:
     from tensorflow.python.keras.engine import base_layer
+
     _TF_KERAS_VALID = True
 except ImportError:
     pass
@@ -85,4 +87,3 @@ def _build_model(type):
     if type == "nn":
         from pipeline.component.nn.backend.tf import model_builder
         return model_builder.build_model()
-

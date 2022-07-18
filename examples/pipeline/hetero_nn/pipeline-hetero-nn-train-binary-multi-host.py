@@ -71,15 +71,15 @@ def main(config="../../config.yaml", namespace=""):
 
     host_nn_host_0 = hetero_nn_0.get_party_instance(role='host', party_id=hosts[0])
     host_nn_host_0.add_bottom_model(Dense(units=3, input_shape=(20,), activation="relu",
-                                     kernel_initializer=initializers.Constant(value=1)))
+                                          kernel_initializer=initializers.Constant(value=1)))
     host_nn_host_0.set_interactve_layer(Dense(units=2, input_shape=(2,),
-                                         kernel_initializer=initializers.Constant(value=1)))
+                                              kernel_initializer=initializers.Constant(value=1)))
 
     host_nn_host_1 = hetero_nn_0.get_party_instance(role='host', party_id=hosts[1])
     host_nn_host_1.add_bottom_model(Dense(units=3, input_shape=(20,), activation="relu",
-                                     kernel_initializer=initializers.Constant(value=1)))
+                                          kernel_initializer=initializers.Constant(value=1)))
     host_nn_host_1.set_interactve_layer(Dense(units=2, input_shape=(2,),
-                                         kernel_initializer=initializers.Constant(value=1)))
+                                              kernel_initializer=initializers.Constant(value=1)))
 
     hetero_nn_0.compile(optimizer=optimizers.SGD(lr=0.15), loss="binary_crossentropy")
     hetero_nn_1 = HeteroNN(name="hetero_nn_1")

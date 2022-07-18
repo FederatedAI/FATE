@@ -136,4 +136,3 @@ if __name__ == "__main__":
         main(args.config)
     else:
         main()
-

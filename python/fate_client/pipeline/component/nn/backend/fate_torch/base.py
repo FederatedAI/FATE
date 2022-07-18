@@ -108,13 +108,3 @@ class Sequential(tSequential):
 
     def get_network_config(self):
         return self.to_dict()
-
-
-
-
-
-
-
-
-
-

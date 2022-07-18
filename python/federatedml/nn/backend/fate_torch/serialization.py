@@ -7,7 +7,6 @@ from federatedml.nn.backend.fate_torch.base import Sequential
 
 
 def recover_layer_from_dict(nn_define, nn_dict):
-
     init_param_dict = copy.deepcopy(nn_define)
     if 'layer' in nn_define:
         class_name = nn_define['layer']
@@ -58,7 +57,6 @@ def recover_sequential_from_dict(nn_define):
 
 
 def recover_optimizer_from_dict(define_dict):
-
     opt_dict = dict(inspect.getmembers(optim))
     if 'optimizer' not in define_dict:
         raise ValueError('please specify optimizer type in the json config')
@@ -69,7 +67,6 @@ def recover_optimizer_from_dict(define_dict):
 
 
 def recover_loss_fn_from_dict(define_dict):
-
     loss_fn_dict = dict(inspect.getmembers(nn))
     if 'loss_fn' not in define_dict:
         raise ValueError('please specify loss function in the json config')
@@ -93,11 +90,11 @@ if __name__ == '__main__':
     optimizer = recover_optimizer_from_dict(opt_dict)
 
     loss_fn_define = {
-       "weight": None,
-       "size_average": None,
-       "reduce": None,
-       "reduction": "mean",
-       "loss_fn": "BCELoss"
+        "weight": None,
+        "size_average": None,
+        "reduce": None,
+        "reduction": "mean",
+        "loss_fn": "BCELoss"
     }
     loss_fn = recover_loss_fn_from_dict(loss_fn_define)
 

@@ -4,7 +4,6 @@ from pipeline.component.nn.backend.fate_torch import optim as optim_
 
 
 def monkey_patch(torch_nn, fate_torch_module):
-
     for name in fate_torch_module.__dict__.keys():
         if '__' in name:  # skip no related variables
             continue
@@ -37,4 +36,3 @@ def fate_torch_hook(torch_module_var):
         raise ValueError('this module: {} does not support fate torch hook'.format(torch_module_var))
 
     return torch_module_var
-

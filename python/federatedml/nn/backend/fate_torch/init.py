@@ -19,6 +19,7 @@ str_init_func_map = {
     "zeros": torch_init.zeros_
 }
 
+
 #
 # def extract_param(func):
 #
@@ -40,7 +41,6 @@ str_init_func_map = {
 
 
 def init_weight(m, initializer):
-
     if hasattr(m, 'weight'):
         initializer(m.weight)
     # LSTM RNN
@@ -52,7 +52,6 @@ def init_weight(m, initializer):
 
 
 def init_bias(m, initializer):
-
     if hasattr(m, 'bias') and not isinstance(m.bias, bool):  # LSTM, RNN .bias is bool
         initializer(m.bias)
     # LSTM RNN
@@ -73,7 +72,6 @@ def get_init_func_type(init='weight'):
 
 
 def recursive_init(m, init_func, obj):
-
     if len(list(m.children())) > 0:
         if m == obj:
             return
@@ -86,7 +84,6 @@ def recursive_init(m, init_func, obj):
 
 
 def make_apply_func(torch_initializer, param_dict, init_func, layer):
-
     param_dict.pop('layer')
     param_dict.pop('init')
     initializer = functools.partial(torch_initializer, **param_dict)
@@ -96,14 +93,12 @@ def make_apply_func(torch_initializer, param_dict, init_func, layer):
 
 
 def get_init_dict(init_func, param_dict, init_type):
-
     rev_dict = {v: k for k, v in str_init_func_map.items()}
     rs = {'init_type': init_type, 'init_func': rev_dict[init_func], 'param': param_dict}
     return rs
 
 
 def record_initializer(layers: FateTorchLayer, init_dict):
-
     if init_dict['init_type'] == 'weight':
         layers.initializer['weight'] = init_dict
     elif init_dict['init_type'] == 'bias':
@@ -111,7 +106,6 @@ def record_initializer(layers: FateTorchLayer, init_dict):
 
 
 def run_init(torch_initializer, input_var, init, layer):
-
     if isinstance(layer, Sequential):
         for sub_layer in layer:
             run_init(torch_initializer, input_var, init, sub_layer)
@@ -120,7 +114,6 @@ def run_init(torch_initializer, input_var, init, layer):
                                                           get_init_func_type(init), layer)
         layer.apply(recursive_init_func)
         record_initializer(layer, get_init_dict(torch_initializer, param_dict, init))
-
 
 
 """
