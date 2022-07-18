@@ -145,6 +145,8 @@ class HomoBoostingClient(Boosting, ABC):
             self.callback_warm_start_init_iter(self.start_round)
         else:
             self.y_hat, self.init_score = self.get_init_score(self.y, self.num_classes)
+            if self.task_type == consts.REGRESSION:
+                self.init_score = 0  # make sure that every local model has same init scores
 
         # sync start round and end round
         self.sync_start_round_and_end_round()
