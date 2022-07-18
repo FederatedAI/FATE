@@ -32,7 +32,7 @@ from federatedml.feature.sparse_vector import SparseVector
 from federatedml.model_base import ModelBase
 from federatedml.param.feature_binning_param import HeteroFeatureBinningParam as FeatureBinningParam
 from federatedml.protobuf.generated import feature_binning_meta_pb2, feature_binning_param_pb2
-from federatedml.statistic.data_overview import get_header
+from federatedml.statistic.data_overview import get_header, get_anonymous_header
 from federatedml.transfer_variable.transfer_class.hetero_feature_binning_transfer_variable import \
     HeteroFeatureBinningTransferVariable
 from federatedml.util import LOGGER
@@ -56,16 +56,20 @@ class BaseFeatureBinning(ModelBase):
         self.transfer_variable = HeteroFeatureBinningTransferVariable()
         self.binning_obj: BaseBinning = None
         self.header = None
-        self.header_anonymous = None
+        self.anonymous_header = None
         self.schema = None
         self.host_results = []
+        self.transform_host_results = []
         self.transform_type = None
 
         self.model_param = FeatureBinningParam()
         self.bin_inner_param = BinInnerParam()
         self.bin_result = MultiClassBinResult(labels=[0, 1])
+        self.transform_bin_result = MultiClassBinResult(labels=[0, 1])
         self.has_missing_value = False
         self.labels = []
+
+        self._stage = "fit"
 
     def _init_model(self, params: FeatureBinningParam):
         self.model_param = params
@@ -139,10 +143,11 @@ class BaseFeatureBinning(ModelBase):
             return
 
         self.header = get_header(data_instances)
+        self.anonymous_header = get_anonymous_header(data_instances)
         LOGGER.debug("_setup_bin_inner_param, get header length: {}".format(len(self.header)))
 
         self.schema = data_instances.schema
-        self.bin_inner_param.set_header(self.header)
+        self.bin_inner_param.set_header(self.header, self.anonymous_header)
         if params.bin_indexes == -1:
             self.bin_inner_param.set_bin_all()
         else:
@@ -161,7 +166,7 @@ class BaseFeatureBinning(ModelBase):
 
     @assert_io_num_rows_equal
     @assert_schema_consistent
-    def transform(self, data_instances):
+    def transform_data(self, data_instances):
         self._setup_bin_inner_param(data_instances, self.model_param)
         if self.transform_type != "woe":
             data_instances = self.binning_obj.transform(data_instances, self.transform_type)
@@ -216,13 +221,41 @@ class BaseFeatureBinning(ModelBase):
             host_party_ids=[str(x) for x in self.component_properties.host_party_idlist],
             has_host_result=has_host_result
         )
-        result_obj = feature_binning_param_pb2. \
-            FeatureBinningParam(binning_result=multi_class_result[0],
-                                host_results=host_single_results,
-                                header=self.header,
-                                header_anonymous=self.header_anonymous,
-                                model_name=consts.BINNING_MODEL,
-                                multi_class_result=multi_pb)
+        if self._stage == "fit":
+            result_obj = feature_binning_param_pb2. \
+                FeatureBinningParam(binning_result=multi_class_result[0],
+                                    host_results=host_single_results,
+                                    header=self.header,
+                                    header_anonymous=self.anonymous_header,
+                                    model_name=consts.BINNING_MODEL,
+                                    multi_class_result=multi_pb)
+        else:
+            transform_multi_class_result = self.transform_bin_result.generated_pb_list(split_points_result)
+            transform_host_single_results = []
+            transform_host_multi_class_result = []
+            for host_res in self.host_results:
+                transform_host_multi_class_result.extend(host_res.generated_pb_list())
+                transform_host_single_results.append(host_res.bin_results[0].generated_pb())
+
+            transform_multi_pb = feature_binning_param_pb2.MultiClassResult(
+                results=transform_multi_class_result,
+                labels=[str(x) for x in self.labels],
+                host_results=host_multi_class_result,
+                host_party_ids=[str(x) for x in self.component_properties.host_party_idlist],
+                has_host_result=has_host_result
+            )
+
+            result_obj = feature_binning_param_pb2. \
+                FeatureBinningParam(binning_result=multi_class_result[0],
+                                    host_results=host_single_results,
+                                    header=self.header,
+                                    header_anonymous=self.anonymous_header,
+                                    model_name=consts.BINNING_MODEL,
+                                    multi_class_result=multi_pb,
+                                    transform_binning_result=transform_multi_class_result[0],
+                                    transform_host_results=transform_host_single_results,
+                                    transform_multi_class_result=transform_multi_pb)
+
         return result_obj
 
     def load_model(self, model_dict):
@@ -231,7 +264,7 @@ class BaseFeatureBinning(ModelBase):
 
         self.bin_inner_param = BinInnerParam()
         multi_class_result = model_param.multi_class_result
-        self.labels = list(multi_class_result.labels)
+        self.labels = list(map(int, multi_class_result.labels))
         # if not self.labels:
         #     self.labels = [0, 1]
         if self.labels:
@@ -241,7 +274,8 @@ class BaseFeatureBinning(ModelBase):
         assert isinstance(model_param, feature_binning_param_pb2.FeatureBinningParam)
 
         self.header = list(model_param.header)
-        self.bin_inner_param.set_header(self.header)
+        self.anonymous_header = list(model_param.header_anonymous)
+        self.bin_inner_param.set_header(self.header, self.anonymous_header)
 
         self.bin_inner_param.add_transform_bin_indexes(list(model_meta.transform_param.transform_cols))
         self.bin_inner_param.add_bin_names(list(model_meta.cols))
@@ -280,8 +314,12 @@ class BaseFeatureBinning(ModelBase):
                     self.host_results.append(MultiClassBinResult.reconstruct(this_pbs, self.labels))
                     i += len(self.labels)
 
+        """
         if list(model_param.header_anonymous):
-            self.header_anonymous = list(model_param.header_anonymous)
+            self.anonymous_header = list(model_param.anonymous_header)
+        """
+
+        self._stage = "transform"
 
     def export_model(self):
         if self.model_output is not None:

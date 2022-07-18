@@ -59,7 +59,7 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
 @click.option("--skip-data", is_flag=True, default=False,
               help="skip uploading data specified in testsuite")
 @click.option("--provider", type=str,
-              help="Select the fat version, for example: fate@1.7")
+              help="Select the fate version, for example: fate@1.7")
 @click.option("--disable-clean-data", "clean_data", flag_value=False, default=None)
 @SharedOptions.get_shared_options(hidden=True)
 @click.pass_context

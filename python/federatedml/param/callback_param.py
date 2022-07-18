@@ -60,6 +60,8 @@ class CallbackParam(BaseParam):
         self.save_freq = save_freq
 
     def check(self):
+        self.callbacks = [] if self.callbacks is None else self.callbacks
+        self.metrics = [] if self.metrics is None else self.metrics
 
         if self.early_stopping_rounds is None:
             pass

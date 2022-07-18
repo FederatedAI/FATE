@@ -56,7 +56,8 @@ class OptimalBinning(BaseBinning):
 
     def fit_split_points(self, data_instances):
         header = data_overview.get_header(data_instances)
-        self._default_setting(header)
+        anonymous_header = data_overview.get_anonymous_header(data_instances)
+        self._default_setting(header, anonymous_header)
 
         if (self.event_total and self.non_event_total) is None:
             self.event_total, self.non_event_total = self.get_histogram(data_instances)
@@ -94,7 +95,8 @@ class OptimalBinning(BaseBinning):
 
     def init_bucket(self, data_instances):
         header = data_overview.get_header(data_instances)
-        self._default_setting(header)
+        anonymous_header = data_overview.get_anonymous_header(data_instances)
+        self._default_setting(header, anonymous_header)
 
         init_bucket_param = copy.deepcopy(self.params)
         init_bucket_param.bin_num = self.optimal_param.init_bin_nums

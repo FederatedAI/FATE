@@ -25,9 +25,9 @@ from federatedml.feature.feature_selection.model_adapter.isometric_model import 
 from federatedml.framework.hetero.sync import selection_info_sync
 from federatedml.param.feature_selection_param import CommonFilterParam
 from federatedml.protobuf.generated import feature_selection_meta_pb2
+from federatedml.statistic.data_overview import look_up_names_from_header
 from federatedml.util import LOGGER
 from federatedml.util import consts
-from federatedml.util import fate_operator
 from federatedml.util import anonymous_generator
 from federatedml.util.component_properties import ComponentProperties
 
@@ -86,6 +86,8 @@ class IsoModelFilter(BaseFilterMethod):
             results = self._top_k_fit(all_feature_values, threshold, take_high)
         else:
             results = self._percentile_fit(all_feature_values, threshold, take_high)
+
+        results = set(results)
 
         for v_idx, v in enumerate(all_feature_values):
             col_name = col_names[v_idx]
@@ -267,9 +269,17 @@ class FederatedIsoModelFilter(IsoModelFilter):
             for col_name in self.selection_properties.last_left_col_names:
                 self.selection_properties.add_left_col_name(col_name)
             return
+        # if self.selection_properties.anonymous_header:
         self.sync_obj.sync_select_results(self.selection_properties,
-                                          decode_func=self.decode_func,
+                                          header=self.selection_properties.header,
+                                          anonymous_header=self.selection_properties.anonymous_header,
                                           suffix=suffix)
+        """else:
+            self.sync_obj.sync_select_results_old(self.selection_properties,
+                                              decode_func=self.decode_func,
+                                              suffix=suffix)
+        """
+
         # LOGGER.debug("In fit selected result, left_col_names: {}".format(self.selection_properties.left_col_names))
         return self
 
@@ -284,12 +294,19 @@ class FederatedIsoModelFilter(IsoModelFilter):
             assert isinstance(self.sync_obj, selection_info_sync.Guest)
             self.host_selection_properties = self.sync_obj.sync_select_cols(suffix=suffix)
         else:
-            encoded_names = []
-            for col_name in self.selection_properties.select_col_names:
-                fid = self.selection_properties.col_name_maps[col_name]
-                encoded_names.append(anonymous_generator.generate_anonymous(
-                    fid=fid, role=self.role, party_id=self.party_id
-                ))
+
+            # if self.selection_properties.anonymous_header:
+            encoded_names = look_up_names_from_header(self.selection_properties.select_col_names,
+                                                      self.selection_properties.header,
+                                                      self.selection_properties.anonymous_header)
+            """else:
+                encoded_names = []
+                for col_name in self.selection_properties.select_col_names:
+                    fid = self.selection_properties.col_name_maps[col_name]
+                    encoded_names.append(anonymous_generator.generate_anonymous(
+                        fid=fid, role=self.role, party_id=self.party_id
+                    ))
+            """
             # LOGGER.debug(f"Before send, encoded_names: {encoded_names},"
             #             f"select_names: {self.selection_properties.select_col_names}")
             self.sync_obj.sync_select_cols(encoded_names, suffix=suffix)
