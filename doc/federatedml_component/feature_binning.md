@@ -38,26 +38,22 @@ Principle](../images/optimal_binning.png)
 
 There exist two kinds of methods, merge-optimal binning and
 split-optimal binning. When choosing metrics as iv, gini or chi-square,
-merge type optimal binning will be used. On the other hand, if ks is
-choosed, split type optimal binning will be used.
+merge type optimal binning will be used. On the other hand, if ks chosen, split type optimal binning will be used.
+
+Below lists all metrics of optimal binning:
+
+| Optimal Binning Metric Type 	| Input Data Case                                                                                                                                                                                                                    	|
+|-----------------------------	|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|
+| chi-square                  	| [dense input](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-optim-chi-square.py) <br> [sparse input](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-sparse-optimal-chi-square.py) 	|
+| gini                        	| [dense input](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-optim-gini.py) <br> [sparse input](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-sparse-optimal-gini.py)             	|
+| iv                          	| [dense input](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-optim-iv.py) <br> [sparse input](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-sparse-optimal-iv.py)                 	|
+| ks                          	| [dense input](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-optim-ks.py) <br> [sparse input](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-sparse-optimal-ks.py)                 	|
 
 Binning module supports multi-class data to calculate iv and woe too. To
 achieve it, one-vs-rest mechanism is used. Each label will be chosen
 iteratively as event case. All other cases will be treated as non-event
 cases. Therefore, we can obtain a set of iv\&woe result for each label
 case.
-
-<!-- mkdocs
-## Param
-
-::: federatedml.param.feature_binning_param
-    rendering:
-      heading_level: 3
-      show_source: true
-      show_root_heading: true
-      show_root_toc_entry: false
-      show_root_full_path: false
- -->
 
 ## Features
 
@@ -72,3 +68,27 @@ case.
 8.  Support 4 types of optimal binning.
 9.  Support asymmetric binning methods on Host & Guest sides.
 10. Support multi-class iv\&woe calculation.
+
+Below lists supported features:
+
+| Cases                                	| Scenario                                                                                                                                                                                                                                                                                                                                                                 	|
+|--------------------------------------	|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|
+| Input Data with Missing Value        	| [bucket binning](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-bucket-missing-value.py) <br> [quantile binning](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-missing-value.py) <br> [optimal binning](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-missing-value-optim.py)                  	|
+| Input Data with Categorical Features 	| [bucket binning](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-multi-host-bucket.py) <br> [quantile binning](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-category-binning.py) <br> [optimal binning](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-asymmetric.py)                           	|
+| Input Data in Sparse Format          	| [bucket binning](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-sparse-bucket-binning.py) <br> [quantile binning](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-sparse-quantile-binning.py) <br> [optimal binning](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-sparse-optimal-chi-square.py) 	|
+| Input Data with Multi-Class(label)   	| [single host](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-multiclass.py) <br> [multi-host](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-multiclass-multihost.py)                                                                                                                                                    	|
+| Output Data Transformed              	| [bin index](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-bucket-binning.py) <br> [woe value(guest-only)](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-woe-binning.py)                                                                                                                                                	|
+| Skip Statistic Calculation           	| [bucket binning](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-bucket-binning.py) <br> [quantile binning](../../examples/pipeline/hetero_feature_binning/pipeline-hetero-binning-skip-statistic.py)                                                                                                                                             	|
+
+
+<!-- mkdocs
+## Param
+
+::: federatedml.param.feature_binning_param
+    rendering:
+      heading_level: 3
+      show_source: true
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_root_full_path: false
+ -->

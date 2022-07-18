@@ -94,7 +94,8 @@ def main(config="../../config.yaml", namespace=""):
     }
 
     hetero_feature_binning_0 = HeteroFeatureBinning(name="hetero_feature_binning_0", **param)
-    hetero_feature_binning_0.get_party_instance(role="guest", party_id=guest).component_param(category_indexe=[0, 1, 2])
+    hetero_feature_binning_0.get_party_instance(role="guest",
+                                                party_id=guest).component_param(category_indexes=[0, 1, 2])
     hetero_feature_binning_1 = HeteroFeatureBinning(name='hetero_feature_binning_1')
 
     pipeline.add_component(reader_0)

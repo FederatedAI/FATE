@@ -91,5 +91,3 @@ This section introduces the dsl and conf for usage of different type of task.
 Users can use following commands to running the task.
 
     flow job submit -c ${runtime_config} -d ${dsl}
-
-Note: the intersection output only contains ids of intersection, because of the parameter of "only_output_key" in runtime_config.

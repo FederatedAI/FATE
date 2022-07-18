@@ -15,7 +15,6 @@
 #
 
 import argparse
-import copy
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataTransform
@@ -27,15 +26,14 @@ from pipeline.utils.tools import load_job_config
 
 
 def main(config="../../config.yaml", namespace=""):
-    # obtain config
     if isinstance(config, str):
         config = load_job_config(config)
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
 
-    guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
+    guest_train_data = {"name": "ionosphere_scale_hetero_guest", "namespace": f"experiment{namespace}"}
+    host_train_data = {"name": "ionosphere_scale_hetero_host", "namespace": f"experiment{namespace}"}
 
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host)
 
@@ -43,14 +41,29 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
-    data_transform_0 = DataTransform(name="data_transform_0")
+    data_transform_0 = DataTransform(name="data_transform_0", label_name="label")
     data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True)
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
+    data_transform_1 = DataTransform(name="data_transform_1", output_format="sparse", label_name="label")
+    data_transform_1.get_party_instance(role='guest', party_id=guest).component_param(with_label=True)
+    data_transform_1.get_party_instance(role='host', party_id=host).component_param(with_label=False)
+
     intersection_0 = Intersection(name="intersection_0")
+    intersection_1 = Intersection(name="intersection_1")
 
     param = {
-        "method": "quantile",
+        "method": "optimal",
+        "compress_thres": 10000,
+        "head_size": 10000,
+        "error": 0.001,
+        "bin_num": 10,
+        "bin_indexes": -1,
+        "bin_names": None,
+        "category_indexes": None,
+        "category_names": None,
+        "adjustment_factor": 0.5,
+        "local_only": False,
         "optimal_binning_param": {
             "metric_method": "gini",
             "min_bin_pct": 0.05,
@@ -59,39 +72,38 @@ def main(config="../../config.yaml", namespace=""):
             "init_bin_nums": 100,
             "mixture": True
         },
-        "compress_thres": 10000,
-        "head_size": 10000,
-        "error": 0.001,
-        "bin_num": 10,
-        "bin_indexes": -1,
-        "bin_names": None,
-        "category_names": None,
-        "adjustment_factor": 0.5,
-        "local_only": False,
         "transform_param": {
-            "transform_cols": -1,
-            "transform_names": None,
-            "transform_type": "bin_num"
+            "transform_type": None
         }
     }
-
-    guest_param = copy.deepcopy(param)
-    guest_param["method"] = "optimal"
-    guest_param["category_indexes"] = [0, 1, 2]
-    host_param = copy.deepcopy(param)
-    host_param["method"] = "quantile"
     hetero_feature_binning_0 = HeteroFeatureBinning(name="hetero_feature_binning_0", **param)
-    hetero_feature_binning_0.get_party_instance(role="guest", party_id=guest).component_param(**guest_param)
-    hetero_feature_binning_0.get_party_instance(role="host", party_id=host).component_param(**host_param)
+    hetero_feature_binning_1 = HeteroFeatureBinning(name="hetero_feature_binning_1", **param)
 
     pipeline.add_component(reader_0)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
     pipeline.add_component(hetero_feature_binning_0, data=Data(data=intersection_0.output.data))
+    pipeline.add_component(data_transform_1, data=Data(data=reader_0.output.data))
+    pipeline.add_component(intersection_1, data=Data(data=data_transform_1.output.data))
+    pipeline.add_component(hetero_feature_binning_1, data=Data(data=intersection_1.output.data))
 
     pipeline.compile()
 
     pipeline.fit()
+
+    pipeline.deploy_component([data_transform_0, intersection_0, hetero_feature_binning_0])
+
+    predict_pipeline = PipeLine()
+    # add data reader onto predict pipeline
+    predict_pipeline.add_component(reader_0)
+    # add selected components from train pipeline onto predict pipeline
+    # specify data source
+    predict_pipeline.add_component(
+        pipeline, data=Data(
+            predict_input={
+                pipeline.data_transform_0.input.data: reader_0.output.data}))
+    # run predict model
+    predict_pipeline.predict()
 
 
 if __name__ == "__main__":
