@@ -101,6 +101,8 @@ class HomoOneHotBase(one_hot_encoder.OneHotEncoder):
                 transfer_pair = one_hot_encoder.TransferPair(col_name)
                 for v in value_list:
                     transfer_pair.add_value(v)
+
+                transfer_pair.encode_new_headers()
                 self.col_maps[col_name] = transfer_pair
 
         self._transform_schema()
