@@ -28,12 +28,12 @@ from pipeline.interface import Data
 from pipeline.utils.tools import load_job_config
 from pipeline.interface import Model
 
-from federatedml import fate_torch_hook
+from pipeline import fate_torch_hook
 import torch as t
 from torch import nn
 from torch.nn import init
 from torch import optim
-from federatedml import fate_torch as ft
+from pipeline import fate_torch as ft
 
 # this is important, modify torch modules so that Sequential model be parsed by pipeline
 fate_torch_hook(t)
