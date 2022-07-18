@@ -19,8 +19,7 @@
 from federatedml.feature.feature_selection.filter_base import BaseFilterMethod
 from federatedml.param.feature_selection_param import ManuallyFilterParam
 from federatedml.protobuf.generated import feature_selection_meta_pb2
-
-from federatedml.util import LOGGER
+from federatedml.statistic.data_overview import look_up_names_from_header
 
 
 class ManuallyFilter(BaseFilterMethod):
@@ -35,16 +34,29 @@ class ManuallyFilter(BaseFilterMethod):
 
     def _transfer_params(self):
         header = self.selection_properties.header
+        anonymous_header = self.selection_properties.anonymous_header
         col_name_maps = self.selection_properties.col_name_maps
         if (self.filter_param.filter_out_indexes or self.filter_param.filter_out_names) is not None:
+            if self.use_anonymous:
+                self.filter_out_names = look_up_names_from_header(self.filter_param.filter_out_names,
+                                                                  anonymous_header,
+                                                                  header)
+            else:
+                self.filter_out_names = self.filter_param.filter_out_names
             self.filter_out_indexes = self.filter_param.filter_out_indexes
-            self.filter_out_names = self.filter_param.filter_out_names
+
         elif (self.filter_param.left_col_indexes or self.filter_param.left_col_names) is not None:
             filter_out_set = set([i for i in range(len(header))])
             if self.filter_param.left_col_indexes is not None:
                 filter_out_set = filter_out_set.difference(self.filter_param.left_col_indexes)
             if self.filter_param.left_col_names is not None:
-                left_idx = [col_name_maps.get(name) for name in self.filter_param.left_col_names]
+                if self.use_anonymous:
+                    left_col_names = look_up_names_from_header(self.filter_param.left_col_names,
+                                                               anonymous_header,
+                                                               header)
+                else:
+                    left_col_names = self.filter_param.left_col_names
+                left_idx = [col_name_maps.get(name) for name in left_col_names]
                 filter_out_set = filter_out_set.difference(left_idx)
             self.filter_out_indexes = list(filter_out_set)
 
@@ -57,12 +69,14 @@ class ManuallyFilter(BaseFilterMethod):
     def fit(self, data_instances, suffix):
         self._transfer_params()
         all_filter_out_names = []
+        filter_out_indexes_set = set(self.filter_out_indexes)
+        filter_out_names_set = set(self.filter_out_names)
         for col_idx, col_name in zip(self.selection_properties.select_col_indexes,
                                      self.selection_properties.select_col_names):
             # LOGGER.debug("Col_idx: {}, col_names: {}, filter_out_indexes: {}, filter_out_names: {}".format(
             #    col_idx, col_name, self.filter_out_indexes, self.filter_out_names
             # ))
-            if col_idx not in self.filter_out_indexes and col_name not in self.filter_out_names:
+            if col_idx not in filter_out_indexes_set and col_name not in filter_out_names_set:
                 self.selection_properties.add_left_col_name(col_name)
             else:
                 all_filter_out_names.append(col_name)
@@ -70,11 +84,6 @@ class ManuallyFilter(BaseFilterMethod):
         self.filter_out_names = all_filter_out_names
         # LOGGER.debug(f"filter out names are: {self.filter_out_names}")
         return self
-
-    # def get_meta_obj(self, meta_dicts):
-    #     result = feature_selection_meta_pb2.ManuallyFilterMeta(filter_out_names=self.filter_out_names)
-    #     meta_dicts['manually_meta'] = result
-    #     return meta_dicts
 
     def get_meta_obj(self):
         result = feature_selection_meta_pb2.FilterMeta()

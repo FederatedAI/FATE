@@ -52,6 +52,18 @@ This section introduces the Pipeline scripts for different types of tasks.
     
     script: pipeline-hetero-feature-selection-single-predict.py
 
+13. Selection with Setting Anonymous Col-names Task:
+    
+    script: pipeline-hetero-feature-selection-select-anonymous-col-names.py
+
+14. Selection by Setting Anonymous Columns in Manually Filter:
+
+    script: pipeline-hetero-feature-selection-anonymous-manually.py
+
+15. Selection by Setting Anonymous Left Columns in Manually Filter:
+    
+    script: pipeline-hetero-feature-selection-anonymous-manually-left.py
+
 
 Users can run a pipeline job directly:
 

@@ -114,6 +114,10 @@
             "conf": "hetero_binning_bucket_binning_conf.json",
             "dsl": "hetero_binning_bucket_binning_dsl.json"
         },
+        "hetero_binning_bucket_binning_missing_value": {
+            "conf": "hetero_binning_bucket_binning_missing_value_conf.json",
+            "dsl": "hetero_binning_bucket_binning_missing_value_dsl.json"
+        },
         "hetero_binning_category_binning": {
             "conf": "hetero_binning_category_binning_conf.json",
             "dsl": "hetero_binning_category_binning_dsl.json"
@@ -138,9 +142,17 @@
             "conf": "hetero_binning_multi_host_conf.json",
             "dsl": "hetero_binning_multi_host_dsl.json"
         },
+        "hetero_binning_multi_host_bucket": {
+            "conf": "hetero_binning_multi_host_bucket_conf.json",
+            "dsl": "hetero_binning_multi_host_dsl.json"
+        },
         "hetero_binning_sparse_bucket_binning": {
             "conf": "hetero_binning_sparse_bucket_binning_conf.json",
             "dsl": "hetero_binning_sparse_bucket_binning_dsl.json"
+        },
+        "hetero_binning_sparse_quantile_binning": {
+            "conf": "hetero_binning_sparse_quantile_binning_conf.json",
+            "dsl": "hetero_binning_sparse_quantile_binning_dsl.json"
         },
         "hetero_binning_sparse_optimal_ks": {
             "conf": "hetero_binning_sparse_optimal_ks_conf.json",

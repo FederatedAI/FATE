@@ -1,25 +1,27 @@
 # Hetero Feature Selection
 
 Feature selection is a process that selects a subset of features for
-model construction. Take good advantage of feature selection can improve
+model construction. Taking advantage of feature selection can improve
 model performance.
 
 In this version, we provide several filter methods for feature
-selection.
-
-<!-- mkdocs
-## Param
-
-::: federatedml.param.feature_selection_param
-    rendering:
-      heading_level: 3
-      show_source: true
-      show_root_heading: true
-      show_root_toc_entry: false
-      show_root_full_path: false
--->
+selection. Note that module works in a cascade manner where 
+selected result of filter A will be input into next filter B. 
+User should pay attention to the order of listing when 
+supplying multiple filters to `filter_methods` param in job configuration.
 
 ## Features
+
+Below lists available input models and their corresponding filter methods(as parameters in configuration):
+
+| Isometric Model 	| Filter Method                                                                                                                                                                                                                                                                                                                                                             	|
+|-----------------	|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|
+| None            	| [manually](../../examples/pipeline/hetero_feature_selection/pipeline-hetero-feature-selection-manually-left.py) <br> [percentage_value](../../examples/pipeline/hetero_feature_selection/pipeline-hetero-feature-selection-percentage-value.py)                                                                                                                           	|
+| Binning         	| [iv_filter](../../examples/pipeline/hetero_feature_selection/pipeline-hetero-feature-selection-local-only.py)                                                                                                                                                                                                                                                             	|
+| Statistic       	| [statistic_filter](../../examples/pipeline/hetero_feature_selection/pipeline-hetero-feature-selection-multi-iso.py)                                                                                                                                                                                                                                                       	|
+| Pearson         	| [correlation_filter](../../examples/pipeline/hetero_feature_selection/pipeline-hetero-feature-selection-pearson.py)(with 'iv' metric & binning model) <br> [vif_filter](../../examples/pipeline/hetero_feature_selection/pipeline-hetero-feature-selection-vif.py)                                                                                                        	|
+| SBT             	| [hetero_sbt_filter](../../examples/pipeline/hetero_feature_selection/pipeline-hetero-feature-selection-multi-iso.py) <br> [hetero_fast_sbt_filter](../../examples/pipeline/hetero_feature_selection/pipeline-hetero-feature-selection-fast-sbt.py) <br> [homo_sbt_filter](../../examples/pipeline/hetero_feature_selection/pipeline-hetero-feature-selection-homo-sbt.py) 	|
+| PSI             	| [psi_filter](../../examples/pipeline/hetero_feature_selection/pipeline-hetero-feature-selection-multi-iso.py)                                                                                                                                                                                                                                                             	|
 
 1.  unique\_value: filter the columns if all values in this feature is
     the same
@@ -75,5 +77,15 @@ results.
 ![Figure 4: Multi-Host Selection
 Principle\</div\>](../images/multi_host_selection.png)
 
-More feature selection methods will be provided. Please make suggestions
-by submitting an issue.
+
+<!-- mkdocs
+## Param
+
+::: federatedml.param.feature_selection_param
+    rendering:
+      heading_level: 3
+      show_source: true
+      show_root_heading: true
+      show_root_toc_entry: false
+      show_root_full_path: false
+-->

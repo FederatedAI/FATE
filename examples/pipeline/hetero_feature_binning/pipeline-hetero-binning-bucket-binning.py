@@ -15,16 +15,13 @@
 #
 
 import argparse
-import os
-import sys
 
-cur_path = os.path.realpath(__file__)
-for i in range(4):
-    cur_path = os.path.dirname(cur_path)
-print(f'fate_path: {cur_path}')
-sys.path.append(cur_path)
-
-from examples.pipeline.hetero_feature_binning import common_tools
+from pipeline.backend.pipeline import PipeLine
+from pipeline.component import DataTransform
+from pipeline.component import HeteroFeatureBinning
+from pipeline.component import Intersection
+from pipeline.component import Reader
+from pipeline.interface import Data
 from pipeline.utils.tools import load_job_config
 
 
@@ -32,8 +29,27 @@ def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
         config = load_job_config(config)
+
+    parties = config.parties
+    guest = parties.guest[0]
+    host = parties.host[0]
+
+    guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
+    host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
+
+    pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host)
+
+    reader_0 = Reader(name="reader_0")
+    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
+    reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
+
+    data_transform_0 = DataTransform(name="data_transform_0")
+    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True)
+    data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
+
+    intersection_0 = Intersection(name="intersection_0")
+
     param = {
-        "name": "hetero_feature_binning_0",
         "method": "bucket",
         "optimal_binning_param": {
             "metric_method": "iv",
@@ -53,15 +69,24 @@ def main(config="../../config.yaml", namespace=""):
         "category_names": None,
         "adjustment_factor": 0.5,
         "local_only": False,
+        "skip_static": True,
         "transform_param": {
             "transform_cols": -1,
             "transform_names": None,
             "transform_type": "bin_num"
         }
     }
-    pipeline = common_tools.make_normal_dsl(config, namespace, param)
+
+    hetero_feature_binning_0 = HeteroFeatureBinning(name="hetero_feature_binning_0", **param)
+
+    pipeline.add_component(reader_0)
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
+    pipeline.add_component(hetero_feature_binning_0, data=Data(data=intersection_0.output.data))
+
+    pipeline.compile()
+
     pipeline.fit()
-    # common_tools.prettify(pipeline.get_component("hetero_feature_binning_0").get_summary())
 
 
 if __name__ == "__main__":

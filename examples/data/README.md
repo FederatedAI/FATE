@@ -274,8 +274,8 @@ Below lists example data sets and their information.
     3. "nus_wide_validate_guest.csv"
         * name: "nus_wide_validate_guest"
         * namespace: "experiment"
-    4. "nus_wide_validate_guest.csv"
-        * name: "nus_wide_validate_guest"
+    4. "nus_wide_validate_host.csv"
+        * name: "nus_wide_validate_host"
         * namespace: "experiment"
 
 

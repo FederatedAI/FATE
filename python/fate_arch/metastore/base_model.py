@@ -44,6 +44,8 @@ class LongTextField(TextField):
 
 
 class JSONField(LongTextField):
+    default_value = {}
+
     def __init__(self, object_hook=None, object_pairs_hook=None, **kwargs):
         self._object_hook = object_hook
         self._object_pairs_hook = object_pairs_hook
@@ -51,30 +53,17 @@ class JSONField(LongTextField):
 
     def db_value(self, value):
         if value is None:
-            value = {}
+            value = self.default_value
         return json_dumps(value)
 
     def python_value(self, value):
-        if value is None:
-            return {}
+        if not value:
+            return self.default_value
         return json_loads(value, object_hook=self._object_hook, object_pairs_hook=self._object_pairs_hook)
 
 
-class ListField(LongTextField):
-    def __init__(self, object_hook=None, object_pairs_hook=None, **kwargs):
-        self._object_hook = object_hook
-        self._object_pairs_hook = object_pairs_hook
-        super().__init__(**kwargs)
-
-    def db_value(self, value):
-        if value is None:
-            value = []
-        return json_dumps(value)
-
-    def python_value(self, value):
-        if value is None:
-            value = "[]"
-        return json_loads(value, object_hook=self._object_hook, object_pairs_hook=self._object_pairs_hook)
+class ListField(JSONField):
+    default_value = []
 
 
 class SerializedField(LongTextField):

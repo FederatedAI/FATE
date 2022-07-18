@@ -31,11 +31,15 @@ class BaseFilterMethod(object):
 
     def __init__(self, filter_param):
         self.selection_properties: SelectionProperties = None
+        self.use_anonymous = False
         self._parse_filter_param(filter_param)
 
     @property
     def feature_values(self):
         return self.selection_properties.feature_values
+
+    def set_use_anonymous(self):
+        self.use_anonymous = True
 
     def fit(self, data_instances, suffix):
         """

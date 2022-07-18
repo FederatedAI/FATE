@@ -33,10 +33,10 @@ class EncodeParam(BaseParam):
     Parameters
     ----------
     salt: str
-        the src data string will be str = str + salt, default by empty string
+        the src id will be str = str + salt, default by empty string
 
     encode_method: {"none", "md5", "sha1", "sha224", "sha256", "sha384", "sha512", "sm3"}
-        the hash method of src data string, support md5, sha1, sha224, sha256, sha384, sha512, sm3, default by None
+        the hash method of src id, support md5, sha1, sha224, sha256, sha384, sha512, sm3, default by None
 
     base64: bool
         if True, the result of hash will be changed to base64, default by False
@@ -82,10 +82,10 @@ class RAWParam(BaseParam):
         whether to hash ids for raw intersect
 
     salt: str
-        the src data string will be str = str + salt, default by empty string
+        the src id will be str = str + salt, default by empty string
 
     hash_method: str
-        the hash method of src data string, support md5, sha1, sha224, sha256, sha384, sha512, sm3, default by None
+        the hash method of src id, support md5, sha1, sha224, sha256, sha384, sha512, sm3, default by None
 
     base64: bool
         if True, the result of hash will be changed to base64, default by False
@@ -130,10 +130,10 @@ class RSAParam(BaseParam):
     Parameters
     ----------
     salt: str
-        the src data string will be str = str + salt, default ''
+        the src id will be str = str + salt, default ''
 
     hash_method: str
-        the hash method of src data string, support sha256, sha384, sha512, sm3, default sha256
+        the hash method of src id, support sha256, sha384, sha512, sm3, default sha256
 
     final_hash_method: str
         the hash method of result data string, support md5, sha1, sha224, sha256, sha384, sha512, sm3, default sha256
@@ -201,10 +201,10 @@ class DHParam(BaseParam):
     Parameters
     ----------
     salt: str
-        the src data string will be str = str + salt, default ''
+        the src id will be str = str + salt, default ''
 
     hash_method: str
-        the hash method of src data string, support none, md5, sha1, sha 224, sha256, sha384, sha512, sm3, default sha256
+        the hash method of src id, support none, md5, sha1, sha 224, sha256, sha384, sha512, sm3, default sha256
 
     key_length: int, value >= 1024
         the key length of the commutative cipher p, default 1024
@@ -232,6 +232,43 @@ class DHParam(BaseParam):
             raise ValueError(f"key length must be >= 1024")
 
         LOGGER.debug("Finish DHParam parameter check!")
+        return True
+
+
+class ECDHParam(BaseParam):
+    """
+    Define the hash method for ECDH intersect method
+
+    Parameters
+    ----------
+    salt: str
+        the src id will be str = str + salt, default ''
+
+    hash_method: str
+        the hash method of src id, support sha256, sha384, sha512, sm3, default sha256
+
+    curve: str
+        the name of curve, currently only support 'curve25519', which offers 128 bits of security
+    """
+
+    def __init__(self, salt='', hash_method='sha256', curve=consts.CURVE25519):
+        super().__init__()
+        self.salt = salt
+        self.hash_method = hash_method
+        self.curve = curve
+
+    def check(self):
+        descr = "ecdh param's "
+        self.check_string(self.salt, f"{descr}salt")
+
+        self.hash_method = self.check_and_change_lower(self.hash_method,
+                                                       [consts.SHA256, consts.SHA384, consts.SHA512,
+                                                        consts.SM3],
+                                                       f"{descr}hash_method")
+
+        self.curve = self.check_and_change_lower(self.curve, [consts.CURVE25519], f"{descr}curve")
+
+        LOGGER.debug("Finish ECDHParam parameter check!")
         return True
 
 
@@ -361,7 +398,7 @@ class IntersectParam(BaseParam):
     Parameters
     ----------
     intersect_method: str
-        it supports 'rsa', 'raw', and 'dh', default by 'rsa'
+        it supports 'rsa', 'raw', 'dh', 'ecdh', default by 'rsa'
 
     random_bit: positive int
         it will define the size of blinding factor in rsa algorithm, default 128
@@ -401,6 +438,9 @@ class IntersectParam(BaseParam):
     dh_params: DHParam
         effective for dh method only
 
+    ecdh_params: ECDHParam
+        effective for ecdh method only
+
     join_method: {'inner_join', 'left_join'}
         if 'left_join', participants will all include sample_id_generator's (imputed) ids in output,
         default 'inner_join'
@@ -420,11 +460,16 @@ class IntersectParam(BaseParam):
         with ver1.7 and above, this param is ignored.
 
     run_cache: bool
-        whether to store Host's encrypted ids, only valid when intersect method is 'rsa' or 'dh', default False
+        whether to store Host's encrypted ids, only valid when intersect method is 'rsa', 'dh', 'ecdh', default False
 
     cardinality_only: bool
         whether to output estimated intersection count(cardinality);
         if sync_cardinality is True, then sync cardinality count with host(s)
+
+    cardinality_method: string
+        specify which intersect method to use for coutning cardinality, default "ecdh";
+        note that with "rsa", estimated cardinality will be produced;
+        while "dh" and "ecdh" method output exact cardinality, it only supports single-host task
 
     sync_cardinality: bool
         whether to sync cardinality with all participants, default False,
@@ -457,10 +502,10 @@ class IntersectParam(BaseParam):
     def __init__(self, intersect_method: str = consts.RSA, random_bit=DEFAULT_RANDOM_BIT, sync_intersect_ids=True,
                  join_role=consts.GUEST, only_output_key: bool = False,
                  with_encode=False, encode_params=EncodeParam(),
-                 raw_params=RAWParam(), rsa_params=RSAParam(), dh_params=DHParam(),
+                 raw_params=RAWParam(), rsa_params=RSAParam(), dh_params=DHParam(), ecdh_params=ECDHParam(),
                  join_method=consts.INNER_JOIN, new_sample_id: bool = False, sample_id_generator=consts.GUEST,
                  intersect_cache_param=IntersectCache(), run_cache: bool = False,
-                 cardinality_only: bool = False, sync_cardinality: bool = False,
+                 cardinality_only: bool = False, sync_cardinality: bool = False, cardinality_method=consts.ECDH,
                  run_preprocess: bool = False,
                  intersect_preprocess_params=IntersectPreProcessParam(),
                  repeated_id_process=False, repeated_id_owner=consts.GUEST,
@@ -488,14 +533,16 @@ class IntersectParam(BaseParam):
         self.dh_params = copy.deepcopy(dh_params)
         self.cardinality_only = cardinality_only
         self.sync_cardinality = sync_cardinality
+        self.cardinality_method = cardinality_method
         self.run_preprocess = run_preprocess
         self.intersect_preprocess_params = copy.deepcopy(intersect_preprocess_params)
+        self.ecdh_params = copy.deepcopy(ecdh_params)
 
     def check(self):
         descr = "intersect param's "
 
         self.intersect_method = self.check_and_change_lower(self.intersect_method,
-                                                            [consts.RSA, consts.RAW, consts.DH],
+                                                            [consts.RSA, consts.RAW, consts.DH, consts.ECDH],
                                                             f"{descr}intersect_method")
 
         if self._warn_to_deprecate_param("random_bit", descr, "rsa_params' 'random_bit'"):
@@ -547,15 +594,15 @@ class IntersectParam(BaseParam):
         self.raw_params.check()
         self.rsa_params.check()
         self.dh_params.check()
-        # self.intersect_cache_param.check()
+        self.ecdh_params.check()
         self.check_boolean(self.cardinality_only, f"{descr}cardinality_only")
         self.check_boolean(self.sync_cardinality, f"{descr}sync_cardinality")
         self.check_boolean(self.run_preprocess, f"{descr}run_preprocess")
         self.intersect_preprocess_params.check()
         if self.cardinality_only:
-            if self.intersect_method not in [consts.RSA]:
-                raise ValueError(f"cardinality-only mode only support rsa.")
-            if self.intersect_method == consts.RSA and self.rsa_params.split_calculation:
+            if self.cardinality_method not in [consts.RSA, consts.DH, consts.ECDH]:
+                raise ValueError(f"cardinality-only mode only support rsa, dh, ecdh.")
+            if self.cardinality_method == consts.RSA and self.rsa_params.split_calculation:
                 raise ValueError(f"cardinality-only mode only supports unified calculation.")
         if self.run_preprocess:
             if self.intersect_preprocess_params.false_positive_rate < 0.01:
@@ -563,8 +610,8 @@ class IntersectParam(BaseParam):
             if self.cardinality_only:
                 raise ValueError(f"cardinality_only mode cannot run preprocessing.")
         if self.run_cache:
-            if self.intersect_method not in [consts.RSA, consts.DH]:
-                raise ValueError(f"Only rsa or dh method supports cache.")
+            if self.intersect_method not in [consts.RSA, consts.DH, consts.ECDH]:
+                raise ValueError(f"Only rsa, dh, or ecdh method supports cache.")
             if self.intersect_method == consts.RSA and self.rsa_params.split_calculation:
                 raise ValueError(f"RSA split_calculation does not support cache.")
             if self.cardinality_only:

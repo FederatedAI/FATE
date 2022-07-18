@@ -21,4 +21,5 @@ RUN pip install --upgrade pip && \
     sed -i '/torch.*/d' /data/projects/python/requirements.txt && \
     sed -i '/torchvision.*/d' /data/projects/python/requirements.txt && \
     sed -i '/pytorch-lightning.*/d' /data/projects/python/requirements.txt && \
+    sed -i '/pyspark.*/d' /data/projects/python/requirements.txt && \
     pip install -r requirements.txt

@@ -31,16 +31,25 @@ class HeteroDataSplitHost(DataSplitter):
             return
         LOGGER.debug(f"Enter Hetero {self.role} Data Split fit")
 
-        id_train = self.transfer_variable.id_train.get(idx=0)
-        id_test = self.transfer_variable.id_test.get(idx=0)
-        id_validate = self.transfer_variable.id_validate.get(idx=0)
+        id_train_table = self.transfer_variable.id_train.get(idx=0)
+        id_test_table = self.transfer_variable.id_test.get(idx=0)
+        id_validate_table = self.transfer_variable.id_validate.get(idx=0)
+        LOGGER.info(f"ids obtained from Guest.")
 
-        train_data, validate_data, test_data = self.split_data(data_inst, id_train, id_validate, id_test)
+        train_data, validate_data, test_data = self.split_data(data_inst,
+                                                               id_train_table,
+                                                               id_validate_table,
+                                                               id_test_table)
+        LOGGER.info(f"Split data finished.")
 
         all_metas = {}
-        all_metas = self.callback_count_info(id_train, id_validate, id_test, all_metas)
+        all_metas = self.callback_count_info(id_train_table,
+                                             id_validate_table,
+                                             id_test_table,
+                                             all_metas)
         self.callback(all_metas)
         self.set_summary(all_metas)
+        LOGGER.info(f"Callback given.")
 
         return [train_data, validate_data, test_data]
 
@@ -65,12 +74,22 @@ class HeteroDataSplitGuest(DataSplitter):
         validate_size, test_size = DataSplitter.get_train_test_size(self.validate_size, self.test_size)
         id_validate, id_test, y_validate, y_test = self._split(id_test_validate, y_test_validate,
                                                                test_size=test_size, train_size=validate_size)
+        LOGGER.info(f"Split ids obtained.")
+        partitions = data_inst.partitions
+        id_train_table = DataSplitter._parallelize_ids(id_train, partitions)
+        id_validate_table = DataSplitter._parallelize_ids(id_validate, partitions)
+        id_test_table = DataSplitter._parallelize_ids(id_test, partitions)
 
-        self.transfer_variable.id_train.remote(obj=id_train, role=consts.HOST, idx=-1)
-        self.transfer_variable.id_test.remote(obj=id_test, role=consts.HOST, idx=-1)
-        self.transfer_variable.id_validate.remote(obj=id_validate, role=consts.HOST, idx=-1)
+        self.transfer_variable.id_train.remote(obj=id_train_table, role=consts.HOST, idx=-1)
+        self.transfer_variable.id_test.remote(obj=id_test_table, role=consts.HOST, idx=-1)
+        self.transfer_variable.id_validate.remote(obj=id_validate_table, role=consts.HOST, idx=-1)
+        LOGGER.info(f"ids remote to Host(s)")
 
-        train_data, validate_data, test_data = self.split_data(data_inst, id_train, id_validate, id_test)
+        train_data, validate_data, test_data = self.split_data(data_inst,
+                                                               id_train_table,
+                                                               id_validate_table,
+                                                               id_test_table)
+        LOGGER.info(f"Split data finished.")
 
         all_metas = {}
 
@@ -81,5 +100,6 @@ class HeteroDataSplitGuest(DataSplitter):
             #summary["data_split_label_info"] = all_metas
         self.callback(all_metas)
         self.set_summary(all_metas)
+        LOGGER.info(f"Callback given.")
 
         return [train_data, validate_data, test_data]

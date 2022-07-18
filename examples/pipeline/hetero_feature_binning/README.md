@@ -80,6 +80,22 @@ This section introduces the Pipeline scripts for different types of tasks.
     
     script: pipeline-hetero-binning-woe-binning.py
 
+20. Multi-host Bucket Task:
+
+    script: pipeline-hetero-binning-multi-host-bucket.py
+
+21. Bucket Binning with Missing Value:
+
+    script: pipeline-hetero-binning-bucket-binning-missing-value.py
+
+22. Quantile Binning with Missing Value:
+
+    script: pipeline-hetero-binning-missing-value.py
+
+23. Sparse Quantile Binning:
+
+    script: pipeline-hetero-binning-sparse-quantile-binning.py
+
 
 Users can run a pipeline job directly:
 
