@@ -56,6 +56,18 @@
         "train_recommendation_task": {
             "script": "./pipeline-hetero-nn-train-binary-recommend-task.py"
         },
+        "train_binary_torch": {
+            "script": "./pipeline-hetero-nn-train-binary-torch.py"
+        },
+        "train_multi_torch": {
+            "script": "./pipeline-hetero-nn-train-multi-torch.py"
+        },
+        "train_binary_with_coae_label_confuser": {
+            "script": "./pipeline-hetero-nn-train-binary-coae.py"
+        },
+        "train_binary_multi_host": {
+            "script": "./pipeline-hetero-nn-train-binary-multi-host.py"
+        },
         "train_multi": {
             "script": "./pipeline-hetero-nn-train-multi.py"
         },
