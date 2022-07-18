@@ -164,7 +164,7 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
         sbt_param = model_param.sbt_param
         this_param = _obtain_single_param(sbt_param, idx)
         if consts.HETERO_FAST_SBT_LAYERED in model.isometric_models and \
-            consts.HETERO_FAST_SBT_MIX in model.isometric_models:
+                consts.HETERO_FAST_SBT_MIX in model.isometric_models:
             raise ValueError("Should not provide layered and mixed fast sbt model simultaneously")
         elif consts.HETERO_FAST_SBT_LAYERED in model.isometric_models:
             iso_model = model.isometric_models.get(consts.HETERO_FAST_SBT_LAYERED)

@@ -136,7 +136,7 @@ def main(config="../../config.yaml", namespace=""):
         ],
             "filter_out_names": [
                 "x3"
-            ]
+        ]
         })
 
     host_param = {
