@@ -18,9 +18,9 @@ import argparse
 import json
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component import HeteroLR
 from pipeline.component import DataTransform
 from pipeline.component import Evaluation
+from pipeline.component import HeteroLR
 from pipeline.component import Intersection
 from pipeline.component import Reader
 from pipeline.interface import Data
@@ -122,10 +122,9 @@ def main(config="../../config.yaml", namespace=""):
     # fit model
     pipeline.fit()
     # query component summary
-    prettify(pipeline.get_component("hetero_lr_0").get_summary())
-    prettify(pipeline.get_component("hetero_lr_1").get_summary())
-    prettify(pipeline.get_component("evaluation_0").get_summary())
-    return pipeline
+    # prettify(pipeline.get_component("hetero_lr_0").get_summary())
+    # prettify(pipeline.get_component("hetero_lr_1").get_summary())
+    # prettify(pipeline.get_component("evaluation_0").get_summary())
 
 
 if __name__ == "__main__":

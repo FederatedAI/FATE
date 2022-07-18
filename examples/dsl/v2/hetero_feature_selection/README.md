@@ -51,6 +51,18 @@ This section introduces the dsl and conf for usage of different type of task.
     "single-predict": {
         "conf": "hetero_feature_selection_single_predict_conf.json",
         "dsl": "hetero_feature_selection_single_predict_dsl.json"
+    },
+    "hetero_feature_selection_select_anonymous_col_names": {
+            "conf": "hetero_feature_selection_select_anonymous_col_names_conf.json",
+            "dsl": "hetero_feature_selection_select_anonymous_col_names_dsl.json"
+    },
+    "hetero_feature_selection_manually_anonymous": {
+            "conf": "hetero_feature_selection_manually_anonymous_conf.json",
+            "dsl": "hetero_feature_selection_manually_anonymous_dsl.json"
+    },
+    "hetero_feature_selection_manually_left_anonymous": {
+            "conf": "hetero_feature_selection_manually_left_anonymous_conf.json",
+            "dsl": "hetero_feature_selection_manually_left_anonymous_dsl.json"
     }
     
 Users can use following commands to running the task.

@@ -191,26 +191,28 @@ class DataSplitter(ModelBase):
         Tool to callback returned data count & ratio information
         Parameters
         ----------
-        id_train: list, id of data set
-        id_validate: list, id of data set
-        id_test: list, id of data set
+        id_train: list or table, id of data set
+        id_validate: list or table, id of data set
+        id_test: list or table, id of data set
         all_metas: dict, all meta info
 
         Returns
         -------
-        None
+        dict
         """
         metas = {}
+        if isinstance(id_train, list):
+            train_count = len(id_train)
+            validate_count = len(id_validate)
+            test_count = len(id_test)
+        else:
+            train_count = id_train.count()
+            validate_count = id_validate.count()
+            test_count = id_test.count()
 
-        train_count = len(id_train)
         metas["train"] = train_count
-
-        validate_count = len(id_validate)
         metas["validate"] = validate_count
-
-        test_count = len(id_test)
         metas["test"] = test_count
-
         original_count = train_count + validate_count + test_count
         metas["original"] = original_count
 
@@ -289,10 +291,16 @@ class DataSplitter(ModelBase):
                                                             extra_metas=metas))
 
     @staticmethod
-    def _match_id(data_inst, ids):
-        ids = [(i, None) for i in ids]
-        id_table = computing_session.parallelize(ids, include_key=True, partition=data_inst.partitions)
+    def _match_id(data_inst, id_table):
+        # ids = [(i, None) for i in ids]
+        # id_table = computing_session.parallelize(ids, include_key=True, partition=data_inst.partitions)
         return data_inst.join(id_table, lambda v1, v2: v1)
+
+    @staticmethod
+    def _parallelize_ids(ids, partitions):
+        ids = [(i, None) for i in ids]
+        id_table = computing_session.parallelize(ids, include_key=True, partition=partitions)
+        return id_table
 
     @staticmethod
     def _set_output_table_schema(data_inst, schema):

@@ -95,7 +95,8 @@ class OptimalBinning(BaseBinning):
 
     def init_bucket(self, data_instances):
         header = data_overview.get_header(data_instances)
-        self._default_setting(header)
+        anonymous_header = data_overview.get_anonymous_header(data_instances)
+        self._default_setting(header, anonymous_header)
 
         init_bucket_param = copy.deepcopy(self.params)
         init_bucket_param.bin_num = self.optimal_param.init_bin_nums

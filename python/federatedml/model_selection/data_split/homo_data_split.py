@@ -37,8 +37,18 @@ class HomoDataSplitHost(DataSplitter):
         validate_size, test_size = DataSplitter.get_train_test_size(self.validate_size, self.test_size)
         id_validate, id_test, y_validate, y_test = self._split(id_test_validate, y_test_validate,
                                                                test_size=test_size, train_size=validate_size)
+        LOGGER.info(f"Split ids obtained.")
 
-        train_data, validate_data, test_data = self.split_data(data_inst, id_train, id_validate, id_test)
+        partitions = data_inst.partitions
+        id_train_table = DataSplitter._parallelize_ids(id_train, partitions)
+        id_validate_table = DataSplitter._parallelize_ids(id_validate, partitions)
+        id_test_table = DataSplitter._parallelize_ids(id_test, partitions)
+
+        train_data, validate_data, test_data = self.split_data(data_inst,
+                                                               id_train_table,
+                                                               id_validate_table,
+                                                               id_test_table)
+        LOGGER.info(f"Split data finished.")
 
         all_metas = {}
 
@@ -72,7 +82,15 @@ class HomoDataSplitGuest(DataSplitter):
                                                                test_size=test_size, train_size=validate_size)
         LOGGER.info(f"Split ids obtained.")
 
-        train_data, validate_data, test_data = self.split_data(data_inst, id_train, id_validate, id_test)
+        partitions = data_inst.partitions
+        id_train_table = DataSplitter._parallelize_ids(id_train, partitions)
+        id_validate_table = DataSplitter._parallelize_ids(id_validate, partitions)
+        id_test_table = DataSplitter._parallelize_ids(id_test, partitions)
+
+        train_data, validate_data, test_data = self.split_data(data_inst,
+                                                               id_train_table,
+                                                               id_validate_table,
+                                                               id_test_table)
         LOGGER.info(f"Split data finished.")
 
         all_metas = {}

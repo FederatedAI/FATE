@@ -26,13 +26,17 @@ from federatedml.util import LOGGER
 class SelectionProperties(object):
     def __init__(self):
         self.header = []
+        self.anonymous_header = []
+        self.anonymous_col_name_maps = {}
         self.col_name_maps = {}
         self.last_left_col_indexes = []
         self.select_col_indexes = []
         self.select_col_names = []
+        # self.anonymous_select_col_names = []
         self.left_col_indexes_added = set()
         self.left_col_indexes = []
         self.left_col_names = []
+        # self.anonymous_left_col_names = []
         self.feature_values = {}
 
     def set_header(self, header):
@@ -40,12 +44,19 @@ class SelectionProperties(object):
         for idx, col_name in enumerate(self.header):
             self.col_name_maps[col_name] = idx
 
+    def set_anonymous_header(self, anonymous_header):
+        self.anonymous_header = anonymous_header
+        if self.anonymous_header:
+            for idx, col_name in enumerate(self.anonymous_header):
+                self.anonymous_col_name_maps[col_name] = idx
+
     def set_last_left_col_indexes(self, left_cols):
         self.last_left_col_indexes = left_cols.copy()
 
     def set_select_all_cols(self):
         self.select_col_indexes = [i for i in range(len(self.header))]
         self.select_col_names = self.header
+        # self.anonymous_select_col_names = self.anonymous_header
 
     def add_select_col_indexes(self, select_col_indexes):
         last_left_col_indexes = set(self.last_left_col_indexes)
@@ -60,6 +71,7 @@ class SelectionProperties(object):
             if idx not in added_select_col_index:
                 self.select_col_indexes.append(idx)
                 self.select_col_names.append(self.header[idx])
+                # self.anonymous_select_col_names.append(self.anonymous_header[idx])
                 added_select_col_index.add(idx)
 
     def add_select_col_names(self, select_col_names):
@@ -76,6 +88,7 @@ class SelectionProperties(object):
             if idx not in added_select_col_indexes:
                 self.select_col_indexes.append(idx)
                 self.select_col_names.append(col_name)
+                # self.anonymous_select_col_names.append(self.anonymous_header[idx])
                 added_select_col_indexes.add(idx)
 
     def add_left_col_name(self, left_col_name):
@@ -87,6 +100,7 @@ class SelectionProperties(object):
             self.left_col_indexes.append(idx)
             self.left_col_indexes_added.add(idx)
             self.left_col_names.append(left_col_name)
+            # self.anonymous_left_col_names.append(self.anonymous_header[idx])
 
     def add_feature_value(self, col_name, feature_value):
         self.feature_values[col_name] = feature_value
@@ -108,6 +122,10 @@ class SelectionProperties(object):
         return [self.header[x] for x in self.all_left_col_indexes]
 
     @property
+    def all_left_anonymous_col_names(self):
+        return [self.anonymous_header[x] for x in self.all_left_col_indexes]
+
+    @property
     def left_col_dicts(self):
         return {x: True for x in self.all_left_col_names}
 
@@ -119,6 +137,7 @@ class SelectionProperties(object):
 class CompletedSelectionResults(object):
     def __init__(self):
         self.header = []
+        self.anonymous_header = []
         self.col_name_maps = {}
         self.__select_col_names = None
         self.filter_results = []
@@ -130,6 +149,9 @@ class CompletedSelectionResults(object):
         self.header = header
         for idx, col_name in enumerate(self.header):
             self.col_name_maps[col_name] = idx
+
+    def set_anonymous_header(self, anonymous_header):
+        self.anonymous_header = anonymous_header
 
     def set_select_col_names(self, select_col_names):
         if self.__select_col_names is None:
@@ -144,6 +166,10 @@ class CompletedSelectionResults(object):
     @property
     def all_left_col_names(self):
         return [self.header[x] for x in self.all_left_col_indexes]
+
+    @property
+    def all_left_anonymous_col_names(self):
+        return [self.anonymous_header[x] for x in self.all_left_col_indexes]
 
     def add_filter_results(self, filter_name, select_properties: SelectionProperties, host_select_properties=None):
         # self.all_left_col_indexes = select_properties.all_left_col_indexes.copy()

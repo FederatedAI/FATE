@@ -50,6 +50,10 @@
             "conf": "./test_intersect_job_rsa_multi_host_conf.json",
             "dsl": "./test_intersect_job_dsl.json"
         },
+        "rsa_intersect_w_preprocess": {
+            "conf": "./test_intersect_job_rsa_w_preprocess_conf.json",
+            "dsl": "./test_intersect_job_dsl.json"
+        },
         "raw_intersect_multi_host": {
             "conf": "./test_intersect_job_raw_multi_host_conf.json",
             "dsl": "./test_intersect_job_dsl.json"
@@ -62,6 +66,18 @@
             "conf": "./test_intersect_job_dh_multi_conf.json",
             "dsl": "./test_intersect_job_dsl.json"
         },
+        "dh_intersect_w_preprocess": {
+            "conf": "./test_intersect_job_dh_w_preprocess_conf.json",
+            "dsl": "./test_intersect_job_dsl.json"
+        },
+        "ecdh_intersect": {
+            "conf": "./test_intersect_job_ecdh_conf.json",
+            "dsl": "./test_intersect_job_dsl.json"
+        },
+        "ecdh_intersect_w_preprocess": {
+            "conf": "./test_intersect_job_ecdh_w_preprocess_conf.json",
+            "dsl": "./test_intersect_job_dsl.json"
+        },
         "rsa_cache_intersect": {
             "conf": "./test_intersect_job_rsa_cache_conf.json",
             "dsl": "./test_intersect_job_cache_dsl.json"
@@ -70,8 +86,20 @@
             "conf": "./test_intersect_job_dh_cache_conf.json",
             "dsl": "./test_intersect_job_cache_dsl.json"
         },
-        "intersect_cardinality": {
-            "conf": "./test_intersect_job_cardinality_conf.json",
+        "ecdh_cache_intersect": {
+            "conf": "./test_intersect_job_ecdh_cache_conf.json",
+            "dsl": "./test_intersect_job_cache_dsl.json"
+        },
+        "intersect_rsa_cardinality": {
+            "conf": "./test_intersect_job_rsa_cardinality_conf.json",
+            "dsl": "./test_intersect_job_dsl.json"
+        },
+        "intersect_ecdh_exact_cardinality": {
+            "conf": "./test_intersect_job_ecdh_exact_cardinality_conf.json",
+            "dsl": "./test_intersect_job_dsl.json"
+        },
+        "intersect_dh_exact_cardinality": {
+            "conf": "./test_intersect_job_dh_exact_cardinality_conf.json",
             "dsl": "./test_intersect_job_dsl.json"
         }
     }

@@ -20,11 +20,7 @@
             "hetero_data_split_0": {
                 "test_size": 0.3,
                 "validate_size": 0.2,
-                "stratified": true,
-                "split_points": [
-                    0.0,
-                    0.2
-                ]
+                "stratified": false
             },
             "hetero_linr_0": {
                 "penalty": "L2",
