@@ -91,8 +91,8 @@ def train_an_autoencoder_confuser(label_num, epoch=50, lambda1=1, lambda2=2, lr=
     if verbose:
         LOGGER.debug('origin labels {}, fake labels {}, reconstruct labels {}'.format(labels, coae.encode(
             labels).detach().numpy(),
-                                                                                      coae.decode(coae.encode(
-                                                                                          labels)).detach().numpy()))
+                coae.decode(coae.encode(
+                    labels)).detach().numpy()))
 
     return coae
 

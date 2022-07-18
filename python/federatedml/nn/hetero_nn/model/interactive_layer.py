@@ -506,7 +506,7 @@ class InteractiveHostDenseLayer(object):
         encrypted_guest_weight_gradient = self.transfer_variable.encrypted_guest_weight_gradient.get(idx=0,
                                                                                                      suffix=(
                                                                                                      epoch, batch,))
-                                                                                                                                                                                                 
+
         return encrypted_guest_weight_gradient
 
     def get_interactive_layer_drop_out_table(self, epoch, batch):
