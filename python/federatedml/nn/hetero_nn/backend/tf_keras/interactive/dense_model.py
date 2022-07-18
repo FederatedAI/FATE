@@ -29,6 +29,12 @@ from fate_arch.session import computing_session as session
 from federatedml.secureprotol.paillier_tensor import PaillierTensor
 from federatedml.util import LOGGER
 
+from federatedml.nn.hetero_nn.backend.pytorch.pytorch_nn_model import PytorchNNModel
+
+from federatedml.nn.hetero_nn.backend.pytorch.pytorch_uitl import torch_interactive_to_keras_nn_model, \
+    keras_nn_model_to_torch_linear, modify_linear_input_shape
+from federatedml.nn.backend.fate_torch.serialization import recover_sequential_from_dict
+from federatedml.util import consts
 
 try:
     from tensorflow import get_default_graph, initialize_all_variables, placeholder
@@ -50,6 +56,7 @@ def _init_session():
 
 
 class DenseModel(object):
+
     def __init__(self):
         self.input = None
         self.model_weight = None
@@ -66,12 +73,20 @@ class DenseModel(object):
         self.is_empty_model = False
         self.activation_input = None
         self.model_builder = None
-
         self.input_cached = np.array([])
         self.activation_cached = np.array([])
 
         self.do_backward_selective_strategy = False
         self.batch_size = None
+
+        self.use_mean_gradient = True
+        self.config_type = consts.keras_backend
+
+        self.use_torch = False
+
+    def disable_mean_gradient(self):
+        # in pytorch backend, disable mean gradient to get correct result
+        self.use_mean_gradient = False
 
     def set_backward_selective_strategy(self):
         self.do_backward_selective_strategy = True
@@ -97,6 +112,7 @@ class DenseModel(object):
         layer_config=None,
         model_builder=None,
         restore_stage=False,
+        use_torch=False
     ):
         if not input_shape:
             if self.role == "host":
@@ -106,20 +122,25 @@ class DenseModel(object):
                 return
 
         self.model_builder = model_builder
-
         self.layer_config = layer_config
+        self.use_torch = use_torch
 
-        self.model = model_builder(
-            input_shape=input_shape,
-            nn_define=layer_config,
-            optimizer=SimpleNamespace(optimizer="SGD", kwargs={}),
-            loss="keep_predict_loss",
-            metrics=None,
-        )
+        if not use_torch:
+            self.model = model_builder(
+                input_shape=input_shape,
+                nn_define=layer_config,
+                optimizer=SimpleNamespace(optimizer="SGD", kwargs={}),
+                loss="keep_predict_loss",
+                metrics=None,
+            )
+        else:
+            torch_linear = recover_sequential_from_dict(modify_linear_input_shape(input_shape, layer_config))
+            self.model = torch_interactive_to_keras_nn_model(torch_linear)
 
         dense_layer = self.model.get_layer_by_index(0)
+
         if not restore_stage:
-            self._init_model_weight(dense_layer)
+            self._init_model_weight(dense_layer, use_torch)  # if use torch, don't have to init weight again
 
         if self.role == "host":
             self.activation_func = dense_layer.activation
@@ -134,17 +155,27 @@ class DenseModel(object):
             layer_weights.append(self.bias)
 
         self.model.set_layer_weights_by_index(0, layer_weights)
-        return self.model.export_model()
+
+        if self.use_torch:
+            torch_linear = keras_nn_model_to_torch_linear(self.model)
+            return PytorchNNModel.get_model_bytes(torch_linear)
+        else:
+            return self.model.export_model()
 
     def restore_model(self, model_bytes):
+
         if self.is_empty_model:
             return
 
-        # LOGGER.debug("model_bytes is {}".format(model_bytes))
-        self.model = self.model.restore_model(model_bytes)
+        if self.use_torch:
+            torch_linear = PytorchNNModel.recover_model_bytes(model_bytes)
+            self.model = torch_interactive_to_keras_nn_model(torch_linear)
+        else:
+            self.model = self.model.restore_model(model_bytes)
         self._init_model_weight(self.model.get_layer_by_index(0), restore_stage=True)
 
     def _init_model_weight(self, dense_layer, restore_stage=False):
+
         if not restore_stage:
             self.sess.run(initialize_all_variables())
 
@@ -245,7 +276,10 @@ class GuestDenseModel(DenseModel):
             self.input = self.input_cached[: self.batch_size]
             self.input_cached = self.input_cached[self.batch_size:]
 
-        delta_w = np.matmul(delta.T, self.input) / self.input.shape[0]
+        if self.use_mean_gradient:
+            delta_w = np.matmul(delta.T, self.input) / self.input.shape[0]
+        else:
+            delta_w = np.matmul(delta.T, self.input)
 
         return delta_w
 
@@ -334,7 +368,8 @@ class HostDenseModel(DenseModel):
         else:
             delta_w = self.input.fast_matmul_2d(delta)
 
-        delta_w /= self.input.shape[0]
+        if self.use_mean_gradient:
+            delta_w /= self.input.shape[0]
 
         return delta_w
 

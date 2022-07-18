@@ -32,6 +32,7 @@ from federatedml.model_base import MetricMeta
 from federatedml.transfer_variable.transfer_class.hetero_boosting_transfer_variable import \
     HeteroBoostingTransferVariable
 from federatedml.util.io_check import assert_io_num_rows_equal
+from federatedml.statistic.data_overview import get_anonymous_header
 
 
 class HeteroBoosting(Boosting, ABC):
@@ -288,6 +289,8 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
     def fit(self, data_inst, validate_data=None):
 
         LOGGER.info('begin to fit a hetero boosting model, model is {}'.format(self.model_name))
+
+        self.anonymous_header = get_anonymous_header(data_inst)
 
         self.start_round = 0
 
