@@ -388,7 +388,11 @@ class Session(object):
     @classmethod
     @DB.connection_context()
     def query_sessions(cls, reverse=None, order_by=None, **kwargs):
-        return SessionRecord.query(reverse=reverse, order_by=order_by, **kwargs)
+        try:
+            session_records = SessionRecord.query(reverse=reverse, order_by=order_by, **kwargs)
+            return session_records
+        except:
+            return []
 
     @DB.connection_context()
     def get_session_from_record(self, **kwargs):
