@@ -53,6 +53,7 @@ class FeatureImputationParam(BaseParam):
 
     def __init__(self, default_value=0, missing_fill_method=None, col_missing_fill_method=None,
                  missing_impute=None, need_run=True):
+        super(FeatureImputationParam, self).__init__()
         self.default_value = default_value
         self.missing_fill_method = missing_fill_method
         self.col_missing_fill_method = col_missing_fill_method

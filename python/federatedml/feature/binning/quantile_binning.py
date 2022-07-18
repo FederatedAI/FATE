@@ -74,9 +74,10 @@ class QuantileBinning(BaseBinning):
                             }
         """
         header = data_overview.get_header(data_instances)
+        anonymous_header = data_overview.get_anonymous_header(data_instances)
         LOGGER.debug("Header length: {}".format(len(header)))
 
-        self._default_setting(header)
+        self._default_setting(header, anonymous_header)
         # self._init_cols(data_instances)
         percent_value = 1.0 / self.bin_num
 

@@ -73,12 +73,6 @@ class StatisticsParam(BaseParam):
         self.need_run = need_run
         self.quantile_error = quantile_error
         self.bias = bias
-        if column_names is None:
-            self.column_names = []
-        if column_indexes is None:
-            self.column_indexes = []
-        if abnormal_list is None:
-            self.abnormal_list = []
 
     # @staticmethod
     # def extend_statistics(statistic_name):
@@ -126,6 +120,9 @@ class StatisticsParam(BaseParam):
             if not match_found:
                 raise ValueError(f"Illegal statistics name provided: {stat_name}.")
 
+        self.column_names = [] if self.column_names is None else self.column_names
+        self.column_indexes = [] if self.column_indexes is None else self.column_indexes
+        self.abnormal_list = [] if self.abnormal_list is None else self.abnormal_list
         model_param_descr = "Statistics's param column_names"
         if not isinstance(self.column_names, list):
             raise ValueError(f"column_names should be list of string.")

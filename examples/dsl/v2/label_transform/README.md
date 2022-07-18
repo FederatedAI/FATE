@@ -14,6 +14,11 @@ This section introduces the dsl & conf files for different types of tasks.
     - dsl: label_transform_encoder_dsl.json  
     - runtime_config : label_transform_encoder_conf.json
 
+3. Label Transform Task with Encoder(without label list):
+
+    - dsl: label_transform_encoder_dsl.json  
+    - runtime_config : label_transform_encoder_without_label_list_conf.json
+
 Users can use following commands to running the task.
 
     flow job submit -c ${runtime_config} -d ${dsl}

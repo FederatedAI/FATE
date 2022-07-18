@@ -414,6 +414,9 @@ class IvCalculator(object):
                         split_points = split_points_dict[col_name]
                         bin_num = BaseBinning.get_bin_num(col_value, split_points)
                         col_results = bin_res.all_cols_results.get(col_name)
+                        if np.isnan(col_value) and len(col_results.woe_array) == bin_num:
+                            raise ValueError("Find missing value in transform data, "
+                                             "but the training data does not has missing value, this is not support")
                         woe_value = col_results.woe_array[bin_num]
                         features[col_idx] = woe_value
                 instances.features = features

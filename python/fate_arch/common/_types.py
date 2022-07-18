@@ -10,6 +10,7 @@ class CoordinationProxyService(object):
     ROLLSITE = "rollsite"
     NGINX = "nginx"
     FATEFLOW = "fateflow"
+    FIREWORK = "firework"
 
 
 class CoordinationCommunicationProtocol(object):

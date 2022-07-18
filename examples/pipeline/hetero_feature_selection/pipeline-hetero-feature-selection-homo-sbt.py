@@ -15,32 +15,24 @@
 #
 
 import argparse
-import os
-import sys
-
-cur_path = os.path.realpath(__file__)
-for i in range(4):
-    cur_path = os.path.dirname(cur_path)
-print(f'fate_path: {cur_path}')
-sys.path.append(cur_path)
-
-from examples.pipeline.hetero_feature_selection import common_tools
-from pipeline.utils.tools import load_job_config
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataTransform
+from pipeline.component import Evaluation
+from pipeline.component import FeatureScale
 from pipeline.component import HeteroFeatureSelection
 from pipeline.component import HomoLR
-from pipeline.component import FeatureScale
 from pipeline.component import HomoSecureBoost
-from pipeline.component import Evaluation
 from pipeline.component import Reader
-
 from pipeline.interface.data import Data
 from pipeline.interface.model import Model
+from pipeline.utils.tools import load_job_config
 
 
-def make_normal_dsl(config, namespace):
+def main(config="../../config.yaml", namespace=""):
+    # obtain config
+    if isinstance(config, str):
+        config = load_job_config(config)
     parties = config.parties
     guest = parties.guest[0]
     hosts = parties.host[0]
@@ -91,7 +83,6 @@ def make_normal_dsl(config, namespace):
     pipeline.add_component(homo_sbt_0, data=Data(train_data=scale_0.output.data))
 
     selection_param = {
-        "name": "hetero_feature_selection_0",
         "select_col_indexes": -1,
         "select_names": [],
         "filter_methods": [
@@ -103,7 +94,7 @@ def make_normal_dsl(config, namespace):
             "take_high": True,
             "threshold": 0.03
         }}
-    feature_selection_0 = HeteroFeatureSelection(**selection_param)
+    feature_selection_0 = HeteroFeatureSelection(name="hetero_feature_selection_0", **selection_param)
     param = {
         "penalty": "L2",
         "optimizer": "sgd",
@@ -137,17 +128,7 @@ def make_normal_dsl(config, namespace):
     pipeline.add_component(evaluation_0, data=Data(data=homo_lr_0.output.data))
     # compile pipeline once finished adding modules, this step will form conf and dsl files for running job
     pipeline.compile()
-    return pipeline
-
-
-def main(config="../../config.yaml", namespace=""):
-    # obtain config
-    if isinstance(config, str):
-        config = load_job_config(config)
-    pipeline = make_normal_dsl(config, namespace)
     pipeline.fit()
-    common_tools.prettify(pipeline.get_component("hetero_feature_selection_0").get_summary())
-    common_tools.prettify(pipeline.get_component("evaluation_0").get_summary())
 
 
 if __name__ == "__main__":

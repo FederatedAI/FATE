@@ -1,7 +1,18 @@
-########################################################
-# Copyright 2019-2020 program was created VMware, Inc. #
-# SPDX-License-Identifier: Apache-2.0                  #
-########################################################
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
 
 import requests
 import time
@@ -18,26 +29,6 @@ APIs are refered to https://rawcdn.githack.com/rabbitmq/rabbitmq-management/v3.8
 """
 
 
-def connection_retry(func):
-    """retry connection
-    """
-
-    def wrapper(self, *args, **kwargs):
-        """wrapper
-        """
-        res = False
-        for ntry in range(60):
-            try:
-                res = func(self, *args, **kwargs)
-                if res is True:
-                    break
-            except Exception as e:
-                LOGGER.error("[rabbitmanager]function %s error" % func.__name__, exc_info=True)
-                time.sleep(1)
-        return res
-    return wrapper
-
-
 class RabbitManager:
     def __init__(self, user, password, endpoint, runtime_config=None):
         self.user = user
@@ -46,8 +37,6 @@ class RabbitManager:
         # The runtime_config defines the parameters to create queue, exchange .etc
         self.runtime_config = runtime_config if runtime_config is not None else {}
 
-    # return a requests.Response object in case someone need more info about the Response
-    @connection_retry
     def create_user(self, user, password):
         url = C_HTTP_TEMPLATE.format(self.endpoint, "users/" + user)
         body = {
@@ -189,7 +178,6 @@ class RabbitManager:
         LOGGER.debug(f"[rabbitmanager.delete_policy] vhost={vhost}, policy_name={policy_name}, {result}")
         return result
 
-    @connection_retry
     def create_queue(self, vhost, queue_name):
         url = C_HTTP_TEMPLATE.format(
             self.endpoint, "{}/{}/{}".format("queues", vhost, queue_name))
@@ -249,7 +237,6 @@ class RabbitManager:
         return result
 
     def delete_connections(self, vhost=None):
-        time.sleep(2)
         result = self.get_connections()
         names = None
         try:
@@ -296,7 +283,6 @@ class RabbitManager:
         LOGGER.debug(result)
         return result
 
-    @connection_retry
     def _set_federated_upstream(self, upstream_host, vhost, receive_queue_name):
         url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/{}/{}".format("parameters",
                                                                          "federation-upstream",
@@ -332,7 +318,6 @@ class RabbitManager:
         LOGGER.debug(result)
         return result
 
-    @connection_retry
     def _set_federated_queue_policy(self, vhost, receive_queue_name):
         url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/{}".format("policies",
                                                                       vhost,
@@ -367,7 +352,7 @@ class RabbitManager:
 
     # Create federate queue with upstream
     def federate_queue(self, upstream_host, vhost, send_queue_name, receive_queue_name):
-        time.sleep(1)
+        time.sleep(0.1)
         LOGGER.debug(f"[rabbitmanager.federate_queue] create federate_queue {receive_queue_name}")
 
         result = self._set_federated_upstream(
@@ -416,4 +401,5 @@ class RabbitManager:
                 self.delete_policy(vhost, name)
 
         self.delete_vhost(vhost=vhost)
+        time.sleep(1)
         self.delete_connections(vhost=vhost)

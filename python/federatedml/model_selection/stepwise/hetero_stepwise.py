@@ -27,7 +27,7 @@ from federatedml.evaluation.metrics.regression_metric import IC, IC_Approx
 from federatedml.model_selection.stepwise.step import Step
 from federatedml.statistic import data_overview
 from federatedml.transfer_variable.transfer_class.stepwise_transfer_variable import StepwiseTransferVariable
-from federatedml.util import consts, anonymous_generator
+from federatedml.util import consts
 from federatedml.util import LOGGER
 
 
@@ -68,6 +68,8 @@ class HeteroStepwise(object):
         self.models_trained = {}
         self.IC_computer = None
         self.step_direction = None
+        self.anonymous_header_guest = None
+        self.anonymous_header_host = None
 
     def _init_model(self, param):
         self.model_param = param
@@ -255,24 +257,27 @@ class HeteroStepwise(object):
             return self.client_sync_data_info(data)
 
     def arbiter_sync_data_info(self):
-        n_host, j_host = self.transfer_variable.host_data_info.get(idx=0)
-        n_guest, j_guest = self.transfer_variable.guest_data_info.get(idx=0)
+        n_host, j_host, self.anonymous_header_host = self.transfer_variable.host_data_info.get(idx=0)
+        n_guest, j_guest, self.anonymous_header_guest = self.transfer_variable.guest_data_info.get(idx=0)
         self.n_count = n_host
         return j_host, j_guest
 
     def client_sync_data_info(self, data):
         n, j = data.count(), data_overview.get_features_shape(data)
+        anonymous_header = data_overview.get_anonymous_header(data)
         self.n_count = n
         if self.role == consts.HOST:
-            self.transfer_variable.host_data_info.remote((n, j), role=consts.ARBITER, idx=0)
-            self.transfer_variable.host_data_info.remote((n, j), role=consts.GUEST, idx=0)
+            self.transfer_variable.host_data_info.remote((n, j, anonymous_header), role=consts.ARBITER, idx=0)
+            self.transfer_variable.host_data_info.remote((n, j, anonymous_header), role=consts.GUEST, idx=0)
             j_host = j
-            n_guest, j_guest = self.transfer_variable.guest_data_info.get(idx=0)
+            n_guest, j_guest, self.anonymous_header_guest = self.transfer_variable.guest_data_info.get(idx=0)
+            self.anonymous_header_host = anonymous_header
         else:
-            self.transfer_variable.guest_data_info.remote((n, j), role=consts.ARBITER, idx=0)
-            self.transfer_variable.guest_data_info.remote((n, j), role=consts.HOST, idx=0)
+            self.transfer_variable.guest_data_info.remote((n, j, anonymous_header), role=consts.ARBITER, idx=0)
+            self.transfer_variable.guest_data_info.remote((n, j, anonymous_header), role=consts.HOST, idx=0)
             j_guest = j
-            n_host, j_host = self.transfer_variable.host_data_info.get(idx=0)
+            n_host, j_host, self.anonymous_header_host = self.transfer_variable.host_data_info.get(idx=0)
+            self.anonymous_header_guest = anonymous_header
         return j_host, j_guest
 
     def get_to_enter(self, host_mask, guest_mask, all_features):
@@ -312,7 +317,7 @@ class HeteroStepwise(object):
         metas["direction"] = self.direction
         metas["n_count"] = int(self.n_count)
 
-        host_anonym = [
+        """host_anonym = [
             anonymous_generator.generate_anonymous(
                 fid=i,
                 role='host',
@@ -326,6 +331,9 @@ class HeteroStepwise(object):
                 len(guest_mask))]
         metas["host_features_anonym"] = host_anonym
         metas["guest_features_anonym"] = guest_anonym
+        """
+        metas["host_features_anonym"] = self.anonymous_header_host
+        metas["guest_features_anonym"] = self.anonymous_header_guest
 
         model_info = self.models_trained[step_best]
         loss = model_info.get_loss()
@@ -349,7 +357,12 @@ class HeteroStepwise(object):
             metas["header"] = param_dict.get("header", [])
             if self.n_step == 0 and self.direction == "forward":
                 metas["intercept"] = self.intercept
-            self.update_summary_client(model, host_mask, guest_mask, all_features, host_anonym, guest_anonym)
+            self.update_summary_client(model,
+                                       host_mask,
+                                       guest_mask,
+                                       all_features,
+                                       self.anonymous_header_host,
+                                       self.anonymous_header_guest)
         else:
             self.update_summary_arbiter(model, loss, ic_val)
         metric_name = f"stepwise_{self.n_step}"
@@ -400,6 +413,8 @@ class HeteroStepwise(object):
         LOGGER.info("Enter stepwise")
         self._init_model(component_parameters)
         j_host, j_guest = self.sync_data_info(train_data)
+        if train_data is not None:
+            self.anonymous_header = data_overview.get_anonymous_header(train_data)
         if self.backward:
             host_mask, guest_mask = np.ones(j_host, dtype=bool), np.ones(j_guest, dtype=bool)
         else:

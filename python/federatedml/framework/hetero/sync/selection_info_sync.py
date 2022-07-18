@@ -19,6 +19,7 @@
 from federatedml.feature.feature_selection.selection_properties import SelectionProperties
 from federatedml.transfer_variable.transfer_class.hetero_feature_selection_transfer_variable import \
     HeteroFeatureSelectionTransferVariable
+from federatedml.statistic.data_overview import look_up_names_from_header
 from federatedml.util import LOGGER
 from federatedml.util import consts
 
@@ -62,7 +63,7 @@ class Host(object):
                                                idx=0,
                                                suffix=suffix)
 
-    def sync_select_results(self, selection_param, decode_func=None, suffix=tuple()):
+    def sync_select_results_old(self, selection_param, decode_func=None, suffix=tuple()):
         left_cols_names = self._result_left_cols_transfer.get(idx=0, suffix=suffix)
         for col_name in left_cols_names:
             if decode_func is not None:
@@ -70,3 +71,12 @@ class Host(object):
             selection_param.add_left_col_name(col_name)
         LOGGER.debug("Received host selected result, original left_cols: {},"
                      " left_col_names: {}".format(left_cols_names, selection_param.left_col_names))
+
+    def sync_select_results(self, selection_param, header=None, anonymous_header=None, suffix=tuple()):
+        left_col_names = self._result_left_cols_transfer.get(idx=0, suffix=suffix)
+        if header is not None and anonymous_header is not None:
+            left_col_plain_names = look_up_names_from_header(left_col_names, anonymous_header, header)
+            for col_name in left_col_plain_names:
+                selection_param.add_left_col_name(col_name)
+        # LOGGER.debug(f"Received host selected result, original left_cols: {left_col_names},"
+        #             f"left_col_names: {selection_param.left_col_names}")

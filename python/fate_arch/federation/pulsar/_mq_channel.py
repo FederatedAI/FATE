@@ -1,12 +1,24 @@
-########################################################
-# Copyright 2019-2021 program was created VMware, Inc. #
-# SPDX-License-Identifier: Apache-2.0                  #
-########################################################
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
 
-import time
 
 import pulsar
+
 from fate_arch.common import log
+from fate_arch.federation._nretry import nretry
 
 LOGGER = log.getLogger()
 CHANNEL_TYPE_PRODUCER = "producer"
@@ -19,66 +31,38 @@ UNIQUE_CONSUMER_NAME = "unique_consumer"
 DEFAULT_SUBSCRIPTION_NAME = "unique"
 
 
-def connection_retry(func):
-    """retry connection
-    """
-
-    def wrapper(self, *args, **kwargs):
-        """wrapper
-        """
-        res = None
-        exception = None
-        for ntry in range(60):
-            try:
-                res = func(self, *args, **kwargs)
-                exception = None
-                break
-            except Exception as e:
-                LOGGER.error("function %s error" % func.__name__, exc_info=True)
-                exception = e
-                time.sleep(0.1)
-
-        if exception is not None:
-            LOGGER.exception(
-                f"failed",
-                exc_info=exception)
-            raise exception
-
-        return res
-
-    return wrapper
-
-
 # A channel cloud only be able to send or receive message.
 
 
 class MQChannel(object):
     # TODO add credential to secure pulsar cluster
     def __init__(
-        self,
-        host,
-        port,
-        mng_port,
-        pulsar_tenant,
-        pulsar_namespace,
-        pulsar_send_topic,
-        pulsar_receive_topic,
-        party_id,
-        role,
-        credential=None,
-        extra_args: dict = None,
+            self,
+            host,
+            port,
+            tenant,
+            namespace,
+            send_topic,
+            receive_topic,
+            src_party_id,
+            src_role,
+            dst_party_id,
+            dst_role,
+            credential=None,
+            extra_args: dict = None,
     ):
         # "host:port" is used to connect the pulsar broker
         self._host = host
         self._port = port
-        self._mng_port = mng_port
-        self._tenant = pulsar_tenant
-        self._namespace = pulsar_namespace
-        self._send_topic = pulsar_send_topic
-        self._receive_topic = pulsar_receive_topic
+        self._tenant = tenant
+        self._namespace = namespace
+        self._send_topic = send_topic
+        self._receive_topic = receive_topic
         self._credential = credential
-        self._party_id = party_id
-        self._role = role
+        self._src_party_id = src_party_id
+        self._src_role = src_role
+        self._dst_party_id = dst_party_id
+        self._dst_role = dst_role
         self._extra_args = extra_args
 
         # "_channel" is the subscriptor for the topic
@@ -106,13 +90,9 @@ class MQChannel(object):
         if self._extra_args.get("consumer") is not None:
             self._consumer_config.update(self._extra_args["consumer"])
 
-    @property
-    def party_id(self):
-        return self._party_id
-
     # splitting the creation of producer and producer to avoid resource wasted
-    @connection_retry
-    def basic_publish(self, body, properties):
+    @nretry
+    def produce(self, body, properties):
         self._get_or_create_producer()
         LOGGER.debug("send queue: {}".format(self._producer_send.topic()))
         LOGGER.debug("send data size: {}".format(len(body)))
@@ -124,7 +104,7 @@ class MQChannel(object):
 
         self._sequence_id = message_id
 
-    @connection_retry
+    @nretry
     def consume(self):
         self._get_or_create_consumer()
 
@@ -143,8 +123,8 @@ class MQChannel(object):
             self._consumer_receive.seek(pulsar.MessageId.earliest)
             raise TimeoutError("meet receive timeout, try to reset the cursor")
 
-    @connection_retry
-    def basic_ack(self, message):
+    @nretry
+    def ack(self, message):
         # assume consumer is alive
         try:
             self._consumer_receive.acknowledge(message)
@@ -157,11 +137,12 @@ class MQChannel(object):
             self._get_or_create_consumer()
             self._consumer_receive.negative_acknowledge(message)
 
-    @connection_retry
+    @nretry
     def unack_all(self):
         self._get_or_create_consumer()
         self._consumer_receive.seek(pulsar.MessageId.earliest)
 
+    @nretry
     def cancel(self):
         if self._consumer_conn is not None:
             try:
@@ -183,7 +164,6 @@ class MQChannel(object):
             self._producer_send = None
             self._producer_conn = None
 
-    @connection_retry
     def _get_or_create_producer(self):
         if self._check_producer_alive() != True:
             # if self._producer_conn is None:
@@ -213,9 +193,8 @@ class MQChannel(object):
                     f"catch exception {e} in creating pulsar producer")
                 self._producer_conn = None
 
-    @connection_retry
     def _get_or_create_consumer(self):
-        if self._check_consumer_alive() != True:
+        if not self._check_consumer_alive():
             try:
                 self._consumer_conn = pulsar.Client(
                     service_url="pulsar://{}:{}".format(

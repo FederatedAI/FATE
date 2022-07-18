@@ -23,6 +23,9 @@
         },
         "label-transform-encoder": {
             "script": "./pipeline-label-transform-encoder.py"
+        },
+        "label-transform-encoder-without-label-list": {
+            "script": "./pipeline-label-transform-encoder-without-label-list.py"
         }
     }
 }

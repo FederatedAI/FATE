@@ -49,6 +49,9 @@
         "rsa_intersect_split": {
             "script": "./pipeline-intersect-rsa-split.py"
         },
+        "rsa_intersect-with-preprocess": {
+            "script": "./pipeline-intersect-rsa-w-preprocess.py"
+        },
         "rsa_intersect_multi_host": {
             "script": "./pipeline-intersect-multi-rsa.py"
         },
@@ -58,11 +61,20 @@
         "raw_intersect_200c_with_union": {
             "script": "./pipeline-intersect-with-union.py"
         },
-        "dh_interect": {
+        "dh_intersect": {
             "script": "./pipeline-intersect-dh.py"
         },
-        "dh_interect_mutli": {
+        "dh_intersect_mutli": {
             "script": "./pipeline-intersect-dh-multi.py"
+        },
+        "dh_intersect-with-preprocess": {
+            "script": "./pipeline-intersect-dh-w-preprocess.py"
+        },
+        "ecdh_intersect": {
+            "script": "./pipeline-intersect-ecdh.py"
+        },
+        "ecdh_intersect-with-preprocess": {
+            "script": "./pipeline-intersect-ecdh-w-preprocess.py"
         },
         "rsa_intersect_cache": {
             "script": "./pipeline-intersect-rsa-cache.py"
@@ -70,8 +82,17 @@
         "dh_intersect_cache": {
             "script": "./pipeline-intersect-dh-cache.py"
         },
-        "intersect_cardinality": {
-            "script": "./pipeline-intersect-cardinality.py"
+        "ecdh_intersect_cache": {
+            "script": "./pipeline-intersect-ecdh-cache.py"
+        },
+        "intersect_rsa_cardinality": {
+            "script": "./pipeline-intersect-rsa-cardinality.py"
+        },
+        "intersect_ecdh_exact_cardinality": {
+            "script": "./pipeline-intersect-ecdh-exact-cardinality.py"
+        },
+        "intersect_dh_exact_cardinality": {
+            "script": "./pipeline-intersect-dh-exact-cardinality.py"
         }
     }
 }

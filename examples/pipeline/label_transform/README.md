@@ -12,6 +12,10 @@ This section introduces the Pipeline scripts for different types of tasks.
 
     script: pipeline-label-transform-encoder.py
 
+3. Label Transform Task with Encoder(without label list):
+
+    script: pipeline-label-transform-encoder-without-label-list.py
+
 Users can run a pipeline job directly:
 
     python ${pipeline_script}

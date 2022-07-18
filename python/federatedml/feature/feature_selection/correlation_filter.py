@@ -32,8 +32,11 @@ class CorrelationFilter(FederatedIsoModelFilter):
                  role, cpp: ComponentProperties):
         super().__init__(filter_param, iso_model=external_model, role=role, cpp=cpp)
         self.correlation_model = correlation_model
-        self.host_party_id = int(self.correlation_model.parties[1][1:-1].split(",")[1])
+        # self.host_party_id = int(self.correlation_model.parties[1][1:-1].split(",")[1])
+        self.host_party_id = None
         self.take_high = False
+        if self.select_federated:
+            self.host_party_id = int(self.correlation_model.parties[1][1:-1].split(",")[1])
 
     def _parse_filter_param(self, filter_param: CorrelationFilterParam):
         self.sort_metric = filter_param.sort_metric
@@ -86,10 +89,12 @@ class CorrelationFilter(FederatedIsoModelFilter):
             if party == 'guest':
                 row = guest_col_names.index(name)
                 corr = self.correlation_model.local_corr[row, :]
+                # local vars will not be filtered
                 filtered_name = self.__get_filtered_column(corr, filtered_name, guest_col_names, name, True)
-                corr = self.correlation_model.corr[row, :]
-                host_filtered_name = self.__get_filtered_column(corr, host_filtered_name,
-                                                                host_col_names, name, False)
+                if self.select_federated:
+                    corr = self.correlation_model.corr[row, :]
+                    host_filtered_name = self.__get_filtered_column(corr, host_filtered_name,
+                                                                    host_col_names, name, False)
                 # LOGGER.debug(f"guest_col_name: {name}, filtered_name: {filtered_name}, "
                 #             f"host_filtered_name: {host_filtered_name}")
             else:
@@ -109,6 +114,7 @@ class CorrelationFilter(FederatedIsoModelFilter):
                 if _name in filtered_name:
                     continue
                 else:
+                    # only record first corr value > threshold
                     filtered_name[_name] = v
         return filtered_name
 

@@ -160,9 +160,10 @@ class StandardScale(BaseScale):
 
     def _get_param(self):
         column_scale_param_dict = {}
+        scale_column_idx_set = set(self.scale_column_idx)
         if self.header:
             for i, header in enumerate(self.header):
-                if i in self.scale_column_idx:
+                if i in scale_column_idx_set:
                     param_obj = ColumnScaleParam(column_upper=self.column_max_value[i],
                                                  column_lower=self.column_min_value[i],
                                                  mean=self.mean[i],

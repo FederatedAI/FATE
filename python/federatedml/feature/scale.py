@@ -141,8 +141,10 @@ class Scale(ModelBase):
         self.std = [1 for _ in range(shape)]
         self.scale_column_idx = []
         scale_param_dict = dict(model_obj.col_scale_param)
+        header_index_mapping = dict(zip(self.header, range(len(self.header))))
         for key, column_scale_param in scale_param_dict.items():
-            index = self.header.index(key)
+            # index = self.header.index(key)
+            index = header_index_mapping[key]
             self.scale_column_idx.append(index)
 
             self.column_max_value[index] = column_scale_param.column_upper
