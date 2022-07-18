@@ -443,7 +443,7 @@ class InteractiveHostDenseLayer(object):
 
         if mask_table:
             decrypted_guest_forward_with_noise = decrypted_guest_forward + \
-                                                 (host_input * self.acc_noise).select_columns(mask_table)
+                (host_input * self.acc_noise).select_columns(mask_table)
             self.mask_table = mask_table
         else:
             decrypted_guest_forward_with_noise = decrypted_guest_forward + (host_input * self.acc_noise)
@@ -506,7 +506,6 @@ class InteractiveHostDenseLayer(object):
         encrypted_guest_weight_gradient = self.transfer_variable.encrypted_guest_weight_gradient.get(idx=0,
                                                                                                      suffix=(
                                                                                                      epoch, batch,))
-
         return encrypted_guest_weight_gradient
 
     def get_interactive_layer_drop_out_table(self, epoch, batch):
