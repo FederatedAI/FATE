@@ -32,10 +32,9 @@ class HomoOneHotArbiter(HomoOneHotBase):
         super(HomoOneHotArbiter, self).__init__()
 
     def combine_all_column_headers(self, guest_columns, host_columns):
-        """ This is used when there is a need for aligment within the
+        """ This is used when there is a need for alignment within the
         federated learning. The function would align the column headers from
         guest and host and send the new aligned headers back.
-
         Returns:
             Combine all the column headers from guest and host
             if there is alignment is used
