@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from pipeline.component.nn.backend.pytorch.fate_torch_base import Sequential as tSeq
 _TF_KERAS_VALID = False
 try:
     from tensorflow.python.keras.engine import base_layer
@@ -30,8 +31,6 @@ class Sequential(object):
         return self._model is None
 
     def add(self, layer):
-
-        from federatedml.nn.backend.fate_torch.nn import Sequential as tSeq
 
         if _TF_KERAS_VALID and isinstance(layer, base_layer.Layer):
             layer_type = "keras"
@@ -81,8 +80,7 @@ def _build_model(type):
         return model_builder.build_model()
 
     if type == "pytorch":
-        from federatedml.nn.backend.fate_torch.nn import Sequential
-        return Sequential()
+        return tSeq()
 
     if type == "nn":
         from pipeline.component.nn.backend.tf import model_builder
