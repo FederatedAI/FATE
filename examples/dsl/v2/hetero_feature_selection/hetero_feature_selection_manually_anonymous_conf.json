@@ -40,11 +40,11 @@
                         "with_label": false
                     },
                     "hetero_feature_selection_0": {
+                        "use_anonymous": true,
                         "manually_param": {
                             "filter_out_names": [
                                 "host_10000_x3"
-                            ],
-                            "use_anonymous": true
+                            ]
                         }
                     }
                 }

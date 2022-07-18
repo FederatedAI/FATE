@@ -352,19 +352,15 @@ class ManuallyFilterParam(BaseParam):
         Specify left col names
         Note tha columns specified by `left_col_indexes` and `left_col_names` will be combined.
 
-    use_anonymous: bool, default: False
-        Specify whether to interpret 'filter_out_names' & 'left_col_names' as anonymous names.
-
     """
 
     def __init__(self, filter_out_indexes=None, filter_out_names=None, left_col_indexes=None,
-                 left_col_names=None, use_anonymous=False):
+                 left_col_names=None):
         super().__init__()
         self.filter_out_indexes = filter_out_indexes
         self.filter_out_names = filter_out_names
         self.left_col_indexes = left_col_indexes
         self.left_col_names = left_col_names
-        self.use_anonymous = use_anonymous
 
     def check(self):
         descr = "Manually Filter param's"
@@ -372,7 +368,6 @@ class ManuallyFilterParam(BaseParam):
         self.check_defined_type(self.filter_out_names, descr, ['list', 'NoneType'])
         self.check_defined_type(self.left_col_indexes, descr, ['list', 'NoneType'])
         self.check_defined_type(self.left_col_names, descr, ['list', 'NoneType'])
-        self.check_boolean(self.use_anonymous, f"{descr} use_anonymous")
 
         if (self.filter_out_indexes or self.filter_out_names) is not None and \
                 (self.left_col_names or self.left_col_indexes) is not None:

@@ -21,8 +21,6 @@ from federatedml.param.feature_selection_param import ManuallyFilterParam
 from federatedml.protobuf.generated import feature_selection_meta_pb2
 from federatedml.statistic.data_overview import look_up_names_from_header
 
-from federatedml.util import LOGGER
-
 
 class ManuallyFilter(BaseFilterMethod):
     def __init__(self, filter_param: ManuallyFilterParam):
@@ -39,7 +37,7 @@ class ManuallyFilter(BaseFilterMethod):
         anonymous_header = self.selection_properties.anonymous_header
         col_name_maps = self.selection_properties.col_name_maps
         if (self.filter_param.filter_out_indexes or self.filter_param.filter_out_names) is not None:
-            if self.filter_param.use_anonymous:
+            if self.use_anonymous:
                 self.filter_out_names = look_up_names_from_header(self.filter_param.filter_out_names,
                                                                   anonymous_header,
                                                                   header)
@@ -52,7 +50,7 @@ class ManuallyFilter(BaseFilterMethod):
             if self.filter_param.left_col_indexes is not None:
                 filter_out_set = filter_out_set.difference(self.filter_param.left_col_indexes)
             if self.filter_param.left_col_names is not None:
-                if self.filter_param.use_anonymous:
+                if self.use_anonymous:
                     left_col_names = look_up_names_from_header(self.filter_param.left_col_names,
                                                                anonymous_header,
                                                                header)

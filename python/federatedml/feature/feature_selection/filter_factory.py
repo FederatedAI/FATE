@@ -132,7 +132,10 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
 
     elif filter_name == consts.MANUALLY_FILTER:
         manually_param = model_param.manually_param
-        return ManuallyFilter(manually_param)
+        filter = ManuallyFilter(manually_param)
+        if model_param.use_anonymous:
+            filter.set_use_anonymous()
+        return filter
 
     elif filter_name == consts.PERCENTAGE_VALUE:
         percentage_value_param = model_param.percentage_value_param
@@ -161,7 +164,7 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
         sbt_param = model_param.sbt_param
         this_param = _obtain_single_param(sbt_param, idx)
         if consts.HETERO_FAST_SBT_LAYERED in model.isometric_models and \
-                consts.HETERO_FAST_SBT_MIX in model.isometric_models:
+            consts.HETERO_FAST_SBT_MIX in model.isometric_models:
             raise ValueError("Should not provide layered and mixed fast sbt model simultaneously")
         elif consts.HETERO_FAST_SBT_LAYERED in model.isometric_models:
             iso_model = model.isometric_models.get(consts.HETERO_FAST_SBT_LAYERED)

@@ -92,11 +92,7 @@ This section introduces the Pipeline scripts for different types of tasks.
 
     script: pipeline-hetero-binning-missing-value.py
 
-23. Optimal Binning with Missing Value:
-
-    script: pipeline-hetero-binning-missing-value-bucket.py
-
-24. Sparse Quantile Binning:
+23. Sparse Quantile Binning:
 
     script: pipeline-hetero-binning-sparse-quantile-binning.py
 
