@@ -69,6 +69,7 @@ def main(config="../../config.yaml", namespace=""):
         "category_names": None,
         "adjustment_factor": 0.5,
         "local_only": False,
+        "skip_static": True,
         "transform_param": {
             "transform_cols": -1,
             "transform_names": None,

@@ -1,4 +1,10 @@
+from typing import overload
+
 class Curve25519(object):
+    @overload
+    def __init__(self): ...
+    @overload
+    def __init__(self, key): ...
     def get_private_key(self) -> bytes: ...
     def encrypt(self, m: bytes) -> bytes:
         """encrypt message.

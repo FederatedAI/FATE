@@ -76,10 +76,10 @@ def main(config="../../config.yaml", namespace=""):
     }
 
     guest_param = copy.deepcopy(param)
-    guest_param["method"] = 'quantile'
+    guest_param["method"] = "optimal"
     guest_param["category_indexes"] = [0, 1, 2]
     host_param = copy.deepcopy(param)
-    host_param["method"] = 'optimal'
+    host_param["method"] = "quantile"
     hetero_feature_binning_0 = HeteroFeatureBinning(name="hetero_feature_binning_0", **param)
     hetero_feature_binning_0.get_party_instance(role="guest", party_id=guest).component_param(**guest_param)
     hetero_feature_binning_0.get_party_instance(role="host", party_id=host).component_param(**host_param)

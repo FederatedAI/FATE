@@ -51,14 +51,6 @@ def main(config="../../config.yaml", namespace=""):
 
     param = {
         "method": "quantile",
-        "optimal_binning_param": {
-            "metric_method": "iv",
-            "min_bin_pct": 0.05,
-            "max_bin_pct": 0.8,
-            "init_bucket_method": "quantile",
-            "init_bin_nums": 100,
-            "mixture": True
-        },
         "compress_thres": 10000,
         "head_size": 10000,
         "error": 0.001,

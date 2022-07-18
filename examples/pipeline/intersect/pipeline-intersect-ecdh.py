@@ -51,18 +51,13 @@ def main(config="../../config.yaml", namespace=""):
         with_label=False, output_format="dense")
 
     param = {
-        "intersect_method": "rsa",
-        "cardinality_only": True,
-        "sync_cardinality": False,
-        "rsa_params": {
+        "intersect_method": "ecdh",
+        "sync_intersect_ids": True,
+        "only_output_key": True,
+        "ecdh_params": {
             "hash_method": "sha256",
-            "final_hash_method": "sha256",
-            "key_length": 2048
-        },
-        "intersect_preprocess_params": {
-            "false_positive_rate": 1e-4,
-            "encrypt_method": "rsa",
-            "hash_method": "sha256"
+            "salt": "12345",
+            "curve": "curve25519"
         }
     }
     intersect_0 = Intersection(name="intersect_0", **param)
