@@ -1,7 +1,7 @@
 # Column Expand
 
 Column Expand is used for adding arbitrary number of columns with
-user-provided values. This module is run directly on table object(raw
+user-provided values. This module is run directly on dense table(raw
 data), before data entering Data Transform.
 
 <!-- mkdocs

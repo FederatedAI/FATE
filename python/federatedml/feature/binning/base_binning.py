@@ -25,7 +25,7 @@ import numpy as np
 
 from federatedml.feature.binning.bin_inner_param import BinInnerParam
 from federatedml.feature.binning.bin_result import BinColResults, SplitPointsResult
-from federatedml.statistic.data_overview import get_header
+from federatedml.statistic.data_overview import get_header, get_anonymous_header
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.statistic import data_overview
@@ -66,12 +66,12 @@ class BaseBinning(object):
     # def split_points(self):
     #     return self.bin_results.all_split_points
 
-    def _default_setting(self, header):
+    def _default_setting(self, header, anonymous_header):
         if self.bin_inner_param is not None:
             return
         self.bin_inner_param = BinInnerParam()
 
-        self.bin_inner_param.set_header(header)
+        self.bin_inner_param.set_header(header, anonymous_header)
         if self.params.bin_indexes == -1:
             self.bin_inner_param.set_bin_all()
         else:
@@ -237,10 +237,11 @@ class BaseBinning(object):
         self.bin_inner_param = BinInnerParam()
 
         header = get_header(data_instances)
+        anonymous_header = get_anonymous_header(data_instances)
         LOGGER.debug("_setup_bin_inner_param, get header length: {}".format(len(self.header)))
 
         self.schema = data_instances.schema
-        self.bin_inner_param.set_header(header)
+        self.bin_inner_param.set_header(header, anonymous_header)
         if params.bin_indexes == -1:
             self.bin_inner_param.set_bin_all()
         else:

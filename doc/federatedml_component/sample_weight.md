@@ -15,7 +15,7 @@ Please note that when weight is not None, only `weight_diff` convergence
 check method may be used for training GLM.
 
 
-!!!Note
+:exclamation:
 
     If both `class_weight` and `sample_weight_name` are provided, values
     from column of `sample_weight_name` will be used.

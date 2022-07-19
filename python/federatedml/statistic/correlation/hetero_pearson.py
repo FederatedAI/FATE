@@ -150,7 +150,6 @@ class HeteroPearson(ModelBase):
         if self.model_param.calc_local_vif:
             self.local_vif = self._vif_from_pearson_matrix(self.local_corr)
         self._summary["local_corr"] = self.local_corr.tolist()
-        self._summary["num_local_features"] = n
 
         if self.model_param.cross_parties:
             with SPDZ(
@@ -177,11 +176,15 @@ class HeteroPearson(ModelBase):
 
                 self.corr = spdz.dot(x, y, "corr").get() / n
                 self._summary["corr"] = self.corr.tolist()
+                self._summary["num_local_features"] = (
+                    m1 if self.local_party.role == "guest" else m2
+                )
                 self._summary["num_remote_features"] = (
                     m2 if self.local_party.role == "guest" else m1
                 )
 
         else:
+            self._summary["num_local_features"] = len(normed.first()[1])
             self.shapes.append(self.local_corr.shape[0])
             self.parties = [self.local_party]
 

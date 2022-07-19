@@ -601,9 +601,18 @@ Fateboard is a web service. When started, it allows a user to view task informat
 
 ### 7.1. Service Management
 
-**Execute as app user on the destination server (192.168.0.1, 192.168.0.2.**
+**Execute as app user on the destination server (192.168.0.1, 192.168.0.2).**
 
-#### 7.1.1. Eggroll Service Management
+#### 7.1.1. Mysql Service Management
+
+Start/Shutdown/View/Restart mysql service
+
+```bash
+cd /data/projects/fate/common/mysql/mysql-*
+sh ./service.sh start|stop|status|restart
+```
+
+#### 7.1.2. Eggroll Service Management
 
 ```bash
 source /data/projects/fate/bin/init_env.sh
@@ -622,7 +631,7 @@ Start/Shutdown/View/Restart a single module (clustermanager, nodemanager, rollsi
 sh ./bin/eggroll.sh clustermanager start/stop/status/restart
 ```
 
-#### 7.1.2. FATE Service Management
+#### 7.1.3. FATE Service Management
 
 1. Start/Shutdown/View/Restart fate_flow service
 
@@ -639,15 +648,6 @@ To start the modules on an individual basis, a user must start eggroll before fa
 ```bash
 cd /data/projects/fate/fateboard
 sh service.sh start|stop|status|restart
-```
-
-#### 7.1.3. Mysql Service Management
-
-Start/Shutdown/View/Restart mysql service
-
-```bash
-cd /data/projects/fate/common/mysql/mysql-8.0.13
-sh ./service.sh start|stop|status|restart
 ```
 
 ### 7.2. View Processes and Ports
@@ -690,7 +690,7 @@ netstat -tlnp | grep 8080
 | eggroll               | /data/projects/fate/eggroll/logs                   |
 | fate_flow & task log | /data/projects/fate/fateflow/logs                  |
 | fateboard             | /data/projects/fate/fateboard/logs                 |
-| mysql                 | /data/projects/fate/common/mysql/mysql-8.0.13/logs |
+| mysql                 | /data/projects/fate/common/mysql/mysql-*/logs |
 
 ### 7.4. Space Clearance Rules
 

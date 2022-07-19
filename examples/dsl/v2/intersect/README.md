@@ -44,25 +44,50 @@ This section introduces the dsl and conf for usage of different type of task.
     - dsl: test_intersect_job_dsl.json  
     - runtime_config : test_intersect_job_dh_multi_conf.json
     
-10. RSA Intersection with Cache:  
+10. ECDH Intersection:  
+    - dsl: test_intersect_job_dsl.json  
+    - runtime_config : test_intersect_job_ecdh_conf.json
+
+11. ECDH Intersection with Preprocessing:  
+    - dsl: test_intersect_job_dsl.json  
+    - runtime_config : test_intersect_job_ecdh_w_preprocess_conf.json
+  
+12. RSA Intersection with Cache:  
     - dsl: test_intersect_job_cache_dsl.json  
     - runtime_config : test_intersect_job_rsa_cache_conf.json
     
-11. DH Intersection with Cache:  
+13. DH Intersection with Cache:  
     - dsl: test_intersect_job_cache_dsl.json  
     - runtime_config : test_intersect_job_dh_cache_conf.json
    
-   
-12. RSA Intersection with Cache Loader:  
+14. ECDH Intersection with Cache:  
+    - dsl: test_intersect_job_cache_dsl.json  
+    - runtime_config : test_intersect_job_ecdh_cache_conf.json
+  
+15. RSA Intersection with Cache Loader:  
     - dsl: test_intersect_job_cache_loader_dsl.json  
     - runtime_config : test_intersect_job_rsa_cache_loader_conf.json
  
-13. Intersect Cardinality:
+16. Estimated Intersect Cardinality:
     - dsl: test_intersect_job_dsl.json
-    - runtime_config: "test_intersect_job_cardinality_conf.json
+    - runtime_config: "test_intersect_job_rsa_cardinality_conf.json
  
+17. Exact Intersect Cardinality with ECDH:
+    - dsl: test_intersect_job_dsl.json
+    - runtime_config: "test_intersect_job_ecdh_exact_cardinality_conf.json
+
+18. Exact Intersect Cardinality with DH:
+    - dsl: test_intersect_job_dsl.json
+    - runtime_config: "test_intersect_job_dh_exact_cardinality_conf.json
+
+19. DH Intersection with Preprocessing:  
+    - dsl: test_intersect_job_dsl.json  
+    - runtime_config : test_intersect_job_dh_w_preprocess_conf.json
+
+20. RSA Intersection with Preprocessing:  
+    - dsl: test_intersect_job_dsl.json  
+    - runtime_config : test_intersect_job_rsa_w_preprocess_conf.json
+
 Users can use following commands to running the task.
 
     flow job submit -c ${runtime_config} -d ${dsl}
-
-Note: the intersection output only contains ids of intersection, because of the parameter of "only_output_key" in runtime_config.

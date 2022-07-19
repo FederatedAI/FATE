@@ -55,6 +55,7 @@ HOMO = "homo"
 RAW = "raw"
 RSA = "rsa"
 DH = "dh"
+ECDH = "ecdh"
 
 # evaluation
 AUC = "auc"
@@ -343,3 +344,6 @@ MIN_HASH_FUNC_COUNT = 4
 MAX_HASH_FUNC_COUNT = 32
 
 EINI_TREE_COMPLEXITY = 1000000000
+
+# curve names
+CURVE25519 = 'curve25519'

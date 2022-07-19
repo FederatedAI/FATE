@@ -72,15 +72,18 @@ class Federation(FederationBase):
         base_user = rabbitmq_config.get("user")
         base_password = rabbitmq_config.get("password")
         mode = rabbitmq_config.get("mode", "replication")
+        # max_message_size；
+        max_message_size = int(rabbitmq_config.get("max_message_size", DEFAULT_MESSAGE_MAX_SIZE))
 
         union_name = federation_session_id
         policy_id = federation_session_id
 
         rabbitmq_run = runtime_conf.get("job_parameters", {}).get("rabbitmq_run", {})
         LOGGER.debug(f"rabbitmq_run: {rabbitmq_run}")
-        max_message_size = rabbitmq_run.get(
-            "max_message_size", DEFAULT_MESSAGE_MAX_SIZE
-        )
+
+        max_message_size = int(rabbitmq_run.get(
+            "max_message_size", max_message_size))
+
         LOGGER.debug(f"set max message size to {max_message_size} Bytes")
 
         rabbit_manager = RabbitManager(

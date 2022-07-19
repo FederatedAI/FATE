@@ -28,11 +28,11 @@ class DataTransformConverter(ProtoConverterBase):
                 host_id_mapping: Dict,
                 arbiter_id_mapping: Dict
                 ) -> Tuple:
-        if not getattr(param, "anonymous_header"):
+        try:
+            anonymous_header = list(param.anonymous_header)
+            replacer = AutoReplace(guest_id_mapping, host_id_mapping, arbiter_id_mapping)
+
+            param.anonymous_header[:] = replacer.migrate_anonymous_header(anonymous_header)
             return param, meta
-
-        anonymous_header = list(param.anonymous_header)
-        replacer = AutoReplace(guest_id_mapping, host_id_mapping, arbiter_id_mapping)
-
-        param.anonymous_header[:] = replacer.migrate_anonymous_header(anonymous_header)
-        return param, meta
+        except AttributeError:
+            return param, meta

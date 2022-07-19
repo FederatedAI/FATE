@@ -107,6 +107,7 @@ fate_on_spark:
     route_table:
     # mode: replication / client, default: replication
     mode: replication
+    max_message_size: 1048576
   pulsar:
     host: 192.168.0.5
     port: 6650
@@ -120,6 +121,7 @@ fate_on_spark:
     route_table:
    # mode: replication / client, default: replication
     mode: replication
+    max_message_size: 1048576
   nginx:
     host: 127.0.0.1
     http_port: 9300
