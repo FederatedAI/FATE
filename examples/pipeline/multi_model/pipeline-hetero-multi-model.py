@@ -32,7 +32,6 @@ from pipeline.component import LocalBaseline
 from pipeline.component import HeteroLinR
 from pipeline.component import HeteroPoisson
 from pipeline.component import HeteroSSHELR
-from pipeline.component import HeteroSSHEPoisson
 from pipeline.component import HeteroSSHELinR
 from pipeline.component import Reader
 from pipeline.interface import Data
@@ -146,9 +145,6 @@ def main(config="../../config.yaml", namespace=""):
                                      init_param={"init_method": "zeros"}, penalty="L2")
     hetero_poisson_1 = HeteroPoisson(name="hetero_poisson_1")
 
-    hetero_sshe_poisson_0 = HeteroSSHEPoisson(name="hetero_sshe_poisson_0", max_iter=5)
-    hetero_sshe_poisson_1 = HeteroSSHEPoisson(name="hetero_sshe_poisson_1")
-
     evaluation_0 = Evaluation(name="evaluation_0")
     evaluation_1 = Evaluation(name="evaluation_1")
     evaluation_2 = Evaluation(name="evaluation_2")
@@ -221,18 +217,13 @@ def main(config="../../config.yaml", namespace=""):
                                                          hetero_sshe_lr_0.output.data, hetero_sshe_lr_1.output.data,
                                                          local_baseline_0.output.data, local_baseline_1.output.data]))
 
-    pipeline.add_component(hetero_sshe_poisson_0, data=Data(train_data=one_hot_0.output.data))
-    pipeline.add_component(hetero_sshe_poisson_1, data=Data(test_data=one_hot_1.output.data),
-                           model=Model(model=hetero_sshe_poisson_0.output.model))
-
     pipeline.add_component(evaluation_1,
                            data=Data(
                                data=[hetero_linr_0.output.data, hetero_linr_1.output.data,
                                      hetero_sshe_linr_0.output.data, hetero_linr_1.output.data]))
     pipeline.add_component(evaluation_2,
                            data=Data(
-                               data=[hetero_poisson_0.output.data, hetero_poisson_1.output.data,
-                                     hetero_sshe_poisson_0.output.data, hetero_sshe_poisson_1.output.data]))
+                               data=[hetero_poisson_0.output.data, hetero_poisson_1.output.data]))
 
     pipeline.compile()
 
