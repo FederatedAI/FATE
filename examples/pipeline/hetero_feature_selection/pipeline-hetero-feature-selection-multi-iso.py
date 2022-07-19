@@ -163,8 +163,8 @@ def main(config="../../config.yaml", namespace=""):
         "statistic_param": {
             "metrics": ["skewness", "skewness", "kurtosis", "median"],
             "filter_type": "threshold",
-            "take_high": [True, False, True, True],
-            "threshold": [-10, 10, -1.5, -1.5]
+            "take_high": [True, False, False, True],
+            "threshold": [-10, 10, 2, -1.5]
         },
         "psi_param": {
             "metrics": "psi",

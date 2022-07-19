@@ -91,7 +91,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(hetero_feature_binning_0, data=Data(data=intersection_0.output.data))
 
     statistic_param = {
-        "statistics": ["95%", "coefficient_of_variance", "stddev"],
+        "statistics": ["95%", "coefficient_of_variance", "stddev", "skewness"],
         "column_indexes": -1,
         "column_names": []
     }
@@ -102,27 +102,20 @@ def main(config="../../config.yaml", namespace=""):
         "select_col_indexes": -1,
         "select_names": [],
         "filter_methods": [
-            "unique_value",
-            "iv_value_thres",
-            "coefficient_of_variation_value_thres",
-            "iv_percentile",
-            "outlier_cols"
+            "statistic_filter",
+            "iv_filter",
+            "coefficient_of_variation_value_thres"
         ],
-        "unique_param": {
-            "eps": 1e-06
+        "statistic_param": {
+            "filter_type": "threshold",
+            "metrics": ["kurtosis", "coefficient_of_variance", "stddev"],
+            "take_high": [False, True, True],
+            "threshold": [2, 0.3, 1e-3]
         },
-        "iv_value_param": {
-            "value_threshold": 0.1
-        },
-        "iv_percentile_param": {
-            "percentile_threshold": 0.9
-        },
-        "variance_coe_param": {
-            "value_threshold": 0.3
-        },
-        "outlier_param": {
-            "percentile": 0.95,
-            "upper_threshold": 2.0
+        "iv_param": {
+            "metrics": ["iv", "iv"],
+            "filter_type": ["threshold", "top_percentile"],
+            "threshold": [0.1, 0.9]
         }
     }
 
