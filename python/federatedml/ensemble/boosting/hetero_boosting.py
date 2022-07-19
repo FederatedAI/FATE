@@ -290,7 +290,7 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
 
         LOGGER.info('begin to fit a hetero boosting model, model is {}'.format(self.model_name))
 
-        self.anonymous_header = get_anonymous_header(data_inst)
+        self.anonymous_header = {v: k for k, v in zip(get_anonymous_header(data_inst), data_inst.schema['header'])}
 
         self.start_round = 0
 

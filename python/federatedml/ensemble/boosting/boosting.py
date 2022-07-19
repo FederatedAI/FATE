@@ -64,7 +64,7 @@ class Boosting(ModelBase, ABC):
         self.random_seed = 100
 
         # feat anonymous header
-        self.anonymous_header = None
+        self.anonymous_header = {}
 
         # data
         self.data_inst = None  # original input data
