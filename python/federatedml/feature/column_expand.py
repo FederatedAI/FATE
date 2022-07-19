@@ -93,13 +93,25 @@ class ColumnExpand(ModelBase):
 
         new_schema = copy.deepcopy(data.schema)
         header = new_schema.get("header", "")
+        anonymous_header = new_schema.get("anonymous_header", None)
+        new_anonymous_header = None
         if len(header) == 0:
             new_header = DELIMITER.join(self.append_header)
             if new_schema.get("sid", None) is not None:
                 new_schema["sid"] = new_schema.get("sid").strip()
+            if anonymous_header is not None:
+                new_anonymous_header = self.anonymous_generator.extend_columns([], self.append_header)
         else:
             new_header = DELIMITER.join(header.split(DELIMITER) + self.append_header)
+            if anonymous_header is not None:
+                anonymous_header_list = anonymous_header.split(DELIMITER)
+                append_anonymous_header = self.anonymous_generator.extend_columns(anonymous_header_list,
+                                                                                  self.append_header)
+                new_anonymous_header = DELIMITER.join(anonymous_header_list + append_anonymous_header)
+
         new_schema["header"] = new_header
+        if new_anonymous_header is not None:
+            new_schema["anonymous_header"] = anonymous_header
         new_data.schema = new_schema
         LOGGER.debug(f"new_data schema: {new_schema}")
 
