@@ -1,6 +1,10 @@
 import json
-import torch as t
-from torch.nn import Sequential as tSequential
+try:
+    import torch as t
+    from torch.nn import Sequential as tSequential
+except ImportError:
+    t = None
+    tSequential = object
 
 
 class FateTorchLayer(object):

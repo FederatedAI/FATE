@@ -1,8 +1,12 @@
-import torch
-import torch as t
 from federatedml.util import LOGGER
-from torch import nn
-from torch.nn import functional as F
+try:
+    import torch
+    import torch as t
+    from torch import nn
+    from torch.nn import Module
+    from torch.nn import functional as F
+except ImportError:
+    Module = object
 
 
 def entropy(tensor):
@@ -29,6 +33,7 @@ def cross_entropy_for_one_hot(pred, target, reduce="mean"):
 
 
 def coae_loss(label, fake_label, reconstruct_label, lambda_1=10, lambda_2=2, verbose=False):
+
     loss_a = cross_entropy(reconstruct_label, label) - lambda_1 * cross_entropy(fake_label, label)
     loss_b = entropy(fake_label)
     if verbose:
@@ -38,7 +43,7 @@ def coae_loss(label, fake_label, reconstruct_label, lambda_1=10, lambda_2=2, ver
     return loss_a - lambda_2 * loss_b
 
 
-class CoAE(nn.Module):
+class CoAE(Module):
 
     def __init__(self, input_dim=2, encode_dim=None):
         super(CoAE, self).__init__()

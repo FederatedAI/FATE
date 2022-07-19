@@ -1,12 +1,16 @@
 import numpy as np
-import torch
-import torch as t
 import tempfile
 from federatedml.util import LOGGER
-from federatedml.nn.backend.fate_torch import optim, serialization as s
-from federatedml.nn.backend.fate_torch.base import FateTorchOptimizer
-from federatedml.nn.backend.fate_torch.nn import CrossEntropyLoss
-from torch import autograd
+
+try:  # for the situation that torch is not installed, but other modules still can be used
+    import torch
+    import torch as t
+    from torch import autograd
+    from federatedml.nn.backend.fate_torch import optim, serialization as s
+    from federatedml.nn.backend.fate_torch.base import FateTorchOptimizer
+    from federatedml.nn.backend.fate_torch.nn import CrossEntropyLoss
+except ImportError:
+    pass
 
 
 def backward_loss(z, backward_error):

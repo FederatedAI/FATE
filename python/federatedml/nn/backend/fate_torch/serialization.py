@@ -1,9 +1,12 @@
 import copy
 import inspect
 from collections import OrderedDict
-from federatedml.nn.backend.fate_torch import optim, init, nn
-from federatedml.nn.backend.fate_torch import operation
-from federatedml.nn.backend.fate_torch.base import Sequential
+try:
+    from federatedml.nn.backend.fate_torch import optim, init, nn
+    from federatedml.nn.backend.fate_torch import operation
+    from federatedml.nn.backend.fate_torch.base import Sequential
+except ImportError:
+    pass
 
 
 def recover_layer_from_dict(nn_define, nn_dict):

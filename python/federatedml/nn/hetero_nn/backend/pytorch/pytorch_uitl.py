@@ -1,12 +1,16 @@
-import torch
-import torch as t
 import copy
 from types import SimpleNamespace
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.models import Sequential
 from federatedml.nn.backend.tf_keras.nn_model import KerasNNModel
-from federatedml.nn.backend.fate_torch.nn import Linear
-from federatedml.nn.backend.fate_torch.nn import Sequential as tSequential
+
+try:
+    import torch
+    import torch as t
+    from federatedml.nn.backend.fate_torch.nn import Linear
+    from federatedml.nn.backend.fate_torch.nn import Sequential as tSequential
+except ImportError:
+    pass
 
 
 def modify_linear_input_shape(input_shape, layer_config):
@@ -17,7 +21,7 @@ def modify_linear_input_shape(input_shape, layer_config):
     return new_layer_config
 
 
-def torch_interactive_to_keras_nn_model(seq: tSequential):
+def torch_interactive_to_keras_nn_model(seq):
 
     linear_layer = seq[0]  # take the linear layer
     weight = linear_layer.weight.detach().numpy()

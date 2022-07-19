@@ -1,6 +1,9 @@
-from pipeline.component.nn.backend.fate_torch import nn as nn_
-from pipeline.component.nn.backend.fate_torch import init as init_
-from pipeline.component.nn.backend.fate_torch import optim as optim_
+try:
+    from pipeline.component.nn.backend.fate_torch import nn as nn_
+    from pipeline.component.nn.backend.fate_torch import init as init_
+    from pipeline.component.nn.backend.fate_torch import optim as optim_
+except ImportError:
+    pass
 
 
 def monkey_patch(torch_nn, fate_torch_module):
