@@ -63,6 +63,9 @@ class Boosting(ModelBase, ABC):
         # random seed
         self.random_seed = 100
 
+        # feat anonymous header
+        self.anonymous_header = None
+
         # data
         self.data_inst = None  # original input data
         self.binning_class = None  # class used for data binning

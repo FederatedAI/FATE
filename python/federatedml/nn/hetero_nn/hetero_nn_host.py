@@ -22,7 +22,7 @@ import numpy as np
 
 from federatedml.util import consts, LOGGER
 from federatedml.framework.hetero.procedure import batch_generator
-from federatedml.nn.hetero_nn.backend.model_builder import model_builder
+from federatedml.nn.hetero_nn.model.hetero_nn_model import HeteroNNHostModel
 from federatedml.nn.hetero_nn.hetero_nn_base import HeteroNNBase
 from federatedml.protobuf.generated.hetero_nn_model_meta_pb2 import HeteroNNMeta
 from federatedml.protobuf.generated.hetero_nn_model_param_pb2 import HeteroNNParam
@@ -65,7 +65,7 @@ class HeteroNNHost(HeteroNNBase):
         self._restore_model_param(param)
 
     def _build_model(self):
-        self.model = model_builder("host", self.hetero_nn_param)
+        self.model = HeteroNNHostModel(self.hetero_nn_param)
         self.model.set_transfer_variable(self.transfer_variable)
 
     def predict(self, data_inst):
