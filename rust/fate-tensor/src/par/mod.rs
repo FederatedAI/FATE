@@ -1,28 +1,21 @@
-pub mod block;
-pub mod cb;
-pub mod fixedpoint;
-pub mod math;
-pub mod paillier;
-mod par;
-
 use bincode::{deserialize, serialize};
 use numpy::{IntoPyArray, PyArrayDyn, PyReadonlyArray1, PyReadonlyArray2, PyReadonlyArrayDyn};
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
+use crate::fixedpoint;
+use crate::block;
 
-/// cipherblock contains ciphertexts and pubkey
-///
-/// we need `new` method with zero argument (Option::None)
-/// for unpickle to work.
-#[pyclass(module = "fate_tensor")]
+mod cb;
+
+#[pyclass(module = "fate_tensor.par")]
 pub struct Cipherblock(Option<block::Cipherblock>);
 
-#[pyclass(module = "fate_tensor")]
+#[pyclass(module = "fate_tensor.par")]
 pub struct PK {
     pk: fixedpoint::PK,
 }
 
-#[pyclass(module = "fate_tensor")]
+#[pyclass(module = "fate_tensor.par")]
 pub struct SK {
     sk: fixedpoint::SK,
 }
@@ -33,9 +26,11 @@ fn keygen(bit_size: u32) -> (PK, SK) {
     (PK { pk }, SK { sk })
 }
 
-/// public key for paillier system used to encrypt arrays
-///
-/// Notes: we could not use Generics Types or rule macro here, sad.
+#[pyfunction]
+fn set_num_threads(num_threads: usize) {
+    rayon::ThreadPoolBuilder::new().num_threads(num_threads).build_global().unwrap();
+}
+
 #[pymethods]
 impl PK {
     fn encrypt_f64(&self, a: PyReadonlyArrayDyn<f64>) -> Cipherblock {
@@ -52,9 +47,6 @@ impl PK {
     }
 }
 
-/// secret key for paillier system used to encrypt arrays
-///
-/// Notes: we could not use Generics Types or rule macro here, sad.
 #[pymethods]
 impl SK {
     fn decrypt_f64<'py>(&self, a: &Cipherblock, py: Python<'py>) -> &'py PyArrayDyn<f64> {
@@ -71,9 +63,6 @@ impl SK {
     }
 }
 
-/// methods for cipherblock
-///
-/// Notes: we could not use Generics Types or rule macro here, sad.
 #[pymethods]
 impl Cipherblock {
     #[new]
@@ -92,7 +81,6 @@ impl Cipherblock {
             Err(e) => Err(e),
         }
     }
-
     // add
     pub fn add_cipherblock(&self, other: &Cipherblock) -> Cipherblock {
         self.add_cb(other)
@@ -226,7 +214,6 @@ impl Cipherblock {
     pub fn rmatmul_plaintext_ix1_i32(&self, other: PyReadonlyArray1<i32>) -> Cipherblock {
         self.rmatmul_plaintext_ix1(other.as_array())
     }
-
     // agg
     pub fn sum(&self) -> Cipherblock {
         self.sum_cb()
@@ -234,15 +221,15 @@ impl Cipherblock {
     pub fn mean(&self) -> Cipherblock {
         self.sum_cb()
     }
-
 }
-#[pymodule]
-fn fate_tensor(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_class::<Cipherblock>()?;
-    m.add_class::<PK>()?;
-    m.add_class::<SK>()?;
-    m.add_function(wrap_pyfunction!(keygen, m)?)?;
 
-    par::register(_py, m)?;
+pub(crate) fn register(py: Python, m: &PyModule) -> PyResult<()> {
+    let submodule_par = PyModule::new(py, "par")?;
+    submodule_par.add_function(wrap_pyfunction!(keygen, submodule_par)?)?;
+    submodule_par.add_function(wrap_pyfunction!(set_num_threads, submodule_par)?)?;
+    m.add_submodule(submodule_par)?;
+    py.import("sys")?
+        .getattr("modules")?
+        .set_item("fate_tensor.par", submodule_par)?;
     Ok(())
 }

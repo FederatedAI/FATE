@@ -4,7 +4,7 @@ import operator
 import torch
 
 from ...abc.tensor import (
-    FPTensorABC,
+    FPTensorProtocol,
     PHECipherABC,
     PHEDecryptorABC,
     PHEEncryptorABC,
@@ -15,39 +15,6 @@ FPTensorLocal = torch.Tensor
 Numeric = typing.Union[int, float]
 TYPEFP = typing.Union[Numeric, "FPTensorLocal"]
 TYPECT = typing.Union[TYPEFP, "PHETensorLocal"]
-
-
-# class FPTensorLocal(FPTensorABC):
-#     """
-#     CPU multiple thread backend Local Fixed Presicion Tensor
-#     """
-
-#     def __init__(self, block):
-#         self._block = block
-
-#     def __add__(self, other: TYPEFP) -> "FPTensorLocal":
-#         return _fp_binary_op(self, other, operator.add, FP_OP_TYPES)
-
-#     def __radd__(self, other: TYPEFP) -> "FPTensorLocal":
-#         return _fp_binary_op(other, self, operator.add, FP_OP_TYPES)
-
-#     def __sub__(self, other: TYPEFP) -> "FPTensorLocal":
-#         return _fp_binary_op(self, other, operator.sub, FP_OP_TYPES)
-
-#     def __rsub__(self, other: TYPEFP) -> "FPTensorLocal":
-#         return _fp_binary_op(other, self, operator.sub, FP_OP_TYPES)
-
-#     def __mul__(self, other: TYPEFP) -> "FPTensorLocal":
-#         return _fp_binary_op(self, other, operator.mul, FP_OP_TYPES)
-
-#     def __rmul__(self, other: TYPEFP) -> "FPTensorLocal":
-#         return _fp_binary_op(other, self, operator.mul, FP_OP_TYPES)
-
-#     def __matmul__(self, other: "FPTensorLocal") -> "FPTensorLocal":
-#         return FPTensorLocal(operator.matmul(self._block, other._block))
-
-#     def __rmatmul__(self, other: "FPTensorLocal") -> "FPTensorLocal":
-#         return FPTensorLocal(operator.matmul(other._block, self._block))
 
 
 class PHETensorLocal(PHETensorABC):
@@ -130,18 +97,6 @@ class PaillierPHECipherLocal(PHECipherABC):
             PaillierPHEEncryptorLocal(block_encrytor),
             PaillierPHEDecryptorLocal(block_decryptor),
         )
-
-
-def _fp_binary_op(self, other, func, types):
-    if type(other) not in types:
-        return NotImplemented
-    elif isinstance(other, FPTensorLocal):
-        return FPTensorLocal(func(self, other))
-    elif isinstance(other, (int, float)):
-        return FPTensorLocal(func(self, other))
-    else:
-        return NotImplemented
-
 
 def _phe_binary_op(self, other, func, types):
     if type(other) not in types:

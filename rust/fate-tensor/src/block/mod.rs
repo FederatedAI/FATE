@@ -3,7 +3,6 @@ use std::ops::Index;
 use super::fixedpoint;
 use super::fixedpoint::CouldCode;
 use ndarray::{ArrayD, ArrayViewD};
-#[cfg(feature = "rayon")]
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 mod matmul;
@@ -118,7 +117,6 @@ impl fixedpoint::SK {
     }
 }
 
-#[cfg(feature = "rayon")]
 impl Cipherblock {
     pub fn agg_par<F, T, ID, OP>(&self, identity: ID, f: F, op: OP) -> T
     where
@@ -188,7 +186,6 @@ impl Cipherblock {
     }
 }
 
-#[cfg(feature = "rayon")]
 impl fixedpoint::PK {
     pub fn encrypt_array_par<T>(&self, array: ArrayViewD<T>) -> Cipherblock
     where
@@ -207,7 +204,6 @@ impl fixedpoint::PK {
     }
 }
 
-#[cfg(feature = "rayon")]
 impl fixedpoint::SK {
     pub fn decrypt_array_par<T>(&self, array: &Cipherblock) -> ArrayD<T>
     where

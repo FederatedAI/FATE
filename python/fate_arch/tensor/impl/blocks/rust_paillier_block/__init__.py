@@ -17,9 +17,7 @@
 import pickle
 import typing
 
-import fate_tensor
 import numpy as np
-from fate_tensor import Cipherblock
 import torch
 
 from ....abc.block import (
@@ -36,10 +34,10 @@ FPBlock = torch.Tensor
 
 
 class PaillierBlock(PHEBlockABC):
-    def __init__(self, cb: Cipherblock) -> None:
+    def __init__(self, cb) -> None:
         self._cb = cb
 
-    def create(self, cb: Cipherblock):
+    def create(self, cb):
         return PaillierBlock(cb)
 
     def __add__(self, other) -> "PaillierBlock":
@@ -177,9 +175,8 @@ class PaillierBlock(PHEBlockABC):
 
 
 class BlockPaillierEncryptor(PHEBlockEncryptorABC):
-    def __init__(self, pk: fate_tensor.PK, multithread=False) -> None:
+    def __init__(self, pk) -> None:
         self._pk = pk
-        self._multithread = multithread
 
     def encrypt(self, other) -> PaillierBlock:
         if isinstance(other, FPBlock):
@@ -188,63 +185,46 @@ class BlockPaillierEncryptor(PHEBlockEncryptorABC):
         raise NotImplementedError(f"type {other} not supported")
 
     def _encrypt_numpy(self, other):
-        if self._multithread:
-            if isinstance(other, np.ndarray):
-                if other.dtype == np.float64:
-                    return self._pk.encrypt_f64_par(other)
-                if other.dtype == np.float32:
-                    return self._pk.encrypt_f32_par(other)
-                if other.dtype == np.int64:
-                    return self._pk.encrypt_i64_par(other)
-                if other.dtype == np.int32:
-                    return self._pk.encrypt_i32_par(other)
-        else:
-            if isinstance(other, np.ndarray):
-                if other.dtype == np.float64:
-                    return self._pk.encrypt_f64(other)
-                if other.dtype == np.float32:
-                    return self._pk.encrypt_f32(other)
-                if other.dtype == np.int64:
-                    return self._pk.encrypt_i64(other)
-                if other.dtype == np.int32:
-                    return self._pk.encrypt_i32(other)
+        if isinstance(other, np.ndarray):
+            if other.dtype == np.float64:
+                return self._pk.encrypt_f64(other)
+            if other.dtype == np.float32:
+                return self._pk.encrypt_f32(other)
+            if other.dtype == np.int64:
+                return self._pk.encrypt_i64(other)
+            if other.dtype == np.int32:
+                return self._pk.encrypt_i32(other)
         raise NotImplementedError(f"type {other} {other.dtype} not supported")
 
 
 class BlockPaillierDecryptor(PHEBlockDecryptorABC):
-    def __init__(self, sk: fate_tensor.SK, multithread=False) -> None:
+    def __init__(self, sk) -> None:
         self._sk = sk
-        self._multithread = multithread
 
     def decrypt(self, other: PaillierBlock, dtype=np.float64):
         return torch.from_numpy(self._decrypt_numpy(other._cb, dtype))
 
-    def _decrypt_numpy(self, cb: Cipherblock, dtype=np.float64):
-        if self._multithread:
-            if dtype == np.float64:
-                return self._sk.decrypt_f64_par(cb)
-            if dtype == np.float32:
-                return self._sk.decrypt_f32_par(cb)
-            if dtype == np.int64:
-                return self._sk.decrypt_i64_par(cb)
-            if dtype == np.int32:
-                return self._sk.decrypt_i32_par(cb)
-        else:
-            if dtype == np.float64:
-                return self._sk.decrypt_f64(cb)
-            if dtype == np.float32:
-                return self._sk.decrypt_f32(cb)
-            if dtype == np.int64:
-                return self._sk.decrypt_i64(cb)
-            if dtype == np.int32:
-                return self._sk.decrypt_i32(cb)
+    def _decrypt_numpy(self, cb, dtype=np.float64):
+        if dtype == np.float64:
+            return self._sk.decrypt_f64(cb)
+        if dtype == np.float32:
+            return self._sk.decrypt_f32(cb)
+        if dtype == np.int64:
+            return self._sk.decrypt_i64(cb)
+        if dtype == np.int32:
+            return self._sk.decrypt_i32(cb)
         raise NotImplementedError("dtype = {dtype}")
 
 
 class BlockPaillierCipher(PHEBlockCipherABC):
     @classmethod
     def keygen(
-            cls, key_length=1024, multithread=False,
+        cls, key_length=1024
     ) -> typing.Tuple[BlockPaillierEncryptor, BlockPaillierDecryptor]:
+        import fate_tensor
+
         pubkey, prikey = fate_tensor.keygen(bit_size=key_length)
-        return (BlockPaillierEncryptor(pubkey, multithread), BlockPaillierDecryptor(prikey, multithread))
+        return (
+            BlockPaillierEncryptor(pubkey),
+            BlockPaillierDecryptor(prikey),
+        )

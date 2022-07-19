@@ -16,8 +16,8 @@ exclude = [
   "**/__pycache__",
   ".venv/"
   ]
-venvPath = "/Users/sage/projects/rust-tensor"
-venv = ".venv"
+venvPath = "/Users/sage/MEGA/FATE/"
+venv = "venv"
 reportMissingImports = true
 reportMissingTypeStubs = false
 executionEnvironments = [
