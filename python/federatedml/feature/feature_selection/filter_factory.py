@@ -132,7 +132,10 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
 
     elif filter_name == consts.MANUALLY_FILTER:
         manually_param = model_param.manually_param
-        return ManuallyFilter(manually_param)
+        filter = ManuallyFilter(manually_param)
+        if model_param.use_anonymous:
+            filter.set_use_anonymous()
+        return filter
 
     elif filter_name == consts.PERCENTAGE_VALUE:
         percentage_value_param = model_param.percentage_value_param

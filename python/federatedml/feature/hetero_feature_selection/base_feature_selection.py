@@ -18,7 +18,6 @@
 
 import functools
 import random
-from google.protobuf import json_format
 
 from federatedml.feature.feature_selection import filter_factory
 from federatedml.feature.feature_selection.model_adapter.adapter_factory import adapter_factory
@@ -26,11 +25,11 @@ from federatedml.feature.feature_selection.selection_properties import Selection
 from federatedml.model_base import ModelBase
 from federatedml.param.feature_selection_param import FeatureSelectionParam
 from federatedml.protobuf.generated import feature_selection_param_pb2, feature_selection_meta_pb2
-from federatedml.statistic.data_overview import get_header
+from federatedml.statistic.data_overview import get_header, get_anonymous_header, look_up_names_from_header
 from federatedml.transfer_variable.transfer_class.hetero_feature_selection_transfer_variable import \
     HeteroFeatureSelectionTransferVariable
 from federatedml.util import LOGGER
-from federatedml.util import abnormal_detection, anonymous_generator
+from federatedml.util import abnormal_detection
 from federatedml.util import consts
 from federatedml.util.io_check import assert_io_num_rows_equal
 from federatedml.util.schema_check import assert_schema_consistent
@@ -73,15 +72,25 @@ class BaseHeteroFeatureSelection(ModelBase):
             return
         self.schema = data_instances.schema
         header = get_header(data_instances)
+        anonymous_header = get_anonymous_header(data_instances)
         self.header = header
+        self.anonymous_header = anonymous_header
         self.curt_select_properties.set_header(header)
+        # use anonymous header of input data
+        self.curt_select_properties.set_anonymous_header(anonymous_header)
         self.curt_select_properties.set_last_left_col_indexes([x for x in range(len(header))])
         if self.model_param.select_col_indexes == -1:
             self.curt_select_properties.set_select_all_cols()
         else:
             self.curt_select_properties.add_select_col_indexes(self.model_param.select_col_indexes)
-        self.curt_select_properties.add_select_col_names(self.model_param.select_names)
+        if self.model_param.use_anonymous:
+            select_names = look_up_names_from_header(self.model_param.select_names, anonymous_header, header)
+            # LOGGER.debug(f"use_anonymous is true, select names: {select_names}")
+        else:
+            select_names = self.model_param.select_names
+        self.curt_select_properties.add_select_col_names(select_names)
         self.completed_selection_result.set_header(header)
+        self.completed_selection_result.set_anonymous_header(anonymous_header)
         self.completed_selection_result.set_select_col_names(self.curt_select_properties.select_col_names)
         self.completed_selection_result.set_all_left_col_indexes(self.curt_select_properties.all_left_col_indexes)
 
@@ -115,17 +124,23 @@ class BaseHeteroFeatureSelection(ModelBase):
                                                                                party_id=str(party_id)))
         else:
             party_id = self.component_properties.local_partyid
-            anonymous_names = [anonymous_generator.generate_anonymous(fid, model=self)
-                               for fid in range(len(self.header))]
-            host_col_names.append(feature_selection_param_pb2.HostColNames(col_names=anonymous_names,
+            # if self.anonymous_header:
+            # anonymous_names = self.anonymous_header
+            """else:
+                anonymous_names = [anonymous_generator.generate_anonymous(fid, model=self)
+                                   for fid in range(len(self.header))]
+            """
+            host_col_names.append(feature_selection_param_pb2.HostColNames(col_names=self.anonymous_header,
                                                                            party_id=str(party_id)))
+        col_name_to_anonym_dict = dict(zip(self.header, self.anonymous_header))
 
         result_obj = feature_selection_param_pb2.FeatureSelectionParam(
             results=self.completed_selection_result.filter_results,
             final_left_cols=final_left_cols,
             col_names=self.completed_selection_result.get_sorted_col_names(),
             host_col_names=host_col_names,
-            header=self.curt_select_properties.header
+            header=self.curt_select_properties.header,
+            col_name_to_anonym_dict=col_name_to_anonym_dict
         )
 
         # json_result = json_format.MessageToJson(result_obj)
@@ -163,10 +178,13 @@ class BaseHeteroFeatureSelection(ModelBase):
         }
 
         header = list(model_param.header)
+        col_name_to_anonym_dict = dict(model_param.col_name_to_anonym_dict)
+        anonymous_header = [col_name_to_anonym_dict[x] for x in header]
         # self.schema = {'header': header}
         self.header = header
         self.curt_select_properties.set_header(header)
         self.completed_selection_result.set_header(header)
+        self.completed_selection_result.set_anonymous_header(anonymous_header)
         self.curt_select_properties.set_last_left_col_indexes([x for x in range(len(header))])
         self.curt_select_properties.add_select_col_names(header)
 
@@ -225,7 +243,10 @@ class BaseHeteroFeatureSelection(ModelBase):
         # LOGGER.debug("When transfering, all left_col_names: {}".format(
         #    self.completed_selection_result.all_left_col_names
         # ))
-        new_data = self.set_schema(new_data, self.completed_selection_result.all_left_col_names)
+
+        new_data = self.set_schema(new_data,
+                                   self.completed_selection_result.all_left_col_names,
+                                   self.completed_selection_result.all_left_anonymous_col_names)
 
         # one_data = new_data.first()[1]
         # LOGGER.debug(
@@ -243,17 +264,21 @@ class BaseHeteroFeatureSelection(ModelBase):
         abnormal_detection.empty_feature_detection(data_instances)
         self.check_schema_content(data_instances.schema)
 
-    def set_schema(self, data_instance, header=None):
+    def set_schema(self, data_instance, header=None, anonymous_header=None):
         if header is None:
             self.schema["header"] = self.curt_select_properties.header
+            self.schema["anonymous_header"] = self.curt_select_properties.anonymous_header
         else:
             self.schema["header"] = header
+            self.schema["anonymous_header"] = anonymous_header
         data_instance.schema = self.schema
         return data_instance
 
     def update_curt_select_param(self):
         new_select_properties = SelectionProperties()
+        # all select properties must have the same header
         new_select_properties.set_header(self.curt_select_properties.header)
+        new_select_properties.set_anonymous_header(self.curt_select_properties.anonymous_header)
         new_select_properties.set_last_left_col_indexes(self.curt_select_properties.all_left_col_indexes)
         new_select_properties.add_select_col_names(self.curt_select_properties.left_col_names)
         self.curt_select_properties = new_select_properties

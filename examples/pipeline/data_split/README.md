@@ -18,7 +18,7 @@ This section introduces the Pipeline scripts for different types of tasks.
     
     data type: categorical
     
-    stratification: stratified by label
+    stratification: None
 
 
 3. Homogeneous Data Spilt Task(only validate size specified):
@@ -35,7 +35,7 @@ This section introduces the Pipeline scripts for different types of tasks.
     
     data type: continuous
     
-    stratification: stratified by split points
+    stratification: None
 
 Users can run a pipeline job directly:
 

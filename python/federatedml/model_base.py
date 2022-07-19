@@ -495,6 +495,7 @@ class ModelBase(object):
                 ],
                 "sid_name": schema.get("sid_name"),
                 "content_type": "predict_result",
+                "match_id_name": schema.get("match_id_name")
             }
         return predict_data
 

@@ -32,8 +32,12 @@ class TransformParam(BaseParam):
         Specify which columns need to be transform. If column index is None, None of columns will be transformed.
         If it is -1, it will use same columns as cols in binning module.
 
+        Note tha columns specified by `transform_cols` and `transform_names` will be combined.
+
     transform_names: list of string, default: []
         Specify which columns need to calculated. Each element in the list represent for a column name in header.
+
+        Note tha columns specified by `transform_cols` and `transform_names` will be combined.
 
 
     transform_type: str, 'bin_num'or 'woe' or None default: 'bin_num'
@@ -153,8 +157,12 @@ class FeatureBinningParam(BaseParam):
         Specify which columns need to be binned. -1 represent for all columns. If you need to indicate specific
         cols, provide a list of header index instead of -1.
 
+        Note tha columns specified by `bin_indexes` and `bin_names` will be combined.
+
     bin_names : list of string, default: []
         Specify which columns need to calculated. Each element in the list represent for a column name in header.
+
+        Note tha columns specified by `bin_indexes` and `bin_names` will be combined.
 
     adjustment_factor : float, default: 0.5
         the adjustment factor when calculating WOE. This is useful when there is no event or non-event in
@@ -167,8 +175,12 @@ class FeatureBinningParam(BaseParam):
 
         The number of categories should not exceed bin_num set above.
 
+        Note tha columns specified by `category_indexes` and `category_names` will be combined.
+
     category_names : list of string, default: []
         Use column names to specify category features. Each element in the list represent for a column name in header.
+
+        Note tha columns specified by `category_indexes` and `category_names` will be combined.
 
     local_only : bool, default: False
         Whether just provide binning method to guest party. If true, host party will do nothing.

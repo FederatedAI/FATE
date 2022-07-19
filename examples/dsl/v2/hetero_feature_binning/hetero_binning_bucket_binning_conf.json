@@ -65,6 +65,7 @@
                     "transform_names": null,
                     "transform_type": "bin_num"
                 },
+                "skip_static": true,
                 "local_only": false,
                 "optimal_binning_param": {
                     "metric_method": "iv",

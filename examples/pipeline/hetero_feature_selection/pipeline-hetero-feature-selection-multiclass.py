@@ -18,17 +18,16 @@ import argparse
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataTransform
+from pipeline.component import HeteroFeatureBinning
+from pipeline.component import HeteroFeatureSelection
+from pipeline.component import Intersection
 from pipeline.component import Reader
 from pipeline.interface import Data
 from pipeline.interface import Model
-from pipeline.component import Intersection
-from pipeline.component import HeteroFeatureBinning
-from pipeline.component import HeteroFeatureSelection
 from pipeline.utils.tools import load_job_config
 
 
 def main(config="../../config.yaml", namespace=""):
-
     # obtain config
     if isinstance(config, str):
         config = load_job_config(config)
@@ -97,10 +96,9 @@ def main(config="../../config.yaml", namespace=""):
     }
 
     hetero_feature_binning_0 = HeteroFeatureBinning(name="hetero_feature_binning_0", **param)
-    hetero_feature_binning_1 = HeteroFeatureBinning(name='hetero_feature_binning_1')
+    hetero_feature_binning_1 = HeteroFeatureBinning(name="hetero_feature_binning_1")
 
     selection_param = {
-        "name": "hetero_feature_selection_0",
         "select_col_indexes": -1,
         "select_names": [],
         "filter_methods": ["iv_filter"],
@@ -108,8 +106,9 @@ def main(config="../../config.yaml", namespace=""):
             "filter_type": "threshold",
             "threshold": 2,
             "mul_class_merge_type": "max"
-        }}
-    hetero_feature_selection_0 = HeteroFeatureSelection(**selection_param)
+        }
+    }
+    hetero_feature_selection_0 = HeteroFeatureSelection(name="hetero_feature_selection_0", **selection_param)
     hetero_feature_selection_1 = HeteroFeatureSelection(name="hetero_feature_selection_1")
 
     pipeline.add_component(reader_0)
@@ -122,11 +121,14 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
     pipeline.add_component(intersection_1, data=Data(data=data_transform_1.output.data))
     pipeline.add_component(hetero_feature_binning_0, data=Data(data=intersection_0.output.data))
-    pipeline.add_component(hetero_feature_binning_1, data=Data(data=intersection_1.output.data),
+    pipeline.add_component(hetero_feature_binning_1,
+                           data=Data(data=intersection_1.output.data),
                            model=Model(hetero_feature_binning_0.output.model))
-    pipeline.add_component(hetero_feature_selection_0, data=Data(data=hetero_feature_binning_0.output.data),
+    pipeline.add_component(hetero_feature_selection_0,
+                           data=Data(data=hetero_feature_binning_0.output.data),
                            model=Model(isometric_model=hetero_feature_binning_0.output.model))
-    pipeline.add_component(hetero_feature_selection_1, data=Data(data=hetero_feature_binning_1.output.data),
+    pipeline.add_component(hetero_feature_selection_1,
+                           data=Data(data=hetero_feature_binning_1.output.data),
                            model=Model(hetero_feature_selection_0.output.model))
     pipeline.compile()
     pipeline.fit()

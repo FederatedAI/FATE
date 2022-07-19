@@ -152,6 +152,7 @@ class DenseFeatureReader(object):
         return data_instance
 
     def fit(self, input_data, input_data_features, input_data_labels):
+        raise ValueError("In Fate-v1.9 or later version, DataIO is deprecated, use DataTransform instead.")
         schema = self.get_schema()
         set_schema(input_data_features, schema)
 
