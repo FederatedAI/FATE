@@ -276,8 +276,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                 if consts.GUEST in id_[0]:
                     new_fi[fid_mapping[id_[1]]] = feature_importances[id_].importance
                 else:
-                    role, party_id = id_[0].split(':')
-                    new_fi[generate_anonymous(role=role, fid=id_[1], party_id=party_id)] = feature_importances[
+                    new_fi[id_[0] + '_' + str(id_[1])] = feature_importances[
                         id_].importance
             else:
                 new_fi[fid_mapping[id_]] = feature_importances[id_].importance
@@ -427,8 +426,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
             if consts.GUEST in sitename:
                 fullname = self.feature_name_fid_mapping[fid]
             else:
-                role_name, party_id = sitename.split(':')
-                fullname = generate_anonymous(fid=fid, party_id=party_id, role=role_name)
+                fullname = sitename + '_' + str(fid)
 
             feature_importance_param.append(FeatureImportanceInfo(sitename=sitename,  # sitename to distinguish sites
                                                                   fid=fid,
