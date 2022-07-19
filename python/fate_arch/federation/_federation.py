@@ -29,8 +29,6 @@ from fate_arch.session import computing_session
 
 LOGGER = getLogger()
 
-# default message max size in bytes = 1MB
-DEFAULT_MESSAGE_MAX_SIZE = 1048576
 NAME_DTYPE_TAG = "<dtype>"
 _SPLIT_ = "^"
 
@@ -41,7 +39,7 @@ class FederationDataType(object):
     SPLIT_OBJECT = "split_obj"
 
 
-def _get_splits(obj, max_message_size=DEFAULT_MESSAGE_MAX_SIZE):
+def _get_splits(obj, max_message_size):
     obj_bytes = p_dumps(obj, protocol=4)
     byte_size = len(obj_bytes)
     num_slice = (byte_size - 1) // max_message_size + 1
@@ -68,7 +66,7 @@ class FederationBase(FederationABC):
             session_id,
             party: Party,
             mq,
-            max_message_size=DEFAULT_MESSAGE_MAX_SIZE,
+            max_message_size,
             conf=None
     ):
         self._session_id = session_id

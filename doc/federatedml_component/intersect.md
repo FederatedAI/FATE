@@ -54,15 +54,31 @@ with Pohlig–Hellman commutative cipher. DH Intersection is also used in
 [Secure Information Retrieval(SIR)
 module](sir.md).
 
-Below is an illustration for single-host-guest DH intersection.
+Below is an illustration of single-host-guest DH intersection.
 
 ![Figure 2 (DH
 Intersection)](../images/dh_intersection.png)
 
-Here is an illustration for DH intersection with multiple hosts.
+Here is an illustration of DH intersection with multiple hosts.
 
 ![Figure 3 (Multi-host DH
 Intersection)](../images/multi_host_dh_intersection.png)
+
+
+## ECDH Intersection
+
+This mode implements secure intersection 
+based on [elliptic curve Diffie-Hellman scheme](https://en.wikipedia.org/wiki/Elliptic-curve_Diffie–Hellman). 
+ECDH mode currently uses [Curve25519](https://en.wikipedia.org/wiki/Curve25519),  
+which offers 128 bits of security with key size of 256 bits.
+
+Below is an illustration of ECDH intersection. Note that currently ECDH method only supports single-host scenario.
+
+![Figure 4 (ECDH
+Intersection)](../images/ecdh_intersection.png)
+
+For details on how to hash value to given curve, 
+please refer [here](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-hash-to-curve-10#section-6.7.1).
 
 
 ## Intersection With Cache
@@ -76,7 +92,7 @@ RSA, RAW, and DH intersection support multi-host scenario. It means a
 guest can perform intersection with more than one host simultaneously
 and get the common ids among all participants.
 
-![Figure 4 (multi-hosts
+![Figure 5 (multi-hosts
 Intersection)](../images/multi_host_intersect.png)
 
 Refer to <span class="title-ref">figure 2</span> for a demonstration of
@@ -139,19 +155,31 @@ And for Host:
 
 ## Feature
 
+Below lists features of each ECDH, RSA, DH, and RAW intersection methods.
+
+| Intersect Methods 	| PSI                                                                     	| Match-ID Support                                                       	| Multi-Host                                                                   	| Exact-Cardinality                                                                              	| Estimated Cardinality                                                              	| Preprocessing                                                                        	| Cache                                                                         	|
+|-------------------	|-------------------------------------------------------------------------	|------------------------------------------------------------------------	|------------------------------------------------------------------------------	|------------------------------------------------------------------------------------------------	|------------------------------------------------------------------------------------	|--------------------------------------------------------------------------------------	|-------------------------------------------------------------------------------	|
+| ECDH              	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-ecdh.py) 	| &check;                                                                	| &cross;                                                                      	| [&check;](../../examples/dsl/v2/intersect/test_intersect_job_ecdh_exact_cardinality_conf.json) 	| &cross;                                                                            	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-ecdh-w-preprocess.py) 	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-ecdh-cache.py) 	|
+| RSA               	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-rsa.py)  	| [&check;](../../examples/pipeline/match_id_test/pipeline-hetero-lr.py) 	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-multi-rsa.py) 	| &cross;                                                                                        	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-rsa-cardinality.py) 	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-dh-w-preprocess.py)   	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-rsa-cache.py)  	|
+| DH                	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-dh.py)   	| &check;                                                                	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-dh-multi.py)  	| [&check;](examples/dsl/v2/intersect/test_intersect_job_dh_exact_cardinality_conf.json)         	| &cross;                                                                            	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-rsa-w-preprocess.py)  	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-dh-cache.py)   	|
+| RAW               	| &check;                                                                 	| &check;                                                                	| &check;                                                                      	| &cross;                                                                                        	| &cross;                                                                            	| &check;                                                                              	| &cross;                                                                       	|
+
+All four methods support:
+
+1.  Automatically match ID intersection using ID expanding (when data contains instance id).
+2.  Configurable hashing methods, including sha256, md5, and sm3; hash
+    operators of RSA intersection can be configured separately, please
+    refer [here](../../python/federatedml/param/intersect_param.py)
+    for more details.
+3.  Preprocessing step to pre-filter Host's data for faster PSI
+
 RSA, RAW, and DH intersection methods support:
 
 1.  Multi-host PSI task. The detailed configuration for multi-host task
     can be found
     [here](../tutorial/dsl_conf/dsl_conf_v2_setting_guide.md#multi-host-configuration).
-2.  Automatically match ID intersection using ID expanding (when data contains instance id).
-3.  Configurable hashing methods, including sha256, md5, and sm3; hash
-    operators of RSA intersection can be configured separately, please
-    refer [here](../../python/federatedml/param/intersect_param.py)
-    for more details.
-4.  Preprocessing step to pre-filter Host's data for faster PSI
 
-RSA and DH intersection methods also support:
+RSA, DH, ECDH intersection methods also support:
 
 1.  PSI with cache
 
@@ -159,7 +187,11 @@ RAW intersection supports the following extra feature:
 
 1.  base64 encoding may be used for all hashing methods.
 
-RSA intersection is used for intersection cardinality estimation.
+Cardinality Computation:
+
+1. Set `cardinality_method` to `rsa` will produce estimated intersection cardinality;
+
+2. Set `cardinality_method` to `dh` will compute exact intersection cardinality
 
 <!-- 
 ## Examples

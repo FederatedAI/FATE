@@ -144,7 +144,11 @@ class HomoBoostingClient(Boosting, ABC):
             self.boosting_round += self.start_round
             self.callback_warm_start_init_iter(self.start_round)
         else:
-            self.y_hat, self.init_score = self.get_init_score(self.y, self.num_classes)
+            if self.task_type == consts.REGRESSION:
+                self.init_score = np.array([0])  # make sure that every local model has same init scores
+                self.y_hat = self.y.mapValues(lambda x: np.array([0]))
+            else:
+                self.y_hat, self.init_score = self.get_init_score(self.y, self.num_classes)
 
         # sync start round and end round
         self.sync_start_round_and_end_round()

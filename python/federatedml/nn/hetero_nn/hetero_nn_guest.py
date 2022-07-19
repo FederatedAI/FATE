@@ -22,7 +22,7 @@ from fate_arch.session import computing_session as session
 from federatedml.model_base import Metric
 from federatedml.model_base import MetricMeta
 from federatedml.framework.hetero.procedure import batch_generator
-from federatedml.nn.hetero_nn.backend.model_builder import model_builder
+from federatedml.nn.hetero_nn.model.hetero_nn_model import HeteroNNGuestModel
 from federatedml.nn.hetero_nn.hetero_nn_base import HeteroNNBase
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.param.evaluation_param import EvaluateParam
@@ -37,6 +37,7 @@ MODELPARAM = "HeteroNNGuestParam"
 
 
 class HeteroNNGuest(HeteroNNBase):
+
     def __init__(self):
         super(HeteroNNGuest, self).__init__()
         self.task_type = None
@@ -58,15 +59,16 @@ class HeteroNNGuest(HeteroNNBase):
                              "is_converged": False,
                              "best_iteration": -1}
 
+        self.config_type = None
+
     def _init_model(self, hetero_nn_param):
         super(HeteroNNGuest, self)._init_model(hetero_nn_param)
-
+        self.config_type = hetero_nn_param.config_type
         self.task_type = hetero_nn_param.task_type
         self.converge_func = converge_func_factory(self.early_stop, self.tol)
 
     def _build_model(self):
-        # return a hetero NN model with keras backend
-        self.model = model_builder("guest", self.hetero_nn_param)
+        self.model = HeteroNNGuestModel(self.hetero_nn_param, self.component_properties)
         self.model.set_transfer_variable(self.transfer_variable)
 
     def _set_loss_callback_info(self):
@@ -128,7 +130,7 @@ class HeteroNNGuest(HeteroNNBase):
             self._summary_buf["is_converged"] = is_converge
             self.transfer_variable.is_converge.remote(is_converge,
                                                       role=consts.HOST,
-                                                      idx=0,
+                                                      idx=-1,
                                                       suffix=(cur_epoch,))
 
             if is_converge:
@@ -301,14 +303,14 @@ class HeteroNNGuest(HeteroNNBase):
 
             self.data_y = transform_y
             return
+        else:  # pytorch doesn't need multi label convert
+            for batch_y in self.data_y:
+                new_batch_y = np.zeros((batch_y.shape[0], self.num_label))
+                for idx in range(new_batch_y.shape[0]):
+                    y = batch_y[idx]
+                    new_batch_y[idx][y] = 1
 
-        for batch_y in self.data_y:
-            new_batch_y = np.zeros((batch_y.shape[0], self.num_label))
-            for idx in range(new_batch_y.shape[0]):
-                y = batch_y[idx]
-                new_batch_y[idx][y] = 1
-
-            transform_y.append(new_batch_y)
+                transform_y.append(new_batch_y)
 
         self.data_y = transform_y
 

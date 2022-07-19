@@ -605,7 +605,16 @@ Fateboard是一项Web服务。如果成功启动了fateboard服务，则可以�
 
 **在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
-#### 7.1.1. Eggroll服务管理
+#### 7.1.1. Mysql服务管理
+
+启动/关闭/查看/重启mysql服务
+
+```bash
+cd /data/projects/fate/common/mysql/mysql-*
+sh ./service.sh start|stop|status|restart
+```
+
+#### 7.1.2. Eggroll服务管理
 
 ```bash
 source /data/projects/fate/bin/init_env.sh
@@ -624,7 +633,7 @@ sh ./bin/eggroll.sh all start/stop/status/restart
 sh ./bin/eggroll.sh clustermanager start/stop/status/restart
 ```
 
-#### 7.1.2. Fate服务管理
+#### 7.1.3. Fate服务管理
 
 1) 启动/关闭/查看/重启fate_flow服务
 
@@ -641,15 +650,6 @@ sh service.sh start|stop|status|restart
 ```bash
 cd /data/projects/fate/fateboard
 sh service.sh start|stop|status|restart
-```
-
-#### 7.1.3. Mysql服务管理
-
-启动/关闭/查看/重启mysql服务
-
-```bash
-cd /data/projects/fate/common/mysql/mysql-8.0.13
-sh ./service.sh start|stop|status|restart
 ```
 
 ### 7.2. 查看进程和端口
@@ -687,12 +687,12 @@ netstat -tlnp | grep 8080
 
 ### 7.3. 服务日志
 
-| 服务               | 日志路径                                           |
-| ------------------ | -------------------------------------------------- |
-| eggroll            | /data/projects/fate/eggroll/logs                   |
-| fate_flow&任务日志 | /data/projects/fate/fateflow/logs                  |
-| fateboard          | /data/projects/fate/fateboard/logs                 |
-| mysql              | /data/projects/fate/common/mysql/mysql-8.0.13/logs |
+| 服务               | 日志路径                                      |
+| ------------------ | --------------------------------------------- |
+| eggroll            | /data/projects/fate/eggroll/logs              |
+| fate_flow&任务日志 | /data/projects/fate/fateflow/logs             |
+| fateboard          | /data/projects/fate/fateboard/logs            |
+| mysql              | /data/projects/fate/common/mysql/mysql-*/logs |
 
 ### 7.4. 空间清理规则
 

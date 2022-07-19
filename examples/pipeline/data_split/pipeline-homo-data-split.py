@@ -53,7 +53,7 @@ def main(config="../../config.yaml", namespace=""):
         label_type="int")
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=True)
 
-    homo_data_split_0 = HomoDataSplit(name="homo_data_split_0", stratified=True, test_size=0.3, validate_size=0.2)
+    homo_data_split_0 = HomoDataSplit(name="homo_data_split_0", stratified=False, test_size=0.3, validate_size=0.2)
 
     pipeline.add_component(reader_0)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))

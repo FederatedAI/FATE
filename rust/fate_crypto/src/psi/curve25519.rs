@@ -11,27 +11,29 @@ use rand::{RngCore, SeedableRng};
 #[pyclass(module = "fate_crypto.psi", name = "Curve25519")]
 struct Secret(Scalar);
 
+impl Secret {
+    fn new(byte32: Option<[u8; 32]>) -> Self {
+        Self(Scalar::from_bytes_mod_order(byte32.unwrap_or_else(|| {
+            let mut bytes: [u8; 32] = [0; 32];
+            StdRng::from_entropy().fill_bytes(&mut bytes);
+            bytes
+        })))
+    }
+}
 #[pymethods]
 impl Secret {
     #[new]
     #[args(args = "*")]
-    fn new(args: &PyTuple) -> PyResult<Self> {
-        if args.len() > 1 {
-            Err(PyTypeError::new_err("accept zero or one positional args"))
-        } else {
-            let byte32: [u8; 32] = match args.len() {
-                0 => {
-                    let mut bytes: [u8; 32] = [0; 32];
-                    StdRng::from_entropy().fill_bytes(&mut bytes);
-                    bytes
-                }
-                1 => {
-                    let bytes: [u8; 32] = args.get_item(0).unwrap().extract::<[u8; 32]>().unwrap();
-                    bytes
-                }
-                _ => unreachable!(),
-            };
-            Ok(Self(Scalar::from_bytes_mod_order(byte32)))
+    fn pynew(args: &PyTuple) -> PyResult<Self> {
+        match args.len() {
+            0 => Ok(Secret::new(None)),
+            1 => args
+                .get_item(0)
+                .unwrap()
+                .extract::<Option<[u8; 32]>>()
+                .map_err(|e| PyTypeError::new_err(e.to_string())) // convert error to pyerr
+                .map(Secret::new),
+            _ => Err(PyTypeError::new_err("accept zero or one positional args")),
         }
     }
     pub fn get_private_key(&self, py: Python) -> PyObject {

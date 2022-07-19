@@ -148,8 +148,13 @@ class HeteroNNParam(BaseParam):
         self.callback_param = copy.deepcopy(callback_param)
 
     def check(self):
-        self.optimizer = self._parse_optimizer(self.optimizer)
-        supported_config_type = ["keras"]
+
+        supported_config_type = ["keras", "pytorch", "torch"]
+        if self.config_type not in supported_config_type:
+            raise ValueError(f"config_type should be one of {supported_config_type}")
+
+        if self.config_type == 'keras':
+            self.optimizer = self._parse_optimizer(self.optimizer)
 
         if self.task_type not in ["classification", "regression"]:
             raise ValueError("config_type should be classification or regression")

@@ -31,8 +31,6 @@ from federatedml.util import consts
 
 class SelectorParam(object):
     """
-    Parameters used for Homo Neural Network.
-
     Args:
         method: None or str
             back propagation select method, accept "relative" only, default: None
@@ -64,6 +62,56 @@ class SelectorParam(object):
 
         if not isinstance(self.min_prob, (float, int)):
             raise ValueError("min_prob should be numeric")
+
+
+class CoAEConfuserParam(BaseParam):
+    """
+    A label protect mechanism proposed in paper: "Batch Label Inference and Replacement Attacks in Black-Boxed Vertical Federated Learning"
+    paper link: https://arxiv.org/abs/2112.05409
+    Convert true labels to fake soft labels by using an auto-encoder.
+
+    Args:
+        enable: boolean
+            run CoAE or not
+        epoch: None or str
+            auto-encoder training epochs
+        lr: int
+            auto-encoder learning rate
+        lambda1: int
+            parameter to control the difference between true labels and fake soft labels. Larger the parameter,
+            autoencoder will give more attention to making true labels and fake soft label different.
+        lambda2: Numeric
+            parameter to control entropy loss, see original paper for details
+        verbose: boolean
+            print loss log while training auto encoder
+    """
+
+    def __init__(self, enable=False, epoch=50, lr=0.001, lambda1=1.0, lambda2=2.0, verbose=False):
+        super(CoAEConfuserParam, self).__init__()
+        self.enable = enable
+        self.epoch = epoch
+        self.lr = lr
+        self.lambda1 = lambda1
+        self.lambda2 = lambda2
+        self.verbose = verbose
+
+    def check(self):
+
+        self.check_boolean(self.enable, 'enable')
+
+        if not isinstance(self.epoch, int) or self.epoch <= 0:
+            raise ValueError("epoch should be a positive integer")
+
+        if not isinstance(self.lr, float):
+            raise ValueError('lr should be a float number')
+
+        if not isinstance(self.lambda1, float):
+            raise ValueError('lambda1 should be a float number')
+
+        if not isinstance(self.lambda2, float):
+            raise ValueError('lambda2 should be a float number')
+
+        self.check_boolean(self.verbose, 'verbose')
 
 
 @deprecated_param("validation_freqs", "early_stopping_rounds", "metrics", "use_first_metric_only")
@@ -122,7 +170,10 @@ class HeteroNNParam(BaseParam):
                  selector_param=SelectorParam(),
                  floating_point_precision=23,
                  drop_out_keep_rate=1.0,
-                 callback_param=CallbackParam()):
+                 callback_param=CallbackParam(),
+                 coae_param=CoAEConfuserParam()
+                 ):
+
         super(HeteroNNParam, self).__init__()
 
         self.task_type = task_type
@@ -154,15 +205,19 @@ class HeteroNNParam(BaseParam):
 
         self.callback_param = copy.deepcopy(callback_param)
 
+        self.coae_param = coae_param
+
     def check(self):
-        self.optimizer = self._parse_optimizer(self.optimizer)
-        supported_config_type = ["keras"]
+
+        supported_config_type = ["keras", "pytorch", "torch"]
+        if self.config_type not in supported_config_type:
+            raise ValueError(f"config_type should be one of {supported_config_type}")
+
+        if self.config_type == 'keras':
+            self.optimizer = self._parse_optimizer(self.optimizer)
 
         if self.task_type not in ["classification", "regression"]:
             raise ValueError("config_type should be classification or regression")
-
-        if self.config_type not in supported_config_type:
-            raise ValueError(f"config_type should be one of {supported_config_type}")
 
         if not isinstance(self.tol, (int, float)):
             raise ValueError("tol should be numeric")
@@ -205,6 +260,7 @@ class HeteroNNParam(BaseParam):
         self.encrypted_model_calculator_param.check()
         self.predict_param.check()
         self.selector_param.check()
+        self.coae_param.check()
 
         descr = "hetero nn param's "
 

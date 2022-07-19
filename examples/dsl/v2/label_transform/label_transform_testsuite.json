@@ -26,8 +26,8 @@
             "conf": "./label_transform_encoder_conf.json",
             "dsl": "./label_transform_encoder_dsl.json"
         },
-        "label-transform-encoder-w/o-label-list": {
-            "conf": "./label_transform_encoder_wo_label_list_conf.json",
+        "label-transform-encoder-without-label-list": {
+            "conf": "./label_transform_encoder_without_label_list_conf.json",
             "dsl": "./label_transform_encoder_dsl.json"
         }
     }

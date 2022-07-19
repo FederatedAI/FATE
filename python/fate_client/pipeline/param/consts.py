@@ -55,6 +55,7 @@ HOMO = "homo"
 RAW = "raw"
 RSA = "rsa"
 DH = "dh"
+ECDH = "ecdh"
 
 # evaluation
 AUC = "auc"
@@ -340,3 +341,6 @@ DEFAULT_KEY_LENGTH = 1024
 
 MIN_HASH_FUNC_COUNT = 4
 MAX_HASH_FUNC_COUNT = 32
+
+# curve names
+CURVE25519 = 'curve25519'
