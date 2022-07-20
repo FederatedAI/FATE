@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "fate-tensor-fpga"
+version = "0.1.0"
+description = "This project is an industrial-level heterogeneous acceleration system to support and speed up federated learning. We've designed and implemented a heterogeneous acceleration solutions using FPGA, respectively, that can significantly accelerate the Paillier cryptosystem while maintaining functionality, accuracy and scalability."
+authors = ["Xiaolong.Gao <1506957902@qq.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.6"
+numpy = "~1.18.4"
+gmpy2 = "^2.0.8"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
