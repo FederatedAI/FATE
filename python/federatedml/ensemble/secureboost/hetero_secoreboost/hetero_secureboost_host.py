@@ -226,7 +226,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         model_param.trees_.extend(self.boosting_model_list)
 
         anonymous_name_mapping = {}
-        LOGGER.debug('anonymous header is {}'.format(self.anonymous_header))
+
         for fid, name in self.feature_name_fid_mapping.items():
             anonymous_name_mapping[self.anonymous_header[name]] = name
 
