@@ -19,19 +19,18 @@ import copy
 import typing
 
 import numpy as np
-from fate_arch.common.base_utils import timestamp_to_date
-from fate_arch.computing import is_table
 from google.protobuf import json_format
 
+from fate_arch.computing import is_table
+from federatedml.callbacks.callback_list import CallbackList
+from federatedml.feature.instance import Instance
 from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.protobuf import deserialize_models
 from federatedml.statistic.data_overview import header_alignment
 from federatedml.util import LOGGER, abnormal_detection
-from federatedml.util.io_check import assert_match_id_consistent
-from federatedml.util.component_properties import ComponentProperties, RunningFuncs
-from federatedml.callbacks.callback_list import CallbackList
-from federatedml.feature.instance import Instance
 from federatedml.util.anonymous_generator_util import Anonymous
+from federatedml.util.component_properties import ComponentProperties, RunningFuncs
+from federatedml.util.io_check import assert_match_id_consistent
 
 
 def serialize_models(models):
@@ -493,10 +492,11 @@ class ModelBase(object):
                     "predict_detail",
                     "type",
                 ],
-                "sid_name": schema.get("sid_name"),
-                "content_type": "predict_result",
-                "match_id_name": schema.get("match_id_name")
+                "sid": schema.get("sid"),
+                "content_type": "predict_result"
             }
+            if schema.get("match_id_name") is not None:
+                predict_data.schema["match_id_name"] = schema.get("match_id_name")
         return predict_data
 
     @staticmethod

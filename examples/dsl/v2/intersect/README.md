@@ -88,6 +88,10 @@ This section introduces the dsl and conf for usage of different type of task.
     - dsl: test_intersect_job_dsl.json  
     - runtime_config : test_intersect_job_rsa_w_preprocess_conf.json
 
+21. ECDH Intersection with Cache Loader:  
+    - dsl: test_intersect_job_cache_loader_dsl.json  
+    - runtime_config : test_intersect_job_ecdh_cache_loader_conf.json
+ 
 Users can use following commands to running the task.
 
     flow job submit -c ${runtime_config} -d ${dsl}
