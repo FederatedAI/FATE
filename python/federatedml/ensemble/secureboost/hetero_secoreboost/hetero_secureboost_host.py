@@ -178,6 +178,8 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
         LOGGER.info('running prediction')
 
+        self.set_anonymous_header(data_inst)
+
         processed_data = self.data_and_header_alignment(data_inst)
 
         predict_start_round = self.sync_predict_start_round()
@@ -224,6 +226,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         model_param.trees_.extend(self.boosting_model_list)
 
         anonymous_name_mapping = {}
+        LOGGER.debug('anonymous header is {}'.format(self.anonymous_header))
         for fid, name in self.feature_name_fid_mapping.items():
             anonymous_name_mapping[self.anonymous_header[name]] = name
 
