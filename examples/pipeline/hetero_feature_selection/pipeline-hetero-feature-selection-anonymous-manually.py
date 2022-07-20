@@ -142,7 +142,7 @@ def main(config="../../config.yaml", namespace=""):
     host_param = {
         "manually_param": {
             "filter_out_names": [
-                "host_10000_x3"
+                f"host_{host}_x3"
             ]
         },
         "use_anonymous": True}

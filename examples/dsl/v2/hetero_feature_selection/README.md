@@ -70,3 +70,6 @@ Users can use following commands to running the task.
     flow job submit -c ${runtime_config} -d ${dsl}
 
 Moreover, after successfully running the fitting task, you can use it to transform too.
+
+For selection using anonymous feature name cases, make sure to change party id value in host feature names accordingly.
+Alternatively, try pipeline examples, where party id will be automatically replaced.

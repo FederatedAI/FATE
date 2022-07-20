@@ -66,18 +66,6 @@
         }
     ],
     "tasks": {
-        "hetero_feature_selection_select_anonymous_col_names": {
-            "conf": "hetero_feature_selection_select_anonymous_col_names_conf.json",
-            "dsl": "hetero_feature_selection_select_anonymous_col_names_dsl.json"
-        },
-        "hetero_feature_selection_manually_anonymous": {
-            "conf": "hetero_feature_selection_manually_anonymous_conf.json",
-            "dsl": "hetero_feature_selection_manually_anonymous_dsl.json"
-        },
-        "hetero_feature_selection_manually_left_anonymous": {
-            "conf": "hetero_feature_selection_manually_left_anonymous_conf.json",
-            "dsl": "hetero_feature_selection_manually_left_anonymous_dsl.json"
-        },
         "hetero_feature_selection_homo_sbt": {
             "conf": "hetero_feature_selection_homo_sbt_conf.json",
             "dsl": "hetero_feature_selection_homo_sbt_dsl.json"
