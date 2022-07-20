@@ -18,11 +18,11 @@ import argparse
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataTransform
-from pipeline.component import Evaluation
 from pipeline.component import HeteroLR
 from pipeline.component import Intersection
+from pipeline.component import LabelTransform
 from pipeline.component import Reader
-from pipeline.interface import Data
+from pipeline.interface import Data, Model
 from pipeline.utils.tools import load_job_config
 
 
@@ -41,54 +41,47 @@ def main(config="../../config.yaml", namespace=""):
     # initialize pipeline
     pipeline = PipeLine()
     # set job initiator
-    pipeline.set_initiator(role='guest', party_id=guest)
-    # set participants information
-    pipeline.set_roles(guest=guest, host=host, arbiter=arbiter)
+    pipeline.set_initiator(role="guest", party_id=guest).set_roles(guest=guest, host=host, arbiter=arbiter)
 
     # define Reader components to read in data
     reader_0 = Reader(name="reader_0")
-    # configure Reader for guest
-    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
-    # configure Reader for host
-    reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
+    # configure Reader
+    reader_0.get_party_instance(role="guest", party_id=guest).component_param(table=guest_train_data)
+    reader_0.get_party_instance(role="host", party_id=host).component_param(table=host_train_data)
 
-    # define DataTransform components
-    data_transform_0 = DataTransform(name="data_transform_0", output_format='dense')
-
-    # get DataTransform party instance of guest
-    data_transform_0_guest_party_instance = data_transform_0.get_party_instance(role='guest', party_id=guest)
-    # configure DataTransform for guest
-    data_transform_0_guest_party_instance.component_param(with_label=True)
-    # get and configure DataTransform party instance of host
-    data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
-
-    # define Intersection components
+    data_transform_0 = DataTransform(name="data_transform_0")  # start component numbering at 0
+    data_transform_0_guest_party_instance = data_transform_0.get_party_instance(role="guest", party_id=guest)
+    data_transform_0_guest_party_instance.component_param(with_label=True, output_format="dense")
+    data_transform_0.get_party_instance(role="host", party_id=host).component_param(with_label=False,
+                                                                                    output_format="dense")
     intersection_0 = Intersection(name="intersection_0")
+
+    label_transform_0 = LabelTransform(name="label_transform_0", label_encoder={"0": 1, "1": 0})
+    label_transform_0.get_party_instance(role="host", party_id=host).component_param(need_run=False)
+
+    hetero_lr_0 = HeteroLR(name="hetero_lr_0", penalty="L2", optimizer="sgd", tol=0.001,
+                           alpha=0.01, max_iter=20, early_stop="weight_diff", batch_size=-1,
+                           learning_rate=0.15, decay=0.0, decay_sqrt=False,
+                           init_param={"init_method": "zeros"},
+                           floating_point_precision=23)
+
+    label_transform_1 = LabelTransform(name="label_transform_1")
+
+    # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
+    pipeline.add_component(label_transform_0, data=Data(data=intersection_0.output.data))
+    pipeline.add_component(hetero_lr_0, data=Data(train_data=label_transform_0.output.data))
+    pipeline.add_component(
+        label_transform_1, data=Data(
+            data=hetero_lr_0.output.data), model=Model(
+            label_transform_0.output.model))
 
-    lr_param = {
-        "penalty": "L2",
-        "optimizer": "nesterov_momentum_sgd",
-        "tol": 1e-05,
-        "alpha": 0.0001,
-        "max_iter": 1,
-        "early_stop": "diff",
-        "multi_class": "ovr",
-        "batch_size": -1,
-        "learning_rate": 0.15,
-        "init_param": {
-            "init_method": "zeros"
-        }
-    }
-    hetero_lr_0 = HeteroLR(name="hetero_lr_0", **lr_param)
-    pipeline.add_component(hetero_lr_0, data=Data(train_data=intersection_0.output.data))
-
-    evaluation_0 = Evaluation(name="evaluation_0", eval_type="multi")
-    pipeline.add_component(evaluation_0, data=Data(data=hetero_lr_0.output.data))
-
+    # compile pipeline once finished adding modules, this step will form conf and dsl files for running job
     pipeline.compile()
+
+    # fit model
     pipeline.fit()
 
 
