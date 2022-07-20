@@ -311,6 +311,7 @@ class HeteroNNGuestModel(HeteroNNModel):
                                                             host_num=len(self.component_properties.host_party_idlist))
         self.interactive_model.set_transfer_variable(self.transfer_variable)
         self.interactive_model.set_partition(self.partition)
+        self.interactive_model.set_batch(self.batch_size)
         if self.selector:
             self.interactive_model.set_backward_select_strategy()
 
