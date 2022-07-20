@@ -73,7 +73,7 @@ def getprimeover(n):
 
 
 def isqrt(n):
-    """ return the integer square root of N """
+    """return the integer square root of N"""
 
     return int(gmpy2.isqrt(n))
 

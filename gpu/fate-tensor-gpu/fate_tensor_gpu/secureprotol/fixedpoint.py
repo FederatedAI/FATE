@@ -21,13 +21,13 @@ import numpy as np
 
 
 class FixedPointNumber(object):
-    """Represents a float or int fixedpoint encoding;.
-    """
+    """Represents a float or int fixedpoint encoding;."""
+
     BASE = 16
     LOG2_BASE = math.log(BASE, 2)
     FLOAT_MANTISSA_BITS = sys.float_info.mant_dig
 
-    Q = 293973345475167247070445277780365744413 ** 2
+    Q = 293973345475167247070445277780365744413**2
 
     def __init__(self, encoding, exponent, n=None, max_int=None):
         if n is None:
@@ -49,9 +49,14 @@ class FixedPointNumber(object):
         return exponent
 
     @classmethod
-    def encode(cls, scalar, n=None, max_int=None, precision=None, max_exponent=None):
-        """return an encoding of an int or float.
-        """
+    def encode(
+            cls,
+            scalar,
+            n=None,
+            max_int=None,
+            precision=None,
+            max_exponent=None):
+        """return an encoding of an int or float."""
         # Calculate the maximum exponent for desired precision
         exponent = None
 
@@ -66,17 +71,26 @@ class FixedPointNumber(object):
             max_int = n // 2
 
         if precision is None:
-            if isinstance(scalar, int) or isinstance(scalar, np.int16) or \
-                    isinstance(scalar, np.int32) or isinstance(scalar, np.int64):
+            if (
+                isinstance(scalar, int)
+                or isinstance(scalar, np.int16)
+                or isinstance(scalar, np.int32)
+                or isinstance(scalar, np.int64)
+            ):
                 exponent = 0
-            elif isinstance(scalar, float) or isinstance(scalar, np.float16) \
-                    or isinstance(scalar, np.float32) or isinstance(scalar, np.float64):
+            elif (
+                isinstance(scalar, float)
+                or isinstance(scalar, np.float16)
+                or isinstance(scalar, np.float32)
+                or isinstance(scalar, np.float64)
+            ):
                 flt_exponent = math.frexp(scalar)[1]
                 lsb_exponent = cls.FLOAT_MANTISSA_BITS - flt_exponent
                 exponent = math.floor(lsb_exponent / cls.LOG2_BASE)
             else:
-                raise TypeError("Don't know the precision of type %s."
-                                % type(scalar))
+                raise TypeError(
+                    "Don't know the precision of type %s." %
+                    type(scalar))
         else:
             exponent = cls.calculate_exponent_from_precision(precision)
 
@@ -86,15 +100,14 @@ class FixedPointNumber(object):
         int_fixpoint = int(round(scalar * pow(cls.BASE, exponent)))
 
         if abs(int_fixpoint) > max_int:
-            raise ValueError(f"Integer needs to be within +/- {max_int},but got {int_fixpoint},"
-                             f"basic info, scalar={scalar}, base={cls.BASE}, exponent={exponent}"
-                             )
+            raise ValueError(
+                f"Integer needs to be within +/- {max_int},but got {int_fixpoint},"
+                f"basic info, scalar={scalar}, base={cls.BASE}, exponent={exponent}")
 
         return cls(int_fixpoint % n, exponent, n, max_int)
 
     def decode(self):
-        """return decode plaintext.
-        """
+        """return decode plaintext."""
         if self.encoding >= self.n:
             # Should be mod n
             raise ValueError('Attempted to decode corrupted number')
@@ -105,27 +118,32 @@ class FixedPointNumber(object):
             # Negative
             mantissa = self.encoding - self.n
         else:
-            raise OverflowError(f'Overflow detected in decode number, encoding: {self.encoding}，'
-                                f'{self.exponent}'
-                                f' {self.n}')
+            raise OverflowError(
+                f'Overflow detected in decode number, encoding: {self.encoding}，'
+                f'{self.exponent}'
+                f' {self.n}')
 
         return mantissa * pow(self.BASE, -self.exponent)
 
     def increase_exponent_to(self, new_exponent):
-        """return FixedPointNumber: new encoding with same value but having great exponent.
-        """
+        """return FixedPointNumber: new encoding with same value but having great exponent."""
         if new_exponent < self.exponent:
-            raise ValueError('New exponent %i should be greater than'
-                             'old exponent %i' % (new_exponent, self.exponent))
+            raise ValueError(
+                'New exponent %i should be greater than'
+                'old exponent %i' % (new_exponent, self.exponent)
+            )
 
         factor = pow(self.BASE, new_exponent - self.exponent)
         new_encoding = self.encoding * factor % self.n
 
-        return FixedPointNumber(new_encoding, new_exponent, self.n, self.max_int)
+        return FixedPointNumber(
+            new_encoding,
+            new_exponent,
+            self.n,
+            self.max_int)
 
     def __align_exponent(self, x, y):
-        """return x,y with same exponent
-        """
+        """return x,y with same exponent"""
         if x.exponent < y.exponent:
             x = x.increase_exponent_to(y.exponent)
         elif x.exponent > y.exponent:
@@ -259,7 +277,11 @@ class FixedPointNumber(object):
             other = self.encode(other.decode(), n=self.n, max_int=self.max_int)
         x, y = self.__align_exponent(self, other)
         encoding = (x.encoding + y.encoding) % self.n
-        return FixedPointNumber(encoding, x.exponent, n=self.n, max_int=self.max_int)
+        return FixedPointNumber(
+            encoding,
+            x.exponent,
+            n=self.n,
+            max_int=self.max_int)
 
     def __add_scalar(self, scalar):
         encoded = self.encode(scalar, n=self.n, max_int=self.max_int)
@@ -271,7 +293,11 @@ class FixedPointNumber(object):
         x, y = self.__align_exponent(self, other)
         encoding = (x.encoding - y.encoding) % self.n
 
-        return FixedPointNumber(encoding, x.exponent, n=self.n, max_int=self.max_int)
+        return FixedPointNumber(
+            encoding,
+            x.exponent,
+            n=self.n,
+            max_int=self.max_int)
 
     def __sub_scalar(self, scalar):
         scalar = -1 * scalar
@@ -295,4 +321,9 @@ class FixedPointNumber(object):
             return self * -1
 
     def __mod__(self, other):
-        return FixedPointNumber(self.encoding % other, self.exponent, n=self.n, max_int=self.max_int)
+        return FixedPointNumber(
+            self.encoding %
+            other,
+            self.exponent,
+            n=self.n,
+            max_int=self.max_int)

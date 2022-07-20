@@ -17,16 +17,37 @@ import typing
 
 import numpy as np
 
-from .gpu_engine import PaillierEncryptedStorage, \
-    TensorShapeStorage, pi_add, te_p2c, fp_encode, pi_encrypt, pi_mul, pi_matmul, pi_rmatmul, pi_sum, pi_h2d_pub_key, \
-    pi_p2c_pub_key, pi_decrypt, te_c2p, pi_h2d_priv_key, pi_p2c_priv_key
-from .secureprotol.fate_paillier import PaillierPublicKey, PaillierPrivateKey, PaillierKeypair
+from .gpu_engine import (
+    PaillierEncryptedStorage,
+    TensorShapeStorage,
+    pi_add,
+    te_p2c,
+    fp_encode,
+    pi_encrypt,
+    pi_mul,
+    pi_matmul,
+    pi_rmatmul,
+    pi_sum,
+    pi_h2d_pub_key,
+    pi_p2c_pub_key,
+    pi_decrypt,
+    te_c2p,
+    pi_h2d_priv_key,
+    pi_p2c_priv_key,
+)
+from .secureprotol.fate_paillier import (
+    PaillierPublicKey,
+    PaillierPrivateKey,
+    PaillierKeypair,
+)
 
 
 class Cipherblock:
-    def __init__(self, store: PaillierEncryptedStorage,
-                 shape: TensorShapeStorage,
-                 pk: "PK"):
+    def __init__(
+            self,
+            store: PaillierEncryptedStorage,
+            shape: TensorShapeStorage,
+            pk: "PK"):
         self.store = store
         self.shape = shape
         self.pk = pk
@@ -42,33 +63,45 @@ class Cipherblock:
         return TensorShapeStorage().from_tuple(other.shape)
 
     def _add_plaintext(self, other) -> "Cipherblock":
-        fp_store = fp_encode(te_p2c(other, None), self.pk.pub_key.n, self.pk.pub_key.max_int)
-        pi_store = pi_encrypt(self.pk.gpu_pub_key, fp_store, None, None)
-        res_store, res_shape = pi_add(self.pk.gpu_pub_key, self.store, pi_store, self.shape, self.gen_shape(other),
-                                      None, None, None)
+        fp_store = fp_encode(
+            te_p2c(other),
+            self.pk.pub_key.n,
+            self.pk.pub_key.max_int)
+        pi_store = pi_encrypt(self.pk.gpu_pub_key, fp_store)
+        res_store, res_shape = pi_add(
+            self.pk.gpu_pub_key, self.store, pi_store, self.shape, self.gen_shape(other))
         return Cipherblock(res_store, res_shape, self.pk)
 
     def _mul_plaintext(self, other) -> "Cipherblock":
-        fp_store = fp_encode(te_p2c(other, None), self.pk.pub_key.n, self.pk.pub_key.max_int)
-        res_store, res_shape = pi_mul(self.pk.gpu_pub_key, self.store, fp_store, self.shape, self.gen_shape(other),
-                                      None, None, None)
+        fp_store = fp_encode(
+            te_p2c(other),
+            self.pk.pub_key.n,
+            self.pk.pub_key.max_int)
+        res_store, res_shape = pi_mul(
+            self.pk.gpu_pub_key, self.store, fp_store, self.shape, self.gen_shape(other))
         return Cipherblock(res_store, res_shape, self.pk)
 
     def _matmul_plaintext(self, other) -> "Cipherblock":
-        fp_store = fp_encode(te_p2c(other, None), self.pk.pub_key.n, self.pk.pub_key.max_int)
-        res_store, res_shape = pi_matmul(self.pk.gpu_pub_key, self.store, fp_store, self.shape, self.gen_shape(other),
-                                         None, None, None)
+        fp_store = fp_encode(
+            te_p2c(other),
+            self.pk.pub_key.n,
+            self.pk.pub_key.max_int)
+        res_store, res_shape = pi_matmul(
+            self.pk.gpu_pub_key, self.store, fp_store, self.shape, self.gen_shape(other))
         return Cipherblock(res_store, res_shape, self.pk)
 
     def _rmatmul_plaintext(self, other) -> "Cipherblock":
-        fp_store = fp_encode(te_p2c(other, None), self.pk.pub_key.n, self.pk.pub_key.max_int)
-        res_store, res_shape = pi_rmatmul(self.pk.gpu_pub_key, fp_store, self.store, self.gen_shape(other), self.shape,
-                                          None, None, None)
+        fp_store = fp_encode(
+            te_p2c(other),
+            self.pk.pub_key.n,
+            self.pk.pub_key.max_int)
+        res_store, res_shape = pi_rmatmul(
+            self.pk.gpu_pub_key, fp_store, self.store, self.gen_shape(other), self.shape)
         return Cipherblock(res_store, res_shape, self.pk)
 
     def add_cipherblock(self, other: "Cipherblock") -> "Cipherblock":
-        res_store, res_shape = pi_add(self.pk.gpu_pub_key, self.store, other.store, self.shape, other.shape, None,
-                                      None, None)
+        res_store, res_shape = pi_add(
+            self.pk.gpu_pub_key, self.store, other.store, self.shape, other.shape)
         return Cipherblock(res_store, res_shape, self.pk)
 
     def add_plaintext_f64(self, other) -> "Cipherblock":
@@ -83,19 +116,27 @@ class Cipherblock:
     def add_plaintext_i32(self, other) -> "Cipherblock":
         return self._add_plaintext(other)
 
-    def add_plaintext_scalar_f64(self, other: typing.Union[float, np.float64]) -> "Cipherblock":
+    def add_plaintext_scalar_f64(
+        self, other: typing.Union[float, np.float64]
+    ) -> "Cipherblock":
         other_array = np.asarray([other], dtype=np.float64)
         return self._add_plaintext(other_array)
 
-    def add_plaintext_scalar_f32(self, other: typing.Union[float, np.float32]) -> "Cipherblock":
+    def add_plaintext_scalar_f32(
+        self, other: typing.Union[float, np.float32]
+    ) -> "Cipherblock":
         other_array = np.asarray([other], dtype=np.float32)
         return self._add_plaintext(other_array)
 
-    def add_plaintext_scalar_i64(self, other: typing.Union[int, np.int64]) -> "Cipherblock":
+    def add_plaintext_scalar_i64(
+        self, other: typing.Union[int, np.int64]
+    ) -> "Cipherblock":
         other_array = np.asarray([other], dtype=np.int64)
         return self._add_plaintext(other_array)
 
-    def add_plaintext_scalar_i32(self, other: typing.Union[int, np.int32]) -> "Cipherblock":
+    def add_plaintext_scalar_i32(
+        self, other: typing.Union[int, np.int32]
+    ) -> "Cipherblock":
         other_array = np.asarray([other], dtype=np.int32)
         return self._add_plaintext(other_array)
 
@@ -114,16 +155,24 @@ class Cipherblock:
     def sub_plaintext_i32(self, other) -> "Cipherblock":
         return self.add_plaintext_i32(other * -1)
 
-    def sub_plaintext_scalar_f64(self, other: typing.Union[float, np.float64]) -> "Cipherblock":
+    def sub_plaintext_scalar_f64(
+        self, other: typing.Union[float, np.float64]
+    ) -> "Cipherblock":
         return self.add_plaintext_scalar_f64(other * -1)
 
-    def sub_plaintext_scalar_f32(self, other: typing.Union[float, np.float32]) -> "Cipherblock":
+    def sub_plaintext_scalar_f32(
+        self, other: typing.Union[float, np.float32]
+    ) -> "Cipherblock":
         return self.add_plaintext_scalar_f32(other * -1)
 
-    def sub_plaintext_scalar_i64(self, other: typing.Union[int, np.int64]) -> "Cipherblock":
+    def sub_plaintext_scalar_i64(
+        self, other: typing.Union[int, np.int64]
+    ) -> "Cipherblock":
         return self.add_plaintext_scalar_i64(other * -1)
 
-    def sub_plaintext_scalar_i32(self, other: typing.Union[int, np.int32]) -> "Cipherblock":
+    def sub_plaintext_scalar_i32(
+        self, other: typing.Union[int, np.int32]
+    ) -> "Cipherblock":
         return self.add_plaintext_scalar_i32(other * -1)
 
     def mul_plaintext_f64(self, other) -> "Cipherblock":
@@ -138,19 +187,27 @@ class Cipherblock:
     def mul_plaintext_i32(self, other) -> "Cipherblock":
         return self._mul_plaintext(other)
 
-    def mul_plaintext_scalar_f64(self, other: typing.Union[float, np.float64]) -> "Cipherblock":
+    def mul_plaintext_scalar_f64(
+        self, other: typing.Union[float, np.float64]
+    ) -> "Cipherblock":
         other_array = np.asarray([other], dtype=np.float64)
         return self._mul_plaintext(other_array)
 
-    def mul_plaintext_scalar_f32(self, other: typing.Union[float, np.float32]) -> "Cipherblock":
+    def mul_plaintext_scalar_f32(
+        self, other: typing.Union[float, np.float32]
+    ) -> "Cipherblock":
         other_array = np.asarray([other], dtype=np.float32)
         return self._mul_plaintext(other_array)
 
-    def mul_plaintext_scalar_i64(self, other: typing.Union[int, np.int64]) -> "Cipherblock":
+    def mul_plaintext_scalar_i64(
+        self, other: typing.Union[int, np.int64]
+    ) -> "Cipherblock":
         other_array = np.asarray([other], dtype=np.int64)
         return self._mul_plaintext(other_array)
 
-    def mul_plaintext_scalar_i32(self, other: typing.Union[int, np.int32]) -> "Cipherblock":
+    def mul_plaintext_scalar_i32(
+        self, other: typing.Union[int, np.int32]
+    ) -> "Cipherblock":
         other_array = np.asarray([other], dtype=np.int32)
         return self._mul_plaintext(other_array)
 
@@ -203,11 +260,13 @@ class Cipherblock:
         return self._rmatmul_plaintext(other)
 
     def sum(self) -> "Cipherblock":
-        res_store, res_shape = pi_sum(self.pk.gpu_pub_key, self.store, self.shape, None, None, None, None)
+        res_store, res_shape = pi_sum(
+            self.pk.gpu_pub_key, self.store, self.shape)
         return Cipherblock(res_store, res_shape, self.pk)
 
     def sum_axis(self, axis=None):
-        res_store, res_shape = pi_sum(self.pk.gpu_pub_key, self.store, self.shape, axis, None, None, None)
+        res_store, res_shape = pi_sum(
+            self.pk.gpu_pub_key, self.store, self.shape, axis)
         return Cipherblock(res_store, res_shape, self.pk)
 
     def mean(self) -> "Cipherblock":
@@ -227,16 +286,24 @@ class Cipherblock:
     def add_plaintext_i64_par(self, other) -> "Cipherblock":
         return self.add_plaintext_i64(other)
 
-    def add_plaintext_scalar_f64_par(self, other: typing.Union[float, np.float64]) -> "Cipherblock":
+    def add_plaintext_scalar_f64_par(
+        self, other: typing.Union[float, np.float64]
+    ) -> "Cipherblock":
         return self.add_plaintext_scalar_f64(other)
 
-    def add_plaintext_scalar_f32_par(self, other: typing.Union[float, np.float32]) -> "Cipherblock":
+    def add_plaintext_scalar_f32_par(
+        self, other: typing.Union[float, np.float32]
+    ) -> "Cipherblock":
         return self.add_plaintext_scalar_f32(other)
 
-    def add_plaintext_scalar_i64_par(self, other: typing.Union[int, np.int64]) -> "Cipherblock":
+    def add_plaintext_scalar_i64_par(
+        self, other: typing.Union[int, np.int64]
+    ) -> "Cipherblock":
         return self.add_plaintext_scalar_i64(other)
 
-    def add_plaintext_scalar_i32_par(self, other: typing.Union[int, np.int32]) -> "Cipherblock":
+    def add_plaintext_scalar_i32_par(
+        self, other: typing.Union[int, np.int32]
+    ) -> "Cipherblock":
         return self.add_plaintext_scalar_i32(other)
 
     def add_plaintext_i32_par(self, other) -> "Cipherblock":
@@ -257,16 +324,24 @@ class Cipherblock:
     def sub_plaintext_i32_par(self, other) -> "Cipherblock":
         return self.sub_plaintext_i32(other)
 
-    def sub_plaintext_scalar_f64_par(self, other: typing.Union[float, np.float64]) -> "Cipherblock":
+    def sub_plaintext_scalar_f64_par(
+        self, other: typing.Union[float, np.float64]
+    ) -> "Cipherblock":
         return self.sub_plaintext_scalar_f64(other)
 
-    def sub_plaintext_scalar_f32_par(self, other: typing.Union[float, np.float32]) -> "Cipherblock":
+    def sub_plaintext_scalar_f32_par(
+        self, other: typing.Union[float, np.float32]
+    ) -> "Cipherblock":
         return self.sub_plaintext_scalar_f32(other)
 
-    def sub_plaintext_scalar_i64_par(self, other: typing.Union[int, np.int64]) -> "Cipherblock":
+    def sub_plaintext_scalar_i64_par(
+        self, other: typing.Union[int, np.int64]
+    ) -> "Cipherblock":
         return self.sub_plaintext_scalar_i64(other)
 
-    def sub_plaintext_scalar_i32_par(self, other: typing.Union[int, np.int32]) -> "Cipherblock":
+    def sub_plaintext_scalar_i32_par(
+        self, other: typing.Union[int, np.int32]
+    ) -> "Cipherblock":
         return self.sub_plaintext_scalar_i32(other)
 
     def mul_plaintext_f64_par(self, other) -> "Cipherblock":
@@ -281,16 +356,24 @@ class Cipherblock:
     def mul_plaintext_i32_par(self, other) -> "Cipherblock":
         return self.mul_plaintext_i32(other)
 
-    def mul_plaintext_scalar_f64_par(self, other: typing.Union[float, np.float64]) -> "Cipherblock":
+    def mul_plaintext_scalar_f64_par(
+        self, other: typing.Union[float, np.float64]
+    ) -> "Cipherblock":
         return self.mul_plaintext_scalar_f64(other)
 
-    def mul_plaintext_scalar_f32_par(self, other: typing.Union[float, np.float32]) -> "Cipherblock":
+    def mul_plaintext_scalar_f32_par(
+        self, other: typing.Union[float, np.float32]
+    ) -> "Cipherblock":
         return self.mul_plaintext_scalar_f32(other)
 
-    def mul_plaintext_scalar_i64_par(self, other: typing.Union[int, np.int64]) -> "Cipherblock":
+    def mul_plaintext_scalar_i64_par(
+        self, other: typing.Union[int, np.int64]
+    ) -> "Cipherblock":
         return self.mul_plaintext_scalar_i64(other)
 
-    def mul_plaintext_scalar_i32_par(self, other: typing.Union[int, np.int32]) -> "Cipherblock":
+    def mul_plaintext_scalar_i32_par(
+        self, other: typing.Union[int, np.int32]
+    ) -> "Cipherblock":
         return self.mul_plaintext_scalar_i32(other)
 
     def matmul_plaintext_ix2_f64_par(self, other) -> "Cipherblock":
@@ -351,12 +434,12 @@ class Cipherblock:
 class PK:
     def __init__(self, pub_key: PaillierPublicKey):
         self.pub_key = pub_key
-        self.gpu_pub_key = pi_h2d_pub_key(None, pi_p2c_pub_key(None, self.pub_key))
+        self.gpu_pub_key = pi_h2d_pub_key(pi_p2c_pub_key(self.pub_key))
 
     def _encrypt(self, a) -> Cipherblock:
         shape = TensorShapeStorage().from_tuple(a.shape)
-        fp_store = fp_encode(te_p2c(a, None), self.pub_key.n, self.pub_key.max_int)
-        pi_store = pi_encrypt(self.gpu_pub_key, fp_store, None, None)
+        fp_store = fp_encode(te_p2c(a), self.pub_key.n, self.pub_key.max_int)
+        pi_store = pi_encrypt(self.gpu_pub_key, fp_store)
         return Cipherblock(pi_store, shape, self)
 
     def encrypt_f64(self, a) -> Cipherblock:
@@ -387,13 +470,13 @@ class PK:
 class SK:
     def __init__(self, priv_key: PaillierPrivateKey, pk: PK):
         self.priv_key = priv_key
-        self.gpu_priv_key = pi_h2d_priv_key(None, pi_p2c_priv_key(None, priv_key))
+        self.gpu_priv_key = pi_h2d_priv_key(pi_p2c_priv_key(priv_key))
         self.pk = pk
 
     def _decrypt(self, a: Cipherblock):
         if a.store.vec_size == 0:
             return np.asarray([])
-        te_res = pi_decrypt(a.pk.gpu_pub_key, self.gpu_priv_key, a.store, None, None, None)
+        te_res = pi_decrypt(a.pk.gpu_pub_key, self.gpu_priv_key, a.store)
         return te_c2p(te_res).reshape(a.get_shape())
 
     def decrypt_f64(self, a: Cipherblock):
