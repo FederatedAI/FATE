@@ -27,7 +27,7 @@ class FixedPointNumber(object):
     LOG2_BASE = math.log(BASE, 2)
     FLOAT_MANTISSA_BITS = sys.float_info.mant_dig
 
-    Q = 293973345475167247070445277780365744413**2
+    Q = 293973345475167247070445277780365744413 ** 2
 
     def __init__(self, encoding, exponent, n=None, max_int=None):
         if n is None:
@@ -71,19 +71,12 @@ class FixedPointNumber(object):
             max_int = n // 2
 
         if precision is None:
-            if (
-                isinstance(scalar, int)
-                or isinstance(scalar, np.int16)
-                or isinstance(scalar, np.int32)
-                or isinstance(scalar, np.int64)
-            ):
+            if isinstance(scalar, int) or isinstance(scalar, np.int16) or isinstance(scalar, np.int32) or isinstance(
+                    scalar, np.int64):
                 exponent = 0
-            elif (
-                isinstance(scalar, float)
-                or isinstance(scalar, np.float16)
-                or isinstance(scalar, np.float32)
-                or isinstance(scalar, np.float64)
-            ):
+            elif isinstance(scalar, float) or isinstance(scalar, np.float16) or isinstance(scalar,
+                                                                                           np.float32) or isinstance(
+                    scalar, np.float64):
                 flt_exponent = math.frexp(scalar)[1]
                 lsb_exponent = cls.FLOAT_MANTISSA_BITS - flt_exponent
                 exponent = math.floor(lsb_exponent / cls.LOG2_BASE)

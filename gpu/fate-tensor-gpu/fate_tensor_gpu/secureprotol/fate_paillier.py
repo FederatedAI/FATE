@@ -173,27 +173,9 @@ class PaillierPrivateKey(object):
                 "ciphertext should be an int, not: %s" %
                 type(ciphertext))
 
-        mp = (
-            self.l_func(
-                gmpy_math.powmod(
-                    ciphertext,
-                    self.p -
-                    1,
-                    self.psquare),
-                self.p) *
-            self.hp %
-            self.p)
+        mp = self.l_func(gmpy_math.powmod(ciphertext, self.p - 1, self.psquare), self.p) * self.hp % self.p
 
-        mq = (
-            self.l_func(
-                gmpy_math.powmod(
-                    ciphertext,
-                    self.q -
-                    1,
-                    self.qsquare),
-                self.q) *
-            self.hq %
-            self.q)
+        mq = self.l_func(gmpy_math.powmod(ciphertext, self.q - 1, self.qsquare), self.q) * self.hq % self.q
 
         return self.crt(mp, mq)
 

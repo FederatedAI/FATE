@@ -218,9 +218,7 @@ def __get_C_uint32(uint32_space, size):
     GPU_LIB.c_memcpy(
         uint32_list,
         c_void_p(uint32_space),
-        c_size_t(
-            size *
-            U_INT32_BYTE))
+        c_size_t(size * U_INT32_BYTE))
     return np.asarray(uint32_list)
 
 
@@ -230,9 +228,7 @@ def __get_C_double(double_space, size):
     GPU_LIB.c_memcpy(
         double_list,
         c_void_p(double_space),
-        c_size_t(
-            size *
-            DOUBLE_BYTE))
+        c_size_t(size * DOUBLE_BYTE))
     # convert all the data in one step, no loop
     return np.asarray(double_list)
 
@@ -243,9 +239,7 @@ def __get_C_int64(int64_space, size):
     GPU_LIB.c_memcpy(
         int64_list,
         c_void_p(int64_space),
-        c_size_t(
-            size *
-            INT64_BYTE))
+        c_size_t(size * INT64_BYTE))
     # convert all the data in one step, no loop
     return np.asarray(int64_list)
 
@@ -459,15 +453,15 @@ class FixedPointStorage:
     '''
 
     def __init__(
-        self,
-        bigint_storage,
-        base_storage,
-        exp_storage,
-        vec_size,
-        n,
-        max_int,
-        mem_type: int,
-        data_type,
+            self,
+            bigint_storage,
+            base_storage,
+            exp_storage,
+            vec_size,
+            n,
+            max_int,
+            mem_type: int,
+            data_type,
     ):
         # 1:cpu/host  2:gpu/device
         self.mem_type = mem_type
@@ -513,15 +507,15 @@ class PaillierEncryptedStorage:
     '''
 
     def __init__(
-        self,
-        pen_storage,
-        base_storage,
-        exp_storage,
-        vec_size,
-        mem_type: int,
-        data_type,
-        fpn_encode_n,
-        fpn_encode_max_int,
+            self,
+            pen_storage,
+            base_storage,
+            exp_storage,
+            vec_size,
+            mem_type: int,
+            data_type,
+            fpn_encode_n,
+            fpn_encode_max_int,
     ):
         self.mem_type = mem_type
         '''Actual data and length for pen'''
@@ -757,18 +751,14 @@ def te_p2c(data, res=None):
         GPU_LIB.c_memcpy(
             c_void_p(storage_pointer),
             data_pointer,
-            c_size_t(
-                vec_size *
-                INT64_BYTE))
+            c_size_t(vec_size * INT64_BYTE))
     elif data.dtype == 'int64':
         data_pointer = data.ctypes.data_as(c_void_p)
         data_type = INT64_TYPE
         GPU_LIB.c_memcpy(
             c_void_p(storage_pointer),
             data_pointer,
-            c_size_t(
-                vec_size *
-                INT64_BYTE))
+            c_size_t(vec_size * INT64_BYTE))
     elif data.dtype == 'float32':
         new_data = data.astype(np.float64)
         data_pointer = new_data.ctypes.data_as(c_void_p)
@@ -776,18 +766,14 @@ def te_p2c(data, res=None):
         GPU_LIB.c_memcpy(
             c_void_p(storage_pointer),
             data_pointer,
-            c_size_t(
-                vec_size *
-                DOUBLE_BYTE))
+            c_size_t(vec_size * DOUBLE_BYTE))
     elif data.dtype == 'float64':
         data_pointer = data.ctypes.data_as(c_void_p)
         data_type = FLOAT_TYPE
         GPU_LIB.c_memcpy(
             c_void_p(storage_pointer),
             data_pointer,
-            c_size_t(
-                vec_size *
-                DOUBLE_BYTE))
+            c_size_t(vec_size * DOUBLE_BYTE))
     else:
         raise PermissionError("Invalid Data Type")
     return _te_init_store(res, storage_pointer, vec_size, MEM_HOST, data_type)
@@ -860,9 +846,7 @@ def fp_c2bytes(store, res=None):
     max_int = store.max_int
     # C memory storage
     bytes_res = c_buffer(
-        (PLAIN_BYTE + U_INT32_BYTE * 2) * store.vec_size
-        + U_INT32_BYTE * 2
-        + PLAIN_BYTE * 2
+        (PLAIN_BYTE + U_INT32_BYTE * 2) * store.vec_size + U_INT32_BYTE * 2 + PLAIN_BYTE * 2
     )
     GPU_LIB.fp_get_bytes(
         cast(bytes_res, c_void_p),
@@ -897,9 +881,7 @@ def pi_c2bytes(store, res=None):
     max_int = store.encode_max_int
     # C memory storage
     bytes_res = c_buffer(
-        (CIPHER_BYTE + U_INT32_BYTE * 2) * store.vec_size
-        + U_INT32_BYTE * 2
-        + CIPHER_BYTE * 2
+        (CIPHER_BYTE + U_INT32_BYTE * 2) * store.vec_size + U_INT32_BYTE * 2 + CIPHER_BYTE * 2
     )
     GPU_LIB.pi_get_bytes(
         cast(bytes_res, c_void_p),
@@ -979,9 +961,7 @@ def fp_bytes2c(data, res=None):
         res:  FixedPointStorage, the restored struct from para.data.
     '''
     # caculate vec_size
-    vec_size = (len(data) - 2 * (U_INT32_BYTE + PLAIN_BYTE)) // (
-        U_INT32_BYTE * 2 + PLAIN_BYTE
-    )
+    vec_size = (len(data) - 2 * (U_INT32_BYTE + PLAIN_BYTE)) // (U_INT32_BYTE * 2 + PLAIN_BYTE)
     # uint32
     data_type = c_buffer(U_INT32_BYTE)
     mem_type = c_buffer(U_INT32_BYTE)
@@ -1033,9 +1013,7 @@ def pi_bytes2c(data, res=None):
         res:  PaillierEncryptedStorage, the restored struct from para.data
     '''
     # caculate vec_size
-    vec_size = (len(data) - 2 * (U_INT32_BYTE + CIPHER_BYTE)) // (
-        U_INT32_BYTE * 2 + CIPHER_BYTE
-    )
+    vec_size = (len(data) - 2 * (U_INT32_BYTE + CIPHER_BYTE)) // (U_INT32_BYTE * 2 + CIPHER_BYTE)
     # uint32
     data_type = c_buffer(U_INT32_BYTE)
     mem_type = c_buffer(U_INT32_BYTE)
@@ -1093,7 +1071,7 @@ def _te_init_shape(shape_store, shape_tuple):
 
 
 def _te_init_ss(
-    res_store, res_data, vec_size, res_shape, shape_tuple, mem_type, data_type
+        res_store, res_data, vec_size, res_shape, shape_tuple, mem_type, data_type
 ):
     '''
     Init TensorStorage and TensorShapeStorage at the same time
@@ -1178,7 +1156,7 @@ def te_pow(
         res_store=None,
         res_shape=None,
         stream=None):
-    res_data = left_store.data**right
+    res_data = left_store.data ** right
     return _te_init_ss(
         res_store,
         res_data,
@@ -1194,13 +1172,13 @@ def te_pow(
 
 
 def te_add(
-    left_store,
-    right_store,
-    left_shape,
-    right_shape,
-    res_store=None,
-    res_shape=None,
-    stream=None,
+        left_store,
+        right_store,
+        left_shape,
+        right_shape,
+        res_store=None,
+        res_shape=None,
+        stream=None,
 ):
     res_data = left_store.data + right_store.data
     return _te_init_ss(
@@ -1218,13 +1196,13 @@ def te_add(
 
 
 def te_mul(
-    left_store,
-    right_store,
-    left_shape,
-    right_shape,
-    res_store=None,
-    res_shape=None,
-    stream=None,
+        left_store,
+        right_store,
+        left_shape,
+        right_shape,
+        res_store=None,
+        res_shape=None,
+        stream=None,
 ):
     res_data = left_store.data * right_store.data
     return _te_init_ss(
@@ -1242,13 +1220,13 @@ def te_mul(
 
 
 def te_truediv(
-    left_store,
-    right_store,
-    left_shape,
-    right_shape,
-    res_store=None,
-    res_shape=None,
-    stream=None,
+        left_store,
+        right_store,
+        left_shape,
+        right_shape,
+        res_store=None,
+        res_shape=None,
+        stream=None,
 ):
     res_data = left_store.data / right_store.data
     return _te_init_ss(
@@ -1263,13 +1241,13 @@ def te_truediv(
 
 
 def te_floordiv(
-    left_store,
-    right_store,
-    left_shape,
-    right_shape,
-    res_store=None,
-    res_shape=None,
-    stream=None,
+        left_store,
+        right_store,
+        left_shape,
+        right_shape,
+        res_store=None,
+        res_shape=None,
+        stream=None,
 ):
     res_data = left_store.data // right_store.data
     return _te_init_ss(
@@ -1284,13 +1262,13 @@ def te_floordiv(
 
 
 def te_sub(
-    left_store,
-    right_store,
-    left_shape,
-    right_shape,
-    res_store=None,
-    res_shape=None,
-    stream=None,
+        left_store,
+        right_store,
+        left_shape,
+        right_shape,
+        res_store=None,
+        res_shape=None,
+        stream=None,
 ):
     res_data = left_store.data - right_store.data
     return _te_init_ss(
@@ -1308,13 +1286,13 @@ def te_sub(
 
 
 def te_matmul(
-    left_store,
-    right_store,
-    left_shape,
-    right_shape,
-    res_store=None,
-    res_shape=None,
-    stream=None,
+        left_store,
+        right_store,
+        left_shape,
+        right_shape,
+        res_store=None,
+        res_shape=None,
+        stream=None,
 ):
     res_data = left_store.data @ right_store.data
     return _te_init_ss(
@@ -1425,13 +1403,13 @@ def te_exp(store, shape, res_store=None, res_shape=None, stream=None):
 
 
 def te_hstack(
-    left_store,
-    right_store,
-    left_shape,
-    right_shape,
-    res_store=None,
-    res_shape=None,
-    stream=None,
+        left_store,
+        right_store,
+        left_shape,
+        right_shape,
+        res_store=None,
+        res_shape=None,
+        stream=None,
 ):
     _store, _shape = te_cat([left_store, right_store], 1, res_store, res_shape)
     # avoid naming collision
@@ -1783,15 +1761,15 @@ def pi_p2c_priv_key(src):
 
 # ###########PaillierEncrypted STORAGE INITIALIZE#################
 def _pi_init_store(
-    res_store,
-    pen_storage,
-    base_storage,
-    exp_storage,
-    vec_size,
-    mem_type,
-    data_type,
-    encode_n,
-    encode_max_int,
+        res_store,
+        pen_storage,
+        base_storage,
+        exp_storage,
+        vec_size,
+        mem_type,
+        data_type,
+        encode_n,
+        encode_max_int,
 ):
     '''
     init a new PaillierEncryptedStorage
@@ -1829,17 +1807,17 @@ _pi_init_shape = _te_init_shape
 
 
 def _pi_init_ss(
-    res_store,
-    pen_storage,
-    base_storage,
-    exp_storage,
-    vec_size,
-    res_shape,
-    res_shape_tuple,
-    mem_type,
-    data_type,
-    encode_n,
-    encode_max_int,
+        res_store,
+        pen_storage,
+        base_storage,
+        exp_storage,
+        vec_size,
+        res_shape,
+        res_shape_tuple,
+        mem_type,
+        data_type,
+        encode_n,
+        encode_max_int,
 ):
     '''
     init new PaillierEncryptedStorage and corresponding TensorShapeStorage at same time
@@ -1912,9 +1890,7 @@ def pi_p2c(target, src, data_type=FLOAT_TYPE):
     GPU_LIB.c_memcpy(
         c_void_p(res_base),
         base_array_pointer,
-        c_size_t(
-            vec_size *
-            U_INT32_BYTE))
+        c_size_t(vec_size * U_INT32_BYTE))
     GPU_LIB.c_memcpy(
         c_void_p(res_exp), exp_array_pointer, c_size_t(vec_size * U_INT32_BYTE)
     )
@@ -1960,15 +1936,15 @@ def _bi_init_ss(
 
 
 def _fp_init_store(
-    res_store,
-    fpn_storage,
-    base_storage,
-    exp_storage,
-    vec_size,
-    n,
-    max_int,
-    mem_type,
-    data_type,
+        res_store,
+        fpn_storage,
+        base_storage,
+        exp_storage,
+        vec_size,
+        n,
+        max_int,
+        mem_type,
+        data_type,
 ):
     '''
     Init FixedPointStorage class,
@@ -2000,17 +1976,17 @@ def _fp_init_store(
 
 
 def _fp_init_ss(
-    res_store,
-    fpn_storage,
-    base_storage,
-    exp_storage,
-    vec_size,
-    n,
-    max_int,
-    res_shape,
-    res_shape_tuple,
-    mem_type,
-    data_type,
+        res_store,
+        fpn_storage,
+        base_storage,
+        exp_storage,
+        vec_size,
+        n,
+        max_int,
+        res_shape,
+        res_shape_tuple,
+        mem_type,
+        data_type,
 ):
     '''Init FixedPointStorage and the corresponding TensorShapeStorage'''
     return _fp_init_store(
@@ -2052,7 +2028,7 @@ def get_add_mul_size(
 
 
 def get_matmul_rmatmul_size(
-    left_shape: TensorShapeStorage, right_shape: TensorShapeStorage
+        left_shape: TensorShapeStorage, right_shape: TensorShapeStorage
 ):
     '''
     Get the result size of matmul, rmatmul calculators
@@ -2400,14 +2376,14 @@ def __shape_resolve(shape_1, shape_2):
 
 
 def pi_add(
-    pub_key,
-    left_store,
-    right_store,
-    left_shape,
-    right_shape,
-    res_store=None,
-    res_shape=None,
-    stream=None,
+        pub_key,
+        left_store,
+        right_store,
+        left_shape,
+        right_shape,
+        res_store=None,
+        res_shape=None,
+        stream=None,
 ):
     '''
     Perform element-wise encrypted add, support broadcast over cols or rows
@@ -2487,14 +2463,14 @@ def pi_add(
 
 
 def pi_mul(
-    pub_key,
-    left_store,
-    right_store,
-    left_shape,
-    right_shape,
-    res_store=None,
-    res_shape=None,
-    stream=None,
+        pub_key,
+        left_store,
+        right_store,
+        left_shape,
+        right_shape,
+        res_store=None,
+        res_shape=None,
+        stream=None,
 ):
     '''
     Perform element-wise encrypted muliply, support broadcast for cols and rows
@@ -2618,21 +2594,15 @@ def fp_transpose(
         GPU_LIB.c_memcpy(
             c_void_p(res_fpn),
             c_void_p(src_fpn),
-            c_size_t(
-                vec_size *
-                PLAIN_BYTE))
+            c_size_t(vec_size * PLAIN_BYTE))
         GPU_LIB.c_memcpy(
             c_void_p(res_base),
             c_void_p(src_base),
-            c_size_t(
-                vec_size *
-                U_INT32_BYTE))
+            c_size_t(vec_size * U_INT32_BYTE))
         GPU_LIB.c_memcpy(
             c_void_p(res_exp),
             c_void_p(src_exp),
-            c_size_t(
-                vec_size *
-                U_INT32_BYTE))
+            c_size_t(vec_size * U_INT32_BYTE))
         return _fp_init_ss(
             res_store,
             res_fpn,
@@ -2693,14 +2663,14 @@ def fp_transpose(
 
 
 def pi_matmul(
-    pub_key,
-    left_store,
-    right_store,
-    left_shape,
-    right_shape,
-    res_store=None,
-    res_shape=None,
-    stream=None,
+        pub_key,
+        left_store,
+        right_store,
+        left_shape,
+        right_shape,
+        res_store=None,
+        res_shape=None,
+        stream=None,
 ):
     '''
     Perform matrix multiply under encryption.
@@ -2724,12 +2694,7 @@ def pi_matmul(
     # '''Pre-process shape'''
     left_tuple = left_shape.to_tuple()
     right_tuple = right_shape.to_tuple()
-    if (
-        len(left_tuple) == 0
-        or len(right_tuple) == 0
-        or len(left_tuple) > 2
-        or len(right_tuple) > 2
-    ):
+    if len(left_tuple) == 0 or len(right_tuple) == 0 or len(left_tuple) > 2 or len(right_tuple) > 2:
         raise PermissionError("Invalid shape")
     P, Q = __shape_decompose(left_shape)
     R, S = __shape_decompose(right_shape)
@@ -2815,14 +2780,14 @@ def pi_matmul(
 
 
 def pi_rmatmul(
-    pub_key,
-    left_store,
-    right_store,
-    left_shape,
-    right_shape,
-    res_store=None,
-    res_shape=None,
-    stream=None,
+        pub_key,
+        left_store,
+        right_store,
+        left_shape,
+        right_shape,
+        res_store=None,
+        res_shape=None,
+        stream=None,
 ):
     '''
     Perform matrix multiply under encryption.
@@ -2847,12 +2812,7 @@ def pi_rmatmul(
     # pre-process of shapes
     left_tuple = left_shape.to_tuple()
     right_tuple = right_shape.to_tuple()
-    if (
-        len(left_tuple) == 0
-        or len(right_tuple) == 0
-        or len(left_tuple) > 2
-        or len(right_tuple) > 2
-    ):
+    if len(left_tuple) == 0 or len(right_tuple) == 0 or len(left_tuple) > 2 or len(right_tuple) > 2:
         raise PermissionError("Invalid shape")
     P, Q = __shape_decompose(left_shape)
     R, S = __shape_decompose(right_shape)
@@ -2978,21 +2938,15 @@ def pi_transpose(
         GPU_LIB.c_memcpy(
             c_void_p(res_pen),
             c_void_p(src_pen),
-            c_size_t(
-                vec_size *
-                CIPHER_BYTE))
+            c_size_t(vec_size * CIPHER_BYTE))
         GPU_LIB.c_memcpy(
             c_void_p(res_base),
             c_void_p(src_base),
-            c_size_t(
-                vec_size *
-                U_INT32_BYTE))
+            c_size_t(vec_size * U_INT32_BYTE))
         GPU_LIB.c_memcpy(
             c_void_p(res_exp),
             c_void_p(src_exp),
-            c_size_t(
-                vec_size *
-                U_INT32_BYTE))
+            c_size_t(vec_size * U_INT32_BYTE))
         return _pi_init_ss(
             res_store,
             res_pen,
@@ -3038,13 +2992,13 @@ def pi_transpose(
 
 # WARNING:  NOW ALMOST ABANDONED DUE TO NOT IDEAL PERFORMANCE!
 def pi_sum_multi_stream(
-    pub_key,
-    left_store,
-    left_shape,
-    axis=None,
-    res_store=None,
-    res_shape=None,
-    stream=None,
+        pub_key,
+        left_store,
+        left_shape,
+        axis=None,
+        res_store=None,
+        res_shape=None,
+        stream=None,
 ):
     '''Doing pi_sum using multi cuda stream'''
     src_pen = left_store.pen_storage
@@ -3095,13 +3049,13 @@ def pi_sum_multi_stream(
 
 
 def pi_sum(
-    pub_key,
-    left_store,
-    left_shape,
-    axis=None,
-    res_store=None,
-    res_shape=None,
-    stream=None,
+        pub_key,
+        left_store,
+        left_shape,
+        axis=None,
+        res_store=None,
+        res_shape=None,
+        stream=None,
 ):
     '''
     Perform sum according to the axis
@@ -3147,21 +3101,15 @@ def pi_sum(
         GPU_LIB.c_memcpy(
             c_void_p(res_pen),
             c_void_p(src_pen),
-            c_size_t(
-                vec_size *
-                CIPHER_BYTE))
+            c_size_t(vec_size * CIPHER_BYTE))
         GPU_LIB.c_memcpy(
             c_void_p(res_base),
             c_void_p(src_base),
-            c_size_t(
-                vec_size *
-                U_INT32_BYTE))
+            c_size_t(vec_size * U_INT32_BYTE))
         GPU_LIB.c_memcpy(
             c_void_p(res_exp),
             c_void_p(src_exp),
-            c_size_t(
-                vec_size *
-                U_INT32_BYTE))
+            c_size_t(vec_size * U_INT32_BYTE))
         return _pi_init_ss(
             left_store,
             res_pen,
@@ -3222,9 +3170,7 @@ def pi_sum(
             res_base = GPU_LIB.c_malloc(
                 c_size_t(transpose_tuple[0] * U_INT32_BYTE))
             res_exp = GPU_LIB.c_malloc(
-                c_size_t(
-                    transpose_tuple[0] *
-                    U_INT32_BYTE))
+                c_size_t(transpose_tuple[0] * U_INT32_BYTE))
         else:
             res_pen = res_store.pen_storage
             res_base = res_store.base_storage
@@ -3252,9 +3198,7 @@ def pi_sum(
             res_base = GPU_LIB.c_malloc(
                 c_size_t(left_shape_tuple[0] * U_INT32_BYTE))
             res_exp = GPU_LIB.c_malloc(
-                c_size_t(
-                    left_shape_tuple[0] *
-                    U_INT32_BYTE))
+                c_size_t(left_shape_tuple[0] * U_INT32_BYTE))
         else:
             res_pen = res_store.pen_storage
             res_base = res_store.base_storage
@@ -3315,21 +3259,15 @@ def pi_sum_with_index_v2(pub_key, left_store, left_shape, valid_index):
         GPU_LIB.c_memcpy(
             c_void_p(res_pen),
             c_void_p(src_pen),
-            c_size_t(
-                vec_size *
-                CIPHER_BYTE))
+            c_size_t(vec_size * CIPHER_BYTE))
         GPU_LIB.c_memcpy(
             c_void_p(res_base),
             c_void_p(src_base),
-            c_size_t(
-                vec_size *
-                U_INT32_BYTE))
+            c_size_t(vec_size * U_INT32_BYTE))
         GPU_LIB.c_memcpy(
             c_void_p(res_exp),
             c_void_p(src_exp),
-            c_size_t(
-                vec_size *
-                U_INT32_BYTE))
+            c_size_t(vec_size * U_INT32_BYTE))
         return _pi_init_ss(
             left_store,
             res_pen,
@@ -3417,21 +3355,15 @@ def pi_sum_with_index(pub_key, left_store, left_shape, valid_index):
         GPU_LIB.c_memcpy(
             c_void_p(res_pen),
             c_void_p(src_pen),
-            c_size_t(
-                vec_size *
-                CIPHER_BYTE))
+            c_size_t(vec_size * CIPHER_BYTE))
         GPU_LIB.c_memcpy(
             c_void_p(res_base),
             c_void_p(src_base),
-            c_size_t(
-                vec_size *
-                U_INT32_BYTE))
+            c_size_t(vec_size * U_INT32_BYTE))
         GPU_LIB.c_memcpy(
             c_void_p(res_exp),
             c_void_p(src_exp),
-            c_size_t(
-                vec_size *
-                U_INT32_BYTE))
+            c_size_t(vec_size * U_INT32_BYTE))
         return _pi_init_ss(
             left_store,
             res_pen,
@@ -3482,7 +3414,7 @@ def pi_sum_with_index(pub_key, left_store, left_shape, valid_index):
 
 
 def pi_sum_multi_index(
-    pub_key, left_store, left_shape, valid_index, min_value=0, max_value=None
+        pub_key, left_store, left_shape, valid_index, min_value=0, max_value=None
 ):
     '''
     Run sum for data with the same index indicated in the valid_index list
@@ -3546,7 +3478,7 @@ def pi_sum_multi_index(
 # WARNNIG: CURRENTLY NOT IN USE BECAUSE NO APPRENT IMPROVEMENT WHEN left_store.vec_size is very large
 # TODO: apply this to store with small size
 def pi_sum_batch_multi_index(
-    pub_key, left_store, left_shape, valid_index, min_value=0, max_value=None
+        pub_key, left_store, left_shape, valid_index, min_value=0, max_value=None
 ):
     '''
     Rum sum for data with the same index indicated in valid index
@@ -3614,7 +3546,7 @@ def pi_sum_batch_multi_index(
 
 # WARNING: ABANDONED FOR THE SAME REASON AS pi_sum_batch_multi_index
 def pi_sum_batch_multi_index_v2(
-    pub_key, left_store, left_shape, valid_index, min_value=0, max_value=None
+        pub_key, left_store, left_shape, valid_index, min_value=0, max_value=None
 ):
     '''
     Almost the same with pi_sum_batch_multi_index,
@@ -3673,7 +3605,7 @@ def pi_sum_batch_multi_index_v2(
 
 
 def fp_encode(
-    store, n, max_int, precision=None, max_exponent=None, res=None, stream=None
+        store, n, max_int, precision=None, max_exponent=None, res=None, stream=None
 ):
     '''
     Perform encode to a TensorStorage
@@ -3907,13 +3839,13 @@ def pi_c2p(src):
 
 
 def fp_mul(
-    left_store,
-    right_store,
-    left_shape,
-    right_shape,
-    res_store=None,
-    res_shape=None,
-    stream=None,
+        left_store,
+        right_store,
+        left_shape,
+        right_shape,
+        res_store=None,
+        res_shape=None,
+        stream=None,
 ):
     '''
     Perform element-wise multiplication between two FixedPointStorage.
@@ -4026,9 +3958,7 @@ def fp_p2c(target, src, data_type=FLOAT_TYPE):
     GPU_LIB.c_memcpy(
         c_void_p(res_base),
         base_array_pointer,
-        c_size_t(
-            vec_size *
-            U_INT32_BYTE))
+        c_size_t(vec_size * U_INT32_BYTE))
     GPU_LIB.c_memcpy(
         c_void_p(res_exp), exp_array_pointer, c_size_t(vec_size * U_INT32_BYTE)
     )
@@ -4729,8 +4659,8 @@ def bi_gen_rand(elem_size, count, res, rand_seed, stream=None):
     # Didn't use vectorize since that we need to_bytes()
     # But ndarray_float64 has no to_bytes method
     random.seed(rand_seed)
-    rands = np.asarray([random.randrange(1, 8**elem_size)
-                       for i in range(count)])
+    rands = np.asarray([random.randrange(1, 8 ** elem_size)
+                        for i in range(count)])
     if res is None:
         data_storage = GPU_LIB.c_malloc(c_size_t(count * CIPHER_BYTE))
     else:
@@ -4873,7 +4803,7 @@ def pi_accumulate(gpu_pubkey, pubkey_n, left_store, left_shape):
 
 
 def pi_add_with_index(
-    gpu_pubkey, pubkey_n, l_store, l_shape, r_store, r_shape, valid_index
+        gpu_pubkey, pubkey_n, l_store, l_shape, r_store, r_shape, valid_index
 ):
     '''
     Add a single PaillierEncryptedNumber to the designated index in a vector

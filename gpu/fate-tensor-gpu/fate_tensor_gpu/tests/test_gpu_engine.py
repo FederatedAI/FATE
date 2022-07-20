@@ -109,11 +109,8 @@ class TestCaseReport:
         res = []
         res.append('=' * self.width)
         res.append(
-            '|'
-            + ' ' * (int(self.width - len(self.name) - 2) // 2)
-            + self.name
-            + ' ' * (int(self.width - len(self.name) - 1) // 2)
-            + '|'
+            '|' + ' ' * (int(self.width - len(self.name) - 2) // 2) + self.name + ' ' * (
+                int(self.width - len(self.name) - 1) // 2) + '|'
         )
         res.append('=' * self.width)
         res.append(self.gen_line("Data Information"))
@@ -228,13 +225,11 @@ def compare_time(gpu_time, cpu_time, num_instances=TEST_SIZE):
     print("CPU time:", cpu_time, "second(s)")
     print(
         "GPU throughput:",
-        num_instances /
-        gpu_time,
+        num_instances / gpu_time,
         "instance(s) per second")
     print(
         "CPU throughput:",
-        num_instances /
-        cpu_time,
+        num_instances / cpu_time,
         "instance(s) per second")
     print("Speedup:", cpu_time / gpu_time)
 
