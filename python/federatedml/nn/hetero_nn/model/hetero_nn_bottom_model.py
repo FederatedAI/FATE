@@ -16,27 +16,35 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from federatedml.util import LOGGER
 import numpy as np
+from federatedml.util import LOGGER
+from federatedml.util import consts
+from federatedml.nn.backend.tf_keras.nn_model import build_keras, KerasNNModel
+from federatedml.nn.hetero_nn.backend.pytorch.pytorch_nn_model import PytorchNNModel, PytorchDataConvertor
+from federatedml.nn.hetero_nn.backend.tf_keras.data_generator import KerasSequenceDataConverter
 
 
 class HeteroNNBottomModel(object):
-    def __init__(self, input_shape=None, optimizer="SGD", model_builder=None, layer_config=None):
-        loss = "keep_predict_loss"
-        self._model = model_builder(input_shape=input_shape,
-                                    nn_define=layer_config,
-                                    optimizer=optimizer,
-                                    loss=loss,
-                                    metrics=None)
 
-        self.data_converter = None
+    def __init__(self, input_shape, optimizer, layer_config, config_type):
+
+        self.config_type = config_type
+        if self.config_type == consts.keras_backend:
+            self._model: KerasNNModel = build_keras(input_shape=input_shape, loss='keep_predict_loss',
+                                                    optimizer=optimizer, nn_define=layer_config, metrics=None)
+            self.data_converter = KerasSequenceDataConverter()
+
+        elif self.config_type == consts.pytorch_backend:
+            self._model: PytorchNNModel = PytorchNNModel(nn_define=layer_config, optimizer_define=optimizer,
+                                                         loss_fn_define=None)
+            self.data_converter = PytorchDataConvertor()
+
+        LOGGER.debug('bottom model is {}'.format(self._model))
+
         self.do_backward_select_strategy = False
         self.x = []
         self.x_cached = []
         self.batch_size = None
-
-    def set_data_converter(self, data_converter):
-        self.data_converter = data_converter
 
     def set_backward_select_strategy(self):
         self.do_backward_select_strategy = True
@@ -68,7 +76,10 @@ class HeteroNNBottomModel(object):
             x = self.x_cached[: self.batch_size]
             self.x_cached = self.x_cached[self.batch_size:]
 
-        data = self.data_converter.convert_data(x, y / x.shape[0])
+        if self.config_type == consts.keras_backend:
+            data = self.data_converter.convert_data(x, y / x.shape[0])
+        else:
+            data = self.data_converter.convert_data(x, y)  # pytorch backend does not have to process gradients
         self._model.train(data)
 
     def predict(self, x):

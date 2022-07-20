@@ -345,5 +345,6 @@ MAX_HASH_FUNC_COUNT = 32
 
 EINI_TREE_COMPLEXITY = 1000000000
 
-# curve names
+pytorch_backend = 'pytorch'
+keras_backend = 'keras'
 CURVE25519 = 'curve25519'

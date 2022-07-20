@@ -50,7 +50,7 @@ class FederationABC(metaclass=ABCMeta):
                name: str,
                tag: str,
                parties: typing.List[Party],
-               gc: GarbageCollectionABC) -> typing.NoReturn:
+               gc: GarbageCollectionABC):
         """
         remote object/table to ``parties``
 
