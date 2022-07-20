@@ -143,7 +143,7 @@ def main(config="../../config.yaml", namespace=""):
         "manually_param":
             {
                 "left_col_names": [
-                    "host_10000_x3"
+                    f"host_{host}_x3"
                 ]
             },
         "use_anonymous": True}

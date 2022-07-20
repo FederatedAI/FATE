@@ -286,11 +286,15 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
         self.start_round = len(self.boosting_model_list) // self.booster_dim
         self.boosting_round += self.start_round
 
+    def set_anonymous_header(self, data_inst):
+        if not self.anonymous_header:
+            self.anonymous_header = {v: k for k, v in zip(get_anonymous_header(data_inst), data_inst.schema['header'])}
+
     def fit(self, data_inst, validate_data=None):
 
         LOGGER.info('begin to fit a hetero boosting model, model is {}'.format(self.model_name))
 
-        self.anonymous_header = {v: k for k, v in zip(get_anonymous_header(data_inst), data_inst.schema['header'])}
+        self.set_anonymous_header(data_inst)
 
         self.start_round = 0
 
