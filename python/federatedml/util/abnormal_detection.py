@@ -37,12 +37,19 @@ def empty_feature_detection(data_instances):
 
 def column_gathering(iterable, ):
 
-    lost_columns = set()
+    non_empty_columns = set()
     for k, v in iterable:
         features = v.features
-        lost_columns.update(np.where(~np.isnan(features))[0])
+        if isinstance(features.dtype, (np.int, np.int64, np.int32, np.float, np.float32, np.float64, np.long)):
+            non_empty_columns.update(np.where(~np.isnan(features))[0])
+        else:
+            for col_idx, col_v in enumerate(features):
+                if col_v != col_v or col_v == "":
+                    continue
+                else:
+                    non_empty_columns.add(col_idx)
 
-    return lost_columns
+    return non_empty_columns
 
 
 def merge_column_sets(v1: set, v2: set):
