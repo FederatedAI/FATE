@@ -42,8 +42,13 @@ class Federation(FederationABC):
             "self_party_id": party.party_id,
             "proxy_endpoint": proxy_endpoint,
         }
+        self._session_id = rs_session_id
         self._rsc = RollSiteContext(rs_session_id, rp_ctx=rp_ctx, options=options)
         LOGGER.debug(f"[federation.eggroll]init federation context done")
+
+    @property
+    def session_id(self) -> str:
+        return self._session_id
 
     def get(self, name, tag, parties, gc):
         parties = [(party.role, party.party_id) for party in parties]
@@ -56,6 +61,9 @@ class Federation(FederationABC):
             v = v._rp
         parties = [(party.role, party.party_id) for party in parties]
         _remote(v, name, tag, parties, self._rsc, gc)
+
+    def destroy(self, parties):
+        pass
 
 
 def _remote(v, name, tag, parties, rsc, gc):

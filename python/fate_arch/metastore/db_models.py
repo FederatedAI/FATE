@@ -144,4 +144,3 @@ class SessionRecord(DataBaseModel):
 
     class Meta:
         db_table = "t_session_record"
-        primary_key = CompositeKey("f_engine_type", "f_engine_name", "f_engine_session_id")
