@@ -73,7 +73,6 @@ class FederationABC(metaclass=ABCMeta):
         """
         ...
 
-
     @abc.abstractmethod
     def destroy(self, parties):
         """
@@ -89,4 +88,3 @@ class FederationABC(metaclass=ABCMeta):
         None
         """
         ...
-

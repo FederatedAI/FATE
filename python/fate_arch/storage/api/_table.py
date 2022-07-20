@@ -61,7 +61,7 @@ class StorageTable(StorageTableBase):
                             fw.write(chunk)
                 with open(self.path, "r") as f:
                     while True:
-                        lines = f.readlines(1024*1024*1024)
+                        lines = f.readlines(1024 * 1024 * 1024)
                         if lines:
                             for line in lines:
                                 self.data_count += 1
