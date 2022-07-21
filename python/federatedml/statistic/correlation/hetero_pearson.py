@@ -123,14 +123,18 @@ class HeteroPearson(ModelBase):
                 remote_anonymous_names = self.sync_anonymous_names(
                     column_anonymous_names
                 )
-                self._summary["num_remote_features"] = (
-                    m2 if self.local_party.role == "guest" else m1
+                m1, m2 = len(x.value.first()[1]), len(y.value.first()[1])
+                shapes = [m1, m2]
+                names = (
+                    [column_names, remote_anonymous_names]
+                    if self.is_guest
+                    else [remote_anonymous_names, column_names]
                 )
-
-        else:
-            self._summary["num_local_features"] = len(normed.first()[1])
-            self.shapes.append(self.local_corr.shape[0])
-            self.parties = [self.local_party]
+                if not self.is_guest:
+                    names = reversed(names)
+                for shape, party, name in zip(shapes, parties, names):
+                    self._modelsaver.save_party_info(shape, party, name)
+                self._summary["num_remote_features"] = m2 if self.is_guest else m1
 
         self._callback()
         self.set_summary(self._summary)
