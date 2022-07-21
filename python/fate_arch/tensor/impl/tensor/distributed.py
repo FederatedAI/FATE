@@ -2,7 +2,7 @@ import typing
 from typing import Union
 
 from ...abc.tensor import (
-    FPTensorABC,
+    FPTensorProtocol,
     PHECipherABC,
     PHEDecryptorABC,
     PHEEncryptorABC,
@@ -12,7 +12,7 @@ from ...abc.tensor import (
 Numeric = typing.Union[int, float]
 
 
-class FPTensorDistributed(FPTensorABC):
+class FPTensorDistributed(FPTensorProtocol):
     """
     Demo of Distributed Fixed Presicion Tensor
     """
