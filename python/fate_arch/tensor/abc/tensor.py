@@ -1,42 +1,32 @@
 import abc
 import typing
+from typing_extensions import Protocol
 
 
-class FPTensorABC(abc.ABC):
-    @classmethod
-    def zeors(cls, shape) -> "FPTensorABC":
+class FPTensorProtocol(Protocol):
+
+    def __add__(self, other: typing.Union["FPTensorProtocol", float, int]) -> "FPTensorProtocol":
         ...
 
-    @abc.abstractmethod
-    def __add__(self, other: typing.Union["FPTensorABC", float, int]) -> "FPTensorABC":
+    def __radd__(self, other: typing.Union["FPTensorProtocol", float, int]) -> "FPTensorProtocol":
         ...
 
-    @abc.abstractmethod
-    def __radd__(self, other: typing.Union["FPTensorABC", float, int]) -> "FPTensorABC":
+    def __sub__(self, other: typing.Union["FPTensorProtocol", float, int]) -> "FPTensorProtocol":
         ...
 
-    @abc.abstractmethod
-    def __sub__(self, other: typing.Union["FPTensorABC", float, int]) -> "FPTensorABC":
+    def __rsub__(self, other: typing.Union["FPTensorProtocol", float, int]) -> "FPTensorProtocol":
         ...
 
-    @abc.abstractmethod
-    def __rsub__(self, other: typing.Union["FPTensorABC", float, int]) -> "FPTensorABC":
+    def __mul__(self, other: typing.Union["FPTensorProtocol", float, int]) -> "FPTensorProtocol":
         ...
 
-    @abc.abstractmethod
-    def __mul__(self, other: typing.Union["FPTensorABC", float, int]) -> "FPTensorABC":
+    def __rmul__(self, other: typing.Union["FPTensorProtocol", float, int]) -> "FPTensorProtocol":
         ...
 
-    @abc.abstractmethod
-    def __rmul__(self, other: typing.Union["FPTensorABC", float, int]) -> "FPTensorABC":
+    def __matmul__(self, other: "FPTensorProtocol") -> "FPTensorProtocol":
         ...
 
-    @abc.abstractmethod
-    def __matmul__(self, other: "FPTensorABC") -> "FPTensorABC":
-        ...
-
-    @abc.abstractmethod
-    def __rmatmul__(self, other: "FPTensorABC") -> "FPTensorABC":
+    def __rmatmul__(self, other: "FPTensorProtocol") -> "FPTensorProtocol":
         ...
 
 
@@ -48,46 +38,46 @@ class PHETensorABC(abc.ABC):
 
     @abc.abstractmethod
     def __add__(
-        self, other: typing.Union["PHETensorABC", "FPTensorABC", float, int]
+        self, other: typing.Union["PHETensorABC", "FPTensorProtocol", float, int]
     ) -> "PHETensorABC":
         ...
 
     @abc.abstractmethod
     def __radd__(
-        self, other: typing.Union["PHETensorABC", "FPTensorABC", float, int]
+        self, other: typing.Union["PHETensorABC", "FPTensorProtocol", float, int]
     ) -> "PHETensorABC":
         ...
 
     @abc.abstractmethod
     def __sub__(
-        self, other: typing.Union["PHETensorABC", "FPTensorABC", float, int]
+        self, other: typing.Union["PHETensorABC", "FPTensorProtocol", float, int]
     ) -> "PHETensorABC":
         ...
 
     @abc.abstractmethod
     def __rsub__(
-        self, other: typing.Union["PHETensorABC", "FPTensorABC", float, int]
+        self, other: typing.Union["PHETensorABC", "FPTensorProtocol", float, int]
     ) -> "PHETensorABC":
         ...
 
     @abc.abstractmethod
     def __mul__(
-        self, other: typing.Union["PHETensorABC", "FPTensorABC", float, int]
+        self, other: typing.Union["PHETensorABC", "FPTensorProtocol", float, int]
     ) -> "PHETensorABC":
         ...
 
     @abc.abstractmethod
     def __rmul__(
-        self, other: typing.Union["PHETensorABC", "FPTensorABC", float, int]
+        self, other: typing.Union["PHETensorABC", "FPTensorProtocol", float, int]
     ) -> "PHETensorABC":
         ...
 
     @abc.abstractmethod
-    def __matmul__(self, other: FPTensorABC) -> "PHETensorABC":
+    def __matmul__(self, other: FPTensorProtocol) -> "PHETensorABC":
         ...
 
     @abc.abstractmethod
-    def __rmatmul__(self, other: FPTensorABC) -> "PHETensorABC":
+    def __rmatmul__(self, other: FPTensorProtocol) -> "PHETensorABC":
         ...
 
     @abc.abstractmethod
@@ -101,13 +91,13 @@ class PHETensorABC(abc.ABC):
 
 class PHEEncryptorABC(abc.ABC):
     @abc.abstractmethod
-    def encrypt(self, tensor: FPTensorABC) -> PHETensorABC:
+    def encrypt(self, tensor: FPTensorProtocol) -> PHETensorABC:
         ...
 
 
 class PHEDecryptorABC(abc.ABC):
     @abc.abstractmethod
-    def decrypt(self, tensor: PHETensorABC) -> FPTensorABC:
+    def decrypt(self, tensor: PHETensorABC) -> FPTensorProtocol:
         ...
 
 
