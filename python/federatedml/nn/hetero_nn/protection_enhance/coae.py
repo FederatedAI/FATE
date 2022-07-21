@@ -1,4 +1,5 @@
 from federatedml.util import LOGGER
+from federatedml.util import consts
 try:
     import torch
     import torch as t
@@ -14,6 +15,7 @@ def entropy(tensor):
 
 
 def cross_entropy(p2, p1, reduction='mean'):
+    p2 = consts.FLOAT_ZERO + p2
     assert p2.shape == p1.shape
     if reduction == 'sum':
         return -t.sum(p1 * t.log(p2))
