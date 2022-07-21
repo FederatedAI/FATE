@@ -51,7 +51,7 @@ lightgbm==3.3.1
 etaf-crypto
 pyparsing<3.0.8
 
-# python 3.6
+# backports
 dataclasses; python_version < '3.7'
 backports-datetime-fromisoformat==1.0.0; python_version < '3.7'
 
