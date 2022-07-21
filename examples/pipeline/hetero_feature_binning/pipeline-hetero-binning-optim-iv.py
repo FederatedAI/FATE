@@ -84,26 +84,6 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline.fit()
 
-    guest_test_data = {"name": "default_credit_homo_guest", "namespace": f"experiment{namespace}"}
-    host_test_data = {"name": "default_credit_hetero_host", "namespace": f"experiment{namespace}"}
-    pipeline.deploy_component([data_transform_0, intersection_0, hetero_feature_binning_0])
-
-    predict_pipeline = PipeLine()
-    reader_0 = Reader(name="reader_0")
-    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_test_data)
-    reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_test_data)
-
-    # add data reader onto predict pipeline
-    predict_pipeline.add_component(reader_0)
-    # add selected components from train pipeline onto predict pipeline
-    # specify data source
-    predict_pipeline.add_component(
-        pipeline, data=Data(
-            predict_input={
-                pipeline.data_transform_0.input.data: reader_0.output.data}))
-    # run predict model
-    predict_pipeline.predict()
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("PIPELINE DEMO")
