@@ -53,6 +53,9 @@
                     },
                     "label_transform_0": {
                         "need_run": false
+                    },
+                    "label_transform_1": {
+                        "need_run": false
                     }
                 }
             },
