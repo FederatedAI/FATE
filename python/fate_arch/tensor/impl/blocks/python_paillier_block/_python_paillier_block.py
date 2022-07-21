@@ -33,7 +33,7 @@ from ._fate_paillier import (
     PaillierPublicKey,
 )
 
-### maybe need wrap?
+# maybe need wrap?
 FPBlock = Tensor
 
 T = typing.TypeVar("T", bound=PaillierEncryptedNumber)

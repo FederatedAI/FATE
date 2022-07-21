@@ -18,10 +18,14 @@ class LabeledDataloaderWrapper:
     ):
         ...
 
-    def __iter__(self) -> "LabeledDataloaderWrapper":
+    @property
+    def shape(self) -> typing.Tuple[int, int]:
         ...
 
-    def __next__(self) -> typing.Tuple[FPTensor, FPTensor]:
+    def next_batch(self) -> typing.Tuple[FPTensor, FPTensor]:
+        ...
+
+    def has_next(self) -> bool:
         ...
 
 
@@ -40,8 +44,12 @@ class UnlabeledDataloaderWrapper:
     ):
         ...
 
-    def __iter__(self) -> "UnlabeledDataloaderWrapper":
+    @property
+    def shape(self) -> typing.Tuple[int, int]:
         ...
 
-    def __next__(self) -> FPTensor:
+    def next_batch(self) -> FPTensor:
+        ...
+
+    def has_next(self) -> bool:
         ...

@@ -94,7 +94,7 @@ class PHEBlockABC(abc.ABC):
     def serialize(self):
         ...
 
-    @abc.abstractmethod
+    # @abc.abstractmethod
     def T(self) -> "PHEBlockABC":
         ...
 
