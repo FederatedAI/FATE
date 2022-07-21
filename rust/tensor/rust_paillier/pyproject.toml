@@ -3,23 +3,10 @@ requires = ["maturin>=0.12,<0.13"]
 build-backend = "maturin"
 
 [project]
-name = "fate-tensor"
+name = "rust_paillier"
 requires-python = ">=3.6"
 classifiers = [
     "Programming Language :: Rust",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
-]
-[tool.pyright]
-include = []
-exclude = [
-  "**/__pycache__",
-  ".venv/"
-  ]
-venvPath = "/Users/sage/MEGA/FATE/"
-venv = "venv"
-reportMissingImports = true
-reportMissingTypeStubs = false
-executionEnvironments = [
-  { root = "."},
 ]

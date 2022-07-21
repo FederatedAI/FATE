@@ -1,4 +1,3 @@
-from _pytest.mark import expression
 import pytest
 import operator
 import os
@@ -8,7 +7,7 @@ import phe
 
 try:
     import gmpy2
-except:
+except Exception:
     raise RuntimeError(f"gmpy2 not installed, lib phe without gmpy2 is slow")
 
 
@@ -23,7 +22,7 @@ def get_num_threads():
 
 
 def get_single_thread_keygen():
-    from fate_tensor import keygen
+    from rust_paillier import keygen
 
     return keygen
 
@@ -32,7 +31,7 @@ NUM_THREADS = get_num_threads()
 
 
 def get_multiple_thread_keygen():
-    from fate_tensor.par import keygen, set_num_threads
+    from rust_paillier.par import keygen, set_num_threads
 
     set_num_threads(NUM_THREADS)
     return keygen

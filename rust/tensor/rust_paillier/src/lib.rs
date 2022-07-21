@@ -14,15 +14,15 @@ use pyo3::types::PyBytes;
 ///
 /// we need `new` method with zero argument (Option::None)
 /// for unpickle to work.
-#[pyclass(module = "fate_tensor")]
+#[pyclass(module = "rust_paillier")]
 pub struct Cipherblock(Option<block::Cipherblock>);
 
-#[pyclass(module = "fate_tensor")]
+#[pyclass(module = "rust_paillier")]
 pub struct PK {
     pk: fixedpoint::PK,
 }
 
-#[pyclass(module = "fate_tensor")]
+#[pyclass(module = "rust_paillier")]
 pub struct SK {
     sk: fixedpoint::SK,
 }
@@ -237,7 +237,7 @@ impl Cipherblock {
 
 }
 #[pymodule]
-fn fate_tensor(_py: Python, m: &PyModule) -> PyResult<()> {
+fn rust_paillier(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<Cipherblock>()?;
     m.add_class::<PK>()?;
     m.add_class::<SK>()?;

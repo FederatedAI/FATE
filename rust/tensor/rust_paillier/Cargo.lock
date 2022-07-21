@@ -200,23 +200,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
 
 [[package]]
-name = "fate-tensor"
-version = "0.1.0"
-dependencies = [
- "bincode",
- "criterion",
- "iai",
- "ndarray",
- "numpy",
- "pyo3",
- "rand",
- "rand_core",
- "rayon",
- "rug",
- "serde",
-]
-
-[[package]]
 name = "getrandom"
 version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -702,6 +685,23 @@ dependencies = [
  "az",
  "gmp-mpfr-sys",
  "libc",
+]
+
+[[package]]
+name = "rust_paillier"
+version = "0.1.0"
+dependencies = [
+ "bincode",
+ "criterion",
+ "iai",
+ "ndarray",
+ "numpy",
+ "pyo3",
+ "rand",
+ "rand_core",
+ "rayon",
+ "rug",
+ "serde",
 ]
 
 [[package]]

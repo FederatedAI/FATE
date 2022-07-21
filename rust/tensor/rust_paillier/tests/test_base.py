@@ -8,7 +8,7 @@ import pytest
 
 def get_suites():
     suites = []
-    packages = ["fate_tensor", "fate_tensor.par"]
+    packages = ["rust_paillier", "rust_paillier.par"]
     for package in packages:
         module = importlib.import_module(package)
         suites.append(Suite(module.keygen))

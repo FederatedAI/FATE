@@ -7,15 +7,15 @@ use crate::block;
 
 mod cb;
 
-#[pyclass(module = "fate_tensor.par")]
+#[pyclass(module = "rust_paillier.par")]
 pub struct Cipherblock(Option<block::Cipherblock>);
 
-#[pyclass(module = "fate_tensor.par")]
+#[pyclass(module = "rust_paillier.par")]
 pub struct PK {
     pk: fixedpoint::PK,
 }
 
-#[pyclass(module = "fate_tensor.par")]
+#[pyclass(module = "rust_paillier.par")]
 pub struct SK {
     sk: fixedpoint::SK,
 }
@@ -230,6 +230,6 @@ pub(crate) fn register(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_submodule(submodule_par)?;
     py.import("sys")?
         .getattr("modules")?
-        .set_item("fate_tensor.par", submodule_par)?;
+        .set_item("rust_paillier.par", submodule_par)?;
     Ok(())
 }
