@@ -13,244 +13,143 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import math
 
 import numpy as np
-
-from fate_arch.session import get_parties
-from federatedml.model_base import MetricMeta
-from federatedml.model_base import ModelBase
+from fate_arch.common import Party
+from federatedml.model_base import MetricMeta, ModelBase
 from federatedml.param.pearson_param import PearsonParam
 from federatedml.secureprotol.spdz import SPDZ
 from federatedml.secureprotol.spdz.tensor.fixedpoint_table import (
     FixedPointTensor,
     table_dot,
 )
+from federatedml.statistic.data_overview import get_anonymous_header, get_header
+from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
 from federatedml.util import LOGGER
-from federatedml.util.anonymous_generator import generate_anonymous
 
-MODEL_META_NAME = "HeteroPearsonModelMeta"
-MODEL_PARAM_NAME = "HeteroPearsonModelParam"
+
+class PearsonTransferVariable(BaseTransferVariables):
+    def __init__(self, flowid=0):
+        super().__init__(flowid)
+        self.anonymous_host = self._create_variable(
+            "anonymous_host", src=["host"], dst=["guest"]
+        )
+        self.anonymous_guest = self._create_variable(
+            "anonymous_guest", src=["guest"], dst=["host"]
+        )
 
 
 class HeteroPearson(ModelBase):
     def __init__(self):
         super().__init__()
         self.model_param = PearsonParam()
-        self.role = None
-        self.corr = None
-        self.local_corr = None
-
-        self.shapes = []
-        self.names = []
-        self.parties = []
-        self.local_party = None
-        self.other_party = None
-        self._set_parties()
-
-        self.local_vif = None  # vif from local features
+        self.transfer_variable = PearsonTransferVariable()
 
         self._summary = {}
+        self._modelsaver = PearsonModelSaver()
 
-    def _set_parties(self):
-        # since multi-host not supported yet, we assume parties are one from guest and one from host
-        parties = []
-        guest_parties = get_parties().roles_to_parties(["guest"])
-        host_parties = get_parties().roles_to_parties(["host"])
-        if len(guest_parties) != 1 or len(host_parties) != 1:
-            raise ValueError(
-                f"one guest and one host required, "
-                f"while {len(guest_parties)} guest and {len(host_parties)} host provided"
+    def fit(self, data_instance):
+        LOGGER.info("fit start")
+        column_names = get_header(data_instance)
+        column_anonymous_names = get_anonymous_header(data_instance)
+        self._modelsaver.save_local_anonymous(column_names, column_anonymous_names)
+        parties = [
+            Party("guest", self.component_properties.guest_partyid),
+            Party("host", self.component_properties.host_party_idlist[0]),
+        ]
+        local_party = parties[0] if self.is_guest else parties[1]
+        other_party = parties[1] if self.is_guest else parties[0]
+        self._modelsaver.save_party(local_party)
+
+        LOGGER.info("select features")
+        names, selected_features = select_columns(
+            data_instance,
+            self.model_param.column_indexes,
+            self.model_param.column_names,
+        )
+        self._summary["num_local_features"] = len(names)
+
+        LOGGER.info("standardized feature data")
+        num_data, standardized = standardize(selected_features)
+
+        # local corr
+        LOGGER.info("calculate correlation cross local features")
+        local_corr = table_dot(standardized, standardized) / num_data
+        self._modelsaver.save_local_corr(local_corr)
+        self._summary["local_corr"] = local_corr.tolist()
+        shape = local_corr.shape[0]
+
+        # local vif
+        if self.model_param.calc_local_vif:
+            LOGGER.info("calc_local_vif enabled, calculate vif for local features")
+            local_vif = vif_from_pearson_matrix(local_corr)
+            self._modelsaver.save_local_vif(local_vif)
+        else:
+            LOGGER.info("calc_local_vif disabled, skip local vif")
+
+        # not cross parties
+        if not self.model_param.cross_parties:
+            LOGGER.info("cross_parties disabled, save model")
+            self._modelsaver.save_party_info(shape, local_party, names)
+        # cross parties
+        else:
+            LOGGER.info(
+                "cross_parties enabled, calculating correlation with remote features"
             )
-        parties.extend(guest_parties)
-        parties.extend(host_parties)
+            with SPDZ(
+                "pearson",
+                local_party=local_party,
+                all_parties=parties,
+                use_mix_rand=self.model_param.use_mix_rand,
+            ) as spdz:
+                LOGGER.info("secret share: prepare data")
+                if self.is_guest:
+                    x, y = (
+                        FixedPointTensor.from_source("x", standardized),
+                        FixedPointTensor.from_source("y", other_party),
+                    )
+                else:
+                    y, x = (
+                        FixedPointTensor.from_source("y", standardized),
+                        FixedPointTensor.from_source("x", other_party),
+                    )
+                LOGGER.info("secret share: dot")
+                corr = spdz.dot(x, y, "corr").get() / num_data
+                self._modelsaver.save_cross_corr(corr)
+                self._summary["corr"] = corr.tolist()
 
-        local_party = get_parties().local_party
-        other_party = parties[0] if parties[0] != local_party else parties[1]
+                # sync anonymous
+                LOGGER.info("sync anonymous names")
+                remote_anonymous_names = self.sync_anonymous_names(
+                    column_anonymous_names
+                )
+                m1, m2 = len(x.value.first()[1]), len(y.value.first()[1])
+                shapes = [m1, m2]
+                names = (
+                    [column_names, remote_anonymous_names]
+                    if self.is_guest
+                    else [remote_anonymous_names, column_names]
+                )
+                if not self.is_guest:
+                    names = reversed(names)
+                for shape, party, name in zip(shapes, parties, names):
+                    self._modelsaver.save_party_info(shape, party, name)
+                self._summary["num_remote_features"] = m2 if self.is_guest else m1
 
-        self.parties = parties
-        self.local_party = local_party
-        self.other_party = other_party
+        self._callback()
+        self.set_summary(self._summary)
+        LOGGER.info("fit done")
+
+    @property
+    def is_guest(self):
+        return self.component_properties.role == "guest"
 
     def _init_model(self, param):
         super()._init_model(param)
         self.model_param = param
 
-    def _select_columns(self, data_instance):
-        col_names = data_instance.schema["header"]
-        if self.model_param.column_indexes == -1:
-            self.names = col_names
-            name_set = set(self.names)
-            for name in self.model_param.column_names:
-                if name not in name_set:
-                    raise ValueError(f"name={name} not found in header")
-            return data_instance.mapValues(lambda inst: inst.features)
-
-        name_to_idx = {col_names[i]: i for i in range(len(col_names))}
-        selected = set()
-        for name in self.model_param.column_names:
-            if name in name_to_idx:
-                selected.add(name_to_idx[name])
-                continue
-            raise ValueError(f"{name} not found")
-        for idx in self.model_param.column_indexes:
-            if 0 <= idx < len(col_names):
-                selected.add(idx)
-                continue
-            raise ValueError(f"idx={idx} out of bound")
-        selected = sorted(list(selected))
-        if len(selected) == len(col_names):
-            self.names = col_names
-            return data_instance.mapValues(lambda inst: inst.features)
-
-        self.names = [col_names[i] for i in selected]
-        return data_instance.mapValues(lambda inst: inst.features[selected])
-
-    @staticmethod
-    def _standardized(data):
-        n = data.count()
-        sum_x, sum_square_x = data.mapValues(lambda x: (x, x ** 2)).reduce(
-            lambda pair1, pair2: (pair1[0] + pair2[0], pair1[1] + pair2[1])
-        )
-        mu = sum_x / n
-        sigma = np.sqrt(sum_square_x / n - mu ** 2)
-        if (sigma <= 0).any():
-            raise ValueError(f"zero standard deviation detected, sigma={sigma}")
-        return n, data.mapValues(lambda x: (x - mu) / sigma)
-
-    @staticmethod
-    def _vif_from_pearson_matrix(mat: np.ndarray):
-        shape = mat.shape
-        if shape[0] != shape[1]:
-            raise RuntimeError("accept square matrix only")
-        dim = shape[0]
-        det = np.linalg.det(mat)
-
-        vif = []
-        for i in range(dim):
-            ax = [j for j in range(dim) if j != i]
-            vif.append(np.linalg.det(mat[ax, :][:, ax]) / det)
-        return vif
-
-    @staticmethod
-    def _generate_determinant_one_matrix(n: int):
-        k = math.exp(
-            (math.sqrt(2 * math.log(n)) / 2 + math.log(math.factorial(n - 1))) / (2 * n)
-        )
-        a = np.random.randn(n, n) / k
-        d = np.linalg.det(a)
-        return a / d ** (1 / n)
-
-    def fit(self, data_instance):
-        # local
-        data = self._select_columns(data_instance)
-        n, normed = self._standardized(data)
-        self.local_corr = table_dot(normed, normed)
-        self.local_corr /= n
-        if self.model_param.calc_local_vif:
-            self.local_vif = self._vif_from_pearson_matrix(self.local_corr)
-        self._summary["local_corr"] = self.local_corr.tolist()
-
-        if self.model_param.cross_parties:
-            with SPDZ(
-                "pearson",
-                local_party=self.local_party,
-                all_parties=self.parties,
-                use_mix_rand=self.model_param.use_mix_rand,
-            ) as spdz:
-                source = [normed, self.other_party]
-                if self.local_party.role == "guest":
-                    x, y = (
-                        FixedPointTensor.from_source("x", source[0]),
-                        FixedPointTensor.from_source("y", source[1]),
-                    )
-                else:
-                    y, x = (
-                        FixedPointTensor.from_source("y", source[0]),
-                        FixedPointTensor.from_source("x", source[1]),
-                    )
-                m1 = len(x.value.first()[1])
-                m2 = len(y.value.first()[1])
-                self.shapes.append(m1)
-                self.shapes.append(m2)
-
-                self.corr = spdz.dot(x, y, "corr").get() / n
-                self._summary["corr"] = self.corr.tolist()
-                self._summary["num_local_features"] = (
-                    m1 if self.local_party.role == "guest" else m2
-                )
-                self._summary["num_remote_features"] = (
-                    m2 if self.local_party.role == "guest" else m1
-                )
-
-        else:
-            self._summary["num_local_features"] = len(normed.first()[1])
-            self.shapes.append(self.local_corr.shape[0])
-            self.parties = [self.local_party]
-
-        self._callback()
-        self.set_summary(self._summary)
-
-    @staticmethod
-    def _build_model_dict(meta, param):
-        return {MODEL_META_NAME: meta, MODEL_PARAM_NAME: param}
-
-    def _get_meta(self):
-        from federatedml.protobuf.generated import pearson_model_meta_pb2
-
-        meta_pb = pearson_model_meta_pb2.PearsonModelMeta()
-        for shape in self.shapes:
-            meta_pb.shapes.append(shape)
-        return meta_pb
-
-    def _get_param(self):
-        from federatedml.protobuf.generated import pearson_model_param_pb2
-
-        param_pb = pearson_model_param_pb2.PearsonModelParam()
-
-        # local
-        param_pb.party = f"({self.local_party.role},{self.local_party.party_id})"
-        param_pb.shape = self.local_corr.shape[0]
-        for v in self.local_corr.reshape(-1):
-            param_pb.local_corr.append(max(-1.0, min(float(v), 1.0)))
-        for idx, name in enumerate(self.names):
-            param_pb.names.append(name)
-            anonymous = param_pb.anonymous_map.add()
-            anonymous.name = name
-            anonymous.anonymous = generate_anonymous(
-                fid=idx, party_id=self.local_party.party_id, role=self.local_party.role
-            )
-
-        if self.model_param.calc_local_vif:
-            for vif_value in self.local_vif:
-                param_pb.local_vif.append(vif_value)
-
-        # global
-        for shape, party in zip(self.shapes, self.parties):
-            param_pb.shapes.append(shape)
-            param_pb.parties.append(f"({party.role},{party.party_id})")
-
-            _names = param_pb.all_names.add()
-            if party == self.local_party:
-                for name in self.names:
-                    _names.names.append(name)
-            else:
-                for i in range(shape):
-                    _names.names.append(f"{party.role}_{party.party_id}_{i}")
-
-        if self.model_param.cross_parties:
-            for v in self.corr.reshape(-1):
-                param_pb.corr.append(max(-1.0, min(float(v), 1.0)))
-
-        param_pb.model_name = "HeteroPearson"
-
-        return param_pb
-
     def export_model(self):
-        if self.model_param.need_run:
-            return self._build_model_dict(
-                meta=self._get_meta(), param=self._get_param()
-            )
+        self._modelsaver.export()
 
     # noinspection PyTypeChecker
     def _callback(self):
@@ -260,3 +159,142 @@ class HeteroPearson(ModelBase):
             metric_name="correlation",
             metric_meta=MetricMeta(name="pearson", metric_type="CORRELATION_GRAPH"),
         )
+
+    def sync_anonymous_names(self, local_anonymous):
+        if self.is_guest:
+            self.transfer_variable.anonymous_guest.remote(local_anonymous, role="host")
+            remote_anonymous = self.transfer_variable.anonymous_host.get(
+                role="host", idx=0
+            )
+        else:
+            self.transfer_variable.anonymous_host.remote(local_anonymous, role="guest")
+            remote_anonymous = self.transfer_variable.anonymous_guest.get(
+                role="guest", idx=0
+            )
+        return remote_anonymous
+
+
+class PearsonModelSaver:
+    def __init__(self) -> None:
+        from federatedml.protobuf.generated import (
+            pearson_model_meta_pb2,
+            pearson_model_param_pb2,
+        )
+
+        self.meta_pb = pearson_model_meta_pb2.PearsonModelMeta()
+        self.param_pb = pearson_model_param_pb2.PearsonModelParam()
+        self.param_pb.model_name = "HeteroPearson"
+
+    def export(self):
+        MODEL_META_NAME = "HeteroPearsonModelMeta"
+        MODEL_PARAM_NAME = "HeteroPearsonModelParam"
+
+        return {MODEL_META_NAME: self.meta_pb, MODEL_PARAM_NAME: self.param_pb}
+
+    def save_shapes(self, shapes):
+        for shape in shapes:
+            self.meta_pb.shapes.append(shape)
+
+    def save_local_corr(self, corr):
+        self.param_pb.shape = corr.shape[0]
+        for v in corr.reshape(-1):
+            self.param_pb.local_corr.append(max(-1.0, min(float(v), 1.0)))
+
+    def save_party_info(self, shape, party, names):
+        self.param_pb.shapes.append(shape)
+        self.param_pb.parties.append(f"({party.role},{party.party_id})")
+
+        _names = self.param_pb.all_names.add()
+        for name in names:
+            _names.names.append(name)
+
+    def save_local_vif(self, local_vif):
+        for vif_value in local_vif:
+            self.param_pb.local_vif.append(vif_value)
+
+    def save_cross_corr(self, corr):
+        for v in corr.reshape(-1):
+            self.param_pb.corr.append(max(-1.0, min(float(v), 1.0)))
+
+    def save_party(self, party):
+        self.param_pb.party = f"({party.role},{party.party_id})"
+
+    def save_local_anonymous(self, names, anonymous_names):
+        for name, anonymous_name in zip(names, anonymous_names):
+            self.param_pb.names.append(name)
+            anonymous = self.param_pb.anonymous_map.add()
+            anonymous.name = name
+            anonymous.anonymous = anonymous_name
+
+
+def standardize(data):
+    """
+    x -> (x - mu) / sigma
+    """
+    n = data.count()
+    sum_x, sum_square_x = data.mapValues(lambda x: (x, x ** 2)).reduce(
+        lambda pair1, pair2: (pair1[0] + pair2[0], pair1[1] + pair2[1])
+    )
+    mu = sum_x / n
+    sigma = np.sqrt(sum_square_x / n - mu ** 2)
+    if (sigma <= 0).any():
+        raise ValueError(
+            f"zero standard deviation detected, sigma={sigma}, zeroindexes={np.argwhere(sigma)}"
+        )
+    return n, data.mapValues(lambda x: (x - mu) / sigma)
+
+
+def select_columns(data_instance, hit_column_indexes, hit_column_names):
+    """
+    select features
+    """
+    column_names = data_instance.schema["header"]
+    num_columns = len(column_names)
+
+    # accept all features
+    if hit_column_indexes == -1:
+        if len(hit_column_names) > 0:
+            raise ValueError(f"specify column name when column_indexes=-1 is ambiguity")
+        return column_names, data_instance.mapValues(lambda inst: inst.features)
+
+    # check hit column indexes and column names
+    name_to_index = {c: i for i, c in enumerate(column_names)}
+    selected = set()
+    for name in hit_column_names:
+        if name not in name_to_index:
+            raise ValueError(f"feature name `{name}` not found in data schema")
+        else:
+            selected.add(name_to_index[name])
+    for idx in hit_column_indexes:
+        if 0 <= idx < num_columns:
+            selected.add(idx)
+        else:
+            raise ValueError(f"feature idx={idx} out of bound")
+    selected = sorted(list(selected))
+
+    # take shortcut if all feature hit
+    if len(selected) == len(column_names):
+        return column_names, data_instance.mapValues(lambda inst: inst.features)
+
+    return (
+        [column_names[i] for i in selected],
+        data_instance.mapValues(lambda inst: inst.features[selected]),
+    )
+
+
+def vif_from_pearson_matrix(pearson, threshold=1e-8):
+    N = pearson.shape[0]
+    vif = []
+    eig = sorted(list(np.linalg.eigvals(pearson)))
+    num_drop = len(list(filter(lambda x: x < threshold, eig)))
+    det_non_zero = np.prod(eig[num_drop:])
+    for i in range(N):
+        indexes = [j for j in range(N) if j != i]
+        cofactor_matrix = pearson[indexes][:, indexes]
+        cofactor_eig = sorted(list(np.linalg.eigvals(cofactor_matrix)))
+        cofactor_num_drop = len(list(filter(lambda x: x < threshold, cofactor_eig)))
+        if cofactor_num_drop < num_drop:
+            vif.append(np.inf)
+        else:
+            vif.append(np.prod(cofactor_eig[cofactor_num_drop:]) / det_non_zero)
+    return vif

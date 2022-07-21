@@ -145,6 +145,8 @@ class DenseFeatureTransformer(object):
         if mode == "transform":
             if (set(self.header) & set(header)) != set(self.header):
                 raise ValueError(f"Transform Data's header is {header}, expect {self.header}")
+            if not self.anonymous_header:
+                self.anonymous_header = anonymous_header
         else:
             self.header = header
             self.anonymous_header = anonymous_header

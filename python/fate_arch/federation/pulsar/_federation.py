@@ -143,6 +143,13 @@ class Federation(FederationBase):
     def __getstate__(self):
         pass
 
+    @property
+    def session_id(self) -> str:
+        return self._session_id
+
+    def destroy(self, parties):
+        return self.cleanup(parties)
+
     def cleanup(self, parties):
         # The idea cleanup strategy is to consume all message in topics,
         # and let pulsar cluster to collect the used topics.
