@@ -64,6 +64,7 @@ def main(config="../../config.yaml", namespace=""):
             "threshold": 5
         },
         "correlation_param": {
+            "sort_metric": "iv",
             "threshold": 0.5,
             "select_federated": False
         }

@@ -68,6 +68,7 @@ def main(config="../../config.yaml", namespace=""):
                            floating_point_precision=23)
 
     label_transform_1 = LabelTransform(name="label_transform_1")
+    label_transform_1.get_party_instance(role="host", party_id=host).component_param(need_run=False)
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary", pos_label=1)
 
     # add components to pipeline, in order of task execution
@@ -87,6 +88,20 @@ def main(config="../../config.yaml", namespace=""):
 
     # fit model
     pipeline.fit()
+
+    deploy_components = [data_transform_0, intersection_0, label_transform_0, hetero_lr_0, label_transform_1]
+    pipeline.deploy_component(components=deploy_components)
+    predict_pipeline = PipeLine()
+    # # add data reader onto predict pipeline
+    predict_pipeline.add_component(reader_0)
+    # # add selected components from train pipeline onto predict pipeline
+    # # specify data source
+    predict_pipeline.add_component(
+        pipeline, data=Data(
+            predict_input={
+                pipeline.data_transform_0.input.data: reader_0.output.data}))
+    predict_pipeline.compile()
+    predict_pipeline.predict()
 
 
 if __name__ == "__main__":
