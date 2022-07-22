@@ -34,7 +34,7 @@ from .fpga_engine import (
     pi_p2c_priv_key,
     te_c2p,
 )
-from .secureprotol.fate_paillier import (
+from fate_arch.tensor.impl.blocks.python_paillier_block import (
     PaillierPublicKey,
     PaillierPrivateKey,
     PaillierKeypair,
@@ -116,25 +116,25 @@ class Cipherblock:
         return self._add_plaintext(other)
 
     def add_plaintext_scalar_f64(
-        self, other: typing.Union[float, np.float64]
+            self, other: typing.Union[float, np.float64]
     ) -> "Cipherblock":
         other_array = np.asarray([other], dtype=np.float64)
         return self._add_plaintext(other_array)
 
     def add_plaintext_scalar_f32(
-        self, other: typing.Union[float, np.float32]
+            self, other: typing.Union[float, np.float32]
     ) -> "Cipherblock":
         other_array = np.asarray([other], dtype=np.float32)
         return self._add_plaintext(other_array)
 
     def add_plaintext_scalar_i64(
-        self, other: typing.Union[int, np.int64]
+            self, other: typing.Union[int, np.int64]
     ) -> "Cipherblock":
         other_array = np.asarray([other], dtype=np.int64)
         return self._add_plaintext(other_array)
 
     def add_plaintext_scalar_i32(
-        self, other: typing.Union[int, np.int32]
+            self, other: typing.Union[int, np.int32]
     ) -> "Cipherblock":
         other_array = np.asarray([other], dtype=np.int32)
         return self._add_plaintext(other_array)
@@ -155,22 +155,22 @@ class Cipherblock:
         return self.add_plaintext_i32(other * -1)
 
     def sub_plaintext_scalar_f64(
-        self, other: typing.Union[float, np.float64]
+            self, other: typing.Union[float, np.float64]
     ) -> "Cipherblock":
         return self.add_plaintext_scalar_f64(other * -1)
 
     def sub_plaintext_scalar_f32(
-        self, other: typing.Union[float, np.float32]
+            self, other: typing.Union[float, np.float32]
     ) -> "Cipherblock":
         return self.add_plaintext_scalar_f32(other * -1)
 
     def sub_plaintext_scalar_i64(
-        self, other: typing.Union[int, np.int64]
+            self, other: typing.Union[int, np.int64]
     ) -> "Cipherblock":
         return self.add_plaintext_scalar_i64(other * -1)
 
     def sub_plaintext_scalar_i32(
-        self, other: typing.Union[int, np.int32]
+            self, other: typing.Union[int, np.int32]
     ) -> "Cipherblock":
         return self.add_plaintext_scalar_i32(other * -1)
 
@@ -187,25 +187,25 @@ class Cipherblock:
         return self._mul_plaintext(other)
 
     def mul_plaintext_scalar_f64(
-        self, other: typing.Union[float, np.float64]
+            self, other: typing.Union[float, np.float64]
     ) -> "Cipherblock":
         other_array = np.asarray([other], dtype=np.float64)
         return self._mul_plaintext(other_array)
 
     def mul_plaintext_scalar_f32(
-        self, other: typing.Union[float, np.float32]
+            self, other: typing.Union[float, np.float32]
     ) -> "Cipherblock":
         other_array = np.asarray([other], dtype=np.float32)
         return self._mul_plaintext(other_array)
 
     def mul_plaintext_scalar_i64(
-        self, other: typing.Union[int, np.int64]
+            self, other: typing.Union[int, np.int64]
     ) -> "Cipherblock":
         other_array = np.asarray([other], dtype=np.int64)
         return self._mul_plaintext(other_array)
 
     def mul_plaintext_scalar_i32(
-        self, other: typing.Union[int, np.int32]
+            self, other: typing.Union[int, np.int32]
     ) -> "Cipherblock":
         other_array = np.asarray([other], dtype=np.int32)
         return self._mul_plaintext(other_array)
@@ -287,22 +287,22 @@ class Cipherblock:
         return self.add_plaintext_i64(other)
 
     def add_plaintext_scalar_f64_par(
-        self, other: typing.Union[float, np.float64]
+            self, other: typing.Union[float, np.float64]
     ) -> "Cipherblock":
         return self.add_plaintext_scalar_f64(other)
 
     def add_plaintext_scalar_f32_par(
-        self, other: typing.Union[float, np.float32]
+            self, other: typing.Union[float, np.float32]
     ) -> "Cipherblock":
         return self.add_plaintext_scalar_f32(other)
 
     def add_plaintext_scalar_i64_par(
-        self, other: typing.Union[int, np.int64]
+            self, other: typing.Union[int, np.int64]
     ) -> "Cipherblock":
         return self.add_plaintext_scalar_i64(other)
 
     def add_plaintext_scalar_i32_par(
-        self, other: typing.Union[int, np.int32]
+            self, other: typing.Union[int, np.int32]
     ) -> "Cipherblock":
         return self.add_plaintext_scalar_i32(other)
 
@@ -325,22 +325,22 @@ class Cipherblock:
         return self.sub_plaintext_i32(other)
 
     def sub_plaintext_scalar_f64_par(
-        self, other: typing.Union[float, np.float64]
+            self, other: typing.Union[float, np.float64]
     ) -> "Cipherblock":
         return self.sub_plaintext_scalar_f64(other)
 
     def sub_plaintext_scalar_f32_par(
-        self, other: typing.Union[float, np.float32]
+            self, other: typing.Union[float, np.float32]
     ) -> "Cipherblock":
         return self.sub_plaintext_scalar_f32(other)
 
     def sub_plaintext_scalar_i64_par(
-        self, other: typing.Union[int, np.int64]
+            self, other: typing.Union[int, np.int64]
     ) -> "Cipherblock":
         return self.sub_plaintext_scalar_i64(other)
 
     def sub_plaintext_scalar_i32_par(
-        self, other: typing.Union[int, np.int32]
+            self, other: typing.Union[int, np.int32]
     ) -> "Cipherblock":
         return self.sub_plaintext_scalar_i32(other)
 
@@ -357,22 +357,22 @@ class Cipherblock:
         return self.mul_plaintext_i32(other)
 
     def mul_plaintext_scalar_f64_par(
-        self, other: typing.Union[float, np.float64]
+            self, other: typing.Union[float, np.float64]
     ) -> "Cipherblock":
         return self.mul_plaintext_scalar_f64(other)
 
     def mul_plaintext_scalar_f32_par(
-        self, other: typing.Union[float, np.float32]
+            self, other: typing.Union[float, np.float32]
     ) -> "Cipherblock":
         return self.mul_plaintext_scalar_f32(other)
 
     def mul_plaintext_scalar_i64_par(
-        self, other: typing.Union[int, np.int64]
+            self, other: typing.Union[int, np.int64]
     ) -> "Cipherblock":
         return self.mul_plaintext_scalar_i64(other)
 
     def mul_plaintext_scalar_i32_par(
-        self, other: typing.Union[int, np.int32]
+            self, other: typing.Union[int, np.int32]
     ) -> "Cipherblock":
         return self.mul_plaintext_scalar_i32(other)
 
