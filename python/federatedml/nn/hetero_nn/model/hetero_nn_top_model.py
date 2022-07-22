@@ -25,7 +25,7 @@ from federatedml.nn.hetero_nn.backend.pytorch.pytorch_nn_model import PytorchNNM
 from federatedml.nn.hetero_nn.backend.pytorch.pytorch_uitl import pytorch_label_reformat
 from federatedml.nn.hetero_nn.backend.tf_keras.data_generator import KerasSequenceDataConverter
 from federatedml.nn.hetero_nn.protection_enhance.coae import train_an_autoencoder_confuser, CoAE, coae_label_reformat, \
-    cross_entropy
+    CrossEntropy
 
 
 class HeteroNNTopModel(object):
@@ -49,7 +49,7 @@ class HeteroNNTopModel(object):
             self.data_converter = PytorchDataConvertor()
             self.label_reformat = pytorch_label_reformat
             if self.coae_config:
-                self._model.loss_fn = cross_entropy
+                self._model.loss_fn = CrossEntropy()
 
         if self.coae_config:
             self.label_reformat = coae_label_reformat
@@ -95,9 +95,11 @@ class HeteroNNTopModel(object):
 
         # run selector
         if self.selector:
+
             losses = self._model.get_forward_loss_from_input(x, y)
             loss = sum(losses) / len(losses)
             selective_strategy = self.selector.select_batch_sample(losses)
+
             for idx, select in enumerate(selective_strategy):
                 if select:
                     selective_id.append(idx)

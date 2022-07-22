@@ -56,6 +56,7 @@ class PytorchNNModel(object):
             self.loss_fn = backward_loss
         else:
             self.loss_fn = s.recover_loss_fn_from_dict(loss_fn_define)
+            self.loss_define = loss_fn_define
 
         self.forward_cache: t.Tensor = None
         self.train_mode: bool = True
@@ -63,8 +64,6 @@ class PytorchNNModel(object):
 
         self.x_dtype = None
         self.y_dtype = None
-
-        self.print_parameters()
 
     def print_parameters(self):
         LOGGER.debug('model parameter is {}'.format(list(self.model.parameters())))
@@ -134,14 +133,17 @@ class PytorchNNModel(object):
     def predict(self, x):
         return self.model(t.Tensor(x)).detach().numpy()
 
-    def get_forward_loss_from_input(self, x, y):
+    def get_forward_loss_from_input(self, x, y, reduction='none'):
 
         with torch.no_grad():
+            default_reduction = self.loss_fn.reduction
+            self.loss_fn.reduction = reduction
             yt = label_convert(y, self.loss_fn)
             xt = t.Tensor(x)
             loss = self.loss_fn(self.model(xt), yt)
+            self.loss_fn.reduction = default_reduction
 
-        return loss.detach().numpy()
+        return list(map(float, loss.detach().numpy()))
 
     def get_input_gradients(self, x, y):
 
