@@ -15,24 +15,39 @@
 #
 
 import argparse
-import os
-import sys
-
-cur_path = os.path.realpath(__file__)
-for i in range(4):
-    cur_path = os.path.dirname(cur_path)
-print(f'fate_path: {cur_path}')
-sys.path.append(cur_path)
-
-from examples.pipeline.hetero_feature_binning import common_tools
-from pipeline.utils.tools import load_job_config
 import copy
+
+from pipeline.backend.pipeline import PipeLine
+from pipeline.component import DataTransform
+from pipeline.component import HeteroFeatureBinning
+from pipeline.component import Intersection
+from pipeline.component import Reader
+from pipeline.interface import Data
+from pipeline.utils.tools import load_job_config
 
 
 def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
         config = load_job_config(config)
+    parties = config.parties
+    guest = parties.guest[0]
+    host = parties.host[0]
+
+    guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
+    host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
+
+    pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host)
+
+    reader_0 = Reader(name="reader_0")
+    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
+    reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
+
+    data_transform_0 = DataTransform(name="data_transform_0")
+    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True)
+    data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
+
+    intersection_0 = Intersection(name="intersection_0")
 
     param = {
         "method": "quantile",
@@ -50,7 +65,6 @@ def main(config="../../config.yaml", namespace=""):
         "bin_num": 10,
         "bin_indexes": -1,
         "bin_names": None,
-        "category_indexes": [0, 1, 2],
         "category_names": None,
         "adjustment_factor": 0.5,
         "local_only": False,
@@ -62,13 +76,22 @@ def main(config="../../config.yaml", namespace=""):
     }
 
     guest_param = copy.deepcopy(param)
-    guest_param["method"] = 'quantile'
+    guest_param["method"] = "optimal"
+    guest_param["category_indexes"] = [0, 1, 2]
     host_param = copy.deepcopy(param)
-    host_param["method"] = 'optimal'
-    pipeline = common_tools.make_asymmetric_dsl(config, namespace, guest_param=guest_param,
-                                                host_param=host_param)
+    host_param["method"] = "quantile"
+    hetero_feature_binning_0 = HeteroFeatureBinning(name="hetero_feature_binning_0", **param)
+    hetero_feature_binning_0.get_party_instance(role="guest", party_id=guest).component_param(**guest_param)
+    hetero_feature_binning_0.get_party_instance(role="host", party_id=host).component_param(**host_param)
+
+    pipeline.add_component(reader_0)
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
+    pipeline.add_component(hetero_feature_binning_0, data=Data(data=intersection_0.output.data))
+
+    pipeline.compile()
+
     pipeline.fit()
-    # common_tools.prettify(pipeline.get_component("hetero_feature_binning_0").get_summary())
 
 
 if __name__ == "__main__":

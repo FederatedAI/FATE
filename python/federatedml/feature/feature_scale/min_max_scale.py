@@ -50,7 +50,7 @@ class MinMaxScale(BaseScale):
 
             features[i] = (value - min_value_list[i]) / scale_value_list[i]
         _data = copy.deepcopy(data)
-        _data.features = copy.deepcopy(features)
+        _data.features = features
         return _data
 
     def fit(self, data):
@@ -134,8 +134,9 @@ class MinMaxScale(BaseScale):
     def _get_param(self):
         min_max_scale_param_dict = {}
         if self.header:
+            scale_column_idx_set = set(self.scale_column_idx)
             for i, header in enumerate(self.header):
-                if i in self.scale_column_idx:
+                if i in scale_column_idx_set:
                     param_obj = ColumnScaleParam(column_upper=self.column_max_value[i],
                                                  column_lower=self.column_min_value[i])
                     min_max_scale_param_dict[header] = param_obj

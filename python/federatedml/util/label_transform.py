@@ -51,10 +51,30 @@ class LabelTransformer(ModelBase):
     def update_label_encoder(self, data):
         if self.label_encoder is not None:
             LOGGER.info(f"label encoder provided")
+            LOGGER.info("count labels in data.")
+            data_type = data.schema.get("content_type")
+            if data_type is None:
+                label_count = get_label_count(data)
+                labels = sorted(label_count.keys())
+            # predict result
+            else:
+                labels = sorted(get_predict_result_labels(data))
+
             if self.label_list is not None:
                 LOGGER.info(f"label list provided")
                 self.encoder_key_type = {str(v): type(v).__name__ for v in self.label_list}
+            else:
+                self.encoder_key_type = {str(v): type(v).__name__ for v in labels}
 
+            if len(labels) != len(self.label_encoder):
+                missing_values = [k for k in labels if str(k) not in self.label_encoder]
+                LOGGER.warning(f"labels: {missing_values} found in input data "
+                               f"but are not matched in provided label_encoder. "
+                               f"Note that unmatched labels will not be transformed.")
+                self.label_encoder.update(zip([str(k) for k in missing_values],
+                                              missing_values))
+                self.encoder_key_type.update(zip([str(k) for k in missing_values],
+                                                 [type(v).__name__ for v in missing_values]))
         else:
             data_type = data.schema.get("content_type")
             if data_type is None:
@@ -205,9 +225,8 @@ class LabelTransformer(ModelBase):
 
         return result_data
 
+
 # also used in feature imputation, to be moved to common util
-
-
 def load_value_to_type(value, value_type):
     if value is None:
         loaded_value = None

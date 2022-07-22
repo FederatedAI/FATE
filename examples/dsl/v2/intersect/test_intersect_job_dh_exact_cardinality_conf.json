@@ -15,19 +15,13 @@
     "component_parameters": {
         "common": {
             "intersect_0": {
-                "intersect_method": "rsa",
+                "cardinality_method": "dh",
                 "cardinality_only": true,
                 "sync_cardinality": false,
-                "rsa_params": {
+                "dh_params": {
                     "hash_method": "sha256",
-                    "final_hash_method": "sha256",
-                    "split_calculation": false,
-                    "key_length": 2048
-                },
-                "intersect_preprocess_params": {
-                    "false_positive_rate": 1e-4,
-                    "encrypt_method": "rsa",
-                    "hash_method": "sha256"
+                    "salt": "12345",
+                    "key_length": 1024
                 }
             }
         },

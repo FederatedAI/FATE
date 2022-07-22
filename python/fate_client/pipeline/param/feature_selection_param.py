@@ -328,25 +328,29 @@ class ManuallyFilterParam(BaseParam):
     """
     Specified columns that need to be filtered. If exist, it will be filtered directly, otherwise, ignore it.
 
-    Parameters
-    ----------
-    filter_out_indexes: list of int, default: None
-        Specify columns' indexes to be filtered out
-
-    filter_out_names : list of string, default: None
-        Specify columns' names to be filtered out
-
-    left_col_indexes: list of int, default: None
-        Specify left_col_index
-
-    left_col_names: list of string, default: None
-        Specify left col names
-
     Both Filter_out or left parameters only works for this specific filter. For instances, if you set some columns left
     in this filter but those columns are filtered by other filters, those columns will NOT left in final.
 
     Please note that (left_col_indexes & left_col_names) cannot use with
         (filter_out_indexes & filter_out_names) simultaneously.
+
+    Parameters
+    ----------
+    filter_out_indexes: list of int, default: None
+        Specify columns' indexes to be filtered out
+        Note tha columns specified by `filter_out_indexes` and `filter_out_names` will be combined.
+
+    filter_out_names : list of string, default: None
+        Specify columns' names to be filtered out
+        Note tha columns specified by `filter_out_indexes` and `filter_out_names` will be combined.
+
+    left_col_indexes: list of int, default: None
+        Specify left_col_index
+        Note tha columns specified by `left_col_indexes` and `left_col_names` will be combined.
+
+    left_col_names: list of string, default: None
+        Specify left col names
+        Note tha columns specified by `left_col_indexes` and `left_col_names` will be combined.
 
     """
 
@@ -380,9 +384,11 @@ class FeatureSelectionParam(BaseParam):
     ----------
     select_col_indexes: list or int, default: -1
         Specify which columns need to calculated. -1 represent for all columns.
+        Note tha columns specified by `select_col_indexes` and `select_names` will be combined.
 
     select_names : list of string, default: []
         Specify which columns need to calculated. Each element in the list represent for a column name in header.
+        Note tha columns specified by `select_col_indexes` and `select_names` will be combined.
 
     filter_methods: list, ["manually", "iv_filter", "statistic_filter",
                             "psi_filter", “hetero_sbt_filter", "homo_sbt_filter",
@@ -431,6 +437,9 @@ class FeatureSelectionParam(BaseParam):
         to choose lower psi features. Check more details in CommonFilterParam.
         To use this filter, data_statistic module has to be provided.
 
+    use_anonymous: bool, default False
+        whether to interpret 'select_names' as anonymous names.
+
     need_run: bool, default True
         Indicate if this module needed to be run
 
@@ -454,6 +463,7 @@ class FeatureSelectionParam(BaseParam):
                                              take_high=False),
                  sbt_param=CommonFilterParam(metrics=consts.FEATURE_IMPORTANCE),
                  correlation_param=CorrelationFilterParam(),
+                 use_anonymous=False,
                  need_run=True
                  ):
         super(FeatureSelectionParam, self).__init__()
@@ -484,6 +494,7 @@ class FeatureSelectionParam(BaseParam):
         self.psi_param = copy.deepcopy(psi_param)
         self.sbt_param = copy.deepcopy(sbt_param)
         self.need_run = need_run
+        self.use_anonymous = use_anonymous
 
     def check(self):
         descr = "hetero feature selection param's"

@@ -54,7 +54,7 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
 @click.option("--data-only", is_flag=True, default=False,
               help="upload data only")
 @click.option("--provider", type=str,
-              help="Select the fat version, for example: fate@1.7")
+              help="Select the fate version, for example: fate@1.7")
 @click.option("--disable-clean-data", "clean_data", flag_value=False, default=None)
 @click.option("--enable-clean-data", "clean_data", flag_value=True, default=None)
 @SharedOptions.get_shared_options(hidden=True)

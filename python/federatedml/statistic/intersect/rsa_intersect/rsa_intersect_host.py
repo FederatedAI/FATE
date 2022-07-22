@@ -66,7 +66,7 @@ class RsaIntersectionHost(RsaIntersect):
                                                     rsa_e=self.rcv_e,
                                                     rsa_n=self.rcv_n)
         LOGGER.info(f"Finish pubkey_ids_process")
-        mask_host_id = pubkey_ids_process.mapValues(lambda v: 1)
+        mask_host_id = pubkey_ids_process.mapValues(lambda v: None)
         self.transfer_variable.host_pubkey_ids.remote(mask_host_id,
                                                       role=consts.GUEST,
                                                       idx=0)
@@ -80,7 +80,7 @@ class RsaIntersectionHost(RsaIntersect):
                                                                    self.q,
                                                                    self.cp,
                                                                    self.cq)
-        prvkey_ids_process = prvkey_ids_process_pair.mapValues(lambda v: 1)
+        prvkey_ids_process = prvkey_ids_process_pair.mapValues(lambda v: None)
 
         self.transfer_variable.host_prvkey_ids.remote(prvkey_ids_process,
                                                       role=consts.GUEST,
@@ -125,7 +125,7 @@ class RsaIntersectionHost(RsaIntersect):
         # filter & send intersect even ids
         intersect_even_ids = self.filter_intersect_ids([encrypt_intersect_even_ids])
 
-        remote_intersect_even_ids = encrypt_intersect_even_ids.mapValues(lambda v: 1)
+        remote_intersect_even_ids = encrypt_intersect_even_ids.mapValues(lambda v: None)
         self.transfer_variable.host_intersect_ids.remote(remote_intersect_even_ids, role=consts.GUEST, idx=0)
         LOGGER.info(f"Remote host intersect ids to Guest")
 
@@ -134,7 +134,7 @@ class RsaIntersectionHost(RsaIntersect):
         if self.sync_intersect_ids:
             encrypt_intersect_odd_ids = self.transfer_variable.intersect_ids.get(idx=0)
             intersect_odd_ids_pair = encrypt_intersect_odd_ids.join(prvkey_ids_process_pair, lambda e, h: h)
-            intersect_odd_ids = intersect_odd_ids_pair.map(lambda k, v: (v, 1))
+            intersect_odd_ids = intersect_odd_ids_pair.map(lambda k, v: (v, None))
             intersect_ids = intersect_odd_ids.union(intersect_even_ids)
             LOGGER.info("Get intersect ids from Guest")
         return intersect_ids
@@ -162,7 +162,7 @@ class RsaIntersectionHost(RsaIntersect):
                                                                    self.cq,
                                                                    self.first_hash_operator)
 
-        prvkey_ids_process = prvkey_ids_process_pair.mapValues(lambda v: 1)
+        prvkey_ids_process = prvkey_ids_process_pair.mapValues(lambda v: None)
         self.transfer_variable.host_prvkey_ids.remote(prvkey_ids_process,
                                                       role=consts.GUEST,
                                                       idx=0)
@@ -190,7 +190,7 @@ class RsaIntersectionHost(RsaIntersect):
         if self.sync_intersect_ids:
             encrypt_intersect_ids = self.transfer_variable.intersect_ids.get(idx=0)
             intersect_ids_pair = encrypt_intersect_ids.join(prvkey_ids_process_pair, lambda e, h: h)
-            intersect_ids = intersect_ids_pair.map(lambda k, v: (v, "id"))
+            intersect_ids = intersect_ids_pair.map(lambda k, v: (v, None))
             LOGGER.info("Get intersect ids from Guest")
 
         return intersect_ids
@@ -268,8 +268,6 @@ class RsaIntersectionHost(RsaIntersect):
             self.intersect_num = self.transfer_variable.cardinality.get(idx=0)
             LOGGER.info("Got intersect cardinality from guest.")
 
-        return data_instances
-
     def generate_cache(self, data_instances):
         LOGGER.info("Run RSA intersect cache.")
         # generate rsa keys
@@ -293,7 +291,7 @@ class RsaIntersectionHost(RsaIntersect):
                                                                    self.cq,
                                                                    self.first_hash_operator)
 
-        prvkey_ids_process = prvkey_ids_process_pair.mapValues(lambda v: 1)
+        prvkey_ids_process = prvkey_ids_process_pair.mapValues(lambda v: None)
 
         cache_id = str(uuid.uuid4())
         # self.cache_id = {self.guest_party_id: cache_id}
@@ -341,7 +339,7 @@ class RsaIntersectionHost(RsaIntersect):
         if self.sync_intersect_ids:
             encrypt_intersect_ids = self.transfer_variable.intersect_ids.get(idx=0)
             intersect_ids_pair = encrypt_intersect_ids.join(cache, lambda e, h: h)
-            intersect_ids = intersect_ids_pair.map(lambda k, v: (v, "id"))
+            intersect_ids = intersect_ids_pair.map(lambda k, v: (v, None))
             LOGGER.info("Get intersect ids from Guest")
 
         return intersect_ids

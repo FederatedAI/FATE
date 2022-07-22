@@ -19,4 +19,12 @@ from fate_arch.computing import is_table
 from fate_arch.common._parties import PartiesInfo, Role
 from fate_arch.session._session import Session, computing_session, get_session, get_parties, get_computing_session
 
-__all__ = ['is_table', 'Session', 'PartiesInfo', 'computing_session', 'get_session', 'get_parties', 'get_computing_session', 'Role']
+__all__ = [
+    'is_table',
+    'Session',
+    'PartiesInfo',
+    'computing_session',
+    'get_session',
+    'get_parties',
+    'get_computing_session',
+    'Role']

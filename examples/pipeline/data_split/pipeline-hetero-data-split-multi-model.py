@@ -57,8 +57,8 @@ def main(config="../../config.yaml", namespace=""):
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
-    hetero_data_split_0 = HeteroDataSplit(name="hetero_data_split_0", stratified=True,
-                                          test_size=0.3, validate_size=0.2, split_points=[0.0, 0.2])
+    hetero_data_split_0 = HeteroDataSplit(name="hetero_data_split_0", stratified=False,
+                                          test_size=0.3, validate_size=0.2)
     hetero_linr_0 = HeteroLinR(name="hetero_linr_0", penalty="L2", optimizer="sgd", tol=0.001,
                                alpha=0.01, max_iter=10, early_stop="weight_diff", batch_size=-1,
                                learning_rate=0.15, decay=0.0, decay_sqrt=False,

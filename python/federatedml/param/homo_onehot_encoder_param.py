@@ -27,8 +27,6 @@ class HomoOneHotParam(BaseParam):
 
     def __init__(self, transform_col_indexes=-1, transform_col_names=None, need_run=True, need_alignment=True):
         super(HomoOneHotParam, self).__init__()
-        if transform_col_names is None:
-            transform_col_names = []
         self.transform_col_indexes = transform_col_indexes
         self.transform_col_names = transform_col_names
         self.need_run = need_run
@@ -39,4 +37,6 @@ class HomoOneHotParam(BaseParam):
         self.check_defined_type(self.transform_col_indexes, descr, ['list', 'int'])
         self.check_boolean(self.need_run, descr)
         self.check_boolean(self.need_alignment, descr)
+
+        self.transform_col_names = [] if self.transform_col_names is None else self.transform_col_names
         return True

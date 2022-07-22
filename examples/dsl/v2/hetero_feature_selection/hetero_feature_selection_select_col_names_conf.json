@@ -24,6 +24,14 @@
                             "name": "breast_hetero_host",
                             "namespace": "experiment"
                         }
+                    },
+                    "hetero_feature_selection_0": {
+                        "select_col_indexes": [],
+                        "select_names": [
+                            "x0",
+                            "x2",
+                            "x3"
+                        ]
                     }
                 }
             },
@@ -38,6 +46,14 @@
                             "name": "breast_hetero_guest",
                             "namespace": "experiment"
                         }
+                    },
+                    "hetero_feature_selection_0": {
+                        "select_col_indexes": [],
+                        "select_names": [
+                            "x0",
+                            "x1",
+                            "x3"
+                        ]
                     }
                 }
             }
@@ -72,11 +88,6 @@
             },
             "hetero_feature_selection_0": {
                 "select_col_indexes": [],
-                "select_names": [
-                    "x0",
-                    "x1",
-                    "x3"
-                ],
                 "filter_methods": [
                     "manually",
                     "unique_value",
