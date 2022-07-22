@@ -47,6 +47,7 @@
             },
             "hetero_feature_selection_0": {
                 "correlation_param": {
+                    "sort_metric": "iv",
                     "threshold": 0.5,
                     "select_federated": false
                 },
