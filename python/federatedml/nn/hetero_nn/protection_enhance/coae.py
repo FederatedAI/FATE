@@ -21,6 +21,8 @@ def cross_entropy(p2, p1, reduction='mean'):
         return -t.sum(p1 * t.log(p2))
     elif reduction == 'mean':
         return -t.mean(t.sum(p1 * t.log(p2), dim=1))
+    elif reduction == 'none':
+        return -t.sum(p1 * t.log(p2), dim=1)
     else:
         raise ValueError('unknown reduction')
 
@@ -43,6 +45,15 @@ def coae_loss(label, fake_label, reconstruct_label, lambda_1=10, lambda_2=2, ver
             'loss a is {} {}'.format(cross_entropy(reconstruct_label, label), cross_entropy(fake_label, label)))
         LOGGER.debug('loss b is {}'.format(loss_b))
     return loss_a - lambda_2 * loss_b
+
+
+class CrossEntropy(object):
+
+    def __init__(self, reduction='mean'):
+        self.reduction = reduction
+
+    def __call__(self, p2, p1):
+        return cross_entropy(p2, p1, self.reduction)
 
 
 class CoAE(Module):
