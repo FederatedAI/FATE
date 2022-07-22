@@ -112,14 +112,7 @@ class Federation(FederationBase):
     def __getstate__(self):
         pass
 
-    @property
-    def session_id(self) -> str:
-        return self._session_id
-
     def destroy(self, parties):
-        return self.cleanup(parties)
-
-    def cleanup(self, parties):
         LOGGER.debug("[rabbitmq.cleanup]start to cleanup...")
         for party in parties:
             if self._party == party:

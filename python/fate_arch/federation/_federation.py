@@ -82,6 +82,13 @@ class FederationBase(FederationABC):
     def __getstate__(self):
         pass
 
+    @property
+    def session_id(self) -> str:
+        return self._session_id
+
+    def destroy(self, parties):
+        raise NotImplementedError()
+
     def get(
             self, name: str, tag: str, parties: typing.List[Party], gc: GarbageCollectionABC
     ) -> typing.List:
@@ -240,9 +247,6 @@ class FederationBase(FederationABC):
             )
 
         LOGGER.debug(f"[{log_str}]finish to remote")
-
-    def cleanup(self, **kwargs):
-        raise NotImplementedError()
 
     def _get_party_topic_infos(
             self, parties: typing.List[Party], name=None, partitions=None, dtype=None
