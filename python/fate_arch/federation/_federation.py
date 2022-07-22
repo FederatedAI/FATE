@@ -226,7 +226,7 @@ class FederationBase(FederationABC):
                 src_party_id=self._party.party_id,
                 src_role=self._party.role,
                 mq=self._mq,
-                maximun_message_size=self._max_message_size,
+                max_message_size=self._max_message_size,
                 conf=self._conf
             )
             # noinspection PyProtectedMember
@@ -381,7 +381,7 @@ class FederationBase(FederationABC):
             src_party_id,
             src_role,
             mq,
-            maximun_message_size,
+            max_message_size,
             conf: dict,
     ):
         def _fn(index, kvs):
@@ -395,7 +395,7 @@ class FederationBase(FederationABC):
                 src_party_id=src_party_id,
                 src_role=src_role,
                 mq=mq,
-                maximun_message_size=maximun_message_size,
+                max_message_size=max_message_size,
                 conf=conf,
             )
 
@@ -412,7 +412,7 @@ class FederationBase(FederationABC):
             src_party_id,
             src_role,
             mq,
-            maximun_message_size,
+            max_message_size,
             conf: dict,
     ):
         channel_infos = self._get_channels_index(
@@ -431,7 +431,7 @@ class FederationBase(FederationABC):
             # roughly caculate the size of package to avoid serialization ;)
             if (
                     datastream.get_size() + sys.getsizeof(el["k"]) + sys.getsizeof(el["v"])
-                    >= maximun_message_size
+                    >= max_message_size
             ):
                 print(
                     f"[federation._partition_send]The size of message is: {datastream.get_size()}"
