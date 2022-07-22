@@ -20,14 +20,14 @@ import unittest
 import functools
 import time
 
-from fate_tensor_gpu.secureprotol.fixedpoint import FixedPointNumber
-from fate_tensor_gpu.secureprotol import gmpy_math
-from fate_tensor_gpu.secureprotol.fate_paillier import (
+from fate_arch.tensor.impl.blocks.python_paillier_block import (
     PaillierKeypair,
     PaillierEncryptedNumber,
+    FixedPointNumber,
+    gmpy_math,
 )
 
-from fate_tensor_gpu.gpu_engine import (
+from ..gpu_engine import (
     FLOAT_TYPE,
     INT64_TYPE,
     pi_p2c_pub_key,

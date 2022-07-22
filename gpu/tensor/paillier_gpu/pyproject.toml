@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "fate-tensor-gpu"
+name = "paillier-gpu"
 version = "0.1.0"
 description = "This project is an industrial-level heterogeneous acceleration system to support and speed up federated learning. We've designed and implemented a heterogeneous acceleration solutions using GPU, respectively, that can significantly accelerate the Paillier cryptosystem while maintaining functionality, accuracy and scalability."
 authors = ["Xiaolong.Gao <1506957902@qq.com>"]

@@ -35,7 +35,7 @@ from .gpu_engine import (
     pi_h2d_priv_key,
     pi_p2c_priv_key,
 )
-from .secureprotol.fate_paillier import (
+from fate_arch.tensor.impl.blocks.python_paillier_block import (
     PaillierPublicKey,
     PaillierPrivateKey,
     PaillierKeypair,

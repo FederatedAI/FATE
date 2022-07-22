@@ -30,12 +30,12 @@ from ctypes import (
     c_size_t,
 )
 
-from .secureprotol.fate_paillier import (
+from fate_arch.tensor.impl.blocks.python_paillier_block import (
     PaillierPublicKey,
     PaillierPrivateKey,
     PaillierEncryptedNumber,
+    FixedPointNumber
 )
-from .secureprotol.fixedpoint import FixedPointNumber
 
 from concurrent.futures import ProcessPoolExecutor as Executor
 
