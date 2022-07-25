@@ -466,8 +466,8 @@ class Session(object):
             except Exception as e:
                 self._logger.info(f"destroy computing session {self._computing_session.session_id} failed", e)
 
-            self._computing_session = None
             self.delete_session_record(engine_session_id=self._computing_session.session_id)
+            self._computing_session = None
 
     def destroy_storage_session(self):
         for session_id, session in self._storage_session.items():
@@ -494,9 +494,9 @@ class Session(object):
             except Exception as e:
                 self._logger.info(f"destroy federation failed: {e}")
 
-            self._federation_session = None
             self.delete_session_record(engine_session_id=self._federation_session.session_id,
                                        manager_session_id=self.session_id)
+            self._federation_session = None
 
     def wait_remote_all_done(self, timeout=None):
         LOGGER.info(f"remote futures: {remote_status._remote_futures}, waiting...")
