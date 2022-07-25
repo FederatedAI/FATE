@@ -198,24 +198,26 @@ class BaseModel(Model):
         else:
             return []
 
-    def save(self, *args, **kwargs):
-        self.f_update_time = current_timestamp()
-        for f_n in AUTO_DATE_TIMESTAMP_FIELD_PREFIX:
-            if getattr(self, f"f_{f_n}_time", None) and hasattr(self, f"f_{f_n}_date"):
-                setattr(self, f"f_{f_n}_date", timestamp_to_date(getattr(self, f"f_{f_n}_time")))
-        return super(BaseModel, self).save(*args, **kwargs)
-
     @classmethod
-    def update(cls, __data=None, **update):
-        if __data:
-            if hasattr(cls, "f_update_time"):
-                __data[operator.attrgetter("f_update_time")(cls)] = current_timestamp()
-            fields = AUTO_DATE_TIMESTAMP_FIELD_PREFIX.copy()
-            # create can not be updated
-            fields.remove("create")
-            for f_n in fields:
-                if hasattr(cls, f"f_{f_n}_time") and hasattr(cls, f"f_{f_n}_date"):
-                    k = operator.attrgetter(f"f_{f_n}_time")(cls)
-                    if k in __data and __data[k]:
-                        __data[operator.attrgetter(f"f_{f_n}_date")(cls)] = timestamp_to_date(__data[k])
-        return super().update(__data, **update)
+    def insert(cls, __data=None, **insert):
+        if isinstance(__data, dict) and __data:
+            __data[cls._meta.combined["f_create_time"]] = current_timestamp()
+        if insert:
+            insert["f_create_time"] = current_timestamp()
+
+        return super().insert(__data, **insert)
+
+    # update and insert will call this method
+    @classmethod
+    def _normalize_data(cls, data, kwargs):
+        normalized = super()._normalize_data(data, kwargs)
+        if not normalized:
+            return {}
+
+        normalized[cls._meta.combined["f_update_time"]] = current_timestamp()
+
+        for f_n in AUTO_DATE_TIMESTAMP_FIELD_PREFIX:
+            if {f"f_{f_n}_time", f"f_{f_n}_date"}.issubset(cls._meta.combined.keys()) and cls._meta.combined[f"f_{f_n}_time"] in normalized:
+                normalized[cls._meta.combined[f"f_{f_n}_date"]] = timestamp_to_date(normalized[cls._meta.combined[f"f_{f_n}_time"]])
+
+        return normalized
