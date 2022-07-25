@@ -470,6 +470,9 @@ class Session(object):
             self.delete_session_record(engine_session_id=self._computing_session.session_id)
 
     def destroy_storage_session(self):
+        if self._storage_session is None:
+            return
+
         for session_id, session in self._storage_session.items():
             try:
                 self._logger.info(f"try to destroy storage session {session_id}")
@@ -479,6 +482,8 @@ class Session(object):
                 self._logger.exception(f"destroy storage session {session_id} failed", e)
 
             self.delete_session_record(engine_session_id=session_id)
+
+        self._storage_session = None
 
     def destroy_federation_session(self):
         if self.is_federation_valid:
