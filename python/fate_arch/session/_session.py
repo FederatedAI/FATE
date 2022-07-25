@@ -90,6 +90,9 @@ class Session(object):
             self._logger.exception("", exc_info=(exc_type, exc_val, exc_tb))
         return self._close()
 
+    def __del__(self):
+        self.destroy_all_sessions()
+
     def init_computing(self,
                        computing_session_id: str = None,
                        record: bool = True,
