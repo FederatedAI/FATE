@@ -208,6 +208,8 @@ class BaseKmeansModel(ModelBase):
                 data_output.schema = {"header": ["label", "predicted_label", "type"],
                                       "sid_name": schema.get('sid_name'),
                                       "content_type": "cluster_result"}
+                if "match_id_name" in schema:
+                    data_output.schema["match_id_name"] = schema["match_id_name"]
 
             predict_datas = [data_output, None]
         return predict_datas
