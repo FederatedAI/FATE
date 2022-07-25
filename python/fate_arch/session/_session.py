@@ -506,7 +506,7 @@ class Session(object):
     def cleanup(self):
         # clean up session temporary tables
         if self._storage_engine in [StorageEngine.STANDALONE, StorageEngine.EGGROLL]:
-            storage = self.storage(record=False)
+            storage = self.storage()
             if self.is_computing_valid:
                 try:
                     self._logger.info('clean table by namespace {}'.format(self._computing_session.session_id))
