@@ -465,6 +465,8 @@ class Session(object):
                                   f"ret={ret}")
             except Exception as e:
                 self._logger.info(f"destroy computing session {self._computing_session.session_id} failed", e)
+
+            self._computing_session = None
             self.delete_session_record(engine_session_id=self._computing_session.session_id)
 
     def destroy_storage_session(self):
@@ -475,6 +477,7 @@ class Session(object):
                 self._logger.info(f"destroy storage session {session_id} successfully")
             except Exception as e:
                 self._logger.exception(f"destroy storage session {session_id} failed", e)
+
             self.delete_session_record(engine_session_id=session_id)
 
     def destroy_federation_session(self):
@@ -488,6 +491,8 @@ class Session(object):
                     self._logger.info(f"destroy federation session {self._federation_session.session_id} done")
             except Exception as e:
                 self._logger.info(f"destroy federation failed: {e}")
+
+            self._federation_session = None
             self.delete_session_record(engine_session_id=self._federation_session.session_id,
                                        manager_session_id=self.session_id)
 
