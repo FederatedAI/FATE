@@ -15,6 +15,7 @@
 #
 
 import uuid
+
 import numpy as np
 
 from federatedml.feature.instance import Instance
@@ -151,10 +152,12 @@ class IntersectModelBase(ModelBase):
             join_data = join_id
             if not self.model_param.only_output_key:
                 feature_shape = data.first()[1].features.shape[0]
+
                 def _generate_nan_instance():
                     filler = np.empty((feature_shape,))
                     filler.fill(np.nan)
                     return filler
+
                 join_data = join_id.mapValues(lambda v: Instance(features=_generate_nan_instance()))
             result_data = intersect_data.union(join_data)
         LOGGER.debug(f"result data count: {result_data.count()}")
@@ -526,7 +529,7 @@ class IntersectGuest(IntersectModelBase):
         filtered_data_list = [
             data_instances.filter(
                 lambda k,
-                v: filter.check(
+                       v: filter.check(
                     hash_operator.compute(
                         k,
                         suffix_salt=self.intersect_preprocess_params.preprocess_salt))) for filter in filter_list]
