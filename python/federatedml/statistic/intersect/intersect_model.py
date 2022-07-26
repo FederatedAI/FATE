@@ -15,6 +15,7 @@
 #
 
 import uuid
+import numpy as np
 
 from federatedml.feature.instance import Instance
 from federatedml.model_base import Metric, MetricMeta
@@ -142,13 +143,20 @@ class IntersectModelBase(ModelBase):
                 join_id = join_data.map(lambda k, v: (k, None))
                 result_data = data
                 if self.model_param.only_output_key:
-                    if not self.use_match_id_process:
-                        result_data = data.mapValues(lambda v: None)
+                    result_data = data.mapValues(lambda v: None)
                 sync_join_id.remote(join_id)
         else:
             join_id = sync_join_id.get(idx=0)
             # LOGGER.debug(f"received join_id count: {join_id.count()}")
-            result_data = intersect_data.union(join_id)
+            join_data = join_id
+            if not self.model_param.only_output_key:
+                feature_shape = data.first()[1].features.shape[0]
+                def _generate_nan_instance():
+                    filler = np.empty((feature_shape,))
+                    filler.fill(np.nan)
+                    return filler
+                join_data = join_id.mapValues(lambda v: Instance(features=_generate_nan_instance()))
+            result_data = intersect_data.union(join_data)
         LOGGER.debug(f"result data count: {result_data.count()}")
         return result_data
 
