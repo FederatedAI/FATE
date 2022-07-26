@@ -31,8 +31,7 @@ class Relationship(object):
             },
             EngineType.FEDERATION: {
                 "default": FederationEngine.STANDALONE,
-                "support": [FederationEngine.STANDALONE, FederationEngine.RABBITMQ, FederationEngine.PULSAR,
-                            FederationEngine.FIREWORK]
+                "support": [FederationEngine.STANDALONE, FederationEngine.RABBITMQ, FederationEngine.PULSAR]
             },
         },
         ComputingEngine.EGGROLL: {
@@ -42,8 +41,7 @@ class Relationship(object):
             },
             EngineType.FEDERATION: {
                 "default": FederationEngine.EGGROLL,
-                "support": [FederationEngine.EGGROLL, FederationEngine.RABBITMQ, FederationEngine.PULSAR,
-                            FederationEngine.FIREWORK]
+                "support": [FederationEngine.EGGROLL, FederationEngine.RABBITMQ, FederationEngine.PULSAR]
             },
         },
         ComputingEngine.SPARK: {
@@ -53,7 +51,7 @@ class Relationship(object):
             },
             EngineType.FEDERATION: {
                 "default": FederationEngine.RABBITMQ,
-                "support": [FederationEngine.PULSAR, FederationEngine.RABBITMQ, FederationEngine.FIREWORK]
+                "support": [FederationEngine.PULSAR, FederationEngine.RABBITMQ]
             },
         },
         ComputingEngine.LINKIS_SPARK: {
@@ -95,7 +93,6 @@ class Relationship(object):
             EngineType.COMPUTING: [(ComputingEngine.SPARK, "spark"), (ComputingEngine.LINKIS_SPARK, "linkis_spark")],
             EngineType.STORAGE: [(StorageEngine.HDFS, "hdfs"), (StorageEngine.HIVE, "hive"),
                                  (StorageEngine.LINKIS_HIVE, "linkis_hive"), (StorageEngine.LOCALFS, "localfs")],
-            EngineType.FEDERATION: [(FederationEngine.RABBITMQ, "rabbitmq"), (FederationEngine.PULSAR, "pulsar"),
-                                    (FederationEngine.FIREWORK, "firework")]
+            EngineType.FEDERATION: [(FederationEngine.RABBITMQ, "rabbitmq"), (FederationEngine.PULSAR, "pulsar")]
         },
     }
