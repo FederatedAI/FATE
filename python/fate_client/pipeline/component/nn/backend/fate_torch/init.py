@@ -16,7 +16,8 @@ str_init_func_map = {
     "dirac": torch_init.dirac_,
     "orthogonal": torch_init.orthogonal_,
     "sparse": torch_init.sparse_,
-    "zeros": torch_init.zeros_
+    "zeros": torch_init.zeros_,
+    "ones": torch_init.ones_
 }
 
 
