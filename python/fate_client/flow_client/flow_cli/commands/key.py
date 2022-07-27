@@ -18,38 +18,38 @@ from flow_client.flow_cli.utils import cli_args
 from flow_client.flow_cli.utils.cli_utils import preprocess, access_server
 
 
-@click.group(short_help="Privilege Operations")
+@click.group(short_help="Key Operations")
 @click.pass_context
-def privilege(ctx):
+def key(ctx):
     """
     \b
-    Provides numbers of privilege operational commands, including grant, query and delete.
+    Provides numbers of key operational commands, including save, query and delete.
     For more details, please check out the help text.
     """
     pass
 
 
-@privilege.command("grant", short_help="Grant Privilege Command")
+@key.command("save", short_help="Save Public Key Command")
 @cli_args.CONF_PATH
 @click.pass_context
-def grant(ctx, **kwargs):
+def save(ctx, **kwargs):
     """
     - DESCRIPTION:
 
 
     \b
-    grant component | dataset privilege
+    save other site public key
 
     \b
     - USAGE:
-        flow privilege grant -c fateflow/examples/permission/grant.json
+        flow key save -c fateflow/examples/key/save_public_key.json
     """
     config_data, dsl_data = preprocess(**kwargs)
-    access_server('post', ctx, 'permission/grant', config_data)
+    access_server('post', ctx, 'key/public/save', config_data)
 
 
-@privilege.command("delete", short_help="Delete Privilege Command")
-@cli_args.CONF_PATH
+@key.command("delete", short_help="Delete Public Key Command")
+@cli_args.PARTYID_REQUIRED
 @click.pass_context
 def delete(ctx, **kwargs):
     """
@@ -57,17 +57,17 @@ def delete(ctx, **kwargs):
 
 
     \b
-    delete component | dataset privilege
+    delete other site public key
 
     \b
     - USAGE:
-        flow privilege delete  -c fateflow/examples/permission/delete.json
+        flow key delete  -p 10000
     """
     config_data, dsl_data = preprocess(**kwargs)
-    access_server('post', ctx, 'permission/delete', config_data)
+    access_server('post', ctx, 'key/public/delete', config_data)
 
 
-@privilege.command("query", short_help="Query Privilege Command")
+@key.command("query", short_help="Query Public Key Command")
 @cli_args.PARTYID_REQUIRED
 @click.pass_context
 def query(ctx, **kwargs):
@@ -76,11 +76,11 @@ def query(ctx, **kwargs):
 
 
     \b
-    query component | dataset privilege
+     query site public key
 
     \b
     - USAGE:
-        flow privilege query -p 10000
+        flow key query -p 10000
     """
     config_data, dsl_data = preprocess(**kwargs)
-    access_server('post', ctx, 'permission/query', config_data)
+    access_server('post', ctx, 'key/query', config_data)

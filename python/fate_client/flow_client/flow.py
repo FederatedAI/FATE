@@ -20,7 +20,7 @@ import click
 from ruamel import yaml
 
 from flow_client.flow_cli.commands import checkpoint, tracking, component, data, job, model, queue, table, tag, task, \
-    provider, server, service, resource, privilege, test, template
+    provider, server, service, resource, privilege, test, template, key
 from flow_client.flow_cli.utils.cli_utils import prettify
 
 
@@ -160,6 +160,7 @@ flow_cli.add_command(tag.tag)
 flow_cli.add_command(checkpoint.checkpoint)
 flow_cli.add_command(test.test)
 flow_cli.add_command(template.template)
+flow_cli.add_command(key.key)
 
 
 if __name__ == '__main__':
