@@ -118,9 +118,11 @@ def check_negative_sample_weight(kv_iterator):
 
 
 def header_alignment(data_instances, pre_header, pre_anonymous_header=None):
-    header = data_instances.schema["header"]
+    header = [col.strip() for col in data_instances.schema["header"]]
     if len((set(header) & set(pre_header))) != len(pre_header):
-        raise ValueError("fit & transform data' header should be same")
+        raise ValueError(f"fit & transform data' header should be the same! "
+                         f"Previous header: {pre_header}. "
+                         f"Current header: {header}.")
 
     if pre_header == header:
         if pre_anonymous_header:
@@ -181,11 +183,6 @@ def get_data_shape(data):
 
 def get_header(data_instances):
     header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
-    return header
-
-
-def get_anonymous_header(data_instances):
-    header = data_instances.schema.get('anonymous_header')  # ['x1', 'x2', 'x3' ... ]
     return header
 
 

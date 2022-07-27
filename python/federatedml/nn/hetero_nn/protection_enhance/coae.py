@@ -1,4 +1,5 @@
 from federatedml.util import LOGGER
+from federatedml.util import consts
 try:
     import torch
     import torch as t
@@ -14,11 +15,14 @@ def entropy(tensor):
 
 
 def cross_entropy(p2, p1, reduction='mean'):
+    p2 = p2 + consts.FLOAT_ZERO  # to avoid nan
     assert p2.shape == p1.shape
     if reduction == 'sum':
         return -t.sum(p1 * t.log(p2))
     elif reduction == 'mean':
         return -t.mean(t.sum(p1 * t.log(p2), dim=1))
+    elif reduction == 'none':
+        return -t.sum(p1 * t.log(p2), dim=1)
     else:
         raise ValueError('unknown reduction')
 
@@ -41,6 +45,15 @@ def coae_loss(label, fake_label, reconstruct_label, lambda_1=10, lambda_2=2, ver
             'loss a is {} {}'.format(cross_entropy(reconstruct_label, label), cross_entropy(fake_label, label)))
         LOGGER.debug('loss b is {}'.format(loss_b))
     return loss_a - lambda_2 * loss_b
+
+
+class CrossEntropy(object):
+
+    def __init__(self, reduction='mean'):
+        self.reduction = reduction
+
+    def __call__(self, p2, p1):
+        return cross_entropy(p2, p1, self.reduction)
 
 
 class CoAE(Module):
@@ -103,6 +116,7 @@ def train_an_autoencoder_confuser(label_num, epoch=50, lambda1=1, lambda2=2, lr=
 
 
 def coae_label_reformat(labels):
+
     if labels.shape[1] == 1:
         return nn.functional.one_hot(t.Tensor(labels).flatten().type(t.int64), 2).numpy()
     else:
@@ -110,4 +124,4 @@ def coae_label_reformat(labels):
 
 
 if __name__ == '__main__':
-    coae = train_an_autoencoder_confuser(2, )
+    coae = train_an_autoencoder_confuser(2, epoch=1000, verbose=True, lambda1=2.0, lambda2=1.0, lr=0.02)

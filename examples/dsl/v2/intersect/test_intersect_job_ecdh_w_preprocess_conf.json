@@ -18,7 +18,7 @@
                 "intersect_method": "ecdh",
                 "sync_intersect_ids": true,
                 "ecdh_params": {
-                    "hash_method": "sha256",
+                    "hash_method": "sm3",
                     "salt": "12345",
                     "curve": "curve25519"
                 },

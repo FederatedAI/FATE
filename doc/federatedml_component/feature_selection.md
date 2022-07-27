@@ -23,7 +23,19 @@ Below lists available input models and their corresponding filter methods(as par
 | SBT             	| [hetero_sbt_filter](../../examples/pipeline/hetero_feature_selection/pipeline-hetero-feature-selection-multi-iso.py) <br> [hetero_fast_sbt_filter](../../examples/pipeline/hetero_feature_selection/pipeline-hetero-feature-selection-fast-sbt.py) <br> [homo_sbt_filter](../../examples/pipeline/hetero_feature_selection/pipeline-hetero-feature-selection-homo-sbt.py)                    	|
 | PSI             	| [psi_filter](../../examples/pipeline/hetero_feature_selection/pipeline-hetero-feature-selection-multi-iso.py)                                                                                                                                                                                                                                                                                	|
 
-1.  unique\_value: filter the columns if all values in this feature is
+Most of the filter methods above share the same set of configurable parameters. 
+Below lists their acceptable parameter values.
+
+| Filter Method                     	| Parameter Name  	| metrics                                                                                                                                                        	| filter_type                            	| take_high  	|
+|-----------------------------------	|-----------------	|----------------------------------------------------------------------------------------------------------------------------------------------------------------	|----------------------------------------	|------------	|
+| IV Filter                         	| filter_param    	| "iv"                                                                                                                                                           	| "threshold", "top_k", "top_percentile" 	| True       	|
+| Statistic Filter                  	| statistic_param 	| "max", "min", "mean", "median", "stddev", "variance", "coefficient_of_variance", "skewness", "kurtosis", "missing_count", "missing_ratio", quantile(e.g."95%") 	| "threshold", "top_k", "top_percentile" 	| True/False 	|
+| PSI Filter                        	| psi_param       	| "psi"                                                                                                                                                          	| "threshold", "top_k", "top_percentile" 	| False      	|
+| VIF Filter                        	| vif_param       	| "vif"                                                                                                                                                          	| "threshold", "top_k", "top_percentile" 	| False      	|
+| Hetero/Homo/HeteroFast SBT Filter 	| sbt_param       	| "feature_importance"                                                                                                                                           	| "threshold", "top_k", "top_percentile" 	| True       	|
+
+
+1.  unique\_value: filter the columns if all values in this feature are
     the same
 
 2.    - iv\_filter: Use iv as criterion to selection features. Support
