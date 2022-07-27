@@ -18,7 +18,9 @@ def recover_layer_from_dict(nn_define, nn_dict):
         class_name = nn_define['op']
         init_param_dict.pop('op')
     else:
-        raise ValueError('no layer or operation info offered in nn define')
+        raise ValueError('no layer or operation info found in nn define, please check your layer config and make'
+                         'sure they are correct for pytorch backend')
+
     if 'initializer' in init_param_dict:
         init_param_dict.pop('initializer')
 
@@ -102,4 +104,3 @@ if __name__ == '__main__':
     loss_fn = recover_loss_fn_from_dict(loss_fn_define)
 
     test = {'0-0': {'bias': True, 'in_features': 8, 'initializer': {}, 'layer': 'Linear', 'out_features': 4}}
-    print(modify_linear_input_shape(16, test))

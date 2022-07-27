@@ -212,7 +212,10 @@ class HeteroNNGuestModel(HeteroNNModel):
         if self.config_type == consts.pytorch_backend:
             model_meta.loss = json.dumps(self.loss)
             optimizer_param.optimizer = self.optimizer['optimizer']
-            optimizer_param.kwargs = json.dumps(copy.deepcopy(self.optimizer).pop('optimizer'))
+            tmp_dict = copy.deepcopy(self.optimizer)
+            tmp_dict.pop('optimizer')
+            optimizer_param.kwargs = json.dumps(tmp_dict)
+            LOGGER.debug('cwj optimizer3 {}'.format(optimizer_param.kwargs))
         else:
             model_meta.loss = self.loss
             optimizer_param.optimizer = self.optimizer.optimizer
