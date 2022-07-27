@@ -102,5 +102,3 @@ if __name__ == '__main__':
         "loss_fn": "BCELoss"
     }
     loss_fn = recover_loss_fn_from_dict(loss_fn_define)
-
-    test = {'0-0': {'bias': True, 'in_features': 8, 'initializer': {}, 'layer': 'Linear', 'out_features': 4}}
