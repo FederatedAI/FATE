@@ -490,4 +490,3 @@ class JobInvoker(object):
                 pass
 
             time.sleep(conf.TIME_QUERY_FREQS * (i + 1))
-

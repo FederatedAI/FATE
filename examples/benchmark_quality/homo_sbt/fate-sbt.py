@@ -56,13 +56,17 @@ def main(config="../../config.yaml", param='./xgb_config_binary.yaml', namespace
 
     reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
-    data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, output_format="dense")
-    data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=True, output_format="dense")
+    data_transform_0.get_party_instance(role='guest', party_id=guest).\
+        component_param(with_label=True, output_format="dense")
+    data_transform_0.get_party_instance(role='host', party_id=host).\
+        component_param(with_label=True, output_format="dense")
 
     reader_1.get_party_instance(role='guest', party_id=guest).component_param(table=guest_validate_data)
     reader_1.get_party_instance(role='host', party_id=host).component_param(table=host_validate_data)
-    data_transform_1.get_party_instance(role='guest', party_id=guest).component_param(with_label=True, output_format="dense")
-    data_transform_1.get_party_instance(role='host', party_id=host).component_param(with_label=True, output_format="dense")
+    data_transform_1.get_party_instance(role='guest', party_id=guest).\
+        component_param(with_label=True, output_format="dense")
+    data_transform_1.get_party_instance(role='host', party_id=host).\
+        component_param(with_label=True, output_format="dense")
 
     homo_secureboost_0 = HomoSecureBoost(name="homo_secureboost_0",
                                          num_trees=param['tree_num'],
@@ -81,7 +85,8 @@ def main(config="../../config.yaml", param='./xgb_config_binary.yaml', namespace
     pipeline.add_component(reader_0)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(reader_1)
-    pipeline.add_component(data_transform_1, data=Data(data=reader_1.output.data), model=Model(data_transform_0.output.model))
+    pipeline.add_component(data_transform_1,
+                           data=Data(data=reader_1.output.data), model=Model(data_transform_0.output.model))
     pipeline.add_component(homo_secureboost_0, data=Data(train_data=data_transform_0.output.data,
                                                          validate_data=data_transform_1.output.data))
     pipeline.add_component(homo_secureboost_1, data=Data(test_data=data_transform_1.output.data),
