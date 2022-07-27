@@ -510,7 +510,6 @@ class Session(object):
                 storage = self.storage()
                 if self.is_computing_valid:
                     try:
-                        storage = self.storage()
                         self._logger.info('clean table by namespace {}'.format(self._computing_session.session_id))
                         storage.cleanup(namespace=self._computing_session.session_id, name="*")
                         self._logger.info(f'clean table namespace {self._computing_session.session_id} done')
