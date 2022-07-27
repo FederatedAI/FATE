@@ -264,7 +264,7 @@ class PipeLine(object):
 
         if component is None:
             if self._stage != "predict":
-                raise ValueError(f"Component {component} does not exist")
+                raise ValueError(f"Component {name} does not exist")
             training_meta = self._predict_pipeline[0]["pipeline"].get_predict_meta()
 
             component = training_meta.get("components").get(name)
@@ -572,6 +572,13 @@ class PipeLine(object):
                                                                 self._initiator.party_id)
 
     @LOGGER.catch(reraise=True)
+    def continuously_fit(self):
+        self._fit_status = self._job_invoker.monitor_job_status(self._train_job_id,
+                                                                self._initiator.role,
+                                                                self._initiator.party_id,
+                                                                previous_status=self._fit_status)
+
+    @LOGGER.catch(reraise=True)
     def predict(self, job_parameters=None, components_checkpoint=None):
         """
 
@@ -749,7 +756,7 @@ class PipeLine(object):
 
         self._data_to_feed_in_prediction = data_dict
 
-    @LOGGER.catch(reraise=True)
+    # @LOGGER.catch(reraise=True)
     def __getattr__(self, attr):
         if attr in self._components:
             return self._components[attr]

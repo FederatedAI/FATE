@@ -24,7 +24,8 @@ __all__ = ["JobStatus", "VERSION", "SERVER_VERSION", "TIME_QUERY_FREQS", "Role",
 
 VERSION = 2
 SERVER_VERSION = "v1"
-TIME_QUERY_FREQS = 0.5
+TIME_QUERY_FREQS = 1
+MAX_RETRY = 3
 
 
 CONSOLE_DISPLAY_LOG = get_default_config().get("console_display_log", True)
