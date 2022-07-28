@@ -90,9 +90,6 @@ class Session(object):
             self._logger.exception("", exc_info=(exc_type, exc_val, exc_tb))
         return self._close()
 
-    def __del__(self):
-        self.destroy_all_sessions()
-
     def init_computing(self,
                        computing_session_id: str = None,
                        record: bool = True,
@@ -506,21 +503,24 @@ class Session(object):
     def cleanup(self):
         # clean up session temporary tables
         if self._storage_engine in [StorageEngine.STANDALONE, StorageEngine.EGGROLL]:
-            storage = self.storage()
-            if self.is_computing_valid:
-                try:
-                    self._logger.info('clean table by namespace {}'.format(self._computing_session.session_id))
-                    storage.cleanup(namespace=self._computing_session.session_id, name="*")
-                    self._logger.info(f'clean table namespace {self._computing_session.session_id} done')
-                except Exception as e:
-                    self._logger.warning(f"no found table namespace {self._computing_session.session_id}")
-            if self.is_federation_valid:
-                try:
-                    self._logger.info('clean table by namespace {}'.format(self._federation_session.session_id))
-                    storage.cleanup(namespace=self._federation_session.session_id, name="*")
-                    self._logger.info(f'clean table namespace {self._federation_session.session_id} done')
-                except Exception as e:
-                    self._logger.warning(f"no found table namespace {self._federation_session.session_id}")
+            if self.is_computing_valid or self.is_federation_valid:
+                storage = self.storage()
+                if self.is_computing_valid:
+                    try:
+                        self._logger.info('clean table by namespace {}'.format(self._computing_session.session_id))
+                        storage.cleanup(namespace=self._computing_session.session_id, name="*")
+                        self._logger.info(f'clean table namespace {self._computing_session.session_id} done')
+                    except Exception as e:
+                        self._logger.warning(f"no found table namespace {self._computing_session.session_id}")
+                if self.is_federation_valid:
+                    try:
+                        self._logger.info('clean table by namespace {}'.format(self._federation_session.session_id))
+                        storage.cleanup(namespace=self._federation_session.session_id, name="*")
+                        self._logger.info(f'clean table namespace {self._federation_session.session_id} done')
+                    except Exception as e:
+                        self._logger.warning(f"no found table namespace {self._federation_session.session_id}")
+                storage.destroy()
+                self.delete_session_record(engine_session_id=storage.session_id)
 
 
 def get_session() -> Session:
