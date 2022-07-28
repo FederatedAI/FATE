@@ -227,7 +227,9 @@ class ModelBase(object):
 
         # retry
         if (
-            self._retry
+            retry
+            and hasattr(self, '_retry')
+            and callable(self._retry)
             and self.checkpoint_manager is not None
             and self.checkpoint_manager.latest_checkpoint is not None
         ):
