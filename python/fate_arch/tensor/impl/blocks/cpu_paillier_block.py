@@ -15,7 +15,7 @@
 #
 
 
-import fate_tensor.par
+import rust_paillier
 import torch
 
 from ._metaclass import (
@@ -44,7 +44,7 @@ class BlockPaillierDecryptor(
 
 class BlockPaillierCipher(
     metaclass=phe_keygen_metaclass(
-        BlockPaillierEncryptor, BlockPaillierDecryptor, fate_tensor.par.keygen
+        BlockPaillierEncryptor, BlockPaillierDecryptor, rust_paillier.keygen
     )
 ):
     pass

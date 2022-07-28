@@ -6,12 +6,14 @@ from typing import (
     Callable,
     Generator,
     List,
+    Mapping,
     Optional,
     Tuple,
     TypeVar,
     Union,
     overload,
 )
+import typing
 
 import torch
 from fate_arch.common import Party
@@ -19,8 +21,10 @@ from fate_arch.federation.transfer_variable import IterationGC
 from fate_arch.session import get_session
 from typing_extensions import Literal
 
+
 from ._parties import Parties, PreludeParty
 from .abc.tensor import PHEDecryptorABC, PHEEncryptorABC, PHETensorABC
+from ._federation import FederationDeserializer
 
 
 class NamespaceState:
@@ -55,6 +59,13 @@ class Device(Enum):
     CPU = 1
     GPU = 2
     FPGA = 3
+    CPU_Intel = 4
+
+
+class Distributed(Enum):
+    NONE = 1
+    EGGROLL = 2
+    SPARK = 3
 
 
 T = TypeVar("T")
@@ -115,7 +126,6 @@ class Futures:
 
 class _ContextInside:
     def __init__(self, cpn_input) -> None:
-        self._device = None
         self._push_gc_dict = {}
         self._pull_gc_dict = {}
 
@@ -125,6 +135,13 @@ class _ContextInside:
         self._job_parameters = cpn_input.job_parameters
         self._parameters = cpn_input.parameters
         self._flow_feeded_parameters = cpn_input.flow_feeded_parameters
+
+        self._device = Device.CPU
+        self._distributed = Distributed.EGGROLL
+
+    @property
+    def device(self):
+        return self._device
 
     @property
     def is_guest(self):
@@ -175,11 +192,7 @@ class Context:
         return Context(states, namespace)
 
     def describe(self):
-        return json.dumps(
-            dict(
-                states=self._inside.describe(),
-            )
-        )
+        return json.dumps(dict(states=self._inside.describe(),))
 
     @property
     def party(self):
@@ -205,46 +218,52 @@ class Context:
     def is_arbiter(self):
         return self._inside.is_guest
 
-    def device_init(self, **kwargs):
-        self._device = Device.CPU
-
+    @property
     def device(self) -> Device:
-        if self._device is None:
-            raise RuntimeError(f"init device first")
-        return self._device
+        return self._inside.device
+
+    @property
+    def distributed(self) -> Distributed:
+        return self._inside._distributed
 
     def current_namespace(self):
         return self._namespace_state.get_namespce()
 
     def push(self, target: Parties, key: str, value):
-        return self._push(target, key, value)
+        return self._push(target.get_parties(), key, value)
 
-    def pull(
-        self,
-        source: Literal[PreludeParty.GUEST, PreludeParty.HOST, PreludeParty.ARBITER],
-        key: str,
-    ) -> Future:
-        return Future(self._pull(source, key)[0])
+    def pull(self, source: Parties, key: str,) -> Future:
+        return Future(self._pull(source.get_parties(), key)[0])
 
     def pulls(self, source: Parties, key: str) -> Futures:
-        return Futures(self._pull(source, key))
+        return Futures(self._pull(source.get_parties(), key))
 
-    def _push(self, parties: Parties, key, value):
-        get_session().federation.remote(
-            v=value,
+    def _push(self, parties: typing.List[Party], key, value):
+        if hasattr(value, "__federation_hook__"):
+            value.__federation_hook__(self, key, parties)
+        else:
+            get_session().federation.remote(
+                v=value,
+                name=key,
+                tag=self.current_namespace(),
+                parties=parties,
+                gc=self._inside.get_or_set_push_gc(key),
+            )
+
+    def _pull(self, parties: typing.List[Party], key):
+        raw_values = get_session().federation.get(
             name=key,
             tag=self.current_namespace(),
-            parties=parties.get_parties(),
-            gc=self._inside.get_or_set_push_gc(key),
-        )
-
-    def _pull(self, parties: Parties, key):
-        return get_session().federation.get(
-            name=key,
-            tag=self.current_namespace(),
-            parties=parties.get_parties(),
+            parties=parties,
             gc=self._inside.get_or_set_pull_gc(key),
         )
+        values = []
+        for party, raw_value in zip(parties, raw_values):
+            if isinstance(raw_value, FederationDeserializer):
+                values.append(raw_value.do_deserialize(self, party))
+            else:
+                values.append(raw_value)
+        return values
 
     @overload
     def keygen(
@@ -257,16 +276,54 @@ class Context:
         ...
 
     def keygen(self, kind, key_length: int, **kwargs):
+        # TODO: exploring expansion eechanisms
         if kind == CipherKind.PHE or kind == CipherKind.PHE_PAILLIER:
-            if self._device == Device.CPU:
-                from .impl.tensor.multithread import PaillierPHECipherLocal
+            if self.distributed == Distributed.NONE:
+                if self.device == Device.CPU:
+                    from .impl.tensor.multithread_cpu_tensor import (
+                        PaillierPHECipherLocal,
+                    )
 
-                encryptor, decryptor = PaillierPHECipherLocal().keygen(
-                    key_length=key_length
-                )
-                return PHEEncryptor(encryptor), PHEDecryptor(decryptor)
+                    encryptor, decryptor = PaillierPHECipherLocal().keygen(
+                        key_length=key_length
+                    )
+                    return PHEEncryptor(encryptor), PHEDecryptor(decryptor)
+            if self.distributed == Distributed.EGGROLL:
+                if self.device == Device.CPU:
+                    from .impl.tensor.distributed import PaillierPHECipherDistributed
+
+                    encryptor, decryptor = PaillierPHECipherDistributed().keygen(
+                        key_length=key_length
+                    )
+                    return PHEEncryptor(encryptor), PHEDecryptor(decryptor)
+
+        raise NotImplementedError(
+            f"keygen for kind<{kind}>-distributed<{self.distributed}>-device<{self.device}> is not implemented"
+        )
+
+    def random_tensor(self, shape, num_partition = 1) -> "FPTensor":
+        if self.distributed == Distributed.NONE:
+            return FPTensor(self, torch.rand(shape))
         else:
-            raise NotImplementedError(f"keygen for kind `{kind}` is not implemented")
+            from fate_arch.session import computing_session
+            from fate_arch.tensor.impl.tensor.distributed import FPTensorDistributed
+
+            parts = []
+            last_dim = shape[-1]
+            for i in range(num_partition):
+                if i == num_partition - 1:
+                    parts.append(torch.tensor((*shape[:-1], last_dim)))
+                else:
+                    parts.append(torch.tensor((*shape[:-1], shape[-1] / num_partition)))
+                    last_dim -= shape[-1] / num_partition
+            return FPTensor(
+                self,
+                FPTensorDistributed(
+                    computing_session.parallelize(
+                        parts, include_key=False, partition=num_partition
+                    )
+                ),
+            )
 
     def create_tensor(self, tensor: torch.Tensor) -> "FPTensor":
 
@@ -429,6 +486,12 @@ class FPTensor:
     def T(self):
         return FPTensor(self._ctx, self._tensor.T)
 
+    def __federation_hook__(self, ctx, key, parties):
+        deserializer = FPTensorFederationDeserializer(key)
+        # 1. remote deserializer with objs
+        ctx._push(parties, key, deserializer)
+        # 2. remote table
+        ctx._push(parties, deserializer.table_key, self._tensor)
 
 class PHETensor:
     def __init__(self, ctx: Context, tensor: PHETensorABC) -> None:
@@ -485,3 +548,27 @@ class PHETensor:
         elif isinstance(other, (int, float)):
             return PHETensor(self._ctx, func(other))
         return NotImplemented
+
+    def __federation_hook__(self, ctx, key, parties):
+        deserializer = PHETensorFederationDeserializer(key)
+        # 1. remote deserializer with objs
+        ctx._push(parties, key, deserializer)
+        # 2. remote table
+        ctx._push(parties, deserializer.table_key, self._tensor)
+
+
+class PHETensorFederationDeserializer(FederationDeserializer):
+    def __init__(self, key) -> None:
+        self.table_key = self.make_frac_key(key, "tensor")
+
+    def do_deserialize(self, ctx: Context, party: Party) -> PHETensor:
+        tensor = ctx._pull([party], self.table_key)[0]
+        return PHETensor(ctx, tensor)
+
+class FPTensorFederationDeserializer(FederationDeserializer):
+    def __init__(self, key) -> None:
+        self.table_key = self.make_frac_key(key, "tensor")
+
+    def do_deserialize(self, ctx: Context, party: Party) -> FPTensor:
+        tensor = ctx._pull([party], self.table_key)[0]
+        return FPTensor(ctx, tensor)

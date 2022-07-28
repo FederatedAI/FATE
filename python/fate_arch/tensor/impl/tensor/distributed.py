@@ -8,6 +8,8 @@ from ...abc.tensor import (
     PHEEncryptorABC,
     PHETensorABC,
 )
+from ..._federation import FederationDeserializer
+from ..._tensor import Context, Party
 
 Numeric = typing.Union[int, float]
 
@@ -74,6 +76,12 @@ class FPTensorDistributed(FPTensorProtocol):
         # todo: fix
         ...
 
+    def __federation_hook__(self, ctx, key, parties):
+        deserializer = FPTensorFederationDeserializer(key)
+        # 1. remote deserializer with objs
+        ctx._push(parties, key, deserializer)
+        # 2. remote table
+        ctx._push(parties, deserializer.table_key, self._blocks_table)
 
 class PHETensorDistributed(PHETensorABC):
     def __init__(self, blocks_table) -> None:
@@ -131,8 +139,14 @@ class PHETensorDistributed(PHETensorABC):
         return transposed
 
     def serialize(self):
-        # TODO: impl me
-        ...
+        return self._blocks_table
+
+    def deserialize(self, **kwargs):
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+
+    def __getstates__(self):
+        return {"_is_transpose": self._is_transpose}
 
     def _binary_op(self, other, func_name):
         if isinstance(other, (FPTensorDistributed, PHETensorDistributed)):
@@ -161,6 +175,12 @@ class PHETensorDistributed(PHETensorABC):
             )
         return NotImplemented
 
+    def __federation_hook__(self, ctx, key, parties):
+        deserializer = PHETensorFederationDeserializer(key, self._is_transpose)
+        # 1. remote deserializer with objs
+        ctx._push(parties, key, deserializer)
+        # 2. remote table
+        ctx._push(parties, deserializer.table_key, self._blocks_table)
 
 class PaillierPHEEncryptorDistributed(PHEEncryptorABC):
     def __init__(self, block_encryptor) -> None:
@@ -187,10 +207,30 @@ class PaillierPHECipherDistributed(PHECipherABC):
     def keygen(
         cls, **kwargs
     ) -> typing.Tuple[PaillierPHEEncryptorDistributed, PaillierPHEDecryptorDistributed]:
-        from ..blocks.python_paillier_block import BlockPaillierCipher
+        from ..blocks.cpu_paillier_block import BlockPaillierCipher
 
         block_encrytor, block_decryptor = BlockPaillierCipher.keygen(**kwargs)
         return (
             PaillierPHEEncryptorDistributed(block_encrytor),
             PaillierPHEDecryptorDistributed(block_decryptor),
         )
+
+class PHETensorFederationDeserializer(FederationDeserializer):
+    def __init__(self, key, is_transpose) -> None:
+        self.table_key = self.make_frac_key(key, "table")
+        self.is_transpose = is_transpose
+
+    def do_deserialize(self, ctx: Context, party: Party) -> PHETensorDistributed:
+        table = ctx._pull([party], self.table_key)[0]
+        tensor = PHETensorDistributed(table)
+        tensor._is_transpose = self.is_transpose
+        return tensor
+
+class FPTensorFederationDeserializer(FederationDeserializer):
+    def __init__(self, key) -> None:
+        self.table_key = self.make_frac_key(key, "table")
+
+    def do_deserialize(self, ctx: Context, party: Party) -> FPTensorDistributed:
+        table = ctx._pull([party], self.table_key)[0]
+        tensor = FPTensorDistributed(table)
+        return tensor

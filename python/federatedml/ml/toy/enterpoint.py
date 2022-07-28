@@ -24,7 +24,6 @@ class TensorExampleGuest(ModelBase):
     def run(self, cpn_input):
         ctx = Context.from_cpn_input(cpn_input)
         LOGGER.info(ctx.describe())
-        ctx.device_init()
         return self._run(ctx, cpn_input)
 
     def _run(self, ctx: Context, cpn_input):
@@ -33,7 +32,7 @@ class TensorExampleGuest(ModelBase):
         self._init_runtime_parameters(cpn_input)
 
         LOGGER.info("begin to make guest data")
-        self.a = ctx.create_tensor(torch.rand((self.data_num, self.feature_num)))
+        self.a = ctx.random_tensor((self.data_num, self.feature_num))
 
         LOGGER.info("keygen")
         self.pk, self.sk = ctx.keygen(CipherKind.PHE, 1024)
@@ -48,7 +47,9 @@ class TensorExampleGuest(ModelBase):
         self.eb = ctx.pull(HOST, "host_cipher").unwrap_phe_tensor()
 
         LOGGER.info("begin to get matmul of guest and host")
-        self.es_guest = self.a.T @ self.eb
+        self.es_guest = self.a + self.eb
+        # LOGGER.info("begin to get matmul of guest and host")
+        # self.es_guest = self.a.T @ self.eb
 
         LOGGER.info("send encrypted matmul to host")
         ctx.push(HOST, "guest_matmul_encrypted", self.es_guest)
@@ -63,7 +64,13 @@ class TensorExampleGuest(ModelBase):
         self.s_guest = ctx.pull(HOST, "host_matmul").unwrap_tensor()
 
         LOGGER.info("assert matmul close")
-        assert torch.allclose(self.s_host._tensor.T, self.s_guest._tensor)
+        sb = self.s_host._tensor._blocks_table.count()
+        sa = self.s_guest._tensor._blocks_table.count()
+        assert sa == sb
+        a = list(self.s_guest._tensor._blocks_table.collect())[0]
+        b = list(self.s_host._tensor._blocks_table.collect())[0]
+        assert torch.allclose(a[1], b[1])
+        # assert torch.allclose(self.s_host._tensor.T, self.s_guest._tensor)
 
         return ComponentOutput(self.save_data(), self.export_model(), self.save_cache())
 
@@ -85,7 +92,6 @@ class TensorExampleHost(ModelBase):
 
     def run(self, cpn_input):
         ctx = Context.from_cpn_input(cpn_input)
-        ctx.device_init()
         LOGGER.info(ctx.describe())
         return self._run(ctx, cpn_input)
 
@@ -94,7 +100,7 @@ class TensorExampleHost(ModelBase):
         self._init_runtime_parameters(cpn_input)
 
         LOGGER.info("begin to make host data")
-        self.b = ctx.create_tensor(torch.rand((self.data_num, self.feature_num)))
+        self.b = ctx.random_tensor((self.data_num, self.feature_num))
 
         with ctx.iter_namespaces(10, prefix_name="tree_") as iteration:
             for i, _ in enumerate(iteration):
@@ -113,7 +119,9 @@ class TensorExampleHost(ModelBase):
         self.ea = ctx.pull(GUEST, "guest_cipher").unwrap_phe_tensor()
 
         LOGGER.info("begin to get matmul of host and guest")
-        self.es_host = self.b.T @ self.ea
+        self.es_host = self.b + self.ea
+        # LOGGER.info("begin to get matmul of host and guest")
+        # self.es_host = self.b.T @ self.ea
 
         LOGGER.info("send encrypted matmul to guest")
         ctx.push(GUEST, "host_matmul_encrypted", self.es_host)

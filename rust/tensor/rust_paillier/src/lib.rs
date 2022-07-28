@@ -19,8 +19,26 @@ pub struct Cipherblock(Option<block::Cipherblock>);
 
 #[pyclass(module = "rust_paillier")]
 pub struct PK {
-    pk: fixedpoint::PK,
+    pk: Option<fixedpoint::PK>,
 }
+#[pymethods]
+impl PK {
+    #[new]
+    fn __new__() -> Self {
+        PK(None)
+    }
+    pub fn __getstate__(&self, py: Python) -> PyResult<PyObject> {
+        Ok(PyBytes::new(py, &serialize(&self.0).unwrap()).to_object(py))
+    }
+    pub fn __setstate__(&mut self, py: Python, state: PyObject) -> PyResult<()> {
+        match state.extract::<&PyBytes>(py) {
+            Ok(s) => {
+                self.0 = deserialize(s.as_bytes()).unwrap();
+                Ok(())
+            }
+            Err(e) => Err(e),
+        }
+    }
 
 #[pyclass(module = "rust_paillier")]
 pub struct SK {
