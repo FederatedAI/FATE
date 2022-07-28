@@ -301,7 +301,7 @@ class Context:
             f"keygen for kind<{kind}>-distributed<{self.distributed}>-device<{self.device}> is not implemented"
         )
 
-    def random_tensor(self, shape, num_partition = 1) -> "FPTensor":
+    def random_tensor(self, shape, num_partition=1) -> "FPTensor":
         if self.distributed == Distributed.NONE:
             return FPTensor(self, torch.rand(shape))
         else:
@@ -493,6 +493,7 @@ class FPTensor:
         # 2. remote table
         ctx._push(parties, deserializer.table_key, self._tensor)
 
+
 class PHETensor:
     def __init__(self, ctx: Context, tensor: PHETensorABC) -> None:
         self._tensor = tensor
@@ -564,6 +565,7 @@ class PHETensorFederationDeserializer(FederationDeserializer):
     def do_deserialize(self, ctx: Context, party: Party) -> PHETensor:
         tensor = ctx._pull([party], self.table_key)[0]
         return PHETensor(ctx, tensor)
+
 
 class FPTensorFederationDeserializer(FederationDeserializer):
     def __init__(self, key) -> None:

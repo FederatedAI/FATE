@@ -83,6 +83,7 @@ class FPTensorDistributed(FPTensorProtocol):
         # 2. remote table
         ctx._push(parties, deserializer.table_key, self._blocks_table)
 
+
 class PHETensorDistributed(PHETensorABC):
     def __init__(self, blocks_table) -> None:
         """
@@ -182,6 +183,7 @@ class PHETensorDistributed(PHETensorABC):
         # 2. remote table
         ctx._push(parties, deserializer.table_key, self._blocks_table)
 
+
 class PaillierPHEEncryptorDistributed(PHEEncryptorABC):
     def __init__(self, block_encryptor) -> None:
         self._block_encryptor = block_encryptor
@@ -215,6 +217,7 @@ class PaillierPHECipherDistributed(PHECipherABC):
             PaillierPHEDecryptorDistributed(block_decryptor),
         )
 
+
 class PHETensorFederationDeserializer(FederationDeserializer):
     def __init__(self, key, is_transpose) -> None:
         self.table_key = self.make_frac_key(key, "table")
@@ -225,6 +228,7 @@ class PHETensorFederationDeserializer(FederationDeserializer):
         tensor = PHETensorDistributed(table)
         tensor._is_transpose = self.is_transpose
         return tensor
+
 
 class FPTensorFederationDeserializer(FederationDeserializer):
     def __init__(self, key) -> None:
