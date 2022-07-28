@@ -93,7 +93,7 @@ class LabelTransformer(ModelBase):
 
         self.label_encoder = {load_value_to_type(k,
                                                  self.encoder_key_type[str(k)]): v for k,
-                                                                                       v in self.label_encoder.items()}
+                              v in self.label_encoder.items()}
 
     def _get_meta(self):
         meta = label_transform_meta_pb2.LabelTransformMeta(
