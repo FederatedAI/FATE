@@ -155,7 +155,7 @@ class HeteroPearson(ModelBase):
         self.model_param = param
 
     def export_model(self):
-        self._modelsaver.export()
+        return self._modelsaver.export()
 
     # noinspection PyTypeChecker
     def _callback(self):
