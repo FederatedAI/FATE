@@ -377,5 +377,5 @@ class HostDenseModel(DenseModel):
         self.model_weight -= delta * self.lr
 
     def update_bias(self, delta):
-        if self.bias:
+        if self.bias is not None:
             self.bias -= np.mean(delta, axis=0) * self.lr
