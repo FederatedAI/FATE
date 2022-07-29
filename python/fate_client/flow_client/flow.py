@@ -62,6 +62,10 @@ def flow_cli(ctx):
         if server_conf.get('http_app_key') and server_conf.get('http_secret_key'):
             ctx.obj['app_key'] = server_conf['http_app_key']
             ctx.obj['secret_key'] = server_conf['http_secret_key']
+        if server_conf.get('authentication', {}).get("client", {}).get('http_app_key') and \
+                server_conf.get('authentication', {}).get("client", {}).get('http_secret_key'):
+            ctx.obj['app_key'] = server_conf['authentication']['client']['http_app_key']
+            ctx.obj['secret_key'] = server_conf['authentication']['client']['http_secret_key']
     elif config.get("ip") and config.get("port"):
         ctx.obj["ip"] = config["ip"]
         ctx.obj["http_port"] = int(config["port"])
