@@ -49,7 +49,9 @@ def flow_cli(ctx):
         is_server_conf_exist = conf_path.exists()
 
     if is_server_conf_exist:
-        server_conf = yaml.safe_load(conf_path.read_text())["fateflow"]
+        conf = yaml.safe_load(conf_path.read_text())
+        server_conf = conf.get("fateflow", {})
+        authentication_conf = conf.get("authentication", {})
 
         local_conf_path = conf_path.with_name(f"local.{conf_path.name}")
         if local_conf_path.exists():
@@ -62,10 +64,10 @@ def flow_cli(ctx):
         if server_conf.get('http_app_key') and server_conf.get('http_secret_key'):
             ctx.obj['app_key'] = server_conf['http_app_key']
             ctx.obj['secret_key'] = server_conf['http_secret_key']
-        if server_conf.get('authentication', {}).get("client", {}).get('http_app_key') and \
-                server_conf.get('authentication', {}).get("client", {}).get('http_secret_key'):
-            ctx.obj['app_key'] = server_conf['authentication']['client']['http_app_key']
-            ctx.obj['secret_key'] = server_conf['authentication']['client']['http_secret_key']
+        if authentication_conf.get("client", {}).get('http_app_key') and \
+                authentication_conf.get("client", {}).get('http_secret_key'):
+            ctx.obj['app_key'] = authentication_conf['client']['http_app_key']
+            ctx.obj['secret_key'] = authentication_conf['client']['http_secret_key']
     elif config.get("ip") and config.get("port"):
         ctx.obj["ip"] = config["ip"]
         ctx.obj["http_port"] = int(config["port"])
