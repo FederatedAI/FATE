@@ -69,7 +69,7 @@ class HeteroFeatureBinningHost(BaseFeatureBinning):
         if not self.model_param.local_only:
             has_label = True
             if self._stage == "transform":
-                self.transfer_variable.transform_stage_has_label.get(idx=0)
+                has_label = self.transfer_variable.transform_stage_has_label.get(idx=0)
             if has_label:
                 self.compressor = CipherCompressorHost()
                 self._sync_init_bucket(data_instances, split_points)
