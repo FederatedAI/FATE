@@ -67,23 +67,27 @@ class HeteroPearson(ModelBase):
             self.model_param.column_indexes,
             self.model_param.column_names,
         )
-        self._summary["num_local_features"] = len(names)
 
         LOGGER.info("standardized feature data")
-        num_data, standardized = standardize(selected_features)
+        num_data, standardized, remainds_indexes, num_features = standardize(
+            selected_features
+        )
+        self._summary["num_local_features"] = num_features
 
         # local corr
         LOGGER.info("calculate correlation cross local features")
         local_corr = table_dot(standardized, standardized) / num_data
-        self._modelsaver.save_local_corr(local_corr)
-        self._summary["local_corr"] = local_corr.tolist()
-        shape = local_corr.shape[0]
+        fixed_local_corr = fix_local_corr(local_corr, remainds_indexes, num_features)
+        self._modelsaver.save_local_corr(fixed_local_corr)
+        self._summary["local_corr"] = fixed_local_corr.tolist()
+        shape = fixed_local_corr.shape[0]
 
         # local vif
         if self.model_param.calc_local_vif:
             LOGGER.info("calc_local_vif enabled, calculate vif for local features")
             local_vif = vif_from_pearson_matrix(local_corr)
-            self._modelsaver.save_local_vif(local_vif)
+            fixed_local_vif = fix_vif(local_vif, remainds_indexes, num_features)
+            self._modelsaver.save_local_vif(fixed_local_vif)
         else:
             LOGGER.info("calc_local_vif disabled, skip local vif")
 
@@ -96,6 +100,23 @@ class HeteroPearson(ModelBase):
             LOGGER.info(
                 "cross_parties enabled, calculating correlation with remote features"
             )
+            # sync anonymous
+            LOGGER.info("sync anonymous names")
+            remote_anonymous_names, remote_remainds_indexes = self.sync_anonymous_names(
+                column_anonymous_names, remainds_indexes
+            )
+            if self.is_guest:
+                names = [column_names, remote_anonymous_names]
+                remainds_indexes_tuple = (remainds_indexes, remote_remainds_indexes)
+            else:
+                names = [remote_anonymous_names, column_names]
+                remainds_indexes_tuple = (remote_remainds_indexes, remainds_indexes)
+            m1, m2 = len(names[0]), len(names[1])
+            shapes = [m1, m2]
+            for shape, party, name in zip(shapes, parties, names):
+                self._modelsaver.save_party_info(shape, party, name)
+            self._summary["num_remote_features"] = m2 if self.is_guest else m1
+
             with SPDZ(
                 "pearson",
                 local_party=local_party,
@@ -115,26 +136,11 @@ class HeteroPearson(ModelBase):
                     )
                 LOGGER.info("secret share: dot")
                 corr = spdz.dot(x, y, "corr").get() / num_data
-                self._modelsaver.save_cross_corr(corr)
-                self._summary["corr"] = corr.tolist()
-
-                # sync anonymous
-                LOGGER.info("sync anonymous names")
-                remote_anonymous_names = self.sync_anonymous_names(
-                    column_anonymous_names
+                fixed_corr = fix_corr(
+                    corr, m1, m2, remainds_indexes_tuple[0], remainds_indexes_tuple[1]
                 )
-                m1, m2 = len(x.value.first()[1]), len(y.value.first()[1])
-                shapes = [m1, m2]
-                names = (
-                    [column_names, remote_anonymous_names]
-                    if self.is_guest
-                    else [remote_anonymous_names, column_names]
-                )
-                if not self.is_guest:
-                    names = reversed(names)
-                for shape, party, name in zip(shapes, parties, names):
-                    self._modelsaver.save_party_info(shape, party, name)
-                self._summary["num_remote_features"] = m2 if self.is_guest else m1
+                self._modelsaver.save_cross_corr(fixed_corr)
+                self._summary["corr"] = fixed_corr.tolist()
 
         self._callback()
         self.set_summary(self._summary)
@@ -160,18 +166,24 @@ class HeteroPearson(ModelBase):
             metric_meta=MetricMeta(name="pearson", metric_type="CORRELATION_GRAPH"),
         )
 
-    def sync_anonymous_names(self, local_anonymous):
+    def sync_anonymous_names(self, local_anonymous, remainds_indexes):
         if self.is_guest:
-            self.transfer_variable.anonymous_guest.remote(local_anonymous, role="host")
-            remote_anonymous = self.transfer_variable.anonymous_host.get(
-                role="host", idx=0
+            self.transfer_variable.anonymous_guest.remote(
+                (local_anonymous, remainds_indexes), role="host"
             )
+            (
+                remote_anonymous,
+                remote_remainds_indexes,
+            ) = self.transfer_variable.anonymous_host.get(role="host", idx=0)
         else:
-            self.transfer_variable.anonymous_host.remote(local_anonymous, role="guest")
-            remote_anonymous = self.transfer_variable.anonymous_guest.get(
-                role="guest", idx=0
+            self.transfer_variable.anonymous_host.remote(
+                (local_anonymous, remainds_indexes), role="guest"
             )
-        return remote_anonymous
+            (
+                remote_anonymous,
+                remote_remainds_indexes,
+            ) = self.transfer_variable.anonymous_guest.get(role="guest", idx=0)
+        return remote_anonymous, remote_remainds_indexes
 
 
 class PearsonModelSaver:
@@ -232,16 +244,27 @@ def standardize(data):
     x -> (x - mu) / sigma
     """
     n = data.count()
-    sum_x, sum_square_x = data.mapValues(lambda x: (x, x ** 2)).reduce(
+    sum_x, sum_square_x = data.mapValues(lambda x: (x, x**2)).reduce(
         lambda pair1, pair2: (pair1[0] + pair2[0], pair1[1] + pair2[1])
     )
     mu = sum_x / n
-    sigma = np.sqrt(sum_square_x / n - mu ** 2)
-    if (sigma <= 0).any():
-        raise ValueError(
+    sigma = np.sqrt(sum_square_x / n - mu**2)
+    size = len(sigma)
+    remiands_indexes = [i for i, e in enumerate(sigma) if e > 0]
+    if len(remiands_indexes) < size:
+        LOGGER.warning(
             f"zero standard deviation detected, sigma={sigma}, zeroindexes={np.argwhere(sigma)}"
         )
-    return n, data.mapValues(lambda x: (x - mu) / sigma)
+        return (
+            n,
+            data.mapValues(
+                lambda x: (x[remiands_indexes] - mu[remiands_indexes])
+                / sigma[remiands_indexes]
+            ),
+            remiands_indexes,
+            size,
+        )
+    return n, data.mapValues(lambda x: (x - mu) / sigma), remiands_indexes, size
 
 
 def select_columns(data_instance, hit_column_indexes, hit_column_names):
@@ -282,19 +305,39 @@ def select_columns(data_instance, hit_column_indexes, hit_column_names):
     )
 
 
-def vif_from_pearson_matrix(pearson, threshold=1e-8):
-    N = pearson.shape[0]
+def vif_from_pearson_matrix(pearson_matrix, threshold=1e-8):
+    assert not np.isnan(
+        pearson_matrix
+    ).any(), f"should not contains nan: {pearson_matrix}"
+    N = pearson_matrix.shape[0]
     vif = []
-    eig = sorted(list(np.linalg.eigvals(pearson)))
+    eig = sorted([abs(v) for v in np.linalg.eigvals(pearson_matrix)])
     num_drop = len(list(filter(lambda x: x < threshold, eig)))
     det_non_zero = np.prod(eig[num_drop:])
     for i in range(N):
         indexes = [j for j in range(N) if j != i]
-        cofactor_matrix = pearson[indexes][:, indexes]
-        cofactor_eig = sorted(list(np.linalg.eigvals(cofactor_matrix)))
-        cofactor_num_drop = len(list(filter(lambda x: x < threshold, cofactor_eig)))
-        if cofactor_num_drop < num_drop:
-            vif.append(np.inf)
-        else:
-            vif.append(np.prod(cofactor_eig[cofactor_num_drop:]) / det_non_zero)
+        cofactor_matrix = pearson_matrix[indexes][:, indexes]
+        cofactor_eig = sorted([abs(v) for v in np.linalg.eigvals(cofactor_matrix)])
+        vif.append(np.prod(cofactor_eig[num_drop:]) / det_non_zero)
     return vif
+
+
+def fix_local_corr(remaind_corr, remainds_indexes, size):
+    corr = np.zeros((size, size))
+    corr.fill(np.nan)
+    corr[np.ix_(remainds_indexes, remainds_indexes)] = remaind_corr
+    return corr
+
+
+def fix_vif(remains_vif, remainds_indexes, size):
+    vif = np.zeros(size)
+    vif.fill(np.nan)
+    vif[remainds_indexes] = remains_vif
+    return vif
+
+
+def fix_corr(remaind_corr, m1, m2, remainds_indexes1, remainds_indexes2):
+    corr = np.zeros((m1, m2))
+    corr.fill(np.nan)
+    corr[np.ix_(remainds_indexes1, remainds_indexes2)] = remaind_corr
+    return corr
