@@ -81,7 +81,7 @@ def access_server(method, ctx, postfix, json_data=None, echo=True, **kwargs):
                 nonce.encode('ascii'),
                 ctx.obj['app_key'].encode('ascii'),
                 prepped.path_url.encode('ascii'),
-                prepped.body if json_data else b'',
+                prepped.body if json_data is not None else b'',
                 urlencode(sorted(kwargs['data'].items()), quote_via=quote, safe='-._~').encode('ascii')
                 if kwargs.get('data') and isinstance(kwargs['data'], dict) else b'',
             ]), 'sha1').digest()).decode('ascii')
