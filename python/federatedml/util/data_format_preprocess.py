@@ -119,8 +119,10 @@ class DataFormatPreProcess(object):
         if input_format == "dense":
             if "header" not in schema:
                 raise ValueError("Dense input data must have schema")
-
-            header = schema["header"].split(delimiter, -1)
+            if isinstance(schema["header"], str):
+                header = schema["header"].split(delimiter, -1)
+            else:
+                header = schema["header"]
             header_index_mapping = dict(zip(header, range(len(header))))
             with_label = meta.get("with_label", False)
             id_list = meta.get("id_list", [])
