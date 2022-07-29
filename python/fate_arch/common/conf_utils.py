@@ -71,7 +71,8 @@ def decrypt_database_config(database=None, passwd_key="passwd"):
     if not database:
         database = get_base_config("database", {})
 
-    return decrypt_database_password(database.get(passwd_key))
+    database[passwd_key] = decrypt_database_password(database[passwd_key])
+    return database
 
 
 def update_config(key, value, conf_name=SERVICE_CONF):

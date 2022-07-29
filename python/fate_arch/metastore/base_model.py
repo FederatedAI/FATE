@@ -217,7 +217,9 @@ class BaseModel(Model):
         normalized[cls._meta.combined["f_update_time"]] = current_timestamp()
 
         for f_n in AUTO_DATE_TIMESTAMP_FIELD_PREFIX:
-            if {f"f_{f_n}_time", f"f_{f_n}_date"}.issubset(cls._meta.combined.keys()) and cls._meta.combined[f"f_{f_n}_time"] in normalized:
+            if {f"f_{f_n}_time", f"f_{f_n}_date"}.issubset(cls._meta.combined.keys()) and \
+                    cls._meta.combined[f"f_{f_n}_time"] in normalized and \
+                    normalized[cls._meta.combined[f"f_{f_n}_time"]] is not None:
                 normalized[cls._meta.combined[f"f_{f_n}_date"]] = timestamp_to_date(normalized[cls._meta.combined[f"f_{f_n}_time"]])
 
         return normalized
