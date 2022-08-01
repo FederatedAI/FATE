@@ -210,7 +210,6 @@ def sbt_guest_predict(data_inst, transfer_var: HeteroSecureBoostTransferVariable
         predict_result = get_predict_scores(leaf_pos=final_leaf_pos, learning_rate=learning_rate,
                                             init_score=init_score, trees=trees,
                                             multi_class_num=booster_dim, predict_cache=predict_cache)
-        LOGGER.debug('predict result 2 is {}'.format(list(predict_result.collect())))
         return predict_result
 
 
