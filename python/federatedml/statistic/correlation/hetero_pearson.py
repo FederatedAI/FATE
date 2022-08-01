@@ -158,6 +158,7 @@ class HeteroPearson(ModelBase):
         return self._modelsaver.export()
 
     # noinspection PyTypeChecker
+
     def _callback(self):
 
         self.tracker.set_metric_meta(
@@ -210,7 +211,7 @@ class PearsonModelSaver:
     def save_local_corr(self, corr):
         self.param_pb.shape = corr.shape[0]
         for v in corr.reshape(-1):
-            self.param_pb.local_corr.append(max(-1.0, min(float(v), 1.0)))
+            self.param_pb.local_corr.append(v.tolist())
 
     def save_party_info(self, shape, party, names):
         self.param_pb.shapes.append(shape)
@@ -226,7 +227,7 @@ class PearsonModelSaver:
 
     def save_cross_corr(self, corr):
         for v in corr.reshape(-1):
-            self.param_pb.corr.append(max(-1.0, min(float(v), 1.0)))
+            self.param_pb.corr.append(v.tolist())
 
     def save_party(self, party):
         self.param_pb.party = f"({party.role},{party.party_id})"
@@ -244,11 +245,11 @@ def standardize(data):
     x -> (x - mu) / sigma
     """
     n = data.count()
-    sum_x, sum_square_x = data.mapValues(lambda x: (x, x**2)).reduce(
+    sum_x, sum_square_x = data.mapValues(lambda x: (x, x ** 2)).reduce(
         lambda pair1, pair2: (pair1[0] + pair2[0], pair1[1] + pair2[1])
     )
     mu = sum_x / n
-    sigma = np.sqrt(sum_square_x / n - mu**2)
+    sigma = np.sqrt(sum_square_x / n - mu ** 2)
     size = len(sigma)
     remiands_indexes = [i for i, e in enumerate(sigma) if e > 0]
     if len(remiands_indexes) < size:
@@ -325,7 +326,7 @@ def vif_from_pearson_matrix(pearson_matrix, threshold=1e-8):
 def fix_local_corr(remaind_corr, remainds_indexes, size):
     corr = np.zeros((size, size))
     corr.fill(np.nan)
-    corr[np.ix_(remainds_indexes, remainds_indexes)] = remaind_corr
+    corr[np.ix_(remainds_indexes, remainds_indexes)] = np.clip(remaind_corr, -1.0, 1.0)
     return corr
 
 
@@ -339,5 +340,7 @@ def fix_vif(remains_vif, remainds_indexes, size):
 def fix_corr(remaind_corr, m1, m2, remainds_indexes1, remainds_indexes2):
     corr = np.zeros((m1, m2))
     corr.fill(np.nan)
-    corr[np.ix_(remainds_indexes1, remainds_indexes2)] = remaind_corr
+    corr[np.ix_(remainds_indexes1, remainds_indexes2)] = np.clip(
+        remaind_corr, -1.0, 1.0
+    )
     return corr
