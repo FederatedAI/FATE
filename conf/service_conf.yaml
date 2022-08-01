@@ -131,10 +131,6 @@ fateboard:
   host: 127.0.0.1
   port: 8080
 
-# this option affects API `/model/load`
-# automatic upload models to the model store if it exists locally but does not exist in the model storage
-# or download models from the model store if it does not exist locally but exists in the model storage
-# this option does not affect API `/model/store` or `/model/restore`
 enable_model_store: false
 model_store_address:
   # use mysql as the model store engine
@@ -147,14 +143,7 @@ model_store_address:
   # other optional configs send to the engine
 #  max_connections: 10
 #  stale_timeout: 10
-  # use redis as the model store engine
-#  storage: redis
-#  host: 127.0.0.1
-#  port: 6379
-#  db: 0
-#  password:
-  # the expiry time of keys, in seconds. defaults None (no expiry time)
-#  ex:
+
   # use tencent cos as model store engine
   storage: tencent_cos
   Region:
