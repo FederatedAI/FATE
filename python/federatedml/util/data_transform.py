@@ -182,6 +182,7 @@ class DenseFeatureTransformer(object):
         else:
             data_instance = self.transform(input_data_features, input_data_labels, input_data_match_id)
             data_instance = data_overview.header_alignment(data_instance, training_header, self.anonymous_header)
+            self.header = training_header
 
         return data_instance
 
