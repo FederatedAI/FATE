@@ -209,12 +209,11 @@ class HeteroNNParam(BaseParam):
 
     def check(self):
 
-        supported_config_type = ["keras", "pytorch", "torch"]
+        supported_config_type = ["keras", "pytorch"]
         if self.config_type not in supported_config_type:
             raise ValueError(f"config_type should be one of {supported_config_type}")
 
-        if self.config_type == 'keras':
-            self.optimizer = self._parse_optimizer(self.optimizer)
+        self.optimizer = self._parse_optimizer(self.optimizer)
 
         if self.task_type not in ["classification", "regression"]:
             raise ValueError("config_type should be classification or regression")
@@ -303,6 +302,9 @@ class HeteroNNParam(BaseParam):
         if isinstance(opt, str):
             return SimpleNamespace(optimizer=opt, kwargs=kwargs)
         elif isinstance(opt, dict):
+            config_type = opt.get('config_type', None)
+            if config_type == 'pytorch':
+                return opt
             optimizer = opt.get("optimizer", kwargs)
             if not optimizer:
                 raise ValueError(f"optimizer config: {opt} invalid")

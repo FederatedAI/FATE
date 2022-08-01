@@ -63,11 +63,16 @@ def recover_sequential_from_dict(nn_define):
 
 def recover_optimizer_from_dict(define_dict):
     opt_dict = dict(inspect.getmembers(optim))
+    from federatedml.util import LOGGER
+    LOGGER.debug('define dict is {}'.format(define_dict))
     if 'optimizer' not in define_dict:
         raise ValueError('please specify optimizer type in the json config')
     opt_class = opt_dict[define_dict['optimizer']]
     param_dict = copy.deepcopy(define_dict)
-    param_dict.pop('optimizer')
+    if 'optimizer' in param_dict:
+        param_dict.pop('optimizer')
+    if 'config_type' in param_dict:
+        param_dict.pop('config_type')
     return opt_class(**param_dict)
 
 
