@@ -2,9 +2,9 @@ import copy
 import inspect
 from collections import OrderedDict
 try:
-    from federatedml.nn.backend.fate_torch import optim, init, nn
-    from federatedml.nn.backend.fate_torch import operation
-    from federatedml.nn.backend.fate_torch.base import Sequential
+    from pipeline.component.nn.backend.fate_torch import optim, init, nn
+    from pipeline.component.nn.backend.fate_torch import operation
+    from pipeline.component.nn.backend.fate_torch.base import Sequential
 except ImportError:
     pass
 

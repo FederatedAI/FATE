@@ -41,6 +41,7 @@ class SelectorParam(object):
         if self.method is not None and self.method not in ["relative"]:
             raise ValueError('selective method should be None be "relative"')
 
+
 class CoAEConfuserParam(BaseParam):
     """
     A label protect mechanism proposed in paper: "Batch Label Inference and Replacement Attacks in Black-Boxed Vertical Federated Learning"
@@ -50,14 +51,14 @@ class CoAEConfuserParam(BaseParam):
     Args:
         enable: boolean
             run CoAE or not
-        epoch: None or str
+        epoch: None or int
             auto-encoder training epochs
-        lr: int
+        lr: float
             auto-encoder learning rate
-        lambda1: int
+        lambda1: float
             parameter to control the difference between true labels and fake soft labels. Larger the parameter,
             autoencoder will give more attention to making true labels and fake soft label different.
-        lambda2: Numeric
+        lambda2: float
             parameter to control entropy loss, see original paper for details
         verbose: boolean
             print loss log while training auto encoder
@@ -249,6 +250,7 @@ class HeteroNNParam(BaseParam):
             }
         """
         kwargs = {}
+        print('opt is {}'.format(opt))
         if isinstance(opt, str):
             return SimpleNamespace(optimizer=opt, kwargs=kwargs)
         elif isinstance(opt, dict):
