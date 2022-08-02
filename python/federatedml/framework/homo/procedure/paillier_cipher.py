@@ -17,8 +17,9 @@ import typing
 
 from federatedml.framework.homo.blocks import paillier_cipher
 from federatedml.framework.homo.blocks.paillier_cipher import PaillierCipherTransVar
-from federatedml.secureprotol import PaillierEncrypt
+from federatedml.secureprotol import PaillierEncrypt, IpclPaillierEncrypt
 from federatedml.secureprotol.fate_paillier import PaillierPublicKey
+from ipcl_python import PaillierPublicKey as IpclPaillierPublicKey
 
 
 class Host(object):
@@ -31,8 +32,8 @@ class Host(object):
     def register_paillier_cipher(self, transfer_variables):
         pass
 
-    def gen_paillier_pubkey(self, enable, suffix=tuple()) -> typing.Union[PaillierPublicKey, None]:
-        return self._paillier.gen_paillier_pubkey(enable=enable, suffix=suffix)
+    def gen_paillier_pubkey(self, enable, lib, suffix=tuple()) -> typing.Union[PaillierPublicKey, IpclPaillierPublicKey, None]:
+        return self._paillier.gen_paillier_pubkey(enable=enable, lib=lib, suffix=suffix)
 
     def set_re_cipher_time(self, re_encrypt_times, suffix=tuple()):
         return self._paillier.set_re_cipher_time(re_encrypt_times=re_encrypt_times, suffix=suffix)
@@ -53,11 +54,11 @@ class Arbiter(object):
         self._client_parties = trans_var.client_parties
         self._party_idx_map = {party: idx for idx, party in enumerate(self._client_parties)}
 
-    def paillier_keygen(self, key_length, suffix=tuple()) -> typing.Mapping[int, typing.Union[PaillierEncrypt, None]]:
+    def paillier_keygen(self, key_length, suffix=tuple()) -> typing.Mapping[int, typing.Union[PaillierEncrypt, IpclPaillierEncrypt, None]]:
         ciphers = self._paillier.keygen(key_length, suffix)
         return {self._party_idx_map[party]: cipher for party, cipher in ciphers.items()}
 
-    def set_re_cipher_time(self, ciphers: typing.Mapping[int, typing.Union[PaillierEncrypt, None]],
+    def set_re_cipher_time(self, ciphers: typing.Mapping[int, typing.Union[PaillierEncrypt, IpclPaillierEncrypt, None]],
                            suffix=tuple()):
         _ciphers = {self._client_parties[idx]: cipher for idx, cipher in ciphers.items()}
         recipher_times = self._paillier.set_re_cipher_time(_ciphers, suffix)

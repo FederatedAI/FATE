@@ -56,6 +56,8 @@ class EncryptParam(BaseParam):
                 LOGGER.warning('Iterative Affine and Random Iterative Affine are not supported in version>=1.7.1 '
                                'due to safety concerns, encrypt method will be reset to Paillier')
                 self.method = consts.PAILLIER
+            elif user_input == "ipcl":
+                self.method = consts.PAILLIER_IPCL
             else:
                 raise ValueError(
                     "encrypt_param's method {} not supported".format(user_input))

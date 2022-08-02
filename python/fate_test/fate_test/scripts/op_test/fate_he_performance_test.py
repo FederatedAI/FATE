@@ -6,7 +6,15 @@ from operator import add, mul
 
 class PaillierAssess(object):
     def __init__(self, method, data_num, test_round):
-        from federatedml.secureprotol.fate_paillier import PaillierKeypair
+        if method == "Paillier":
+            from federatedml.secureprotol.fate_paillier import PaillierKeypair
+            self.is_ipcl = False
+        elif method == "IPCL":
+            from ipcl_python import PaillierKeypair
+            self.is_ipcl = True
+        else:
+            print("Unsupported Paillier method: ", method)
+            return
         self.public_key, self.private_key = PaillierKeypair.generate_keypair()
         self.method = method
         self.data_num = data_num
@@ -15,7 +23,7 @@ class PaillierAssess(object):
         self.float_data_y, self.encrypt_float_data_y, self.int_data_y, self.encrypt_int_data_y = self._get_data()
 
     def _get_data(self, type_int=True, type_float=True):
-        if self.method == "Paillier":
+        if self.method in ["Paillier", "IPCL"]:
             key = self.public_key
         else:
             key = None
@@ -23,12 +31,19 @@ class PaillierAssess(object):
         encrypt_int_data = []
         float_data = np.random.uniform(-1e9, 1e9, size=self.data_num)
         int_data = np.random.randint(-1000, 1000, size=self.data_num)
-        if type_float:
-            for i in float_data:
-                encrypt_float_data.append(key.encrypt(i))
-        if type_int:
-            for i in int_data:
-                encrypt_int_data.append(key.encrypt(i))
+
+        if self.is_ipcl:
+            if type_float:
+                encrypt_float_data = key.encrypt(float_data)
+            if type_int:
+                encrypt_int_data = key.encrypt(int_data)
+        else:
+            if type_float:
+                for i in float_data:
+                    encrypt_float_data.append(key.encrypt(i))
+            if type_int:
+                for i in int_data:
+                    encrypt_int_data.append(key.encrypt(i))
         return float_data, encrypt_float_data, int_data, encrypt_int_data
 
     def output_table(self):
@@ -39,41 +54,53 @@ class PaillierAssess(object):
 
         metric = Metric(data_num=self.data_num, test_round=self.test_round)
 
-        table.add_row(metric.encrypt(self.float_data_x, self.public_key.encrypt))
-        decrypt_data = [self.private_key.decrypt(i) for i in self.encrypt_float_data_x]
+        table.add_row(metric.encrypt(self.float_data_x, self.public_key.encrypt, is_ipcl=self.is_ipcl))
+        decrypt_data = self.private_key.decrypt(self.encrypt_float_data_x) if self.is_ipcl else [self.private_key.decrypt(i) for i in self.encrypt_float_data_x]
         table.add_row(metric.decrypt(self.encrypt_float_data_x, self.float_data_x, decrypt_data,
-                                     self.private_key.decrypt))
+                                     self.private_key.decrypt, is_ipcl=self.is_ipcl))
 
         real_data = list(map(add, self.float_data_x, self.float_data_y))
-        encrypt_data = list(map(add, self.encrypt_float_data_x, self.encrypt_float_data_y))
+        if self.is_ipcl:
+            encrypt_data = self.encrypt_float_data_x + self.encrypt_float_data_y
+        else:
+            encrypt_data = list(map(add, self.encrypt_float_data_x, self.encrypt_float_data_y))
         self.binary_op(table, metric, self.encrypt_float_data_x, self.encrypt_float_data_y,
-                       self.int_data_x, self.int_data_y, real_data, encrypt_data,
+                       self.float_data_x, self.float_data_y, real_data, encrypt_data,
                        add, "float add")
 
         real_data = list(map(add, self.int_data_x, self.int_data_y))
-        encrypt_data = list(map(add, self.encrypt_int_data_x, self.encrypt_int_data_y))
+        if self.is_ipcl:
+            encrypt_data = self.encrypt_int_data_x + self.encrypt_int_data_y
+        else:
+            encrypt_data = list(map(add, self.encrypt_int_data_x, self.encrypt_int_data_y))
         self.binary_op(table, metric, self.encrypt_int_data_x, self.encrypt_int_data_y,
                        self.int_data_x, self.int_data_y, real_data, encrypt_data,
                        add, "int add")
 
         real_data = list(map(mul, self.float_data_x, self.float_data_y))
-        encrypt_data = list(map(mul, self.encrypt_float_data_x, self.float_data_y))
+        if self.is_ipcl:
+            encrypt_data = self.encrypt_float_data_x * self.float_data_y
+        else:
+            encrypt_data = list(map(mul, self.encrypt_float_data_x, self.float_data_y))
         self.binary_op(table, metric, self.encrypt_float_data_x, self.float_data_y,
                        self.float_data_x, self.float_data_y, real_data, encrypt_data,
                        mul, "float mul")
 
         real_data = list(map(mul, self.int_data_x, self.int_data_y))
-        encrypt_data = list(map(mul, self.encrypt_int_data_x, self.int_data_y))
+        if self.is_ipcl:
+            encrypt_data = self.encrypt_int_data_x * self.int_data_y
+        else:
+            encrypt_data = list(map(mul, self.encrypt_int_data_x, self.int_data_y))
         self.binary_op(table, metric, self.encrypt_int_data_x, self.int_data_y,
-                       self.float_data_x, self.float_data_y, real_data, encrypt_data,
+                       self.int_data_x, self.int_data_y, real_data, encrypt_data,
                        mul, "int mul")
 
         return table.get_string(title=f"{self.method} Computational performance")
 
     def binary_op(self, table, metric, encrypt_data_x, encrypt_data_y, raw_data_x, raw_data_y,
                   real_data, encrypt_data, op, op_name):
-        decrypt_data = [self.private_key.decrypt(i) for i in encrypt_data]
+        decrypt_data = self.private_key.decrypt(encrypt_data) if self.is_ipcl else [self.private_key.decrypt(i) for i in encrypt_data]
         table.add_row(metric.binary_op(encrypt_data_x, encrypt_data_y,
                                        raw_data_x, raw_data_y,
                                        real_data, decrypt_data,
-                                       op, op_name))
+                                       op, op_name, is_ipcl=self.is_ipcl))

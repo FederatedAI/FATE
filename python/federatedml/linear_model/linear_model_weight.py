@@ -21,13 +21,16 @@ import numpy as np
 
 from federatedml.framework.weights import ListWeights, TransferableWeights
 from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
+from ipcl_python import PaillierEncryptedNumber as IpclPaillierEncryptedNumber
+from ipcl_python.bindings.ipcl_bindings import ipclCipherText
+from federatedml.secureprotol import IpclPaillierEncrypt
 from federatedml.util import LOGGER
 
 
 class LinearModelWeights(ListWeights):
     def __init__(self, l, fit_intercept, raise_overflow_error=True):
         l = np.array(l)
-        if len(l) > 0 and not isinstance(l[0], PaillierEncryptedNumber):
+        if not np.ndim(l) == 0 and len(l) > 0 and not isinstance(l[0], (PaillierEncryptedNumber, IpclPaillierEncryptedNumber)):
             if np.max(np.abs(l)) > 1e8:
                 if raise_overflow_error:
                     raise RuntimeError("The model weights are overflow, please check if the "
@@ -44,12 +47,36 @@ class LinearModelWeights(ListWeights):
     @property
     def coef_(self):
         if self.fit_intercept:
+            if np.ndim(self._weights) == 0 and isinstance(self._weights.item(0), IpclPaillierEncryptedNumber):
+                ipcl_w = self._weights.item(0)
+                w_len = ipcl_w.__len__() - 1
+                pub_key = ipcl_w.public_key
+
+                bn = []
+                exp = []
+                for i in range(w_len):
+                    bn.append(ipcl_w.ciphertextBN(i))
+                    exp.append(ipcl_w.exponent(i))
+                ct = ipclCipherText(pub_key.pubkey, bn)
+                coeff = IpclPaillierEncryptedNumber(pub_key, ct, exp, w_len)
+                return np.array(coeff)
+
             return np.array(self._weights[:-1])
         return np.array(self._weights)
 
     @property
     def intercept_(self):
         if self.fit_intercept:
+            if np.ndim(self._weights) == 0 and isinstance(self._weights.item(0), IpclPaillierEncryptedNumber):
+                ipcl_w = self._weights.item(0)
+                w_len = ipcl_w.__len__() - 1
+                pub_key = ipcl_w.public_key
+                bn = [ipcl_w.ciphertextBN(w_len)]
+                exp = [ipcl_w.exponent(w_len)]
+                ct = ipclCipherText(pub_key.pubkey, bn)
+                coeff = IpclPaillierEncryptedNumber(pub_key, ct, exp, 1)
+                return coeff
+
             return 0.0 if len(self._weights) == 0 else self._weights[-1]
         return 0.0
 
@@ -65,6 +92,14 @@ class LinearModelWeights(ListWeights):
             return LinearModelWeights(_w, self.fit_intercept, self.raise_overflow_error)
 
     def map_values(self, func, inplace):
+        if isinstance(self._weights.item(0), IpclPaillierEncryptedNumber) and np.ndim(self._weights) == 0:  # for dec
+            if inplace:
+                self._weights = np.array(func(self.unboxed.item(0)))
+                return self
+            else:
+                _w = func(self.unboxed.item(0))
+                return LinearModelWeights(_w, self.fit_intercept)
+
         if inplace:
             for k, v in enumerate(self._weights):
                 self._weights[k] = func(v)
@@ -73,6 +108,14 @@ class LinearModelWeights(ListWeights):
             _w = []
             for v in self._weights:
                 _w.append(func(v))
+            return LinearModelWeights(_w, self.fit_intercept)
+
+    def encrypted_ipcl(self, cipher: IpclPaillierEncrypt, inplace=True):
+        if inplace:
+            self._weights = np.array(cipher.encrypt(self.unboxed))
+            return self
+        else:
+            _w = cipher.encrypt(self.unboxed)
             return LinearModelWeights(_w, self.fit_intercept)
 
     def __repr__(self):

@@ -86,3 +86,23 @@ class TaylorLogisticGradient(object):
         grad = sum(grad_batch)
         LOGGER.debug("Finish compute_gradient")
         return grad
+
+    @staticmethod
+    def compute_gradient_with_weights(values, weights, fit_intercept):
+        LOGGER.debug("Get in compute_gradient_with_weights")
+        X, Y = load_data(values)
+        batch_size = len(X)
+        if batch_size == 0:
+            return None
+
+        one_d_y = Y.reshape([-1, ])
+        X_1 = np.c_[X, np.ones(len(X))]
+        d = (0.25 * fate_operator.dot(X_1, weights).transpose() + 0.5 * one_d_y * -1)
+
+        grad_batch = X.transpose() * d
+        grad_batch = grad_batch.transpose()
+        if fit_intercept:
+            grad_batch = np.c_[grad_batch, d]
+        grad = sum(grad_batch)
+        LOGGER.debug("Finish compute_gradient_with_weights")
+        return grad

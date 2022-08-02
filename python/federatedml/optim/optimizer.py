@@ -21,6 +21,8 @@ import numpy as np
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.util import LOGGER
 from federatedml.util import consts
+from ipcl_python import PaillierEncryptedNumber as IpclPaillierEncryptedNumber
+from ipcl_python.bindings.ipcl_bindings import ipclCipherText
 
 
 class _Optimizer(object):
@@ -83,12 +85,29 @@ class _Optimizer(object):
     def add_regular_to_grad(self, grad, lr_weights):
 
         if self.penalty == consts.L2_PENALTY:
-            if lr_weights.fit_intercept:
-                gradient_without_intercept = grad[: -1]
-                gradient_without_intercept += self.alpha * lr_weights.coef_
-                new_grad = np.append(gradient_without_intercept, grad[-1])
+            if isinstance(lr_weights.unboxed.item(0), IpclPaillierEncryptedNumber):
+                pub_key = grad[0].public_key
+                bn, exp = [], []
+                for i in range(len(grad)):
+                    assert grad[i].__len__() == 1
+                    bn.append(grad[i].ciphertextBN(0))
+                    exp.append(grad[i].exponent(0))
+                ct = ipclCipherText(pub_key.pubkey, bn)
+                grad_ct = IpclPaillierEncryptedNumber(pub_key, ct, exp, len(grad))
+                grad_ct = np.array(grad_ct)
+
+                if lr_weights.fit_intercept:
+                    alpha = np.append(np.ones(len(grad) - 1) * self.alpha, 0.0)
+                    new_grad = grad_ct + lr_weights.unboxed.item(0) * alpha
+                else:
+                    new_grad = grad_ct + self.alpha * lr_weights.coef_
             else:
-                new_grad = grad + self.alpha * lr_weights.coef_
+                if lr_weights.fit_intercept:
+                    gradient_without_intercept = grad[: -1]
+                    gradient_without_intercept += self.alpha * lr_weights.coef_
+                    new_grad = np.append(gradient_without_intercept, grad[-1])
+                else:
+                    new_grad = grad + self.alpha * lr_weights.coef_
         else:
             new_grad = grad
 

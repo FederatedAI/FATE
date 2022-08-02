@@ -24,7 +24,7 @@ from federatedml.optim import activation
 from federatedml.optim.optimizer import optimizer_factory
 from federatedml.param.logistic_regression_param import HomoLogisticParam
 from federatedml.protobuf.generated import lr_model_meta_pb2
-from federatedml.secureprotol import PaillierEncrypt
+from federatedml.secureprotol import PaillierEncrypt, IpclPaillierEncrypt
 from federatedml.util.classify_label_checker import ClassifyLabelChecker
 from federatedml.util.homo_label_encoder import HomoLabelEncoderClient, HomoLabelEncoderArbiter
 from federatedml.statistic import data_overview
@@ -50,6 +50,8 @@ class HomoLRBase(BaseLogisticRegression):
 
         if params.encrypt_param.method == consts.PAILLIER:
             self.cipher_operator = PaillierEncrypt()
+        elif params.encrypt_param.method == consts.PAILLIER_IPCL:
+            self.cipher_operator = IpclPaillierEncrypt()
         else:
             self.cipher_operator = None
 

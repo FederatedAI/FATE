@@ -33,7 +33,7 @@ def paillier_test(ctx, data_num, test_round, **kwargs):
     if not yes and not click.confirm("running?"):
         return
 
-    for method in ["Paillier"]:
+    for method in ["Paillier", "IPCL"]:
         assess_table = PaillierAssess(method=method, data_num=data_num, test_round=test_round)
         table = assess_table.output_table()
         echo.echo(table)

@@ -20,16 +20,16 @@ from federatedml.framework.hetero.sync import paillier_keygen_sync
 class Host(paillier_keygen_sync.Host):
 
     def register_paillier_cipher(self, transfer_variables):
-        self._register_paillier_keygen(pubkey_transfer=transfer_variables.paillier_pubkey)
+        self._register_paillier_keygen(method_transfer=transfer_variables.paillier_lib, pubkey_transfer=transfer_variables.paillier_pubkey)
 
 
 class Guest(paillier_keygen_sync.Guest):
 
     def register_paillier_cipher(self, transfer_variables):
-        self._register_paillier_keygen(pubkey_transfer=transfer_variables.paillier_pubkey)
+        self._register_paillier_keygen(method_transfer=transfer_variables.paillier_lib, pubkey_transfer=transfer_variables.paillier_pubkey)
 
 
 class Arbiter(paillier_keygen_sync.Arbiter):
 
     def register_paillier_cipher(self, transfer_variables):
-        self._register_paillier_keygen(pubkey_transfer=transfer_variables.paillier_pubkey)
+        self._register_paillier_keygen(method_transfer=transfer_variables.paillier_lib, pubkey_transfer=transfer_variables.paillier_pubkey)

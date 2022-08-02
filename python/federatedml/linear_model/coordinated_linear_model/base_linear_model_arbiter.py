@@ -69,7 +69,7 @@ class HeteroBaseArbiter(BaseLinearModel):
 
         LOGGER.info("Enter hetero linear model arbiter fit")
 
-        self.cipher_operator = self.cipher.paillier_keygen(self.model_param.encrypt_param.key_length)
+        self.cipher_operator = self.cipher.paillier_keygen(self.model_param.encrypt_param.method, self.model_param.encrypt_param.key_length)
         self.batch_generator.initialize_batch_generator()
         self.gradient_loss_operator.set_total_batch_nums(self.batch_generator.batch_num)
 

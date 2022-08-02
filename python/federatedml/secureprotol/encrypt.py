@@ -28,6 +28,8 @@ from federatedml.secureprotol.fate_paillier import PaillierKeypair
 from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
 from federatedml.secureprotol.random import RandomPads
 
+from ipcl_python import PaillierKeypair as IpclPaillierKeypair
+
 _TORCH_VALID = False
 try:
     import torch
@@ -214,6 +216,59 @@ class PaillierEncrypt(Encrypt):
 
     def raw_decrypt(self, ciphertext):
         return self.privacy_key.raw_decrypt(ciphertext.ciphertext())
+
+    def recursive_raw_encrypt(self, X, exponent=0):
+        raw_en_func = functools.partial(self.raw_encrypt, exponent=exponent)
+        return self._recursive_func(X, raw_en_func)
+
+
+class IpclPaillierEncrypt(Encrypt):
+    def __init__(self):
+        super(IpclPaillierEncrypt, self).__init__()
+
+    def generate_key(self, n_length=1024):
+        self.public_key, self.privacy_key = IpclPaillierKeypair.generate_keypair(
+            n_length=n_length
+        )
+
+    def get_key_pair(self):
+        return self.public_key, self.privacy_key
+
+    def set_public_key(self, public_key):
+        self.public_key = public_key
+
+    def get_public_key(self):
+        return self.public_key
+
+    def set_privacy_key(self, privacy_key):
+        self.privacy_key = privacy_key
+
+    def get_privacy_key(self):
+        return self.privacy_key
+
+    def encrypt(self, value):
+        if self.public_key is not None:
+            return self.public_key.encrypt(value)
+        else:
+            return None
+
+    def decrypt(self, value):
+        if self.privacy_key is not None:
+            return self.privacy_key.decrypt(value)
+        else:
+            return None
+
+    def raw_encrypt(self, plaintext, exponent=0):
+        return self.public_key.raw_encrypt(plaintext)
+
+    def raw_decrypt(self, ciphertext):
+        return self.privacy_key.raw_decrypt(ciphertext)
+
+    def encrypt_list(self, values):
+        return self.encrypt(values)
+
+    def decrypt_list(self, values):
+        return self.decrypt(values.item(0))
 
     def recursive_raw_encrypt(self, X, exponent=0):
         raw_en_func = functools.partial(self.raw_encrypt, exponent=exponent)

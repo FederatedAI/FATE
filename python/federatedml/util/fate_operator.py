@@ -22,11 +22,21 @@ from scipy.sparse import csr_matrix
 from federatedml.feature.instance import Instance
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
+from ipcl_python import PaillierEncryptedNumber as IpclPaillierEncryptNumber
 
 
 def _one_dimension_dot(X, w):
     res = 0
     # LOGGER.debug("_one_dimension_dot, len of w: {}, len of X: {}".format(len(w), len(X)))
+
+    # ipcl case
+    if np.ndim(w) == 0:
+        if isinstance(X, csr_matrix):
+            res = w.item(0).dot(X.data)
+        else:
+            res = w.item(0).dot(X)
+        return res
+
     if isinstance(X, csr_matrix):
         for idx, value in zip(X.indices, X.data):
             res += value * w[idx]
@@ -37,12 +47,16 @@ def _one_dimension_dot(X, w):
             res += w[i] * X[i]
 
     if res == 0:
-        if isinstance(w[0], PaillierEncryptedNumber):
+        if isinstance(w[0], (PaillierEncryptedNumber, IpclPaillierEncryptNumber)):
             res = 0 * w[0]
     return res
 
 
 def dot(value, w):
+    w_ndim = np.ndim(w)
+    if w_ndim == 0:
+        w_ndim += 1  # ipcl case
+
     if isinstance(value, Instance):
         X = value.features
     else:
@@ -51,9 +65,9 @@ def dot(value, w):
     # # dot(a, b)[i, j, k, m] = sum(a[i, j, :] * b[k, :, m])
     # # One-dimension dot, which is the inner product of these two arrays
 
-    if np.ndim(X) == np.ndim(w) == 1:
+    if np.ndim(X) == w_ndim == 1:
         return _one_dimension_dot(X, w)
-    elif np.ndim(X) == 2 and np.ndim(w) == 1:
+    elif np.ndim(X) == 2 and w_ndim == 1:
         res = []
         for x in X:
             res.append(_one_dimension_dot(x, w))

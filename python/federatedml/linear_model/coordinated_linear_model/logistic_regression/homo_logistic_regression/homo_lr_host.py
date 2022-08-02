@@ -51,13 +51,15 @@ class HomoLRHost(HomoLRBase):
         super()._init_model(params)
         if self.component_properties.has_arbiter:
             self.cipher = paillier_cipher.Host()
-        if params.encrypt_param.method in [consts.PAILLIER]:
+        if params.encrypt_param.method in [consts.PAILLIER, consts.PAILLIER_IPCL]:
             self.cipher.register_paillier_cipher(self.transfer_variable)
             self.use_encrypt = True
+            self.paillier_lib = params.encrypt_param.method
             self.gradient_operator = TaylorLogisticGradient()
             self.re_encrypt_batches = params.re_encrypt_batches
         else:
             self.use_encrypt = False
+            self.paillier_lib = "N/A"
             self.gradient_operator = LogisticGradient()
 
     def fit_binary(self, data_instances, validate_data=None):
@@ -67,7 +69,7 @@ class HomoLRHost(HomoLRBase):
         self._client_check_data(data_instances)
         self.callback_list.on_train_begin(data_instances, validate_data)
 
-        pubkey = self.cipher.gen_paillier_pubkey(enable=self.use_encrypt, suffix=('fit',))
+        pubkey = self.cipher.gen_paillier_pubkey(enable=self.use_encrypt, lib=self.paillier_lib, suffix=('fit',))
         if self.use_encrypt:
             self.cipher_operator.set_public_key(pubkey)
 
@@ -130,10 +132,15 @@ class HomoLRHost(HomoLRBase):
                 n = batch_data.count()
                 degree += n
                 LOGGER.debug('before compute_gradient')
-                f = functools.partial(self.gradient_operator.compute_gradient,
-                                      coef=model_weights.coef_,
-                                      intercept=model_weights.intercept_,
-                                      fit_intercept=self.fit_intercept)
+                if len(model_weights.unboxed.shape) == 0:
+                    f = functools.partial(self.gradient_operator.compute_gradient_with_weights,
+                                          weights=model_weights.unboxed,
+                                          fit_intercept=self.fit_intercept)
+                else:
+                    f = functools.partial(self.gradient_operator.compute_gradient,
+                                          coef=model_weights.coef_,
+                                          intercept=model_weights.intercept_,
+                                          fit_intercept=self.fit_intercept)
                 grad = batch_data.applyPartitions(f).reduce(fate_operator.reduce_add)
                 grad /= n
                 if self.use_proximal:  # use additional proximal term
@@ -194,7 +201,7 @@ class HomoLRHost(HomoLRBase):
 
         suffix = ('predict',)
         if self.component_properties.has_arbiter:
-            pubkey = self.cipher.gen_paillier_pubkey(enable=self.use_encrypt, suffix=suffix)
+            pubkey = self.cipher.gen_paillier_pubkey(enable=self.use_encrypt, lib=self.paillier_lib, suffix=suffix)
         else:
             if self.use_encrypt:
                 raise ValueError(f"In use_encrypt case, arbiter should be set")

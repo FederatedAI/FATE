@@ -1,13 +1,14 @@
 import functools
 import numpy as np
 from federatedml.secureprotol.fixedpoint import FixedPointNumber
-from federatedml.secureprotol import PaillierEncrypt
+from federatedml.secureprotol import PaillierEncrypt, IpclPaillierEncrypt
 from federatedml.cipher_compressor.packer import GuestIntegerPacker, cipher_list_to_cipher_tensor
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.splitter import SplitInfo
 from federatedml.util import consts
 from federatedml.cipher_compressor.compressor import CipherCompressorHost, NormalCipherPackage
 from federatedml.cipher_compressor.compressor import PackingCipherTensorPackage
 from federatedml.util import LOGGER
+from typing import Union
 
 fix_point_precision = 2 ** 52
 REGRESSION_MAX_GRADIENT = 10 ** 9
@@ -83,7 +84,7 @@ class SplitInfoPackage2(PackingCipherTensorPackage):
 
 class GHPacker(object):
 
-    def __init__(self, sample_num: int, encrypter: PaillierEncrypt,
+    def __init__(self, sample_num: int, encrypter: Union[PaillierEncrypt, IpclPaillierEncrypt],
                  precision=fix_point_precision, max_sample_weight=1.0, task_type=consts.CLASSIFICATION,
                  g_min=None, g_max=None, class_num=1, mo_mode=False, sync_para=True):
 
