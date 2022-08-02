@@ -130,7 +130,7 @@ class HeteroNNParam(BaseParam):
             1. a string, one of "Adadelta", "Adagrad", "Adam", "Adamax", "Nadam", "RMSprop", "SGD"
             2. a dict, with a required key-value pair keyed by "optimizer",
                 with optional key-value pairs such as learning rate.
-            defaults to "SGD"
+            defaults to "SGD".
         loss:  str, a string to define loss function used
         epochs: int, the maximum iteration for aggregation in training.
         batch_size : int, batch size when updating model.
