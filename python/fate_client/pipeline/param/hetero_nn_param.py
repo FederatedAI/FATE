@@ -46,6 +46,7 @@ class CoAEConfuserParam(BaseParam):
     """
     A label protect mechanism proposed in paper: "Batch Label Inference and Replacement Attacks in Black-Boxed Vertical Federated Learning"
     paper link: https://arxiv.org/abs/2112.05409
+    
     Convert true labels to fake soft labels by using an auto-encoder.
 
     Args:
