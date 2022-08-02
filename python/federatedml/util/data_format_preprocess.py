@@ -24,6 +24,7 @@ import numpy as np
 DEFAULT_LABEL_NAME = "label"
 DEFAULT_MATCH_ID_PREFIX = "match_id"
 SVMLIGHT_COLUMN_PREFIX = "x"
+DEFAULT_SID_NAME = "sid"
 
 
 class DataFormatPreProcess(object):
@@ -70,6 +71,8 @@ class DataFormatPreProcess(object):
 
         delimiter = meta["delimiter"]
         tag_with_value = meta["tag_with_value"]
+        if not isinstance(tag_with_value, bool):
+            raise ValueError(f"tag with value should be bool, bug {tag_with_value} find")
         tag_value_delimiter = meta["tag_value_delimiter"]
 
         offset = DataFormatPreProcess.get_feature_offset(meta)
@@ -106,26 +109,32 @@ class DataFormatPreProcess(object):
 
     @staticmethod
     def generate_header(data, schema):
-        if "meta" not in schema:
+        if not schema.get('meta'):
             raise ValueError("Meta not in schema")
 
         meta = schema["meta"]
+        if schema.get("extend_sid") is True:
+            meta["with_match_id"] = True
+
+        generated_header = dict(original_index_info=dict(), meta=meta)
         input_format = meta.get("input_format")
         delimiter = meta.get("delimiter", ",")
         if not input_format:
             raise ValueError("InputFormat should be configured.")
 
-        generated_header = dict(original_index_info=dict())
         if input_format == "dense":
             if "header" not in schema:
                 raise ValueError("Dense input data must have schema")
-            if isinstance(schema["header"], str):
-                header = schema["header"].split(delimiter, -1)
-            else:
-                header = schema["header"]
+
+            header = schema["header"].split(delimiter, -1)
             header_index_mapping = dict(zip(header, range(len(header))))
             with_label = meta.get("with_label", False)
+            if not isinstance(with_label, bool):
+                raise ValueError("with_label should be True or False")
             id_list = meta.get("id_list", [])
+            if not isinstance(id_list, (type(None), list)):
+                raise ValueError("id_list should be list type or None")
+
             with_match_id = meta.get("with_match_id", False)
 
             filter_ids = set()
@@ -183,6 +192,9 @@ class DataFormatPreProcess(object):
             if with_label:
                 generated_header["label_name"] = DEFAULT_LABEL_NAME
 
+        if generated_header.get("sid") is None:
+            generated_header["sid"] = DEFAULT_SID_NAME
+
         return generated_header
 
     @staticmethod
@@ -192,11 +204,11 @@ class DataFormatPreProcess(object):
             return schema["header"]
 
         header_index_mapping = dict()
-        if original_index_info["header_index"]:
+        if "header_index" in original_index_info and original_index_info["header_index"]:
             for idx, col_name in zip(original_index_info["header_index"], schema["header"]):
-                header_index_mapping[col_name] = idx
+                header_index_mapping[idx] = col_name
 
-        if original_index_info["match_id_index"]:
+        if original_index_info.get("match_id_index") is not None:
             match_id_name = schema["match_id_name"]
             match_id_index = original_index_info["match_id_index"]
             if isinstance(match_id_name, str):
@@ -205,10 +217,10 @@ class DataFormatPreProcess(object):
                 for idx, col_name in zip(match_id_index, match_id_name):
                     header_index_mapping[idx] = col_name
 
-        if original_index_info["label_index"]:
+        if original_index_info.get("label_index") is not None:
             header_index_mapping[original_index_info["label_index"]] = schema["label_name"]
 
-        original_header = []
+        original_header = [None] * len(header_index_mapping)
         for idx, col_name in header_index_mapping.items():
             original_header[idx] = col_name
 
