@@ -18,7 +18,9 @@ def recover_layer_from_dict(nn_define, nn_dict):
         class_name = nn_define['op']
         init_param_dict.pop('op')
     else:
-        raise ValueError('no layer or operation info offered in nn define')
+        raise ValueError('no layer or operation info found in nn define, please check your layer config and make'
+                         'sure they are correct for pytorch backend')
+
     if 'initializer' in init_param_dict:
         init_param_dict.pop('initializer')
 
@@ -61,11 +63,16 @@ def recover_sequential_from_dict(nn_define):
 
 def recover_optimizer_from_dict(define_dict):
     opt_dict = dict(inspect.getmembers(optim))
+    from federatedml.util import LOGGER
+    LOGGER.debug('define dict is {}'.format(define_dict))
     if 'optimizer' not in define_dict:
         raise ValueError('please specify optimizer type in the json config')
     opt_class = opt_dict[define_dict['optimizer']]
     param_dict = copy.deepcopy(define_dict)
-    param_dict.pop('optimizer')
+    if 'optimizer' in param_dict:
+        param_dict.pop('optimizer')
+    if 'config_type' in param_dict:
+        param_dict.pop('config_type')
     return opt_class(**param_dict)
 
 
@@ -100,6 +107,3 @@ if __name__ == '__main__':
         "loss_fn": "BCELoss"
     }
     loss_fn = recover_loss_fn_from_dict(loss_fn_define)
-
-    test = {'0-0': {'bias': True, 'in_features': 8, 'initializer': {}, 'layer': 'Linear', 'out_features': 4}}
-    print(modify_linear_input_shape(16, test))
