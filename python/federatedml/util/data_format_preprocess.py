@@ -102,7 +102,8 @@ class DataFormatPreProcess(object):
 
         max_dim = data.\
             mapValues(
-                lambda value: max([int(fid_value.split(":", -1)[0]) for fid_value in value.split(delimiter, -1)[offset:]])).\
+                lambda value:
+                max([int(fid_value.split(":", -1)[0]) for fid_value in value.split(delimiter, -1)[offset:]])).\
             reduce(lambda x, y: max(x, y))
 
         return max_dim
@@ -113,10 +114,7 @@ class DataFormatPreProcess(object):
             raise ValueError("Meta not in schema")
 
         meta = schema["meta"]
-        if schema.get("extend_sid") is True:
-            meta["with_match_id"] = True
-
-        generated_header = dict(original_index_info=dict(), meta=meta)
+        generated_header = dict(original_index_info=dict())
         input_format = meta.get("input_format")
         delimiter = meta.get("delimiter", ",")
         if not input_format:
@@ -152,6 +150,8 @@ class DataFormatPreProcess(object):
                             match_id_name.append(_id)
                             match_id_index.append(header_index_mapping[_id])
                             filter_ids.add(match_id_index[-1])
+                        else:
+                            raise ValueError(f"Can not find {_id} in id_list in data's header")
 
                 generated_header["match_id_name"] = match_id_name
                 generated_header["original_index_info"]["match_id_index"] = match_id_index
@@ -192,8 +192,7 @@ class DataFormatPreProcess(object):
             if with_label:
                 generated_header["label_name"] = DEFAULT_LABEL_NAME
 
-        if generated_header.get("sid") is None:
-            generated_header["sid"] = DEFAULT_SID_NAME
+        generated_header["sid"] = schema.get("sid", DEFAULT_SID_NAME)
 
         return generated_header
 
