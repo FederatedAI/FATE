@@ -47,6 +47,7 @@ class FateTorchOptimizer(object):
         import copy
         ret_dict = copy.deepcopy(self.param_dict)
         ret_dict['optimizer'] = type(self).__name__
+        ret_dict['config_type'] = 'pytorch'
         return ret_dict
 
     def register_optimizer(self, fate_torch_component):
