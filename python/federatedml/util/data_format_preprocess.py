@@ -35,13 +35,13 @@ class DataFormatPreProcess(object):
         """
         with_label = meta.get("with_label", False)
         with_match_id = meta.get("with_match_id", False)
-        id_column_num = meta.get("id_column_num", 0)
+        id_range = meta.get("id_range", 0)
 
         if with_match_id:
-            if not id_column_num:
-                id_column_num = 1
+            if not id_range:
+                id_range = 1
 
-        offset = id_column_num
+        offset = id_range
         if with_label:
             offset += 1
 
@@ -114,7 +114,7 @@ class DataFormatPreProcess(object):
             raise ValueError("Meta not in schema")
 
         meta = schema["meta"]
-        generated_header = dict(original_index_info=dict())
+        generated_header = dict(original_index_info=dict(), meta=meta)
         input_format = meta.get("input_format")
         delimiter = meta.get("delimiter", ",")
         if not input_format:
@@ -178,19 +178,27 @@ class DataFormatPreProcess(object):
 
             with_label = meta.get("with_label", False)
             with_match_id = meta.get("with_match_id", False)
-            id_column_num = meta.get("id_column_num", 0)
+            id_range = meta.get("id_range", 0)
+
+            if id_range and not with_match_id:
+                raise ValueError(f"id_range {id_range} != 0, with_match_id should be true")
 
             if with_match_id:
-                if not id_column_num:
-                    id_column_num = 1
+                if not id_range:
+                    id_range = 1
 
-                if id_column_num == 1:
+                if id_range == 1:
                     generated_header["match_id_name"] = DEFAULT_MATCH_ID_PREFIX
                 else:
-                    generated_header["match_id_name"] = [DEFAULT_MATCH_ID_PREFIX + str(i) for i in range(id_column_num)]
+                    generated_header["match_id_name"] = [DEFAULT_MATCH_ID_PREFIX + str(i) for i in range(id_range)]
 
             if with_label:
                 generated_header["label_name"] = DEFAULT_LABEL_NAME
+
+            if id_range:
+                generated_header["meta"]["id_range"] = id_range
+
+            generated_header["is_display"] = False
 
         generated_header["sid"] = schema.get("sid", DEFAULT_SID_NAME)
 
