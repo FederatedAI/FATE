@@ -41,6 +41,7 @@ class SelectorParam(object):
         if self.method is not None and self.method not in ["relative"]:
             raise ValueError('selective method should be None be "relative"')
 
+
 class CoAEConfuserParam(BaseParam):
     """
     A label protect mechanism proposed in paper: "Batch Label Inference and Replacement Attacks in Black-Boxed Vertical Federated Learning"
@@ -249,6 +250,7 @@ class HeteroNNParam(BaseParam):
             }
         """
         kwargs = {}
+        print('opt is {}'.format(opt))
         if isinstance(opt, str):
             return SimpleNamespace(optimizer=opt, kwargs=kwargs)
         elif isinstance(opt, dict):
