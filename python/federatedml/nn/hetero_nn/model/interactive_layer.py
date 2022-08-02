@@ -33,12 +33,12 @@ from federatedml.util import consts, LOGGER
 
 class InterActiveGuestDenseLayer(object):
 
-    def __init__(self, params=None, layer_config=None, host_num=1):
+    def __init__(self, params=None, config_type=None, layer_config=None, host_num=1):
 
         self.host_num = host_num
         self.nn_define = layer_config
         self.layer_config = layer_config
-        self.config_type = params.config_type
+        self.config_type = config_type
         self.host_input_shapes = []
         self.guest_input_shape = None
         self.model = None
