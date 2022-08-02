@@ -20,6 +20,12 @@ def phe_tensor_metaclass(fp_cls):
             setattr(phe_cls, "__init__", __init__)
 
             @property
+            def shape(self):
+                return self._block.shape
+
+            setattr(phe_cls, "shape", shape)
+
+            @property
             def T(self) -> phe_cls:
                 transposed = phe_cls(self._block)
                 transposed._is_transpose = not self._is_transpose

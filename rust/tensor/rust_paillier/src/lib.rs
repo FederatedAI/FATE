@@ -158,7 +158,10 @@ impl Cipherblock {
             Err(e) => Err(e),
         }
     }
-
+    #[getter]
+    pub fn shape(&self) -> Vec<usize> {
+        self.0.as_ref().map(|cb| cb.shape.clone()).unwrap()
+    }
     // add
     pub fn add_cipherblock(&self, other: &Cipherblock) -> Cipherblock {
         self.add_cb(other)
