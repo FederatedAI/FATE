@@ -7,6 +7,7 @@ mod par;
 
 use bincode::{deserialize, serialize};
 use numpy::{IntoPyArray, PyArrayDyn, PyReadonlyArray1, PyReadonlyArray2, PyReadonlyArrayDyn};
+use pyo3::exceptions::PyTypeError;
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 
@@ -21,34 +22,33 @@ pub struct Cipherblock(Option<block::Cipherblock>);
 pub struct PK {
     pk: Option<fixedpoint::PK>,
 }
-#[pymethods]
 impl PK {
-    #[new]
-    fn __new__() -> Self {
-        PK(None)
+    fn new(pk: fixedpoint::PK) -> Self {
+        Self { pk: Some(pk) }
     }
-    pub fn __getstate__(&self, py: Python) -> PyResult<PyObject> {
-        Ok(PyBytes::new(py, &serialize(&self.0).unwrap()).to_object(py))
+    fn as_ref(&self) -> &fixedpoint::PK {
+        self.pk.as_ref().unwrap()
     }
-    pub fn __setstate__(&mut self, py: Python, state: PyObject) -> PyResult<()> {
-        match state.extract::<&PyBytes>(py) {
-            Ok(s) => {
-                self.0 = deserialize(s.as_bytes()).unwrap();
-                Ok(())
-            }
-            Err(e) => Err(e),
-        }
-    }
+}
 
 #[pyclass(module = "rust_paillier")]
 pub struct SK {
-    sk: fixedpoint::SK,
+    sk: Option<fixedpoint::SK>,
+}
+
+impl SK {
+    fn new(sk: fixedpoint::SK) -> Self {
+        Self { sk: Some(sk) }
+    }
+    fn as_ref(&self) -> &fixedpoint::SK {
+        self.sk.as_ref().unwrap()
+    }
 }
 
 #[pyfunction]
 fn keygen(bit_size: u32) -> (PK, SK) {
     let (sk, pk) = fixedpoint::keygen(bit_size);
-    (PK { pk }, SK { sk })
+    (PK::new(pk), SK::new(sk))
 }
 
 /// public key for paillier system used to encrypt arrays
@@ -56,6 +56,30 @@ fn keygen(bit_size: u32) -> (PK, SK) {
 /// Notes: we could not use Generics Types or rule macro here, sad.
 #[pymethods]
 impl PK {
+    #[new]
+    fn __new__() -> Self {
+        Self { pk: None }
+    }
+    pub fn __getstate__(&self, py: Python) -> PyResult<PyObject> {
+        Ok(PyBytes::new(py, &serialize(self.as_ref()).unwrap()).to_object(py))
+    }
+    pub fn __setstate__(&mut self, py: Python, state: PyObject) -> PyResult<()> {
+        match state.extract::<&PyBytes>(py) {
+            Ok(s) => {
+                self.pk = Some(deserialize(s.as_bytes()).unwrap());
+                Ok(())
+            }
+            Err(e) => Err(e),
+        }
+    }
+    pub fn __richcmp__(&self, other: &PK, cmp: pyo3::basic::CompareOp) -> PyResult<bool> {
+        match cmp {
+            pyo3::basic::CompareOp::Eq => Ok(self.as_ref() == other.as_ref()),
+            _ => Err(PyTypeError::new_err(
+                "not supported between instances PK and PK",
+            )),
+        }
+    }
     fn encrypt_f64(&self, a: PyReadonlyArrayDyn<f64>) -> Cipherblock {
         self.encrypt_array(a.as_array())
     }
@@ -75,6 +99,30 @@ impl PK {
 /// Notes: we could not use Generics Types or rule macro here, sad.
 #[pymethods]
 impl SK {
+    #[new]
+    fn __new__() -> Self {
+        Self { sk: None }
+    }
+    pub fn __getstate__(&self, py: Python) -> PyResult<PyObject> {
+        Ok(PyBytes::new(py, &serialize(self.as_ref()).unwrap()).to_object(py))
+    }
+    pub fn __setstate__(&mut self, py: Python, state: PyObject) -> PyResult<()> {
+        match state.extract::<&PyBytes>(py) {
+            Ok(s) => {
+                self.sk = Some(deserialize(s.as_bytes()).unwrap());
+                Ok(())
+            }
+            Err(e) => Err(e),
+        }
+    }
+    pub fn __richcmp__(&self, other: &SK, cmp: pyo3::basic::CompareOp) -> PyResult<bool> {
+        match cmp {
+            pyo3::basic::CompareOp::Eq => Ok(self.as_ref() == other.as_ref()),
+            _ => Err(PyTypeError::new_err(
+                "not supported between instances PK and PK",
+            )),
+        }
+    }
     fn decrypt_f64<'py>(&self, a: &Cipherblock, py: Python<'py>) -> &'py PyArrayDyn<f64> {
         self.decrypt_array(a).into_pyarray(py)
     }
@@ -252,7 +300,6 @@ impl Cipherblock {
     pub fn mean(&self) -> Cipherblock {
         self.sum_cb()
     }
-
 }
 #[pymodule]
 fn rust_paillier(_py: Python, m: &PyModule) -> PyResult<()> {

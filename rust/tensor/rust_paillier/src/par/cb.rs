@@ -153,15 +153,12 @@ impl Cipherblock {
 impl SK {
     pub fn decrypt_array<T: CouldCode + numpy::Element>(&self, a: &Cipherblock) -> ArrayD<T> {
         let array = a.0.as_ref().unwrap();
-        self.sk.decrypt_array_par(array)
+        self.as_ref().decrypt_array_par(array)
     }
 }
 
 impl PK {
-    pub fn encrypt_array<T: CouldCode + Sync + Send>(
-        &self,
-        array: ArrayViewD<T>,
-    ) -> Cipherblock {
-        Cipherblock::new(self.pk.encrypt_array_par(array))
+    pub fn encrypt_array<T: CouldCode + Sync + Send>(&self, array: ArrayViewD<T>) -> Cipherblock {
+        Cipherblock::new(self.as_ref().encrypt_array_par(array))
     }
 }

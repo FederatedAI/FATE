@@ -116,7 +116,6 @@ impl Cipherblock {
         block::Cipherblock::rmatmul_plaintext_ix2,
         ArrayView2
     );
-
 }
 
 impl Cipherblock {
@@ -146,12 +145,12 @@ impl Cipherblock {
 impl SK {
     pub fn decrypt_array<T: CouldCode + numpy::Element>(&self, a: &Cipherblock) -> ArrayD<T> {
         let array = a.0.as_ref().unwrap();
-        self.sk.decrypt_array(array)
+        self.as_ref().decrypt_array(array)
     }
 }
 
 impl PK {
     pub fn encrypt_array<T: CouldCode>(&self, array: ArrayViewD<T>) -> Cipherblock {
-        Cipherblock::new(self.pk.encrypt_array(array))
+        Cipherblock::new(self.as_ref().encrypt_array(array))
     }
 }

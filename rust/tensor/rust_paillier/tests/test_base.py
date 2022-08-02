@@ -4,6 +4,7 @@ import operator
 import cachetools
 import numpy as np
 import pytest
+import pickle
 
 
 def get_suites():
@@ -64,6 +65,12 @@ def data(fp, index, shape=(3, 5), scalar=False) -> np.ndarray:
             )[0]
         if fp == "i32":
             return np.random.randint(low=-100, high=100, size=1, dtype=np.int32)[0]
+
+
+@pytest.mark.parametrize("fp", ["f64"])
+def test_serde(suite: Suite, fp):
+    assert suite.pk == pickle.loads(pickle.dumps(suite.pk))
+    assert suite.sk == pickle.loads(pickle.dumps(suite.sk))
 
 
 @pytest.mark.parametrize("fp", ["f64", "f32", "i32", "i64"])
