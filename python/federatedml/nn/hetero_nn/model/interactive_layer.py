@@ -33,12 +33,12 @@ from federatedml.util import consts, LOGGER
 
 class InterActiveGuestDenseLayer(object):
 
-    def __init__(self, params=None, layer_config=None, host_num=1):
+    def __init__(self, params=None, config_type=None, layer_config=None, host_num=1):
 
         self.host_num = host_num
         self.nn_define = layer_config
         self.layer_config = layer_config
-        self.config_type = params.config_type
+        self.config_type = config_type
         self.host_input_shapes = []
         self.guest_input_shape = None
         self.model = None
@@ -153,6 +153,8 @@ class InterActiveGuestDenseLayer(object):
         LOGGER.info("start to get interactive layer's activation output of epoch {} batch {}".format(epoch, batch))
         # all model has same activation layer
         activation_out = self.host_model_list[0].forward_activation(self.dense_output_data.numpy())
+        for host_model in self.host_model_list[1:]:
+            host_model.activation_input = self.dense_output_data.numpy()
         LOGGER.info("end to get interactive layer's activation output of epoch {} batch {}".format(epoch, batch))
 
         if train and self.drop_out:
@@ -176,7 +178,6 @@ class InterActiveGuestDenseLayer(object):
         if len(output_gradient) > 0:
             LOGGER.debug("interactive layer start backward propagation of epoch {} batch {}".format(epoch, batch))
             activation_backward = self.host_model_list[0].backward_activation()[0]
-
             activation_gradient = output_gradient * activation_backward
             if self.drop_out:
                 activation_gradient = self.drop_out.backward(activation_gradient)

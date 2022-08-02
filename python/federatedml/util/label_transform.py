@@ -17,13 +17,15 @@
 #  limitations under the License.
 
 import copy
+
 import numpy as np
 
 from federatedml.model_base import Metric, MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.param.label_transform_param import LabelTransformParam
 from federatedml.protobuf.generated import label_transform_meta_pb2, label_transform_param_pb2
-from federatedml.statistic.data_overview import get_label_count, get_predict_result_labels
+from federatedml.statistic.data_overview import get_label_count, get_predict_result_labels, \
+    predict_detail_dict_to_str, predict_detail_str_to_dict
 from federatedml.util import LOGGER
 
 
@@ -160,8 +162,8 @@ class LabelTransformer(ModelBase):
     @staticmethod
     def replace_predict_label(predict_inst, label_encoder):
         transform_predict_inst = copy.deepcopy(predict_inst)
-        true_label, predict_label, predict_score, predict_detail, result_type = transform_predict_inst.features
-        # true_label, predict_label = label_encoder[true_label], label_encoder[predict_label]
+        true_label, predict_label, predict_score, predict_detail_str, result_type = transform_predict_inst.features
+        predict_detail = predict_detail_str_to_dict(predict_detail_str)
         true_label_replace_val, predict_label_replace_val = label_encoder.get(
             true_label), label_encoder.get(predict_label)
         if true_label_replace_val is None:
@@ -169,7 +171,8 @@ class LabelTransformer(ModelBase):
         if predict_label_replace_val is None:
             raise ValueError(f"{predict_label_replace_val} not found in given label encoder")
         label_encoder_detail = {str(k): v for k, v in label_encoder.items()}
-        predict_detail = {label_encoder_detail[label]: score for label, score in predict_detail.items()}
+        predict_detail_dict = {label_encoder_detail[label]: score for label, score in predict_detail.items()}
+        predict_detail = predict_detail_dict_to_str(predict_detail_dict)
         transform_predict_inst.features = [true_label_replace_val, predict_label_replace_val, predict_score,
                                            predict_detail, result_type]
         return transform_predict_inst

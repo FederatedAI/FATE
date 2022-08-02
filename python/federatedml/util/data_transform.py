@@ -85,8 +85,9 @@ class DenseFeatureTransformer(object):
         self.delimitor = meta.get("delimiter", ",")
         self.data_type = meta.get("data_type")
         self.with_label = meta.get("with_label", False)
-        self.label_type = meta.get("label_type", None)
-        self.label_name = meta.get("label_name", None)
+        if self.with_label:
+            self.label_type = meta.get("label_type", "int")
+            self.label_name = meta.get("label_name", '')
         self.with_match_id = meta.get("with_match_id", False)
         self.match_id_name = meta.get("match_id_name", None)
 
@@ -132,6 +133,11 @@ class DenseFeatureTransformer(object):
                         with_match_id=self.with_match_id,
                         data_type=self.data_type,
                         )
+            if mode == "transform" and self.with_label \
+                    and self.label_name not in schema["header"].split(self.delimitor, -1):
+                del meta["label_name"]
+                del meta["with_label"]
+
             schema["meta"] = meta
             generated_header = DataFormatPreProcess.generate_header(input_data, schema)
             schema.update(generated_header)
@@ -142,9 +148,11 @@ class DenseFeatureTransformer(object):
 
         header = schema["header"]
         anonymous_header = schema["anonymous_header"]
+        training_header = self.header
         if mode == "transform":
             if (set(self.header) & set(header)) != set(self.header):
                 raise ValueError(f"Transform Data's header is {header}, expect {self.header}")
+            self.header = header
             if not self.anonymous_header:
                 self.anonymous_header = anonymous_header
         else:
@@ -173,7 +181,8 @@ class DenseFeatureTransformer(object):
             set_schema(data_instance, schema)
         else:
             data_instance = self.transform(input_data_features, input_data_labels, input_data_match_id)
-            data_instance = data_overview.header_alignment(data_instance, self.header, self.anonymous_header)
+            data_instance = data_overview.header_alignment(data_instance, training_header, self.anonymous_header)
+            self.header = training_header
 
         return data_instance
 
@@ -238,7 +247,7 @@ class DenseFeatureTransformer(object):
         return input_data_features
 
     def gen_data_instance(self, input_data_features, input_data_labels, input_data_match_id):
-        if self.with_label:
+        if input_data_labels:
             data_instance = input_data_features.join(input_data_labels,
                                                      lambda features, label: self.to_instance(features, label))
         else:
@@ -259,7 +268,7 @@ class DenseFeatureTransformer(object):
         elif self.header is not None and len(self.header) != len(features):
             raise ValueError("features shape {} not equal to header shape {}".format(len(features), len(self.header)))
 
-        if self.with_label:
+        if label is not None:
             if self.label_type == 'int':
                 label = int(label)
             elif self.label_type in ["float", "float64"]:
@@ -443,8 +452,9 @@ class SparseFeatureTransformer(object):
         self.delimitor = meta.get("delimiter", ",")
         self.data_type = meta.get("data_type")
         self.with_label = meta.get("with_label", False)
-        self.label_type = meta.get("label_type")
-        self.label_name = meta.get("label_name", None)
+        if self.with_label:
+            self.label_type = meta.get("label_type", "int")
+            self.label_name = meta.get("label_name", "")
         self.with_match_id = meta.get("with_match_id", False)
 
     def read_data(self, input_data, mode="fit"):
@@ -459,6 +469,7 @@ class SparseFeatureTransformer(object):
                         with_label=self.with_label,
                         with_match_id=self.with_match_id,
                         data_type=self.data_type)
+
             schema["meta"] = meta
             generated_header = DataFormatPreProcess.generate_header(input_data, schema)
             schema.update(generated_header)
@@ -643,8 +654,9 @@ class SparseTagTransformer(object):
         self.tag_with_value = meta.get("tag_with_value")
         self.tag_value_delimitor = meta.get("tag_value_delimiter", ":")
         self.with_label = meta.get("with_label", False)
-        self.label_type = meta.get("label_type")
-        self.label_name = meta.get("label_name")
+        if self.with_label:
+            self.label_type = meta.get("label_type", "int")
+            self.label_name = meta.get("label_name")
         self.with_match_id = meta.get("with_match_id", False)
 
     def read_data(self, input_data, mode="fit"):

@@ -26,7 +26,7 @@ from federatedml.callbacks.callback_list import CallbackList
 from federatedml.feature.instance import Instance
 from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.protobuf import deserialize_models
-from federatedml.statistic.data_overview import header_alignment
+from federatedml.statistic.data_overview import header_alignment, predict_detail_dict_to_str
 from federatedml.util import LOGGER, abnormal_detection
 from federatedml.util.anonymous_generator_util import Anonymous
 from federatedml.util.component_properties import ComponentProperties, RunningFuncs
@@ -227,7 +227,9 @@ class ModelBase(object):
 
         # retry
         if (
-            self._retry
+            retry
+            and hasattr(self, '_retry')
+            and callable(self._retry)
             and self.checkpoint_manager is not None
             and self.checkpoint_manager.latest_checkpoint is not None
         ):
@@ -520,7 +522,10 @@ class ModelBase(object):
         # regression
         if classes is None:
             predict_result = data_instances.join(
-                predict_score, lambda d, pred: [d.label, pred, pred, {"label": pred}]
+                predict_score, lambda d, pred: [d.label,
+                                                pred,
+                                                pred,
+                                                predict_detail_dict_to_str({"label": pred})]
             )
         # binary
         elif isinstance(classes, list) and len(classes) == 2:
@@ -537,7 +542,7 @@ class ModelBase(object):
                     x[0],
                     y,
                     x[1],
-                    {class_neg_name: (1 - x[1]), class_pos_name: x[1]},
+                    predict_detail_dict_to_str({class_neg_name: (1 - x[1]), class_pos_name: x[1]})
                 ],
             )
 
@@ -552,7 +557,7 @@ class ModelBase(object):
                     x,
                     int(classes[np.argmax(y)]),
                     float(np.max(y)),
-                    dict(zip(classes, list(y))),
+                    predict_detail_dict_to_str(dict(zip(classes, list(y))))
                 ],
             )
         else:

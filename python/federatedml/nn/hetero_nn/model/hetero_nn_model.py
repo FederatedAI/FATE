@@ -92,8 +92,6 @@ class HeteroNNGuestModel(HeteroNNModel):
                                                      random_rate=hetero_nn_param.selector_param.random_state,
                                                      min_prob=hetero_nn_param.selector_param.min_prob)
 
-        LOGGER.debug('config type is {}'.format(self.config_type))
-
     def set_nn_meta(self, hetero_nn_param: HeteroNNParam):
         self.bottom_nn_define = hetero_nn_param.bottom_nn_define
         self.top_nn_define = hetero_nn_param.top_nn_define
@@ -212,7 +210,9 @@ class HeteroNNGuestModel(HeteroNNModel):
         if self.config_type == consts.pytorch_backend:
             model_meta.loss = json.dumps(self.loss)
             optimizer_param.optimizer = self.optimizer['optimizer']
-            optimizer_param.kwargs = json.dumps(copy.deepcopy(self.optimizer).pop('optimizer'))
+            tmp_dict = copy.deepcopy(self.optimizer)
+            tmp_dict.pop('optimizer')
+            optimizer_param.kwargs = json.dumps(tmp_dict)
         else:
             model_meta.loss = self.loss
             optimizer_param.optimizer = self.optimizer.optimizer
@@ -307,6 +307,7 @@ class HeteroNNGuestModel(HeteroNNModel):
 
     def _build_interactive_model(self):
         self.interactive_model = InterActiveGuestDenseLayer(self.hetero_nn_param,
+                                                            self.config_type,
                                                             self.interactive_layer_define,
                                                             host_num=len(self.component_properties.host_party_idlist))
         self.interactive_model.set_transfer_variable(self.transfer_variable)
@@ -409,15 +410,17 @@ class HeteroNNHostModel(HeteroNNModel):
             optimizer_param.kwargs = json.dumps(self.optimizer.kwargs)
         else:
             optimizer_param.optimizer = self.optimizer['optimizer']
-            optimizer_param.kwargs = json.dumps(copy.deepcopy(self.optimizer).pop('optimizer'))
+            tmp_opt = copy.deepcopy(self.optimizer)
+            tmp_opt.pop('optimizer')
+            optimizer_param.kwargs = json.dumps(tmp_opt)
 
         model_meta.optimizer_param.CopyFrom(optimizer_param)
 
         return model_meta
 
     def set_hetero_nn_model_meta(self, model_meta):
-        self.config_type = model_meta.config_type
 
+        self.config_type = model_meta.config_type
         if self.config_type == "nn":
             self.bottom_nn_define = []
 

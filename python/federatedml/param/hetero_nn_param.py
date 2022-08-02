@@ -73,14 +73,14 @@ class CoAEConfuserParam(BaseParam):
     Args:
         enable: boolean
             run CoAE or not
-        epoch: None or str
+        epoch: None or int
             auto-encoder training epochs
-        lr: int
+        lr: float
             auto-encoder learning rate
-        lambda1: int
+        lambda1: float
             parameter to control the difference between true labels and fake soft labels. Larger the parameter,
             autoencoder will give more attention to making true labels and fake soft label different.
-        lambda2: Numeric
+        lambda2: float
             parameter to control entropy loss, see original paper for details
         verbose: boolean
             print loss log while training auto encoder
@@ -130,7 +130,7 @@ class HeteroNNParam(BaseParam):
             1. a string, one of "Adadelta", "Adagrad", "Adam", "Adamax", "Nadam", "RMSprop", "SGD"
             2. a dict, with a required key-value pair keyed by "optimizer",
                 with optional key-value pairs such as learning rate.
-            defaults to "SGD"
+            defaults to "SGD".
         loss:  str, a string to define loss function used
         epochs: int, the maximum iteration for aggregation in training.
         batch_size : int, batch size when updating model.
@@ -209,12 +209,11 @@ class HeteroNNParam(BaseParam):
 
     def check(self):
 
-        supported_config_type = ["keras", "pytorch", "torch"]
+        supported_config_type = ["keras", "pytorch"]
         if self.config_type not in supported_config_type:
             raise ValueError(f"config_type should be one of {supported_config_type}")
 
-        if self.config_type == 'keras':
-            self.optimizer = self._parse_optimizer(self.optimizer)
+        self.optimizer = self._parse_optimizer(self.optimizer)
 
         if self.task_type not in ["classification", "regression"]:
             raise ValueError("config_type should be classification or regression")
@@ -303,6 +302,9 @@ class HeteroNNParam(BaseParam):
         if isinstance(opt, str):
             return SimpleNamespace(optimizer=opt, kwargs=kwargs)
         elif isinstance(opt, dict):
+            config_type = opt.get('config_type', None)
+            if config_type == 'pytorch':
+                return opt
             optimizer = opt.get("optimizer", kwargs)
             if not optimizer:
                 raise ValueError(f"optimizer config: {opt} invalid")
