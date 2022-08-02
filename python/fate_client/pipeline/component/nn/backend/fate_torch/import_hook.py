@@ -15,6 +15,7 @@ def monkey_patch(torch_nn, fate_torch_module):
 
 
 def fate_torch_hook(torch_module_var):
+    print(114514)
     """
     This is a monkey patch function that modify torch modules to use fate_torch layers and Components
     :param torch_module_var:
