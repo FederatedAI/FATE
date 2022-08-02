@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The FATE Authors. All Rights Reserved.
+ * Copyright 2019 The Eggroll Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 
 syntax = "proto3";
 
-import "fate-meta.proto";
+import "basic-meta.proto";
 
-package com.webank.ai.fate.api.networking.proxy;
+package com.webank.ai.eggroll.api.networking.proxy;
 
 // metadata of event
 message Model {
@@ -36,7 +36,7 @@ message Topic {
     string name = 1;
     string partyId = 2;
     string role = 3;
-    com.webank.ai.fate.api.core.Endpoint callback = 4;  // implication of pub/sub model, necessary for http-based senario
+    com.webank.ai.eggroll.api.core.Endpoint callback = 4;  // implication of pub/sub model, necessary for http-based senario
 }
 
 // task admin command
@@ -61,6 +61,8 @@ message Metadata {
     int64 seq = 6;                      // stream seq (reserved)
     int64 ack = 7;                      // stream ack (reserved)
     Conf conf = 8;                      // operation config
+    bytes ext = 9;
+    string version = 100;
 }
 
 // includes key and value field, supporting sequential and random data transfer
@@ -91,13 +93,22 @@ message HeartbeatResponse {
     Operation operation = 2;
 }
 
+message PollingFrame {
+    string method = 1;
+    int64 seq = 2;
+    Metadata metadata = 10;
+    Packet packet = 20;
+    string desc = 30;
+}
+
 // data transfer service
 service DataTransferService {
     rpc push (stream Packet) returns (Metadata);
     rpc pull (Metadata) returns (stream Packet);
     rpc unaryCall (Packet) returns (Packet);
+    rpc polling (stream PollingFrame) returns (stream PollingFrame);
 }
 
 service RouteService {
-    rpc query (Topic) returns (com.webank.ai.fate.api.core.Endpoint);
+    rpc query (Topic) returns (com.webank.ai.eggroll.api.core.Endpoint);
 }

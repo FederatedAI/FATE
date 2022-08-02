@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The FATE Authors. All Rights Reserved.
+ * Copyright 2019 The Eggroll Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,7 @@
 
 syntax = "proto3";
 
-package com.webank.ai.fate.api.core;
-option java_outer_classname = "BasicMeta";
+package com.webank.ai.eggroll.api.core;
 
 // network endpoint
 message Endpoint {
@@ -79,4 +78,11 @@ message Result {
 message ReturnStatus {
     int32 code = 1;
     string message = 2;
+}
+
+message SessionInfo {
+    string sessionId = 1;
+    map<string, string> computingEngineConf = 2;
+    string namingPolicy = 3;
+    string tag = 4;
 }
