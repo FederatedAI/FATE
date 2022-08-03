@@ -16,7 +16,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
+import copy
 import functools
 import numpy as np
 
@@ -25,6 +25,7 @@ DEFAULT_LABEL_NAME = "label"
 DEFAULT_MATCH_ID_PREFIX = "match_id"
 SVMLIGHT_COLUMN_PREFIX = "x"
 DEFAULT_SID_NAME = "sid"
+DELIMITER = ","
 
 
 class DataFormatPreProcess(object):
@@ -124,7 +125,8 @@ class DataFormatPreProcess(object):
             if "header" not in schema:
                 raise ValueError("Dense input data must have schema")
 
-            header = schema["header"].split(delimiter, -1)
+            header = schema["header"].strip().split(delimiter, -1)
+            header = list(map(lambda col: col.strip(),header))
             header_index_mapping = dict(zip(header, range(len(header))))
             with_label = meta.get("with_label", False)
             if not isinstance(with_label, bool):
@@ -200,7 +202,7 @@ class DataFormatPreProcess(object):
 
             generated_header["is_display"] = False
 
-        generated_header["sid"] = schema.get("sid", DEFAULT_SID_NAME)
+        generated_header["sid"] = schema.get("sid", DEFAULT_SID_NAME).strip()
 
         return generated_header
 
@@ -232,3 +234,41 @@ class DataFormatPreProcess(object):
             original_header[idx] = col_name
 
         return original_header
+
+    @staticmethod
+    def extend_header(schema, columns):
+        schema = copy.deepcopy(schema)
+        original_index_info = schema.get("original_index_info")
+
+        columns = list(map(lambda column: column.strip(), columns))
+        header = schema["header"]
+        if isinstance(header, list):
+            header.extend(columns)
+            schema["header"] = header
+
+            if original_index_info and "header_index" in original_index_info:
+                header_index = original_index_info["header_index"]
+                if header_index:
+                    start_col_idx = max(header_index)
+                else:
+                    start_col_idx = 0
+
+                if original_index_info.get("label_index") is not None:
+                    start_col_idx = max(original_index_info["label_index"], start_col_idx)
+                if original_index_info.get("match_id_index") is not None:
+                    start_col_idx = max(original_index_info["match_id_index"], start_col_idx)
+
+                new_header_index = header_index + [i + start_col_idx for i in range(len(columns))]
+
+                schema["header_index"] = new_header_index
+        else:
+            if len(header) == 0:
+                new_header = DELIMITER.join(columns)
+            else:
+                new_header = DELIMITER.join(header.split(DELIMITER, -1) + columns)
+
+            schema["header"] = new_header
+            if schema.get("sid") is not None:
+                schema["sid"] = schema["sid"].strip()
+
+        return schema
