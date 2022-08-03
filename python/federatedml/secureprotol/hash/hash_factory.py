@@ -61,7 +61,7 @@ def compute_sm3(value):
 
 
 def compute_sm3_base64(value):
-    return str(base64.b64encode(libsm3py.hash(bytes(value, encoding='utf-8')).encode('utf-8')), "utf-8")
+    return str(base64.b64encode(libsm3py.hash(bytes(value, encoding='utf-8'))), "utf-8")
 
 
 def compute_no_hash(value):
