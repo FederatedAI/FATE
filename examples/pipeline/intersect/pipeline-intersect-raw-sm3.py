@@ -58,7 +58,7 @@ def main(config="../../config.yaml", namespace=""):
             "use_hash": True,
             "hash_method": "sm3",
             "salt": "12345",
-            "base64": False,
+            "base64": True,
             "join_role": "host"
         }
     }

@@ -21,7 +21,7 @@
                     "use_hash": true,
                     "hash_method": "sm3",
                     "salt": "12345",
-                    "base64": false,
+                    "base64": true,
                     "join_role": "host"
                 },
                 "only_output_key": true
