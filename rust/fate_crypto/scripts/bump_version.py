@@ -4,6 +4,7 @@ import argparse
 
 root_path = pathlib.Path(__file__).parent.parent.resolve()
 
+
 def update_version(version):
     with open(root_path.joinpath("Cargo.toml")) as f:
         cargo = toml.load(f)
@@ -12,6 +13,7 @@ def update_version(version):
     cargo["package"]["version"] = version
     with open(root_path.joinpath("Cargo.toml"), "w") as f:
         toml.dump(cargo, f)
+
 
 if __name__ == "__main__":
     parse = argparse.ArgumentParser("bump version")
