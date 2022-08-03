@@ -18,8 +18,10 @@
 
 import copy
 import functools
-import numpy as np
+import json
 from collections import Counter
+
+import numpy as np
 
 from federatedml.feature.instance import Instance
 from federatedml.util import LOGGER
@@ -90,7 +92,6 @@ def look_up_names_from_header(name_list, source_header, transform_header):
 
 
 def max_abs_sample_weight_map_func(kv_iter):
-
     max_weight = -1
     for k, inst in kv_iter:
         if np.abs(inst.weight) > max_weight:
@@ -118,9 +119,11 @@ def check_negative_sample_weight(kv_iterator):
 
 
 def header_alignment(data_instances, pre_header, pre_anonymous_header=None):
-    header = data_instances.schema["header"]
+    header = [col.strip() for col in data_instances.schema["header"]]
     if len((set(header) & set(pre_header))) != len(pre_header):
-        raise ValueError("fit & transform data' header should be same")
+        raise ValueError(f"fit & transform data' header should be the same! "
+                         f"Previous header: {pre_header}. "
+                         f"Current header: {header}.")
 
     if pre_header == header:
         if pre_anonymous_header:
@@ -181,11 +184,6 @@ def get_data_shape(data):
 
 def get_header(data_instances):
     header = data_instances.schema.get('header')  # ['x1', 'x2', 'x3' ... ]
-    return header
-
-
-def get_anonymous_header(data_instances):
-    header = data_instances.schema.get('anonymous_header')  # ['x1', 'x2', 'x3' ... ]
     return header
 
 
@@ -290,6 +288,14 @@ def check_with_inst_id(data_instances):
     return False
 
 
+def predict_detail_dict_to_str(result_dict):
+    return "\"" + json.dumps(result_dict).replace("\"", "\'") + "\""
+
+
+def predict_detail_str_to_dict(result_dict_str):
+    return json.loads(json.loads(result_dict_str).replace("\'", "\""))
+
+
 def scale_sample_weight(data_instances):
     data_count = data_instances.count()
 
@@ -298,15 +304,18 @@ def scale_sample_weight(data_instances):
         for _, v in kv_iterator:
             weight_sum += v.weight
         return weight_sum
+
     total_weight = data_instances.mapPartitions(_sum_all_weight).reduce(lambda x, y: x + y)
     # LOGGER.debug(f"weight_sum is : {total_weight}")
     scale_factor = data_count / total_weight
+
     # LOGGER.debug(f"scale factor is : {total_weight}")
 
     def _replace_weight(instance):
         new_weight = instance.weight * scale_factor
         instance.set_weight(new_weight)
         return instance
+
     scaled_instances = data_instances.mapValues(lambda v: _replace_weight(v))
     return scaled_instances
 

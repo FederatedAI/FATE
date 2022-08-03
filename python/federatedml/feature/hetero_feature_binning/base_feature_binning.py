@@ -233,14 +233,14 @@ class BaseFeatureBinning(ModelBase):
             transform_multi_class_result = self.transform_bin_result.generated_pb_list(split_points_result)
             transform_host_single_results = []
             transform_host_multi_class_result = []
-            for host_res in self.host_results:
+            for host_res in self.transform_host_results:
                 transform_host_multi_class_result.extend(host_res.generated_pb_list())
                 transform_host_single_results.append(host_res.bin_results[0].generated_pb())
 
             transform_multi_pb = feature_binning_param_pb2.MultiClassResult(
                 results=transform_multi_class_result,
                 labels=[str(x) for x in self.labels],
-                host_results=host_multi_class_result,
+                host_results=transform_host_multi_class_result,
                 host_party_ids=[str(x) for x in self.component_properties.host_party_idlist],
                 has_host_result=has_host_result
             )

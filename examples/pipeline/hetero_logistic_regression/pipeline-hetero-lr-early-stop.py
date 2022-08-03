@@ -75,14 +75,12 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(reader_1)
 
     data_transform_1 = DataTransform(name="data_transform_1", output_format='dense')
-    # get DataTransform party instance of guest
-
-    # define Intersection components
-    intersection_1 = Intersection(name="intersection_1")
-    pipeline.add_component(reader_1)
     pipeline.add_component(data_transform_1,
                            data=Data(data=reader_1.output.data),
                            model=Model(data_transform_0.output.model))
+
+    # define Intersection components
+    intersection_1 = Intersection(name="intersection_1")
     pipeline.add_component(intersection_1, data=Data(data=data_transform_1.output.data))
 
     lr_param = {

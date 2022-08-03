@@ -55,7 +55,7 @@ def main(config="../../config.yaml", namespace=""):
         "sync_intersect_ids": True,
         "only_output_key": True,
         "ecdh_params": {
-            "hash_method": "sha256",
+            "hash_method": "sm3",
             "salt": "12345",
             "curve": "curve25519"
         },

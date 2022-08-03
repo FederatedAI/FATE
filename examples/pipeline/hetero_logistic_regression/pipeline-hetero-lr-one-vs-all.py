@@ -85,7 +85,7 @@ def main(config="../../config.yaml", namespace=""):
     hetero_lr_0 = HeteroLR(name="hetero_lr_0", **lr_param)
     pipeline.add_component(hetero_lr_0, data=Data(train_data=intersection_0.output.data))
 
-    evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary")
+    evaluation_0 = Evaluation(name="evaluation_0", eval_type="multi")
     pipeline.add_component(evaluation_0, data=Data(data=hetero_lr_0.output.data))
 
     pipeline.compile()

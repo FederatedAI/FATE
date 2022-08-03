@@ -29,12 +29,38 @@ class Anonymous(object):
         self._party_id = party_id
         self._migrate_mapping = migrate_mapping
 
+    def migrate_schema_anonymous(self, schema):
+        if "anonymous_header" in schema:
+            schema["anonymous_header"] = self.migrate_anonymous(schema["anonymous_header"])
+
+        if "anonymous_label" in schema:
+            schema["anonymous_label"] = self.migrate_anonymous(schema['anonymous_label'])
+
+        return schema
+
     def migrate_anonymous(self, anonymous_header):
+        ret_list = True
+        if not isinstance(anonymous_header, list):
+            ret_list = False
+            anonymous_header = [anonymous_header]
+
         migrate_anonymous_header = []
         for column in anonymous_header:
             role, party_id, suf = column.split(SPLICES, 2)
-            migrate_party_id = self._migrate_mapping[role][int(party_id)]
-            migrate_anonymous_header.append(self.generate_anonymous_column(role, migrate_party_id, suf))
+            try:
+                migrate_party_id = self._migrate_mapping[role][int(party_id)]
+            except KeyError:
+                migrate_party_id = self._migrate_mapping[role][party_id]
+            except BaseException:
+                migrate_party_id = None
+
+            if migrate_party_id is not None:
+                migrate_anonymous_header.append(self.generate_anonymous_column(role, migrate_party_id, suf))
+            else:
+                migrate_anonymous_header.append(column)
+
+        if not ret_list:
+            migrate_anonymous_header = migrate_anonymous_header[0]
 
         return migrate_anonymous_header
 

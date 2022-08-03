@@ -2,7 +2,6 @@ from operator import itemgetter
 from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util.io_check import assert_io_num_rows_equal
-from federatedml.util.anonymous_generator import generate_anonymous
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_importance import FeatureImportance
 from federatedml.ensemble.boosting import HeteroBoostingHost
@@ -118,9 +117,11 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
     def postprocess(self):
         # generate anonymous
         new_feat_importance = {}
-        sitename = 'host:' + str(self.component_properties.local_partyid)
         for key in self.feature_importances_:
-            new_feat_importance[(sitename, key)] = self.feature_importances_[key]
+            anonymous_name = self.anonymous_header[self.feature_name_fid_mapping[key]]
+            party, party_id, anonymous_feat = anonymous_name.split('_')
+            feat_idx = int(anonymous_feat.replace('x', ''))
+            new_feat_importance[(party + '_' + party_id, feat_idx)] = self.feature_importances_[key]
         self.hetero_sbt_transfer_variable.host_feature_importance.remote(new_feat_importance)
 
     def fit_a_learner(self, epoch_idx: int, booster_dim: int):
@@ -177,6 +178,8 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
         LOGGER.info('running prediction')
 
+        self.set_anonymous_header(data_inst)
+
         processed_data = self.data_and_header_alignment(data_inst)
 
         predict_start_round = self.sync_predict_start_round()
@@ -223,9 +226,9 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         model_param.trees_.extend(self.boosting_model_list)
 
         anonymous_name_mapping = {}
-        party_id = self.component_properties.local_partyid
+
         for fid, name in self.feature_name_fid_mapping.items():
-            anonymous_name_mapping[generate_anonymous(fid, role=consts.HOST, party_id=party_id, )] = name
+            anonymous_name_mapping[self.anonymous_header[name]] = name
 
         model_param.anonymous_name_mapping.update(anonymous_name_mapping)
         model_param.feature_name_fid_mapping.update(self.feature_name_fid_mapping)

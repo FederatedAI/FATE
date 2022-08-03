@@ -93,11 +93,12 @@ def main(config="../../config.yaml", namespace=""):
         "select_col_indexes": -1,
         "select_names": [],
         "filter_methods": [
-            "iv_value_thres"
+            "iv_filter"
         ],
-
-        "iv_value_param": {
-            "value_threshold": 0.1
+        "iv_param": {
+            "metrics": "iv",
+            "filter_type": "threshold",
+            "threshold": 0.1,
         }}
     hetero_feature_selection_0 = HeteroFeatureSelection(name="hetero_feature_selection_0", **selection_param)
 

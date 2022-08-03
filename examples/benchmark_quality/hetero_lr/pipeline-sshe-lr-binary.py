@@ -131,8 +131,8 @@ def main(config="../../config.yaml", param="./lr_config.yaml", namespace=""):
 
     # fit model
     pipeline.fit()
-    lr_0_data = pipeline.get_component("hetero_sshe_lr_0").get_output_data().get("data")
-    lr_1_data = pipeline.get_component("hetero_sshe_lr_1").get_output_data().get("data")
+    lr_0_data = pipeline.get_component("hetero_sshe_lr_0").get_output_data()
+    lr_1_data = pipeline.get_component("hetero_sshe_lr_1").get_output_data()
     lr_0_score = extract_data(lr_0_data, "predict_result")
     lr_0_label = extract_data(lr_0_data, "label")
     lr_1_score = extract_data(lr_1_data, "predict_result")

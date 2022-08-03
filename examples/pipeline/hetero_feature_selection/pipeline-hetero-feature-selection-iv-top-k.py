@@ -93,10 +93,13 @@ def main(config="../../config.yaml", namespace=""):
     selection_param = {
         "select_col_indexes": -1,
         "select_names": [],
-        "filter_methods": ["iv_top_k"],
-        "iv_top_k_param": {
-            "k": 7,
-            "local_only": False
+        "filter_methods": [
+            "iv_filter"
+        ],
+        "iv_param": {
+            "metrics": "iv",
+            "filter_type": "top_k",
+            "threshold": 7
         }}
     hetero_feature_selection_0 = HeteroFeatureSelection(name="hetero_feature_selection_0", **selection_param)
 

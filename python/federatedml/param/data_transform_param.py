@@ -100,8 +100,12 @@ class DataTransformParam(BaseParam):
     with_match_id: bool
         True if dataset has match_id, default: False
 
+    match_id_name: str
+        Valid if input_format is "dense", and multiple columns are considered as match_ids,
+        the name of match_id to be used in current job
+
     match_id_index: int
-        Valid if input_format is "tag" or "sparse", and multiple column is considered as match_id,
+        Valid if input_format is "tag" or "sparse", and multiple columns are considered as match_ids,
         the index of match_id, default: 0
 
     """
@@ -114,7 +118,7 @@ class DataTransformParam(BaseParam):
                  outlier_impute=None, outlier_replace_value=0,
                  with_label=False, label_name='y',
                  label_type='int', output_format='dense', need_run=True,
-                 with_match_id=False, match_id_index=0):
+                 with_match_id=False, match_id_name='', match_id_index=0):
         self.input_format = input_format
         self.delimitor = delimitor
         self.data_type = data_type
@@ -135,6 +139,7 @@ class DataTransformParam(BaseParam):
         self.output_format = output_format
         self.need_run = need_run
         self.with_match_id = with_match_id
+        self.match_id_name = match_id_name
         self.match_id_index = match_id_index
 
     def check(self):
@@ -182,5 +187,11 @@ class DataTransformParam(BaseParam):
 
         if not isinstance(self.with_match_id, bool):
             raise ValueError("with_match_id should be boolean variable, but {} find".format(self.with_match_id))
+
+        if not isinstance(self.match_id_index, int) or self.match_id_index < 0:
+            raise ValueError("match_id_index should be non negative integer")
+
+        if not isinstance(self.match_id_name, str):
+            raise ValueError("match_id_name should be str")
 
         return True

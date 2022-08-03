@@ -15,6 +15,22 @@
             "table_name": "breast_hetero_host",
             "namespace": "experiment",
             "role": "host_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
         }
     ],
     "pipeline_tasks": {
@@ -23,6 +39,9 @@
         },
         "label-transform-encoder": {
             "script": "./pipeline-label-transform-encoder.py"
+        },
+        "label-transform-encoder-partial": {
+            "script": "./pipeline-label-transform-encoder-partial.py"
         },
         "label-transform-encoder-without-label-list": {
             "script": "./pipeline-label-transform-encoder-without-label-list.py"
