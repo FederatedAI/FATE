@@ -69,6 +69,13 @@ class BaseHeteroFeatureSelection(ModelBase):
             self.schema = data_instances.schema
 
         if self.header is not None:
+            # load current data anonymous header for prediction with model of version < 1.9.0
+            if len(self.completed_selection_result.anonymous_header) == 0:
+                data_anonymous_header = get_anonymous_header(data_instances)
+                # LOGGER.info(f"data_anonymous_header: {data_anonymous_header}")
+                self.anonymous_header = data_anonymous_header
+                # anonymous_header = [data_anonymous_header[header.index(f)] for f in self.header]
+                self.completed_selection_result.set_anonymous_header(data_anonymous_header)
             return
         self.schema = data_instances.schema
         header = get_header(data_instances)
@@ -142,7 +149,6 @@ class BaseHeteroFeatureSelection(ModelBase):
             header=self.curt_select_properties.header,
             col_name_to_anonym_dict=col_name_to_anonym_dict
         )
-
         # json_result = json_format.MessageToJson(result_obj)
         # LOGGER.debug("json_result: {}".format(json_result))
         return result_obj
@@ -152,9 +158,11 @@ class BaseHeteroFeatureSelection(ModelBase):
 
     def export_model(self):
         # LOGGER.debug("Model output is : {}".format(self.model_output))
+        """
         if self.model_output is not None:
             LOGGER.debug("model output already exists, return directly")
             return self.model_output
+        """
 
         meta_obj = self._get_meta()
         param_obj = self._get_param()
@@ -178,13 +186,16 @@ class BaseHeteroFeatureSelection(ModelBase):
         }
 
         header = list(model_param.header)
-        col_name_to_anonym_dict = dict(model_param.col_name_to_anonym_dict)
-        anonymous_header = [col_name_to_anonym_dict[x] for x in header]
+        # LOGGER.info(f"col_name_to_anonym_dict: {model_param.col_name_to_anonym_dict}")
+        if model_param.col_name_to_anonym_dict:
+            col_name_to_anonym_dict = dict(model_param.col_name_to_anonym_dict)
+            self.anonymous_header = [col_name_to_anonym_dict[x] for x in header]
+            self.completed_selection_result.set_anonymous_header(self.anonymous_header)
+
         # self.schema = {'header': header}
         self.header = header
         self.curt_select_properties.set_header(header)
         self.completed_selection_result.set_header(header)
-        self.completed_selection_result.set_anonymous_header(anonymous_header)
         self.curt_select_properties.set_last_left_col_indexes([x for x in range(len(header))])
         self.curt_select_properties.add_select_col_names(header)
 
