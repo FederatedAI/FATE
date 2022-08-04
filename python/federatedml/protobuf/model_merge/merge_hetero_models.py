@@ -1,35 +1,21 @@
 from federatedml.protobuf.model_merge.merge_sbt import merge_sbt
 from nyoka import lgb_to_pmml
 import copy
+import tempfile
 
 
-class MergedModel(object):
-
-    def __init__(self, model, model_type, output_format, target_name):
-        self.model = model
-        self.model_type = model_type
-        self.output_format = output_format
-        self.target_name = target_name
-
-    def __repr__(self):
-        return self.model.__repr__()
-
-    def dump(self, path):
-
-        if self.model_type in ['secureboost', 'tree', 'sbt']:
-            if self.output_format == 'pmml':
-                feature_names = self.model['lgb'].feature_name_
-                lgb_to_pmml(self.model, feature_names, self.target_name, path)
-            else:
-                with open(path, 'w') as f:
-                    f.write(self.model)
-
-        # linear model here
+def get_pmml_str(pmml_pipeline, target_name):
+    tmp_f = tempfile.NamedTemporaryFile()
+    path = tmp_f.name
+    lgb_to_pmml(pmml_pipeline, pmml_pipeline['lgb'].feature_name_, target_name, path)
+    with open(path, 'r') as read_f:
+        str_ = read_f.read()
+    tmp_f.close()
+    return str_
 
 
 def hetero_model_merge(guest_param: dict, guest_meta: dict, host_params: list, host_metas: list, model_type: str,
                        output_format: str, target_name: str = 'y'):
-
     """
     Merge a hetero model
     :param guest_param: a json dict contains guest model param
@@ -60,7 +46,11 @@ def hetero_model_merge(guest_param: dict, guest_meta: dict, host_params: list, h
 
     if model_type.lower() in ['secureboost', 'tree', 'sbt']:
         model = merge_sbt(guest_param, guest_meta, host_params, host_metas, output_format, target_name)
-        return MergedModel(model, model_type, output_format, target_name)
+        if output_format == 'pmml':
+            return get_pmml_str(model, target_name)
+        else:
+            return model
+
     elif model_type.lower() in ['logistic_regression', 'lr']:
         pass
     else:

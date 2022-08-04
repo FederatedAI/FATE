@@ -50,6 +50,7 @@ fastavro==1.4.1
 lightgbm==3.3.1
 etaf-crypto
 pyparsing<3.0.8
+nyoka==5.3.0
 
 # backports
 dataclasses; python_version < '3.7'
