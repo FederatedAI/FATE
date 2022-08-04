@@ -8,10 +8,13 @@ This section introduces the dsl and conf for different types of tasks.
 
     runtime_config : upload_conf.json
 
-2. Uploat Tag Task:
+2. Upload Tag Task:
 
     runtime_config : upload_tag_conf.json
 
+3. Upload Task with Anonymous Header:
+
+    runtime_config : upload_anonymous_conf.json
 
 Users can use following commands to run the task.
 
