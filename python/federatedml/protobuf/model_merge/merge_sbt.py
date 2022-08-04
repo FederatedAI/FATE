@@ -9,6 +9,7 @@ from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import Boosting
 from google.protobuf import json_format
 from federatedml.util.anonymous_generator_util import Anonymous
 
+
 def _merge_sbt(guest_param, host_param, host_sitename):
 
     # update feature name fid mapping
