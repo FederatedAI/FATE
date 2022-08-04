@@ -1,5 +1,6 @@
 from federatedml.protobuf.model_merge.merge_sbt import merge_sbt
 from nyoka import lgb_to_pmml
+import copy
 
 
 class MergedModel(object):
@@ -38,7 +39,6 @@ def hetero_model_merge(guest_param: dict, guest_meta: dict, host_params: list, h
     :param model_type: specify the model type:
                        secureboost, alias tree, sbt
                        logistic_regression, alias LR
-                       linear_regression, alias LinR
     :param output_format: output format of merged model, support:
                           lightgbm, for tree models only
                           sklearn, for linear models only
@@ -47,6 +47,10 @@ def hetero_model_merge(guest_param: dict, guest_meta: dict, host_params: list, h
 
     :return: Merged Model Class
     """
+    guest_param = copy.deepcopy(guest_param)
+    guest_meta = copy.deepcopy(guest_meta)
+    host_params = copy.deepcopy(host_params)
+    host_metas = copy.deepcopy(host_metas)
 
     if not isinstance(model_type, str):
         raise ValueError('model type should be a str, but got {}'.format(model_type))
@@ -59,31 +63,6 @@ def hetero_model_merge(guest_param: dict, guest_meta: dict, host_params: list, h
         return MergedModel(model, model_type, output_format, target_name)
     elif model_type.lower() in ['logistic_regression', 'lr']:
         pass
-    elif model_type.lower() in ['linear_regression', 'linr']:
-        pass
     else:
-        raise ValueError('model type should be one in ["sbt", "lr", "linr"], '
+        raise ValueError('model type should be one in ["sbt", "lr"], '
                          'but got unknown model type: {}'.format(model_type))
-
-
-if __name__ == '__main__':
-    import json
-    guest_json_path = '/home/cwj/standalone_fate_install_1.8.0/fateflow/model_local_cache' \
-                      '/guest#9999#guest-9999#host-9998#model/202205181728266208040/variables/data' \
-                      '/hetero_secure_boost_0/model'
-
-    host_json_path = '/home/cwj/standalone_fate_install_1.8.0/fateflow/model_local_cache/' \
-                     'host#9998#guest-9999#host-9998#model/202205181728266208040/variables/data/hetero_secure_boost_0/model'
-
-    """
-    Merging codes
-    """
-
-    param_name_guest = 'HeteroSecureBoostingTreeGuestParam.json'
-    meta_name_guest = 'HeteroSecureBoostingTreeGuestMeta.json'
-    param_name_host = 'HeteroSecureBoostingTreeHostParam.json'
-    guest_param_ = json.loads(open(guest_json_path + '/' + param_name_guest, 'r').read())
-    guest_meta_ = json.loads(open(guest_json_path + '/' + meta_name_guest, 'r').read())
-    host_param_ = json.loads(open(host_json_path + '/' + param_name_host, 'r').read())
-
-    ret = hetero_model_merge(guest_param_, guest_meta_, [host_param_], [], 'sbt', 'lgb', 'y')

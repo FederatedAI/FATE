@@ -87,7 +87,7 @@ def merge_sbt(guest_param: dict, guest_meta: dict, host_params: list, host_metas
     elif output_format in ['pmml']:
         classes = list(map(int, pb_param.classes_))
         bst = lgb.Booster(model_str=lgb_model)
-        new_clf = lgb.LGBMClassifier()
+        new_clf = lgb.LGBMRegressor() if guest_meta['taskType'] == 'regression' else lgb.LGBMClassifier()
         new_clf._Booster = bst
         new_clf._n_features = len(bst.feature_name())
         new_clf._n_classes = len(np.unique(classes))
@@ -100,31 +100,6 @@ def merge_sbt(guest_param: dict, guest_meta: dict, host_params: list, host_metas
     else:
         raise ValueError('unknown output type {}'.format(output_format))
 
-
-if __name__ == '__main__':
-    """
-    Param to modify
-    """
-
-    host_sitename_ = 'host:9998'
-
-    guest_json_path = '/home/cwj/standalone_fate_install_1.8.0/fateflow/model_local_cache' \
-                      '/guest#9999#guest-9999#host-9998#model/202205181728266208040/variables/data' \
-                      '/hetero_secure_boost_0/model'
-
-    host_json_path = '/home/cwj/standalone_fate_install_1.8.0/fateflow/model_local_cache/' \
-                     'host#9998#guest-9999#host-9998#model/202205181728266208040/variables/data/hetero_secure_boost_0/model'
-
-    """
-    Merging codes
-    """
-
-    param_name_guest = 'HeteroSecureBoostingTreeGuestParam.json'
-    meta_name_guest = 'HeteroSecureBoostingTreeGuestMeta.json'
-    param_name_host = 'HeteroSecureBoostingTreeHostParam.json'
-    guest_param_ = json.loads(open(guest_json_path + '/' + param_name_guest, 'r').read())
-    guest_meta_ = json.loads(open(guest_json_path + '/' + meta_name_guest, 'r').read())
-    host_param_ = json.loads(open(host_json_path + '/' + param_name_host, 'r').read())
 
 
 
