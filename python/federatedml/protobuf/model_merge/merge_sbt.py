@@ -7,7 +7,7 @@ from federatedml.protobuf.homo_model_convert.lightgbm.gbdt import sbt_to_lgb
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
 from google.protobuf import json_format
-
+from federatedml.util.anonymous_generator_util import Anonymous
 
 def _merge_sbt(guest_param, host_param, host_sitename):
 
@@ -50,17 +50,15 @@ def _merge_sbt(guest_param, host_param, host_sitename):
 def extract_host_name(host_param, idx):
 
     try:
+        anonymous_obj = Anonymous()
         anonymous_dict = host_param['anonymousNameMapping']
-        split_dict = None
-        split_dict_2 = None
+        role, party_id = None, None
         for key in anonymous_dict:
-            split_dict = key.split('_')
-            split_dict_2 = key.split(':')
+            role = anonymous_obj.get_role_from_anonymous_column(key)
+            party_id = anonymous_obj.get_party_id_from_anonymous_column(key)
             break
-        if len(split_dict) == 3:
-            return str(split_dict[0]) + '_' + str(split_dict[1])
-        elif len(split_dict_2) == 3:
-            return str(split_dict_2[0]) + '_' + str(split_dict_2[1])
+        if role is not None and party_id is not None:
+            return role + '_' + party_id
         else:
             return None
     except Exception as e:
