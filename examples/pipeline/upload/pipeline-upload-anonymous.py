@@ -47,8 +47,8 @@ def main(config="../../config.yaml", namespace=""):
                                     meta={
                                         "with_label": True,
                                         "label_name": "y"
-                                    }
-                                    )
+    }
+    )
     # upload both data
     pipeline_upload.upload(drop=1)
 
