@@ -87,6 +87,20 @@ class Anonymous(object):
         return original_anonymous_header + extend_anonymous_header
 
     @staticmethod
+    def get_party_id_from_anonymous_column(anonymous_column):
+        splits = Anonymous.get_anonymous_column_splits(anonymous_column)
+        if len(splits) < 3:
+            raise ValueError("This is not a anonymous_column")
+        return splits[1]
+
+    @staticmethod
+    def get_role_from_anonymous_column(anonymous_column):
+        splits = Anonymous.get_anonymous_column_splits(anonymous_column)
+        if len(splits) < 3:
+            raise ValueError("This is not a anonymous_column")
+        return splits[0]
+
+    @staticmethod
     def get_anonymous_header(schema):
         return schema["anonymous_header"]
 
