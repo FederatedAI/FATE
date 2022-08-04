@@ -17,6 +17,7 @@ packages = [
     "pipeline.component.nn.backend.keras",
     "pipeline.component.nn.backend.pytorch",
     "pipeline.component.nn.backend.tf",
+    "pipeline.component.nn.backend.fate_torch"
     "pipeline.component.nn.models",
     "pipeline.demo",
     "pipeline.interface",
