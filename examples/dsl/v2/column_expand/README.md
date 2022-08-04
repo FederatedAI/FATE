@@ -10,7 +10,13 @@ This section introduces the dsl and conf for different types of tasks.
     
     runtime_config : test_column_expand_job_conf.json
     
-    data type: categorical(binary)
+
+2. Column Expand Task with Anonymous Header:
+
+    dsl: test_column_expand_job_dsl.json
+    
+    runtime_config : test_column_expand_anonymous_job_conf.json
+
 
 Users can use following commands to run a task.
 
