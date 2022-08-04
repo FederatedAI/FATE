@@ -249,18 +249,18 @@ class DataFormatPreProcess(object):
             if original_index_info and "header_index" in original_index_info:
                 header_index = original_index_info["header_index"]
                 if header_index:
-                    start_col_idx = max(header_index)
+                    pre_max_col_idx = max(header_index)
                 else:
-                    start_col_idx = 0
+                    pre_max_col_idx = -1
 
                 if original_index_info.get("label_index") is not None:
-                    start_col_idx = max(original_index_info["label_index"], start_col_idx)
+                    pre_max_col_idx = max(original_index_info["label_index"], pre_max_col_idx)
                 if original_index_info.get("match_id_index") is not None:
-                    start_col_idx = max(original_index_info["match_id_index"], start_col_idx)
+                    pre_max_col_idx = max(original_index_info["match_id_index"], pre_max_col_idx)
 
-                new_header_index = header_index + [i + start_col_idx for i in range(len(columns))]
+                append_header_index = [i + pre_max_col_idx + 1 for i in range(len(columns))]
 
-                schema["header_index"] = new_header_index
+                schema["original_index_info"]["header_index"] = header_index + append_header_index
         else:
             if len(header) == 0:
                 new_header = DELIMITER.join(columns)
