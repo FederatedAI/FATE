@@ -126,7 +126,7 @@ class DataFormatPreProcess(object):
                 raise ValueError("Dense input data must have schema")
 
             header = schema["header"].strip().split(delimiter, -1)
-            header = list(map(lambda col: col.strip(), header))
+            header = list(map(lambda col: col.strip(),header))
             header_index_mapping = dict(zip(header, range(len(header))))
             with_label = meta.get("with_label", False)
             if not isinstance(with_label, bool):
@@ -272,3 +272,35 @@ class DataFormatPreProcess(object):
                 schema["sid"] = schema["sid"].strip()
 
         return schema
+
+    @staticmethod
+    def clean_header(schema):
+        schema = copy.deepcopy(schema)
+        header = schema["header"]
+
+        if "label_name" in schema:
+            del schema["label_name"]
+
+        if "anonymous_header" in schema:
+            del schema["anonymous_header"]
+
+        if "anonymous_label" in schema:
+            del schema["anonymous_label"]
+
+        if isinstance(header, list):
+            schema["header"] = []
+            original_index_info = schema.get("original_index_info")
+            if original_index_info:
+                del schema["original_index_info"]
+
+                if "match_id_name" in schema:
+                    del schema["match_id_name"]
+
+                if "match_id_index" in schema:
+                    del schema["match_id_index"]
+        else:
+            schema["header"] = ""
+
+        return schema
+
+
