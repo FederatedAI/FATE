@@ -19,11 +19,18 @@ class FPTensorDistributed(FPTensorProtocol):
     Demo of Distributed Fixed Presicion Tensor
     """
 
-    def __init__(self, blocks_table):
+    def __init__(self, blocks_table, shape=None):
         """
         use table to store blocks in format (blockid, block)
         """
         self._blocks_table = blocks_table
+
+        # assume block is verticel aranged
+        if shape is None:
+            shapes = list(self._blocks_table.mapValues(lambda cb: cb.shape).collect())
+            self.shape = (sum(s[0] for s in shapes), shapes[0][1])
+        else:
+            self.shape = shape
 
     def _binary_op(self, other, func_name):
         if isinstance(other, FPTensorDistributed):
@@ -68,11 +75,11 @@ class FPTensorDistributed(FPTensorProtocol):
     ) -> "FPTensorDistributed":
         return self._binary_op(other, "__rmul__")
 
-    def __matmul__(self, other: "FPTensorDistributed") -> "FPTensorDistributed":
+    def __matmul__(self, other: "PHETensorDistributed") -> "PHETensorDistributed":
         # todo: fix
         ...
 
-    def __rmatmul__(self, other: "FPTensorDistributed") -> "FPTensorDistributed":
+    def __rmatmul__(self, other: "PHETensorDistributed") -> "FPTensorDistributed":
         # todo: fix
         ...
 
@@ -85,12 +92,19 @@ class FPTensorDistributed(FPTensorProtocol):
 
 
 class PHETensorDistributed(PHETensorABC):
-    def __init__(self, blocks_table) -> None:
+    def __init__(self, blocks_table, shape=None):
         """
         use table to store blocks in format (blockid, encrypted_block)
         """
         self._blocks_table = blocks_table
         self._is_transpose = False
+
+        # assume block is verticel aranged
+        if shape is None:
+            shapes = list(self._blocks_table.mapValues(lambda cb: cb.shape).collect())
+            self.shape = (sum(s[1][0] for s in shapes), shapes[0][1][1])
+        else:
+            self.shape = shape
 
     def __add__(
         self, other: Union["PHETensorDistributed", FPTensorDistributed, int, float]
@@ -122,15 +136,11 @@ class PHETensorDistributed(PHETensorABC):
     ) -> "PHETensorDistributed":
         return self._binary_op_limited(other, "__rmul__")
 
-    def __matmul__(
-        self, other: Union["PHETensorDistributed", FPTensorDistributed, int, float]
-    ) -> "PHETensorDistributed":
+    def __matmul__(self, other: FPTensorDistributed) -> "PHETensorDistributed":
         # TODO: impl me
         ...
 
-    def __rmatmul__(
-        self, other: Union["PHETensorDistributed", FPTensorDistributed, int, float]
-    ) -> "PHETensorDistributed":
+    def __rmatmul__(self, other: FPTensorDistributed) -> "PHETensorDistributed":
         # TODO: impl me
         ...
 

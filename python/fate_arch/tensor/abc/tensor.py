@@ -4,23 +4,34 @@ from typing_extensions import Protocol
 
 
 class FPTensorProtocol(Protocol):
-
-    def __add__(self, other: typing.Union["FPTensorProtocol", float, int]) -> "FPTensorProtocol":
+    def __add__(
+        self, other: typing.Union["FPTensorProtocol", float, int]
+    ) -> "FPTensorProtocol":
         ...
 
-    def __radd__(self, other: typing.Union["FPTensorProtocol", float, int]) -> "FPTensorProtocol":
+    def __radd__(
+        self, other: typing.Union["FPTensorProtocol", float, int]
+    ) -> "FPTensorProtocol":
         ...
 
-    def __sub__(self, other: typing.Union["FPTensorProtocol", float, int]) -> "FPTensorProtocol":
+    def __sub__(
+        self, other: typing.Union["FPTensorProtocol", float, int]
+    ) -> "FPTensorProtocol":
         ...
 
-    def __rsub__(self, other: typing.Union["FPTensorProtocol", float, int]) -> "FPTensorProtocol":
+    def __rsub__(
+        self, other: typing.Union["FPTensorProtocol", float, int]
+    ) -> "FPTensorProtocol":
         ...
 
-    def __mul__(self, other: typing.Union["FPTensorProtocol", float, int]) -> "FPTensorProtocol":
+    def __mul__(
+        self, other: typing.Union["FPTensorProtocol", float, int]
+    ) -> "FPTensorProtocol":
         ...
 
-    def __rmul__(self, other: typing.Union["FPTensorProtocol", float, int]) -> "FPTensorProtocol":
+    def __rmul__(
+        self, other: typing.Union["FPTensorProtocol", float, int]
+    ) -> "FPTensorProtocol":
         ...
 
     def __matmul__(self, other: "FPTensorProtocol") -> "FPTensorProtocol":

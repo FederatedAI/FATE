@@ -73,7 +73,7 @@ T = TypeVar("T")
 
 class Future:
     """
-    get maybe async in future, in this version,
+    `get` maybe async in future, in this version,
     we wrap obj to support explicit typing and check
     """
 
@@ -312,9 +312,9 @@ class Context:
             last_dim = shape[-1]
             for i in range(num_partition):
                 if i == num_partition - 1:
-                    parts.append(torch.tensor((*shape[:-1], last_dim)))
+                    parts.append(torch.rand((*shape[:-1], last_dim)))
                 else:
-                    parts.append(torch.tensor((*shape[:-1], shape[-1] / num_partition)))
+                    parts.append(torch.rand((*shape[:-1], shape[-1] / num_partition)))
                     last_dim -= shape[-1] / num_partition
             return FPTensor(
                 self,
@@ -428,6 +428,10 @@ class FPTensor:
         self._ctx = ctx
         self._tensor = tensor
 
+    @property
+    def shape(self):
+        return self._tensor.shape
+
     def __add__(self, other: Union["FPTensor", float, int]) -> "FPTensor":
         if not hasattr(self._tensor, "__add__"):
             return NotImplemented
@@ -498,6 +502,10 @@ class PHETensor:
     def __init__(self, ctx: Context, tensor: PHETensorABC) -> None:
         self._tensor = tensor
         self._ctx = ctx
+
+    @property
+    def shape(self):
+        return self._tensor.shape
 
     def __add__(self, other: Union["PHETensor", FPTensor, int, float]) -> "PHETensor":
         return self._binary_op(other, self._tensor.__add__)

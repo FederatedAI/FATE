@@ -100,9 +100,7 @@ def phe_keygen_metaclass(encrypt_cls, decrypt_cls, keygen_op):
 def phe_decryptor_metaclass(pheblock_cls, fpblock_cls):
     class PHEDecryptorMetaclass(type):
         def __new__(cls, name, bases, dict):
-            decryptor_cls = super().__new__(
-                cls, name, bases, dict
-            )
+            decryptor_cls = super().__new__(cls, name, bases, dict)
 
             setattr(decryptor_cls, "__init__", _impl_decryptor_init())
             setattr(
@@ -132,9 +130,7 @@ def phe_decryptor_metaclass(pheblock_cls, fpblock_cls):
 def phe_encryptor_metaclass(pheblock_cls, fpblock_cls):
     class PHEEncryptorMetaclass(type):
         def __new__(cls, name, bases, dict):
-            encryptor_cls = super().__new__(
-                cls, name, bases, dict
-            )
+            encryptor_cls = super().__new__(cls, name, bases, dict)
 
             setattr(encryptor_cls, "__init__", _impl_encryptor_init())
             setattr(
@@ -167,6 +163,12 @@ class PHEBlockMetaclass(type):
         class_obj = super().__new__(cls, name, bases, dict)
 
         setattr(class_obj, "__init__", _impl_init())
+
+        @property
+        def shape(self):
+            return self._cb.shape
+
+        setattr(class_obj, "shape", shape)
         _maybe_setattr(class_obj, "serialize", _impl_serialize())
         for impl_name, ops in {
             "__add__": PHEBlockMetaclass._add,
