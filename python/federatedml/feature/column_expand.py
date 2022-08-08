@@ -80,7 +80,7 @@ class ColumnExpand(ModelBase):
     @staticmethod
     def _append_feature(entry, append_value):
         # empty content
-        if len(entry) == 0:
+        if entry is None or len(entry) == 0:
             new_entry = append_value
         else:
             new_entry = entry + DELIMITER + append_value
