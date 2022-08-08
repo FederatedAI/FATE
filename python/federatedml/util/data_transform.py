@@ -1109,11 +1109,19 @@ def load_data_transform_model(model_name="DataTransform",
     with_label = model_meta.with_label
     label_name = model_meta.label_name if with_label else None
     label_type = model_meta.label_type if with_label else None
-    with_match_id = model_meta.with_match_id
+    try:
+        with_match_id = model_meta.with_match_id
+    except AttributeError:
+        with_match_id = False
+
     output_format = model_meta.output_format
 
     header = list(model_param.header) or None
-    anonymous_header = list(model_param.anonymous_header) or None
+
+    try:
+        anonymous_header = list(model_param.anonymous_header)
+    except AttributeError:
+        anonymous_header = None
 
     sid_name = None
     if model_param.sid_name:
