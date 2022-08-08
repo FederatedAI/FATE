@@ -1,13 +1,26 @@
-from federatedml.protobuf.model_merge.merge_sbt import merge_sbt
-from nyoka import lgb_to_pmml
 import copy
 import tempfile
+
+from federatedml.protobuf.model_merge.merge_sbt import merge_sbt
+from federatedml.protobuf.model_merge.merge_hetero_lr import merge_lr
+from nyoka import lgb_to_pmml
+from sklearn2pmml import sklearn2pmml
 
 
 def get_pmml_str(pmml_pipeline, target_name):
     tmp_f = tempfile.NamedTemporaryFile()
     path = tmp_f.name
     lgb_to_pmml(pmml_pipeline, pmml_pipeline['lgb'].feature_name_, target_name, path)
+    with open(path, 'r') as read_f:
+        str_ = read_f.read()
+    tmp_f.close()
+    return str_
+
+
+def output_sklearn_pmml_str(pmml_pipeline, ):
+    tmp_f = tempfile.NamedTemporaryFile()
+    path = tmp_f.name
+    sklearn2pmml(pmml_pipeline, path, with_repr=True)
     with open(path, 'r') as read_f:
         str_ = read_f.read()
     tmp_f.close()
@@ -52,7 +65,11 @@ def hetero_model_merge(guest_param: dict, guest_meta: dict, host_params: list, h
             return model
 
     elif model_type.lower() in ['logistic_regression', 'lr']:
-        pass
+        model = merge_lr(guest_param, guest_meta, host_params, host_metas, output_format)
+        if output_format == 'pmml':
+            return output_sklearn_pmml_str(model)
+        else:
+            return model
     else:
         raise ValueError('model type should be one in ["sbt", "lr"], '
                          'but got unknown model type: {}'.format(model_type))
