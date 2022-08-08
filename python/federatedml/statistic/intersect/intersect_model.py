@@ -29,7 +29,7 @@ from federatedml.statistic.intersect import RawIntersectionHost, RawIntersection
 from federatedml.statistic.intersect.match_id_process import MatchIDIntersect
 from federatedml.transfer_variable.transfer_class.intersection_func_transfer_variable import \
     IntersectionFuncTransferVariable
-from federatedml.util import consts, LOGGER
+from federatedml.util import consts, LOGGER, data_format_preprocess
 
 
 class IntersectModelBase(ModelBase):
@@ -266,8 +266,9 @@ class IntersectModelBase(ModelBase):
                                                           owner_only=True)
             if self.model_param.only_output_key and self.intersect_ids:
                 self.intersect_ids = self.intersect_ids.mapValues(lambda v: Instance(inst_id=v.inst_id))
-                self.intersect_ids.schema = {"match_id_name": data.schema["match_id_name"],
-                                             "sid": data.schema.get("sid")}
+                # self.intersect_ids.schema = {"match_id_name": data.schema["match_id_name"],
+                #                             "sid": data.schema.get("sid")}
+                self.intersect_ids.schema = data_format_preprocess.DataFormatPreProcess.clean_header(data.schema)
 
         LOGGER.info("Finish intersection")
 
@@ -284,7 +285,8 @@ class IntersectModelBase(ModelBase):
         result_data = self.intersect_ids
         if not self.use_match_id_process and result_data:
             if self.intersection_obj.only_output_key:
-                result_data.schema = {"sid": data.schema.get("sid")}
+                # result_data.schema = {"sid": data.schema.get("sid")}
+                result_data.schema = data_format_preprocess.DataFormatPreProcess.clean_header(data.schema)
                 LOGGER.debug(f"non-match-id & only_output_key, add sid to schema")
             else:
                 result_data = self.intersection_obj.get_value_from_data(result_data, data)
@@ -396,8 +398,9 @@ class IntersectModelBase(ModelBase):
                 self.intersect_ids = proc_obj.expand(self.intersect_ids, match_data=match_data)
             if self.intersect_ids and self.model_param.only_output_key:
                 self.intersect_ids = self.intersect_ids.mapValues(lambda v: Instance(inst_id=v.inst_id))
-                self.intersect_ids.schema = {"match_id_name": data_inst.schema["match_id_name"],
-                                             "sid": data_inst.schema.get("sid")}
+                # self.intersect_ids.schema = {"match_id_name": data_inst.schema["match_id_name"],
+                #                             "sid": data_inst.schema.get("sid")}
+                self.intersect_ids.schema = data_format_preprocess.DataFormatPreProcess.clean_header(data_inst.schema)
 
         LOGGER.info("Finish intersection")
 
@@ -418,7 +421,8 @@ class IntersectModelBase(ModelBase):
                 self.intersect_ids.schema = result_data.schema
                 LOGGER.debug(f"not only_output_key, restore value called")
             if self.intersection_obj.only_output_key and result_data:
-                schema = {"sid": data_inst.schema.get("sid")}
+                # schema = {"sid": data_inst.schema.get("sid")}
+                schema = data_format_preprocess.DataFormatPreProcess.clean_header(data_inst.schema)
                 result_data = result_data.mapValues(lambda v: None)
                 result_data.schema = schema
                 self.intersect_ids.schema = schema
