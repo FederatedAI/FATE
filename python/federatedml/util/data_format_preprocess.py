@@ -302,4 +302,3 @@ class DataFormatPreProcess(object):
             schema["header"] = ""
 
         return schema
-
