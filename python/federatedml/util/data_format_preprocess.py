@@ -126,7 +126,7 @@ class DataFormatPreProcess(object):
                 raise ValueError("Dense input data must have schema")
 
             header = schema["header"].strip().split(delimiter, -1)
-            header = list(map(lambda col: col.strip(),header))
+            header = list(map(lambda col: col.strip(), header))
             header_index_mapping = dict(zip(header, range(len(header))))
             with_label = meta.get("with_label", False)
             if not isinstance(with_label, bool):
@@ -302,5 +302,4 @@ class DataFormatPreProcess(object):
             schema["header"] = ""
 
         return schema
-
 
