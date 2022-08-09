@@ -374,7 +374,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         param = list(feat_importance_param)
         rs_dict = {}
         for fp in param:
-            key = (fp.sitename, fp.fid)
+            key = (fp.sitename.replace(':', '_'), fp.fid)
             importance = FeatureImportance()
             importance.from_protobuf(fp)
             rs_dict[key] = importance
