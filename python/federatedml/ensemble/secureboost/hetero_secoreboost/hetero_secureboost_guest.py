@@ -158,6 +158,20 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                 self.feature_importances_[fid] += tree_feature_importance[fid]
         LOGGER.debug('cur feature importance {}'.format(self.feature_importances_))
 
+    def align_feature_importance_guest(self):
+        """
+        receive feature importance from host to update global feature importance
+        """
+        host_feature_importance_list = self.hetero_sbt_transfer_variable.host_feature_importance.get(idx=-1)
+        # pop host importance, make sure host importance is latest when host anonymous features are updated
+        for key, importance in self.feature_importances_:
+            sitename, fid = key
+            if consts.GUEST not in sitename:
+                self.feature_importances_.pop(key)
+
+        for i in host_feature_importance_list:
+            self.feature_importances_.update(i)
+
     def goss_sample(self):
 
         sampled_gh = goss_sampling(self.grad_and_hess, self.top_rate, self.other_rate)
@@ -191,11 +205,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
             self.booster_dim = 1
 
     def postprocess(self):
-        host_feature_importance_list = self.hetero_sbt_transfer_variable.host_feature_importance.get(idx=-1)
-        for i in host_feature_importance_list:
-            self.feature_importances_.update(i)
-
-        LOGGER.debug('self feature importance is {}'.format(self.feature_importances_))
+        self.align_feature_importance_guest()
 
     def fit_a_learner(self, epoch_idx: int, booster_dim: int):
 
@@ -293,6 +303,9 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         cache_dataset_key = self.predict_data_cache.get_data_key(data_inst)
 
         processed_data = self.data_and_header_alignment(data_inst)
+
+        # sync feature importance
+        self.align_feature_importance_guest()
 
         last_round = self.predict_data_cache.predict_data_last_round(cache_dataset_key)
 
