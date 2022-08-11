@@ -34,6 +34,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.max_sample_weight = None
         self.round_decimal = None
         self.new_ver = True
+        self.feature_importance_aligned = False
 
         self.boosting_strategy = consts.STD_TREE
 
@@ -119,7 +120,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
             new_feat_importance[(party + '_' + party_id, feat_idx)] = self.feature_importances_[key]
         return new_feat_importance
 
-    def align_feature_importance_host(self):
+    def align_feature_importance_host(self, suffix):
         """
         send feature importance to guest to update global feature importance
         """
@@ -132,7 +133,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
     def postprocess(self):
         # generate anonymous
-        self.align_feature_importance_host()
+        self.align_feature_importance_host(suffix='postprocess')
 
     def fit_a_learner(self, epoch_idx: int, booster_dim: int):
 
@@ -192,8 +193,9 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
         self.set_anonymous_header(processed_data)
 
-        # sync feature importance
-        self.align_feature_importance_host()
+        # sync feature importance if host anonymous change in model migration
+        if not self.on_training:
+            self.align_feature_importance_host('predict')
 
         predict_start_round = self.sync_predict_start_round()
 

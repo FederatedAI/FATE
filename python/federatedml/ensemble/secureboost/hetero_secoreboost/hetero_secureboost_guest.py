@@ -158,7 +158,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                 self.feature_importances_[fid] += tree_feature_importance[fid]
         LOGGER.debug('cur feature importance {}'.format(self.feature_importances_))
 
-    def align_feature_importance_guest(self):
+    def align_feature_importance_guest(self, suffix):
         """
         receive feature importance from host to update global feature importance
         """
@@ -209,7 +209,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
             self.booster_dim = 1
 
     def postprocess(self):
-        self.align_feature_importance_guest()
+        self.align_feature_importance_guest(suffix='postprocess')
 
     def fit_a_learner(self, epoch_idx: int, booster_dim: int):
 
@@ -308,8 +308,9 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
 
         processed_data = self.data_and_header_alignment(data_inst)
 
-        # sync feature importance
-        self.align_feature_importance_guest()
+        # sync feature importance if host anonymous change in model migration
+        if not self.on_training:
+            self.align_feature_importance_guest('predict')
 
         last_round = self.predict_data_cache.predict_data_last_round(cache_dataset_key)
 
