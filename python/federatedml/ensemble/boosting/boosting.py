@@ -217,7 +217,7 @@ class Boosting(ModelBase, ABC):
 
     def data_and_header_alignment(self, data_inst):
         """
-        turn data into sparse and align header/ algin data table header
+        turn data into sparse and align header/ align data table header
         """
 
         cache_dataset_key = self.predict_data_cache.get_data_key(data_inst)

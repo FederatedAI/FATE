@@ -144,7 +144,8 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
 
         self.data_inst = data_inst
 
-        self.data_bin, self.bin_split_points, self.bin_sparse_points = self.prepare_data(data_inst)
+        to_process_data_inst = self.data_and_header_alignment(data_inst) if self.is_warm_start else data_inst
+        self.data_bin, self.bin_split_points, self.bin_sparse_points = self.prepare_data(to_process_data_inst)
 
         self.y = self.get_label(self.data_bin)
 
@@ -300,7 +301,8 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
 
         self.on_training = True
 
-        self.data_bin, self.bin_split_points, self.bin_sparse_points = self.prepare_data(data_inst)
+        to_process_data_inst = self.data_and_header_alignment(data_inst) if self.is_warm_start else data_inst
+        self.data_bin, self.bin_split_points, self.bin_sparse_points = self.prepare_data(to_process_data_inst)
 
         if self.is_warm_start:
             self.prepare_warm_start(data_inst)
