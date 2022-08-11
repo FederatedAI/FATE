@@ -188,9 +188,9 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
         LOGGER.info('running prediction')
 
-        self.set_anonymous_header(data_inst)
-
         processed_data = self.data_and_header_alignment(data_inst)
+
+        self.set_anonymous_header(processed_data)
 
         # sync feature importance
         self.align_feature_importance_host()

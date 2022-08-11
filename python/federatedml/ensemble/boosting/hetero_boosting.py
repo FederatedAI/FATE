@@ -295,14 +295,14 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
 
         LOGGER.info('begin to fit a hetero boosting model, model is {}'.format(self.model_name))
 
-        self.set_anonymous_header(data_inst)
-
         self.start_round = 0
 
         self.on_training = True
 
         to_process_data_inst = self.data_and_header_alignment(data_inst) if self.is_warm_start else data_inst
         self.data_bin, self.bin_split_points, self.bin_sparse_points = self.prepare_data(to_process_data_inst)
+
+        self.set_anonymous_header(to_process_data_inst)
 
         if self.is_warm_start:
             self.prepare_warm_start(data_inst)
