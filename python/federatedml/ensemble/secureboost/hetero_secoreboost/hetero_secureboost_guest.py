@@ -163,11 +163,15 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         receive feature importance from host to update global feature importance
         """
         host_feature_importance_list = self.hetero_sbt_transfer_variable.host_feature_importance.get(idx=-1)
-        # pop host importance, make sure host importance is latest when host anonymous features are updated
-        for key, importance in self.feature_importances_:
+        # remove host importance, make sure host importance is latest when host anonymous features are updated
+        pop_key = []
+        for key in self.feature_importances_:
             sitename, fid = key
             if consts.GUEST not in sitename:
-                self.feature_importances_.pop(key)
+                pop_key.append(key)
+
+        for k in pop_key:
+            self.feature_importances_.pop(k)
 
         for i in host_feature_importance_list:
             self.feature_importances_.update(i)
