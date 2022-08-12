@@ -154,7 +154,7 @@ class Session(object):
                 raise RuntimeError(f"`party_info` and `runtime_conf` are both `None`")
             parties_info = PartiesInfo.from_conf(runtime_conf)
         self._parties_info = parties_info
-        self._all_parties_info = [Party(k, p) for k, v in runtime_conf['role'].items() for p in v]
+        self._all_party_info = [Party(k, p) for k, v in runtime_conf['role'].items() for p in v]
 
         if self.is_federation_valid:
             raise RuntimeError("federation session already valid")
@@ -400,6 +400,7 @@ class Session(object):
                                                 storage_engine=session_record.f_engine_name,
                                                 record=False)
                 elif session_record.f_engine_type == EngineType.FEDERATION:
+                    self._logger.info(f"engine runtime conf: {session_record.f_engine_address}")
                     self._init_federation_if_not_valid(federation_session_id=engine_session_id,
                                                        engine_runtime_conf=session_record.f_engine_address)
             except Exception as e:
