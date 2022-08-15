@@ -49,7 +49,7 @@ filelock==3.3.1
 pulsar-client==2.10.0
 fastavro==1.4.1
 lightgbm==3.3.1
-etaf_crypto
+etaf-crypto
 pyparsing<3.0.8
 
 # addtional requirements for eggroll
