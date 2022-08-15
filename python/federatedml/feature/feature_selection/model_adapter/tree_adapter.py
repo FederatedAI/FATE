@@ -56,7 +56,7 @@ def feature_importance_with_anonymous_converter(model_meta, model_param):
             local_cols.append(fid_mapping[fid])
             local_val.append(importance)
         else:
-            site_name = site_name.split('_')
+            site_name = site_name.split(':')
             if site_name[0] == consts.HOST:
                 continue
             else:
