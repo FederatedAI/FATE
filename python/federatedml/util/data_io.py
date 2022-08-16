@@ -1137,7 +1137,7 @@ class DataIO(ModelBase):
     def transform(self, data_inst):
         self._transformer.role = self.role
         self._transformer.component_properties = self.component_properties
-        self._transformer.transform(data_inst)
+        return self._transformer.transform(data_inst)
 
     def export_model(self):
         return self._transformer.export_model()
