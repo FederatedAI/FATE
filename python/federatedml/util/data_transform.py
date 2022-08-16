@@ -111,7 +111,8 @@ class DenseFeatureTransformer(object):
         if exclusive_data_type:
             self.exclusive_data_type = dict([(k.lower(), v) for k, v in exclusive_data_type.items()])
             for idx, col_name in enumerate(header):
-                self.exclusive_data_type_fid_map[idx] = self.exclusive_data_type[col_name]
+                if col_name in self.exclusive_data_type:
+                    self.exclusive_data_type_fid_map[idx] = self.exclusive_data_type[col_name]
 
     def extract_feature_value(self, value, header_index=None):
         if not header_index:
@@ -167,7 +168,8 @@ class DenseFeatureTransformer(object):
         extract_feature_func = functools.partial(self.extract_feature_value,
                                                  header_index=header_index)
         input_data_features = input_data.mapValues(extract_feature_func)
-        input_data_features.schema = input_data.schema
+        # input_data_features.schema = input_data.schema
+        input_data_features.schema = schema
 
         input_data_labels = None
         input_data_match_id = None
@@ -1031,8 +1033,15 @@ class DataTransform(ModelBase):
         return data_inst
 
     def export_model(self):
-        model_dict = self.transformer.save_model()
-        model_dict["DataTransformMeta"].need_run = self.need_run
+        if not self.need_run:
+            model_meta = DataTransformMeta()
+            model_meta.need_run = False
+            model_param = DataTransformParam()
+            model_dict = dict(DataTransformMeta=model_param,
+                              DataTransformParam=model_param)
+        else:
+            model_dict = self.transformer.save_model()
+
         return model_dict
 
 
@@ -1109,11 +1118,19 @@ def load_data_transform_model(model_name="DataTransform",
     with_label = model_meta.with_label
     label_name = model_meta.label_name if with_label else None
     label_type = model_meta.label_type if with_label else None
-    with_match_id = model_meta.with_match_id
+    try:
+        with_match_id = model_meta.with_match_id
+    except AttributeError:
+        with_match_id = False
+
     output_format = model_meta.output_format
 
     header = list(model_param.header) or None
-    anonymous_header = list(model_param.anonymous_header) or None
+
+    try:
+        anonymous_header = list(model_param.anonymous_header)
+    except AttributeError:
+        anonymous_header = None
 
     sid_name = None
     if model_param.sid_name:
