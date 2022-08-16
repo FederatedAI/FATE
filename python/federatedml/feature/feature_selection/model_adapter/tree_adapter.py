@@ -16,9 +16,6 @@ def feature_importance_converter(model_meta, model_param):
 
     for feat_importance in feat_importance_list:
         site_name = feat_importance.sitename
-        site_name = site_name.split(':')
-        if site_name[0] == consts.HOST:
-            continue
         fid = feat_importance.fid
         importance = feat_importance.importance
         feature_name = fid_mapping[fid]
@@ -101,6 +98,6 @@ class HeteroFastSBTAdapter(BaseAdapter):
         if model_name == consts.HETERO_FAST_SBT_LAYERED:
             return feature_importance_with_anonymous_converter(model_meta, model_param)
         elif model_name == consts.HETERO_FAST_SBT_MIX:
-            return feature_importance_converter(model_meta, model_param)
+            return feature_importance_with_anonymous_converter(model_meta, model_param)
         else:
             raise ValueError('model name {} is illegal'.format(model_name))
