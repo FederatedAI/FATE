@@ -42,16 +42,15 @@ class SelectionProperties(object):
     def load_properties_with_new_header(self, header, feature_values, left_cols_obj, new_header_dict):
         self.set_header(list(new_header_dict.values()))
         self.set_last_left_col_indexes([header.index(i) for i in left_cols_obj.original_cols])
-        self.add_select_col_names([new_header_dict[col] for col in left_cols_obj.original_cols])
+        self.add_select_col_names([new_header_dict.get(col) for col in left_cols_obj.original_cols])
         for col_name, _ in feature_values.items():
-            self.add_feature_value(new_header_dict[col_name], feature_values[col_name])
+            self.add_feature_value(new_header_dict.get(col_name), feature_values.get(col_name))
         left_cols_dict = dict(left_cols_obj.left_cols)
-        LOGGER.info(f"left_cols_dict: {left_cols_dict}")
+        # LOGGER.info(f"left_cols_dict: {left_cols_dict}")
         for col_name, _ in left_cols_dict.items():
-            if left_cols_dict[col_name]:
-                LOGGER.info(f"add left original col_name: {col_name}; new col_name: {new_header_dict[col_name]}")
-                self.add_left_col_name(new_header_dict[col_name])
-                LOGGER.info(f"select properties all left cols names: {self.all_left_col_names}")
+            if left_cols_dict.get(col_name):
+                self.add_left_col_name(new_header_dict.get(col_name))
+                # LOGGER.info(f"select properties all left cols names: {self.all_left_col_names}")
 
         return self
 
