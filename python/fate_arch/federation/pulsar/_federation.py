@@ -31,8 +31,8 @@ from fate_arch.federation._datastream import Datastream
 
 
 LOGGER = getLogger()
-# default message max size in bytes = 50MB
-DEFAULT_MESSAGE_MAX_SIZE = 104857 * 50
+# default message max size in bytes = 1MB
+DEFAULT_MESSAGE_MAX_SIZE = 1024 * 1024
 NAME_DTYPE_TAG = "<dtype>"
 _SPLIT_ = "^"
 
