@@ -200,7 +200,7 @@ MIX_TREE = 'mix'
 LAYERED_TREE = 'layered'
 SINGLE_OUTPUT = 'single_output'
 MULTI_OUTPUT = 'multi_output'
-HOST_LOCAL = 'host_local'
+HOST_LOCAL = 'hostLocal'
 
 TRAIN_EVALUATE = 'train_evaluate'
 VALIDATE_EVALUATE = 'validate_evaluate'

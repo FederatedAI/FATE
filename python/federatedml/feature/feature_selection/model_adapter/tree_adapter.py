@@ -15,6 +15,10 @@ def feature_importance_converter(model_meta, model_param):
     cols_names, importance_val = [], []
 
     for feat_importance in feat_importance_list:
+        site_name = feat_importance.sitename
+        site_name = site_name.split(':')
+        if site_name[0] == consts.HOST:
+            continue
         fid = feat_importance.fid
         importance = feat_importance.importance
         feature_name = fid_mapping[fid]
@@ -56,7 +60,7 @@ def feature_importance_with_anonymous_converter(model_meta, model_param):
             local_cols.append(fid_mapping[fid])
             local_val.append(importance)
         else:
-            site_name = site_name.split('_')
+            site_name = site_name.split(':')
             if site_name[0] == consts.HOST:
                 continue
             else:

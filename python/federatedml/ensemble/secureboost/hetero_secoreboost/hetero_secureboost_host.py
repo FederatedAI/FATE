@@ -260,7 +260,8 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         feature_importances = sorted(feature_importances, key=itemgetter(1), reverse=True)
         feature_importance_param = []
         for fid, importance in feature_importances:
-            feature_importance_param.append(FeatureImportanceInfo(fid=fid,
+            feature_importance_param.append(FeatureImportanceInfo(sitename=consts.HOST_LOCAL,
+                                                                  fid=fid,
                                                                   importance=importance.importance,
                                                                   fullname=self.feature_name_fid_mapping[fid],
                                                                   main=importance.main_type
