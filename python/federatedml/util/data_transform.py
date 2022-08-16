@@ -122,7 +122,11 @@ class DenseFeatureTransformer(object):
         if len(value) <= header_index[-1]:
             raise ValueError("Feature shape is smaller than header shape")
 
-        return np.array(value)[header_index].tolist()
+        feature_values = []
+        for idx in header_index:
+            feature_values.append(value[idx])
+
+        return feature_values
 
     def read_data(self, input_data, mode="fit"):
         LOGGER.info("start to read dense data and change data to instance")
@@ -302,21 +306,31 @@ class DenseFeatureTransformer(object):
         if output_format not in ["dense", "sparse"]:
             raise ValueError("output format {} is not define".format(output_format))
 
+        missing_impute_dtype_set = {"int", "int64", "long", "float", "float64", "double"}
+        missing_impute_value_set = {'', 'NULL', 'null', "NA"}
+        type_mapping = dict()
         if output_format == "dense":
-            format_features = copy.deepcopy(features)
+            # format_features = copy.deepcopy(features)
+            format_features = [None] * len(features)
             for fid in range(len(features)):
                 if exclusive_data_type_fid_map is not None and fid in exclusive_data_type_fid_map:
                     dtype = exclusive_data_type_fid_map[fid]
                 else:
                     dtype = data_type
 
-                if dtype in ["int", "int64", "long", "float", "float64", "double"]:
+                if dtype in missing_impute_dtype_set:
                     if (missing_impute is not None and features[fid] in missing_impute) or \
-                            (missing_impute is None and features[fid] in ['', 'NULL', 'null', "NA"]):
+                            (missing_impute is None and features[fid] in missing_impute_value_set):
                         format_features[fid] = np.nan
                         continue
 
-                format_features[fid] = getattr(np, dtype)(features[fid])
+                format_features[fid] = features[fid]
+                if exclusive_data_type_fid_map:
+                    if dtype not in type_mapping:
+                        np_type = getattr(np, dtype)
+                        type_mapping[dtype] = np_type
+
+                    format_features[fid] = type_mapping[dtype](format_features[fid])
 
             if exclusive_data_type_fid_map:
                 return np.asarray(format_features, dtype=object)
@@ -330,7 +344,7 @@ class DenseFeatureTransformer(object):
 
         for i in range(column_shape):
             if (missing_impute is not None and features[i] in missing_impute) or \
-                    (missing_impute is None and features[i] in ['', 'NULL', 'null', "NA"]):
+                    (missing_impute is None and features[i] in missing_impute_value_set):
                 indices.append(i)
                 data.append(np.nan)
                 non_zero += 1
