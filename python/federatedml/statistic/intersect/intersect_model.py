@@ -79,6 +79,9 @@ class IntersectModelBase(ModelBase):
         return {"intersect_num": self.intersect_num, "intersect_rate": self.intersect_rate,
                 "cardinality_only": self.intersection_obj.cardinality_only}
 
+    def sync_use_match_id(self):
+        raise NotImplementedError(f"Should not be called here.")
+
     def __share_info(self, data):
         LOGGER.info("Start to share information with another role")
         info_share = self.transfer_variable.info_share_from_guest if self.model_param.info_owner == consts.GUEST else \
@@ -196,6 +199,7 @@ class IntersectModelBase(ModelBase):
         if data_overview.check_with_inst_id(data):
             self.use_match_id_process = True
             LOGGER.info(f"use match_id_process")
+        self.sync_use_match_id()
 
         if self.use_match_id_process:
             if len(self.host_party_id_list) > 1 and self.model_param.sample_id_generator != consts.GUEST:
@@ -348,6 +352,8 @@ class IntersectModelBase(ModelBase):
         if data_overview.check_with_inst_id(data_inst):
             self.use_match_id_process = True
             LOGGER.info(f"use match_id_process")
+        self.sync_use_match_id()
+
         intersect_data = data_inst
         if self.use_match_id_process:
             if len(self.host_party_id_list) > 1 and self.model_param.sample_id_generator != consts.GUEST:
@@ -466,6 +472,10 @@ class IntersectHost(IntersectModelBase):
         self.intersection_obj.load_params(self.model_param)
         self.model_param = self.intersection_obj.model_param
 
+    def sync_use_match_id(self):
+        self.transfer_variable.use_match_id.remote(self.use_match_id_process, role=consts.GUEST, idx=-1)
+        LOGGER.info(f"sync use_match_id flag: {self.use_match_id_process} with Guest")
+
     def make_filter_process(self, data_instances, hash_operator):
         filter = self.intersection_obj.construct_filter(data_instances,
                                                         self.intersect_preprocess_params.false_positive_rate,
@@ -513,6 +523,12 @@ class IntersectGuest(IntersectModelBase):
         self.intersection_obj.guest_party_id = self.guest_party_id
         self.intersection_obj.host_party_id_list = self.host_party_id_list
         self.intersection_obj.load_params(self.model_param)
+
+    def sync_use_match_id(self):
+        host_use_match_id_flg = self.transfer_variable.use_match_id.get(idx=-1)
+        LOGGER.info(f"received use_match_id flag from all hosts.")
+        if any(flg != self.use_match_id_process for flg in host_use_match_id_flg):
+            raise ValueError(f"Not all parties' input data have match_id, please check.")
 
     def make_filter_process(self, data_instances, hash_operator):
         filter = self.intersection_obj.construct_filter(data_instances,
