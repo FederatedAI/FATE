@@ -70,10 +70,10 @@
             "script": "pipeline-hetero-feature-selection-select-anonymous-col-names.py"
         },
         "hetero-feature-selection-select-anonymous-manually": {
-            "script": "pipeline-hetero-feature-selection-select-anonymous-manually.py"
+            "script": "pipeline-hetero-feature-selection-anonymous-manually.py"
         },
         "hetero-feature-selection-select-anonymous-manually-left": {
-            "script": "pipeline-hetero-feature-selection-select-anonymous-manually-left.py"
+            "script": "pipeline-hetero-feature-selection-anonymous-manually-left.py"
         },
         "hetero-feature-selection-select-cols": {
             "script": "pipeline-hetero-feature-selection-select-cols.py"
