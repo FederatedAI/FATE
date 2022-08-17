@@ -78,10 +78,6 @@
             "conf": "hetero_feature_selection_manually_left_anonymous_conf.json",
              "dsl": "hetero_feature_selection_manually_left_anonymous_dsl.json"
         },
-        "hetero_feature_selection_homo_sbt": {
-            "conf": "hetero_feature_selection_homo_sbt_conf.json",
-            "dsl": "hetero_feature_selection_homo_sbt_dsl.json"
-        },
         "hetero_feature_selection_select_cols": {
             "conf": "hetero_feature_selection_select_cols_conf.json",
             "dsl": "hetero_feature_selection_select_cols_dsl.json"

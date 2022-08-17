@@ -80,15 +80,11 @@ This section introduces the Pipeline scripts for different types of tasks.
 
     script: pipeline-hetero-feature-selection-local-only.py
 
-20. Selection with HomoSBT:
-
-    script: pipeline-hetero-feature-selection-homo-sbt.py
-
-21. Selection with Multi-class Data:
+20. Selection with Multi-class Data:
 
     script: pipeline-hetero-feature-selection-multiclass.py
 
-22. Selection with Multi-class Data & All Filter Types:
+21. Selection with Multi-class Data & All Filter Types:
 
     script: pipeline-hetero-feature-selection-multiclass-all-case.py
 

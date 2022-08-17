@@ -126,9 +126,6 @@
         "hetero-feature-selection-manually-left": {
             "script": "pipeline-hetero-feature-selection-manually-left.py"
         },
-        "hetero-feature-selection-homo-sbt": {
-            "script": "pipeline-hetero-feature-selection-homo-sbt.py"
-        },
         "hetero-feature-selection-multiclass-all-case": {
             "script": "pipeline-hetero-feature-selection-multiclass-all-case.py"
         }
