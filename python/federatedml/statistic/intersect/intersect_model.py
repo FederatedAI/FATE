@@ -29,7 +29,7 @@ from federatedml.statistic.intersect import RawIntersectionHost, RawIntersection
 from federatedml.statistic.intersect.match_id_process import MatchIDIntersect
 from federatedml.transfer_variable.transfer_class.intersection_func_transfer_variable import \
     IntersectionFuncTransferVariable
-from federatedml.util import consts, LOGGER
+from federatedml.util import consts, LOGGER, data_format_preprocess
 
 
 class IntersectModelBase(ModelBase):
@@ -78,6 +78,9 @@ class IntersectModelBase(ModelBase):
     def get_model_summary(self):
         return {"intersect_num": self.intersect_num, "intersect_rate": self.intersect_rate,
                 "cardinality_only": self.intersection_obj.cardinality_only}
+
+    def sync_use_match_id(self):
+        raise NotImplementedError(f"Should not be called here.")
 
     def __share_info(self, data):
         LOGGER.info("Start to share information with another role")
@@ -196,6 +199,7 @@ class IntersectModelBase(ModelBase):
         if data_overview.check_with_inst_id(data):
             self.use_match_id_process = True
             LOGGER.info(f"use match_id_process")
+        self.sync_use_match_id()
 
         if self.use_match_id_process:
             if len(self.host_party_id_list) > 1 and self.model_param.sample_id_generator != consts.GUEST:
@@ -266,8 +270,9 @@ class IntersectModelBase(ModelBase):
                                                           owner_only=True)
             if self.model_param.only_output_key and self.intersect_ids:
                 self.intersect_ids = self.intersect_ids.mapValues(lambda v: Instance(inst_id=v.inst_id))
-                self.intersect_ids.schema = {"match_id_name": data.schema["match_id_name"],
-                                             "sid": data.schema.get("sid")}
+                # self.intersect_ids.schema = {"match_id_name": data.schema["match_id_name"],
+                #                             "sid": data.schema.get("sid")}
+                self.intersect_ids.schema = data_format_preprocess.DataFormatPreProcess.clean_header(data.schema)
 
         LOGGER.info("Finish intersection")
 
@@ -284,7 +289,8 @@ class IntersectModelBase(ModelBase):
         result_data = self.intersect_ids
         if not self.use_match_id_process and result_data:
             if self.intersection_obj.only_output_key:
-                result_data.schema = {"sid": data.schema.get("sid")}
+                # result_data.schema = {"sid": data.schema.get("sid")}
+                result_data.schema = data_format_preprocess.DataFormatPreProcess.clean_header(data.schema)
                 LOGGER.debug(f"non-match-id & only_output_key, add sid to schema")
             else:
                 result_data = self.intersection_obj.get_value_from_data(result_data, data)
@@ -346,6 +352,8 @@ class IntersectModelBase(ModelBase):
         if data_overview.check_with_inst_id(data_inst):
             self.use_match_id_process = True
             LOGGER.info(f"use match_id_process")
+        self.sync_use_match_id()
+
         intersect_data = data_inst
         if self.use_match_id_process:
             if len(self.host_party_id_list) > 1 and self.model_param.sample_id_generator != consts.GUEST:
@@ -396,8 +404,9 @@ class IntersectModelBase(ModelBase):
                 self.intersect_ids = proc_obj.expand(self.intersect_ids, match_data=match_data)
             if self.intersect_ids and self.model_param.only_output_key:
                 self.intersect_ids = self.intersect_ids.mapValues(lambda v: Instance(inst_id=v.inst_id))
-                self.intersect_ids.schema = {"match_id_name": data_inst.schema["match_id_name"],
-                                             "sid": data_inst.schema.get("sid")}
+                # self.intersect_ids.schema = {"match_id_name": data_inst.schema["match_id_name"],
+                #                             "sid": data_inst.schema.get("sid")}
+                self.intersect_ids.schema = data_format_preprocess.DataFormatPreProcess.clean_header(data_inst.schema)
 
         LOGGER.info("Finish intersection")
 
@@ -418,7 +427,8 @@ class IntersectModelBase(ModelBase):
                 self.intersect_ids.schema = result_data.schema
                 LOGGER.debug(f"not only_output_key, restore value called")
             if self.intersection_obj.only_output_key and result_data:
-                schema = {"sid": data_inst.schema.get("sid")}
+                # schema = {"sid": data_inst.schema.get("sid")}
+                schema = data_format_preprocess.DataFormatPreProcess.clean_header(data_inst.schema)
                 result_data = result_data.mapValues(lambda v: None)
                 result_data.schema = schema
                 self.intersect_ids.schema = schema
@@ -461,6 +471,10 @@ class IntersectHost(IntersectModelBase):
         self.intersection_obj.host_party_id_list = self.host_party_id_list
         self.intersection_obj.load_params(self.model_param)
         self.model_param = self.intersection_obj.model_param
+
+    def sync_use_match_id(self):
+        self.transfer_variable.use_match_id.remote(self.use_match_id_process, role=consts.GUEST, idx=-1)
+        LOGGER.info(f"sync use_match_id flag: {self.use_match_id_process} with Guest")
 
     def make_filter_process(self, data_instances, hash_operator):
         filter = self.intersection_obj.construct_filter(data_instances,
@@ -509,6 +523,12 @@ class IntersectGuest(IntersectModelBase):
         self.intersection_obj.guest_party_id = self.guest_party_id
         self.intersection_obj.host_party_id_list = self.host_party_id_list
         self.intersection_obj.load_params(self.model_param)
+
+    def sync_use_match_id(self):
+        host_use_match_id_flg = self.transfer_variable.use_match_id.get(idx=-1)
+        LOGGER.info(f"received use_match_id flag from all hosts.")
+        if any(flg != self.use_match_id_process for flg in host_use_match_id_flg):
+            raise ValueError(f"Not all parties' input data have match_id, please check.")
 
     def make_filter_process(self, data_instances, hash_operator):
         filter = self.intersection_obj.construct_filter(data_instances,

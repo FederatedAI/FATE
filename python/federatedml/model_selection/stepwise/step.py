@@ -21,7 +21,7 @@ import numpy as np
 from federatedml.statistic.data_overview import get_header, get_anonymous_header
 from federatedml.util import consts
 from federatedml.util import LOGGER
-from federatedml.util.data_io import set_schema
+from federatedml.util.data_transform import set_schema
 
 
 class Step(object):

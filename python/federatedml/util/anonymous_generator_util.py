@@ -29,12 +29,38 @@ class Anonymous(object):
         self._party_id = party_id
         self._migrate_mapping = migrate_mapping
 
+    def migrate_schema_anonymous(self, schema):
+        if "anonymous_header" in schema:
+            schema["anonymous_header"] = self.migrate_anonymous(schema["anonymous_header"])
+
+        if "anonymous_label" in schema:
+            schema["anonymous_label"] = self.migrate_anonymous(schema['anonymous_label'])
+
+        return schema
+
     def migrate_anonymous(self, anonymous_header):
+        ret_list = True
+        if not isinstance(anonymous_header, list):
+            ret_list = False
+            anonymous_header = [anonymous_header]
+
         migrate_anonymous_header = []
         for column in anonymous_header:
             role, party_id, suf = column.split(SPLICES, 2)
-            migrate_party_id = self._migrate_mapping[role][int(party_id)]
-            migrate_anonymous_header.append(self.generate_anonymous_column(role, migrate_party_id, suf))
+            try:
+                migrate_party_id = self._migrate_mapping[role][int(party_id)]
+            except KeyError:
+                migrate_party_id = self._migrate_mapping[role][party_id]
+            except BaseException:
+                migrate_party_id = None
+
+            if migrate_party_id is not None:
+                migrate_anonymous_header.append(self.generate_anonymous_column(role, migrate_party_id, suf))
+            else:
+                migrate_anonymous_header.append(column)
+
+        if not ret_list:
+            migrate_anonymous_header = migrate_anonymous_header[0]
 
         return migrate_anonymous_header
 
@@ -59,6 +85,20 @@ class Anonymous(object):
             extend_anonymous_header.append(self.__generate_expand_anonymous_column(exp_start_idx + i))
 
         return original_anonymous_header + extend_anonymous_header
+
+    @staticmethod
+    def get_party_id_from_anonymous_column(anonymous_column):
+        splits = Anonymous.get_anonymous_column_splits(anonymous_column)
+        if len(splits) < 3:
+            raise ValueError("This is not a anonymous_column")
+        return splits[1]
+
+    @staticmethod
+    def get_role_from_anonymous_column(anonymous_column):
+        splits = Anonymous.get_anonymous_column_splits(anonymous_column)
+        if len(splits) < 3:
+            raise ValueError("This is not a anonymous_column")
+        return splits[0]
 
     @staticmethod
     def get_anonymous_header(schema):
@@ -144,3 +184,22 @@ class Anonymous(object):
                 new_schema["anonymous_label"] = ANONYMOUS_LABEL
 
         return new_schema
+
+    def generated_compatible_anonymous_header_with_old_version(self, header):
+        if self._role is None or self._party_id is None:
+            raise ValueError("Please init anonymous generator with role & party_id")
+        return [SPLICES.join([self._role, str(self._party_id), str(idx)]) for idx in range(len(header))]
+
+    @staticmethod
+    def is_old_version_anonymous_header(anonymous_header):
+        for anonymous_col in anonymous_header:
+            splits = anonymous_col.split(SPLICES, -1)
+            if len(splits) != 3:
+                return False
+
+            try:
+                index = int(splits[2])
+            except ValueError:
+                return False
+
+        return True

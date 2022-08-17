@@ -27,6 +27,7 @@ from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.ensemble.boosting.predict_cache import PredictDataCache
 from federatedml.statistic import data_overview
 from federatedml.optim.convergence import converge_func_factory
+from federatedml.statistic.data_overview import get_anonymous_header
 from federatedml.util import LOGGER
 
 
@@ -217,7 +218,7 @@ class Boosting(ModelBase, ABC):
 
     def data_and_header_alignment(self, data_inst):
         """
-        turn data into sparse and align header/ algin data table header
+        turn data into sparse and align header/ align data table header
         """
 
         cache_dataset_key = self.predict_data_cache.get_data_key(data_inst)
@@ -229,7 +230,8 @@ class Boosting(ModelBase, ABC):
             header = [None] * len(self.feature_name_fid_mapping)
             for idx, col in self.feature_name_fid_mapping.items():
                 header[idx] = col
-            processed_data = data_overview.header_alignment(data_inst_tmp, header)
+            processed_data = data_overview.header_alignment(data_inst_tmp, header,
+                                                            pre_anonymous_header=get_anonymous_header(data_inst))
             self.data_alignment_map[cache_dataset_key] = processed_data
 
         return processed_data

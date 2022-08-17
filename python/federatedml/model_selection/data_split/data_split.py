@@ -24,7 +24,7 @@ from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.model_base import ModelBase
 from federatedml.param.data_split_param import DataSplitParam
 from federatedml.util import LOGGER
-from federatedml.util import data_io
+from federatedml.util import data_transform
 from federatedml.util.consts import FLOAT_ZERO
 
 ROUND_NUM = 3
@@ -305,7 +305,7 @@ class DataSplitter(ModelBase):
     @staticmethod
     def _set_output_table_schema(data_inst, schema):
         if schema is not None and data_inst.count() > 0:
-            data_io.set_schema(data_inst, schema)
+            data_transform.set_schema(data_inst, schema)
 
     def split_data(self, data_inst, id_train, id_validate, id_test):
         train_data = DataSplitter._match_id(data_inst, id_train)

@@ -64,6 +64,29 @@ This section introduces the Pipeline scripts for different types of tasks.
     
     script: pipeline-hetero-feature-selection-anonymous-manually-left.py
 
+16. Selection with VIF Filter:
+
+    script: pipeline-hetero-feature-selection-vif.py
+
+17. Selection with Pearson:
+
+    script: pipeline-hetero-feature-selection-pearson.py
+
+18. Selection with Pearson & Prediction:
+
+    script: pipeline-hetero-feature-selection-pearson-predict.py
+
+19. Selection with local-only filters:
+
+    script: pipeline-hetero-feature-selection-local-only.py
+
+20. Selection with Multi-class Data:
+
+    script: pipeline-hetero-feature-selection-multiclass.py
+
+21. Selection with Multi-class Data & All Filter Types:
+
+    script: pipeline-hetero-feature-selection-multiclass-all-case.py
 
 Users can run a pipeline job directly:
 

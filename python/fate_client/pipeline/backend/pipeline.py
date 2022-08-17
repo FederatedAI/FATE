@@ -246,7 +246,7 @@ class PipeLine(object):
 
     @LOGGER.catch(reraise=True)
     def add_upload_data(self, file, table_name, namespace, head=1, partition=16,
-                        id_delimiter=",", extend_sid=False, auto_increasing_sid=False):
+                        id_delimiter=",", extend_sid=False, auto_increasing_sid=False, **kargs):
         data_conf = {"file": file,
                      "table_name": table_name,
                      "namespace": namespace,
@@ -254,7 +254,7 @@ class PipeLine(object):
                      "partition": partition,
                      "id_delimiter": id_delimiter,
                      "extend_sid": extend_sid,
-                     "auto_increasing_sid": auto_increasing_sid}
+                     "auto_increasing_sid": auto_increasing_sid, **kargs}
         self._upload_conf.append(data_conf)
 
     def _get_task_inst(self, job_id, name, init_role, party_id):
@@ -406,6 +406,9 @@ class PipeLine(object):
 
     def _set_state(self, state):
         self._cur_state = state
+
+    def set_job_invoker(self, job_invoker):
+        self._job_invoker = job_invoker
 
     @LOGGER.catch(reraise=True)
     def compile(self):
@@ -643,12 +646,19 @@ class PipeLine(object):
 
     @classmethod
     def load(cls, pipeline_bytes):
+        """
         return pickle.loads(pipeline_bytes)
+        """
+        pipeline_obj = pickle.loads(pipeline_bytes)
+        pipeline_obj.set_job_invoker(JobInvoker())
+        return pipeline_obj
 
     @classmethod
     def load_model_from_file(cls, file_path):
         with open(file_path, "rb") as fin:
-            return pickle.loads(fin.read())
+            pipeline_obj = pickle.loads(fin.read())
+            pipeline_obj.set_job_invoker(JobInvoker())
+            return pipeline_obj
 
     @LOGGER.catch(reraise=True)
     def deploy_component(self, components=None):

@@ -267,6 +267,7 @@ class FedLightModule(pl.LightningModule):
         self._all_consumed_data_aggregated = True
 
         self._should_early_stop = False
+        self._loss = None
 
     def forward(self, x):
         return self.model(x)
@@ -291,20 +292,13 @@ class FedLightModule(pl.LightningModule):
         return {"val_loss": loss, "val_accuracy": accuracy}
 
     def validation_epoch_end(self, outputs):
-        loss = torch.mean(torch.stack([x["val_loss"] for x in outputs]))
+        self._loss = torch.mean(torch.stack([x["val_loss"] for x in outputs]))
         accuracy = torch.mean(torch.stack([x["val_accuracy"] for x in outputs]))
-        convergence_status = self.context.do_convergence_check(
-            self._num_data_consumed, loss
-        )
         LOGGER.info(
-            f"validation epoch end, local loss: {loss}, local accuracy: {accuracy}, convergence statu: {convergence_status}"
+            f"validation epoch end, local loss: {self._loss}, local accuracy: {accuracy}"
         )
 
         # aggregation end
-        self._num_data_consumed = 0
-        self.context.increase_aggregation_iteration()
-        if convergence_status:
-            self.context.set_converged()
 
     def training_epoch_end(self, outputs) -> None:
         ...
@@ -323,11 +317,19 @@ class FedLightModule(pl.LightningModule):
         else:
             self._num_data_consumed += len(batch)
 
-    def on_train_epoch_end(self, outputs) -> None:
+    def on_train_epoch_end(self, *args, **kwargs) -> None:
         if self.context.should_aggregate_on_epoch(self.current_epoch):
             self.context.do_aggregation(float(self._num_data_consumed))
             self._all_consumed_data_aggregated = True
             # self._num_data_consumed = 0
+
+        convergence_status = self.context.do_convergence_check(
+            self._num_data_consumed, self._loss
+        )
+        self._num_data_consumed = 0
+        self.context.increase_aggregation_iteration()
+        if convergence_status:
+            self.context.set_converged()
 
     def configure_optimizers(self):
         optimizer = get_optimizer(
@@ -360,7 +362,7 @@ class PyTorchFederatedTrainer(object):
     def fit(self, dataloader):
         self.pl_trainer.fit(
             self.pl_model,
-            train_dataloader=dataloader,
+            train_dataloaders=dataloader,
             val_dataloaders=dataloader,
         )
 
