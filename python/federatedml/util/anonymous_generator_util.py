@@ -189,3 +189,17 @@ class Anonymous(object):
         if self._role is None or self._party_id is None:
             raise ValueError("Please init anonymous generator with role & party_id")
         return [SPLICES.join([self._role, str(self._party_id), str(idx)]) for idx in range(len(header))]
+
+    @staticmethod
+    def is_old_version_anonymous_header(anonymous_header):
+        for anonymous_col in anonymous_header:
+            splits = anonymous_col.split(SPLICES, -1)
+            if len(splits) != 3:
+                return False
+
+            try:
+                index = int(splits[2])
+            except ValueError:
+                return False
+
+        return True

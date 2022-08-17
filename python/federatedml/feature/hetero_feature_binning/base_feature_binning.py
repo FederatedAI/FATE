@@ -38,6 +38,7 @@ from federatedml.transfer_variable.transfer_class.hetero_feature_binning_transfe
 from federatedml.util import LOGGER
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
+from federatedml.util.anonymous_generator_util import Anonymous
 from federatedml.util.io_check import assert_io_num_rows_equal
 from federatedml.util.schema_check import assert_schema_consistent
 
@@ -57,6 +58,7 @@ class BaseFeatureBinning(ModelBase):
         self.binning_obj: BaseBinning = None
         self.header = None
         self.anonymous_header = None
+        self.training_anonymous_header = None
         self.schema = None
         self.host_results = []
         self.transform_host_results = []
@@ -209,9 +211,28 @@ class BaseFeatureBinning(ModelBase):
         # LOGGER.debug(f"split_points_result: {split_points_result}")
         host_multi_class_result = []
         host_single_results = []
-        for host_res in self.host_results:
-            host_multi_class_result.extend(host_res.generated_pb_list())
-            host_single_results.append(host_res.bin_results[0].generated_pb())
+
+        anonymous_dict_list = []
+        if self._stage == "transform" and self._check_lower_version_anonymous():
+            if self.role == consts.GUEST:
+                anonymous_dict_list = self.transfer_variable.host_anonymous_header_dict.get(idx=-1)
+            else:
+                anonymous_dict = dict(zip(self.training_anonymous_header, self.anonymous_header))
+                self.transfer_variable.host_anonymous_header_dict.remote(
+                    anonymous_dict,
+                    role=consts.GUEST,
+                    idx=0
+                )
+
+        for idx, host_res in enumerate(self.host_results):
+            if not anonymous_dict_list:
+                host_multi_class_result.extend(host_res.generated_pb_list())
+                host_single_results.append(host_res.bin_results[0].generated_pb())
+            else:
+                updated_anonymous_header = anonymous_dict_list[idx]
+                host_res.update_anonymous(updated_anonymous_header)
+                host_multi_class_result.extend(host_res.generated_pb_list())
+                host_single_results.append(host_res.bin_results[0].generated_pb())
 
         has_host_result = True if len(host_multi_class_result) else False
         multi_pb = feature_binning_param_pb2.MultiClassResult(
@@ -274,8 +295,8 @@ class BaseFeatureBinning(ModelBase):
         assert isinstance(model_param, feature_binning_param_pb2.FeatureBinningParam)
 
         self.header = list(model_param.header)
-        self.anonymous_header = list(model_param.header_anonymous)
-        self.bin_inner_param.set_header(self.header, self.anonymous_header)
+        self.training_anonymous_header = list(model_param.header_anonymous)
+        self.bin_inner_param.set_header(self.header, self.training_anonymous_header)
 
         self.bin_inner_param.add_transform_bin_indexes(list(model_meta.transform_param.transform_cols))
         self.bin_inner_param.add_bin_names(list(model_meta.cols))
@@ -349,3 +370,7 @@ class BaseFeatureBinning(ModelBase):
         abnormal_detection.empty_table_detection(data_instances)
         abnormal_detection.empty_feature_detection(data_instances)
         self.check_schema_content(data_instances.schema)
+
+    def _check_lower_version_anonymous(self):
+        return not self.training_anonymous_header or \
+            Anonymous.is_old_version_anonymous_header(self.training_anonymous_header)
