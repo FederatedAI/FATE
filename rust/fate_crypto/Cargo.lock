@@ -70,7 +70,7 @@ dependencies = [
 
 [[package]]
 name = "fate_crypto"
-version = "0.1.0"
+version = "1.9.0"
 dependencies = [
  "curve25519-dalek",
  "libsm",

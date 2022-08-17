@@ -382,7 +382,7 @@ class Session(object):
         try:
             session_records = SessionRecord.query(reverse=reverse, order_by=order_by, **kwargs)
             return session_records
-        except:
+        except BaseException:
             return []
 
     @DB.connection_context()
