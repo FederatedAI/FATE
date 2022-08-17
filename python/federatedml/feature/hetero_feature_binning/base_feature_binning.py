@@ -373,4 +373,4 @@ class BaseFeatureBinning(ModelBase):
 
     def _check_lower_version_anonymous(self):
         return not self.training_anonymous_header or \
-               Anonymous.is_old_version_anonymous_header(self.training_anonymous_header)
+            Anonymous.is_old_version_anonymous_header(self.training_anonymous_header)
