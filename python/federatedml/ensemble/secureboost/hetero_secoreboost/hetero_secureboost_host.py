@@ -116,8 +116,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         for key in self.feature_importances_:
             anonymous_name = self.anonymous_header[self.feature_name_fid_mapping[key]]
             party, party_id, anonymous_feat = anonymous_name.split('_')
-            feat_idx = int(anonymous_feat.replace('x', ''))
-            new_feat_importance[(party + '_' + party_id, feat_idx)] = self.feature_importances_[key]
+            new_feat_importance[(party + '_' + party_id, anonymous_feat)] = self.feature_importances_[key]
         return new_feat_importance
 
     def align_feature_importance_host(self, suffix):
