@@ -125,7 +125,7 @@ class StorageTable(StorageTableBase):
     def _exist(self):
         try:
             info = self._hdfs_client.get_file_info([self.path])[0]
-        except:
+        except Exception:
             info = self._hdfs_client.get_file_info([self.file_path])[0]
         return info.type != fs.FileType.NotFound
 
