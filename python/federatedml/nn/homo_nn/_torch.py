@@ -148,8 +148,7 @@ class PyTorchSAClientContext(_PyTorchSAContext):
         return status
 
     def configure_aggregation_params(
-        self,
-        optimizer,
+        self, optimizer,
     ):
         if optimizer is not None:
             self._params = [
@@ -308,9 +307,7 @@ class FedLightModule(pl.LightningModule):
             self._num_data_consumed = 0
             self._all_consumed_data_aggregated = False
 
-    def on_train_batch_start(
-        self, batch: typing.Any, batch_idx: int, dataloader_idx: int
-    ) -> None:
+    def on_train_batch_start(self, batch: typing.Any, *args, **kwargs) -> None:
         if self._all_consumed_data_aggregated:
             self._all_consumed_data_aggregated = False
             self._num_data_consumed = len(batch)
@@ -361,9 +358,7 @@ class PyTorchFederatedTrainer(object):
 
     def fit(self, dataloader):
         self.pl_trainer.fit(
-            self.pl_model,
-            train_dataloaders=dataloader,
-            val_dataloaders=dataloader,
+            self.pl_model, train_dataloaders=dataloader, val_dataloaders=dataloader,
         )
 
     def summary(self):
