@@ -73,7 +73,7 @@ class HomoBinningClient(BaseFeatureBinning):
         self.binning_obj.set_bin_inner_param(self.bin_inner_param)
         self.binning_obj.set_transfer_variable(self.transfer_variable)
         split_points = self.binning_obj.fit_split_points(transformed_instances)
-        data_out = self.transform(data_instances)
+        data_out = self.transform_data(data_instances)
         summary = {}
         for k, v in split_points.items():
             summary[k] = list(v)
