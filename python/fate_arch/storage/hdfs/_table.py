@@ -118,8 +118,15 @@ class StorageTable(StorageTableBase):
     def path(self) -> str:
         return f"{self._address.name_node}/{self._address.path}"
 
+    @property
+    def file_path(self) -> str:
+        return f"{self._address.path}"
+
     def _exist(self):
-        info = self._hdfs_client.get_file_info([self.path])[0]
+        try:
+            info = self._hdfs_client.get_file_info([self.path])[0]
+        except Exception:
+            info = self._hdfs_client.get_file_info([self.file_path])[0]
         return info.type != fs.FileType.NotFound
 
     def _as_generator(self):
