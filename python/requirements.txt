@@ -40,7 +40,7 @@ JinJa2==3.0.3
 itsdangerous==2.0.1
 Werkzeug==1.0.1
 coverage==4.5.2
-pika==1.1.0
+pika==1.2.1
 pandas==1.1.5
 cryptography==3.3.2
 sortedcontainers==2.2.2
