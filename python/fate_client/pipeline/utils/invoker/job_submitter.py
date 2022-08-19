@@ -311,7 +311,7 @@ class JobInvoker(object):
             rows = []
             for i in range(1, len(data)):
                 cols = data[i].split(",", -1)
-                predict_detail = json.loads(",".join(cols[len(meta) - 2: -1]).replace("\'", "\""))
+                predict_detail = json.loads(",".join(cols[len(meta) - 2: -1])[1:-1].replace("\'", "\""))
                 value = cols[: len(meta) - 2] + [predict_detail] + cols[-1:]
                 rows.append(value)
 
