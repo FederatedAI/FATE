@@ -216,7 +216,7 @@ class BaseFeatureBinning(ModelBase):
         if self._stage == "transform" and self._check_lower_version_anonymous():
             if self.role == consts.GUEST:
                 anonymous_dict_list = self.transfer_variable.host_anonymous_header_dict.get(idx=-1)
-            else:
+            elif self.role == consts.HOST:
                 anonymous_dict = dict(zip(self.training_anonymous_header, self.anonymous_header))
                 self.transfer_variable.host_anonymous_header_dict.remote(
                     anonymous_dict,
