@@ -434,7 +434,7 @@ class PipeLine(object):
             for cpn in self._train_dsl["components"]:
                 if cpn in predict_pipeline_dsl["components"]:
                     raise ValueError(
-                        "component name {} exist in predict pipeline's deploy component, this is not support")
+                        f"component name {cpn} exist in predict pipeline's deploy component, this is not support")
 
             if "algorithm_parameters" in predict_pipeline_conf:
                 algo_param = predict_pipeline_conf["algorithm_parameters"]
