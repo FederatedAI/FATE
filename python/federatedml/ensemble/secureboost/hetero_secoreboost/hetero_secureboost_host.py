@@ -16,6 +16,7 @@ from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import Boosting
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core import tree_plan as plan
+from federatedml.util.anonymous_generator_util import Anonymous
 
 
 class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
@@ -115,9 +116,10 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         new_feat_importance = {}
         for key in self.feature_importances_:
             anonymous_name = self.anonymous_header[self.feature_name_fid_mapping[key]]
-            party, party_id, anonymous_feat = anonymous_name.split('_')
-            feat_idx = int(anonymous_feat.replace('x', ''))
-            new_feat_importance[(party + '_' + party_id, feat_idx)] = self.feature_importances_[key]
+            party = Anonymous.get_role_from_anonymous_column(anonymous_name)
+            party_id = Anonymous.get_party_id_from_anonymous_column(anonymous_name)
+            anonymous_feat = Anonymous.get_suffix_from_anonymous_column(anonymous_name)
+            new_feat_importance[(party + '_' + party_id, anonymous_feat)] = self.feature_importances_[key]
         return new_feat_importance
 
     def align_feature_importance_host(self, suffix):
