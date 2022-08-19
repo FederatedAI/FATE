@@ -33,7 +33,6 @@ package_data = {"": ["*"]}
 
 install_requires = [
     "click>=7.1.2,<8.0.0",
-    "flask>=1.0.2,<2.0.0",
     "loguru>=0.6.0",
     "poetry>=0.12",
     "pandas>=1.1.5",
