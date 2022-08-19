@@ -196,7 +196,6 @@ class PaillierEncrypt(Encrypt):
         return self.privacy_key
 
     def encrypt(self, value):
-        LOGGER.debug('cwj encrypt')
         if self.public_key is not None:
             return self.public_key.encrypt(value)
         else:
@@ -209,7 +208,6 @@ class PaillierEncrypt(Encrypt):
             return None
 
     def raw_encrypt(self, plaintext, exponent=0):
-        LOGGER.debug('cwj raw encrypt')
         cipher_int = self.public_key.raw_encrypt(plaintext)
         paillier_num = PaillierEncryptedNumber(public_key=self.public_key, ciphertext=cipher_int, exponent=exponent)
         return paillier_num
