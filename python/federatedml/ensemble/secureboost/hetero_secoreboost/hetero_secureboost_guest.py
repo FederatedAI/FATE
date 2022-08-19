@@ -5,7 +5,7 @@ from federatedml.util import LOGGER
 from federatedml.ensemble.boosting import HeteroBoostingGuest
 from federatedml.param.boosting_param import HeteroSecureBoostParam, DecisionTreeParam
 from federatedml.util.io_check import assert_io_num_rows_equal
-from federatedml.util.anonymous_generator import generate_anonymous
+from federatedml.util.anonymous_generator_util import Anonymous
 from federatedml.statistic.data_overview import with_weight, get_max_sample_weight
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_importance import FeatureImportance
 from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict_transfer_variable import \
@@ -395,7 +395,9 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
             if consts.GUEST in fp.sitename:
                 key = (fp.sitename.replace(':', '_'), fp.fid)  # guest format
             else:
-                key = (fp.sitename.replace(':', '_'), fp.fullname.split('_')[-1])  # host format
+                sitename = fp.sitename.replace(':', '_')
+                anonymous_feat_name = Anonymous().get_suffix_from_anonymous_column(fp.fullname)
+                key = (sitename, anonymous_feat_name)
             importance = FeatureImportance()
             importance.from_protobuf(fp)
             rs_dict[key] = importance
