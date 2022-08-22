@@ -171,6 +171,7 @@ class DenseModel(object):
         dtype = dense_layer.get_weights()[0].dtype
         with tf.GradientTape() as tape:
             activation_input = tf.constant(self.activation_input, dtype=dtype)
+            tape.watch(activation_input)
             activation_output = dense_layer.activation(activation_input)
         return [tape.gradient(activation_output, activation_input).numpy()]
 
