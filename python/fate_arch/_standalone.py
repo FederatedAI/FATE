@@ -47,6 +47,7 @@ deserialize = c_pickle.loads
 # default message max size in bytes = 1MB
 DEFAULT_MESSAGE_MAX_SIZE = 1048576
 
+
 # noinspection PyPep8Naming
 class Table(object):
     def __init__(
@@ -655,8 +656,7 @@ class Federation(object):
                 dtype = r[2]
                 LOGGER.debug(
                     f"[{log_str}] got "
-                    f"Table(namespace={table.namespace}, name={table.name}, partitions={table.partitions}), dtype={dtype}"
-                )
+                    f"Table(namespace={table.namespace}, name={table.name}, partitions={table.partitions}), dtype={dtype}")
 
                 if dtype == FederationDataType.SPLIT_OBJECT:
                     obj_bytes = b''.join(map(lambda t: t[1], sorted(table.collect(), key=lambda x: x[0])))
