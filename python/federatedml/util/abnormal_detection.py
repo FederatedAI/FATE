@@ -98,8 +98,8 @@ def check_legal_schema(schema):
         if len(header_set) != len(header):
             raise ValueError(f"data header contains repeated names, please check.")
 
-    sid_name = schema.get("sid_name", None)
-    LOGGER.debug(f"sid_name is {sid_name}")
+    sid_name = schema.get("sid", None)
+    LOGGER.debug(f"sid is {sid_name}")
     if sid_name is not None and not sid_name.isprintable():
         raise ValueError(f"non-printable char found in sid_name {sid_name}, please check.")
 

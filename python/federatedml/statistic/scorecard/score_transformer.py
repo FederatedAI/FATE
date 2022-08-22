@@ -99,10 +99,6 @@ class Scorecard(ModelBase):
                                                                                             self.use_match_id))
         result_schema = copy.deepcopy(prediction_result.schema)
         result_schema["header"] = ["label", "predict_result", "predict_score", "credit_score"]
-        """
-        result_schema = {"header": ["label", "predict_result", "predict_score", "credit_score"],
-                         "sid_name": schema.get('sid_name')}
-        """
         score_result.schema = result_schema
 
         self._set_summary()
