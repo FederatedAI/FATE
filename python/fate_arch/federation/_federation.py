@@ -24,6 +24,7 @@ from fate_arch.abc import CTableABC
 from fate_arch.abc import FederationABC, GarbageCollectionABC
 from fate_arch.common import Party
 from fate_arch.common.log import getLogger
+from fate_arch.federation import FederationDataType
 from fate_arch.federation._datastream import Datastream
 from fate_arch.session import computing_session
 
@@ -31,12 +32,6 @@ LOGGER = getLogger()
 
 NAME_DTYPE_TAG = "<dtype>"
 _SPLIT_ = "^"
-
-
-class FederationDataType(object):
-    OBJECT = "obj"
-    TABLE = "Table"
-    SPLIT_OBJECT = "split_obj"
 
 
 def _get_splits(obj, max_message_size):
