@@ -44,6 +44,8 @@ LOGGER = getLogger()
 serialize = c_pickle.dumps
 deserialize = c_pickle.loads
 
+# default message max size in bytes = 1MB
+DEFAULT_MESSAGE_MAX_SIZE = 1048576
 
 # noinspection PyPep8Naming
 class Table(object):
@@ -507,6 +509,7 @@ class Federation(object):
         self._party: Party = party
         self._loop = asyncio.get_event_loop()
         self._session = session
+        self._max_message_size = DEFAULT_MESSAGE_MAX_SIZE
         self._federation_status_table = _create_table(
             session=session,
             name=self._get_status_table_name(self._party),
@@ -584,20 +587,16 @@ class Federation(object):
 
         if v is None:
             raise ValueError(f"[{log_str}]remote `None` to {parties}")
+
         LOGGER.debug(f"[{log_str}]remote data, type={type(v)}")
 
         if isinstance(v, Table):
+            dtype = FederationDataType.TABLE
             LOGGER.debug(
                 f"[{log_str}]remote "
-                f"Table(namespace={v.namespace}, name={v.name}, partitions={v.partitions})"
+                f"Table(namespace={v.namespace}, name={v.name}, partitions={v.partitions}), dtype={dtype}"
             )
-
-            # todo: add split object;
-            dtype = FederationDataType.TABLE
         else:
-            LOGGER.debug(f"[{log_str}]remote object with type: {type(v)}")
-
-            # todo: add split object;
             v_splits, num_slice = _get_splits(v, self._max_message_size)
             if num_slice > 1:
                 v = _create_table(
@@ -610,7 +609,12 @@ class Federation(object):
                 )
                 v.put_all(kv_list=v_splits)
                 dtype = FederationDataType.SPLIT_OBJECT
+                LOGGER.debug(
+                    f"[{log_str}]remote "
+                    f"Table(namespace={v.namespace}, name={v.name}, partitions={v.partitions}), dtype={dtype}"
+                )
             else:
+                LOGGER.debug(f"[{log_str}]remote object with type: {type(v)}")
                 dtype = FederationDataType.OBJECT
 
         for party in parties:
@@ -648,7 +652,6 @@ class Federation(object):
                     session=self._session, name=r[0], namespace=r[1], need_cleanup=True
                 )
 
-                # todo：dylan
                 dtype = r[2]
                 LOGGER.debug(
                     f"[{log_str}] got "
@@ -659,7 +662,6 @@ class Federation(object):
                     obj_bytes = b''.join(map(lambda t: t[1], sorted(table.collect(), key=lambda x: x[0])))
                     obj = deserialize(obj_bytes)
                     rtn.append(obj)
-                    table.destroy()
                 else:
                     rtn.append(table)
             else:
