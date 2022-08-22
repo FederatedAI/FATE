@@ -36,7 +36,7 @@ import numpy as np
 
 from fate_arch.common import Party, file_utils
 from fate_arch.common.log import getLogger
-from fate_arch.federation._federation import FederationDataType
+from fate_arch.federation import FederationDataType
 
 
 LOGGER = getLogger()
