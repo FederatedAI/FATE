@@ -498,7 +498,6 @@ class Federation(object):
     def __init__(self, session, session_id, party: Party):
         self._session_id = session_id
         self._party: Party = party
-        self._loop = asyncio.get_event_loop()
         self._session = session
         self._max_message_size = DEFAULT_MESSAGE_MAX_SIZE
         self._federation_status_table = _create_table(
@@ -519,6 +518,13 @@ class Federation(object):
         )
         self._other_status_tables = {}
         self._other_object_tables = {}
+        self._even_loop = None
+
+    @property
+    def _loop(self):
+        if self._even_loop is None:
+            self._even_loop = asyncio.get_event_loop()
+        return self._even_loop
 
     @staticmethod
     def _get_status_table_name(party):
