@@ -98,16 +98,16 @@ class TestModel(Base):
                 if response.status_code == 200:
                     if response.json().get('retcode'):
                         self.error_log('job list: {}'.format(response.json().get('retmsg')) + '\n')
-                    if len(response.json().get('data')) == post_data["limit"]:
+                    if len(response.json().get('data', {}).get('jobs', [])) == post_data["limit"]:
                         return response.json().get('retcode')
             except Exception:
                 return
 
-        elif command == 'log':
+        elif command == 'log/download':
             post_data = {'job_id': self.job_id}
             tar_file_name = 'job_{}_log.tar.gz'.format(post_data['job_id'])
             extract_dir = os.path.join(output_path, tar_file_name.replace('.tar.gz', ''))
-            with closing(requests.get("/".join([self.server_url, "job", command]),
+            with closing(requests.post("/".join([self.server_url, "job", command]),
                                       json=post_data, stream=True)) as response:
                 if response.status_code == 200:
                     try:
@@ -193,7 +193,7 @@ class TestModel(Base):
             if response.status_code == 200:
                 if response.json().get('retcode'):
                     self.error_log('list task: {}'.format(response.json().get('retmsg')) + '\n')
-                if response.json().get("data") and len(response.json().get('data')) == post_data["limit"]:
+                if len(response.json().get('data', {}).get('tasks', [])) == post_data["limit"]:
                     return response.json().get('retcode')
         except Exception:
             return
@@ -817,7 +817,7 @@ def run_test_api(config_json, namespace):
     job.add_row(['job data view', judging_state(test_api.job_api('data/view/query'))])
     job.add_row(['job list', judging_state(test_api.job_api('list/job'))])
     job.add_row(['job config', judging_state(test_api.job_config(max_iter=max_iter, output_path=output_path))])
-    job.add_row(['job log', judging_state(test_api.job_api('log', output_path))])
+    job.add_row(['job log', judging_state(test_api.job_api('log/download', output_path))])
     job.add_row(['job dsl generate', judging_state(test_api.job_dsl_generate())])
     print(job.get_string(title="job api"))
 

@@ -90,6 +90,7 @@ def access_server(method, ctx, postfix, json_data=None, echo=True, **kwargs):
 
     sess = requests.Session()
     stream = kwargs.pop('stream', sess.stream)
+    timeout = kwargs.pop('timeout', None)
     prepped = requests.Request(method, '/'.join([ctx.obj['server_url'], postfix]),
                                 json=json_data, **kwargs).prepare()
 
@@ -114,7 +115,7 @@ def access_server(method, ctx, postfix, json_data=None, echo=True, **kwargs):
         })
 
     try:
-        response = sess.send(prepped, stream=stream)
+        response = sess.send(prepped, stream=stream, timeout=timeout)
 
         if echo:
             prettify(response)
