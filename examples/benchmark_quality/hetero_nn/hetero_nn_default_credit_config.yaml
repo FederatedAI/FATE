@@ -7,7 +7,7 @@ loss: "binary_crossentropy"
 tol: 0.01
 batch_size: 30000
 metrics: ["AUC"]
-epochs: 20
+epochs: 15
 bottom_layer_units: 2
 interactive_layer_units: 1
 top_layer_units: 1
