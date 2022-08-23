@@ -92,14 +92,10 @@ class KerasNNModel(NNModel):
         optimizer_instance = getattr(tf.keras.optimizers, optimizer.optimizer)(
             **optimizer.kwargs
         )
-        self.loss_fn = getattr(losses, loss)
+        self._loss_fn = getattr(losses, loss)
         self._model.compile(
-            optimizer=optimizer_instance, loss=self.loss_fn, metrics=metrics
+            optimizer=optimizer_instance, loss=self._loss_fn, metrics=metrics
         )
-
-    @staticmethod
-    def _trim_device_str(name):
-        return name.split("/")[0]
 
     def get_model_weights(self) -> OrderDictWeights:
         return OrderDictWeights(self._trainable_weights)
@@ -120,7 +116,7 @@ class KerasNNModel(NNModel):
             X = tf.constant(X)
             y = tf.constant(y)
             tape.watch(X)
-            loss = self._model.compiled_loss(y, self._model(X))
+            loss = self._loss_fn(y, self._model(X))
         return [tape.gradient(loss, X).numpy()]
 
     def get_trainable_gradients(self, X, y):
@@ -141,20 +137,13 @@ class KerasNNModel(NNModel):
         return self._loss
 
     def get_forward_loss_from_input(self, X, y):
-        # losses_fn = self._model.compiled_loss._losses
-        # LOGGER.error(f"{losses_fn}-{type(losses_fn)}")
-        # if isinstance(losses_fn, list):
-        #     losses_fn = losses_fn[0]
-        # if isinstance(losses_fn, tf.keras.losses.LossFunctionWrapper):
-        #     losses_fn = losses_fn.fn
-        # LOGGER.error(f"{losses_fn}-{type(losses_fn)}")
-        loss = self.loss_fn(tf.constant(y), self._model(X))
+        loss = self._loss_fn(tf.constant(y), self._model(X))
         return loss.numpy()
 
     def _get_gradients(self, X, y, variable):
         with tf.GradientTape() as tape:
             y = tf.constant(y)
-            loss = self._model.compiled_loss(y, self._model(X))
+            loss = self._loss_fn(y, self._model(X))
         g = tape.gradient(loss, variable)
         if isinstance(g, list):
             return [t.numpy() for t in g]
