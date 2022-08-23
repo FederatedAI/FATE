@@ -99,8 +99,13 @@ def access_server(method, ctx, postfix, json_data=None, echo=True, **kwargs):
     sess = requests.Session()
     stream = kwargs.pop('stream', sess.stream)
     timeout = kwargs.pop('timeout', None)
-    prepped = requests.Request(method, '/'.join([ctx.obj['server_url'], postfix]),
-                                json=json_data, **kwargs).prepare()
+    prepped = requests.Request(
+        method, '/'.join([
+            ctx.obj['server_url'],
+            postfix,
+        ]),
+        json=json_data, **kwargs
+    ).prepare()
 
     if ctx.obj.get('app_key') and ctx.obj.get('secret_key'):
         timestamp = str(round(time() * 1000))

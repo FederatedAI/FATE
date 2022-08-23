@@ -107,8 +107,7 @@ class TestModel(Base):
             post_data = {'job_id': self.job_id}
             tar_file_name = 'job_{}_log.tar.gz'.format(post_data['job_id'])
             extract_dir = os.path.join(output_path, tar_file_name.replace('.tar.gz', ''))
-            with closing(requests.post("/".join([self.server_url, "job", command]),
-                                      json=post_data, stream=True)) as response:
+            with closing(requests.post("/".join([self.server_url, "job", command]), json=post_data, stream=True)) as response:
                 if response.status_code == 200:
                     try:
                         download_from_request(http_response=response, tar_file_name=tar_file_name,
