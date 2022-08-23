@@ -513,7 +513,6 @@ class Session(object):
                         self._logger.info(f'clean table namespace {self._computing_session.session_id} done')
                     except Exception as e:
                         self._logger.warning(f"no found table namespace {self._computing_session.session_id}")
-                if self.is_federation_valid:
                     try:
                         self._logger.info('clean table by namespace {}'.format(self._federation_session.session_id))
                         storage.cleanup(namespace=self._federation_session.session_id, name="*")
