@@ -75,11 +75,19 @@ def access_server(method, ctx, postfix, json_data=None, echo=True, **kwargs):
     if not ctx.obj.get('initialized', False):
         response = {
             'retcode': 100,
-            'retmsg': "Fate flow CLI has not been initialized yet or configured incorrectly. "
-            "Please initialize it before using CLI at the first time. And make sure "
-            "the address of fate flow server is configured correctly. The configuration "
-            "file path is: {}.".format(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                                                    os.pardir, os.pardir, 'settings.yaml')))
+            'retmsg': (
+                'Fate flow CLI has not been initialized yet or configured incorrectly. '
+                'Please initialize it before using CLI at the first time. '
+                'And make sure the address of fate flow server is configured correctly. '
+                'The configuration file path is: "{}".'.format(
+                    os.path.abspath(os.path.join(
+                        os.path.dirname(__file__),
+                        os.pardir,
+                        os.pardir,
+                        'settings.yaml',
+                    ))
+                )
+            )
         }
 
         if echo:
@@ -124,16 +132,35 @@ def access_server(method, ctx, postfix, json_data=None, echo=True, **kwargs):
         return response
     except Exception as e:
         exc_type, exc_value, exc_traceback_obj = sys.exc_info()
-        response = {'retcode': 100, 'retmsg': str(e),
-                    'traceback': traceback.format_exception(exc_type, exc_value, exc_traceback_obj)}
+        response = {
+            'retcode': 100,
+            'retmsg': str(e),
+            'traceback': traceback.format_exception(
+                exc_type,
+                exc_value,
+                exc_traceback_obj,
+            ),
+        }
+
         if 'Connection refused' in str(e):
-            response['retmsg'] = 'Connection refused. Please check if the fate flow service is started'
+            response['retmsg'] = (
+                'Connection refused. '
+                'Please check if the fate flow service is started.'
+            )
             del response['traceback']
         elif 'Connection aborted' in str(e):
-            response['retmsg'] = 'Connection aborted. Please make sure that the address of fate flow server ' \
-                                    'is configured correctly. The configuration file path is: ' \
-                                    '{}.'.format(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                                                            os.pardir, os.pardir, 'settings.yaml')))
+            response['retmsg'] = (
+                'Connection aborted. '
+                'Please make sure that the address of fate flow server is configured correctly. '
+                'The configuration file path is: {}'.format(
+                    os.path.abspath(os.path.join(
+                        os.path.dirname(__file__),
+                        os.pardir,
+                        os.pardir,
+                        'settings.yaml',
+                    ))
+                )
+            )
             del response['traceback']
 
         if echo:
