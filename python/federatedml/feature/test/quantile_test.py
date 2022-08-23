@@ -38,11 +38,13 @@ class TestInstance(unittest.TestCase):
 
         dense_inst = []
         headers = ['x' + str(i) for i in range(20)]
+        anonymous_header = ["guest_9999_x" + str(i) for i in range(20)]
         for i in range(100):
             inst = Instance(features=(i % 16 * np.ones(20)))
             dense_inst.append((i, inst))
         self.dense_table = session.parallelize(dense_inst, include_key=True, partition=2)
-        self.dense_table.schema = {'header': headers}
+        self.dense_table.schema = {'header': headers,
+                                   "anonymous_header": anonymous_header}
 
         self.sparse_inst = []
         for i in range(100):

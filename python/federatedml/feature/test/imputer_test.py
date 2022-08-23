@@ -38,6 +38,7 @@ class TestImputer(unittest.TestCase):
             self.test_instance.append(td)
         self.table_instance = self.data_to_table(self.test_instance)
         self.table_instance.schema['header'] = ["fid" + str(i) for i in range(len(self.test_data[0]))]
+        self.table_instance.schema['anonymous_header'] = ["guest_9999_x" + str(i) for i in range(len(self.test_data[0]))]
 
     def print_table(self, table):
         for v in (list(table.collect())):
