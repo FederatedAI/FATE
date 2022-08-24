@@ -28,16 +28,13 @@ LIMIT = click.option("-l", "--limit", type=click.INT, default=10,
 
 JOBID = click.option("-j", "--job-id", type=click.STRING,
                      help="A valid job id.")
-
 JOBID_REQUIRED = click.option("-j", "--job-id", type=click.STRING, required=True,
                               help="A valid job id.")
 
 role_choices_list = ["local", "guest", "arbiter", "host"]
-
 ROLE = click.option("-r", "--role", type=click.Choice(role_choices_list), metavar="TEXT",
                     help="Role name. Users can choose one from {} and {}.".format(",".join(role_choices_list[:-1]),
                                                                                   role_choices_list[-1]))
-
 ROLE_REQUIRED = click.option("-r", "--role", type=click.Choice(role_choices_list), required=True, metavar="TEXT",
                              help="Role name. Users can choose one from {} and {}.".format(
                                  ",".join(role_choices_list[:-1]),
@@ -45,7 +42,6 @@ ROLE_REQUIRED = click.option("-r", "--role", type=click.Choice(role_choices_list
 
 PARTYID = click.option("-p", "--party-id", type=click.STRING,
                        help="A valid party id.")
-
 PARTYID_REQUIRED = click.option("-p", "--party-id", type=click.STRING, required=True,
                                 help="A valid party id.")
 
@@ -53,35 +49,32 @@ GUEST_PARTYID_REQUIRED = click.option("-gid", "--guest-party-id", type=click.STR
                                       help="A valid party id.")
 HOST_PARTYID_REQUIRED = click.option("-hid", "--host-party-id", type=click.STRING, required=True,
                                      help="A valid party id.")
+HOST_PARTYIDS_REQUIRED = click.option("-hids", "--host-party-ids", type=click.STRING, required=True,
+                                      help="Multiple party ids, use a comma to separate each one.")
 
 COMPONENT_NAME = click.option("-cpn", "--component-name", type=click.STRING,
                               help="A valid component name.")
-
 COMPONENT_NAME_REQUIRED = click.option("-cpn", "--component-name", type=click.STRING, required=True,
                                        help="A valid component name.")
 
 status_choices_list = ["success", "failed", "running", "waiting", "timeout", "canceled", "partial", "deleted"]
-
 STATUS = click.option("-s", "--status", type=click.Choice(status_choices_list), metavar="TEXT",
                       help="Job status. Users can choose one from {} and {}.".format(
                           ", ".join(status_choices_list[:-1]),
                           status_choices_list[-1]))
 
+OUTPUT_PATH = click.option("-o", "--output-path", type=click.Path(exists=False),
+                           help="User specifies output directory path.")
 OUTPUT_PATH_REQUIRED = click.option("-o", "--output-path", type=click.Path(exists=False), required=True,
                                     help="User specifies output directory path.")
 
-OUTPUT_PATH = click.option("-o", "--output-path", type=click.Path(exists=False),
-                           help="User specifies output directory path.")
-
 NAMESPACE = click.option("-n", "--namespace", type=click.STRING,
                          help="Namespace.")
-
-TABLE_NAME = click.option("-t", "--table-name", type=click.STRING,
-                          help="Table name.")
-
 NAMESPACE_REQUIRED = click.option("-n", "--namespace", type=click.STRING, required=True,
                                   help="Namespace.")
 
+TABLE_NAME = click.option("-t", "--table-name", type=click.STRING,
+                          help="Table name.")
 TABLE_NAME_REQUIRED = click.option("-t", "--table-name", type=click.STRING, required=True,
                                    help="Table name.")
 
@@ -93,26 +86,26 @@ TAG_DESCRIPTION = click.option("-d", "--tag-desc", type=click.STRING,
                                     "please make sure the description text is enclosed in double quotation marks.")
 
 MODEL_ID = click.option("--model-id", type=click.STRING, help="Model id.")
-
-MODEL_VERSION = click.option("--model-version", type=click.STRING, help="Model version.")
-
-MODEL_VERSION_REQUIRED = click.option("--model-version", type=click.STRING, required=True, help="Model version.")
-
 MODEL_ID_REQUIRED = click.option("--model-id", type=click.STRING, required=True, help="Model id.")
 
-SERVICE_NAME = click.option("--service", type=click.STRING, required=True, help="Service Name")
-FORCE = click.option("--force", is_flag=True, default=False, help="force execute")
-SIMPLE = click.option("-s", '--simple', is_flag=True, default=False, help="simple output")
+MODEL_VERSION = click.option("--model-version", type=click.STRING, help="Model version.")
+MODEL_VERSION_REQUIRED = click.option("--model-version", type=click.STRING, required=True, help="Model version.")
+
+SERVICE_NAME = click.option("--service", type=click.STRING, required=True, help="Service Name.")
+FORCE = click.option("--force", is_flag=True, default=False, help="Force execute.")
+SIMPLE = click.option("-s", '--simple', is_flag=True, default=False, help="Simple output.")
 
 TIMEOUT = click.option("--timeout", type=click.INT, default=300,
-                       help="Timeout limit, default 300 seconds")
+                       help="Timeout limit, default 300 seconds.")
 TASK_CORES = click.option("--task-cores", type=click.INT, default=2,
-                          help="Run Job Task Cores, default 2 cores")
+                          help="Run Job Task Cores, default 2 cores.")
 
-SRC_PARTY_ID = click.option("--src-party-id", type=click.STRING, required=True, help="src party id.")
+SRC_PARTY_ID = click.option("--src-party-id", type=click.STRING, required=True, help="Source party id.")
 SRC_ROLE = click.option("--src-role", type=click.Choice(role_choices_list), required=True, metavar="TEXT",
-                        help="Role name. Users can choose one from {} and {}.".format(",".join(role_choices_list[:-1]),
+                        help="Source role name. Users can choose one from {} and {}.".format(",".join(role_choices_list[:-1]),
                                                                                       role_choices_list[-1]))
 
 MIN_DATA = click.option("--min-data", type=click.INT, help="min data")
 CONNECTOR_NAME = click.option("--connector-name", type=click.STRING, required=True, help="connector name")
+
+MODEL_ALIAS_REQUIRED = click.option("--model-alias", type=click.STRING, required=True, help="Model alias.")

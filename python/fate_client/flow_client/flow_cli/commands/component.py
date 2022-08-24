@@ -177,7 +177,7 @@ def output_data(ctx, **kwargs):
                        'retmsg': 'Download failed, please check if the parameters are correct.'}
         else:
             try:
-                res = response.json() if isinstance(response, requests.models.Response) else response
+                res = response.json()
             except Exception:
                 res = {'retcode': 100,
                        'retmsg': 'Download failed, for more details please check logs/fate_flow/fate_flow_stat.log.'}
@@ -269,7 +269,7 @@ def get_summary(ctx, **kwargs):
                     }
                 else:
                     try:
-                        res = response.json() if isinstance(response, requests.models.Response) else response
+                        res = response.json()
                     except Exception:
                         res = {"retcode": 100,
                                "retmsg": "Download component summary failed, "
@@ -277,3 +277,38 @@ def get_summary(ctx, **kwargs):
         prettify(res)
     else:
         access_server("post", ctx, "tracking/component/summary/download", config_data)
+
+
+@component.command('hetero-model-merge', short_help='Merge Hetero Model Command')
+@cli_args.MODEL_ID_REQUIRED
+@cli_args.MODEL_VERSION_REQUIRED
+@cli_args.GUEST_PARTYID_REQUIRED
+@cli_args.HOST_PARTYIDS_REQUIRED
+@cli_args.COMPONENT_NAME_REQUIRED
+@cli_args.MODEL_ALIAS_REQUIRED
+@click.option('--model-type', type=click.STRING, required=True)
+@click.option('--output-format', type=click.STRING, required=True)
+@click.option('--target-name', type=click.STRING)
+@cli_args.OUTPUT_PATH_REQUIRED
+@click.pass_context
+def hetero_model_merge(ctx, **kwargs):
+    """
+    \b
+    - DESCRIPTION:
+        Merge a hetero model.
+
+    \b
+    - USAGE:
+        flow component hetero-model-merge --model-id guest-9999#host-9998#model --model-version 202208241838502253290 --guest-party-id 9999 --host-party-ids 9998,9997 --component-name hetero_secure_boost_0 --model-alias model --model-type secureboost --output-format pmml --target-name y --output-path model.xml
+    """
+    config_data, dsl_data = preprocess(**kwargs)
+    config_data['host_party_ids'] = config_data['host_party_ids'].split(',')
+
+    response = access_server('post', ctx, 'component/hetero/merge', config_data, False)
+
+    if not response.json().get('data'):
+        prettify(response)
+        return
+
+    with open(config_data['output_path'], 'w', encoding='utf-8') as f:
+        f.write(response.json()['data'])

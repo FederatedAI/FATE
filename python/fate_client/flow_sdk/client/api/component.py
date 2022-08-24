@@ -15,6 +15,8 @@
 #
 import os
 from contextlib import closing
+from typing import List
+
 from flow_sdk.client.api.base import BaseFlowAPI
 from flow_sdk.utils import preprocess, check_config, download_from_request
 
@@ -97,7 +99,28 @@ class Component(BaseFlowAPI):
         config_data, dsl_data = preprocess(**kwargs)
         check_config(config=config_data,
                      required_arguments=['job_id', 'component_name', 'role', 'party_id'])
-        res = self._post(url='tracking/component/summary/download', handle_result=True, json=config_data)
+        res = self._post(url='tracking/component/summary/download', json=config_data)
         if not res.get('data'):
             res['data'] = {}
+        return res
+
+    def hetero_model_merge(
+        self,
+        model_id: str, model_version: str,
+        guest_party_id: str, host_party_ids: List[str],
+        component_name: str, model_alias: str,
+        model_type: str, output_format: str,
+        target_name: str = None,
+    ):
+        kwargs = locals()
+        config_data, dsl_data = preprocess(**kwargs)
+
+        check_config(config=config_data, required_arguments=(
+            'model_id', 'model_version',
+            'guest_party_id', 'host_party_ids',
+            'component_name', 'model_alias',
+            'model_type', 'output_format',
+        ))
+
+        res = self._post(url='component/hetero/merge', json=config_data)
         return res
