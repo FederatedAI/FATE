@@ -21,7 +21,9 @@ from federatedml.util import consts
 
 
 class PearsonMetricInfo(object):
-    def __init__(self, local_corr, col_names, corr=None, host_col_names=None, parties=None):
+    def __init__(
+        self, local_corr, col_names, corr=None, host_col_names=None, parties=None
+    ):
         self.local_corr = local_corr
         self.col_names = col_names
         self.corr = corr
@@ -35,40 +37,36 @@ class PearsonMetricInfo(object):
 
 
 class PearsonAdapter(BaseAdapter):
-
     def convert(self, model_meta, model_param):
         col_names = list(model_param.names)
+        result = isometric_model.IsometricModel()
 
-        local_corr = np.array(model_param.local_corr).reshape(model_param.shape, model_param.shape)
-
-        from federatedml.util import LOGGER
-        for idx in range(local_corr.shape[0]):
-            corr_col = local_corr[idx, :]
-            # LOGGER.debug(f"local_col_idx: {idx}, corr_col: {corr_col}")
-
+        # corr
+        local_corr = np.array(model_param.local_corr).reshape(
+            model_param.shape, model_param.shape
+        )
         if model_param.corr:
             corr = np.array(model_param.corr).reshape(*model_param.shapes)
-
-            for idx in range(corr.shape[1]):
-                corr_col = corr[:, idx]
-                # LOGGER.debug(f"col_idx: {idx}, corr_col: {corr_col}")
-
             host_names = list(list(model_param.all_names)[1].names)
             parties = list(model_param.parties)
         else:
             corr = None
             host_names = None
             parties = None
-        pearson_metric = PearsonMetricInfo(local_corr=local_corr, col_names=col_names,
-                                           corr=corr, host_col_names=host_names, parties=parties)
+        pearson_metric = PearsonMetricInfo(
+            local_corr=local_corr,
+            col_names=col_names,
+            corr=corr,
+            host_col_names=host_names,
+            parties=parties,
+        )
+        result.add_metric_value(metric_name=consts.PEARSON, metric_info=pearson_metric)
 
-        result = isometric_model.IsometricModel()
-        if model_param.local_vif:
-            local_vif = model_param.local_vif
+        # local vif
+        local_vif = model_param.local_vif
+        if local_vif:
             single_info = isometric_model.SingleMetricInfo(
-                values=local_vif,
-                col_names=col_names
+                values=local_vif, col_names=col_names
             )
             result.add_metric_value(metric_name=consts.VIF, metric_info=single_info)
-        result.add_metric_value(metric_name=consts.PEARSON, metric_info=pearson_metric)
         return result
