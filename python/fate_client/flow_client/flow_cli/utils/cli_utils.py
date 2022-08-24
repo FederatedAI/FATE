@@ -63,7 +63,13 @@ def check_config(config: typing.Dict, required_arguments: typing.List):
 
 def prettify(response):
     if isinstance(response, requests.models.Response):
-        response = response.json()
+        try:
+            response = response.json()
+        except json.decoder.JSONDecodeError:
+            response = {
+                'retcode': 100,
+                'retmsg': response.text,
+            }
 
     click.echo(json.dumps(response, indent=4, ensure_ascii=False))
     click.echo('')
