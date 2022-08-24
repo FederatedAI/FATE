@@ -55,7 +55,7 @@ class Federation(FederationABC):
         return [Table(r) if isinstance(r, RawTable) else r for r in rtn]
 
     def destroy(self, parties):
-        pass
+        self._federation.destroy()
 
 
 _remote_history = set()

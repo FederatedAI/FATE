@@ -101,6 +101,13 @@ class Anonymous(object):
         return splits[0]
 
     @staticmethod
+    def get_suffix_from_anonymous_column(anonymous_column):
+        splits = Anonymous.get_anonymous_column_splits(anonymous_column, num=2)
+        if len(splits) < 3:
+            raise ValueError("This is not a anonymous_column")
+        return splits[-1]
+
+    @staticmethod
     def get_anonymous_header(schema):
         return schema["anonymous_header"]
 
@@ -184,3 +191,22 @@ class Anonymous(object):
                 new_schema["anonymous_label"] = ANONYMOUS_LABEL
 
         return new_schema
+
+    def generated_compatible_anonymous_header_with_old_version(self, header):
+        if self._role is None or self._party_id is None:
+            raise ValueError("Please init anonymous generator with role & party_id")
+        return [SPLICES.join([self._role, str(self._party_id), str(idx)]) for idx in range(len(header))]
+
+    @staticmethod
+    def is_old_version_anonymous_header(anonymous_header):
+        for anonymous_col in anonymous_header:
+            splits = anonymous_col.split(SPLICES, -1)
+            if len(splits) != 3:
+                return False
+
+            try:
+                index = int(splits[2])
+            except ValueError:
+                return False
+
+        return True

@@ -50,7 +50,7 @@ class BaseDataBase(object):
     def __init__(self):
         database_config = DATABASE.copy()
         db_name = database_config.pop("name")
-        if is_standalone:
+        if is_standalone and not os.environ.get("FORCE_USE_MYSQL"):
             from playhouse.apsw_ext import APSWDatabase
             self.database_connection = APSWDatabase(file_utils.get_project_base_directory("fate_sqlite.db"))
         else:

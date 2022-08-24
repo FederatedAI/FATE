@@ -600,6 +600,10 @@ class CSessionABC(metaclass=ABCMeta):
         """
 
     @abc.abstractmethod
+    def destroy(self):
+        pass
+
+    @abc.abstractmethod
     def stop(self):
         pass
 

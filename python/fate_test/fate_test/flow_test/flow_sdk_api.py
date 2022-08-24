@@ -86,7 +86,7 @@ class TestModel(object):
                 stdout = self.client.job.list(limit=3)
                 if stdout.get('retcode'):
                     self.error_log('job list: {}'.format(stdout.get('retmsg')) + '\n')
-                if len(stdout.get('data')) == 3:
+                if len(stdout.get('data', {}).get('jobs', [])) == 3:
                     return stdout.get('retcode')
             except Exception:
                 return
@@ -170,7 +170,7 @@ class TestModel(object):
             stdout = self.client.task.list(limit=3)
             if stdout.get('retcode'):
                 self.error_log('list task: {}'.format(stdout.get('retmsg')) + '\n')
-            if stdout.get("data") and len(stdout.get('data')) == 3:
+            if len(stdout.get('data', {}).get('tasks', [])) == 3:
                 return stdout.get('retcode')
         except Exception:
             return

@@ -28,7 +28,6 @@ from federatedml.protobuf.generated import feature_selection_meta_pb2
 from federatedml.statistic.data_overview import look_up_names_from_header
 from federatedml.util import LOGGER
 from federatedml.util import consts
-from federatedml.util import anonymous_generator
 from federatedml.util.component_properties import ComponentProperties
 
 
@@ -274,18 +273,9 @@ class FederatedIsoModelFilter(IsoModelFilter):
                                           header=self.selection_properties.header,
                                           anonymous_header=self.selection_properties.anonymous_header,
                                           suffix=suffix)
-        """else:
-            self.sync_obj.sync_select_results_old(self.selection_properties,
-                                              decode_func=self.decode_func,
-                                              suffix=suffix)
-        """
 
         # LOGGER.debug("In fit selected result, left_col_names: {}".format(self.selection_properties.left_col_names))
         return self
-
-    def decode_func(self, encoded_name):
-        fid = anonymous_generator.reconstruct_fid(encoded_name)
-        return self.selection_properties.header[fid]
 
     def _sync_select_info(self, suffix):
         if not self.select_federated:

@@ -79,3 +79,6 @@ class HomoBinningClient(BaseFeatureBinning):
             summary[k] = list(v)
         self.set_summary({"split_points": summary})
         return data_out
+
+    def transform(self, data_instances):
+        return self.transform_data(data_instances)

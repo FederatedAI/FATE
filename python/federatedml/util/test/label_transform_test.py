@@ -22,6 +22,7 @@ import numpy as np
 from fate_arch.session import computing_session as session
 
 from federatedml.feature.instance import Instance
+from federatedml.statistic.data_overview import predict_detail_dict_to_str
 from federatedml.util.label_transform import LabelTransformer
 
 
@@ -58,16 +59,15 @@ class TestLabelTransform(unittest.TestCase):
     def test_replace_predict_label(self):
         true_label, predict_label, predict_score, predict_detail, predict_type = 1, 0, 0.1, {
             "1": 0.1, "0": 0.9}, "train"
+        predict_detail = predict_detail_dict_to_str(predict_detail)
         predict_result = Instance(inst_id=0,
                                   features=[true_label, predict_label, predict_score, predict_detail, predict_type])
         r_predict_instance = self.label_transformer_obj.replace_predict_label(
             predict_result, self.predict_label_encoder)
         r_predict_result = r_predict_instance.features
-        c_predict_result = ["yes", "no", predict_score, {"yes": 0.1, "no": 0.9}, predict_type]
+        c_predict_detail = predict_detail_dict_to_str({"yes": 0.1, "no": 0.9})
+        c_predict_result = ["yes", "no", predict_score, c_predict_detail, predict_type]
         self.assertEqual(r_predict_result, c_predict_result)
-
-    def tearDown(self):
-        session.stop()
 
 
 if __name__ == '__main__':

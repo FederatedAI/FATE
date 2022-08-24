@@ -28,7 +28,19 @@ from uuid import uuid1
 
 import click
 import requests
-from flask import Response
+
+
+class Response(requests.models.Response):
+
+    def __init__(self, resp, status):
+        super().__init__()
+
+        self.encoding = 'utf-8'
+        self._content = json.dumps(resp).encode(self.encoding)
+        self._content_consumed = True
+
+        self.status_code = status
+        self.headers['Content-Type'] = 'application/json'
 
 
 def check_config(config: typing.Dict, required_arguments: typing.List):
@@ -49,88 +61,124 @@ def check_config(config: typing.Dict, required_arguments: typing.List):
             ','.join(no_arguments), ','.join(['{}={}'.format(a[0], a[1]) for a in error_arguments])))
 
 
-def prettify(response, verbose=True):
-    if verbose:
-        if isinstance(response, requests.models.Response):
-            try:
-                response_dict = response.json()
-            except TypeError:
-                response_dict = response.json
-        else:
-            response_dict = response
+def prettify(response):
+    if isinstance(response, requests.models.Response):
         try:
-            click.echo(json.dumps(response_dict, indent=4, ensure_ascii=False))
-        except TypeError:
-            click.echo(json.dumps(response_dict.json, indent=4, ensure_ascii=False))
-        click.echo('')
+            response = response.json()
+        except json.decoder.JSONDecodeError:
+            response = {
+                'retcode': 100,
+                'retmsg': response.text,
+            }
+
+    click.echo(json.dumps(response, indent=4, ensure_ascii=False))
+    click.echo('')
+
     return response
 
 
 def access_server(method, ctx, postfix, json_data=None, echo=True, **kwargs):
-    if ctx.obj.get('init', False):
-        sess = requests.Session()
-        stream = kwargs.pop('stream', sess.stream)
-        prepped = requests.Request(method, '/'.join([ctx.obj['server_url'], postfix]),
-                                   json=json_data, **kwargs).prepare()
-
-        if ctx.obj.get('app_key') and ctx.obj.get('secret_key'):
-            timestamp = str(round(time() * 1000))
-            nonce = str(uuid1())
-            signature = b64encode(HMAC(ctx.obj['secret_key'].encode('ascii'), b'\n'.join([
-                timestamp.encode('ascii'),
-                nonce.encode('ascii'),
-                ctx.obj['app_key'].encode('ascii'),
-                prepped.path_url.encode('ascii'),
-                prepped.body if json_data is not None else b'',
-                urlencode(sorted(kwargs['data'].items()), quote_via=quote, safe='-._~').encode('ascii')
-                if kwargs.get('data') and isinstance(kwargs['data'], dict) else b'',
-            ]), 'sha1').digest()).decode('ascii')
-
-            prepped.headers.update({
-                'TIMESTAMP': timestamp,
-                'NONCE': nonce,
-                'APP_KEY': ctx.obj['app_key'],
-                'SIGNATURE': signature,
-            })
-
-        try:
-            response = sess.send(prepped, stream=stream)
-            if echo:
-                prettify(response)
-                return
-            else:
-                return response
-        except Exception as e:
-            exc_type, exc_value, exc_traceback_obj = sys.exc_info()
-            response = {'retcode': 100, 'retmsg': str(e),
-                        'traceback': traceback.format_exception(exc_type, exc_value, exc_traceback_obj)}
-            if 'Connection refused' in str(e):
-                response['retmsg'] = 'Connection refused. Please check if the fate flow service is started'
-                del response['traceback']
-            if 'Connection aborted' in str(e):
-                response['retmsg'] = 'Connection aborted. Please make sure that the address of fate flow server ' \
-                                     'is configured correctly. The configuration file path is: ' \
-                                     '{}.'.format(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                                                               os.pardir, os.pardir, 'settings.yaml')))
-                del response['traceback']
-            if echo:
-                prettify(response)
-                return
-            else:
-                return Response(json.dumps(response), status=500, mimetype='application/json')
-    else:
+    if not ctx.obj.get('initialized', False):
         response = {
             'retcode': 100,
-            'retmsg': "Fate flow CLI has not been initialized yet or configured incorrectly. "
-            "Please initialize it before using CLI at the first time. And make sure "
-            "the address of fate flow server is configured correctly. The configuration "
-            "file path is: {}.".format(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                                                    os.pardir, os.pardir, 'settings.yaml')))
+            'retmsg': (
+                'Fate flow CLI has not been initialized yet or configured incorrectly. '
+                'Please initialize it before using CLI at the first time. '
+                'And make sure the address of fate flow server is configured correctly. '
+                'The configuration file path is: "{}".'.format(
+                    os.path.abspath(os.path.join(
+                        os.path.dirname(__file__),
+                        os.pardir,
+                        os.pardir,
+                        'settings.yaml',
+                    ))
+                )
+            )
         }
+
         if echo:
             prettify(response)
-        else:
-            return Response(json.dumps(response), status=500, mimetype='application/json')
+            return
+
+        return Response(response, 500)
+
+    sess = requests.Session()
+    stream = kwargs.pop('stream', sess.stream)
+    timeout = kwargs.pop('timeout', None)
+    prepped = requests.Request(
+        method, '/'.join([
+            ctx.obj['server_url'],
+            postfix,
+        ]),
+        json=json_data, **kwargs
+    ).prepare()
+
+    if ctx.obj.get('app_key') and ctx.obj.get('secret_key'):
+        timestamp = str(round(time() * 1000))
+        nonce = str(uuid1())
+        signature = b64encode(HMAC(ctx.obj['secret_key'].encode('ascii'), b'\n'.join([
+            timestamp.encode('ascii'),
+            nonce.encode('ascii'),
+            ctx.obj['app_key'].encode('ascii'),
+            prepped.path_url.encode('ascii'),
+            prepped.body if json_data is not None else b'',
+            urlencode(sorted(kwargs['data'].items()), quote_via=quote, safe='-._~').encode('ascii')
+            if kwargs.get('data') and isinstance(kwargs['data'], dict) else b'',
+        ]), 'sha1').digest()).decode('ascii')
+
+        prepped.headers.update({
+            'TIMESTAMP': timestamp,
+            'NONCE': nonce,
+            'APP_KEY': ctx.obj['app_key'],
+            'SIGNATURE': signature,
+        })
+
+    try:
+        response = sess.send(prepped, stream=stream, timeout=timeout)
+
+        if echo:
+            prettify(response)
+            return
+
+        return response
+    except Exception as e:
+        exc_type, exc_value, exc_traceback_obj = sys.exc_info()
+        response = {
+            'retcode': 100,
+            'retmsg': str(e),
+            'traceback': traceback.format_exception(
+                exc_type,
+                exc_value,
+                exc_traceback_obj,
+            ),
+        }
+
+        if 'Connection refused' in str(e):
+            response['retmsg'] = (
+                'Connection refused. '
+                'Please check if the fate flow service is started.'
+            )
+            del response['traceback']
+        elif 'Connection aborted' in str(e):
+            response['retmsg'] = (
+                'Connection aborted. '
+                'Please make sure that the address of fate flow server is configured correctly. '
+                'The configuration file path is: {}'.format(
+                    os.path.abspath(os.path.join(
+                        os.path.dirname(__file__),
+                        os.pardir,
+                        os.pardir,
+                        'settings.yaml',
+                    ))
+                )
+            )
+            del response['traceback']
+
+        if echo:
+            prettify(response)
+            return
+
+        return Response(response, 500)
 
 
 def preprocess(**kwargs):

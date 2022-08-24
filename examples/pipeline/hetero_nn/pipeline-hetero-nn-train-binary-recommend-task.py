@@ -100,7 +100,7 @@ def main(config="../../config.yaml", namespace=""):
     # optimizer, after fate torch hook optimizer can be created without parameters
     opt: ft.optim.Adam = optim.Adam(lr=0.01)
 
-    hetero_nn_0 = HeteroNN(name="hetero_nn_0", epochs=10, floating_point_precision=None,
+    hetero_nn_0 = HeteroNN(name="hetero_nn_0", epochs=1, floating_point_precision=None,
                            interactive_layer_lr=0.01, batch_size=4096, early_stop="diff")
 
     guest_nn_0 = hetero_nn_0.get_party_instance(role='guest', party_id=guest)

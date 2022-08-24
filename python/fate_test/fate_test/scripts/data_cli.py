@@ -7,7 +7,6 @@ import json
 from datetime import timedelta
 
 import click
-import torchvision
 from pathlib import Path
 from ruamel import yaml
 
@@ -306,6 +305,8 @@ def query_component_output_data(clients: Clients, config: Config, component_name
 
 
 def download_mnist(base, name, is_train=True):
+    import torchvision
+
     dataset = torchvision.datasets.MNIST(
         root=base.joinpath(".cache"), train=is_train, download=True
     )

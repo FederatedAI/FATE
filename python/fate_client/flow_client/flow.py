@@ -89,7 +89,7 @@ def flow_cli(ctx):
     else:
         raise ValueError('Invalid configuration file. Did you run "flow init"?')
 
-    ctx.obj['init'] = is_server_conf_exist or (config.get('ip') and config.get('port'))
+    ctx.obj['initialized'] = is_server_conf_exist or (config.get('ip') and config.get('port'))
 
 
 @flow_cli.command('init', short_help='Flow CLI Init Command')
