@@ -37,8 +37,8 @@ class PearsonMetricInfo(object):
 class PearsonAdapter(BaseAdapter):
 
     def convert(self, model_meta, model_param):
-        local_vif = model_param.local_vif
         col_names = list(model_param.names)
+
         local_corr = np.array(model_param.local_corr).reshape(model_param.shape, model_param.shape)
 
         from federatedml.util import LOGGER
@@ -62,11 +62,13 @@ class PearsonAdapter(BaseAdapter):
         pearson_metric = PearsonMetricInfo(local_corr=local_corr, col_names=col_names,
                                            corr=corr, host_col_names=host_names, parties=parties)
 
-        single_info = isometric_model.SingleMetricInfo(
-            values=local_vif,
-            col_names=col_names
-        )
         result = isometric_model.IsometricModel()
-        result.add_metric_value(metric_name=consts.VIF, metric_info=single_info)
+        if model_param.local_vif:
+            local_vif = model_param.local_vif
+            single_info = isometric_model.SingleMetricInfo(
+                values=local_vif,
+                col_names=col_names
+            )
+            result.add_metric_value(metric_name=consts.VIF, metric_info=single_info)
         result.add_metric_value(metric_name=consts.PEARSON, metric_info=pearson_metric)
         return result
