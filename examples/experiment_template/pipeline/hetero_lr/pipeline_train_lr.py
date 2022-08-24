@@ -18,15 +18,14 @@ import argparse
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import HeteroFeatureBinning, HeteroFeatureSelection, DataStatistics, Evaluation
-from pipeline.component.scale import FeatureScale
-from pipeline.component.dataio import DataIO
-from pipeline.component.hetero_lr import HeteroLR
-from pipeline.component.intersection import Intersection
-from pipeline.component.reader import Reader
-from pipeline.interface.data import Data
-from pipeline.interface.model import Model
+from pipeline.component import FeatureScale
+from pipeline.component import DataTransform
+from pipeline.component import HeteroLR
+from pipeline.component import Intersection
+from pipeline.component import Reader
+from pipeline.interface import Data
+from pipeline.interface import Model
 from pipeline.utils.tools import load_job_config
-from pipeline.runtime.entity import JobParameters
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -60,9 +59,9 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
     reader_1.get_party_instance(role='host', party_id=host).component_param(table=host_test_data)
 
-    # define DataIO components
-    dataio_0 = DataIO(name="dataio_0")  # start component numbering at 0
-    dataio_1 = DataIO(name="dataio_1")  # start component numbering at 1
+    # define DataTransform components
+    data_transform_0 = DataTransform(name="data_transform_0")  # start component numbering at 0
+    data_transform_1 = DataTransform(name="data_transform_1")  # start component numbering at 1
 
     param = {
         "with_label": True,
@@ -76,12 +75,12 @@ def main(config="../../config.yaml", namespace=""):
         "outlier_replace_value": 0.66,
         "outlier_impute": "-9999"
     }
-    # get DataIO party instance of guest
-    dataio_0_guest_party_instance = dataio_0.get_party_instance(role='guest', party_id=guest)
-    # configure DataIO for guest
-    dataio_0_guest_party_instance.component_param(**param)
-    # get and configure DataIO party instance of host
-    dataio_1.get_party_instance(role='guest', party_id=guest).component_param(**param)
+    # get DataTransform party instance of guest
+    data_transform_0_guest_party_instance = data_transform_0.get_party_instance(role='guest', party_id=guest)
+    # configure DataTransform for guest
+    data_transform_0_guest_party_instance.component_param(**param)
+    # get and configure DataTransform party instance of host
+    data_transform_1.get_party_instance(role='guest', party_id=guest).component_param(**param)
 
     param = {
         "input_format": "tag",
@@ -90,8 +89,8 @@ def main(config="../../config.yaml", namespace=""):
         "delimitor": ";",
         "output_format": "dense"
     }
-    dataio_0.get_party_instance(role='host', party_id=host).component_param(**param)
-    dataio_1.get_party_instance(role='host', party_id=host).component_param(**param)
+    data_transform_0.get_party_instance(role='host', party_id=host).component_param(**param)
+    data_transform_1.get_party_instance(role='host', party_id=host).component_param(**param)
 
     # define Intersection components
     intersection_0 = Intersection(name="intersection_0", intersect_method="raw")
@@ -157,12 +156,13 @@ def main(config="../../config.yaml", namespace=""):
     # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)
     pipeline.add_component(reader_1)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(dataio_1, data=Data(data=reader_1.output.data), model=Model(dataio_0.output.model))
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(data_transform_1,
+                           data=Data(data=reader_1.output.data), model=Model(data_transform_0.output.model))
 
     # set data input sources of intersection components
-    pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
-    pipeline.add_component(intersection_1, data=Data(data=dataio_1.output.data))
+    pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
+    pipeline.add_component(intersection_1, data=Data(data=data_transform_1.output.data))
 
     # set train & validate data of hetero_lr_0 component
     pipeline.add_component(hetero_feature_binning_0, data=Data(data=intersection_0.output.data))
