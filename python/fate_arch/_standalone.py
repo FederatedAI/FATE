@@ -404,20 +404,10 @@ class Session(object):
             LOGGER.error(f"illegal data dir: {data_path}")
             return
 
-        # e.g.: '/fate/data/202109081519036144070_reader_0_0_host_10000'
         namespace_dir = data_path.joinpath(namespace)
 
         if not namespace_dir.is_dir():
-            # remove role and party_id
-            # e.g.: '202109081519036144070_reader_0_0'
-            stem = '_'.join(namespace_dir.stem.split('_')[:-2])
-            # TODO: find where the dir was created
-            namespace_dir = namespace_dir.with_name(stem)
-
-            if not namespace_dir.is_dir():
-                # TODO: find the reason
-                LOGGER.warning(f"namespace dir {namespace_dir} does not exist")
-                return
+            return
 
         if name == "*":
             shutil.rmtree(namespace_dir)
@@ -508,7 +498,6 @@ class Federation(object):
     def __init__(self, session, session_id, party: Party):
         self._session_id = session_id
         self._party: Party = party
-        self._loop = asyncio.get_event_loop()
         self._session = session
         self._max_message_size = DEFAULT_MESSAGE_MAX_SIZE
         self._federation_status_table = _create_table(
@@ -529,6 +518,13 @@ class Federation(object):
         )
         self._other_status_tables = {}
         self._other_object_tables = {}
+        self._even_loop = None
+
+    @property
+    def _loop(self):
+        if self._even_loop is None:
+            self._even_loop = asyncio.get_event_loop()
+        return self._even_loop
 
     @staticmethod
     def _get_status_table_name(party):
