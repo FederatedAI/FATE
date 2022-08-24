@@ -32,6 +32,8 @@ fateflow:
     host:
     http_port:
     grpc_port:
+  # use random instance_id instead of {host}:{http_port}
+  random_instance_id: false
 
   # support rollsite/nginx/fateflow as a coordination proxy
   # rollsite support fate on eggroll, use grpc protocol

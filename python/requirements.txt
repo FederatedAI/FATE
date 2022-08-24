@@ -1,6 +1,5 @@
 pip>=21
 apsw<3.10
-importlib_metadata<2.0.0
 pkginfo==1.7.1
 beautifultable==1.0.0
 cachetools==3.0.0
@@ -8,7 +7,7 @@ casbin==1.16.6
 casbin-sqlalchemy-adapter==0.4.2
 cloudpickle==2.1.0
 cos-python-sdk-v5==1.9.10
-Flask==1.0.2
+Flask==2.0.3
 gmpy2==2.0.8
 joblib==1.0.1
 kazoo==2.6.1
@@ -46,8 +45,9 @@ pulsar-client==2.10.1; sys_platform == "linux"
 pulsar-client==2.10.0; sys_platform == "darwin"
 fastavro==1.4.1
 lightgbm==3.3.1
+shortuuid==1.0.9
+
 etaf-crypto
-pyparsing<3.0.8
 
 # addtional requirements for eggroll
 grpcio==1.46.3
