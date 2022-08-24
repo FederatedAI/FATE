@@ -314,14 +314,14 @@ def vif_from_pearson_matrix(pearson_matrix, threshold=1e-8):
     N = pearson_matrix.shape[0]
     vif = []
     LOGGER.info(f"local vif calc: calc matrix eigvals")
-    eig = sorted([abs(v) for v in np.linalg.eigvals(pearson_matrix)])
+    eig = sorted([abs(v) for v in np.linalg.eigvalsh(pearson_matrix)])
     num_drop = len(list(filter(lambda x: x < threshold, eig)))
     det_non_zero = np.prod(eig[num_drop:])
     LOGGER.info(f"local vif calc: calc submatrix eigvals")
     for i in range(N):
         indexes = [j for j in range(N) if j != i]
         cofactor_matrix = pearson_matrix[indexes][:, indexes]
-        cofactor_eig = sorted([abs(v) for v in np.linalg.eigvals(cofactor_matrix)])
+        cofactor_eig = sorted([abs(v) for v in np.linalg.eigvalsh(cofactor_matrix)])
         vif.append(np.prod(cofactor_eig[num_drop:]) / det_non_zero)
         LOGGER.info(f"local vif calc: submatrix {i+1}/{N} eig is {vif[-1]}")
     LOGGER.info(f"local vif calc done")
