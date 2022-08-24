@@ -410,11 +410,11 @@ class Session(object):
             return
 
         if name == "*":
-            shutil.rmtree(namespace_dir)
+            shutil.rmtree(namespace_dir, True)
             return
 
         for table in namespace_dir.glob(name):
-            shutil.rmtree(table)
+            shutil.rmtree(table, True)
 
     def stop(self):
         self.cleanup(name="*", namespace=self.session_id)
@@ -495,30 +495,45 @@ class Federation(object):
     def _federation_object_key(self, name, tag, s_party, d_party):
         return f"{self._session_id}-{name}-{tag}-{s_party.role}-{s_party.party_id}-{d_party.role}-{d_party.party_id}"
 
-    def __init__(self, session, session_id, party: Party):
+    def __init__(self, session: Session, session_id, party: Party):
         self._session_id = session_id
         self._party: Party = party
         self._session = session
         self._max_message_size = DEFAULT_MESSAGE_MAX_SIZE
-        self._federation_status_table = _create_table(
-            session=session,
-            name=self._get_status_table_name(self._party),
-            namespace=self._session_id,
-            partitions=1,
-            need_cleanup=True,
-            error_if_exist=False,
-        )
-        self._federation_object_table = _create_table(
-            session=session,
-            name=self._get_object_table_name(self._party),
-            namespace=self._session_id,
-            partitions=1,
-            need_cleanup=True,
-            error_if_exist=False,
-        )
         self._other_status_tables = {}
         self._other_object_tables = {}
         self._even_loop = None
+        self._federation_status_table_cache = None
+        self._federation_object_table_cache = None
+
+    def destroy(self):
+        self._session.cleanup(namespace=self._session_id, name="*")
+
+    @property
+    def _federation_status_table(self):
+        if self._federation_status_table_cache is None:
+            self._federation_status_table_cache = _create_table(
+                session=self._session,
+                name=self._get_status_table_name(self._party),
+                namespace=self._session_id,
+                partitions=1,
+                need_cleanup=True,
+                error_if_exist=False,
+            )
+        return self._federation_status_table_cache
+
+    @property
+    def _federation_object_table(self):
+        if self._federation_object_table_cache is None:
+            self._federation_object_table_cache = _create_table(
+                session=self._session,
+                name=self._get_object_table_name(self._party),
+                namespace=self._session_id,
+                partitions=1,
+                need_cleanup=True,
+                error_if_exist=False,
+            )
+        return self._federation_object_table_cache
 
     @property
     def _loop(self):
