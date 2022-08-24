@@ -102,8 +102,9 @@ TASK_CORES = click.option("--task-cores", type=click.INT, default=2,
 
 SRC_PARTY_ID = click.option("--src-party-id", type=click.STRING, required=True, help="Source party id.")
 SRC_ROLE = click.option("--src-role", type=click.Choice(role_choices_list), required=True, metavar="TEXT",
-                        help="Source role name. Users can choose one from {} and {}.".format(",".join(role_choices_list[:-1]),
-                                                                                      role_choices_list[-1]))
+                        help="Source role name. Users can choose one from {} and {}.".format(
+                            ",".join(role_choices_list[:-1]),
+                            role_choices_list[-1]))
 
 MIN_DATA = click.option("--min-data", type=click.INT, help="min data")
 CONNECTOR_NAME = click.option("--connector-name", type=click.STRING, required=True, help="connector name")
