@@ -454,20 +454,7 @@ class Session(object):
         if self.is_computing_valid:
             try:
                 self._logger.info(f"try to destroy computing session {self._computing_session.session_id}")
-
-                try:
-                    self._logger.info('clean table by namespace {}'.format(self._computing_session.session_id))
-                    self._computing_session.cleanup(namespace=self._computing_session.session_id, name="*")
-                    self._logger.info(f'clean table namespace {self._computing_session.session_id} done')
-                except Exception as e:
-                    self._logger.warning(f"no found table namespace {self._computing_session.session_id}")
-
-                try:
-                    ret = self._computing_session.stop()
-                except BaseException:
-                    ret = self._computing_session.kill()
-                self._logger.info(f"destroy computing session {self._computing_session.session_id} successfully, "
-                                  f"ret={ret}")
+                self._computing_session.destroy()
             except Exception as e:
                 self._logger.info(f"destroy computing session {self._computing_session.session_id} failed", e)
 

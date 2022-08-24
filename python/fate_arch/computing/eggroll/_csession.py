@@ -104,3 +104,16 @@ class CSession(CSessionABC):
 
     def kill(self):
         return self._rp_session.kill()
+
+    def destroy(self):
+        try:
+            LOGGER.info(f"clean table namespace {self._session_id}")
+            self.cleanup(namespace=self._session_id, name="*")
+        except Exception as e:
+            LOGGER.warning(f"no found table namespace {self._session_id}")
+
+        try:
+            self.stop()
+        except Exception as e:
+            LOGGER.warning(f"stop storage session {self._session_id} failed, try to kill", e)
+            self.kill()
