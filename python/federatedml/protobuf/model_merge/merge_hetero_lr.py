@@ -8,7 +8,7 @@ from sklearn2pmml.pipeline import PMMLPipeline
 from google.protobuf import json_format
 
 
-def  _get_coef(param_obj):
+def _get_coef(param_obj):
     coefficient = np.empty((1, len(param_obj.header)))
     weight_dict = dict(param_obj.weight)
     for index in range(len(param_obj.header)):
