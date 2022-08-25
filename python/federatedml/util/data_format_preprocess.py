@@ -256,7 +256,7 @@ class DataFormatPreProcess(object):
                 if original_index_info.get("label_index") is not None:
                     pre_max_col_idx = max(original_index_info["label_index"], pre_max_col_idx)
                 if original_index_info.get("match_id_index") is not None:
-                    pre_max_col_idx = max(original_index_info["match_id_index"], pre_max_col_idx)
+                    pre_max_col_idx = max(max(original_index_info["match_id_index"]), pre_max_col_idx)
 
                 append_header_index = [i + pre_max_col_idx + 1 for i in range(len(columns))]
 
