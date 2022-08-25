@@ -64,15 +64,12 @@ def flow_cli(ctx):
         http_app_key = None
         http_secret_key = None
 
-        try:
+        if server_conf.get('authentication', {}).get('client', {}).get('switch'):
             http_app_key = server_conf['authentication']['client']['http_app_key']
             http_secret_key = server_conf['authentication']['client']['http_secret_key']
-        except KeyError:
-            try:
-                http_app_key = server_conf['fateflow']['http_app_key']
-                http_secret_key = server_conf['fateflow']['http_secret_key']
-            except KeyError:
-                pass
+        else:
+            http_app_key = server_conf.get('fateflow', {}).get('http_app_key')
+            http_secret_key = server_conf.get('fateflow', {}).get('http_secret_key')
 
         if http_app_key and http_secret_key:
             ctx.obj['app_key'] = http_app_key
