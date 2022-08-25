@@ -28,7 +28,7 @@ def output_sklearn_pmml_str(pmml_pipeline, ):
 
 
 def hetero_model_merge(guest_param: dict, guest_meta: dict, host_params: list, host_metas: list, model_type: str,
-                       output_format: str, target_name: str = 'y'):
+                       output_format: str, target_name: str = 'y', include_guest_coef=False):
     """
     Merge a hetero model
     :param guest_param: a json dict contains guest model param
@@ -43,6 +43,7 @@ def hetero_model_merge(guest_param: dict, guest_meta: dict, host_params: list, h
                           sklearn, for linear models only
                           pmml, for all types
     :param target_name: if output format is pmml, need to specify the targe(label) name
+    :param include_guest_coef: default False
 
     :return: Merged Model Class
     """
@@ -54,18 +55,18 @@ def hetero_model_merge(guest_param: dict, guest_meta: dict, host_params: list, h
     if not isinstance(model_type, str):
         raise ValueError('model type should be a str, but got {}'.format(model_type))
 
-    if output_format.lower() not in ['lightgbm', 'lgb', 'sklearn', 'pmml']:
+    if output_format.lower() not in {'lightgbm', 'lgb', 'sklearn', 'pmml'}:
         raise ValueError('unknown output format: {}'.format(output_format))
 
-    if model_type.lower() in ['secureboost', 'tree', 'sbt']:
-        model = merge_sbt(guest_param, guest_meta, host_params, host_metas, output_format, target_name)
+    if model_type.lower() in {'secureboost', 'tree', 'sbt'}:
+        model = merge_sbt(guest_param, guest_meta, host_params, host_metas, output_format)
         if output_format == 'pmml':
             return get_pmml_str(model, target_name)
         else:
             return model
 
-    elif model_type.lower() in ['logistic_regression', 'lr']:
-        model = merge_lr(guest_param, guest_meta, host_params, host_metas, output_format)
+    elif model_type.lower() in {'logistic_regression', 'lr'}:
+        model = merge_lr(guest_param, guest_meta, host_params, host_metas, output_format, include_guest_coef)
         if output_format == 'pmml':
             return output_sklearn_pmml_str(model)
         else:

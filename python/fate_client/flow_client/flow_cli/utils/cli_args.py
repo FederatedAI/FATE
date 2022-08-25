@@ -108,5 +108,3 @@ SRC_ROLE = click.option("--src-role", type=click.Choice(role_choices_list), requ
 
 MIN_DATA = click.option("--min-data", type=click.INT, help="min data")
 CONNECTOR_NAME = click.option("--connector-name", type=click.STRING, required=True, help="connector name")
-
-MODEL_ALIAS_REQUIRED = click.option("--model-alias", type=click.STRING, required=True, help="Model alias.")

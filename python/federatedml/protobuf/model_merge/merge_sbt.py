@@ -66,8 +66,7 @@ def extract_host_name(host_param, idx):
         return 'host_{}'.format(idx)
 
 
-def merge_sbt(guest_param: dict, guest_meta: dict, host_params: list, host_metas: list, output_format: str,
-              target_name='y'):
+def merge_sbt(guest_param: dict, guest_meta: dict, host_params: list, host_metas: list, output_format: str):
 
     result_param = None
     for idx, host_param in enumerate(host_params):

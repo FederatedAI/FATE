@@ -22,7 +22,7 @@ def _merge_single_model_coef(guest_pb_param, host_pb_param, include_guest_coef):
         guest_coef = _get_coef(guest_pb_param)
         coef = np.concatenate((guest_coef, host_coef), axis=1)
         return coef
-    return  host_coef
+    return host_coef
 
 
 def merge_lr(guest_param: dict, guest_meta: dict, host_params: list, host_metas: list, output_format: str,
