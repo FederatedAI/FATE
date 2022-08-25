@@ -1017,6 +1017,8 @@ class DataTransform(ModelBase):
             self.transformer = SparseFeatureTransformer(self.model_param)
         elif input_format == "tag":
             self.transformer = SparseTagTransformer(self.model_param)
+        else:
+            raise ValueError("Cannot recognize input format")
 
         if self._input_model_meta:
             self.transformer.load_model(self._input_model_meta, self._input_model_param)
