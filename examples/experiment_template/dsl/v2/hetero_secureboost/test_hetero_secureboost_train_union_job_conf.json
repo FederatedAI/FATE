@@ -117,14 +117,14 @@
         "role": {
             "host": {
                 "0": {
-                    "dataio_1": {
+                    "data_transform_1": {
                         "input_format": "tag",
                         "delimitor": ";",
                         "tag_with_value": true,
                         "with_label": false,
                         "output_format": "dense"
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "input_format": "tag",
                         "delimitor": ";",
                         "tag_with_value": true,
@@ -159,10 +159,10 @@
             },
             "guest": {
                 "0": {
-                    "dataio_1": {
+                    "data_transform_1": {
                         "with_label": true
                     },
-                    "dataio_0": {
+                    "data_transform_0": {
                         "with_label": true,
                         "output_format": "dense"
                     },
