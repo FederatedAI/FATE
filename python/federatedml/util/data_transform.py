@@ -135,6 +135,8 @@ class DenseFeatureTransformer(object):
 
         schema = copy.deepcopy(input_data.schema)
         if not schema.get("meta"):
+            LOGGER.warning("Data meta is supported to be set with data uploading or binding, "
+                           "please refer to data transform using guides.")
             meta = dict(input_format="dense",
                         delimiter=self.delimitor,
                         with_label=self.with_label,
@@ -493,6 +495,8 @@ class SparseFeatureTransformer(object):
 
         schema = copy.deepcopy(input_data.schema)
         if not schema.get("meta", {}):
+            LOGGER.warning("Data meta is supported to be set with data uploading or binding, "
+                           "please refer to data transform using guides.")
             meta = dict(input_format="sparse",
                         delimiter=self.delimitor,
                         with_label=self.with_label,
@@ -711,6 +715,8 @@ class SparseTagTransformer(object):
         abnormal_detection.empty_table_detection(input_data)
         schema = copy.deepcopy(input_data.schema)
         if not schema.get("meta", {}):
+            LOGGER.warning("Data meta is supported to be set with data uploading or binding, "
+                           "please refer to data transform using guides.")
             meta = dict(input_format="tag",
                         delimiter=self.delimitor,
                         with_label=self.with_label,
