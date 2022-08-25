@@ -28,7 +28,7 @@ def output_sklearn_pmml_str(pmml_pipeline, ):
 
 
 def hetero_model_merge(guest_param: dict, guest_meta: dict, host_params: list, host_metas: list, model_type: str,
-                       output_format: str, target_name: str = 'y'):
+                       output_format: str, target_name: str = 'y', host_rename=False):
     """
     Merge a hetero model
     :param guest_param: a json dict contains guest model param
@@ -43,6 +43,7 @@ def hetero_model_merge(guest_param: dict, guest_meta: dict, host_params: list, h
                           sklearn, for linear models only
                           pmml, for all types
     :param target_name: if output format is pmml, need to specify the targe(label) name
+    :param host_rename: add suffix to secureboost host features
 
     :return: Merged Model Class
     """
@@ -58,7 +59,7 @@ def hetero_model_merge(guest_param: dict, guest_meta: dict, host_params: list, h
         raise ValueError('unknown output format: {}'.format(output_format))
 
     if model_type.lower() in ['secureboost', 'tree', 'sbt']:
-        model = merge_sbt(guest_param, guest_meta, host_params, host_metas, output_format, target_name)
+        model = merge_sbt(guest_param, guest_meta, host_params, host_metas, output_format, target_name, host_rename=host_rename)
         if output_format == 'pmml':
             return get_pmml_str(model, target_name)
         else:

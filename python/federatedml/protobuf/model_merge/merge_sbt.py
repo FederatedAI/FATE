@@ -10,7 +10,7 @@ from google.protobuf import json_format
 from federatedml.util.anonymous_generator_util import Anonymous
 
 
-def _merge_sbt(guest_param, host_param, host_sitename):
+def _merge_sbt(guest_param, host_param, host_sitename, host_rename=False):
 
     # update feature name fid mapping
     guest_fid_map = guest_param['featureNameFidMapping']
@@ -27,7 +27,7 @@ def _merge_sbt(guest_param, host_param, host_sitename):
     new_host_fid_map = {}
     for key, item in host_fid_map.items():
         new_key = host_new_fid[key]
-        new_host_fid_map[new_key] = item + '_' + host_sitename
+        new_host_fid_map[new_key] = item + '_' + host_sitename if host_rename else item
 
     guest_fid_map.update(new_host_fid_map)
     guest_param['featureNameFidMapping'] = guest_fid_map
@@ -67,15 +67,15 @@ def extract_host_name(host_param, idx):
 
 
 def merge_sbt(guest_param: dict, guest_meta: dict, host_params: list, host_metas: list, output_format: str,
-              target_name='y'):
+              target_name='y', host_rename=False):
 
     result_param = None
     for idx, host_param in enumerate(host_params):
         host_name = extract_host_name(host_param, idx)
         if result_param is None:
-            result_param = _merge_sbt(guest_param, host_param, host_name)
+            result_param = _merge_sbt(guest_param, host_param, host_name, host_rename)
         else:
-            result_param = _merge_sbt(result_param, host_param, host_name)
+            result_param = _merge_sbt(result_param, host_param, host_name, host_rename)
 
     pb_param = json_format.Parse(json.dumps(result_param), BoostingTreeModelParam())
     pb_meta = json_format.Parse(json.dumps(guest_meta), BoostingTreeModelMeta())
