@@ -16,14 +16,17 @@ def _get_coef(param_obj):
     return coefficient
 
 
-def _merge_single_model_coef(guest_pb_param, host_pb_param):
-    guest_coef = _get_coef(guest_pb_param)
+def _merge_single_model_coef(guest_pb_param, host_pb_param, include_guest_coef):
     host_coef = _get_coef(host_pb_param)
-    coef = np.concatenate((guest_coef, host_coef), axis=1)
-    return coef
+    if include_guest_coef:
+        guest_coef = _get_coef(guest_pb_param)
+        coef = np.concatenate((guest_coef, host_coef), axis=1)
+        return coef
+    return  host_coef
 
 
-def merge_lr(guest_param: dict, guest_meta: dict, host_params: list, host_metas: list, output_format: str):
+def merge_lr(guest_param: dict, guest_meta: dict, host_params: list, host_metas: list, output_format: str,
+             include_guest_coef=False):
     # check for multi-host
     if len(host_params) > 1 or len(host_metas) > 1:
         raise ValueError(f"Cannot merge Hetero LR models from multiple hosts. Please check input")
@@ -45,7 +48,7 @@ def merge_lr(guest_param: dict, guest_meta: dict, host_params: list, host_metas:
         host_pb_models = host_pb_param_c.one_vs_rest_result.completed_models
         coef_list, intercept_list, iters_list = [], [], []
         for guest_single_pb_param, host_single_pb_param in zip(guest_pb_models, host_pb_models):
-            coef = _merge_single_model_coef(guest_single_pb_param, host_single_pb_param)
+            coef = _merge_single_model_coef(guest_single_pb_param, host_single_pb_param, include_guest_coef)
             coef_list.append(coef)
             intercept_list.append(guest_single_pb_param.intercept)
             iters_list.append(guest_single_pb_param.iters)
@@ -59,7 +62,7 @@ def merge_lr(guest_param: dict, guest_meta: dict, host_params: list, host_metas:
         sk_lr_model.classes_ = np.array([0, 1])
         sk_lr_model.n_iter_ = np.array([guest_pb_param.iters])
 
-        coef = _merge_single_model_coef(guest_pb_param, host_pb_param)
+        coef = _merge_single_model_coef(guest_pb_param, host_pb_param, include_guest_coef)
         sk_lr_model.coef_ = coef
         sk_lr_model.intercept_ = np.array([guest_pb_param.intercept])
 
