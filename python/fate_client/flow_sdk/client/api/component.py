@@ -111,7 +111,7 @@ class Component(BaseFlowAPI):
         component_name: str, model_alias: str,
         model_type: str, output_format: str,
         target_name: str = None,
-        include_guest_coef: bool = False,
+        include_guest_coef: bool = None,
     ):
         kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
