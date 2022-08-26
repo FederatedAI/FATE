@@ -10,24 +10,24 @@ from google.protobuf import json_format
 from federatedml.util.anonymous_generator_util import Anonymous
 
 
-def _merge_sbt(guest_param, host_param, host_sitename, host_rename=False):
-
+def _merge_sbt(guest_param, host_param, host_sitename):
     # update feature name fid mapping
     guest_fid_map = guest_param['featureNameFidMapping']
     host_fid_map = host_param['featureNameFidMapping']
+    host_fid_map = sorted([(int(k), v) for k, v in host_param['featureNameFidMapping'].items()], key=lambda x: x[0])
     guest_feat_len = len(guest_fid_map)
     start = guest_feat_len
     host_new_fid = {}
 
-    for k, v in host_fid_map.items():
+    for k, v in host_fid_map:
         guest_fid_map[str(start)] = v
-        host_new_fid[k] = str(start)
+        host_new_fid[k] = start
         start += 1
 
     new_host_fid_map = {}
-    for key, item in host_fid_map.items():
+    for key, item in host_fid_map:
         new_key = host_new_fid[key]
-        new_host_fid_map[new_key] = item + '_' + host_sitename if host_rename else item
+        new_host_fid_map[new_key] = item  # + '_' + host_sitename
 
     guest_fid_map.update(new_host_fid_map)
     guest_param['featureNameFidMapping'] = guest_fid_map
@@ -41,7 +41,7 @@ def _merge_sbt(guest_param, host_param, host_sitename, host_rename=False):
         for node_g, node_h in zip(tree_guest['tree'], tree_host['tree']):
 
             if str(node_h['id']) in tree_host['splitMaskdict']:
-                node_g['fid'] = int(host_new_fid[str(node_h['fid'])])
+                node_g['fid'] = int(host_new_fid[int(node_h['fid'])])
                 node_g['sitename'] = host_sitename
                 node_g['bid'] = 0
 
