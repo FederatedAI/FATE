@@ -586,7 +586,7 @@ def run_test_api(config_json, namespace):
 
     serving_connect_bool = serving_connect(config_json['serving_setting'])
     remove_path = str(config_json['data_base_dir']).split("python")[
-        0] + '/model_local_cache/guest#{}#arbiter-{}#guest-{}#host-{}#model/'.format(
+        0] + '/fateflow/model_local_cache/guest#{}#arbiter-{}#guest-{}#host-{}#model/'.format(
         guest_party_id[0], arbiter_party_id[0], guest_party_id[0], host_party_id[0])
     max_iter = test_api.set_config(guest_party_id, host_party_id, arbiter_party_id, conf_path,
                                    config_json['component_name'])
