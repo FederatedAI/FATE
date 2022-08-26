@@ -40,7 +40,7 @@ $ cd /data/projects/fate/common/apache-pulsar-2.7.0
 brokerDeleteInactiveTopicsEnabled=true
 
 # 设置非活跃topic扫描间隔
-brokerDeleteInactiveTopicsFrequencySeconds=180
+brokerDeleteInactiveTopicsFrequencySeconds=36000
 
 # 设置用于镜像复制的链接数
 replicationConnectionsPerBroker=4
@@ -50,6 +50,12 @@ nettyMaxFrameSizeBytes=134217728
 
 # 增加pulsar message容量的大小为128MB，默认为5MB
 maxMessageSize=134217728
+
+
+# Default per-topic backlog quota limit
+backlogQuotaDefaultLimitGB=-1
+
+
 ```
 更多关于配置字段的描述可以参考配置文件的注释。
 

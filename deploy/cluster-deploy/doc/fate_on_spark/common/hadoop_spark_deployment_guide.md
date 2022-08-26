@@ -153,11 +153,11 @@ ssh app@192.168.0.3
 
 **Upload below Packages to Servers**
 
-1. jdk-8u192-linux-x64.tar.gz
-2. hadoop-2.8.5.tar.gz
-3. scala-2.11.12.tar.gz
-4. spark-2.4.1-bin-hadoop2.7.tar.gz
-5. zookeeper-3.4.5.tar.gz
+1. wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
+2. wget https://archive.apache.org/dist/hadoop/common/hadoop-3.2.0/hadoop-3.2.0.tar.gz
+3. wget https://downloads.lightbend.com/scala/2.12.10/scala-2.12.10.tgz
+4. wget https://archive.apache.org/dist/spark/spark-3.1.2/spark-3.1.2-bin-hadoop3.2.tgz
+5. wget https://archive.apache.org/dist/zookeeper/zookeeper-3.4.14/zookeeper-3.4.14.tar.gz
 
 **Extract**
 
