@@ -1,6 +1,8 @@
 import copy
 import tempfile
-
+import json
+import pickle
+import base64
 from federatedml.protobuf.model_merge.merge_sbt import merge_sbt
 from federatedml.protobuf.model_merge.merge_hetero_lr import merge_lr
 from nyoka import lgb_to_pmml
@@ -59,8 +61,6 @@ def hetero_model_merge(guest_param: dict, guest_meta: dict, host_params: list, h
     if output_format.lower() not in {'lightgbm', 'lgb', 'sklearn', 'pmml'}:
         raise ValueError('unknown output format: {}'.format(output_format))
 
-    if model_type.lower() in {'secureboost', 'tree', 'sbt'}:
-        model = merge_sbt(guest_param, guest_meta, host_params, host_metas, output_format)
     if model_type.lower() in ['secureboost', 'tree', 'sbt']:
         model = merge_sbt(guest_param, guest_meta, host_params, host_metas, output_format, target_name,
                           host_rename=host_rename)
