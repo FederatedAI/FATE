@@ -10,29 +10,20 @@ from google.protobuf import json_format
 from federatedml.util.anonymous_generator_util import Anonymous
 
 
-def _merge_sbt(guest_param, host_param, host_sitename, host_rename=False):
+def _merge_sbt(guest_param, host_param, host_sitename, rename_host=True):
     # update feature name fid mapping
     guest_fid_map = guest_param['featureNameFidMapping']
-    host_fid_map = host_param['featureNameFidMapping']
+    guest_fid_map = {int(k): v for k, v in guest_fid_map.items()}
     host_fid_map = sorted([(int(k), v) for k, v in host_param['featureNameFidMapping'].items()], key=lambda x: x[0])
     guest_feat_len = len(guest_fid_map)
     start = guest_feat_len
     host_new_fid = {}
 
     for k, v in host_fid_map:
-        guest_fid_map[str(start)] = v
+        guest_fid_map[start] = v if not rename_host else v + '_' + host_sitename
         host_new_fid[k] = start
         start += 1
 
-    new_host_fid_map = {}
-    for key, item in host_fid_map:
-        new_key = host_new_fid[key]
-        if host_rename:
-            new_host_fid_map[new_key] = item + '_' + host_sitename
-        else:
-            new_host_fid_map[new_key] = item  # + '_' + host_sitename
-
-    guest_fid_map.update(new_host_fid_map)
     guest_param['featureNameFidMapping'] = guest_fid_map
 
     # merging trees
@@ -70,7 +61,7 @@ def extract_host_name(host_param, idx):
 
 
 def merge_sbt(guest_param: dict, guest_meta: dict, host_params: list, host_metas: list, output_format: str,
-              target_name='y', host_rename=False):
+              target_name='y', host_rename=True):
 
     result_param = None
     for idx, host_param in enumerate(host_params):
