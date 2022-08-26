@@ -471,8 +471,9 @@ class TestModel(object):
                 "role": "guest",
                 "party_id": self.guest_party_id[0],
                 "file": model_path,
-                "force_update": True
+                "force_update": 1,
             }
+
             config_file_path = self.cache_directory + 'model_import.json'
             with open(config_file_path, 'w') as fp:
                 json.dump(config_data, fp)

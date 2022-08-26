@@ -35,7 +35,7 @@ class TestModel(Base):
                 self.model_version = response.json().get("data").get("model_info").get("model_version")
                 if stop:
                     return
-                return self.query_status()
+                return self.query_status(self.job_id)
         except Exception:
             return
 
@@ -63,7 +63,7 @@ class TestModel(Base):
                 if response.status_code == 200:
                     if response.json().get('retcode'):
                         self.error_log('job rerun: {}'.format(response.json().get('retmsg')) + '\n')
-                    return self.query_status()
+                    return self.query_status(self.job_id)
             except Exception:
                 return
 
@@ -751,7 +751,7 @@ class TestModel(Base):
             except Exception:
                 return
 
-    def query_status(self, job_id=None):
+    def query_status(self, job_id):
         while True:
             time.sleep(5)
             status = self.query_job(job_id=job_id)
