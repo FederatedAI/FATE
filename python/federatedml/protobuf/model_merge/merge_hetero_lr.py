@@ -44,11 +44,10 @@ def merge_lr(guest_param: dict, guest_meta: dict, host_params: list, host_metas:
     # check for multi-host
     if len(host_params) > 1 or len(host_metas) > 1:
         raise ValueError(f"Cannot merge Hetero LR models from multiple hosts. Please check input")
-    # check for encrypted model
-    if guest_meta.get("reveal_strategy") == "encrypted_reveal_in_host":
-        raise ValueError(f"Cannot merge encrypted LR models. Please check input.")
     host_param, host_meta = host_params[0], host_metas[0]
     pb_meta = json_format.Parse(json.dumps(guest_meta), LRModelMeta())
+    if pb_meta.reveal_strategy == "encrypted_reveal_in_host":
+        raise ValueError(f"Cannot merge encrypted LR models. Please check input.")
     # set up model
     sk_lr_model = LogisticRegression(penalty=pb_meta.penalty.lower(),
                                      tol=pb_meta.tol,
