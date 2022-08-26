@@ -79,7 +79,8 @@ def main():
     pipeline.add_component(reader_1)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
     # set data_transform_1 to replicate model from data_transform_0
-    pipeline.add_component(data_transform_1, data=Data(data=reader_1.output.data), model=Model(data_transform_0.output.model))
+    pipeline.add_component(data_transform_1,
+                           data=Data(data=reader_1.output.data), model=Model(data_transform_0.output.model))
     # set data input sources of intersection components
     pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
     pipeline.add_component(intersection_1, data=Data(data=data_transform_1.output.data))
@@ -113,8 +114,8 @@ def main():
     predict_pipeline.add_component(reader_2)
     # add selected components from train pipeline onto predict pipeline
     # specify data source
-    predict_pipeline.add_component(pipeline,
-                                   data=Data(predict_input={pipeline.data_transform_0.input.data: reader_2.output.data}))
+    predict_pipeline.add_component(pipeline, data=Data(
+        predict_input={pipeline.data_transform_0.input.data: reader_2.output.data}))
     # run predict model
     predict_pipeline.predict()
 

@@ -53,7 +53,7 @@ class TestModel(object):
 
     def job_dsl_generate(self):
         train_dsl = {"components": {"data_transform_0": {"module": "DataTransform", "input": {"data": {"data": []}},
-                                                 "output": {"data": ["train"], "model": ["data_transform"]}}}}
+                                                         "output": {"data": ["train"], "model": ["data_transform"]}}}}
         train_dsl_path = self.cache_directory + 'generate_dsl_file.json'
         with open(train_dsl_path, 'w') as fp:
             json.dump(train_dsl, fp)

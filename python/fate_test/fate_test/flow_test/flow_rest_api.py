@@ -42,7 +42,7 @@ class TestModel(Base):
     def job_dsl_generate(self):
         post_data = {
             'train_dsl': '{"components": {"data_transform_0": {"module": "DataTransform", "input": {"data": {"data": []}},'
-                         '"output": {"data": ["train"], "model": ["data_transform"]}}}}',
+            '"output": {"data": ["train"], "model": ["data_transform"]}}}}',
             'cpn_str': 'data_transform_0'
         }
         try:
