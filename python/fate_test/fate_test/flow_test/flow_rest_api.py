@@ -43,8 +43,7 @@ class TestModel(Base):
         post_data = {
             'train_dsl': '{"components": {"data_transform_0": {"module": "DataTransform", "input": {"data": {"data": []}},'
             '"output": {"data": ["train"], "model": ["data_transform"]}}}}',
-            'cpn_str': 'data_transform_0'
-        }
+            'cpn_str': 'data_transform_0'}
         try:
             response = requests.post("/".join([self.server_url, "job", "dsl/generate"]), json=post_data)
             if response.status_code == 200:
