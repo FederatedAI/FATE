@@ -118,7 +118,7 @@ def run_init(torch_initializer, input_var, init, layer):
     else:
         try:
             return torch_initializer(layer)
-        except BaseException:
+        except Exception:
             pass
 
 
