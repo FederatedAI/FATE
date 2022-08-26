@@ -52,18 +52,18 @@ class TestModel(object):
             return
 
     def job_dsl_generate(self):
-        train_dsl = {"components": {"dataio_0": {"module": "DataIO", "input": {"data": {"data": []}},
-                                                 "output": {"data": ["train"], "model": ["hetero_lr"]}}}}
+        train_dsl = {"components": {"data_transform_0": {"module": "DataTransform", "input": {"data": {"data": []}},
+                                                         "output": {"data": ["train"], "model": ["data_transform"]}}}}
         train_dsl_path = self.cache_directory + 'generate_dsl_file.json'
         with open(train_dsl_path, 'w') as fp:
             json.dump(train_dsl, fp)
         try:
             stdout = self.client.job.generate_dsl(train_dsl=get_dict_from_file(train_dsl_path),
-                                                  cpn=['dataio_0'])
+                                                  cpn=['data_transform_0'])
             if stdout.get('retcode'):
                 self.error_log('job dsl generate: {}'.format(stdout.get('retmsg')) + '\n')
-            if stdout.get('data')['components']['dataio_0']['input']['model'][
-                    0] == 'pipeline.dataio_0.hetero_lr':
+            if stdout.get('data')['components']['data_transform_0']['input']['model'][
+                    0] == 'pipeline.data_transform_0.data_transform':
                 return stdout.get('retcode')
         except Exception:
             return
