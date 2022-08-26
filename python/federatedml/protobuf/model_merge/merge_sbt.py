@@ -92,7 +92,3 @@ def merge_sbt(guest_param: dict, guest_meta: dict, host_params: list, host_metas
 
     else:
         raise ValueError('unknown output type {}'.format(output_format))
-
-
-
-
