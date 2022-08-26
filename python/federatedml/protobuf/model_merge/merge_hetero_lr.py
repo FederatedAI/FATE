@@ -61,8 +61,7 @@ def merge_lr(guest_param: dict, guest_meta: dict, host_params: list, host_metas:
     if pb_meta.need_one_vs_rest:
         guest_pb_param_c = json_format.Parse(json.dumps(guest_param), LRModelParam())
         host_pb_param_c = json_format.Parse(json.dumps(host_param), LRModelParam())
-        sk_lr_model.classes_ = np.array(guest_pb_param_c.one_vs_rest_result.one_vs_rest_classes)
-
+        sk_lr_model.classes_ = np.array([int(c) for c in guest_pb_param_c.one_vs_rest_result.one_vs_rest_classes])
         guest_pb_models = guest_pb_param_c.one_vs_rest_result.completed_models
         host_pb_models = host_pb_param_c.one_vs_rest_result.completed_models
         coef_list, intercept_list, iters_list, header = [], [], [], []
