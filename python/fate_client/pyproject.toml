@@ -28,15 +28,15 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.6"
-requests_toolbelt = "^0.9.1"
-requests = ">=2.24.0"
-click = "^7.1.2"
-"ruamel.yaml" = "^0.16.10"
+python = "^3.8"
+click = ">=7.1.2,<8.0.0"
 loguru = ">=0.6.0"
+poetry = ">=0.12"
 pandas = ">=1.1.5"
-flask = "^1.0.2"
-setuptools = "^50.0"
+requests = ">=2.24.0,<3.0.0"
+requests_toolbelt= ">=0.9.1,<0.10.0"
+"ruamel.yaml" = ">=0.16.10,<0.17.0"
+setuptools = ">=50.0,<51.0"
 
 [tool.poetry.dev-dependencies]
 
