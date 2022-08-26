@@ -1,5 +1,8 @@
+import base64
 import copy
 import tempfile
+import pickle
+import json
 
 from federatedml.protobuf.model_merge.merge_sbt import merge_sbt
 from federatedml.protobuf.model_merge.merge_hetero_lr import merge_lr
@@ -70,7 +73,7 @@ def hetero_model_merge(guest_param: dict, guest_meta: dict, host_params: list, h
         if output_format == 'pmml':
             return output_sklearn_pmml_str(model)
         else:
-            return model
+            return json.dumps(str(base64.b64encode(pickle.dumps(model)), "utf-8"))
     else:
         raise ValueError('model type should be one in ["sbt", "lr"], '
                          'but got unknown model type: {}'.format(model_type))

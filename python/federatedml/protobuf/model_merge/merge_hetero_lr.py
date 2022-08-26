@@ -25,6 +25,14 @@ def _merge_single_model_coef(guest_pb_param, host_pb_param, include_guest_coef):
     return host_coef
 
 
+def _get_model_header(guest_pb_param, host_pb_param, include_guest_coef):
+    header = list(host_pb_param.header)
+    if include_guest_coef:
+        guest_header = list(guest_pb_param.header)
+        header = guest_header + header
+    return header
+
+
 def merge_lr(guest_param: dict, guest_meta: dict, host_params: list, host_metas: list, output_format: str,
              include_guest_coef=False):
     # check for multi-host
@@ -46,12 +54,13 @@ def merge_lr(guest_param: dict, guest_meta: dict, host_params: list, host_metas:
 
         guest_pb_models = guest_pb_param_c.one_vs_rest_result.completed_models
         host_pb_models = host_pb_param_c.one_vs_rest_result.completed_models
-        coef_list, intercept_list, iters_list = [], [], []
+        coef_list, intercept_list, iters_list, header = [], [], [], []
         for guest_single_pb_param, host_single_pb_param in zip(guest_pb_models, host_pb_models):
             coef = _merge_single_model_coef(guest_single_pb_param, host_single_pb_param, include_guest_coef)
             coef_list.append(coef)
             intercept_list.append(guest_single_pb_param.intercept)
             iters_list.append(guest_single_pb_param.iters)
+            header = _get_model_header(guest_single_pb_param, host_single_pb_param, include_guest_coef)
         sk_lr_model.coef_ = np.concatenate(coef_list, axis=0)
         sk_lr_model.intercept_ = np.array(intercept_list)
         sk_lr_model.n_iter_ = np.array(iters_list)
@@ -61,15 +70,17 @@ def merge_lr(guest_param: dict, guest_meta: dict, host_params: list, host_metas:
         host_pb_param = json_format.Parse(json.dumps(host_param), LRModelParam())
         sk_lr_model.classes_ = np.array([0, 1])
         sk_lr_model.n_iter_ = np.array([guest_pb_param.iters])
-
+        header = _get_model_header(guest_pb_param, host_pb_param, include_guest_coef)
         coef = _merge_single_model_coef(guest_pb_param, host_pb_param, include_guest_coef)
         sk_lr_model.coef_ = coef
         sk_lr_model.intercept_ = np.array([guest_pb_param.intercept])
-
+    sk_lr_model.feature_names_in_ = np.array(header, dtype=str)
+    sk_lr_model.n_features_in_ = len(header)
     if output_format in ['sklearn', 'scikit-learn']:
         return sk_lr_model
     elif output_format in ['pmml']:
         pipeline = PMMLPipeline([("classifier", sk_lr_model)])
+        pipeline.active_fields = header
         return pipeline
 
     else:
