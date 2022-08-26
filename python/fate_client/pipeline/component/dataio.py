@@ -27,6 +27,7 @@ class DataIO(FateComponent, DataIOParam):
 
         #print (self.name)
         LOGGER.debug(f"{self.name} component created")
+        LOGGER.warning("DataIO should not be use in training task since FATE-v1.9.0, use DataTransform instead")
         new_kwargs = self.erase_component_base_param(**kwargs)
 
         DataIOParam.__init__(self, **new_kwargs)

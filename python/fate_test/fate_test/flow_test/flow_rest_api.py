@@ -41,17 +41,17 @@ class TestModel(Base):
 
     def job_dsl_generate(self):
         post_data = {
-            'train_dsl': '{"components": {"dataio_0": {"module": "DataIO", "input": {"data": {"data": []}},'
-                         '"output": {"data": ["train"], "model": ["hetero_lr"]}}}}',
-            'cpn_str': 'dataio_0'
+            'train_dsl': '{"components": {"data_transform_0": {"module": "DataTransform", "input": {"data": {"data": []}},'
+                         '"output": {"data": ["train"], "model": ["data_transform"]}}}}',
+            'cpn_str': 'data_transform_0'
         }
         try:
             response = requests.post("/".join([self.server_url, "job", "dsl/generate"]), json=post_data)
             if response.status_code == 200:
                 if response.json().get('retcode'):
                     self.error_log('job dsl generate: {}'.format(response.json().get('retmsg')) + '\n')
-                if response.json().get('data')['components']['dataio_0']['input']['model'][
-                        0] == 'pipeline.dataio_0.hetero_lr':
+                if response.json().get('data')['components']['data_transform_0']['input']['model'][
+                        0] == 'pipeline.data_transform_0.data_transform':
                     return response.json().get('retcode')
         except Exception:
             return

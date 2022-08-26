@@ -59,7 +59,7 @@ $ flow job config -j 2020103015490073208469 -r guest -p 9999 -o ./
 We use flow_client to deploy components needed in the prediction task:
 
 ```sh
-$ flow model deploy --model-id guest-10000#host-10000#model --model-version 2020103015490073208469 --cpn-list "dataio_0, intersection_0, hetero_secure_boost_0"
+$ flow model deploy --model-id guest-10000#host-10000#model --model-version 2020103015490073208469 --cpn-list "data_transform_0, intersection_0, hetero_secure_boost_0"
 ```
 
 We can modify existing predict conf by replacing model_id, model_version and data set name with yours to make a new 
