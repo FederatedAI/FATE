@@ -517,8 +517,10 @@ class TestModel(Base):
                 "model_version": self.model_version,
                 "role": "guest",
                 "party_id": self.guest_party_id[0],
-                "file": model_path
+                "file": model_path,
+                "force_update": 1,
             }
+
             try:
                 remove_path = Path(remove_path + self.model_version)
                 if os.path.exists(model_path):

@@ -111,6 +111,7 @@ class Component(BaseFlowAPI):
         component_name: str, model_alias: str,
         model_type: str, output_format: str,
         target_name: str = None,
+        host_rename: bool = False,
         include_guest_coef: bool = None,
     ):
         kwargs = locals()

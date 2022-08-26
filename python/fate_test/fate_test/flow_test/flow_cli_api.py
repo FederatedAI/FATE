@@ -470,7 +470,8 @@ class TestModel(object):
                 "model_version": self.model_version,
                 "role": "guest",
                 "party_id": self.guest_party_id[0],
-                "file": model_path
+                "file": model_path,
+                "force_update": True
             }
             config_file_path = self.cache_directory + 'model_import.json'
             with open(config_file_path, 'w') as fp:
