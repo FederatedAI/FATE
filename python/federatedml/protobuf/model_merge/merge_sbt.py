@@ -10,7 +10,7 @@ from google.protobuf import json_format
 from federatedml.util.anonymous_generator_util import Anonymous
 
 
-def _merge_sbt(guest_param, host_param, host_sitename):
+def _merge_sbt(guest_param, host_param, host_sitename, host_rename=False):
     # update feature name fid mapping
     guest_fid_map = guest_param['featureNameFidMapping']
     host_fid_map = host_param['featureNameFidMapping']
@@ -27,7 +27,10 @@ def _merge_sbt(guest_param, host_param, host_sitename):
     new_host_fid_map = {}
     for key, item in host_fid_map:
         new_key = host_new_fid[key]
-        new_host_fid_map[new_key] = item  # + '_' + host_sitename
+        if host_rename:
+            new_host_fid_map[new_key] = item + '_' + host_sitename
+        else:
+            new_host_fid_map[new_key] = item  # + '_' + host_sitename
 
     guest_fid_map.update(new_host_fid_map)
     guest_param['featureNameFidMapping'] = guest_fid_map
