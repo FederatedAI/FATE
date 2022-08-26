@@ -30,7 +30,7 @@ def output_sklearn_pmml_str(pmml_pipeline, ):
 
 
 def hetero_model_merge(guest_param: dict, guest_meta: dict, host_params: list, host_metas: list, model_type: str,
-                       output_format: str, target_name: str = 'y', host_rename=True, include_guest_coef=False):
+                       output_format: str, target_name: str = 'y', host_rename=False, include_guest_coef=False):
     """
     Merge a hetero model
     :param guest_param: a json dict contains guest model param
