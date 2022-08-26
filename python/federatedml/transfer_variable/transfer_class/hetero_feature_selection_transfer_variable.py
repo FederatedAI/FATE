@@ -33,3 +33,6 @@ class HeteroFeatureSelectionTransferVariable(BaseTransferVariables):
         self.host_select_cols = self._create_variable(name='host_select_cols', src=['host'], dst=['guest'])
         self.result_left_cols = self._create_variable(name='result_left_cols', src=['guest'], dst=['host'])
         self.host_empty_cols = self._create_variable(name='host_empty_cols', src=['host'], dst=['guest'])
+        self.host_anonymous_header_dict = self._create_variable(name='host_anonymous_header_dict',
+                                                                src=['host'],
+                                                                dst=['guest'])

@@ -24,6 +24,7 @@ from fate_arch.session import computing_session as session
 session.init("123")
 from federatedml.feature.one_hot_encoder import OneHotEncoder
 from federatedml.feature.instance import Instance
+from federatedml.util.anonymous_generator_util import Anonymous
 import numpy as np
 
 
@@ -33,6 +34,7 @@ class TestOneHotEncoder(unittest.TestCase):
         self.feature_num = 3
         self.cols = [0, 1, 2, 3]
         self.header = ['x' + str(i) for i in range(self.feature_num)]
+        self.anonymous_header = ["guest_9999_x" + str(i) for i in range(self.feature_num)]
         final_result = []
 
         for i in range(self.data_num):
@@ -47,7 +49,8 @@ class TestOneHotEncoder(unittest.TestCase):
         table = session.parallelize(final_result,
                                     include_key=True,
                                     partition=10)
-        table.schema = {"header": self.header}
+        table.schema = {"header": self.header,
+                        "anonymous_header": self.anonymous_header}
         self.model_name = 'OneHotEncoder'
 
         self.table = table
@@ -56,6 +59,7 @@ class TestOneHotEncoder(unittest.TestCase):
 
     def test_instance(self):
         one_hot_encoder = OneHotEncoder()
+        one_hot_encoder.anonymous_generator = Anonymous()
         one_hot_encoder.cols = self.cols
         one_hot_encoder.cols_index = self.cols
 

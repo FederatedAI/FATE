@@ -51,7 +51,7 @@ class TestRsaIntersectHost(unittest.TestCase):
         D3 = self.data_to_table(d3)
 
         res = self.raw_operator.get_common_intersection([D1, D2, D3])
-        gt = [(4, "id")]
+        gt = [(4, None)]
         self.assertListEqual(list(res.collect()), gt)
 
     def tearDown(self):

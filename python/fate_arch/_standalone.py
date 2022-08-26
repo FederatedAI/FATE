@@ -36,8 +36,16 @@ import numpy as np
 
 from fate_arch.common import Party, file_utils
 from fate_arch.common.log import getLogger
+from fate_arch.federation import FederationDataType
+
 
 LOGGER = getLogger()
+
+serialize = c_pickle.dumps
+deserialize = c_pickle.loads
+
+# default message max size in bytes = 1MB
+DEFAULT_MESSAGE_MAX_SIZE = 1048576
 
 
 # noinspection PyPep8Naming
@@ -120,7 +128,7 @@ class Table(object):
             heapify(entries)
             while entries:
                 key, value, _, it = entry = entries[0]
-                yield c_pickle.loads(key), c_pickle.loads(value)
+                yield deserialize(key), deserialize(value)
                 if it.next():
                     entry[0], entry[1] = it.item()
                     heapreplace(entries, entry)
@@ -334,7 +342,7 @@ class Table(object):
             with env.begin(write=True) as txn:
                 old_value_bytes = txn.get(k_bytes)
                 return (
-                    None if old_value_bytes is None else c_pickle.loads(old_value_bytes)
+                    None if old_value_bytes is None else deserialize(old_value_bytes)
                 )
 
     def delete(self, k):
@@ -347,7 +355,7 @@ class Table(object):
                     return (
                         None
                         if old_value_bytes is None
-                        else c_pickle.loads(old_value_bytes)
+                        else deserialize(old_value_bytes)
                     )
                 return None
 
@@ -396,27 +404,17 @@ class Session(object):
             LOGGER.error(f"illegal data dir: {data_path}")
             return
 
-        # e.g.: '/fate/data/202109081519036144070_reader_0_0_host_10000'
         namespace_dir = data_path.joinpath(namespace)
 
         if not namespace_dir.is_dir():
-            # remove role and party_id
-            # e.g.: '202109081519036144070_reader_0_0'
-            stem = '_'.join(namespace_dir.stem.split('_')[:-2])
-            # TODO: find where the dir was created
-            namespace_dir = namespace_dir.with_name(stem)
-
-            if not namespace_dir.is_dir():
-                # TODO: find the reason
-                LOGGER.warning(f"namespace dir {namespace_dir} does not exist")
-                return
+            return
 
         if name == "*":
-            shutil.rmtree(namespace_dir)
+            shutil.rmtree(namespace_dir, True)
             return
 
         for table in namespace_dir.glob(name):
-            shutil.rmtree(table)
+            shutil.rmtree(table, True)
 
     def stop(self):
         self.cleanup(name="*", namespace=self.session_id)
@@ -481,33 +479,67 @@ class Session(object):
         return results
 
 
+def _get_splits(obj, max_message_size):
+    obj_bytes = serialize(obj, protocol=4)
+    byte_size = len(obj_bytes)
+    num_slice = (byte_size - 1) // max_message_size + 1
+    if num_slice <= 1:
+        return obj, num_slice
+    else:
+        _max_size = max_message_size
+        kv = [(i, obj_bytes[slice(i * _max_size, (i + 1) * _max_size)]) for i in range(num_slice)]
+        return kv, num_slice
+
+
 class Federation(object):
     def _federation_object_key(self, name, tag, s_party, d_party):
         return f"{self._session_id}-{name}-{tag}-{s_party.role}-{s_party.party_id}-{d_party.role}-{d_party.party_id}"
 
-    def __init__(self, session, session_id, party: Party):
+    def __init__(self, session: Session, session_id, party: Party):
         self._session_id = session_id
         self._party: Party = party
-        self._loop = asyncio.get_event_loop()
         self._session = session
-        self._federation_status_table = _create_table(
-            session=session,
-            name=self._get_status_table_name(self._party),
-            namespace=self._session_id,
-            partitions=1,
-            need_cleanup=True,
-            error_if_exist=False,
-        )
-        self._federation_object_table = _create_table(
-            session=session,
-            name=self._get_object_table_name(self._party),
-            namespace=self._session_id,
-            partitions=1,
-            need_cleanup=True,
-            error_if_exist=False,
-        )
+        self._max_message_size = DEFAULT_MESSAGE_MAX_SIZE
         self._other_status_tables = {}
         self._other_object_tables = {}
+        self._even_loop = None
+        self._federation_status_table_cache = None
+        self._federation_object_table_cache = None
+
+    def destroy(self):
+        self._session.cleanup(namespace=self._session_id, name="*")
+
+    @property
+    def _federation_status_table(self):
+        if self._federation_status_table_cache is None:
+            self._federation_status_table_cache = _create_table(
+                session=self._session,
+                name=self._get_status_table_name(self._party),
+                namespace=self._session_id,
+                partitions=1,
+                need_cleanup=True,
+                error_if_exist=False,
+            )
+        return self._federation_status_table_cache
+
+    @property
+    def _federation_object_table(self):
+        if self._federation_object_table_cache is None:
+            self._federation_object_table_cache = _create_table(
+                session=self._session,
+                name=self._get_object_table_name(self._party),
+                namespace=self._session_id,
+                partitions=1,
+                need_cleanup=True,
+                error_if_exist=False,
+            )
+        return self._federation_object_table_cache
+
+    @property
+    def _loop(self):
+        if self._even_loop is None:
+            self._even_loop = asyncio.get_event_loop()
+        return self._even_loop
 
     @staticmethod
     def _get_status_table_name(party):
@@ -567,15 +599,35 @@ class Federation(object):
 
         if v is None:
             raise ValueError(f"[{log_str}]remote `None` to {parties}")
+
         LOGGER.debug(f"[{log_str}]remote data, type={type(v)}")
 
         if isinstance(v, Table):
+            dtype = FederationDataType.TABLE
             LOGGER.debug(
                 f"[{log_str}]remote "
-                f"Table(namespace={v.namespace}, name={v.name}, partitions={v.partitions})"
+                f"Table(namespace={v.namespace}, name={v.name}, partitions={v.partitions}), dtype={dtype}"
             )
         else:
-            LOGGER.debug(f"[{log_str}]remote object with type: {type(v)}")
+            v_splits, num_slice = _get_splits(v, self._max_message_size)
+            if num_slice > 1:
+                v = _create_table(
+                    session=self._session,
+                    name=str(uuid.uuid1()),
+                    namespace=self._session_id,
+                    partitions=1,
+                    need_cleanup=True,
+                    error_if_exist=False,
+                )
+                v.put_all(kv_list=v_splits)
+                dtype = FederationDataType.SPLIT_OBJECT
+                LOGGER.debug(
+                    f"[{log_str}]remote "
+                    f"Table(namespace={v.namespace}, name={v.name}, partitions={v.partitions}), dtype={dtype}"
+                )
+            else:
+                LOGGER.debug(f"[{log_str}]remote object with type: {type(v)}")
+                dtype = FederationDataType.OBJECT
 
         for party in parties:
             _tagged_key = self._federation_object_key(name, tag, self._party, party)
@@ -588,7 +640,7 @@ class Federation(object):
                 _v = v.save_as(
                     name=saved_name, namespace=v.namespace, need_cleanup=False
                 )
-                self._put_status(party, _tagged_key, (_v.name, _v.namespace))
+                self._put_status(party, _tagged_key, (_v.name, _v.namespace, dtype))
             else:
                 self._put_object(party, _tagged_key, v)
                 self._put_status(party, _tagged_key, _tagged_key)
@@ -611,11 +663,18 @@ class Federation(object):
                 table: Table = _load_table(
                     session=self._session, name=r[0], namespace=r[1], need_cleanup=True
                 )
-                rtn.append(table)
+
+                dtype = r[2]
                 LOGGER.debug(
                     f"[{log_str}] got "
-                    f"Table(namespace={table.namespace}, name={table.name}, partitions={table.partitions})"
-                )
+                    f"Table(namespace={table.namespace}, name={table.name}, partitions={table.partitions}), dtype={dtype}")
+
+                if dtype == FederationDataType.SPLIT_OBJECT:
+                    obj_bytes = b''.join(map(lambda t: t[1], sorted(table.collect(), key=lambda x: x[0])))
+                    obj = deserialize(obj_bytes)
+                    rtn.append(obj)
+                else:
+                    rtn.append(table)
             else:
                 obj = self._get_object(r)
                 if obj is None:
@@ -863,10 +922,6 @@ def _hash_key_to_partition(key, partitions):
     return int(b)
 
 
-serialize = c_pickle.dumps
-deserialize = c_pickle.loads
-
-
 def _do_map(p: _UnaryProcess):
     rtn = p.output_operand()
     with ExitStack() as s:
@@ -1087,8 +1142,8 @@ def _do_filter(p: _UnaryProcess):
 
         cursor = s.enter_context(source_txn.cursor())
         for k_bytes, v_bytes in cursor:
-            k = c_pickle.loads(k_bytes)
-            v = c_pickle.loads(v_bytes)
+            k = deserialize(k_bytes)
+            v = deserialize(v_bytes)
             if p.get_func()(k, v):
                 dst_txn.put(k_bytes, v_bytes)
     return rtn
@@ -1171,8 +1226,8 @@ def _do_union(p: _BinaryProcess):
 
 
 def _kv_to_bytes(k, v):
-    return c_pickle.dumps(k), c_pickle.dumps(v)
+    return serialize(k), serialize(v)
 
 
 def _k_to_bytes(k):
-    return c_pickle.dumps(k)
+    return serialize(k)

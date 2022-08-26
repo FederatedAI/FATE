@@ -28,7 +28,7 @@ def output_sklearn_pmml_str(pmml_pipeline, ):
 
 
 def hetero_model_merge(guest_param: dict, guest_meta: dict, host_params: list, host_metas: list, model_type: str,
-                       output_format: str, target_name: str = 'y', host_rename=True):
+                       output_format: str, target_name: str = 'y', host_rename=True, include_guest_coef=False):
     """
     Merge a hetero model
     :param guest_param: a json dict contains guest model param
@@ -44,6 +44,7 @@ def hetero_model_merge(guest_param: dict, guest_meta: dict, host_params: list, h
                           pmml, for all types
     :param target_name: if output format is pmml, need to specify the targe(label) name
     :param host_rename: add suffix to secureboost host features
+    :param include_guest_coef: default False
 
     :return: Merged Model Class
     """
@@ -55,9 +56,11 @@ def hetero_model_merge(guest_param: dict, guest_meta: dict, host_params: list, h
     if not isinstance(model_type, str):
         raise ValueError('model type should be a str, but got {}'.format(model_type))
 
-    if output_format.lower() not in ['lightgbm', 'lgb', 'sklearn', 'pmml']:
+    if output_format.lower() not in {'lightgbm', 'lgb', 'sklearn', 'pmml'}:
         raise ValueError('unknown output format: {}'.format(output_format))
 
+    if model_type.lower() in {'secureboost', 'tree', 'sbt'}:
+        model = merge_sbt(guest_param, guest_meta, host_params, host_metas, output_format)
     if model_type.lower() in ['secureboost', 'tree', 'sbt']:
         model = merge_sbt(guest_param, guest_meta, host_params, host_metas, output_format, target_name,
                           host_rename=host_rename)
@@ -66,12 +69,12 @@ def hetero_model_merge(guest_param: dict, guest_meta: dict, host_params: list, h
         else:
             return model
 
-    elif model_type.lower() in ['logistic_regression', 'lr']:
-        model = merge_lr(guest_param, guest_meta, host_params, host_metas, output_format)
+    elif model_type.lower() in {'logistic_regression', 'lr'}:
+        model = merge_lr(guest_param, guest_meta, host_params, host_metas, output_format, include_guest_coef)
         if output_format == 'pmml':
             return output_sklearn_pmml_str(model)
         else:
-            return model
+            return json.dumps(str(base64.b64encode(pickle.dumps(model)), "utf-8"))
     else:
         raise ValueError('model type should be one in ["sbt", "lr"], '
                          'but got unknown model type: {}'.format(model_type))

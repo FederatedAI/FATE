@@ -80,7 +80,7 @@ class ColumnExpand(ModelBase):
     @staticmethod
     def _append_feature(entry, append_value):
         # empty content
-        if len(entry) == 0:
+        if entry is None or len(entry) == 0:
             new_entry = append_value
         else:
             new_entry = entry + DELIMITER + append_value
@@ -92,23 +92,15 @@ class ColumnExpand(ModelBase):
 
         new_schema = copy.deepcopy(data.schema)
         header = new_schema.get("header", "")
-        anonymous_header = new_schema.get("anonymous_header", None)
-        new_anonymous_header = None
+        new_schema = data_format_preprocess.DataFormatPreProcess.extend_header(new_schema, self.append_header)
         if len(header) == 0:
-            new_schema = data_format_preprocess.DataFormatPreProcess.extend_header(new_schema, self.append_header)
             if new_schema.get("sid", None) is not None:
                 new_schema["sid"] = new_schema.get("sid").strip()
-            if anonymous_header is not None:
-                new_anonymous_header = self.anonymous_generator.extend_columns([], self.append_header)
-        else:
-            new_schema = data_format_preprocess.DataFormatPreProcess.extend_header(new_schema, self.append_header)
-            if anonymous_header is not None:
-                append_anonymous_header = self.anonymous_generator.extend_columns(anonymous_header,
-                                                                                  self.append_header)
-                new_anonymous_header = anonymous_header + append_anonymous_header
-
-        if new_anonymous_header is not None:
-            new_schema["anonymous_header"] = anonymous_header
+        if new_schema.get("meta"):
+            anonymous_header = new_schema.get("anonymous_header", [])
+            new_anonymous_header = self.anonymous_generator.extend_columns(anonymous_header,
+                                                                           self.append_header)
+            new_schema["anonymous_header"] = new_anonymous_header
         new_data.schema = new_schema
         new_header = new_schema.get("header")
 

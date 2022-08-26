@@ -244,7 +244,7 @@ class PSI(ModelBase):
         if not self.is_sparse(actual_table):  # convert missing value: nan to NoneType
             actual_table = self.convert_missing_val(actual_table)
 
-        if not(self.check_table_content(expect_table) and self.check_table_content(actual_table)):
+        if not (self.check_table_content(expect_table) and self.check_table_content(actual_table)):
             raise ValueError('contents of input table must be instances of class "Instance"')
 
         param = FeatureBinningParam(method=consts.QUANTILE, bin_num=self.max_bin_num, local_only=True,

@@ -13,21 +13,21 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import copy
-import threading
+
 import typing
 import uuid
 
 import peewee
-from fate_arch.common import engine_utils, EngineType, Party
+
 from fate_arch.abc import CSessionABC, FederationABC, CTableABC, StorageSessionABC, StorageTableABC, StorageTableMetaABC
+from fate_arch.common import engine_utils, EngineType, Party
 from fate_arch.common import log, base_utils
 from fate_arch.common import remote_status
+from fate_arch.common._parties import PartiesInfo
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
-from fate_arch.storage import StorageEngine, StorageSessionBase
 from fate_arch.metastore.db_models import DB, SessionRecord, init_database_tables
-from fate_arch.common._parties import PartiesInfo
+from fate_arch.storage import StorageEngine, StorageSessionBase
 
 LOGGER = log.getLogger()
 
@@ -154,7 +154,7 @@ class Session(object):
                 raise RuntimeError(f"`party_info` and `runtime_conf` are both `None`")
             parties_info = PartiesInfo.from_conf(runtime_conf)
         self._parties_info = parties_info
-        self._all_parties_info = [Party(k, p) for k, v in runtime_conf['role'].items() for p in v]
+        self._all_party_info = [Party(k, p) for k, v in runtime_conf['role'].items() for p in v]
 
         if self.is_federation_valid:
             raise RuntimeError("federation session already valid")
@@ -382,7 +382,7 @@ class Session(object):
         try:
             session_records = SessionRecord.query(reverse=reverse, order_by=order_by, **kwargs)
             return session_records
-        except:
+        except BaseException:
             return []
 
     @DB.connection_context()
@@ -400,6 +400,7 @@ class Session(object):
                                                 storage_engine=session_record.f_engine_name,
                                                 record=False)
                 elif session_record.f_engine_type == EngineType.FEDERATION:
+                    self._logger.info(f"engine runtime conf: {session_record.f_engine_address}")
                     self._init_federation_if_not_valid(federation_session_id=engine_session_id,
                                                        engine_runtime_conf=session_record.f_engine_address)
             except Exception as e:
@@ -444,7 +445,6 @@ class Session(object):
     def destroy_all_sessions(self, **kwargs):
         self._logger.info(f"start destroy manager session {self._session_id} all sessions")
         self.get_session_from_record(**kwargs)
-        self.cleanup()
         self.destroy_federation_session()
         self.destroy_storage_session()
         self.destroy_computing_session()
@@ -454,12 +454,7 @@ class Session(object):
         if self.is_computing_valid:
             try:
                 self._logger.info(f"try to destroy computing session {self._computing_session.session_id}")
-                try:
-                    ret = self._computing_session.stop()
-                except BaseException:
-                    ret = self._computing_session.kill()
-                self._logger.info(f"destroy computing session {self._computing_session.session_id} successfully, "
-                                  f"ret={ret}")
+                self._computing_session.destroy()
             except Exception as e:
                 self._logger.info(f"destroy computing session {self._computing_session.session_id} failed", e)
 
@@ -499,28 +494,6 @@ class Session(object):
         LOGGER.info(f"remote futures: {remote_status._remote_futures}, waiting...")
         remote_status.wait_all_remote_done(timeout)
         LOGGER.info(f"remote futures: {remote_status._remote_futures}, all done")
-
-    def cleanup(self):
-        # clean up session temporary tables
-        if self._storage_engine in [StorageEngine.STANDALONE, StorageEngine.EGGROLL]:
-            if self.is_computing_valid or self.is_federation_valid:
-                storage = self.storage()
-                if self.is_computing_valid:
-                    try:
-                        self._logger.info('clean table by namespace {}'.format(self._computing_session.session_id))
-                        storage.cleanup(namespace=self._computing_session.session_id, name="*")
-                        self._logger.info(f'clean table namespace {self._computing_session.session_id} done')
-                    except Exception as e:
-                        self._logger.warning(f"no found table namespace {self._computing_session.session_id}")
-                if self.is_federation_valid:
-                    try:
-                        self._logger.info('clean table by namespace {}'.format(self._federation_session.session_id))
-                        storage.cleanup(namespace=self._federation_session.session_id, name="*")
-                        self._logger.info(f'clean table namespace {self._federation_session.session_id} done')
-                    except Exception as e:
-                        self._logger.warning(f"no found table namespace {self._federation_session.session_id}")
-                storage.destroy()
-                self.delete_session_record(engine_session_id=storage.session_id)
 
 
 def get_session() -> Session:

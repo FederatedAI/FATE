@@ -42,6 +42,7 @@ from federatedml.util import LOGGER
 from federatedml.util.io_check import assert_io_num_rows_equal
 
 
+"""
 # =============================================================================
 # DenseFeatureReader
 # =============================================================================
@@ -1112,3 +1113,31 @@ def load_outlier_model(header=None,
         outlier_replace_value = None
 
     return outlier_replace, outlier_replace_method, outlier_value, outlier_replace_value
+"""
+
+
+class DataIO(ModelBase):
+    def __init__(self):
+        super(DataIO, self).__init__()
+        from federatedml.param.data_transform_param import DataTransformParam
+        from federatedml.util.data_transform import DataTransform
+        self.model_param = DataTransformParam()
+        self._transformer = DataTransform()
+
+    def _init_model(self, model_param):
+        LOGGER.warning('DataIO is deprecated, use DataTransform module instead')
+        self._transformer._init_model(model_param)
+
+    def load_model(self, model_dict):
+        self._transformer.load_model(model_dict)
+
+    def fit(self, data_inst):
+        raise ValueError("In Fate-v1.9 or later version, DataIO is deprecated, use DataTransform instead.")
+
+    def transform(self, data_inst):
+        self._transformer.role = self.role
+        self._transformer.component_properties = self.component_properties
+        return self._transformer.transform(data_inst)
+
+    def export_model(self):
+        return self._transformer.export_model()

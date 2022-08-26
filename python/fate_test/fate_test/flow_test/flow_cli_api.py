@@ -72,7 +72,7 @@ class TestModel(object):
             except Exception:
                 return
 
-        elif command == 'job_log':
+        elif command == 'job_log_download':
             log_file_dir = os.path.join(self.output_path, 'job_{}_log'.format(self.job_id))
             try:
                 subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", command, "-j", self.job_id, "-o",
@@ -614,7 +614,7 @@ def run_test_api(config_json, namespace):
     job.add_row(['job query', judging_state(False if test_api.query_job() == "success" else True)])
     job.add_row(['job data view', judging_state(test_api.job_api('data_view_query'))])
     job.add_row(['job config', judging_state(test_api.job_config(max_iter=max_iter))])
-    job.add_row(['job log', judging_state(test_api.job_api('job_log'))])
+    job.add_row(['job log', judging_state(test_api.job_api('job_log_download'))])
 
     task = PrettyTable()
     task.set_style(ORGMODE)

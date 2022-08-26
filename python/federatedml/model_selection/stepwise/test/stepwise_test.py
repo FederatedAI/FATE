@@ -20,10 +20,8 @@ import uuid
 
 from fate_arch.common import profile
 from fate_arch.session import computing_session as session
-from federatedml.feature.instance import Instance
 from federatedml.model_selection.stepwise.hetero_stepwise import HeteroStepwise
 from federatedml.util import consts
-from federatedml.util import data_io
 
 profile._PROFILE_LOG_ENABLED = False
 
@@ -43,21 +41,6 @@ class TestStepwise(unittest.TestCase):
         self.str_mask = "10110"
         self.header = ["x1", "x2", "x3", "x4", "x5"]
         self.mask = self.prepare_mask(bool_list)
-        self.table = self.prepare_data(data_num, feature_num, self.header, "id", "y")
-
-    def prepare_data(self, data_num, feature_num, header, sid_name, label_name):
-        final_result = []
-        for i in range(data_num):
-            tmp = i * np.ones(feature_num)
-            inst = Instance(inst_id=i, features=tmp, label=0)
-            tmp = (i, inst)
-            final_result.append(tmp)
-        table = session.parallelize(final_result,
-                                    include_key=True,
-                                    partition=3)
-        schema = data_io.make_schema(header, sid_name, label_name)
-        table.schema = schema
-        return table
 
     def prepare_mask(self, bool_list):
         mask = np.array(bool_list, dtype=bool)

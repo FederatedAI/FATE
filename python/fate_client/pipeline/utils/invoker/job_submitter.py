@@ -188,10 +188,10 @@ class JobInvoker(object):
         data = {}
         try:
             if 'retcode' not in result or result["retcode"] != 0:
-                raise ValueError
+                raise ValueError(f"No retcode found in result: {result}")
 
             if "data" not in result:
-                raise ValueError
+                raise ValueError(f"No data returned: {result}")
 
             all_data = result["data"]
             n = len(all_data)
@@ -211,7 +211,7 @@ class JobInvoker(object):
                 LOGGER.info(f"No output data table found in {result}")
 
         except ValueError:
-            raise ValueError("Job submit failed, err msg: {}".format(result))
+            raise ValueError(f"Job submit failed, err msg: {result}")
         return data
 
     def query_task(self, job_id, role, party_id, status=None):
@@ -311,7 +311,7 @@ class JobInvoker(object):
             rows = []
             for i in range(1, len(data)):
                 cols = data[i].split(",", -1)
-                predict_detail = json.loads(",".join(cols[len(meta) - 2: -1]).replace("\'", "\""))
+                predict_detail = json.loads(",".join(cols[len(meta) - 2: -1])[1:-1].replace("\'", "\""))
                 value = cols[: len(meta) - 2] + [predict_detail] + cols[-1:]
                 rows.append(value)
 
@@ -351,8 +351,8 @@ class JobInvoker(object):
             try:
                 meta_dict = json.load(fin)
                 meta = meta_dict["header"]
-            except ValueError:
-                raise ValueError(f"Cannot get output data meta. err msg: ")
+            except ValueError as e:
+                raise ValueError(f"Cannot get output data meta. err msg: {e}")
 
         return meta
 
@@ -363,11 +363,10 @@ class JobInvoker(object):
             result = self.client.component.output_model(job_id=job_id, role=role,
                                                         party_id=party_id, component_name=cpn_name)
             if "data" not in result:
-                raise ValueError(f"job {job_id}, component {cpn_name} has no output model param")
+                raise ValueError(f"{result['retmsg']} job {job_id}, component {cpn_name} has no output model param")
             return result["data"]
         except BaseException:
-            raise ValueError("Cannot get output model, err msg: ")
-            # raise
+            raise ValueError(f"Cannot get output model, err msg: {result}")
 
     def get_metric(self, job_id, cpn_name, role, party_id):
         result = None
@@ -379,7 +378,7 @@ class JobInvoker(object):
                 raise ValueError(f"job {job_id}, component {cpn_name} has no output metric")
             return result["data"]
         except BaseException:
-            raise ValueError("Cannot get ouput model, err msg: ")
+            raise ValueError(f"Cannot get output model, err msg: {result}")
             # raise
 
     def get_summary(self, job_id, cpn_name, role, party_id):
@@ -389,11 +388,10 @@ class JobInvoker(object):
             result = self.client.component.get_summary(job_id=job_id, role=role,
                                                        party_id=party_id, component_name=cpn_name)
             if "data" not in result:
-                # print("job {}, component {} has no output metric".format(job_id, cpn_name))
                 raise ValueError(f"Job {job_id}, component {cpn_name} has no output metric")
             return result["data"]
         except BaseException:
-            raise ValueError("Cannot get output model, err msg: ")
+            raise ValueError(f"Cannot get output model, err msg: {result}")
 
     def model_deploy(self, model_id, model_version, cpn_list=None, predict_dsl=None, components_checkpoint=None):
         if cpn_list:
@@ -408,7 +406,7 @@ class JobInvoker(object):
         if result is None or 'retcode' not in result:
             raise ValueError("Call flow deploy is failed, check if fate_flow server is up!")
         elif result["retcode"] != 0:
-            raise ValueError("Cannot deploy components, error msg is {}".format(result["retmsg"]))
+            raise ValueError(f"Cannot deploy components, error msg is {result['data']}")
         else:
             return result["data"]
 
@@ -422,13 +420,6 @@ class JobInvoker(object):
             return result["data"]
 
     def load_model(self, load_conf):
-        """
-        with tempfile.TemporaryDirectory() as job_dir:
-            submit_path = os.path.join(job_dir, "job_runtime_conf.json")
-            with open(submit_path, "w") as fout:
-                fout.write(json.dumps(load_conf))
-        result = self.client.model.load(submit_path)
-        """
         result = self.client.model.load(load_conf)
         if result is None or 'retcode' not in result:
             raise ValueError("Call flow load failed, check if fate_flow server is up!")
@@ -438,13 +429,6 @@ class JobInvoker(object):
             return result["data"]
 
     def bind_model(self, bind_conf):
-        """
-        with tempfile.TemporaryDirectory() as job_dir:
-            submit_path = os.path.join(job_dir, "job_runtime_conf.json")
-            with open(submit_path, "w") as fout:
-                fout.write(json.dumps(bind_conf))
-        result = self.client.model.bind(submit_path)
-        """
         result = self.client.model.bind(bind_conf)
         if result is None or 'retcode' not in result:
             raise ValueError("Call flow bind failed, check if fate_flow server is up!")
@@ -454,13 +438,6 @@ class JobInvoker(object):
             return result["retmsg"]
 
     def convert_homo_model(self, convert_conf):
-        """
-        with tempfile.TemporaryDirectory() as job_dir:
-            submit_path = os.path.join(job_dir, "job_runtime_conf.json")
-            with open(submit_path, "w") as fout:
-                fout.write(json.dumps(convert_conf))
-        result = self.client.model.homo_convert(submit_path)
-        """
         result = self.client.model.homo_convert(convert_conf)
         if result is None or 'retcode' not in result:
             raise ValueError("Call flow homo convert failed, check if fate_flow server is up!")

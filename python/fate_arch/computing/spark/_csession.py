@@ -96,3 +96,6 @@ class CSession(CSessionABC):
 
     def kill(self):
         pass
+
+    def destroy(self):
+        pass

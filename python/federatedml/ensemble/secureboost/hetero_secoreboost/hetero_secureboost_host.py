@@ -16,6 +16,7 @@ from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import Boosting
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core import tree_plan as plan
+from federatedml.util.anonymous_generator_util import Anonymous
 
 
 class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
@@ -34,6 +35,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.max_sample_weight = None
         self.round_decimal = None
         self.new_ver = True
+        self.feature_importance_aligned = False
 
         self.boosting_strategy = consts.STD_TREE
 
@@ -110,19 +112,30 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
         self.feature_importances_ = rs_dict
 
+    def get_anonymous_importance(self):
+        new_feat_importance = {}
+        for key in self.feature_importances_:
+            anonymous_name = self.anonymous_header[self.feature_name_fid_mapping[key]]
+            party = Anonymous.get_role_from_anonymous_column(anonymous_name)
+            party_id = Anonymous.get_party_id_from_anonymous_column(anonymous_name)
+            anonymous_feat = Anonymous.get_suffix_from_anonymous_column(anonymous_name)
+            new_feat_importance[(party + '_' + party_id, anonymous_feat)] = self.feature_importances_[key]
+        return new_feat_importance
+
+    def align_feature_importance_host(self, suffix):
+        """
+        send feature importance to guest to update global feature importance
+        """
+        new_feat_importance = self.get_anonymous_importance()
+        self.hetero_sbt_transfer_variable.host_feature_importance.remote(new_feat_importance)
+
     def preprocess(self):
         if self.multi_mode == consts.MULTI_OUTPUT:
             self.booster_dim = 1
 
     def postprocess(self):
         # generate anonymous
-        new_feat_importance = {}
-        for key in self.feature_importances_:
-            anonymous_name = self.anonymous_header[self.feature_name_fid_mapping[key]]
-            party, party_id, anonymous_feat = anonymous_name.split('_')
-            feat_idx = int(anonymous_feat.replace('x', ''))
-            new_feat_importance[(party + '_' + party_id, feat_idx)] = self.feature_importances_[key]
-        self.hetero_sbt_transfer_variable.host_feature_importance.remote(new_feat_importance)
+        self.align_feature_importance_host(suffix='postprocess')
 
     def fit_a_learner(self, epoch_idx: int, booster_dim: int):
 
@@ -178,9 +191,13 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
         LOGGER.info('running prediction')
 
-        self.set_anonymous_header(data_inst)
-
         processed_data = self.data_and_header_alignment(data_inst)
+
+        self.set_anonymous_header(processed_data)
+
+        # sync feature importance if host anonymous change in model migration
+        if not self.on_training:
+            self.align_feature_importance_host('predict')
 
         predict_start_round = self.sync_predict_start_round()
 
@@ -244,9 +261,8 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         feature_importances = list(self.feature_importances_.items())
         feature_importances = sorted(feature_importances, key=itemgetter(1), reverse=True)
         feature_importance_param = []
-        LOGGER.debug('host feat importance is {}'.format(feature_importances))
         for fid, importance in feature_importances:
-            feature_importance_param.append(FeatureImportanceInfo(sitename=consts.HOST_LOCAL,  # host local feat
+            feature_importance_param.append(FeatureImportanceInfo(sitename=consts.HOST_LOCAL,
                                                                   fid=fid,
                                                                   importance=importance.importance,
                                                                   fullname=self.feature_name_fid_mapping[fid],
