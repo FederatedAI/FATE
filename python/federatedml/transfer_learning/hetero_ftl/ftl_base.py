@@ -309,7 +309,7 @@ class FTL(ModelBase):
         model_param.model_bytes = model_bytes
         model_param.header.extend(list(self.store_header))
 
-        return model_param
+        return model_paramc
 
     def set_model_meta(self, model_meta):
 
