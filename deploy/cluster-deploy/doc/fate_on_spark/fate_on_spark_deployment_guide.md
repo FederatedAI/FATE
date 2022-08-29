@@ -1,4 +1,4 @@
-# FATE ON Spark Deployment Guide 
+# FATE ON Spark Deployment Guide
 [中文](fate_on_spark_deployment_guide.zh.md)
 
 ## 1.Server Information
@@ -177,11 +177,11 @@ Execute on the target server (192.168.0.1 with extranet environment) under the a
 mkdir -p /data/projects/install
 cd /data/projects/install
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/Miniconda3-py38_4.12.0-Linux-x86_64.sh
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-fate-8.0.28.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/openresty-1.17.8.2.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/pip-packages-fate-${version}.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/FATE_install_${version}_release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/jdk-8u192-linux-x64.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/mysql-8.0.28.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/openresty-1.17.8.2.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/pip_packages_fate_${version}.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/fate_install_${version}_release.tar.gz
 
 #transfer to 192.168.0.1 and 192.168.0.2
 scp *.tar.gz app@192.168.0.1:/data/projects/install
@@ -323,8 +323,8 @@ See the deployment guide: [Pulsar deployment](common/pulsar_deployment_guide.md)
 ## Deploy the software
 ## On the target server (192.168.0.1 192.168.0.2) under the app user execute:
 cd /data/projects/install
-tar xf FATE_install_*.tar.gz
-cd FATE_install_*
+tar xf fate_install_*.tar.gz
+cd fate_install_*
 cp fate.env /data/projects/fate/
 cp RELEASE.md /data/projects/fate/
 tar xvf bin.tar.gz -C /data/projects/fate/
@@ -355,9 +355,9 @@ EOF
 
 #Install dependencies
 cd /data/projects/install
-tar xvf pip-packages-fate-*.tar.gz
+tar xvf pip_packages_fate_*.tar.gz
 source /data/projects/fate/common/python/venv/bin/activate
-cd pip-packages-fate-*
+cd pip_packages_fate_*
 pip install -r /data/projects/fate/fate/python/requirements.txt -f ./ --no-index
 cd /data/projects/fate/fate/python/fate_client
 python setup.py install
@@ -380,7 +380,7 @@ pip list | wc -l
 
 
 ```
-#Modify and execute under the target server (192.168.0.1) app user 
+#Modify and execute under the target server (192.168.0.1) app user
 cat > /data/projects/fate/fateboard/conf/application.properties <<EOF
 server.port=8080
 fateflow.url=http://192.168.0.1:9380
@@ -410,7 +410,7 @@ feign.client.config.default.connectTimeout=10000
 feign.client.config.default.readTimeout=10000
 EOF
 
-#Modify and execute under the target server (192.168.0.2) app user 
+#Modify and execute under the target server (192.168.0.2) app user
 cat > /data/projects/fate/fateboard/conf/application.properties <<EOF
 server.port=8080
 fateflow.url=http://192.168.0.2:9380
@@ -467,7 +467,7 @@ default_engines:
 fateflow.
   proxy: nginx
 fate_on_spark:
-  nginx: 
+  nginx:
     Host: 127.0.0.1
     port: 9390
 ```
@@ -499,7 +499,7 @@ fate_on_spark:
     cluster: standalone
     tenant: fl-tenant
     topic_ttl: 5
-    route_table:     
+    route_table:
 ```
 - Spark related configuration
     - Home is the absolute path to Spark's home page
@@ -512,13 +512,13 @@ fate_on_spark:
 
 - RabbitMQ related configuration
     - host: host_ip
-    - management_port: 
+    - management_port:
     - mng_port: Management port
     - port. Service port
     - user: admin user
     - password: administrator password
     - route_table: Routing table information, default is empty
-    
+
 - pulsar-related configuration
     - host: host ip
     - port: brokerServicePort
@@ -544,12 +544,12 @@ export PYSPARK_PYTHON=/data/projects/fate/common/python/venv/bin/python
 export PYSPARK_DRIVER_PYTHON=/data/projects/fate/common/python/venv/bin/python
 ```
 
-##### 6.3.4 Reference configuration  
+##### 6.3.4 Reference configuration
 
-The configuration file format must be configured in yaml format, otherwise, an error will be reported when parsing, you can refer to the following example to configure manually, or use the following instructions to complete.  
+The configuration file format must be configured in yaml format, otherwise, an error will be reported when parsing, you can refer to the following example to configure manually, or use the following instructions to complete.
 
 ```
-#Modify and execute under the target server (192.168.0.1) app user 
+#Modify and execute under the target server (192.168.0.1) app user
 cat > /data/projects/fate/conf/service_conf.yaml <<EOF
 use_registry: false
 use_deserialize_safe_module: false
@@ -679,10 +679,10 @@ servings:
 fatemanager:
   host: 127.0.0.1
   port: 8001
-  federatedId: 0   
+  federatedId: 0
 EOF
 
-#Modify and execute under the target server (192.168.0.2) app user 
+#Modify and execute under the target server (192.168.0.2) app user
 cat > /data/projects/fate/conf/service_conf.yaml <<EOF
 use_registry: false
 use_deserialize_safe_module: false
@@ -854,11 +854,11 @@ default.
   sslPort: 6651
 ```
 
-##### 6.3.6 Nginx routing configuration file modification 
+##### 6.3.6 Nginx routing configuration file modification
 
 configuration file :  /data/projects/fate/proxy/nginx/conf/route_table.yaml
 
-This configuration file is used by Nginx to configure routing information. You can manually configure it by referring to the following example, or you can use the following commands to complete: 
+This configuration file is used by Nginx to configure routing information. You can manually configure it by referring to the following example, or you can use the following commands to complete:
 
 ```
 #Modify and execute under the app user of the target server (192.168.0.1)
@@ -924,7 +924,7 @@ sh service.sh start
 /data/projects/fate/proxy/nginx/sbin/nginx -c /data/projects/fate/proxy/nginx/conf/nginx.conf
 ```
 
-## 8. Fate client and Fate test configuration  
+## 8. Fate client and Fate test configuration
 
 **Execute under the target server (192.168.0.1 192.168.0.2) app user**
 
@@ -944,7 +944,7 @@ parties:
   guest: [10000]
   - flow_services:
       - {address: 192.168.0.1:9380, parties: [10000]}
-      
+
 #192.168.0.2 parameters are modified as follows
 data_base_dir: /data/projects/fate
 fate_base: /data/projects/fate/fate
@@ -981,7 +981,7 @@ A user must set 2 parameters for this testing: gid(guest partyid), hid(host part
 
 ```
 source /data/projects/fate/bin/init_env.sh
-flow test toy -gid 10000 -hid 10000 
+flow test toy -gid 10000 -hid 10000
 ```
 
 A result similar to the following indicates successful operation:

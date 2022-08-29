@@ -48,23 +48,13 @@ export version=`grep "FATE=" ${FATE_PROJECT_BASE}/fate.env | awk -F "=" '{print 
 
 ### 4.1 安装Python环境(可选)
 
-请安装或者使用已有的Python 3.6 或者 3.7 版本，最好使用3.6.5，其为FATE团队官方大量测试版本
+请安装或者使用已有的 Python 3.8 版本
 
 ### 4.2 为FATE配置虚拟环境
 
 ```bash
-virtualenv --version
-```
-
-若能正常返回版本信息, 则虚拟环境工具已安装, 若提示命令不存在, 请自行安装，大多情况下可以使用类似命令安装
-
-```bash
-pip install virtualenv
-```
-
-```bash
 cd(or create) {放置虚拟环境的根目录}
-virtualenv {虚拟环境名称}
+python3 -m venv {虚拟环境名称}
 export FATE_VENV_BASE={放置虚拟环境的根目录}/{虚拟环境名称}
 source ${FATE_VENV_BASE}/bin/activate
 ```
