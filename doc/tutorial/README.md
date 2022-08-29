@@ -2,7 +2,7 @@
 
 Here we provide tutorials on running FATE jobs:
 
-Submiting jobs with `Pipeline` is recommended, here are some `Jupyter Notebook` with guided instructions:
+Submitting jobs with `Pipeline` is recommended, here are some `Jupyter Notebook` with guided instructions:
 
 - [Upload Data with FATE-Pipeline](pipeline/pipeline_tutorial_upload.ipynb)
 - [Train & Predict Hetero SecureBoost with FATE-Pipeline](pipeline/pipeline_tutorial_hetero_sbt.ipynb)
@@ -25,4 +25,4 @@ And for those who want to run jobs in batches, ie. run algorithm tests, try usin
 
 To merge models from different roles and export as sklearn/lighGBM or PMML format, please reger to the tutorial below:
 
-- [Guide to Merging FATE Model on Host's Side](./model_merge_on_host_side_guide.md)
+- [Guide to Merging FATE Model](./model_merge.md)

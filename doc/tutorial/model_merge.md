@@ -1,4 +1,4 @@
-# Guide to Merging FATE Model on Host's Side
+# Guide to Merging FATE Model
 
 ## 1. Overview
 
