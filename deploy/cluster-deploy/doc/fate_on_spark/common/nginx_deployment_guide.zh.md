@@ -42,18 +42,18 @@ cat > /data/projects/fate/proxy/nginx/conf/route_table.yaml << EOF
 default:
   proxy:
     - host: 192.168.0.2
-      port: 9390
+      port: 9310
 10000:
   proxy:
     - host: 192.168.0.1
-      port: 9390
+      port: 9310
   fateflow:
     - host: 192.168.0.1
       port: 9360
 9999:
   proxy:
     - host: 192.168.0.2
-      port: 9390
+      port: 9310
   fateflow:
     - host: 192.168.0.2
       port: 9360
