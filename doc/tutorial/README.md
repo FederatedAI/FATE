@@ -23,6 +23,6 @@ And for those who want to run jobs in batches, ie. run algorithm tests, try usin
     
 - [FATE-Test Tutorial](fate_test_tutorial.md)
 
-To merge models from different roles and export as sklearn/lighGBM or PMML format, please reger to the tutorial below:
+To merge models from different roles and export as sklearn/lighGBM or PMML format, please refer to the tutorial below:
 
 - [Guide to Merging FATE Model](./model_merge.md)
