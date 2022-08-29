@@ -22,3 +22,7 @@ Models can be pushlished with FATE Serving to `Serving without FATE`:
 And for those who want to run jobs in batches, ie. run algorithm tests, try using `fate_test`:
     
 - [FATE-Test Tutorial](fate_test_tutorial.md)
+
+To merge models from different roles and export as sklearn/lighGBM or PMML format, please reger to the tutorial below:
+
+- [Guide to Merging FATE Model on Host's Side](./model_merge_on_host_side_guide.md)
