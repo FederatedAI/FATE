@@ -1,4 +1,4 @@
-# FATE ON Spark 部署指南 
+# FATE ON Spark 部署指南
 [English](fate_on_spark_deployment_guide.md)
 
 ## 1.服务器配置
@@ -38,7 +38,7 @@
 | mysql    | mysql     | 3306      | 元数据存储                                            |
 | Spark    |           |           | 计算引擎                                              |
 | HDFS(或者LocalFS)     |           |           | 存储引擎                                              |
-| RabbitMQ(或pulsar) |           |           | 跨站点(party)数据交换代理 
+| RabbitMQ(或pulsar) |           |           | 跨站点(party)数据交换代理
 
 ## 4.基础环境配置
 
@@ -173,11 +173,11 @@ fi
 mkdir -p /data/projects/install
 cd /data/projects/install
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/Miniconda3-py38_4.12.0-Linux-x86_64.sh
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-fate-8.0.28.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/openresty-1.17.8.2.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/pip-packages-fate-${version}.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/FATE_install_${version}_release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/jdk-8u192-linux-x64.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/mysql-8.0.28.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/openresty-1.17.8.2.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/pip_packages_fate_${version}.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/fate_install_${version}_release.tar.gz
 
 #传输到192.168.0.1和192.168.0.2
 scp *.tar.gz app@192.168.0.1:/data/projects/install
@@ -316,8 +316,8 @@ sh Miniconda3-py38_4.12.0-Linux-x86_64.sh -b -p /data/projects/fate/common/minic
 #部署软件
 #在目标服务器（192.168.0.1 192.168.0.2）app用户下执行:
 cd /data/projects/install
-tar xf FATE_install_*.tar.gz
-cd FATE_install_*
+tar xf fate_install_*.tar.gz
+cd fate_install_*
 cp fate.env /data/projects/fate/
 cp RELEASE.md /data/projects/fate
 tar xvf bin.tar.gz -C /data/projects/fate/
@@ -347,9 +347,9 @@ EOF
 
 #安装依赖包
 cd /data/projects/install
-tar xvf pip-packages-fate-*.tar.gz
+tar xvf pip_packages_fate_*.tar.gz
 source /data/projects/fate/common/python/venv/bin/activate
-cd pip-packages-fate-*
+cd pip_packages_fate_*
 pip install -r /data/projects/fate/fate/python/requirements.txt -f ./ --no-index
 cd /data/projects/fate/fate/python/fate_client
 python setup.py install
@@ -461,7 +461,7 @@ default_engines:
 fateflow:
   proxy: nginx
 fate_on_spark:
-  nginx: 
+  nginx:
     host: 127.0.0.1
     http_port: 9390
     grpc_port: 9310
@@ -494,7 +494,7 @@ fate_on_spark:
     cluster: standalone
     tenant: fl-tenant
     topic_ttl: 5
-    route_table:    
+    route_table:
 
 ```
 - Spark的相关配置
@@ -513,7 +513,7 @@ fate_on_spark:
     - user：管理员用户
     - password: 管理员密码
     - route_table: 路由表信息，默认为空
-    
+
 - pulsar相关配置
     - host: 主机ip
     - port: brokerServicePort
@@ -936,7 +936,7 @@ parties:
   guest: [10000]
   - flow_services:
       - {address: 192.168.0.1:9380, parties: [10000]}
-      
+
 #192.168.0.2参数修改如下
 data_base_dir: /data/projects/fate
 fate_base: /data/projects/fate/fate
@@ -973,7 +973,7 @@ parties:
 
 ```
 source /data/projects/fate/bin/init_env.sh
-flow test toy -gid 10000 -hid 10000 
+flow test toy -gid 10000 -hid 10000
 ```
 
 类似如下结果表示成功：

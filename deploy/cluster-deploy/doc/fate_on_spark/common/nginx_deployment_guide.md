@@ -3,7 +3,7 @@
 ### 1. dependency download
 ```shell script
 mkdir -r /data/projects/install && cd /data/projects/install
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/openresty-1.17.8.2.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/openresty-1.17.8.2.tar.gz
 ```
 
 ### 2. Deployment

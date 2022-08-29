@@ -6,7 +6,7 @@
 
 ```
 1. jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/jdk-8u192.tar.gz
 2. spark-3.1.2-bin-hadoop3.2.tgz
 wget https://archive.apache.org/dist/spark/spark-3.1.2/spark-3.1.2-bin-hadoop3.2.tgz
 ```
@@ -54,14 +54,14 @@ export SPARK_PID_DIR=/data/projects/fate/common/spark-3.1.2-bin-hadoop3.2/conf
 - Start service
 ```bash
 source /etc/profile
-cd /data/projects/fate/common/spark-3.1.2-bin-hadoop3.2 
+cd /data/projects/fate/common/spark-3.1.2-bin-hadoop3.2
 ./sbin/start-all.sh
 ```
 - Stop service
 ```bash
 
 source /etc/profile
-cd /data/projects/fate/common/spark-3.1.2-bin-hadoop3.2 
+cd /data/projects/fate/common/spark-3.1.2-bin-hadoop3.2
 ./sbin/stop-all.sh
 ```
 - Master Web UI access

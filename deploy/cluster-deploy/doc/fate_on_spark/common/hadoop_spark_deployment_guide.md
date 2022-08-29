@@ -153,7 +153,7 @@ ssh app@192.168.0.3
 
 **Upload below Packages to Servers**
 
-1. wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
+1. wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/jdk-8u192.tar.gz
 2. wget https://archive.apache.org/dist/hadoop/common/hadoop-3.2.0/hadoop-3.2.0.tar.gz
 3. wget https://downloads.lightbend.com/scala/2.12.10/scala-2.12.10.tgz
 4. wget https://archive.apache.org/dist/spark/spark-3.1.2/spark-3.1.2-bin-hadoop3.2.tgz
@@ -492,7 +492,7 @@ cd /data/projects/common/hadoop/etc/hadoop
         <value>true</value>
     </property>
     <property>
-        <name>yarn.resourcemanager.store.class</name>   
+        <name>yarn.resourcemanager.store.class</name>
         <value>org.apache.hadoop.yarn.server.resourcemanager.recovery.ZKRMStateStore</value>
     </property>
     <property>
@@ -601,7 +601,7 @@ Check yarn cluster status at http://192.168.0.1:8088
 **\#Execute on 192.168.0.1 192.168.0.2 192.168.0.3 as user app:**
 
 ```bash
-cd /data/projects/common/spark/conf 
+cd /data/projects/common/spark/conf
 cat slaves
 ```
 
