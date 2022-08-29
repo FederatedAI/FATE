@@ -131,10 +131,8 @@ def main(config="./config.yaml", param="./hetero_nn_breast_config.yaml"):
                 eval_result["accuracy"] = acc
 
         data_summary = {}
-
     except Exception as e:
         print(e)
-    
     return data_summary, eval_result
 
 
