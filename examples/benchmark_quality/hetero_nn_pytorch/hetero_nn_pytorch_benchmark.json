@@ -103,7 +103,7 @@
         "compare_setting": {
             "relative_tol": 0.05
         }
-    },
+    }, 
     "hetero_nn-binary-3": {
         "local": {
             "script": "./local-hetero_nn.py",
@@ -117,5 +117,5 @@
             "relative_tol": 0.05
         }
     }
-    }
+    
 }

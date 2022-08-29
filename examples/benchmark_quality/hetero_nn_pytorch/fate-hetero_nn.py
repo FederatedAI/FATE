@@ -131,6 +131,7 @@ def main(config="./config.yaml", param="./hetero_nn_breast_config.yaml", namespa
                     }
     return data_summary, metric_summary
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("BENCHMARK-QUALITY PIPELINE JOB")
     parser.add_argument("-config", type=str,
