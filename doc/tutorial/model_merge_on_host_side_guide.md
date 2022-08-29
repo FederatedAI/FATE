@@ -133,6 +133,8 @@ If model importation succeeds, `flow` will return success message like this:
 
 ## 4. Merge Model
 
+### Hetero Logistic Regression Example
+
 Once model is ready, run the following command to merge models into a sklearn Logistic Regression model:
 
 ```commandline
@@ -158,6 +160,60 @@ test_data = pandas.concat((test_data_g, test_data_h), axis=1)
 with open(filename, "r") as f:
     loaded_model = pickle.loads(base64.b64decode(json.load(f)))
     predict_score = loaded_model.predict_proba(test_data)
+```
+
+### HeteroSecureBoost Example
+
+If the federated model is a HeteroSecureBoost Model, run this command to merge model and export it in LightGBM format.
+
+```commandline
+flow component hetero-model-merge --model-id arbiter-10000#guest-9999#host-10000#model --model-version 202208291446341887230 
+--guest-party-id 9999 --host-party-ids 10000 --component-name hetero_secureboost_0 --model-type secureboost --output-format lgb --target-name y --output-path ./lgb.txt
+```
+
+If you want a model in PMML format, use this command:
+
+```commandline
+flow component hetero-model-merge --model-id arbiter-10000#guest-9999#host-10000#model --model-version 202208291446341887230 
+--guest-party-id 9999 --host-party-ids 10000 --component-name hetero_secureboost_0 --model-type secureboost --output-format pmml --target-name y --output-path ./lgb.txt
+``` 
+
+Please notice that the model merge function offers a parameter 'host_rename'. Host features will be renamed by adding a sitename
+suffix to the original feature name once this option is on:
+
+```commandline
+Host party id is 9998, sitename is host_9998, origin feature is x1
+
+x1 -> x1, default setting
+x1 -> x1_host_9998, when enable host_rename
+```
+
+Use this command to rename host names when output 
+
+```commandline
+flow component hetero-model-merge --model-id arbiter-10000#guest-9999#host-10000#model --model-version 202208291446341887230 --host-rename
+--guest-party-id 9999 --host-party-ids 10000 --component-name hetero_secureboost_0 --model-type secureboost --output-format lgb --target-name y --output-path ./lgb.txt
+```
+
+We may then load and predict with the obtained lightgbm model. Remember that to get the correct predicted result,
+the order of features in predicted data should be in the same order as the merged tree model.
+
+```python
+import json
+import pandas
+import lightgbm as lgb
+
+filename = "./lgb.txt"
+test_data_h = pandas.read_csv("/data/projects/fate/examples/data/breast_hetero_host.csv",
+                                    header=0, index_col="id")
+test_data_g = pandas.read_csv("/data/projects/fate/examples/data/breast_hetero_guest.csv",
+                                      header=0, index_col="id")
+test_data_g = test_data_g.loc[:, test_data_g.columns != 'y']
+test_data = pandas.concat((test_data_g, test_data_h), axis=1)
+
+bst = lgb.Booster(model_str=open(filename, 'r').read())
+
+pred_rs = bst.predict(test_data)
 ```
 
 For more information on command options, please check `help` menu:
@@ -192,3 +248,5 @@ Options:
 
   -h, --help                      Show this message and exit.
 ```
+
+
