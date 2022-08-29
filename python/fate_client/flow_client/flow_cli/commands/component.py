@@ -288,6 +288,7 @@ def get_summary(ctx, **kwargs):
 @click.option('--model-type', type=click.STRING, required=True)
 @click.option('--output-format', type=click.STRING, required=True)
 @click.option('--target-name', type=click.STRING)
+@click.option('--host-rename/--no-host-rename', is_flag=True, default=None)
 @click.option('--include-guest-coef/--no-include-guest-coef', is_flag=True, default=None)
 @cli_args.OUTPUT_PATH_REQUIRED
 @click.pass_context
@@ -299,7 +300,7 @@ def hetero_model_merge(ctx, **kwargs):
 
     \b
     - USAGE:
-        flow component hetero-model-merge --model-id guest-9999#host-9998#model --model-version 202208241838502253290 --guest-party-id 9999 --host-party-ids 9998,9997 --component-name hetero_secure_boost_0 --model-type secureboost --output-format pmml --target-name y --no-include-guest-coef --output-path model.xml
+        flow component hetero-model-merge --model-id guest-9999#host-9998#model --model-version 202208241838502253290 --guest-party-id 9999 --host-party-ids 9998,9997 --component-name hetero_secure_boost_0 --model-type secureboost --output-format pmml --target-name y --no-host-rename --no-include-guest-coef --output-path model.xml
     """
     config_data, dsl_data = preprocess(**kwargs)
     config_data['host_party_ids'] = config_data['host_party_ids'].split(',')

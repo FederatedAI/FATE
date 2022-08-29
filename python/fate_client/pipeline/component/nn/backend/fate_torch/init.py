@@ -116,7 +116,10 @@ def run_init(torch_initializer, input_var, init, layer):
         layer.apply(recursive_init_func)
         record_initializer(layer, get_init_dict(torch_initializer, param_dict, init))
     else:
-        return torch_initializer(layer)
+        try:
+            return torch_initializer(layer)
+        except Exception:
+            pass
 
 
 """
