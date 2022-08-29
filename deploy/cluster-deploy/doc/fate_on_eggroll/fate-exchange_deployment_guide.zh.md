@@ -1,4 +1,4 @@
-#  FATE exchange部署指南 
+#  FATE exchange部署指南
 [English](./fate-exchange_deployment_guide.md)
 
 1.服务器配置
@@ -145,8 +145,8 @@ fi
 备注：用具体FATE版本号替换${version}
 ```
 cd /data/projects/install
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_${version}_release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/jdk-8u192-linux-x64.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/FATE_install_${version}_release.tar.gz
 
 注意：version不带字符v，如FATE_install_1.x.x_release.tar.gz
 ```

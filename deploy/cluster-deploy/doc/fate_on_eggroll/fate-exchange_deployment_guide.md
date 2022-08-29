@@ -1,4 +1,4 @@
-# FATE Exchange Deployment Guide 
+# FATE Exchange Deployment Guide
 [中文](./fate-exchange_deployment_guide.zh.md)
 
 # 1\. Server Configuration
@@ -137,8 +137,8 @@ Note: Replace ${version} with the specific FATE version number.
 
 ```
 cd /data/projects/install
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_${version}_release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/jdk-8u192-linux-x64.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/fate_install_${version}_release.tar.gz
 
 Note: version without character v, such as FATE_install_1.x.x_release.tar.gz
 ```
@@ -195,7 +195,7 @@ EOF
 ### 5.4.2 Modify Eggroll System Profile
 
 - Modify the rollsite IP and port of the corresponding party, and the party id of this party. For the rollsite port, the default value can be used.
-  
+
   eggroll.rollsite.host: 192.168.0.1
   eggroll.rollsite.port: 9370
   eggroll.rollsite.party.id: exchange
