@@ -125,7 +125,7 @@ fate_on_spark:
     # all parties should use a same tenant
     tenant: fl-tenant
     # message ttl in minutes
-    topic_ttl: 5
+    topic_ttl: 30
     # default conf/pulsar_route_table.yaml
     route_table:
    # mode: replication / client, default: replication
