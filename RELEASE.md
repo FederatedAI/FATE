@@ -8,7 +8,7 @@
 * Add CoAE label reinforcement mechanism for vertical federated neural network
 * Hetero NN supports multi-host modeling scenarios
 * HeteroSecureBoost supports merging sub-models from all parties and exporting the merged model into lightgbm or PMML format
-* HeteroLR and HeteroSSHELR supports merging sub-models from all parties and exporting the merged model into sklearn or PMML format
+* HeteroLR and HeteroSSHELR support merging sub-models from all parties and exporting the merged model into sklearn or PMML format
 * HeteroFeatureSelection supports anonymous feature selection
 * Label Encoder adds automatic label type inference
 * 10x faster local VIF computation in HeteroPearson, with added support for computing local VIF on linearly dependent columns
