@@ -154,30 +154,30 @@ ssh app@192.168.0.3
 
 **上传以下程序包到服务器上**
 
-1. jdk-8u192-linux-x64.tar.gz
-2. hadoop-2.8.5.tar.gz
-3. scala-2.11.12.tar.gz
-4. spark-2.4.1-bin-hadoop2.7.tar.gz
-5. zookeeper-3.4.5.tar.gz
+1. wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
+2. wget https://archive.apache.org/dist/hadoop/common/hadoop-3.2.0/hadoop-3.2.0.tar.gz
+3. wget https://downloads.lightbend.com/scala/2.12.10/scala-2.12.10.tgz
+4. wget https://archive.apache.org/dist/spark/spark-3.1.2/spark-3.1.2-bin-hadoop3.2.tgz
+5. wget https://archive.apache.org/dist/zookeeper/zookeeper-3.4.14/zookeeper-3.4.14.tar.gz
 
 **解压**
 
 ```bash
-tar xvf hadoop-2.8.5.tar.gz -C /data/projects/common
-tar xvf scala-2.11.12.tar.gz -C /data/projects/common
-tar xvf spark-2.4.1-bin-hadoop2.7.tar.gz -C /data/projects/common
-tar xvf zookeeper-3.4.5.tar.gz -C /data/projects/common
+tar xvf hadoop-3.2.0.tar.gz -C /data/projects/common
+tar xvf scala-2.12.10.tgz -C /data/projects/common
+tar xvf spark-3.1.2-bin-hadoop3.2.tgz -C /data/projects/common
+tar xvf zookeeper-3.4.14.tar.gz -C /data/projects/common
 tar xvf jdk-8u192-linux-x64.tar.gz -C /data/projects/common/jdk
-mv hadoop-2.8.5 hadoop
-mv scala-2.11.12 scala
-mv spark-2.4.1-bin-hadoop2.7 spark
-mv zookeeper-3.4.5 zookeeper
+mv hadoop-3.2.0 hadoop
+mv scala-2.12.10 scala
+mv spark-3.1.2-bin-hadoop3.2 spark
+mv zookeeper-3.4.14 zookeeper
 ```
 
 **配置/etc/profile**
 
 ```bash
-export JAVA_HOME=/data/projects/common/jdk/jdk1.8.0_192
+export JAVA_HOME=/data/projects/common/jdk/jdk-8u192
 export PATH=$JAVA_HOME/bin:$PATH
 export HADOOP_HOME=/data/projects/common/hadoop
 export PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin
@@ -629,7 +629,7 @@ spark.yarn.jars hdfs://fate-cluster/tmp/spark/jars/\*.jar
 
 **在spark-env.sh加入**
 
-export JAVA_HOME=/data/projects/common/jdk/jdk1.8.0_192
+export JAVA_HOME=/data/projects/common/jdk/jdk-8u192
 
 export SCALA_HOME=/data/projects/common/scala
 
@@ -653,13 +653,13 @@ export PYSPARK_DRIVER_PYTHON=/data/projects/fate/common/python/venv/bin/python
 **\#启动**
 
 ```bash
-sh /data/projects/common/spark/spark-2.4.1-bin-hadoop2.7/sbin/start-all.sh
+sh /data/projects/common/spark/spark/sbin/start-all.sh
 ```
 
 **\#验证**
 
 ```bash
-cd /data/projects/common/spark/spark-2.4.1-bin-hadoop2.7/jars
+cd /data/projects/common/spark/jars
 hdfs dfs -mkdir -p /tmp/spark/jars
 hdfs dfs -mkdir -p /tmp/spark/event
 hdfs dfs -put *jar /tmp/spark/jars
