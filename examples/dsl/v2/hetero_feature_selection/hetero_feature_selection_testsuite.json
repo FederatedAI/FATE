@@ -146,10 +146,6 @@
             "conf": "hetero_feature_selection_multiclass_conf.json",
             "dsl": "hetero_feature_selection_multiclass_dsl.json"
         },
-        "hetero_feature_selection_multiclass_case1": {
-            "conf": "hetero_feature_selection_multiclass_case1_conf.json",
-            "dsl": "hetero_feature_selection_multiclass_case1_dsl.json"
-        },
         "hetero_feature_selection_multiclass_all_case": {
             "conf": "hetero_feature_selection_multiclass_all_case_conf.json",
             "dsl": "hetero_feature_selection_multiclass_all_case_dsl.json"
