@@ -82,6 +82,7 @@ docker tag ccr.ccs.tencentyun.com/federatedai/standalone_fate:${version} federat
 
    ```bash
    docker exec -it $(docker ps -aqf "name=standalone_fate") bash
+   source bin/init_env.sh
    ```
 
    - [test item](#4-test-items)
