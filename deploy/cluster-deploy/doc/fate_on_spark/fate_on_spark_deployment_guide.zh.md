@@ -861,21 +861,26 @@ cat > /data/projects/fate/proxy/nginx/conf/route_table.yaml << EOF
 default:
   proxy:
     - host: 192.168.0.2
-      port: 9310
+      http_port: 9300
+      grpc_port: 9310
 10000:
   proxy:
     - host: 192.168.0.1
-      port: 9310
+      http_port: 9300
+      grpc_port: 9310
   fateflow:
     - host: 192.168.0.1
-      port: 9360
+      http_port: 9380
+      grpc_port: 9360
 9999:
   proxy:
     - host: 192.168.0.2
-      port: 9310
+      http_port: 9300
+      grpc_port: 9310
   fateflow:
     - host: 192.168.0.2
-      port: 9360
+      http_port: 9380
+      grpc_port: 9360
 EOF
 
 #在目标服务器（192.168.0.2）app用户下修改执行
@@ -883,21 +888,26 @@ cat > /data/projects/fate/proxy/nginx/conf/route_table.yaml << EOF
 default:
   proxy:
     - host: 192.168.0.1
-      port: 9310
+      http_port: 9300
+      grpc_port: 9310
 10000:
   proxy:
     - host: 192.168.0.1
-      port: 9310
+      http_port: 9300
+      grpc_port: 9310
   fateflow:
     - host: 192.168.0.1
-      port: 9360
+      http_port: 9380
+      grpc_port: 9360
 9999:
   proxy:
     - host: 192.168.0.2
-      port: 9310
+      http_port: 9300
+      grpc_port: 9310
   fateflow:
     - host: 192.168.0.2
-      port: 9360
+      http_port: 9380
+      grpc_port: 9360
 EOF
 ```
 
