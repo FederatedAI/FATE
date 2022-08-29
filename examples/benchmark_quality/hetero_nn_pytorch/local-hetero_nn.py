@@ -83,13 +83,10 @@ def main(config="./config.yaml", param="./hetero_nn_breast_config.yaml"):
             data_base_dir = config["data_base_dir"]
         else:
             data_base_dir = config.data_base_dir
-
         if isinstance(param, str):
             param = JobConfig.load_from_file(param)
-            
         data_guest = param["data_guest"]
         data_host = param["data_host"]
-
         idx = param["idx"]
         label_name = param["label_name"]
         # prepare data
@@ -99,7 +96,6 @@ def main(config="./config.yaml", param="./hetero_nn_breast_config.yaml"):
         out = Xa.drop(Xb.index)
         Xa = Xa.drop(out.index)
         Xb = Xb.drop(label_name, axis=1)
-
         # torch model
         model = build(param, Xb.shape[1], Xa.shape[1])
         Xb = t.Tensor(Xb.values)
@@ -121,7 +117,6 @@ def main(config="./config.yaml", param="./hetero_nn_breast_config.yaml"):
                 loss = loss_fn(pred.flatten(), label.type(t.float32))
                 loss.backward()
                 optimizer.step()
-        #             print('loss is {}'.format(loss.detach().numpy()))
 
         eval_result = {}
         for metric in param["metrics"]:
@@ -136,10 +131,12 @@ def main(config="./config.yaml", param="./hetero_nn_breast_config.yaml"):
                 eval_result["accuracy"] = acc
 
         data_summary = {}
+
     except Exception as e:
         print(e)
     
     return data_summary, eval_result
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("BENCHMARK-QUALITY SKLEARN JOB")
