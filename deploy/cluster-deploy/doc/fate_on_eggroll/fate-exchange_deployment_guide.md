@@ -140,7 +140,7 @@ cd /data/projects/install
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/jdk-8u192-linux-x64.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/fate_install_${version}_release.tar.gz
 
-Note: version without character v, such as FATE_install_1.x.x_release.tar.gz
+Note: version without character v, such as fate_install_1.x.x_release.tar.gz
 ```
 
 ## 5.2 Check OS Parameters
@@ -179,8 +179,8 @@ mv jdk1.8.0_192 jdk-8u192
 #Deploy the software
 #Execute as app user on the destination server (192.168.0.1):
 cd /data/projects/install
-tar xf FATE_install_*.tar.gz
-cd FATE_install_*
+tar xf fate_install_*.tar.gz
+cd fate_install_*
 tar xvf eggroll.tar.gz -C /data/projects/fate
 
 #Set the environment variable file
