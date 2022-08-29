@@ -52,18 +52,18 @@ class TestModel(object):
             return
 
     def job_dsl_generate(self):
-        train_dsl = {"components": {"dataio_0": {"module": "DataIO", "input": {"data": {"data": []}},
-                                                 "output": {"data": ["train"], "model": ["hetero_lr"]}}}}
+        train_dsl = {"components": {"data_transform_0": {"module": "DataTransform", "input": {"data": {"data": []}},
+                                                         "output": {"data": ["train"], "model": ["data_transform"]}}}}
         train_dsl_path = self.cache_directory + 'generate_dsl_file.json'
         with open(train_dsl_path, 'w') as fp:
             json.dump(train_dsl, fp)
         try:
             stdout = self.client.job.generate_dsl(train_dsl=get_dict_from_file(train_dsl_path),
-                                                  cpn=['dataio_0'])
+                                                  cpn=['data_transform_0'])
             if stdout.get('retcode'):
                 self.error_log('job dsl generate: {}'.format(stdout.get('retmsg')) + '\n')
-            if stdout.get('data')['components']['dataio_0']['input']['model'][
-                    0] == 'pipeline.dataio_0.hetero_lr':
+            if stdout.get('data')['components']['data_transform_0']['input']['model'][
+                    0] == 'pipeline.data_transform_0.data_transform':
                 return stdout.get('retcode')
         except Exception:
             return
@@ -447,11 +447,10 @@ class TestModel(object):
                 "model_version": self.model_version,
                 "role": "guest",
                 "party_id": self.guest_party_id[0],
-                "file": model_path
+                "file": model_path,
+                "force_update": 1,
             }
-            # config_file_path = self.cache_directory + 'model_import.json'
-            # with open(config_file_path, 'w') as fp:
-            #     json.dump(config_data, fp)
+
             try:
                 remove_path = Path(remove_path + self.model_version)
                 if os.path.isdir(remove_path):
@@ -688,7 +687,7 @@ def run_test_api(config_json, namespace):
     conf_file = get_dict_from_file(upload_file_path)
     serving_connect_bool = serving_connect(config_json['serving_setting'])
     remove_path = str(config_json['data_base_dir']).split("python")[
-        0] + '/model_local_cache/guest#{}#arbiter-{}#guest-{}#host-{}#model/'.format(
+        0] + '/fateflow/model_local_cache/guest#{}#arbiter-{}#guest-{}#host-{}#model/'.format(
         guest_party_id[0], arbiter_party_id[0], guest_party_id[0], host_party_id[0])
     max_iter = test_api.set_config(guest_party_id, host_party_id, arbiter_party_id, conf_path,
                                    config_json['component_name'])
@@ -773,7 +772,7 @@ def run_test_api(config_json, namespace):
                                                                       servings=config_json['serving_setting']))])
     status, model_path = test_api.model_api('model/export')
     model.add_row(['model export', judging_state(status)])
-    model.add_row(['model  import', (judging_state(
+    model.add_row(['model import', (judging_state(
         test_api.model_api('model/import', remove_path=remove_path, model_path=model_path)))])
     model.add_row(['tag model', judging_state(test_api.model_api('model_tag/model', tag_name='model_tag_create'))])
     model.add_row(['tag list', judging_state(test_api.model_api('model_tag/list', tag_name='model_tag_create'))])

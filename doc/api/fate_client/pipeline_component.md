@@ -19,11 +19,11 @@ components' input, check the [list](../../federatedml_component/README.md).
 Here is an example to access a component's input:
 
 ``` sourceCode python
-from pipeline.component import DataIO
-dataio_0 = DataIO(name="dataio_0")
-input_all = dataio_0.input
-input_data = dataio_0.input.data
-input_model = dataio_0.input.model
+from pipeline.component import DataTransform
+data_transform_0 = DataTransform(name="data_transform_0")
+input_all = data_transform_0.input
+input_data = data_transform_0.input.data
+input_model = data_transform_0.input.model
 ```
 
 ### Output
@@ -37,11 +37,11 @@ information on each components' output, check the
 Here is an example to access a component's output:
 
 ``` sourceCode python
-from pipeline.component import DataIO
-dataio_0 = DataIO(name="dataio_0")
-output_all = dataio_0.output
-output_data = dataio_0.output.data
-output_model = dataio_0.output.model
+from pipeline.component import DataTransform
+data_transform_0 = DataTransform(name="data_transform_0")
+output_all = data_transform_0.output
+output_data = data_transform_0.output.data
+output_model = data_transform_0.output.model
 ```
 
 Meanwhile, to download components' output table or model, please use
@@ -51,12 +51,12 @@ Meanwhile, to download components' output table or model, please use
 
 In most cases, data sets are wrapped into `data` when being passed
 between modules. For instance, in the [mini
-demo](../../../examples/pipeline/demo/pipeline-mini-demo.py), data output of `dataio_0` is set
+demo](../../../examples/pipeline/demo/pipeline-mini-demo.py), data output of `data_transform_0` is set
 as data input to
 `intersection_0`.
 
 ``` sourceCode python
-pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
+pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
 ```
 
 For data sets used in different modeling stages (e.g., train & validate)
@@ -96,7 +96,7 @@ pipeline.add_component(hetero_lr_1,
 To run prediction with with new data, data source needs to be updated in
 prediction job. Below is an example from [mini
 demo](../../../examples/pipeline/demo/pipeline-mini-demo.py), where data input of original
-<span class="title-ref">dataio\_0</span> component is set to be the data
+<span class="title-ref">data\_transform\_0</span> component is set to be the data
 output from <span class="title-ref">reader\_2</span>.
 
 ``` sourceCode python
@@ -106,7 +106,7 @@ reader_2.get_party_instance(role="host", party_id=host).component_param(table=ho
 # add data reader onto predict pipeline
 predict_pipeline.add_component(reader_2)
 predict_pipeline.add_component(pipeline,
-                               data=Data(predict_input={pipeline.dataio_0.input.data: reader_2.output.data}))
+                               data=Data(predict_input={pipeline.data_transform_0.input.data: reader_2.output.data}))
 ```
 
 Below lists all five types of `data` and whether `Input` and `Output`
@@ -131,17 +131,17 @@ input and output:
 
 ``` sourceCode python
 from pipeline.backend.pipeline import Pipeline
-from pipeline.component import DataIO, Intersection, HeteroDataSplit, HeteroLR
+from pipeline.component import DataTransform, Intersection, HeteroDataSplit, HeteroLR
 # initialize a pipeline
 pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest)
 # define all components
-dataio_0 = DataIO(name="dataio_0")
+data_transform_0 = DataTransform(name="data_transform_0")
 data_split = HeteroDataSplit(name="data_split_0")
 hetero_lr_0 = HeteroLR(name="hetero_lr_0", max_iter=20)
 # chain together all components
 pipeline.add_component(reader_0)
-pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
+pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
 pipeline.add_component(hetero_data_split_0, data=Data(data=intersection_0.output.data))
 pipeline.add_component(hetero_lr_0, data=Data(train_data=hetero_data_split_0.output.data.train_data,
                                               validate_data=hetero_data_split_0.output.data.test_data))
@@ -156,13 +156,13 @@ parameters from the previous component. When a model from previous
 component is used as input but the current component is of different
 class from the previous component, `isometric_model` is used.
 
-Check below for a case from mini demo, where `model` from `dataio_0` is
-passed to `dataio_1`.
+Check below for a case from mini demo, where `model` from `data_transform_0` is
+passed to `data_transform_1`.
 
 ``` sourceCode python
-pipeline.add_component(dataio_1,
+pipeline.add_component(data_transform_1,
                        data=Data(data=reader_1.output.data),
-                       model=Model(dataio_0.output.model))
+                       model=Model(data_transform_0.output.model))
 ```
 
 Here is a case of using `isometric model`. `HeteroFeatureSelection` uses
@@ -200,7 +200,7 @@ Below code sets cache output from `intersection_0` as cache input of
 `intersection_1`.
 
 ``` sourceCode python
-pipeline.add_component(intersection_1, data=Data(data=dataio_0.output.data), cache=Cache(intersect_0.output.cache))
+pipeline.add_component(intersection_1, data=Data(data=data_transform_0.output.data), cache=Cache(intersect_0.output.cache))
 ```
 
 To load cache from another job, use `CacheLoader` component. In this
@@ -210,7 +210,7 @@ input.
 
 ``` sourceCode python
 pipeline.add_component(cache_loader_0)
-pipeline.add_component(intersect_0, data=Data(data=dataio_0.output.data), cache=Cache(cache_loader_0.output.cache))
+pipeline.add_component(intersect_0, data=Data(data=data_transform_0.output.data), cache=Cache(cache_loader_0.output.cache))
 ```
 
 ### Parameter
@@ -224,8 +224,8 @@ per individual participant.
 <!-- end list -->
 
 ``` sourceCode python
-from pipeline.component import DataIO
-dataio_0 = DataIO(name="dataio_0", input_format="dense", output_format="dense",
+from pipeline.component import DataTransform
+data_transform_0 = DataTransform(name="data_transform_0", input_format="dense", output_format="dense",
                   outlier_replace=False)
 ```
 
@@ -234,11 +234,11 @@ dataio_0 = DataIO(name="dataio_0", input_format="dense", output_format="dense",
 <!-- end list -->
 
 ``` sourceCode python
-# set guest dataio_0 component parameters
-guest_dataio_0 = dataio_0.get_party_instance(role='guest', party_id=9999)
-guest_dataio_0.component_param(with_label=True)
-# set host dataio_0 component parameters
-dataio_0.get_party_instance(role='host', party_id=10000).component_param(with_label=False)
+# set guest data_transform_0 component parameters
+guest_data_transform_0 = data_transform_0.get_party_instance(role='guest', party_id=9999)
+guest_data_transform_0.component_param(with_label=True)
+# set host data_transform_0 component parameters
+data_transform_0.get_party_instance(role='host', party_id=10000).component_param(with_label=False)
 ```
 
 ### Task Info
@@ -258,6 +258,6 @@ To obtain output of a component, the component needs to be first
 extracted from pipeline:
 
 ``` sourceCode python
-print(pipeline.get_component("dataio_0").get_output_data(limits=10))
+print(pipeline.get_component("data_transform_0").get_output_data(limits=10))
 ```
 
