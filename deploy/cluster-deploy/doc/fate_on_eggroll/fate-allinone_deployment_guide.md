@@ -198,7 +198,7 @@ echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab
 Or create by using the code package script in Section 5.1, and execute as app user:
 
 ```
-sh /data/projects/fate-cluster-install-${version}/tools-install/makeVirtualDisk.sh
+sh /data/projects/fate_cluster_install_${version}_release/tools-install/makeVirtualDisk.sh
 Waring: please make sure has enough space of your disk first!!! (Please make sure there is enough storage space)
 current user has sudo privilege(yes|no):yes      (Whether the user has sudo privilege; enter yes and do not abbreviate it)
 Enter store directory:/data    (Set the storage path for virtual memory files; make sure the directory exists and do not set it to the root directory)
@@ -261,17 +261,17 @@ Note: Replace ${version} with specific FATE version number,can be viewed on the 
 
 ```
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_cluster_install_${version}_release-c7-u18.tar.gz
-tar xzf fate_cluster_install_${version}_release-c7-u18.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/fate_cluster_install_${version}_release.tar.gz
+tar xzf fate_cluster_install_${version}_release.tar.gz
 
-Note: version without character v, such as fate_cluster_install_1.x.x_release-c7-u18.tar.gz
+Note: version without character v, such as fate_cluster_install_1.x.x_release.tar.gz
 ```
 
 ### 5.2. Pre-Deployment Check
 
 **Execute as app user on the destination server (192.168.0.1, 192.168.0.2)**
 
-Copy the check script fate-cluster-install-${version}/tools-install/check.sh from 192.168.0.1 to 192.168.0.2
+Copy the check script fate_cluster_install_${version}_release/tools-install/check.sh from 192.168.0.1 to 192.168.0.2
 
 ```
 #Execute the script check on the servers 192.168.0.1 and 192.168.0.2 respectively
@@ -289,10 +289,10 @@ sh ./check.sh
 
 **Execute as app user on the destination server (192.168.0.1)**
 
-Modify the profile: fate-cluster-install-${version}/allInone/conf/setup.conf.
+Modify the profile: fate_cluster_install_${version}_release/allInone/conf/setup.conf.
 
 ```
-vi fate-cluster-install-${version}/allInone/conf/setup.conf
+vi fate_cluster_install_${version}_release/allInone/conf/setup.conf
 ```
 
 Description of Profile setup.conf
@@ -468,14 +468,14 @@ nodemanager_port=4671
 
 ### 5.4 Deployment
 
-Modify the corresponding configuration items in the setup.conf file according to the above configuration definition, then execute the deployment script under the fate-cluster-install-${version}/allInone directory:
+Modify the corresponding configuration items in the setup.conf file according to the above configuration definition, then execute the deployment script under the fate_cluster_install_${version}_release/allInone directory:
 
 ```
-cd fate-cluster-install-${version}/allInone
+cd fate_cluster_install_${version}_release/allInone
 nohup sh ./deploy.sh > logs/boot.log 2>&1 &
 ```
 
-The deployment log is located in the fate-cluster-install-${version}/allInone/logs directory. A user can check it in real time to see if there are any errors:
+The deployment log is located in the fate_cluster_install_${version}_release/allInone/logs directory. A user can check it in real time to see if there are any errors:
 
 ```
 tail -f ./logs/deploy.log (Just check it when the deployment is completed)

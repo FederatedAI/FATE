@@ -185,7 +185,7 @@ Please refer [here](../../../examples/pipeline/../README.zh.md) for a quick star
 cd ${FATE_PROJECT_BASE};
 mkdir -p env/jdk;
 cd env/jdk
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/jdk-8u192.tar.gz;
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/jdk-8u192.tar.gz;
 tar xzf jdk-8u192.tar.gz
 ```
 
