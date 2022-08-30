@@ -20,7 +20,7 @@ FATE于2019年2月首次对外开源，并成立
 ## 教程
 
 ### 部署
-
+FATE 支持多种部署模式，用户可以根据自身情况进行选择。[历史发布版本可以通过这里下载](https://github.com/FederatedAI/FATE/wiki/Download)
 #### 单机版
 - [原生单机版安装](./deploy/standalone-deploy/)
 
@@ -37,6 +37,17 @@ FATE于2019年2月首次对外开源，并成立
 - [使用DSL json conf运行任务](doc/tutorial/dsl_conf/dsl_conf_tutorial.md)
 - [更多教程](doc/tutorial)
 
+## 关联仓库
+- [KubeFATE](https://github.com/FederatedAI/KubeFATE)
+- [FATE-Flow](https://github.com/FederatedAI/FATE-Flow)
+- [FATE-Board](https://github.com/FederatedAI/FATE-Board)
+- [FATE-Serving](https://github.com/FederatedAI/FATE-Serving)
+- [FATE-Cloud](https://github.com/FederatedAI/FATE-Cloud)
+- [FedVision](https://github.com/FederatedAI/FedVision)
+- [EggRoll](https://github.com/WeBankFinTech/eggroll)
+- [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE)
+- [FATE-Builder](https://github.com/FederatedAI/FATE-Builder)
+
 ## 文档
 
 ### FATE设计
@@ -46,37 +57,28 @@ FATE于2019年2月首次对外开源，并成立
 - [算法参数](./python/federatedml/param)
 - [论文与会议资料](./doc/resources/README.zh.md)
 
-### 贡献代码
+### 开发资源
 
 - [开发指南](doc/develop/develop_guide.zh.md)
-
-### API文档
-- [Session API](doc/api/session.md)
-- [Computing API](doc/api/computing.md)
-- [Federation API](./doc/api/federation.md)
+- [FATE API references](doc/api)
 - [Flow SDK API](doc/api/fate_client/flow_sdk.md)
 - [Flow Client](https://fate-flow.readthedocs.io/en/latest/zh/fate_flow_client/)
 - [FATE Pipeline](doc/api/fate_client/pipeline.md)
 - [FATE Test](./doc/tutorial/fate_test_tutorial.md)
 - [DSL Conf Setting Guide](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.zh.md)
-
-### 在线课程
 - [Bilibili: @FATEFedAI](https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)
 
-## 关联仓库
+## 社区治理  
 
-- [FATE-Flow](https://github.com/FederatedAI/FATE-Flow)
-- [FATE-Board](https://github.com/FederatedAI/FATE-Board)
-- [FATE-Serving](https://github.com/FederatedAI/FATE-Serving)
-- [FATE-Cloud](https://github.com/FederatedAI/FATE-Cloud)
-- [FedVision](https://github.com/FederatedAI/FedVision)
-- [EggRoll](https://github.com/WeBankFinTech/eggroll)
-- [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE)
-- [KubeFATE](https://github.com/FederatedAI/KubeFATE)
+[FATE-Community](https://github.com/FederatedAI/FATE-Community) 仓库包含历史社区合作，沟通，会议，章程等文档。
+
+- [GOVERNANCE.md](https://github.com/FederatedAI/FATE-Community/blob/master/GOVERNANCE.md) 
+- [Minutes](https://github.com/FederatedAI/FATE-Community/blob/master/meeting-minutes) 
+- [Development Process Guidelines](https://github.com/FederatedAI/FATE-Community/blob/master/FederatedAI_PROJECT_PROCESS_GUIDELINE.md) 
+- [Security Release Process](https://github.com/FederatedAI/FATE-Community/blob/master/SECURITY.md) 
 
 ## 了解更多
 
-- [FATE Community](https://github.com/FederatedAI/FATE-Community)
 - [Fate-FedAI Group IO](https://groups.io/g/Fate-FedAI)
 - [FAQ](https://github.com/FederatedAI/FATE/wiki)
 - [issues](https://github.com/FederatedAI/FATE/issues)
