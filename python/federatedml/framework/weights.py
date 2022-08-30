@@ -18,12 +18,11 @@ import abc
 import numpy as np
 import operator
 
-from fate_arch.federation import segment_transfer_enabled
 from federatedml.secureprotol.encrypt import Encrypt
 from federatedml.util import LOGGER
 
 
-class TransferableWeights(metaclass=segment_transfer_enabled()):
+class TransferableWeights:
     def __init__(self, weights, cls, *args, **kwargs):
         self._weights = weights
         self._cls = cls
@@ -53,7 +52,7 @@ class TransferableWeights(metaclass=segment_transfer_enabled()):
             return self._cls(self._weights, *args, **kwargs)
 
 
-class Weights(metaclass=segment_transfer_enabled()):
+class Weights:
 
     def __init__(self, l):
         self._weights = l

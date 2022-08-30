@@ -65,6 +65,7 @@ class FeatureImputation(ModelBase):
 
     def save_model(self):
         meta_obj, param_obj = save_feature_imputer_model(missing_fill=True,
+                                                         missing_replace_method=self.missing_fill_method,
                                                          cols_replace_method=self.cols_replace_method,
                                                          missing_impute=self.missing_impute,
                                                          missing_fill_value=self.default_value,
@@ -137,7 +138,7 @@ def save_feature_imputer_model(missing_fill=False,
 
     model_meta.is_imputer = missing_fill
     if missing_fill:
-        if missing_replace_method:
+        if missing_replace_method and cols_replace_method is None:
             model_meta.strategy = missing_replace_method
 
         if missing_impute is not None:
@@ -159,7 +160,11 @@ def save_feature_imputer_model(missing_fill=False,
 
         if cols_replace_method is not None:
             cols_replace_method = {k: str(v) for k, v in cols_replace_method.items()}
-            model_param.cols_replace_method.update(cols_replace_method)
+            # model_param.cols_replace_method.update(cols_replace_method)
+        else:
+            filled_cols = set(header) - set(skip_cols)
+            cols_replace_method = {k: str(missing_replace_method) for k in filled_cols}
+        model_param.cols_replace_method.update(cols_replace_method)
 
         model_param.skip_cols.extend(skip_cols)
 

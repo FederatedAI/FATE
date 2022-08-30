@@ -17,7 +17,7 @@
 import copy
 import functools
 
-from federatedml.feature.instance import Instance
+from federatedml.model_base import ModelBase
 from federatedml.transfer_variable.transfer_class.one_vs_rest_transfer_variable import OneVsRestTransferVariable
 from federatedml.util import LOGGER
 from federatedml.util import consts
@@ -193,14 +193,14 @@ class OneVsRest(object):
 
         prob = self._comprehensive_result(predict_res_list)
         if prob:
-            f = functools.partial(self.__get_multi_class_res, classes=list(self.classes))
-            multi_classes_res = prob.mapValues(f)
-            predict_res = data_instances.join(multi_classes_res, lambda d, m: [d.label, m[0], m[1], m[2]])
+            # f = functools.partial(self.__get_multi_class_res, classes=list(self.classes))
+            #  multi_classes_res = prob.mapValues(f)
+            # predict_res = data_instances.join(multi_classes_res, lambda d, m: [d.label, m[0], m[1], m[2]])
+            # def _transfer(instance, pred_res):
+            #    return Instance(features=pred_res, inst_id=instance.inst_id)
 
-            def _transfer(instance, pred_res):
-                return Instance(features=pred_res, inst_id=instance.inst_id)
-
-            predict_res = data_instances.join(predict_res, _transfer)
+            # predict_res = data_instances.join(predict_res, _transfer)
+            predict_res = ModelBase.predict_score_to_output(data_instances, prob, list(self.classes))
         else:
             predict_res = None
         #

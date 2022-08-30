@@ -1,0 +1,15 @@
+data_guest: "examples/data/default_credit_hetero_guest.csv"
+data_host: "examples/data/default_credit_hetero_host.csv"
+idx: "id"
+label_name: "y"
+learning_rate: 0.05
+loss: "binary_crossentropy"
+tol: 0.01
+batch_size: 30000
+eval_type: "binary"
+metrics: ["AUC"]
+epochs: 20
+guest_table_name: "default_credit_hetero_guest"
+host_table_name: "default_credit_hetero_host"
+guest_input_shape: 13
+host_input_shape: 10

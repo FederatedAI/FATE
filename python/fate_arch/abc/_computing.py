@@ -299,6 +299,10 @@ class CTableABC(metaclass=ABCMeta):
         ...
 
     @abc.abstractmethod
+    def mapPartitionsWithIndex(self, func, preserves_partitioning=False):
+        ...
+
+    @abc.abstractmethod
     def flatMap(self, func):
         """
         apply a flat ``func`` to each data of table
@@ -594,6 +598,10 @@ class CSessionABC(metaclass=ABCMeta):
         namespace: str
            namespace
         """
+
+    @abc.abstractmethod
+    def destroy(self):
+        pass
 
     @abc.abstractmethod
     def stop(self):

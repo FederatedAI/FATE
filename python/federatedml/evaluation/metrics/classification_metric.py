@@ -378,7 +378,7 @@ class MultiClassAccuracy(object):
     """
 
     def compute(self, labels, pred_scores, normalize=True):
-        return accuracy_score(labels, pred_scores, normalize)
+        return accuracy_score(labels, pred_scores, normalize=normalize)
 
 
 class FScore(object):

@@ -29,7 +29,7 @@ class TestStatistics(unittest.TestCase):
         raw_data = np.random.rand(200, 100)
         expect = (raw_data - np.mean(raw_data, axis=0)) / np.std(raw_data, axis=0)
         data_table = session.parallelize([row for row in raw_data], partition=10, include_key=False)
-        n, standardized = hetero_pearson.HeteroPearson._standardized(data_table)
+        n, standardized, _, _ = hetero_pearson.standardize(data_table)
         standardized_data = np.array([row[1] for row in standardized.collect()])
         self.assertEqual(n, standardized_data.shape[0])
         self.assertEqual(raw_data.shape, standardized_data.shape)

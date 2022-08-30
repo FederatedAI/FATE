@@ -1,14 +1,15 @@
 import copy
 import functools
+
 import numpy as np
 
-from federatedml.feature.instance import Instance
 from federatedml.feature.fate_element_type import NoneType
+from federatedml.feature.instance import Instance
+from federatedml.statistic import data_overview
 from federatedml.statistic.data_overview import get_header
 from federatedml.statistic.statics import MultivariateStatisticalSummary
-from federatedml.util import consts
 from federatedml.util import LOGGER
-from federatedml.statistic import data_overview
+from federatedml.util import consts
 
 
 class Imputer(object):
@@ -34,7 +35,7 @@ class Imputer(object):
             if v != v:
                 self.missing_value_list[i] = np.nan
                 self.abnormal_value_list[i] = NoneType()
-
+        self.abnormal_value_set = set(self.abnormal_value_list)
         self.support_replace_method = ['min', 'max', 'mean', 'median', 'designated']
         self.support_output_format = {
             'str': str,
@@ -100,10 +101,17 @@ class Imputer(object):
         _data = copy.deepcopy(data)
         replace_cols_index_list = []
         if isinstance(_data, Instance):
+            new_features = []
             for i, v in enumerate(_data.features):
                 if v in missing_value_list and i not in skip_cols:
-                    _data.features[i] = transform_list[i]
+                    # _data.features[i] = transform_list[i]
+                    new_features.append(transform_list[i])
                     replace_cols_index_list.append(i)
+                else:
+                    new_features.append(v)
+            if replace_cols_index_list:
+                # new features array will have lowest compatible dtype
+                _data.features = np.array(new_features)
         else:
             for i, v in enumerate(_data):
                 if str(v) in missing_value_list and i not in skip_cols:
@@ -138,10 +146,17 @@ class Imputer(object):
         _data = copy.deepcopy(data)
         replace_cols_index_list = []
         if isinstance(_data, Instance):
+            new_features = []
             for i, v in enumerate(_data.features):
                 if v in missing_value_list:
-                    _data.features[i] = replace_value
+                    # _data.features[i] = replace_value
+                    new_features.append(replace_value)
                     replace_cols_index_list.append(i)
+                else:
+                    new_features.append(v)
+            if replace_cols_index_list:
+                # make sure new features array has lowest compatible dtype
+                _data.features = np.array(new_features)
         else:
             for i, v in enumerate(_data):
                 if str(v) in missing_value_list:
@@ -208,37 +223,27 @@ class Imputer(object):
         LOGGER.debug(f"cols_transform value is: {cols_transform_value}")
         return cols_transform_value
 
+    @staticmethod
+    def _transform_nan(instance):
+        feature_shape = instance.features.shape[0]
+        new_features = []
+
+        for i in range(feature_shape):
+            if instance.features[i] != instance.features[i]:
+                new_features.append(NoneType())
+            else:
+                new_features.append(instance.features[i])
+        new_instance = copy.deepcopy(instance)
+        new_instance.features = np.array(new_features)
+        return new_instance
+
     def __fit_replace(self, data, replace_method, replace_value=None, output_format=None,
                       col_replace_method=None):
         replace_method_per_col, skip_cols = self.__get_cols_transform_method(data, replace_method, col_replace_method)
 
-        """
-        def _transform_nan(instance):
-            feature_shape = instance.features.shape[0]
-            new_features = copy.deepcopy(instance.features)
-
-            for i in range(feature_shape):
-                if np.isnan(instance.features[i]):
-                    new_features[i] = NoneType()
-            new_instance = copy.deepcopy(instance)
-            new_instance.features = new_features
-            return new_instance
-        """
-        def _transform_nan(instance):
-            feature_shape = instance.features.shape[0]
-            new_features = []
-
-            for i in range(feature_shape):
-                if instance.features[i] != instance.features[i]:
-                    new_features.append(NoneType())
-                else:
-                    new_features.append(instance.features[i])
-            new_instance = copy.deepcopy(instance)
-            new_instance.features = np.array(new_features)
-            return new_instance
         schema = data.schema
         if isinstance(data.first()[1], Instance):
-            data = data.mapValues(lambda v: _transform_nan(v))
+            data = data.mapValues(lambda v: Imputer._transform_nan(v))
             data.schema = schema
         cols_transform_value = self.__get_cols_transform_value(data, replace_method_per_col,
                                                                replace_value=replace_value)
@@ -246,11 +251,11 @@ class Imputer(object):
         skip_cols = [get_header(data).index(v) for v in skip_cols]
         if output_format is not None:
             f = functools.partial(Imputer.replace_missing_value_with_cols_transform_value_format,
-                                  transform_list=cols_transform_value, missing_value_list=self.abnormal_value_list,
+                                  transform_list=cols_transform_value, missing_value_list=self.abnormal_value_set,
                                   output_format=output_format, skip_cols=set(skip_cols))
         else:
             f = functools.partial(Imputer.replace_missing_value_with_cols_transform_value,
-                                  transform_list=cols_transform_value, missing_value_list=self.abnormal_value_list,
+                                  transform_list=cols_transform_value, missing_value_list=self.abnormal_value_set,
                                   skip_cols=set(skip_cols))
 
         transform_data = data.mapValues(f)
@@ -261,23 +266,29 @@ class Imputer(object):
 
     def __transform_replace(self, data, transform_value, replace_area, output_format, skip_cols):
         skip_cols = [get_header(data).index(v) for v in skip_cols]
+
+        schema = data.schema
+        if isinstance(data.first()[1], Instance):
+            data = data.mapValues(lambda v: Imputer._transform_nan(v))
+            data.schema = schema
+
         if replace_area == 'all':
             if output_format is not None:
                 f = functools.partial(Imputer.replace_missing_value_with_replace_value_format,
-                                      replace_value=transform_value, missing_value_list=self.abnormal_value_list,
+                                      replace_value=transform_value, missing_value_list=self.abnormal_value_set,
                                       output_format=output_format)
             else:
                 f = functools.partial(Imputer.replace_missing_value_with_replace_value,
-                                      replace_value=transform_value, missing_value_list=self.abnormal_value_list)
+                                      replace_value=transform_value, missing_value_list=self.abnormal_value_set)
         elif replace_area == 'col':
             if output_format is not None:
                 f = functools.partial(Imputer.replace_missing_value_with_cols_transform_value_format,
-                                      transform_list=transform_value, missing_value_list=self.abnormal_value_list,
+                                      transform_list=transform_value, missing_value_list=self.abnormal_value_set,
                                       output_format=output_format,
                                       skip_cols=set(skip_cols))
             else:
                 f = functools.partial(Imputer.replace_missing_value_with_cols_transform_value,
-                                      transform_list=transform_value, missing_value_list=self.abnormal_value_list,
+                                      transform_list=transform_value, missing_value_list=self.abnormal_value_set,
                                       skip_cols=set(skip_cols))
         else:
             raise ValueError("Unknown replace area {} in Imputer".format(replace_area))

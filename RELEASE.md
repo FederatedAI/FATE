@@ -1,3 +1,32 @@
+##Release 1.9.0
+### Major Features and Improvements
+> FederatedML
+* Add elliptic curve based PSI algorithm, which allows 128-bit secure-level intersection of billion samples, 20x faster than RSA protocol under the same security level
+* Support accurate intersection cardinality calculation
+* Support for multi-column ID data; user may specify id column for PSI intersection and subsequent modeling usage
+* Hetero NN supports torch backend and supports complex layers such as LSTM
+* Add CoAE label reinforcement mechanism for vertical federated neural network
+* Hetero NN supports multi-host modeling scenarios
+* HeteroSecureBoost supports merging sub-models from all parties and exporting the merged model into lightgbm or PMML format
+* HeteroLR and HeteroSSHELR support merging sub-models from all parties and exporting the merged model into sklearn or PMML format
+* HeteroFeatureSelection supports anonymous feature selection
+* Label Encoder adds automatic label type inference
+* 10x faster local VIF computation in HeteroPearson, with added support for computing local VIF on linearly dependent columns
+* Optimized feature engineering column processing logic
+* HeteroFeatureBinning supports calculation of IV and WOE values during prediction
+* Renewed feature anonymous generation logic
+
+> FATE-ARCH
+* Support python3.8+
+* Support Spark 3x
+* Renewed Federation module, RabbitMQ and Pulsar support client transmission mode
+* Support Standalone, Spark, EggRoll heterogeneous computing engine interconnection
+
+> Fate-Client
+* PipeLine adds timeout retry mechanism
+* Pipeline's `get_output_data` API now may return component output data in DataFrame-typed format
+
+
 ## Release 1.8.0
 ### Major Features and Improvements
 > FederatedML

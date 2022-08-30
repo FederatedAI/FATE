@@ -1,0 +1,14 @@
+data_guest: "examples/data/give_credit_hetero_guest.csv"
+data_host: "examples/data/give_credit_hetero_host.csv"
+idx: "id"
+label_name: "y"
+learning_rate: 0.1
+tol: 0.01
+batch_size: 12000
+metrics: ["AUC"]
+epochs: 10
+guest_table_name: "give_credit_hetero_guest"
+host_table_name: "give_credit_hetero_host"
+eval_type: "binary"
+guest_input_shape: 5
+host_input_shape: 5

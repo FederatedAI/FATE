@@ -1,0 +1,35 @@
+[package]
+name = "fate_crypto"
+version = "1.9.0"
+edition = "2021"
+
+[lib]
+name = "fate_crypto"
+crate-type = [ "cdylib",]
+
+[dependencies]
+rand = "0.8.5"
+libsm = "0.5"
+
+[features]
+default = [ "std", "u64_backend",]
+simd_backend = [ "curve25519-dalek/simd_backend",]
+std = [ "curve25519-dalek/std",]
+nightly = [ "curve25519-dalek/nightly",]
+u64_backend = [ "curve25519-dalek/u64_backend",]
+u32_backend = [ "curve25519-dalek/u32_backend",]
+fiat_u64_backend = [ "curve25519-dalek/fiat_u64_backend",]
+fiat_u32_backend = [ "curve25519-dalek/fiat_u32_backend",]
+
+[dependencies.pyo3]
+version = "0.15.2"
+features = [ "extension-module",]
+
+[dependencies.curve25519-dalek]
+version = "3.2.1"
+
+[dependencies.sha2]
+version = "0.9.9"
+
+[package.metadata.maturin]
+name = "fate_crypto"

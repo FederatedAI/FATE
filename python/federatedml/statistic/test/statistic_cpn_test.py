@@ -17,13 +17,15 @@ class TestStatisticCpn(unittest.TestCase):
     def gen_data(self, data_num, partition):
         data = []
         header = [str(i) for i in range(2)]
+        anonymous_header = ["guest_9999_x" + str(i) for i in range(2)]
         col_1 = np.random.randn(data_num)
         col_2 = np.random.rand(data_num)
         for key in range(data_num):
             data.append((key, Instance(features=np.array([col_1[key], col_2[key]]))))
 
         result = session.parallelize(data, include_key=True, partition=partition)
-        result.schema = {'header': header}
+        result.schema = {'header': header,
+                         "anonymous_header": anonymous_header}
         self.header = header
         self.col_1 = col_1
         self.col_2 = col_2

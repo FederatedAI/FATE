@@ -82,6 +82,7 @@ docker tag ccr.ccs.tencentyun.com/federatedai/standalone_fate:${version} federat
 
    ```bash
    docker exec -it $(docker ps -aqf "name=standalone_fate") bash
+   source bin/init_env.sh
    ```
 
    - [test item](#4-test-items)
@@ -117,7 +118,7 @@ Download the installation package and unpack it
 
 ### 3.3 Installation
 
-Go to the unpacked directory and use init.sh to install
+Go to the unpacked directory and use `bin/init.sh` to install
 
 The script will complete automatically:
 
@@ -132,14 +133,14 @@ The script will complete automatically:
 
    ```bash
    cd standalone_fate_install_${version}_release;
-   bash init.sh init
+   bash bin/init.sh init
    ```
 
 ### 3.4 Start
 
    ```bash
-   bash init.sh status;
-   bash init.sh start
+   bash bin/init.sh status;
+   bash bin/init.sh start
    ```
 
 ### 3.5 Testing

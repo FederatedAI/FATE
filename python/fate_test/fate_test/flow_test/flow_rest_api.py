@@ -35,23 +35,22 @@ class TestModel(Base):
                 self.model_version = response.json().get("data").get("model_info").get("model_version")
                 if stop:
                     return
-                return self.query_status()
+                return self.query_status(self.job_id)
         except Exception:
             return
 
     def job_dsl_generate(self):
         post_data = {
-            'train_dsl': '{"components": {"dataio_0": {"module": "DataIO", "input": {"data": {"data": []}},'
-                         '"output": {"data": ["train"], "model": ["hetero_lr"]}}}}',
-            'cpn_str': 'dataio_0'
-        }
+            'train_dsl': '{"components": {"data_transform_0": {"module": "DataTransform", "input": {"data": {"data": []}},'
+            '"output": {"data": ["train"], "model": ["data_transform"]}}}}',
+            'cpn_str': 'data_transform_0'}
         try:
             response = requests.post("/".join([self.server_url, "job", "dsl/generate"]), json=post_data)
             if response.status_code == 200:
                 if response.json().get('retcode'):
                     self.error_log('job dsl generate: {}'.format(response.json().get('retmsg')) + '\n')
-                if response.json().get('data')['components']['dataio_0']['input']['model'][
-                        0] == 'pipeline.dataio_0.hetero_lr':
+                if response.json().get('data')['components']['data_transform_0']['input']['model'][
+                        0] == 'pipeline.data_transform_0.data_transform':
                     return response.json().get('retcode')
         except Exception:
             return
@@ -64,7 +63,7 @@ class TestModel(Base):
                 if response.status_code == 200:
                     if response.json().get('retcode'):
                         self.error_log('job rerun: {}'.format(response.json().get('retmsg')) + '\n')
-                    return self.query_status()
+                    return self.query_status(self.job_id)
             except Exception:
                 return
 
@@ -98,17 +97,16 @@ class TestModel(Base):
                 if response.status_code == 200:
                     if response.json().get('retcode'):
                         self.error_log('job list: {}'.format(response.json().get('retmsg')) + '\n')
-                    if len(response.json().get('data')) == post_data["limit"]:
+                    if len(response.json().get('data', {}).get('jobs', [])) == post_data["limit"]:
                         return response.json().get('retcode')
             except Exception:
                 return
 
-        elif command == 'log':
+        elif command == 'log/download':
             post_data = {'job_id': self.job_id}
             tar_file_name = 'job_{}_log.tar.gz'.format(post_data['job_id'])
             extract_dir = os.path.join(output_path, tar_file_name.replace('.tar.gz', ''))
-            with closing(requests.get("/".join([self.server_url, "job", command]),
-                                      json=post_data, stream=True)) as response:
+            with closing(requests.post("/".join([self.server_url, "job", command]), json=post_data, stream=True)) as response:
                 if response.status_code == 200:
                     try:
                         download_from_request(http_response=response, tar_file_name=tar_file_name,
@@ -193,7 +191,7 @@ class TestModel(Base):
             if response.status_code == 200:
                 if response.json().get('retcode'):
                     self.error_log('list task: {}'.format(response.json().get('retmsg')) + '\n')
-                if response.json().get("data") and len(response.json().get('data')) == post_data["limit"]:
+                if len(response.json().get('data', {}).get('tasks', [])) == post_data["limit"]:
                     return response.json().get('retcode')
         except Exception:
             return
@@ -519,8 +517,10 @@ class TestModel(Base):
                 "model_version": self.model_version,
                 "role": "guest",
                 "party_id": self.guest_party_id[0],
-                "file": model_path
+                "file": model_path,
+                "force_update": 1,
             }
+
             try:
                 remove_path = Path(remove_path + self.model_version)
                 if os.path.exists(model_path):
@@ -751,7 +751,7 @@ class TestModel(Base):
             except Exception:
                 return
 
-    def query_status(self, job_id=None):
+    def query_status(self, job_id):
         while True:
             time.sleep(5)
             status = self.query_job(job_id=job_id)
@@ -781,7 +781,7 @@ def run_test_api(config_json, namespace):
     upload_file_path = config_json['upload_file_path']
     model_file_path = config_json['model_file_path']
     remove_path = str(config_json['data_base_dir']).split("python")[
-        0] + '/model_local_cache/guest#{}#arbiter-{}#guest-{}#host-{}#model/'.format(
+        0] + '/fateflow/model_local_cache/guest#{}#arbiter-{}#guest-{}#host-{}#model/'.format(
         guest_party_id[0], arbiter_party_id[0], guest_party_id[0], host_party_id[0])
 
     serving_connect_bool = serving_connect(config_json['serving_setting'])
@@ -817,7 +817,7 @@ def run_test_api(config_json, namespace):
     job.add_row(['job data view', judging_state(test_api.job_api('data/view/query'))])
     job.add_row(['job list', judging_state(test_api.job_api('list/job'))])
     job.add_row(['job config', judging_state(test_api.job_config(max_iter=max_iter, output_path=output_path))])
-    job.add_row(['job log', judging_state(test_api.job_api('log', output_path))])
+    job.add_row(['job log', judging_state(test_api.job_api('log/download', output_path))])
     job.add_row(['job dsl generate', judging_state(test_api.job_dsl_generate())])
     print(job.get_string(title="job api"))
 
@@ -875,7 +875,7 @@ def run_test_api(config_json, namespace):
                                                                       servings=config_json['serving_setting']))])
     status, model_path = test_api.model_api('model/export', output_path=output_path)
     model.add_row(['model export', judging_state(status)])
-    model.add_row(['model  import', (judging_state(
+    model.add_row(['model import', (judging_state(
         test_api.model_api('model/import', remove_path=remove_path, model_path=model_path)))])
     model.add_row(
         ['model_tag create', judging_state(test_api.model_api('model_tag/create', tag_name='model_tag_create'))])

@@ -51,7 +51,7 @@ def main(config="../../config.yaml", param="./gbdt_config_multi.yaml"):
     X = df.drop(label_name, axis=1)
     X_guest = df_guest.drop(label_name, axis=1)
     y_guest = df_guest[label_name]
-    clf = GradientBoostingRegressor(n_estimators=50)
+    clf = GradientBoostingRegressor(n_estimators=40)
     clf.fit(X, y)
     y_predict = clf.predict(X_guest)
 

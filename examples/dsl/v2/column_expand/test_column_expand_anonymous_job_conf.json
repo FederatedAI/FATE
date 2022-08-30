@@ -1,0 +1,46 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "guest": [
+            9999
+        ]
+    },
+    "component_parameters": {
+        "role": {
+            "guest": {
+                "0": {
+                    "data_transform_0": {
+                        "with_label": true,
+                        "output_format": "dense"
+                    },
+                    "column_expand_0": {
+                        "append_header": [
+                            "x_0",
+                            "x_1",
+                            "x_2",
+                            "x_3"
+                        ],
+                        "method": "manual",
+                        "fill_value": [
+                            0,
+                            0.2,
+                            0.5,
+                            1
+                        ],
+                        "need_run": true
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "anony_breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

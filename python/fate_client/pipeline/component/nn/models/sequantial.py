@@ -13,12 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-_TF_KERAS_VALID = False
-try:
-    from tensorflow.python.keras.engine import base_layer
-    _TF_KERAS_VALID = True
-except ImportError:
-    pass
+from pipeline.component.nn.backend.fate_torch.base import Sequential as tSeq
 
 
 class Sequential(object):
@@ -30,11 +25,23 @@ class Sequential(object):
         return self._model is None
 
     def add(self, layer):
-        if _TF_KERAS_VALID and isinstance(layer, base_layer.Layer):
+        _IS_TF_KERAS = False
+        try:
+            import tensorflow as tf
+
+            _IS_TF_KERAS = isinstance(layer, tf.Module)
+        except ImportError:
+            pass
+
+        if _IS_TF_KERAS:
             layer_type = "keras"
         elif isinstance(layer, dict):
             layer_type = "nn"
-        elif hasattr(layer, "__module__") and getattr(layer, "__module__").startswith("torch.nn.modules"):
+        elif hasattr(layer, "__module__") and "fate_torch" in getattr(
+            layer, "__module__"
+        ):
+            layer_type = "pytorch"
+        elif isinstance(layer, tSeq):
             layer_type = "pytorch"
         else:
             raise ValueError("Layer type {} not support yet".format(type(layer)))
@@ -51,7 +58,10 @@ class Sequential(object):
             self.__config_type = layer_type
         else:
             raise ValueError(
-                "pre add layer type is {}, not equals to current layer {}".format(self.__config_type, layer_type))
+                "pre add layer type is {}, not equals to current layer {}".format(
+                    self.__config_type, layer_type
+                )
+            )
 
     def get_layer_type(self):
         return self.__config_type
@@ -72,12 +82,13 @@ class Sequential(object):
 def _build_model(type):
     if type == "keras":
         from pipeline.component.nn.backend.keras import model_builder
+
         return model_builder.build_model()
 
     if type == "pytorch":
-        from pipeline.component.nn.backend.pytorch import model_builder
-        return model_builder.build_model()
+        return tSeq()
 
     if type == "nn":
         from pipeline.component.nn.backend.tf import model_builder
+
         return model_builder.build_model()

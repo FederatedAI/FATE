@@ -18,14 +18,13 @@ import argparse
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataTransform
-from pipeline.component import HeteroPearson
 from pipeline.component import HeteroFeatureBinning
 from pipeline.component import HeteroFeatureSelection
+from pipeline.component import HeteroPearson
 from pipeline.component import Intersection
 from pipeline.component import Reader
 from pipeline.interface import Data
 from pipeline.interface import Model
-
 from pipeline.utils.tools import load_job_config
 
 
@@ -55,7 +54,6 @@ def main(config="../../config.yaml", namespace=""):
     hetero_pearson_0 = HeteroPearson(name='hetero_pearson_0', column_indexes=-1)
     hetero_binning_0 = HeteroFeatureBinning(name='hetero_binning_0')
     selection_param = {
-        "name": "hetero_feature_selection_0",
         "select_col_indexes": -1,
         "select_names": [],
         "filter_methods": [
@@ -66,11 +64,12 @@ def main(config="../../config.yaml", namespace=""):
             "threshold": 5
         },
         "correlation_param": {
+            "sort_metric": "iv",
             "threshold": 0.5,
             "select_federated": False
         }
     }
-    hetero_feature_selection_0 = HeteroFeatureSelection(**selection_param)
+    hetero_feature_selection_0 = HeteroFeatureSelection(name="hetero_feature_selection_0", **selection_param)
     pipeline.add_component(reader_0)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))

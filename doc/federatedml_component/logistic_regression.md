@@ -1,8 +1,16 @@
 # Federated Logistic Regression
 
 Logistic Regression(LR) is a widely used statistic model for
-classification problems. FATE provided two kinds of federated LR:
+classification problems. FATE provided two modes of federated LR:
 Homogeneous LR (HomoLR) and Heterogeneous LR (HeteroLR and Hetero_SSHE_LR).
+
+Below lists features of each LR models:
+
+| Linear Model  	| Multiclass(OVR)                                                                                	| Arbiter-less Training                                                          	| Weighted Training                                                                                  	| Multi-Host                                                                                     	| Cross Validation                                                                       	| Warm-Start/CheckPoint                                                                          	|
+|---------------	|------------------------------------------------------------------------------------------------	|--------------------------------------------------------------------------------	|----------------------------------------------------------------------------------------------------	|------------------------------------------------------------------------------------------------	|----------------------------------------------------------------------------------------	|------------------------------------------------------------------------------------------------	|
+| Hetero LR     	| [&check;](../../examples/pipeline/hetero_logistic_regression/pipeline-hetero-lr-one-vs-all.py) 	| &cross;                                                                        	| [&check;](../../examples/pipeline/hetero_logistic_regression/pipeline-hetero-lr-sample-weights.py) 	| [&check;](../../examples/pipeline/hetero_logistic_regression/pipeline-hetero-lr-multi-host.py) 	| [&check;](../../examples/pipeline/hetero_logistic_regression/pipeline-hetero-lr-cv.py) 	| [&check;](../../examples/pipeline/hetero_logistic_regression/pipeline-hetero-lr-warm-start.py) 	|
+| Hetero SSHELR 	| [&check;](../../examples/pipeline/hetero_sshe_lr/pipeline-hetero-lr-ovr.py)                    	| [&check;](../../examples/pipeline/hetero_sshe_lr/pipeline-hetero-lr-normal.py) 	| [&check;](../../examples/pipeline/hetero_sshe_lr/pipeline-hetero-lr-sample-weights.py)             	| &cross;                                                                                        	| [&check;](../../examples/pipeline/hetero_sshe_lr/pipeline-hetero-lr-cv.py)             	| [&check;](../../examples/pipeline/hetero_sshe_lr/pipeline-hetero-lr-warm-start.py)             	|
+| Homo LR       	| [&check;](../../examples/pipeline/homo_logistic_regression/pipeline-homo-lr-one-vs-all.py)     	| &cross;                                                                        	| [&check;](../../examples/pipeline/homo_logistic_regression/pipeline-homo-lr-sample-weights.py)     	| [&check;](../../examples/pipeline/homo_logistic_regression/pipeline-homo-lr-multi-host.py)     	| [&check;](../../examples/pipeline/homo_logistic_regression/pipeline-homo-lr-cv.py)     	| [&check;](../../examples/pipeline/homo_logistic_regression/pipeline-homo-lr-warm-start.py)     	|
 
 We simplified the federation process into three parties. Party A
 represents Guest， party B represents Host while party C, which also

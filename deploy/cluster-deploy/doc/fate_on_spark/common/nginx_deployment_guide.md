@@ -3,7 +3,7 @@
 ### 1. dependency download
 ```shell script
 mkdir -r /data/projects/install && cd /data/projects/install
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/openresty-1.17.8.2.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/openresty-1.17.8.2.tar.gz
 ```
 
 ### 2. Deployment
@@ -42,21 +42,26 @@ cat > /data/projects/fate/proxy/nginx/conf/route_table.yaml << EOF
 default:
   proxy:
     - host: 192.168.0.2
-      port: 9390
+      http_port: 9300
+      grpc_port: 9310
 10000:
   proxy:
     - host: 192.168.0.1
-      port: 9390
+      http_port: 9300
+      grpc_port: 9310
   fateflow:
     - host: 192.168.0.1
-      port: 9360
+      http_port: 9380
+      grpc_port: 9360
 9999:
   proxy:
     - host: 192.168.0.2
-      port: 9390
+      http_port: 9300
+      grpc_port: 9310
   fateflow:
     - host: 192.168.0.2
-      port: 9360
+      http_port: 9380
+      grpc_port: 9360
 EOF
 
 # Modify the execution under the app user of the target server (192.168.0.2)
@@ -64,21 +69,26 @@ cat > /data/projects/fate/proxy/nginx/conf/route_table.yaml << EOF
 default:
   proxy:
     - host: 192.168.0.1
-      port: 9390
+      http_port: 9300
+      grpc_port: 9310
 10000:
   proxy:
     - host: 192.168.0.1
-      port: 9390
+      http_port: 9300
+      grpc_port: 9310
   fateflow:
     - host: 192.168.0.1
-      port: 9360
+      http_port: 9380
+      grpc_port: 9360
 9999:
   proxy:
     - host: 192.168.0.2
-      port: 9390
+      http_port: 9300
+      grpc_port: 9310
   fateflow:
     - host: 192.168.0.2
-      port: 9360
+      http_port: 9380
+      grpc_port: 9360
 EOF
 ```
 

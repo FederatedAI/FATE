@@ -235,7 +235,8 @@ class CommonFilterParam(BaseParam):
 
         if self.host_thresholds is not None:
             if not isinstance(self.host_thresholds, list):
-                raise ValueError("IV selection param's host_threshold should be list or None")
+                self.host_thresholds = [self.host_thresholds]
+                # raise ValueError("selection param's host_thresholds should be list or None")
 
         assert isinstance(self.select_federated, list)
         for v in self.select_federated:
@@ -357,16 +358,19 @@ class ManuallyFilterParam(BaseParam):
     ----------
     filter_out_indexes: list of int, default: None
         Specify columns' indexes to be filtered out
+        Note tha columns specified by `filter_out_indexes` and `filter_out_names` will be combined.
 
     filter_out_names : list of string, default: None
         Specify columns' names to be filtered out
+        Note tha columns specified by `filter_out_indexes` and `filter_out_names` will be combined.
 
     left_col_indexes: list of int, default: None
         Specify left_col_index
+        Note tha columns specified by `left_col_indexes` and `left_col_names` will be combined.
 
     left_col_names: list of string, default: None
         Specify left col names
-
+        Note tha columns specified by `left_col_indexes` and `left_col_names` will be combined.
 
     """
 
@@ -406,11 +410,15 @@ class FeatureSelectionParam(BaseParam):
     ----------
     select_col_indexes: list or int, default: -1
         Specify which columns need to calculated. -1 represent for all columns.
+        Note tha columns specified by `select_col_indexes` and `select_names` will be combined.
 
     select_names : list of string, default: []
         Specify which columns need to calculated. Each element in the list represent for a column name in header.
+        Note tha columns specified by `select_col_indexes` and `select_names` will be combined.
 
-    filter_methods: list of ["manually", "iv_filter", "statistic_filter", "psi_filter", “hetero_sbt_filter", "homo_sbt_filter", "hetero_fast_sbt_filter", "percentage_value", "vif_filter", "correlation_filter"], default: ["manually"]
+    filter_methods: list of ["manually", "iv_filter", "statistic_filter", "psi_filter",
+        “hetero_sbt_filter", "homo_sbt_filter", "hetero_fast_sbt_filter", "percentage_value",
+        "vif_filter", "correlation_filter"], default: ["manually"].
         The following methods will be deprecated in future version:
         "unique_value", "iv_value_thres", "iv_percentile",
         "coefficient_of_variation_value_thres", "outlier_cols"
@@ -461,6 +469,9 @@ class FeatureSelectionParam(BaseParam):
         to choose lower psi features. Check more details in CommonFilterParam.
         To use this filter, data_statistic module has to be provided.
 
+    use_anonymous: bool, default False
+        whether to interpret 'select_names' as anonymous names.
+
     need_run: bool, default True
         Indicate if this module needed to be run
 
@@ -484,6 +495,7 @@ class FeatureSelectionParam(BaseParam):
                                              take_high=False),
                  sbt_param=CommonFilterParam(metrics=consts.FEATURE_IMPORTANCE),
                  correlation_param=CorrelationFilterParam(),
+                 use_anonymous=False,
                  need_run=True
                  ):
         super(FeatureSelectionParam, self).__init__()
@@ -514,6 +526,7 @@ class FeatureSelectionParam(BaseParam):
         self.psi_param = copy.deepcopy(psi_param)
         self.sbt_param = copy.deepcopy(sbt_param)
         self.need_run = need_run
+        self.use_anonymous = use_anonymous
 
     def check(self):
         descr = "hetero feature selection param's"
@@ -574,6 +587,7 @@ class FeatureSelectionParam(BaseParam):
                 raise ValueError("For VIF filter, metrics should be 'vif'")
 
         self.correlation_param.check()
+        self.check_boolean(self.use_anonymous, f"{descr} use_anonymous")
 
         self._warn_to_deprecate_param("iv_value_param", descr, "iv_param")
         self._warn_to_deprecate_param("iv_percentile_param", descr, "iv_param")

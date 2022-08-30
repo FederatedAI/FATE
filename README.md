@@ -15,13 +15,14 @@ It implements secure computation protocols based on homomorphic encryption and m
 Supporting various federated learning scenarios, FATE now provides a host of federated learning algorithms, including logistic regression, tree-based algorithms, deep learning and transfer learning.
 
 
-FATE is an open source project hosted by Linux Foundation. The [Technical Charter](FATE_Project_Technical_Charter.pdf) sets forth the responsibilities and procedures for technical contribution to, and oversight of, the FATE (“Federated AI Technology Enabler”) Project. 
+FATE is an open source project hosted by Linux Foundation. The [Technical Charter](https://github.com/FederatedAI/FATE-Community/blob/master/FATE_Project_Technical_Charter.pdf) sets forth the responsibilities and procedures for technical contribution to, and oversight of, the FATE (“Federated AI Technology Enabler”) Project. 
 
 <https://fate.readthedocs.io/en/latest>
 
 ## Getting Started
 
-FATE can be deployed on a single host or on multiple nodes. Choose the deployment approach which matches your environment. 
+FATE can be deployed on a single host or on multiple nodes. Choose the deployment approach which matches your environment.
+[Release version can be downloaded here.](https://github.com/FederatedAI/FATE/wiki/Download)
 
 ### Standalone deployment 
 - Deploying FATE on a single node via pre-built docker images, installers or source code. It is for simple testing purposes. Refer to this [guide](./deploy/standalone-deploy/).
@@ -40,16 +41,14 @@ Deploying FATE to multiple nodes to achieve scalability, reliability and managea
 - [More Tutorials...](doc/tutorial)
 
 ## Related Repositories (Projects)
-
 - [KubeFATE](https://github.com/FederatedAI/KubeFATE): An operational tool for the FATE platform using cloud native technologies such as containers and Kubernetes.
 - [FATE-Flow](https://github.com/FederatedAI/FATE-Flow): A multi-party secure task scheduling platform for federated learning pipeline.
 - [FATE-Board](https://github.com/FederatedAI/FATE-Board): A suite of visualization tools to explore and understand federated models easily and effectively.
 - [FATE-Serving](https://github.com/FederatedAI/FATE-Serving): A high-performance and production-ready serving system for federated learning models.
 - [FATE-Cloud](https://github.com/FederatedAI/FATE-Cloud): An infrastructure for building and managing industrial-grade federated learning cloud services.
-- [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE): A tool to optimize and automate the configuration and deployment operations via Ansible.
 - [EggRoll](https://github.com/WeBankFinTech/eggroll): A simple high-performance computing framework for (federated) machine learning.
-
-
+- [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE): A tool to optimize and automate the configuration and deployment operations via Ansible.
+- [FATE-Builder](https://github.com/FederatedAI/FATE-Builder): A tool to build package and docker image for FATE and KubeFATE.
 ## Documentation 
 
 ### FATE Design 

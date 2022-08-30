@@ -51,7 +51,8 @@ class BucketBinning(BaseBinning):
 
         """
         header = data_overview.get_header(data_instances)
-        self._default_setting(header)
+        anonymous_header = data_overview.get_anonymous_header(data_instances)
+        self._default_setting(header, anonymous_header)
 
         # is_sparse = data_overview.is_sparse_data(data_instances)
         # if is_sparse:

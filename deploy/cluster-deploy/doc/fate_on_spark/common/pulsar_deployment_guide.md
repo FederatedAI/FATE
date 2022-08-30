@@ -40,7 +40,7 @@ $ cd /data/projects/fate/common/apache-pulsar-2.7.0
 brokerDeleteInactiveTopicsEnabled=true
 
 # Setting time interval for scanning of inactive topic
-brokerDeleteInactiveTopicsFrequencySeconds=180
+brokerDeleteInactiveTopicsFrequencySeconds=36000
 
 # Setting number of connection for replication
 replicationConnectionsPerBroker=4
@@ -50,10 +50,20 @@ nettyMaxFrameSizeBytes=134217728
 
 # Modify the size of the pulsar message capacity to 128MB, the default is 5MB
 maxMessageSize=134217728
+
+# Default per-topic backlog quota limit(-1 means no limit)
+backlogQuotaDefaultLimitGB=-1
 ```
 For more details about the configuration, please refer to the file mentioned above.
 
-2. Start the pulsar service
+2. Edit the "conf/pulsar_env.sh" file and modify it as follows：
+
+```bash
+# Extra options to be passed to the jvm
+PULSAR_MEM=${PULSAR_MEM:-"-Xms4g -Xmx4g -XX:MaxDirectMemorySize=8g"}
+```
+
+3. Start the pulsar service
 
 ``` bash
 $ bin/bin/pulsar-daemon start standalone -nss
@@ -61,7 +71,7 @@ $ bin/bin/pulsar-daemon start standalone -nss
 
 The running log is in the logs directory under the pulsar software deployment directory  .
 
-3. Stop the pulsar service
+4. Stop the pulsar service
 
 When the pulsar cluster is no longer needed, the following command can be used to stop it.
 

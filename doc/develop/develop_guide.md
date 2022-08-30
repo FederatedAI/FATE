@@ -249,7 +249,7 @@ In this section, we describe how to do Step 2-5. Many common interfaces are prov
     def fit(self, train_data, validate_data):
     ```
     
-    Both `train_data` and `validate_data` (optional) are Tables from upstream components(DataIO for example). 
+    Both `train_data` and `validate_data` (optional) are Tables from upstream components(DataTransform for example). 
     The `fit` method is the entry point to launch the training of the modeling component or the feature engineering component.
     When starting a training task, this method will be called by `model_base` automatically.
 
