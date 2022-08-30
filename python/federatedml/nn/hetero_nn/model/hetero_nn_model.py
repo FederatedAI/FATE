@@ -13,28 +13,59 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import copy
 
 import json
-
-from federatedml.nn.hetero_nn.backend.tf_keras.data_generator import KerasSequenceDataConverter
-from federatedml.nn.hetero_nn.hetero_nn_model import HeteroNNGuestModel
-from federatedml.nn.hetero_nn.hetero_nn_model import HeteroNNHostModel
+from federatedml.util import LOGGER
+from federatedml.util import consts
+from federatedml.param.hetero_nn_param import HeteroNNParam
+from federatedml.nn.hetero_nn.strategy.selector import SelectorFactory
 from federatedml.nn.hetero_nn.model.hetero_nn_bottom_model import HeteroNNBottomModel
 from federatedml.nn.hetero_nn.model.hetero_nn_top_model import HeteroNNTopModel
 from federatedml.nn.hetero_nn.model.interactive_layer import InterActiveGuestDenseLayer
 from federatedml.nn.hetero_nn.model.interactive_layer import InteractiveHostDenseLayer
-from federatedml.nn.homo_nn import nn_model
 from federatedml.protobuf.generated.hetero_nn_model_meta_pb2 import HeteroNNModelMeta
 from federatedml.protobuf.generated.hetero_nn_model_meta_pb2 import OptimizerParam
 from federatedml.protobuf.generated.hetero_nn_model_param_pb2 import HeteroNNModelParam
-from federatedml.util import LOGGER
-from federatedml.nn.hetero_nn.strategy.selector import SelectorFactory
+
+from federatedml.util import consts
 
 
-class HeteroNNKerasGuestModel(HeteroNNGuestModel):
-    def __init__(self, hetero_nn_param):
-        super(HeteroNNKerasGuestModel, self).__init__()
+class HeteroNNModel(object):
+    def __init__(self):
+        self.partition = 1
 
+    def load_model(self):
+        pass
+
+    def predict(self, data):
+        pass
+
+    def export_model(self):
+        pass
+
+    def get_hetero_nn_model_meta(self):
+        pass
+
+    def get_hetero_nn_model_param(self):
+        pass
+
+    def set_hetero_nn_model_meta(self, model_meta):
+        pass
+
+    def set_hetero_nn_model_param(self, model_param):
+        pass
+
+    def set_partition(self, partition):
+        pass
+
+
+class HeteroNNGuestModel(HeteroNNModel):
+
+    def __init__(self, hetero_nn_param, component_properties):
+        super(HeteroNNGuestModel, self).__init__()
+
+        self.role = consts.GUEST
         self.bottom_model = None
         self.interactive_model = None
         self.top_model = None
@@ -47,17 +78,13 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
         self.metrics = None
         self.hetero_nn_param = None
         self.transfer_variable = None
-        self.model_builder = None
         self.bottom_model_input_shape = 0
         self.top_model_input_shape = None
-
         self.batch_size = None
-
         self.is_empty = False
-
+        self.coae_param = None
         self.set_nn_meta(hetero_nn_param)
-        self.model_builder = nn_model.get_nn_builder(config_type=self.config_type)
-        self.data_converter = KerasSequenceDataConverter()
+        self.component_properties = component_properties
 
         self.selector = SelectorFactory.get_selector(hetero_nn_param.selector_param.method,
                                                      hetero_nn_param.selector_param.selective_size,
@@ -65,7 +92,7 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
                                                      random_rate=hetero_nn_param.selector_param.random_state,
                                                      min_prob=hetero_nn_param.selector_param.min_prob)
 
-    def set_nn_meta(self, hetero_nn_param):
+    def set_nn_meta(self, hetero_nn_param: HeteroNNParam):
         self.bottom_nn_define = hetero_nn_param.bottom_nn_define
         self.top_nn_define = hetero_nn_param.top_nn_define
         self.interactive_layer_define = hetero_nn_param.interactive_layer_define
@@ -75,10 +102,15 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
         self.hetero_nn_param = hetero_nn_param
         self.batch_size = hetero_nn_param.batch_size
 
+        coae_param = hetero_nn_param.coae_param
+        if coae_param.enable:
+            self.coae_param = coae_param
+
     def set_empty(self):
         self.is_empty = True
 
     def train(self, x, y, epoch, batch_idx):
+
         if self.batch_size == -1:
             self.batch_size = x.shape[0]
 
@@ -132,28 +164,31 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
         return metrics
 
     def get_hetero_nn_model_param(self):
+
         model_param = HeteroNNModelParam()
         model_param.is_empty = self.is_empty
         if not self.is_empty:
             model_param.bottom_saved_model_bytes = self.bottom_model.export_model()
         model_param.top_saved_model_bytes = self.top_model.export_model()
         model_param.interactive_layer_param.CopyFrom(self.interactive_model.export_model())
-
         model_param.bottom_model_input_shape = self.bottom_model_input_shape
         model_param.top_model_input_shape = self.top_model_input_shape
+        coae_bytes = self.top_model.export_coae()
+        if coae_bytes is not None:
+            model_param.coae_bytes = coae_bytes
 
         return model_param
 
     def set_hetero_nn_model_param(self, model_param):
+
         self.is_empty = model_param.is_empty
         self.top_model_input_shape = model_param.top_model_input_shape
         self.bottom_model_input_shape = model_param.bottom_model_input_shape
         if not self.is_empty:
             self._restore_bottom_model(model_param.bottom_saved_model_bytes)
-
         self._restore_interactive_model(model_param.interactive_layer_param)
-
         self._restore_top_model(model_param.top_saved_model_bytes)
+        self.top_model.restore_coae(model_param.coae_bytes)
 
     def get_hetero_nn_model_meta(self):
         model_meta = HeteroNNModelMeta()
@@ -162,27 +197,31 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
         if self.config_type == "nn":
             for layer in self.bottom_nn_define:
                 model_meta.bottom_nn_define.append(json.dumps(layer))
-
             for layer in self.top_nn_define:
                 model_meta.top_nn_define.append(json.dumps(layer))
-        elif self.config_type == "keras":
+        else:
             model_meta.bottom_nn_define.append(json.dumps(self.bottom_nn_define))
             model_meta.top_nn_define.append(json.dumps(self.top_nn_define))
 
         model_meta.interactive_layer_define = json.dumps(self.interactive_layer_define)
         model_meta.interactive_layer_lr = self.hetero_nn_param.interactive_layer_lr
 
-        model_meta.loss = self.loss
+        optimizer_param = OptimizerParam()
+        if self.config_type == consts.pytorch_backend:
+            model_meta.loss = json.dumps(self.loss)
+            optimizer_param.optimizer = self.optimizer['optimizer']
+            tmp_dict = copy.deepcopy(self.optimizer)
+            tmp_dict.pop('optimizer')
+            optimizer_param.kwargs = json.dumps(tmp_dict)
+        else:
+            model_meta.loss = self.loss
+            optimizer_param.optimizer = self.optimizer.optimizer
+            optimizer_param.kwargs = json.dumps(self.optimizer.kwargs)
 
         """
         for metric in self.metrics:
             model_meta.metrics.append(metric)
         """
-
-        optimizer_param = OptimizerParam()
-        optimizer_param.optimizer = self.optimizer.optimizer
-        optimizer_param.kwargs = json.dumps(self.optimizer.kwargs)
-
         model_meta.optimizer_param.CopyFrom(optimizer_param)
 
         return model_meta
@@ -199,12 +238,16 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
 
             for layer in model_meta.top_nn_define:
                 self.top_nn_define.append(json.loads(layer))
-        elif self.config_type == 'keras':
+        else:
             self.bottom_nn_define = json.loads(model_meta.bottom_nn_define[0])
             self.top_nn_define = json.loads(model_meta.top_nn_define[0])
 
         self.interactive_layer_define = json.loads(model_meta.interactive_layer_define)
-        self.loss = model_meta.loss
+
+        if self.config_type == consts.pytorch_backend:
+            self.loss = json.loads(model_meta.loss)
+        else:
+            self.loss = model_meta.loss
 
         self.metrics = []
         for metric in self.metrics:
@@ -215,6 +258,11 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
             self.optimizer = SimpleNamespace(optimizer=None, kwargs={})
             self.optimizer.optimizer = model_meta.optimizer_param.optimizer
             self.optimizer.kwargs = json.loads(model_meta.optimizer_param.kwargs)
+
+            if self.config_type == consts.pytorch_backend:
+                tmp_opt = {'optimizer': self.optimizer.optimizer}
+                tmp_opt.update(self.optimizer.kwargs)
+                self.optimizer = tmp_opt
 
     def set_transfer_variable(self, transfer_variable):
         self.transfer_variable = transfer_variable
@@ -228,9 +276,8 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
         self.bottom_model = HeteroNNBottomModel(input_shape=self.bottom_model_input_shape,
                                                 optimizer=self.optimizer,
                                                 layer_config=self.bottom_nn_define,
-                                                model_builder=self.model_builder)
+                                                config_type=self.config_type)
 
-        self.bottom_model.set_data_converter(self.data_converter)
         if self.selector:
             self.bottom_model.set_backward_select_strategy()
             self.bottom_model.set_batch(self.batch_size)
@@ -240,14 +287,15 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
         self.bottom_model.restore_model(model_bytes)
 
     def _build_top_model(self):
+
         self.top_model = HeteroNNTopModel(input_shape=self.top_model_input_shape,
                                           optimizer=self.optimizer,
                                           layer_config=self.top_nn_define,
                                           loss=self.loss,
                                           metrics=self.metrics,
-                                          model_builder=self.model_builder)
-
-        self.top_model.set_data_converter(self.data_converter)
+                                          config_type=self.config_type,
+                                          coae_config=self.coae_param
+                                          )
 
         if self.selector:
             self.top_model.set_backward_selector_strategy(selector=self.selector)
@@ -259,18 +307,17 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
 
     def _build_interactive_model(self):
         self.interactive_model = InterActiveGuestDenseLayer(self.hetero_nn_param,
+                                                            self.config_type,
                                                             self.interactive_layer_define,
-                                                            model_builder=self.model_builder)
-
+                                                            host_num=len(self.component_properties.host_party_idlist))
         self.interactive_model.set_transfer_variable(self.transfer_variable)
         self.interactive_model.set_partition(self.partition)
+        self.interactive_model.set_batch(self.batch_size)
         if self.selector:
             self.interactive_model.set_backward_select_strategy()
-            self.interactive_model.set_batch(self.batch_size)
 
     def _restore_interactive_model(self, interactive_model_param):
         self._build_interactive_model()
-
         self.interactive_model.restore_model(interactive_model_param)
 
     def warm_start(self):
@@ -278,10 +325,12 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
         self.top_model.recompile(self.loss, self.optimizer, self.metrics)
 
 
-class HeteroNNKerasHostModel(HeteroNNHostModel):
-    def __init__(self, hetero_nn_param):
-        super(HeteroNNKerasHostModel, self).__init__()
+class HeteroNNHostModel(HeteroNNModel):
 
+    def __init__(self, hetero_nn_param):
+        super(HeteroNNHostModel, self).__init__()
+
+        self.role = consts.HOST
         self.bottom_model_input_shape = None
         self.bottom_model = None
         self.interactive_model = None
@@ -293,9 +342,6 @@ class HeteroNNKerasHostModel(HeteroNNHostModel):
 
         self.batch_size = None
         self.set_nn_meta(hetero_nn_param)
-
-        self.model_builder = nn_model.get_nn_builder(config_type=self.config_type)
-        self.data_converter = KerasSequenceDataConverter()
 
         self.transfer_variable = None
 
@@ -316,9 +362,7 @@ class HeteroNNKerasHostModel(HeteroNNHostModel):
         self.bottom_model = HeteroNNBottomModel(input_shape=self.bottom_model_input_shape,
                                                 optimizer=self.optimizer,
                                                 layer_config=self.bottom_nn_define,
-                                                model_builder=self.model_builder)
-
-        self.bottom_model.set_data_converter(self.data_converter)
+                                                config_type=self.config_type)
 
     def _restore_bottom_model(self, model_bytes):
         self._build_bottom_model()
@@ -326,7 +370,6 @@ class HeteroNNKerasHostModel(HeteroNNHostModel):
 
     def _build_interactive_model(self):
         self.interactive_model = InteractiveHostDenseLayer(self.hetero_nn_param)
-
         self.interactive_model.set_transfer_variable(self.transfer_variable)
         self.interactive_model.set_partition(self.partition)
 
@@ -356,29 +399,34 @@ class HeteroNNKerasHostModel(HeteroNNHostModel):
             for layer in self.bottom_nn_define:
                 model_meta.bottom_nn_define.append(json.dumps(layer))
 
-        elif self.config_type == "keras":
+        else:
             model_meta.bottom_nn_define.append(json.dumps(self.bottom_nn_define))
 
         model_meta.interactive_layer_lr = self.hetero_nn_param.interactive_layer_lr
 
         optimizer_param = OptimizerParam()
-        optimizer_param.optimizer = self.optimizer.optimizer
-        optimizer_param.kwargs = json.dumps(self.optimizer.kwargs)
+        if self.config_type == consts.keras_backend:
+            optimizer_param.optimizer = self.optimizer.optimizer
+            optimizer_param.kwargs = json.dumps(self.optimizer.kwargs)
+        else:
+            optimizer_param.optimizer = self.optimizer['optimizer']
+            tmp_opt = copy.deepcopy(self.optimizer)
+            tmp_opt.pop('optimizer')
+            optimizer_param.kwargs = json.dumps(tmp_opt)
 
         model_meta.optimizer_param.CopyFrom(optimizer_param)
 
         return model_meta
 
     def set_hetero_nn_model_meta(self, model_meta):
-        self.config_type = model_meta.config_type
 
+        self.config_type = model_meta.config_type
         if self.config_type == "nn":
             self.bottom_nn_define = []
 
             for layer in model_meta.bottom_nn_define:
                 self.bottom_nn_define.append(json.loads(layer))
-
-        elif self.config_type == 'keras':
+        else:
             self.bottom_nn_define = json.loads(model_meta.bottom_nn_define[0])
 
         if self.optimizer is None:
@@ -386,6 +434,10 @@ class HeteroNNKerasHostModel(HeteroNNHostModel):
             self.optimizer = SimpleNamespace(optimizer=None, kwargs={})
             self.optimizer.optimizer = model_meta.optimizer_param.optimizer
             self.optimizer.kwargs = json.loads(model_meta.optimizer_param.kwargs)
+            if self.config_type == consts.pytorch_backend:
+                tmp_opt = {'optimizer': self.optimizer.optimizer}
+                tmp_opt.update(self.optimizer.kwargs)
+                self.optimizer = tmp_opt
 
     def set_hetero_nn_model_param(self, model_param):
         self.bottom_model_input_shape = model_param.bottom_model_input_shape

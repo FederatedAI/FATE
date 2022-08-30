@@ -229,9 +229,20 @@ class EarlyStopCallback(Callback):
     def __init__(self, context: PyTorchSAClientContext):
         self.context = context
 
-    def on_validation_epoch_end(self, trainer, pl_module):
-        if self.context.should_stop():
+    def on_train_epoch_end(self, trainer, pl_module):
+        if self.context.should_aggregate_on_epoch(pl_module.current_epoch):
+            self.context.do_aggregation(float(pl_module.num_data_consumed))
+            self._all_consumed_data_aggregated = True
+        convergence_status = self.context.do_convergence_check(
+            pl_module.num_data_consumed, pl_module._loss
+        )
+        LOGGER.info(f"checked convergence status: {convergence_status}")
+        pl_module.num_data_consumed = 0
+        self.context.increase_aggregation_iteration()
+        if convergence_status:
+            self.context.set_converged()
             trainer.should_stop = True
+            trainer.limit_val_batches = 0
 
 
 class FedLightModule(pl.LightningModule):
@@ -263,10 +274,11 @@ class FedLightModule(pl.LightningModule):
         self._optimizer_name = optimizer_config.optimizer
         self._optimizer_kwargs = optimizer_config.kwargs
 
-        self._num_data_consumed = 0
+        self.num_data_consumed = 0
         self._all_consumed_data_aggregated = True
 
         self._should_early_stop = False
+        self._loss = None
 
     def forward(self, x):
         return self.model(x)
@@ -291,43 +303,29 @@ class FedLightModule(pl.LightningModule):
         return {"val_loss": loss, "val_accuracy": accuracy}
 
     def validation_epoch_end(self, outputs):
-        loss = torch.mean(torch.stack([x["val_loss"] for x in outputs]))
+        self._loss = torch.mean(torch.stack([x["val_loss"] for x in outputs]))
         accuracy = torch.mean(torch.stack([x["val_accuracy"] for x in outputs]))
-        convergence_status = self.context.do_convergence_check(
-            self._num_data_consumed, loss
-        )
         LOGGER.info(
-            f"validation epoch end, local loss: {loss}, local accuracy: {accuracy}, convergence statu: {convergence_status}"
+            f"validation epoch end, local loss: {self._loss}, local accuracy: {accuracy}"
         )
-
-        # aggregation end
-        self._num_data_consumed = 0
-        self.context.increase_aggregation_iteration()
-        if convergence_status:
-            self.context.set_converged()
 
     def training_epoch_end(self, outputs) -> None:
-        ...
+        pass
 
     def on_train_epoch_start(self) -> None:
         if self._all_consumed_data_aggregated:
-            self._num_data_consumed = 0
+            self.num_data_consumed = 0
             self._all_consumed_data_aggregated = False
 
-    def on_train_batch_start(
-        self, batch: typing.Any, batch_idx: int, dataloader_idx: int
-    ) -> None:
+    def on_train_batch_start(self, batch: typing.Any, *args, **kwargs) -> None:
         if self._all_consumed_data_aggregated:
             self._all_consumed_data_aggregated = False
-            self._num_data_consumed = len(batch)
+            self.num_data_consumed = len(batch)
         else:
-            self._num_data_consumed += len(batch)
+            self.num_data_consumed += len(batch)
 
-    def on_train_epoch_end(self, outputs) -> None:
-        if self.context.should_aggregate_on_epoch(self.current_epoch):
-            self.context.do_aggregation(float(self._num_data_consumed))
-            self._all_consumed_data_aggregated = True
-            # self._num_data_consumed = 0
+    def on_train_epoch_end(self, *args, **kwargs) -> None:
+        pass
 
     def configure_optimizers(self):
         optimizer = get_optimizer(
@@ -360,7 +358,7 @@ class PyTorchFederatedTrainer(object):
     def fit(self, dataloader):
         self.pl_trainer.fit(
             self.pl_model,
-            train_dataloader=dataloader,
+            train_dataloaders=dataloader,
             val_dataloaders=dataloader,
         )
 
@@ -446,7 +444,6 @@ class PyTorchFederatedTrainer(object):
         total_epoch = context.max_num_aggregation * context.aggregate_every_n_epoch
         pl_trainer = pl.Trainer(
             max_epochs=total_epoch,
-            min_epochs=total_epoch,
             callbacks=[EarlyStopCallback(context)],
             num_sanity_val_steps=0,
         )
@@ -511,7 +508,6 @@ def build_trainer(param: HomoNNParam, data, should_label_align=True, trainer=Non
         )
         pl_trainer = pl.Trainer(
             max_epochs=total_epoch,
-            min_epochs=total_epoch,
             callbacks=[EarlyStopCallback(context)],
             num_sanity_val_steps=0,
         )
