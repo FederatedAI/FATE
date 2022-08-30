@@ -3,7 +3,7 @@ data_host: "examples/data/epsilon_5k_hetero_host.csv"
 idx: "id"
 label_name: "y"
 learning_rate: 0.03
-tol: 0.01
+tol: 0.1
 batch_size: -1
 metrics: ["AUC"]
 epochs: 100
