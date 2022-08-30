@@ -1,6 +1,6 @@
 import base64
 import hashlib
-import libsm3py
+from fate_crypto.hash import sm3_hash
 
 from federatedml.util import consts
 
@@ -57,11 +57,11 @@ def compute_sha384_base64(value):
 
 
 def compute_sm3(value):
-    return libsm3py.hash(bytes(value, encoding='utf-8')).hex()
+    return sm3_hash(bytes(value, encoding='utf-8')).hex()
 
 
 def compute_sm3_base64(value):
-    return str(base64.b64encode(libsm3py.hash(bytes(value, encoding='utf-8'))), "utf-8")
+    return str(base64.b64encode(sm3_hash(bytes(value, encoding='utf-8'))), "utf-8")
 
 
 def compute_no_hash(value):
