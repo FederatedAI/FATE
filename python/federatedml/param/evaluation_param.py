@@ -30,13 +30,10 @@ class EvaluateParam(BaseParam):
         support 'binary' for HomoLR, HeteroLR and Secureboosting,
         support 'regression' for Secureboosting,
         'multi' is not support these version
-
     unfold_multi_result : bool
         unfold multi result and get several one-vs-rest binary classification results
-
     pos_label : int or float or str
         specify positive label type, depend on the data's label. this parameter effective only for 'binary'
-
     need_run: bool, default True
         Indicate if this module needed to be run
     """

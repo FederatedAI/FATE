@@ -48,11 +48,9 @@ class IVValueSelectionParam(BaseParam):
     ----------
     value_threshold: float, default: 1.0
         Used if iv_value_thres method is used in feature selection.
-
     host_thresholds: List of float or None, default: None
         Set threshold for different host. If None, use same threshold as guest. If provided, the order should map with
         the host id setting.
-
     """
 
     def __init__(self, value_threshold=0.0, host_thresholds=None, local_only=False):
@@ -149,10 +147,8 @@ class OutlierColsSelectionParam(BaseParam):
     ----------
     percentile: float, [0., 1.] default: 1.0
         The percentile points to compare.
-
     upper_threshold: float, default: 1.0
         Percentile threshold for coefficient_of_variation_percentile method
-
     """
 
     def __init__(self, percentile=1.0, upper_threshold=1.0):
@@ -180,22 +176,17 @@ class CommonFilterParam(BaseParam):
     ----------
     metrics: str or list, default: depends on the specific filter
         Indicate what metrics are used in this filter
-
     filter_type: str, default: threshold
         Should be one of "threshold", "top_k" or "top_percentile"
-
     take_high: bool, default: True
         When filtering, taking highest values or not.
-
     threshold: float or int, default: 1
         If filter type is threshold, this is the threshold value.
         If it is "top_k", this is the k value.
         If it is top_percentile, this is the percentile threshold.
-
     host_thresholds: List of float or List of List of float or None, default: None
         Set threshold for different host. If None, use same threshold as guest. If provided, the order should map with
         the host id setting.
-
     select_federated: bool, default: True
         Whether select federated with other parties or based on local variables
     """
@@ -295,10 +286,8 @@ class CorrelationFilterParam(BaseParam):
     ----------
     sort_metric: str, default: iv
         Specify which metric to be used to sort features.
-
     threshold: float or int, default: 0.1
         Correlation threshold
-
     select_federated: bool, default: True
         Whether select federated with other parties or based on local variables
     """
@@ -359,19 +348,15 @@ class ManuallyFilterParam(BaseParam):
     filter_out_indexes: list of int, default: None
         Specify columns' indexes to be filtered out
         Note tha columns specified by `filter_out_indexes` and `filter_out_names` will be combined.
-
     filter_out_names : list of string, default: None
         Specify columns' names to be filtered out
         Note tha columns specified by `filter_out_indexes` and `filter_out_names` will be combined.
-
     left_col_indexes: list of int, default: None
         Specify left_col_index
         Note tha columns specified by `left_col_indexes` and `left_col_names` will be combined.
-
     left_col_names: list of string, default: None
         Specify left col names
         Note tha columns specified by `left_col_indexes` and `left_col_names` will be combined.
-
     """
 
     def __init__(self, filter_out_indexes=None, filter_out_names=None, left_col_indexes=None,
@@ -411,67 +396,52 @@ class FeatureSelectionParam(BaseParam):
     select_col_indexes: list or int, default: -1
         Specify which columns need to calculated. -1 represent for all columns.
         Note tha columns specified by `select_col_indexes` and `select_names` will be combined.
-
     select_names : list of string, default: []
         Specify which columns need to calculated. Each element in the list represent for a column name in header.
         Note tha columns specified by `select_col_indexes` and `select_names` will be combined.
-
     filter_methods: list of ["manually", "iv_filter", "statistic_filter", "psi_filter",
         “hetero_sbt_filter", "homo_sbt_filter", "hetero_fast_sbt_filter", "percentage_value",
         "vif_filter", "correlation_filter"], default: ["manually"].
         The following methods will be deprecated in future version:
         "unique_value", "iv_value_thres", "iv_percentile",
         "coefficient_of_variation_value_thres", "outlier_cols"
-
         Specify the filter methods used in feature selection. The orders of filter used is depended on this list.
         Please be notified that, if a percentile method is used after some certain filter method,
         the percentile represent for the ratio of rest features.
-
         e.g. If you have 10 features at the beginning. After first filter method, you have 8 rest. Then, you want
         top 80% highest iv feature. Here, we will choose floor(0.8 * 8) = 6 features instead of 8.
-
     unique_param: UniqueValueParam
         filter the columns if all values in this feature is the same
-
     iv_value_param: IVValueSelectionParam
         Use information value to filter columns. If this method is set, a float threshold need to be provided.
         Filter those columns whose iv is smaller than threshold. Will be deprecated in the future.
-
     iv_percentile_param: IVPercentileSelectionParam
         Use information value to filter columns. If this method is set, a float ratio threshold
         need to be provided. Pick floor(ratio * feature_num) features with higher iv. If multiple features around
         the threshold are same, all those columns will be keep. Will be deprecated in the future.
-
     variance_coe_param: VarianceOfCoeSelectionParam
         Use coefficient of variation to judge whether filtered or not.
         Will be deprecated in the future.
-
     outlier_param: OutlierColsSelectionParam
         Filter columns whose certain percentile value is larger than a threshold.
         Will be deprecated in the future.
-
     percentage_value_param: PercentageValueParam
         Filter the columns that have a value that exceeds a certain percentage.
-
     iv_param: IVFilterParam
         Setting how to filter base on iv. It support take high mode only. All of "threshold",
         "top_k" and "top_percentile" are accepted. Check more details in CommonFilterParam. To
         use this filter, hetero-feature-binning module has to be provided.
-
     statistic_param: CommonFilterParam
         Setting how to filter base on statistic values. All of "threshold",
         "top_k" and "top_percentile" are accepted. Check more details in CommonFilterParam.
         To use this filter, data_statistic module has to be provided.
-
     psi_param: CommonFilterParam
         Setting how to filter base on psi values. All of "threshold",
         "top_k" and "top_percentile" are accepted. Its take_high properties should be False
         to choose lower psi features. Check more details in CommonFilterParam.
         To use this filter, data_statistic module has to be provided.
-
     use_anonymous: bool, default False
         whether to interpret 'select_names' as anonymous names.
-
     need_run: bool, default True
         Indicate if this module needed to be run
 

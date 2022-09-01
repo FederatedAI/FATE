@@ -27,13 +27,10 @@ class InitParam(BaseParam):
     ----------
     init_method : {'random_uniform', 'random_normal', 'ones', 'zeros' or 'const'}
         Initial method.
-
     init_const : int or float, default: 1
         Required when init_method is 'const'. Specify the constant.
-
     fit_intercept : bool, default: True
         Whether to initialize the intercept or not.
-
     """
 
     def __init__(self, init_method='random_uniform', init_const=1, fit_intercept=True, random_seed=None):

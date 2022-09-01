@@ -31,15 +31,10 @@ class TransformParam(BaseParam):
     transform_cols : list of column index, default: -1
         Specify which columns need to be transform. If column index is None, None of columns will be transformed.
         If it is -1, it will use same columns as cols in binning module.
-
         Note tha columns specified by `transform_cols` and `transform_names` will be combined.
-
     transform_names: list of string, default: []
         Specify which columns need to calculated. Each element in the list represent for a column name in header.
-
         Note tha columns specified by `transform_cols` and `transform_names` will be combined.
-
-
     transform_type: {'bin_num', 'woe', None}
         Specify which value these columns going to replace.
          1. bin_num: Transfer original feature value to bin index in which this value belongs to.
@@ -73,20 +68,14 @@ class OptimalBinningParam(BaseParam):
     ----------
     metric_method: str, default: "iv"
         The algorithm metric method. Support iv, gini, ks, chi-square
-
-
     min_bin_pct: float, default: 0.05
         The minimum percentage of each bucket
-
     max_bin_pct: float, default: 1.0
         The maximum percentage of each bucket
-
     init_bin_nums: int, default 100
         Number of bins when initialize
-
     mixture: bool, default: True
         Whether each bucket need event and non-event records
-
     init_bucket_method: str default: quantile
         Init bucket methods. Accept quantile and bucket.
 
@@ -136,65 +125,47 @@ class FeatureBinningParam(BaseParam):
     ----------
     method : str, 'quantile'， 'bucket' or 'optimal', default: 'quantile'
         Binning method.
-
     compress_thres: int, default: 10000
         When the number of saved summaries exceed this threshold, it will call its compress function
-
     head_size: int, default: 10000
         The buffer size to store inserted observations. When head list reach this buffer size, the
         QuantileSummaries object start to generate summary(or stats) and insert into its sampled list.
-
     error: float, 0 <= error < 1 default: 0.001
         The error of tolerance of binning. The final split point comes from original data, and the rank
         of this value is close to the exact rank. More precisely,
         floor((p - 2 * error) * N) <= rank(x) <= ceil((p + 2 * error) * N)
         where p is the quantile in float, and N is total number of data.
-
     bin_num: int, bin_num > 0, default: 10
         The max bin number for binning
-
     bin_indexes : list of int or int, default: -1
         Specify which columns need to be binned. -1 represent for all columns. If you need to indicate specific
         cols, provide a list of header index instead of -1.
-
         Note tha columns specified by `bin_indexes` and `bin_names` will be combined.
-
     bin_names : list of string, default: []
         Specify which columns need to calculated. Each element in the list represent for a column name in header.
         Note tha columns specified by `bin_indexes` and `bin_names` will be combined.
-
     adjustment_factor : float, default: 0.5
         the adjustment factor when calculating WOE. This is useful when there is no event or non-event in
         a bin. Please note that this parameter will NOT take effect for setting in host.
-
     category_indexes : list of int or int, default: []
         Specify which columns are category features. -1 represent for all columns. List of int indicate a set of
         such features. For category features, bin_obj will take its original values as split_points and treat them
         as have been binned. If this is not what you expect, please do NOT put it into this parameters.
-
         The number of categories should not exceed bin_num set above.
-
         Note tha columns specified by `category_indexes` and `category_names` will be combined.
-
     category_names : list of string, default: []
         Use column names to specify category features. Each element in the list represent for a column name in header.
-
         Note tha columns specified by `category_indexes` and `category_names` will be combined.
-
     local_only : bool, default: False
         Whether just provide binning method to guest party. If true, host party will do nothing.
         Warnings: This parameter will be deprecated in future version.
-
     transform_param: TransformParam
         Define how to transfer the binned data.
-
     need_run: bool, default True
         Indicate if this module needed to be run
-
     skip_static: bool, default False
         If true, binning will not calculate iv, woe etc. In this case, optimal-binning
         will not be supported.
-
     """
 
     def __init__(self, method=consts.QUANTILE,

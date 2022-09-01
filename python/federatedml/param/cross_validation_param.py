@@ -30,26 +30,19 @@ class CrossValidationParam(BaseParam):
     ----------
     n_splits: int, default: 5
         Specify how many splits used in KFold
-
     mode: str, default: 'Hetero'
         Indicate what mode is current task
-
     role: {'Guest', 'Host', 'Arbiter'}, default: 'Guest'
         Indicate what role is current party
-
     shuffle: bool, default: True
         Define whether do shuffle before KFold or not.
-
     random_seed: int, default: 1
         Specify the random seed for numpy shuffle
-
     need_cv: bool, default False
         Indicate if this module needed to be run
-
     output_fold_history: bool, default True
         Indicate whether to output table of ids used by each fold, else return original input data
         returned ids are formatted as: {original_id}#fold{fold_num}#{train/validate}
-
     history_value_type: {'score', 'instance'}, default score
         Indicate whether to include original instance or predict score in the output fold history,
         only effective when output_fold_history set to True

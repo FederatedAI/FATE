@@ -36,17 +36,13 @@ class StatisticsParam(BaseParam):
         "summary" represents list: [consts.SUM, consts.MEAN, consts.STANDARD_DEVIATION,
                     consts.MEDIAN, consts.MIN, consts.MAX,
                     consts.MISSING_COUNT, consts.SKEWNESS, consts.KURTOSIS]
-
     column_names: list of string, default []
         Specify columns to be used for statistic computation by column names in header
-
     column_indexes: list of int, default -1
         Specify columns to be used for statistic computation by column order in header
         -1 indicates to compute statistics over all columns
-
     bias: bool, default: True
         If False, the calculations of skewness and kurtosis are corrected for statistical bias.
-
     need_run: bool, default True
         Indicate whether to run this modules
     """

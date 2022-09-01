@@ -13,16 +13,12 @@ class HomoOneHotParam(BaseParam):
 
     Parameters
     ----------
-
     transform_col_indexes: list or int, default: -1
         Specify which columns need to calculated. -1 represent for all columns.
-
     need_run: bool, default True
         Indicate if this module needed to be run
-
     need_alignment: bool, default True
         Indicated whether alignment of features is turned on
-
     """
 
     def __init__(self, transform_col_indexes=-1, transform_col_names=None, need_run=True, need_alignment=True):
