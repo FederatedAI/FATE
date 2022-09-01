@@ -97,27 +97,24 @@ plugins:
       hooks:
         on_page_markdown: "doc.mkdocs.hook:on_page_markdown"
   - search
+  - gen-files:
+      scripts:
+        - doc/mkdocs/gen_params_doc.py
   - mkdocstrings:
-      default_handler: python
       handlers:
         python:
-          setup_commands:
-            - import sys
-            - sys.path.append("python")
-            - from unittest.mock import MagicMock as mock
-            - sys.modules["filelock"] = mock()
-            - sys.modules["apsw"] = mock()
-            - sys.modules["beautifultable"] = mock()
-
-          rendering:
+          paths: ["python"]
+          options:
+            docstring_style: numpy
+            docstring_section_style: table
+            merge_init_into_class: yes
             show_source: true
             show_category_heading: true
             members_order: source
             show_if_no_docstring: true
           selection:
-            docstring_style: numpy
-      watch:
-        - python
+            new_path_syntax: yes
+          enable_inventory: true
   - i18n:
       default_language: en
       languages:
