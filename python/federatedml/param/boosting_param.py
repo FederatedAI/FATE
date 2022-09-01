@@ -41,7 +41,6 @@ class ObjectiveParam(BaseParam):
         None in host's config, should be str in guest'config.
         when task_type is classification, only support 'cross_entropy',
         other 6 types support in regression task
-
     params : None or list
         should be non empty list when objective is 'tweedie','fair','huber',
         first element of list shoulf be a float-number large than 0.0 when objective is 'fair', 'huber',
@@ -103,7 +102,6 @@ class DecisionTreeParam(BaseParam):
     ----------
     criterion_method : {"xgboost"}, default: "xgboost"
         the criterion function to use
-
     criterion_params: list or dict
         should be non empty and elements are float-numbers,
         if a list is offered, the first one is l2 regularization value, and the second one is
@@ -111,48 +109,36 @@ class DecisionTreeParam(BaseParam):
         if a dict is offered, make sure it contains key 'l1', and 'l2'.
         l1, l2 regularization values are non-negative floats.
         default: [0.1, 0] or {'l1':0, 'l2':0,1}
-
     max_depth: positive integer
         the max depth of a decision tree, default: 3
-
     min_sample_split: int
         least quantity of nodes to split, default: 2
-
     min_impurity_split: float
         least gain of a single split need to reach, default: 1e-3
-
     min_child_weight: float
         sum of hessian needed in child nodes. default is 0
-
     min_leaf_node: int
         when samples no more than min_leaf_node, it becomes a leave, default: 1
-
     max_split_nodes: positive integer
         we will use no more than max_split_nodes to
         parallel finding their splits in a batch, for memory consideration. default is 65536
-
     feature_importance_type: {'split', 'gain'}
         if is 'split', feature_importances calculate by feature split times,
         if is 'gain', feature_importances calculate by feature split gain.
         default: 'split'
-
-                             Due to the safety concern, we adjust training strategy of Hetero-SBT in FATE-1.8,
-                             When running Hetero-SBT, this parameter is now abandoned.
-                             In Hetero-SBT of FATE-1.8, guest side will compute split, gain of local features,
-                             and receive anonymous feature importance results from hosts. Hosts will compute split
-                             importance of local features.
-
+        Due to the safety concern, we adjust training strategy of Hetero-SBT in FATE-1.8,
+        When running Hetero-SBT, this parameter is now abandoned.
+        In Hetero-SBT of FATE-1.8, guest side will compute split, gain of local features,
+        and receive anonymous feature importance results from hosts. Hosts will compute split
+        importance of local features.
     use_missing: bool, accepted True, False only, default: False
         use missing value in training process or not.
-
     zero_as_missing: bool
         regard 0 as missing value or not,
         will be use only if use_missing=True, default: False
-
     deterministic: bool
         ensure stability when computing histogram. Set this to true to ensure stable result when using
         same data and same parameter. But it may slow down computation.
-
     """
 
     def __init__(self, criterion_method="xgboost", criterion_params=[0.1, 0], max_depth=3,
@@ -249,25 +235,18 @@ class BoostingParam(BaseParam):
     ----------
     task_type : {'classification', 'regression'}, default: 'classification'
         task type
-
     objective_param : ObjectiveParam Object, default: ObjectiveParam()
         objective param
-
     learning_rate : float, int or long
         the learning rate of secure boost. default: 0.3
-
     num_trees : int or float
         the max number of boosting round. default: 5
-
     subsample_feature_rate : float
         a float-number in [0, 1], default: 1.0
-
     n_iter_no_change : bool,
         when True and residual error less than tol, tree building process will stop. default: True
-
     bin_num: positive integer greater than 1
         bin number use in quantile. default: 32
-
     validation_freqs: None or positive integer or container object in python
         Do validation in training process or Not.
         if equals None, will not do validation in train process;
@@ -358,7 +337,6 @@ class HeteroBoostingParam(BoostingParam):
     ----------
     encrypt_param : EncodeParam Object
         encrypt method use in secure boost, default: EncryptParam()
-
     encrypted_mode_calculator_param: EncryptedModeCalculatorParam object
         the calculation mode use in secureboost,
         default: EncryptedModeCalculatorParam()
@@ -414,44 +392,31 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
     ----------
     task_type : {'classification', 'regression'}, default: 'classification'
         task type
-
     tree_param : DecisionTreeParam Object, default: DecisionTreeParam()
         tree param
-
     objective_param : ObjectiveParam Object, default: ObjectiveParam()
         objective param
-
     learning_rate : float, int or long
         the learning rate of secure boost. default: 0.3
-
     num_trees : int or float
         the max number of trees to build. default: 5
-
     subsample_feature_rate : float
         a float-number in [0, 1], default: 1.0
-
     random_seed: int
         seed that controls all random functions
-
     n_iter_no_change : bool,
         when True and residual error less than tol, tree building process will stop. default: True
-
     encrypt_param : EncodeParam Object
         encrypt method use in secure boost, default: EncryptParam(), this parameter
         is only for hetero-secureboost
-
     bin_num: positive integer greater than 1
         bin number use in quantile. default: 32
-
     encrypted_mode_calculator_param: EncryptedModeCalculatorParam object
         the calculation mode use in secureboost, default: EncryptedModeCalculatorParam(), only for hetero-secureboost
-
     use_missing: bool
         use missing value in training process or not. default: False
-
     zero_as_missing: bool
         regard 0 as missing value or not, will be use only if use_missing=True, default: False
-
     validation_freqs: None or positive integer or container object in python
         Do validation in training process or Not.
         if equals None, will not do validation in train process;
@@ -463,85 +428,60 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         speed up training by skipping validation rounds. When it is larger than 1, a number which is
         divisible by "num_trees" is recommended, otherwise, you will miss the validation scores
         of last training iteration.
-
     early_stopping_rounds: integer larger than 0
         will stop training if one metric of one validation data
         doesn’t improve in last early_stopping_round rounds，
         need to set validation freqs and will check early_stopping every at every validation epoch,
-
     metrics: list, default: []
         Specify which metrics to be used when performing evaluation during training process.
         If set as empty, default metrics will be used. For regression tasks, default metrics are
         ['root_mean_squared_error', 'mean_absolute_error']， For binary-classificatiin tasks, default metrics
         are ['auc', 'ks']. For multi-classification tasks, default metrics are ['accuracy', 'precision', 'recall']
-
     use_first_metric_only: bool
         use only the first metric for early stopping
-
     complete_secure: bool
         if use complete_secure, when use complete secure, build first tree using only guest features
-
     sparse_optimization:
         this parameter is abandoned in FATE-1.7.1
-
     run_goss: bool
         activate Gradient-based One-Side Sampling, which selects large gradient and small
         gradient samples using top_rate and other_rate.
-
-        top_rate: float, the retain ratio of large gradient data, used when run_goss is True
-
-        other_rate: float, the retain ratio of small gradient data, used when run_goss is True
-
-        cipher_compress_error： This param is now abandoned
-
-        cipher_compress: bool, default is True, use cipher compressing to reduce computation cost and transfer cost
-
-        boosting_strategy：str
-
-            std: standard sbt setting
-
-            mix:  alternate using guest/host features to build trees. For example, the first 'tree_num_per_party' trees
-                  use guest features,
-                  the second k trees use host features, and so on
-
-            layered: only support 2 party, when running layered mode, first 'host_depth' layer will use host features,
-                     and then next 'guest_depth' will only use guest features
-
-        work_mode: str
-                   This parameter has the same function as boosting_strategy, but is deprecated
-
-        tree_num_per_party: int, every party will alternate build 'tree_num_per_party' trees until reach max tree num, this
-                            param is valid when boosting_strategy is mix
-
-        guest_depth: int, guest will build last guest_depth of a decision tree using guest features, is valid when boosting_strategy
-                     is layered
-
-        host_depth: int, host will build first host_depth of a decision tree using host features, is valid when work boosting_strategy
-                    layered
-
-
-        multi_mode: str, decide which mode to use when running multi-classification task:
-
-                    single_output standard gbdt multi-classification strategy
-
-                    multi_output every leaf give a multi-dimension predict, using multi_mode can save time
-                                 by learning a model with less trees.
-
-        EINI_inference: bool
-            default is False, this option changes the inference algorithm used in predict tasks.
-            a secure prediction method that hides decision path to enhance security in the inference
-            step. This method is insprired by EINI inference algorithm.
-
-        EINI_random_mask: bool
-            default is False
-            multiply predict result by a random float number to confuse original predict result. This operation further
-            enhances the security of naive EINI algorithm.
-
-        EINI_complexity_check: bool
-            default is False
-            check the complexity of tree models when running EINI algorithms. Complexity models are easy to hide their
-            decision path, while simple tree models are not, therefore if a tree model is too simple, it is not allowed
-            to run EINI predict algorithms.
+    top_rate: float, the retain ratio of large gradient data, used when run_goss is True
+    other_rate: float, the retain ratio of small gradient data, used when run_goss is True
+    cipher_compress_error： This param is now abandoned
+    cipher_compress: bool, default is True, use cipher compressing to reduce computation cost and transfer cost
+    boosting_strategy：str
+        std: standard sbt setting
+        mix:  alternate using guest/host features to build trees. For example, the first 'tree_num_per_party' trees
+                use guest features,
+                the second k trees use host features, and so on
+        layered: only support 2 party, when running layered mode, first 'host_depth' layer will use host features,
+                    and then next 'guest_depth' will only use guest features
+    work_mode: str
+        This parameter has the same function as boosting_strategy, but is deprecated
+    tree_num_per_party: int, every party will alternate build 'tree_num_per_party' trees until reach max tree num, this
+                        param is valid when boosting_strategy is mix
+    guest_depth: int, guest will build last guest_depth of a decision tree using guest features, is valid when boosting_strategy
+                    is layered
+    host_depth: int, host will build first host_depth of a decision tree using host features, is valid when work boosting_strategy
+                layered
+    multi_mode: str, decide which mode to use when running multi-classification task:
+                single_output standard gbdt multi-classification strategy
+                multi_output every leaf give a multi-dimension predict, using multi_mode can save time
+                                by learning a model with less trees.
+    EINI_inference: bool
+        default is False, this option changes the inference algorithm used in predict tasks.
+        a secure prediction method that hides decision path to enhance security in the inference
+        step. This method is insprired by EINI inference algorithm.
+    EINI_random_mask: bool
+        default is False
+        multiply predict result by a random float number to confuse original predict result. This operation further
+        enhances the security of naive EINI algorithm.
+    EINI_complexity_check: bool
+        default is False
+        check the complexity of tree models when running EINI algorithms. Complexity models are easy to hide their
+        decision path, while simple tree models are not, therefore if a tree model is too simple, it is not allowed
+        to run EINI predict algorithms.
     """
 
     def __init__(self, tree_param: DecisionTreeParam = DecisionTreeParam(), task_type=consts.CLASSIFICATION,

@@ -29,10 +29,8 @@ class UnionParam(BaseParam):
     ----------
     need_run: bool, default True
         Indicate if this module needed to be run
-
     allow_missing: bool, default False
         Whether allow mismatch between feature length and header length in the result. Note that empty tables will always be skipped regardless of this param setting.
-
     keep_duplicate: bool, default False
         Whether to keep entries with duplicated keys. If set to True, a new id will be generated for duplicated entry in the format {id}_{table_name}.
     """

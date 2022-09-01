@@ -31,16 +31,16 @@ from federatedml.util import consts
 
 class SelectorParam(object):
     """
-    Args:
-        method: None or str
-            back propagation select method, accept "relative" only, default: None
-        selective_size: int
-            deque size to use, store the most recent selective_size historical loss, default: 1024
-        beta: int
-            sample whose selective probability >= power(np.random, beta) will be selected
-        min_prob: Numeric
-            selective probability is max(min_prob, rank_rate)
-
+    Parameters
+    ----------
+    method: None or str
+        back propagation select method, accept "relative" only, default: None
+    selective_size: int
+        deque size to use, store the most recent selective_size historical loss, default: 1024
+    beta: int
+        sample whose selective probability >= power(np.random, beta) will be selected
+    min_prob: Numeric
+        selective probability is max(min_prob, rank_rate)
     """
 
     def __init__(self, method=None, beta=1, selective_size=consts.SELECTIVE_SIZE, min_prob=0, random_state=None):
@@ -119,31 +119,32 @@ class HeteroNNParam(BaseParam):
     """
     Parameters used for Hetero Neural Network.
 
-    Args:
-        task_type: str, task type of hetero nn model, one of 'classification', 'regression'.
-        config_type: str, accept "keras" only.
-        bottom_nn_define: a dict represents the structure of bottom neural network.
-        interactive_layer_define: a dict represents the structure of interactive layer.
-        interactive_layer_lr: float, the learning rate of interactive layer.
-        top_nn_define: a dict represents the structure of top neural network.
-        optimizer: optimizer method, accept following types:
-            1. a string, one of "Adadelta", "Adagrad", "Adam", "Adamax", "Nadam", "RMSprop", "SGD"
-            2. a dict, with a required key-value pair keyed by "optimizer",
-                with optional key-value pairs such as learning rate.
-            defaults to "SGD".
-        loss:  str, a string to define loss function used
-        epochs: int, the maximum iteration for aggregation in training.
-        batch_size : int, batch size when updating model.
-            -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
-            defaults to -1.
-        early_stop : str, accept 'diff' only in this version, default: 'diff'
-            Method used to judge converge or not.
-                a)	diff： Use difference of loss between two iterations to judge whether converge.
-        floating_point_precision: None or integer, if not None, means use floating_point_precision-bit to speed up calculation,
-                                   e.g.: convert an x to round(x * 2**floating_point_precision) during Paillier operation, divide
-                                          the result by 2**floating_point_precision in the end.
-        drop_out_keep_rate: float, should betweend 0 and 1, if not equals to 1.0, will enabled drop out
-        callback_param: CallbackParam object
+    Parameters
+    ----------
+    task_type: str, task type of hetero nn model, one of 'classification', 'regression'.
+    config_type: str, accept "keras" only.
+    bottom_nn_define: a dict represents the structure of bottom neural network.
+    interactive_layer_define: a dict represents the structure of interactive layer.
+    interactive_layer_lr: float, the learning rate of interactive layer.
+    top_nn_define: a dict represents the structure of top neural network.
+    optimizer: optimizer method, accept following types:
+        1. a string, one of "Adadelta", "Adagrad", "Adam", "Adamax", "Nadam", "RMSprop", "SGD"
+        2. a dict, with a required key-value pair keyed by "optimizer",
+            with optional key-value pairs such as learning rate.
+        defaults to "SGD".
+    loss:  str, a string to define loss function used
+    epochs: int, the maximum iteration for aggregation in training.
+    batch_size : int, batch size when updating model.
+        -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
+        defaults to -1.
+    early_stop : str, accept 'diff' only in this version, default: 'diff'
+        Method used to judge converge or not.
+            a)	diff： Use difference of loss between two iterations to judge whether converge.
+    floating_point_precision: None or integer, if not None, means use floating_point_precision-bit to speed up calculation,
+                                e.g.: convert an x to round(x * 2**floating_point_precision) during Paillier operation, divide
+                                        the result by 2**floating_point_precision in the end.
+    drop_out_keep_rate: float, should betweend 0 and 1, if not equals to 1.0, will enabled drop out
+    callback_param: CallbackParam object
     """
 
     def __init__(self,
