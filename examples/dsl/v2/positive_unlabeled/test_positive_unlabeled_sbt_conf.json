@@ -82,11 +82,7 @@
                             "0": 0,
                             "1": 1
                         },
-                        "label_list": [0, 1],
-                        "unlabeled_digit": 0,
-                        "pu_param": {
-                            "mode": "standard"
-                        }
+                        "label_list": [0, 1]
                     }
                 }
             }

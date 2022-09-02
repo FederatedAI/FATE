@@ -77,11 +77,7 @@ def main(config="../../config.yaml", namespace=""):
             "1": 1,
             "-1": -1
         },
-        "label_list": [0, 1, -1],
-        "unlabeled_digit": -1,
-        "pu_param": {
-            "mode": "two_step"
-        }
+        "label_list": [0, 1, -1]
     }
     label_transform_0 = LabelTransform(**label_transform_0_param)
     # configure LabelTransform for host

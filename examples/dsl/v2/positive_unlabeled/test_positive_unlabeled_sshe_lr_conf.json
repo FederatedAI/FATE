@@ -69,11 +69,7 @@
                             "1": 1,
                             "-1": -1
                         },
-                        "label_list": [0, 1, -1],
-                        "unlabeled_digit": -1,
-                        "pu_param": {
-                            "mode": "two_step"
-                        }
+                        "label_list": [0, 1, -1]
                     }
                 }
             }
