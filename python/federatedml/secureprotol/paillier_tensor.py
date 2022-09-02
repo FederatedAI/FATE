@@ -123,6 +123,10 @@ class PaillierTensor(object):
             return self._ori_data.shape
         else:
             first_dim = self._obj.count()
+
+            if not first_dim:
+                return (0, )
+
             second_dim = self._obj.first()[1].shape
 
             return tuple([first_dim] + list(second_dim))
