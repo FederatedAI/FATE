@@ -55,7 +55,6 @@ HOMO = "homo"
 RAW = "raw"
 RSA = "rsa"
 DH = "dh"
-ECDH = "ecdh"
 
 # evaluation
 AUC = "auc"
@@ -200,7 +199,7 @@ MIX_TREE = 'mix'
 LAYERED_TREE = 'layered'
 SINGLE_OUTPUT = 'single_output'
 MULTI_OUTPUT = 'multi_output'
-HOST_LOCAL = 'hostLocal'
+HOST_LOCAL = 'host_local'
 
 TRAIN_EVALUATE = 'train_evaluate'
 VALIDATE_EVALUATE = 'validate_evaluate'
@@ -344,10 +343,6 @@ MIN_HASH_FUNC_COUNT = 4
 MAX_HASH_FUNC_COUNT = 32
 
 EINI_TREE_COMPLEXITY = 1000000000
-
-pytorch_backend = 'pytorch'
-keras_backend = 'keras'
-CURVE25519 = 'curve25519'
 
 # positive unlabeled
 STANDARD = "standard"
