@@ -16,10 +16,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import copy
 
 from federatedml.param.base_param import BaseParam
-from federatedml.param.positive_unlabeled_param import PositiveUnlabeledParam
 from federatedml.util import LOGGER
 
 
@@ -39,25 +37,16 @@ class LabelTransformParam(BaseParam):
         length should match key count in label_encoder
         e.g. ["Yes", "No"]
 
-    unlabeled_digit: None or integer, default: None
-        Whether it has unlabeled data. If true, declaring the unlabeled digit.
-
     need_run: bool, default: True
         Specify whether to run label transform
 
-    pu_param: PositiveUnlabeledParam object, default: default PositiveUnlabeledParam object
-        positive unlabeled param
-
     """
 
-    def __init__(self, label_encoder=None, label_list=None, unlabeled_digit=None, need_run=True,
-                 pu_param=PositiveUnlabeledParam()):
+    def __init__(self, label_encoder=None, label_list=None, need_run=True):
         super(LabelTransformParam, self).__init__()
         self.label_encoder = label_encoder
         self.label_list = label_list
-        self.unlabeled_digit = unlabeled_digit
         self.need_run = need_run
-        self.pu_param = copy.deepcopy(pu_param)
 
     def check(self):
         model_param_descr = "label transform param's "
@@ -73,11 +62,6 @@ class LabelTransformParam(BaseParam):
                 raise ValueError(f"{model_param_descr} label_list should be list type")
             if self.label_encoder and len(self.label_list) != len(self.label_encoder.keys()):
                 raise ValueError(f"label_list length should match label_encoder key count")
-
-        if self.unlabeled_digit is not None and type(self.unlabeled_digit).__name__ != "int":
-            raise ValueError(f"{model_param_descr} unlabeled_digit should be None or an integer")
-
-        self.pu_param.check()
 
         LOGGER.debug("Finish label transformer parameter check!")
         return True
