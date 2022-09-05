@@ -65,7 +65,7 @@ $ flow model deploy --model-id guest-10000#host-10000#model --model-version 2020
 We can modify existing predict conf by replacing model_id, model_version and data set name with yours to make a new 
 predict conf.
 Here we replace model_id and model_version in [predict conf](../../../examples/dsl/v2/hetero_secureboost/test_predict_conf.json) 
-with model_id and model_version returned by training job.
+with model_id and model_version returned by deploy model job.
 
 ```json
 {
