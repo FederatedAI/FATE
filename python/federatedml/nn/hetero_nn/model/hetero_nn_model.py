@@ -102,10 +102,6 @@ class HeteroNNGuestModel(HeteroNNModel):
         self.hetero_nn_param = hetero_nn_param
         self.batch_size = hetero_nn_param.batch_size
 
-        coae_param = hetero_nn_param.coae_param
-        if coae_param.enable:
-            self.coae_param = coae_param
-
     def set_empty(self):
         self.is_empty = True
 
