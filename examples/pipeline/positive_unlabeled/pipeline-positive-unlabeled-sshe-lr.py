@@ -115,7 +115,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(label_transform_0, data=Data(data=intersection_0.output.data))
     pipeline.add_component(hetero_sshe_lr_0, data=Data(train_data=label_transform_0.output.data))
     pipeline.add_component(positive_unlabeled_0,
-                           data=Data(train_data=[label_transform_0.output.data, hetero_sshe_lr_0.output.data]))
+                           data=Data(data=[label_transform_0.output.data, hetero_sshe_lr_0.output.data]))
     pipeline.add_component(hetero_sshe_lr_1, data=Data(train_data=positive_unlabeled_0.output.data))
     pipeline.compile()
 
