@@ -10,13 +10,13 @@ Positive unlabeled learning is one of the semi-supervised algorithms. This compo
 
 For the `"standard"` mode, the dataset has only positive and unlabeled samples. Unlabeled data are treated as negative data for the binary classifier training. The trained classification model is used for assigning labels to those unlabeled data. After relabeling operations, the dataset is repartitioned and the number of labeled data is increased. Repeatedly, `"standard"` mode can gain a classification model that takes advantage of unlabeled data. The procedure of probability relabeling strategy is shown below.
 
-![Figure 1: Standard Mode of PU Learning](../images/standard_mode.png "Figure 1: Standard Mode of PU Learning")
+<div align=center><img src=../images/standard_mode.png/></div>
 
 
 
 For the `"two-step"` mode, the dataset has not only positive and unlabeled samples but also negative data. In this mode, unlabeled data are merely used in the prediction stage. Positive and negative data are applied to the binary classifier training. Similar to the `"standard"` mode, unlabeled data are assigned labels by a trained classification model in relabeling strategy. As a result of unlabeled samples allocated to the labeled set, `"two-step"` mode can make the best of the unlabeled data. The procedure of probability relabeling strategy is shown below.
 
-![Figure 2: Two-step Mode of PU Learning](../images/two-step_mode.png "Figure 1: Two-step Mode of PU Learning")
+<div align=center><img src=../images/two-step_mode.png/></div>
 
 
 
