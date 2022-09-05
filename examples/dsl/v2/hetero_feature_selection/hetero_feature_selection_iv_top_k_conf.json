@@ -64,12 +64,13 @@
             "hetero_feature_selection_0": {
                 "select_col_indexes": -1,
                 "select_names": [],
-                "filter_methods": [
-                    "iv_top_k"
+                 "filter_methods": [
+                    "iv_filter"
                 ],
-                "iv_top_k_param": {
-                    "k": 7,
-                    "local_only": false
+                "iv_param": {
+                    "metrics": "iv",
+                    "filter_type": "top_k",
+                    "threshold": 7
                 }
             }
         }

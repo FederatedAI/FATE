@@ -14,18 +14,16 @@
 #  limitations under the License.
 #
 
+
 import argparse
-import os
-import sys
 
-cur_path = os.path.realpath(__file__)
-for i in range(4):
-    cur_path = os.path.dirname(cur_path)
-print(f'fate_path: {cur_path}')
-sys.path.append(cur_path)
-
-from examples.pipeline.hetero_logistic_regression import common_tools
-
+from pipeline.backend.pipeline import PipeLine
+from pipeline.component import DataTransform
+from pipeline.component import Evaluation
+from pipeline.component import HeteroLR
+from pipeline.component import Intersection
+from pipeline.component import Reader
+from pipeline.interface import Data
 from pipeline.utils.tools import load_job_config
 
 
@@ -33,9 +31,43 @@ def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
         config = load_job_config(config)
+    parties = config.parties
+    guest = parties.guest[0]
+    hosts = parties.host
+    arbiter = parties.arbiter[0]
+
+    guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
+    host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
+
+    # initialize pipeline
+    pipeline = PipeLine()
+    # set job initiator
+    pipeline.set_initiator(role='guest', party_id=guest)
+    # set participants information
+    pipeline.set_roles(guest=guest, host=hosts, arbiter=arbiter)
+
+    # define Reader components to read in data
+    reader_0 = Reader(name="reader_0")
+    # configure Reader for guest
+    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
+    # configure Reader for host
+    reader_0.get_party_instance(role='host', party_id=hosts).component_param(table=host_train_data)
+
+    data_transform_0 = DataTransform(name="data_transform_0", output_format='dense')
+    # get DataTransform party instance of guest
+    data_transform_0_guest_party_instance = data_transform_0.get_party_instance(role='guest', party_id=guest)
+    # configure DataTransform for guest
+    data_transform_0_guest_party_instance.component_param(with_label=True)
+    # get and configure DataTransform party instance of host
+    data_transform_0.get_party_instance(role='host', party_id=hosts).component_param(with_label=False)
+
+    # define Intersection components
+    intersection_0 = Intersection(name="intersection_0")
+    pipeline.add_component(reader_0)
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
 
     lr_param = {
-        "name": "hetero_lr_0",
         "penalty": "L2",
         "optimizer": "nesterov_momentum_sgd",
         "tol": 0.0001,
@@ -60,12 +92,14 @@ def main(config="../../config.yaml", namespace=""):
             "need_cv": False
         }
     }
+    hetero_lr_0 = HeteroLR(name="hetero_lr_0", **lr_param)
+    pipeline.add_component(hetero_lr_0, data=Data(train_data=intersection_0.output.data))
 
-    pipeline = common_tools.make_normal_dsl(config, namespace, lr_param, is_multi_host=True)
-    # fit model
+    evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary")
+    pipeline.add_component(evaluation_0, data=Data(data=hetero_lr_0.output.data))
+
+    pipeline.compile()
     pipeline.fit()
-    # query component summary
-    common_tools.prettify(pipeline.get_component("hetero_lr_0").get_summary())
 
 
 if __name__ == "__main__":

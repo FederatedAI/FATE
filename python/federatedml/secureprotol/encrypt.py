@@ -19,6 +19,7 @@ import hashlib
 from collections import Iterable
 
 import numpy as np
+from federatedml.util import LOGGER
 from Cryptodome import Random
 from Cryptodome.PublicKey import RSA
 from federatedml.feature.instance import Instance

@@ -1,7 +1,7 @@
 # Union
 
 Union module combines given tables into one while keeping unique entry
-ids. Union is a local module. Like DataIO, this module can be run on the
+ids. Union is a local module. Like DataTransform, this module can be run on the
 side of Host or Guest, and running this module does not require any
 interaction with outside parties.
 
@@ -26,7 +26,7 @@ with FATE-Pipeline:
             "module": "Union",
             "input": {
                 "data": {
-                        "data": ["dataio_0.data", "dataio_1.data", "dataio_2.data"]
+                        "data": ["data_transform_0.data", "data_transform_1.data", "data_transform_2.data"]
                 }
             },
             "output": {
@@ -44,7 +44,7 @@ with DSL v2:
             "module": "Union",
             "input": {
                 "data": {
-                        "data": ["dataio_0.data", "dataio_1.data", "dataio_2.data"]
+                        "data": ["data_transform_0.data", "data_transform_1.data", "data_transform_2.data"]
                 }
             },
             "output": {
@@ -55,24 +55,24 @@ with DSL v2:
 ```
 
 Upstream tables will enter Union module in this order:
-<span class="title-ref">dataio\_0.data</span>,
-<span class="title-ref">dataio\_1.data</span>,
-<span class="title-ref">dataio\_2.data</span> .
+<span class="title-ref">data\_transform\_0.data</span>,
+<span class="title-ref">data\_transform\_1.data</span>,
+<span class="title-ref">data\_transform\_2.data</span> .
 
 If an id <span class="title-ref">42</span> exists in both
-<span class="title-ref">dataio\_0.data</span> and
-<span class="title-ref">dataio\_1.data</span>, and:
+<span class="title-ref">data\_transform\_0.data</span> and
+<span class="title-ref">data\_transform\_1.data</span>, and:
 
 1.  'keep\_duplicate\` set to false: the value from
-    <span class="title-ref">dataio\_0.data</span> is the one being kept
+    <span class="title-ref">data\_transform\_0.data</span> is the one being kept
     in the final result, its id unchanged.
 2.  'keep\_duplicate\` set to true: the value from
-    <span class="title-ref">dataio\_0.data</span> and the one from
-    <span class="title-ref">dataio\_1.data</span> are both kept; the id
-    in <span class="title-ref">dataio\_0.data</span> will be transformed
-    to <span class="title-ref">42\_dataio\_0</span>, and the id in
-    <span class="title-ref">dataio\_1.data</span> to
-    <span class="title-ref">42\_dataio\_1</span>.
+    <span class="title-ref">data\_transform\_0.data</span> and the one from
+    <span class="title-ref">data\_transform\_1.data</span> are both kept; the id
+    in <span class="title-ref">data\_transform\_0.data</span> will be transformed
+    to <span class="title-ref">42\_data\_transform\_0</span>, and the id in
+    <span class="title-ref">data\_transform\_1.data</span> to
+    <span class="title-ref">42\_data\_transform\_1</span>.
 
 
 <!-- mkdocs

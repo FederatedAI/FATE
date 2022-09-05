@@ -46,23 +46,13 @@ export version=`grep "FATE=" ${FATE_PROJECT_BASE}/fate.env | awk -F "=" '{print 
 
 ### 4.1 Installing the Python environment (optional)
 
-Please install or use existing Python version 3.6 or 3.7, preferably 3.6.5, which is the official and heavily tested version of the FATE team.
+Please install or use existing Python version 3.8
 
 ### 4.2 Configuring a virtual environment for FATE
 
 ```bash
-virtualenv --version
-```
-
-If the version information is returned normally, then the virtual environment tool is installed, if the command does not exist, please install it yourself, in most cases you can use a similar command to install
-
-```bash
-pip install virtualenv
-```
-
-```bash
 cd(or create) {root directory for the virtual environment}
-virtualenv {name of virtual environment}
+python3 -m venv {虚拟环境名称}
 export FATE_VENV_BASE={root directory for the virtual environment}/{name of virtual environment}
 source ${FATE_VENV_BASE}/bin/activate
 ```
@@ -183,7 +173,7 @@ Visualizing FATE Jobs with fateboard
 cd ${FATE_PROJECT_BASE};
 mkdir -p env/jdk;
 cd env/jdk;
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/jdk-8u192.tar.gz;
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/jdk-8u192.tar.gz;
 tar xzf jdk-8u192.tar.gz
 ```
 

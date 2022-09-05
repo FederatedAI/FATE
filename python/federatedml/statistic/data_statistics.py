@@ -38,6 +38,7 @@ class StatisticInnerParam(object):
         self.col_name_maps = {}
         self.header = []
         self.static_indices = []
+        self.static_indices_set = set()
         self.static_names = []
 
     def set_header(self, header):
@@ -47,6 +48,7 @@ class StatisticInnerParam(object):
 
     def set_static_all(self):
         self.static_indices = [i for i in range(len(self.header))]
+        self.static_indices_set = set(self.static_indices)
         self.static_names = self.header
 
     def add_static_indices(self, static_indices):
@@ -56,7 +58,8 @@ class StatisticInnerParam(object):
             if idx >= len(self.header):
                 LOGGER.warning("Adding indices that out of header's bound")
                 continue
-            if idx not in self.static_indices:
+            if idx not in self.static_indices_set:
+                self.static_indices_set.add(idx)
                 self.static_indices.append(idx)
                 self.static_names.append(self.header[idx])
 
@@ -68,7 +71,8 @@ class StatisticInnerParam(object):
             if idx is None:
                 LOGGER.warning(f"Adding col_name: {col_name} that is not exist in header")
                 continue
-            if idx not in self.static_indices:
+            if idx not in self.static_indices_set:
+                self.static_indices_set.add(idx)
                 self.static_indices.append(idx)
                 self.static_names.append(self.header[idx])
 

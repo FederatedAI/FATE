@@ -42,3 +42,4 @@ class IntersectionFuncTransferVariable(BaseTransferVariables):
                                                                  dst=['host'])
         self.cache_id = self._create_variable(name='cache_id', src=['guest', 'host'], dst=['host', 'guest'])
         self.cache_id_from_host = self._create_variable(name='cache_id_from_host', src=['host'], dst=['guest'])
+        self.use_match_id = self._create_variable(name='use_match_id', src=['host'], dst=['guest'])

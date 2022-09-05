@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fate_test"
-version = "1.8.0"
+version = "1.9.0"
 description = "test tools for FATE"
 authors = ["FederatedAI <contact@FedAI.org>"]
 license = "Apache-2.0"
@@ -28,10 +28,10 @@ requests_toolbelt = "^0.9.1"
 requests = "^2.24.0"
 click = "^7.1.2"
 "ruamel.yaml" = "^0.16.10"
-loguru = "^0.5.1"
+loguru = ">=0.6.0"
 prettytable = "^1.0.0"
 sshtunnel = "^0.1.5"
-fate_client = "^1.8"
+fate_client = "^1.9"
 pandas = ">=1.1.5"
 colorama = "^0.4.4"
 

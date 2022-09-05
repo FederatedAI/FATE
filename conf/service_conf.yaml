@@ -4,13 +4,37 @@ dependent_distribution: false
 encrypt_password: false
 encrypt_module: fate_arch.common.encrypt_utils#pwdecrypt
 private_key:
+party_id:
+hook_module:
+  client_authentication: fate_flow.hook.flow.client_authentication
+  site_authentication: fate_flow.hook.flow.site_authentication
+  permission: fate_flow.hook.flow.permission
+hook_server_name:
+authentication:
+  client:
+    switch: false
+    http_app_key:
+    http_secret_key:
+  site:
+    switch: false
+permission:
+  switch: false
+  component: false
+  dataset: false
 fateflow:
   # you must set real ip address, 127.0.0.1 and 0.0.0.0 is not supported
   host: 127.0.0.1
   http_port: 9380
   grpc_port: 9360
-  http_app_key:
-  http_secret_key:
+  # when you have multiple fateflow server on one party,
+  # we suggest using nginx for load balancing.
+  nginx:
+    host:
+    http_port:
+    grpc_port:
+  # use random instance_id instead of {host}:{http_port}
+  random_instance_id: false
+
   # support rollsite/nginx/fateflow as a coordination proxy
   # rollsite support fate on eggroll, use grpc protocol
   # nginx support fate on eggroll and fate on spark, use http or grpc protocol, default is http
@@ -90,6 +114,9 @@ fate_on_spark:
     password: fate
     # default conf/rabbitmq_route_table.yaml
     route_table:
+    # mode: replication / client, default: replication
+    mode: replication
+    max_message_size: 1048576
   pulsar:
     host: 192.168.0.5
     port: 6650
@@ -98,9 +125,12 @@ fate_on_spark:
     # all parties should use a same tenant
     tenant: fl-tenant
     # message ttl in minutes
-    topic_ttl: 5
+    topic_ttl: 30
     # default conf/pulsar_route_table.yaml
     route_table:
+   # mode: replication / client, default: replication
+    mode: replication
+    max_message_size: 1048576
   nginx:
     host: 127.0.0.1
     http_port: 9300
@@ -110,10 +140,6 @@ fateboard:
   host: 127.0.0.1
   port: 8080
 
-# this option affects API `/model/load`
-# automatic upload models to the model store if it exists locally but does not exist in the model storage
-# or download models from the model store if it does not exist locally but exists in the model storage
-# this option does not affect API `/model/store` or `/model/restore`
 enable_model_store: false
 model_store_address:
   # use mysql as the model store engine
@@ -126,14 +152,7 @@ model_store_address:
   # other optional configs send to the engine
 #  max_connections: 10
 #  stale_timeout: 10
-  # use redis as the model store engine
-#  storage: redis
-#  host: 127.0.0.1
-#  port: 6379
-#  db: 0
-#  password:
-  # the expiry time of keys, in seconds. defaults None (no expiry time)
-#  ex:
+
   # use tencent cos as model store engine
   storage: tencent_cos
   Region:

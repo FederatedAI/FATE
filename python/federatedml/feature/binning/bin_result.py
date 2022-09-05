@@ -226,6 +226,15 @@ class BinResults(object):
             self.all_cols_results[col_name] = col_bin_obj
         return self
 
+    def update_anonymous(self, anonymous_header_dict):
+        all_cols_results = dict()
+        for col_name, col_bin_result in self.all_cols_results.items():
+            updated_col_name = anonymous_header_dict[col_name]
+            all_cols_results[updated_col_name] = col_bin_result
+
+        self.all_cols_results = all_cols_results
+        return self
+
 
 class MultiClassBinResult(BinResults):
     def __init__(self, labels):
@@ -281,6 +290,10 @@ class MultiClassBinResult(BinResults):
             result.bin_results[idx].reconstruct(pb)
 
         return result
+
+    def update_anonymous(self, anonymous_header_dict):
+        for idx in range(len(self.bin_results)):
+            self.bin_results[idx].update_anonymous(anonymous_header_dict)
 
     @property
     def all_split_points(self):

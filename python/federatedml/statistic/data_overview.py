@@ -18,8 +18,10 @@
 
 import copy
 import functools
-import numpy as np
+import json
 from collections import Counter
+
+import numpy as np
 
 from federatedml.feature.instance import Instance
 from federatedml.util import LOGGER
@@ -51,8 +53,45 @@ def get_instance_shape(instance):
         return instance.features.shape[0]
 
 
-def max_abs_sample_weight_map_func(kv_iter):
+def get_anonymous_header(data_instances):
+    anonymous_header = data_instances.schema.get('anonymous_header')  # ['x1', 'x2', 'x3' ... ]
+    return anonymous_header
 
+
+def look_up_names_from_header(name_list, source_header, transform_header):
+    """
+
+    Parameters
+    ----------
+    name_list: list or str, list of feature name(s)
+    source_header: table header containing name_list
+    transform_header: table header into which name_list to be transformed
+
+    Returns
+    -------
+    list of plaintext feature names
+
+    """
+    if name_list is None:
+        return
+    if len(source_header) != len(transform_header):
+        raise ValueError(f"Length of source header and transform header do not match, please check.")
+    if not isinstance(name_list, list):
+        name_list = [name_list]
+    name_set = set(name_list)
+    # name list contains repeated name
+    if len(name_set) < len(name_list):
+        LOGGER.debug(f"Repeated name(s) found in provided name_list: {name_list}.")
+        name_set = name_list
+
+    feature_names = [f_name for i, f_name in enumerate(transform_header) if source_header[i] in name_set]
+    if len(feature_names) < len(name_set):
+        raise ValueError(f"Cannot match all provided names from: {name_list} to given header, "
+                         f"please check.")
+    return feature_names
+
+
+def max_abs_sample_weight_map_func(kv_iter):
     max_weight = -1
     for k, inst in kv_iter:
         if np.abs(inst.weight) > max_weight:
@@ -79,12 +118,16 @@ def check_negative_sample_weight(kv_iterator):
     return False
 
 
-def header_alignment(data_instances, pre_header):
-    header = data_instances.schema["header"]
+def header_alignment(data_instances, pre_header, pre_anonymous_header=None):
+    header = [col.strip() for col in data_instances.schema["header"]]
     if len((set(header) & set(pre_header))) != len(pre_header):
-        raise ValueError("fit & transform data' header should be same")
+        raise ValueError(f"fit & transform data' header should be the same! "
+                         f"Previous header: {pre_header}. "
+                         f"Current header: {header}.")
 
     if pre_header == header:
+        if pre_anonymous_header:
+            data_instances.schema["anonymous_header"] = pre_anonymous_header
         return data_instances
 
     if len(pre_header) != len(header):
@@ -124,6 +167,8 @@ def header_alignment(data_instances, pre_header):
 
     correct_schema = data_instances.schema
     correct_schema["header"] = pre_header
+    if pre_anonymous_header:
+        correct_schema["anonymous_header"] = pre_anonymous_header
     data_instances = data_instances.mapValues(lambda inst: align_header(inst, header_pos=header_correct))
     data_instances.schema = correct_schema
     return data_instances
@@ -243,6 +288,14 @@ def check_with_inst_id(data_instances):
     return False
 
 
+def predict_detail_dict_to_str(result_dict):
+    return "\"" + json.dumps(result_dict).replace("\"", "\'") + "\""
+
+
+def predict_detail_str_to_dict(result_dict_str):
+    return json.loads(json.loads(result_dict_str).replace("\'", "\""))
+
+
 def scale_sample_weight(data_instances):
     data_count = data_instances.count()
 
@@ -251,15 +304,18 @@ def scale_sample_weight(data_instances):
         for _, v in kv_iterator:
             weight_sum += v.weight
         return weight_sum
+
     total_weight = data_instances.mapPartitions(_sum_all_weight).reduce(lambda x, y: x + y)
     # LOGGER.debug(f"weight_sum is : {total_weight}")
     scale_factor = data_count / total_weight
+
     # LOGGER.debug(f"scale factor is : {total_weight}")
 
     def _replace_weight(instance):
         new_weight = instance.weight * scale_factor
         instance.set_weight(new_weight)
         return instance
+
     scaled_instances = data_instances.mapValues(lambda v: _replace_weight(v))
     return scaled_instances
 

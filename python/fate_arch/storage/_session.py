@@ -159,6 +159,9 @@ class StorageSessionBase(StorageSessionABC):
     def kill(self):
         raise NotImplementedError()
 
+    def cleanup(self, name, namespace):
+        raise NotImplementedError()
+
     @property
     def session_id(self):
         return self._session_id

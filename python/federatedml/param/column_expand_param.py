@@ -46,7 +46,7 @@ class ColumnExpandParam(BaseParam):
     def __init__(self, append_header=None, method="manual",
                  fill_value=consts.FLOAT_ZERO, need_run=True):
         super(ColumnExpandParam, self).__init__()
-        self.append_header = [] if append_header is None else append_header
+        self.append_header = append_header
         self.method = method
         self.fill_value = fill_value
         self.need_run = need_run
@@ -64,6 +64,7 @@ class ColumnExpandParam(BaseParam):
 
         BaseParam.check_boolean(self.need_run, descr=descr)
 
+        self.append_header = [] if self.append_header is None else self.append_header
         if not isinstance(self.append_header, list):
             raise ValueError(f"{descr} append_header must be None or list of str. "
                              f"Received {type(self.append_header)} instead.")

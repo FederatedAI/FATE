@@ -150,13 +150,13 @@
                     "take_high": [
                         true,
                         false,
-                        true,
+                        false,
                         true
                     ],
                     "threshold": [
                         -10,
                         10,
-                        -1.5,
+                        2,
                         -1.5
                     ]
                 },

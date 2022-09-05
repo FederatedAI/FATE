@@ -134,7 +134,6 @@ class FixedPointTensor(TensorBase):
         from federatedml.secureprotol.spdz import SPDZ
         spdz = SPDZ.get_instance()
         share_val = self.value.copy()
-        LOGGER.debug(f"share_val: {share_val}")
 
         name = tensor_name or self.tensor_name
 

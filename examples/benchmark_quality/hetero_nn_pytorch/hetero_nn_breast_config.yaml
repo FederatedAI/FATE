@@ -1,0 +1,14 @@
+data_guest: "examples/data/breast_hetero_guest.csv"
+data_host: "examples/data/breast_hetero_host.csv"
+idx: "id"
+label_name: "y"
+learning_rate: 0.01
+tol: 0.01
+batch_size: -1
+metrics: ["AUC"]
+epochs: 50
+guest_table_name: "breast_hetero_guest"
+host_table_name: "breast_hetero_host"
+eval_type: "binary"
+guest_input_shape: 10
+host_input_shape: 20

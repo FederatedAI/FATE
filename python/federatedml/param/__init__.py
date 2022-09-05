@@ -46,7 +46,6 @@ from federatedml.param.poisson_regression_param import PoissonParam
 from federatedml.param.positive_unlabeled_param import PositiveUnlabeledParam
 from federatedml.param.predict_param import PredictParam
 from federatedml.param.psi_param import PSIParam
-from federatedml.param.rsa_param import RsaParam
 from federatedml.param.sample_param import SampleParam
 from federatedml.param.sample_weight_param import SampleWeightParam
 from federatedml.param.scale_param import ScaleParam
@@ -87,7 +86,6 @@ __all__ = [
     "PositiveUnlabeledParam",
     "PredictParam",
     "PSIParam",
-    "RsaParam",
     "SampleParam",
     "ScaleParam",
     "SecureAddExampleParam",

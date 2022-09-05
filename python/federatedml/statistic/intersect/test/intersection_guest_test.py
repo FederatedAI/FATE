@@ -46,7 +46,7 @@ class TestRsaIntersectGuest(unittest.TestCase):
 
         res = self.rsa_operator.map_raw_id_to_encrypt_id(D1, D2)
 
-        gt = [(4, "id"), (5, "id"), (6, "id")]
+        gt = [(4, None), (5, None), (6, None)]
         self.assertListEqual(list(res.collect()), gt)
 
     def test_hash(self):

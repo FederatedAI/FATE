@@ -41,6 +41,7 @@ class TestVarianceCoeFilter(unittest.TestCase):
     def gen_data(self, data_num, feature_num, partition):
         data = []
         header = [str(i) for i in range(feature_num)]
+        anonymous_header = ["guest_9999_x" + str(i) for i in range(feature_num)]
         # col_2 = np.random.rand(data_num)
         col_data = []
         for _ in range(feature_num - 1):
@@ -54,7 +55,9 @@ class TestVarianceCoeFilter(unittest.TestCase):
             data.append((key, Instance(features=np.array([col[key] for col in col_data]))))
 
         result = session.parallelize(data, include_key=True, partition=partition)
-        result.schema = {'header': header}
+        result.schema = {'header': header,
+                         "anonymous_header": anonymous_header
+                         }
         self.header = header
 
         return result

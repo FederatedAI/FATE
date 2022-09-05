@@ -49,9 +49,11 @@ class TestBucketBinning(unittest.TestCase):
                                     partition=10)
 
         header = ['x' + str(i) for i in range(self.feature_num)]
+        anonymous_header = ["guest_9999_x" + str(i) for i in range(self.feature_num)]
 
         self.table = table
-        self.table.schema = {'header': header}
+        self.table.schema = {'header': header,
+                             "anonymous_header": anonymous_header}
 
         self.numpy_table = np.array(numpy_array)
         self.cols = [1, 2]

@@ -70,16 +70,13 @@
                 "select_col_indexes": -1,
                 "select_names": [],
                 "filter_methods": [
-                    "iv_value_thres",
                     "iv_filter"
                 ],
-                "iv_value_param": {
-                    "value_threshold": 1,
-                    "local_only": true
-                },
                 "iv_param": {
+                    "metrics": "iv",
                     "filter_type": "threshold",
-                    "select_federated": false
+                    "select_federated": false,
+                    "threshold": 1
                 }
             }
         }

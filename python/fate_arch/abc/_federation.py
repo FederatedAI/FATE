@@ -13,6 +13,11 @@ class FederationABC(metaclass=ABCMeta):
     federation, get or remote objects and tables
     """
 
+    @property
+    @abc.abstractmethod
+    def session_id(self) -> str:
+        ...
+
     @abc.abstractmethod
     def get(self, name: str,
             tag: str,
@@ -45,7 +50,7 @@ class FederationABC(metaclass=ABCMeta):
                name: str,
                tag: str,
                parties: typing.List[Party],
-               gc: GarbageCollectionABC) -> typing.NoReturn:
+               gc: GarbageCollectionABC):
         """
         remote object/table to ``parties``
 
@@ -65,5 +70,21 @@ class FederationABC(metaclass=ABCMeta):
         Returns
         -------
         Notes
+        """
+        ...
+
+    @abc.abstractmethod
+    def destroy(self, parties):
+        """
+        destroy federation from ``parties``
+
+        Parameters
+        ----------
+        parties: typing.List[Party]
+           parties to get objects/tables from
+
+        Returns
+        -------
+        None
         """
         ...

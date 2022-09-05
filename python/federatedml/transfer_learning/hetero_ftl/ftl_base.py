@@ -57,6 +57,7 @@ class FTL(ModelBase):
         self.batch_size = None
         self.epochs = None
         self.store_header = None  # header of input data table
+        self.model_float_type = np.float32
 
         self.cache_dataloader = {}
 
@@ -204,6 +205,10 @@ class FTL(ModelBase):
 
         return data_loader, data_loader.x_shape, data_inst.count(), len(data_loader.get_overlap_indexes())
 
+    def get_model_float_type(self, nn):
+        weights = nn.get_trainable_weights()
+        self.model_float_type = weights[0].dtype
+
     def initialize_nn(self, input_shape):
         """
         initializing nn weights
@@ -211,8 +216,9 @@ class FTL(ModelBase):
 
         loss = "keep_predict_loss"
         self.nn_builder = get_nn_builder(config_type=self.config_type)
-        self.nn: NNModel = self.nn_builder(loss=loss, nn_define=self.nn_define, optimizer=self.optimizer, metrics=None,
-                                           input_shape=input_shape)
+        self.nn = self.nn_builder(loss=loss, nn_define=self.nn_define, optimizer=self.optimizer, metrics=None,
+                                  input_shape=input_shape)
+        self.get_model_float_type(self.nn)
 
         LOGGER.debug('printing nn layers structure')
         for layer in self.nn._model.layers:
@@ -235,6 +241,8 @@ class FTL(ModelBase):
         """
         compute gradient for a mini batch
         """
+        X_batch = X_batch.astype(self.model_float_type)
+        backward_grads_batch = backward_grads_batch.astype(self.model_float_type)
         grads = self.nn.get_weight_gradients(X_batch, backward_grads_batch)
         return grads
 
@@ -316,7 +324,7 @@ class FTL(ModelBase):
         self.optimizer.optimizer = model_meta.optimizer_param.optimizer
         self.optimizer.kwargs = json.loads(model_meta.optimizer_param.kwargs)
 
-        self.initialize_nn((self.input_dim, ))
+        self.initialize_nn((self.input_dim,))
 
     def set_model_param(self, model_param):
 

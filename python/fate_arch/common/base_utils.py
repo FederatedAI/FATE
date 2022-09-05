@@ -88,6 +88,8 @@ def current_timestamp():
 
 
 def timestamp_to_date(timestamp, format_string="%Y-%m-%d %H:%M:%S"):
+    if not timestamp:
+        timestamp = time.time()
     timestamp = int(timestamp) / 1000
     time_array = time.localtime(timestamp)
     str_date = time.strftime(format_string, time_array)

@@ -24,7 +24,7 @@ from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.model_base import ModelBase
 from federatedml.param.data_split_param import DataSplitParam
 from federatedml.util import LOGGER
-from federatedml.util import data_io
+from federatedml.util import data_transform
 from federatedml.util.consts import FLOAT_ZERO
 
 ROUND_NUM = 3
@@ -167,7 +167,7 @@ class DataSplitter(ModelBase):
         freq_dict = collections.Counter(y)
         freq_keys = freq_dict.keys()
         # continuous label
-        if split_points is not None:
+        if split_points is not None and len(split_points) > 0:
             label_count = len(split_points) + 1
             # fill in count for missing bins
             if len(freq_keys) < label_count:
@@ -191,26 +191,28 @@ class DataSplitter(ModelBase):
         Tool to callback returned data count & ratio information
         Parameters
         ----------
-        id_train: list, id of data set
-        id_validate: list, id of data set
-        id_test: list, id of data set
+        id_train: list or table, id of data set
+        id_validate: list or table, id of data set
+        id_test: list or table, id of data set
         all_metas: dict, all meta info
 
         Returns
         -------
-        None
+        dict
         """
         metas = {}
+        if isinstance(id_train, list):
+            train_count = len(id_train)
+            validate_count = len(id_validate)
+            test_count = len(id_test)
+        else:
+            train_count = id_train.count()
+            validate_count = id_validate.count()
+            test_count = id_test.count()
 
-        train_count = len(id_train)
         metas["train"] = train_count
-
-        validate_count = len(id_validate)
         metas["validate"] = validate_count
-
-        test_count = len(id_test)
         metas["test"] = test_count
-
         original_count = train_count + validate_count + test_count
         metas["original"] = original_count
 
@@ -269,7 +271,7 @@ class DataSplitter(ModelBase):
         test_freq_dict = DataSplitter.get_class_freq(y_test, self.split_points, label_names)
         metas["test"] = test_freq_dict
 
-        if self.split_points is not None:
+        if self.split_points is not None and len(self.split_points) > 0:
             metas["split_points"] = self.split_points
             metas["continuous_label"] = True
         else:
@@ -289,15 +291,21 @@ class DataSplitter(ModelBase):
                                                             extra_metas=metas))
 
     @staticmethod
-    def _match_id(data_inst, ids):
-        ids = [(i, None) for i in ids]
-        id_table = computing_session.parallelize(ids, include_key=True, partition=data_inst.partitions)
+    def _match_id(data_inst, id_table):
+        # ids = [(i, None) for i in ids]
+        # id_table = computing_session.parallelize(ids, include_key=True, partition=data_inst.partitions)
         return data_inst.join(id_table, lambda v1, v2: v1)
+
+    @staticmethod
+    def _parallelize_ids(ids, partitions):
+        ids = [(i, None) for i in ids]
+        id_table = computing_session.parallelize(ids, include_key=True, partition=partitions)
+        return id_table
 
     @staticmethod
     def _set_output_table_schema(data_inst, schema):
         if schema is not None and data_inst.count() > 0:
-            data_io.set_schema(data_inst, schema)
+            data_transform.set_schema(data_inst, schema)
 
     def split_data(self, data_inst, id_train, id_validate, id_test):
         train_data = DataSplitter._match_id(data_inst, id_train)

@@ -28,7 +28,7 @@ for i in range(10):
     features = ",".join([str(x) for x in features])
     data.append((i, features))
 
-c_table = session.get_session().computing.parallelize(data, include_key=True, partition=4)
+c_table = sess.computing.parallelize(data, include_key=True, partition=4)
 for k, v in c_table.collect():
     print(v)
 print()
@@ -41,7 +41,7 @@ for k, v in s_table.collect():
     print(v)
 print()
 
-t2 = session.get_session().computing.load(
+t2 = sess.computing.load(
     table_meta.get_address(),
     partitions=table_meta.get_partitions(),
     schema=table_meta.get_schema())

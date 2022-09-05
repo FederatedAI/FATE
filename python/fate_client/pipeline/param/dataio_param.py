@@ -22,6 +22,7 @@ from pipeline.param.base_param import BaseParam
 class DataIOParam(BaseParam):
     """
     Define dataio parameters that used in federated ml.
+    This module is not supported to use in training task since Fate-v1.9.0, use data transform instead.
 
     Parameters
     ----------

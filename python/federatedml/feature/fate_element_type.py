@@ -21,3 +21,6 @@
 class NoneType(object):
     def __eq__(self, obj):
         return isinstance(obj, NoneType)
+
+    def __hash__(self):
+        return hash("FATENoneType")

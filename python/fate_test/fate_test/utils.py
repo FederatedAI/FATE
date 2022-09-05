@@ -326,12 +326,12 @@ def parse_summary_result(rs_dict):
             return rs_content['train']
 
 
-def extract_data(txt, col_name, convert_float=True, keep_id=False):
+def extract_data(df, col_name, convert_float=True, keep_id=False):
     """
-    convert list of string from component output data to array
+    component output data to numpy array
     Parameters
     ----------
-    txt: data in list of string
+    df: dataframe
     col_name: column to extract
     convert_float: whether to convert extracted value to float value
     keep_id: whether to keep id
@@ -339,16 +339,10 @@ def extract_data(txt, col_name, convert_float=True, keep_id=False):
     -------
     array of extracted data, optionally with id
     """
-    header = txt[0].split(",")
-    data = []
-    col_name_loc = header.index(col_name)
-    for entry in txt[1:]:
-        entry_list = entry.split(",")
-        extract_val = entry_list[col_name_loc]
+    if keep_id:
         if convert_float:
-            extract_val = float(extract_val)
-        if keep_id:
-            data.append((entry_list[0], extract_val))
-        else:
-            data.append(extract_val)
-    return np.array(data)
+            df[col_name] = df[col_name].to_numpy().astype(np.float64)
+
+        return df[[df.columns[0], col_name]].to_numpy()
+    else:
+        return df[col_name].to_numpy().astype(np.float64)
