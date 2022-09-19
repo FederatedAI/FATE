@@ -33,14 +33,12 @@ class TensorExampleGuest(ModelBase):
 
         LOGGER.info("begin to make guest data")
         self.a = ctx.random_tensor((self.data_num, self.feature_num))
-        LOGGER.info(f"shape of a: {self.a.shape}")
 
         LOGGER.info("keygen")
         self.pk, self.sk = ctx.keygen(CipherKind.PHE, 1024)
 
         LOGGER.info("encrypt data")
         self.ea = self.pk.encrypt(self.a)
-        LOGGER.info(f"shape of ea: {self.ea.shape}")
 
         LOGGER.info("share encrypted data to host")
         ctx.push(HOST, "guest_cipher", self.ea)

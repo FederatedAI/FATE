@@ -309,13 +309,14 @@ class Context:
             from fate_arch.tensor.impl.tensor.distributed import FPTensorDistributed
 
             parts = []
-            last_dim = shape[-1]
+            first_dim_approx = shape[0] // num_partition
+            last_part_first_dim = shape[0] - (num_partition - 1) * first_dim_approx
+            assert first_dim_approx > 0
             for i in range(num_partition):
                 if i == num_partition - 1:
-                    parts.append(torch.rand((*shape[:-1], last_dim)))
+                    parts.append(torch.rand((last_part_first_dim, *shape[1:],)))
                 else:
-                    parts.append(torch.rand((*shape[:-1], shape[-1] / num_partition)))
-                    last_dim -= shape[-1] / num_partition
+                    parts.append(torch.rand((first_dim_approx, *shape[1:])))
             return FPTensor(
                 self,
                 FPTensorDistributed(

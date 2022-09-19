@@ -8,10 +8,19 @@ from ...abc.tensor import (
 )
 
 
+class Local:
+    @property
+    def block(self):
+        ...
+
+    def is_distributed(self):
+        return False
+
+
 def phe_tensor_metaclass(fp_cls):
     class PHETensorMetaclass(type):
         def __new__(cls, name, bases, dict):
-            phe_cls = super().__new__(cls, name, bases, dict)
+            phe_cls = super().__new__(cls, name, (*bases, Local), dict)
 
             def __init__(self, block) -> None:
                 self._block = block
