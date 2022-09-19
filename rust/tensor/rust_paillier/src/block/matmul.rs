@@ -1,6 +1,5 @@
 use super::{fixedpoint, Cipherblock, CouldCode};
 use ndarray::{ArrayView1, ArrayView2};
-#[cfg(feature = "rayon")]
 use rayon::prelude::*;
 
 /// help function for generic matrix multiply
@@ -28,7 +27,6 @@ where
 /// 1. the output matrix C has shape (m, n)
 /// 2. C(i,j) = \sum_k A(i,k)B(k,j)
 /// 3. the function F(i, k, j, v): v += A(i,k)B(k,j)
-#[cfg(feature = "rayon")]
 fn matmul_apply_par<F>(m: usize, s: usize, n: usize, func: F) -> Vec<fixedpoint::CT>
 where
     F: Fn(usize, usize, usize, &mut fixedpoint::CT) -> () + Sync, // (i, k, j, v) -> ()
@@ -203,7 +201,6 @@ pub fn cipherblock_rmatmul_plaintext_ix2<T: CouldCode>(
     }
 }
 
-#[cfg(feature = "rayon")]
 pub fn cipherblock_matmul_plaintext_ix1_par<T: CouldCode + Sync>(
     lhs: &Cipherblock,
     rhs: ArrayView1<T>,
@@ -219,7 +216,6 @@ pub fn cipherblock_matmul_plaintext_ix1_par<T: CouldCode + Sync>(
         shape: vec![m, n],
     }
 }
-#[cfg(feature = "rayon")]
 pub fn cipherblock_matmul_plaintext_ix2_par<T: CouldCode + Sync>(
     lhs: &Cipherblock,
     rhs: ArrayView2<T>,
@@ -235,7 +231,6 @@ pub fn cipherblock_matmul_plaintext_ix2_par<T: CouldCode + Sync>(
         shape: vec![m, n],
     }
 }
-#[cfg(feature = "rayon")]
 pub fn cipherblock_rmatmul_plaintext_ix1_par<T: CouldCode + Sync>(
     lhs: ArrayView1<T>,
     rhs: &Cipherblock,
@@ -252,7 +247,6 @@ pub fn cipherblock_rmatmul_plaintext_ix1_par<T: CouldCode + Sync>(
     }
 }
 
-#[cfg(feature = "rayon")]
 pub fn cipherblock_rmatmul_plaintext_ix2_par<T: CouldCode + Sync>(
     lhs: ArrayView2<T>,
     rhs: &Cipherblock,
@@ -284,22 +278,18 @@ impl Cipherblock {
     }
 
     // par
-    #[cfg(feature = "rayon")]
     pub fn matmul_plaintext_ix1_par<T: CouldCode + Sync>(&self, rhs: ArrayView1<T>) -> Cipherblock {
         cipherblock_matmul_plaintext_ix1_par(self, rhs)
     }
-    #[cfg(feature = "rayon")]
     pub fn rmatmul_plaintext_ix1_par<T: CouldCode + Sync>(
         &self,
         lhs: ArrayView1<T>,
     ) -> Cipherblock {
         cipherblock_rmatmul_plaintext_ix1_par(lhs, self)
     }
-    #[cfg(feature = "rayon")]
     pub fn matmul_plaintext_ix2_par<T: CouldCode + Sync>(&self, rhs: ArrayView2<T>) -> Cipherblock {
         cipherblock_matmul_plaintext_ix2_par(self, rhs)
     }
-    #[cfg(feature = "rayon")]
     pub fn rmatmul_plaintext_ix2_par<T: CouldCode + Sync>(
         &self,
         lhs: ArrayView2<T>,

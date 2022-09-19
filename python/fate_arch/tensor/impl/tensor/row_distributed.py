@@ -1,8 +1,6 @@
 import typing
 from typing import Union
 
-import torch
-
 from ...abc.tensor import (
     FPTensorProtocol,
     PHECipherABC,
@@ -12,41 +10,20 @@ from ...abc.tensor import (
 )
 from ..._federation import FederationDeserializer
 from ..._tensor import Context, Party
-from ....abc._computing import CTableABC
 
 Numeric = typing.Union[int, float]
 
 
-class Distributed:
-    @property
-    def blocks(self) -> CTableABC:
-        ...
-
-    def is_distributed(self):
-        return True
-
-
-class FPTensorDistributed(FPTensorProtocol, Distributed):
+class FPTensorDistributed(FPTensorProtocol):
     """
     Demo of Distributed Fixed Presicion Tensor
     """
 
-    def __init__(self, blocks_table, shape=None):
+    def __init__(self, blocks_table):
         """
         use table to store blocks in format (blockid, block)
         """
         self._blocks_table = blocks_table
-
-        # assuming blocks are arranged vertically
-        if shape is None:
-            shapes = list(self._blocks_table.mapValues(lambda cb: cb.shape).collect())
-            self.shape = (sum(s[0] for s in shapes), shapes[0][1])
-        else:
-            self.shape = shape
-
-    @property
-    def blocks(self):
-        return self._blocks_table
 
     def _binary_op(self, other, func_name):
         if isinstance(other, FPTensorDistributed):
@@ -60,10 +37,6 @@ class FPTensorDistributed(FPTensorProtocol, Distributed):
                 self._blocks_table.mapValues(lambda x: getattr(x, func_name)(other))
             )
         return NotImplemented
-
-    def collect(self):
-        blocks = sorted(self._blocks_table.collect())
-        return torch.cat([pair[1] for pair in blocks])
 
     def __add__(
         self, other: Union["FPTensorDistributed", int, float]
@@ -95,17 +68,11 @@ class FPTensorDistributed(FPTensorProtocol, Distributed):
     ) -> "FPTensorDistributed":
         return self._binary_op(other, "__rmul__")
 
-    def __matmul__(self, other: "PHETensorDistributed") -> "PHETensorDistributed":
-        assert self.shape[1] == other.shape[0]
-        # support one dimension only
-        assert len(other.shape) == 1
+    def __matmul__(self, other: "FPTensorDistributed") -> "FPTensorDistributed":
+        # todo: fix
+        ...
 
-        def func(cb):
-            return cb @ other._blocks_table.collect()
-
-        self._blocks_table.mapValues()
-
-    def __rmatmul__(self, other: "PHETensorDistributed") -> "FPTensorDistributed":
+    def __rmatmul__(self, other: "FPTensorDistributed") -> "FPTensorDistributed":
         # todo: fix
         ...
 
@@ -118,23 +85,12 @@ class FPTensorDistributed(FPTensorProtocol, Distributed):
 
 
 class PHETensorDistributed(PHETensorABC):
-    def __init__(self, blocks_table, shape=None):
+    def __init__(self, blocks_table) -> None:
         """
         use table to store blocks in format (blockid, encrypted_block)
         """
         self._blocks_table = blocks_table
         self._is_transpose = False
-
-        # assume block is verticel aranged
-        if shape is None:
-            shapes = list(self._blocks_table.mapValues(lambda cb: cb.shape).collect())
-            self.shape = (sum(s[1][0] for s in shapes), shapes[0][1][1])
-        else:
-            self.shape = shape
-
-    def collect(self):
-        blocks = sorted(self._blocks_table.collect())
-        return torch.cat([pair[1] for pair in blocks])
 
     def __add__(
         self, other: Union["PHETensorDistributed", FPTensorDistributed, int, float]
@@ -166,11 +122,15 @@ class PHETensorDistributed(PHETensorABC):
     ) -> "PHETensorDistributed":
         return self._binary_op_limited(other, "__rmul__")
 
-    def __matmul__(self, other: FPTensorDistributed) -> "PHETensorDistributed":
+    def __matmul__(
+        self, other: FPTensorDistributed
+    ) -> "PHETensorDistributed":
         # TODO: impl me
         ...
 
-    def __rmatmul__(self, other: FPTensorDistributed) -> "PHETensorDistributed":
+    def __rmatmul__(
+        self, other: FPTensorDistributed
+    ) -> "PHETensorDistributed":
         # TODO: impl me
         ...
 

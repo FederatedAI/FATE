@@ -2,7 +2,7 @@ import abc
 import typing
 
 
-class FPBlockABC(abc.ABC):
+class FPBlockABC:
     @classmethod
     def zeors(cls, shape) -> "FPBlockABC":
         ...
@@ -40,7 +40,7 @@ class FPBlockABC(abc.ABC):
         ...
 
 
-class PHEBlockABC(abc.ABC):
+class PHEBlockABC:
     """Tensor implements Partial Homomorphic Encryption schema:
     1. decrypt(encrypt(a) + encrypt(b)) = a + b
     2. decrypt(encrypt(a) * b) = a * b
@@ -99,19 +99,19 @@ class PHEBlockABC(abc.ABC):
         ...
 
 
-class PHEBlockEncryptorABC(abc.ABC):
+class PHEBlockEncryptorABC:
     @abc.abstractmethod
     def encrypt(self, tensor: FPBlockABC) -> PHEBlockABC:
         ...
 
 
-class PHEBlockDecryptorABC(abc.ABC):
+class PHEBlockDecryptorABC:
     @abc.abstractmethod
     def decrypt(self, tensor: PHEBlockABC) -> FPBlockABC:
         ...
 
 
-class PHEBlockCipherABC(abc.ABC):
+class PHEBlockCipherABC:
     @abc.abstractclassmethod
     def keygen(
         cls, **kwargs

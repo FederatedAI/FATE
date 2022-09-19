@@ -1,11 +1,11 @@
 [package]
-name = "fate-tensor"
+name = "rust_paillier"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
-name = "fate_tensor"
+name = "rust_paillier"
 crate-type = ["cdylib", "staticlib", "rlib"]
 bench = false
 

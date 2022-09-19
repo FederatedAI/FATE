@@ -1,38 +1,14 @@
 import torch
-from fate_arch.tensor._context import CipherKind, Context
-from fate_arch.tensor import PHETensor, FPTensor, GUEST, HOST
+from fate_arch.tensor import GUEST, HOST, CipherKind, Context
 from federatedml.model_base import ComponentOutput, ModelBase
-from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
 from federatedml.util import LOGGER
 
 from .params import TensorExampleParam
 
 
-# noinspection PyAttributeOutsideInit
-class TensorExampleTransferVariable(BaseTransferVariables):
-    def __init__(self, flowid=0):
-        super().__init__(flowid)
-        self.guest_cipher = self._create_variable(
-            name="guest_cipher", src=["guest"], dst=["host"]
-        )
-        self.host_cipher = self._create_variable(
-            name="host_cipher", src=["host"], dst=["guest"]
-        )
-        self.host_matmul_encrypted = self._create_variable(
-            name="host_matmul_encrypted", src=["host"], dst=["guest"]
-        )
-        self.host_matmul = self._create_variable(
-            name="host_matmul", src=["host"], dst=["guest"]
-        )
-        self.guest_matmul_encrypted = self._create_variable(
-            name="guest_matmul_encrypted", src=["guest"], dst=["host"]
-        )
-
-
 class TensorExampleGuest(ModelBase):
     def __init__(self):
         super(TensorExampleGuest, self).__init__()
-        self.transfer_inst = TensorExampleTransferVariable()
         self.model_param = TensorExampleParam()
         self.data_output = None
         self.model_output = None
@@ -46,8 +22,8 @@ class TensorExampleGuest(ModelBase):
         self.feature_num = self.model_param.feature_num
 
     def run(self, cpn_input):
-        ctx = Context()
-        ctx.device_init()
+        ctx = Context.from_cpn_input(cpn_input)
+        LOGGER.info(ctx.describe())
         return self._run(ctx, cpn_input)
 
     def _run(self, ctx: Context, cpn_input):
@@ -56,37 +32,45 @@ class TensorExampleGuest(ModelBase):
         self._init_runtime_parameters(cpn_input)
 
         LOGGER.info("begin to make guest data")
-        self.a = FPTensor(ctx, torch.rand((self.data_num, self.feature_num)))
+        self.a = ctx.random_tensor((self.data_num, self.feature_num))
 
         LOGGER.info("keygen")
-        self.pk, self.sk = ctx.cypher_utils.keygen(CipherKind.PHE, 1024)
+        self.pk, self.sk = ctx.keygen(CipherKind.PHE, 1024)
 
         LOGGER.info("encrypt data")
         self.ea = self.pk.encrypt(self.a)
 
         LOGGER.info("share encrypted data to host")
-        self.ea.remote(HOST, "guest_cipher")
+        ctx.push(HOST, "guest_cipher", self.ea)
 
         LOGGER.info("get encrypted data from host")
-        self.eb = PHETensor.get(ctx, HOST, "host_cipher")
+        self.eb = ctx.pull(HOST, "host_cipher").unwrap_phe_tensor()
 
         LOGGER.info("begin to get matmul of guest and host")
-        self.es_guest = self.a.T @ self.eb
+        self.es_guest = self.a + self.eb
+        # LOGGER.info("begin to get matmul of guest and host")
+        # self.es_guest = self.a.T @ self.eb
 
         LOGGER.info("send encrypted matmul to host")
-        self.es_guest.remote(HOST, "guest_matmul_encrypted")
+        ctx.push(HOST, "guest_matmul_encrypted", self.es_guest)
 
         LOGGER.info("receive encrypted matmul from guest")
-        self.es_host = PHETensor.get(ctx, HOST, "host_matmul_encrypted")
+        self.es_host = ctx.pull(HOST, "host_matmul_encrypted").unwrap_phe_tensor()
 
         LOGGER.info("decrypt matmul")
         self.s_host = self.sk.decrypt(self.es_host)
 
         LOGGER.info("get decrypted matmul")
-        self.s_guest = FPTensor.get(ctx, HOST, "host_matmul")
+        self.s_guest = ctx.pull(HOST, "host_matmul").unwrap_tensor()
 
         LOGGER.info("assert matmul close")
-        assert torch.allclose(self.s_host._tensor.T, self.s_guest._tensor)
+        sb = self.s_host._tensor._blocks_table.count()
+        sa = self.s_guest._tensor._blocks_table.count()
+        assert sa == sb
+        a = list(self.s_guest._tensor._blocks_table.collect())[0]
+        b = list(self.s_host._tensor._blocks_table.collect())[0]
+        assert torch.allclose(a[1], b[1])
+        # assert torch.allclose(self.s_host._tensor.T, self.s_guest._tensor)
 
         return ComponentOutput(self.save_data(), self.export_model(), self.save_cache())
 
@@ -94,7 +78,6 @@ class TensorExampleGuest(ModelBase):
 class TensorExampleHost(ModelBase):
     def __init__(self):
         super(TensorExampleHost, self).__init__()
-        self.transfer_inst = TensorExampleTransferVariable()
         self.model_param = TensorExampleParam()
         self.data_output = None
         self.model_output = None
@@ -108,8 +91,8 @@ class TensorExampleHost(ModelBase):
         self.feature_num = self.model_param.feature_num
 
     def run(self, cpn_input):
-        ctx = Context()
-        ctx.device_init()
+        ctx = Context.from_cpn_input(cpn_input)
+        LOGGER.info(ctx.describe())
         return self._run(ctx, cpn_input)
 
     def _run(self, ctx: Context, cpn_input):
@@ -117,33 +100,39 @@ class TensorExampleHost(ModelBase):
         self._init_runtime_parameters(cpn_input)
 
         LOGGER.info("begin to make host data")
-        self.b = FPTensor(ctx, torch.rand((self.data_num, self.feature_num)))
+        self.b = ctx.random_tensor((self.data_num, self.feature_num))
+
+        with ctx.iter_namespaces(10, prefix_name="tree_") as iteration:
+            for i, _ in enumerate(iteration):
+                print(ctx.current_namespace())
 
         LOGGER.info("keygen")
-        self.pk, self.sk = ctx.cypher_utils.keygen(CipherKind.PHE, 1024)
+        self.pk, self.sk = ctx.keygen(CipherKind.PHE, 1024)
 
         LOGGER.info("begin to encrypt")
         self.eb = self.pk.encrypt(self.b)
 
         LOGGER.info("share encrypted data to guest")
-        self.eb.remote(GUEST, "host_cipher")
+        ctx.push(GUEST, "host_cipher", self.eb)
 
         LOGGER.info("get encrypted data from guest")
-        self.ea = PHETensor.get(ctx, GUEST, "guest_cipher")
+        self.ea = ctx.pull(GUEST, "guest_cipher").unwrap_phe_tensor()
 
         LOGGER.info("begin to get matmul of host and guest")
-        self.es_host = self.b.T @ self.ea
+        self.es_host = self.b + self.ea
+        # LOGGER.info("begin to get matmul of host and guest")
+        # self.es_host = self.b.T @ self.ea
 
         LOGGER.info("send encrypted matmul to guest")
-        self.es_host.remote(GUEST, "host_matmul_encrypted")
+        ctx.push(GUEST, "host_matmul_encrypted", self.es_host)
 
         LOGGER.info("get encrypted matmul from guest")
-        self.es_guest = PHETensor.get(ctx, GUEST, "guest_matmul_encrypted")
+        self.es_guest = ctx.pull(GUEST, "guest_matmul_encrypted").unwrap_phe_tensor()
 
         LOGGER.info("decrypt encrypted matmul from guest")
         self.s_guest = self.sk.decrypt(self.es_guest)
 
         LOGGER.info("send decrypted matmul to guest")
-        self.s_guest.remote(GUEST, "host_matmul")
+        ctx.push(GUEST, "host_matmul", self.s_guest)
 
         return ComponentOutput(self.save_data(), self.export_model(), self.save_cache())
