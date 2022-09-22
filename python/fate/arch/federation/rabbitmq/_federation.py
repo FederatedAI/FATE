@@ -16,12 +16,11 @@
 
 import json
 
-from fate_arch.common import Party
-from fate_arch.common import file_utils
-from fate_arch.common.log import getLogger
-from fate_arch.federation._federation import FederationBase
-from fate_arch.federation.rabbitmq._mq_channel import MQChannel
-from fate_arch.federation.rabbitmq._rabbit_manager import RabbitManager
+from ...common import Party, file_utils
+from ...common.log import getLogger
+from ._federation import FederationBase
+from ._mq_channel import MQChannel
+from ._rabbit_manager import RabbitManager
 
 LOGGER = getLogger()
 
@@ -48,7 +47,9 @@ class MQ(object):
 
 
 class _TopicPair(object):
-    def __init__(self, tenant=None, namespace=None, vhost=None, send=None, receive=None):
+    def __init__(
+        self, tenant=None, namespace=None, vhost=None, send=None, receive=None
+    ):
         self.tenant = tenant
         self.namespace = namespace
         self.vhost = vhost
@@ -59,10 +60,7 @@ class _TopicPair(object):
 class Federation(FederationBase):
     @staticmethod
     def from_conf(
-            federation_session_id: str,
-            party: Party,
-            runtime_conf: dict,
-            **kwargs
+        federation_session_id: str, party: Party, runtime_conf: dict, **kwargs
     ):
         rabbitmq_config = kwargs["rabbitmq_config"]
         LOGGER.debug(f"rabbitmq_config: {rabbitmq_config}")
@@ -73,7 +71,9 @@ class Federation(FederationBase):
         base_password = rabbitmq_config.get("password")
         mode = rabbitmq_config.get("mode", "replication")
         # max_message_size；
-        max_message_size = int(rabbitmq_config.get("max_message_size", DEFAULT_MESSAGE_MAX_SIZE))
+        max_message_size = int(
+            rabbitmq_config.get("max_message_size", DEFAULT_MESSAGE_MAX_SIZE)
+        )
 
         union_name = federation_session_id
         policy_id = federation_session_id
@@ -81,8 +81,7 @@ class Federation(FederationBase):
         rabbitmq_run = runtime_conf.get("job_parameters", {}).get("rabbitmq_run", {})
         LOGGER.debug(f"rabbitmq_run: {rabbitmq_run}")
 
-        max_message_size = int(rabbitmq_run.get(
-            "max_message_size", max_message_size))
+        max_message_size = int(rabbitmq_run.get("max_message_size", max_message_size))
 
         LOGGER.debug(f"set max message size to {max_message_size} Bytes")
 
@@ -95,16 +94,35 @@ class Federation(FederationBase):
             route_table_path = "conf/rabbitmq_route_table.yaml"
         route_table = file_utils.load_yaml_conf(conf_path=route_table_path)
         mq = MQ(host, port, union_name, policy_id, route_table)
-        conf = rabbit_manager.runtime_config.get(
-            "connection", {}
-        )
+        conf = rabbit_manager.runtime_config.get("connection", {})
 
         return Federation(
-            federation_session_id, party, mq, rabbit_manager, max_message_size, conf, mode
+            federation_session_id,
+            party,
+            mq,
+            rabbit_manager,
+            max_message_size,
+            conf,
+            mode,
         )
 
-    def __init__(self, session_id, party: Party, mq: MQ, rabbit_manager: RabbitManager, max_message_size, conf, mode):
-        super().__init__(session_id=session_id, party=party, mq=mq, max_message_size=max_message_size, conf=conf)
+    def __init__(
+        self,
+        session_id,
+        party: Party,
+        mq: MQ,
+        rabbit_manager: RabbitManager,
+        max_message_size,
+        conf,
+        mode,
+    ):
+        super().__init__(
+            session_id=session_id,
+            party=party,
+            mq=mq,
+            max_message_size=max_message_size,
+            conf=conf,
+        )
         self._rabbit_manager = rabbit_manager
         self._vhost_set = set()
         self._mode = mode
@@ -153,7 +171,7 @@ class Federation(FederationBase):
             namespace=self._session_id,
             vhost=vhost_name,
             send=send_queue_name,
-            receive=receive_queue_name
+            receive=receive_queue_name,
         )
 
         # initial vhost
@@ -181,7 +199,7 @@ class Federation(FederationBase):
             namespace=self._session_id,
             vhost=vhost_name,
             send=send_queue_name,
-            receive=receive_queue_name
+            receive=receive_queue_name,
         )
 
         # initial vhost
@@ -196,9 +214,7 @@ class Federation(FederationBase):
         self._rabbit_manager.create_queue(topic_pair.vhost, topic_pair.send)
 
         # initial receive queue, the name is receive-${vhost}
-        self._rabbit_manager.create_queue(
-            topic_pair.vhost, topic_pair.receive
-        )
+        self._rabbit_manager.create_queue(topic_pair.vhost, topic_pair.receive)
 
         upstream_uri = self._upstream_uri(party_id=party.party_id)
         self._rabbit_manager.federate_queue(
@@ -219,9 +235,19 @@ class Federation(FederationBase):
         return upstream_uri
 
     def _get_channel(
-            self, topic_pair, src_party_id, src_role, dst_party_id, dst_role, mq=None, conf: dict = None):
-        LOGGER.debug(f"rabbitmq federation _get_channel, src_party_id={src_party_id}, src_role={src_role},"
-                     f"dst_party_id={dst_party_id}, dst_role={dst_role}")
+        self,
+        topic_pair,
+        src_party_id,
+        src_role,
+        dst_party_id,
+        dst_role,
+        mq=None,
+        conf: dict = None,
+    ):
+        LOGGER.debug(
+            f"rabbitmq federation _get_channel, src_party_id={src_party_id}, src_role={src_role},"
+            f"dst_party_id={dst_party_id}, dst_role={dst_role}"
+        )
         return MQChannel(
             host=mq.host,
             port=mq.port,
@@ -248,7 +274,7 @@ class Federation(FederationBase):
                 "message_id": properties.message_id,
                 "correlation_id": properties.correlation_id,
                 "content_type": properties.content_type,
-                "headers": json.dumps(properties.headers)
+                "headers": json.dumps(properties.headers),
             }
 
             yield method.delivery_tag, properties, body

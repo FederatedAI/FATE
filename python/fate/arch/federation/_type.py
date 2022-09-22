@@ -16,10 +16,10 @@
 
 
 class FederationEngine(object):
-    EGGROLL = 'EGGROLL'
-    RABBITMQ = 'RABBITMQ'
-    STANDALONE = 'STANDALONE'
-    PULSAR = 'PULSAR'
+    EGGROLL = "EGGROLL"
+    RABBITMQ = "RABBITMQ"
+    STANDALONE = "STANDALONE"
+    PULSAR = "PULSAR"
 
 
 class FederationDataType(object):

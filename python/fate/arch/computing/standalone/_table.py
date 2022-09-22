@@ -17,10 +17,10 @@
 import itertools
 import typing
 
-from fate_arch.abc import CTableABC
-from fate_arch.common import log
-from fate_arch.common.profile import computing_profile
-from fate_arch.computing._type import ComputingEngine
+from ...abc import CTableABC
+from ...common import log
+from ...common.profile import computing_profile
+from .._type import ComputingEngine
 
 LOGGER = log.getLogger()
 
@@ -48,7 +48,7 @@ class Table(CTableABC):
 
     @computing_profile
     def save(self, address, partitions, schema, **kwargs):
-        from fate_arch.common.address import StandaloneAddress
+        from ...common.address import StandaloneAddress
 
         if isinstance(address, StandaloneAddress):
             self._table.save_as(
@@ -60,10 +60,10 @@ class Table(CTableABC):
             schema.update(self.schema)
             return
 
-        from fate_arch.common.address import PathAddress
+        from ...common.address import PathAddress
 
         if isinstance(address, PathAddress):
-            from fate_arch.computing.non_distributed import LocalData
+            from ...computing.non_distributed import LocalData
 
             return LocalData(address.path)
         raise NotImplementedError(

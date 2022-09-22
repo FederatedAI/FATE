@@ -18,9 +18,9 @@ import hashlib
 import typing
 from typing import Union
 
-from fate_arch.common import Party, profile
-from fate_arch.common.log import getLogger
-from fate_arch.federation._gc import IterationGC
+from ..common import Party, profile
+from ..common.log import getLogger
+from ..federation._gc import IterationGC
 
 __all__ = ["Variable", "BaseTransferVariables"]
 
@@ -126,7 +126,7 @@ class Variable(object):
         -------
         None
         """
-        from fate_arch.session import get_session
+        from ..session import get_session
 
         session = get_session()
         if isinstance(parties, Party):
@@ -177,7 +177,7 @@ class Variable(object):
            a list of objects/tables get from parties with same order of ``parties``
 
         """
-        from fate_arch.session import get_session
+        from ..session import get_session
 
         session = get_session()
         if not isinstance(parties, list):
@@ -220,7 +220,7 @@ class Variable(object):
                 The default is -1, which means sent values to parties regardless their party id
             suffix: additional tag suffix, the default is tuple()
         """
-        from fate_arch.session import get_parties
+        from ..session import get_parties
 
         party_info = get_parties()
         if idx >= 0 and role is None:
@@ -254,7 +254,7 @@ class Variable(object):
         Returns:
             object or list of object
         """
-        from fate_arch.session import get_parties
+        from ..session import get_parties
 
         if role is None:
             src_parties = get_parties().roles_to_parties(roles=self._src, strict=False)
@@ -326,7 +326,7 @@ class BaseTransferVariables(object):
            list of parties
 
         """
-        from fate_arch.session import get_parties
+        from ..session import get_parties
 
         return get_parties().all_parties
 
@@ -341,6 +341,6 @@ class BaseTransferVariables(object):
            party this program running on
 
         """
-        from fate_arch.session import get_parties
+        from ..session import get_parties
 
         return get_parties().local_party

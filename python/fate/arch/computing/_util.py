@@ -15,7 +15,7 @@
 #
 
 
-from fate_arch.abc import CTableABC
+from ..abc import CTableABC
 
 
 def is_table(v):

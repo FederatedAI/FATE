@@ -14,6 +14,6 @@
 #  limitations under the License.
 #
 
-from fate_arch.federation.rabbitmq._federation import Federation, MQ, RabbitManager
+from ._federation import MQ, Federation, RabbitManager
 
-__all__ = ['Federation', 'MQ', 'RabbitManager']
+__all__ = ["Federation", "MQ", "RabbitManager"]

@@ -15,7 +15,8 @@
 #
 
 from typing import Iterable
-from fate_arch.storage import StorageTableBase, StorageEngine, EggRollStoreType
+
+from ...storage import EggRollStoreType, StorageEngine, StorageTableBase
 
 
 class StorageTable(StorageTableBase):
@@ -54,7 +55,7 @@ class StorageTable(StorageTableBase):
             address=address,
             partitions=partitions,
             name=name,
-            namespace=namespace
+            namespace=namespace,
         )
         return table
 

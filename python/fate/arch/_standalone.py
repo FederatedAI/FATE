@@ -34,10 +34,9 @@ import cloudpickle as f_pickle
 import lmdb
 import numpy as np
 
-from fate_arch.common import Party, file_utils
-from fate_arch.common.log import getLogger
-from fate_arch.federation import FederationDataType
-
+from .common import Party, file_utils
+from .common.log import getLogger
+from .federation import FederationDataType
 
 LOGGER = getLogger()
 
@@ -341,9 +340,7 @@ class Table(object):
         with self._get_env_for_partition(p) as env:
             with env.begin(write=True) as txn:
                 old_value_bytes = txn.get(k_bytes)
-                return (
-                    None if old_value_bytes is None else deserialize(old_value_bytes)
-                )
+                return None if old_value_bytes is None else deserialize(old_value_bytes)
 
     def delete(self, k):
         k_bytes = _k_to_bytes(k=k)
@@ -487,7 +484,10 @@ def _get_splits(obj, max_message_size):
         return obj, num_slice
     else:
         _max_size = max_message_size
-        kv = [(i, obj_bytes[slice(i * _max_size, (i + 1) * _max_size)]) for i in range(num_slice)]
+        kv = [
+            (i, obj_bytes[slice(i * _max_size, (i + 1) * _max_size)])
+            for i in range(num_slice)
+        ]
         return kv, num_slice
 
 
@@ -667,10 +667,13 @@ class Federation(object):
                 dtype = r[2]
                 LOGGER.debug(
                     f"[{log_str}] got "
-                    f"Table(namespace={table.namespace}, name={table.name}, partitions={table.partitions}), dtype={dtype}")
+                    f"Table(namespace={table.namespace}, name={table.name}, partitions={table.partitions}), dtype={dtype}"
+                )
 
                 if dtype == FederationDataType.SPLIT_OBJECT:
-                    obj_bytes = b''.join(map(lambda t: t[1], sorted(table.collect(), key=lambda x: x[0])))
+                    obj_bytes = b"".join(
+                        map(lambda t: t[1], sorted(table.collect(), key=lambda x: x[0]))
+                    )
                     obj = deserialize(obj_bytes)
                     rtn.append(obj)
                 else:

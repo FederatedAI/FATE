@@ -1,7 +1,7 @@
 import operator
 
-from fate_arch.common.base_utils import current_timestamp
-from fate_arch.metastore.db_models import DB, StorageConnectorModel
+from ..common.base_utils import current_timestamp
+from ..metastore.db_models import DB, StorageConnectorModel
 
 
 class StorageConnector:
@@ -17,11 +17,10 @@ class StorageConnector:
             "f_engine": self.engine,
             "f_connector_info": self.connector_info,
             "f_create_time": current_timestamp(),
-
         }
         connector, status = StorageConnectorModel.get_or_create(
-            f_name=self.name,
-            defaults=defaults)
+            f_name=self.name, defaults=defaults
+        )
         if status is False:
             for key in defaults:
                 setattr(connector, key, defaults[key])
@@ -29,8 +28,12 @@ class StorageConnector:
 
     @DB.connection_context()
     def get_info(self):
-        connectors = [connector for connector in StorageConnectorModel.select().where(
-            operator.attrgetter("f_name")(StorageConnectorModel) == self.name)]
+        connectors = [
+            connector
+            for connector in StorageConnectorModel.select().where(
+                operator.attrgetter("f_name")(StorageConnectorModel) == self.name
+            )
+        ]
         if connectors:
             return connectors[0].f_connector_info
         else:

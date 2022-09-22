@@ -15,13 +15,13 @@
 #
 
 import inspect
-import traceback
 import logging
 import os
+import traceback
 from logging.handlers import TimedRotatingFileHandler
 from threading import RLock
 
-from fate_arch.common import file_utils
+from .file_utils import get_project_base_directory
 
 
 class LoggerFactory(object):
@@ -50,14 +50,16 @@ class LoggerFactory(object):
     schedule_logger_dict = {}
 
     @staticmethod
-    def set_directory(directory=None, parent_log_dir=None, append_to_parent_log=None, force=False):
+    def set_directory(
+        directory=None, parent_log_dir=None, append_to_parent_log=None, force=False
+    ):
         if parent_log_dir:
             LoggerFactory.PARENT_LOG_DIR = parent_log_dir
         if append_to_parent_log:
             LoggerFactory.append_to_parent_log = append_to_parent_log
         with LoggerFactory.lock:
             if not directory:
-                directory = file_utils.get_project_base_directory("logs")
+                directory = get_project_base_directory("logs")
             if not LoggerFactory.LOG_DIR or force:
                 LoggerFactory.LOG_DIR = directory
             if LoggerFactory.log_share:
@@ -123,30 +125,36 @@ class LoggerFactory(object):
                 return logging.StreamHandler()
 
             if not log_dir:
-                log_file = os.path.join(LoggerFactory.LOG_DIR, "{}.log".format(class_name))
+                log_file = os.path.join(
+                    LoggerFactory.LOG_DIR, "{}.log".format(class_name)
+                )
             else:
                 log_file = os.path.join(log_dir, "{}.log".format(class_name))
         else:
-            log_file = os.path.join(log_dir, "fate_flow_{}.log".format(
-                log_type) if level == LoggerFactory.LEVEL else 'fate_flow_{}_error.log'.format(log_type))
+            log_file = os.path.join(
+                log_dir,
+                "fate_flow_{}.log".format(log_type)
+                if level == LoggerFactory.LEVEL
+                else "fate_flow_{}_error.log".format(log_type),
+            )
         job_id = job_id or os.getenv("FATE_JOB_ID")
         if job_id:
-            formatter = logging.Formatter(LoggerFactory.LOG_FORMAT.replace("jobId", job_id))
+            formatter = logging.Formatter(
+                LoggerFactory.LOG_FORMAT.replace("jobId", job_id)
+            )
         else:
-            formatter = logging.Formatter(LoggerFactory.LOG_FORMAT.replace("jobId", "Server"))
+            formatter = logging.Formatter(
+                LoggerFactory.LOG_FORMAT.replace("jobId", "Server")
+            )
         os.makedirs(os.path.dirname(log_file), exist_ok=True)
         if LoggerFactory.log_share:
-            handler = ROpenHandler(log_file,
-                                   when='D',
-                                   interval=1,
-                                   backupCount=14,
-                                   delay=True)
+            handler = ROpenHandler(
+                log_file, when="D", interval=1, backupCount=14, delay=True
+            )
         else:
-            handler = TimedRotatingFileHandler(log_file,
-                                               when='D',
-                                               interval=1,
-                                               backupCount=14,
-                                               delay=True)
+            handler = TimedRotatingFileHandler(
+                log_file, when="D", interval=1, backupCount=14, delay=True
+            )
 
         if level:
             handler.level = level
@@ -176,13 +184,18 @@ class LoggerFactory(object):
             for level in LoggerFactory.levels:
                 if level >= LoggerFactory.LEVEL:
                     level_logger_name = logging._levelToName[level]
-                    logger.addHandler(LoggerFactory.get_global_handler(level_logger_name, level))
+                    logger.addHandler(
+                        LoggerFactory.get_global_handler(level_logger_name, level)
+                    )
         if LoggerFactory.append_to_parent_log and LoggerFactory.PARENT_LOG_DIR:
             for level in LoggerFactory.levels:
                 if level >= LoggerFactory.LEVEL:
                     level_logger_name = logging._levelToName[level]
                     logger.addHandler(
-                        LoggerFactory.get_global_handler(level_logger_name, level, LoggerFactory.PARENT_LOG_DIR))
+                        LoggerFactory.get_global_handler(
+                            level_logger_name, level, LoggerFactory.PARENT_LOG_DIR
+                        )
+                    )
 
 
 def setDirectory(directory=None):
@@ -197,7 +210,7 @@ def getLogger(className=None, useLevelFile=False):
     if className is None:
         frame = inspect.stack()[1]
         module = inspect.getmodule(frame[0])
-        className = 'stat'
+        className = "stat"
     return LoggerFactory.get_logger(className)
 
 

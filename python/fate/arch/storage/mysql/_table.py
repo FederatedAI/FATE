@@ -14,8 +14,7 @@
 #  limitations under the License.
 #
 
-from fate_arch.storage import StorageEngine, MySQLStoreType
-from fate_arch.storage import StorageTableBase
+from ...storage import MySQLStoreType, StorageEngine, StorageTableBase
 
 
 class StorageTable(StorageTableBase):
@@ -50,9 +49,7 @@ class StorageTable(StorageTableBase):
                     schema.get("sid"), schema.get("header"), self._address.name
                 )
             else:
-                sql = "SELECT {} FROM {}".format(
-                    schema.get("sid"), self._address.name
-                )
+                sql = "SELECT {} FROM {}".format(schema.get("sid"), self._address.name)
             feature_data = self.execute(sql)
             for feature in feature_data:
                 if feature:
@@ -115,7 +112,9 @@ class StorageTable(StorageTableBase):
         self._con.commit()
 
     def _save_as(self, address, name, namespace, partitions=None, **kwargs):
-        sql = "create table {}.{} select * from {};".format(namespace, name, self._address.name)
+        sql = "create table {}.{} select * from {};".format(
+            namespace, name, self._address.name
+        )
         self._cur.execute(sql)
         self._con.commit()
 

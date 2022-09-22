@@ -15,15 +15,13 @@
 #
 
 import io
-import os
 from typing import Iterable
 
 from pyarrow import fs
 
-from fate_arch.common import hdfs_utils
-from fate_arch.common.log import getLogger
-from fate_arch.storage import StorageEngine, LocalFSStoreType
-from fate_arch.storage import StorageTableBase
+from ...common import hdfs_utils
+from ...common.log import getLogger
+from ...storage import LocalFSStoreType, StorageEngine, StorageTableBase
 
 LOGGER = getLogger()
 
@@ -99,9 +97,7 @@ class StorageTable(StorageTableBase):
             count += 1
         return count
 
-    def _save_as(
-        self, address, partitions=None, name=None, namespace=None, **kwargs
-    ):
+    def _save_as(self, address, partitions=None, name=None, namespace=None, **kwargs):
         self._local_fs_client.copy_file(src=self.path, dst=address.path)
         return StorageTable(
             address=address,
@@ -130,7 +126,9 @@ class StorageTable(StorageTableBase):
             selector = fs.FileSelector(self.path)
             file_infos = self._local_fs_client.get_file_info(selector)
             for file_info in file_infos:
-                if file_info.base_name.startswith(".") or file_info.base_name.startswith("_"):
+                if file_info.base_name.startswith(
+                    "."
+                ) or file_info.base_name.startswith("_"):
                     continue
                 assert (
                     file_info.is_file
@@ -179,6 +177,8 @@ class StorageTable(StorageTableBase):
             offset += len(buffer_block[:end_index])
 
     def _read_lines(self, buffer_block):
-        with io.TextIOWrapper(buffer=io.BytesIO(buffer_block), encoding="utf-8") as reader:
+        with io.TextIOWrapper(
+            buffer=io.BytesIO(buffer_block), encoding="utf-8"
+        ) as reader:
             for line in reader:
                 yield line

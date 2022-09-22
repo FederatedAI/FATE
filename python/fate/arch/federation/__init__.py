@@ -1,7 +1,3 @@
-from fate_arch.federation._type import FederationEngine
-from fate_arch.federation._type import FederationDataType
+from ._type import FederationDataType, FederationEngine
 
-__all__ = [
-    "FederationEngine",
-    "FederationDataType"
-]
+__all__ = ["FederationEngine", "FederationDataType"]

@@ -14,15 +14,12 @@
 #  limitations under the License.
 #
 
-
-from fate_arch._standalone import Table as StandaloneTable
-from fate_arch.abc import AddressABC, CTableABC
-
+from ..._standalone import Table as StandaloneTable
+from ...abc import AddressABC, CTableABC
 
 # noinspection PyAbstractClass
 class Table(CTableABC):
     def __init__(self, table: StandaloneTable):
         self._table = table
         ...
-
     def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs): ...

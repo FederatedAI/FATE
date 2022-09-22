@@ -16,8 +16,8 @@
 
 
 import io
-import sys
 import json
+import sys
 
 
 # Datastream is a wraper of StringIO, it receives kv pairs and dump it to json string

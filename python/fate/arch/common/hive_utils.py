@@ -15,10 +15,11 @@
 #
 
 import pickle
+
 from pyspark.sql import Row
 
-_DELIMITER = ','
-NEWLINE = '\n'
+_DELIMITER = ","
+NEWLINE = "\n"
 
 
 def deserialize_line(line):
@@ -26,12 +27,12 @@ def deserialize_line(line):
 
 
 def serialize_line(k, v):
-    return f'{_DELIMITER}'.join([k, pickle.dumps(v).hex()]) + f"{NEWLINE}"
+    return f"{_DELIMITER}".join([k, pickle.dumps(v).hex()]) + f"{NEWLINE}"
 
 
 def read_line(line_data):
     line = [str(i) for i in line_data]
-    return f'{_DELIMITER}'.join(line) + f"{NEWLINE}"
+    return f"{_DELIMITER}".join(line) + f"{NEWLINE}"
 
 
 def from_row(r):

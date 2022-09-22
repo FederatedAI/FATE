@@ -17,44 +17,69 @@ import traceback
 
 import pymysql
 
-from fate_arch.storage import StorageSessionBase, StorageEngine, MySQLStoreType
-from fate_arch.abc import AddressABC
-from fate_arch.common.address import MysqlAddress
+from ...abc import AddressABC
+from ...common.address import MysqlAddress
+from ...storage import MySQLStoreType, StorageEngine, StorageSessionBase
 
 
 class StorageSession(StorageSessionBase):
     def __init__(self, session_id, options=None):
-        super(StorageSession, self).__init__(session_id=session_id, engine=StorageEngine.MYSQL)
+        super(StorageSession, self).__init__(
+            session_id=session_id, engine=StorageEngine.MYSQL
+        )
         self._db_con = {}
 
-    def table(self, name, namespace, address: AddressABC, partitions,
-              store_type: MySQLStoreType = MySQLStoreType.InnoDB, options=None, **kwargs):
+    def table(
+        self,
+        name,
+        namespace,
+        address: AddressABC,
+        partitions,
+        store_type: MySQLStoreType = MySQLStoreType.InnoDB,
+        options=None,
+        **kwargs,
+    ):
 
         if isinstance(address, MysqlAddress):
-            from fate_arch.storage.mysql._table import StorageTable
-            address_key = MysqlAddress(user=None,
-                                       passwd=None,
-                                       host=address.host,
-                                       port=address.port,
-                                       db=address.db,
-                                       name=None)
+            from ...storage.mysql._table import StorageTable
+
+            address_key = MysqlAddress(
+                user=None,
+                passwd=None,
+                host=address.host,
+                port=address.port,
+                db=address.db,
+                name=None,
+            )
 
             if address_key in self._db_con:
                 con, cur = self._db_con[address_key]
             else:
                 self._create_db_if_not_exists(address)
-                con = pymysql.connect(host=address.host,
-                                      user=address.user,
-                                      passwd=address.passwd,
-                                      port=address.port,
-                                      db=address.db)
+                con = pymysql.connect(
+                    host=address.host,
+                    user=address.user,
+                    passwd=address.passwd,
+                    port=address.port,
+                    db=address.db,
+                )
                 cur = con.cursor()
                 self._db_con[address_key] = (con, cur)
 
-            return StorageTable(cur=cur, con=con, address=address, name=name, namespace=namespace,
-                                store_type=store_type, partitions=partitions, options=options)
+            return StorageTable(
+                cur=cur,
+                con=con,
+                address=address,
+                name=name,
+                namespace=namespace,
+                store_type=store_type,
+                partitions=partitions,
+                options=options,
+            )
 
-        raise NotImplementedError(f"address type {type(address)} not supported with eggroll storage")
+        raise NotImplementedError(
+            f"address type {type(address)} not supported with eggroll storage"
+        )
 
     def cleanup(self, name, namespace):
         pass
@@ -73,13 +98,15 @@ class StorageSession(StorageSessionBase):
         return self.stop()
 
     def _create_db_if_not_exists(self, address):
-        connection = pymysql.connect(host=address.host,
-                                     user=address.user,
-                                     password=address.passwd,
-                                     port=address.port)
+        connection = pymysql.connect(
+            host=address.host,
+            user=address.user,
+            password=address.passwd,
+            port=address.port,
+        )
         with connection:
             with connection.cursor() as cursor:
                 cursor.execute("create database if not exists {}".format(address.db))
-                print('create db {} success'.format(address.db))
+                print("create db {} success".format(address.db))
 
             connection.commit()

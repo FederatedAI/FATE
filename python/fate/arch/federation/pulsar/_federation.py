@@ -14,17 +14,16 @@
 #  limitations under the License.
 #
 
-from fate_arch.common import Party
-from fate_arch.common import file_utils
-from fate_arch.common.log import getLogger
-from fate_arch.federation._federation import FederationBase
-from fate_arch.federation.pulsar._mq_channel import (
-    MQChannel,
-    DEFAULT_TENANT,
+from ...common import Party, file_utils
+from ...common.log import getLogger
+from ._federation import FederationBase
+from ._mq_channel import (
     DEFAULT_CLUSTER,
     DEFAULT_SUBSCRIPTION_NAME,
+    DEFAULT_TENANT,
+    MQChannel,
 )
-from fate_arch.federation.pulsar._pulsar_manager import PulsarManager
+from ._pulsar_manager import PulsarManager
 
 LOGGER = getLogger()
 # default message max size in bytes = 1MB
@@ -59,10 +58,7 @@ class _TopicPair(object):
 class Federation(FederationBase):
     @staticmethod
     def from_conf(
-            federation_session_id: str,
-            party: Party,
-            runtime_conf: dict,
-            **kwargs
+        federation_session_id: str, party: Party, runtime_conf: dict, **kwargs
     ):
         pulsar_config = kwargs["pulsar_config"]
         LOGGER.debug(f"pulsar_config: {pulsar_config}")
@@ -75,14 +71,14 @@ class Federation(FederationBase):
         tenant = pulsar_config.get("tenant", DEFAULT_TENANT)
 
         # max_message_size；
-        max_message_size = int(pulsar_config.get("max_message_size", DEFAULT_MESSAGE_MAX_SIZE))
+        max_message_size = int(
+            pulsar_config.get("max_message_size", DEFAULT_MESSAGE_MAX_SIZE)
+        )
 
-        pulsar_run = runtime_conf.get(
-            "job_parameters", {}).get("pulsar_run", {})
+        pulsar_run = runtime_conf.get("job_parameters", {}).get("pulsar_run", {})
         LOGGER.debug(f"pulsar_run: {pulsar_run}")
 
-        max_message_size = int(pulsar_run.get(
-            "max_message_size", max_message_size))
+        max_message_size = int(pulsar_run.get("max_message_size", max_message_size))
 
         LOGGER.debug(f"set max message size to {max_message_size} Bytes")
 
@@ -102,8 +98,7 @@ class Federation(FederationBase):
         # init tenant
         tenant_info = pulsar_manager.get_tenant(tenant=tenant).json()
         if tenant_info.get("allowedClusters") is None:
-            pulsar_manager.create_tenant(
-                tenant=tenant, admins=[], clusters=[cluster])
+            pulsar_manager.create_tenant(tenant=tenant, admins=[], clusters=[cluster])
 
         route_table_path = pulsar_config.get("route_table")
         if route_table_path is None:
@@ -111,9 +106,7 @@ class Federation(FederationBase):
         route_table = file_utils.load_yaml_conf(conf_path=route_table_path)
         mq = MQ(host, port, route_table)
 
-        conf = pulsar_manager.runtime_config.get(
-            "connection", {}
-        )
+        conf = pulsar_manager.runtime_config.get("connection", {})
 
         LOGGER.debug(f"federation mode={mode}")
 
@@ -127,12 +120,29 @@ class Federation(FederationBase):
             cluster,
             tenant,
             conf,
-            mode
+            mode,
         )
 
-    def __init__(self, session_id, party: Party, mq: MQ, pulsar_manager: PulsarManager, max_message_size, topic_ttl,
-                 cluster, tenant, conf, mode):
-        super().__init__(session_id=session_id, party=party, mq=mq, max_message_size=max_message_size, conf=conf)
+    def __init__(
+        self,
+        session_id,
+        party: Party,
+        mq: MQ,
+        pulsar_manager: PulsarManager,
+        max_message_size,
+        topic_ttl,
+        cluster,
+        tenant,
+        conf,
+        mode,
+    ):
+        super().__init__(
+            session_id=session_id,
+            party=party,
+            mq=mq,
+            max_message_size=max_message_size,
+            conf=conf,
+        )
 
         self._pulsar_manager = pulsar_manager
         self._topic_ttl = topic_ttl
@@ -212,8 +222,7 @@ class Federation(FederationBase):
         )
 
         # init pulsar namespace
-        namespaces = self._pulsar_manager.get_namespace(
-            self._tenant).json()
+        namespaces = self._pulsar_manager.get_namespace(self._tenant).json()
         # create namespace
         if f"{self._tenant}/{self._session_id}" not in namespaces:
             # append target cluster to the pulsar namespace
@@ -268,44 +277,33 @@ class Federation(FederationBase):
         )
 
         if party.party_id == self._party.party_id:
-            LOGGER.debug(
-                "connecting to local broker, skipping cluster creation"
-            )
+            LOGGER.debug("connecting to local broker, skipping cluster creation")
         else:
             # init pulsar cluster
-            cluster = self._pulsar_manager.get_cluster(
-                party.party_id).json()
+            cluster = self._pulsar_manager.get_cluster(party.party_id).json()
             if (
-                    cluster.get("brokerServiceUrl", "") == ""
-                    and cluster.get("brokerServiceUrlTls", "") == ""
+                cluster.get("brokerServiceUrl", "") == ""
+                and cluster.get("brokerServiceUrlTls", "") == ""
             ):
                 LOGGER.debug(
                     "pulsar cluster with name %s does not exist or broker url is empty, creating...",
                     party.party_id,
                 )
 
-                remote_party = self._mq.route_table.get(
-                    int(party.party_id), None
-                )
+                remote_party = self._mq.route_table.get(int(party.party_id), None)
 
                 # handle party does not exist in route table first
                 if remote_party is None:
-                    domain = self._mq.route_table.get(
-                        "default").get("domain")
+                    domain = self._mq.route_table.get("default").get("domain")
                     host = f"{party.party_id}.{domain}"
-                    port = self._mq.route_table.get("default").get(
-                        "brokerPort", "6650"
-                    )
+                    port = self._mq.route_table.get("default").get("brokerPort", "6650")
                     sslPort = self._mq.route_table.get("default").get(
                         "brokerSslPort", "6651"
                     )
-                    proxy = self._mq.route_table.get(
-                        "default").get("proxy", "")
+                    proxy = self._mq.route_table.get("default").get("proxy", "")
                 # fetch party info from the route table
                 else:
-                    host = self._mq.route_table.get(int(party.party_id)).get(
-                        "host"
-                    )
+                    host = self._mq.route_table.get(int(party.party_id)).get("host")
                     port = self._mq.route_table.get(int(party.party_id)).get(
                         "port", "6650"
                     )
@@ -322,10 +320,10 @@ class Federation(FederationBase):
                     proxy = f"pulsar+ssl://{proxy}"
 
                 if self._pulsar_manager.create_cluster(
-                        cluster_name=party.party_id,
-                        broker_url=broker_url,
-                        broker_url_tls=broker_url_tls,
-                        proxy_url=proxy,
+                    cluster_name=party.party_id,
+                    broker_url=broker_url,
+                    broker_url_tls=broker_url_tls,
+                    proxy_url=proxy,
                 ).ok:
                     LOGGER.debug(
                         "pulsar cluster with name: %s, broker_url: %s created",
@@ -333,10 +331,10 @@ class Federation(FederationBase):
                         broker_url,
                     )
                 elif self._pulsar_manager.update_cluster(
-                        cluster_name=party.party_id,
-                        broker_url=broker_url,
-                        broker_url_tls=broker_url_tls,
-                        proxy_url=proxy,
+                    cluster_name=party.party_id,
+                    broker_url=broker_url,
+                    broker_url_tls=broker_url_tls,
+                    proxy_url=proxy,
                 ).ok:
                     LOGGER.debug(
                         "pulsar cluster with name: %s, broker_url: %s updated",
@@ -344,26 +342,23 @@ class Federation(FederationBase):
                         broker_url,
                     )
                 else:
-                    error_message = (
-                        "unable to create pulsar cluster: %s".format(
-                            party.party_id
-                        )
+                    error_message = "unable to create pulsar cluster: %s".format(
+                        party.party_id
                     )
                     LOGGER.error(error_message)
                     # just leave this alone.
                     raise Exception(error_message)
 
             # update tenant
-            tenant_info = self._pulsar_manager.get_tenant(
-                self._tenant).json()
+            tenant_info = self._pulsar_manager.get_tenant(self._tenant).json()
             if party.party_id not in tenant_info["allowedClusters"]:
                 tenant_info["allowedClusters"].append(party.party_id)
                 if self._pulsar_manager.update_tenant(
-                        self._tenant,
-                        tenant_info.get("admins", []),
-                        tenant_info.get(
-                            "allowedClusters",
-                        ),
+                    self._tenant,
+                    tenant_info.get("admins", []),
+                    tenant_info.get(
+                        "allowedClusters",
+                    ),
                 ).ok:
                     LOGGER.debug(
                         "successfully update tenant with cluster: %s",
@@ -374,15 +369,14 @@ class Federation(FederationBase):
 
         # TODO: remove this for the loop
         # init pulsar namespace
-        namespaces = self._pulsar_manager.get_namespace(
-            self._tenant).json()
+        namespaces = self._pulsar_manager.get_namespace(self._tenant).json()
         # create namespace
         if f"{self._tenant}/{self._session_id}" not in namespaces:
             # append target cluster to the pulsar namespace
             clusters = [self._cluster]
             if (
-                    party.party_id != self._party.party_id
-                    and party.party_id not in clusters
+                party.party_id != self._party.party_id
+                and party.party_id not in clusters
             ):
                 clusters.append(party.party_id)
 
@@ -431,7 +425,7 @@ class Federation(FederationBase):
                 if party.party_id not in clusters:
                     clusters.append(party.party_id)
                     if self._pulsar_manager.set_clusters_to_namespace(
-                            self._tenant, self._session_id, clusters
+                        self._tenant, self._session_id, clusters
                     ).ok:
                         LOGGER.debug(
                             "successfully set clusters: {}  to pulsar namespace: {}".format(
@@ -447,8 +441,16 @@ class Federation(FederationBase):
 
         return topic_pair
 
-    def _get_channel(self, topic_pair: _TopicPair, src_party_id, src_role, dst_party_id, dst_role, mq=None,
-                     conf: dict = None):
+    def _get_channel(
+        self,
+        topic_pair: _TopicPair,
+        src_party_id,
+        src_role,
+        dst_party_id,
+        dst_role,
+        mq=None,
+        conf: dict = None,
+    ):
         return MQChannel(
             host=mq.host,
             port=mq.port,

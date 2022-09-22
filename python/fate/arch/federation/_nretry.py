@@ -16,18 +16,16 @@
 
 import time
 
-from fate_arch.common.log import getLogger
+from ..common.log import getLogger
 
 LOGGER = getLogger()
 
 
 def nretry(func):
-    """retry connection
-    """
+    """retry connection"""
 
     def wrapper(self, *args, **kwargs):
-        """wrapper
-        """
+        """wrapper"""
         res = None
         exception = None
         for ntry in range(10):
@@ -41,9 +39,7 @@ def nretry(func):
                 time.sleep(1)
 
         if exception is not None:
-            LOGGER.debug(
-                f"failed",
-                exc_info=exception)
+            LOGGER.debug(f"failed", exc_info=exception)
             raise exception
 
         return res

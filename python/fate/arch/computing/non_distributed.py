@@ -15,7 +15,7 @@
 #
 
 
-class LocalData():
+class LocalData:
     def __init__(self, path, engine=None):
         self.path = path
         self.schema = {"header": [], "sid_name": "id"}

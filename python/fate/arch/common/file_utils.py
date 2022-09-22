@@ -70,7 +70,9 @@ def get_fate_python_directory(*args):
 
 
 def get_federatedml_setting_conf_directory():
-    return os.path.join(get_fate_python_directory(), 'federatedml', 'conf', 'setting_conf')
+    return os.path.join(
+        get_fate_python_directory(), "federatedml", "conf", "setting_conf"
+    )
 
 
 @cached(cache=LRUCache(maxsize=10))

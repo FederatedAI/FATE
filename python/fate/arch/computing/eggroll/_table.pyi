@@ -14,14 +14,12 @@
 #  limitations under the License.
 #
 from eggroll.roll_pair.roll_pair import RollPair
-from fate_arch.abc import AddressABC, CTableABC
 
+from ...abc import AddressABC, CTableABC
 
 # noinspection PyAbstractClass
 class Table(CTableABC):
-
     def __init__(self, rp: RollPair):
         self._rp: RollPair = ...
         ...
-
     def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs): ...

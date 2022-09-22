@@ -14,7 +14,8 @@
 #  limitations under the License.
 #
 from pyspark import SparkContext
-sc = SparkContext('local', 'test')
+
+sc = SparkContext("local", "test")
 a = []
 for i in range(10):
     a.append((i, str(i)))

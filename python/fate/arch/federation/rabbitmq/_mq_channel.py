@@ -15,30 +15,32 @@
 #
 
 import json
+
 import pika
 
-from fate_arch.common import log
-from fate_arch.federation._nretry import nretry
+from ...common import log
+from .._nretry import nretry
 
 LOGGER = log.getLogger()
 
 
 class MQChannel(object):
-
-    def __init__(self,
-                 host,
-                 port,
-                 user,
-                 password,
-                 namespace,
-                 vhost,
-                 send_queue_name,
-                 receive_queue_name,
-                 src_party_id,
-                 src_role,
-                 dst_party_id,
-                 dst_role,
-                 extra_args: dict):
+    def __init__(
+        self,
+        host,
+        port,
+        user,
+        password,
+        namespace,
+        vhost,
+        send_queue_name,
+        receive_queue_name,
+        src_party_id,
+        src_role,
+        dst_party_id,
+        dst_role,
+        extra_args: dict,
+    ):
         self._host = host
         self._port = port
         self._credentials = pika.PlainCredentials(user, password)
@@ -87,8 +89,12 @@ class MQChannel(object):
             delivery_mode=1,
         )
 
-        return self._channel.basic_publish(exchange='', routing_key=self._send_queue_name, body=body,
-                                           properties=properties)
+        return self._channel.basic_publish(
+            exchange="",
+            routing_key=self._send_queue_name,
+            body=body,
+            properties=properties,
+        )
 
     @nretry
     def consume(self):
@@ -113,10 +119,15 @@ class MQChannel(object):
             self._clear()
 
         if not self._conn:
-            self._conn = pika.BlockingConnection(pika.ConnectionParameters(host=self._host, port=self._port,
-                                                                           virtual_host=self._vhost,
-                                                                           credentials=self._credentials,
-                                                                           **self._extra_args))
+            self._conn = pika.BlockingConnection(
+                pika.ConnectionParameters(
+                    host=self._host,
+                    port=self._port,
+                    virtual_host=self._vhost,
+                    credentials=self._credentials,
+                    **self._extra_args,
+                )
+            )
 
         if not self._channel:
             self._channel = self._conn.channel()
@@ -137,4 +148,9 @@ class MQChannel(object):
             self._channel = None
 
     def _check_alive(self):
-        return self._channel and self._channel.is_open and self._conn and self._conn.is_open
+        return (
+            self._channel
+            and self._channel.is_open
+            and self._conn
+            and self._conn.is_open
+        )

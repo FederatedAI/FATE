@@ -14,11 +14,11 @@
 #  limitations under the License.
 #
 import os
-
-import dotenv
 import typing
 
-from fate_arch.common.file_utils import get_project_base_directory
+import dotenv
+
+from .file_utils import get_project_base_directory
 
 
 def get_versions() -> typing.Mapping[str, typing.Any]:

@@ -1,5 +1,3 @@
-
-
 class EngineType(object):
     COMPUTING = "computing"
     STORAGE = "storage"
@@ -58,6 +56,7 @@ class BaseType:
             else:
                 data = obj
             return {"type": obj.__class__.__name__, "data": data, "module": module}
+
         return _dict(self)
 
 
@@ -84,6 +83,9 @@ class Party(BaseType):
 
     def __eq__(self, other):
         return self.party_id == other.party_id and self.role == other.role
+
+    def as_tuple(self):
+        return (self.role, self.party_id)
 
 
 class DTable(BaseType):

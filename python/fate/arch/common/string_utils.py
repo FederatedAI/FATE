@@ -20,9 +20,9 @@ import string
 
 def random_string(string_length=6):
     letters = string.ascii_lowercase
-    return ''.join(random.choice(letters) for _ in range(string_length))
+    return "".join(random.choice(letters) for _ in range(string_length))
 
 
 def random_number_string(string_length=6):
     letters = string.octdigits
-    return ''.join(random.choice(letters) for _ in range(string_length))
+    return "".join(random.choice(letters) for _ in range(string_length))

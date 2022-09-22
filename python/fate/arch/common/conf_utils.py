@@ -14,10 +14,11 @@
 #  limitations under the License.
 #
 import os
-from filelock import FileLock
 from importlib import import_module
 
-from fate_arch.common import file_utils
+from filelock import FileLock
+
+from .file_utils import get_project_base_directory, load_yaml_conf, rewrite_yaml_conf
 
 SERVICE_CONF = "service_conf.yaml"
 TRANSFER_CONF = "transfer_conf.yaml"
@@ -25,15 +26,15 @@ TRANSFER_CONF = "transfer_conf.yaml"
 
 def conf_realpath(conf_name):
     conf_path = f"conf/{conf_name}"
-    return os.path.join(file_utils.get_project_base_directory(), conf_path)
+    return os.path.join(get_project_base_directory(), conf_path)
 
 
 def get_base_config(key, default=None, conf_name=SERVICE_CONF) -> dict:
     local_config = {}
-    local_path = conf_realpath(f'local.{conf_name}')
+    local_path = conf_realpath(f"local.{conf_name}")
 
     if os.path.exists(local_path):
-        local_config = file_utils.load_yaml_conf(local_path)
+        local_config = load_yaml_conf(local_path)
         if not isinstance(local_config, dict):
             raise ValueError(f'Invalid config file: "{local_path}".')
 
@@ -41,7 +42,7 @@ def get_base_config(key, default=None, conf_name=SERVICE_CONF) -> dict:
             return local_config[key]
 
     config_path = conf_realpath(conf_name)
-    config = file_utils.load_yaml_conf(config_path)
+    config = load_yaml_conf(config_path)
 
     if not isinstance(config, dict):
         raise ValueError(f'Invalid config file: "{config_path}".')
@@ -78,9 +79,9 @@ def decrypt_database_config(database=None, passwd_key="passwd"):
 def update_config(key, value, conf_name=SERVICE_CONF):
     conf_path = conf_realpath(conf_name=conf_name)
     if not os.path.isabs(conf_path):
-        conf_path = os.path.join(file_utils.get_project_base_directory(), conf_path)
+        conf_path = os.path.join(get_project_base_directory(), conf_path)
 
     with FileLock(os.path.join(os.path.dirname(conf_path), ".lock")):
-        config = file_utils.load_yaml_conf(conf_path=conf_path) or {}
+        config = load_yaml_conf(conf_path=conf_path) or {}
         config[key] = value
-        file_utils.rewrite_yaml_conf(conf_path=conf_path, config=config)
+        rewrite_yaml_conf(conf_path=conf_path, config=config)

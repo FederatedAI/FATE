@@ -18,7 +18,7 @@
 import concurrent.futures
 import typing
 
-from fate_arch.common.log import getLogger
+from .log import getLogger
 
 LOGGER = getLogger()
 

@@ -17,7 +17,7 @@
 
 import typing
 
-from fate_arch.common import Party
+from ._types import Party
 
 
 class Role:
@@ -95,9 +95,9 @@ class PartiesInfo(metaclass=_PartiesMeta):
         return PartiesInfo(local, role_to_parties)
 
     def __init__(
-            self,
-            local: Party,
-            role_to_parties: typing.MutableMapping[str, typing.List[Party]],
+        self,
+        local: Party,
+        role_to_parties: typing.MutableMapping[str, typing.List[Party]],
     ):
         self._local = local
         self._role_to_parties = role_to_parties

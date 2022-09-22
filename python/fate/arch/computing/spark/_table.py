@@ -14,20 +14,19 @@
 #  limitations under the License.
 #
 
+import typing
 import uuid
 from itertools import chain
 
-import typing
 import pyspark
-
 from pyspark.rddsampler import RDDSamplerBase
-
-from fate_arch.abc import CTableABC
-from fate_arch.common import log, hdfs_utils, hive_utils
-from fate_arch.common.profile import computing_profile
-from fate_arch.computing.spark._materialize import materialize, unmaterialize
 from scipy.stats import hypergeom
-from fate_arch.computing._type import ComputingEngine
+
+from ...abc import CTableABC
+from ...common import hdfs_utils, hive_utils, log
+from ...common.profile import computing_profile
+from .._type import ComputingEngine
+from ._materialize import materialize, unmaterialize
 
 LOGGER = log.getLogger()
 
@@ -59,7 +58,7 @@ class Table(CTableABC):
 
     @computing_profile
     def save(self, address, partitions, schema, **kwargs):
-        from fate_arch.common.address import HDFSAddress
+        from ...common.address import HDFSAddress
 
         if isinstance(address, HDFSAddress):
             self._rdd.map(lambda x: hdfs_utils.serialize(x[0], x[1])).repartition(
@@ -68,7 +67,7 @@ class Table(CTableABC):
             schema.update(self.schema)
             return
 
-        from fate_arch.common.address import HiveAddress, LinkisHiveAddress
+        from ...common.address import HiveAddress, LinkisHiveAddress
 
         if isinstance(address, (HiveAddress, LinkisHiveAddress)):
             # df = (
@@ -77,12 +76,14 @@ class Table(CTableABC):
             #     .toDF()
             # )
             LOGGER.debug(f"partitions: {partitions}")
-            _repartition = self._rdd.map(lambda x: hive_utils.to_row(x[0], x[1])).repartition(partitions)
+            _repartition = self._rdd.map(
+                lambda x: hive_utils.to_row(x[0], x[1])
+            ).repartition(partitions)
             _repartition.toDF().write.saveAsTable(f"{address.database}.{address.name}")
             schema.update(self.schema)
             return
 
-        from fate_arch.common.address import LocalFSAddress
+        from ...common.address import LocalFSAddress
 
         if isinstance(address, LocalFSAddress):
             self._rdd.map(lambda x: hdfs_utils.serialize(x[0], x[1])).repartition(
@@ -133,7 +134,9 @@ class Table(CTableABC):
     @computing_profile
     def mapPartitionsWithIndex(self, func, preserves_partitioning=False, **kwargs):
         return from_rdd(
-            self._rdd.mapPartitionsWithIndex(func, preservesPartitioning=preserves_partitioning)
+            self._rdd.mapPartitionsWithIndex(
+                func, preservesPartitioning=preserves_partitioning
+            )
         )
 
     @computing_profile
@@ -212,13 +215,12 @@ def from_hdfs(paths: str, partitions, in_serialized=True, id_delimiter=None):
     from pyspark import SparkContext
 
     sc = SparkContext.getOrCreate()
-    fun = hdfs_utils.deserialize if in_serialized else lambda x: (x.partition(id_delimiter)[0],
-                                                                  x.partition(id_delimiter)[2])
-    rdd = materialize(
-        sc.textFile(paths, partitions)
-        .map(fun)
-        .repartition(partitions)
+    fun = (
+        hdfs_utils.deserialize
+        if in_serialized
+        else lambda x: (x.partition(id_delimiter)[0], x.partition(id_delimiter)[2])
     )
+    rdd = materialize(sc.textFile(paths, partitions).map(fun).repartition(partitions))
     return Table(rdd=rdd)
 
 
@@ -227,13 +229,12 @@ def from_localfs(paths: str, partitions, in_serialized=True, id_delimiter=None):
     from pyspark import SparkContext
 
     sc = SparkContext.getOrCreate()
-    fun = hdfs_utils.deserialize if in_serialized else lambda x: (x.partition(id_delimiter)[0],
-                                                                  x.partition(id_delimiter)[2])
-    rdd = materialize(
-        sc.textFile(paths, partitions)
-        .map(fun)
-        .repartition(partitions)
+    fun = (
+        hdfs_utils.deserialize
+        if in_serialized
+        else lambda x: (x.partition(id_delimiter)[0], x.partition(id_delimiter)[2])
     )
+    rdd = materialize(sc.textFile(paths, partitions).map(fun).repartition(partitions))
     return Table(rdd=rdd)
 
 

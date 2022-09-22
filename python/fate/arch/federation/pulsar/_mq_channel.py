@@ -17,8 +17,8 @@
 
 import pulsar
 
-from fate_arch.common import log
-from fate_arch.federation._nretry import nretry
+from ...common import log
+from .._nretry import nretry
 
 LOGGER = log.getLogger()
 CHANNEL_TYPE_PRODUCER = "producer"
@@ -37,19 +37,19 @@ DEFAULT_SUBSCRIPTION_NAME = "unique"
 class MQChannel(object):
     # TODO add credential to secure pulsar cluster
     def __init__(
-            self,
-            host,
-            port,
-            tenant,
-            namespace,
-            send_topic,
-            receive_topic,
-            src_party_id,
-            src_role,
-            dst_party_id,
-            dst_role,
-            credential=None,
-            extra_args: dict = None,
+        self,
+        host,
+        port,
+        tenant,
+        namespace,
+        send_topic,
+        receive_topic,
+        src_party_id,
+        src_role,
+        dst_party_id,
+        dst_role,
+        credential=None,
+        extra_args: dict = None,
     ):
         # "host:port" is used to connect the pulsar broker
         self._host = host
@@ -97,8 +97,7 @@ class MQChannel(object):
         LOGGER.debug("send queue: {}".format(self._producer_send.topic()))
         LOGGER.debug("send data size: {}".format(len(body)))
 
-        message_id = self._producer_send.send(
-            content=body, properties=properties)
+        message_id = self._producer_send.send(content=body, properties=properties)
         if message_id is None:
             raise Exception("publish failed")
 
@@ -109,15 +108,11 @@ class MQChannel(object):
         self._get_or_create_consumer()
 
         try:
-            LOGGER.debug("receive topic: {}".format(
-                self._consumer_receive.topic()))
-            receive_timeout = self._consumer_config.get(
-                'receive_timeout_millis', None)
+            LOGGER.debug("receive topic: {}".format(self._consumer_receive.topic()))
+            receive_timeout = self._consumer_config.get("receive_timeout_millis", None)
             if receive_timeout is not None:
-                LOGGER.debug(
-                    f"receive timeout millis {receive_timeout}")
-            message = self._consumer_receive.receive(
-                timeout_millis=receive_timeout)
+                LOGGER.debug(f"receive timeout millis {receive_timeout}")
+            message = self._consumer_receive.receive(timeout_millis=receive_timeout)
             return message
         except Exception:
             self._consumer_receive.seek(pulsar.MessageId.earliest)
@@ -169,8 +164,7 @@ class MQChannel(object):
             # if self._producer_conn is None:
             try:
                 self._producer_conn = pulsar.Client(
-                    service_url="pulsar://{}:{}".format(
-                        self._host, self._port),
+                    service_url="pulsar://{}:{}".format(self._host, self._port),
                     operation_timeout_seconds=30,
                 )
             except Exception as e:
@@ -189,16 +183,14 @@ class MQChannel(object):
                     **self._producer_config,
                 )
             except Exception as e:
-                LOGGER.debug(
-                    f"catch exception {e} in creating pulsar producer")
+                LOGGER.debug(f"catch exception {e} in creating pulsar producer")
                 self._producer_conn = None
 
     def _get_or_create_consumer(self):
         if not self._check_consumer_alive():
             try:
                 self._consumer_conn = pulsar.Client(
-                    service_url="pulsar://{}:{}".format(
-                        self._host, self._port),
+                    service_url="pulsar://{}:{}".format(self._host, self._port),
                     operation_timeout_seconds=30,
                 )
             except Exception:
@@ -221,8 +213,7 @@ class MQChannel(object):
                     self._consumer_receive.seek(self._latest_confirmed)
 
             except Exception as e:
-                LOGGER.debug(
-                    f"catch exception {e} in creating pulsar consumer")
+                LOGGER.debug(f"catch exception {e} in creating pulsar consumer")
                 self._consumer_conn.close()
                 self._consumer_conn = None
 

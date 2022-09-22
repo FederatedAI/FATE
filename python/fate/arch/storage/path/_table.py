@@ -13,12 +13,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from typing import Iterable
 
-from fate_arch.common import path_utils
-from fate_arch.common.log import getLogger
-from fate_arch.storage import StorageEngine, PathStoreType
-from fate_arch.storage import StorageTableBase
+from ...common import path_utils
+from ...common.log import getLogger
+from ...storage import PathStoreType, StorageEngine, StorageTableBase
 
 LOGGER = getLogger()
 

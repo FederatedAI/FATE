@@ -16,10 +16,9 @@
 import os
 import uuid
 
-from fate_arch.common import hive_utils
-from fate_arch.common.file_utils import get_project_base_directory
-from fate_arch.storage import StorageEngine, HiveStoreType
-from fate_arch.storage import StorageTableBase
+from ...common import hive_utils
+from ...common.file_utils import get_project_base_directory
+from ...storage import HiveStoreType, StorageEngine, StorageTableBase
 
 
 class StorageTable(StorageTableBase):
@@ -60,7 +59,7 @@ class StorageTable(StorageTableBase):
             return result
 
     def _count(self, **kwargs):
-        sql = 'select count(*) from {}'.format(self._address.name)
+        sql = "select count(*) from {}".format(self._address.name)
         try:
             self._cur.execute(sql)
             self._con.commit()
@@ -87,23 +86,29 @@ class StorageTable(StorageTableBase):
 
     def _put_all(self, kv_list, **kwargs):
         id_name, feature_name_list, id_delimiter = self.get_id_feature_name()
-        create_table = "create table if not exists {}(k varchar(128) NOT NULL, v string) row format delimited fields terminated by" \
-                       " '{}'".format(self._address.name, id_delimiter)
+        create_table = (
+            "create table if not exists {}(k varchar(128) NOT NULL, v string) row format delimited fields terminated by"
+            " '{}'".format(self._address.name, id_delimiter)
+        )
         self._cur.execute(create_table)
         # load local file or hdfs file
-        temp_path = os.path.join(get_project_base_directory(), 'temp_data', uuid.uuid1().hex)
+        temp_path = os.path.join(
+            get_project_base_directory(), "temp_data", uuid.uuid1().hex
+        )
         os.makedirs(os.path.dirname(temp_path), exist_ok=True)
-        with open(temp_path, 'w') as f:
+        with open(temp_path, "w") as f:
             for k, v in kv_list:
                 f.write(hive_utils.serialize_line(k, v))
-        sql = "load data local inpath '{}' into table {}".format(temp_path, self._address.name)
+        sql = "load data local inpath '{}' into table {}".format(
+            temp_path, self._address.name
+        )
         self._cur.execute(sql)
         self._con.commit()
         os.remove(temp_path)
 
     def get_id_feature_name(self):
-        id = self.meta.get_schema().get('sid', 'id')
-        header = self.meta.get_schema().get('header')
+        id = self.meta.get_schema().get("sid", "id")
+        header = self.meta.get_schema().get("header")
         id_delimiter = self.meta.get_id_delimiter()
         if header:
             if isinstance(header, str):
@@ -121,13 +126,17 @@ class StorageTable(StorageTableBase):
         return self.execute(sql)
 
     def _save_as(self, address, name, namespace, partitions=None, **kwargs):
-        sql = "create table {}.{} like {}.{};".format(namespace, name, self._namespace, self._name)
+        sql = "create table {}.{} like {}.{};".format(
+            namespace, name, self._namespace, self._name
+        )
         return self.execute(sql)
 
     def check_address(self):
         schema = self.meta.get_schema()
         if schema:
-            sql = 'SELECT {},{} FROM {}'.format(schema.get('sid'), schema.get('header'), self._address.name)
+            sql = "SELECT {},{} FROM {}".format(
+                schema.get("sid"), schema.get("header"), self._address.name
+            )
             feature_data = self.execute(sql)
             for feature in feature_data:
                 if feature:
@@ -136,11 +145,11 @@ class StorageTable(StorageTableBase):
 
     @staticmethod
     def get_meta_header(feature_name_list):
-        create_features = ''
+        create_features = ""
         feature_list = []
         feature_size = "varchar(255)"
         for feature_name in feature_name_list:
-            create_features += '{} {},'.format(feature_name, feature_size)
+            create_features += "{} {},".format(feature_name, feature_size)
             feature_list.append(feature_name)
         return create_features, feature_list
 

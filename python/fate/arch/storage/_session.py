@@ -13,19 +13,24 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import os.path
 import typing
 
-from fate_arch.abc import StorageSessionABC, CTableABC
-from fate_arch.common import EngineType, engine_utils
-from fate_arch.common.data_utils import default_output_fs_path
-from fate_arch.common.log import getLogger
-from fate_arch.storage._table import StorageTableMeta
-from fate_arch.storage._types import StorageEngine, EggRollStoreType, StandaloneStoreType, HDFSStoreType, HiveStoreType, \
-    LinkisHiveStoreType, LocalFSStoreType, PathStoreType, StorageTableOrigin
-from fate_arch.relation_ship import Relationship
-from fate_arch.common.base_utils import current_timestamp
-
+from ..abc import CTableABC, StorageSessionABC
+from ..common import EngineType, engine_utils
+from ..common.base_utils import current_timestamp
+from ..common.log import getLogger
+from ..storage._table import StorageTableMeta
+from ..storage._types import (
+    EggRollStoreType,
+    HDFSStoreType,
+    HiveStoreType,
+    LinkisHiveStoreType,
+    LocalFSStoreType,
+    PathStoreType,
+    StandaloneStoreType,
+    StorageEngine,
+    StorageTableOrigin,
+)
 
 LOGGER = getLogger()
 
@@ -36,19 +41,27 @@ class StorageSessionBase(StorageSessionABC):
         self._engine = engine
 
     def create_table(self, address, name, namespace, partitions=None, **kwargs):
-        table = self.table(address=address, name=name, namespace=namespace, partitions=partitions, **kwargs)
+        table = self.table(
+            address=address,
+            name=name,
+            namespace=namespace,
+            partitions=partitions,
+            **kwargs,
+        )
         table.create_meta(**kwargs)
         return table
 
     def get_table(self, name, namespace):
         meta = StorageTableMeta(name=name, namespace=namespace)
         if meta and meta.exists():
-            table = self.table(name=meta.get_name(),
-                               namespace=meta.get_namespace(),
-                               address=meta.get_address(),
-                               partitions=meta.get_partitions(),
-                               store_type=meta.get_store_type(),
-                               options=meta.get_options())
+            table = self.table(
+                name=meta.get_name(),
+                namespace=meta.get_namespace(),
+                address=meta.get_address(),
+                partitions=meta.get_partitions(),
+                store_type=meta.get_store_type(),
+                options=meta.get_options(),
+            )
             table.meta = meta
             return table
         else:
@@ -63,56 +76,105 @@ class StorageSessionBase(StorageSessionABC):
             return None
 
     @classmethod
-    def persistent(cls, computing_table: CTableABC, namespace, name, schema=None,
-                   part_of_data=None, engine=None, engine_address=None,
-                   store_type=None, token: typing.Dict = None) -> StorageTableMeta:
+    def persistent(
+        cls,
+        computing_table: CTableABC,
+        namespace,
+        name,
+        schema=None,
+        part_of_data=None,
+        engine=None,
+        engine_address=None,
+        store_type=None,
+        token: typing.Dict = None,
+    ) -> StorageTableMeta:
+
+        from ..relation_ship import Relationship
         if engine:
-            if engine != StorageEngine.PATH and engine not in Relationship.Computing.get(
-                    computing_table.engine, {}).get(EngineType.STORAGE, {}).get("support", []):
-                raise Exception(f"storage engine {engine} not supported with computing engine {computing_table.engine}")
+            if (
+                engine != StorageEngine.PATH
+                and engine
+                not in Relationship.Computing.get(computing_table.engine, {})
+                .get(EngineType.STORAGE, {})
+                .get("support", [])
+            ):
+                raise Exception(
+                    f"storage engine {engine} not supported with computing engine {computing_table.engine}"
+                )
         else:
-            engine = Relationship.Computing.get(
-                computing_table.engine,
-                {}).get(
-                EngineType.STORAGE,
-                {}).get(
-                "default",
-                None)
+            engine = (
+                Relationship.Computing.get(computing_table.engine, {})
+                .get(EngineType.STORAGE, {})
+                .get("default", None)
+            )
             if not engine:
-                raise Exception(f"can not found {computing_table.engine} default storage engine")
+                raise Exception(
+                    f"can not found {computing_table.engine} default storage engine"
+                )
         if engine_address is None:
             # find engine address from service_conf.yaml
-            engine_address = engine_utils.get_engines_config_from_conf().get(EngineType.STORAGE, {}).get(engine, {})
+            engine_address = (
+                engine_utils.get_engines_config_from_conf()
+                .get(EngineType.STORAGE, {})
+                .get(engine, {})
+            )
         address_dict = engine_address.copy()
         partitions = computing_table.partitions
 
         if engine == StorageEngine.STANDALONE:
             address_dict.update({"name": name, "namespace": namespace})
-            store_type = StandaloneStoreType.ROLLPAIR_LMDB if store_type is None else store_type
+            store_type = (
+                StandaloneStoreType.ROLLPAIR_LMDB if store_type is None else store_type
+            )
 
         elif engine == StorageEngine.EGGROLL:
             address_dict.update({"name": name, "namespace": namespace})
-            store_type = EggRollStoreType.ROLLPAIR_LMDB if store_type is None else store_type
+            store_type = (
+                EggRollStoreType.ROLLPAIR_LMDB if store_type is None else store_type
+            )
 
         elif engine == StorageEngine.HIVE:
             address_dict.update({"database": namespace, "name": f"{name}"})
             store_type = HiveStoreType.DEFAULT if store_type is None else store_type
 
         elif engine == StorageEngine.LINKIS_HIVE:
-            address_dict.update({"database": None, "name": f"{namespace}_{name}",
-                                 "username": token.get("username", "")})
-            store_type = LinkisHiveStoreType.DEFAULT if store_type is None else store_type
+            address_dict.update(
+                {
+                    "database": None,
+                    "name": f"{namespace}_{name}",
+                    "username": token.get("username", ""),
+                }
+            )
+            store_type = (
+                LinkisHiveStoreType.DEFAULT if store_type is None else store_type
+            )
 
         elif engine == StorageEngine.HDFS:
+            from ..common.data_utils import default_output_fs_path
             if not address_dict.get("path"):
-                address_dict.update({"path": default_output_fs_path(
-                    name=name, namespace=namespace, prefix=address_dict.get("path_prefix"))})
+                address_dict.update(
+                    {
+                        "path": default_output_fs_path(
+                            name=name,
+                            namespace=namespace,
+                            prefix=address_dict.get("path_prefix"),
+                        )
+                    }
+                )
             store_type = HDFSStoreType.DISK if store_type is None else store_type
 
         elif engine == StorageEngine.LOCALFS:
+            from ..common.data_utils import default_output_fs_path
             if not address_dict.get("path"):
-                address_dict.update({"path": default_output_fs_path(
-                    name=name, namespace=namespace, storage_engine=StorageEngine.LOCALFS)})
+                address_dict.update(
+                    {
+                        "path": default_output_fs_path(
+                            name=name,
+                            namespace=namespace,
+                            storage_engine=StorageEngine.LOCALFS,
+                        )
+                    }
+                )
             store_type = LocalFSStoreType.DISK if store_type is None else store_type
 
         elif engine == StorageEngine.PATH:
@@ -120,9 +182,13 @@ class StorageSessionBase(StorageSessionABC):
 
         else:
             raise RuntimeError(f"{engine} storage is not supported")
-        address = StorageTableMeta.create_address(storage_engine=engine, address_dict=address_dict)
+        address = StorageTableMeta.create_address(
+            storage_engine=engine, address_dict=address_dict
+        )
         schema = schema if schema else {}
-        computing_table.save(address, schema=schema, partitions=partitions, store_type=store_type)
+        computing_table.save(
+            address, schema=schema, partitions=partitions, store_type=store_type
+        )
         table_count = computing_table.count()
         table_meta = StorageTableMeta(name=name, namespace=namespace, new=True)
         table_meta.address = address
@@ -147,7 +213,9 @@ class StorageSessionBase(StorageSessionABC):
         try:
             self.stop()
         except Exception as e:
-            LOGGER.warning(f"stop storage session {self._session_id} failed, try to kill", e)
+            LOGGER.warning(
+                f"stop storage session {self._session_id} failed, try to kill", e
+            )
             self.kill()
 
     def table(self, name, namespace, address, store_type, partitions=None, **kwargs):

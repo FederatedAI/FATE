@@ -24,55 +24,55 @@ class StorageTableOrigin(object):
 
 
 class StorageEngine(object):
-    STANDALONE = 'STANDALONE'
-    EGGROLL = 'EGGROLL'
-    HDFS = 'HDFS'
-    MYSQL = 'MYSQL'
-    SIMPLE = 'SIMPLE'
-    PATH = 'PATH'
-    HIVE = 'HIVE'
-    LINKIS_HIVE = 'LINKIS_HIVE'
-    LOCALFS = 'LOCALFS'
-    API = 'API'
+    STANDALONE = "STANDALONE"
+    EGGROLL = "EGGROLL"
+    HDFS = "HDFS"
+    MYSQL = "MYSQL"
+    SIMPLE = "SIMPLE"
+    PATH = "PATH"
+    HIVE = "HIVE"
+    LINKIS_HIVE = "LINKIS_HIVE"
+    LOCALFS = "LOCALFS"
+    API = "API"
 
 
 class StandaloneStoreType(object):
-    ROLLPAIR_IN_MEMORY = 'IN_MEMORY'
-    ROLLPAIR_LMDB = 'LMDB'
+    ROLLPAIR_IN_MEMORY = "IN_MEMORY"
+    ROLLPAIR_LMDB = "LMDB"
     DEFAULT = ROLLPAIR_LMDB
 
 
 class EggRollStoreType(object):
-    ROLLPAIR_IN_MEMORY = 'IN_MEMORY'
-    ROLLPAIR_LMDB = 'LMDB'
-    ROLLPAIR_LEVELDB = 'LEVEL_DB'
-    ROLLFRAME_FILE = 'ROLL_FRAME_FILE'
-    ROLLPAIR_ROLLSITE = 'ROLL_SITE'
-    ROLLPAIR_FILE = 'ROLL_PAIR_FILE'
-    ROLLPAIR_MMAP = 'ROLL_PAIR_MMAP'
-    ROLLPAIR_CACHE = 'ROLL_PAIR_CACHE'
-    ROLLPAIR_QUEUE = 'ROLL_PAIR_QUEUE'
+    ROLLPAIR_IN_MEMORY = "IN_MEMORY"
+    ROLLPAIR_LMDB = "LMDB"
+    ROLLPAIR_LEVELDB = "LEVEL_DB"
+    ROLLFRAME_FILE = "ROLL_FRAME_FILE"
+    ROLLPAIR_ROLLSITE = "ROLL_SITE"
+    ROLLPAIR_FILE = "ROLL_PAIR_FILE"
+    ROLLPAIR_MMAP = "ROLL_PAIR_MMAP"
+    ROLLPAIR_CACHE = "ROLL_PAIR_CACHE"
+    ROLLPAIR_QUEUE = "ROLL_PAIR_QUEUE"
     DEFAULT = ROLLPAIR_LMDB
 
 
 class HDFSStoreType(object):
-    RAM_DISK = 'RAM_DISK'
-    SSD = 'SSD'
-    DISK = 'DISK'
-    ARCHIVE = 'ARCHIVE'
+    RAM_DISK = "RAM_DISK"
+    SSD = "SSD"
+    DISK = "DISK"
+    ARCHIVE = "ARCHIVE"
     DEFAULT = None
 
 
 class PathStoreType(object):
-    PICTURE = 'PICTURE'
+    PICTURE = "PICTURE"
 
 
 class FileStoreType(object):
-    CSV = 'CSV'
+    CSV = "CSV"
 
 
 class ApiStoreType(object):
-    EXTERNAL = 'EXTERNAL'
+    EXTERNAL = "EXTERNAL"
 
 
 class MySQLStoreType(object):
@@ -92,10 +92,10 @@ class LinkisHiveStoreType(object):
 
 
 class LocalFSStoreType(object):
-    RAM_DISK = 'RAM_DISK'
-    SSD = 'SSD'
-    DISK = 'DISK'
-    ARCHIVE = 'ARCHIVE'
+    RAM_DISK = "RAM_DISK"
+    SSD = "SSD"
+    DISK = "DISK"
+    ARCHIVE = "ARCHIVE"
     DEFAULT = None
 
 

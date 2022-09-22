@@ -18,10 +18,6 @@
 import abc
 from typing import Iterable
 
-from fate_arch.common.log import getLogger
-
-LOGGER = getLogger()
-
 
 class StorageTableMetaABC(metaclass=abc.ABCMeta):
     @abc.abstractmethod
@@ -37,7 +33,15 @@ class StorageTableMetaABC(metaclass=abc.ABCMeta):
         ...
 
     @abc.abstractmethod
-    def update_metas(self, schema=None, count=None, part_of_data=None, description=None, partitions=None, **kwargs):
+    def update_metas(
+        self,
+        schema=None,
+        count=None,
+        part_of_data=None,
+        description=None,
+        partitions=None,
+        **kwargs
+    ):
         ...
 
     @abc.abstractmethod
@@ -169,13 +173,15 @@ class StorageTableABC(metaclass=abc.ABCMeta):
         ...
 
     @abc.abstractmethod
-    def update_meta(self,
-                    schema=None,
-                    count=None,
-                    part_of_data=None,
-                    description=None,
-                    partitions=None,
-                    **kwargs) -> StorageTableMetaABC:
+    def update_meta(
+        self,
+        schema=None,
+        count=None,
+        part_of_data=None,
+        description=None,
+        partitions=None,
+        **kwargs
+    ) -> StorageTableMetaABC:
         ...
 
     @abc.abstractmethod
@@ -209,8 +215,16 @@ class StorageTableABC(metaclass=abc.ABCMeta):
 
 class StorageSessionABC(metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def create_table(self, address, name, namespace, partitions, storage_type=None, options=None,
-                     **kwargs) -> StorageTableABC:
+    def create_table(
+        self,
+        address,
+        name,
+        namespace,
+        partitions,
+        storage_type=None,
+        options=None,
+        **kwargs
+    ) -> StorageTableABC:
         ...
 
     @abc.abstractmethod

@@ -14,20 +14,48 @@
 #  limitations under the License.
 #
 import unittest
-from fate_arch.metastore import base_model
+
+from ...metastore import base_model
 
 
 class TestBaseModel(unittest.TestCase):
     def test_auto_date_timestamp_field(self):
         self.assertEqual(
-            base_model.auto_date_timestamp_field(), {
-                'write_access_time', 'create_time', 'read_access_time', 'end_time', 'update_time', 'start_time'})
+            base_model.auto_date_timestamp_field(),
+            {
+                "write_access_time",
+                "create_time",
+                "read_access_time",
+                "end_time",
+                "update_time",
+                "start_time",
+            },
+        )
 
     def test(self):
-        from peewee import IntegerField, FloatField, AutoField, BigAutoField, BigIntegerField, BitField
-        from peewee import CharField, TextField, BooleanField, BigBitField
-        from fate_arch.metastore.base_model import JSONField, LongTextField
-        for f in {IntegerField, FloatField, AutoField, BigAutoField, BigIntegerField, BitField}:
+        from peewee import (
+            AutoField,
+            BigAutoField,
+            BigBitField,
+            BigIntegerField,
+            BitField,
+            BooleanField,
+            CharField,
+            FloatField,
+            IntegerField,
+            TextField,
+        )
+
+        from ...metastore.base_model import JSONField, LongTextField
+
+        for f in {
+            IntegerField,
+            FloatField,
+            AutoField,
+            BigAutoField,
+            BigIntegerField,
+            BitField,
+        }:
             self.assertEqual(base_model.is_continuous_field(f), True)
         for f in {CharField, TextField, BooleanField, BigBitField}:
             self.assertEqual(base_model.is_continuous_field(f), False)
@@ -35,5 +63,5 @@ class TestBaseModel(unittest.TestCase):
             self.assertEqual(base_model.is_continuous_field(f), False)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

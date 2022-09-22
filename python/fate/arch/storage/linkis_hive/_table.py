@@ -17,14 +17,8 @@ import time
 
 import requests
 
-from fate_arch.storage import StorageEngine, LinkisHiveStoreType
-from fate_arch.storage import StorageTableBase
-from fate_arch.storage.linkis_hive._settings import (
-    Token_Code,
-    Token_User,
-    STATUS_URI,
-    EXECUTE_URI,
-)
+from ...storage import LinkisHiveStoreType, StorageEngine, StorageTableBase
+from ._settings import EXECUTE_URI, STATUS_URI, Token_Code, Token_User
 
 
 class StorageTable(StorageTableBase):

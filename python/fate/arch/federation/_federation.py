@@ -18,15 +18,15 @@
 import json
 import sys
 import typing
-from pickle import dumps as p_dumps, loads as p_loads
+from pickle import dumps as p_dumps
+from pickle import loads as p_loads
 
-from fate_arch.abc import CTableABC
-from fate_arch.abc import FederationABC, GarbageCollectionABC
-from fate_arch.common import Party
-from fate_arch.common.log import getLogger
-from fate_arch.federation import FederationDataType
-from fate_arch.federation._datastream import Datastream
-from fate_arch.session import computing_session
+from ..abc import CTableABC, FederationABC, GarbageCollectionABC
+from ..common import Party
+from ..common.log import getLogger
+from ..federation import FederationDataType
+from ..federation._datastream import Datastream
+from ..session import computing_session
 
 LOGGER = getLogger()
 
@@ -42,28 +42,21 @@ def _get_splits(obj, max_message_size):
         return obj, num_slice
     else:
         _max_size = max_message_size
-        kv = [(i, obj_bytes[slice(i * _max_size, (i + 1) * _max_size)]) for i in range(num_slice)]
+        kv = [
+            (i, obj_bytes[slice(i * _max_size, (i + 1) * _max_size)])
+            for i in range(num_slice)
+        ]
         return kv, num_slice
 
 
 class FederationBase(FederationABC):
     @staticmethod
     def from_conf(
-            federation_session_id: str,
-            party: Party,
-            runtime_conf: dict,
-            **kwargs
+        federation_session_id: str, party: Party, runtime_conf: dict, **kwargs
     ):
         raise NotImplementedError()
 
-    def __init__(
-            self,
-            session_id,
-            party: Party,
-            mq,
-            max_message_size,
-            conf=None
-    ):
+    def __init__(self, session_id, party: Party, mq, max_message_size, conf=None):
         self._session_id = session_id
         self._party = party
         self._mq = mq
@@ -85,7 +78,7 @@ class FederationBase(FederationABC):
         raise NotImplementedError()
 
     def get(
-            self, name: str, tag: str, parties: typing.List[Party], gc: GarbageCollectionABC
+        self, name: str, tag: str, parties: typing.List[Party], gc: GarbageCollectionABC
     ) -> typing.List:
         log_str = f"[federation.get](name={name}, tag={tag}, parties={parties})"
         LOGGER.debug(f"[{log_str}]start to get")
@@ -96,7 +89,9 @@ class FederationBase(FederationABC):
         ]
 
         if _name_dtype_keys[0] not in self._name_dtype_map:
-            party_topic_infos = self._get_party_topic_infos(parties, dtype=NAME_DTYPE_TAG)
+            party_topic_infos = self._get_party_topic_infos(
+                parties, dtype=NAME_DTYPE_TAG
+            )
             channel_infos = self._get_channels(party_topic_infos=party_topic_infos)
             rtn_dtype = []
             for i, info in enumerate(channel_infos):
@@ -118,8 +113,13 @@ class FederationBase(FederationABC):
         dtype = rtn_dtype.get("dtype", None)
         partitions = rtn_dtype.get("partitions", None)
 
-        if dtype == FederationDataType.TABLE or dtype == FederationDataType.SPLIT_OBJECT:
-            party_topic_infos = self._get_party_topic_infos(parties, name, partitions=partitions)
+        if (
+            dtype == FederationDataType.TABLE
+            or dtype == FederationDataType.SPLIT_OBJECT
+        ):
+            party_topic_infos = self._get_party_topic_infos(
+                parties, name, partitions=partitions
+            )
             for i in range(len(party_topic_infos)):
                 party = parties[i]
                 role = party.role
@@ -134,10 +134,12 @@ class FederationBase(FederationABC):
                     dst_role=role,
                     topic_infos=topic_infos,
                     mq=self._mq,
-                    conf=self._conf
+                    conf=self._conf,
                 )
 
-                table = computing_session.parallelize(range(partitions), partitions, include_key=False)
+                table = computing_session.parallelize(
+                    range(partitions), partitions, include_key=False
+                )
                 table = table.mapPartitionsWithIndex(receive_func)
 
                 # add gc
@@ -149,7 +151,9 @@ class FederationBase(FederationABC):
                 if dtype == FederationDataType.TABLE:
                     rtn.append(table)
                 else:
-                    obj_bytes = b''.join(map(lambda t: t[1], sorted(table.collect(), key=lambda x: x[0])))
+                    obj_bytes = b"".join(
+                        map(lambda t: t[1], sorted(table.collect(), key=lambda x: x[0]))
+                    )
                     obj = p_loads(obj_bytes)
                     rtn.append(obj)
         else:
@@ -166,12 +170,12 @@ class FederationBase(FederationABC):
         return rtn
 
     def remote(
-            self,
-            v,
-            name: str,
-            tag: str,
-            parties: typing.List[Party],
-            gc: GarbageCollectionABC,
+        self,
+        v,
+        name: str,
+        tag: str,
+        parties: typing.List[Party],
+        gc: GarbageCollectionABC,
     ) -> typing.NoReturn:
         log_str = f"[federation.remote](name={name}, tag={tag}, parties={parties})"
 
@@ -181,14 +185,21 @@ class FederationBase(FederationABC):
         ]
 
         if _name_dtype_keys[0] not in self._name_dtype_map:
-            party_topic_infos = self._get_party_topic_infos(parties, dtype=NAME_DTYPE_TAG)
+            party_topic_infos = self._get_party_topic_infos(
+                parties, dtype=NAME_DTYPE_TAG
+            )
             channel_infos = self._get_channels(party_topic_infos=party_topic_infos)
 
             if not isinstance(v, CTableABC):
                 v, num_slice = _get_splits(v, self._max_message_size)
                 if num_slice > 1:
-                    v = computing_session.parallelize(data=v, partition=1, include_key=True)
-                    body = {"dtype": FederationDataType.SPLIT_OBJECT, "partitions": v.partitions}
+                    v = computing_session.parallelize(
+                        data=v, partition=1, include_key=True
+                    )
+                    body = {
+                        "dtype": FederationDataType.SPLIT_OBJECT,
+                        "partitions": v.partitions,
+                    }
                 else:
                     body = {"dtype": FederationDataType.OBJECT}
 
@@ -216,7 +227,9 @@ class FederationBase(FederationABC):
                 f"[{log_str}]start to remote table, total_size={total_size}, partitions={partitions}"
             )
 
-            party_topic_infos = self._get_party_topic_infos(parties, name, partitions=partitions)
+            party_topic_infos = self._get_party_topic_infos(
+                parties, name, partitions=partitions
+            )
             # add gc
             gc.add_gc_action(tag, v, "__del__", {})
 
@@ -229,7 +242,7 @@ class FederationBase(FederationABC):
                 src_role=self._party.role,
                 mq=self._mq,
                 max_message_size=self._max_message_size,
-                conf=self._conf
+                conf=self._conf,
             )
             # noinspection PyProtectedMember
             v.mapPartitionsWithIndex(send_func)
@@ -244,7 +257,7 @@ class FederationBase(FederationABC):
         LOGGER.debug(f"[{log_str}]finish to remote")
 
     def _get_party_topic_infos(
-            self, parties: typing.List[Party], name=None, partitions=None, dtype=None
+        self, parties: typing.List[Party], name=None, partitions=None, dtype=None
     ) -> typing.List:
         topic_infos = [
             self._get_or_create_topic(party, name, partitions, dtype)
@@ -257,20 +270,18 @@ class FederationBase(FederationABC):
         raise NotImplementedError()
 
     def _get_or_create_topic(
-            self, party: Party, name=None, partitions=None, dtype=None
+        self, party: Party, name=None, partitions=None, dtype=None
     ) -> typing.Tuple:
         topic_key_list = []
         topic_infos = []
 
         if dtype is not None:
-            topic_key = _SPLIT_.join(
-                [party.role, party.party_id, dtype, dtype])
+            topic_key = _SPLIT_.join([party.role, party.party_id, dtype, dtype])
             topic_key_list.append(topic_key)
         else:
             if partitions is not None:
                 for i in range(partitions):
-                    topic_key = _SPLIT_.join(
-                        [party.role, party.party_id, name, str(i)])
+                    topic_key = _SPLIT_.join([party.role, party.party_id, name, str(i)])
                     topic_key_list.append(topic_key)
             elif name is not None:
                 topic_key = _SPLIT_.join([party.role, party.party_id, name])
@@ -283,7 +294,9 @@ class FederationBase(FederationABC):
             if topic_key not in self._topic_map:
                 topic_key_splits = topic_key.split(_SPLIT_)
                 topic_suffix = "-".join(topic_key_splits[2:])
-                topic_pair = self._maybe_create_topic_and_replication(party, topic_suffix)
+                topic_pair = self._maybe_create_topic_and_replication(
+                    party, topic_suffix
+                )
                 self._topic_map[topic_key] = topic_pair
 
             topic_pair = self._topic_map[topic_key]
@@ -292,7 +305,15 @@ class FederationBase(FederationABC):
         return topic_infos
 
     def _get_channel(
-            self, topic_pair, src_party_id, src_role, dst_party_id, dst_role, mq=None, conf: dict = None):
+        self,
+        topic_pair,
+        src_party_id,
+        src_role,
+        dst_party_id,
+        dst_role,
+        mq=None,
+        conf: dict = None,
+    ):
         raise NotImplementedError()
 
     def _get_channels(self, party_topic_infos):
@@ -312,14 +333,22 @@ class FederationBase(FederationABC):
                         dst_party_id=party_id,
                         dst_role=role,
                         mq=self._mq,
-                        conf=self._conf
+                        conf=self._conf,
                     )
 
                     self._channels_map[topic_key] = info
                 channel_infos.append(info)
         return channel_infos
 
-    def _get_channels_index(self, index, party_topic_infos, src_party_id, src_role, mq=None, conf: dict = None):
+    def _get_channels_index(
+        self,
+        index,
+        party_topic_infos,
+        src_party_id,
+        src_role,
+        mq=None,
+        conf: dict = None,
+    ):
         channel_infos = []
         for e in party_topic_infos:
             # select specified topic_info for a party
@@ -334,7 +363,7 @@ class FederationBase(FederationABC):
                 dst_party_id=party_id,
                 dst_role=role,
                 mq=mq,
-                conf=conf
+                conf=conf,
             )
             channel_infos.append(info)
         return channel_infos
@@ -345,19 +374,19 @@ class FederationBase(FederationABC):
                 "content_type": "text/plain",
                 "app_id": info._dst_party_id,
                 "message_id": name,
-                "correlation_id": tag
+                "correlation_id": tag,
             }
             LOGGER.debug(f"[federation._send_obj]properties:{properties}.")
             info.produce(body=data, properties=properties)
 
     def _send_kv(
-            self, name, tag, data, channel_infos, partition_size, partitions, message_key
+        self, name, tag, data, channel_infos, partition_size, partitions, message_key
     ):
         headers = json.dumps(
             {
                 "partition_size": partition_size,
                 "partitions": partitions,
-                "message_key": message_key
+                "message_key": message_key,
             }
         )
         for info in channel_infos:
@@ -366,22 +395,22 @@ class FederationBase(FederationABC):
                 "app_id": info._dst_party_id,
                 "message_id": name,
                 "correlation_id": tag,
-                "headers": headers
+                "headers": headers,
             }
             print(f"[federation._send_kv]info: {info}, properties: {properties}.")
             info.produce(body=data, properties=properties)
 
     def _get_partition_send_func(
-            self,
-            name,
-            tag,
-            partitions,
-            party_topic_infos,
-            src_party_id,
-            src_role,
-            mq,
-            max_message_size,
-            conf: dict,
+        self,
+        name,
+        tag,
+        partitions,
+        party_topic_infos,
+        src_party_id,
+        src_role,
+        mq,
+        max_message_size,
+        conf: dict,
     ):
         def _fn(index, kvs):
             return self._partition_send(
@@ -401,22 +430,26 @@ class FederationBase(FederationABC):
         return _fn
 
     def _partition_send(
-            self,
-            index,
-            kvs,
-            name,
-            tag,
-            partitions,
-            party_topic_infos,
-            src_party_id,
-            src_role,
-            mq,
-            max_message_size,
-            conf: dict,
+        self,
+        index,
+        kvs,
+        name,
+        tag,
+        partitions,
+        party_topic_infos,
+        src_party_id,
+        src_role,
+        mq,
+        max_message_size,
+        conf: dict,
     ):
         channel_infos = self._get_channels_index(
-            index=index, party_topic_infos=party_topic_infos, src_party_id=src_party_id, src_role=src_role, mq=mq,
-            conf=conf
+            index=index,
+            party_topic_infos=party_topic_infos,
+            src_party_id=src_party_id,
+            src_role=src_role,
+            mq=mq,
+            conf=conf,
         )
 
         datastream = Datastream()
@@ -429,8 +462,8 @@ class FederationBase(FederationABC):
             el = {"k": p_dumps(k).hex(), "v": p_dumps(v).hex()}
             # roughly caculate the size of package to avoid serialization ;)
             if (
-                    datastream.get_size() + sys.getsizeof(el["k"]) + sys.getsizeof(el["v"])
-                    >= max_message_size
+                datastream.get_size() + sys.getsizeof(el["k"]) + sys.getsizeof(el["v"])
+                >= max_message_size
             ):
                 print(
                     f"[federation._partition_send]The size of message is: {datastream.get_size()}"
@@ -491,9 +524,7 @@ class FederationBase(FederationABC):
         channel_info = self._query_receive_topic(channel_info)
 
         for id, properties, body in self._get_consume_message(channel_info):
-            LOGGER.debug(
-                f"[federation._receive_obj] properties: {properties}"
-            )
+            LOGGER.debug(f"[federation._receive_obj] properties: {properties}")
             if properties["message_id"] != name or properties["correlation_id"] != tag:
                 # todo: fix this
                 LOGGER.warning(
@@ -521,7 +552,16 @@ class FederationBase(FederationABC):
                 )
 
     def _get_partition_receive_func(
-            self, name, tag, src_party_id, src_role, dst_party_id, dst_role, topic_infos, mq, conf: dict
+        self,
+        name,
+        tag,
+        src_party_id,
+        src_role,
+        dst_party_id,
+        dst_role,
+        topic_infos,
+        mq,
+        conf: dict,
     ):
         def _fn(index, kvs):
             return self._partition_receive(
@@ -541,27 +581,29 @@ class FederationBase(FederationABC):
         return _fn
 
     def _partition_receive(
-            self,
-            index,
-            kvs,
-            name,
-            tag,
-            src_party_id,
-            src_role,
-            dst_party_id,
-            dst_role,
-            topic_infos,
-            mq,
-            conf: dict,
+        self,
+        index,
+        kvs,
+        name,
+        tag,
+        src_party_id,
+        src_role,
+        dst_party_id,
+        dst_role,
+        topic_infos,
+        mq,
+        conf: dict,
     ):
         topic_pair = topic_infos[index][1]
-        channel_info = self._get_channel(topic_pair=topic_pair,
-                                         src_party_id=src_party_id,
-                                         src_role=src_role,
-                                         dst_party_id=dst_party_id,
-                                         dst_role=dst_role,
-                                         mq=mq,
-                                         conf=conf)
+        channel_info = self._get_channel(
+            topic_pair=topic_pair,
+            src_party_id=src_party_id,
+            src_role=src_role,
+            dst_party_id=dst_party_id,
+            dst_role=dst_role,
+            mq=mq,
+            conf=conf,
+        )
 
         message_key_cache = set()
         count = 0
@@ -573,10 +615,11 @@ class FederationBase(FederationABC):
         while True:
             try:
                 for id, properties, body in self._get_consume_message(channel_info):
-                    print(
-                        f"[federation._partition_receive] properties: {properties}."
-                    )
-                    if properties["message_id"] != name or properties["correlation_id"] != tag:
+                    print(f"[federation._partition_receive] properties: {properties}.")
+                    if (
+                        properties["message_id"] != name
+                        or properties["correlation_id"] != tag
+                    ):
                         # todo: fix this
                         self._consume_ack(channel_info, id)
                         print(
@@ -601,7 +644,10 @@ class FederationBase(FederationABC):
 
                         data = json.loads(body.decode())
                         data_iter = (
-                            (p_loads(bytes.fromhex(el["k"])), p_loads(bytes.fromhex(el["v"])))
+                            (
+                                p_loads(bytes.fromhex(el["k"])),
+                                p_loads(bytes.fromhex(el["v"])),
+                            )
                             for el in data
                         )
                         count += len(data)

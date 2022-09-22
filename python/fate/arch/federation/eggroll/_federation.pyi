@@ -17,46 +17,67 @@ import typing
 
 from eggroll.roll_pair.roll_pair import RollPairContext
 from eggroll.roll_site.roll_site import RollSiteContext
-from fate_arch.abc import GarbageCollectionABC
-from fate_arch.common import Party
 
+from ...abc import GarbageCollectionABC
+from ...common import Party
 
 class Federation(object):
-
-    def __init__(self, rp_ctx: RollPairContext, rs_session_id: str, party: Party, proxy_endpoint: str):
+    def __init__(
+        self,
+        rp_ctx: RollPairContext,
+        rs_session_id: str,
+        party: Party,
+        proxy_endpoint: str,
+    ):
         self._rsc: RollSiteContext = ...
         ...
+    def get(
+        self: Federation,
+        name: str,
+        tag: str,
+        parties: typing.List[Party],
+        gc: GarbageCollectionABC,
+    ) -> typing.List: ...
+    def remote(
+        self,
+        v,
+        name: str,
+        tag: str,
+        parties: typing.List[Party],
+        gc: GarbageCollectionABC,
+    ) -> typing.NoReturn: ...
 
-    def get(self: Federation, name: str, tag: str, parties: typing.List[Party],
-            gc: GarbageCollectionABC) -> typing.List: ...
-
-    def remote(self, v, name: str, tag: str, parties: typing.List[Party],
-               gc: GarbageCollectionABC) -> typing.NoReturn: ...
-
-
-def _remote(v,
-            name: str,
-            tag: str,
-            parties: typing.List[typing.Tuple[str, str]],
-            rsc: RollSiteContext,
-            gc: GarbageCollectionABC) -> typing.NoReturn: ...
-
-
-def _get(name: str,
-         tag: str,
-         parties: typing.List[typing.Tuple[str, str]],
-         rsc: RollSiteContext,
-         gc: GarbageCollectionABC) -> typing.List: ...
-
-
-def _remote_tag_not_duplicate(name: str, tag: str, parties: typing.List[typing.Tuple[str, str]]): ...
-
-
-def _push_with_exception_handle(rsc: RollSiteContext, v, name: str, tag: str, parties: typing.List[typing.Tuple[str, str]]): ...
-
-
+def _remote(
+    v,
+    name: str,
+    tag: str,
+    parties: typing.List[typing.Tuple[str, str]],
+    rsc: RollSiteContext,
+    gc: GarbageCollectionABC,
+) -> typing.NoReturn: ...
+def _get(
+    name: str,
+    tag: str,
+    parties: typing.List[typing.Tuple[str, str]],
+    rsc: RollSiteContext,
+    gc: GarbageCollectionABC,
+) -> typing.List: ...
+def _remote_tag_not_duplicate(
+    name: str, tag: str, parties: typing.List[typing.Tuple[str, str]]
+): ...
+def _push_with_exception_handle(
+    rsc: RollSiteContext,
+    v,
+    name: str,
+    tag: str,
+    parties: typing.List[typing.Tuple[str, str]],
+): ...
 def _get_tag_not_duplicate(name: str, tag: str, party: typing.Tuple[str, str]): ...
-
-
-def _get_value_post_process(v, name: str, tag: str, party: typing.Tuple[str, str], rsc: RollSiteContext,
-                            gc: GarbageCollectionABC): ...
+def _get_value_post_process(
+    v,
+    name: str,
+    tag: str,
+    party: typing.Tuple[str, str],
+    rsc: RollSiteContext,
+    gc: GarbageCollectionABC,
+): ...

@@ -15,11 +15,11 @@
 #
 from collections import Iterable
 
-from fate_arch._standalone import Session
-from fate_arch.abc import AddressABC, CSessionABC
-from fate_arch.common.base_utils import fate_uuid
-from fate_arch.common.log import getLogger
-from fate_arch.computing.standalone._table import Table
+from ..._standalone import Session
+from ...abc import AddressABC, CSessionABC
+from ...common.base_utils import fate_uuid
+from ...common.log import getLogger
+from ._table import Table
 
 LOGGER = getLogger()
 
@@ -38,8 +38,8 @@ class CSession(CSessionABC):
         return self._session.session_id
 
     def load(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
-        from fate_arch.common.address import StandaloneAddress
-        from fate_arch.storage import StandaloneStoreType
+        from ...common.address import StandaloneAddress
+        from ...storage import StandaloneStoreType
 
         if isinstance(address, StandaloneAddress):
             raw_table = self._session.load(address.name, address.namespace)
@@ -54,11 +54,12 @@ class CSession(CSessionABC):
             table.schema = schema
             return table
 
-        from fate_arch.common.address import PathAddress
+        from ...common.address import PathAddress
 
         if isinstance(address, PathAddress):
-            from fate_arch.computing.non_distributed import LocalData
-            from fate_arch.computing import ComputingEngine
+            from ...computing import ComputingEngine
+            from ...computing.non_distributed import LocalData
+
             return LocalData(address.path, engine=ComputingEngine.STANDALONE)
         raise NotImplementedError(
             f"address type {type(address)} not supported with standalone backend"
@@ -89,5 +90,7 @@ class CSession(CSessionABC):
         try:
             self.stop()
         except Exception as e:
-            LOGGER.warning(f"stop storage session {self.session_id} failed, try to kill", e)
+            LOGGER.warning(
+                f"stop storage session {self.session_id} failed, try to kill", e
+            )
             self.kill()

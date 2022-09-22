@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_arch.storage.standalone._table import StorageTable
-from fate_arch.storage.standalone._session import StorageSession
+from ._session import StorageSession
+from ._table import StorageTable
 
 __all__ = ["StorageTable", "StorageSession"]

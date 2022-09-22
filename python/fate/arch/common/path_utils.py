@@ -16,12 +16,12 @@
 
 import os
 
-from fate_arch.common import file_utils
+from .file_utils import load_yaml_conf
 
 
 def get_data_table_count(path):
     config_path = os.path.join(path, "config.yaml")
-    config = file_utils.load_yaml_conf(conf_path=config_path)
+    config = load_yaml_conf(conf_path=config_path)
     count = 0
     if config:
         if config.get("type") != "vision":

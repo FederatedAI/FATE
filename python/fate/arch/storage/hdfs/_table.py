@@ -18,23 +18,22 @@ from typing import Iterable
 
 from pyarrow import fs
 
-from fate_arch.common import hdfs_utils
-from fate_arch.common.log import getLogger
-from fate_arch.storage import StorageEngine, HDFSStoreType
-from fate_arch.storage import StorageTableBase
+from ...common import hdfs_utils
+from ...common.log import getLogger
+from ...storage import HDFSStoreType, StorageEngine, StorageTableBase
 
 LOGGER = getLogger()
 
 
 class StorageTable(StorageTableBase):
     def __init__(
-            self,
-            address=None,
-            name: str = None,
-            namespace: str = None,
-            partitions: int = 1,
-            store_type: HDFSStoreType = HDFSStoreType.DISK,
-            options=None,
+        self,
+        address=None,
+        name: str = None,
+        namespace: str = None,
+        partitions: int = 1,
+        store_type: HDFSStoreType = HDFSStoreType.DISK,
+        options=None,
     ):
         super(StorageTable, self).__init__(
             name=name,
@@ -58,7 +57,7 @@ class StorageTable(StorageTableBase):
         return self._exist()
 
     def _put_all(
-            self, kv_list: Iterable, append=True, assume_file_exist=False, **kwargs
+        self, kv_list: Iterable, append=True, assume_file_exist=False, **kwargs
     ):
         LOGGER.info(f"put in hdfs file: {self.file_path}")
         if append and (assume_file_exist or self._exist()):
@@ -97,9 +96,7 @@ class StorageTable(StorageTableBase):
             count += 1
         return count
 
-    def _save_as(
-            self, address, partitions=None, name=None, namespace=None, **kwargs
-    ):
+    def _save_as(self, address, partitions=None, name=None, namespace=None, **kwargs):
         self._hdfs_client.copy_file(src=self.file_path, dst=address.path)
         table = StorageTable(
             address=address,
@@ -144,8 +141,8 @@ class StorageTable(StorageTableBase):
                     file_info.is_file
                 ), f"{self.path} is directory contains a subdirectory: {file_info.path}"
                 with io.TextIOWrapper(
-                        buffer=self._hdfs_client.open_input_stream(file_info.path),
-                        encoding="utf-8",
+                    buffer=self._hdfs_client.open_input_stream(file_info.path),
+                    encoding="utf-8",
                 ) as reader:
                     for line in reader:
                         yield line
@@ -185,6 +182,8 @@ class StorageTable(StorageTableBase):
             offset += len(buffer_block[:end_index])
 
     def _read_lines(self, buffer_block):
-        with io.TextIOWrapper(buffer=io.BytesIO(buffer_block), encoding="utf-8") as reader:
+        with io.TextIOWrapper(
+            buffer=io.BytesIO(buffer_block), encoding="utf-8"
+        ) as reader:
             for line in reader:
                 yield line

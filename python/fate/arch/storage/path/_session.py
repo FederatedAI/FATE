@@ -14,21 +14,41 @@
 #  limitations under the License.
 #
 
-from fate_arch.storage import StorageSessionBase, StorageEngine
-from fate_arch.abc import AddressABC
-from fate_arch.common.address import PathAddress
+from ...abc import AddressABC
+from ...common.address import PathAddress
+from ...storage import StorageEngine, StorageSessionBase
 
 
 class StorageSession(StorageSessionBase):
     def __init__(self, session_id, options=None):
-        super(StorageSession, self).__init__(session_id=session_id, engine=StorageEngine.PATH)
+        super(StorageSession, self).__init__(
+            session_id=session_id, engine=StorageEngine.PATH
+        )
 
-    def table(self, address: AddressABC, name, namespace, partitions, store_type=None, options=None, **kwargs):
+    def table(
+        self,
+        address: AddressABC,
+        name,
+        namespace,
+        partitions,
+        store_type=None,
+        options=None,
+        **kwargs,
+    ):
         if isinstance(address, PathAddress):
-            from fate_arch.storage.path._table import StorageTable
-            return StorageTable(address=address, name=name, namespace=namespace,
-                                partitions=partitions, store_type=store_type, options=options)
-        raise NotImplementedError(f"address type {type(address)} not supported with hdfs storage")
+            from ...storage.path._table import StorageTable
+
+            return StorageTable(
+                address=address,
+                name=name,
+                namespace=namespace,
+                partitions=partitions,
+                store_type=store_type,
+                options=options,
+            )
+        raise NotImplementedError(
+            f"address type {type(address)} not supported with hdfs storage"
+        )
 
     def cleanup(self, name, namespace):
         pass

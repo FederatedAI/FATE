@@ -1,7 +1,6 @@
-
-from fate_arch.abc._gc import GarbageCollectionABC
-from fate_arch.abc._address import AddressABC
-from fate_arch.abc._computing import CTableABC, CSessionABC
-from fate_arch.abc._storage import StorageTableABC, StorageSessionABC, StorageTableMetaABC
-from fate_arch.abc._federation import FederationABC
-from fate_arch.abc._components import Components, ComponentMeta
+from ._address import AddressABC
+from ._components import ComponentMeta, Components
+from ._computing import CSessionABC, CTableABC
+from ._federation import FederationABC
+from ._gc import GarbageCollectionABC
+from ._storage import StorageSessionABC, StorageTableABC, StorageTableMetaABC

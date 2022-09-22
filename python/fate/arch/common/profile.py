@@ -14,15 +14,15 @@
 #  limitations under the License.
 #
 import hashlib
+import inspect
 import time
 import typing
+from functools import wraps
 
 import beautifultable
 
-from fate_arch.common.log import getLogger
-import inspect
-from functools import wraps
-from fate_arch.abc import CTableABC
+from ..abc import CTableABC
+from .log import getLogger
 
 profile_logger = getLogger("PROFILING")
 _PROFILE_LOG_ENABLED = False
@@ -36,7 +36,7 @@ class _TimerItem(object):
         self.total_time = 0.0
         self.max_time = 0.0
 
-    def union(self, other: '_TimerItem'):
+    def union(self, other: "_TimerItem"):
         self.count += other.count
         self.total_time += other.total_time
         if self.max_time < other.max_time:
@@ -78,12 +78,16 @@ class _ComputingTimer(object):
         self._start = time.time()
 
         function_stack = "\n".join(function_stack_list)
-        self._hash = hashlib.blake2b(function_stack.encode('utf-8'), digest_size=5).hexdigest()
+        self._hash = hashlib.blake2b(
+            function_stack.encode("utf-8"), digest_size=5
+        ).hexdigest()
 
         if self._hash not in self._STATS:
             self._STATS[self._hash] = _ComputingTimerItem(function_name, function_stack)
             if _PROFILE_LOG_ENABLED:
-                profile_logger.debug(f"[computing#{self._hash}]function_stack: {' <-'.join(function_stack_list)}")
+                profile_logger.debug(
+                    f"[computing#{self._hash}]function_stack: {' <-'.join(function_stack_list)}"
+                )
 
         if _PROFILE_LOG_ENABLED:
             profile_logger.debug(f"[computing#{self._hash}]start")
@@ -92,18 +96,30 @@ class _ComputingTimer(object):
         elapse = time.time() - self._start
         self._STATS[self._hash].item.add(elapse)
         if _PROFILE_LOG_ENABLED:
-            profile_logger.debug(f"[computing#{self._hash}]done, elapse: {elapse}, function: {function_string}")
+            profile_logger.debug(
+                f"[computing#{self._hash}]done, elapse: {elapse}, function: {function_string}"
+            )
 
     @classmethod
     def computing_statistics_table(cls, timer_aggregator: _TimerItem = None):
-        stack_table = beautifultable.BeautifulTable(110, precision=4, detect_numerics=False)
-        stack_table.columns.header = ["function", "n", "sum(s)", "mean(s)", "max(s)", "stack_hash", "stack"]
+        stack_table = beautifultable.BeautifulTable(
+            110, precision=4, detect_numerics=False
+        )
+        stack_table.columns.header = [
+            "function",
+            "n",
+            "sum(s)",
+            "mean(s)",
+            "max(s)",
+            "stack_hash",
+            "stack",
+        ]
         stack_table.columns.alignment["stack"] = beautifultable.ALIGN_LEFT
         stack_table.columns.header.alignment = beautifultable.ALIGN_CENTER
-        stack_table.border.left = ''
-        stack_table.border.right = ''
-        stack_table.border.bottom = ''
-        stack_table.border.top = ''
+        stack_table.border.left = ""
+        stack_table.border.right = ""
+        stack_table.border.bottom = ""
+        stack_table.border.top = ""
 
         function_table = beautifultable.BeautifulTable(110)
         function_table.set_style(beautifultable.STYLE_COMPACT)
@@ -112,7 +128,14 @@ class _ComputingTimer(object):
         aggregate = {}
         total = _TimerItem()
         for hash_id, timer in cls._STATS.items():
-            stack_table.rows.append([timer.function_name, *timer.item.as_list(), hash_id, timer.function_stack])
+            stack_table.rows.append(
+                [
+                    timer.function_name,
+                    *timer.item.as_list(),
+                    hash_id,
+                    timer.function_stack,
+                ]
+            )
             aggregate.setdefault(timer.function_name, _TimerItem()).union(timer.item)
             total.union(timer.item)
 
@@ -148,20 +171,20 @@ class _FederationTimer(object):
             get_table.rows.append([name, *item.as_list()])
             total.union(item)
         get_table.rows.sort("sum(s)", reverse=True)
-        get_table.border.left = ''
-        get_table.border.right = ''
-        get_table.border.bottom = ''
-        get_table.border.top = ''
+        get_table.border.left = ""
+        get_table.border.right = ""
+        get_table.border.bottom = ""
+        get_table.border.top = ""
         remote_table = beautifultable.BeautifulTable(110)
         remote_table.columns.header = ["name", "n", "sum(s)", "mean(s)", "max(s)"]
         for name, item in cls._REMOTE_STATS.items():
             remote_table.rows.append([name, *item.as_list()])
             total.union(item)
         remote_table.rows.sort("sum(s)", reverse=True)
-        remote_table.border.left = ''
-        remote_table.border.right = ''
-        remote_table.border.bottom = ''
-        remote_table.border.top = ''
+        remote_table.border.left = ""
+        remote_table.border.right = ""
+        remote_table.border.bottom = ""
+        remote_table.border.top = ""
 
         base_table = beautifultable.BeautifulTable(120)
         base_table.rows.append(["get", get_table])
@@ -189,15 +212,19 @@ class _FederationRemoteTimer(_FederationTimer):
     def done(self, federation):
         self._end_time = time.time()
         self._REMOTE_STATS[self._full_name].add(self.elapse)
-        profile_logger.debug(f"[federation.remote.{self._full_name}.{self._tag}]"
-                             f"{self._local_party}->{self._parties} done")
+        profile_logger.debug(
+            f"[federation.remote.{self._full_name}.{self._tag}]"
+            f"{self._local_party}->{self._parties} done"
+        )
 
         if is_profile_remote_enable():
-            federation.remote(v={"start_time": self._start_time, "end_time": self._end_time},
-                              name=self._name,
-                              tag=profile_remote_tag(self._tag),
-                              parties=self._parties,
-                              gc=None)
+            federation.remote(
+                v={"start_time": self._start_time, "end_time": self._end_time},
+                name=self._name,
+                tag=profile_remote_tag(self._tag),
+                parties=self._parties,
+                gc=None,
+            )
 
     @property
     def elapse(self):
@@ -220,15 +247,23 @@ class _FederationGetTimer(_FederationTimer):
     def done(self, federation):
         self._end_time = time.time()
         self._GET_STATS[self._full_name].add(self.elapse)
-        profile_logger.debug(f"[federation.get.{self._full_name}.{self._tag}]"
-                             f"{self._local_party}<-{self._parties} done")
+        profile_logger.debug(
+            f"[federation.get.{self._full_name}.{self._tag}]"
+            f"{self._local_party}<-{self._parties} done"
+        )
 
         if is_profile_remote_enable():
-            remote_meta = federation.get(name=self._name, tag=profile_remote_tag(self._tag), parties=self._parties,
-                                         gc=None)
+            remote_meta = federation.get(
+                name=self._name,
+                tag=profile_remote_tag(self._tag),
+                parties=self._parties,
+                gc=None,
+            )
             for party, meta in zip(self._parties, remote_meta):
-                profile_logger.debug(f"[federation.meta.{self._full_name}.{self._tag}]{self._local_party}<-{party}]"
-                                     f"meta={meta}")
+                profile_logger.debug(
+                    f"[federation.meta.{self._full_name}.{self._tag}]{self._local_party}<-{party}]"
+                    f"meta={meta}"
+                )
 
     @property
     def elapse(self):
@@ -236,7 +271,9 @@ class _FederationGetTimer(_FederationTimer):
 
 
 def federation_remote_timer(name, full_name, tag, local, parties):
-    profile_logger.debug(f"[federation.remote.{full_name}.{tag}]{local}->{parties} start")
+    profile_logger.debug(
+        f"[federation.remote.{full_name}.{tag}]{local}->{parties} start"
+    )
     return _FederationRemoteTimer(name, full_name, tag, local, parties)
 
 
@@ -262,9 +299,15 @@ def profile_ends():
     timer_aggregator = _TimerItem()
     computing_timer_aggregator = _TimerItem()
     federation_timer_aggregator = _TimerItem()
-    computing_base_table, computing_detailed_table = _ComputingTimer.computing_statistics_table(
-        timer_aggregator=computing_timer_aggregator)
-    federation_base_table = _FederationTimer.federation_statistics_table(timer_aggregator=federation_timer_aggregator)
+    (
+        computing_base_table,
+        computing_detailed_table,
+    ) = _ComputingTimer.computing_statistics_table(
+        timer_aggregator=computing_timer_aggregator
+    )
+    federation_base_table = _FederationTimer.federation_statistics_table(
+        timer_aggregator=federation_timer_aggregator
+    )
     timer_aggregator.union(computing_timer_aggregator)
     timer_aggregator.union(federation_timer_aggregator)
 
@@ -278,10 +321,12 @@ def profile_ends():
             federation_timer_aggregator.total_time,
             federation_timer_aggregator.total_time / profile_total_time,
             computing_timer_aggregator.total_time,
-            computing_timer_aggregator.total_time / profile_total_time
+            computing_timer_aggregator.total_time / profile_total_time,
         )
     )
-    profile_logger.info(f"\nComputing:\n{computing_base_table}\n\nFederation:\n{federation_base_table}\n")
+    profile_logger.info(
+        f"\nComputing:\n{computing_base_table}\n\nFederation:\n{federation_base_table}\n"
+    )
     profile_logger.debug(f"\nDetailed Computing:\n{computing_detailed_table}\n")
 
     global _PROFILE_LOG_ENABLED
@@ -306,7 +351,9 @@ def _call_stack_strings():
     call_stack_strings = []
     frames = inspect.getouterframes(inspect.currentframe(), 10)[2:-2]
     for frame in frames:
-        call_stack_strings.append(f"[{frame.filename.split('/')[-1]}:{frame.lineno}]{frame.function}")
+        call_stack_strings.append(
+            f"[{frame.filename.split('/')[-1]}:{frame.lineno}]{frame.function}"
+        )
     return call_stack_strings
 
 

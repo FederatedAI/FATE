@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from fate_arch.computing.eggroll._table import Table
-from fate_arch.computing.eggroll._csession import CSession
+from ._csession import CSession
+from ._table import Table
 
-__all__ = ['Table', 'CSession']
+__all__ = ["Table", "CSession"]

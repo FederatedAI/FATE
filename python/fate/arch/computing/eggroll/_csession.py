@@ -18,11 +18,11 @@
 from eggroll.core.session import session_init
 from eggroll.roll_pair.roll_pair import runtime_init
 
-from fate_arch.abc import AddressABC, CSessionABC
-from fate_arch.common.base_utils import fate_uuid
-from fate_arch.common.log import getLogger
-from fate_arch.common.profile import computing_profile
-from fate_arch.computing.eggroll import Table
+from ...abc import AddressABC, CSessionABC
+from ...common.base_utils import fate_uuid
+from ...common.log import getLogger
+from ...common.profile import computing_profile
+from ...computing.eggroll import Table
 
 LOGGER = getLogger()
 
@@ -49,21 +49,21 @@ class CSession(CSessionABC):
     @computing_profile
     def load(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
 
-        from fate_arch.common.address import EggRollAddress
-        from fate_arch.storage import EggRollStoreType
+        from ...common.address import EggRollAddress
+        from ...storage import EggRollStoreType
 
         if isinstance(address, EggRollAddress):
             options = kwargs.get("option", {})
             options["total_partitions"] = partitions
-            options["store_type"] = kwargs.get("store_type", EggRollStoreType.ROLLPAIR_LMDB)
+            options["store_type"] = kwargs.get(
+                "store_type", EggRollStoreType.ROLLPAIR_LMDB
+            )
             options["create_if_missing"] = False
             rp = self._rpc.load(
                 namespace=address.namespace, name=address.name, options=options
             )
             if rp is None or rp.get_partitions() == 0:
-                raise RuntimeError(
-                    f"no exists: {address.name}, {address.namespace}"
-                )
+                raise RuntimeError(f"no exists: {address.name}, {address.namespace}")
 
             if options["store_type"] != EggRollStoreType.ROLLPAIR_IN_MEMORY:
                 rp = rp.save_as(
@@ -77,11 +77,12 @@ class CSession(CSessionABC):
             table.schema = schema
             return table
 
-        from fate_arch.common.address import PathAddress
+        from ...common.address import PathAddress
 
         if isinstance(address, PathAddress):
-            from fate_arch.computing.non_distributed import LocalData
-            from fate_arch.computing import ComputingEngine
+            from ...computing import ComputingEngine
+            from ...computing.non_distributed import LocalData
+
             return LocalData(address.path, engine=ComputingEngine.EGGROLL)
 
         raise NotImplementedError(
@@ -115,5 +116,7 @@ class CSession(CSessionABC):
         try:
             self.stop()
         except Exception as e:
-            LOGGER.warning(f"stop storage session {self.session_id} failed, try to kill", e)
+            LOGGER.warning(
+                f"stop storage session {self.session_id} failed, try to kill", e
+            )
             self.kill()

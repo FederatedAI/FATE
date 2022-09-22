@@ -15,18 +15,14 @@
 #
 from pyspark import RDD
 
-from fate_arch.abc import AddressABC, CTableABC
-
+from ...abc import AddressABC, CTableABC
 
 # noinspection PyAbstractClass
 class Table(CTableABC):
-
     def __init__(self, rdd: RDD):
         self._rdd: RDD = ...
         ...
-
     def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs): ...
-
 
 def from_hdfs(paths: str, partitions, in_serialized, id_delimiter) -> Table: ...
 def from_hive(tb_name: str, db_name: str, partitions: int) -> Table: ...

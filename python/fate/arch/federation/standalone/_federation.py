@@ -1,10 +1,10 @@
 import typing
 
-from fate_arch._standalone import Federation as RawFederation, Table as RawTable
-from fate_arch.abc import FederationABC
-from fate_arch.abc import GarbageCollectionABC
-from fate_arch.common import Party, log
-from fate_arch.computing.standalone import Table
+from ..._standalone import Federation as RawFederation
+from ..._standalone import Table as RawTable
+from ...abc import FederationABC, GarbageCollectionABC
+from ...common import Party, log
+from ...computing.standalone import Table
 
 LOGGER = log.getLogger()
 

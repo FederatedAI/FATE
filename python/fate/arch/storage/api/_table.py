@@ -13,14 +13,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import os
 from contextlib import closing
 
 import requests
-import os
 
-from fate_arch.common.log import getLogger
-from fate_arch.storage import StorageEngine, ApiStoreType
-from fate_arch.storage import StorageTableBase
+from ...common.log import getLogger
+from ...storage import ApiStoreType, StorageEngine, StorageTableBase
 
 LOGGER = getLogger()
 
@@ -51,11 +50,17 @@ class StorageTable(StorageTableBase):
     def _collect(self, **kwargs) -> list:
         self.request = getattr(requests, self.address.method.lower(), None)
         id_delimiter = self._meta.get_id_delimiter()
-        with closing(self.request(url=self.address.url, json=self.address.body, headers=self.address.header,
-                                  stream=True)) as response:
+        with closing(
+            self.request(
+                url=self.address.url,
+                json=self.address.body,
+                headers=self.address.header,
+                stream=True,
+            )
+        ) as response:
             if response.status_code == 200:
                 os.makedirs(os.path.dirname(self.path), exist_ok=True)
-                with open(self.path, 'wb') as fw:
+                with open(self.path, "wb") as fw:
                     for chunk in response.iter_content(1024):
                         if chunk:
                             fw.write(chunk)
@@ -66,10 +71,14 @@ class StorageTable(StorageTableBase):
                             for line in lines:
                                 self.data_count += 1
                                 id = line.split(id_delimiter)[0]
-                                feature = id_delimiter.join(line.split(id_delimiter)[1:])
+                                feature = id_delimiter.join(
+                                    line.split(id_delimiter)[1:]
+                                )
                                 yield id, feature
                             else:
-                                _, self._meta = self._meta.update_metas(count=self.data_count)
+                                _, self._meta = self._meta.update_metas(
+                                    count=self.data_count
+                                )
                                 break
             else:
                 raise Exception(response.status_code, response.text)

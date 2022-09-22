@@ -2,8 +2,8 @@ import abc
 import typing
 from abc import ABCMeta
 
-from fate_arch.abc._gc import GarbageCollectionABC
-from fate_arch.common import Party
+from ..common import Party
+from ._gc import GarbageCollectionABC
 
 __all__ = ["FederationABC"]
 
@@ -19,10 +19,9 @@ class FederationABC(metaclass=ABCMeta):
         ...
 
     @abc.abstractmethod
-    def get(self, name: str,
-            tag: str,
-            parties: typing.List[Party],
-            gc: GarbageCollectionABC) -> typing.List:
+    def get(
+        self, name: str, tag: str, parties: typing.List[Party], gc: GarbageCollectionABC
+    ) -> typing.List:
         """
         get objects/tables from ``parties``
 
@@ -46,11 +45,14 @@ class FederationABC(metaclass=ABCMeta):
         ...
 
     @abc.abstractmethod
-    def remote(self, v,
-               name: str,
-               tag: str,
-               parties: typing.List[Party],
-               gc: GarbageCollectionABC):
+    def remote(
+        self,
+        v,
+        name: str,
+        tag: str,
+        parties: typing.List[Party],
+        gc: GarbageCollectionABC,
+    ):
         """
         remote object/table to ``parties``
 

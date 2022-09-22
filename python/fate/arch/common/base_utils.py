@@ -24,11 +24,10 @@ import time
 import uuid
 from enum import Enum, IntEnum
 
-from fate_arch.common.conf_utils import get_base_config
-from fate_arch.common import BaseType
+from ._types import BaseType
+from .conf_utils import get_base_config
 
-
-use_deserialize_safe_module = get_base_config('use_deserialize_safe_module', False)
+use_deserialize_safe_module = get_base_config("use_deserialize_safe_module", False)
 
 
 class CustomJSONEncoder(json.JSONEncoder):
@@ -38,9 +37,9 @@ class CustomJSONEncoder(json.JSONEncoder):
 
     def default(self, obj):
         if isinstance(obj, datetime.datetime):
-            return obj.strftime('%Y-%m-%d %H:%M:%S')
+            return obj.strftime("%Y-%m-%d %H:%M:%S")
         elif isinstance(obj, datetime.date):
-            return obj.strftime('%Y-%m-%d')
+            return obj.strftime("%Y-%m-%d")
         elif isinstance(obj, datetime.timedelta):
             return str(obj)
         elif issubclass(type(obj), Enum) or issubclass(type(obj), IntEnum):
@@ -117,22 +116,18 @@ def deserialize_b64(src):
     return pickle.loads(src)
 
 
-safe_module = {
-    'federatedml',
-    'numpy',
-    'fate_flow'
-}
+safe_module = {"federatedml", "numpy", "fate_flow"}
 
 
 class RestrictedUnpickler(pickle.Unpickler):
     def find_class(self, module, name):
         import importlib
-        if module.split('.')[0] in safe_module:
+
+        if module.split(".")[0] in safe_module:
             _module = importlib.import_module(module)
             return getattr(_module, name)
         # Forbid everything else.
-        raise pickle.UnpicklingError("global '%s.%s' is forbidden" %
-                                     (module, name))
+        raise pickle.UnpicklingError("global '%s.%s' is forbidden" % (module, name))
 
 
 def restricted_loads(src):
@@ -148,7 +143,12 @@ def get_lan_ip():
         def get_interface_ip(ifname):
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             return socket.inet_ntoa(
-                fcntl.ioctl(s.fileno(), 0x8915, struct.pack('256s', string_to_bytes(ifname[:15])))[20:24])
+                fcntl.ioctl(
+                    s.fileno(),
+                    0x8915,
+                    struct.pack("256s", string_to_bytes(ifname[:15])),
+                )[20:24]
+            )
 
     ip = socket.gethostbyname(socket.getfqdn())
     if ip.startswith("127.") and os.name != "nt":
@@ -170,4 +170,4 @@ def get_lan_ip():
                 break
             except IOError as e:
                 pass
-    return ip or ''
+    return ip or ""

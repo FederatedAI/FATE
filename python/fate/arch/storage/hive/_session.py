@@ -17,21 +17,32 @@ import traceback
 
 from impala.dbapi import connect
 
-from fate_arch.common.address import HiveAddress
-from fate_arch.storage import StorageSessionBase, StorageEngine, HiveStoreType
-from fate_arch.abc import AddressABC
+from ...abc import AddressABC
+from ...common.address import HiveAddress
+from ...storage import HiveStoreType, StorageEngine, StorageSessionBase
 
 
 class StorageSession(StorageSessionBase):
     def __init__(self, session_id, options=None):
-        super(StorageSession, self).__init__(session_id=session_id, engine=StorageEngine.HIVE)
+        super(StorageSession, self).__init__(
+            session_id=session_id, engine=StorageEngine.HIVE
+        )
         self._db_con = {}
 
-    def table(self, name, namespace, address: AddressABC, partitions,
-              storage_type: HiveStoreType = HiveStoreType.DEFAULT, options=None, **kwargs):
+    def table(
+        self,
+        name,
+        namespace,
+        address: AddressABC,
+        partitions,
+        storage_type: HiveStoreType = HiveStoreType.DEFAULT,
+        options=None,
+        **kwargs,
+    ):
 
         if isinstance(address, HiveAddress):
-            from fate_arch.storage.hive._table import StorageTable
+            from ...storage.hive._table import StorageTable
+
             address_key = HiveAddress(
                 host=address.host,
                 username=None,
@@ -39,23 +50,35 @@ class StorageSession(StorageSessionBase):
                 database=address.database,
                 auth_mechanism=None,
                 password=None,
-                name=None)
+                name=None,
+            )
             if address_key in self._db_con:
                 con, cur = self._db_con[address_key]
             else:
                 self._create_db_if_not_exists(address)
-                con = connect(host=address.host,
-                              port=address.port,
-                              database=address.database,
-                              auth_mechanism=address.auth_mechanism,
-                              password=address.password,
-                              user=address.username
-                              )
+                con = connect(
+                    host=address.host,
+                    port=address.port,
+                    database=address.database,
+                    auth_mechanism=address.auth_mechanism,
+                    password=address.password,
+                    user=address.username,
+                )
                 cur = con.cursor()
                 self._db_con[address_key] = (con, cur)
-            return StorageTable(cur=cur, con=con, address=address, name=name, namespace=namespace,
-                                storage_type=storage_type, partitions=partitions, options=options)
-        raise NotImplementedError(f"address type {type(address)} not supported with eggroll storage")
+            return StorageTable(
+                cur=cur,
+                con=con,
+                address=address,
+                name=name,
+                namespace=namespace,
+                storage_type=storage_type,
+                partitions=partitions,
+                options=options,
+            )
+        raise NotImplementedError(
+            f"address type {type(address)} not supported with eggroll storage"
+        )
 
     def cleanup(self, name, namespace):
         pass
@@ -74,14 +97,17 @@ class StorageSession(StorageSessionBase):
         return self.stop()
 
     def _create_db_if_not_exists(self, address):
-        connection = connect(host=address.host,
-                             port=address.port,
-                             user=address.username,
-                             auth_mechanism=address.auth_mechanism,
-                             password=address.password
-                             )
+        connection = connect(
+            host=address.host,
+            port=address.port,
+            user=address.username,
+            auth_mechanism=address.auth_mechanism,
+            password=address.password,
+        )
         with connection:
             with connection.cursor() as cursor:
-                cursor.execute("create database if not exists {}".format(address.database))
-                print('create db {} success'.format(address.database))
+                cursor.execute(
+                    "create database if not exists {}".format(address.database)
+                )
+                print("create db {} success".format(address.database))
             connection.commit()

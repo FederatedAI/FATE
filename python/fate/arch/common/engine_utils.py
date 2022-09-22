@@ -13,14 +13,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import typing
-
-from fate_arch.common import FederatedMode, conf_utils
-from fate_arch.computing import ComputingEngine
-from fate_arch.federation import FederationEngine
-from fate_arch.storage import StorageEngine
-from fate_arch.relation_ship import Relationship
-from fate_arch.common import EngineType
+from ..common import EngineType, FederatedMode, conf_utils
+from ..computing import ComputingEngine
+from ..federation import FederationEngine
+from ..relation_ship import Relationship
+from ..storage import StorageEngine
 
 
 def get_engine_class_members(engine_class) -> list:
@@ -49,8 +46,10 @@ def get_engines():
 
     # computing engine
     if default_engines.get(EngineType.COMPUTING) is None:
-        raise RuntimeError(f"{EngineType.COMPUTING} is None,"
-                           f"Please check default_engines on conf/service_conf.yaml")
+        raise RuntimeError(
+            f"{EngineType.COMPUTING} is None,"
+            f"Please check default_engines on conf/service_conf.yaml"
+        )
     engines[EngineType.COMPUTING] = default_engines[EngineType.COMPUTING].upper()
     if engines[EngineType.COMPUTING] not in get_engine_class_members(ComputingEngine):
         raise RuntimeError(f"{engines[EngineType.COMPUTING]} is illegal")
@@ -67,7 +66,9 @@ def get_engines():
     for t in (EngineType.STORAGE, EngineType.FEDERATION):
         if engines.get(t) is None:
             # use default relation engine
-            engines[t] = Relationship.Computing[engines[EngineType.COMPUTING]][t]["default"]
+            engines[t] = Relationship.Computing[engines[EngineType.COMPUTING]][t][
+                "default"
+            ]
 
     # set default federated mode by federation engine
     if engines[EngineType.FEDERATION] == FederationEngine.STANDALONE:
@@ -82,26 +83,39 @@ def get_engines():
         raise RuntimeError(f"{engines[EngineType.FEDERATION]} is illegal")
 
     for t in [EngineType.FEDERATION]:
-        if engines[t] not in Relationship.Computing[engines[EngineType.COMPUTING]][t]["support"]:
-            raise RuntimeError(f"{engines[t]} is not supported in {engines[EngineType.COMPUTING]}")
+        if (
+            engines[t]
+            not in Relationship.Computing[engines[EngineType.COMPUTING]][t]["support"]
+        ):
+            raise RuntimeError(
+                f"{engines[t]} is not supported in {engines[EngineType.COMPUTING]}"
+            )
 
     return engines
 
 
 def is_standalone():
-    return get_engines().get(EngineType.FEDERATION).upper() == FederationEngine.STANDALONE
+    return (
+        get_engines().get(EngineType.FEDERATION).upper() == FederationEngine.STANDALONE
+    )
 
 
 def get_engines_config_from_conf(group_map=False):
     engines_config = {}
     engine_group_map = {}
-    for engine_type in {EngineType.COMPUTING, EngineType.FEDERATION, EngineType.STORAGE}:
+    for engine_type in {
+        EngineType.COMPUTING,
+        EngineType.FEDERATION,
+        EngineType.STORAGE,
+    }:
         engines_config[engine_type] = {}
         engine_group_map[engine_type] = {}
     for group_name, engine_map in Relationship.EngineConfMap.items():
         for engine_type, name_maps in engine_map.items():
             for name_map in name_maps:
-                single_engine_config = conf_utils.get_base_config(group_name, {}).get(name_map[1], {})
+                single_engine_config = conf_utils.get_base_config(group_name, {}).get(
+                    name_map[1], {}
+                )
                 if single_engine_config:
                     engine_name = name_map[0]
                     engines_config[engine_type][engine_name] = single_engine_config

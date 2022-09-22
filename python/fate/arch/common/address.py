@@ -1,5 +1,5 @@
-from fate_arch.abc import AddressABC
-from fate_arch.metastore.db_utils import StorageConnector
+from ..abc import AddressABC
+from ..metastore.db_utils import StorageConnector
 
 
 class AddressBase(AddressABC):
@@ -22,7 +22,14 @@ class AddressBase(AddressABC):
 
 
 class StandaloneAddress(AddressBase):
-    def __init__(self, home=None, name=None, namespace=None, storage_type=None, connector_name=None):
+    def __init__(
+        self,
+        home=None,
+        name=None,
+        namespace=None,
+        storage_type=None,
+        connector_name=None,
+    ):
         self.home = home
         self.name = name
         self.namespace = namespace
@@ -100,7 +107,9 @@ class PathAddress(AddressBase):
 
 
 class ApiAddress(AddressBase):
-    def __init__(self, method="POST", url=None, header=None, body=None, connector_name=None):
+    def __init__(
+        self, method="POST", url=None, header=None, body=None, connector_name=None
+    ):
         self.method = method
         self.url = url
         self.header = header if header else {}
@@ -118,7 +127,16 @@ class ApiAddress(AddressBase):
 
 
 class MysqlAddress(AddressBase):
-    def __init__(self, user=None, passwd=None, host=None, port=None, db=None, name=None, connector_name=None):
+    def __init__(
+        self,
+        user=None,
+        passwd=None,
+        host=None,
+        port=None,
+        db=None,
+        name=None,
+        connector_name=None,
+    ):
         self.user = user
         self.passwd = passwd
         self.host = host
@@ -139,12 +157,27 @@ class MysqlAddress(AddressBase):
 
     @property
     def connector(self):
-        return {"user": self.user, "passwd": self.passwd, "host": self.host, "port": self.port, "db": self.db}
+        return {
+            "user": self.user,
+            "passwd": self.passwd,
+            "host": self.host,
+            "port": self.port,
+            "db": self.db,
+        }
 
 
 class HiveAddress(AddressBase):
-    def __init__(self, host=None, name=None, port=10000, username=None, database='default', auth_mechanism='PLAIN',
-                 password=None, connector_name=None):
+    def __init__(
+        self,
+        host=None,
+        name=None,
+        port=10000,
+        username=None,
+        database="default",
+        auth_mechanism="PLAIN",
+        password=None,
+        connector_name=None,
+    ):
         self.host = host
         self.username = username
         self.port = port
@@ -171,12 +204,24 @@ class HiveAddress(AddressBase):
             "username": self.username,
             "password": self.password,
             "auth_mechanism": self.auth_mechanism,
-            "database": self.database}
+            "database": self.database,
+        }
 
 
 class LinkisHiveAddress(AddressBase):
-    def __init__(self, host="127.0.0.1", port=9001, username='', database='', name='', run_type='hql',
-                 execute_application_name='hive', source={}, params={}, connector_name=None):
+    def __init__(
+        self,
+        host="127.0.0.1",
+        port=9001,
+        username="",
+        database="",
+        name="",
+        run_type="hql",
+        execute_application_name="hive",
+        source={},
+        params={},
+        connector_name=None,
+    ):
         self.host = host
         self.port = port
         self.username = username

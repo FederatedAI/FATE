@@ -16,8 +16,8 @@
 
 import pickle
 
-_DELIMITER = '\t'
-NEWLINE = '\n'
+_DELIMITER = "\t"
+NEWLINE = "\n"
 
 
 def deserialize(m):
