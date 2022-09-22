@@ -63,6 +63,7 @@ class IntersectModelBase(ModelBase):
         self.intersect_preprocess_params = params.intersect_preprocess_params
 
     def init_intersect_method(self):
+        # to distinguish in future ver
         if self.model_param.cardinality_only:
             self.intersect_method = self.model_param.cardinality_method
         else:
@@ -224,7 +225,7 @@ class IntersectModelBase(ModelBase):
                 self.cache_output = self.intersection_obj.generate_cache(match_data)
                 intersect_meta = self.intersection_obj.get_intersect_method_meta()
                 self.callback_cache_meta(intersect_meta)
-                return data
+                return
             if self.intersection_obj.cardinality_only:
                 self.intersection_obj.run_cardinality(match_data)
             else:
@@ -240,7 +241,7 @@ class IntersectModelBase(ModelBase):
                 intersect_meta = self.intersection_obj.get_intersect_method_meta()
                 # LOGGER.debug(f"callback intersect meta is: {intersect_meta}")
                 self.callback_cache_meta(intersect_meta)
-                return data
+                return
             if self.intersection_obj.cardinality_only:
                 self.intersection_obj.run_cardinality(data)
             else:

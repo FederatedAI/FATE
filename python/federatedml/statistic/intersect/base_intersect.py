@@ -107,6 +107,9 @@ class Intersect(object):
         if not isinstance(party_list, list):
             party_list = [party_list]
         cache_list = [cache_data.get(str(party_id)) for party_id in party_list]
+        if (cache_len := len(cache_list)) != (data_len := len(cache_data.items())):
+            LOGGER.warning(f"{cache_len} cache sets are given,"
+                           f"but only {data_len} hosts participate in current intersection task.")
         return cache_list
 
     def run_cache_intersect(self, data_instances, cache_data):
