@@ -377,6 +377,7 @@ class IntersectModelBase(ModelBase):
         self.sync_use_match_id()
 
         intersect_data = data_inst
+        self.match_id_num = data_inst.count()
         if self.use_match_id_process:
             if len(self.host_party_id_list) > 1 and self.model_param.sample_id_generator != consts.GUEST:
                 raise ValueError("While multi-host, sample_id_generator should be guest.")
@@ -403,6 +404,7 @@ class IntersectModelBase(ModelBase):
             cache_id = cache_meta[str(self.guest_party_id)].get("cache_id")
             self.transfer_variable.cache_id.remote(cache_id, role=consts.GUEST, idx=0)
             guest_cache_id = self.transfer_variable.cache_id.get(role=consts.GUEST, idx=0)
+            self.match_id_num = list(cache_data.values())[0].count()
             if guest_cache_id != cache_id:
                 raise ValueError(f"cache_id check failed. cache_id from host & guest must match.")
         elif self.role == consts.GUEST:
