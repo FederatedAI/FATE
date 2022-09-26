@@ -1,14 +1,12 @@
 from typing import Callable, List, Literal, Optional, Tuple, TypeVar
 
-from fate.interface import FPTensor
+from fate.interface import Context, FederationEngine, FPTensor
 from fate.interface import Future as FutureInterface
 from fate.interface import Futures as FuturesInterface
 from fate.interface import Parties as PartiesInterface
 from fate.interface import Party as PartyInterface
-from fate.interface import PHEEncryptor, PHETensor
-from fate.interface import FederationEngine as FederationEngineInterface
+from fate.interface import PartyMeta, PHEEncryptor, PHETensor
 
-from ..common import Party as PartyMeta
 from ..federation.transfer_variable import IterationGC
 from ._namespace import Namespace
 
@@ -89,15 +87,18 @@ class GC:
         return self._pull_gc_dict[key]
 
 
-class FederationParty(PartyInterface):
+class Party(PartyInterface):
     def __init__(
-        self, ctx, federation, party: Tuple[str, str], namespace, gc: GC
+        self,
+        ctx,
+        federation,
+        party: PartyMeta,
+        namespace,
     ) -> None:
         self.ctx = ctx
         self.federation = federation
-        self.party = PartyMeta(party[0], party[1])
+        self.party = party
         self.namespace = namespace
-        self.gc = gc
 
     def push(self, name: str, value):
         return _push(
@@ -106,41 +107,58 @@ class FederationParty(PartyInterface):
             name,
             self.namespace,
             [self.party],
-            self.gc,
             value,
         )
 
     def pull(self, name: str) -> Future:
-        return Future(
-            _pull(
-                self.ctx, self.federation, name, self.namespace, [self.party], self.gc
-            )[0]
-        )
+        return Future(_pull(self.ctx, self.federation, name, self.namespace, [self.party])[0])
 
 
-class FederationParties(PartiesInterface):
+class Parties(PartiesInterface):
     def __init__(
         self,
         ctx,
-        federation,
-        parties: List[Tuple[str, str]],
+        federation: FederationEngine,
+        party: PartyMeta,
+        parties: List[PartyMeta],
         namespace: Namespace,
-        gc: GC,
     ) -> None:
         self.ctx = ctx
         self.federation = federation
-        self.parties = [PartyMeta(party[0], party[1]) for party in parties]
+        self.party = party
+        self.parties = parties
         self.namespace = namespace
-        self.gc = gc
 
-    def __call__(self, key: int) -> FederationParty:
-        return FederationParty(
+    def __call__(self, key: int) -> Party:
+        return Party(
             self.ctx,
             self.federation,
-            self.parties[key].as_tuple(),
+            self.parties[key],
             self.namespace,
-            self.gc,
         )
+
+    def get_neighbor(self, shift: int, module: bool = False) -> Party:
+        start_index = self.get_local_index()
+        if start_index is None:
+            raise RuntimeError(f"local party `{self.party}` not in `{self.parties}`")
+        target_index = start_index + shift
+        if module:
+            target_index = target_index % module
+
+        if 0 <= target_index < len(self.parties):
+            return self(target_index)
+        else:
+            raise IndexError(f"target index `{target_index}` out of bound")
+
+    def get_neighbors(self) -> "Parties":
+        parties = [party for party in self.parties if party != self.party]
+        return Parties(self.ctx, self.federation, self.party, parties, self.namespace)
+
+    def get_local_index(self) -> Optional[int]:
+        if self.party not in self.parties:
+            return None
+        else:
+            return self.parties.index(self.party)
 
     def push(self, name: str, value):
         return _push(
@@ -149,47 +167,43 @@ class FederationParties(PartiesInterface):
             name,
             self.namespace,
             self.parties,
-            self.gc,
             value,
         )
 
     def pull(self, name: str) -> Futures:
-        return Futures(
-            _pull(
-                self.ctx, self.federation, name, self.namespace, self.parties, self.gc
-            )
-        )
+        return Futures(_pull(self.ctx, self.federation, name, self.namespace, self.parties))
 
 
 def _push(
-    ctx,
-    federation,
+    ctx: Context,
+    federation: FederationEngine,
     name: str,
     namespace: Namespace,
     parties: List[PartyMeta],
-    gc: GC,
     value,
 ):
     if hasattr(value, "__federation_hook__"):
         value.__federation_hook__(ctx, name, parties)
     else:
-        federation.remote(
+        federation.push(
             v=value,
             name=name,
             tag=namespace.fedeation_tag(),
             parties=parties,
-            gc=gc.get_or_set_push_gc(name),
         )
 
 
 def _pull(
-    ctx, federation, name: str, namespace: Namespace, parties: List[PartyMeta], gc: GC
+    ctx: Context,
+    federation: FederationEngine,
+    name: str,
+    namespace: Namespace,
+    parties: List[PartyMeta],
 ):
-    raw_values = federation.get(
+    raw_values = federation.pull(
         name=name,
         tag=namespace.fedeation_tag(),
         parties=parties,
-        gc=gc.get_or_set_pull_gc(name),
     )
     values = []
     for party, raw_value in zip(parties, raw_values):
@@ -198,73 +212,3 @@ def _pull(
         else:
             values.append(raw_value)
     return values
-
-
-class FederationEngine(FederationEngineInterface):
-    def __init__(
-        self,
-        federation_id: str,
-        local_party: Tuple[Literal["guest", "host", "arbiter"], str],
-        parties: Optional[List[Tuple[Literal["guest", "host", "arbiter"], str]]],
-        ctx,
-        session,  # should remove
-        namespace: Namespace,
-    ):
-        if parties is None:
-            parties = []
-        if local_party not in parties:
-            parties.append(local_party)
-        self._local = local_party
-        self._parties = parties
-        self._role_to_parties = {}
-        for (role, party_id) in self._parties:
-            self._role_to_parties.setdefault(role, []).append(party_id)
-
-        # walkround, temp
-        from ..common._parties import Party, PartiesInfo
-
-        local = Party(local_party[0], local_party[1])
-        role_to_parties = {}
-        for role, party_id in [local_party, *parties]:
-            role_to_parties.setdefault(role, []).append(Party(role, party_id))
-        session.init_federation(
-            federation_session_id=federation_id,
-            parties_info=PartiesInfo(local, role_to_parties),
-        )
-        self.federation = session.federation
-
-        self.ctx = ctx
-        self.namespace = namespace
-        self.gc = GC()
-
-    @property
-    def guest(self) -> PartyInterface:
-        party = self._role("guest")[0]
-        return FederationParty(
-            self.ctx, self.federation, party, self.namespace, self.gc
-        )
-
-    @property
-    def hosts(self) -> PartiesInterface:
-        parties = self._role("host")
-        return FederationParties(
-            self.ctx, self.federation, parties, self.namespace, self.gc
-        )
-
-    @property
-    def arbiter(self) -> PartyInterface:
-        party = self._role("arbiter")[0]
-        return FederationParty(
-            self.ctx, self.federation, party, self.namespace, self.gc
-        )
-
-    @property
-    def parties(self) -> PartiesInterface:
-        return FederationParties(
-            self.ctx, self.federation, self._parties, self.namespace, self.gc
-        )
-
-    def _role(self, role: str) -> List:
-        if role not in self._role_to_parties:
-            raise RuntimeError(f"no {role} party has configurated")
-        return [(role, party_id) for party_id in self._role_to_parties[role]]

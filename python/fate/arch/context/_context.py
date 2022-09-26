@@ -1,21 +1,23 @@
 import logging
 from contextlib import contextmanager
 from dataclasses import dataclass
-from logging import Logger, disable, getLogger
-from typing import List, Literal, Optional, Tuple, Iterator
+from logging import Logger, getLogger
+from typing import Iterator, List, Literal, Optional, Tuple
 
-from fate.interface import LOGMSG, Anonymous, Cache, CheckpointManager
+from fate.interface import LOGMSG, T_ROLE, Anonymous, Cache, CheckpointManager
+from fate.interface import Cipher as CipherInterface
+from fate.interface import ComputingEngine
 from fate.interface import Context as ContextInterface
+from fate.interface import FederationEngine
 from fate.interface import Logger as LoggerInterface
 from fate.interface import Metric as MetricInterface
 from fate.interface import MetricMeta as MetricMetaInterface
-from fate.interface import Metrics, Summary
-from fate.interface import ComputingEngine
-from ..session import Session
+from fate.interface import Metrics, PartyMeta, Summary
 
-from ._federation import GC, FederationEngine
+from ..session import Session
+from ._cipher import Cipher
+from ._federation import GC, Parties, Party
 from ._namespace import Namespace
-from ..common._parties import PartiesInfo, Party
 
 
 @dataclass
@@ -172,6 +174,7 @@ class Context(ContextInterface):
         anonymous_generator: Anonymous = DummyAnonymous(),
         checkpoint_manager: CheckpointManager = DummyCheckpointManager(),
         log: Optional[LoggerInterface] = None,
+        cipher: Optional[CipherInterface] = None,
         disable_buildin_logger=True,  # FIXME: just clear old loggers, remove in future
         namespace: Optional[Namespace] = None,
     ) -> None:
@@ -187,55 +190,87 @@ class Context(ContextInterface):
         self.namespace = namespace
 
         if log is None:
-            log = DummyLogger(
-                context_name, self.namespace, disable_buildin=disable_buildin_logger
-            )
+            log = DummyLogger(context_name, self.namespace, disable_buildin=disable_buildin_logger)
         self.log = log
+
+        if cipher is None:
+            cipher = Cipher()
+        self.cipher = cipher
 
         self._computing = computing
         self._federation = federation
-        self._session = Session()
+        self._role_to_parties = None
+
         self._gc = GC()
 
-    def init_computing(self, computing_session_id=None):
-        self._session.init_computing(computing_session_id=computing_session_id)
-
-    def init_federation(
-        self,
-        federation_id,
-        local_party: Tuple[Literal["guest", "host", "arbiter"], str],
-        parties: List[Tuple[Literal["guest", "host", "arbiter"], str]],
-    ):
-        if self._federation is None:
-            self._federation = FederationEngine(
-                federation_id, local_party, parties, self, self._session, self.namespace
-            )
-
     @contextmanager
-    def sub_ctx(self, namespace) -> Iterator["Context"]:
+    def sub_ctx(self, namespace: str) -> Iterator["Context"]:
         with self.namespace.into_subnamespace(namespace):
             try:
                 yield self
             finally:
                 ...
 
-    @property
-    def guest(self):
-        return self._get_party_util().guest
+    def set_federation(self, federation: FederationEngine):
+        self._federation = federation
 
     @property
-    def hosts(self):
-        return self._get_party_util().hosts
+    def guest(self) -> Party:
+        return Party(
+            self,
+            self._get_federation(),
+            self._get_parties("guest")[0],
+            self.namespace,
+        )
 
     @property
-    def arbiter(self):
-        return self._get_party_util().arbiter
+    def hosts(self) -> Parties:
+        return Parties(
+            self,
+            self._get_federation(),
+            self._get_federation().party,
+            self._get_parties("host"),
+            self.namespace,
+        )
 
     @property
-    def parties(self):
-        return self._get_party_util().parties
+    def arbiter(self) -> Party:
+        return Party(
+            self,
+            self._get_federation(),
+            self._get_parties("arbiter")[0],
+            self.namespace,
+        )
 
-    def _get_party_util(self) -> FederationEngine:
+    @property
+    def parties(self) -> Parties:
+        return Parties(
+            self,
+            self._get_federation(),
+            self._get_federation().party,
+            self._get_parties(),
+            self.namespace,
+        )
+
+    def _get_parties(self, role: Optional[T_ROLE] = None) -> List[PartyMeta]:
+        # update role to parties mapping
+        if self._role_to_parties is None:
+            self._role_to_parties = {}
+            for party in self._get_federation().parties:
+                self._role_to_parties.setdefault(party[0], []).append(party)
+
+        parties = []
+        if role is None:
+            for role_parties in self._role_to_parties.values():
+                parties.extend(role_parties)
+        else:
+            if role not in self._role_to_parties:
+                raise RuntimeError(f"no {role} party has configurated")
+            else:
+                parties.extend(self._role_to_parties[role])
+        return parties
+
+    def _get_federation(self):
         if self._federation is None:
-            raise RuntimeError("federation session not init")
+            raise RuntimeError(f"federation not set")
         return self._federation

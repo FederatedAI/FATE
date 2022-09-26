@@ -40,7 +40,7 @@ class StorageTableMetaABC(metaclass=abc.ABCMeta):
         part_of_data=None,
         description=None,
         partitions=None,
-        **kwargs
+        **kwargs,
     ):
         ...
 
@@ -180,7 +180,7 @@ class StorageTableABC(metaclass=abc.ABCMeta):
         part_of_data=None,
         description=None,
         partitions=None,
-        **kwargs
+        **kwargs,
     ) -> StorageTableMetaABC:
         ...
 
@@ -223,7 +223,7 @@ class StorageSessionABC(metaclass=abc.ABCMeta):
         partitions,
         storage_type=None,
         options=None,
-        **kwargs
+        **kwargs,
     ) -> StorageTableABC:
         ...
 

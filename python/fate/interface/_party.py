@@ -1,5 +1,6 @@
-from typing import Callable, List, Optional, Protocol, TypeVar
+from typing import Callable, List, Literal, Optional, Protocol, Tuple, TypeVar
 
+from ._consts import T_ROLE
 from ._tensor import FPTensor, PHEEncryptor, PHETensor
 
 T = TypeVar("T")
@@ -52,3 +53,15 @@ class Parties(Protocol):
 
     def __call__(self, key: int) -> Party:
         ...
+
+    def get_neighbor(self, shift: int, module: bool = False) -> Party:
+        ...
+
+    def get_neighbors(self) -> "Parties":
+        ...
+
+    def get_local_index(self) -> Optional[int]:
+        ...
+
+
+PartyMeta = Tuple[T_ROLE, str]

@@ -17,10 +17,44 @@
 import typing
 from collections import deque
 
+from fate.interface import GarbageCollector as GarbageCollectorInterface
+
 from ..abc import GarbageCollectionABC
 from ..common.log import getLogger
 
 LOGGER = getLogger()
+
+
+class GarbageCollector(GarbageCollectorInterface):
+    def __init__(self) -> None:
+        self._register = {}
+
+    def register_clean_action(self, name: str, tag: str, obj, method: str, kwargs):
+        """
+        when clean action for (`name`, `tag`) triggered, do
+        `getattr(obj, method)(**kwargs)`
+        """
+        self._register.setdefault(name, {})[tag] = (obj, method, kwargs)
+
+    def clean(self, name: str, tag: str):
+        if tag == "*":
+            if name in self._register:
+                for _, (obj, method, kwargs) in self._register[name].items():
+                    self._safe_gc_call(obj, method, kwargs)
+                del self._register[name]
+        else:
+            if name in self._register and tag in self._register[name]:
+                obj, method, kwargs = self._register[name][tag]
+                self._safe_gc_call(obj, method, kwargs)
+                del self._register[name][tag]
+
+    @classmethod
+    def _safe_gc_call(cls, obj, method: str, kwargs: dict):
+        try:
+            LOGGER.debug(f"[CLEAN]deleting {obj}, {method}, {kwargs}")
+            getattr(obj, method)(**kwargs)
+        except Exception as e:
+            LOGGER.debug(f"[CLEAN]this could be ignore {e}")
 
 
 class IterationGC(GarbageCollectionABC):

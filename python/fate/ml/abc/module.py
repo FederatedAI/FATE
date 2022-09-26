@@ -1,10 +1,9 @@
 from abc import abstractmethod
 from typing import Optional
 
-from federatedml.util import consts
-
 from fate.interface import Context, Dataframe, ModelsLoader, ModelsSaver
 from fate.interface import Module as ModuleProtocol
+from federatedml.util import consts
 
 from .param import MLParam
 

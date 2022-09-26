@@ -1,9 +1,14 @@
-def host(federation_id, local_party, parties):
-    from fate.arch.context import Context
+from multiprocessing import Process
 
-    ctx = Context("guest")
-    ctx.init_computing()
-    ctx.init_federation(federation_id, local_party=local_party, parties=parties)
+from fate.arch.computing.standalone import CSession
+from fate.arch.context import Context
+from fate.arch.federation.standalone import StandaloneFederation
+
+
+def host(federation_id, local_party, parties):
+    computing = CSession()
+    federation = StandaloneFederation(computing, federation_id, local_party, parties)
+    ctx = Context("guest", computing=computing, federation=federation)
     with ctx.sub_ctx("predict") as sub_ctx:
         sub_ctx.log.debug("ctx inited")
         loss = 0.2
@@ -14,11 +19,9 @@ def host(federation_id, local_party, parties):
 
 
 def guest(federation_id, local_party, parties):
-    from fate.arch.context import Context
-
-    ctx = Context("host")
-    ctx.init_computing()
-    ctx.init_federation(federation_id, local_party=local_party, parties=parties)
+    computing = CSession()
+    federation = StandaloneFederation(computing, federation_id, local_party, parties)
+    ctx = Context("host", computing=computing, federation=federation)
     with ctx.sub_ctx("predict") as sub_ctx:
         sub_ctx.log.error("ctx inited")
         loss = 0.1
@@ -29,7 +32,6 @@ def guest(federation_id, local_party, parties):
 
 
 if __name__ == "__main__":
-    from multiprocessing import Process
 
     federation_id = "federation_id"
     guest_party = ("guest", "guest_party_id")

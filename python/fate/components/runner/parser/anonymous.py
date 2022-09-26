@@ -16,7 +16,6 @@
 import copy
 
 import numpy as np
-
 from fate.interface import Anonymous as AnonymousInterface
 
 ANONYMOUS_COLUMN_PREFIX = "x"
@@ -32,14 +31,10 @@ class Anonymous(AnonymousInterface):
 
     def migrate_schema_anonymous(self, schema):
         if "anonymous_header" in schema:
-            schema["anonymous_header"] = self.migrate_anonymous(
-                schema["anonymous_header"]
-            )
+            schema["anonymous_header"] = self.migrate_anonymous(schema["anonymous_header"])
 
         if "anonymous_label" in schema:
-            schema["anonymous_label"] = self.migrate_anonymous(
-                schema["anonymous_label"]
-            )
+            schema["anonymous_label"] = self.migrate_anonymous(schema["anonymous_label"])
 
         return schema
 
@@ -60,9 +55,7 @@ class Anonymous(AnonymousInterface):
                 migrate_party_id = None
 
             if migrate_party_id is not None:
-                migrate_anonymous_header.append(
-                    self.generate_anonymous_column(role, migrate_party_id, suf)
-                )
+                migrate_anonymous_header.append(self.generate_anonymous_column(role, migrate_party_id, suf))
             else:
                 migrate_anonymous_header.append(column)
 
@@ -77,10 +70,7 @@ class Anonymous(AnonymousInterface):
             return False
         role, party_id = splits[0], splits[1]
 
-        return (
-            role in self._migrate_mapping
-            and int(party_id) in self._migrate_mapping[role]
-        )
+        return role in self._migrate_mapping and int(party_id) in self._migrate_mapping[role]
 
     def extend_columns(self, original_anonymous_header, extend_header):
         extend_anonymous_header = []
@@ -89,14 +79,10 @@ class Anonymous(AnonymousInterface):
             if not self.is_expand_column(anonymous_col_name):
                 continue
 
-            exp_start_idx = max(
-                exp_start_idx, self.get_expand_idx(anonymous_col_name) + 1
-            )
+            exp_start_idx = max(exp_start_idx, self.get_expand_idx(anonymous_col_name) + 1)
 
         for i in range(len(extend_header)):
-            extend_anonymous_header.append(
-                self.__generate_expand_anonymous_column(exp_start_idx + i)
-            )
+            extend_anonymous_header.append(self.__generate_expand_anonymous_column(exp_start_idx + i))
 
         return original_anonymous_header + extend_anonymous_header
 
@@ -136,9 +122,7 @@ class Anonymous(AnonymousInterface):
         return new_schema
 
     @staticmethod
-    def generate_derived_header(
-        original_header, original_anonymous_header, derived_dict
-    ):
+    def generate_derived_header(original_header, original_anonymous_header, derived_dict):
         new_anonymous_header = []
         for column, anonymous_column in zip(original_header, original_anonymous_header):
             if column not in derived_dict:
@@ -177,15 +161,12 @@ class Anonymous(AnonymousInterface):
         if "anonymous_header" in schema:
             old_anonymous_header = schema["anonymous_header"]
             new_anonymous_header = [
-                Anonymous.generate_anonymous_column(role, party_id, col_name)
-                for col_name in old_anonymous_header
+                Anonymous.generate_anonymous_column(role, party_id, col_name) for col_name in old_anonymous_header
             ]
             new_schema["anonymous_header"] = new_anonymous_header
 
         if "label_name" in schema:
-            new_schema["anonymous_label"] = Anonymous.generate_anonymous_column(
-                role, party_id, ANONYMOUS_LABEL
-            )
+            new_schema["anonymous_label"] = Anonymous.generate_anonymous_column(role, party_id, ANONYMOUS_LABEL)
 
         return new_schema
 
@@ -194,15 +175,11 @@ class Anonymous(AnonymousInterface):
         header = schema["header"]
         if self._role:
             anonymous_header = [
-                Anonymous.generate_anonymous_column(
-                    self._role, self._party_id, ANONYMOUS_COLUMN_PREFIX + str(i)
-                )
+                Anonymous.generate_anonymous_column(self._role, self._party_id, ANONYMOUS_COLUMN_PREFIX + str(i))
                 for i in range(len(header))
             ]
         else:
-            anonymous_header = [
-                ANONYMOUS_COLUMN_PREFIX + str(i) for i in range(len(header))
-            ]
+            anonymous_header = [ANONYMOUS_COLUMN_PREFIX + str(i) for i in range(len(header))]
 
         new_schema["anonymous_header"] = anonymous_header
 
@@ -219,10 +196,7 @@ class Anonymous(AnonymousInterface):
     def generated_compatible_anonymous_header_with_old_version(self, header):
         if self._role is None or self._party_id is None:
             raise ValueError("Please init anonymous generator with role & party_id")
-        return [
-            SPLICES.join([self._role, str(self._party_id), str(idx)])
-            for idx in range(len(header))
-        ]
+        return [SPLICES.join([self._role, str(self._party_id), str(idx)]) for idx in range(len(header))]
 
     @staticmethod
     def is_old_version_anonymous_header(anonymous_header):

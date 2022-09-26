@@ -4,6 +4,7 @@ from typing import Iterator, Protocol
 from ._anonymous import Anonymous
 from ._cache import Cache
 from ._checkpoint import CheckpointManager
+from ._cipher import Cipher
 from ._log import Logger
 from ._metric import Metrics
 from ._party import Parties, Party
@@ -21,6 +22,7 @@ class Context(Protocol):
     hosts: Parties
     arbiter: Party
     parties: Parties
+    cipher: Cipher
 
     @contextmanager
     def sub_ctx(self, namespace) -> Iterator["Context"]:

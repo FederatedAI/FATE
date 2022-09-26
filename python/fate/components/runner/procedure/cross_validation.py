@@ -1,8 +1,7 @@
 from typing import List
 
-from federatedml.model_selection.k_fold import KFold
-
 from fate.interface import Context, Dataframe, ModelsLoader, ModelsSaver, Module, Params
+from federatedml.model_selection.k_fold import KFold
 
 from ..parser.data import Datasets
 from .procedure import Procedure
@@ -10,9 +9,7 @@ from .procedure import Procedure
 
 class CrossValidation(Procedure):
     @classmethod
-    def is_fulfilled(
-        cls, params: Params, datasets: Datasets, models_loader: ModelsLoader
-    ) -> bool:
+    def is_fulfilled(cls, params: Params, datasets: Datasets, models_loader: ModelsLoader) -> bool:
         return params.is_need_cv
 
     @classmethod

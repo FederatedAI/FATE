@@ -198,9 +198,7 @@ class CTableABC(metaclass=ABCMeta):
         ...
 
     @abc.abstractmethod
-    def mapPartitions(
-        self, func, use_previous_behavior=True, preserves_partitioning=False
-    ):
+    def mapPartitions(self, func, use_previous_behavior=True, preserves_partitioning=False):
         """
         apply ``func`` to each partition of table
 
@@ -385,7 +383,7 @@ class CTableABC(metaclass=ABCMeta):
         *,
         fraction: typing.Optional[float] = None,
         num: typing.Optional[int] = None,
-        seed=None
+        seed=None,
     ):
         """
         return a sampled subset of this Table.
@@ -552,9 +550,7 @@ class CSessionABC(metaclass=ABCMeta):
     """
 
     @abc.abstractmethod
-    def load(
-        self, address: AddressABC, partitions, schema: dict, **kwargs
-    ) -> typing.Union[PathABC, CTableABC]:
+    def load(self, address: AddressABC, partitions, schema: dict, **kwargs) -> typing.Union[PathABC, CTableABC]:
         """
         load a table from given address
 
@@ -575,9 +571,7 @@ class CSessionABC(metaclass=ABCMeta):
         ...
 
     @abc.abstractmethod
-    def parallelize(
-        self, data: Iterable, partition: int, include_key: bool, **kwargs
-    ) -> CTableABC:
+    def parallelize(self, data: Iterable, partition: int, include_key: bool, **kwargs) -> CTableABC:
         """
         create table from iterable data
 

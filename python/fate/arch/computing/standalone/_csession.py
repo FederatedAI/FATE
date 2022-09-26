@@ -14,20 +14,24 @@
 #  limitations under the License.
 #
 from collections import Iterable
+from typing import Optional
 
 from ..._standalone import Session
 from ...abc import AddressABC, CSessionABC
-from ...common.base_utils import fate_uuid
 from ...common.log import getLogger
+from ...unify import generate_computing_uuid, uuid
 from ._table import Table
 
 LOGGER = getLogger()
 
 
 class CSession(CSessionABC):
-    def __init__(self, session_id: str, options=None):
-        if options is not None:
-            max_workers = options.get("task_cores", None)
+    def __init__(self, session_id: Optional[str] = None, options: Optional[dict] = None):
+        if session_id is None:
+            session_id = generate_computing_uuid()
+        if options is None:
+            options = {}
+        max_workers = options.get("task_cores", None)
         self._session = Session(session_id, max_workers=max_workers)
 
     def get_standalone_session(self):
@@ -45,7 +49,7 @@ class CSession(CSessionABC):
             raw_table = self._session.load(address.name, address.namespace)
             if address.storage_type != StandaloneStoreType.ROLLPAIR_IN_MEMORY:
                 raw_table = raw_table.save_as(
-                    name=f"{address.name}_{fate_uuid()}",
+                    name=f"{address.name}_{uuid()}",
                     namespace=address.namespace,
                     partition=partitions,
                     need_cleanup=True,
@@ -61,14 +65,10 @@ class CSession(CSessionABC):
             from ...computing.non_distributed import LocalData
 
             return LocalData(address.path, engine=ComputingEngine.STANDALONE)
-        raise NotImplementedError(
-            f"address type {type(address)} not supported with standalone backend"
-        )
+        raise NotImplementedError(f"address type {type(address)} not supported with standalone backend")
 
     def parallelize(self, data: Iterable, partition: int, include_key: bool, **kwargs):
-        table = self._session.parallelize(
-            data=data, partition=partition, include_key=include_key, **kwargs
-        )
+        table = self._session.parallelize(data=data, partition=partition, include_key=include_key, **kwargs)
         return Table(table)
 
     def cleanup(self, name, namespace):
@@ -90,7 +90,5 @@ class CSession(CSessionABC):
         try:
             self.stop()
         except Exception as e:
-            LOGGER.warning(
-                f"stop storage session {self.session_id} failed, try to kill", e
-            )
+            LOGGER.warning(f"stop storage session {self.session_id} failed, try to kill", e)
             self.kill()
