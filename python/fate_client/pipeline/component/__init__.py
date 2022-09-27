@@ -39,6 +39,7 @@ from pipeline.component.model_loader import ModelLoader
 from pipeline.component.hetero_kmeans import HeteroKmeans
 from pipeline.component.homo_onehot import HomoOneHotEncoder
 from pipeline.component.hetero_sshe_linr import HeteroSSHELinR
+from pipeline.component.positive_unlabeled import PositiveUnlabeled
 
 __all__ = ["DataStatistics", "DataIO", "Evaluation", "HeteroDataSplit",
            "HeteroFastSecureBoost", "HeteroFeatureBinning", "HeteroFeatureSelection",
@@ -49,4 +50,4 @@ __all__ = ["DataStatistics", "DataIO", "Evaluation", "HeteroDataSplit",
            "FederatedSample", "FeatureScale", "Union", "ColumnExpand", "FeldmanVerifiableSum",
            "SampleWeight", "DataTransform", "FeatureImputation",
            "LabelTransform", "SecureInformationRetrieval", "CacheLoader", "ModelLoader",
-           "HeteroSSHELR", "HeteroKmeans", "HomoOneHotEncoder", "HeteroSSHELinR"]
+           "HeteroSSHELR", "HeteroKmeans", "HomoOneHotEncoder", "HeteroSSHELinR", "PositiveUnlabeled"]
