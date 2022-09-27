@@ -65,23 +65,29 @@ def main(config="../../config.yaml", namespace=""):
         "adjustment_factor": 0.5,
         "local_only": False,
         "transform_param": {
-            "transform_cols": [
-                0,
-                1,
-                2
-            ],
-            "transform_names": None,
-            "transform_type": "bin_num"
+            "transform_type": None
         }
     }
     hetero_feature_binning_0 = HeteroFeatureBinning(name="hetero_feature_binning_0", **param)
-    hetero_feature_binning_0.get_party_instance(role="host", party_id=host).component_param(
-        transform_param={"transform_type": None}
+    hetero_feature_binning_0.get_party_instance(role="guest", party_id=guest).component_param(
+        transform_param={"transform_cols": [
+            0,
+            1,
+            2
+        ],
+            "transform_names": None,
+            "transform_type": "bin_num"}
     )
 
     hetero_feature_binning_1 = HeteroFeatureBinning(name="hetero_feature_binning_1", **param)
-    hetero_feature_binning_0.get_party_instance(role="host", party_id=host).component_param(
-        transform_param={"transform_type": None}
+    hetero_feature_binning_0.get_party_instance(role="guest", party_id=guest).component_param(
+        transform_param={"transform_cols": [
+            0,
+            1,
+            2
+        ],
+            "transform_names": None,
+            "transform_type": "bin_num"}
     )
 
     pipeline.add_component(reader_0)

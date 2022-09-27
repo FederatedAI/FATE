@@ -14,7 +14,6 @@
 #  limitations under the License.
 #
 import io
-import os
 from typing import Iterable
 
 from pyarrow import fs
@@ -61,14 +60,14 @@ class StorageTable(StorageTableBase):
     def _put_all(
             self, kv_list: Iterable, append=True, assume_file_exist=False, **kwargs
     ):
-        LOGGER.info(f"put in hdfs file: {self.path}")
+        LOGGER.info(f"put in hdfs file: {self.file_path}")
         if append and (assume_file_exist or self._exist()):
             stream = self._hdfs_client.open_append_stream(
-                path=self.path, compression=None
+                path=self.file_path, compression=None
             )
         else:
             stream = self._hdfs_client.open_output_stream(
-                path=self.path, compression=None
+                path=self.file_path, compression=None
             )
 
         counter = self._meta.get_count() if self._meta.get_count() else 0
@@ -88,7 +87,7 @@ class StorageTable(StorageTableBase):
             yield line
 
     def _destroy(self):
-        self._hdfs_client.delete_file(self.path)
+        self._hdfs_client.delete_file(self.file_path)
 
     def _count(self):
         count = 0
@@ -101,7 +100,7 @@ class StorageTable(StorageTableBase):
     def _save_as(
             self, address, partitions=None, name=None, namespace=None, **kwargs
     ):
-        self._hdfs_client.copy_file(src=self.path, dst=address.path)
+        self._hdfs_client.copy_file(src=self.file_path, dst=address.path)
         table = StorageTable(
             address=address,
             partitions=partitions,
@@ -118,20 +117,25 @@ class StorageTable(StorageTableBase):
     def path(self) -> str:
         return f"{self._address.name_node}/{self._address.path}"
 
+    @property
+    def file_path(self) -> str:
+        return f"{self._address.path}"
+
     def _exist(self):
-        info = self._hdfs_client.get_file_info([self.path])[0]
+        info = self._hdfs_client.get_file_info([self.file_path])[0]
         return info.type != fs.FileType.NotFound
 
     def _as_generator(self):
-        info = self._hdfs_client.get_file_info([self.path])[0]
+        LOGGER.info(f"as generator: {self.file_path}")
+        info = self._hdfs_client.get_file_info([self.file_path])[0]
         if info.type == fs.FileType.NotFound:
-            raise FileNotFoundError(f"file {self.path} not found")
+            raise FileNotFoundError(f"file {self.file_path} not found")
 
         elif info.type == fs.FileType.File:
             for line in self._read_buffer_lines():
                 yield line
         else:
-            selector = fs.FileSelector(os.path.join("/", self._address.path))
+            selector = fs.FileSelector(self.file_path)
             file_infos = self._hdfs_client.get_file_info(selector)
             for file_info in file_infos:
                 if file_info.base_name == "_SUCCESS":
@@ -140,9 +144,7 @@ class StorageTable(StorageTableBase):
                     file_info.is_file
                 ), f"{self.path} is directory contains a subdirectory: {file_info.path}"
                 with io.TextIOWrapper(
-                        buffer=self._hdfs_client.open_input_stream(
-                            f"{self._address.name_node}/{file_info.path}"
-                        ),
+                        buffer=self._hdfs_client.open_input_stream(file_info.path),
                         encoding="utf-8",
                 ) as reader:
                     for line in reader:
@@ -150,7 +152,7 @@ class StorageTable(StorageTableBase):
 
     def _read_buffer_lines(self, path=None):
         if not path:
-            path = self.path
+            path = self.file_path
         buffer = self._hdfs_client.open_input_file(path)
         offset = 0
         block_size = 1024 * 1024 * 10

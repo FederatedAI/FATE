@@ -65,5 +65,8 @@ message FeatureBinningParam {
     repeated string header = 3;
     repeated string header_anonymous = 4;
     string model_name = 5;
-    MultiClassResult multi_class_result=6;
+    MultiClassResult multi_class_result = 6;
+    FeatureBinningResult transform_binning_result = 7;
+    repeated FeatureBinningResult transform_host_results = 8;
+    MultiClassResult transform_multi_class_result = 9;
 }

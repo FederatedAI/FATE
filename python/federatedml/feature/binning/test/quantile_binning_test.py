@@ -100,6 +100,7 @@ class TestQuantileBinning(unittest.TestCase):
         data = []
         shift_iter = 0
         header = [str(i) for i in range(feature_num)]
+        anonymous_header = ["guest_9999_x" + str(i) for i in range(feature_num)]
 
         for data_key in range(data_num):
             value = data_key % bin_num
@@ -126,7 +127,8 @@ class TestQuantileBinning(unittest.TestCase):
 
             data.append((data_key, inst))
         result = session.parallelize(data, include_key=True, partition=partition)
-        result.schema = {'header': header}
+        result.schema = {'header': header,
+                         "anonymous_header": anonymous_header}
         return result
 
     def tearDown(self):

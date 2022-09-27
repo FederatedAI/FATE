@@ -18,9 +18,10 @@ import copy
 
 import numpy as np
 
-from federatedml.util import LOGGER
+from federatedml.statistic.data_overview import get_header, get_anonymous_header
 from federatedml.util import consts
-from federatedml.util.data_io import make_schema, set_schema
+from federatedml.util import LOGGER
+from federatedml.util.data_transform import set_schema
 
 
 class Step(object):
@@ -53,11 +54,18 @@ class Step(object):
 
     @staticmethod
     def get_new_schema(original_data, feature_mask):
-        old_header = original_data.schema.get("header")
-        sid_name = original_data.schema.get("sid_name")
-        label_name = original_data.schema.get("label_name")
+        schema = copy.deepcopy(original_data.schema)
+
+        old_header = get_header(original_data)
         new_header = [old_header[i] for i in np.where(feature_mask > 0)[0]]
-        schema = make_schema(new_header, sid_name, label_name)
+        schema["header"] = new_header
+
+        old_anonymous_header = get_anonymous_header(original_data)
+        if old_anonymous_header:
+            new_anonymous_header = [old_anonymous_header[i] for i in np.where(feature_mask > 0)[0]]
+            schema["anonymous_header"] = new_anonymous_header
+            LOGGER.debug(f"given feature_mask: {feature_mask}, new anonymous header is: {new_anonymous_header}")
+
         return schema
 
     def run(self, original_model, train_data, validate_data, feature_mask):

@@ -39,36 +39,26 @@ class LogisticParam(LinearModelParam):
     penalty : {'L2', 'L1' or None}
         Penalty method used in LR. Please note that, when using encrypted version in HomoLR,
         'L1' is not supported.
-
     tol : float, default: 1e-4
         The tolerance of convergence
-
     alpha : float, default: 1.0
         Regularization strength coefficient.
-
     optimizer : {'rmsprop', 'sgd', 'adam', 'nesterov_momentum_sgd', 'adagrad'}, default: 'rmsprop'
         Optimize method.
-
     batch_strategy : str, {'full', 'random'}, default: "full"
         Strategy to generate batch data.
             a) full: use full data to generate batch_data, batch_nums every iteration is ceil(data_size /  batch_size)
             b) random: select data randomly from full data, batch_num will be 1 every iteration.
-
     batch_size : int, default: -1
         Batch size when updating model. -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
-
     shuffle : bool, default: True
         Work only in hetero logistic regression, batch data will be shuffle in every iteration.
-
     masked_rate: int, float: default: 5
         Use masked data to enhance security of hetero logistic regression
-
     learning_rate : float, default: 0.01
         Learning rate
-
     max_iter : int, default: 100
         The maximum iteration for training.
-
     early_stop : {'diff', 'weight_diff', 'abs'}, default: 'diff'
         Method used to judge converge or not.
             a)	diff： Use difference of loss between two iterations to judge whether converge.
@@ -76,44 +66,32 @@ class LogisticParam(LinearModelParam):
             c)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < eps, it is converged.
 
             Please note that for hetero-lr multi-host situation, this parameter support "weight_diff" only.
-
     decay: int or float, default: 1
         Decay rate for learning rate. learning rate will follow the following decay schedule.
         lr = lr0/(1+decay*t) if decay_sqrt is False. If decay_sqrt is True, lr = lr0 / sqrt(1+decay*t)
         where t is the iter number.
-
     decay_sqrt: bool, default: True
         lr = lr0/(1+decay*t) if decay_sqrt is False, otherwise, lr = lr0 / sqrt(1+decay*t)
-
     encrypt_param: EncryptParam object, default: default EncryptParam object
         encrypt param
-
     predict_param: PredictParam object, default: default PredictParam object
         predict param
-
     callback_param: CallbackParam object
         callback param
-
     cv_param: CrossValidationParam object, default: default CrossValidationParam object
         cv param
-
     multi_class: {'ovr'}, default: 'ovr'
         If it is a multi_class task, indicate what strategy to use. Currently, support 'ovr' short for one_vs_rest only.
-
     validation_freqs: int or list or tuple or set, or None, default None
         validation frequency during training.
-
     early_stopping_rounds: int, default: None
         Will stop training if one metric doesn’t improve in last early_stopping_round rounds
-
     metrics: list or None, default: None
         Indicate when executing evaluation during train process, which metrics will be used. If set as empty,
         default metrics for specific task type will be used. As for binary classification, default metrics are
         ['auc', 'ks']
-
     use_first_metric_only: bool, default: False
         Indicate whether use the first metric only for early stopping judgement.
-
     floating_point_precision: None or integer
         if not None, use floating_point_precision-bit to speed up calculation,
         e.g.: convert an x to round(x * 2**floating_point_precision) during Paillier operation, divide
@@ -187,14 +165,11 @@ class HomoLogisticParam(LogisticParam):
         Required when using encrypted version HomoLR. Since multiple batch updating coefficient may cause
         overflow error. The model need to be re-encrypt for every several batches. Please be careful when setting
         this parameter. Too large batches may cause training failure.
-
     aggregate_iters : int, default: 1
         Indicate how many iterations are aggregated once.
-
     use_proximal: bool, default: False
         Whether to turn on additional proximial term. For more details of FedProx, Please refer to
         https://arxiv.org/abs/1812.06127
-
     mu: float, default 0.1
         To scale the proximal term
 

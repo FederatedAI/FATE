@@ -131,6 +131,12 @@ class Table(CTableABC):
         return from_rdd(_map_partitions(self._rdd, func))
 
     @computing_profile
+    def mapPartitionsWithIndex(self, func, preserves_partitioning=False, **kwargs):
+        return from_rdd(
+            self._rdd.mapPartitionsWithIndex(func, preservesPartitioning=preserves_partitioning)
+        )
+
+    @computing_profile
     def glom(self, **kwargs):
         return from_rdd(_glom(self._rdd))
 

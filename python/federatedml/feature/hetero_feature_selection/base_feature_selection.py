@@ -16,9 +16,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import copy
 import functools
 import random
-from google.protobuf import json_format
 
 from federatedml.feature.feature_selection import filter_factory
 from federatedml.feature.feature_selection.model_adapter.adapter_factory import adapter_factory
@@ -26,11 +26,12 @@ from federatedml.feature.feature_selection.selection_properties import Selection
 from federatedml.model_base import ModelBase
 from federatedml.param.feature_selection_param import FeatureSelectionParam
 from federatedml.protobuf.generated import feature_selection_param_pb2, feature_selection_meta_pb2
-from federatedml.statistic.data_overview import get_header
+from federatedml.statistic.data_overview import get_header, \
+    get_anonymous_header, look_up_names_from_header, header_alignment
 from federatedml.transfer_variable.transfer_class.hetero_feature_selection_transfer_variable import \
     HeteroFeatureSelectionTransferVariable
 from federatedml.util import LOGGER
-from federatedml.util import abnormal_detection, anonymous_generator
+from federatedml.util import abnormal_detection
 from federatedml.util import consts
 from federatedml.util.io_check import assert_io_num_rows_equal
 from federatedml.util.schema_check import assert_schema_consistent
@@ -47,9 +48,12 @@ class BaseHeteroFeatureSelection(ModelBase):
 
         self.curt_select_properties = SelectionProperties()
         self.completed_selection_result = CompletedSelectionResults()
+        self.loaded_local_select_properties = dict()
+        self.loaded_host_filter_results = dict()
 
         self.schema = None
         self.header = None
+        self.anonymous_header = None
         self.party_name = 'Base'
         # Possible previous model
         self.binning_model = None
@@ -70,18 +74,64 @@ class BaseHeteroFeatureSelection(ModelBase):
             self.schema = data_instances.schema
 
         if self.header is not None:
+            # load current data anonymous header for prediction with model of version < 1.9.0
+            # if len(self.completed_selection_result.anonymous_header) == 0:
+            if self.anonymous_header is None:
+                data_anonymous_header = get_anonymous_header(data_instances)
+                # LOGGER.info(f"data_anonymous_header: {data_anonymous_header}")
+                self.anonymous_header = data_anonymous_header
+                self.completed_selection_result.set_anonymous_header(data_anonymous_header)
+                if self.role == consts.HOST:
+                    anonymous_header_in_old_format = self.anonymous_generator. \
+                        generated_compatible_anonymous_header_with_old_version(data_anonymous_header)
+                    anonymous_dict = dict(zip(anonymous_header_in_old_format, data_anonymous_header))
+                    self.transfer_variable.host_anonymous_header_dict.remote(anonymous_dict,
+                                                                             role=consts.GUEST,
+                                                                             idx=0)
+
+                    for filter_name, select_properties in self.loaded_local_select_properties.items():
+                        self.completed_selection_result.add_filter_results(filter_name, select_properties)
+                else:
+                    host_anonymous_dict_list = self.transfer_variable.host_anonymous_header_dict.get(idx=-1)
+                    for filter_name, cur_select_properties in self.loaded_local_select_properties.items():
+                        cur_host_select_properties_list = []
+                        host_feature_values_obj_list, host_left_cols_obj_list = self.loaded_host_filter_results[
+                            filter_name]
+                        for i, host_left_cols_obj in enumerate(host_left_cols_obj_list):
+                            cur_host_select_properties = SelectionProperties()
+                            old_host_header = list(host_anonymous_dict_list[i].keys())
+                            host_feature_values = host_feature_values_obj_list[i].feature_values
+                            cur_host_select_properties.load_properties_with_new_header(old_host_header,
+                                                                                       host_feature_values,
+                                                                                       host_left_cols_obj,
+                                                                                       host_anonymous_dict_list[i])
+                            cur_host_select_properties_list.append(cur_host_select_properties)
+
+                        self.completed_selection_result.add_filter_results(filter_name,
+                                                                           cur_select_properties,
+                                                                           cur_host_select_properties_list)
             return
         self.schema = data_instances.schema
         header = get_header(data_instances)
+        anonymous_header = get_anonymous_header(data_instances)
         self.header = header
+        self.anonymous_header = anonymous_header
         self.curt_select_properties.set_header(header)
+        # use anonymous header of input data
+        self.curt_select_properties.set_anonymous_header(anonymous_header)
         self.curt_select_properties.set_last_left_col_indexes([x for x in range(len(header))])
         if self.model_param.select_col_indexes == -1:
             self.curt_select_properties.set_select_all_cols()
         else:
             self.curt_select_properties.add_select_col_indexes(self.model_param.select_col_indexes)
-        self.curt_select_properties.add_select_col_names(self.model_param.select_names)
+        if self.model_param.use_anonymous:
+            select_names = look_up_names_from_header(self.model_param.select_names, anonymous_header, header)
+            # LOGGER.debug(f"use_anonymous is true, select names: {select_names}")
+        else:
+            select_names = self.model_param.select_names
+        self.curt_select_properties.add_select_col_names(select_names)
         self.completed_selection_result.set_header(header)
+        self.completed_selection_result.set_anonymous_header(anonymous_header)
         self.completed_selection_result.set_select_col_names(self.curt_select_properties.select_col_names)
         self.completed_selection_result.set_all_left_col_indexes(self.curt_select_properties.all_left_col_indexes)
 
@@ -115,21 +165,26 @@ class BaseHeteroFeatureSelection(ModelBase):
                                                                                party_id=str(party_id)))
         else:
             party_id = self.component_properties.local_partyid
-            anonymous_names = [anonymous_generator.generate_anonymous(fid, model=self)
-                               for fid in range(len(self.header))]
-            host_col_names.append(feature_selection_param_pb2.HostColNames(col_names=anonymous_names,
+            # if self.anonymous_header:
+            # anonymous_names = self.anonymous_header
+            """else:
+                anonymous_names = [anonymous_generator.generate_anonymous(fid, model=self)
+                                   for fid in range(len(self.header))]
+            """
+            host_col_names.append(feature_selection_param_pb2.HostColNames(col_names=self.anonymous_header,
                                                                            party_id=str(party_id)))
+        col_name_to_anonym_dict = None
+        if self.header and self.anonymous_header:
+            col_name_to_anonym_dict = dict(zip(self.header, self.anonymous_header))
 
         result_obj = feature_selection_param_pb2.FeatureSelectionParam(
             results=self.completed_selection_result.filter_results,
             final_left_cols=final_left_cols,
             col_names=self.completed_selection_result.get_sorted_col_names(),
             host_col_names=host_col_names,
-            header=self.curt_select_properties.header
+            header=self.curt_select_properties.header,
+            col_name_to_anonym_dict=col_name_to_anonym_dict
         )
-
-        # json_result = json_format.MessageToJson(result_obj)
-        # LOGGER.debug("json_result: {}".format(json_result))
         return result_obj
 
     def save_data(self):
@@ -137,9 +192,11 @@ class BaseHeteroFeatureSelection(ModelBase):
 
     def export_model(self):
         # LOGGER.debug("Model output is : {}".format(self.model_output))
+        """
         if self.model_output is not None:
             LOGGER.debug("model output already exists, return directly")
             return self.model_output
+        """
 
         meta_obj = self._get_meta()
         param_obj = self._get_param()
@@ -163,12 +220,58 @@ class BaseHeteroFeatureSelection(ModelBase):
         }
 
         header = list(model_param.header)
-        # self.schema = {'header': header}
+        # LOGGER.info(f"col_name_to_anonym_dict: {model_param.col_name_to_anonym_dict}")
         self.header = header
         self.curt_select_properties.set_header(header)
         self.completed_selection_result.set_header(header)
         self.curt_select_properties.set_last_left_col_indexes([x for x in range(len(header))])
         self.curt_select_properties.add_select_col_names(header)
+
+        # for model ver >= 1.9.0
+        if model_param.col_name_to_anonym_dict:
+            col_name_to_anonym_dict = dict(model_param.col_name_to_anonym_dict)
+            self.anonymous_header = [col_name_to_anonym_dict[x] for x in header]
+            self.completed_selection_result.set_anonymous_header(self.anonymous_header)
+
+            host_col_names_list = model_param.host_col_names
+            for result in model_param.results:
+                cur_select_properties = copy.deepcopy(self.curt_select_properties)
+                feature_values, left_cols_obj = dict(result.feature_values), result.left_cols
+                cur_select_properties.load_properties(header, feature_values, left_cols_obj)
+
+                cur_host_select_properties_list = []
+                host_feature_values_obj_list = list(result.host_feature_values)
+                host_left_cols_obj_list = list(result.host_left_cols)
+                for i, host_left_cols_obj in enumerate(host_left_cols_obj_list):
+                    cur_host_select_properties = SelectionProperties()
+                    host_col_names_obj = host_col_names_list[i]
+                    host_header = list(host_col_names_obj.col_names)
+                    host_feature_values = host_feature_values_obj_list[i].feature_values
+                    cur_host_select_properties.load_properties(host_header, host_feature_values, host_left_cols_obj)
+                    cur_host_select_properties_list.append(cur_host_select_properties)
+
+                self.completed_selection_result.add_filter_results(result.filter_name,
+                                                                   cur_select_properties,
+                                                                   cur_host_select_properties_list)
+        # for model ver 1.8.x
+        else:
+            LOGGER.warning(f"Anonymous column name dictionary not found in given model."
+                           f"Will infer host(s)' anonymous names.")
+            """
+            self.loaded_host_col_names_list = [list(host_col_names_obj.col_names)
+                                               for host_col_names_obj in model_param.host_col_names]
+            """
+            for result in model_param.results:
+                cur_select_properties = copy.deepcopy(self.curt_select_properties)
+                feature_values, left_cols_obj = dict(result.feature_values), result.left_cols
+                cur_select_properties.load_properties(header, feature_values, left_cols_obj)
+                # record local select properties
+                self.loaded_local_select_properties[result.filter_name] = cur_select_properties
+
+                host_feature_values_obj_list = list(result.host_feature_values)
+                host_left_cols_obj_list = list(result.host_left_cols)
+                self.loaded_host_filter_results[result.filter_name] = (host_feature_values_obj_list,
+                                                                       host_left_cols_obj_list)
 
         final_left_cols_names = dict(model_param.final_left_cols.left_cols)
         # LOGGER.debug("final_left_cols_names: {}".format(final_left_cols_names))
@@ -197,8 +300,6 @@ class BaseHeteroFeatureSelection(ModelBase):
             this_iso_model = adapter.convert(model_meta, model_param)
             self.isometric_models[model_name] = this_iso_model
 
-        # for model_name, model_dict in iso_model.items():
-
     def load_model(self, model_dict):
         LOGGER.debug(f"Start to load model")
         if 'model' in model_dict:
@@ -215,8 +316,6 @@ class BaseHeteroFeatureSelection(ModelBase):
         return instance
 
     def _transfer_data(self, data_instances):
-
-        # before_one_data = data_instances.first()
         f = functools.partial(self.select_cols,
                               left_col_idx=self.completed_selection_result.all_left_col_indexes)
 
@@ -225,7 +324,10 @@ class BaseHeteroFeatureSelection(ModelBase):
         # LOGGER.debug("When transfering, all left_col_names: {}".format(
         #    self.completed_selection_result.all_left_col_names
         # ))
-        new_data = self.set_schema(new_data, self.completed_selection_result.all_left_col_names)
+
+        new_data = self.set_schema(new_data,
+                                   self.completed_selection_result.all_left_col_names,
+                                   self.completed_selection_result.all_left_anonymous_col_names)
 
         # one_data = new_data.first()[1]
         # LOGGER.debug(
@@ -243,17 +345,21 @@ class BaseHeteroFeatureSelection(ModelBase):
         abnormal_detection.empty_feature_detection(data_instances)
         self.check_schema_content(data_instances.schema)
 
-    def set_schema(self, data_instance, header=None):
+    def set_schema(self, data_instance, header=None, anonymous_header=None):
         if header is None:
             self.schema["header"] = self.curt_select_properties.header
+            self.schema["anonymous_header"] = self.curt_select_properties.anonymous_header
         else:
             self.schema["header"] = header
+            self.schema["anonymous_header"] = anonymous_header
         data_instance.schema = self.schema
         return data_instance
 
     def update_curt_select_param(self):
         new_select_properties = SelectionProperties()
+        # all select properties must have the same header
         new_select_properties.set_header(self.curt_select_properties.header)
+        new_select_properties.set_anonymous_header(self.curt_select_properties.anonymous_header)
         new_select_properties.set_last_left_col_indexes(self.curt_select_properties.all_left_col_indexes)
         new_select_properties.add_select_col_names(self.curt_select_properties.left_col_names)
         self.curt_select_properties = new_select_properties
@@ -274,7 +380,9 @@ class BaseHeteroFeatureSelection(ModelBase):
         this_filter.set_selection_properties(self.curt_select_properties)
 
         this_filter.set_transfer_variable(self.transfer_variable)
+        # .info(f"this_filter type: {this_filter.filter_type}, method: {method}, filter obj: {this_filter}")
         self.curt_select_properties = this_filter.fit(data_instances, suffix).selection_properties
+        # LOGGER.info(f"filter.fit called")
         host_select_properties = getattr(this_filter, 'host_selection_properties', None)
         # if host_select_properties is not None:
         #     LOGGER.debug("method: {}, host_select_properties: {}".format(
@@ -295,7 +403,6 @@ class BaseHeteroFeatureSelection(ModelBase):
         self.update_curt_select_param()
         # LOGGER.debug("After updated, method: {}, selection_cols: {}".format(
         #     method, self.curt_select_properties.select_col_names))
-        # self.meta_dicts = this_filter.get_meta_obj(self.meta_dicts)
         self.meta_list.append(this_filter.get_meta_obj())
 
     def fit(self, data_instances):
@@ -329,7 +436,6 @@ class BaseHeteroFeatureSelection(ModelBase):
                                    f"column to participate in fitting filter(s). "
                                    f"All columns from this host will be kept, "
                                    f"but be aware that this may lead to unexpected behavior.")
-
         for filter_idx, method in enumerate(self.filter_methods):
             if method in [consts.STATISTIC_FILTER, consts.IV_FILTER, consts.PSI_FILTER,
                           consts.HETERO_SBT_FILTER, consts.HOMO_SBT_FILTER, consts.HETERO_FAST_SBT_FILTER,
@@ -369,5 +475,7 @@ class BaseHeteroFeatureSelection(ModelBase):
     def transform(self, data_instances):
         self._abnormal_detection(data_instances)
         self._init_select_params(data_instances)
+        # align data instance to model header & anonymous header
+        data_instances = header_alignment(data_instances, self.header, self.anonymous_header)
         new_data = self._transfer_data(data_instances)
         return new_data

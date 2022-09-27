@@ -28,39 +28,26 @@ class TaskInfo(object):
         self._role = role
 
     @LOGGER.catch(onerror=lambda _: sys.exit(1))
-    def get_output_data(self, limits=None):
+    def get_output_data(self, limits=None, to_pandas=True):
         '''
         gets downloaded data of arbitrary component
         Parameters
         ----------
         limits: int, None, default None. Maximum number of lines returned, including header. If None, return all lines.
+        to_pandas: bool, default True.
 
         Returns
         -------
-        dict
-        single output example:
-            {
-                data: [],
-                meta: []
-
-            }
+        single output example: pandas.DataFrame
         multiple output example:
             {
-            train_data: {
-                data: [],
-                meta: []
-                },
-            validate_data: {
-                data: [],
-                meta: []
-                }
-            test_data: {
-                data: [],
-                meta: []
-                }
+            train_data: train_data_df,
+            validate_data: validate_data_df,
+            test_data: test_data_df
             }
         '''
-        return self._job_client.get_output_data(self._jobid, self._component.name, self._role, self._party_id, limits)
+        return self._job_client.get_output_data(self._jobid, self._component.name, self._role,
+                                                self._party_id, limits, to_pandas=to_pandas)
 
     @LOGGER.catch(onerror=lambda _: sys.exit(1))
     def get_model_param(self):

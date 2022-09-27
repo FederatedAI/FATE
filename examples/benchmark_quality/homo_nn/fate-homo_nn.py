@@ -17,7 +17,7 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component import DataIO, HomoNN, Evaluation
+from pipeline.component import DataTransform, HomoNN, Evaluation
 from pipeline.component import Reader
 from pipeline.interface import Data, Model
 from pipeline.utils.tools import load_job_config, JobConfig
@@ -80,10 +80,10 @@ def main(config="../../config.yaml", param="param_conf.yaml", namespace=""):
         reader_0.get_party_instance(role='host', party_id=hosts[i]) \
             .component_param(table=host_train_data[i])
 
-    dataio_0 = DataIO(name="dataio_0", with_label=True)
-    dataio_0.get_party_instance(role='guest', party_id=config.parties.guest[0]) \
+    data_transform_0 = DataTransform(name="data_transform_0", with_label=True)
+    data_transform_0.get_party_instance(role='guest', party_id=config.parties.guest[0]) \
         .component_param(with_label=True, output_format="dense")
-    dataio_0.get_party_instance(role='host', party_id=hosts).component_param(with_label=True)
+    data_transform_0.get_party_instance(role='host', party_id=hosts).component_param(with_label=True)
 
     homo_nn_0 = HomoNN(name="homo_nn_0", encode_label=encode_label, max_iter=epoch, batch_size=batch_size,
                        early_stop={"early_stop": "diff", "eps": 0.0})
@@ -101,16 +101,16 @@ def main(config="../../config.yaml", param="param_conf.yaml", namespace=""):
     evaluation_0 = Evaluation(name='evaluation_0', eval_type="multi", metrics=["accuracy", "precision", "recall"])
 
     pipeline.add_component(reader_0)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(homo_nn_0, data=Data(train_data=dataio_0.output.data))
-    pipeline.add_component(homo_nn_1, data=Data(test_data=dataio_0.output.data),
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(homo_nn_0, data=Data(train_data=data_transform_0.output.data))
+    pipeline.add_component(homo_nn_1, data=Data(test_data=data_transform_0.output.data),
                            model=Model(homo_nn_0.output.model))
     pipeline.add_component(evaluation_0, data=Data(data=homo_nn_0.output.data))
     pipeline.compile()
     pipeline.fit()
     metric_summary = parse_summary_result(pipeline.get_component("evaluation_0").get_summary())
-    nn_0_data = pipeline.get_component("homo_nn_0").get_output_data().get("data")
-    nn_1_data = pipeline.get_component("homo_nn_1").get_output_data().get("data")
+    nn_0_data = pipeline.get_component("homo_nn_0").get_output_data()
+    nn_1_data = pipeline.get_component("homo_nn_1").get_output_data()
     nn_0_score = extract_data(nn_0_data, "predict_result")
     nn_0_label = extract_data(nn_0_data, "label")
     nn_1_score = extract_data(nn_1_data, "predict_result")

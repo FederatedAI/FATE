@@ -246,7 +246,7 @@ class PipeLine(object):
 
     @LOGGER.catch(reraise=True)
     def add_upload_data(self, file, table_name, namespace, head=1, partition=16,
-                        id_delimiter=",", extend_sid=False, auto_increasing_sid=False):
+                        id_delimiter=",", extend_sid=False, auto_increasing_sid=False, **kargs):
         data_conf = {"file": file,
                      "table_name": table_name,
                      "namespace": namespace,
@@ -254,7 +254,7 @@ class PipeLine(object):
                      "partition": partition,
                      "id_delimiter": id_delimiter,
                      "extend_sid": extend_sid,
-                     "auto_increasing_sid": auto_increasing_sid}
+                     "auto_increasing_sid": auto_increasing_sid, **kargs}
         self._upload_conf.append(data_conf)
 
     def _get_task_inst(self, job_id, name, init_role, party_id):
@@ -264,7 +264,7 @@ class PipeLine(object):
 
         if component is None:
             if self._stage != "predict":
-                raise ValueError(f"Component {component} does not exist")
+                raise ValueError(f"Component {name} does not exist")
             training_meta = self._predict_pipeline[0]["pipeline"].get_predict_meta()
 
             component = training_meta.get("components").get(name)
@@ -407,6 +407,9 @@ class PipeLine(object):
     def _set_state(self, state):
         self._cur_state = state
 
+    def set_job_invoker(self, job_invoker):
+        self._job_invoker = job_invoker
+
     @LOGGER.catch(reraise=True)
     def compile(self):
         self._construct_train_dsl()
@@ -431,7 +434,7 @@ class PipeLine(object):
             for cpn in self._train_dsl["components"]:
                 if cpn in predict_pipeline_dsl["components"]:
                     raise ValueError(
-                        "component name {} exist in predict pipeline's deploy component, this is not support")
+                        f"component name {cpn} exist in predict pipeline's deploy component, this is not support")
 
             if "algorithm_parameters" in predict_pipeline_conf:
                 algo_param = predict_pipeline_conf["algorithm_parameters"]
@@ -572,6 +575,13 @@ class PipeLine(object):
                                                                 self._initiator.party_id)
 
     @LOGGER.catch(reraise=True)
+    def continuously_fit(self):
+        self._fit_status = self._job_invoker.monitor_job_status(self._train_job_id,
+                                                                self._initiator.role,
+                                                                self._initiator.party_id,
+                                                                previous_status=self._fit_status)
+
+    @LOGGER.catch(reraise=True)
     def predict(self, job_parameters=None, components_checkpoint=None):
         """
 
@@ -636,12 +646,19 @@ class PipeLine(object):
 
     @classmethod
     def load(cls, pipeline_bytes):
+        """
         return pickle.loads(pipeline_bytes)
+        """
+        pipeline_obj = pickle.loads(pipeline_bytes)
+        pipeline_obj.set_job_invoker(JobInvoker())
+        return pipeline_obj
 
     @classmethod
     def load_model_from_file(cls, file_path):
         with open(file_path, "rb") as fin:
-            return pickle.loads(fin.read())
+            pipeline_obj = pickle.loads(fin.read())
+            pipeline_obj.set_job_invoker(JobInvoker())
+            return pipeline_obj
 
     @LOGGER.catch(reraise=True)
     def deploy_component(self, components=None):
@@ -749,7 +766,7 @@ class PipeLine(object):
 
         self._data_to_feed_in_prediction = data_dict
 
-    @LOGGER.catch(reraise=True)
+    # @LOGGER.catch(reraise=True)
     def __getattr__(self, attr):
         if attr in self._components:
             return self._components[attr]

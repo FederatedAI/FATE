@@ -1,5 +1,6 @@
 import functools
 import numpy as np
+import sklearn
 from typing import List
 from federatedml.util import LOGGER
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import CriterionMeta
@@ -318,17 +319,42 @@ class HomoDecisionTreeClient(DecisionTree):
         root_sample_idx = np.array([i for i in range(sample_num)]).astype(np.uint32)
         return root_sample_idx
 
+    @staticmethod
+    def skl_comp(ver1, ver2):
+        split_v1, split_v2 = ver1.split('.'), ver2.split('.')
+        for v1s, v2s in zip(split_v1, split_v2):
+            v1, v2 = int(v1s), int(v2s)
+            if v1 != v2:
+                return -1 if v1 < v2 else 1
+        return 0
+
+    def _get_hist_builder(self, g, h, bin_data, bin_num):
+
+        try:
+            hist_builder = HistogramBuilder(bin_data, bin_num, g, h, False)
+        except TypeError as e:
+            from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+            n_threads = _openmp_effective_n_threads(None)
+            hist_builder = HistogramBuilder(bin_data, bin_num, g, h, False, n_threads)
+
+        return hist_builder
+
     def init_memory_hist_builder(self, g, h, bin_data, bin_num):
+
+        if self.skl_comp(sklearn.__version__, '0.24.2') == -1:
+            raise ValueError('Please upgrade your sklearn version, current version is {}, '
+                             'expected version is >= 0.24.2'.format(sklearn.__version__))
 
         if len(g.shape) == 2:  # mo case
             idx_end = g.shape[1]
             for i in range(0, idx_end):
                 g_arr = np.ascontiguousarray(g[::, i], dtype=np.float32)
                 h_arr = np.ascontiguousarray(h[::, i], dtype=np.float32)
-                hist_builder = HistogramBuilder(bin_data, bin_num, g_arr, h_arr, False)
+                hist_builder = self._get_hist_builder(g_arr, h_arr, bin_data, bin_num)
                 self.memory_hist_builder_list.append(hist_builder)
         else:
-            self.memory_hist_builder_list.append(HistogramBuilder(bin_data, bin_num, g, h, False))
+            hist_builder = self._get_hist_builder(g, h, bin_data, bin_num)
+            self.memory_hist_builder_list.append(hist_builder)
 
     def sklearn_compute_agg_hist(self, data_indices):
 

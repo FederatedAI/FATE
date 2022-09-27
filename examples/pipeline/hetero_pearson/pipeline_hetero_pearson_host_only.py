@@ -13,23 +13,110 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import os
-import sys
+import argparse
 
-additional_path = os.path.realpath(os.path.join(os.path.realpath(__file__), os.path.pardir, os.path.pardir))
-if additional_path not in sys.path:
-    sys.path.append(additional_path)
-
-from hetero_pearson._common_component import run_pearson_pipeline, dataset
+from pipeline.backend.pipeline import PipeLine
+from pipeline.component import DataTransform, HeteroPearson, Intersection, Reader
+from pipeline.interface import Data
+from pipeline.utils.tools import load_job_config
 
 
 def main(config="../../config.yaml", namespace=""):
-    common_param = dict(
-        column_indexes=-1,
-        cross_parties=False
+    common_param = dict(column_indexes=-1, cross_parties=False)
+    guest_only_param = dict(need_run=False)
+    pipeline = run_pearson_pipeline(
+        config=config,
+        namespace=namespace,
+        data=dataset.breast,
+        common_param=common_param,
+        guest_only_param=guest_only_param,
     )
-    guest_only_param = dict(
-        need_run=False
+
+
+def run_pearson_pipeline(
+    config,
+    namespace,
+    data,
+    common_param=None,
+    guest_only_param=None,
+    host_only_param=None,
+):
+    if isinstance(config, str):
+        config = load_job_config(config)
+    guest_data = data["guest"]
+    host_data = data["host"][0]
+
+    guest_data["namespace"] = f"{guest_data['namespace']}{namespace}"
+    host_data["namespace"] = f"{host_data['namespace']}{namespace}"
+
+    pipeline = (
+        PipeLine()
+        .set_initiator(role="guest", party_id=config.parties.guest[0])
+        .set_roles(guest=config.parties.guest[0], host=config.parties.host[0])
     )
-    pipeline = run_pearson_pipeline(config=config, namespace=namespace, data=dataset.breast,
-                                    common_param=common_param, guest_only_param=guest_only_param)
+
+    reader_0 = Reader(name="reader_0")
+    reader_0.get_party_instance(
+        role="guest", party_id=config.parties.guest[0]
+    ).component_param(table=guest_data)
+    reader_0.get_party_instance(
+        role="host", party_id=config.parties.host[0]
+    ).component_param(table=host_data)
+
+    data_transform_0 = DataTransform(name="data_transform_0")
+    data_transform_0.get_party_instance(
+        role="guest", party_id=config.parties.guest[0]
+    ).component_param(with_label=True, output_format="dense")
+    data_transform_0.get_party_instance(
+        role="host", party_id=config.parties.host[0]
+    ).component_param(with_label=False)
+
+    intersect_0 = Intersection(name="intersection_0")
+
+    if common_param is None:
+        common_param = {}
+    hetero_pearson_component = HeteroPearson(name="hetero_pearson_0", **common_param)
+
+    if guest_only_param:
+        hetero_pearson_component.get_party_instance(
+            "guest", config.parties.guest[0]
+        ).component_param(**guest_only_param)
+
+    if host_only_param:
+        hetero_pearson_component.get_party_instance(
+            "host", config.parties.host[0]
+        ).component_param(**host_only_param)
+
+    pipeline.add_component(reader_0)
+    pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(intersect_0, data=Data(data=data_transform_0.output.data))
+    pipeline.add_component(
+        hetero_pearson_component, data=Data(train_data=intersect_0.output.data)
+    )
+
+    pipeline.compile()
+    pipeline.fit()
+    return pipeline
+
+
+class dataset_meta(type):
+    @property
+    def breast(cls):
+        return {
+            "guest": {"name": "breast_hetero_guest", "namespace": "experiment"},
+            "host": [{"name": "breast_hetero_host", "namespace": "experiment"}],
+        }
+
+
+class dataset(metaclass=dataset_meta):
+    ...
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser("PIPELINE DEMO")
+    parser.add_argument("-config", type=str, help="config file")
+    args = parser.parse_args()
+    if args.config is not None:
+        main(args.config)
+    else:
+        main()

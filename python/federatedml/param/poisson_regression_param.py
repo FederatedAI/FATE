@@ -38,78 +38,57 @@ class PoissonParam(LinearModelParam):
     penalty : {'L2', 'L1'}, default: 'L2'
         Penalty method used in Poisson. Please note that, when using encrypted version in HeteroPoisson,
         'L1' is not supported.
-
     tol : float, default: 1e-4
         The tolerance of convergence
-
     alpha : float, default: 1.0
         Regularization strength coefficient.
-
     optimizer : {'rmsprop', 'sgd', 'adam', 'adagrad'}, default: 'rmsprop'
         Optimize method
-
     batch_size : int, default: -1
         Batch size when updating model. -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
-
     learning_rate : float, default: 0.01
         Learning rate
-
     max_iter : int, default: 20
         The maximum iteration for training.
-
     init_param: InitParam object, default: default InitParam object
         Init param method object.
-
     early_stop : str, 'weight_diff', 'diff' or 'abs', default: 'diff'
         Method used to judge convergence.
             a)	diff： Use difference of loss between two iterations to judge whether converge.
             b)  weight_diff: Use difference between weights of two consecutive iterations
             c)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < eps, it is converged.
-
     exposure_colname: str or None, default: None
         Name of optional exposure variable in dTable.
-
     encrypt_param: EncryptParam object, default: default EncryptParam object
         encrypt param
-
     encrypted_mode_calculator_param: EncryptedModeCalculatorParam object, default: default EncryptedModeCalculatorParam object
         encrypted mode calculator param
-
     cv_param: CrossValidationParam object, default: default CrossValidationParam object
         cv param
-
     stepwise_param: StepwiseParam object, default: default StepwiseParam object
         stepwise param
-
     decay: int or float, default: 1
         Decay rate for learning rate. learning rate will follow the following decay schedule.
         lr = lr0/(1+decay*t) if decay_sqrt is False. If decay_sqrt is True, lr = lr0 / sqrt(1+decay*t)
         where t is the iter number.
-
     decay_sqrt: bool, default: True
         lr = lr0/(1+decay*t) if decay_sqrt is False, otherwise, lr = lr0 / sqrt(1+decay*t)
-
     validation_freqs: int, list, tuple, set, or None
         validation frequency during training, required when using early stopping.
         The default value is None, 1 is suggested. You can set it to a number larger than 1 in order to speed up training by skipping validation rounds.
         When it is larger than 1, a number which is divisible by "max_iter" is recommended, otherwise, you will miss the validation scores of the last training iteration.
-
     early_stopping_rounds: int, default: None
         If positive number specified, at every specified training rounds, program checks for early stopping criteria.
         Validation_freqs must also be set when using early stopping.
-
     metrics: list or None, default: None
         Specify which metrics to be used when performing evaluation during training process. If metrics have not improved at early_stopping rounds, trianing stops before convergence.
         If set as empty, default metrics will be used. For regression tasks, default metrics are ['root_mean_squared_error', 'mean_absolute_error']
-
     use_first_metric_only: bool, default: False
         Indicate whether to use the first metric in `metrics` as the only criterion for early stopping judgement.
-
     floating_point_precision: None or integer
         if not None, use floating_point_precision-bit to speed up calculation,
         e.g.: convert an x to round(x * 2**floating_point_precision) during Paillier operation, divide
                 the result by 2**floating_point_precision in the end.
-
     callback_param: CallbackParam object
         callback param
 

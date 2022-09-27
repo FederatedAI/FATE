@@ -241,6 +241,10 @@ class StorageSessionABC(metaclass=abc.ABCMeta):
     def kill(self):
         ...
 
+    @abc.abstractmethod
+    def cleanup(self, name, namespace):
+        ...
+
     @property
     @abc.abstractmethod
     def session_id(self) -> str:

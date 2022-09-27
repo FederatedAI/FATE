@@ -6,7 +6,7 @@
     },
     "role": {
         "arbiter": [
-            9999
+            10000
         ],
         "host": [
             10000
@@ -88,7 +88,7 @@
                 }
             },
             "evaluation_0": {
-                "eval_type": "binary"
+                "eval_type": "multi"
             }
         }
     }

@@ -21,6 +21,7 @@ from federatedml.param import EvaluateParam
 from federatedml.util import consts
 from federatedml.model_base import ModelBase
 from federatedml.evaluation.metric_interface import MetricInterface
+from federatedml.statistic.data_overview import predict_detail_str_to_dict
 
 import numpy as np
 
@@ -256,7 +257,7 @@ class Evaluation(ModelBase):
         for key, multi_result in score_list:
             true_label = multi_result[0]
             predicted_label = multi_result[1]
-            multi_score = multi_result[3]
+            multi_score = predict_detail_str_to_dict(multi_result[3])
             data_type = multi_result[-1]
             # to binary predict result format
             for multi_label in multi_score:

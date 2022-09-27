@@ -72,7 +72,7 @@ class TestModel(object):
             except Exception:
                 return
 
-        elif command == 'job_log':
+        elif command == 'job_log_download':
             log_file_dir = os.path.join(self.output_path, 'job_{}_log'.format(self.job_id))
             try:
                 subp = subprocess.Popen([self.python_bin, self.fate_flow_path, "-f", command, "-j", self.job_id, "-o",
@@ -470,8 +470,10 @@ class TestModel(object):
                 "model_version": self.model_version,
                 "role": "guest",
                 "party_id": self.guest_party_id[0],
-                "file": model_path
+                "file": model_path,
+                "force_update": 1,
             }
+
             config_file_path = self.cache_directory + 'model_import.json'
             with open(config_file_path, 'w') as fp:
                 json.dump(config_data, fp)
@@ -585,7 +587,7 @@ def run_test_api(config_json, namespace):
 
     serving_connect_bool = serving_connect(config_json['serving_setting'])
     remove_path = str(config_json['data_base_dir']).split("python")[
-        0] + '/model_local_cache/guest#{}#arbiter-{}#guest-{}#host-{}#model/'.format(
+        0] + '/fateflow/model_local_cache/guest#{}#arbiter-{}#guest-{}#host-{}#model/'.format(
         guest_party_id[0], arbiter_party_id[0], guest_party_id[0], host_party_id[0])
     max_iter = test_api.set_config(guest_party_id, host_party_id, arbiter_party_id, conf_path,
                                    config_json['component_name'])
@@ -614,7 +616,7 @@ def run_test_api(config_json, namespace):
     job.add_row(['job query', judging_state(False if test_api.query_job() == "success" else True)])
     job.add_row(['job data view', judging_state(test_api.job_api('data_view_query'))])
     job.add_row(['job config', judging_state(test_api.job_config(max_iter=max_iter))])
-    job.add_row(['job log', judging_state(test_api.job_api('job_log'))])
+    job.add_row(['job log', judging_state(test_api.job_api('job_log_download'))])
 
     task = PrettyTable()
     task.set_style(ORGMODE)

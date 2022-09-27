@@ -47,17 +47,24 @@ class Model(BaseFlowAPI):
     def import_model(self, config_data, from_database=False):
         kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
-        if not kwargs.pop("from_database"):
-            file_path = config_data["file"]
-            if not os.path.isabs(file_path):
-                file_path = os.path.join(get_project_base_directory(), file_path)
-            if os.path.exists(file_path):
-                files = {'file': open(file_path, 'rb')}
-            else:
-                raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
-                                'please check the path: {}'.format(file_path))
-            return self._post(url='model/import', data=config_data, files=files)
-        return self._post(url='model/restore', json=config_data)
+
+        if kwargs.pop('from_database'):
+            return self._post(url='model/restore', json=config_data)
+
+        file_path = config_data['file']
+
+        if not os.path.isabs(file_path):
+            file_path = os.path.join(get_project_base_directory(), file_path)
+
+        if os.path.exists(file_path):
+            FileNotFoundError(
+                'The file is obtained from the fate flow client machine, but it does not exist, '
+                ' please check the path: {}'.format(file_path)
+            )
+
+        config_data['force_update'] = int(config_data.get('force_update', False))
+        files = {'file': open(file_path, 'rb')}
+        return self._post(url='model/import', data=config_data, files=files)
 
     def export_model(self, config_data, to_database=False):
         kwargs = locals()

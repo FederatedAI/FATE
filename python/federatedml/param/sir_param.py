@@ -31,26 +31,19 @@ class SecureInformationRetrievalParam(BaseParam):
     security_level: float, default 0.5
         security level, should set value in [0, 1]
         if security_level equals 0.0 means raw data retrieval
-
     oblivious_transfer_protocol: {"OT_Hauck"}
         OT type, only supports OT_Hauck
-
     commutative_encryption : {"CommutativeEncryptionPohligHellman"}
         the commutative encryption scheme used
-
     non_committing_encryption : {"aes"}
         the non-committing encryption scheme used
-
     dh_params
         params for Pohlig-Hellman Encryption
-
     key_size: int, value >= 1024
         the key length of the commutative cipher;
         note that this param will be deprecated in future, please specify key_length in PHParam instead.
-
     raw_retrieval: bool
         perform raw retrieval if raw_retrieval
-
     target_cols: str or list of str
         target cols to retrieve;
         any values not retrieved will be marked as "unretrieved",
@@ -75,7 +68,7 @@ class SecureInformationRetrievalParam(BaseParam):
         self.dh_params = dh_params
         self.key_size = key_size
         self.raw_retrieval = raw_retrieval
-        self.target_cols = [] if target_cols is None else target_cols
+        self.target_cols = target_cols
 
     def check(self):
         descr = "secure information retrieval param's "
@@ -94,6 +87,8 @@ class SecureInformationRetrievalParam(BaseParam):
         self.dh_params.check()
         if self._warn_to_deprecate_param("raw_retrieval", descr, "dh_param's security_level = 0"):
             self.check_boolean(self.raw_retrieval, descr)
+
+        self.target_cols = [] if self.target_cols is None else self.target_cols
         if not isinstance(self.target_cols, list):
             self.target_cols = [self.target_cols]
         for col in self.target_cols:

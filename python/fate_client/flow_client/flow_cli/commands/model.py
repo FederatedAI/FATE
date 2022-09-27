@@ -95,9 +95,6 @@ def bind(ctx, **kwargs):
 
 @model.command("import", short_help="Import Model Command")
 @cli_args.CONF_PATH
-# @click.option("--force", is_flag=True, default=False,
-#               help="If specified, the existing model file which is named the same as current model's, "
-#                    "older version of model files would be renamed. Otherwise, importing progress would be rejected.")
 @click.option('--from-database', is_flag=True, default=False,
               help="If specified and there is a valid database environment, fate flow will import model from database "
                    "which you specified in configuration file.")
@@ -114,25 +111,32 @@ def import_model(ctx, **kwargs):
         flow model import -c fate_flow/examples/restore_model.json --from-database
     """
     config_data, dsl_data = preprocess(**kwargs)
-    if not config_data.pop('from_database'):
-        file_path = config_data.get("file", None)
-        if file_path:
-            if not os.path.isabs(file_path):
-                file_path = os.path.join(get_project_base_directory(), file_path)
-            if os.path.exists(file_path):
-                files = {'file': open(file_path, 'rb')}
-                access_server('post', ctx, 'model/import', data=config_data, files=files)
-            else:
-                prettify({'retcode': 100,
-                          'retmsg': 'Import model failed. The file is obtained from the fate flow client machine, '
-                                    'but it does not exist, please check the path: {}'.format(file_path)})
-        else:
-            prettify({
-                'retcode': 100,
-                'retmsg': "Import model failed. Please specify the valid model file path and try again."
-            })
-    else:
+
+    if config_data.pop('from_database'):
         access_server('post', ctx, 'model/restore', config_data)
+        return
+
+    file_path = config_data.get("file", None)
+    if not file_path:
+        prettify({
+            'retcode': 100,
+            'retmsg': "Import model failed. Please specify the valid model file path and try again."
+        })
+        return
+
+    if not os.path.isabs(file_path):
+        file_path = os.path.join(get_project_base_directory(), file_path)
+
+    if not os.path.exists(file_path):
+        prettify({
+            'retcode': 100,
+            'retmsg': 'Import model failed. The file is obtained from the fate flow client machine, '
+                      'but it does not exist, please check the path: {}'.format(file_path),
+        })
+
+    config_data['force_update'] = int(config_data.get('force_update', False))
+    files = {'file': open(file_path, 'rb')}
+    access_server('post', ctx, 'model/import', data=config_data, files=files)
 
 
 @model.command("export", short_help="Export Model Command")

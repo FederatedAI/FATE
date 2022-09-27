@@ -28,25 +28,18 @@ class CallbackParam(BaseParam):
     callbacks : list, default: []
         Indicate what kinds of callback functions is desired during the training process.
         Accepted values: {'EarlyStopping', 'ModelCheckpoint'， 'PerformanceEvaluate'}
-
     validation_freqs: {None, int, list, tuple, set}
         validation frequency during training.
-
     early_stopping_rounds: None or int
         Will stop training if one metric doesn’t improve in last early_stopping_round rounds
-
     metrics: None, or list
         Indicate when executing evaluation during train process, which metrics will be used. If set as empty,
         default metrics for specific task type will be used. As for binary classification, default metrics are
         ['auc', 'ks']
-
     use_first_metric_only: bool, default: False
         Indicate whether use the first metric only for early stopping judgement.
-
     save_freq: int, default: 1
         The callbacks save model every save_freq epoch
-
-
     """
 
     def __init__(self, callbacks=None, validation_freqs=None, early_stopping_rounds=None,
@@ -60,6 +53,8 @@ class CallbackParam(BaseParam):
         self.save_freq = save_freq
 
     def check(self):
+        self.callbacks = [] if self.callbacks is None else self.callbacks
+        self.metrics = [] if self.metrics is None else self.metrics
 
         if self.early_stopping_rounds is None:
             pass

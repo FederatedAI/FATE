@@ -22,7 +22,7 @@ from federatedml.param.base_param import BaseParam
 
 class KmeansParam(BaseParam):
     """
-    Parameters used for K-means.
+    Parameters
     ----------
     k : int, default 5
         The number of the centroids to generate.

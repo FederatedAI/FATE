@@ -66,9 +66,17 @@
         }
     ],
     "tasks": {
-        "hetero_feature_selection_homo_sbt": {
-            "conf": "hetero_feature_selection_homo_sbt_conf.json",
-            "dsl": "hetero_feature_selection_homo_sbt_dsl.json"
+        "hetero-feature-selection-select-anonymous-col-names": {
+            "conf": "hetero_feature_selection_select_anonymous_col_names_conf.json",
+            "dsl": "hetero_feature_selection_select_anonymous_col_names_dsl.json"
+        },
+        "hetero-feature-selection-select-anonymous-manually": {
+             "conf": "hetero_feature_selection_manually_anonymous_conf.json",
+             "dsl": "hetero_feature_selection_manually_anonymous_dsl.json"
+        },
+        "hetero-feature-selection-select-anonymous-manually-left": {
+            "conf": "hetero_feature_selection_manually_left_anonymous_conf.json",
+             "dsl": "hetero_feature_selection_manually_left_anonymous_dsl.json"
         },
         "hetero_feature_selection_select_cols": {
             "conf": "hetero_feature_selection_select_cols_conf.json",
@@ -137,10 +145,6 @@
         "hetero_feature_selection_multiclass": {
             "conf": "hetero_feature_selection_multiclass_conf.json",
             "dsl": "hetero_feature_selection_multiclass_dsl.json"
-        },
-        "hetero_feature_selection_multiclass_case1": {
-            "conf": "hetero_feature_selection_multiclass_case1_conf.json",
-            "dsl": "hetero_feature_selection_multiclass_case1_dsl.json"
         },
         "hetero_feature_selection_multiclass_all_case": {
             "conf": "hetero_feature_selection_multiclass_all_case_conf.json",
