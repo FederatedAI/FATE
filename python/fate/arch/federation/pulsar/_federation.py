@@ -87,8 +87,8 @@ class Federation(FederationBase):
 
         # pulsar not use user and password so far
         # TODO add credential to connections
-        base_user = pulsar_config.get("user")
-        base_password = pulsar_config.get("password")
+        pulsar_config.get("user")
+        pulsar_config.get("password")
         mode = pulsar_config.get("mode", "replication")
 
         pulsar_manager = PulsarManager(

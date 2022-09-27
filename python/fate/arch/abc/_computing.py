@@ -596,7 +596,6 @@ class CSessionABC(metaclass=ABCMeta):
            a table create from data
 
         """
-        pass
 
     @abc.abstractmethod
     def cleanup(self, name, namespace):

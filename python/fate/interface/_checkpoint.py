@@ -1,4 +1,4 @@
-from typing import Optional, Protocol
+from typing import Protocol
 
 from ._model_io import ModelsLoader
 

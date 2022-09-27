@@ -231,7 +231,7 @@ class Anonymous(AnonymousInterface):
                 return False
 
             try:
-                index = int(splits[2])
+                int(splits[2])
             except ValueError:
                 return False
 

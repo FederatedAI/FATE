@@ -110,7 +110,7 @@ class CSession(CSessionABC):
         try:
             LOGGER.info(f"clean table namespace {self.session_id}")
             self.cleanup(namespace=self.session_id, name="*")
-        except Exception as e:
+        except Exception:
             LOGGER.warning(f"no found table namespace {self.session_id}")
 
         try:

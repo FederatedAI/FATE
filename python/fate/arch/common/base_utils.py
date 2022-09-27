@@ -168,6 +168,6 @@ def get_lan_ip():
             try:
                 ip = get_interface_ip(ifname)
                 break
-            except IOError as e:
+            except IOError:
                 pass
     return ip or ""

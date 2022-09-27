@@ -1,3 +1,7 @@
+[tool.autoflake]
+check = false
+exclude = ["examples/*", "python/fate_test/*", "python/fate_client/*", "doc/*", "deploy/*", "c/*", "rust/*"]
+
 [tool.isort]
 profile = "black"
 skip_glob = ["examples/*", "python/fate_test/*", "python/fate_client/*", "doc/*", "deploy/*", "c/*", "rust/*"]

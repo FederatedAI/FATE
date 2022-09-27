@@ -90,7 +90,7 @@ class StorageSession(StorageSessionBase):
                 cur = val[1]
                 cur.close()
                 con.close()
-        except Exception as e:
+        except Exception:
             traceback.print_exc()
 
     def kill(self):

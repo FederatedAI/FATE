@@ -15,7 +15,6 @@
 #
 
 import json
-import logging
 
 import requests
 from requests.adapters import HTTPAdapter

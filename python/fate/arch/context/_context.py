@@ -2,7 +2,7 @@ import logging
 from contextlib import contextmanager
 from dataclasses import dataclass
 from logging import Logger, getLogger
-from typing import Iterator, List, Literal, Optional, Tuple
+from typing import Iterator, List, Optional
 
 from fate.interface import (
     LOGMSG,

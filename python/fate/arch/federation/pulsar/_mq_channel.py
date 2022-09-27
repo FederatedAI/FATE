@@ -167,7 +167,7 @@ class MQChannel(object):
                     service_url="pulsar://{}:{}".format(self._host, self._port),
                     operation_timeout_seconds=30,
                 )
-            except Exception as e:
+            except Exception:
                 self._producer_conn = None
 
             # alway used current client to fetch producer
@@ -244,7 +244,7 @@ class MQChannel(object):
                 return True
             else:
                 return False
-        except Exception as e:
+        except Exception:
             self._consumer_conn = None
             self._consumer_receive = None
             return False

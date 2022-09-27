@@ -1,4 +1,4 @@
-from typing import Callable, List, Literal, Optional, Protocol, Tuple, TypeVar
+from typing import Callable, List, Optional, Protocol, Tuple, TypeVar
 
 from ._consts import T_ROLE
 from ._tensor import FPTensor, PHEEncryptor, PHETensor

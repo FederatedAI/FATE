@@ -1,4 +1,4 @@
-from typing import List, Literal, Optional, Tuple
+from typing import List, Tuple
 
 from fate.interface import FederationEngine, PartyMeta
 
