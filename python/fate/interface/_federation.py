@@ -8,7 +8,7 @@ class FederationEngine(Protocol):
     session_id: str
     get_gc: Optional[GarbageCollector]
     remote_gc: Optional[GarbageCollector]
-    party: PartyMeta
+    local_party: PartyMeta
     parties: List[PartyMeta]
 
     def pull(self, name: str, tag: str, parties: List[PartyMeta]) -> List:
@@ -32,3 +32,8 @@ class FederationWrapper(Protocol):
     hosts: Parties
     arbiter: Party
     parties: Parties
+
+
+class FederationDeserializer(Protocol):
+    def __do_deserialize__(self, ctx, party):
+        ...

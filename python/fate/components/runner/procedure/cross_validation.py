@@ -9,7 +9,9 @@ from .procedure import Procedure
 
 class CrossValidation(Procedure):
     @classmethod
-    def is_fulfilled(cls, params: Params, datasets: Datasets, models_loader: ModelsLoader) -> bool:
+    def is_fulfilled(
+        cls, params: Params, datasets: Datasets, models_loader: ModelsLoader
+    ) -> bool:
         return params.is_need_cv
 
     @classmethod

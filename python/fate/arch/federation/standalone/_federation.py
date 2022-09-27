@@ -11,7 +11,13 @@ LOGGER = log.getLogger()
 
 
 class StandaloneFederation(FederationEngine):
-    def __init__(self, standalone_session, federation_session_id: str, party: PartyMeta, parties: List[PartyMeta]):
+    def __init__(
+        self,
+        standalone_session,
+        federation_session_id: str,
+        party: PartyMeta,
+        parties: List[PartyMeta],
+    ):
         LOGGER.debug(
             f"[federation.standalone]init federation: "
             f"standalone_session={standalone_session}, "
@@ -19,7 +25,9 @@ class StandaloneFederation(FederationEngine):
             f"party={party}"
         )
         self._session_id = federation_session_id
-        self._federation = RawFederation(standalone_session, federation_session_id, party)
+        self._federation = RawFederation(
+            standalone_session, federation_session_id, party
+        )
         LOGGER.debug("[federation.standalone]init federation context done")
         self._remote_history = set()
         self._get_history = set()
@@ -27,7 +35,7 @@ class StandaloneFederation(FederationEngine):
         # standalone has build in design of table clean
         self.get_gc = None
         self.remote_gc = None
-        self.party = party
+        self.local_party = party
         self.parties = parties
 
     @property
@@ -43,7 +51,9 @@ class StandaloneFederation(FederationEngine):
     ):
         for party in parties:
             if (name, tag, party) in self._remote_history:
-                raise ValueError(f"remote to {parties} with duplicate tag: {name}.{tag}")
+                raise ValueError(
+                    f"remote to {parties} with duplicate tag: {name}.{tag}"
+                )
             self._remote_history.add((name, tag, party))
 
         if isinstance(v, Table):

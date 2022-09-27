@@ -92,31 +92,47 @@ class StorageSessionBase(StorageSessionABC):
         from ..relation_ship import Relationship
 
         if engine:
-            if engine != StorageEngine.PATH and engine not in Relationship.Computing.get(
-                computing_table.engine, {}
-            ).get(EngineType.STORAGE, {}).get("support", []):
+            if (
+                engine != StorageEngine.PATH
+                and engine
+                not in Relationship.Computing.get(computing_table.engine, {})
+                .get(EngineType.STORAGE, {})
+                .get("support", [])
+            ):
                 raise Exception(
                     f"storage engine {engine} not supported with computing engine {computing_table.engine}"
                 )
         else:
             engine = (
-                Relationship.Computing.get(computing_table.engine, {}).get(EngineType.STORAGE, {}).get("default", None)
+                Relationship.Computing.get(computing_table.engine, {})
+                .get(EngineType.STORAGE, {})
+                .get("default", None)
             )
             if not engine:
-                raise Exception(f"can not found {computing_table.engine} default storage engine")
+                raise Exception(
+                    f"can not found {computing_table.engine} default storage engine"
+                )
         if engine_address is None:
             # find engine address from service_conf.yaml
-            engine_address = engine_utils.get_engines_config_from_conf().get(EngineType.STORAGE, {}).get(engine, {})
+            engine_address = (
+                engine_utils.get_engines_config_from_conf()
+                .get(EngineType.STORAGE, {})
+                .get(engine, {})
+            )
         address_dict = engine_address.copy()
         partitions = computing_table.partitions
 
         if engine == StorageEngine.STANDALONE:
             address_dict.update({"name": name, "namespace": namespace})
-            store_type = StandaloneStoreType.ROLLPAIR_LMDB if store_type is None else store_type
+            store_type = (
+                StandaloneStoreType.ROLLPAIR_LMDB if store_type is None else store_type
+            )
 
         elif engine == StorageEngine.EGGROLL:
             address_dict.update({"name": name, "namespace": namespace})
-            store_type = EggRollStoreType.ROLLPAIR_LMDB if store_type is None else store_type
+            store_type = (
+                EggRollStoreType.ROLLPAIR_LMDB if store_type is None else store_type
+            )
 
         elif engine == StorageEngine.HIVE:
             address_dict.update({"database": namespace, "name": f"{name}"})
@@ -130,7 +146,9 @@ class StorageSessionBase(StorageSessionABC):
                     "username": token.get("username", ""),
                 }
             )
-            store_type = LinkisHiveStoreType.DEFAULT if store_type is None else store_type
+            store_type = (
+                LinkisHiveStoreType.DEFAULT if store_type is None else store_type
+            )
 
         elif engine == StorageEngine.HDFS:
             from ..common.data_utils import default_output_fs_path
@@ -167,9 +185,13 @@ class StorageSessionBase(StorageSessionABC):
 
         else:
             raise RuntimeError(f"{engine} storage is not supported")
-        address = StorageTableMeta.create_address(storage_engine=engine, address_dict=address_dict)
+        address = StorageTableMeta.create_address(
+            storage_engine=engine, address_dict=address_dict
+        )
         schema = schema if schema else {}
-        computing_table.save(address, schema=schema, partitions=partitions, store_type=store_type)
+        computing_table.save(
+            address, schema=schema, partitions=partitions, store_type=store_type
+        )
         table_count = computing_table.count()
         table_meta = StorageTableMeta(name=name, namespace=namespace, new=True)
         table_meta.address = address
@@ -194,7 +216,9 @@ class StorageSessionBase(StorageSessionABC):
         try:
             self.stop()
         except Exception as e:
-            LOGGER.warning(f"stop storage session {self._session_id} failed, try to kill", e)
+            LOGGER.warning(
+                f"stop storage session {self._session_id} failed, try to kill", e
+            )
             self.kill()
 
     def table(self, name, namespace, address, store_type, partitions=None, **kwargs):

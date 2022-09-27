@@ -131,7 +131,9 @@ def _push_with_exception_handle(rsc, v, name: str, tag: str, parties: List[Party
     def _remote_exception_re_raise(f, p: PartyMeta):
         try:
             f.result()
-            LOGGER.debug(f"[federation.eggroll.remote.{name}.{tag}]future to remote to party: {p} done")
+            LOGGER.debug(
+                f"[federation.eggroll.remote.{name}.{tag}]future to remote to party: {p} done"
+            )
         except Exception as e:
             pid = os.getpid()
             LOGGER.exception(

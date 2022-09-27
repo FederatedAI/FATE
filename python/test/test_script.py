@@ -1,14 +1,19 @@
+import queue
+import time
 from multiprocessing import Process
 
 from fate.arch.computing.standalone import CSession
-from fate.arch.context import Context
+from fate.arch.context import Context, disable_inner_logs
 from fate.arch.federation.standalone import StandaloneFederation
 
 
 def host(federation_id, local_party, parties):
+    disable_inner_logs()
     computing = CSession()
     federation = StandaloneFederation(computing, federation_id, local_party, parties)
     ctx = Context("guest", computing=computing, federation=federation)
+    ctx.cipher.phe.keygen()
+    ctx.tensor.random_tensor((10, 10))
     with ctx.sub_ctx("predict") as sub_ctx:
         sub_ctx.log.debug("ctx inited")
         loss = 0.2
@@ -19,6 +24,7 @@ def host(federation_id, local_party, parties):
 
 
 def guest(federation_id, local_party, parties):
+    disable_inner_logs()
     computing = CSession()
     federation = StandaloneFederation(computing, federation_id, local_party, parties)
     ctx = Context("host", computing=computing, federation=federation)
@@ -41,5 +47,19 @@ if __name__ == "__main__":
     p_host = Process(target=host, args=(federation_id, host_party, parties))
     p_guest.start()
     p_host.start()
-    p_guest.join()
-    p_host.join()
+
+    process = queue.Queue()
+    process.put(p_guest)
+    process.put(p_host)
+    while not process.empty():
+        time.sleep(0.1)
+        p = process.get()
+        if p.is_alive():
+            process.put(p)
+            continue
+        if p.exitcode != 0:
+            print("terminating rest process")
+            while not process.empty():
+                q = process.get()
+                print("kill")
+                q.kill()

@@ -1,6 +1,6 @@
-from typing import Callable, List, Literal, Optional, Tuple, TypeVar
+from typing import Callable, List, Optional, TypeVar
 
-from fate.interface import Context, FederationEngine, FPTensor
+from fate.interface import FederationEngine, FPTensor
 from fate.interface import Future as FutureInterface
 from fate.interface import Futures as FuturesInterface
 from fate.interface import Parties as PartiesInterface
@@ -9,16 +9,6 @@ from fate.interface import PartyMeta, PHEEncryptor, PHETensor
 
 from ..federation.transfer_variable import IterationGC
 from ._namespace import Namespace
-
-
-class FederationDeserializer:
-    def do_deserialize(self, ctx, party):
-        ...
-
-    @classmethod
-    def make_frac_key(cls, base_key, frac_key):
-        return f"{base_key}__frac__{frac_key}"
-
 
 T = TypeVar("T")
 
@@ -90,19 +80,16 @@ class GC:
 class Party(PartyInterface):
     def __init__(
         self,
-        ctx,
         federation,
         party: PartyMeta,
         namespace,
     ) -> None:
-        self.ctx = ctx
         self.federation = federation
         self.party = party
         self.namespace = namespace
 
     def push(self, name: str, value):
         return _push(
-            self.ctx,
             self.federation,
             name,
             self.namespace,
@@ -111,19 +98,17 @@ class Party(PartyInterface):
         )
 
     def pull(self, name: str) -> Future:
-        return Future(_pull(self.ctx, self.federation, name, self.namespace, [self.party])[0])
+        return Future(_pull(self.federation, name, self.namespace, [self.party])[0])
 
 
 class Parties(PartiesInterface):
     def __init__(
         self,
-        ctx,
         federation: FederationEngine,
         party: PartyMeta,
         parties: List[PartyMeta],
         namespace: Namespace,
     ) -> None:
-        self.ctx = ctx
         self.federation = federation
         self.party = party
         self.parties = parties
@@ -131,7 +116,6 @@ class Parties(PartiesInterface):
 
     def __call__(self, key: int) -> Party:
         return Party(
-            self.ctx,
             self.federation,
             self.parties[key],
             self.namespace,
@@ -162,7 +146,6 @@ class Parties(PartiesInterface):
 
     def push(self, name: str, value):
         return _push(
-            self.ctx,
             self.federation,
             name,
             self.namespace,
@@ -171,11 +154,10 @@ class Parties(PartiesInterface):
         )
 
     def pull(self, name: str) -> Futures:
-        return Futures(_pull(self.ctx, self.federation, name, self.namespace, self.parties))
+        return Futures(_pull(self.federation, name, self.namespace, self.parties))
 
 
 def _push(
-    ctx: Context,
     federation: FederationEngine,
     name: str,
     namespace: Namespace,
@@ -183,7 +165,7 @@ def _push(
     value,
 ):
     if hasattr(value, "__federation_hook__"):
-        value.__federation_hook__(ctx, name, parties)
+        value.__federation_hook__(federation, name, namespace, parties)
     else:
         federation.push(
             v=value,
@@ -194,21 +176,21 @@ def _push(
 
 
 def _pull(
-    ctx: Context,
     federation: FederationEngine,
     name: str,
     namespace: Namespace,
     parties: List[PartyMeta],
 ):
+    tag = namespace.fedeation_tag()
     raw_values = federation.pull(
         name=name,
-        tag=namespace.fedeation_tag(),
+        tag=tag,
         parties=parties,
     )
     values = []
     for party, raw_value in zip(parties, raw_values):
-        if isinstance(raw_value, FederationDeserializer):
-            values.append(raw_value.do_deserialize(ctx, party))
+        if hasattr(raw_value, "__do_deserialize__"):
+            values.append(raw_value.__do_deserialize__(federation, name, tag, party))
         else:
             values.append(raw_value)
     return values

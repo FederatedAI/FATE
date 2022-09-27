@@ -70,7 +70,11 @@ class Session(object):
         self._parties_info: typing.Optional[PartiesInfo] = None
         self._all_party_info: typing.List[Party] = []
         self._session_id = str(uuid.uuid1()) if not session_id else session_id
-        self._logger = LOGGER if options.get("logger", None) is None else options.get("logger", None)
+        self._logger = (
+            LOGGER
+            if options.get("logger", None) is None
+            else options.get("logger", None)
+        )
 
         self._logger.info(f"create manager session {self._session_id}")
 
@@ -102,7 +106,9 @@ class Session(object):
         **kwargs,
     ):
         computing_session_id = (
-            f"{self._session_id}_computing_{uuid.uuid1()}" if not computing_session_id else computing_session_id
+            f"{self._session_id}_computing_{uuid.uuid1()}"
+            if not computing_session_id
+            else computing_session_id
         )
         if self.is_computing_valid:
             raise RuntimeError(f"computing session already valid")
@@ -118,7 +124,9 @@ class Session(object):
             from ..computing.standalone import CSession
 
             options = kwargs.get("options", {})
-            self._computing_session = CSession(session_id=computing_session_id, options=options)
+            self._computing_session = CSession(
+                session_id=computing_session_id, options=options
+            )
             self._computing_type = ComputingEngine.STANDALONE
             return self
 
@@ -126,7 +134,9 @@ class Session(object):
             from ..computing.eggroll import CSession
 
             options = kwargs.get("options", {})
-            self._computing_session = CSession(session_id=computing_session_id, options=options)
+            self._computing_session = CSession(
+                session_id=computing_session_id, options=options
+            )
             return self
 
         if self._computing_type == ComputingEngine.SPARK:
@@ -177,8 +187,12 @@ class Session(object):
             from ..computing.standalone import CSession
             from ..federation.standalone import Federation
 
-            if not self.is_computing_valid or not isinstance(self._computing_session, CSession):
-                raise RuntimeError(f"require computing with type {ComputingEngine.STANDALONE} valid")
+            if not self.is_computing_valid or not isinstance(
+                self._computing_session, CSession
+            ):
+                raise RuntimeError(
+                    f"require computing with type {ComputingEngine.STANDALONE} valid"
+                )
 
             self._federation_session = Federation(
                 standalone_session=self._computing_session.get_standalone_session(),
@@ -191,8 +205,12 @@ class Session(object):
             from ..computing.eggroll import CSession
             from ..federation.eggroll import Federation
 
-            if not self.is_computing_valid or not isinstance(self._computing_session, CSession):
-                raise RuntimeError(f"require computing with type {ComputingEngine.EGGROLL} valid")
+            if not self.is_computing_valid or not isinstance(
+                self._computing_session, CSession
+            ):
+                raise RuntimeError(
+                    f"require computing with type {ComputingEngine.EGGROLL} valid"
+                )
 
             self._federation_session = Federation(
                 rp_ctx=self._computing_session.get_rpc(),
@@ -235,7 +253,9 @@ class Session(object):
         **kwargs,
     ) -> StorageSessionABC:
         storage_session_id = (
-            f"{self._session_id}_storage_{uuid.uuid1()}" if not storage_session_id else storage_session_id
+            f"{self._session_id}_storage_{uuid.uuid1()}"
+            if not storage_session_id
+            else storage_session_id
         )
 
         if storage_session_id in self._storage_session:
@@ -258,56 +278,78 @@ class Session(object):
         if storage_engine == StorageEngine.EGGROLL:
             from ..storage.eggroll import StorageSession
 
-            storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
+            storage_session = StorageSession(
+                session_id=storage_session_id, options=kwargs.get("options", {})
+            )
 
         elif storage_engine == StorageEngine.STANDALONE:
             from ..storage.standalone import StorageSession
 
-            storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
+            storage_session = StorageSession(
+                session_id=storage_session_id, options=kwargs.get("options", {})
+            )
 
         elif storage_engine == StorageEngine.MYSQL:
             from ..storage.mysql import StorageSession
 
-            storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
+            storage_session = StorageSession(
+                session_id=storage_session_id, options=kwargs.get("options", {})
+            )
 
         elif storage_engine == StorageEngine.HDFS:
             from ..storage.hdfs import StorageSession
 
-            storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
+            storage_session = StorageSession(
+                session_id=storage_session_id, options=kwargs.get("options", {})
+            )
 
         elif storage_engine == StorageEngine.HIVE:
             from ..storage.hive import StorageSession
 
-            storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
+            storage_session = StorageSession(
+                session_id=storage_session_id, options=kwargs.get("options", {})
+            )
 
         elif storage_engine == StorageEngine.LINKIS_HIVE:
             from ..storage.linkis_hive import StorageSession
 
-            storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
+            storage_session = StorageSession(
+                session_id=storage_session_id, options=kwargs.get("options", {})
+            )
 
         elif storage_engine == StorageEngine.PATH:
             from ..storage.path import StorageSession
 
-            storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
+            storage_session = StorageSession(
+                session_id=storage_session_id, options=kwargs.get("options", {})
+            )
 
         elif storage_engine == StorageEngine.LOCALFS:
             from ..storage.localfs import StorageSession
 
-            storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
+            storage_session = StorageSession(
+                session_id=storage_session_id, options=kwargs.get("options", {})
+            )
 
         elif storage_engine == StorageEngine.API:
             from ..storage.api import StorageSession
 
-            storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
+            storage_session = StorageSession(
+                session_id=storage_session_id, options=kwargs.get("options", {})
+            )
 
         else:
-            raise NotImplementedError(f"can not be initialized with storage engine: {storage_engine}")
+            raise NotImplementedError(
+                f"can not be initialized with storage engine: {storage_engine}"
+            )
 
         self._storage_session[storage_session_id] = storage_session
 
         return storage_session
 
-    def get_table(self, name, namespace, ignore_disable=False) -> typing.Union[StorageTableABC, None]:
+    def get_table(
+        self, name, namespace, ignore_disable=False
+    ) -> typing.Union[StorageTableABC, None]:
         meta = Session.get_table_meta(name=name, namespace=namespace)
         if meta is None:
             return None
@@ -372,7 +414,9 @@ class Session(object):
         return self._federation_session is not None
 
     @DB.connection_context()
-    def save_record(self, engine_type, engine_name, engine_session_id, engine_runtime_conf=None):
+    def save_record(
+        self, engine_type, engine_name, engine_session_id, engine_runtime_conf=None
+    ):
         self._logger.info(
             f"try to save session record for manager {self._session_id}, {engine_type} {engine_name}"
             f" {engine_session_id}"
@@ -382,7 +426,9 @@ class Session(object):
         session_record.f_engine_type = engine_type
         session_record.f_engine_name = engine_name
         session_record.f_engine_session_id = engine_session_id
-        session_record.f_engine_address = engine_runtime_conf if engine_runtime_conf else {}
+        session_record.f_engine_address = (
+            engine_runtime_conf if engine_runtime_conf else {}
+        )
         session_record.f_create_time = base_utils.current_timestamp()
         msg = (
             f"save storage session record for manager {self._session_id}, {engine_type} {engine_name} "
@@ -404,7 +450,11 @@ class Session(object):
     @DB.connection_context()
     def delete_session_record(self, engine_session_id, manager_session_id=None):
         if not manager_session_id:
-            rows = SessionRecord.delete().where(SessionRecord.f_engine_session_id == engine_session_id).execute()
+            rows = (
+                SessionRecord.delete()
+                .where(SessionRecord.f_engine_session_id == engine_session_id)
+                .execute()
+            )
         else:
             rows = (
                 SessionRecord.delete()
@@ -423,7 +473,9 @@ class Session(object):
     @DB.connection_context()
     def query_sessions(cls, reverse=None, order_by=None, **kwargs):
         try:
-            session_records = SessionRecord.query(reverse=reverse, order_by=order_by, **kwargs)
+            session_records = SessionRecord.query(
+                reverse=reverse, order_by=order_by, **kwargs
+            )
             return session_records
         except BaseException:
             return []
@@ -431,13 +483,19 @@ class Session(object):
     @DB.connection_context()
     def get_session_from_record(self, **kwargs):
         self._logger.info(f"query by manager session id {self._session_id}")
-        session_records = self.query_sessions(manager_session_id=self.session_id, **kwargs)
-        self._logger.info([session_record.f_engine_session_id for session_record in session_records])
+        session_records = self.query_sessions(
+            manager_session_id=self.session_id, **kwargs
+        )
+        self._logger.info(
+            [session_record.f_engine_session_id for session_record in session_records]
+        )
         for session_record in session_records:
             try:
                 engine_session_id = session_record.f_engine_session_id
                 if session_record.f_engine_type == EngineType.COMPUTING:
-                    self._init_computing_if_not_valid(computing_session_id=engine_session_id)
+                    self._init_computing_if_not_valid(
+                        computing_session_id=engine_session_id
+                    )
                 elif session_record.f_engine_type == EngineType.STORAGE:
                     self._get_or_create_storage(
                         storage_session_id=engine_session_id,
@@ -445,14 +503,18 @@ class Session(object):
                         record=False,
                     )
                 elif session_record.f_engine_type == EngineType.FEDERATION:
-                    self._logger.info(f"engine runtime conf: {session_record.f_engine_address}")
+                    self._logger.info(
+                        f"engine runtime conf: {session_record.f_engine_address}"
+                    )
                     self._init_federation_if_not_valid(
                         federation_session_id=engine_session_id,
                         engine_runtime_conf=session_record.f_engine_address,
                     )
             except Exception as e:
                 self._logger.info(e)
-                self.delete_session_record(engine_session_id=session_record.f_engine_session_id)
+                self.delete_session_record(
+                    engine_session_id=session_record.f_engine_session_id
+                )
 
     def _init_computing_if_not_valid(self, computing_session_id):
         if not self.is_computing_valid:
@@ -471,14 +533,18 @@ class Session(object):
     def _init_federation_if_not_valid(self, federation_session_id, engine_runtime_conf):
         if not self.is_federation_valid:
             try:
-                self._logger.info(f"init federation session {federation_session_id} type {self._federation_type}")
+                self._logger.info(
+                    f"init federation session {federation_session_id} type {self._federation_type}"
+                )
                 self.init_federation(
                     federation_session_id=federation_session_id,
                     runtime_conf=engine_runtime_conf.get("runtime_conf"),
                     service_conf=engine_runtime_conf.get("service_conf"),
                     record=False,
                 )
-                self._logger.info(f"init federation session {federation_session_id} type {self._federation_type} done")
+                self._logger.info(
+                    f"init federation session {federation_session_id} type {self._federation_type} done"
+                )
                 return True
             except Exception as e:
                 self._logger.warning(
@@ -495,17 +561,23 @@ class Session(object):
             return True
 
     def destroy_all_sessions(self, **kwargs):
-        self._logger.info(f"start destroy manager session {self._session_id} all sessions")
+        self._logger.info(
+            f"start destroy manager session {self._session_id} all sessions"
+        )
         self.get_session_from_record(**kwargs)
         self.destroy_federation_session()
         self.destroy_storage_session()
         self.destroy_computing_session()
-        self._logger.info(f"finish destroy manager session {self._session_id} all sessions")
+        self._logger.info(
+            f"finish destroy manager session {self._session_id} all sessions"
+        )
 
     def destroy_computing_session(self):
         if self.is_computing_valid:
             try:
-                self._logger.info(f"try to destroy computing session {self._computing_session.session_id}")
+                self._logger.info(
+                    f"try to destroy computing session {self._computing_session.session_id}"
+                )
                 self._computing_session.destroy()
             except Exception as e:
                 self._logger.info(
@@ -513,7 +585,9 @@ class Session(object):
                     e,
                 )
 
-            self.delete_session_record(engine_session_id=self._computing_session.session_id)
+            self.delete_session_record(
+                engine_session_id=self._computing_session.session_id
+            )
             self._computing_session = None
 
     def destroy_storage_session(self):
@@ -523,7 +597,9 @@ class Session(object):
                 session.destroy()
                 self._logger.info(f"destroy storage session {session_id} successfully")
             except Exception as e:
-                self._logger.exception(f"destroy storage session {session_id} failed", e)
+                self._logger.exception(
+                    f"destroy storage session {session_id} failed", e
+                )
 
             self.delete_session_record(engine_session_id=session_id)
 
@@ -537,8 +613,12 @@ class Session(object):
                         f"try to destroy federation session {self._federation_session.session_id} type"
                         f" {EngineType.FEDERATION} role {self._parties_info.local_party.role}"
                     )
-                    self._federation_session.destroy(parties=self._parties_info.all_parties)
-                    self._logger.info(f"destroy federation session {self._federation_session.session_id} done")
+                    self._federation_session.destroy(
+                        parties=self._parties_info.all_parties
+                    )
+                    self._logger.info(
+                        f"destroy federation session {self._federation_session.session_id} done"
+                    )
             except Exception as e:
                 self._logger.info(f"destroy federation failed: {e}")
 
@@ -573,8 +653,12 @@ class computing_session(object):
         Session(options=options).as_global().init_computing(session_id)
 
     @staticmethod
-    def parallelize(data: typing.Iterable, partition: int, include_key: bool, **kwargs) -> CTableABC:
-        return get_computing_session().parallelize(data, partition=partition, include_key=include_key, **kwargs)
+    def parallelize(
+        data: typing.Iterable, partition: int, include_key: bool, **kwargs
+    ) -> CTableABC:
+        return get_computing_session().parallelize(
+            data, partition=partition, include_key=include_key, **kwargs
+        )
 
     @staticmethod
     def stop():

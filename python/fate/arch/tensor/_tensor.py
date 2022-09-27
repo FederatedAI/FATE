@@ -1,6 +1,7 @@
-from typing import Any, Union, overload
+from typing import Any, List, Union, overload
 
-from fate.arch.common import Party
+from fate.interface import FederationDeserializer as FederationDeserializerInterface
+from fate.interface import FederationEngine, PartyMeta
 
 from .abc.tensor import PHEDecryptorABC, PHEEncryptorABC, PHETensorABC
 
@@ -89,12 +90,18 @@ class FPTensor:
     def T(self):
         return FPTensor(self._tensor.T)
 
-    def __federation_hook__(self, ctx, key, parties):
-        deserializer = FPTensorFederationDeserializer(key)
+    def __federation_hook__(
+        self,
+        federation: FederationEngine,
+        name: str,
+        tag: str,
+        parties: List[PartyMeta],
+    ):
+        deserializer = FPTensorFederationDeserializer(name)
         # 1. remote deserializer with objs
-        ctx._push(parties, key, deserializer)
+        federation.push(deserializer, name, tag, parties)
         # 2. remote table
-        ctx._push(parties, deserializer.table_key, self._tensor)
+        federation.push(self._tensor, deserializer.table_key, tag, parties)
 
 
 class PHETensor:
@@ -164,19 +171,29 @@ class PHETensor:
         ctx._push(parties, deserializer.table_key, self._tensor)
 
 
-class PHETensorFederationDeserializer(FederationDeserializer):
+class PHETensorFederationDeserializer(FederationDeserializerInterface):
     def __init__(self, key) -> None:
-        self.table_key = self.make_frac_key(key, "tensor")
+        self.table_key = f"__phetensor_{key}__"
 
-    def do_deserialize(self, ctx: Context, party: Party) -> PHETensor:
-        tensor = ctx._pull([party], self.table_key)[0]
-        return PHETensor(ctx, tensor)
+    def __do_deserialize__(
+        self,
+        federation: FederationEngine,
+        tag: str,
+        party: PartyMeta,
+    ) -> PHETensor:
+        tensor = federation.pull(name=self.table_key, tag=tag, parties=[party])[0]
+        return PHETensor(tensor)
 
 
-class FPTensorFederationDeserializer(FederationDeserializer):
+class FPTensorFederationDeserializer(FederationDeserializerInterface):
     def __init__(self, key) -> None:
-        self.table_key = self.make_frac_key(key, "tensor")
+        self.table_key = f"__tensor_{key}__"
 
-    def do_deserialize(self, ctx: Context, party: Party) -> FPTensor:
-        tensor = ctx._pull([party], self.table_key)[0]
-        return FPTensor(ctx, tensor)
+    def __do_deserialize__(
+        self,
+        federation: FederationEngine,
+        tag: str,
+        party: PartyMeta,
+    ) -> FPTensor:
+        tensor = federation.pull(name=self.table_key, tag=tag, parties=[party])[0]
+        return FPTensor(tensor)

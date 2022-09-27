@@ -4,9 +4,14 @@ from dataclasses import dataclass
 from logging import Logger, getLogger
 from typing import Iterator, List, Literal, Optional, Tuple
 
-from fate.interface import LOGMSG, T_ROLE, Anonymous, Cache, CheckpointManager
-from fate.interface import Cipher as CipherInterface
-from fate.interface import ComputingEngine
+from fate.interface import (
+    LOGMSG,
+    T_ROLE,
+    Anonymous,
+    Cache,
+    CheckpointManager,
+    ComputingEngine,
+)
 from fate.interface import Context as ContextInterface
 from fate.interface import FederationEngine
 from fate.interface import Logger as LoggerInterface
@@ -14,10 +19,11 @@ from fate.interface import Metric as MetricInterface
 from fate.interface import MetricMeta as MetricMetaInterface
 from fate.interface import Metrics, PartyMeta, Summary
 
-from ..session import Session
-from ._cipher import Cipher
+from ..unify import Backend, Device
+from ._cipher import CipherKit
 from ._federation import GC, Parties, Party
 from ._namespace import Namespace
+from ._tensor import TensorKit
 
 
 @dataclass
@@ -98,11 +104,7 @@ class DummyLogger(LoggerInterface):
         context_name: Optional[str] = None,
         namespace: Optional[Namespace] = None,
         level=logging.DEBUG,
-        disable_buildin=True,
     ) -> None:
-        if disable_buildin:
-            self._disable_buildin()
-
         self.logger = getLogger("fate.dummy")
         self.namespace = namespace
         self.context_name = context_name
@@ -122,13 +124,6 @@ class DummyLogger(LoggerInterface):
         console_handler.setLevel(logging.DEBUG)
         console_handler.setFormatter(formatter)
         self.logger.addHandler(console_handler)
-
-    @classmethod
-    def _disable_buildin(cls):
-        from ..common.log import getLogger
-
-        logger = getLogger()
-        logger.disabled = True
 
     def log(self, level: int, msg: LOGMSG):
         if Logger.isEnabledFor(self.logger, level):
@@ -166,6 +161,8 @@ class Context(ContextInterface):
     def __init__(
         self,
         context_name: Optional[str] = None,
+        backend: Backend = Backend.LOCAL,
+        device: Device = Device.CPU,
         computing: Optional[ComputingEngine] = None,
         federation: Optional[FederationEngine] = None,
         summary: Summary = DummySummary(),
@@ -174,8 +171,6 @@ class Context(ContextInterface):
         anonymous_generator: Anonymous = DummyAnonymous(),
         checkpoint_manager: CheckpointManager = DummyCheckpointManager(),
         log: Optional[LoggerInterface] = None,
-        cipher: Optional[CipherInterface] = None,
-        disable_buildin_logger=True,  # FIXME: just clear old loggers, remove in future
         namespace: Optional[Namespace] = None,
     ) -> None:
         self.context_name = context_name
@@ -190,12 +185,10 @@ class Context(ContextInterface):
         self.namespace = namespace
 
         if log is None:
-            log = DummyLogger(context_name, self.namespace, disable_buildin=disable_buildin_logger)
+            log = DummyLogger(context_name, self.namespace)
         self.log = log
-
-        if cipher is None:
-            cipher = Cipher()
-        self.cipher = cipher
+        self.cipher: CipherKit = CipherKit(backend, device)
+        self.tensor: TensorKit = TensorKit(backend, device)
 
         self._computing = computing
         self._federation = federation
@@ -217,7 +210,6 @@ class Context(ContextInterface):
     @property
     def guest(self) -> Party:
         return Party(
-            self,
             self._get_federation(),
             self._get_parties("guest")[0],
             self.namespace,
@@ -226,9 +218,8 @@ class Context(ContextInterface):
     @property
     def hosts(self) -> Parties:
         return Parties(
-            self,
             self._get_federation(),
-            self._get_federation().party,
+            self._get_federation().local_party,
             self._get_parties("host"),
             self.namespace,
         )
@@ -236,7 +227,6 @@ class Context(ContextInterface):
     @property
     def arbiter(self) -> Party:
         return Party(
-            self,
             self._get_federation(),
             self._get_parties("arbiter")[0],
             self.namespace,
@@ -245,9 +235,8 @@ class Context(ContextInterface):
     @property
     def parties(self) -> Parties:
         return Parties(
-            self,
             self._get_federation(),
-            self._get_federation().party,
+            self._get_federation().local_party,
             self._get_parties(),
             self.namespace,
         )
