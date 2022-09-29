@@ -5,7 +5,8 @@ from ..unify import Backend, Device
 
 
 class TensorKit:
-    def __init__(self, backend: Backend, device: Device) -> None:
+    def __init__(self, computing, backend: Backend, device: Device) -> None:
+        self.computing = computing
         self.backend = backend
         self.device = device
 
@@ -14,8 +15,6 @@ class TensorKit:
             return FPTensor(torch.rand(shape))
         else:
             from fate.arch.tensor.impl.tensor.distributed import FPTensorDistributed
-
-            from ..session import computing_session
 
             parts = []
             first_dim_approx = shape[0] // num_partition
@@ -34,9 +33,8 @@ class TensorKit:
                 else:
                     parts.append(torch.rand((first_dim_approx, *shape[1:])))
             return FPTensor(
-                self,
                 FPTensorDistributed(
-                    computing_session.parallelize(
+                    self.computing.parallelize(
                         parts, include_key=False, partition=num_partition
                     )
                 ),

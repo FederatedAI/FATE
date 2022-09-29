@@ -1,7 +1,4 @@
-import queue
-import time
-from multiprocessing import Process
-
+from fate.arch import Backend, Context
 from fate.arch.computing.standalone import CSession
 from fate.arch.context import Context, disable_inner_logs
 from fate.arch.federation.standalone import StandaloneFederation
@@ -11,9 +8,10 @@ def host(federation_id, local_party, parties):
     disable_inner_logs()
     computing = CSession()
     federation = StandaloneFederation(computing, federation_id, local_party, parties)
-    ctx = Context("guest", computing=computing, federation=federation)
+    ctx = Context(
+        "guest", backend=Backend.STANDALONE, computing=computing, federation=federation
+    )
     ctx.cipher.phe.keygen()
-    ctx.tensor.random_tensor((10, 10))
     with ctx.sub_ctx("predict") as sub_ctx:
         sub_ctx.log.debug("ctx inited")
         loss = 0.2
@@ -21,6 +19,7 @@ def host(federation_id, local_party, parties):
         guest_loss = sub_ctx.guest.pull("loss").unwrap()
         sub_ctx.summary.add("guest_loss", guest_loss)
         ctx.log.debug(f"{sub_ctx.summary.summary}")
+    print(ctx.tensor.random_tensor((10, 10)))
 
 
 def guest(federation_id, local_party, parties):
@@ -38,28 +37,17 @@ def guest(federation_id, local_party, parties):
 
 
 if __name__ == "__main__":
+    import argparse
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument("role")
+    args = parser.parse_args()
     federation_id = "federation_id"
     guest_party = ("guest", "guest_party_id")
     host_party = ("host", "host_party_id")
     parties = [guest_party, host_party]
-    p_guest = Process(target=guest, args=(federation_id, guest_party, parties))
-    p_host = Process(target=host, args=(federation_id, host_party, parties))
-    p_guest.start()
-    p_host.start()
 
-    process = queue.Queue()
-    process.put(p_guest)
-    process.put(p_host)
-    while not process.empty():
-        time.sleep(0.1)
-        p = process.get()
-        if p.is_alive():
-            process.put(p)
-            continue
-        if p.exitcode != 0:
-            print("terminating rest process")
-            while not process.empty():
-                q = process.get()
-                print("kill")
-                q.kill()
+    if args.role == "guest":
+        guest(federation_id, guest_party, parties)
+    if args.role == "host":
+        host(federation_id, host_party, parties)

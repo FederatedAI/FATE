@@ -1,7 +1,6 @@
 from typing import List
 
-from fate.arch.context import Context as ContextBase
-from fate.arch.context import Metric, MetricMeta, Namespace
+from fate.arch.context import Context, Metric, MetricMeta, Namespace
 from fate.interface import Cache
 from fate.interface import Metric as MetricInterface
 from fate.interface import MetricMeta as MetricMetaInterface
@@ -11,7 +10,7 @@ from .parser.anonymous import Anonymous, copy
 from .parser.checkpoint import CheckpointManager
 
 
-class ComponentContext(ContextBase):
+class ComponentContext(Context):
     """
     implement fate.interface.Context for flow runner
 

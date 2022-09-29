@@ -22,6 +22,7 @@ from fate.interface import Metrics, PartyMeta, Summary
 from ..unify import Backend, Device
 from ._cipher import CipherKit
 from ._federation import GC, Parties, Party
+from ._io import ReadKit, WriteKit
 from ._namespace import Namespace
 from ._tensor import TensorKit
 
@@ -188,7 +189,9 @@ class Context(ContextInterface):
             log = DummyLogger(context_name, self.namespace)
         self.log = log
         self.cipher: CipherKit = CipherKit(backend, device)
-        self.tensor: TensorKit = TensorKit(backend, device)
+        self.tensor: TensorKit = TensorKit(computing, backend, device)
+        self.read: ReadKit = ReadKit()
+        self.write: WriteKit = WriteKit()
 
         self._computing = computing
         self._federation = federation

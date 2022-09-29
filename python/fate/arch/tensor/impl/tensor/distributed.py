@@ -2,10 +2,9 @@ import typing
 from typing import Union
 
 import torch
+from fate.interface import FederationDeserializer, FederationEngine, PartyMeta
 
 from ....abc._computing import CTableABC
-from ..._federation import FederationDeserializer
-from ..._tensor import Context, Party
 from ...abc.tensor import (
     FPTensorProtocol,
     PHECipherABC,
@@ -260,21 +259,31 @@ class PaillierPHECipherDistributed(PHECipherABC):
 
 class PHETensorFederationDeserializer(FederationDeserializer):
     def __init__(self, key, is_transpose) -> None:
-        self.table_key = self.make_frac_key(key, "table")
+        self.table_key = f"distributed_phetensor_{key}__"
         self.is_transpose = is_transpose
 
-    def do_deserialize(self, ctx: Context, party: Party) -> PHETensorDistributed:
-        table = ctx._pull([party], self.table_key)[0]
-        tensor = PHETensorDistributed(table)
+    def __do_deserialize__(
+        self,
+        federation: FederationEngine,
+        tag: str,
+        party: PartyMeta,
+    ) -> PHETensorDistributed:
+        tensor = PHETensorDistributed(
+            federation.pull(name=self.table_key, tag=tag, parties=[party])[0]
+        )
         tensor._is_transpose = self.is_transpose
         return tensor
 
 
 class FPTensorFederationDeserializer(FederationDeserializer):
     def __init__(self, key) -> None:
-        self.table_key = self.make_frac_key(key, "table")
+        self.table_key = f"distributed_tensor_{key}__"
 
-    def do_deserialize(self, ctx: Context, party: Party) -> FPTensorDistributed:
-        table = ctx._pull([party], self.table_key)[0]
-        tensor = FPTensorDistributed(table)
-        return tensor
+    def __do_deserialize__(
+        self,
+        federation: FederationEngine,
+        tag: str,
+        party: PartyMeta,
+    ) -> FPTensorDistributed:
+        tensor = federation.pull(name=self.table_key, tag=tag, parties=[party])[0]
+        return FPTensorDistributed(tensor)

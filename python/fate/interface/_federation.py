@@ -35,5 +35,10 @@ class FederationWrapper(Protocol):
 
 
 class FederationDeserializer(Protocol):
-    def __do_deserialize__(self, ctx, party):
+    def __do_deserialize__(
+        self,
+        federation: FederationEngine,
+        tag: str,
+        party: PartyMeta,
+    ):
         ...
