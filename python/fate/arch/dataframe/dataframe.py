@@ -8,7 +8,6 @@ import operator
 import types
 from fate.arch.tensor import FPTensor
 from fate.arch.tensor.impl.tensor.distributed import FPTensorDistributed
-from fate.arch.data import ops
 
 
 # TODO: record data type, support multiple data types
@@ -177,6 +176,20 @@ class DataFrame(object):
             indexes.append(index)
 
         return indexes
+
+    def loc(self, indexes, repartition=True):
+        """
+        :param indexes:  list of ids
+        :param repartition: repartition or not, as collection of indexes is order, if dose not repartition,
+                            batching may be stuck in only one partition, causing slow down.
+        :return:
+        """
+        if isinstance(indexes, list):
+            # TODO: get multiple lines
+            ...
+        else:
+            # TODO: get a single line
+            ...
 
     def take(self, indices):
         if set(indices) != len(indices):

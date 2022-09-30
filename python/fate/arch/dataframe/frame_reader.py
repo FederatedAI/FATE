@@ -127,7 +127,10 @@ class ImageReader(object):
     """
     Image Reader now support convert image to a 3D tensor, dtype=torch.float64
     """
-    def __init__(self, ):
+    def __init__(self,
+                 mode="L",
+
+                 ):
         ...
 
 
@@ -176,6 +179,15 @@ class MysqlReader(object):
 
 class TextReader(object):
     ...
+
+
+class TorchDataSetReader(object):
+    # TODO: this is for Torch DataSet Reader, the passing object has attributes __len__ and __get_item__
+    def __init__(self, ):
+        ...
+
+    def to_frame(self, ctx, dataset):
+        ...
 
 
 class PandasReader(object):
