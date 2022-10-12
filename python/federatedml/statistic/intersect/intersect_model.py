@@ -17,19 +17,23 @@
 import uuid
 
 import numpy as np
-
 from federatedml.feature.instance import Instance
-from federatedml.model_base import Metric, MetricMeta
-from federatedml.model_base import ModelBase
+from federatedml.model_base import Metric, MetricMeta, ModelBase
 from federatedml.param.intersect_param import IntersectParam
 from federatedml.secureprotol.hash.hash_factory import Hash
 from federatedml.statistic import data_overview
-from federatedml.statistic.intersect import RawIntersectionHost, RawIntersectionGuest, RsaIntersectionHost, \
-    RsaIntersectionGuest, DhIntersectionGuest, DhIntersectionHost, EcdhIntersectionHost, EcdhIntersectionGuest
+from federatedml.statistic.intersect import (DhIntersectionGuest,
+                                             DhIntersectionHost,
+                                             EcdhIntersectionGuest,
+                                             EcdhIntersectionHost,
+                                             RawIntersectionGuest,
+                                             RawIntersectionHost,
+                                             RsaIntersectionGuest,
+                                             RsaIntersectionHost)
 from federatedml.statistic.intersect.match_id_process import MatchIDIntersect
 from federatedml.transfer_variable.transfer_class.intersection_func_transfer_variable import \
     IntersectionFuncTransferVariable
-from federatedml.util import consts, LOGGER, data_format_preprocess
+from federatedml.util import LOGGER, consts, data_format_preprocess
 
 
 class IntersectModelBase(ModelBase):
@@ -82,28 +86,34 @@ class IntersectModelBase(ModelBase):
     def sync_use_match_id(self):
         raise NotImplementedError(f"Should not be called here.")
 
+    # 纵向对齐
     def __share_info(self, data):
         LOGGER.info("Start to share information with another role")
         info_share = self.transfer_variable.info_share_from_guest if self.model_param.info_owner == consts.GUEST else \
             self.transfer_variable.info_share_from_host
         party_role = consts.GUEST if self.model_param.info_owner == consts.HOST else consts.HOST
 
+        # 发送还是获取信息通过info的拥有者来判断
         if self.role == self.model_param.info_owner:
+            # 发送信息
             if data.schema.get('header') is not None:
                 try:
                     share_info_col_idx = data.schema.get('header').index(consts.SHARE_INFO_COL_NAME)
 
                     one_data = data.first()
                     if isinstance(one_data[1], Instance):
-                        share_data = data.join(self.intersect_ids, lambda d, i: [d.features[share_info_col_idx]])
+                        share_data = data.join(self.intersect_ids, lambda d, i: [
+                                               d.features[share_info_col_idx]])  # 求用户id的交集
                     else:
                         share_data = data.join(self.intersect_ids, lambda d, i: [d[share_info_col_idx]])
 
+                    # 主要调用arch里的通信方法,将封装的share_data全部发送
                     info_share.remote(share_data,
                                       role=party_role,
                                       idx=-1)
                     LOGGER.info("Remote share information to {}".format(party_role))
 
+                # TODO: 为什么无论发生错误，依旧要将空信息发出去？
                 except Exception as e:
                     LOGGER.warning("Something unexpected:{}, share a empty information to {}".format(e, party_role))
                     share_data = self.intersect_ids.mapValues(lambda v: ['null'])
@@ -115,6 +125,7 @@ class IntersectModelBase(ModelBase):
                     "'allow_info_share' is true, and 'info_owner' is {}, but can not get header in data, information sharing not done".format(
                         self.model_param.info_owner))
         else:
+            # 收取信息
             self.intersect_ids = info_share.get(idx=0)
             self.intersect_ids.schema['header'] = [consts.SHARE_INFO_COL_NAME]
             LOGGER.info(
@@ -122,6 +133,8 @@ class IntersectModelBase(ModelBase):
 
         return self.intersect_ids
 
+    # join, union, subtractByKey一系列的spark, eggroll算子均包含在fate_arch
+    # 横向对齐样本，并与其他方进行通信
     def __sync_join_id(self, data, intersect_data):
         LOGGER.debug(f"data count: {data.count()}")
         LOGGER.debug(f"intersect_data count: {intersect_data.count()}")
@@ -130,8 +143,10 @@ class IntersectModelBase(ModelBase):
             sync_join_id = self.transfer_variable.join_id_from_guest
         else:
             sync_join_id = self.transfer_variable.join_id_from_host
+
+        # 发 or 收信息
         if self.role == self.model_param.sample_id_generator:
-            join_data = data.subtractByKey(intersect_data)
+            join_data = data.subtractByKey(intersect_data)  # 返回data相比intersect_data独有的数据（删除交集部分）
             # LOGGER.debug(f"join_data count: {join_data.count()}")
             if self.model_param.new_sample_id:
                 if self.model_param.only_output_key:
@@ -139,10 +154,10 @@ class IntersectModelBase(ModelBase):
                     join_id = join_data
                 else:
                     join_data = join_data.map(lambda k, v: (uuid.uuid4().hex, v))
-                    join_id = join_data.mapValues(lambda v: None)
-                sync_join_id.remote(join_id)
+                    join_id = join_data.mapValues(lambda v: None)  # 将数据置空
+                sync_join_id.remote(join_id)  # 向其他方发送
 
-                result_data = intersect_data.union(join_data)
+                result_data = intersect_data.union(join_data)  # 合并两数据
             else:
                 join_id = join_data.map(lambda k, v: (k, None))
                 result_data = data
@@ -199,7 +214,7 @@ class IntersectModelBase(ModelBase):
         if data_overview.check_with_inst_id(data):
             self.use_match_id_process = True
             LOGGER.info(f"use match_id_process")
-        self.sync_use_match_id()
+        self.sync_use_match_id()  # 在host，gust中重写了这个方法
 
         if self.use_match_id_process:
             if len(self.host_party_id_list) > 1 and self.model_param.sample_id_generator != consts.GUEST:

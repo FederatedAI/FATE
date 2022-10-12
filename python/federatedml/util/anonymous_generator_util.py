@@ -14,15 +14,15 @@
 #  limitations under the License.
 #
 import copy
+
 import numpy as np
 from federatedml.util.data_format_preprocess import DataFormatPreProcess
-
 
 ANONYMOUS_COLUMN_PREFIX = "x"
 ANONYMOUS_LABEL = "y"
 SPLICES = "_"
 
-
+# 数据匿名化
 class Anonymous(object):
     def __init__(self, role=None, party_id=None, migrate_mapping=None):
         self._role = role
