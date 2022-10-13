@@ -1,6 +1,6 @@
-from ._tensor import FPTensor, PHETensor
+from ._tensor import tensor, distributed_tensor
+from ._ops import *
+from ._unary_ops import *
+from ._binary_ops import *
 
-__all__ = [
-    "FPTensor",
-    "PHETensor",
-]
+__all__ = ["tensor", "distributed_tensor"]

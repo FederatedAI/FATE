@@ -58,7 +58,7 @@ class FederationEggroll(FederationEngine):
 
         self.get_gc: GarbageCollector = GarbageCollector()
         self.remote_gc: GarbageCollector = GarbageCollector()
-        self.party = party
+        self.local_party = party
         self.parties = parties
         self._rsc = RollSiteContext(rs_session_id, rp_ctx=rp_ctx, options=options)
         LOGGER.debug(f"[federation.eggroll]init federation context done")
@@ -131,9 +131,7 @@ def _push_with_exception_handle(rsc, v, name: str, tag: str, parties: List[Party
     def _remote_exception_re_raise(f, p: PartyMeta):
         try:
             f.result()
-            LOGGER.debug(
-                f"[federation.eggroll.remote.{name}.{tag}]future to remote to party: {p} done"
-            )
+            LOGGER.debug(f"[federation.eggroll.remote.{name}.{tag}]future to remote to party: {p} done")
         except Exception as e:
             pid = os.getpid()
             LOGGER.exception(

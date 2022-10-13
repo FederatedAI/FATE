@@ -13,19 +13,15 @@ from ...abc.tensor import (
     PHETensorABC,
 )
 
+
 Numeric = typing.Union[int, float]
 
 
-class Distributed:
-    @property
-    def blocks(self) -> CTableABC:
-        ...
-
-    def is_distributed(self):
-        return True
+def get_distributed_axis(t):
+    return getattr(t, "_d_axis", None)
 
 
-class FPTensorDistributed(FPTensorProtocol, Distributed):
+class FPTensorDistributed(FPTensorProtocol):
     """
     Demo of Distributed Fixed Presicion Tensor
     """
@@ -35,17 +31,18 @@ class FPTensorDistributed(FPTensorProtocol, Distributed):
         use table to store blocks in format (blockid, block)
         """
         self._blocks_table = blocks_table
+        self._d_axis = 0  # distributed axis
 
-        # assuming blocks are arranged vertically
+        # blocks are distributed along _d_axis
         if shape is None:
-            shapes = list(self._blocks_table.mapValues(lambda cb: cb.shape).collect())
-            self.shape = (sum(s[0] for s in shapes), shapes[0][1])
+            partition_shapes = list(
+                self._blocks_table.mapValues(lambda cb: cb.shape).collect()
+            )
+            self.shape = list(partition_shapes[0])
+            d_axis_size = sum(p_shape[self._d_axis] for p_shape in partition_shapes)
+            self.shape.insert(self._d_axis, d_axis_size)
         else:
             self.shape = shape
-
-    @property
-    def blocks(self):
-        return self._blocks_table
 
     def _binary_op(self, other, func_name):
         if isinstance(other, FPTensorDistributed):
@@ -94,17 +91,59 @@ class FPTensorDistributed(FPTensorProtocol, Distributed):
     ) -> "FPTensorDistributed":
         return self._binary_op(other, "__rmul__")
 
-    def __matmul__(self, other: "PHETensorDistributed") -> "PHETensorDistributed":
-        assert self.shape[1] == other.shape[0]
-        # support one dimension only
-        assert len(other.shape) == 1
+    def __matmul__(self, other) -> "PHETensorDistributed":
+        """
+        If both arguments are 2-D they are multiplied like conventional matrices.
+        If either argument is N-D, N > 2, it is treated as a stack of matrices residing in the last two indexes and broadcast accordingly.
+        If the first argument is 1-D, it is promoted to a matrix by prepending a 1 to its dimensions. After matrix multiplication the prepended 1 is removed.
+        If the second argument is 1-D, it is promoted to a matrix by appending a 1 to its dimensions. After matrix multiplication the appended 1 is removed.
+        (x, a, 1) (x, 1, b) -> (x, a, b)
+        """
+        lshape = self.shape
+        rshape = other.shape
+        if (s1 := lshape[-1]) != (s2 := rshape[-2:][0]):
+            raise ValueError(
+                "matmul: Input operand 1 has a mismatch in its core dimension 0,"
+                f"signature (n?,k),(k,m?)->(n?,m?) (size {s1} is different from {s2})"
+            )
+        bs_shape = torch.broadcast_shapes(lshape[:-2], rshape[:-2])
 
-        def func(cb):
-            return cb @ other._blocks_table.collect()
+        if other_d_axis := get_distributed_axis(other) is None:
+            # last axis is distributed
+            if self._d_axis == len(lshape) - 1:
+                # (..., ?) x (...)
+                raise ValueError(
+                    f"matmul: can't matmul distributed tensor with non distributed tensor with operand 0 last dim distributed"
+                )
 
-        self._blocks_table.mapValues()
+            else:
+                # (..., d, ?, ...) x (...)
+                def _map_func(block):
+                    return matmul(block, other)
+
+                output_blocks_table = self._blocks_table.mapValues(_map_func)
+        else:
+            if self._d_axis == len(lshape) - 2:
+                # (..., d, ?) x (..., ?, ...)
+                raise ValueError(
+                    f"matmul: can't matmul distributed tensor with distributed tensor with operand 0 `-2 dim distributed`"
+                )
+            if self._d_axis == len(lshape) - 1 and len(rshape) == 1:
+                self._blocks_table.join(other._block_table).mapValues().reduce()
+                # (..., d) x (d)
+                ...
+            if self._d_axis == len(lshape) - 1 and len(rshape) - 2 == other_d_axis:
+                # (..., d) x (..., d, ?)
+                ...
+
+            if len(lshape) - self._d_axis == len(rshape) - other_d_axis:
+                # (..., d, a1, ..., ak) x (..., d, b1, ..., bk)
+                ...
+
+            raise ValueError(...)
 
     def __rmatmul__(self, other: "PHETensorDistributed") -> "FPTensorDistributed":
+
         # todo: fix
         ...
 
@@ -228,8 +267,11 @@ class PaillierPHEEncryptorDistributed(PHEEncryptorABC):
         self._block_encryptor = block_encryptor
 
     def encrypt(self, tensor: FPTensorDistributed) -> PHETensorDistributed:
-        return PHETensorDistributed(
-            tensor._blocks_table.mapValues(lambda x: self._block_encryptor.encrypt(x))
+        from ...device.cpu import _CPUStorage
+        from ..._base import dtype
+
+        return tensor.elemwise_unary_op(
+            lambda x: _CPUStorage(dtype.phe, self._block_encryptor.encrypt(x.data))
         )
 
 

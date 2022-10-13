@@ -15,6 +15,6 @@
 #
 
 from .context import Context
-from .unify import Backend, Device
+from .unify import Backend, device
 
-__all__ = ["Backend", "Device", "Context"]
+__all__ = ["Backend", "device", "Context"]

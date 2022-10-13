@@ -1,199 +1,94 @@
-from typing import Any, List, Union, overload
-
-from fate.interface import FederationDeserializer as FederationDeserializerInterface
-from fate.interface import FederationEngine, PartyMeta
-
+import torch
+from ._base import StorageBase, dtype, DStorage, device
+from fate.interface import Context
+from typing import List
 from .abc.tensor import PHEDecryptorABC, PHEEncryptorABC, PHETensorABC
 
 
-class PHEEncryptor:
-    def __init__(self, encryptor: PHEEncryptorABC) -> None:
-        self._encryptor = encryptor
+def tensor(t: torch.Tensor):
+    from .device.cpu import _CPUStorage
 
-    def encrypt(self, tensor: "FPTensor"):
-
-        return PHETensor(self._encryptor.encrypt(tensor._tensor))
+    storage = _CPUStorage(dtype.from_torch_dtype(t.dtype), t)
+    return Tensor(storage)
 
 
-class PHEDecryptor:
-    def __init__(self, decryptor: PHEDecryptorABC) -> None:
-        self._decryptor = decryptor
+def distributed_tensor(ctx: Context, tensors: List[torch.Tensor], partitions=3):
+    from .device.cpu import _CPUStorage
 
-    def decrypt(self, tensor: "PHETensor") -> "FPTensor":
+    storages = [_CPUStorage(dtype.from_torch_dtype(t.dtype), t) for t in tensors]
+    d_type = storages[0].dtype
+    device = storages[0].device
+    blocks = ctx.computing.parallelize(
+        enumerate(storages), partition=partitions, include_key=True
+    )
+    storage = DStorage(blocks, 0, d_type, device)
+    return Tensor(storage)
 
-        return FPTensor(self._decryptor.decrypt(tensor._tensor))
+
+def _inject_op(func):
+    method = func.__name__
+
+    def _wrap(*args):
+        from ._ops import _apply_buildin_ops
+
+        return _apply_buildin_ops(method, *args)
+
+    return _wrap
 
 
-class FPTensor:
-    def __init__(self, tensor) -> None:
-        self._tensor = tensor
-
-    @property
-    def shape(self):
-        return self._tensor.shape
-
-    def __add__(self, other: Union["FPTensor", float, int]) -> "FPTensor":
-        if not hasattr(self._tensor, "__add__"):
-            return NotImplemented
-        return self._binary_op(other, self._tensor.__add__)
-
-    def __radd__(self, other: Union["FPTensor", float, int]) -> "FPTensor":
-        if not hasattr(self._tensor, "__radd__"):
-            return self.__add__(other)
-        return self._binary_op(other, self._tensor.__add__)
-
-    def __sub__(self, other: Union["FPTensor", float, int]) -> "FPTensor":
-        if not hasattr(self._tensor, "__sub__"):
-            return NotImplemented
-        return self._binary_op(other, self._tensor.__sub__)
-
-    def __rsub__(self, other: Union["FPTensor", float, int]) -> "FPTensor":
-        if not hasattr(self._tensor, "__rsub__"):
-            return self.__mul__(-1).__add__(other)
-        return self._binary_op(other, self._tensor.__rsub__)
-
-    def __mul__(self, other: Union["FPTensor", float, int]) -> "FPTensor":
-        if not hasattr(self._tensor, "__mul__"):
-            return NotImplemented
-        return self._binary_op(other, self._tensor.__mul__)
-
-    def __rmul__(self, other: Union["FPTensor", float, int]) -> "FPTensor":
-        if not hasattr(self._tensor, "__rmul__"):
-            return self.__mul__(other)
-        return self._binary_op(other, self._tensor.__rmul__)
-
-    def __matmul__(self, other: "FPTensor") -> "FPTensor":
-        if not hasattr(self._tensor, "__matmul__"):
-            return NotImplemented
-        if isinstance(other, FPTensor):
-            return FPTensor(self._tensor.__matmul__(other._tensor))
-        else:
-            return NotImplemented
-
-    def __rmatmul__(self, other: "FPTensor") -> "FPTensor":
-        if not hasattr(self._tensor, "__rmatmul__"):
-            return NotImplemented
-        if isinstance(other, FPTensor):
-            return FPTensor(self._tensor.__rmatmul__(other._tensor))
-        else:
-            return NotImplemented
-
-    def _binary_op(self, other, func):
-        if isinstance(other, FPTensor):
-            return FPTensor(func(other._tensor))
-        elif isinstance(other, (int, float)):
-            return FPTensor(func(other))
-        else:
-            return NotImplemented
+class Tensor:
+    def __init__(self, storage: StorageBase) -> None:
+        self._storage = storage
 
     @property
-    def T(self):
-        return FPTensor(self._tensor.T)
-
-    def __federation_hook__(
-        self,
-        federation: FederationEngine,
-        name: str,
-        tag: str,
-        parties: List[PartyMeta],
-    ):
-        deserializer = FPTensorFederationDeserializer(name)
-        # 1. remote deserializer with objs
-        federation.push(deserializer, name, tag, parties)
-        # 2. remote table
-        federation.push(self._tensor, deserializer.table_key, tag, parties)
-
-
-class PHETensor:
-    def __init__(self, tensor: PHETensorABC) -> None:
-        self._tensor = tensor
+    def dtype(self):
+        return self._storage.dtype
 
     @property
-    def shape(self):
-        return self._tensor.shape
+    def storage(self):
+        return self._storage
 
-    def __add__(self, other: Union["PHETensor", FPTensor, int, float]) -> "PHETensor":
-        return self._binary_op(other, self._tensor.__add__)
+    @property
+    def device(self):
+        return self._storage.device
 
-    def __radd__(self, other: Union["PHETensor", FPTensor, int, float]) -> "PHETensor":
-        return self._binary_op(other, self._tensor.__radd__)
+    def to_local(self):
+        if isinstance(self._storage, DStorage):
+            return Tensor(self._storage.to_local())
+        return self
 
-    def __sub__(self, other: Union["PHETensor", FPTensor, int, float]) -> "PHETensor":
-        return self._binary_op(other, self._tensor.__sub__)
+    def __str__(self) -> str:
+        return f"Tensor(device={self.device}, storage={self.storage})"
 
-    def __rsub__(self, other: Union["PHETensor", FPTensor, int, float]) -> "PHETensor":
-        return self._binary_op(other, self._tensor.__rsub__)
+    def __repr__(self) -> str:
+        return self.__str__()
 
-    def __mul__(self, other: Union[FPTensor, int, float]) -> "PHETensor":
-        return self._binary_op(other, self._tensor.__mul__)
+    def __add__(self, other):
+        return self.add(other)
 
-    def __rmul__(self, other: Union[FPTensor, int, float]) -> "PHETensor":
-        return self._binary_op(other, self._tensor.__rmul__)
+    def __sub__(self, other):
+        return self.add(other)
 
-    def __matmul__(self, other: FPTensor) -> "PHETensor":
-        if isinstance(other, FPTensor):
-            return PHETensor(self._tensor.__matmul__(other._tensor))
-        else:
-            return NotImplemented
+    def __mul__(self, other):
+        return self.mul(other)
 
-    def __rmatmul__(self, other: FPTensor) -> "PHETensor":
-        if isinstance(other, FPTensor):
-            return PHETensor(self._tensor.__rmatmul__(other._tensor))
-        else:
-            return NotImplemented
+    def __div__(self, other):
+        return self.div(other)
 
-    def T(self) -> "PHETensor":
-        return PHETensor(self._tensor.T())
+    """and others"""
 
-    @overload
-    def decrypt(self, decryptor: "PHEDecryptor") -> FPTensor:
+    @_inject_op
+    def add(self, other) -> "Tensor":
         ...
 
-    @overload
-    def decrypt(self, decryptor) -> Any:
+    @_inject_op
+    def sub(self, other) -> "Tensor":
         ...
 
-    def decrypt(self, decryptor):
-        return decryptor.decrypt(self)
+    @_inject_op
+    def mul(self, other) -> "Tensor":
+        ...
 
-    def _binary_op(self, other, func):
-        if isinstance(other, (PHETensor, FPTensor)):
-            return PHETensor(func(other._tensor))
-        elif isinstance(other, (int, float)):
-            return PHETensor(func(other))
-        return NotImplemented
-
-    def __federation_hook__(self, ctx, key, parties):
-        deserializer = PHETensorFederationDeserializer(key)
-        # 1. remote deserializer with objs
-        ctx._push(parties, key, deserializer)
-        # 2. remote table
-        ctx._push(parties, deserializer.table_key, self._tensor)
-
-
-class PHETensorFederationDeserializer(FederationDeserializerInterface):
-    def __init__(self, key) -> None:
-        self.table_key = f"__phetensor_{key}__"
-
-    def __do_deserialize__(
-        self,
-        federation: FederationEngine,
-        tag: str,
-        party: PartyMeta,
-    ) -> PHETensor:
-        tensor = federation.pull(name=self.table_key, tag=tag, parties=[party])[0]
-        return PHETensor(tensor)
-
-
-class FPTensorFederationDeserializer(FederationDeserializerInterface):
-    def __init__(self, key) -> None:
-        self.table_key = f"__tensor_{key}__"
-
-    def __do_deserialize__(
-        self,
-        federation: FederationEngine,
-        tag: str,
-        party: PartyMeta,
-    ) -> FPTensor:
-        tensor = federation.pull(name=self.table_key, tag=tag, parties=[party])[0]
-        return FPTensor(tensor)
+    @_inject_op
+    def div(self, other) -> "Tensor":
+        ...

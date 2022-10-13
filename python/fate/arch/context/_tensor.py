@@ -1,11 +1,11 @@
 import torch
 
-from ..tensor import FPTensor
-from ..unify import Backend, Device
+from ..tensor import Tensor as FPTensor
+from ..unify import Backend, device
 
 
 class TensorKit:
-    def __init__(self, computing, backend: Backend, device: Device) -> None:
+    def __init__(self, computing, backend: Backend, device: device) -> None:
         self.computing = computing
         self.backend = backend
         self.device = device

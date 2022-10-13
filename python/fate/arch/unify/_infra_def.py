@@ -1,10 +1,13 @@
 from enum import Enum
 
 
-class Device(Enum):
-    CPU = "CPU"
-    GPU = "GPU"
-    FPGA = "FPGA"
+class device(Enum):
+    def __init__(self, type: str, index) -> None:
+        self.type = type
+        self.index = index
+
+    CPU = ("CPU", 1)
+    CUDA = ("CUDA", 2)
 
 
 class Backend(Enum):

@@ -19,7 +19,7 @@ from fate.interface import Metric as MetricInterface
 from fate.interface import MetricMeta as MetricMetaInterface
 from fate.interface import Metrics, PartyMeta, Summary
 
-from ..unify import Backend, Device
+from ..unify import Backend, device
 from ._cipher import CipherKit
 from ._federation import GC, Parties, Party
 from ._io import ReadKit, WriteKit
@@ -163,7 +163,7 @@ class Context(ContextInterface):
         self,
         context_name: Optional[str] = None,
         backend: Backend = Backend.LOCAL,
-        device: Device = Device.CPU,
+        device: device = device.CPU,
         computing: Optional[ComputingEngine] = None,
         federation: Optional[FederationEngine] = None,
         summary: Summary = DummySummary(),
@@ -198,6 +198,14 @@ class Context(ContextInterface):
         self._role_to_parties = None
 
         self._gc = GC()
+
+    @property
+    def computing(self):
+        return self._get_computing()
+
+    @property
+    def federation(self):
+        return self._get_federation()
 
     @contextmanager
     def sub_ctx(self, namespace: str) -> Iterator["Context"]:
@@ -266,3 +274,8 @@ class Context(ContextInterface):
         if self._federation is None:
             raise RuntimeError(f"federation not set")
         return self._federation
+
+    def _get_computing(self):
+        if self._computing is None:
+            raise RuntimeError(f"computing not set")
+        return self._computing

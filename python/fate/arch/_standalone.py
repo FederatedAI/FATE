@@ -78,7 +78,10 @@ class Table(object):
 
     def __del__(self):
         if self._need_cleanup:
-            self.destroy()
+            try:
+                self.destroy()
+            except:
+                pass
 
     def __str__(self):
         return f"<Table {self._namespace}|{self._name}|{self._partitions}|{self._need_cleanup}>"

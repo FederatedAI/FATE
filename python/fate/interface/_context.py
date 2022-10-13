@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from typing import Iterator, Protocol
+from typing import Iterator, Protocol, Optional
 
 from ._anonymous import Anonymous
 from ._cache import Cache
@@ -9,7 +9,8 @@ from ._log import Logger
 from ._metric import Metrics
 from ._party import Parties, Party
 from ._summary import Summary
-
+from ._computing import ComputingEngine
+from ._federation import FederationEngine
 
 class Context(Protocol):
     summary: Summary
@@ -23,6 +24,8 @@ class Context(Protocol):
     arbiter: Party
     parties: Parties
     cipher: CipherKit
+    computing: ComputingEngine
+    federation: FederationEngine
 
     @contextmanager
     def sub_ctx(self, namespace) -> Iterator["Context"]:
