@@ -16,6 +16,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from federatedml.util import consts
 from federatedml.param.base_param import BaseParam
 
 
@@ -23,38 +24,36 @@ class PositiveUnlabeledParam(BaseParam):
     """
     Parameters used for positive unlabeled.
     ----------
-    labeling_strategy: {"proportion", "quantity", "probability"}
-        Switch converting unlabeled value strategy.
+    strategy: {"probability", "quantity", "proportion", "distribution"}
+        The strategy of converting unlabeled value.
 
-    threshold_percent: float, default: 0.1
-        The threshold percent in proportion strategy.
-
-    threshold_amount: float, default: 10
-        The threshold amount in quantity strategy.
-
-    threshold_proba: float, default: 0.9
-        The threshold proba in probability strategy.
+    threshold: int or float, default: 0.1
+        The threshold in labeling strategy.
     """
 
-    def __init__(self, labeling_strategy="proportion",
-                 threshold_percent=0.1, threshold_amount=10, threshold_proba=0.9):
+    def __init__(self, strategy="probability", threshold=0.9):
         super(PositiveUnlabeledParam, self).__init__()
-        self.labeling_strategy = labeling_strategy
-        self.threshold_percent = threshold_percent
-        self.threshold_amount = threshold_amount
-        self.threshold_proba = threshold_proba
+        self.strategy = strategy
+        self.threshold = threshold
 
     def check(self):
-        if self.labeling_strategy not in ["proportion", "quantity", "probability"]:
-            raise ValueError("labeling_strategy not supported, it should be 'proportion', 'quantity' or 'probability'")
+        base_descr = "Positive Unlabeled Param's "
+        float_descr = "Probability or Proportion Strategy Param's "
+        int_descr = "Quantity Strategy Param's "
+        numeric_descr = "Distribution Strategy Param's "
 
-        if self.labeling_strategy == "proportion" and type(self.threshold_percent).__name__ != "float":
-            raise ValueError("threshold_percent should be a float in proportion strategy")
+        self.check_valid_value(self.strategy, base_descr,
+                               [consts.PROBABILITY, consts.QUANTITY, consts.PROPORTION, consts.DISTRIBUTION])
 
-        if self.labeling_strategy == "quantity" and type(self.threshold_amount).__name__ != "int":
-            raise ValueError("threshold_amount should be an integer in quantity strategy")
+        self.check_defined_type(self.threshold, base_descr, [consts.INT, consts.FLOAT])
 
-        if self.labeling_strategy == "probability" and type(self.threshold_proba).__name__ != "float":
-            raise ValueError("threshold_proba should be a float in probability strategy")
+        if self.strategy == consts.PROBABILITY or self.strategy == consts.PROPORTION:
+            self.check_decimal_float(self.threshold, float_descr)
+
+        if self.strategy == consts.QUANTITY:
+            self.check_positive_integer(self.threshold, int_descr)
+
+        if self.strategy == consts.DISTRIBUTION:
+            self.check_positive_number(self.threshold, numeric_descr)
 
         return True

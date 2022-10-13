@@ -28,8 +28,8 @@
                 }
             },
             "positive_unlabeled_0": {
-                "labeling_strategy": "quantity",
-                "threshold_amount": 10
+                "strategy": "quantity",
+                "threshold": 10
             },
             "hetero_secure_boost_1": {
                 "task_type": "classification",
@@ -53,9 +53,6 @@
                     },
                     "data_transform_0": {
                         "with_label": false
-                    },
-                    "label_transform_0": {
-                        "need_run": false
                     }
                 }
             },
@@ -69,13 +66,6 @@
                     },
                     "data_transform_0": {
                         "with_label": true
-                    },
-                    "label_transform_0": {
-                        "label_encoder": {
-                            "0": 0,
-                            "1": 1
-                        },
-                        "label_list": [0, 1]
                     }
                 }
             }

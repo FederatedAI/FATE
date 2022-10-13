@@ -25,12 +25,9 @@ In the component, unlabeled data are treated as negative data for the binary cla
 
 Positive unlabeled learning provides different labeling strategies.
 
-* `labeling_strategy`: the labeling strategy for unlabeled data, including `"proportion"`, `"quantity"` and `"probability"`
-  * `threshold_percent`: the threshold percent in proportion strategy
+* `strategy`: the strategy of converting unlabeled value, including `"probability"`, `"quantity"`, `"proportion"` and `"distribution"`
 
-  * `threshold_amount`: the threshold amount in quantity strategy
-
-  * `threshold_proba`: the threshold proba in probability strategy
+* `threshold`: the threshold in labeling strategy
 
 
 

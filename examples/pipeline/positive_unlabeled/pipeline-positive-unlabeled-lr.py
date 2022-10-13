@@ -21,7 +21,6 @@ from pipeline.backend.pipeline import PipeLine
 from pipeline.component import Reader
 from pipeline.component import DataTransform
 from pipeline.component import Intersection
-from pipeline.component import LabelTransform
 from pipeline.component import HeteroLR
 from pipeline.component import PositiveUnlabeled
 from pipeline.interface import Data
@@ -70,19 +69,6 @@ def main(config="../../config.yaml", namespace=""):
     # define Intersection components
     intersection_0 = Intersection(name="intersection_0")
 
-    # define LabelTransform components
-    label_transform_0_param = {
-        "name": "label_transform_0",
-        "label_encoder": {
-            "0": 0,
-            "1": 1
-        },
-        "label_list": [0, 1]
-    }
-    label_transform_0 = LabelTransform(**label_transform_0_param)
-    # configure LabelTransform for host
-    label_transform_0.get_party_instance(role="host", party_id=hosts).component_param(need_run=False)
-
     # define LR and PositiveUnlabeled components
     lr_0_param = {
         "name": "hetero_lr_0",
@@ -90,8 +76,8 @@ def main(config="../../config.yaml", namespace=""):
     }
     pu_0_param = {
         "name": "positive_unlabeled_0",
-        "labeling_strategy": "proportion",
-        "threshold_percent": 0.1
+        "strategy": "proportion",
+        "threshold": 0.1
     }
     lr_1_param = {
         "name": "hetero_lr_1",
@@ -105,10 +91,9 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(reader_0)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
-    pipeline.add_component(label_transform_0, data=Data(data=intersection_0.output.data))
-    pipeline.add_component(hetero_lr_0, data=Data(train_data=label_transform_0.output.data))
+    pipeline.add_component(hetero_lr_0, data=Data(train_data=intersection_0.output.data))
     pipeline.add_component(positive_unlabeled_0,
-                           data=Data(data=[label_transform_0.output.data, hetero_lr_0.output.data]))
+                           data=Data(data=[intersection_0.output.data, hetero_lr_0.output.data]))
     pipeline.add_component(hetero_lr_1, data=Data(train_data=positive_unlabeled_0.output.data))
     pipeline.compile()
 

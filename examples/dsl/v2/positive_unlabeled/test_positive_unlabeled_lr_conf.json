@@ -24,8 +24,8 @@
                 "max_iter": 2
             },
             "positive_unlabeled_0": {
-                "labeling_strategy": "proportion",
-                "threshold_percent": 0.1
+                "strategy": "proportion",
+                "threshold": 0.1
             },
             "hetero_lr_1": {
                 "max_iter": 1
@@ -42,9 +42,6 @@
                     },
                     "data_transform_0": {
                         "with_label": false
-                    },
-                    "label_transform_0": {
-                        "need_run": false
                     }
                 }
             },
@@ -58,13 +55,6 @@
                     },
                     "data_transform_0": {
                         "with_label": true
-                    },
-                    "label_transform_0": {
-                        "label_encoder": {
-                            "0": 0,
-                            "1": 1
-                        },
-                        "label_list": [0, 1]
                     }
                 }
             }
