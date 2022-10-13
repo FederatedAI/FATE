@@ -15,7 +15,7 @@
 #
 _TF_KERAS_VALID = False
 try:
-    from tensorflow.python.keras.engine import base_layer
+    from keras.engine import base_layer
     _TF_KERAS_VALID = True
 except ImportError:
     pass
