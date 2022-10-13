@@ -27,7 +27,7 @@ class PositiveUnlabeledParam(BaseParam):
     strategy: {"probability", "quantity", "proportion", "distribution"}
         The strategy of converting unlabeled value.
 
-    threshold: int or float, default: 0.1
+    threshold: int or float, default: 0.9
         The threshold in labeling strategy.
     """
 
