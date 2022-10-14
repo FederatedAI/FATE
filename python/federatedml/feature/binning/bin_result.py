@@ -17,9 +17,14 @@
 #  limitations under the License.
 
 import numpy as np
-
 from federatedml.protobuf.generated import feature_binning_param_pb2
 from federatedml.util import LOGGER
+
+"""
+    每个特征分箱基本信息:
+        woe_array, iv_array, event_count_array, non_event_count_array, event_rate_array, ,non_event_rate_array,
+        split_points, iv, is_woe_monotonic, bin_nums, bin_anonymous 
+"""
 
 
 class BinColResults(object):
@@ -37,9 +42,13 @@ class BinColResults(object):
             for idx, woe in enumerate(self.woe_array):
                 non_event_rate = non_event_count_array[idx]
                 event_rate = event_rate_array[idx]
-                iv += (non_event_rate - event_rate) * woe
+                iv += (non_event_rate - event_rate) * woe  # 求IV值总和
         self.iv = iv
         self._bin_anonymous = None
+
+    """
+    分箱匿名化
+    """
 
     @property
     def bin_anonymous(self):
@@ -53,12 +62,17 @@ class BinColResults(object):
     def bin_anonymous(self, x):
         self._bin_anonymous = x
 
+    """
+    切分点getter setter
+    """
+
     def set_split_points(self, split_points):
         self.split_points = split_points
 
     def get_split_points(self):
         return np.array(self.split_points)
 
+    # 判断分箱是否单调
     @property
     def is_woe_monotonic(self):
         """
@@ -72,15 +86,21 @@ class BinColResults(object):
         is_decreasing = all(x >= y for x, y in zip(woe_array, woe_array[1:]))
         return is_increasing or is_decreasing
 
+    # 方向数量
     @property
     def bin_nums(self):
         return len(self.woe_array)
 
+    # 结果字典{单调性，分箱数量}
     def result_dict(self):
         save_dict = self.__dict__
         save_dict['is_woe_monotonic'] = self.is_woe_monotonic
         save_dict['bin_nums'] = self.bin_nums
         return save_dict
+
+    """
+    变量重构
+    """
 
     def reconstruct(self, iv_obj):
         self.woe_array = list(iv_obj.woe_array)
@@ -120,17 +140,26 @@ class BinColResults(object):
         return result
 
 
+"""
+    切分点基本信息:
+        split_results
+"""
+
+
 class SplitPointsResult(object):
     def __init__(self):
         self.split_results = {}
 
+    # 设置切分点
     def put_col_split_points(self, col_name, split_points):
         self.split_results[col_name] = split_points
 
+    # 获取所有切分点dict
     @property
     def all_split_points(self):
         return self.split_results
 
+    # 获取所有切分点np.array
     def get_split_points_array(self, col_names):
         split_points_result = []
         for col_name in col_names:
@@ -139,8 +168,15 @@ class SplitPointsResult(object):
             split_points_result.append(self.split_results[col_name])
         return np.array(split_points_result)
 
+    # 切分点结果转换为json
     def to_json(self):
         return {k: list(v) for k, v in self.split_results.items()}
+
+
+"""
+    所有特征的分箱结果:
+        all_cols_results, role, party_id
+"""
 
 
 class BinResults(object):
@@ -149,6 +185,7 @@ class BinResults(object):
         self.role = ''
         self.party_id = ''
 
+    # 设置角色
     def set_role_party(self, role, party_id):
         self.role = role
         self.party_id = party_id
@@ -190,6 +227,7 @@ class BinResults(object):
     def all_monotonic(self):
         return {col_name: x.is_woe_monotonic for col_name, x in self.all_cols_results.items()}
 
+    # 汇总所有的分箱基本信息
     def summary(self, split_points=None):
         if split_points is None:
             split_points = {}
@@ -202,6 +240,7 @@ class BinResults(object):
                 "monotonic": self.all_monotonic,
                 "split_points": split_points}
 
+    # 生成protobuf
     def generated_pb(self, split_points=None):
         col_result_dict = {}
         if split_points is not None:
@@ -234,6 +273,11 @@ class BinResults(object):
 
         self.all_cols_results = all_cols_results
         return self
+
+
+"""
+
+"""
 
 
 class MultiClassBinResult(BinResults):

@@ -43,30 +43,34 @@ class BinInnerParam(object):
         self.category_names = []
         self.category_indexes_added_set = set()
 
+    # 设置表头：header, anonymous_header
     def set_header(self, header, anonymous_header):
         self.header = copy.deepcopy(header)
         self.anonymous_header = copy.deepcopy(anonymous_header)
         for idx, col_name in enumerate(self.header):
-            self.col_name_maps[col_name] = idx
+            self.col_name_maps[col_name] = idx  # 列与id值对应关系
 
         self.anonymous_col_name_maps = dict(zip(self.anonymous_header, self.header))
         self.col_name_anonymous_maps = dict(zip(self.header, self.anonymous_header))
 
+    # 设置分箱（转换前）
     def set_bin_all(self):
         """
         Called when user set to bin all columns
         """
-        self.bin_indexes = [i for i in range(len(self.header))]
-        self.bin_indexes_added_set = set(self.bin_indexes)
-        self.bin_names = copy.deepcopy(self.header)
+        self.bin_indexes = [i for i in range(len(self.header))]  # 设置分箱id
+        self.bin_indexes_added_set = set(self.bin_indexes)  # 转换为set(无序不重复集合)
+        self.bin_names = copy.deepcopy(self.header)  # 设置分箱名
 
+    # 设置分箱（转换后）
     def set_transform_all(self):
-        self.transform_bin_indexes = self.bin_indexes
-        self.transform_bin_names = self.bin_names
-        self.transform_bin_indexes.extend(self.category_indexes)
-        self.transform_bin_names.extend(self.category_names)
-        self.transform_bin_indexes_added_set = set(self.transform_bin_indexes)
+        self.transform_bin_indexes = self.bin_indexes  # 设置分箱id
+        self.transform_bin_names = self.bin_names  # 设置分箱名称
+        self.transform_bin_indexes.extend(self.category_indexes)  # 将大id拓展为小id
+        self.transform_bin_names.extend(self.category_names)  # 将大名称拓展为小名称
+        self.transform_bin_indexes_added_set = set(self.transform_bin_indexes)  # 转换为set
 
+    # 通过id增加特征（转换前）
     def add_bin_indexes(self, bin_indexes):
         if bin_indexes is None:
             return
@@ -80,6 +84,7 @@ class BinInnerParam(object):
                 self.bin_indexes_added_set.add(idx)
                 self.bin_names.append(self.header[idx])
 
+    # 通过名称增加特征（转换前）
     def add_bin_names(self, bin_names):
         if bin_names is None:
             return
@@ -94,6 +99,7 @@ class BinInnerParam(object):
                 self.bin_indexes_added_set.add(idx)
                 self.bin_names.append(self.header[idx])
 
+    # 通过id添加特征（转换后）
     def add_transform_bin_indexes(self, transform_indexes):
         if transform_indexes is None:
             return
@@ -108,6 +114,7 @@ class BinInnerParam(object):
                 self.transform_bin_indexes_added_set.add(idx)
                 self.transform_bin_names.append(self.header[idx])
 
+    # 通过名称增加特征（转换后）
     def add_transform_bin_names(self, transform_names):
         if transform_names is None:
             return
@@ -121,6 +128,7 @@ class BinInnerParam(object):
                 self.transform_bin_indexes_added_set.add(idx)
                 self.transform_bin_names.append(self.header[idx])
 
+    # 通过id添加单一特征分箱
     def add_category_indexes(self, category_indexes):
         if category_indexes == -1:
             category_indexes = [i for i in range(len(self.header))]
@@ -141,6 +149,7 @@ class BinInnerParam(object):
 
         self._align_bin_index()
 
+    # 通过名称添加单一特征分箱
     def add_category_names(self, category_names):
         if category_names is None:
             return
@@ -159,6 +168,7 @@ class BinInnerParam(object):
 
         self._align_bin_index()
 
+    # 对齐分箱id
     def _align_bin_index(self):
         if len(self.bin_indexes_added_set) != len(self.bin_indexes):
             new_bin_indexes = []
@@ -171,16 +181,22 @@ class BinInnerParam(object):
             self.bin_indexes = new_bin_indexes
             self.bin_names = new_bin_names
 
+    # 获取需要计算iv值的列和分箱的map
     def get_need_cal_iv_cols_map(self):
         names = self.bin_names + self.category_names
         indexs = self.bin_indexes + self.category_indexes
         assert len(names) == len(indexs)
-        return dict(zip(names, indexs))
+        return dict(zip(names, indexs))  # zip()一一对应打包为元组，然后转换为字典
 
+    # 获取分箱和列的map
     @property
     def bin_cols_map(self):
         assert len(self.bin_indexes) == len(self.bin_names)
         return dict(zip(self.bin_names, self.bin_indexes))
+
+    """
+    数据匿名化
+    """
 
     @staticmethod
     def change_to_anonymous(col_name, v, col_name_anonymous_maps: dict):
