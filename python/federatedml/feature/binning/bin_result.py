@@ -175,7 +175,7 @@ class SplitPointsResult(object):
 
 """
     所有特征的分箱结果:
-        all_cols_results, role, party_id
+        all_cols_results = {col_name: BinColResult}, role, party_id
 """
 
 
@@ -276,7 +276,8 @@ class BinResults(object):
 
 
 """
-
+    多分类的分箱结果:
+        labels, is_multi_class, BinResults()
 """
 
 
