@@ -13,52 +13,26 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from pipeline.backend.config import IODataType
+from ..conf.types import InputDataKey
+from ..conf.types import InputModelKey
+from ..conf.types import InputCacheKey
 
 
 class Input(object):
-    def __init__(self, name, data_type="single"):
-        if data_type == "single":
-            self.data = InputData(name).data
-            self.data_output = InputData(name).get_all_input()
-        elif data_type == "multi":
-            self.data = TrainingInputData(name)
-            self.data_output = InputData(name).get_all_input()
-        else:
-            raise ValueError("input data type should be one of ['single', 'multi']")
+    def __init__(self, name, data_key=None, model_key=None, cache_key=None):
+        self._data_key = InputDataKey().register(data_key) if data_key else None
+        self._model_key = InputModelKey().register(model_key) if model_key else None
+        self._cache_key = InputCacheKey().register(cache_key) if cache_key else None
 
+    def get_input_keys(self):
+        inputs = dict()
+        if self._data_key:
+            inputs["data"] = self._data_key.keys
 
-class InputData(object):
-    def __init__(self, prefix):
-        self.prefix = prefix
+        if self._model_key:
+            inputs["model"] = self._model_key
 
-    @property
-    def data(self):
-        return ".".join([self.prefix, IODataType.SINGLE])
+        if self._cache_key:
+            inputs["cache"] = self._cache_key
 
-    @staticmethod
-    def get_all_input():
-        return ["data"]
-
-
-class TrainingInputData(object):
-    def __init__(self, prefix):
-        self.prefix = prefix
-
-    @property
-    def train_data(self):
-        return ".".join([self.prefix, IODataType.TRAIN])
-
-    @property
-    def test_data(self):
-        return ".".join([self.prefix, IODataType.TEST])
-
-    @property
-    def validate_data(self):
-        return ".".join([self.prefix, IODataType.VALIDATE])
-
-    @staticmethod
-    def get_all_input():
-        return [IODataType.TRAIN,
-                IODataType.VALIDATE,
-                IODataType.TEST]
+        return inputs

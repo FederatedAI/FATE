@@ -48,6 +48,8 @@ class Component(object):
             if len(index) == 1:
                 index = index[0]
 
+        if isinstance(index, list):
+            index.sort()
         index_key = str(index) if isinstance(index, int) else "|".join(map(str, index))
 
         del self.__party_instance[self._role]["party"][self._index]
@@ -110,32 +112,19 @@ class Component(object):
     def get_component_param(self):
         return self._component_param
 
-    def get_role_param_conf(self, roles=None):
-        role_param_conf = dict()
+    def get_role_param(self, role, index):
+        component_param = self._component_param
+        if role not in self.__party_instance:
+            return component_param
 
-        if not self.__party_instance:
-            return role_param_conf
+        index = str(index)
 
-        for role in self.__party_instance:
-            role_param_conf[role] = dict()
+        role_params = self.__party_instance[role]
+        for party_index, param in role_params:
+            party_index = party_index.split("|")
+            if index not in party_index:
+                continue
 
-            valid_partyids = roles.get(role)
-            for party_id in self.__party_instance[role]["party"]:
-                if not party_id:
-                    continue
+            component_param.update(param)
 
-                if isinstance(party_id, int):
-                    party_key = str(valid_partyids.index(party_id))
-                else:
-                    party_list = list(map(int, party_id.split("|", -1)))
-                    party_list.sort()
-                    party_key = "|".join(map(str, [valid_partyids.index(party) for party in party_list]))
-
-                party_inst = self.__party_instance[role]["party"][party_id]
-
-                if party_key not in role_param_conf:
-                    role_param_conf[role][party_key] = dict()
-
-                role_param_conf[role][party_key][self._component_name] = party_inst.get_component_param()
-
-        return role_param_conf
+        return component_param

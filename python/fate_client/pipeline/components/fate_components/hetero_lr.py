@@ -1,8 +1,8 @@
-from pipeline.components import ComponentBase
+from pipeline.components import Component
 from pipeline.interface import Input, Output
 
 
-class HeteroLR(ComponentBase):
+class HeteroLR(Component):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._module = "HeteroLR"
