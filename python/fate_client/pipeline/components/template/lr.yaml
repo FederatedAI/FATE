@@ -1,0 +1,19 @@
+module: HeteroLR
+description: Hetero logistic regression using HE-Protocol
+role:
+  guest: HeteroLRGuest
+  host: HeteroLRHost
+  Arbiter: HeteroLRArbiter
+
+input_data_key:
+  - train_data
+  - validate_data
+  - test_data
+
+input_model_key:
+  - model
+
+
+output:
+  data: output data, may have more attributes with different roles
+  model: output model of logistic regression, may have more attributes

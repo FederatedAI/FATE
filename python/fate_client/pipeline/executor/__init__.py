@@ -1,0 +1,1 @@
+from .task_executor import FateStandaloneExecutor
