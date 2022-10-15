@@ -23,20 +23,26 @@
 #
 ################################################################################
 
-from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
+from federatedml.transfer_variable.base_transfer_variable import \
+    BaseTransferVariables
 
 
 # noinspection PyAttributeOutsideInit
+# 异构特征guest和host交流变量
 class HeteroFeatureBinningTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
-        self.bucket_idx = self._create_variable(name='bucket_idx', src=['guest'], dst=['host'])
-        self.encrypted_bin_sum = self._create_variable(name='encrypted_bin_sum', src=['host'], dst=['guest'])
-        self.optimal_info = self._create_variable(name='optimal_info', src=['host'], dst=['guest'])
-        self.encrypted_label = self._create_variable(name='encrypted_label', src=['guest'], dst=['host'])
-        self.paillier_pubkey = self._create_variable(name='paillier_pubkey', src=['guest'], dst=['host'])
+        self.bucket_idx = self._create_variable(name='bucket_idx', src=['guest'], dst=['host'])  # 分箱id, guest-->host
+        self.encrypted_bin_sum = self._create_variable(name='encrypted_bin_sum', src=['host'], dst=[
+                                                       'guest'])  # 加密分箱总数, host-->guest
+        self.optimal_info = self._create_variable(name='optimal_info', src=['host'], dst=[
+                                                  'guest'])  # 优化分箱信息, host-->guest
+        self.encrypted_label = self._create_variable(name='encrypted_label', src=['guest'], dst=[
+                                                     'host'])  # 加密label, guest-->host
+        self.paillier_pubkey = self._create_variable(
+            name='paillier_pubkey', src=['guest'], dst=['host'])  # paillier加密公钥, guest-->host
         self.transform_stage_has_label = self._create_variable(
             name="transform_stage_has_label", src=['guest'], dst=['host'])
         self.host_anonymous_header_dict = self._create_variable(name='host_anonymous_header_dict',
                                                                 src=['host'],
-                                                                dst=['guest'])
+                                                                dst=['guest'])  # host匿名表头, host-->guest

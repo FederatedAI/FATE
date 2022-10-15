@@ -218,7 +218,7 @@ class HeteroFeatureBinningParam(FeatureBinningParam):
                  bin_num=consts.G_BIN_NUM, bin_indexes=-1, bin_names=None, adjustment_factor=0.5,
                  transform_param=TransformParam(), optimal_binning_param=OptimalBinningParam(),
                  local_only=False, category_indexes=None, category_names=None,
-                 encrypt_param=EncryptParam(),
+                 encrypt_param=Encrypt Param(),
                  need_run=True, skip_static=False):
         super(HeteroFeatureBinningParam, self).__init__(method=method, compress_thres=compress_thres,
                                                         head_size=head_size, error=error,

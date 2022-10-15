@@ -19,12 +19,12 @@
 import math
 
 import numpy as np
-
 from federatedml.feature.binning.optimal_binning.bucket_info import Bucket
 from federatedml.param.feature_binning_param import OptimalBinningParam
 from federatedml.util import LOGGER
 
 
+# 初始化堆节点
 class HeapNode(object):
     def __init__(self):
         self.left_bucket: Bucket = None
@@ -52,9 +52,11 @@ class IvHeapNode(HeapNode):
 
     def cal_score(self):
         """
+        计算分箱合并后的iv分数
         IV = ∑(py_i - pn_i ) * WOE
         where py_i is event_rate, pn_i is non_event_rate
         WOE = log(non_event_rate / event_rate)
+        score = left_bucket.iv + right_bucket.iv - merge_iv
         """
 
         self.event_count = self.left_bucket.event_count + self.right_bucket.event_count
@@ -86,7 +88,9 @@ class IvHeapNode(HeapNode):
 class GiniHeapNode(HeapNode):
     def cal_score(self):
         """
+        计算合并分箱后的基尼分数
         gini = 1 - ∑(p_i^2 ) = 1 -（event / total）^2 - (nonevent / total)^2
+        score = merged_gini - left_bucket.gini - right_bucket.gini
         """
 
         self.event_count = self.left_bucket.event_count + self.right_bucket.event_count
@@ -106,10 +110,12 @@ class GiniHeapNode(HeapNode):
 class ChiSquareHeapNode(HeapNode):
     def cal_score(self):
         """
+        计算合并分箱后的卡方分数
         X^2 = ∑∑(A_ij - E_ij )^2 / E_ij
         where E_ij = (N_i / N) * C_j. N is total count of merged bucket, N_i is the total count of ith bucket
         and C_j is the count of jth label in merged bucket.
         A_ij is number of jth label in ith bucket.
+        score = chi_square
         """
 
         self.event_count = self.left_bucket.event_count + self.right_bucket.event_count
@@ -118,8 +124,8 @@ class ChiSquareHeapNode(HeapNode):
             self.score = -math.inf
             return
 
-        c1 = self.left_bucket.event_count + self.right_bucket.event_count
-        c0 = self.left_bucket.non_event_count + self.right_bucket.non_event_count
+        c1 = self.left_bucket.event_count + self.right_bucket.event_count  # 左右分箱Label=0的总数
+        c0 = self.left_bucket.non_event_count + self.right_bucket.non_event_count  # 左右分箱Label=1的总数
 
         if c1 == 0 or c0 == 0:
             self.score = - math.inf
@@ -139,6 +145,7 @@ class ChiSquareHeapNode(HeapNode):
         self.score = chi_square
 
 
+# 计算分箱堆节点
 def heap_node_factory(optimal_param: OptimalBinningParam, left_bucket=None, right_bucket=None):
     metric_method = optimal_param.metric_method
     if metric_method == 'iv':
@@ -166,6 +173,7 @@ def heap_node_factory(optimal_param: OptimalBinningParam, left_bucket=None, righ
     return node
 
 
+# 堆操作
 class MinHeap(object):
     def __init__(self):
         self.size = 0

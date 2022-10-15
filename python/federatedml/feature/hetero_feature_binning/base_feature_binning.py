@@ -19,25 +19,26 @@
 import copy
 
 import numpy as np
-
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.bin_inner_param import BinInnerParam
-from federatedml.feature.binning.bucket_binning import BucketBinning
-from federatedml.feature.binning.optimal_binning.optimal_binning import OptimalBinning
-from federatedml.feature.binning.quantile_binning import QuantileBinning
-from federatedml.feature.binning.iv_calculator import IvCalculator
 from federatedml.feature.binning.bin_result import MultiClassBinResult
+from federatedml.feature.binning.bucket_binning import BucketBinning
+from federatedml.feature.binning.iv_calculator import IvCalculator
+from federatedml.feature.binning.optimal_binning.optimal_binning import \
+    OptimalBinning
+from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.feature.fate_element_type import NoneType
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.model_base import ModelBase
-from federatedml.param.feature_binning_param import HeteroFeatureBinningParam as FeatureBinningParam
-from federatedml.protobuf.generated import feature_binning_meta_pb2, feature_binning_param_pb2
-from federatedml.statistic.data_overview import get_header, get_anonymous_header
+from federatedml.param.feature_binning_param import \
+    HeteroFeatureBinningParam as FeatureBinningParam
+from federatedml.protobuf.generated import (feature_binning_meta_pb2,
+                                            feature_binning_param_pb2)
+from federatedml.statistic.data_overview import (get_anonymous_header,
+                                                 get_header)
 from federatedml.transfer_variable.transfer_class.hetero_feature_binning_transfer_variable import \
     HeteroFeatureBinningTransferVariable
-from federatedml.util import LOGGER
-from federatedml.util import abnormal_detection
-from federatedml.util import consts
+from federatedml.util import LOGGER, abnormal_detection, consts
 from federatedml.util.anonymous_generator_util import Anonymous
 from federatedml.util.io_check import assert_io_num_rows_equal
 from federatedml.util.schema_check import assert_schema_consistent
@@ -54,25 +55,26 @@ class BaseFeatureBinning(ModelBase):
 
     def __init__(self):
         super(BaseFeatureBinning, self).__init__()
-        self.transfer_variable = HeteroFeatureBinningTransferVariable()
+        self.transfer_variable = HeteroFeatureBinningTransferVariable()  # 异构特征guest和host交流变量
         self.binning_obj: BaseBinning = None
         self.header = None
         self.anonymous_header = None
         self.training_anonymous_header = None
-        self.schema = None
+        self.schema = None  # 数据库
         self.host_results = []
         self.transform_host_results = []
         self.transform_type = None
 
-        self.model_param = FeatureBinningParam()
-        self.bin_inner_param = BinInnerParam()
-        self.bin_result = MultiClassBinResult(labels=[0, 1])
-        self.transform_bin_result = MultiClassBinResult(labels=[0, 1])
+        self.model_param = FeatureBinningParam()  # 模型参数,主要为分箱算法用到的具体参数
+        self.bin_inner_param = BinInnerParam()  # 分箱过程中的参数
+        self.bin_result = MultiClassBinResult(labels=[0, 1])  # 二分类的分箱结果
+        self.transform_bin_result = MultiClassBinResult(labels=[0, 1])  # 转换后的二分类分箱结果
         self.has_missing_value = False
         self.labels = []
 
         self._stage = "fit"
 
+    # 初始化模型
     def _init_model(self, params: FeatureBinningParam):
         self.model_param = params
 
@@ -83,27 +85,27 @@ class BaseFeatureBinning(ModelBase):
                 raise ValueError("Host party do not support woe transform now.")
 
         if self.model_param.method == consts.QUANTILE:
-            self.binning_obj = QuantileBinning(self.model_param)
+            self.binning_obj = QuantileBinning(self.model_param)  # 量化分箱(无监督分箱)
         elif self.model_param.method == consts.BUCKET:
-            self.binning_obj = BucketBinning(self.model_param)
-        elif self.model_param.method == consts.OPTIMAL:
-            if self.role == consts.HOST:
-                self.model_param.bin_num = self.model_param.optimal_binning_param.init_bin_nums
-                self.binning_obj = QuantileBinning(self.model_param)
-            else:
-                self.binning_obj = OptimalBinning(self.model_param)
+            self.binning_obj = BucketBinning(self.model_param)  # 桶分箱(有监督分箱)
+        elif self.model_param.method == consts.OPTIMAL:  # 优化分箱(无监督分箱)
+            if self.role == consts.HOST:  # host为量化分箱
+                self.model_param.bin_num = self.model_param.optimal_binning_param.init_bin_nums  # 初始化分箱数目
+                self.binning_obj = QuantileBinning(self.model_param)  # 再量化分箱(host没有label，只能无监督分箱)
+            else:  # guest为优化分箱
+                self.binning_obj = OptimalBinning(self.model_param)  # 优化分箱
         else:
             raise ValueError("Binning method: {} is not supported yet".format(self.model_param.method))
 
         self.iv_calculator = IvCalculator(self.model_param.adjustment_factor,
                                           role=self.role,
-                                          party_id=self.component_properties.local_partyid)
+                                          party_id=self.component_properties.local_partyid)  # 初始化iv计算函数
         # self.binning_obj.set_role_party(self.role, self.component_properties.local_partyid)
 
     @staticmethod
     def data_format_transform(row):
         """
-        transform data into sparse format
+        transform data into sparse format{label feature_id:value}
         """
 
         if type(row.features).__name__ != consts.SPARSE_VECTOR:
@@ -140,6 +142,7 @@ class BaseFeatureBinning(ModelBase):
                     new_sparse_vec[key] = NoneType()
                 return new_row
 
+    # 设置分箱过程中的参数
     def _setup_bin_inner_param(self, data_instances, params):
         if self.schema is not None:
             return
@@ -166,6 +169,7 @@ class BaseFeatureBinning(ModelBase):
             self.bin_inner_param.add_transform_bin_names(params.transform_param.transform_names)
         self.binning_obj.set_bin_inner_param(self.bin_inner_param)
 
+    # 将guest分箱中特征值转换为woe编码
     @assert_io_num_rows_equal
     @assert_schema_consistent
     def transform_data(self, data_instances):
@@ -181,6 +185,7 @@ class BaseFeatureBinning(ModelBase):
         self.data_output = data_instances
         return data_instances
 
+    # 从protobuf中获取元数据
     def _get_meta(self):
         # col_list = [str(x) for x in self.cols]
 

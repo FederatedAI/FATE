@@ -20,7 +20,6 @@ import copy
 import functools
 
 import numpy as np
-
 from fate_arch.computing import is_table
 from federatedml.util import LOGGER
 

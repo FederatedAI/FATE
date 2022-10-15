@@ -18,12 +18,12 @@ import math
 import operator
 
 import numpy as np
-
-from federatedml.feature.binning.base_binning import BaseBinning
-from federatedml.feature.binning.bin_result import BinColResults, MultiClassBinResult
-from federatedml.statistic import data_overview
-from federatedml.feature.sparse_vector import SparseVector
 from federatedml.cipher_compressor.compressor import PackingCipherTensor
+from federatedml.feature.binning.base_binning import BaseBinning
+from federatedml.feature.binning.bin_result import (BinColResults,
+                                                    MultiClassBinResult)
+from federatedml.feature.sparse_vector import SparseVector
+from federatedml.statistic import data_overview
 from federatedml.util import LOGGER
 
 
@@ -365,6 +365,7 @@ class IvCalculator(object):
         label_table = data_instances.mapValues(_convert)
         return label_table
 
+    # 转换为woe编码
     @staticmethod
     def woe_transformer(data_instances, bin_inner_param, multi_class_bin_res: MultiClassBinResult,
                         abnormal_list=None):
