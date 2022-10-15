@@ -187,6 +187,19 @@ class BaseFeatureBinning(ModelBase):
 
     # 从protobuf中获取元数据
     def _get_meta(self):
+        """
+        method
+        compress_thres
+        head_size
+        error
+        bin_num
+        cols
+        adjustment_factor
+        local_only
+        need_run
+        transform_param
+        skip_static
+        """
         # col_list = [str(x) for x in self.cols]
 
         transform_param = feature_binning_meta_pb2.TransformMeta(
