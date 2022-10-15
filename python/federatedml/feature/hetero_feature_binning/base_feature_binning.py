@@ -222,7 +222,11 @@ class BaseFeatureBinning(ModelBase):
         )
         return meta_protobuf_obj
 
+    # 从protobuf获取参数
     def _get_param(self):
+        """
+
+        """
         split_points_result = self.binning_obj.bin_results.split_results
 
         multi_class_result = self.bin_result.generated_pb_list(split_points_result)
@@ -297,7 +301,10 @@ class BaseFeatureBinning(ModelBase):
 
         return result_obj
 
+    # 加载模型
     def load_model(self, model_dict):
+
+        # 将元数据和模型参数读入当前类
         model_param = list(model_dict.get('model').values())[0].get(MODEL_PARAM_NAME)
         model_meta = list(model_dict.get('model').values())[0].get(MODEL_META_NAME)
 
@@ -309,9 +316,11 @@ class BaseFeatureBinning(ModelBase):
         if self.labels:
             self.bin_result = MultiClassBinResult.reconstruct(list(multi_class_result.results), self.labels)
 
+        # instance类型判断
         assert isinstance(model_meta, feature_binning_meta_pb2.FeatureBinningMeta)
         assert isinstance(model_param, feature_binning_param_pb2.FeatureBinningParam)
 
+        # 表头设置
         self.header = list(model_param.header)
         self.training_anonymous_header = list(model_param.header_anonymous)
         self.bin_inner_param.set_header(self.header, self.training_anonymous_header)
@@ -320,17 +329,19 @@ class BaseFeatureBinning(ModelBase):
         self.bin_inner_param.add_bin_names(list(model_meta.cols))
         self.transform_type = model_meta.transform_param.transform_type
 
+        # 调用分箱方法进行分箱
         bin_method = str(model_meta.method)
         if bin_method == consts.QUANTILE:
-            self.binning_obj = QuantileBinning(params=model_meta)
+            self.binning_obj = QuantileBinning(params=model_meta)  # 量化分箱
         elif bin_method == consts.OPTIMAL:
-            self.binning_obj = OptimalBinning(params=model_meta)
+            self.binning_obj = OptimalBinning(params=model_meta)  # 优化分箱
         else:
-            self.binning_obj = BucketBinning(params=model_meta)
+            self.binning_obj = BucketBinning(params=model_meta)  # 桶分箱
 
         # self.binning_obj.set_role_party(self.role, self.component_properties.local_partyid)
         self.binning_obj.set_bin_inner_param(self.bin_inner_param)
 
+        # 保存分箱结果
         split_results = dict(model_param.binning_result.binning_result)
         for col_name, sr_pb in split_results.items():
             split_points = list(sr_pb.split_points)
@@ -338,6 +349,7 @@ class BaseFeatureBinning(ModelBase):
 
         # self.binning_obj.bin_results.reconstruct(model_param.binning_result)
 
+        # host的分箱结果
         self.host_results = []
         host_pbs = list(model_param.multi_class_result.host_results)
         if len(host_pbs):
@@ -360,6 +372,7 @@ class BaseFeatureBinning(ModelBase):
 
         self._stage = "transform"
 
+    # 导出模型（包括：模型元数据和模型参数）
     def export_model(self):
         if self.model_output is not None:
             return self.model_output
@@ -373,14 +386,17 @@ class BaseFeatureBinning(ModelBase):
         self.model_output = result
         return result
 
+    # 保存数据
     def save_data(self):
         return self.data_output
 
+    # 设置数据schema
     def set_schema(self, data_instance):
         self.schema['header'] = self.header
         data_instance.schema = self.schema
         # LOGGER.debug("After Binning, when setting schema, schema is : {}".format(data_instance.schema))
 
+    # 异常检测
     def _abnormal_detection(self, data_instances):
         """
         Make sure input data_instances is valid.
@@ -389,6 +405,7 @@ class BaseFeatureBinning(ModelBase):
         abnormal_detection.empty_feature_detection(data_instances)
         self.check_schema_content(data_instances.schema)
 
+    # 老版本数据匿名化检查
     def _check_lower_version_anonymous(self):
         return not self.training_anonymous_header or \
             Anonymous.is_old_version_anonymous_header(self.training_anonymous_header)
