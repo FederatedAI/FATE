@@ -93,9 +93,9 @@ class DenseFeatureTransformer(object):
         if self.with_match_id:
             match_id_name = schema.get("match_id_name", [])
             if not self.match_id_name:
-                if isinstance(match_id_name, list):
+                if isinstance(match_id_name, list) and len(self.match_id_name) > 1:
                     raise ValueError("Multiple Match ID exist, please specified the one to use")
-                self.match_id_name = match_id_name
+                self.match_id_name = match_id_name[0] if isinstance(match_id_name, list) else match_id_name
                 self.match_id_index = schema["original_index_info"]["match_id_index"][0]
             else:
                 try:
