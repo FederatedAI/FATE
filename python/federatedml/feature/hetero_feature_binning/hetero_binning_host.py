@@ -41,8 +41,13 @@ class HeteroFeatureBinningHost(BaseFeatureBinning):
                 if idx in has_missing_value:
                     raise ValueError(f"Optimal Binning do not support missing value now.")
 
-        # Calculates split points of data in self party
-        split_points = self.binning_obj.fit_split_points(data_instances)
+        if self.model_param.split_points_by_col_name or self.model_param.split_points_by_index:
+            split_points = self._get_manual_split_points(data_instances)
+            for col_name, sp in split_points.items():
+                self.binning_obj.bin_results.put_col_split_points(col_name, sp)
+        else:
+            # Calculates split points of data in self part
+            split_points = self.binning_obj.fit_split_points(data_instances)
 
         return self.stat_and_transform(data_instances, split_points)
 
@@ -58,10 +63,12 @@ class HeteroFeatureBinningHost(BaseFeatureBinning):
         the specific metric value for specific columns.
         """
         if self.model_param.skip_static:
-            if self.transform_type != 'woe':
-                data_instances = self.transform_data(data_instances)
+            # if self.transform_type != 'woe':
+            data_instances = self.transform_data(data_instances)
+            """
             else:
                 raise ValueError("Woe transform is not supported in host parties.")
+            """
             self.set_schema(data_instances)
             self.data_output = data_instances
             return data_instances
@@ -76,8 +83,8 @@ class HeteroFeatureBinningHost(BaseFeatureBinning):
                 if self.model_param.method == consts.OPTIMAL and self._stage == "fit":
                     self.optimal_binning_sync()
 
-        if self.transform_type != 'woe':
-            data_instances = self.transform_data(data_instances)
+        # if self.transform_type != 'woe':
+        data_instances = self.transform_data(data_instances)
 
         self.set_schema(data_instances)
         self.data_output = data_instances

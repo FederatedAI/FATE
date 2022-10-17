@@ -70,6 +70,8 @@ class BaseFeatureBinning(ModelBase):
         self.transform_bin_result = MultiClassBinResult(labels=[0, 1])
         self.has_missing_value = False
         self.labels = []
+        self.manual_split_points = None
+        self.has_woe_array = False
 
         self._stage = "fit"
 
@@ -78,9 +80,11 @@ class BaseFeatureBinning(ModelBase):
 
         self.transform_type = self.model_param.transform_param.transform_type
 
+        """
         if self.role == consts.HOST:
             if self.transform_type == "woe":
                 raise ValueError("Host party do not support woe transform now.")
+        """
 
         if self.model_param.method == consts.QUANTILE:
             self.binning_obj = QuantileBinning(self.model_param)
@@ -98,7 +102,27 @@ class BaseFeatureBinning(ModelBase):
         self.iv_calculator = IvCalculator(self.model_param.adjustment_factor,
                                           role=self.role,
                                           party_id=self.component_properties.local_partyid)
-        # self.binning_obj.set_role_party(self.role, self.component_properties.local_partyid)
+
+    def _get_manual_split_points(self, data_instances):
+        data_index_to_col_name = dict(enumerate(data_instances.schema.get("header")))
+        manual_split_points = {}
+        if self.model_param.split_points_by_index is not None:
+            manual_split_points = {
+                data_index_to_col_name.get(int(k), None): v for k, v in self.model_param.split_points_by_index.items()
+            }
+            if None in manual_split_points.keys():
+                raise ValueError(f"Index given in `split_points_by_index` not found in input data header."
+                                 f"Please check.")
+        if self.model_param.split_points_by_col_name is not None:
+            for col_name, split_points in self.model_param.split_points_by_col_name.items():
+                if manual_split_points.get(col_name) is not None:
+                    raise ValueError(f"Split points for feature {col_name} given in both "
+                                     f"`split_points_by_index` and `split_points_by_col_name`. Please check.")
+                manual_split_points[col_name] = split_points
+        if set(self.bin_inner_param.bin_names) != set(manual_split_points.keys()):
+            raise ValueError(f"Column set from provided split points dictionary does not match that of"
+                             f"`bin_names` or `bin_indexes. Please check.`")
+        return manual_split_points
 
     @staticmethod
     def data_format_transform(row):
@@ -172,7 +196,7 @@ class BaseFeatureBinning(ModelBase):
         self._setup_bin_inner_param(data_instances, self.model_param)
         if self.transform_type != "woe":
             data_instances = self.binning_obj.transform(data_instances, self.transform_type)
-        elif self.role == consts.HOST:
+        elif self.role == consts.HOST and not self.has_woe_array:
             raise ValueError("Woe transform is not available for host parties.")
         else:
             data_instances = self.iv_calculator.woe_transformer(data_instances, self.bin_inner_param,
@@ -286,10 +310,15 @@ class BaseFeatureBinning(ModelBase):
         self.bin_inner_param = BinInnerParam()
         multi_class_result = model_param.multi_class_result
         self.labels = list(map(int, multi_class_result.labels))
-        # if not self.labels:
-        #     self.labels = [0, 1]
         if self.labels:
             self.bin_result = MultiClassBinResult.reconstruct(list(multi_class_result.results), self.labels)
+        if self.role == consts.HOST:
+            binning_result = dict(list(multi_class_result.results)[0].binning_result)
+            woe_array =  list(binning_result.values())[0].woe_array
+            # if manual woe, reconstruct
+            if woe_array:
+                self.bin_result = MultiClassBinResult.reconstruct(list(multi_class_result.results))
+                self.has_woe_array = True
 
         assert isinstance(model_meta, feature_binning_meta_pb2.FeatureBinningMeta)
         assert isinstance(model_param, feature_binning_param_pb2.FeatureBinningParam)

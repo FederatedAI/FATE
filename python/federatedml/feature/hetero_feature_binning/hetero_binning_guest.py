@@ -55,7 +55,12 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
             for idx in self.bin_inner_param.bin_indexes:
                 if idx in has_missing_value:
                     raise ValueError(f"Optimal Binning do not support missing value now.")
-        split_points = self.binning_obj.fit_split_points(data_instances)
+        if self.model_param.split_points_by_col_name or self.model_param.split_points_by_index:
+            split_points = self._get_manual_split_points(data_instances)
+            for col_name, sp in split_points.items():
+                self.binning_obj.bin_results.put_col_split_points(col_name, sp)
+        else:
+            split_points = self.binning_obj.fit_split_points(data_instances)
 
         if self.model_param.skip_static:
             self.transform_data(data_instances)
@@ -144,6 +149,8 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
 
         if self._stage == "fit":
             self.labels = list(label_counts_dict.keys())
+            if len(self.labels) == 2 and not self.labels[0]:
+                self.labels.reverse()
 
         label_counts = [label_counts_dict.get(k, 0) for k in self.labels]
         label_table = IvCalculator.convert_label(data_instances, self.labels)

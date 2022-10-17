@@ -96,6 +96,9 @@ This section introduces the Pipeline scripts for different types of tasks.
 
     script: pipeline-hetero-binning-sparse-quantile-binning.py
 
+24. Binning with Manual Split Points
+    script: pipeline-hetero-binning-manual-split-points.py
+
 
 Users can run a pipeline job directly:
 

@@ -90,6 +90,10 @@
         }
     ],
     "tasks": {
+        "hetero_binning_manual_split_points": {
+            "conf": "hetero_binning_manual_split_points_conf.json",
+            "dsl": "hetero_binning_manual_split_points_dsl.json"
+        },
         "hetero_binning_large_bin": {
             "conf": "hetero_binning_large_bin_conf.json",
             "dsl": "hetero_binning_large_bin_dsl.json"
@@ -105,10 +109,6 @@
         "hetero_binning_optim_ks": {
             "conf": "hetero_binning_optim_ks_conf.json",
             "dsl": "hetero_binning_optim_ks_dsl.json"
-        },
-        "hetero_binning_multiclass_multihost": {
-            "conf": "hetero_binning_multiclass_multihost_conf.json",
-            "dsl": "hetero_binning_multiclass_multihost_dsl.json"
         },
         "hetero_binning_bucket_binning": {
             "conf": "hetero_binning_bucket_binning_conf.json",
@@ -133,10 +133,6 @@
         "hetero_binning_sparse_optimal_gini": {
             "conf": "hetero_binning_sparse_optimal_gini_conf.json",
             "dsl": "hetero_binning_sparse_optimal_gini_dsl.json"
-        },
-        "hetero_binning_multiclass_multihost_woe": {
-            "conf": "hetero_binning_multiclass_multihost_woe_conf.json",
-            "dsl": "hetero_binning_multiclass_multihost_woe_dsl.json"
         },
         "hetero_binning_multi_host": {
             "conf": "hetero_binning_multi_host_conf.json",

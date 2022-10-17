@@ -90,6 +90,9 @@
         }
     ],
     "pipeline_tasks": {
+        "hetero-binning-manual-split-points": {
+            "script": "pipeline-hetero-binning-manual-split-points.py"
+        },
         "hetero-binning-large-bin": {
             "script": "pipeline-hetero-binning-large-bin.py"
         },
@@ -119,9 +122,6 @@
         },
         "hetero-binning-sparse-optimal-gini": {
             "script": "pipeline-hetero-binning-sparse-optimal-gini.py"
-        },
-        "hetero-binning-multiclass-multihost-woe": {
-            "script": "pipeline-hetero-binning-multiclass-multihost-woe.py"
         },
         "hetero-binning-multi-host": {
             "script": "pipeline-hetero-binning-multi-host.py"

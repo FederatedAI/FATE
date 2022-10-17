@@ -59,6 +59,8 @@ class IvCalculator(object):
         if label_counts is None:
             label_counts = data_overview.get_label_count(data_instances)
             labels = list(label_counts.keys())
+            if len(labels) == 2 and not labels[0]:
+                labels.reverse()
             label_counts = [label_counts[k] for k in labels]
 
         data_bin_table = BaseBinning.get_data_bin(data_instances, split_points, bin_cols_map)
@@ -370,6 +372,8 @@ class IvCalculator(object):
                         abnormal_list=None):
         if abnormal_list is None:
             abnormal_list = []
+        if len(multi_class_bin_res.bin_results) > 1:
+            raise ValueError(f"WOE transform of multi-class-labeled data not supported. Please check!")
         bin_res = multi_class_bin_res.bin_results[0]
         transform_cols_idx = bin_inner_param.transform_bin_indexes
         split_points_dict = bin_res.all_split_points
@@ -415,8 +419,9 @@ class IvCalculator(object):
                         bin_num = BaseBinning.get_bin_num(col_value, split_points)
                         col_results = bin_res.all_cols_results.get(col_name)
                         if np.isnan(col_value) and len(col_results.woe_array) == bin_num:
-                            raise ValueError("Find missing value in transform data, "
-                                             "but the training data does not has missing value, this is not support")
+                            raise ValueError("Missing value found in transform data, "
+                                             "but the training data does not have missing value, "
+                                             "this is not supported.")
                         woe_value = col_results.woe_array[bin_num]
                         features[col_idx] = woe_value
                 instances.features = features
