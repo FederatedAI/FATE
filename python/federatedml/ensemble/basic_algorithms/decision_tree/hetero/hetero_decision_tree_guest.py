@@ -40,6 +40,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.run_cipher_compressing = True
         self.packer = None
         self.max_sample_weight = 1
+        self.objective = None
 
         # code version control
         self.new_ver = True
@@ -115,6 +116,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
              task_type,
              class_num=1,
              complete_secure=False,
+             objective=None,
              goss_subsample=False,
              cipher_compressing=False,
              max_sample_weight=1,
@@ -135,6 +137,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.max_sample_weight = max_sample_weight
         self.task_type = task_type
         self.mo_tree = mo_tree
+        self.objective = objective
         if self.mo_tree:  # when mo mode is activated, need class number
             self.class_num = class_num
         else:
@@ -359,13 +362,19 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 statistics = MultivariateStatisticalSummary(self.grad_and_hess, -1)
                 g_min = statistics.get_min()['g']
                 g_max = statistics.get_max()['g']
-
+                if self.objective == 'lse':
+                    h_max = 2
+                elif self.objective == 'lae':
+                    h_max = 1
+                else:
+                    h_max = statistics.get_max()['h']
             self.packer = GHPacker(sample_num=self.grad_and_hess.count(),
                                    task_type=self.task_type,
                                    max_sample_weight=self.max_sample_weight,
                                    encrypter=self.encrypter,
                                    g_min=g_min,
                                    g_max=g_max,
+                                   h_max=h_max,
                                    mo_mode=self.mo_tree,  # mo packing
                                    class_num=self.class_num  # no mo packing
                                    )

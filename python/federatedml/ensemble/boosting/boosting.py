@@ -214,7 +214,7 @@ class Boosting(ModelBase, ABC):
 
     def data_and_header_alignment(self, data_inst):
         """
-        turn data into sparse and align header/ algin data table header
+        turn data into sparse and align header/ align data table header
         """
 
         cache_dataset_key = self.predict_data_cache.get_data_key(data_inst)
@@ -333,15 +333,16 @@ class Boosting(ModelBase, ABC):
         compute loss given predicted y and real y
         """
         LOGGER.info("compute loss")
+        loss = 0
         if self.task_type == consts.CLASSIFICATION:
             loss_method = self.loss
             y_predict = y_hat.mapValues(lambda val: loss_method.predict(val))
             loss = loss_method.compute_loss(y, y_predict)
         elif self.task_type == consts.REGRESSION:
-            if self.objective_param.objective in ["lse", "lae", "logcosh", "tweedie", "log_cosh", "huber"]:
+            if self.objective_param.objective in ["lse", "lae", "logcosh", "log_cosh", "huber"]:
                 loss_method = self.loss
                 loss = loss_method.compute_loss(y, y_hat)
-            else:
+            elif self.objective_param.objective in ['tweedie']:
                 loss_method = self.loss
                 y_predict = y_hat.mapValues(lambda val: loss_method.predict(val))
                 loss = loss_method.compute_loss(y, y_predict)
@@ -436,21 +437,23 @@ class Boosting(ModelBase, ABC):
         given binary/multi-class/regression prediction scores, outputs result in standard format
         """
         predicts = None
-        if self.task_type == consts.CLASSIFICATION:
-            loss_method = self.loss
+        loss_method = self.loss
+        
+        if self.task_type == consts.CLASSIFICATION:    
             if self.num_classes == 2:
                 predicts = y_hat.mapValues(lambda f: float(loss_method.predict(f)))
             else:
                 predicts = y_hat.mapValues(lambda f: loss_method.predict(f).tolist())
 
         elif self.task_type == consts.REGRESSION:
-            if self.objective_param.objective in ["lse", "lae", "huber", "log_cosh", "fair", "tweedie"]:
+            if self.objective_param.objective in ["tweedie"]:
+                predicts = y_hat.mapValues(lambda f: [float(loss_method.predict(f))])
+            elif self.objective_param.objective in ["lse", "lae", "huber", "log_cosh", "fair"]:
                 predicts = y_hat
             else:
                 raise NotImplementedError("objective {} not supprted yet".format(self.objective_param.objective))
 
         if self.task_type == consts.CLASSIFICATION:
-
             predict_result = self.predict_score_to_output(data_inst, predict_score=predicts, classes=self.classes_,
                                                           threshold=self.predict_param.threshold)
 
