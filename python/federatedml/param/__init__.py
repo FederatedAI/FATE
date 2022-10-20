@@ -96,5 +96,6 @@ __all__ = [
     "ScorecardParam",
     "SecureInformationRetrievalParam",
     "SampleWeightParam",
-    "FeldmanVerifiableSumParam"
+    "FeldmanVerifiableSumParam",
+    "EvaluateParam"
 ]
