@@ -368,6 +368,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
                     h_max = 1
                 else:
                     h_max = statistics.get_max()['h']
+            else:
+                h_max = None
             self.packer = GHPacker(sample_num=self.grad_and_hess.count(),
                                    task_type=self.task_type,
                                    max_sample_weight=self.max_sample_weight,
