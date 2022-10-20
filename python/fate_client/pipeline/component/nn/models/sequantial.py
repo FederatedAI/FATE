@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from pipeline.component.nn.backend.fate_torch.base import Sequential as tSeq
+from pipeline.component.nn.backend.torch.base import Sequential as tSeq
 
 
 class Sequential(object):
