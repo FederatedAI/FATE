@@ -1,67 +1,43 @@
-from ._ops import _binary_func
+from ._ops import auto_binary_op
 
 
-@_binary_func
-def add(x):
-    ""
+@auto_binary_op
+def add(x, y, *args, **kwargs):
+    """"""
     ...
 
 
-@_binary_func
-def sub(x):
-    ""
+@auto_binary_op
+def sub(x, y, *args, **kwargs):
+    """"""
     ...
 
 
-@_binary_func
-def mul(x):
-    ""
+@auto_binary_op
+def mul(x, y, *args, **kwargs):
+    """"""
     ...
 
 
-@_binary_func
-def div(x):
-    ""
+@auto_binary_op
+def div(x, y, *args, **kwargs):
+    """"""
     ...
 
 
-@_binary_func
-def pow(x):
-    ""
+@auto_binary_op
+def pow(x, y, *args, **kwargs):
+    """"""
     ...
 
 
-@_binary_func
-def remainder(x):
-    ""
+@auto_binary_op
+def remainder(x, y, *args, **kwargs):
+    """"""
     ...
 
 
-@_binary_func
-def fmod(x):
+@auto_binary_op
+def fmod(x, y, *args, **kwargs):
     "element wise remainder of division"
-    ...
-
-
-@_binary_func
-def pow(x):
-    ""
-    ...
-
-
-@_binary_func
-def pow(x):
-    ""
-    ...
-
-
-@_binary_func
-def pow(x):
-    ""
-    ...
-
-
-@_binary_func
-def pow(x):
-    ""
     ...

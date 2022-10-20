@@ -165,7 +165,7 @@ def _push(
     value,
 ):
     if hasattr(value, "__federation_hook__"):
-        value.__federation_hook__(federation, name, namespace, parties)
+        value.__federation_hook__(federation, name, namespace.fedeation_tag(), parties)
     else:
         federation.push(
             v=value,

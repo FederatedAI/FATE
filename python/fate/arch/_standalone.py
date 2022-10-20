@@ -21,7 +21,7 @@ import pickle as c_pickle
 import shutil
 import time
 import uuid
-from collections import Iterable
+from collections.abc import Iterable
 from concurrent.futures import ProcessPoolExecutor as Executor
 from contextlib import ExitStack
 from functools import partial

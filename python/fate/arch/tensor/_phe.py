@@ -4,6 +4,7 @@ from typing import Tuple
 from fate.interface import PHECipher as PHECipherInterface
 
 from ..unify import Backend, device
+from ._base import Shape
 
 
 class PHEKind(Enum):
@@ -24,7 +25,7 @@ class PHECipher(PHECipherInterface):
 
         if kind == PHEKind.AUTO or PHEKind.PAILLIER:
             if self.device == device.CPU:
-                from ..tensor.impl.blocks.multithread_cpu_paillier_block import (
+                from .device.cpu.multithread_cpu_paillier_block import (
                     BlockPaillierCipher,
                 )
 
@@ -44,21 +45,24 @@ class PHEEncryptor:
         self._encryptor = storage_encryptor
 
     def encrypt(self, tensor):
-        from ..tensor._base import DStorage
         from ..tensor import Tensor
+        from ..tensor._base import DStorage, dtype
         from ..tensor.device.cpu import _CPUStorage
-        from ..tensor._base import dtype
 
-        storage = tensor.storage
-        if isinstance(storage, DStorage):
-            encrypted_storage = storage.elemwise_unary_op(
-                lambda s: _CPUStorage(dtype.phe, self._encryptor.encrypt(s.data)),
-                dtype.phe,
-            )
-        else:
-            encrypted_storage = _CPUStorage(
-                dtype.phe, self._encryptor.encrypt(storage.data)
-            )
+        if tensor.device == device.CPU:
+            storage = tensor.storage
+            if isinstance(storage, DStorage):
+                encrypted_storage = DStorage.elemwise_unary_op(
+                    storage,
+                    lambda s: _CPUStorage(
+                        dtype.paillier, storage.shape, self._encryptor.encrypt(s.data)
+                    ),
+                    dtype.paillier,
+                )
+            else:
+                encrypted_storage = _CPUStorage(
+                    dtype.paillier, storage.shape, self._encryptor.encrypt(storage.data)
+                )
         return Tensor(encrypted_storage)
 
 
@@ -67,19 +71,21 @@ class PHEDecryptor:
         self._decryptor = storage_decryptor
 
     def decrypt(self, tensor):
-        from ..tensor._base import DStorage
         from ..tensor import Tensor
+        from ..tensor._base import DStorage, dtype
         from ..tensor.device.cpu import _CPUStorage
-        from ..tensor._base import dtype
 
         storage = tensor.storage
         if isinstance(storage, DStorage):
-            encrypted_storage = storage.elemwise_unary_op(
-                lambda s: _CPUStorage(dtype.phe, self._decryptor.decrypt(s.data)),
-                dtype.phe,
+            encrypted_storage = DStorage.elemwise_unary_op(
+                storage,
+                lambda s: _CPUStorage(
+                    dtype.paillier, storage.shape, self._decryptor.decrypt(s.data)
+                ),
+                dtype.paillier,
             )
         else:
             encrypted_storage = _CPUStorage(
-                dtype.phe, self._decryptor.decrypt(storage.data)
+                dtype.float64, storage.shape, self._decryptor.decrypt(storage.data)
             )
         return Tensor(encrypted_storage)

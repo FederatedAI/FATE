@@ -1,169 +1,169 @@
-from ._ops import _unary_func
+from ._ops import auto_unary_op
 
 
-@_unary_func
-def abs(x):
+@auto_unary_op
+def abs(x, *args, **kwargs):
     "arc cosine"
     ...
 
 
-@_unary_func
-def asin(x):
+@auto_unary_op
+def asin(x, *args, **kwargs):
     "arc sin"
     ...
 
 
-@_unary_func
-def atan(x):
-    ""
+@auto_unary_op
+def atan(x, *args, **kwargs):
+    """"""
     ...
 
 
-@_unary_func
-def atan2(x):
-    ""
+@auto_unary_op
+def atan2(x, *args, **kwargs):
+    """"""
     ...
 
 
-@_unary_func
-def ceil(x):
+@auto_unary_op
+def ceil(x, *args, **kwargs):
     "ceiling"
     ...
 
 
-@_unary_func
-def cos(x):
-    ""
+@auto_unary_op
+def cos(x, *args, **kwargs):
+    """"""
     ...
 
 
-@_unary_func
-def cosh(x):
-    ""
+@auto_unary_op
+def cosh(x, *args, **kwargs):
+    """"""
     ...
 
 
-@_unary_func
-def erf(x):
+@auto_unary_op
+def erf(x, *args, **kwargs):
     "Gaussian error functiom"
     ...
 
 
-@_unary_func
-def erfinv(x):
+@auto_unary_op
+def erfinv(x, *args, **kwargs):
     "Gaussian error functiom"
     ...
 
 
-@_unary_func
-def exp(x):
-    ""
+@auto_unary_op
+def exp(x, *args, **kwargs):
+    """"""
     ...
 
 
-@_unary_func
-def expm1(x):
+@auto_unary_op
+def expm1(x, *args, **kwargs):
     "exponential of each element minus 1"
     ...
 
 
-@_unary_func
-def floor(x):
-    ""
+@auto_unary_op
+def floor(x, *args, **kwargs):
+    """"""
     ...
 
 
-@_unary_func
-def frac(x):
+@auto_unary_op
+def frac(x, *args, **kwargs):
     "fraction part 3.4 -> 0.4"
     ...
 
 
-@_unary_func
-def log(x):
+@auto_unary_op
+def log(x, *args, **kwargs):
     "natural log"
     ...
 
 
-@_unary_func
-def log1p(x):
+@auto_unary_op
+def log1p(x, *args, **kwargs):
     "y = log(1 + x)"
     ...
 
 
-@_unary_func
-def neg(x):
-    ""
+@auto_unary_op
+def neg(x, *args, **kwargs):
+    """"""
     ...
 
 
-@_unary_func
-def reciprocal(x):
+@auto_unary_op
+def reciprocal(x, *args, **kwargs):
     "1/x"
     ...
 
 
-@_unary_func
-def sigmoid(x):
+@auto_unary_op
+def sigmoid(x, *args, **kwargs):
     "sigmode(x)"
     ...
 
 
-@_unary_func
-def sign(x):
-    ""
+@auto_unary_op
+def sign(x, *args, **kwargs):
+    """"""
     ...
 
 
-@_unary_func
-def sin(x):
-    ""
+@auto_unary_op
+def sin(x, *args, **kwargs):
+    """"""
     ...
 
 
-@_unary_func
-def sinh(x):
-    ""
+@auto_unary_op
+def sinh(x, *args, **kwargs):
+    """"""
     ...
 
 
-@_unary_func
-def sqrt(x):
-    ""
+@auto_unary_op
+def sqrt(x, *args, **kwargs):
+    """"""
     ...
 
 
-@_unary_func
-def square(x):
-    ""
+@auto_unary_op
+def square(x, *args, **kwargs):
+    """"""
     ...
 
 
-@_unary_func
-def tan(x):
-    ""
+@auto_unary_op
+def tan(x, *args, **kwargs):
+    """"""
     ...
 
 
-@_unary_func
-def tanh(x):
-    ""
+@auto_unary_op
+def tanh(x, *args, **kwargs):
+    """"""
     ...
 
 
-@_unary_func
-def trunc(x):
+@auto_unary_op
+def trunc(x, *args, **kwargs):
     "truncated integer"
     ...
 
 
-@_unary_func
-def rsqrt(x):
+@auto_unary_op
+def rsqrt(x, *args, **kwargs):
     "the reciprocal of the square-root"
     ...
 
 
-@_unary_func
-def round(x):
-    ""
+@auto_unary_op
+def round(x, *args, **kwargs):
+    """"""
     ...

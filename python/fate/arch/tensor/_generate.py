@@ -41,27 +41,23 @@ if __name__ == "__main__":
         ("pow", ""),
         ("remainder", ""),
         ("fmod", "element wise remainder of division"),
-        ("pow", ""),
-        ("pow", ""),
-        ("pow", ""),
-        ("pow", ""),
     ]
     with open(_unary_path, "w") as fw:
-        fw.write("from ._ops import _unary_func\n")
+        fw.write("from ._ops import auto_unary_op\n")
         for name, comment in _unary_funcs:
             fw.write("\n")
             fw.write("\n")
-            fw.write("@_unary_func\n")
-            fw.write(f"def {name}(x):\n")
+            fw.write("@auto_unary_op\n")
+            fw.write(f"def {name}(x, *args, **kwargs):\n")
             fw.write(f'    "{comment}"\n')
             fw.write(f"    ...\n")
 
     with open(_binary_path, "w") as fw:
-        fw.write("from ._ops import _binary_func\n")
+        fw.write("from ._ops import auto_binary_op\n")
         for name, comment in _binary_funcs:
             fw.write("\n")
             fw.write("\n")
-            fw.write("@_binary_func\n")
-            fw.write(f"def {name}(x):\n")
+            fw.write("@auto_binary_op\n")
+            fw.write(f"def {name}(x, y, *args, **kwargs):\n")
             fw.write(f'    "{comment}"\n')
             fw.write(f"    ...\n")

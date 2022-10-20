@@ -21,7 +21,7 @@ distributed computing
 import abc
 import typing
 from abc import ABCMeta
-from collections import Iterable
+from collections.abc import Iterable
 
 from ._address import AddressABC
 from ._path import PathABC
