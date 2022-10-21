@@ -175,7 +175,7 @@ class DataTransformParam(BaseParam):
         if not isinstance(self.match_id_index, int) or self.match_id_index < 0:
             raise ValueError("match_id_index should be non negative integer")
 
-        if not isinstance(self.match_id_name, str):
+        if self.match_id_name is not None and not isinstance(self.match_id_name, str):
             raise ValueError("match_id_name should be str")
 
         return True
