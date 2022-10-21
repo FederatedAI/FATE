@@ -1,4 +1,4 @@
-from dag import DAG, FateStandaloneDAG, FateFlowDAG
+from .dag import DAG, FateStandaloneDAG, FateFlowDAG
 
 
 __all__ = [

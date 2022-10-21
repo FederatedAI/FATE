@@ -24,15 +24,14 @@ class Input(object):
         self._model_key = InputModelKey().register(model_key) if model_key else None
         self._cache_key = InputCacheKey().register(cache_key) if cache_key else None
 
-    def get_input_keys(self):
-        inputs = dict()
-        if self._data_key:
-            inputs["data"] = self._data_key.keys
+    def get_input_key(self, key=None):
+        if key == "data" and self._data_key:
+            return self._data_key.keys
 
-        if self._model_key:
-            inputs["model"] = self._model_key
+        if key == "model" and self._model_key:
+            return self._model_key.keys()
 
-        if self._cache_key:
-            inputs["cache"] = self._cache_key
+        if key == "cache" and self._cache_key:
+            return self._cache_key.keys()
 
-        return inputs
+        return []

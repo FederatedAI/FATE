@@ -10,10 +10,12 @@ class Component(object):
         if "name" in kwargs:
             self._component_name = kwargs.pop("name")
         self._component_param = kwargs
+        self._support_roles = None
         self.__party_instance = {}
         self._module_name = None
         self._role = None
         self._index = None
+        self._callable = True
 
     def __new__(cls, *args, **kwargs):
         if cls.__name__.lower() not in cls.__instance:
@@ -34,6 +36,12 @@ class Component(object):
     def _set_index(self, idx):
         self._index = idx
 
+    def _set_callable(self, status):
+        self._callable = status
+
+    def callable(self):
+        return self._callable
+
     def __getitem__(self, index) -> "Component":
         if not isinstance(index, (int, list, slice)):
             raise ValueError("Index should be int or list of integer")
@@ -52,11 +60,12 @@ class Component(object):
             index.sort()
         index_key = str(index) if isinstance(index, int) else "|".join(map(str, index))
 
-        del self.__party_instance[self._role]["party"][self._index]
+        # del self.__party_instance[self._role]["party"][self._index]
         self._set_index(index_key)
+        self._set_callable(True)
 
-        self.__party_instance[self._role]["party"][self._index] = self
-        return self
+        self.__party_instance[self._index] = copy.deepcopy(self)
+        return self.__party_instance[self._index]
 
     @property
     def guest(self) -> "Component":
@@ -79,23 +88,34 @@ class Component(object):
 
         if role not in self.__party_instance:
             self.__party_instance[role] = dict()
-            self.__party_instance[role]["party"] = dict()
 
         index = get_uuid()
 
         inst = copy.deepcopy(self)
+        inst.party_instance = {}
         self._decrease_instance_count()
 
         inst._set_role(role)
         inst._set_index(index)
+        inst._set_callable(False)
 
-        self.__party_instance[role]["party"][index] = inst
+        self.__party_instance[role][index] = inst
+        return inst
 
-        return self.__party_instance[role]["party"][index]
+    def get_support_roles(self):
+        return self._support_roles
 
     @classmethod
     def _decrease_instance_count(cls):
         cls.__instance[cls.__name__.lower()] -= 1
+
+    @property
+    def party_instance(self):
+        return self.__party_instance
+
+    @party_instance.setter
+    def party_instance(self, party_instance):
+        self.__party_instance = party_instance
 
     @property
     def name(self):
@@ -104,6 +124,10 @@ class Component(object):
     @property
     def module(self):
         return self._module_name
+
+    @property
+    def support_roles(self):
+        return self._support_roles
 
     def component_param(self, **kwargs):
         for attr, val in kwargs:
@@ -119,12 +143,30 @@ class Component(object):
 
         index = str(index)
 
-        role_params = self.__party_instance[role]
-        for party_index, param in role_params:
-            party_index = party_index.split("|")
-            if index not in party_index:
-                continue
+        role_inst_dict = self.__party_instance[role]
 
-            component_param.update(param)
+        for _, inst in role_inst_dict.items():
+            for party_index, party_inst in inst.party_instance.items():
+                party_index = party_index.split("|")
+                if index not in party_index:
+                    continue
+
+                component_param.update(party_inst.get_component_param())
 
         return component_param
+
+    def validate_runtime_env(self, roles):
+        runtime_roles = roles.get_runtime_roles()
+        for role, role_inst in self.__party_instance.items():
+            if role not in runtime_roles:
+                raise ValueError(f"role {role} does not set in pipeline")
+            runtime_role_parties = roles.get_party_list_by_role(role)
+
+            mx_idx = 0
+            for _, inst in role_inst.items():
+                for party_key in inst.party_instance:
+                    parties = map(int, party_key.split("|", -1))
+                    mx_idx = max(mx_idx, max(parties))
+
+            if mx_idx >= len(runtime_role_parties):
+                raise ValueError(f"role {role}, index {mx_idx} out of bound")

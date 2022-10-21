@@ -14,29 +14,20 @@
 #  limitations under the License.
 #
 
-from pipeline.backend.config import IODataType
-
 
 class Output(object):
-    def __init__(self, name, data_type='single', has_data=True, has_model=True, has_cache=False, output_unit=1):
-        if has_model:
+    def __init__(self, name, data_key=None, model_key=None):
+        if model_key:
             self.model = Model(name).model
             self.model_output = Model(name).get_all_output()
 
-        if has_data:
-            if data_type == "single":
-                self.data = SingleOutputData(name).data
-                self.data_output = SingleOutputData(name).get_all_output()
-            elif data_type == "multi":
+        if data_key:
+            if len(data_key) == 1:
+                self.data = SingleOutputData(name, data_key[0]).data
+                self.data_output = SingleOutputData(name, data_key[0]).get_all_output()
+            else:
                 self.data = TraditionalMultiOutputData(name)
                 self.data_output = TraditionalMultiOutputData(name).get_all_output()
-            else:
-                self.data = NoLimitOutputData(name, output_unit)
-                self.data_output = NoLimitOutputData(name, output_unit).get_all_output()
-
-        if has_cache:
-            self.cache = Cache(name).cache
-            self.cache_output = Cache(name).get_all_output()
 
 
 class Model(object):
@@ -53,12 +44,13 @@ class Model(object):
 
 
 class SingleOutputData(object):
-    def __init__(self, prefix):
+    def __init__(self, prefix, data_key):
         self.prefix = prefix
+        self._key = data_key
 
     @property
     def data(self):
-        return ".".join([self.prefix, IODataType.SINGLE])
+        return ".".join([self.prefix, self._key])
 
     @staticmethod
     def get_all_output():
@@ -71,44 +63,18 @@ class TraditionalMultiOutputData(object):
 
     @property
     def train_data(self):
-        return ".".join([self.prefix, IODataType.TRAIN])
+        return ".".join([self.prefix, "train_data"])
 
     @property
     def test_data(self):
-        return ".".join([self.prefix, IODataType.TEST])
+        return ".".join([self.prefix, "test_data"])
 
     @property
     def validate_data(self):
-        return ".".join([self.prefix, IODataType.VALIDATE])
+        return ".".join([self.prefix, "validate_data"])
 
     @staticmethod
     def get_all_output():
-        return [IODataType.TRAIN,
-                IODataType.VALIDATE,
-                IODataType.TEST]
-
-
-class NoLimitOutputData(object):
-    def __init__(self, prefix, output_unit=1):
-        self.prefix = prefix
-        self.output_unit = output_unit
-
-    @property
-    def data(self):
-        return [self.prefix + "." + "data_" + str(i) for i in range(self.output_unit)]
-
-    def get_all_output(self):
-        return ["data_" + str(i) for i in range(self.output_unit)]
-
-
-class Cache(object):
-    def __init__(self, prefix):
-        self.prefix = prefix
-
-    @property
-    def cache(self):
-        return ".".join([self.prefix, "cache"])
-
-    @staticmethod
-    def get_all_output():
-        return ["cache"]
+        return ["train_data",
+                "validate_data",
+                "test_data"]

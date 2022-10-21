@@ -14,6 +14,8 @@ input_model_key:
   - model
 
 
-output:
-  data: output data, may have more attributes with different roles
-  model: output model of logistic regression, may have more attributes
+output_data_key:
+  - data
+
+output_model_key:
+  - model
