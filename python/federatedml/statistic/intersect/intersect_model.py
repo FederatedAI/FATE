@@ -133,7 +133,7 @@ class IntersectModelBase(ModelBase):
 
         return self.intersect_ids
 
-    # join, union, subtractByKey一系列的spark, eggroll算子均包含在fate_arch
+    # join, union, subtractByKey 一系列的spark, eggroll算子均包含在fate_arch
     # 横向对齐样本，并与其他方进行通信
     def __sync_join_id(self, data, intersect_data):
         LOGGER.debug(f"data count: {data.count()}")

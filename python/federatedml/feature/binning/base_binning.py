@@ -118,7 +118,7 @@ class BaseBinning(object):
             category_col_values = statics_obj.static_all_values(data_instances,
                                                                 self.bin_inner_param.category_indexes,
                                                                 is_sparse)
-            for col_name, split_points in zip(self.bin_inner_param.category_names, category_col_values):
+            for col_name, split_points in zip(self.bin_inner_param.category_names, category_col_values):  # zip()打包为一一对应元组，长度为最小列表
                 self.bin_results.put_col_split_points(col_name, split_points)
 
     def set_bin_inner_param(self, bin_inner_param):

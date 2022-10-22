@@ -19,15 +19,14 @@
 import math
 
 import numpy as np
-
 from federatedml.feature.feature_selection.filter_base import BaseFilterMethod
-from federatedml.feature.feature_selection.model_adapter.isometric_model import IsometricModel
+from federatedml.feature.feature_selection.model_adapter.isometric_model import \
+    IsometricModel
 from federatedml.framework.hetero.sync import selection_info_sync
 from federatedml.param.feature_selection_param import CommonFilterParam
 from federatedml.protobuf.generated import feature_selection_meta_pb2
 from federatedml.statistic.data_overview import look_up_names_from_header
-from federatedml.util import LOGGER
-from federatedml.util import consts
+from federatedml.util import LOGGER, consts
 from federatedml.util.component_properties import ComponentProperties
 
 
@@ -97,6 +96,7 @@ class IsoModelFilter(BaseFilterMethod):
 
         return self
 
+    # 阈值过滤
     def _threshold_fit(self, values, threshold, take_high):
         result = []
         for idx, v in enumerate(values):
@@ -108,6 +108,7 @@ class IsoModelFilter(BaseFilterMethod):
                     result.append(idx)
         return result
 
+    # top-k过滤
     def _top_k_fit(self, values, k, take_high):
         sorted_idx = np.argsort(values)
         result = []
@@ -122,7 +123,8 @@ class IsoModelFilter(BaseFilterMethod):
                 if len(result) >= k:
                     break
         return result
-
+    
+    # 百分比过滤
     def _percentile_fit(self, values, percent, take_high):
         k = math.ceil(percent * len(values))
         return self._top_k_fit(values, k, take_high)
@@ -169,13 +171,14 @@ class FederatedIsoModelFilter(IsoModelFilter):
         self._fix_with_value_obj(value_obj, suffix)
 
     def _fix_with_value_obj(self, value_obj, suffix):
+        # 获取guest全部特征值的list
         all_feature_values = value_obj.get_partial_values(self.selection_properties.select_col_names)
+        # 获取guest特征list
         col_names = [("guest", x) for x in self.selection_properties.select_col_names]
+        # 将host特征加入到guest中
         if self.select_federated:
-            # all_feature_values, col_names = value_obj.union_result()
             host_threshold = {}
             for idx, host_party_id in enumerate(value_obj.host_party_ids):
-                # host_id = self.cpp.host_party_idlist.index(int(host_party_id))
                 host_property = self.host_selection_properties[idx]
                 all_feature_values.extend(value_obj.get_partial_values(
                     host_property.select_col_names, host_party_id
@@ -186,53 +189,44 @@ class FederatedIsoModelFilter(IsoModelFilter):
                 else:
                     host_threshold[host_party_id] = self.host_threshold[idx]
         else:
-            # all_feature_values = value_obj.get_values()
-            # col_names = value_obj.get_col_names()
             host_threshold = None
 
         filter_type = self.filter_type
         take_high = self.take_high
         threshold = self.threshold
 
+        # 阈值过滤
         if filter_type == "threshold":
             results = self._threshold_fit(all_feature_values, threshold,
                                           take_high, host_threshold, col_names)
+        # 最大k项过滤
         elif filter_type == "top_k":
             results = self._top_k_fit(all_feature_values, threshold, take_high)
+        # 百分比过滤
         else:
             results = self._percentile_fit(all_feature_values, threshold, take_high)
-        # LOGGER.debug(f"results length: {len(results)}, type of results is: {type(results)}")
         results = set(results)
-        # LOGGER.debug(f"filter_type: {filter_type}, results: {results}, "
-        #              f"all_feature_values: {all_feature_values}")
 
+        # 将选择的特征结果拆分给guest和host，并同步结果
         for v_idx, v in enumerate(all_feature_values):
-            # LOGGER.debug(f"all_feature_values: {all_feature_values},"
-            # f"col_names: {col_names},"
-            #             f"v_idx: {v_idx}")
             col_name = col_names[v_idx]
             if col_name[0] == consts.GUEST:
                 self.selection_properties.add_feature_value(col_name[1], v)
                 if v_idx in results:
                     self.selection_properties.add_left_col_name(col_name[1])
             else:
-                # LOGGER.debug(f"host_selection_propertied: {self.host_selection_properties}")
-                # LOGGER.debug(f" col_name: {col_name}")
                 host_idx = self.cpp.host_party_idlist.index(int(col_name[0]))
-                # LOGGER.debug(f"header: {self.host_selection_properties[host_idx].header}")
                 host_prop = self.host_selection_properties[host_idx]
-                # if len(self.metrics) == 1:
                 host_prop.add_feature_value(col_name[1], v)
-
                 if v_idx in results:
                     host_prop.add_left_col_name(col_name[1])
         for host_prop in self.host_selection_properties:
             self._keep_one_feature(pick_high=self.take_high, selection_properties=host_prop,
                                    feature_values=host_prop.feature_values)
-
         if self.select_federated:
             self.sync_obj.sync_select_results(self.host_selection_properties, suffix=suffix)
 
+    # 阈值过滤
     def _threshold_fit(self, values, threshold, take_high,
                        host_thresholds=None, col_names=None):
         if host_thresholds is None:

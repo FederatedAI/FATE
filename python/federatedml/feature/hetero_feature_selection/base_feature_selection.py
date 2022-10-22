@@ -21,18 +21,20 @@ import functools
 import random
 
 from federatedml.feature.feature_selection import filter_factory
-from federatedml.feature.feature_selection.model_adapter.adapter_factory import adapter_factory
-from federatedml.feature.feature_selection.selection_properties import SelectionProperties, CompletedSelectionResults
+from federatedml.feature.feature_selection.model_adapter.adapter_factory import \
+    adapter_factory
+from federatedml.feature.feature_selection.selection_properties import (
+    CompletedSelectionResults, SelectionProperties)
 from federatedml.model_base import ModelBase
 from federatedml.param.feature_selection_param import FeatureSelectionParam
-from federatedml.protobuf.generated import feature_selection_param_pb2, feature_selection_meta_pb2
-from federatedml.statistic.data_overview import get_header, \
-    get_anonymous_header, look_up_names_from_header, header_alignment
+from federatedml.protobuf.generated import (feature_selection_meta_pb2,
+                                            feature_selection_param_pb2)
+from federatedml.statistic.data_overview import (get_anonymous_header,
+                                                 get_header, header_alignment,
+                                                 look_up_names_from_header)
 from federatedml.transfer_variable.transfer_class.hetero_feature_selection_transfer_variable import \
     HeteroFeatureSelectionTransferVariable
-from federatedml.util import LOGGER
-from federatedml.util import abnormal_detection
-from federatedml.util import consts
+from federatedml.util import LOGGER, abnormal_detection, consts
 from federatedml.util.io_check import assert_io_num_rows_equal
 from federatedml.util.schema_check import assert_schema_consistent
 
@@ -211,6 +213,8 @@ class BaseHeteroFeatureSelection(ModelBase):
         LOGGER.debug("Feature selection need run: {}".format(self.need_run))
         if not self.need_run:
             return
+
+        # 载入模型
         model_param = list(model_dict.get('model').values())[0].get(MODEL_PARAM_NAME)
         model_meta = list(model_dict.get('model').values())[0].get(MODEL_META_NAME)
 
@@ -219,6 +223,7 @@ class BaseHeteroFeatureSelection(ModelBase):
             MODEL_PARAM_NAME: model_param
         }
 
+        # 设置能被选择的特征
         header = list(model_param.header)
         # LOGGER.info(f"col_name_to_anonym_dict: {model_param.col_name_to_anonym_dict}")
         self.header = header
@@ -365,8 +370,10 @@ class BaseHeteroFeatureSelection(ModelBase):
         self.curt_select_properties = new_select_properties
 
     def _filter(self, data_instances, method, suffix, idx=0):
+        # 从filter factory获取filter
         this_filter = filter_factory.get_filter(filter_name=method, model_param=self.model_param,
                                                 role=self.role, model=self, idx=idx)
+        # 根据选择的filter设置参数
         if method == consts.STATISTIC_FILTER:
             method = self.model_param.statistic_param.metrics[idx]
         elif method == consts.IV_FILTER:

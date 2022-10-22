@@ -18,18 +18,17 @@ import copy
 import functools
 
 import numpy as np
-
 from federatedml.cipher_compressor.packer import GuestIntegerPacker
 from federatedml.feature.binning.iv_calculator import IvCalculator
-from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
-from federatedml.feature.binning.optimal_binning.optimal_binning import OptimalBinning
-from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseFeatureBinning
+from federatedml.feature.binning.optimal_binning.optimal_binning import \
+    OptimalBinning
+from federatedml.feature.hetero_feature_binning.base_feature_binning import \
+    BaseFeatureBinning
 from federatedml.secureprotol import PaillierEncrypt
+from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
-from federatedml.statistic import data_overview
-from federatedml.statistic import statics
-from federatedml.util import LOGGER
-from federatedml.util import consts
+from federatedml.statistic import data_overview, statics
+from federatedml.util import LOGGER, consts
 
 
 class HeteroFeatureBinningGuest(BaseFeatureBinning):
@@ -48,28 +47,35 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
 
         # self._parse_cols(data_instances)
 
-        self._setup_bin_inner_param(data_instances, self.model_param)
+        self._setup_bin_inner_param(data_instances, self.model_param)  # 设置分箱内部变量
 
-        if self.model_param.method == consts.OPTIMAL:
+        if self.model_param.method == consts.OPTIMAL:  # 最优化分箱方法可行性辨别
             has_missing_value = self.iv_calculator.check_containing_missing_value(data_instances)
             for idx in self.bin_inner_param.bin_indexes:
                 if idx in has_missing_value:
                     raise ValueError(f"Optimal Binning do not support missing value now.")
+        # 分箱并接收切分点
         split_points = self.binning_obj.fit_split_points(data_instances)
 
+        # 仅woe编码
         if self.model_param.skip_static:
             self.transform_data(data_instances)
             return self.data_output
 
+        # 获取label信息
         label_counts_dict, label_counts, label_table = self.stat_label(data_instances)
+
+        # guest本地计算iv
         self.bin_result = self.cal_local_iv(data_instances, split_points, label_counts, label_table)
 
+        # 如果仅本地计算iv
         if self.model_param.local_only:
-
+            # 转换为woe编码
             self.transform_data(data_instances)
-            self.set_summary(self.bin_result.summary())
+            self.set_summary(self.bin_result.summary())  # 设置结果集合
             return self.data_output
 
+        # 联邦计算iv值
         self.host_results = self.federated_iv(
             data_instances=data_instances,
             label_table=label_table,
@@ -77,11 +83,11 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
             label_elements=self.labels,
             label_counts=label_counts)
 
-        total_summary = self.bin_result.summary()
+        total_summary = self.bin_result.summary()  # 设置结果集合
         for host_res in self.host_results:
             total_summary = self._merge_summary(total_summary, host_res.summary())
 
-        self.set_schema(data_instances)
+        self.set_schema(data_instances)  # 设置数据存储
         self.transform_data(data_instances)
         LOGGER.info("Finish feature binning fit and transform")
         self.set_summary(total_summary)
@@ -161,6 +167,7 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
         return bin_result
 
     def federated_iv(self, data_instances, label_table, result_counts, label_elements, label_counts):
+        # PAILLIER加密
         if self.model_param.encrypt_param.method == consts.PAILLIER:
             paillier_encryptor = PaillierEncrypt()
             paillier_encryptor.generate_key(self.model_param.encrypt_param.key_length)
@@ -169,15 +176,20 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
         self._packer = GuestIntegerPacker(pack_num=len(self.labels), pack_num_range=label_counts,
                                           encrypter=paillier_encryptor)
 
+        # 加密label
         converted_label_table = label_table.mapValues(lambda x: [int(i) for i in x])
         encrypted_label_table = self._packer.pack_and_encrypt(converted_label_table)
+
+        # 发送加密label给host
         self.transfer_variable.encrypted_label.remote(encrypted_label_table,
                                                       role=consts.HOST,
                                                       idx=-1)
+        # 获取加密的host分箱信息
         encrypted_bin_sum_infos = self.transfer_variable.encrypted_bin_sum.get(idx=-1)
         encrypted_bin_infos = self.transfer_variable.optimal_info.get(idx=-1)
         LOGGER.info("Get encrypted_bin_sum from host")
 
+        # 加密计算host分箱结果
         host_results = []
         for host_idx, encrypted_bin_info in enumerate(encrypted_bin_infos):
             host_party_id = self.component_properties.host_party_idlist[host_idx]

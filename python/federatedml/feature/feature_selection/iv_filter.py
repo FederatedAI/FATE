@@ -14,8 +14,8 @@
 #  limitations under the License.
 
 import numpy as np
-
-from federatedml.feature.feature_selection.iso_model_filter import FederatedIsoModelFilter
+from federatedml.feature.feature_selection.iso_model_filter import \
+    FederatedIsoModelFilter
 from federatedml.feature.feature_selection.model_adapter import isometric_model
 from federatedml.param.feature_selection_param import IVFilterParam
 from federatedml.util import LOGGER
@@ -74,6 +74,5 @@ class IVFilter(FederatedIsoModelFilter):
         return single_info
 
     def _guest_fit(self, suffix):
-        # for idx, m in enumerate(self.metrics):
-        value_obj = self._merge_iv()
-        self._fix_with_value_obj(value_obj, suffix)
+        value_obj = self._merge_iv()  # 合并多方的iv值
+        self._fix_with_value_obj(value_obj, suffix)  # 根据iv值进行过滤

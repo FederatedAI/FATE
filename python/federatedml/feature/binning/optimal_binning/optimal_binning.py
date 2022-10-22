@@ -23,18 +23,15 @@ import operator
 import time
 
 import numpy as np
-
 from fate_arch.session import computing_session as session
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.bucket_binning import BucketBinning
-from federatedml.feature.binning.optimal_binning import bucket_info
-from federatedml.feature.binning.optimal_binning import heap
+from federatedml.feature.binning.optimal_binning import bucket_info, heap
 from federatedml.feature.binning.quantile_tool import QuantileBinningTool
-from federatedml.param.feature_binning_param import HeteroFeatureBinningParam, OptimalBinningParam
-from federatedml.statistic import data_overview
-from federatedml.statistic import statics
-from federatedml.util import LOGGER
-from federatedml.util import consts
+from federatedml.param.feature_binning_param import (HeteroFeatureBinningParam,
+                                                     OptimalBinningParam)
+from federatedml.statistic import data_overview, statics
+from federatedml.util import LOGGER, consts
 
 
 class OptimalBinning(BaseBinning):
@@ -55,20 +52,18 @@ class OptimalBinning(BaseBinning):
         self.bucket_lists = {}
 
     def fit_split_points(self, data_instances):
+        # 初始参数设置
         header = data_overview.get_header(data_instances)
         anonymous_header = data_overview.get_anonymous_header(data_instances)
         self._default_setting(header, anonymous_header)
 
         if (self.event_total and self.non_event_total) is None:
-            self.event_total, self.non_event_total = self.get_histogram(data_instances)
-        # LOGGER.debug("In fit split points, event_total: {}, non_event_total: {}".format(self.event_total,
-        #                                                                                 self.non_event_total))
-
-        bucket_table = self.init_bucket(data_instances)
-        sample_count = data_instances.count()
-        self.fit_buckets(bucket_table, sample_count)
-        self.fit_category_features(data_instances)
-        return self.bin_results.all_split_points
+            self.event_total, self.non_event_total = self.get_histogram(data_instances)  # 获取特征统计直方图
+        bucket_table = self.init_bucket(data_instances)  # 初始化分箱
+        sample_count = data_instances.count()  # 统计样本数量
+        self.fit_buckets(bucket_table, sample_count)  # 最优化分箱
+        self.fit_category_features(data_instances)  # 特征类别
+        return self.bin_results.all_split_points  # 返回分箱结果（所有切分点）
 
     def fit_buckets(self, bucket_table, sample_count):
         if self.optimal_param.metric_method in ['iv', 'gini', 'chi_square']:
@@ -93,21 +88,23 @@ class OptimalBinning(BaseBinning):
     #     col_result_obj = self.woe_1d(result_counts, self.adjustment_factor)
     #     self.bin_results.put_col_results(col_name, col_result_obj)
 
+    # 分箱
     def init_bucket(self, data_instances):
-        header = data_overview.get_header(data_instances)
-        anonymous_header = data_overview.get_anonymous_header(data_instances)
-        self._default_setting(header, anonymous_header)
+        header = data_overview.get_header(data_instances)  # 获取表头
+        anonymous_header = data_overview.get_anonymous_header(data_instances)  # 数据匿名
+        self._default_setting(header, anonymous_header)  # 初始化分箱默认设置
 
-        init_bucket_param = copy.deepcopy(self.params)
-        init_bucket_param.bin_num = self.optimal_param.init_bin_nums
-        if self.optimal_param.init_bucket_method == consts.QUANTILE:
-            init_binning_obj = QuantileBinningTool(param_obj=init_bucket_param, allow_duplicate=False)
+        init_bucket_param = copy.deepcopy(self.params)  # 初始化参数
+        init_bucket_param.bin_num = self.optimal_param.init_bin_nums  # 设置分箱数
+        if self.optimal_param.init_bucket_method == consts.QUANTILE:  # 初始化分箱方法为量化分箱
+            init_binning_obj = QuantileBinningTool(param_obj=init_bucket_param, allow_duplicate=False)  # 生成量化分箱类
         else:
-            init_binning_obj = BucketBinning(params=init_bucket_param)
-        init_binning_obj.set_bin_inner_param(self.bin_inner_param)
-        init_split_points = init_binning_obj.fit_split_points(data_instances)
+            init_binning_obj = BucketBinning(params=init_bucket_param)  # 生成桶分箱类
+        init_binning_obj.set_bin_inner_param(self.bin_inner_param)  # 设置分箱过程参数
+        init_split_points = init_binning_obj.fit_split_points(data_instances)  # 分箱并返回切分点
         is_sparse = data_overview.is_sparse_data(data_instances)
 
+        # 根据切分点生成分箱字典
         bucket_dict = dict()
         for col_name, sps in init_split_points.items():
 
@@ -126,22 +123,22 @@ class OptimalBinning(BaseBinning):
             bucket_dict[col_name] = bucket_list
             # LOGGER.debug(f"col_name: {col_name}, length of sps: {len(sps)}, "
             #              f"length of list: {len(bucket_list)}")
-
+        # 分箱字典转换元组列表
         convert_func = functools.partial(self.convert_data_to_bucket,
                                          split_points=init_split_points,
                                          headers=self.header,
                                          bucket_dict=copy.deepcopy(bucket_dict),
                                          is_sparse=is_sparse,
                                          get_bin_num_func=self.get_bin_num)
-        bucket_table = data_instances.mapReducePartitions(convert_func, self.merge_bucket_list)
-        return bucket_table
+        bucket_table = data_instances.mapReducePartitions(convert_func, self.merge_bucket_list)  # 分箱进行合并
+        return bucket_table  # CTable class
 
     @staticmethod
     def get_histogram(data_instances):
-        static_obj = statics.MultivariateStatisticalSummary(data_instances, cols_index=-1)
-        label_historgram = static_obj.get_label_histogram()
-        event_total = label_historgram.get(1, 0)
-        non_event_total = label_historgram.get(0, 0)
+        static_obj = statics.MultivariateStatisticalSummary(data_instances, cols_index=-1)  # 对所有列初始化统计类
+        label_historgram = static_obj.get_label_histogram()  # 每个分箱中label的个数统计
+        event_total = label_historgram.get(1, 0)  # 获取label=0数量
+        non_event_total = label_historgram.get(0, 0)  # 获取label=1数量
         # if event_total == 0 or non_event_total == 0:
         #     LOGGER.warning(f"event_total or non_event_total might have errors, event_total: {event_total},"
         #                    f" non_event_total: {non_event_total}")

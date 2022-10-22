@@ -17,8 +17,8 @@
 #  limitations under the License.
 
 from federatedml.feature.binning.base_binning import BaseBinning
-from federatedml.statistic.statics import MultivariateStatisticalSummary
 from federatedml.statistic import data_overview
+from federatedml.statistic.statics import MultivariateStatisticalSummary
 
 
 class BucketBinning(BaseBinning):
@@ -63,10 +63,10 @@ class BucketBinning(BaseBinning):
         statistics = MultivariateStatisticalSummary(data_instances,
                                                     self.bin_inner_param.bin_indexes,
                                                     abnormal_list=self.abnormal_list)
-        max_dict = statistics.get_max()
-        min_dict = statistics.get_min()
-        for col_name, max_value in max_dict.items():
-            min_value = min_dict.get(col_name)
+        max_dict = statistics.get_max()  # 所有列最大值
+        min_dict = statistics.get_min()  # 所有列最小值
+        for col_name, max_value in max_dict.items():  # 某一列最大值
+            min_value = min_dict.get(col_name)  # 某一列最小值
             split_points = []
             L = (max_value - min_value) / self.bin_num
             for k in range(self.bin_num - 1):
