@@ -18,10 +18,12 @@
 #
 import copy
 
+from fate_arch.session import computing_session
 from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.model_base import ModelBase
 from federatedml.model_base import Metric
+from federatedml.feature.instance import Instance
 from federatedml.param.positive_unlabeled_param import PositiveUnlabeledParam
 
 
@@ -53,10 +55,11 @@ class PositiveUnlabeled(ModelBase):
 
         LOGGER.info("Switch probability strategy")
         replaced_label_table = label_score_table.mapValues(replaced_func)
-        self.replaced_label_list = list(replaced_label_table.collect())
 
         summary_table = replaced_label_table.join(label_score_table, summarized_func)
         self.converted_unlabeled_count = summary_table.filter(lambda k, v: v == 1).count()
+
+        return replaced_label_table
 
     def quantity_process(self, label_score_table):
         LOGGER.info("Switch quantity strategy")
@@ -113,13 +116,16 @@ class PositiveUnlabeled(ModelBase):
 
     def apply_labeling_strategy(self, strategy, label_score_table):
         if strategy == consts.PROBABILITY:
-            self.probability_process(label_score_table)
+            return self.probability_process(label_score_table)
         elif strategy == consts.QUANTITY:
             self.quantity_process(label_score_table)
         elif strategy == consts.PROPORTION:
             self.proportion_process(label_score_table)
         else:
             self.distribution_process(label_score_table)
+
+    def replace_table_labels(self, intersect_table, label_table):
+        return intersect_table.join(label_table, lambda i, l: self.replace_instance_label(i, l))
 
     def callback_info(self):
         self.add_summary("count of converted unlabeled", self.converted_unlabeled_count)
@@ -128,11 +134,10 @@ class PositiveUnlabeled(ModelBase):
                              metric_data=[Metric("count of converted unlabeled", self.converted_unlabeled_count)])
 
     @staticmethod
-    def replace_instance_label(key, val, replaced_label_list):
-        replaced_label_dict = dict(replaced_label_list)
-        copied_val = copy.deepcopy(val)
-        copied_val.label = replaced_label_dict[key]
-        return copied_val
+    def replace_instance_label(intersect_inst, label_inst):
+        copied_intersect_inst = copy.deepcopy(intersect_inst)
+        copied_intersect_inst.label = label_inst.label
+        return copied_intersect_inst
 
     def fit(self, data_insts):
         LOGGER.info("Convert labels by positive unlabeled transformer")
@@ -149,17 +154,24 @@ class PositiveUnlabeled(ModelBase):
             label_score_table = predict_table.mapValues(lambda x: x.features[0:3:2])
 
             LOGGER.info("Replace labels by labeling strategy")
-            self.apply_labeling_strategy(strategy=self.strategy, label_score_table=label_score_table)
+            if self.strategy != consts.PROBABILITY:
+                self.apply_labeling_strategy(strategy=self.strategy, label_score_table=label_score_table)
+                replaced_label_table = computing_session.parallelize(self.replaced_label_list,
+                                                                     include_key=True,
+                                                                     partition=intersect_table.partitions)
+            else:
+                replaced_label_table = self.apply_labeling_strategy(strategy=self.strategy,
+                                                                    label_score_table=label_score_table)
+            replaced_label_table = replaced_label_table.mapValues(lambda x: Instance(label=x))
 
-            LOGGER.info("Construct replaced label feature table")
-            replaced_label_feature_table = intersect_table.map(
-                lambda k, v: (k, self.replace_instance_label(k, v, self.replaced_label_list)))
-            replaced_label_feature_table.schema = intersect_table.schema
+            LOGGER.info("Construct replaced intersect table")
+            replaced_intersect_table = self.replace_table_labels(intersect_table, replaced_label_table)
+            replaced_intersect_table.schema = intersect_table.schema
 
-            LOGGER.info("Obtain positive unlabeled component summary")
+            LOGGER.info("Obtain positive unlabeled summary")
             self.callback_info()
 
-            return replaced_label_feature_table
+            return replaced_intersect_table
 
         elif self.role == consts.HOST:
             LOGGER.info("Identify intersect table")
