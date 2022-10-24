@@ -51,14 +51,26 @@ class FateTorchOptimizer(object):
         ret_dict['config_type'] = 'pytorch'
         return ret_dict
 
+    def check_params(self, params):
+
+        if isinstance(params, FateTorchLayer) or isinstance(params, Sequential):
+            params.add_optimizer(self)
+            params = params.parameters()
+        else:
+            params = params
+
+        l_param = list(params)
+        if len(l_param) == 0:
+            return [t.nn.Parameter(t.Tensor([0]))]  # fake parameters, for the case that there are only cust model
+
+        return l_param
+
     def register_optimizer(self, input_):
 
         if input_ is None:
             return
-        
         if isinstance(input_, FateTorchLayer) or isinstance(input_, Sequential):
-            fate_torch_component.add_optimizer(self)
-            param = input_.parameters()
+            input_.add_optimizer(self)
 
     def to_torch_instance(self, parameters):
         return self.torch_class(parameters, **self.param_dict)
