@@ -22,7 +22,7 @@ from federatedml.framework.hetero.sync import loss_sync
 from federatedml.optim.gradient import hetero_linear_model_gradient
 from federatedml.util import LOGGER
 from federatedml.util.fate_operator import reduce_add, vec_dot
-from python.federatedml.secureprotol.encrypt import IpclPaillierEncrypt
+from federatedml.secureprotol.encrypt import IpclPaillierEncrypt
 
 
 class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):

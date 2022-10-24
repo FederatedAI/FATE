@@ -19,7 +19,7 @@
 import functools
 
 import numpy as np
-from python.federatedml.secureprotol.encrypt import IpclPaillierEncrypt
+from federatedml.secureprotol.encrypt import IpclPaillierEncrypt
 import scipy.sparse as sp
 
 from federatedml.feature.sparse_vector import SparseVector
