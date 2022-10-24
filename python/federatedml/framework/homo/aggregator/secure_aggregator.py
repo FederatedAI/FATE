@@ -1,6 +1,6 @@
 import numpy as np
 import torch as t
-from typing import List
+from typing import List, Any
 from torch.optim import Optimizer
 from federatedml.framework.homo.blocks import random_padding_cipher
 from federatedml.framework.homo.blocks.random_padding_cipher import RandomPaddingCipherTransVar
@@ -88,13 +88,37 @@ class SecureAggregatorClient(AggregatorBaseClient):
 
         return converge_status
 
-    def aggregate(self, model: List[List[np.ndarray]], loss: float):
+    def aggregate(self, model: Any, loss: float):
 
-        agg_model = self.aggregate_model(model)
+        if isinstance(model, t.nn.Module):
+            parameters = list(model.parameters())
+            to_agg = [[p.cpu().detach().numpy() for p in parameters]]
+        elif isinstance(model, t.optim.Optimizer):
+            to_agg = [[p.cpu().detach().numpy() for p in group["params"]]
+                       for group in model.param_groups]
+        elif isinstance(model, list):
+            for p_l in model:
+                for p in p_l:
+                    assert isinstance(p, np.ndarray), 'expecting List[List[np.ndarray]], but got {}'.format(p)
+            to_agg = model
+        else:
+            raise ValueError('expecting pytorch model, pytorch optimizer, or List[List[np.ndarray]], but got {}'.format(model))
+
+        agg_model = self.aggregate_model(to_agg)
         converge_status = self.aggregate_loss(loss)
         self.inc_agg_round()
 
-        return agg_model, converge_status
+        if isinstance(model, t.nn.Module):
+            for agg_p, p in zip(agg_model[0], model.parameters()):
+                p.data.copy_(t.Tensor(agg_p))
+            return model, converge_status
+        elif isinstance(model, t.optim.Optimizer):
+            for agg_group, group in zip(agg_model, model.param_groups):
+                for agg_p, p in zip(agg_group, group["params"]):
+                    p.data.copy_(t.Tensor(agg_p))
+            return model, converge_status
+        else:
+            return agg_model, converge_status
 
 
 @aggregator_server('secure_agg')

@@ -6,7 +6,6 @@
 #  You may obtain a copy of the License at
 #
 #      http://www.apache.org/licenses/LICENSE-2.0
-
 #
 #  Unless required by applicable law or agreed to in writing, software
 #  distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,27 +14,16 @@
 #  limitations under the License.
 #
 
-from .components import ComponentMeta
 
-homo_nn_cpn_meta = ComponentMeta("HomoNN")
-
-
-@homo_nn_cpn_meta.bind_param
-def homo_nn_param():
-    from federatedml.param.homo_nn_param import HomoNNParam
-
-    return HomoNNParam
+from federatedml.nn.hetero_nn.backend.hetero_nn_model import HeteroNNKerasGuestModel
+from federatedml.nn.hetero_nn.backend.hetero_nn_model import HeteroNNKerasHostModel
 
 
-@homo_nn_cpn_meta.bind_runner.on_guest.on_host
-def homo_nn_runner_client():
-    from federatedml.nn.homo.client import HomoNNClient
+def model_builder(role="guest", hetero_nn_param=None, backend="keras"):
+    if backend != "keras":
+        raise ValueError("Only support keras backend in this version!")
 
-    return HomoNNClient
-
-
-@homo_nn_cpn_meta.bind_runner.on_arbiter
-def homo_nn_runner_arbiter():
-    from federatedml.nn.homo.server import HomoNNServer
-
-    return HomoNNServer
+    if role == "guest":
+        return HeteroNNKerasGuestModel(hetero_nn_param)
+    elif role == "host":
+        return HeteroNNKerasHostModel(hetero_nn_param)

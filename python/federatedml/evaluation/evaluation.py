@@ -714,8 +714,7 @@ class Evaluation(ModelBase):
         validate_metric = {}
         train_metric = {}
         collect_dict = {}
-        LOGGER.debug('callback metric called')
-
+        
         for (data_type, eval_res_list) in eval_results.items():
 
             precision_recall = {}

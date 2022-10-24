@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -6,7 +9,6 @@
 #  You may obtain a copy of the License at
 #
 #      http://www.apache.org/licenses/LICENSE-2.0
-
 #
 #  Unless required by applicable law or agreed to in writing, software
 #  distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,27 +17,30 @@
 #  limitations under the License.
 #
 
-from .components import ComponentMeta
-
-homo_nn_cpn_meta = ComponentMeta("HomoNN")
-
-
-@homo_nn_cpn_meta.bind_param
-def homo_nn_param():
-    from federatedml.param.homo_nn_param import HomoNNParam
-
-    return HomoNNParam
+import tensorflow as tf
+import numpy as np
 
 
-@homo_nn_cpn_meta.bind_runner.on_guest.on_host
-def homo_nn_runner_client():
-    from federatedml.nn.homo.client import HomoNNClient
+class KerasSequenceData(tf.keras.utils.Sequence):
+    def __init__(self, X, y=None):
+        if X.shape[0] == 0:
+            raise ValueError("Data is empty!")
 
-    return HomoNNClient
+        self.X = X
+
+        if y is None:
+            self.y = np.zeros(X.shape[0])
+        else:
+            self.y = y
+
+    def __len__(self):
+        return 1
+
+    def __getitem__(self, idx):
+        return self.X, self.y
 
 
-@homo_nn_cpn_meta.bind_runner.on_arbiter
-def homo_nn_runner_arbiter():
-    from federatedml.nn.homo.server import HomoNNServer
-
-    return HomoNNServer
+class KerasSequenceDataConverter(object):
+    @classmethod
+    def convert_data(cls, x=None, y=None):
+        return KerasSequenceData(x, y)

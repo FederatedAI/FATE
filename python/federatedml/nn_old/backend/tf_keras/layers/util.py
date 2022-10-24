@@ -6,7 +6,6 @@
 #  You may obtain a copy of the License at
 #
 #      http://www.apache.org/licenses/LICENSE-2.0
-
 #
 #  Unless required by applicable law or agreed to in writing, software
 #  distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,27 +14,19 @@
 #  limitations under the License.
 #
 
-from .components import ComponentMeta
 
-homo_nn_cpn_meta = ComponentMeta("HomoNN")
-
-
-@homo_nn_cpn_meta.bind_param
-def homo_nn_param():
-    from federatedml.param.homo_nn_param import HomoNNParam
-
-    return HomoNNParam
+from tensorflow.python.keras import initializers
 
 
-@homo_nn_cpn_meta.bind_runner.on_guest.on_host
-def homo_nn_runner_client():
-    from federatedml.nn.homo.client import HomoNNClient
+def _get_initializer(initializer, seed):
+    if not seed:
+        return initializer
 
-    return HomoNNClient
+    initializer_class = getattr(initializers, initializer, None)
+    if initializer_class:
+        initializer_instance = initializer_class()
+        if hasattr(initializer_instance, "seed"):
+            initializer_instance.seed = seed
+        return initializer_instance
 
-
-@homo_nn_cpn_meta.bind_runner.on_arbiter
-def homo_nn_runner_arbiter():
-    from federatedml.nn.homo.server import HomoNNServer
-
-    return HomoNNServer
+    return initializer
