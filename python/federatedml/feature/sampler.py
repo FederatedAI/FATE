@@ -21,15 +21,15 @@ import random
 from sklearn.utils import resample
 
 from fate_arch.session import computing_session as session
-from federatedml.statistic.intersect.base_intersect import Intersect
 from federatedml.model_base import Metric
 from federatedml.model_base import MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.param.sample_param import SampleParam
+from federatedml.statistic.intersect.base_intersect import Intersect
 from federatedml.transfer_variable.transfer_class.sample_transfer_variable import SampleTransferVariable
+from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util.schema_check import assert_schema_consistent
-from federatedml.util import LOGGER
 
 
 class RandomSampler(object):
@@ -436,7 +436,8 @@ class ExactSampler(object):
             new_key_num = math.ceil(v.weight)
             new_sample_id_list = [Intersect.generate_new_uuid() for _ in range(new_key_num)]
             return new_sample_id_list
-        sample_ids =  non_zero_data_inst.mapValues(lambda v: __generate_new_ids(v))
+
+        sample_ids = non_zero_data_inst.mapValues(lambda v: __generate_new_ids(v))
         return sample_ids
 
     def sample(self, data_inst, sample_ids=None):
@@ -461,54 +462,6 @@ class ExactSampler(object):
         new_data_inst = self.__sample(data_inst, sample_ids)
         return new_data_inst
 
-    """
-    def __sample(self, data_inst, sample_ids=None):
-        LOGGER.info("start to run exact sampling")
-        return_sample_ids = False
-
-        data_set = list(data_inst.collect())
-        ids = [key for (key, inst) in data_set]
-        id_maps = dict(zip(ids, range(len(ids))))
-
-        if sample_ids is None:
-            return_sample_ids = True
-            data_set = list(data_inst.collect())
-            ids = [key for (key, inst) in data_set]
-            id_maps = dict(zip(ids, range(len(ids))))
-            sample_ids = []
-
-            for key, inst in data_inst.collect():
-                weight = inst.weight
-                if weight is None:
-                    raise ValueError(f"Empty weight encountered. Please check input data.")
-                if weight <= consts.FLOAT_ZERO:
-                    LOGGER.warning(f"zero-weighted sample encountered, will be discarded in final result.")
-                    continue
-                new_key_num = math.ceil(weight)
-                new_key_list = [key] * new_key_num
-                sample_ids.extend(new_key_list)
-        random.shuffle(sample_ids)
-
-        new_data = []
-        for i in range(len(sample_ids)):
-            index = id_maps[sample_ids[i]]
-            new_data.append((i, data_set[index][1]))
-
-        new_data_inst = session.parallelize(new_data,
-                                            include_key=True,
-                                            partition=data_inst.partitions)
-        data_count = new_data_inst.count()
-        if data_count is None:
-            data_count = 0
-            LOGGER.warning(f"All data instances discarded. Please check weight.")
-        callback(self.tracker, "exact_by_weight", [Metric("count", data_count)], summary_dict=self._summary_buf)
-
-        if return_sample_ids:
-            return new_data_inst, sample_ids
-        else:
-            return new_data_inst
-    """
-
     def __sample(self, data_inst, sample_ids):
         """
         Exact sample method, duplicate samples by corresponding weight:
@@ -530,9 +483,11 @@ class ExactSampler(object):
 
         """
         sample_ids_map = data_inst.join(sample_ids, lambda v, ids: (v, ids))
+
         def __sample_new_id(k, v_id_map):
             v, id_map = v_id_map
             return [(new_id, v) for new_id in id_map]
+
         new_data_inst = sample_ids_map.flatMap(functools.partial(__sample_new_id))
         data_count = new_data_inst.count()
         if data_count is None:
@@ -541,7 +496,6 @@ class ExactSampler(object):
         callback(self.tracker, "exact_by_weight", [Metric("count", data_count)], summary_dict=self._summary_buf)
 
         return new_data_inst
-
 
     def get_summary(self):
         return self._summary_buf
