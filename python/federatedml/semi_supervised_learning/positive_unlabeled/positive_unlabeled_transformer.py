@@ -43,12 +43,12 @@ class PositiveUnlabeled(ModelBase):
     def probability_process(self, label_score_table):
         def replaced_func(x):
             if x[1] >= self.threshold and x[0] == 0:
-                return 1
+                return Instance(label=1)
             else:
-                return x[0]
+                return Instance(label=x[0])
 
         def summarized_func(r, l):
-            if r == 1 and l[0] == 0:
+            if r.label == 1 and l[0] == 0:
                 return 1
             else:
                 return 0
@@ -159,10 +159,10 @@ class PositiveUnlabeled(ModelBase):
                 replaced_label_table = computing_session.parallelize(self.replaced_label_list,
                                                                      include_key=True,
                                                                      partition=intersect_table.partitions)
+                replaced_label_table = replaced_label_table.mapValues(lambda x: Instance(label=x))
             else:
                 replaced_label_table = self.apply_labeling_strategy(strategy=self.strategy,
                                                                     label_score_table=label_score_table)
-            replaced_label_table = replaced_label_table.mapValues(lambda x: Instance(label=x))
 
             LOGGER.info("Construct replaced intersect table")
             replaced_intersect_table = self.replace_table_labels(intersect_table, replaced_label_table)
