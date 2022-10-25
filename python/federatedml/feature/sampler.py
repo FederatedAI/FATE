@@ -14,11 +14,14 @@
 #  limitations under the License.
 #
 
+import functools
+import math
 import random
 
 from sklearn.utils import resample
 
 from fate_arch.session import computing_session as session
+from federatedml.statistic.intersect.base_intersect import Intersect
 from federatedml.model_base import Metric
 from federatedml.model_base import MetricMeta
 from federatedml.model_base import ModelBase
@@ -145,7 +148,7 @@ class RandomSampler(object):
             if sample_ids is None:
                 return_sample_ids = True
                 if self.fraction <= 0:
-                    raise ValueError("sapmle fractions should be a numeric number large than 0")
+                    raise ValueError("sample fractions should be a numeric number large than 0")
 
                 sample_num = int(self.fraction * len(idset))
                 sample_ids = resample(idset,
@@ -189,7 +192,7 @@ class StratifiedSampler(object):
 
     random_state: int, RandomState instance or None, optional, default: None
 
-    method: str, supported "upsample", "downsample" only in this version, default: "downsample"
+    method: str, supported "upsample", "downsample", default: "downsample"
 
     """
 
@@ -403,6 +406,147 @@ class StratifiedSampler(object):
         return self._summary_buf
 
 
+class ExactSampler(object):
+    """
+    Exact Sampling Method
+
+    Parameters
+    ----------
+    """
+
+    def __init__(self):
+        self.tracker = None
+        self._summary_buf = {}
+
+    def set_tracker(self, tracker):
+        self.tracker = tracker
+
+    def get_sample_ids(self, data_inst):
+        original_sample_count = data_inst.count()
+        non_zero_data_inst = data_inst.filter(lambda k, v: v.weight > consts.FLOAT_ZERO)
+        non_zero_sample_count = data_inst.count()
+        if original_sample_count != non_zero_sample_count:
+            sample_diff = original_sample_count - non_zero_sample_count
+            LOGGER.warning(f"{sample_diff} zero-weighted sample encountered, will be discarded in final result.")
+
+        def __generate_new_ids(v):
+            if v.inst_id is None:
+                raise ValueError(f"To sample with `exact_by_weight` mode, instances must have match id."
+                                 f"Please check.")
+            new_key_num = math.ceil(v.weight)
+            new_sample_id_list = [Intersect.generate_new_uuid() for _ in range(new_key_num)]
+            return new_sample_id_list
+        sample_ids =  non_zero_data_inst.mapValues(lambda v: __generate_new_ids(v))
+        return sample_ids
+
+    def sample(self, data_inst, sample_ids=None):
+        """
+        Interface to call stratified sample method
+
+        Parameters
+        ----------
+        data_inst : Table
+            The input data
+
+        sample_ids : Table
+            use the samples_ids to generate data
+
+        Returns
+        -------
+        new_data_inst: Table
+            the output sample data, same format with input
+
+        """
+        LOGGER.info("start to generate exact sampling result")
+        new_data_inst = self.__sample(data_inst, sample_ids)
+        return new_data_inst
+
+    """
+    def __sample(self, data_inst, sample_ids=None):
+        LOGGER.info("start to run exact sampling")
+        return_sample_ids = False
+
+        data_set = list(data_inst.collect())
+        ids = [key for (key, inst) in data_set]
+        id_maps = dict(zip(ids, range(len(ids))))
+
+        if sample_ids is None:
+            return_sample_ids = True
+            data_set = list(data_inst.collect())
+            ids = [key for (key, inst) in data_set]
+            id_maps = dict(zip(ids, range(len(ids))))
+            sample_ids = []
+
+            for key, inst in data_inst.collect():
+                weight = inst.weight
+                if weight is None:
+                    raise ValueError(f"Empty weight encountered. Please check input data.")
+                if weight <= consts.FLOAT_ZERO:
+                    LOGGER.warning(f"zero-weighted sample encountered, will be discarded in final result.")
+                    continue
+                new_key_num = math.ceil(weight)
+                new_key_list = [key] * new_key_num
+                sample_ids.extend(new_key_list)
+        random.shuffle(sample_ids)
+
+        new_data = []
+        for i in range(len(sample_ids)):
+            index = id_maps[sample_ids[i]]
+            new_data.append((i, data_set[index][1]))
+
+        new_data_inst = session.parallelize(new_data,
+                                            include_key=True,
+                                            partition=data_inst.partitions)
+        data_count = new_data_inst.count()
+        if data_count is None:
+            data_count = 0
+            LOGGER.warning(f"All data instances discarded. Please check weight.")
+        callback(self.tracker, "exact_by_weight", [Metric("count", data_count)], summary_dict=self._summary_buf)
+
+        if return_sample_ids:
+            return new_data_inst, sample_ids
+        else:
+            return new_data_inst
+    """
+
+    def __sample(self, data_inst, sample_ids):
+        """
+        Exact sample method, duplicate samples by corresponding weight:
+            if weight <= 0, discard sample; if round(weight) == 1, keep one,
+            else duplicate round(weight) copies of sample
+
+        Parameters
+        ----------
+        data_inst : Table
+            The input data
+
+        sample_ids : Table
+            use the samples_ids the generate data
+
+        Returns
+        -------
+        new_data_inst: Table
+            the output sample data, sample format with input
+
+        """
+        sample_ids_map = data_inst.join(sample_ids, lambda v, ids: (v, ids))
+        def __sample_new_id(k, v_id_map):
+            v, id_map = v_id_map
+            return [(new_id, v) for new_id in id_map]
+        new_data_inst = sample_ids_map.flatMap(functools.partial(__sample_new_id))
+        data_count = new_data_inst.count()
+        if data_count is None:
+            data_count = 0
+            LOGGER.warning(f"All data instances discarded. Please check weight.")
+        callback(self.tracker, "exact_by_weight", [Metric("count", data_count)], summary_dict=self._summary_buf)
+
+        return new_data_inst
+
+
+    def get_summary(self):
+        return self._summary_buf
+
+
 class Sampler(ModelBase):
     """
     Sampling Object
@@ -433,7 +577,9 @@ class Sampler(ModelBase):
                                              sample_param.random_state,
                                              sample_param.method)
             self.sampler.set_tracker(self.tracker)
-
+        elif sample_param.mode == "exact_by_weight":
+            self.sampler = ExactSampler()
+            self.sampler.set_tracker(self.tracker)
         else:
             raise ValueError("{} sampler not support yet".format(sample_param.mde))
 
@@ -528,8 +674,15 @@ class Sampler(ModelBase):
 
         elif task_type == consts.HETERO:
             if task_role == consts.GUEST:
-                sample_data_inst, sample_ids = self.sample(data_inst)
-                self.sync_sample_ids(sample_ids)
+                if self.model_param.mode == "exact_by_weight":
+                    LOGGER.info("start to run exact sampling")
+                    sample_ids = self.sampler.get_sample_ids(data_inst)
+                    self.sync_sample_ids(sample_ids)
+                    sample_data_inst = self.sample(data_inst, sample_ids)
+
+                else:
+                    sample_data_inst, sample_ids = self.sample(data_inst)
+                    self.sync_sample_ids(sample_ids)
 
             elif task_role == consts.HOST:
                 sample_ids = self.recv_sample_ids()
@@ -550,17 +703,6 @@ class Sampler(ModelBase):
     def check_consistency(self):
         pass
 
-    """
-    def run(self, component_parameters, args=None):
-        self._init_runtime_parameters(component_parameters)
-        self._init_role(component_parameters)
-        stage = "fit"
-        if args.get("data", None) is None:
-            return
-
-        self._run_data(args["data"], stage)
-    """
-
     def save_data(self):
         return self.data_output
 
@@ -579,7 +721,7 @@ def callback(tracker, method, callback_metrics, other_metrics=None, summary_dict
 
         summary_dict["sample_count"] = callback_metrics[0].value
 
-    else:
+    elif method == "stratified":
         LOGGER.debug(
             "callback: name {}, namespace {}, metrics_data {}".format("sample_count", "stratified", callback_metrics))
 
@@ -608,3 +750,18 @@ def callback(tracker, method, callback_metrics, other_metrics=None, summary_dict
         summary_dict["original_count"] = {}
         for sample_metric in other_metrics:
             summary_dict["original_count"][sample_metric.key] = sample_metric.value
+
+    else:
+        LOGGER.debug(
+            f"callback: metrics_data {callback_metrics}, summary dict: {summary_dict}")
+
+        tracker.log_metric_data("sample_count",
+                                "exact_by_weight",
+                                callback_metrics)
+
+        tracker.set_metric_meta("sample_count",
+                                "exact_by_weight",
+                                MetricMeta(name="sample_count",
+                                           metric_type="SAMPLE_TEXT"))
+
+        summary_dict["sample_count"] = callback_metrics[0].value
