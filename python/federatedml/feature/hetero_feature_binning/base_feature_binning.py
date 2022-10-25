@@ -212,7 +212,9 @@ class BaseFeatureBinning(ModelBase):
             transform_cols=self.bin_inner_param.transform_bin_indexes,
             transform_type=self.model_param.transform_param.transform_type
         )
-
+        optimal_metric_method = None
+        if self.model_param.method == consts.OPTIMAL:
+            optimal_metric_method = self.model_param.optimal_binning_param.metric_method
         meta_protobuf_obj = feature_binning_meta_pb2.FeatureBinningMeta(
             method=self.model_param.method,
             compress_thres=self.model_param.compress_thres,
@@ -224,7 +226,8 @@ class BaseFeatureBinning(ModelBase):
             local_only=self.model_param.local_only,
             need_run=self.need_run,
             transform_param=transform_param,
-            skip_static=self.model_param.skip_static
+            skip_static=self.model_param.skip_static,
+            optimal_metric_method = optimal_metric_method
         )
         return meta_protobuf_obj
 
@@ -391,6 +394,12 @@ class BaseFeatureBinning(ModelBase):
         self.schema['header'] = self.header
         data_instance.schema = self.schema
         # LOGGER.debug("After Binning, when setting schema, schema is : {}".format(data_instance.schema))
+
+    def set_optimal_metric_array(self, optimal_metric_array_dict):
+        # LOGGER.debug(f"optimal metric array dict: {optimal_metric_array_dict}")
+        for col_name, optimal_metric_array in optimal_metric_array_dict.items():
+            self.bin_result.put_optimal_metric_array(col_name, optimal_metric_array)
+        # LOGGER.debug(f"after set optimal metric, self.bin_result metric is: {self.bin_result.all_optimal_metric}")
 
     def _abnormal_detection(self, data_instances):
         """
