@@ -81,8 +81,12 @@ class Data(object):
         return Data(config=kwargs, role_str=role_str)
 
     def update(self, config: Config):
-        self.config.update(dict(extend_sid=config.extend_sid,
-                                auto_increasing_sid=config.auto_increasing_sid))
+        update_dict = {}
+        if config.extend_sid is not None:
+            update_dict["extend_sid"] = config.extend_sid
+        if config.auto_increasing_sid is not None:
+            update_dict["auto_increasing_sid"] = config.auto_increasing_sid
+        self.config.update(update_dict)
 
 
 class JobConf(object):
