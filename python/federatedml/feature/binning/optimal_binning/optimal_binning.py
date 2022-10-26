@@ -80,16 +80,31 @@ class OptimalBinning(BaseBinning):
                 self.bin_results.put_col_split_points(col_name, split_points)
                 metric_array = [node.score for node in min_heap.node_list]
                 self.bin_results.put_col_optimal_metric_array(col_name, metric_array)
-                LOGGER.debug(f"column {col_name}, split_points: {split_points}, metric array: {metric_array}")
+                # LOGGER.debug(f"column {col_name}, split_points: {split_points}, metric array: {metric_array}")
                 self.bucket_lists[col_name] = bucket_list
         else:
             optimal_binning_method = functools.partial(self.split_optimal_binning,
                                                        optimal_param=self.optimal_param,
                                                        sample_count=sample_count)
             result_bucket = bucket_table.mapValues(optimal_binning_method)
-            for col_name, (bucket_list, non_mixture_num, small_size_num) in result_bucket.collect():
+            for col_name, (bucket_list, non_mixture_num, small_size_num, res_ks_array) in result_bucket.collect():
                 split_points = np.unique([bucket.right_bound for bucket in bucket_list]).tolist()
                 self.bin_results.put_col_split_points(col_name, split_points)
+                """
+                if res_split_ks:
+                    acc_event, acc_non_event =  0, 0
+                    ks_array = []
+                    for bucket in bucket_list:
+                        acc_event += bucket.event_count
+                        acc_non_event += bucket.non_event_count
+                        LOGGER.debug(f"event_total is: {bucket.event_total},  non_event_total is: {bucket.non_event_total}")
+                        ks = math.fabs(acc_event / bucket.event_total - acc_non_event / bucket.non_event_total)
+                        ks_array.append(ks)
+                        self.bin_results.put_col_optimal_metric_array(col_name, ks_array)
+                """
+                self.bin_results.put_col_optimal_metric_array(col_name, res_ks_array)
+                LOGGER.debug(f"column {col_name}, split_points: {split_points}, "
+                             f"metric array: {res_ks_array}")
                 self.bucket_lists[col_name] = bucket_list
         return result_bucket
 
@@ -510,6 +525,7 @@ class OptimalBinning(BaseBinning):
             return res_bucket
 
         res_split_index = []
+        res_split_ks = {}
         to_split_pair = [(0, len(bucket_list))]
 
         # iteratively split
@@ -528,6 +544,7 @@ class OptimalBinning(BaseBinning):
             if res_dict.get('left_total') < min_item_num or res_dict.get('right_total') < min_item_num:
                 continue
             res_split_index.append(best_index + 1)
+            res_split_ks[best_index + 1] = best_ks
 
             if res_dict.get('right_total') > res_dict.get('left_total'):
                 to_split_pair.append((best_index + 1, end))
@@ -541,6 +558,12 @@ class OptimalBinning(BaseBinning):
             LOGGER.warning("Best ks optimal binning fail to split. Take middle split point instead")
             res_split_index.append(len(bucket_list) // 2)
         res_split_index = sorted(res_split_index)
+
+        res_ks = []
+        if res_split_ks:
+            res_ks = [res_split_ks[idx] for idx in res_split_index]
+            # last bin
+            res_ks.append(0.0)
         res_split_index.append(len(bucket_list))
         start = 0
         bucket_res = []
@@ -554,7 +577,8 @@ class OptimalBinning(BaseBinning):
             if new_bucket.total_count < min_item_num:
                 small_size_num += 1
             start = end
-        return bucket_res, non_mixture_num, small_size_num
+
+        return bucket_res, non_mixture_num, small_size_num, res_ks
 
     def bin_sum_to_bucket_list(self, bin_sum, partitions):
         """
