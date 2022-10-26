@@ -8,6 +8,18 @@ PATH = '{}.model_zoo'.format(ML_PATH)
 
 class CustModel(FateTorchLayer, nn.Module):
 
+    r"""A :class: CustModel.
+
+           An interface for your customized model. You can specify your customized model in the model_zoo
+           using this module.
+
+           Args:
+                name: your customized NN module name in the model_zoo, fate will automatically find
+                    and read name.py in the model_zoo
+                **kwargs: kw arguments, will be passed to your customize NN Module
+
+           """
+
     def __init__(self, name, **kwargs):
         super(CustModel, self).__init__()
         assert isinstance(name, str), 'name must be a str, specify the module file in the model_zoo'

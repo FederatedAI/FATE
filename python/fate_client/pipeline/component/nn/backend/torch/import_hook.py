@@ -3,6 +3,7 @@ try:
     from pipeline.component.nn.backend.torch import init as init_
     from pipeline.component.nn.backend.torch import optim as optim_
     from pipeline.component.nn.backend.torch.cust_model import CustModel
+    from pipeline.component.nn.backend.torch.interactive import InteractiveLayer
 except ImportError:
     pass
 
@@ -27,10 +28,12 @@ def fate_torch_hook(torch_module_var):
         monkey_patch(torch_module_var.optim, optim_)
         monkey_patch(torch_module_var.nn.init, init_)
         setattr(torch_module_var.nn, 'CustModel', CustModel)
+        setattr(torch_module_var.nn, 'InteractiveLayer', InteractiveLayer)
 
     elif torch_module_var.__name__ == 'torch.nn':
         monkey_patch(torch_module_var, nn_)
         setattr(torch_module_var, 'CustModel', CustModel)
+        setattr(torch_module_var.nn, 'InteractiveLayer', InteractiveLayer)
 
     elif torch_module_var.__name__ == 'torch.optim':
         monkey_patch(torch_module_var, optim_)

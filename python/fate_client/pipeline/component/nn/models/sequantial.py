@@ -13,7 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from pipeline.component.nn.backend.torch.base import Sequential as tSeq
+from pipeline.component.nn.backend.torch.base import Sequential as Seq
+from pipeline.component.nn.backend.torch.cust_model import CustModel
+from pipeline.component.nn.backend.torch.interactive import InteractiveLayer
 
 
 class Sequential(object):
@@ -24,44 +26,30 @@ class Sequential(object):
     def is_empty(self):
         return self._model is None
 
+    def get_model(self):
+        return self._model
+
     def add(self, layer):
-        _IS_TF_KERAS = False
-        try:
-            import tensorflow as tf
 
-            _IS_TF_KERAS = isinstance(layer, tf.Module)
-        except ImportError:
-            pass
-
-        if _IS_TF_KERAS:
-            layer_type = "keras"
-        elif isinstance(layer, dict):
-            layer_type = "nn"
-        elif hasattr(layer, "__module__") and "fate_torch" in getattr(
+        layer_type = "torch"
+        is_layer = hasattr(layer, "__module__") and "pipeline.component.nn.backend.torch.nn" == getattr(
             layer, "__module__"
-        ):
-            layer_type = "pytorch"
-        elif isinstance(layer, tSeq):
-            layer_type = "pytorch"
-        else:
+        )
+        is_seq = isinstance(layer, Seq)
+        is_cust_model = isinstance(layer, CustModel)
+        is_interactive_layer = isinstance(layer, InteractiveLayer)
+        if not(is_layer or is_cust_model or is_interactive_layer or is_seq):
             raise ValueError("Layer type {} not support yet".format(type(layer)))
 
         self._add_layer(layer, layer_type)
 
-    def _add_layer(self, layer, layer_type):
-        if self._model is None:
-            self._model = _build_model(layer_type)
+    def _add_layer(self, layer, layer_type, replace=True):
+
+        if self._model is None or replace:
+            self._model = Seq()
             self.__config_type = layer_type
 
-        if self.__config_type == layer_type:
-            self._model.add(layer)
-            self.__config_type = layer_type
-        else:
-            raise ValueError(
-                "pre add layer type is {}, not equals to current layer {}".format(
-                    self.__config_type, layer_type
-                )
-            )
+        self._model.add(layer)
 
     def get_layer_type(self):
         return self.__config_type
@@ -73,22 +61,11 @@ class Sequential(object):
         return self._model.get_optimizer_config(optimizer)
 
     def get_network_config(self):
+
         if not self.__config_type:
             raise ValueError("Empty layer find, can't get config")
 
         return self._model.get_network_config()
 
-
-def _build_model(type):
-    if type == "keras":
-        from pipeline.component.nn.backend.keras import model_builder
-
-        return model_builder.build_model()
-
-    if type == "pytorch":
-        return tSeq()
-
-    if type == "nn":
-        from pipeline.component.nn.backend.tf import model_builder
-
-        return model_builder.build_model()
+    def __repr__(self):
+        return self._model.__repr__()

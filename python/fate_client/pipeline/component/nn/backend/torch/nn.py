@@ -5,9 +5,11 @@ from torch import nn
 
 class Bilinear(nn.modules.linear.Bilinear, FateTorchLayer):
 
-    def __init__(self, in1_features, in2_features, out_features, bias=True, **kwargs):
+    def __init__(self, in1_features, in2_features, out_features, bias=True, device=None, dtype=None, **kwargs):
         FateTorchLayer.__init__(self)
         self.param_dict['bias'] = bias
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
         self.param_dict['in1_features'] = in1_features
         self.param_dict['in2_features'] = in2_features
         self.param_dict['out_features'] = out_features
@@ -23,15 +25,42 @@ class Identity(nn.modules.linear.Identity, FateTorchLayer):
         nn.modules.linear.Identity.__init__(self, **self.param_dict)
 
 
-class Linear(nn.modules.linear.Linear, FateTorchLayer):
+class LazyLinear(nn.modules.linear.LazyLinear, FateTorchLayer):
 
-    def __init__(self, in_features, out_features, bias=True, **kwargs):
+    def __init__(self, out_features, bias=True, device=None, dtype=None, **kwargs):
         FateTorchLayer.__init__(self)
         self.param_dict['bias'] = bias
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
+        self.param_dict['out_features'] = out_features
+        self.param_dict.update(kwargs)
+        nn.modules.linear.LazyLinear.__init__(self, **self.param_dict)
+
+
+class Linear(nn.modules.linear.Linear, FateTorchLayer):
+
+    def __init__(self, in_features, out_features, bias=True, device=None, dtype=None, **kwargs):
+        FateTorchLayer.__init__(self)
+        self.param_dict['bias'] = bias
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
         self.param_dict['in_features'] = in_features
         self.param_dict['out_features'] = out_features
         self.param_dict.update(kwargs)
         nn.modules.linear.Linear.__init__(self, **self.param_dict)
+
+
+class NonDynamicallyQuantizableLinear(nn.modules.linear.NonDynamicallyQuantizableLinear, FateTorchLayer):
+
+    def __init__(self, in_features, out_features, bias=True, device=None, dtype=None, **kwargs):
+        FateTorchLayer.__init__(self)
+        self.param_dict['bias'] = bias
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
+        self.param_dict['in_features'] = in_features
+        self.param_dict['out_features'] = out_features
+        self.param_dict.update(kwargs)
+        nn.modules.linear.NonDynamicallyQuantizableLinear.__init__(self, **self.param_dict)
 
 
 class GRU(nn.modules.rnn.GRU, FateTorchLayer):
@@ -44,9 +73,11 @@ class GRU(nn.modules.rnn.GRU, FateTorchLayer):
 
 class GRUCell(nn.modules.rnn.GRUCell, FateTorchLayer):
 
-    def __init__(self, input_size, hidden_size, bias=True, **kwargs):
+    def __init__(self, input_size, hidden_size, bias=True, device=None, dtype=None, **kwargs):
         FateTorchLayer.__init__(self)
         self.param_dict['bias'] = bias
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
         self.param_dict['input_size'] = input_size
         self.param_dict['hidden_size'] = hidden_size
         self.param_dict.update(kwargs)
@@ -63,9 +94,11 @@ class LSTM(nn.modules.rnn.LSTM, FateTorchLayer):
 
 class LSTMCell(nn.modules.rnn.LSTMCell, FateTorchLayer):
 
-    def __init__(self, input_size, hidden_size, bias=True, **kwargs):
+    def __init__(self, input_size, hidden_size, bias=True, device=None, dtype=None, **kwargs):
         FateTorchLayer.__init__(self)
         self.param_dict['bias'] = bias
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
         self.param_dict['input_size'] = input_size
         self.param_dict['hidden_size'] = hidden_size
         self.param_dict.update(kwargs)
@@ -83,13 +116,16 @@ class RNN(nn.modules.rnn.RNN, FateTorchLayer):
 class RNNBase(nn.modules.rnn.RNNBase, FateTorchLayer):
 
     def __init__(self, mode, input_size, hidden_size, num_layers=1, bias=True, batch_first=False, dropout=0.0,
-                 bidirectional=False, **kwargs):
+                 bidirectional=False, proj_size=0, device=None, dtype=None, **kwargs):
         FateTorchLayer.__init__(self)
         self.param_dict['num_layers'] = num_layers
         self.param_dict['bias'] = bias
         self.param_dict['batch_first'] = batch_first
         self.param_dict['dropout'] = dropout
         self.param_dict['bidirectional'] = bidirectional
+        self.param_dict['proj_size'] = proj_size
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
         self.param_dict['mode'] = mode
         self.param_dict['input_size'] = input_size
         self.param_dict['hidden_size'] = hidden_size
@@ -99,10 +135,12 @@ class RNNBase(nn.modules.rnn.RNNBase, FateTorchLayer):
 
 class RNNCell(nn.modules.rnn.RNNCell, FateTorchLayer):
 
-    def __init__(self, input_size, hidden_size, bias=True, nonlinearity='tanh', **kwargs):
+    def __init__(self, input_size, hidden_size, bias=True, nonlinearity='tanh', device=None, dtype=None, **kwargs):
         FateTorchLayer.__init__(self)
         self.param_dict['bias'] = bias
         self.param_dict['nonlinearity'] = nonlinearity
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
         self.param_dict['input_size'] = input_size
         self.param_dict['hidden_size'] = hidden_size
         self.param_dict.update(kwargs)
@@ -111,8 +149,10 @@ class RNNCell(nn.modules.rnn.RNNCell, FateTorchLayer):
 
 class RNNCellBase(nn.modules.rnn.RNNCellBase, FateTorchLayer):
 
-    def __init__(self, input_size, hidden_size, bias, num_chunks, **kwargs):
+    def __init__(self, input_size, hidden_size, bias, num_chunks, device=None, dtype=None, **kwargs):
         FateTorchLayer.__init__(self)
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
         self.param_dict['input_size'] = input_size
         self.param_dict['hidden_size'] = hidden_size
         self.param_dict['bias'] = bias
@@ -124,7 +164,7 @@ class RNNCellBase(nn.modules.rnn.RNNCellBase, FateTorchLayer):
 class Embedding(nn.modules.sparse.Embedding, FateTorchLayer):
 
     def __init__(self, num_embeddings, embedding_dim, padding_idx=None, max_norm=None, norm_type=2.0,
-                 scale_grad_by_freq=False, sparse=False, _weight=None, **kwargs):
+                 scale_grad_by_freq=False, sparse=False, _weight=None, device=None, dtype=None, **kwargs):
         FateTorchLayer.__init__(self)
         self.param_dict['padding_idx'] = padding_idx
         self.param_dict['max_norm'] = max_norm
@@ -132,6 +172,8 @@ class Embedding(nn.modules.sparse.Embedding, FateTorchLayer):
         self.param_dict['scale_grad_by_freq'] = scale_grad_by_freq
         self.param_dict['sparse'] = sparse
         self.param_dict['_weight'] = _weight
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
         self.param_dict['num_embeddings'] = num_embeddings
         self.param_dict['embedding_dim'] = embedding_dim
         self.param_dict.update(kwargs)
@@ -141,7 +183,8 @@ class Embedding(nn.modules.sparse.Embedding, FateTorchLayer):
 class EmbeddingBag(nn.modules.sparse.EmbeddingBag, FateTorchLayer):
 
     def __init__(self, num_embeddings, embedding_dim, max_norm=None, norm_type=2.0, scale_grad_by_freq=False,
-                 mode='mean', sparse=False, _weight=None, **kwargs):
+                 mode='mean', sparse=False, _weight=None, include_last_offset=False, padding_idx=None, device=None,
+                 dtype=None, **kwargs):
         FateTorchLayer.__init__(self)
         self.param_dict['max_norm'] = max_norm
         self.param_dict['norm_type'] = norm_type
@@ -149,6 +192,10 @@ class EmbeddingBag(nn.modules.sparse.EmbeddingBag, FateTorchLayer):
         self.param_dict['mode'] = mode
         self.param_dict['sparse'] = sparse
         self.param_dict['_weight'] = _weight
+        self.param_dict['include_last_offset'] = include_last_offset
+        self.param_dict['padding_idx'] = padding_idx
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
         self.param_dict['num_embeddings'] = num_embeddings
         self.param_dict['embedding_dim'] = embedding_dim
         self.param_dict.update(kwargs)
@@ -173,6 +220,16 @@ class Dropout(nn.modules.dropout.Dropout, FateTorchLayer):
         self.param_dict['inplace'] = inplace
         self.param_dict.update(kwargs)
         nn.modules.dropout.Dropout.__init__(self, **self.param_dict)
+
+
+class Dropout1d(nn.modules.dropout.Dropout1d, FateTorchLayer):
+
+    def __init__(self, p=0.5, inplace=False, **kwargs):
+        FateTorchLayer.__init__(self)
+        self.param_dict['p'] = p
+        self.param_dict['inplace'] = inplace
+        self.param_dict.update(kwargs)
+        nn.modules.dropout.Dropout1d.__init__(self, **self.param_dict)
 
 
 class Dropout2d(nn.modules.dropout.Dropout2d, FateTorchLayer):
@@ -237,8 +294,9 @@ class ELU(nn.modules.activation.ELU, FateTorchLayer):
 
 class GELU(nn.modules.activation.GELU, FateTorchLayer):
 
-    def __init__(self, **kwargs):
+    def __init__(self, approximate='none', **kwargs):
         FateTorchLayer.__init__(self)
+        self.param_dict['approximate'] = approximate
         self.param_dict.update(kwargs)
         nn.modules.activation.GELU.__init__(self, **self.param_dict)
 
@@ -259,6 +317,24 @@ class Hardshrink(nn.modules.activation.Hardshrink, FateTorchLayer):
         self.param_dict['lambd'] = lambd
         self.param_dict.update(kwargs)
         nn.modules.activation.Hardshrink.__init__(self, **self.param_dict)
+
+
+class Hardsigmoid(nn.modules.activation.Hardsigmoid, FateTorchLayer):
+
+    def __init__(self, inplace=False, **kwargs):
+        FateTorchLayer.__init__(self)
+        self.param_dict['inplace'] = inplace
+        self.param_dict.update(kwargs)
+        nn.modules.activation.Hardsigmoid.__init__(self, **self.param_dict)
+
+
+class Hardswish(nn.modules.activation.Hardswish, FateTorchLayer):
+
+    def __init__(self, inplace=False, **kwargs):
+        FateTorchLayer.__init__(self)
+        self.param_dict['inplace'] = inplace
+        self.param_dict.update(kwargs)
+        nn.modules.activation.Hardswish.__init__(self, **self.param_dict)
 
 
 class Hardtanh(nn.modules.activation.Hardtanh, FateTorchLayer):
@@ -301,10 +377,19 @@ class LogSoftmax(nn.modules.activation.LogSoftmax, FateTorchLayer):
         nn.modules.activation.LogSoftmax.__init__(self, **self.param_dict)
 
 
+class Mish(nn.modules.activation.Mish, FateTorchLayer):
+
+    def __init__(self, inplace=False, **kwargs):
+        FateTorchLayer.__init__(self)
+        self.param_dict['inplace'] = inplace
+        self.param_dict.update(kwargs)
+        nn.modules.activation.Mish.__init__(self, **self.param_dict)
+
+
 class MultiheadAttention(nn.modules.activation.MultiheadAttention, FateTorchLayer):
 
     def __init__(self, embed_dim, num_heads, dropout=0.0, bias=True, add_bias_kv=False, add_zero_attn=False, kdim=None,
-                 vdim=None, **kwargs):
+                 vdim=None, batch_first=False, device=None, dtype=None, **kwargs):
         FateTorchLayer.__init__(self)
         self.param_dict['dropout'] = dropout
         self.param_dict['bias'] = bias
@@ -312,6 +397,9 @@ class MultiheadAttention(nn.modules.activation.MultiheadAttention, FateTorchLaye
         self.param_dict['add_zero_attn'] = add_zero_attn
         self.param_dict['kdim'] = kdim
         self.param_dict['vdim'] = vdim
+        self.param_dict['batch_first'] = batch_first
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
         self.param_dict['embed_dim'] = embed_dim
         self.param_dict['num_heads'] = num_heads
         self.param_dict.update(kwargs)
@@ -320,10 +408,12 @@ class MultiheadAttention(nn.modules.activation.MultiheadAttention, FateTorchLaye
 
 class PReLU(nn.modules.activation.PReLU, FateTorchLayer):
 
-    def __init__(self, num_parameters=1, init=0.25, **kwargs):
+    def __init__(self, num_parameters=1, init=0.25, device=None, dtype=None, **kwargs):
         FateTorchLayer.__init__(self)
         self.param_dict['num_parameters'] = num_parameters
         self.param_dict['init'] = init
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
         self.param_dict.update(kwargs)
         nn.modules.activation.PReLU.__init__(self, **self.param_dict)
 
@@ -364,6 +454,15 @@ class SELU(nn.modules.activation.SELU, FateTorchLayer):
         self.param_dict['inplace'] = inplace
         self.param_dict.update(kwargs)
         nn.modules.activation.SELU.__init__(self, **self.param_dict)
+
+
+class SiLU(nn.modules.activation.SiLU, FateTorchLayer):
+
+    def __init__(self, inplace=False, **kwargs):
+        FateTorchLayer.__init__(self)
+        self.param_dict['inplace'] = inplace
+        self.param_dict.update(kwargs)
+        nn.modules.activation.SiLU.__init__(self, **self.param_dict)
 
 
 class Sigmoid(nn.modules.activation.Sigmoid, FateTorchLayer):
@@ -457,7 +556,7 @@ class Threshold(nn.modules.activation.Threshold, FateTorchLayer):
 class Conv1d(nn.modules.conv.Conv1d, FateTorchLayer):
 
     def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True,
-                 padding_mode='zeros', **kwargs):
+                 padding_mode='zeros', device=None, dtype=None, **kwargs):
         FateTorchLayer.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['padding'] = padding
@@ -465,6 +564,8 @@ class Conv1d(nn.modules.conv.Conv1d, FateTorchLayer):
         self.param_dict['groups'] = groups
         self.param_dict['bias'] = bias
         self.param_dict['padding_mode'] = padding_mode
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
         self.param_dict['in_channels'] = in_channels
         self.param_dict['out_channels'] = out_channels
         self.param_dict['kernel_size'] = kernel_size
@@ -475,7 +576,7 @@ class Conv1d(nn.modules.conv.Conv1d, FateTorchLayer):
 class Conv2d(nn.modules.conv.Conv2d, FateTorchLayer):
 
     def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True,
-                 padding_mode='zeros', **kwargs):
+                 padding_mode='zeros', device=None, dtype=None, **kwargs):
         FateTorchLayer.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['padding'] = padding
@@ -483,6 +584,8 @@ class Conv2d(nn.modules.conv.Conv2d, FateTorchLayer):
         self.param_dict['groups'] = groups
         self.param_dict['bias'] = bias
         self.param_dict['padding_mode'] = padding_mode
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
         self.param_dict['in_channels'] = in_channels
         self.param_dict['out_channels'] = out_channels
         self.param_dict['kernel_size'] = kernel_size
@@ -493,7 +596,7 @@ class Conv2d(nn.modules.conv.Conv2d, FateTorchLayer):
 class Conv3d(nn.modules.conv.Conv3d, FateTorchLayer):
 
     def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True,
-                 padding_mode='zeros', **kwargs):
+                 padding_mode='zeros', device=None, dtype=None, **kwargs):
         FateTorchLayer.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['padding'] = padding
@@ -501,6 +604,8 @@ class Conv3d(nn.modules.conv.Conv3d, FateTorchLayer):
         self.param_dict['groups'] = groups
         self.param_dict['bias'] = bias
         self.param_dict['padding_mode'] = padding_mode
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
         self.param_dict['in_channels'] = in_channels
         self.param_dict['out_channels'] = out_channels
         self.param_dict['kernel_size'] = kernel_size
@@ -511,7 +616,7 @@ class Conv3d(nn.modules.conv.Conv3d, FateTorchLayer):
 class ConvTranspose1d(nn.modules.conv.ConvTranspose1d, FateTorchLayer):
 
     def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, output_padding=0, groups=1,
-                 bias=True, dilation=1, padding_mode='zeros', **kwargs):
+                 bias=True, dilation=1, padding_mode='zeros', device=None, dtype=None, **kwargs):
         FateTorchLayer.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['padding'] = padding
@@ -520,6 +625,8 @@ class ConvTranspose1d(nn.modules.conv.ConvTranspose1d, FateTorchLayer):
         self.param_dict['bias'] = bias
         self.param_dict['dilation'] = dilation
         self.param_dict['padding_mode'] = padding_mode
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
         self.param_dict['in_channels'] = in_channels
         self.param_dict['out_channels'] = out_channels
         self.param_dict['kernel_size'] = kernel_size
@@ -530,7 +637,7 @@ class ConvTranspose1d(nn.modules.conv.ConvTranspose1d, FateTorchLayer):
 class ConvTranspose2d(nn.modules.conv.ConvTranspose2d, FateTorchLayer):
 
     def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, output_padding=0, groups=1,
-                 bias=True, dilation=1, padding_mode='zeros', **kwargs):
+                 bias=True, dilation=1, padding_mode='zeros', device=None, dtype=None, **kwargs):
         FateTorchLayer.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['padding'] = padding
@@ -539,6 +646,8 @@ class ConvTranspose2d(nn.modules.conv.ConvTranspose2d, FateTorchLayer):
         self.param_dict['bias'] = bias
         self.param_dict['dilation'] = dilation
         self.param_dict['padding_mode'] = padding_mode
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
         self.param_dict['in_channels'] = in_channels
         self.param_dict['out_channels'] = out_channels
         self.param_dict['kernel_size'] = kernel_size
@@ -549,7 +658,7 @@ class ConvTranspose2d(nn.modules.conv.ConvTranspose2d, FateTorchLayer):
 class ConvTranspose3d(nn.modules.conv.ConvTranspose3d, FateTorchLayer):
 
     def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, output_padding=0, groups=1,
-                 bias=True, dilation=1, padding_mode='zeros', **kwargs):
+                 bias=True, dilation=1, padding_mode='zeros', device=None, dtype=None, **kwargs):
         FateTorchLayer.__init__(self)
         self.param_dict['stride'] = stride
         self.param_dict['padding'] = padding
@@ -558,6 +667,8 @@ class ConvTranspose3d(nn.modules.conv.ConvTranspose3d, FateTorchLayer):
         self.param_dict['bias'] = bias
         self.param_dict['dilation'] = dilation
         self.param_dict['padding_mode'] = padding_mode
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
         self.param_dict['in_channels'] = in_channels
         self.param_dict['out_channels'] = out_channels
         self.param_dict['kernel_size'] = kernel_size
@@ -565,11 +676,130 @@ class ConvTranspose3d(nn.modules.conv.ConvTranspose3d, FateTorchLayer):
         nn.modules.conv.ConvTranspose3d.__init__(self, **self.param_dict)
 
 
+class LazyConv1d(nn.modules.conv.LazyConv1d, FateTorchLayer):
+
+    def __init__(self, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True,
+                 padding_mode='zeros', device=None, dtype=None, **kwargs):
+        FateTorchLayer.__init__(self)
+        self.param_dict['stride'] = stride
+        self.param_dict['padding'] = padding
+        self.param_dict['dilation'] = dilation
+        self.param_dict['groups'] = groups
+        self.param_dict['bias'] = bias
+        self.param_dict['padding_mode'] = padding_mode
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
+        self.param_dict['out_channels'] = out_channels
+        self.param_dict['kernel_size'] = kernel_size
+        self.param_dict.update(kwargs)
+        nn.modules.conv.LazyConv1d.__init__(self, **self.param_dict)
+
+
+class LazyConv2d(nn.modules.conv.LazyConv2d, FateTorchLayer):
+
+    def __init__(self, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True,
+                 padding_mode='zeros', device=None, dtype=None, **kwargs):
+        FateTorchLayer.__init__(self)
+        self.param_dict['stride'] = stride
+        self.param_dict['padding'] = padding
+        self.param_dict['dilation'] = dilation
+        self.param_dict['groups'] = groups
+        self.param_dict['bias'] = bias
+        self.param_dict['padding_mode'] = padding_mode
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
+        self.param_dict['out_channels'] = out_channels
+        self.param_dict['kernel_size'] = kernel_size
+        self.param_dict.update(kwargs)
+        nn.modules.conv.LazyConv2d.__init__(self, **self.param_dict)
+
+
+class LazyConv3d(nn.modules.conv.LazyConv3d, FateTorchLayer):
+
+    def __init__(self, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True,
+                 padding_mode='zeros', device=None, dtype=None, **kwargs):
+        FateTorchLayer.__init__(self)
+        self.param_dict['stride'] = stride
+        self.param_dict['padding'] = padding
+        self.param_dict['dilation'] = dilation
+        self.param_dict['groups'] = groups
+        self.param_dict['bias'] = bias
+        self.param_dict['padding_mode'] = padding_mode
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
+        self.param_dict['out_channels'] = out_channels
+        self.param_dict['kernel_size'] = kernel_size
+        self.param_dict.update(kwargs)
+        nn.modules.conv.LazyConv3d.__init__(self, **self.param_dict)
+
+
+class LazyConvTranspose1d(nn.modules.conv.LazyConvTranspose1d, FateTorchLayer):
+
+    def __init__(self, out_channels, kernel_size, stride=1, padding=0, output_padding=0, groups=1, bias=True,
+                 dilation=1, padding_mode='zeros', device=None, dtype=None, **kwargs):
+        FateTorchLayer.__init__(self)
+        self.param_dict['stride'] = stride
+        self.param_dict['padding'] = padding
+        self.param_dict['output_padding'] = output_padding
+        self.param_dict['groups'] = groups
+        self.param_dict['bias'] = bias
+        self.param_dict['dilation'] = dilation
+        self.param_dict['padding_mode'] = padding_mode
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
+        self.param_dict['out_channels'] = out_channels
+        self.param_dict['kernel_size'] = kernel_size
+        self.param_dict.update(kwargs)
+        nn.modules.conv.LazyConvTranspose1d.__init__(self, **self.param_dict)
+
+
+class LazyConvTranspose2d(nn.modules.conv.LazyConvTranspose2d, FateTorchLayer):
+
+    def __init__(self, out_channels, kernel_size, stride=1, padding=0, output_padding=0, groups=1, bias=True,
+                 dilation=1, padding_mode='zeros', device=None, dtype=None, **kwargs):
+        FateTorchLayer.__init__(self)
+        self.param_dict['stride'] = stride
+        self.param_dict['padding'] = padding
+        self.param_dict['output_padding'] = output_padding
+        self.param_dict['groups'] = groups
+        self.param_dict['bias'] = bias
+        self.param_dict['dilation'] = dilation
+        self.param_dict['padding_mode'] = padding_mode
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
+        self.param_dict['out_channels'] = out_channels
+        self.param_dict['kernel_size'] = kernel_size
+        self.param_dict.update(kwargs)
+        nn.modules.conv.LazyConvTranspose2d.__init__(self, **self.param_dict)
+
+
+class LazyConvTranspose3d(nn.modules.conv.LazyConvTranspose3d, FateTorchLayer):
+
+    def __init__(self, out_channels, kernel_size, stride=1, padding=0, output_padding=0, groups=1, bias=True,
+                 dilation=1, padding_mode='zeros', device=None, dtype=None, **kwargs):
+        FateTorchLayer.__init__(self)
+        self.param_dict['stride'] = stride
+        self.param_dict['padding'] = padding
+        self.param_dict['output_padding'] = output_padding
+        self.param_dict['groups'] = groups
+        self.param_dict['bias'] = bias
+        self.param_dict['dilation'] = dilation
+        self.param_dict['padding_mode'] = padding_mode
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
+        self.param_dict['out_channels'] = out_channels
+        self.param_dict['kernel_size'] = kernel_size
+        self.param_dict.update(kwargs)
+        nn.modules.conv.LazyConvTranspose3d.__init__(self, **self.param_dict)
+
+
 class _ConvNd(nn.modules.conv._ConvNd, FateTorchLayer):
 
     def __init__(self, in_channels, out_channels, kernel_size, stride, padding, dilation, transposed, output_padding,
-                 groups, bias, padding_mode, **kwargs):
+                 groups, bias, padding_mode, device=None, dtype=None, **kwargs):
         FateTorchLayer.__init__(self)
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
         self.param_dict['in_channels'] = in_channels
         self.param_dict['out_channels'] = out_channels
         self.param_dict['kernel_size'] = kernel_size
@@ -593,10 +823,41 @@ class _ConvTransposeMixin(nn.modules.conv._ConvTransposeMixin, FateTorchLayer):
         nn.modules.conv._ConvTransposeMixin.__init__(self, **self.param_dict)
 
 
+class _ConvTransposeNd(nn.modules.conv._ConvTransposeNd, FateTorchLayer):
+
+    def __init__(self, in_channels, out_channels, kernel_size, stride, padding, dilation, transposed, output_padding,
+                 groups, bias, padding_mode, device=None, dtype=None, **kwargs):
+        FateTorchLayer.__init__(self)
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
+        self.param_dict['in_channels'] = in_channels
+        self.param_dict['out_channels'] = out_channels
+        self.param_dict['kernel_size'] = kernel_size
+        self.param_dict['stride'] = stride
+        self.param_dict['padding'] = padding
+        self.param_dict['dilation'] = dilation
+        self.param_dict['transposed'] = transposed
+        self.param_dict['output_padding'] = output_padding
+        self.param_dict['groups'] = groups
+        self.param_dict['bias'] = bias
+        self.param_dict['padding_mode'] = padding_mode
+        self.param_dict.update(kwargs)
+        nn.modules.conv._ConvTransposeNd.__init__(self, **self.param_dict)
+
+
+class _LazyConvXdMixin(nn.modules.conv._LazyConvXdMixin, FateTorchLayer):
+
+    def __init__(self, **kwargs):
+        FateTorchLayer.__init__(self)
+        self.param_dict.update(kwargs)
+        nn.modules.conv._LazyConvXdMixin.__init__(self, **self.param_dict)
+
+
 class Transformer(nn.modules.transformer.Transformer, FateTorchLayer):
 
     def __init__(self, d_model=512, nhead=8, num_encoder_layers=6, num_decoder_layers=6, dim_feedforward=2048,
-                 dropout=0.1, activation='relu', custom_encoder=None, custom_decoder=None, **kwargs):
+                 dropout=0.1, custom_encoder=None, custom_decoder=None, layer_norm_eps=1e-05, batch_first=False,
+                 norm_first=False, device=None, dtype=None, **kwargs):
         FateTorchLayer.__init__(self)
         self.param_dict['d_model'] = d_model
         self.param_dict['nhead'] = nhead
@@ -604,9 +865,13 @@ class Transformer(nn.modules.transformer.Transformer, FateTorchLayer):
         self.param_dict['num_decoder_layers'] = num_decoder_layers
         self.param_dict['dim_feedforward'] = dim_feedforward
         self.param_dict['dropout'] = dropout
-        self.param_dict['activation'] = activation
         self.param_dict['custom_encoder'] = custom_encoder
         self.param_dict['custom_decoder'] = custom_decoder
+        self.param_dict['layer_norm_eps'] = layer_norm_eps
+        self.param_dict['batch_first'] = batch_first
+        self.param_dict['norm_first'] = norm_first
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
         self.param_dict.update(kwargs)
         nn.modules.transformer.Transformer.__init__(self, **self.param_dict)
 
@@ -624,11 +889,16 @@ class TransformerDecoder(nn.modules.transformer.TransformerDecoder, FateTorchLay
 
 class TransformerDecoderLayer(nn.modules.transformer.TransformerDecoderLayer, FateTorchLayer):
 
-    def __init__(self, d_model, nhead, dim_feedforward=2048, dropout=0.1, activation='relu', **kwargs):
+    def __init__(self, d_model, nhead, dim_feedforward=2048, dropout=0.1, layer_norm_eps=1e-05, batch_first=False,
+                 norm_first=False, device=None, dtype=None, **kwargs):
         FateTorchLayer.__init__(self)
         self.param_dict['dim_feedforward'] = dim_feedforward
         self.param_dict['dropout'] = dropout
-        self.param_dict['activation'] = activation
+        self.param_dict['layer_norm_eps'] = layer_norm_eps
+        self.param_dict['batch_first'] = batch_first
+        self.param_dict['norm_first'] = norm_first
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
         self.param_dict['d_model'] = d_model
         self.param_dict['nhead'] = nhead
         self.param_dict.update(kwargs)
@@ -637,9 +907,10 @@ class TransformerDecoderLayer(nn.modules.transformer.TransformerDecoderLayer, Fa
 
 class TransformerEncoder(nn.modules.transformer.TransformerEncoder, FateTorchLayer):
 
-    def __init__(self, encoder_layer, num_layers, norm=None, **kwargs):
+    def __init__(self, encoder_layer, num_layers, norm=None, enable_nested_tensor=False, **kwargs):
         FateTorchLayer.__init__(self)
         self.param_dict['norm'] = norm
+        self.param_dict['enable_nested_tensor'] = enable_nested_tensor
         self.param_dict['encoder_layer'] = encoder_layer
         self.param_dict['num_layers'] = num_layers
         self.param_dict.update(kwargs)
@@ -648,11 +919,16 @@ class TransformerEncoder(nn.modules.transformer.TransformerEncoder, FateTorchLay
 
 class TransformerEncoderLayer(nn.modules.transformer.TransformerEncoderLayer, FateTorchLayer):
 
-    def __init__(self, d_model, nhead, dim_feedforward=2048, dropout=0.1, activation='relu', **kwargs):
+    def __init__(self, d_model, nhead, dim_feedforward=2048, dropout=0.1, layer_norm_eps=1e-05, batch_first=False,
+                 norm_first=False, device=None, dtype=None, **kwargs):
         FateTorchLayer.__init__(self)
         self.param_dict['dim_feedforward'] = dim_feedforward
         self.param_dict['dropout'] = dropout
-        self.param_dict['activation'] = activation
+        self.param_dict['layer_norm_eps'] = layer_norm_eps
+        self.param_dict['batch_first'] = batch_first
+        self.param_dict['norm_first'] = norm_first
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
         self.param_dict['d_model'] = d_model
         self.param_dict['nhead'] = nhead
         self.param_dict.update(kwargs)
@@ -953,12 +1229,15 @@ class _MaxUnpoolNd(nn.modules.pooling._MaxUnpoolNd, FateTorchLayer):
 
 class BatchNorm1d(nn.modules.batchnorm.BatchNorm1d, FateTorchLayer):
 
-    def __init__(self, num_features, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True, **kwargs):
+    def __init__(self, num_features, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True, device=None,
+                 dtype=None, **kwargs):
         FateTorchLayer.__init__(self)
         self.param_dict['eps'] = eps
         self.param_dict['momentum'] = momentum
         self.param_dict['affine'] = affine
         self.param_dict['track_running_stats'] = track_running_stats
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
         self.param_dict['num_features'] = num_features
         self.param_dict.update(kwargs)
         nn.modules.batchnorm.BatchNorm1d.__init__(self, **self.param_dict)
@@ -966,12 +1245,15 @@ class BatchNorm1d(nn.modules.batchnorm.BatchNorm1d, FateTorchLayer):
 
 class BatchNorm2d(nn.modules.batchnorm.BatchNorm2d, FateTorchLayer):
 
-    def __init__(self, num_features, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True, **kwargs):
+    def __init__(self, num_features, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True, device=None,
+                 dtype=None, **kwargs):
         FateTorchLayer.__init__(self)
         self.param_dict['eps'] = eps
         self.param_dict['momentum'] = momentum
         self.param_dict['affine'] = affine
         self.param_dict['track_running_stats'] = track_running_stats
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
         self.param_dict['num_features'] = num_features
         self.param_dict.update(kwargs)
         nn.modules.batchnorm.BatchNorm2d.__init__(self, **self.param_dict)
@@ -979,27 +1261,77 @@ class BatchNorm2d(nn.modules.batchnorm.BatchNorm2d, FateTorchLayer):
 
 class BatchNorm3d(nn.modules.batchnorm.BatchNorm3d, FateTorchLayer):
 
-    def __init__(self, num_features, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True, **kwargs):
+    def __init__(self, num_features, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True, device=None,
+                 dtype=None, **kwargs):
         FateTorchLayer.__init__(self)
         self.param_dict['eps'] = eps
         self.param_dict['momentum'] = momentum
         self.param_dict['affine'] = affine
         self.param_dict['track_running_stats'] = track_running_stats
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
         self.param_dict['num_features'] = num_features
         self.param_dict.update(kwargs)
         nn.modules.batchnorm.BatchNorm3d.__init__(self, **self.param_dict)
 
 
-class SyncBatchNorm(nn.modules.batchnorm.SyncBatchNorm, FateTorchLayer):
+class LazyBatchNorm1d(nn.modules.batchnorm.LazyBatchNorm1d, FateTorchLayer):
 
-    def __init__(self, num_features, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True, process_group=None,
+    def __init__(self, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True, device=None, dtype=None,
                  **kwargs):
         FateTorchLayer.__init__(self)
         self.param_dict['eps'] = eps
         self.param_dict['momentum'] = momentum
         self.param_dict['affine'] = affine
         self.param_dict['track_running_stats'] = track_running_stats
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
+        self.param_dict.update(kwargs)
+        nn.modules.batchnorm.LazyBatchNorm1d.__init__(self, **self.param_dict)
+
+
+class LazyBatchNorm2d(nn.modules.batchnorm.LazyBatchNorm2d, FateTorchLayer):
+
+    def __init__(self, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True, device=None, dtype=None,
+                 **kwargs):
+        FateTorchLayer.__init__(self)
+        self.param_dict['eps'] = eps
+        self.param_dict['momentum'] = momentum
+        self.param_dict['affine'] = affine
+        self.param_dict['track_running_stats'] = track_running_stats
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
+        self.param_dict.update(kwargs)
+        nn.modules.batchnorm.LazyBatchNorm2d.__init__(self, **self.param_dict)
+
+
+class LazyBatchNorm3d(nn.modules.batchnorm.LazyBatchNorm3d, FateTorchLayer):
+
+    def __init__(self, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True, device=None, dtype=None,
+                 **kwargs):
+        FateTorchLayer.__init__(self)
+        self.param_dict['eps'] = eps
+        self.param_dict['momentum'] = momentum
+        self.param_dict['affine'] = affine
+        self.param_dict['track_running_stats'] = track_running_stats
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
+        self.param_dict.update(kwargs)
+        nn.modules.batchnorm.LazyBatchNorm3d.__init__(self, **self.param_dict)
+
+
+class SyncBatchNorm(nn.modules.batchnorm.SyncBatchNorm, FateTorchLayer):
+
+    def __init__(self, num_features, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True, process_group=None,
+                 device=None, dtype=None, **kwargs):
+        FateTorchLayer.__init__(self)
+        self.param_dict['eps'] = eps
+        self.param_dict['momentum'] = momentum
+        self.param_dict['affine'] = affine
+        self.param_dict['track_running_stats'] = track_running_stats
         self.param_dict['process_group'] = process_group
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
         self.param_dict['num_features'] = num_features
         self.param_dict.update(kwargs)
         nn.modules.batchnorm.SyncBatchNorm.__init__(self, **self.param_dict)
@@ -1007,25 +1339,46 @@ class SyncBatchNorm(nn.modules.batchnorm.SyncBatchNorm, FateTorchLayer):
 
 class _BatchNorm(nn.modules.batchnorm._BatchNorm, FateTorchLayer):
 
-    def __init__(self, num_features, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True, **kwargs):
+    def __init__(self, num_features, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True, device=None,
+                 dtype=None, **kwargs):
         FateTorchLayer.__init__(self)
         self.param_dict['eps'] = eps
         self.param_dict['momentum'] = momentum
         self.param_dict['affine'] = affine
         self.param_dict['track_running_stats'] = track_running_stats
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
         self.param_dict['num_features'] = num_features
         self.param_dict.update(kwargs)
         nn.modules.batchnorm._BatchNorm.__init__(self, **self.param_dict)
 
 
-class _NormBase(nn.modules.batchnorm._NormBase, FateTorchLayer):
+class _LazyNormBase(nn.modules.batchnorm._LazyNormBase, FateTorchLayer):
 
-    def __init__(self, num_features, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True, **kwargs):
+    def __init__(self, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True, device=None, dtype=None,
+                 **kwargs):
         FateTorchLayer.__init__(self)
         self.param_dict['eps'] = eps
         self.param_dict['momentum'] = momentum
         self.param_dict['affine'] = affine
         self.param_dict['track_running_stats'] = track_running_stats
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
+        self.param_dict.update(kwargs)
+        nn.modules.batchnorm._LazyNormBase.__init__(self, **self.param_dict)
+
+
+class _NormBase(nn.modules.batchnorm._NormBase, FateTorchLayer):
+
+    def __init__(self, num_features, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True, device=None,
+                 dtype=None, **kwargs):
+        FateTorchLayer.__init__(self)
+        self.param_dict['eps'] = eps
+        self.param_dict['momentum'] = momentum
+        self.param_dict['affine'] = affine
+        self.param_dict['track_running_stats'] = track_running_stats
+        self.param_dict['device'] = device
+        self.param_dict['dtype'] = dtype
         self.param_dict['num_features'] = num_features
         self.param_dict.update(kwargs)
         nn.modules.batchnorm._NormBase.__init__(self, **self.param_dict)
@@ -1077,6 +1430,15 @@ class ReflectionPad2d(nn.modules.padding.ReflectionPad2d, FateTorchLayer):
         self.param_dict['padding'] = padding
         self.param_dict.update(kwargs)
         nn.modules.padding.ReflectionPad2d.__init__(self, **self.param_dict)
+
+
+class ReflectionPad3d(nn.modules.padding.ReflectionPad3d, FateTorchLayer):
+
+    def __init__(self, padding, **kwargs):
+        FateTorchLayer.__init__(self)
+        self.param_dict['padding'] = padding
+        self.param_dict.update(kwargs)
+        nn.modules.padding.ReflectionPad3d.__init__(self, **self.param_dict)
 
 
 class ReplicationPad1d(nn.modules.padding.ReplicationPad1d, FateTorchLayer):
@@ -1190,15 +1552,25 @@ class CosineEmbeddingLoss(nn.modules.loss.CosineEmbeddingLoss, FateTorchLoss):
 
 class CrossEntropyLoss(nn.modules.loss.CrossEntropyLoss, FateTorchLoss):
 
-    def __init__(self, weight=None, size_average=None, ignore_index=-100, reduce=None, reduction='mean', **kwargs):
+    def __init__(self, weight=None, size_average=None, ignore_index=-100, reduce=None, reduction='mean',
+                 label_smoothing=0.0, **kwargs):
         FateTorchLoss.__init__(self)
         self.param_dict['weight'] = weight
         self.param_dict['size_average'] = size_average
         self.param_dict['ignore_index'] = ignore_index
         self.param_dict['reduce'] = reduce
         self.param_dict['reduction'] = reduction
+        self.param_dict['label_smoothing'] = label_smoothing
         self.param_dict.update(kwargs)
         nn.modules.loss.CrossEntropyLoss.__init__(self, **self.param_dict)
+
+
+class GaussianNLLLoss(nn.modules.loss.GaussianNLLLoss, FateTorchLoss):
+
+    def __init__(self, **kwargs):
+        FateTorchLoss.__init__(self)
+        self.param_dict.update(kwargs)
+        nn.modules.loss.GaussianNLLLoss.__init__(self, **self.param_dict)
 
 
 class HingeEmbeddingLoss(nn.modules.loss.HingeEmbeddingLoss, FateTorchLoss):
@@ -1213,13 +1585,24 @@ class HingeEmbeddingLoss(nn.modules.loss.HingeEmbeddingLoss, FateTorchLoss):
         nn.modules.loss.HingeEmbeddingLoss.__init__(self, **self.param_dict)
 
 
+class HuberLoss(nn.modules.loss.HuberLoss, FateTorchLoss):
+
+    def __init__(self, reduction='mean', delta=1.0, **kwargs):
+        FateTorchLoss.__init__(self)
+        self.param_dict['reduction'] = reduction
+        self.param_dict['delta'] = delta
+        self.param_dict.update(kwargs)
+        nn.modules.loss.HuberLoss.__init__(self, **self.param_dict)
+
+
 class KLDivLoss(nn.modules.loss.KLDivLoss, FateTorchLoss):
 
-    def __init__(self, size_average=None, reduce=None, reduction='mean', **kwargs):
+    def __init__(self, size_average=None, reduce=None, reduction='mean', log_target=False, **kwargs):
         FateTorchLoss.__init__(self)
         self.param_dict['size_average'] = size_average
         self.param_dict['reduce'] = reduce
         self.param_dict['reduction'] = reduction
+        self.param_dict['log_target'] = log_target
         self.param_dict.update(kwargs)
         nn.modules.loss.KLDivLoss.__init__(self, **self.param_dict)
 
@@ -1338,11 +1721,12 @@ class PoissonNLLLoss(nn.modules.loss.PoissonNLLLoss, FateTorchLoss):
 
 class SmoothL1Loss(nn.modules.loss.SmoothL1Loss, FateTorchLoss):
 
-    def __init__(self, size_average=None, reduce=None, reduction='mean', **kwargs):
+    def __init__(self, size_average=None, reduce=None, reduction='mean', beta=1.0, **kwargs):
         FateTorchLoss.__init__(self)
         self.param_dict['size_average'] = size_average
         self.param_dict['reduce'] = reduce
         self.param_dict['reduction'] = reduction
+        self.param_dict['beta'] = beta
         self.param_dict.update(kwargs)
         nn.modules.loss.SmoothL1Loss.__init__(self, **self.param_dict)
 
@@ -1374,6 +1758,14 @@ class TripletMarginLoss(nn.modules.loss.TripletMarginLoss, FateTorchLoss):
         nn.modules.loss.TripletMarginLoss.__init__(self, **self.param_dict)
 
 
+class TripletMarginWithDistanceLoss(nn.modules.loss.TripletMarginWithDistanceLoss, FateTorchLoss):
+
+    def __init__(self, **kwargs):
+        FateTorchLoss.__init__(self)
+        self.param_dict.update(kwargs)
+        nn.modules.loss.TripletMarginWithDistanceLoss.__init__(self, **self.param_dict)
+
+
 class _Loss(nn.modules.loss._Loss, FateTorchLoss):
 
     def __init__(self, size_average=None, reduce=None, reduction='mean', **kwargs):
@@ -1395,3 +1787,4 @@ class _WeightedLoss(nn.modules.loss._WeightedLoss, FateTorchLoss):
         self.param_dict['reduction'] = reduction
         self.param_dict.update(kwargs)
         nn.modules.loss._WeightedLoss.__init__(self, **self.param_dict)
+

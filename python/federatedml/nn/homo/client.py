@@ -2,6 +2,7 @@ import json
 import torch
 import tempfile
 import inspect
+from fate_arch.computing.non_distributed import LocalData
 from fate_arch.session import computing_session
 from federatedml.model_base import ModelBase
 from federatedml.nn.dataset.base import get_dataset_class, Dataset
@@ -221,9 +222,14 @@ class HomoNNClient(ModelBase):
     def fit(self, train_input, validate_input=None):
         
         # train input & validate input are DTables or path str
-        
+        if isinstance(train_input, LocalData):
+            train_input = train_input.path
+        if isinstance(validate_input, LocalData):
+            validate_input = validate_input.path
+
         # fate loss callback setting
-        self.callback_meta("loss", "train", MetricMeta(name="train", metric_type="LOSS", extra_metas={"unit_name": "iters"}))
+        self.callback_meta("loss", "train",
+                           MetricMeta(name="train", metric_type="LOSS", extra_metas={"unit_name": "iters"}))
 
         # set random seed
         global_seed(self.torch_seed)
@@ -258,6 +264,9 @@ class HomoNNClient(ModelBase):
 
     def predict(self, cpn_input):
 
+        if isinstance(cpn_input, LocalData):
+            cpn_input = cpn_input.path
+
         LOGGER.info('running predict')
         if self.trainer_inst is None:
             # init model
@@ -277,7 +286,9 @@ class HomoNNClient(ModelBase):
         id_dtable = computing_session.parallelize(id_table, partition=self.partitions, include_key=True)
         pred_dtable = computing_session.parallelize(pred_table, partition=self.partitions, include_key=True)
 
-        return self.predict_score_to_output(id_dtable, pred_dtable, classes)
+        ret_table = self.predict_score_to_output(id_dtable, pred_dtable, classes)
+        LOGGER.debug('ret table info {}'.format(ret_table.schema))
+        return ret_table
 
     def export_model(self):
 
@@ -292,3 +303,30 @@ class HomoNNClient(ModelBase):
         param, meta = get_homo_param_meta(model_dict)
         self.model = (param, meta)
         self.model_loaded = True
+
+    # override function
+    @staticmethod
+    def set_predict_data_schema(predict_datas, schemas):
+        if predict_datas is None:
+            return predict_datas
+        if isinstance(predict_datas, list):
+            predict_data = predict_datas[0]
+            schema = schemas[0]
+        else:
+            predict_data = predict_datas
+            schema = schemas
+        if predict_data is not None:
+            predict_data.schema = {
+                "header": [
+                    "label",
+                    "predict_result",
+                    "predict_score",
+                    "predict_detail",
+                    "type",
+                ],
+                "sid": 'id',
+                "content_type": "predict_result"
+            }
+            if schema.get("match_id_name") is not None:
+                predict_data.schema["match_id_name"] = schema.get("match_id_name")
+        return predict_data

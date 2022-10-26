@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -19,9 +16,8 @@
 
 import pickle
 import numpy as np
-from federatedml.nn.hetero_nn.backend.tf_keras.interactive.drop_out import DropOut
+from federatedml.nn_old.hetero_nn.backend.tf_keras.interactive.drop_out import DropOut
 from federatedml.util.fixpoint_solver import FixedPointEncoder
-from federatedml.nn.backend.tf_keras.nn_model import build_keras
 from federatedml.secureprotol.paillier_tensor import PaillierTensor
 from federatedml.nn_old.hetero_nn.backend.tf_keras.interactive.dense_model import GuestDenseModel
 from federatedml.nn_old.hetero_nn.backend.tf_keras.interactive.dense_model import HostDenseModel

@@ -194,6 +194,7 @@ class DenseModel(object):
 
 
 class GuestDenseModel(DenseModel):
+
     def __init__(self):
         super(GuestDenseModel, self).__init__()
         self.role = "guest"

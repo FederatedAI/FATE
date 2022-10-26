@@ -148,8 +148,8 @@ class HeteroNNParam(BaseParam):
     """
 
     def __init__(self,
+
                  task_type='classification',
-                 config_type="keras",
                  bottom_nn_define=None,
                  top_nn_define=None,
                  interactive_layer_define=None,
@@ -160,6 +160,7 @@ class HeteroNNParam(BaseParam):
                  batch_size=-1,
                  early_stop="diff",
                  tol=1e-5,
+
                  encrypt_param=EncryptParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  predict_param=PredictParam(),
@@ -167,6 +168,7 @@ class HeteroNNParam(BaseParam):
                  validation_freqs=None,
                  early_stopping_rounds=None,
                  metrics=None,
+
                  use_first_metric_only=True,
                  selector_param=SelectorParam(),
                  floating_point_precision=23,
@@ -178,7 +180,6 @@ class HeteroNNParam(BaseParam):
         super(HeteroNNParam, self).__init__()
 
         self.task_type = task_type
-        self.config_type = config_type
         self.bottom_nn_define = bottom_nn_define
         self.interactive_layer_define = interactive_layer_define
         self.interactive_layer_lr = interactive_layer_lr
@@ -209,10 +210,6 @@ class HeteroNNParam(BaseParam):
         self.coae_param = coae_param
 
     def check(self):
-
-        supported_config_type = ["keras", "pytorch"]
-        if self.config_type not in supported_config_type:
-            raise ValueError(f"config_type should be one of {supported_config_type}")
 
         self.optimizer = self._parse_optimizer(self.optimizer)
 
@@ -286,32 +283,3 @@ class HeteroNNParam(BaseParam):
 
         if self._warn_to_deprecate_param("use_first_metric_only", descr, "callback_param's 'use_first_metric_only'"):
             self.callback_param.use_first_metric_only = self.use_first_metric_only
-
-    @staticmethod
-    def _parse_optimizer(opt):
-        """
-        Examples:
-
-            1. "optimize": "SGD"
-            2. "optimize": {
-                "optimizer": "SGD",
-                "learning_rate": 0.05
-            }
-        """
-
-        kwargs = {}
-        if isinstance(opt, str):
-            return SimpleNamespace(optimizer=opt, kwargs=kwargs)
-        elif isinstance(opt, dict):
-            config_type = opt.get('config_type', None)
-            if config_type == 'pytorch':
-                return opt
-            optimizer = opt.get("optimizer", kwargs)
-            if not optimizer:
-                raise ValueError(f"optimizer config: {opt} invalid")
-            kwargs = {k: v for k, v in opt.items() if k != "optimizer"}
-            return SimpleNamespace(optimizer=optimizer, kwargs=kwargs)
-        elif opt is None:
-            return None
-        else:
-            raise ValueError(f"invalid type for optimize: {type(opt)}")

@@ -20,9 +20,11 @@ from fate_arch.common import file_utils
 
 
 def get_data_table_count(path):
-    config_path = os.path.join(path, "config.yaml")
-    config = file_utils.load_yaml_conf(conf_path=config_path)
     count = 0
+    config_path = os.path.join(path, "config.yaml")
+    if not os.path.exists(config_path):
+        return count
+    config = file_utils.load_yaml_conf(conf_path=config_path)
     if config:
         if config.get("type") != "vision":
             raise Exception(f"can not support this type {config.get('type')}")

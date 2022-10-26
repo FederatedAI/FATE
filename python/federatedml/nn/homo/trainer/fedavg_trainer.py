@@ -149,8 +149,6 @@ class FedAVGTrainer(TrainerBase):
                     ids_v, pred_v, label_v = self._predict(validate_set)
                     self.evaluation(ids_v, pred_v, label_v, dataset_type='validate', epoch_idx=i, task_type=self.task_type)
 
-                LOGGER.debug('pred_t {}, label_t {}'.format(pred_t, label_t))
-
             if self.save_freq is not None and ((i+1) % self.save_freq == 0):
                 self.set_checkpoint(self.model, optimizer, i)
                 LOGGER.info('save checkpoint : epoch {}'.format(i))
