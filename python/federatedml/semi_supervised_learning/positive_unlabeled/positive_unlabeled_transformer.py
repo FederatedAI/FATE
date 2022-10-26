@@ -23,7 +23,6 @@ from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.model_base import ModelBase
 from federatedml.model_base import Metric
-from federatedml.feature.instance import Instance
 from federatedml.param.positive_unlabeled_param import PositiveUnlabeledParam
 
 
@@ -43,12 +42,12 @@ class PositiveUnlabeled(ModelBase):
     def probability_process(self, label_score_table):
         def replaced_func(x):
             if x[1] >= self.threshold and x[0] == 0:
-                return Instance(label=1)
+                return 1
             else:
-                return Instance(label=x[0])
+                return x[0]
 
         def summarized_func(r, l):
-            if r.label == 1 and l[0] == 0:
+            if r == 1 and l[0] == 0:
                 return 1
             else:
                 return 0
@@ -134,10 +133,10 @@ class PositiveUnlabeled(ModelBase):
                              metric_data=[Metric("count of converted unlabeled", self.converted_unlabeled_count)])
 
     @staticmethod
-    def replace_instance_label(intersect_inst, label_inst):
-        copied_intersect_inst = copy.deepcopy(intersect_inst)
-        copied_intersect_inst.label = label_inst.label
-        return copied_intersect_inst
+    def replace_instance_label(inst, label):
+        copied_inst = copy.deepcopy(inst)
+        copied_inst.label = label
+        return copied_inst
 
     def fit(self, data_insts):
         LOGGER.info("Convert labels by positive unlabeled transformer")
@@ -159,7 +158,6 @@ class PositiveUnlabeled(ModelBase):
                 replaced_label_table = computing_session.parallelize(self.replaced_label_list,
                                                                      include_key=True,
                                                                      partition=intersect_table.partitions)
-                replaced_label_table = replaced_label_table.mapValues(lambda x: Instance(label=x))
             else:
                 replaced_label_table = self.apply_labeling_strategy(strategy=self.strategy,
                                                                     label_score_table=label_score_table)
