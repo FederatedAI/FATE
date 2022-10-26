@@ -90,28 +90,10 @@ class OptimalBinning(BaseBinning):
             for col_name, (bucket_list, non_mixture_num, small_size_num, res_ks_array) in result_bucket.collect():
                 split_points = np.unique([bucket.right_bound for bucket in bucket_list]).tolist()
                 self.bin_results.put_col_split_points(col_name, split_points)
-                """
-                if res_split_ks:
-                    acc_event, acc_non_event =  0, 0
-                    ks_array = []
-                    for bucket in bucket_list:
-                        acc_event += bucket.event_count
-                        acc_non_event += bucket.non_event_count
-                        LOGGER.debug(f"event_total is: {bucket.event_total},  non_event_total is: {bucket.non_event_total}")
-                        ks = math.fabs(acc_event / bucket.event_total - acc_non_event / bucket.non_event_total)
-                        ks_array.append(ks)
-                        self.bin_results.put_col_optimal_metric_array(col_name, ks_array)
-                """
                 self.bin_results.put_col_optimal_metric_array(col_name, res_ks_array)
-                LOGGER.debug(f"column {col_name}, split_points: {split_points}, "
-                             f"metric array: {res_ks_array}")
+                # LOGGER.debug(f"column {col_name}, split_points: {split_points}, metric array: {res_ks_array}")
                 self.bucket_lists[col_name] = bucket_list
         return result_bucket
-
-    # def __cal_single_col_result(self, col_name, bucket_list):
-    #     result_counts = [[b.event_count, b.non_event_count] for b in bucket_list]
-    #     col_result_obj = self.woe_1d(result_counts, self.adjustment_factor)
-    #     self.bin_results.put_col_results(col_name, col_result_obj)
 
     def init_bucket(self, data_instances):
         header = data_overview.get_header(data_instances)
