@@ -1,19 +1,25 @@
-from ._base import DStorage, Shape, StorageBase
-from ._ops import dispatch_signature2
+from ._base import DStorage, Shape
+from ._ops import _get_dispatch_info, dispatch_signature2
+from ._storage_ops import _ops_dispatch_signature2_local_unknown_unknown
 from ._tensor import Tensor
 
 
 def matmul(a: Tensor, b: Tensor):
-    if not (isinstance(a.storage, DStorage) or isinstance(b.storage, DStorage)):
-        return dispatch_signature2("matmul", a, b, [], {}, bc_shape_validate=False)
+    """
+    If both arguments are 2-D they are multiplied like conventional matrices.
+    If either argument is N-D, N > 2, it is treated as a stack of matrices residing in the last two indexes and broadcast accordingly.
+    If the first argument is 1-D, it is promoted to a matrix by prepending a 1 to its dimensions. After matrix multiplication the prepended 1 is removed.
+    If the second argument is 1-D, it is promoted to a matrix by appending a 1 to its dimensions. After matrix multiplication the appended 1 is removed.
+    """
+    _is_distributed, _device, _dtype = _get_dispatch_info([a, b])
 
-    size_a = a.shape.size
-    size_b = b.shape.size
-    if (s1 := size_a[-1]) != (s2 := size_b[-2:][0]):
-        raise ValueError(
-            "matmul: Input operand 1 has a mismatch in its core dimension 0,"
-            f"signature (n?,k),(k,m?)->(n?,m?) (size {s1} is different from {s2})"
+    # both local
+    if not _is_distributed:
+        storage_op = _ops_dispatch_signature2_local_unknown_unknown(
+            "matmul", _device, _dtype, [], {}
         )
+        storage = storage_op(a.storage, b.storage)
+        return Tensor(storage)
 
     bc_shape_a = a.shape[:-2]
     bc_shape_b = b.shape[:-2]
@@ -26,58 +32,20 @@ def matmul(a: Tensor, b: Tensor):
         # join and matmul
         return dispatch_signature2("matmul", a, b, [], {}, bc_shape_validate=False)
 
-    # if (not isinstance(a, DStorage)) and (not isinstance(b, DStorage)):
-    #     from ._storage_ops import _ops_dispatch_signature2_local_unknown_unknown
-    #     return _ops_dispatch_signature2_local_unknown_unknown("matmul", a.device, a.dtype)
+    mul_shape_a = a.shape[-2:]
+    mul_shape_b = b.shape[-2:]
+    if mul_shape_a.size[-1] != mul_shape_b.size[0]:
+        raise ValueError("matmul: dimension mismatch: should be (..., n) x (...,n,?)")
 
-    # ...
+    if mul_shape_a.is_d_axis(-2) or mul_shape_b.is_d_axis(-1):
+        raise ValueError("not supported distributed axis position")
 
-    # """
-    # If both arguments are 2-D they are multiplied like conventional matrices.
-    # If either argument is N-D, N > 2, it is treated as a stack of matrices residing in the last two indexes and broadcast accordingly.
-    # If the first argument is 1-D, it is promoted to a matrix by prepending a 1 to its dimensions. After matrix multiplication the prepended 1 is removed.
-    # If the second argument is 1-D, it is promoted to a matrix by appending a 1 to its dimensions. After matrix multiplication the appended 1 is removed.
-    # (x, a, 1) (x, 1, b) -> (x, a, b)
-    # """
-    # lshape = self.shape
-    # rshape = other.shape
-    # if (s1 := lshape[-1]) != (s2 := rshape[-2:][0]):
-    #     raise ValueError(
-    #         "matmul: Input operand 1 has a mismatch in its core dimension 0,"
-    #         f"signature (n?,k),(k,m?)->(n?,m?) (size {s1} is different from {s2})"
-    #     )
-    # bs_shape = torch.broadcast_shapes(lshape[:-2], rshape[:-2])
-
-    # if other_d_axis := get_distributed_axis(other) is None:
-    #     # last axis is distributed
-    #     if self._d_axis == len(lshape) - 1:
-    #         # (..., ?) x (...)
-    #         raise ValueError(
-    #             f"matmul: can't matmul distributed tensor with non distributed tensor with operand 0 last dim distributed"
-    #         )
-
-    #     else:
-    #         # (..., d, ?, ...) x (...)
-    #         def _map_func(block):
-    #             return matmul(block, other)
-
-    #         output_blocks_table = self._blocks_table.mapValues(_map_func)
-    # else:
-    #     if self._d_axis == len(lshape) - 2:
-    #         # (..., d, ?) x (..., ?, ...)
-    #         raise ValueError(
-    #             f"matmul: can't matmul distributed tensor with distributed tensor with operand 0 `-2 dim distributed`"
-    #         )
-    #     if self._d_axis == len(lshape) -1 and len(rshape) == 1:
-    #         self._blocks_table.join(other._block_table).mapValues().reduce()
-    #         # (..., d) x (d)
-    #         ...
-    #     if self._d_axis == len(lshape) -1 and len(rshape) - 2 == other_d_axis:
-    #         # (..., d) x (..., d, ?)
-    #         ...
-
-    #     if len(lshape) - self._d_axis == len(rshape) - other_d_axis:
-    #         # (..., d, a1, ..., ak) x (..., d, b1, ..., bk)
-    #         ...
-
-    #     raise ValueError(...)
+    out_storage = a.storage.blocks.join(
+        b.storage.blocks,
+        _ops_dispatch_signature2_local_unknown_unknown(
+            "matmul", _device, _dtype, [], {}
+        ),
+    ).reduce(
+        _ops_dispatch_signature2_local_unknown_unknown("add", _device, _dtype, [], {})
+    )
+    return Tensor(out_storage)

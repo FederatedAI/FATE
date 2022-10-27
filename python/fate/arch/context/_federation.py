@@ -1,64 +1,14 @@
-from typing import Callable, List, Optional, TypeVar
+from typing import List, Optional, TypeVar, Union
 
-from fate.interface import FederationEngine, FPTensor
-from fate.interface import Future as FutureInterface
-from fate.interface import Futures as FuturesInterface
+from fate.interface import FederationEngine
 from fate.interface import Parties as PartiesInterface
 from fate.interface import Party as PartyInterface
-from fate.interface import PartyMeta, PHEEncryptor, PHETensor
+from fate.interface import PartyMeta
 
 from ..federation.transfer_variable import IterationGC
 from ._namespace import Namespace
 
 T = TypeVar("T")
-
-
-class Future(FutureInterface):
-    def __init__(self, inside) -> None:
-        self._inside = inside
-
-    def unwrap_tensor(self) -> "FPTensor":
-
-        assert isinstance(self._inside, FPTensor)
-        return self._inside
-
-    def unwrap_phe_encryptor(self) -> "PHEEncryptor":
-        assert isinstance(self._inside, PHEEncryptor)
-        return self._inside
-
-    def unwrap_phe_tensor(self) -> "PHETensor":
-
-        assert isinstance(self._inside, PHETensor)
-        return self._inside
-
-    def unwrap(self, check: Optional[Callable[[T], bool]] = None) -> T:
-        if check is not None and not check(self._inside):
-            raise TypeError(f"`{self._inside}` check failed")
-        return self._inside
-
-
-class Futures(FuturesInterface):
-    def __init__(self, insides) -> None:
-        self._insides = insides
-
-    def unwrap_tensors(self) -> List["FPTensor"]:
-
-        for t in self._insides:
-            assert isinstance(t, FPTensor)
-        return self._insides
-
-    def unwrap_phe_tensors(self) -> List["PHETensor"]:
-
-        for t in self._insides:
-            assert isinstance(t, PHETensor)
-        return self._insides
-
-    def unwrap(self, check: Optional[Callable[[T], bool]] = None) -> List[T]:
-        if check is not None:
-            for i, t in enumerate(self._insides):
-                if not check(t):
-                    raise TypeError(f"{i}th element `{self._insides}` check failed")
-        return self._insides
 
 
 class GC:
@@ -77,28 +27,45 @@ class GC:
         return self._pull_gc_dict[key]
 
 
+class _KeyedParty:
+    def __init__(self, party: Union["Party", "Parties"], key) -> None:
+        self.party = party
+        self.key = key
+
+    def put(self, value):
+        return self.party.put(self.key, value)
+
+    def get(self):
+        return self.party.get(self.key)
+
+
 class Party(PartyInterface):
-    def __init__(
-        self,
-        federation,
-        party: PartyMeta,
-        namespace,
-    ) -> None:
+    def __init__(self, federation, party: PartyMeta, namespace, key=None) -> None:
         self.federation = federation
         self.party = party
         self.namespace = namespace
+        self.key = key
 
-    def push(self, name: str, value):
-        return _push(
-            self.federation,
-            name,
-            self.namespace,
-            [self.party],
-            value,
-        )
+    def __call__(self, key: str) -> "_KeyedParty":
+        return _KeyedParty(self, key)
 
-    def pull(self, name: str) -> Future:
-        return Future(_pull(self.federation, name, self.namespace, [self.party])[0])
+    def put(self, *args, **kwargs):
+        if args:
+            assert len(args) == 2 and isinstance(
+                args[0], str
+            ), "invalid position parameter"
+            assert (
+                not kwargs
+            ), "keywords paramters not allowed when position parameter provided"
+            kvs = [args]
+        else:
+            kvs = kwargs.items()
+
+        for k, v in kvs:
+            return _push(self.federation, k, self.namespace, [self.party], v)
+
+    def get(self, name: str):
+        return _pull(self.federation, name, self.namespace, [self.party])[0]
 
 
 class Parties(PartiesInterface):
@@ -114,12 +81,11 @@ class Parties(PartiesInterface):
         self.parties = parties
         self.namespace = namespace
 
-    def __call__(self, key: int) -> Party:
-        return Party(
-            self.federation,
-            self.parties[key],
-            self.namespace,
-        )
+    def __getitem__(self, key: int) -> Party:
+        return Party(self.federation, self.parties[key], self.namespace)
+
+    def __call__(self, key: str) -> "_KeyedParty":
+        return _KeyedParty(self, key)
 
     def get_neighbor(self, shift: int, module: bool = False) -> Party:
         start_index = self.get_local_index()
@@ -136,7 +102,7 @@ class Parties(PartiesInterface):
 
     def get_neighbors(self) -> "Parties":
         parties = [party for party in self.parties if party != self.party]
-        return Parties(self.ctx, self.federation, self.party, parties, self.namespace)
+        return Parties(self.federation, self.party, parties, self.namespace)
 
     def get_local_index(self) -> Optional[int]:
         if self.party not in self.parties:
@@ -144,17 +110,22 @@ class Parties(PartiesInterface):
         else:
             return self.parties.index(self.party)
 
-    def push(self, name: str, value):
-        return _push(
-            self.federation,
-            name,
-            self.namespace,
-            self.parties,
-            value,
-        )
+    def put(self, *args, **kwargs):
+        if args:
+            assert len(args) == 2 and isinstance(
+                args[0], str
+            ), "invalid position parameter"
+            assert (
+                not kwargs
+            ), "keywords paramters not allowed when position parameter provided"
+            kvs = [args]
+        else:
+            kvs = kwargs.items()
+        for k, v in kvs:
+            return _push(self.federation, k, self.namespace, self.parties, v)
 
-    def pull(self, name: str) -> Futures:
-        return Futures(_pull(self.federation, name, self.namespace, self.parties))
+    def get(self, name: str):
+        return _pull(self.federation, name, self.namespace, self.parties)
 
 
 def _push(

@@ -55,7 +55,7 @@ def _impl_encrypt(pheblock_cls, fpbloke_cls, encrypt_op):
 
 
 def _impl_decrypt(pheblock_cls, fpbloke_cls, decrypt_op):
-    def decrypt(self, other, dtype=np.float64) -> fpbloke_cls:
+    def decrypt(self, other, dtype=np.float32) -> fpbloke_cls:
         if isinstance(other, pheblock_cls):
             return torch.from_numpy(decrypt_op(self._sk, other._cb, dtype))
         raise NotImplementedError(f"type {other} not supported")

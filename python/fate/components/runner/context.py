@@ -1,12 +1,14 @@
-from typing import List
+from typing import List, Optional
 
-from fate.arch.context import Context, Metric, MetricMeta, Namespace
-from fate.interface import Cache
+from fate.arch.context import Backend, Context, Metric, MetricMeta, Namespace
+from fate.arch.unify import device
+from fate.interface import Cache, ComputingEngine, FederationEngine
+from fate.interface import Logger as LoggerInterface
 from fate.interface import Metric as MetricInterface
 from fate.interface import MetricMeta as MetricMetaInterface
-from fate.interface import Metrics, Summary
+from fate.interface import Metrics, PartyMeta, Summary
 
-from .parser.anonymous import Anonymous, copy
+from .parser.anonymous import copy
 from .parser.checkpoint import CheckpointManager
 
 
@@ -14,7 +16,7 @@ class ComponentContext(Context):
     """
     implement fate.interface.Context for flow runner
 
-    this implemention is specificated for fate.flow, ie:
+    this implemention is specificated for fate.components, ie:
       - `summary` and `metrics` are traceback using flow's track client
       - `metrics` has additional propety `surfix` for CV/Stepwise to log metric separated in fold
       - ...
@@ -22,22 +24,26 @@ class ComponentContext(Context):
 
     def __init__(
         self,
-        role: str,
-        party_id: str,
-        tracker,
-        checkpoint_manager: CheckpointManager,
-        namespace: Namespace,
+        context_name: Optional[str] = None,
+        device: device = device.CPU,
+        computing: Optional[ComputingEngine] = None,
+        federation: Optional[FederationEngine] = None,
+        log: Optional[LoggerInterface] = None,
+        namespace: Optional[Namespace] = None,
     ) -> None:
         self.namespace = namespace
-        self.role = role
-        self.party_id = party_id
 
-        self.tracker = tracker
-        self.checkpoint_manager: CheckpointManager = checkpoint_manager
-        self.summary: ComponentSummary = ComponentSummary(tracker)
-        self.metrics: ComponentsMetrics = ComponentsMetrics(tracker)
+        # self.checkpoint_manager: CheckpointManager = checkpoint_manager
+        # self.summary: ComponentSummary = ComponentSummary(tracker)
+        # self.metrics: ComponentsMetrics = ComponentsMetrics(tracker)
         self.cache: ComponentsCache = ComponentsCache()
-        self.anonymous_generator: Anonymous = Anonymous(role, party_id)
+
+        super().__init__(
+            context_name=context_name,
+            device=device,
+            computing=computing,
+            federation=federation,
+        )
 
 
 class ComponentSummary(Summary):

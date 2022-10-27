@@ -11,8 +11,10 @@ class Namespace:
     ```
     """
 
-    def __init__(self) -> None:
-        self.namespaces = []
+    def __init__(self, namespaces=None) -> None:
+        if namespaces is None:
+            namespaces = []
+        self.namespaces = namespaces
 
     @contextmanager
     def into_subnamespace(self, subnamespace: str):
@@ -29,40 +31,8 @@ class Namespace:
     def fedeation_tag(self) -> str:
         return ".".join(self.namespaces)
 
-    @contextmanager
     def sub_namespace(self, namespace):
-        """
-        into sub_namespace ``, suffix federation namespace with `namespace`
-
-        Examples:
-        ```
-        with ctx.sub_namespace("fit"):
-            ctx.push(..., trans_key, obj)
-
-        with ctx.sub_namespace("predict"):
-            ctx.push(..., trans_key, obj2)
-        ```
-        `obj1` and `obj2` are pushed with different namespace
-        without conflic.
-        """
-
-        prev_namespace_state = self._namespace_state
-
-        # into subnamespace
-        self._namespace_state = NamespaceState(
-            self._namespace_state.sub_namespace(namespace)
-        )
-
-        # return sub_ctx
-        # ```python
-        # with ctx.sub_namespace(xxx) as sub_ctx:
-        #     ...
-        # ```
-        #
-        yield self
-
-        # restore namespace state when leaving with context
-        self._namespace_state = prev_namespace_state
+        return Namespace([*self.namespace, namespace])
 
     @overload
     @contextmanager

@@ -1,7 +1,7 @@
 import contextlib
 import typing
-from collections.abc import Iterator
 from dataclasses import dataclass
+from typing import Iterator
 
 from fate.interface import (
     ModelMeta,

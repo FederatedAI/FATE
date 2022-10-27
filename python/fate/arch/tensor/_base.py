@@ -57,6 +57,9 @@ class StorageBase(metaclass=abc.ABCMeta):
     def to_local(self):
         return self
 
+    def transpose(self) -> "StorageBase":
+        ...
+
 
 class _StorageOpsHandler(Protocol):
     @classmethod
@@ -70,6 +73,22 @@ class Shape:
             size = (size,)
         self.size = size
         self.d_axis = d_axis
+
+    def transpose(self) -> "Shape":
+        if self.d_axis is not None:
+            d_axis = len(self.size) - self.d_axis
+        else:
+            d_axis = None
+        return Shape(self.size, d_axis)
+
+    def is_d_axis(self, axis: int):
+        if self.d_axis is None:
+            return False
+        gap = abs(self.d_axis - axis)
+        return gap == 0 or gap == self.d_axis
+
+    def __len__(self):
+        return len(self.size)
 
     def __str__(self) -> str:
         return f"Shape<size={self.size}, d_axis={self.d_axis}>"
@@ -171,7 +190,7 @@ class Shape:
                 p = d_axis - (len(result) - len(shape.size))
                 if p >= 0 and shape.size[p] != 1:
                     raise RuntimeError(
-                        "Can't broadcast along distritebed axis for Local Storage "
+                        "Can't broadcast along distributed axis for Local Storage "
                     )
         return Shape(result, d_axis)
 

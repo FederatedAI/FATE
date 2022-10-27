@@ -1,10 +1,11 @@
 from typing import List
 
 from fate.interface import Context, Dataframe, ModelsLoader, ModelsSaver, Module, Params
-from federatedml.model_selection.k_fold import KFold
 
 from ..parser.data import Datasets
 from .procedure import Procedure
+
+# from federatedml.model_selection.k_fold import KFold
 
 
 class CrossValidation(Procedure):

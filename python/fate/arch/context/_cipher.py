@@ -1,14 +1,13 @@
 from fate.interface import CipherKit as CipherKitInterface
 
 from ..tensor._phe import PHECipher
-from ..unify import Backend, device
+from ..unify import device
 
 
 class CipherKit(CipherKitInterface):
-    def __init__(self, backend: Backend, device: device) -> None:
-        self.backend = backend
+    def __init__(self, device: device) -> None:
         self.device = device
 
     @property
     def phe(self):
-        return PHECipher(self.backend, self.device)
+        return PHECipher(self.device)

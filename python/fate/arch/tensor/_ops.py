@@ -47,6 +47,31 @@ def _maybe_get_storage(tensor):
         return tensor
 
 
+def _get_dispatch_info(tensors):
+    _is_distributed = False
+    _device = None
+    _dtype = None
+    for tensor in tensors:
+        if isinstance(tensor, Tensor):
+            # set distributed or local
+            _is_distributed = _is_distributed or isinstance(tensor.storage, DStorage)
+
+            # set device
+            if _device is None:
+                _device = tensor.device
+            elif _device != tensor.device:
+                raise OpDispatchInvalidDevice(
+                    f"device mismatch: {_device} and {tensor.device}"
+                )
+
+            # set dtypes
+            if _dtype is None:
+                _dtype = tensor.dtype
+            else:
+                _dtype = _dtype.type_promoted(tensor.dtype)
+    return _is_distributed, _device, _dtype
+
+
 def dispatch_signature1(method, tensor, args, kwargs):
     if not isinstance(tensor, Tensor):
         raise OpsDispatchBadSignatureError(
@@ -80,32 +105,7 @@ def dispatch_signature2(method, tensor, other, args, kwargs, bc_shape_validate=T
                 raise RuntimeError(
                     f"shape broadcast failed: {tensor.shape} and {other.shape}"
                 )
-    _is_distributed = False
-    _device = None
-    _dtype = None
-    for t in [tensor, other]:
-        if isinstance(t, Tensor):
-            # set distributed or local
-            _is_distributed = _is_distributed or isinstance(tensor.storage, DStorage)
-
-            # set device
-            if _device is None:
-                _device = tensor.device
-            elif _device != tensor.device:
-                raise OpDispatchInvalidDevice(
-                    f"device mismatch: {_device} and {tensor.device}"
-                )
-
-            # set dtypes
-            if _dtype is None:
-                _dtype = tensor.dtype
-            else:
-                _dtype = _dtype.type_promoted(other.dtype)
-
-    if not isinstance(tensor, Tensor):
-        raise OpsDispatchBadSignatureError(
-            f"required exactly one tensor input, got {tensor}"
-        )
+    _is_distributed, _device, _dtype = _get_dispatch_info([tensor, other])
     storage_op = _ops_dispatch_signature2_unknown_unknown_unknown(
         method, _is_distributed, _device, _dtype, args, kwargs
     )
@@ -127,7 +127,7 @@ def dispatch_signature3(method, tensor, mapper, reducer, post_func, args, kwargs
         dtype=_dtype,
         mapper=mapper(_device, _dtype),
         reducer=reducer(_device, _dtype),
-        post_func=post_func(_device, _dtype),
+        post_func=None if post_func is None else post_func(_device, _dtype),
         args=args,
         kwargs=kwargs,
     )

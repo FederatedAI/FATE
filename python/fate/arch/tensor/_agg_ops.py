@@ -12,12 +12,12 @@ from ._tensor import Tensor
 
 
 @overload
-def sum(a: Tensor, *, dtype=None):
+def sum(a: Tensor, *, dtype=None) -> Tensor:
     ...
 
 
 @overload
-def sum(a: Tensor, dim, keepdim=False, *, dtype=None):
+def sum(a: Tensor, dim, keepdim=False, *, dtype=None) -> Tensor:
     ...
 
 

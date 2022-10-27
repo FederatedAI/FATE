@@ -1,5 +1,6 @@
 import logging
 from contextlib import contextmanager
+from copy import copy
 from dataclasses import dataclass
 from logging import Logger, getLogger
 from typing import Iterator, List, Optional
@@ -162,7 +163,6 @@ class Context(ContextInterface):
     def __init__(
         self,
         context_name: Optional[str] = None,
-        backend: Backend = Backend.LOCAL,
         device: device = device.CPU,
         computing: Optional[ComputingEngine] = None,
         federation: Optional[FederationEngine] = None,
@@ -188,8 +188,8 @@ class Context(ContextInterface):
         if log is None:
             log = DummyLogger(context_name, self.namespace)
         self.log = log
-        self.cipher: CipherKit = CipherKit(backend, device)
-        self.tensor: TensorKit = TensorKit(computing, backend, device)
+        self.cipher: CipherKit = CipherKit(device)
+        self.tensor: TensorKit = TensorKit(computing, device)
         self.read: ReadKit = ReadKit()
         self.write: WriteKit = WriteKit()
 
@@ -198,6 +198,19 @@ class Context(ContextInterface):
         self._role_to_parties = None
 
         self._gc = GC()
+
+    def with_namespace(self, namespace: Namespace):
+        context = copy(self)
+        context.namespace = namespace
+        return context
+
+    def range(self, end):
+        for i in range(end):
+            yield i, self.with_namespace(self.namespace.sub_namespace(f"{i}"))
+
+    def iter(self, iterable):
+        for i, it in enumerate(iterable):
+            yield self.with_namespace(self.namespace.sub_namespace(f"{i}")), it
 
     @property
     def computing(self):

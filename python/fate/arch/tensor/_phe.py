@@ -3,8 +3,7 @@ from typing import Tuple
 
 from fate.interface import PHECipher as PHECipherInterface
 
-from ..unify import Backend, device
-from ._base import Shape
+from ..unify import device
 
 
 class PHEKind(Enum):
@@ -15,8 +14,7 @@ class PHEKind(Enum):
 
 
 class PHECipher(PHECipherInterface):
-    def __init__(self, backend: Backend, device: device) -> None:
-        self.backend = backend
+    def __init__(self, device: device) -> None:
         self.device = device
 
     def keygen(
@@ -36,7 +34,7 @@ class PHECipher(PHECipherInterface):
                 return PHEEncryptor(encryptor), PHEDecryptor(decryptor)
 
         raise NotImplementedError(
-            f"keygen for kind<{kind}>-distributed<{self.backend}>-device<{self.device}> is not implemented"
+            f"keygen for kind<{kind}>-device<{self.device}> is not implemented"
         )
 
 

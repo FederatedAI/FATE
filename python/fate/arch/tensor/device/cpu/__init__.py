@@ -15,6 +15,9 @@ class _CPUStorage(StorageBase):
         self.shape = shape
         self.data = data
 
+    def transpose(self):
+        return _CPUStorage(self.dtype, self.shape.transpose(), self.data.T)
+
     def __eq__(self, __o: object) -> bool:
         return (
             isinstance(__o, _CPUStorage)
@@ -25,7 +28,7 @@ class _CPUStorage(StorageBase):
         )
 
     def __str__(self) -> str:
-        return f"_CPUStorage({self.device}, {self.dtype}, {self.shape}, {self.data})"
+        return f"_CPUStorage({self.device}, {self.dtype}, {self.shape},\n{self.data})"
 
     def __repr__(self) -> str:
         return self.__str__()

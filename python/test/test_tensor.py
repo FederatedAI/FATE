@@ -1,7 +1,7 @@
 import torch
 from fate.arch import Backend, Context, tensor
 from fate.arch.computing.standalone import CSession
-from fate.arch.context import Context, disable_inner_logs
+from fate.arch.context import Context
 from fate.arch.federation.standalone import StandaloneFederation
 
 # disable_inner_logs()
@@ -25,8 +25,8 @@ ctx2 = Context(
 )
 t1 = tensor.tensor(torch.tensor([[1, 2, 3], [4, 5, 6]]))
 t2 = tensor.tensor(torch.tensor([[7, 8, 9], [10, 11, 12]]))
-ctx.hosts.push("t1", t1)
-t3 = ctx2.guest.pull("t1").unwrap()
+ctx.hosts.push("ttt1", t1)
+t3 = ctx2.guest.pull("ttt1").unwrap()
 print(t3)
 # print(f"t1={t1}")
 # print(f"t2={t2}")

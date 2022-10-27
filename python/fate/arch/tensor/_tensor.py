@@ -31,7 +31,7 @@ def _inject_op_sinature1(func):
     def _wrap(input):
         from ._ops import dispatch_signature1
 
-        return dispatch_signature1(method, input)
+        return dispatch_signature1(method, input, [], {})
 
     return _wrap
 
@@ -42,7 +42,7 @@ def _inject_op_sinature2(func):
     def _wrap(input, other):
         from ._ops import dispatch_signature2
 
-        return dispatch_signature2(method, input, other)
+        return dispatch_signature2(method, input, other, [], {})
 
     return _wrap
 
@@ -50,6 +50,9 @@ def _inject_op_sinature2(func):
 class Tensor:
     def __init__(self, storage: StorageBase) -> None:
         self._storage = storage
+
+    def to(self, party, name: str):
+        return party.put(name, self)
 
     @property
     def dtype(self):
@@ -62,6 +65,10 @@ class Tensor:
     @property
     def device(self):
         return self._storage.device
+
+    @property
+    def T(self):
+        return Tensor(self._storage.transpose())
 
     @property
     def shape(self):
@@ -104,6 +111,9 @@ class Tensor:
         return self.add(other)
 
     def __mul__(self, other):
+        return self.mul(other)
+
+    def __rmul__(self, other):
         return self.mul(other)
 
     def __div__(self, other):
