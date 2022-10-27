@@ -703,8 +703,13 @@ class SparseTagTransformer(object):
         if self.with_match_id:
             match_id_name = schema.get("match_id_name")
             if isinstance(match_id_name, list):
+                if not isinstance(self.match_id_index, int) or self.match_id_index >= len(self.match_id_name):
+                    raise ValueError(f"match id index should between 0 and {len(self.match_id_name) - 1}, "
+                                     f"but {self.match_id_index} is given")
                 self.match_id_name = match_id_name[self.match_id_index]
             else:
+                if self.match_id_index != 0:
+                    raise ValueError("Only One MatchID exist, match_id_index should be 0")
                 self.match_id_name = match_id_name
 
             schema["match_id_name"] = self.match_id_name
