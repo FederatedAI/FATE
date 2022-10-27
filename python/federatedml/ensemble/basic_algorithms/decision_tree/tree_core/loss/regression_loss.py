@@ -236,6 +236,8 @@ class TweedieLoss(object):
         return tweedie_loss_sum / sample_num
 
     def compute_grad(self, y, y_pred):
+        if y < 0:
+            raise ValueError('y < 0, in tweedie loss label must be non-negative, but got {}'.format(y))
         return -y * np.exp((1 - self.rho) * y_pred) + np.exp((2 - self.rho) * y_pred) 
 
     def compute_hess(self, y, y_pred):
