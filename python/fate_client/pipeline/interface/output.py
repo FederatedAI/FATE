@@ -17,9 +17,8 @@
 
 class Output(object):
     def __init__(self, name, data_key=None, model_key=None):
-        if model_key:
-            self.model = Model(name).model
-            self.model_output = Model(name).get_all_output()
+        self.model = Model(name).model if model_key else None
+        self.model_output = Model(name).get_all_output() if model_key else None
 
         if data_key:
             if len(data_key) == 1:
@@ -28,6 +27,19 @@ class Output(object):
             else:
                 self.data = TraditionalMultiOutputData(name)
                 self.data_output = TraditionalMultiOutputData(name).get_all_output()
+        else:
+            self.data = None
+            self.data_output = None
+
+    def get_output(self):
+        output_dict = dict()
+        if self.data_output:
+            output_dict["data"] = self.data_output
+
+        if self.model_output:
+            output_dict["model"] = self.model_output
+
+        return output_dict
 
 
 class Model(object):

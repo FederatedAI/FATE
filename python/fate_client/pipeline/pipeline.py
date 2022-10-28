@@ -1,17 +1,17 @@
-from .executor import FateStandaloneExecutor
-from .utils import FateStandaloneDAG, FateFlowDAG
+from .executor import FateStandaloneExecutor, FateFlowExecutor
+from .entity import FateStandaloneDAG, FateFlowDAG
 from .entity.runtime_entity import Roles
 from .conf.types import SupportRole
 
 
 class Pipeline(object):
-    def __init__(self, executor, *args):
+    def __init__(self, executor):
         self._executor = executor
         self._dag = None
         self._roles = Roles()
 
     def set_leader(self, role, party_id):
-        self._roles.set_leader(role, party_id)
+        self._roles.set_leader(role, str(party_id))
         return self
 
     def set_roles(self, guest=None, host=None, arbiter=None, **kwargs):
@@ -28,6 +28,10 @@ class Pipeline(object):
             if role not in support_roles:
                 raise ValueError(f"role {role} is not support")
 
+            if isinstance(party_id, int):
+                party_id = str(party_id)
+            elif isinstance(party_id, list):
+                party_id = [str(_id) for _id in party_id]
             self._roles.set_role(role, party_id)
 
         return self
@@ -67,5 +71,5 @@ class FateStandalonePipeline(Pipeline):
 
 class FateFlowPipeline(Pipeline):
     def __init__(self, *args):
-        super(FateFlowPipeline, self).__init__(*args)
+        super(FateFlowPipeline, self).__init__(FateFlowExecutor, *args)
         self._dag = FateFlowDAG()

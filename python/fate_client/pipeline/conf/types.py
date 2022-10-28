@@ -1,3 +1,9 @@
+class UriTypes(object):
+    LOCAL = "file"
+    SQL = "sql"
+    LMDB = "lmdb"
+
+
 class SupportRole(object):
     LOCAL = "local"
     GUEST = "guest"
@@ -28,6 +34,8 @@ class InputKey(object):
             keys = [keys]
 
         self._keys = set([key.lower() for key in keys])
+
+        return self
 
     @property
     def keys(self):

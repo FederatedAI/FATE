@@ -29,9 +29,10 @@ class Input(object):
             return self._data_key.keys
 
         if key == "model" and self._model_key:
-            return self._model_key.keys()
+            return self._model_key.keys
 
         if key == "cache" and self._cache_key:
-            return self._cache_key.keys()
+            return self._cache_key.keys
 
         return []
+

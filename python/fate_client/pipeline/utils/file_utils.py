@@ -1,43 +1,24 @@
 import json
-import os.path
+import typing
 from pathlib import Path
+from .uri_tools import parse_uri
 
 
-def construct_local_dir(path, default_suffix=None):
-    if not path:
-        ret_dir = Path.cwd().joinpath("data") # .resolve().as_uri()
-        if default_suffix:
-            for suf in default_suffix:
-                ret_dir = ret_dir.joinpath(suf)
-        ret_dir = ret_dir
-    else:
-        ret_dir = Path(path)
+def construct_local_dir(filepath: typing.Union[Path, str], *suffixes) -> "Path":
+    if not isinstance(filepath, Path):
+        filepath = Path(filepath)
 
-    return ret_dir
-
-
-def generate_dir_uri(path: Path, *suffixes):
     for suf in suffixes:
-        path = path.joinpath(suf)
+        filepath = filepath.joinpath(suf)
 
-    return path.resolve().as_uri()
-
-
-def generate_dir(path: Path, *suffixes) -> "Path":
-    for suf in suffixes:
-        path = path.joinpath(str(suf))
-
-    return path.resolve()
+    return filepath
 
 
-def write_json_file(path, buffer):
-    create_parent_dir(path)
+def write_json_file(path: str, buffer: dict):
+    path = parse_uri(path).path
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w") as fout:
         fout.write(json.dumps(buffer))
         fout.flush()
 
 
-def create_parent_dir(path):
-    parent_dir = Path(path).parent
-    if not os.path.exists(parent_dir):
-        os.makedirs(parent_dir)

@@ -1,8 +1,14 @@
-ip:
-port:
 log_directory:
-job_directory:
-output_data_dir:
-output_model_dir:
-output_metric_dir:
 console_display_log:
+
+fate_standalone:
+    job_directory:
+    output_data_dir:
+    output_model_dir:
+    output_metric_dir:
+    output_status_dir:
+
+fate_flow:
+    ip:
+    port:
+    backend:

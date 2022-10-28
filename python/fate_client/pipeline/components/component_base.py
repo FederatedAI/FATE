@@ -1,4 +1,5 @@
 import copy
+from ..conf.types import LinkKey
 from ..conf.types import SupportRole
 from ..utils.id_gen import get_uuid
 
@@ -16,6 +17,8 @@ class Component(object):
         self._role = None
         self._index = None
         self._callable = True
+        self.input = None
+        self.output = None
 
     def __new__(cls, *args, **kwargs):
         if cls.__name__.lower() not in cls.__instance:
@@ -170,3 +173,12 @@ class Component(object):
 
             if mx_idx >= len(runtime_role_parties):
                 raise ValueError(f"role {role}, index {mx_idx} out of bound")
+
+    def get_input_interface(self):
+        return [(self.input.get_input_key(key="data"), LinkKey.DATA),
+                (self.input.get_input_key(key="model"), LinkKey.MODEL),
+                (self.input.get_input_key(key="cache"), LinkKey.CACHE)
+                ]
+
+    def get_output_interface(self):
+        return self.output.get_output()
