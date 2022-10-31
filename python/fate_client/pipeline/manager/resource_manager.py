@@ -19,7 +19,28 @@ class FateStandaloneResourceManager(object):
         self._status_manager = get_status_manager(conf.OUTPUT_STATUS_DIR)
         self._job_conf_manager = get_job_conf_manager(conf.JOB_DIR)
 
-    def generate_task_runtime_resource(self, session_id: str, role: str, party: str, outputs: dict):
+    def generate_task_runtime_conf(self, session_id: str, computing_id: str, federation_id: str, job_type: str,
+                                   module: str, runtime_parties: dict, role: str,
+                                   party: str, params: dict, inputs: dict, outputs: dict, backends: dict):
+
+        task_runtime_conf = self._job_conf_manager.construct_job_runtime_conf(
+            task_id=session_id,
+            job_type=job_type,
+            module=module,
+            runtime_parties=runtime_parties,
+            role=role,
+            party_id=party,
+            params=params,
+            inputs=inputs,
+            outputs=outputs,
+            backends=backends,
+            computing_id=computing_id,
+            federation_id=federation_id
+        )
+
+        return task_runtime_conf
+
+    def generate_task_outputs(self, session_id: str, role: str, party: str, outputs: dict):
         output_resource = dict()
         if outputs:
             for output_outer_key, output_inner_keys in outputs.items():

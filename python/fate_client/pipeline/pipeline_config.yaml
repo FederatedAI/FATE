@@ -7,6 +7,9 @@ fate_standalone:
     output_model_dir:
     output_metric_dir:
     output_status_dir:
+    computing_engine: "standalone"
+    federation_engine: "standalone"
+    device: "CPU"
 
 fate_flow:
     ip:

@@ -10,23 +10,16 @@ packages = [
     "flow_sdk.client",
     "flow_sdk.client.api",
     "pipeline",
-    "pipeline.backend",
-    "pipeline.component",
-    "pipeline.component.nn",
-    "pipeline.component.nn.backend",
-    "pipeline.component.nn.backend.keras",
-    "pipeline.component.nn.backend.pytorch",
-    "pipeline.component.nn.backend.tf",
-    "pipeline.component.nn.backend.fate_torch",
-    "pipeline.component.nn.models",
-    "pipeline.demo",
+    "pipeline.components",
+    "pipeline.components.fate_components",
+    "pipeline.components.template",
+    "pipeline.conf",
+    "pipeline.entity",
+    "pipeline.executor",
     "pipeline.interface",
-    "pipeline.param",
-    "pipeline.parser",
-    "pipeline.runtime",
-    "pipeline.test",
+    "pipeline.manager",
     "pipeline.utils",
-    "pipeline.utils.invoker",
+    "pipeline.worker",
 ]
 
 package_data = {"": ["*"]}
@@ -40,12 +33,12 @@ install_requires = [
     "requests_toolbelt>=0.9.1,<0.10.0",
     "ruamel.yaml>=0.16.10,<0.17.0",
     "setuptools>=50.0,<51.0",
+    "networkx>=2.8.7"
 ]
 
 entry_points = {
     "console_scripts": [
-        "flow = flow_client.flow:flow_cli",
-        "pipeline = pipeline.pipeline_cli:cli",
+        "flow = flow_client.flow:flow_cli"
     ]
 }
 

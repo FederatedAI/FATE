@@ -18,7 +18,7 @@ def write_json_file(path: str, buffer: dict):
     path = parse_uri(path).path
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w") as fout:
-        fout.write(json.dumps(buffer))
+        fout.write(json.dumps(buffer, indent=2))
         fout.flush()
 
 

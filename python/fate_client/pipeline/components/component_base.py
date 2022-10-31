@@ -13,7 +13,7 @@ class Component(object):
         self._component_param = kwargs
         self._support_roles = None
         self.__party_instance = {}
-        self._module_name = None
+        self._module = None
         self._role = None
         self._index = None
         self._callable = True
@@ -126,14 +126,14 @@ class Component(object):
 
     @property
     def module(self):
-        return self._module_name
+        return self._module
 
     @property
     def support_roles(self):
         return self._support_roles
 
     def component_param(self, **kwargs):
-        for attr, val in kwargs:
+        for attr, val in kwargs.items():
             self._component_param[attr] = val
 
     def get_component_param(self):

@@ -7,6 +7,7 @@ class DAG(object):
         self._dag = nx.DiGraph()
         self._node_def = dict()
 
+        self._node_local_inputs = dict()
         self._links = dict()
 
         self._links[LinkKey.DATA] = dict()
@@ -48,6 +49,16 @@ class DAG(object):
     def get_node(self, src):
         return self._node_def[src]
 
+    def get_runtime_parties(self, node_name):
+        node = self._node_def[node_name]
+        runtime_roles = set(node.get_support_roles()) & set(self._roles.get_runtime_roles())
+        parties = dict()
+        for role in runtime_roles:
+            role_party_list = self._roles.get_party_list_by_role(role)
+            parties[role] = role_party_list
+
+        return parties
+
     def get_node_conf(self, node_name):
         node = self._node_def[node_name]
         runtime_roles = set(node.get_support_roles()) & set(self._roles.get_runtime_roles())
@@ -65,6 +76,9 @@ class DAG(object):
 
         return node_conf
 
+    def get_module(self, node_name):
+        return self._node_def[node_name].module
+
     def set_roles(self, roles):
         self._roles = roles
 
@@ -80,6 +94,7 @@ class DAG(object):
             for inner_key, inner_links in links.items():
                 for dst, sources in inner_links.items():
                     for src in sources:
+                        # TODO: this should be optimize, local input maybe a LocalInputComponent
                         src_node_name, src_link = src.split(".", 1)
                         self.add_edge(src_node_name, dst, attrs={
                             link_outer_key: {
@@ -112,7 +127,7 @@ class DAG(object):
         if not self._is_compiled:
             self.compile()
 
-            
+
 class FateFlowDAG(DAG):
     def __init__(self):
         super(FateFlowDAG, self).__init__()

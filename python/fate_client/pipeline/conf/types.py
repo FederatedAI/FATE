@@ -15,6 +15,12 @@ class SupportRole(object):
         return [cls.LOCAL, cls.GUEST, cls.HOST, cls.ARBITER]
 
 
+class Backend(object):
+    STANDALONE = "standalone"
+    EGGROLL = "EGGROLL"
+    SPARK = "SPARK"
+
+
 class LinkKey(object):
     DATA = "data"
     MODEL = "model"
@@ -101,3 +107,6 @@ class InputCacheKey(InputKey):
             raise ValueError("cache input key does not register in this component")
 
         return "cache"
+
+
+LOCAL_INPUT = "Standalone::local::input"

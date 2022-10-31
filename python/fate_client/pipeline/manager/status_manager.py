@@ -27,7 +27,7 @@ class LocalFSStatusManager(object):
     @classmethod
     def record_finish_status(cls, status_uri):
         uri_obj = parse_uri(status_uri)
-        path = Path(uri_obj.path).joinpath("done")
+        path = Path(uri_obj.path).parent.joinpath("done")
         buf = dict(job_status="done")
 
         write_json_file(str(path), buf)
@@ -35,22 +35,28 @@ class LocalFSStatusManager(object):
     @classmethod
     def get_tasks_status(cls, task_status_uris):
         summary_msg = dict()
+        summary_status = "SUCCESS"
         for obj in task_status_uris:
             try:
-                with open(obj.status_uri, "r") as fin:
+                path = parse_uri(obj.status_uri).path
+                with open(path, "r") as fin:
                     party_status = json.loads(fin.read())
-                    if party_status["retcode"]:
-                        ret_code = 10000
+
+                if party_status["status"]["status"] != "SUCCESS":
+                    summary_status = "FAIL"
             except FileNotFoundError:
-                ret_code = 10001
-                party_status = dict(retcode=10001,
-                                    retmsg="can not start task")
+                party_status = dict(
+                    status=dict(
+                        status="FAIL",
+                        extras="can not start task"
+                    )
+                )
 
             if obj.role not in summary_msg:
                 summary_msg[obj.role] = dict()
             summary_msg[obj.role][obj.party_id] = party_status
 
-        ret = dict(retcode=ret_code,
+        ret = dict(summary_status=summary_status,
                    retmsg=summary_msg)
 
         return ret

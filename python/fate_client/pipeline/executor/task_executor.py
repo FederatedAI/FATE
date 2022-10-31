@@ -18,7 +18,7 @@ class FateStandaloneExecutor(object):
         log_dir_prefix = Path(LogPath.log_directory()).joinpath(session_id)
         print(f"log prefix {log_dir_prefix}")
         # validate param first
-        cls.validate(dag, session_id, log_dir_prefix)
+        # cls.validate(dag, session_id, log_dir_prefix)
 
         # execute nodes
         runtime_entity_dict = cls.run(dag, session_id, log_dir_prefix)
@@ -26,27 +26,37 @@ class FateStandaloneExecutor(object):
 
     @classmethod
     def validate(cls, dag, session_id, log_dir_prefix):
+        task_type = "run_component"
         for node_name in dag.topological_sort():
             log_dir = log_dir_prefix.joinpath("validate_param").joinpath(node_name)
             node_conf = dag.get_node_conf(node_name)
+            module = dag.get_module(node_name)
+            runtime_parties = dag.get_runtime_parties(node_name)
             runtime_entity = FateStandaloneRuntimeEntity(session_id=session_id,
                                                          node_conf=node_conf,
-                                                         node_name=node_name)
+                                                         node_name=node_name,
+                                                         module=module,
+                                                         job_type=task_type,
+                                                         runtime_parties=runtime_parties)
 
-            ret_msg = cls.start_task("validate_params",
+            ret_msg = cls.start_task(task_type,
                                      runtime_entity,
                                      session_id,
                                      log_dir)
 
-            # if ret_msg["retcode"] != 0:
-            #     raise ValueError(f"Validate params are failed, error msg is {ret_msg}")
+            if ret_msg["retcode"] != 0:
+                raise ValueError(f"Validate params are failed, error msg is {ret_msg}")
 
     @classmethod
     def run(cls, dag: FateStandaloneDAG, session_id, log_dir_prefix):
         runtime_entity_dict = dict()
+        task_type = "run_component"
         for node_name in dag.topological_sort():
+            print(f"Running component {node_name}")
             log_dir = log_dir_prefix.joinpath("tasks").joinpath(node_name)
             node_conf = dag.get_node_conf(node_name)
+            module = dag.get_module(node_name)
+            runtime_parties = dag.get_runtime_parties(node_name)
             upstream_node_names = dag.predecessors(node_name)
             inputs = dict()
             outputs = dag.get_node_output_interface(node_name)
@@ -74,20 +84,27 @@ class FateStandaloneExecutor(object):
             runtime_entity = FateStandaloneRuntimeEntity(session_id=session_id,
                                                          node_conf=node_conf,
                                                          node_name=node_name,
+                                                         module=module,
+                                                         job_type=task_type,
+                                                         runtime_parties=runtime_parties,
                                                          inputs=inputs,
                                                          outputs=outputs)
             runtime_entity_dict[node_name] = runtime_entity
 
-            ret_msg = cls.start_task("execute_component",
+            if module == "data_input":
+                continue
+
+            ret_msg = cls.start_task(task_type,
                                      runtime_entity,
                                      session_id,
                                      log_dir)
 
-            cls.clean(session_id, runtime_entity, log_dir_prefix)
+            # cls.clean(session_id, runtime_entity, log_dir_prefix)
 
-            # if ret_msg["retcode"] != 0:
-            #     raise ValueError(f"Execute component {node_name} failed, error msg is {ret_msg}")
+            if ret_msg["summary_status"] != "SUCCESS":
+                raise ValueError(f"Execute component {node_name} failed, error msg is {ret_msg}")
 
+        print("Job Finish Successfully!!!")
         return runtime_entity_dict
 
     @classmethod
@@ -103,8 +120,7 @@ class FateStandaloneExecutor(object):
         exec_cmd_prefix = [
             "python",
             "-m",
-            "fate.components.runner",
-            "--session-id",
+            "fate.components.entrypoint",
             session_id
         ]
         ret_msg = process_task(task_type=task_type,

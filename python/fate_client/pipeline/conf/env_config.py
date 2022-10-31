@@ -70,6 +70,10 @@ class FateStandaloneConfig(object):
     if not OUTPUT_STATUS_DIR:
         OUTPUT_STATUS_DIR = default_path.joinpath("status").as_uri()
 
+    DEVICE = conf.get("device")
+    COMPUTING_ENGINE = conf.get("computing_engine")
+    FEDERATION_ENGINE = conf.get("federation_engine")
+
 
 class LogPath(object):
     @classmethod

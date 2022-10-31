@@ -5,7 +5,7 @@ from .conf.types import SupportRole
 
 
 class Pipeline(object):
-    def __init__(self, executor):
+    def __init__(self, executor, *args):
         self._executor = executor
         self._dag = None
         self._roles = Roles()

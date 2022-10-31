@@ -47,6 +47,7 @@ def process_task(task_type: str, exec_cmd_prefix: list, runtime_entity: FateStan
     task_pools = list()
     task_status_uris = list()
     # task_done_tag_paths = list()
+    mp_ctx = multiprocessing.get_context("fork")
     for role_party_obj in role_party_list:
         role = role_party_obj.role
         party_id = role_party_obj.party_id
@@ -67,13 +68,10 @@ def process_task(task_type: str, exec_cmd_prefix: list, runtime_entity: FateStan
         exec_cmd = copy.deepcopy(exec_cmd_prefix)
         exec_cmd.extend(
             [
-                "--task-type",
-                task_type,
-                "--address",
                 conf_path
             ]
         )
-        task_pools.append(multiprocessing.Process(target=run_task_in_party, kwargs=dict(
+        task_pools.append(mp_ctx.Process(target=run_task_in_party, kwargs=dict(
             exec_cmd=exec_cmd,
             std_log_path=log_path,
             status_manager=status_manager,
@@ -82,9 +80,9 @@ def process_task(task_type: str, exec_cmd_prefix: list, runtime_entity: FateStan
 
         task_pools[-1].start()
 
-    detect_task = multiprocessing.Process(target=run_detect_task,
-                                          kwargs=dict(status_manager=status_manager,
-                                                      status_uris=task_status_uris))
+    detect_task = mp_ctx.Process(target=run_detect_task,
+                                 kwargs=dict(status_manager=status_manager,
+                                             status_uris=task_status_uris))
 
     detect_task.start()
 
