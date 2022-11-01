@@ -2,10 +2,88 @@ ALTER TABLE t_task ADD f_run_port INT;
 ALTER TABLE t_task ADD f_kill_status BOOL NOT NULL DEFAULT FALSE;
 ALTER TABLE t_task ADD f_error_report TEXT;
 
+DROP PROCEDURE IF EXISTS alter_trackingmetric;
+DELIMITER //
+
+CREATE PROCEDURE alter_trackingmetric()
+BEGIN
+    DECLARE done BOOL DEFAULT FALSE;
+    DECLARE date_ CHAR(8);
+
+    DECLARE cur CURSOR FOR SELECT RIGHT(TABLE_NAME, 8) FROM INFORMATION_SCHEMA.TABLES
+        WHERE TABLE_SCHEMA = (SELECT DATABASE()) AND TABLE_NAME LIKE 't\_tracking\_metric\_%';
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+    OPEN cur;
+
+    loop_: LOOP
+        FETCH cur INTO date_;
+        IF done THEN
+            LEAVE loop_;
+        END IF;
+
+        SET @sql = CONCAT(
+            'ALTER TABLE t_tracking_metric_', date_,
+            ' MODIFY f_component_name VARCHAR(30) NOT NULL,',
+            ' ADD INDEX trackingmetric_', date_, '_f_component_name (f_component_name),',
+            ' DROP INDEX trackingmetric_', date_, '_f_task_id,',
+            ' DROP INDEX trackingmetric_', date_, '_f_task_version,',
+            ' MODIFY f_role VARCHAR(10) NOT NULL,',
+            ' DROP INDEX trackingmetric_', date_, '_f_party_id,',
+            ' MODIFY f_metric_namespace VARCHAR(80) NOT NULL,',
+            ' ADD INDEX trackingmetric_', date_, '_f_metric_namespace (f_metric_namespace),',
+            ' MODIFY f_metric_name VARCHAR(80) NOT NULL,',
+            ' ADD INDEX trackingmetric_', date_, '_f_metric_name (f_metric_name);'
+        );
+        PREPARE stmt FROM @sql;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+    END LOOP;
+
+    CLOSE cur;
+END //
+
+DELIMITER ;
+CALL alter_trackingmetric();
+DROP PROCEDURE alter_trackingmetric;
+
 ALTER TABLE t_machine_learning_model_info DROP f_description;
 ALTER TABLE t_machine_learning_model_info DROP f_job_status;
 ALTER TABLE t_machine_learning_model_info ADD f_archive_sha256 VARCHAR(100);
 ALTER TABLE t_machine_learning_model_info ADD f_archive_from_ip VARCHAR(100);
+
+DROP PROCEDURE IF EXISTS alter_componentsummary;
+DELIMITER //
+
+CREATE PROCEDURE alter_componentsummary()
+BEGIN
+    DECLARE done BOOL DEFAULT FALSE;
+    DECLARE date_ CHAR(8);
+
+    DECLARE cur CURSOR FOR SELECT RIGHT(TABLE_NAME, 8) FROM INFORMATION_SCHEMA.TABLES
+        WHERE TABLE_SCHEMA = (SELECT DATABASE()) AND TABLE_NAME LIKE 't\_component\_summary\_%';
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+    OPEN cur;
+
+    loop_: LOOP
+        FETCH cur INTO date_;
+        IF done THEN
+            LEAVE loop_;
+        END IF;
+
+        SET @sql = CONCAT('ALTER TABLE t_component_summary_', date_, ' MODIFY f_component_name VARCHAR(50) NOT NULL;');
+        PREPARE stmt FROM @sql;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+    END LOOP;
+
+    CLOSE cur;
+END //
+
+DELIMITER ;
+CALL alter_componentsummary();
+DROP PROCEDURE alter_componentsummary;
 
 DROP TABLE t_model_operation_log;
 
