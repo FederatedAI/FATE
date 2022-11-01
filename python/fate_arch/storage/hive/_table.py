@@ -91,7 +91,7 @@ class StorageTable(StorageTableBase):
         create_table = "create table if not exists {}(k varchar(128) NOT NULL, v string) row format delimited fields terminated by" \
                        " '{}'".format(self._address.name, id_delimiter)
         self._cur.execute(create_table)
-        tuples=",".join([f'("{k}"{hive_utils._DELIMITER}"{pickle.dumps(v).hex()}")' for k,v in kv_list])
+        tuples = ",".join([f'("{k}"{hive_utils._DELIMITER}"{pickle.dumps(v).hex()}")' for k, v in kv_list])
         sql = "insert into  {} values {} ".format(
             self._address.name, tuples
         )
