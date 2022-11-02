@@ -11,7 +11,6 @@ class device(Enum):
 
 
 class Backend(Enum):
-    LOCAL = "LOCAL"
     STANDALONE = "STANDALONE"
     EGGROLL = "EGGROLL"
     SPARK = "SPARK"

@@ -50,8 +50,9 @@ class LrModuleHost(HeteroModule):
         l1_ratio=None,
     ):
         self.max_iter = max_iter
-        self.batch_size = 100
-        self.alpha = 0.01
+        self.learning_rate = 0.1
+        self.alpha = 1.0
+        self.batch_size = 1000
 
     def fit(self, ctx: Context, train_data) -> None:
         # mock data
@@ -66,12 +67,17 @@ class LrModuleHost(HeteroModule):
             logger.info(f"start iter {i}")
             j = 0
             for batch_ctx, X in iter_ctx.iter(train_data.batches(self.batch_size)):
+                h = X.shape[0]
                 logger.info(f"start batch {j}")
-                d_host = 0.25 * tensor.matmul(X, w)
-                batch_ctx.guest.put(d_host=encryptor.encrypt(d_host))
+                Xw_h = 0.25 * tensor.matmul(X, w)
+                encryptor.encrypt(Xw_h).to(batch_ctx.guest, "Xw_h")
+                encryptor.encrypt(tensor.matmul(Xw_h.T, Xw_h)).to(
+                    batch_ctx.guest, "Xw2_h"
+                )
                 d = batch_ctx.guest.get("d")
                 tensor.matmul(X.T, d).to(batch_ctx.arbiter, "g_enc")
-                g_plain = batch_ctx.arbiter.get("g")
-                w -= (self.alpha / self.batch_size) * g_plain
-                logger.info(w)
+                g = batch_ctx.arbiter.get("g")
+                g += self.alpha * w
+                w -= (self.learning_rate / h) * g
+                logger.info(f"w={w}")
                 j += 1

@@ -107,8 +107,14 @@ class Tensor:
     def __add__(self, other):
         return self.add(other)
 
-    def __sub__(self, other):
+    def __radd__(self, other):
         return self.add(other)
+
+    def __sub__(self, other):
+        return self.sub(other)
+
+    def __rsub__(self, other):
+        return self.rsub(other)
 
     def __mul__(self, other):
         return self.mul(other)
@@ -122,6 +128,11 @@ class Tensor:
     def __truediv__(self, other):
         return self.truediv(other)
 
+    def __matmul__(self, other):
+        from ._matmul_ops import matmul
+
+        return matmul(self, other)
+
     """and others"""
 
     @_inject_op_sinature2
@@ -130,6 +141,10 @@ class Tensor:
 
     @_inject_op_sinature2
     def sub(self, other) -> "Tensor":
+        ...
+
+    @_inject_op_sinature2
+    def rsub(self, other) -> "Tensor":
         ...
 
     @_inject_op_sinature2

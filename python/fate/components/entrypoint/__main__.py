@@ -29,10 +29,10 @@ import rich
 
 # temporary for pretty debug
 import rich.logging
+from rich.traceback import install
 
-# from rich.traceback import install
-# install(show_locals=True, width=None)
-# handler = rich.logging.RichHandler(rich_tracebacks=True)
+install(show_locals=True, width=None)
+handler = rich.logging.RichHandler(rich_tracebacks=True)
 handler = logging.StreamHandler(sys.stderr)
 logging.basicConfig(handlers=[handler], level=logging.DEBUG)
 

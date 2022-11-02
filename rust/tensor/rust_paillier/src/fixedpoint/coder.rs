@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 const FLOAT_MANTISSA_BITS: u32 = 53;
 const LOG2_BASE: u32 = 4;
 const BASE: u32 = 16;
-const MAX_INT_FRACTION: u8 = 3;
+const MAX_INT_FRACTION: u8 = 2;
 
 /// fixedpoint encoder
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -94,6 +94,7 @@ impl FixedpointCoder {
         } else if significant >= BInt::from(&self.n - &self.max_int) {
             significant - &self.n
         } else {
+            format!("Overflow detected in decrypted number: {:?}", significant);
             panic!("Overflow detected in decrypted number")
         };
         if encoded.exp >= 0 {

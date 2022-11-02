@@ -33,7 +33,7 @@ class LrModuleArbiter(HeteroModule):
         self.batch_size = 5
 
     def fit(self, ctx: Context, train_data) -> None:
-        encryptor, decryptor = ctx.cipher.phe.keygen(options=dict(key_length=2048))
+        encryptor, decryptor = ctx.cipher.phe.keygen(options=dict(key_length=1024))
         ctx.guest("encryptor").put(encryptor)  # ctx.guest.put("encryptor", encryptor)
         ctx.hosts("encryptor").put(encryptor)
         num_batch = ctx.guest.get("num_batch")
@@ -42,6 +42,10 @@ class LrModuleArbiter(HeteroModule):
         for _, iter_ctx in ctx.range(self.max_iter):
             for _, batch_ctx in iter_ctx.range(num_batch):
                 g_guest_enc = batch_ctx.guest.get("g_enc")
-                batch_ctx.guest.put("g", decryptor.decrypt(g_guest_enc))
+                g = decryptor.decrypt(g_guest_enc)
+                batch_ctx.guest.put("g", g)
                 for i, g_host_enc in enumerate(batch_ctx.hosts.get("g_enc")):
-                    batch_ctx.hosts[i].put("g", decryptor.decrypt(g_host_enc))
+                    g = decryptor.decrypt(g_host_enc)
+                    batch_ctx.hosts[i].put("g", g)
+                loss = decryptor.decrypt(batch_ctx.guest.get("loss"))
+                logger.info(f"loss={loss}")

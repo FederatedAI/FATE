@@ -4,7 +4,7 @@ from ._storage_ops import _ops_dispatch_signature2_local_unknown_unknown
 from ._tensor import Tensor
 
 
-def matmul(a: Tensor, b: Tensor):
+def matmul(a: Tensor, b: Tensor) -> Tensor:
     """
     If both arguments are 2-D they are multiplied like conventional matrices.
     If either argument is N-D, N > 2, it is treated as a stack of matrices residing in the last two indexes and broadcast accordingly.

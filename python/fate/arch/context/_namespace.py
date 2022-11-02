@@ -1,5 +1,8 @@
+import logging
 from contextlib import contextmanager
 from typing import Generator, overload
+
+logger = logging.getLogger(__name__)
 
 
 class Namespace:
@@ -32,7 +35,7 @@ class Namespace:
         return ".".join(self.namespaces)
 
     def sub_namespace(self, namespace):
-        return Namespace([*self.namespace, namespace])
+        return Namespace([*self.namespaces, namespace])
 
     @overload
     @contextmanager

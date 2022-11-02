@@ -131,7 +131,6 @@ fn checked_shape_cipherblock_rmatmul_plaintext_ix2<T>(
     lhs: ArrayView2<T>,
     rhs: &Cipherblock,
 ) -> (usize, usize, usize) {
-    println!("{:?}, {:?}", lhs.dim(), rhs.shape);
     if rhs.shape.len() != 2 || rhs.shape[0] != lhs.dim().1 {
         panic!("dot shape error: ({:?}) x ({:?})", lhs.dim(), rhs.shape);
     }

@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from typing import Iterable, Iterator, Protocol, Tuple, TypeVar
+from typing import Iterable, Iterator, List, Protocol, Tuple, TypeVar
 
 from ._anonymous import Anonymous
 from ._cache import Cache
@@ -38,4 +38,28 @@ class Context(Protocol):
         ...
 
     def iter(self, iterable: Iterable[T]) -> Iterator[Tuple["Context", T]]:
+        ...
+
+    def from_guest(self, key: str):
+        ...
+
+    def to_guest(self, key: str, value):
+        ...
+
+    def from_arbiter(self, key: str):
+        ...
+
+    def to_arbiter(self, key: str, value):
+        ...
+
+    def from_hosts(self, key: str) -> List:
+        ...
+
+    def to_hosts(self, key: str, value):
+        ...
+
+    def from_host(self, key: str, index):
+        ...
+
+    def to_host(self, key: str, value, index):
         ...
