@@ -1,10 +1,13 @@
-from typing import List, Optional, TypeVar, Union
+import io
+import pickle
+from typing import Any, List, Optional, TypeVar, Union
 
 from fate.interface import FederationEngine
 from fate.interface import Parties as PartiesInterface
 from fate.interface import Party as PartyInterface
 from fate.interface import PartyMeta
 
+from ..computing import is_table
 from ..federation.transfer_variable import IterationGC
 from ._namespace import Namespace
 
@@ -135,15 +138,8 @@ def _push(
     parties: List[PartyMeta],
     value,
 ):
-    if hasattr(value, "__federation_hook__"):
-        value.__federation_hook__(federation, name, namespace.fedeation_tag(), parties)
-    else:
-        federation.push(
-            v=value,
-            name=name,
-            tag=namespace.fedeation_tag(),
-            parties=parties,
-        )
+    tag = namespace.fedeation_tag()
+    _TableRemotePersistentPickler.push(value, federation, name, tag, parties)
 
 
 def _pull(
@@ -159,9 +155,91 @@ def _pull(
         parties=parties,
     )
     values = []
-    for party, raw_value in zip(parties, raw_values):
-        if hasattr(raw_value, "__do_deserialize__"):
-            values.append(raw_value.__do_deserialize__(federation, name, tag, party))
-        else:
-            values.append(raw_value)
+    for party, buffers in zip(parties, raw_values):
+        values.append(
+            _TableRmotePersistentUnpickler.pull(buffers, federation, name, tag, party)
+        )
     return values
+
+
+class _TablePersistantId:
+    def __init__(self, key) -> None:
+        self.key = key
+
+
+class _TableRemotePersistentPickler(pickle.Pickler):
+    def __init__(
+        self,
+        federation: FederationEngine,
+        name: str,
+        tag: str,
+        parties: List[PartyMeta],
+        f,
+    ) -> None:
+        self._federation = federation
+        self._name = name
+        self._tag = tag
+        self._parties = parties
+
+        self._tables = {}
+        self._table_index = 0
+        super().__init__(f)
+
+    def _get_next_table_key(self):
+        # or uuid?
+        return f"{self._name}__table_persistent_{self._table_index}__"
+
+    def persistent_id(self, obj: Any) -> Any:
+        if is_table(obj):
+            key = self._get_next_table_key()
+            self._federation.push(v=obj, name=key, tag=self._tag, parties=self._parties)
+            self._table_index += 1
+            return _TablePersistantId(key)
+
+    @classmethod
+    def push(
+        cls,
+        value,
+        federation: FederationEngine,
+        name: str,
+        tag: str,
+        parties: List[PartyMeta],
+    ):
+        with io.BytesIO() as f:
+            pickler = _TableRemotePersistentPickler(federation, name, tag, parties, f)
+            pickler.dump(value)
+            federation.push(v=f.getvalue(), name=name, tag=tag, parties=parties)
+
+
+class _TableRmotePersistentUnpickler(pickle.Unpickler):
+    def __init__(
+        self,
+        federation: FederationEngine,
+        name: str,
+        tag: str,
+        party: PartyMeta,
+        f,
+    ):
+        self._federation = federation
+        self._name = name
+        self._tag = tag
+        self._party = party
+        super().__init__(f)
+
+    def persistent_load(self, pid: Any) -> Any:
+        if isinstance(pid, _TablePersistantId):
+            table = self._federation.pull(pid.key, self._tag, [self._party])[0]
+            return table
+
+    @classmethod
+    def pull(
+        cls,
+        buffers,
+        federation: FederationEngine,
+        name: str,
+        tag: str,
+        party: PartyMeta,
+    ):
+        with io.BytesIO(buffers) as f:
+            unpickler = _TableRmotePersistentUnpickler(federation, name, tag, party, f)
+            return unpickler.load()

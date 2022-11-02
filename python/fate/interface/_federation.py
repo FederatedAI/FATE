@@ -32,13 +32,3 @@ class FederationWrapper(Protocol):
     hosts: Parties
     arbiter: Party
     parties: Parties
-
-
-class FederationDeserializer(Protocol):
-    def __do_deserialize__(
-        self,
-        federation: FederationEngine,
-        tag: str,
-        party: PartyMeta,
-    ):
-        ...

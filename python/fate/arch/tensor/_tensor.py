@@ -1,7 +1,7 @@
 from typing import List
 
 import torch
-from fate.interface import Context, FederationDeserializer, FederationEngine, PartyMeta
+from fate.interface import Context
 
 from ._base import DStorage, Shape, StorageBase, dtype
 
@@ -79,22 +79,6 @@ class Tensor:
             return Tensor(self._storage.to_local())
         return self
 
-    def __federation_hook__(
-        self,
-        federation: FederationEngine,
-        name: str,
-        tag: str,
-        parties: List[PartyMeta],
-    ):
-        if not isinstance(self.storage, DStorage):
-            return federation.push(self, name, tag, parties)
-        else:
-            deserializer = TensorFederationDeserializer(name, self.storage)
-            # 1. remote deserializer with objs
-            federation.push(deserializer, name, tag, parties)
-            # 2. remote table
-            federation.push(self.storage.blocks, deserializer.table_key, tag, parties)
-
     def __eq__(self, __o: object) -> bool:
         return isinstance(__o, Tensor) and self._storage == __o._storage
 
@@ -158,20 +142,3 @@ class Tensor:
     @_inject_op_sinature2
     def truediv(self, other) -> "Tensor":
         ...
-
-
-class TensorFederationDeserializer(FederationDeserializer):
-    def __init__(self, key, storage) -> None:
-        self.table_key = f"__tensor_{key}__"
-        self.storage = storage
-
-    def __do_deserialize__(
-        self,
-        federation: FederationEngine,
-        name: str,
-        tag: str,
-        party: PartyMeta,
-    ) -> Tensor:
-        blocks = federation.pull(name=self.table_key, tag=tag, parties=[party])[0]
-        self.storage.blocks = blocks
-        return Tensor(self.storage)

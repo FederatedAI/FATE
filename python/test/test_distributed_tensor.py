@@ -11,7 +11,6 @@ if __name__ == "__main__":
         _computing = CSession()
         ctx = Context(
             "guest",
-            backend=Backend.STANDALONE,
             computing=_computing,
             federation=StandaloneFederation(_computing, fed_id, local_party, parties),
         )
@@ -35,8 +34,8 @@ if __name__ == "__main__":
             torch.tensor([[1, 2, 3], [4, 5, 6]]),
         ],
     )
-    ctx1.hosts.push("tensor", t1)
-    t3 = ctx2.guest.pull("tensor").unwrap()
+    ctx1.hosts.put("tensor", t1)
+    t3 = ctx2.guest.get("tensor")
     print(t3.storage.collect())
 
     # lt1 = tensor.tensor(torch.tensor([[1, 2, 3]]))
