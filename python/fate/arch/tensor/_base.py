@@ -96,6 +96,10 @@ class Shape:
     def __repr__(self) -> str:
         return self.__str__()
 
+    def slice(self, key):
+        if isinstance(key, int):
+            ...
+
     @overload
     def __getitem__(self, key: int) -> int:
         ...
@@ -268,6 +272,21 @@ class DStorage(StorageBase):
             enumerate(storages), partition=partitions, include_key=True
         )
         return DStorage(blocks, Shape(shape_size, d_axis), d_type, device)
+
+    @classmethod
+    def unary_op(
+        cls,
+        a: "DStorage",
+        mapper: Callable[[StorageBase], StorageBase],
+        output_shape: Optional[Shape] = None,
+        output_dtype=None,
+    ):
+        output_block = a.blocks.mapValues(mapper)
+        if output_dtype is None:
+            output_dtype = a._dtype
+        if output_shape is None:
+            output_shape = a.shape
+        return DStorage(output_block, output_shape, output_dtype, a._device)
 
     @classmethod
     def elemwise_unary_op(

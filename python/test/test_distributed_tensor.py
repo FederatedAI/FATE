@@ -34,9 +34,10 @@ if __name__ == "__main__":
             torch.tensor([[1, 2, 3], [4, 5, 6]]),
         ],
     )
-    ctx1.hosts.put("tensor", t1)
-    t3 = ctx2.guest.get("tensor")
-    print(t3.storage.collect())
+    print(t1[1].storage.collect())
+    # ctx1.hosts.put("tensor", t1)
+    # t3 = ctx2.guest.get("tensor")
+    # print(t3.storage.collect())
 
     # lt1 = tensor.tensor(torch.tensor([[1, 2, 3]]))
     # pprint.pprint(f"t1={t1.to_local()}")

@@ -8,6 +8,7 @@ from .device import (
 )
 
 
+# signature1: elemwise (tensor) -> tensor
 def _ops_dispatch_signature1_unknown_unknown_unknown(
     method, distributed, device, dtype, args, kwargs
 ) -> Callable[[StorageBase], StorageBase]:
@@ -38,6 +39,7 @@ def _ops_dispatch_signature1_distributed_unknown_unknown(
     return _wrap
 
 
+# signature2: elemwise (tensor, tensor) -> tensor
 def _ops_dispatch_signature2_unknown_unknown_unknown(
     method, distributed, device, dtype, args, kwargs
 ) -> Callable[[Any, Any], StorageBase]:

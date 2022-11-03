@@ -91,23 +91,18 @@ class DummyCache(Cache):
         self.cache.append((key, value))
 
 
-# FIXME: vary complex to use, may take times to fix
-class DummyAnonymous(Anonymous):
-    ...
-
-
 class DummyCheckpointManager(CheckpointManager):
     ...
 
 
-class DummyLogger(LoggerInterface):
+class ContextLogger(LoggerInterface):
     def __init__(
         self,
         context_name: Optional[str] = None,
         namespace: Optional[Namespace] = None,
         level=logging.DEBUG,
     ) -> None:
-        self.logger = getLogger("fate.dummy")
+        self.logger = getLogger("fate.arch.context")
         self.namespace = namespace
         self.context_name = context_name
 
@@ -169,7 +164,6 @@ class Context(ContextInterface):
         summary: Summary = DummySummary(),
         metrics: Metrics = DummyMetrics(),
         cache: Cache = DummyCache(),
-        anonymous_generator: Anonymous = DummyAnonymous(),
         checkpoint_manager: CheckpointManager = DummyCheckpointManager(),
         log: Optional[LoggerInterface] = None,
         namespace: Optional[Namespace] = None,
@@ -178,7 +172,6 @@ class Context(ContextInterface):
         self.summary = summary
         self.metrics = metrics
         self.cache = cache
-        self.anonymous_generator = anonymous_generator
         self.checkpoint_manager = checkpoint_manager
 
         if namespace is None:
@@ -186,7 +179,7 @@ class Context(ContextInterface):
         self.namespace = namespace
 
         if log is None:
-            log = DummyLogger(context_name, self.namespace)
+            log = ContextLogger(context_name, self.namespace)
         self.log = log
         self.cipher: CipherKit = CipherKit(device)
         self.tensor: TensorKit = TensorKit(computing, device)
@@ -255,6 +248,10 @@ class Context(ContextInterface):
             self._get_parties("arbiter")[0],
             self.namespace,
         )
+
+    @property
+    def local(self):
+        return self._get_federation().local_party
 
     @property
     def parties(self) -> Parties:

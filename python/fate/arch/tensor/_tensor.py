@@ -117,6 +117,11 @@ class Tensor:
 
         return matmul(self, other)
 
+    def __getitem__(self, key):
+        from ._slice_ops import slice
+
+        return slice(self, key)
+
     """and others"""
 
     @_inject_op_sinature2
