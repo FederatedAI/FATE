@@ -6,8 +6,6 @@ import numpy as np
 import torch
 import operator
 import types
-from fate.arch.tensor import FPTensor
-from fate.arch.tensor.impl.tensor.distributed import FPTensorDistributed
 
 
 # TODO: record data type, support multiple data types
@@ -190,6 +188,28 @@ class DataFrame(object):
         else:
             # TODO: get a single line
             ...
+
+    def iloc(self, row_indexes):
+        return self._values[row_indexes]
+
+    def to_local(self):
+        ret_dict = {
+            "index": self._index.to_local(),
+        }
+        if self._values:
+            ret_dict["values"] = self._values.to_local()
+        if self._weight:
+            ret_dict["weight"] = self._weight.to_local()
+        if self._label:
+            ret_dict["label"] = self._label.to_local()
+        if self._match_id:
+            ret_dict["match_id"] = self._match_id.to_local()
+
+        return DataFrame(
+            self._ctx,
+            self._schema,
+            **ret_dict
+        )
 
     def take(self, indices):
         if set(indices) != len(indices):

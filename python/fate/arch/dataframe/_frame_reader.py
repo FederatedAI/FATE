@@ -1,13 +1,14 @@
 import functools
+import typing
+
 import numpy as np
 import torch
+from fate.arch import tensor
 import pandas as pd
 import PIL
 
-from fate.arch.session import computing_session
-from fate.arch.tensor import FPTensor
-from fate.arch.tensor.impl.tensor.distributed import FPTensorDistributed
-
+from ._index import Index
+from ._dataframe import DataFrame
 
 class TableReader(object):
     def __init__(self,
@@ -74,24 +75,21 @@ class TableReader(object):
             data_dict["label"] = _convert_to_tensor(ctx,
                                                     label,
                                                     block_partition_mapping=self._block_partition_mapping,
-                                                    dtype=getattr(torch, self._label_type),
-                                                    block_type="vector")
+                                                    dtype=getattr(torch, self._label_type))
 
         if self._with_weight:
             weight = data_trans.mapValues(lambda value: value[schema["weight_index"]])
             data_dict["weight"] = _convert_to_tensor(ctx,
                                                      weight,
                                                      block_partition_mapping=self._block_partition_mapping,
-                                                     dtype="float64",
-                                                     block_type="vector")
+                                                     dtype="float64")
 
         if schema["feature_indexes"]:
             values = data_trans.mapValues(lambda value: np.array(value)[schema["feature_indexes"]].tolist())
             data_dict["values"] = _convert_to_tensor(ctx,
                                                      values,
                                                      block_partition_mapping=self._block_partition_mapping,
-                                                     dtype=getattr(torch, "float64"),
-                                                     block_type="matrix")
+                                                     dtype=getattr(torch, "float64"))
 
     @staticmethod
     def _process_schema(schema, input_format, with_match_id, match_id_name,
@@ -135,24 +133,22 @@ class ImageReader(object):
 
 
 class CSVReader(object):
+    # TODO: fast data read
+    # TODO: a. support match_id, b. more id type
     def __init__(self,
-                 id_name=None,
-                 delimiter=",",
-                 with_label=False,
-                 label_name="y",
-                 label_type="int",
-                 with_weight=False,
-                 weight_name="weight",
-                 data_type="float64",
-                 partition=4):
+                 id_name: typing.Union[None, str] = None,
+                 delimiter: str = ",",
+                 label_name: typing.Union[None, str] = None,
+                 label_type: str = "int",
+                 weight_name: typing.Union[None, str] = None,
+                 dtype: str = "float32",
+                 partition: int = 4):
         self._id_name = id_name
         self._delimiter = delimiter
-        self._with_label = with_label
         self._label_name = label_name
         self._label_type = label_type
-        self._with_weight = with_weight
         self._weight_name = weight_name
-        self._data_type = data_type
+        self._dtype = dtype
         self._partition = partition
 
     def to_frame(self, ctx, path):
@@ -160,12 +156,9 @@ class CSVReader(object):
         df = pd.read_csv(path, delimiter=self._delimiter)
 
         return PandasReader(id_name=self._id_name,
-                            with_label=self._with_label,
                             label_name=self._label_name,
                             label_type=self._label_type,
-                            with_weight=self._with_weight,
                             weight_name=self._weight_name,
-                            data_type=self._data_type,
                             partition=self._partition).to_frame(ctx, df)
 
 
@@ -192,35 +185,33 @@ class TorchDataSetReader(object):
 
 class PandasReader(object):
     def __init__(self,
-                 id_name=None,
-                 with_label=False,
-                 label_name="y",
-                 label_type="int",
-                 with_weight=False,
-                 weight_name="weight",
-                 data_type="float64",
-                 partition=4):
+                 id_name: typing.Union[None, str] = None,
+                 label_name: str = None,
+                 label_type: str = "int",
+                 weight_name: typing.Union[None, str] = None,
+                 dtype: str = "float32",
+                 partition: int = 4):
         self._id_name = id_name
-        self._with_label = with_label
         self._label_name = label_name
         self._label_type = label_type
-        self._with_weight = with_weight
         self._weight_name = weight_name
-        self._data_type = data_type
+        self._dtype = dtype
         self._partition = partition
 
         self._block_partition_mapping = None
 
-    def to_frame(self, ctx, df):
-        if self._id_name:
-            df = df.set_index(self._id_name)
+    def to_frame(self, ctx, df: 'pd.DataFrame'):
+        schema = dict()
+        if not self._id_name:
+            self._id_name = df.columns[0]
+        df = df.set_index(self._id_name)
 
         # TODO: need to ensure id's type is str?
         df.index = df.index.astype("str")
 
         id_list = df.index.tolist()
 
-        index_table = computing_session.parallelize(
+        index_table = ctx.computing.parallelize(
             zip(id_list, range(df.shape[0])),
             include_key=True,
             partition=self._partition
@@ -229,9 +220,9 @@ class PandasReader(object):
         self._block_partition_mapping = _convert_to_order_indexes(index_table)
 
         data_dict = {}
-        if self._with_label:
-            label_list = df[self._label_name].tolist()
-            label_table = computing_session.parallelize(
+        if self._label_name:
+            label_list = [[label] for label in df[self._label_name].tolist()]
+            label_table = ctx.computing.parallelize(
                 zip(id_list, label_list),
                 include_key=True,
                 partition=self._partition
@@ -239,13 +230,13 @@ class PandasReader(object):
             data_dict["label"] = _convert_to_tensor(ctx,
                                                     label_table,
                                                     block_partition_mapping=self._block_partition_mapping,
-                                                    dtype=getattr(torch, self._label_type),
-                                                    block_type="vector")
+                                                    dtype=getattr(torch, self._label_type))
             df = df.drop(columns=self._label_name)
+            schema["label_name"] = self._label_name
 
-        if self._with_weight:
+        if self._weight_name:
             weight_list = df[self._weight_name].tolist()
-            weight_table = computing_session.parallelize(
+            weight_table = ctx.computing.parallelize(
                 zip(id_list, weight_list),
                 include_key=True,
                 partition=self._partition
@@ -253,13 +244,13 @@ class PandasReader(object):
             data_dict["weight"] = _convert_to_tensor(ctx,
                                                      weight_table,
                                                      block_partition_mapping=self._block_partition_mapping,
-                                                     dtype=getattr(torch, "float64"),
-                                                     block_type="vector")
+                                                     dtype=getattr(torch, "float64"))
 
             df = df.drop(columns=self._weight_name)
+            schema["weight_name"] = self._weight_name
 
         if df.shape[1]:
-            value_table = computing_session.parallelize(
+            value_table = ctx.computing.parallelize(
                 zip(id_list, df.values),
                 include_key=True,
                 partition=self._partition
@@ -267,14 +258,24 @@ class PandasReader(object):
             data_dict["values"] = _convert_to_tensor(ctx,
                                                      value_table,
                                                      block_partition_mapping=self._block_partition_mapping,
-                                                     dtype=getattr(torch, self._data_type),
-                                                     block_type="matrix")
+                                                     dtype=getattr(torch, self._dtype))
+            schema["header"] = df.columns.to_list()
+
+        data_dict["index"] = _convert_to_index(ctx,
+                                               index_table,
+                                               block_partition_mapping=self._block_partition_mapping)
+
+        schema["sid"] = self._id_name
+
+        return DataFrame(ctx=ctx,
+                         schema=schema,
+                         **data_dict)
 
 
 def _convert_to_order_indexes(table):
     def _get_block_summary(kvs):
-        key = next(kvs)
-        block_size = 1 + len(kvs)
+        key = next(kvs)[0]
+        block_size = 1 + sum(1 for kv in kvs)
         return {key: block_size}
 
     block_summary = table.mapPartitions(_get_block_summary).reduce(lambda blk1, blk2: {**blk1, **blk2})
@@ -291,20 +292,43 @@ def _convert_to_order_indexes(table):
     return block_partition_mapping
 
 
-def _convert_to_tensor(ctx, table, block_partition_mapping, dtype, block_type):
-    def _convert_block(kvs):
-        ret = []
-        block_id = None
-        for key, value in kvs:
-            if block_id is None:
-                block_id = block_partition_mapping[key]["block_id"]
+def _convert_to_index(ctx, table, block_partition_mapping):
+    convert_func = functools.partial(_convert_block,
+                                     block_partition_mapping=block_partition_mapping,
+                                     dtype=str,
+                                     convert_type="index")
 
-            if block_type == "vector":
-                ret.extend(value)
-            else:
-                ret.append(value)
+    index_table = table.mapPartitions(convert_func, use_previous_behavior=False)
 
-        return block_id, torch.tensor(ret, dtype=dtype)
+    return Index(ctx, index_table, block_partition_mapping)
 
-    return FPTensor(ctx, FPTensorDistributed(
-        table.mapPartitions(_convert_block, use_previous_behavior=False)))
+
+def _convert_to_tensor(ctx, table, block_partition_mapping, dtype):
+    # TODO: in mini-demo stage, distributed tensor only accept list, in future, replace this with distributed table.
+    convert_func = functools.partial(_convert_block,
+                                     block_partition_mapping=block_partition_mapping,
+                                     dtype=dtype)
+    blocks_with_id = list(table.mapPartitions(convert_func, use_previous_behavior=False).collect())
+    blocks = [block_with_id[1] for block_with_id in sorted(blocks_with_id)]
+
+    return tensor.distributed_tensor(
+        ctx,
+        blocks,
+        partitions=len(blocks)
+    )
+
+
+def _convert_block(kvs, block_partition_mapping, dtype, convert_type="tensor"):
+    ret = []
+    block_id = None
+    for key, value in kvs:
+        if block_id is None:
+            block_id = block_partition_mapping[key]["block_id"]
+
+        ret.append(value)
+
+    if convert_type == "tensor":
+        return [(block_id, torch.tensor(ret, dtype=dtype))]
+    else:
+        return [(block_id, pd.Index(ret, dtype=dtype))]
+

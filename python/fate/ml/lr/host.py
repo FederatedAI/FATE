@@ -3,6 +3,7 @@ import logging
 import numpy as np
 import torch
 from fate.arch import tensor
+from fate.arch.dataframe import CSVReader, DataLoader
 from fate.interface import Context, ModelsLoader, ModelsSaver
 from pandas import pandas
 
@@ -12,14 +13,14 @@ logger = logging.getLogger(__name__)
 
 
 class DataframeMock:
-    def __init__(self) -> None:
-        self.data = (
-            pandas.read_csv(
-                "/Users/sage/proj/FATE/2.0.0-alpha/examples/data/breast_hetero_host.csv"
-            )
-            .to_numpy()
-            .astype(np.float32)
-        )
+    def __init__(self, ctx) -> None:
+        guest_data_path = "/Users/sage/proj/FATE/2.0.0-alpha/" \
+                          "examples/data/breast_hetero_host.csv"
+        self.data = CSVReader(
+            id_name="id",
+            delimiter=",",
+            dtype="float32"
+        ).to_frame(ctx, guest_data_path)
         self.num_features = 20
         self.num_sample = len(self.data)
 
@@ -56,7 +57,9 @@ class LrModuleHost(HeteroModule):
 
     def fit(self, ctx: Context, train_data) -> None:
         # mock data
-        train_data = DataframeMock()
+        train_data = DataframeMock(ctx)
+        batch_loader = DataLoader(train_data.data, ctx=ctx, batch_size=self.batch_size,
+                                  mode="hetero", role="host")
         # get encryptor
         encryptor = ctx.arbiter("encryptor").get()
 
@@ -66,7 +69,7 @@ class LrModuleHost(HeteroModule):
         for i, iter_ctx in ctx.range(self.max_iter):
             logger.info(f"start iter {i}")
             j = 0
-            for batch_ctx, X in iter_ctx.iter(train_data.batches(self.batch_size)):
+            for batch_ctx, X in iter_ctx.iter(batch_loader):
                 h = X.shape[0]
                 logger.info(f"start batch {j}")
                 Xw_h = 0.25 * tensor.matmul(X, w)

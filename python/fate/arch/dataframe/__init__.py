@@ -1,4 +1,5 @@
-from fate.arch.dataframe.frame_reader import PandasReader, CSVReader, TableReader, ImageReader, TorchDataSetReader
+from ._frame_reader import PandasReader, CSVReader, TableReader, ImageReader, TorchDataSetReader
+from .utils import DataLoader
 
 
 __all__ = [

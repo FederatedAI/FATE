@@ -1,8 +1,7 @@
 import logging
 
-from fate.arch import tensor
 from fate.interface import Context, ModelsLoader, ModelsSaver
-from pandas import pandas
+from fate.arch.dataframe import DataLoader
 
 from ..abc.module import HeteroModule
 
@@ -36,11 +35,12 @@ class LrModuleArbiter(HeteroModule):
         encryptor, decryptor = ctx.cipher.phe.keygen(options=dict(key_length=1024))
         ctx.guest("encryptor").put(encryptor)  # ctx.guest.put("encryptor", encryptor)
         ctx.hosts("encryptor").put(encryptor)
-        num_batch = ctx.guest.get("num_batch")
-        logger.info(f"num_batch={num_batch}")
-
+        # num_batch = ctx.guest.get("num_batch")
+        batch_loader = DataLoader(dataset=None, ctx=ctx, batch_size=self.batch_size,
+                                  mode="hetero", role="arbiter", sync_arbiter=True)
+        logger.info(f"batch_num={batch_loader.batch_num}")
         for _, iter_ctx in ctx.range(self.max_iter):
-            for _, batch_ctx in iter_ctx.range(num_batch):
+            for batch_ctx, _ in iter_ctx.iter(batch_loader):
                 g_guest_enc = batch_ctx.guest.get("g_enc")
                 g = decryptor.decrypt(g_guest_enc)
                 batch_ctx.guest.put("g", g)

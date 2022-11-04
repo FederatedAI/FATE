@@ -1,10 +1,10 @@
 import logging
 
 import numpy as np
-import pandas
 import torch
 from fate.arch import tensor
 from fate.interface import Context, ModelsLoader, ModelsSaver
+from fate.arch.dataframe import CSVReader, DataLoader
 from sklearn.linear_model import LogisticRegression
 from sklearn.utils.fixes import sklearn
 
@@ -14,14 +14,16 @@ logger = logging.getLogger(__name__)
 
 
 class GuestDataframeMock:
-    def __init__(self) -> None:
-        self.data = (
-            pandas.read_csv(
-                "/Users/sage/proj/FATE/2.0.0-alpha/examples/data/breast_hetero_guest.csv"
-            )
-            .to_numpy()
-            .astype(np.float32)
-        )
+    def __init__(self, ctx) -> None:
+        guest_data_path = "/Users/sage/proj/FATE/2.0.0-alpha/" \
+                          "examples/data/breast_hetero_guest.csv"
+        self.data = CSVReader(
+            id_name="id",
+            label_name="y",
+            label_type="float32",
+            delimiter=",",
+            dtype="float32"
+        ).to_frame(ctx, guest_data_path)
         self.num_features = 10
         self.num_sample = len(self.data)
 
@@ -55,7 +57,7 @@ class LrModuleGuest(HeteroModule):
         l1_ratio=None,
     ):
         self.max_iter = max_iter
-        self.batch_size = 1000
+        self.batch_size = 100
         self.learning_rate = 0.1
         self.alpha = 1.0
 
@@ -67,11 +69,12 @@ class LrModuleGuest(HeteroModule):
         loss = log2 - (1/N)*0.5*∑ywx + (1/N)*0.125*[∑(Wg*Xg)^2 + ∑(Wh*Xh)^2 + 2 * ∑(Wg*Xg * Wh*Xh)]
         """
         # mock data
-        train_data = GuestDataframeMock()
+        train_data = GuestDataframeMock(ctx)
+        batch_loader = DataLoader(train_data.data, ctx=ctx, batch_size=self.batch_size,
+                                  mode="hetero", role="guest", sync_arbiter=True)
         # get encryptor
         ctx.arbiter("encryptor").get()
         logger.info(train_data.num_sample)
-        ctx.arbiter.put("num_batch", (train_data.num_sample - 1) // self.batch_size + 1)
 
         w = tensor.tensor(
             torch.randn((train_data.num_features, 1), dtype=torch.float32)
@@ -79,7 +82,7 @@ class LrModuleGuest(HeteroModule):
         for i, iter_ctx in ctx.range(self.max_iter):
             logger.info(f"start iter {i}")
             j = 0
-            for batch_ctx, (X, Y) in iter_ctx.iter(train_data.batches(self.batch_size)):
+            for batch_ctx, (X, Y) in iter_ctx.iter(batch_loader):
                 h = X.shape[0]
 
                 # d
