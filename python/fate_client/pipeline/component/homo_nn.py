@@ -50,7 +50,7 @@ if register_cell_magic is not None:
             base_path = base_path + '/federatedml/'
 
             model_pth = 'nn/model_zoo/'
-            dataset_pth = 'nn/dataset'
+            dataset_pth = 'nn/dataset/'
             trainer_pth = 'nn/homo/trainer/'
             aggregator_pth = 'framework/homo/aggregator/'
 
@@ -110,6 +110,18 @@ class DatasetParam(BaseParam):
 
 
 class HomoNN(FateComponent):
+    """
+
+    Parameters
+    ----------
+    name, name of this component
+    trainer, trainer param
+    dataset, dataset param
+    torch_seed, global random seed
+    loss, loss function from fate_torch
+    optimizer, optimizer from fate_torch
+    model, a fate torch sequential defining the model structure
+    """
 
     @extract_explicit_parameter
     def __init__(self,
@@ -122,7 +134,6 @@ class HomoNN(FateComponent):
                                                       validation_freq=None),
                  dataset: DatasetParam = DatasetParam(dataset_name='table'),
                  torch_seed: int = 100,
-                 validation_freq: int = None,
                  loss=None,
                  optimizer: t.optim.Optimizer = None,
                  model: Sequential = None

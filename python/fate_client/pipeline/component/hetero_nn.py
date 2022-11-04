@@ -20,6 +20,22 @@ from pipeline.component.nn.backend.torch.interactive import InteractiveLayer
 from pipeline.interface import Input
 from pipeline.interface import Output
 from pipeline.utils.tools import extract_explicit_parameter
+from pipeline.param.base_param import BaseParam
+
+
+class DatasetParam(BaseParam):
+
+    def __init__(self, dataset_name=None, **kwargs):
+        super(DatasetParam, self).__init__()
+        self.dataset_name = dataset_name
+        self.param = kwargs
+
+    def check(self):
+        self.check_string(self.dataset_name, 'dataset_name')
+
+    def to_dict(self):
+        ret = {'dataset_name': self.dataset_name, 'param': self.param}
+        return ret
 
 
 class HeteroNN(FateComponent):
@@ -28,14 +44,16 @@ class HeteroNN(FateComponent):
     def __init__(self, task_type="classification", epochs=None, batch_size=-1, early_stop="diff",
                  tol=1e-5, encrypt_param=None, predict_param=None, cv_param=None, interactive_layer_lr=0.1,
                  validation_freqs=None, early_stopping_rounds=None, use_first_metric_only=None,
-                 floating_point_precision=23, drop_out_keep_rate=1, selector_param=None, **kwargs):
+                 floating_point_precision=23, drop_out_keep_rate=1, selector_param=None, seed=100,
+                 dataset: DatasetParam = DatasetParam(dataset_name='table'), **kwargs
+                 ):
 
         explicit_parameters = kwargs["explict_parameters"]
         explicit_parameters["optimizer"] = None
         explicit_parameters["bottom_nn_define"] = None
         explicit_parameters["top_nn_define"] = None
         explicit_parameters["interactive_layer_define"] = None
-        explicit_parameters["config_type"] = "keras"
+        explicit_parameters["loss"] = None
         FateComponent.__init__(self, **explicit_parameters)
 
         if "name" in explicit_parameters:
@@ -46,7 +64,6 @@ class HeteroNN(FateComponent):
         self.input = Input(self.name, data_type="multi")
         self.output = Output(self.name, data_type='single')
         self._module_name = "HeteroNN"
-        self.config_type = 'pytorch'
         self.optimizer = None
         self.bottom_nn_define = None
         self.top_nn_define = None
@@ -56,6 +73,19 @@ class HeteroNN(FateComponent):
         self._bottom_nn_model = Sequential()
         self._interactive_layer = Sequential()
         self._top_nn_model = Sequential()
+
+        if hasattr(self, 'dataset'):
+            assert isinstance(self.dataset, DatasetParam), 'dataset must be a DatasetParam class'
+            self.dataset.check()
+            self.dataset: DatasetParam = self.dataset.to_dict()
+
+    def add_dataset(self, dataset_param: DatasetParam):
+
+        assert isinstance(dataset_param, DatasetParam), 'dataset must be a DatasetParam class'
+        dataset_param.check()
+        self.dataset: DatasetParam = dataset_param.to_dict()
+        self._component_parameter_keywords.add("dataset")
+        self._component_param["dataset"] = self.dataset
 
     def add_bottom_model(self, model):
         if not hasattr(self, "_bottom_nn_model"):
@@ -88,7 +118,6 @@ class HeteroNN(FateComponent):
         assert hasattr(loss, 'to_dict'), 'loss does not have function to_dict(), remember to call fate_torch_hook(t)'
         loss_conf = loss.to_dict()
         setattr(self, "loss", loss_conf)
-        self._component_parameter_keywords.add("loss")
 
     def compile(self, optimizer, loss):
 
