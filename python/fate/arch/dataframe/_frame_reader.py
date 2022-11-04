@@ -10,6 +10,7 @@ import PIL
 from ._index import Index
 from ._dataframe import DataFrame
 
+
 class TableReader(object):
     def __init__(self,
                  input_format="dense",
@@ -198,8 +199,6 @@ class PandasReader(object):
         self._dtype = dtype
         self._partition = partition
 
-        self._block_partition_mapping = None
-
     def to_frame(self, ctx, df: 'pd.DataFrame'):
         schema = dict()
         if not self._id_name:
@@ -217,7 +216,7 @@ class PandasReader(object):
             partition=self._partition
         )
 
-        self._block_partition_mapping = _convert_to_order_indexes(index_table)
+        _block_partition_mapping, _global_ranks = _convert_to_order_indexes(index_table)
 
         data_dict = {}
         if self._label_name:
@@ -229,7 +228,7 @@ class PandasReader(object):
             )
             data_dict["label"] = _convert_to_tensor(ctx,
                                                     label_table,
-                                                    block_partition_mapping=self._block_partition_mapping,
+                                                    block_partition_mapping=_block_partition_mapping,
                                                     dtype=getattr(torch, self._label_type))
             df = df.drop(columns=self._label_name)
             schema["label_name"] = self._label_name
@@ -243,7 +242,7 @@ class PandasReader(object):
             )
             data_dict["weight"] = _convert_to_tensor(ctx,
                                                      weight_table,
-                                                     block_partition_mapping=self._block_partition_mapping,
+                                                     block_partition_mapping=_block_partition_mapping,
                                                      dtype=getattr(torch, "float64"))
 
             df = df.drop(columns=self._weight_name)
@@ -257,13 +256,14 @@ class PandasReader(object):
             )
             data_dict["values"] = _convert_to_tensor(ctx,
                                                      value_table,
-                                                     block_partition_mapping=self._block_partition_mapping,
+                                                     block_partition_mapping=_block_partition_mapping,
                                                      dtype=getattr(torch, self._dtype))
             schema["header"] = df.columns.to_list()
 
         data_dict["index"] = _convert_to_index(ctx,
                                                index_table,
-                                               block_partition_mapping=self._block_partition_mapping)
+                                               block_partition_mapping=_block_partition_mapping,
+                                               global_ranks=_global_ranks)
 
         schema["sid"] = self._id_name
 
@@ -282,17 +282,20 @@ def _convert_to_order_indexes(table):
 
     start_index, block_id = 0, 0
     block_partition_mapping = dict()
+    global_ranks = []
     for blk_key, blk_size in block_summary.items():
         block_partition_mapping[blk_key] = dict(start_index=start_index,
                                                 end_index=start_index + blk_size - 1,
                                                 block_id=block_id)
+        global_ranks.append(block_partition_mapping[blk_key])
+
         start_index += blk_size
         block_id += 1
 
-    return block_partition_mapping
+    return block_partition_mapping, global_ranks
 
 
-def _convert_to_index(ctx, table, block_partition_mapping):
+def _convert_to_index(ctx, table, block_partition_mapping, global_ranks):
     convert_func = functools.partial(_convert_block,
                                      block_partition_mapping=block_partition_mapping,
                                      dtype=str,
@@ -300,7 +303,7 @@ def _convert_to_index(ctx, table, block_partition_mapping):
 
     index_table = table.mapPartitions(convert_func, use_previous_behavior=False)
 
-    return Index(ctx, index_table, block_partition_mapping)
+    return Index(ctx, index_table, global_ranks)
 
 
 def _convert_to_tensor(ctx, table, block_partition_mapping, dtype):
@@ -331,4 +334,3 @@ def _convert_block(kvs, block_partition_mapping, dtype, convert_type="tensor"):
         return [(block_id, torch.tensor(ret, dtype=dtype))]
     else:
         return [(block_id, pd.Index(ret, dtype=dtype))]
-

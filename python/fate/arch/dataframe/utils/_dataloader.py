@@ -107,14 +107,15 @@ class FullBatchDataLoader(object):
             if self._role != "arbiter":
                 self._batch_num = (len(self._dataset) + self._batch_size - 1) // self._batch_size
                 if self._role == "guest" and self._sync_arbiter:
-                    # self._ctx.arbiter.put("batch_num", self._batch_num)
-                    # TODO: for mini-demo, set batch_num = 1
-                    self._ctx.arbiter.put("batch_num", 1)
+                    self._ctx.arbiter.put("batch_num", self._batch_num)
             elif self._sync_arbiter:
                 self._batch_num = self._ctx.guest.get("batch_num")
 
         if self._role == "arbiter":
             return
+
+        # TODO: need to modify later, in mini-demo stage, only local tensor is supported
+        self._dataset = self._dataset.to_local()
 
         if self._batch_size == len(self._dataset):
             self._batch_splits.append(self._dataset)
@@ -138,15 +139,12 @@ class FullBatchDataLoader(object):
 
                     self._batch_splits.append(sub_frame)
             elif self._mode == "hetero" and self._role == "host":
-                # indexes = self._dataset.index.tolist()
                 for i, iter_ctx in self._ctx.range(self._batch_num):
                     batch_indexes = iter_ctx.guest.get("batch_indexes")
-                    sub_frame = self._dataset.loc(batch_indexes, repartition=True)
+                    sub_frame = self._dataset.loc(batch_indexes)
                     self._batch_splits.append(sub_frame)
 
         # TODO: the following is just for mini-demo
-        self._batch_num = 1
-        self._batch_splits = [self._dataset.to_local()]
 
     def __next__(self):
         if self._role == "arbiter":

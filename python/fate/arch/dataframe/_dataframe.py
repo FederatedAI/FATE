@@ -1,11 +1,9 @@
 import copy
 
-import functools
 import pandas as pd
 import numpy as np
 import torch
 import operator
-import types
 
 
 # TODO: record data type, support multiple data types
@@ -156,11 +154,6 @@ class DataFrame(object):
     def __len__(self):
         return self.count()
 
-    """
-    def __iter__(self):
-        return (col for col in self._schema["header"])
-    """
-
     def __get_index_by_column_names(self, column_names):
         if isinstance(column_names, str):
             column_names = [column_names]
@@ -175,22 +168,39 @@ class DataFrame(object):
 
         return indexes
 
-    def loc(self, indexes, repartition=True):
-        """
-        :param indexes:  list of ids
-        :param repartition: repartition or not, as collection of indexes is order, if dose not repartition,
-                            batching may be stuck in only one partition, causing slow down.
-        :return:
-        """
-        if isinstance(indexes, list):
-            # TODO: get multiple lines
-            ...
-        else:
-            # TODO: get a single line
-            ...
+    def loc(self, ids):
+        # this is very costly, use iloc is better
+        # TODO: if data is not balance, repartition is need?
+        if not isinstance(ids, (int, list)):
+            raise ValueError(f"loc function accepts single id or list of ids, but {ids} found")
 
-    def iloc(self, row_indexes):
-        return self._values[row_indexes]
+        if isinstance(ids, int):
+            ids = [ids]
+
+        indexes = self._index.get_indexer(ids)
+
+        return self.iloc(indexes)
+
+    def iloc(self, indexes):
+        # TODO: if data is not balance, repartition is need?
+        if not isinstance(indexes, (int, list)):
+            raise ValueError(f"iloc function accepts single integer or list of integers, but {indexes} found")
+
+        weight = self._weight[indexes] if self._weight else None
+        label = self._label[indexes] if self._label else None
+        values = self._values[indexes] if self._values else None
+        match_id = self._match_id[indexes] if self._match_id else None
+        index = self._index[indexes] if self._index else None
+
+        return DataFrame(
+            self._ctx,
+            self._schema,
+            index=index,
+            match_id=match_id,
+            label=label,
+            weight=weight,
+            values=values
+        )
 
     def to_local(self):
         ret_dict = {
