@@ -98,7 +98,7 @@ class FedAVGTrainer(TrainerBase):
         if hasattr(var, 'cuda'):
             return var.cuda()
         elif isinstance(var, tuple) or isinstance(var, list):
-            return (self.to_cuda(i) for i in var)
+            return tuple(self.to_cuda(i) for i in var)
         else:
             return var
 
