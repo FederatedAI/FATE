@@ -94,6 +94,14 @@ class FedAVGTrainer(TrainerBase):
                                  ['secure_aggregate', 'weighted_aggregation'], self.is_bool, '{} is not a bool')
         self.check_trainer_param([self.eps], ['eps'], self.is_float, '{} is not a float')
 
+    def to_cuda(self, var):
+        if hasattr(var, 'cuda'):
+            return var.cuda()
+        elif isinstance(var, tuple) or isinstance(var, list):
+            return (self.to_cuda(i) for i in var)
+        else:
+            return var
+
     def train(self, train_set: Dataset, validate_set: Dataset = None, optimizer: t.optim.Optimizer = None, loss=None):
 
         if self.cuda:
@@ -143,7 +151,7 @@ class FedAVGTrainer(TrainerBase):
             for batch_data, batch_label in to_iterate:
                 
                 if self.cuda:
-                    batch_data, batch_label = batch_data.cuda(), batch_label.cuda()
+                    batch_data, batch_label = self.to_cuda(batch_data), self.to_cuda(batch_label)
                     
                 optimizer.zero_grad()
                 pred = self.model(batch_data)
@@ -205,7 +213,7 @@ class FedAVGTrainer(TrainerBase):
 
             for batch_data, batch_label in DataLoader(dataset, self.batch_size):
                 if self.cuda:
-                    batch_data = batch_data.cuda()
+                    batch_data = self.to_cuda(batch_label)
                 pred = self.model(batch_data)
                 pred_result.append(pred)
                 labels.append(batch_label)
