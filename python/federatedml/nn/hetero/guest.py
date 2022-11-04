@@ -17,12 +17,15 @@
 #  limitations under the License.
 #
 import numpy as np
-
+import torch
+from torch.utils.data import DataLoader
 from fate_arch.session import computing_session as session
+from fate_arch.computing._util import is_table
+from federatedml.feature.instance import Instance
 from federatedml.model_base import Metric
 from federatedml.model_base import MetricMeta
+from federatedml.nn.hetero.model import HeteroNNGuestModel
 from federatedml.framework.hetero.procedure import batch_generator
-from federatedml.nn.hetero_nn.model.hetero_nn_model import HeteroNNGuestModel
 from federatedml.nn.hetero.base import HeteroNNBase
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.param.evaluation_param import EvaluateParam
@@ -31,6 +34,7 @@ from federatedml.protobuf.generated.hetero_nn_model_param_pb2 import HeteroNNPar
 from federatedml.util import consts, LOGGER
 from federatedml.util.io_check import assert_io_num_rows_equal
 from federatedml.param.hetero_nn_param import HeteroNNParam as NNParameter
+
 
 MODELMETA = "HeteroNNGuestMeta"
 MODELPARAM = "HeteroNNGuestParam"
@@ -46,30 +50,29 @@ class HeteroNNGuest(HeteroNNBase):
         self.batch_generator = batch_generator.Guest()
         self.data_keys = []
 
-        self.model_builder = None
         self.label_dict = {}
 
         self.model = None
         self.role = consts.GUEST
         self.history_loss = []
-        self.num_label = 2
-
         self.input_shape = None
         self._summary_buf = {"history_loss": [],
                              "is_converged": False,
                              "best_iteration": -1}
 
-        self.config_type = None
+        self.dataset_cache_dict = {}
+
+        self.default_table_partitions = 4
 
     def _init_model(self, hetero_nn_param):
         super(HeteroNNGuest, self)._init_model(hetero_nn_param)
-        self.config_type = hetero_nn_param.config_type
         self.task_type = hetero_nn_param.task_type
         self.converge_func = converge_func_factory(self.early_stop, self.tol)
 
     def _build_model(self):
         self.model = HeteroNNGuestModel(self.hetero_nn_param, self.component_properties)
         self.model.set_transfer_variable(self.transfer_variable)
+        self.model.set_partition(self.default_table_partitions)
 
     def _set_loss_callback_info(self):
         self.callback_meta("loss",
@@ -79,35 +82,47 @@ class HeteroNNGuest(HeteroNNBase):
                                       extra_metas={"unit_name": "iters"}))
 
     def fit(self, data_inst, validate_data=None):
-        self.callback_list.on_train_begin(data_inst, validate_data)
+
+        if hasattr(data_inst, 'partitions') and data_inst.partitions is not None:
+            self.default_table_partitions = data_inst.partitions
+            LOGGER.debug('reset default partitions is {}'.format(self.default_table_partitions))
+
+        train_ds = self.prepare_dataset(data_inst, data_type='train', check_label=True)
+        if validate_data is not None:
+            val_ds = self.prepare_dataset(validate_data, data_type='validate')
+        else:
+            val_ds = None
+
+        self.callback_list.on_train_begin(train_ds, val_ds)
 
         # collect data from table to form data loader
         if not self.component_properties.is_warm_start:
             self._build_model()
-            cur_epoch = 0
+            epoch_offset = 0
         else:
             self.model.warm_start()
             self.callback_warm_start_init_iter(self.history_iter_epoch)
-            cur_epoch = self.history_iter_epoch + 1
+            epoch_offset = self.history_iter_epoch + 1
 
-        self.prepare_batch_data(self.batch_generator, data_inst)
-        if not self.input_shape:
+        if len(train_ds) == 0:
             self.model.set_empty()
 
         self._set_loss_callback_info()
-        while cur_epoch < self.epochs:
-            self.iter_epoch = cur_epoch
+
+        batch_size = len(train_ds) if self.batch_size == -1 else self.batch_size
+        data_loader = DataLoader(train_ds, batch_size=batch_size, num_workers=4)
+
+        LOGGER.debug('sample ids are {}'.format(train_ds.get_sample_ids()))
+
+        for cur_epoch in range(epoch_offset, self.epochs + epoch_offset):
+
             LOGGER.debug("cur epoch is {}".format(cur_epoch))
             self.callback_list.on_epoch_begin(cur_epoch)
             epoch_loss = 0
 
-            for batch_idx in range(len(self.data_x)):
-                # hetero NN model
-                batch_loss = self.model.train(self.data_x[batch_idx], self.data_y[batch_idx], cur_epoch, batch_idx)
-
+            for batch_idx, (batch_data, batch_label) in enumerate(data_loader):
+                batch_loss = self.model.train(batch_data, batch_label, cur_epoch, batch_idx)
                 epoch_loss += batch_loss
-
-            epoch_loss /= len(self.data_x)
 
             LOGGER.debug("epoch {}' loss is {}".format(cur_epoch, epoch_loss))
 
@@ -127,6 +142,7 @@ class HeteroNNGuest(HeteroNNBase):
                 is_converge = False
             else:
                 is_converge = self.converge_func.is_converge(epoch_loss)
+
             self._summary_buf["is_converged"] = is_converge
             self.transfer_variable.is_converge.remote(is_converge,
                                                       role=consts.HOST,
@@ -137,49 +153,64 @@ class HeteroNNGuest(HeteroNNBase):
                 LOGGER.debug("Training process is converged in epoch {}".format(cur_epoch))
                 break
 
-            cur_epoch += 1
-
-        if cur_epoch == self.epochs:
-            LOGGER.debug("Training process reach max training epochs {} and not converged".format(self.epochs))
-
         self.callback_list.on_train_end()
-        # if self.validation_strategy and self.validation_strategy.has_saved_best_model():
-        #     self.load_model(self.validation_strategy.cur_best_model)
 
         self.set_summary(self._get_model_summary())
 
     @assert_io_num_rows_equal
     def predict(self, data_inst):
-        data_inst = self.align_data_header(data_inst, self._header)
-        keys, test_x, test_y = self._load_data(data_inst)
-        self.set_partition(data_inst)
 
-        preds = self.model.predict(test_x)
+        ds = self.prepare_dataset(data_inst, data_type='predict')
+        keys = ds.get_sample_ids()
 
-        if self.task_type == "regression":
-            preds = [float(pred[0]) for pred in preds]
-            predict_tb = session.parallelize(zip(keys, preds), include_key=True, partition=data_inst.partitions)
+        batch_size = len(ds) if self.batch_size == -1 else self.batch_size
+        dl = DataLoader(ds, batch_size=batch_size)
+        preds = []
+        labels = []
+
+        for batch_data, batch_label in dl:
+            batch_pred = self.model.predict(batch_data)
+            preds.append(batch_pred)
+            labels.append(batch_label)
+
+        preds = np.concatenate(preds, axis=0)
+        labels = torch.concat(labels, dim=0).cpu().numpy().flatten().tolist()
+
+        # make an id table for making predict result
+        if not is_table(data_inst):
+            id_table = [(id_, Instance(label=l)) for id_, l in zip(keys, labels)]
+            data_inst = session.parallelize(id_table, partition=self.default_table_partitions, include_key=True)
+
+        if self.task_type == consts.REGRESSION:
+            preds = preds.flatten().tolist()
+            preds = [float(pred) for pred in preds]
+            predict_tb = session.parallelize(zip(keys, preds), include_key=True,
+                                             partition=self.default_table_partitions)
             result = self.predict_score_to_output(data_inst, predict_tb)
         else:
             if self.num_label > 2:
+                preds = preds.tolist()
                 preds = [list(map(float, pred)) for pred in preds]
-                predict_tb = session.parallelize(zip(keys, preds), include_key=True, partition=data_inst.partitions)
+                predict_tb = session.parallelize(zip(keys, preds), include_key=True,
+                                                 partition=self.default_table_partitions)
                 result = self.predict_score_to_output(data_inst, predict_tb, classes=list(range(self.num_label)))
 
             else:
-                preds = [float(pred[0]) for pred in preds]
-                predict_tb = session.parallelize(zip(keys, preds), include_key=True, partition=data_inst.partitions)
+                preds = preds.flatten().tolist()
+                preds = [float(pred) for pred in preds]
+                predict_tb = session.parallelize(zip(keys, preds), include_key=True,
+                                                 partition=self.default_table_partitions)
                 threshold = self.predict_param.threshold
                 result = self.predict_score_to_output(data_inst, predict_tb, classes=[0, 1], threshold=threshold)
 
         return result
 
     def export_model(self):
-        if self.model is None:
-            return
 
-        return {MODELMETA: self._get_model_meta(),
-                MODELPARAM: self._get_model_param()}
+        model = {MODELMETA: self._get_model_meta(),
+                 MODELPARAM: self._get_model_param()}
+
+        return model
 
     def load_model(self, model_dict):
 
@@ -195,7 +226,7 @@ class HeteroNNGuest(HeteroNNBase):
         self._restore_model_param(param)
 
     def _get_model_summary(self):
-        # self._summary_buf["best_iteration"] = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
+
         self._summary_buf["history_loss"] = self.history_loss
         if self.callback_variables.validation_summary:
             self._summary_buf["validation_metrics"] = self.callback_variables.validation_summary
@@ -216,8 +247,6 @@ class HeteroNNGuest(HeteroNNBase):
         model_meta.epochs = self.epochs
         model_meta.early_stop = self.early_stop
         model_meta.tol = self.tol
-        # model_meta.interactive_layer_lr = self.hetero_nn_param.interacitve_layer_lr
-
         model_meta.hetero_nn_model_meta.CopyFrom(self.model.get_hetero_nn_model_meta())
 
         return model_meta
@@ -228,7 +257,6 @@ class HeteroNNGuest(HeteroNNBase):
         model_param.hetero_nn_model_param.CopyFrom(self.model.get_hetero_nn_model_param())
         model_param.num_label = self.num_label
         model_param.best_iteration = self.callback_variables.best_iteration
-        # model_param.best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
         model_param.header.extend(self._header)
 
         for loss in self.history_loss:
@@ -245,74 +273,6 @@ class HeteroNNGuest(HeteroNNBase):
                 return EvaluateParam(eval_type="multi", metrics=self.metrics)
         else:
             return EvaluateParam(eval_type="regression", metrics=self.metrics)
-
-    def prepare_batch_data(self, batch_generator, data_inst):
-        self._header = data_inst.schema["header"]
-        batch_generator.initialize_batch_generator(data_inst, self.batch_size)
-        batch_data_generator = batch_generator.generate_batch_data()
-
-        for batch_data in batch_data_generator:
-            keys, batch_x, batch_y = self._load_data(batch_data)
-            self.data_x.append(batch_x)
-            self.data_y.append(batch_y)
-            self.data_keys.append(keys)
-
-        self._convert_label()
-        self.set_partition(data_inst)
-
-    def _load_data(self, data_inst):
-        data = list(data_inst.collect())
-        data_keys = [key for (key, val) in data]
-        data_keys_map = dict(zip(sorted(data_keys), range(len(data_keys))))
-
-        keys = [None for idx in range(len(data_keys))]
-        batch_x = [None for idx in range(len(data_keys))]
-        batch_y = [None for idx in range(len(data_keys))]
-
-        for (key, inst) in data:
-            idx = data_keys_map[key]
-            keys[idx] = key
-            batch_x[idx] = inst.features
-            batch_y[idx] = inst.label
-
-            if self.input_shape is None:
-                try:
-                    self.input_shape = inst.features.shape[0]
-                except AttributeError:
-                    self.input_shape = 0
-
-        batch_x = np.asarray(batch_x)
-        batch_y = np.asarray(batch_y)
-
-        return keys, batch_x, batch_y
-
-    def _convert_label(self):
-        diff_label = np.unique(np.concatenate(self.data_y))
-        self.label_dict = dict(zip(diff_label, range(diff_label.shape[0])))
-
-        transform_y = []
-        self.num_label = diff_label.shape[0]
-
-        if self.task_type == "regression" or self.num_label <= 2:
-            for batch_y in self.data_y:
-                new_batch_y = np.zeros((batch_y.shape[0], 1))
-                for idx in range(new_batch_y.shape[0]):
-                    new_batch_y[idx] = batch_y[idx]
-
-                transform_y.append(new_batch_y)
-
-            self.data_y = transform_y
-            return
-        else:  # pytorch doesn't need multi label convert
-            for batch_y in self.data_y:
-                new_batch_y = np.zeros((batch_y.shape[0], self.num_label))
-                for idx in range(new_batch_y.shape[0]):
-                    y = batch_y[idx]
-                    new_batch_y[idx][y] = 1
-
-                transform_y.append(new_batch_y)
-
-        self.data_y = transform_y
 
     def _restore_model_param(self, param):
         super(HeteroNNGuest, self)._restore_model_param(param)

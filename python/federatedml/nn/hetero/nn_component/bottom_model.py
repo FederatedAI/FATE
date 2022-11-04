@@ -18,7 +18,7 @@
 #
 import numpy as np
 from federatedml.util import LOGGER
-from federatedml.nn.hetero.nn_component.torch_model import TorchNNModel, TorchDataConvertor
+from federatedml.nn.hetero.nn_component.torch_model import TorchNNModel
 
 
 class BottomModel(object):
@@ -27,10 +27,8 @@ class BottomModel(object):
 
         self._model: TorchNNModel = TorchNNModel(nn_define=layer_config, optimizer_define=optimizer,
                                                  loss_fn_define=None)
-        self.data_converter = TorchDataConvertor()
-
-        LOGGER.debug('bottom model is {}'.format(self._model))
-
+        LOGGER.debug('show bottom init para')
+        self._model.print_parameters()
         self.do_backward_select_strategy = False
         self.x = []
         self.x_cached = []
@@ -42,15 +40,21 @@ class BottomModel(object):
     def set_batch(self, batch_size):
         self.batch_size = batch_size
 
+    def train_mode(self, mode):
+        self._model.train_mode(mode)
+
     def forward(self, x):
         LOGGER.debug("bottom model start to forward propagation")
         self.x = x
-        data = self.data_converter.convert_data(x)
-        output_data = self._model.predict(data)
+
+        if self.do_backward_select_strategy:
+            output_data = self._model.predict(x)
+        else:
+            output_data = self._model.forward(x)
 
         return output_data
 
-    def backward(self, x, y, selective_ids):
+    def backward(self, x, error, selective_ids):
         LOGGER.debug("bottom model start to backward propagation")
         if self.do_backward_select_strategy:
             if selective_ids:
@@ -58,24 +62,24 @@ class BottomModel(object):
                     self.x_cached = self.x[selective_ids]
                 else:
                     self.x_cached = np.vstack((self.x_cached, self.x[selective_ids]))
-
-        if len(y) == 0:
-            return
-
-        if self.do_backward_select_strategy:
+            if len(error) == 0:
+                return
             x = self.x_cached[: self.batch_size]
             self.x_cached = self.x_cached[self.batch_size:]
+            self._model.train((x, error))
+        else:
+            self._model.backward(error)
 
-        data = self.data_converter.convert_data(x, y)  # pytorch backend does not have to process gradients
-        self._model.train(data)
+        LOGGER.debug('bottom model update parameters:')
 
     def predict(self, x):
-        data = self.data_converter.convert_data(x)
-
-        return self._model.predict(data)
+        return self._model.predict(x)
 
     def export_model(self):
         return self._model.export_model()
 
     def restore_model(self, model_bytes):
         self._model = self._model.restore_model(model_bytes)
+
+    def __repr__(self):
+        return 'bottom model contains {}'.format(self._model.__repr__())

@@ -18,7 +18,7 @@
 #
 
 import numpy as np
-from federatedml.nn.hetero_nn.strategy.comparision import Comparision
+from federatedml.nn.hetero.strategy.comparision import Comparision
 
 
 class RelativeSelector(object):

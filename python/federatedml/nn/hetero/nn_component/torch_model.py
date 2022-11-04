@@ -8,207 +8,126 @@ try:  # for the situation that torch is not installed, but other modules still c
     import copy
     from types import SimpleNamespace
     from torch import autograd
-    from federatedml.nn.backend.fate_torch import optim, serialization as s
-    from federatedml.nn.backend.fate_torch.base import FateTorchOptimizer
-    from federatedml.nn.backend.fate_torch.nn import CrossEntropyLoss
-    from tensorflow.keras.layers import Dense
-    from tensorflow.keras.models import Sequential
-    from federatedml.nn.backend.tf_keras.nn_model import KerasNNModel
+    from federatedml.nn.backend.torch import serialization as s
+    from federatedml.nn.backend.torch.base import FateTorchOptimizer
+    from federatedml.nn.backend.torch.nn import CrossEntropyLoss
+    from federatedml.nn.backend.torch import optim
 except ImportError:
     pass
-
-
-try:
-    import torch
-    import torch as t
-    from federatedml.nn.backend.fate_torch.nn import Linear
-    from federatedml.nn.backend.fate_torch.nn import Sequential as tSequential
-except ImportError:
-    pass
-
-
-def modify_linear_input_shape(input_shape, layer_config):
-    new_layer_config = copy.deepcopy(layer_config)
-    for k, v in new_layer_config.items():
-        if v['layer'] == 'Linear':
-            v['in_features'] = input_shape
-    return new_layer_config
-
-
-def torch_interactive_to_keras_nn_model(seq):
-
-    linear_layer = seq[0]  # take the linear layer
-    weight = linear_layer.weight.detach().numpy()
-    if linear_layer.bias is not None:
-        bias = linear_layer.bias.detach().numpy()
-    else:
-        bias = None
-
-    in_shape = weight.shape[1]
-    out_shape = weight.shape[0]
-    weight = weight.transpose()
-    use_bias = not (bias is None)
-    keras_model = KerasNNModel(Sequential(Dense(units=out_shape, input_shape=(in_shape, ), use_bias=use_bias)))
-    if bias is not None:
-        keras_model._model.layers[0].set_weights([weight, bias])
-    else:
-        keras_model._model.layers[0].set_weights([weight])
-
-    keras_model.compile('keep_predict_loss', optimizer=SimpleNamespace(optimizer="SGD", kwargs={}), metrics=None)
-
-    return keras_model
-
-
-def keras_nn_model_to_torch_linear(keras_model: KerasNNModel):
-
-    weights = keras_model.get_trainable_weights()
-    use_bias = len(weights) == 2
-    in_shape, out_shape = weights[0].shape[0], weights[0].shape[1]
-    linear = Linear(in_shape, out_shape, use_bias)
-
-    with torch.no_grad():
-        linear.weight = torch.nn.Parameter(t.Tensor(weights[0].transpose()))
-        if use_bias:
-            linear.bias = torch.nn.Parameter(t.Tensor(weights[1]))
-
-    return tSequential(linear)
-
-
-def pytorch_label_reformat(labels):
-
-    if labels.shape[1] == 1:  # binary classification
-        return labels
-    else:
-        return t.Tensor(labels).argmax(dim=1).flatten().numpy()  # multi classification
 
 
 def backward_loss(z, backward_error):
     return t.sum(z * backward_error)
 
 
-class TorchDataConvertor(object):
-
-    def __init__(self,):
-        pass
-
-    def convert_data(self, x: np.ndarray, y: np.ndarray = None):
-
-        tensorx = t.Tensor(x)
-        if y is not None:
-            tensory = t.Tensor(y)
-            return tensorx, tensory
-        else:
-            return tensorx
-
-
-def label_convert(y, loss_fn):
-
-    # pytorch CE loss require 1D-int64-tensor
-    if isinstance(loss_fn, CrossEntropyLoss):
-        return t.Tensor(y).flatten().type(t.int64).flatten()  # accept 1-D array
-    else:
-        return t.Tensor(y).type(t.float)
-
-
 class TorchNNModel(object):
 
-    def __init__(self, nn_define: dict, optimizer_define: dict = None, loss_fn_define: dict = None):
+    def __init__(self, nn_define: dict, optimizer_define: dict = None, loss_fn_define: dict = None, cuda=False):
 
-        self.model = s.recover_sequential_from_dict(nn_define)
-        if optimizer_define is None:  # default optimizer
-            self.optimizer = optim.SGD(lr=0.01)
+        self.cuda = cuda
+        self.double_model = False
+        if self.cuda and not t.cuda.is_available():
+            raise ValueError('this machine dose not support cuda, cuda.is_available() is False')
+        self.optimizer_define = optimizer_define
+        self.nn_define = nn_define
+        self.loss_fn_define = loss_fn_define
+        self.loss_history = []
+        self.model, self.opt_inst, self.loss_fn = self.init(self.nn_define, self.optimizer_define, self.loss_fn_define)
+        self.fw_cached = None
+        if self.double_model:
+            self.model.type(t.float64)
+
+    def to_tensor(self, x: np.ndarray):
+
+        if isinstance(x, np.ndarray):
+            x = t.from_numpy(x)
+
+        if self.cuda:
+            return x.cuda()
         else:
-            self.optimizer: FateTorchOptimizer = s.recover_optimizer_from_dict(optimizer_define)
-        self.opt_inst = self.optimizer.to_torch_instance(self.model.parameters())
+            return x
+
+    def label_convert(self, y, loss_fn):
+        # pytorch CE loss require 1D-int64-tensor
+        if isinstance(loss_fn, CrossEntropyLoss):
+            return t.Tensor(y).flatten().type(t.int64).flatten()  # accept 1-D array
+        else:
+            return t.Tensor(y).type(t.float)
+
+    def init(self, nn_define: dict, optimizer_define: dict = None, loss_fn_define: dict = None):
+
+        model = s.recover_sequential_from_dict(nn_define)
+        if self.cuda:
+            model = model.cuda()
+
+        if optimizer_define is None:  # default optimizer
+            optimizer = optim.SGD(lr=0.01)
+        else:
+            optimizer: FateTorchOptimizer = s.recover_optimizer_from_dict(optimizer_define)
+        opt_inst = optimizer.to_torch_instance(model.parameters())
 
         if loss_fn_define is None:
-            self.loss_fn = backward_loss
+            loss_fn = backward_loss
         else:
-            self.loss_fn = s.recover_loss_fn_from_dict(loss_fn_define)
-            self.loss_define = loss_fn_define
+            loss_fn = s.recover_loss_fn_from_dict(loss_fn_define)
 
-        self.forward_cache: t.Tensor = None
-        self.train_mode: bool = True
-        self.loss_history = []
-
-        self.x_dtype = None
-        self.y_dtype = None
+        return model, opt_inst, loss_fn
 
     def print_parameters(self):
         LOGGER.debug('model parameter is {}'.format(list(self.model.parameters())))
 
     def __repr__(self):
-        return self.model.__repr__() + '\n' + self.optimizer.__repr__() + '\n' + str(self.loss_fn)
+        return self.model.__repr__() + '\n' + self.opt_inst.__repr__() + '\n' + str(self.loss_fn)
 
-    def input_tensor_convert(self, data):
-        if self.x_dtype is not None:
-            return torch.tensor(data, dtype=self.x_dtype)
-        else:
-            pass
+    def train_mode(self, mode):
+        self.model.train(mode)
 
-    def label_tensor_convert(self, data):
-        if self.y_dtype is not None:
-            return torch.tensor(data, dtype=self.y_dtype)
-        else:
-            pass
-
-    def train(self, data_x_and_y, ret_input_gradient=False):
+    def train(self, data_x_and_y):
 
         x, y = data_x_and_y  # this is a tuple
-        input_grad = None
         self.opt_inst.zero_grad()
-        yt = label_convert(y, self.loss_fn)
-        if ret_input_gradient:
-            xt = t.Tensor(x).requires_grad_(True)
-        else:
-            xt = t.Tensor(x)
-
-        loss = self.loss_fn(self.model(xt), yt)
-
-        if ret_input_gradient:
-            input_grad = autograd.grad(loss, xt, retain_graph=True)
-
+        yt = self.to_tensor(y)
+        xt = self.to_tensor(x)
+        out = self.model(xt)
+        loss = self.loss_fn(out, yt)
         loss.backward()
-        self.loss_history.append(loss.detach().numpy())
+        loss_val = loss.cpu().detach().numpy()
+        self.loss_history.append(loss_val)
         self.opt_inst.step()
 
-        if ret_input_gradient:
-            return loss.detach().numpy(), input_grad
-        else:
-            return loss.detach().numpy()
+        return loss_val
 
     def forward(self, x):
+        # will cache tensor with grad, this function is especially for bottom model
+        x = self.to_tensor(x)
+        out = self.model(x)
+        if self.fw_cached is not None:
+            raise ValueError('fed cached should be None when forward')
+        self.fw_cached = out
 
-        x = t.Tensor(x)
-        forward_rs = self.model(x)
-        self.forward_cache = forward_rs
+        return out.cpu().detach().numpy()
 
-        return forward_rs.detach().numpy()
-
-    def backward(self, backward_gradients):
-
-        if self.forward_cache is None:
-            raise ValueError('no forward cache, unable to do backward propagation')
-        self.forward_cache.backward(t.Tensor(backward_gradients))
-
-    def backward_and_update(self, backward_gradients):
-
+    def backward(self, error):
+        # backward ,this function is especially for bottom model
         self.opt_inst.zero_grad()
-        if self.forward_cache is None:
-            raise ValueError('no forward cache, unable to do backward propagation')
-        self.forward_cache.backward(t.Tensor(backward_gradients))
+        error = self.to_tensor(error)
+        loss = self.loss_fn(self.fw_cached, error)
+        loss.backward()
+        self.fw_cached = None
         self.opt_inst.step()
 
     def predict(self, x):
-        return self.model(t.Tensor(x)).detach().numpy()
+
+        with torch.no_grad():
+            return self.model(self.to_tensor(x)).cpu().detach().numpy()
 
     def get_forward_loss_from_input(self, x, y, reduction='none'):
 
         with torch.no_grad():
             default_reduction = self.loss_fn.reduction
             self.loss_fn.reduction = reduction
-            yt = label_convert(y, self.loss_fn)
-            xt = t.Tensor(x)
+            yt = self.to_tensor(y)
+            xt = self.to_tensor(x)
             loss = self.loss_fn(self.model(xt), yt)
             self.loss_fn.reduction = default_reduction
 
@@ -216,8 +135,8 @@ class TorchNNModel(object):
 
     def get_input_gradients(self, x, y):
 
-        yt = label_convert(y, self.loss_fn)
-        xt = t.Tensor(x).requires_grad_(True)
+        yt = self.to_tensor(y)
+        xt = self.to_tensor(x).requires_grad_(True)
         fw = self.model(xt)
         loss = self.loss_fn(fw, yt)
         grad = autograd.grad(loss, xt)
@@ -227,21 +146,12 @@ class TorchNNModel(object):
     def get_loss(self):
         return [self.loss_history[-1]]
 
-    def get_trainable_gradients(self, x, y):
-        pass
-
-    def evaluate(self, data):
-        pass
-
     @staticmethod
     def get_model_bytes(model):
         with tempfile.TemporaryFile() as f:
             torch.save(model, f)
             f.seek(0)
             return f.read()
-
-    def export_model(self):
-        return self.get_model_bytes(self.model)
 
     @staticmethod
     def recover_model_bytes(model_bytes):
@@ -251,10 +161,44 @@ class TorchNNModel(object):
             model = torch.load(f)
         return model
 
+    @staticmethod
+    def get_model_save_dict(model: t.nn.Module, model_define, optimizer: t.optim.Optimizer, optimizer_define,
+                            loss_define):
+        with tempfile.TemporaryFile() as f:
+            save_dict = {
+                'nn_define': model_define,
+                'model': model.state_dict(),
+                'optimizer_define': optimizer_define,
+                'optimizer': optimizer.state_dict(),
+                'loss_define': loss_define
+            }
+            torch.save(save_dict, f)
+            f.seek(0)
+            return f.read()
+
+    @staticmethod
+    def recover_model_save_dict(model_bytes):
+        with tempfile.TemporaryFile() as f:
+            f.write(model_bytes)
+            f.seek(0)
+            save_dict = torch.load(f)
+
+        return save_dict
+
     def restore_model(self, model_bytes):
-        self.model = self.recover_model_bytes(model_bytes)
-        LOGGER.debug('loaded model is {}'.format(self.model))
+        save_dict = self.recover_model_save_dict(model_bytes)
+        self.nn_define = save_dict['nn_define']
+        opt_define = save_dict['optimizer_define']
+
+        # optimizer can be updated
+        if opt_define == self.optimizer_define:
+            opt_inst: t.optim.Optimizer = self.opt_inst
+            opt_inst.load_state_dict(save_dict['optimizer'])
+
+        self.model.load_state_dict(save_dict['model'])
+
         return self
 
-    def compile(self, *args, **kwargs):
-        pass
+    def export_model(self):
+        return self.get_model_save_dict(self.model, self.nn_define, self.opt_inst, self.optimizer_define,
+                                        self.loss_fn_define)

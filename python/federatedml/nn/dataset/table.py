@@ -6,13 +6,27 @@ from federatedml.util import LOGGER
 
 class TableDataset(Dataset):
 
+    """
+     A Table Dataset, load data from a give csv path, or transform FATE DTable
+
+     Parameters
+     ----------
+     label_col str, name of label column in csv, if None, will automatically take 'y' or 'label' or 'target' as label
+     feature_dtype dtype of feature, supports int, long, float, double
+     label_dtype: dtype of label, supports int, long, float, double
+     label_shape: list or tuple, the shape of label
+     flatten_label: bool, flatten extracted label column or not, default is False
+     """
+
     def __init__(self, label_col=None, feature_dtype='float', label_dtype='float', label_shape=None,
                  flatten_label=False):
+
         super(TableDataset, self).__init__()
+        self.with_label = True
         self.features: np.ndarray = None
         self.label: np.ndarray = None
         self.origin_table: pd.DataFrame = pd.DataFrame()
-        self.label = label_col
+        self.label_col = label_col
         self.f_dtype = self.check_dtype(feature_dtype)
         self.l_dtype = self.check_dtype(label_dtype)
         if label_shape is not None:
@@ -20,12 +34,13 @@ class TableDataset(Dataset):
         self.label_shape = label_shape
         self.flatten_label = flatten_label
 
-        if self.label is not None:
-            assert isinstance(self.label, str) or isinstance(self.label, int),\
+        if self.label_col is not None:
+            assert isinstance(self.label_col, str) or isinstance(self.label_col, int),\
                 'label columns parameter must be a str or an int'
 
     @staticmethod
     def check_dtype(dtype):
+
         if dtype is not None:
             avail = ['long', 'int', 'float', 'double']
             assert dtype in avail, 'available dtype is {}, but got {}'.format(avail, dtype)
@@ -40,7 +55,10 @@ class TableDataset(Dataset):
         return dtype
 
     def __getitem__(self, item):
-        return self.features[item], self.label[item]
+        if self.with_label:
+            return self.features[item], self.label[item]
+        else:
+            return self.features[item]
 
     def __len__(self):
         return len(self.origin_table)
@@ -74,8 +92,12 @@ class TableDataset(Dataset):
             y_ = np.asarray(y_)
             df = pd.DataFrame(x_)
             df.columns = header
-            df['label'] = y_
             df['id'] = data_keys
+            df['label'] = y_
+            # host data has no label, so this columns will all be None
+            if df['label'].isna().all():
+                df = df.drop(columns=['label'])
+
             self.origin_table = df
 
         label_col_candidates = ['y', 'label', 'target']
@@ -89,34 +111,43 @@ class TableDataset(Dataset):
                 break
 
         # infer column name
-        label = self.label
+        label = self.label_col
         if label is None:
             for i in label_col_candidates:
                 if i in self.origin_table:
                     label = i
                     break
             if label is None:
-                raise ValueError('label default setting is "auto", but found no "y"/"label"/"target" in input'
-                                 'table')
-
+                self.with_label = False
+                LOGGER.warning('label default setting is "auto", but found no "y"/"label"/"target" in input table')
         else:
             if label not in self.origin_table:
                 raise ValueError('label column {} not found in input table'.format(label))
 
-        self.features = self.origin_table.drop(columns=[label]).values
+        if self.with_label:
+            self.label = self.origin_table[label].values
+            self.features = self.origin_table.drop(columns=[label]).values
+
+            if self.l_dtype:
+                self.label = self.label.astype(self.l_dtype)
+
+            if self.label_shape:
+                self.label = self.label.reshape(self.label_shape)
+            else:
+                self.label = self.label.reshape((len(self.features), -1))
+
+            if self.flatten_label:
+                self.label = self.label.flatten()
+
+        else:
+            self.label = None
+            self.features = self.origin_table.values
+
         if self.f_dtype:
             self.features = self.features.astype(self.f_dtype)
 
-        self.label = self.origin_table[label].values
-        if self.l_dtype:
-            self.label = self.label.astype(self.l_dtype)
-
-        if self.label_shape:
-            self.label = self.label.reshape(self.label_shape)
+    def get_classes(self):
+        if self.label is not None:
+            return np.unique(self.label).tolist()
         else:
-            self.label = self.label.reshape((len(self.features), -1))
-
-        if self.flatten_label:
-            self.label = self.label.flatten()
-
-        assert self.features.shape[1] >= 1, 'feature number is less than 1'
+            raise ValueError('no label found, please check if self.label is set')

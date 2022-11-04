@@ -3,19 +3,19 @@ import torch
 import tempfile
 import inspect
 from fate_arch.computing.non_distributed import LocalData
+from fate_arch.computing._util import is_table
 from fate_arch.session import computing_session
 from federatedml.model_base import ModelBase
-from federatedml.nn.dataset.base import get_dataset_class, Dataset
 from federatedml.nn.homo.trainer.trainer_base import get_trainer_class, TrainerBase
-from federatedml.nn.dataset.table import TableDataset
-from federatedml.nn.dataset.image import ImageDataset
+from federatedml.nn.backend.utils.data import load_dataset
 from federatedml.param.homo_nn_param import HomoNNParam
 from federatedml.nn.backend.torch import serialization as s
 from federatedml.nn.backend.torch.base import FateTorchOptimizer
 from federatedml.model_base import MetricMeta
 from federatedml.util import LOGGER
 from federatedml.util import consts
-from federatedml.nn.backend.util import global_seed, get_homo_model_dict, get_homo_param_meta
+from federatedml.nn.homo.trainer.trainer_base import StdReturnFormat
+from federatedml.nn.backend.utils.common import global_seed, get_homo_model_dict, get_homo_param_meta
 from federatedml.callbacks.model_checkpoint import ModelCheckpoint
 from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
 
@@ -72,53 +72,6 @@ class HomoNNClient(ModelBase):
         self.nn_define = param.nn_define
         self.loss = param.loss
         self.optimizer = param.optimizer
-
-    def try_dataset_class(self, dataset_class, path):
-        # try default dataset
-        try:
-            dataset_inst: Dataset = dataset_class(**self.dataset_param)
-            dataset_inst.load(path)
-            return dataset_inst
-        except Exception as e:
-            LOGGER.warning('try to load dataset failed, exception :{}'.format(e))
-            return None
-
-    def load_dataset(self, data_path_or_dtable):
-
-        # load dataset class
-        if isinstance(data_path_or_dtable, str):
-            cached_id = data_path_or_dtable
-        else:
-            cached_id = id(data_path_or_dtable)
-
-        if cached_id in self.cache_dataset:
-            LOGGER.debug('use cached dataset, cached id {}'.format(cached_id))
-            return self.cache_dataset[cached_id]
-
-        if self.dataset is None or self.dataset == '':
-            # automatically match default dataset
-            LOGGER.info('dataset is not specified, use auto inference')
-            
-            for ds_class in [TableDataset, ImageDataset]:
-                dataset_inst = self.try_dataset_class(ds_class, data_path_or_dtable)
-                if dataset_inst is not None:
-                    break
-            if dataset_inst is None:
-                raise ValueError('cannot find default dataset that can successfully load data from path {}, '
-                                 'please check the warning message for error details'.
-                                 format(data_path_or_dtable))
-        else:
-            # load specified dataset
-            dataset_class = get_dataset_class(self.dataset)
-            dataset_inst = dataset_class(**self.dataset_param)
-            dataset_inst.load(data_path_or_dtable)
-
-        if isinstance(data_path_or_dtable, str):
-            self.cache_dataset[data_path_or_dtable] = dataset_inst
-        else:
-            self.cache_dataset[id(data_path_or_dtable)] = dataset_inst
-
-        return dataset_inst
 
     # read model from model bytes
     @staticmethod
@@ -220,12 +173,19 @@ class HomoNNClient(ModelBase):
         return trainer_inst, model, optimizer, loss_fn
 
     def fit(self, train_input, validate_input=None):
-        
+
+        LOGGER.debug('train input is {}'.format(train_input))
+
         # train input & validate input are DTables or path str
-        if isinstance(train_input, LocalData):
-            train_input = train_input.path
-        if isinstance(validate_input, LocalData):
-            validate_input = validate_input.path
+        if not is_table(train_input):
+            if isinstance(train_input, LocalData):
+                train_input = train_input.path
+                assert train_input is not None, 'input train path is None!'
+
+        if not is_table(validate_input):
+            if isinstance(validate_input, LocalData):
+                validate_input = validate_input.path
+                assert validate_input is not None, 'input validate path is None!'
 
         # fate loss callback setting
         self.callback_meta("loss", "train",
@@ -239,11 +199,13 @@ class HomoNNClient(ModelBase):
         self.trainer_inst.set_tracker(self.tracker)
 
         # load dataset class
-        dataset_inst = self.load_dataset(train_input)
+        dataset_inst = load_dataset(dataset_name=self.dataset, data_path_or_dtable=train_input,
+                                    dataset_cache=self.cache_dataset, param=self.dataset_param)
         LOGGER.info('train dataset instance is {}'.format(dataset_inst))
         
         if validate_input:
-            val_dataset_inst = self.load_dataset(validate_input)
+            val_dataset_inst = load_dataset(dataset_name=self.dataset, data_path_or_dtable=validate_input,
+                                            dataset_cache=self.cache_dataset, param=self.dataset_param)
             LOGGER.info('validate dataset instance is {}'.format(dataset_inst))
         else:
             val_dataset_inst = None
@@ -264,8 +226,10 @@ class HomoNNClient(ModelBase):
 
     def predict(self, cpn_input):
 
-        if isinstance(cpn_input, LocalData):
-            cpn_input = cpn_input.path
+        if not is_table(cpn_input):
+            if isinstance(cpn_input, LocalData):
+                cpn_input = cpn_input.path
+                assert cpn_input is not None, 'input path is None!'
 
         LOGGER.info('running predict')
         if self.trainer_inst is None:
@@ -274,15 +238,17 @@ class HomoNNClient(ModelBase):
             self.trainer_inst.set_model(model)
             self.trainer_inst.set_tracker(self.tracker)
 
-        dataset_inst = self.load_dataset(cpn_input)
+        dataset_inst = load_dataset(dataset_name=self.dataset, data_path_or_dtable=cpn_input,
+                                    dataset_cache=self.cache_dataset, param=self.dataset_param)
+
         if not dataset_inst.has_dataset_type():
             dataset_inst.set_type('predict')
         trainer_ret = self.trainer_inst.predict(dataset_inst)
-        if trainer_ret is None:
+        if trainer_ret is None or not isinstance(trainer_ret, StdReturnFormat):
             LOGGER.info('trainer did not return formatted predicted result, skip predict')
             return None
 
-        id_table, pred_table, classes = trainer_ret
+        id_table, pred_table, classes = trainer_ret()
         id_dtable = computing_session.parallelize(id_table, partition=self.partitions, include_key=True)
         pred_dtable = computing_session.parallelize(pred_table, partition=self.partitions, include_key=True)
 

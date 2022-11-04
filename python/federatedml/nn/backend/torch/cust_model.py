@@ -1,7 +1,7 @@
 from torch import nn
 import importlib
 from federatedml.nn.backend.torch.base import FateTorchLayer
-from federatedml.nn.backend.util import ML_PATH
+from federatedml.nn.backend.utils.common import ML_PATH
 
 PATH = '{}.model_zoo'.format(ML_PATH)
 
@@ -27,6 +27,8 @@ class CustModel(FateTorchLayer, nn.Module):
 
         module_name: str = self.param_dict['name']
         module_param: dict = self.param_dict['param']
+        if module_name.endswith('.py'):
+            module_name = module_name.replace('.py', '')
         nn_modules = importlib.import_module('{}.{}'.format(PATH, module_name))
         try:
 

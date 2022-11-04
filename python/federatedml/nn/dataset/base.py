@@ -1,8 +1,8 @@
 from torch.utils.data import Dataset as Dataset_
-from federatedml.nn.backend.util import ML_PATH
-from federatedml.util import LOGGER
+from federatedml.nn.backend.utils.common import ML_PATH
 import importlib
 import abc
+import numpy as np
 
 
 class Dataset(Dataset_):
@@ -45,16 +45,13 @@ class Dataset(Dataset_):
         self.sample_ids = ids
 
     def get_sample_ids(self):
-        return list(self.sample_ids)
+        if self.sample_ids is not None:
+            return list(self.sample_ids)
+        else:
+            return None
 
     def has_sample_ids(self):
         return self.sample_ids is not None
-
-    def __getitem__(self, item):
-        raise NotImplementedError()
-
-    def __len__(self):
-        raise NotImplementedError()
 
     def generate_sample_ids(self, prefix: str = None):
         if prefix is not None:
@@ -66,14 +63,70 @@ class Dataset(Dataset_):
             generated_ids.append(prefix + '_' + str(i))
         self._sample_ids = generated_ids
 
+    """
+    User to implement functions
+    """
+
     @abc.abstractmethod
     def load(self, file_path):
         raise NotImplementedError('You must implement load function so that Client class can pass file-path to this '
                                   'class')
 
+    def __getitem__(self, item):
+        raise NotImplementedError()
+
+    def __len__(self):
+        raise NotImplementedError()
+
+    def get_classes(self):
+        pass
+
+
+class ShuffleWrapDataset(Dataset_):
+
+    def __init__(self, dataset: Dataset, shuffle_seed=100):
+        super(ShuffleWrapDataset, self).__init__()
+        self.ds = dataset
+        ids = self.ds.get_sample_ids()
+        sort_idx = np.argsort(np.array(ids))
+        assert isinstance(dataset, Dataset)
+        self.idx = sort_idx
+        if shuffle_seed is not None:
+            np.random.seed(shuffle_seed)
+            self.shuffled_idx = np.copy(self.idx)
+            np.random.shuffle(self.shuffled_idx)
+        else:
+            self.shuffled_idx = np.copy(self.idx)
+        self.idx_map = {k: v for k, v in zip(self.idx, self.shuffled_idx)}
+
+    def __getitem__(self, item):
+        return self.ds[self.idx_map[self.idx[item]]]
+
+    def __len__(self):
+        return len(self.ds)
+
+    def __repr__(self):
+        return self.ds.__repr__()
+
+    def has_sample_ids(self):
+        return self.ds.has_sample_ids()
+
+    def set_shuffled_idx(self, idx_map: dict):
+        self.shuffled_idx = np.array(list(idx_map.values()))
+        self.idx_map = idx_map
+
+    def get_sample_ids(self):
+        ids = self.ds.get_sample_ids()
+        return np.array(ids)[self.shuffled_idx].tolist()
+
+    def get_classes(self):
+        return self.ds.get_classes()
+
 
 def get_dataset_class(dataset_module_name: str):
 
+    if dataset_module_name.endswith('.py'):
+        dataset_module_name = dataset_module_name.replace('.py', '')
     ds_modules = importlib.import_module('{}.dataset.{}'.format(ML_PATH, dataset_module_name))
     try:
 
@@ -85,3 +138,4 @@ def get_dataset_class(dataset_module_name: str):
                          format(dataset_module_name))
     except ValueError as e:
         raise e
+

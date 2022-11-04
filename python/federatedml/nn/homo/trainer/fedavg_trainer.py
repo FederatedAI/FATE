@@ -10,12 +10,45 @@ from federatedml.framework.homo.aggregator.secure_aggregator import SecureAggreg
 
 class FedAVGTrainer(TrainerBase):
 
+    """
+
+    Parameters
+    ----------
+    epochs: int >0, epochs to train
+    batch_size: int, -1 means full batch
+    early_stop: None, 'diff' or 'abs'. if None, disable early stop; if 'diff', use the loss difference between
+                two epochs as early stop condition, if differences < eps, stop training ; if 'abs', if loss < eps,
+                stop training
+    eps: float, eps value for early stop
+    secure_aggregate: bool, default is True, whether to use secure aggregation. if enabled, will add random number
+                            mask to local models. These random number masks will eventually cancel out to get 0.
+    weighted_aggregation: bool, whether add weight to each local model when doing aggregation.
+                         if True, According to origin paper, weight of a client is: n_local / n_global, where n_local
+                         is the sample number locally and n_global is the sample number of all clients.
+                         if False, simply averaging these models.
+
+    aggregate_every_n_epoch: None or int. if None, aggregate model on the end of every epoch, if int, aggregate
+                             every n epochs.
+    cuda: bool, use cuda or not
+    pin_memory: bool, for pytorch DataLoader
+    shuffle: bool, for pytorch DataLoader
+    data_loader_worker: int, for pytorch DataLoader, number of workers when loading data
+    validation_freqs: None or int. if int, validate your model and send validate results to fate-board every n epoch.
+                      if is binary classification task, will use metrics 'auc', 'ks', 'gain', 'lift', 'precision'
+                      if is multi classification task, will use metrics 'precision', 'recall', 'accuracy'
+                      if is regression task, will use metrics 'mse', 'mae', 'rmse', 'explained_variance', 'r2_score'
+    checkpoint_save_freqs: save model every n epoch, if None, will not save checkpoint.
+    task_type: str, 'auto', 'binary', 'multi', 'regression'
+               this option decides the return format of this trainer, and the evaluation type when running validation.
+               if auto, will automatically infer your task type from labels and predict results.
+    """
+
     def __init__(self, epochs=10, batch_size=512,  # training parameter
                  early_stop=None, eps=0.0001,  # early stop parameters
                  secure_aggregate=True, weighted_aggregation=True, aggregate_every_n_epoch=None,  # federation
                  cuda=False, pin_memory=True, shuffle=True, data_loader_worker=0,  # GPU dataloader
-                 validation_freq=None,  # validation configuration
-                 checkpoint_save_freq=None,
+                 validation_freqs=None,  # validation configuration
+                 checkpoint_save_freqs=None,
                  task_type='auto'
                  ):
 
@@ -24,8 +57,8 @@ class FedAVGTrainer(TrainerBase):
         # training parameters
         self.epochs = epochs
         self.eps = eps
-        self.validation_freq = validation_freq
-        self.save_freq = checkpoint_save_freq
+        self.validation_freq = validation_freqs
+        self.save_freq = checkpoint_save_freqs
 
         self.task_type = task_type
         task_type_allow = [consts.BINARY, consts.REGRESSION, consts.MULTY, 'auto']
@@ -115,14 +148,16 @@ class FedAVGTrainer(TrainerBase):
                 optimizer.zero_grad()
                 pred = self.model(batch_data)
                 batch_loss = loss(pred, batch_label)
-
                 batch_loss.backward()
                 optimizer.step()
                 batch_loss_np = batch_loss.detach().numpy() if not self.cuda else batch_loss.cpu().detach().numpy()
-                epoch_loss += batch_loss_np
+                epoch_loss += batch_loss_np * self.batch_size
                 batch_idx += 1
-            
-            epoch_loss = epoch_loss / batch_idx
+
+                if self.fed_mode:
+                    LOGGER.debug('epoch {} batch {} finished'.format(i, batch_idx))
+
+            epoch_loss = epoch_loss / len(train_set)
             self.callback_loss(epoch_loss, i)
             LOGGER.info('epoch loss is {}'.format(epoch_loss))
             

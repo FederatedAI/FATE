@@ -10,13 +10,24 @@ from typing import List
 from federatedml.util import consts
 from federatedml.util import LOGGER
 from federatedml.model_base import serialize_models
-from federatedml.nn.backend.util import ML_PATH, get_homo_model_dict
+from federatedml.nn.backend.utils.common import ML_PATH, get_homo_model_dict
 from federatedml.feature.instance import Instance
 from federatedml.evaluation.evaluation import Evaluation
 from federatedml.model_base import Metric, MetricMeta
 from federatedml.param import EvaluateParam
 from federatedml.protobuf.generated.homo_nn_model_param_pb2 import HomoNNParam
 from federatedml.protobuf.generated.homo_nn_model_meta_pb2 import HomoNNMeta
+
+
+class StdReturnFormat(object):
+
+    def __init__(self, id_table_list, pred_table, classes):
+        self.id = id_table_list
+        self.pred_table = pred_table
+        self.classes = classes
+
+    def __call__(self,):
+        return self.id, self.pred_table, self.classes
 
 
 class TrainerBase(object):
@@ -212,7 +223,7 @@ class TrainerBase(object):
         
         id_table = [(id_, Instance(label=l)) for id_, l in zip(sample_ids, true_label)]
         score_table = [(id_, pred) for id_, pred in zip(sample_ids, predict_result)]
-        return id_table, score_table, classes  # classes
+        return StdReturnFormat(id_table, score_table, classes)
 
     def get_cached_model(self):
         return self._cache_model
@@ -319,6 +330,8 @@ class TrainerBase(object):
 
 def get_trainer_class(trainer_module_name: str):
 
+    if trainer_module_name.endswith('.py'):
+        trainer_module_name = trainer_module_name.replace('.py', '')
     ds_modules = importlib.import_module('{}.homo.trainer.{}'.format(ML_PATH, trainer_module_name))
     try:
 

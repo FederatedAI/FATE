@@ -7,6 +7,7 @@ try:
     from federatedml.nn.backend.torch import operation
     from federatedml.nn.backend.torch.base import Sequential, get_torch_instance
     from federatedml.nn.backend.torch.cust_model import CustModel
+    from federatedml.nn.backend.torch.interactive import InteractiveLayer
 except ImportError:
     pass
 
@@ -30,6 +31,8 @@ def recover_layer_from_dict(nn_define, nn_dict):
     # find corresponding class
     if class_name == CustModel.__name__:
         nn_layer_class = CustModel
+    elif class_name == InteractiveLayer.__name__:
+        nn_layer_class = InteractiveLayer
     else:
         nn_layer_class = nn_dict[class_name]
 
@@ -37,6 +40,8 @@ def recover_layer_from_dict(nn_define, nn_dict):
     if nn_layer_class == CustModel:  # converto to pytorch model
         layer: CustModel = CustModel(name=init_param_dict['name'], **init_param_dict['param'])
         layer = layer.get_pytorch_model()
+    elif nn_layer_class == InteractiveLayer:
+        layer: InteractiveLayer = InteractiveLayer(**init_param_dict)
     else:
         layer = get_torch_instance(nn_layer_class, init_param_dict)
 
@@ -57,13 +62,22 @@ def recover_layer_from_dict(nn_define, nn_dict):
 
 def recover_sequential_from_dict(nn_define):
     nn_define_dict = nn_define
-    add_dict = OrderedDict()
     nn_dict = dict(inspect.getmembers(nn))
     op_dict = dict(inspect.getmembers(operation))
     nn_dict.update(op_dict)
-    for k, v in nn_define_dict.items():
-        layer = recover_layer_from_dict(v, nn_dict)
-        add_dict[k] = layer
+    try:
+        # submitted model have int prefixes, they make sure that layers are in order
+        add_dict = OrderedDict()
+        keys = list(nn_define_dict.keys())
+        keys = sorted(keys, key=lambda x: int(x.split('-')[0]))
+        for k in keys:
+            layer = recover_layer_from_dict(nn_define_dict[k], nn_dict)
+            add_dict[k] = layer
+    except:
+        add_dict = OrderedDict()
+        for k, v in nn_define_dict.items():
+            layer = recover_layer_from_dict(v, nn_dict)
+            add_dict[k] = layer
 
     return tSeq(add_dict)
 
