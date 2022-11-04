@@ -35,7 +35,7 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 
 BITS = 10
 MIXED_RATE = 0.5
-PLAINTEXT = True
+PLAINTEXT = False
 
 
 class HEInteractiveTransferVariable(BaseTransferVariables):
