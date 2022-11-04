@@ -1,65 +1,15 @@
 import logging
 import time
 import traceback
-from enum import Enum
-from typing import Dict, List, Literal, Optional, Tuple
+from typing import Optional
 
-import pydantic
 from fate.arch.context import Context
-from fate.arch.unify import device
 from fate.components.cpn import get_cpn
 from fate.components.entrypoint.uri.uri import URI
 
+from .parser import FATEComponentTaskConfig, TaskExecuteStatus
+
 logger = logging.getLogger(__name__)
-
-
-class TaskExecuteStatus(Enum):
-    RUNNING = "running"
-    FAILED = "failed"
-    SUCCESS = "success"
-
-
-class FATECpnExtra(pydantic.BaseModel):
-    class DistributedComputingBackend(pydantic.BaseModel):
-        engine: str
-        computing_id: str
-
-    class FederationBackend(pydantic.BaseModel):
-        class Parties(pydantic.BaseModel):
-            local: Tuple[Literal["guest", "host", "arbiter"], str]
-            parties: List[Tuple[Literal["guest", "host", "arbiter"], str]]
-
-        engine: str
-        federation_id: str
-        parties: Parties
-
-    device: device
-    distributed_computing_backend: DistributedComputingBackend
-    federation_backend: FederationBackend
-
-    @pydantic.validator("device", pre=True)
-    def _device_validate(cls, v):
-        if not isinstance(v, str):
-            raise ValueError("must be str")
-        for dev in device:
-            if dev.name == v.strip().upper():
-                return dev
-        raise ValueError(f"should be one of {[dev.name for dev in device]}")
-
-
-class FATEComponentTaskConfig(pydantic.BaseModel):
-    task_id: str
-    cpn: str
-    role: str
-    params: Dict
-    data_inputs: List[str]
-    data_outputs: List[str]
-    model_inputs: List[str]
-    model_outputs: List[str]
-    status_output: str
-    extra: FATECpnExtra
-    metrics_output: Optional[str] = None
-    status_input: Optional[str] = None
 
 
 class StatusTracker:
@@ -86,9 +36,11 @@ class ParamsValidateFailed(ComponentExecException):
 
 
 def task_execute(config: FATEComponentTaskConfig):
+    # status tracker
     status_tracker = StatusTracker(config.status_output, config.status_input)
-    context_name = config.task_id
 
+    # init context
+    context_name = config.task_id
     computing = get_computing(config)
     federation = get_federation(config, computing)
     context = Context(
@@ -155,18 +107,38 @@ def run(
 
 
 def get_computing(config: FATEComponentTaskConfig):
-    from fate.arch.computing.standalone import CSession
+    if (engine := config.extra.distributed_computing_backend.engine) == "standalone":
+        from fate.arch.computing.standalone import CSession
 
-    return CSession(config.extra.distributed_computing_backend.computing_id)
+        return CSession(config.extra.distributed_computing_backend.computing_id)
+    elif engine == "eggroll":
+        from fate.arch.computing.eggroll import CSession
+
+        return CSession(config.extra.distributed_computing_backend.computing_id)
+    elif engine == "spark":
+        from fate.arch.computing.spark import CSession
+
+        return CSession(config.extra.distributed_computing_backend.computing_id)
+
+    else:
+        raise ParamsValidateFailed(
+            f"extra.distributed_computing_backend.engine={engine} not support"
+        )
 
 
 def get_federation(config: FATEComponentTaskConfig, computing):
-    from fate.arch.federation.standalone import StandaloneFederation
+    if (engine := config.extra.federation_backend.engine) == "standalone":
+        from fate.arch.federation.standalone import StandaloneFederation
 
-    federation_config = config.extra.federation_backend
-    return StandaloneFederation(
-        computing,
-        federation_config.federation_id,
-        federation_config.parties.local,
-        federation_config.parties.parties,
-    )
+        federation_config = config.extra.federation_backend
+        return StandaloneFederation(
+            computing,
+            federation_config.federation_id,
+            federation_config.parties.local,
+            federation_config.parties.parties,
+        )
+
+    else:
+        raise ParamsValidateFailed(
+            f"extra.distributed_computing_backend.engine={engine} not support"
+        )

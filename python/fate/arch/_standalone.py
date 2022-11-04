@@ -17,6 +17,7 @@
 import asyncio
 import hashlib
 import itertools
+import logging
 import pickle as c_pickle
 import shutil
 import time
@@ -36,10 +37,9 @@ import numpy as np
 from fate.interface import PartyMeta
 
 from .common import file_utils
-from .common.log import getLogger
 from .federation import FederationDataType
 
-LOGGER = getLogger()
+LOGGER = logging.getLogger(__name__)
 
 serialize = c_pickle.dumps
 deserialize = c_pickle.loads

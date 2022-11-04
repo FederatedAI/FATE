@@ -20,21 +20,7 @@ execute with python -m fate.components.runner --session_id xxx --task_config xxx
 import logging
 from typing import Dict
 
-from fate.components.entrypoint.uri.uri import URI
-from sklearn import sys
-
-logger = logging.getLogger(__name__)
-
-import rich
-
-# temporary for pretty debug
-import rich.logging
-from rich.traceback import install
-
-install(show_locals=True, width=None)
-handler = rich.logging.RichHandler(rich_tracebacks=True)
-handler = logging.StreamHandler(sys.stderr)
-logging.basicConfig(handlers=[handler], level=logging.DEBUG)
+from .uri.uri import URI
 
 
 def run(config: Dict):
@@ -44,15 +30,18 @@ def run(config: Dict):
     extra = task.get("task_extra", {})
     task_params = task["task_params"]
     if task_type == "run_component":
-        from ..runner.entrypoint.exec_component import (
-            FATEComponentTaskConfig,
-            task_execute,
-        )
+        from ..runner.entrypoint.parser import FATEComponentTaskConfig
 
         task_config = FATEComponentTaskConfig(
             task_id=task_id, extra=extra, **task_params
         )
+        # install logger, be careful not to get logger before logger has installed
+        task_config.extra.logger.install()
+        logger = logging.getLogger(__name__)
         logger.info(f"{task_config=}")
+
+        from ..runner.entrypoint.exec_component import task_execute
+
         task_execute(task_config)
     else:
         raise RuntimeError(f"task type `{args.type}` unknown")

@@ -16,6 +16,11 @@
       "metrics_output": "flow://127.0.0.1:9360/xxx/metrics"
     },
     "task_extra": {
+      "logger": {
+        "type": "pipeline",
+        "basepath": "log",
+        "level": "DEBUG"
+      },
       "device": "CPU",
       "distributed_computing_backend": {
         "engine": "eggroll",
