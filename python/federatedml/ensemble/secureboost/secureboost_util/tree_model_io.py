@@ -13,6 +13,7 @@ def produce_hetero_tree_learner(role, tree_param: DecisionTreeParam, flow_id, da
                                 g_h=None, encrypter=None,  # guest only
                                 goss_subsample=False, complete_secure=False,
                                 max_sample_weights=1.0,
+                                objective=None,
                                 bin_num=None,  # host only
                                 fast_sbt=False,
                                 tree_type=None, target_host_id=None,  # fast sbt only
