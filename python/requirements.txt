@@ -34,6 +34,7 @@ tensorflow==2.9.1
 torch==1.12.0
 torch-model-archiver==0.3.1
 torchvision==0.13.0
+transformers==4.23.1
 coverage==4.5.2
 pika==1.2.1
 pandas==1.1.5
