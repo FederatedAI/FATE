@@ -15,7 +15,6 @@
 #
 
 import functools
-import uuid
 
 from federatedml.param.intersect_param import IntersectParam
 from federatedml.statistic.intersect.intersect_preprocess import BitArray
@@ -206,10 +205,6 @@ class Intersect(object):
     def hash(value, hash_operator, salt=''):
         h_value = hash_operator.compute(value, suffix_salt=salt)
         return h_value
-
-    @staticmethod
-    def generate_new_uuid():
-        return str(uuid.uuid4())
 
     @staticmethod
     def insert_key(kv_iterator, filter, hash_operator=None, salt=None):

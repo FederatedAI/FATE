@@ -14,10 +14,10 @@
 #  limitations under the License.
 #
 
-import uuid
 
 import numpy as np
 
+from fate_arch.common.base_utils import fate_uuid
 from federatedml.feature.instance import Instance
 from federatedml.model_base import Metric, MetricMeta
 from federatedml.model_base import ModelBase
@@ -140,10 +140,10 @@ class IntersectModelBase(ModelBase):
             # LOGGER.debug(f"join_data count: {join_data.count()}")
             if self.model_param.new_sample_id:
                 if self.model_param.only_output_key:
-                    join_data = join_data.map(lambda k, v: (uuid.uuid4().hex, None))
+                    join_data = join_data.map(lambda k, v: (fate_uuid(), None))
                     join_id = join_data
                 else:
-                    join_data = join_data.map(lambda k, v: (uuid.uuid4().hex, v))
+                    join_data = join_data.map(lambda k, v: (fate_uuid(), v))
                     join_id = join_data.mapValues(lambda v: None)
                 sync_join_id.remote(join_id)
 
