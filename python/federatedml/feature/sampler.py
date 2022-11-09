@@ -29,7 +29,7 @@ from federatedml.transfer_variable.transfer_class.sample_transfer_variable impor
 from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util.schema_check import assert_schema_consistent
-from federatedml.util.uuid_generator import generate_new_uuid
+from fate_arch.common.base_utils import fate_uuid
 
 
 class RandomSampler(object):
@@ -434,7 +434,7 @@ class ExactSampler(object):
                 raise ValueError(f"To sample with `exact_by_weight` mode, instances must have match id."
                                  f"Please check.")
             new_key_num = math.ceil(v.weight)
-            new_sample_id_list = [generate_new_uuid() for _ in range(new_key_num)]
+            new_sample_id_list = [fate_uuid() for _ in range(new_key_num)]
             return new_sample_id_list
 
         sample_ids = non_zero_data_inst.mapValues(lambda v: __generate_new_ids(v))
