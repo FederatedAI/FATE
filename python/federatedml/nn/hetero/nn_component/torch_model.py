@@ -34,8 +34,6 @@ class TorchNNModel(object):
         self.loss_history = []
         self.model, self.opt_inst, self.loss_fn = self.init(self.nn_define, self.optimizer_define, self.loss_fn_define)
         self.fw_cached = None
-        if self.double_model:
-            self.model.type(t.float64)
 
     def to_tensor(self, x: np.ndarray):
 
@@ -70,6 +68,9 @@ class TorchNNModel(object):
             loss_fn = backward_loss
         else:
             loss_fn = s.recover_loss_fn_from_dict(loss_fn_define)
+
+        if self.double_model:
+            self.model.type(t.float64)
 
         return model, opt_inst, loss_fn
 
@@ -189,12 +190,12 @@ class TorchNNModel(object):
         save_dict = self.recover_model_save_dict(model_bytes)
         self.nn_define = save_dict['nn_define']
         opt_define = save_dict['optimizer_define']
-
         # optimizer can be updated
+        # old define == new define, load state dict
         if opt_define == self.optimizer_define:
             opt_inst: t.optim.Optimizer = self.opt_inst
             opt_inst.load_state_dict(save_dict['optimizer'])
-
+        # load state dict
         self.model.load_state_dict(save_dict['model'])
 
         return self

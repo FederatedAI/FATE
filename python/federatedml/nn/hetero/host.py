@@ -95,14 +95,13 @@ class HeteroNNHost(HeteroNNBase):
             self._build_model()
             epoch_offset = 0
         else:
-            self.model.warm_start()
             self.callback_warm_start_init_iter(self.history_iter_epoch)
             epoch_offset = self.history_iter_epoch + 1
 
         batch_size = len(train_ds) if self.batch_size == -1 else self.batch_size
 
         for cur_epoch in range(epoch_offset, epoch_offset + self.epochs):
-
+            self.iter_epoch = cur_epoch
             for batch_idx, batch_data in enumerate(DataLoader(train_ds, batch_size=batch_size)):
                 self.model.train(batch_data, cur_epoch, batch_idx)
 

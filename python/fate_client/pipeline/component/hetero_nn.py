@@ -44,7 +44,7 @@ class HeteroNN(FateComponent):
     def __init__(self, task_type="classification", epochs=None, batch_size=-1, early_stop="diff",
                  tol=1e-5, encrypt_param=None, predict_param=None, cv_param=None, interactive_layer_lr=0.1,
                  validation_freqs=None, early_stopping_rounds=None, use_first_metric_only=None,
-                 floating_point_precision=23, drop_out_keep_rate=1, selector_param=None, seed=100,
+                 floating_point_precision=23, selector_param=None, seed=100,
                  dataset: DatasetParam = DatasetParam(dataset_name='table'), **kwargs
                  ):
 

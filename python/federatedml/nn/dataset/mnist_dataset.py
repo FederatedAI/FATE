@@ -3,6 +3,7 @@ from federatedml.nn.dataset.base import Dataset
 from torchvision.datasets import ImageFolder
 from torchvision import transforms
 
+
 class MNISTDataset(Dataset):
     
     def __init__(self, return_label=True):  # guest方有标签，return label = True, host方无标签，return label = False

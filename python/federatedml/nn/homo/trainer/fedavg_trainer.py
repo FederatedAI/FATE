@@ -114,6 +114,8 @@ class FedAVGTrainer(TrainerBase):
             raise ValueError('FedAVGTrainer requires a loss function, but got None, please specify loss function in the'
                              ' job configuration')
 
+        if self.batch_size > len(train_set):
+            self.batch_size = len(train_set)
         dl = DataLoader(train_set, batch_size=self.batch_size, pin_memory=self.pin_memory, shuffle=self.shuffle,
                         num_workers=self.data_loader_worker)
 
@@ -142,6 +144,7 @@ class FedAVGTrainer(TrainerBase):
             LOGGER.info('epoch is {}'.format(i))
             epoch_loss = 0.0
             batch_idx = 0
+            acc_num = 0
             # for better user interface
             if self.fed_mode:
                 to_iterate = tqdm.tqdm(dl)
@@ -159,7 +162,11 @@ class FedAVGTrainer(TrainerBase):
                 batch_loss.backward()
                 optimizer.step()
                 batch_loss_np = batch_loss.detach().numpy() if not self.cuda else batch_loss.cpu().detach().numpy()
-                epoch_loss += batch_loss_np * self.batch_size
+                if acc_num + self.batch_size > len(train_set):
+                    batch_len = len(train_set) - acc_num
+                else:
+                    batch_len = self.batch_size
+                epoch_loss += batch_loss_np * batch_len
                 batch_idx += 1
 
                 if self.fed_mode:

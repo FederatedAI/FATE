@@ -157,7 +157,6 @@ class HeteroNNParam(BaseParam):
     floating_point_precision: None or integer, if not None, means use floating_point_precision-bit to speed up calculation,
                                 e.g.: convert an x to round(x * 2**floating_point_precision) during Paillier operation, divide
                                         the result by 2**floating_point_precision in the end.
-    drop_out_keep_rate: float, should betweend 0 and 1, if not equals to 1.0, will enabled drop out
     callback_param: CallbackParam object
     """
 
@@ -184,7 +183,6 @@ class HeteroNNParam(BaseParam):
                  use_first_metric_only=True,
                  selector_param=SelectorParam(),
                  floating_point_precision=23,
-                 drop_out_keep_rate=1.0,
                  callback_param=CallbackParam(),
                  coae_param=CoAEConfuserParam(),
                  dataset=DatasetParam()
@@ -213,7 +211,6 @@ class HeteroNNParam(BaseParam):
         self.cv_param = copy.deepcopy(cv_param)
         self.selector_param = selector_param
         self.floating_point_precision = floating_point_precision
-        self.drop_out_keep_rate = drop_out_keep_rate
         self.callback_param = copy.deepcopy(callback_param)
         self.coae_param = coae_param
         self.dataset = dataset
@@ -260,10 +257,6 @@ class HeteroNNParam(BaseParam):
                 (not isinstance(self.floating_point_precision, int) or
                  self.floating_point_precision < 0 or self.floating_point_precision > 63):
             raise ValueError("floating point precision should be null or a integer between 0 and 63")
-
-        if not isinstance(self.drop_out_keep_rate, (float, int)) or self.drop_out_keep_rate < 0.0 or \
-                self.drop_out_keep_rate > 1.0:
-            raise ValueError("drop_out_keep_rate should be in range [0.0, 1.0]")
 
         self.encrypt_param.check()
         self.encrypted_model_calculator_param.check()

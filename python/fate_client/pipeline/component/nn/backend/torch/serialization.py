@@ -38,7 +38,9 @@ def recover_layer_from_dict(nn_define, nn_dict):
 
     # create layer or Module
     if nn_layer_class == CustModel:  # converto to pytorch model
-        layer: CustModel = CustModel(name=init_param_dict['name'], **init_param_dict['param'])
+        layer: CustModel = CustModel(module_name=init_param_dict['module_name'],
+                                     class_name=init_param_dict['class_name'],
+                                     **init_param_dict['param'])
         layer = layer.get_pytorch_model()
     elif nn_layer_class == InteractiveLayer:
         layer: InteractiveLayer = InteractiveLayer(**init_param_dict)

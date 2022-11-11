@@ -20,7 +20,6 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 from fate_arch.session import computing_session as session
-from fate_arch.computing._util import is_table
 from federatedml.feature.instance import Instance
 from federatedml.model_base import Metric
 from federatedml.model_base import MetricMeta
@@ -100,7 +99,6 @@ class HeteroNNGuest(HeteroNNBase):
             self._build_model()
             epoch_offset = 0
         else:
-            self.model.warm_start()
             self.callback_warm_start_init_iter(self.history_iter_epoch)
             epoch_offset = self.history_iter_epoch + 1
 
@@ -113,18 +111,25 @@ class HeteroNNGuest(HeteroNNBase):
         data_loader = DataLoader(train_ds, batch_size=batch_size, num_workers=4)
 
         LOGGER.debug('sample ids are {}'.format(train_ds.get_sample_ids()))
-
         for cur_epoch in range(epoch_offset, self.epochs + epoch_offset):
 
+            self.iter_epoch = cur_epoch
             LOGGER.debug("cur epoch is {}".format(cur_epoch))
             self.callback_list.on_epoch_begin(cur_epoch)
             epoch_loss = 0
+            acc_sample_num = 0
 
             for batch_idx, (batch_data, batch_label) in enumerate(data_loader):
                 batch_loss = self.model.train(batch_data, batch_label, cur_epoch, batch_idx)
-                epoch_loss += batch_loss
+                if acc_sample_num + batch_size > len(train_ds):
+                    batch_len = len(train_ds) - acc_sample_num
+                else:
+                    batch_len = batch_size
+                acc_sample_num += batch_size
+                epoch_loss += batch_loss * batch_len
 
-            LOGGER.debug("epoch {}' loss is {}".format(cur_epoch, epoch_loss))
+            epoch_loss = epoch_loss / len(train_ds)
+            LOGGER.debug("epoch {} loss is {}".format(cur_epoch, epoch_loss))
 
             self.callback_metric("loss",
                                  "train",
@@ -154,7 +159,6 @@ class HeteroNNGuest(HeteroNNBase):
                 break
 
         self.callback_list.on_train_end()
-
         self.set_summary(self._get_model_summary())
 
     @assert_io_num_rows_equal
@@ -176,10 +180,8 @@ class HeteroNNGuest(HeteroNNBase):
         preds = np.concatenate(preds, axis=0)
         labels = torch.concat(labels, dim=0).cpu().numpy().flatten().tolist()
 
-        # make an id table for making predict result
-        if not is_table(data_inst):
-            id_table = [(id_, Instance(label=l)) for id_, l in zip(keys, labels)]
-            data_inst = session.parallelize(id_table, partition=self.default_table_partitions, include_key=True)
+        id_table = [(id_, Instance(label=l)) for id_, l in zip(keys, labels)]
+        data_inst = session.parallelize(id_table, partition=self.default_table_partitions, include_key=True)
 
         if self.task_type == consts.REGRESSION:
             preds = preds.flatten().tolist()

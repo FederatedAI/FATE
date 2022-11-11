@@ -1,6 +1,7 @@
 import torch as t
 from torch import nn
 
+
 class MLP(nn.Module):
     
     def __init__(self, input_dim=30, num_class=2):

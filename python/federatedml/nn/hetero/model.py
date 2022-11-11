@@ -153,6 +153,7 @@ class HeteroNNGuestModel(HeteroNNModel):
             guest_bottom_output = self.bottom_model.predict(x)
         else:
             guest_bottom_output = None
+
         interactive_output = self.interactive_model.forward(guest_bottom_output, epoch=self._predict_round,
                                                             batch_idx=batch, train=False)
         self.top_model.train_mode(False)
@@ -226,46 +227,55 @@ class HeteroNNGuestModel(HeteroNNModel):
         if self.interactive_model is not None:
             self.interactive_model.set_partition(self.partition)
 
-    def _build_bottom_model(self):
-
-        self.bottom_model = BottomModel(optimizer=self.optimizer, layer_config=self.bottom_nn_define)
+    def _init_bottom_select_strategy(self):
         if self.selector:
             self.bottom_model.set_backward_select_strategy()
             self.bottom_model.set_batch(self.batch_size)
 
+    def _build_bottom_model(self):
+
+        self.bottom_model = BottomModel(optimizer=self.optimizer, layer_config=self.bottom_nn_define)
+        self._init_bottom_select_strategy()
+
     def _restore_bottom_model(self, model_bytes):
         self._build_bottom_model()
         self.bottom_model.restore_model(model_bytes)
+        self._init_bottom_select_strategy()
+
+    def _init_top_select_strategy(self):
+        if self.selector:
+            self.top_model.set_backward_selector_strategy(selector=self.selector)
+            self.top_model.set_batch(self.batch_size)
 
     def _build_top_model(self):
         if self.top_nn_define is None:
             raise ValueError('top nn model define is None, you must define your top model in guest side')
         self.top_model = TopModel(optimizer=self.optimizer, layer_config=self.top_nn_define, loss=self.loss,
                                   coae_config=self.coae_param)
-
-        if self.selector:
-            self.top_model.set_backward_selector_strategy(selector=self.selector)
-            self.top_model.set_batch(self.batch_size)
+        self._init_top_select_strategy()
 
     def _restore_top_model(self, model_bytes):
         self._build_top_model()
         self.top_model.restore_model(model_bytes)
+        self._init_top_select_strategy()
 
-    def _build_interactive_model(self):
-        self.interactive_model = HEInteractiveLayerGuest(params=self.hetero_nn_param,
-                                                         layer_config=self.interactive_layer_define,
-                                                         host_num=len(self.component_properties.host_party_idlist))
+    def _init_inter_layer(self):
         self.interactive_model.set_partition(self.partition)
         self.interactive_model.set_batch(self.batch_size)
         self.interactive_model.set_flow_id('interactive_layer')
         if self.selector:
             self.interactive_model.set_backward_select_strategy()
 
+    def _build_interactive_model(self):
+        self.interactive_model = HEInteractiveLayerGuest(params=self.hetero_nn_param,
+                                                         layer_config=self.interactive_layer_define,
+                                                         host_num=len(self.component_properties.host_party_idlist))
+        self._init_inter_layer()
+
     def _restore_interactive_model(self, interactive_model_param):
         self._build_interactive_model()
         self.interactive_model.restore_model(interactive_model_param)
-        self.interactive_model.set_flow_id('interactive_layer')
-        self.interactive_model.set_partition(self.partition)
+        self._init_inter_layer()
 
 
 class HeteroNNHostModel(HeteroNNModel):
@@ -366,16 +376,13 @@ class HeteroNNHostModel(HeteroNNModel):
         if self.bottom_model is None:
             global_seed(self.seed)
             self._build_bottom_model()
-
             if self.batch_size == -1:
                 self.batch_size = x.shape[0]
-
+            self._build_interactive_model()
             if self.selector:
                 self.bottom_model.set_backward_select_strategy()
                 self.bottom_model.set_batch(self.batch_size)
                 self.interactive_model.set_backward_select_strategy()
-
-            self._build_interactive_model()
 
         self.bottom_model.train_mode(True)
         host_bottom_output = self.bottom_model.forward(x)

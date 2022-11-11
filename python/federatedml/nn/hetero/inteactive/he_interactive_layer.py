@@ -32,6 +32,7 @@ from federatedml.nn.hetero.nn_component.np_model import GuestDenseModel, HostDen
 from federatedml.secureprotol.paillier_tensor import PaillierTensor
 from federatedml.nn.hetero.nn_component.torch_model import TorchNNModel
 from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
+from fate_arch.session import computing_session as session
 
 BITS = 10
 MIXED_RATE = 0.5
@@ -52,6 +53,7 @@ class HEInteractiveTransferVariable(BaseTransferVariables):
         self.encrypted_host_forward = self._create_variable(name='encrypted_host_forward', src=['host'], dst=['guest'])
         self.host_backward = self._create_variable(name='host_backward', src=['guest'], dst=['host'])
         self.selective_info = self._create_variable(name="selective_info", src=["guest"], dst=["host"])
+        self.drop_out_info = self._create_variable(name="drop_out_info", src=["guest"], dst=["host"])
         self.drop_out_table = self._create_variable(name="drop_out_table", src=["guest"], dst=["host"])
         self.interactive_layer_output_unit = self._create_variable(
             name="interactive_layer_output_unit", src=["guest"], dst=["host"])
@@ -110,6 +112,51 @@ class RandomNumberGenerator(object):
             return PaillierTensor(tb)
 
 
+class DropOut(object):
+    def __init__(self, rate, noise_shape):
+        self._keep_rate = rate
+        self._noise_shape = noise_shape
+        self._mask = None
+        self._partition = None
+        self._mask_table = None
+        self._select_mask_table = None
+        self._do_backward_select = False
+
+    def forward(self, X):
+        forward_x = X * self._mask / self._keep_rate
+
+        return forward_x
+
+    def backward(self, grad):
+        if self._do_backward_select:
+            self._mask = self._select_mask_table[grad.shape[0]]
+            self._select_mask_table = self._select_mask_table[grad.shape[0]:]
+
+        return grad * self._mask / self._keep_rate
+
+    def generate_mask(self):
+        self._mask = np.random.uniform(low=0, high=1, size=self._noise_shape) < self._keep_rate
+
+    def generate_mask_table(self):
+        _mask_table = session.parallelize(self._mask, include_key=False, partition=self._partition)
+
+        self._mask_table = _mask_table
+        return _mask_table
+
+    def set_partition(self, partition):
+        self._partition = partition
+
+    def select_backward_sample(self, select_ids):
+        select_mask_table = self._mask[np.array(select_ids)]
+        if self._select_mask_table is not None:
+            self._select_mask_table = np.vstack((self._select_mask_table, select_mask_table))
+        else:
+            self._select_mask_table = select_mask_table
+
+    def do_backward_select_strategy(self):
+        self._do_backward_select = True
+
+
 class HEInteractiveLayerGuest(InteractiveLayerBase):
 
     def __init__(self, params=None, layer_config=None, host_num=1):
@@ -142,8 +189,9 @@ class HEInteractiveLayerGuest(InteractiveLayerBase):
         self.partitions = 0
         self.do_backward_select_strategy = False
         self.encrypted_host_input_cached = None
-        self.drop_out_keep_rate = params.drop_out_keep_rate
+        self.init_drop_out = False
         self.drop_out = None
+        self.drop_out_keep_rate = None
 
         self.fixed_point_encoder = None if params.floating_point_precision is None else FixedPointEncoder(
             2 ** params.floating_point_precision)
@@ -168,7 +216,6 @@ class HEInteractiveLayerGuest(InteractiveLayerBase):
         if self.model is None:
             raise ValueError('torch interactive model is not initialized!')
 
-        # for multi host cases
         for i in range(self.host_num):
             host_model = HostDenseModel()
             host_model.build(self.model.host_model[i])
@@ -192,11 +239,13 @@ class HEInteractiveLayerGuest(InteractiveLayerBase):
 
         if self.model is None:
             self.model = recover_sequential_from_dict(self.layer_config)[0]
+
             if self.float64:
                 self.model.type(torch.float64)
-            if self.optimizer is None:
-                self.optimizer = torch.optim.SGD(params=self.model.parameters(), lr=self.learning_rate)
             self.guest_input_shape = self.model.guest_model.weight.shape[1]
+
+        if self.optimizer is None:
+            self.optimizer = torch.optim.SGD(params=self.model.parameters(), lr=self.learning_rate)
 
         if train:
             self.model.train()
@@ -243,18 +292,63 @@ class HEInteractiveLayerGuest(InteractiveLayerBase):
 
         return ret_grad[0]
 
+    def activation_forward(self, dense_out, with_grad=True):
+        if with_grad:
+            if (self.dense_output_data_require_grad is not None) or (self.activation_out_require_grad is not None):
+                raise ValueError('torch forward error, related required grad tensors are not freed')
+            self.dense_output_data_require_grad = dense_out.requires_grad_(True)
+            activation_out_ = self.model.activation(self.dense_output_data_require_grad)
+            self.activation_out_require_grad = activation_out_
+        else:
+            with torch.no_grad():
+                activation_out_ = self.model.activation(dense_out)
+
+        return activation_out_.cpu().detach().numpy()
+
+    def activation_backward(self, output_gradients):
+
+        if self.activation_out_require_grad is None and self.dense_output_data_require_grad is None:
+            raise ValueError('related grad is None, cannot compute backward')
+        loss = backward_loss(self.activation_out_require_grad, torch.Tensor(output_gradients))
+        activation_backward_grad = torch.autograd.grad(loss, self.dense_output_data_require_grad)
+        self.activation_out_require_grad = None
+        self.dense_output_data_require_grad = None
+
+        return activation_backward_grad[0].cpu().detach().numpy()
+
     def forward(self, x, epoch: int, batch_idx: int, train: bool = True, **kwargs):
 
-        LOGGER.info("interactive layer start forward propagation of epoch {} batch {}".format(epoch, batch_idx))
+        if train:
+            LOGGER.info("interactive layer start forward propagation of epoch {} batch {}".format(epoch, batch_idx))
+        else:
+            LOGGER.info("interactive layer start predict of iter {} batch {}".format(epoch, batch_idx))
 
         if self.plaintext:
             return self.plaintext_forward(x, epoch, batch_idx, train)
 
-        host_inputs = self.get_forward_from_host(epoch, batch_idx, train, idx=-1)
         if self.model is None:
             self.model = recover_sequential_from_dict(self.layer_config)[0]
+            LOGGER.debug('interactive model is {}'.format(self.model))
+            # for multi host cases
+            LOGGER.debug('host num is {}, len host model {}'.format(self.host_num, len(self.model.host_model)))
+            assert self.host_num == len(self.model.host_model), 'host number is {}, but host linear layer number is {},' \
+                                                                'please check your interactive configuration, make sure' \
+                                                                ' that host layer number equals to host number' \
+                .format(self.host_num, len(self.model.host_model))
+
             if self.float64:
                 self.model.type(torch.float64)
+
+        if train and not self.init_drop_out:
+
+            if isinstance(self.model.param_dict['dropout'], float):
+                self.drop_out_keep_rate = 1 - self.model.param_dict['dropout']
+            else:
+                self.drop_out_keep_rate = -1
+            self.transfer_variable.drop_out_info.remote(self.drop_out_keep_rate, idx=-1, suffix=('dropout_rate', ))
+            self.init_drop_out = True
+
+        host_inputs = self.get_forward_from_host(epoch, batch_idx, train, idx=-1)
 
         host_bottom_inputs_tensor = []
         host_input_shapes = []
@@ -287,24 +381,21 @@ class HEInteractiveLayerGuest(InteractiveLayerBase):
         else:
             dense_output_data = host_output
 
-        LOGGER.info("start to get interactive layer's activation output of epoch {} batch {}".format(epoch, batch_idx))
-        if (self.dense_output_data_require_grad is not None) or (self.activation_out_require_grad is not None):
-            raise ValueError('torch forward error, related required grad tensors are not freed')
-
         if self.float64:  # result after encrypt calculation is float 64
             dense_out = torch.from_numpy(dense_output_data.numpy())
         else:
             dense_out = torch.Tensor(dense_output_data.numpy())  # convert to float32
 
-        if train:
-            self.dense_output_data_require_grad = dense_out.requires_grad_(True)
-            activation_out_ = self.model.activation(self.dense_output_data_require_grad)
-            self.activation_out_require_grad = activation_out_
-        else:
-            with torch.no_grad():
-                activation_out_ = self.model.activation(dense_out)
+        if self.do_backward_select_strategy:
+            for h in self.host_model_list:
+                h.activation_input = dense_out.cpu().detach().numpy()
 
-        activation_out = activation_out_.cpu().detach().numpy()
+        if not train or self.do_backward_select_strategy:
+            with_grad = False
+        else:
+            with_grad = True
+
+        activation_out = self.activation_forward(dense_out, with_grad=with_grad)
 
         return activation_out
 
@@ -314,9 +405,11 @@ class HEInteractiveLayerGuest(InteractiveLayerBase):
             return self.plaintext_backward(error, epoch, batch_idx)
 
         if selective_ids:
+
             for host_model in self.host_model_list:
                 host_model.select_backward_sample(selective_ids)
             self.guest_model.select_backward_sample(selective_ids)
+
             if self.drop_out:
                 self.drop_out.select_backward_sample(selective_ids)
 
@@ -327,10 +420,15 @@ class HEInteractiveLayerGuest(InteractiveLayerBase):
         if len(error) > 0:
 
             LOGGER.debug("interactive layer start backward propagation of epoch {} batch {}".format(epoch, batch_idx))
-            activation_gradient = self.activation_backward(error)
+            if not self.do_backward_select_strategy:
+                activation_gradient = self.activation_backward(error)
+            else:
+                act_input = self.host_model_list[0].get_selective_activation_input()
+                _ = self.activation_forward(torch.from_numpy(act_input), True)
+                activation_gradient = self.activation_backward(error)
 
-            # if self.drop_out:
-            #     activation_gradient = self.drop_out.backward(activation_gradient)
+            if self.drop_out:
+                activation_gradient = self.drop_out.backward(activation_gradient)
             LOGGER.debug("interactive layer update guest weight of epoch {} batch {}".format(epoch, batch_idx))
 
             # update guest model
@@ -350,15 +448,14 @@ class HEInteractiveLayerGuest(InteractiveLayerBase):
             return []
 
     def _create_drop_out(self, shape):
-        # if self.drop_out_keep_rate and self.drop_out_keep_rate != 1:
-        #     if not self.drop_out:
-        #         self.drop_out = DropOut(noise_shape=shape, rate=self.drop_out_keep_rate)
-        #         self.drop_out.set_partition(self.partitions)
-        #         if self.do_backward_select_strategy:
-        #             self.drop_out.do_backward_select_strategy()
-        #
-        #     self.drop_out.generate_mask()
-        pass
+        if self.drop_out_keep_rate and self.drop_out_keep_rate != 1 and self.drop_out_keep_rate > 0:
+            if not self.drop_out:
+                self.drop_out = DropOut(noise_shape=shape, rate=self.drop_out_keep_rate)
+                self.drop_out.set_partition(self.partitions)
+                if self.do_backward_select_strategy:
+                    self.drop_out.do_backward_select_strategy()
+
+            self.drop_out.generate_mask()
 
     def sync_interactive_layer_output_unit(self, shape, idx=0):
         self.transfer_variable.interactive_layer_output_unit.remote(shape,
@@ -394,18 +491,13 @@ class HEInteractiveLayerGuest(InteractiveLayerBase):
 
         return input_gradient
 
-    def activation_backward(self, output_gradients):
-
-        loss = backward_loss(self.activation_out_require_grad, torch.Tensor(output_gradients))
-        activation_backward_grad = torch.autograd.grad(loss, self.dense_output_data_require_grad)
-        self.activation_out_require_grad = None
-        self.dense_output_data_require_grad = None
-
-        return activation_backward_grad[0].cpu().detach().numpy()
-
     def forward_interactive(self, encrypted_host_input, epoch, batch, train=True):
 
-        LOGGER.info("get encrypted dense output of host model of epoch {} batch {}".format(epoch, batch))
+        if train:
+            LOGGER.info("get encrypted dense output of host model of epoch {} batch {}".format(epoch, batch))
+        else:
+            LOGGER.info("interactive layer predict: iter {} batch {}".format(epoch, batch))
+
         mask_table_list = []
         guest_nosies = []
 
@@ -413,7 +505,9 @@ class HEInteractiveLayerGuest(InteractiveLayerBase):
         for model, host_bottom_input in zip(self.host_model_list, encrypted_host_input):
 
             encrypted_fw = model.forward_dense(host_bottom_input, self.fixed_point_encoder)
+
             mask_table = None
+
             if train:
                 self._create_drop_out(encrypted_fw.shape)
                 if self.drop_out:
@@ -425,7 +519,6 @@ class HEInteractiveLayerGuest(InteractiveLayerBase):
             guest_forward_noise = self.rng_generator.fast_generate_random_number(encrypted_fw.shape,
                                                                                  encrypted_fw.partitions,
                                                                                  keep_table=mask_table)
-
             if self.fixed_point_encoder:
                 encrypted_fw += guest_forward_noise.encode(self.fixed_point_encoder)
             else:
@@ -440,14 +533,11 @@ class HEInteractiveLayerGuest(InteractiveLayerBase):
 
             host_idx += 1
 
-        LOGGER.info("get decrypted dense output of host model of epoch {} batch {}".format(epoch, batch))
-
         # get list from hosts
         decrypted_dense_outputs = self.get_guest_decrypted_forward_from_host(epoch, batch, idx=-1)
         merge_output = None
         for idx, (outputs, noise) in enumerate(zip(decrypted_dense_outputs, guest_nosies)):
             out = PaillierTensor(outputs) - noise
-            # handle mask table
             if len(mask_table_list) != 0:
                 out = PaillierTensor(out.get_obj().join(mask_table_list[idx], self.expand_columns))
             if merge_output is None:
@@ -563,12 +653,12 @@ class HEInteractiveLayerHost(InteractiveLayerBase):
         self.encrypter = self.generate_encrypter(params)
         self.transfer_variable = HEInteractiveTransferVariable()
         self.partitions = 1
-        LOGGER.debug('init and set input shape None')
         self.input_shape = None
         self.output_unit = None
         self.rng_generator = RandomNumberGenerator()
         self.do_backward_select_strategy = False
-        self.drop_out_keep_rate = params.drop_out_keep_rate
+        self.drop_out_init = False
+        self.drop_out_keep_rate = None
 
         self.fixed_point_encoder = None if params.floating_point_precision is None else FixedPointEncoder(
             2 ** params.floating_point_precision)
@@ -595,15 +685,26 @@ class HEInteractiveLayerHost(InteractiveLayerBase):
             self.plaintext_forward(host_input, epoch, batch_idx, train)
             return
 
-        LOGGER.info("forward propagation: encrypt host_bottom_output of epoch {} batch {}".format(epoch, batch_idx))
+        if train and not self.drop_out_init:
+            self.drop_out_init = True
+            self.drop_out_keep_rate = self.transfer_variable.drop_out_info.get(0, role=consts.GUEST,
+                                                                               suffix=('dropout_rate', ))
+            if self.drop_out_keep_rate == -1:
+                self.drop_out_keep_rate = None
+
+        if train:
+            LOGGER.info("forward propagation: encrypt host_bottom_output of epoch {} batch {}".format(epoch, batch_idx))
+        else:
+            LOGGER.info("host interactive layer predict forward of iter {} batch {}".format(epoch, batch_idx))
+
         host_input = PaillierTensor(host_input, partitions=self.partitions)
 
         encrypted_host_input = host_input.encrypt(self.encrypter)
         self.send_forward_to_guest(encrypted_host_input.get_obj(), epoch, batch_idx, train)
 
         encrypted_guest_forward = PaillierTensor(self.get_guest_encrypted_forward_from_guest(epoch, batch_idx))
-
         decrypted_guest_forward = encrypted_guest_forward.decrypt(self.encrypter)
+
         if self.fixed_point_encoder:
             decrypted_guest_forward = decrypted_guest_forward.decode(self.fixed_point_encoder)
 
@@ -648,7 +749,6 @@ class HEInteractiveLayerHost(InteractiveLayerBase):
         decrypted_guest_weight_gradient = self.encrypter.recursive_decrypt(encrypted_guest_weight_gradient)
 
         noise_weight_gradient = self.rng_generator.generate_random_number((self.input_shape, self.output_unit))
-        noise_weight_gradient = 0
         decrypted_guest_weight_gradient += noise_weight_gradient / self.learning_rate
 
         self.send_guest_decrypted_weight_gradient_to_guest(decrypted_guest_weight_gradient, epoch, batch)

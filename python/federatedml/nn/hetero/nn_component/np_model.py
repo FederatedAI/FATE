@@ -11,12 +11,9 @@ class DenseModel(object):
         self.model_weight = None
         self.model_shape = None
         self.bias = None
-        self.model = None
         self.lr = 1.0
         self.layer_config = None
         self.role = "host"
-        self.activation_placeholder_name = "activation_placeholder" + str(uuid.uuid1())
-        self.activation_gradient_func = None
         self.activation_func = None
         self.is_empty_model = False
         self.activation_input = None
@@ -78,8 +75,10 @@ class DenseModel(object):
         output = self.activation_func(input_data)
         return output
 
-    def backward_activation(self):
-        pass
+    def get_selective_activation_input(self):
+        self.activation_input = self.activation_cached[: self.batch_size]
+        self.activation_cached = self.activation_cached[self.batch_size:]
+        return self.activation_input
 
     def get_weight(self):
         return self.model_weight.transpose()
