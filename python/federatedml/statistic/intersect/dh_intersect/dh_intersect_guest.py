@@ -145,20 +145,20 @@ class DhIntersectionGuest(DhIntersect):
         return intersect_ids
 
     def load_intersect_key(self, cache_meta):
-         host_party = self.host_party_id_list[0]
-         intersect_key = cache_meta[str(host_party)]["intersect_key"]
-         mod_base = int(intersect_key["mod_base"])
-         exponent = int(intersect_key["exponent"])
-         for host_party in self.host_party_id_list:
-             cur_intersect_key = cache_meta[str(host_party)]["intersect_key"]
+        host_party = self.host_party_id_list[0]
+        intersect_key = cache_meta[str(host_party)]["intersect_key"]
+        mod_base = int(intersect_key["mod_base"])
+        exponent = int(intersect_key["exponent"])
+        for host_party in self.host_party_id_list:
+            cur_intersect_key = cache_meta[str(host_party)]["intersect_key"]
 
-             cur_mod_base = int(cur_intersect_key["mod_base"])
-             cur_exponent = int(cur_intersect_key["exponent"])
-             if cur_mod_base != mod_base or cur_exponent != exponent:
-                 raise ValueError("Not all intersect keys from cache match, please check.")
+            cur_mod_base = int(cur_intersect_key["mod_base"])
+            cur_exponent = int(cur_intersect_key["exponent"])
+            if cur_mod_base != mod_base or cur_exponent != exponent:
+                raise ValueError("Not all intersect keys from cache match, please check.")
 
-         ph_key = PohligHellmanCipherKey(mod_base, exponent)
-         self.commutative_cipher = CryptoExecutor(ph_key)
+        ph_key = PohligHellmanCipherKey(mod_base, exponent)
+        self.commutative_cipher = CryptoExecutor(ph_key)
 
     def generate_cache(self, data_instances):
         self._generate_commutative_cipher()
