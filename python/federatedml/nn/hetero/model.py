@@ -26,7 +26,7 @@ from federatedml.nn.backend.utils.common import global_seed
 from federatedml.protobuf.generated.hetero_nn_model_meta_pb2 import HeteroNNModelMeta
 from federatedml.protobuf.generated.hetero_nn_model_meta_pb2 import OptimizerParam
 from federatedml.protobuf.generated.hetero_nn_model_param_pb2 import HeteroNNModelParam
-from federatedml.nn.hetero.inteactive.he_interactive_layer import HEInteractiveLayerGuest, HEInteractiveLayerHost
+from federatedml.nn.hetero.interactive.he_interactive_layer import HEInteractiveLayerGuest, HEInteractiveLayerHost
 
 
 class HeteroNNModel(object):

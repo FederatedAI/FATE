@@ -36,7 +36,7 @@ class TokenizerDataset(Dataset):
 
         self.truncation = truncation
         self.max_length = text_max_length
-        self.return_label = return_label
+        self.with_label = return_label
         self.tokenizer_name_or_path = tokenizer_name_or_path
         
     def load(self, file_path):
@@ -47,7 +47,7 @@ class TokenizerDataset(Dataset):
         text_list = list(self.text.text)
         self.word_idx = tokenizer(text_list, padding=True, return_tensors='pt',
                                   truncation=self.truncation, max_length=self.max_length)['input_ids']
-        if self.return_label:
+        if self.with_label:
             self.label = t.Tensor(self.text.label).detach().numpy()
             self.label = self.label.reshape((len(self.word_idx), -1))
         del tokenizer # avoid tokenizer parallelism
@@ -62,7 +62,7 @@ class TokenizerDataset(Dataset):
         return self.tokenizer.vocab_size
 
     def __getitem__(self, item):
-        if self.return_label:
+        if self.with_label:
             return self.word_idx[item], self.label[item]
         else:
             return self.word_idx[item]

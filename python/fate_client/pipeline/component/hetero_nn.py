@@ -20,22 +20,7 @@ from pipeline.component.nn.backend.torch.interactive import InteractiveLayer
 from pipeline.interface import Input
 from pipeline.interface import Output
 from pipeline.utils.tools import extract_explicit_parameter
-from pipeline.param.base_param import BaseParam
-
-
-class DatasetParam(BaseParam):
-
-    def __init__(self, dataset_name=None, **kwargs):
-        super(DatasetParam, self).__init__()
-        self.dataset_name = dataset_name
-        self.param = kwargs
-
-    def check(self):
-        self.check_string(self.dataset_name, 'dataset_name')
-
-    def to_dict(self):
-        ret = {'dataset_name': self.dataset_name, 'param': self.param}
-        return ret
+from pipeline.component.nn.interface import DatasetParam
 
 
 class HeteroNN(FateComponent):

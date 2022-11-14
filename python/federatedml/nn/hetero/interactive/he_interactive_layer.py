@@ -15,11 +15,10 @@
 #
 
 import pickle
-import random
 import numpy as np
 import torch
 from torch import autograd
-from federatedml.nn.hetero.inteactive.base import InteractiveLayerBase
+from federatedml.nn.hetero.interactive.base import InteractiveLayerBase
 from federatedml.nn.hetero.nn_component.torch_model import backward_loss
 from federatedml.nn.backend.torch.interactive import InteractiveLayer
 from federatedml.nn.backend.torch.serialization import recover_sequential_from_dict
@@ -27,15 +26,14 @@ from federatedml.util.fixpoint_solver import FixedPointEncoder
 from federatedml.protobuf.generated.hetero_nn_model_param_pb2 import InteractiveLayerParam
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.util import consts, LOGGER
-from fate_arch.session import computing_session
 from federatedml.nn.hetero.nn_component.np_model import GuestDenseModel, HostDenseModel
 from federatedml.secureprotol.paillier_tensor import PaillierTensor
 from federatedml.nn.hetero.nn_component.torch_model import TorchNNModel
 from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
 from fate_arch.session import computing_session as session
+from federatedml.nn.backend.utils.rng import RandomNumberGenerator
 
-BITS = 10
-MIXED_RATE = 0.5
+
 PLAINTEXT = False
 
 
@@ -57,59 +55,6 @@ class HEInteractiveTransferVariable(BaseTransferVariables):
         self.drop_out_table = self._create_variable(name="drop_out_table", src=["guest"], dst=["host"])
         self.interactive_layer_output_unit = self._create_variable(
             name="interactive_layer_output_unit", src=["guest"], dst=["host"])
-
-
-class RandomNumberGenerator(object):
-    def __init__(self):
-        self.lower_bound = -2 ** BITS
-        self.upper_bound = 2 ** BITS
-
-    @staticmethod
-    def get_size_by_shape(shape):
-        size = 1
-        for dim in shape:
-            size *= dim
-
-        return size
-
-    def generate_random_number_1d(self, size, mixed_rate=MIXED_RATE, keep=None):
-        if keep is not None:
-            ret = [0] * size
-            for i in range(size):
-                if keep[i]:
-                    rng = random.SystemRandom().uniform(
-                        self.lower_bound, self.upper_bound) if np.random.rand() < mixed_rate else np.random.uniform(
-                        self.lower_bound, self.upper_bound)
-                    ret[i] = rng
-
-            return np.array(ret)[keep]
-        else:
-            return [
-                random.SystemRandom().uniform(
-                    self.lower_bound,
-                    self.upper_bound) if np.random.rand() < mixed_rate else np.random.uniform(
-                    self.lower_bound,
-                    self.upper_bound) for _ in range(size)]
-
-    def generate_random_number(self, shape=None, mixed_rate=MIXED_RATE, keep=None):
-        if keep is not None:
-            size = self.get_size_by_shape(keep.shape)
-            return self.generate_random_number_1d(size, mixed_rate=mixed_rate, keep=keep)
-        else:
-            size = self.get_size_by_shape(shape)
-            return np.reshape(self.generate_random_number_1d(size, mixed_rate=mixed_rate), shape)
-
-    def fast_generate_random_number(self, shape, partition=10, mixed_rate=MIXED_RATE, keep_table=None):
-        if keep_table:
-            tb = keep_table.mapValues(lambda keep_array: self.generate_random_number(keep=keep_array,
-                                                                                     mixed_rate=mixed_rate))
-            return PaillierTensor(tb)
-        else:
-            tb = computing_session.parallelize([None for _ in range(shape[0])], include_key=False, partition=partition)
-
-            tb = tb.mapValues(lambda val: self.generate_random_number(shape[1:], mixed_rate=mixed_rate))
-
-            return PaillierTensor(tb)
 
 
 class DropOut(object):
@@ -318,10 +263,7 @@ class HEInteractiveLayerGuest(InteractiveLayerBase):
 
     def forward(self, x, epoch: int, batch_idx: int, train: bool = True, **kwargs):
 
-        if train:
-            LOGGER.info("interactive layer start forward propagation of epoch {} batch {}".format(epoch, batch_idx))
-        else:
-            LOGGER.info("interactive layer start predict of iter {} batch {}".format(epoch, batch_idx))
+        LOGGER.info("interactive layer start forward propagation of epoch {} batch {}".format(epoch, batch_idx))
 
         if self.plaintext:
             return self.plaintext_forward(x, epoch, batch_idx, train)
@@ -380,6 +322,8 @@ class HEInteractiveLayerGuest(InteractiveLayerBase):
             dense_output_data = host_output + PaillierTensor(guest_output, partitions=self.partitions)
         else:
             dense_output_data = host_output
+
+        LOGGER.info("start to get interactive layer's activation output of epoch {} batch {}".format(epoch, batch_idx))
 
         if self.float64:  # result after encrypt calculation is float 64
             dense_out = torch.from_numpy(dense_output_data.numpy())
@@ -493,11 +437,8 @@ class HEInteractiveLayerGuest(InteractiveLayerBase):
 
     def forward_interactive(self, encrypted_host_input, epoch, batch, train=True):
 
-        if train:
-            LOGGER.info("get encrypted dense output of host model of epoch {} batch {}".format(epoch, batch))
-        else:
-            LOGGER.info("interactive layer predict: iter {} batch {}".format(epoch, batch))
-
+        LOGGER.info("get encrypted dense output of host model of epoch {} batch {}, train is {}"
+                    "".format(epoch, batch, train))
         mask_table_list = []
         guest_nosies = []
 
@@ -519,10 +460,18 @@ class HEInteractiveLayerGuest(InteractiveLayerBase):
             guest_forward_noise = self.rng_generator.fast_generate_random_number(encrypted_fw.shape,
                                                                                  encrypted_fw.partitions,
                                                                                  keep_table=mask_table)
+
+            LOGGER.debug('guest noise {}'.format(guest_forward_noise.numpy().tolist()))
+
             if self.fixed_point_encoder:
+                LOGGER.debug('encode noise {}'.format(guest_forward_noise.encode(self.fixed_point_encoder).numpy().tolist()))
+                LOGGER.debug('encrypted fw is {}'.format(encrypted_fw.decode(self.fixed_point_encoder).numpy()))
                 encrypted_fw += guest_forward_noise.encode(self.fixed_point_encoder)
             else:
+                LOGGER.debug('encrypted fw is {}'.format(encrypted_fw.numpy()))
                 encrypted_fw += guest_forward_noise
+
+            LOGGER.debug('encrypt fw with noise {}'.format(encrypted_fw.numpy()))
 
             guest_nosies.append(guest_forward_noise)
 
@@ -544,6 +493,8 @@ class HEInteractiveLayerGuest(InteractiveLayerBase):
                 merge_output = out
             else:
                 merge_output = merge_output + out
+
+        LOGGER.debug('merge out is {}'.format(merge_output.numpy()))
 
         return merge_output
 
@@ -692,11 +643,7 @@ class HEInteractiveLayerHost(InteractiveLayerBase):
             if self.drop_out_keep_rate == -1:
                 self.drop_out_keep_rate = None
 
-        if train:
-            LOGGER.info("forward propagation: encrypt host_bottom_output of epoch {} batch {}".format(epoch, batch_idx))
-        else:
-            LOGGER.info("host interactive layer predict forward of iter {} batch {}".format(epoch, batch_idx))
-
+        LOGGER.info("forward propagation: encrypt host_bottom_output of epoch {} batch {}".format(epoch, batch_idx))
         host_input = PaillierTensor(host_input, partitions=self.partitions)
 
         encrypted_host_input = host_input.encrypt(self.encrypter)
@@ -705,6 +652,7 @@ class HEInteractiveLayerHost(InteractiveLayerBase):
         encrypted_guest_forward = PaillierTensor(self.get_guest_encrypted_forward_from_guest(epoch, batch_idx))
         decrypted_guest_forward = encrypted_guest_forward.decrypt(self.encrypter)
 
+        # cwj
         if self.fixed_point_encoder:
             decrypted_guest_forward = decrypted_guest_forward.decode(self.fixed_point_encoder)
 
