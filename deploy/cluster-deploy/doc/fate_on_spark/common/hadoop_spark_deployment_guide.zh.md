@@ -154,8 +154,8 @@ ssh app@192.168.0.3
 
 **上传以下程序包到服务器上**
 
-1. wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/jdk-8u192.tar.gz
-2. wget https://archive.apache.org/dist/hadoop/common/hadoop-3.2.0/hadoop-3.2.0.tar.gz
+1. wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/jdk-8u345.tar.xz
+2. wget https://archive.apache.org/dist/hadoop/common/hadoop-3.3.1/hadoop-3.3.1.tar.gz
 3. wget https://downloads.lightbend.com/scala/2.12.10/scala-2.12.10.tgz
 4. wget https://archive.apache.org/dist/spark/spark-3.1.2/spark-3.1.2-bin-hadoop3.2.tgz
 5. wget https://archive.apache.org/dist/zookeeper/zookeeper-3.4.14/zookeeper-3.4.14.tar.gz
@@ -163,12 +163,12 @@ ssh app@192.168.0.3
 **解压**
 
 ```bash
-tar xvf hadoop-3.2.0.tar.gz -C /data/projects/common
+tar xvf hadoop-3.3.1.tar.gz -C /data/projects/common
 tar xvf scala-2.12.10.tgz -C /data/projects/common
 tar xvf spark-3.1.2-bin-hadoop3.2.tgz -C /data/projects/common
 tar xvf zookeeper-3.4.14.tar.gz -C /data/projects/common
-tar xvf jdk-8u192-linux-x64.tar.gz -C /data/projects/common/jdk
-mv hadoop-3.2.0 hadoop
+tar xvf jdk-8u345.tar.xz -C /data/projects/common/jdk
+mv hadoop-3.3.1 hadoop
 mv scala-2.12.10 scala
 mv spark-3.1.2-bin-hadoop3.2 spark
 mv zookeeper-3.4.14 zookeeper
@@ -177,7 +177,7 @@ mv zookeeper-3.4.14 zookeeper
 **配置/etc/profile**
 
 ```bash
-export JAVA_HOME=/data/projects/common/jdk/jdk-8u192
+export JAVA_HOME=/data/projects/common/jdk/jdk-8u345
 export PATH=$JAVA_HOME/bin:$PATH
 export HADOOP_HOME=/data/projects/common/hadoop
 export PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin
@@ -227,7 +227,7 @@ cd /data/projects/common/hadoop/etc/hadoop
 
 **在hadoop-env.sh、yarn-env.sh**
 
-**加入**：export JAVA_HOME=/data/projects/common/jdk/jdk1.8.0_192
+**加入**：export JAVA_HOME=/data/projects/common/jdk/jdk-8u345
 
 **/data/projects/common/Hadoop/etc/hadoop目录下修改core-site.xml、hdfs-site.xml、mapred-site.xml、yarn-site.xml配置，需要根据实际情况修改里面的IP主机名、目录等。参考如下**
 
@@ -629,7 +629,7 @@ spark.yarn.jars hdfs://fate-cluster/tmp/spark/jars/\*.jar
 
 **在spark-env.sh加入**
 
-export JAVA_HOME=/data/projects/common/jdk/jdk-8u192
+export JAVA_HOME=/data/projects/common/jdk/jdk-8u345
 
 export SCALA_HOME=/data/projects/common/scala
 
