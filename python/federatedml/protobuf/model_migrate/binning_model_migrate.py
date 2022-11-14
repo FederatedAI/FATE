@@ -13,10 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
-import copy
-
-from federatedml.protobuf.generated.feature_binning_param_pb2 import FeatureBinningParam
+from federatedml.protobuf import parse_pb_buffer
 
 
 def extract_woe_array_dict(model_param_dict, host_idx=0):
@@ -30,46 +27,37 @@ def extract_woe_array_dict(model_param_dict, host_idx=0):
     return woe_array_dict
 
 
-"""def merge_woe_array_dict(model_param_dict, woe_array_dict):
-    header, anonymous_header = model_param_dict.get("header"), model_param_dict.get("headerAnonymous")
-    if len(header) != len(anonymous_header):
-        raise ValueError(f"Given header length and anonymous header length in model param do not match."
-                         f"Please check!")
-    anonymous_col_name_dict = dict(zip(header, anonymous_header))
-    binning_results = copy.deepcopy(model_param_dict.get("binningResult", {}).get("binningResult", {}))
+def merge_woe_array_dict(pb_name, model_param_pb, model_param_dict, woe_array_dict):
+    model_param_pb = parse_pb_buffer(pb_name, model_param_pb)
 
-    for col_name, col_result in binning_results.items():
-        if woe_array_dict.get(anonymous_col_name_dict[col_name]):
-            col_result["woeArray"] = woe_array_dict[anonymous_col_name_dict[col_name]].get("woeArray")
-    model_param_dict.get("binningResult", {})["binningResult"] = binning_results
-
-    binning_results = model_param_dict.get("multiClassResult", {}).get("results", [])[0].get("binningResult")
-    for col_name, col_result in binning_results.items():
-        if woe_array_dict.get(anonymous_col_name_dict[col_name]):
-            col_result["woeArray"] = woe_array_dict[anonymous_col_name_dict[col_name]].get("woeArray")
-    # model_param_dict["multiClassResult"]["results"][0]["binningResult"] = binning_results
-    return model_param_dict"""
-
-def merge_woe_array_dict(model_param_pb, woe_array_dict):
     header, anonymous_header = list(model_param_pb.header), list(model_param_pb.header_anonymous)
     if len(header) != len(anonymous_header):
-        raise ValueError(f"Given header length and anonymous header length in model param do not match."
-                         f"Please check!")
+        raise ValueError(
+            "Given header length and anonymous header length in model param do not match. "
+            "Please check!"
+        )
+
     anonymous_col_name_dict = dict(zip(header, anonymous_header))
-    binning_results = model_param_pb.binning_result.binning_result
-    binning_results_cols = dict(binning_results).keys()
 
-    for col_name in binning_results_cols:
-        if woe_array_dict.get(anonymous_col_name_dict[col_name]):
-            binning_results[col_name].woe_array = woe_array_dict[anonymous_col_name_dict[col_name]].get("woeArray")
+    for col_name in model_param_pb.binning_result.binning_result:
+        try:
+            woe_array = woe_array_dict[anonymous_col_name_dict[col_name]]["woeArray"]
+        except KeyError:
+            continue
 
-    binning_results = model_param_pb.multi_class_result.results[0].binning_result
-    binning_results_cols = dict(binning_results).keys()
-    for col_name in binning_results_cols:
-        if woe_array_dict.get(anonymous_col_name_dict[col_name]):
-            binning_results[col_name].woe_array = woe_array_dict[anonymous_col_name_dict[col_name]].get("woeArray")
-    # model_param_dict["multiClassResult"]["results"][0]["binningResult"] = binning_results
-    return model_param_pb
+        model_param_pb.binning_result.binning_result[col_name].woe_array[:] = woe_array
+        model_param_dict["binningResult"]["binningResult"][col_name]["woeArray"] = woe_array
+
+    for col_name in model_param_pb.multi_class_result.results[0].binning_result:
+        try:
+            woe_array = woe_array_dict[anonymous_col_name_dict[col_name]]["woeArray"]
+        except KeyError:
+            continue
+
+        model_param_pb.multi_class_result.results[0].binning_result[col_name].woe_array[:] = woe_array
+        model_param_dict["multiClassResult"]["results"][0]["binningResult"][col_name]["woeArray"] = woe_array
+
+    return model_param_pb.SerializeToString(), model_param_dict
 
 
 def set_model_meta(model_meta_dict):

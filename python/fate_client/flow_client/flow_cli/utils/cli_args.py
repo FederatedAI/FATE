@@ -64,9 +64,14 @@ STATUS = click.option("-s", "--status", type=click.Choice(status_choices_list), 
                           status_choices_list[-1]))
 
 OUTPUT_PATH = click.option("-o", "--output-path", type=click.Path(exists=False),
-                           help="User specifies output directory path.")
+                           help="User specifies output directory/file path.")
 OUTPUT_PATH_REQUIRED = click.option("-o", "--output-path", type=click.Path(exists=False), required=True,
-                                    help="User specifies output directory path.")
+                                    help="User specifies output directory/file path.")
+
+INPUT_PATH = click.option("-i", "--input-path", type=click.Path(exists=True),
+                          help="User specifies input directory/file path.")
+INPUT_PATH_REQUIRED = click.option("-i", "--input-path", type=click.Path(exists=True), required=True,
+                                   help="User specifies input directory/file path.")
 
 NAMESPACE = click.option("-n", "--namespace", type=click.STRING,
                          help="Namespace.")
