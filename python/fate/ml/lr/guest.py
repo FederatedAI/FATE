@@ -3,8 +3,8 @@ import logging
 import numpy as np
 import torch
 from fate.arch import tensor
-from fate.interface import Context, ModelsLoader, ModelsSaver
 from fate.arch.dataframe import CSVReader, DataLoader
+from fate.interface import Context, ModelsLoader, ModelsSaver
 from sklearn.linear_model import LogisticRegression
 from sklearn.utils.fixes import sklearn
 
@@ -15,14 +15,15 @@ logger = logging.getLogger(__name__)
 
 class GuestDataframeMock:
     def __init__(self, ctx) -> None:
-        guest_data_path = "/Users/sage/proj/FATE/2.0.0-alpha/" \
-                          "examples/data/breast_hetero_guest.csv"
+        guest_data_path = (
+            "/Users/sage/proj/FATE/2.0.0-alpha/" "examples/data/breast_hetero_guest.csv"
+        )
         self.data = CSVReader(
             id_name="id",
             label_name="y",
             label_type="float32",
             delimiter=",",
-            dtype="float32"
+            dtype="float32",
         ).to_frame(ctx, guest_data_path)
         self.num_features = 10
         self.num_sample = len(self.data)
@@ -39,6 +40,7 @@ class GuestDataframeMock:
 class LrModuleGuest(HeteroModule):
     def __init__(
         self,
+        lr="0.1",
         penalty="l2",
         *,
         dual=False,
@@ -61,7 +63,7 @@ class LrModuleGuest(HeteroModule):
         self.learning_rate = 0.1
         self.alpha = 1.0
 
-    def fit(self, ctx: Context, train_data) -> None:
+    def fit(self, ctx: Context, train_data, validate_data) -> None:
         """
         l(w) = 1/h * Σ(log(2) - 0.5 * y * xw + 0.125 * (wx)^2)
         ∇l(w) = 1/h * Σ(0.25 * xw - 0.5 * y)x = 1/h * Σdx
@@ -70,8 +72,14 @@ class LrModuleGuest(HeteroModule):
         """
         # mock data
         train_data = GuestDataframeMock(ctx)
-        batch_loader = DataLoader(train_data.data, ctx=ctx, batch_size=self.batch_size,
-                                  mode="hetero", role="guest", sync_arbiter=True)
+        batch_loader = DataLoader(
+            train_data.data,
+            ctx=ctx,
+            batch_size=self.batch_size,
+            mode="hetero",
+            role="guest",
+            sync_arbiter=True,
+        )
         # get encryptor
         ctx.arbiter("encryptor").get()
         logger.info(train_data.num_sample)
@@ -108,3 +116,6 @@ class LrModuleGuest(HeteroModule):
                 w -= (self.learning_rate / h) * g
                 logger.info(f"w={w}")
                 j += 1
+
+    def export_model(self):
+        ...
