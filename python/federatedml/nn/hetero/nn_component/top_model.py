@@ -18,6 +18,7 @@
 #
 
 import numpy as np
+import torch
 from federatedml.util import LOGGER
 from federatedml.nn.hetero.nn_component.torch_model import TorchNNModel
 from federatedml.nn.hetero.protection_enhance.coae import train_an_autoencoder_confuser, CoAE, coae_label_reformat, \
@@ -34,8 +35,6 @@ class TopModel(object):
 
         self._model: TorchNNModel = TorchNNModel(nn_define=layer_config, optimizer_define=optimizer,
                                                  loss_fn_define=loss)
-        LOGGER.debug('show top init para')
-        self._model.print_parameters()
 
         self.label_reformat = None
         if self.coae_config:
@@ -61,7 +60,6 @@ class TopModel(object):
     def train_and_get_backward_gradient(self, x, y):
 
         LOGGER.debug("top model start to forward propagation")
-
         selective_id = []
         input_gradient = []
 
@@ -84,6 +82,10 @@ class TopModel(object):
         # run selector
         if self.selector:
 
+            # when run selective bp, need to convert y to numpy format
+            if isinstance(y, torch.Tensor):
+                y = y.cpu().numpy()
+
             losses = self._model.get_forward_loss_from_input(x, y)
             loss = sum(losses) / len(losses)
             selective_strategy = self.selector.select_batch_sample(losses)
@@ -95,16 +97,13 @@ class TopModel(object):
                     self.batch_data_cached_y.append(y[idx])
 
             if len(self.batch_data_cached_X) >= self.batch_size:
-                data = (np.array(self.batch_data_cached_X[: self.batch_size]), np.array(self.batch_data_cached_y[: self.batch_size]))
-                input_gradient = self._model.get_input_gradients(np.array(self.batch_data_cached_X[: self.batch_size]),
-                                                                 np.array(self.batch_data_cached_y[: self.batch_size]))[
-                    0]
+                data = (np.array(self.batch_data_cached_X[: self.batch_size]),
+                        np.array(self.batch_data_cached_y[: self.batch_size]))
+                input_gradient = self._model.get_input_gradients(data[0], data[1])[0]
                 self._model.train(data)
                 self.batch_data_cached_X = self.batch_data_cached_X[self.batch_size:]
                 self.batch_data_cached_y = self.batch_data_cached_y[self.batch_size:]
-
         else:
-
             input_gradient = self._model.get_input_gradients(x, y)[0]
             self._model.train((x, y))
             loss = self._model.get_loss()[0]
