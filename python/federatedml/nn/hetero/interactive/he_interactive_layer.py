@@ -40,7 +40,7 @@ PLAINTEXT = False
 class HEInteractiveTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
-        self.decrypted_guest_fowrad = self._create_variable(name='decrypted_guest_fowrad', src=['host'], dst=['guest'])
+        self.decrypted_guest_forward = self._create_variable(name='decrypted_guest_forward', src=['host'], dst=['guest'])
         self.decrypted_guest_weight_gradient = self._create_variable(
             name='decrypted_guest_weight_gradient', src=['host'], dst=['guest'])
         self.encrypted_acc_noise = self._create_variable(name='encrypted_acc_noise', src=['host'], dst=['guest'])
@@ -61,31 +61,44 @@ class DropOut(object):
     def __init__(self, rate, noise_shape):
         self._keep_rate = rate
         self._noise_shape = noise_shape
+        self._batch_size = noise_shape[0]
         self._mask = None
         self._partition = None
         self._mask_table = None
         self._select_mask_table = None
         self._do_backward_select = False
 
-    def forward(self, X):
-        forward_x = X * self._mask / self._keep_rate
+        self._mask_table_cache = {}
 
+    def forward(self, X):
+        if X.shape == self._mask.shape:
+            forward_x = X * self._mask / self._keep_rate
+        else:
+            forward_x = X * self._mask[0: len(X)] / self._keep_rate
         return forward_x
 
     def backward(self, grad):
-        if self._do_backward_select:
-            self._mask = self._select_mask_table[grad.shape[0]]
-            self._select_mask_table = self._select_mask_table[grad.shape[0]:]
 
-        return grad * self._mask / self._keep_rate
+        if self._do_backward_select:
+            self._mask = self._select_mask_table[0: grad.shape[0]]
+            self._select_mask_table = self._select_mask_table[grad.shape[0]:]
+            return grad * self._mask / self._keep_rate
+        else:
+            if grad.shape == self._mask.shape:
+                return grad * self._mask / self._keep_rate
+            else:
+                return grad * self._mask[0: grad.shape[0]] / self._keep_rate
 
     def generate_mask(self):
         self._mask = np.random.uniform(low=0, high=1, size=self._noise_shape) < self._keep_rate
 
-    def generate_mask_table(self):
-        _mask_table = session.parallelize(self._mask, include_key=False, partition=self._partition)
+    def generate_mask_table(self, shape):
+        # generate mask table according to samples shape, because in some batches, sample_num < batch_size
+        if shape == self._noise_shape:
+            _mask_table = session.parallelize(self._mask, include_key=False, partition=self._partition)
+        else:
+            _mask_table = session.parallelize(self._mask[0: shape[0]], include_key=False, partition=self._partition)
 
-        self._mask_table = _mask_table
         return _mask_table
 
     def set_partition(self, partition):
@@ -341,6 +354,9 @@ class HEInteractiveLayerGuest(InteractiveLayerBase):
 
         activation_out = self.activation_forward(dense_out, with_grad=with_grad)
 
+        if train and self.drop_out:
+            return self.drop_out.forward(activation_out)
+
         return activation_out
 
     def guest_backward(self, error, epoch: int, batch_idx: int, selective_ids=None, **kwargs):
@@ -452,7 +468,7 @@ class HEInteractiveLayerGuest(InteractiveLayerBase):
             if train:
                 self._create_drop_out(encrypted_fw.shape)
                 if self.drop_out:
-                    mask_table = self.drop_out.generate_mask_table()
+                    mask_table = self.drop_out.generate_mask_table(encrypted_fw.shape)
                 if mask_table:
                     encrypted_fw = encrypted_fw.select_columns(mask_table)
                     mask_table_list.append(mask_table)
@@ -460,18 +476,10 @@ class HEInteractiveLayerGuest(InteractiveLayerBase):
             guest_forward_noise = self.rng_generator.fast_generate_random_number(encrypted_fw.shape,
                                                                                  encrypted_fw.partitions,
                                                                                  keep_table=mask_table)
-
-            LOGGER.debug('guest noise {}'.format(guest_forward_noise.numpy().tolist()))
-
             if self.fixed_point_encoder:
-                LOGGER.debug('encode noise {}'.format(guest_forward_noise.encode(self.fixed_point_encoder).numpy().tolist()))
-                LOGGER.debug('encrypted fw is {}'.format(encrypted_fw.decode(self.fixed_point_encoder).numpy()))
                 encrypted_fw += guest_forward_noise.encode(self.fixed_point_encoder)
             else:
-                LOGGER.debug('encrypted fw is {}'.format(encrypted_fw.numpy()))
                 encrypted_fw += guest_forward_noise
-
-            LOGGER.debug('encrypt fw with noise {}'.format(encrypted_fw.numpy()))
 
             guest_nosies.append(guest_forward_noise)
 
@@ -493,8 +501,6 @@ class HEInteractiveLayerGuest(InteractiveLayerBase):
                 merge_output = out
             else:
                 merge_output = merge_output + out
-
-        LOGGER.debug('merge out is {}'.format(merge_output.numpy()))
 
         return merge_output
 
@@ -536,8 +542,8 @@ class HEInteractiveLayerGuest(InteractiveLayerBase):
                                                             suffix=(epoch, batch,))
 
     def get_guest_decrypted_forward_from_host(self, epoch, batch, idx=0):
-        return self.transfer_variable.decrypted_guest_fowrad.get(idx=idx,
-                                                                 suffix=(epoch, batch,))
+        return self.transfer_variable.decrypted_guest_forward.get(idx=idx,
+                                                                  suffix=(epoch, batch,))
 
     def get_encrypted_acc_noise_from_host(self, epoch, batch, idx=0):
         return self.transfer_variable.encrypted_acc_noise.get(idx=idx,
@@ -767,10 +773,10 @@ class HEInteractiveLayerHost(InteractiveLayerBase):
         return encrypted_guest_forward
 
     def send_decrypted_guest_forward_with_noise_to_guest(self, decrypted_guest_forward_with_noise, epoch, batch):
-        self.transfer_variable.decrypted_guest_fowrad.remote(decrypted_guest_forward_with_noise,
-                                                             idx=0,
-                                                             role=consts.GUEST,
-                                                             suffix=(epoch, batch,))
+        self.transfer_variable.decrypted_guest_forward.remote(decrypted_guest_forward_with_noise,
+                                                              idx=0,
+                                                              role=consts.GUEST,
+                                                              suffix=(epoch, batch,))
 
     def generate_encrypter(self, param):
         LOGGER.info("generate encrypter")

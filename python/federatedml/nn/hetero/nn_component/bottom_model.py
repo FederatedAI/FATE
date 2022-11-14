@@ -27,8 +27,6 @@ class BottomModel(object):
 
         self._model: TorchNNModel = TorchNNModel(nn_define=layer_config, optimizer_define=optimizer,
                                                  loss_fn_define=None)
-        LOGGER.debug('show bottom init para')
-        self._model.print_parameters()
         self.do_backward_select_strategy = False
         self.x = []
         self.x_cached = []
