@@ -32,7 +32,7 @@ class Host(object):
     def register_paillier_cipher(self, transfer_variables):
         pass
 
-    def gen_paillier_pubkey(self, enable, lib, suffix=tuple()) -> typing.Union[PaillierPublicKey, IpclPaillierPublicKey, None]:
+    def gen_paillier_pubkey(self, enable, lib, suffix=tuple()):
         return self._paillier.gen_paillier_pubkey(enable=enable, lib=lib, suffix=suffix)
 
     def set_re_cipher_time(self, re_encrypt_times, suffix=tuple()):

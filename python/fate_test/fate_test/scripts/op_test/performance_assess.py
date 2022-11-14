@@ -69,7 +69,6 @@ class Metric(object):
 
         return final_time / test_round
 
-
     def encrypt(self, data, op, is_ipcl=False):
         if is_ipcl:
             many_round_encrypt_time = self.many_call_ipcl(data, unary_op=op, test_round=self.test_round)
@@ -96,7 +95,7 @@ class Metric(object):
                   raw_data_x, raw_data_y, real_ret, decrypt_ret, op, op_name, is_ipcl=False):
         if is_ipcl:
             many_round_time = self.many_call_ipcl(data_x=encrypt_data_x, binary_op=op,
-                                             data_y=encrypt_data_y, test_round=self.test_round)
+                                                  data_y=encrypt_data_y, test_round=self.test_round)
         else:
             many_round_time = self.many_call(data_x=encrypt_data_x, binary_op=op,
                                              data_y=encrypt_data_y, test_round=self.test_round)

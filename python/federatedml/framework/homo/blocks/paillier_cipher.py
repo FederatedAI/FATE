@@ -62,7 +62,7 @@ class Server(object):
                     cipher = IpclPaillierEncrypt()
                 else:
                     raise ValueError(
-                    "Paillier method {} not supported".format(paillier_lib_))
+                        "Paillier method {} not supported".format(paillier_lib_))
                 cipher.generate_key(key_length)
                 pub_key = cipher.get_public_key()
                 self._paillier_pubkey.remote_parties(obj=pub_key, parties=[party], suffix=suffix)

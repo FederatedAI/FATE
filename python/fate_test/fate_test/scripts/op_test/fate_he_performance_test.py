@@ -55,7 +55,8 @@ class PaillierAssess(object):
         metric = Metric(data_num=self.data_num, test_round=self.test_round)
 
         table.add_row(metric.encrypt(self.float_data_x, self.public_key.encrypt, is_ipcl=self.is_ipcl))
-        decrypt_data = self.private_key.decrypt(self.encrypt_float_data_x) if self.is_ipcl else [self.private_key.decrypt(i) for i in self.encrypt_float_data_x]
+        decrypt_data = self.private_key.decrypt(self.encrypt_float_data_x) if self.is_ipcl else [
+            self.private_key.decrypt(i) for i in self.encrypt_float_data_x]
         table.add_row(metric.decrypt(self.encrypt_float_data_x, self.float_data_x, decrypt_data,
                                      self.private_key.decrypt, is_ipcl=self.is_ipcl))
 
@@ -99,7 +100,8 @@ class PaillierAssess(object):
 
     def binary_op(self, table, metric, encrypt_data_x, encrypt_data_y, raw_data_x, raw_data_y,
                   real_data, encrypt_data, op, op_name):
-        decrypt_data = self.private_key.decrypt(encrypt_data) if self.is_ipcl else [self.private_key.decrypt(i) for i in encrypt_data]
+        decrypt_data = self.private_key.decrypt(encrypt_data) if self.is_ipcl else [
+            self.private_key.decrypt(i) for i in encrypt_data]
         table.add_row(metric.binary_op(encrypt_data_x, encrypt_data_y,
                                        raw_data_x, raw_data_y,
                                        real_data, decrypt_data,

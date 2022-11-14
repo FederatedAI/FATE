@@ -110,8 +110,8 @@ class Arbiter(object):
                 self._model_broadcaster.send_model(model=model.for_remote(), parties=party, suffix=suffix)
             else:
                 if isinstance(cipher, IpclPaillierEncrypt):
-                    self._model_broadcaster.send_model(model=model.encrypted_ipcl(cipher, False).for_remote(), parties=party,
-                                                       suffix=suffix)
+                    self._model_broadcaster.send_model(model=model.encrypted_ipcl(
+                        cipher, False).for_remote(), parties=party, suffix=suffix)
                 else:
                     self._model_broadcaster.send_model(model=model.encrypted(cipher, False).for_remote(), parties=party,
                                                        suffix=suffix)
