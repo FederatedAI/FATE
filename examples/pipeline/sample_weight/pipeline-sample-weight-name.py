@@ -20,7 +20,7 @@ from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataTransform
 from pipeline.component import Evaluation
 from pipeline.component import HeteroLR
-from pipeline.component import SampleWeight
+from pipeline.component import SampleWeight, FederatedSample
 from pipeline.component import Intersection
 from pipeline.component import Reader
 from pipeline.component import FeatureScale
@@ -58,12 +58,14 @@ def main(config="../../config.yaml", namespace=""):
     data_transform_0.get_party_instance(role='host', party_id=host).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
-    scale_0 = FeatureScale(name="scale_0", method="min_max_scale", mode="cap", scale_names=["x0"])
+    scale_0 = FeatureScale(name="scale_0", method="min_max_scale", mode="normal", scale_names=["x0"])
 
     sample_weight_0 = SampleWeight(name="sample_weight_0")
     sample_weight_0.get_party_instance(role='guest', party_id=guest).component_param(need_run=True,
                                                                                      sample_weight_name="x0")
     sample_weight_0.get_party_instance(role='host', party_id=host).component_param(need_run=False)
+
+    federated_sampler_0 = FederatedSample(name="federated_sampler_0", mode="exact_by_weight")
 
     hetero_lr_0 = HeteroLR(name="hetero_lr_0", optimizer="sgd", tol=0.001,
                            alpha=0.01, max_iter=20, early_stop="weight_diff", batch_size=-1,
@@ -78,7 +80,8 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
     pipeline.add_component(scale_0, data=Data(intersection_0.output.data))
     pipeline.add_component(sample_weight_0, data=Data(data=scale_0.output.data))
-    pipeline.add_component(hetero_lr_0, data=Data(train_data=sample_weight_0.output.data))
+    pipeline.add_component(federated_sampler_0, data=sample_weight_0.output.data)
+    pipeline.add_component(hetero_lr_0, data=Data(train_data=federated_sampler_0.output.data))
     pipeline.add_component(evaluation_0, data=Data(data=hetero_lr_0.output.data))
 
     pipeline.compile()

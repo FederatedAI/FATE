@@ -66,7 +66,6 @@ class IntersectModelBase(ModelBase):
         self.intersect_preprocess_params = params.intersect_preprocess_params
 
     def init_intersect_method(self):
-        # to distinguish in future ver
         if self.model_param.cardinality_only:
             self.intersect_method = self.model_param.cardinality_method
         else:

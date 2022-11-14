@@ -20,10 +20,10 @@ class SharedOptions(object):
                 False),
         "extend_sid": (('--extend_sid', ),
                        dict(type=bool, is_flag=True, help="whether to append uuid as sid when uploading data",
-                            default=None), False),
+                            default=None), None),
         "auto_increasing_sid": (('--auto_increasing_sid', ),
                                 dict(type=bool, is_flag=True, help="whether to generate sid value starting at 0",
-                                     default=None), False),
+                                     default=None), None),
     }
 
     def __init__(self):
