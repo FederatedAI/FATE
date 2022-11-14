@@ -6,7 +6,7 @@
 
 ```
 1. jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/jdk-8u192.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/jdk-8u345.tar.xz
 2. spark-3.1.2-bin-hadoop3.2.tgz
 wget https://archive.apache.org/dist/spark/spark-3.1.2/spark-3.1.2-bin-hadoop3.2.tgz
 ```
@@ -21,13 +21,13 @@ tar xvf spark-3.1.2-bin-hadoop3.2.tgz -C /data/projects/fate/common
 #If JDK is not deployed in the current environment, execute
 mkdir -p /data/projects/fate/common/jdk
 #decompression
-tar xzf jdk-8u192-linux-x64.tar.gz -C /data/projects/fate/common/jdk
+tar xzf jdk-8u345.tar.xz -C /data/projects/fate/common/jdk
 ```
 
 **configure /etc/profile**
 
 ```bash
-export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
+export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u345
 export PATH=$JAVA_HOME/bin:$PATH
 export SPARK_HOME=/data/projects/fate/common/spark-3.1.2-bin-hadoop3.2
 export PATH=$SPARK_HOME/bin:$PATH
@@ -39,7 +39,7 @@ export PATH=$SPARK_HOME/bin:$PATH
 cd /data/projects/fate/common/spark-3.1.2-bin-hadoop3.2/conf
 cp spark-env.sh.template spark-env.sh
 #Add parameters
-export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
+export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u345
 export SPARK_MASTER_IP={Host IP}
 export SPARK_MASTER_PORT=7077
 export SPARK_MASTER_WEBUI_PORT=9080
