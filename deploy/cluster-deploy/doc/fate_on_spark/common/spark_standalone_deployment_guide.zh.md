@@ -21,7 +21,7 @@ tar xvf spark-3.1.2-bin-hadoop3.2.tgz -C /data/projects/fate/common
 #如当前环境没有部署jdk则执行
 mkdir -p /data/projects/fate/common/jdk
 #解压缩
-tar xzf jdk-8u345.tar.xz -C /data/projects/fate/common/jdk
+tar xJf jdk-8u345.tar.xz -C /data/projects/fate/common/jdk
 ```
 
 **配置/etc/profile**

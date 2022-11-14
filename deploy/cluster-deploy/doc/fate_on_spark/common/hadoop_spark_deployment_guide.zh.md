@@ -167,7 +167,7 @@ tar xvf hadoop-3.3.1.tar.gz -C /data/projects/common
 tar xvf scala-2.12.10.tgz -C /data/projects/common
 tar xvf spark-3.1.2-bin-hadoop3.2.tgz -C /data/projects/common
 tar xvf zookeeper-3.4.14.tar.gz -C /data/projects/common
-tar xvf jdk-8u345.tar.xz -C /data/projects/common/jdk
+tar xJf jdk-8u345.tar.xz -C /data/projects/common/jdk
 mv hadoop-3.3.1 hadoop
 mv scala-2.12.10 scala
 mv spark-3.1.2-bin-hadoop3.2 spark

@@ -21,7 +21,7 @@ tar xvf spark-3.1.2-bin-hadoop3.2.tgz -C /data/projects/fate/common
 #If JDK is not deployed in the current environment, execute
 mkdir -p /data/projects/fate/common/jdk
 #decompression
-tar xzf jdk-8u345.tar.xz -C /data/projects/fate/common/jdk
+tar xJf jdk-8u345.tar.xz -C /data/projects/fate/common/jdk
 ```
 
 **configure /etc/profile**

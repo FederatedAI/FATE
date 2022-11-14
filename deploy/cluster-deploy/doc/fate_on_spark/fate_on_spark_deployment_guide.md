@@ -282,7 +282,7 @@ mysql>show databases;
 mkdir -p /data/projects/fate/common/jdk
 #Uncompress
 cd /data/projects/install
-tar xzf jdk-8u345.tar.xz -C /data/projects/fate/common/jdk
+tar xJf jdk-8u345.tar.xz -C /data/projects/fate/common/jdk
 ```
 
 ### 5.5 Deploying python
