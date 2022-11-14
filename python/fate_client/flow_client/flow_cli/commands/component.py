@@ -318,35 +318,6 @@ def hetero_model_merge(ctx, **kwargs):
 @component.command('woe-array-extract', short_help='Extract WOE Array Command')
 @cli_args.MODEL_ID_REQUIRED
 @cli_args.MODEL_VERSION_REQUIRED
-@cli_args.PARTYID_REQUIRED
-@cli_args.COMPONENT_NAME_REQUIRED
-@cli_args.OUTPUT_PATH_REQUIRED
-@click.pass_context
-def woe_array_extract(ctx, **kwargs):
-    """
-    \b
-    - DESCRIPTION:
-        Extract WOE array from a guest model.
-
-    \b
-    - USAGE:
-        flow component woe-array-extract --model-id guest-9999#host-9998#model --model-version 202208241838502253290 --guest-party-id 9999 --host-party-ids 9998,9997 --component-name xxx --output-path woe_array.json
-    """
-    config_data, dsl_data = preprocess(**kwargs)
-
-    response = access_server('post', ctx, 'component/woe_array/extract', config_data, False)
-
-    if not response.json().get('data'):
-        prettify(response)
-        return
-
-    with open(config_data['output_path'], 'w', encoding='utf-8') as f:
-        json.dump(response.json()['data'], f)
-
-
-@component.command('woe-array-extract', short_help='Extract WOE Array Command')
-@cli_args.MODEL_ID_REQUIRED
-@cli_args.MODEL_VERSION_REQUIRED
 @cli_args.ROLE_REQUIRED
 @cli_args.PARTYID_REQUIRED
 @cli_args.COMPONENT_NAME_REQUIRED
@@ -382,7 +353,7 @@ def woe_array_extract(ctx, **kwargs):
 @cli_args.COMPONENT_NAME_REQUIRED
 @cli_args.INPUT_PATH_REQUIRED
 @click.pass_context
-def woe_array_extract(ctx, **kwargs):
+def woe_array_merge(ctx, **kwargs):
     """
     \b
     - DESCRIPTION:
