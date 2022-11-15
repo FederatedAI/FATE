@@ -6,15 +6,8 @@
                 "data": [
                     "data"
                 ]
-            }
-        },
-        "reader_1": {
-            "module": "Reader",
-            "output": {
-                "data": [
-                    "data"
-                ]
-            }
+            },
+            "provider": "fate_flow"
         },
         "data_transform_0": {
             "module": "DataTransform",
@@ -32,25 +25,8 @@
                 "model": [
                     "model"
                 ]
-            }
-        },
-        "data_transform_1": {
-            "module": "DataTransform",
-            "input": {
-                "data": {
-                    "data": [
-                        "reader_1.data"
-                    ]
-                }
             },
-            "output": {
-                "data": [
-                    "data"
-                ],
-                "model": [
-                    "model"
-                ]
-            }
+            "provider": "fate"
         },
         "intersection_0": {
             "module": "Intersection",
@@ -68,25 +44,8 @@
                 "cache": [
                     "cache"
                 ]
-            }
-        },
-        "intersection_1": {
-            "module": "Intersection",
-            "input": {
-                "data": {
-                    "data": [
-                        "data_transform_1.data"
-                    ]
-                }
             },
-            "output": {
-                "data": [
-                    "data"
-                ],
-                "cache": [
-                    "cache"
-                ]
-            }
+            "provider": "fate"
         },
         "hetero_nn_0": {
             "module": "HeteroNN",
@@ -94,9 +53,6 @@
                 "data": {
                     "train_data": [
                         "intersection_0.data"
-                    ],
-                    "validate_data": [
-                        "intersection_1.data"
                     ]
                 }
             },
@@ -107,14 +63,15 @@
                 "model": [
                     "model"
                 ]
-            }
+            },
+            "provider": "fate"
         },
         "hetero_nn_1": {
             "module": "HeteroNN",
             "input": {
                 "data": {
                     "test_data": [
-                        "intersection_1.data"
+                        "intersection_0.data"
                     ]
                 },
                 "model": [
@@ -128,15 +85,15 @@
                 "model": [
                     "model"
                 ]
-            }
+            },
+            "provider": "fate"
         },
         "evaluation_0": {
             "module": "Evaluation",
             "input": {
                 "data": {
                     "data": [
-                        "hetero_nn_0.data",
-                        "hetero_nn_1.data"
+                        "hetero_nn_0.data"
                     ]
                 }
             },
@@ -144,7 +101,8 @@
                 "data": [
                     "data"
                 ]
-            }
+            },
+            "provider": "fate"
         }
     }
 }

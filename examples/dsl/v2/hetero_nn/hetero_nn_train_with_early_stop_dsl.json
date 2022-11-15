@@ -6,7 +6,8 @@
                 "data": [
                     "data"
                 ]
-            }
+            },
+            "provider": "fate_flow"
         },
         "reader_1": {
             "module": "Reader",
@@ -14,7 +15,8 @@
                 "data": [
                     "data"
                 ]
-            }
+            },
+            "provider": "fate_flow"
         },
         "data_transform_0": {
             "module": "DataTransform",
@@ -32,7 +34,8 @@
                 "model": [
                     "model"
                 ]
-            }
+            },
+            "provider": "fate"
         },
         "data_transform_1": {
             "module": "DataTransform",
@@ -50,7 +53,8 @@
                 "model": [
                     "model"
                 ]
-            }
+            },
+            "provider": "fate"
         },
         "intersection_0": {
             "module": "Intersection",
@@ -68,7 +72,8 @@
                 "cache": [
                     "cache"
                 ]
-            }
+            },
+            "provider": "fate"
         },
         "intersection_1": {
             "module": "Intersection",
@@ -86,7 +91,8 @@
                 "cache": [
                     "cache"
                 ]
-            }
+            },
+            "provider": "fate"
         },
         "hetero_nn_0": {
             "module": "HeteroNN",
@@ -107,36 +113,15 @@
                 "model": [
                     "model"
                 ]
-            }
-        },
-        "hetero_nn_1": {
-            "module": "HeteroNN",
-            "input": {
-                "data": {
-                    "test_data": [
-                        "intersection_1.data"
-                    ]
-                },
-                "model": [
-                    "hetero_nn_0.model"
-                ]
             },
-            "output": {
-                "data": [
-                    "data"
-                ],
-                "model": [
-                    "model"
-                ]
-            }
+            "provider": "fate"
         },
-        "evaluation_0": {
+        "eval_0": {
             "module": "Evaluation",
             "input": {
                 "data": {
-                    "data": [
-                        "hetero_nn_0.data",
-                        "hetero_nn_1.data"
+                    "train_data": [
+                        "hetero_nn_0.data"
                     ]
                 }
             },
@@ -144,7 +129,8 @@
                 "data": [
                     "data"
                 ]
-            }
+            },
+            "provider": "fate"
         }
     }
 }
