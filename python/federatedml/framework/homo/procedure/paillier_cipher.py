@@ -54,7 +54,7 @@ class Arbiter(object):
         self._client_parties = trans_var.client_parties
         self._party_idx_map = {party: idx for idx, party in enumerate(self._client_parties)}
 
-    def paillier_keygen(self, key_length, suffix=tuple()) -> typing.Mapping[int, typing.Union[PaillierEncrypt, IpclPaillierEncrypt, None]]:
+    def paillier_keygen(self, key_length, suffix=tuple()):
         ciphers = self._paillier.keygen(key_length, suffix)
         return {self._party_idx_map[party]: cipher for party, cipher in ciphers.items()}
 

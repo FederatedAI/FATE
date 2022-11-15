@@ -30,7 +30,8 @@ from federatedml.util import LOGGER
 class LinearModelWeights(ListWeights):
     def __init__(self, l, fit_intercept, raise_overflow_error=True):
         l = np.array(l)
-        if not np.ndim(l) == 0 and len(l) > 0 and not isinstance(l[0], (PaillierEncryptedNumber, IpclPaillierEncryptedNumber)):
+        if not np.ndim(l) == 0 and len(l) > 0 and not isinstance(
+                l[0], (PaillierEncryptedNumber, IpclPaillierEncryptedNumber)):
             if np.max(np.abs(l)) > 1e8:
                 if raise_overflow_error:
                     raise RuntimeError("The model weights are overflow, please check if the "
