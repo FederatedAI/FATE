@@ -158,7 +158,7 @@ ssh app@192.168.0.3
 2. wget https://archive.apache.org/dist/hadoop/common/hadoop-3.3.1/hadoop-3.3.1.tar.gz
 3. wget https://downloads.lightbend.com/scala/2.12.10/scala-2.12.10.tgz
 4. wget https://archive.apache.org/dist/spark/spark-3.1.2/spark-3.1.2-bin-hadoop3.2.tgz
-5. wget https://archive.apache.org/dist/zookeeper/zookeeper-3.4.14/zookeeper-3.4.14.tar.gz
+5. wget https://archive.apache.org/dist/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3-bin.tar.gz 
 
 **解压**
 
@@ -171,7 +171,7 @@ tar xJf jdk-8u345.tar.xz -C /data/projects/common/jdk
 mv hadoop-3.3.1 hadoop
 mv scala-2.12.10 scala
 mv spark-3.1.2-bin-hadoop3.2 spark
-mv zookeeper-3.4.14 zookeeper
+mv apache-zookeeper-3.6.3-bin zookeeper
 ```
 
 **配置/etc/profile**
