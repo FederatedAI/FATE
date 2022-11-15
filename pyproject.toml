@@ -7,6 +7,7 @@ profile = "black"
 skip_glob = ["examples/*", "python/fate_test/*", "python/fate_client/*", "doc/*", "deploy/*", "c/*", "rust/*"]
 
 [tool.black]
+line-length = 119
 target-version = ['py38']
 include = '\.pyi?$'
 # 'extend-exclude' excludes files or directories in addition to the defaults

@@ -16,18 +16,15 @@
 These are only compatible with v2 Pipelines.
 """
 
-from typing import Dict, List, Optional, Type
+from typing import Dict, List, Optional, Type, Union
 
+from typing_extensions import Annotated
 
-class Artifacts:
-    schema_title = "system.Artifacts"
-    schema_version = "0.0.1"
-
-    def __init__(self, artifacts: List["Artifact"] = []):
-        self.artifacts = artifacts or []
+from .types import Input, Output
 
 
 class Artifact:
+    type: str = "fate.Artifact"
     """Represents a generic machine learning artifact.
 
     This class and all artifact classes
@@ -40,9 +37,6 @@ class Artifact:
         uri: The artifact's location on disk or cloud storage.
         metadata: Arbitrary key-value pairs about the artifact.
     """
-
-    schema_title = "system.Artifact"
-    schema_version = "0.0.1"
 
     def __init__(
         self,
@@ -82,7 +76,38 @@ class Artifact:
         self.uri = path
 
 
-class Model(Artifact):
+class Artifacts(List):
+    type = "fate.Artifacts"
+
+    def __init__(self, artifacts: List["Artifact"] = []):
+        self.artifacts = artifacts or []
+
+
+class DatasetArtifact(Artifact):
+    type = "fate.Dataset"
+    """An artifact representing a machine learning dataset.
+
+    Args:
+        name: Name of the dataset.
+        uri: The dataset's location on disk or cloud storage.
+        metadata: Arbitrary key-value pairs about the dataset.
+    """
+
+    def __init__(
+        self,
+        name: Optional[str] = None,
+        uri: Optional[str] = None,
+        metadata: Optional[Dict] = None,
+    ) -> None:
+        super().__init__(uri=uri, name=name, metadata=metadata)
+
+
+class DatasetsArtifact(Artifacts):
+    type = "fate.Datasets"
+
+
+class ModelArtifact(Artifact):
+    type = "fate.Model"
     """An artifact representing a machine learning model.
 
     Args:
@@ -90,8 +115,6 @@ class Model(Artifact):
         uri: The model's location on disk or cloud storage.
         metadata: Arbitrary key-value pairs about the model.
     """
-
-    schema_title = "system.Model"
 
     def __init__(
         self,
@@ -116,36 +139,8 @@ class Model(Artifact):
         self.metadata["framework"] = framework
 
 
-class Dataset(Artifact):
-    """An artifact representing a machine learning dataset.
-
-    Args:
-        name: Name of the dataset.
-        uri: The dataset's location on disk or cloud storage.
-        metadata: Arbitrary key-value pairs about the dataset.
-    """
-
-    schema_title = "system.Dataset"
-
-    def __init__(
-        self,
-        name: Optional[str] = None,
-        uri: Optional[str] = None,
-        metadata: Optional[Dict] = None,
-    ) -> None:
-        super().__init__(uri=uri, name=name, metadata=metadata)
-
-
-class Metrics(Artifact):
-    """An artifact for storing key-value scalar metrics.
-
-    Args:
-        name: Name of the metrics artifact.
-        uri: The metrics artifact's location on disk or cloud storage.
-        metadata: Key-value scalar metrics.
-    """
-
-    schema_title = "system.Metrics"
+class MetricArtifact(Artifact):
+    type = "fate.Metric"
 
     def __init__(
         self,
@@ -174,7 +169,7 @@ class ClassificationMetrics(Artifact):
         metadata: The key-value scalar metrics.
     """
 
-    schema_title = "system.ClassificationMetrics"
+    type = "fate.ClassificationMetrics"
 
     def __init__(
         self,
@@ -203,9 +198,7 @@ class ClassificationMetrics(Artifact):
 
         self.metadata["confidenceMetrics"].append(roc_reading)
 
-    def log_roc_curve(
-        self, fpr: List[float], tpr: List[float], threshold: List[float]
-    ) -> None:
+    def log_roc_curve(self, fpr: List[float], tpr: List[float], threshold: List[float]) -> None:
         """Logs an ROC curve to metadata.
 
         Args:
@@ -216,16 +209,10 @@ class ClassificationMetrics(Artifact):
         Raises:
           ValueError: If the lists ``fpr``, ``tpr`` and ``threshold`` are not the same length.
         """
-        if (
-            len(fpr) != len(tpr)
-            or len(fpr) != len(threshold)
-            or len(tpr) != len(threshold)
-        ):
+        if len(fpr) != len(tpr) or len(fpr) != len(threshold) or len(tpr) != len(threshold):
             raise ValueError(
                 "Length of fpr, tpr and threshold must be the same. "
-                "Got lengths {}, {} and {} respectively.".format(
-                    len(fpr), len(tpr), len(threshold)
-                )
+                "Got lengths {}, {} and {} respectively.".format(len(fpr), len(tpr), len(threshold))
             )
 
         for i in range(len(fpr)):
@@ -266,25 +253,15 @@ class ClassificationMetrics(Artifact):
             set in ``set_categories`` call.
         """
         if row_category not in self._categories:
-            raise ValueError(
-                "Invalid category: {} passed. Expected one of: {}".format(
-                    row_category, self._categories
-                )
-            )
+            raise ValueError("Invalid category: {} passed. Expected one of: {}".format(row_category, self._categories))
 
         if len(row) != len(self._categories):
-            raise ValueError(
-                "Invalid row. Expected size: {} got: {}".format(
-                    len(self._categories), len(row)
-                )
-            )
+            raise ValueError("Invalid row. Expected size: {} got: {}".format(len(self._categories), len(row)))
 
         self._matrix[self._categories.index(row_category)] = {"row": row}
         self.metadata["confusionMatrix"] = self._confusion_matrix
 
-    def log_confusion_matrix_cell(
-        self, row_category: str, col_category: str, value: int
-    ) -> None:
+    def log_confusion_matrix_cell(self, row_category: str, col_category: str, value: int) -> None:
         """Logs a cell in the confusion matrix to metadata.
 
         Args:
@@ -297,27 +274,15 @@ class ClassificationMetrics(Artifact):
            categories set in ``set_categories``.
         """
         if row_category not in self._categories:
-            raise ValueError(
-                "Invalid category: {} passed. Expected one of: {}".format(
-                    row_category, self._categories
-                )
-            )
+            raise ValueError("Invalid category: {} passed. Expected one of: {}".format(row_category, self._categories))
 
         if col_category not in self._categories:
-            raise ValueError(
-                "Invalid category: {} passed. Expected one of: {}".format(
-                    row_category, self._categories
-                )
-            )
+            raise ValueError("Invalid category: {} passed. Expected one of: {}".format(row_category, self._categories))
 
-        self._matrix[self._categories.index(row_category)]["row"][
-            self._categories.index(col_category)
-        ] = value
+        self._matrix[self._categories.index(row_category)]["row"][self._categories.index(col_category)] = value
         self.metadata["confusionMatrix"] = self._confusion_matrix
 
-    def log_confusion_matrix(
-        self, categories: List[str], matrix: List[List[int]]
-    ) -> None:
+    def log_confusion_matrix(self, categories: List[str], matrix: List[List[int]]) -> None:
         """Logs a confusion matrix to metadata.
 
         Args:
@@ -330,19 +295,11 @@ class ClassificationMetrics(Artifact):
         self.set_confusion_matrix_categories(categories)
 
         if len(matrix) != len(categories):
-            raise ValueError(
-                "Invalid matrix: {} passed for categories: {}".format(
-                    matrix, categories
-                )
-            )
+            raise ValueError("Invalid matrix: {} passed for categories: {}".format(matrix, categories))
 
         for index in range(len(categories)):
             if len(matrix[index]) != len(categories):
-                raise ValueError(
-                    "Invalid matrix: {} passed for categories: {}".format(
-                        matrix, categories
-                    )
-                )
+                raise ValueError("Invalid matrix: {} passed for categories: {}".format(matrix, categories))
 
             self.log_confusion_matrix_row(categories[index], matrix[index])
 
@@ -363,7 +320,7 @@ class SlicedClassificationMetrics(Artifact):
         metadata: Arbitrary key-value pairs about the metrics artifact.
     """
 
-    schema_title = "system.SlicedClassificationMetrics"
+    type = "fate.SlicedClassificationMetrics"
 
     def __init__(
         self,
@@ -389,9 +346,7 @@ class SlicedClassificationMetrics(Artifact):
             }
             self.metadata["evaluationSlices"].append(slice_metrics)
 
-    def log_roc_reading(
-        self, slice: str, threshold: float, tpr: float, fpr: float
-    ) -> None:
+    def log_roc_reading(self, slice: str, threshold: float, tpr: float, fpr: float) -> None:
         """Logs a single data point in the ROC curve of a slice to metadata.
 
         Args:
@@ -416,9 +371,7 @@ class SlicedClassificationMetrics(Artifact):
         self._sliced_metrics[slice].load_roc_readings(readings)
         self._update_metadata(slice)
 
-    def set_confusion_matrix_categories(
-        self, slice: str, categories: List[str]
-    ) -> None:
+    def set_confusion_matrix_categories(self, slice: str, categories: List[str]) -> None:
         """Logs confusion matrix categories for a slice to metadata.
 
         Categories are stored in the internal ``metrics_utils.ConfusionMatrix``
@@ -432,9 +385,7 @@ class SlicedClassificationMetrics(Artifact):
         self._sliced_metrics[slice].set_confusion_matrix_categories(categories)
         self._update_metadata(slice)
 
-    def log_confusion_matrix_row(
-        self, slice: str, row_category: str, row: List[int]
-    ) -> None:
+    def log_confusion_matrix_row(self, slice: str, row_category: str, row: List[int]) -> None:
         """Logs a confusion matrix row for a slice to metadata.
 
         Row is updated on the internal ``metrics_utils.ConfusionMatrix``
@@ -449,9 +400,7 @@ class SlicedClassificationMetrics(Artifact):
         self._sliced_metrics[slice].log_confusion_matrix_row(row_category, row)
         self._update_metadata(slice)
 
-    def log_confusion_matrix_cell(
-        self, slice: str, row_category: str, col_category: str, value: int
-    ) -> None:
+    def log_confusion_matrix_cell(self, slice: str, row_category: str, col_category: str, value: int) -> None:
         """Logs a confusion matrix cell for a slice to metadata.
 
         Cell is updated on the internal ``metrics_utils.ConfusionMatrix``
@@ -464,14 +413,10 @@ class SlicedClassificationMetrics(Artifact):
           value: Value of the cell.
         """
         self._upsert_classification_metrics_for_slice(slice)
-        self._sliced_metrics[slice].log_confusion_matrix_cell(
-            row_category, col_category, value
-        )
+        self._sliced_metrics[slice].log_confusion_matrix_cell(row_category, col_category, value)
         self._update_metadata(slice)
 
-    def load_confusion_matrix(
-        self, slice: str, categories: List[str], matrix: List[List[int]]
-    ) -> None:
+    def load_confusion_matrix(self, slice: str, categories: List[str], matrix: List[List[int]]) -> None:
         """Bulk loads the whole confusion matrix for a slice.
 
         Args:
@@ -484,56 +429,23 @@ class SlicedClassificationMetrics(Artifact):
         self._update_metadata(slice)
 
 
-class HTML(Artifact):
-    """An artifact representing an HTML file.
-
-    Args:
-        name: Name of the HTML file.
-        uri: The HTML file's location on disk or cloud storage.
-        metadata: Arbitrary key-value pairs about the HTML file.
-    """
-
-    schema_title = "system.HTML"
-
-    def __init__(
-        self,
-        name: Optional[str] = None,
-        uri: Optional[str] = None,
-        metadata: Optional[Dict] = None,
-    ) -> None:
-        super().__init__(uri=uri, name=name, metadata=metadata)
-
-
-class Markdown(Artifact):
-    """An artifact representing a markdown file.
-
-    Args:
-        name: Name of the markdown file.
-        uri: The markdown file's location on disk or cloud storage.
-        metadata: Arbitrary key-value pairs about the markdown file.
-    """
-
-    schema_title = "system.Markdown"
-
-    def __init__(
-        self,
-        name: Optional[str] = None,
-        uri: Optional[str] = None,
-        metadata: Optional[Dict] = None,
-    ):
-        super().__init__(uri=uri, name=name, metadata=metadata)
-
-
+TrainData = Annotated[Input[DatasetArtifact], "trainData"]
+ValidateData = Annotated[Input[DatasetArtifact], "validateData"]
+TestData = Annotated[Input[DatasetArtifact], "testData"]
+TrainOutputData = Annotated[Output[DatasetArtifact], "trainOutputData"]
+TestOutputData = Annotated[Output[DatasetArtifact], "testOutputData"]
+Model = Annotated[Output[ModelArtifact], "model"]
+Metrics = Annotated[Output[MetricArtifact], "metrics"]
+ArtifactType = Union[TrainData, ValidateData, TestData, TrainOutputData, TestOutputData, Model, Metrics]
 _SCHEMA_TITLE_TO_TYPE: Dict[str, Type[Artifact]] = {
-    x.schema_title: x
+    x.type: x
     for x in [
         Artifact,
-        Model,
-        Dataset,
-        Metrics,
+        Artifacts,
+        ModelArtifact,
+        DatasetArtifact,
+        MetricArtifact,
         ClassificationMetrics,
         SlicedClassificationMetrics,
-        HTML,
-        Markdown,
     ]
 }
