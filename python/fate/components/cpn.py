@@ -28,11 +28,9 @@ logger = logging.getLogger(__name__)
 
 
 from io import StringIO
-from typing import Any, Callable, Dict, List, Tuple, Type, TypeVar
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, TypeVar
 
-from typing_extensions import Literal
-
-from .specs import (
+from .spec import (
     ArtifactSpec,
     ArtifactType,
     ComponentSpec,
@@ -42,6 +40,7 @@ from .specs import (
     OutputAnnotated,
     OutputDefinitionsSpec,
     ParameterSpec,
+    roles,
 )
 
 T = TypeVar("T")
@@ -51,7 +50,7 @@ class Cpn:
     def __init__(
         self,
         name: str,
-        roles: List[Literal["guest", "host", "arbiter"]],
+        roles: List[roles],
         provider: str,
         version: str,
         description: str = "",
@@ -72,9 +71,7 @@ class Cpn:
         default: Any,
         optional: bool,
     ) -> Callable[[T], T]:
-        self._params[name] = ParameterSpec(
-            type=type.__name__, default=default, optional=optional
-        )
+        self._params[name] = ParameterSpec(type=type.__name__, default=default, optional=optional)
 
         def _wrap(func):
             return func
@@ -86,7 +83,7 @@ class Cpn:
         name: str,
         type: Type[ArtifactType],
         optional=False,
-        roles=None,
+        roles: Optional[List[roles]] = None,
         stages=None,
     ) -> Callable[[T], T]:
         annotated, type_name, *_ = getattr(type, "__metadata__", [None, {}])
@@ -94,16 +91,12 @@ class Cpn:
         if annotated == OutputAnnotated:
             self._artifacts[name] = (
                 True,
-                ArtifactSpec(
-                    type=type.type, optional=optional, roles=roles, stages=stages
-                ),
+                ArtifactSpec(type=type.type, optional=optional, roles=roles, stages=stages),
             )
         elif annotated == InputAnnotated:
             self._artifacts[name] = (
                 False,
-                ArtifactSpec(
-                    type=type.type, optional=optional, roles=roles, stages=stages
-                ),
+                ArtifactSpec(type=type.type, optional=optional, roles=roles, stages=stages),
             )
         else:
             raise ValueError(f"bad type: {type}")
@@ -121,9 +114,7 @@ class Cpn:
                 output_artifacts[name] = artifact
             else:
                 input_artifacts[name] = artifact
-        input_definition = InputDefinitionsSpec(
-            parameters=self._params, artifacts=input_artifacts
-        )
+        input_definition = InputDefinitionsSpec(parameters=self._params, artifacts=input_artifacts)
         output_definition = OutputDefinitionsSpec(artifacts=output_artifacts)
         component = ComponentSpec(
             name=self.name,

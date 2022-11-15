@@ -4,7 +4,6 @@ import traceback
 from typing import Optional
 
 from fate.arch.context import Context
-from fate.components.cpn import get_cpn
 from fate.components.entrypoint.uri.uri import URI
 
 from .parser import FATEComponentTaskConfig, TaskExecuteStatus
@@ -37,7 +36,7 @@ class ParamsValidateFailed(ComponentExecException):
 
 def task_execute(config: FATEComponentTaskConfig):
     # status tracker
-    status_tracker = StatusTracker(config.status_output, config.status_input)
+    StatusTracker(config.status_output, config.status_input)
 
     # init context
     context_name = config.task_id
@@ -70,9 +69,7 @@ def task_execute(config: FATEComponentTaskConfig):
             )
         except Exception as e:
             tb = traceback.format_exc()
-            status_tracker.update_status(
-                TaskExecuteStatus.FAILED, dict(exception=e.args, traceback=tb)
-            )
+            status_tracker.update_status(TaskExecuteStatus.FAILED, dict(exception=e.args, traceback=tb))
             raise e
         else:
             status_tracker.update_status(TaskExecuteStatus.SUCCESS)
@@ -121,9 +118,7 @@ def get_computing(config: FATEComponentTaskConfig):
         return CSession(config.extra.distributed_computing_backend.computing_id)
 
     else:
-        raise ParamsValidateFailed(
-            f"extra.distributed_computing_backend.engine={engine} not support"
-        )
+        raise ParamsValidateFailed(f"extra.distributed_computing_backend.engine={engine} not support")
 
 
 def get_federation(config: FATEComponentTaskConfig, computing):
@@ -139,6 +134,4 @@ def get_federation(config: FATEComponentTaskConfig, computing):
         )
 
     else:
-        raise ParamsValidateFailed(
-            f"extra.distributed_computing_backend.engine={engine} not support"
-        )
+        raise ParamsValidateFailed(f"extra.distributed_computing_backend.engine={engine} not support")

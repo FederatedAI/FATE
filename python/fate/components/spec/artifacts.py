@@ -24,7 +24,7 @@ from .types import Input, Output
 
 
 class Artifact:
-    type: str = "fate.Artifact"
+    type: str = "Artifact"
     """Represents a generic machine learning artifact.
 
     This class and all artifact classes
@@ -77,14 +77,14 @@ class Artifact:
 
 
 class Artifacts(List):
-    type = "fate.Artifacts"
+    type = "Artifacts"
 
     def __init__(self, artifacts: List["Artifact"] = []):
         self.artifacts = artifacts or []
 
 
 class DatasetArtifact(Artifact):
-    type = "fate.Dataset"
+    type = "Dataset"
     """An artifact representing a machine learning dataset.
 
     Args:
@@ -103,11 +103,11 @@ class DatasetArtifact(Artifact):
 
 
 class DatasetsArtifact(Artifacts):
-    type = "fate.Datasets"
+    type = "Datasets"
 
 
 class ModelArtifact(Artifact):
-    type = "fate.Model"
+    type = "Model"
     """An artifact representing a machine learning model.
 
     Args:
@@ -140,7 +140,7 @@ class ModelArtifact(Artifact):
 
 
 class MetricArtifact(Artifact):
-    type = "fate.Metric"
+    type = "Metric"
 
     def __init__(
         self,
@@ -169,7 +169,7 @@ class ClassificationMetrics(Artifact):
         metadata: The key-value scalar metrics.
     """
 
-    type = "fate.ClassificationMetrics"
+    type = "ClassificationMetrics"
 
     def __init__(
         self,
@@ -320,7 +320,7 @@ class SlicedClassificationMetrics(Artifact):
         metadata: Arbitrary key-value pairs about the metrics artifact.
     """
 
-    type = "fate.SlicedClassificationMetrics"
+    type = "SlicedClassificationMetrics"
 
     def __init__(
         self,

@@ -1,46 +1,46 @@
-from fate.components.specs import artifacts
+from fate.components.spec import artifacts, roles, stages
 
 from ..cpn import Cpn
 
 cpn = Cpn(
     name="lr",
-    roles=["guest", "host", "arbiter"],
+    roles=roles.get_all(),
     provider="fate",
     version="2.0.0.alpha",
     description="",
 )
 
 
-@cpn.artifact("train_data", type=artifacts.TrainData, roles=["guest", "host"], stages=["train"])
+@cpn.artifact("train_data", type=artifacts.TrainData, roles=[roles.GUEST, roles.HOST], stages=[stages.TRAIN])
 @cpn.artifact(
     "validate_data",
     type=artifacts.ValidateData,
     optional=True,
-    roles=["guest", "host"],
+    roles=[roles.GUEST, roles.HOST],
     stages=["train"],
 )
-@cpn.artifact("input_model", type=artifacts.Model, roles=["guest", "host"], stages=["train"])
+@cpn.artifact("input_model", type=artifacts.Model, roles=[roles.GUEST, roles.HOST], stages=[stages.TRAIN])
 @cpn.artifact(
     "test_data",
     type=artifacts.TestData,
     optional=True,
-    roles=["guest", "host"],
-    stages=["test"],
+    roles=[roles.GUEST, roles.HOST],
+    stages=[stages.PREDICT],
 )
 @cpn.parameter("learning_rate", type=float, default=0.1, optional=False)
 @cpn.parameter("max_iter", type=int, default=100, optional=False)
 @cpn.artifact(
     "train_output_data",
     type=artifacts.TrainOutputData,
-    roles=["guest", "host"],
-    stages=["train"],
+    roles=[roles.GUEST, roles.HOST],
+    stages=[stages.TRAIN],
 )
-@cpn.artifact("output_model", type=artifacts.Model, roles=["guest", "host"], stages=["train"])
+@cpn.artifact("output_model", type=artifacts.Model, roles=[roles.GUEST, roles.HOST], stages=[stages.TRAIN])
 @cpn.artifact(
     "test_output_data",
     type=artifacts.TestOutputData,
-    roles=["guest", "host"],
-    stages=["test"],
+    roles=[roles.GUEST, roles.HOST],
+    stages=[stages.PREDICT],
 )
 def lr(
     ctx,
