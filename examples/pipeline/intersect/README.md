@@ -90,7 +90,19 @@ This section introduces the Pipeline scripts for different types of tasks.
 22. ECDH Intersect with Cache Loader:
     
     script: pipeline-intersect-ecdh-cache-loader.py   
-     
+
+23. Exact Multi-host Intersect Cardinality with ECDH:
+    
+    script: pipeline-intersect-ecdh-multi-exact-cardinality.py
+
+24. Exact Multi-host Intersect Cardinality with DH:
+    
+    script: pipeline-intersect-dh-multi-exact-cardinality.py
+
+25. Exact Multi-host Intersect with ECDH:
+    
+    script: pipeline-intersect-ecdh-multi.py
+
 
 Users can run a pipeline job directly:
 
