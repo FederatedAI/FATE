@@ -15,7 +15,6 @@
 #
 
 import argparse
-
 from collections import OrderedDict
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataTransform
@@ -30,7 +29,6 @@ from pipeline.interface import Model
 from pipeline import fate_torch_hook
 import torch as t
 from torch import nn
-from torch.nn import init
 from torch import optim
 from pipeline import fate_torch as ft
 
@@ -85,8 +83,8 @@ def main(config="../../config.yaml", namespace=""):
         ReLU()
     )
 
-    # interactive layer
-    interactive_layer = Linear(16, 8, True)
+    # use interactive layer after fate_torch_hook
+    interactive_layer = t.nn.InteractiveLayer(out_dim=8, guest_dim=8, host_dim=8, host_num=1)
 
     # loss fun
     ce_loss_fn = nn.CrossEntropyLoss()
@@ -104,6 +102,8 @@ def main(config="../../config.yaml", namespace=""):
     guest_nn_0.set_interactve_layer(interactive_layer)
     host_nn_0 = hetero_nn_0.get_party_instance(role='host', party_id=host)
     host_nn_0.add_bottom_model(seq3)
+
+    hetero_nn_0.set_interactve_layer(interactive_layer)
 
     hetero_nn_0.compile(opt, loss=ce_loss_fn)
 
