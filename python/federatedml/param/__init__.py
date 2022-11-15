@@ -43,6 +43,7 @@ from federatedml.param.logistic_regression_param import LogisticParam
 from federatedml.param.one_vs_rest_param import OneVsRestParam
 from federatedml.param.pearson_param import PearsonParam
 from federatedml.param.poisson_regression_param import PoissonParam
+from federatedml.param.positive_unlabeled_param import PositiveUnlabeledParam
 from federatedml.param.predict_param import PredictParam
 from federatedml.param.psi_param import PSIParam
 from federatedml.param.sample_param import SampleParam
@@ -82,6 +83,7 @@ __all__ = [
     "OneVsRestParam",
     "PearsonParam",
     "PoissonParam",
+    "PositiveUnlabeledParam",
     "PredictParam",
     "PSIParam",
     "SampleParam",

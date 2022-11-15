@@ -26,12 +26,13 @@ class SampleParam(BaseParam):
 
     Parameters
     ----------
-    mode: str, accepted 'random','stratified'' only in this version, specify sample to use, default: 'random'
+    mode: str, accepted 'random','stratified', 'exact_by_weight', specify sample to use, default: 'random'
 
     method: str, accepted 'downsample','upsample' only in this version. default: 'downsample'
 
     fractions: None or float or list, if mode equals to random, it should be a float number greater than 0,
-     otherwise a list of elements of pairs like [label_i, sample_rate_i], e.g. [[0, 0.5], [1, 0.8], [2, 0.3]]. default: None
+     otherwise a list of elements of pairs like [label_i, sample_rate_i],
+     e.g. [[0, 0.5], [1, 0.8], [2, 0.3]]. default: None
 
     random_state: int, RandomState instance or None, default: None
 
@@ -39,8 +40,8 @@ class SampleParam(BaseParam):
         Indicate if this module needed to be run
     """
 
-    def __init__(self, mode="random", method="downsample", fractions=None, random_state=None, task_type="hetero",
-                 need_run=True):
+    def __init__(self, mode="random", method="downsample", fractions=None,
+                 random_state=None, task_type="hetero", need_run=True):
         self.mode = mode
         self.method = method
         self.fractions = fractions
@@ -51,7 +52,7 @@ class SampleParam(BaseParam):
     def check(self):
         descr = "sample param"
         self.mode = self.check_and_change_lower(self.mode,
-                                                ["random", "stratified"],
+                                                ["random", "stratified", "exact_by_weight"],
                                                 descr)
 
         self.method = self.check_and_change_lower(self.method,
