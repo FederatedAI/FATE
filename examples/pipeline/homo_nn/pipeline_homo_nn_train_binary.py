@@ -34,24 +34,24 @@ def main(config="../../config.yaml", namespace=""):
     if isinstance(config, str):
         config = load_job_config(config)
     parties = config.parties
-    host_0 = parties.host[0]
-    host_1 = parties.host[1]
+    guest = parties.guest[0]
+    host = parties.host[0]
+    arbiter = parties.arbiter[0]
 
-    pipeline = PipeLine().set_initiator(role='host', party_id=host_0).set_roles(host=[host_0, host_1],
-                                                                                arbiter=[host_0])
+    pipeline = PipeLine().set_initiator(role='host', party_id=guest).set_roles(guest=guest, host=host, arbiter=arbiter)
 
     train_data_0 = {"name": "breast_homo_guest", "namespace": "experiment"}
     train_data_1 = {"name": "breast_homo_host", "namespace": "experiment"}
     reader_0 = Reader(name="reader_0")
-    reader_0.get_party_instance(role='host', party_id=host_0).component_param(table=train_data_0)
-    reader_0.get_party_instance(role='host', party_id=host_1).component_param(table=train_data_1)
+    reader_0.get_party_instance(role='host', party_id=guest).component_param(table=train_data_0)
+    reader_0.get_party_instance(role='host', party_id=host).component_param(table=train_data_1)
 
     data_transform_0 = DataTransform(name='data_transform_0')
     data_transform_0.get_party_instance(
-        role='host', party_id=host_0).component_param(
+        role='host', party_id=guest).component_param(
         with_label=True, output_format="dense")
     data_transform_0.get_party_instance(
-        role='host', party_id=host_1).component_param(
+        role='host', party_id=host).component_param(
         with_label=True, output_format="dense")
 
     model = nn.Sequential(
