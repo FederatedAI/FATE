@@ -80,12 +80,27 @@
                 ]
             }
         },
+        "federated_sample_0": {
+            "module": "FederatedSample",
+            "input": {
+                "data": {
+                    "data": [
+                        "sample_weight_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
         "hetero_lr_0": {
             "module": "HeteroLR",
             "input": {
                 "data": {
                     "train_data": [
-                        "sample_weight_0.data"
+                        "federated_sample_0.data"
                     ]
                 }
             },

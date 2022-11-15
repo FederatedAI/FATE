@@ -350,3 +350,9 @@ keras_backend = 'keras'
 CURVE25519 = 'curve25519'
 # HOMO NN Framework
 FEDAVG_TRAINER = 'fedavg_trainer'
+
+# positive unlabeled
+PROBABILITY = "probability"
+QUANTITY = "quantity"
+PROPORTION = "proportion"
+DISTRIBUTION = "distribution"
