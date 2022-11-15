@@ -10,7 +10,7 @@ class ImageDataset(Dataset):
     """
 
     A basic Image Dataset built on pytorch ImageFolder, supports simple image transform
-    given a folder path, ImageDataset will load images from this folder, images in this
+    Given a folder path, ImageDataset will load images from this folder, images in this
     folder need to be organized in a Torch-ImageFolder format, see
     https://pytorch.org/vision/main/generated/torchvision.datasets.ImageFolder.html for details.
 
