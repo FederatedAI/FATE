@@ -154,8 +154,8 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
 
         if self._stage == "fit":
             self.labels = list(label_counts_dict.keys())
-            if len(self.labels) == 2 and not self.labels[0]:
-                self.labels.reverse()
+            self.labels.sort()
+            self.labels.reverse()
 
         label_counts = [label_counts_dict.get(k, 0) for k in self.labels]
         label_table = IvCalculator.convert_label(data_instances, self.labels)

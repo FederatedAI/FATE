@@ -65,7 +65,7 @@ BEGIN
             LEAVE loop_;
         END IF;
 
-        SET @sql = CONCAT('ALTER TABLE t_component_summary_', date_, ' DROP INDEX componentsummary_', date_, '_f_task_version');
+        SET @sql = CONCAT('ALTER TABLE t_component_summary_', date_, ' DROP INDEX componentsummary_', date_, '_f_task_version;');
         PREPARE stmt FROM @sql;
         EXECUTE stmt;
         DEALLOCATE PREPARE stmt;

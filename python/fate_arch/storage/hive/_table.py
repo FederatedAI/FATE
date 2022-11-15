@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 import os
+import pickle
 import uuid
 
 from fate_arch.common import hive_utils
@@ -90,16 +91,12 @@ class StorageTable(StorageTableBase):
         create_table = "create table if not exists {}(k varchar(128) NOT NULL, v string) row format delimited fields terminated by" \
                        " '{}'".format(self._address.name, id_delimiter)
         self._cur.execute(create_table)
-        # load local file or hdfs file
-        temp_path = os.path.join(get_project_base_directory(), 'temp_data', uuid.uuid1().hex)
-        os.makedirs(os.path.dirname(temp_path), exist_ok=True)
-        with open(temp_path, 'w') as f:
-            for k, v in kv_list:
-                f.write(hive_utils.serialize_line(k, v))
-        sql = "load data local inpath '{}' into table {}".format(temp_path, self._address.name)
+        tuples = ",".join([f'("{k}"{hive_utils._DELIMITER}"{pickle.dumps(v).hex()}")' for k, v in kv_list])
+        sql = "insert into  {} values {} ".format(
+            self._address.name, tuples
+        )
         self._cur.execute(sql)
         self._con.commit()
-        os.remove(temp_path)
 
     def get_id_feature_name(self):
         id = self.meta.get_schema().get('sid', 'id')
