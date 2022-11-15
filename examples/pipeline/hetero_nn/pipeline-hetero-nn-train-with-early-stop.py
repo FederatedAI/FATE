@@ -118,7 +118,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(intersection_1, data=Data(data=data_transform_1.output.data))
     pipeline.add_component(hetero_nn_0, data=Data(train_data=intersection_0.output.data,
                                                   validate_data=intersection_1.output.data))
-    pipeline.add_component(evaluation_0, data=Data(train_data=hetero_nn_0.output.data))
+    pipeline.add_component(evaluation_0, data=Data(data=hetero_nn_0.output.data))
     pipeline.compile()
     pipeline.fit()
 

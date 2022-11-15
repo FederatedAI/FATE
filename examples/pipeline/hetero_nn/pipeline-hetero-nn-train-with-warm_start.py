@@ -100,7 +100,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(hetero_nn_0, data=Data(train_data=intersection_0.output.data))
     pipeline.add_component(hetero_nn_1, data=Data(train_data=intersection_0.output.data),
                            model=Model(model=hetero_nn_0.output.model))
-    pipeline.add_component(evaluation_0, data=Data(train_data=hetero_nn_0.output.data))
+    pipeline.add_component(evaluation_0, data=Data(data=hetero_nn_0.output.data))
     pipeline.compile()
     pipeline.fit()
 
