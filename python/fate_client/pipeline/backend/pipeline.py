@@ -804,6 +804,7 @@ class PipeLine(object):
         info = self._job_invoker.bind_table(engine=engine, name=name, namespace=namespace, address=address, **kwargs)
         return info
 
+
     def __getattr__(self, attr):
         if attr in self._components:
             return self._components[attr]
