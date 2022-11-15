@@ -62,6 +62,10 @@ class DataFrame(object):
         return self.__shape
 
     @property
+    def schema(self) -> dict:
+        return self._schema
+
+    @property
     def columns(self) -> "ColumnObject":
         if not self._columns:
             self._columns = ColumnObject(self._schema["header"])
@@ -221,16 +225,15 @@ class DataFrame(object):
             **ret_dict
         )
 
-    def take(self, indices):
-        if set(indices) != len(indices):
-            raise ValueError("Only support to take indices of ")
-
-        ...
-
     def serialize(self):
-        ...
+        """
+        this function change tensor to a normal distributed table
+        """
 
     def deserialize(self):
+        """
+        this function change a distributed table to tensor
+        """
         ...
 
 

@@ -9,6 +9,14 @@ class Index(object):
         self._global_ranks = global_ranks
         self._count = None
 
+    @property
+    def global_ranks(self):
+        return self._global_ranks
+
+    @property
+    def values(self):
+        return self._index_table
+
     def count(self):
         if self._count is not None:
             return self._count
