@@ -25,6 +25,7 @@ class DhIntersectionGuest(DhIntersect):
         super().__init__()
         self.role = consts.GUEST
         self.id_list_local_first = None
+        self.id_local_first = None
         self.id_list_remote_second = None
         self.id_list_local_second = None
         self.host_count = None
