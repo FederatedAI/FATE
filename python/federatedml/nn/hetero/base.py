@@ -105,9 +105,11 @@ class HeteroNNBase(ModelBase):
         self.dataset_param = dataset_param['param']
 
         if self.role == consts.GUEST:
-            self.batch_generator.register_batch_generator(self.transfer_variable, has_arbiter=False)
+            self.batch_generator.register_batch_generator(
+                self.transfer_variable, has_arbiter=False)
         else:
-            self.batch_generator.register_batch_generator(self.transfer_variable)
+            self.batch_generator.register_batch_generator(
+                self.transfer_variable)
 
     def reset_flowid(self):
         new_flowid = ".".join([self.flowid, "evaluate"])
@@ -162,18 +164,26 @@ class HeteroNNBase(ModelBase):
         if isinstance(data, Dataset) or isinstance(data, ShuffleWrapDataset):
             ds = data
         else:
-            ds = load_dataset(self.dataset, data, self.dataset_param, self.dataset_cache_dict)
+            ds = load_dataset(
+                self.dataset,
+                data,
+                self.dataset_param,
+                self.dataset_cache_dict)
 
             if not ds.has_sample_ids():
-                raise ValueError('Dataset has no sample id, this is not allowed in hetero-nn, please make sure'
-                                 ' that you use set_sample_ids() to set ids for samples')
+                raise ValueError(
+                    'Dataset has no sample id, this is not allowed in hetero-nn, please make sure'
+                    ' that you use set_sample_ids() to set ids for samples')
 
             if self.dataset_shuffle:
-                ds = ShuffleWrapDataset(ds, shuffle_seed=self.dataset_shuffle_seed)
+                ds = ShuffleWrapDataset(
+                    ds, shuffle_seed=self.dataset_shuffle_seed)
                 if self.role == consts.GUEST:
-                    self.transfer_variable.dataset_info.remote(ds.idx_map, idx=-1, suffix=('idx_map', data_type))
+                    self.transfer_variable.dataset_info.remote(
+                        ds.idx_map, idx=-1, suffix=('idx_map', data_type))
                 if self.role == consts.HOST:
-                    idx_map = self.transfer_variable.dataset_info.get(idx=0, suffix=('idx_map', data_type))
+                    idx_map = self.transfer_variable.dataset_info.get(
+                        idx=0, suffix=('idx_map', data_type))
                     assert len(idx_map) == len(ds), 'host dataset len != guest dataset len, please check your dataset,' \
                                                     'guest len {}, host len {}'.format(len(idx_map), len(ds))
                     ds.set_shuffled_idx(idx_map)
@@ -181,9 +191,10 @@ class HeteroNNBase(ModelBase):
             if check_label:
                 all_classes = ds.get_classes()
                 if all_classes is None:
-                    raise NotImplementedError('get_classes() is not implemented, please implement this function'
-                                              ' when you are using hetero-nn. Let it return classes in a list.'
-                                              ' Please see built-in dataset(table.py for example) for reference')
+                    raise NotImplementedError(
+                        'get_classes() is not implemented, please implement this function'
+                        ' when you are using hetero-nn. Let it return classes in a list.'
+                        ' Please see built-in dataset(table.py for example) for reference')
                 self.num_label = len(all_classes)
 
         return ds
@@ -212,5 +223,6 @@ class HeteroNNBase(ModelBase):
                 "content_type": "predict_result"
             }
             if schema.get("match_id_name") is not None:
-                predict_data.schema["match_id_name"] = schema.get("match_id_name")
+                predict_data.schema["match_id_name"] = schema.get(
+                    "match_id_name")
         return predict_data
