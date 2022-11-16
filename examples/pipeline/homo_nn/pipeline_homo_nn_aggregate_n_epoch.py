@@ -40,17 +40,17 @@ def main(config="../../config.yaml", namespace=""):
     host = parties.host[0]
     arbiter = parties.arbiter[0]
 
-    pipeline = PipeLine().set_initiator(role='host', party_id=guest).set_roles(guest=guest, host=host, arbiter=arbiter)
+    pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host, arbiter=arbiter)
 
     train_data_0 = {"name": "breast_homo_guest", "namespace": "experiment"}
     train_data_1 = {"name": "breast_homo_host", "namespace": "experiment"}
     reader_0 = Reader(name="reader_0")
-    reader_0.get_party_instance(role='host', party_id=guest).component_param(table=train_data_0)
+    reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=train_data_0)
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=train_data_1)
 
     data_transform_0 = DataTransform(name='data_transform_0')
     data_transform_0.get_party_instance(
-        role='host', party_id=guest).component_param(
+        role='guest', party_id=guest).component_param(
         with_label=True, output_format="dense")
     data_transform_0.get_party_instance(
         role='host', party_id=host).component_param(
@@ -67,7 +67,7 @@ def main(config="../../config.yaml", namespace=""):
                           model=model,
                           loss=loss,
                           optimizer=optimizer,
-                          trainer=TrainerParam(trainer_name='fedavg_trainer', epochs=50, batch_size=128,
+                          trainer=TrainerParam(trainer_name='fedavg_trainer', epochs=20, batch_size=128,
                                                validation_freqs=1, aggregate_every_n_epoch=5),
                           torch_seed=100
                           )

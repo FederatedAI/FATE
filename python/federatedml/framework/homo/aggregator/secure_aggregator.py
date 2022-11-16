@@ -48,7 +48,7 @@ class SecureAggregatorClient(AggregatorBaseClient):
             trans_var = RandomPaddingCipherTransVar(
                 server=(
                     consts.ARBITER,), clients=(
-                    consts.HOST,))
+                    consts.HOST, consts.GUEST))
             self._random_padding_cipher: PadsCipher = \
                 random_padding_cipher.Client(trans_var=trans_var).create_cipher()
             LOGGER.info('initialize secure aggregator done')
@@ -164,7 +164,7 @@ class SecureAggregatorServer(AggregatorBaseServer):
                 trans_var=RandomPaddingCipherTransVar(
                     server=(
                         consts.ARBITER,), clients=(
-                        consts.HOST,))) .exchange_secret_keys()
+                        consts.HOST, consts.GUEST))) .exchange_secret_keys()
             LOGGER.info('initialize secure aggregator done')
 
         self._cur_agg_round = 0
