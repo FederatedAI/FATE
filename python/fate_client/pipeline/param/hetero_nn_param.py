@@ -214,7 +214,7 @@ class HeteroNNParam(BaseParam):
         self.callback_param = copy.deepcopy(callback_param)
         self.coae_param = coae_param
         self.dataset = dataset
-        self.config_type = 'pytorch' # pytorch only
+        self.config_type = 'pytorch'  # pytorch only
 
     def check(self):
 

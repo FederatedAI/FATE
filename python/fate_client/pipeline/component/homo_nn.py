@@ -50,8 +50,7 @@ class HomoNN(FateComponent):
                  torch_seed: int = 100,
                  loss=None,
                  optimizer: t.optim.Optimizer = None,
-                 model: Sequential = None
-                 , **kwargs):
+                 model: Sequential = None, **kwargs):
 
         explicit_parameters = kwargs["explict_parameters"]
         explicit_parameters["nn_define"] = None
