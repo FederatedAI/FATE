@@ -1,18 +1,19 @@
 from pipeline.param.base_param import BaseParam
 import sys
 
+
+def not_working_save_to_fate(*args, **kwargs):
+    raise ValueError(
+        'save to fate not working, please check if your ipython is installed, '
+        'and if ipython.get_ipython() is working')
+
+
 try:
     import IPython as ipy
     from IPython.core.magic import register_cell_magic
 except ImportError as e:
     ipy = None
     register_cell_magic = None
-
-
-def not_working_save_to_fate(*args, **kwargs):
-    raise ValueError(
-        'save to fate not working, please check if your ipython is installed, '
-        'and if ipython.get_ipython() is working')
 
 
 if register_cell_magic is not None:
