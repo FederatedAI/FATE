@@ -1,10 +1,8 @@
 import torch as t
-from torchvision import models
 from torchvision.models import get_model
 
 
 class TorchVisionModels(t.nn.Module):
-
     """
     This Class provides ALL torchvision classification models,
     instantiate models and using pretrained weights by providing string model name and weight names
@@ -18,7 +16,6 @@ class TorchVisionModels(t.nn.Module):
     """
 
     def __init__(self, vision_model_name: str, pretrain_weights: str = None):
-
         super(TorchVisionModels, self).__init__()
         self.model = get_model(vision_model_name, weights=pretrain_weights)
 
@@ -27,4 +24,3 @@ class TorchVisionModels(t.nn.Module):
 
     def __repr__(self):
         return self.model.__repr__()
-

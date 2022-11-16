@@ -17,8 +17,9 @@
 #  limitations under the License.
 #
 import numpy as np
-from federatedml.util import LOGGER
+
 from federatedml.nn.hetero.nn_component.torch_model import TorchNNModel
+from federatedml.util import LOGGER
 
 
 class BottomModel(object):
@@ -59,7 +60,8 @@ class BottomModel(object):
                 if len(self.x_cached) == 0:
                     self.x_cached = self.x[selective_ids]
                 else:
-                    self.x_cached = np.vstack((self.x_cached, self.x[selective_ids]))
+                    self.x_cached = np.vstack(
+                        (self.x_cached, self.x[selective_ids]))
             if len(error) == 0:
                 return
             x = self.x_cached[: self.batch_size]

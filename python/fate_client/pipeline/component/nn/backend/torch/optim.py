@@ -5,7 +5,16 @@ from pipeline.component.nn.backend.torch.base import FateTorchOptimizer
 
 class ASGD(optim.ASGD, FateTorchOptimizer):
 
-    def __init__(self, params=None, lr=0.01, lambd=0.0001, alpha=0.75, t0=1000000.0, weight_decay=0, foreach=None, ):
+    def __init__(
+        self,
+        params=None,
+        lr=0.01,
+        lambd=0.0001,
+        alpha=0.75,
+        t0=1000000.0,
+        weight_decay=0,
+        foreach=None,
+    ):
         FateTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['lambd'] = lambd
@@ -27,7 +36,15 @@ class ASGD(optim.ASGD, FateTorchOptimizer):
 
 class Adadelta(optim.Adadelta, FateTorchOptimizer):
 
-    def __init__(self, params=None, lr=1.0, rho=0.9, eps=1e-06, weight_decay=0, foreach=None, ):
+    def __init__(
+        self,
+        params=None,
+        lr=1.0,
+        rho=0.9,
+        eps=1e-06,
+        weight_decay=0,
+        foreach=None,
+    ):
         FateTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['rho'] = rho
@@ -48,8 +65,16 @@ class Adadelta(optim.Adadelta, FateTorchOptimizer):
 
 class Adagrad(optim.Adagrad, FateTorchOptimizer):
 
-    def __init__(self, params=None, lr=0.01, lr_decay=0, weight_decay=0, initial_accumulator_value=0, eps=1e-10,
-                 foreach=None, ):
+    def __init__(
+        self,
+        params=None,
+        lr=0.01,
+        lr_decay=0,
+        weight_decay=0,
+        initial_accumulator_value=0,
+        eps=1e-10,
+        foreach=None,
+    ):
         FateTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['lr_decay'] = lr_decay
@@ -71,7 +96,17 @@ class Adagrad(optim.Adagrad, FateTorchOptimizer):
 
 class Adam(optim.Adam, FateTorchOptimizer):
 
-    def __init__(self, params=None, lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=0, amsgrad=False, ):
+    def __init__(
+        self,
+        params=None,
+        lr=0.001,
+        betas=(
+            0.9,
+            0.999),
+        eps=1e-08,
+        weight_decay=0,
+        amsgrad=False,
+    ):
         FateTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['betas'] = betas
@@ -92,7 +127,17 @@ class Adam(optim.Adam, FateTorchOptimizer):
 
 class AdamW(optim.AdamW, FateTorchOptimizer):
 
-    def __init__(self, params=None, lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=0.01, amsgrad=False, ):
+    def __init__(
+        self,
+        params=None,
+        lr=0.001,
+        betas=(
+            0.9,
+            0.999),
+        eps=1e-08,
+        weight_decay=0.01,
+        amsgrad=False,
+    ):
         FateTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['betas'] = betas
@@ -113,7 +158,17 @@ class AdamW(optim.AdamW, FateTorchOptimizer):
 
 class Adamax(optim.Adamax, FateTorchOptimizer):
 
-    def __init__(self, params=None, lr=0.002, betas=(0.9, 0.999), eps=1e-08, weight_decay=0, foreach=None, ):
+    def __init__(
+        self,
+        params=None,
+        lr=0.002,
+        betas=(
+            0.9,
+            0.999),
+        eps=1e-08,
+        weight_decay=0,
+        foreach=None,
+    ):
         FateTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['betas'] = betas
@@ -134,8 +189,17 @@ class Adamax(optim.Adamax, FateTorchOptimizer):
 
 class LBFGS(optim.LBFGS, FateTorchOptimizer):
 
-    def __init__(self, params=None, lr=1, max_iter=20, max_eval=None, tolerance_grad=1e-07, tolerance_change=1e-09,
-                 history_size=100, line_search_fn=None, ):
+    def __init__(
+        self,
+        params=None,
+        lr=1,
+        max_iter=20,
+        max_eval=None,
+        tolerance_grad=1e-07,
+        tolerance_change=1e-09,
+        history_size=100,
+        line_search_fn=None,
+    ):
         FateTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['max_iter'] = max_iter
@@ -158,8 +222,18 @@ class LBFGS(optim.LBFGS, FateTorchOptimizer):
 
 class NAdam(optim.NAdam, FateTorchOptimizer):
 
-    def __init__(self, params=None, lr=0.002, betas=(0.9, 0.999), eps=1e-08, weight_decay=0, momentum_decay=0.004,
-                 foreach=None, ):
+    def __init__(
+        self,
+        params=None,
+        lr=0.002,
+        betas=(
+            0.9,
+            0.999),
+        eps=1e-08,
+        weight_decay=0,
+        momentum_decay=0.004,
+        foreach=None,
+    ):
         FateTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['betas'] = betas
@@ -181,7 +255,17 @@ class NAdam(optim.NAdam, FateTorchOptimizer):
 
 class RAdam(optim.RAdam, FateTorchOptimizer):
 
-    def __init__(self, params=None, lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=0, foreach=None, ):
+    def __init__(
+        self,
+        params=None,
+        lr=0.001,
+        betas=(
+            0.9,
+            0.999),
+        eps=1e-08,
+        weight_decay=0,
+        foreach=None,
+    ):
         FateTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['betas'] = betas
@@ -202,8 +286,17 @@ class RAdam(optim.RAdam, FateTorchOptimizer):
 
 class RMSprop(optim.RMSprop, FateTorchOptimizer):
 
-    def __init__(self, params=None, lr=0.01, alpha=0.99, eps=1e-08, weight_decay=0, momentum=0, centered=False,
-                 foreach=None, ):
+    def __init__(
+        self,
+        params=None,
+        lr=0.01,
+        alpha=0.99,
+        eps=1e-08,
+        weight_decay=0,
+        momentum=0,
+        centered=False,
+        foreach=None,
+    ):
         FateTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['alpha'] = alpha
@@ -226,7 +319,10 @@ class RMSprop(optim.RMSprop, FateTorchOptimizer):
 
 class Rprop(optim.Rprop, FateTorchOptimizer):
 
-    def __init__(self, params=None, lr=0.01, etas=(0.5, 1.2), step_sizes=(1e-06, 50), foreach=None, ):
+    def __init__(
+        self, params=None, lr=0.01, etas=(
+            0.5, 1.2), step_sizes=(
+            1e-06, 50), foreach=None, ):
         FateTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['etas'] = etas
@@ -246,7 +342,15 @@ class Rprop(optim.Rprop, FateTorchOptimizer):
 
 class SGD(optim.SGD, FateTorchOptimizer):
 
-    def __init__(self, lr, params=None, momentum=0, dampening=0, weight_decay=0, nesterov=False, ):
+    def __init__(
+        self,
+        lr,
+        params=None,
+        momentum=0,
+        dampening=0,
+        weight_decay=0,
+        nesterov=False,
+    ):
         FateTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['momentum'] = momentum

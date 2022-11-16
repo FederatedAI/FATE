@@ -16,21 +16,22 @@
 
 import argparse
 from collections import OrderedDict
-from pipeline.backend.pipeline import PipeLine
-from pipeline.component import DataTransform
-from pipeline.component import HeteroNN
-from pipeline.component import Intersection
-from pipeline.component import Reader
-from pipeline.component import Evaluation
-from pipeline.interface import Data
-from pipeline.utils.tools import load_job_config
-from pipeline.interface import Model
 
-from pipeline import fate_torch_hook
 import torch as t
 from torch import nn
 from torch import optim
+
 from pipeline import fate_torch as ft
+from pipeline import fate_torch_hook
+from pipeline.backend.pipeline import PipeLine
+from pipeline.component import DataTransform
+from pipeline.component import Evaluation
+from pipeline.component import HeteroNN
+from pipeline.component import Intersection
+from pipeline.component import Reader
+from pipeline.interface import Data
+from pipeline.interface import Model
+from pipeline.utils.tools import load_job_config
 
 # this is important, modify torch modules so that Sequential model be parsed by pipeline
 fate_torch_hook(t)

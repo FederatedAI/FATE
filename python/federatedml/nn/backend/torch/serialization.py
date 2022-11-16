@@ -1,6 +1,7 @@
 import copy
 import inspect
 from collections import OrderedDict
+
 try:
     from torch.nn import Sequential as tSeq
     from federatedml.nn.backend.torch import optim, init, nn
@@ -13,7 +14,6 @@ except ImportError:
 
 
 def recover_layer_from_dict(nn_define, nn_dict):
-
     init_param_dict = copy.deepcopy(nn_define)
     if 'layer' in nn_define:
         class_name = nn_define['layer']
@@ -22,8 +22,9 @@ def recover_layer_from_dict(nn_define, nn_dict):
         class_name = nn_define['op']
         init_param_dict.pop('op')
     else:
-        raise ValueError('no layer or operation info found in nn define, please check your layer config and make'
-                         'sure they are correct for pytorch backend')
+        raise ValueError(
+            'no layer or operation info found in nn define, please check your layer config and make'
+            'sure they are correct for pytorch backend')
 
     if 'initializer' in init_param_dict:
         init_param_dict.pop('initializer')
@@ -62,21 +63,21 @@ def recover_layer_from_dict(nn_define, nn_dict):
     return layer
 
 
-
 def recover_sequential_from_dict(nn_define):
     nn_define_dict = nn_define
     nn_dict = dict(inspect.getmembers(nn))
     op_dict = dict(inspect.getmembers(operation))
     nn_dict.update(op_dict)
     try:
-        # submitted model have int prefixes, they make sure that layers are in order
+        # submitted model have int prefixes, they make sure that layers are in
+        # order
         add_dict = OrderedDict()
         keys = list(nn_define_dict.keys())
         keys = sorted(keys, key=lambda x: int(x.split('-')[0]))
         for k in keys:
             layer = recover_layer_from_dict(nn_define_dict[k], nn_dict)
             add_dict[k] = layer
-    except:
+    except BaseException:
         add_dict = OrderedDict()
         for k, v in nn_define_dict.items():
             layer = recover_layer_from_dict(v, nn_dict)

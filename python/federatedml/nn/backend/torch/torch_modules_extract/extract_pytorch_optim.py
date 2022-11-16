@@ -1,7 +1,9 @@
 import inspect
+
 from torch import optim
-from federatedml.nn.backend.torch.torch_modules_extract.extract_pytorch_modules import extract_init_param, Required
 from torch.optim.optimizer import required
+
+from federatedml.nn.backend.torch.torch_modules_extract.extract_pytorch_modules import extract_init_param, Required
 
 
 def code_assembly(param, nn_class):
@@ -38,14 +40,14 @@ def code_assembly(param, nn_class):
     def __init__(self, {}):
         FateTorchOptimizer.__init__(self){}
         self.torch_class = type(self).__bases__[0]
-        
+
         if params is None:
             return
-        
+
         params = self.check_params(params)
-            
+
         self.torch_class.__init__(self, params, **self.param_dict)
-        
+
         # optim.{}.__init__(self, **self.param_dict)
     """.format(para_str, init_str, nn_class, nn_class)
 

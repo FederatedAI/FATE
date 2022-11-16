@@ -54,7 +54,11 @@ def init_weight(m, initializer):
 
 
 def init_bias(m, initializer):
-    if hasattr(m, 'bias') and not isinstance(m.bias, bool) and m.bias is not None:  # LSTM, RNN .bias is bool
+    if hasattr(
+            m,
+            'bias') and not isinstance(
+            m.bias,
+            bool) and m.bias is not None:  # LSTM, RNN .bias is bool
         initializer(m.bias)
     # LSTM RNN
     if hasattr(m, 'bias_hh_l0') and m.bias_hh_l0 is not None:
@@ -89,13 +93,17 @@ def make_apply_func(torch_initializer, param_dict, init_func, layer):
 
     initializer = functools.partial(torch_initializer, **param_dict)
     init_func = functools.partial(init_func, initializer=initializer)
-    recursive_init_func = functools.partial(recursive_init, obj=layer, init_func=init_func)
+    recursive_init_func = functools.partial(
+        recursive_init, obj=layer, init_func=init_func)
     return recursive_init_func, param_dict
 
 
 def get_init_dict(init_func, param_dict, init_type):
     rev_dict = {v: k for k, v in str_init_func_map.items()}
-    rs = {'init_type': init_type, 'init_func': rev_dict[init_func], 'param': param_dict}
+    rs = {
+        'init_type': init_type,
+        'init_func': rev_dict[init_func],
+        'param': param_dict}
     return rs
 
 
@@ -114,10 +122,15 @@ def run_init(torch_initializer, input_var, init, layer):
             run_init(torch_initializer, input_var, init, sub_layer)
     # init layer
     elif isinstance(layer, FateTorchLayer) or isinstance(layer, t.nn.Module):
-        recursive_init_func, param_dict = make_apply_func(torch_initializer, copy.deepcopy(input_var),
-                                                          get_init_func_type(init), layer)
+        recursive_init_func, param_dict = make_apply_func(
+            torch_initializer, copy.deepcopy(input_var), get_init_func_type(init), layer)
         layer.apply(recursive_init_func)
-        record_initializer(layer, get_init_dict(torch_initializer, param_dict, init))
+        record_initializer(
+            layer,
+            get_init_dict(
+                torch_initializer,
+                param_dict,
+                init))
     else:
         try:
             return torch_initializer(layer, **input_var)
@@ -140,7 +153,12 @@ def local_extract(local_dict):
 
 
 def uniform_(layer, a=0, b=1, init='weight'):
-    run_init(str_init_func_map['uniform'], local_extract(locals()), init, layer)
+    run_init(
+        str_init_func_map['uniform'],
+        local_extract(
+            locals()),
+        init,
+        layer)
 
 
 def normal_(layer, mean=0, std=1, init='weight'):
@@ -148,7 +166,12 @@ def normal_(layer, mean=0, std=1, init='weight'):
 
 
 def constant_(layer, val, init='weight'):
-    run_init(str_init_func_map['constant'], local_extract(locals()), init, layer)
+    run_init(
+        str_init_func_map['constant'],
+        local_extract(
+            locals()),
+        init,
+        layer)
 
 
 def ones_(layer, init='weight'):
@@ -168,23 +191,42 @@ def dirac_(layer, group=1, init='weight'):
 
 
 def xavier_uniform_(layer, gain=1.0, init='weight'):
-    run_init(str_init_func_map['xavier_uniform'], local_extract(locals()), init, layer)
+    run_init(str_init_func_map['xavier_uniform'],
+             local_extract(locals()), init, layer)
 
 
 def xavier_normal_(layer, gain=1.0, init='weight'):
-    run_init(str_init_func_map['xavier_normal'], local_extract(locals()), init, layer)
+    run_init(str_init_func_map['xavier_normal'],
+             local_extract(locals()), init, layer)
 
 
-def kaiming_uniform_(layer, a=0, mode='fan_in', nonlinearity='leaky_relu', init='weight'):
-    run_init(str_init_func_map['kaiming_uniform'], local_extract(locals()), init, layer)
+def kaiming_uniform_(
+        layer,
+        a=0,
+        mode='fan_in',
+        nonlinearity='leaky_relu',
+        init='weight'):
+    run_init(str_init_func_map['kaiming_uniform'],
+             local_extract(locals()), init, layer)
 
 
-def kaiming_normal_(layer, a=0, mode='fan_in', nonlinearity='leaky_relu', init='weight'):
-    run_init(str_init_func_map['kaiming_normal'], local_extract(locals()), init, layer)
+def kaiming_normal_(
+        layer,
+        a=0,
+        mode='fan_in',
+        nonlinearity='leaky_relu',
+        init='weight'):
+    run_init(str_init_func_map['kaiming_normal'],
+             local_extract(locals()), init, layer)
 
 
 def orthogonal_(layer, gain=1, init='weight'):
-    run_init(str_init_func_map['orthogonal'], local_extract(locals()), init, layer)
+    run_init(
+        str_init_func_map['orthogonal'],
+        local_extract(
+            locals()),
+        init,
+        layer)
 
 
 def sparse_(layer, sparsity, std=0.01, init='weight'):
@@ -209,6 +251,3 @@ str_fate_torch_init_func_map = {
 
 if __name__ == '__main__':
     pass
-
-
-

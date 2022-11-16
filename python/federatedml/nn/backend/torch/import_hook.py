@@ -36,6 +36,7 @@ def fate_torch_hook(torch_module_var):
         monkey_patch(torch_module_var, init_)
 
     else:
-        raise ValueError('this module: {} does not support fate torch hook'.format(torch_module_var))
+        raise ValueError(
+            'this module: {} does not support fate torch hook'.format(torch_module_var))
 
     return torch_module_var

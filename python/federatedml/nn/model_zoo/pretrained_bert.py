@@ -1,12 +1,12 @@
-from transformers.models.bert import BertModel
 from torch.nn import Module
+from transformers.models.bert import BertModel
+
 from federatedml.util import LOGGER
 
 
 class PretrainedBert(Module):
 
     def __init__(self, pretrained_model_name_or_path: str = 'bert-base-uncased', freeze_weight=False):
-
         """
         A pretrained Bert Model based on transformers
         Parameters
@@ -22,9 +22,11 @@ class PretrainedBert(Module):
         super(PretrainedBert, self).__init__()
         self.pretrained_model_str = pretrained_model_name_or_path
         self.freeze_weight = freeze_weight
-        LOGGER.info('if you are using non-local models, it will download the pretrained model and will take'
-                    'some time')
-        self.model = BertModel.from_pretrained(pretrained_model_name_or_path=self.pretrained_model_str)
+        LOGGER.info(
+            'if you are using non-local models, it will download the pretrained model and will take'
+            'some time')
+        self.model = BertModel.from_pretrained(
+            pretrained_model_name_or_path=self.pretrained_model_str)
         if self.freeze_weight:
             self.model.requires_grad_(False)
 

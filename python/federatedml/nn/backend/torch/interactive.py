@@ -1,10 +1,10 @@
 import torch as t
 from torch.nn import ReLU, Linear, LazyLinear, Tanh, Sigmoid, Dropout, Sequential
+
 from federatedml.nn.backend.torch.base import FateTorchLayer
 
 
 class InteractiveLayer(t.nn.Module, FateTorchLayer):
-
     r"""A :class: InteractiveLayer.
 
            An interface for InteractiveLayer. In interactive layer, the forward method is:
@@ -26,8 +26,18 @@ class InteractiveLayer(t.nn.Module, FateTorchLayer):
                 need_guest: if false, will ignore the input of guest bottom model
            """
 
-    def __init__(self, out_dim, guest_dim=None, host_num=1, host_dim=None, activation='relu', dropout=None,
-                 guest_bias=True, host_bias=True, need_guest=True, ):
+    def __init__(
+        self,
+        out_dim,
+        guest_dim=None,
+        host_num=1,
+        host_dim=None,
+        activation='relu',
+        dropout=None,
+        guest_bias=True,
+        host_bias=True,
+        need_guest=True,
+    ):
 
         t.nn.Module.__init__(self)
         FateTorchLayer.__init__(self)
@@ -41,7 +51,8 @@ class InteractiveLayer(t.nn.Module, FateTorchLayer):
             elif activation.lower() == 'sigmoid':
                 self.activation = Sigmoid()
             else:
-                raise ValueError('activation not support {}, avail: relu, tanh, sigmoid'.format(activation))
+                raise ValueError(
+                    'activation not support {}, avail: relu, tanh, sigmoid'.format(activation))
 
         self.dropout = None
         if dropout is not None:
@@ -55,7 +66,8 @@ class InteractiveLayer(t.nn.Module, FateTorchLayer):
         self.param_dict['dropout'] = dropout
         self.param_dict['need_guest'] = need_guest
 
-        assert isinstance(host_num, int) and host_num >= 1, 'host number is an int >= 1'
+        assert isinstance(
+            host_num, int) and host_num >= 1, 'host number is an int >= 1'
         self.param_dict['host_num'] = host_num
 
         if guest_dim is not None:
@@ -100,13 +112,22 @@ class InteractiveLayer(t.nn.Module, FateTorchLayer):
 
     def lazy_to_linear(self, guest_dim=None, host_dims=None):
 
-        if isinstance(self.guest_model, t.nn.LazyLinear) and guest_dim is not None:
-            self.guest_model = t.nn.Linear(guest_dim, self.out_dim, bias=self.guest_bias)
+        if isinstance(
+                self.guest_model,
+                t.nn.LazyLinear) and guest_dim is not None:
+            self.guest_model = t.nn.Linear(
+                guest_dim, self.out_dim, bias=self.guest_bias)
 
-        if isinstance(self.host_model[0], t.nn.LazyLinear) and host_dims is not None:
+        if isinstance(
+                self.host_model[0],
+                t.nn.LazyLinear) and host_dims is not None:
             new_model_list = t.nn.ModuleList()
             for dim in host_dims:
-                new_model_list.append(t.nn.Linear(dim, self.out_dim, bias=self.host_bias))
+                new_model_list.append(
+                    t.nn.Linear(
+                        dim,
+                        self.out_dim,
+                        bias=self.host_bias))
             self.host_model = new_model_list
 
     def make_host_model(self):

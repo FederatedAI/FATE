@@ -39,8 +39,9 @@ class SequentialModel(object):
 
     def add(self, layer):
         if not _TF_KERAS_VALID:
-            raise ImportError("Please install tensorflow first, "
-                              "can not import sequential model from tensorflow.keras.model !!!")
+            raise ImportError(
+                "Please install tensorflow first, "
+                "can not import sequential model from tensorflow.keras.model !!!")
 
         self._model.add(layer)
 
@@ -52,7 +53,8 @@ class SequentialModel(object):
         if loss.__module__ == "tensorflow.python.keras.losses":
             return loss.__name__
 
-        raise ValueError("keras sequential model' loss should be string of losses function of tf_keras")
+        raise ValueError(
+            "keras sequential model' loss should be string of losses function of tf_keras")
 
     @staticmethod
     def get_optimizer_config(optimizer):
@@ -68,7 +70,8 @@ class SequentialModel(object):
 
     def get_network_config(self):
         if not _TF_KERAS_VALID:
-            raise ImportError("Please install tensorflow first, "
-                              "can not import sequential model from tensorflow.keras.model !!!")
+            raise ImportError(
+                "Please install tensorflow first, "
+                "can not import sequential model from tensorflow.keras.model !!!")
 
         return json.loads(self._model.to_json())

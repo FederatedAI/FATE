@@ -59,4 +59,3 @@ def get_nn_builder(config_type):
         return build_keras
     else:
         raise ValueError(f"{config_type} is not supported")
-

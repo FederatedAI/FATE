@@ -1,8 +1,10 @@
-from torch.utils.data import Dataset as Dataset_
-from federatedml.nn.backend.utils.common import ML_PATH
-import importlib
 import abc
+import importlib
+
 import numpy as np
+from torch.utils.data import Dataset as Dataset_
+
+from federatedml.nn.backend.utils.common import ML_PATH
 
 
 class Dataset(Dataset_):
@@ -15,7 +17,8 @@ class Dataset(Dataset_):
     @property
     def dataset_type(self):
         if not hasattr(self, '_type'):
-            raise AttributeError('type variable not exists, call __init__ of super class')
+            raise AttributeError(
+                'type variable not exists, call __init__ of super class')
         return self._type
 
     @dataset_type.setter
@@ -25,7 +28,8 @@ class Dataset(Dataset_):
     @property
     def sample_ids(self):
         if not hasattr(self, '_sample_ids'):
-            raise AttributeError('sample_ids variable not exists, call __init__ of super class')
+            raise AttributeError(
+                'sample_ids variable not exists, call __init__ of super class')
         return self._sample_ids
 
     @sample_ids.setter
@@ -55,7 +59,8 @@ class Dataset(Dataset_):
 
     def generate_sample_ids(self, prefix: str = None):
         if prefix is not None:
-            assert isinstance(prefix, str), 'prefix must be a str, but got {}'.format(prefix)
+            assert isinstance(
+                prefix, str), 'prefix must be a str, but got {}'.format(prefix)
         else:
             prefix = self._type
         generated_ids = []
@@ -69,8 +74,9 @@ class Dataset(Dataset_):
 
     @abc.abstractmethod
     def load(self, file_path):
-        raise NotImplementedError('You must implement load function so that Client class can pass file-path to this '
-                                  'class')
+        raise NotImplementedError(
+            'You must implement load function so that Client class can pass file-path to this '
+            'class')
 
     def __getitem__(self, item):
         raise NotImplementedError()
@@ -124,10 +130,11 @@ class ShuffleWrapDataset(Dataset_):
 
 
 def get_dataset_class(dataset_module_name: str):
-
     if dataset_module_name.endswith('.py'):
         dataset_module_name = dataset_module_name.replace('.py', '')
-    ds_modules = importlib.import_module('{}.dataset.{}'.format(ML_PATH, dataset_module_name))
+    ds_modules = importlib.import_module(
+        '{}.dataset.{}'.format(
+            ML_PATH, dataset_module_name))
     try:
 
         for k, v in ds_modules.__dict__.items():
@@ -138,4 +145,3 @@ def get_dataset_class(dataset_module_name: str):
                          format(dataset_module_name))
     except ValueError as e:
         raise e
-

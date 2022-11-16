@@ -1,12 +1,12 @@
-import torch
-from federatedml.nn.dataset.base import Dataset
-from torchvision.datasets import ImageFolder
-from torchvision import transforms
 import numpy as np
+import torch
+from torchvision import transforms
+from torchvision.datasets import ImageFolder
+
+from federatedml.nn.dataset.base import Dataset
 
 
 class ImageDataset(Dataset):
-
     """
 
     A basic Image Dataset built on pytorch ImageFolder, supports simple image transform
@@ -42,19 +42,21 @@ class ImageDataset(Dataset):
         self.float64 = float64
         self.dtype = torch.float32 if not self.float64 else torch.float64
         avail_label_type = ['float', 'long', 'double']
-        assert label_dtype in avail_label_type, 'available label dtype : {}'.format(avail_label_type)
+        assert label_dtype in avail_label_type, 'available label dtype : {}'.format(
+            avail_label_type)
         if label_dtype == 'double':
             self.label_dtype = torch.float64
         elif label_dtype == 'long':
             self.label_dtype = torch.int64
         else:
             self.label_dtype = torch.float32
-        
+
     def load(self, folder_path):
 
         # read image from folders
         if self.center_crop:
-            transformer = transforms.Compose([transforms.CenterCrop(size=self.size), transforms.ToTensor()])
+            transformer = transforms.Compose(
+                [transforms.CenterCrop(size=self.size), transforms.ToTensor()])
         else:
             transformer = transforms.Compose([transforms.ToTensor()])
 
@@ -69,14 +71,18 @@ class ImageDataset(Dataset):
             file_name = self.image_folder.imgs
             ids = []
             for name in file_name:
-                sample_id = name[0].split('/')[-1].replace(self.file_suffix, '')
+                sample_id = name[0].split(
+                    '/')[-1].replace(self.file_suffix, '')
                 ids.append(sample_id)
             self.set_sample_ids(ids)
 
     def __getitem__(self, item):
         if self.return_label:
             item = self.image_folder[item]
-            return item[0].type(self.dtype), torch.tensor(item[1]).type(self.label_dtype)
+            return item[0].type(
+                self.dtype), torch.tensor(
+                item[1]).type(
+                self.label_dtype)
         else:
             return self.image_folder[item][0].type(self.dtype)
 

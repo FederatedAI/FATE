@@ -14,22 +14,24 @@
 #  limitations under the License.
 #
 
+import argparse
+
 # torch
 import torch as t
 from torch import nn
-import argparse
+
+from pipeline import fate_torch_hook
 # pipeline
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import Reader, DataTransform, HomoNN, Evaluation
 from pipeline.component.nn import TrainerParam, DatasetParam
 from pipeline.interface import Data
 from pipeline.utils.tools import load_job_config
-from pipeline import fate_torch_hook
+
 fate_torch_hook(t)
 
 
 def main(config="../../config.yaml", namespace=""):
-
     # obtain config
     if isinstance(config, str):
         config = load_job_config(config)
@@ -56,7 +58,7 @@ def main(config="../../config.yaml", namespace=""):
 
     model = nn.Sequential(
         nn.Linear(18, 4),
-        nn.Softmax(dim=1)   # actually cross-entropy loss does the softmax
+        nn.Softmax(dim=1)  # actually cross-entropy loss does the softmax
     )
     loss = nn.CrossEntropyLoss()
     optimizer = t.optim.Adam(model.parameters(), lr=0.01)

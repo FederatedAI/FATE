@@ -15,8 +15,10 @@
 #
 
 import argparse
+
 import torch as t
 from torch import nn
+
 from pipeline import fate_torch_hook
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataTransform
@@ -26,7 +28,6 @@ from pipeline.component import Intersection
 from pipeline.component import Reader
 from pipeline.interface import Data, Model
 from pipeline.utils.tools import load_job_config
-
 
 fate_torch_hook(t)
 

@@ -1,4 +1,5 @@
 import json
+
 import torch as t
 from torch.nn import Sequential as tSequential
 
@@ -53,7 +54,11 @@ class FateTorchOptimizer(object):
 
     def check_params(self, params):
 
-        if isinstance(params, FateTorchLayer) or isinstance(params, Sequential):
+        if isinstance(
+                params,
+                FateTorchLayer) or isinstance(
+                params,
+                Sequential):
             params.add_optimizer(self)
             params = params.parameters()
         else:
@@ -61,7 +66,8 @@ class FateTorchOptimizer(object):
 
         l_param = list(params)
         if len(l_param) == 0:
-            return [t.nn.Parameter(t.Tensor([0]))]  # fake parameters, for the case that there are only cust model
+            # fake parameters, for the case that there are only cust model
+            return [t.nn.Parameter(t.Tensor([0]))]
 
         return l_param
 
@@ -69,7 +75,11 @@ class FateTorchOptimizer(object):
 
         if input_ is None:
             return
-        if isinstance(input_, FateTorchLayer) or isinstance(input_, Sequential):
+        if isinstance(
+                input_,
+                FateTorchLayer) or isinstance(
+                input_,
+                Sequential):
             input_.add_optimizer(self)
 
     def to_torch_instance(self, parameters):
@@ -109,7 +119,9 @@ class Sequential(tSequential):
             if not hasattr(self, 'optimizer') and hasattr(layer, 'optimizer'):
                 setattr(self, 'optimizer', layer.optimizer)
         else:
-            raise ValueError('unknown input layer type {}, this type is not supported'.format(type(layer)))
+            raise ValueError(
+                'unknown input layer type {}, this type is not supported'.format(
+                    type(layer)))
 
     @staticmethod
     def get_loss_config(loss: FateTorchLoss):
@@ -126,7 +138,6 @@ class Sequential(tSequential):
 
 
 def get_torch_instance(fate_torch_nn_class: FateTorchLayer, param):
-
     parent_torch_class = fate_torch_nn_class.__bases__
     for cls in parent_torch_class:
         if issubclass(cls, t.nn.Module):
