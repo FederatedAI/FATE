@@ -76,23 +76,15 @@ class DhIntersect(Intersect):
             return 3
         return 1
 
-    @staticmethod
-    def _decrypt_id(data_instance, cipher, reserve_value=False):
-        """
-        Decrypt the key (ID) of input Table
-        :param data_instance: Table
-        :param reserve_value: (e, De) if reserve_value, otherwise (De, -1)
-        :return:
-        """
-        if reserve_value:
-            return cipher.map_decrypt(data_instance, mode=0)
-        else:
-            return cipher.map_decrypt(data_instance, mode=1)
-
+    """
     def _generate_commutative_cipher(self):
         self.commutative_cipher = [
             CryptoExecutor(PohligHellmanCipherKey.generate_key(self.key_length)) for _ in self.host_party_id_list
         ]
+    """
+
+    def _generate_commutative_cipher(self):
+        self.commutative_cipher = CryptoExecutor(PohligHellmanCipherKey.generate_key(self.key_length))
 
     def _sync_commutative_cipher_public_knowledge(self):
         """
@@ -101,9 +93,9 @@ class DhIntersect(Intersect):
         """
         pass
 
-    def _exchange_id_list(self, id_list, replace_val=True):
+    def _exchange_id(self, id_cipher, replace_val=True):
         """
-        :param id_list: Table in the form (id, 0)
+        :param id_cipher: Table in the form (id, 0)
         :return:
         """
         pass
