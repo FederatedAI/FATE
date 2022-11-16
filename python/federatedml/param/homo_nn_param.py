@@ -64,7 +64,6 @@ class HomoNNParam(BaseParam):
         self.check_positive_integer(self.torch_seed, 'torch seed')
         if self.validation_freq is not None:
             self.check_positive_integer(self.validation_freq, 'validation freq')
-            
         if self.nn_define is not None:
             assert isinstance(self.nn_define, dict), 'nn define should be a dict defining model structures'
         if self.loss is not None:
