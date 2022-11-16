@@ -27,7 +27,7 @@ class HomoNNTransferVariable(BaseTransferVariables):
         super().__init__(flowid)
         # checkpoint history
         self.ckp_history = self._create_variable(
-            name='ckp_history', src=['host'], dst=['arbiter'])
+            name='ckp_history', src=['host', 'guest'], dst=['arbiter'])
 
 
 class HomoNNClient(ModelBase):
