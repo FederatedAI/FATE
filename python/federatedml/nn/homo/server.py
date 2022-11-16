@@ -46,8 +46,10 @@ class HomoNNServer(ModelBase):
         server_agg.set_tracker(self.tracker)
 
         # fate loss callback setting
-        self.callback_meta("loss", "train",
-                           MetricMeta(name="train", metric_type="LOSS", extra_metas={"unit_name": "aggregate_round"}))
+        self.callback_meta(
+            "loss", "train", MetricMeta(
+                name="train", metric_type="LOSS", extra_metas={
+                    "unit_name": "aggregate_round"}))
 
         for i in range(server_agg.get_agg_round()):
             server_agg.aggregate()
@@ -63,15 +65,19 @@ class HomoNNServer(ModelBase):
             return
 
         for h in ckp_histories[1:]:
-            assert ckp_history == h, 'all clients must have same checkpoint history, but got {}'.format(ckp_histories)
+            assert ckp_history == h, 'all clients must have same checkpoint history, but got {}'.format(
+                ckp_histories)
 
-        # sever saves empty models, to match with client model checkpoint history
+        # sever saves empty models, to match with client model checkpoint
+        # history
         model_checkpoint = ModelCheckpoint(self, save_freq=1)
         LOGGER.debug('checkpoint history is {}'.format(ckp_history))
         empty_model = {'param': HomoParam(), 'meta': HomoMeta()}
         for step_idx in ckp_history:
             # save empty check point
-            model_checkpoint.add_checkpoint(step_index=step_idx, to_save_model=serialize_models(empty_model))
+            model_checkpoint.add_checkpoint(
+                step_index=step_idx,
+                to_save_model=serialize_models(empty_model))
 
     def predict(self, data_inst):
         return None

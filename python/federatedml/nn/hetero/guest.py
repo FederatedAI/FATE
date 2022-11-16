@@ -69,7 +69,8 @@ class HeteroNNGuest(HeteroNNBase):
         self.converge_func = converge_func_factory(self.early_stop, self.tol)
 
     def _build_model(self):
-        self.model = HeteroNNGuestModel(self.hetero_nn_param, self.component_properties)
+        self.model = HeteroNNGuestModel(
+            self.hetero_nn_param, self.component_properties)
         self.model.set_transfer_variable(self.transfer_variable)
         self.model.set_partition(self.default_table_partitions)
 
@@ -82,11 +83,16 @@ class HeteroNNGuest(HeteroNNBase):
 
     def fit(self, data_inst, validate_data=None):
 
-        if hasattr(data_inst, 'partitions') and data_inst.partitions is not None:
+        if hasattr(
+                data_inst,
+                'partitions') and data_inst.partitions is not None:
             self.default_table_partitions = data_inst.partitions
-            LOGGER.debug('reset default partitions is {}'.format(self.default_table_partitions))
+            LOGGER.debug(
+                'reset default partitions is {}'.format(
+                    self.default_table_partitions))
 
-        train_ds = self.prepare_dataset(data_inst, data_type='train', check_label=True)
+        train_ds = self.prepare_dataset(
+            data_inst, data_type='train', check_label=True)
         if validate_data is not None:
             val_ds = self.prepare_dataset(validate_data, data_type='validate')
         else:
@@ -107,8 +113,12 @@ class HeteroNNGuest(HeteroNNBase):
 
         self._set_loss_callback_info()
 
-        batch_size = len(train_ds) if self.batch_size == -1 else self.batch_size
-        data_loader = DataLoader(train_ds, batch_size=batch_size, num_workers=4)
+        batch_size = len(train_ds) if self.batch_size == - \
+            1 else self.batch_size
+        data_loader = DataLoader(
+            train_ds,
+            batch_size=batch_size,
+            num_workers=4)
 
         LOGGER.debug('sample ids are {}'.format(train_ds.get_sample_ids()))
         for cur_epoch in range(epoch_offset, self.epochs + epoch_offset):
@@ -120,7 +130,8 @@ class HeteroNNGuest(HeteroNNBase):
             acc_sample_num = 0
 
             for batch_idx, (batch_data, batch_label) in enumerate(data_loader):
-                batch_loss = self.model.train(batch_data, batch_label, cur_epoch, batch_idx)
+                batch_loss = self.model.train(
+                    batch_data, batch_label, cur_epoch, batch_idx)
                 if acc_sample_num + batch_size > len(train_ds):
                     batch_len = len(train_ds) - acc_sample_num
                 else:
@@ -155,7 +166,8 @@ class HeteroNNGuest(HeteroNNBase):
                                                       suffix=(cur_epoch,))
 
             if is_converge:
-                LOGGER.debug("Training process is converged in epoch {}".format(cur_epoch))
+                LOGGER.debug(
+                    "Training process is converged in epoch {}".format(cur_epoch))
                 break
 
         self.callback_list.on_train_end()
@@ -181,7 +193,10 @@ class HeteroNNGuest(HeteroNNBase):
         labels = torch.concat(labels, dim=0).cpu().numpy().flatten().tolist()
 
         id_table = [(id_, Instance(label=l)) for id_, l in zip(keys, labels)]
-        data_inst = session.parallelize(id_table, partition=self.default_table_partitions, include_key=True)
+        data_inst = session.parallelize(
+            id_table,
+            partition=self.default_table_partitions,
+            include_key=True)
 
         if self.task_type == consts.REGRESSION:
             preds = preds.flatten().tolist()
@@ -195,7 +210,8 @@ class HeteroNNGuest(HeteroNNBase):
                 preds = [list(map(float, pred)) for pred in preds]
                 predict_tb = session.parallelize(zip(keys, preds), include_key=True,
                                                  partition=self.default_table_partitions)
-                result = self.predict_score_to_output(data_inst, predict_tb, classes=list(range(self.num_label)))
+                result = self.predict_score_to_output(
+                    data_inst, predict_tb, classes=list(range(self.num_label)))
 
             else:
                 preds = preds.flatten().tolist()
@@ -203,7 +219,9 @@ class HeteroNNGuest(HeteroNNBase):
                 predict_tb = session.parallelize(zip(keys, preds), include_key=True,
                                                  partition=self.default_table_partitions)
                 threshold = self.predict_param.threshold
-                result = self.predict_score_to_output(data_inst, predict_tb, classes=[0, 1], threshold=threshold)
+                result = self.predict_score_to_output(
+                    data_inst, predict_tb, classes=[
+                        0, 1], threshold=threshold)
 
         return result
 
@@ -249,14 +267,16 @@ class HeteroNNGuest(HeteroNNBase):
         model_meta.epochs = self.epochs
         model_meta.early_stop = self.early_stop
         model_meta.tol = self.tol
-        model_meta.hetero_nn_model_meta.CopyFrom(self.model.get_hetero_nn_model_meta())
+        model_meta.hetero_nn_model_meta.CopyFrom(
+            self.model.get_hetero_nn_model_meta())
 
         return model_meta
 
     def _get_model_param(self):
         model_param = HeteroNNParam()
         model_param.iter_epoch = self.iter_epoch
-        model_param.hetero_nn_model_param.CopyFrom(self.model.get_hetero_nn_model_param())
+        model_param.hetero_nn_model_param.CopyFrom(
+            self.model.get_hetero_nn_model_param())
         model_param.num_label = self.num_label
         model_param.best_iteration = self.callback_variables.best_iteration
         model_param.header.extend(self._header)

@@ -52,8 +52,8 @@ class DenseModel(object):
             self.is_empty_model = True
             return
 
-        assert isinstance(torch_linear, torch.nn.Linear), 'must use a torch Linear to build this class, got {}' \
-            .format(torch_linear)
+        assert isinstance(
+            torch_linear, torch.nn.Linear), 'must use a torch Linear to build this class, got {}' .format(torch_linear)
 
         self.model_weight = torch_linear.weight.cpu().detach().numpy().transpose()
         if torch_linear.bias is not None:
@@ -98,7 +98,8 @@ class DenseModel(object):
         return self.model_weight.shape[1:]
 
     def __repr__(self):
-        return 'model weights: {}, model bias {}'.format(self.model_weight, self.bias)
+        return 'model weights: {}, model bias {}'.format(
+            self.model_weight, self.bias)
 
 
 class GuestDenseModel(DenseModel):

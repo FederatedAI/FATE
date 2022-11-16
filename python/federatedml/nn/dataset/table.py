@@ -18,8 +18,13 @@ class TableDataset(Dataset):
      flatten_label: bool, flatten extracted label column or not, default is False
      """
 
-    def __init__(self, label_col=None, feature_dtype='float', label_dtype='float', label_shape=None,
-                 flatten_label=False):
+    def __init__(
+            self,
+            label_col=None,
+            feature_dtype='float',
+            label_dtype='float',
+            label_shape=None,
+            flatten_label=False):
 
         super(TableDataset, self).__init__()
         self.with_label = True
@@ -30,21 +35,22 @@ class TableDataset(Dataset):
         self.f_dtype = self.check_dtype(feature_dtype)
         self.l_dtype = self.check_dtype(label_dtype)
         if label_shape is not None:
-            assert isinstance(label_shape, tuple) or isinstance(label_shape, list), 'label shape is {}'.format(
-                label_shape)
+            assert isinstance(label_shape, tuple) or isinstance(
+                label_shape, list), 'label shape is {}'.format(label_shape)
         self.label_shape = label_shape
         self.flatten_label = flatten_label
 
         if self.label_col is not None:
-            assert isinstance(self.label_col, str) or isinstance(self.label_col, int), \
-                'label columns parameter must be a str or an int'
+            assert isinstance(self.label_col, str) or isinstance(
+                self.label_col, int), 'label columns parameter must be a str or an int'
 
     @staticmethod
     def check_dtype(dtype):
 
         if dtype is not None:
             avail = ['long', 'int', 'float', 'double']
-            assert dtype in avail, 'available dtype is {}, but got {}'.format(avail, dtype)
+            assert dtype in avail, 'available dtype is {}, but got {}'.format(
+                avail, dtype)
             if dtype == 'long':
                 return np.int64
             if dtype == 'int':
@@ -120,10 +126,12 @@ class TableDataset(Dataset):
                     break
             if label is None:
                 self.with_label = False
-                LOGGER.warning('label default setting is "auto", but found no "y"/"label"/"target" in input table')
+                LOGGER.warning(
+                    'label default setting is "auto", but found no "y"/"label"/"target" in input table')
         else:
             if label not in self.origin_table:
-                raise ValueError('label column {} not found in input table'.format(label))
+                raise ValueError(
+                    'label column {} not found in input table'.format(label))
 
         if self.with_label:
             self.label = self.origin_table[label].values
@@ -151,4 +159,5 @@ class TableDataset(Dataset):
         if self.label is not None:
             return np.unique(self.label).tolist()
         else:
-            raise ValueError('no label found, please check if self.label is set')
+            raise ValueError(
+                'no label found, please check if self.label is set')

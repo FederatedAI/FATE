@@ -29,12 +29,14 @@ class TorchNNModel(object):
         self.cuda = cuda
         self.double_model = False
         if self.cuda and not t.cuda.is_available():
-            raise ValueError('this machine dose not support cuda, cuda.is_available() is False')
+            raise ValueError(
+                'this machine dose not support cuda, cuda.is_available() is False')
         self.optimizer_define = optimizer_define
         self.nn_define = nn_define
         self.loss_fn_define = loss_fn_define
         self.loss_history = []
-        self.model, self.opt_inst, self.loss_fn = self.init(self.nn_define, self.optimizer_define, self.loss_fn_define)
+        self.model, self.opt_inst, self.loss_fn = self.init(
+            self.nn_define, self.optimizer_define, self.loss_fn_define)
         self.fw_cached = None
 
     def to_tensor(self, x: np.ndarray):
@@ -50,7 +52,8 @@ class TorchNNModel(object):
     def label_convert(self, y, loss_fn):
         # pytorch CE loss require 1D-int64-tensor
         if isinstance(loss_fn, CrossEntropyLoss):
-            return t.Tensor(y).flatten().type(t.int64).flatten()  # accept 1-D array
+            return t.Tensor(y).flatten().type(
+                t.int64).flatten()  # accept 1-D array
         else:
             return t.Tensor(y).type(t.float)
 
@@ -77,10 +80,14 @@ class TorchNNModel(object):
         return model, opt_inst, loss_fn
 
     def print_parameters(self):
-        LOGGER.debug('model parameter is {}'.format(list(self.model.parameters())))
+        LOGGER.debug(
+            'model parameter is {}'.format(
+                list(
+                    self.model.parameters())))
 
     def __repr__(self):
-        return self.model.__repr__() + '\n' + self.opt_inst.__repr__() + '\n' + str(self.loss_fn)
+        return self.model.__repr__() + '\n' + self.opt_inst.__repr__() + \
+            '\n' + str(self.loss_fn)
 
     def train_mode(self, mode):
         self.model.train(mode)
@@ -101,7 +108,8 @@ class TorchNNModel(object):
         return loss_val
 
     def forward(self, x):
-        # will cache tensor with grad, this function is especially for bottom model
+        # will cache tensor with grad, this function is especially for bottom
+        # model
         x = self.to_tensor(x)
         out = self.model(x)
         if self.fw_cached is not None:
@@ -203,5 +211,9 @@ class TorchNNModel(object):
         return self
 
     def export_model(self):
-        return self.get_model_save_dict(self.model, self.nn_define, self.opt_inst, self.optimizer_define,
-                                        self.loss_fn_define)
+        return self.get_model_save_dict(
+            self.model,
+            self.nn_define,
+            self.opt_inst,
+            self.optimizer_define,
+            self.loss_fn_define)

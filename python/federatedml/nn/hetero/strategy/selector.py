@@ -45,10 +45,19 @@ class RelativeSelector(object):
 
 class SelectorFactory(object):
     @staticmethod
-    def get_selector(method, selective_size, beta=1, random_rate=None, min_prob=0):
+    def get_selector(
+            method,
+            selective_size,
+            beta=1,
+            random_rate=None,
+            min_prob=0):
         if not method:
             return None
         elif method == "relative":
-            return RelativeSelector(selective_size, beta, random_state=random_rate, min_prob=min_prob)
+            return RelativeSelector(
+                selective_size,
+                beta,
+                random_state=random_rate,
+                min_prob=min_prob)
         else:
             raise ValueError("Back Propagation Selector {} not supported yet")

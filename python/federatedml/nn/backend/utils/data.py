@@ -31,13 +31,14 @@ def load_dataset(dataset_name, data_path_or_dtable, param, dataset_cache: dict):
         LOGGER.info('dataset is not specified, use auto inference')
 
         for ds_class in [TableDataset, ImageDataset]:
-            dataset_inst = try_dataset_class(ds_class, data_path_or_dtable, param=param)
+            dataset_inst = try_dataset_class(
+                ds_class, data_path_or_dtable, param=param)
             if dataset_inst is not None:
                 break
         if dataset_inst is None:
-            raise ValueError('cannot find default dataset that can successfully load data from path {}, '
-                             'please check the warning message for error details'.
-                             format(data_path_or_dtable))
+            raise ValueError(
+                'cannot find default dataset that can successfully load data from path {}, '
+                'please check the warning message for error details'. format(data_path_or_dtable))
     else:
         # load specified dataset
         dataset_class = get_dataset_class(dataset_name)

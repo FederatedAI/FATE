@@ -43,12 +43,17 @@ class TokenizerDataset(Dataset):
 
     def load(self, file_path):
 
-        tokenizer = BertTokenizerFast.from_pretrained(self.tokenizer_name_or_path)
+        tokenizer = BertTokenizerFast.from_pretrained(
+            self.tokenizer_name_or_path)
         self.tokenizer = tokenizer
         self.text = pd.read_csv(file_path)
         text_list = list(self.text.text)
-        self.word_idx = tokenizer(text_list, padding=True, return_tensors='pt',
-                                  truncation=self.truncation, max_length=self.max_length)['input_ids']
+        self.word_idx = tokenizer(
+            text_list,
+            padding=True,
+            return_tensors='pt',
+            truncation=self.truncation,
+            max_length=self.max_length)['input_ids']
         if self.with_label:
             self.label = t.Tensor(self.text.label).detach().numpy()
             self.label = self.label.reshape((len(self.word_idx), -1))

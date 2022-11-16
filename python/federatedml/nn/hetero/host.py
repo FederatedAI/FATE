@@ -79,9 +79,13 @@ class HeteroNNHost(HeteroNNBase):
 
     def fit(self, data_inst, validate_data=None):
 
-        if hasattr(data_inst, 'partitions') and data_inst.partitions is not None:
+        if hasattr(
+                data_inst,
+                'partitions') and data_inst.partitions is not None:
             self.default_table_partitions = data_inst.partitions
-            LOGGER.debug('reset default partitions is {}'.format(self.default_table_partitions))
+            LOGGER.debug(
+                'reset default partitions is {}'.format(
+                    self.default_table_partitions))
 
         train_ds = self.prepare_dataset(data_inst, data_type='train')
         if validate_data is not None:
@@ -98,21 +102,24 @@ class HeteroNNHost(HeteroNNBase):
             self.callback_warm_start_init_iter(self.history_iter_epoch)
             epoch_offset = self.history_iter_epoch + 1
 
-        batch_size = len(train_ds) if self.batch_size == -1 else self.batch_size
+        batch_size = len(train_ds) if self.batch_size == - \
+            1 else self.batch_size
 
         for cur_epoch in range(epoch_offset, epoch_offset + self.epochs):
             self.iter_epoch = cur_epoch
-            for batch_idx, batch_data in enumerate(DataLoader(train_ds, batch_size=batch_size)):
+            for batch_idx, batch_data in enumerate(
+                    DataLoader(train_ds, batch_size=batch_size)):
                 self.model.train(batch_data, cur_epoch, batch_idx)
 
             self.callback_list.on_epoch_end(cur_epoch)
             if self.callback_variables.stop_training:
                 LOGGER.debug('early stopping triggered')
                 break
-            is_converge = self.transfer_variable.is_converge.get(idx=0,
-                                                                 suffix=(cur_epoch,))
+            is_converge = self.transfer_variable.is_converge.get(
+                idx=0, suffix=(cur_epoch,))
             if is_converge:
-                LOGGER.debug("Training process is converged in epoch {}".format(cur_epoch))
+                LOGGER.debug(
+                    "Training process is converged in epoch {}".format(cur_epoch))
                 break
 
         self.callback_list.on_train_end()
@@ -120,7 +127,8 @@ class HeteroNNHost(HeteroNNBase):
     def _get_model_meta(self):
         model_meta = HeteroNNMeta()
         model_meta.batch_size = self.batch_size
-        model_meta.hetero_nn_model_meta.CopyFrom(self.model.get_hetero_nn_model_meta())
+        model_meta.hetero_nn_model_meta.CopyFrom(
+            self.model.get_hetero_nn_model_meta())
         model_meta.module = 'HeteroNN'
         return model_meta
 
@@ -128,7 +136,8 @@ class HeteroNNHost(HeteroNNBase):
         model_param = HeteroNNParam()
         model_param.iter_epoch = self.iter_epoch
         model_param.header.extend(self._header)
-        model_param.hetero_nn_model_param.CopyFrom(self.model.get_hetero_nn_model_param())
+        model_param.hetero_nn_model_param.CopyFrom(
+            self.model.get_hetero_nn_model_param())
         model_param.best_iteration = self.callback_variables.best_iteration
 
         return model_param

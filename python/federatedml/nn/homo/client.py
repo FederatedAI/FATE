@@ -26,7 +26,8 @@ class HomoNNTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
         # checkpoint history
-        self.ckp_history = self._create_variable(name='ckp_history', src=['host'], dst=['arbiter'])
+        self.ckp_history = self._create_variable(
+            name='ckp_history', src=['host'], dst=['arbiter'])
 
 
 class HomoNNClient(ModelBase):
@@ -91,7 +92,8 @@ class HomoNNClient(ModelBase):
 
         # load trainer class
         if self.trainer is None:
-            raise ValueError('Trainer is not specified, please specify your trainer')
+            raise ValueError(
+                'Trainer is not specified, please specify your trainer')
 
         trainer_class = get_trainer_class(self.trainer)
         LOGGER.info('trainer class is {}'.format(trainer_class))
@@ -105,12 +107,14 @@ class HomoNNClient(ModelBase):
             param, meta = self.model
 
             if param is None or meta is None:
-                raise ValueError('model protobuf is None, make sure'
-                                 'that your trainer calls export_model() function to save models')
+                raise ValueError(
+                    'model protobuf is None, make sure'
+                    'that your trainer calls export_model() function to save models')
 
             if meta.nn_define[0] is None:
-                raise ValueError('nn_define is None, model protobuf has no nn-define, make sure'
-                                 'that your trainer calls export_model() function to save models')
+                raise ValueError(
+                    'nn_define is None, model protobuf has no nn-define, make sure'
+                    'that your trainer calls export_model() function to save models')
 
             self.nn_define = json.loads(meta.nn_define[0])
             loss = json.loads(meta.loss_func_define[0])
@@ -130,7 +134,8 @@ class HomoNNClient(ModelBase):
 
         # check key param
         if self.nn_define is None:
-            raise ValueError('Model structure is not defined, nn_define is None, please check your param')
+            raise ValueError(
+                'Model structure is not defined, nn_define is None, please check your param')
 
         # get model from nn define
         model = s.recover_sequential_from_dict(self.nn_define)
@@ -164,11 +169,17 @@ class HomoNNClient(ModelBase):
         trainer_inst: TrainerBase = trainer_class(**self.trainer_param)
 
         trainer_train_args = inspect.getfullargspec(trainer_inst.train).args
-        args_format = ['self', 'train_set', 'validate_set', 'optimizer', 'loss']
+        args_format = [
+            'self',
+            'train_set',
+            'validate_set',
+            'optimizer',
+            'loss']
         if len(trainer_train_args) < 5:
-            raise ValueError('Train function of trainer should take 5 arguments :{}, but current trainer.train '
-                             'only takes {} arguments: {}'.format(args_format, len(trainer_train_args),
-                                                                  trainer_train_args))
+            raise ValueError(
+                'Train function of trainer should take 5 arguments :{}, but current trainer.train '
+                'only takes {} arguments: {}'.format(
+                    args_format, len(trainer_train_args), trainer_train_args))
 
         trainer_inst.set_nn_config(self.nn_define, self.optimizer, self.loss)
 
@@ -190,8 +201,14 @@ class HomoNNClient(ModelBase):
                 assert validate_input is not None, 'input validate path is None!'
 
         # fate loss callback setting
-        self.callback_meta("loss", "train",
-                           MetricMeta(name="train", metric_type="LOSS", extra_metas={"unit_name": "iters"}))
+        self.callback_meta(
+            "loss",
+            "train",
+            MetricMeta(
+                name="train",
+                metric_type="LOSS",
+                extra_metas={
+                    "unit_name": "iters"}))
 
         # set random seed
         global_seed(self.torch_seed)
@@ -201,13 +218,19 @@ class HomoNNClient(ModelBase):
         self.trainer_inst.set_tracker(self.tracker)
 
         # load dataset class
-        dataset_inst = load_dataset(dataset_name=self.dataset, data_path_or_dtable=train_input,
-                                    dataset_cache=self.cache_dataset, param=self.dataset_param)
+        dataset_inst = load_dataset(
+            dataset_name=self.dataset,
+            data_path_or_dtable=train_input,
+            dataset_cache=self.cache_dataset,
+            param=self.dataset_param)
         LOGGER.info('train dataset instance is {}'.format(dataset_inst))
 
         if validate_input:
-            val_dataset_inst = load_dataset(dataset_name=self.dataset, data_path_or_dtable=validate_input,
-                                            dataset_cache=self.cache_dataset, param=self.dataset_param)
+            val_dataset_inst = load_dataset(
+                dataset_name=self.dataset,
+                data_path_or_dtable=validate_input,
+                dataset_cache=self.cache_dataset,
+                param=self.dataset_param)
             LOGGER.info('validate dataset instance is {}'.format(dataset_inst))
         else:
             val_dataset_inst = None
@@ -215,9 +238,14 @@ class HomoNNClient(ModelBase):
         # set dataset prefix
         dataset_inst.set_type('train')
         # set model check point
-        self.callback_list.callback_list.append(ModelCheckpoint(self, save_freq=1))
+        self.callback_list.callback_list.append(
+            ModelCheckpoint(self, save_freq=1))
         self.trainer_inst.init_checkpoint(self.callback_list.callback_list[0])
-        self.trainer_inst.train(dataset_inst, val_dataset_inst, optimizer, loss_fn)
+        self.trainer_inst.train(
+            dataset_inst,
+            val_dataset_inst,
+            optimizer,
+            loss_fn)
 
         # training is done, get exported model
         self.model = self.trainer_inst.get_cached_model()
@@ -240,21 +268,28 @@ class HomoNNClient(ModelBase):
             self.trainer_inst.set_model(model)
             self.trainer_inst.set_tracker(self.tracker)
 
-        dataset_inst = load_dataset(dataset_name=self.dataset, data_path_or_dtable=cpn_input,
-                                    dataset_cache=self.cache_dataset, param=self.dataset_param)
+        dataset_inst = load_dataset(
+            dataset_name=self.dataset,
+            data_path_or_dtable=cpn_input,
+            dataset_cache=self.cache_dataset,
+            param=self.dataset_param)
 
         if not dataset_inst.has_dataset_type():
             dataset_inst.set_type('predict')
         trainer_ret = self.trainer_inst.predict(dataset_inst)
         if trainer_ret is None or not isinstance(trainer_ret, StdReturnFormat):
-            LOGGER.info('trainer did not return formatted predicted result, skip predict')
+            LOGGER.info(
+                'trainer did not return formatted predicted result, skip predict')
             return None
 
         id_table, pred_table, classes = trainer_ret()
-        id_dtable = computing_session.parallelize(id_table, partition=self.partitions, include_key=True)
-        pred_dtable = computing_session.parallelize(pred_table, partition=self.partitions, include_key=True)
+        id_dtable = computing_session.parallelize(
+            id_table, partition=self.partitions, include_key=True)
+        pred_dtable = computing_session.parallelize(
+            pred_table, partition=self.partitions, include_key=True)
 
-        ret_table = self.predict_score_to_output(id_dtable, pred_dtable, classes)
+        ret_table = self.predict_score_to_output(
+            id_dtable, pred_dtable, classes)
         LOGGER.debug('ret table info {}'.format(ret_table.schema))
         return ret_table
 
@@ -296,5 +331,6 @@ class HomoNNClient(ModelBase):
                 "content_type": "predict_result"
             }
             if schema.get("match_id_name") is not None:
-                predict_data.schema["match_id_name"] = schema.get("match_id_name")
+                predict_data.schema["match_id_name"] = schema.get(
+                    "match_id_name")
         return predict_data

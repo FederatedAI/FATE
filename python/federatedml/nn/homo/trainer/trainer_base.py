@@ -64,7 +64,12 @@ class TrainerBase(object):
         return isinstance(val, bool)
 
     @staticmethod
-    def check_trainer_param(var_list, name_list, judge_func, warning_str, allow_none=True):
+    def check_trainer_param(
+            var_list,
+            name_list,
+            judge_func,
+            warning_str,
+            allow_none=True):
         for var, name in zip(var_list, name_list):
             if allow_none and var is None:
                 continue
@@ -73,10 +78,12 @@ class TrainerBase(object):
     @property
     def model(self):
         if not hasattr(self, '_model'):
-            raise AttributeError('model variable is not initialized, remember to call'
-                                 ' super(your_class, self).__init__()')
+            raise AttributeError(
+                'model variable is not initialized, remember to call'
+                ' super(your_class, self).__init__()')
         if self._model is None:
-            raise AttributeError('model is not set, use set_model() function to set training model')
+            raise AttributeError(
+                'model is not set, use set_model() function to set training model')
 
         return self._model
 
@@ -87,8 +94,9 @@ class TrainerBase(object):
     @property
     def fed_mode(self):
         if not hasattr(self, '_fed_mode'):
-            raise AttributeError('run_local_mode variable is not initialized, remember to call'
-                                 ' super(your_class, self).__init__()')
+            raise AttributeError(
+                'run_local_mode variable is not initialized, remember to call'
+                ' super(your_class, self).__init__()')
         return self._fed_mode
 
     @fed_mode.setter
@@ -166,11 +174,14 @@ class TrainerBase(object):
             return param, meta
 
         else:
-            raise ValueError('export model must be a subclass of torch nn.Module, however got {}'.format(type(model)))
+            raise ValueError(
+                'export model must be a subclass of torch nn.Module, however got {}'.format(
+                    type(model)))
 
     def export_model(self, model, optimizer=None, epoch_idx=-1):
 
-        param, meta = self._get_model_param_and_meta(model, optimizer, epoch_idx)
+        param, meta = self._get_model_param_and_meta(
+            model, optimizer, epoch_idx)
         self._cache_model = (param, meta)
 
     @staticmethod
@@ -187,7 +198,10 @@ class TrainerBase(object):
                 return consts.BINARY
 
             if (len(pred_shape) > 1) and (pred_shape[1] > 1):
-                if t.isclose(predict_result.sum(axis=1).cpu(), t.Tensor([1.0])).all():
+                if t.isclose(
+                    predict_result.sum(
+                        axis=1).cpu(), t.Tensor(
+                        [1.0])).all():
                     return consts.MULTY
                 else:
                     return None
@@ -207,7 +221,8 @@ class TrainerBase(object):
         if task_type == 'auto':
             task_type = self.task_type_infer(predict_result, true_label)
             if task_type is None:
-                LOGGER.warning('unable to infer predict result type, predict process will be skipped')
+                LOGGER.warning(
+                    'unable to infer predict result type, predict process will be skipped')
                 return None
 
         classes = None
@@ -223,8 +238,10 @@ class TrainerBase(object):
         else:
             predict_result = predict_result.flatten().tolist()
 
-        id_table = [(id_, Instance(label=l)) for id_, l in zip(sample_ids, true_label)]
-        score_table = [(id_, pred) for id_, pred in zip(sample_ids, predict_result)]
+        id_table = [(id_, Instance(label=l))
+                    for id_, l in zip(sample_ids, true_label)]
+        score_table = [(id_, pred)
+                       for id_, pred in zip(sample_ids, predict_result)]
         return StdReturnFormat(id_table, score_table, classes)
 
     def get_cached_model(self):
@@ -232,11 +249,14 @@ class TrainerBase(object):
 
     def set_checkpoint(self, model, optimizer=None, epoch_idx=-1):
 
-        assert isinstance(epoch_idx, int) and epoch_idx >= 0, 'epoch idx must be an int >= 0'
+        assert isinstance(
+            epoch_idx, int) and epoch_idx >= 0, 'epoch idx must be an int >= 0'
         if self._model_checkpoint:
-            param, meta = self._get_model_param_and_meta(model, optimizer, epoch_idx)
+            param, meta = self._get_model_param_and_meta(
+                model, optimizer, epoch_idx)
             model_dict = get_homo_model_dict(param, meta)
-            self._model_checkpoint.add_checkpoint(epoch_idx, to_save_model=serialize_models(model_dict))
+            self._model_checkpoint.add_checkpoint(
+                epoch_idx, to_save_model=serialize_models(model_dict))
             if not self._check_point_history:
                 self._check_point_history = []
             self._check_point_history.append(epoch_idx)
@@ -244,13 +264,18 @@ class TrainerBase(object):
 
     def callback_metric(self, metric_name: str, value: float, metric_type='train', epoch_idx=0):
 
-        assert metric_type in ['train', 'validate'], 'metric_type should be train or validate'
+        assert metric_type in [
+            'train', 'validate'], 'metric_type should be train or validate'
         iter_name = 'iteration_{}'.format(epoch_idx)
         if self._tracker is not None:
-            self._tracker.log_metric_data(metric_type, iter_name,
-                                          [Metric(metric_name, np.round(value, 6))])
-            self._tracker.set_metric_meta(metric_type, iter_name,
-                                          MetricMeta(name=metric_name, metric_type='EVALUATION_SUMMARY'))
+            self._tracker.log_metric_data(
+                metric_type, iter_name, [
+                    Metric(
+                        metric_name, np.round(
+                            value, 6))])
+            self._tracker.set_metric_meta(
+                metric_type, iter_name, MetricMeta(
+                    name=metric_name, metric_type='EVALUATION_SUMMARY'))
 
     def callback_loss(self, loss: float, epoch_idx: int):
 
@@ -271,7 +296,8 @@ class TrainerBase(object):
         if task_type is None:
             return
 
-        assert dataset_type in ['train', 'validate'], 'dataset_type must in ["train", "validate"]'
+        assert dataset_type in [
+            'train', 'validate'], 'dataset_type must in ["train", "validate"]'
 
         eval_param = EvaluateParam(eval_type=task_type)
         if task_type == consts.BINARY:
@@ -308,7 +334,8 @@ class TrainerBase(object):
         if self._tracker is not None:
             eval_obj.set_tracker(self._tracker)
             # send result to fate-board
-            eval_obj.callback_metric_data({'iteration_{}'.format(epoch_idx): [eval_result]})
+            eval_obj.callback_metric_data(
+                {'iteration_{}'.format(epoch_idx): [eval_result]})
 
     @abc.abstractmethod
     def train(self, train_set, validate_set=None, optimizer=None, loss=None):
@@ -333,7 +360,9 @@ class TrainerBase(object):
 def get_trainer_class(trainer_module_name: str):
     if trainer_module_name.endswith('.py'):
         trainer_module_name = trainer_module_name.replace('.py', '')
-    ds_modules = importlib.import_module('{}.homo.trainer.{}'.format(ML_PATH, trainer_module_name))
+    ds_modules = importlib.import_module(
+        '{}.homo.trainer.{}'.format(
+            ML_PATH, trainer_module_name))
     try:
 
         for k, v in ds_modules.__dict__.items():

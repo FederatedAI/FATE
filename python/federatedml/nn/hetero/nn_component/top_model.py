@@ -77,7 +77,8 @@ class TopModel(object):
                                                             self.coae_config.lr, self.coae_config.verbose)
         # make fake soft label
         if self.coae:
-            y = self.coae.encode(y).detach().numpy()  # transform labels to fake labels
+            # transform labels to fake labels
+            y = self.coae.encode(y).detach().numpy()
             LOGGER.debug('fake labels are {}'.format(y))
 
         # run selector
@@ -100,7 +101,8 @@ class TopModel(object):
             if len(self.batch_data_cached_X) >= self.batch_size:
                 data = (np.array(self.batch_data_cached_X[: self.batch_size]),
                         np.array(self.batch_data_cached_y[: self.batch_size]))
-                input_gradient = self._model.get_input_gradients(data[0], data[1])[0]
+                input_gradient = self._model.get_input_gradients(data[0], data[1])[
+                    0]
                 self._model.train(data)
                 self.batch_data_cached_X = self.batch_data_cached_X[self.batch_size:]
                 self.batch_data_cached_y = self.batch_data_cached_y[self.batch_size:]
