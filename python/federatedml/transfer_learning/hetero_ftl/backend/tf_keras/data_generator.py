@@ -17,13 +17,30 @@
 #  limitations under the License.
 #
 
-from tensorflow.keras.losses import *
-from tensorflow.python.keras import backend as K
-from tensorflow.python.framework import ops
-from tensorflow.python.util.tf_export import keras_export
+import tensorflow as tf
+import numpy as np
 
 
-@keras_export('keras.losses.keep_predict_loss')
-def keep_predict_loss(y_true, y_pred):
-    y_pred = ops.convert_to_tensor(y_pred)
-    return K.sum(y_true * y_pred)
+class KerasSequenceData(tf.keras.utils.Sequence):
+    def __init__(self, X, y=None):
+        if X.shape[0] == 0:
+            raise ValueError("Data is empty!")
+
+        self.X = X
+
+        if y is None:
+            self.y = np.zeros(X.shape[0])
+        else:
+            self.y = y
+
+    def __len__(self):
+        return 1
+
+    def __getitem__(self, idx):
+        return self.X, self.y
+
+
+class KerasSequenceDataConverter(object):
+    @classmethod
+    def convert_data(cls, x=None, y=None):
+        return KerasSequenceData(x, y)
