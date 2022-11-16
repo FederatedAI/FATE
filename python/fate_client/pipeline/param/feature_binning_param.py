@@ -259,9 +259,7 @@ class HeteroFeatureBinningParam(FeatureBinningParam):
         and nth value the max of current feature.
     """
 
-
-    def __init__(self, method=consts.QUANTILE,
-                 compress_thres=consts.DEFAULT_COMPRESS_THRESHOLD,
+    def __init__(self, method=consts.QUANTILE, compress_thres=consts.DEFAULT_COMPRESS_THRESHOLD,
                  head_size=consts.DEFAULT_HEAD_SIZE,
                  error=consts.DEFAULT_RELATIVE_ERROR,
                  bin_num=consts.G_BIN_NUM, bin_indexes=-1, bin_names=None, adjustment_factor=0.5,
