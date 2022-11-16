@@ -3,16 +3,15 @@ import json
 import functools
 import numpy as np
 from federatedml.util import LOGGER
-from federatedml.nn.homo_nn.nn_model import get_nn_builder
+from federatedml.transfer_learning.hetero_ftl.backend.nn_model import get_nn_builder
 from federatedml.model_base import ModelBase
 from federatedml.param.ftl_param import FTLParam
-from federatedml.nn.homo_nn.nn_model import NNModel
-from federatedml.nn.backend.tf_keras.nn_model import KerasNNModel
+from federatedml.transfer_learning.hetero_ftl.backend.tf_keras.nn_model import KerasNNModel
 from federatedml.util.classify_label_checker import ClassifyLabelChecker
 from federatedml.transfer_variable.transfer_class.ftl_transfer_variable import FTLTransferVariable
 from federatedml.transfer_learning.hetero_ftl.ftl_dataloder import FTLDataLoader
-from federatedml.nn.hetero_nn.backend.tf_keras.data_generator import KerasSequenceDataConverter
-from federatedml.nn.hetero_nn.util import random_number_generator
+from federatedml.transfer_learning.hetero_ftl.backend.tf_keras.data_generator import KerasSequenceDataConverter
+from federatedml.nn.backend.utils import rng as random_number_generator
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.util import consts
 from federatedml.secureprotol.paillier_tensor import PaillierTensor
@@ -36,7 +35,7 @@ class FTL(ModelBase):
         self.use_first_metric_only = None
         self.optimizer = None
         self.intersect_param = None
-        self.config_type = None
+        self.config_type = 'keras'
         self.comm_eff = None
         self.local_round = 1
 
@@ -72,7 +71,6 @@ class FTL(ModelBase):
         self.validation_freqs = param.validation_freqs
         self.optimizer = param.optimizer
         self.intersect_param = param.intersect_param
-        self.config_type = param.config_type
         self.batch_size = param.batch_size
         self.epochs = param.epochs
         self.mode = param.mode

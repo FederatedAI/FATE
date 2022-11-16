@@ -16,11 +16,10 @@
 
 import argparse
 
-from pipeline.utils.tools import load_job_config
-from tensorflow.keras import initializers
-from tensorflow.keras import optimizers
-from tensorflow.keras.layers import Dense
+import torch as t
+from torch import nn
 
+from pipeline import fate_torch_hook
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataTransform
 from pipeline.component import Evaluation
@@ -28,7 +27,9 @@ from pipeline.component import HeteroNN
 from pipeline.component import Intersection
 from pipeline.component import Reader
 from pipeline.interface import Data
-from pipeline.interface import Model
+from pipeline.utils.tools import load_job_config
+
+fate_torch_hook(t)
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -39,8 +40,10 @@ def main(config="../../config.yaml", namespace=""):
     guest = parties.guest[0]
     host = parties.host[0]
 
-    guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
+    guest_train_data = {"name": "breast_hetero_guest", "namespace": "experiment"}
+    host_train_data = {"name": "breast_hetero_host", "namespace": "experiment"}
+    guest_val_data = {"name": "breast_hetero_guest", "namespace": "experiment"}
+    host_val_data = {"name": "breast_hetero_host", "namespace": "experiment"}
 
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host)
 
@@ -49,8 +52,8 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
     reader_1 = Reader(name="reader_1")
-    reader_1.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
-    reader_1.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
+    reader_1.get_party_instance(role='guest', party_id=guest).component_param(table=guest_val_data)
+    reader_1.get_party_instance(role='host', party_id=host).component_param(table=host_val_data)
 
     data_transform_0 = DataTransform(name="data_transform_0")
     data_transform_0.get_party_instance(role='guest', party_id=guest).component_param(with_label=True)
@@ -64,33 +67,50 @@ def main(config="../../config.yaml", namespace=""):
     intersection_1 = Intersection(name="intersection_1")
 
     hetero_nn_0 = HeteroNN(name="hetero_nn_0", epochs=100,
-                           interactive_layer_lr=0.15, batch_size=-1, early_stop="diff",
+                           interactive_layer_lr=0.01, batch_size=-1, task_type='classification',
                            callback_param={
                                "callbacks": ["EarlyStopping"],
                                "validation_freqs": 1,
-                               "early_stopping_rounds": 15,
+                               "early_stopping_rounds": 2,
                                "use_first_metric_only": True,
                                "metrics": ["AUC"]
-                           })
-
+                           }
+                           )
     guest_nn_0 = hetero_nn_0.get_party_instance(role='guest', party_id=guest)
-    guest_nn_0.add_bottom_model(Dense(units=3, input_shape=(10,), activation="relu",
-                                      kernel_initializer=initializers.Constant(value=1)))
-    guest_nn_0.set_interactve_layer(Dense(units=2, input_shape=(2,),
-                                          kernel_initializer=initializers.Constant(value=1)))
-    guest_nn_0.add_top_model(Dense(units=1, input_shape=(2,), activation="sigmoid",
-                                   kernel_initializer=initializers.Constant(value=1)))
     host_nn_0 = hetero_nn_0.get_party_instance(role='host', party_id=host)
-    host_nn_0.add_bottom_model(Dense(units=3, input_shape=(20,), activation="relu",
-                                     kernel_initializer=initializers.Constant(value=1)))
-    host_nn_0.set_interactve_layer(Dense(units=2, input_shape=(2,),
-                                         kernel_initializer=initializers.Constant(value=1)))
-    hetero_nn_0.compile(optimizer=optimizers.SGD(lr=0.15), loss="binary_crossentropy")
 
-    hetero_nn_1 = HeteroNN(name="hetero_nn_1")
+    # define model
+    guest_bottom = t.nn.Sequential(
+        nn.Linear(10, 2),
+        nn.ReLU()
+    )
 
-    evaluation_0 = Evaluation(name="evaluation_0")
+    guest_top = t.nn.Sequential(
+        nn.Linear(2, 1),
+        nn.Sigmoid()
+    )
 
+    host_bottom = t.nn.Sequential(
+        nn.Linear(20, 2),
+        nn.ReLU()
+    )
+
+    # use interactive layer after fate_torch_hook
+    interactive_layer = t.nn.InteractiveLayer(out_dim=2, guest_dim=2, host_dim=2, host_num=1)
+
+    guest_nn_0.add_top_model(guest_top)
+    guest_nn_0.add_bottom_model(guest_bottom)
+    host_nn_0.add_bottom_model(host_bottom)
+
+    optimizer = t.optim.Adam(lr=0.01)  # you can initialize optimizer without parameters after fate_torch_hook
+    loss = t.nn.BCELoss()
+
+    hetero_nn_0.set_interactve_layer(interactive_layer)
+    hetero_nn_0.compile(optimizer=optimizer, loss=loss)
+
+    evaluation_0 = Evaluation(name='eval_0', eval_type='binary')
+
+    # define components IO
     pipeline.add_component(reader_0)
     pipeline.add_component(reader_1)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
@@ -99,16 +119,11 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(intersection_1, data=Data(data=data_transform_1.output.data))
     pipeline.add_component(hetero_nn_0, data=Data(train_data=intersection_0.output.data,
                                                   validate_data=intersection_1.output.data))
-    pipeline.add_component(hetero_nn_1, data=Data(test_data=intersection_1.output.data),
-                           model=Model(model=hetero_nn_0.output.model))
-    pipeline.add_component(evaluation_0, data=Data(data=[hetero_nn_0.output.data, hetero_nn_1.output.data]))
-
+    pipeline.add_component(evaluation_0, data=Data(data=hetero_nn_0.output.data))
     pipeline.compile()
-
     pipeline.fit()
 
     print(pipeline.get_component("hetero_nn_0").get_summary())
-    print(pipeline.get_component("evaluation_0").get_summary())
 
 
 if __name__ == "__main__":

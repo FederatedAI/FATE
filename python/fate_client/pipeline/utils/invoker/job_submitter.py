@@ -446,6 +446,15 @@ class JobInvoker(object):
         else:
             return result["data"]
 
+    def bind_table(self, **kwargs):
+        result = self.client.table.bind(**kwargs)
+        if result is None or 'retcode' not in result:
+            raise ValueError("Call flow table bind is failed, check if fate_flow server is up!")
+        elif result["retcode"] != 0:
+            raise ValueError(f"Cannot bind table, error msg is {result['retmsg']}")
+        else:
+            return result["data"]
+
     @staticmethod
     def run_job_with_retry(api_func, params):
         for i in range(conf.MAX_RETRY + 1):

@@ -95,7 +95,6 @@ class Weights:
         return self.binary_op(other, operator.add, inplace=True)
 
     def __add__(self, other):
-        LOGGER.debug("In binary_op0, _w: {}".format(self._weights))
         return self.binary_op(other, operator.add, inplace=False)
 
     def __radd__(self, other):
@@ -262,7 +261,7 @@ class NumpyWeights(Weights):
         if inplace:
             size = self._weights.size
             view = self._weights.view().reshape(size)
-            view_other = other._weights.view().reshpae(size)
+            view_other = other._weights.view().reshape(size)
             for i in range(size):
                 view[i] = func(view[i], view_other[i])
             return self
@@ -278,3 +277,6 @@ class NumpyWeights(Weights):
         for i in range(size):
             view[i] += a * view_other[i]
         return self
+
+    def __repr__(self):
+        return self._weights.__repr__()
