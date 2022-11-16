@@ -260,6 +260,7 @@ class HeteroFeatureBinningParam(FeatureBinningParam):
 
     """
 
+
     def __init__(self, method=consts.QUANTILE,
                  compress_thres=consts.DEFAULT_COMPRESS_THRESHOLD,
                  head_size=consts.DEFAULT_HEAD_SIZE,
