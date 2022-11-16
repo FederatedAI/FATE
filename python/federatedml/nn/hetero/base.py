@@ -16,28 +16,31 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from fate_arch.computing.non_distributed import LocalData
 from federatedml.model_base import ModelBase
 from federatedml.model_selection import start_cross_validation
 from federatedml.param.hetero_nn_param import HeteroNNParam
 from federatedml.transfer_variable.transfer_class.hetero_nn_transfer_variable import HeteroNNTransferVariable
 from federatedml.util import consts
+from federatedml.nn.backend.utils.data import load_dataset
+from federatedml.nn.dataset.base import Dataset, ShuffleWrapDataset
+from federatedml.util import LOGGER
 
 
 class HeteroNNBase(ModelBase):
+
     def __init__(self):
         super(HeteroNNBase, self).__init__()
 
         self.tol = None
         self.early_stop = None
-
+        self.seed = 100
         self.epochs = None
         self.batch_size = None
         self._header = []
 
         self.predict_param = None
         self.hetero_nn_param = None
-
-        self.model_builder = None
 
         self.batch_generator = None
         self.model = None
@@ -48,25 +51,37 @@ class HeteroNNBase(ModelBase):
         self.metrics = []
         self.use_first_metric_only = False
 
-        self.data_x = []
-        self.data_y = []
         self.transfer_variable = HeteroNNTransferVariable()
         self.model_param = HeteroNNParam()
-
         self.mode = consts.HETERO
 
         self.selector_param = None
-
         self.floating_point_precision = None
 
         self.history_iter_epoch = 0
         self.iter_epoch = 0
 
-    def _init_model(self, hetero_nn_param):
+        self.data_x = []
+        self.data_y = []
+        self.dataset_cache_dict = {}
+
+        self.num_label = None
+
+        # nn related param
+        self.top_model_define = None
+        self.bottom_model_define = None
+        self.interactive_layer_define = None
+        self.dataset_shuffle = True
+        self.dataset = None
+        self.dataset_param = None
+        self.dataset_shuffle_seed = 100
+
+    def _init_model(self, hetero_nn_param: HeteroNNParam):
+
         self.interactive_layer_lr = hetero_nn_param.interactive_layer_lr
         self.epochs = hetero_nn_param.epochs
         self.batch_size = hetero_nn_param.batch_size
-
+        self.seed = hetero_nn_param.seed
         self.early_stop = hetero_nn_param.early_stop
         self.validation_freqs = hetero_nn_param.validation_freqs
         self.early_stopping_rounds = hetero_nn_param.early_stopping_rounds
@@ -77,10 +92,18 @@ class HeteroNNBase(ModelBase):
 
         self.predict_param = hetero_nn_param.predict_param
         self.hetero_nn_param = hetero_nn_param
-
         self.selector_param = hetero_nn_param.selector_param
-
         self.floating_point_precision = hetero_nn_param.floating_point_precision
+
+        # nn configs
+        self.bottom_model_define = hetero_nn_param.bottom_nn_define
+        self.top_model_define = hetero_nn_param.top_nn_define
+        self.interactive_layer_define = hetero_nn_param.interactive_layer_define
+
+        # dataset
+        dataset_param = hetero_nn_param.dataset.to_dict()
+        self.dataset = dataset_param['dataset_name']
+        self.dataset_param = dataset_param['param']
 
         if self.role == consts.GUEST:
             self.batch_generator.register_batch_generator(self.transfer_variable, has_arbiter=False)
@@ -130,3 +153,65 @@ class HeteroNNBase(ModelBase):
 
     def cross_validation(self, data_instances):
         return start_cross_validation.run(self, data_instances)
+
+    def prepare_dataset(self, data, data_type='train', check_label=False):
+
+        # train input & validate input are DTables or path str
+        if isinstance(data, LocalData):
+            data = data.path
+
+        if isinstance(data, Dataset) or isinstance(data, ShuffleWrapDataset):
+            ds = data
+        else:
+            ds = load_dataset(self.dataset, data, self.dataset_param, self.dataset_cache_dict)
+
+            if not ds.has_sample_ids():
+                raise ValueError('Dataset has no sample id, this is not allowed in hetero-nn, please make sure'
+                                 ' that you use set_sample_ids() to set ids for samples')
+
+            if self.dataset_shuffle:
+                ds = ShuffleWrapDataset(ds, shuffle_seed=self.dataset_shuffle_seed)
+                if self.role == consts.GUEST:
+                    self.transfer_variable.dataset_info.remote(ds.idx_map, idx=-1, suffix=('idx_map', data_type))
+                if self.role == consts.HOST:
+                    idx_map = self.transfer_variable.dataset_info.get(idx=0, suffix=('idx_map', data_type))
+                    assert len(idx_map) == len(ds), 'host dataset len != guest dataset len, please check your dataset,' \
+                                                    'guest len {}, host len {}'.format(len(idx_map), len(ds))
+                    ds.set_shuffled_idx(idx_map)
+
+            if check_label:
+                all_classes = ds.get_classes()
+                if all_classes is None:
+                    raise NotImplementedError('get_classes() is not implemented, please implement this function'
+                                              ' when you are using hetero-nn. Let it return classes in a list.'
+                                              ' Please see built-in dataset(table.py for example) for reference')
+                self.num_label = len(all_classes)
+
+        return ds
+
+    # override function
+    @staticmethod
+    def set_predict_data_schema(predict_datas, schemas):
+        if predict_datas is None:
+            return predict_datas
+        if isinstance(predict_datas, list):
+            predict_data = predict_datas[0]
+            schema = schemas[0]
+        else:
+            predict_data = predict_datas
+            schema = schemas
+        if predict_data is not None:
+            predict_data.schema = {
+                "header": [
+                    "label",
+                    "predict_result",
+                    "predict_score",
+                    "predict_detail",
+                    "type",
+                ],
+                "sid": 'id',
+                "content_type": "predict_result"
+            }
+            if schema.get("match_id_name") is not None:
+                predict_data.schema["match_id_name"] = schema.get("match_id_name")
+        return predict_data

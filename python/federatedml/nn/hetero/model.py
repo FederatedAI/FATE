@@ -19,21 +19,28 @@ import json
 from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.param.hetero_nn_param import HeteroNNParam
-from federatedml.nn.hetero_nn.strategy.selector import SelectorFactory
-from federatedml.nn.hetero_nn.model.hetero_nn_bottom_model import HeteroNNBottomModel
-from federatedml.nn.hetero_nn.model.hetero_nn_top_model import HeteroNNTopModel
-from federatedml.nn.hetero_nn.model.interactive_layer import InterActiveGuestDenseLayer
-from federatedml.nn.hetero_nn.model.interactive_layer import InteractiveHostDenseLayer
+from federatedml.nn.hetero.strategy.selector import SelectorFactory
+from federatedml.nn.hetero.nn_component.bottom_model import BottomModel
+from federatedml.nn.hetero.nn_component.top_model import TopModel
+from federatedml.nn.backend.utils.common import global_seed
 from federatedml.protobuf.generated.hetero_nn_model_meta_pb2 import HeteroNNModelMeta
 from federatedml.protobuf.generated.hetero_nn_model_meta_pb2 import OptimizerParam
 from federatedml.protobuf.generated.hetero_nn_model_param_pb2 import HeteroNNModelParam
-
-from federatedml.util import consts
+from federatedml.nn.hetero.interactive.he_interactive_layer import HEInteractiveLayerGuest, HEInteractiveLayerHost
 
 
 class HeteroNNModel(object):
     def __init__(self):
         self.partition = 1
+        self.batch_size = None
+        self.bottom_nn_define = None
+        self.top_nn_define = None
+        self.interactive_layer_define = None
+        self.optimizer = None
+        self.config_type = None
+        self.transfer_variable = None
+
+        self._predict_round = 0
 
     def load_model(self):
         pass
@@ -59,6 +66,9 @@ class HeteroNNModel(object):
     def set_partition(self, partition):
         pass
 
+    def inc_predict_round(self):
+        self._predict_round += 1
+
 
 class HeteroNNGuestModel(HeteroNNModel):
 
@@ -66,26 +76,16 @@ class HeteroNNGuestModel(HeteroNNModel):
         super(HeteroNNGuestModel, self).__init__()
 
         self.role = consts.GUEST
-        self.bottom_model = None
-        self.interactive_model = None
-        self.top_model = None
-        self.bottom_nn_define = None
-        self.top_nn_define = None
-        self.interactive_layer_define = None
-        self.config_type = None
-        self.optimizer = None
+        self.bottom_model: BottomModel = None
+        self.top_model: TopModel = None
+        self.interactive_model: HEInteractiveLayerGuest = None
         self.loss = None
-        self.metrics = None
         self.hetero_nn_param = None
-        self.transfer_variable = None
-        self.bottom_model_input_shape = 0
-        self.top_model_input_shape = None
-        self.batch_size = None
         self.is_empty = False
         self.coae_param = None
+        self.seed = 100
         self.set_nn_meta(hetero_nn_param)
         self.component_properties = component_properties
-
         self.selector = SelectorFactory.get_selector(hetero_nn_param.selector_param.method,
                                                      hetero_nn_param.selector_param.selective_size,
                                                      beta=hetero_nn_param.selector_param.beta,
@@ -101,6 +101,7 @@ class HeteroNNGuestModel(HeteroNNModel):
         self.loss = hetero_nn_param.loss
         self.hetero_nn_param = hetero_nn_param
         self.batch_size = hetero_nn_param.batch_size
+        self.seed = hetero_nn_param.seed
 
         coae_param = hetero_nn_param.coae_param
         if coae_param.enable:
@@ -114,11 +115,17 @@ class HeteroNNGuestModel(HeteroNNModel):
         if self.batch_size == -1:
             self.batch_size = x.shape[0]
 
+        global_seed(self.seed)
+
+        if self.top_model is None:
+            self._build_top_model()
+            LOGGER.debug('top model is {}'.format(self.top_model))
+
         if not self.is_empty:
             if self.bottom_model is None:
-                self.bottom_model_input_shape = x.shape[1]
                 self._build_bottom_model()
-
+                LOGGER.debug('bottom model is {}'.format(self.bottom_model))
+            self.bottom_model.train_mode(True)
             guest_bottom_output = self.bottom_model.forward(x)
         else:
             guest_bottom_output = None
@@ -126,42 +133,34 @@ class HeteroNNGuestModel(HeteroNNModel):
         if self.interactive_model is None:
             self._build_interactive_model()
 
-        interactive_output = self.interactive_model.forward(guest_bottom_output, epoch, batch_idx, train=True)
-
-        if self.top_model is None:
-            self.top_model_input_shape = int(interactive_output.shape[1])
-            self._build_top_model()
-
+        interactive_output = self.interactive_model.forward(x=guest_bottom_output, epoch=epoch, batch_idx=batch_idx,
+                                                            train=True)
+        self.top_model.train_mode(True)
         selective_ids, gradients, loss = self.top_model.train_and_get_backward_gradient(interactive_output, y)
-
-        interactive_layer_backward = self.interactive_model.backward(gradients, selective_ids, epoch, batch_idx)
+        interactive_layer_backward = self.interactive_model.guest_backward(error=gradients, epoch=epoch,
+                                                                           batch_idx=batch_idx,
+                                                                           selective_ids=selective_ids)
 
         if not self.is_empty:
             self.bottom_model.backward(x, interactive_layer_backward, selective_ids)
 
         return loss
 
-    def predict(self, x):
+    def predict(self, x, batch=0):
+
         if not self.is_empty:
+            self.bottom_model.train_mode(False)
             guest_bottom_output = self.bottom_model.predict(x)
         else:
             guest_bottom_output = None
 
-        interactive_output = self.interactive_model.forward(guest_bottom_output, train=False)
+        interactive_output = self.interactive_model.forward(guest_bottom_output, epoch=self._predict_round,
+                                                            batch_idx=batch, train=False)
+        self.top_model.train_mode(False)
         preds = self.top_model.predict(interactive_output)
+        self.inc_predict_round()
 
         return preds
-
-    def evaluate(self, x, y, epoch, batch):
-        if not self.is_empty:
-            guest_bottom_output = self.bottom_model.predict(x)
-        else:
-            guest_bottom_output = None
-
-        interactive_output = self.interactive_model.forward(guest_bottom_output, epoch, batch, train=False)
-        metrics = self.top_model.evaluate(interactive_output, y)
-
-        return metrics
 
     def get_hetero_nn_model_param(self):
 
@@ -171,8 +170,6 @@ class HeteroNNGuestModel(HeteroNNModel):
             model_param.bottom_saved_model_bytes = self.bottom_model.export_model()
         model_param.top_saved_model_bytes = self.top_model.export_model()
         model_param.interactive_layer_param.CopyFrom(self.interactive_model.export_model())
-        model_param.bottom_model_input_shape = self.bottom_model_input_shape
-        model_param.top_model_input_shape = self.top_model_input_shape
         coae_bytes = self.top_model.export_coae()
         if coae_bytes is not None:
             model_param.coae_bytes = coae_bytes
@@ -182,8 +179,6 @@ class HeteroNNGuestModel(HeteroNNModel):
     def set_hetero_nn_model_param(self, model_param):
 
         self.is_empty = model_param.is_empty
-        self.top_model_input_shape = model_param.top_model_input_shape
-        self.bottom_model_input_shape = model_param.bottom_model_input_shape
         if not self.is_empty:
             self._restore_bottom_model(model_param.bottom_saved_model_bytes)
         self._restore_interactive_model(model_param.interactive_layer_param)
@@ -191,78 +186,38 @@ class HeteroNNGuestModel(HeteroNNModel):
         self.top_model.restore_coae(model_param.coae_bytes)
 
     def get_hetero_nn_model_meta(self):
+
         model_meta = HeteroNNModelMeta()
         model_meta.config_type = self.config_type
-
-        if self.config_type == "nn":
-            for layer in self.bottom_nn_define:
-                model_meta.bottom_nn_define.append(json.dumps(layer))
-            for layer in self.top_nn_define:
-                model_meta.top_nn_define.append(json.dumps(layer))
-        else:
-            model_meta.bottom_nn_define.append(json.dumps(self.bottom_nn_define))
-            model_meta.top_nn_define.append(json.dumps(self.top_nn_define))
-
+        model_meta.bottom_nn_define.append(json.dumps(self.bottom_nn_define))
+        model_meta.top_nn_define.append(json.dumps(self.top_nn_define))
         model_meta.interactive_layer_define = json.dumps(self.interactive_layer_define)
         model_meta.interactive_layer_lr = self.hetero_nn_param.interactive_layer_lr
-
         optimizer_param = OptimizerParam()
-        if self.config_type == consts.pytorch_backend:
-            model_meta.loss = json.dumps(self.loss)
-            optimizer_param.optimizer = self.optimizer['optimizer']
-            tmp_dict = copy.deepcopy(self.optimizer)
-            tmp_dict.pop('optimizer')
-            optimizer_param.kwargs = json.dumps(tmp_dict)
-        else:
-            model_meta.loss = self.loss
-            optimizer_param.optimizer = self.optimizer.optimizer
-            optimizer_param.kwargs = json.dumps(self.optimizer.kwargs)
-
-        """
-        for metric in self.metrics:
-            model_meta.metrics.append(metric)
-        """
+        model_meta.loss = json.dumps(self.loss)
+        optimizer_param.optimizer = self.optimizer['optimizer']
+        tmp_dict = copy.deepcopy(self.optimizer)
+        tmp_dict.pop('optimizer')
+        optimizer_param.kwargs = json.dumps(tmp_dict)
         model_meta.optimizer_param.CopyFrom(optimizer_param)
 
         return model_meta
 
     def set_hetero_nn_model_meta(self, model_meta):
         self.config_type = model_meta.config_type
-
-        if self.config_type == "nn":
-            self.bottom_nn_define = []
-            self.top_nn_define = []
-
-            for layer in model_meta.bottom_nn_define:
-                self.bottom_nn_define.append(json.loads(layer))
-
-            for layer in model_meta.top_nn_define:
-                self.top_nn_define.append(json.loads(layer))
-        else:
-            self.bottom_nn_define = json.loads(model_meta.bottom_nn_define[0])
-            self.top_nn_define = json.loads(model_meta.top_nn_define[0])
-
+        self.bottom_nn_define = json.loads(model_meta.bottom_nn_define[0])
+        self.top_nn_define = json.loads(model_meta.top_nn_define[0])
         self.interactive_layer_define = json.loads(model_meta.interactive_layer_define)
-
-        if self.config_type == consts.pytorch_backend:
-            self.loss = json.loads(model_meta.loss)
-        else:
-            self.loss = model_meta.loss
-
-        self.metrics = []
-        for metric in self.metrics:
-            self.metrics.append(metric)
+        self.loss = json.loads(model_meta.loss)
 
         if self.optimizer is None:
             from types import SimpleNamespace
             self.optimizer = SimpleNamespace(optimizer=None, kwargs={})
             self.optimizer.optimizer = model_meta.optimizer_param.optimizer
             self.optimizer.kwargs = json.loads(model_meta.optimizer_param.kwargs)
-
-            if self.config_type == consts.pytorch_backend:
-                tmp_opt = {'optimizer': self.optimizer.optimizer}
-                tmp_opt.update(self.optimizer.kwargs)
-                self.optimizer = tmp_opt
+            tmp_opt = {'optimizer': self.optimizer.optimizer}
+            tmp_opt.update(self.optimizer.kwargs)
+            self.optimizer = tmp_opt
 
     def set_transfer_variable(self, transfer_variable):
         self.transfer_variable = transfer_variable
@@ -272,57 +227,55 @@ class HeteroNNGuestModel(HeteroNNModel):
         if self.interactive_model is not None:
             self.interactive_model.set_partition(self.partition)
 
-    def _build_bottom_model(self):
-        self.bottom_model = HeteroNNBottomModel(input_shape=self.bottom_model_input_shape,
-                                                optimizer=self.optimizer,
-                                                layer_config=self.bottom_nn_define,
-                                                config_type=self.config_type)
-
+    def _init_bottom_select_strategy(self):
         if self.selector:
             self.bottom_model.set_backward_select_strategy()
             self.bottom_model.set_batch(self.batch_size)
 
+    def _build_bottom_model(self):
+
+        self.bottom_model = BottomModel(optimizer=self.optimizer, layer_config=self.bottom_nn_define)
+        self._init_bottom_select_strategy()
+
     def _restore_bottom_model(self, model_bytes):
         self._build_bottom_model()
         self.bottom_model.restore_model(model_bytes)
+        self._init_bottom_select_strategy()
 
-    def _build_top_model(self):
-
-        self.top_model = HeteroNNTopModel(input_shape=self.top_model_input_shape,
-                                          optimizer=self.optimizer,
-                                          layer_config=self.top_nn_define,
-                                          loss=self.loss,
-                                          metrics=self.metrics,
-                                          config_type=self.config_type,
-                                          coae_config=self.coae_param
-                                          )
-
+    def _init_top_select_strategy(self):
         if self.selector:
             self.top_model.set_backward_selector_strategy(selector=self.selector)
             self.top_model.set_batch(self.batch_size)
 
+    def _build_top_model(self):
+        if self.top_nn_define is None:
+            raise ValueError('top nn model define is None, you must define your top model in guest side')
+        self.top_model = TopModel(optimizer=self.optimizer, layer_config=self.top_nn_define, loss=self.loss,
+                                  coae_config=self.coae_param)
+        self._init_top_select_strategy()
+
     def _restore_top_model(self, model_bytes):
         self._build_top_model()
         self.top_model.restore_model(model_bytes)
+        self._init_top_select_strategy()
 
-    def _build_interactive_model(self):
-        self.interactive_model = InterActiveGuestDenseLayer(self.hetero_nn_param,
-                                                            self.config_type,
-                                                            self.interactive_layer_define,
-                                                            host_num=len(self.component_properties.host_party_idlist))
-        self.interactive_model.set_transfer_variable(self.transfer_variable)
+    def _init_inter_layer(self):
         self.interactive_model.set_partition(self.partition)
         self.interactive_model.set_batch(self.batch_size)
+        self.interactive_model.set_flow_id('interactive_layer')
         if self.selector:
             self.interactive_model.set_backward_select_strategy()
+
+    def _build_interactive_model(self):
+        self.interactive_model = HEInteractiveLayerGuest(params=self.hetero_nn_param,
+                                                         layer_config=self.interactive_layer_define,
+                                                         host_num=len(self.component_properties.host_party_idlist))
+        self._init_inter_layer()
 
     def _restore_interactive_model(self, interactive_model_param):
         self._build_interactive_model()
         self.interactive_model.restore_model(interactive_model_param)
-
-    def warm_start(self):
-        self.bottom_model.recompile(self.optimizer)
-        self.top_model.recompile(self.loss, self.optimizer, self.metrics)
+        self._init_inter_layer()
 
 
 class HeteroNNHostModel(HeteroNNModel):
@@ -331,20 +284,11 @@ class HeteroNNHostModel(HeteroNNModel):
         super(HeteroNNHostModel, self).__init__()
 
         self.role = consts.HOST
-        self.bottom_model_input_shape = None
-        self.bottom_model = None
+        self.bottom_model: BottomModel = None
         self.interactive_model = None
-
-        self.bottom_nn_define = None
-        self.config_type = None
-        self.optimizer = None
         self.hetero_nn_param = None
-
-        self.batch_size = None
+        self.seed = 100
         self.set_nn_meta(hetero_nn_param)
-
-        self.transfer_variable = None
-
         self.selector = SelectorFactory.get_selector(hetero_nn_param.selector_param.method,
                                                      hetero_nn_param.selector_param.selective_size,
                                                      beta=hetero_nn_param.selector_param.beta,
@@ -357,28 +301,27 @@ class HeteroNNHostModel(HeteroNNModel):
         self.optimizer = hetero_nn_param.optimizer
         self.hetero_nn_param = hetero_nn_param
         self.batch_size = hetero_nn_param.batch_size
+        self.seed = hetero_nn_param.seed
 
     def _build_bottom_model(self):
-        self.bottom_model = HeteroNNBottomModel(input_shape=self.bottom_model_input_shape,
-                                                optimizer=self.optimizer,
-                                                layer_config=self.bottom_nn_define,
-                                                config_type=self.config_type)
+        if self.bottom_nn_define is None:
+            raise ValueError('bottom nn model define is None, you must define your bottom model in host')
+        self.bottom_model = BottomModel(optimizer=self.optimizer, layer_config=self.bottom_nn_define)
 
     def _restore_bottom_model(self, model_bytes):
         self._build_bottom_model()
         self.bottom_model.restore_model(model_bytes)
 
     def _build_interactive_model(self):
-        self.interactive_model = InteractiveHostDenseLayer(self.hetero_nn_param)
-        self.interactive_model.set_transfer_variable(self.transfer_variable)
+        self.interactive_model = HEInteractiveLayerHost(self.hetero_nn_param)
         self.interactive_model.set_partition(self.partition)
+        self.interactive_model.set_flow_id('interactive_layer')
 
     def _restore_interactive_model(self, interactive_layer_param):
         self._build_interactive_model()
         self.interactive_model.restore_model(interactive_layer_param)
-
-    def warm_start(self):
-        self.bottom_model.recompile(self.optimizer)
+        self.interactive_model.set_partition(self.partition)
+        self.interactive_model.set_flow_id('interactive_layer')
 
     def set_transfer_variable(self, transfer_variable):
         self.transfer_variable = transfer_variable
@@ -392,28 +335,14 @@ class HeteroNNHostModel(HeteroNNModel):
 
     def get_hetero_nn_model_meta(self):
         model_meta = HeteroNNModelMeta()
-
         model_meta.config_type = self.config_type
-
-        if self.config_type == "nn":
-            for layer in self.bottom_nn_define:
-                model_meta.bottom_nn_define.append(json.dumps(layer))
-
-        else:
-            model_meta.bottom_nn_define.append(json.dumps(self.bottom_nn_define))
-
+        model_meta.bottom_nn_define.append(json.dumps(self.bottom_nn_define))
         model_meta.interactive_layer_lr = self.hetero_nn_param.interactive_layer_lr
-
         optimizer_param = OptimizerParam()
-        if self.config_type == consts.keras_backend:
-            optimizer_param.optimizer = self.optimizer.optimizer
-            optimizer_param.kwargs = json.dumps(self.optimizer.kwargs)
-        else:
-            optimizer_param.optimizer = self.optimizer['optimizer']
-            tmp_opt = copy.deepcopy(self.optimizer)
-            tmp_opt.pop('optimizer')
-            optimizer_param.kwargs = json.dumps(tmp_opt)
-
+        optimizer_param.optimizer = self.optimizer['optimizer']
+        tmp_opt = copy.deepcopy(self.optimizer)
+        tmp_opt.pop('optimizer')
+        optimizer_param.kwargs = json.dumps(tmp_opt)
         model_meta.optimizer_param.CopyFrom(optimizer_param)
 
         return model_meta
@@ -421,26 +350,17 @@ class HeteroNNHostModel(HeteroNNModel):
     def set_hetero_nn_model_meta(self, model_meta):
 
         self.config_type = model_meta.config_type
-        if self.config_type == "nn":
-            self.bottom_nn_define = []
-
-            for layer in model_meta.bottom_nn_define:
-                self.bottom_nn_define.append(json.loads(layer))
-        else:
-            self.bottom_nn_define = json.loads(model_meta.bottom_nn_define[0])
-
+        self.bottom_nn_define = json.loads(model_meta.bottom_nn_define[0])
         if self.optimizer is None:
             from types import SimpleNamespace
             self.optimizer = SimpleNamespace(optimizer=None, kwargs={})
             self.optimizer.optimizer = model_meta.optimizer_param.optimizer
             self.optimizer.kwargs = json.loads(model_meta.optimizer_param.kwargs)
-            if self.config_type == consts.pytorch_backend:
-                tmp_opt = {'optimizer': self.optimizer.optimizer}
-                tmp_opt.update(self.optimizer.kwargs)
-                self.optimizer = tmp_opt
+            tmp_opt = {'optimizer': self.optimizer.optimizer}
+            tmp_opt.update(self.optimizer.kwargs)
+            self.optimizer = tmp_opt
 
     def set_hetero_nn_model_param(self, model_param):
-        self.bottom_model_input_shape = model_param.bottom_model_input_shape
         self._restore_bottom_model(model_param.bottom_saved_model_bytes)
         self._restore_interactive_model(model_param.interactive_layer_param)
 
@@ -452,30 +372,29 @@ class HeteroNNHostModel(HeteroNNModel):
         return model_param
 
     def train(self, x, epoch, batch_idx):
+
         if self.bottom_model is None:
-            self.bottom_model_input_shape = x.shape[1]
+            global_seed(self.seed)
             self._build_bottom_model()
-            self._build_interactive_model()
             if self.batch_size == -1:
                 self.batch_size = x.shape[0]
-
+            self._build_interactive_model()
             if self.selector:
                 self.bottom_model.set_backward_select_strategy()
                 self.bottom_model.set_batch(self.batch_size)
                 self.interactive_model.set_backward_select_strategy()
 
+        self.bottom_model.train_mode(True)
         host_bottom_output = self.bottom_model.forward(x)
 
         self.interactive_model.forward(host_bottom_output, epoch, batch_idx, train=True)
 
-        host_gradient, selective_ids = self.interactive_model.backward(epoch, batch_idx)
+        host_gradient, selective_ids = self.interactive_model.host_backward(epoch, batch_idx)
 
         self.bottom_model.backward(x, host_gradient, selective_ids)
 
-    def predict(self, x):
+    def predict(self, x, batch=0):
+        self.bottom_model.train_mode(False)
         guest_bottom_output = self.bottom_model.predict(x)
-        self.interactive_model.forward(guest_bottom_output, train=False)
-
-    def evaluate(self, x, epoch, batch_idx):
-        guest_bottom_output = self.bottom_model.predict(x)
-        self.interactive_model.forward(guest_bottom_output, epoch, batch_idx, train=False)
+        self.interactive_model.forward(guest_bottom_output, epoch=self._predict_round, batch=batch, train=False)
+        self.inc_predict_round()

@@ -18,51 +18,35 @@
 #
 
 import numpy as np
-from federatedml.util import consts
+import torch
 from federatedml.util import LOGGER
-from federatedml.nn.backend.tf_keras.nn_model import build_keras, KerasNNModel
-from federatedml.nn.hetero_nn.backend.pytorch.pytorch_nn_model import PytorchNNModel, PytorchDataConvertor
-from federatedml.nn.hetero_nn.backend.pytorch.pytorch_uitl import pytorch_label_reformat
-from federatedml.nn.hetero_nn.backend.tf_keras.data_generator import KerasSequenceDataConverter
-from federatedml.nn.hetero_nn.protection_enhance.coae import train_an_autoencoder_confuser, CoAE, coae_label_reformat, \
+from federatedml.nn.hetero.nn_component.torch_model import TorchNNModel
+from federatedml.nn.hetero.protection_enhance.coae import train_an_autoencoder_confuser, CoAE, coae_label_reformat, \
     CrossEntropy
 
 
-class HeteroNNTopModel(object):
+class TopModel(object):
 
-    def __init__(self, input_shape, loss, optimizer, metrics, layer_config, config_type, coae_config):
+    def __init__(self, loss, optimizer, layer_config, coae_config):
 
-        self.config_type = config_type
-        self.label_reformat = None
         self.coae = None
         self.coae_config = coae_config
         self.labem_num = 2
 
-        if self.config_type == consts.keras_backend:
-            self._model: KerasNNModel = build_keras(input_shape=input_shape, loss=loss,
-                                                    optimizer=optimizer, nn_define=layer_config, metrics=metrics)
-            self.data_converter = KerasSequenceDataConverter()
+        self._model: TorchNNModel = TorchNNModel(nn_define=layer_config, optimizer_define=optimizer,
+                                                 loss_fn_define=loss)
 
-        elif self.config_type == consts.pytorch_backend:
-            self._model: PytorchNNModel = PytorchNNModel(nn_define=layer_config, optimizer_define=optimizer,
-                                                         loss_fn_define=loss)
-            self.data_converter = PytorchDataConvertor()
-            self.label_reformat = pytorch_label_reformat
-            if self.coae_config:
-                self._model.loss_fn = CrossEntropy()
+        self.label_reformat = None
+        if self.coae_config:
+            self._model.loss_fn = CrossEntropy()
 
         if self.coae_config:
             self.label_reformat = coae_label_reformat
-
-        LOGGER.debug('top model is {}'.format(self._model))
 
         self.batch_size = None
         self.selector = None
         self.batch_data_cached_X = []
         self.batch_data_cached_y = []
-
-    def set_data_converter(self, data_converter):
-        self.data_converter = data_converter
 
     def set_backward_selector_strategy(self, selector):
         self.selector = selector
@@ -70,10 +54,12 @@ class HeteroNNTopModel(object):
     def set_batch(self, batch_size):
         self.batch_size = batch_size
 
+    def train_mode(self, mode):
+        self._model.train_mode(mode)
+
     def train_and_get_backward_gradient(self, x, y):
 
         LOGGER.debug("top model start to forward propagation")
-
         selective_id = []
         input_gradient = []
 
@@ -96,6 +82,10 @@ class HeteroNNTopModel(object):
         # run selector
         if self.selector:
 
+            # when run selective bp, need to convert y to numpy format
+            if isinstance(y, torch.Tensor):
+                y = y.cpu().numpy()
+
             losses = self._model.get_forward_loss_from_input(x, y)
             loss = sum(losses) / len(losses)
             selective_strategy = self.selector.select_batch_sample(losses)
@@ -107,20 +97,19 @@ class HeteroNNTopModel(object):
                     self.batch_data_cached_y.append(y[idx])
 
             if len(self.batch_data_cached_X) >= self.batch_size:
-                data = self.data_converter.convert_data(np.array(self.batch_data_cached_X[: self.batch_size]),
-                                                        np.array(self.batch_data_cached_y[: self.batch_size]))
-                input_gradient = self._model.get_input_gradients(np.array(self.batch_data_cached_X[: self.batch_size]),
-                                                                 np.array(self.batch_data_cached_y[: self.batch_size]))[
-                    0]
+                data = (np.array(self.batch_data_cached_X[: self.batch_size]),
+                        np.array(self.batch_data_cached_y[: self.batch_size]))
+                input_gradient = self._model.get_input_gradients(data[0], data[1])[0]
                 self._model.train(data)
                 self.batch_data_cached_X = self.batch_data_cached_X[self.batch_size:]
                 self.batch_data_cached_y = self.batch_data_cached_y[self.batch_size:]
-
         else:
             input_gradient = self._model.get_input_gradients(x, y)[0]
-            data = self.data_converter.convert_data(x, y)
-            self._model.train(data)
+            self._model.train((x, y))
             loss = self._model.get_loss()[0]
+
+        LOGGER.debug('top model update parameters:')
+        self._model.print_parameters()
 
         return selective_id, input_gradient, loss
 
@@ -136,20 +125,16 @@ class HeteroNNTopModel(object):
         else:
             return output_data
 
-    def evaluate(self, x, y):
-        data = self.data_converter.convert_data(x, y)
-        return self._model.evaluate(data)
-
     def export_coae(self):
         if self.coae:
-            model_bytes = PytorchNNModel.get_model_bytes(self.coae)
+            model_bytes = TorchNNModel.get_model_bytes(self.coae)
             return model_bytes
         else:
             return None
 
     def restore_coae(self, model_bytes):
         if model_bytes is not None and len(model_bytes) > 0:
-            coae = PytorchNNModel.recover_model_bytes(model_bytes)
+            coae = TorchNNModel.recover_model_bytes(model_bytes)
             self.coae = coae
 
     def export_model(self):
@@ -158,7 +143,5 @@ class HeteroNNTopModel(object):
     def restore_model(self, model_bytes):
         self._model = self._model.restore_model(model_bytes)
 
-    def recompile(self, loss, optimizer, metrics):
-        self._model.compile(loss=loss,
-                            optimizer=optimizer,
-                            metrics=metrics)
+    def __repr__(self):
+        return 'top model contains {}'.format(self._model.__repr__())
