@@ -120,7 +120,6 @@ class HeteroNNGuest(HeteroNNBase):
             batch_size=batch_size,
             num_workers=4)
 
-        LOGGER.debug('sample ids are {}'.format(train_ds.get_sample_ids()))
         for cur_epoch in range(epoch_offset, self.epochs + epoch_offset):
 
             self.iter_epoch = cur_epoch

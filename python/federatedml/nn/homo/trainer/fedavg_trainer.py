@@ -17,9 +17,9 @@ class FedAVGTrainer(TrainerBase):
     epochs: int >0, epochs to train
     batch_size: int, -1 means full batch
     early_stop: None, 'diff' or 'abs'. if None, disable early stop; if 'diff', use the loss difference between
-                two epochs as early stop condition, if differences < eps, stop training ; if 'abs', if loss < eps,
+                two epochs as early stop condition, if differences < tol, stop training ; if 'abs', if loss < tol,
                 stop training
-    eps: float, eps value for early stop
+    tol: float, tol value for early stop
     secure_aggregate: bool, default is True, whether to use secure aggregation. if enabled, will add random number
                             mask to local models. These random number masks will eventually cancel out to get 0.
     weighted_aggregation: bool, whether add weight to each local model when doing aggregation.
@@ -44,7 +44,7 @@ class FedAVGTrainer(TrainerBase):
     """
 
     def __init__(self, epochs=10, batch_size=512,  # training parameter
-                 early_stop=None, eps=0.0001,  # early stop parameters
+                 early_stop=None, tol=0.0001,  # early stop parameters
                  secure_aggregate=True, weighted_aggregation=True, aggregate_every_n_epoch=None,  # federation
                  cuda=False, pin_memory=True, shuffle=True, data_loader_worker=0,  # GPU dataloader
                  validation_freqs=None,  # validation configuration
@@ -56,7 +56,7 @@ class FedAVGTrainer(TrainerBase):
 
         # training parameters
         self.epochs = epochs
-        self.eps = eps
+        self.tol = tol
         self.validation_freq = validation_freqs
         self.save_freq = checkpoint_save_freqs
 
@@ -105,7 +105,7 @@ class FedAVGTrainer(TrainerBase):
         self.check_trainer_param([self.secure_aggregate, self.weighted_aggregation], [
                                  'secure_aggregate', 'weighted_aggregation'], self.is_bool, '{} is not a bool')
         self.check_trainer_param(
-            [self.eps], ['eps'], self.is_float, '{} is not a float')
+            [self.tol], ['tol'], self.is_float, '{} is not a float')
 
     def to_cuda(self, var):
         if hasattr(var, 'cuda'):
@@ -156,7 +156,7 @@ class FedAVGTrainer(TrainerBase):
                 secure_aggregate=self.secure_aggregate,
                 check_convergence=self.early_stop is not None,
                 aggregate_type='fedavg',
-                eps=self.eps,
+                eps=self.tol,
                 convergence_type=self.early_stop,
                 sample_number=sample_num)
         else:

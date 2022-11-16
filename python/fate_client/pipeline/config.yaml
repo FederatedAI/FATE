@@ -1,5 +1,5 @@
-ip: 127.0.0.1
-port: 9380
+ip:
+port:
 app_key:
 secret_key:
 log_directory:
