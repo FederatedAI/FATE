@@ -545,7 +545,7 @@ class OptimalBinning(BaseBinning):
         if res_split_ks:
             res_ks = [res_split_ks[idx] for idx in res_split_index]
             # last bin
-            res_ks.append(0.0)
+            # res_ks.append(0.0)
         res_split_index.append(len(bucket_list))
         start = 0
         bucket_res = []
