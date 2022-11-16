@@ -220,9 +220,6 @@ class BinResults(object):
         col_result_dict = {}
         if split_points is not None:
             for col_name, sp in split_points.items():
-                # LOGGER.debug(f"before put col name: {col_name}'s split points, "
-                #              f"bin optimal metric: {self.all_cols_results.get(col_name, BinColResults()).optimal_metric_array}")
-
                 self.put_col_split_points(col_name, sp)
         for col_name, col_bin_result in self.all_cols_results.items():
             bin_res_dict = col_bin_result.generate_pb_dict()

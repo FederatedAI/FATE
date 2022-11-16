@@ -227,7 +227,7 @@ class BaseFeatureBinning(ModelBase):
             need_run=self.need_run,
             transform_param=transform_param,
             skip_static=self.model_param.skip_static,
-            optimal_metric_method = optimal_metric_method
+            optimal_metric_method=optimal_metric_method
         )
         return meta_protobuf_obj
 
@@ -317,7 +317,7 @@ class BaseFeatureBinning(ModelBase):
             self.bin_result = MultiClassBinResult.reconstruct(list(multi_class_result.results), self.labels)
         if self.role == consts.HOST:
             binning_result = dict(list(multi_class_result.results)[0].binning_result)
-            woe_array =  list(binning_result.values())[0].woe_array
+            woe_array = list(binning_result.values())[0].woe_array
             # if manual woe, reconstruct
             if woe_array:
                 self.bin_result = MultiClassBinResult.reconstruct(list(multi_class_result.results))
