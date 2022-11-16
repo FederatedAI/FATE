@@ -8,9 +8,12 @@ except ImportError as e:
     ipy = None
     register_cell_magic = None
 
+
 def not_working_save_to_fate(*args, **kwargs):
-    raise ValueError('save to fate not working, please check if your ipython is installed, '
-                     'and if ipython.get_ipython() is working')
+    raise ValueError(
+        'save to fate not working, please check if your ipython is installed, '
+        'and if ipython.get_ipython() is working')
+
 
 if register_cell_magic is not None:
     if ipy.get_ipython():
@@ -25,7 +28,8 @@ if register_cell_magic is not None:
                     break
 
             if base_path is None:
-                raise ValueError('cannot find fate/python in system path, please check your configuration')
+                raise ValueError(
+                    'cannot find fate/python in system path, please check your configuration')
 
             base_path = base_path + '/federatedml/'
 
@@ -42,13 +46,15 @@ if register_cell_magic is not None:
             }
 
             args = line.split()
-            assert len(args) == 2, "input args len is not 2, got {} \n expect format: %%save_to_fate SAVE_MODE FILENAME \n SAVE_MODE in ['model', 'dataset', 'trainer', 'aggregator']   FILE_NAME xxx.py".format(args)
+            assert len(
+                args) == 2, "input args len is not 2, got {} \n expect format: %%save_to_fate SAVE_MODE FILENAME \n SAVE_MODE in ['model', 'dataset', 'trainer', 'aggregator']   FILE_NAME xxx.py".format(args)
             modes_avail = ['model', 'dataset', 'trainer', 'aggregator']
             save_mode = args[0]
             file_name = args[1]
-            assert save_mode in modes_avail, 'avail modes are {}, got {}'.format(modes_avail, save_mode)
+            assert save_mode in modes_avail, 'avail modes are {}, got {}'.format(
+                modes_avail, save_mode)
             assert file_name.endswith('.py'), 'save file should be a .py'
-            with open(base_path+mode_map[save_mode]+file_name, 'w') as f:
+            with open(base_path + mode_map[save_mode] + file_name, 'w') as f:
                 f.write(cell)
             ipy.get_ipython().run_cell(cell)
     else:
@@ -66,7 +72,8 @@ class TrainerParam(BaseParam):
 
     def check(self):
         if self.trainer_name is None:
-            raise ValueError('You did not specify the trainer name, please set the trainer name')
+            raise ValueError(
+                'You did not specify the trainer name, please set the trainer name')
         self.check_string(self.trainer_name, 'trainer_name')
 
     def to_dict(self):

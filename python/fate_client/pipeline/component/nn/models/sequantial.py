@@ -44,16 +44,20 @@ class Sequential(object):
             layer_type = "keras"
         else:
             layer_type = "torch"
-            is_layer = hasattr(layer, "__module__") and "pipeline.component.nn.backend.torch.nn" == getattr(
-                layer, "__module__"
-            )
+            is_layer = hasattr(
+                layer,
+                "__module__") and "pipeline.component.nn.backend.torch.nn" == getattr(
+                layer,
+                "__module__")
             is_seq = isinstance(layer, Seq)
             is_cust_model = isinstance(layer, CustModel)
             is_interactive_layer = isinstance(layer, InteractiveLayer)
             if not(is_layer or is_cust_model or is_interactive_layer or is_seq):
-                raise ValueError("Layer type {} not support yet, added layer must be a FateTorchLayer or a fate_torch "
-                                 "Sequential, remember to call fate_torch_hook() before using pipeline "
-                                 "".format(type(layer)))
+                raise ValueError(
+                    "Layer type {} not support yet, added layer must be a FateTorchLayer or a fate_torch "
+                    "Sequential, remember to call fate_torch_hook() before using pipeline "
+                    "".format(
+                        type(layer)))
 
         self._add_layer(layer, layer_type)
 

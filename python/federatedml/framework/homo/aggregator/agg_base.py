@@ -21,14 +21,16 @@ class AggregatorPair(object):
 
     def set_client_class(self, client):
         if self._client_cls is not None:
-            raise ValueError('client class is already set, cur client cls is {}, new cls is {}'.
-                             format(self._client_cls, client))
+            raise ValueError(
+                'client class is already set, cur client cls is {}, new cls is {}'. format(
+                    self._client_cls, client))
         self._client_cls = client
 
     def set_server_class(self, server):
         if self._server_cls is not None:
-            raise ValueError('server class is already set, cur server cls is {}, new cls is {}'.
-                             format(self._server_cls, server))
+            raise ValueError(
+                'server class is already set, cur server cls is {}, new cls is {}'. format(
+                    self._server_cls, server))
         self._server_cls = server
 
     def get_server_class(self):
@@ -38,7 +40,8 @@ class AggregatorPair(object):
         return self._client_cls.__name__
 
     def __repr__(self):
-        return "<client:{}, server:{}>".format(self._client_cls, self._server_cls)
+        return "<client:{}, server:{}>".format(
+            self._client_cls, self._server_cls)
 
 
 # add client class to global class dict
@@ -103,7 +106,8 @@ class AggBaseTransVar(BaseTransferVariables):
         self.server_to_client = self._create_variable(
             "server_to_client", dst=["host"], src=["arbiter"]
         )
-        self.agg_round = self._create_variable("agg_round", src=["host"], dst=["arbiter"])
+        self.agg_round = self._create_variable(
+            "agg_round", src=["host"], dst=["arbiter"])
 
 
 class AggregatorClassConfirmTransVar(BaseTransferVariables):
@@ -154,15 +158,20 @@ class AggregatorBaseClient(object):
         self._agg_class_confirm_transvar = AggregatorClassConfirmTransVar()
 
         if self.inform_server_aggregator_type:
-            # send aggregator type to inform arbiter to get the corresponding server class
-            self._agg_class_confirm_transvar.client_agg_class.remote(type(self).__name__)
+            # send aggregator type to inform arbiter to get the corresponding
+            # server class
+            self._agg_class_confirm_transvar.client_agg_class.remote(
+                type(self).__name__)
             LOGGER.debug('sync done, send class name to server')
 
-        assert isinstance(max_aggregate_round, int), 'round num need to be an integer'
+        assert isinstance(
+            max_aggregate_round, int), 'round num need to be an integer'
         if self.max_aggregate_round <= 0:
-            raise ValueError('round number is an int >=0, but got {}'.format(max_aggregate_round))
+            raise ValueError(
+                'round number is an int >=0, but got {}'.format(max_aggregate_round))
         self.max_aggregate_round = max_aggregate_round
-        self._transfer_var.agg_round.remote(self.max_aggregate_round, suffix=('agg_round', ))
+        self._transfer_var.agg_round.remote(
+            self.max_aggregate_round, suffix=('agg_round', ))
 
     def send_to_server(self, obj, suffix):
         """
@@ -174,7 +183,8 @@ class AggregatorBaseClient(object):
         """
         Getting an obj from sever side
         """
-        return self._transfer_var.server_to_client.get(idx=0, role=consts.ARBITER, suffix=suffix)
+        return self._transfer_var.server_to_client.get(
+            idx=0, role=consts.ARBITER, suffix=suffix)
 
     def aggregate(self, *args, **kwargs):
         raise NotImplementedError('This function need to be implemented')
@@ -185,29 +195,33 @@ class AggregatorBaseServer(object):
 
     def __init__(self):
         self._transfer_var = AggBaseTransVar()
-        self.max_agg_round = self._transfer_var.agg_round.get(idx=-1, suffix=('agg_round',))[0]
+        self.max_agg_round = self._transfer_var.agg_round.get(
+            idx=-1, suffix=('agg_round',))[0]
         self.loss_history = []
         self._tracker = None
-        LOGGER.info('aggregator base init done, agg round is {}'.format(self.max_agg_round))
+        LOGGER.info(
+            'aggregator base init done, agg round is {}'.format(
+                self.max_agg_round))
 
     def save_loss(self, loss):
         self.loss_history.append(loss)
-        
+
     def set_tracker(self, tracker):
         self._tracker = tracker
 
     def get_agg_round(self):
         if self.max_agg_round is None:
-            raise ValueError('communication round not initialized, need to get this variable from guest')
+            raise ValueError(
+                'communication round not initialized, need to get this variable from guest')
         return self.max_agg_round
-    
+
     def callback_loss(self, loss: float, idx: int):
         if self._tracker is not None:
             self._tracker.log_metric_data(
                 metric_name="loss",
                 metric_namespace="train",
                 metrics=[Metric(idx, loss)],
-            )        
+            )
 
     def send_to_clients(self, obj, suffix, client_idx=-1):
         """
@@ -218,7 +232,8 @@ class AggregatorBaseServer(object):
                          in the range of client numbers( if there are 3 clients, available idx is 0,1,2 for example)
                     list: send to several specified client
         """
-        self._transfer_var.server_to_client.remote(obj, suffix=suffix, idx=client_idx)
+        self._transfer_var.server_to_client.remote(
+            obj, suffix=suffix, idx=client_idx)
 
     def get_from_clients(self, suffix, client_idx=-1):
         """
@@ -229,7 +244,8 @@ class AggregatorBaseServer(object):
                  in the range of client numbers( if there are 3 clients, available idx is 0,1,2 for example)
             list: send to several specified client
         """
-        return self._transfer_var.client_to_server.get(suffix=suffix, idx=client_idx)
+        return self._transfer_var.client_to_server.get(
+            suffix=suffix, idx=client_idx)
 
     def aggregate(self):
         raise NotImplementedError("This function need to be implemented")

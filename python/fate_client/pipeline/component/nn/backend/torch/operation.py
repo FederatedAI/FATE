@@ -20,7 +20,17 @@ class Astype(Module, OpBase):
     def __init__(self, cast_type: str):
         OpBase.__init__(self)
         Module.__init__(self)
-        assert cast_type in ['float', 'int', 'bool', 'float32', 'float64', 'int8', 'int16', 'int32', 'int64', 'float16']
+        assert cast_type in [
+            'float',
+            'int',
+            'bool',
+            'float32',
+            'float64',
+            'int8',
+            'int16',
+            'int32',
+            'int64',
+            'float16']
         self.param_dict['cast_type'] = cast_type
         self.cast_type = cast_type
         self.cast_type_map = {
@@ -96,7 +106,8 @@ class SelectRange(Module, OpBase):
         self.param_dict = {'dim': dim, 'start': start, 'end': end}
 
     def forward(self, tensor):
-        return tensor.select(self.param_dict['dim'], -1)[self.param_dict['start']: self.param_dict['end']]
+        return tensor.select(
+            self.param_dict['dim'], -1)[self.param_dict['start']: self.param_dict['end']]
 
 
 class Sum(Module, OpBase):

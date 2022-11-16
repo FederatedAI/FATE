@@ -71,7 +71,10 @@ class PerformanceRecorder(object):
         for metric in eval_dict:
             if metric not in self.allowed_metric:
                 continue
-            if self.has_improved(eval_dict[metric], metric, self.cur_best_performance):
+            if self.has_improved(
+                    eval_dict[metric],
+                    metric,
+                    self.cur_best_performance):
                 self.cur_best_performance[metric] = eval_dict[metric]
                 self.no_improvement_round[metric] = 0
             else:
