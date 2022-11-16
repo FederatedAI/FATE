@@ -16,6 +16,7 @@ except ImportError as e:
     register_cell_magic = None
 
 
+# check
 if register_cell_magic is not None:
     if ipy.get_ipython():
         @register_cell_magic
