@@ -1,5 +1,5 @@
 from torch import optim
-from federatedml.nn.backend.torch.base import FateTorchLayer, Sequential
+
 from federatedml.nn.backend.torch.base import FateTorchOptimizer
 
 

@@ -1,22 +1,24 @@
 import abc
-import json
-import torch.optim
 import importlib
+import json
 import tempfile
-import torch as t
-import numpy as np
-from torch.nn import Module
 from typing import List
-from federatedml.util import consts
-from federatedml.util import LOGGER
+
+import numpy as np
+import torch as t
+import torch.optim
+from torch.nn import Module
+
+from federatedml.evaluation.evaluation import Evaluation
+from federatedml.feature.instance import Instance
+from federatedml.model_base import Metric, MetricMeta
 from federatedml.model_base import serialize_models
 from federatedml.nn.backend.utils.common import ML_PATH, get_homo_model_dict
-from federatedml.feature.instance import Instance
-from federatedml.evaluation.evaluation import Evaluation
-from federatedml.model_base import Metric, MetricMeta
 from federatedml.param import EvaluateParam
-from federatedml.protobuf.generated.homo_nn_model_param_pb2 import HomoNNParam
 from federatedml.protobuf.generated.homo_nn_model_meta_pb2 import HomoNNMeta
+from federatedml.protobuf.generated.homo_nn_model_param_pb2 import HomoNNParam
+from federatedml.util import LOGGER
+from federatedml.util import consts
 
 
 class StdReturnFormat(object):
@@ -26,14 +28,14 @@ class StdReturnFormat(object):
         self.pred_table = pred_table
         self.classes = classes
 
-    def __call__(self,):
+    def __call__(self, ):
         return self.id, self.pred_table, self.classes
 
 
 class TrainerBase(object):
 
     def __init__(self, **kwargs):
-        
+
         self._fed_mode = True
         self.role = None
         self.party_id = None
@@ -215,12 +217,12 @@ class TrainerBase(object):
             classes = [i for i in range(predict_result.shape[1])]
 
         true_label = true_label.cpu().detach().flatten().tolist()
-        
+
         if task_type == consts.MULTY:
             predict_result = predict_result.tolist()
         else:
             predict_result = predict_result.flatten().tolist()
-        
+
         id_table = [(id_, Instance(label=l)) for id_, l in zip(sample_ids, true_label)]
         score_table = [(id_, pred) for id_, pred in zip(sample_ids, predict_result)]
         return StdReturnFormat(id_table, score_table, classes)
@@ -265,18 +267,18 @@ class TrainerBase(object):
         eval_obj = Evaluation()
         if task_type == 'auto':
             task_type = self.task_type_infer(pred_scores, label)
-        
+
         if task_type is None:
             return
 
         assert dataset_type in ['train', 'validate'], 'dataset_type must in ["train", "validate"]'
-        
+
         eval_param = EvaluateParam(eval_type=task_type)
         if task_type == consts.BINARY:
             eval_param.metrics = ['auc', 'ks']
         elif task_type == consts.MULTY:
             eval_param.metrics = ['accuracy', 'precision', 'recall']
-            
+
         eval_param.check_single_value_default_metric()
         eval_obj._init_model(eval_param)
 
@@ -286,7 +288,7 @@ class TrainerBase(object):
         if task_type == consts.REGRESSION or task_type == consts.BINARY:
             pred_scores = pred_scores.flatten()
             label = label.flatten()
-            
+
         pred_scores = pred_scores.tolist()
         label = label.tolist()
 
@@ -300,9 +302,9 @@ class TrainerBase(object):
             elif task_type == consts.BINARY:
                 pred_label = (s > 0.5) + 1
                 eval_data.append([id_, (l, pred_label, s)])
-        
+
         eval_result = eval_obj.evaluate_metrics(dataset_type, eval_data)
-        
+
         if self._tracker is not None:
             eval_obj.set_tracker(self._tracker)
             # send result to fate-board
@@ -329,7 +331,6 @@ class TrainerBase(object):
 
 
 def get_trainer_class(trainer_module_name: str):
-
     if trainer_module_name.endswith('.py'):
         trainer_module_name = trainer_module_name.replace('.py', '')
     ds_modules = importlib.import_module('{}.homo.trainer.{}'.format(ML_PATH, trainer_module_name))

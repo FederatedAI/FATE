@@ -1,6 +1,4 @@
 import torch as t
-import numpy as np
-import random
 
 ML_PATH = 'federatedml.nn'
 HOMOMODELMETA = "HomoNNMeta"
@@ -8,7 +6,6 @@ HOMOMODELPARAM = "HomoNNParam"
 
 
 def global_seed(seed):
-
     # set random seed of torch
     t.manual_seed(seed)
     t.cuda.manual_seed_all(seed)

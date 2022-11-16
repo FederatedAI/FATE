@@ -1,8 +1,9 @@
 import random
-from fate_arch.session import computing_session
-import numpy as np
-from federatedml.secureprotol.paillier_tensor import PaillierTensor
 
+import numpy as np
+
+from fate_arch.session import computing_session
+from federatedml.secureprotol.paillier_tensor import PaillierTensor
 
 BITS = 10
 MIXED_RATE = 0.5
@@ -59,4 +60,3 @@ class RandomNumberGenerator(object):
             tb = tb.mapValues(lambda val: self.generate_random_number(shape[1:], mixed_rate=mixed_rate))
 
             return PaillierTensor(tb)
-

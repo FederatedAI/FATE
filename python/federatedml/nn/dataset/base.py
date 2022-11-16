@@ -1,8 +1,10 @@
-from torch.utils.data import Dataset as Dataset_
-from federatedml.nn.backend.utils.common import ML_PATH
-import importlib
 import abc
+import importlib
+
 import numpy as np
+from torch.utils.data import Dataset as Dataset_
+
+from federatedml.nn.backend.utils.common import ML_PATH
 
 
 class Dataset(Dataset_):
@@ -124,7 +126,6 @@ class ShuffleWrapDataset(Dataset_):
 
 
 def get_dataset_class(dataset_module_name: str):
-
     if dataset_module_name.endswith('.py'):
         dataset_module_name = dataset_module_name.replace('.py', '')
     ds_modules = importlib.import_module('{}.dataset.{}'.format(ML_PATH, dataset_module_name))
@@ -138,4 +139,3 @@ def get_dataset_class(dataset_module_name: str):
                          format(dataset_module_name))
     except ValueError as e:
         raise e
-

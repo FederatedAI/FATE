@@ -19,12 +19,11 @@
 from fate_arch.computing.non_distributed import LocalData
 from federatedml.model_base import ModelBase
 from federatedml.model_selection import start_cross_validation
+from federatedml.nn.backend.utils.data import load_dataset
+from federatedml.nn.dataset.base import Dataset, ShuffleWrapDataset
 from federatedml.param.hetero_nn_param import HeteroNNParam
 from federatedml.transfer_variable.transfer_class.hetero_nn_transfer_variable import HeteroNNTransferVariable
 from federatedml.util import consts
-from federatedml.nn.backend.utils.data import load_dataset
-from federatedml.nn.dataset.base import Dataset, ShuffleWrapDataset
-from federatedml.util import LOGGER
 
 
 class HeteroNNBase(ModelBase):

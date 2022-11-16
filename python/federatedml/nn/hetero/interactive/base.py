@@ -1,4 +1,5 @@
 import numpy as np
+
 from federatedml.param.hetero_nn_param import HeteroNNParam
 from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
 
@@ -6,7 +7,6 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 class InteractiveLayerBase(object):
 
     def __init__(self, params: HeteroNNParam, **kwargs):
-
         self.params = params
         self.transfer_variable: BaseTransferVariables = None
 

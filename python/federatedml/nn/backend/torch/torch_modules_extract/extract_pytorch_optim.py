@@ -1,7 +1,9 @@
 import inspect
+
 from torch import optim
-from federatedml.nn.backend.torch.torch_modules_extract.extract_pytorch_modules import extract_init_param, Required
 from torch.optim.optimizer import required
+
+from federatedml.nn.backend.torch.torch_modules_extract.extract_pytorch_modules import extract_init_param, Required
 
 
 def code_assembly(param, nn_class):

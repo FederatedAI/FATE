@@ -1,9 +1,7 @@
-import numpy as np
-from torch.utils.data import Dataset as torchDataset
-from federatedml.util import LOGGER
 from federatedml.nn.dataset.base import Dataset, get_dataset_class
 from federatedml.nn.dataset.image import ImageDataset
 from federatedml.nn.dataset.table import TableDataset
+from federatedml.util import LOGGER
 
 
 def try_dataset_class(dataset_class, path, param):

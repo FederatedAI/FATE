@@ -14,22 +14,24 @@
 #  limitations under the License.
 #
 
+import argparse
+
 # torch
 import torch as t
 from torch import nn
-import argparse
+
+from pipeline import fate_torch_hook
 # pipeline
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import Reader, DataTransform, HomoNN, Evaluation
 from pipeline.component.nn import TrainerParam
 from pipeline.interface import Data
 from pipeline.utils.tools import load_job_config
-from pipeline import fate_torch_hook
+
 fate_torch_hook(t)
 
 
 def main(config="../../config.yaml", namespace=""):
-
     # obtain config
     if isinstance(config, str):
         config = load_job_config(config)

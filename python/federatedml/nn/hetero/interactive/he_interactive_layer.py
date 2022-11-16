@@ -15,24 +15,25 @@
 #
 
 import pickle
+
 import numpy as np
 import torch
 from torch import autograd
-from federatedml.nn.hetero.interactive.base import InteractiveLayerBase
-from federatedml.nn.hetero.nn_component.torch_model import backward_loss
+
+from fate_arch.session import computing_session as session
 from federatedml.nn.backend.torch.interactive import InteractiveLayer
 from federatedml.nn.backend.torch.serialization import recover_sequential_from_dict
-from federatedml.util.fixpoint_solver import FixedPointEncoder
+from federatedml.nn.backend.utils.rng import RandomNumberGenerator
+from federatedml.nn.hetero.interactive.base import InteractiveLayerBase
+from federatedml.nn.hetero.nn_component.np_model import GuestDenseModel, HostDenseModel
+from federatedml.nn.hetero.nn_component.torch_model import TorchNNModel
+from federatedml.nn.hetero.nn_component.torch_model import backward_loss
 from federatedml.protobuf.generated.hetero_nn_model_param_pb2 import InteractiveLayerParam
 from federatedml.secureprotol import PaillierEncrypt
-from federatedml.util import consts, LOGGER
-from federatedml.nn.hetero.nn_component.np_model import GuestDenseModel, HostDenseModel
 from federatedml.secureprotol.paillier_tensor import PaillierTensor
-from federatedml.nn.hetero.nn_component.torch_model import TorchNNModel
 from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
-from fate_arch.session import computing_session as session
-from federatedml.nn.backend.utils.rng import RandomNumberGenerator
-
+from federatedml.util import consts, LOGGER
+from federatedml.util.fixpoint_solver import FixedPointEncoder
 
 PLAINTEXT = False
 
@@ -40,7 +41,8 @@ PLAINTEXT = False
 class HEInteractiveTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
-        self.decrypted_guest_forward = self._create_variable(name='decrypted_guest_forward', src=['host'], dst=['guest'])
+        self.decrypted_guest_forward = self._create_variable(name='decrypted_guest_forward', src=['host'],
+                                                             dst=['guest'])
         self.decrypted_guest_weight_gradient = self._create_variable(
             name='decrypted_guest_weight_gradient', src=['host'], dst=['guest'])
         self.encrypted_acc_noise = self._create_variable(name='encrypted_acc_noise', src=['host'], dst=['guest'])
@@ -300,7 +302,7 @@ class HEInteractiveLayerGuest(InteractiveLayerBase):
                 self.drop_out_keep_rate = 1 - self.model.param_dict['dropout']
             else:
                 self.drop_out_keep_rate = -1
-            self.transfer_variable.drop_out_info.remote(self.drop_out_keep_rate, idx=-1, suffix=('dropout_rate', ))
+            self.transfer_variable.drop_out_info.remote(self.drop_out_keep_rate, idx=-1, suffix=('dropout_rate',))
             self.init_drop_out = True
 
         host_inputs = self.get_forward_from_host(epoch, batch_idx, train, idx=-1)
@@ -645,7 +647,7 @@ class HEInteractiveLayerHost(InteractiveLayerBase):
         if train and not self.drop_out_init:
             self.drop_out_init = True
             self.drop_out_keep_rate = self.transfer_variable.drop_out_info.get(0, role=consts.GUEST,
-                                                                               suffix=('dropout_rate', ))
+                                                                               suffix=('dropout_rate',))
             if self.drop_out_keep_rate == -1:
                 self.drop_out_keep_rate = None
 
@@ -675,7 +677,7 @@ class HEInteractiveLayerHost(InteractiveLayerBase):
 
         if mask_table:
             decrypted_guest_forward_with_noise = decrypted_guest_forward + \
-                (host_input * self.acc_noise).select_columns(mask_table)
+                                                 (host_input * self.acc_noise).select_columns(mask_table)
             self.mask_table = mask_table
         else:
             noise_part = (host_input * self.acc_noise)

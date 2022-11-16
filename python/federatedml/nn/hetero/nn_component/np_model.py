@@ -1,6 +1,6 @@
-import torch
-import uuid
 import numpy as np
+import torch
+
 from federatedml.secureprotol.paillier_tensor import PaillierTensor
 
 
@@ -52,7 +52,7 @@ class DenseModel(object):
             self.is_empty_model = True
             return
 
-        assert isinstance(torch_linear, torch.nn.Linear), 'must use a torch Linear to build this class, got {}'\
+        assert isinstance(torch_linear, torch.nn.Linear), 'must use a torch Linear to build this class, got {}' \
             .format(torch_linear)
 
         self.model_weight = torch_linear.weight.cpu().detach().numpy().transpose()

@@ -1,9 +1,11 @@
-from federatedml.nn.dataset.base import Dataset
+import os
+
+import numpy as np
 import pandas as pd
 import torch as t
 from transformers import BertTokenizerFast
-import os
-import numpy as np
+
+from federatedml.nn.dataset.base import Dataset
 
 # avoid tokenizer parallelism
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -38,7 +40,7 @@ class TokenizerDataset(Dataset):
         self.max_length = text_max_length
         self.with_label = return_label
         self.tokenizer_name_or_path = tokenizer_name_or_path
-        
+
     def load(self, file_path):
 
         tokenizer = BertTokenizerFast.from_pretrained(self.tokenizer_name_or_path)
@@ -50,7 +52,7 @@ class TokenizerDataset(Dataset):
         if self.with_label:
             self.label = t.Tensor(self.text.label).detach().numpy()
             self.label = self.label.reshape((len(self.word_idx), -1))
-        del tokenizer # avoid tokenizer parallelism
+        del tokenizer  # avoid tokenizer parallelism
 
         if 'id' in self.text:
             self.set_sample_ids(self.text['id'].values.tolist())
@@ -72,4 +74,3 @@ class TokenizerDataset(Dataset):
 
     def __repr__(self):
         return self.tokenizer.__repr__()
-

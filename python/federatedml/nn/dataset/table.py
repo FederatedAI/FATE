@@ -1,11 +1,11 @@
 import numpy as np
 import pandas as pd
+
 from federatedml.nn.dataset.base import Dataset
 from federatedml.util import LOGGER
 
 
 class TableDataset(Dataset):
-
     """
      A Table Dataset, load data from a give csv path, or transform FATE DTable
 
@@ -30,12 +30,13 @@ class TableDataset(Dataset):
         self.f_dtype = self.check_dtype(feature_dtype)
         self.l_dtype = self.check_dtype(label_dtype)
         if label_shape is not None:
-            assert isinstance(label_shape, tuple) or isinstance(label_shape, list), 'label shape is {}'.format(label_shape)
+            assert isinstance(label_shape, tuple) or isinstance(label_shape, list), 'label shape is {}'.format(
+                label_shape)
         self.label_shape = label_shape
         self.flatten_label = flatten_label
 
         if self.label_col is not None:
-            assert isinstance(self.label_col, str) or isinstance(self.label_col, int),\
+            assert isinstance(self.label_col, str) or isinstance(self.label_col, int), \
                 'label columns parameter must be a str or an int'
 
     @staticmethod

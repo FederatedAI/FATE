@@ -15,14 +15,15 @@
 #
 import argparse
 
+from tensorflow.keras import optimizers
+from tensorflow.keras.layers import Dense
+
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.data_transform import DataTransform
 from pipeline.component.homo_nn import HomoNN
 from pipeline.component.reader import Reader
 from pipeline.interface import Data
 from pipeline.utils.tools import load_job_config
-from tensorflow.keras import optimizers
-from tensorflow.keras.layers import Dense
 
 
 def main(config="../../config.yaml", namespace=""):

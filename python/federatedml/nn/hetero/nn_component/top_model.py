@@ -19,10 +19,11 @@
 
 import numpy as np
 import torch
-from federatedml.util import LOGGER
+
 from federatedml.nn.hetero.nn_component.torch_model import TorchNNModel
 from federatedml.nn.hetero.protection_enhance.coae import train_an_autoencoder_confuser, CoAE, coae_label_reformat, \
     CrossEntropy
+from federatedml.util import LOGGER
 
 
 class TopModel(object):

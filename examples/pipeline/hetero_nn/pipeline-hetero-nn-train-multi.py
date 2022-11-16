@@ -15,19 +15,20 @@
 #
 
 import argparse
+
 import torch as t
 from torch import nn
+
 from pipeline import fate_torch_hook
-from pipeline.component.nn import DatasetParam
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataTransform
 from pipeline.component import Evaluation
 from pipeline.component import HeteroNN
 from pipeline.component import Intersection
 from pipeline.component import Reader
+from pipeline.component.nn import DatasetParam
 from pipeline.interface import Data
 from pipeline.utils.tools import load_job_config
-
 
 fate_torch_hook(t)
 

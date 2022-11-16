@@ -1,6 +1,7 @@
 import copy
 import inspect
 from collections import OrderedDict
+
 try:
     from torch.nn import Sequential as tSeq
     from federatedml.nn.backend.torch import optim, init, nn
@@ -13,7 +14,6 @@ except ImportError:
 
 
 def recover_layer_from_dict(nn_define, nn_dict):
-
     init_param_dict = copy.deepcopy(nn_define)
     if 'layer' in nn_define:
         class_name = nn_define['layer']
@@ -60,7 +60,6 @@ def recover_layer_from_dict(nn_define, nn_dict):
             init_func(layer, init='bias', **init_para['param'])
 
     return layer
-
 
 
 def recover_sequential_from_dict(nn_define):

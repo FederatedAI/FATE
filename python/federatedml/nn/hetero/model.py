@@ -14,19 +14,19 @@
 #  limitations under the License.
 #
 import copy
-
 import json
-from federatedml.util import LOGGER
-from federatedml.util import consts
-from federatedml.param.hetero_nn_param import HeteroNNParam
-from federatedml.nn.hetero.strategy.selector import SelectorFactory
+
+from federatedml.nn.backend.utils.common import global_seed
+from federatedml.nn.hetero.interactive.he_interactive_layer import HEInteractiveLayerGuest, HEInteractiveLayerHost
 from federatedml.nn.hetero.nn_component.bottom_model import BottomModel
 from federatedml.nn.hetero.nn_component.top_model import TopModel
-from federatedml.nn.backend.utils.common import global_seed
+from federatedml.nn.hetero.strategy.selector import SelectorFactory
+from federatedml.param.hetero_nn_param import HeteroNNParam
 from federatedml.protobuf.generated.hetero_nn_model_meta_pb2 import HeteroNNModelMeta
 from federatedml.protobuf.generated.hetero_nn_model_meta_pb2 import OptimizerParam
 from federatedml.protobuf.generated.hetero_nn_model_param_pb2 import HeteroNNModelParam
-from federatedml.nn.hetero.interactive.he_interactive_layer import HEInteractiveLayerGuest, HEInteractiveLayerHost
+from federatedml.util import LOGGER
+from federatedml.util import consts
 
 
 class HeteroNNModel(object):

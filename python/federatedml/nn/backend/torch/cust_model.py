@@ -1,5 +1,7 @@
-from torch import nn
 import importlib
+
+from torch import nn
+
 from federatedml.nn.backend.torch.base import FateTorchLayer
 from federatedml.nn.backend.utils.common import ML_PATH
 
@@ -47,5 +49,4 @@ class CustModel(FateTorchLayer, nn.Module):
 
 
 if __name__ == '__main__':
-
     cust_model = CustModel(module_name='mlp', class_name='MLP', input_dim=30, num_class=3)

@@ -1,7 +1,9 @@
 import copy
+import functools
+
 import torch as t
 from torch.nn import init as torch_init
-import functools
+
 from federatedml.nn.backend.torch.base import FateTorchLayer
 from federatedml.nn.backend.torch.base import Sequential
 
@@ -86,7 +88,6 @@ def recursive_init(m, init_func, obj):
 
 
 def make_apply_func(torch_initializer, param_dict, init_func, layer):
-
     initializer = functools.partial(torch_initializer, **param_dict)
     init_func = functools.partial(init_func, initializer=initializer)
     recursive_init_func = functools.partial(recursive_init, obj=layer, init_func=init_func)
@@ -209,6 +210,3 @@ str_fate_torch_init_func_map = {
 
 if __name__ == '__main__':
     pass
-
-
-

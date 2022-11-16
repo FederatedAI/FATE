@@ -2,14 +2,14 @@ import torch
 import torch as t
 import tqdm
 from torch.utils.data import DataLoader
+
+from federatedml.framework.homo.aggregator.secure_aggregator import SecureAggregatorClient
 from federatedml.nn.dataset.base import Dataset
 from federatedml.nn.homo.trainer.trainer_base import TrainerBase
 from federatedml.util import LOGGER, consts
-from federatedml.framework.homo.aggregator.secure_aggregator import SecureAggregatorClient
 
 
 class FedAVGTrainer(TrainerBase):
-
     """
 
     Parameters
@@ -150,12 +150,12 @@ class FedAVGTrainer(TrainerBase):
                 to_iterate = tqdm.tqdm(dl)
             else:
                 to_iterate = dl
-            
+
             for batch_data, batch_label in to_iterate:
-                
+
                 if self.cuda:
                     batch_data, batch_label = self.to_cuda(batch_data), self.to_cuda(batch_label)
-                    
+
                 optimizer.zero_grad()
                 pred = self.model(batch_data)
                 batch_loss = loss(pred, batch_label)
@@ -175,10 +175,10 @@ class FedAVGTrainer(TrainerBase):
             epoch_loss = epoch_loss / len(train_set)
             self.callback_loss(epoch_loss, i)
             LOGGER.info('epoch loss is {}'.format(epoch_loss))
-            
+
             # federation process, if running local mode, cancel federation
             if fedavg is not None:
-                if self.aggregate_every_n_epoch is not None and (i+1) % self.aggregate_every_n_epoch != 0:
+                if self.aggregate_every_n_epoch is not None and (i + 1) % self.aggregate_every_n_epoch != 0:
                     continue
 
                 # model averaging
@@ -190,16 +190,17 @@ class FedAVGTrainer(TrainerBase):
                 if converge_status:
                     LOGGER.info('early stop triggered, stop training')
                     break
-                    
-            if self.validation_freq and ((i+1) % self.validation_freq == 0):
+
+            if self.validation_freq and ((i + 1) % self.validation_freq == 0):
                 LOGGER.info('running validation')
                 ids_t, pred_t, label_t = self._predict(train_set)
                 self.evaluation(ids_t, pred_t, label_t, dataset_type='train', epoch_idx=i, task_type=self.task_type)
                 if validate_set is not None:
                     ids_v, pred_v, label_v = self._predict(validate_set)
-                    self.evaluation(ids_v, pred_v, label_v, dataset_type='validate', epoch_idx=i, task_type=self.task_type)
+                    self.evaluation(ids_v, pred_v, label_v, dataset_type='validate', epoch_idx=i,
+                                    task_type=self.task_type)
 
-            if self.save_freq is not None and ((i+1) % self.save_freq == 0):
+            if self.save_freq is not None and ((i + 1) % self.save_freq == 0):
                 self.set_checkpoint(self.model, optimizer, i)
                 LOGGER.info('save checkpoint : epoch {}'.format(i))
 

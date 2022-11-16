@@ -15,15 +15,15 @@
 #
 
 
-import numpy as np
 from torch.utils.data import DataLoader
-from federatedml.util import consts, LOGGER
+
 from federatedml.framework.hetero.procedure import batch_generator
 from federatedml.nn.hetero.base import HeteroNNBase
+from federatedml.nn.hetero.model import HeteroNNHostModel
+from federatedml.param.hetero_nn_param import HeteroNNParam as NNParameter
 from federatedml.protobuf.generated.hetero_nn_model_meta_pb2 import HeteroNNMeta
 from federatedml.protobuf.generated.hetero_nn_model_param_pb2 import HeteroNNParam
-from federatedml.param.hetero_nn_param import HeteroNNParam as NNParameter
-from federatedml.nn.hetero.model import HeteroNNHostModel
+from federatedml.util import consts, LOGGER
 
 MODELMETA = "HeteroNNHostMeta"
 MODELPARAM = "HeteroNNHostParam"
@@ -46,7 +46,7 @@ class HeteroNNHost(HeteroNNBase):
     def export_model(self):
 
         model = {MODELMETA: self._get_model_meta(),
-                MODELPARAM: self._get_model_param()}
+                 MODELPARAM: self._get_model_param()}
 
         return model
 

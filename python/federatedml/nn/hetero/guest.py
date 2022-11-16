@@ -19,21 +19,21 @@
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
+
 from fate_arch.session import computing_session as session
 from federatedml.feature.instance import Instance
+from federatedml.framework.hetero.procedure import batch_generator
 from federatedml.model_base import Metric
 from federatedml.model_base import MetricMeta
-from federatedml.nn.hetero.model import HeteroNNGuestModel
-from federatedml.framework.hetero.procedure import batch_generator
 from federatedml.nn.hetero.base import HeteroNNBase
+from federatedml.nn.hetero.model import HeteroNNGuestModel
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.param.evaluation_param import EvaluateParam
+from federatedml.param.hetero_nn_param import HeteroNNParam as NNParameter
 from federatedml.protobuf.generated.hetero_nn_model_meta_pb2 import HeteroNNMeta
 from federatedml.protobuf.generated.hetero_nn_model_param_pb2 import HeteroNNParam
 from federatedml.util import consts, LOGGER
 from federatedml.util.io_check import assert_io_num_rows_equal
-from federatedml.param.hetero_nn_param import HeteroNNParam as NNParameter
-
 
 MODELMETA = "HeteroNNGuestMeta"
 MODELPARAM = "HeteroNNGuestParam"

@@ -1,23 +1,25 @@
-import json
-import torch
-import tempfile
 import inspect
-from fate_arch.computing.non_distributed import LocalData
+import json
+import tempfile
+
+import torch
+
 from fate_arch.computing._util import is_table
+from fate_arch.computing.non_distributed import LocalData
 from fate_arch.session import computing_session
+from federatedml.callbacks.model_checkpoint import ModelCheckpoint
+from federatedml.model_base import MetricMeta
 from federatedml.model_base import ModelBase
-from federatedml.nn.homo.trainer.trainer_base import get_trainer_class, TrainerBase
-from federatedml.nn.backend.utils.data import load_dataset
-from federatedml.param.homo_nn_param import HomoNNParam
 from federatedml.nn.backend.torch import serialization as s
 from federatedml.nn.backend.torch.base import FateTorchOptimizer
-from federatedml.model_base import MetricMeta
+from federatedml.nn.backend.utils.common import global_seed, get_homo_model_dict, get_homo_param_meta
+from federatedml.nn.backend.utils.data import load_dataset
+from federatedml.nn.homo.trainer.trainer_base import StdReturnFormat
+from federatedml.nn.homo.trainer.trainer_base import get_trainer_class, TrainerBase
+from federatedml.param.homo_nn_param import HomoNNParam
+from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
 from federatedml.util import LOGGER
 from federatedml.util import consts
-from federatedml.nn.homo.trainer.trainer_base import StdReturnFormat
-from federatedml.nn.backend.utils.common import global_seed, get_homo_model_dict, get_homo_param_meta
-from federatedml.callbacks.model_checkpoint import ModelCheckpoint
-from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
 
 
 class HomoNNTransferVariable(BaseTransferVariables):
@@ -90,13 +92,13 @@ class HomoNNClient(ModelBase):
         # load trainer class
         if self.trainer is None:
             raise ValueError('Trainer is not specified, please specify your trainer')
-            
+
         trainer_class = get_trainer_class(self.trainer)
         LOGGER.info('trainer class is {}'.format(trainer_class))
 
         # recover model from model config / or recover from saved model param
         loaded_model_dict = None
-        
+
         # if has model protobuf, load model config from protobuf
         load_opt_state_dict = False
         if self.model_loaded:
@@ -114,13 +116,13 @@ class HomoNNClient(ModelBase):
             loss = json.loads(meta.loss_func_define[0])
             optimizer = json.loads(meta.optimizer_define[0])
             loaded_model_dict = self.recover_model_bytes(param.model_bytes)
-            
+
             if self.optimizer is not None and optimizer != self.optimizer:
                 LOGGER.info('optimizer updated')
             else:
                 self.optimizer = optimizer
                 load_opt_state_dict = True
-                
+
             if self.loss is not None and self.loss != loss:
                 LOGGER.info('loss updated')
             else:
@@ -129,7 +131,7 @@ class HomoNNClient(ModelBase):
         # check key param
         if self.nn_define is None:
             raise ValueError('Model structure is not defined, nn_define is None, please check your param')
-        
+
         # get model from nn define
         model = s.recover_sequential_from_dict(self.nn_define)
         if loaded_model_dict:
@@ -202,7 +204,7 @@ class HomoNNClient(ModelBase):
         dataset_inst = load_dataset(dataset_name=self.dataset, data_path_or_dtable=train_input,
                                     dataset_cache=self.cache_dataset, param=self.dataset_param)
         LOGGER.info('train dataset instance is {}'.format(dataset_inst))
-        
+
         if validate_input:
             val_dataset_inst = load_dataset(dataset_name=self.dataset, data_path_or_dtable=validate_input,
                                             dataset_cache=self.cache_dataset, param=self.dataset_param)
@@ -216,7 +218,7 @@ class HomoNNClient(ModelBase):
         self.callback_list.callback_list.append(ModelCheckpoint(self, save_freq=1))
         self.trainer_inst.init_checkpoint(self.callback_list.callback_list[0])
         self.trainer_inst.train(dataset_inst, val_dataset_inst, optimizer, loss_fn)
-                               
+
         # training is done, get exported model
         self.model = self.trainer_inst.get_cached_model()
 
