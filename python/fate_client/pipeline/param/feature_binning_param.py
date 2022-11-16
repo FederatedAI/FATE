@@ -257,9 +257,7 @@ class HeteroFeatureBinningParam(FeatureBinningParam):
         note that each split point list should have length equal to desired bin num(n),
         with first (n-1) entries equal to the maximum value(inclusive) of each first (n-1) bins,
         and nth value the max of current feature.
-
     """
-
 
     def __init__(self, method=consts.QUANTILE,
                  compress_thres=consts.DEFAULT_COMPRESS_THRESHOLD,
