@@ -97,7 +97,7 @@ class BaseFeatureBinning(ModelBase):
             else:
                 self.binning_obj = OptimalBinning(self.model_param)
         else:
-            raise ValueError("Binning method: {} is not supported yet".format(self.model_param.method))
+            raise ValueError(f"Binning method: {self.model_param.method} is not supported.")
 
         self.iv_calculator = IvCalculator(self.model_param.adjustment_factor,
                                           role=self.role,

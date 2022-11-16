@@ -205,12 +205,11 @@ class OptimalBinning(BaseBinning):
         min_heap = heap.MinHeap()
 
         def _add_heap_nodes(constraint=None):
-            LOGGER.debug("Add heap nodes, constraint: {}, dict_length: {}".format(constraint, len(bucket_dict)))
+            # LOGGER.debug(f"Add heap nodes, constraint: {}, dict_length: {}".format(constraint, len(bucket_dict)))
             this_non_mixture_num = 0
             this_small_size_num = 0
             # Make bucket satisfy mixture condition
 
-            # for i in bucket_dict.keys():
             for i in range(len(bucket_dict)):
                 left_bucket = bucket_dict[i]
                 right_bucket = bucket_dict.get(left_bucket.right_neighbor_idx)
@@ -400,18 +399,17 @@ class OptimalBinning(BaseBinning):
             return aim_var
 
         if optimal_param.mixture:
-            LOGGER.debug("Before mixture add, dict length: {}".format(len(bucket_dict)))
+            LOGGER.debug(f"Before mixture add, dict length: {len(bucket_dict)}")
             min_heap, non_mixture_num, small_size_num = _add_heap_nodes(constraint='mixture')
             min_heap, non_mixture_num = _merge_heap(constraint='mixture', aim_var=non_mixture_num)
             bucket_dict = _update_bucket_info(bucket_dict)
 
             min_heap, non_mixture_num, small_size_num = _add_heap_nodes(constraint='single_mixture')
             min_heap, non_mixture_num = _merge_heap(constraint='single_mixture', aim_var=non_mixture_num)
-            LOGGER.debug("After mixture merge, min_heap size: {}, non_mixture_num: {}".format(min_heap.size,
-                                                                                              non_mixture_num))
+            LOGGER.debug(f"After mixture merge, min_heap size: {min_heap.size}, non_mixture_num: {non_mixture_num}")
             bucket_dict = _update_bucket_info(bucket_dict)
 
-        LOGGER.debug("Before small_size add, dit length: {}".format(len(bucket_dict)))
+        LOGGER.debug(f"Before small_size add, dict length: {len(bucket_dict)}")
         min_heap, non_mixture_num, small_size_num = _add_heap_nodes(constraint='small_size')
         min_heap, small_size_num = _merge_heap(constraint='small_size', aim_var=small_size_num)
         bucket_dict = _update_bucket_info(bucket_dict)
@@ -421,11 +419,11 @@ class OptimalBinning(BaseBinning):
 
         bucket_dict = _update_bucket_info(bucket_dict)
 
-        LOGGER.debug("Before add, dict length: {}".format(len(bucket_dict)))
+        # LOGGER.debug(f"Before add, dict length: {len(bucket_dict)}")
         min_heap, non_mixture_num, small_size_num = _add_heap_nodes()
-        LOGGER.debug("After normal add, small_size: {}, min_heap size: {}".format(small_size_num, min_heap.size))
+        # LOGGER.debug("After normal add, small_size: {}, min_heap size: {}".format(small_size_num, min_heap.size))
         min_heap, total_bucket_num = _merge_heap(aim_var=len(bucket_dict) - final_max_bin)
-        LOGGER.debug("After normal merge, min_heap size: {}".format(min_heap.size))
+        # LOGGER.debug("After normal merge, min_heap size: {}".format(min_heap.size))
 
         non_mixture_num = 0
         small_size_num = 0
@@ -437,9 +435,8 @@ class OptimalBinning(BaseBinning):
         bucket_res = list(bucket_dict.values())
         bucket_res = sorted(bucket_res, key=lambda bucket: bucket.left_bound)
 
-        LOGGER.debug("Before return, dict length: {}".format(len(bucket_dict)))
-        # LOGGER.info(f"Consume time: {time.time() - t0}")
-        LOGGER.debug(f"Before return, min heap node list length: {len(min_heap.node_list)}")
+        # LOGGER.debug("Before return, dict length: {}".format(len(bucket_dict)))
+        # LOGGER.debug(f"Before return, min heap node list length: {len(min_heap.node_list)}")
         return min_heap, bucket_res, non_mixture_num, small_size_num
 
     @staticmethod

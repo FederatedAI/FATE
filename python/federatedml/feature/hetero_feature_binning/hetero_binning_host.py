@@ -95,7 +95,7 @@ class HeteroFeatureBinningHost(BaseFeatureBinning):
     def _sync_init_bucket(self, data_instances, split_points, need_shuffle=False):
 
         data_bin_table = self.binning_obj.get_data_bin(data_instances, split_points, self.bin_inner_param.bin_cols_map)
-        LOGGER.debug("data_bin_table, count: {}".format(data_bin_table.count()))
+        # LOGGER.debug("data_bin_table, count: {}".format(data_bin_table.count()))
 
         encrypted_label_table = self.transfer_variable.encrypted_label.get(idx=0)
 
@@ -172,7 +172,7 @@ class HeteroFeatureBinningHost(BaseFeatureBinning):
 
     def optimal_binning_sync(self):
         bucket_idx = self.transfer_variable.bucket_idx.get(idx=0)
-        LOGGER.debug("In optimal_binning_sync, received bucket_idx: {}".format(bucket_idx))
+        # LOGGER.debug("In optimal_binning_sync, received bucket_idx: {}".format(bucket_idx))
         original_split_points = self.binning_obj.bin_results.all_split_points
         for anonymous_col_name, b_idx in bucket_idx.items():
             col_name = self.bin_inner_param.get_col_name_by_anonymous(anonymous_col_name)
