@@ -16,7 +16,7 @@
 These are only compatible with v2 Pipelines.
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Type
 
 from typing_extensions import Annotated
 
@@ -50,8 +50,8 @@ class Artifact:
         self.metadata = metadata or {}
 
     @classmethod
-    def parse_obj(cls, **attr):
-        return cls(**attr)
+    def parse_desc(cls, desc):
+        return cls(uri=desc.uri, name=desc.name, metadata=desc.metadata)
 
     @property
     def path(self) -> str:
@@ -81,12 +81,18 @@ class Artifact:
 
 
 class Artifacts:
+    type: str
+    artifact_type: Type[Artifact]
+
     def __init__(self, artifacts: List[Artifact]) -> None:
         self.artifacts = artifacts
 
     @classmethod
-    def parse_obj(cls, **attr):
-        return cls(**attr)
+    def parse_desc(cls, desc_list):
+        artifacts = []
+        for desc in desc_list:
+            artifacts.append(cls.artifact_type(uri=desc.uri, name=desc.name, metadata=desc.metadata))
+        return cls(artifacts)
 
 
 class DatasetArtifact(Artifact):
@@ -108,7 +114,9 @@ class DatasetArtifact(Artifact):
         super().__init__(uri=uri, name=name, metadata=metadata)
 
 
-DatasetsArtifact = Annotated[Artifacts, DatasetArtifact]
+class DatasetArtifacts(Artifacts):
+    type = "datasets"
+    artifact_type: Type[Artifact] = DatasetArtifact
 
 
 class ModelArtifact(Artifact):
@@ -142,6 +150,11 @@ class ModelArtifact(Artifact):
 
     def _set_framework(self, framework: str) -> None:
         self.metadata["framework"] = framework
+
+
+class ModelArtifacts(Artifacts):
+    type = "models"
+    artifact_type: Type[Artifact] = ModelArtifact
 
 
 class MetricArtifact(Artifact):

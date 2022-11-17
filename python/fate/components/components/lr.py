@@ -1,24 +1,32 @@
 from fate.components import cpn
-from fate.components.spec import Input, ModelArtifact, Output, artifacts, roles, stages
+from fate.components.spec import (
+    DatasetArtifact,
+    DatasetArtifacts,
+    Input,
+    ModelArtifact,
+    Output,
+    roles,
+    stages,
+)
 
 
 @cpn.component(roles=roles.get_all(), provider="fate", version="2.0.0.alpha")
-@cpn.artifact("train_data", type=artifacts.TrainData, roles=[roles.GUEST, roles.HOST], stages=[stages.TRAIN])
+@cpn.artifact("train_data", type=Input[DatasetArtifact], roles=[roles.GUEST, roles.HOST], stages=[stages.TRAIN])
 @cpn.artifact(
-    "validate_data", type=artifacts.ValidateData, optional=True, roles=[roles.GUEST, roles.HOST], stages=["train"]
+    "validate_data", type=Input[DatasetArtifact], optional=True, roles=[roles.GUEST, roles.HOST], stages=["train"]
 )
 @cpn.artifact("input_model", type=Input[ModelArtifact], roles=[roles.GUEST, roles.HOST], stages=[stages.TRAIN])
 @cpn.artifact(
-    "test_data", type=artifacts.TestData, optional=True, roles=[roles.GUEST, roles.HOST], stages=[stages.PREDICT]
+    "test_data", type=Input[DatasetArtifacts], optional=False, roles=[roles.GUEST, roles.HOST], stages=[stages.PREDICT]
 )
 @cpn.parameter("learning_rate", type=float, default=0.1, optional=False)
 @cpn.parameter("max_iter", type=int, default=100, optional=False)
 @cpn.artifact(
-    "train_output_data", type=artifacts.TrainOutputData, roles=[roles.GUEST, roles.HOST], stages=[stages.TRAIN]
+    "train_output_data", type=Output[DatasetArtifact], roles=[roles.GUEST, roles.HOST], stages=[stages.TRAIN]
 )
 @cpn.artifact("output_model", type=Output[ModelArtifact], roles=[roles.GUEST, roles.HOST], stages=[stages.TRAIN])
 @cpn.artifact(
-    "test_output_data", type=artifacts.TestOutputData, roles=[roles.GUEST, roles.HOST], stages=[stages.PREDICT]
+    "test_output_data", type=Output[DatasetArtifact], roles=[roles.GUEST, roles.HOST], stages=[stages.PREDICT]
 )
 def hetero_lr(
     ctx,

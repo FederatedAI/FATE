@@ -52,6 +52,8 @@ flowing codes modified from [click](https://github.com/pallets/click) project
 import inspect
 from typing import List
 
+from fate.components.spec import artifacts
+
 
 class ComponentDeclarError(Exception):
     ...
@@ -120,11 +122,7 @@ class _Component:
         for arg in self.func_args[3:]:
             # arg support to be artifact
             if arti := name_artifact_mapping.get(arg):
-                if (
-                    (arti.stages is None or stage in arti.stages)
-                    and (arti.roles is None or role in arti.roles)
-                    and (not arti.optional)
-                ):
+                if (arti.stages is None or stage in arti.stages) and (arti.roles is None or role in arti.roles):
                     # get corresponding applying config
                     if isinstance(arti, _InputArtifactDeclareClass):
                         artifact_apply = config.inputs.artifacts.get(arg)
@@ -133,16 +131,21 @@ class _Component:
                     else:
                         artifact_apply = None
 
-                    # not found
                     if artifact_apply is None:
-                        raise ComponentApplyError(f"artifact `{arg}` required, declar: `{arti}`")
+                        if arti.optional:
+                            execute_args.append(None)
+                        # not found, and not optional
+                        else:
+                            raise ComponentApplyError(f"artifact `{arg}` required, declare: `{arti}`")
                     # try apply
                     else:
                         try:
-                            execute_args.append(arti.type.parse_obj(**artifact_apply.dict()))
+                            # annotated metadata drop in inherite, so pass type as argument here
+                            # maybe we could find more elegant way some day
+                            execute_args.append(arti.type.parse_desc(artifact_apply))
                         except Exception as e:
                             raise ComponentApplyError(
-                                f"artifact `{arg}` with applying config `{artifact_apply.dict()}` can't apply to `{arti}`"
+                                f"artifact `{arg}` with applying config `{artifact_apply}` can't apply to `{arti}`"
                             ) from e
                 else:
                     execute_args.append(None)
@@ -152,7 +155,7 @@ class _Component:
                 if not parameter.optional:
                     parameter_apply = config.inputs.parameters.get(arg)
                     if parameter_apply is None:
-                        raise ComponentApplyError(f"parameter `{arg}` required, declar: `{parameter}`")
+                        raise ComponentApplyError(f"parameter `{arg}` required, declare: `{parameter}`")
                     else:
                         if type(parameter_apply) != parameter.type:
                             raise ComponentApplyError(
@@ -166,6 +169,7 @@ class _Component:
             else:
                 raise ComponentApplyError(f"should not go here")
 
+        print(execute_args)
         return execute_args
 
     def execute(self, ctx, *args):
@@ -311,10 +315,10 @@ class _InputArtifactDeclareClass(_ArtifactDeclareClass):
 def _create_artifact_declare_class(name, type, roles, stages, desc, optional):
     from fate.components.spec.types import InputAnnotated, OutputAnnotated
 
-    annotated = getattr(type, "__metadata__", [None])[0]
-    if annotated == OutputAnnotated:
+    annotates = getattr(type, "__metadata__", [None])
+    if OutputAnnotated in annotates:
         return _OutputArtifactDeclareClass(name, type, roles, stages, desc, optional)
-    elif annotated == InputAnnotated:
+    elif InputAnnotated in annotates:
         return _InputArtifactDeclareClass(name, type, roles, stages, desc, optional)
     else:
         raise ValueError(f"bad artifact: {name}")
