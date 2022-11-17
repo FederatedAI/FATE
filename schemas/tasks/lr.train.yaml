@@ -1,7 +1,7 @@
 execution_id: xxx
 component: lr
 role: guest
-stage: predict
+stage: train
 inputs:
   parameters:
     learning_rate: 0.2
@@ -17,29 +17,12 @@ inputs:
       uri: file:///tmp/train_data
       metadata:
         format: csv
-    test_data:
-      - name: test_data1
-        uri: file:///tmp/test_data1
-        metadata:
-          format: csv
-      - name: test_data2
-        uri: file:///tmp/test_data2
-        metadata:
-          format: csv
-    input_model:
-      name: input_model
-      uri: file:///tmp/trained_model
 outputs:
   artifacts:
     output_model:
       name: output_model
       uri: file:///tmp/trained_model
     train_output_data:
-      name: train_output_data
-      uri: file:///tmp/train_data_forward
-      metadata:
-        format: csv
-    test_output_data:
       name: train_output_data
       uri: file:///tmp/train_data_forward
       metadata:

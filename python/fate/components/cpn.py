@@ -50,9 +50,9 @@ flowing codes modified from [click](https://github.com/pallets/click) project
 """
 
 import inspect
-from typing import List
-
-from fate.components.spec import artifacts
+import logging
+import pprint
+from typing import List, OrderedDict
 
 
 class ComponentDeclarError(Exception):
@@ -61,6 +61,9 @@ class ComponentDeclarError(Exception):
 
 class ComponentApplyError(Exception):
     ...
+
+
+logger = logging.getLogger(__name__)
 
 
 class _Component:
@@ -169,10 +172,11 @@ class _Component:
             else:
                 raise ComponentApplyError(f"should not go here")
 
-        print(execute_args)
         return execute_args
 
     def execute(self, ctx, *args):
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug(f"execution arguments: {pprint.pformat(OrderedDict(zip(self.func_args, [ctx, *args])))}")
         return self.callback(ctx, *args)
 
     def dict(self):
@@ -191,11 +195,11 @@ class _Component:
         for artifact in self.artifacts:
             annotated = getattr(artifact.type, "__metadata__", [None])[0]
             if annotated == OutputAnnotated:
-                input_artifacts[artifact.name] = ArtifactSpec(
+                output_artifacts[artifact.name] = ArtifactSpec(
                     type=artifact.type.type, optional=artifact.optional, roles=artifact.roles, stages=artifact.stages
                 )
             elif annotated == InputAnnotated:
-                output_artifacts[artifact.name] = ArtifactSpec(
+                input_artifacts[artifact.name] = ArtifactSpec(
                     type=artifact.type.type, optional=artifact.optional, roles=artifact.roles, stages=artifact.stages
                 )
             else:

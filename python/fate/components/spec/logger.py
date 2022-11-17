@@ -63,11 +63,12 @@ class PipelineLogger(pydantic.BaseModel):
         if self.metadata.debug_mode:
             handler_name = f"root_console_{self.metadata.level.lower()}"
             handlers[handler_name] = {
-                "class": "logging.StreamHandler",
-                "formatter": "brief",
+                # "class": "logging.StreamHandler",
+                "class": "rich.logging.RichHandler",
+                # "formatter": "brief",
                 "level": self.metadata.level,
                 "filters": [],
-                "stream": "ext://sys.stdout",
+                # "stream": "ext://sys.stdout",
             }
             root_handlers.append(handler_name)
 

@@ -18,8 +18,6 @@ These are only compatible with v2 Pipelines.
 
 from typing import Dict, List, Optional, Type
 
-from typing_extensions import Annotated
-
 from .types import Input, Output
 
 
@@ -48,6 +46,12 @@ class Artifact:
         self.uri = uri or ""
         self.name = name or ""
         self.metadata = metadata or {}
+
+    def __str__(self) -> str:
+        return f"<{type(self).__name__} {dict(name=self.name, uri=self.uri, metadata=self.metadata)}>"
+
+    def __repr__(self) -> str:
+        return self.__str__()
 
     @classmethod
     def parse_desc(cls, desc):
@@ -86,6 +90,12 @@ class Artifacts:
 
     def __init__(self, artifacts: List[Artifact]) -> None:
         self.artifacts = artifacts
+
+    def __str__(self) -> str:
+        return f"<{type(self).__name__} {self.artifacts}>"
+
+    def __repr__(self) -> str:
+        return self.__str__()
 
     @classmethod
     def parse_desc(cls, desc_list):
