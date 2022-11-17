@@ -101,13 +101,13 @@ class AggBaseTransVar(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
         self.client_to_server = self._create_variable(
-            "client_to_server", src=["host"], dst=["arbiter"]
+            "client_to_server", src=["guest", "host"], dst=["arbiter"]
         )
         self.server_to_client = self._create_variable(
-            "server_to_client", dst=["host"], src=["arbiter"]
+            "server_to_client", dst=["guest", "host"], src=["arbiter"]
         )
         self.agg_round = self._create_variable(
-            "agg_round", src=["host"], dst=["arbiter"])
+            "agg_round", src=["guest", "host"], dst=["arbiter"])
 
 
 class AggregatorClassConfirmTransVar(BaseTransferVariables):
@@ -115,7 +115,7 @@ class AggregatorClassConfirmTransVar(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
         self.client_agg_class = self._create_variable(
-            "client_agg_class", src=["host"], dst=["arbiter"]
+            "client_agg_class", src=["host", "guest"], dst=["arbiter"]
         )
 
 

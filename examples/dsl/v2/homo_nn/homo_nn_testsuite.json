@@ -50,21 +50,21 @@
         }
     ],
     "tasks": {
-        "pipeline_homo_nn_train_regression": {
-            "conf": "pipeline_homo_nn_train_regression_conf.json",
-            "dsl": "pipeline_homo_nn_train_regression_dsl.json"
+        "homo_nn_train_regression": {
+            "conf": "homo_nn_train_regression_conf.json",
+            "dsl": "homo_nn_train_regression_dsl.json"
         },
-        "pipeline_homo_nn_train_binary": {
-            "conf": "pipeline_homo_nn_train_binary_conf.json",
-            "dsl": "pipeline_homo_nn_train_binary_dsl.json"
+        "homo_nn_train_binary": {
+            "conf": "homo_nn_train_binary_conf.json",
+            "dsl": "homo_nn_train_binary_dsl.json"
         },
-        "pipeline_homo_nn_train_multi": {
-            "conf": "pipeline_homo_nn_train_multi_conf.json",
-            "dsl": "pipeline_homo_nn_train_multi_dsl.json"
+        "homo_nn_train_multi": {
+            "conf": "homo_nn_train_multi_conf.json",
+            "dsl": "homo_nn_train_multi_dsl.json"
         },
-        "pipeline_homo_nn_aggregate_n_epoch": {
-            "conf": "pipeline_homo_nn_aggregate_n_epoch_conf.json",
-            "dsl": "pipeline_homo_nn_aggregate_n_epoch_dsl.json"
+        "homo_nn_aggregate_n_epoch": {
+            "conf": "homo_nn_aggregate_n_epoch_conf.json",
+            "dsl": "homo_nn_aggregate_n_epoch_dsl.json"
         }
     }
 }

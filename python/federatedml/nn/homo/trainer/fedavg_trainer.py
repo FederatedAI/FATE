@@ -205,21 +205,19 @@ class FedAVGTrainer(TrainerBase):
 
             # federation process, if running local mode, cancel federation
             if fedavg is not None:
-                if self.aggregate_every_n_epoch is not None and (
-                        i + 1) % self.aggregate_every_n_epoch != 0:
-                    continue
 
-                # model averaging
-                agg_model, converge_status = fedavg.aggregate(
-                    self.model, epoch_loss)
+                if not (self.aggregate_every_n_epoch is not None and (i + 1) % self.aggregate_every_n_epoch != 0):
+                    # model averaging
+                    agg_model, converge_status = fedavg.aggregate(
+                        self.model, epoch_loss)
 
-                cur_agg_round += 1
-                LOGGER.info(
-                    'model averaging finished, aggregate round {}/{}'.format(
-                        cur_agg_round, fedavg.max_aggregate_round))
-                if converge_status:
-                    LOGGER.info('early stop triggered, stop training')
-                    break
+                    cur_agg_round += 1
+                    LOGGER.info(
+                        'model averaging finished, aggregate round {}/{}'.format(
+                            cur_agg_round, fedavg.max_aggregate_round))
+                    if converge_status:
+                        LOGGER.info('early stop triggered, stop training')
+                        break
 
             if self.validation_freq and ((i + 1) % self.validation_freq == 0):
                 LOGGER.info('running validation')
