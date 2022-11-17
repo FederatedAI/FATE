@@ -3,7 +3,7 @@ import time
 import traceback
 
 from fate.arch.context import Context
-from fate.components.components import load_component
+from fate.components.loader import load_component
 from fate.components.spec.task import TaskConfigSpec
 
 logger = logging.getLogger(__name__)

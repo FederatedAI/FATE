@@ -1,41 +1,25 @@
-#
-#  Copyright 2019 The FATE Authors. All Rights Reserved.
-#
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
-#
-
-"""
-execute with python -m fate.components --execution_id xxx --config xxx
-"""
-import logging
-
 import click
 
 
 @click.group()
-def cli():
-    pass
+def component():
+    """
+    Manipulate components: execute, list, generate describe file
+    """
 
 
-@cli.command()
+@component.command()
 @click.option("--execution-id", required=True, help="unique id to identify this execution")
 @click.option("--config", required=False, type=click.File(), help="config path")
 @click.option("--config-entrypoint", required=False, help="enctypoint to get config")
 @click.option("--component", required=False, help="execution cpn")
 @click.option("--stage", required=False, help="execution stage")
 @click.option("--role", required=False, help="execution role")
-def component(execution_id, config, config_entrypoint, component, role, stage):
+def execute(execution_id, config, config_entrypoint, component, role, stage):
+    "execute component"
     # TODO: extends parameters
+    import logging
+
     from fate.components.spec.task import TaskConfigSpec
 
     # parse config
@@ -89,5 +73,29 @@ def load_config_from_entrypoint(configs, config_entrypoint):
     return configs
 
 
-if __name__ == "__main__":
-    cli()
+@component.command()
+@click.option("--name", required=True, help="name of component")
+@click.option("--save", type=click.File(mode="w", lazy=True), help="save desc output to specified file in yaml format")
+def desc(name, save):
+    "generate component describe config"
+    from fate.components.loader import load_component
+
+    cpn = load_component(name)
+    if save:
+        cpn.dump_yaml(save)
+    else:
+        print(cpn.dump_yaml())
+
+
+@component.command()
+@click.option("--save", type=click.File(mode="w", lazy=True), help="save list output to specified file in json format")
+def list(save):
+    "list all components"
+    from fate.components.loader import list_components
+
+    if save:
+        import json
+
+        json.dump(list_components(), save)
+    else:
+        print(list_components())
