@@ -1,7 +1,7 @@
 import logging
 
-from fate.interface import Context, ModelsLoader, ModelsSaver
 from fate.arch.dataframe import DataLoader
+from fate.interface import Context, ModelsLoader, ModelsSaver
 
 from ..abc.module import HeteroModule
 
@@ -31,13 +31,14 @@ class LrModuleArbiter(HeteroModule):
         self.max_iter = max_iter
         self.batch_size = 5
 
-    def fit(self, ctx: Context, train_data) -> None:
+    def fit(self, ctx: Context) -> None:
         encryptor, decryptor = ctx.cipher.phe.keygen(options=dict(key_length=1024))
         ctx.guest("encryptor").put(encryptor)  # ctx.guest.put("encryptor", encryptor)
         ctx.hosts("encryptor").put(encryptor)
         # num_batch = ctx.guest.get("num_batch")
-        batch_loader = DataLoader(dataset=None, ctx=ctx, batch_size=self.batch_size,
-                                  mode="hetero", role="arbiter", sync_arbiter=True)
+        batch_loader = DataLoader(
+            dataset=None, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="arbiter", sync_arbiter=True
+        )
         logger.info(f"batch_num={batch_loader.batch_num}")
         for _, iter_ctx in ctx.range(self.max_iter):
             for batch_ctx, _ in iter_ctx.iter(batch_loader):

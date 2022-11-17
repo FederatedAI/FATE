@@ -43,30 +43,37 @@ def hetero_lr(
     test_output_data,
 ):
     """ """
+    from fate.ml.lr.arbiter import LrModuleArbiter
     from fate.ml.lr.guest import LrModuleGuest
     from fate.ml.lr.host import LrModuleHost
 
     if stage == "train":
-        if role == "guest":
-            module = LrModuleGuest(max_iter=max_iter)
-            module.fit(ctx, ctx.read_df(train_data), validate_data)
-            model = module.export_model()
-            output_data = module.predict(ctx, ctx.read_df(validate_data))
-            return {
-                "train_output_model": ctx.dump(output_data, train_output_data),
-                "output_model": ctx.dump(output_model, model),
-            }
+        if role == "guest" and role == "host":
+            if role == "guest":
+                module = LrModuleGuest(max_iter=max_iter, learning_rate=learning_rate)
+            else:
+                module = LrModuleHost(max_iter=max_iter, learning_rate=learning_rate)
+            train_data = ctx.read(train_data).dataframe()
+            if validate_data is not None:
+                validate_data = ctx.read(validate_data).load_dataframe()
+            module.fit(ctx, train_data, validate_data)
+            model = module.to_model()
+            output_data = module.predict(ctx, train_data)
+            ctx.write(train_output_data).save_dataframe(output_data)
+            ctx.write(output_model).save_model(model)
+        if role == "arbiter":
+            module = LrModuleArbiter(max_iter=max_iter)
+            module.fit(ctx)
 
     elif stage == "predict":
-        if role == "guest":
-            module = LrModuleGuest.load_model(ctx, ctx.load(input_model))
-            output_data = module.predict(ctx, ctx.read_df(train_data))
-            return {
-                "test_output_data": ctx.dump(output_data, test_output_data),
-            }
+        if role == "guest" or role == "host":
+            model = ctx.read(input_model).load_model()
+            if role == "guest":
+                module = LrModuleGuest.from_model(model)
+            else:
+                module = LrModuleHost.from_model(model)
+            train_data = ctx.read(test_data).load_dataframe()
+            output_data = module.predict(ctx, test_data)
+            ctx.write(test_output_data).save_dataframe(output_data)
     else:
         raise NotImplementedError(f"stage={stage}")
-
-
-if __name__ == "__main__":
-    print(hetero_lr.dump_yaml())

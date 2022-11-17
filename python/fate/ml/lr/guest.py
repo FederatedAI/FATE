@@ -2,9 +2,8 @@ import logging
 
 import numpy as np
 import torch
-from fate.arch import tensor
+from fate.arch import dataframe, tensor
 from fate.interface import Context, ModelsLoader, ModelsSaver
-from fate.arch import dataframe
 from sklearn.linear_model import LogisticRegression
 from sklearn.utils.fixes import sklearn
 
@@ -15,14 +14,9 @@ logger = logging.getLogger(__name__)
 
 class GuestDataframeMock:
     def __init__(self, ctx) -> None:
-        guest_data_path = "/Users/sage/proj/FATE/2.0.0-alpha/"\
-                          "examples/data/breast_hetero_guest.csv"
+        guest_data_path = "/Users/sage/proj/FATE/2.0.0-alpha/" "examples/data/breast_hetero_guest.csv"
         self.data = dataframe.CSVReader(
-            id_name="id",
-            label_name="y",
-            label_type="float32",
-            delimiter=",",
-            dtype="float32"
+            id_name="id", label_name="y", label_type="float32", delimiter=",", dtype="float32"
         ).to_frame(ctx, guest_data_path)
 
         # the following is just a demo for serialize and deserialize data
@@ -43,29 +37,16 @@ class GuestDataframeMock:
 class LrModuleGuest(HeteroModule):
     def __init__(
         self,
-        penalty="l2",
-        *,
-        dual=False,
-        tol=1e-4,
-        C=1.0,
-        fit_intercept=True,
-        intercept_scaling=1,
-        class_weight=None,
-        random_state=None,
-        solver="lbfgs",
-        max_iter=100,
-        multi_class="auto",
-        verbose=0,
-        warm_start=False,
-        n_jobs=None,
-        l1_ratio=None,
+        max_iter,
+        batch_size=None,
+        learning_rate=0.01,
+        alpha=1.0,
     ):
         self.max_iter = max_iter
-        self.batch_size = 100
-        self.learning_rate = 0.01
-        self.alpha = 1.0
+        self.batch_size = batch_size
+        self.learning_rate = learning_rate
 
-    def fit(self, ctx: Context, train_data) -> None:
+    def fit(self, ctx: Context, train_data, validate_data=None) -> None:
         """
         l(w) = 1/h * Σ(log(2) - 0.5 * y * xw + 0.125 * (wx)^2)
         ∇l(w) = 1/h * Σ(0.25 * xw - 0.5 * y)x = 1/h * Σdx
@@ -74,15 +55,14 @@ class LrModuleGuest(HeteroModule):
         """
         # mock data
         train_data = GuestDataframeMock(ctx)
-        batch_loader = dataframe.DataLoader(train_data.data, ctx=ctx, batch_size=self.batch_size,
-                                            mode="hetero", role="guest", sync_arbiter=True)
+        batch_loader = dataframe.DataLoader(
+            train_data.data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="guest", sync_arbiter=True
+        )
         # get encryptor
         ctx.arbiter("encryptor").get()
         logger.info(train_data.num_sample)
 
-        w = tensor.tensor(
-            torch.randn((train_data.num_features, 1), dtype=torch.float32)
-        )
+        w = tensor.tensor(torch.randn((train_data.num_features, 1), dtype=torch.float32))
         for i, iter_ctx in ctx.range(self.max_iter):
             logger.info(f"start iter {i}")
             j = 0
@@ -92,9 +72,7 @@ class LrModuleGuest(HeteroModule):
                 # d
                 Xw = tensor.matmul(X, w)
                 d = 0.25 * Xw - 0.5 * Y
-                loss = 0.125 / h * tensor.matmul(Xw.T, Xw) - 0.5 / h * tensor.matmul(
-                    Xw.T, Y
-                )
+                loss = 0.125 / h * tensor.matmul(Xw.T, Xw) - 0.5 / h * tensor.matmul(Xw.T, Y)
                 for Xw_h in batch_ctx.hosts.get("Xw_h"):
                     d += Xw_h
                     loss -= 0.5 / h * tensor.matmul(Y.T, Xw_h)
@@ -112,3 +90,10 @@ class LrModuleGuest(HeteroModule):
                 w -= (self.learning_rate / h) * g
                 logger.info(f"w={w}")
                 j += 1
+
+    def to_model(self):
+        ...
+
+    @classmethod
+    def from_model(cls, model) -> "LrModuleGuest":
+        ...
