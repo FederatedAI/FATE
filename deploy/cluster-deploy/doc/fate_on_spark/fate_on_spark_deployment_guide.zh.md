@@ -277,7 +277,7 @@ mysql>show databases;
 mkdir -p /data/projects/fate/common/jdk
 #解压缩
 cd /data/projects/install
-tar xzf jdk-8u192-linux-x64.tar.gz -C /data/projects/fate/common/jdk
+tar xJf jdk-8u345.tar.xz -C /data/projects/fate/common/jdk
 ```
 
 ### 5.5 部署python
@@ -338,7 +338,7 @@ export FATE_DEPLOY_BASE=\$fate_project_base
 
 export PYTHONPATH=/data/projects/fate/fateflow/python:/data/projects/fate/fate/python
 venv=/data/projects/fate/common/python/venv
-export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
+export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u345
 export PATH=\$PATH:\$JAVA_HOME/bin
 source \${venv}/bin/activate
 export FATE_LOG_LEVEL=DEBUG
