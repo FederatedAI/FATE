@@ -1,0 +1,172 @@
+components:
+  hetero_lr:
+    description: ''
+    input_definitions:
+      artifacts:
+        output_model:
+          optional: false
+          roles:
+          - guest
+          - host
+          stages:
+          - train
+          type: model
+        test_output_data:
+          optional: false
+          roles:
+          - guest
+          - host
+          stages:
+          - predict
+          type: dataset
+        train_output_data:
+          optional: false
+          roles:
+          - guest
+          - host
+          stages:
+          - train
+          type: dataset
+      parameters:
+        learning_rate:
+          default: 0.1
+          optional: false
+          type: float
+        max_iter:
+          default: 100
+          optional: false
+          type: int
+    labels: []
+    output_definitions:
+      artifacts:
+        input_model:
+          optional: false
+          roles:
+          - guest
+          - host
+          stages:
+          - predict
+          type: model
+        test_data:
+          optional: false
+          roles:
+          - guest
+          - host
+          stages:
+          - predict
+          type: datasets
+        train_data:
+          optional: false
+          roles:
+          - guest
+          - host
+          stages:
+          - train
+          type: dataset
+        validate_data:
+          optional: true
+          roles:
+          - guest
+          - host
+          stages:
+          - train
+          type: dataset
+    provider: fate
+    roles:
+    - guest
+    - host
+    - arbiter
+    version: 2.0.0.alpha
+  reader:
+    description: ''
+    input_definitions:
+      parameters:
+        path:
+          default: null
+          optional: false
+          type: str
+    labels: []
+    output_definitions:
+      artifacts:
+        data:
+          optional: false
+          roles:
+          - guest
+          - host
+          stages:
+          - train
+          - predict
+          type: dataset
+    provider: fate
+    roles:
+    - guest
+    - host
+    version: 2.0.0.alpha
+dag:
+  initiator_party:
+    party_id: 10001
+    role: arbiter
+  job_parameters: {}
+  parties:
+  - party_id: 10001
+    role: arbiter
+  - party_id: 9999
+    role: guest
+  - party_id: 10000
+    role: host
+  party_tasks:
+    guest_9999:
+      parties:
+      - party_id: 9999
+        role: guest
+      tasks:
+        reader_0:
+          inputs:
+            parameters:
+              path: examples/data/breast_hetero_guest.csv
+    host_10000:
+      parties:
+      - party_id: 10000
+        role: host
+      tasks:
+        reader_0:
+          inputs:
+            parameters:
+              path: examples/data/breast_hetero_host.csv
+    task_parameters: {}
+  task_parameters: {}
+  tasks:
+    lr_0:
+      component_ref: hetero_lr
+      dependent_tasks:
+      - reader_0
+      inputs:
+        artifacts:
+          train_data:
+            task_output_artifact:
+              output_artifact_key: data
+        parameters:
+          learning_rate: 0.1
+          max_iter: 10
+      parties:
+      - party_id: 10001
+        role: arbiter
+      - party_id: 9999
+        role: guest
+      - party_id: 10000
+        role: host
+      stage: train
+      task_info:
+        name: lr_0
+    reader_0:
+      component_ref: reader
+      parties:
+      - party_id: 9999
+        role: guest
+      - party_id: 10000
+        role: host
+      stage: train
+      task_info:
+        name: reader_0
+schema_version: 2.0.0.alpha
+
