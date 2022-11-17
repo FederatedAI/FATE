@@ -28,3 +28,13 @@ class Table(BaseFlowAPI):
         kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
         return self._post(url='table/delete', json=config_data)
+
+    def bind(
+        self, engine: str, name: str, namespace: str, address: dict,
+        partitions: int = None, head: bool = None, id_delimiter: str = None,
+        in_serialized: bool = None, drop: bool = None,
+        id_column: str = None, feature_column: str = None,
+    ):
+        kwargs = locals()
+        config_data, dsl_data = preprocess(**kwargs)
+        return self._post(url='table/bind', json=config_data)

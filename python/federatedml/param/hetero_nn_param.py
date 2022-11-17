@@ -29,6 +29,22 @@ from federatedml.param.predict_param import PredictParam
 from federatedml.util import consts
 
 
+class DatasetParam(BaseParam):
+
+    def __init__(self, dataset_name=None, **kwargs):
+        super(DatasetParam, self).__init__()
+        self.dataset_name = dataset_name
+        self.param = kwargs
+
+    def check(self):
+        if self.dataset_name is not None:
+            self.check_string(self.dataset_name, 'dataset_name')
+
+    def to_dict(self):
+        ret = {'dataset_name': self.dataset_name, 'param': self.param}
+        return ret
+
+
 class SelectorParam(object):
     """
     Parameters
@@ -122,7 +138,6 @@ class HeteroNNParam(BaseParam):
     Parameters
     ----------
     task_type: str, task type of hetero nn model, one of 'classification', 'regression'.
-    config_type: str, accept "keras" only.
     bottom_nn_define: a dict represents the structure of bottom neural network.
     interactive_layer_define: a dict represents the structure of interactive layer.
     interactive_layer_lr: float, the learning rate of interactive layer.
@@ -143,23 +158,23 @@ class HeteroNNParam(BaseParam):
     floating_point_precision: None or integer, if not None, means use floating_point_precision-bit to speed up calculation,
                                 e.g.: convert an x to round(x * 2**floating_point_precision) during Paillier operation, divide
                                         the result by 2**floating_point_precision in the end.
-    drop_out_keep_rate: float, should betweend 0 and 1, if not equals to 1.0, will enabled drop out
     callback_param: CallbackParam object
     """
 
     def __init__(self,
                  task_type='classification',
-                 config_type="keras",
                  bottom_nn_define=None,
                  top_nn_define=None,
                  interactive_layer_define=None,
                  interactive_layer_lr=0.9,
+                 config_type='pytorch',
                  optimizer='SGD',
                  loss=None,
                  epochs=100,
                  batch_size=-1,
                  early_stop="diff",
                  tol=1e-5,
+                 seed=100,
                  encrypt_param=EncryptParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  predict_param=PredictParam(),
@@ -170,15 +185,14 @@ class HeteroNNParam(BaseParam):
                  use_first_metric_only=True,
                  selector_param=SelectorParam(),
                  floating_point_precision=23,
-                 drop_out_keep_rate=1.0,
                  callback_param=CallbackParam(),
-                 coae_param=CoAEConfuserParam()
+                 coae_param=CoAEConfuserParam(),
+                 dataset=DatasetParam()
                  ):
 
         super(HeteroNNParam, self).__init__()
 
         self.task_type = task_type
-        self.config_type = config_type
         self.bottom_nn_define = bottom_nn_define
         self.interactive_layer_define = interactive_layer_define
         self.interactive_layer_lr = interactive_layer_lr
@@ -193,28 +207,25 @@ class HeteroNNParam(BaseParam):
         self.early_stopping_rounds = early_stopping_rounds
         self.metrics = metrics or []
         self.use_first_metric_only = use_first_metric_only
-
         self.encrypt_param = copy.deepcopy(encrypt_param)
         self.encrypted_model_calculator_param = encrypted_mode_calculator_param
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
-
         self.selector_param = selector_param
         self.floating_point_precision = floating_point_precision
-
-        self.drop_out_keep_rate = drop_out_keep_rate
-
         self.callback_param = copy.deepcopy(callback_param)
-
         self.coae_param = coae_param
+        self.dataset = dataset
+        self.seed = seed
+        self.config_type = 'pytorch'  # pytorch only
 
     def check(self):
 
-        supported_config_type = ["keras", "pytorch"]
-        if self.config_type not in supported_config_type:
-            raise ValueError(f"config_type should be one of {supported_config_type}")
+        assert isinstance(self.dataset, DatasetParam), 'dataset must be a DatasetParam()'
 
-        self.optimizer = self._parse_optimizer(self.optimizer)
+        self.dataset.check()
+
+        self.check_positive_integer(self.seed, 'seed')
 
         if self.task_type not in ["classification", "regression"]:
             raise ValueError("config_type should be classification or regression")
@@ -252,10 +263,6 @@ class HeteroNNParam(BaseParam):
                  self.floating_point_precision < 0 or self.floating_point_precision > 63):
             raise ValueError("floating point precision should be null or a integer between 0 and 63")
 
-        if not isinstance(self.drop_out_keep_rate, (float, int)) or self.drop_out_keep_rate < 0.0 or \
-                self.drop_out_keep_rate > 1.0:
-            raise ValueError("drop_out_keep_rate should be in range [0.0, 1.0]")
-
         self.encrypt_param.check()
         self.encrypted_model_calculator_param.check()
         self.predict_param.check()
@@ -286,32 +293,3 @@ class HeteroNNParam(BaseParam):
 
         if self._warn_to_deprecate_param("use_first_metric_only", descr, "callback_param's 'use_first_metric_only'"):
             self.callback_param.use_first_metric_only = self.use_first_metric_only
-
-    @staticmethod
-    def _parse_optimizer(opt):
-        """
-        Examples:
-
-            1. "optimize": "SGD"
-            2. "optimize": {
-                "optimizer": "SGD",
-                "learning_rate": 0.05
-            }
-        """
-
-        kwargs = {}
-        if isinstance(opt, str):
-            return SimpleNamespace(optimizer=opt, kwargs=kwargs)
-        elif isinstance(opt, dict):
-            config_type = opt.get('config_type', None)
-            if config_type == 'pytorch':
-                return opt
-            optimizer = opt.get("optimizer", kwargs)
-            if not optimizer:
-                raise ValueError(f"optimizer config: {opt} invalid")
-            kwargs = {k: v for k, v in opt.items() if k != "optimizer"}
-            return SimpleNamespace(optimizer=optimizer, kwargs=kwargs)
-        elif opt is None:
-            return None
-        else:
-            raise ValueError(f"invalid type for optimize: {type(opt)}")

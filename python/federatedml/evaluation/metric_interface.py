@@ -41,7 +41,8 @@ class MetricInterface(object):
                 logging.warning("all true labels are 0/1 when running ovr AUC")
             return score
         else:
-            logging.warning("auc is just suppose Binary Classification! return None as results")
+            logging.warning(
+                "auc is just suppose Binary Classification! return None as results")
             return None
 
     @staticmethod
@@ -151,10 +152,13 @@ class MetricInterface(object):
 
     def roc(self, labels, pred_scores):
         if self.eval_type == consts.BINARY:
-            fpr, tpr, thresholds = roc_curve(np.array(labels), np.array(pred_scores), drop_intermediate=1)
-            fpr, tpr, thresholds = list(map(float, fpr)), list(map(float, tpr)), list(map(float, thresholds))
+            fpr, tpr, thresholds = roc_curve(
+                np.array(labels), np.array(pred_scores), drop_intermediate=1)
+            fpr, tpr, thresholds = list(map(float, fpr)), list(
+                map(float, tpr)), list(map(float, thresholds))
 
-            filt_thresholds, cuts = self.__filt_threshold(thresholds=thresholds, step=0.01)
+            filt_thresholds, cuts = self.__filt_threshold(
+                thresholds=thresholds, step=0.01)
             new_thresholds = []
             new_tpr = []
             new_fpr = []
@@ -169,7 +173,8 @@ class MetricInterface(object):
             thresholds = new_thresholds
             return fpr, tpr, thresholds, cuts
         else:
-            logging.warning("roc_curve is just suppose Binary Classification! return None as results")
+            logging.warning(
+                "roc_curve is just suppose Binary Classification! return None as results")
             fpr, tpr, thresholds, cuts = None, None, None, None
 
             return fpr, tpr, thresholds, cuts
@@ -214,7 +219,8 @@ class MetricInterface(object):
         if self.eval_type == consts.BINARY:
             return classification_metric.Lift().compute(labels, pred_scores)
         else:
-            logging.warning("lift is just suppose Binary Classification! return None as results")
+            logging.warning(
+                "lift is just suppose Binary Classification! return None as results")
             return None
 
     def gain(self, labels, pred_scores):
@@ -235,7 +241,8 @@ class MetricInterface(object):
         if self.eval_type == consts.BINARY:
             return classification_metric.Gain().compute(labels, pred_scores)
         else:
-            logging.warning("gain is just suppose Binary Classification! return None as results")
+            logging.warning(
+                "gain is just suppose Binary Classification! return None as results")
             return None
 
     def precision(self, labels, pred_scores):
@@ -255,13 +262,16 @@ class MetricInterface(object):
         """
         if self.eval_type == consts.BINARY:
             precision_operator = classification_metric.BiClassPrecision()
-            metric_scores, score_threshold, cuts = precision_operator.compute(labels, pred_scores)
+            metric_scores, score_threshold, cuts = precision_operator.compute(
+                labels, pred_scores)
             return metric_scores, cuts, score_threshold
         elif self.eval_type == consts.MULTY:
             precision_operator = classification_metric.MultiClassPrecision()
             return precision_operator.compute(labels, pred_scores)
         else:
-            logging.warning("error:can not find classification type:{}".format(self.eval_type))
+            logging.warning(
+                "error:can not find classification type:{}".format(
+                    self.eval_type))
 
     def recall(self, labels, pred_scores):
         """
@@ -279,13 +289,16 @@ class MetricInterface(object):
         """
         if self.eval_type == consts.BINARY:
             recall_operator = classification_metric.BiClassRecall()
-            recall_res, thresholds, cuts = recall_operator.compute(labels, pred_scores)
+            recall_res, thresholds, cuts = recall_operator.compute(
+                labels, pred_scores)
             return recall_res, cuts, thresholds
         elif self.eval_type == consts.MULTY:
             recall_operator = classification_metric.MultiClassRecall()
             return recall_operator.compute(labels, pred_scores)
         else:
-            logging.warning("error:can not find classification type:{}".format(self.eval_type))
+            logging.warning(
+                "error:can not find classification type:{}".format(
+                    self.eval_type))
 
     def accuracy(self, labels, pred_scores, normalize=True):
         """
@@ -303,13 +316,16 @@ class MetricInterface(object):
 
         if self.eval_type == consts.BINARY:
             acc_operator = classification_metric.BiClassAccuracy()
-            acc_res, thresholds, cuts = acc_operator.compute(labels, pred_scores, normalize)
+            acc_res, thresholds, cuts = acc_operator.compute(
+                labels, pred_scores, normalize)
             return acc_res, cuts, thresholds
         elif self.eval_type == consts.MULTY:
             acc_operator = classification_metric.MultiClassAccuracy()
             return acc_operator.compute(labels, pred_scores, normalize)
         else:
-            logging.warning("error:can not find classification type:".format(self.eval_type))
+            logging.warning(
+                "error:can not find classification type:".format(
+                    self.eval_type))
 
     def f1_score(self, labels, pred_scores):
         """
@@ -317,10 +333,12 @@ class MetricInterface(object):
         """
 
         if self.eval_type == consts.BINARY:
-            f1_scores, score_threshold, cuts = classification_metric.FScore().compute(labels, pred_scores)
+            f1_scores, score_threshold, cuts = classification_metric.FScore().compute(labels,
+                                                                                      pred_scores)
             return list(f1_scores), list(cuts), list(score_threshold)
         else:
-            logging.warning('error: f-score metric is for binary classification only')
+            logging.warning(
+                'error: f-score metric is for binary classification only')
 
     def confusion_mat(self, labels, pred_scores):
         """
@@ -329,12 +347,14 @@ class MetricInterface(object):
 
         if self.eval_type == consts.BINARY:
 
-            sorted_labels, sorted_scores = classification_metric.sort_score_and_label(labels, pred_scores)
-            _, cuts = classification_metric.ThresholdCutter.cut_by_step(sorted_scores, steps=0.01)
+            sorted_labels, sorted_scores = classification_metric.sort_score_and_label(
+                labels, pred_scores)
+            _, cuts = classification_metric.ThresholdCutter.cut_by_step(
+                sorted_scores, steps=0.01)
             fixed_interval_threshold = classification_metric.ThresholdCutter.fixed_interval_threshold()
-            confusion_mat = classification_metric.ConfusionMatrix.compute(sorted_labels, sorted_scores,
-                                                                          fixed_interval_threshold,
-                                                                          ret=['tp', 'fp', 'fn', 'tn'])
+            confusion_mat = classification_metric.ConfusionMatrix.compute(
+                sorted_labels, sorted_scores, fixed_interval_threshold, ret=[
+                    'tp', 'fp', 'fn', 'tn'])
 
             confusion_mat['tp'] = self.__to_int_list(confusion_mat['tp'])
             confusion_mat['fp'] = self.__to_int_list(confusion_mat['fp'])
@@ -343,9 +363,16 @@ class MetricInterface(object):
 
             return confusion_mat, cuts, fixed_interval_threshold
         else:
-            logging.warning('error: f-score metric is for binary classification only')
+            logging.warning(
+                'error: f-score metric is for binary classification only')
 
-    def psi(self, train_scores, validate_scores, train_labels, validate_labels, debug=False):
+    def psi(
+            self,
+            train_scores,
+            validate_scores,
+            train_labels,
+            validate_labels,
+            debug=False):
         """
         Compute the PSI index
         Parameters
@@ -363,8 +390,12 @@ class MetricInterface(object):
                                                                                     debug=debug, str_intervals=True,
                                                                                     round_num=6, train_labels=train_labels, validate_labels=validate_labels)
 
-            len_list = np.array([len(psi_scores), len(expected_interval), len(expected_percentage),
-                                 len(actual_interval), len(actual_percentage), len(intervals)])
+            len_list = np.array([len(psi_scores),
+                                 len(expected_interval),
+                                 len(expected_percentage),
+                                 len(actual_interval),
+                                 len(actual_percentage),
+                                 len(intervals)])
 
             assert (len_list == len(psi_scores)).all()
 
@@ -373,12 +404,15 @@ class MetricInterface(object):
                 list(validate_pos_perc), intervals
 
         else:
-            logging.warning('error: psi metric is for binary classification only')
+            logging.warning(
+                'error: psi metric is for binary classification only')
 
     def quantile_pr(self, labels, pred_scores):
         if self.eval_type == consts.BINARY:
-            p = classification_metric.BiClassPrecision(cut_method='quantile', remove_duplicate=False)
-            r = classification_metric.BiClassRecall(cut_method='quantile', remove_duplicate=False)
+            p = classification_metric.BiClassPrecision(
+                cut_method='quantile', remove_duplicate=False)
+            r = classification_metric.BiClassRecall(
+                cut_method='quantile', remove_duplicate=False)
             p_scores, score_threshold, cuts = p.compute(labels, pred_scores)
             r_scores, score_threshold, cuts = r.compute(labels, pred_scores)
             p_scores = list(map(list, np.flip(p_scores, axis=0)))
@@ -386,7 +420,8 @@ class MetricInterface(object):
             score_threshold = list(np.flip(score_threshold))
             return p_scores, r_scores, score_threshold
         else:
-            logging.warning('error: pr quantile is for binary classification only')
+            logging.warning(
+                'error: pr quantile is for binary classification only')
 
     @staticmethod
     def jaccard_similarity_score(labels, pred_labels):
@@ -444,7 +479,8 @@ class MetricInterface(object):
 
         """
         # process data from evaluation
-        return clustering_metric.DaviesBouldinIndex().compute(cluster_avg_intra_dist, cluster_inter_dist)
+        return clustering_metric.DaviesBouldinIndex().compute(
+            cluster_avg_intra_dist, cluster_inter_dist)
 
     @staticmethod
     def contingency_matrix(labels, pred_labels):
@@ -455,8 +491,12 @@ class MetricInterface(object):
         return clustering_metric.ContengincyMatrix().compute(labels, pred_labels)
 
     @staticmethod
-    def distance_measure(cluster_avg_intra_dist, cluster_inter_dist, max_radius):
+    def distance_measure(
+            cluster_avg_intra_dist,
+            cluster_inter_dist,
+            max_radius):
         """
 
         """
-        return clustering_metric.DistanceMeasure().compute(cluster_avg_intra_dist, cluster_inter_dist, max_radius)
+        return clustering_metric.DistanceMeasure().compute(
+            cluster_avg_intra_dist, cluster_inter_dist, max_radius)

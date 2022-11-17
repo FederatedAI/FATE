@@ -73,6 +73,9 @@
         "ecdh_intersect": {
             "script": "./pipeline-intersect-ecdh.py"
         },
+        "ecdh_intersect_multi": {
+            "script": "./pipeline-intersect-ecdh-multi.py"
+        },
         "ecdh_intersect-with-preprocess": {
             "script": "./pipeline-intersect-ecdh-w-preprocess.py"
         },
@@ -91,8 +94,14 @@
         "intersect_ecdh_exact_cardinality": {
             "script": "./pipeline-intersect-ecdh-exact-cardinality.py"
         },
+        "intersect_ecdh_exact_cardinality_multi": {
+            "script": "./pipeline-intersect-ecdh-multi-exact-cardinality.py"
+        },
         "intersect_dh_exact_cardinality": {
             "script": "./pipeline-intersect-dh-exact-cardinality.py"
+        },
+        "intersect_dh_exact_cardinality_multi": {
+            "script": "./pipeline-intersect-dh-multi-exact-cardinality.py"
         }
     }
 }

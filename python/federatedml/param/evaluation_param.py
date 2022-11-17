@@ -138,8 +138,6 @@ class EvaluateParam(BaseParam):
 
         self.metrics = self._check_valid_metric(self.metrics)
 
-        LOGGER.info("Finish evaluation parameter check!")
-
         return True
 
     def check_single_value_default_metric(self):
