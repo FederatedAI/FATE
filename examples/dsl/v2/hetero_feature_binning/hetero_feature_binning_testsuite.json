@@ -25,6 +25,22 @@
             "role": "host_1"
         },
         {
+            "file": "examples/data/breast_homo_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_homo_host",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_homo_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_homo_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
             "file": "examples/data/default_credit_hetero_guest.csv",
             "head": 1,
             "partition": 16,
@@ -90,6 +106,10 @@
         }
     ],
     "tasks": {
+        "hetero_binning_manual_split_points": {
+            "conf": "hetero_binning_manual_split_points_conf.json",
+            "dsl": "hetero_binning_manual_split_points_dsl.json"
+        },
         "hetero_binning_large_bin": {
             "conf": "hetero_binning_large_bin_conf.json",
             "dsl": "hetero_binning_large_bin_dsl.json"
@@ -105,10 +125,6 @@
         "hetero_binning_optim_ks": {
             "conf": "hetero_binning_optim_ks_conf.json",
             "dsl": "hetero_binning_optim_ks_dsl.json"
-        },
-        "hetero_binning_multiclass_multihost": {
-            "conf": "hetero_binning_multiclass_multihost_conf.json",
-            "dsl": "hetero_binning_multiclass_multihost_dsl.json"
         },
         "hetero_binning_bucket_binning": {
             "conf": "hetero_binning_bucket_binning_conf.json",
@@ -133,10 +149,6 @@
         "hetero_binning_sparse_optimal_gini": {
             "conf": "hetero_binning_sparse_optimal_gini_conf.json",
             "dsl": "hetero_binning_sparse_optimal_gini_dsl.json"
-        },
-        "hetero_binning_multiclass_multihost_woe": {
-            "conf": "hetero_binning_multiclass_multihost_woe_conf.json",
-            "dsl": "hetero_binning_multiclass_multihost_woe_dsl.json"
         },
         "hetero_binning_multi_host": {
             "conf": "hetero_binning_multi_host_conf.json",

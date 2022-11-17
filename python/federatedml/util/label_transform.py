@@ -92,8 +92,11 @@ class LabelTransformer(ModelBase):
         self.encoder_value_type = {str(k): type(v).__name__ for k, v in self.label_encoder.items()}
 
         self.label_encoder = {load_value_to_type(k,
-                                                 self.encoder_key_type[str(k)]): v for k,
+                                                 self.encoder_key_type.get(str(k), None)): v for k,
                               v in self.label_encoder.items()}
+        for k, v in self.label_encoder.items():
+            if v is None:
+                raise ValueError(f"given encoder key {k} not found in data or provided label list, please check.")
 
     def _get_meta(self):
         meta = label_transform_meta_pb2.LabelTransformMeta(

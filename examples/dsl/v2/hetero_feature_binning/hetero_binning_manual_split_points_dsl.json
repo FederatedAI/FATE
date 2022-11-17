@@ -8,6 +8,14 @@
                 ]
             }
         },
+        "reader_1": {
+            "module": "Reader",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
         "data_transform_0": {
             "module": "DataTransform",
             "input": {
@@ -23,14 +31,6 @@
                 ],
                 "model": [
                     "model"
-                ]
-            }
-        },
-        "reader_1": {
-            "module": "Reader",
-            "output": {
-                "data": [
-                    "data"
                 ]
             }
         },
@@ -129,6 +129,7 @@
                     "model"
                 ]
             }
+
         }
     }
 }

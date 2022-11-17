@@ -106,23 +106,47 @@ class Component(BaseFlowAPI):
 
     def hetero_model_merge(
         self,
-        model_id: str, model_version: str,
-        guest_party_id: str, host_party_ids: List[str],
-        component_name: str, model_alias: str,
-        model_type: str, output_format: str,
-        target_name: str = None,
-        host_rename: bool = False,
-        include_guest_coef: bool = None,
+        model_id: str, model_version: str, guest_party_id: str, host_party_ids: List[str],
+        component_name: str, model_type: str, output_format: str, target_name: str = None,
+        host_rename: bool = None, include_guest_coef: bool = None,
     ):
         kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
 
         check_config(config=config_data, required_arguments=(
-            'model_id', 'model_version',
-            'guest_party_id', 'host_party_ids',
-            'component_name', 'model_alias',
-            'model_type', 'output_format',
+            'model_id', 'model_version', 'guest_party_id', 'host_party_ids',
+            'component_name', 'model_type', 'output_format',
         ))
 
         res = self._post(url='component/hetero/merge', json=config_data)
+        return res
+
+    def woe_array_extract(
+        self,
+        model_id: str, model_version: str, party_id: str, role: str, component_name: str,
+    ):
+        kwargs = locals()
+        config_data, dsl_data = preprocess(**kwargs)
+
+        check_config(config=config_data, required_arguments=(
+            'model_id', 'model_version', 'party_id', 'role', 'component_name',
+        ))
+
+        res = self._post(url='component/woe_array/extract', json=config_data)
+        return res
+
+    def woe_array_merge(
+        self,
+        model_id: str, model_version: str, party_id: str, role: str, component_name: str,
+        woe_array: dict,
+    ):
+        kwargs = locals()
+        config_data, dsl_data = preprocess(**kwargs)
+
+        check_config(config=config_data, required_arguments=(
+            'model_id', 'model_version', 'party_id', 'role', 'component_name',
+            'woe_array',
+        ))
+
+        res = self._post(url='component/woe_array/merge', json=config_data)
         return res
