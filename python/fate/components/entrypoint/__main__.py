@@ -48,8 +48,8 @@ def component(execution_id, config, config_entrypoint, component, role, stage):
     # install logger
     task_config.env.logger.install()
     logger = logging.getLogger(__name__)
-    logger.info("logger installed")
-    logger.info(f"{task_config=}")
+    logger.debug("logger installed")
+    logger.debug(f"task config: {task_config}")
 
     # init mlmd
     task_config.env.mlmd.init(task_config.execution_id)

@@ -29,9 +29,9 @@ def execute_component(config: TaskConfigSpec):
         computing=computing,
         federation=federation,
     )
-    logger.info(f"component={config.component}, context={ctx}")
+    logger.debug(f"component={config.component}, context={ctx}")
     try:
-        logger.info("running...")
+        logger.debug("running...")
         mlmd.log_excution_start()
         component = load_component(config.component)
         try:
@@ -46,14 +46,14 @@ def execute_component(config: TaskConfigSpec):
     except Exception as e:
         raise e
     else:
-        logger.info("done without error, waiting signal to terminate")
+        logger.debug("done without error, waiting signal to terminate")
         while not mlmd.safe_terminate():
             time.sleep(0.5)
-        logger.info("terminating, bye~")
+        logger.debug("terminating, bye~")
     finally:
-        logger.info("cleaning...")
+        logger.debug("cleaning...")
         # context.clean()
-        logger.info("clean finished")
+        logger.debug("clean finished")
 
 
 def get_computing(config: TaskConfigSpec):
