@@ -20,7 +20,5 @@ class EggrollURI(ConcrateURI):
         _, namespace, *names = uri.path.split("/")
         name = "_".join(names)
         if len(name) > _EGGROLL_NAME_MAX_SIZE:
-            name = hashlib.md5(name.encode(encoding="utf8")).hexdigest()[
-                :_EGGROLL_NAME_MAX_SIZE
-            ]
+            name = hashlib.md5(name.encode(encoding="utf8")).hexdigest()[:_EGGROLL_NAME_MAX_SIZE]
         return EggrollURI(namespace, name)

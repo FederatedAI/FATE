@@ -16,7 +16,7 @@
 These are only compatible with v2 Pipelines.
 """
 
-from typing import Dict, List, Optional, Type, Union
+from typing import Dict, List, Optional
 
 from typing_extensions import Annotated
 
@@ -24,7 +24,7 @@ from .types import Input, Output
 
 
 class Artifact:
-    type: str = "Artifact"
+    type: str = "artifact"
     """Represents a generic machine learning artifact.
 
     This class and all artifact classes
@@ -48,6 +48,10 @@ class Artifact:
         self.uri = uri or ""
         self.name = name or ""
         self.metadata = metadata or {}
+
+    @classmethod
+    def parse_obj(cls, **attr):
+        return cls(**attr)
 
     @property
     def path(self) -> str:
@@ -76,15 +80,17 @@ class Artifact:
         self.uri = path
 
 
-class Artifacts(List):
-    type = "Artifacts"
+class Artifacts:
+    def __init__(self, artifacts: List[Artifact]) -> None:
+        self.artifacts = artifacts
 
-    def __init__(self, artifacts: List["Artifact"] = []):
-        self.artifacts = artifacts or []
+    @classmethod
+    def parse_obj(cls, **attr):
+        return cls(**attr)
 
 
 class DatasetArtifact(Artifact):
-    type = "Dataset"
+    type = "dataset"
     """An artifact representing a machine learning dataset.
 
     Args:
@@ -102,12 +108,11 @@ class DatasetArtifact(Artifact):
         super().__init__(uri=uri, name=name, metadata=metadata)
 
 
-class DatasetsArtifact(Artifacts):
-    type = "Datasets"
+DatasetsArtifact = Annotated[Artifacts, DatasetArtifact]
 
 
 class ModelArtifact(Artifact):
-    type = "Model"
+    type = "model"
     """An artifact representing a machine learning model.
 
     Args:
@@ -140,7 +145,7 @@ class ModelArtifact(Artifact):
 
 
 class MetricArtifact(Artifact):
-    type = "Metric"
+    type = "metric"
 
     def __init__(
         self,
@@ -169,7 +174,7 @@ class ClassificationMetrics(Artifact):
         metadata: The key-value scalar metrics.
     """
 
-    type = "ClassificationMetrics"
+    type = "classification_metrics"
 
     def __init__(
         self,
@@ -320,7 +325,7 @@ class SlicedClassificationMetrics(Artifact):
         metadata: Arbitrary key-value pairs about the metrics artifact.
     """
 
-    type = "SlicedClassificationMetrics"
+    type = "sliced_classification_metrics"
 
     def __init__(
         self,
@@ -429,23 +434,9 @@ class SlicedClassificationMetrics(Artifact):
         self._update_metadata(slice)
 
 
-TrainData = Annotated[Input[DatasetArtifact], "trainData"]
-ValidateData = Annotated[Input[DatasetArtifact], "validateData"]
-TestData = Annotated[Input[DatasetArtifact], "testData"]
-TrainOutputData = Annotated[Output[DatasetArtifact], "trainOutputData"]
-TestOutputData = Annotated[Output[DatasetArtifact], "testOutputData"]
-Model = Annotated[Output[ModelArtifact], "model"]
-Metrics = Annotated[Output[MetricArtifact], "metrics"]
-ArtifactType = Union[TrainData, ValidateData, TestData, TrainOutputData, TestOutputData, Model, Metrics]
-_SCHEMA_TITLE_TO_TYPE: Dict[str, Type[Artifact]] = {
-    x.type: x
-    for x in [
-        Artifact,
-        Artifacts,
-        ModelArtifact,
-        DatasetArtifact,
-        MetricArtifact,
-        ClassificationMetrics,
-        SlicedClassificationMetrics,
-    ]
-}
+TrainData = Input[DatasetArtifact]
+ValidateData = Input[DatasetArtifact]
+TestData = Input[DatasetArtifact]
+TrainOutputData = Output[DatasetArtifact]
+TestOutputData = Output[DatasetArtifact]
+Metrics = Output[MetricArtifact]

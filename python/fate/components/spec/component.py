@@ -36,10 +36,10 @@ class ComponentSpec(BaseModel):
     version: str
     labels: List[labels]
     roles: List[roles]
-    inputDefinitions: InputDefinitionsSpec
-    outputDefinitions: OutputDefinitionsSpec
+    input_definitions: InputDefinitionsSpec
+    output_definitions: OutputDefinitionsSpec
 
 
 class ComponentSpecV1(BaseModel):
     component: ComponentSpec
-    schemaVersion: str = "v1"
+    schema_version: str = "v1"

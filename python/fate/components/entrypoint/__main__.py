@@ -15,43 +15,79 @@
 #
 
 """
-execute with python -m fate.components.runner --session_id xxx --task_config xxx
+execute with python -m fate.components --execution_id xxx --config xxx
 """
 import logging
-from typing import Dict
 
-from .uri.uri import URI
+import click
 
 
-def run(config: Dict):
-    task_id = config["task_id"]
-    task = config["task"]
-    task_type = task["type"]
-    extra = task.get("task_extra", {})
-    task_params = task["task_params"]
-    if task_type == "run_component":
-        from ..runner.entrypoint.parser import FATEComponentTaskConfig
+@click.group()
+def cli():
+    pass
 
-        task_config = FATEComponentTaskConfig(
-            task_id=task_id, extra=extra, **task_params
-        )
-        # install logger, be careful not to get logger before logger has installed
-        task_config.extra.logger.install()
-        logger = logging.getLogger(__name__)
-        logger.info(f"{task_config=}")
 
-        from ..runner.entrypoint.exec_component import task_execute
+@cli.command()
+@click.option("--execution-id", required=True, help="unique id to identify this execution")
+@click.option("--config", required=False, type=click.File(), help="config path")
+@click.option("--config-entrypoint", required=False, help="enctypoint to get config")
+@click.option("--component", required=False, help="execution cpn")
+@click.option("--stage", required=False, help="execution stage")
+@click.option("--role", required=False, help="execution role")
+def component(execution_id, config, config_entrypoint, component, role, stage):
+    # TODO: extends parameters
+    from fate.components.spec.task import TaskConfigSpec
 
-        task_execute(task_config)
-    else:
-        raise RuntimeError(f"task type `{args.type}` unknown")
+    # parse config
+    configs = {}
+    load_config_from_entrypoint(configs, config_entrypoint)
+    load_config_from_file(configs, config)
+    load_config_from_cli(configs, execution_id, component, role, stage)
+    task_config = TaskConfigSpec.parse_obj(configs)
+
+    # install logger
+    task_config.env.logger.install()
+    logger = logging.getLogger(__name__)
+    logger.info("logger installed")
+    logger.info(f"{task_config=}")
+
+    # init mlmd
+    task_config.env.mlmd.init(task_config.execution_id)
+
+    from fate.components.entrypoint.component import execute_component
+
+    execute_component(task_config)
+
+
+def load_config_from_cli(configs, execution_id, component, role, stage):
+    configs["execution_id"] = execution_id
+    if role is not None:
+        configs["role"] = role
+    if stage is not None:
+        configs["stage"] = stage
+    if component is not None:
+        configs["component"] = component
+
+
+def load_config_from_file(configs, config_file):
+    from ruamel import yaml
+
+    if config_file is not None:
+        configs.update(yaml.safe_load(config_file))
+    return configs
+
+
+def load_config_from_entrypoint(configs, config_entrypoint):
+    import requests
+
+    if config_entrypoint is not None:
+        try:
+            resp = requests.get(config_entrypoint).json()
+            configs.update(resp["config"])
+        except:
+            pass
+    return configs
 
 
 if __name__ == "__main__":
-    import argparse
-
-    arguments = argparse.ArgumentParser()
-    arguments.add_argument("session_id")
-    arguments.add_argument("task_config")
-    args = arguments.parse_args()
-    task_config = run(URI.from_string(args.task_config).read_json())
+    cli()

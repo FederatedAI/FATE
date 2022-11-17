@@ -36,9 +36,7 @@ class _PROTOCOLS:
             # register from entrypoint
             import pkg_resources
 
-            for concrate_uri_ep in pkg_resources.iter_entry_points(
-                group="fate.plugins.uri"
-            ):
+            for concrate_uri_ep in pkg_resources.iter_entry_points(group="fate.plugins.uri"):
                 try:
                     concrate_uri = concrate_uri_ep.load()
                     concrate_uri_schema = concrate_uri.schema()
@@ -48,18 +46,12 @@ class _PROTOCOLS:
                     )
                     continue
                 try:
-                    assert hasattr(
-                        concrate_uri, "from_uri"
-                    ), f"bad implement of uri for schema: {concrate_uri_schema}"
+                    assert hasattr(concrate_uri, "from_uri"), f"bad implement of uri for schema: {concrate_uri_schema}"
                 except Exception as e:
-                    logger.warning(
-                        f"register uri schema {concrate_uri_schema} from entrypoint failed: {e}"
-                    )
+                    logger.warning(f"register uri schema {concrate_uri_schema} from entrypoint failed: {e}")
 
         if schema not in cls.cache:
-            raise ValueError(
-                f"schema `{schema}` not supported, use one of {list(cls.cache)}"
-            )
+            raise ValueError(f"schema `{schema}` not supported, use one of {list(cls.cache)}")
         return cls.cache[schema]
 
 
@@ -95,6 +87,9 @@ class ConcrateURI(Protocol):
         ...
 
     def read_json(self) -> Dict:
+        ...
+
+    def read_yaml(self) -> Dict:
         ...
 
     def read_kv(self, key: str):

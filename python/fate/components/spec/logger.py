@@ -1,27 +1,29 @@
 import logging
 import logging.config
+import pathlib
 from typing import Literal
 
 import pydantic
-from pandas.io.common import pathlib
 
 
 class PipelineLogger(pydantic.BaseModel):
-    type: Literal["pipeline"]
-    basepath: pydantic.DirectoryPath
-    level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+    class PipelineLoggerMetadata(pydantic.BaseModel):
+        basepath: pydantic.DirectoryPath
+        level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        debug_mode: bool = False
 
-    @pydantic.validator("basepath", pre=True)
-    def create_basepath(cls, value):
-        pathlib.Path(value).mkdir(parents=True, exist_ok=True)
-        return value
+        @pydantic.validator("basepath", pre=True)
+        def create_basepath(cls, value):
+            pathlib.Path(value).mkdir(parents=True, exist_ok=True)
+            return value
+
+    type: Literal["pipeline"]
+    metadata: PipelineLoggerMetadata
 
     def install(self):
-        self.basepath.mkdir(parents=True, exist_ok=True)
+        self.metadata.basepath.mkdir(parents=True, exist_ok=True)
         levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-        formatters = {
-            "brief": {"format": "'%(asctime)s %(levelname)-8s %(name)-15s %(message)s'"}
-        }
+        formatters = {"brief": {"format": "'%(asctime)s %(levelname)-8s %(name)-15s %(message)s'"}}
         handlers = {}
         filters = {}
 
@@ -46,7 +48,7 @@ class PipelineLogger(pydantic.BaseModel):
 
         # add root logger
         root_handlers = []
-        root_base_path = self.basepath.joinpath("root")
+        root_base_path = self.metadata.basepath.joinpath("root")
         root_base_path.mkdir(parents=True, exist_ok=True)
         for level in levels:
             handler_name = f"root_{level.lower()}"
@@ -57,9 +59,21 @@ class PipelineLogger(pydantic.BaseModel):
             )
             root_handlers.append(handler_name)
 
+        # add console logger
+        if self.metadata.debug_mode:
+            handler_name = f"root_console_{self.metadata.level.lower()}"
+            handlers[handler_name] = {
+                "class": "logging.StreamHandler",
+                "formatter": "brief",
+                "level": self.metadata.level,
+                "filters": [],
+                "stream": "ext://sys.stdout",
+            }
+            root_handlers.append(handler_name)
+
         # add component logger
         component_handlers = []
-        component_base_path = self.basepath.joinpath("component")
+        component_base_path = self.metadata.basepath.joinpath("component")
         component_base_path.mkdir(parents=True, exist_ok=True)
         filters["components"] = {"name": "fate.components"}
         filters["ml"] = {"name": "fate.ml"}
@@ -75,12 +89,12 @@ class PipelineLogger(pydantic.BaseModel):
             "fate.components": dict(
                 handlers=component_handlers,
                 filters=["components"],
-                level=self.level,
+                level=self.metadata.level,
             ),
             "fate.ml": dict(
                 handlers=component_handlers,
                 filters=["ml"],
-                level=self.level,
+                level=self.metadata.level,
             ),
         }
 
@@ -91,24 +105,30 @@ class PipelineLogger(pydantic.BaseModel):
                 handlers=handlers,
                 filters=filters,
                 loggers=component_loggers,
-                root=dict(handlers=root_handlers, level=self.level),
+                root=dict(handlers=root_handlers, level=self.metadata.level),
                 disable_existing_loggers=False,
             )
         )
 
 
 class FlowLogger(pydantic.BaseModel):
+    class FlowLoggerMetadata(pydantic.BaseModel):
+        basepath: pydantic.DirectoryPath
+        level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+
     type: Literal["flow"]
-    basepath: pydantic.DirectoryPath
-    level: str
+    metadata: FlowLoggerMetadata
 
     def install(self):
         raise NotImplementedError()
 
 
 class CustomLogger(pydantic.BaseModel):
+    class CustomLoggerMetadata(pydantic.BaseModel):
+        config_dict: dict
+
     type: Literal["custom"]
-    config_dict: dict
+    metadata: CustomLoggerMetadata
 
     def install(self):
-        logging.config.dictConfig(self.config_dict)
+        logging.config.dictConfig(self.metadata.config_dict)

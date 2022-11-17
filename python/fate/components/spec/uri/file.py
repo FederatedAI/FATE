@@ -23,6 +23,12 @@ class FileURI(ConcrateURI):
         with open(self.path) as f:
             return json.load(f)
 
+    def read_yaml(self) -> Dict:
+        import ruamel.yaml
+
+        with open(self.path) as f:
+            return ruamel.yaml.load(f)
+
     def read_kv(self, key: str):
         with open(self.path) as f:
             json.load(f)[key]
