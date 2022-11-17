@@ -32,8 +32,7 @@ class CustModel(FateTorchLayer, nn.Module):
     def get_pytorch_model(self):
 
         module_name: str = self.param_dict['module_name']
-        class_name:
-            str = self.param_dict['class_name']
+        class_name = self.param_dict['class_name']
         module_param: dict = self.param_dict['param']
         if module_name.endswith('.py'):
             module_name = module_name.replace('.py', '')

@@ -34,8 +34,7 @@ class CustModel(FateTorchLayer, nn.Module):
     def get_pytorch_model(self):
 
         module_name: str = self.param_dict['module_name']
-        class_name:
-            str = self.param_dict['class_name']
+        class_name = self.param_dict['class_name']
         module_param: dict = self.param_dict['param']
         if module_name.endswith('.py'):
             module_name = module_name.replace('.py', '')
@@ -54,11 +53,3 @@ class CustModel(FateTorchLayer, nn.Module):
 
     def __repr__(self):
         return 'CustModel({})'.format(str(self.param_dict))
-
-
-if __name__ == '__main__':
-    cust_model = CustModel(
-        module_name='mlp',
-        class_name='MLP',
-        input_dim=30,
-        num_class=3)
