@@ -242,4 +242,3 @@ class TweedieLoss(object):
 
     def compute_hess(self, y, y_pred):
         return -y * (1 - self.rho) * np.exp((1 - self.rho) * y_pred) + (2 - self.rho) * np.exp((2 - self.rho) * y_pred)
-
