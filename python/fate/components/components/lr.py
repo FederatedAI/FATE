@@ -42,38 +42,70 @@ def hetero_lr(
     output_model,
     test_output_data,
 ):
-    """ """
-    from fate.ml.lr.arbiter import LrModuleArbiter
+    if stage == "train":
+        if role == "guest":
+            train_guest(ctx, train_data, validate_data, train_output_data, output_model, max_iter, learning_rate)
+        elif role == "host":
+            train_host(ctx, train_data, validate_data, train_output_data, output_model, max_iter, learning_rate)
+        elif role == "arbiter":
+            train_arbiter(ctx, max_iter)
+    elif stage == "predict":
+        if role == "guest":
+            predict_guest(ctx, input_model, test_data, test_output_data)
+        if role == "host":
+            predict_host(ctx, input_model, test_data, test_output_data)
+
+
+def train_guest(ctx, train_data, validate_data, train_output_data, output_model, max_iter, learning_rate):
     from fate.ml.lr.guest import LrModuleGuest
+
+    module = LrModuleGuest(max_iter=max_iter, learning_rate=learning_rate)
+    train_data = ctx.read(train_data).dataframe()
+    if validate_data is not None:
+        validate_data = ctx.read(validate_data).load_dataframe()
+    module.fit(ctx, train_data, validate_data)
+    model = module.to_model()
+    output_data = module.predict(ctx, train_data)
+    ctx.write(train_output_data).save_dataframe(output_data)
+    ctx.write(output_model).save_model(model)
+
+
+def train_host(ctx, train_data, validate_data, train_output_data, output_model, max_iter, learning_rate):
     from fate.ml.lr.host import LrModuleHost
 
-    if stage == "train":
-        if role == "guest" and role == "host":
-            if role == "guest":
-                module = LrModuleGuest(max_iter=max_iter, learning_rate=learning_rate)
-            else:
-                module = LrModuleHost(max_iter=max_iter, learning_rate=learning_rate)
-            train_data = ctx.read(train_data).dataframe()
-            if validate_data is not None:
-                validate_data = ctx.read(validate_data).load_dataframe()
-            module.fit(ctx, train_data, validate_data)
-            model = module.to_model()
-            output_data = module.predict(ctx, train_data)
-            ctx.write(train_output_data).save_dataframe(output_data)
-            ctx.write(output_model).save_model(model)
-        if role == "arbiter":
-            module = LrModuleArbiter(max_iter=max_iter)
-            module.fit(ctx)
+    module = LrModuleHost(max_iter=max_iter, learning_rate=learning_rate)
+    train_data = ctx.read(train_data).dataframe()
+    if validate_data is not None:
+        validate_data = ctx.read(validate_data).load_dataframe()
+    module.fit(ctx, train_data, validate_data)
+    model = module.to_model()
+    output_data = module.predict(ctx, train_data)
+    ctx.write(train_output_data).save_dataframe(output_data)
+    ctx.write(output_model).save_model(model)
 
-    elif stage == "predict":
-        if role == "guest" or role == "host":
-            model = ctx.read(input_model).load_model()
-            if role == "guest":
-                module = LrModuleGuest.from_model(model)
-            else:
-                module = LrModuleHost.from_model(model)
-            train_data = ctx.read(test_data).load_dataframe()
-            output_data = module.predict(ctx, test_data)
-            ctx.write(test_output_data).save_dataframe(output_data)
-    else:
-        raise NotImplementedError(f"stage={stage}")
+
+def train_arbiter(ctx, max_iter):
+    from fate.ml.lr.arbiter import LrModuleArbiter
+
+    module = LrModuleArbiter(max_iter=max_iter)
+    module.fit(ctx)
+
+
+def predict_guest(ctx, input_model, test_data, test_output_data):
+    from fate.ml.lr.guest import LrModuleGuest
+
+    model = ctx.read(input_model).load_model()
+    module = LrModuleGuest.from_model(model)
+    test_data = ctx.read(test_data).load_dataframe()
+    output_data = module.predict(ctx, test_data)
+    ctx.write(test_output_data).save_dataframe(output_data)
+
+
+def predict_host(ctx, input_model, test_data, test_output_data):
+    from fate.ml.lr.host import LrModuleHost
+
+    model = ctx.read(input_model).load_model()
+    module = LrModuleHost.from_model(model)
+    test_data = ctx.read(test_data).load_dataframe()
+    output_data = module.predict(ctx, test_data)
+    ctx.write(test_output_data).save_dataframe(output_data)

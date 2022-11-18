@@ -1,5 +1,5 @@
 execution_id: xxx
-component: lr
+component: hetero_lr
 role: guest
 stage: predict
 inputs:
