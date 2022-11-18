@@ -1,8 +1,7 @@
 dag:
-  scheduler_party:
-    party_id: 9999
-  job_parameters:
-    inheritance_parameters:
+  scheduler_party_id: 9999
+  parameters:
+    inherit:
       job_id: 202211141733532889390
       tasks:
       - reader_0
@@ -12,30 +11,25 @@ dag:
     auto_retries: 1
     model_id: demo
     model_version: demo
-  task_parameters:
-    task_cores: 8
-    engine_parameters:
-      computing:
-        partitions: 8
-        eggroll:
-          eggroll.session.processors.per.node: 4
-        spark:
-          num-executors: 2
-          executor-cores: 2
-      federation:
-        pulsar:
-          max_message_size: 104857
-          topic_ttl: 1
-        rabbitmq:
-          max_message_size: 1048576
+    task:
+      task_cores: 8
+      engine:
+        computing:
+          partitions: 8
+          type: eggroll
+          metadata:
+            eggroll.session.processors.per.node: 4
+        federation:
+          type: pulsar
+          metadata:
+            max_message_size: 104857
+            topic_ttl: 1
   stage: train
   parties:
-  - party_id: 10001
-    role: arbiter
-  - party_id: 9999
-    role: guest
-  - party_id: 10000
-    role: host
+    - role: guest
+      party_id:
+        -9999
+        -10000
   party_tasks:
     guest_9999:
       parties:
@@ -57,6 +51,7 @@ dag:
               path: examples/data/breast_hetero_host.csv
   tasks:
     lr_0:
+      stage:
       component_ref: hetero_lr
       dependent_tasks:
       - reader_0
@@ -65,12 +60,19 @@ dag:
           train_data:
             task_output_artifact:
               producer_task: reader_0
-              output_artifact_key: data
+              artifact_key: data
+          model:
+            zoo:
+              model_id: xxxx
+              model_version: xxx
+              producer_task: lr_0
+              artifact_key: model
+              output_artifact_key: model
+              metadata:
+                model_id:
         parameters:
           learning_rate: 0.1
           max_iter: 10
-      task_info:
-        name: lr_0
     reader_0:
       component_ref: reader
       parties:
