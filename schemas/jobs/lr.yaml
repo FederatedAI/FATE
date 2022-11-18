@@ -69,13 +69,6 @@ dag:
         parameters:
           learning_rate: 0.1
           max_iter: 10
-      parties:
-      - party_id: 10001
-        role: arbiter
-      - party_id: 9999
-        role: guest
-      - party_id: 10000
-        role: host
       task_info:
         name: lr_0
     reader_0:
