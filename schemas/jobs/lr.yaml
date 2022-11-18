@@ -4,7 +4,7 @@ dag:
   job_parameters:
     inheritance_parameters:
       job_id: 202211141733532889390
-      components:
+      tasks:
       - reader_0
       - lr_0
     task_parallelism: 1
