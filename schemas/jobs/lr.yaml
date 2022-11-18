@@ -1,8 +1,33 @@
 dag:
-  initiator_party:
-    party_id: 10001
-    role: arbiter
-  job_parameters: {}
+  scheduler_party:
+    party_id: 9999
+  job_parameters:
+    inheritance_parameters:
+      job_id: 202211141733532889390
+      components:
+      - reader_0
+      - lr_0
+    task_parallelism: 1
+    federated_status_collect_type: PUSH
+    auto_retries: 1
+    model_id: demo
+    model_version: demo
+  task_parameters:
+    task_cores: 8
+    engine_parameters:
+      computing:
+        partitions: 8
+        eggroll:
+          eggroll.session.processors.per.node: 4
+        spark:
+          num-executors: 2
+          executor-cores: 2
+      federation:
+        pulsar:
+          max_message_size: 104857
+          topic_ttl: 1
+        rabbitmq:
+          max_message_size: 1048576
   stage: train
   parties:
   - party_id: 10001
@@ -31,7 +56,6 @@ dag:
             parameters:
               path: examples/data/breast_hetero_host.csv
     task_parameters: {}
-  task_parameters: {}
   tasks:
     lr_0:
       component_ref: hetero_lr
