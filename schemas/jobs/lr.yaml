@@ -55,7 +55,6 @@ dag:
           inputs:
             parameters:
               path: examples/data/breast_hetero_host.csv
-    task_parameters: {}
   tasks:
     lr_0:
       component_ref: hetero_lr
