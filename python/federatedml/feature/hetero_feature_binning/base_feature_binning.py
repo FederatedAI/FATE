@@ -70,7 +70,7 @@ class BaseFeatureBinning(ModelBase):
         self.transform_bin_result = MultiClassBinResult(labels=[0, 1])
         self.has_missing_value = False
         self.labels = []
-        self.manual_split_points = None
+        self.use_manual_split_points = False
         self.has_woe_array = False
 
         self._stage = "fit"
@@ -213,7 +213,7 @@ class BaseFeatureBinning(ModelBase):
             transform_type=self.model_param.transform_param.transform_type
         )
         optimal_metric_method = None
-        if self.model_param.method == consts.OPTIMAL:
+        if self.model_param.method == consts.OPTIMAL and not self.use_manual_split_points:
             optimal_metric_method = self.model_param.optimal_binning_param.metric_method
         meta_protobuf_obj = feature_binning_meta_pb2.FeatureBinningMeta(
             method=self.model_param.method,
