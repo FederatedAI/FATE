@@ -255,8 +255,7 @@ class HeteroFeatureBinningParam(FeatureBinningParam):
     def check(self):
         descr = "Hetero Binning param's"
         super(HeteroFeatureBinningParam, self).check()
-        if self.method is not None:
-            self.check_valid_value(self.method, descr, [consts.QUANTILE, consts.BUCKET, consts.OPTIMAL])
+        self.check_valid_value(self.method, descr, [consts.QUANTILE, consts.BUCKET, consts.OPTIMAL])
         self.optimal_binning_param.check()
         self.encrypt_param.check()
         if self.encrypt_param.method != consts.PAILLIER:
