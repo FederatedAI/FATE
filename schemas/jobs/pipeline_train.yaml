@@ -1,0 +1,89 @@
+dag:
+  conf:
+    task_parallelism: 1
+  parties:
+  - party_id:
+    - '9999'
+    role: guest
+  - party_id:
+    - '10000'
+    - '10001'
+    role: host
+  - party_id:
+    - '10001'
+    role: arbiter
+  party_tasks:
+    guest_9999:
+      parties:
+      - party_id:
+        - '9999'
+        role: guest
+      tasks:
+        reader_0:
+          inputs:
+            parameters:
+              path: examples/data/breast_hetero_guest.csv
+    host_10000:
+      parties:
+      - party_id:
+        - '10000'
+        role: host
+      tasks:
+        reader_0:
+          inputs:
+            parameters:
+              path: examples/data/breast_hetero_host.csv
+    host_10001:
+      parties:
+      - party_id:
+        - '10001'
+        role: host
+      tasks:
+        reader_0:
+          inputs:
+            parameters:
+              path: examples/data/breast_hetero_host.csv
+  scheduler_party_id: '10001'
+  stage: train
+  tasks:
+    lr_0:
+      component_ref: hetero_lr
+      dependent_tasks:
+      - reader_0
+      inputs:
+        artifacts:
+          train_data:
+            task_output_artifact:
+              output_artifact_key: data
+              producer_task: reader_0
+        parameters:
+          max_iter: 1
+    lr_1:
+      component_ref: hetero_lr
+      dependent_tasks:
+      - reader_0
+      - lr_0
+      inputs:
+        artifacts:
+          input_model:
+            task_output_artifact:
+              output_artifact_key: output_model
+              producer_task: lr_0
+          test_data:
+            task_output_artifact:
+              output_artifact_key: data
+              producer_task: reader_0
+      stage: predict
+    reader_0:
+      component_ref: reader
+      parties:
+      - party_id:
+        - '9999'
+        role: guest
+      - party_id:
+        - '10000'
+        - '10001'
+        role: host
+      stage: default
+schema_version: 2.0.0.alpha
+
