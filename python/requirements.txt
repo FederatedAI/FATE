@@ -50,6 +50,7 @@ sklearn2pmml==0.84.2
 nyoka==5.3.0
 transformers==4.23.1
 impyla==0.18.0
+venv-pack==0.2.0
 etaf-crypto
 
 # addtional requirements for eggroll
