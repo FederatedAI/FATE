@@ -87,6 +87,12 @@ class _Component:
         self.description = description
         self.callback = callback
         self.parameters = parameters
+        # assert parameters defined once
+        _defined = set()
+        for p in self.parameters:
+            if p.name in _defined:
+                raise ComponentDeclarError(f"parameter named `{p.name}` declared multiple times")
+            _defined.add(p.name)
         self.artifacts = artifacts
 
         self.func_args = list(inspect.signature(self.callback).parameters.keys())

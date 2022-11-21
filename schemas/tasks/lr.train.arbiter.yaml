@@ -1,38 +1,21 @@
 execution_id: xxx
 component: hetero_lr
-role: guest
+role: arbiter
 stage: train
 inputs:
   parameters:
-    learning_rate: 0.2
+    learning_rate: 0.01
     max_iter: 100
-  artifacts:
-    train_data:
-      name: train_data
-      uri: file:///tmp/train_data
-      metadata:
-        format: csv
-    validate_data:
-      name: train_data
-      uri: file:///tmp/train_data
-      metadata:
-        format: csv
+    batch_size: 100
+
 outputs:
   artifacts:
-    output_model:
-      name: output_model
-      uri: file:///tmp/trained_model
-    train_output_data:
-      name: train_output_data
-      uri: file:///tmp/train_data_forward
-      metadata:
-        format: csv
     metrics:
       name: ClassificationMetrics
       uri: file:///tmp/metrics
       metadata:
         format: json
-env:
+conf:
   mlmd:
     type: pipeline
     metadata:
@@ -53,9 +36,11 @@ env:
     federation_id: xxx
     parties:
       local:
-        role: guest
-        partyid: "9999"
+        role: arbiter
+        partyid: "10001"
       parties:
+        - role: guest
+          partyid: "9999"
         - role: host
           partyid: "10000"
         - role: arbiter

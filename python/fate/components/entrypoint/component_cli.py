@@ -30,13 +30,13 @@ def execute(execution_id, config, config_entrypoint, component, role, stage):
     task_config = TaskConfigSpec.parse_obj(configs)
 
     # install logger
-    task_config.env.logger.install()
+    task_config.conf.logger.install()
     logger = logging.getLogger(__name__)
     logger.debug("logger installed")
     logger.debug(f"task config: {task_config}")
 
     # init mlmd
-    task_config.env.mlmd.init(task_config.execution_id)
+    task_config.conf.mlmd.init(task_config.execution_id)
 
     from fate.components.entrypoint.component import execute_component
 

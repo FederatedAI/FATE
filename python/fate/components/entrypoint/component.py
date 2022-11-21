@@ -18,11 +18,11 @@ class ParamsValidateFailed(ComponentExecException):
 
 
 def execute_component(config: TaskConfigSpec):
-    mlmd = config.env.mlmd
+    mlmd = config.conf.mlmd
     context_name = config.execution_id
     computing = get_computing(config)
     federation = get_federation(config, computing)
-    device = config.env.get_device()
+    device = config.conf.get_device()
     ctx = Context(
         context_name=context_name,
         device=device,
@@ -39,7 +39,7 @@ def execute_component(config: TaskConfigSpec):
             component.execute(ctx, *args)
         except Exception as e:
             tb = traceback.format_exc()
-            mlmd.log_excution_exception(dict(exception=e.args, traceback=tb))
+            mlmd.log_excution_exception(dict(exception=str(e.args), traceback=tb))
             raise e
         else:
             mlmd.log_excution_end()
@@ -57,33 +57,33 @@ def execute_component(config: TaskConfigSpec):
 
 
 def get_computing(config: TaskConfigSpec):
-    if (engine := config.env.distributed_computing_backend.engine) == "standalone":
+    if (engine := config.conf.distributed_computing_backend.engine) == "standalone":
         from fate.arch.computing.standalone import CSession
 
-        return CSession(config.env.distributed_computing_backend.computing_id)
+        return CSession(config.conf.distributed_computing_backend.computing_id)
     elif engine == "eggroll":
         from fate.arch.computing.eggroll import CSession
 
-        return CSession(config.env.distributed_computing_backend.computing_id)
+        return CSession(config.conf.distributed_computing_backend.computing_id)
     elif engine == "spark":
         from fate.arch.computing.spark import CSession
 
-        return CSession(config.env.distributed_computing_backend.computing_id)
+        return CSession(config.conf.distributed_computing_backend.computing_id)
 
     else:
         raise ParamsValidateFailed(f"extra.distributed_computing_backend.engine={engine} not support")
 
 
 def get_federation(config: TaskConfigSpec, computing):
-    if (engine := config.env.federation_backend.engine) == "standalone":
+    if (engine := config.conf.federation_backend.engine) == "standalone":
         from fate.arch.federation.standalone import StandaloneFederation
 
-        federation_config = config.env.federation_backend
+        federation_config = config.conf.federation_backend
         return StandaloneFederation(
             computing,
             federation_config.federation_id,
-            federation_config.parties.local,
-            federation_config.parties.parties,
+            federation_config.parties.local.tuple(),
+            [p.tuple() for p in federation_config.parties.parties],
         )
 
     else:

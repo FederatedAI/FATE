@@ -22,6 +22,9 @@ class TaskPartySpec(pydantic.BaseModel):
     role: Literal["guest", "host", "arbiter"]
     partyid: str
 
+    def tuple(self):
+        return (self.role, self.partyid)
+
 
 class TaskFederationPartiesSpec(pydantic.BaseModel):
     local: TaskPartySpec
@@ -34,7 +37,7 @@ class TaskFederationBackendSpec(pydantic.BaseModel):
     parties: TaskFederationPartiesSpec
 
 
-class TaskEnvSpec(pydantic.BaseModel):
+class TaskConfSpec(pydantic.BaseModel):
     device: Literal["CPU", "GPU"]
     distributed_computing_backend: TaskDistributedComputingBackendSpec
     federation_backend: TaskFederationBackendSpec
@@ -57,12 +60,12 @@ class ArtifactSpec(pydantic.BaseModel):
 
 
 class TaskInputsSpec(pydantic.BaseModel):
-    parameters: Dict[str, Any]
-    artifacts: Dict[str, Union[ArtifactSpec, List[ArtifactSpec]]]
+    parameters: Dict[str, Any] = {}
+    artifacts: Dict[str, Union[ArtifactSpec, List[ArtifactSpec]]] = {}
 
 
 class TaskOutputsSpec(pydantic.BaseModel):
-    artifacts: Dict[str, Union[ArtifactSpec, List[ArtifactSpec]]]
+    artifacts: Dict[str, Union[ArtifactSpec, List[ArtifactSpec]]] = {}
 
 
 class TaskConfigSpec(pydantic.BaseModel):
@@ -70,6 +73,6 @@ class TaskConfigSpec(pydantic.BaseModel):
     component: str
     role: str
     stage: str
-    inputs: TaskInputsSpec
-    outputs: TaskOutputsSpec
-    env: TaskEnvSpec
+    inputs: TaskInputsSpec = TaskInputsSpec(parameters={}, artifacts={})
+    outputs: TaskOutputsSpec = TaskOutputsSpec(artifacts={})
+    conf: TaskConfSpec

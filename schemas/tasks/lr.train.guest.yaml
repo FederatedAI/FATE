@@ -1,0 +1,72 @@
+execution_id: xxx
+component: hetero_lr
+role: guest
+stage: train
+inputs:
+  parameters:
+    learning_rate: 0.01
+    max_iter: 100
+    batch_size: 100
+  artifacts:
+    train_data:
+      name: train_data
+      uri: file:///Users/sage/proj/FATE/2.0.0-alpha/examples/data/breast_hetero_guest.csv
+      metadata:
+        format: csv
+        id_name: id
+        delimiter: ","
+        label_name: y
+        label_type: float32
+        dtype: float32
+        num_features: 10
+        num_samples: 569
+    validate_data:
+      name: train_data
+      uri: file:///Users/sage/proj/FATE/2.0.0-alpha/examples/data/breast_hetero_guest.csv
+      metadata:
+        format: csv
+        num_features: 10
+        num_samples: 569
+outputs:
+  artifacts:
+    output_model:
+      name: output_model
+      uri: file:///tmp/trained_model
+    train_output_data:
+      name: train_output_data
+      uri: file:///tmp/train_data_forward
+      metadata:
+        format: csv
+    metrics:
+      name: ClassificationMetrics
+      uri: file:///tmp/metrics
+      metadata:
+        format: json
+conf:
+  mlmd:
+    type: pipeline
+    metadata:
+      state_path: /Users/sage/fate_tmp/state
+      terminate_state_path: /Users/sage/fate_tmp/terminate_state
+  logger:
+    type: pipeline
+    metadata:
+      basepath: /Users/sage/fate_tmp/logs
+      level: DEBUG
+      debug_mode: true
+  device: CPU
+  distributed_computing_backend:
+    engine: standalone
+    computing_id: xxxx
+  federation_backend:
+    engine: standalone
+    federation_id: xxx
+    parties:
+      local:
+        role: guest
+        partyid: "9999"
+      parties:
+        - role: host
+          partyid: "10000"
+        - role: arbiter
+          partyid: "10001"

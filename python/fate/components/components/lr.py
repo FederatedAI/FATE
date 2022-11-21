@@ -8,6 +8,19 @@ from fate.components.spec import (
     roles,
     stages,
 )
+from torch import batch_norm
+
+# @cpn.component(...)
+# def lr():
+#     ...
+
+# @lr.stage(...)
+# def train():
+#     ...
+
+# @lr.stage(...)
+# def predict():
+#     ...
 
 
 @cpn.component(roles=roles.get_all(), provider="fate", version="2.0.0.alpha")
@@ -21,6 +34,7 @@ from fate.components.spec import (
 )
 @cpn.parameter("learning_rate", type=float, default=0.1, optional=False)
 @cpn.parameter("max_iter", type=int, default=100, optional=False)
+@cpn.parameter("batch_size", type=int, default=100, optional=False)
 @cpn.artifact(
     "train_output_data", type=Output[DatasetArtifact], roles=[roles.GUEST, roles.HOST], stages=[stages.TRAIN]
 )
@@ -38,15 +52,20 @@ def hetero_lr(
     input_model,
     learning_rate,
     max_iter,
+    batch_size,
     train_output_data,
     output_model,
     test_output_data,
 ):
     if stage == "train":
         if role == "guest":
-            train_guest(ctx, train_data, validate_data, train_output_data, output_model, max_iter, learning_rate)
+            train_guest(
+                ctx, train_data, validate_data, train_output_data, output_model, max_iter, learning_rate, batch_size
+            )
         elif role == "host":
-            train_host(ctx, train_data, validate_data, train_output_data, output_model, max_iter, learning_rate)
+            train_host(
+                ctx, train_data, validate_data, train_output_data, output_model, max_iter, learning_rate, batch_size
+            )
         elif role == "arbiter":
             train_arbiter(ctx, max_iter)
     elif stage == "predict":
@@ -56,32 +75,32 @@ def hetero_lr(
             predict_host(ctx, input_model, test_data, test_output_data)
 
 
-def train_guest(ctx, train_data, validate_data, train_output_data, output_model, max_iter, learning_rate):
+def train_guest(ctx, train_data, validate_data, train_output_data, output_model, max_iter, learning_rate, batch_size):
     from fate.ml.lr.guest import LrModuleGuest
 
-    module = LrModuleGuest(max_iter=max_iter, learning_rate=learning_rate)
-    train_data = ctx.read(train_data).dataframe()
+    module = LrModuleGuest(max_iter=max_iter, learning_rate=learning_rate, batch_size=batch_size)
+    train_data = ctx.reader(train_data).read_dataframe()
     if validate_data is not None:
-        validate_data = ctx.read(validate_data).load_dataframe()
+        validate_data = ctx.reader(validate_data).read_dataframe()
     module.fit(ctx, train_data, validate_data)
     model = module.to_model()
     output_data = module.predict(ctx, train_data)
-    ctx.write(train_output_data).save_dataframe(output_data)
-    ctx.write(output_model).save_model(model)
+    ctx.writer(train_output_data).write_dataframe(output_data)
+    ctx.writer(output_model).write_model(model)
 
 
-def train_host(ctx, train_data, validate_data, train_output_data, output_model, max_iter, learning_rate):
+def train_host(ctx, train_data, validate_data, train_output_data, output_model, max_iter, learning_rate, batch_size):
     from fate.ml.lr.host import LrModuleHost
 
-    module = LrModuleHost(max_iter=max_iter, learning_rate=learning_rate)
-    train_data = ctx.read(train_data).dataframe()
+    module = LrModuleHost(max_iter=max_iter, learning_rate=learning_rate, batch_size=batch_size)
+    train_data = ctx.reader(train_data).read_dataframe()
     if validate_data is not None:
-        validate_data = ctx.read(validate_data).load_dataframe()
+        validate_data = ctx.reader(validate_data).read_dataframe()
     module.fit(ctx, train_data, validate_data)
     model = module.to_model()
     output_data = module.predict(ctx, train_data)
-    ctx.write(train_output_data).save_dataframe(output_data)
-    ctx.write(output_model).save_model(model)
+    ctx.writer(train_output_data).write_dataframe(output_data)
+    ctx.writer(output_model).write_model(model)
 
 
 def train_arbiter(ctx, max_iter):
