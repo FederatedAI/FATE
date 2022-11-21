@@ -159,7 +159,7 @@ Below lists features of each ECDH, RSA, DH, and RAW intersection methods.
 
 | Intersect Methods 	| PSI                                                                     	| Match-ID Support                                                       	| Multi-Host                                                                   	| Exact-Cardinality                                                                              	| Estimated Cardinality                                                              	| Preprocessing                                                                        	| Cache                                                                         	|
 |-------------------	|-------------------------------------------------------------------------	|------------------------------------------------------------------------	|------------------------------------------------------------------------------	|------------------------------------------------------------------------------------------------	|------------------------------------------------------------------------------------	|--------------------------------------------------------------------------------------	|-------------------------------------------------------------------------------	|
-| ECDH              	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-ecdh.py) 	| &check;                                                                	| &cross;                                                                      	| [&check;](../../examples/dsl/v2/intersect/test_intersect_job_ecdh_exact_cardinality_conf.json) 	| &cross;                                                                            	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-ecdh-w-preprocess.py) 	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-ecdh-cache.py) 	|
+| ECDH              	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-ecdh.py) 	| &check;                                                                	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-ecdh-multi)    | [&check;](../../examples/dsl/v2/intersect/test_intersect_job_ecdh_exact_cardinality_conf.json) 	| &cross;                                                                            	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-ecdh-w-preprocess.py) 	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-ecdh-cache.py) 	|
 | RSA               	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-rsa.py)  	| [&check;](../../examples/pipeline/match_id_test/pipeline-hetero-lr.py) 	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-multi-rsa.py) 	| &cross;                                                                                        	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-rsa-cardinality.py) 	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-dh-w-preprocess.py)   	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-rsa-cache.py)  	|
 | DH                	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-dh.py)   	| &check;                                                                	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-dh-multi.py)  	| [&check;](examples/dsl/v2/intersect/test_intersect_job_dh_exact_cardinality_conf.json)         	| &cross;                                                                            	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-rsa-w-preprocess.py)  	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-dh-cache.py)   	|
 | RAW               	| &check;                                                                 	| &check;                                                                	| &check;                                                                      	| &cross;                                                                                        	| &cross;                                                                            	| &check;                                                                              	| &cross;                                                                       	|
@@ -172,10 +172,7 @@ All four methods support:
     refer [here](../../python/federatedml/param/intersect_param.py)
     for more details.
 3.  Preprocessing step to pre-filter Host's data for faster PSI
-
-RSA, RAW, and DH intersection methods support:
-
-1.  Multi-host PSI task. The detailed configuration for multi-host task
+4.  Multi-host PSI task. The detailed configuration for multi-host task
     can be found
     [here](../tutorial/dsl_conf/dsl_conf_v2_setting_guide.md#multi-host-configuration).
 
@@ -191,7 +188,7 @@ Cardinality Computation:
 
 1. Set `cardinality_method` to `rsa` will produce estimated intersection cardinality;
 
-2. Set `cardinality_method` to `dh` will compute exact intersection cardinality
+2. Set `cardinality_method` to `dh` or `ecdh` will compute exact intersection cardinality
 
 <!-- 
 ## Examples

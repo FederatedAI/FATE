@@ -13,7 +13,7 @@ provide:
     Feature Selection, etc.
 4. Federated Machine Learning Algorithms: LR, GBDT, DNN,
     TransferLearning, UnsupervisedLearning which support Heterogeneous and Homogeneous
-    styles.
+    styles, Semi-supervisedLearning which support Heterogeneous styles
 5. Model Evaluation: Binary | Multiclass | Regression | Clustering
     Evaluation, Local vs Federated Comparison.
 6. Secure Protocol: Provides multiple security protocols for secure
@@ -61,6 +61,7 @@ provide:
 | [Label Transform](label_transform.md)                                    | LabelTransform              | Replaces label values of input data instances and predict results                                                                     | Table, values are Instances or prediction results | Table, values with transformed label values                                                           |                                                      | LabelTransform Model                                                    |
 | [Hetero SSHE Logistic Regression](logistic_regression.md)                                    | HeteroSSHELR            | Build hetero logistic regression model without arbiter                                                                     | Table, values are Instances                               | Table, values are Instances                                                           |                                                      | SSHE LR Model                                                    |
 | [Hetero SSHE Linear Regression](linear_regression.md)                                    | HeteroSSHELinR            | Build hetero linear regression model without arbiter                                                                     | Table, values are Instances                               | Table, values are Instances                                                           |                                                      | SSHE LinR Model                                                    |
+| [Positive Unlabeled Learning](positive_unlabeled.md) | PositiveUnlabeled | Build positive unlabeled learning model                                        | Table, values are Instances                               | Table, values are Instances                                                           |                                                      |     |
 
 ## Secure Protocol
 
