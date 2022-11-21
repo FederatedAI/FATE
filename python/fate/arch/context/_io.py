@@ -35,7 +35,8 @@ class Reader:
 
 
 class IOKit:
-    def reader(self, ctx, arg, **kwargs):
+    @staticmethod
+    def _parse_args(arg, **kwargs):
         name = ""
         metadata = {}
         if hasattr(arg, "uri"):
@@ -54,20 +55,31 @@ class IOKit:
             if k not in ["name", "metadata"]:
                 metadata[k] = v
 
-        self.uri = URI.from_string(uri)
+        uri = URI.from_string(uri)
         format = metadata.get("format")
+        return format, name, uri, metadata
+
+    def reader(self, ctx, arg, **kwargs) -> "Reader":
+        format, name, uri, metadata = self._parse_args(arg, **kwargs)
         if format is None:
             raise ValueError(f"reader format `{format}` unknown")
         return get_reader(format, ctx, name, uri, metadata)
 
+    def writer(self, ctx, arg, **kwargs) -> "Writer":
+        format, name, uri, metadata = self._parse_args(arg, **kwargs)
+        if format is None:
+            raise ValueError(f"reader format `{format}` unknown")
+        return get_writer(format, ctx, name, uri, metadata)
+
 
 class Reader(Protocol):
-    ...
+    def read_dataframe(self):
+        ...
 
 
 def get_reader(format, ctx, name, uri, metadata) -> Reader:
     if format == "csv":
-        return CSVReader(ctx, name, uri, metadata)
+        return CSVReader(ctx, name, uri.path, metadata)
 
 
 class CSVReader:
@@ -116,8 +128,41 @@ class LibSVMReader:
         ...
 
 
-class CSVWriter:
+def get_writer(format, ctx, name, uri, metadata) -> Reader:
+    if format == "csv":
+        return CSVWriter(ctx, name, uri, metadata)
+
+    if format == "json":
+        return JsonWriter(ctx, name, uri.path, metadata)
+
+
+class Writer(Protocol):
     ...
+
+
+class CSVWriter:
+    def __init__(self, ctx, name: str, uri: URI, metadata: dict) -> None:
+        self.name = name
+        self.ctx = ctx
+        self.uri = uri
+        self.metadata = metadata
+
+    def write_dataframe(self, df):
+        ...
+
+
+class JsonWriter:
+    def __init__(self, ctx, name: str, uri, metadata: dict) -> None:
+        self.name = name
+        self.ctx = ctx
+        self.uri = uri
+        self.metadata = metadata
+
+    def write_model(self, model):
+        import json
+
+        with open(self.uri, "w") as f:
+            json.dump(model, f)
 
 
 class LibSVMWriter:

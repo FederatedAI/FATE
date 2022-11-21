@@ -1,28 +1,13 @@
 import logging
 
-import numpy as np
 import torch
 from fate.arch import tensor
-from fate.arch.dataframe import CSVReader, DataLoader
-from fate.interface import Context, ModelsLoader, ModelsSaver
-from pandas import pandas
+from fate.arch.dataframe import DataLoader
+from fate.interface import Context
 
 from ..abc.module import HeteroModule
 
 logger = logging.getLogger(__name__)
-
-
-class DataframeMock:
-    def __init__(self, ctx) -> None:
-        guest_data_path = "/Users/sage/proj/FATE/2.0.0-alpha/" "examples/data/breast_hetero_host.csv"
-        self.data = CSVReader(id_name="id", delimiter=",", dtype="float32").to_frame(ctx, guest_data_path)
-        self.num_features = 20
-        self.num_sample = len(self.data)
-
-    def batches(self, batch_size):
-        num_batchs = (self.num_sample - 1) // batch_size + 1
-        for chunk in np.array_split(self.data, num_batchs):
-            yield tensor.tensor(torch.Tensor(chunk[:, 1:]))
 
 
 class LrModuleHost(HeteroModule):
@@ -38,10 +23,10 @@ class LrModuleHost(HeteroModule):
         self.alpha = alpha
         self.batch_size = batch_size
 
+        self.w = None
+
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
-        # mock data
-        train_data = DataframeMock(ctx)
-        batch_loader = DataLoader(train_data.data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="host")
+        batch_loader = DataLoader(train_data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="host")
         # get encryptor
         encryptor = ctx.arbiter("encryptor").get()
 
@@ -63,8 +48,10 @@ class LrModuleHost(HeteroModule):
                 logger.info(f"w={w}")
                 j += 1
 
+        self.w = w
+
     def to_model(self):
-        ...
+        return {"w": self.w.to_local()._storage.data.tolist()}
 
     @classmethod
     def from_model(cls, model) -> "LrModuleHost":

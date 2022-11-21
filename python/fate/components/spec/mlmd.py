@@ -52,7 +52,7 @@ class PipelineMLMD(BaseModel):
             json.dump(data, f)
 
     def safe_terminate(self):
-        ...
+        return True
 
 
 class FlowMLMD(BaseModel):

@@ -22,6 +22,8 @@ class LrModuleGuest(HeteroModule):
         self.learning_rate = learning_rate
         self.alpha = alpha
 
+        self.w = None
+
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
         """
         l(w) = 1/h * Σ(log(2) - 0.5 * y * xw + 0.125 * (wx)^2)
@@ -41,7 +43,6 @@ class LrModuleGuest(HeteroModule):
             logger.info(f"start iter {i}")
             j = 0
             for batch_ctx, (X, Y) in iter_ctx.iter(batch_loader):
-                print(X, Y)
                 h = X.shape[0]
 
                 # d
@@ -65,9 +66,10 @@ class LrModuleGuest(HeteroModule):
                 w -= (self.learning_rate / h) * g
                 logger.info(f"w={w}")
                 j += 1
+        self.w = w
 
     def to_model(self):
-        ...
+        return {"w": self.w.to_local()._storage.data.tolist()}
 
     @classmethod
     def from_model(cls, model) -> "LrModuleGuest":

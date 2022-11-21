@@ -5,7 +5,7 @@ stage: train
 inputs:
   parameters:
     learning_rate: 0.01
-    max_iter: 100
+    max_iter: 5
     batch_size: 100
   artifacts:
     train_data:
@@ -15,6 +15,9 @@ inputs:
         format: csv
         num_features: 20
         num_samples: 569
+        id_name: id
+        delimiter: ","
+        dtype: float32
     validate_data:
       name: train_data
       uri: file:///Users/sage/proj/FATE/2.0.0-alpha/examples/data/breast_hetero_host.csv
@@ -22,14 +25,19 @@ inputs:
         format: csv
         num_features: 20
         num_samples: 569
+        id_name: id
+        delimiter: ","
+        dtype: float32
 outputs:
   artifacts:
     output_model:
       name: output_model
-      uri: file:///tmp/trained_model
+      uri: file:///Users/sage/proj/FATE/2.0.0-alpha/models/host.json
+      metadata:
+        format: json
     train_output_data:
       name: train_output_data
-      uri: file:///tmp/train_data_forward
+      uri: file:///Users/sage/temp/host_output_data
       metadata:
         format: csv
     metrics:

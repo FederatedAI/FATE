@@ -5,7 +5,7 @@ stage: train
 inputs:
   parameters:
     learning_rate: 0.01
-    max_iter: 100
+    max_iter: 5
     batch_size: 100
   artifacts:
     train_data:
@@ -31,7 +31,9 @@ outputs:
   artifacts:
     output_model:
       name: output_model
-      uri: file:///tmp/trained_model
+      uri: file:///Users/sage/proj/FATE/2.0.0-alpha/models/guest.json
+      metadata:
+        format: json
     train_output_data:
       name: train_output_data
       uri: file:///tmp/train_data_forward

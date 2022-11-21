@@ -11,22 +11,7 @@ logger = logging.getLogger(__name__)
 class LrModuleArbiter(HeteroModule):
     def __init__(
         self,
-        penalty="l2",
-        *,
-        dual=False,
-        tol=1e-4,
-        C=1.0,
-        fit_intercept=True,
-        intercept_scaling=1,
-        class_weight=None,
-        random_state=None,
-        solver="lbfgs",
         max_iter=100,
-        multi_class="auto",
-        verbose=0,
-        warm_start=False,
-        n_jobs=None,
-        l1_ratio=None,
     ):
         self.max_iter = max_iter
         self.batch_size = 5
@@ -44,11 +29,9 @@ class LrModuleArbiter(HeteroModule):
             for batch_ctx, _ in iter_ctx.iter(batch_loader):
                 g_guest_enc = batch_ctx.guest.get("g_enc")
                 g = decryptor.decrypt(g_guest_enc)
-                logger.info(f"g={g}")
                 batch_ctx.guest.put("g", g)
                 for i, g_host_enc in enumerate(batch_ctx.hosts.get("g_enc")):
                     g = decryptor.decrypt(g_host_enc)
                     batch_ctx.hosts[i].put("g", g)
-                    logger.info(f"g={g}")
                 loss = decryptor.decrypt(batch_ctx.guest.get("loss"))
                 logger.info(f"loss={loss}")
