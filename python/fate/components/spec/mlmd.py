@@ -1,7 +1,5 @@
-import json
 from typing import Literal, Protocol
 
-import pydantic
 from pydantic import BaseModel
 
 """
@@ -24,16 +22,20 @@ class MLMD(Protocol):
         ...
 
 
-class PipelineMLMD(BaseModel):
+class PipelineMLMDDesc(BaseModel):
     class PipelineMLMDMetaData(BaseModel):
-        state_path: str
-        terminate_state_path: str
+        db: str
 
     type: Literal["pipeline"]
     metadata: PipelineMLMDMetaData
 
-    def init(self, execution_id: str):
-        ...
+
+class PipelineMLMD:
+    def __init__(self, mlmd: PipelineMLMDDesc, taskid) -> None:
+        from fate.arch.context._mlmd import MachineLearningMetadata
+
+        self._mlmd = MachineLearningMetadata(metadata=dict(filename_uri=mlmd.metadata.db))
+        self._task = self._mlmd.get_or_create_task(taskid)
 
     def log_excution_start(self):
         return self._log_state("running")
@@ -42,17 +44,15 @@ class PipelineMLMD(BaseModel):
         return self._log_state("finish")
 
     def log_excution_exception(self, message: dict):
-        return self._log_state("exception", message)
+        import json
+
+        self._log_state("exception", json.dumps(message))
 
     def _log_state(self, state, message=None):
-        data = dict(state=state)
-        if message is not None:
-            data["message"] = message
-        with open(self.metadata.state_path, "w") as f:
-            json.dump(data, f)
+        self._mlmd.update_task_state(self._task, state, message)
 
     def safe_terminate(self):
-        return True
+        return self._mlmd.get_task_safe_terminate_flag(self._task)
 
 
 class FlowMLMD(BaseModel):
@@ -84,3 +84,8 @@ class FlowMLMD(BaseModel):
 
     def safe_terminate(self):
         ...
+
+
+def get_mlmd(mlmd, taskid):
+    if isinstance(mlmd, PipelineMLMDDesc):
+        return PipelineMLMD(mlmd, taskid)

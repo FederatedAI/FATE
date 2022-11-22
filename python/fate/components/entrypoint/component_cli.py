@@ -32,9 +32,6 @@ def execute(process_tag, config, config_entrypoint, properties):
     logger.debug("logger installed")
     logger.debug(f"task config: {task_config}")
 
-    # init mlmd
-    task_config.conf.mlmd.init(task_config.execution_id)
-
     from fate.components.entrypoint.component import execute_component
 
     execute_component(task_config)

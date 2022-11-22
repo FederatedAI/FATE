@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Union
 
 import pydantic
-from fate.components.spec.mlmd import FlowMLMD, PipelineMLMD
+from fate.components.spec.mlmd import FlowMLMD, PipelineMLMDDesc
 
 from .logger import CustomLogger, FlowLogger, PipelineLogger
 
@@ -42,7 +42,7 @@ class TaskConfSpec(pydantic.BaseModel):
     computing: TaskDistributedComputingBackendSpec
     federation: TaskFederationBackendSpec
     logger: Union[PipelineLogger, FlowLogger, CustomLogger]
-    mlmd: Union[PipelineMLMD, FlowMLMD]
+    mlmd: Union[PipelineMLMDDesc, FlowMLMD]
 
     def get_device(self):
         from fate.arch.unify import device
