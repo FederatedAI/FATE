@@ -57,10 +57,10 @@ conf:
       level: DEBUG
       debug_mode: true
   device: CPU
-  distributed_computing_backend:
+  computing:
     engine: standalone
     computing_id: xxxx
-  federation_backend:
+  federation:
     engine: standalone
     federation_id: xxx
     parties:

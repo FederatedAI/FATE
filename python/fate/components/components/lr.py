@@ -8,7 +8,6 @@ from fate.components.spec import (
     roles,
     stages,
 )
-from torch import batch_norm
 
 # @cpn.component(...)
 # def lr():

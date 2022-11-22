@@ -9,15 +9,12 @@ def component():
 
 
 @component.command()
-@click.option("--execution-id", required=True, help="unique id to identify this execution")
+@click.option("--process-tag", required=True, help="unique id to identify this execution process")
 @click.option("--config", required=False, type=click.File(), help="config path")
 @click.option("--config-entrypoint", required=False, help="enctypoint to get config")
-@click.option("--component", required=False, help="execution cpn")
-@click.option("--stage", required=False, help="execution stage")
-@click.option("--role", required=False, help="execution role")
-def execute(execution_id, config, config_entrypoint, component, role, stage):
+@click.option("--properties", "-p", multiple=True, help="properties config")
+def execute(process_tag, config, config_entrypoint, properties):
     "execute component"
-    # TODO: extends parameters
     import logging
 
     from fate.components.spec.task import TaskConfigSpec
@@ -26,7 +23,7 @@ def execute(execution_id, config, config_entrypoint, component, role, stage):
     configs = {}
     load_config_from_entrypoint(configs, config_entrypoint)
     load_config_from_file(configs, config)
-    load_config_from_cli(configs, execution_id, component, role, stage)
+    load_config_from_properties(configs, properties)
     task_config = TaskConfigSpec.parse_obj(configs)
 
     # install logger
@@ -43,14 +40,39 @@ def execute(execution_id, config, config_entrypoint, component, role, stage):
     execute_component(task_config)
 
 
-def load_config_from_cli(configs, execution_id, component, role, stage):
-    configs["execution_id"] = execution_id
-    if role is not None:
-        configs["role"] = role
-    if stage is not None:
-        configs["stage"] = stage
-    if component is not None:
-        configs["component"] = component
+def load_config_from_properties(configs, properties):
+    for property_item in properties:
+        k, v = property_item.split("=")
+        k = k.strip()
+        v = v.strip()
+        lens_and_setter = configs, None
+
+        def _setter(d, k):
+            def _set(v):
+                d[k] = v
+
+            return _set
+
+        for s in k.split("."):
+            lens, _ = lens_and_setter
+            if not s.endswith("]"):
+                print("in", lens)
+                if lens.get(s) is None:
+                    lens[s] = {}
+                lens_and_setter = lens[s], _setter(lens, s)
+            else:
+                name, index = s.rstrip("]").split("[")
+                index = int(index)
+                if lens.get(name) is None:
+                    lens[name] = []
+                lens = lens[name]
+                if (short_size := index + 1 - len(lens)) > 0:
+                    lens.extend([None] * short_size)
+                    lens[index] = {}
+                lens_and_setter = lens[index], _setter(lens, index)
+        _, setter = lens_and_setter
+        if setter is not None:
+            setter(v)
 
 
 def load_config_from_file(configs, config_file):

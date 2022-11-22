@@ -39,8 +39,8 @@ class TaskFederationBackendSpec(pydantic.BaseModel):
 
 class TaskConfSpec(pydantic.BaseModel):
     device: Literal["CPU", "GPU"]
-    distributed_computing_backend: TaskDistributedComputingBackendSpec
-    federation_backend: TaskFederationBackendSpec
+    computing: TaskDistributedComputingBackendSpec
+    federation: TaskFederationBackendSpec
     logger: Union[PipelineLogger, FlowLogger, CustomLogger]
     mlmd: Union[PipelineMLMD, FlowMLMD]
 

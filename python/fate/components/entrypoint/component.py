@@ -57,28 +57,28 @@ def execute_component(config: TaskConfigSpec):
 
 
 def get_computing(config: TaskConfigSpec):
-    if (engine := config.conf.distributed_computing_backend.engine) == "standalone":
+    if (engine := config.conf.computing.engine) == "standalone":
         from fate.arch.computing.standalone import CSession
 
-        return CSession(config.conf.distributed_computing_backend.computing_id)
+        return CSession(config.conf.computing.computing_id)
     elif engine == "eggroll":
         from fate.arch.computing.eggroll import CSession
 
-        return CSession(config.conf.distributed_computing_backend.computing_id)
+        return CSession(config.conf.computing.computing_id)
     elif engine == "spark":
         from fate.arch.computing.spark import CSession
 
-        return CSession(config.conf.distributed_computing_backend.computing_id)
+        return CSession(config.conf.computing.computing_id)
 
     else:
         raise ParamsValidateFailed(f"extra.distributed_computing_backend.engine={engine} not support")
 
 
 def get_federation(config: TaskConfigSpec, computing):
-    if (engine := config.conf.federation_backend.engine) == "standalone":
+    if (engine := config.conf.federation.engine) == "standalone":
         from fate.arch.federation.standalone import StandaloneFederation
 
-        federation_config = config.conf.federation_backend
+        federation_config = config.conf.federation
         return StandaloneFederation(
             computing,
             federation_config.federation_id,
