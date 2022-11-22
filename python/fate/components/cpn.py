@@ -87,6 +87,8 @@ class _Component:
         self.description = description
         self.callback = callback
         self.parameters = parameters
+        if not self.description:
+            self.description = ""
         # assert parameters defined once
         _defined = set()
         for p in self.parameters:
@@ -200,13 +202,14 @@ class _Component:
         output_artifacts = {}
         for artifact in self.artifacts:
             annotated = getattr(artifact.type, "__metadata__", [None])[0]
+            roles = getattr(artifact, "roles") or self.roles
             if annotated == OutputAnnotated:
                 output_artifacts[artifact.name] = ArtifactSpec(
-                    type=artifact.type.type, optional=artifact.optional, roles=artifact.roles, stages=artifact.stages
+                    type=artifact.type.type, optional=artifact.optional, roles=roles, stages=artifact.stages
                 )
             elif annotated == InputAnnotated:
                 input_artifacts[artifact.name] = ArtifactSpec(
-                    type=artifact.type.type, optional=artifact.optional, roles=artifact.roles, stages=artifact.stages
+                    type=artifact.type.type, optional=artifact.optional, roles=roles, stages=artifact.stages
                 )
             else:
                 raise ValueError(f"bad artifact: {artifact}")

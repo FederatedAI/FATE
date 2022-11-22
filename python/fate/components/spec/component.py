@@ -17,7 +17,7 @@ class ArtifactSpec(BaseModel):
     type: str
     optional: bool
     stages: Optional[List[stages]]
-    roles: Optional[List[roles]]
+    roles: List[roles]
 
 
 class InputDefinitionsSpec(BaseModel):
