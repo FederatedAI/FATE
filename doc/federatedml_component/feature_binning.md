@@ -68,7 +68,6 @@ case.
 8.  Support 4 types of optimal binning.
 9.  Support asymmetric binning methods on Host & Guest sides.
 10. Support multi-class iv\&woe calculation.
-11. Support configuring select columns by anonymous feature names
 
 Below lists supported features:
 
