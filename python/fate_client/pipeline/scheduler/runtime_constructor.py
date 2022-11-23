@@ -1,7 +1,7 @@
 from ..conf.env_config import StandaloneConfig
 from ..entity.component_structures import OutputDefinitionsSpec
-from ..entity.task_structure import TaskScheduleSpec, MLMDSpec, LOGGERSpec, \
-    RuntimeEnvSpec, ComputingBackendSpec, FederationBackendSpec, FederationPartySpec
+from ..entity.task_structure import TaskScheduleSpec, LOGGERSpec, TaskRuntimeInputSpec, TaskRuntimeOutputSpec, \
+    MLMDSpec, RuntimeEnvSpec, ComputingBackendSpec, FederationBackendSpec, FederationPartySpec
 from ..manager.resource_manager import StandaloneResourceManager
 from ..utils.id_gen import gen_computing_id, gen_federation_id, gen_execution_id
 
@@ -112,12 +112,8 @@ class RuntimeConstructor(object):
                 self._input_artifacts[party.role][party.party_id].update({input_key: output_artifacts})
 
     def _construct_mlmd(self, role, party_id):
-        status_path = self._resource_manager.generate_output_status_uri(self._job_id, self._task_name, role, party_id)
-        terminate_status_path = self._resource_manager.generate_output_terminate_status_uri(
-            self._job_id, self._task_name, role, party_id)
         metadata = {
-            "state_path": status_path,
-            "terminate_state_path": terminate_status_path
+            "db": self._conf.SQLITE_DB
         }
         return MLMDSpec(type="pipeline",
                         metadata=metadata)
@@ -160,8 +156,8 @@ class RuntimeConstructor(object):
             mlmd=mlmd,
             logger=logger,
             device=self._conf.DEVICE,
-            distributed_computing_backend=computing_backend,
-            federation_backend=federation_backend
+            computing=computing_backend,
+            federation=federation_backend
         )
 
     def construct_task_schedule_spec(self):
@@ -176,12 +172,19 @@ class RuntimeConstructor(object):
             )
 
             input_artifact = self._input_artifacts[party.role][party.party_id]
+            task_input_spec = TaskRuntimeInputSpec()
             if input_artifact:
-                party_task_spec.inputs = input_artifact
+                task_input_spec.artifacts = input_artifact
+            parameters = self._runtime_parameters.get(party.role, {}).get(party.party_id, {})
+            if parameters:
+                task_input_spec.parameters = parameters
+
+            if task_input_spec.dict(exclude_defaults=True):
+                party_task_spec.inputs = task_input_spec
 
             output_artifact = self._output_artifacts[party.role][party.party_id]
             if output_artifact:
-                party_task_spec.outputs = output_artifact
+                party_task_spec.outputs = TaskRuntimeOutputSpec(artifacts=output_artifact)
 
             self._task_schedule_spec[party.role][party.party_id] = party_task_spec
             conf_uri = self._resource_manager.write_out_task_conf(self._job_id,
@@ -208,3 +211,6 @@ class RuntimeConstructor(object):
     @property
     def status_manager(self):
         return self._resource_manager.status_manager
+
+    def log_path(self, role, party_id):
+        return self._task_schedule_spec[role][party_id].env.logger.metadata["base_path"]

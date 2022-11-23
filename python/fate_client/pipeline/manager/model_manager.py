@@ -9,8 +9,9 @@ class LocalFSModelManager(object):
                                   role: str, party_id: str, model_suffix: str):
         model_id = "_".join([job_id, task_name, role, str(party_id), model_suffix])
         model_version = "v0"
+        suffix = "model.json"
         uri_obj = parse_uri(output_dir_uri)
-        local_path = construct_local_dir(uri_obj.path, *[model_id, model_version])
+        local_path = construct_local_dir(uri_obj.path, *[model_id, model_version, suffix])
         uri_obj = replace_uri_path(uri_obj, str(local_path))
         return uri_obj.geturl()
 

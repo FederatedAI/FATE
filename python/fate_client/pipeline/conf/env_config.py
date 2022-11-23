@@ -76,6 +76,10 @@ class StandaloneConfig(object):
     COMPUTING_ENGINE = conf.get("computing_engine")
     FEDERATION_ENGINE = conf.get("federation_engine")
 
+    SQLITE_DB = conf.get("sqlite_db")
+    if not SQLITE_DB:
+        SQLITE_DB = default_path.joinpath("pipeline_sqlite.db").as_uri()
+
 
 class LogPath(object):
     @classmethod

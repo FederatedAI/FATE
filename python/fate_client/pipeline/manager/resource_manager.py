@@ -13,7 +13,7 @@ class StandaloneResourceManager(object):
         self._data_manager = get_data_manager(conf.OUTPUT_DATA_DIR)
         self._model_manager = get_model_manager(conf.OUTPUT_MODEL_DIR)
         self._metric_manager = get_metric_manager(conf.OUTPUT_METRIC_DIR)
-        self._status_manager = get_status_manager(conf.OUTPUT_STATUS_DIR)
+        self._status_manager = get_status_manager().create_status_manager(conf.SQLITE_DB)
         self._task_conf_manager = get_task_conf_manager(conf.JOB_DIR)
 
     def generate_output_artifact(self, job_id, task_name, role, party_id, output_key, artifact_type):
@@ -28,7 +28,8 @@ class StandaloneResourceManager(object):
 
             return IOArtifact(
                 name=output_key,
-                uri=model_uri
+                uri=model_uri,
+                metadata=dict(format="json")
             )
         elif artifact_type in ["dataset", "datasets"]:
             data_uri = self._generate_output_data_uri(
@@ -41,7 +42,8 @@ class StandaloneResourceManager(object):
 
             return IOArtifact(
                 name=output_key,
-                uri=data_uri
+                uri=data_uri,
+                metadata=dict(format="json")
             )
 
     def _generate_output_data_uri(self, job_id, task_name, role, party_id, output_key):
@@ -72,13 +74,6 @@ class StandaloneResourceManager(object):
                                                                job_id,
                                                                role,
                                                                party)
-
-    def generate_output_status_uri(self, job_id, task_name, role, party_id):
-        return self._status_manager.generate_output_status_uri(self._conf.OUTPUT_STATUS_DIR,
-                                                               job_id,
-                                                               task_name,
-                                                               role,
-                                                               party_id)
 
     def generate_output_terminate_status_uri(self, job_id, task_name, role, party_id):
         return self._status_manager.generate_output_terminate_status_uri(self._conf.OUTPUT_STATUS_DIR,

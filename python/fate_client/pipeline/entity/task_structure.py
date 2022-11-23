@@ -18,6 +18,10 @@ class TaskRuntimeInputSpec(BaseModel):
     artifacts: Optional[Dict[str, IOArtifact]]
 
 
+class TaskRuntimeOutputSpec(BaseModel):
+    artifacts: Dict[str, IOArtifact]
+
+
 class MLMDSpec(BaseModel):
     type: str
     metadata: Dict[str, Any]
@@ -48,8 +52,8 @@ class RuntimeEnvSpec(BaseModel):
     mlmd: MLMDSpec
     logger: LOGGERSpec
     device: str
-    distributed_computing_backend: ComputingBackendSpec
-    federation_backend: FederationBackendSpec
+    computing: ComputingBackendSpec
+    federation: FederationBackendSpec
 
 
 class TaskScheduleSpec(BaseModel):
@@ -58,6 +62,6 @@ class TaskScheduleSpec(BaseModel):
     role: str
     stage: str
     party_id: Optional[Union[str, int]]
-    inputs: Optional[Dict[str, IOArtifact]]
+    inputs: Optional[TaskRuntimeInputSpec]
     outputs: Optional[Dict[str, IOArtifact]]
     env: RuntimeEnvSpec

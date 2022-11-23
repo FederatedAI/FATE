@@ -2,11 +2,11 @@ log_directory:
 console_display_log:
 
 standalone:
+  sqlite_db:
   job_directory:
   output_data_dir:
   output_model_dir:
   output_metric_dir:
-  output_status_dir:
   computing_engine: "standalone"
   federation_engine: "standalone"
   logger:
