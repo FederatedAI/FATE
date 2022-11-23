@@ -10,7 +10,7 @@ inputs:
 
 outputs:
   artifacts:
-    metrics:
+    train_output_metric:
       name: ClassificationMetrics
       uri: file:///Users/sage/alpha/metric/arbiter_metrics.json
       metadata:

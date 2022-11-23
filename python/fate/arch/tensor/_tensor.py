@@ -80,6 +80,11 @@ class Tensor:
             return Tensor(self._storage.to_local())
         return self
 
+    def tolist(self):
+        if isinstance(self._storage, DStorage):
+            return self._storage.to_local().tolist()
+        return self._storage.tolist()
+
     def __eq__(self, __o: object) -> bool:
         return isinstance(__o, Tensor) and self._storage == __o._storage
 

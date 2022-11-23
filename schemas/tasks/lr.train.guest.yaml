@@ -44,11 +44,6 @@ outputs:
       uri: file:///Users/sage/alpha/data/guest_output_data
       metadata:
         format: csv
-    metrics:
-      name: ClassificationMetrics
-      uri: file:///Users/sage/alpha/metric/guest.json
-      metadata:
-        format: json
 conf:
   mlmd:
     type: pipeline

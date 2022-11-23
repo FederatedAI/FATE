@@ -69,7 +69,7 @@ class LrModuleGuest(HeteroModule):
         self.w = w
 
     def predict(self, ctx, test_data):
-        self.w
+        logger.info(test_data)
         batch_loader = dataframe.DataLoader(
             test_data,
             ctx=ctx,
@@ -78,11 +78,11 @@ class LrModuleGuest(HeteroModule):
             role="guest",
             sync_arbiter=False,
         )
-        print("sage", batch_loader.next_batch())
-        for x, y in batch_loader:
-            print("sage", x, y)
+        for X, y in batch_loader:
+            output = tensor.matmul(X, self.w)
+            print(output)
 
-    def to_model(self):
+    def get_model(self):
         return {"w": self.w.to_local()._storage.data.tolist()}
 
     @classmethod

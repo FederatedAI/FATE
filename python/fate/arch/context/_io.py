@@ -102,8 +102,6 @@ class CSVReader:
                 kwargs[k] = v
 
         dataframe_reader = dataframe.CSVReader(**kwargs).to_frame(self.ctx, self.uri)
-        s_df = dataframe.serialize(self.ctx, dataframe_reader)
-        dataframe_reader = dataframe.deserialize(self.ctx, s_df)
         return DataframeReader(dataframe_reader, self.metadata["num_features"], self.metadata["num_samples"])
 
 
@@ -163,6 +161,12 @@ class JsonWriter:
 
         with open(self.uri, "w") as f:
             json.dump(model, f)
+
+    def write_metric(self, metric):
+        import json
+
+        with open(self.uri, "w") as f:
+            json.dump(metric, f)
 
 
 class LibSVMWriter:

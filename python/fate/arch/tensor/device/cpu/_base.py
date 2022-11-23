@@ -15,6 +15,9 @@ class _CPUStorage(StorageBase):
         self.shape = shape
         self.data = data
 
+    def tolist(self):
+        return self.data.tolist()
+
     def transpose(self):
         return _CPUStorage(self.dtype, self.shape.transpose(), self.data.T)
 
@@ -38,11 +41,7 @@ class _CPUStorage(StorageBase):
         d_type = self.dtype
         tensors = [self.data]
         for storage in others:
-            if (
-                not isinstance(storage, _CPUStorage)
-                or storage.dtype != d_type
-                or storage.device != device
-            ):
+            if not isinstance(storage, _CPUStorage) or storage.dtype != d_type or storage.device != device:
                 raise RuntimeError(f"not supported type: {storage}")
         tensors.extend([storage.data for storage in others])
         cat_tensor = torch.cat(tensors, axis)
@@ -102,9 +101,7 @@ def _get_method(method):
             raise NotImplementedError(f"method `{method}` not found")
 
 
-def _ops_dispatch_signature_1_local_cpu_plain(
-    method, args, kwargs
-) -> Callable[[_CPUStorage], _CPUStorage]:
+def _ops_dispatch_signature_1_local_cpu_plain(method, args, kwargs) -> Callable[[_CPUStorage], _CPUStorage]:
     def _wrap(storage: _CPUStorage) -> _CPUStorage:
         func = _get_method(method)
         output = func(_maybe_unwrap_storage(storage), *args, **kwargs)
@@ -115,9 +112,7 @@ def _ops_dispatch_signature_1_local_cpu_plain(
     return _wrap
 
 
-def _ops_dispatch_signature_1_local_cpu_paillier(
-    method, args, kwargs
-) -> Callable[[_CPUStorage], _CPUStorage]:
+def _ops_dispatch_signature_1_local_cpu_paillier(method, args, kwargs) -> Callable[[_CPUStorage], _CPUStorage]:
     raise OpsDispatchUnsupportedError(method, False, device.CPU, dtype.paillier)
 
 
@@ -128,9 +123,7 @@ def _ops_dispatch_signature_2_local_cpu_plain(
 ) -> Callable[[Any, Any], _CPUStorage]:
     def _wrap(a, b) -> _CPUStorage:
         func = _get_method(method)
-        output = func(
-            _maybe_unwrap_storage(a), _maybe_unwrap_storage(b), *args, **kwargs
-        )
+        output = func(_maybe_unwrap_storage(a), _maybe_unwrap_storage(b), *args, **kwargs)
         output_dtype = dtype.from_torch_dtype(output.dtype)
         output_shape = Shape(output.shape)
         return _CPUStorage(output_dtype, output_shape, output)

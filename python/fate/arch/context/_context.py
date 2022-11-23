@@ -214,11 +214,10 @@ class Context(ContextInterface):
 
     @contextmanager
     def sub_ctx(self, namespace: str) -> Iterator["Context"]:
-        with self.namespace.into_subnamespace(namespace):
-            try:
-                yield self
-            finally:
-                ...
+        try:
+            yield self.with_namespace(self.namespace.sub_namespace(namespace))
+        finally:
+            ...
 
     def set_federation(self, federation: FederationEngine):
         self._federation = federation

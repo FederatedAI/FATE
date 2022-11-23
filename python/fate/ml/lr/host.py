@@ -50,7 +50,7 @@ class LrModuleHost(HeteroModule):
 
         self.w = w
 
-    def to_model(self):
+    def get_model(self):
         return {"w": self.w.to_local()._storage.data.tolist()}
 
     @classmethod
