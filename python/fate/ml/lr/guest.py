@@ -1,7 +1,7 @@
 import logging
 
-import torch
 from fate.arch import dataframe, tensor
+from fate.arch.tensor import dtype
 from fate.interface import Context
 
 from ..abc.module import HeteroModule
@@ -35,10 +35,10 @@ class LrModuleGuest(HeteroModule):
         batch_loader = dataframe.DataLoader(
             train_data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="guest", sync_arbiter=True
         )
-        # get encryptor
-        ctx.arbiter("encryptor").get()
+        # # get encryptor
+        # ctx.arbiter("encryptor").get()
 
-        w = tensor.tensor(torch.randn((train_data.num_features, 1), dtype=torch.float32))
+        w = tensor.randn((train_data.num_features, 1), dtype=dtype.float32)
         for i, iter_ctx in ctx.range(self.max_iter):
             logger.info(f"start iter {i}")
             j = 0
@@ -67,6 +67,20 @@ class LrModuleGuest(HeteroModule):
                 logger.info(f"w={w}")
                 j += 1
         self.w = w
+
+    def predict(self, ctx, test_data):
+        self.w
+        batch_loader = dataframe.DataLoader(
+            test_data,
+            ctx=ctx,
+            batch_size=-1,
+            mode="hetero",
+            role="guest",
+            sync_arbiter=False,
+        )
+        print("sage", batch_loader.next_batch())
+        for x, y in batch_loader:
+            print("sage", x, y)
 
     def to_model(self):
         return {"w": self.w.to_local()._storage.data.tolist()}

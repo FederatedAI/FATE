@@ -20,12 +20,7 @@ class dtype(Enum):
     paillier = (True, True, 5)  # partially homomorphic encryption
     #
     def is_basic(self):
-        return (
-            self == dtype.float32
-            or self == dtype.float64
-            or self == dtype.int32
-            or self == dtype.int64
-        )
+        return self == dtype.float32 or self == dtype.float64 or self == dtype.int32 or self == dtype.int64
 
     def is_paillier(self):
         return self == dtype.paillier
@@ -35,6 +30,17 @@ class dtype(Enum):
             return other
         else:
             return self
+
+    def to_torch_dtype(self):
+        if self == dtype.int32:
+            return torch.int32
+        if self == dtype.int64:
+            return torch.int64
+        if self == dtype.float64:
+            return torch.float64
+        if self == dtype.float32:
+            return torch.float32
+        raise TypeError(f"unsupported type: {self}")
 
     @classmethod
     def from_torch_dtype(cls, t_type):
@@ -141,9 +147,7 @@ class Shape:
                     max_len = s
         result = [1] * max_len
         d_axis = None
-        shapes = [
-            Shape((s.size,), s.d_axis) if isinstance(s.size, int) else s for s in shapes
-        ]
+        shapes = [Shape((s.size,), s.d_axis) if isinstance(s.size, int) else s for s in shapes]
         for shape in shapes:
             if isinstance(shape.size, tuple) or isinstance(shape.size, list):
                 if shape.d_axis is not None:
@@ -152,9 +156,7 @@ class Shape:
                         d_axis = aligned_d_axis
                     elif d_axis != aligned_d_axis:
                         if raise_exception:
-                            raise RuntimeError(
-                                "d_axis mismatch: d_axis should be equal after shape broadcast"
-                            )
+                            raise RuntimeError("d_axis mismatch: d_axis should be equal after shape broadcast")
                         else:
                             return None
                 for i in range(-1, -1 - len(shape.size), -1):
@@ -171,9 +173,7 @@ class Shape:
                         continue
                     if result[i] != 1:
                         if raise_exception:
-                            raise RuntimeError(
-                                "Shape mismatch: objects cannot be broadcast to a single shape"
-                            )
+                            raise RuntimeError("Shape mismatch: objects cannot be broadcast to a single shape")
                         else:
                             return None
                     result[i] = shape.size[i]
@@ -193,9 +193,7 @@ class Shape:
                     continue
                 p = d_axis - (len(result) - len(shape.size))
                 if p >= 0 and shape.size[p] != 1:
-                    raise RuntimeError(
-                        "Can't broadcast along distributed axis for Local Storage "
-                    )
+                    raise RuntimeError("Can't broadcast along distributed axis for Local Storage ")
         return Shape(result, d_axis)
 
 
@@ -215,11 +213,7 @@ class DStorage(StorageBase):
         return self._device
 
     def __eq__(self, __o: object) -> bool:
-        if (
-            isinstance(__o, DStorage)
-            and self._dtype == __o.dtype
-            and self._device == __o.device
-        ):
+        if isinstance(__o, DStorage) and self._dtype == __o.dtype and self._device == __o.device:
             return self.to_local() == __o.to_local()
         else:
             return False
@@ -268,9 +262,7 @@ class DStorage(StorageBase):
                 else:
                     if shape_size[i] != storage.shape.size[i]:
                         raise RuntimeError(f"requires same shape except d_axis")
-        blocks = ctx.computing.parallelize(
-            enumerate(storages), partition=partitions, include_key=True
-        )
+        blocks = ctx.computing.parallelize(enumerate(storages), partition=partitions, include_key=True)
         return DStorage(blocks, Shape(shape_size, d_axis), d_type, device)
 
     @classmethod

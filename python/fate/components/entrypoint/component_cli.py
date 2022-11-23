@@ -118,3 +118,13 @@ def list(save):
         json.dump(list_components(), save)
     else:
         print(list_components())
+
+
+@component.command()
+@click.option("--db", required=True, type=str, help="mlmd db")
+@click.option("--taskid", required=True, type=str, help="taskid")
+def set_mlmd_finish(db, taskid):
+    from fate.arch.context._mlmd import MachineLearningMetadata
+
+    mlmd = MachineLearningMetadata(metadata={"filename_uri": db})
+    mlmd.set_task_safe_terminate_flag(taskid)

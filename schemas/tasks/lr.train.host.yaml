@@ -32,29 +32,28 @@ outputs:
   artifacts:
     output_model:
       name: output_model
-      uri: file:///Users/sage/proj/FATE/2.0.0-alpha/models/host.json
+      uri: file:///Users/sage/alpha/model/host.json
       metadata:
         format: json
     train_output_data:
       name: train_output_data
-      uri: file:///Users/sage/temp/host_output_data
+      uri: file:///Users/sage/alpha/data/host_output_data
       metadata:
         format: csv
     metrics:
       name: ClassificationMetrics
-      uri: file:///tmp/metrics
+      uri: file:///Users/sage/alpha/metric/host_metrics.json
       metadata:
         format: json
 conf:
   mlmd:
     type: pipeline
     metadata:
-      state_path: /Users/sage/fate_tmp/state
-      terminate_state_path: /Users/sage/fate_tmp/terminate_state
+      db: /Users/sage/alpha/mlmd.db
   logger:
     type: pipeline
     metadata:
-      basepath: /Users/sage/fate_tmp/logs
+      basepath: /Users/sage/alpha/logs
       level: DEBUG
       debug_mode: true
   device: CPU

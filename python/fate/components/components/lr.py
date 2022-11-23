@@ -83,7 +83,7 @@ def train_guest(ctx, train_data, validate_data, train_output_data, output_model,
         validate_data = ctx.reader(validate_data).read_dataframe()
     module.fit(ctx, train_data, validate_data)
     model = module.to_model()
-    output_data = module.predict(ctx, train_data)
+    output_data = module.predict(ctx, validate_data)
     ctx.writer(train_output_data).write_dataframe(output_data)
     ctx.writer(output_model).write_model(model)
 
@@ -97,7 +97,7 @@ def train_host(ctx, train_data, validate_data, train_output_data, output_model, 
         validate_data = ctx.reader(validate_data).read_dataframe()
     module.fit(ctx, train_data, validate_data)
     model = module.to_model()
-    output_data = module.predict(ctx, train_data)
+    output_data = module.predict(ctx, validate_data)
     ctx.writer(train_output_data).write_dataframe(output_data)
     ctx.writer(output_model).write_model(model)
 

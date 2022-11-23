@@ -18,7 +18,7 @@ class LrModuleArbiter(HeteroModule):
 
     def fit(self, ctx: Context) -> None:
         encryptor, decryptor = ctx.cipher.phe.keygen(options=dict(key_length=2048))
-        ctx.guest("encryptor").put(encryptor)  # ctx.guest.put("encryptor", encryptor)
+        # ctx.guest("encryptor").put(encryptor)  # ctx.guest.put("encryptor", encryptor)
         ctx.hosts("encryptor").put(encryptor)
         # num_batch = ctx.guest.get("num_batch")
         batch_loader = DataLoader(

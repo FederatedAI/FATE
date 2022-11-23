@@ -13,14 +13,15 @@ def tensor(t: torch.Tensor):
     return Tensor(storage)
 
 
-def distributed_tensor(
-    ctx: Context, tensors: List[torch.Tensor], d_axis=0, partitions=3
-):
+def randn(shape, dtype):
+    torch_tensor = torch.randn(shape, dtype=dtype.to_torch_dtype())
+    return tensor(torch_tensor)
+
+
+def distributed_tensor(ctx: Context, tensors: List[torch.Tensor], d_axis=0, partitions=3):
     from .device.cpu import _CPUStorage
 
-    storages = [
-        _CPUStorage(dtype.from_torch_dtype(t.dtype), Shape(t.shape), t) for t in tensors
-    ]
+    storages = [_CPUStorage(dtype.from_torch_dtype(t.dtype), Shape(t.shape), t) for t in tensors]
     storage = DStorage.from_storages(ctx, storages, d_axis, partitions)
     return Tensor(storage)
 

@@ -12,19 +12,18 @@ outputs:
   artifacts:
     metrics:
       name: ClassificationMetrics
-      uri: file:///tmp/metrics
+      uri: file:///Users/sage/alpha/metric/arbiter_metrics.json
       metadata:
         format: json
 conf:
   mlmd:
     type: pipeline
     metadata:
-      state_path: /Users/sage/fate_tmp/state
-      terminate_state_path: /Users/sage/fate_tmp/terminate_state
+      db: /Users/sage/alpha/mlmd.db
   logger:
     type: pipeline
     metadata:
-      basepath: /Users/sage/fate_tmp/logs
+      basepath: /Users/sage/alpha/logs
       level: DEBUG
       debug_mode: true
   device: CPU

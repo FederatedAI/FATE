@@ -8,16 +8,19 @@ class MachineLearningMetadata:
         self._job_type_id = None  # context type
         self._task_type_id = None  # execution type
 
-    def update_task_state(self, task_run, state, exception=None):
+    def update_task_state(self, taskid, state, exception=None):
+        task_run = self.get_or_create_task(taskid)
         task_run.properties["state"].string_value = state
         if exception is not None:
             task_run.properties["exception"].string_value = exception
         self.store.put_executions([task_run])
 
-    def get_task_safe_terminate_flag(self, task_run):
+    def get_task_safe_terminate_flag(self, taskid: str):
+        task_run = self.get_or_create_task(taskid)
         return task_run.properties["safe_terminate"].bool_value
 
-    def set_task_safe_terminate_flag(self, task_run):
+    def set_task_safe_terminate_flag(self, taskid: str):
+        task_run = self.get_or_create_task(taskid)
         task_run.properties["safe_terminate"].bool_value = True
         self.store.put_executions([task_run])
 

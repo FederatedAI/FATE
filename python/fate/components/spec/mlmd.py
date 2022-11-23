@@ -35,7 +35,7 @@ class PipelineMLMD:
         from fate.arch.context._mlmd import MachineLearningMetadata
 
         self._mlmd = MachineLearningMetadata(metadata=dict(filename_uri=mlmd.metadata.db))
-        self._task = self._mlmd.get_or_create_task(taskid)
+        self._taskid = taskid
 
     def log_excution_start(self):
         return self._log_state("running")
@@ -49,10 +49,10 @@ class PipelineMLMD:
         self._log_state("exception", json.dumps(message))
 
     def _log_state(self, state, message=None):
-        self._mlmd.update_task_state(self._task, state, message)
+        self._mlmd.update_task_state(self._taskid, state, message)
 
     def safe_terminate(self):
-        return self._mlmd.get_task_safe_terminate_flag(self._task)
+        return self._mlmd.get_task_safe_terminate_flag(self._taskid)
 
 
 class FlowMLMD(BaseModel):
