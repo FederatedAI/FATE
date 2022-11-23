@@ -1,28 +1,27 @@
 import copy
-import json
 import multiprocessing
 import os
 import subprocess
 import time
 
-from ..entity.runtime_entity import FateStandaloneRuntimeEntity
 from pathlib import Path
 from types import SimpleNamespace
+from ..scheduler.runtime_constructor import RuntimeConstructor
 
 
-def run_subprocess(exec_cmd, std_log_path):
-    std = open(std_log_path, "w")
+def run_subprocess(exec_cmd, std_log_fd):
     process = subprocess.Popen(
         exec_cmd,
-        stderr=std,
-        stdout=std
+        stderr=std_log_fd,
+        stdout=std_log_fd
     )
     return process
 
 
-def run_task_in_party(exec_cmd, std_log_path, status_manager, status_uri):
-    process = run_subprocess(exec_cmd, std_log_path)
+def run_task_in_party(exec_cmd, std_log_fd, status_manager, status_uri):
+    process = run_subprocess(exec_cmd, std_log_fd)
     process.communicate()
+    process.terminate()
     try:
         os.kill(process.pid, 0)
     except ProcessLookupError:
@@ -40,43 +39,56 @@ def run_detect_task(status_manager, status_uris):
         time.sleep(0.1)
 
 
-def process_task(task_type: str, exec_cmd_prefix: list, runtime_entity: FateStandaloneRuntimeEntity, log_dir: Path):
-    role_party_list = runtime_entity.runtime_role_with_party
-    status_manager = runtime_entity.status_manager
-
+def process_task(task_type: str, task_name: str, exec_cmd_prefix: list, runtime_constructor: RuntimeConstructor):
+    parties = runtime_constructor.runtime_parties
     task_pools = list()
     task_status_uris = list()
+    status_manager = runtime_constructor.status_manager
     # task_done_tag_paths = list()
     mp_ctx = multiprocessing.get_context("fork")
-    for role_party_obj in role_party_list:
-        role = role_party_obj.role
-        party_id = role_party_obj.party_id
-        status_uri = runtime_entity.get_status_output_uri(role, party_id)
-        # done_tag_path = str(Path(status_uri.parent.joinpath(f"{task_type}.done")))
-        # task_done_tag_paths.append(done_tag_path)
-        task_status_uris.append(
-            SimpleNamespace(
-                role=role,
-                party_id=party_id,
-                status_uri=status_uri
-            )
-        )
-        conf_path = runtime_entity.get_job_conf_uri(role, party_id)
-        log_path = log_dir.joinpath(role).joinpath(party_id)
-        log_path.mkdir(parents=True, exist_ok=True)
-        log_path = str(log_path.joinpath("std.log"))
+    std_log_fds = []
+    for party in parties:
+        role = party.role
+        party_id = party.party_id
+
+        # TODO: mlmd should be optimized later
+        mlmd = runtime_constructor.mlmd(role, party_id)
+        status_uri = mlmd.metadata["state_path"]
+        terminate_status_uri = mlmd.metadata["terminate_state_path"]
+
+        conf_path = runtime_constructor.task_conf_uri(role, party_id)
+        execution_id = runtime_constructor.execution_id(role, party_id)
+        std_log_path = Path(status_uri).parent.joinpath("std.log").resolve()
+        std_log_path.parent.mkdir(parents=True, exist_ok=True)
+        std_log_fd = open(std_log_path, "w")
+        std_log_fds.append(std_log_fd)
+
+        done_status_path = str(Path(status_uri).parent.joinpath("done").resolve())
+
         exec_cmd = copy.deepcopy(exec_cmd_prefix)
         exec_cmd.extend(
             [
+                "--execution_id",
+                execution_id,
+                "--config",
                 conf_path
             ]
         )
         task_pools.append(mp_ctx.Process(target=run_task_in_party, kwargs=dict(
             exec_cmd=exec_cmd,
-            std_log_path=log_path,
+            std_log_fd=std_log_fd,
             status_manager=status_manager,
-            status_uri=status_uri
+            status_uri=done_status_path
         )))
+
+        task_status_uris.append(
+            SimpleNamespace(
+                role=role,
+                party_id=party_id,
+                status_uri=done_status_path,
+                task_terminate_status_uri=terminate_status_uri
+            )
+        )
 
         task_pools[-1].start()
 
@@ -91,6 +103,7 @@ def process_task(task_type: str, exec_cmd_prefix: list, runtime_entity: FateStan
 
     detect_task.join()
 
+    for std_log_fd in std_log_fds:
+        std_log_fd.close()
+
     return status_manager.get_tasks_status(task_status_uris)
-
-

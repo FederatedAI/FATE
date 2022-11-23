@@ -1,6 +1,6 @@
-from .pipeline import FateFlowPipeline, FateStandalonePipeline
+from .pipeline import FateFlowPipeline, StandalonePipeline
 
 __all__ = [
     "FateFlowPipeline",
-    "FateStandalonePipeline"
+    "StandalonePipeline"
 ]

@@ -1,14 +1,18 @@
 log_directory:
 console_display_log:
 
-fate_standalone:
-    job_directory:
-    output_data_dir:
-    output_model_dir:
-    output_metric_dir:
-    output_status_dir:
-    computing_engine: "standalone"
-    federation_engine: "standalone"
+standalone:
+  job_directory:
+  output_data_dir:
+  output_model_dir:
+  output_metric_dir:
+  output_status_dir:
+  computing_engine: "standalone"
+  federation_engine: "standalone"
+  logger:
+    level: "DEBUG"
+    debug_mode: true
+  engine:
     device: "CPU"
 
 fate_flow:

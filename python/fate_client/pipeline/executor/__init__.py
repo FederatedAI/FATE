@@ -1,8 +1,8 @@
-from .task_executor import FateStandaloneExecutor
+from .task_executor import StandaloneExecutor
 from .task_executor import FateFlowExecutor
 
 
 __all__ = [
-    "FateStandaloneExecutor",
+    "StandaloneExecutor",
     "FateFlowExecutor"
 ]

@@ -8,10 +8,18 @@ from ..conf.types import UriTypes
 
 class LocalFSStatusManager(object):
     @classmethod
-    def generate_output_status_uri(cls, output_dir_uri: str, session_id: str,
+    def generate_output_status_uri(cls, output_dir_uri: str, job_id: str, task_name: str,
                                    role: str, party_id: str):
         uri_obj = parse_uri(output_dir_uri)
-        local_path = construct_local_dir(uri_obj.path, *[session_id, role, party_id, "status.log"])
+        local_path = construct_local_dir(uri_obj.path, *[job_id, task_name, role, party_id, "status.log"])
+        uri_obj = replace_uri_path(uri_obj, str(local_path))
+        return uri_obj.geturl()
+
+    @classmethod
+    def generate_output_terminate_status_uri(cls, output_dir_uri: str, job_id: str, task_name: str,
+                                             role: str, party_id: str):
+        uri_obj = parse_uri(output_dir_uri)
+        local_path = construct_local_dir(uri_obj.path, *[job_id, task_name, role, party_id, "terminate_status.log"])
         uri_obj = replace_uri_path(uri_obj, str(local_path))
         return uri_obj.geturl()
 
@@ -38,7 +46,7 @@ class LocalFSStatusManager(object):
         summary_status = "SUCCESS"
         for obj in task_status_uris:
             try:
-                path = parse_uri(obj.status_uri).path
+                path = parse_uri(obj.task_terminate_status_uri).path
                 with open(path, "r") as fin:
                     party_status = json.loads(fin.read())
 
@@ -51,6 +59,7 @@ class LocalFSStatusManager(object):
                         extras="can not start task"
                     )
                 )
+                summary_status = "FAIL"
 
             if obj.role not in summary_msg:
                 summary_msg[obj.role] = dict()
