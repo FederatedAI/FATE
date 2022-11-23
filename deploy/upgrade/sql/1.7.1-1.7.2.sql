@@ -28,11 +28,76 @@ ALTER TABLE t_task DROP INDEX task_f_auto_retries;
 ALTER TABLE t_task DROP INDEX task_f_worker_id;
 ALTER TABLE t_task DROP INDEX task_f_party_status;
 
-ALTER TABLE trackingmetric DROP INDEX trackingmetric_f_metric_namespace;
-ALTER TABLE trackingmetric DROP INDEX trackingmetric_f_metric_name;
-ALTER TABLE trackingmetric DROP INDEX trackingmetric_f_type;
+DROP PROCEDURE IF EXISTS alter_trackingmetric;
+DELIMITER //
 
-ALTER TABLE trackingoutputdatainfo DROP INDEX trackingoutputdatainfo_f_task_version;
+CREATE PROCEDURE alter_trackingmetric()
+BEGIN
+    DECLARE done BOOL DEFAULT FALSE;
+    DECLARE date_ CHAR(8);
+
+    DECLARE cur CURSOR FOR SELECT RIGHT(TABLE_NAME, 8) FROM INFORMATION_SCHEMA.TABLES
+        WHERE TABLE_SCHEMA = (SELECT DATABASE()) AND TABLE_NAME LIKE 't\_tracking\_metric\_%';
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+    OPEN cur;
+
+    loop_: LOOP
+        FETCH cur INTO date_;
+        IF done THEN
+            LEAVE loop_;
+        END IF;
+
+        SET @sql = CONCAT(
+            'ALTER TABLE t_tracking_metric_', date_,
+            ' DROP INDEX trackingmetric_', date_, '_f_metric_namespace,',
+            ' DROP INDEX trackingmetric_', date_, '_f_metric_name,',
+            ' DROP INDEX trackingmetric_', date_, '_f_type;'
+        );
+        PREPARE stmt FROM @sql;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+    END LOOP;
+
+    CLOSE cur;
+END //
+
+DELIMITER ;
+CALL alter_trackingmetric();
+DROP PROCEDURE alter_trackingmetric;
+
+DROP PROCEDURE IF EXISTS alter_trackingoutputdatainfo;
+DELIMITER //
+
+CREATE PROCEDURE alter_trackingoutputdatainfo()
+BEGIN
+    DECLARE done BOOL DEFAULT FALSE;
+    DECLARE date_ CHAR(8);
+
+    DECLARE cur CURSOR FOR SELECT RIGHT(TABLE_NAME, 8) FROM INFORMATION_SCHEMA.TABLES
+        WHERE TABLE_SCHEMA = (SELECT DATABASE()) AND TABLE_NAME LIKE 't\_tracking\_output\_data\_info\_%';
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+    OPEN cur;
+
+    loop_: LOOP
+        FETCH cur INTO date_;
+        IF done THEN
+            LEAVE loop_;
+        END IF;
+
+        SET @sql = CONCAT('ALTER TABLE t_tracking_output_data_info_', date_, 'DROP INDEX trackingoutputdatainfo_', date_, '_f_task_version;');
+        PREPARE stmt FROM @sql;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+    END LOOP;
+
+    CLOSE cur;
+END //
+
+DELIMITER ;
+CALL alter_trackingoutputdatainfo();
+DROP PROCEDURE alter_trackingoutputdatainfo;
 
 ALTER TABLE t_machine_learning_model_info DROP INDEX machinelearningmodelinfo_f_role;
 ALTER TABLE t_machine_learning_model_info DROP INDEX machinelearningmodelinfo_f_party_id;
@@ -65,7 +130,7 @@ BEGIN
             LEAVE loop_;
         END IF;
 
-        SET @sql = CONCAT('ALTER TABLE t_component_summary_', date_, ' DROP INDEX componentsummary_', date_, '_f_task_version');
+        SET @sql = CONCAT('ALTER TABLE t_component_summary_', date_, ' DROP INDEX componentsummary_', date_, '_f_task_version;');
         PREPARE stmt FROM @sql;
         EXECUTE stmt;
         DEALLOCATE PREPARE stmt;

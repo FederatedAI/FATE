@@ -85,7 +85,7 @@ class GHPacker(object):
 
     def __init__(self, sample_num: int, encrypter: PaillierEncrypt,
                  precision=fix_point_precision, max_sample_weight=1.0, task_type=consts.CLASSIFICATION,
-                 g_min=None, g_max=None, class_num=1, mo_mode=False, sync_para=True):
+                 g_min=None, g_max=None, h_max=None, class_num=1, mo_mode=False, sync_para=True):
 
         if task_type == consts.CLASSIFICATION:
             g_max = 1.0
@@ -99,7 +99,8 @@ class GHPacker(object):
             else:
                 g_max = g_max
                 g_min = g_min
-            h_max = 2.0
+            if h_max is None:
+                h_max = 2
         else:
             raise ValueError('unknown task type {}'.format(task_type))
 
@@ -118,7 +119,6 @@ class GHPacker(object):
 
         h_sum_max = self.h_max * sample_num
         h_max_int = int(h_sum_max * precision) + 1
-
         g_offset_max = self.g_offset + self.g_max
         g_max_int = int(g_offset_max * sample_num * precision) + 1
 

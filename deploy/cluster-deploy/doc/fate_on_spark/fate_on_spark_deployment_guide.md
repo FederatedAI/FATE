@@ -177,8 +177,8 @@ Execute on the target server (192.168.0.1 with extranet environment) under the a
 mkdir -p /data/projects/install
 cd /data/projects/install
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/Miniconda3-py38_4.12.0-Linux-x86_64.sh
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/mysql-8.0.28.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/jdk-8u345.tar.xz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/mysql-fate-8.0.28.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/openresty-1.17.8.2.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/pip_packages_fate_${version}.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/fate_install_${version}_release.tar.gz
@@ -282,7 +282,7 @@ mysql>show databases;
 mkdir -p /data/projects/fate/common/jdk
 #Uncompress
 cd /data/projects/install
-tar xzf jdk-8u192-linux-x64.tar.gz -C /data/projects/fate/common/jdk
+tar xJf jdk-8u345.tar.xz -C /data/projects/fate/common/jdk
 ```
 
 ### 5.5 Deploying python
@@ -345,7 +345,7 @@ export FATE_DEPLOY_BASE=\$fate_project_base
 
 export PYTHONPATH=/data/projects/fate/fateflow/python:/data/projects/fate/fate/python
 venv=/data/projects/fate/common/python/venv
-export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
+export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u345
 export PATH=\$PATH:\$JAVA_HOME/bin
 source \${venv}/bin/activate
 export FATE_LOG_LEVEL=DEBUG

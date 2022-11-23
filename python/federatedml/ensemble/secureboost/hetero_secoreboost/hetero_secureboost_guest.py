@@ -238,6 +238,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                                            cipher_compress=self.cipher_compressing,
                                            g_h=g_h, encrypter=self.encrypter,
                                            goss_subsample=self.enable_goss,
+                                           objective=self.objective_param.objective,
                                            complete_secure=complete_secure, max_sample_weights=self.max_sample_weight,
                                            fast_sbt=fast_sbt, tree_type=tree_type, target_host_id=target_host_id,
                                            guest_depth=self.guest_depth, host_depth=self.host_depth,

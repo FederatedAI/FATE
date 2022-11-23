@@ -1,3 +1,13 @@
+## Release 1.9.1
+### Major Features and Improvements
+> Bug-Fix
+* Fix cipher compression with large Hessian value for HeteroSecureBoost
+* Fix tweedie-loss calculation in HeteroSecureBoost
+* Fix Intersection summary when left-joining data with match_id
+* Fix event/non_event statistic for WOE computation in HeteroFeatureBinning
+* Fix default sid name display for data uploaded with meta
+
+
 ## Release 1.9.0
 ### Major Features and Improvements
 > FederatedML
