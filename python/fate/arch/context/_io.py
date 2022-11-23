@@ -1,37 +1,6 @@
-from typing import Protocol, overload
+from typing import Protocol
 
 from ..unify import URI
-
-
-class Reader:
-    @overload
-    def __init__(self, ctx, uri: str, **kwargs):
-        ...
-
-    @overload
-    def __init__(self, ctx, data, **kwargs):
-        ...
-
-    def __init__(self, ctx, *args, **kwargs):
-        self.ctx = ctx
-        if isinstance(args[0], str):
-            self.uri = args[0]
-            self.name = kwargs.get("name", "")
-            self.metadata = kwargs.get("metadata", {})
-        elif hasattr(args[0], "uri"):
-            self.uri = args[0].uri
-            self.name = args[0].name
-            self.metadata = args[0].metadata
-        else:
-            raise ValueError(f"invalid arguments: {args} and {kwargs}")
-
-    def read_dataframe(self):
-        from fate.arch import dataframe
-
-        self.data = dataframe.CSVReader(
-            id_name="id", label_name="y", label_type="float32", delimiter=",", dtype="float32"
-        ).to_frame(self.ctx, self.uri)
-        return self
 
 
 class IOKit:
@@ -81,6 +50,11 @@ def get_reader(format, ctx, name, uri, metadata) -> Reader:
     if format == "csv":
         return CSVReader(ctx, name, uri.path, metadata)
 
+    if format == "json":
+        return JsonReader(ctx, name, uri.path, metadata)
+
+    raise ValueError(f"reader for format {format} not found")
+
 
 class CSVReader:
     def __init__(self, ctx, name: str, uri: URI, metadata: dict) -> None:
@@ -103,6 +77,26 @@ class CSVReader:
 
         dataframe_reader = dataframe.CSVReader(**kwargs).to_frame(self.ctx, self.uri)
         return DataframeReader(dataframe_reader, self.metadata["num_features"], self.metadata["num_samples"])
+
+
+class JsonReader:
+    def __init__(self, ctx, name: str, uri, metadata: dict) -> None:
+        self.name = name
+        self.ctx = ctx
+        self.uri = uri
+        self.metadata = metadata
+
+    def read_model(self):
+        import json
+
+        with open(self.uri, "r") as f:
+            return json.load(f)
+
+    def read_metric(self):
+        import json
+
+        with open(self.uri, "r") as f:
+            return json.load(f)
 
 
 class DataframeReader:
@@ -132,6 +126,8 @@ def get_writer(format, ctx, name, uri, metadata) -> Reader:
 
     if format == "json":
         return JsonWriter(ctx, name, uri.path, metadata)
+
+    raise ValueError(f"wirter for format {format} not found")
 
 
 class Writer(Protocol):

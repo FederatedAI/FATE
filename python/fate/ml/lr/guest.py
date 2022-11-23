@@ -69,7 +69,6 @@ class LrModuleGuest(HeteroModule):
         self.w = w
 
     def predict(self, ctx, test_data):
-        logger.info(test_data)
         batch_loader = dataframe.DataLoader(
             test_data,
             ctx=ctx,
@@ -83,8 +82,20 @@ class LrModuleGuest(HeteroModule):
             print(output)
 
     def get_model(self):
-        return {"w": self.w.to_local()._storage.data.tolist()}
+        return {
+            "w": self.w.to_local()._storage.data.tolist(),
+            "metadata": {
+                "max_iter": self.max_iter,
+                "batch_size": self.batch_size,
+                "learning_rate": self.learning_rate,
+                "alpha": self.alpha,
+            },
+        }
 
     @classmethod
     def from_model(cls, model) -> "LrModuleGuest":
-        ...
+        lr = LrModuleGuest(**model["metadata"])
+        import torch
+
+        lr.w = tensor.tensor(torch.tensor(model["w"]))
+        return lr

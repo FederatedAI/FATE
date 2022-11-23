@@ -26,15 +26,15 @@ from fate.components.spec import (
 @cpn.component(roles=roles.get_all(), provider="fate", version="2.0.0.alpha")
 @cpn.artifact("train_data", type=Input[DatasetArtifact], roles=[roles.GUEST, roles.HOST], stages=[stages.TRAIN])
 @cpn.artifact(
-    "validate_data", type=Input[DatasetArtifact], optional=True, roles=[roles.GUEST, roles.HOST], stages=["train"]
+    "validate_data", type=Input[DatasetArtifact], optional=True, roles=[roles.GUEST, roles.HOST], stages=[stages.TRAIN]
 )
 @cpn.artifact("input_model", type=Input[ModelArtifact], roles=[roles.GUEST, roles.HOST], stages=[stages.PREDICT])
 @cpn.artifact(
-    "test_data", type=Input[DatasetArtifacts], optional=False, roles=[roles.GUEST, roles.HOST], stages=[stages.PREDICT]
+    "test_data", type=Input[DatasetArtifact], optional=False, roles=[roles.GUEST, roles.HOST], stages=[stages.PREDICT]
 )
-@cpn.parameter("learning_rate", type=float, default=0.1, optional=False)
-@cpn.parameter("max_iter", type=int, default=100, optional=False)
-@cpn.parameter("batch_size", type=int, default=100, optional=False)
+@cpn.parameter("learning_rate", type=float, default=0.1)
+@cpn.parameter("max_iter", type=int, default=100)
+@cpn.parameter("batch_size", type=int, default=100)
 @cpn.artifact(
     "train_output_data", type=Output[DatasetArtifact], roles=[roles.GUEST, roles.HOST], stages=[stages.TRAIN]
 )
@@ -122,18 +122,20 @@ def train_arbiter(ctx, max_iter, train_output_metric):
 def predict_guest(ctx, input_model, test_data, test_output_data):
     from fate.ml.lr.guest import LrModuleGuest
 
-    model = ctx.read(input_model).load_model()
-    module = LrModuleGuest.from_model(model)
-    test_data = ctx.read(test_data).load_dataframe()
-    output_data = module.predict(ctx, test_data)
-    ctx.write(test_output_data).save_dataframe(output_data)
+    with ctx.sub_ctx("predict") as sub_ctx:
+        model = sub_ctx.reader(input_model).read_model()
+        module = LrModuleGuest.from_model(model)
+        test_data = sub_ctx.reader(test_data).read_dataframe()
+        output_data = module.predict(sub_ctx, test_data)
+        sub_ctx.writer(test_output_data).write_dataframe(output_data)
 
 
 def predict_host(ctx, input_model, test_data, test_output_data):
     from fate.ml.lr.host import LrModuleHost
 
-    model = ctx.read(input_model).load_model()
-    module = LrModuleHost.from_model(model)
-    test_data = ctx.read(test_data).load_dataframe()
-    output_data = module.predict(ctx, test_data)
-    ctx.write(test_output_data).save_dataframe(output_data)
+    with ctx.sub_ctx("predict") as sub_ctx:
+        model = sub_ctx.reader(input_model).read_model()
+        module = LrModuleHost.from_model(model)
+        test_data = sub_ctx.reader(test_data).read_dataframe()
+        output_data = module.predict(sub_ctx, test_data)
+        sub_ctx.writer(test_output_data).write_dataframe(output_data)

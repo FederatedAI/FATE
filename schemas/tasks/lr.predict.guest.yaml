@@ -1,0 +1,55 @@
+execution_id: predict_xxx
+component: hetero_lr
+role: guest
+stage: predict
+inputs:
+  artifacts:
+    test_data:
+      name: predict_data
+      uri: file:///Users/sage/proj/FATE/2.0.0-alpha/examples/data/breast_hetero_guest.csv
+      metadata:
+        format: csv
+        id_name: id
+        delimiter: ","
+        label_name: y
+        label_type: float32
+        dtype: float32
+        num_features: 10
+        num_samples: 569
+    input_model:
+      name: input_model
+      uri: file:///Users/sage/alpha/model/guest.json
+      metadata:
+        format: json
+outputs:
+  artifacts:
+    test_output_data:
+      name: test_output_data
+      uri: file:///Users/sage/alpha/data/guest_predict_output.csv
+      metadata:
+        format: csv
+conf:
+  mlmd:
+    type: pipeline
+    metadata:
+      db: /Users/sage/alpha/mlmd.db
+  logger:
+    type: pipeline
+    metadata:
+      basepath: /Users/sage/alpha/logs
+      level: DEBUG
+      debug_mode: true
+  device: CPU
+  computing:
+    engine: standalone
+    computing_id: xxxx
+  federation:
+    engine: standalone
+    federation_id: xxx
+    parties:
+      local:
+        role: guest
+        partyid: "9999"
+      parties:
+        - role: host
+          partyid: "10000"

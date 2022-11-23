@@ -51,8 +51,33 @@ class LrModuleHost(HeteroModule):
         self.w = w
 
     def get_model(self):
-        return {"w": self.w.to_local()._storage.data.tolist()}
+        return {
+            "w": self.w.to_local()._storage.data.tolist(),
+            "metadata": {
+                "max_iter": self.max_iter,
+                "batch_size": self.batch_size,
+                "learning_rate": self.learning_rate,
+                "alpha": self.alpha,
+            },
+        }
+
+    def predict(self, ctx, test_data):
+        batch_loader = DataLoader(
+            test_data,
+            ctx=ctx,
+            batch_size=-1,
+            mode="hetero",
+            role="host",
+            sync_arbiter=False,
+        )
+        for X in batch_loader:
+            output = tensor.matmul(X, self.w)
+            print(output)
 
     @classmethod
     def from_model(cls, model) -> "LrModuleHost":
-        ...
+        lr = LrModuleHost(**model["metadata"])
+        import torch
+
+        lr.w = tensor.tensor(torch.tensor(model["w"]))
+        return lr

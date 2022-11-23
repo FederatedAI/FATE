@@ -163,20 +163,20 @@ class _Component:
 
             # arg support to be parameter
             elif parameter := name_parameter_mapping.get(arg):
-                if not parameter.optional:
-                    parameter_apply = config.inputs.parameters.get(arg)
-                    if parameter_apply is None:
+                parameter_apply = config.inputs.parameters.get(arg)
+                if parameter_apply is None:
+                    if not parameter.optional:
                         raise ComponentApplyError(f"parameter `{arg}` required, declare: `{parameter}`")
                     else:
-                        if type(parameter_apply) != parameter.type:
-                            raise ComponentApplyError(
-                                f"parameter `{arg}` with applying config `{parameter_apply}` can't apply to `{parameter}`"
-                                f": {type(parameter_apply)} != {parameter.type}"
-                            )
-                        else:
-                            execute_args.append(parameter_apply)
+                        execute_args.append(parameter_apply)
                 else:
-                    execute_args.append(parameter.default)
+                    if type(parameter_apply) != parameter.type:
+                        raise ComponentApplyError(
+                            f"parameter `{arg}` with applying config `{parameter_apply}` can't apply to `{parameter}`"
+                            f": {type(parameter_apply)} != {parameter.type}"
+                        )
+                    else:
+                        execute_args.append(parameter_apply)
             else:
                 raise ComponentApplyError(f"should not go here")
 
@@ -365,7 +365,7 @@ class _ParameterDeclareClass:
         return f"Parameter<name={self.name}, type={self.type}, default={self.default}, optional={self.optional}>"
 
 
-def parameter(name, type, default=None, optional=False, desc=None):
+def parameter(name, type, default=None, optional=True, desc=None):
     """attaches an parameter to the component."""
 
     def decorator(f):
