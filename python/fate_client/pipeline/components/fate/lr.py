@@ -12,6 +12,7 @@ class HeteroLR(Component):
                  runtime_roles: List[str] = None,
                  learning_rate: float = PlaceHolder(),
                  max_iter: int = PlaceHolder(),
+                 batch_size: int = PlaceHolder(),
                  train_data: ArtifactChannel = PlaceHolder(),
                  validate_data: ArtifactChannel = PlaceHolder(),
                  test_data: ArtifactChannel = PlaceHolder(),
@@ -24,6 +25,7 @@ class HeteroLR(Component):
         self.runtime_roles = runtime_roles
         self.learning_rate = learning_rate
         self.max_iter = max_iter
+        self.batch_size = batch_size
         self.train_data = train_data
         self.validate_data = validate_data
         self.test_data = test_data

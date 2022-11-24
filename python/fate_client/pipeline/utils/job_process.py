@@ -33,9 +33,9 @@ def run_detect_task(status_manager, execution_ids):
         is_finish = status_manager.monitor_finish_status(execution_ids)
         if is_finish:
             status_manager.record_terminate_status(execution_ids)
-            return
+            break
 
-        time.sleep(0.1)
+        time.sleep(0.5)
 
 
 def process_task(task_type: str, task_name: str, exec_cmd_prefix: list, runtime_constructor: RuntimeConstructor):
@@ -51,13 +51,13 @@ def process_task(task_type: str, task_name: str, exec_cmd_prefix: list, runtime_
         role = party.role
         party_id = party.party_id
 
-        conf_path = runtime_constructor.task_conf_uri(role, party_id)
+        conf_path = runtime_constructor.task_conf_path(role, party_id)
         execution_id = runtime_constructor.execution_id(role, party_id)
         execution_ids.append(execution_id)
         task_infos.append(SimpleNamespace(execution_id=execution_id, role=role, party_id=party_id))
 
         log_path = runtime_constructor.log_path(role, party_id)
-        std_log_path = Path(log_path).parent.joinpath("std.log").resolve()
+        std_log_path = Path(log_path).joinpath("std.log").resolve()
         std_log_path.parent.mkdir(parents=True, exist_ok=True)
         std_log_fd = open(std_log_path, "w")
         std_log_fds.append(std_log_fd)
@@ -65,7 +65,7 @@ def process_task(task_type: str, task_name: str, exec_cmd_prefix: list, runtime_
         exec_cmd = copy.deepcopy(exec_cmd_prefix)
         exec_cmd.extend(
             [
-                "--process_tag",
+                "--process-tag",
                 execution_id,
                 "--config",
                 conf_path
@@ -84,10 +84,9 @@ def process_task(task_type: str, task_name: str, exec_cmd_prefix: list, runtime_
 
     detect_task.start()
 
+    detect_task.join()
     for func in task_pools:
         func.join()
-
-    detect_task.join()
 
     for std_log_fd in std_log_fds:
         std_log_fd.close()

@@ -12,7 +12,7 @@ from fate.components.spec import (
 @cpn.parameter("format", type=str, default="csv", optional=False)
 @cpn.parameter("id_name", type=str, default="id", optional=True)
 @cpn.parameter("delimiter", type=str, default=",", optional=True)
-@cpn.parameter("label_name", type=str, default="y", optional=True)
+@cpn.parameter("label_name", type=str, default=None, optional=True)
 @cpn.parameter("label_type", type=str, default="float32", optional=True)
 @cpn.parameter("dtype", type=str, default="float32", optional=True)
 @cpn.artifact(

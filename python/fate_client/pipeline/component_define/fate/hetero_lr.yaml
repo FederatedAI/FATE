@@ -13,11 +13,15 @@ component:
       learning_rate:
         type: float
         default: 0.1
-        optional: false
+        optional: true
       max_iter:
         type: int
         default: 100
-        optional: false
+        optional: true
+      batch_size:
+        type: int
+        default: 100
+        optional: true
     artifacts:
       train_data:
         type: dataset
@@ -44,7 +48,7 @@ component:
           - guest
           - host
       test_data:
-        type: datasets
+        type: dataset
         optional: false
         stages:
           - predict
@@ -61,6 +65,13 @@ component:
         roles:
           - guest
           - host
+      train_output_metric:
+        type: metric
+        optional: false
+        stages:
+          - train
+        roles:
+          - arbiter
       output_model:
         type: model
         optional: false
@@ -78,3 +89,4 @@ component:
           - guest
           - host
 schema_version: v1
+

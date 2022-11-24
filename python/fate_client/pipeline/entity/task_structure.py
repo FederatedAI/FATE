@@ -48,7 +48,7 @@ class FederationBackendSpec(BaseModel):
     parties: FederationPartySpec
 
 
-class RuntimeEnvSpec(BaseModel):
+class RuntimeConfSpec(BaseModel):
     mlmd: MLMDSpec
     logger: LOGGERSpec
     device: str
@@ -64,4 +64,4 @@ class TaskScheduleSpec(BaseModel):
     party_id: Optional[Union[str, int]]
     inputs: Optional[TaskRuntimeInputSpec]
     outputs: Optional[Dict[str, IOArtifact]]
-    env: RuntimeEnvSpec
+    conf: RuntimeConfSpec

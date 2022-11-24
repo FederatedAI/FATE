@@ -12,15 +12,14 @@ class LocalFSTaskConfManager(object):
                                role: str, party_id: str):
         uri_obj = parse_uri(output_dir_uri)
         local_path = construct_local_dir(uri_obj.path, *[job_id, task_name, role, party_id, cls.FILE_SUFFIX])
-        uri_obj = replace_uri_path(uri_obj, str(local_path))
-        return uri_obj.geturl()
+        return str(local_path)
 
     @classmethod
     def record_task_conf(cls, output_dir_uri, job_id, task_name, role, party_id, task_conf):
-        uri = cls.generate_task_conf_uri(output_dir_uri, job_id, task_name, role, party_id)
-        write_yaml_file(uri, task_conf)
+        path = cls.generate_task_conf_uri(output_dir_uri, job_id, task_name, role, party_id)
+        write_yaml_file(path, task_conf)
 
-        return uri
+        return path
 
 
 class LMDBTaskConfManager(object):

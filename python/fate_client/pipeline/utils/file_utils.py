@@ -12,6 +12,8 @@ def construct_local_dir(filepath: typing.Union[Path, str], *suffixes) -> "Path":
     for suf in suffixes:
         filepath = filepath.joinpath(suf)
 
+    filepath.parent.mkdir(parents=True, exist_ok=True)
+
     return filepath
 
 

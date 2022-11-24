@@ -14,15 +14,15 @@ class SQLiteStatusManager(object):
         for execution_id in execution_ids:
             task_run = self._meta_manager.get_or_create_task(execution_id)
             state = task_run.properties["state"].string_value
-            if state == "running":
+            if state in ["INIT", "running"]:
                 return False
 
         return True
 
     def record_terminate_status(self, execution_ids):
         for execution_id in execution_ids:
-            task_run = self._meta_manager.get_or_create_task(execution_id)
-            self._meta_manager.set_task_safe_terminate_flag(task_run)
+            # task_run = self._meta_manager.get_or_create_task(execution_id)
+            self._meta_manager.set_task_safe_terminate_flag(execution_id)
 
     def get_task_results(self, tasks_info):
         """
@@ -50,23 +50,29 @@ class SQLiteStatusManager(object):
         return ret
 
 
+def get_status_manager():
+    return SQLiteStatusManager
+
+
 class MachineLearningMetadata:
     def __init__(self, backend="sqlite", metadata={}) -> None:
         self.store = self.create_store(backend, metadata)
         self._job_type_id = None  # context type
         self._task_type_id = None  # execution type
 
-    def update_task_state(self, task_run, state, exception=None):
+    def update_task_state(self, taskid, state, exception=None):
+        task_run = self.get_or_create_task(taskid)
         task_run.properties["state"].string_value = state
         if exception is not None:
             task_run.properties["exception"].string_value = exception
         self.store.put_executions([task_run])
 
-    def get_task_safe_terminate_flag(self, task_run):
-        task_run = self.get_or_create_task(task_run.name)
+    def get_task_safe_terminate_flag(self, taskid: str):
+        task_run = self.get_or_create_task(taskid)
         return task_run.properties["safe_terminate"].bool_value
 
-    def set_task_safe_terminate_flag(self, task_run):
+    def set_task_safe_terminate_flag(self, taskid: str):
+        task_run = self.get_or_create_task(taskid)
         task_run.properties["safe_terminate"].bool_value = True
         self.store.put_executions([task_run])
 
@@ -109,7 +115,3 @@ class MachineLearningMetadata:
             task_type.properties["safe_terminate"] = metadata_store_pb2.BOOLEAN
             self._task_type_id = self.store.put_execution_type(task_type)
         return self._task_type_id
-
-
-def get_status_manager():
-    return SQLiteStatusManager

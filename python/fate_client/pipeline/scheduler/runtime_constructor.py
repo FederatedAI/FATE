@@ -1,7 +1,7 @@
 from ..conf.env_config import StandaloneConfig
 from ..entity.component_structures import OutputDefinitionsSpec
 from ..entity.task_structure import TaskScheduleSpec, LOGGERSpec, TaskRuntimeInputSpec, TaskRuntimeOutputSpec, \
-    MLMDSpec, RuntimeEnvSpec, ComputingBackendSpec, FederationBackendSpec, FederationPartySpec
+    MLMDSpec, RuntimeConfSpec, ComputingBackendSpec, FederationBackendSpec, FederationPartySpec
 from ..manager.resource_manager import StandaloneResourceManager
 from ..utils.id_gen import gen_computing_id, gen_federation_id, gen_execution_id
 
@@ -20,12 +20,11 @@ class RuntimeConstructor(object):
         self._conf = StandaloneConfig()
         self._resource_manager = StandaloneResourceManager(self._conf)
 
-        self._runtime_env = dict()
         self._runtime_conf = dict()
         self._input_artifacts = dict()
         self._output_artifacts = dict()
         self._task_schedule_spec = dict()
-        self._task_conf_uri = dict()
+        self._task_conf_path = dict()
 
         self._runtime_roles = set()
         for party in self._runtime_parties:
@@ -35,13 +34,13 @@ class RuntimeConstructor(object):
                 self._input_artifacts[party.role] = dict()
                 self._output_artifacts[party.role] = dict()
                 self._task_schedule_spec[party.role] = dict()
-                self._task_conf_uri[party.role] = dict()
+                self._task_conf_path[party.role] = dict()
 
             self._runtime_conf[party.role].update({party.party_id: None})
             self._input_artifacts[party.role].update({party.party_id: dict()})
             self._output_artifacts[party.role].update({party.party_id: dict()})
             self._task_schedule_spec[party.role].update({party.party_id: None})
-            self._task_conf_uri[party.role].update({party.party_id: None})
+            self._task_conf_path[party.role].update({party.party_id: None})
 
     def construct_output_artifacts(self, output_definition_artifacts: OutputDefinitionsSpec):
         for output_key, output_artifact_spec in output_definition_artifacts.artifacts.items():
@@ -120,8 +119,8 @@ class RuntimeConstructor(object):
 
     def _construct_logger(self, role, party_id):
         metadata = dict(
-            base_path=self._resource_manager.generate_log_uri(
-                self._log_dir, self._job_id, self._task_name, role, party_id),
+            basepath=self._resource_manager.generate_log_uri(
+                self._log_dir, role, party_id),
             level=self._conf.LOG_LEVEL,
             debug_mode=self._conf.LOG_DEBUG_MODE
         )
@@ -147,12 +146,12 @@ class RuntimeConstructor(object):
             )
         )
 
-    def _construct_runtime_env(self, role, party_id):
+    def _construct_runtime_conf(self, role, party_id):
         mlmd = self._construct_mlmd(role, party_id)
         logger = self._construct_logger(role, party_id)
         computing_backend = self._construct_computing_backend(role, party_id)
         federation_backend = self._construct_federation_backend(role, party_id)
-        return RuntimeEnvSpec(
+        return RuntimeConfSpec(
             mlmd=mlmd,
             logger=logger,
             device=self._conf.DEVICE,
@@ -162,13 +161,13 @@ class RuntimeConstructor(object):
 
     def construct_task_schedule_spec(self):
         for party in self._runtime_parties:
-            env = self._construct_runtime_env(party.role, party.party_id)
+            conf = self._construct_runtime_conf(party.role, party.party_id)
             party_task_spec = TaskScheduleSpec(
                 execution_id=gen_execution_id(self._job_id, self._task_name, party.role, party.party_id),
                 component=self._component_ref,
                 role=party.role,
                 stage=self._stage,
-                env=env
+                conf=conf
             )
 
             input_artifact = self._input_artifacts[party.role][party.party_id]
@@ -187,23 +186,23 @@ class RuntimeConstructor(object):
                 party_task_spec.outputs = TaskRuntimeOutputSpec(artifacts=output_artifact)
 
             self._task_schedule_spec[party.role][party.party_id] = party_task_spec
-            conf_uri = self._resource_manager.write_out_task_conf(self._job_id,
-                                                                  self._task_name,
-                                                                  party.role,
-                                                                  party.party_id,
-                                                                  party_task_spec.dict(exclude_defaults=True))
-            self._task_conf_uri[party.role][party.party_id] = conf_uri
-            print(f"{party.role}-{party.party_id}'s task_conf uri {conf_uri}")
+            conf_path = self._resource_manager.write_out_task_conf(self._job_id,
+                                                                   self._task_name,
+                                                                   party.role,
+                                                                   party.party_id,
+                                                                   party_task_spec.dict(exclude_defaults=True))
+            self._task_conf_path[party.role][party.party_id] = conf_path
+            print(f"{party.role}-{party.party_id}'s task_conf path {conf_path}")
 
     @property
     def runtime_parties(self):
         return self._runtime_parties
 
     def mlmd(self, role, party_id):
-        return self._task_schedule_spec[role][party_id].env.mlmd
+        return self._task_schedule_spec[role][party_id].conf.mlmd
 
-    def task_conf_uri(self, role, party_id):
-        return self._task_conf_uri[role][party_id]
+    def task_conf_path(self, role, party_id):
+        return self._task_conf_path[role][party_id]
 
     def execution_id(self, role, party_id):
         return self._task_schedule_spec[role][party_id].execution_id
@@ -213,4 +212,4 @@ class RuntimeConstructor(object):
         return self._resource_manager.status_manager
 
     def log_path(self, role, party_id):
-        return self._task_schedule_spec[role][party_id].env.logger.metadata["base_path"]
+        return self._task_schedule_spec[role][party_id].conf.logger.metadata["basepath"]

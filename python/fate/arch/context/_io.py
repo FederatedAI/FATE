@@ -107,7 +107,7 @@ class CSVReader:
         dataframe_reader = dataframe.CSVReader(**kwargs).to_frame(self.ctx, self.uri)
         # s_df = dataframe.serialize(self.ctx, dataframe_reader)
         # dataframe_reader = dataframe.deserialize(self.ctx, s_df)
-        return Dataframe(dataframe_reader, dataframe_reader.shape[0], dataframe_reader.shape[1])
+        return DataframeDataset(dataframe_reader, dataframe_reader.shape[1], dataframe_reader.shape[0])
 
 
 class DataFrameReader:
@@ -124,7 +124,7 @@ class DataFrameReader:
             data_dict = json.loads(fin.read())
             df = dataframe.deserialize(self.ctx, data_dict)
 
-        return Dataframe(df, df.shape[0], df.shape[1])
+        return DataframeDataset(df, df.shape[1], df.shape[0])
 
 
 class LibSVMReader:
@@ -195,7 +195,7 @@ class DataFrameWriter:
             json.dump(data_dict, f)
 
 
-class Dataframe:
+class DataframeDataset:
     def __init__(self, frames, num_features, num_samples) -> None:
         self.data = frames
         self.num_features = num_features

@@ -11,11 +11,36 @@ component:
     parameters:
       path:
         type: str
-        default: null
+        default:
         optional: false
+      format:
+        type: str
+        default: csv
+        optional: false
+      id_name:
+        type: str
+        default: id
+        optional: true
+      delimiter:
+        type: str
+        default: ','
+        optional: true
+      label_name:
+        type: str
+        default: y
+        optional: true
+      label_type:
+        type: str
+        default: float32
+        optional: true
+      dtype:
+        type: str
+        default: float32
+        optional: true
+    artifacts: {}
   output_definitions:
     artifacts:
-      data:
+      output_data:
         type: dataset
         optional: false
         stages:
