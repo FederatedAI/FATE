@@ -97,7 +97,7 @@ def load_config_from_entrypoint(configs, config_entrypoint):
 @click.option("--save", type=click.File(mode="w", lazy=True), help="save desc output to specified file in yaml format")
 def desc(name, save):
     "generate component describe config"
-    from fate.components.loader import load_component
+    from fate.components.loader.component import load_component
 
     cpn = load_component(name)
     if save:
@@ -110,7 +110,7 @@ def desc(name, save):
 @click.option("--save", type=click.File(mode="w", lazy=True), help="save list output to specified file in json format")
 def list(save):
     "list all components"
-    from fate.components.loader import list_components
+    from fate.components.loader.component import list_components
 
     if save:
         import json

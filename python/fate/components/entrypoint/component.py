@@ -3,8 +3,8 @@ import time
 import traceback
 
 from fate.arch.context import Context
-from fate.components.loader import load_component
-from fate.components.spec.mlmd import get_mlmd
+from fate.components.loader.component import load_component
+from fate.components.loader.mlmd import load_mlmd
 from fate.components.spec.task import TaskConfigSpec
 
 logger = logging.getLogger(__name__)
@@ -20,7 +20,7 @@ class ParamsValidateFailed(ComponentExecException):
 
 def execute_component(config: TaskConfigSpec):
     context_name = config.execution_id
-    mlmd = get_mlmd(config.conf.mlmd, context_name)
+    mlmd = load_mlmd(config.conf.mlmd, context_name)
     computing = get_computing(config)
     federation = get_federation(config, computing)
     device = config.conf.get_device()

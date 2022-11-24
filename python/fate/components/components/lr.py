@@ -1,7 +1,6 @@
 from fate.components import cpn
 from fate.components.spec import (
     DatasetArtifact,
-    DatasetArtifacts,
     Input,
     MetricArtifact,
     ModelArtifact,

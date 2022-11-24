@@ -13,7 +13,7 @@ def load_component(cpn_name: str):
     # from entrypoint
     import pkg_resources
 
-    for cpn_ep in pkg_resources.iter_entry_points(group="fate.plugins.cpn"):
+    for cpn_ep in pkg_resources.iter_entry_points(group="fate.ext.component"):
         try:
             cpn_register = cpn_ep.load()
             cpn_registered_name = cpn_register.registered_name()
@@ -34,7 +34,7 @@ def list_components():
     buildin_components = list(BUILDIN_COMPONENTS.keys())
     third_parties_components = []
 
-    for cpn_ep in pkg_resources.iter_entry_points(group="fate.plugins.cpn"):
+    for cpn_ep in pkg_resources.iter_entry_points(group="fate.ext.component"):
         try:
             cpn_register = cpn_ep.load()
             cpn_registered_name = cpn_register.registered_name()
