@@ -22,7 +22,7 @@ from fate_arch.session import computing_session
 from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.model_base import ModelBase
-from federatedml.model_base import Metric
+from federatedml.model_base import Metric, MetricMeta
 from federatedml.param.positive_unlabeled_param import PositiveUnlabeledParam
 
 
@@ -32,6 +32,7 @@ class PositiveUnlabeled(ModelBase):
         self.model_param = PositiveUnlabeledParam()
         self.metric_name = "positive_unlabeled"
         self.metric_namespace = "train"
+        self.metric_type = "PU_MODEL"
         self.replaced_label_list = []
         self.converted_unlabeled_count = 0
 
@@ -131,6 +132,8 @@ class PositiveUnlabeled(ModelBase):
         self.callback_metric(metric_name=self.metric_name,
                              metric_namespace=self.metric_namespace,
                              metric_data=[Metric("count of converted unlabeled", self.converted_unlabeled_count)])
+        self.tracker.set_metric_meta(metric_name=self.metric_name, metric_namespace=self.metric_namespace,
+                                     metric_meta=MetricMeta(name=self.metric_name, metric_type=self.metric_type))
 
     @staticmethod
     def replace_instance_label(inst, label):
