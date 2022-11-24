@@ -202,7 +202,10 @@ class DataFormatPreProcess(object):
 
             generated_header["is_display"] = False
 
-        generated_header["sid"] = schema.get("sid", DEFAULT_SID_NAME).strip()
+        sid = schema.get("sid")
+        if sid is None or sid == "":
+            sid = DEFAULT_SID_NAME
+        generated_header["sid"] = sid.strip()
 
         return generated_header
 
@@ -302,3 +305,51 @@ class DataFormatPreProcess(object):
             schema["header"] = ""
 
         return schema
+
+    @staticmethod
+    def recover_schema(schema):
+        if not schema.get('meta'):
+            raise ValueError("Meta not in schema, can not recover meta")
+
+        recovery_schema = copy.deepcopy(schema)
+        meta = schema["meta"]
+        input_format = meta.get("input_format", "dense")
+        if input_format == "dense":
+            """schema has not been processed yet"""
+            if "original_index_info" not in schema:
+                return recovery_schema
+
+            header_list = DataFormatPreProcess.reconstruct_header(schema)
+            del recovery_schema["original_index_info"]
+            delimiter = schema.get("delimiter", ",")
+            header = "" if not header_list else delimiter.join(header_list)
+            recovery_schema["header"] = header
+
+            if "label_name" in recovery_schema:
+                del recovery_schema["label_name"]
+
+            if meta.get("with_match_id"):
+                del recovery_schema["match_id_name"]
+        else:
+            recovery_schema["header"] = ""
+            if "label_name" in recovery_schema:
+                del recovery_schema["label_name"]
+
+            if meta.get("id_range"):
+                recovery_schema["meta"]["id_range"] = 0
+
+            if meta.get("with_label"):
+                del recovery_schema["meta"]["label_name"]
+
+            del recovery_schema["is_display"]
+
+            if meta.get("with_match_id"):
+                del recovery_schema["match_id_name"]
+
+        if "anonymous_header" in schema:
+            del recovery_schema["anonymous_header"]
+
+        if "anonymous_label" in schema:
+            del recovery_schema["anonymous_label"]
+
+        return recovery_schema

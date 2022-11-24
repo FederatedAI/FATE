@@ -58,7 +58,8 @@ class IvCalculator(object):
                     bin_indexes.append(bin_cols_map[h])
         if label_counts is None:
             label_counts = data_overview.get_label_count(data_instances)
-            labels = list(label_counts.keys())
+            labels = sorted(label_counts.keys())
+            labels.reverse()
             label_counts = [label_counts[k] for k in labels]
 
         data_bin_table = BaseBinning.get_data_bin(data_instances, split_points, bin_cols_map)

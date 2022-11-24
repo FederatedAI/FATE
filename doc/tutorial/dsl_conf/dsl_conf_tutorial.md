@@ -95,7 +95,8 @@ Then we can get a return message by deploy model contains model_id and model_ver
 We can modify existing predict conf by replacing model_id, model_version and data set name with yours to make a new 
 predict conf.
 Here we replace model_id and model_version in [predict conf](../../../examples/dsl/v2/hetero_secureboost/test_predict_conf.json) 
-with model_id and model_version returned by deploy model.
+with model_id and model_version returned by deploy model job.
+
 
 ```json
 {

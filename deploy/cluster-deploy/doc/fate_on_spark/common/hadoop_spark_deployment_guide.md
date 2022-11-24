@@ -153,30 +153,30 @@ ssh app@192.168.0.3
 
 **Upload below Packages to Servers**
 
-1. wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/jdk-8u192.tar.gz
-2. wget https://archive.apache.org/dist/hadoop/common/hadoop-3.2.0/hadoop-3.2.0.tar.gz
+1. wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/jdk-8u345.tar.xz
+2. wget https://archive.apache.org/dist/hadoop/common/hadoop-3.3.1/hadoop-3.3.1.tar.gz
 3. wget https://downloads.lightbend.com/scala/2.12.10/scala-2.12.10.tgz
 4. wget https://archive.apache.org/dist/spark/spark-3.1.2/spark-3.1.2-bin-hadoop3.2.tgz
-5. wget https://archive.apache.org/dist/zookeeper/zookeeper-3.4.14/zookeeper-3.4.14.tar.gz
+5. wget https://archive.apache.org/dist/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3-bin.tar.gz 
 
 **Extract**
 
 ```bash
-tar xvf hadoop-3.2.0.tar.gz -C /data/projects/common
+tar xvf hadoop-3.3.1.tar.gz -C /data/projects/common
 tar xvf scala-2.12.10.tgz -C /data/projects/common
 tar xvf spark-3.1.2-bin-hadoop3.2.tgz -C /data/projects/common
 tar xvf zookeeper-3.4.14.tar.gz -C /data/projects/common
-tar xvf jdk-8u192-linux-x64.tar.gz -C /data/projects/common/jdk
-mv hadoop-3.2.0 hadoop
+tar xJf jdk-8u345.tar.xz -C /data/projects/common/jdk
+mv hadoop-3.3.1 hadoop
 mv scala-2.12.10 scala
 mv spark-3.1.2-bin-hadoop3.2 spark
-mv zookeeper-3.4.14 zookeeper
+mv apache-zookeeper-3.6.3-bin zookeeper
 ```
 
 **Configure /etc/profile**
 
 ```bash
-export JAVA_HOME=/data/projects/common/jdk/jdk-8u192
+export JAVA_HOME=/data/projects/common/jdk/jdk-8u345
 export PATH=$JAVA_HOME/bin:$PATH
 export HADOOP_HOME=/data/projects/common/hadoop
 export PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin
@@ -226,7 +226,7 @@ cd /data/projects/common/hadoop/etc/hadoop
 
 **In hadoop-env.sh、yarn-env.sh**
 
-**Add**: export JAVA_HOME=/data/projects/common/jdk/jdk1.8.0_192
+**Add**: export JAVA_HOME=/data/projects/common/jdk/jdk-8u345
 
 **In /data/projects/common/Hadoop/etc/hadoop change `core-site.xml`, `hdfs-site.xml`, `mapred-site.xml`, `yarn-site.xml` configuration; change IP hostname & path depending on actual environment. Please refer below for an example**
 
@@ -631,7 +631,7 @@ spark.yarn.jars hdfs://fate-cluster/tmp/spark/jars/\*.jar
 **Add to spark-env.sh: **
 
 ```
-export JAVA_HOME=/data/projects/common/jdk/jdk-8u192
+export JAVA_HOME=/data/projects/common/jdk/jdk-8u345
 export SCALA_HOME=/data/projects/common/scala
 export HADOOP_HOME=/data/projects/common/hadoop
 export HADOOP_CONF_DIR=\$HADOOP_HOME/etc/hadoop
