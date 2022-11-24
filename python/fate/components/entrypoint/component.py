@@ -36,6 +36,8 @@ def execute_component(config: TaskConfigSpec):
         mlmd.log_excution_start()
         component = load_component(config.component)
         try:
+            if config.stage.strip().lower() != "default":
+                component = component.stages[config.stage]
             args = component.validate_and_extract_execute_args(config)
             component.execute(ctx, *args)
         except Exception as e:

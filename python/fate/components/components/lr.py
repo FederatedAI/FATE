@@ -6,74 +6,62 @@ from fate.components.spec import (
     ModelArtifact,
     Output,
     roles,
-    stages,
 )
-
-# @cpn.component(...)
-# def lr():
-#     ...
-
-# @lr.stage(...)
-# def train():
-#     ...
-
-# @lr.stage(...)
-# def predict():
-#     ...
 
 
 @cpn.component(roles=roles.get_all(), provider="fate", version="2.0.0.alpha")
-@cpn.artifact("train_data", type=Input[DatasetArtifact], roles=[roles.GUEST, roles.HOST], stages=[stages.TRAIN])
-@cpn.artifact(
-    "validate_data", type=Input[DatasetArtifact], optional=True, roles=[roles.GUEST, roles.HOST], stages=[stages.TRAIN]
-)
-@cpn.artifact("input_model", type=Input[ModelArtifact], roles=[roles.GUEST, roles.HOST], stages=[stages.PREDICT])
-@cpn.artifact(
-    "test_data", type=Input[DatasetArtifact], optional=False, roles=[roles.GUEST, roles.HOST], stages=[stages.PREDICT]
-)
+def hetero_lr(ctx, role):
+    ...
+
+
+@hetero_lr.stage("train")
+@cpn.artifact("train_data", type=Input[DatasetArtifact], roles=[roles.GUEST, roles.HOST])
+@cpn.artifact("validate_data", type=Input[DatasetArtifact], optional=True, roles=[roles.GUEST, roles.HOST])
 @cpn.parameter("learning_rate", type=float, default=0.1)
 @cpn.parameter("max_iter", type=int, default=100)
 @cpn.parameter("batch_size", type=int, default=100)
-@cpn.artifact(
-    "train_output_data", type=Output[DatasetArtifact], roles=[roles.GUEST, roles.HOST], stages=[stages.TRAIN]
-)
-@cpn.artifact("train_output_metric", type=Output[MetricArtifact], roles=[roles.ARBITER], stages=[stages.TRAIN])
-@cpn.artifact("output_model", type=Output[ModelArtifact], roles=[roles.GUEST, roles.HOST], stages=[stages.TRAIN])
-@cpn.artifact(
-    "test_output_data", type=Output[DatasetArtifact], roles=[roles.GUEST, roles.HOST], stages=[stages.PREDICT]
-)
-def hetero_lr(
+@cpn.artifact("train_output_data", type=Output[DatasetArtifact], roles=[roles.GUEST, roles.HOST])
+@cpn.artifact("train_output_metric", type=Output[MetricArtifact], roles=[roles.ARBITER])
+@cpn.artifact("output_model", type=Output[ModelArtifact], roles=[roles.GUEST, roles.HOST])
+def hetero_lr_train(
     ctx,
     role,
-    stage,
     train_data,
     validate_data,
-    test_data,
-    input_model,
     learning_rate,
     max_iter,
     batch_size,
     train_output_data,
     train_output_metric,
     output_model,
+):
+    if role == "guest":
+        train_guest(
+            ctx, train_data, validate_data, train_output_data, output_model, max_iter, learning_rate, batch_size
+        )
+    elif role == "host":
+        train_host(
+            ctx, train_data, validate_data, train_output_data, output_model, max_iter, learning_rate, batch_size
+        )
+    elif role == "arbiter":
+        train_arbiter(ctx, max_iter, train_output_metric)
+
+
+@hetero_lr.stage("predict")
+@cpn.artifact("input_model", type=Input[ModelArtifact], roles=[roles.GUEST, roles.HOST])
+@cpn.artifact("test_data", type=Input[DatasetArtifact], optional=False, roles=[roles.GUEST, roles.HOST])
+@cpn.artifact("test_output_data", type=Output[DatasetArtifact], roles=[roles.GUEST, roles.HOST])
+def hetero_lr_predict(
+    ctx,
+    role,
+    test_data,
+    input_model,
     test_output_data,
 ):
-    if stage == "train":
-        if role == "guest":
-            train_guest(
-                ctx, train_data, validate_data, train_output_data, output_model, max_iter, learning_rate, batch_size
-            )
-        elif role == "host":
-            train_host(
-                ctx, train_data, validate_data, train_output_data, output_model, max_iter, learning_rate, batch_size
-            )
-        elif role == "arbiter":
-            train_arbiter(ctx, max_iter, train_output_metric)
-    elif stage == "predict":
-        if role == "guest":
-            predict_guest(ctx, input_model, test_data, test_output_data)
-        if role == "host":
-            predict_host(ctx, input_model, test_data, test_output_data)
+    if role == "guest":
+        predict_guest(ctx, input_model, test_data, test_output_data)
+    if role == "host":
+        predict_host(ctx, input_model, test_data, test_output_data)
 
 
 def train_guest(ctx, train_data, validate_data, train_output_data, output_model, max_iter, learning_rate, batch_size):

@@ -119,7 +119,9 @@ class DataFrameReader:
 
     def read_dataframe(self):
         import json
+
         from fate.arch import dataframe
+
         with open(self.uri, "r") as fin:
             data_dict = json.loads(fin.read())
             df = dataframe.deserialize(self.ctx, data_dict)
@@ -174,6 +176,12 @@ class JsonWriter:
         with open(self.uri, "w") as f:
             json.dump(model, f)
 
+    def write_metric(self, metric):
+        import json
+
+        with open(self.uri, "w") as f:
+            json.dump(metric, f)
+
 
 class LibSVMWriter:
     ...
@@ -188,6 +196,7 @@ class DataFrameWriter:
 
     def write_dataframe(self, df):
         import json
+
         from fate.arch import dataframe
 
         with open(self.uri, "w") as f:
@@ -195,8 +204,8 @@ class DataFrameWriter:
             json.dump(data_dict, f)
 
 
-class DataframeDataset:
-    def __init__(self, frames, num_features, num_samples) -> None:
+class Dataframe:
+    def __init__(self, frames, num_samples, num_features) -> None:
         self.data = frames
         self.num_features = num_features
         self.num_samples = num_samples
