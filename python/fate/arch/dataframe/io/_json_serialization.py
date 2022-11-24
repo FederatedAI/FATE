@@ -1,4 +1,6 @@
 import functools
+import json
+import pickle
 import pandas
 import torch
 from ._json_schema import build_schema, parse_schema
@@ -53,10 +55,22 @@ def serialize(ctx, data):
         serialize_data = data.index.to_local().values.join(tensor_concat, _flatten)
 
     serialize_data.schema = schema
-    return serialize_data
+    data_dict = dict(data=list(serialize_data.collect()),
+                     schema=schema)
+    return data_dict
+    # return serialize_data
 
 
 def deserialize(ctx, data):
+    local_data = data["data"]
+    schema = data["schema"]
+    data = ctx.computing.parallelize(
+            local_data,
+            include_key=True,
+            partition=1
+        )
+    data.schema = schema
+
     recovery_schema, global_ranks, column_info = parse_schema(data.schema)
 
     def _recovery_index(value):
