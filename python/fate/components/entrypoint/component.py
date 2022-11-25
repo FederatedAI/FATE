@@ -4,7 +4,8 @@ import traceback
 
 from fate.arch.context import Context
 from fate.components.loader.component import load_component
-from fate.components.loader.engine import load_computing, load_federation
+from fate.components.loader.computing import load_computing
+from fate.components.loader.federation import load_federation
 from fate.components.loader.mlmd import load_mlmd
 from fate.components.spec.task import TaskConfigSpec
 

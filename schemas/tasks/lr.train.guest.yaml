@@ -57,17 +57,19 @@ conf:
       debug_mode: true
   device: CPU
   computing:
-    engine: standalone
-    computing_id: xxxx
+    type: standalone
+    metadata:
+      computing_id: xxxx
   federation:
-    engine: standalone
-    federation_id: xxx
-    parties:
-      local:
-        role: guest
-        partyid: "9999"
+    type: standalone
+    metadata:
+      federation_id: xxx
       parties:
-        - role: host
-          partyid: "10000"
-        - role: arbiter
-          partyid: "10001"
+        local:
+          role: guest
+          partyid: "9999"
+        parties:
+          - role: host
+            partyid: "10000"
+          - role: arbiter
+            partyid: "10001"

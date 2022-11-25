@@ -1,39 +1,25 @@
 from typing import Any, Dict, List, Literal, Optional, Union
 
 import pydantic
+from fate.components.spec.computing import (
+    EggrollComputingSpec,
+    SparkComputingSpec,
+    StandaloneComputingSpec,
+)
+from fate.components.spec.federation import (
+    EggrollFederationSpec,
+    RabbitMQFederationSpec,
+    StandaloneFederationSpec,
+)
 from fate.components.spec.mlmd import CustomMLMDSpec, FlowMLMDSpec, PipelineMLMDSpec
 
 from .logger import CustomLogger, FlowLogger, PipelineLogger
 
 
-class TaskComputingSpec(pydantic.BaseModel):
-    engine: str
-    computing_id: str
-
-
-class TaskPartySpec(pydantic.BaseModel):
-    role: Literal["guest", "host", "arbiter"]
-    partyid: str
-
-    def tuple(self):
-        return (self.role, self.partyid)
-
-
-class TaskFederationPartiesSpec(pydantic.BaseModel):
-    local: TaskPartySpec
-    parties: List[TaskPartySpec]
-
-
-class TaskFederationSpec(pydantic.BaseModel):
-    engine: str
-    federation_id: str
-    parties: TaskFederationPartiesSpec
-
-
 class TaskConfSpec(pydantic.BaseModel):
     device: Literal["CPU", "GPU"]
-    computing: TaskComputingSpec
-    federation: TaskFederationSpec
+    computing: Union[StandaloneComputingSpec, EggrollComputingSpec, SparkComputingSpec]
+    federation: Union[StandaloneFederationSpec, EggrollFederationSpec, RabbitMQFederationSpec]
     logger: Union[PipelineLogger, FlowLogger, CustomLogger]
     mlmd: Union[PipelineMLMDSpec, FlowMLMDSpec, CustomMLMDSpec]
 
