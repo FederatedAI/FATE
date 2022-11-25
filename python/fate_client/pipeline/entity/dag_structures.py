@@ -28,12 +28,13 @@ class TaskSpec(BaseModel):
 
 class PartyTaskRefSpec(BaseModel):
     inputs: RuntimeInputDefinition
+    conf: Optional[Dict]
 
 
 class PartyTaskSpec(BaseModel):
     parties: Optional[List[PartySpec]]
     tasks: Dict[str, PartyTaskRefSpec]
-    task_conf: Optional[dict]
+    conf: Optional[dict]
 
 
 class TaskConfSpec(BaseModel):
