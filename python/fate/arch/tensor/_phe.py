@@ -17,9 +17,7 @@ class PHECipher(PHECipherInterface):
     def __init__(self, device: device) -> None:
         self.device = device
 
-    def keygen(
-        self, kind: PHEKind = PHEKind.AUTO, options={}
-    ) -> Tuple["PHEEncryptor", "PHEDecryptor"]:
+    def keygen(self, kind: PHEKind = PHEKind.AUTO, options={}) -> Tuple["PHEEncryptor", "PHEDecryptor"]:
 
         if kind == PHEKind.AUTO or PHEKind.PAILLIER:
             if self.device == device.CPU:
@@ -28,14 +26,10 @@ class PHECipher(PHECipherInterface):
                 )
 
                 key_length = options.get("key_length", 1024)
-                encryptor, decryptor = BlockPaillierCipher().keygen(
-                    key_length=key_length
-                )
+                encryptor, decryptor = BlockPaillierCipher().keygen(key_length=key_length)
                 return PHEEncryptor(encryptor), PHEDecryptor(decryptor)
 
-        raise NotImplementedError(
-            f"keygen for kind<{kind}>-device<{self.device}> is not implemented"
-        )
+        raise NotImplementedError(f"keygen for kind<{kind}>-device<{self.device}> is not implemented")
 
 
 class PHEEncryptor:
@@ -52,15 +46,11 @@ class PHEEncryptor:
             if isinstance(storage, DStorage):
                 encrypted_storage = DStorage.elemwise_unary_op(
                     storage,
-                    lambda s: _CPUStorage(
-                        dtype.paillier, storage.shape, self._encryptor.encrypt(s.data)
-                    ),
+                    lambda s: _CPUStorage(dtype.paillier, storage.shape, self._encryptor.encrypt(s.data)),
                     dtype.paillier,
                 )
             else:
-                encrypted_storage = _CPUStorage(
-                    dtype.paillier, storage.shape, self._encryptor.encrypt(storage.data)
-                )
+                encrypted_storage = _CPUStorage(dtype.paillier, storage.shape, self._encryptor.encrypt(storage.data))
         return Tensor(encrypted_storage)
 
 
@@ -77,13 +67,9 @@ class PHEDecryptor:
         if isinstance(storage, DStorage):
             encrypted_storage = DStorage.elemwise_unary_op(
                 storage,
-                lambda s: _CPUStorage(
-                    dtype.paillier, storage.shape, self._decryptor.decrypt(s.data)
-                ),
+                lambda s: _CPUStorage(dtype.paillier, storage.shape, self._decryptor.decrypt(s.data)),
                 dtype.paillier,
             )
         else:
-            encrypted_storage = _CPUStorage(
-                dtype.float64, storage.shape, self._decryptor.decrypt(storage.data)
-            )
+            encrypted_storage = _CPUStorage(dtype.float32, storage.shape, self._decryptor.decrypt(storage.data))
         return Tensor(encrypted_storage)

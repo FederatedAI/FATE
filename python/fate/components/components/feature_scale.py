@@ -5,6 +5,7 @@ from fate.components import (
     Input,
     ModelArtifact,
     Output,
+    Role,
     cpn,
 )
 
@@ -21,7 +22,7 @@ def feature_scale(ctx, role):
 @cpn.artifact("output_model", type=Output[ModelArtifact], roles=[GUEST, HOST])
 def feature_scale_train(
     ctx,
-    role,
+    role: Role,
     train_data,
     method,
     train_output_data,
@@ -36,7 +37,7 @@ def feature_scale_train(
 @cpn.artifact("test_output_data", type=Output[DatasetArtifact], roles=[GUEST, HOST])
 def feature_scale_predict(
     ctx,
-    role,
+    role: Role,
     test_data,
     input_model,
     test_output_data,

@@ -7,6 +7,7 @@ from fate.components import (
     MetricArtifact,
     ModelArtifact,
     Output,
+    Role,
     cpn,
 )
 
@@ -27,7 +28,7 @@ def hetero_lr(ctx, role):
 @cpn.artifact("output_model", type=Output[ModelArtifact], roles=[GUEST, HOST])
 def train(
     ctx,
-    role,
+    role: Role,
     train_data,
     validate_data,
     learning_rate,
@@ -37,16 +38,16 @@ def train(
     train_output_metric,
     output_model,
 ):
-    if role == "guest":
+    if role.is_guest:
         train_guest(
             ctx, train_data, validate_data, train_output_data, output_model, max_iter, learning_rate, batch_size
         )
-    elif role == "host":
+    elif role.is_host:
         train_host(
             ctx, train_data, validate_data, train_output_data, output_model, max_iter, learning_rate, batch_size
         )
-    elif role == "arbiter":
-        train_arbiter(ctx, max_iter, train_output_metric)
+    elif role.is_arbiter:
+        train_arbiter(ctx, max_iter, batch_size, train_output_metric)
 
 
 @hetero_lr.predict()
@@ -55,14 +56,14 @@ def train(
 @cpn.artifact("test_output_data", type=Output[DatasetArtifact], roles=[GUEST, HOST])
 def predict(
     ctx,
-    role,
+    role: Role,
     test_data,
     input_model,
     test_output_data,
 ):
-    if role == "guest":
+    if role.is_guest:
         predict_guest(ctx, input_model, test_data, test_output_data)
-    if role == "host":
+    if role.is_host:
         predict_host(ctx, input_model, test_data, test_output_data)
 
 
@@ -98,11 +99,11 @@ def train_host(ctx, train_data, validate_data, train_output_data, output_model, 
         sub_ctx.writer(train_output_data).write_dataframe(output_data)
 
 
-def train_arbiter(ctx, max_iter, train_output_metric):
+def train_arbiter(ctx, max_iter, batch_size, train_output_metric):
     from fate.ml.lr.arbiter import LrModuleArbiter
 
     with ctx.sub_ctx("train") as sub_ctx:
-        module = LrModuleArbiter(max_iter=max_iter)
+        module = LrModuleArbiter(max_iter=max_iter, batch_size=batch_size)
         module.fit(sub_ctx)
         for metric in module.get_metrics():
             sub_ctx.writer(train_output_metric).write_metric(metric)

@@ -1,4 +1,4 @@
-from fate.components import GUEST, HOST, DatasetArtifact, Output, cpn
+from fate.components import GUEST, HOST, DatasetArtifact, Output, Role, cpn
 
 
 @cpn.component(roles=[GUEST, HOST])
@@ -12,7 +12,7 @@ from fate.components import GUEST, HOST, DatasetArtifact, Output, cpn
 @cpn.artifact("output_data", type=Output[DatasetArtifact], roles=[GUEST, HOST])
 def reader(
     ctx,
-    role,
+    role: Role,
     path,
     format,
     id_name,

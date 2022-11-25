@@ -52,7 +52,9 @@ flowing codes modified from [click](https://github.com/pallets/click) project
 import inspect
 import logging
 import pprint
-from typing import Dict, List, Optional, OrderedDict
+from typing import List, Optional, OrderedDict
+
+from fate.components import Role
 
 
 class ComponentDeclarError(Exception):
@@ -122,7 +124,7 @@ class _Component:
                 f"function's arguments `{undeclared_func_parameters}` lack of corresponding decorator"
             )
 
-        self.stages: Dict[str, _Component] = {}
+        self.stage_components: List[_Component] = []
 
     def validate_and_extract_execute_args(self, role, stage, inputs_artifacts, outputs_artifacts, inputs_parameters):
         from fate.components.loader.artifact import load_artifact
@@ -133,7 +135,7 @@ class _Component:
         for arg in self.func_args[2:]:
             # arg support to be artifact
             if arti := name_artifact_mapping.get(arg):
-                if (arti.stages is None or stage in arti.stages) and (arti.roles is None or role in arti.roles):
+                if (arti.stages is None or stage in arti.stages) and ((not (arti.roles)) or role.name in arti.roles):
                     # get corresponding applying config
                     if isinstance(arti, _InputArtifactDeclareClass):
                         artifact_apply = inputs_artifacts.get(arg)
@@ -189,7 +191,7 @@ class _Component:
 
     def get_artifacts(self):
         mapping = {artifact.name: artifact for artifact in self.artifacts}
-        for _, stage_cpn in self.stages.items():
+        for stage_cpn in self.stage_components:
             for artifact_name, artifact in stage_cpn.get_artifacts().items():
                 # update or merge
                 if artifact_name not in mapping:
@@ -215,7 +217,7 @@ class _Component:
 
     def get_parameters(self):
         mapping = {parameter.name: parameter for parameter in self.parameters}
-        for _, stage_cpn in self.stages.items():
+        for stage_cpn in self.stage_components:
             for parameter_name, parameter in stage_cpn.get_parameters().items():
                 # update or error
                 if parameter_name not in mapping:
@@ -303,16 +305,14 @@ class _Component:
             return stream.getvalue()
 
     def predict(self, roles=[], provider: Optional[str] = None, version: Optional[str] = None, description=None):
-        from fate.components import STAGES
+        from fate.components import PREDICT
 
-        return self.stage(
-            roles=roles, name=STAGES.PREDICT, provider=provider, version=version, description=description
-        )
+        return self.stage(roles=roles, name=PREDICT.name, provider=provider, version=version, description=description)
 
     def train(self, roles=[], provider: Optional[str] = None, version: Optional[str] = None, description=None):
-        from fate.components import STAGES
+        from fate.components import TRAIN
 
-        return self.stage(roles=roles, name=STAGES.TRAIN, provider=provider, version=version, description=description)
+        return self.stage(roles=roles, name=TRAIN.name, provider=provider, version=version, description=description)
 
     def stage(
         self, roles=[], name=None, provider: Optional[str] = None, version: Optional[str] = None, description=None
@@ -336,14 +336,14 @@ class _Component:
             sub_cpn = _component(
                 name, roles or self.roles, provider or self.provider, version or self.version, description, True
             )(f)
-            self.stages[sub_cpn.name] = sub_cpn
+            self.stage_components.append(sub_cpn)
             return sub_cpn
 
         return wrap
 
 
 def component(
-    roles: list,
+    roles: List[Role],
     name: Optional[str] = None,
     provider: Optional[str] = None,
     version: Optional[str] = None,
@@ -369,13 +369,14 @@ def component(
         version = __version__
     if provider is None:
         provider = __provider__
+    roles = [r.name for r in roles]
     return _component(
         name=name, roles=roles, provider=provider, version=version, description=description, is_subcomponent=False
     )
 
 
 def _component(name, roles, provider, version, description, is_subcomponent):
-    from fate.components import STAGES
+    from fate.components import DEFAULT
 
     def decorator(f):
         cpn_name = name or f.__name__.lower()
@@ -397,7 +398,7 @@ def _component(name, roles, provider, version, description, is_subcomponent):
             if is_subcomponent:
                 artifact.stages = [cpn_name]
             else:
-                artifact.stages = [STAGES.DEFAULT]
+                artifact.stages = [DEFAULT.name]
         desc = description
         if desc is None:
             desc = inspect.getdoc(f)
@@ -454,8 +455,11 @@ def _create_artifact_declare_class(name, type, roles, desc, optional):
         raise ValueError(f"bad artifact: {name}")
 
 
-def artifact(name, type, roles=None, desc=None, optional=False):
+def artifact(name, type, roles: Optional[List[Role]] = None, desc=None, optional=False):
     """attaches an artifact to the component."""
+    if roles is None:
+        roles = []
+    roles = [r.name for r in roles]
 
     def decorator(f):
         description = desc

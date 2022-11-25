@@ -31,6 +31,8 @@ class _CPUStorage(StorageBase):
         )
 
     def __str__(self) -> str:
+        if isinstance(self.data, torch.Tensor):
+            return f"_CPUStorage({self.device}, {self.dtype}, {self.shape},\n<Inner data={self.data}, dtype={self.data.dtype}>)"
         return f"_CPUStorage({self.device}, {self.dtype}, {self.shape},\n{self.data})"
 
     def __repr__(self) -> str:

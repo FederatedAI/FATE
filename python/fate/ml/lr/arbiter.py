@@ -11,10 +11,11 @@ logger = logging.getLogger(__name__)
 class LrModuleArbiter(HeteroModule):
     def __init__(
         self,
+        batch_size,
         max_iter=100,
     ):
         self.max_iter = max_iter
-        self.batch_size = 5
+        self.batch_size = batch_size
 
         self.losses = []
 

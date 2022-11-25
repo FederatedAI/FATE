@@ -1,4 +1,4 @@
-from fate.components import GUEST, HOST, DatasetArtifact, Input, Output, cpn
+from fate.components import GUEST, HOST, DatasetArtifact, Input, Output, Role, cpn
 
 
 @cpn.component(roles=[GUEST, HOST], provider="fate")
@@ -7,15 +7,15 @@ from fate.components import GUEST, HOST, DatasetArtifact, Input, Output, cpn
 @cpn.artifact("output_data", type=Output[DatasetArtifact], roles=[GUEST, HOST])
 def intersection(
     ctx,
-    role,
+    role: Role,
     input_data,
     method,
     output_data,
 ):
-    if role == "guest":
+    if role.is_guest:
         if method == "raw":
             raw_intersect_guest(ctx, input_data, output_data)
-    elif role == "host":
+    elif role.is_host:
         if method == "raw":
             raw_intersect_host(ctx, input_data, output_data)
 

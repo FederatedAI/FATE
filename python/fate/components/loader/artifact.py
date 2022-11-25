@@ -1,5 +1,5 @@
 def load_artifact(data, artifact_type):
-    from fate.components.spec.artifacts import (
+    from fate.components import (
         Artifact,
         Artifacts,
         DatasetArtifact,

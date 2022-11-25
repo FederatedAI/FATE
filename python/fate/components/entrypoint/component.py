@@ -8,6 +8,7 @@ from fate.components.loader.computing import load_computing
 from fate.components.loader.device import load_device
 from fate.components.loader.federation import load_federation
 from fate.components.loader.mlmd import load_mlmd
+from fate.components.loader.other import load_role, load_stage
 from fate.components.spec.task import TaskConfigSpec
 
 logger = logging.getLogger(__name__)
@@ -19,6 +20,8 @@ def execute_component(config: TaskConfigSpec):
     computing = load_computing(config.conf.computing)
     federation = load_federation(config.conf.federation, computing)
     device = load_device(config.conf.device)
+    role = load_role(config.role)
+    stage = load_stage(config.stage)
     ctx = Context(
         context_name=context_name,
         device=device,
@@ -31,14 +34,16 @@ def execute_component(config: TaskConfigSpec):
         mlmd.log_excution_start()
         component = load_component(config.component)
         try:
-            if (stage := config.stage.strip().lower()) != "default":
+            if not stage.is_default:
                 # use sub component to handle stage
-                if stage not in component.stages:
-                    raise ValueError(f"stage `{stage}` for component `{component.name}` not supported")
+                for stage_component in component.stage_components:
+                    if stage_component.name == stage.name:
+                        component = stage_component
+                        break
                 else:
-                    component = component.stages[config.stage]
+                    raise ValueError(f"stage `{stage.name}` for component `{component.name}` not supported")
             args = component.validate_and_extract_execute_args(
-                config.role, config.stage, config.inputs.artifacts, config.outputs.artifacts, config.inputs.parameters
+                role, config.stage, config.inputs.artifacts, config.outputs.artifacts, config.inputs.parameters
             )
             component.execute(ctx, *args)
         except Exception as e:
