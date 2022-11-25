@@ -1,9 +1,10 @@
 import copy
-
 import pandas as pd
 import numpy as np
 import torch
 import operator
+from fate.arch import tensor
+
 
 
 # TODO: record data type, support multiple data types
@@ -81,7 +82,11 @@ class DataFrame(object):
         return self._process_stat_func(min_ret, *args, **kwargs)
 
     def mean(self, *args, **kwargs) -> "DataFrame":
-        mean_ret = self._values.mean(*args, **kwargs)
+        """
+        TODO: re-implement later
+        """
+        mean_ret = self._values[0].tolist()
+        # mean_ret = self._values.mean(*args, **kwargs)
         return self._process_stat_func(mean_ret, *args, **kwargs)
 
     def sum(self, *args, **kwargs) -> "DataFrame":
@@ -89,7 +94,8 @@ class DataFrame(object):
         return self._process_stat_func(sum_ret, *args, **kwargs)
 
     def std(self, *args, **kwargs) -> "DataFrame":
-        std_ret = self._values.std(*args, **kwargs)
+        std_ret = self._values[1].tolist()
+        # std_ret = self._values.std(*args, **kwargs)
         return self._process_stat_func(std_ret, *args, **kwargs)
 
     def count(self) -> "int":
@@ -115,7 +121,7 @@ class DataFrame(object):
 
     def _arithmetic_operate(self, op, other):
         if isinstance(other, pd.Series):
-            other = torch.tensor(pd.Series)
+            other = tensor.tensor(torch.tensor(other.tolist(), dtype=getattr(torch, "float32")))
         elif isinstance(other, DataFrame):
             other = other.values
         elif isinstance(other, (int, float, np.int, np.int32, np.int64, np.float, np.float32, np.float64)):
@@ -123,7 +129,7 @@ class DataFrame(object):
         else:
             raise ValueError(f"{op.__name__} between {DataFrame} and {type(other)} is not supported")
 
-        ret_value = op(self._values, other.values)
+        ret_value = op(self._values, other)
         return DataFrame(self._ctx, index=self._index, values=ret_value, label=self._label, weight=self._weight,
                          schema=self._schema)
 

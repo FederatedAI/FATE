@@ -84,6 +84,9 @@ def get_reader(format, ctx, name, uri, metadata) -> Reader:
     if format == "dataframe":
         return DataFrameReader(ctx, name, uri.path, metadata)
 
+    if format == "json":
+        return JsonReader(ctx, name, uri.path, metadata)
+
 
 class CSVReader:
     def __init__(self, ctx, name: str, uri: URI, metadata: dict) -> None:
@@ -111,7 +114,7 @@ class CSVReader:
 
 
 class DataFrameReader:
-    def __init__(self, ctx, name: str, uri: URI, metadata: dict) -> None:
+    def __init__(self, ctx, name: str, uri: str, metadata: dict) -> None:
         self.name = name
         self.ctx = ctx
         self.uri = uri
@@ -127,6 +130,21 @@ class DataFrameReader:
             df = dataframe.deserialize(self.ctx, data_dict)
 
         return Dataframe(df, df.shape[1], df.shape[0])
+
+
+class JsonReader:
+    def __init__(self, ctx, name: str, uri: str, metadata: dict) -> None:
+        self.name = name
+        self.ctx = ctx
+        self.uri = uri
+        self.metadata = metadata
+
+    def read_model(self):
+        import json
+        with open(self.uri, "r") as fin:
+            model_dict = json.loads(fin.read())
+
+        return model_dict
 
 
 class LibSVMReader:
