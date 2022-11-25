@@ -21,23 +21,32 @@ import numpy as np
 
 from federatedml.framework.weights import ListWeights, TransferableWeights
 from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
-from ipcl_python import PaillierEncryptedNumber as IpclPaillierEncryptedNumber
-from ipcl_python.bindings.ipcl_bindings import ipclCipherText
 from federatedml.secureprotol import IpclPaillierEncrypt
 from federatedml.util import LOGGER
+
+ipcl_enabled = False
+try:
+    from ipcl_python import PaillierEncryptedNumber as IpclPaillierEncryptedNumber
+    from ipcl_python.bindings.ipcl_bindings import ipclCipherText
+    ipcl_enabled = True
+except ImportError:
+    LOGGER.info("ipcl_python failed to import")
+    pass
 
 
 class LinearModelWeights(ListWeights):
     def __init__(self, l, fit_intercept, raise_overflow_error=True):
         l = np.array(l)
-        if not np.ndim(l) == 0 and len(l) > 0 and not isinstance(
-                l[0], (PaillierEncryptedNumber, IpclPaillierEncryptedNumber)):
-            if np.max(np.abs(l)) > 1e8:
-                if raise_overflow_error:
-                    raise RuntimeError("The model weights are overflow, please check if the "
-                                       "input data has been normalized")
-                else:
-                    LOGGER.warning(f"LinearModelWeights contains entry greater than 1e8.")
+        if not np.ndim(l) == 0 and len(l) > 0:
+            if not isinstance(l[0], PaillierEncryptedNumber) and not (
+                    ipcl_enabled and isinstance(l[0], IpclPaillierEncryptedNumber)):
+                if np.max(np.abs(l)) > 1e8:
+                    if raise_overflow_error:
+                        raise RuntimeError(
+                            "The model weights are overflow, please check if the input data has been normalized")
+                    else:
+                        LOGGER.warning(
+                            f"LinearModelWeights contains entry greater than 1e8.")
         super().__init__(l)
         self.fit_intercept = fit_intercept
         self.raise_overflow_error = raise_overflow_error
@@ -48,7 +57,8 @@ class LinearModelWeights(ListWeights):
     @property
     def coef_(self):
         if self.fit_intercept:
-            if np.ndim(self._weights) == 0 and isinstance(self._weights.item(0), IpclPaillierEncryptedNumber):
+            if np.ndim(self._weights) == 0 and ipcl_enabled and isinstance(
+                    self._weights.item(0), IpclPaillierEncryptedNumber):
                 ipcl_w = self._weights.item(0)
                 w_len = ipcl_w.__len__() - 1
                 pub_key = ipcl_w.public_key
@@ -68,7 +78,8 @@ class LinearModelWeights(ListWeights):
     @property
     def intercept_(self):
         if self.fit_intercept:
-            if np.ndim(self._weights) == 0 and isinstance(self._weights.item(0), IpclPaillierEncryptedNumber):
+            if np.ndim(self._weights) == 0 and ipcl_enabled and isinstance(
+                    self._weights.item(0), IpclPaillierEncryptedNumber):
                 ipcl_w = self._weights.item(0)
                 w_len = ipcl_w.__len__() - 1
                 pub_key = ipcl_w.public_key
@@ -93,7 +104,8 @@ class LinearModelWeights(ListWeights):
             return LinearModelWeights(_w, self.fit_intercept, self.raise_overflow_error)
 
     def map_values(self, func, inplace):
-        if isinstance(self._weights.item(0), IpclPaillierEncryptedNumber) and np.ndim(self._weights) == 0:  # for dec
+        if ipcl_enabled and isinstance(self._weights.item(
+                0), IpclPaillierEncryptedNumber) and np.ndim(self._weights) == 0:  # for dec
             if inplace:
                 self._weights = np.array(func(self.unboxed.item(0)))
                 return self

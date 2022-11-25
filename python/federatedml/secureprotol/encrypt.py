@@ -28,7 +28,11 @@ from federatedml.secureprotol.fate_paillier import PaillierKeypair
 from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
 from federatedml.secureprotol.random import RandomPads
 
-from ipcl_python import PaillierKeypair as IpclPaillierKeypair
+try:
+    from ipcl_python import PaillierKeypair as IpclPaillierKeypair
+except ImportError:
+    LOGGER.info("ipcl_python failed to import")
+    pass
 
 _TORCH_VALID = False
 try:

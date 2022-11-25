@@ -21,8 +21,15 @@ import numpy as np
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.util import LOGGER
 from federatedml.util import consts
-from ipcl_python import PaillierEncryptedNumber as IpclPaillierEncryptedNumber
-from ipcl_python.bindings.ipcl_bindings import ipclCipherText
+
+ipcl_enabled = False
+try:
+    from ipcl_python import PaillierEncryptedNumber as IpclPaillierEncryptedNumber
+    from ipcl_python.bindings.ipcl_bindings import ipclCipherText
+    ipcl_enabled = True
+except ImportError:
+    LOGGER.info("ipcl_python failed to import")
+    pass
 
 
 class _Optimizer(object):
@@ -85,7 +92,7 @@ class _Optimizer(object):
     def add_regular_to_grad(self, grad, lr_weights):
 
         if self.penalty == consts.L2_PENALTY:
-            if isinstance(lr_weights.unboxed.item(0), IpclPaillierEncryptedNumber):
+            if ipcl_enabled and isinstance(lr_weights.unboxed.item(0), IpclPaillierEncryptedNumber):
                 pub_key = grad[0].public_key
                 bn, exp = [], []
                 for i in range(len(grad)):

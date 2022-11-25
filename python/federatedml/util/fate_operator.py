@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 
+from federatedml.util import LOGGER
 from collections import Iterable
 
 import numpy as np
@@ -22,7 +23,14 @@ from scipy.sparse import csr_matrix
 from federatedml.feature.instance import Instance
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
-from ipcl_python import PaillierEncryptedNumber as IpclPaillierEncryptNumber
+
+ipcl_enabled = False
+try:
+    from ipcl_python import PaillierEncryptedNumber as IpclPaillierEncryptNumber
+    ipcl_enabled = True
+except ImportError:
+    LOGGER.info("ipcl_python failed to import")
+    pass
 
 
 def _one_dimension_dot(X, w):
@@ -47,7 +55,7 @@ def _one_dimension_dot(X, w):
             res += w[i] * X[i]
 
     if res == 0:
-        if isinstance(w[0], (PaillierEncryptedNumber, IpclPaillierEncryptNumber)):
+        if isinstance(w[0], PaillierEncryptedNumber) or ipcl_enabled and isinstance(w[0], IpclPaillierEncryptNumber):
             res = 0 * w[0]
     return res
 

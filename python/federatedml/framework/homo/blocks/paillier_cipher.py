@@ -17,8 +17,6 @@ from typing import Union
 
 from federatedml.framework.homo.blocks.base import HomoTransferBase
 from federatedml.secureprotol import PaillierEncrypt, IpclPaillierEncrypt
-from federatedml.secureprotol.fate_paillier import PaillierPublicKey
-from ipcl_python import PaillierPublicKey as IpclPaillierPublicKey
 from federatedml.util import LOGGER
 from federatedml.util import consts
 
@@ -120,7 +118,7 @@ class Client(object):
 
         self._server_parties = trans_var.server_parties
 
-    def gen_paillier_pubkey(self, enable, lib, suffix=tuple()) -> Union[PaillierPublicKey, IpclPaillierPublicKey, None]:
+    def gen_paillier_pubkey(self, enable, lib, suffix=tuple()):
         self._use_encrypt.remote_parties(obj=enable, parties=self._server_parties, suffix=suffix)
         self._paillier_lib.remote_parties(obj=lib, parties=self._server_parties, suffix=suffix)
         if enable:
