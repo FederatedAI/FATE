@@ -31,8 +31,6 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 from federatedml.util import LOGGER
 from federatedml.util import consts
 
-from federatedml.secureprotol import IpclPaillierEncrypt
-
 
 class LegacyAggregatorTransVar(HomoTransferBase):
     def __init__(self, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST,), prefix=None):
@@ -109,12 +107,8 @@ class Arbiter(object):
             if cipher is None:
                 self._model_broadcaster.send_model(model=model.for_remote(), parties=party, suffix=suffix)
             else:
-                if isinstance(cipher, IpclPaillierEncrypt):
-                    self._model_broadcaster.send_model(model=model.encrypted_ipcl(
-                        cipher, False).for_remote(), parties=party, suffix=suffix)
-                else:
-                    self._model_broadcaster.send_model(model=model.encrypted(cipher, False).for_remote(), parties=party,
-                                                       suffix=suffix)
+                self._model_broadcaster.send_model(model=model.encrypted(cipher, False).for_remote(), parties=party,
+                                                   suffix=suffix)
 
     def aggregate_loss(self, idx=None, suffix=tuple()):
         if idx is None:

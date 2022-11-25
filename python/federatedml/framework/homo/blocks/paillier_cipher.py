@@ -16,7 +16,8 @@
 from typing import Union
 
 from federatedml.framework.homo.blocks.base import HomoTransferBase
-from federatedml.secureprotol import PaillierEncrypt, IpclPaillierEncrypt
+from federatedml.secureprotol import PaillierEncrypt
+from federatedml.secureprotol.fate_paillier import PaillierPublicKey
 from federatedml.util import LOGGER
 from federatedml.util import consts
 
@@ -25,8 +26,7 @@ class PaillierCipherTransVar(HomoTransferBase):
     def __init__(self, server=(consts.ARBITER,), clients=(consts.HOST,), prefix=None):
         super().__init__(server=server, clients=clients, prefix=prefix)
         self.use_encrypt = self.create_client_to_server_variable(name="use_encrypt")
-        self.paillier_lib = self.create_client_to_server_variable(name="paillier_lib")
-        self.paillier_pubkey = self.create_server_to_client_variable(name="paillier_pubkey")
+        self.pailler_pubkey = self.create_server_to_client_variable(name="pailler_pubkey")
         self.re_encrypt_times = self.create_client_to_server_variable(name="re_encrypt_times")
         self.model_to_re_encrypt = self.create_client_to_server_variable(name="model_to_re_encrypt")
         self.model_re_encrypted = self.create_server_to_client_variable(name="model_re_encrypted")
@@ -38,8 +38,7 @@ class Server(object):
         if trans_var is None:
             trans_var = PaillierCipherTransVar()
         self._use_encrypt = trans_var.use_encrypt
-        self._paillier_lib = trans_var.paillier_lib
-        self._paillier_pubkey = trans_var.paillier_pubkey
+        self._pailler_pubkey = trans_var.pailler_pubkey
         self._re_encrypt_times = trans_var.re_encrypt_times
         self._model_to_re_encrypt = trans_var.model_to_re_encrypt
         self._model_re_encrypted = trans_var.model_re_encrypted
@@ -48,22 +47,15 @@ class Server(object):
 
     def keygen(self, key_length, suffix=tuple()) -> dict:
         use_cipher = self._use_encrypt.get_parties(parties=self._client_parties, suffix=suffix)
-        paillier_lib = self._paillier_lib.get_parties(parties=self._client_parties, suffix=suffix)
         ciphers = dict()
-        for party, use_encryption, paillier_lib_ in zip(self._client_parties, use_cipher, paillier_lib):
+        for party, use_encryption in zip(self._client_parties, use_cipher):
             if not use_encryption:
                 ciphers[party] = None
             else:
-                if paillier_lib_ == consts.PAILLIER:
-                    cipher = PaillierEncrypt()
-                elif paillier_lib_ == consts.PAILLIER_IPCL:
-                    cipher = IpclPaillierEncrypt()
-                else:
-                    raise ValueError(
-                        "Paillier method {} not supported".format(paillier_lib_))
+                cipher = PaillierEncrypt()
                 cipher.generate_key(key_length)
                 pub_key = cipher.get_public_key()
-                self._paillier_pubkey.remote_parties(obj=pub_key, parties=[party], suffix=suffix)
+                self._pailler_pubkey.remote_parties(obj=pub_key, parties=[party], suffix=suffix)
                 ciphers[party] = cipher
         return ciphers
 
@@ -110,19 +102,17 @@ class Client(object):
         if trans_var is None:
             trans_var = PaillierCipherTransVar()
         self._use_encrypt = trans_var.use_encrypt
-        self._paillier_lib = trans_var.paillier_lib
-        self._paillier_pubkey = trans_var.paillier_pubkey
+        self._pailler_pubkey = trans_var.pailler_pubkey
         self._re_encrypt_times = trans_var.re_encrypt_times
         self._model_to_re_encrypt = trans_var.model_to_re_encrypt
         self._model_re_encrypted = trans_var.model_re_encrypted
 
         self._server_parties = trans_var.server_parties
 
-    def gen_paillier_pubkey(self, enable, lib, suffix=tuple()):
+    def gen_paillier_pubkey(self, enable, suffix=tuple()) -> Union[PaillierPublicKey, None]:
         self._use_encrypt.remote_parties(obj=enable, parties=self._server_parties, suffix=suffix)
-        self._paillier_lib.remote_parties(obj=lib, parties=self._server_parties, suffix=suffix)
         if enable:
-            ciphers = self._paillier_pubkey.get_parties(parties=self._server_parties, suffix=suffix)
+            ciphers = self._pailler_pubkey.get_parties(parties=self._server_parties, suffix=suffix)
             return ciphers[0]
         return None
 
