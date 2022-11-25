@@ -1,28 +1,30 @@
-from fate.components import cpn
-from fate.components.spec import (
+from fate.components import (
+    ARBITER,
+    GUEST,
+    HOST,
     DatasetArtifact,
     Input,
     MetricArtifact,
     ModelArtifact,
     Output,
-    roles,
+    cpn,
 )
 
 
-@cpn.component(roles=[roles.GUEST, roles.HOST, roles.ARBITER], provider="fate", version="2.0.0.alpha")
+@cpn.component(roles=[GUEST, HOST, ARBITER])
 def hetero_lr(ctx, role):
     ...
 
 
-@hetero_lr.stage()
-@cpn.artifact("train_data", type=Input[DatasetArtifact], roles=[roles.GUEST, roles.HOST])
-@cpn.artifact("validate_data", type=Input[DatasetArtifact], optional=True, roles=[roles.GUEST, roles.HOST])
+@hetero_lr.train()
+@cpn.artifact("train_data", type=Input[DatasetArtifact], roles=[GUEST, HOST])
+@cpn.artifact("validate_data", type=Input[DatasetArtifact], optional=True, roles=[GUEST, HOST])
 @cpn.parameter("learning_rate", type=float, default=0.1)
 @cpn.parameter("max_iter", type=int, default=100)
 @cpn.parameter("batch_size", type=int, default=100)
-@cpn.artifact("train_output_data", type=Output[DatasetArtifact], roles=[roles.GUEST, roles.HOST])
-@cpn.artifact("train_output_metric", type=Output[MetricArtifact], roles=[roles.ARBITER])
-@cpn.artifact("output_model", type=Output[ModelArtifact], roles=[roles.GUEST, roles.HOST])
+@cpn.artifact("train_output_data", type=Output[DatasetArtifact], roles=[GUEST, HOST])
+@cpn.artifact("train_output_metric", type=Output[MetricArtifact], roles=[ARBITER])
+@cpn.artifact("output_model", type=Output[ModelArtifact], roles=[GUEST, HOST])
 def train(
     ctx,
     role,
@@ -47,10 +49,10 @@ def train(
         train_arbiter(ctx, max_iter, train_output_metric)
 
 
-@hetero_lr.stage()
-@cpn.artifact("input_model", type=Input[ModelArtifact], roles=[roles.GUEST, roles.HOST])
-@cpn.artifact("test_data", type=Input[DatasetArtifact], optional=False, roles=[roles.GUEST, roles.HOST])
-@cpn.artifact("test_output_data", type=Output[DatasetArtifact], roles=[roles.GUEST, roles.HOST])
+@hetero_lr.predict()
+@cpn.artifact("input_model", type=Input[ModelArtifact], roles=[GUEST, HOST])
+@cpn.artifact("test_data", type=Input[DatasetArtifact], optional=False, roles=[GUEST, HOST])
+@cpn.artifact("test_output_data", type=Output[DatasetArtifact], roles=[GUEST, HOST])
 def predict(
     ctx,
     role,

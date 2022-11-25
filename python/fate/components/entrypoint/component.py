@@ -5,6 +5,7 @@ import traceback
 from fate.arch.context import Context
 from fate.components.loader.component import load_component
 from fate.components.loader.computing import load_computing
+from fate.components.loader.device import load_device
 from fate.components.loader.federation import load_federation
 from fate.components.loader.mlmd import load_mlmd
 from fate.components.spec.task import TaskConfigSpec
@@ -17,7 +18,7 @@ def execute_component(config: TaskConfigSpec):
     mlmd = load_mlmd(config.conf.mlmd, context_name)
     computing = load_computing(config.conf.computing)
     federation = load_federation(config.conf.federation, computing)
-    device = config.conf.get_device()
+    device = load_device(config.conf.device)
     ctx = Context(
         context_name=context_name,
         device=device,
@@ -36,7 +37,9 @@ def execute_component(config: TaskConfigSpec):
                     raise ValueError(f"stage `{stage}` for component `{component.name}` not supported")
                 else:
                     component = component.stages[config.stage]
-            args = component.validate_and_extract_execute_args(config)
+            args = component.validate_and_extract_execute_args(
+                config.role, config.stage, config.inputs.artifacts, config.outputs.artifacts, config.inputs.parameters
+            )
             component.execute(ctx, *args)
         except Exception as e:
             tb = traceback.format_exc()

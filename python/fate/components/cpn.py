@@ -124,9 +124,9 @@ class _Component:
 
         self.stages: Dict[str, _Component] = {}
 
-    def validate_and_extract_execute_args(self, config):
-        role = config.role
-        stage = config.stage
+    def validate_and_extract_execute_args(self, role, stage, inputs_artifacts, outputs_artifacts, inputs_parameters):
+        from fate.components.loader.artifact import load_artifact
+
         name_artifact_mapping = {artifact.name: artifact for artifact in self.artifacts}
         name_parameter_mapping = {parameter.name: parameter for parameter in self.parameters}
         execute_args = [role]
@@ -136,9 +136,9 @@ class _Component:
                 if (arti.stages is None or stage in arti.stages) and (arti.roles is None or role in arti.roles):
                     # get corresponding applying config
                     if isinstance(arti, _InputArtifactDeclareClass):
-                        artifact_apply = config.inputs.artifacts.get(arg)
+                        artifact_apply = inputs_artifacts.get(arg)
                     elif isinstance(arti, _OutputArtifactDeclareClass):
-                        artifact_apply = config.outputs.artifacts.get(arg)
+                        artifact_apply = outputs_artifacts.get(arg)
                     else:
                         artifact_apply = None
 
@@ -153,7 +153,7 @@ class _Component:
                         try:
                             # annotated metadata drop in inherite, so pass type as argument here
                             # maybe we could find more elegant way some day
-                            execute_args.append(arti.type.parse_desc(artifact_apply))
+                            execute_args.append(load_artifact(artifact_apply, arti.type))
                         except Exception as e:
                             raise ComponentApplyError(
                                 f"artifact `{arg}` with applying config `{artifact_apply}` can't apply to `{arti}`"
@@ -163,12 +163,12 @@ class _Component:
 
             # arg support to be parameter
             elif parameter := name_parameter_mapping.get(arg):
-                parameter_apply = config.inputs.parameters.get(arg)
+                parameter_apply = inputs_parameters.get(arg)
                 if parameter_apply is None:
                     if not parameter.optional:
                         raise ComponentApplyError(f"parameter `{arg}` required, declare: `{parameter}`")
                     else:
-                        execute_args.append(parameter_apply)
+                        execute_args.append(parameter.default)
                 else:
                     if type(parameter_apply) != parameter.type:
                         raise ComponentApplyError(
@@ -189,7 +189,7 @@ class _Component:
 
     def get_artifacts(self):
         mapping = {artifact.name: artifact for artifact in self.artifacts}
-        for stage_name, stage_cpn in self.stages.items():
+        for _, stage_cpn in self.stages.items():
             for artifact_name, artifact in stage_cpn.get_artifacts().items():
                 # update or merge
                 if artifact_name not in mapping:
@@ -215,7 +215,7 @@ class _Component:
 
     def get_parameters(self):
         mapping = {parameter.name: parameter for parameter in self.parameters}
-        for stage_name, stage_cpn in self.stages.items():
+        for _, stage_cpn in self.stages.items():
             for parameter_name, parameter in stage_cpn.get_parameters().items():
                 # update or error
                 if parameter_name not in mapping:
@@ -237,6 +237,7 @@ class _Component:
         return mapping
 
     def dict(self):
+        from fate.components import InputAnnotated, OutputAnnotated
         from fate.components.spec.component import (
             ArtifactSpec,
             ComponentSpec,
@@ -245,13 +246,12 @@ class _Component:
             OutputDefinitionsSpec,
             ParameterSpec,
         )
-        from fate.components.spec.types import InputAnnotated, OutputAnnotated
 
         input_artifacts = {}
         output_artifacts = {}
         for artifact_name, artifact in self.get_artifacts().items():
             annotated = getattr(artifact.type, "__metadata__", [None])[0]
-            roles = getattr(artifact, "roles") or self.roles
+            roles = artifact.roles or self.roles
             if annotated == OutputAnnotated:
                 output_artifacts[artifact_name] = ArtifactSpec(
                     type=artifact.type.type, optional=artifact.optional, roles=roles, stages=artifact.stages
@@ -266,7 +266,10 @@ class _Component:
         input_parameters = {}
         for parameter_name, parameter in self.get_parameters().items():
             input_parameters[parameter_name] = ParameterSpec(
-                type=parameter.type.__name__, default=parameter.default, optional=parameter.optional
+                type=parameter.type.__name__,
+                default=parameter.default,
+                optional=parameter.optional,
+                description=parameter.desc,
             )
 
         input_definition = InputDefinitionsSpec(parameters=input_parameters, artifacts=input_artifacts)
@@ -299,8 +302,20 @@ class _Component:
         if inefficient:
             return stream.getvalue()
 
+    def predict(self, roles=[], provider: Optional[str] = None, version: Optional[str] = None, description=None):
+        from fate.components import STAGES
+
+        return self.stage(
+            roles=roles, name=STAGES.PREDICT, provider=provider, version=version, description=description
+        )
+
+    def train(self, roles=[], provider: Optional[str] = None, version: Optional[str] = None, description=None):
+        from fate.components import STAGES
+
+        return self.stage(roles=roles, name=STAGES.TRAIN, provider=provider, version=version, description=description)
+
     def stage(
-        self, name=None, roles=[], provider: Optional[str] = None, version: Optional[str] = None, description=None
+        self, roles=[], name=None, provider: Optional[str] = None, version: Optional[str] = None, description=None
     ):
         r"""Creates a new stage component with :class:`_Component` and uses the decorated function as
         callback.  This will also automatically attach all decorated
@@ -327,7 +342,13 @@ class _Component:
         return wrap
 
 
-def component(name=None, roles=[], provider="fate", version="2.0.0.alpha", description=None):
+def component(
+    roles: list,
+    name: Optional[str] = None,
+    provider: Optional[str] = None,
+    version: Optional[str] = None,
+    description: Optional[str] = None,
+):
     r"""Creates a new :class:`_Component` and uses the decorated function as
     callback.  This will also automatically attach all decorated
     :func:`artifact`\s and :func:`parameter`\s as parameters to the component execution.
@@ -342,12 +363,20 @@ def component(name=None, roles=[], provider="fate", version="2.0.0.alpha", descr
     :param name: the name of the component.  This defaults to the function
                  name.
     """
+    from fate import __provider__, __version__
+
+    if version is None:
+        version = __version__
+    if provider is None:
+        provider = __provider__
     return _component(
         name=name, roles=roles, provider=provider, version=version, description=description, is_subcomponent=False
     )
 
 
 def _component(name, roles, provider, version, description, is_subcomponent):
+    from fate.components import STAGES
+
     def decorator(f):
         cpn_name = name or f.__name__.lower()
         if isinstance(f, _Component):
@@ -368,7 +397,7 @@ def _component(name, roles, provider, version, description, is_subcomponent):
             if is_subcomponent:
                 artifact.stages = [cpn_name]
             else:
-                artifact.stages = ["default"]
+                artifact.stages = [STAGES.DEFAULT]
         desc = description
         if desc is None:
             desc = inspect.getdoc(f)
@@ -414,7 +443,7 @@ class _InputArtifactDeclareClass(_ArtifactDeclareClass):
 
 
 def _create_artifact_declare_class(name, type, roles, desc, optional):
-    from fate.components.spec.types import InputAnnotated, OutputAnnotated
+    from fate.components import InputAnnotated, OutputAnnotated
 
     annotates = getattr(type, "__metadata__", [None])
     if OutputAnnotated in annotates:
@@ -446,12 +475,13 @@ class _ParameterDeclareClass:
         self.type = type
         self.default = default
         self.optional = optional
+        self.desc = desc
 
     def __str__(self) -> str:
         return f"Parameter<name={self.name}, type={self.type}, default={self.default}, optional={self.optional}>"
 
 
-def parameter(name, type, default=None, optional=True, desc=None):
+def parameter(name, type, default=None, optional=True, desc=""):
     """attaches an parameter to the component."""
 
     def decorator(f):

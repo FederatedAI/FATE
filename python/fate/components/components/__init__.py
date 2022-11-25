@@ -1,6 +1,6 @@
 from .feature_scale import feature_scale
+from .hetero_lr import hetero_lr
 from .intersection import intersection
-from .lr import hetero_lr
 from .reader import reader
 
 BUILDIN_COMPONENTS = [

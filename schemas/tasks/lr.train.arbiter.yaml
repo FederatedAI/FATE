@@ -26,7 +26,8 @@ conf:
       basepath: /Users/sage/alpha/logs
       level: DEBUG
       debug_mode: true
-  device: CPU
+  device:
+    type: CPU
   computing:
     type: standalone
     metadata:

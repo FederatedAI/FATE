@@ -1,23 +1,21 @@
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Optional
 
+from fate.components import T_LABEL, T_ROLE, T_STAGE
 from pydantic import BaseModel
-
-roles = Literal["guest", "host", "arbiter"]
-stages = Literal["train", "predict", "default"]
-labels = Literal["trainable"]
 
 
 class ParameterSpec(BaseModel):
     type: str
     default: Any
     optional: bool
+    description: str = ""
 
 
 class ArtifactSpec(BaseModel):
     type: str
     optional: bool
-    stages: Optional[List[stages]]
-    roles: List[roles]
+    stages: Optional[List[T_STAGE]]
+    roles: List[T_ROLE]
 
 
 class InputDefinitionsSpec(BaseModel):
@@ -34,8 +32,8 @@ class ComponentSpec(BaseModel):
     description: str
     provider: str
     version: str
-    labels: List[labels]
-    roles: List[roles]
+    labels: List[T_LABEL]
+    roles: List[T_ROLE]
     input_definitions: InputDefinitionsSpec
     output_definitions: OutputDefinitionsSpec
 

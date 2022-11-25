@@ -1,8 +1,7 @@
-from fate.components import cpn
-from fate.components.spec import DatasetArtifact, Output, roles
+from fate.components import GUEST, HOST, DatasetArtifact, Output, cpn
 
 
-@cpn.component(roles=[roles.GUEST, roles.HOST], provider="fate", version="2.0.0.alpha")
+@cpn.component(roles=[GUEST, HOST])
 @cpn.parameter("path", type=str, default=None, optional=False)
 @cpn.parameter("format", type=str, default="csv", optional=False)
 @cpn.parameter("id_name", type=str, default="id", optional=True)
@@ -10,7 +9,7 @@ from fate.components.spec import DatasetArtifact, Output, roles
 @cpn.parameter("label_name", type=str, default=None, optional=True)
 @cpn.parameter("label_type", type=str, default="float32", optional=True)
 @cpn.parameter("dtype", type=str, default="float32", optional=True)
-@cpn.artifact("output_data", type=Output[DatasetArtifact], roles=[roles.GUEST, roles.HOST])
+@cpn.artifact("output_data", type=Output[DatasetArtifact], roles=[GUEST, HOST])
 def reader(
     ctx,
     role,

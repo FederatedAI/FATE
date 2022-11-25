@@ -18,8 +18,6 @@ These are only compatible with v2 Pipelines.
 
 from typing import Dict, List, Optional, Type
 
-from .types import Input, Output
-
 
 class Artifact:
     type: str = "artifact"
@@ -56,32 +54,6 @@ class Artifact:
     @classmethod
     def parse_desc(cls, desc):
         return cls(uri=desc.uri, name=desc.name, metadata=desc.metadata)
-
-    @property
-    def path(self) -> str:
-        return self._get_path()
-
-    @path.setter
-    def path(self, path: str) -> None:
-        self._set_path(path)
-
-    def _get_path(self) -> Optional[str]:
-        if self.uri.startswith("gs://"):
-            return _GCS_LOCAL_MOUNT_PREFIX + self.uri[len("gs://") :]
-        elif self.uri.startswith("minio://"):
-            return _MINIO_LOCAL_MOUNT_PREFIX + self.uri[len("minio://") :]
-        elif self.uri.startswith("s3://"):
-            return _S3_LOCAL_MOUNT_PREFIX + self.uri[len("s3://") :]
-        return None
-
-    def _set_path(self, path: str) -> None:
-        if path.startswith(_GCS_LOCAL_MOUNT_PREFIX):
-            path = "gs://" + path[len(_GCS_LOCAL_MOUNT_PREFIX) :]
-        elif path.startswith(_MINIO_LOCAL_MOUNT_PREFIX):
-            path = "minio://" + path[len(_MINIO_LOCAL_MOUNT_PREFIX) :]
-        elif path.startswith(_S3_LOCAL_MOUNT_PREFIX):
-            path = "s3://" + path[len(_S3_LOCAL_MOUNT_PREFIX) :]
-        self.uri = path
 
 
 class Artifacts:
@@ -455,11 +427,3 @@ class SlicedClassificationMetrics(Artifact):
         self._upsert_classification_metrics_for_slice(slice)
         self._sliced_metrics[slice].log_confusion_matrix_cell(categories, matrix)
         self._update_metadata(slice)
-
-
-TrainData = Input[DatasetArtifact]
-ValidateData = Input[DatasetArtifact]
-TestData = Input[DatasetArtifact]
-TrainOutputData = Output[DatasetArtifact]
-TestOutputData = Output[DatasetArtifact]
-Metrics = Output[MetricArtifact]

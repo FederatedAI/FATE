@@ -1,35 +1,24 @@
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import pydantic
-from fate.components.spec.computing import (
-    EggrollComputingSpec,
-    SparkComputingSpec,
-    StandaloneComputingSpec,
-)
-from fate.components.spec.federation import (
+
+from .computing import EggrollComputingSpec, SparkComputingSpec, StandaloneComputingSpec
+from .device import CPUSpec, GPUSpec
+from .federation import (
     EggrollFederationSpec,
     RabbitMQFederationSpec,
     StandaloneFederationSpec,
 )
-from fate.components.spec.mlmd import CustomMLMDSpec, FlowMLMDSpec, PipelineMLMDSpec
-
 from .logger import CustomLogger, FlowLogger, PipelineLogger
+from .mlmd import CustomMLMDSpec, FlowMLMDSpec, PipelineMLMDSpec
 
 
 class TaskConfSpec(pydantic.BaseModel):
-    device: Literal["CPU", "GPU"]
+    device: Union[CPUSpec, GPUSpec]
     computing: Union[StandaloneComputingSpec, EggrollComputingSpec, SparkComputingSpec]
     federation: Union[StandaloneFederationSpec, EggrollFederationSpec, RabbitMQFederationSpec]
     logger: Union[PipelineLogger, FlowLogger, CustomLogger]
     mlmd: Union[PipelineMLMDSpec, FlowMLMDSpec, CustomMLMDSpec]
-
-    def get_device(self):
-        from fate.arch.unify import device
-
-        for dev in device:
-            if dev.name == self.device.strip().upper():
-                return dev
-        raise ValueError(f"should be one of {[dev.name for dev in device]}")
 
 
 class ArtifactSpec(pydantic.BaseModel):

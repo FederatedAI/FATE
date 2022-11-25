@@ -33,14 +33,14 @@ def list_components():
     import pkg_resources
     from fate.components.components import BUILDIN_COMPONENTS
 
-    buildin_components = list(BUILDIN_COMPONENTS.keys())
+    buildin_components = [c.name for c in BUILDIN_COMPONENTS]
     third_parties_components = []
 
     for cpn_ep in pkg_resources.iter_entry_points(group="fate.ext.component"):
         try:
             candidate_cpn = cpn_ep.load()
             candidate_cpn_name = candidate_cpn.name
-            third_parties_components.append(candidate_cpn_name)
+            third_parties_components.append([candidate_cpn_name])
         except Exception as e:
             logger.warning(
                 f"register cpn from entrypoint(named={cpn_ep.name}, module={cpn_ep.module_name}) failed: {e}"
