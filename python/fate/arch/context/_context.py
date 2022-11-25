@@ -23,7 +23,7 @@ from fate.interface import Metrics, PartyMeta, Summary
 from ..unify import Backend, device
 from ._cipher import CipherKit
 from ._federation import GC, Parties, Party
-from ._io import ReadKit, WriteKit
+from ._io import IOKit
 from ._namespace import Namespace
 from ._tensor import TensorKit
 
@@ -183,8 +183,7 @@ class Context(ContextInterface):
         self.log = log
         self.cipher: CipherKit = CipherKit(device)
         self.tensor: TensorKit = TensorKit(computing, device)
-        self.read: ReadKit = ReadKit()
-        self.write: WriteKit = WriteKit()
+        self._io_kit: IOKit = IOKit()
 
         self._computing = computing
         self._federation = federation
@@ -215,11 +214,10 @@ class Context(ContextInterface):
 
     @contextmanager
     def sub_ctx(self, namespace: str) -> Iterator["Context"]:
-        with self.namespace.into_subnamespace(namespace):
-            try:
-                yield self
-            finally:
-                ...
+        try:
+            yield self.with_namespace(self.namespace.sub_namespace(namespace))
+        finally:
+            ...
 
     def set_federation(self, federation: FederationEngine):
         self._federation = federation
@@ -289,3 +287,9 @@ class Context(ContextInterface):
         if self._computing is None:
             raise RuntimeError(f"computing not set")
         return self._computing
+
+    def reader(self, uri, **kwargs) -> "Reader":
+        return self._io_kit.reader(self, uri, **kwargs)
+
+    def writer(self, uri, **kwargs) -> "Writer":
+        return self._io_kit.writer(self, uri, **kwargs)

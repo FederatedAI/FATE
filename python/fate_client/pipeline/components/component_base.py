@@ -1,24 +1,32 @@
 import copy
-from ..conf.types import LinkKey
-from ..conf.types import SupportRole
+from ..conf.types import SupportRole, PlaceHolder
 from ..utils.id_gen import get_uuid
+from pipeline.entity.component_structures import ComponentSpec, load_component_spec, ArtifactSpec
+from ..interface import ArtifactChannel
+from ..entity.dag_structures import RuntimeOutputChannelSpec
 
 
 class Component(object):
     __instance = {}
 
+    yaml_define_path = None
+
     def __init__(self, *args, **kwargs):
-        if "name" in kwargs:
-            self._component_name = kwargs.pop("name")
-        self._component_param = kwargs
-        self._support_roles = None
+        self.name = None
+        self.runtime_roles = None
         self.__party_instance = {}
         self._module = None
         self._role = None
         self._index = None
         self._callable = True
-        self.input = None
-        self.output = None
+        self._outputs = None
+        self._component_param = dict()
+
+        if self.yaml_define_path is None:
+            raise ValueError("Component should have yaml define file, set yaml_define_path first please!")
+
+        self._component_spec = load_component_spec(self.yaml_define_path)
+        self._init_component_param()
 
     def __new__(cls, *args, **kwargs):
         if cls.__name__.lower() not in cls.__instance:
@@ -31,7 +39,7 @@ class Component(object):
         return new_cls
 
     def set_name(self, idx):
-        self._component_name = self.__class__.__name__.lower() + "_" + str(idx)
+        self.name = self.__class__.__name__.lower() + "_" + str(idx)
 
     def _set_role(self, role):
         self._role = role
@@ -72,21 +80,21 @@ class Component(object):
 
     @property
     def guest(self) -> "Component":
-        inst = self.get_party_instance(role=SupportRole.GUEST)
+        inst = self.get_party_instance(role=SupportRole.GUEST)[0]
         return inst
 
     @property
-    def host(self) -> "Component":
+    def hosts(self) -> "Component":
         inst = self.get_party_instance(role=SupportRole.HOST)
         return inst
 
     @property
     def arbiter(self) -> "Component":
-        inst = self.get_party_instance(role=SupportRole.ARBITER)
+        inst = self.get_party_instance(role=SupportRole.ARBITER)[0]
         return inst
 
     def get_party_instance(self, role="guest") -> 'Component':
-        if role not in SupportRole.support_roles():
+        if role not in self.support_roles:
             raise ValueError("Role should be one of guest/host/arbiter")
 
         if role not in self.__party_instance:
@@ -105,9 +113,6 @@ class Component(object):
         self.__party_instance[role][index] = inst
         return inst
 
-    def get_support_roles(self):
-        return self._support_roles
-
     @classmethod
     def _decrease_instance_count(cls):
         cls.__instance[cls.__name__.lower()] -= 1
@@ -121,16 +126,19 @@ class Component(object):
         self.__party_instance = party_instance
 
     @property
-    def name(self):
-        return self._component_name
+    def get_name(self):
+        return self.name
 
     @property
-    def module(self):
-        return self._module
+    def component_ref(self):
+        return self._component_spec.name
 
     @property
     def support_roles(self):
-        return self._support_roles
+        if not self.runtime_roles:
+            return self._component_spec.roles
+        else:
+            return list(set(self._component_spec.roles) & set(self.runtime_roles))
 
     def component_param(self, **kwargs):
         for attr, val in kwargs.items():
@@ -140,7 +148,7 @@ class Component(object):
         return self._component_param
 
     def get_role_param(self, role, index):
-        component_param = self._component_param
+        component_param = dict()
         if role not in self.__party_instance:
             return component_param
 
@@ -174,11 +182,100 @@ class Component(object):
             if mx_idx >= len(runtime_role_parties):
                 raise ValueError(f"role {role}, index {mx_idx} out of bound")
 
-    def get_input_interface(self):
-        return [(self.input.get_input_key(key="data"), LinkKey.DATA),
-                (self.input.get_input_key(key="model"), LinkKey.MODEL),
-                (self.input.get_input_key(key="cache"), LinkKey.CACHE)
-                ]
+    @property
+    def component_spec(self):
+        return self._component_spec
 
-    def get_output_interface(self):
-        return self.output.get_output()
+    @property
+    def outputs(self):
+        if self._component_spec.output_definitions is None:
+            raise ValueError("Output Definitions is None")
+
+        if self._outputs:
+            return self._outputs
+
+        artifacts = self._component_spec.output_definitions.artifacts
+        self._outputs = dict()
+        for artifact_name, artifact in artifacts.items():
+            channel = ArtifactChannel(
+                name=artifact_name,
+                channel_type=artifact.type,
+                task_name=self.name
+            )
+
+            self._outputs[artifact_name] = channel
+
+        return self._outputs
+
+    def _process_init_inputs(self, inputs):
+        self._init_inputs = {}
+        for key, value in inputs.items():
+            if key == "self" or key.startswith("_"):
+                continue
+
+            self._init_inputs[key] = value
+
+    def get_dependent_tasks(self):
+        if not hasattr(self._component_spec.input_definitions, "artifacts"):
+            return []
+        input_artifacts = self._component_spec.input_definitions.artifacts
+        dependencies = set()
+        for artifact_key in input_artifacts:
+            if not hasattr(self, artifact_key) or isinstance(getattr(self, artifact_key), PlaceHolder):
+                continue
+
+            channels = getattr(self, artifact_key)
+            if not channels:
+                continue
+
+            if not isinstance(channels, list):
+                channels = [channels]
+
+            for channel in channels:
+                if not isinstance(channel, ArtifactChannel):
+                    raise ValueError(f"Component {self.name}'s {artifact_key} "
+                                     f"should be ArtifactChannel, {channel} find")
+
+                dependencies.add(channel.task_name)
+
+        return list(dependencies)
+
+    def get_runtime_input_artifacts(self):
+        input_definition_artifacts = self._component_spec.input_definitions.artifacts
+        runtime_input_channels = dict()
+        input_artifacts = dict()
+        for artifact_key, artifact_spec in input_definition_artifacts.items():
+            if not hasattr(self, artifact_key) or isinstance(getattr(self, artifact_key), PlaceHolder):
+                continue
+
+            channels = getattr(self, artifact_key)
+
+            if isinstance(channels, list):
+                task_output_artifact = []
+                for channel in channels:
+                    task_output_artifact.append(RuntimeOutputChannelSpec(
+                        producer_task=channel.task_name,
+                        output_artifact_key=channel.name
+                    ))
+                runtime_input_channels[artifact_key] = dict(task_output_artifact=task_output_artifact)
+                input_artifacts[artifact_key] = artifact_spec
+            else:
+                runtime_input_channels[artifact_key] = dict(
+                    task_output_artifact=RuntimeOutputChannelSpec(
+                        producer_task=channels.task_name,
+                        output_artifact_key=channels.name
+                    )
+                )
+                input_artifacts[artifact_key] = artifact_spec
+
+        return runtime_input_channels, input_artifacts
+
+    def _init_component_param(self):
+        if not hasattr(self._component_spec.input_definitions, "parameters"):
+            return
+
+        parameters = self._component_spec.input_definitions.parameters
+        for param in parameters:
+            if isinstance(self._init_inputs.get(param, PlaceHolder()), PlaceHolder):
+                continue
+            self._component_param[param] = self._init_inputs[param]

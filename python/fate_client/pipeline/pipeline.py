@@ -1,18 +1,32 @@
-from .executor import FateStandaloneExecutor, FateFlowExecutor
-from .entity import FateStandaloneDAG, FateFlowDAG
+from typing import Union
+from .executor import StandaloneExecutor, FateFlowExecutor
+from .entity import DAG
 from .entity.runtime_entity import Roles
 from .conf.types import SupportRole
+from .conf.job_configuration import JobConf
+import yaml
 
 
 class Pipeline(object):
     def __init__(self, executor, *args):
         self._executor = executor
-        self._dag = None
+        self._dag = DAG()
         self._roles = Roles()
+        self._stage = "train"
+        self._components = dict()
+        self._job_conf = JobConf()
 
-    def set_leader(self, role, party_id):
-        self._roles.set_leader(role, str(party_id))
+    def set_stage(self, stage):
+        self._stage = stage
         return self
+
+    def set_scheduler_party_id(self, party_id: Union[str, int]):
+        self._roles.set_scheduler_party_id(party_id)
+        return self
+
+    @property
+    def conf(self):
+        return self._job_conf
 
     def set_roles(self, guest=None, host=None, arbiter=None, **kwargs):
         local_vars = locals()
@@ -36,20 +50,33 @@ class Pipeline(object):
 
         return self
 
-    def add_component(self, component, data=None, train_data=None,
-                      validate_data=None, model=None, isometric_model=None, cache=None, **kwargs) -> "Pipeline":
-        self._dag.add_node(component, data=data, train_data=train_data, validate_data=validate_data,
-                           model=model, isometric_model=isometric_model, cache=cache, **kwargs)
+    def add_component(self, component) -> "Pipeline":
+        if component.name in self._components:
+            raise ValueError(f"Component {component.name} has been added before")
+
+        self._components[component.name] = component
+
         return self
 
     def compile(self) -> "Pipeline":
-        self._dag.set_roles(self._roles)
-        self._dag.compile()
+        self._dag.compile(components=self._components,
+                          roles=self._roles,
+                          stage=self._stage,
+                          job_conf=self._job_conf.conf)
         return self
 
+    def get_dag(self):
+        return yaml.dump(self._dag.dag_spec.dict(exclude_defaults=True))
+
+    def get_component_specs(self):
+        component_specs = dict()
+        for component_name, component in self._components.items():
+            component_specs[component_name] = component.component_spec
+
+        return component_specs
+
     def fit(self) -> "Pipeline":
-        self.compile()
-        self._executor.exec(self._dag)
+        self._executor.exec(self._dag.dag_spec, self.get_component_specs())
 
         return self
 
@@ -60,16 +87,14 @@ class Pipeline(object):
         ...
 
     def show(self):
-        self._dag.display()
+        ...
 
 
-class FateStandalonePipeline(Pipeline):
+class StandalonePipeline(Pipeline):
     def __init__(self, *args):
-        super(FateStandalonePipeline, self).__init__(FateStandaloneExecutor, *args)
-        self._dag = FateStandaloneDAG()
+        super(StandalonePipeline, self).__init__(StandaloneExecutor(), *args)
 
 
 class FateFlowPipeline(Pipeline):
     def __init__(self, *args):
-        super(FateFlowPipeline, self).__init__(FateFlowExecutor, *args)
-        self._dag = FateFlowDAG()
+        super(FateFlowPipeline, self).__init__(FateFlowExecutor(), *args)

@@ -1,45 +1,27 @@
-from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Union
 
 import pydantic
-from fate.components.spec.mlmd import FlowMLMD, PipelineMLMD
+from fate.components.spec.computing import (
+    EggrollComputingSpec,
+    SparkComputingSpec,
+    StandaloneComputingSpec,
+)
+from fate.components.spec.federation import (
+    EggrollFederationSpec,
+    RabbitMQFederationSpec,
+    StandaloneFederationSpec,
+)
+from fate.components.spec.mlmd import CustomMLMDSpec, FlowMLMDSpec, PipelineMLMDSpec
 
 from .logger import CustomLogger, FlowLogger, PipelineLogger
 
 
-class TaskExecuteStatus(Enum):
-    RUNNING = "running"
-    FAILED = "failed"
-    SUCCESS = "success"
-
-
-class TaskDistributedComputingBackendSpec(pydantic.BaseModel):
-    engine: str
-    computing_id: str
-
-
-class TaskPartySpec(pydantic.BaseModel):
-    role: Literal["guest", "host", "arbiter"]
-    partyid: str
-
-
-class TaskFederationPartiesSpec(pydantic.BaseModel):
-    local: TaskPartySpec
-    parties: List[TaskPartySpec]
-
-
-class TaskFederationBackendSpec(pydantic.BaseModel):
-    engine: str
-    federation_id: str
-    parties: TaskFederationPartiesSpec
-
-
-class TaskEnvSpec(pydantic.BaseModel):
+class TaskConfSpec(pydantic.BaseModel):
     device: Literal["CPU", "GPU"]
-    distributed_computing_backend: TaskDistributedComputingBackendSpec
-    federation_backend: TaskFederationBackendSpec
+    computing: Union[StandaloneComputingSpec, EggrollComputingSpec, SparkComputingSpec]
+    federation: Union[StandaloneFederationSpec, EggrollFederationSpec, RabbitMQFederationSpec]
     logger: Union[PipelineLogger, FlowLogger, CustomLogger]
-    mlmd: Union[PipelineMLMD, FlowMLMD]
+    mlmd: Union[PipelineMLMDSpec, FlowMLMDSpec, CustomMLMDSpec]
 
     def get_device(self):
         from fate.arch.unify import device
@@ -57,19 +39,19 @@ class ArtifactSpec(pydantic.BaseModel):
 
 
 class TaskInputsSpec(pydantic.BaseModel):
-    parameters: Dict[str, Any]
-    artifacts: Dict[str, Union[ArtifactSpec, List[ArtifactSpec]]]
+    parameters: Dict[str, Any] = {}
+    artifacts: Dict[str, Union[ArtifactSpec, List[ArtifactSpec]]] = {}
 
 
 class TaskOutputsSpec(pydantic.BaseModel):
-    artifacts: Dict[str, Union[ArtifactSpec, List[ArtifactSpec]]]
+    artifacts: Dict[str, Union[ArtifactSpec, List[ArtifactSpec]]] = {}
 
 
 class TaskConfigSpec(pydantic.BaseModel):
     execution_id: str
     component: str
     role: str
-    stage: str
-    inputs: TaskInputsSpec
-    outputs: TaskOutputsSpec
-    env: TaskEnvSpec
+    stage: str = "default"
+    inputs: TaskInputsSpec = TaskInputsSpec(parameters={}, artifacts={})
+    outputs: TaskOutputsSpec = TaskOutputsSpec(artifacts={})
+    conf: TaskConfSpec

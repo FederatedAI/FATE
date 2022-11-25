@@ -11,16 +11,20 @@ def time_str() -> str:
     return time.strftime("%Y%m%d%H%M%S", time.localtime())
 
 
-def get_session_id(*suffix) -> str:
+def gen_job_id(*suffix) -> str:
     if not suffix:
         return time_str() + str(random.randint(0, 100000))
     else:
         return "_".join(list(suffix))
 
 
-def get_computing_id(session_id) -> str:
-    return "_".join([session_id, "computing"])
+def gen_computing_id(job_id, task_name, role, party_id) -> str:
+    return "_".join([job_id, task_name, role, party_id, "computing"])
 
 
-def get_federation_id(session_id) -> str:
-    return "_".join([session_id, "federation"])
+def gen_execution_id(job_id, task_name, role, party_id) -> str:
+    return "_".join([job_id, task_name, role, party_id, "execution"])
+
+
+def gen_federation_id(job_id, task_name) -> str:
+    return "_".join([job_id, task_name, "federation"])

@@ -1,14 +1,25 @@
 import random
 
-from fate.arch.dataframe import PandasReader, TorchDataSetReader
-import pandas as pd
 import numpy as np
+import pandas as pd
 import torch
+from fate.arch.dataframe import PandasReader, TorchDataSetReader
 
 
 class DataLoader(object):
-    def __init__(self, dataset, ctx=None, mode="homo", role="guest", need_align=False, sync_arbiter=False,
-                 batch_size=-1, shuffle=False, batch_strategy="full", random_seed=None):
+    def __init__(
+        self,
+        dataset,
+        ctx=None,
+        mode="homo",
+        role="guest",
+        need_align=False,
+        sync_arbiter=False,
+        batch_size=-1,
+        shuffle=False,
+        batch_strategy="full",
+        random_seed=None,
+    ):
         self._ctx = ctx
         self._dataset = dataset
         self._batch_size = batch_size
@@ -37,15 +48,17 @@ class DataLoader(object):
         """
 
         if self._batch_strategy == "full":
-            self._batch_generator = FullBatchDataLoader(self._dataset,
-                                                        self._ctx,
-                                                        mode=self._mode,
-                                                        role=self._role,
-                                                        batch_size=self._batch_size,
-                                                        shuffle=self._shuffle,
-                                                        random_seed=self._random_seed,
-                                                        need_align=self._need_align,
-                                                        sync_arbiter=self._sync_arbiter)
+            self._batch_generator = FullBatchDataLoader(
+                self._dataset,
+                self._ctx,
+                mode=self._mode,
+                role=self._role,
+                batch_size=self._batch_size,
+                shuffle=self._shuffle,
+                random_seed=self._random_seed,
+                need_align=self._need_align,
+                sync_arbiter=self._sync_arbiter,
+            )
         else:
             raise ValueError(f"batch strategy {self._batch_strategy} is not support")
 
@@ -82,6 +95,8 @@ class FullBatchDataLoader(object):
         self._mode = mode
         self._role = role
         self._batch_size = batch_size
+        if self._batch_size < 0:
+            self._batch_size = len(self._dataset)
         self._shuffle = shuffle
         self._random_seed = random_seed
         self._need_align = need_align
@@ -128,7 +143,7 @@ class FullBatchDataLoader(object):
                 random.shuffle(indexes)
 
                 for i, iter_ctx in self._ctx.range(self._batch_num):
-                    batch_indexes = indexes[self._batch_size * i: self._batch_size * (i + 1)]
+                    batch_indexes = indexes[self._batch_size * i : self._batch_size * (i + 1)]
 
                     # TODO: for mini-demo stage, tensor does not support slice,
                     #  so only testing batch indexes sending interface

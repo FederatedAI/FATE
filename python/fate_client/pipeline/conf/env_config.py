@@ -18,7 +18,7 @@ import yaml
 from pathlib import Path
 
 
-__all__ = ["StatusCode", "LogPath", "LogFormat", "FlowConfig", "FateStandaloneConfig"]
+__all__ = ["StatusCode", "LogPath", "LogFormat", "FlowConfig", "StandaloneConfig"]
 
 
 with Path(__file__).parent.parent.joinpath("pipeline_config.yaml").resolve().open("r") as fin:
@@ -46,8 +46,8 @@ class FlowConfig(object):
     PORT = conf.get("port", None)
 
 
-class FateStandaloneConfig(object):
-    conf = get_default_config().get("fate_standalone", {})
+class StandaloneConfig(object):
+    conf = get_default_config().get("standalone", {})
 
     default_path = Path.cwd()
     OUTPUT_DATA_DIR = conf.get("output_data_dir")
@@ -70,9 +70,15 @@ class FateStandaloneConfig(object):
     if not OUTPUT_STATUS_DIR:
         OUTPUT_STATUS_DIR = default_path.joinpath("status").as_uri()
 
-    DEVICE = conf.get("device")
+    LOG_LEVEL = conf.get("logger").get("level")
+    LOG_DEBUG_MODE = conf.get("logger").get("debug_mode")
+    DEVICE = conf.get("engine").get("device")
     COMPUTING_ENGINE = conf.get("computing_engine")
     FEDERATION_ENGINE = conf.get("federation_engine")
+
+    SQLITE_DB = conf.get("sqlite_db")
+    if not SQLITE_DB:
+        SQLITE_DB = default_path.joinpath("pipeline_sqlite.db").as_uri()
 
 
 class LogPath(object):

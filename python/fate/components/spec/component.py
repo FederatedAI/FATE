@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Literal, Optional
 from pydantic import BaseModel
 
 roles = Literal["guest", "host", "arbiter"]
-stages = Literal["train", "predict"]
+stages = Literal["train", "predict", "default"]
 labels = Literal["trainable"]
 
 
@@ -17,7 +17,7 @@ class ArtifactSpec(BaseModel):
     type: str
     optional: bool
     stages: Optional[List[stages]]
-    roles: Optional[List[roles]]
+    roles: List[roles]
 
 
 class InputDefinitionsSpec(BaseModel):

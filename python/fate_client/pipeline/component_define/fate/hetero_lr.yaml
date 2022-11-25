@@ -1,0 +1,92 @@
+component:
+  name: hetero_lr
+  description: ''
+  provider: fate
+  version: 2.0.0.alpha
+  labels: []
+  roles:
+    - guest
+    - host
+    - arbiter
+  input_definitions:
+    parameters:
+      learning_rate:
+        type: float
+        default: 0.1
+        optional: true
+      max_iter:
+        type: int
+        default: 100
+        optional: true
+      batch_size:
+        type: int
+        default: 100
+        optional: true
+    artifacts:
+      train_data:
+        type: dataset
+        optional: false
+        stages:
+          - train
+        roles:
+          - guest
+          - host
+      validate_data:
+        type: dataset
+        optional: true
+        stages:
+          - train
+        roles:
+          - guest
+          - host
+      input_model:
+        type: model
+        optional: false
+        stages:
+          - predict
+        roles:
+          - guest
+          - host
+      test_data:
+        type: dataset
+        optional: false
+        stages:
+          - predict
+        roles:
+          - guest
+          - host
+  output_definitions:
+    artifacts:
+      train_output_data:
+        type: dataset
+        optional: false
+        stages:
+          - train
+        roles:
+          - guest
+          - host
+      train_output_metric:
+        type: metric
+        optional: false
+        stages:
+          - train
+        roles:
+          - arbiter
+      output_model:
+        type: model
+        optional: false
+        stages:
+          - train
+        roles:
+          - guest
+          - host
+      test_output_data:
+        type: dataset
+        optional: false
+        stages:
+          - predict
+        roles:
+          - guest
+          - host
+schema_version: v1
+

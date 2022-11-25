@@ -1,50 +1,28 @@
 import logging
 
-import numpy as np
-import torch
 from fate.arch import dataframe, tensor
-from fate.interface import Context, ModelsLoader, ModelsSaver
-from sklearn.linear_model import LogisticRegression
-from sklearn.utils.fixes import sklearn
+from fate.arch.tensor import dtype
+from fate.interface import Context
 
 from ..abc.module import HeteroModule
 
 logger = logging.getLogger(__name__)
 
 
-class GuestDataframeMock:
-    def __init__(self, ctx) -> None:
-        guest_data_path = "/Users/sage/proj/FATE/2.0.0-alpha/" "examples/data/breast_hetero_guest.csv"
-        self.data = dataframe.CSVReader(
-            id_name="id", label_name="y", label_type="float32", delimiter=",", dtype="float32"
-        ).to_frame(ctx, guest_data_path)
-
-        # the following is just a demo for serialize and deserialize data
-        s_df = dataframe.serialize(ctx, self.data)
-        self.data = dataframe.deserialize(ctx, s_df)
-        self.num_features = 10
-        self.num_sample = len(self.data)
-
-    def batches(self, batch_size):
-        num_batchs = (self.num_sample - 1) // batch_size + 1
-        for chunk in np.array_split(self.data, num_batchs):
-            yield (
-                tensor.tensor(torch.Tensor(chunk[:, 2:])),
-                2 * tensor.tensor(torch.Tensor(chunk[:, 1:2]) - 1),
-            )
-
-
 class LrModuleGuest(HeteroModule):
     def __init__(
         self,
         max_iter,
-        batch_size=None,
+        batch_size,
         learning_rate=0.01,
         alpha=1.0,
     ):
         self.max_iter = max_iter
         self.batch_size = batch_size
         self.learning_rate = learning_rate
+        self.alpha = alpha
+
+        self.w = None
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
         """
@@ -54,15 +32,13 @@ class LrModuleGuest(HeteroModule):
         loss = log2 - (1/N)*0.5*∑ywx + (1/N)*0.125*[∑(Wg*Xg)^2 + ∑(Wh*Xh)^2 + 2 * ∑(Wg*Xg * Wh*Xh)]
         """
         # mock data
-        train_data = GuestDataframeMock(ctx)
         batch_loader = dataframe.DataLoader(
-            train_data.data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="guest", sync_arbiter=True
+            train_data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="guest", sync_arbiter=True
         )
-        # get encryptor
-        ctx.arbiter("encryptor").get()
-        logger.info(train_data.num_sample)
+        # # get encryptor
+        # ctx.arbiter("encryptor").get()
 
-        w = tensor.tensor(torch.randn((train_data.num_features, 1), dtype=torch.float32))
+        w = tensor.randn((train_data.num_features, 1), dtype=dtype.float32)
         for i, iter_ctx in ctx.range(self.max_iter):
             logger.info(f"start iter {i}")
             j = 0
@@ -90,10 +66,36 @@ class LrModuleGuest(HeteroModule):
                 w -= (self.learning_rate / h) * g
                 logger.info(f"w={w}")
                 j += 1
+        self.w = w
 
-    def to_model(self):
-        ...
+    def predict(self, ctx, test_data):
+        batch_loader = dataframe.DataLoader(
+            test_data,
+            ctx=ctx,
+            batch_size=-1,
+            mode="hetero",
+            role="guest",
+            sync_arbiter=False,
+        )
+        for X, y in batch_loader:
+            output = tensor.matmul(X, self.w)
+            print(output)
+
+    def get_model(self):
+        return {
+            "w": self.w.to_local()._storage.data.tolist(),
+            "metadata": {
+                "max_iter": self.max_iter,
+                "batch_size": self.batch_size,
+                "learning_rate": self.learning_rate,
+                "alpha": self.alpha,
+            },
+        }
 
     @classmethod
     def from_model(cls, model) -> "LrModuleGuest":
-        ...
+        lr = LrModuleGuest(**model["metadata"])
+        import torch
+
+        lr.w = tensor.tensor(torch.tensor(model["w"]))
+        return lr

@@ -52,7 +52,7 @@ flowing codes modified from [click](https://github.com/pallets/click) project
 import inspect
 import logging
 import pprint
-from typing import List, OrderedDict
+from typing import Dict, List, Optional, OrderedDict
 
 
 class ComponentDeclarError(Exception):
@@ -77,9 +77,9 @@ class _Component:
         callback,
         parameters: List["_ParameterDeclareClass"],
         artifacts: List["_ArtifactDeclareClass"],
+        is_subcomponent: bool = False,
     ) -> None:
-        import inspect
-
+        self.is_subcomponent = is_subcomponent
         self.name = name
         self.roles = roles
         self.provider = provider
@@ -87,6 +87,14 @@ class _Component:
         self.description = description
         self.callback = callback
         self.parameters = parameters
+        if not self.description:
+            self.description = ""
+        # assert parameters defined once
+        _defined = set()
+        for p in self.parameters:
+            if p.name in _defined:
+                raise ComponentDeclarError(f"parameter named `{p.name}` declared multiple times")
+            _defined.add(p.name)
         self.artifacts = artifacts
 
         self.func_args = list(inspect.signature(self.callback).parameters.keys())
@@ -96,9 +104,7 @@ class _Component:
             raise ComponentDeclarError("bad component definition, first argument should be `ctx`")
         if self.func_args[1] != "role":
             raise ComponentDeclarError("bad component definition, second argument should be `role`")
-        if self.func_args[2] != "stage":
-            raise ComponentDeclarError("bad component definition, third argument should be `stage`")
-        undeclared_func_parameters = set(self.func_args[3:])
+        undeclared_func_parameters = set(self.func_args[2:])
         for parameter in self.parameters:
             if parameter.name not in undeclared_func_parameters:
                 raise ComponentDeclarError(
@@ -116,13 +122,15 @@ class _Component:
                 f"function's arguments `{undeclared_func_parameters}` lack of corresponding decorator"
             )
 
+        self.stages: Dict[str, _Component] = {}
+
     def validate_and_extract_execute_args(self, config):
         role = config.role
         stage = config.stage
         name_artifact_mapping = {artifact.name: artifact for artifact in self.artifacts}
         name_parameter_mapping = {parameter.name: parameter for parameter in self.parameters}
-        execute_args = [role, stage]
-        for arg in self.func_args[3:]:
+        execute_args = [role]
+        for arg in self.func_args[2:]:
             # arg support to be artifact
             if arti := name_artifact_mapping.get(arg):
                 if (arti.stages is None or stage in arti.stages) and (arti.roles is None or role in arti.roles):
@@ -155,20 +163,20 @@ class _Component:
 
             # arg support to be parameter
             elif parameter := name_parameter_mapping.get(arg):
-                if not parameter.optional:
-                    parameter_apply = config.inputs.parameters.get(arg)
-                    if parameter_apply is None:
+                parameter_apply = config.inputs.parameters.get(arg)
+                if parameter_apply is None:
+                    if not parameter.optional:
                         raise ComponentApplyError(f"parameter `{arg}` required, declare: `{parameter}`")
                     else:
-                        if type(parameter_apply) != parameter.type:
-                            raise ComponentApplyError(
-                                f"parameter `{arg}` with applying config `{parameter_apply}` can't apply to `{parameter}`"
-                                f": {type(parameter_apply)} != {parameter.type}"
-                            )
-                        else:
-                            execute_args.append(parameter_apply)
+                        execute_args.append(parameter_apply)
                 else:
-                    execute_args.append(parameter.default)
+                    if type(parameter_apply) != parameter.type:
+                        raise ComponentApplyError(
+                            f"parameter `{arg}` with applying config `{parameter_apply}` can't apply to `{parameter}`"
+                            f": {type(parameter_apply)} != {parameter.type}"
+                        )
+                    else:
+                        execute_args.append(parameter_apply)
             else:
                 raise ComponentApplyError(f"should not go here")
 
@@ -178,6 +186,55 @@ class _Component:
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug(f"execution arguments: {pprint.pformat(OrderedDict(zip(self.func_args, [ctx, *args])))}")
         return self.callback(ctx, *args)
+
+    def get_artifacts(self):
+        mapping = {artifact.name: artifact for artifact in self.artifacts}
+        for stage_name, stage_cpn in self.stages.items():
+            for artifact_name, artifact in stage_cpn.get_artifacts().items():
+                # update or merge
+                if artifact_name not in mapping:
+                    mapping[artifact_name] = artifact
+                else:
+                    old = mapping[artifact_name]
+                    if set(old.roles) != set(artifact.roles):
+                        raise ComponentDeclarError(
+                            f"artifact {artifact_name} declare multiple times with different roles: `{old.roles}` vs `{artifact.roles}`"
+                        )
+                    if old.optional != artifact.optional:
+                        raise ComponentDeclarError(
+                            f"artifact {artifact_name} declare multiple times with different optional: `{old.optional}` vs `{artifact.optional}`"
+                        )
+                    if old.type != artifact.type:
+                        raise ComponentDeclarError(
+                            f"artifact {artifact_name} declare multiple times with different optional: `{old.type}` vs `{artifact.type}`"
+                        )
+                    stages = set(old.stages)
+                    stages.update(artifact.stages)
+                    old.stages = list(stages)
+        return mapping
+
+    def get_parameters(self):
+        mapping = {parameter.name: parameter for parameter in self.parameters}
+        for stage_name, stage_cpn in self.stages.items():
+            for parameter_name, parameter in stage_cpn.get_parameters().items():
+                # update or error
+                if parameter_name not in mapping:
+                    mapping[parameter_name] = parameter
+                else:
+                    old = mapping[parameter_name]
+                    if set(old.default) != set(artifact.default):
+                        raise ComponentDeclarError(
+                            f"artifact {parameter_name} declare multiple times with different roles: `{old.default}` vs `{artifact.default}`"
+                        )
+                    if old.optional != artifact.optional:
+                        raise ComponentDeclarError(
+                            f"artifact {parameter_name} declare multiple times with different optional: `{old.optional}` vs `{artifact.optional}`"
+                        )
+                    if old.type != artifact.type:
+                        raise ComponentDeclarError(
+                            f"artifact {parameter_name} declare multiple times with different optional: `{old.type}` vs `{artifact.type}`"
+                        )
+        return mapping
 
     def dict(self):
         from fate.components.spec.component import (
@@ -192,22 +249,23 @@ class _Component:
 
         input_artifacts = {}
         output_artifacts = {}
-        for artifact in self.artifacts:
+        for artifact_name, artifact in self.get_artifacts().items():
             annotated = getattr(artifact.type, "__metadata__", [None])[0]
+            roles = getattr(artifact, "roles") or self.roles
             if annotated == OutputAnnotated:
-                output_artifacts[artifact.name] = ArtifactSpec(
-                    type=artifact.type.type, optional=artifact.optional, roles=artifact.roles, stages=artifact.stages
+                output_artifacts[artifact_name] = ArtifactSpec(
+                    type=artifact.type.type, optional=artifact.optional, roles=roles, stages=artifact.stages
                 )
             elif annotated == InputAnnotated:
-                input_artifacts[artifact.name] = ArtifactSpec(
-                    type=artifact.type.type, optional=artifact.optional, roles=artifact.roles, stages=artifact.stages
+                input_artifacts[artifact_name] = ArtifactSpec(
+                    type=artifact.type.type, optional=artifact.optional, roles=roles, stages=artifact.stages
                 )
             else:
                 raise ValueError(f"bad artifact: {artifact}")
 
         input_parameters = {}
-        for parameter in self.parameters:
-            input_parameters[parameter.name] = ParameterSpec(
+        for parameter_name, parameter in self.get_parameters().items():
+            input_parameters[parameter_name] = ParameterSpec(
                 type=parameter.type.__name__, default=parameter.default, optional=parameter.optional
             )
 
@@ -241,9 +299,36 @@ class _Component:
         if inefficient:
             return stream.getvalue()
 
+    def stage(
+        self, name=None, roles=[], provider: Optional[str] = None, version: Optional[str] = None, description=None
+    ):
+        r"""Creates a new stage component with :class:`_Component` and uses the decorated function as
+        callback.  This will also automatically attach all decorated
+        :func:`artifact`\s and :func:`parameter`\s as parameters to the component execution.
+
+        The stage name of the component defaults to the name of the function.
+        If you want to change that, you can
+        pass the intended name as the first argument.
+
+        Once decorated the function turns into a :class:`Component` instance
+        that can be invoked as a component execution.
+
+        :param name: the name of the component.  This defaults to the function
+                    name.
+        """
+
+        def wrap(f):
+            sub_cpn = _component(
+                name, roles or self.roles, provider or self.provider, version or self.version, description, True
+            )(f)
+            self.stages[sub_cpn.name] = sub_cpn
+            return sub_cpn
+
+        return wrap
+
 
 def component(name=None, roles=[], provider="fate", version="2.0.0.alpha", description=None):
-    r"""Creates a new :class:`Component` and uses the decorated function as
+    r"""Creates a new :class:`_Component` and uses the decorated function as
     callback.  This will also automatically attach all decorated
     :func:`artifact`\s and :func:`parameter`\s as parameters to the component execution.
 
@@ -257,8 +342,14 @@ def component(name=None, roles=[], provider="fate", version="2.0.0.alpha", descr
     :param name: the name of the component.  This defaults to the function
                  name.
     """
+    return _component(
+        name=name, roles=roles, provider=provider, version=version, description=description, is_subcomponent=False
+    )
 
+
+def _component(name, roles, provider, version, description, is_subcomponent):
     def decorator(f):
+        cpn_name = name or f.__name__.lower()
         if isinstance(f, _Component):
             raise TypeError("Attempted to convert a callback into a component twice.")
         try:
@@ -273,6 +364,11 @@ def component(name=None, roles=[], provider="fate", version="2.0.0.alpha", descr
             del f.__component_artifacts__
         except AttributeError:
             artifacts = []
+        for artifact in artifacts:
+            if is_subcomponent:
+                artifact.stages = [cpn_name]
+            else:
+                artifact.stages = ["default"]
         desc = description
         if desc is None:
             desc = inspect.getdoc(f)
@@ -281,7 +377,7 @@ def component(name=None, roles=[], provider="fate", version="2.0.0.alpha", descr
         else:
             desc = inspect.cleandoc(desc)
         cpn = _Component(
-            name=name or f.__name__.lower(),
+            name=cpn_name,
             roles=roles,
             provider=provider,
             version=version,
@@ -289,6 +385,7 @@ def component(name=None, roles=[], provider="fate", version="2.0.0.alpha", descr
             callback=f,
             parameters=parameters,
             artifacts=artifacts,
+            is_subcomponent=is_subcomponent,
         )
         cpn.__doc__ = f.__doc__
         return cpn
@@ -316,19 +413,19 @@ class _InputArtifactDeclareClass(_ArtifactDeclareClass):
         return f"InputArtifact<name={self.name}, type={self.type}, roles={self.roles}, stages={self.stages}, optional={self.optional}>"
 
 
-def _create_artifact_declare_class(name, type, roles, stages, desc, optional):
+def _create_artifact_declare_class(name, type, roles, desc, optional):
     from fate.components.spec.types import InputAnnotated, OutputAnnotated
 
     annotates = getattr(type, "__metadata__", [None])
     if OutputAnnotated in annotates:
-        return _OutputArtifactDeclareClass(name, type, roles, stages, desc, optional)
+        return _OutputArtifactDeclareClass(name, type, roles, [], desc, optional)
     elif InputAnnotated in annotates:
-        return _InputArtifactDeclareClass(name, type, roles, stages, desc, optional)
+        return _InputArtifactDeclareClass(name, type, roles, [], desc, optional)
     else:
         raise ValueError(f"bad artifact: {name}")
 
 
-def artifact(name, type, roles=None, stages=None, desc=None, optional=False):
+def artifact(name, type, roles=None, desc=None, optional=False):
     """attaches an artifact to the component."""
 
     def decorator(f):
@@ -337,9 +434,7 @@ def artifact(name, type, roles=None, stages=None, desc=None, optional=False):
             description = inspect.cleandoc(description)
         if not hasattr(f, "__component_artifacts__"):
             f.__component_artifacts__ = []
-        f.__component_artifacts__.append(
-            _create_artifact_declare_class(name, type, roles, stages, description, optional)
-        )
+        f.__component_artifacts__.append(_create_artifact_declare_class(name, type, roles, description, optional))
         return f
 
     return decorator
@@ -356,7 +451,7 @@ class _ParameterDeclareClass:
         return f"Parameter<name={self.name}, type={self.type}, default={self.default}, optional={self.optional}>"
 
 
-def parameter(name, type, default=None, optional=False, desc=None):
+def parameter(name, type, default=None, optional=True, desc=None):
     """attaches an parameter to the component."""
 
     def decorator(f):

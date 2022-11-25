@@ -1,3 +1,7 @@
+class PlaceHolder(object):
+    ...
+
+
 class UriTypes(object):
     LOCAL = "file"
     SQL = "sql"

@@ -1,5 +1,4 @@
-from .input import Input
-from .output import Output
+from .channel import ArtifactChannel
 
 
-__all__ = ["Input", "Output"]
+__all__ = ["ArtifactChannel"]

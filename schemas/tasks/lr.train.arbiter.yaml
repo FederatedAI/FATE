@@ -1,0 +1,48 @@
+execution_id: xxx
+component: hetero_lr
+role: arbiter
+stage: train
+inputs:
+  parameters:
+    learning_rate: 0.01
+    max_iter: 5
+    batch_size: 100
+
+outputs:
+  artifacts:
+    train_output_metric:
+      name: ClassificationMetrics
+      uri: file:///Users/sage/alpha/metric/arbiter_metrics.json
+      metadata:
+        format: json
+conf:
+  mlmd:
+    type: pipeline
+    metadata:
+      db: /Users/sage/alpha/mlmd.db
+  logger:
+    type: pipeline
+    metadata:
+      basepath: /Users/sage/alpha/logs
+      level: DEBUG
+      debug_mode: true
+  device: CPU
+  computing:
+    type: standalone
+    metadata:
+      computing_id: xxxx
+  federation:
+    type: standalone
+    metadata:
+      federation_id: xxx
+      parties:
+        local:
+          role: arbiter
+          partyid: "10001"
+        parties:
+          - role: guest
+            partyid: "9999"
+          - role: host
+            partyid: "10000"
+          - role: arbiter
+            partyid: "10001"
