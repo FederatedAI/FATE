@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Union
 
 import pydantic
@@ -7,13 +6,7 @@ from fate.components.spec.mlmd import CustomMLMDSpec, FlowMLMDSpec, PipelineMLMD
 from .logger import CustomLogger, FlowLogger, PipelineLogger
 
 
-class TaskExecuteStatus(Enum):
-    RUNNING = "running"
-    FAILED = "failed"
-    SUCCESS = "success"
-
-
-class TaskDistributedComputingBackendSpec(pydantic.BaseModel):
+class TaskComputingSpec(pydantic.BaseModel):
     engine: str
     computing_id: str
 
@@ -31,7 +24,7 @@ class TaskFederationPartiesSpec(pydantic.BaseModel):
     parties: List[TaskPartySpec]
 
 
-class TaskFederationBackendSpec(pydantic.BaseModel):
+class TaskFederationSpec(pydantic.BaseModel):
     engine: str
     federation_id: str
     parties: TaskFederationPartiesSpec
@@ -39,8 +32,8 @@ class TaskFederationBackendSpec(pydantic.BaseModel):
 
 class TaskConfSpec(pydantic.BaseModel):
     device: Literal["CPU", "GPU"]
-    computing: TaskDistributedComputingBackendSpec
-    federation: TaskFederationBackendSpec
+    computing: TaskComputingSpec
+    federation: TaskFederationSpec
     logger: Union[PipelineLogger, FlowLogger, CustomLogger]
     mlmd: Union[PipelineMLMDSpec, FlowMLMDSpec, CustomMLMDSpec]
 
@@ -72,7 +65,7 @@ class TaskConfigSpec(pydantic.BaseModel):
     execution_id: str
     component: str
     role: str
-    stage: str
+    stage: str = "default"
     inputs: TaskInputsSpec = TaskInputsSpec(parameters={}, artifacts={})
     outputs: TaskOutputsSpec = TaskOutputsSpec(artifacts={})
     conf: TaskConfSpec

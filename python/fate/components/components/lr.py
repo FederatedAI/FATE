@@ -9,12 +9,12 @@ from fate.components.spec import (
 )
 
 
-@cpn.component(roles=roles.get_all(), provider="fate", version="2.0.0.alpha")
+@cpn.component(roles=[roles.GUEST, roles.HOST, roles.ARBITER], provider="fate", version="2.0.0.alpha")
 def hetero_lr(ctx, role):
     ...
 
 
-@hetero_lr.stage("train")
+@hetero_lr.stage()
 @cpn.artifact("train_data", type=Input[DatasetArtifact], roles=[roles.GUEST, roles.HOST])
 @cpn.artifact("validate_data", type=Input[DatasetArtifact], optional=True, roles=[roles.GUEST, roles.HOST])
 @cpn.parameter("learning_rate", type=float, default=0.1)
@@ -23,7 +23,7 @@ def hetero_lr(ctx, role):
 @cpn.artifact("train_output_data", type=Output[DatasetArtifact], roles=[roles.GUEST, roles.HOST])
 @cpn.artifact("train_output_metric", type=Output[MetricArtifact], roles=[roles.ARBITER])
 @cpn.artifact("output_model", type=Output[ModelArtifact], roles=[roles.GUEST, roles.HOST])
-def hetero_lr_train(
+def train(
     ctx,
     role,
     train_data,
@@ -47,11 +47,11 @@ def hetero_lr_train(
         train_arbiter(ctx, max_iter, train_output_metric)
 
 
-@hetero_lr.stage("predict")
+@hetero_lr.stage()
 @cpn.artifact("input_model", type=Input[ModelArtifact], roles=[roles.GUEST, roles.HOST])
 @cpn.artifact("test_data", type=Input[DatasetArtifact], optional=False, roles=[roles.GUEST, roles.HOST])
 @cpn.artifact("test_output_data", type=Output[DatasetArtifact], roles=[roles.GUEST, roles.HOST])
-def hetero_lr_predict(
+def predict(
     ctx,
     role,
     test_data,

@@ -5,25 +5,27 @@ logger = logging.getLogger(__name__)
 
 def load_component(cpn_name: str):
     from fate.components.components import BUILDIN_COMPONENTS
+    from fate.components.cpn import _Component
 
     # from buildin
-    if cpn_name in BUILDIN_COMPONENTS:
-        return BUILDIN_COMPONENTS[cpn_name]
+    for cpn in BUILDIN_COMPONENTS:
+        if cpn.name == cpn_name:
+            return cpn
 
     # from entrypoint
     import pkg_resources
 
     for cpn_ep in pkg_resources.iter_entry_points(group="fate.ext.component"):
         try:
-            cpn_register = cpn_ep.load()
-            cpn_registered_name = cpn_register.registered_name()
+            candidate_cpn: _Component = cpn_ep.load()
+            candidate_cpn_name = candidate_cpn.name
         except Exception as e:
             logger.warning(
                 f"register cpn from entrypoint(named={cpn_ep.name}, module={cpn_ep.module_name}) failed: {e}"
             )
             continue
-        if cpn_registered_name == cpn_name:
-            return cpn_register
+        if candidate_cpn_name == cpn_name:
+            return candidate_cpn
     raise RuntimeError(f"could not find registerd cpn named `{cpn_name}`")
 
 
@@ -36,9 +38,9 @@ def list_components():
 
     for cpn_ep in pkg_resources.iter_entry_points(group="fate.ext.component"):
         try:
-            cpn_register = cpn_ep.load()
-            cpn_registered_name = cpn_register.registered_name()
-            third_parties_components.append(cpn_registered_name)
+            candidate_cpn = cpn_ep.load()
+            candidate_cpn_name = candidate_cpn.name
+            third_parties_components.append(candidate_cpn_name)
         except Exception as e:
             logger.warning(
                 f"register cpn from entrypoint(named={cpn_ep.name}, module={cpn_ep.module_name}) failed: {e}"

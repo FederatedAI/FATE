@@ -52,7 +52,7 @@ flowing codes modified from [click](https://github.com/pallets/click) project
 import inspect
 import logging
 import pprint
-from typing import List, OrderedDict
+from typing import Dict, List, Optional, OrderedDict
 
 
 class ComponentDeclarError(Exception):
@@ -122,7 +122,7 @@ class _Component:
                 f"function's arguments `{undeclared_func_parameters}` lack of corresponding decorator"
             )
 
-        self.stages = {}
+        self.stages: Dict[str, _Component] = {}
 
     def validate_and_extract_execute_args(self, config):
         role = config.role
@@ -299,15 +299,36 @@ class _Component:
         if inefficient:
             return stream.getvalue()
 
-    def stage(self, stage, description=None):
+    def stage(
+        self, name=None, roles=[], provider: Optional[str] = None, version: Optional[str] = None, description=None
+    ):
+        r"""Creates a new stage component with :class:`_Component` and uses the decorated function as
+        callback.  This will also automatically attach all decorated
+        :func:`artifact`\s and :func:`parameter`\s as parameters to the component execution.
+
+        The stage name of the component defaults to the name of the function.
+        If you want to change that, you can
+        pass the intended name as the first argument.
+
+        Once decorated the function turns into a :class:`Component` instance
+        that can be invoked as a component execution.
+
+        :param name: the name of the component.  This defaults to the function
+                    name.
+        """
+
         def wrap(f):
-            self.stages[stage] = _component(stage, self.roles, self.provider, self.version, description, True)(f)
+            sub_cpn = _component(
+                name, roles or self.roles, provider or self.provider, version or self.version, description, True
+            )(f)
+            self.stages[sub_cpn.name] = sub_cpn
+            return sub_cpn
 
         return wrap
 
 
 def component(name=None, roles=[], provider="fate", version="2.0.0.alpha", description=None):
-    r"""Creates a new :class:`Component` and uses the decorated function as
+    r"""Creates a new :class:`_Component` and uses the decorated function as
     callback.  This will also automatically attach all decorated
     :func:`artifact`\s and :func:`parameter`\s as parameters to the component execution.
 
@@ -328,6 +349,7 @@ def component(name=None, roles=[], provider="fate", version="2.0.0.alpha", descr
 
 def _component(name, roles, provider, version, description, is_subcomponent):
     def decorator(f):
+        cpn_name = name or f.__name__.lower()
         if isinstance(f, _Component):
             raise TypeError("Attempted to convert a callback into a component twice.")
         try:
@@ -344,7 +366,7 @@ def _component(name, roles, provider, version, description, is_subcomponent):
             artifacts = []
         for artifact in artifacts:
             if is_subcomponent:
-                artifact.stages = [name]
+                artifact.stages = [cpn_name]
             else:
                 artifact.stages = ["default"]
         desc = description
@@ -355,7 +377,7 @@ def _component(name, roles, provider, version, description, is_subcomponent):
         else:
             desc = inspect.cleandoc(desc)
         cpn = _Component(
-            name=name or f.__name__.lower(),
+            name=cpn_name,
             roles=roles,
             provider=provider,
             version=version,

@@ -4,25 +4,18 @@ import traceback
 
 from fate.arch.context import Context
 from fate.components.loader.component import load_component
+from fate.components.loader.engine import load_computing, load_federation
 from fate.components.loader.mlmd import load_mlmd
 from fate.components.spec.task import TaskConfigSpec
 
 logger = logging.getLogger(__name__)
 
 
-class ComponentExecException(Exception):
-    ...
-
-
-class ParamsValidateFailed(ComponentExecException):
-    ...
-
-
 def execute_component(config: TaskConfigSpec):
     context_name = config.execution_id
     mlmd = load_mlmd(config.conf.mlmd, context_name)
-    computing = get_computing(config)
-    federation = get_federation(config, computing)
+    computing = load_computing(config.conf.computing)
+    federation = load_federation(config.conf.federation, computing)
     device = config.conf.get_device()
     ctx = Context(
         context_name=context_name,
@@ -36,8 +29,12 @@ def execute_component(config: TaskConfigSpec):
         mlmd.log_excution_start()
         component = load_component(config.component)
         try:
-            if config.stage.strip().lower() != "default":
-                component = component.stages[config.stage]
+            if (stage := config.stage.strip().lower()) != "default":
+                # use sub component to handle stage
+                if stage not in component.stages:
+                    raise ValueError(f"stage `{stage}` for component `{component.name}` not supported")
+                else:
+                    component = component.stages[config.stage]
             args = component.validate_and_extract_execute_args(config)
             component.execute(ctx, *args)
         except Exception as e:
@@ -57,37 +54,3 @@ def execute_component(config: TaskConfigSpec):
         logger.debug("cleaning...")
         # context.clean()
         logger.debug("clean finished")
-
-
-def get_computing(config: TaskConfigSpec):
-    if (engine := config.conf.computing.engine) == "standalone":
-        from fate.arch.computing.standalone import CSession
-
-        return CSession(config.conf.computing.computing_id)
-    elif engine == "eggroll":
-        from fate.arch.computing.eggroll import CSession
-
-        return CSession(config.conf.computing.computing_id)
-    elif engine == "spark":
-        from fate.arch.computing.spark import CSession
-
-        return CSession(config.conf.computing.computing_id)
-
-    else:
-        raise ParamsValidateFailed(f"extra.distributed_computing_backend.engine={engine} not support")
-
-
-def get_federation(config: TaskConfigSpec, computing):
-    if (engine := config.conf.federation.engine) == "standalone":
-        from fate.arch.federation.standalone import StandaloneFederation
-
-        federation_config = config.conf.federation
-        return StandaloneFederation(
-            computing,
-            federation_config.federation_id,
-            federation_config.parties.local.tuple(),
-            [p.tuple() for p in federation_config.parties.parties],
-        )
-
-    else:
-        raise ParamsValidateFailed(f"extra.distributed_computing_backend.engine={engine} not support")
