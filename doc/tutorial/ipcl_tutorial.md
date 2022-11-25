@@ -16,14 +16,9 @@ The following sections introduce:
 
 ### Build FATE with IPCL
 
-- **Standalone Docker Build**
+- **Build Docker Images**
   
-  To build a Docker image of standalone FATE with `ipcl_python` enabled, just use "ipcl" as (or part of) the image tag. Otherwise `ipcl_python` won't be installed.
-
-  ```bash
-  cd ${FATE_DIR}  # /path/to/fate
-  bash build/standalone-docker-build/build.sh ipcl
-  ```
+  To build FATE images with `ipcl_python` enabled, please refer to [README](https://github.com/FederatedAI/FATE-Builder/blob/main/docker-build/README.md#environments) of [FATE-Builder](https://github.com/FederatedAI/FATE-Builder). Set `Build_IPCL=1`.
 
 ### IPCL Usage
 
@@ -43,7 +38,7 @@ The following sections introduce:
 
 ### Integration Steps
 
-The following steps briefly introduce how IPCL is integrated into FATE, which have been already done since FATE v1.9.0.
+The following steps briefly introduce how IPCL is integrated into FATE, which have been already done since FATE v1.10.0.
 
 - Add IPCL as an encryption parameter `consts.PAILLIER_IPCL`
 
@@ -84,58 +79,25 @@ The following steps briefly introduce how IPCL is integrated into FATE, which ha
     + __all__ = ['RsaEncrypt', 'PaillierEncrypt', 'IpclPaillierEncrypt', 'EncryptModeCalculator']
     ```
 
-- Add `IpclPaillierEncrypt` as a machine learning model's `cipher_operator`, e.g., `homo_logistic_regression`
+- Add `IpclPaillierEncrypt` as the model's `cipher_operator`, e.g., `hetero_logistic_regression`
 
-  - `python/federatedml/linear_model/coordinated_linear_model/logistic_regression/homo_logistic_regression/homo_lr_base.py`
+  - `python/federatedml/linear_model/coordinated_linear_model/logistic_regression/hetero_logistic_regression/hetero_lr_base.py`
 
     ```diff
     - from federatedml.secureprotol import PaillierEncrypt
     + from federatedml.secureprotol import PaillierEncrypt, IpclPaillierEncrypt
       ...
-              if params.encrypt_param.method == consts.PAILLIER:
-                  self.cipher_operator = PaillierEncrypt()
+    -         self.cipher_operator = PaillierEncrypt()
+    +
+    +         if params.encrypt_param.method == consts.PAILLIER:
+    +             self.cipher_operator = PaillierEncrypt()
     +         elif params.encrypt_param.method == consts.PAILLIER_IPCL:
     +             self.cipher_operator = IpclPaillierEncrypt()
-              else:
-                  self.cipher_operator = None
-    ```
-
-  - `python/federatedml/linear_model/coordinated_linear_model/logistic_regression/homo_logistic_regression/homo_lr_host.py`
-
-    ```diff
-    -         pubkey = self.cipher.gen_paillier_pubkey(enable=self.use_encrypt, suffix=('fit',))
-    +         pubkey = self.cipher.gen_paillier_pubkey(enable=self.use_encrypt, lib=self.paillier_lib, suffix=('fit',))
-              if self.use_encrypt:
-                  self.cipher_operator.set_public_key(pubkey)
-      ...
-    -             pubkey = self.cipher.gen_paillier_pubkey(enable=self.use_encrypt, suffix=suffix)
-    +             pubkey = self.cipher.gen_paillier_pubkey(enable=self.use_encrypt, lib=self.paillier_lib, suffix=suffix)
-    ```
-
-  - `python/federatedml/framework/homo/blocks/paillier_cipher.py`
-
-    ```diff
-          def keygen(self, key_length, suffix=tuple()) -> dict:
-              use_cipher = self._use_encrypt.get_parties(parties=self._client_parties, suffix=suffix)
-    +         paillier_lib = self._paillier_lib.get_parties(parties=self._client_parties, suffix=suffix)
-              ciphers = dict()
-    -         for party, use_encryption in zip(self._client_parties, use_cipher):
-    +         for party, use_encryption, paillier_lib_ in zip(self._client_parties, use_cipher, paillier_lib):
-                  if not use_encryption:
-                      ciphers[party] = None
-                  else:
-    -                 cipher = PaillierEncrypt()
-    +                 if paillier_lib_ == consts.PAILLIER:
-    +                     cipher = PaillierEncrypt()
-    +                 elif paillier_lib_ == consts.PAILLIER_IPCL:
-    +                     cipher = IpclPaillierEncrypt()
-                      cipher.generate_key(key_length)
-                      pub_key = cipher.get_public_key()
-                      self._paillier_pubkey.remote_parties(obj=pub_key, parties=[party], suffix=suffix)
-                      ciphers[party] = cipher
-              return ciphers
+    +         else:
+    +             raise ValueError(f"Unsupported encryption method: {params.encrypt_param.method}")
+    +
     ```
 
 ## Current Status
 
-For now, only the `homo_logistic_regression` and `hetero_secure_boost` model are supported by IPCL. `hetero_logistic_regression` is expected to be supported soon.
+For now, `hetero_logistic_regression` and `hetero_secure_boost` models are supported by IPCL.
