@@ -1,5 +1,11 @@
 dag:
   conf:
+    auto_retries: null
+    federated_status_collect_type: null
+    inherit: null
+    model_id: null
+    model_version: null
+    task: {}
     task_parallelism: 1
   parties:
   - party_id:
@@ -14,52 +20,82 @@ dag:
     role: arbiter
   party_tasks:
     guest_9999:
+      conf: {}
       parties:
       - party_id:
         - '9999'
         role: guest
       tasks:
         reader_0:
+          conf: null
           inputs:
+            artifacts: null
             parameters:
+              delimiter: ','
+              dtype: float32
+              format: csv
+              id_name: id
+              label_name: y
+              label_type: float32
               path: examples/data/breast_hetero_guest.csv
     host_10000:
+      conf: {}
       parties:
       - party_id:
         - '10000'
         role: host
       tasks:
         reader_0:
+          conf: {}
           inputs:
+            artifacts: null
             parameters:
+              delimiter: ','
+              dtype: float32
+              format: csv
+              id_name: id
+              label_name: null
               path: examples/data/breast_hetero_host.csv
     host_10001:
+      conf: {}
       parties:
       - party_id:
         - '10001'
         role: host
       tasks:
         reader_0:
+          conf: null
           inputs:
+            artifacts: null
             parameters:
+              delimiter: ','
+              dtype: float32
+              format: csv
+              id_name: id
+              label_name: null
               path: examples/data/breast_hetero_host.csv
   scheduler_party_id: '10001'
   stage: train
   tasks:
     lr_0:
       component_ref: hetero_lr
+      conf: {}
       dependent_tasks:
       - reader_0
       inputs:
         artifacts:
           train_data:
             task_output_artifact:
-              output_artifact_key: data
+              output_artifact_key: output_data
               producer_task: reader_0
         parameters:
+          batch_size: -1
           max_iter: 1
+      parties: null
+      stage: null
     lr_1:
       component_ref: hetero_lr
+      conf: {}
       dependent_tasks:
       - reader_0
       - lr_0
@@ -71,11 +107,16 @@ dag:
               producer_task: lr_0
           test_data:
             task_output_artifact:
-              output_artifact_key: data
+              output_artifact_key: output_data
               producer_task: reader_0
+        parameters: null
+      parties: null
       stage: predict
     reader_0:
       component_ref: reader
+      conf: {}
+      dependent_tasks: null
+      inputs: null
       parties:
       - party_id:
         - '9999'
