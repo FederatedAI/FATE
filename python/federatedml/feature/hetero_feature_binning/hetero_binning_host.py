@@ -43,6 +43,7 @@ class HeteroFeatureBinningHost(BaseFeatureBinning):
 
         if self.model_param.split_points_by_col_name or self.model_param.split_points_by_index:
             split_points = self._get_manual_split_points(data_instances)
+            self.use_manual_split_points = True
             for col_name, sp in split_points.items():
                 self.binning_obj.bin_results.put_col_split_points(col_name, sp)
         else:

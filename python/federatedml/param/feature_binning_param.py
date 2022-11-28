@@ -19,7 +19,7 @@ import copy
 
 from federatedml.param.base_param import BaseParam
 from federatedml.param.encrypt_param import EncryptParam
-from federatedml.util import consts
+from federatedml.util import consts, LOGGER
 
 
 class TransformParam(BaseParam):
@@ -266,6 +266,7 @@ class HeteroFeatureBinningParam(FeatureBinningParam):
         if self.skip_static and self.transform_param.transform_type == 'woe':
             raise ValueError("To use woe transform, skip_static should set as False")
         if self.split_points_by_index is not None:
+            LOGGER.warning(f"When manually setting binning split points, 'method' will be ignored.")
             if not isinstance(self.split_points_by_index, dict):
                 raise ValueError(f"{descr} `split_points_by_index` should be a dict")
             for k, v in self.split_points_by_index.items():
@@ -277,6 +278,7 @@ class HeteroFeatureBinningParam(FeatureBinningParam):
                     raise ValueError(f"{k}'s split points({v}) should be given in sorted order.")
 
         if self.split_points_by_col_name is not None:
+            LOGGER.warning(f"When manually setting binning split points, 'method' will be ignored.")
             if not isinstance(self.split_points_by_col_name, dict):
                 raise ValueError(f"{descr} `split_points_by_col_name` should be a dict")
             for k, v in self.split_points_by_col_name.items():
