@@ -6,17 +6,11 @@ be user-friendly and consistent in behavior with FATE command line
 tools. User can customize job workflow by adding components to pipeline
 and then initiate a job with one call. In addition, Pipeline provides
 functionality to run prediction and query information after fitting a
-pipeline. Run the [mini
-demo](../../../examples/pipeline/demo/pipeline-mini-demo.py) to have
-a taste of how FATE Pipeline works. Default values of party ids and work
+pipeline. Run this [quick tutorial](../../tutorial/pipeline/pipeline_tutorial_hetero_sbt.ipynb) 
+to have a taste of how FATE Pipeline works. Default values of party ids and work
 mode may need to be modified depending on the deployment setting.
 
-```bash
-python pipeline-mini-demo.py
-```
-
-For more pipeline demo, please refer to
-[examples](../../../examples/pipeline).
+For more tutorials on pipeline usage, please refer [here](../../tutorial/pipeline).
 
 ## A FATE Job is A Directed Acyclic Graph
 
@@ -29,16 +23,15 @@ and output data and model. Therefore two modules are connected when
 output of one module is set to be the input of another module. By
 tracing how one data set is processed through FATE modules, we can see
 that a FATE job is in fact formed by a sequence of sub-tasks. For
-example, in the [mini
-demo](../../../examples/pipeline/demo/pipeline-mini-demo.py) above,
+example, in the [tutorial](../../tutorial/pipeline/pipeline_tutorial_hetero_sbt.ipynb),
 guest’s data is first read in by `Reader`, then loaded into
 `DataTransform`. Overlapping ids between guest and host are then found
-by running data through `Intersection`. Finally, `HeteroLR` model is fit
+by running data through `Intersection`. Finally, `HeteroSecureBoost` is fit
 on the data. Each listed modules run a small task with the data, and
 together they constitute a model training job.
 
-Beyond the given mini demo, a job may include multiple data sets and
-models. For more pipeline examples, please refer to
+Beyond the given tutorial, a job may include multiple data sets and
+models. For more pipeline job examples, please refer to
 [examples](../../../examples/pipeline).
 
 ## Install Pipeline
