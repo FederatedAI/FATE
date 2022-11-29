@@ -51,7 +51,8 @@ class Evaluation(ModelBase):
 
         self.special_metric_list = [consts.PSI]
 
-        self.clustering_intra_metric_list = [consts.DAVIES_BOULDIN_INDEX, consts.DISTANCE_MEASURE]
+        self.clustering_intra_metric_list = [
+            consts.DAVIES_BOULDIN_INDEX, consts.DISTANCE_MEASURE]
 
         self.metrics = None
         self.round_num = 6
@@ -76,7 +77,8 @@ class Evaluation(ModelBase):
         self.pos_label = self.model_param.pos_label
         self.need_unfold_multi_result = self.model_param.unfold_multi_result
         self.metrics = model.metrics
-        self.metric_interface = MetricInterface(pos_label=self.pos_label, eval_type=self.eval_type, )
+        self.metric_interface = MetricInterface(
+            pos_label=self.pos_label, eval_type=self.eval_type, )
 
     def _run_data(self, data_sets=None, stage=None):
         if not self.need_run:
@@ -131,13 +133,19 @@ class Evaluation(ModelBase):
         """
 
         true_cluster_index, predicted_cluster_index = [], []
-        intra_cluster_data, inter_cluster_dist = {'avg_dist': [], 'max_radius': []}, []
+        intra_cluster_data, inter_cluster_dist = {
+            'avg_dist': [], 'max_radius': []}, []
 
         run_intra_metrics = False  # run intra metrics or outer metrics ?
         if len(data[0][1]) == 3:
             # [int int] -> [true_label, predicted label] -> outer metric
             # [int np.array] - > [predicted label, distance] -> need no metric computation
-            if not (isinstance(data[0][1][0], int) and isinstance(data[0][1][1], int)):
+            if not (
+                isinstance(
+                    data[0][1][0],
+                    int) and isinstance(
+                    data[0][1][1],
+                    int)):
                 return None, None, run_intra_metrics
 
         if len(data[0][1]) == 5:  # the input format is for intra metrics
@@ -157,21 +165,33 @@ class Evaluation(ModelBase):
 
         # if cluster related data exists, sort by cluster index
         if len(cluster_index_list) != 0:
-            to_sort = list(zip(cluster_index_list, intra_cluster_data['avg_dist'], intra_cluster_data['max_radius']))
+            to_sort = list(zip(cluster_index_list,
+                               intra_cluster_data['avg_dist'],
+                               intra_cluster_data['max_radius']))
             sort_rs = sorted(to_sort, key=lambda x: x[0])  # cluster index
             intra_cluster_data['avg_dist'] = [i[1] for i in sort_rs]
             intra_cluster_data['max_radius'] = [i[2] for i in sort_rs]
 
-        return (true_cluster_index, predicted_cluster_index, run_intra_metrics) if not run_intra_metrics else \
-            (intra_cluster_data, inter_cluster_dist, run_intra_metrics)
+        return (
+            true_cluster_index,
+            predicted_cluster_index,
+            run_intra_metrics) if not run_intra_metrics else (
+            intra_cluster_data,
+            inter_cluster_dist,
+            run_intra_metrics)
 
     def _evaluate_classification_and_regression_metrics(self, mode, data):
 
-        labels, pred_results = self._classification_and_regression_extract(data)
+        labels, pred_results = self._classification_and_regression_extract(
+            data)
         eval_result = defaultdict(list)
         for eval_metric in self.metrics:
             if eval_metric not in self.special_metric_list:
-                res = getattr(self.metric_interface, eval_metric)(labels, pred_results)
+                res = getattr(
+                    self.metric_interface,
+                    eval_metric)(
+                    labels,
+                    pred_results)
                 if res is not None:
                     try:
                         if math.isinf(res):
@@ -192,8 +212,11 @@ class Evaluation(ModelBase):
                     self.psi_validate_labels = labels
 
                 if self.psi_train_scores is not None and self.psi_validate_scores is not None:
-                    res = self.metric_interface.psi(self.psi_train_scores, self.psi_validate_scores,
-                                                    self.psi_train_labels, self.psi_validate_labels)
+                    res = self.metric_interface.psi(
+                        self.psi_train_scores,
+                        self.psi_validate_scores,
+                        self.psi_train_labels,
+                        self.psi_validate_labels)
                     eval_result[eval_metric].append(mode)
                     eval_result[eval_metric].append(res)
                     # delete saved scores after computing a psi pair
@@ -206,13 +229,15 @@ class Evaluation(ModelBase):
         eval_result = defaultdict(list)
         rs0, rs1, run_outer_metric = self._clustering_extract(data)
         if rs0 is None and rs1 is None:  # skip evaluation computation if get this input format
-            LOGGER.debug('skip computing, this clustering format is not for metric computation')
+            LOGGER.debug(
+                'skip computing, this clustering format is not for metric computation')
             return eval_result
 
         if not run_outer_metric:
             no_label = set(rs0) == {None}
             if no_label:
-                LOGGER.debug('no label found in clustering result, skip metric computation')
+                LOGGER.debug(
+                    'no label found in clustering result, skip metric computation')
                 return eval_result
 
         for eval_metric in self.metrics:
@@ -220,7 +245,8 @@ class Evaluation(ModelBase):
             # if input format and required metrics matches ? XNOR
             if not ((not (eval_metric in self.clustering_intra_metric_list) and not run_outer_metric) +
                     ((eval_metric in self.clustering_intra_metric_list) and run_outer_metric)):
-                LOGGER.warning('input data format does not match current clustering metric: {}'.format(eval_metric))
+                LOGGER.warning(
+                    'input data format does not match current clustering metric: {}'.format(eval_metric))
                 continue
 
             LOGGER.debug('clustering_metrics is {}'.format(eval_metric))
@@ -228,9 +254,15 @@ class Evaluation(ModelBase):
             if run_outer_metric:
 
                 if eval_metric == consts.DISTANCE_MEASURE:
-                    res = getattr(self.metric_interface, eval_metric)(rs0['avg_dist'], rs1, rs0['max_radius'])
+                    res = getattr(
+                        self.metric_interface, eval_metric)(
+                        rs0['avg_dist'], rs1, rs0['max_radius'])
                 else:
-                    res = getattr(self.metric_interface, eval_metric)(rs0['avg_dist'], rs1)
+                    res = getattr(
+                        self.metric_interface,
+                        eval_metric)(
+                        rs0['avg_dist'],
+                        rs1)
             else:
                 res = getattr(self.metric_interface, eval_metric)(rs0, rs1)
             eval_result[eval_metric].append(mode)
@@ -240,12 +272,14 @@ class Evaluation(ModelBase):
 
     @staticmethod
     def _check_clustering_input(data):
-        # one evaluation component is only available for one kmeans component in current version
+        # one evaluation component is only available for one kmeans component
+        # in current version
         input_num = len(data.items())
         if input_num > 1:
-            raise ValueError('multiple input detected, '
-                             'one evaluation component is only available '
-                             'for one clustering(kmean) component in current version')
+            raise ValueError(
+                'multiple input detected, '
+                'one evaluation component is only available '
+                'for one clustering(kmean) component in current version')
 
     @staticmethod
     def _unfold_multi_result(score_list):
@@ -262,10 +296,13 @@ class Evaluation(ModelBase):
             # to binary predict result format
             for multi_label in multi_score:
                 bin_label = 1 if str(multi_label) == str(true_label) else 0
-                bin_predicted_label = 1 if str(multi_label) == str(predicted_label) else 0
+                bin_predicted_label = 1 if str(
+                    multi_label) == str(predicted_label) else 0
                 bin_score = multi_score[multi_label]
                 neg_bin_score = 1 - bin_score
-                result_list = [bin_label, bin_predicted_label, bin_score, {1: bin_score, 0: neg_bin_score}, data_type]
+                result_list = [
+                    bin_label, bin_predicted_label, bin_score, {
+                        1: bin_score, 0: neg_bin_score}, data_type]
                 if multi_label not in binary_result:
                     binary_result[multi_label] = []
                 binary_result[multi_label].append((key, result_list))
@@ -276,7 +313,8 @@ class Evaluation(ModelBase):
 
         eval_result = None
         if self.eval_type != consts.CLUSTERING:
-            eval_result = self._evaluate_classification_and_regression_metrics(mode, data)
+            eval_result = self._evaluate_classification_and_regression_metrics(
+                mode, data)
         elif self.eval_type == consts.CLUSTERING:
             LOGGER.debug('running clustering')
             eval_result = self._evaluate_clustering_metrics(mode, data)
@@ -299,10 +337,13 @@ class Evaluation(ModelBase):
                     continue
                 sample = eval_data.take(1)[0]
                 # label, predict_type, predict_score, predict_detail, type
-                if not isinstance(sample[1].features, list) or len(sample[1].features) != 5:
-                    raise ValueError('length of table header mismatch, expected length is 5, got:{},'
-                                     'please check the input of the Evaluation Module, result of '
-                                     'cross validation is not supported.'.format(sample))
+                if not isinstance(
+                        sample[1].features, list) or len(
+                        sample[1].features) != 5:
+                    raise ValueError(
+                        'length of table header mismatch, expected length is 5, got:{},'
+                        'please check the input of the Evaluation Module, result of '
+                        'cross validation is not supported.'.format(sample))
 
     def fit(self, data, return_result=False):
 
@@ -313,7 +354,8 @@ class Evaluation(ModelBase):
         for (key, eval_data) in data.items():
 
             if eval_data is None:
-                LOGGER.debug('data with {} is None, skip metric computation'.format(key))
+                LOGGER.debug(
+                    'data with {} is None, skip metric computation'.format(key))
                 continue
 
             collected_data = list(eval_data.collect())
@@ -340,9 +382,11 @@ class Evaluation(ModelBase):
                 self.metrics = [consts.AUC, consts.KS]
 
                 for mode, data in split_data_with_label.items():
-                    unfold_multi_data = self._unfold_multi_result(eval_data_local)
+                    unfold_multi_data = self._unfold_multi_result(
+                        eval_data_local)
                     for multi_label, marginal_bin_result in unfold_multi_data.items():
-                        eval_result = self.evaluate_metrics(mode, marginal_bin_result)
+                        eval_result = self.evaluate_metrics(
+                            mode, marginal_bin_result)
                         new_key = key + '_class_{}'.format(multi_label)
                         unfold_binary_eval_result[new_key].append(eval_result)
 
@@ -353,20 +397,36 @@ class Evaluation(ModelBase):
                 self.metric_interface.eval_type = consts.MULTY
                 self.metrics = back_up_metric
 
-        return self.callback_metric_data(self.eval_results, return_single_val_metrics=return_result)
+        return self.callback_metric_data(
+            self.eval_results,
+            return_single_val_metrics=return_result)
 
-    def __save_single_value(self, result, metric_name, metric_namespace, eval_name):
+    def __save_single_value(
+            self,
+            result,
+            metric_name,
+            metric_namespace,
+            eval_name):
 
         metric_type = 'EVALUATION_SUMMARY'
         if eval_name in consts.ALL_CLUSTER_METRICS:
             metric_type = 'CLUSTERING_EVALUATION_SUMMARY'
 
-        self.tracker.log_metric_data(metric_namespace, metric_name,
-                                     [Metric(eval_name, np.round(result, self.round_num))])
-        self.tracker.set_metric_meta(metric_namespace, metric_name,
-                                     MetricMeta(name=metric_name, metric_type=metric_type))
+        self.tracker.log_metric_data(
+            metric_namespace, metric_name, [
+                Metric(
+                    eval_name, np.round(
+                        result, self.round_num))])
+        self.tracker.set_metric_meta(
+            metric_namespace, metric_name, MetricMeta(
+                name=metric_name, metric_type=metric_type))
 
-    def __save_curve_data(self, x_axis_list, y_axis_list, metric_name, metric_namespace):
+    def __save_curve_data(
+            self,
+            x_axis_list,
+            y_axis_list,
+            metric_name,
+            metric_namespace):
         points = []
         for i, value in enumerate(x_axis_list):
             if isinstance(value, float):
@@ -374,14 +434,30 @@ class Evaluation(ModelBase):
             points.append((value, np.round(y_axis_list[i], self.round_num)))
         points.sort(key=lambda x: x[0])
         metric_points = [Metric(point[0], point[1]) for point in points]
-        self.tracker.log_metric_data(metric_namespace, metric_name, metric_points)
+        self.tracker.log_metric_data(
+            metric_namespace, metric_name, metric_points)
 
-    def __save_curve_meta(self, metric_name, metric_namespace, metric_type, unit_name=None, ordinate_name=None,
-                          curve_name=None, best=None, pair_type=None, thresholds=None):
+    def __save_curve_meta(
+            self,
+            metric_name,
+            metric_namespace,
+            metric_type,
+            unit_name=None,
+            ordinate_name=None,
+            curve_name=None,
+            best=None,
+            pair_type=None,
+            thresholds=None):
         extra_metas = {}
         metric_type = "_".join([metric_type, "EVALUATION"])
 
-        key_list = ["unit_name", "ordinate_name", "curve_name", "best", "pair_type", "thresholds"]
+        key_list = [
+            "unit_name",
+            "ordinate_name",
+            "curve_name",
+            "best",
+            "pair_type",
+            "thresholds"]
         for key in key_list:
             value = locals()[key]
             if value:
@@ -389,8 +465,8 @@ class Evaluation(ModelBase):
                     value = np.round(value, self.round_num).tolist()
                 extra_metas[key] = value
 
-        self.tracker.set_metric_meta(metric_namespace, metric_name,
-                                     MetricMeta(name=metric_name, metric_type=metric_type, extra_metas=extra_metas))
+        self.tracker.set_metric_meta(metric_namespace, metric_name, MetricMeta(
+            name=metric_name, metric_type=metric_type, extra_metas=extra_metas))
 
     @staticmethod
     def __multi_class_label_padding(metrics, label_indices):
@@ -463,10 +539,16 @@ class Evaluation(ModelBase):
 
         return new_fpr, new_tpr, new_threshold
 
-    def __save_roc_curve(self, data_name, metric_name, metric_namespace, metric_res):
+    def __save_roc_curve(
+            self,
+            data_name,
+            metric_name,
+            metric_namespace,
+            metric_res):
         fpr, tpr, thresholds, _ = metric_res
 
-        fpr, tpr, thresholds = self.__filter_duplicate_roc_data_point(fpr, tpr, thresholds)
+        fpr, tpr, thresholds = self.__filter_duplicate_roc_data_point(
+            fpr, tpr, thresholds)
 
         # set roc edge value
         fpr.append(1.0)
@@ -474,30 +556,56 @@ class Evaluation(ModelBase):
         thresholds.append(1.0)
 
         self.__save_curve_data(fpr, tpr, metric_name, metric_namespace)
-        self.__save_curve_meta(metric_name=metric_name, metric_namespace=metric_namespace,
-                               metric_type="ROC", unit_name="fpr", ordinate_name="tpr",
-                               curve_name=data_name, thresholds=thresholds)
+        self.__save_curve_meta(
+            metric_name=metric_name,
+            metric_namespace=metric_namespace,
+            metric_type="ROC",
+            unit_name="fpr",
+            ordinate_name="tpr",
+            curve_name=data_name,
+            thresholds=thresholds)
 
-    def __save_ks_curve(self, metric, metric_res, metric_name, metric_namespace, data_name):
+    def __save_ks_curve(
+            self,
+            metric,
+            metric_res,
+            metric_name,
+            metric_namespace,
+            data_name):
 
         best_ks, fpr, tpr, thresholds, cuts = metric_res[1]
 
         for curve_name, curve_data in zip(["fpr", "tpr"], [fpr, tpr]):
             metric_name_fpr = '_'.join([metric_name, curve_name])
             curve_name_fpr = "_".join([data_name, curve_name])
-            self.__save_curve_data(cuts, curve_data, metric_name_fpr, metric_namespace)
-            self.__save_curve_meta(metric_name=metric_name_fpr, metric_namespace=metric_namespace,
-                                   metric_type=metric.upper(), unit_name="",
-                                   curve_name=curve_name_fpr, pair_type=data_name,
-                                   thresholds=thresholds)
+            self.__save_curve_data(
+                cuts,
+                curve_data,
+                metric_name_fpr,
+                metric_namespace)
+            self.__save_curve_meta(
+                metric_name=metric_name_fpr,
+                metric_namespace=metric_namespace,
+                metric_type=metric.upper(),
+                unit_name="",
+                curve_name=curve_name_fpr,
+                pair_type=data_name,
+                thresholds=thresholds)
 
-    def __save_lift_gain_curve(self, metric, metric_res, metric_name, metric_namespace, data_name):
+    def __save_lift_gain_curve(
+            self,
+            metric,
+            metric_res,
+            metric_name,
+            metric_namespace,
+            data_name):
 
         score, cuts, thresholds = metric_res[1]
 
         score = [float(s[1]) for s in score]
         cuts = [float(c[1]) for c in cuts]
-        cuts, score, idx_list = self.__filt_override_unit_ordinate_coordinate(cuts, score)
+        cuts, score, idx_list = self.__filt_override_unit_ordinate_coordinate(
+            cuts, score)
         thresholds = [thresholds[idx] for idx in idx_list]
 
         score.append(1.0)
@@ -505,11 +613,21 @@ class Evaluation(ModelBase):
         thresholds.append(0.0)
 
         self.__save_curve_data(cuts, score, metric_name, metric_namespace)
-        self.__save_curve_meta(metric_name=metric_name, metric_namespace=metric_namespace,
-                               metric_type=metric.upper(), unit_name="",
-                               curve_name=data_name, thresholds=thresholds)
+        self.__save_curve_meta(
+            metric_name=metric_name,
+            metric_namespace=metric_namespace,
+            metric_type=metric.upper(),
+            unit_name="",
+            curve_name=data_name,
+            thresholds=thresholds)
 
-    def __save_accuracy_curve(self, metric, metric_res, metric_name, metric_namespace, data_name):
+    def __save_accuracy_curve(
+            self,
+            metric,
+            metric_res,
+            metric_name,
+            metric_namespace,
+            data_name):
 
         if self.eval_type == consts.MULTY:
             return
@@ -517,9 +635,13 @@ class Evaluation(ModelBase):
         score, cuts, thresholds = metric_res[1]
 
         self.__save_curve_data(cuts, score, metric_name, metric_namespace)
-        self.__save_curve_meta(metric_name=metric_name, metric_namespace=metric_namespace,
-                               metric_type=metric.upper(), unit_name="",
-                               curve_name=data_name, thresholds=thresholds)
+        self.__save_curve_meta(
+            metric_name=metric_name,
+            metric_namespace=metric_namespace,
+            metric_type=metric.upper(),
+            unit_name="",
+            curve_name=data_name,
+            thresholds=thresholds)
 
     def __save_pr_curve(self, precision_and_recall, data_name):
 
@@ -528,8 +650,8 @@ class Evaluation(ModelBase):
 
         if precision_res[0] != recall_res[0]:
             LOGGER.warning(
-                "precision mode:{} is not equal to recall mode:{}".format(precision_res[0],
-                                                                          recall_res[0]))
+                "precision mode:{} is not equal to recall mode:{}".format(
+                    precision_res[0], recall_res[0]))
             return
 
         metric_namespace = precision_res[0]
@@ -566,63 +688,135 @@ class Evaluation(ModelBase):
             edge_idx = idx_list[-1]
             if edge_idx == len(precision_thresholds) - 1:
                 idx_list = idx_list[:-1]
-            precision_thresholds = [precision_thresholds[idx] for idx in idx_list]
+            precision_thresholds = [
+                precision_thresholds[idx] for idx in idx_list]
             recall_thresholds = [recall_thresholds[idx] for idx in idx_list]
 
         elif self.eval_type == consts.MULTY:
 
-            pos_recall_score, recall_cuts = self.__multi_class_label_padding(pos_recall_score, recall_cuts)
-            pos_precision_score, precision_cuts = self.__multi_class_label_padding(pos_precision_score, precision_cuts)
+            pos_recall_score, recall_cuts = self.__multi_class_label_padding(
+                pos_recall_score, recall_cuts)
+            pos_precision_score, precision_cuts = self.__multi_class_label_padding(
+                pos_precision_score, precision_cuts)
 
-        self.__save_curve_data(precision_cuts, pos_precision_score, metric_name_precision,
-                               metric_namespace)
-        self.__save_curve_meta(metric_name_precision, metric_namespace,
-                               "_".join([consts.PRECISION.upper(), self.eval_type.upper()]),
-                               unit_name="", ordinate_name="Precision",
+        self.__save_curve_data(
+            precision_cuts,
+            pos_precision_score,
+            metric_name_precision,
+            metric_namespace)
+        self.__save_curve_meta(metric_name_precision,
+                               metric_namespace,
+                               "_".join([consts.PRECISION.upper(),
+                                         self.eval_type.upper()]),
+                               unit_name="",
+                               ordinate_name="Precision",
                                curve_name=precision_curve_name,
-                               pair_type=data_name, thresholds=precision_thresholds)
+                               pair_type=data_name,
+                               thresholds=precision_thresholds)
 
-        self.__save_curve_data(recall_cuts, pos_recall_score, metric_name_recall,
-                               metric_namespace)
-        self.__save_curve_meta(metric_name_recall, metric_namespace,
-                               "_".join([consts.RECALL.upper(), self.eval_type.upper()]),
-                               unit_name="", ordinate_name="Recall", curve_name=recall_curve_name,
-                               pair_type=data_name, thresholds=recall_thresholds)
+        self.__save_curve_data(
+            recall_cuts,
+            pos_recall_score,
+            metric_name_recall,
+            metric_namespace)
+        self.__save_curve_meta(metric_name_recall,
+                               metric_namespace,
+                               "_".join([consts.RECALL.upper(),
+                                         self.eval_type.upper()]),
+                               unit_name="",
+                               ordinate_name="Recall",
+                               curve_name=recall_curve_name,
+                               pair_type=data_name,
+                               thresholds=recall_thresholds)
 
-    def __save_confusion_mat_table(self, metric, confusion_mat, thresholds, metric_name, metric_namespace):
+    def __save_confusion_mat_table(
+            self,
+            metric,
+            confusion_mat,
+            thresholds,
+            metric_name,
+            metric_namespace):
 
-        extra_metas = {'tp': list(confusion_mat['tp']), 'tn': list(confusion_mat['tn']),
-                       'fp': list(confusion_mat['fp']),
-                       'fn': list(confusion_mat['fn']), 'thresholds': list(np.round(thresholds, self.round_num))}
+        extra_metas = {
+            'tp': list(
+                confusion_mat['tp']), 'tn': list(
+                confusion_mat['tn']), 'fp': list(
+                confusion_mat['fp']), 'fn': list(
+                    confusion_mat['fn']), 'thresholds': list(
+                        np.round(
+                            thresholds, self.round_num))}
 
-        self.tracker.set_metric_meta(metric_namespace, metric_name,
-                                     MetricMeta(name=metric_name, metric_type=metric.upper(), extra_metas=extra_metas))
+        self.tracker.set_metric_meta(
+            metric_namespace,
+            metric_name,
+            MetricMeta(
+                name=metric_name,
+                metric_type=metric.upper(),
+                extra_metas=extra_metas))
 
-    def __save_f1_score_table(self, metric, f1_scores, thresholds, metric_name, metric_namespace):
+    def __save_f1_score_table(
+            self,
+            metric,
+            f1_scores,
+            thresholds,
+            metric_name,
+            metric_namespace):
 
-        extra_metas = {'f1_scores': list(np.round(f1_scores, self.round_num)),
-                       'thresholds': list(np.round(thresholds, self.round_num))}
+        extra_metas = {
+            'f1_scores': list(
+                np.round(
+                    f1_scores, self.round_num)), 'thresholds': list(
+                np.round(
+                    thresholds, self.round_num))}
 
-        self.tracker.set_metric_meta(metric_namespace, metric_name,
-                                     MetricMeta(name=metric_name, metric_type=metric.upper(), extra_metas=extra_metas))
+        self.tracker.set_metric_meta(
+            metric_namespace,
+            metric_name,
+            MetricMeta(
+                name=metric_name,
+                metric_type=metric.upper(),
+                extra_metas=extra_metas))
 
-    def __save_psi_table(self, metric, metric_res, metric_name, metric_namespace):
+    def __save_psi_table(
+            self,
+            metric,
+            metric_res,
+            metric_name,
+            metric_namespace):
 
         psi_scores, total_psi, expected_interval, expected_percentage, actual_interval, actual_percentage, \
             train_pos_perc, validate_pos_perc, intervals = metric_res[1]
 
-        extra_metas = {'psi_scores': list(np.round(psi_scores, self.round_num)),
-                       'total_psi': round(total_psi, self.round_num),
-                       'expected_interval': list(expected_interval),
-                       'expected_percentage': list(expected_percentage), 'actual_interval': list(actual_interval),
-                       'actual_percentage': list(actual_percentage), 'intervals': list(intervals),
-                       'train_pos_perc': train_pos_perc, 'validate_pos_perc': validate_pos_perc
-                       }
+        extra_metas = {
+            'psi_scores': list(
+                np.round(
+                    psi_scores,
+                    self.round_num)),
+            'total_psi': round(
+                total_psi,
+                self.round_num),
+            'expected_interval': list(expected_interval),
+            'expected_percentage': list(expected_percentage),
+            'actual_interval': list(actual_interval),
+            'actual_percentage': list(actual_percentage),
+            'intervals': list(intervals),
+            'train_pos_perc': train_pos_perc,
+            'validate_pos_perc': validate_pos_perc}
 
-        self.tracker.set_metric_meta(metric_namespace, metric_name,
-                                     MetricMeta(name=metric_name, metric_type=metric.upper(), extra_metas=extra_metas))
+        self.tracker.set_metric_meta(
+            metric_namespace,
+            metric_name,
+            MetricMeta(
+                name=metric_name,
+                metric_type=metric.upper(),
+                extra_metas=extra_metas))
 
-    def __save_pr_table(self, metric, metric_res, metric_name, metric_namespace):
+    def __save_pr_table(
+            self,
+            metric,
+            metric_res,
+            metric_name,
+            metric_namespace):
 
         p_scores, r_scores, score_threshold = metric_res
 
@@ -630,10 +824,20 @@ class Evaluation(ModelBase):
                        'r_scores': list(map(list, np.round(r_scores, self.round_num))),
                        'thresholds': list(np.round(score_threshold, self.round_num))}
 
-        self.tracker.set_metric_meta(metric_namespace, metric_name,
-                                     MetricMeta(name=metric_name, metric_type=metric.upper(), extra_metas=extra_metas))
+        self.tracker.set_metric_meta(
+            metric_namespace,
+            metric_name,
+            MetricMeta(
+                name=metric_name,
+                metric_type=metric.upper(),
+                extra_metas=extra_metas))
 
-    def __save_contingency_matrix(self, metric, metric_res, metric_name, metric_namespace):
+    def __save_contingency_matrix(
+            self,
+            metric,
+            metric_res,
+            metric_name,
+            metric_namespace):
 
         result_array, unique_predicted_label, unique_true_label = metric_res
         true_labels = list(map(int, unique_true_label))
@@ -642,10 +846,18 @@ class Evaluation(ModelBase):
         for l_ in result_array:
             result_table.append(list(map(int, l_)))
 
-        extra_metas = {'true_labels': true_labels, 'predicted_labels': predicted_label, 'result_table': result_table}
+        extra_metas = {
+            'true_labels': true_labels,
+            'predicted_labels': predicted_label,
+            'result_table': result_table}
 
-        self.tracker.set_metric_meta(metric_namespace, metric_name,
-                                     MetricMeta(name=metric_name, metric_type=metric.upper(), extra_metas=extra_metas))
+        self.tracker.set_metric_meta(
+            metric_namespace,
+            metric_name,
+            MetricMeta(
+                name=metric_name,
+                metric_type=metric.upper(),
+                extra_metas=extra_metas))
 
     def __save_distance_measure(self, metric, metric_res: dict, metric_name, metric_namespace):
 
@@ -660,8 +872,13 @@ class Evaluation(ModelBase):
         extra_metas['radius'] = radius
         extra_metas['nearest_idx'] = neareast_idx
 
-        self.tracker.set_metric_meta(metric_namespace, metric_name,
-                                     MetricMeta(name=metric_name, metric_type=metric.upper(), extra_metas=extra_metas))
+        self.tracker.set_metric_meta(
+            metric_namespace,
+            metric_name,
+            MetricMeta(
+                name=metric_name,
+                metric_type=metric.upper(),
+                extra_metas=extra_metas))
 
     def __update_summary(self, data_type, namespace, metric, metric_val):
         if data_type not in self.metric_summaries:
@@ -682,7 +899,8 @@ class Evaluation(ModelBase):
             validate_callback_meta = defaultdict(dict)
             split_list = model_name.split('_')
             label = split_list[-1]
-            origin_model_name_list = split_list[:-2]  # remove ' "class" label_index'
+            # remove ' "class" label_index'
+            origin_model_name_list = split_list[:-2]
             origin_model_name = ''
             for s in origin_model_name_list:
                 origin_model_name += (s + '_')
@@ -691,7 +909,8 @@ class Evaluation(ModelBase):
             for rs_dict in eval_rs:
                 for metric_name, metric_rs in rs_dict.items():
                     if metric_name == consts.KS:
-                        metric_rs = [metric_rs[0], metric_rs[1][0]]  # ks value only, curve data is not needed
+                        # ks value only, curve data is not needed
+                        metric_rs = [metric_rs[0], metric_rs[1][0]]
                     metric_namespace = metric_rs[0]
                     if metric_namespace == 'train':
                         callback_meta = train_callback_meta
@@ -699,22 +918,35 @@ class Evaluation(ModelBase):
                         callback_meta = validate_callback_meta
                     callback_meta[label][metric_name] = metric_rs[1]
 
-            self.tracker.set_metric_meta("train", model_name + '_' + 'ovr',
-                                         MetricMeta(name=origin_model_name, metric_type='ovr',
-                                                    extra_metas=train_callback_meta))
-            self.tracker.set_metric_meta("validate", model_name + '_' + 'ovr',
-                                         MetricMeta(name=origin_model_name, metric_type='ovr',
-                                                    extra_metas=validate_callback_meta))
+            self.tracker.set_metric_meta(
+                "train",
+                model_name + '_' + 'ovr',
+                MetricMeta(
+                    name=origin_model_name,
+                    metric_type='ovr',
+                    extra_metas=train_callback_meta))
+            self.tracker.set_metric_meta(
+                "validate",
+                model_name + '_' + 'ovr',
+                MetricMeta(
+                    name=origin_model_name,
+                    metric_type='ovr',
+                    extra_metas=validate_callback_meta))
 
-            LOGGER.debug('callback data {} {}'.format(train_callback_meta, validate_callback_meta))
+            LOGGER.debug(
+                'callback data {} {}'.format(
+                    train_callback_meta,
+                    validate_callback_meta))
 
-    def callback_metric_data(self, eval_results, return_single_val_metrics=False):
+    def callback_metric_data(
+            self,
+            eval_results,
+            return_single_val_metrics=False):
 
         # collect single val metric for validation strategy
         validate_metric = {}
         train_metric = {}
         collect_dict = {}
-        LOGGER.debug('callback metric called')
 
         for (data_type, eval_res_list) in eval_results.items():
 
@@ -731,26 +963,35 @@ class Evaluation(ModelBase):
 
                     metric_name = '_'.join([data_type, metric])
 
-                    single_val_metric = self.__process_single_value_data(metric, metric_res)
+                    single_val_metric = self.__process_single_value_data(
+                        metric, metric_res)
 
                     if single_val_metric is not None:
-                        self.__save_single_value(single_val_metric, metric_name=data_type,
-                                                 metric_namespace=metric_namespace, eval_name=metric)
+                        self.__save_single_value(
+                            single_val_metric,
+                            metric_name=data_type,
+                            metric_namespace=metric_namespace,
+                            eval_name=metric)
                         collect_dict[metric] = single_val_metric
                         # update pipeline summary
-                        self.__update_summary(data_type, metric_namespace, metric, single_val_metric)
+                        self.__update_summary(
+                            data_type, metric_namespace, metric, single_val_metric)
 
                     if metric == consts.KS:
-                        self.__save_ks_curve(metric, metric_res, metric_name, metric_namespace, data_type)
+                        self.__save_ks_curve(
+                            metric, metric_res, metric_name, metric_namespace, data_type)
 
                     elif metric == consts.ROC:
-                        self.__save_roc_curve(data_type, metric_name, metric_namespace, metric_res[1])
+                        self.__save_roc_curve(
+                            data_type, metric_name, metric_namespace, metric_res[1])
 
                     elif metric == consts.ACCURACY:
-                        self.__save_accuracy_curve(metric, metric_res, metric_name, metric_namespace, data_type)
+                        self.__save_accuracy_curve(
+                            metric, metric_res, metric_name, metric_namespace, data_type)
 
                     elif metric in [consts.GAIN, consts.LIFT]:
-                        self.__save_lift_gain_curve(metric, metric_res, metric_name, metric_namespace, data_type)
+                        self.__save_lift_gain_curve(
+                            metric, metric_res, metric_name, metric_namespace, data_type)
 
                     elif metric in [consts.PRECISION, consts.RECALL]:
                         precision_recall[metric] = metric_res
@@ -762,25 +1003,30 @@ class Evaluation(ModelBase):
                         precision_recall = {}  # reset cached dict
 
                     elif metric == consts.PSI:
-                        self.__save_psi_table(metric, metric_res, metric_name, metric_namespace)
+                        self.__save_psi_table(
+                            metric, metric_res, metric_name, metric_namespace)
 
                     elif metric == consts.CONFUSION_MAT:
                         confusion_mat, cuts, score_threshold = metric_res[1]
-                        self.__save_confusion_mat_table(metric, confusion_mat, score_threshold, metric_name,
-                                                        metric_namespace)
+                        self.__save_confusion_mat_table(
+                            metric, confusion_mat, score_threshold, metric_name, metric_namespace)
 
                     elif metric == consts.F1_SCORE:
                         f1_scores, cuts, score_threshold = metric_res[1]
-                        self.__save_f1_score_table(metric, f1_scores, score_threshold, metric_name, metric_namespace)
+                        self.__save_f1_score_table(
+                            metric, f1_scores, score_threshold, metric_name, metric_namespace)
 
                     elif metric == consts.QUANTILE_PR:
-                        self.__save_pr_table(metric, metric_res[1], metric_name, metric_namespace)
+                        self.__save_pr_table(
+                            metric, metric_res[1], metric_name, metric_namespace)
 
                     elif metric == consts.CONTINGENCY_MATRIX:
-                        self.__save_contingency_matrix(metric, metric_res[1], metric_name, metric_namespace)
+                        self.__save_contingency_matrix(
+                            metric, metric_res[1], metric_name, metric_namespace)
 
                     elif metric == consts.DISTANCE_MEASURE:
-                        self.__save_distance_measure(metric, metric_res[1], metric_name, metric_namespace)
+                        self.__save_distance_measure(
+                            metric, metric_res[1], metric_name, metric_namespace)
 
         self.__save_summary()
 

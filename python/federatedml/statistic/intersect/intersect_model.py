@@ -14,10 +14,10 @@
 #  limitations under the License.
 #
 
-import uuid
 
 import numpy as np
 
+from fate_arch.common.base_utils import fate_uuid
 from federatedml.feature.instance import Instance
 from federatedml.model_base import Metric, MetricMeta
 from federatedml.model_base import ModelBase
@@ -37,7 +37,7 @@ class IntersectModelBase(ModelBase):
         super().__init__()
         self.intersection_obj = None
         self.proc_obj = None
-        self.intersect_num = -1
+        # self.intersect_num = -1
         self.intersect_rate = -1
         self.unmatched_num = -1
         self.unmatched_rate = -1
@@ -51,6 +51,9 @@ class IntersectModelBase(ModelBase):
         self.use_match_id_process = False
         self.role = None
         self.intersect_method = None
+        self.match_id_num = None
+        self.match_id_intersect_num = -1
+        self.recovered_num = -1
 
         self.guest_party_id = None
         self.host_party_id = None
@@ -76,8 +79,9 @@ class IntersectModelBase(ModelBase):
             raise ValueError("role {} is not support".format(self.role))
 
     def get_model_summary(self):
-        return {"intersect_num": self.intersect_num, "intersect_rate": self.intersect_rate,
-                "cardinality_only": self.intersection_obj.cardinality_only}
+        return {"intersect_num": self.match_id_intersect_num, "intersect_rate": self.intersect_rate,
+                "cardinality_only": self.intersection_obj.cardinality_only,
+                "unique_id_num": self.match_id_num}
 
     def sync_use_match_id(self):
         raise NotImplementedError(f"Should not be called here.")
@@ -135,10 +139,10 @@ class IntersectModelBase(ModelBase):
             # LOGGER.debug(f"join_data count: {join_data.count()}")
             if self.model_param.new_sample_id:
                 if self.model_param.only_output_key:
-                    join_data = join_data.map(lambda k, v: (uuid.uuid4().hex, None))
+                    join_data = join_data.map(lambda k, v: (fate_uuid(), None))
                     join_id = join_data
                 else:
-                    join_data = join_data.map(lambda k, v: (uuid.uuid4().hex, v))
+                    join_data = join_data.map(lambda k, v: (fate_uuid(), v))
                     join_id = join_data.mapValues(lambda v: None)
                 sync_join_id.remote(join_id)
 
@@ -169,12 +173,23 @@ class IntersectModelBase(ModelBase):
     def callback(self):
         meta_info = {"intersect_method": self.intersect_method,
                      "join_method": self.model_param.join_method}
-        self.callback_metric(metric_name=self.metric_name,
-                             metric_namespace=self.metric_namespace,
-                             metric_data=[Metric("intersect_count", self.intersect_num),
-                                          Metric("intersect_rate", self.intersect_rate),
-                                          Metric("unmatched_count", self.unmatched_num),
-                                          Metric("unmatched_rate", self.unmatched_rate)])
+        if self.use_match_id_process:
+            self.callback_metric(metric_name=self.metric_name,
+                                 metric_namespace=self.metric_namespace,
+                                 metric_data=[Metric("intersect_count", self.match_id_intersect_num),
+                                              Metric("input_match_id_count", self.match_id_num),
+                                              Metric("intersect_rate", self.intersect_rate),
+                                              Metric("unmatched_count", self.unmatched_num),
+                                              Metric("unmatched_rate", self.unmatched_rate),
+                                              Metric("intersect_sample_id_count", self.recovered_num)])
+        else:
+            self.callback_metric(metric_name=self.metric_name,
+                                 metric_namespace=self.metric_namespace,
+                                 metric_data=[Metric("intersect_count", self.match_id_intersect_num),
+                                              Metric("input_match_id_count", self.match_id_num),
+                                              Metric("intersect_rate", self.intersect_rate),
+                                              Metric("unmatched_count", self.unmatched_num),
+                                              Metric("unmatched_rate", self.unmatched_rate)])
         self.tracker.set_metric_meta(metric_namespace=self.metric_namespace,
                                      metric_name=self.metric_name,
                                      metric_meta=MetricMeta(name=self.metric_name,
@@ -220,11 +235,12 @@ class IntersectModelBase(ModelBase):
             if data_overview.check_with_inst_id(data) or self.model_param.with_sample_id:
                 self.proc_obj.use_sample_id()
             match_data = self.proc_obj.recover(data=data)
+            self.match_id_num = match_data.count()
             if self.intersection_obj.run_cache:
                 self.cache_output = self.intersection_obj.generate_cache(match_data)
                 intersect_meta = self.intersection_obj.get_intersect_method_meta()
                 self.callback_cache_meta(intersect_meta)
-                return data
+                return
             if self.intersection_obj.cardinality_only:
                 self.intersection_obj.run_cardinality(match_data)
             else:
@@ -232,15 +248,18 @@ class IntersectModelBase(ModelBase):
                 if self.model_param.run_preprocess:
                     intersect_data = self.run_preprocess(match_data)
                 self.intersect_ids = self.intersection_obj.run_intersect(intersect_data)
+                if self.intersect_ids:
+                    self.match_id_intersect_num = self.intersect_ids.count()
         else:
             if self.model_param.join_method == consts.LEFT_JOIN:
                 raise ValueError(f"Only data with match_id may apply left_join method. Please check input data format")
+            self.match_id_num = data.count()
             if self.intersection_obj.run_cache:
                 self.cache_output = self.intersection_obj.generate_cache(data)
                 intersect_meta = self.intersection_obj.get_intersect_method_meta()
                 # LOGGER.debug(f"callback intersect meta is: {intersect_meta}")
                 self.callback_cache_meta(intersect_meta)
-                return data
+                return
             if self.intersection_obj.cardinality_only:
                 self.intersection_obj.run_cardinality(data)
             else:
@@ -248,13 +267,15 @@ class IntersectModelBase(ModelBase):
                 if self.model_param.run_preprocess:
                     intersect_data = self.run_preprocess(data)
                 self.intersect_ids = self.intersection_obj.run_intersect(intersect_data)
+                if self.intersect_ids:
+                    self.match_id_intersect_num = self.intersect_ids.count()
 
         if self.intersection_obj.cardinality_only:
             if self.intersection_obj.intersect_num is not None:
-                data_count = data.count()
-                self.intersect_num = self.intersection_obj.intersect_num
-                self.intersect_rate = self.intersect_num / data_count
-                self.unmatched_num = data_count - self.intersect_num
+                # data_count = data.count()
+                self.match_id_intersect_num = self.intersection_obj.intersect_num
+                self.intersect_rate = self.match_id_intersect_num / self.match_id_num
+                self.unmatched_num = self.match_id_num - self.match_id_intersect_num
                 self.unmatched_rate = 1 - self.intersect_rate
             self.set_summary(self.get_model_summary())
             self.callback()
@@ -268,6 +289,8 @@ class IntersectModelBase(ModelBase):
                 self.intersect_ids = self.proc_obj.expand(self.intersect_ids,
                                                           match_data=match_data,
                                                           owner_only=True)
+            if self.intersect_ids:
+                self.recovered_num = self.intersect_ids.count()
             if self.model_param.only_output_key and self.intersect_ids:
                 self.intersect_ids = self.intersect_ids.mapValues(lambda v: Instance(inst_id=v.inst_id))
                 # self.intersect_ids.schema = {"match_id_name": data.schema["match_id_name"],
@@ -277,10 +300,8 @@ class IntersectModelBase(ModelBase):
         LOGGER.info("Finish intersection")
 
         if self.intersect_ids:
-            data_count = data.count()
-            self.intersect_num = self.intersect_ids.count()
-            self.intersect_rate = self.intersect_num / data_count
-            self.unmatched_num = data_count - self.intersect_num
+            self.intersect_rate = self.match_id_intersect_num / self.match_id_num
+            self.unmatched_num = self.match_id_num - self.match_id_intersect_num
             self.unmatched_rate = 1 - self.intersect_rate
 
         self.set_summary(self.get_model_summary())
@@ -355,6 +376,7 @@ class IntersectModelBase(ModelBase):
         self.sync_use_match_id()
 
         intersect_data = data_inst
+        self.match_id_num = data_inst.count()
         if self.use_match_id_process:
             if len(self.host_party_id_list) > 1 and self.model_param.sample_id_generator != consts.GUEST:
                 raise ValueError("While multi-host, sample_id_generator should be guest.")
@@ -375,11 +397,13 @@ class IntersectModelBase(ModelBase):
                 proc_obj.use_sample_id()
             match_data = proc_obj.recover(data=data_inst)
             intersect_data = match_data
+            self.match_id_num = match_data.count()
 
         if self.role == consts.HOST:
             cache_id = cache_meta[str(self.guest_party_id)].get("cache_id")
             self.transfer_variable.cache_id.remote(cache_id, role=consts.GUEST, idx=0)
             guest_cache_id = self.transfer_variable.cache_id.get(role=consts.GUEST, idx=0)
+            self.match_id_num = list(cache_data.values())[0].count()
             if guest_cache_id != cache_id:
                 raise ValueError(f"cache_id check failed. cache_id from host & guest must match.")
         elif self.role == consts.GUEST:
@@ -395,6 +419,7 @@ class IntersectModelBase(ModelBase):
             raise ValueError(f"Role {self.role} cannot run intersection transform.")
 
         self.intersect_ids = self.intersection_obj.run_cache_intersect(intersect_data, cache_data)
+        self.match_id_intersect_num = self.intersect_ids.count()
         if self.use_match_id_process:
             if not self.model_param.sync_intersect_ids:
                 self.intersect_ids = proc_obj.expand(self.intersect_ids,
@@ -402,6 +427,8 @@ class IntersectModelBase(ModelBase):
                                                      owner_only=True)
             else:
                 self.intersect_ids = proc_obj.expand(self.intersect_ids, match_data=match_data)
+            if self.intersect_ids:
+                self.recovered_num = self.intersect_ids.count()
             if self.intersect_ids and self.model_param.only_output_key:
                 self.intersect_ids = self.intersect_ids.mapValues(lambda v: Instance(inst_id=v.inst_id))
                 # self.intersect_ids.schema = {"match_id_name": data_inst.schema["match_id_name"],
@@ -411,10 +438,8 @@ class IntersectModelBase(ModelBase):
         LOGGER.info("Finish intersection")
 
         if self.intersect_ids:
-            data_count = data_inst.count()
-            self.intersect_num = self.intersect_ids.count()
-            self.intersect_rate = self.intersect_num / data_count
-            self.unmatched_num = data_count - self.intersect_num
+            self.intersect_rate = self.match_id_intersect_num / self.match_id_num
+            self.unmatched_num = self.match_id_num - self.match_id_intersect_num
             self.unmatched_rate = 1 - self.intersect_rate
 
         self.set_summary(self.get_model_summary())

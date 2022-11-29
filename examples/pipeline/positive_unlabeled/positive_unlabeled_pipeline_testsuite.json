@@ -19,13 +19,13 @@
     ],
     "pipeline_tasks": {
         "positive-unlabeled-lr": {
-            "script": "positive-unlabeled-lr.py"
+            "script": "pipeline-positive-unlabeled-lr.py"
         },
         "positive-unlabeled-sshe-lr": {
-            "script": "positive-unlabeled-sshe-lr.py"
+            "script": "pipeline-positive-unlabeled-sshe-lr.py"
         },
         "positive-unlabeled-sbt": {
-            "script": "positive-unlabeled-sbt.py"
+            "script": "pipeline-positive-unlabeled-sbt.py"
         }
     }
 }

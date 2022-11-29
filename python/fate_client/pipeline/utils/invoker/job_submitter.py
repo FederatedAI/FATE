@@ -449,9 +449,9 @@ class JobInvoker(object):
     def bind_table(self, **kwargs):
         result = self.client.table.bind(**kwargs)
         if result is None or 'retcode' not in result:
-            raise ValueError("Call flwo table bind is failed, check if fate_flow server is up!")
+            raise ValueError("Call flow table bind is failed, check if fate_flow server is up!")
         elif result["retcode"] != 0:
-            raise ValueError(f"Cannot bin table, error msg is {result['data']}")
+            raise ValueError(f"Cannot bind table, error msg is {result['retmsg']}")
         else:
             return result["data"]
 

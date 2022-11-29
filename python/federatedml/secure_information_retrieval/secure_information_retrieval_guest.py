@@ -122,13 +122,13 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
                                                                                        id_list_host_second_only,
                                                                                        keep_value=True)
         # 8. Get (EEright, Eright_guest)
-        id_list_local_first = self.intersection_obj.id_list_local_first[0]  # (Eright_guest, id)
+        id_local_first = self.intersection_obj.id_local_first  # (Eright_guest, id)
         id_list_local_second = self.intersection_obj.id_list_local_second[0]  # (EEright, Eright_guest)
 
         # 9. Merge result
         # (Eright_guest, instance)
         id_list_cipher = self._merge_instance(target_block_cipher_cipher_id, id_list_local_second, self.need_label)
-        data_output = self._merge(id_list_cipher, id_list_local_first)
+        data_output = self._merge(id_list_cipher, id_local_first)
 
         if self.with_inst_id:
             data_output = self._restore_sample_id(data_output)

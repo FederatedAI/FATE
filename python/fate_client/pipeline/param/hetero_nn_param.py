@@ -29,7 +29,36 @@ from pipeline.param.predict_param import PredictParam
 from pipeline.param import consts
 
 
+class DatasetParam(BaseParam):
+
+    def __init__(self, dataset_name=None, **kwargs):
+        super(DatasetParam, self).__init__()
+        self.dataset_name = dataset_name
+        self.param = kwargs
+
+    def check(self):
+        if self.dataset_name is not None:
+            self.check_string(self.dataset_name, 'dataset_name')
+
+    def to_dict(self):
+        ret = {'dataset_name': self.dataset_name, 'param': self.param}
+        return ret
+
+
 class SelectorParam(object):
+    """
+    Parameters
+    ----------
+    method: None or str
+        back propagation select method, accept "relative" only, default: None
+    selective_size: int
+        deque size to use, store the most recent selective_size historical loss, default: 1024
+    beta: int
+        sample whose selective probability >= power(np.random, beta) will be selected
+    min_prob: Numeric
+        selective probability is max(min_prob, rank_rate)
+    """
+
     def __init__(self, method=None, beta=1, selective_size=consts.SELECTIVE_SIZE, min_prob=0, random_state=None):
         self.method = method
         self.selective_size = selective_size
@@ -40,6 +69,15 @@ class SelectorParam(object):
     def check(self):
         if self.method is not None and self.method not in ["relative"]:
             raise ValueError('selective method should be None be "relative"')
+
+        if not isinstance(self.selective_size, int) or self.selective_size <= 0:
+            raise ValueError("selective size should be a positive integer")
+
+        if not isinstance(self.beta, int):
+            raise ValueError("beta should be integer")
+
+        if not isinstance(self.min_prob, (float, int)):
+            raise ValueError("min_prob should be numeric")
 
 
 class CoAEConfuserParam(BaseParam):
@@ -96,38 +134,37 @@ class HeteroNNParam(BaseParam):
     """
     Parameters used for Hetero Neural Network.
 
-    Args:
-        task_type: str, task type of hetero nn model, one of 'classification', 'regression'.
-        config_type: str, accept "keras" only.
-        bottom_nn_define: a dict represents the structure of bottom neural network.
-        interactive_layer_define: a dict represents the structure of interactive layer.
-        interactive_layer_lr: float, the learning rate of interactive layer.
-        top_nn_define: a dict represents the structure of top neural network.
-        optimizer: optimizer method, accept following types:
-            1. a string, one of "Adadelta", "Adagrad", "Adam", "Adamax", "Nadam", "RMSprop", "SGD"
-            2. a dict, with a required key-value pair keyed by "optimizer",
-                with optional key-value pairs such as learning rate.
-            defaults to "SGD"
-        loss:  str, a string to define loss function used
-        epochs: int, the maximum iteration for aggregation in training.
-        batch_size : int, batch size when updating model.
-            -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
-            defaults to -1.
-        early_stop : str, accept 'diff' only in this version, default: 'diff'
-            Method used to judge converge or not.
-                a)	diff： Use difference of loss between two iterations to judge whether converge.
-        floating_point_precision: None or integer, if not None, means use floating_point_precision-bit to speed up calculation,
-                                   e.g.: convert an x to round(x * 2**floating_point_precision) during Paillier operation, divide
-                                          the result by 2**floating_point_precision in the end.
-        drop_out_keep_rate: float, should betweend 0 and 1, if not equals to 1.0, will enabled drop out
-        callback_param: CallbackParam object
+    Parameters
+    ----------
+    task_type: str, task type of hetero nn model, one of 'classification', 'regression'.
+    bottom_nn_define: a dict represents the structure of bottom neural network.
+    interactive_layer_define: a dict represents the structure of interactive layer.
+    interactive_layer_lr: float, the learning rate of interactive layer.
+    top_nn_define: a dict represents the structure of top neural network.
+    optimizer: optimizer method, accept following types:
+        1. a string, one of "Adadelta", "Adagrad", "Adam", "Adamax", "Nadam", "RMSprop", "SGD"
+        2. a dict, with a required key-value pair keyed by "optimizer",
+            with optional key-value pairs such as learning rate.
+        defaults to "SGD".
+    loss:  str, a string to define loss function used
+    epochs: int, the maximum iteration for aggregation in training.
+    batch_size : int, batch size when updating model.
+        -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
+        defaults to -1.
+    early_stop : str, accept 'diff' only in this version, default: 'diff'
+        Method used to judge converge or not.
+            a)	diff： Use difference of loss between two iterations to judge whether converge.
+    floating_point_precision: None or integer, if not None, means use floating_point_precision-bit to speed up calculation,
+                                e.g.: convert an x to round(x * 2**floating_point_precision) during Paillier operation, divide
+                                        the result by 2**floating_point_precision in the end.
+    callback_param: CallbackParam object
     """
 
     def __init__(self,
                  task_type='classification',
-                 config_type="keras",
                  bottom_nn_define=None,
                  top_nn_define=None,
+                 config_type='pytorch',
                  interactive_layer_define=None,
                  interactive_layer_lr=0.9,
                  optimizer='SGD',
@@ -146,15 +183,14 @@ class HeteroNNParam(BaseParam):
                  use_first_metric_only=True,
                  selector_param=SelectorParam(),
                  floating_point_precision=23,
-                 drop_out_keep_rate=1.0,
                  callback_param=CallbackParam(),
-                 coae_param=CoAEConfuserParam()
+                 coae_param=CoAEConfuserParam(),
+                 dataset=DatasetParam()
                  ):
 
         super(HeteroNNParam, self).__init__()
 
         self.task_type = task_type
-        self.config_type = config_type
         self.bottom_nn_define = bottom_nn_define
         self.interactive_layer_define = interactive_layer_define
         self.interactive_layer_lr = interactive_layer_lr
@@ -169,28 +205,22 @@ class HeteroNNParam(BaseParam):
         self.early_stopping_rounds = early_stopping_rounds
         self.metrics = metrics or []
         self.use_first_metric_only = use_first_metric_only
-
         self.encrypt_param = copy.deepcopy(encrypt_param)
         self.encrypted_model_calculator_param = encrypted_mode_calculator_param
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
-
         self.selector_param = selector_param
         self.floating_point_precision = floating_point_precision
-
-        self.drop_out_keep_rate = drop_out_keep_rate
-
         self.callback_param = copy.deepcopy(callback_param)
-
         self.coae_param = coae_param
+        self.dataset = dataset
+        self.config_type = 'pytorch'  # pytorch only
 
     def check(self):
 
-        supported_config_type = ["keras", "pytorch"]
-        if self.config_type not in supported_config_type:
-            raise ValueError(f"config_type should be one of {supported_config_type}")
+        assert isinstance(self.dataset, DatasetParam), 'dataset must be a DatasetParam()'
 
-        self.optimizer = self._parse_optimizer(self.optimizer)
+        self.dataset.check()
 
         if self.task_type not in ["classification", "regression"]:
             raise ValueError("config_type should be classification or regression")
@@ -228,41 +258,33 @@ class HeteroNNParam(BaseParam):
                  self.floating_point_precision < 0 or self.floating_point_precision > 63):
             raise ValueError("floating point precision should be null or a integer between 0 and 63")
 
-        if not isinstance(self.drop_out_keep_rate, (float, int)) or self.drop_out_keep_rate < 0.0 or \
-                self.drop_out_keep_rate > 1.0:
-            raise ValueError("drop_out_keep_rate should be in range [0.0, 1.0]")
-
         self.encrypt_param.check()
         self.encrypted_model_calculator_param.check()
         self.predict_param.check()
         self.selector_param.check()
         self.coae_param.check()
 
-    @staticmethod
-    def _parse_optimizer(opt):
-        """
-        Examples:
+        descr = "hetero nn param's "
 
-            1. "optimize": "SGD"
-            2. "optimize": {
-                "optimizer": "SGD",
-                "learning_rate": 0.05
-            }
-        """
-        kwargs = {}
-        print('opt is {}'.format(opt))
-        if isinstance(opt, str):
-            return SimpleNamespace(optimizer=opt, kwargs=kwargs)
-        elif isinstance(opt, dict):
-            config_type = opt.get('config_type', None)
-            if config_type == 'pytorch':
-                return opt
-            optimizer = opt.get("optimizer", kwargs)
-            if not optimizer:
-                raise ValueError(f"optimizer config: {opt} invalid")
-            kwargs = {k: v for k, v in opt.items() if k != "optimizer"}
-            return SimpleNamespace(optimizer=optimizer, kwargs=kwargs)
-        elif opt is None:
-            return None
-        else:
-            raise ValueError(f"invalid type for optimize: {type(opt)}")
+        for p in ["early_stopping_rounds", "validation_freqs",
+                  "use_first_metric_only"]:
+            if self._deprecated_params_set.get(p):
+                if "callback_param" in self.get_user_feeded():
+                    raise ValueError(f"{p} and callback param should not be set simultaneously，"
+                                     f"{self._deprecated_params_set}, {self.get_user_feeded()}")
+                else:
+                    self.callback_param.callbacks = ["PerformanceEvaluate"]
+                break
+
+        if self._warn_to_deprecate_param("validation_freqs", descr, "callback_param's 'validation_freqs'"):
+            self.callback_param.validation_freqs = self.validation_freqs
+
+        if self._warn_to_deprecate_param("early_stopping_rounds", descr, "callback_param's 'early_stopping_rounds'"):
+            self.callback_param.early_stopping_rounds = self.early_stopping_rounds
+
+        if self._warn_to_deprecate_param("metrics", descr, "callback_param's 'metrics'"):
+            if self.metrics:
+                self.callback_param.metrics = self.metrics
+
+        if self._warn_to_deprecate_param("use_first_metric_only", descr, "callback_param's 'use_first_metric_only'"):
+            self.callback_param.use_first_metric_only = self.use_first_metric_only

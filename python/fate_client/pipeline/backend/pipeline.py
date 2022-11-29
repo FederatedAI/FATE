@@ -800,11 +800,13 @@ class PipeLine(object):
         self._data_to_feed_in_prediction = data_dict
 
     @LOGGER.catch(reraise=True)
-    def bind_table(self, engine, name, namespace, address, **kwargs):
-        info = self._job_invoker.bind_table(engine=engine, name=name, namespace=namespace, address=address, **kwargs)
+    def bind_table(self, name, namespace, path, engine='PATH', replace=True, **kwargs):
+        info = self._job_invoker.bind_table(engine=engine, name=name, namespace=namespace, address={
+            "path": path
+        }, drop=replace, **kwargs)
         return info
 
-
+    # @LOGGER.catch(reraise=True)
     def __getattr__(self, attr):
         if attr in self._components:
             return self._components[attr]

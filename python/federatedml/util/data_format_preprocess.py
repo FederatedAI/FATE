@@ -202,7 +202,10 @@ class DataFormatPreProcess(object):
 
             generated_header["is_display"] = False
 
-        generated_header["sid"] = schema.get("sid", DEFAULT_SID_NAME).strip()
+        sid = schema.get("sid")
+        if sid is None or sid == "":
+            sid = DEFAULT_SID_NAME
+        generated_header["sid"] = sid.strip()
 
         return generated_header
 

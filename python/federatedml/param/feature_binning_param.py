@@ -19,7 +19,7 @@ import copy
 
 from federatedml.param.base_param import BaseParam
 from federatedml.param.encrypt_param import EncryptParam
-from federatedml.util import consts
+from federatedml.util import consts, LOGGER
 
 
 class TransformParam(BaseParam):
@@ -211,15 +211,33 @@ class FeatureBinningParam(BaseParam):
 
 
 class HeteroFeatureBinningParam(FeatureBinningParam):
-    def __init__(self, method=consts.QUANTILE,
-                 compress_thres=consts.DEFAULT_COMPRESS_THRESHOLD,
+    """
+    split_points_by_index: dict, default None
+        Manually specified split points for local features;
+        key should be feature index, value should be split points in sorted list;
+        along with `split_points_by_col_name`, keys should cover all local features, including categorical features;
+        note that each split point list should have length equal to desired bin num(n),
+        with first (n-1) entries equal to the maximum value(inclusive) of each first (n-1) bins,
+        and nth value the max of current feature.
+
+    split_points_by_col_name: dict, default None
+        Manually specified split points for local features;
+        key should be feature name, value should be split points in sorted list;
+        along with `split_points_by_index`, keys should cover all local features, including categorical features;
+        note that each split point list should have length equal to desired bin num(n),
+        with first (n-1) entries equal to the maximum value(inclusive) of each first (n-1) bins,
+        and nth value the max of current feature.
+    """
+
+    def __init__(self, method=consts.QUANTILE, compress_thres=consts.DEFAULT_COMPRESS_THRESHOLD,
                  head_size=consts.DEFAULT_HEAD_SIZE,
                  error=consts.DEFAULT_RELATIVE_ERROR,
                  bin_num=consts.G_BIN_NUM, bin_indexes=-1, bin_names=None, adjustment_factor=0.5,
                  transform_param=TransformParam(), optimal_binning_param=OptimalBinningParam(),
                  local_only=False, category_indexes=None, category_names=None,
                  encrypt_param=EncryptParam(),
-                 need_run=True, skip_static=False):
+                 need_run=True, skip_static=False,
+                 split_points_by_index=None, split_points_by_col_name=None):
         super(HeteroFeatureBinningParam, self).__init__(method=method, compress_thres=compress_thres,
                                                         head_size=head_size, error=error,
                                                         bin_num=bin_num, bin_indexes=bin_indexes,
@@ -231,6 +249,8 @@ class HeteroFeatureBinningParam(FeatureBinningParam):
                                                         skip_static=skip_static)
         self.optimal_binning_param = copy.deepcopy(optimal_binning_param)
         self.encrypt_param = encrypt_param
+        self.split_points_by_index = split_points_by_index
+        self.split_points_by_col_name = split_points_by_col_name
 
     def check(self):
         descr = "Hetero Binning param's"
@@ -245,6 +265,29 @@ class HeteroFeatureBinningParam(FeatureBinningParam):
         self.transform_param.check()
         if self.skip_static and self.transform_param.transform_type == 'woe':
             raise ValueError("To use woe transform, skip_static should set as False")
+        if self.split_points_by_index is not None:
+            LOGGER.warning(f"When manually setting binning split points, 'method' will be ignored.")
+            if not isinstance(self.split_points_by_index, dict):
+                raise ValueError(f"{descr} `split_points_by_index` should be a dict")
+            for k, v in self.split_points_by_index.items():
+                if not isinstance(k, str):
+                    raise ValueError(f"{descr} `split_points_by_index`'s keys should be str")
+                if not isinstance(v, list):
+                    raise ValueError(f"{descr} `split_points_by_index`'s values should be given in list format")
+                if sorted(v) != v:
+                    raise ValueError(f"{k}'s split points({v}) should be given in sorted order.")
+
+        if self.split_points_by_col_name is not None:
+            LOGGER.warning(f"When manually setting binning split points, 'method' will be ignored.")
+            if not isinstance(self.split_points_by_col_name, dict):
+                raise ValueError(f"{descr} `split_points_by_col_name` should be a dict")
+            for k, v in self.split_points_by_col_name.items():
+                if not isinstance(k, str):
+                    raise ValueError(f"{descr} `split_points_by_col_name`'s keys should be str")
+                if not isinstance(v, list):
+                    raise ValueError(f"{descr} `split_points_by_col_name`'s values should be given in list format")
+                if sorted(v) != v:
+                    raise ValueError(f"{k}'s split points({v}) should be given in sorted order.")
 
 
 class HomoFeatureBinningParam(FeatureBinningParam):

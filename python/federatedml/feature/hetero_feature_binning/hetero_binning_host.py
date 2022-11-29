@@ -41,8 +41,14 @@ class HeteroFeatureBinningHost(BaseFeatureBinning):
                 if idx in has_missing_value:
                     raise ValueError(f"Optimal Binning do not support missing value now.")
 
-        # Calculates split points of data in self party
-        split_points = self.binning_obj.fit_split_points(data_instances)
+        if self.model_param.split_points_by_col_name or self.model_param.split_points_by_index:
+            split_points = self._get_manual_split_points(data_instances)
+            self.use_manual_split_points = True
+            for col_name, sp in split_points.items():
+                self.binning_obj.bin_results.put_col_split_points(col_name, sp)
+        else:
+            # Calculates split points of data in self part
+            split_points = self.binning_obj.fit_split_points(data_instances)
 
         return self.stat_and_transform(data_instances, split_points)
 
@@ -58,10 +64,12 @@ class HeteroFeatureBinningHost(BaseFeatureBinning):
         the specific metric value for specific columns.
         """
         if self.model_param.skip_static:
-            if self.transform_type != 'woe':
-                data_instances = self.transform_data(data_instances)
+            # if self.transform_type != 'woe':
+            data_instances = self.transform_data(data_instances)
+            """
             else:
                 raise ValueError("Woe transform is not supported in host parties.")
+            """
             self.set_schema(data_instances)
             self.data_output = data_instances
             return data_instances
@@ -76,8 +84,8 @@ class HeteroFeatureBinningHost(BaseFeatureBinning):
                 if self.model_param.method == consts.OPTIMAL and self._stage == "fit":
                     self.optimal_binning_sync()
 
-        if self.transform_type != 'woe':
-            data_instances = self.transform_data(data_instances)
+        # if self.transform_type != 'woe':
+        data_instances = self.transform_data(data_instances)
 
         self.set_schema(data_instances)
         self.data_output = data_instances
@@ -88,7 +96,7 @@ class HeteroFeatureBinningHost(BaseFeatureBinning):
     def _sync_init_bucket(self, data_instances, split_points, need_shuffle=False):
 
         data_bin_table = self.binning_obj.get_data_bin(data_instances, split_points, self.bin_inner_param.bin_cols_map)
-        LOGGER.debug("data_bin_table, count: {}".format(data_bin_table.count()))
+        # LOGGER.debug("data_bin_table, count: {}".format(data_bin_table.count()))
 
         encrypted_label_table = self.transfer_variable.encrypted_label.get(idx=0)
 
@@ -165,7 +173,7 @@ class HeteroFeatureBinningHost(BaseFeatureBinning):
 
     def optimal_binning_sync(self):
         bucket_idx = self.transfer_variable.bucket_idx.get(idx=0)
-        LOGGER.debug("In optimal_binning_sync, received bucket_idx: {}".format(bucket_idx))
+        # LOGGER.debug("In optimal_binning_sync, received bucket_idx: {}".format(bucket_idx))
         original_split_points = self.binning_obj.bin_results.all_split_points
         for anonymous_col_name, b_idx in bucket_idx.items():
             col_name = self.bin_inner_param.get_col_name_by_anonymous(anonymous_col_name)

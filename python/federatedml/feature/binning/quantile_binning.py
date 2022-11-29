@@ -131,17 +131,6 @@ class QuantileBinning(BaseBinning):
             return np.unique(split_points)
         else:
             return np.array(split_points)
-        """
-        split_point = []
-        for percent_rate in percentile_rate:
-            s_p = summary.query(percent_rate)
-            if not allow_duplicate:
-                if s_p not in split_point:
-                    split_point.append(s_p)
-            else:
-                split_point.append(s_p)
-        return np.array(split_point)
-        """
 
     @staticmethod
     def feature_summary(data_iter, params, cols_dict, abnormal_list, header, is_sparse):

@@ -70,7 +70,7 @@ def main(config="../../config.yaml", namespace=""):
 
     # define SSHE-LR and PositiveUnlabeled components
     sshe_lr_0_param = {
-        "name": "hetero_sbt_lr_0",
+        "name": "hetero_sshe_lr_0",
         "max_iter": 2
     }
     pu_0_param = {
@@ -79,7 +79,7 @@ def main(config="../../config.yaml", namespace=""):
         "threshold": 0.9
     }
     sshe_lr_1_param = {
-        "name": "hetero_sbt_lr_1",
+        "name": "hetero_sshe_lr_1",
         "max_iter": 1
     }
     hetero_sshe_lr_0 = HeteroSSHELR(**sshe_lr_0_param)
