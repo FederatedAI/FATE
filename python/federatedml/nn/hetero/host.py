@@ -45,6 +45,9 @@ class HeteroNNHost(HeteroNNBase):
 
     def export_model(self):
 
+        if self.need_cv:
+            return None
+
         model = {MODELMETA: self._get_model_meta(),
                  MODELPARAM: self._get_model_param()}
 
@@ -63,7 +66,7 @@ class HeteroNNHost(HeteroNNBase):
         self._restore_model_param(param)
 
     def _build_model(self):
-        self.model = HeteroNNHostModel(self.hetero_nn_param)
+        self.model = HeteroNNHostModel(self.hetero_nn_param, self.flowid)
         self.model.set_transfer_variable(self.transfer_variable)
         self.model.set_partition(self.default_table_partitions)
 

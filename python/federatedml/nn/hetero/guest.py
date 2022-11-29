@@ -70,7 +70,7 @@ class HeteroNNGuest(HeteroNNBase):
 
     def _build_model(self):
         self.model = HeteroNNGuestModel(
-            self.hetero_nn_param, self.component_properties)
+            self.hetero_nn_param, self.component_properties, self.flowid)
         self.model.set_transfer_variable(self.transfer_variable)
         self.model.set_partition(self.default_table_partitions)
         self.model.set_label_num(self.label_num)
@@ -226,7 +226,10 @@ class HeteroNNGuest(HeteroNNBase):
         return result
 
     def export_model(self):
-
+        
+        if self.need_cv:
+            return None
+            
         model = {MODELMETA: self._get_model_meta(),
                  MODELPARAM: self._get_model_param()}
 
