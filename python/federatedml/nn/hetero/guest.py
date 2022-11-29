@@ -226,10 +226,8 @@ class HeteroNNGuest(HeteroNNBase):
         return result
 
     def export_model(self):
-        
         if self.need_cv:
             return None
-            
         model = {MODELMETA: self._get_model_meta(),
                  MODELPARAM: self._get_model_param()}
 

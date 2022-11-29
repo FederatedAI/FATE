@@ -104,7 +104,6 @@ class HeteroNNBase(ModelBase):
         self.dataset = dataset_param['dataset_name']
         self.dataset_param = dataset_param['param']
 
-
     def reset_flowid(self):
         new_flowid = ".".join([self.flowid, "evaluate"])
         self.set_flowid(new_flowid)

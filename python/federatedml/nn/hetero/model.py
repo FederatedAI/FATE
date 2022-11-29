@@ -274,8 +274,8 @@ class HeteroNNGuestModel(HeteroNNModel):
             loss=self.loss,
             coae_config=self.coae_param,
             label_num=self.label_num
-            )
-        
+        )
+
         self._init_top_select_strategy()
 
     def _restore_top_model(self, model_bytes):
