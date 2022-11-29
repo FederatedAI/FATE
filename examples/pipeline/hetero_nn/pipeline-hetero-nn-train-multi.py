@@ -94,7 +94,7 @@ def main(config="../../config.yaml", namespace=""):
     # will use table dataset in federatedml/nn/dataset/table.py
     hetero_nn_0.add_dataset(DatasetParam(dataset_name='table', flatten_label=True, label_dtype='long'))
     hetero_nn_0.compile(optimizer=optimizer, loss=loss)
-    evaluation_0 = Evaluation(name='eval_0', eval_type='binary')
+    evaluation_0 = Evaluation(name='eval_0', eval_type='multi')
 
     # define components IO
     pipeline.add_component(reader_0)

@@ -73,6 +73,7 @@ class HeteroNNGuest(HeteroNNBase):
             self.hetero_nn_param, self.component_properties)
         self.model.set_transfer_variable(self.transfer_variable)
         self.model.set_partition(self.default_table_partitions)
+        self.model.set_label_num(self.label_num)
 
     def _set_loss_callback_info(self):
         self.callback_meta("loss",
@@ -204,13 +205,13 @@ class HeteroNNGuest(HeteroNNBase):
                                              partition=self.default_table_partitions)
             result = self.predict_score_to_output(data_inst, predict_tb)
         else:
-            if self.num_label > 2:
+            if self.label_num > 2:
                 preds = preds.tolist()
                 preds = [list(map(float, pred)) for pred in preds]
                 predict_tb = session.parallelize(zip(keys, preds), include_key=True,
                                                  partition=self.default_table_partitions)
                 result = self.predict_score_to_output(
-                    data_inst, predict_tb, classes=list(range(self.num_label)))
+                    data_inst, predict_tb, classes=list(range(self.label_num)))
 
             else:
                 preds = preds.flatten().tolist()
@@ -276,7 +277,7 @@ class HeteroNNGuest(HeteroNNBase):
         model_param.iter_epoch = self.iter_epoch
         model_param.hetero_nn_model_param.CopyFrom(
             self.model.get_hetero_nn_model_param())
-        model_param.num_label = self.num_label
+        model_param.num_label = self.label_num
         model_param.best_iteration = self.callback_variables.best_iteration
         model_param.header.extend(self._header)
 
@@ -287,7 +288,7 @@ class HeteroNNGuest(HeteroNNBase):
 
     def get_metrics_param(self):
         if self.task_type == consts.CLASSIFICATION:
-            if self.num_label == 2:
+            if self.label_num == 2:
                 return EvaluateParam(eval_type="binary",
                                      pos_label=1, metrics=self.metrics)
             else:
@@ -297,4 +298,4 @@ class HeteroNNGuest(HeteroNNBase):
 
     def _restore_model_param(self, param):
         super(HeteroNNGuest, self)._restore_model_param(param)
-        self.num_label = param.num_label
+        self.label_num = param.num_label

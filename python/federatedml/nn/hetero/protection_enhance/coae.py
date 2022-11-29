@@ -137,13 +137,15 @@ def train_an_autoencoder_confuser(
     return coae
 
 
-def coae_label_reformat(labels):
-    if labels.shape[1] == 1:
+def coae_label_reformat(labels, label_num):
+    LOGGER.debug('label shape is {}'.format(labels.shape))
+    labels = labels
+    if label_num == 1:  # regression:
+        raise ValueError('label num ==1, regression task not support COAE')
+    else:
         return nn.functional.one_hot(
             t.Tensor(labels).flatten().type(
-                t.int64), 2).numpy()
-    else:
-        return labels
+                t.int64), label_num).numpy()
 
 
 if __name__ == '__main__':

@@ -86,6 +86,7 @@ class HeteroNNGuestModel(HeteroNNModel):
         self.seed = 100
         self.set_nn_meta(hetero_nn_param)
         self.component_properties = component_properties
+        self.label_num = 1
         self.selector = SelectorFactory.get_selector(
             hetero_nn_param.selector_param.method,
             hetero_nn_param.selector_param.selective_size,
@@ -110,6 +111,9 @@ class HeteroNNGuestModel(HeteroNNModel):
 
     def set_empty(self):
         self.is_empty = True
+
+    def set_label_num(self, label_num):
+        self.label_num = label_num
 
     def train(self, x, y, epoch, batch_idx):
 
@@ -264,7 +268,10 @@ class HeteroNNGuestModel(HeteroNNModel):
             optimizer=self.optimizer,
             layer_config=self.top_nn_define,
             loss=self.loss,
-            coae_config=self.coae_param)
+            coae_config=self.coae_param,
+            label_num=self.label_num
+            )
+        
         self._init_top_select_strategy()
 
     def _restore_top_model(self, model_bytes):

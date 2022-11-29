@@ -173,6 +173,9 @@ class HEInteractiveLayerGuest(InteractiveLayerBase):
         self.optimizer = None
         self.float64 = False
 
+    def set_flow_id(self, flow_id):
+        self.transfer_variable.set_flowid(flow_id)
+
     def set_backward_select_strategy(self):
         self.do_backward_select_strategy = True
 
@@ -723,8 +726,8 @@ class HEInteractiveLayerHost(InteractiveLayerBase):
             2 ** params.floating_point_precision)
         self.mask_table = None
 
-    def set_transfer_variable(self, transfer_variable):
-        self.transfer_variable = transfer_variable
+    def set_flow_id(self, flow_id):
+        self.transfer_variable.set_flowid(flow_id)
 
     def set_partition(self, partition):
         self.partitions = partition
