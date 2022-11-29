@@ -64,7 +64,7 @@ class HeteroNNBase(ModelBase):
         self.data_y = []
         self.dataset_cache_dict = {}
 
-        self.num_label = None
+        self.label_num = None
 
         # nn related param
         self.top_model_define = None
@@ -104,13 +104,6 @@ class HeteroNNBase(ModelBase):
         self.dataset = dataset_param['dataset_name']
         self.dataset_param = dataset_param['param']
 
-        if self.role == consts.GUEST:
-            self.batch_generator.register_batch_generator(
-                self.transfer_variable, has_arbiter=False)
-        else:
-            self.batch_generator.register_batch_generator(
-                self.transfer_variable)
-
     def reset_flowid(self):
         new_flowid = ".".join([self.flowid, "evaluate"])
         self.set_flowid(new_flowid)
@@ -123,12 +116,6 @@ class HeteroNNBase(ModelBase):
         pass
 
     def _build_interactive_model(self):
-        pass
-
-    def prepare_batch_data(self, batch_generator, data_inst):
-        pass
-
-    def _load_data(self, data_inst):
         pass
 
     def _restore_model_meta(self, meta):
@@ -195,7 +182,11 @@ class HeteroNNBase(ModelBase):
                         'get_classes() is not implemented, please implement this function'
                         ' when you are using hetero-nn. Let it return classes in a list.'
                         ' Please see built-in dataset(table.py for example) for reference')
-                self.num_label = len(all_classes)
+
+                if self.task_type == consts.CLASSIFICATION:
+                    self.label_num = len(all_classes)
+                elif self.task_type == consts.REGRESSION:
+                    self.label_num = 1
 
         return ds
 

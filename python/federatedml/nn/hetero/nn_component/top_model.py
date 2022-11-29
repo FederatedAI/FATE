@@ -28,15 +28,14 @@ from federatedml.util import LOGGER
 
 class TopModel(object):
 
-    def __init__(self, loss, optimizer, layer_config, coae_config):
+    def __init__(self, loss, optimizer, layer_config, coae_config, label_num):
 
         self.coae = None
         self.coae_config = coae_config
-        self.labem_num = 2
-
+        self.label_num = label_num
+        LOGGER.debug('label num is {}'.format(self.label_num))
         self._model: TorchNNModel = TorchNNModel(nn_define=layer_config, optimizer_define=optimizer,
                                                  loss_fn_define=loss)
-
         self.label_reformat = None
         if self.coae_config:
             self._model.loss_fn = CrossEntropy()
@@ -66,13 +65,12 @@ class TopModel(object):
 
         # transform label format
         if self.label_reformat:
-            y = self.label_reformat(y)
+            y = self.label_reformat(y, label_num=self.label_num)
 
         # train an auto-encoder confuser
         if self.coae_config and self.coae is None:
-            self.labem_num = y.shape[1]
             LOGGER.debug('training coae encoder')
-            self.coae: CoAE = train_an_autoencoder_confuser(self.labem_num, self.coae_config.epoch,
+            self.coae: CoAE = train_an_autoencoder_confuser(y.shape[1], self.coae_config.epoch,
                                                             self.coae_config.lambda1, self.coae_config.lambda2,
                                                             self.coae_config.lr, self.coae_config.verbose)
         # make fake soft label

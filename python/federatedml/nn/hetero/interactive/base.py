@@ -1,5 +1,4 @@
 import numpy as np
-
 from federatedml.param.hetero_nn_param import HeteroNNParam
 from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
 
@@ -7,6 +6,7 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 class InteractiveLayerBase(object):
 
     def __init__(self, params: HeteroNNParam, **kwargs):
+
         self.params = params
         self.transfer_variable: BaseTransferVariables = None
 
@@ -17,7 +17,10 @@ class InteractiveLayerBase(object):
     def set_batch(self, batch_size):
         pass
 
-    def forward(self, x, epoch: int, batch_idx: int, train: bool = True, **kwargs) -> np.ndarray:
+    def forward(self, x, epoch: int, batch: int, train: bool = True, **kwargs) -> np.ndarray:
+        pass
+
+    def backward(self, *args, **kwargs):
         pass
 
     def guest_backward(self, error, epoch: int, batch_idx: int, **kwargs):
@@ -33,4 +36,22 @@ class InteractiveLayerBase(object):
         pass
 
     def set_backward_select_strategy(self):
+        pass
+
+
+class InteractiveLayerGuest(InteractiveLayerBase):
+
+    def __init__(self, params: HeteroNNParam, **kwargs):
+        super(InteractiveLayerGuest, self).__init__(params, **kwargs)
+
+    def backward(self, error, epoch: int, batch: int, **kwargs):
+        pass
+
+
+class InteractiveLayerHost(InteractiveLayerBase):
+
+    def __init__(self, params: HeteroNNParam, **kwargs):
+        super(InteractiveLayerHost, self).__init__(params, **kwargs)
+
+    def backward(self, epoch: int, batch: int, **kwargs):
         pass

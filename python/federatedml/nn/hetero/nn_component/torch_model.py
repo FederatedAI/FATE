@@ -1,7 +1,5 @@
-import tempfile
-
 import numpy as np
-
+import tempfile
 from federatedml.util import LOGGER
 
 try:  # for the situation that torch is not installed, but other modules still can be used

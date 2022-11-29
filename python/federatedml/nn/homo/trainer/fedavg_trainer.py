@@ -102,8 +102,8 @@ class FedAVGTrainer(TrainerBase):
                                   'aggregate_every_n_epoch'],
                                  self.is_pos_int,
                                  '{} is not a positive int')
-        self.check_trainer_param([self.secure_aggregate, self.weighted_aggregation], [
-                                 'secure_aggregate', 'weighted_aggregation'], self.is_bool, '{} is not a bool')
+        self.check_trainer_param([self.secure_aggregate, self.weighted_aggregation, self.pin_memory], [
+                                 'secure_aggregate', 'weighted_aggregation', 'pin_memory'], self.is_bool, '{} is not a bool')
         self.check_trainer_param(
             [self.tol], ['tol'], self.is_float, '{} is not a float')
 
@@ -131,6 +131,9 @@ class FedAVGTrainer(TrainerBase):
 
         if self.batch_size > len(train_set):
             self.batch_size = len(train_set)
+        elif self.batch_size == -1:
+            self.batch_size = len(train_set)
+
         dl = DataLoader(
             train_set,
             batch_size=self.batch_size,

@@ -17,9 +17,8 @@
 #  limitations under the License.
 #
 import numpy as np
-
-from federatedml.nn.hetero.nn_component.torch_model import TorchNNModel
 from federatedml.util import LOGGER
+from federatedml.nn.hetero.nn_component.torch_model import TorchNNModel
 
 
 class BottomModel(object):

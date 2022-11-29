@@ -56,8 +56,9 @@ def main(config="../../config.yaml", namespace=""):
     intersection_0 = Intersection(name="intersection_0")
 
     hetero_nn_0 = HeteroNN(name="hetero_nn_0", epochs=20,
-                           interactive_layer_lr=0.01, batch_size=-1, validation_freqs=1, task_type='classification',
+                           interactive_layer_lr=0.01, batch_size=-1, task_type='classification',
                            callback_param={
+                               "validation_freq": 1,
                                "callbacks": ["ModelCheckpoint"],
                                "save_freq": 1},
                            )

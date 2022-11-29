@@ -53,7 +53,7 @@ class TrainerBase(object):
 
     @staticmethod
     def is_pos_int(val):
-        return val > 0 and isinstance(val, int)
+        return isinstance(val, int), val > 0
 
     @staticmethod
     def is_float(val):
