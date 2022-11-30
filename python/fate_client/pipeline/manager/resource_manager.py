@@ -13,7 +13,7 @@ class StandaloneResourceManager(object):
         self._data_manager = get_data_manager(conf.OUTPUT_DATA_DIR)
         self._model_manager = get_model_manager(conf.OUTPUT_MODEL_DIR)
         self._metric_manager = get_metric_manager(conf.OUTPUT_METRIC_DIR)
-        self._status_manager = get_status_manager().create_status_manager(conf.SQLITE_DB)
+        self._status_manager = get_status_manager().create_status_manager(conf.MLMD.db)
         self._task_conf_manager = get_task_conf_manager(conf.JOB_DIR)
 
     def generate_output_artifact(self, job_id, task_name, role, party_id, output_key, artifact_type):

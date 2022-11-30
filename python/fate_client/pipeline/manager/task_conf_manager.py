@@ -1,5 +1,4 @@
-from typing import Union
-from ..utils.uri_tools import parse_uri, replace_uri_path, get_schema_from_uri
+from ..utils.uri_tools import parse_uri, get_schema_from_uri
 from ..utils.file_utils import construct_local_dir, write_yaml_file
 from ..conf.types import UriTypes
 

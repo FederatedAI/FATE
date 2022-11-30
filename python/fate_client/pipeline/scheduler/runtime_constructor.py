@@ -1,7 +1,8 @@
 from ..conf.env_config import StandaloneConfig
 from ..entity.component_structures import OutputDefinitionsSpec
 from ..entity.task_structure import TaskScheduleSpec, LOGGERSpec, TaskRuntimeInputSpec, TaskRuntimeOutputSpec, \
-    MLMDSpec, RuntimeConfSpec, ComputingBackendSpec, FederationBackendSpec, FederationPartySpec
+    MLMDSpec, RuntimeConfSpec, ComputingEngineSpec, DeviceSpec, FederationPartySpec, \
+    ComputingEngineMetadata, FederationEngineSpec, FederationEngineMetadata
 from ..manager.resource_manager import StandaloneResourceManager
 from ..utils.id_gen import gen_computing_id, gen_federation_id, gen_execution_id
 
@@ -112,49 +113,53 @@ class RuntimeConstructor(object):
 
     def _construct_mlmd(self, role, party_id):
         metadata = {
-            "db": self._conf.SQLITE_DB
+            "db": self._conf.MLMD.db
         }
-        return MLMDSpec(type="pipeline",
+        return MLMDSpec(type=self._conf.MLMD.type,
                         metadata=metadata)
 
     def _construct_logger(self, role, party_id):
         metadata = dict(
             basepath=self._resource_manager.generate_log_uri(
                 self._log_dir, role, party_id),
-            level=self._conf.LOG_LEVEL,
-            debug_mode=self._conf.LOG_DEBUG_MODE
+            level=self._conf.LOGGER.level,
+            debug_mode=self._conf.LOGGER.debug_mode
         )
         return LOGGERSpec(type="pipeline",
                           metadata=metadata)
 
-    def _construct_computing_backend(self, role, party_id):
-        return ComputingBackendSpec(
-            engine="standalone",
-            computing_id=gen_computing_id(self._job_id, self._task_name, role, party_id)
+    def _construct_computing_engine(self, role, party_id):
+        return ComputingEngineSpec(
+            type=self._conf.COMPUTING_ENGINE.type,
+            metadata=ComputingEngineMetadata(
+                computing_id=gen_computing_id(self._job_id, self._task_name, role, party_id)
+            )
         )
 
-    def _construct_federation_backend(self, role, party_id):
+    def _construct_federation_engine(self, role, party_id):
         parties = []
         for party in self._runtime_parties:
             parties.append(dict(role=party.role, partyid=party.party_id))
-        return FederationBackendSpec(
-            engine="standalone",
-            federation_id=self._federation_id,
-            parties=FederationPartySpec(
-                local=dict(role=role, partyid=party_id),
-                parties=parties
+        return FederationEngineSpec(
+            type=self._conf.FEDERATION_ENGINE.type,
+            metadata=FederationEngineMetadata(
+                federation_id=self._federation_id,
+                parties=FederationPartySpec(
+                    local=dict(role=role, partyid=party_id),
+                    parties=parties
+                )
             )
         )
 
     def _construct_runtime_conf(self, role, party_id):
         mlmd = self._construct_mlmd(role, party_id)
         logger = self._construct_logger(role, party_id)
-        computing_backend = self._construct_computing_backend(role, party_id)
-        federation_backend = self._construct_federation_backend(role, party_id)
+        computing_backend = self._construct_computing_engine(role, party_id)
+        federation_backend = self._construct_federation_engine(role, party_id)
         return RuntimeConfSpec(
             mlmd=mlmd,
             logger=logger,
-            device=self._conf.DEVICE,
+            device=DeviceSpec(type=self._conf.DEVICE.type),
             computing=computing_backend,
             federation=federation_backend
         )

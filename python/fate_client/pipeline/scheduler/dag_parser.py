@@ -15,21 +15,31 @@ class DagParser(object):
         self._task_parameters = dict()
         self._task_parties = dict()
         self._tasks = dict()
+        self._conf = dict()
 
     def parse_dag(self, dag_schema: DAGSchema, component_specs: Dict[str, ComponentSpec] = None):
         dag_spec = dag_schema.dag
         dag_stage = dag_spec.stage
         tasks = dag_spec.tasks
+        if dag_spec.conf:
+            self._conf = dag_spec.conf.dict(exclude_defaults=True)
+        job_conf = self._conf.get("task", {})
         for name, task_spec in tasks.items():
             task_stage = dag_stage
+            component_ref = task_spec.component_ref
+            if not task_spec.conf:
+                task_conf = copy.deepcopy(job_conf)
+            else:
+                task_conf = copy.deepcopy(task_spec.conf).update(job_conf)
             if task_spec.stage:
                 task_stage = task_spec.stage
 
             self._tasks[name] = TaskNodeInfo()
             self._tasks[name].stage = task_stage
+            self._tasks[name].component_ref = component_ref
             if component_specs:
                 self._tasks[name].component_spec = component_specs[name]
-            self._init_task_runtime_parameters(name, dag_schema)
+            self._init_task_runtime_parameters_and_conf(name, dag_schema, task_conf)
 
             if not task_spec.inputs or not task_spec.inputs.artifacts:
                 continue
@@ -54,7 +64,7 @@ class DagParser(object):
 
         self._dag.add_edge(src, dst, **attrs)
 
-    def _init_task_runtime_parameters(self, task_name: str, dag_schema: DAGSchema):
+    def _init_task_runtime_parameters_and_conf(self, task_name: str, dag_schema: DAGSchema, global_task_conf):
         dag = dag_schema.dag
         role_keys = set([party.role for party in dag.parties])
         task_spec = dag.tasks[task_name]
@@ -67,14 +77,17 @@ class DagParser(object):
             common_parameters = task_spec.inputs.parameters
 
         task_parameters = dict()
+        task_conf = dict()
         task_runtime_parties = []
 
         for party in dag.parties:
             if party.role not in role_keys:
                 continue
             task_parameters[party.role] = dict()
+            task_conf[party.role] = dict()
             for party_id in party.party_id:
                 task_parameters[party.role][party_id] = copy.deepcopy(common_parameters)
+                task_conf[party.role][party_id] = copy.deepcopy(global_task_conf)
                 task_runtime_parties.append(Party(role=party.role, party_id=party_id))
 
         if dag.party_tasks:
@@ -82,11 +95,25 @@ class DagParser(object):
             for site_name, party_tasks_spec in party_tasks.items():
                 if task_name not in party_tasks_spec.tasks:
                     continue
+
+                party_task_conf = copy.deepcopy(party_tasks_spec.conf) if party_tasks_spec.conf else dict()
+                party_task_conf.update(global_task_conf)
+
                 party_parties = party_tasks_spec.parties
                 party_task_spec = party_tasks_spec.tasks[task_name]
+
+                if party_task_spec.conf:
+                    _conf = copy.deepcopy(party_task_spec.conf)
+                    party_task_conf = _conf.update(party_task_conf)
+                for party in party_parties:
+                    if party.role in task_parameters:
+                        for party_id in party.party_id:
+                            task_conf[party.role][party_id].update(party_task_conf)
+
                 if not party_task_spec.inputs:
                     continue
                 parameters = party_task_spec.inputs.parameters
+
                 if parameters:
                     for party in party_parties:
                         if party.role in task_parameters:
@@ -95,6 +122,7 @@ class DagParser(object):
 
         self._tasks[task_name].runtime_parameters = task_parameters
         self._tasks[task_name].runtime_parties = task_runtime_parties
+        self._tasks[task_name].conf = task_conf
 
     def get_runtime_parties(self, task_name):
         return self._task_parties[task_name]
@@ -114,15 +142,21 @@ class DagParser(object):
     def get_edge_attr(self, src, dst):
         return self._dag.edges[src, dst]
 
+    @property
+    def conf(self):
+        return self._conf
+
 
 class TaskNodeInfo(object):
     def __init__(self):
         self._runtime_parameters = None
         self._runtime_parties = None
         self._input_dependencies = None
+        self._component_ref = None
         self._component_spec = None
         self._upstream_inputs = dict()
         self._stage = None
+        self._conf = None
 
     @property
     def stage(self):
@@ -170,7 +204,19 @@ class TaskNodeInfo(object):
 
     @property
     def component_ref(self):
-        return self._component_spec.name
+        return self._component_ref
+
+    @component_ref.setter
+    def component_ref(self, component_ref):
+        self._component_ref = component_ref
+
+    @property
+    def conf(self):
+        return self._conf
+
+    @conf.setter
+    def conf(self, conf):
+        self._conf = conf
 
 
 class Party(BaseModel):

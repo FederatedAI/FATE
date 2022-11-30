@@ -2,18 +2,23 @@ log_directory:
 console_display_log:
 
 standalone:
-  sqlite_db:
   job_directory:
   output_data_dir:
   output_model_dir:
   output_metric_dir:
-  computing_engine: "standalone"
-  federation_engine: "standalone"
   logger:
     level: "DEBUG"
     debug_mode: true
-  engine:
-    device: "CPU"
+  device:
+    type: "CPU"
+  mlmd:
+    type: pipeline
+    metadata:
+      db:
+  computing:
+    type: standalone
+  federation_engine:
+    type: standalone
 
 fate_flow:
     ip:

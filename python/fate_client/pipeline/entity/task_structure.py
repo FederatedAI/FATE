@@ -32,9 +32,17 @@ class LOGGERSpec(BaseModel):
     metadata: Dict[str, Any]
 
 
-class ComputingBackendSpec(BaseModel):
-    engine: str
+class ComputingEngineMetadata(BaseModel):
     computing_id: str
+
+
+class ComputingEngineSpec(BaseModel):
+    type: str
+    metadata: ComputingEngineMetadata
+
+
+class DeviceSpec(BaseModel):
+    type: str
 
 
 class FederationPartySpec(BaseModel):
@@ -42,18 +50,22 @@ class FederationPartySpec(BaseModel):
     parties: List[Dict[str, str]]
 
 
-class FederationBackendSpec(BaseModel):
-    engine: str
+class FederationEngineMetadata(BaseModel):
     federation_id: str
     parties: FederationPartySpec
+
+
+class FederationEngineSpec(BaseModel):
+    type: str
+    metadata: FederationEngineMetadata
 
 
 class RuntimeConfSpec(BaseModel):
     mlmd: MLMDSpec
     logger: LOGGERSpec
-    device: str
-    computing: ComputingBackendSpec
-    federation: FederationBackendSpec
+    device: DeviceSpec
+    computing: ComputingEngineSpec
+    federation: FederationEngineSpec
 
 
 class TaskScheduleSpec(BaseModel):

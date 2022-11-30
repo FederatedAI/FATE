@@ -46,6 +46,87 @@ class FlowConfig(object):
     PORT = conf.get("port", None)
 
 
+"""
+standalone:
+  job_directory:
+  output_data_dir:
+  output_model_dir:
+  output_metric_dir:
+  logger:
+    level: "DEBUG"
+    debug_mode: true
+  device:
+    type: "CPU"
+    device: "CPU"
+  mlmd:
+    type: pipeline
+    metadata:
+        db:
+  computing_engine:
+    type: standalone
+  federation_engine:
+    type: standalone
+"""
+
+
+class Device(object):
+    def __init__(self, conf):
+        self._type = conf.get("device", {}).get("type", "CPU")
+
+    @property
+    def type(self):
+        return self._type
+
+
+class LOGGER(object):
+    def __init__(self, conf):
+        self._level = conf.get("logger", {}).get("level", "DEBUG")
+        self._debug_mode = conf.get("logger", {}).get("debug_mode", True)
+
+    @property
+    def level(self):
+        return self._level
+
+    @property
+    def debug_mode(self):
+        return self._debug_mode
+
+
+class ComputingEngine(object):
+    def __init__(self, conf):
+        self._type = conf.get("computing_engine", {}).get("type", "standalone")
+
+    @property
+    def type(self):
+        return self._type
+
+
+class FederationEngine(object):
+    def __init__(self, conf):
+        self._type = conf.get("federation_engine", {}).get("type", "standalone")
+
+    @property
+    def type(self):
+        return self._type
+
+
+class MLMD(object):
+    def __init__(self, conf):
+        self._type = conf.get("mlmd", {}).get("type", "pipeline")
+        self._db = conf.get("mlmd", {}).get("metadata", {}).get("db")
+        if not self._db:
+            default_path = Path.cwd()
+            self._db = default_path.joinpath("pipeline_sqlite.db").as_uri()
+
+    @property
+    def db(self):
+        return self._db
+
+    @property
+    def type(self):
+        return self._type
+
+
 class StandaloneConfig(object):
     conf = get_default_config().get("standalone", {})
 
@@ -66,19 +147,11 @@ class StandaloneConfig(object):
     if not JOB_DIR:
         JOB_DIR = default_path.joinpath("jobs").as_uri()
 
-    OUTPUT_STATUS_DIR = conf.get("output_status_dir")
-    if not OUTPUT_STATUS_DIR:
-        OUTPUT_STATUS_DIR = default_path.joinpath("status").as_uri()
-
-    LOG_LEVEL = conf.get("logger").get("level")
-    LOG_DEBUG_MODE = conf.get("logger").get("debug_mode")
-    DEVICE = conf.get("engine").get("device")
-    COMPUTING_ENGINE = conf.get("computing_engine")
-    FEDERATION_ENGINE = conf.get("federation_engine")
-
-    SQLITE_DB = conf.get("sqlite_db")
-    if not SQLITE_DB:
-        SQLITE_DB = default_path.joinpath("pipeline_sqlite.db").as_uri()
+    MLMD = MLMD(conf)
+    LOGGER = LOGGER(conf)
+    DEVICE = Device(conf)
+    COMPUTING_ENGINE = ComputingEngine(conf)
+    FEDERATION_ENGINE = FederationEngine(conf)
 
 
 class LogPath(object):
