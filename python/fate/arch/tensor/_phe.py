@@ -39,18 +39,22 @@ class PHEEncryptor:
     def encrypt(self, tensor):
         from ..tensor import Tensor
         from ..tensor._base import DStorage, dtype
-        from ..tensor.device.cpu import _CPUStorage
+        from ..tensor.device.cpu.paillier import _RustPaillierStorage
 
         if tensor.device == device.CPU:
             storage = tensor.storage
             if isinstance(storage, DStorage):
                 encrypted_storage = DStorage.elemwise_unary_op(
                     storage,
-                    lambda s: _CPUStorage(dtype.paillier, storage.shape, self._encryptor.encrypt(s.data)),
+                    lambda s: _RustPaillierStorage(dtype.paillier, storage.shape, self._encryptor.encrypt(s.data)),
                     dtype.paillier,
                 )
             else:
-                encrypted_storage = _CPUStorage(dtype.paillier, storage.shape, self._encryptor.encrypt(storage.data))
+                encrypted_storage = _RustPaillierStorage(
+                    dtype.paillier, storage.shape, self._encryptor.encrypt(storage.data)
+                )
+        else:
+            raise NotImplementedError()
         return Tensor(encrypted_storage)
 
 
@@ -61,15 +65,15 @@ class PHEDecryptor:
     def decrypt(self, tensor):
         from ..tensor import Tensor
         from ..tensor._base import DStorage, dtype
-        from ..tensor.device.cpu import _CPUStorage
+        from ..tensor.device.cpu.plain import _TorchStorage
 
         storage = tensor.storage
         if isinstance(storage, DStorage):
             encrypted_storage = DStorage.elemwise_unary_op(
                 storage,
-                lambda s: _CPUStorage(dtype.paillier, storage.shape, self._decryptor.decrypt(s.data)),
+                lambda s: _TorchStorage(dtype.paillier, storage.shape, self._decryptor.decrypt(s.data)),
                 dtype.paillier,
             )
         else:
-            encrypted_storage = _CPUStorage(dtype.float32, storage.shape, self._decryptor.decrypt(storage.data))
+            encrypted_storage = _TorchStorage(dtype.float32, storage.shape, self._decryptor.decrypt(storage.data))
         return Tensor(encrypted_storage)

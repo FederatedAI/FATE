@@ -107,6 +107,18 @@ def desc(name, save):
 
 
 @component.command()
+@click.option("--save", type=click.File(mode="w", lazy=True), help="save desc output to specified file in yaml format")
+def task_schema(save):
+    "generate component task config json schema"
+    from fate.components.spec.task import TaskConfigSpec
+
+    if save:
+        save.write(TaskConfigSpec.schema_json())
+    else:
+        print(TaskConfigSpec.schema_json())
+
+
+@component.command()
 @click.option("--save", type=click.File(mode="w", lazy=True), help="save list output to specified file in json format")
 def list(save):
     "list all components"

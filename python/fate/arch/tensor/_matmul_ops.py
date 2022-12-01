@@ -15,9 +15,7 @@ def matmul(a: Tensor, b: Tensor) -> Tensor:
 
     # both local
     if not _is_distributed:
-        storage_op = _ops_dispatch_signature2_local_unknown_unknown(
-            "matmul", _device, _dtype, [], {}
-        )
+        storage_op = _ops_dispatch_signature2_local_unknown_unknown("matmul", _device, _dtype, [], {})
         storage = storage_op(a.storage, b.storage)
         return Tensor(storage)
 
@@ -37,15 +35,28 @@ def matmul(a: Tensor, b: Tensor) -> Tensor:
     if mul_shape_a.size[-1] != mul_shape_b.size[0]:
         raise ValueError("matmul: dimension mismatch: should be (..., n) x (...,n,?)")
 
-    if mul_shape_a.is_d_axis(-2) or mul_shape_b.is_d_axis(-1):
-        raise ValueError("not supported distributed axis position")
+    if mul_shape_a.is_d_axis(-2):
+        raise ValueError(f"not supported distributed axis position (...,d,?) for left tensor {a}")
+    if mul_shape_b.is_d_axis(-1):
+        raise ValueError("not supported distributed axis position (...,?,d) for right tensor {b}")
 
     out_storage = a.storage.blocks.join(
         b.storage.blocks,
-        _ops_dispatch_signature2_local_unknown_unknown(
-            "matmul", _device, _dtype, [], {}
+        apply_transpose(
+            _ops_dispatch_signature2_local_unknown_unknown("matmul", _device, _dtype, [], {}),
+            a.storage.transposed,
+            b.storage.transposed,
         ),
-    ).reduce(
-        _ops_dispatch_signature2_local_unknown_unknown("add", _device, _dtype, [], {})
-    )
+    ).reduce(_ops_dispatch_signature2_local_unknown_unknown("add", _device, _dtype, [], {}))
     return Tensor(out_storage)
+
+
+def apply_transpose(func, lf, rf):
+    def _wrap(a, b):
+        if lf:
+            a = a.transpose()
+        if rf:
+            b = b.transpose()
+        return func(a, b)
+
+    return _wrap

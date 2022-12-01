@@ -1,7 +1,5 @@
 if __name__ == "__main__":
 
-    import pprint
-
     import torch
     from fate.arch import Context, tensor
     from fate.arch.computing.standalone import CSession
@@ -20,6 +18,7 @@ if __name__ == "__main__":
 
     ctx1 = create_ctx("fed", ("guest", 10), [("host", 9)])
     ctx2 = create_ctx("fed", ("host", 9), [("guest", 10)])
+
     t1 = tensor.distributed_tensor(
         ctx1,
         [
@@ -31,34 +30,27 @@ if __name__ == "__main__":
     t2 = tensor.distributed_tensor(
         ctx2,
         [
-            torch.tensor([[1, 2, 3], [4, 5, 6]]),
-            torch.tensor([[1, 2, 3], [4, 5, 6]]),
-            torch.tensor([[1, 2, 3], [4, 5, 6]]),
+            torch.tensor([[1.0, 2, 3], [4, 5, 6]]),
+            torch.tensor([[1.0, 2, 3], [4, 5, 6]]),
+            torch.tensor([[1.0, 2, 3], [4, 5, 6]]),
         ],
     )
-    ctx1.hosts.put("tensor", t1)
-    t3 = ctx2.guest.get("tensor")
-    print(t3.storage.collect())
-
+    t3 = tensor.distributed_tensor(
+        ctx2,
+        [
+            torch.tensor([[1.0, 4.0], [2.0, 5.0], [3.0, 6.0]]),
+            torch.tensor([[1.0, 4.0], [2.0, 5.0], [3.0, 6.0]]),
+            torch.tensor([[1.0, 4.0], [2.0, 5.0], [3.0, 6.0]]),
+        ],
+        d_axis=1,
+    )
     lt1 = tensor.tensor(torch.tensor([[1, 2, 3]]))
-    pprint.pprint(f"t1={t1.to_local()}")
-    pprint.pprint(f"t2={t2.to_local()}")
-    pprint.pprint(f"t1+lt1={(t1+lt1).to_local()}")
 
-    for method in ["add", "sub", "div", "mul"]:
-        out = getattr(tensor, method)(t1, t2)
-        pprint.pprint(f"{method}(t1, t2):\n{out.to_local()}")
+    # print(tensor.sum(t3))
+    # print(tensor.sum(t3, dim=1))
 
-    for method in ["exp", "log", "neg", "reciprocal", "square", "abs"]:
-        out = getattr(tensor, method)(t1)
-        pprint.pprint(f"{method}(t1):\n{out.to_local()}")
+    # print(tensor.mean(t3))
+    # print(tensor.mean(t3, dim=1))
 
-    encryptor, decryptor = ctx1.cipher.phe.keygen()
-    t2 = encryptor.encrypt(t1)
-    t3 = t2 + t1
-    t4 = t2 * t1
-    t5 = decryptor.decrypt(t3)
-    t6 = decryptor.decrypt(t4)
-    print(t1.storage.collect())
-    print(t5.storage.collect())
-    print(t6.storage.collect())
+    print(tensor.std(t3))
+    print(tensor.std(t3, dim=1))

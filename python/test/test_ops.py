@@ -1,8 +1,8 @@
 import pytest
 import torch
-from fate.arch import Backend, Context, tensor
+from fate.arch import Context, tensor
 from fate.arch.computing.standalone import CSession
-from fate.arch.context import Context, disable_inner_logs
+from fate.arch.context import Context
 from fate.arch.federation.standalone import StandaloneFederation
 from pytest import fixture
 from pytest_lazyfixture import lazy_fixture
@@ -15,11 +15,8 @@ def ctx():
     computing = CSession()
     return Context(
         "guest",
-        backend=Backend.STANDALONE,
         computing=computing,
-        federation=StandaloneFederation(
-            computing, "fed", ("guest", 10000), [("host", 9999)]
-        ),
+        federation=StandaloneFederation(computing, "fed", ("guest", 10000), [("host", 9999)]),
     )
 
 
@@ -114,3 +111,7 @@ def test_add(a, b, c):
 def test_exp():
     a = torch.randn((3, 4))
     assert tensor.exp(tensor.tensor(a)) == tensor.tensor(torch.exp(a))
+
+
+def test_transpose(dt1):
+    dt1.T

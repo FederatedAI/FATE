@@ -1,15 +1,15 @@
-from typing import List
+from typing import List, Union
 
 import torch
 from fate.interface import Context
 
-from ._base import DStorage, Shape, StorageBase, dtype
+from ._base import DStorage, LStorage, Shape, dtype
 
 
 def tensor(t: torch.Tensor):
-    from .device.cpu import _CPUStorage
+    from .device.cpu.plain import _TorchStorage
 
-    storage = _CPUStorage(dtype.from_torch_dtype(t.dtype), Shape(t.shape), t)
+    storage = _TorchStorage(dtype.from_torch_dtype(t.dtype), Shape(t.shape), t)
     return Tensor(storage)
 
 
@@ -19,9 +19,9 @@ def randn(shape, dtype):
 
 
 def distributed_tensor(ctx: Context, tensors: List[torch.Tensor], d_axis=0, partitions=3):
-    from .device.cpu import _CPUStorage
+    from .device.cpu.plain import _TorchStorage
 
-    storages = [_CPUStorage(dtype.from_torch_dtype(t.dtype), Shape(t.shape), t) for t in tensors]
+    storages = [_TorchStorage(dtype.from_torch_dtype(t.dtype), Shape(t.shape), t) for t in tensors]
     storage = DStorage.from_storages(ctx, storages, d_axis, partitions)
     return Tensor(storage)
 
@@ -49,7 +49,7 @@ def _inject_op_sinature2(func):
 
 
 class Tensor:
-    def __init__(self, storage: StorageBase) -> None:
+    def __init__(self, storage: Union[DStorage, LStorage]) -> None:
         self._storage = storage
 
     def to(self, party, name: str):
@@ -84,6 +84,15 @@ class Tensor:
         if isinstance(self._storage, DStorage):
             return self._storage.to_local().tolist()
         return self._storage.tolist()
+
+    def sum(self, *args, **kwargs):
+        return Tensor(self.storage.sum(*args, **kwargs))
+
+    def mean(self, *args, **kwargs):
+        return Tensor(self.storage.mean(*args, **kwargs))
+
+    def std(self, *args, **kwargs):
+        return Tensor(self.storage.std(*args, **kwargs))
 
     def __eq__(self, __o: object) -> bool:
         return isinstance(__o, Tensor) and self._storage == __o._storage

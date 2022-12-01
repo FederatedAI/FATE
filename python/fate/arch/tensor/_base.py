@@ -1,6 +1,6 @@
-import abc
 from enum import Enum
-from typing import Callable, List, Optional, Protocol, overload
+from functools import reduce
+from typing import Callable, List, Optional, Protocol, Union, overload
 
 import torch
 
@@ -55,24 +55,6 @@ class dtype(Enum):
         raise TypeError(f"unsupported type: {t_type}")
 
 
-class StorageBase(metaclass=abc.ABCMeta):
-    device: device
-    dtype: dtype
-    shape: "Shape"
-
-    def to_local(self):
-        return self
-
-    def transpose(self) -> "StorageBase":
-        ...
-
-
-class _StorageOpsHandler(Protocol):
-    @classmethod
-    def get_storage_op(cls, method: str, dtypes: List[Optional["dtype"]]) -> Callable:
-        ...
-
-
 class Shape:
     def __init__(self, size, d_axis=None) -> None:
         if isinstance(size, int):
@@ -81,20 +63,27 @@ class Shape:
         self.d_axis = d_axis
 
     def transpose(self) -> "Shape":
+        if len(self.size) != 2:
+            raise RuntimeError(f"transpose of size {self.size} no supported")
+        size = self.size[::-1]
+
         if self.d_axis is not None:
-            d_axis = len(self.size) - self.d_axis
+            d_axis = len(self.size) - 1 - self.d_axis
         else:
             d_axis = None
-        return Shape(self.size, d_axis)
+        return Shape(size, d_axis)
 
     def is_d_axis(self, axis: int):
         if self.d_axis is None:
             return False
         gap = abs(self.d_axis - axis)
-        return gap == 0 or gap == self.d_axis
+        return gap == 0 or gap == len(self.size)
 
     def __len__(self):
         return len(self.size)
+
+    def prod(self):
+        return reduce(lambda x, y: x * y, self.size)
 
     def __str__(self) -> str:
         return f"Shape<size={self.size}, d_axis={self.d_axis}>"
@@ -197,12 +186,32 @@ class Shape:
         return Shape(result, d_axis)
 
 
-class DStorage(StorageBase):
-    def __init__(self, blocks, shape: Shape, dtype: dtype, device: device) -> None:
+class LStorage(Protocol):
+    device: device
+    dtype: dtype
+    shape: "Shape"
+
+    def tolist(self):
+        ...
+
+    def transpose(self) -> "LStorage":
+        ...
+
+    def to_local(self) -> "LStorage":
+        ...
+
+
+class DStorage:
+    def __init__(self, blocks, shape: Shape, dtype: dtype, device: device, transposed=False) -> None:
         self.blocks = blocks
-        self.shape = shape
+        self._shape = shape
         self._dtype = dtype
         self._device = device
+        self.transposed = transposed
+
+    @property
+    def shape(self):
+        return self._shape
 
     @property
     def dtype(self):
@@ -211,6 +220,29 @@ class DStorage(StorageBase):
     @property
     def device(self):
         return self._device
+
+    def transpose(self) -> "DStorage":
+        return DStorage(self.blocks, self.shape.transpose(), self.dtype, self.device, not self.transposed)
+
+    def sum(self, *args, **kwargs):
+        from .storage.agg import sum
+
+        return sum(self, *args, **kwargs)
+
+    def max(self, *args, **kwargs):
+        from .storage.agg import max
+
+        return max(self, *args, **kwargs)
+
+    def mean(self, *args, **kwargs):
+        from .storage.agg import mean
+
+        return mean(self, *args, **kwargs)
+
+    def std(self, *args, **kwargs):
+        from .storage.agg import std
+
+        return std(self, *args, **kwargs)
 
     def __eq__(self, __o: object) -> bool:
         if isinstance(__o, DStorage) and self._dtype == __o.dtype and self._device == __o.device:
@@ -224,7 +256,7 @@ class DStorage(StorageBase):
     def num_blocks(self):
         return self.blocks.count()
 
-    def collect(self) -> List[StorageBase]:
+    def collect(self) -> List[LStorage]:
         return [pair[1] for pair in sorted(self.blocks.collect())]
 
     def to_local(self):
@@ -232,7 +264,7 @@ class DStorage(StorageBase):
         return storages[0].cat(storages[1:], self.shape.d_axis)
 
     @classmethod
-    def from_storages(cls, ctx, storages: List[StorageBase], d_axis=0, partitions=4):
+    def from_storages(cls, ctx, storages: List[LStorage], d_axis=0, partitions=4):
         d_type = storages[0].dtype
         device = storages[0].device
         shape_size = storages[0].shape.size
@@ -269,10 +301,19 @@ class DStorage(StorageBase):
     def unary_op(
         cls,
         a: "DStorage",
-        mapper: Callable[[StorageBase], StorageBase],
+        mapper: Callable[[LStorage], LStorage],
         output_shape: Optional[Shape] = None,
         output_dtype=None,
     ):
+        def _apply_transpose(func, flag):
+            def _wrap(blk):
+                if flag:
+                    blk = blk.transpose()
+                return func(blk)
+
+            return _wrap
+
+        mapper = _apply_transpose(mapper, a.transposed)
         output_block = a.blocks.mapValues(mapper)
         if output_dtype is None:
             output_dtype = a._dtype
@@ -284,9 +325,18 @@ class DStorage(StorageBase):
     def elemwise_unary_op(
         cls,
         a,
-        mapper: Callable[[StorageBase], StorageBase],
+        mapper: Callable[[LStorage], LStorage],
         output_dtype=None,
     ):
+        def _apply_transpose(func, flag):
+            def _wrap(blk):
+                if flag:
+                    blk = blk.transpose()
+                return func(blk)
+
+            return _wrap
+
+        mapper = _apply_transpose(mapper, a.transposed)
         output_block = a.blocks.mapValues(mapper)
         if output_dtype is None:
             output_dtype = a._dtype
@@ -296,7 +346,7 @@ class DStorage(StorageBase):
     def agg_unary_op(
         cls,
         a: "DStorage",
-        mapper: Callable[[StorageBase], StorageBase],
+        mapper: Callable[[LStorage], LStorage],
         reducer,
         post_func,
         output_dtype=None,
@@ -318,9 +368,20 @@ class DStorage(StorageBase):
         cls,
         a: "DStorage",
         b: "DStorage",
-        binary_mapper: Callable[[StorageBase, StorageBase], StorageBase],
+        binary_mapper: Callable[[LStorage, LStorage], LStorage],
         output_dtype=None,
     ):
+        def _apply_transpose(func, lf, rf):
+            def _wrap(lblk, rblk):
+                if lf:
+                    lblk = lblk.transpose()
+                if rf:
+                    rblk = rblk.transpose()
+                return func(lblk, rblk)
+
+            return _wrap
+
+        binary_mapper = _apply_transpose(binary_mapper, a.transposed, b.transposed)
         output_blocks = a.blocks.join(b.blocks, binary_mapper)
         if output_dtype is None:
             output_dtype = a._dtype
@@ -331,16 +392,31 @@ class DStorage(StorageBase):
         cls,
         a: "DStorage",
         b: "DStorage",
-        func: Callable[[StorageBase, StorageBase], StorageBase],
+        func: Callable[[LStorage, LStorage], LStorage],
         output_dtype=None,
         **kwargs,
     ):
+        def _apply_transpose(func, lf, rf):
+            def _wrap(lblk, rblk):
+                if lf:
+                    lblk = lblk.transpose()
+                if rf:
+                    rblk = rblk.transpose()
+                return func(lblk, rblk)
+
+            return _wrap
+
         if isinstance(a, DStorage) and not isinstance(b, DStorage):
+            func = _apply_transpose(func, a.transposed, False)
             output_blocks = a.blocks.mapValues(lambda x: func(x, b, **kwargs))
         elif isinstance(b, DStorage) and not isinstance(a, DStorage):
+            func = _apply_transpose(func, False, b.transposed)
             output_blocks = b.blocks.mapValues(lambda x: func(a, x, **kwargs))
         else:
             raise RuntimeError("exactly one DStorage required")
         if output_dtype is None:
             output_dtype = a._dtype
         return DStorage(output_blocks, a.shape, output_dtype, a._device)
+
+
+Storage = Union[LStorage, DStorage]
