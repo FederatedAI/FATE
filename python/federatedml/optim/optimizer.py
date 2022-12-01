@@ -19,14 +19,7 @@
 import numpy as np
 
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
-from federatedml.util import LOGGER, consts, paillier_check
-
-try:
-    from ipcl_python import PaillierEncryptedNumber as IpclPaillierEncryptedNumber
-    from ipcl_python.bindings.ipcl_bindings import ipclCipherText
-except ImportError:
-    LOGGER.info("ipcl_python failed to import")
-    pass
+from federatedml.util import LOGGER, consts, paillier_check, ipcl_operator
 
 
 class _Optimizer(object):
@@ -90,15 +83,7 @@ class _Optimizer(object):
 
         if self.penalty == consts.L2_PENALTY:
             if paillier_check.is_single_ipcl_encrypted_number(lr_weights.unboxed):
-                # Put all gradients into one ciphertext, since all weights are in one ciphertext
-                pub_key = grad[0].public_key
-                bn, exp = [], []
-                for i in range(len(grad)):
-                    assert grad[i].__len__() == 1
-                    bn.append(grad[i].ciphertextBN(0))
-                    exp.append(grad[i].exponent(0))
-                ct = ipclCipherText(pub_key.pubkey, bn)
-                grad_ct = IpclPaillierEncryptedNumber(pub_key, ct, exp, len(grad))
+                grad_ct = ipcl_operator.merge_encrypted_number_array(grad)
                 grad_ct = np.array(grad_ct)
 
                 if lr_weights.fit_intercept:

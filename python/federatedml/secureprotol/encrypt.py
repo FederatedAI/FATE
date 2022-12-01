@@ -271,7 +271,7 @@ class IpclPaillierEncrypt(Encrypt):
         Encrypt without applying obfuscator.
 
         Returns:
-            (PaillierEncryptedNumber from `ipcl_python): one ciphertext
+            (PaillierEncryptedNumber from `ipcl_python`): one ciphertext
         """
         return self.public_key.raw_encrypt(plaintext)
 
@@ -288,7 +288,7 @@ class IpclPaillierEncrypt(Encrypt):
         """Encrypt a list of raw values into one ciphertext.
 
         Returns:
-            (PaillierEncryptedNumber from `ipcl_python): all in one single ciphertext
+            (PaillierEncryptedNumber from `ipcl_python`): all in one single ciphertext
         """
         return self.encrypt(values)
 

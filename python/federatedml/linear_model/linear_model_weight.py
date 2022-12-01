@@ -20,14 +20,7 @@
 import numpy as np
 
 from federatedml.framework.weights import ListWeights, TransferableWeights
-from federatedml.util import LOGGER, paillier_check
-
-try:
-    from ipcl_python import PaillierEncryptedNumber as IpclPaillierEncryptedNumber
-    from ipcl_python.bindings.ipcl_bindings import ipclCipherText
-except ImportError:
-    LOGGER.info("ipcl_python failed to import")
-    pass
+from federatedml.util import LOGGER, paillier_check, ipcl_operator
 
 
 class LinearModelWeights(ListWeights):
@@ -52,18 +45,8 @@ class LinearModelWeights(ListWeights):
     def coef_(self):
         if self.fit_intercept:
             if paillier_check.is_single_ipcl_encrypted_number(self._weights):
-                ipcl_w = self._weights.item(0)
-                w_len = ipcl_w.__len__() - 1
-                pub_key = ipcl_w.public_key
-
-                bn = []
-                exp = []
-                for i in range(w_len):
-                    bn.append(ipcl_w.ciphertextBN(i))
-                    exp.append(ipcl_w.exponent(i))
-                ct = ipclCipherText(pub_key.pubkey, bn)
-                coeff = IpclPaillierEncryptedNumber(pub_key, ct, exp, w_len)
-                return np.array(coeff)
+                coeffs = ipcl_operator.get_coeffs(self._weights.item(0))
+                return np.array(coeffs)
 
             return np.array(self._weights[:-1])
         return np.array(self._weights)
@@ -72,14 +55,7 @@ class LinearModelWeights(ListWeights):
     def intercept_(self):
         if self.fit_intercept:
             if paillier_check.is_single_ipcl_encrypted_number(self._weights):
-                ipcl_w = self._weights.item(0)
-                w_len = ipcl_w.__len__() - 1
-                pub_key = ipcl_w.public_key
-                bn = [ipcl_w.ciphertextBN(w_len)]
-                exp = [ipcl_w.exponent(w_len)]
-                ct = ipclCipherText(pub_key.pubkey, bn)
-                coeff = IpclPaillierEncryptedNumber(pub_key, ct, exp, 1)
-                return coeff
+                return ipcl_operator.get_intercept(self._weights.item(0))
 
             return 0.0 if len(self._weights) == 0 else self._weights[-1]
         return 0.0
