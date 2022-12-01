@@ -1,8 +1,7 @@
 from typing import Any, Callable
 
-from ._base import Storage
-from ._tensor import DStorage
-from .device import (
+from ..types import DStorage, Storage
+from .local.device import (
     _ops_dispatch_signature1_local_unknown_unknown,
     _ops_dispatch_signature2_local_unknown_unknown,
 )

@@ -30,21 +30,15 @@ class PaillierBlock(metaclass=PHEBlockMetaclass):
     pass
 
 
-class BlockPaillierEncryptor(
-    metaclass=phe_encryptor_metaclass(PaillierBlock, torch.Tensor)
-):
+class BlockPaillierEncryptor(metaclass=phe_encryptor_metaclass(PaillierBlock, torch.Tensor)):
     pass
 
 
-class BlockPaillierDecryptor(
-    metaclass=phe_decryptor_metaclass(PaillierBlock, torch.Tensor)
-):
+class BlockPaillierDecryptor(metaclass=phe_decryptor_metaclass(PaillierBlock, torch.Tensor)):
     pass
 
 
 class BlockPaillierCipher(
-    metaclass=phe_keygen_metaclass(
-        BlockPaillierEncryptor, BlockPaillierDecryptor, rust_paillier.keygen
-    )
+    metaclass=phe_keygen_metaclass(BlockPaillierEncryptor, BlockPaillierDecryptor, rust_paillier.keygen)
 ):
     pass

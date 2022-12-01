@@ -21,7 +21,7 @@ class PHECipher(PHECipherInterface):
 
         if kind == PHEKind.AUTO or PHEKind.PAILLIER:
             if self.device == device.CPU:
-                from .device.cpu.multithread_cpu_paillier_block import (
+                from .storage.local.device.cpu.multithread_cpu_paillier_block import (
                     BlockPaillierCipher,
                 )
 
@@ -38,12 +38,12 @@ class PHEEncryptor:
 
     def encrypt(self, tensor):
         from ..tensor import Tensor
-        from ..tensor._base import DStorage, dtype
-        from ..tensor.device.cpu.paillier import _RustPaillierStorage
+        from .storage.local.device.cpu.paillier import _RustPaillierStorage
+        from .types import DStorage, dtype
 
         if tensor.device == device.CPU:
             storage = tensor.storage
-            if isinstance(storage, DStorage):
+            if tensor.is_distributed:
                 encrypted_storage = DStorage.elemwise_unary_op(
                     storage,
                     lambda s: _RustPaillierStorage(dtype.paillier, storage.shape, self._encryptor.encrypt(s.data)),
@@ -64,8 +64,8 @@ class PHEDecryptor:
 
     def decrypt(self, tensor):
         from ..tensor import Tensor
-        from ..tensor._base import DStorage, dtype
-        from ..tensor.device.cpu.plain import _TorchStorage
+        from .storage.local.device.cpu.plain import _TorchStorage
+        from .types import DStorage, dtype
 
         storage = tensor.storage
         if isinstance(storage, DStorage):

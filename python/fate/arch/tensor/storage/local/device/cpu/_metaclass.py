@@ -3,13 +3,6 @@ import pickle
 import numpy as np
 import torch
 
-from ...abc.block import (
-    PHEBlockABC,
-    PHEBlockCipherABC,
-    PHEBlockDecryptorABC,
-    PHEBlockEncryptorABC,
-)
-
 
 def _impl_ops(class_obj, method_name, ops):
     def func(self, other):
@@ -89,9 +82,7 @@ def phe_keygen_metaclass(encrypt_cls, decrypt_cls, keygen_op):
         def __new__(cls, name, bases, dict):
             keygen_cls = super().__new__(cls, name, bases, dict)
 
-            setattr(
-                keygen_cls, "keygen", _impl_keygen(encrypt_cls, decrypt_cls, keygen_op)
-            )
+            setattr(keygen_cls, "keygen", _impl_keygen(encrypt_cls, decrypt_cls, keygen_op))
             return keygen_cls
 
     return PHEKeygenMetaclass
@@ -106,9 +97,7 @@ def phe_decryptor_metaclass(pheblock_cls, fpblock_cls):
             setattr(
                 decryptor_cls,
                 "decrypt",
-                _impl_decrypt(
-                    pheblock_cls, fpblock_cls, PHEDecryptorMetaclass._decrypt_numpy
-                ),
+                _impl_decrypt(pheblock_cls, fpblock_cls, PHEDecryptorMetaclass._decrypt_numpy),
             )
             return decryptor_cls
 
@@ -136,9 +125,7 @@ def phe_encryptor_metaclass(pheblock_cls, fpblock_cls):
             setattr(
                 encryptor_cls,
                 "encrypt",
-                _impl_encrypt(
-                    pheblock_cls, fpblock_cls, PHEEncryptorMetaclass._encrypt_numpy
-                ),
+                _impl_encrypt(pheblock_cls, fpblock_cls, PHEEncryptorMetaclass._encrypt_numpy),
             )
             return encryptor_cls
 
@@ -320,9 +307,7 @@ class PHEBlockMetaclass(type):
 
     @staticmethod
     def _rsub(cb, other, class_obj):
-        return PHEBlockMetaclass._add(
-            PHEBlockMetaclass._mul(cb, -1, class_obj), other, class_obj
-        )
+        return PHEBlockMetaclass._add(PHEBlockMetaclass._mul(cb, -1, class_obj), other, class_obj)
 
     @staticmethod
     def _rmul(cb, other, class_obj):

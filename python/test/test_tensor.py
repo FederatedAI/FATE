@@ -19,6 +19,7 @@ ctx2 = Context(
 )
 t1 = tensor.tensor(torch.tensor([[1, 2, 3], [4, 5, 6]]))
 t2 = tensor.tensor(torch.tensor([[7, 8, 9], [10, 11, 12]]))
+print(tensor.matmul(t1, t2.T))
 ctx.hosts.put("ttt1", t1)
 t3 = ctx2.guest.get("ttt1")
 print(t3)

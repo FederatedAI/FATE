@@ -1,8 +1,8 @@
 from typing import Any, Callable, List
 
 import torch
-
-from ..._base import LStorage, Shape, device, dtype
+from fate.arch.tensor.types import LStorage, Shape, dtype
+from fate.arch.unify import device
 
 
 class _TorchStorage(LStorage):

@@ -1,7 +1,6 @@
-from ._base import DStorage, Shape
+from .._tensor import Tensor
+from ..types import Shape
 from ._ops import _get_dispatch_info, dispatch_signature2
-from ._storage_ops import _ops_dispatch_signature2_local_unknown_unknown
-from ._tensor import Tensor
 
 
 def matmul(a: Tensor, b: Tensor) -> Tensor:
@@ -14,9 +13,12 @@ def matmul(a: Tensor, b: Tensor) -> Tensor:
     _is_distributed, _device, _dtype = _get_dispatch_info([a, b])
 
     # both local
+    from ..storage._helper import local_ops_helper
+
+    local_ops = local_ops_helper(_device, _dtype)
+
     if not _is_distributed:
-        storage_op = _ops_dispatch_signature2_local_unknown_unknown("matmul", _device, _dtype, [], {})
-        storage = storage_op(a.storage, b.storage)
+        storage = local_ops.matmul(a.storage, b.storage)
         return Tensor(storage)
 
     bc_shape_a = a.shape[:-2]
@@ -43,11 +45,11 @@ def matmul(a: Tensor, b: Tensor) -> Tensor:
     out_storage = a.storage.blocks.join(
         b.storage.blocks,
         apply_transpose(
-            _ops_dispatch_signature2_local_unknown_unknown("matmul", _device, _dtype, [], {}),
+            local_ops.matmul,
             a.storage.transposed,
             b.storage.transposed,
         ),
-    ).reduce(_ops_dispatch_signature2_local_unknown_unknown("add", _device, _dtype, [], {}))
+    ).reduce(local_ops.add)
     return Tensor(out_storage)
 
 

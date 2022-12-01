@@ -1,12 +1,8 @@
 from functools import wraps
 
-from ._base import DStorage, Shape
-from ._exception import OpDispatchInvalidDevice, OpsDispatchBadSignatureError
-from ._storage_ops import (
-    _ops_dispatch_signature1_unknown_unknown_unknown,
-    _ops_dispatch_signature2_unknown_unknown_unknown,
-)
-from ._tensor import Tensor
+from .._exception import OpDispatchInvalidDevice, OpsDispatchBadSignatureError
+from .._tensor import Tensor
+from ..types import Shape
 
 
 def auto_unary_op(func):
@@ -43,7 +39,7 @@ def _get_dispatch_info(tensors):
     for tensor in tensors:
         if isinstance(tensor, Tensor):
             # set distributed or local
-            _is_distributed = _is_distributed or isinstance(tensor.storage, DStorage)
+            _is_distributed = _is_distributed or tensor.is_distributed
 
             # set device
             if _device is None:
@@ -62,9 +58,11 @@ def _get_dispatch_info(tensors):
 def dispatch_signature1(method, tensor, args, kwargs):
     if not isinstance(tensor, Tensor):
         raise OpsDispatchBadSignatureError(f"required exactly one tensor input, got {tensor}")
+    from ..storage._ops import _ops_dispatch_signature1_unknown_unknown_unknown
+
     storage_op = _ops_dispatch_signature1_unknown_unknown_unknown(
         method=method,
-        distributed=isinstance(tensor.storage, DStorage),
+        distributed=tensor.is_distributed,
         device=tensor.device,
         dtype=tensor.dtype,
         args=args,
@@ -77,6 +75,8 @@ def dispatch_signature1(method, tensor, args, kwargs):
 def dispatch_signature2(method, tensor, other, args, kwargs, bc_shape_validate=True):
     if not isinstance(tensor, Tensor) and not isinstance(other, Tensor):
         raise OpsDispatchBadSignatureError(f"atleast one tensor input, got {tensor} and {other}")
+    from ..storage._ops import _ops_dispatch_signature2_unknown_unknown_unknown
+
     if bc_shape_validate:
         if isinstance(tensor, Tensor) and isinstance(other, Tensor):
             if Shape.broadcast_shape([tensor.shape, other.shape], raise_exception=False) is None:

@@ -3,11 +3,11 @@ from typing import List, Union
 import torch
 from fate.interface import Context
 
-from ._base import DStorage, LStorage, Shape, dtype
+from .types import DStorage, LStorage, Shape, dtype
 
 
 def tensor(t: torch.Tensor):
-    from .device.cpu.plain import _TorchStorage
+    from .storage.local.device.cpu.plain import _TorchStorage
 
     storage = _TorchStorage(dtype.from_torch_dtype(t.dtype), Shape(t.shape), t)
     return Tensor(storage)
@@ -19,7 +19,7 @@ def randn(shape, dtype):
 
 
 def distributed_tensor(ctx: Context, tensors: List[torch.Tensor], d_axis=0, partitions=3):
-    from .device.cpu.plain import _TorchStorage
+    from .storage.local.device.cpu.plain import _TorchStorage
 
     storages = [_TorchStorage(dtype.from_torch_dtype(t.dtype), Shape(t.shape), t) for t in tensors]
     storage = DStorage.from_storages(ctx, storages, d_axis, partitions)
@@ -30,7 +30,7 @@ def _inject_op_sinature1(func):
     method = func.__name__
 
     def _wrap(input):
-        from ._ops import dispatch_signature1
+        from .ops._ops import dispatch_signature1
 
         return dispatch_signature1(method, input, [], {})
 
@@ -41,7 +41,7 @@ def _inject_op_sinature2(func):
     method = func.__name__
 
     def _wrap(input, other):
-        from ._ops import dispatch_signature2
+        from .ops._ops import dispatch_signature2
 
         return dispatch_signature2(method, input, other, [], {})
 
@@ -51,6 +51,12 @@ def _inject_op_sinature2(func):
 class Tensor:
     def __init__(self, storage: Union[DStorage, LStorage]) -> None:
         self._storage = storage
+
+    @property
+    def is_distributed(self):
+        from .types import DStorage
+
+        return isinstance(self._storage, DStorage)
 
     def to(self, party, name: str):
         return party.put(name, self)
@@ -84,15 +90,6 @@ class Tensor:
         if isinstance(self._storage, DStorage):
             return self._storage.to_local().tolist()
         return self._storage.tolist()
-
-    def sum(self, *args, **kwargs):
-        return Tensor(self.storage.sum(*args, **kwargs))
-
-    def mean(self, *args, **kwargs):
-        return Tensor(self.storage.mean(*args, **kwargs))
-
-    def std(self, *args, **kwargs):
-        return Tensor(self.storage.std(*args, **kwargs))
 
     def __eq__(self, __o: object) -> bool:
         return isinstance(__o, Tensor) and self._storage == __o._storage
@@ -133,7 +130,7 @@ class Tensor:
         return matmul(self, other)
 
     def __getitem__(self, key):
-        from ._slice_ops import slice
+        from .ops import slice
 
         return slice(self, key)
 
