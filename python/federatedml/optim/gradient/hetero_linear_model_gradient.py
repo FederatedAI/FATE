@@ -19,7 +19,6 @@
 import functools
 
 import numpy as np
-from federatedml.secureprotol.encrypt import IpclPaillierEncrypt
 import scipy.sparse as sp
 
 from federatedml.feature.sparse_vector import SparseVector
@@ -406,10 +405,7 @@ class Arbiter(HeteroGradientBase):
         gradient = np.hstack((h for h in host_gradients))
         gradient = np.hstack((gradient, guest_gradient))
 
-        if isinstance(cipher, IpclPaillierEncrypt):
-            grad = np.array([cipher.decrypt(msg) for msg in gradient])
-        else:
-            grad = np.array(cipher.decrypt_list(gradient))
+        grad = np.array(cipher.decrypt_list(gradient))
 
         # LOGGER.debug("In arbiter compute_gradient_procedure, before apply grad: {}, size_list: {}".format(
         #     grad, size_list

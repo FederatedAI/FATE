@@ -14,7 +14,6 @@
 #  limitations under the License.
 #
 
-from federatedml.util import LOGGER
 from collections import Iterable
 
 import numpy as np
@@ -22,23 +21,15 @@ from scipy.sparse import csr_matrix
 
 from federatedml.feature.instance import Instance
 from federatedml.feature.sparse_vector import SparseVector
-from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
-
-ipcl_enabled = False
-try:
-    from ipcl_python import PaillierEncryptedNumber as IpclPaillierEncryptNumber
-    ipcl_enabled = True
-except ImportError:
-    LOGGER.info("ipcl_python failed to import")
-    pass
+from federatedml.util import paillier_check
 
 
 def _one_dimension_dot(X, w):
     res = 0
     # LOGGER.debug("_one_dimension_dot, len of w: {}, len of X: {}".format(len(w), len(X)))
 
-    # ipcl case
-    if np.ndim(w) == 0:
+    # If all weights are in one single IPCL encrypted number
+    if paillier_check.is_single_ipcl_encrypted_number(w):
         if isinstance(X, csr_matrix):
             res = w.item(0).dot(X.data)
         else:
@@ -55,15 +46,15 @@ def _one_dimension_dot(X, w):
             res += w[i] * X[i]
 
     if res == 0:
-        if isinstance(w[0], PaillierEncryptedNumber) or ipcl_enabled and isinstance(w[0], IpclPaillierEncryptNumber):
+        if paillier_check.is_paillier_encrypted_number(w[0]):
             res = 0 * w[0]
     return res
 
 
 def dot(value, w):
     w_ndim = np.ndim(w)
-    if w_ndim == 0:
-        w_ndim += 1  # ipcl case
+    if paillier_check.is_single_ipcl_encrypted_number(w):
+        w_ndim += 1
 
     if isinstance(value, Instance):
         X = value.features

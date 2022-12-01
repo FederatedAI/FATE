@@ -22,7 +22,6 @@ from federatedml.framework.hetero.sync import loss_sync
 from federatedml.optim.gradient import hetero_linear_model_gradient
 from federatedml.util import LOGGER
 from federatedml.util.fate_operator import reduce_add, vec_dot
-from federatedml.secureprotol.encrypt import IpclPaillierEncrypt
 
 
 class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
@@ -238,8 +237,5 @@ class Arbiter(hetero_linear_model_gradient.Arbiter, loss_sync.Arbiter):
 
         current_suffix = (n_iter_, batch_index)
         loss_list = self.sync_loss_info(suffix=current_suffix)
-        if isinstance(cipher, IpclPaillierEncrypt):
-            de_loss_list = [cipher.decrypt(msg) for msg in loss_list]
-        else:
-            de_loss_list = cipher.decrypt_list(loss_list)
+        de_loss_list = cipher.decrypt_list(loss_list)
         return de_loss_list

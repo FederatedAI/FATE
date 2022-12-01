@@ -10,11 +10,14 @@ class PaillierAssess(object):
             from federatedml.secureprotol.fate_paillier import PaillierKeypair
             self.is_ipcl = False
         elif method == "IPCL":
-            from ipcl_python import PaillierKeypair
-            self.is_ipcl = True
+            try:
+                from ipcl_python import PaillierKeypair
+                self.is_ipcl = True
+            except ImportError:
+                raise ValueError("IPCL is not supported.")
         else:
-            print("Unsupported Paillier method: ", method)
-            return
+            raise ValueError(f"Unsupported Paillier method: {method}.")
+        
         self.public_key, self.private_key = PaillierKeypair.generate_keypair()
         self.method = method
         self.data_num = data_num
