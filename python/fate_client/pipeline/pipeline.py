@@ -4,6 +4,8 @@ from .entity import DAG
 from .entity.runtime_entity import Roles
 from .conf.types import SupportRole
 from .conf.job_configuration import JobConf
+from .components.component_base import Component
+from .scheduler.dag_parser import DagParser
 import yaml
 
 
@@ -13,8 +15,10 @@ class Pipeline(object):
         self._dag = DAG()
         self._roles = Roles()
         self._stage = "train"
-        self._components = dict()
+        self._tasks = dict()
         self._job_conf = JobConf()
+        self._model_info = None
+        self._predict_dag = None
 
     def set_stage(self, stage):
         self._stage = stage
@@ -27,6 +31,9 @@ class Pipeline(object):
     @property
     def conf(self):
         return self._job_conf
+
+    def set_predict_dag(self, predict_dag):
+        self._predict_dag = predict_dag
 
     def set_roles(self, guest=None, host=None, arbiter=None, **kwargs):
         local_vars = locals()
@@ -50,16 +57,16 @@ class Pipeline(object):
 
         return self
 
-    def add_component(self, component) -> "Pipeline":
-        if component.name in self._components:
-            raise ValueError(f"Component {component.name} has been added before")
+    def add_task(self, task) -> "Pipeline":
+        if task.name in self._tasks:
+            raise ValueError(f"Task {task.name} has been added before")
 
-        self._components[component.name] = component
+        self._tasks[task.name] = task
 
         return self
 
     def compile(self) -> "Pipeline":
-        self._dag.compile(components=self._components,
+        self._dag.compile(task_insts=self._tasks,
                           roles=self._roles,
                           stage=self._stage,
                           job_conf=self._job_conf.conf)
@@ -70,24 +77,49 @@ class Pipeline(object):
 
     def get_component_specs(self):
         component_specs = dict()
-        for component_name, component in self._components.items():
-            component_specs[component_name] = component.component_spec
+        for task_name, task in self._tasks.items():
+            component_specs[task_name] = task.component_spec
 
         return component_specs
 
     def fit(self) -> "Pipeline":
-        self._executor.exec(self._dag.dag_spec, self.get_component_specs())
+        self._model_info = self._executor.exec(self._dag.dag_spec, self.get_component_specs())
 
         return self
 
     def predict(self):
         ...
 
-    def deploy(self):
-        ...
+    def deploy(self, task_list=None):
+        """
+        this will return predict dag IR
+        if component_list is None: deploy all
+        """
+        if task_list:
+            task_name_list = []
+            for task in task_list:
+                if isinstance(task, Component):
+                    task_name_list.append(task.name)
+                else:
+                    task_name_list.append(task)
+        else:
+            task_name_list = [task.name for (task_name, task) in self._tasks.items()]
 
-    def show(self):
-        ...
+        self._predict_dag = DagParser.deploy(task_name_list, self._dag.dag_spec, self.get_component_specs())
+
+        return yaml.dump(self._predict_dag.dict(exclude_defaults=True))
+
+    def __getattr__(self, attr):
+        if attr in self._tasks:
+            return self._tasks[attr]
+
+        return self.__getattribute__(attr)
+
+    def __getitem__(self, item):
+        if item not in self._tasks:
+            raise ValueError(f"Component {item} has not been added in pipeline")
+
+        return self._tasks[item]
 
 
 class StandalonePipeline(Pipeline):

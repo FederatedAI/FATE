@@ -40,23 +40,23 @@ feature_scale_1 = FeatureScale(name="feature_scale_1",
                                input_model=feature_scale_0.outputs["output_model"])
 
 lr_0 = HeteroLR(name="lr_0",
-                train_data=reader_0.outputs["output_data"],
+                train_data=feature_scale_0.outputs["train_output_data"],
                 max_iter=1,
                 learning_rate=0.01,
                 batch_size=-1)
 lr_1 = HeteroLR(name="lr_1",
-                test_data=reader_0.outputs["output_data"],
+                test_data=feature_scale_1.outputs["test_output_data"],
                 input_model=lr_0.outputs["output_model"])
 
-pipeline.add_component(reader_0)
-pipeline.add_component(feature_scale_0)
-pipeline.add_component(feature_scale_1)
-pipeline.add_component(intersection_0)
-pipeline.add_component(intersection_1)
-pipeline.add_component(lr_0)
-pipeline.add_component(lr_1)
+pipeline.add_task(reader_0)
+pipeline.add_task(feature_scale_0)
+pipeline.add_task(feature_scale_1)
+pipeline.add_task(intersection_0)
+pipeline.add_task(intersection_1)
+pipeline.add_task(lr_0)
+pipeline.add_task(lr_1)
 pipeline.conf.set("task_parallelism", 1)
 pipeline.compile()
 print(pipeline.get_dag())
-pipeline.fit()
+print(pipeline.deploy([reader_0, lr_0]))
 
