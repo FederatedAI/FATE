@@ -21,12 +21,9 @@ from federatedml.model_base import Metric
 from federatedml.model_base import MetricMeta
 from federatedml.evaluation.metrics import clustering_metric
 from federatedml.feature.instance import Instance
-from federatedml.framework.hetero.procedure import table_aggregator
 from federatedml.param.hetero_kmeans_param import KmeansParam
 from federatedml.unsupervised_learning.kmeans.kmeans_model_base import BaseKmeansModel
-
-# Do not delete this import
-from federatedml.framework.weights import NumpyWeights
+from federatedml.framework.homo.aggregator.secure_aggregator import SecureAggregatorServer
 
 from federatedml.util import LOGGER
 from federatedml.util import consts
@@ -36,10 +33,8 @@ class HeteroKmeansArbiter(BaseKmeansModel):
     def __init__(self):
         super(HeteroKmeansArbiter, self).__init__()
         self.model_param = KmeansParam()
-        # self.dist_aggregator = secure_sum_aggregator.Server(enable_secure_aggregate=False)
-        # self.cluster_dist_aggregator = secure_sum_aggregator.Server(enable_secure_aggregate=False)
         self.DBI = 0
-        self.aggregator = table_aggregator.Server(enable_secure_aggregate=True)
+        self.aggregator = SecureAggregatorServer(True, 'kmeans')
 
     def callback_dbi(self, iter_num, dbi):
         metric_meta = MetricMeta(name='train',
@@ -93,7 +88,9 @@ class HeteroKmeansArbiter(BaseKmeansModel):
         dist_table = self.cal_ave_dist(dist_cluster_table, cluster_result)  # ave dist in each cluster
         if len(dist_table) == 1:
             raise ValueError('Only one class detected. DBI calculation error')
-        cluster_dist = self.aggregator.sum_model(suffix=(suffix,))
+
+        cluster_dist = self.aggregator.aggregate_model(suffix=('cluster_dist', suffix,))
+
         cluster_avg_intra_dist = []
         for i in range(len(dist_table)):
             cluster_avg_intra_dist.append(dist_table[i][2])
@@ -105,11 +102,13 @@ class HeteroKmeansArbiter(BaseKmeansModel):
         LOGGER.info("Enter hetero Kmeans arbiter fit")
         last_cluster_result = None
         while self.n_iter_ < self.max_iter:
-            dist_sum = self.aggregator.aggregate_tables(suffix=(self.n_iter_,))
+
+            dist_sum = self.aggregator.aggregate_model(suffix=(self.n_iter_,))
             if last_cluster_result is not None:
                 self.cal_dbi(dist_sum, last_cluster_result, self.n_iter_)
             cluster_result = dist_sum.mapValues(lambda v: np.argmin(v))
-            self.aggregator.send_aggregated_tables(cluster_result, suffix=(self.n_iter_,))
+            self.aggregator.broadcast_model(cluster_result, suffix=(self.n_iter_,))
+
             tol1 = self.transfer_variable.guest_tol.get(idx=0, suffix=(self.n_iter_,))
             tol2 = self.transfer_variable.host_tol.get(idx=0, suffix=(self.n_iter_,))
             tol_final = tol1 + tol2
@@ -127,30 +126,32 @@ class HeteroKmeansArbiter(BaseKmeansModel):
                 break
 
         # calculate finall round dbi
-        dist_sum = self.aggregator.aggregate_tables(suffix=(self.n_iter_,))
+        dist_sum = self.aggregator.aggregate_model(suffix=(self.n_iter_,))
         cluster_result = dist_sum.mapValues(lambda v: np.argmin(v))
-        self.aggregator.send_aggregated_tables(cluster_result, suffix=(self.n_iter_,))
+
+        self.aggregator.broadcast_model(cluster_result, suffix=(self.n_iter_,))
         self.cal_dbi(dist_sum, last_cluster_result, self.n_iter_)
-        dist_sum_dbi = self.aggregator.aggregate_tables(suffix=(self.n_iter_ + 1,))
-        self.aggregator.send_aggregated_tables(cluster_result, suffix=(self.n_iter_ + 1,))
+        dist_sum_dbi = self.aggregator.aggregate_model(suffix=(self.n_iter_ + 1, ))
+        self.aggregator.broadcast_model(cluster_result, suffix=(self.n_iter_ + 1,))
+
         self.cal_dbi(dist_sum_dbi, cluster_result, self.n_iter_ + 1)
 
     def predict(self, data_instances=None):
         LOGGER.info("Start predict ...")
-        res_dict = self.aggregator.aggregate_tables(suffix='predict')
+
+        res_dict = self.aggregator.aggregate_model(suffix=('predict', ))
+
         cluster_result = res_dict.mapValues(lambda v: np.argmin(v))
         cluster_dist_result = res_dict.mapValues(lambda v: min(v))
-        self.aggregator.send_aggregated_tables(cluster_result, suffix='predict')
+        self.aggregator.broadcast_model(cluster_result, suffix=('predict', ))
+        res_dict_dbi = self.aggregator.aggregate_model(suffix=('predict_dbi', ))
+        self.aggregator.broadcast_model(cluster_result, suffix=('predict_dbi', ))
 
-        res_dict_dbi = self.aggregator.aggregate_tables(suffix='predict_dbi')
-        self.aggregator.send_aggregated_tables(cluster_result, suffix='predict_dbi')
         dist_cluster_table = res_dict.join(cluster_result, lambda v1, v2: [v1, v2])
         dist_cluster_table_dbi = res_dict_dbi.join(cluster_result, lambda v1, v2: [v1, v2])
         dist_table = self.cal_ave_dist(dist_cluster_table, cluster_result)  # ave dist in each cluster
         dist_table_dbi = self.cal_ave_dist(dist_cluster_table_dbi, cluster_result)
-        # if len(dist_table) == 1:
-        #    raise ValueError('Only one class detected. DBI calculation error')
-        cluster_dist = self.aggregator.sum_model(suffix='predict')
+        cluster_dist = self.aggregator.aggregate_model(suffix=('predict_cluster_dist', ))
 
         dist_cluster_table_out = cluster_result.join(cluster_dist_result, lambda v1, v2: [int(v1), float(v2)])
         cluster_max_radius = dist_cluster_table_out.applyPartitions(self.max_radius).reduce(self.get_max_radius)

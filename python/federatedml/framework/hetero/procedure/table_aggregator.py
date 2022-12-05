@@ -67,6 +67,7 @@ class TableTransferClient(object):
         return self._broadcaster.get_parties(parties=self._server_parties, suffix=suffix)[0]
 
     def send_tables(self, tables, suffix=tuple()):
+        LOGGER.debug('self._scatter is {}, suffix is {}'.format(self._scatter, suffix))
         return self._scatter.remote_parties(obj=tables, parties=self._server_parties, suffix=suffix)
 
 

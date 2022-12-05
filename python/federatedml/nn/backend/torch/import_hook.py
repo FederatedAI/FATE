@@ -1,9 +1,9 @@
 try:
-    from pipeline.component.nn.backend.torch import nn as nn_
-    from pipeline.component.nn.backend.torch import init as init_
-    from pipeline.component.nn.backend.torch import optim as optim_
-    from pipeline.component.nn.backend.torch.cust import CustModel, CustLoss
-    from pipeline.component.nn.backend.torch.interactive import InteractiveLayer
+    from federatedml.component.nn.backend.torch import nn as nn_
+    from federatedml.component.nn.backend.torch import init as init_
+    from federatedml.component.nn.backend.torch import optim as optim_
+    from federatedml.component.nn.backend.torch.cust import CustModel, CustLoss
+    from federatedml.nn.backend.torch.interactive import InteractiveLayer
 except ImportError:
     pass
 

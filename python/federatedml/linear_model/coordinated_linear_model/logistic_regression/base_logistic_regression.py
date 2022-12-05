@@ -57,16 +57,21 @@ class BaseLogisticRegression(BaseLinearModel):
         for idx, header_name in enumerate(self.header):
             coef_i = self.model_weights.coef_[idx]
             weight_dict[header_name] = coef_i
-
+        
+        if hasattr(self, 'best_iteration'):
+            best_iter = self.best_iteration
+        else:
+            best_iter = -1 if self.validation_strategy is None else  self.validation_strategy.best_iteration
+                 
         result = {'iters': self.n_iter_,
                   'loss_history': self.loss_history,
                   'is_converged': self.is_converged,
                   'weight': weight_dict,
                   'intercept': self.model_weights.intercept_,
                   'header': self.header,
-                  'best_iteration': -1 if self.validation_strategy is None else
-                  self.validation_strategy.best_iteration
+                  'best_iteration': best_iter
                   }
+                  
         return result
 
     def _get_param(self):
@@ -78,7 +83,6 @@ class BaseLogisticRegression(BaseLinearModel):
             return param_protobuf_obj
 
         if self.need_one_vs_rest:
-            # one_vs_rest_class = list(map(str, self.one_vs_rest_obj.classes))
             one_vs_rest_result = self.one_vs_rest_obj.save(lr_model_param_pb2.SingleModel)
             single_result = {'header': self.header, 'need_one_vs_rest': True, "best_iteration": -1}
         else:

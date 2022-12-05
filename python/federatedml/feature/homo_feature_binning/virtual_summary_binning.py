@@ -21,9 +21,7 @@ import functools
 from federatedml.feature.binning.quantile_tool import QuantileBinningTool
 from federatedml.feature.homo_feature_binning import homo_binning_base
 from federatedml.param.feature_binning_param import HomoFeatureBinningParam
-# from federatedml.framework.homo.blocks import secure_sum_aggregator
-from federatedml.framework.hetero.procedure import table_aggregator
-
+from federatedml.framework.homo.aggregator.secure_aggregator import SecureAggregatorClient, SecureAggregatorServer
 from federatedml.util import LOGGER
 from federatedml.util import consts
 
@@ -34,7 +32,7 @@ class Server(homo_binning_base.Server):
 
     def fit_split_points(self, data=None):
         if self.aggregator is None:
-            self.aggregator = table_aggregator.Server(enable_secure_aggregate=True)
+            self.aggregator = SecureAggregatorServer(True, communicate_match_suffix='virtual_summary_binning')
         self.get_total_count()
         self.get_min_max()
         self.get_missing_count()
@@ -72,7 +70,7 @@ class Client(homo_binning_base.Client):
 
     def fit_split_points(self, data_instances):
         if self.aggregator is None:
-            self.aggregator = table_aggregator.Client(enable_secure_aggregate=True)
+            self.aggregator = SecureAggregatorClient(secure_aggregate=True, aggregate_type='sum', communicate_match_suffix='virtual_summary_binning')
         self.fit(data_instances)
 
         query_func = functools.partial(self._query, bin_num=self.bin_num,
