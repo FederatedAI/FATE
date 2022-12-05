@@ -36,4 +36,4 @@ class PretrainedBert(Module):
         if self.freeze_weight:
             return (),
         else:
-            return self.model.parameters()
+            return self.model.parameters(recurse=recurse)
