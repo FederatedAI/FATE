@@ -21,7 +21,6 @@ from fate_test.scripts.benchmark_cli import run_benchmark
 from fate_test.scripts.config_cli import config_group
 from fate_test.scripts.data_cli import data_group
 from fate_test.scripts.flow_test_cli import flow_group
-from fate_test.scripts.min_test_cli import run_min_test
 from fate_test.scripts.performance_cli import run_task
 from fate_test.scripts.pipeline_conversion_cli import convert_group
 from fate_test.scripts.quick_test_cli import unittest_group
@@ -39,7 +38,6 @@ commands = {
     "unittest": unittest_group,
     "convert": convert_group,
     "op-test": secure_protocol_group,
-    "min": run_min_test,
 }
 
 commands_alias = {

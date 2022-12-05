@@ -49,6 +49,8 @@ GUEST_PARTYID_REQUIRED = click.option("-gid", "--guest-party-id", type=click.STR
                                       help="A valid party id.")
 HOST_PARTYID_REQUIRED = click.option("-hid", "--host-party-id", type=click.STRING, required=True,
                                      help="A valid party id.")
+ARBITER_PARTYID_REQUIRED = click.option("-aid", "--arbiter-party-id", type=click.STRING, required=True,
+                                        help="A valid party id.")
 HOST_PARTYIDS_REQUIRED = click.option("-hids", "--host-party-ids", type=click.STRING, required=True,
                                       help="Multiple party ids, use a comma to separate each one.")
 
