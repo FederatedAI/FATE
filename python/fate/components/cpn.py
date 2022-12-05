@@ -51,10 +51,9 @@ flowing codes modified from [click](https://github.com/pallets/click) project
 
 import inspect
 import logging
-import pprint
-from typing import List, Optional, OrderedDict
+from typing import List, Optional
 
-from fate.components import Role
+from fate.components import Role, Stage
 
 
 class ComponentDeclarError(Exception):
@@ -126,68 +125,10 @@ class _Component:
 
         self.stage_components: List[_Component] = []
 
-    def validate_and_extract_execute_args(self, role, stage, inputs_artifacts, outputs_artifacts, inputs_parameters):
-        from fate.components.loader.artifact import load_artifact
-
-        name_artifact_mapping = {artifact.name: artifact for artifact in self.artifacts}
-        name_parameter_mapping = {parameter.name: parameter for parameter in self.parameters}
-        execute_args = [role]
-        for arg in self.func_args[2:]:
-            # arg support to be artifact
-            if arti := name_artifact_mapping.get(arg):
-                if (arti.stages is None or stage in arti.stages) and ((not (arti.roles)) or role.name in arti.roles):
-                    # get corresponding applying config
-                    if isinstance(arti, _InputArtifactDeclareClass):
-                        artifact_apply = inputs_artifacts.get(arg)
-                    elif isinstance(arti, _OutputArtifactDeclareClass):
-                        artifact_apply = outputs_artifacts.get(arg)
-                    else:
-                        artifact_apply = None
-
-                    if artifact_apply is None:
-                        if arti.optional:
-                            execute_args.append(None)
-                        # not found, and not optional
-                        else:
-                            raise ComponentApplyError(f"artifact `{arg}` required, declare: `{arti}`")
-                    # try apply
-                    else:
-                        try:
-                            # annotated metadata drop in inherite, so pass type as argument here
-                            # maybe we could find more elegant way some day
-                            execute_args.append(load_artifact(artifact_apply, arti.type))
-                        except Exception as e:
-                            raise ComponentApplyError(
-                                f"artifact `{arg}` with applying config `{artifact_apply}` can't apply to `{arti}`"
-                            ) from e
-                else:
-                    execute_args.append(None)
-
-            # arg support to be parameter
-            elif parameter := name_parameter_mapping.get(arg):
-                parameter_apply = inputs_parameters.get(arg)
-                if parameter_apply is None:
-                    if not parameter.optional:
-                        raise ComponentApplyError(f"parameter `{arg}` required, declare: `{parameter}`")
-                    else:
-                        execute_args.append(parameter.default)
-                else:
-                    if type(parameter_apply) != parameter.type:
-                        raise ComponentApplyError(
-                            f"parameter `{arg}` with applying config `{parameter_apply}` can't apply to `{parameter}`"
-                            f": {type(parameter_apply)} != {parameter.type}"
-                        )
-                    else:
-                        execute_args.append(parameter_apply)
-            else:
-                raise ComponentApplyError(f"should not go here")
-
-        return execute_args
-
-    def execute(self, ctx, *args):
+    def execute(self, ctx, role, **kwargs):
         if logger.isEnabledFor(logging.DEBUG):
-            logger.debug(f"execution arguments: {pprint.pformat(OrderedDict(zip(self.func_args, [ctx, *args])))}")
-        return self.callback(ctx, *args)
+            logger.debug(f"execution arguments: {kwargs}")
+        return self.callback(ctx, role, **kwargs)
 
     def get_artifacts(self):
         mapping = {artifact.name: artifact for artifact in self.artifacts}
@@ -424,13 +365,20 @@ def _component(name, roles, provider, version, description, is_subcomponent):
 
 
 class _ArtifactDeclareClass:
-    def __init__(self, name, type, roles, stages, desc, optional) -> None:
+    def __init__(self, name, type, roles: Optional[List[str]], stages: Optional[List[str]], desc, optional) -> None:
         self.name = name
         self.type = type
         self.roles = roles
         self.stages = stages
         self.desc = desc
         self.optional = optional
+
+    def is_active_for(self, stage: Stage, role: Role):
+        if self.stages is not None and stage.name not in self.stages:
+            return False
+        if self.roles and role.name not in self.roles:
+            return False
+        return True
 
 
 class _OutputArtifactDeclareClass(_ArtifactDeclareClass):

@@ -4,7 +4,7 @@ from typing_extensions import Annotated
 
 
 class Role:
-    def __init__(self, name) -> None:
+    def __init__(self, name: str) -> None:
         self.name = name
 
     @property
@@ -30,7 +30,7 @@ T_LABEL = Literal["trainable"]
 
 
 class Stage:
-    def __init__(self, name) -> None:
+    def __init__(self, name: str) -> None:
         self.name = name
 
     @property

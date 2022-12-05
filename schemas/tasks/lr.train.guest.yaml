@@ -32,19 +32,23 @@ inputs:
         dtype: float32
         num_features: 10
         num_samples: 569
-outputs:
-  artifacts:
-    output_model:
-      name: output_model
-      uri: file:///Users/sage/alpha/model/guest.json
-      metadata:
-        format: json
-    train_output_data:
-      name: train_output_data
-      uri: file:///Users/sage/alpha/data/guest_output_data
-      metadata:
-        format: csv
 conf:
+  output:
+    model:
+      type: directory
+      metadata:
+        uri: file:///Users/sage/alpha/output/model
+        format: json
+    metric:
+      type: directory
+      metadata:
+        uri: file:///Users/sage/alpha/output/metric
+        format: json
+    data:
+      type: directory
+      metadata:
+        uri: file:///Users/sage/alpha/output/data
+        format: csv
   mlmd:
     type: pipeline
     metadata:

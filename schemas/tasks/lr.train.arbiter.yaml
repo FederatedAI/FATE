@@ -7,15 +7,23 @@ inputs:
     learning_rate: 0.01
     max_iter: 5
     batch_size: 100
-
-outputs:
-  artifacts:
-    train_output_metric:
-      name: ClassificationMetrics
-      uri: file:///Users/sage/alpha/metric/arbiter_metrics.json
-      metadata:
-        format: json
 conf:
+  output:
+    model:
+      type: directory
+      metadata:
+        uri: file:///Users/sage/alpha/output/model
+        format: json
+    metric:
+      type: directory
+      metadata:
+        uri: file:///Users/sage/alpha/output/metric
+        format: json
+    data:
+      type: directory
+      metadata:
+        uri: file:///Users/sage/alpha/output/data
+        format: csv
   mlmd:
     type: pipeline
     metadata:

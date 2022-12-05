@@ -68,7 +68,7 @@ class IOKit:
     def writer(self, ctx, arg, **kwargs) -> "Writer":
         format, name, uri, metadata = self._parse_args(arg, **kwargs)
         if format is None:
-            raise ValueError(f"reader format `{format}` unknown")
+            raise ValueError(f"writer format `{format}` unknown")
         return get_writer(format, ctx, name, uri, metadata)
 
 
@@ -141,6 +141,7 @@ class JsonReader:
 
     def read_model(self):
         import json
+
         with open(self.uri, "r") as fin:
             model_dict = json.loads(fin.read())
 
