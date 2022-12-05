@@ -9,7 +9,7 @@ def slice(a: Tensor, key) -> Tensor:
 
     local_ops = local_ops_helper(_device, _dtype)
     if not _is_distributed:
-        output_storage = local_ops.slice(a.storage)
+        output_storage = local_ops.slice(a.storage, key)
     else:
         storage = a.storage
         assert isinstance(storage, DStorage), ""

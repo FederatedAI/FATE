@@ -125,7 +125,7 @@ class Tensor:
         return self.truediv(other)
 
     def __matmul__(self, other):
-        from ._matmul_ops import matmul
+        from .ops import matmul
 
         return matmul(self, other)
 
@@ -159,3 +159,15 @@ class Tensor:
     @_inject_op_sinature2
     def truediv(self, other) -> "Tensor":
         ...
+
+    def mean(self, *args, **kwargs) -> "Tensor":
+        return Tensor(self.storage.mean(*args, **kwargs))
+
+    def std(self, *args, **kwargs) -> "Tensor":
+        return Tensor(self.storage.std(*args, **kwargs))
+
+    def max(self, *args, **kwargs) -> "Tensor":
+        return Tensor(self.storage.max(*args, **kwargs))
+
+    def min(self, *args, **kwargs) -> "Tensor":
+        return Tensor(self.storage.min(*args, **kwargs))
