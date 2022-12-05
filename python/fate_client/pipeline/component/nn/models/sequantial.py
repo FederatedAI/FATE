@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 from pipeline.component.nn.backend.torch.base import Sequential as Seq
-from pipeline.component.nn.backend.torch.cust_model import CustModel
+from pipeline.component.nn.backend.torch.cust import CustModel
 from pipeline.component.nn.backend.torch.interactive import InteractiveLayer
 
 

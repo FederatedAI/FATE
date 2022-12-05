@@ -6,7 +6,7 @@ try:
     from pipeline.component.nn.backend.torch import optim, init, nn
     from pipeline.component.nn.backend.torch import operation
     from pipeline.component.nn.backend.torch.base import Sequential, get_torch_instance
-    from pipeline.component.nn.backend.torch.cust_model import CustModel
+    from pipeline.component.nn.backend.torch.cust import CustModel, CustLoss
     from pipeline.component.nn.backend.torch.interactive import InteractiveLayer
 except ImportError:
     pass
@@ -107,7 +107,12 @@ def recover_loss_fn_from_dict(define_dict):
         raise ValueError('please specify loss function in the json config')
     param_dict = copy.deepcopy(define_dict)
     param_dict.pop('loss_fn')
-    return loss_fn_dict[define_dict['loss_fn']](**param_dict)
+    if define_dict['loss_fn'] == CustLoss.__name__:
+        return CustLoss(loss_module_name=param_dict['loss_module_name'], 
+                        class_name=param_dict['class_name'], 
+                        **param_dict['param']).get_pytorch_model()
+    else:
+        return loss_fn_dict[define_dict['loss_fn']](**param_dict)
 
 
 if __name__ == '__main__':
