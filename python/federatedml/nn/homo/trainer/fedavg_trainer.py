@@ -319,7 +319,7 @@ class FedAVGTrainer(TrainerBase):
                 'check early stop, converge func is {}'.format(converge_func))
 
         LOGGER.info('server running aggregate procedure')
-        server_agg = SecureAggServer(True, aggregator_name=self.comm_suffix)
+        server_agg = SecureAggServer(True, communicate_match_suffix=self.comm_suffix)
 
         # aggregate and broadcast models
         for i in range(self.epochs):

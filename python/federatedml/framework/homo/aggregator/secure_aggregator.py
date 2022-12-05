@@ -1,4 +1,4 @@
-from federatedml.framework.homo.blocks import RandomPaddingCipherClient, RandomPaddingCipherServer, PadsCipher
+from federatedml.framework.homo.blocks import RandomPaddingCipherClient, RandomPaddingCipherServer, PadsCipher, RandomPaddingCipherTransVar
 from federatedml.framework.homo.aggregator.aggregator_base import AggregatorBaseClient, AutoSuffix, AggregatorBaseServer
 import numpy as np
 from federatedml.framework.weights import Weights, NumpyWeights
@@ -17,7 +17,8 @@ class SecureAggregatorClient(AggregatorBaseClient):
     def __init__(self, secure_aggregate=True, aggregate_type='weighted_mean', aggregate_weight=1.0,
                  communicate_match_suffix=None):
 
-        super(SecureAggregatorClient, self).__init__(communicate_match_suffix=communicate_match_suffix)
+        super(SecureAggregatorClient, self).__init__(
+            communicate_match_suffix=communicate_match_suffix)
         self.secure_aggregate = secure_aggregate
         self.suffix = {
             "local_loss": AutoSuffix("local_loss"),
@@ -29,11 +30,13 @@ class SecureAggregatorClient(AggregatorBaseClient):
 
         # init secure aggregate random padding:
         if self.secure_aggregate:
-            self._random_padding_cipher: PadsCipher = RandomPaddingCipherClient().create_cipher()
+            self._random_padding_cipher: PadsCipher = RandomPaddingCipherClient(
+                trans_var=RandomPaddingCipherTransVar(prefix=communicate_match_suffix)).create_cipher()
             LOGGER.info('initialize secure aggregator done')
 
         # compute weight
-        assert aggregate_type in AGG_TYPE, 'aggregate type must in {}'.format(AGG_TYPE)
+        assert aggregate_type in AGG_TYPE, 'aggregate type must in {}'.format(
+            AGG_TYPE)
         if aggregate_type == 'weighted_mean':
             aggregate_weight = aggregate_weight
         elif aggregate_type == 'mean':
@@ -66,12 +69,13 @@ class SecureAggregatorClient(AggregatorBaseClient):
             return to_agg
 
         # is FATE distrubed Table
-        elif is_table(model): 
+        elif is_table(model):
             model = model.mapValues(lambda x: x * self._weight)
 
             if self.secure_aggregate:
                 if not self._set_table_amplify_factor:
-                    self._random_padding_cipher.set_amplify_factor(consts.SECURE_AGG_AMPLIFY_FACTOR)
+                    self._random_padding_cipher.set_amplify_factor(
+                        consts.SECURE_AGG_AMPLIFY_FACTOR)
                 model = self._random_padding_cipher.encrypt_table(model)
             return model
 
@@ -175,7 +179,8 @@ class SecureAggregatorClient(AggregatorBaseClient):
 class SecureAggregatorServer(AggregatorBaseServer):
 
     def __init__(self, secure_aggregate=True, communicate_match_suffix=None):
-        super(SecureAggregatorServer, self).__init__(communicate_match_suffix=communicate_match_suffix)
+        super(SecureAggregatorServer, self).__init__(
+            communicate_match_suffix=communicate_match_suffix)
         self.suffix = {
             "local_loss": AutoSuffix("local_loss"),
             "agg_loss": AutoSuffix("agg_loss"),
@@ -185,7 +190,8 @@ class SecureAggregatorServer(AggregatorBaseServer):
         }
         self.secure_aggregate = secure_aggregate
         if self.secure_aggregate:
-            RandomPaddingCipherServer().exchange_secret_keys()
+            RandomPaddingCipherServer(trans_var=RandomPaddingCipherTransVar(
+                prefix=communicate_match_suffix)).exchange_secret_keys()
             LOGGER.info('initialize secure aggregator done')
 
         agg_weights = self.collect(suffix=('agg_weight', ))
@@ -228,7 +234,8 @@ class SecureAggregatorServer(AggregatorBaseServer):
                         agg_p += p
 
         if agg_result is None:
-            raise ValueError('can not aggregate receive model, format is illegal: {}'.format(models))
+            raise ValueError(
+                'can not aggregate receive model, format is illegal: {}'.format(models))
 
         return agg_result
 

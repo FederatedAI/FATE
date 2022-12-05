@@ -116,7 +116,6 @@ class HomoBoostingClient(Boosting, ABC):
 
         # init federation obj
         self.aggregator = HomoBoostClientAggregator(sample_num=data_inst.count())
-        self.binning_obj = HomoFeatureBinningClient()
 
         # binning
         self.data_preporcess(data_inst)
@@ -274,7 +273,6 @@ class HomoBoostingArbiter(Boosting, ABC):
 
         # init binning obj
         self.aggregator = HomoBoostArbiterAggregator()
-        self.binning_obj = HomoFeatureBinningServer()
 
         self.federated_binning()
         # initializing
