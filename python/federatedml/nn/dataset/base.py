@@ -1,10 +1,8 @@
-import abc
-import importlib
-
-import numpy as np
 from torch.utils.data import Dataset as Dataset_
-
 from federatedml.nn.backend.utils.common import ML_PATH
+import importlib
+import abc
+import numpy as np
 
 
 class Dataset(Dataset_):
@@ -13,6 +11,7 @@ class Dataset(Dataset_):
         super(Dataset, self).__init__()
         self._sample_ids = None
         self._type = 'local'  # train/predict
+        self.training = True
 
     @property
     def dataset_type(self):
@@ -45,9 +44,6 @@ class Dataset(Dataset_):
     def get_type(self):
         return self.dataset_type
 
-    def set_sample_ids(self, ids):
-        self.sample_ids = ids
-
     def get_sample_ids(self):
         if self.sample_ids is not None:
             return list(self.sample_ids)
@@ -69,8 +65,20 @@ class Dataset(Dataset_):
         self._sample_ids = generated_ids
 
     """
-    User to implement functions
+    Functions for users
     """
+
+    def set_sample_ids(self, ids):
+        self.sample_ids = ids
+
+    def train(self, ):
+        self.training = True
+
+    def eval(self, ):
+        self.training = False
+
+
+    # Function to implemented
 
     @abc.abstractmethod
     def load(self, file_path):
@@ -86,6 +94,8 @@ class Dataset(Dataset_):
 
     def get_classes(self):
         pass
+
+    
 
 
 class ShuffleWrapDataset(Dataset_):
@@ -130,6 +140,7 @@ class ShuffleWrapDataset(Dataset_):
 
 
 def get_dataset_class(dataset_module_name: str):
+
     if dataset_module_name.endswith('.py'):
         dataset_module_name = dataset_module_name.replace('.py', '')
     ds_modules = importlib.import_module(

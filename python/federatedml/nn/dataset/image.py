@@ -1,12 +1,12 @@
-import numpy as np
 import torch
-from torchvision import transforms
-from torchvision.datasets import ImageFolder
-
 from federatedml.nn.dataset.base import Dataset
+from torchvision.datasets import ImageFolder
+from torchvision import transforms
+import numpy as np
 
 
 class ImageDataset(Dataset):
+
     """
 
     A basic Image Dataset built on pytorch ImageFolder, supports simple image transform

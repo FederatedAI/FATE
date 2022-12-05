@@ -1,7 +1,9 @@
+import numpy as np
+from torch.utils.data import Dataset as torchDataset
+from federatedml.util import LOGGER
 from federatedml.nn.dataset.base import Dataset, get_dataset_class
 from federatedml.nn.dataset.image import ImageDataset
 from federatedml.nn.dataset.table import TableDataset
-from federatedml.util import LOGGER
 
 
 def try_dataset_class(dataset_class, path, param):
@@ -16,11 +18,12 @@ def try_dataset_class(dataset_class, path, param):
 
 
 def load_dataset(dataset_name, data_path_or_dtable, param, dataset_cache: dict):
+
     # load dataset class
     if isinstance(data_path_or_dtable, str):
         cached_id = data_path_or_dtable
     else:
-        cached_id = id(data_path_or_dtable)
+        cached_id = str(id(data_path_or_dtable))
 
     if cached_id in dataset_cache:
         LOGGER.debug('use cached dataset, cached id {}'.format(cached_id))
@@ -51,3 +54,13 @@ def load_dataset(dataset_name, data_path_or_dtable, param, dataset_cache: dict):
         dataset_cache[id(data_path_or_dtable)] = dataset_inst
 
     return dataset_inst
+
+
+def get_ret_predict_table(id_table, pred_table, classes, partitions, computing_session):
+
+    id_dtable = computing_session.parallelize(
+        id_table, partition=partitions, include_key=True)
+    pred_dtable = computing_session.parallelize(
+        pred_table, partition=partitions, include_key=True)
+
+    return id_dtable, pred_dtable

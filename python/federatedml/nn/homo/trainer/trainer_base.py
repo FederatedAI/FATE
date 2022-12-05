@@ -1,24 +1,17 @@
 import abc
 import importlib
-import json
-import tempfile
-from typing import List
-
-import numpy as np
 import torch as t
-import torch.optim
+import numpy as np
 from torch.nn import Module
-
-from federatedml.evaluation.evaluation import Evaluation
-from federatedml.feature.instance import Instance
-from federatedml.model_base import Metric, MetricMeta
-from federatedml.model_base import serialize_models
-from federatedml.nn.backend.utils.common import ML_PATH, get_homo_model_dict
-from federatedml.param import EvaluateParam
-from federatedml.protobuf.generated.homo_nn_model_meta_pb2 import HomoNNMeta
-from federatedml.protobuf.generated.homo_nn_model_param_pb2 import HomoNNParam
-from federatedml.util import LOGGER
+from typing import List
 from federatedml.util import consts
+from federatedml.util import LOGGER
+from federatedml.model_base import serialize_models
+from federatedml.nn.backend.utils.common import ML_PATH
+from federatedml.feature.instance import Instance
+from federatedml.evaluation.evaluation import Evaluation
+from federatedml.model_base import Metric, MetricMeta
+from federatedml.param import EvaluateParam
 
 
 class StdReturnFormat(object):
@@ -28,8 +21,18 @@ class StdReturnFormat(object):
         self.pred_table = pred_table
         self.classes = classes
 
-    def __call__(self, ):
+    def __call__(self,):
         return self.id, self.pred_table, self.classes
+
+
+class ExporterBase(object):
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def export_model_dict(self, model=None, optimizer=None, model_define=None, optimizer_define=None, loss_define=None,
+                          epoch_idx=-1, converge_status=False, loss_history=None, best_epoch=-1, extra_data={}):
+        pass
 
 
 class TrainerBase(object):
@@ -45,15 +48,21 @@ class TrainerBase(object):
         self._model = None
         self._tracker = None
         self._model_checkpoint = None
-        self._check_point_history = []
-        self._summary = {}
+        self._exporter = None
+        self._evaluation_summary = {}
+
+        # running status
+        self._set_model_checkpoint_epoch = set()
 
         # nn config
         self.nn_define, self.opt_define, self.loss_define = {}, {}, {}
 
+        # ret summary
+        self._summary = {}
+
     @staticmethod
     def is_pos_int(val):
-        return isinstance(val, int), val > 0
+        return val > 0 and isinstance(val, int)
 
     @staticmethod
     def is_float(val):
@@ -101,6 +110,7 @@ class TrainerBase(object):
 
     @fed_mode.setter
     def fed_mode(self, val):
+        assert isinstance(val, bool), 'fed mode must be a bool'
         self._fed_mode = val
 
     def local_mode(self):
@@ -114,75 +124,19 @@ class TrainerBase(object):
     def set_tracker(self, tracker):
         self._tracker = tracker
 
-    def init_checkpoint(self, chkp):
+    def set_checkpoint(self, chkp):
         self._model_checkpoint = chkp
-
-    def set_flowid(self, flowid):
-        """
-        Set flow id, and initialize transfer variable
-        """
-        self._flowid = flowid
-
-    def set_role(self, role):
-        """
-        set self role
-        """
-        self.role = role
-
-    def set_party_id(self, party_id):
-        self.party_id = party_id
 
     def set_party_id_list(self, party_id_list):
         self.party_id_list = party_id_list
 
-    def set_model(self, model: Module):
-        if not issubclass(type(model), Module):
-            raise ValueError('model must be a subclass of pytorch nn.Module')
-        self.model = model
+    def set_model_exporter(self, exporter):
+        assert isinstance(
+            exporter, ExporterBase), 'exporter is not an instance of ExporterBase'
+        self._exporter = exporter
 
-    def get_checkpoint_history(self):
-        return self._check_point_history
-
-    def _get_model_param_and_meta(self, model, optimizer=None, epoch_idx=-1):
-
-        if issubclass(type(model), Module):
-            self._cache_model = model
-            opt_state_dict = None
-            if optimizer is not None:
-                assert isinstance(optimizer, torch.optim.Optimizer), \
-                    'optimizer must be an instance of torch.optim.Optimizer'
-                opt_state_dict = optimizer.state_dict()
-
-            model_status = {
-                'model': model.state_dict(),
-                'optimizer': opt_state_dict,
-            }
-
-            with tempfile.TemporaryFile() as f:
-                torch.save(model_status, f)
-                f.seek(0)
-                model_saved_bytes = f.read()
-
-            param = HomoNNParam()
-            meta = HomoNNMeta()
-
-            param.model_bytes = model_saved_bytes
-            meta.nn_define.append(json.dumps(self.nn_define))
-            meta.optimizer_define.append(json.dumps(self.opt_define))
-            meta.loss_func_define.append(json.dumps(self.loss_define))
-
-            return param, meta
-
-        else:
-            raise ValueError(
-                'export model must be a subclass of torch nn.Module, however got {}'.format(
-                    type(model)))
-
-    def export_model(self, model, optimizer=None, epoch_idx=-1):
-
-        param, meta = self._get_model_param_and_meta(
-            model, optimizer, epoch_idx)
-        self._cache_model = (param, meta)
+    def get_cached_model(self):
+        return self._cache_model
 
     @staticmethod
     def task_type_infer(predict_result: t.Tensor, true_label):
@@ -206,12 +160,88 @@ class TrainerBase(object):
                 else:
                     return None
             elif (len(pred_shape) == 1) or (pred_shape[1] == 1):
-                # if t.max(predict_result) <= 1.0 and t.min(predict_result) >= 0.0:
-                #     return consts.BINARY
-                # else:
                 return consts.REGRESSION
 
         return None
+
+    def _update_metric_summary(self, metric_dict):
+
+        if len(metric_dict) == 0:
+            return
+
+        iter_name = list(metric_dict.keys())[0]
+        metric_dict = metric_dict[iter_name]
+
+        if len(self._evaluation_summary) == 0:
+            self._evaluation_summary = {namespace: {}
+                                        for namespace in metric_dict}
+
+        for namespace in metric_dict:
+            for metric_name in metric_dict[namespace]:
+                epoch_metric = metric_dict[namespace][metric_name]
+                if namespace not in self._evaluation_summary:
+                    self._evaluation_summary[namespace] = {}
+                if metric_name not in self._evaluation_summary[namespace]:
+                    self._evaluation_summary[namespace][metric_name] = []
+                self._evaluation_summary[namespace][metric_name].append(
+                    epoch_metric)
+
+    def get_evaluation_summary(self):
+        return self._evaluation_summary
+
+    def get_summary(self):
+        return self._summary
+
+    """
+    User Interfaces    
+    """
+
+    def set_model(self, model: Module):
+        if not issubclass(type(model), Module):
+            raise ValueError('model must be a subclass of pytorch nn.Module')
+        self.model = model
+
+    def save(self, model=None, epoch_idx=-1, optimizer=None, converge_status=False, loss_history=None, best_epoch=-1, extra_data={}):
+
+        assert isinstance(
+            epoch_idx, int) and epoch_idx >= 0, 'epoch idx must be an int >= 0'
+
+        if self._exporter:
+            model_dict = self._exporter.export_model_dict(model=model,
+                                                          optimizer=optimizer,
+                                                          model_define=self.nn_define,
+                                                          optimizer_define=self.opt_define,
+                                                          loss_define=self.loss_define,
+                                                          epoch_idx=epoch_idx,
+                                                          converge_status=converge_status,
+                                                          loss_history=loss_history,
+                                                          best_epoch=best_epoch,
+                                                          extra_data=extra_data
+                                                          )
+            self._cache_model = model_dict
+
+    def checkpoint(self, epoch_idx, model=None, optimizer=None, converge_status=False, loss_history=None, best_epoch=-1, extra_data={}):
+
+        assert isinstance(
+            epoch_idx, int) and epoch_idx >= 0, 'epoch idx must be an int >= 0'
+
+        if self._model_checkpoint:
+
+            if self._exporter is None:
+                raise RuntimeError('exporter is None, cannot save checkpoint')
+
+            if epoch_idx in self._set_model_checkpoint_epoch:
+                LOGGER.info(
+                    'checkpoint at epoch {} set, skip setting checkpoint'.format(epoch_idx))
+                return
+
+            self.save(model=model, epoch_idx=epoch_idx, optimizer=optimizer, converge_status=converge_status,
+                      loss_history=loss_history, best_epoch=best_epoch, extra_data=extra_data)
+
+            self._model_checkpoint.add_checkpoint(
+                len(self._set_model_checkpoint_epoch), to_save_model=serialize_models(self._cache_model)) # step_index, to_save_model
+            self._set_model_checkpoint_epoch.add(epoch_idx)
+            LOGGER.info('checkpoint at epoch {} saved'.format(epoch_idx))
 
     def format_predict_result(self, sample_ids: List, predict_result: t.Tensor,
                               true_label: t.Tensor, task_type: str = None):
@@ -232,7 +262,6 @@ class TrainerBase(object):
             classes = [i for i in range(predict_result.shape[1])]
 
         true_label = true_label.cpu().detach().flatten().tolist()
-
         if task_type == consts.MULTY:
             predict_result = predict_result.tolist()
         else:
@@ -243,24 +272,6 @@ class TrainerBase(object):
         score_table = [(id_, pred)
                        for id_, pred in zip(sample_ids, predict_result)]
         return StdReturnFormat(id_table, score_table, classes)
-
-    def get_cached_model(self):
-        return self._cache_model
-
-    def set_checkpoint(self, model, optimizer=None, epoch_idx=-1):
-
-        assert isinstance(
-            epoch_idx, int) and epoch_idx >= 0, 'epoch idx must be an int >= 0'
-        if self._model_checkpoint:
-            param, meta = self._get_model_param_and_meta(
-                model, optimizer, epoch_idx)
-            model_dict = get_homo_model_dict(param, meta)
-            self._model_checkpoint.add_checkpoint(
-                epoch_idx, to_save_model=serialize_models(model_dict))
-            if not self._check_point_history:
-                self._check_point_history = []
-            self._check_point_history.append(epoch_idx)
-            LOGGER.info('check point at epoch {} saved'.format(epoch_idx))
 
     def callback_metric(self, metric_name: str, value: float, metric_type='train', epoch_idx=0):
 
@@ -286,6 +297,11 @@ class TrainerBase(object):
                 metrics=[Metric(epoch_idx, loss)],
             )
 
+    def summary(self, summary_dict: dict):
+        
+        assert isinstance(summary_dict, dict), 'summary must be a dict'
+        self._summary = summary_dict
+
     def evaluation(self, sample_ids: list, pred_scores: t.Tensor, label: t.Tensor, dataset_type='train',
                    metric_list=None, epoch_idx=0, task_type=None):
 
@@ -294,6 +310,7 @@ class TrainerBase(object):
             task_type = self.task_type_infer(pred_scores, label)
 
         if task_type is None:
+            LOGGER.debug('cannot infer task type, return')
             return
 
         assert dataset_type in [
@@ -309,7 +326,7 @@ class TrainerBase(object):
         eval_obj._init_model(eval_param)
 
         pred_scores = pred_scores.cpu().detach().numpy()
-        label = label.cpu().detach().numpy()
+        label = label.cpu().detach().numpy().flatten()
 
         if task_type == consts.REGRESSION or task_type == consts.BINARY:
             pred_scores = pred_scores.flatten()
@@ -337,8 +354,19 @@ class TrainerBase(object):
             eval_obj.callback_metric_data(
                 {'iteration_{}'.format(epoch_idx): [eval_result]})
 
+        self._update_metric_summary(eval_obj.metric_summaries)
+        return self._evaluation_summary
+
+    def to_cuda(self, var):
+        if hasattr(var, 'cuda'):
+            return var.cuda()
+        elif isinstance(var, tuple) or isinstance(var, list):
+            return tuple(self.to_cuda(i) for i in var)
+        else:
+            return var
+
     @abc.abstractmethod
-    def train(self, train_set, validate_set=None, optimizer=None, loss=None):
+    def train(self, train_set, validate_set=None, optimizer=None, loss=None, extra_data={}):
         """
             train_set : A Dataset Instance, must be a instance of subclass of Dataset (federatedml.nn.dataset.base),
                       for example, TableDataset() (from federatedml.nn.dataset.table)
@@ -356,8 +384,18 @@ class TrainerBase(object):
     def predict(self, dataset):
         pass
 
+    @abc.abstractmethod
+    def server_aggregate_procedure(self, extra_data={}):
+        pass
+
+
+"""
+Load Trainer
+"""
+
 
 def get_trainer_class(trainer_module_name: str):
+
     if trainer_module_name.endswith('.py'):
         trainer_module_name = trainer_module_name.replace('.py', '')
     ds_modules = importlib.import_module(

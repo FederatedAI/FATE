@@ -22,4 +22,9 @@ option java_outer_classname = "HomoNNParamProto";
 
 message HomoNNParam {
     bytes model_bytes = 1;
+    bytes extra_data_bytes = 2;
+    int32 epoch_idx = 3;
+    bool converge_status = 4;
+    repeated float loss_history = 5;
+    int32 best_epoch = 6;
 }

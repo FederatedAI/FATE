@@ -1,9 +1,8 @@
 import random
-
-import numpy as np
-
 from fate_arch.session import computing_session
+import numpy as np
 from federatedml.secureprotol.paillier_tensor import PaillierTensor
+
 
 BITS = 10
 MIXED_RATE = 0.5

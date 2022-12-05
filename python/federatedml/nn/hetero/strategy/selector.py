@@ -18,7 +18,6 @@
 #
 
 import numpy as np
-
 from federatedml.nn.hetero.strategy.comparision import Comparision
 
 

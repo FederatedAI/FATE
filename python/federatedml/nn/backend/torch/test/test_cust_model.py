@@ -1,11 +1,9 @@
+from federatedml.nn.backend.torch import nn, init
 import json
-
-import torch as t
-
-from federatedml.nn.backend.torch import nn
 from federatedml.nn.backend.torch import serialization as s
-from federatedml.nn.backend.torch.cust_model import CustModel
+import torch as t
 from federatedml.nn.backend.torch.import_hook import fate_torch_hook
+from federatedml.nn.backend.torch.cust import CustModel
 
 fate_torch_hook(t)
 

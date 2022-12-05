@@ -39,7 +39,6 @@ class HomoNNParam(BaseParam):
                  trainer: TrainerParam = TrainerParam(),
                  dataset: DatasetParam = DatasetParam(),
                  torch_seed: int = 100,
-                 validation_freq: int = None,
                  nn_define: dict = None,
                  loss: dict = None,
                  optimizer: dict = None
@@ -49,7 +48,6 @@ class HomoNNParam(BaseParam):
         self.trainer = trainer
         self.dataset = dataset
         self.torch_seed = torch_seed
-        self.validation_freq = validation_freq
         self.nn_define = nn_define
         self.loss = loss
         self.optimizer = optimizer
@@ -62,8 +60,6 @@ class HomoNNParam(BaseParam):
         self.trainer.check()
         self.dataset.check()
         self.check_positive_integer(self.torch_seed, 'torch seed')
-        if self.validation_freq is not None:
-            self.check_positive_integer(self.validation_freq, 'validation freq')
         if self.nn_define is not None:
             assert isinstance(self.nn_define, dict), 'nn define should be a dict defining model structures'
         if self.loss is not None:

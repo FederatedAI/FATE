@@ -1,11 +1,9 @@
-import os
-
-import numpy as np
+from federatedml.nn.dataset.base import Dataset
 import pandas as pd
 import torch as t
 from transformers import BertTokenizerFast
-
-from federatedml.nn.dataset.base import Dataset
+import os
+import numpy as np
 
 # avoid tokenizer parallelism
 os.environ["TOKENIZERS_PARALLELISM"] = "false"

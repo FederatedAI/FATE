@@ -1,6 +1,5 @@
-from torch.nn import Module
 from transformers.models.bert import BertModel
-
+from torch.nn import Module
 from federatedml.util import LOGGER
 
 
