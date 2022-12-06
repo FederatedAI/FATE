@@ -39,9 +39,9 @@ class HomoLRServerExporter(ExporterBase):
         return {self.param_name: lr_model_param_pb2.LRModelParam(), self.meta_name: lr_model_meta_pb2.LRModelMeta()}
 
 
-class HomoLRArbiter(HomoLRBase):
+class HomoLRServer(HomoLRBase):
     def __init__(self):
-        super(HomoLRArbiter, self).__init__()
+        super(HomoLRServer, self).__init__()
         self.re_encrypt_times = []  # Record the times needed for each host
         self.role = consts.ARBITER
         self.trainer = None
@@ -54,7 +54,7 @@ class HomoLRArbiter(HomoLRBase):
         super()._init_model(params)
 
     def fit_binary(self, data_instances=None, validate_data=None):
-
+        
         for i in self.callback_list.callback_list:
             if isinstance(i, ModelCheckpoint):
                 self.save_freq = i.save_freq
@@ -69,18 +69,18 @@ class HomoLRArbiter(HomoLRBase):
                     name="train", metric_type="LOSS", extra_metas={
                         "unit_name": "aggregate_round"}))
 
-        self.trainer = FedAVGTrainer(
-            epochs=self.max_iter,
-            secure_aggregate=True,
-            aggregate_every_n_epoch=self.aggregate_iters,
-            validation_freqs=self.validation_freqs,
-            task_type='binary',
-            checkpoint_save_freqs=self.save_freq)
+        early_stop = None
+        if self.early_stop != 'weight_diff':
+            early_stop = self.early_stop
+        self.trainer = FedAVGTrainer(epochs=self.max_iter, secure_aggregate=True, aggregate_every_n_epoch=self.aggregate_iters, 
+                                     validation_freqs=self.validation_freqs, task_type='binary', checkpoint_save_freqs=self.save_freq,
+                                     early_stop=early_stop, tol=self.tol
+                                     )
         if self.one_vs_rest_obj is None:
             self.trainer.set_tracker(self.tracker)
         self.trainer.set_checkpoint(self.model_checkpoint)
         self.trainer.set_model_exporter(HomoLRServerExporter(self.model_param_name, self.model_meta_name))
-
+        
         self.trainer.server_aggregate_procedure()
         LOGGER.info("Finish Training task")
 

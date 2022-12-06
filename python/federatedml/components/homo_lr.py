@@ -30,22 +30,22 @@ def homo_lr_param():
 @homo_lr_cpn_meta.bind_runner.on_guest
 def homo_lr_runner_guest():
     from federatedml.linear_model.coordinated_linear_model.logistic_regression.homo_logistic_regression.homo_lr_client import (
-        HomoLRGuest, )
+        HomoLRClient, )
 
-    return HomoLRGuest
+    return HomoLRClient
 
 
 @homo_lr_cpn_meta.bind_runner.on_host
 def homo_lr_runner_host():
     from federatedml.linear_model.coordinated_linear_model.logistic_regression.homo_logistic_regression.homo_lr_client import (
-        HomoLRGuest, )
+        HomoLRClient, )
 
-    return HomoLRGuest
+    return HomoLRClient
 
 
 @homo_lr_cpn_meta.bind_runner.on_arbiter
 def homo_lr_runner_arbiter():
     from federatedml.linear_model.coordinated_linear_model.logistic_regression.homo_logistic_regression.homo_lr_server import (
-        HomoLRArbiter, )
+        HomoLRServer, )
 
-    return HomoLRArbiter
+    return HomoLRServer
