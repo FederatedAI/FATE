@@ -108,8 +108,8 @@ def recover_loss_fn_from_dict(define_dict):
     param_dict = copy.deepcopy(define_dict)
     param_dict.pop('loss_fn')
     if define_dict['loss_fn'] == CustLoss.__name__:
-        return CustLoss(loss_module_name=param_dict['loss_module_name'], 
-                        class_name=param_dict['class_name'], 
+        return CustLoss(loss_module_name=param_dict['loss_module_name'],
+                        class_name=param_dict['class_name'],
                         **param_dict['param']).get_pytorch_model()
     else:
         return loss_fn_dict[define_dict['loss_fn']](**param_dict)

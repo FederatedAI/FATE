@@ -25,7 +25,7 @@ class AggregatorBaseClient(object):
         Parameters
         ----------
         communicate_match_suffix : str, you can give a unique name to aggregator, to avoid reusing of same transfer variable tag,
-                          To make sure that client and server can communicate correctly, 
+                          To make sure that client and server can communicate correctly,
                           the server-side and client-side aggregators need to have the same suffix
         """
         self.communicator = ClientCommunicator(prefix=communicate_match_suffix)
@@ -58,7 +58,7 @@ class AggregatorBaseServer(object):
         Parameters
         ----------
         communicate_match_suffix : str, you can give a unique name to aggregator, to avoid reusing of same transfer variable tag,
-                          To make sure that client and server can communicate correctly, 
+                          To make sure that client and server can communicate correctly,
                           the server-side and client-side aggregators need to have the same suffix
         """
         self.communicator = ServerCommunicator(prefix=communicate_match_suffix)

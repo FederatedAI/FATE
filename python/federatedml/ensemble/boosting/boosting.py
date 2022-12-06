@@ -442,8 +442,8 @@ class Boosting(ModelBase, ABC):
         """
         predicts = None
         loss_method = self.loss
-        
-        if self.task_type == consts.CLASSIFICATION:    
+
+        if self.task_type == consts.CLASSIFICATION:
             if self.num_classes == 2:
                 predicts = y_hat.mapValues(lambda f: float(loss_method.predict(f)))
             else:

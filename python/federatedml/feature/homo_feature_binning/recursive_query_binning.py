@@ -31,7 +31,8 @@ class Server(homo_binning_base.Server):
 
     def fit_split_points(self, data=None):
         if self.aggregator is None:
-            self.aggregator = SecureAggregatorServer(secure_aggregate=True, communicate_match_suffix='recursive_query_binning')
+            self.aggregator = SecureAggregatorServer(
+                secure_aggregate=True, communicate_match_suffix='recursive_query_binning')
         self.get_total_count()
         self.get_min_max()
         self.get_missing_count()
@@ -61,7 +62,10 @@ class Client(homo_binning_base.Client):
 
     def fit_split_points(self, data_instances):
         if self.aggregator is None:
-            self.aggregator = SecureAggregatorClient(secure_aggregate=True, aggregate_type='sum', communicate_match_suffix='recursive_query_binning')
+            self.aggregator = SecureAggregatorClient(
+                secure_aggregate=True,
+                aggregate_type='sum',
+                communicate_match_suffix='recursive_query_binning')
         if self.bin_inner_param is None:
             self._setup_bin_inner_param(data_instances, self.params)
         self.total_count = self.get_total_count(data_instances)

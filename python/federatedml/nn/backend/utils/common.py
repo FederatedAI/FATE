@@ -30,7 +30,7 @@ def recover_model_bytes(model_bytes):
         f.write(model_bytes)
         f.seek(0)
         model_dict = t.load(f)
-        
+
     return model_dict
 
 

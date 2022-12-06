@@ -52,7 +52,7 @@ class Sequential(object):
             is_seq = isinstance(layer, Seq)
             is_cust_model = isinstance(layer, CustModel)
             is_interactive_layer = isinstance(layer, InteractiveLayer)
-            if not(is_layer or is_cust_model or is_interactive_layer or is_seq):
+            if not (is_layer or is_cust_model or is_interactive_layer or is_seq):
                 raise ValueError(
                     "Layer type {} not support yet, added layer must be a FateTorchLayer or a fate_torch "
                     "Sequential, remember to call fate_torch_hook() before using pipeline "

@@ -49,7 +49,10 @@ class HomoFeatureBinningServer(object):
 
 class HomoFeatureBinningClient(object):
     def __init__(self, bin_method=consts.QUANTILE):
-        self.aggregator = SecureAggregatorClient(secure_aggregate=True, aggregate_type='mean', communicate_match_suffix='homo_feature_binning')
+        self.aggregator = SecureAggregatorClient(
+            secure_aggregate=True,
+            aggregate_type='mean',
+            communicate_match_suffix='homo_feature_binning')
         self.suffix = tuple()
         self.bin_method = bin_method
         self.bin_obj: QuantileBinning = None

@@ -30,11 +30,12 @@ def get_class(module_name, class_name, param, base_path):
         sort_by_simi = sorted(name_simi_list, key=lambda x: -x[0])
 
         if len(sort_by_simi) > 0:
-            raise ValueError('Did not find any class in {}.py that is subclass of nn.Module and named {}. Do you mean {}?'.
-                                format(module_name, class_name, sort_by_simi[0][1].__name__))
+            raise ValueError(
+                'Did not find any class in {}.py that is subclass of nn.Module and named {}. Do you mean {}?'. format(
+                    module_name, class_name, sort_by_simi[0][1].__name__))
         else:
             raise ValueError('Did not find any class in {}.py that is subclass of nn.Module and named {}'.
-                                format(module_name, class_name))
+                             format(module_name, class_name))
 
     except ValueError as e:
         raise e
@@ -59,11 +60,19 @@ class CustModel(FateTorchLayer, nn.Module):
         return self._model(x)
 
     def get_pytorch_model(self, module_path=None):
-        
+
         if module_path is None:
-            return get_class(self.param_dict['module_name'], self.param_dict['class_name'], self.param_dict['param'], MODEL_PATH)
+            return get_class(
+                self.param_dict['module_name'],
+                self.param_dict['class_name'],
+                self.param_dict['param'],
+                MODEL_PATH)
         else:
-            return get_class(self.param_dict['module_name'], self.param_dict['class_name'], self.param_dict['param'], module_path)
+            return get_class(
+                self.param_dict['module_name'],
+                self.param_dict['class_name'],
+                self.param_dict['param'],
+                module_path)
 
     def __repr__(self):
         return 'CustModel({})'.format(str(self.param_dict))

@@ -60,8 +60,8 @@ class HeteroNN(FateComponent):
         self._top_nn_model = Sequential()
 
         # role
-        self._role = 'common' # common/guest/host
- 
+        self._role = 'common'  # common/guest/host
+
         if hasattr(self, 'dataset'):
             assert isinstance(self.dataset, DatasetParam), 'dataset must be a DatasetParam class'
             self.dataset.check()
@@ -86,7 +86,7 @@ class HeteroNN(FateComponent):
         self._bottom_nn_model.add(model)
 
     def set_interactve_layer(self, layer):
-        
+
         if self._role == 'common' or self._role == 'guest':
             if not hasattr(self, "_interactive_layer"):
                 setattr(self, "_interactive_layer", Sequential())

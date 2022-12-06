@@ -14,6 +14,7 @@ import hashlib
 Base Transfer variable
 """
 
+
 class HomoTransferBase(BaseTransferVariables):
     def __init__(self, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST), prefix=None):
         super().__init__()
@@ -48,6 +49,8 @@ class HomoTransferBase(BaseTransferVariables):
 """
 Client & Server Communication
 """
+
+
 class CommunicatorTransVar(HomoTransferBase):
     def __init__(self, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST), prefix=None):
         super().__init__(server=server, clients=clients, prefix=prefix)
@@ -81,7 +84,7 @@ class ServerCommunicator(object):
 
 
 class ClientCommunicator(object):
-    
+
     def __init__(self, prefix=None):
         trans_var = CommunicatorTransVar(prefix=prefix)
         self.trans_var = trans_var
@@ -97,6 +100,7 @@ class ClientCommunicator(object):
 """
 Diffie Hellman Exchange
 """
+
 
 class DHTransVar(HomoTransferBase):
     def __init__(self, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST), prefix=None):
@@ -142,9 +146,12 @@ class DHClient(object):
         share_secret = {uid: DiffieHellman.decrypt(gr, r, p) for uid, gr in cipher_texts.items() if uid != uuid}
         return share_secret
 
+
 """
 UUID
 """
+
+
 class UUIDTransVar(HomoTransferBase):
     def __init__(self, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST), prefix=None):
         super().__init__(server=server, clients=clients, prefix=prefix)
@@ -193,9 +200,11 @@ class UUIDClient(object):
         uid = self._uuid_variable.get_parties(parties=self._server_parties)[0]
         return uid
 
+
 """
 Random Padding
 """
+
 
 class RandomPaddingCipherTransVar(HomoTransferBase):
     def __init__(self, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST), prefix=None):
@@ -247,9 +256,11 @@ class RandomPaddingCipherClient(object):
     def encrypt(self, transfer_weights):
         return self._cipher.encrypt(transfer_weights)
 
+
 """
 Paillier Cipher
 """
+
 
 class PaillierCipherTransVar(HomoTransferBase):
     def __init__(self, server=(consts.ARBITER,), clients=(consts.HOST,), prefix=None):

@@ -135,7 +135,13 @@ class SecureAggregatorClient(AggregatorBaseClient):
             loss, np.ndarray), 'illegal loss type {}, loss should be a float or a np array'.format(type(loss))
         self.send(loss * self._weight, suffix)
 
-    def send_model(self, model: Union[np.ndarray, Weights, List[np.ndarray], t.nn.Module, t.optim.Optimizer], suffix=tuple()):
+    def send_model(self,
+                   model: Union[np.ndarray,
+                                Weights,
+                                List[np.ndarray],
+                                t.nn.Module,
+                                t.optim.Optimizer],
+                   suffix=tuple()):
         """Sending model to arbiter for aggregation
 
         Parameters

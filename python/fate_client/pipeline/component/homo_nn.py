@@ -87,7 +87,7 @@ class HomoNN(FateComponent):
         self._check_parameters()
 
     def _set_updated(self, attr, status=True):
-        
+
         if attr in self._updated:
             self._updated[attr] = status
         else:
@@ -127,9 +127,9 @@ class HomoNN(FateComponent):
         if hasattr(self, 'optimizer') and self.optimizer is not None and not self._updated['optimizer']:
             if not isinstance(self.optimizer, base.FateTorchOptimizer):
                 raise ValueError('please pass FateTorchOptimizer instances to Homo-nn components, got {}.'
-                                    'do remember to use fate_torch_hook():\n'
-                                    '    import torch as t\n'
-                                    '    fate_torch_hook(t)'.format(type(self.optimizer)))
+                                 'do remember to use fate_torch_hook():\n'
+                                 '    import torch as t\n'
+                                 '    fate_torch_hook(t)'.format(type(self.optimizer)))
             optimizer_config = self.optimizer.to_dict()
             self.optimizer = optimizer_config
             self._set_updated('optimizer', True)
@@ -141,8 +141,8 @@ class HomoNN(FateComponent):
                 loss_config = self.loss().to_dict()
             else:
                 raise ValueError('unable to parse loss function {}, loss must be an instance'
-                                    'of FateTorchLoss subclass or a subclass of FateTorchLoss, '
-                                    'do remember to use fate_torch_hook()'.format(self.loss))
+                                 'of FateTorchLoss subclass or a subclass of FateTorchLoss, '
+                                 'do remember to use fate_torch_hook()'.format(self.loss))
             self.loss = loss_config
             self._set_updated('loss', True)
 
@@ -166,7 +166,6 @@ class HomoNN(FateComponent):
                 continue
             else:
                 self._component_param[attr] = getattr(self, attr)
-
 
     def __getstate__(self):
         state = dict(self.__dict__)

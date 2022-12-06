@@ -70,7 +70,10 @@ class Client(homo_binning_base.Client):
 
     def fit_split_points(self, data_instances):
         if self.aggregator is None:
-            self.aggregator = SecureAggregatorClient(secure_aggregate=True, aggregate_type='sum', communicate_match_suffix='virtual_summary_binning')
+            self.aggregator = SecureAggregatorClient(
+                secure_aggregate=True,
+                aggregate_type='sum',
+                communicate_match_suffix='virtual_summary_binning')
         self.fit(data_instances)
 
         query_func = functools.partial(self._query, bin_num=self.bin_num,

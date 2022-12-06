@@ -44,7 +44,10 @@ class DecisionTreeClientAggregator(object):
     """
 
     def __init__(self, verbose=False):
-        self.aggregator = SecureAggregatorClient(secure_aggregate=True, aggregate_type='sum', communicate_match_suffix='tree_agg')
+        self.aggregator = SecureAggregatorClient(
+            secure_aggregate=True,
+            aggregate_type='sum',
+            communicate_match_suffix='tree_agg')
         self.verbose = verbose
 
     def send_histogram(self, hist: List[HistogramBag], suffix):
