@@ -82,14 +82,14 @@ def check_log(flow_sdk, party_id, job_id, job_status):
 
 
 @test.command("min", short_help="Min Test Command")
-@click.option("-d", "--data-type", type=click.Choice(["fast", "normal"]), default="fast", show_default=True,
+@click.option("-t", "--data-type", type=click.Choice(["fast", "normal"]), default="fast", show_default=True,
               help="fast for breast data, normal for default credit data")
-@click.option("-t", "--task-type", type=click.Choice(["lr", "sbt"]), default="lr", show_default=True)
+@click.option("--sbt/--no-sbt", is_flag=True, default=True, show_default=True, help="run sbt test or not")
 @cli_args.GUEST_PARTYID_REQUIRED
 @cli_args.HOST_PARTYID_REQUIRED
 @cli_args.ARBITER_PARTYID_REQUIRED
 @click.pass_context
-def run_min_test(ctx, data_type, task_type, guest_party_id, host_party_id, arbiter_party_id, **kwargs):
+def run_min_test(ctx, data_type, sbt, guest_party_id, host_party_id, arbiter_party_id, **kwargs):
     guest_party_id = int(guest_party_id)
     host_party_id = int(host_party_id)
     arbiter_party_id = int(arbiter_party_id)
@@ -106,20 +106,22 @@ def run_min_test(ctx, data_type, task_type, guest_party_id, host_party_id, arbit
         click.echo(f"data type {data_type} not supported", err=True)
         raise click.Abort()
 
-    if task_type == "lr":
-        pipeline = lr_train_pipeline(guest_party_id, host_party_id, arbiter_party_id, guest_train_data, host_train_data)
-        model_auc = get_auc(pipeline, "hetero_lr_0")
-    elif task_type == "sbt":
-        pipeline = sbt_train_pipeline(guest_party_id, host_party_id, guest_train_data, host_train_data)
-        model_auc = get_auc(pipeline, "hetero_secureboost_0")
-    else:
-        click.echo(f"task type {task_type} not supported", err=True)
-        raise click.Abort()
+    lr_pipeline = lr_train_pipeline(guest_party_id, host_party_id, arbiter_party_id, guest_train_data, host_train_data)
+    lr_auc = get_auc(lr_pipeline, "hetero_lr_0")
 
-    if model_auc < auc_base:
-        click.echo(f"Warning: The auc {model_auc} is lower than expect value {auc_base}")
+    if lr_auc < auc_base:
+        click.echo(f"Warning: The LR auc {lr_auc} is lower than expect value {auc_base}")
 
-    predict_pipeline(pipeline, guest_party_id, host_party_id, guest_train_data, host_train_data)
+    predict_pipeline(lr_pipeline, guest_party_id, host_party_id, guest_train_data, host_train_data)
+
+    if sbt:
+        sbt_pipeline = sbt_train_pipeline(guest_party_id, host_party_id, guest_train_data, host_train_data)
+        sbt_auc = get_auc(sbt_pipeline, "hetero_secureboost_0")
+
+        if sbt_auc < auc_base:
+            click.echo(f"Warning: The SBT auc {sbt_auc} is lower than expect value {auc_base}")
+
+        predict_pipeline(sbt_pipeline, guest_party_id, host_party_id, guest_train_data, host_train_data)
 
 
 def lr_train_pipeline(guest, host, arbiter, guest_train_data, host_train_data):
