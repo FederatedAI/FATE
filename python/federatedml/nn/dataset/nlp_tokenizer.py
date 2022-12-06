@@ -80,4 +80,3 @@ class TokenizerDataset(Dataset):
 
     def __repr__(self):
         return self.tokenizer.__repr__()
-

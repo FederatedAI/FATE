@@ -44,7 +44,8 @@ class Dataset(Dataset_):
                 for id_ in sample_ids:
                     if (not isinstance(id_, str)) and (not isinstance(id_, int)):
                         raise RuntimeError(
-                            'get_sample_ids() must return a list contains str or integer: got id of type {}:{}'.format(id_, type(id_)))
+                            'get_sample_ids() must return a list contains str or integer: got id of type {}:{}'.format(
+                                id_, type(id_)))
                 assert len(sample_ids) == len(
                     self), 'sample id len:{} != dataset length:{}'.format(len(sample_ids), len(self))
                 self._check = True

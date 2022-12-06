@@ -66,12 +66,12 @@ class TableDataset(Dataset):
         return dtype
 
     def __getitem__(self, item):
-        
+
         if self.with_label:
             if self.with_sample_weight and self.training:
                 return self.features[item], (self.label[item], self.sample_weights[item])
             else:
-                return self.features[item], self.label[item]    
+                return self.features[item], self.label[item]
         else:
             return self.features[item]
 
