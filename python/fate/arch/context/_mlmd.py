@@ -7,7 +7,7 @@ from ml_metadata.proto import metadata_store_pb2
 class MachineLearningMetadata:
     def __init__(self, backend="sqlite", metadata={}) -> None:
         self.store = self.create_store(backend, metadata)
-        self._job_type_id = None  # context type
+        self._task_context_type_id = None  # context type
         self._task_type_id = None  # execution type
         self._data_type_id = None  # data artifact
         self._model_type_id = None  # model artifact
@@ -22,8 +22,8 @@ class MachineLearningMetadata:
             connection_config.sqlite.connection_mode = metadata.get("connection_mode", 3)
         return metadata_store.MetadataStore(connection_config)
 
-    def get_artifacts(self, jobid):
-        context_id = self.get_or_create_job(jobid).id
+    def get_artifacts(self, taskid):
+        context_id = self.get_or_create_task_context(taskid).id
         artifacts = self.store.get_artifacts_by_context(context_id)
         # parameters
         parameters = []
@@ -68,26 +68,26 @@ class MachineLearningMetadata:
 
         return dict(parameters=parameters, data=data, model=model, metric=metric)
 
-    def get_or_create_job(self, jobid):
-        job_run = self.store.get_context_by_type_and_name("Job", jobid)
-        if job_run is None:
-            job_run = metadata_store_pb2.Context()
-            job_run.type_id = self.job_type_id
-            job_run.name = jobid
-        [job_run_id] = self.store.put_contexts([job_run])
-        job_run.id = job_run_id
-        return job_run
+    def get_or_create_task_context(self, taskid):
+        task_context_run = self.store.get_context_by_type_and_name("TaskContext", taskid)
+        if task_context_run is None:
+            task_context_run = metadata_store_pb2.Context()
+            task_context_run.type_id = self.task_context_type_id
+            task_context_run.name = taskid
+        [task_context_run_id] = self.store.put_contexts([task_context_run])
+        task_context_run.id = task_context_run_id
+        return task_context_run
 
-    def put_task_to_job(self, jobid, taskid):
+    def put_task_to_task_context(self, taskid):
         association = metadata_store_pb2.Association()
         association.execution_id = self.get_or_create_task(taskid).id
-        association.context_id = self.get_or_create_job(jobid).id
+        association.context_id = self.get_or_create_task_context(taskid).id
         self.store.put_attributions_and_associations([], [association])
 
-    def put_artifact_to_job(self, jobid, artifact_id):
+    def put_artifact_to_task_context(self, taskid, artifact_id):
         attribution = metadata_store_pb2.Attribution()
         attribution.artifact_id = artifact_id
-        attribution.context_id = self.get_or_create_job(jobid).id
+        attribution.context_id = self.get_or_create_task_context(taskid).id
         self.store.put_attributions_and_associations([attribution], [])
 
     def update_task_state(self, taskid, state, exception=None):
@@ -160,13 +160,13 @@ class MachineLearningMetadata:
         return artifact_id
 
     @property
-    def job_type_id(self):
-        if self._job_type_id is None:
+    def task_context_type_id(self):
+        if self._task_context_type_id is None:
             job_type = metadata_store_pb2.ContextType()
-            job_type.name = "Job"
+            job_type.name = "TaskContext"
             job_type.properties["jobid"] = metadata_store_pb2.STRING
-            self._job_type_id = self.store.put_context_type(job_type)
-        return self._job_type_id
+            self._task_context_type_id = self.store.put_context_type(job_type)
+        return self._task_context_type_id
 
     @property
     def task_type_id(self):

@@ -25,8 +25,7 @@ logger = logging.getLogger(__name__)
 
 def execute_component(config: TaskConfigSpec):
     taskid = config.taskid
-    jobid = config.jobid
-    mlmd = load_mlmd(config.conf.mlmd, jobid, taskid)
+    mlmd = load_mlmd(config.conf.mlmd, taskid)
     output_pool = load_pool(config.conf.output)
     computing = load_computing(config.conf.computing)
     federation = load_federation(config.conf.federation, computing)
