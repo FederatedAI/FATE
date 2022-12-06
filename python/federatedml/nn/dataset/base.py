@@ -11,6 +11,7 @@ class Dataset(Dataset_):
         super(Dataset, self).__init__()
         self._type = 'local'  # train/predict
         self._check = False
+        self._generated_ids = None
         self.training = True
 
     @property
@@ -49,9 +50,9 @@ class Dataset(Dataset_):
                 assert len(sample_ids) == len(
                     self), 'sample id len:{} != dataset length:{}'.format(len(sample_ids), len(self))
                 self._check = True
-            return sample_ids
+            return True
 
-    def generate_sample_ids(self, prefix: str = None):
+    def init_sid_and_getfunc(self, prefix: str = None):
         if prefix is not None:
             assert isinstance(
                 prefix, str), 'prefix must be a str, but got {}'.format(prefix)
@@ -60,7 +61,11 @@ class Dataset(Dataset_):
         generated_ids = []
         for i in range(0, self.__len__()):
             generated_ids.append(prefix + '_' + str(i))
-        self._sample_ids = generated_ids
+        self._generated_ids = generated_ids
+
+        def get_func():
+            return self._generated_ids
+        self.get_sample_ids = get_func
 
     """
     Functions for users
@@ -87,10 +92,10 @@ class Dataset(Dataset_):
         raise NotImplementedError()
 
     def get_classes(self):
-        pass
+        raise NotImplementedError()
 
     def get_sample_ids(self):
-        return None
+        raise NotImplementedError()
 
 
 class ShuffleWrapDataset(Dataset_):

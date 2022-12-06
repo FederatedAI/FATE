@@ -158,7 +158,7 @@ class LogisticParam(LinearModelParam):
         return True
 
 
-@deprecated_param('re_encrypt_batches', 'use_proximal', 'mu', 'encrypte_param', 'early_stopping_rounds')
+@deprecated_param('re_encrypt_batches', 'use_proximal', 'mu', 'encrypt_param', 'early_stopping_rounds')
 class HomoLogisticParam(LogisticParam):
     """
     Parameters
