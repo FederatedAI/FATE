@@ -7,18 +7,23 @@ from .protocol import IOManagerProtocol
 
 
 class PipelineMLMD(MLMD):
-    def __init__(self, mlmd: PipelineMLMDSpec, taskid) -> None:
+    def __init__(self, mlmd: PipelineMLMDSpec, jobid, taskid) -> None:
         self._mlmd = MachineLearningMetadata(metadata=dict(filename_uri=mlmd.metadata.db))
-        self.execution_status = ExecutionStatus(self._mlmd, taskid)
+        self._jobid = jobid
         self._taskid = taskid
-        self.io = IOManager()
+        self.execution_status = ExecutionStatus(self._mlmd, self._taskid)
+        self.io = IOManager(self._mlmd, self._jobid, self._taskid)
 
 
 class IOManager(IOManagerProtocol):
-    def log_input_parameters(self, key, value):
-        ...
+    def __init__(self, mlmd: MachineLearningMetadata, jobid, taskid) -> None:
+        self._mlmd = mlmd
+        self._jobid = jobid
+        self._taskid = taskid
 
     def log_input_artifact(self, key, value):
+        if value is None:
+            return
         from fate.components import DatasetArtifact, MetricArtifact, ModelArtifact
 
         if isinstance(value, DatasetArtifact):
@@ -31,6 +36,8 @@ class IOManager(IOManagerProtocol):
             raise RuntimeError(f"not supported input artifact `name={key}, value={value}`")
 
     def log_output_artifact(self, key, value):
+        if value is None:
+            return
         from fate.components import DatasetArtifact, MetricArtifact, ModelArtifact
 
         if isinstance(value, DatasetArtifact):
@@ -42,23 +49,47 @@ class IOManager(IOManagerProtocol):
         else:
             raise RuntimeError(f"not supported input artifact `name={key}, value={value}`")
 
+    def log_input_parameter(self, key, value):
+        artifact_id = self._mlmd.add_parameter(name=key, value=value)
+        execution_id = self._mlmd.get_or_create_task(self._taskid).id
+        self._mlmd.record_input_event(execution_id=execution_id, artifact_id=artifact_id)
+        self._mlmd.put_artifact_to_job(self._jobid, artifact_id)
+
     def log_input_data(self, key, value):
-        ...
+        artifact_id = self._mlmd.add_data_artifact(name=value.name, uri=value.uri, metadata=value.metadata)
+        execution_id = self._mlmd.get_or_create_task(self._taskid).id
+        self._mlmd.record_input_event(execution_id=execution_id, artifact_id=artifact_id)
+        self._mlmd.put_artifact_to_job(self._jobid, artifact_id)
 
     def log_input_model(self, key, value):
-        ...
+        artifact_id = self._mlmd.add_model_artifact(name=value.name, uri=value.uri, metadata=value.metadata)
+        execution_id = self._mlmd.get_or_create_task(self._taskid).id
+        self._mlmd.record_input_event(execution_id=execution_id, artifact_id=artifact_id)
+        self._mlmd.put_artifact_to_job(self._jobid, artifact_id)
 
     def log_input_metric(self, key, value):
-        ...
+        artifact_id = self._mlmd.add_metric_artifact(name=value.name, uri=value.uri, metadata=value.metadata)
+        execution_id = self._mlmd.get_or_create_task(self._taskid).id
+        self._mlmd.record_input_event(execution_id=execution_id, artifact_id=artifact_id)
+        self._mlmd.put_artifact_to_job(self._jobid, artifact_id)
 
     def log_output_data(self, key, value):
-        ...
+        artifact_id = self._mlmd.add_data_artifact(name=value.name, uri=value.uri, metadata=value.metadata)
+        execution_id = self._mlmd.get_or_create_task(self._taskid).id
+        self._mlmd.record_output_event(execution_id=execution_id, artifact_id=artifact_id)
+        self._mlmd.put_artifact_to_job(self._jobid, artifact_id)
 
     def log_output_model(self, key, value):
-        ...
+        artifact_id = self._mlmd.add_model_artifact(name=value.name, uri=value.uri, metadata=value.metadata)
+        execution_id = self._mlmd.get_or_create_task(self._taskid).id
+        self._mlmd.record_output_event(execution_id=execution_id, artifact_id=artifact_id)
+        self._mlmd.put_artifact_to_job(self._jobid, artifact_id)
 
     def log_output_metric(self, key, value):
-        ...
+        artifact_id = self._mlmd.add_metric_artifact(name=value.name, uri=value.uri, metadata=value.metadata)
+        execution_id = self._mlmd.get_or_create_task(self._taskid).id
+        self._mlmd.record_output_event(execution_id=execution_id, artifact_id=artifact_id)
+        self._mlmd.put_artifact_to_job(self._jobid, artifact_id)
 
 
 class ExecutionStatus(ExecutionStatusProtocol):

@@ -38,7 +38,8 @@ class TaskConfigSpec(pydantic.BaseModel):
         mlmd: Union[PipelineMLMDSpec, FlowMLMDSpec, CustomMLMDSpec]
         output: OutputPoolConf
 
-    execution_id: str
+    jobid: str
+    taskid: str
     component: str
     role: str
     stage: str = "default"

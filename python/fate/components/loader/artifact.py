@@ -9,8 +9,10 @@ def load_artifact(data, artifact_type):
         ModelArtifacts,
     )
 
+    if hasattr(artifact_type, "__origin__"):
+        artifact_type = artifact_type.__origin__
     if isinstance(data, list):
-        if artifact_type == DatasetArtifacts:
+        if artifact_type.__origin__ == DatasetArtifacts:
             return DatasetArtifacts([DatasetArtifact(name=d.name, uri=d.uri, metadata=d.metadata) for d in data])
         if artifact_type == ModelArtifacts:
             return ModelArtifacts([ModelArtifact(name=d.name, uri=d.uri, metadata=d.metadata) for d in data])

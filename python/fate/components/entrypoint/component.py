@@ -24,8 +24,9 @@ logger = logging.getLogger(__name__)
 
 
 def execute_component(config: TaskConfigSpec):
-    context_name = config.execution_id
-    mlmd = load_mlmd(config.conf.mlmd, context_name)
+    taskid = config.taskid
+    jobid = config.jobid
+    mlmd = load_mlmd(config.conf.mlmd, jobid, taskid)
     output_pool = load_pool(config.conf.output)
     computing = load_computing(config.conf.computing)
     federation = load_federation(config.conf.federation, computing)
@@ -33,7 +34,7 @@ def execute_component(config: TaskConfigSpec):
     role = load_role(config.role)
     stage = load_stage(config.stage)
     ctx = Context(
-        context_name=context_name,
+        context_name=taskid,
         device=device,
         computing=computing,
         federation=federation,
@@ -94,7 +95,7 @@ def parse_input_parameters(mlmd: MLMD, cpn: _Component, input_parameters: Dict[s
                     raise ComponentApplyError(f"parameter `{arg}` required, declare: `{parameter}`")
                 else:
                     execute_parameters[parameter.name] = parameter.default
-                    mlmd.io.log_input_parameters(parameter.name, parameter.default)
+                    mlmd.io.log_input_parameter(parameter.name, parameter.default)
             else:
                 # TODO: enhance type validate
                 if type(parameter_apply) != parameter.type:
@@ -103,7 +104,7 @@ def parse_input_parameters(mlmd: MLMD, cpn: _Component, input_parameters: Dict[s
                         f": {type(parameter_apply)} != {parameter.type}"
                     )
                 execute_parameters[parameter.name] = parameter_apply
-                mlmd.io.log_input_parameters(parameter.name, parameter_apply)
+                mlmd.io.log_input_parameter(parameter.name, parameter_apply)
     return execute_parameters
 
 
@@ -128,12 +129,12 @@ def parse_input_artifacts(mlmd: MLMD, cpn: _Component, stage, role, input_artifa
                         raise ComponentApplyError(
                             f"artifact `{arg}` with applying config `{artifact_apply}` can't apply to `{arti}`"
                         ) from e
-                    mlmd.io.log_input_data(arg, execute_input_artifacts[arg])  # TODO: data/model/metric
+                    mlmd.io.log_input_artifact(arg, execute_input_artifacts[arg])
                     continue
                 else:
                     if not arti.optional:
                         raise ComponentApplyError(f"artifact `{arg}` required, declare: `{arti}`")
-            mlmd.io.log_input_data(arg, execute_input_artifacts[arg])
+            mlmd.io.log_input_artifact(arg, execute_input_artifacts[arg])
     return execute_input_artifacts
 
 
@@ -148,5 +149,5 @@ def parse_output_artifacts(mlmd: MLMD, cpn: _Component, stage, role, output_pool
             execute_output_artifacts[arg] = None
             if arti.is_active_for(stage, role):
                 execute_output_artifacts[arg] = output_pool.create_artifact(arti.name, arti.type)
-                mlmd.io.log_output_data(arg, execute_output_artifacts[arg])
+                mlmd.io.log_output_artifact(arg, execute_output_artifacts[arg])
     return execute_output_artifacts

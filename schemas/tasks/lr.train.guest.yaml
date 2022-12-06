@@ -1,4 +1,5 @@
-execution_id: xxx
+jobid: yyy
+taskid: xxx
 component: hetero_lr
 role: guest
 stage: train

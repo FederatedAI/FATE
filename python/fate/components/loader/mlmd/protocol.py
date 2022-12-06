@@ -16,7 +16,7 @@ class ExecutionStatus(Protocol):
 
 
 class IOManagerProtocol:
-    def log_input_parameters(self, key, value):
+    def log_input_parameter(self, key, value):
         ...
 
     def log_input_artifact(self, key, value):

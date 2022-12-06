@@ -7,12 +7,12 @@ from .protocol import MLMD
 logger = logging.getLogger(__name__)
 
 
-def load_mlmd(mlmd, taskid) -> MLMD:
+def load_mlmd(mlmd, jobid, taskid) -> MLMD:
     # from buildin
     if isinstance(mlmd, PipelineMLMDSpec):
         from .pipeline import PipelineMLMD
 
-        return PipelineMLMD(mlmd, taskid)
+        return PipelineMLMD(mlmd, jobid, taskid)
 
     if isinstance(mlmd, FlowMLMDSpec):
         from .flow import FlowMLMD
