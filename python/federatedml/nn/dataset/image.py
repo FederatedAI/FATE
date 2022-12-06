@@ -42,6 +42,7 @@ class ImageDataset(Dataset):
         self.float64 = float64
         self.dtype = torch.float32 if not self.float64 else torch.float64
         avail_label_type = ['float', 'long', 'double']
+        self.sample_ids = None
         assert label_dtype in avail_label_type, 'available label dtype : {}'.format(
             avail_label_type)
         if label_dtype == 'double':
@@ -74,7 +75,7 @@ class ImageDataset(Dataset):
                 sample_id = name[0].split(
                     '/')[-1].replace(self.file_suffix, '')
                 ids.append(sample_id)
-            self.set_sample_ids(ids)
+            self.sample_ids = ids
 
     def __getitem__(self, item):
         if self.return_label:
@@ -94,6 +95,9 @@ class ImageDataset(Dataset):
 
     def get_classes(self):
         return np.unique(self.image_folder.targets).tolist()
+
+    def get_sample_ids(self):
+        return self.sample_ids
 
 
 if __name__ == '__main__':

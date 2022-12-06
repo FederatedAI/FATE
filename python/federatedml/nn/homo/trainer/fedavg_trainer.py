@@ -113,13 +113,7 @@ class FedAVGTrainer(TrainerBase):
         self.check_trainer_param(
             [self.tol], ['tol'], self.is_float, '{} is not a float')
 
-    def train(
-            self,
-            train_set: Dataset,
-            validate_set: Dataset = None,
-            optimizer: t.optim.Optimizer = None,
-            loss=None,
-            extra_dict={}):
+    def train(self, train_set: Dataset, validate_set: Dataset = None, optimizer: t.optim.Optimizer = None, loss=None, extra_dict={}):
 
         if self.cuda:
             self.model = self.model.cuda()
@@ -320,7 +314,7 @@ class FedAVGTrainer(TrainerBase):
         if self.early_stop:
             check_converge = True
             converge_func = converge_func_factory(
-                self.convergence_type, self.eps)
+                self.early_stop, self.tol).is_converge
             LOGGER.info(
                 'check early stop, converge func is {}'.format(converge_func))
 

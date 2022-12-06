@@ -33,7 +33,7 @@ class TokenizerDataset(Dataset):
         self.word_idx = None
         self.label = None
         self.tokenizer = None
-
+        self.sample_ids = None
         self.truncation = truncation
         self.max_length = text_max_length
         self.with_label = return_label
@@ -58,13 +58,16 @@ class TokenizerDataset(Dataset):
         del tokenizer  # avoid tokenizer parallelism
 
         if 'id' in self.text:
-            self.set_sample_ids(self.text['id'].values.tolist())
+            self.sample_ids = self.text['id'].values.tolist()
 
     def get_classes(self):
         return np.unique(self.label).tolist()
 
     def get_vocab_size(self):
         return self.tokenizer.vocab_size
+
+    def get_sample_ids(self):
+        return self.sample_ids
 
     def __getitem__(self, item):
         if self.with_label:
@@ -77,3 +80,4 @@ class TokenizerDataset(Dataset):
 
     def __repr__(self):
         return self.tokenizer.__repr__()
+

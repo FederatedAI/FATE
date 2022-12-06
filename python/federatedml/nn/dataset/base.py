@@ -9,8 +9,8 @@ class Dataset(Dataset_):
 
     def __init__(self, **kwargs):
         super(Dataset, self).__init__()
-        self._sample_ids = None
         self._type = 'local'  # train/predict
+        self._check = False
         self.training = True
 
     @property
@@ -24,17 +24,6 @@ class Dataset(Dataset_):
     def dataset_type(self, val):
         self._type = val
 
-    @property
-    def sample_ids(self):
-        if not hasattr(self, '_sample_ids'):
-            raise AttributeError(
-                'sample_ids variable not exists, call __init__ of super class')
-        return self._sample_ids
-
-    @sample_ids.setter
-    def sample_ids(self, val):
-        self._sample_ids = val
-
     def has_dataset_type(self):
         return self.dataset_type
 
@@ -44,14 +33,22 @@ class Dataset(Dataset_):
     def get_type(self):
         return self.dataset_type
 
-    def get_sample_ids(self):
-        if self.sample_ids is not None:
-            return list(self.sample_ids)
-        else:
-            return None
-
     def has_sample_ids(self):
-        return self.sample_ids is not None
+        sample_ids = self.get_sample_ids()
+        if sample_ids is None:
+            return False
+        else:
+            if not self._check:
+                assert isinstance(
+                    sample_ids, list), 'get_sample_ids() must return a list contains str or integer'
+                for id_ in sample_ids:
+                    if (not isinstance(id_, str)) and (not isinstance(id_, int)):
+                        raise RuntimeError(
+                            'get_sample_ids() must return a list contains str or integer: got id of type {}:{}'.format(id_, type(id_)))
+                assert len(sample_ids) == len(
+                    self), 'sample id len:{} != dataset length:{}'.format(len(sample_ids), len(self))
+                self._check = True
+            return sample_ids
 
     def generate_sample_ids(self, prefix: str = None):
         if prefix is not None:
@@ -67,9 +64,6 @@ class Dataset(Dataset_):
     """
     Functions for users
     """
-
-    def set_sample_ids(self, ids):
-        self.sample_ids = ids
 
     def train(self, ):
         self.training = True
@@ -93,6 +87,9 @@ class Dataset(Dataset_):
 
     def get_classes(self):
         pass
+
+    def get_sample_ids(self):
+        return None
 
 
 class ShuffleWrapDataset(Dataset_):
