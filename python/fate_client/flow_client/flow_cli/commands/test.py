@@ -132,7 +132,8 @@ def lr_train_pipeline(guest, host, arbiter, guest_train_data, host_train_data):
     reader_0.get_party_instance(role="host", party_id=host).component_param(table=host_train_data)
 
     data_transform_0 = DataTransform(name="data_transform_0")
-    data_transform_0.get_party_instance(role="guest", party_id=guest).component_param(with_label=True, output_format="dense")
+    data_transform_0.get_party_instance(role="guest", party_id=guest).component_param(
+        with_label=True, output_format="dense")
     data_transform_0.get_party_instance(role="host", party_id=host).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
@@ -185,7 +186,8 @@ def sbt_train_pipeline(guest, host, guest_train_data, host_train_data):
     reader_0.get_party_instance(role="host", party_id=host).component_param(table=host_train_data)
 
     data_transform_0 = DataTransform(name="data_transform_0")
-    data_transform_0.get_party_instance(role="guest", party_id=guest).component_param(with_label=True, output_format="dense")
+    data_transform_0.get_party_instance(role="guest", party_id=guest).component_param(
+        with_label=True, output_format="dense")
     data_transform_0.get_party_instance(role="host", party_id=host).component_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
@@ -235,5 +237,6 @@ def predict_pipeline(train_pipeline, guest, host, guest_train_data, host_train_d
     reader_0.get_party_instance(role="guest", party_id=guest).component_param(table=guest_train_data)
     reader_0.get_party_instance(role="host", party_id=host).component_param(table=host_train_data)
     pipeline.add_component(reader_0)
-    pipeline.add_component(train_pipeline, data=Data(predict_input={train_pipeline.data_transform_0.input.data: reader_0.output.data}))
+    pipeline.add_component(train_pipeline, data=Data(predict_input={
+        train_pipeline.data_transform_0.input.data: reader_0.output.data}))
     pipeline.predict()
