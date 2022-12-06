@@ -1,6 +1,7 @@
 import torch as t
 from torch.nn import BCELoss
 
+
 class WeightedBCE(t.nn.Module):
 
     def __init__(self) -> None:
@@ -13,4 +14,3 @@ class WeightedBCE(t.nn.Module):
         losses = losses * weights
         loss_val = losses.sum() / weights.sum()
         return loss_val
-        

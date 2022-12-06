@@ -35,7 +35,7 @@ class HomoNNServer(ModelBase):
         return self.model
 
     def load_model(self, model_dict):
-        
+
         if model_dict is not None:
             model_dict = list(model_dict["model"].values())[0]
             self.model = model_dict
@@ -83,4 +83,3 @@ class HomoNNServer(ModelBase):
 
     def predict(self, data_inst):
         return None
-

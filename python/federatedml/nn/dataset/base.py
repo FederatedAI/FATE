@@ -77,7 +77,6 @@ class Dataset(Dataset_):
     def eval(self, ):
         self.training = False
 
-
     # Function to implemented
 
     @abc.abstractmethod
@@ -94,8 +93,6 @@ class Dataset(Dataset_):
 
     def get_classes(self):
         pass
-
-    
 
 
 class ShuffleWrapDataset(Dataset_):

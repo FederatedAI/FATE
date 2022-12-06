@@ -43,20 +43,20 @@ class HomoLRBase(BaseLogisticRegression):
         self.model_param = HomoLogisticParam()
         self.aggregator = None
         self.param = None
-    
+
     def get_torch_optimizer(self, torch_model: t.nn.Module, param: HomoLogisticParam):
 
         try:
             learning_rate = param.learning_rate
-            alpha = param.alpha # L2 penalty weight
+            alpha = param.alpha  # L2 penalty weight
 
             decay = param.decay
             decay_sqrt = param.decay_sqrt
 
             if not decay_sqrt:
-                decay_func = lambda epoch: 1 / (1 + epoch*decay)
+                def decay_func(epoch): return 1 / (1 + epoch * decay)
             else:
-                decay_func = lambda epoch: 1 / math.sqrt(1 + epoch*decay)
+                def decay_func(epoch): return 1 / math.sqrt(1 + epoch * decay)
 
         except AttributeError:
             raise AttributeError("Optimizer parameters has not been totally set")
@@ -65,7 +65,12 @@ class HomoLRBase(BaseLogisticRegression):
         if optimizer_type == 'sgd':
             opt = t.optim.SGD(params=torch_model.parameters(), lr=learning_rate, weight_decay=alpha)
         elif optimizer_type == 'nesterov_momentum_sgd':
-            opt = t.optim.SGD(params=torch_model.parameters(), nesterov=True, momentum=0.9, lr=learning_rate, weight_decay=alpha)
+            opt = t.optim.SGD(
+                params=torch_model.parameters(),
+                nesterov=True,
+                momentum=0.9,
+                lr=learning_rate,
+                weight_decay=alpha)
         elif optimizer_type == 'rmsprop':
             opt = t.optim.RMSprop(params=torch_model.parameters(), alpha=0.99, lr=learning_rate, weight_decay=alpha)
         elif optimizer_type == 'adam':

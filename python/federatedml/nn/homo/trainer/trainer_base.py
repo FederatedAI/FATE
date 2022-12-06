@@ -193,7 +193,7 @@ class TrainerBase(object):
         return self._summary
 
     """
-    User Interfaces    
+    User Interfaces
     """
 
     def set_model(self, model: Module):
@@ -201,7 +201,15 @@ class TrainerBase(object):
             raise ValueError('model must be a subclass of pytorch nn.Module')
         self.model = model
 
-    def save(self, model=None, epoch_idx=-1, optimizer=None, converge_status=False, loss_history=None, best_epoch=-1, extra_data={}):
+    def save(
+            self,
+            model=None,
+            epoch_idx=-1,
+            optimizer=None,
+            converge_status=False,
+            loss_history=None,
+            best_epoch=-1,
+            extra_data={}):
 
         assert isinstance(
             epoch_idx, int) and epoch_idx >= 0, 'epoch idx must be an int >= 0'
@@ -220,7 +228,15 @@ class TrainerBase(object):
                                                           )
             self._cache_model = model_dict
 
-    def checkpoint(self, epoch_idx, model=None, optimizer=None, converge_status=False, loss_history=None, best_epoch=-1, extra_data={}):
+    def checkpoint(
+            self,
+            epoch_idx,
+            model=None,
+            optimizer=None,
+            converge_status=False,
+            loss_history=None,
+            best_epoch=-1,
+            extra_data={}):
 
         assert isinstance(
             epoch_idx, int) and epoch_idx >= 0, 'epoch idx must be an int >= 0'
@@ -238,8 +254,8 @@ class TrainerBase(object):
             self.save(model=model, epoch_idx=epoch_idx, optimizer=optimizer, converge_status=converge_status,
                       loss_history=loss_history, best_epoch=best_epoch, extra_data=extra_data)
 
-            self._model_checkpoint.add_checkpoint(
-                len(self._set_model_checkpoint_epoch), to_save_model=serialize_models(self._cache_model)) # step_index, to_save_model
+            self._model_checkpoint.add_checkpoint(len(self._set_model_checkpoint_epoch),
+                                                  to_save_model=serialize_models(self._cache_model))  # step_index, to_save_model
             self._set_model_checkpoint_epoch.add(epoch_idx)
             LOGGER.info('checkpoint at epoch {} saved'.format(epoch_idx))
 
@@ -298,7 +314,7 @@ class TrainerBase(object):
             )
 
     def summary(self, summary_dict: dict):
-        
+
         assert isinstance(summary_dict, dict), 'summary must be a dict'
         self._summary = summary_dict
 

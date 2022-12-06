@@ -264,7 +264,7 @@ class HomoNNClient(ModelBase):
             data_path_or_dtable=train_input,
             dataset_cache=self.cache_dataset,
             param=self.dataset_param
-            )
+        )
         # set dataset prefix
         dataset_inst.set_type('train')
         LOGGER.info('train dataset instance is {}'.format(dataset_inst))
@@ -275,7 +275,7 @@ class HomoNNClient(ModelBase):
                 data_path_or_dtable=validate_input,
                 dataset_cache=self.cache_dataset,
                 param=self.dataset_param
-                )
+            )
             dataset_inst.set_type('validate')
             LOGGER.info('validate dataset instance is {}'.format(dataset_inst))
         else:
@@ -285,7 +285,6 @@ class HomoNNClient(ModelBase):
         if self.component_properties.is_warm_start:
             self.callback_warm_start_init_iter(self.warm_start_iter)
 
-        
         # set model check point
         self.trainer_inst.set_checkpoint(ModelCheckpoint(self, save_freq=1))
         # training
