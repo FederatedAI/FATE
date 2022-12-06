@@ -94,8 +94,18 @@ class HomoLRClientExporter(ExporterBase):
         self.param_name = param_name
         self.meta_name = meta_name
 
-    def export_model_dict(self, model, optimizer=None, model_define=None, optimizer_define=None,
-                          loss_define=None, epoch_idx=None, converge_status=None, loss_history=None, best_epoch=None, extra_data={}):
+    def export_model_dict(
+            self,
+            model,
+            optimizer=None,
+            model_define=None,
+            optimizer_define=None,
+            loss_define=None,
+            epoch_idx=None,
+            converge_status=None,
+            loss_history=None,
+            best_epoch=None,
+            extra_data={}):
 
         torch_to_linear_weight(self.model_weights, model)
         weight_dict = {}
@@ -169,15 +179,28 @@ class HomoLRClient(HomoLRBase):
         if self.early_stop != 'weight_diff':
             early_stop = self.early_stop
 
-        trainer = FedAVGTrainer(epochs=self.max_iter, batch_size=batch_size, data_loader_worker=partitions,
-                                secure_aggregate=True, aggregate_every_n_epoch=self.aggregate_iters, validation_freqs=self.validation_freqs,
-                                task_type='binary', checkpoint_save_freqs=self.save_freq, early_stop=early_stop, tol=self.tol)
+        trainer = FedAVGTrainer(
+            epochs=self.max_iter,
+            batch_size=batch_size,
+            data_loader_worker=partitions,
+            secure_aggregate=True,
+            aggregate_every_n_epoch=self.aggregate_iters,
+            validation_freqs=self.validation_freqs,
+            task_type='binary',
+            checkpoint_save_freqs=self.save_freq,
+            early_stop=early_stop,
+            tol=self.tol)
 
         if not self.callback_one_vs_rest:
             trainer.set_tracker(self.tracker)
         trainer.set_model(torch_model)
-        trainer.set_model_exporter(HomoLRClientExporter(header=self.header, homo_lr_meta=self._get_meta(), model_weights=self.model_weights,
-                                                        meta_name=self.model_meta_name, param_name=self.model_param_name))
+        trainer.set_model_exporter(
+            HomoLRClientExporter(
+                header=self.header,
+                homo_lr_meta=self._get_meta(),
+                model_weights=self.model_weights,
+                meta_name=self.model_meta_name,
+                param_name=self.model_param_name))
         trainer.set_checkpoint(self.model_checkpoint)
 
         return trainer, torch_model, wrap_optimizer, loss
