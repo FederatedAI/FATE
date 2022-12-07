@@ -71,6 +71,7 @@ def execute_component(config: TaskConfigSpec):
         else:
             mlmd.execution_status.log_excution_end()
     except Exception as e:
+        logger.error(e, exc_info=True)
         raise e
     else:
         logger.debug("done without error, waiting signal to terminate")
