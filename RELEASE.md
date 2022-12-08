@@ -1,3 +1,9 @@
+## Release 1.9.2
+### Major Features and Improvements
+> EggRoll
+* Support EggRoll v2.4.7
+
+
 ## Release 1.9.1
 ### Major Features and Improvements
 > Bug-Fix
