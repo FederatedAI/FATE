@@ -170,6 +170,10 @@ class HEInteractiveLayerGuest(InteractiveLayerGuest):
         # float64
         self.float64 = False
 
+    """
+    Init functions
+    """
+
     def set_flow_id(self, flow_id):
         self.transfer_variable.set_flowid(flow_id)
 

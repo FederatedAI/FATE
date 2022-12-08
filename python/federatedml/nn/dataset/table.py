@@ -1,11 +1,12 @@
 import numpy as np
 import pandas as pd
-
+from federatedml.statistic.data_overview import with_weight
 from federatedml.nn.dataset.base import Dataset
 from federatedml.util import LOGGER
 
 
 class TableDataset(Dataset):
+
     """
      A Table Dataset, load data from a give csv path, or transform FATE DTable
 
@@ -28,8 +29,10 @@ class TableDataset(Dataset):
 
         super(TableDataset, self).__init__()
         self.with_label = True
+        self.with_sample_weight = False
         self.features: np.ndarray = None
         self.label: np.ndarray = None
+        self.sample_weights: np.ndarray = None
         self.origin_table: pd.DataFrame = pd.DataFrame()
         self.label_col = label_col
         self.f_dtype = self.check_dtype(feature_dtype)
@@ -39,6 +42,7 @@ class TableDataset(Dataset):
                 label_shape, list), 'label shape is {}'.format(label_shape)
         self.label_shape = label_shape
         self.flatten_label = flatten_label
+        self.sample_ids = None
 
         if self.label_col is not None:
             assert isinstance(self.label_col, str) or isinstance(
@@ -62,8 +66,12 @@ class TableDataset(Dataset):
         return dtype
 
     def __getitem__(self, item):
+
         if self.with_label:
-            return self.features[item], self.label[item]
+            if self.with_sample_weight and self.training:
+                return self.features[item], (self.label[item], self.sample_weights[item])
+            else:
+                return self.features[item], self.label[item]
         else:
             return self.features[item]
 
@@ -78,8 +86,9 @@ class TableDataset(Dataset):
             self.origin_table = file_path
         else:
             # if is FATE DTable, collect data and transform to array format
-            LOGGER.info('collecting FATE DTable')
             data_inst = file_path
+            self.with_sample_weight = with_weight(data_inst)
+            LOGGER.info('collecting FATE DTable, with sample weight is {}'.format(self.with_sample_weight))
             header = data_inst.schema["header"]
             LOGGER.debug('input dtable header is {}'.format(header))
             data = list(data_inst.collect())
@@ -89,12 +98,16 @@ class TableDataset(Dataset):
             keys = [None for idx in range(len(data_keys))]
             x_ = [None for idx in range(len(data_keys))]
             y_ = [None for idx in range(len(data_keys))]
+            sample_weights = [1 for idx in range(len(data_keys))]
 
             for (key, inst) in data:
                 idx = data_keys_map[key]
                 keys[idx] = key
                 x_[idx] = inst.features
                 y_[idx] = inst.label
+                if self.with_sample_weight:
+                    sample_weights[idx] = inst.weight
+
             x_ = np.asarray(x_)
             y_ = np.asarray(y_)
             df = pd.DataFrame(x_)
@@ -106,6 +119,7 @@ class TableDataset(Dataset):
                 df = df.drop(columns=['label'])
 
             self.origin_table = df
+            self.sample_weights = np.array(sample_weights)
 
         label_col_candidates = ['y', 'label', 'target']
 
@@ -113,7 +127,7 @@ class TableDataset(Dataset):
         id_col_candidates = ['id', 'sid']
         for id_col in id_col_candidates:
             if id_col in self.origin_table:
-                self.set_sample_ids(self.origin_table[id_col].values.tolist())
+                self.sample_ids = self.origin_table[id_col].values.tolist()
                 self.origin_table = self.origin_table.drop(columns=[id_col])
                 break
 
@@ -161,3 +175,6 @@ class TableDataset(Dataset):
         else:
             raise ValueError(
                 'no label found, please check if self.label is set')
+
+    def get_sample_ids(self):
+        return self.sample_ids

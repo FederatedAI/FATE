@@ -1,239 +1,285 @@
+from federatedml.framework.homo.blocks import RandomPaddingCipherClient, RandomPaddingCipherServer, PadsCipher, RandomPaddingCipherTransVar
+from federatedml.framework.homo.aggregator.aggregator_base import AggregatorBaseClient, AutoSuffix, AggregatorBaseServer
 import numpy as np
-import torch as t
-from typing import List, Any
-from torch.optim import Optimizer
-from federatedml.framework.homo.blocks import random_padding_cipher
-from federatedml.framework.homo.blocks.random_padding_cipher import RandomPaddingCipherTransVar
-from federatedml.secureprotol.encrypt import PadsCipher
-from federatedml.framework.homo.aggregator.agg_base import AggregatorBaseClient, AggregatorBaseServer
-from federatedml.framework.homo.aggregator.agg_base import aggregator_client, aggregator_server
-from federatedml.framework.weights import NumpyWeights
-from federatedml.optim.convergence import converge_func_factory
+from federatedml.framework.weights import Weights, NumpyWeights
 from federatedml.util import LOGGER
+import torch as t
+from typing import Union, List
+from fate_arch.computing._util import is_table
 from federatedml.util import consts
 
 
-@aggregator_client('secure_agg')
+AGG_TYPE = ['weighted_mean', 'sum', 'mean']
+
+
 class SecureAggregatorClient(AggregatorBaseClient):
 
-    def __init__(self, max_aggregate_round: int, secure_aggregate=True, check_convergence=False,
-                 convergence_type: str = 'diff', eps=0.0001, aggregate_type: str = 'fedavg',
-                 sample_number=None):
+    def __init__(self, secure_aggregate=True, aggregate_type='weighted_mean', aggregate_weight=1.0,
+                 communicate_match_suffix=None):
 
-        super(SecureAggregatorClient, self).__init__(max_aggregate_round)
-
+        super(SecureAggregatorClient, self).__init__(
+            communicate_match_suffix=communicate_match_suffix)
         self.secure_aggregate = secure_aggregate
-        self.check_convergence = check_convergence
-        self.eps = eps
-        if check_convergence is True:
-            assert convergence_type in ['diff', 'abs']
-        self.convergence_type = convergence_type
-        self.support_agg_type = ['fedavg', 'sum']
-        if aggregate_type not in self.support_agg_type:
-            raise ValueError(
-                'supported aggregate type {}, but got {}'.format(
-                    self.support_agg_type, aggregate_type))
-        self.aggregate_type = aggregate_type
-        self.send_to_server({'secure_aggregate': self.secure_aggregate,
-                             'check_convergence': self.check_convergence,
-                             'eps': self.eps,
-                             'aggregate_type': self.aggregate_type,
-                             'convergence_type': self.convergence_type},
-                            suffix='param')
+        self.suffix = {
+            "local_loss": AutoSuffix("local_loss"),
+            "agg_loss": AutoSuffix("agg_loss"),
+            "local_model": AutoSuffix("local_model"),
+            "agg_model": AutoSuffix("agg_model"),
+            "converge_status": AutoSuffix("converge_status")
+        }
 
-        self._cur_agg_round = 0
-
-        # dh key exchange for secure aggregation
+        # init secure aggregate random padding:
         if self.secure_aggregate:
-            trans_var = RandomPaddingCipherTransVar(
-                server=(
-                    consts.ARBITER,), clients=(
-                    consts.HOST, consts.GUEST))
-            self._random_padding_cipher: PadsCipher = \
-                random_padding_cipher.Client(trans_var=trans_var).create_cipher()
+            self._random_padding_cipher: PadsCipher = RandomPaddingCipherClient(
+                trans_var=RandomPaddingCipherTransVar(prefix=communicate_match_suffix)).create_cipher()
             LOGGER.info('initialize secure aggregator done')
 
-        # compute weights for this party
-        self.sample_num = 1 if sample_number is None else sample_number
-        if self.aggregate_type == 'fedavg':
-            self.send_to_server(np.array(self.sample_num),
-                                suffix=('sample_agg',))
-            total_number = self.get_from_server(suffix=('sample_agg_result',))
-            self._weight = float(self.sample_num / total_number)
-            LOGGER.debug(
-                'total sample number is {}, weight is {}'.format(
-                    total_number, self._weight))
-        elif self.aggregate_type == 'sum':
-            self._weight = 1.0
+        # compute weight
+        assert aggregate_type in AGG_TYPE, 'aggregate type must in {}'.format(
+            AGG_TYPE)
+        if aggregate_type == 'weighted_mean':
+            aggregate_weight = aggregate_weight
+        elif aggregate_type == 'mean':
+            aggregate_weight = 1
 
-    def inc_agg_round(self):
-        self._cur_agg_round += 1
+        self.send(aggregate_weight, suffix=('agg_weight', ))
+        self._weight = aggregate_weight / \
+            self.get(suffix=('agg_weight', ))[0]  # local weight / total weight
 
-    def aggregate_model(self, model: List[List[np.ndarray]]):
+        if aggregate_type == 'sum':  # reset _weight
+            self._weight = 1
 
-        # if secure aggregation, add random mask
+        self._set_table_amplify_factor = False
+
+        LOGGER.debug('aggregate compute weight is {}'.format(self._weight))
+
+    def _process_model(self, model):
+
+        to_agg = None
+
+        if isinstance(model, np.ndarray) or isinstance(model, Weights):
+            if isinstance(model, np.ndarray):
+                to_agg = NumpyWeights(model * self._weight)
+            else:
+                to_agg = model * self._weight
+
+            if self.secure_aggregate:
+                to_agg: Weights = to_agg.encrypted(
+                    self._random_padding_cipher)
+            return to_agg
+
+        # is FATE distrubed Table
+        elif is_table(model):
+            model = model.mapValues(lambda x: x * self._weight)
+
+            if self.secure_aggregate:
+                if not self._set_table_amplify_factor:
+                    self._random_padding_cipher.set_amplify_factor(
+                        consts.SECURE_AGG_AMPLIFY_FACTOR)
+                model = self._random_padding_cipher.encrypt_table(model)
+            return model
+
+        if isinstance(model, t.nn.Module):
+            parameters = list(model.parameters())
+            tmp_list = [[p.cpu().detach().numpy() for p in parameters]]
+        elif isinstance(model, t.optim.Optimizer):
+            tmp_list = [[p.cpu().detach().numpy() for p in group["params"]]
+                        for group in model.param_groups]
+        elif isinstance(model, list):
+            for p in model:
+                assert isinstance(
+                    p, np.ndarray), 'expecting List[np.ndarray], but got {}'.format(p)
+            tmp_list = [model]
+
         if self.secure_aggregate:
-            model = [
+            to_agg = [
                 [
                     NumpyWeights(
                         arr *
                         self._weight).encrypted(
-                        self._random_padding_cipher) for arr in arr_list] for arr_list in model]
+                        self._random_padding_cipher) for arr in arr_list] for arr_list in tmp_list]
         else:
-            model = [[arr * self._weight for arr in arr_list]
-                     for arr_list in model]
+            to_agg = [[arr * self._weight for arr in arr_list]
+                      for arr_list in tmp_list]
 
-        self.send_to_server(model, suffix=(self._cur_agg_round, 'model'))
-        agg_model = self.get_from_server(suffix=(self._cur_agg_round,))
-        # if secure aggregation, convert back to np ndarray
-        if self.secure_aggregate:
-            return [[np_weight.unboxed for np_weight in arr_list]
-                    for arr_list in agg_model]
-        else:
+        return to_agg
+
+    def _recover_model(self, model, agg_model):
+
+        if isinstance(model, np.ndarray):
+            return agg_model.unboxed
+        elif isinstance(model, Weights):
             return agg_model
-
-    def aggregate_loss(self, loss):
-
-        if self.secure_aggregate:
-            sync_loss = NumpyWeights(
-                np.array([loss * self._weight])).encrypted(self._random_padding_cipher)
+        elif is_table(agg_model):
+            return agg_model
         else:
-            sync_loss = loss * self._weight
-        self.send_to_server(sync_loss, suffix=(self._cur_agg_round, 'loss'))
-        converge_status = self.get_from_server(
-            suffix=(self._cur_agg_round, 'converge_status'))
+            if self.secure_aggregate:
+                agg_model = [[np_weight.unboxed for np_weight in arr_list]
+                             for arr_list in agg_model]
 
+            if isinstance(model, t.nn.Module):
+                for agg_p, p in zip(agg_model[0], model.parameters()):
+                    p.data.copy_(t.Tensor(agg_p))
+                return model
+            elif isinstance(model, t.optim.Optimizer):
+                for agg_group, group in zip(agg_model, model.param_groups):
+                    for agg_p, p in zip(agg_group, group["params"]):
+                        p.data.copy_(t.Tensor(agg_p))
+                return model
+            else:
+                return agg_model
+
+    def send_loss(self, loss, suffix=tuple()):
+        suffix = self._get_suffix('local_loss', suffix)
+        assert isinstance(loss, float) or isinstance(
+            loss, np.ndarray), 'illegal loss type {}, loss should be a float or a np array'.format(type(loss))
+        self.send(loss * self._weight, suffix)
+
+    def send_model(self,
+                   model: Union[np.ndarray,
+                                Weights,
+                                List[np.ndarray],
+                                t.nn.Module,
+                                t.optim.Optimizer],
+                   suffix=tuple()):
+        """Sending model to arbiter for aggregation
+
+        Parameters
+        ----------
+        model : model can be:
+                A numpy array
+                A Weight instance(or subclass of Weights), see federatedml.framework.weights
+                List of numpy array
+                A pytorch model, is the subclass of torch.nn.Module
+                A pytorch optimizer, will extract param group from this optimizer as weights to aggregate
+        suffix : sending suffix, by default tuple(), can be None or tuple contains str&number. If None, will automatically generate suffix
+        """
+        suffix = self._get_suffix('local_model', suffix)
+        # judge model type
+        to_agg_model = self._process_model(model)
+        self.send(to_agg_model, suffix)
+
+    def get_aggregated_model(self, suffix=tuple()):
+        suffix = self._get_suffix("agg_model", suffix)
+        return self.get(suffix)[0]
+
+    def get_aggregated_loss(self, suffix=tuple()):
+        suffix = self._get_suffix("agg_loss", suffix)
+        return self.get(suffix)[0]
+
+    def get_converge_status(self, suffix=tuple()):
+        suffix = self._get_suffix("converge_status", suffix)
+        return self.get(suffix)[0]
+
+    def model_aggregation(self, model, suffix=tuple()):
+        self.send_model(model, suffix=suffix)
+        agg_model = self.get_aggregated_model(suffix=suffix)
+        return self._recover_model(model, agg_model)
+
+    def loss_aggregation(self, loss, suffix=tuple()):
+        self.send_loss(loss, suffix=suffix)
+        converge_status = self.get_converge_status(suffix=suffix)
         return converge_status
 
-    def aggregate(self, model: Any, loss: float):
 
-        if isinstance(model, t.nn.Module):
-            parameters = list(model.parameters())
-            to_agg = [[p.cpu().detach().numpy() for p in parameters]]
-        elif isinstance(model, t.optim.Optimizer):
-            to_agg = [[p.cpu().detach().numpy() for p in group["params"]]
-                      for group in model.param_groups]
-        elif isinstance(model, list):
-            for p_l in model:
-                for p in p_l:
-                    assert isinstance(
-                        p, np.ndarray), 'expecting List[List[np.ndarray]], but got {}'.format(p)
-            to_agg = model
-        else:
-            raise ValueError(
-                'expecting pytorch model, pytorch optimizer, or List[List[np.ndarray]], but got {}'.format(model))
-
-        agg_model = self.aggregate_model(to_agg)
-        converge_status = self.aggregate_loss(loss)
-        self.inc_agg_round()
-
-        if isinstance(model, t.nn.Module):
-            for agg_p, p in zip(agg_model[0], model.parameters()):
-                p.data.copy_(t.Tensor(agg_p))
-            return model, converge_status
-        elif isinstance(model, t.optim.Optimizer):
-            for agg_group, group in zip(agg_model, model.param_groups):
-                for agg_p, p in zip(agg_group, group["params"]):
-                    p.data.copy_(t.Tensor(agg_p))
-            return model, converge_status
-        else:
-            return agg_model, converge_status
-
-
-@aggregator_server('secure_agg')
 class SecureAggregatorServer(AggregatorBaseServer):
 
-    def __init__(self):
-        super(SecureAggregatorServer, self).__init__()
-        self.param = self.get_from_clients(suffix='param')[0]
-        self.secure_aggregate = self.param['secure_aggregate']
-        self.eps = self.param['eps']
-        self.aggregate_type = self.param['aggregate_type']
-        self.check_convergence = self.param['check_convergence']
-        self.convergence_type = self.param['convergence_type']
-        self.converge_status = False
-        LOGGER.debug('received parameter {}'.format(self.param))
-
-        self.convergence = None
-        if self.check_convergence:
-            self.convergence = converge_func_factory(
-                self.convergence_type, self.eps)
-
+    def __init__(self, secure_aggregate=True, communicate_match_suffix=None):
+        super(SecureAggregatorServer, self).__init__(
+            communicate_match_suffix=communicate_match_suffix)
+        self.suffix = {
+            "local_loss": AutoSuffix("local_loss"),
+            "agg_loss": AutoSuffix("agg_loss"),
+            "local_model": AutoSuffix("local_model"),
+            "agg_model": AutoSuffix("agg_model"),
+            "converge_status": AutoSuffix("converge_status")
+        }
+        self.secure_aggregate = secure_aggregate
         if self.secure_aggregate:
-            random_padding_cipher.Server(
-                trans_var=RandomPaddingCipherTransVar(
-                    server=(
-                        consts.ARBITER,), clients=(
-                        consts.HOST, consts.GUEST))) .exchange_secret_keys()
+            RandomPaddingCipherServer(trans_var=RandomPaddingCipherTransVar(
+                prefix=communicate_match_suffix)).exchange_secret_keys()
             LOGGER.info('initialize secure aggregator done')
 
-        self._cur_agg_round = 0
+        agg_weights = self.collect(suffix=('agg_weight', ))
+        sum_weights = 0
+        for i in agg_weights:
+            sum_weights += i
+        self.broadcast(sum_weights, suffix=('agg_weight', ))
 
-        if self.aggregate_type == 'fedavg':
-            total_sample = None
-            samples = self.get_from_clients(suffix=('sample_agg',))
-            for s in samples:
-                if total_sample is None:
-                    total_sample = s
-                    continue
-                total_sample += s
-            self.send_to_clients(total_sample, suffix=('sample_agg_result',))
+    def aggregate_model(self, suffix=None, party_idx=-1):
 
-    def inc_agg_round(self):
-        self._cur_agg_round += 1
-
-    def get_converge_status(self):
-        return self.converge_status
-
-    def aggregate_model(self):
+        # get suffix
+        suffix = self._get_suffix('local_model', suffix)
         # recv params for aggregation
-        params_groups = self.get_from_clients(
-            suffix=(self._cur_agg_round, "model"))
-        # aggregation
-        aggregated_params_group = params_groups[0]
-        # aggregate numpy model weights from all clients
-        for params_group in params_groups[1:]:
-            for agg_params, params in zip(
-                    aggregated_params_group, params_group):
-                for agg_p, p in zip(agg_params, params):
-                    # agg_p: NumpyWeights or numpy array
-                    agg_p += p
+        models = self.collect(suffix=suffix, party_idx=party_idx)
+        agg_result = None
 
-        self.send_to_clients(
-            aggregated_params_group, suffix=(
-                self._cur_agg_round,))
+        # Aggregate Weights or Numpy Array
+        if isinstance(models[0], Weights):
+            agg_result = models[0]
+            for w in models[1:]:
+                agg_result += w
 
-    def aggregate_loss(self):
+        # Aggregate Table
+        elif is_table(models[0]):
+            agg_result = models[0]
+            for table in models[1:]:
+                agg_result = agg_result.join(table, lambda x1, x2: x1 + x2)
+            return agg_result
 
-        # get loss & weight
-        losses = self.get_from_clients(suffix=(self._cur_agg_round, "loss"))
+        # Aggregate numpy groups
+        elif isinstance(models[0], list):
+            # aggregation
+            agg_result = models[0]
+            # aggregate numpy model weights from all clients
+            for params_group in models[1:]:
+                for agg_params, params in zip(
+                        agg_result, params_group):
+                    for agg_p, p in zip(agg_params, params):
+                        # agg_p: NumpyWeights or numpy array
+                        agg_p += p
+
+        if agg_result is None:
+            raise ValueError(
+                'can not aggregate receive model, format is illegal: {}'.format(models))
+
+        return agg_result
+
+    def broadcast_model(self, model, suffix=tuple(), party_idx=-1):
+        suffix = self._get_suffix('agg_model', suffix)
+        self.broadcast(model, suffix=suffix, party_idx=party_idx)
+
+    def aggregate_loss(self, suffix=tuple(), party_idx=-1):
+
+        # get loss
+        suffix = self._get_suffix('local_loss', suffix)
+        losses = self.collect(suffix, party_idx=party_idx)
         # aggregate loss
         total_loss = losses[0]
         for loss in losses[1:]:
             total_loss += loss
-        if self.secure_aggregate:
-            total_loss = total_loss.unboxed
-        self.save_loss(float(total_loss))
-        if self.convergence:
-            is_converge = self.convergence.is_converge(total_loss)
+
+        return total_loss
+
+    def broadcast_loss(self, loss_sum, suffix=tuple(), party_idx=-1):
+        suffix = self._get_suffix('agg_loss', suffix)
+        self.broadcast(loss_sum, suffix=suffix, party_idx=party_idx)
+
+    def model_aggregation(self, suffix=tuple(), party_idx=-1):
+        agg_model = self.aggregate_model(suffix=suffix, party_idx=party_idx)
+        self.broadcast_model(agg_model, suffix=suffix, party_idx=party_idx)
+        return agg_model
+
+    def broadcast_converge_status(self, converge_status, suffix=tuple(), party_idx=-1):
+        suffix = self._get_suffix('converge_status', suffix)
+        self.broadcast(converge_status, suffix=suffix, party_idx=party_idx)
+
+    def loss_aggregation(self, check_converge=False, converge_func=None, suffix=tuple(), party_idx=-1):
+        agg_loss = self.aggregate_loss(suffix=suffix, party_idx=party_idx)
+        if check_converge:
+            converge_status = converge_func(agg_loss)
         else:
-            is_converge = False
-        LOGGER.info(
-            'aggregated loss is {}, converge is {}'.format(
-                total_loss, is_converge))
-        self.send_to_clients(
-            is_converge,
-            suffix=(
-                self._cur_agg_round,
-                'converge_status'))
-        self.converge_status = is_converge
-
-    def aggregate(self):
-        self.aggregate_model()
-        self.aggregate_loss()
-        self.callback_loss(self.loss_history[-1], self._cur_agg_round)
-        self.inc_agg_round()
-
-
-if __name__ == '__main__':
-    pass
+            converge_status = False
+        self.broadcast_converge_status(
+            converge_status, suffix=suffix, party_idx=party_idx)
+        return agg_loss, converge_status

@@ -1,18 +1,18 @@
-import abc
-import importlib
-
-import numpy as np
 from torch.utils.data import Dataset as Dataset_
-
 from federatedml.nn.backend.utils.common import ML_PATH
+import importlib
+import abc
+import numpy as np
 
 
 class Dataset(Dataset_):
 
     def __init__(self, **kwargs):
         super(Dataset, self).__init__()
-        self._sample_ids = None
         self._type = 'local'  # train/predict
+        self._check = False
+        self._generated_ids = None
+        self.training = True
 
     @property
     def dataset_type(self):
@@ -25,17 +25,6 @@ class Dataset(Dataset_):
     def dataset_type(self, val):
         self._type = val
 
-    @property
-    def sample_ids(self):
-        if not hasattr(self, '_sample_ids'):
-            raise AttributeError(
-                'sample_ids variable not exists, call __init__ of super class')
-        return self._sample_ids
-
-    @sample_ids.setter
-    def sample_ids(self, val):
-        self._sample_ids = val
-
     def has_dataset_type(self):
         return self.dataset_type
 
@@ -45,19 +34,25 @@ class Dataset(Dataset_):
     def get_type(self):
         return self.dataset_type
 
-    def set_sample_ids(self, ids):
-        self.sample_ids = ids
-
-    def get_sample_ids(self):
-        if self.sample_ids is not None:
-            return list(self.sample_ids)
-        else:
-            return None
-
     def has_sample_ids(self):
-        return self.sample_ids is not None
+        sample_ids = self.get_sample_ids()
+        if sample_ids is None:
+            return False
+        else:
+            if not self._check:
+                assert isinstance(
+                    sample_ids, list), 'get_sample_ids() must return a list contains str or integer'
+                for id_ in sample_ids:
+                    if (not isinstance(id_, str)) and (not isinstance(id_, int)):
+                        raise RuntimeError(
+                            'get_sample_ids() must return a list contains str or integer: got id of type {}:{}'.format(
+                                id_, type(id_)))
+                assert len(sample_ids) == len(
+                    self), 'sample id len:{} != dataset length:{}'.format(len(sample_ids), len(self))
+                self._check = True
+            return True
 
-    def generate_sample_ids(self, prefix: str = None):
+    def init_sid_and_getfunc(self, prefix: str = None):
         if prefix is not None:
             assert isinstance(
                 prefix, str), 'prefix must be a str, but got {}'.format(prefix)
@@ -66,11 +61,23 @@ class Dataset(Dataset_):
         generated_ids = []
         for i in range(0, self.__len__()):
             generated_ids.append(prefix + '_' + str(i))
-        self._sample_ids = generated_ids
+        self._generated_ids = generated_ids
+
+        def get_func():
+            return self._generated_ids
+        self.get_sample_ids = get_func
 
     """
-    User to implement functions
+    Functions for users
     """
+
+    def train(self, ):
+        self.training = True
+
+    def eval(self, ):
+        self.training = False
+
+    # Function to implemented
 
     @abc.abstractmethod
     def load(self, file_path):
@@ -85,7 +92,10 @@ class Dataset(Dataset_):
         raise NotImplementedError()
 
     def get_classes(self):
-        pass
+        raise NotImplementedError()
+
+    def get_sample_ids(self):
+        raise NotImplementedError()
 
 
 class ShuffleWrapDataset(Dataset_):
@@ -130,6 +140,7 @@ class ShuffleWrapDataset(Dataset_):
 
 
 def get_dataset_class(dataset_module_name: str):
+
     if dataset_module_name.endswith('.py'):
         dataset_module_name = dataset_module_name.replace('.py', '')
     ds_modules = importlib.import_module(

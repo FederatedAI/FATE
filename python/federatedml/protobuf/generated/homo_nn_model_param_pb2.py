@@ -14,7 +14,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x19homo-nn-model-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\"\n\x0bHomoNNParam\x12\x13\n\x0bmodel_bytes\x18\x01 \x01(\x0c\x42\x12\x42\x10HomoNNParamProtob\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x19homo-nn-model-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\x92\x01\n\x0bHomoNNParam\x12\x13\n\x0bmodel_bytes\x18\x01 \x01(\x0c\x12\x18\n\x10\x65xtra_data_bytes\x18\x02 \x01(\x0c\x12\x11\n\tepoch_idx\x18\x03 \x01(\x05\x12\x17\n\x0f\x63onverge_status\x18\x04 \x01(\x08\x12\x14\n\x0closs_history\x18\x05 \x03(\x02\x12\x12\n\nbest_epoch\x18\x06 \x01(\x05\x42\x12\x42\x10HomoNNParamProtob\x06proto3')
 
 
 
@@ -30,6 +30,6 @@ if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
   DESCRIPTOR._serialized_options = b'B\020HomoNNParamProto'
-  _HOMONNPARAM._serialized_start=69
-  _HOMONNPARAM._serialized_end=103
+  _HOMONNPARAM._serialized_start=70
+  _HOMONNPARAM._serialized_end=216
 # @@protoc_insertion_point(module_scope)

@@ -17,7 +17,7 @@
 #  limitations under the License.
 #
 import copy
-
+from federatedml.param.base_param import deprecated_param
 from federatedml.param.glm_param import LinearModelParam
 from federatedml.param.callback_param import CallbackParam
 from federatedml.param.cross_validation_param import CrossValidationParam
@@ -66,6 +66,7 @@ class LogisticParam(LinearModelParam):
             c)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < eps, it is converged.
 
             Please note that for hetero-lr multi-host situation, this parameter support "weight_diff" only.
+            In homo-lr, weight_diff is not supported
     decay: int or float, default: 1
         Decay rate for learning rate. learning rate will follow the following decay schedule.
         lr = lr0/(1+decay*t) if decay_sqrt is False. If decay_sqrt is True, lr = lr0 / sqrt(1+decay*t)
@@ -157,22 +158,17 @@ class LogisticParam(LinearModelParam):
         return True
 
 
+@deprecated_param('re_encrypt_batches', 'use_proximal', 'mu', 'encrypt_param', 'early_stopping_rounds')
 class HomoLogisticParam(LogisticParam):
     """
     Parameters
     ----------
-    re_encrypt_batches : int, default: 2
-        Required when using encrypted version HomoLR. Since multiple batch updating coefficient may cause
-        overflow error. The model need to be re-encrypt for every several batches. Please be careful when setting
-        this parameter. Too large batches may cause training failure.
     aggregate_iters : int, default: 1
         Indicate how many iterations are aggregated once.
-    use_proximal: bool, default: False
-        Whether to turn on additional proximial term. For more details of FedProx, Please refer to
-        https://arxiv.org/abs/1812.06127
-    mu: float, default 0.1
-        To scale the proximal term
-
+    re_encrypt_batches : this parameter is now abandoned
+    use_proximal: this parameter is now abandoned
+    mu: this parameter is now abandoned
+    early_stopping_rounds: this function is not supported in FATE-1.10
     """
 
     def __init__(self, penalty='L2',

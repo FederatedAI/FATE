@@ -1,8 +1,7 @@
 import inspect
-
 from torch.nn.modules import linear, activation, rnn, dropout, sparse, pooling, conv, transformer, batchnorm
-from torch.nn.modules import loss
 from torch.nn.modules import padding, pixelshuffle
+from torch.nn.modules import loss
 
 
 class Required(object):

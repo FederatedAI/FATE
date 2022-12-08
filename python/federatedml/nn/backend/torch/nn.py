@@ -1,6 +1,6 @@
 from torch import nn
-
 from federatedml.nn.backend.torch.base import FateTorchLayer, FateTorchLoss
+from federatedml.nn.backend.torch.base import Sequential
 
 
 class Bilinear(nn.modules.linear.Bilinear, FateTorchLayer):

@@ -59,10 +59,17 @@ class HeteroNN(FateComponent):
         self._interactive_layer = Sequential()
         self._top_nn_model = Sequential()
 
+        # role
+        self._role = 'common'  # common/guest/host
+
         if hasattr(self, 'dataset'):
             assert isinstance(self.dataset, DatasetParam), 'dataset must be a DatasetParam class'
             self.dataset.check()
             self.dataset: DatasetParam = self.dataset.to_dict()
+
+    def get_party_instance(self, role="guest", party_id=None) -> 'Component':
+        self._role = role
+        return super().get_party_instance(role, party_id)
 
     def add_dataset(self, dataset_param: DatasetParam):
 
@@ -80,14 +87,18 @@ class HeteroNN(FateComponent):
 
     def set_interactve_layer(self, layer):
 
-        if not hasattr(self, "_interactive_layer"):
-            setattr(self, "_interactive_layer", Sequential())
-        assert isinstance(layer, InteractiveLayer), 'You need to add an interactive layer instance, \n' \
-                                                    'you can access InteractiveLayer by:\n' \
-                                                    't.nn.InteractiveLayer after fate_torch_hook(t)\n' \
-                                                    'or from pipeline.component.nn.backend.torch.interactive ' \
-                                                    'import InteractiveLayer'
-        self._interactive_layer.add(layer)
+        if self._role == 'common' or self._role == 'guest':
+            if not hasattr(self, "_interactive_layer"):
+                setattr(self, "_interactive_layer", Sequential())
+            assert isinstance(layer, InteractiveLayer), 'You need to add an interactive layer instance, \n' \
+                                                        'you can access InteractiveLayer by:\n' \
+                                                        't.nn.InteractiveLayer after fate_torch_hook(t)\n' \
+                                                        'or from pipeline.component.nn.backend.torch.interactive ' \
+                                                        'import InteractiveLayer'
+            self._interactive_layer.add(layer)
+
+        else:
+            raise RuntimeError('You can only set interactive layer in "common" or "guest" hetero nn component')
 
     def add_top_model(self, model):
         if not hasattr(self, "_top_nn_model"):
@@ -131,6 +142,7 @@ class HeteroNN(FateComponent):
         for role in all_party_instance:
             for party in all_party_instance[role]["party"].keys():
                 all_party_instance[role]["party"][party]._compile_common_network_config()
+                all_party_instance[role]["party"][party]._compile_interactive_layer()
 
     def get_bottom_model(self):
 

@@ -99,10 +99,10 @@ class GHPacker(object):
             else:
                 g_max = g_max
                 g_min = g_min
-                
+
             if h_max is None:
                 h_max = 2
-                
+
         else:
             raise ValueError('unknown task type {}'.format(task_type))
 
@@ -121,7 +121,7 @@ class GHPacker(object):
 
         h_sum_max = self.h_max * sample_num
         h_max_int = int(h_sum_max * precision) + 1
-        
+
         g_offset_max = self.g_offset + self.g_max
         g_max_int = int(g_offset_max * sample_num * precision) + 1
 

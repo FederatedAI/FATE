@@ -198,7 +198,7 @@ class KerasNNModel(NNModel):
                 f.extractall(model_path)
 
         # add custom objects
-        from federatedml.nn.hetero_nn.backend.tf_keras.losses import keep_predict_loss
+        from federatedml.transfer_learning.hetero_ftl.backend.tf_keras.losses import keep_predict_loss
 
         tf.keras.utils.get_custom_objects().update(
             {"keep_predict_loss": keep_predict_loss}

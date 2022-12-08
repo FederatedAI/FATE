@@ -11,16 +11,42 @@ from federatedml.transfer_variable.transfer_class.homo_boosting_transfer_variabl
 from typing import List
 from federatedml.feature.fate_element_type import NoneType
 from federatedml.util import LOGGER
-from federatedml.ensemble.boosting.homo_boosting_aggregator import HomoBoostArbiterAggregator, \
-    HomoBoostClientAggregator
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.param.boosting_param import HomoSecureBoostParam
 from federatedml.model_base import Metric
 from federatedml.model_base import MetricMeta
 from federatedml.util.io_check import assert_io_num_rows_equal
-
 from federatedml.feature.homo_feature_binning import recursive_query_binning
 from federatedml.param.feature_binning_param import HomoFeatureBinningParam
+from federatedml.framework.homo.aggregator.secure_aggregator import SecureAggregatorClient, SecureAggregatorServer
+
+
+class HomoBoostArbiterAggregator(object):
+
+    def __init__(self, ):
+        self.aggregator = SecureAggregatorServer(communicate_match_suffix='homo_sbt')
+
+    def aggregate_loss(self, suffix):
+        global_loss = self.aggregator.aggregate_loss(suffix)
+        return global_loss
+
+    def broadcast_converge_status(self, func, loss, suffix):
+        is_converged = func(*loss)
+        self.aggregator.broadcast_converge_status(is_converged, suffix=suffix)
+        return is_converged
+
+
+class HomoBoostClientAggregator(object):
+
+    def __init__(self, sample_num):
+        self.aggregator = SecureAggregatorClient(
+            communicate_match_suffix='homo_sbt', aggregate_weight=sample_num)
+
+    def send_local_loss(self, loss, suffix):
+        self.aggregator.send_loss(loss, suffix)
+
+    def get_converge_status(self, suffix):
+        return self.aggregator.get_converge_status(suffix)
 
 
 class HomoBoostingClient(Boosting, ABC):
@@ -89,8 +115,7 @@ class HomoBoostingClient(Boosting, ABC):
     def fit(self, data_inst, validate_data=None):
 
         # init federation obj
-        self.aggregator = HomoBoostClientAggregator()
-        self.binning_obj = HomoFeatureBinningClient()
+        self.aggregator = HomoBoostClientAggregator(sample_num=data_inst.count())
 
         # binning
         self.data_preporcess(data_inst)
@@ -176,7 +201,7 @@ class HomoBoostingClient(Boosting, ABC):
                 self.y_hat = self.get_new_predict_score(self.y_hat, cur_sample_weights, dim=class_idx)
 
             local_loss = self.compute_loss(self.y_hat, self.y)
-            self.aggregator.send_local_loss(local_loss, self.data_bin.count(), suffix=(epoch_idx,))
+            self.aggregator.send_local_loss(local_loss, suffix=(epoch_idx,))
 
             validation_strategy = self.callback_list.get_validation_strategy()
             if validation_strategy:
@@ -248,7 +273,6 @@ class HomoBoostingArbiter(Boosting, ABC):
 
         # init binning obj
         self.aggregator = HomoBoostArbiterAggregator()
-        self.binning_obj = HomoFeatureBinningServer()
 
         self.federated_binning()
         # initializing

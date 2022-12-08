@@ -109,9 +109,6 @@ class TopModel(object):
             self._model.train((x, y))
             loss = self._model.get_loss()[0]
 
-        LOGGER.debug('top model update parameters:')
-        self._model.print_parameters()
-
         return selective_id, input_gradient, loss
 
     def predict(self, input_data):

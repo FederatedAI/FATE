@@ -1,10 +1,10 @@
 import torch as t
 from torch.nn import ReLU, Linear, LazyLinear, Tanh, Sigmoid, Dropout, Sequential
-
 from federatedml.nn.backend.torch.base import FateTorchLayer
 
 
 class InteractiveLayer(t.nn.Module, FateTorchLayer):
+
     r"""A :class: InteractiveLayer.
 
            An interface for InteractiveLayer. In interactive layer, the forward method is:

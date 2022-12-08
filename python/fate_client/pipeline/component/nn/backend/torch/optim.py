@@ -1,5 +1,4 @@
 from torch import optim
-from pipeline.component.nn.backend.torch.base import FateTorchLayer, Sequential
 from pipeline.component.nn.backend.torch.base import FateTorchOptimizer
 
 
@@ -14,6 +13,7 @@ class ASGD(optim.ASGD, FateTorchOptimizer):
         t0=1000000.0,
         weight_decay=0,
         foreach=None,
+        maximize=False,
     ):
         FateTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
@@ -22,6 +22,7 @@ class ASGD(optim.ASGD, FateTorchOptimizer):
         self.param_dict['t0'] = t0
         self.param_dict['weight_decay'] = weight_decay
         self.param_dict['foreach'] = foreach
+        self.param_dict['maximize'] = maximize
         self.torch_class = type(self).__bases__[0]
 
         if params is None:
@@ -33,18 +34,16 @@ class ASGD(optim.ASGD, FateTorchOptimizer):
 
         # optim.ASGD.__init__(self, **self.param_dict)
 
+    def __repr__(self):
+        try:
+            return type(self).__bases__[0].__repr__(self)
+        except BaseException:
+            return 'Optimizer ASGD without initiated parameters'.format(type(self).__name__)
+
 
 class Adadelta(optim.Adadelta, FateTorchOptimizer):
 
-    def __init__(
-        self,
-        params=None,
-        lr=1.0,
-        rho=0.9,
-        eps=1e-06,
-        weight_decay=0,
-        foreach=None,
-    ):
+    def __init__(self, params=None, lr=1.0, rho=0.9, eps=1e-06, weight_decay=0, foreach=None, ):
         FateTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['rho'] = rho
@@ -61,6 +60,12 @@ class Adadelta(optim.Adadelta, FateTorchOptimizer):
         self.torch_class.__init__(self, params, **self.param_dict)
 
         # optim.Adadelta.__init__(self, **self.param_dict)
+
+    def __repr__(self):
+        try:
+            return type(self).__bases__[0].__repr__(self)
+        except BaseException:
+            return 'Optimizer Adadelta without initiated parameters'.format(type(self).__name__)
 
 
 class Adagrad(optim.Adagrad, FateTorchOptimizer):
@@ -93,20 +98,16 @@ class Adagrad(optim.Adagrad, FateTorchOptimizer):
 
         # optim.Adagrad.__init__(self, **self.param_dict)
 
+    def __repr__(self):
+        try:
+            return type(self).__bases__[0].__repr__(self)
+        except BaseException:
+            return 'Optimizer Adagrad without initiated parameters'.format(type(self).__name__)
+
 
 class Adam(optim.Adam, FateTorchOptimizer):
 
-    def __init__(
-        self,
-        params=None,
-        lr=0.001,
-        betas=(
-            0.9,
-            0.999),
-        eps=1e-08,
-        weight_decay=0,
-        amsgrad=False,
-    ):
+    def __init__(self, params=None, lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=0, amsgrad=False, ):
         FateTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['betas'] = betas
@@ -124,20 +125,16 @@ class Adam(optim.Adam, FateTorchOptimizer):
 
         # optim.Adam.__init__(self, **self.param_dict)
 
+    def __repr__(self):
+        try:
+            return type(self).__bases__[0].__repr__(self)
+        except BaseException:
+            return 'Optimizer Adam without initiated parameters'.format(type(self).__name__)
+
 
 class AdamW(optim.AdamW, FateTorchOptimizer):
 
-    def __init__(
-        self,
-        params=None,
-        lr=0.001,
-        betas=(
-            0.9,
-            0.999),
-        eps=1e-08,
-        weight_decay=0.01,
-        amsgrad=False,
-    ):
+    def __init__(self, params=None, lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=0.01, amsgrad=False, ):
         FateTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['betas'] = betas
@@ -155,20 +152,16 @@ class AdamW(optim.AdamW, FateTorchOptimizer):
 
         # optim.AdamW.__init__(self, **self.param_dict)
 
+    def __repr__(self):
+        try:
+            return type(self).__bases__[0].__repr__(self)
+        except BaseException:
+            return 'Optimizer AdamW without initiated parameters'.format(type(self).__name__)
+
 
 class Adamax(optim.Adamax, FateTorchOptimizer):
 
-    def __init__(
-        self,
-        params=None,
-        lr=0.002,
-        betas=(
-            0.9,
-            0.999),
-        eps=1e-08,
-        weight_decay=0,
-        foreach=None,
-    ):
+    def __init__(self, params=None, lr=0.002, betas=(0.9, 0.999), eps=1e-08, weight_decay=0, foreach=None, ):
         FateTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['betas'] = betas
@@ -185,6 +178,12 @@ class Adamax(optim.Adamax, FateTorchOptimizer):
         self.torch_class.__init__(self, params, **self.param_dict)
 
         # optim.Adamax.__init__(self, **self.param_dict)
+
+    def __repr__(self):
+        try:
+            return type(self).__bases__[0].__repr__(self)
+        except BaseException:
+            return 'Optimizer Adamax without initiated parameters'.format(type(self).__name__)
 
 
 class LBFGS(optim.LBFGS, FateTorchOptimizer):
@@ -219,6 +218,12 @@ class LBFGS(optim.LBFGS, FateTorchOptimizer):
 
         # optim.LBFGS.__init__(self, **self.param_dict)
 
+    def __repr__(self):
+        try:
+            return type(self).__bases__[0].__repr__(self)
+        except BaseException:
+            return 'Optimizer LBFGS without initiated parameters'.format(type(self).__name__)
+
 
 class NAdam(optim.NAdam, FateTorchOptimizer):
 
@@ -252,20 +257,16 @@ class NAdam(optim.NAdam, FateTorchOptimizer):
 
         # optim.NAdam.__init__(self, **self.param_dict)
 
+    def __repr__(self):
+        try:
+            return type(self).__bases__[0].__repr__(self)
+        except BaseException:
+            return 'Optimizer NAdam without initiated parameters'.format(type(self).__name__)
+
 
 class RAdam(optim.RAdam, FateTorchOptimizer):
 
-    def __init__(
-        self,
-        params=None,
-        lr=0.001,
-        betas=(
-            0.9,
-            0.999),
-        eps=1e-08,
-        weight_decay=0,
-        foreach=None,
-    ):
+    def __init__(self, params=None, lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=0, foreach=None, ):
         FateTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['betas'] = betas
@@ -283,6 +284,12 @@ class RAdam(optim.RAdam, FateTorchOptimizer):
 
         # optim.RAdam.__init__(self, **self.param_dict)
 
+    def __repr__(self):
+        try:
+            return type(self).__bases__[0].__repr__(self)
+        except BaseException:
+            return 'Optimizer RAdam without initiated parameters'.format(type(self).__name__)
+
 
 class RMSprop(optim.RMSprop, FateTorchOptimizer):
 
@@ -296,6 +303,8 @@ class RMSprop(optim.RMSprop, FateTorchOptimizer):
         momentum=0,
         centered=False,
         foreach=None,
+        maximize=False,
+        differentiable=False,
     ):
         FateTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
@@ -305,6 +314,8 @@ class RMSprop(optim.RMSprop, FateTorchOptimizer):
         self.param_dict['momentum'] = momentum
         self.param_dict['centered'] = centered
         self.param_dict['foreach'] = foreach
+        self.param_dict['maximize'] = maximize
+        self.param_dict['differentiable'] = differentiable
         self.torch_class = type(self).__bases__[0]
 
         if params is None:
@@ -316,18 +327,22 @@ class RMSprop(optim.RMSprop, FateTorchOptimizer):
 
         # optim.RMSprop.__init__(self, **self.param_dict)
 
+    def __repr__(self):
+        try:
+            return type(self).__bases__[0].__repr__(self)
+        except BaseException:
+            return 'Optimizer RMSprop without initiated parameters'.format(type(self).__name__)
+
 
 class Rprop(optim.Rprop, FateTorchOptimizer):
 
-    def __init__(
-        self, params=None, lr=0.01, etas=(
-            0.5, 1.2), step_sizes=(
-            1e-06, 50), foreach=None, ):
+    def __init__(self, params=None, lr=0.01, etas=(0.5, 1.2), step_sizes=(1e-06, 50), foreach=None, maximize=False, ):
         FateTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['etas'] = etas
         self.param_dict['step_sizes'] = step_sizes
         self.param_dict['foreach'] = foreach
+        self.param_dict['maximize'] = maximize
         self.torch_class = type(self).__bases__[0]
 
         if params is None:
@@ -339,18 +354,16 @@ class Rprop(optim.Rprop, FateTorchOptimizer):
 
         # optim.Rprop.__init__(self, **self.param_dict)
 
+    def __repr__(self):
+        try:
+            return type(self).__bases__[0].__repr__(self)
+        except BaseException:
+            return 'Optimizer Rprop without initiated parameters'.format(type(self).__name__)
+
 
 class SGD(optim.SGD, FateTorchOptimizer):
 
-    def __init__(
-        self,
-        lr,
-        params=None,
-        momentum=0,
-        dampening=0,
-        weight_decay=0,
-        nesterov=False,
-    ):
+    def __init__(self, lr, params=None, momentum=0, dampening=0, weight_decay=0, nesterov=False, ):
         FateTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['momentum'] = momentum
@@ -368,14 +381,21 @@ class SGD(optim.SGD, FateTorchOptimizer):
 
         # optim.SGD.__init__(self, **self.param_dict)
 
+    def __repr__(self):
+        try:
+            return type(self).__bases__[0].__repr__(self)
+        except BaseException:
+            return 'Optimizer SGD without initiated parameters'.format(type(self).__name__)
+
 
 class SparseAdam(optim.SparseAdam, FateTorchOptimizer):
 
-    def __init__(self, params=None, lr=0.001, betas=(0.9, 0.999), eps=1e-08, ):
+    def __init__(self, params=None, lr=0.001, betas=(0.9, 0.999), eps=1e-08, maximize=False, ):
         FateTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['betas'] = betas
         self.param_dict['eps'] = eps
+        self.param_dict['maximize'] = maximize
         self.torch_class = type(self).__bases__[0]
 
         if params is None:
@@ -386,3 +406,9 @@ class SparseAdam(optim.SparseAdam, FateTorchOptimizer):
         self.torch_class.__init__(self, params, **self.param_dict)
 
         # optim.SparseAdam.__init__(self, **self.param_dict)
+
+    def __repr__(self):
+        try:
+            return type(self).__bases__[0].__repr__(self)
+        except BaseException:
+            return 'Optimizer SparseAdam without initiated parameters'.format(type(self).__name__)

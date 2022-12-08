@@ -1,19 +1,19 @@
 import copy
 import inspect
 from collections import OrderedDict
-
 try:
     from torch.nn import Sequential as tSeq
     from federatedml.nn.backend.torch import optim, init, nn
     from federatedml.nn.backend.torch import operation
     from federatedml.nn.backend.torch.base import Sequential, get_torch_instance
-    from federatedml.nn.backend.torch.cust_model import CustModel
+    from federatedml.nn.backend.torch.cust import CustModel, CustLoss
     from federatedml.nn.backend.torch.interactive import InteractiveLayer
 except ImportError:
     pass
 
 
 def recover_layer_from_dict(nn_define, nn_dict):
+
     init_param_dict = copy.deepcopy(nn_define)
     if 'layer' in nn_define:
         class_name = nn_define['layer']
@@ -107,7 +107,12 @@ def recover_loss_fn_from_dict(define_dict):
         raise ValueError('please specify loss function in the json config')
     param_dict = copy.deepcopy(define_dict)
     param_dict.pop('loss_fn')
-    return loss_fn_dict[define_dict['loss_fn']](**param_dict)
+    if define_dict['loss_fn'] == CustLoss.__name__:
+        return CustLoss(loss_module_name=param_dict['loss_module_name'],
+                        class_name=param_dict['class_name'],
+                        **param_dict['param']).get_pytorch_model()
+    else:
+        return loss_fn_dict[define_dict['loss_fn']](**param_dict)
 
 
 if __name__ == '__main__':

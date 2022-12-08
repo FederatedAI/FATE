@@ -1,6 +1,5 @@
-import copy
-
 import torch as t
+import copy
 from torch.nn import Module
 
 

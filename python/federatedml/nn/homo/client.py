@@ -1,33 +1,75 @@
-import inspect
 import json
-import tempfile
-
 import torch
-
-from fate_arch.computing._util import is_table
+import tempfile
+import inspect
 from fate_arch.computing.non_distributed import LocalData
-from fate_arch.session import computing_session
-from federatedml.callbacks.model_checkpoint import ModelCheckpoint
-from federatedml.model_base import MetricMeta
+from fate_arch.computing._util import is_table
 from federatedml.model_base import ModelBase
+from federatedml.nn.homo.trainer.trainer_base import get_trainer_class, TrainerBase
+from federatedml.nn.backend.utils.data import load_dataset
+from federatedml.param.homo_nn_param import HomoNNParam
 from federatedml.nn.backend.torch import serialization as s
 from federatedml.nn.backend.torch.base import FateTorchOptimizer
-from federatedml.nn.backend.utils.common import global_seed, get_homo_model_dict, get_homo_param_meta
-from federatedml.nn.backend.utils.data import load_dataset
-from federatedml.nn.homo.trainer.trainer_base import StdReturnFormat
-from federatedml.nn.homo.trainer.trainer_base import get_trainer_class, TrainerBase
-from federatedml.param.homo_nn_param import HomoNNParam
-from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
+from federatedml.model_base import MetricMeta
 from federatedml.util import LOGGER
 from federatedml.util import consts
+from federatedml.nn.homo.trainer.trainer_base import StdReturnFormat
+from federatedml.nn.backend.utils.common import global_seed, get_homo_model_dict, get_homo_param_meta, recover_model_bytes, get_torch_model_bytes
+from federatedml.callbacks.model_checkpoint import ModelCheckpoint
+from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
+from federatedml.nn.homo.trainer.trainer_base import ExporterBase
+from fate_arch.session import computing_session
+from federatedml.nn.backend.utils.data import get_ret_predict_table
+from federatedml.protobuf.generated.homo_nn_model_param_pb2 import HomoNNParam as HomoNNParamPB
+from federatedml.protobuf.generated.homo_nn_model_meta_pb2 import HomoNNMeta as HomoNNMetaPB
 
 
-class HomoNNTransferVariable(BaseTransferVariables):
-    def __init__(self, flowid=0):
-        super().__init__(flowid)
-        # checkpoint history
-        self.ckp_history = self._create_variable(
-            name='ckp_history', src=['host', 'guest'], dst=['arbiter'])
+class NNModelExporter(ExporterBase):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def export_model_dict(self, model=None, optimizer=None, model_define=None, optimizer_define=None, loss_define=None,
+                          epoch_idx=-1, converge_status=False, loss_history=None, best_epoch=-1, extra_data={}):
+
+        if issubclass(type(model), torch.nn.Module):
+            model_statedict = model.state_dict()
+        else:
+            model_statedict = None
+
+        opt_state_dict = None
+        if optimizer is not None:
+            assert isinstance(optimizer, torch.optim.Optimizer), \
+                'optimizer must be an instance of torch.optim.Optimizer'
+            opt_state_dict = optimizer.state_dict()
+
+        model_status = {
+            'model': model_statedict,
+            'optimizer': opt_state_dict,
+        }
+
+        model_saved_bytes = get_torch_model_bytes(model_status)
+        extra_data_bytes = get_torch_model_bytes(extra_data)
+
+        param = HomoNNParamPB()
+        meta = HomoNNMetaPB()
+
+        # save param
+        param.model_bytes = model_saved_bytes
+        param.extra_data_bytes = extra_data_bytes
+        param.epoch_idx = epoch_idx
+        param.converge_status = converge_status
+        param.best_epoch = best_epoch
+        if loss_history is None:
+            loss_history = []
+        param.loss_history.extend(loss_history)
+
+        # save meta
+        meta.nn_define.append(json.dumps(model_define))
+        meta.optimizer_define.append(json.dumps(optimizer_define))
+        meta.loss_func_define.append(json.dumps(loss_define))
+
+        return get_homo_model_dict(param, meta)
 
 
 class HomoNNClient(ModelBase):
@@ -43,13 +85,13 @@ class HomoNNClient(ModelBase):
         self.torch_seed = None
         self.loss = None
         self.optimizer = None
-        self.validation_freq = None
         self.nn_define = None
 
         # running varialbles
         self.trainer_inst = None
 
         # export model
+        self.exporter = NNModelExporter()
         self.model_loaded = False
         self.model = None
 
@@ -59,8 +101,8 @@ class HomoNNClient(ModelBase):
         # dtable partitions
         self.partitions = 4
 
-        # transfer var
-        self.transfer_variable = HomoNNTransferVariable(self.flowid)
+        # warm start display iter
+        self.warm_start_iter = None
 
     def _init_model(self, param: HomoNNParam):
 
@@ -71,19 +113,9 @@ class HomoNNClient(ModelBase):
         self.trainer_param = train_param['param']
         self.dataset_param = dataset_param['param']
         self.torch_seed = param.torch_seed
-        self.validation_freq = param.validation_freq
         self.nn_define = param.nn_define
         self.loss = param.loss
         self.optimizer = param.optimizer
-
-    # read model from model bytes
-    @staticmethod
-    def recover_model_bytes(model_bytes):
-        with tempfile.TemporaryFile() as f:
-            f.write(model_bytes)
-            f.seek(0)
-            model_dict = torch.load(f)
-        return model_dict
 
     def init(self):
 
@@ -104,8 +136,9 @@ class HomoNNClient(ModelBase):
         # if has model protobuf, load model config from protobuf
         load_opt_state_dict = False
         if self.model_loaded:
-            param, meta = self.model
 
+            param, meta = get_homo_param_meta(self.model)
+            self.warm_start_iter = param.epoch_idx
             if param is None or meta is None:
                 raise ValueError(
                     'model protobuf is None, make sure'
@@ -119,7 +152,8 @@ class HomoNNClient(ModelBase):
             self.nn_define = json.loads(meta.nn_define[0])
             loss = json.loads(meta.loss_func_define[0])
             optimizer = json.loads(meta.optimizer_define[0])
-            loaded_model_dict = self.recover_model_bytes(param.model_bytes)
+            loaded_model_dict = recover_model_bytes(param.model_bytes)
+            extra_data = recover_model_bytes(param.extra_data_bytes)
 
             if self.optimizer is not None and optimizer != self.optimizer:
                 LOGGER.info('optimizer updated')
@@ -131,6 +165,8 @@ class HomoNNClient(ModelBase):
                 LOGGER.info('loss updated')
             else:
                 self.loss = loss
+        else:
+            extra_data = {}
 
         # check key param
         if self.nn_define is None:
@@ -146,7 +182,8 @@ class HomoNNClient(ModelBase):
         LOGGER.info('model structure is {}'.format(model))
         # init optimizer
         if self.optimizer is not None:
-            optimizer_: FateTorchOptimizer = s.recover_optimizer_from_dict(self.optimizer)
+            optimizer_: FateTorchOptimizer = s.recover_optimizer_from_dict(
+                self.optimizer)
             # pass model parameters to optimizer
             optimizer = optimizer_.to_torch_instance(model.parameters())
             if load_opt_state_dict:
@@ -174,16 +211,19 @@ class HomoNNClient(ModelBase):
             'train_set',
             'validate_set',
             'optimizer',
-            'loss']
-        if len(trainer_train_args) < 5:
+            'loss'
+            'extra_data'
+        ]
+        if len(trainer_train_args) < 6:
             raise ValueError(
-                'Train function of trainer should take 5 arguments :{}, but current trainer.train '
+                'Train function of trainer should take 6 arguments :{}, but current trainer.train '
                 'only takes {} arguments: {}'.format(
                     args_format, len(trainer_train_args), trainer_train_args))
 
         trainer_inst.set_nn_config(self.nn_define, self.optimizer, self.loss)
+        trainer_inst.fed_mode = True
 
-        return trainer_inst, model, optimizer, loss_fn
+        return trainer_inst, model, optimizer, loss_fn, extra_data
 
     def fit(self, train_input, validate_input=None):
 
@@ -208,21 +248,25 @@ class HomoNNClient(ModelBase):
                 name="train",
                 metric_type="LOSS",
                 extra_metas={
-                    "unit_name": "iters"}))
+                    "unit_name": "epochs"}))
 
         # set random seed
         global_seed(self.torch_seed)
 
-        self.trainer_inst, model, optimizer, loss_fn = self.init()
+        self.trainer_inst, model, optimizer, loss_fn, extra_data = self.init()
         self.trainer_inst.set_model(model)
         self.trainer_inst.set_tracker(self.tracker)
+        self.trainer_inst.set_model_exporter(self.exporter)
 
         # load dataset class
         dataset_inst = load_dataset(
             dataset_name=self.dataset,
             data_path_or_dtable=train_input,
             dataset_cache=self.cache_dataset,
-            param=self.dataset_param)
+            param=self.dataset_param
+        )
+        # set dataset prefix
+        dataset_inst.set_type('train')
         LOGGER.info('train dataset instance is {}'.format(dataset_inst))
 
         if validate_input:
@@ -230,29 +274,31 @@ class HomoNNClient(ModelBase):
                 dataset_name=self.dataset,
                 data_path_or_dtable=validate_input,
                 dataset_cache=self.cache_dataset,
-                param=self.dataset_param)
+                param=self.dataset_param
+            )
+            dataset_inst.set_type('validate')
             LOGGER.info('validate dataset instance is {}'.format(dataset_inst))
         else:
             val_dataset_inst = None
 
-        # set dataset prefix
-        dataset_inst.set_type('train')
+        # display warmstart iter
+        if self.component_properties.is_warm_start:
+            self.callback_warm_start_init_iter(self.warm_start_iter)
+
         # set model check point
-        self.callback_list.callback_list.append(
-            ModelCheckpoint(self, save_freq=1))
-        self.trainer_inst.init_checkpoint(self.callback_list.callback_list[0])
+        self.trainer_inst.set_checkpoint(ModelCheckpoint(self, save_freq=1))
+        # training
         self.trainer_inst.train(
             dataset_inst,
             val_dataset_inst,
             optimizer,
-            loss_fn)
+            loss_fn,
+            extra_data
+        )
 
         # training is done, get exported model
         self.model = self.trainer_inst.get_cached_model()
-
-        # sync check point history
-        ckp_history = self.trainer_inst.get_checkpoint_history()
-        self.transfer_variable.ckp_history.remote(ckp_history)
+        self.set_summary(self.trainer_inst.get_summary())
 
     def predict(self, cpn_input):
 
@@ -276,6 +322,7 @@ class HomoNNClient(ModelBase):
 
         if not dataset_inst.has_dataset_type():
             dataset_inst.set_type('predict')
+
         trainer_ret = self.trainer_inst.predict(dataset_inst)
         if trainer_ret is None or not isinstance(trainer_ret, StdReturnFormat):
             LOGGER.info(
@@ -283,28 +330,25 @@ class HomoNNClient(ModelBase):
             return None
 
         id_table, pred_table, classes = trainer_ret()
-        id_dtable = computing_session.parallelize(
-            id_table, partition=self.partitions, include_key=True)
-        pred_dtable = computing_session.parallelize(
-            pred_table, partition=self.partitions, include_key=True)
-
+        id_dtable, pred_dtable = get_ret_predict_table(
+            id_table, pred_table, classes, self.partitions, computing_session)
         ret_table = self.predict_score_to_output(
             id_dtable, pred_dtable, classes)
-        LOGGER.debug('ret table info {}'.format(ret_table.schema))
+
         return ret_table
 
     def export_model(self):
 
         if self.model is None:
-            return
+            LOGGER.debug('export an empty model')
+            return self.exporter.export_model_dict()  # return an empty model
 
-        return get_homo_model_dict(self.model[0], self.model[1])
+        return self.model
 
     def load_model(self, model_dict):
 
         model_dict = list(model_dict["model"].values())[0]
-        param, meta = get_homo_param_meta(model_dict)
-        self.model = (param, meta)
+        self.model = model_dict
         self.model_loaded = True
 
     # override function
