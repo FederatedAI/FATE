@@ -89,7 +89,7 @@ def main(config="../../config.yaml", namespace=""):
     optimizer = t.optim.Adam(lr=0.05)  # you can initialize optimizer without parameters after fate_torch_hook
     loss = t.nn.CrossEntropyLoss()
 
-    hetero_nn_0.set_interactve_layer(interactive_layer)
+    hetero_nn_0.set_interactive_layer(interactive_layer)
     # add dataset param, because CrossEntropy loss need flatten long label, so add this parameter
     # will use table dataset in federatedml/nn/dataset/table.py
     hetero_nn_0.add_dataset(DatasetParam(dataset_name='table', flatten_label=True, label_dtype='long'))

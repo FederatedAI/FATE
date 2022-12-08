@@ -85,7 +85,7 @@ class HeteroNN(FateComponent):
 
         self._bottom_nn_model.add(model)
 
-    def set_interactve_layer(self, layer):
+    def set_interactive_layer(self, layer):
 
         if self._role == 'common' or self._role == 'guest':
             if not hasattr(self, "_interactive_layer"):

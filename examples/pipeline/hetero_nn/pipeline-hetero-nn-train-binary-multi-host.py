@@ -91,7 +91,7 @@ def main(config="../../config.yaml", namespace=""):
     optimizer = t.optim.Adam(lr=0.01)  # you can initialize optimizer without parameters after fate_torch_hook
     loss = t.nn.BCELoss()
 
-    hetero_nn_0.set_interactve_layer(interactive_layer)
+    hetero_nn_0.set_interactive_layer(interactive_layer)
     hetero_nn_0.compile(optimizer=optimizer, loss=loss)
 
     evaluation_0 = Evaluation(name='eval_0', eval_type='binary')

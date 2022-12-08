@@ -99,12 +99,10 @@ def main(config="../../config.yaml", namespace=""):
     guest_nn_0 = hetero_nn_0.get_party_instance(role='guest', party_id=guest)
     guest_nn_0.add_bottom_model(seq)
     guest_nn_0.add_top_model(seq2)
-
-    guest_nn_0.set_interactve_layer(interactive_layer)
     host_nn_0 = hetero_nn_0.get_party_instance(role='host', party_id=host)
     host_nn_0.add_bottom_model(seq3)
 
-    hetero_nn_0.set_interactve_layer(interactive_layer)
+    hetero_nn_0.set_interactive_layer(interactive_layer)
 
     hetero_nn_0.compile(opt, loss=ce_loss_fn)
 
