@@ -290,7 +290,7 @@ mkdir -p /data/projects/fate/common/python/venv
 
 #安装miniconda3
 cd /data/projects/install
-sh Miniconda3-py38_4.12.0-Linux-x86_64.sh -b -p /data/projects/fate/common/miniconda3
+bash Miniconda3-py38_4.12.0-Linux-x86_64.sh -b -p /data/projects/fate/common/miniconda3
 #创建虚拟化环境
 /data/projects/fate/common/miniconda3/bin/python3.8 -m venv /data/projects/fate/common/python/venv
 
@@ -918,10 +918,10 @@ EOF
 ```
 #启动FATE服务，FATE-Flow依赖MySQL的启动
 cd /data/projects/fate/fateflow/bin
-sh service.sh start
+bash service.sh start
 #启动fateboard服务
 cd /data/projects/fate/fateboard
-sh service.sh start
+bash service.sh start
 #启动nginx服务
 /data/projects/fate/proxy/nginx/sbin/nginx -c /data/projects/fate/proxy/nginx/conf/nginx.conf
 ```
@@ -1073,7 +1073,7 @@ FATEBoard是一项Web服务。如果成功启动了FATEBoard服务，则可以�
 ```bash
 source /data/projects/fate/init_env.sh
 cd /data/projects/fate/fateflow/bin
-sh service.sh start|stop|status|restart
+bash service.sh start|stop|status|restart
 ```
 
 如果逐个模块启动，需要先启动eggroll再启动fateflow，fateflow依赖eggroll的启动。
@@ -1082,7 +1082,7 @@ sh service.sh start|stop|status|restart
 
 ```bash
 cd /data/projects/fate/fateboard
-sh service.sh start|stop|status|restart
+bash service.sh start|stop|status|restart
 ```
 
 3) 启动/关闭/重启NginX服务
@@ -1099,7 +1099,7 @@ cd /data/projects/fate/proxy
 
 ```bash
 cd /data/projects/fate/common/mysql/mysql-8.0.13
-sh ./service.sh start|stop|status|restart
+bash ./service.sh start|stop|status|restart
 ```
 
 ### 11.2 查看进程和端口
@@ -1136,5 +1136,3 @@ netstat -tlnp | grep 9390
 | fateboard          | /data/projects/fate/fateboard/logs                 |
 | nginx | /data/projects/fate/proxy/nginx/logs                 |
 | mysql              | /data/projects/fate/common/mysql/mysql-*/logs |
-
-

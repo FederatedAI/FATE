@@ -24,12 +24,10 @@ script:
   - tar -xzf standalone_fate_master_1.5.1.tar.gz
   - cd standalone_fate_master_1.5.1
   - sed -i.bak "s/sh  service.sh/bash service.sh/g" init.sh
-  - sh init.sh init
+  - bash init.sh init
   - ls -alh
   - source bin/init_env.sh
   - bash ./python/federatedml/test/run_test.sh
 after_success:
   - conda install -c conda-forge codecov --yes
   - cd ./python/federatedml/test && codecov
-
-
