@@ -378,6 +378,10 @@ class TrainerBase(object):
             return var.cuda()
         elif isinstance(var, tuple) or isinstance(var, list):
             return tuple(self.to_cuda(i) for i in var)
+        elif isinstance(var, dict):
+            for k in var:
+                if hasattr(k, 'cuda'):
+                    k.cuda()
         else:
             return var
 

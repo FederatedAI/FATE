@@ -55,12 +55,12 @@ class HomoLRServer(HomoLRBase):
 
     def fit_binary(self, data_instances=None, validate_data=None):
 
-        for i in self.callback_list.callback_list:
-            if isinstance(i, ModelCheckpoint):
-                self.save_freq = i.save_freq
-                self.model_checkpoint = i
-            elif isinstance(i, ValidationStrategy):
-                self.validation_freqs = i.validation_freqs
+        for callback_cpn in self.callback_list.callback_list:
+            if isinstance(callback_cpn, ModelCheckpoint):
+                self.save_freq = callback_cpn.save_freq
+                self.model_checkpoint = callback_cpn
+            elif isinstance(callback_cpn, ValidationStrategy):
+                self.validation_freqs = callback_cpn.validation_freqs
 
         # fate loss callback setting
         if not self.callback_one_vs_rest:  # ovr does not display loss

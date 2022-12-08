@@ -48,10 +48,7 @@ def load_dataset(dataset_name, data_path_or_dtable, param, dataset_cache: dict):
         dataset_inst = dataset_class(**param)
         dataset_inst.load(data_path_or_dtable)
 
-    if isinstance(data_path_or_dtable, str):
-        dataset_cache[data_path_or_dtable] = dataset_inst
-    else:
-        dataset_cache[id(data_path_or_dtable)] = dataset_inst
+    dataset_cache[cached_id] = dataset_inst
 
     return dataset_inst
 

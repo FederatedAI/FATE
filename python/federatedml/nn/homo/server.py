@@ -51,7 +51,7 @@ class HomoNNServer(ModelBase):
         LOGGER.debug('trainer and trainer param {} {}'.format(
             self.trainer, self.trainer_param))
 
-    def fit(self, cpn_input=None, cpn_input_2=None):
+    def fit(self, data_instance=None, validate_data=None):
 
         # fate loss callback setting
         self.callback_meta(

@@ -113,13 +113,7 @@ class FedAVGTrainer(TrainerBase):
         self.check_trainer_param(
             [self.tol], ['tol'], self.is_float, '{} is not a float')
 
-    def train(
-            self,
-            train_set: Dataset,
-            validate_set: Dataset = None,
-            optimizer: t.optim.Optimizer = None,
-            loss=None,
-            extra_dict={}):
+    def train(self, train_set: Dataset, validate_set: Dataset = None, optimizer: t.optim.Optimizer = None, loss=None, extra_dict={}):
 
         if self.cuda:
             self.model = self.model.cuda()
@@ -280,7 +274,7 @@ class FedAVGTrainer(TrainerBase):
         self.model.eval()
 
         if not dataset.has_sample_ids():
-            dataset.generate_sample_ids(prefix=dataset.get_type())
+            dataset.init_sid_and_getfunc(prefix=dataset.get_type())
 
         labels = []
         with torch.no_grad():
