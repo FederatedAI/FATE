@@ -17,7 +17,7 @@ class PaillierAssess(object):
                 raise ValueError("IPCL is not supported.")
         else:
             raise ValueError(f"Unsupported Paillier method: {method}.")
-        
+
         self.public_key, self.private_key = PaillierKeypair.generate_keypair()
         self.method = method
         self.data_num = data_num
