@@ -73,7 +73,6 @@ class HeteroNNGuest(HeteroNNBase):
             self.hetero_nn_param, self.component_properties, self.flowid)
         self.model.set_transfer_variable(self.transfer_variable)
         self.model.set_partition(self.default_table_partitions)
-        self.model.set_label_num(self.label_num)
 
     def _set_loss_callback_info(self):
         self.callback_meta("loss",
@@ -94,8 +93,11 @@ class HeteroNNGuest(HeteroNNBase):
 
         train_ds = self.prepare_dataset(
             data_inst, data_type='train', check_label=True)
+        train_ds.train()  # set dataset to train mode
+
         if validate_data is not None:
             val_ds = self.prepare_dataset(validate_data, data_type='validate')
+            val_ds.train()  # set dataset to train mode
         else:
             val_ds = None
 
@@ -108,6 +110,9 @@ class HeteroNNGuest(HeteroNNBase):
         else:
             self.callback_warm_start_init_iter(self.history_iter_epoch)
             epoch_offset = self.history_iter_epoch + 1
+
+        # set label number
+        self.model.set_label_num(self.label_num)
 
         if len(train_ds) == 0:
             self.model.set_empty()
@@ -177,6 +182,7 @@ class HeteroNNGuest(HeteroNNBase):
     def predict(self, data_inst):
 
         ds = self.prepare_dataset(data_inst, data_type='predict')
+        ds.eval()  # set dataset to eval mode
         keys = ds.get_sample_ids()
 
         batch_size = len(ds) if self.batch_size == -1 else self.batch_size

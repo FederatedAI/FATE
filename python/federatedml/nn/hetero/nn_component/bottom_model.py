@@ -16,6 +16,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import torch as t
 import numpy as np
 from federatedml.util import LOGGER
 from federatedml.nn.hetero.nn_component.torch_model import TorchNNModel
@@ -43,7 +44,13 @@ class BottomModel(object):
 
     def forward(self, x):
         LOGGER.debug("bottom model start to forward propagation")
+
         self.x = x
+        if self.do_backward_select_strategy:
+            if (not isinstance(x, np.ndarray) and not isinstance(x, t.Tensor)):
+                raise ValueError(
+                    'When using selective bp, data from dataset must be a ndarray or a torch tensor, but got {}'.format(
+                        type(x)))
 
         if self.do_backward_select_strategy:
             output_data = self._model.predict(x)

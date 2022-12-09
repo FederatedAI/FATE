@@ -35,7 +35,15 @@ class Dataset(Dataset_):
         return self.dataset_type
 
     def has_sample_ids(self):
-        sample_ids = self.get_sample_ids()
+
+        # if not implement get_sample_ids, return False
+        try:
+            sample_ids = self.get_sample_ids()
+        except NotImplementedError as e:
+            return False
+        except BaseException as e:
+            raise e
+
         if sample_ids is None:
             return False
         else:
@@ -82,7 +90,7 @@ class Dataset(Dataset_):
     @abc.abstractmethod
     def load(self, file_path):
         raise NotImplementedError(
-            'You must implement load function so that Client class can pass file-path to this '
+            'You must implement load function so that Client can pass file-path to this '
             'class')
 
     def __getitem__(self, item):
@@ -114,6 +122,12 @@ class ShuffleWrapDataset(Dataset_):
         else:
             self.shuffled_idx = np.copy(self.idx)
         self.idx_map = {k: v for k, v in zip(self.idx, self.shuffled_idx)}
+
+    def train(self, ):
+        self.ds.train()
+
+    def eval(self, ):
+        self.ds.eval()
 
     def __getitem__(self, item):
         return self.ds[self.idx_map[self.idx[item]]]
