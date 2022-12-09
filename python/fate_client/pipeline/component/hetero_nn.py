@@ -60,16 +60,20 @@ class HeteroNN(FateComponent):
         self._top_nn_model = Sequential()
 
         # role
-        self._role = 'common'  # common/guest/host
-
+        self._role = 'common' # common/guest/host
+ 
         if hasattr(self, 'dataset'):
             assert isinstance(self.dataset, DatasetParam), 'dataset must be a DatasetParam class'
             self.dataset.check()
             self.dataset: DatasetParam = self.dataset.to_dict()
 
-    def get_party_instance(self, role="guest", party_id=None) -> 'Component':
+    def set_role(self, role):
         self._role = role
-        return super().get_party_instance(role, party_id)
+
+    def get_party_instance(self, role="guest", party_id=None) -> 'Component':
+        inst = super().get_party_instance(role, party_id)
+        inst.set_role(role)
+        return inst
 
     def add_dataset(self, dataset_param: DatasetParam):
 
@@ -86,7 +90,7 @@ class HeteroNN(FateComponent):
         self._bottom_nn_model.add(model)
 
     def set_interactive_layer(self, layer):
-
+        
         if self._role == 'common' or self._role == 'guest':
             if not hasattr(self, "_interactive_layer"):
                 setattr(self, "_interactive_layer", Sequential())
@@ -101,6 +105,8 @@ class HeteroNN(FateComponent):
             raise RuntimeError('You can only set interactive layer in "common" or "guest" hetero nn component')
 
     def add_top_model(self, model):
+        if self._role == 'host':
+            raise  RuntimeError('top model is not allow to set on host model')
         if not hasattr(self, "_top_nn_model"):
             setattr(self, "_top_nn_model", Sequential())
 
