@@ -13,17 +13,24 @@ def component():
 @click.option("--config", required=False, type=click.File(), help="config path")
 @click.option("--config-entrypoint", required=False, help="enctypoint to get config")
 @click.option("--properties", "-p", multiple=True, help="properties config")
-def execute(process_tag, config, config_entrypoint, properties):
+@click.option("--env-prefix", "-e", type=str, default="runtime.component.", help="prefix for env config")
+def execute(process_tag, config, config_entrypoint, properties, env_prefix):
     "execute component"
     import logging
 
     from fate.components.spec.task import TaskConfigSpec
 
+    # parse properties
+    properties_items = {}
+    properties_items.update(load_properties(properties))
+    properties_items.update(load_properties_from_env(env_prefix))
+
     # parse config
     configs = {}
     load_config_from_entrypoint(configs, config_entrypoint)
     load_config_from_file(configs, config)
-    load_config_from_properties(configs, properties)
+    load_config_from_properties(configs, properties_items)
+
     task_config = TaskConfigSpec.parse_obj(configs)
 
     # install logger
@@ -37,11 +44,32 @@ def execute(process_tag, config, config_entrypoint, properties):
     execute_component(task_config)
 
 
-def load_config_from_properties(configs, properties):
+def load_properties(properties) -> dict:
+    properties_dict = {}
     for property_item in properties:
         k, v = property_item.split("=")
         k = k.strip()
         v = v.strip()
+        properties_dict[k] = v
+    return properties_dict
+
+
+def load_properties_from_env(env_filter_prefix):
+    import os
+
+    properties_dict = {}
+    if env_filter_prefix:
+        env_prefix_size = len(env_filter_prefix)
+        for k, v in os.environ.items():
+            if k.startswith(env_filter_prefix):
+                property_key = k[env_prefix_size:]
+                if property_key:
+                    properties_dict[property_key] = v
+    return properties_dict
+
+
+def load_config_from_properties(configs, properties_dict):
+    for k, v in properties_dict.items():
         lens_and_setter = configs, None
 
         def _setter(d, k):
