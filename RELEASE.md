@@ -1,3 +1,9 @@
+## Release 1.7.3
+### Major Features and Improvements
+> EggRoll
+* Support EggRoll v2.4.7
+
+
 ## Release 1.7.2
 ### Major Features and Improvements
 > FederatedML
