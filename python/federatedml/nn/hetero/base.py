@@ -160,7 +160,7 @@ class HeteroNNBase(ModelBase):
             if not ds.has_sample_ids():
                 raise ValueError(
                     'Dataset has no sample id, this is not allowed in hetero-nn, please make sure'
-                    ' that you use set_sample_ids() to set ids for samples')
+                    ' that you implement get_sample_ids()')
 
             if self.dataset_shuffle:
                 ds = ShuffleWrapDataset(
@@ -176,17 +176,23 @@ class HeteroNNBase(ModelBase):
                     ds.set_shuffled_idx(idx_map)
 
             if check_label:
-                all_classes = ds.get_classes()
-                if all_classes is None:
+                try:
+                    all_classes = ds.get_classes()
+                except NotImplementedError as e:
                     raise NotImplementedError(
                         'get_classes() is not implemented, please implement this function'
                         ' when you are using hetero-nn. Let it return classes in a list.'
                         ' Please see built-in dataset(table.py for example) for reference')
+                except BaseException as e:
+                    raise e
 
-                if self.task_type == consts.CLASSIFICATION:
-                    self.label_num = len(all_classes)
-                elif self.task_type == consts.REGRESSION:
-                    self.label_num = 1
+                from federatedml.util import LOGGER
+                LOGGER.debug('all classes is {}'.format(all_classes))
+                if self.label_num is None:
+                    if self.task_type == consts.CLASSIFICATION:
+                        self.label_num = len(all_classes)
+                    elif self.task_type == consts.REGRESSION:
+                        self.label_num = 1
 
         return ds
 

@@ -115,6 +115,8 @@ class HeteroNNGuestModel(HeteroNNModel):
 
     def set_label_num(self, label_num):
         self.label_num = label_num
+        if self.top_model is not None:  # warmstart case
+            self.top_model.label_num = label_num
 
     def train(self, x, y, epoch, batch_idx):
 

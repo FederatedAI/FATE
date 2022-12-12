@@ -208,11 +208,6 @@ class HEInteractiveLayerGuest(InteractiveLayerGuest):
                 host_model.set_backward_selective_strategy()
                 host_model.set_batch(self.batch_size)
 
-        LOGGER.debug(
-            'dense model guest: {}, dense model host {}'.format(
-                self.guest_model,
-                self.host_model_list))
-
     """
     Drop out functions
     """

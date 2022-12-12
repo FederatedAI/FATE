@@ -120,6 +120,8 @@ class HomoBoostingClient(Boosting, ABC):
         # binning
         self.data_preporcess(data_inst)
 
+        self.data_inst = data_inst
+
         # fid mapping and warm start check
         if not self.is_warm_start:
             self.feature_name_fid_mapping = self.gen_feature_fid_mapping(data_inst.schema)
