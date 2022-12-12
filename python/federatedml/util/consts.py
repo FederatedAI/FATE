@@ -29,6 +29,7 @@ REGRESSION = 'regression'
 CLUSTERING = 'clustering'
 ONE_VS_REST = 'one_vs_rest'
 PAILLIER = 'Paillier'
+PAILLIER_IPCL = 'IPCL'
 RANDOM_PADS = "RandomPads"
 NONE = "None"
 AFFINE = 'Affine'

@@ -227,7 +227,7 @@ class HomoLogisticParam(LogisticParam):
                 "logistic_param's aggregate_iters {} not supported, should be int type".format(
                     self.aggregate_iters))
 
-        if self.encrypt_param.method == consts.PAILLIER:
+        if self.encrypt_param.method in [consts.PAILLIER, consts.PAILLIER_IPCL]:
             if self.optimizer != 'sgd':
                 raise ValueError("Paillier encryption mode supports 'sgd' optimizer method only.")
 

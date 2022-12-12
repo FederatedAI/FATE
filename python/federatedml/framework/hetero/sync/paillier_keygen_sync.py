@@ -14,17 +14,26 @@
 #
 
 
-from federatedml.secureprotol.encrypt import PaillierEncrypt
+from federatedml.secureprotol.encrypt import PaillierEncrypt, IpclPaillierEncrypt
 from federatedml.util import consts
 
 
 class Arbiter(object):
     # noinspection PyAttributeOutsideInit
-    def _register_paillier_keygen(self, pubkey_transfer):
+    def _register_paillier_keygen(self, method_transfer, pubkey_transfer):
+        self._method_transfer = method_transfer
         self._pubkey_transfer = pubkey_transfer
 
-    def paillier_keygen(self, key_length, suffix=tuple()):
-        cipher = PaillierEncrypt()
+    def paillier_keygen(self, method, key_length, suffix=tuple()):
+        if method == consts.PAILLIER:
+            cipher = PaillierEncrypt()
+        elif method == consts.PAILLIER_IPCL:
+            cipher = IpclPaillierEncrypt()
+        else:
+            raise ValueError(f"Unsupported encryption method: {method}")
+        self._method_transfer.remote(obj=method, role=consts.HOST, idx=-1, suffix=suffix)
+        self._method_transfer.remote(obj=method, role=consts.GUEST, idx=-1, suffix=suffix)
+
         cipher.generate_key(key_length)
         pub_key = cipher.get_public_key()
         self._pubkey_transfer.remote(obj=pub_key, role=consts.HOST, idx=-1, suffix=suffix)
@@ -34,12 +43,21 @@ class Arbiter(object):
 
 class _Client(object):
     # noinspection PyAttributeOutsideInit
-    def _register_paillier_keygen(self, pubkey_transfer):
+    def _register_paillier_keygen(self, method_transfer, pubkey_transfer):
+        self._method_transfer = method_transfer
         self._pubkey_transfer = pubkey_transfer
 
     def gen_paillier_cipher_operator(self, suffix=tuple()):
+        method = self._method_transfer.get(idx=0, suffix=suffix)
         pubkey = self._pubkey_transfer.get(idx=0, suffix=suffix)
-        cipher = PaillierEncrypt()
+
+        if method == consts.PAILLIER:
+            cipher = PaillierEncrypt()
+        elif method == consts.PAILLIER_IPCL:
+            cipher = IpclPaillierEncrypt()
+        else:
+            raise ValueError(f"Unsupported encryption method: {method}")
+
         cipher.set_public_key(pubkey)
         return cipher
 
