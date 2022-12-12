@@ -7,11 +7,10 @@ from ..conf.types import UriTypes
 class LocalFSDataManager(object):
     @classmethod
     def generate_output_data_uri(cls, output_dir_uri: str, job_id: str, task_name: str,
-                                 role: str, party_id: Union[str, int], data_suffix: str):
+                                 role: str, party_id: Union[str, int]):
         uri_obj = parse_uri(output_dir_uri)
         namespace = "_".join([job_id, task_name, role, str(party_id)])
-        name = data_suffix
-        local_path = construct_local_dir(uri_obj.path, *[namespace, name])
+        local_path = construct_local_dir(uri_obj.path, *[namespace])
         uri_obj = replace_uri_path(uri_obj, str(local_path))
         return uri_obj.geturl()
 
@@ -19,7 +18,7 @@ class LocalFSDataManager(object):
 class LMDBDataManager(object):
     @classmethod
     def generate_output_data_uri(cls, output_dir_uri: str, job_id: str, task_name: str,
-                                 role: str, party_id: Union[str, int], data_suffix: str):
+                                 role: str, party_id: Union[str, int]):
         ...
 
 

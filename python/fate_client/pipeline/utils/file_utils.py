@@ -5,7 +5,7 @@ import yaml
 from .uri_tools import parse_uri
 
 
-def construct_local_dir(filepath: typing.Union[Path, str], *suffixes) -> "Path":
+def construct_local_file(filepath: typing.Union[Path, str], *suffixes) -> "Path":
     if not isinstance(filepath, Path):
         filepath = Path(filepath)
 
@@ -13,6 +13,18 @@ def construct_local_dir(filepath: typing.Union[Path, str], *suffixes) -> "Path":
         filepath = filepath.joinpath(suf)
 
     filepath.parent.mkdir(parents=True, exist_ok=True)
+
+    return filepath
+
+
+def construct_local_dir(filepath: typing.Union[Path, str], *suffixes) -> "Path":
+    if not isinstance(filepath, Path):
+        filepath = Path(filepath)
+
+    for suf in suffixes:
+        filepath = filepath.joinpath(suf)
+
+    filepath.mkdir(parents=True, exist_ok=True)
 
     return filepath
 

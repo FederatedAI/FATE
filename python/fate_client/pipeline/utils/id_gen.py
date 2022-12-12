@@ -22,7 +22,7 @@ def gen_computing_id(job_id, task_name, role, party_id) -> str:
     return "_".join([job_id, task_name, role, party_id, "computing"])
 
 
-def gen_execution_id(job_id, task_name, role, party_id) -> str:
+def gen_task_id(job_id, task_name, role, party_id) -> str:
     return "_".join([job_id, task_name, role, party_id, "execution"])
 
 

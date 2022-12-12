@@ -6,7 +6,7 @@ class JobStage(object):
 
 class ArtifactSourceType(object):
     TASK_OUTPUT_ARTIFACT = "task_output_artifact"
-    FATE_MODEL_WAREHOUSE = "fate_model_warehouse"
+    MODEL_WAREHOUSE = "model_warehouse"
 
 
 class ArtifactType(object):
@@ -50,5 +50,3 @@ class SupportRole(object):
     @classmethod
     def support_roles(cls):
         return [cls.LOCAL, cls.GUEST, cls.HOST, cls.ARBITER]
-
-

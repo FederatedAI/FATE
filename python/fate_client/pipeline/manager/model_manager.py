@@ -6,12 +6,11 @@ from ..conf.types import UriTypes
 class LocalFSModelManager(object):
     @classmethod
     def generate_output_model_uri(cls, output_dir_uri: str, job_id: str, task_name: str,
-                                  role: str, party_id: str, model_suffix: str):
-        model_id = "_".join([job_id, task_name, role, str(party_id), model_suffix])
+                                  role: str, party_id: str):
+        model_id = "_".join([job_id, task_name, role, str(party_id)])
         model_version = "v0"
-        suffix = "model.json"
         uri_obj = parse_uri(output_dir_uri)
-        local_path = construct_local_dir(uri_obj.path, *[model_id, model_version, suffix])
+        local_path = construct_local_dir(uri_obj.path, *[model_id, model_version])
         uri_obj = replace_uri_path(uri_obj, str(local_path))
         return uri_obj.geturl()
 

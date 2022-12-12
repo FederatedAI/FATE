@@ -28,11 +28,11 @@ def run_task_in_party(exec_cmd, std_log_fd):
         pass
 
 
-def run_detect_task(status_manager, execution_ids):
+def run_detect_task(status_manager, task_ids):
     while True:
-        is_finish = status_manager.monitor_finish_status(execution_ids)
+        is_finish = status_manager.monitor_finish_status(task_ids)
         if is_finish:
-            status_manager.record_terminate_status(execution_ids)
+            status_manager.record_terminate_status(task_ids)
             break
 
         time.sleep(0.5)
@@ -45,16 +45,16 @@ def process_task(task_type: str, task_name: str, exec_cmd_prefix: list, runtime_
     # task_done_tag_paths = list()
     mp_ctx = multiprocessing.get_context("fork")
     std_log_fds = []
-    execution_ids = []
+    task_ids = []
     task_infos = []
     for party in parties:
         role = party.role
         party_id = party.party_id
 
         conf_path = runtime_constructor.task_conf_path(role, party_id)
-        execution_id = runtime_constructor.execution_id(role, party_id)
-        execution_ids.append(execution_id)
-        task_infos.append(SimpleNamespace(execution_id=execution_id, role=role, party_id=party_id))
+        task_id = runtime_constructor.task_id(role, party_id)
+        task_ids.append(task_id)
+        task_infos.append(SimpleNamespace(task_id=task_id, role=role, party_id=party_id))
 
         log_path = runtime_constructor.log_path(role, party_id)
         std_log_path = Path(log_path).joinpath("std.log").resolve()
@@ -66,7 +66,7 @@ def process_task(task_type: str, task_name: str, exec_cmd_prefix: list, runtime_
         exec_cmd.extend(
             [
                 "--process-tag",
-                execution_id,
+                task_id,
                 "--config",
                 conf_path
             ]
@@ -80,7 +80,7 @@ def process_task(task_type: str, task_name: str, exec_cmd_prefix: list, runtime_
 
     detect_task = mp_ctx.Process(target=run_detect_task,
                                  kwargs=dict(status_manager=status_manager,
-                                             execution_ids=execution_ids))
+                                             task_ids=task_ids))
 
     detect_task.start()
 

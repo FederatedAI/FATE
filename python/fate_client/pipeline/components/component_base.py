@@ -1,9 +1,9 @@
 import copy
-from ..conf.types import SupportRole, PlaceHolder
+from ..conf.types import SupportRole, PlaceHolder, ArtifactSourceType
 from ..utils.id_gen import get_uuid
 from pipeline.entity.component_structures import ComponentSpec, load_component_spec, ArtifactSpec
 from ..interface import ArtifactChannel
-from ..entity.dag_structures import RuntimeOutputChannelSpec
+from ..entity.dag_structures import RuntimeTaskOutputChannelSpec, ModelWarehouseChannelSpec
 
 
 class Component(object):
@@ -236,7 +236,8 @@ class Component(object):
                     raise ValueError(f"Component {self.name}'s {artifact_key} "
                                      f"should be ArtifactChannel, {channel} find")
 
-                dependencies.add(channel.task_name)
+                if channel.source == ArtifactSourceType.TASK_OUTPUT_ARTIFACT:
+                    dependencies.add(channel.task_name)
 
         return list(dependencies)
 
@@ -244,6 +245,13 @@ class Component(object):
         input_definition_artifacts = self._component_spec.input_definitions.artifacts
         runtime_input_channels = dict()
         input_artifacts = dict()
+
+        def __get_artifact_spec_by_source_type(source_type):
+            if source_type == ArtifactSourceType.TASK_OUTPUT_ARTIFACT:
+                return RuntimeTaskOutputChannelSpec
+            else:
+                return ModelWarehouseChannelSpec
+
         for artifact_key, artifact_spec in input_definition_artifacts.items():
             if not hasattr(self, artifact_key) or isinstance(getattr(self, artifact_key), PlaceHolder):
                 continue
@@ -251,21 +259,23 @@ class Component(object):
             channels = getattr(self, artifact_key)
 
             if isinstance(channels, list):
-                task_output_artifact = []
+                output_artifact = []
                 for channel in channels:
-                    task_output_artifact.append(RuntimeOutputChannelSpec(
+                    artifact_spec_source = __get_artifact_spec_by_source_type(channel.source)
+                    output_artifact.append(artifact_spec_source(
                         producer_task=channel.task_name,
                         output_artifact_key=channel.name
                     ))
-                runtime_input_channels[artifact_key] = dict(task_output_artifact=task_output_artifact)
+                runtime_input_channels[artifact_key] = {channels[0].source: output_artifact}
                 input_artifacts[artifact_key] = artifact_spec
             else:
-                runtime_input_channels[artifact_key] = dict(
-                    task_output_artifact=RuntimeOutputChannelSpec(
+                artifact_spec_source = __get_artifact_spec_by_source_type(channels.source)
+                runtime_input_channels[artifact_key] = {
+                    channels.source: artifact_spec_source(
                         producer_task=channels.task_name,
                         output_artifact_key=channels.name
                     )
-                )
+                }
                 input_artifacts[artifact_key] = artifact_spec
 
         return runtime_input_channels, input_artifacts

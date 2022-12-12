@@ -2,24 +2,29 @@ from pydantic import BaseModel
 from typing import Dict, Optional, Union, Any, List
 
 
-class IOArtifact(BaseModel):
+class InputArtifact(BaseModel):
     name: str
     uri: str
     metadata: Optional[dict]
 
 
+class OutputArtifact(BaseModel):
+    type: str
+    metadata: Optional[dict]
+
+
 class InputSpec(BaseModel):
     parameters: Optional[Dict[str, Any]]
-    artifacts: Optional[IOArtifact]
+    artifacts: Optional[InputArtifact]
 
 
 class TaskRuntimeInputSpec(BaseModel):
     parameters: Optional[Dict[str, str]]
-    artifacts: Optional[Dict[str, IOArtifact]]
+    artifacts: Optional[Dict[str, InputArtifact]]
 
 
 class TaskRuntimeOutputSpec(BaseModel):
-    artifacts: Dict[str, IOArtifact]
+    artifacts: Dict[str, OutputArtifact]
 
 
 class MLMDSpec(BaseModel):
@@ -66,14 +71,14 @@ class RuntimeConfSpec(BaseModel):
     device: DeviceSpec
     computing: ComputingEngineSpec
     federation: FederationEngineSpec
+    output: Dict[str, OutputArtifact]
 
 
 class TaskScheduleSpec(BaseModel):
-    execution_id: str
+    taskid: str
     component: str
     role: str
     stage: str
     party_id: Optional[Union[str, int]]
     inputs: Optional[TaskRuntimeInputSpec]
-    outputs: Optional[Dict[str, IOArtifact]]
     conf: RuntimeConfSpec

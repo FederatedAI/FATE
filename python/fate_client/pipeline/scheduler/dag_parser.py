@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from typing import Dict, List, Union
 
 from ..conf.types import ArtifactType, JobStage, InputDataKeyType, ArtifactSourceType
-from ..entity.dag_structures import DAGSchema, DAGSpec, RuntimeOutputChannelSpec
+from ..entity.dag_structures import DAGSchema, DAGSpec, RuntimeTaskOutputChannelSpec, ModelWarehouseChannelSpec
 from ..entity.component_structures import ArtifactSpec, ComponentSpec
 
 
@@ -26,6 +26,7 @@ class DagParser(object):
             self._conf = dag_spec.conf.dict(exclude_defaults=True)
         job_conf = self._conf.get("task", {})
         for name, task_spec in tasks.items():
+            self._dag.add_node(name)
             task_stage = dag_stage
             component_ref = task_spec.component_ref
             if not task_spec.conf:
@@ -48,8 +49,12 @@ class DagParser(object):
             upstream_inputs = dict()
             for input_key, output_specs_dict in task_spec.inputs.artifacts.items():
                 upstream_inputs[input_key] = dict()
-                for output_name, channel_spec_list in output_specs_dict.items():
+                for artifact_source, channel_spec_list in output_specs_dict.items():
                     upstream_inputs[input_key] = channel_spec_list
+
+                    if artifact_source == ArtifactSourceType.MODEL_WAREHOUSE:
+                        continue
+
                     if not isinstance(channel_spec_list, list):
                         channel_spec_list = [channel_spec_list]
 
@@ -230,18 +235,20 @@ class DagParser(object):
                         test_input_artifact_definition = component_spec.input_definitions.artifacts[test_input_key]
                         artifact_source_type = list(artifact_channel.items())[0][0]
                         runtime_output_channel = list(artifact_channel.items())[0][1]
-                        if test_input_key not in deduced_dag.tasks[task_name].inputs.artifacts:
-                            deduced_dag.tasks[task_name].inputs.artifacts[test_input_key] = dict()
-                        deduced_dag.tasks[task_name].inputs.artifacts[test_input_key][artifact_source_type] = \
-                            cls.infer_test_input_data(
-                                task_name_set,
-                                artifact_definition,
-                                test_input_artifact_definition,
-                                runtime_output_channel,
-                                dag_spec,
-                                component_specs,
-                                data_tracer
-                            )
+                        test_input_data = cls.infer_test_input_data(
+                            task_name_set,
+                            artifact_definition,
+                            test_input_artifact_definition,
+                            runtime_output_channel,
+                            dag_spec,
+                            component_specs,
+                            data_tracer
+                        )
+                        if test_input_data:
+                            if test_input_key not in deduced_dag.tasks[task_name].inputs.artifacts:
+                                deduced_dag.tasks[task_name].inputs.artifacts[test_input_key] = dict()
+                            deduced_dag.tasks[task_name].inputs.artifacts[test_input_key][artifact_source_type] = \
+                                test_input_data
                     elif artifact_definition.type in [ArtifactType.MODEL, ArtifactType.MODELS]:
                         deduced_dag.tasks[task_name].inputs.artifacts.pop(artifact_name)
 
@@ -249,7 +256,7 @@ class DagParser(object):
                 component_spec.input_definitions.artifacts, component_spec.output_definitions.artifacts)
             if model_input_artifact_key and model_output_artifact_key:
                 deduced_dag.tasks[task_name].inputs.artifacts[model_input_artifact_key] = {
-                    ArtifactSourceType.FATE_MODEL_WAREHOUSE: RuntimeOutputChannelSpec(
+                    ArtifactSourceType.MODEL_WAREHOUSE: ModelWarehouseChannelSpec(
                         producer_task=task_name,
                         output_artifact_key=model_output_artifact_key
                     )
@@ -288,7 +295,7 @@ class DagParser(object):
         dependent_task_list = list()
         for artifact_name, artifact_channel in artifacts.items():
             for artifact_source_type, channels in artifact_channel.items():
-                if artifact_source_type == ArtifactSourceType.FATE_MODEL_WAREHOUSE:
+                if artifact_source_type == ArtifactSourceType.MODEL_WAREHOUSE:
                     continue
 
                 if not isinstance(channels, list):
@@ -388,7 +395,7 @@ class DagParser(object):
                               task_name_set,
                               train_artifact_definition,
                               test_artifact_definition,
-                              output_channel: Union[RuntimeOutputChannelSpec, List[RuntimeOutputChannelSpec]],
+                              output_channel: Union[RuntimeTaskOutputChannelSpec, List[RuntimeTaskOutputChannelSpec]],
                               dag_spec,
                               component_specs,
                               data_tracer: dict):
@@ -398,27 +405,28 @@ class DagParser(object):
             """
             raise ValueError(f"train_artifact_definition's type is {train_artifact_definition.type}, "
                              f"can not be changed to {test_artifact_definition.type}")
-        if isinstance(output_channel, RuntimeOutputChannelSpec):
+        if isinstance(output_channel, RuntimeTaskOutputChannelSpec):
             output_channel = [output_channel]
 
         ret_output_channel = []
         for channel in output_channel:
             upstream_task = data_tracer[channel.producer_task]
             if upstream_task is None:
-                ret_output_channel.append(None)
                 continue
 
             test_artifact_data_key = cls.infer_test_output_data_key(
                 component_specs[upstream_task].output_definitions.artifacts
             )
             ret_output_channel.append(
-                RuntimeOutputChannelSpec(
+                RuntimeTaskOutputChannelSpec(
                     producer_task=upstream_task,
                     output_artifact_key=test_artifact_data_key
                 )
             )
 
-        if train_artifact_definition.type == ArtifactType.DATASETS:
+        if not ret_output_channel:
+            return None
+        elif train_artifact_definition.type == ArtifactType.DATASETS:
             return ret_output_channel
         else:
             return ret_output_channel[0]

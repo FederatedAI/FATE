@@ -1,13 +1,16 @@
 from ..conf.env_config import StandaloneConfig
 from ..entity.component_structures import OutputDefinitionsSpec
-from ..entity.task_structure import TaskScheduleSpec, LOGGERSpec, TaskRuntimeInputSpec, TaskRuntimeOutputSpec, \
+from ..entity.dag_structures import RuntimeTaskOutputChannelSpec, ModelWarehouseChannelSpec
+from ..entity.task_structure import TaskScheduleSpec, LOGGERSpec, TaskRuntimeInputSpec, \
     MLMDSpec, RuntimeConfSpec, ComputingEngineSpec, DeviceSpec, FederationPartySpec, \
-    ComputingEngineMetadata, FederationEngineSpec, FederationEngineMetadata
+    ComputingEngineMetadata, FederationEngineSpec, FederationEngineMetadata, InputArtifact
 from ..manager.resource_manager import StandaloneResourceManager
-from ..utils.id_gen import gen_computing_id, gen_federation_id, gen_execution_id
+from ..utils.id_gen import gen_computing_id, gen_federation_id, gen_task_id
 
 
 class RuntimeConstructor(object):
+    OUTPUT_KEYS = ["model", "metric", "data"]
+
     def __init__(self, runtime_parties, stage, job_id, task_name, component_ref, runtime_parameters, log_dir):
         self._task_name = task_name
         self._runtime_parties = runtime_parties
@@ -24,6 +27,7 @@ class RuntimeConstructor(object):
         self._runtime_conf = dict()
         self._input_artifacts = dict()
         self._output_artifacts = dict()
+        self._outputs = dict()
         self._task_schedule_spec = dict()
         self._task_conf_path = dict()
 
@@ -34,37 +38,29 @@ class RuntimeConstructor(object):
                 self._runtime_conf[party.role] = dict()
                 self._input_artifacts[party.role] = dict()
                 self._output_artifacts[party.role] = dict()
+                self._outputs[party.role] = dict()
                 self._task_schedule_spec[party.role] = dict()
                 self._task_conf_path[party.role] = dict()
 
             self._runtime_conf[party.role].update({party.party_id: None})
             self._input_artifacts[party.role].update({party.party_id: dict()})
             self._output_artifacts[party.role].update({party.party_id: dict()})
+            self._outputs[party.role].update({party.party_id: dict()})
             self._task_schedule_spec[party.role].update({party.party_id: None})
             self._task_conf_path[party.role].update({party.party_id: None})
 
-    def construct_output_artifacts(self, output_definition_artifacts: OutputDefinitionsSpec):
-        for output_key, output_artifact_spec in output_definition_artifacts.artifacts.items():
-            if self._stage not in set(output_artifact_spec.stages):
-                continue
-            roles = set(output_artifact_spec.roles)
-
+    def construct_outputs(self):
+        for output_key in self.OUTPUT_KEYS:
             for party in self._runtime_parties:
-                if party.role not in roles:
-                    continue
+                output_artifact = self._construct_outputs(party, output_key)
+                self._outputs[party.role][party.party_id].update({output_key: output_artifact})
 
-                output_artifact = self._construct_output_artifact(party, output_key, output_artifact_spec.type)
-
-                if output_artifact:
-                    self._output_artifacts[party.role][party.party_id].update({output_key: output_artifact})
-
-    def _construct_output_artifact(self, party, output_key,  artifact_type):
+    def _construct_outputs(self, party, artifact_type):
         return self._resource_manager.generate_output_artifact(
             self._job_id,
             self._task_name,
             party.role,
             party.party_id,
-            output_key,
             artifact_type
         )
 
@@ -74,7 +70,8 @@ class RuntimeConstructor(object):
 
         return self._output_artifacts[role][party_id].get(output_key, None)
 
-    def construct_input_artifacts(self, upstream_inputs, runtime_constructor_dict, component_spec):
+    def construct_input_artifacts(self, upstream_inputs, runtime_constructor_dict,
+                                  component_spec, fit_model_info=None):
         input_artifacts = component_spec.input_definitions.artifacts
         for input_key, channels in upstream_inputs.items():
             artifact_spec = input_artifacts[input_key]
@@ -96,8 +93,14 @@ class RuntimeConstructor(object):
                     upstream_task = channel.producer_task
                     upstream_output_key = channel.output_artifact_key
 
-                    output_artifact = runtime_constructor_dict[upstream_task].get_output_artifact(
-                        party.role, party.party_id, upstream_output_key)
+                    if isinstance(channel, RuntimeTaskOutputChannelSpec):
+                        output_artifact = runtime_constructor_dict[upstream_task].get_output_artifact(
+                            party.role, party.party_id, upstream_output_key)
+                    else:
+                        output_artifact = fit_model_info.task_info[upstream_task].get_output_artifact(
+                            party.role, party.party_id, upstream_output_key
+                        )
+
                     if output_artifact is None:
                         if not optional:
                             raise ValueError(f"Can not find upstream input {input_key} for "
@@ -161,14 +164,15 @@ class RuntimeConstructor(object):
             logger=logger,
             device=DeviceSpec(type=self._conf.DEVICE.type),
             computing=computing_backend,
-            federation=federation_backend
+            federation=federation_backend,
+            output=self._outputs[role][party_id]
         )
 
     def construct_task_schedule_spec(self):
         for party in self._runtime_parties:
             conf = self._construct_runtime_conf(party.role, party.party_id)
             party_task_spec = TaskScheduleSpec(
-                execution_id=gen_execution_id(self._job_id, self._task_name, party.role, party.party_id),
+                taskid=gen_task_id(self._job_id, self._task_name, party.role, party.party_id),
                 component=self._component_ref,
                 role=party.role,
                 stage=self._stage,
@@ -186,9 +190,9 @@ class RuntimeConstructor(object):
             if task_input_spec.dict(exclude_defaults=True):
                 party_task_spec.inputs = task_input_spec
 
-            output_artifact = self._output_artifacts[party.role][party.party_id]
-            if output_artifact:
-                party_task_spec.outputs = TaskRuntimeOutputSpec(artifacts=output_artifact)
+            # output_artifact = self._output_artifacts[party.role][party.party_id]
+            # if output_artifact:
+            #     party_task_spec.outputs = TaskRuntimeOutputSpec(artifacts=output_artifact)
 
             self._task_schedule_spec[party.role][party.party_id] = party_task_spec
             conf_path = self._resource_manager.write_out_task_conf(self._job_id,
@@ -209,8 +213,8 @@ class RuntimeConstructor(object):
     def task_conf_path(self, role, party_id):
         return self._task_conf_path[role][party_id]
 
-    def execution_id(self, role, party_id):
-        return self._task_schedule_spec[role][party_id].execution_id
+    def task_id(self, role, party_id):
+        return self._task_schedule_spec[role][party_id].taskid
 
     @property
     def status_manager(self):
@@ -218,3 +222,17 @@ class RuntimeConstructor(object):
 
     def log_path(self, role, party_id):
         return self._task_schedule_spec[role][party_id].conf.logger.metadata["basepath"]
+
+    def retrieval_task_outputs(self):
+        for party in self._runtime_parties:
+            task_id = self._task_schedule_spec[party.role][party.party_id].taskid
+            outputs = self._resource_manager.status_manager.get_task_outputs(task_id)
+
+            for output_key in self.OUTPUT_KEYS:
+                output_list = outputs.get(output_key)
+                if not output_list:
+                    continue
+
+                for output in output_list:
+                    output_artifact = InputArtifact(**output)
+                    self._output_artifacts[party.role][party.party_id].update({output_artifact.name: output_artifact})

@@ -1,8 +1,10 @@
+import copy
+import pprint
 from typing import Union
 from .executor import StandaloneExecutor, FateFlowExecutor
 from .entity import DAG
 from .entity.runtime_entity import Roles
-from .conf.types import SupportRole
+from .conf.types import SupportRole, PlaceHolder
 from .conf.job_configuration import JobConf
 from .components.component_base import Component
 from .scheduler.dag_parser import DagParser
@@ -32,8 +34,33 @@ class Pipeline(object):
     def conf(self):
         return self._job_conf
 
-    def set_predict_dag(self, predict_dag):
+    @conf.setter
+    def conf(self, job_conf):
+        self._job_conf = job_conf
+
+    @property
+    def model_info(self):
+        return self._model_info
+
+    @model_info.setter
+    def model_info(self, model_info):
+        self._model_info = model_info
+
+    @property
+    def predict_dag(self):
+        return self._predict_dag
+
+    @property
+    def stage(self):
+        return self._stage
+
+    @predict_dag.setter
+    def predict_dag(self, predict_dag):
         self._predict_dag = predict_dag
+
+    @property
+    def tasks(self):
+        return self._tasks
 
     def set_roles(self, guest=None, host=None, arbiter=None, **kwargs):
         local_vars = locals()
@@ -57,11 +84,30 @@ class Pipeline(object):
 
         return self
 
-    def add_task(self, task) -> "Pipeline":
-        if task.name in self._tasks:
-            raise ValueError(f"Task {task.name} has been added before")
+    @property
+    def roles(self) -> Roles:
+        return self._roles
 
-        self._tasks[task.name] = task
+    @roles.setter
+    def roles(self, roles):
+        self._roles = roles
+
+    def add_task(self, task) -> "Pipeline":
+        if isinstance(task, Component):
+            if task.name in self._tasks:
+                raise ValueError(f"Task {task.name} has been added before")
+
+            self._tasks[task.name] = task
+        elif isinstance(task, Pipeline):
+            if task.stage != "deployed":
+                raise ValueError("Deploy training pipeline first and use get_deployed_pipeline to get the inst")
+
+            self._stage = "predict"
+            if not self._roles.is_initialized():
+                self._roles = task.roles
+
+            self._tasks.update(task.tasks)
+            self._model_info = task.model_info
 
         return self
 
@@ -71,6 +117,39 @@ class Pipeline(object):
                           stage=self._stage,
                           job_conf=self._job_conf.conf)
         return self
+
+    def get_deployed_pipeline(self):
+        if not self._predict_dag:
+            raise ValueError("To get deployed pipeline, deploy first")
+
+        deploy_pipeline = Pipeline(self._executor)
+        deploy_pipeline.set_stage("deployed")
+        deploy_pipeline.conf = self._job_conf
+        deploy_pipeline.predict_dag = self._predict_dag
+        deploy_pipeline.roles = self._roles
+        deploy_pipeline.model_info = self._model_info
+
+        for task_name, task in self._tasks.items():
+            if task_name not in self._predict_dag.tasks:
+                continue
+            deploy_task = copy.deepcopy(task)
+            predict_task_spec = self._predict_dag.tasks[task_name]
+            input_artifact_keys = task.component_spec.input_definitions.artifacts.keys()
+            for input_artifact_key in input_artifact_keys:
+                setattr(deploy_task, input_artifact_key, PlaceHolder())
+
+            if predict_task_spec.inputs and predict_task_spec.inputs.artifacts:
+                for input_artifact_key, input_channel in predict_task_spec.inputs.artifacts.items():
+                    for artifact_source_type, channel in input_channel.items():
+                        producer_task = channel.producer_task
+                        output_artifact_key = channel.output_artifact_key
+                        changed_channel = copy.deepcopy(self._tasks[producer_task].outputs[output_artifact_key])
+                        changed_channel.source = artifact_source_type
+                        setattr(deploy_task, input_artifact_key, changed_channel)
+
+            deploy_pipeline.add_task(deploy_task)
+
+        return deploy_pipeline
 
     def get_dag(self):
         return yaml.dump(self._dag.dag_spec.dict(exclude_defaults=True))
@@ -83,18 +162,23 @@ class Pipeline(object):
         return component_specs
 
     def fit(self) -> "Pipeline":
-        self._model_info = self._executor.exec(self._dag.dag_spec, self.get_component_specs())
+        self._model_info = self._executor.fit(self._dag.dag_spec, self.get_component_specs())
 
         return self
 
-    def predict(self):
-        ...
+    def predict(self) -> "Pipeline":
+        self._executor.predict(self._dag.dag_spec, self.get_component_specs(), self._model_info)
+
+        return self
 
     def deploy(self, task_list=None):
         """
         this will return predict dag IR
         if component_list is None: deploy all
         """
+        if self._stage != "train":
+            raise ValueError(f"Only training pipeline can be deployed, but this pipeline's stage is {self._stage}")
+
         if task_list:
             task_name_list = []
             for task in task_list:

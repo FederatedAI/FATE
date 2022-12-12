@@ -1,4 +1,3 @@
-import pprint
 from .dag_structures import PartySpec
 
 
@@ -7,6 +6,10 @@ class Roles(object):
         self._role_party_id_mappings = dict()
         self._role_party_index_mapping = dict()
         self._scheduler_party_id = None
+        self._is_initialized = False
+
+    def is_initialized(self):
+        return self._is_initialized
 
     def set_role(self, role, party_id):
         if not isinstance(party_id, list):
@@ -23,9 +26,11 @@ class Roles(object):
             self._role_party_id_mappings[role].append(pid)
 
         self._role_party_id_mappings[role] = party_id
+        self._is_initialized = True
 
     def set_scheduler_party_id(self, party_id):
         self._scheduler_party_id = party_id
+        self._is_initialized = True
 
     @property
     def scheduler_party_id(self):

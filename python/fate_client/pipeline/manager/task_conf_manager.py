@@ -1,5 +1,5 @@
 from ..utils.uri_tools import parse_uri, get_schema_from_uri
-from ..utils.file_utils import construct_local_dir, write_yaml_file
+from ..utils.file_utils import construct_local_file, write_yaml_file
 from ..conf.types import UriTypes
 
 
@@ -10,7 +10,7 @@ class LocalFSTaskConfManager(object):
     def generate_task_conf_uri(cls, output_dir_uri: str, job_id: str, task_name: str,
                                role: str, party_id: str):
         uri_obj = parse_uri(output_dir_uri)
-        local_path = construct_local_dir(uri_obj.path, *[job_id, task_name, role, party_id, cls.FILE_SUFFIX])
+        local_path = construct_local_file(uri_obj.path, *[job_id, task_name, role, party_id, cls.FILE_SUFFIX])
         return str(local_path)
 
     @classmethod

@@ -7,11 +7,10 @@ from ..conf.types import UriTypes
 class LocalFSMetricManager(object):
     @classmethod
     def generate_output_metric_uri(cls, output_dir_uri: str, job_id: str, task_name: str,
-                                 role: str, party_id: Union[str, int], suffix: str):
+                                   role: str, party_id: Union[str, int]):
         uri_obj = parse_uri(output_dir_uri)
         namespace = "_".join([job_id, task_name, role, str(party_id)])
-        name = ".".join([suffix, "json"])
-        local_path = construct_local_dir(uri_obj.path, *[namespace, name])
+        local_path = construct_local_dir(uri_obj.path, *[namespace])
         uri_obj = replace_uri_path(uri_obj, str(local_path))
         return uri_obj.geturl()
 
@@ -19,7 +18,7 @@ class LocalFSMetricManager(object):
 class LMDBMetricManager(object):
     @classmethod
     def generate_output_metric_uri(cls, output_dir_uri: str, job_id: str, task_name: str,
-                                   role: str, party_id: Union[str, int], suffix: str):
+                                   role: str, party_id: Union[str, int]):
         ...
 
 
