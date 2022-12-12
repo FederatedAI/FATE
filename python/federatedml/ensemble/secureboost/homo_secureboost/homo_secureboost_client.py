@@ -5,6 +5,7 @@ from typing import List
 from operator import itemgetter
 from federatedml.util import LOGGER
 from federatedml.util import consts
+from federatedml.statistic.data_overview import with_weight
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.feature.fate_element_type import NoneType
 from federatedml.ensemble import HeteroSecureBoostingTreeGuest
@@ -59,7 +60,17 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         valid_feature = self.transfer_inst.valid_features.get(idx=0, suffix=('valid_features', epoch_idx, b_idx))
         return valid_feature
 
-    def compute_local_grad_and_hess(self, y_hat):
+    def process_sample_weights(self, grad_and_hess, data_with_sample_weight=None):
+            
+        # add sample weights to gradient and hessian
+        if data_with_sample_weight is not None:
+            if with_weight(data_with_sample_weight):
+                LOGGER.info('weighted sample detected, multiply g/h by weights')
+                grad_and_hess = grad_and_hess.join(data_with_sample_weight,
+                                                    lambda v1, v2: (v1[0] * v2.weight, v1[1] * v2.weight))
+        return grad_and_hess
+
+    def compute_local_grad_and_hess(self, y_hat,  data_with_sample_weight):
 
         loss_method = self.loss
         if self.task_type == consts.CLASSIFICATION:
@@ -70,6 +81,8 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
             grad_and_hess = self.y.join(y_hat, lambda y, f_val:
                                         (loss_method.compute_grad(y, f_val),
                                          loss_method.compute_hess(y, f_val)))
+
+        grad_and_hess = self.process_sample_weights(grad_and_hess, data_with_sample_weight)
 
         return grad_and_hess
 
@@ -196,7 +209,7 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
 
         if self.cur_epoch_idx != epoch_idx:
             # update g/h every epoch
-            self.grad_and_hess = self.compute_local_grad_and_hess(self.y_hat)
+            self.grad_and_hess = self.compute_local_grad_and_hess(self.y_hat, self.data_inst)
             self.cur_epoch_idx = epoch_idx
 
         if self.multi_mode == consts.MULTI_OUTPUT:
