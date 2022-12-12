@@ -144,7 +144,7 @@ class LogisticParam(LinearModelParam):
         descr = "logistic_param's"
         super(LogisticParam, self).check()
         self.predict_param.check()
-        if self.encrypt_param.method not in [consts.PAILLIER, None]:
+        if self.encrypt_param.method not in [consts.PAILLIER, consts.PAILLIER_IPCL, None]:
             raise ValueError(
                 "logistic_param's encrypted method support 'Paillier' or None only")
         self.multi_class = self.check_and_change_lower(
@@ -198,7 +198,7 @@ class HomoLogisticParam(LogisticParam):
             raise ValueError(
                 "logistic_param's aggregate_iters {} not supported, should be int type".format(
                     self.aggregate_iters))
-
+                    
         return True
 
 

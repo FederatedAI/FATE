@@ -2,14 +2,14 @@ import math
 from abc import ABC
 from abc import abstractmethod
 from federatedml.util import LOGGER
-from federatedml.secureprotol import PaillierEncrypt
+from federatedml.secureprotol import PaillierEncrypt, IpclPaillierEncrypt
 from federatedml.transfer_variable.transfer_class.cipher_compressor_transfer_variable \
     import CipherCompressorTransferVariable
 
 
 def get_homo_encryption_max_int(encrypter):
 
-    if isinstance(encrypter, PaillierEncrypt):
+    if isinstance(encrypter, (PaillierEncrypt, IpclPaillierEncrypt)):
         max_pos_int = encrypter.public_key.max_int
         min_neg_int = -max_pos_int
     else:
@@ -133,8 +133,8 @@ class NormalCipherPackage(CipherPackage):
 
     def unpack(self, decrypter):
 
-        if isinstance(decrypter, PaillierEncrypt):
-            compressed_plain_text = decrypter.privacy_key.raw_decrypt(self._cipher_text.ciphertext())
+        if isinstance(decrypter, (PaillierEncrypt, IpclPaillierEncrypt)):
+            compressed_plain_text = decrypter.raw_decrypt(self._cipher_text)
         else:
             raise ValueError('unknown decrypter: {}'.format(type(decrypter)))
 
