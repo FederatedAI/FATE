@@ -198,7 +198,7 @@ class HomoLogisticParam(LogisticParam):
             raise ValueError(
                 "logistic_param's aggregate_iters {} not supported, should be int type".format(
                     self.aggregate_iters))
-                    
+
         return True
 
 
