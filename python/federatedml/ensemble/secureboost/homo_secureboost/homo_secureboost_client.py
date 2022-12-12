@@ -61,16 +61,16 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         return valid_feature
 
     def process_sample_weights(self, grad_and_hess, data_with_sample_weight=None):
-            
+
         # add sample weights to gradient and hessian
         if data_with_sample_weight is not None:
             if with_weight(data_with_sample_weight):
                 LOGGER.info('weighted sample detected, multiply g/h by weights')
                 grad_and_hess = grad_and_hess.join(data_with_sample_weight,
-                                                    lambda v1, v2: (v1[0] * v2.weight, v1[1] * v2.weight))
+                                                   lambda v1, v2: (v1[0] * v2.weight, v1[1] * v2.weight))
         return grad_and_hess
 
-    def compute_local_grad_and_hess(self, y_hat,  data_with_sample_weight):
+    def compute_local_grad_and_hess(self, y_hat, data_with_sample_weight):
 
         loss_method = self.loss
         if self.task_type == consts.CLASSIFICATION:
