@@ -82,9 +82,40 @@ class HdfsURI(ConcrateURI):
         return HdfsURI(uri.path, uri.authority)
 
 
+@dataclass
+class HttpURI(ConcrateURI):
+    path: str
+    authority: Optional[str] = None
+
+
+
+    @classmethod
+    def schema(cls):
+        return "http"
+
+    @classmethod
+    def from_uri(cls, uri: URI):
+        return HttpURI(uri.path, uri.authority)
+
+
+@dataclass
+class HttpsURI(ConcrateURI):
+    path: str
+    authority: Optional[str] = None
+
+    @classmethod
+    def schema(cls):
+        return "https"
+
+    @classmethod
+    def from_uri(cls, uri: URI):
+        return HttpsURI(uri.path, uri.authority)
+
+
 if __name__ == "__main__":
     print(URI.from_string("file:///aaa"))
     print(URI.from_string("eggroll:///namespace/name1/name2").to_schema())
     print(URI.from_string("eggroll:///namespace/name1/name2"))
+    print(URI.from_string("https://127.0.0.1:9999/test"))
     print(URI.from_string("hdsf://127.0.0.1:9999/namespace/name"))
     print(URI.from_string("hive://sage:pass@127.0.0.1:9999/namespace/name"))

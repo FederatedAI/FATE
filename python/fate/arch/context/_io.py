@@ -1,6 +1,7 @@
+import logging
 from typing import Protocol, overload
 
-from ..unify import URI
+from ..unify import URI, HttpURI, HttpsURI
 
 
 class Reader:
@@ -161,7 +162,7 @@ def get_writer(format, ctx, name, uri, metadata) -> Reader:
         return CSVWriter(ctx, name, uri, metadata)
 
     if format == "json":
-        return JsonWriter(ctx, name, uri.path, metadata)
+        return JsonWriter(ctx, name, uri, metadata)
 
     if format == "dataframe":
         return DataFrameWriter(ctx, name, uri.path, metadata)
@@ -183,7 +184,7 @@ class CSVWriter:
 
 
 class JsonWriter:
-    def __init__(self, ctx, name: str, uri, metadata: dict) -> None:
+    def __init__(self, ctx, name: str, uri: URI, metadata: dict) -> None:
         self.name = name
         self.ctx = ctx
         self.uri = uri
@@ -191,15 +192,21 @@ class JsonWriter:
 
     def write_model(self, model):
         import json
-
-        with open(self.uri, "w") as f:
-            json.dump(model, f)
+        if isinstance(self.uri.to_schema(), HttpURI) or isinstance(self.uri.to_schema(), HttpsURI):
+            import requests
+            url = f"{self.uri.schema}://{self.uri.authority}{self.uri.path}"
+            logging.debug(url)
+            response = requests.post(url=url, json={"data": model})
+            logging.debug(response.text)
+        elif isinstance(self.uri.to_schema(), URI):
+            with open(self.uri.to_schema(), "w") as f:
+                json.dump(model, f)
 
     def write_metric(self, metric):
         import json
-
-        with open(self.uri, "w") as f:
-            json.dump(metric, f)
+        if isinstance(self.uri.to_schema(), URI):
+            with open(self.uri.path, "w") as f:
+                json.dump(metric, f)
 
 
 class LibSVMWriter:

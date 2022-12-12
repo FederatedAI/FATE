@@ -13,7 +13,8 @@ class PipelineMLMDSpec(BaseModel):
 
 class FlowMLMDSpec(BaseModel):
     class FlowMLMDMetaData(BaseModel):
-        entrypoint: str
+        statu_uri: str
+        tracking_uri: str
 
     type: Literal["flow"]
     metadata: FlowMLMDMetaData
