@@ -20,20 +20,20 @@
 import numpy as np
 
 from federatedml.framework.weights import ListWeights, TransferableWeights
-from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
-from federatedml.util import LOGGER
+from federatedml.util import LOGGER, paillier_check, ipcl_operator
 
 
 class LinearModelWeights(ListWeights):
     def __init__(self, l, fit_intercept, raise_overflow_error=True):
         l = np.array(l)
-        if len(l) > 0 and not isinstance(l[0], PaillierEncryptedNumber):
+        if not paillier_check.is_paillier_encrypted_number(l):
             if np.max(np.abs(l)) > 1e8:
                 if raise_overflow_error:
-                    raise RuntimeError("The model weights are overflow, please check if the "
-                                       "input data has been normalized")
+                    raise RuntimeError(
+                        "The model weights are overflow, please check if the input data has been normalized")
                 else:
-                    LOGGER.warning(f"LinearModelWeights contains entry greater than 1e8.")
+                    LOGGER.warning(
+                        f"LinearModelWeights contains entry greater than 1e8.")
         super().__init__(l)
         self.fit_intercept = fit_intercept
         self.raise_overflow_error = raise_overflow_error
@@ -44,12 +44,19 @@ class LinearModelWeights(ListWeights):
     @property
     def coef_(self):
         if self.fit_intercept:
+            if paillier_check.is_single_ipcl_encrypted_number(self._weights):
+                coeffs = ipcl_operator.get_coeffs(self._weights.item(0))
+                return np.array(coeffs)
+
             return np.array(self._weights[:-1])
         return np.array(self._weights)
 
     @property
     def intercept_(self):
         if self.fit_intercept:
+            if paillier_check.is_single_ipcl_encrypted_number(self._weights):
+                return ipcl_operator.get_intercept(self._weights.item(0))
+
             return 0.0 if len(self._weights) == 0 else self._weights[-1]
         return 0.0
 
@@ -65,6 +72,14 @@ class LinearModelWeights(ListWeights):
             return LinearModelWeights(_w, self.fit_intercept, self.raise_overflow_error)
 
     def map_values(self, func, inplace):
+        if paillier_check.is_single_ipcl_encrypted_number(self._weights):
+            if inplace:
+                self._weights = np.array(func(self.unboxed.item(0)))
+                return self
+            else:
+                _w = func(self.unboxed.item(0))
+                return LinearModelWeights(_w, self.fit_intercept)
+
         if inplace:
             for k, v in enumerate(self._weights):
                 self._weights[k] = func(v)

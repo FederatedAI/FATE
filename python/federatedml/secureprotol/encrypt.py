@@ -28,6 +28,12 @@ from federatedml.secureprotol.fate_paillier import PaillierKeypair
 from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
 from federatedml.secureprotol.random import RandomPads
 
+try:
+    from ipcl_python import PaillierKeypair as IpclPaillierKeypair
+except ImportError:
+    LOGGER.info("ipcl_python failed to import")
+    pass
+
 _TORCH_VALID = False
 try:
     import torch
@@ -214,6 +220,91 @@ class PaillierEncrypt(Encrypt):
 
     def raw_decrypt(self, ciphertext):
         return self.privacy_key.raw_decrypt(ciphertext.ciphertext())
+
+    def recursive_raw_encrypt(self, X, exponent=0):
+        raw_en_func = functools.partial(self.raw_encrypt, exponent=exponent)
+        return self._recursive_func(X, raw_en_func)
+
+
+class IpclPaillierEncrypt(Encrypt):
+    """
+    A class to perform Paillier encryption with Intel Paillier Cryptosystem Library (IPCL)
+    """
+
+    def __init__(self):
+        super(IpclPaillierEncrypt, self).__init__()
+
+    def generate_key(self, n_length=1024):
+        self.public_key, self.privacy_key = IpclPaillierKeypair.generate_keypair(
+            n_length=n_length
+        )
+
+    def get_key_pair(self):
+        return self.public_key, self.privacy_key
+
+    def set_public_key(self, public_key):
+        self.public_key = public_key
+
+    def get_public_key(self):
+        return self.public_key
+
+    def set_privacy_key(self, privacy_key):
+        self.privacy_key = privacy_key
+
+    def get_privacy_key(self):
+        return self.privacy_key
+
+    def encrypt(self, value):
+        if self.public_key is not None:
+            return self.public_key.encrypt(value)
+        else:
+            return None
+
+    def decrypt(self, value):
+        if self.privacy_key is not None:
+            return self.privacy_key.decrypt(value)
+        else:
+            return None
+
+    def raw_encrypt(self, plaintext, exponent=0):
+        """
+        Encrypt without applying obfuscator.
+
+        Returns:
+            (PaillierEncryptedNumber from `ipcl_python`): one ciphertext
+        """
+        return self.public_key.raw_encrypt(plaintext)
+
+    def raw_decrypt(self, ciphertext):
+        """
+        Decrypt without constructing `FixedPointNumber`.
+
+        Returns:
+            (int or list): raw value(s)
+        """
+        return self.privacy_key.raw_decrypt(ciphertext)
+
+    def encrypt_list(self, values):
+        """Encrypt a list of raw values into one ciphertext.
+
+        Returns:
+            (PaillierEncryptedNumber from `ipcl_python`): all in one single ciphertext
+        """
+        return self.encrypt(values)
+
+    def decrypt_list(self, values):
+        """
+        Decrypt input values.
+        If the type is list or 1-d numpy array, use `decrypt_list` of the parent class.
+        Ohterwise, the type will be a 0-d numpy array, which contains one single ciphertext of multiple raw values.
+        Use `item(0)` to fetch the ciphertext and then decrypt.
+
+        Returns:
+            (list): a list of raw values
+        """
+        if np.ndim(values) >= 1:
+            return super().decrypt_list(values)
+        return self.decrypt(values.item(0))
 
     def recursive_raw_encrypt(self, X, exponent=0):
         raw_en_func = functools.partial(self.raw_encrypt, exponent=exponent)
