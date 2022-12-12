@@ -1,28 +1,37 @@
-from typing import List, Optional, Protocol
-
-
-class Metric(Protocol):
-    key: str
-    value: float
-    timestamp: Optional[float] = None
-
-
-class MetricMeta(Protocol):
-    name: str
-    metric_type: str
-    metas: dict
-    extra_metas: Optional[dict] = None
-
-    def update_metas(self, metas: dict):
-        ...
+from typing import List, Protocol, Tuple
 
 
 class Metrics(Protocol):
-    def log(self, name: str, namespace: str, data: List[Metric]):
+    name: str
+    type: str
+
+    def dict(self) -> dict:
         ...
 
-    def log_meta(self, name: str, namespace: str, meta: MetricMeta):
+
+class Metric(Protocol):
+    type: str
+
+    def dict(self) -> dict:
         ...
 
-    def log_warmstart_init_iter(self, iter_num):  # FIXME: strange here
+
+class MetricsHandler(Protocol):
+    def log_metrics(self, metrics: Metrics):
+        ...
+
+    def log_metric(self, name: str, metric: Metric, step=None, timestamp=None):
+        ...
+
+    # concrate
+    def log_scalar(self, name: str, data: float, step=None, timestamp=None):
+        ...
+
+    def log_loss(self, name: str, data: float, step, timestamp=None):
+        ...
+
+    def log_roc(self, name: str, data: List[Tuple[float, float]]):
+        ...
+
+    def log_accuracy(self, name: str, accuracy: float, step, timestamp=None):
         ...

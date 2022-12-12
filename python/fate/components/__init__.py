@@ -183,6 +183,18 @@ class MetricArtifact(Artifact):
         self.metadata[metric] = value
 
 
+class LossMetrics(MetricArtifact):
+    type = "loss"
+
+    def __init__(
+        self,
+        name: Optional[str] = None,
+        uri: Optional[str] = None,
+        metadata: Optional[Dict] = None,
+    ) -> None:
+        super().__init__(uri=uri, name=name, metadata=metadata)
+
+
 class ClassificationMetrics(MetricArtifact):
     """An artifact for storing classification metrics.
 

@@ -4,7 +4,7 @@ from fate.components import (
     HOST,
     DatasetArtifact,
     Input,
-    MetricArtifact,
+    LossMetrics,
     ModelArtifact,
     Output,
     Role,
@@ -27,7 +27,7 @@ def hetero_lr(ctx, role):
     "batch_size", type=params.ConInt(), default=100, desc="batch size, value less or equals to 0 means full batch"
 )
 @cpn.artifact("train_output_data", type=Output[DatasetArtifact], roles=[GUEST, HOST])
-@cpn.artifact("train_output_metric", type=Output[MetricArtifact], roles=[ARBITER])
+@cpn.artifact("train_output_metric", type=Output[LossMetrics], roles=[ARBITER])
 @cpn.artifact("output_model", type=Output[ModelArtifact], roles=[GUEST, HOST])
 def train(
     ctx,
@@ -108,8 +108,8 @@ def train_arbiter(ctx, max_iter, batch_size, train_output_metric):
     with ctx.sub_ctx("train") as sub_ctx:
         module = LrModuleArbiter(max_iter=max_iter, batch_size=batch_size)
         module.fit(sub_ctx)
-        for metric in module.get_metrics():
-            sub_ctx.writer(train_output_metric).write_metric(metric)
+        # for metric in module.get_metrics():
+        #     sub_ctx.writer(train_output_metric).write_metric(metric)
 
 
 def predict_guest(ctx, input_model, test_data, test_output_data):

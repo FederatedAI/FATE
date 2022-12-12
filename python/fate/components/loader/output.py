@@ -10,13 +10,18 @@ class OutputPool:
         self.metric = metric
 
     def create_artifact(self, name: str, artifact_type):
-        from fate.components import DatasetArtifact, MetricArtifact, ModelArtifact
+        from fate.components import (
+            DatasetArtifact,
+            LossMetrics,
+            MetricArtifact,
+            ModelArtifact,
+        )
 
         if artifact_type == Output[DatasetArtifact]:
             return self.data.create_artifact(name)
         if artifact_type == Output[ModelArtifact]:
             return self.model.create_artifact(name)
-        if artifact_type == Output[MetricArtifact]:
+        if artifact_type == Output[MetricArtifact] or artifact_type == Output[LossMetrics]:
             return self.metric.create_artifact(name)
         raise RuntimeError(f"artifact type `{artifact_type}` not supported in output pool")
 
