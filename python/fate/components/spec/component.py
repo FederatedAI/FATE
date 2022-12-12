@@ -9,6 +9,7 @@ class ParameterSpec(BaseModel):
     default: Any
     optional: bool
     description: str = ""
+    type_meta: dict = {}
 
 
 class ArtifactSpec(BaseModel):

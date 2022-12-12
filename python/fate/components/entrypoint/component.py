@@ -4,6 +4,7 @@ import traceback
 from typing import Any, Dict
 
 from fate.arch.context import Context
+from fate.components import params
 from fate.components.cpn import (
     ComponentApplyError,
     _Component,
@@ -98,12 +99,11 @@ def parse_input_parameters(mlmd: MLMD, cpn: _Component, input_parameters: Dict[s
                     mlmd.io.log_input_parameter(parameter.name, parameter.default)
             else:
                 # TODO: enhance type validate
-                if type(parameter_apply) != parameter.type:
-                    raise ComponentApplyError(
-                        f"parameter `{arg}` with applying config `{parameter_apply}` can't apply to `{parameter}`"
-                        f": {type(parameter_apply)} != {parameter.type}"
-                    )
-                execute_parameters[parameter.name] = parameter_apply
+                try:
+                    value = params.parse(parameter.type, parameter_apply)
+                except Exception as e:
+                    raise ComponentApplyError(f"apply value `{parameter_apply}` to parameter `{arg}` failed:\n{e}")
+                execute_parameters[parameter.name] = value
                 mlmd.io.log_input_parameter(parameter.name, parameter_apply)
     return execute_parameters
 

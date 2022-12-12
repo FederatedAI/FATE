@@ -207,9 +207,19 @@ class _Component:
                 raise ValueError(f"bad artifact: {artifact}")
 
         input_parameters = {}
+        from fate.components.params import Parameter
+
         for parameter_name, parameter in self.get_parameters().items():
+            if isinstance(parameter.type, Parameter):  # recomanded
+                type_name = type(parameter.type).__name__
+                type_meta = parameter.type.dict()
+            else:
+                type_name = parameter.type.__name__
+                type_meta = {}
+
             input_parameters[parameter_name] = ParameterSpec(
-                type=parameter.type.__name__,
+                type=type_name,
+                type_meta=type_meta,
                 default=parameter.default,
                 optional=parameter.optional,
                 description=parameter.desc,

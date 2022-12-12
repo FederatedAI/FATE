@@ -9,6 +9,7 @@ from fate.components import (
     Output,
     Role,
     cpn,
+    params,
 )
 
 
@@ -20,9 +21,11 @@ def hetero_lr(ctx, role):
 @hetero_lr.train()
 @cpn.artifact("train_data", type=Input[DatasetArtifact], roles=[GUEST, HOST])
 @cpn.artifact("validate_data", type=Input[DatasetArtifact], optional=True, roles=[GUEST, HOST])
-@cpn.parameter("learning_rate", type=float, default=0.1)
-@cpn.parameter("max_iter", type=int, default=100)
-@cpn.parameter("batch_size", type=int, default=100)
+@cpn.parameter("learning_rate", type=params.ConFloat(gt=0.0), default=0.1, desc="learning rate")
+@cpn.parameter("max_iter", type=params.ConInt(gt=0), default=100)
+@cpn.parameter(
+    "batch_size", type=params.ConInt(), default=100, desc="batch size, value less or equals to 0 means full batch"
+)
 @cpn.artifact("train_output_data", type=Output[DatasetArtifact], roles=[GUEST, HOST])
 @cpn.artifact("train_output_metric", type=Output[MetricArtifact], roles=[ARBITER])
 @cpn.artifact("output_model", type=Output[ModelArtifact], roles=[GUEST, HOST])
