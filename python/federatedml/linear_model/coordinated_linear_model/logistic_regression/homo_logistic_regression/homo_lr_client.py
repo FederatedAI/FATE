@@ -83,6 +83,15 @@ class WrappedOptAndScheduler(object):
         self.opt.step()
         self.scheduler.step()
 
+    def state_dict(self):
+        return self.opt.state_dict()
+
+    def restep(self, n):
+        for i in range(n):
+            self.opt.zero_grad()
+            self.opt.step()
+            self.scheduler.step()
+
 
 class HomoLRClientExporter(ExporterBase):
 
@@ -169,6 +178,7 @@ class HomoLRClient(HomoLRBase):
         optimizer, scheduler = self.get_torch_optimizer(
             torch_model, self.model_param)
         wrap_optimizer = WrappedOptAndScheduler(optimizer, scheduler)
+        LOGGER.debug('init optimizer statedict is {}'.format(wrap_optimizer.state_dict()))
 
         if dataset.with_sample_weight:
             loss = WeightedBCE()
@@ -189,6 +199,7 @@ class HomoLRClient(HomoLRBase):
             task_type='binary',
             checkpoint_save_freqs=self.save_freq,
             early_stop=early_stop,
+            shuffle=False,
             tol=self.tol)
 
         if not self.callback_one_vs_rest:
@@ -241,7 +252,7 @@ class HomoLRClient(HomoLRBase):
             self.model_weights = self._init_model_variables(data_instances)
         else:
             LOGGER.debug('callback warm start, iter {}'.format(self.n_iter_))
-            self.callback_warm_start_init_iter(self.n_iter_)
+            self.callback_warm_start_init_iter(self.n_iter_ + 1)
 
         # fate loss callback setting
         LOGGER.debug('need one vs rest {}'.format(self.need_one_vs_rest))
@@ -257,6 +268,9 @@ class HomoLRClient(HomoLRBase):
 
         self.trainer, torch_model, wrap_optimizer, loss = self.init(
             train_set, data_instances.partitions)
+
+        if self.component_properties.is_warm_start:
+            wrap_optimizer.restep(self.n_iter_ + 1)
 
         self.trainer.train(train_set, val_set, loss=loss,
                            optimizer=wrap_optimizer)

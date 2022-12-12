@@ -80,7 +80,9 @@ class HomoLRServer(HomoLRBase):
             task_type='binary',
             checkpoint_save_freqs=self.save_freq,
             early_stop=early_stop,
-            tol=self.tol)
+            tol=self.tol,
+            shuffle=False
+            )
         if self.one_vs_rest_obj is None:
             self.trainer.set_tracker(self.tracker)
         self.trainer.set_checkpoint(self.model_checkpoint)
