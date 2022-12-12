@@ -2,6 +2,9 @@ import pydantic
 
 
 class Parameter:
+    def parse(self, obj):
+        raise NotImplementedError()
+
     def dict(self):
         raise NotImplementedError()
 
@@ -53,7 +56,7 @@ class ConFloat(Parameter):
 
 
 def parse(parameter_type, obj):
-    if isinstance(parameter_type, Parameter) and hasattr(parameter_type, "parse"):
-        return getattr(parameter_type, "parse")(obj)
+    if isinstance(parameter_type, Parameter):
+        return parameter_type.parse(obj)
     else:
         return pydantic.parse_obj_as(parameter_type, obj)
