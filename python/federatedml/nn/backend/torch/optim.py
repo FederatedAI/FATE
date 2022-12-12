@@ -364,7 +364,7 @@ class Rprop(optim.Rprop, FateTorchOptimizer):
 
 class SGD(optim.SGD, FateTorchOptimizer):
 
-    def __init__(self, lr, params=None, momentum=0, dampening=0, weight_decay=0, nesterov=False, ):
+    def __init__(self, params=None, lr=0.01, momentum=0, dampening=0, weight_decay=0, nesterov=False, ):
         FateTorchOptimizer.__init__(self)
         self.param_dict['lr'] = lr
         self.param_dict['momentum'] = momentum
