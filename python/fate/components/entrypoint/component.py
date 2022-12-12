@@ -122,8 +122,6 @@ def parse_input_artifacts(mlmd: MLMD, cpn: _Component, stage, role, input_artifa
                 if artifact_apply is not None:
                     # try apply
                     try:
-                        # annotated metadata drop in inherite, so pass type as argument here
-                        # maybe we could find more elegant way some day
                         execute_input_artifacts[arg] = load_artifact(artifact_apply, arti.type)
                     except Exception as e:
                         raise ComponentApplyError(

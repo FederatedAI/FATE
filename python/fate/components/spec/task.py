@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Union
 
 import pydantic
 
@@ -13,16 +13,6 @@ from .federation import (
 from .logger import CustomLogger, FlowLogger, PipelineLogger
 from .mlmd import CustomMLMDSpec, FlowMLMDSpec, PipelineMLMDSpec
 from .output import OutputPoolConf
-
-
-class OtherTaskOutputTaskInputArtifactSpec(pydantic.BaseModel):
-    class OtherTaskOutputArtifact(pydantic.BaseModel):
-        output_artifact_key: str
-        producer_task: str
-
-    name: str
-    metadata: Optional[dict] = None
-    task_output_artifact: OtherTaskOutputArtifact
 
 
 class TaskConfigSpec(pydantic.BaseModel):
