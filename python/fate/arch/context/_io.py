@@ -1,3 +1,4 @@
+import logging
 from typing import Protocol, overload
 
 from ..unify import URI, HttpURI, HttpsURI
@@ -194,9 +195,9 @@ class JsonWriter:
         if isinstance(self.uri.to_schema(), HttpURI) or isinstance(self.uri.to_schema(), HttpsURI):
             import requests
             url = f"{self.uri.schema}://{self.uri.authority}{self.uri.path}"
-            print(url)
+            logging.debug(url)
             response = requests.post(url=url, json={"data": model})
-            print(response.text)
+            logging.debug(response.text)
         elif isinstance(self.uri.to_schema(), URI):
             with open(self.uri.to_schema(), "w") as f:
                 json.dump(model, f)

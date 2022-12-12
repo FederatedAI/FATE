@@ -39,8 +39,9 @@ class ExecutionStatus:
         import requests
         logging.info(self._mlmd.metadata.statu_uri)
         data = self.StateData(execution_id=self._taskid, status=state, error=error).dict()
+        logging.debug(f"request flow uri: {self._mlmd.metadata.statu_uri}")
         response = requests.post(self._mlmd.metadata.statu_uri, json=data)
-        print(response.text)
+        logging.debug(f"response: {response.text}")
 
     def safe_terminate(self):
         return True
@@ -67,18 +68,19 @@ class IOManager(IOManagerProtocol):
 
     def log_output_data(self, key, value):
         import requests
+        logging.debug(f"request flow uri: {self.mlmd.metadata.tracking_uri}")
         response = requests.post(self.mlmd.metadata.tracking_uri,
                                  json={"output_key": value.name, "meta_data": value.metadata,
                                        "execution_id": self.task_id, "uri": value.uri, "type": "data"})
-        print(response.text)
+        logging.debug(f"response: {response.text}")
 
     def log_output_model(self, key, value):
         import requests
-        print("start save model test")
+        logging.debug(f"request flow uri: {self.mlmd.metadata.tracking_uri}")
         response = requests.post(self.mlmd.metadata.tracking_uri,
                                  json={"output_key": value.name, "meta_data": value.metadata,
                                        "execution_id": self.task_id, "uri": value.uri, "type": "model"})
-        print(response.text)
+        logging.debug(response.text)
         logging.debug(value)
 
     def log_output_metric(self, key, value):
