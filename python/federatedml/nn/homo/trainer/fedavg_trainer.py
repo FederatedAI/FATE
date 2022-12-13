@@ -133,7 +133,7 @@ class FedAVGTrainer(TrainerBase):
                 'FedAVGTrainer requires a loss function, but got None, please specify loss function in the'
                 ' job configuration')
 
-        if self.batch_size > len(train_set):
+        if self.batch_size > len(train_set) or self.batch_size == -1:
             self.batch_size = len(train_set)
         dl = DataLoader(
             train_set,

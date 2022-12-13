@@ -59,7 +59,13 @@ class HomoNNParam(BaseParam):
 
         self.trainer.check()
         self.dataset.check()
-        self.check_positive_integer(self.torch_seed, 'torch seed')
+
+        # torch seed >= 0
+        if isinstance(self.torch_seed, int):
+            assert self.torch_seed >= 0, 'torch seed should be an int >=0'
+        else:
+            raise ValueError('torch seed should be an int >=0')
+
         if self.nn_define is not None:
             assert isinstance(self.nn_define, dict), 'nn define should be a dict defining model structures'
         if self.loss is not None:
