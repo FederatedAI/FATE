@@ -29,10 +29,11 @@ from pipeline.utils.logger import LOGGER
 DEFAULT_PARAM_DICT = {
     'trainer': TrainerParam(trainer_name='fedavg_trainer', epochs=10, batch_size=512,  # training parameter
                             early_stop=None, tol=0.0001,  # early stop parameters
-                            secure_aggregate=True, weighted_aggregation=True,
-                            aggregate_every_n_epoch=None,  # federation
-                            cuda=False, pin_memory=True, shuffle=True, data_loader_worker=0,  # GPU dataloader
-                            validation_freq=None),
+                            secure_aggregate=True, weighted_aggregation=True, aggregate_every_n_epoch=None,  # federation
+                            cuda=False, pin_memory=True, shuffle=True, data_loader_worker=0,  # GPU & dataloader
+                            validation_freqs=None,  # validation configuration
+                            checkpoint_save_freqs=None,  # checkpoint configuration
+                            task_type='auto'),
     'dataset': DatasetParam(dataset_name='table'),
     'torch_seed': 100,
     'loss': None,
@@ -60,10 +61,11 @@ class HomoNN(FateComponent):
                  name=None,
                  trainer: TrainerParam = TrainerParam(trainer_name='fedavg_trainer', epochs=10, batch_size=512,  # training parameter
                                                       early_stop=None, tol=0.0001,  # early stop parameters
-                                                      secure_aggregate=True, weighted_aggregation=True,
-                                                      aggregate_every_n_epoch=None,  # federation
-                                                      cuda=False, pin_memory=True, shuffle=True, data_loader_worker=0,  # GPU dataloader
-                                                      validation_freq=None),
+                                                      secure_aggregate=True, weighted_aggregation=True, aggregate_every_n_epoch=None,  # federation
+                                                      cuda=False, pin_memory=True, shuffle=True, data_loader_worker=0,  # GPU & dataloader
+                                                      validation_freqs=None,  # validation configuration
+                                                      checkpoint_save_freqs=None,  # checkpoint configuration
+                                                      task_type='auto'),
                  dataset: DatasetParam = DatasetParam(dataset_name='table'),
                  torch_seed: int = 100,
                  loss=None,
@@ -74,15 +76,20 @@ class HomoNN(FateComponent):
         explicit_parameters["nn_define"] = None
         explicit_parameters.pop('model')
         if 'name' not in kwargs["explict_parameters"]:
-            raise RuntimeError('moduel name is not set')
+            raise RuntimeError('module name is not set')
         explicit_parameters["name"] = kwargs["explict_parameters"]['name']
         FateComponent.__init__(self, **explicit_parameters)
         explicit_parameters.update(kwargs["explict_parameters"])
         self.input = Input(self.name, data_type="multi")
         self.output = Output(self.name, data_type='single')
         self._module_name = "HomoNN"
-        self._updated = {'trainer': False, 'dataset': False,
-                         'torch_seed': False, 'loss': False, 'optimizer': False, 'model': False}
+        self._updated = {
+            'trainer': False,
+            'dataset': False,
+            'torch_seed': False,
+            'loss': False,
+            'optimizer': False,
+            'model': False}
         self._set_param(explicit_parameters)
         self._check_parameters()
 
@@ -91,7 +98,9 @@ class HomoNN(FateComponent):
         if attr in self._updated:
             self._updated[attr] = status
         else:
-            raise ValueError('attr {} not in update status {}'.format(attr, self._updated))
+            raise ValueError(
+                'attr {} not in update status {}'.format(
+                    attr, self._updated))
 
     def _set_param(self, params):
         if "name" in params:
@@ -101,21 +110,27 @@ class HomoNN(FateComponent):
 
     def _check_parameters(self):
 
-        if hasattr(self, 'trainer') and self.trainer is not None and not self._updated['trainer']:
+        if hasattr(
+                self,
+                'trainer') and self.trainer is not None and not self._updated['trainer']:
             assert isinstance(
                 self.trainer, TrainerParam), 'trainer must be a TrainerPram class'
             self.trainer.check()
             self.trainer: TrainerParam = self.trainer.to_dict()
             self._set_updated('trainer', True)
 
-        if hasattr(self, 'dataset') and self.dataset is not None and not self._updated['dataset']:
+        if hasattr(
+                self,
+                'dataset') and self.dataset is not None and not self._updated['dataset']:
             assert isinstance(
                 self.dataset, DatasetParam), 'dataset must be a DatasetParam class'
             self.dataset.check()
             self.dataset: DatasetParam = self.dataset.to_dict()
             self._set_updated('dataset', True)
 
-        if hasattr(self, 'model') and self.model is not None and not self._updated['model']:
+        if hasattr(
+                self,
+                'model') and self.model is not None and not self._updated['model']:
             assert isinstance(self.model, Sequential), 'Model must be a fate-torch Sequential, but got {} ' \
                                                        '\n do remember to call fate_torch_hook():' \
                                                        '\n    import torch as t' \
@@ -124,31 +139,39 @@ class HomoNN(FateComponent):
             self.nn_define = self.model.get_network_config()
             self._set_updated('model', True)
 
-        if hasattr(self, 'optimizer') and self.optimizer is not None and not self._updated['optimizer']:
+        if hasattr(
+                self,
+                'optimizer') and self.optimizer is not None and not self._updated['optimizer']:
             if not isinstance(self.optimizer, base.FateTorchOptimizer):
-                raise ValueError('please pass FateTorchOptimizer instances to Homo-nn components, got {}.'
-                                 'do remember to use fate_torch_hook():\n'
-                                 '    import torch as t\n'
-                                 '    fate_torch_hook(t)'.format(type(self.optimizer)))
+                raise ValueError(
+                    'please pass FateTorchOptimizer instances to Homo-nn components, got {}.'
+                    'do remember to use fate_torch_hook():\n'
+                    '    import torch as t\n'
+                    '    fate_torch_hook(t)'.format(
+                        type(
+                            self.optimizer)))
             optimizer_config = self.optimizer.to_dict()
             self.optimizer = optimizer_config
             self._set_updated('optimizer', True)
 
-        if hasattr(self, 'loss') and self.loss is not None and not self._updated['loss']:
+        if hasattr(
+                self,
+                'loss') and self.loss is not None and not self._updated['loss']:
             if isinstance(self.loss, base.FateTorchLoss):
                 loss_config = self.loss.to_dict()
             elif issubclass(self.loss, base.FateTorchLoss):
                 loss_config = self.loss().to_dict()
             else:
-                raise ValueError('unable to parse loss function {}, loss must be an instance'
-                                 'of FateTorchLoss subclass or a subclass of FateTorchLoss, '
-                                 'do remember to use fate_torch_hook()'.format(self.loss))
+                raise ValueError(
+                    'unable to parse loss function {}, loss must be an instance'
+                    'of FateTorchLoss subclass or a subclass of FateTorchLoss, '
+                    'do remember to use fate_torch_hook()'.format(
+                        self.loss))
             self.loss = loss_config
             self._set_updated('loss', True)
 
     def component_param(self, **kwargs):
 
-        # reset paramerters
         used_attr = set()
         setattr(self, 'model', None)
         for attr in self.__dict__:

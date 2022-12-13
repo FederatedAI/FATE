@@ -310,7 +310,7 @@ class HomoNNClient(ModelBase):
         LOGGER.info('running predict')
         if self.trainer_inst is None:
             # init model
-            self.trainer_inst, model, optimizer, loss_fn = self.init()
+            self.trainer_inst, model, optimizer, loss_fn, _ = self.init()
             self.trainer_inst.set_model(model)
             self.trainer_inst.set_tracker(self.tracker)
 

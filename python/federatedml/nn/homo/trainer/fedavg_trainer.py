@@ -109,7 +109,7 @@ class FedAVGTrainer(TrainerBase):
                                  self.is_pos_int,
                                  '{} is not a positive int')
         self.check_trainer_param([self.secure_aggregate, self.weighted_aggregation, self.pin_memory], [
-                                 'secure_aggregate', 'weighted_aggregation', 'self.pin_memory,'], self.is_bool, '{} is not a bool')
+                                 'secure_aggregate', 'weighted_aggregation', 'pin_memory,'], self.is_bool, '{} is not a bool')
         self.check_trainer_param(
             [self.tol], ['tol'], self.is_float, '{} is not a float')
 

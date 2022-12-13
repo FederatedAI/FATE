@@ -63,7 +63,8 @@ class HeteroNN(FateComponent):
         self._role = 'common'  # common/guest/host
 
         if hasattr(self, 'dataset'):
-            assert isinstance(self.dataset, DatasetParam), 'dataset must be a DatasetParam class'
+            assert isinstance(
+                self.dataset, DatasetParam), 'dataset must be a DatasetParam class'
             self.dataset.check()
             self.dataset: DatasetParam = self.dataset.to_dict()
 
@@ -77,7 +78,8 @@ class HeteroNN(FateComponent):
 
     def add_dataset(self, dataset_param: DatasetParam):
 
-        assert isinstance(dataset_param, DatasetParam), 'dataset must be a DatasetParam class'
+        assert isinstance(
+            dataset_param, DatasetParam), 'dataset must be a DatasetParam class'
         dataset_param.check()
         self.dataset: DatasetParam = dataset_param.to_dict()
         self._component_parameter_keywords.add("dataset")
@@ -102,7 +104,8 @@ class HeteroNN(FateComponent):
             self._interactive_layer.add(layer)
 
         else:
-            raise RuntimeError('You can only set interactive layer in "common" or "guest" hetero nn component')
+            raise RuntimeError(
+                'You can only set interactive layer in "common" or "guest" hetero nn component')
 
     def add_top_model(self, model):
         if self._role == 'host':
@@ -113,11 +116,13 @@ class HeteroNN(FateComponent):
         self._top_nn_model.add(model)
 
     def _set_optimizer(self, opt):
-        assert hasattr(opt, 'to_dict'), 'opt does not have function to_dict(), remember to call fate_torch_hook(t)'
+        assert hasattr(
+            opt, 'to_dict'), 'opt does not have function to_dict(), remember to call fate_torch_hook(t)'
         self.optimizer = opt.to_dict()
 
     def _set_loss(self, loss):
-        assert hasattr(loss, 'to_dict'), 'loss does not have function to_dict(), remember to call fate_torch_hook(t)'
+        assert hasattr(
+            loss, 'to_dict'), 'loss does not have function to_dict(), remember to call fate_torch_hook(t)'
         loss_conf = loss.to_dict()
         setattr(self, "loss", loss_conf)
 
@@ -130,16 +135,22 @@ class HeteroNN(FateComponent):
         self._compile_interactive_layer()
 
     def _compile_interactive_layer(self):
-        if hasattr(self, "_interactive_layer") and not self._interactive_layer.is_empty():
+        if hasattr(
+                self,
+                "_interactive_layer") and not self._interactive_layer.is_empty():
             self.interactive_layer_define = self._interactive_layer.get_network_config()
             self._component_param["interactive_layer_define"] = self.interactive_layer_define
 
     def _compile_common_network_config(self):
-        if hasattr(self, "_bottom_nn_model") and not self._bottom_nn_model.is_empty():
+        if hasattr(
+                self,
+                "_bottom_nn_model") and not self._bottom_nn_model.is_empty():
             self.bottom_nn_define = self._bottom_nn_model.get_network_config()
             self._component_param["bottom_nn_define"] = self.bottom_nn_define
 
-        if hasattr(self, "_top_nn_model") and not self._top_nn_model.is_empty():
+        if hasattr(
+                self,
+                "_top_nn_model") and not self._top_nn_model.is_empty():
             self.top_nn_define = self._top_nn_model.get_network_config()
             self._component_param["top_nn_define"] = self.top_nn_define
 
@@ -147,12 +158,18 @@ class HeteroNN(FateComponent):
         all_party_instance = self._get_all_party_instance()
         for role in all_party_instance:
             for party in all_party_instance[role]["party"].keys():
-                all_party_instance[role]["party"][party]._compile_common_network_config()
-                all_party_instance[role]["party"][party]._compile_interactive_layer()
+                all_party_instance[role]["party"][party]._compile_common_network_config(
+                )
+                all_party_instance[role]["party"][party]._compile_interactive_layer(
+                )
 
     def get_bottom_model(self):
 
-        if hasattr(self, "_bottom_nn_model") and not getattr(self, "_bottom_nn_model").is_empty():
+        if hasattr(
+                self,
+                "_bottom_nn_model") and not getattr(
+                self,
+                "_bottom_nn_model").is_empty():
             return getattr(self, "_bottom_nn_model").get_model()
 
         bottom_models = {}
@@ -161,14 +178,19 @@ class HeteroNN(FateComponent):
             for party in all_party_instance[role]["party"].keys():
                 party_inst = all_party_instance[role]["party"][party]
                 if party_inst is not None:
-                    btn_model = all_party_instance[role]["party"][party].get_bottom_model()
+                    btn_model = all_party_instance[role]["party"][party].get_bottom_model(
+                    )
                     if btn_model is not None:
                         bottom_models[party] = btn_model
 
         return bottom_models if len(bottom_models) > 0 else None
 
     def get_top_model(self):
-        if hasattr(self, "_top_nn_model") and not getattr(self, "_top_nn_model").is_empty():
+        if hasattr(
+                self,
+                "_top_nn_model") and not getattr(
+                self,
+                "_top_nn_model").is_empty():
             return getattr(self, "_top_nn_model").get_model()
 
         models = {}
@@ -177,7 +199,8 @@ class HeteroNN(FateComponent):
             for party in all_party_instance[role]["party"].keys():
                 party_inst = all_party_instance[role]["party"][party]
                 if party_inst is not None:
-                    top_model = all_party_instance[role]["party"][party].get_top_model()
+                    top_model = all_party_instance[role]["party"][party].get_top_model(
+                    )
                     if top_model is not None:
                         models[party] = top_model
 
