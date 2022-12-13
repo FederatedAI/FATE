@@ -87,19 +87,11 @@ class HomoLRBase(BaseLogisticRegression):
 
     def _init_model(self, params):
         super(HomoLRBase, self)._init_model(params)
-        self.re_encrypt_batches = params.re_encrypt_batches
-
-        if params.encrypt_param.method == consts.PAILLIER:
-            self.cipher_operator = PaillierEncrypt()
-        else:
-            self.cipher_operator = None
 
         self.transfer_variable = HomoLRTransferVariable()
         # self.aggregator.register_aggregator(self.transfer_variable)
         self.param = params
         self.aggregate_iters = params.aggregate_iters
-        self.use_proximal = params.use_proximal
-        self.mu = params.mu
 
     @property
     def use_loss(self):
@@ -201,7 +193,6 @@ class HomoLRBase(BaseLogisticRegression):
                                                           max_iter=self.max_iter,
                                                           early_stop=self.model_param.early_stop,
                                                           fit_intercept=self.fit_intercept,
-                                                          re_encrypt_batches=self.re_encrypt_batches,
                                                           module='HomoLR',
                                                           need_one_vs_rest=self.need_one_vs_rest)
         return meta_protobuf_obj

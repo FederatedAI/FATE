@@ -89,9 +89,6 @@
         },
         "homo-lr-sample-weights": {
             "script": "pipeline-homo-lr-sample-weights.py"
-        },
-        "homo-lr-one-vs-all-encrypted-host": {
-            "script": "pipeline-homo-lr-one-vs-all-encrypted-host.py"
         }
     }
 }
