@@ -22,11 +22,11 @@
     },
     "component_parameters": {
         "role": {
-            "host": {
+            "guest": {
                 "0": {
                     "reader_0": {
                         "table": {
-                            "name": "vehicle_scale_homo_host",
+                            "name": "vehicle_scale_homo_guest",
                             "namespace": "experiment"
                         }
                     },
@@ -36,11 +36,11 @@
                     }
                 }
             },
-            "guest": {
+            "host": {
                 "0": {
                     "reader_0": {
                         "table": {
-                            "name": "vehicle_scale_homo_guest",
+                            "name": "vehicle_scale_homo_host",
                             "namespace": "experiment"
                         }
                     },
