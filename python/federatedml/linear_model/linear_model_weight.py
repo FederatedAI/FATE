@@ -26,7 +26,7 @@ from federatedml.util import LOGGER, paillier_check, ipcl_operator
 class LinearModelWeights(ListWeights):
     def __init__(self, l, fit_intercept, raise_overflow_error=True):
         l = np.array(l)
-        if not paillier_check.is_paillier_encrypted_number(l):
+        if l.shape != (0,) and not paillier_check.is_paillier_encrypted_number(l):
             if np.max(np.abs(l)) > 1e8:
                 if raise_overflow_error:
                     raise RuntimeError(
