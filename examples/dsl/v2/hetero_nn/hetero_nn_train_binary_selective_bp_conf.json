@@ -19,16 +19,47 @@
     },
     "component_parameters": {
         "role": {
+            "host": {
+                "0": {
+                    "data_transform_0": {
+                        "with_label": false
+                    },
+                    "hetero_nn_0": {
+                        "bottom_nn_define": {
+                            "0-0": {
+                                "bias": true,
+                                "device": null,
+                                "dtype": null,
+                                "in_features": 20,
+                                "out_features": 4,
+                                "layer": "Linear",
+                                "initializer": {}
+                            },
+                            "1-1": {
+                                "inplace": false,
+                                "layer": "ReLU",
+                                "initializer": {}
+                            },
+                            "2-2": {
+                                "p": 0.2,
+                                "inplace": false,
+                                "layer": "Dropout",
+                                "initializer": {}
+                            }
+                        }
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            },
             "guest": {
                 "0": {
                     "data_transform_0": {
                         "with_label": true
-                    },
-                    "reader_0": {
-                        "table": {
-                            "name": "breast_hetero_guest",
-                            "namespace": "experiment"
-                        }
                     },
                     "hetero_nn_0": {
                         "bottom_nn_define": {
@@ -68,42 +99,11 @@
                                 "initializer": {}
                             }
                         }
-                    }
-                }
-            },
-            "host": {
-                "0": {
-                    "data_transform_0": {
-                        "with_label": false
                     },
                     "reader_0": {
                         "table": {
-                            "name": "breast_hetero_host",
+                            "name": "breast_hetero_guest",
                             "namespace": "experiment"
-                        }
-                    },
-                    "hetero_nn_0": {
-                        "bottom_nn_define": {
-                            "0-0": {
-                                "bias": true,
-                                "device": null,
-                                "dtype": null,
-                                "in_features": 20,
-                                "out_features": 4,
-                                "layer": "Linear",
-                                "initializer": {}
-                            },
-                            "1-1": {
-                                "inplace": false,
-                                "layer": "ReLU",
-                                "initializer": {}
-                            },
-                            "2-2": {
-                                "p": 0.2,
-                                "inplace": false,
-                                "layer": "Dropout",
-                                "initializer": {}
-                            }
                         }
                     }
                 }

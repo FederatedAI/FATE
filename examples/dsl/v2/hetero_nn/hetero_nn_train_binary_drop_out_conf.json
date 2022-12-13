@@ -21,6 +21,9 @@
         "role": {
             "guest": {
                 "0": {
+                    "data_transform_0": {
+                        "with_label": true
+                    },
                     "hetero_nn_0": {
                         "bottom_nn_define": {
                             "0-0": {
@@ -65,14 +68,14 @@
                             "name": "breast_hetero_guest",
                             "namespace": "experiment"
                         }
-                    },
-                    "data_transform_0": {
-                        "with_label": true
                     }
                 }
             },
             "host": {
                 "0": {
+                    "data_transform_0": {
+                        "with_label": false
+                    },
                     "hetero_nn_0": {
                         "bottom_nn_define": {
                             "0-0": {
@@ -102,9 +105,6 @@
                             "name": "breast_hetero_host",
                             "namespace": "experiment"
                         }
-                    },
-                    "data_transform_0": {
-                        "with_label": false
                     }
                 }
             }
