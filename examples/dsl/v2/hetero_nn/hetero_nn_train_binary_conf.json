@@ -19,37 +19,6 @@
     },
     "component_parameters": {
         "role": {
-            "host": {
-                "0": {
-                    "hetero_nn_0": {
-                        "bottom_nn_define": {
-                            "0-0": {
-                                "bias": true,
-                                "device": null,
-                                "dtype": null,
-                                "in_features": 20,
-                                "out_features": 4,
-                                "layer": "Linear",
-                                "initializer": {}
-                            },
-                            "1-1": {
-                                "inplace": false,
-                                "layer": "ReLU",
-                                "initializer": {}
-                            }
-                        }
-                    },
-                    "reader_0": {
-                        "table": {
-                            "name": "breast_hetero_host",
-                            "namespace": "experiment"
-                        }
-                    },
-                    "data_transform_0": {
-                        "with_label": false
-                    }
-                }
-            },
             "guest": {
                 "0": {
                     "hetero_nn_0": {
@@ -93,6 +62,37 @@
                     },
                     "data_transform_0": {
                         "with_label": true
+                    }
+                }
+            },
+            "host": {
+                "0": {
+                    "hetero_nn_0": {
+                        "bottom_nn_define": {
+                            "0-0": {
+                                "bias": true,
+                                "device": null,
+                                "dtype": null,
+                                "in_features": 20,
+                                "out_features": 4,
+                                "layer": "Linear",
+                                "initializer": {}
+                            },
+                            "1-1": {
+                                "inplace": false,
+                                "layer": "ReLU",
+                                "initializer": {}
+                            }
+                        }
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "data_transform_0": {
+                        "with_label": false
                     }
                 }
             }

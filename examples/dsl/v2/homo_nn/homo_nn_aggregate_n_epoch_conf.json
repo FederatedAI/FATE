@@ -22,20 +22,6 @@
     },
     "component_parameters": {
         "role": {
-            "host": {
-                "0": {
-                    "data_transform_0": {
-                        "with_label": true,
-                        "output_format": "dense"
-                    },
-                    "reader_0": {
-                        "table": {
-                            "name": "breast_homo_host",
-                            "namespace": "experiment"
-                        }
-                    }
-                }
-            },
             "guest": {
                 "0": {
                     "data_transform_0": {
@@ -45,6 +31,20 @@
                     "reader_0": {
                         "table": {
                             "name": "breast_homo_guest",
+                            "namespace": "experiment"
+                        }
+                    }
+                }
+            },
+            "host": {
+                "0": {
+                    "data_transform_0": {
+                        "with_label": true,
+                        "output_format": "dense"
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_homo_host",
                             "namespace": "experiment"
                         }
                     }

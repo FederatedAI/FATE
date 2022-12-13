@@ -70,7 +70,7 @@
             "module": "Evaluation",
             "input": {
                 "data": {
-                    "train_data": [
+                    "data": [
                         "hetero_nn_0.data"
                     ]
                 }

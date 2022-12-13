@@ -21,12 +21,6 @@
         "role": {
             "guest": {
                 "0": {
-                    "reader_0": {
-                        "table": {
-                            "name": "breast_hetero_guest",
-                            "namespace": "experiment"
-                        }
-                    },
                     "hetero_nn_0": {
                         "bottom_nn_define": {
                             "0-0": {
@@ -62,17 +56,17 @@
                     },
                     "data_transform_0": {
                         "with_label": true
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
                     }
                 }
             },
             "host": {
                 "0": {
-                    "reader_0": {
-                        "table": {
-                            "name": "breast_hetero_host",
-                            "namespace": "experiment"
-                        }
-                    },
                     "hetero_nn_0": {
                         "bottom_nn_define": {
                             "0-0": {
@@ -93,6 +87,12 @@
                     },
                     "data_transform_0": {
                         "with_label": false
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
                     }
                 }
             }

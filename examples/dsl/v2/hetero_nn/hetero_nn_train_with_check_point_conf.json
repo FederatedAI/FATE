@@ -24,6 +24,12 @@
                     "data_transform_0": {
                         "with_label": false
                     },
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    },
                     "hetero_nn_0": {
                         "bottom_nn_define": {
                             "0-0": {
@@ -41,12 +47,6 @@
                                 "initializer": {}
                             }
                         }
-                    },
-                    "reader_0": {
-                        "table": {
-                            "name": "breast_hetero_host",
-                            "namespace": "experiment"
-                        }
                     }
                 }
             },
@@ -54,6 +54,12 @@
                 "0": {
                     "data_transform_0": {
                         "with_label": true
+                    },
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
                     },
                     "hetero_nn_0": {
                         "bottom_nn_define": {
@@ -87,12 +93,6 @@
                                 "initializer": {}
                             }
                         }
-                    },
-                    "reader_0": {
-                        "table": {
-                            "name": "breast_hetero_guest",
-                            "namespace": "experiment"
-                        }
                     }
                 }
             }
@@ -102,9 +102,9 @@
                 "epochs": 20,
                 "interactive_layer_lr": 0.01,
                 "batch_size": -1,
-                "validation_freqs": 1,
                 "task_type": "classification",
                 "callback_param": {
+                    "validation_freq": 1,
                     "callbacks": [
                         "ModelCheckpoint"
                     ],
