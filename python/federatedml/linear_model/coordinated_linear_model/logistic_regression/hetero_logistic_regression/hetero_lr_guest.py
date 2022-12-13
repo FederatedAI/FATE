@@ -93,7 +93,7 @@ class HeteroLRGuest(HeteroLRBase):
 
         data_instances = data_instances.mapValues(HeteroLRGuest.load_data)
         LOGGER.debug(f"MODEL_STEP After load data, data count: {data_instances.count()}")
-        self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
+        self.cipher_operator = self.cipher.gen_paillier_cipher_operator(method=self.model_param.encrypt_param.method)
 
         self.batch_generator.initialize_batch_generator(data_instances, self.batch_size,
                                                         batch_strategy=self.batch_strategy,

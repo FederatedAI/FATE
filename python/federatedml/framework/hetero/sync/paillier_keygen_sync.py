@@ -20,8 +20,7 @@ from federatedml.util import consts
 
 class Arbiter(object):
     # noinspection PyAttributeOutsideInit
-    def _register_paillier_keygen(self, method_transfer, pubkey_transfer):
-        self._method_transfer = method_transfer
+    def _register_paillier_keygen(self, pubkey_transfer):
         self._pubkey_transfer = pubkey_transfer
 
     def paillier_keygen(self, method, key_length, suffix=tuple()):
@@ -31,8 +30,6 @@ class Arbiter(object):
             cipher = IpclPaillierEncrypt()
         else:
             raise ValueError(f"Unsupported encryption method: {method}")
-        self._method_transfer.remote(obj=method, role=consts.HOST, idx=-1, suffix=suffix)
-        self._method_transfer.remote(obj=method, role=consts.GUEST, idx=-1, suffix=suffix)
 
         cipher.generate_key(key_length)
         pub_key = cipher.get_public_key()
@@ -43,12 +40,10 @@ class Arbiter(object):
 
 class _Client(object):
     # noinspection PyAttributeOutsideInit
-    def _register_paillier_keygen(self, method_transfer, pubkey_transfer):
-        self._method_transfer = method_transfer
+    def _register_paillier_keygen(self, pubkey_transfer):
         self._pubkey_transfer = pubkey_transfer
 
-    def gen_paillier_cipher_operator(self, suffix=tuple()):
-        method = self._method_transfer.get(idx=0, suffix=suffix)
+    def gen_paillier_cipher_operator(self, suffix=tuple(), method=consts.PAILLIER):
         pubkey = self._pubkey_transfer.get(idx=0, suffix=suffix)
 
         if method == consts.PAILLIER:
