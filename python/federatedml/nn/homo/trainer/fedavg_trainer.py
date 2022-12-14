@@ -288,7 +288,7 @@ class FedAVGTrainer(TrainerBase):
             for batch_data, batch_label in DataLoader(
                     dataset, self.batch_size):
                 if self.cuda:
-                    batch_data = self.to_cuda(batch_label)
+                    batch_data = self.to_cuda(batch_data)
                 pred = self.model(batch_data)
                 pred_result.append(pred)
                 labels.append(batch_label)
