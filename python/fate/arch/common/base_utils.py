@@ -25,9 +25,6 @@ import uuid
 from enum import Enum, IntEnum
 
 from ._types import BaseType
-from .conf_utils import get_base_config
-
-use_deserialize_safe_module = get_base_config("use_deserialize_safe_module", False)
 
 
 class CustomJSONEncoder(json.JSONEncoder):
@@ -111,8 +108,6 @@ def serialize_b64(src, to_str=False):
 
 def deserialize_b64(src):
     src = base64.b64decode(string_to_bytes(src) if isinstance(src, str) else src)
-    if use_deserialize_safe_module:
-        return restricted_loads(src)
     return pickle.loads(src)
 
 
