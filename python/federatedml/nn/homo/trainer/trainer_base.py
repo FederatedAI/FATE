@@ -350,7 +350,8 @@ class TrainerBase(object):
 
         pred_scores = pred_scores.tolist()
         label = label.tolist()
-
+        assert len(pred_scores) == len(
+            label), 'the length of predict score != the length of label, pred {} and label {}'.format(len(pred_scores), len(label))
         eval_data = []
         for id_, s, l in zip(sample_ids, pred_scores, label):
             if task_type == consts.REGRESSION:

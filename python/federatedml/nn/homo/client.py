@@ -211,7 +211,7 @@ class HomoNNClient(ModelBase):
             'train_set',
             'validate_set',
             'optimizer',
-            'loss'
+            'loss',
             'extra_data'
         ]
         if len(trainer_train_args) < 6:
@@ -276,7 +276,8 @@ class HomoNNClient(ModelBase):
                 dataset_cache=self.cache_dataset,
                 param=self.dataset_param
             )
-            dataset_inst.set_type('validate')
+            if id(val_dataset_inst) != id(dataset_inst):
+                dataset_inst.set_type('validate')
             LOGGER.info('validate dataset instance is {}'.format(dataset_inst))
         else:
             val_dataset_inst = None
