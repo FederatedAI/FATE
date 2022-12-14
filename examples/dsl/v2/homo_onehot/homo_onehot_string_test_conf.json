@@ -80,9 +80,6 @@
                 },
                 "max_iter": 3,
                 "early_stop": "diff",
-                "encrypt_param": {
-                    "method": "Paillier"
-                },
                 "cv_param": {
                     "n_splits": 4,
                     "shuffle": true,
