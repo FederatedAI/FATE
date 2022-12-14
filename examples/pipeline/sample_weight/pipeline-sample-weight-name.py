@@ -38,8 +38,8 @@ def main(config="../../config.yaml", namespace=""):
     host = parties.host[0]
     arbiter = parties.arbiter[0]
 
-    guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
+    guest_train_data = {"name": "breast_hetero_guest_sid", "namespace": f"experiment{namespace}"}
+    host_train_data = {"name": "breast_hetero_host_sid", "namespace": f"experiment{namespace}"}
 
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host, arbiter=arbiter)
 
@@ -47,7 +47,7 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='guest', party_id=guest).component_param(table=guest_train_data)
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
-    data_transform_0 = DataTransform(name="data_transform_0")
+    data_transform_0 = DataTransform(name="data_transform_0", with_match_id=True)
     data_transform_0.get_party_instance(
         role='guest',
         party_id=guest).component_param(
@@ -80,7 +80,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
     pipeline.add_component(scale_0, data=Data(intersection_0.output.data))
     pipeline.add_component(sample_weight_0, data=Data(data=scale_0.output.data))
-    pipeline.add_component(federated_sampler_0, data=sample_weight_0.output.data)
+    pipeline.add_component(federated_sampler_0, data=Data(sample_weight_0.output.data))
     pipeline.add_component(hetero_lr_0, data=Data(train_data=federated_sampler_0.output.data))
     pipeline.add_component(evaluation_0, data=Data(data=hetero_lr_0.output.data))
 
