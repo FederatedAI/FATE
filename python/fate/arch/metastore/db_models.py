@@ -27,17 +27,13 @@ from peewee import (
 )
 
 from ..common import EngineType, conf_utils, file_utils, log
-from ..common.conf_utils import decrypt_database_config
 from ..federation import FederationEngine
 from ..metastore.base_model import BaseModel, DateTimeField, JSONField, SerializedField
 
 LOGGER = log.getLogger()
 
-DATABASE = decrypt_database_config()
-is_standalone = (
-    conf_utils.get_base_config("default_engines", {}).get(EngineType.FEDERATION).upper()
-    == FederationEngine.STANDALONE
-)
+DATABASE = {"name": "xxx"}
+is_standalone = True
 
 
 def singleton(cls, *args, **kw):

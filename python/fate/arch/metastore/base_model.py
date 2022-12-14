@@ -25,7 +25,7 @@ from peewee import (
     IntegerField,
     Metadata,
     Model,
-    TextField,
+    TextField, DateTimeField,
 )
 
 from ..common import EngineType, conf_utils
@@ -40,14 +40,6 @@ from ..common.base_utils import (
 )
 from ..federation import FederationEngine
 
-is_standalone = (
-    conf_utils.get_base_config("default_engines", {}).get(EngineType.FEDERATION).upper()
-    == FederationEngine.STANDALONE
-)
-if is_standalone:
-    from playhouse.apsw_ext import DateTimeField
-else:
-    from peewee import DateTimeField
 
 CONTINUOUS_FIELD_TYPE = {IntegerField, FloatField, DateTimeField}
 AUTO_DATE_TIMESTAMP_FIELD_PREFIX = {
