@@ -154,7 +154,7 @@ class FedAVGTrainer(TrainerBase):
             if self.weighted_aggregation:
                 sample_num = len(train_set)
             else:
-                sample_num = None
+                sample_num = 1.0
 
             client_agg = SecureAggClient(
                 True, aggregate_weight=sample_num, communicate_match_suffix=self.comm_suffix)

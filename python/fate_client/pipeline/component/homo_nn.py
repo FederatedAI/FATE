@@ -148,6 +148,7 @@ class HomoNN(FateComponent):
         if 'model' in kwargs:
             self.model = kwargs['model']
             kwargs.pop('model')
+            self._set_updated('model', False)
 
         for attr in self._component_parameter_keywords:
             if attr in kwargs:
