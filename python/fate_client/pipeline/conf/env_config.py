@@ -42,31 +42,9 @@ class StatusCode(object):
 
 class FlowConfig(object):
     conf = get_default_config().get("fate_flow", {})
-    IP = conf.get("ip", None)
-    PORT = conf.get("port", None)
-
-
-"""
-standalone:
-  job_directory:
-  output_data_dir:
-  output_model_dir:
-  output_metric_dir:
-  logger:
-    level: "DEBUG"
-    debug_mode: true
-  device:
-    type: "CPU"
-    device: "CPU"
-  mlmd:
-    type: pipeline
-    metadata:
-        db:
-  computing_engine:
-    type: standalone
-  federation_engine:
-    type: standalone
-"""
+    IP = conf.get("ip")
+    PORT = conf.get("port")
+    VERSION = conf.get("version")
 
 
 class Device(object):

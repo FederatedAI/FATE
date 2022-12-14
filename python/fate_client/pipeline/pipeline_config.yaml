@@ -21,6 +21,6 @@ standalone:
     type: standalone
 
 fate_flow:
-    ip:
-    port:
-    backend:
+    ip: 127.0.0.1
+    port: 9382
+    version: v2

@@ -19,6 +19,11 @@ class ModelWarehouseChannelSpec(BaseModel):
     output_artifact_key: str
 
 
+class ModelWarehouseInputArtifacts(BaseModel):
+    artifact_source_type = "model_warehouse"
+    input_channel: Union[ModelWarehouseChannelSpec, List[ModelWarehouseChannelSpec]]
+
+
 InputChannelSpec = TypeVar("InputChannelSpec", RuntimeTaskOutputChannelSpec, ModelWarehouseChannelSpec)
 
 

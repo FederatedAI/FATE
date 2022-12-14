@@ -1,12 +1,13 @@
 from pathlib import Path
 from typing import Dict
-from ..conf.env_config import LogPath
+from ..conf.env_config import LogPath, FlowConfig
 from ..utils.id_gen import gen_job_id
 from ..utils.job_process import process_task
 from ..entity.dag_structures import DAGSchema
 from ..entity.component_structures import ComponentSpec
 from ..scheduler.dag_parser import DagParser
 from ..scheduler.runtime_constructor import RuntimeConstructor
+from ..utils.fate_flow_job_invoker import FATEFlowJobInvoker
 from .model_info import StandaloneModelInfo, FateFlowModelInfo
 
 
@@ -17,7 +18,8 @@ class StandaloneExecutor(object):
         self._dag_parser = DagParser()
         self._log_dir_prefix = None
 
-    def fit(self, dag_schema: DAGSchema, component_specs: Dict[str, ComponentSpec]) -> StandaloneModelInfo:
+    def fit(self, dag_schema: DAGSchema, component_specs: Dict[str, ComponentSpec],
+            schedule_role: str) -> StandaloneModelInfo:
         self._dag_parser.parse_dag(dag_schema, component_specs)
         self._run()
 
@@ -29,6 +31,7 @@ class StandaloneExecutor(object):
     def predict(self,
                 dag_schema: DAGSchema,
                 component_specs: Dict[str, ComponentSpec],
+                schedule_role: str,
                 fit_model_info: StandaloneModelInfo) -> StandaloneModelInfo:
         self._dag_parser.parse_dag(dag_schema, component_specs)
         self._run(fit_model_info)
@@ -104,5 +107,25 @@ class FateFlowExecutor(object):
     def __init__(self):
         ...
 
-    def fit(self, dag_schema: DAGSchema, component_specs: Dict[str, ComponentSpec]) -> FateFlowModelInfo:
-        ...
+    def fit(self, dag_schema: DAGSchema, component_specs: Dict[str, ComponentSpec],
+            schedule_role: str) -> FateFlowModelInfo:
+        schedule_party_id = self.get_schedule_party_id(dag_schema, schedule_role)
+        flow_job_invoker = FATEFlowJobInvoker()
+
+        job_id = flow_job_invoker.submit_job(dag_schema.dict(exclude_defaults=True))
+        flow_job_invoker.monitor_status(job_id, schedule_role, schedule_party_id)
+
+        return FateFlowModelInfo(
+            job_id=job_id,
+            schedule_role=schedule_role,
+            schedule_party_id=schedule_party_id
+        )
+
+    @staticmethod
+    def get_schedule_party_id(dag_schema, scheduler_role):
+        """
+        query it by flow
+        """
+        for party in dag_schema.dag.parties:
+            if scheduler_role == party.role:
+                return party.party_id[0]

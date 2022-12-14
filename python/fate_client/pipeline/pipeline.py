@@ -21,6 +21,10 @@ class Pipeline(object):
         self._job_conf = JobConf()
         self._model_info = None
         self._predict_dag = None
+        self._schedule_role = "guest"
+
+    def set_schedule_role(self, role):
+        self._schedule_role = role
 
     def set_stage(self, stage):
         self._stage = stage
@@ -162,12 +166,17 @@ class Pipeline(object):
         return component_specs
 
     def fit(self) -> "Pipeline":
-        self._model_info = self._executor.fit(self._dag.dag_spec, self.get_component_specs())
+        self._model_info = self._executor.fit(self._dag.dag_spec,
+                                              self.get_component_specs(),
+                                              schedule_role=self._schedule_role)
 
         return self
 
     def predict(self) -> "Pipeline":
-        self._executor.predict(self._dag.dag_spec, self.get_component_specs(), self._model_info)
+        self._executor.predict(self._dag.dag_spec,
+                               self.get_component_specs(),
+                               self._schedule_role,
+                               self._model_info)
 
         return self
 
