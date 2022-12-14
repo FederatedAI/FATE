@@ -51,9 +51,10 @@ flowing codes modified from [click](https://github.com/pallets/click) project
 
 import inspect
 import logging
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
-from fate.components import Role, Stage
+import pydantic
+from fate.components import MetricArtifact, Role, Stage
 
 
 class ComponentDeclarError(Exception):
@@ -77,7 +78,7 @@ class _Component:
         description,
         callback,
         parameters: List["_ParameterDeclareClass"],
-        artifacts: List["_ArtifactDeclareClass"],
+        artifacts: "_ComponentArtifacts",
         is_subcomponent: bool = False,
     ) -> None:
         self.is_subcomponent = is_subcomponent
@@ -90,96 +91,78 @@ class _Component:
         self.parameters = parameters
         if not self.description:
             self.description = ""
+        self.artifacts = artifacts
+        self.func_args = list(inspect.signature(self.callback).parameters.keys())
+        self.stage_components: List[_Component] = []
+
+    def validate_declare(self):
+        # validate
+        if self.func_args[0] != "ctx":
+            raise ComponentDeclarError("bad component definition, first argument should be `ctx`")
+        if self.func_args[1] != "role":
+            raise ComponentDeclarError("bad component definition, second argument should be `role`")
+
         # assert parameters defined once
         _defined = set()
         for p in self.parameters:
             if p.name in _defined:
                 raise ComponentDeclarError(f"parameter named `{p.name}` declared multiple times")
             _defined.add(p.name)
-        self.artifacts = artifacts
 
-        self.func_args = list(inspect.signature(self.callback).parameters.keys())
-
-        # validate
-        if self.func_args[0] != "ctx":
-            raise ComponentDeclarError("bad component definition, first argument should be `ctx`")
-        if self.func_args[1] != "role":
-            raise ComponentDeclarError("bad component definition, second argument should be `role`")
+        # validate func arguments
         undeclared_func_parameters = set(self.func_args[2:])
+
+        def _check_and_remove(name, arg_type):
+            if name not in undeclared_func_parameters:
+                raise ComponentDeclarError(
+                    f"{arg_type} named `{name}` declar in decorator, but not found in function's argument"
+                )
+            undeclared_func_parameters.remove(name)
+
         for parameter in self.parameters:
-            if parameter.name not in undeclared_func_parameters:
-                raise ComponentDeclarError(
-                    f"parameter named `{parameter.name}` declar in decorator, but not found in function's argument"
-                )
-            undeclared_func_parameters.remove(parameter.name)
-        for artifact in self.artifacts:
-            if artifact.name not in undeclared_func_parameters:
-                raise ComponentDeclarError(
-                    f"artifact named `{artifact.name}` declar in decorator, but not found in function's argument"
-                )
-            undeclared_func_parameters.remove(artifact.name)
+            _check_and_remove(parameter.name, "parameter")
+        for name in self.artifacts.get_artifacts():
+            _check_and_remove(name, "artifact")
         if undeclared_func_parameters:
             raise ComponentDeclarError(
-                f"function's arguments `{undeclared_func_parameters}` lack of corresponding decorator"
+                f"function's arguments `{undeclared_func_parameters}` lack of corresponding parameter or artifact decorator"
             )
-
-        self.stage_components: List[_Component] = []
 
     def execute(self, ctx, role, **kwargs):
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug(f"execution arguments: {kwargs}")
         return self.callback(ctx, role, **kwargs)
 
-    def get_artifacts(self):
-        mapping = {artifact.name: artifact for artifact in self.artifacts}
-        for stage_cpn in self.stage_components:
-            for artifact_name, artifact in stage_cpn.get_artifacts().items():
-                # update or merge
-                if artifact_name not in mapping:
-                    mapping[artifact_name] = artifact
-                else:
-                    old = mapping[artifact_name]
-                    if set(old.roles) != set(artifact.roles):
-                        raise ComponentDeclarError(
-                            f"artifact {artifact_name} declare multiple times with different roles: `{old.roles}` vs `{artifact.roles}`"
-                        )
-                    if old.optional != artifact.optional:
-                        raise ComponentDeclarError(
-                            f"artifact {artifact_name} declare multiple times with different optional: `{old.optional}` vs `{artifact.optional}`"
-                        )
-                    if old.type != artifact.type:
-                        raise ComponentDeclarError(
-                            f"artifact {artifact_name} declare multiple times with different optional: `{old.type}` vs `{artifact.type}`"
-                        )
-                    stages = set(old.stages)
-                    stages.update(artifact.stages)
-                    old.stages = list(stages)
-        return mapping
-
-    def get_parameters(self):
-        mapping = {parameter.name: parameter for parameter in self.parameters}
-        for stage_cpn in self.stage_components:
-            for parameter_name, parameter in stage_cpn.get_parameters().items():
-                # update or error
-                if parameter_name not in mapping:
-                    mapping[parameter_name] = parameter
-                else:
-                    old = mapping[parameter_name]
-                    if set(old.default) != set(artifact.default):
-                        raise ComponentDeclarError(
-                            f"artifact {parameter_name} declare multiple times with different roles: `{old.default}` vs `{artifact.default}`"
-                        )
-                    if old.optional != artifact.optional:
-                        raise ComponentDeclarError(
-                            f"artifact {parameter_name} declare multiple times with different optional: `{old.optional}` vs `{artifact.optional}`"
-                        )
-                    if old.type != artifact.type:
-                        raise ComponentDeclarError(
-                            f"artifact {parameter_name} declare multiple times with different optional: `{old.type}` vs `{artifact.type}`"
-                        )
-        return mapping
-
     def dict(self):
+        return self._flatten_stages()._dict()
+
+    def _flatten_stages(self) -> "_Component":
+        parameter_mapping = {parameter.name: parameter for parameter in self.parameters}
+        merged_artifacts = self.artifacts
+        for stage_cpn in self.stage_components:
+            stage_cpn = stage_cpn._flatten_stages()
+            # merge parameters
+            for parameter in stage_cpn.parameters:
+                # update or error
+                if parameter.name not in parameter_mapping:
+                    parameter_mapping[parameter.name] = parameter
+                else:
+                    parameter_mapping[parameter.name].merge(parameter)
+            merged_artifacts = merged_artifacts.merge(stage_cpn.artifacts)
+
+        return _Component(
+            name=self.name,
+            roles=self.roles,
+            provider=self.provider,
+            version=self.version,
+            description=self.description,
+            callback=self.callback,
+            parameters=list(parameter_mapping.values()),
+            artifacts=merged_artifacts,
+            is_subcomponent=self.is_subcomponent,
+        )
+
+    def _dict(self):
         from fate.components import InputAnnotated, OutputAnnotated
         from fate.components.spec.component import (
             ArtifactSpec,
@@ -192,15 +175,15 @@ class _Component:
 
         input_artifacts = {}
         output_artifacts = {}
-        for artifact_name, artifact in self.get_artifacts().items():
+        for _, artifact in self.artifacts.get_artifacts().items():
             annotated = getattr(artifact.type, "__metadata__", [None])[0]
             roles = artifact.roles or self.roles
             if annotated == OutputAnnotated:
-                output_artifacts[artifact_name] = ArtifactSpec(
+                output_artifacts[artifact.name] = ArtifactSpec(
                     type=artifact.type.type, optional=artifact.optional, roles=roles, stages=artifact.stages
                 )
             elif annotated == InputAnnotated:
-                input_artifacts[artifact_name] = ArtifactSpec(
+                input_artifacts[artifact.name] = ArtifactSpec(
                     type=artifact.type.type, optional=artifact.optional, roles=roles, stages=artifact.stages
                 )
             else:
@@ -209,7 +192,7 @@ class _Component:
         input_parameters = {}
         from fate.components.params import Parameter
 
-        for parameter_name, parameter in self.get_parameters().items():
+        for parameter in self.parameters:
             if isinstance(parameter.type, Parameter):  # recomanded
                 type_name = type(parameter.type).__name__
                 type_meta = parameter.type.dict()
@@ -217,7 +200,7 @@ class _Component:
                 type_name = parameter.type.__name__
                 type_meta = {}
 
-            input_parameters[parameter_name] = ParameterSpec(
+            input_parameters[parameter.name] = ParameterSpec(
                 type=type_name,
                 type_meta=type_meta,
                 default=parameter.default,
@@ -320,9 +303,14 @@ def component(
         version = __version__
     if provider is None:
         provider = __provider__
-    roles = [r.name for r in roles]
+    component_roles = [r.name for r in roles]
     return _component(
-        name=name, roles=roles, provider=provider, version=version, description=description, is_subcomponent=False
+        name=name,
+        roles=component_roles,
+        provider=provider,
+        version=version,
+        description=description,
+        is_subcomponent=False,
     )
 
 
@@ -341,15 +329,14 @@ def _component(name, roles, provider, version, description, is_subcomponent):
             parameters = []
         try:
             artifacts = f.__component_artifacts__
-            artifacts.reverse()
             del f.__component_artifacts__
         except AttributeError:
-            artifacts = []
-        for artifact in artifacts:
-            if is_subcomponent:
-                artifact.stages = [cpn_name]
-            else:
-                artifact.stages = [DEFAULT.name]
+            artifacts = _ComponentArtifacts()
+
+        if is_subcomponent:
+            artifacts.set_stages([cpn_name])
+        else:
+            artifacts.set_stages([DEFAULT.name])
         desc = description
         if desc is None:
             desc = inspect.getdoc(f)
@@ -369,19 +356,19 @@ def _component(name, roles, provider, version, description, is_subcomponent):
             is_subcomponent=is_subcomponent,
         )
         cpn.__doc__ = f.__doc__
+        cpn.validate_declare()
         return cpn
 
     return decorator
 
 
-class _ArtifactDeclareClass:
-    def __init__(self, name, type, roles: Optional[List[str]], stages: Optional[List[str]], desc, optional) -> None:
-        self.name = name
-        self.type = type
-        self.roles = roles
-        self.stages = stages
-        self.desc = desc
-        self.optional = optional
+class _ArtifactDeclareClass(pydantic.BaseModel):
+    name: str
+    type: Any
+    roles: List[str]
+    stages: List[str]
+    desc: str
+    optional: bool
 
     def is_active_for(self, stage: Stage, role: Role):
         if self.stages is not None and stage.name not in self.stages:
@@ -390,42 +377,144 @@ class _ArtifactDeclareClass:
             return False
         return True
 
-
-class _OutputArtifactDeclareClass(_ArtifactDeclareClass):
     def __str__(self) -> str:
-        return f"OutputArtifact<name={self.name}, type={self.type}, roles={self.roles}, stages={self.stages}, optional={self.optional}>"
+        return f"ArtifactDeclare<name={self.name}, type={self.type}, roles={self.roles}, stages={self.stages}, optional={self.optional}>"
+
+    def merge(self, a: "_ArtifactDeclareClass"):
+        if set(self.roles) != set(a.roles):
+            raise ComponentDeclarError(
+                f"artifact {self.name} declare multiple times with different roles: `{self.roles}` vs `{a.roles}`"
+            )
+        if self.optional != a.optional:
+            raise ComponentDeclarError(
+                f"artifact {self.name} declare multiple times with different optional: `{self.optional}` vs `{a.optional}`"
+            )
+        if self.type != a.type:
+            raise ComponentDeclarError(
+                f"artifact {self.name} declare multiple times with different optional: `{self.type}` vs `{a.type}`"
+            )
+        stages = set(self.stages)
+        stages.update(a.stages)
+        stages = list(stages)
+        return _ArtifactDeclareClass(
+            name=self.name, type=self.type, roles=self.roles, stages=stages, desc=self.desc, optional=self.optional
+        )
 
 
-class _InputArtifactDeclareClass(_ArtifactDeclareClass):
-    def __str__(self) -> str:
-        return f"InputArtifact<name={self.name}, type={self.type}, roles={self.roles}, stages={self.stages}, optional={self.optional}>"
+class _ComponentArtifacts(pydantic.BaseModel):
+    class Artifacts(pydantic.BaseModel):
+        data_artifact: Dict[str, _ArtifactDeclareClass] = pydantic.Field(default_factory=dict)
+        model_artifact: Dict[str, _ArtifactDeclareClass] = pydantic.Field(default_factory=dict)
+        metric_artifact: Dict[str, _ArtifactDeclareClass] = pydantic.Field(default_factory=dict)
+
+        def add_data(self, artifact):
+            self.data_artifact[artifact.name] = artifact
+
+        def add_model(self, artifact):
+            self.model_artifact[artifact.name] = artifact
+
+        def add_metric(self, artifact):
+            self.metric_artifact[artifact.name] = artifact
+
+        def get_artifact(self, name):
+            return self.data_artifact.get(name) or self.model_artifact.get(name) or self.metric_artifact.get(name)
+
+        def merge(self, stage_artifacts):
+            def _merge(a, b):
+                result = {}
+                result.update(a)
+                for k, v in b.items():
+                    if k not in result:
+                        result[k] = v
+                    else:
+                        result[k] = result[k].merge(v)
+                return result
+
+            data_artifact = _merge(self.data_artifact, stage_artifacts.data_artifact)
+            model_artifact = _merge(self.model_artifact, stage_artifacts.model_artifact)
+            metric_artifact = _merge(self.metric_artifact, stage_artifacts.metric_artifact)
+            return _ComponentArtifacts.Artifacts(
+                data_artifact=data_artifact, model_artifact=model_artifact, metric_artifact=metric_artifact
+            )
+
+    inputs: Artifacts = pydantic.Field(default_factory=Artifacts)
+    outputs: Artifacts = pydantic.Field(default_factory=Artifacts)
+
+    def set_stages(self, stages):
+        def _set_all(artifacts: Dict[str, _ArtifactDeclareClass]):
+            for _, artifact in artifacts.items():
+                artifact.stages = stages
+
+        _set_all(self.inputs.data_artifact)
+        _set_all(self.inputs.model_artifact)
+        _set_all(self.inputs.metric_artifact)
+        _set_all(self.outputs.data_artifact)
+        _set_all(self.outputs.model_artifact)
+        _set_all(self.outputs.metric_artifact)
+
+    def get_artifacts(self):
+        artifacts = {}
+        artifacts.update(self.inputs.data_artifact)
+        artifacts.update(self.inputs.model_artifact)
+        artifacts.update(self.inputs.metric_artifact)
+        artifacts.update(self.outputs.data_artifact)
+        artifacts.update(self.outputs.model_artifact)
+        artifacts.update(self.outputs.metric_artifact)
+        return artifacts
+
+    def merge(self, stage_artifacts: "_ComponentArtifacts"):
+        return _ComponentArtifacts(
+            inputs=self.inputs.merge(stage_artifacts.inputs), outputs=self.outputs.merge(stage_artifacts.outputs)
+        )
 
 
-def _create_artifact_declare_class(name, type, roles, desc, optional):
-    from fate.components import InputAnnotated, OutputAnnotated
-
-    annotates = getattr(type, "__metadata__", [None])
-    if OutputAnnotated in annotates:
-        return _OutputArtifactDeclareClass(name, type, roles, [], desc, optional)
-    elif InputAnnotated in annotates:
-        return _InputArtifactDeclareClass(name, type, roles, [], desc, optional)
-    else:
-        raise ValueError(f"bad artifact: {name}")
-
-
-def artifact(name, type, roles: Optional[List[Role]] = None, desc=None, optional=False):
+def artifact(name, type, roles: Optional[List[Role]] = None, desc="", optional=False):
     """attaches an artifact to the component."""
     if roles is None:
-        roles = []
-    roles = [r.name for r in roles]
+        artifact_roles = []
+    else:
+        artifact_roles = [r.name for r in roles]
 
     def decorator(f):
         description = desc
-        if description is not None:
+        if description:
             description = inspect.cleandoc(description)
         if not hasattr(f, "__component_artifacts__"):
-            f.__component_artifacts__ = []
-        f.__component_artifacts__.append(_create_artifact_declare_class(name, type, roles, description, optional))
+            f.__component_artifacts__ = _ComponentArtifacts()
+
+        from fate.components import (
+            DatasetArtifact,
+            InputAnnotated,
+            ModelArtifact,
+            OutputAnnotated,
+        )
+
+        annotates = getattr(type, "__metadata__", [None])
+        origin_type = getattr(type, "__origin__")
+        artifact_dec = _ArtifactDeclareClass(
+            name=name, type=type, roles=artifact_roles, stages=[], desc=description, optional=optional
+        )
+        if InputAnnotated in annotates:
+            if issubclass(origin_type, DatasetArtifact):
+                f.__component_artifacts__.inputs.add_data(artifact_dec)
+            elif issubclass(origin_type, ModelArtifact):
+                f.__component_artifacts__.inputs.add_model(artifact_dec)
+            elif issubclass(origin_type, MetricArtifact):
+                f.__component_artifacts__.inputs.add_metric(artifact_dec)
+            else:
+                raise ValueError(f"bad artifact, name: `{name}`, type: `{type}`")
+
+        elif OutputAnnotated in annotates:
+            if issubclass(origin_type, DatasetArtifact):
+                f.__component_artifacts__.outputs.add_data(artifact_dec)
+            elif issubclass(origin_type, ModelArtifact):
+                f.__component_artifacts__.outputs.add_model(artifact_dec)
+            elif issubclass(origin_type, MetricArtifact):
+                f.__component_artifacts__.outputs.add_metric(artifact_dec)
+            else:
+                raise ValueError(f"bad artifact, name: `{name}`, type: `{type}`")
+        else:
+            raise ValueError(f"bad artifact, name: `{name}`, type: `{type}`")
         return f
 
     return decorator
@@ -441,6 +530,21 @@ class _ParameterDeclareClass:
 
     def __str__(self) -> str:
         return f"Parameter<name={self.name}, type={self.type}, default={self.default}, optional={self.optional}>"
+
+    def merge(self, p: "_ParameterDeclareClass"):
+        if self.default != p.default:
+            raise ComponentDeclarError(
+                f"parameter {p.name} declare multiple times with different default: `{self.default}` vs `{p.default}`"
+            )
+        if self.optional != p.optional:
+            raise ComponentDeclarError(
+                f"parameter {parameter.name} declare multiple times with different optional: `{self.optional}` vs `{p.optional}`"
+            )
+        if self.type != p.type:
+            raise ComponentDeclarError(
+                f"parameter {parameter.name} declare multiple times with different type: `{self.type}` vs `{self.type}`"
+            )
+        return self
 
 
 def parameter(name, type, default=None, optional=True, desc=""):
