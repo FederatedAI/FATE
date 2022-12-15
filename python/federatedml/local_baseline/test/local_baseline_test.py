@@ -51,8 +51,7 @@ class TestLocalBaseline(unittest.TestCase):
         for i in range(data_num):
             tmp = self.X[i, :]
             inst = Instance(inst_id=i, features=tmp, label=self.y[i])
-            tmp = (str(i), inst)
-            final_result.append(tmp)
+            final_result.append((i, inst))
         table = session.parallelize(final_result,
                                     include_key=True,
                                     partition=3)
@@ -61,11 +60,12 @@ class TestLocalBaseline(unittest.TestCase):
     def test_predict(self):
         glm = LogisticRegression().fit(self.X, self.y)
         real_predict_result = glm.predict(self.X)
+        real_predict_result = dict(zip(range(self.X.shape[0]), real_predict_result))
         self.local_baseline_obj.model_fit = glm
         model_predict_result = self.local_baseline_obj.predict(self.table)
-        model_predict_result = np.array([v[1].features[1] for v in model_predict_result.collect()])
+        model_predict_result = {v[0]: v[1].features[1] for v in model_predict_result.collect()}
 
-        np.testing.assert_array_equal(model_predict_result, real_predict_result)
+        self.assertDictEqual(model_predict_result, real_predict_result)
 
     def tearDown(self):
         session.stop()
