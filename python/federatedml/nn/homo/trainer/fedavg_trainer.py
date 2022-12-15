@@ -231,7 +231,6 @@ class FedAVGTrainer(TrainerBase):
             if self.validation_freq and ((i + 1) % self.validation_freq == 0):
                 LOGGER.info('running validation')
                 ids_t, pred_t, label_t = self._predict(train_set)
-                LOGGER.debug('pred t is {}'.format(pred_t))
                 evaluation_summary = self.evaluation(
                     ids_t,
                     pred_t,
@@ -241,7 +240,6 @@ class FedAVGTrainer(TrainerBase):
                     task_type=self.task_type)
                 if validate_set is not None:
                     ids_v, pred_v, label_v = self._predict(validate_set)
-                    LOGGER.debug('pred v is {}'.format(pred_v))
                     evaluation_summary = self.evaluation(
                         ids_v,
                         pred_v,

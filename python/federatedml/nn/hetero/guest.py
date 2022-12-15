@@ -34,6 +34,7 @@ from federatedml.protobuf.generated.hetero_nn_model_meta_pb2 import HeteroNNMeta
 from federatedml.protobuf.generated.hetero_nn_model_param_pb2 import HeteroNNParam
 from federatedml.util import consts, LOGGER
 from federatedml.util.io_check import assert_io_num_rows_equal
+from federatedml.nn.dataset.table import TableDataset
 
 MODELMETA = "HeteroNNGuestMeta"
 MODELPARAM = "HeteroNNGuestParam"
@@ -81,6 +82,12 @@ class HeteroNNGuest(HeteroNNBase):
                                       metric_type="LOSS",
                                       extra_metas={"unit_name": "iters"}))
 
+    @staticmethod
+    def _disable_sample_weight(dataset):
+        # currently not support sample weight
+        if isinstance(dataset, TableDataset):
+            dataset.with_sample_weight = False
+
     def fit(self, data_inst, validate_data=None):
 
         if hasattr(
@@ -94,10 +101,12 @@ class HeteroNNGuest(HeteroNNBase):
         train_ds = self.prepare_dataset(
             data_inst, data_type='train', check_label=True)
         train_ds.train()  # set dataset to train mode
+        self._disable_sample_weight(train_ds)
 
         if validate_data is not None:
             val_ds = self.prepare_dataset(validate_data, data_type='validate')
             val_ds.train()  # set dataset to train mode
+            self._disable_sample_weight(val_ds)
         else:
             val_ds = None
 
@@ -183,6 +192,7 @@ class HeteroNNGuest(HeteroNNBase):
 
         ds = self.prepare_dataset(data_inst, data_type='predict')
         ds.eval()  # set dataset to eval mode
+        self._disable_sample_weight(ds)
         keys = ds.get_sample_ids()
 
         batch_size = len(ds) if self.batch_size == -1 else self.batch_size
