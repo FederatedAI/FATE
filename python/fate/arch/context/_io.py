@@ -148,7 +148,7 @@ class JsonReader:
             logging.debug(url)
             model_dict = requests.get(url=url).json().get("data", {})
             logging.debug(model_dict)
-        elif isinstance(self.uri.to_schema(), URI):
+        elif isinstance(self.uri.to_schema(), FileURI):
             with open(self.uri.path, "r") as fin:
                 model_dict = json.loads(fin.read())
         return model_dict
