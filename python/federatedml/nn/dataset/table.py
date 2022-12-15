@@ -42,7 +42,10 @@ class TableDataset(Dataset):
                 label_shape, list), 'label shape is {}'.format(label_shape)
         self.label_shape = label_shape
         self.flatten_label = flatten_label
+
+        # ids, match ids is for FATE match id system
         self.sample_ids = None
+        self.match_ids = None
 
         if self.label_col is not None:
             assert isinstance(self.label_col, str) or isinstance(
@@ -98,6 +101,7 @@ class TableDataset(Dataset):
             keys = [None for idx in range(len(data_keys))]
             x_ = [None for idx in range(len(data_keys))]
             y_ = [None for idx in range(len(data_keys))]
+            match_ids = {}
             sample_weights = [1 for idx in range(len(data_keys))]
 
             for (key, inst) in data:
@@ -105,6 +109,7 @@ class TableDataset(Dataset):
                 keys[idx] = key
                 x_[idx] = inst.features
                 y_[idx] = inst.label
+                match_ids[key] = inst.inst_id
                 if self.with_sample_weight:
                     sample_weights[idx] = inst.weight
 
@@ -120,6 +125,7 @@ class TableDataset(Dataset):
 
             self.origin_table = df
             self.sample_weights = np.array(sample_weights)
+            self.match_ids = match_ids
 
         label_col_candidates = ['y', 'label', 'target']
 
@@ -178,3 +184,6 @@ class TableDataset(Dataset):
 
     def get_sample_ids(self):
         return self.sample_ids
+
+    def get_match_ids(self):
+        return self.match_ids
