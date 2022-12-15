@@ -17,7 +17,8 @@ reader_0.guest.component_param(path="/Users/maguoqiang/mgq/FATE-2.0-alpha-with-f
                                label_type="float32",
                                dtype="float32")
 
-reader_0.hosts[[0, 1]].component_param(path="examples/data/breast_hetero_host.csv",
+reader_0.hosts[[0, 1]].component_param(path="/Users/maguoqiang/mgq/FATE-2.0-alpha-with-flow/FATE/"
+                                            "examples/data/breast_hetero_host.csv",
                                        format="csv",
                                        id_name="id",
                                        delimiter=",",
@@ -58,11 +59,8 @@ pipeline.add_task(lr_0)
 pipeline.add_task(lr_1)
 pipeline.conf.set("task_parallelism", 1)
 pipeline.compile()
-print (pipeline.get_dag())
-exit(0)
-pipeline.fit()
-exit(0)
 print(pipeline.get_dag())
+pipeline.fit()
 print(pipeline.deploy([reader_0, lr_0]))
 
 
@@ -91,4 +89,5 @@ predict_pipeline.add_task(deployed_pipeline)
 predict_pipeline.add_task(reader_1)
 
 print("\n\n\n")
-print (predict_pipeline.compile().get_dag())
+print(predict_pipeline.compile().get_dag())
+predict_pipeline.predict()

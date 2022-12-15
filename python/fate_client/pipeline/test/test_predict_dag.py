@@ -36,7 +36,7 @@ pipeline.add_task(feature_scale_0)
 
 pipeline.conf.set("task_parallelism", 1)
 pipeline.compile()
-# pipeline.fit()
+pipeline.fit()
 print(pipeline.get_dag())
 pipeline.deploy([intersection_0, feature_scale_0])
 
@@ -66,5 +66,5 @@ predict_pipeline.add_task(deployed_pipeline)
 predict_pipeline.add_task(reader_1)
 
 print("\n\n\n")
-print (predict_pipeline.compile().get_dag())
-# predict_pipeline.predict()
+print(predict_pipeline.compile().get_dag())
+predict_pipeline.predict()

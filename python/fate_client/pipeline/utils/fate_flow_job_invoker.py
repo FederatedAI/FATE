@@ -42,7 +42,7 @@ class FATEFlowJobInvoker(object):
                     pre_task = task
                 print(f"\x1b[80D\x1b[1A\x1b[KRunning task {task}, time elapse: {elapse_seconds}")
 
-            time.sleep(0.1)
+            time.sleep(1)
 
     def submit_job(self, dag_schema):
         response = self._client.submit_job(dag_schema=dag_schema)

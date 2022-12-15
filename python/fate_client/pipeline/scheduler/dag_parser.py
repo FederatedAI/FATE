@@ -50,10 +50,28 @@ class DagParser(object):
             for input_key, output_specs_dict in task_spec.inputs.artifacts.items():
                 upstream_inputs[input_key] = dict()
                 for artifact_source, channel_spec_list in output_specs_dict.items():
-                    upstream_inputs[input_key] = channel_spec_list
-
                     if artifact_source == ArtifactSourceType.MODEL_WAREHOUSE:
+                        if isinstance(channel_spec_list, list):
+                            inputs = []
+                            for channel in channel_spec_list:
+                                model_warehouse_channel = ModelWarehouseChannelSpec(**channel.dict(exclude_defaults=True))
+                                if model_warehouse_channel.model_id is None:
+                                    model_warehouse_channel.model_id = self._conf.get("model_id", None)
+                                    model_warehouse_channel.model_version = self._conf.get("model_version", None)
+                                inputs.append(model_warehouse_channel)
+                        else:
+                            inputs = ModelWarehouseChannelSpec(**channel_spec_list.dict(exclude_defaults=True))
+
+                        upstream_inputs[input_key] = inputs
                         continue
+                    else:
+                        if isinstance(channel_spec_list, list):
+                            inputs = [RuntimeTaskOutputChannelSpec(**channel.dict(exclude_defaults=True))
+                                      for channel in channel_spec_list]
+                        else:
+                            inputs = RuntimeTaskOutputChannelSpec(**channel_spec_list.dict(exclude_defaults=True))
+
+                        upstream_inputs[input_key] = inputs
 
                     if not isinstance(channel_spec_list, list):
                         channel_spec_list = [channel_spec_list]

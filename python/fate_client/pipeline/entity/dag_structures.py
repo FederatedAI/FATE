@@ -7,6 +7,13 @@ class PartySpec(BaseModel):
     party_id: List[Union[str, int]]
 
 
+class OutputChannelSpec(BaseModel):
+    producer_task: str
+    output_artifact_key: str
+    model_id: Optional[str]
+    model_version: Optional[str]
+
+
 class RuntimeTaskOutputChannelSpec(BaseModel):
     producer_task: str
     output_artifact_key: str
@@ -19,12 +26,10 @@ class ModelWarehouseChannelSpec(BaseModel):
     output_artifact_key: str
 
 
-class ModelWarehouseInputArtifacts(BaseModel):
-    artifact_source_type = "model_warehouse"
-    input_channel: Union[ModelWarehouseChannelSpec, List[ModelWarehouseChannelSpec]]
-
-
-InputChannelSpec = TypeVar("InputChannelSpec", RuntimeTaskOutputChannelSpec, ModelWarehouseChannelSpec)
+InputChannelSpec = TypeVar("InputChannelSpec",
+                           OutputChannelSpec,
+                           RuntimeTaskOutputChannelSpec,
+                           ModelWarehouseChannelSpec)
 
 
 class RuntimeInputDefinition(BaseModel):
