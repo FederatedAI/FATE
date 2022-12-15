@@ -39,6 +39,7 @@ class Context(ContextInterface):
         if namespace is None:
             namespace = Namespace()
         self.namespace = namespace
+        self.super_namespace = Namespace()
 
         self.cipher: CipherKit = CipherKit(device)
         self.tensor: TensorKit = TensorKit(computing, device)
@@ -53,6 +54,12 @@ class Context(ContextInterface):
     def with_namespace(self, namespace: Namespace):
         context = copy(self)
         context.namespace = namespace
+        return context
+
+    def into_group_namespace(self, group_name: str, group_id: str):
+        context = copy(self)
+        context.metrics = context.metrics.into_group(group_name, group_id)
+        context.namespace = self.namespace.sub_namespace(f"{group_name}_{group_id}")
         return context
 
     def range(self, end):

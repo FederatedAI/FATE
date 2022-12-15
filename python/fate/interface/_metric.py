@@ -37,7 +37,13 @@ class MetricsHandler(Protocol):
 
 
 class MetricsWrap(Protocol):
+    def into_group(self, group_name: str, group_id: str) -> "MetricsWrap":
+        ...
+
     def log_metrics(self, metrics: Metrics):
+        ...
+
+    def log_meta(self, meta):
         ...
 
     def log_metric(self, name: str, metric: Metric, step=None, timestamp=None):

@@ -1,4 +1,5 @@
 import abc
+from typing import Dict, Optional
 
 
 class Metric(metaclass=abc.ABCMeta):
@@ -12,6 +13,8 @@ class Metric(metaclass=abc.ABCMeta):
 class Metrics(metaclass=abc.ABCMeta):
     name: str
     type: str
+    nemaspace: Optional[str] = None
+    groups: Dict[str, str] = {}
 
     @abc.abstractmethod
     def dict(self) -> dict:
@@ -21,6 +24,8 @@ class Metrics(metaclass=abc.ABCMeta):
 class InCompleteMetrics(metaclass=abc.ABCMeta):
     name: str
     type: str
+    nemaspace: Optional[str] = None
+    groups: Dict[str, str] = {}
 
     @abc.abstractmethod
     def dict(self) -> dict:
