@@ -61,6 +61,9 @@ class DagParser(object):
                                 inputs.append(model_warehouse_channel)
                         else:
                             inputs = ModelWarehouseChannelSpec(**channel_spec_list.dict(exclude_defaults=True))
+                            if inputs.model_id is None:
+                                inputs.model_id = self._conf.get("model_id", None)
+                                inputs.model_version = self._conf.get("model_version", None)
 
                         upstream_inputs[input_key] = inputs
                         continue
