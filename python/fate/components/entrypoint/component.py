@@ -5,17 +5,13 @@ from typing import Any, Dict
 
 from fate.arch.context import Context
 from fate.components import params
-from fate.components.cpn import (
-    ComponentApplyError,
-    _Component,
-    _InputArtifactDeclareClass,
-    _OutputArtifactDeclareClass,
-)
+from fate.components.cpn import ComponentApplyError, _Component
 from fate.components.loader.artifact import load_artifact
 from fate.components.loader.component import load_component
 from fate.components.loader.computing import load_computing
 from fate.components.loader.device import load_device
 from fate.components.loader.federation import load_federation
+from fate.components.loader.metric import load_metrics_handler
 from fate.components.loader.mlmd import MLMD, load_mlmd
 from fate.components.loader.other import load_role, load_stage
 from fate.components.loader.output import OutputPool, load_pool
@@ -33,11 +29,13 @@ def execute_component(config: TaskConfigSpec):
     device = load_device(config.conf.device)
     role = load_role(config.role)
     stage = load_stage(config.stage)
+    load_metrics_handler(config)
     ctx = Context(
         context_name=taskid,
         device=device,
         computing=computing,
         federation=federation,
+        # metrics=metrics_handler,
     )
     logger.debug(f"component={config.component}, context={ctx}")
     try:
@@ -98,7 +96,6 @@ def parse_input_parameters(mlmd: MLMD, cpn: _Component, input_parameters: Dict[s
                     execute_parameters[parameter.name] = parameter.default
                     mlmd.io.log_input_parameter(parameter.name, parameter.default)
             else:
-                # TODO: enhance type validate
                 try:
                     value = params.parse(parameter.type, parameter_apply)
                 except Exception as e:
@@ -111,11 +108,8 @@ def parse_input_parameters(mlmd: MLMD, cpn: _Component, input_parameters: Dict[s
 def parse_input_artifacts(mlmd: MLMD, cpn: _Component, stage, role, input_artifacts) -> dict:
 
     execute_input_artifacts = {}
-    name_input_artifacts_mapping = {
-        artifact.name: artifact for artifact in cpn.artifacts if isinstance(artifact, _InputArtifactDeclareClass)
-    }
     for arg in cpn.func_args[2:]:
-        if arti := name_input_artifacts_mapping.get(arg):
+        if arti := cpn.artifacts.inputs.get_artifact(arg):
             execute_input_artifacts[arg] = None
             if arti.is_active_for(stage, role):
                 artifact_apply = input_artifacts.get(arg)
@@ -139,11 +133,8 @@ def parse_input_artifacts(mlmd: MLMD, cpn: _Component, stage, role, input_artifa
 def parse_output_artifacts(mlmd: MLMD, cpn: _Component, stage, role, output_pool: OutputPool) -> dict:
 
     execute_output_artifacts = {}
-    name_output_artifacts_mapping = {
-        artifact.name: artifact for artifact in cpn.artifacts if isinstance(artifact, _OutputArtifactDeclareClass)
-    }
     for arg in cpn.func_args[2:]:
-        if arti := name_output_artifacts_mapping.get(arg):
+        if arti := cpn.artifacts.outputs.get_artifact(arg):
             execute_output_artifacts[arg] = None
             if arti.is_active_for(stage, role):
                 execute_output_artifacts[arg] = output_pool.create_artifact(arti.name, arti.type)
