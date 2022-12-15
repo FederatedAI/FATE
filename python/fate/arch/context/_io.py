@@ -86,7 +86,7 @@ def get_reader(format, ctx, name, uri, metadata) -> Reader:
         return DataFrameReader(ctx, name, uri.path, metadata)
 
     if format == "json":
-        return JsonReader(ctx, name, uri.path, metadata)
+        return JsonReader(ctx, name, uri, metadata)
 
 
 class CSVReader:
@@ -134,7 +134,7 @@ class DataFrameReader:
 
 
 class JsonReader:
-    def __init__(self, ctx, name: str, uri: str, metadata: dict) -> None:
+    def __init__(self, ctx, name: str, uri: URI, metadata: dict) -> None:
         self.name = name
         self.ctx = ctx
         self.uri = uri
@@ -142,10 +142,15 @@ class JsonReader:
 
     def read_model(self):
         import json
-
-        with open(self.uri, "r") as fin:
-            model_dict = json.loads(fin.read())
-
+        if isinstance(self.uri.to_schema(), HttpURI) or isinstance(self.uri.to_schema(), HttpsURI):
+            import requests
+            url = f"{self.uri.schema}://{self.uri.authority}{self.uri.path}"
+            logging.debug(url)
+            model_dict = requests.get(url=url).json().get("data", {})
+            logging.debug(model_dict)
+        elif isinstance(self.uri.to_schema(), URI):
+            with open(self.uri.path, "r") as fin:
+                model_dict = json.loads(fin.read())
         return model_dict
 
 
