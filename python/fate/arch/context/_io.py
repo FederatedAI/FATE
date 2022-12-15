@@ -1,7 +1,7 @@
 import logging
 from typing import Protocol, overload
 
-from ..unify import URI, HttpURI, HttpsURI
+from ..unify import URI, FileURI, HttpsURI, HttpURI
 
 
 class Reader:
@@ -197,19 +197,24 @@ class JsonWriter:
 
     def write_model(self, model):
         import json
+
         if isinstance(self.uri.to_schema(), HttpURI) or isinstance(self.uri.to_schema(), HttpsURI):
             import requests
+
             url = f"{self.uri.schema}://{self.uri.authority}{self.uri.path}"
             logging.debug(url)
             response = requests.post(url=url, json={"data": model})
             logging.debug(response.text)
-        elif isinstance(self.uri.to_schema(), URI):
-            with open(self.uri.to_schema(), "w") as f:
+        elif isinstance(self.uri.to_schema(), FileURI):
+            with open(self.uri.path, "w") as f:
                 json.dump(model, f)
+        else:
+            raise NotImplementedError(f"uri `{self.uri}` not support")
 
     def write_metric(self, metric):
         import json
-        if isinstance(self.uri.to_schema(), URI):
+
+        if isinstance(self.uri, URI):
             with open(self.uri.path, "w") as f:
                 json.dump(metric, f)
 
