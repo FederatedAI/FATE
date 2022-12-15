@@ -4,15 +4,15 @@ from typing import Iterator, List, Optional
 
 from fate.interface import T_ROLE, ComputingEngine
 from fate.interface import Context as ContextInterface
-from fate.interface import FederationEngine, PartyMeta
+from fate.interface import FederationEngine, MetricsHandler, PartyMeta
 
 from ..unify import device
 from ._cipher import CipherKit
 from ._federation import GC, Parties, Party
 from ._io import IOKit
-from ._metrics import MetricsHandler, NoopMetricsHandler
 from ._namespace import Namespace
 from ._tensor import TensorKit
+from .metric import MetricsWrap
 
 
 class Context(ContextInterface):
@@ -30,11 +30,11 @@ class Context(ContextInterface):
         device: device = device.CPU,
         computing: Optional[ComputingEngine] = None,
         federation: Optional[FederationEngine] = None,
-        metrics: MetricsHandler = NoopMetricsHandler(),
+        metrics_handler: Optional[MetricsHandler] = None,
         namespace: Optional[Namespace] = None,
     ) -> None:
         self.context_name = context_name
-        self.metrics = metrics
+        self.metrics = MetricsWrap(metrics_handler)
 
         if namespace is None:
             namespace = Namespace()

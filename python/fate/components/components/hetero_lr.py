@@ -105,11 +105,11 @@ def train_host(ctx, train_data, validate_data, train_output_data, output_model, 
 def train_arbiter(ctx, max_iter, batch_size, train_output_metric):
     from fate.ml.lr.arbiter import LrModuleArbiter
 
+    ctx.metrics.handler.register_metrics(lr_loss=ctx.writer(train_output_metric))
+
     with ctx.sub_ctx("train") as sub_ctx:
         module = LrModuleArbiter(max_iter=max_iter, batch_size=batch_size)
         module.fit(sub_ctx)
-        # for metric in module.get_metrics():
-        #     sub_ctx.writer(train_output_metric).write_metric(metric)
 
 
 def predict_guest(ctx, input_model, test_data, test_output_data):

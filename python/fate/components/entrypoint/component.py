@@ -29,13 +29,13 @@ def execute_component(config: TaskConfigSpec):
     device = load_device(config.conf.device)
     role = load_role(config.role)
     stage = load_stage(config.stage)
-    load_metrics_handler(config)
+    metrics_handler = load_metrics_handler()
     ctx = Context(
         context_name=taskid,
         device=device,
         computing=computing,
         federation=federation,
-        # metrics=metrics_handler,
+        metrics_handler=metrics_handler,
     )
     logger.debug(f"component={config.component}, context={ctx}")
     try:
@@ -58,8 +58,11 @@ def execute_component(config: TaskConfigSpec):
             execute_kwargs.update(parse_input_parameters(mlmd, component, config.inputs.parameters))
             # parse and validate inputs
             execute_kwargs.update(parse_input_artifacts(mlmd, component, stage, role, config.inputs.artifacts))
+
             # fill in outputs
-            execute_kwargs.update(parse_output_artifacts(mlmd, component, stage, role, output_pool))
+            execute_kwargs.update(parse_output_data(mlmd, component, stage, role, output_pool))
+            execute_kwargs.update(parse_output_model(mlmd, component, stage, role, output_pool))
+            execute_kwargs.update(parse_output_metrics(mlmd, component, stage, role, output_pool))
 
             # execute
             component.execute(ctx, role, **execute_kwargs)
@@ -130,13 +133,37 @@ def parse_input_artifacts(mlmd: MLMD, cpn: _Component, stage, role, input_artifa
     return execute_input_artifacts
 
 
-def parse_output_artifacts(mlmd: MLMD, cpn: _Component, stage, role, output_pool: OutputPool) -> dict:
+def parse_output_data(mlmd: MLMD, cpn: _Component, stage, role, output_pool: OutputPool) -> dict:
 
-    execute_output_artifacts = {}
+    execute_output_data = {}
     for arg in cpn.func_args[2:]:
-        if arti := cpn.artifacts.outputs.get_artifact(arg):
-            execute_output_artifacts[arg] = None
+        if arti := cpn.artifacts.outputs.data_artifact.get(arg):
+            execute_output_data[arg] = None
             if arti.is_active_for(stage, role):
-                execute_output_artifacts[arg] = output_pool.create_artifact(arti.name, arti.type)
-                mlmd.io.log_output_artifact(arg, execute_output_artifacts[arg])
-    return execute_output_artifacts
+                execute_output_data[arg] = output_pool.create_artifact(arti.name, arti.type)
+                mlmd.io.log_output_artifact(arg, execute_output_data[arg])
+    return execute_output_data
+
+
+def parse_output_model(mlmd: MLMD, cpn: _Component, stage, role, output_pool: OutputPool) -> dict:
+
+    execute_output_model = {}
+    for arg in cpn.func_args[2:]:
+        if arti := cpn.artifacts.outputs.model_artifact.get(arg):
+            execute_output_model[arg] = None
+            if arti.is_active_for(stage, role):
+                execute_output_model[arg] = output_pool.create_artifact(arti.name, arti.type)
+                mlmd.io.log_output_artifact(arg, execute_output_model[arg])
+    return execute_output_model
+
+
+def parse_output_metrics(mlmd: MLMD, cpn: _Component, stage, role, output_pool: OutputPool) -> dict:
+
+    execute_output_metrics = {}
+    for arg in cpn.func_args[2:]:
+        if arti := cpn.artifacts.outputs.metric_artifact.get(arg):
+            execute_output_metrics[arg] = None
+            if arti.is_active_for(stage, role):
+                execute_output_metrics[arg] = output_pool.create_artifact(arti.name, arti.type)
+                mlmd.io.log_output_artifact(arg, execute_output_metrics[arg])
+    return execute_output_metrics

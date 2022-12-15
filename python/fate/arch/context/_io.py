@@ -1,7 +1,9 @@
 import logging
-from typing import Protocol, overload
+import os
+from typing import Protocol, Union, overload
 
 from ..unify import URI, FileURI, HttpsURI, HttpURI
+from .metric import InCompleteMetrics, Metrics
 
 
 class Reader:
@@ -142,8 +144,10 @@ class JsonReader:
 
     def read_model(self):
         import json
+
         if isinstance(self.uri.to_schema(), HttpURI) or isinstance(self.uri.to_schema(), HttpsURI):
             import requests
+
             url = f"{self.uri.schema}://{self.uri.authority}{self.uri.path}"
             logging.debug(url)
             model_dict = requests.get(url=url).json().get("data", {})
@@ -211,12 +215,34 @@ class JsonWriter:
         else:
             raise NotImplementedError(f"uri `{self.uri}` not support")
 
-    def write_metric(self, metric):
+    def write_metric(self, metrics: Union[Metrics, InCompleteMetrics]):
         import json
 
-        if isinstance(self.uri, URI):
-            with open(self.uri.path, "w") as f:
-                json.dump(metric, f)
+        if isinstance(self.uri.to_schema(), HttpURI) or isinstance(self.uri.to_schema(), HttpsURI):
+            import requests
+
+            url = f"{self.uri.schema}://{self.uri.authority}{self.uri.path}"
+            logging.debug(url)
+            response = requests.post(url=url, json={"data": metrics.dict()})
+            logging.debug(response.text)
+
+        elif isinstance(self.uri.to_schema(), FileURI):
+            if isinstance(metrics, Metrics):
+                with open(self.uri.path, "w") as f:
+                    json.dump(metrics.dict(), f)
+            else:
+                # read
+                if not os.path.exists(self.uri.path):
+                    merged = metrics
+                else:
+                    with open(self.uri.path, "r") as f:
+                        merged = metrics.from_dict(json.load(f)).merge(metrics)
+
+                with open(self.uri.path, "w") as f:
+                    json.dump(merged.dict(), f)
+
+        else:
+            raise NotImplementedError(f"uri `{self.uri}` not support")
 
 
 class LibSVMWriter:

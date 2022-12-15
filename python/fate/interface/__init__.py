@@ -10,7 +10,7 @@ from ._data_io import Dataframe
 from ._federation import FederationEngine, FederationWrapper
 from ._gc import GarbageCollector
 from ._log import LOGMSG, Logger
-from ._metric import Metric, Metrics, MetricsHandler
+from ._metric import InCompleteMetrics, Metric, Metrics, MetricsHandler
 from ._model_io import ModelMeta, ModelReader, ModelsLoader, ModelsSaver, ModelWriter
 from ._module import Module
 from ._param import Params
@@ -32,6 +32,7 @@ __all__ = [
     "Cache",
     "MetricsHandler",
     "Metrics",
+    "InCompleteMetrics",
     "Metric",
     "Anonymous",
     "CheckpointManager",

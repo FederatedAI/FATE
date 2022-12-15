@@ -173,15 +173,6 @@ class MetricArtifact(Artifact):
     ) -> None:
         super().__init__(uri=uri, name=name, metadata=metadata)
 
-    def log_metric(self, metric: str, value: float) -> None:
-        """Sets a custom scalar metric in the artifact's metadata.
-
-        Args:
-          metric: The metric key.
-          value: The metric value.
-        """
-        self.metadata[metric] = value
-
 
 class LossMetrics(MetricArtifact):
     type = "loss"

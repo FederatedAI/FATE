@@ -8,7 +8,7 @@ from ._cipher import CipherKit
 from ._computing import ComputingEngine
 from ._federation import FederationEngine
 from ._log import Logger
-from ._metric import MetricsHandler
+from ._metric import MetricsWrap
 from ._party import Parties, Party
 from ._summary import Summary
 
@@ -16,7 +16,7 @@ T = TypeVar("T")
 
 
 class Context(Protocol):
-    metrics: MetricsHandler
+    metrics: MetricsWrap
     guest: Party
     hosts: Parties
     arbiter: Party
