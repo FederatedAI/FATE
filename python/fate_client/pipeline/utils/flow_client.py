@@ -47,7 +47,7 @@ class FlowClient(object):
 
     def query_job(self, job_id, role, party_id):
         response = requests.post(
-            self._address.query_task_url,
+            self._address.query_job_url,
             json={
                 "job_id": job_id,
                 "role": role,
