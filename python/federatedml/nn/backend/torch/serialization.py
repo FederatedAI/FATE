@@ -60,7 +60,7 @@ def recover_layer_from_dict(nn_define, nn_dict):
             init_func = init.str_fate_torch_init_func_map[init_para['init_func']]
             init_func(layer, init='bias', **init_para['param'])
 
-    return layer
+    return layer, class_name
 
 
 def recover_sequential_from_dict(nn_define):
@@ -68,6 +68,8 @@ def recover_sequential_from_dict(nn_define):
     nn_dict = dict(inspect.getmembers(nn))
     op_dict = dict(inspect.getmembers(operation))
     nn_dict.update(op_dict)
+
+    class_name_list = []
     try:
         # submitted model have int prefixes, they make sure that layers are in
         # order
@@ -75,15 +77,21 @@ def recover_sequential_from_dict(nn_define):
         keys = list(nn_define_dict.keys())
         keys = sorted(keys, key=lambda x: int(x.split('-')[0]))
         for k in keys:
-            layer = recover_layer_from_dict(nn_define_dict[k], nn_dict)
+            layer, class_name = recover_layer_from_dict(nn_define_dict[k], nn_dict)
             add_dict[k] = layer
+            class_name_list.append(class_name)
     except BaseException:
         add_dict = OrderedDict()
         for k, v in nn_define_dict.items():
-            layer = recover_layer_from_dict(v, nn_dict)
+            layer, class_name = recover_layer_from_dict(v, nn_dict)
             add_dict[k] = layer
+            class_name_list.append(class_name)
 
-    return tSeq(add_dict)
+    if len(class_name_list) == 1 and class_name_list[0] == CustModel.__name__:
+        # If there are only a CustModel, return the model only
+        return list(add_dict.values())[0]
+    else:
+        return tSeq(add_dict)
 
 
 def recover_optimizer_from_dict(define_dict):
