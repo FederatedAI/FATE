@@ -216,7 +216,7 @@ class HeteroNNGuest(HeteroNNBase):
 
         id_table = [(id_, Instance(label=l)) for id_, l in zip(keys, labels)]
         if with_match_id:
-            add_match_id(id_table, ds)
+            add_match_id(id_table, ds.ds)  # ds is wrap shuffle dataset here
         data_inst = session.parallelize(
             id_table,
             partition=self.default_table_partitions,
