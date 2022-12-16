@@ -19,7 +19,7 @@
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
-
+from fate_arch.computing._util import is_table
 from fate_arch.session import computing_session as session
 from federatedml.feature.instance import Instance
 from federatedml.framework.hetero.procedure import batch_generator
@@ -35,6 +35,8 @@ from federatedml.protobuf.generated.hetero_nn_model_param_pb2 import HeteroNNPar
 from federatedml.util import consts, LOGGER
 from federatedml.util.io_check import assert_io_num_rows_equal
 from federatedml.nn.dataset.table import TableDataset
+from federatedml.statistic.data_overview import check_with_inst_id
+from federatedml.nn.backend.utils.data import add_match_id
 
 MODELMETA = "HeteroNNGuestMeta"
 MODELPARAM = "HeteroNNGuestParam"
@@ -190,6 +192,10 @@ class HeteroNNGuest(HeteroNNBase):
     @assert_io_num_rows_equal
     def predict(self, data_inst):
 
+        with_match_id = False
+        if is_table(data_inst):
+            with_match_id = check_with_inst_id(data_inst)
+
         ds = self.prepare_dataset(data_inst, data_type='predict')
         ds.eval()  # set dataset to eval mode
         self._disable_sample_weight(ds)
@@ -209,6 +215,8 @@ class HeteroNNGuest(HeteroNNBase):
         labels = torch.concat(labels, dim=0).cpu().numpy().flatten().tolist()
 
         id_table = [(id_, Instance(label=l)) for id_, l in zip(keys, labels)]
+        if with_match_id:
+            add_match_id(id_table, ds)
         data_inst = session.parallelize(
             id_table,
             partition=self.default_table_partitions,
