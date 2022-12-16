@@ -125,4 +125,3 @@ def recover_loss_fn_from_dict(define_dict):
 
 if __name__ == '__main__':
     pass
-

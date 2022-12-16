@@ -23,6 +23,7 @@ from pipeline.interface import Input
 from pipeline.interface import Output
 from pipeline.utils.tools import extract_explicit_parameter
 from pipeline.component.nn.interface import TrainerParam, DatasetParam
+from pipeline.component.nn.backend.torch.cust import CustModel
 from pipeline.utils.logger import LOGGER
 
 # default parameter dict
@@ -110,12 +111,17 @@ class HomoNN(FateComponent):
             self._set_updated('dataset', True)
 
         if hasattr(self, 'model') and self.model is not None and not self._updated['model']:
-            assert isinstance(self.model, Sequential), 'Model must be a fate-torch Sequential, but got {} ' \
-                                                       '\n do remember to call fate_torch_hook():' \
-                                                       '\n    import torch as t' \
-                                                       '\n    fate_torch_hook(t)'.format(
-                                                           type(self.model))
-            self.nn_define = self.model.get_network_config()
+            if isinstance(self.model, Sequential):
+                self.nn_define = self.model.get_network_config()
+            elif isinstance(self.model, CustModel):
+                self.model = Sequential(self.model)
+                self.nn_define = self.model.get_network_config()
+            else:
+                raise RuntimeError('Model must be a fate-torch Sequential, but got {} '
+                                   '\n do remember to call fate_torch_hook():'
+                                   '\n    import torch as t'
+                                   '\n    fate_torch_hook(t)'.format(
+                                       type(self.model)))
             self._set_updated('model', True)
 
         if hasattr(self, 'optimizer') and self.optimizer is not None and not self._updated['optimizer']:
