@@ -21,6 +21,7 @@ from federatedml.nn.homo.trainer.trainer_base import ExporterBase
 from fate_arch.session import computing_session
 from federatedml.nn.backend.utils.data import get_ret_predict_table
 from federatedml.nn.dataset.table import TableDataset
+from federatedml.nn.backend.utils.data import add_match_id
 from federatedml.protobuf.generated.homo_nn_model_param_pb2 import HomoNNParam as HomoNNParamPB
 from federatedml.protobuf.generated.homo_nn_model_meta_pb2 import HomoNNMeta as HomoNNMetaPB
 
@@ -337,16 +338,17 @@ class HomoNNClient(ModelBase):
             return None
 
         id_table, pred_table, classes = trainer_ret()
+
         if with_inst_id:  # set match id
-            assert isinstance(dataset_inst, TableDataset), 'when using match id your dataset must be a Table Dataset'
-            for id_inst in id_table:
-                id_inst[1].inst_id = dataset_inst.match_ids[id_inst[0]]
+            add_match_id(id_table=id_table, dataset_inst=dataset_inst)
+
         id_dtable, pred_dtable = get_ret_predict_table(
             id_table, pred_table, classes, self.partitions, computing_session)
         ret_table = self.predict_score_to_output(
             id_dtable, pred_dtable, classes)
         if schema is not None:
             self.set_predict_data_schema(ret_table, schema)
+
         return ret_table
 
     def export_model(self):
