@@ -154,7 +154,7 @@ class FedAVGTrainer(TrainerBase):
             if self.weighted_aggregation:
                 sample_num = len(train_set)
             else:
-                sample_num = None
+                sample_num = 1.0
 
             client_agg = SecureAggClient(
                 True, aggregate_weight=sample_num, communicate_match_suffix=self.comm_suffix)
@@ -231,7 +231,6 @@ class FedAVGTrainer(TrainerBase):
             if self.validation_freq and ((i + 1) % self.validation_freq == 0):
                 LOGGER.info('running validation')
                 ids_t, pred_t, label_t = self._predict(train_set)
-                LOGGER.debug('pred t is {}'.format(pred_t))
                 evaluation_summary = self.evaluation(
                     ids_t,
                     pred_t,
@@ -241,7 +240,6 @@ class FedAVGTrainer(TrainerBase):
                     task_type=self.task_type)
                 if validate_set is not None:
                     ids_v, pred_v, label_v = self._predict(validate_set)
-                    LOGGER.debug('pred v is {}'.format(pred_v))
                     evaluation_summary = self.evaluation(
                         ids_v,
                         pred_v,
@@ -288,7 +286,7 @@ class FedAVGTrainer(TrainerBase):
             for batch_data, batch_label in DataLoader(
                     dataset, self.batch_size):
                 if self.cuda:
-                    batch_data = self.to_cuda(batch_label)
+                    batch_data = self.to_cuda(batch_data)
                 pred = self.model(batch_data)
                 pred_result.append(pred)
                 labels.append(batch_label)

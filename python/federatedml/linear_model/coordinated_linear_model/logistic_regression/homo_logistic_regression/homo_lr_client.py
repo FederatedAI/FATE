@@ -33,8 +33,9 @@ from federatedml.callbacks.validation_strategy import ValidationStrategy
 from federatedml.protobuf.generated import lr_model_param_pb2
 from federatedml.model_base import MetricMeta
 from fate_arch.session import computing_session
-from federatedml.nn.backend.utils.data import get_ret_predict_table
+from federatedml.nn.backend.utils.data import get_ret_predict_table, add_match_id
 from federatedml.nn.loss.weighted_loss import WeightedBCE
+from federatedml.statistic.data_overview import check_with_inst_id
 
 
 def linear_weight_to_torch(model_weights):
@@ -105,7 +106,7 @@ class HomoLRClientExporter(ExporterBase):
 
     def export_model_dict(
             self,
-            model,
+            model=None,
             optimizer=None,
             model_define=None,
             optimizer_define=None,
@@ -291,6 +292,7 @@ class HomoLRClient(HomoLRBase):
         self.init_schema(data_instances)
 
         data_instances = self.align_data_header(data_instances, self.header)
+        with_inst_id = check_with_inst_id(data_instances)
 
         dataset = self.get_dataset(data_instances)
 
@@ -299,13 +301,15 @@ class HomoLRClient(HomoLRBase):
             return predict_result
 
         dataset.set_type('predict')
-
         if self.trainer is None:
             self.trainer, torch_model, wrap_optimizer, loss = self.init(
                 dataset, data_instances.partitions)
-
         trainer_ret = self.trainer.predict(dataset)
         id_table, pred_table, classes = trainer_ret()
+
+        if with_inst_id:
+            add_match_id(id_table=id_table, dataset_inst=dataset)
+
         id_dtable, pred_dtable = get_ret_predict_table(
             id_table, pred_table, classes, data_instances.partitions, computing_session)
         ret_table = self.predict_score_to_output(

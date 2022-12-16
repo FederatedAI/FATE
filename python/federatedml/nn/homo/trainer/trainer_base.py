@@ -350,7 +350,8 @@ class TrainerBase(object):
 
         pred_scores = pred_scores.tolist()
         label = label.tolist()
-
+        assert len(pred_scores) == len(
+            label), 'the length of predict score != the length of label, pred {} and label {}'.format(len(pred_scores), len(label))
         eval_data = []
         for id_, s, l in zip(sample_ids, pred_scores, label):
             if task_type == consts.REGRESSION:
@@ -377,11 +378,13 @@ class TrainerBase(object):
         if hasattr(var, 'cuda'):
             return var.cuda()
         elif isinstance(var, tuple) or isinstance(var, list):
-            return tuple(self.to_cuda(i) for i in var)
+            ret = tuple(self.to_cuda(i) for i in var)
+            return ret
         elif isinstance(var, dict):
             for k in var:
-                if hasattr(k, 'cuda'):
-                    k.cuda()
+                if hasattr(var[k], 'cuda'):
+                    var[k] = var[k].cuda()
+            return var
         else:
             return var
 

@@ -16,10 +16,12 @@ from federatedml.util import consts
 from federatedml.nn.homo.trainer.trainer_base import StdReturnFormat
 from federatedml.nn.backend.utils.common import global_seed, get_homo_model_dict, get_homo_param_meta, recover_model_bytes, get_torch_model_bytes
 from federatedml.callbacks.model_checkpoint import ModelCheckpoint
-from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
+from federatedml.statistic.data_overview import check_with_inst_id
 from federatedml.nn.homo.trainer.trainer_base import ExporterBase
 from fate_arch.session import computing_session
 from federatedml.nn.backend.utils.data import get_ret_predict_table
+from federatedml.nn.dataset.table import TableDataset
+from federatedml.nn.backend.utils.data import add_match_id
 from federatedml.protobuf.generated.homo_nn_model_param_pb2 import HomoNNParam as HomoNNParamPB
 from federatedml.protobuf.generated.homo_nn_model_meta_pb2 import HomoNNMeta as HomoNNMetaPB
 
@@ -211,7 +213,7 @@ class HomoNNClient(ModelBase):
             'train_set',
             'validate_set',
             'optimizer',
-            'loss'
+            'loss',
             'extra_data'
         ]
         if len(trainer_train_args) < 6:
@@ -276,7 +278,8 @@ class HomoNNClient(ModelBase):
                 dataset_cache=self.cache_dataset,
                 param=self.dataset_param
             )
-            dataset_inst.set_type('validate')
+            if id(val_dataset_inst) != id(dataset_inst):
+                dataset_inst.set_type('validate')
             LOGGER.info('validate dataset instance is {}'.format(dataset_inst))
         else:
             val_dataset_inst = None
@@ -302,10 +305,15 @@ class HomoNNClient(ModelBase):
 
     def predict(self, cpn_input):
 
+        with_inst_id = False
+        schema = None
         if not is_table(cpn_input):
             if isinstance(cpn_input, LocalData):
                 cpn_input = cpn_input.path
                 assert cpn_input is not None, 'input path is None!'
+        elif is_table(cpn_input):
+            with_inst_id = check_with_inst_id(cpn_input)
+            schema = cpn_input.schema
 
         LOGGER.info('running predict')
         if self.trainer_inst is None:
@@ -330,10 +338,16 @@ class HomoNNClient(ModelBase):
             return None
 
         id_table, pred_table, classes = trainer_ret()
+
+        if with_inst_id:  # set match id
+            add_match_id(id_table=id_table, dataset_inst=dataset_inst)
+
         id_dtable, pred_dtable = get_ret_predict_table(
             id_table, pred_table, classes, self.partitions, computing_session)
         ret_table = self.predict_score_to_output(
             id_dtable, pred_dtable, classes)
+        if schema is not None:
+            self.set_predict_data_schema(ret_table, schema)
 
         return ret_table
 

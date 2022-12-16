@@ -61,3 +61,9 @@ def get_ret_predict_table(id_table, pred_table, classes, partitions, computing_s
         pred_table, partition=partitions, include_key=True)
 
     return id_dtable, pred_dtable
+
+
+def add_match_id(id_table: list, dataset_inst: TableDataset):
+    assert isinstance(dataset_inst, TableDataset), 'when using match id your dataset must be a Table Dataset'
+    for id_inst in id_table:
+        id_inst[1].inst_id = dataset_inst.match_ids[id_inst[0]]
