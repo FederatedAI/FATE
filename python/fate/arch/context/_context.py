@@ -9,9 +9,9 @@ from fate.interface import FederationEngine, MetricsHandler, PartyMeta
 from ..unify import device
 from ._cipher import CipherKit
 from ._federation import GC, Parties, Party
-from ._io import IOKit
 from ._namespace import Namespace
 from ._tensor import TensorKit
+from .io.kit import IOKit
 from .metric import MetricsWrap
 
 
