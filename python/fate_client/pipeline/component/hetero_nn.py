@@ -32,6 +32,40 @@ class HeteroNN(FateComponent):
                  floating_point_precision=23, selector_param=None, seed=100,
                  dataset: DatasetParam = DatasetParam(dataset_name='table'), **kwargs
                  ):
+        """
+            Parameters used for Hetero Neural Network.
+
+            Parameters
+            ----------
+            task_type: str, task type of hetero nn model, one of 'classification', 'regression'.
+            interactive_layer_lr: float, the learning rate of interactive layer.
+            epochs: int, the maximum iteration for aggregation in training.
+            batch_size : int, batch size when updating model.
+                -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
+                defaults to -1.
+            early_stop : str, accept 'diff' only in this version, default: 'diff'
+                Method used to judge converge or not.
+                    a)	diff： Use difference of loss between two iterations to judge whether converge.
+            tol: float, tolerance val for early stop
+
+            floating_point_precision: None or integer, if not None, means use floating_point_precision-bit to speed up calculation,
+                                        e.g.: convert an x to round(x * 2**floating_point_precision) during Paillier operation, divide
+                                                the result by 2**floating_point_precision in the end.
+            callback_param: dict, CallbackParam, see federatedml/param/callback_param
+            encrypt_param: dict, see federatedml/param/encrypt_param
+            dataset_param: dict, interface defining the dataset param
+            early_stopping_rounds: integer larger than 0
+                    will stop training if one metric of one validation data
+                    doesn’t improve in last early_stopping_round rounds，
+                    need to set validation freqs and will check early_stopping every at every validation epoch
+            validation_freqs: None or positive integer or container object in python
+                    Do validation in training process or Not.
+                    if equals None, will not do validation in train process;
+                    if equals positive integer, will validate data every validation_freqs epochs passes;
+                    if container object in python, will validate data if epochs belong to this container.
+                    e.g. validation_freqs = [10, 15], will validate data when epoch equals to 10 and 15.
+                    Default: None
+        """
 
         explicit_parameters = kwargs["explict_parameters"]
         explicit_parameters["optimizer"] = None

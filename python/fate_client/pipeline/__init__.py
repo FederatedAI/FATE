@@ -6,4 +6,4 @@ except ImportError:
 except ValueError:
     fate_torch_hook, fate_torch = None, None
 
-__all__ = ['fate_torch_hook', 'fate_torch', 'PipeLine']
+__all__ = ['fate_torch_hook', 'fate_torch']
