@@ -79,7 +79,7 @@ class _TorchStorage(LStorage):
 
 
 def _ops_cpu_plain_unary_buildin(method, args, kwargs) -> Callable[[_TorchStorage], _TorchStorage]:
-    if method in {"exp", "log", "neg", "reciprocal", "square", "abs", "sum", "sqrt"}:
+    if method in {"exp", "log", "neg", "reciprocal", "square", "abs", "sum", "sqrt", "var"}:
         func = getattr(torch, method)
 
         def _wrap(storage: _TorchStorage) -> _TorchStorage:
