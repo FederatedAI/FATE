@@ -62,7 +62,7 @@ def execute_component(config: TaskConfigSpec):
             # fill in outputs
             execute_kwargs.update(parse_output_data(mlmd, component, stage, role, output_pool))
             execute_kwargs.update(parse_output_model(mlmd, component, stage, role, output_pool))
-            execute_kwargs.update(parse_output_metrics(mlmd, component, stage, role, output_pool))
+            execute_kwargs.update(parse_output_metric(mlmd, component, stage, role, output_pool))
 
             # execute
             component.execute(ctx, role, **execute_kwargs)
@@ -140,7 +140,7 @@ def parse_output_data(mlmd: MLMD, cpn: _Component, stage, role, output_pool: Out
         if arti := cpn.artifacts.outputs.data_artifact.get(arg):
             execute_output_data[arg] = None
             if arti.is_active_for(stage, role):
-                execute_output_data[arg] = output_pool.create_artifact(arti.name, arti.type)
+                execute_output_data[arg] = output_pool.create_data_artifact(arti.name)
                 mlmd.io.log_output_artifact(arg, execute_output_data[arg])
     return execute_output_data
 
@@ -152,18 +152,18 @@ def parse_output_model(mlmd: MLMD, cpn: _Component, stage, role, output_pool: Ou
         if arti := cpn.artifacts.outputs.model_artifact.get(arg):
             execute_output_model[arg] = None
             if arti.is_active_for(stage, role):
-                execute_output_model[arg] = output_pool.create_artifact(arti.name, arti.type)
+                execute_output_model[arg] = output_pool.create_model_artifact(arti.name)
                 mlmd.io.log_output_artifact(arg, execute_output_model[arg])
     return execute_output_model
 
 
-def parse_output_metrics(mlmd: MLMD, cpn: _Component, stage, role, output_pool: OutputPool) -> dict:
+def parse_output_metric(mlmd: MLMD, cpn: _Component, stage, role, output_pool: OutputPool) -> dict:
 
     execute_output_metrics = {}
     for arg in cpn.func_args[2:]:
         if arti := cpn.artifacts.outputs.metric_artifact.get(arg):
             execute_output_metrics[arg] = None
             if arti.is_active_for(stage, role):
-                execute_output_metrics[arg] = output_pool.create_artifact(arti.name, arti.type)
+                execute_output_metrics[arg] = output_pool.create_metric_artifact(arti.name)
                 mlmd.io.log_output_artifact(arg, execute_output_metrics[arg])
     return execute_output_metrics

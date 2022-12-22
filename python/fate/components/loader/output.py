@@ -1,7 +1,5 @@
 import uuid
 
-from fate.components import Output
-
 
 class OutputPool:
     def __init__(self, data, model, metric) -> None:
@@ -9,21 +7,14 @@ class OutputPool:
         self.model = model
         self.metric = metric
 
-    def create_artifact(self, name: str, artifact_type):
-        from fate.components import (
-            DatasetArtifact,
-            LossMetrics,
-            MetricArtifact,
-            ModelArtifact,
-        )
+    def create_data_artifact(self, name: str):
+        return self.data.create_artifact(name)
 
-        if artifact_type == Output[DatasetArtifact]:
-            return self.data.create_artifact(name)
-        if artifact_type == Output[ModelArtifact]:
-            return self.model.create_artifact(name)
-        if artifact_type == Output[MetricArtifact] or artifact_type == Output[LossMetrics]:
-            return self.metric.create_artifact(name)
-        raise RuntimeError(f"artifact type `{artifact_type}` not supported in output pool")
+    def create_model_artifact(self, name: str):
+        return self.model.create_artifact(name)
+
+    def create_metric_artifact(self, name: str):
+        return self.metric.create_artifact(name)
 
 
 def load_pool(output_pool_conf):
