@@ -13,20 +13,3 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
-from pathlib import Path
-
-from ruamel import yaml
-
-with Path(__file__).parent.parent.joinpath("config.yaml").resolve().open("r") as fin:
-    __DEFAULT_CONFIG: dict = yaml.safe_load(fin)
-
-
-def set_default_config(ip: str, port: int, log_directory: str, console_display_log: bool, system_setting: dict):
-    global __DEFAULT_CONFIG
-    __DEFAULT_CONFIG.update(dict(ip=ip, port=port, log_directory=log_directory,
-                                 console_display_log=console_display_log, system_setting=system_setting))
-
-
-def get_default_config():
-    return __DEFAULT_CONFIG
