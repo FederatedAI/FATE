@@ -31,7 +31,7 @@ ruamel-yaml==0.16.10
 scikit-learn==1.0.1
 scipy==1.8.1
 tensorflow==2.9.3
-torch==1.13.0
+torch==1.13.1
 torch-model-archiver==0.3.1
 torchvision==0.14.0
 transformers==4.23.1
@@ -51,7 +51,8 @@ nyoka==5.3.0
 transformers==4.23.1
 impyla==0.18.0
 venv-pack==0.2.0
-etaf-crypto
+fate-crypto==0.3.0
+ipcl-python==2.0.0
 
 # addtional requirements for eggroll
 grpcio==1.46.3
