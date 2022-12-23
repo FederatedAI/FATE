@@ -22,7 +22,7 @@ from pipeline.constant import JobStatus
 
 
 __all__ = ["JobStatus", "VERSION", "SERVER_VERSION", "TIME_QUERY_FREQS", "Role", "StatusCode",
-           "LogPath", "LogFormat", "IODataType", "FlowConfig"]
+           "LogPath", "LogFormat", "IODataType", "PipelineConfig"]
 
 
 VERSION = 2
@@ -67,7 +67,7 @@ class IODataType:
     TEST = "test_data"
 
 
-class FlowConfigMeta(type):
+class PipelineConfigMeta(type):
 
     def __getattr__(cls, name):
         if name not in cls._keys:
@@ -90,7 +90,7 @@ class FlowConfigMeta(type):
         return cls._defaults.get(name)
 
 
-class FlowConfig(metaclass=FlowConfigMeta):
+class PipelineConfig(metaclass=PipelineConfigMeta):
     _conf = None
     _keys = {"IP", "PORT", "APP_KEY", "SECRET_KEY", "CONSOLE_DISPLAY_LOG", "SYSTEM_SETTING"}
     _defaults = {

@@ -20,7 +20,7 @@ from pathlib import Path
 
 import loguru
 
-from pipeline.backend.config import LogPath, LogFormat, FlowConfig
+from pipeline.backend.config import LogPath, LogFormat, PipelineConfig
 
 RUNTIME_LOG = "runtime"
 
@@ -38,7 +38,7 @@ LOGGER = loguru.logger
 
 LOGGER.remove()
 LOGGER.configure(extra={"format": LogFormat.NORMAL})
-if FlowConfig.CONSOLE_DISPLAY_LOG:
+if PipelineConfig.CONSOLE_DISPLAY_LOG:
     console_handler = LOGGER.add(sys.stderr, level="INFO", colorize=True,
                                  filter=runtime_log_only)
 LOGGER.add(Path(info_log_path).resolve(), level="INFO", rotation="500MB",

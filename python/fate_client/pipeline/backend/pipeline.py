@@ -23,7 +23,7 @@ from types import SimpleNamespace
 from pipeline.backend.config import Role
 from pipeline.backend.config import StatusCode
 from pipeline.backend.config import VERSION
-from pipeline.backend.config import FlowConfig
+from pipeline.backend.config import PipelineConfig
 from pipeline.backend._operation import OnlineCommand, ModelConvert
 from pipeline.backend.task_info import TaskInfo
 from pipeline.component.component_base import Component
@@ -62,7 +62,7 @@ class PipeLine(object):
         self._data_to_feed_in_prediction = None
         self._predict_pipeline = []
         self._deploy = False
-        self._system_role = FlowConfig.SYSTEM_SETTING.get("role")
+        self._system_role = PipelineConfig.SYSTEM_SETTING.get("role")
         self.online = OnlineCommand(self)
         self._load = False
         self.model_convert = ModelConvert(self)
