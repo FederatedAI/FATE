@@ -84,7 +84,7 @@ class FlowConfigMeta(type):
         if name in {"IP", "PORT"}:
             raise ValueError(
                 f"{name} not configured. "
-                 "Please use command line tool `pipeline init` to set it."
+                "Please use command line tool `pipeline init` to set it."
             )
 
         return cls._defaults.get(name)
