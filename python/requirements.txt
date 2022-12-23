@@ -1,3 +1,5 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+
 pip>=21
 apsw<3.10
 pkginfo==1.7.1
@@ -30,10 +32,10 @@ requests_toolbelt==0.9.1
 ruamel-yaml==0.16.10
 scikit-learn==1.0.1
 scipy==1.8.1
-tensorflow==2.9.3
-torch==1.13.1
+tensorflow-cpu==2.9.3
+torch==1.13.1+cpu
+torchvision==0.14.1+cpu
 torch-model-archiver==0.3.1
-torchvision==0.14.0
 transformers==4.23.1
 coverage==4.5.2
 pika==1.2.1
