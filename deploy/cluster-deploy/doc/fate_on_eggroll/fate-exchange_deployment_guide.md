@@ -282,7 +282,7 @@ Modify the content in /data/projects/fate/eggroll/conf/route\_table.json. The de
 #Start the Eggroll service
 source /data/projects/fate/init_env.sh
 cd /data/projects/fate/eggroll
-sh ./bin/eggroll.sh rollsite start
+bash ./bin/eggroll.sh rollsite start
 ```
 
 ## 5.6 Verification and Troubleshooting
@@ -314,7 +314,7 @@ cd /data/projects/fate/eggroll
 Start/Shutdown/View/Restart rollsite:
 
 ```
-sh ./bin/eggroll.sh rollsite start/stop/status/restart
+bash ./bin/eggroll.sh rollsite start/stop/status/restart
 ```
 
 ## 6.2 View Processes and Ports
@@ -341,4 +341,3 @@ netstat -tlnp | grep 9370
 | Service| Log Path
 |----------|----------
 | eggroll| /data/projects/fate/eggroll/logs
-

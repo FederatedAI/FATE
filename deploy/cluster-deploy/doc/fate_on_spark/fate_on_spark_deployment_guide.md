@@ -297,7 +297,7 @@ mkdir -p /data/projects/fate/common/python
 cd /data/projects/install
 tar xvf python-env-*.tar.gz
 cd python-env
-sh miniconda3-4.5.4-Linux-x86_64.sh -b -p /data/projects/fate/common/miniconda3
+bash miniconda3-4.5.4-Linux-x86_64.sh -b -p /data/projects/fate/common/miniconda3
 
 #Create a virtualized environment
 /data/projects/fate/common/miniconda3/bin/python3.8 -m venv /data/projects/fate/common/python/venv
@@ -924,11 +924,11 @@ execute under the target server (192.168.0.1 192.168.0.2) app user
 ## Start FATE service, FATE-Flow depends on MySQL to start
 Source code /data/projects/fate/bin/init_env.sh
 cd /data/projects/fate/fateflow/bin
-sh service.sh start
+bash service.sh start
 
 #Start the fateboard service
 cd /data/projects/fate/fateboard
-sh service.sh start
+bash service.sh start
 
 #Start the nginx service
 /data/projects/fate/proxy/nginx/sbin/nginx -c /data/projects/fate/proxy/nginx/conf/nginx.conf
@@ -1081,7 +1081,7 @@ execute under the target server (192.168.0.1 192.168.0.2) app user
 ```bash
 source /data/projects/fate/init_env.sh
 cd /data/projects/fate/fateflow/bin
-sh service.sh start|stop|status|restart
+bash service.sh start|stop|status|restart
 ```
 
 If you start module by module, you need to start eggroll first and then fateflow. fateflow depends on eggroll to start.
@@ -1090,7 +1090,7 @@ If you start module by module, you need to start eggroll first and then fateflow
 
 ```bash
 cd /data/projects/fate/fateboard
-sh service.sh start|stop|status|restart
+bash service.sh start|stop|status|restart
 ```
 
 3) Start/shutdown/restart the NginX service
@@ -1107,7 +1107,7 @@ Start/shutdown/view/restart MySQL services
 
 ```bash
 cd /data/projects/fate/common/mysql/mysql-8.0.13
-sh ./service.sh start|stop|status|restart
+bash ./service.sh start|stop|status|restart
 ```
 
 ### 11.2 Viewing processes and ports

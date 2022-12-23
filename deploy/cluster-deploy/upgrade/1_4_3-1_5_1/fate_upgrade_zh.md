@@ -45,10 +45,10 @@ SUPERVISOR_ROOT=/data/projects/common/supervisord
 cd ~/fate_1_4_3-1_5_1/
 
 # 带参数执行如下命令，其中组件名请从：fatepython、fateboard、mysql、all中选择
-sh upgrade.sh <module>
+bash upgrade.sh <module>
 
 # 例如，如果只需要更新fatepython，请执行如下命令：
-sh upgrade.sh fatepython
+bash upgrade.sh fatepython
 ```
 
 如果提示ERROR，... aborting字样，则为参数检查不通过，请根据提示对脚本参数进行二次确认及修改；
@@ -78,7 +78,7 @@ sh upgrade.sh fatepython
 cd /data/projects/fate/python/fate_flow/
 
 # 停止服务
-sh service.sh stop
+bash service.sh stop
 ```
 
 ##### ansible部署方式的停止服务方法
@@ -87,7 +87,7 @@ sh service.sh stop
 cd /data/projects/common/supervisord/
 
 # 停止服务
-sh service.sh stop fate-fateflow
+bash service.sh stop fate-fateflow
 ```
 
 
@@ -140,7 +140,7 @@ alter table t_job_backup150 rename to t_job;
 cd /data/projects/fate/python/fate_flow/
 
 # 启动服务
-sh service.sh start
+bash service.sh start
 ```
 
 ##### ansible部署方式的停止服务方法
@@ -150,7 +150,7 @@ sh service.sh start
 cd /data/projects/common/supervisord/
 
 # 启动服务
-sh service.sh start fate-fateflow
+bash service.sh start fate-fateflow
 ```
 
 
@@ -164,7 +164,7 @@ sh service.sh start fate-fateflow
 cd /data/projects/fate/fateboard/
 
 # 停止服务
-sh service.sh stop
+bash service.sh stop
 ```
 
 ##### ansible部署方式的停止服务方法
@@ -174,7 +174,7 @@ sh service.sh stop
 cd /data/projects/common/supervisord/
 
 # 停止服务
-sh service.sh stop fate-fateboard
+bash service.sh stop fate-fateboard
 ```
 
 
@@ -205,7 +205,7 @@ mv fateboard_150bak_202101011200/ fateboard/
 cd /data/projects/fate/fateboard/
 
 # 停止服务
-sh service.sh start
+bash service.sh start
 ```
 
 ##### ansible部署方式的停止服务方法
@@ -215,7 +215,7 @@ sh service.sh start
 cd /data/projects/common/supervisord/
 
 # 停止服务
-sh service.sh start fate-fateboard
+bash service.sh start fate-fateboard
 ```
 
 
@@ -251,7 +251,7 @@ sh service.sh start fate-fateboard
 cd /data/projects/fate/python/fate_flow/
 
 # 停止服务
-sh service.sh stop
+bash service.sh stop
 ```
 
 ##### ansible部署方式的停止服务方法
@@ -261,7 +261,7 @@ sh service.sh stop
 cd /data/projects/common/supervisord/
 
 # 停止服务
-sh service.sh stop fate-fateflow
+bash service.sh stop fate-fateflow
 ```
 
 
@@ -322,7 +322,7 @@ DROP database fate_flow_backup144;
 cd /data/projects/fate/python/fate_flow/
 
 # 启动服务
-sh service.sh start
+bash service.sh start
 ```
 
 ##### ansible部署方式的停止服务方法
@@ -332,7 +332,7 @@ sh service.sh start
 cd /data/projects/common/supervisord/
 
 # 启动服务
-sh service.sh start fate-fateflow
+bash service.sh start fate-fateflow
 ```
 
 
@@ -346,7 +346,7 @@ sh service.sh start fate-fateflow
 cd /data/projects/fate/fateboard/
 
 # 停止服务
-sh service.sh stop
+bash service.sh stop
 ```
 
 ##### ansible部署方式的停止服务方法
@@ -356,7 +356,7 @@ sh service.sh stop
 cd /data/projects/common/supervisord/
 
 # 停止服务
-sh service.sh stop fate-fateboard
+bash service.sh stop fate-fateboard
 ```
 
 
@@ -387,7 +387,7 @@ mv fateboard_150bak_202101011200/ fateboard/
 cd /data/projects/fate/fateboard/
 
 # 停止服务
-sh service.sh start
+bash service.sh start
 ```
 
 ##### ansible部署方式的停止服务方法
@@ -397,7 +397,7 @@ sh service.sh start
 cd /data/projects/common/supervisord/
 
 # 停止服务
-sh service.sh start fate-fateboard
+bash service.sh start fate-fateboard
 ```
 
 
@@ -433,7 +433,7 @@ sh service.sh start fate-fateboard
 cd /data/projects/fate/python/fate_flow/
 
 # 停止服务
-sh service.sh stop
+bash service.sh stop
 ```
 
 ##### ansible部署方式的停止服务方法
@@ -443,7 +443,7 @@ sh service.sh stop
 cd /data/projects/common/supervisord/
 
 # 停止服务
-sh service.sh stop fate-fateflow
+bash service.sh stop fate-fateflow
 ```
 
 
@@ -474,7 +474,7 @@ mv python_143bak_202101011200/ python/
 cd /data/projects/fate/python/fate_flow/
 
 # 启动服务
-sh service.sh start
+bash service.sh start
 ```
 
 ##### ansible部署方式的停止服务方法
@@ -484,7 +484,7 @@ sh service.sh start
 cd /data/projects/common/supervisord/
 
 # 启动服务
-sh service.sh start fate-fateflow
+bash service.sh start fate-fateflow
 ```
 
 

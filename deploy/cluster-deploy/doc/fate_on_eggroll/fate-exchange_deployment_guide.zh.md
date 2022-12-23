@@ -299,7 +299,7 @@ EOF
 #启动eggroll服务
 source /data/projects/fate/init_env.sh
 cd /data/projects/fate/eggroll
-sh ./bin/eggroll.sh rollsite start
+bash ./bin/eggroll.sh rollsite start
 ```
 
 ## 5.6 验证和问题定位
@@ -333,7 +333,7 @@ cd /data/projects/fate/eggroll
 启动/关闭/查看/重启rollsite：
 
 ```
-sh ./bin/eggroll.sh rollsite start/stop/status/restart
+bash ./bin/eggroll.sh rollsite start/stop/status/restart
 ```
 
 ## 6.2 查看进程和端口

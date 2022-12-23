@@ -90,7 +90,7 @@ function check_mysql_conn() {
   else
     echo "INFO: Done."
   fi
-  
+
   $MYSQL_ROOT/bin/mysql -u$DB_USER -p$DB_PASS -S $MYSQL_SOCKET_PATH -e "select 'x';"
   if [ $? -ne 0 ]; then
     echo "ERROR: Mysql connect failed. Upgrade process aborting.";
@@ -116,10 +116,10 @@ function stop_fateflow() {
   echo "INFO: Stopping fate flow server..."
   case $DEPLOY_METHOD in
     "allinone")
-      sh $FATE_PYTHON_ROOT/fate_flow/service.sh stop
+      bash $FATE_PYTHON_ROOT/fate_flow/service.sh stop
       ;;
     "ansible")
-      sh $SUPERVISOR_ROOT/service.sh stop fate-fateflow
+      bash $SUPERVISOR_ROOT/service.sh stop fate-fateflow
       ;;
   esac
 }
@@ -129,10 +129,10 @@ function start_fateflow() {
   echo "INFO: Starting fate flow server..."
   case $DEPLOY_METHOD in
     "allinone")
-      sh $FATE_PYTHON_ROOT/fate_flow/service.sh start
+      bash $FATE_PYTHON_ROOT/fate_flow/service.sh start
       ;;
     "ansible")
-      sh $SUPERVISOR_ROOT/service.sh start fate-fateflow
+      bash $SUPERVISOR_ROOT/service.sh start fate-fateflow
       ;;
   esac
 }
@@ -142,10 +142,10 @@ function stop_fateboard() {
   echo "INFO: Stopping fateboard..."
   case $DEPLOY_METHOD in
     "allinone")
-      sh $FATEBOARD_ROOT/service.sh stop
+      bash $FATEBOARD_ROOT/service.sh stop
       ;;
     "ansible")
-      sh $SUPERVISOR_ROOT/service.sh stop fate-fateboard
+      bash $SUPERVISOR_ROOT/service.sh stop fate-fateboard
       ;;
   esac
 }
@@ -155,11 +155,11 @@ function start_fateboard() {
   echo "INFO: Starting fateboard..."
   case $DEPLOY_METHOD in
     "allinone")
-      sh $FATEBOARD_ROOT/service.sh start
+      bash $FATEBOARD_ROOT/service.sh start
       ;;
     "ansible")
-      sh $SUPERVISOR_ROOT/service.sh update fate-fateboard
-      sh $SUPERVISOR_ROOT/service.sh start fate-fateboard
+      bash $SUPERVISOR_ROOT/service.sh update fate-fateboard
+      bash $SUPERVISOR_ROOT/service.sh start fate-fateboard
       ;;
   esac
 }
