@@ -18,10 +18,16 @@ def run_subprocess(exec_cmd, std_log_fd):
     return process
 
 
-def run_task_in_party(exec_cmd, std_log_fd):
+def run_task_in_party(exec_cmd, std_log_fd, status_manager, task_id):
     process = run_subprocess(exec_cmd, std_log_fd)
     process.communicate()
     process.terminate()
+    if process.returncode != 0:
+        """
+        subprocess fail, record the fail status to MLMD
+        """
+        status_manager.record_task_status(task_id, "exception")
+
     try:
         os.kill(process.pid, 0)
     except ProcessLookupError:
@@ -73,7 +79,9 @@ def process_task(task_type: str, task_name: str, exec_cmd_prefix: list, runtime_
         )
         task_pools.append(mp_ctx.Process(target=run_task_in_party, kwargs=dict(
             exec_cmd=exec_cmd,
-            std_log_fd=std_log_fd
+            std_log_fd=std_log_fd,
+            status_manager=status_manager,
+            task_id=task_id
         )))
 
         task_pools[-1].start()

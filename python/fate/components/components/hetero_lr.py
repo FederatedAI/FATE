@@ -82,8 +82,9 @@ def train_guest(ctx, train_data, validate_data, train_output_data, output_model,
         model = module.get_model()
         sub_ctx.writer(output_model).write_model(model)
     with ctx.sub_ctx("predict") as sub_ctx:
-        output_data = module.predict(sub_ctx, validate_data)
-        sub_ctx.writer(train_output_data).write_dataframe(output_data)
+        predict_score = module.predict(sub_ctx, validate_data)
+        predict_result = validate_data.data.transform_to_predict_result(predict_score)
+        sub_ctx.writer(train_output_data).write_dataframe(predict_result)
 
 
 def train_host(ctx, train_data, validate_data, train_output_data, output_model, max_iter, learning_rate, batch_size):
@@ -98,8 +99,7 @@ def train_host(ctx, train_data, validate_data, train_output_data, output_model, 
         model = module.get_model()
         sub_ctx.writer(output_model).write_model(model)
     with ctx.sub_ctx("predict") as sub_ctx:
-        output_data = module.predict(sub_ctx, validate_data)
-        sub_ctx.writer(train_output_data).write_dataframe(output_data)
+        module.predict(sub_ctx, validate_data)
 
 
 def train_arbiter(ctx, max_iter, batch_size, train_output_metric):

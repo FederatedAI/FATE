@@ -33,9 +33,17 @@ intersection_1 = Intersection(name="intersection_1",
                               method="raw",
                               input_data=reader_0.outputs["output_data"])
 
+lr_0 = HeteroLR(name="lr_0",
+                train_data=intersection_0.outputs["train_output_data"],
+                eval_data=intersection_1.outputs["test_output_data"],
+                max_iter=1,
+                learning_rate=0.01,
+                batch_size=-1)
+
 pipeline.add_task(reader_0)
 pipeline.add_task(intersection_0)
 pipeline.add_task(intersection_1)
+pipeline.add_task(lr_0)
 pipeline.compile()
 print (pipeline.get_dag())
 pipeline.fit()
