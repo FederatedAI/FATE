@@ -120,10 +120,6 @@ class GHPacker(object):
 
         h_sum_max = self.h_max * sample_num
         h_max_int = int(h_sum_max * precision) + 1
-<<<<<<< HEAD
-
-=======
->>>>>>> master
         g_offset_max = self.g_offset + self.g_max
         g_max_int = int(g_offset_max * sample_num * precision) + 1
 
