@@ -22,5 +22,5 @@ standalone:
 
 fate_flow:
     ip: 127.0.0.1
-    port: 9382
+    port: 9380
     version: v2

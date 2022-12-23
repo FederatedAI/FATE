@@ -1,3 +1,4 @@
+import logging
 from typing import Union
 
 import requests
@@ -14,9 +15,10 @@ class HTTPMetricsWriter:
 
     def write_metric(self, metrics: Union[Metrics, InCompleteMetrics]):
         if isinstance(metrics, Metrics):
-            requests.post(url=self.entrypoint, json={"data": metrics.dict(), "incomplte": False})
+            response = requests.post(url=self.entrypoint, json={"data": metrics.dict(), "incomplte": False})
         else:
-            requests.post(url=self.entrypoint, json={"data": metrics.dict(), "incomplete": True})
+            response = requests.post(url=self.entrypoint, json={"data": metrics.dict(), "incomplete": True})
+        logging.info(response.text)
 
 
 class HTTPMetricsReader:

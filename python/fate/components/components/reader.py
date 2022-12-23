@@ -27,10 +27,8 @@ def reader(
 
 
 def read_data(ctx, path, format, id_name, delimiter, label_name, label_type, dtype, output_data):
-    from types import SimpleNamespace
-
     if format == "csv":
-        data_meta = SimpleNamespace(
+        data_meta = DatasetArtifact(
             uri=path,
             name="data",
             metadata=dict(
