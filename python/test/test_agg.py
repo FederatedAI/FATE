@@ -1,42 +1,50 @@
-if __name__ == "__main__":
+import torch
+from fate.arch import Context, tensor
+from fate.arch.computing.standalone import CSession
+from fate.arch.context import Context
+from fate.arch.federation.standalone import StandaloneFederation
+from pytest import fixture
+from pytest_lazyfixture import lazy_fixture
 
-    import torch
-    from fate.arch import Context, tensor
-    from fate.arch.computing.standalone import CSession
-    from fate.arch.context import Context
-    from fate.arch.federation.standalone import StandaloneFederation
 
-    # disable_inner_logs()
-    def create_ctx(fed_id, local_party, parties):
-        _computing = CSession()
-        ctx = Context(
-            "guest",
-            computing=_computing,
-            federation=StandaloneFederation(_computing, fed_id, local_party, parties),
-        )
-        return ctx
+@fixture
+def ctx():
+    computing = CSession()
+    return Context(
+        "guest",
+        computing=computing,
+        federation=StandaloneFederation(computing, "fed", ("guest", 10000), [("host", 9999)]),
+    )
 
-    ctx1 = create_ctx("fed", ("guest", 10), [("host", 9)])
-    ctx2 = create_ctx("fed", ("host", 9), [("guest", 10)])
 
-    t1 = tensor.distributed_tensor(
-        ctx1,
+@fixture
+def t1(ctx):
+    return tensor.distributed_tensor(
+        ctx,
+        [
+            torch.tensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]),
+            torch.tensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]),
+            torch.tensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]),
+        ],
+    )
+
+
+@fixture
+def t2(ctx):
+    return tensor.distributed_tensor(
+        ctx,
         [
             torch.tensor([[1, 2, 3], [4, 5, 6]]),
             torch.tensor([[1, 2, 3], [4, 5, 6]]),
             torch.tensor([[1, 2, 3], [4, 5, 6]]),
         ],
     )
-    t2 = tensor.distributed_tensor(
-        ctx2,
-        [
-            torch.tensor([[1.0, 2, 3], [4, 5, 6]]),
-            torch.tensor([[1.0, 2, 3], [4, 5, 6]]),
-            torch.tensor([[1.0, 2, 3], [4, 5, 6]]),
-        ],
-    )
-    t3 = tensor.distributed_tensor(
-        ctx2,
+
+
+@fixture
+def t3(ctx):
+    return tensor.distributed_tensor(
+        ctx,
         [
             torch.tensor([[1.0, 4.0], [2.0, 5.0], [3.0, 6.0]]),
             torch.tensor([[1.0, 4.0], [2.0, 5.0], [3.0, 6.0]]),
@@ -44,18 +52,39 @@ if __name__ == "__main__":
         ],
         d_axis=1,
     )
-    lt1 = tensor.tensor(torch.tensor([[1, 2, 3]]))
-    print(t1[0])
-    print(tensor.matmul(t3, t2))
 
-    print(tensor.sum(t3))
-    print(tensor.sum(t3, dim=1))
 
-    print(tensor.mean(t3))
-    print(tensor.mean(t3, dim=1))
+def test_sum(t1):
+    print(tensor.sum(t1))
+    print(tensor.sum(t1, dim=0))
+    print(tensor.sum(t1, dim=1))
+    print(torch.sum(t1.to_local().storage.data))
+    print(torch.sum(t1.to_local().storage.data, dim=0))
+    print(torch.sum(t1.to_local().storage.data, dim=1))
 
-    print(tensor.std(t3))
-    print(tensor.std(t3, dim=1))
 
-    print(tensor.var(t3))
-    print(tensor.var(t3, dim=1))
+def test_mean(t1):
+    print(tensor.mean(t1))
+    print(tensor.mean(t1, dim=0))
+    print(tensor.mean(t1, dim=1))
+    print(torch.mean(t1.to_local().storage.data))
+    print(torch.mean(t1.to_local().storage.data, dim=0))
+    print(torch.mean(t1.to_local().storage.data, dim=1))
+
+
+def test_std(t1):
+    print(tensor.std(t1, unbiased=False))
+    print(tensor.std(t1, dim=0, unbiased=False))
+    print(tensor.std(t1, dim=1, unbiased=False).to_local())
+    print(torch.std(t1.to_local().storage.data, unbiased=False))
+    print(torch.std(t1.to_local().storage.data, dim=0, unbiased=False))
+    print(torch.std(t1.to_local().storage.data, dim=1, unbiased=False))
+
+
+def test_var(t1):
+    print(tensor.var(t1, unbiased=False))
+    print(tensor.var(t1, dim=0, unbiased=False))
+    print(tensor.var(t1, dim=1, unbiased=False).to_local())
+    print(torch.var(t1.to_local().storage.data, unbiased=False))
+    print(torch.var(t1.to_local().storage.data, dim=0, unbiased=False))
+    print(torch.var(t1.to_local().storage.data, dim=1, unbiased=False))

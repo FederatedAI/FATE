@@ -9,6 +9,9 @@ class local_ops_helper:
     def var(self, x, *args, **kwargs):
         return self.apply_signature1("var", args, kwargs)(x)
 
+    def std(self, x, *args, **kwargs):
+        return self.apply_signature1("std", args, kwargs)(x)
+
     def sum(self, x, *args, **kwargs):
         return self.apply_signature1("sum", args, kwargs)(x)
 

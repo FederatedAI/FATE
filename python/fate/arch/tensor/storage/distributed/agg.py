@@ -64,9 +64,9 @@ def var(storage: DStorage, *args, **kwargs):
 
         sq, s = storage.blocks.mapValues(_mapper).reduce(_reducer)
         output = local_ops.sub(local_ops.div(sq, n), local_ops.square(local_ops.div(s, n)))
-    if unbiased:
-        output = local_ops.mul(output, n / (n - 1))
-    return output
+        if unbiased:
+            output = local_ops.mul(output, n / (n - 1))
+        return output
 
 
 def std(storage: DStorage, *args, **kwargs):
@@ -75,17 +75,31 @@ def std(storage: DStorage, *args, **kwargs):
         dim = args[0]
     if "dim" in kwargs:
         dim = kwargs["dim"]
+    unbiased = kwargs.get("unbiased", True)
 
     local_ops = storage.local_ops_helper()
-    if dim is None:
+    if dim is not None and dim != storage.shape.d_axis:
+        return DStorage.unary_op(storage, lambda x: local_ops.std(x, dim=dim, unbiased=unbiased))
 
-        def _mapper(x):
-            return (local_ops.sum(local_ops.square(x)), local_ops.sum(x))
+    else:
+        if dim is None:
+            n = storage.shape.prod()
+
+            def _mapper(x):
+                return (local_ops.sum(local_ops.square(x)), local_ops.sum(x))
+
+        else:
+            n = storage.shape[dim]
+
+            def _mapper(x):
+                return (local_ops.sum(local_ops.square(x), dim=dim), local_ops.sum(x, dim=dim))
 
         def _reducer(x, y):
-            return (local_ops.add(x[0], y[0]), local_ops.add(y[0], y[1]))
+            return (local_ops.add(x[0], y[0]), local_ops.add(x[1], y[1]))
 
         sq, s = storage.blocks.mapValues(_mapper).reduce(_reducer)
-        n = storage.shape.prod()
-        return local_ops.sqrt(local_ops.sub(local_ops.square(local_ops.div(s, n)), local_ops.div(sq, n)))
-    raise NotImplementedError()
+        output = local_ops.sub(local_ops.div(sq, n), local_ops.square(local_ops.div(s, n)))
+        if unbiased:
+            output = local_ops.mul(output, n / (n - 1))
+        output = local_ops.sqrt(output)
+        return output
