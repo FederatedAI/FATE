@@ -11,6 +11,8 @@
    * more flexible pytorch top/bottom model customization; provide access to industry approved PyTorch models
    * User-defined training loss
    * Support various data set types, may build data set based on PyTorch Dataset
+* Renewed Homo-federated framework with support for all current homo models, including Homo NN, Homo LR,Homo SecureBoost, 
+  Homo Feature Binning, and Hetero KMeans. This provides smoother algorithm customization and development experience
 * Semi-Supervised Algorithm Positive Unlabeled Learning
 * Hetero LR & Hetero SecureBoost now supports Intel IPCL
 * Intersection support Multi-host Elliptic-curve-based PSI
