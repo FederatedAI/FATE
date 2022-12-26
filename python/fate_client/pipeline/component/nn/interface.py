@@ -39,18 +39,20 @@ if register_cell_magic is not None:
             dataset_pth = 'nn/dataset/'
             trainer_pth = 'nn/homo/trainer/'
             aggregator_pth = 'framework/homo/aggregator/'
+            loss_path = 'nn/loss/'
 
             mode_map = {
                 'model': model_pth,
                 'trainer': trainer_pth,
                 'aggregator': aggregator_pth,
-                'dataset': dataset_pth
+                'dataset': dataset_pth,
+                'loss': loss_path
             }
 
             args = line.split()
             assert len(
-                args) == 2, "input args len is not 2, got {} \n expect format: %%save_to_fate SAVE_MODE FILENAME \n SAVE_MODE in ['model', 'dataset', 'trainer', 'aggregator']   FILE_NAME xxx.py".format(args)
-            modes_avail = ['model', 'dataset', 'trainer', 'aggregator']
+                args) == 2, "input args len is not 2, got {} \n expect format: %%save_to_fate SAVE_MODE FILENAME \n SAVE_MODE in ['model', 'dataset', 'trainer', 'loss', 'aggregator']   FILE_NAME xxx.py".format(args)
+            modes_avail = ['model', 'dataset', 'trainer', 'aggregator', 'loss']
             save_mode = args[0]
             file_name = args[1]
             assert save_mode in modes_avail, 'avail modes are {}, got {}'.format(
