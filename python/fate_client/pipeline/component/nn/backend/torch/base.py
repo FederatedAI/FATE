@@ -1,6 +1,7 @@
 import json
 import torch as t
 from torch.nn import Sequential as tSequential
+from pipeline.component.nn.backend.torch.operation import OpBase
 
 
 class FateTorchLayer(object):
@@ -137,8 +138,11 @@ class Sequential(tSequential):
 
 
 def get_torch_instance(fate_torch_nn_class: FateTorchLayer, param):
-
     parent_torch_class = fate_torch_nn_class.__bases__
+
+    if issubclass(fate_torch_nn_class, OpBase):
+        return fate_torch_nn_class(**param)
+
     for cls in parent_torch_class:
         if issubclass(cls, t.nn.Module):
             return cls(**param)
