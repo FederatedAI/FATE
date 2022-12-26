@@ -575,11 +575,10 @@ Select 9999 as the guest and execute on 192.168.0.2:
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/min_test_task/
 #One-sided testing
-python run_task.py -gid 9999 -hid 9999 -aid 9999 -f fast
+flow test min -gid 9999 -hid 9999 -aid 9999 -t fast
 #Two-sided testing
-python run_task.py -gid 9999 -hid 10000 -aid 10000 -f fast
+flow test min -gid 9999 -hid 10000 -aid 10000 -t fast
 ```
 
 Other parameters that may be useful include:
