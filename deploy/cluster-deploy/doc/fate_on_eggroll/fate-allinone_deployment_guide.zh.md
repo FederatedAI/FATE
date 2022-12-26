@@ -577,11 +577,10 @@ fate_test data upload -t min_test
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/min_test_task/
 #单边测试
-python run_task.py -gid 9999 -hid 9999 -aid 9999 -f fast
+flow test min -gid 9999 -hid 9999 -aid 9999 -t fast
 #双边测试
-python run_task.py -gid 9999 -hid 10000 -aid 10000 -f fast
+flow test min -gid 9999 -hid 10000 -aid 10000 -t fast
 ```
 
 其他一些可能有用的参数包括：
