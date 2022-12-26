@@ -934,6 +934,10 @@ bash service.sh start
 #配置fate client
 source /data/projects/fate/bin/init_env.sh
 flow init -c /data/projects/fate/conf/service_conf.yaml
+#192.168.0.1执行
+pipeline init --ip 192.168.0.1 --port 9380
+#192.168.0.2执行
+pipeline init --ip 192.168.0.2 --port 9380
 
 #配置fate test
 source /data/projects/fate/bin/init_env.sh
@@ -1038,11 +1042,10 @@ fate_test data upload -t min_test
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/min_test_task/
 #单边测试
-python run_task.py -gid 9999 -hid 9999 -aid 9999 -f fast
+flow test min -gid 9999 -hid 9999 -aid 9999 -t fast
 #双边测试
-python run_task.py -gid 9999 -hid 10000 -aid 10000 -f fast
+flow test min -gid 9999 -hid 10000 -aid 10000 -t fast
 ```
 
 其他一些可能有用的参数包括：
