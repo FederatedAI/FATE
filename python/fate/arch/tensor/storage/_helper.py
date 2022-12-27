@@ -12,6 +12,12 @@ class local_ops_helper:
     def std(self, x, *args, **kwargs):
         return self.apply_signature1("std", args, kwargs)(x)
 
+    def max(self, x, *args, **kwargs):
+        return self.apply_signature1("max", args, kwargs)(x)
+
+    def min(self, x, *args, **kwargs):
+        return self.apply_signature1("min", args, kwargs)(x)
+
     def sum(self, x, *args, **kwargs):
         return self.apply_signature1("sum", args, kwargs)(x)
 
@@ -20,6 +26,12 @@ class local_ops_helper:
 
     def add(self, x, y, *args, **kwargs):
         return self.apply_signature2("add", args, kwargs)(x, y)
+
+    def maximum(self, x, y, *args, **kwargs):
+        return self.apply_signature2("maximum", args, kwargs)(x, y)
+
+    def minimum(self, x, y, *args, **kwargs):
+        return self.apply_signature2("minimum", args, kwargs)(x, y)
 
     def div(self, x, y, *args, **kwargs):
         return self.apply_signature2("div", args, kwargs)(x, y)

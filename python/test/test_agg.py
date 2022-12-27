@@ -88,3 +88,21 @@ def test_var(t1):
     print(torch.var(t1.to_local().storage.data, unbiased=False))
     print(torch.var(t1.to_local().storage.data, dim=0, unbiased=False))
     print(torch.var(t1.to_local().storage.data, dim=1, unbiased=False))
+
+
+def test_max(t1):
+    print(tensor.max(t1))
+    print(tensor.max(t1, dim=0))
+    print(tensor.max(t1, dim=1).to_local())
+    print(torch.max(t1.to_local().storage.data))
+    print(torch.max(t1.to_local().storage.data, dim=0).values)
+    print(torch.max(t1.to_local().storage.data, dim=1).values)
+
+
+def test_min(t1):
+    print(tensor.min(t1))
+    print(tensor.min(t1, dim=0))
+    print(tensor.min(t1, dim=1).to_local())
+    print(torch.min(t1.to_local().storage.data))
+    print(torch.min(t1.to_local().storage.data, dim=0).values)
+    print(torch.min(t1.to_local().storage.data, dim=1).values)

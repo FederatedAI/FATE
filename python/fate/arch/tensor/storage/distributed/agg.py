@@ -103,3 +103,47 @@ def std(storage: DStorage, *args, **kwargs):
             output = local_ops.mul(output, n / (n - 1))
         output = local_ops.sqrt(output)
         return output
+
+
+def max(storage: DStorage, *args, **kwargs):
+    dim = None
+    if len(args) > 0:
+        dim = args[0]
+    if "dim" in kwargs:
+        dim = kwargs["dim"]
+    local_ops = storage.local_ops_helper()
+    if dim is None:
+
+        def _mapper(x):
+            return local_ops.max(x)
+
+        return storage.blocks.mapValues(_mapper).reduce(lambda x, y: local_ops.maximum(x, y))
+    else:
+        if dim == storage.shape.d_axis:
+            return storage.blocks.mapValues(lambda x: local_ops.max(x, dim=dim)).reduce(
+                lambda x, y: local_ops.maximum(x, y)
+            )
+        else:
+            return DStorage.unary_op(storage, lambda s: local_ops.max(s, *args, **kwargs))
+
+
+def min(storage: DStorage, *args, **kwargs):
+    dim = None
+    if len(args) > 0:
+        dim = args[0]
+    if "dim" in kwargs:
+        dim = kwargs["dim"]
+    local_ops = storage.local_ops_helper()
+    if dim is None:
+
+        def _mapper(x):
+            return local_ops.min(x)
+
+        return storage.blocks.mapValues(_mapper).reduce(lambda x, y: local_ops.minimum(x, y))
+    else:
+        if dim == storage.shape.d_axis:
+            return storage.blocks.mapValues(lambda x: local_ops.min(x, dim=dim)).reduce(
+                lambda x, y: local_ops.minimum(x, y)
+            )
+        else:
+            return DStorage.unary_op(storage, lambda s: local_ops.min(s, *args, **kwargs))

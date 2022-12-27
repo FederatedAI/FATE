@@ -40,6 +40,11 @@ class DStorage:
 
         return max(self, *args, **kwargs)
 
+    def min(self, *args, **kwargs):
+        from ..storage.distributed.agg import min
+
+        return min(self, *args, **kwargs)
+
     def mean(self, *args, **kwargs):
         from ..storage.distributed.agg import mean
 
