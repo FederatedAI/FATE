@@ -99,9 +99,6 @@ def main(config="../../config.yaml", param="./breast_lr_config.yaml", namespace=
         "batch_size": param.get("batch_size", -1),
         "init_param": {
             "init_method": param.get("init_method", 'random_uniform')
-        },
-        "encrypt_param": {
-            "method": None
         }
     }
     lr_param.update(config_param)
