@@ -57,7 +57,7 @@ In order to show you how to develop your own Trainer, here we try to develop a s
 
 ### Top Model, Bottom Model & Interactive Layer & Loss
 
-- [2.1 Use CustModel to Set Top, Bottom Model](Hetero-NN-Model-and-Loss.ipynb)
+- [2.1 Use CustModel to Set Top, Bottom Model](Hetero-NN-Customize-Model.ipynb)
 
 
 ## Advanced Examples
