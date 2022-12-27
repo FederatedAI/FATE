@@ -94,10 +94,6 @@
         "one_vs_all": {
             "conf": "homo_lr_one_vs_all_conf.json",
             "dsl": "homo_lr_one_vs_all_dsl.json"
-        },
-        "one_vs_all_encrypted": {
-            "conf": "homo_lr_one_vs_all_encrypted_host_conf.json",
-            "dsl": "homo_lr_one_vs_all_encrypted_host_dsl.json"
         }
     }
 }
