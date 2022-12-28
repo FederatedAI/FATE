@@ -15,3 +15,5 @@ guest_table_name: "vehicle_scale_hetero_guest"
 host_table_name: "vehicle_scale_hetero_host"
 top_act: "softmax"
 opt: "RMSprop"
+shape1: 9
+shape2: 9
