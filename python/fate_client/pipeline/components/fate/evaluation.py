@@ -10,7 +10,8 @@ class Evaluation(Component):
     def __init__(self,
                  name: str,
                  runtime_roles: List[str] = None,
-                 input_data: ArtifactChannel = PlaceHolder()
+                 input_data: ArtifactChannel = PlaceHolder(),
+                 eval_type: str = PlaceHolder(),
                  ):
         inputs = locals()
         self._process_init_inputs(inputs)
@@ -18,3 +19,4 @@ class Evaluation(Component):
         self.name = name
         self.runtime_roles = runtime_roles
         self.input_data = input_data
+        self.eval_type = eval_type

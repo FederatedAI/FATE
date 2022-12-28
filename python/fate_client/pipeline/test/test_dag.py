@@ -50,11 +50,13 @@ lr_0 = HeteroLR(name="lr_0",
                 max_iter=1,
                 learning_rate=0.01,
                 batch_size=569)
+
 lr_1 = HeteroLR(name="lr_1",
                 test_data=feature_scale_1.outputs["test_output_data"],
                 input_model=lr_0.outputs["output_model"])
 
 evaluation_0 = Evaluation(name="evaluation_0",
+                          runtime_roles="guest",
                           input_data=lr_0.outputs["train_output_data"])
 
 pipeline.add_task(reader_0)
@@ -70,6 +72,7 @@ pipeline.conf.set("task_parallelism", 1)
 pipeline.compile()
 print(pipeline.get_dag())
 pipeline.fit()
+exit(0)
 print(pipeline.deploy([reader_0, lr_0]))
 
 

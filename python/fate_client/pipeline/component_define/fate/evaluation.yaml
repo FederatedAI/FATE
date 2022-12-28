@@ -18,6 +18,8 @@ component:
           - default
         roles:
           - guest
+          - host
+          - arbiter
   output_definitions:
     artifacts:
       output_metric:
@@ -27,4 +29,6 @@ component:
           - default
         roles:
           - guest
+          - host
+          - arbiter
 schema_version: v1

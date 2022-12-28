@@ -111,7 +111,7 @@ class Pipeline(object):
                 self._roles = task.roles
 
             self._tasks.update(task.tasks)
-            self._job_conf.update(task.conf.conf)
+            self._job_conf.update(task.conf.dict())
             self._model_info = task.model_info
 
         return self
@@ -120,7 +120,7 @@ class Pipeline(object):
         self._dag.compile(task_insts=self._tasks,
                           roles=self._roles,
                           stage=self._stage,
-                          job_conf=self._job_conf.conf)
+                          job_conf=self._job_conf.dict())
         return self
 
     def get_deployed_pipeline(self):

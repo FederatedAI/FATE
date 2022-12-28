@@ -13,7 +13,9 @@ class JobConf(object):
             if k not in self._conf:
                 self._conf[k] = v
 
-    @property
-    def conf(self):
+    def dict(self):
         return self._conf
 
+
+class TaskConf(JobConf):
+    ...
