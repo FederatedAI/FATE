@@ -6,6 +6,6 @@ label_name: "y"
 penalty: "L2"
 max_iter: 30
 alpha: 0.01
-batch_size: 32
+batch_size: -1
 learning_rate: 0.15
 optimizer: "rmsprop"

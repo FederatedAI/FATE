@@ -54,7 +54,7 @@
       "relative_tol": 0.05
     }
   },
-   "homo_nn-multi": {
+  "homo_nn-multi": {
     "local": {
       "script": "./local-homo_nn.py",
       "conf": "./param_conf_multi.yaml"

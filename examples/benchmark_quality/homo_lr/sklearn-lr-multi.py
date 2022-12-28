@@ -42,10 +42,11 @@ def main(config="../../config.yaml", param="./lr_config.yaml"):
 
     config_param = {
         "penalty": param["penalty"],
-        "max_iter": 100,
+        "max_iter": param["max_iter"],
         "alpha": param["alpha"],
         "learning_rate": "optimal",
-        "eta0": param["learning_rate"]
+        "eta0": param["learning_rate"],
+        "random_state": 123
     }
 
     # prepare data

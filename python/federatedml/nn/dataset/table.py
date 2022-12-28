@@ -117,7 +117,7 @@ class TableDataset(Dataset):
             y_ = np.asarray(y_)
             df = pd.DataFrame(x_)
             df.columns = header
-            df['id'] = data_keys
+            df['id'] = sorted(data_keys)
             df['label'] = y_
             # host data has no label, so this columns will all be None
             if df['label'].isna().all():
