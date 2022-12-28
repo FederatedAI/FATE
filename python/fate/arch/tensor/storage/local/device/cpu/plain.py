@@ -66,20 +66,26 @@ class _TorchStorage(LStorage):
             return _ops_cpu_plain_binary_buildin(method, args, kwargs)
 
     def mean(self, *args, **kwargs):
-        output = torch.mean(self.data, *args, **kwargs)
-        output_dtype = dtype.from_torch_dtype(output.dtype)
-        output_shape = Shape(output.shape)
-        return _TorchStorage(output_dtype, output_shape, output)
+        return _ops_cpu_plain_unary_buildin("mean", args, kwargs)(self)
 
     def sum(self, *args, **kwargs):
-        output = torch.sum(self.data, *args, **kwargs)
-        output_dtype = dtype.from_torch_dtype(output.dtype)
-        output_shape = Shape(output.shape)
-        return _TorchStorage(output_dtype, output_shape, output)
+        return _ops_cpu_plain_unary_buildin("sum", args, kwargs)(self)
+
+    def var(self, *args, **kwargs):
+        return _ops_cpu_plain_unary_buildin("var", args, kwargs)(self)
+
+    def std(self, *args, **kwargs):
+        return _ops_cpu_plain_unary_buildin("std", args, kwargs)(self)
+
+    def max(self, *args, **kwargs):
+        return _ops_cpu_plain_unary_custom("max", args, kwargs)(self)
+
+    def min(self, *args, **kwargs):
+        return _ops_cpu_plain_unary_custom("min", args, kwargs)(self)
 
 
 def _ops_cpu_plain_unary_buildin(method, args, kwargs) -> Callable[[_TorchStorage], _TorchStorage]:
-    if method in {"exp", "log", "neg", "reciprocal", "square", "abs", "sum", "sqrt", "var", "std"}:
+    if method in {"exp", "log", "neg", "reciprocal", "square", "abs", "sum", "sqrt", "var", "std", "mean"}:
         func = getattr(torch, method)
 
         def _wrap(storage: _TorchStorage) -> _TorchStorage:

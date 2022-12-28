@@ -23,7 +23,7 @@ def mean(storage: DStorage, *args, **kwargs):
     local_ops = storage.local_ops_helper()
     if dim is not None and dim != storage.shape.d_axis:
         count = storage.shape[dim]
-        output = DStorage.unary_op(storage, lambda x: local_ops.truediv(local_ops.sum(x, *args, **kwargs), count))
+        return DStorage.unary_op(storage, lambda x: local_ops.truediv(local_ops.sum(x, *args, **kwargs), count))
     else:
         output = DStorage.unary_op(storage, lambda x: local_ops.sum(x, *args, **kwargs))
         if dim is None:
