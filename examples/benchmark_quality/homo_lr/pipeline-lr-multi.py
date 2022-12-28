@@ -85,7 +85,7 @@ def main(config="../../config.yaml", param="./breast_lr_config.yaml", namespace=
         "optimizer": param.get("optimizer", "sgd"),
         "batch_size": param.get("batch_size", -1),
         "init_param": {
-            "init_method": param.get("init_method", 'random_uniform')
+            "init_method": 'random_uniform'
         }
     }
     lr_param.update(config_param)
