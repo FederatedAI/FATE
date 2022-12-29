@@ -32,10 +32,14 @@ def get_proto_buffer_class(buffer_name):
     raise ModuleNotFoundError(buffer_name)
 
 
+def parse_pb_buffer(pb_name, pb_buffer):
+    pb_object = get_proto_buffer_class(pb_name)()
+    pb_object.ParseFromString(pb_buffer)
+    return pb_object
+
+
 def deserialize_models(model_input):
     for model_type, models in model_input.items():
         for cpn_name, cpn_models in models.items():
             for model_name, (pb_name, pb_buffer) in cpn_models.items():
-                pb_object = get_proto_buffer_class(pb_name)()
-                pb_object.ParseFromString(pb_buffer)
-                model_input[model_type][cpn_name][model_name] = pb_object
+                model_input[model_type][cpn_name][model_name] = parse_pb_buffer(pb_name, pb_buffer)

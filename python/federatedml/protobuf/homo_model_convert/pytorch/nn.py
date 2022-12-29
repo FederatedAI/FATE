@@ -15,8 +15,8 @@
 #
 
 import io
-import torch
-
+import torch as t
+import tempfile
 from ..component_converter import ComponentConverterBase
 
 
@@ -27,15 +27,16 @@ class NNComponentConverter(ComponentConverterBase):
         return ['HomoNN']
 
     def convert(self, model_dict):
-        param_obj = model_dict["HomoNNModelParam"]
-        meta_obj = model_dict["HomoNNModelMeta"]
-        if meta_obj.params.config_type != "pytorch":
-            raise ValueError("Invalid config type: {}".format(meta_obj.config_type))
 
-        with io.BytesIO(param_obj.saved_model_bytes) as model_bytes:
-            if hasattr(param_obj, "api_version") and param_obj.api_version > 0:
-                from federatedml.nn.homo_nn._torch import FedLightModule
-                pytorch_nn_model = FedLightModule.load_from_checkpoint(model_bytes).model
-            else:
-                pytorch_nn_model = torch.load(model_bytes)
-            return pytorch_nn_model
+        param_obj = model_dict["HomoNNParam"]
+        meta_obj = model_dict["HomoNNMeta"]
+
+        if not hasattr(param_obj, 'model_bytes'):
+            raise ValueError("Did not find model_bytes in model param protobuf")
+
+        with tempfile.TemporaryFile() as f:
+            f.write(param_obj.model_bytes)
+            f.seek(0)
+            model_dict = t.load(f)
+
+        return model_dict

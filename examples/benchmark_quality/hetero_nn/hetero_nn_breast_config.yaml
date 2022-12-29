@@ -15,3 +15,5 @@ guest_table_name: "breast_hetero_guest"
 host_table_name: "breast_hetero_host"
 top_act: "sigmoid"
 opt: "SGD"
+shape1: 10
+shape2: 20

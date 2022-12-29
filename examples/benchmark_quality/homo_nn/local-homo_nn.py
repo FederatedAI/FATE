@@ -16,13 +16,13 @@
 
 import argparse
 import pathlib
-
+import numpy as np
+import torch as t
+from torch.utils.data import DataLoader, TensorDataset
 import pandas
 from pipeline.utils.tools import JobConfig
-from tensorflow.keras import Sequential
-from tensorflow.keras import optimizers
-import tensorflow.keras.layers
-from tensorflow.keras.utils import to_categorical
+from federatedml.nn.backend.utils.common import global_seed
+
 
 dataset = {
     "vehicle": {
@@ -36,7 +36,38 @@ dataset = {
 }
 
 
+def fit(epoch, model, optimizer, loss, batch_size, dataset):
+
+    print(
+        'model is {}, loss is {}, optimizer is {}'.format(
+            model,
+            loss,
+            optimizer))
+    dl = DataLoader(dataset, batch_size=batch_size)
+    for i in range(epoch):
+        epoch_loss = 0
+        for feat, label in dl:
+            optimizer.zero_grad()
+            pred = model(feat)
+            l = loss(pred, label)
+            epoch_loss += l.detach().numpy()
+            l.backward()
+            optimizer.step()
+        print('epoch is {}, epoch loss is {}'.format(i, epoch_loss))
+
+
+def compute_acc(pred, label, is_multy):
+
+    if is_multy:
+        pred = pred.argmax(axis=1)
+    else:
+        pred = (pred > 0.5) + 0
+
+    return float((pred == label).sum() / len(label))
+
+
 def main(config="../../config.yaml", param="param_conf.yaml"):
+
     if isinstance(param, str):
         param = JobConfig.load_from_file(param)
     if isinstance(config, str):
@@ -48,25 +79,15 @@ def main(config="../../config.yaml", param="param_conf.yaml"):
     epoch = param["epoch"]
     lr = param["lr"]
     batch_size = param.get("batch_size", -1)
-    optimizer_name = param.get("optimizer", "Adam")
-    loss = param.get("loss", "categorical_crossentropy")
-    metrics = param.get("metrics", ["accuracy"])
-    layers = param["layers"]
     is_multy = param["is_multy"]
     data = dataset[param.get("dataset", "vehicle")]
 
-    model = Sequential()
-    for layer_config in layers:
-        layer = getattr(tensorflow.keras.layers, layer_config["name"])
-        layer_params = layer_config["params"]
-        model.add(layer(**layer_params))
+    global_seed(123)
 
-    model.compile(
-        optimizer=getattr(optimizers, optimizer_name)(learning_rate=lr),
-        loss=loss,
-        metrics=metrics,
-    )
-
+    if is_multy:
+        loss = t.nn.CrossEntropyLoss()
+    else:
+        loss = t.nn.BCELoss()
     data_path = pathlib.Path(data_base_dir)
     data_with_label = pandas.concat(
         [
@@ -74,24 +95,35 @@ def main(config="../../config.yaml", param="param_conf.yaml"):
             pandas.read_csv(data_path.joinpath(data["host"]), index_col=0),
         ]
     ).values
-    data = data_with_label[:, 1:]
+
+    data = t.Tensor(data_with_label[:, 1:])
+    labels = t.Tensor(data_with_label[:, 0])
     if is_multy:
-        labels = to_categorical(data_with_label[:, 0])
+        labels = labels.type(t.int64)
     else:
-        labels = data_with_label[:, 0]
+        labels = labels.reshape((-1, 1))
+    ds = TensorDataset(data, labels)
+
+    input_shape = data.shape[1]
+    output_shape = 4 if is_multy else 1
+    out_act = t.nn.Softmax(dim=1) if is_multy else t.nn.Sigmoid()
+
+    model = t.nn.Sequential(
+        t.nn.Linear(input_shape, 16),
+        t.nn.ReLU(),
+        t.nn.Linear(16, output_shape),
+        out_act
+    )
+
     if batch_size < 0:
         batch_size = len(data_with_label)
-    model.fit(data, labels, epochs=epoch, batch_size=batch_size)
-    evaluate = model.evaluate(data, labels)
-    metric_summary = {"accuracy": evaluate[1]}
+
+    optimizer = t.optim.Adam(model.parameters(), lr=lr)
+    fit(epoch, model, optimizer, loss, batch_size, ds)
+
+    pred_rs = model(data)
+    acc = compute_acc(pred_rs, labels, is_multy)
+    metric_summary = {"accuracy": acc}
+    print(metric_summary)
     data_summary = {}
     return data_summary, metric_summary
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser("BENCHMARK-QUALITY SKLEARN JOB")
-    parser.add_argument("-param", type=str, help="config file for params")
-    args = parser.parse_args()
-    if args.param is not None:
-        main(args.param)
-    main()

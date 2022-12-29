@@ -30,8 +30,8 @@ from pipeline.utils.logger import LOGGER
 
 class JobInvoker(object):
     def __init__(self):
-        self.client = FlowClient(ip=conf.FlowConfig.IP, port=conf.FlowConfig.PORT, version=conf.SERVER_VERSION,
-                                 app_key=conf.FlowConfig.APP_KEY, secret_key=conf.FlowConfig.SECRET_KEY)
+        self.client = FlowClient(ip=conf.PipelineConfig.IP, port=conf.PipelineConfig.PORT, version=conf.SERVER_VERSION,
+                                 app_key=conf.PipelineConfig.APP_KEY, secret_key=conf.PipelineConfig.SECRET_KEY)
 
     def submit_job(self, dsl=None, submit_conf=None, callback_func=None):
         LOGGER.debug(f"submit dsl is: \n {json.dumps(dsl, indent=4, ensure_ascii=False)}")
@@ -443,6 +443,15 @@ class JobInvoker(object):
             raise ValueError("Call flow homo convert failed, check if fate_flow server is up!")
         elif result["retcode"] != 0:
             raise ValueError("Cannot convert homo model, error msg is {}".format(result["retmsg"]))
+        else:
+            return result["data"]
+
+    def bind_table(self, **kwargs):
+        result = self.client.table.bind(**kwargs)
+        if result is None or 'retcode' not in result:
+            raise ValueError("Call flow table bind is failed, check if fate_flow server is up!")
+        elif result["retcode"] != 0:
+            raise ValueError(f"Cannot bind table, error msg is {result['retmsg']}")
         else:
             return result["data"]
 

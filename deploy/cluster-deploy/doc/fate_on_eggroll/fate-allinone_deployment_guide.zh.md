@@ -199,7 +199,7 @@ echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab
 或者使用5.1章节的代码包中的脚本创建，app用户执行：
 
 ```
-sh /data/projects/fate_cluster_install_${version}_release/tools-install/makeVirtualDisk.sh
+bash /data/projects/fate_cluster_install_${version}_release/tools-install/makeVirtualDisk.sh
 Waring: please make sure has enough space of your disk first!!! （请确认有足够的存储空间）
 current user has sudo privilege(yes|no):yes      （是否有sudo权限，输入yes，不能简写）
 Enter store directory:/data    （设置虚拟内存文件的存放路径，确保目录存在和不要设置在根目录）
@@ -277,7 +277,7 @@ tar xzf fate_cluster_install_${version}_release.tar.gz
 
 ```
 #在192.168.0.1和192.168.0.2服务器上分别执行检查脚本
-sh ./check.sh
+bash ./check.sh
 
 #确认app用户已配置sudo
 #虚拟内存，size不低于128G，如不满足需参考4.6章节重新设置
@@ -474,7 +474,7 @@ nodemanager_port=4671
 
 ```
 cd fate_cluster_install_${version}_release/allInone
-nohup sh ./deploy.sh > logs/boot.log 2>&1 &
+nohup bash ./deploy.sh > logs/boot.log 2>&1 &
 ```
 
 部署日志输出在fate_cluster_install_${version}_release/allInone/logs目录下,实时查看是否有报错：
@@ -577,11 +577,10 @@ fate_test data upload -t min_test
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/min_test_task/
 #单边测试
-python run_task.py -gid 9999 -hid 9999 -aid 9999 -f fast
+flow test min -gid 9999 -hid 9999 -aid 9999 -t fast
 #双边测试
-python run_task.py -gid 9999 -hid 10000 -aid 10000 -f fast
+flow test min -gid 9999 -hid 10000 -aid 10000 -t fast
 ```
 
 其他一些可能有用的参数包括：
@@ -611,7 +610,7 @@ Fateboard是一项Web服务。如果成功启动了fateboard服务，则可以�
 
 ```bash
 cd /data/projects/fate/common/mysql/mysql-*
-sh ./service.sh start|stop|status|restart
+bash ./service.sh start|stop|status|restart
 ```
 
 #### 7.1.2. Eggroll服务管理
@@ -624,13 +623,13 @@ cd /data/projects/fate/eggroll
 启动/关闭/查看/重启所有：
 
 ```bash
-sh ./bin/eggroll.sh all start/stop/status/restart
+bash ./bin/eggroll.sh all start/stop/status/restart
 ```
 
 启动/关闭/查看/重启单个模块(可选：clustermanager，nodemanager，rollsite)：
 
 ```bash
-sh ./bin/eggroll.sh clustermanager start/stop/status/restart
+bash ./bin/eggroll.sh clustermanager start/stop/status/restart
 ```
 
 #### 7.1.3. Fate服务管理
@@ -640,7 +639,7 @@ sh ./bin/eggroll.sh clustermanager start/stop/status/restart
 ```bash
 source /data/projects/fate/bin/init_env.sh
 cd /data/projects/fate/fateflow/bin
-sh service.sh start|stop|status|restart
+bash service.sh start|stop|status|restart
 ```
 
 如果逐个模块启动，需要先启动eggroll再启动fateflow，fateflow依赖eggroll的启动。
@@ -649,7 +648,7 @@ sh service.sh start|stop|status|restart
 
 ```bash
 cd /data/projects/fate/fateboard
-sh service.sh start|stop|status|restart
+bash service.sh start|stop|status|restart
 ```
 
 ### 7.2. 查看进程和端口
@@ -779,4 +778,3 @@ find /data/projects/fate/eggroll/data/IN_MEMORY/ -maxdepth 1 -mindepth 1 -mtime 
 ```bash
 find /data/projects/fate/eggroll/data/LMDB/ -maxdepth 1 -mindepth 1 -mtime +N -type d -name "output_data_*" | xargs rm -rf
 ```
-

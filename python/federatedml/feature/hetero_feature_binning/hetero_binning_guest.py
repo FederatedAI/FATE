@@ -50,12 +50,20 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
 
         self._setup_bin_inner_param(data_instances, self.model_param)
 
+        split_points_obj = None
         if self.model_param.method == consts.OPTIMAL:
             has_missing_value = self.iv_calculator.check_containing_missing_value(data_instances)
             for idx in self.bin_inner_param.bin_indexes:
                 if idx in has_missing_value:
                     raise ValueError(f"Optimal Binning do not support missing value now.")
-        split_points = self.binning_obj.fit_split_points(data_instances)
+        if self.model_param.split_points_by_col_name or self.model_param.split_points_by_index:
+            split_points = self._get_manual_split_points(data_instances)
+            self.use_manual_split_points = True
+            for col_name, sp in split_points.items():
+                self.binning_obj.bin_results.put_col_split_points(col_name, sp)
+        else:
+            split_points = self.binning_obj.fit_split_points(data_instances)
+            split_points_obj = self.binning_obj.bin_results
 
         if self.model_param.skip_static:
             self.transform_data(data_instances)
@@ -63,6 +71,9 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
 
         label_counts_dict, label_counts, label_table = self.stat_label(data_instances)
         self.bin_result = self.cal_local_iv(data_instances, split_points, label_counts, label_table)
+        if self.model_param.method == consts.OPTIMAL and split_points_obj is not None:
+            # LOGGER.debug(f"set optimal metric array")
+            self.set_optimal_metric_array(split_points_obj.all_optimal_metric)
 
         if self.model_param.local_only:
 

@@ -34,8 +34,6 @@ class EcdhIntersect(Intersect):
 
     def load_params(self, param):
         super().load_params(param=param)
-        if len(self.host_party_id_list) > 1:
-            raise ValueError(f"ECDH method currently only support single-host tasks.")
         self.ecdh_params = param.ecdh_params
         self.hash_operator = Hash(param.ecdh_params.hash_method, hex_output=False)
         self.salt = self.ecdh_params.salt
@@ -121,16 +119,12 @@ class EcdhIntersect(Intersect):
         raise NotImplementedError("This method should not be called here")
 
     def run_intersect(self, data_instances):
-        if len(self.host_party_id_list) > 1:
-            raise ValueError(f"Intersection with ECDH only supports single-host task.")
         LOGGER.info("Start ECDH Intersection")
         id_intersect_cipher_cipher = self.get_intersect_doubly_encrypted_id(data_instances)
         intersect_ids = self.decrypt_intersect_doubly_encrypted_id(id_intersect_cipher_cipher)
         return intersect_ids
 
     def run_cache_intersect(self, data_instances, cache_data):
-        if len(self.host_party_id_list) > 1:
-            raise ValueError(f"Intersection with ECDH only supports single-host task.")
         LOGGER.info("Start ECDH Intersection with cache")
         id_intersect_cipher_cipher = self.get_intersect_doubly_encrypted_id_from_cache(data_instances, cache_data)
         intersect_ids = self.decrypt_intersect_doubly_encrypted_id(id_intersect_cipher_cipher)

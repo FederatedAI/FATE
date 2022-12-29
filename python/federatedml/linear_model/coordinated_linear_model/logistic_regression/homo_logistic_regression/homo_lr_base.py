@@ -17,16 +17,15 @@
 #  limitations under the License.
 
 import functools
-
+import torch as t
+import math
+from torch.optim.lr_scheduler import LambdaLR
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.linear_model.coordinated_linear_model.logistic_regression.base_logistic_regression import BaseLogisticRegression
 from federatedml.optim import activation
-from federatedml.optim.optimizer import optimizer_factory
 from federatedml.param.logistic_regression_param import HomoLogisticParam
 from federatedml.protobuf.generated import lr_model_meta_pb2
 from federatedml.secureprotol import PaillierEncrypt
-from federatedml.util.classify_label_checker import ClassifyLabelChecker
-from federatedml.util.homo_label_encoder import HomoLabelEncoderClient, HomoLabelEncoderArbiter
 from federatedml.statistic import data_overview
 from federatedml.transfer_variable.transfer_class.homo_lr_transfer_variable import HomoLRTransferVariable
 from federatedml.util import LOGGER
@@ -43,22 +42,56 @@ class HomoLRBase(BaseLogisticRegression):
         self.mode = consts.HOMO
         self.model_param = HomoLogisticParam()
         self.aggregator = None
+        self.param = None
+
+    def get_torch_optimizer(self, torch_model: t.nn.Module, param: HomoLogisticParam):
+
+        try:
+            learning_rate = param.learning_rate
+            alpha = param.alpha  # L2 penalty weight
+
+            decay = param.decay
+            decay_sqrt = param.decay_sqrt
+
+            if not decay_sqrt:
+                def decay_func(epoch): return 1 / (1 + epoch * decay)
+            else:
+                def decay_func(epoch): return 1 / math.sqrt(1 + epoch * decay)
+
+        except AttributeError:
+            raise AttributeError("Optimizer parameters has not been totally set")
+
+        optimizer_type = param.optimizer
+        if optimizer_type == 'sgd':
+            opt = t.optim.SGD(params=torch_model.parameters(), lr=learning_rate, weight_decay=alpha)
+        elif optimizer_type == 'nesterov_momentum_sgd':
+            opt = t.optim.SGD(
+                params=torch_model.parameters(),
+                nesterov=True,
+                momentum=0.9,
+                lr=learning_rate,
+                weight_decay=alpha)
+        elif optimizer_type == 'rmsprop':
+            opt = t.optim.RMSprop(params=torch_model.parameters(), alpha=0.99, lr=learning_rate, weight_decay=alpha)
+        elif optimizer_type == 'adam':
+            opt = t.optim.Adam(params=torch_model.parameters(), lr=learning_rate, weight_decay=alpha)
+        elif optimizer_type == 'adagrad':
+            opt = t.optim.Adagrad(params=torch_model.parameters(), lr=learning_rate, weight_decay=alpha)
+        else:
+            if optimizer_type == 'sqn':
+                raise NotImplementedError("Sqn optimizer is not supported in Homo-LR")
+            raise NotImplementedError("Optimize method cannot be recognized: {}".format(optimizer_type))
+
+        scheduler = LambdaLR(opt, lr_lambda=decay_func)
+        return opt, scheduler
 
     def _init_model(self, params):
         super(HomoLRBase, self)._init_model(params)
-        self.re_encrypt_batches = params.re_encrypt_batches
-
-        if params.encrypt_param.method == consts.PAILLIER:
-            self.cipher_operator = PaillierEncrypt()
-        else:
-            self.cipher_operator = None
 
         self.transfer_variable = HomoLRTransferVariable()
         # self.aggregator.register_aggregator(self.transfer_variable)
-        self.optimizer = optimizer_factory(params)
+        self.param = params
         self.aggregate_iters = params.aggregate_iters
-        self.use_proximal = params.use_proximal
-        self.mu = params.mu
 
     @property
     def use_loss(self):
@@ -160,7 +193,6 @@ class HomoLRBase(BaseLogisticRegression):
                                                           max_iter=self.max_iter,
                                                           early_stop=self.model_param.early_stop,
                                                           fit_intercept=self.fit_intercept,
-                                                          re_encrypt_batches=self.re_encrypt_batches,
                                                           module='HomoLR',
                                                           need_one_vs_rest=self.need_one_vs_rest)
         return meta_protobuf_obj

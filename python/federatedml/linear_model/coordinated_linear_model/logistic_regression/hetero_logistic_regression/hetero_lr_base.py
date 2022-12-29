@@ -21,7 +21,7 @@ from federatedml.linear_model.coordinated_linear_model.logistic_regression.base_
 from federatedml.optim.gradient.hetero_sqn_gradient import sqn_factory
 from federatedml.param.logistic_regression_param import HeteroLogisticParam
 from federatedml.protobuf.generated import lr_model_meta_pb2
-from federatedml.secureprotol import PaillierEncrypt
+from federatedml.secureprotol import PaillierEncrypt, IpclPaillierEncrypt
 from federatedml.transfer_variable.transfer_class.hetero_lr_transfer_variable import HeteroLRTransferVariable
 from federatedml.util import LOGGER
 from federatedml.util import consts
@@ -45,7 +45,14 @@ class HeteroLRBase(BaseLogisticRegression):
     def _init_model(self, params):
         super()._init_model(params)
         self.encrypted_mode_calculator_param = params.encrypted_mode_calculator_param
-        self.cipher_operator = PaillierEncrypt()
+
+        if params.encrypt_param.method == consts.PAILLIER:
+            self.cipher_operator = PaillierEncrypt()
+        elif params.encrypt_param.method == consts.PAILLIER_IPCL:
+            self.cipher_operator = IpclPaillierEncrypt()
+        else:
+            raise ValueError(f"Unsupported encryption method: {params.encrypt_param.method}")
+
         self.cipher.register_paillier_cipher(self.transfer_variable)
         self.converge_procedure.register_convergence(self.transfer_variable)
         self.batch_generator.register_batch_generator(self.transfer_variable)

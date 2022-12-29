@@ -137,7 +137,7 @@ class EcdhIntersectionHost(EcdhIntersect):
 
     def run_cardinality(self, data_instances):
         LOGGER.info(f"run exact_cardinality with DH")
-        self.get_intersect_doubly_encrypted_id(data_instances, keep_key=False)
+        self.get_intersect_doubly_encrypted_id(data_instances, keep_key=True)
         if self.sync_cardinality:
             self.intersect_num = self.transfer_variable.cardinality.get(idx=0)
             LOGGER.info("Got intersect cardinality from guest.")

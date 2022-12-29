@@ -23,7 +23,7 @@ from types import SimpleNamespace
 from pipeline.backend.config import Role
 from pipeline.backend.config import StatusCode
 from pipeline.backend.config import VERSION
-from pipeline.backend.config import SystemSetting
+from pipeline.backend.config import PipelineConfig
 from pipeline.backend._operation import OnlineCommand, ModelConvert
 from pipeline.backend.task_info import TaskInfo
 from pipeline.component.component_base import Component
@@ -62,7 +62,7 @@ class PipeLine(object):
         self._data_to_feed_in_prediction = None
         self._predict_pipeline = []
         self._deploy = False
-        self._system_role = SystemSetting.system_setting().get("role")
+        self._system_role = PipelineConfig.SYSTEM_SETTING.get("role")
         self.online = OnlineCommand(self)
         self._load = False
         self.model_convert = ModelConvert(self)
@@ -71,6 +71,10 @@ class PipeLine(object):
     @LOGGER.catch(reraise=True)
     def set_initiator(self, role, party_id):
         self._initiator = SimpleNamespace(role=role, party_id=party_id)
+        # for predict pipeline
+        if self._predict_pipeline:
+            predict_pipeline = self._predict_pipeline[0]["pipeline"]
+            predict_pipeline._initiator = SimpleNamespace(role=role, party_id=party_id)
 
         return self
 
@@ -151,6 +155,14 @@ class PipeLine(object):
                 self._roles[role].extend(party_id)
             else:
                 raise ValueError("role: {}'s party_id should be an integer or a list of integer".format(role))
+            # update role config for compiled pipeline
+            if self._train_conf:
+                if role in self._train_conf["role"]:
+                    self._train_conf["role"][role] = self._roles[role]
+
+        if self._predict_pipeline:
+            predict_pipeline = self._predict_pipeline[0]["pipeline"]
+            predict_pipeline._roles = self._roles
 
         return self
 
@@ -575,6 +587,27 @@ class PipeLine(object):
                                                                 self._initiator.party_id)
 
     @LOGGER.catch(reraise=True)
+    def update_model_info(self, model_id=None, model_version=None):
+        # predict pipeline
+        if self._predict_pipeline:
+            predict_pipeline = self._predict_pipeline[0]["pipeline"]
+            if model_id:
+                predict_pipeline._model_info.model_id = model_id
+            if model_version:
+                predict_pipeline._model_info.model_version = model_version
+            return self
+        # train pipeline
+        original_model_id, original_model_version = None, None
+        if self._model_info is not None:
+            original_model_id, original_model_version = self._model_info.model_id, self._model_info.model_version
+        new_model_id = model_id if model_id is not None else original_model_id
+        new_model_version = model_version if model_version is not None else original_model_version
+        if new_model_id is None and new_model_version is None:
+            return self
+        self._model_info = SimpleNamespace(model_id=new_model_id, model_version=new_model_version)
+        return self
+
+    @LOGGER.catch(reraise=True)
     def continuously_fit(self):
         self._fit_status = self._job_invoker.monitor_job_status(self._train_job_id,
                                                                 self._initiator.role,
@@ -765,6 +798,13 @@ class PipeLine(object):
             raise ValueError("input placeholder {} should be fill".format(unfilled_placeholder))
 
         self._data_to_feed_in_prediction = data_dict
+
+    @LOGGER.catch(reraise=True)
+    def bind_table(self, name, namespace, path, engine='PATH', replace=True, **kwargs):
+        info = self._job_invoker.bind_table(engine=engine, name=name, namespace=namespace, address={
+            "path": path
+        }, drop=replace, **kwargs)
+        return info
 
     # @LOGGER.catch(reraise=True)
     def __getattr__(self, attr):

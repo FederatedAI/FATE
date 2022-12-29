@@ -29,14 +29,16 @@ class KmeansParam(BaseParam):
     max_iter : int, default 300.
         Maximum number of iterations of the hetero-k-means algorithm to run.
     tol : float, default 0.001。
+    random_stat: int, random state, default is None
 
     """
 
-    def __init__(self, k=5, max_iter=300, tol=0.001):
+    def __init__(self, k=5, max_iter=300, tol=0.001, random_stat=None):
         super(KmeansParam, self).__init__()
         self.k = k
         self.max_iter = max_iter
         self.tol = tol
+        self.random_stat = random_stat
 
     def check(self):
         descr = "Kmeans_param's"

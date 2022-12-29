@@ -241,15 +241,33 @@ class FeatureBinningParam(BaseParam):
 
 
 class HeteroFeatureBinningParam(FeatureBinningParam):
-    def __init__(self, method=consts.QUANTILE,
-                 compress_thres=consts.DEFAULT_COMPRESS_THRESHOLD,
+    """
+    split_points_by_index: dict, default None
+        Manually specified split points for local features;
+        key should be feature index, value should be split points in sorted list;
+        along with `split_points_by_col_name`, keys should cover all local features, including categorical features;
+        note that each split point list should have length equal to desired bin num(n),
+        with first (n-1) entries equal to the maximum value(inclusive) of each first (n-1) bins,
+        and nth value the max of current feature.
+
+    split_points_by_col_name: dict, default None
+        Manually specified split points for local features;
+        key should be feature name, value should be split points in sorted list;
+        along with `split_points_by_index`, keys should cover all local features, including categorical features;
+        note that each split point list should have length equal to desired bin num(n),
+        with first (n-1) entries equal to the maximum value(inclusive) of each first (n-1) bins,
+        and nth value the max of current feature.
+    """
+
+    def __init__(self, method=consts.QUANTILE, compress_thres=consts.DEFAULT_COMPRESS_THRESHOLD,
                  head_size=consts.DEFAULT_HEAD_SIZE,
                  error=consts.DEFAULT_RELATIVE_ERROR,
                  bin_num=consts.G_BIN_NUM, bin_indexes=-1, bin_names=None, adjustment_factor=0.5,
                  transform_param=TransformParam(), optimal_binning_param=OptimalBinningParam(),
                  local_only=False, category_indexes=None, category_names=None,
                  encrypt_param=EncryptParam(),
-                 need_run=True, skip_static=False):
+                 need_run=True, skip_static=False,
+                 split_points_by_index=None, split_points_by_col_name=None):
         super(HeteroFeatureBinningParam, self).__init__(method=method, compress_thres=compress_thres,
                                                         head_size=head_size, error=error,
                                                         bin_num=bin_num, bin_indexes=bin_indexes,
@@ -261,6 +279,8 @@ class HeteroFeatureBinningParam(FeatureBinningParam):
                                                         skip_static=skip_static)
         self.optimal_binning_param = copy.deepcopy(optimal_binning_param)
         self.encrypt_param = encrypt_param
+        self.split_points_by_index = split_points_by_index
+        self.split_points_by_col_name = split_points_by_col_name
 
     def check(self):
         descr = "Hetero Binning param's"

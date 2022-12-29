@@ -19,8 +19,7 @@
 import numpy as np
 
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
-from federatedml.util import LOGGER
-from federatedml.util import consts
+from federatedml.util import LOGGER, consts, paillier_check, ipcl_operator
 
 
 class _Optimizer(object):
@@ -83,12 +82,22 @@ class _Optimizer(object):
     def add_regular_to_grad(self, grad, lr_weights):
 
         if self.penalty == consts.L2_PENALTY:
-            if lr_weights.fit_intercept:
-                gradient_without_intercept = grad[: -1]
-                gradient_without_intercept += self.alpha * lr_weights.coef_
-                new_grad = np.append(gradient_without_intercept, grad[-1])
+            if paillier_check.is_single_ipcl_encrypted_number(lr_weights.unboxed):
+                grad_ct = ipcl_operator.merge_encrypted_number_array(grad)
+                grad_ct = np.array(grad_ct)
+
+                if lr_weights.fit_intercept:
+                    alpha = np.append(np.ones(len(grad) - 1) * self.alpha, 0.0)
+                    new_grad = grad_ct + lr_weights.unboxed.item(0) * alpha
+                else:
+                    new_grad = grad_ct + self.alpha * lr_weights.coef_
             else:
-                new_grad = grad + self.alpha * lr_weights.coef_
+                if lr_weights.fit_intercept:
+                    gradient_without_intercept = grad[: -1]
+                    gradient_without_intercept += self.alpha * lr_weights.coef_
+                    new_grad = np.append(gradient_without_intercept, grad[-1])
+                else:
+                    new_grad = grad + self.alpha * lr_weights.coef_
         else:
             new_grad = grad
 

@@ -66,6 +66,10 @@
             "conf": "./test_intersect_job_dh_multi_conf.json",
             "dsl": "./test_intersect_job_dsl.json"
         },
+        "dh_intersect_multi_exact_cardinality": {
+            "conf": "./test_intersect_job_dh_multi_exact_cardinality_conf.json",
+            "dsl": "./test_intersect_job_dsl.json"
+        },
         "dh_intersect_w_preprocess": {
             "conf": "./test_intersect_job_dh_w_preprocess_conf.json",
             "dsl": "./test_intersect_job_dsl.json"
@@ -76,6 +80,14 @@
         },
         "ecdh_intersect_w_preprocess": {
             "conf": "./test_intersect_job_ecdh_w_preprocess_conf.json",
+            "dsl": "./test_intersect_job_dsl.json"
+        },
+        "ecdh_multi_intersect": {
+            "conf": "./test_intersect_job_ecdh_multi_conf.json",
+            "dsl": "./test_intersect_job_dsl.json"
+        },
+        "ecdh_multi_exact_cardinality": {
+            "conf": "./test_intersect_job_ecdh_multi_exact_cardinality_conf.json",
             "dsl": "./test_intersect_job_dsl.json"
         },
         "rsa_cache_intersect": {

@@ -91,6 +91,10 @@ This section introduces the dsl and conf for usage of different type of task.
     "skip_statistic"
         "conf": "hetero_binning_skip_statistic_conf.json",
         "dsl": "hetero_binning_skip_statistic_dsl.json"
+    
+    "hetero_binning_manual_split_points"
+        "conf": "hetero_binning_manual_split_points_conf.json",
+        "dsl": "hetero_binning_manual_split_points_dsl.json"
 
 
 Users can use following commands to running the task.

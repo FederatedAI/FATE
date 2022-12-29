@@ -7,7 +7,7 @@ package_data = {"": ["*"]}
 
 install_requires = [
     "click>=7.1.2,<8.0.0",
-    "fate_client>=1.9,<2.0",
+    "fate_client>=1.10,<2.0",
     "loguru>=0.6.0",
     "pandas>=1.1.5",
     "poetry>=0.12",

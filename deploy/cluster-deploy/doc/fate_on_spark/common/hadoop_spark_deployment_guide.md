@@ -157,7 +157,7 @@ ssh app@192.168.0.3
 2. wget https://archive.apache.org/dist/hadoop/common/hadoop-3.3.1/hadoop-3.3.1.tar.gz
 3. wget https://downloads.lightbend.com/scala/2.12.10/scala-2.12.10.tgz
 4. wget https://archive.apache.org/dist/spark/spark-3.1.2/spark-3.1.2-bin-hadoop3.2.tgz
-5. wget https://archive.apache.org/dist/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3-bin.tar.gz 
+5. wget https://archive.apache.org/dist/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3-bin.tar.gz
 
 **Extract**
 
@@ -647,7 +647,7 @@ export PYSPARK_DRIVER_PYTHON=/data/projects/fate/common/python/venv/bin/python
 **\#Start**
 
 ```bash
-sh /data/projects/common/spark/sbin/start-all.sh
+bash /data/projects/common/spark/sbin/start-all.sh
 ```
 
 **\#Check**

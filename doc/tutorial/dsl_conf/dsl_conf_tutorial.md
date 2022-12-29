@@ -44,8 +44,8 @@ $ flow job config -j 2020103015490073208469 -r guest -p 9999 -o ./
     "data": {
         "job_id": "2020103015490073208469",
         "model_info": {
-            "model_id": "guest-10000#host-10000#model", <<- model_id needed for prediction tasks
-            "model_version": "2020103015490073208469" <<- model_version needed for prediction tasks
+            "model_id": "guest-10000#host-10000#model", <<- model_id needed for deploy model
+            "model_version": "2020103015490073208469" <<- model_version needed for deploy model
         },
         "train_runtime_conf": {}
     },
@@ -60,12 +60,43 @@ We use flow_client to deploy components needed in the prediction task:
 
 ```sh
 $ flow model deploy --model-id guest-10000#host-10000#model --model-version 2020103015490073208469 --cpn-list "data_transform_0, intersection_0, hetero_secure_boost_0"
+{
+    "data": {
+        "detail": {
+            "guest": {
+                "10000": {
+                    "retcode": 0,
+                    "retmsg": "deploy model of role guest 10000 success"
+                }
+            },
+            "host": {
+                "9999": {
+                    "retcode": 0,
+                    "retmsg": "deploy model of role host 9999 success"
+                }
+            }
+        },
+        "guest": {
+            "10000": 0
+        },
+        "host": {
+            "9999": 0
+        },
+        "model_id": "guest-10000#host-9999#model",     <<-- used in predict conf
+        "model_version": "2020103000555532513450"      <<-- used in predict conf
+    },
+    "retcode": 0,
+    "retmsg": "success"
+}
 ```
+
+Then we can get a return message by deploy model contains model_id and model_version.
 
 We can modify existing predict conf by replacing model_id, model_version and data set name with yours to make a new 
 predict conf.
 Here we replace model_id and model_version in [predict conf](../../../examples/dsl/v2/hetero_secureboost/test_predict_conf.json) 
 with model_id and model_version returned by deploy model job.
+
 
 ```json
 {
@@ -85,8 +116,8 @@ with model_id and model_version returned by deploy model job.
     "job_parameters": {
         "common": {
             "job_type": "predict",
-            "model_id": "guest-10000#host-9999#model", <<-- to replace
-            "model_version": "20200928174750711017114"  <<-- to replace
+            "model_id": "guest-10000#host-9999#model", <<-- to replace,return by deploy model
+            "model_version": "20200928174750711017114"  <<-- to replace,return by deploy model
         }
     },
     "component_parameters": {
@@ -113,6 +144,64 @@ with model_id and model_version returned by deploy model job.
             }
         }
     }
+}
+```
+
+We can also generate predict conf, model_id and model_version returned by deploy model:
+```shell
+flow model get-predict-conf --model-id guest-10000#host-9999#model --model-version 2020103000555532513450 -o ./
+```
+the file like predict_conf_******.json
+```json
+{
+    "data": {
+        "component_parameters": {
+            "role": {
+                "guest": {
+                    "0": {
+                        "reader_1": {
+                            "table": {
+                                "name": "name_to_be_filled_0",                  <<-- you can set new dataset here
+                                "namespace": "namespace_to_be_filled_0"         <<-- you can set new dataset here
+                            }
+                        }
+                    }
+                },
+                "host": {
+                    "0": {
+                        "reader_1": {
+                            "table": {
+                                "name": "name_to_be_filled_0",                 <<-- you can set new dataset here
+                                "namespace": "namespace_to_be_filled_0"        <<-- you can set new dataset here
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "dsl_version": 2,
+        "initiator": {
+            "party_id": 12001,
+            "role": "guest"
+        },
+        "job_parameters": {
+            "common": {
+                "job_type": "predict",
+                "model_id": "guest-10000#host-9999#model",   <<-- do not need set
+                "model_version": "2020103000555532513450",   <<-- do not need set
+            }
+        },
+        "role": {
+            "guest": [
+                12001
+            ],
+            "host": [
+                12000
+            ]
+        }
+    },
+    "retcode": 0,
+    "retmsg": "success"
 }
 ```
 

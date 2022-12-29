@@ -38,7 +38,7 @@ class LinearParam(LinearModelParam):
     ----------
     penalty : {'L2' or 'L1'}
         Penalty method used in LinR. Please note that, when using encrypted version in HeteroLinR,
-        'L1' is not supported.
+        'L1' is not supported. When using Homo-LR, 'L1' is not supported
     tol : float, default: 1e-4
         The tolerance of convergence
     alpha : float, default: 1.0

@@ -120,6 +120,7 @@ class BaseBinning(object):
                                                                 is_sparse)
             for col_name, split_points in zip(self.bin_inner_param.category_names, category_col_values):
                 self.bin_results.put_col_split_points(col_name, split_points)
+                self.bin_results.put_col_optimal_metric_array(col_name, None)
 
     def set_bin_inner_param(self, bin_inner_param):
         self.bin_inner_param = bin_inner_param

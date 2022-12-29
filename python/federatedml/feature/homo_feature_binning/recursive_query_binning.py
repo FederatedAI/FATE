@@ -14,14 +14,12 @@
 #  limitations under the License.
 
 import numpy as np
-
-from fate_arch.session import computing_session as session
 from federatedml.feature.binning.quantile_tool import QuantileBinningTool
 from federatedml.feature.homo_feature_binning import homo_binning_base
-from federatedml.framework.hetero.procedure import table_aggregator
 from federatedml.param.feature_binning_param import HomoFeatureBinningParam
 from federatedml.util import consts
 from federatedml.util import LOGGER
+from federatedml.framework.homo.aggregator.secure_aggregator import SecureAggregatorClient, SecureAggregatorServer
 import copy
 import operator
 import functools
@@ -33,7 +31,8 @@ class Server(homo_binning_base.Server):
 
     def fit_split_points(self, data=None):
         if self.aggregator is None:
-            self.aggregator = table_aggregator.Server(enable_secure_aggregate=False)
+            self.aggregator = SecureAggregatorServer(
+                secure_aggregate=True, communicate_match_suffix='recursive_query_binning')
         self.get_total_count()
         self.get_min_max()
         self.get_missing_count()
@@ -63,7 +62,10 @@ class Client(homo_binning_base.Client):
 
     def fit_split_points(self, data_instances):
         if self.aggregator is None:
-            self.aggregator = table_aggregator.Client(enable_secure_aggregate=False)
+            self.aggregator = SecureAggregatorClient(
+                secure_aggregate=True,
+                aggregate_type='sum',
+                communicate_match_suffix='recursive_query_binning')
         if self.bin_inner_param is None:
             self._setup_bin_inner_param(data_instances, self.params)
         self.total_count = self.get_total_count(data_instances)

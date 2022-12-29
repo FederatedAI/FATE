@@ -37,7 +37,7 @@ Deploying FATE to multiple nodes to achieve scalability, reliability and managea
 
 ### Quick Start
 - [Train & Predict Hetero SecureBoost with FATE-Pipeline](./doc/tutorial/pipeline/pipeline_tutorial_hetero_sbt.ipynb)
-- [Build Homo NN model with FATE-Pipeline](doc/tutorial/pipeline/pipeline_tutorial_homo_nn.ipynb)
+- [Build & Customize NN models with FATE-Pipeline](./doc/tutorial/pipeline/nn_tutorial/README.md)
 - [Run Job with DSL json conf](doc/tutorial/dsl_conf/dsl_conf_tutorial.md)
 - [More Tutorials...](doc/tutorial)
 
@@ -65,6 +65,7 @@ Deploying FATE to multiple nodes to achieve scalability, reliability and managea
 - [FATE API references](doc/api)
 - [Flow SDK](doc/api/fate_client/flow_sdk.md)
 - [Flow Client](https://fate-flow.readthedocs.io/en/latest/fate_flow_client/)
+- [FATE Pipeline](doc/api/fate_client/pipeline.md)
 - [FATE Test](./doc/tutorial/fate_test_tutorial.md)
 - [DSL Conf Setting Guide](./doc/tutorial/dsl_conf/dsl_conf_v2_setting_guide.md)
 - [Online courses on Bilibili @FATEFedAI](https://space.bilibili.com/457797601?from=search&seid=6776229889454067000)

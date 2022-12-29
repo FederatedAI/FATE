@@ -15,24 +15,23 @@
 #
 
 import argparse
-
 from collections import OrderedDict
+
+import torch as t
+from torch import nn
+from torch import optim
+
+from pipeline import fate_torch as ft
+from pipeline import fate_torch_hook
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataTransform
+from pipeline.component import Evaluation
 from pipeline.component import HeteroNN
 from pipeline.component import Intersection
 from pipeline.component import Reader
-from pipeline.component import Evaluation
 from pipeline.interface import Data
-from pipeline.utils.tools import load_job_config
 from pipeline.interface import Model
-
-from pipeline import fate_torch_hook
-import torch as t
-from torch import nn
-from torch.nn import init
-from torch import optim
-from pipeline import fate_torch as ft
+from pipeline.utils.tools import load_job_config
 
 # this is important, modify torch modules so that Sequential model be parsed by pipeline
 fate_torch_hook(t)
@@ -85,8 +84,8 @@ def main(config="../../config.yaml", namespace=""):
         ReLU()
     )
 
-    # interactive layer
-    interactive_layer = Linear(16, 8, True)
+    # use interactive layer after fate_torch_hook
+    interactive_layer = t.nn.InteractiveLayer(out_dim=8, guest_dim=8, host_dim=8, host_num=1)
 
     # loss fun
     ce_loss_fn = nn.CrossEntropyLoss()
@@ -100,10 +99,10 @@ def main(config="../../config.yaml", namespace=""):
     guest_nn_0 = hetero_nn_0.get_party_instance(role='guest', party_id=guest)
     guest_nn_0.add_bottom_model(seq)
     guest_nn_0.add_top_model(seq2)
-
-    guest_nn_0.set_interactve_layer(interactive_layer)
     host_nn_0 = hetero_nn_0.get_party_instance(role='host', party_id=host)
     host_nn_0.add_bottom_model(seq3)
+
+    hetero_nn_0.set_interactive_layer(interactive_layer)
 
     hetero_nn_0.compile(opt, loss=ce_loss_fn)
 
