@@ -70,18 +70,12 @@ docker tag ccr.ccs.tencentyun.com/federatedai/standalone_fate:${version} federat
 ### 2.3 启动
 
    ```bash
-   docker run -d --name standalone_fate -p 8080:8080 federatedai/standalone_fate:${version};
-   docker ps -a | grep standalone_fate
+   docker run -it --name standalone_fate -p 8080:8080 federatedai/standalone_fate:${version}
    ```
-
-   能看到对应${version}的容器运行中则启动成功
 
 ### 2.4 测试
 
-   - 进入容器
-
    ```bash
-   docker exec -it $(docker ps -aqf "name=standalone_fate") bash
    source bin/init_env.sh
    ```
 
