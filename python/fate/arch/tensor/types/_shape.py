@@ -1,9 +1,18 @@
 from functools import reduce
-from typing import List, overload
+from typing import List, Optional, overload
+
+
+class DAxis:
+    def __init__(self, axis, partitions) -> None:
+        self.axis = axis
+        self.partitions = partitions
+
+    def __str__(self) -> str:
+        return f"DAxis<axis={self.axis}, partitions={self.partitions}>"
 
 
 class Shape:
-    def __init__(self, size, d_axis=None) -> None:
+    def __init__(self, size, d_axis: Optional[DAxis] = None) -> None:
         if isinstance(size, int):
             size = (size,)
         self.size = size
@@ -15,7 +24,7 @@ class Shape:
         size = self.size[::-1]
 
         if self.d_axis is not None:
-            d_axis = len(self.size) - 1 - self.d_axis
+            d_axis = DAxis(len(self.size) - 1 - self.d_axis.axis, self.d_axis.partitions)
         else:
             d_axis = None
         return Shape(size, d_axis)
@@ -23,7 +32,7 @@ class Shape:
     def is_d_axis(self, axis: int):
         if self.d_axis is None:
             return False
-        gap = abs(self.d_axis - axis)
+        gap = abs(self.d_axis.axis - axis)
         return gap == 0 or gap == len(self.size)
 
     def __len__(self):
@@ -40,7 +49,10 @@ class Shape:
 
     def slice(self, key):
         if isinstance(key, int):
-            ...
+            raise NotImplementedError(f"key {key}")
+        if isinstance(key, list):
+            if self.d_axis is None:
+                raise NotImplementedError(f"key {key}")
 
     @overload
     def __getitem__(self, key: int) -> int:
@@ -61,11 +73,11 @@ class Shape:
             out_d_axis = None
             if self.d_axis is not None:
                 d_axis_mask = [False] * len(self.size)
-                d_axis_mask[self.d_axis] = True
+                d_axis_mask[self.d_axis.axis] = True
                 out_d_axis = None
                 for i, v in enumerate(d_axis_mask[key]):
                     if v:
-                        out_d_axis = i
+                        out_d_axis = DAxis(i, self.d_axis.partitions)
             return Shape(out, out_d_axis)
         else:
             raise NotImplementedError(f"key type {type(key)}")
@@ -87,10 +99,10 @@ class Shape:
         for shape in shapes:
             if isinstance(shape.size, tuple) or isinstance(shape.size, list):
                 if shape.d_axis is not None:
-                    aligned_d_axis = max_len - len(shape.size) + shape.d_axis
+                    aligned_d_axis = DAxis(max_len - len(shape.size) + shape.d_axis.axis, shape.d_axis.partitions)
                     if d_axis is None:
                         d_axis = aligned_d_axis
-                    elif d_axis != aligned_d_axis:
+                    elif d_axis.axis != aligned_d_axis.axis:
                         if raise_exception:
                             raise RuntimeError("d_axis mismatch: d_axis should be equal after shape broadcast")
                         else:
@@ -127,7 +139,7 @@ class Shape:
             for shape in shapes:
                 if shape.d_axis is not None:
                     continue
-                p = d_axis - (len(result) - len(shape.size))
+                p = d_axis.axis - (len(result) - len(shape.size))
                 if p >= 0 and shape.size[p] != 1:
                     raise RuntimeError("Can't broadcast along distributed axis for Local Storage ")
         return Shape(result, d_axis)

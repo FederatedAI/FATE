@@ -29,16 +29,7 @@ def t1(ctx):
 
 
 @fixture
-def t2():
-    return tensor.tensor(
-        torch.tensor(
-            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]
-        ),
-    )
-
-
-@fixture
-def t3(ctx):
+def t2(ctx):
     return tensor.distributed_tensor(
         ctx,
         [
@@ -50,18 +41,52 @@ def t3(ctx):
     )
 
 
-def test_sum(t1, t2):
-    print(tensor.sum(t1))
-    print(tensor.sum(t1, dim=0))
-    print(tensor.sum(t1, dim=1).to_local())
-    print("-----------------------------------------------")
-    print(tensor.sum(t2))
-    print(tensor.sum(t2, dim=0))
-    print(tensor.sum(t2, dim=1))
-    print("-----------------------------------------------")
-    print(torch.sum(t1.to_local().storage.data))
-    print(torch.sum(t1.to_local().storage.data, dim=0))
-    print(torch.sum(t1.to_local().storage.data, dim=1))
+@fixture
+def t3():
+    return tensor.tensor(
+        torch.tensor(
+            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]
+        ),
+    )
+
+
+@fixture
+def t4():
+    return torch.tensor(
+        [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]
+    )
+
+
+def test_sum_all(t1, t2, t3, t4):
+    s1 = tensor.sum(t1)
+    s2 = tensor.sum(t2)
+    s3 = tensor.sum(t3)
+    s4 = torch.sum(t4)
+    assert s1.to_local().storage.data == s4
+    assert s2.to_local().storage.data == s4
+    assert s3.to_local().storage.data == s4
+
+
+def test_sum_dim_0(t1, t2, t3, t4):
+    s1 = tensor.sum(t1, dim=0)
+    s2 = tensor.sum(t2, dim=0)
+    s3 = tensor.sum(t3, dim=0)
+    s4 = torch.sum(t4, dim=0)
+    s5 = torch.sum(t4.T, dim=0, keepdim=True)
+    assert torch.allclose(s1.to_local().storage.data, s4)
+    assert torch.allclose(s2.to_local().storage.data, s5)
+    assert torch.allclose(s3.to_local().storage.data, s4)
+
+
+def test_sum_dim_1(t1, t2, t3, t4):
+    s1 = tensor.sum(t1, dim=1)
+    s2 = tensor.sum(t2, dim=1)
+    s3 = tensor.sum(t3, dim=1, keepdim=True)
+    s4 = torch.sum(t4, dim=1, keepdim=True)
+    s5 = torch.sum(t4.T, dim=1, keepdim=True)
+    assert torch.allclose(s1.to_local().storage.data, s4)
+    assert torch.allclose(s3.to_local().storage.data, s4)
+    assert torch.allclose(s2.to_local().storage.data, s5)
 
 
 def test_mean(t1, t2):

@@ -7,9 +7,11 @@ def sum(storage: DStorage, *args, **kwargs):
         dim = args[0]
     if "dim" in kwargs:
         dim = kwargs["dim"]
+    if dim is not None and not kwargs.get("keepdim", False):
+        kwargs["keepdim"] = True
     local_ops = storage.local_ops_helper()
     output = DStorage.unary_op(storage, lambda x: local_ops.sum(x, *args, **kwargs))
-    if dim is None or dim == storage.shape.d_axis:
+    if dim is None or dim == storage.d_axis.axis:
         output = output.blocks.reduce(lambda x, y: local_ops.add(x, y))
     return output
 
@@ -21,7 +23,7 @@ def mean(storage: DStorage, *args, **kwargs):
     if "dim" in kwargs:
         dim = kwargs["dim"]
     local_ops = storage.local_ops_helper()
-    if dim is not None and dim != storage.shape.d_axis:
+    if dim is not None and dim != storage.d_axis.axis:
         count = storage.shape[dim]
         return DStorage.unary_op(storage, lambda x: local_ops.truediv(local_ops.sum(x, *args, **kwargs), count))
     else:
@@ -43,7 +45,7 @@ def var(storage: DStorage, *args, **kwargs):
     unbiased = kwargs.get("unbiased", True)
 
     local_ops = storage.local_ops_helper()
-    if dim is not None and dim != storage.shape.d_axis:
+    if dim is not None and dim != storage.d_axis.axis:
         return DStorage.unary_op(storage, lambda x: local_ops.var(x, dim=dim, unbiased=unbiased))
 
     else:
@@ -78,7 +80,7 @@ def std(storage: DStorage, *args, **kwargs):
     unbiased = kwargs.get("unbiased", True)
 
     local_ops = storage.local_ops_helper()
-    if dim is not None and dim != storage.shape.d_axis:
+    if dim is not None and dim != storage.d_axis.axis:
         return DStorage.unary_op(storage, lambda x: local_ops.std(x, dim=dim, unbiased=unbiased))
 
     else:
@@ -119,7 +121,7 @@ def max(storage: DStorage, *args, **kwargs):
 
         return storage.blocks.mapValues(_mapper).reduce(lambda x, y: local_ops.maximum(x, y))
     else:
-        if dim == storage.shape.d_axis:
+        if dim == storage.d_axis.axis:
             return storage.blocks.mapValues(lambda x: local_ops.max(x, dim=dim)).reduce(
                 lambda x, y: local_ops.maximum(x, y)
             )
@@ -141,7 +143,7 @@ def min(storage: DStorage, *args, **kwargs):
 
         return storage.blocks.mapValues(_mapper).reduce(lambda x, y: local_ops.minimum(x, y))
     else:
-        if dim == storage.shape.d_axis:
+        if dim == storage.d_axis.axis:
             return storage.blocks.mapValues(lambda x: local_ops.min(x, dim=dim)).reduce(
                 lambda x, y: local_ops.minimum(x, y)
             )
