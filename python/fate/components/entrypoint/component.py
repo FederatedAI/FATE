@@ -13,6 +13,10 @@ from fate.components.loader.device import load_device
 from fate.components.loader.federation import load_federation
 from fate.components.loader.metric import load_metrics_handler
 from fate.components.loader.mlmd import MLMD, load_mlmd
+from fate.components.loader.model import (
+    load_input_model_wrapper,
+    load_output_model_wrapper,
+)
 from fate.components.loader.other import load_role, load_stage
 from fate.components.loader.output import OutputPool, load_pool
 from fate.components.spec.task import TaskConfigSpec
@@ -23,13 +27,13 @@ logger = logging.getLogger(__name__)
 def execute_component(config: TaskConfigSpec):
     taskid = config.taskid
     mlmd = load_mlmd(config.conf.mlmd, taskid)
-    output_pool = load_pool(config.conf.output)
     computing = load_computing(config.conf.computing)
     federation = load_federation(config.conf.federation, computing)
     device = load_device(config.conf.device)
     role = load_role(config.role)
     stage = load_stage(config.stage)
     metrics_handler = load_metrics_handler()
+    output_pool = load_pool(config.conf.output)
     ctx = Context(
         context_name=taskid,
         device=device,
@@ -52,20 +56,57 @@ def execute_component(config: TaskConfigSpec):
                 else:
                     raise ValueError(f"stage `{stage.name}` for component `{component.name}` not supported")
 
-            # get execute key-word arguments
-            execute_kwargs = {}
+            # load model wrapper
+            output_model_wrapper = load_output_model_wrapper(
+                config.taskid, config.taskid, component, config.role, config.partyid, config.conf.federation
+            )
+            input_model_wrapper = load_input_model_wrapper()
             # parse and validate parameters
-            execute_kwargs.update(parse_input_parameters(mlmd, component, config.inputs.parameters))
+            input_parameters = parse_input_parameters(mlmd, component, config.inputs.parameters)
             # parse and validate inputs
-            execute_kwargs.update(parse_input_artifacts(mlmd, component, stage, role, config.inputs.artifacts))
+            input_data_artifacts = parse_input_data(component, stage, role, config.inputs.artifacts)
+            input_model_artifacts = parse_input_model(component, stage, role, config.inputs.artifacts)
+            input_metric_artifacts = parse_input_metric(component, stage, role, config.inputs.artifacts)
+            # log output artifacts
+            for name, artifact in input_data_artifacts.items():
+                mlmd.io.log_input_artifact(name, artifact)
+            for name, artifact in input_metric_artifacts.items():
+                mlmd.io.log_input_artifact(name, artifact)
+
+            # wrap model artifact
+            input_model_artifacts = {
+                key: input_model_wrapper.wrap(value, mlmd.io) for key, value in input_model_artifacts.items()
+            }
 
             # fill in outputs
-            execute_kwargs.update(parse_output_data(mlmd, component, stage, role, output_pool))
-            execute_kwargs.update(parse_output_model(mlmd, component, stage, role, output_pool))
-            execute_kwargs.update(parse_output_metric(mlmd, component, stage, role, output_pool))
+            output_data_artifacts = parse_output_data(component, stage, role, output_pool)
+            output_model_artifacts = parse_output_model(component, stage, role, output_pool)
+            output_metric_artifacts = parse_output_metric(component, stage, role, output_pool)
+
+            # wrap model artifact
+            output_model_artifacts = {
+                key: output_model_wrapper.wrap(value, mlmd.io) for key, value in output_model_artifacts.items()
+            }
+
+            # get execute key-word arguments
+            execute_kwargs = {}
+            execute_kwargs.update(input_parameters)
+            execute_kwargs.update(input_data_artifacts)
+            execute_kwargs.update(input_model_artifacts)
+            execute_kwargs.update(input_metric_artifacts)
+            execute_kwargs.update(output_data_artifacts)
+            execute_kwargs.update(output_model_artifacts)
+            execute_kwargs.update(output_metric_artifacts)
 
             # execute
             component.execute(ctx, role, **execute_kwargs)
+
+            # log output artifacts
+            for name, artifact in output_data_artifacts.items():
+                mlmd.io.log_output_artifact(name, artifact)
+            for name, artifact in output_metric_artifacts.items():
+                mlmd.io.log_output_artifact(name, artifact)
+
         except Exception as e:
             tb = traceback.format_exc()
             mlmd.execution_status.log_excution_exception(dict(exception=str(e.args), traceback=tb))
@@ -108,32 +149,76 @@ def parse_input_parameters(mlmd: MLMD, cpn: _Component, input_parameters: Dict[s
     return execute_parameters
 
 
-def parse_input_artifacts(mlmd: MLMD, cpn: _Component, stage, role, input_artifacts) -> dict:
+def parse_input_data(cpn: _Component, stage, role, input_artifacts) -> dict:
 
-    execute_input_artifacts = {}
+    execute_input_data = {}
     for arg in cpn.func_args[2:]:
-        if arti := cpn.artifacts.inputs.get_artifact(arg):
-            execute_input_artifacts[arg] = None
+        if arti := cpn.artifacts.inputs.data_artifact.get(arg):
+            execute_input_data[arg] = None
             if arti.is_active_for(stage, role):
                 artifact_apply = input_artifacts.get(arg)
                 if artifact_apply is not None:
                     # try apply
                     try:
-                        execute_input_artifacts[arg] = load_artifact(artifact_apply, arti.type)
+                        execute_input_data[arg] = load_artifact(artifact_apply, arti.type)
                     except Exception as e:
                         raise ComponentApplyError(
                             f"artifact `{arg}` with applying config `{artifact_apply}` can't apply to `{arti}`"
                         ) from e
-                    mlmd.io.log_input_artifact(arg, execute_input_artifacts[arg])
                     continue
                 else:
                     if not arti.optional:
                         raise ComponentApplyError(f"artifact `{arg}` required, declare: `{arti}`")
-            mlmd.io.log_input_artifact(arg, execute_input_artifacts[arg])
-    return execute_input_artifacts
+    return execute_input_data
 
 
-def parse_output_data(mlmd: MLMD, cpn: _Component, stage, role, output_pool: OutputPool) -> dict:
+def parse_input_model(cpn: _Component, stage, role, input_artifacts) -> dict:
+
+    execute_input_model = {}
+    for arg in cpn.func_args[2:]:
+        if arti := cpn.artifacts.inputs.model_artifact.get(arg):
+            execute_input_model[arg] = None
+            if arti.is_active_for(stage, role):
+                artifact_apply = input_artifacts.get(arg)
+                if artifact_apply is not None:
+                    # try apply
+                    try:
+                        execute_input_model[arg] = load_artifact(artifact_apply, arti.type)
+                    except Exception as e:
+                        raise ComponentApplyError(
+                            f"artifact `{arg}` with applying config `{artifact_apply}` can't apply to `{arti}`"
+                        ) from e
+                    continue
+                else:
+                    if not arti.optional:
+                        raise ComponentApplyError(f"artifact `{arg}` required, declare: `{arti}`")
+    return execute_input_model
+
+
+def parse_input_metric(cpn: _Component, stage, role, input_artifacts) -> dict:
+
+    execute_input_metric = {}
+    for arg in cpn.func_args[2:]:
+        if arti := cpn.artifacts.inputs.metric_artifact.get(arg):
+            execute_input_metric[arg] = None
+            if arti.is_active_for(stage, role):
+                artifact_apply = input_artifacts.get(arg)
+                if artifact_apply is not None:
+                    # try apply
+                    try:
+                        execute_input_metric[arg] = load_artifact(artifact_apply, arti.type)
+                    except Exception as e:
+                        raise ComponentApplyError(
+                            f"artifact `{arg}` with applying config `{artifact_apply}` can't apply to `{arti}`"
+                        ) from e
+                    continue
+                else:
+                    if not arti.optional:
+                        raise ComponentApplyError(f"artifact `{arg}` required, declare: `{arti}`")
+    return execute_input_metric
+
+
+def parse_output_data(cpn: _Component, stage, role, output_pool: OutputPool) -> dict:
 
     execute_output_data = {}
     for arg in cpn.func_args[2:]:
@@ -141,11 +226,10 @@ def parse_output_data(mlmd: MLMD, cpn: _Component, stage, role, output_pool: Out
             execute_output_data[arg] = None
             if arti.is_active_for(stage, role):
                 execute_output_data[arg] = output_pool.create_data_artifact(arti.name)
-                mlmd.io.log_output_artifact(arg, execute_output_data[arg])
     return execute_output_data
 
 
-def parse_output_model(mlmd: MLMD, cpn: _Component, stage, role, output_pool: OutputPool) -> dict:
+def parse_output_model(cpn: _Component, stage, role, output_pool: OutputPool) -> dict:
 
     execute_output_model = {}
     for arg in cpn.func_args[2:]:
@@ -153,11 +237,10 @@ def parse_output_model(mlmd: MLMD, cpn: _Component, stage, role, output_pool: Ou
             execute_output_model[arg] = None
             if arti.is_active_for(stage, role):
                 execute_output_model[arg] = output_pool.create_model_artifact(arti.name)
-                mlmd.io.log_output_artifact(arg, execute_output_model[arg])
     return execute_output_model
 
 
-def parse_output_metric(mlmd: MLMD, cpn: _Component, stage, role, output_pool: OutputPool) -> dict:
+def parse_output_metric(cpn: _Component, stage, role, output_pool: OutputPool) -> dict:
 
     execute_output_metrics = {}
     for arg in cpn.func_args[2:]:
@@ -165,5 +248,4 @@ def parse_output_metric(mlmd: MLMD, cpn: _Component, stage, role, output_pool: O
             execute_output_metrics[arg] = None
             if arti.is_active_for(stage, role):
                 execute_output_metrics[arg] = output_pool.create_metric_artifact(arti.name)
-                mlmd.io.log_output_artifact(arg, execute_output_metrics[arg])
     return execute_output_metrics

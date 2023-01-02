@@ -1,6 +1,8 @@
 taskid: xxx
+party_task_id: xxxx
 component: hetero_lr
 role: guest
+partyid: "9999"
 stage: train
 inputs:
   parameters:
@@ -50,9 +52,7 @@ conf:
         uri: file:///Users/sage/alpha/output/data
         format: csv
   mlmd:
-    type: pipeline
-    metadata:
-      db: /Users/sage/alpha/mlmd.db
+    type: noop
   logger:
     type: pipeline
     metadata:

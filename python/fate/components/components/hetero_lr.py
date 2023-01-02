@@ -71,6 +71,7 @@ def predict(
 
 
 def train_guest(ctx, train_data, validate_data, train_output_data, output_model, max_iter, learning_rate, batch_size):
+
     from fate.ml.lr.guest import LrModuleGuest
 
     with ctx.sub_ctx("train") as sub_ctx:
@@ -80,7 +81,9 @@ def train_guest(ctx, train_data, validate_data, train_output_data, output_model,
             validate_data = sub_ctx.reader(validate_data).read_dataframe()
         module.fit(sub_ctx, train_data, validate_data)
         model = module.get_model()
-        sub_ctx.writer(output_model).write_model(model)
+        with output_model as model_writer:
+            model_writer.write_model("hetero_lr_guest", model, metadata={})
+
     with ctx.sub_ctx("predict") as sub_ctx:
         predict_score = module.predict(sub_ctx, validate_data)
         predict_result = validate_data.data.transform_to_predict_result(predict_score)
@@ -97,7 +100,8 @@ def train_host(ctx, train_data, validate_data, train_output_data, output_model, 
             validate_data = sub_ctx.reader(validate_data).read_dataframe()
         module.fit(sub_ctx, train_data, validate_data)
         model = module.get_model()
-        sub_ctx.writer(output_model).write_model(model)
+        with output_model as model_writer:
+            model_writer.write_model("hetero_lr_host", model, metadata={})
     with ctx.sub_ctx("predict") as sub_ctx:
         module.predict(sub_ctx, validate_data)
 

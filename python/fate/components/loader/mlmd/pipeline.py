@@ -77,7 +77,7 @@ class IOManager(IOManagerProtocol):
         self._mlmd.record_output_event(execution_id=execution_id, artifact_id=artifact_id)
         self._mlmd.put_artifact_to_task_context(self._taskid, artifact_id)
 
-    def log_output_model(self, key, value):
+    def log_output_model(self, key, value, metadata={}):
         artifact_id = self._mlmd.add_model_artifact(name=value.name, uri=value.uri, metadata=value.metadata)
         execution_id = self._mlmd.get_or_create_task(self._taskid).id
         self._mlmd.record_output_event(execution_id=execution_id, artifact_id=artifact_id)
