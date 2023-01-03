@@ -3,6 +3,7 @@ use_deserialize_safe_module: false
 dependent_distribution: false
 encrypt_password: false
 encrypt_module: fate_arch.common.encrypt_utils#pwdecrypt
+private_key_file: public_key.pem
 private_key:
 party_id:
 hook_module:
