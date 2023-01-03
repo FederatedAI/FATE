@@ -59,6 +59,7 @@ class PulsarFederation(FederationBase):
     @staticmethod
     def from_conf(
         federation_session_id: str,
+        computing_session,
         party: PartyMeta,
         parties: List[PartyMeta],
         route_table: dict,
@@ -105,6 +106,7 @@ class PulsarFederation(FederationBase):
 
         return PulsarFederation(
             federation_session_id,
+            computing_session,
             party,
             parties,
             mq,
@@ -120,6 +122,7 @@ class PulsarFederation(FederationBase):
     def __init__(
         self,
         session_id,
+        computing_session,
         party: PartyMeta,
         parties: List[PartyMeta],
         mq: MQ,
@@ -133,6 +136,7 @@ class PulsarFederation(FederationBase):
     ):
         super().__init__(
             session_id=session_id,
+            computing_session=computing_session,
             party=party,
             parties=parties,
             mq=mq,

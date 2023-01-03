@@ -1,6 +1,7 @@
 def load_federation(federation, computing):
     from fate.components.spec.federation import (
         EggrollFederationSpec,
+        OSXFederationSpec,
         PulsarFederationSpec,
         RabbitMQFederationSpec,
         StandaloneFederationSpec,
@@ -36,6 +37,7 @@ def load_federation(federation, computing):
 
         return RabbitmqFederation.from_conf(
             federation_session_id=federation.metadata.federation_id,
+            computing_session=computing,
             party=federation.metadata.parties.local.tuple(),
             parties=[p.tuple() for p in federation.metadata.parties.parties],
             route_table={k: v.dict() for k, v in federation.metadata.route_table.items()},
@@ -55,6 +57,7 @@ def load_federation(federation, computing):
 
         return PulsarFederation.from_conf(
             federation_session_id=federation.metadata.federation_id,
+            computing_session=computing,
             party=federation.metadata.parties.local.tuple(),
             parties=[p.tuple() for p in federation.metadata.parties.parties],
             route_table={k: v.dict() for k, v in federation.metadata.route_table.items()},
@@ -70,6 +73,19 @@ def load_federation(federation, computing):
             tenant=federation.metadata.pulsar_config.tenant,
             pulsar_run=federation.metadata.pulsar_run,
             connection=federation.metadata.connection,
+        )
+
+    if isinstance(federation, OSXFederationSpec):
+        from fate.arch.federation.osx import OSXFederation
+
+        return OSXFederation.from_conf(
+            federation_session_id=federation.metadata.federation_id,
+            computing_session=computing,
+            party=federation.metadata.parties.local.tuple(),
+            parties=[p.tuple() for p in federation.metadata.parties.parties],
+            host=federation.metadata.osx_config.host,
+            port=federation.metadata.osx_config.port,
+            max_message_size=federation.metadata.osx_config.max_message_size,
         )
     # TODO: load from plugin
     raise ValueError(f"conf.federation={federation} not support")

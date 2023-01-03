@@ -86,6 +86,22 @@ class PulsarFederationSpec(pydantic.BaseModel):
     metadata: MetadataSpec
 
 
+class OSXFederationSpec(pydantic.BaseModel):
+    class MetadataSpec(pydantic.BaseModel):
+        class OSXConfig(pydantic.BaseModel):
+            host: str
+            port: int
+            max_message_size: Optional[int] = None
+
+        federation_id: str
+        parties: FederationPartiesSpec
+        route_table: dict
+        osx_config: OSXConfig
+
+    type: Literal["pulsar"]
+    metadata: MetadataSpec
+
+
 class CustomFederationSpec(pydantic.BaseModel):
     type: Literal["custom"]
     metadata: dict

@@ -20,7 +20,6 @@ from typing import List, Optional
 
 from fate.interface import PartyMeta
 
-from ...common import Party, file_utils
 from .._federation import FederationBase
 from ._mq_channel import MQChannel
 from ._rabbit_manager import RabbitManager
@@ -62,6 +61,7 @@ class RabbitmqFederation(FederationBase):
     @staticmethod
     def from_conf(
         federation_session_id: str,
+        computing_session,
         party: PartyMeta,
         parties: List[PartyMeta],
         route_table: dict,
@@ -88,6 +88,7 @@ class RabbitmqFederation(FederationBase):
 
         return RabbitmqFederation(
             federation_session_id,
+            computing_session,
             party,
             parties,
             mq,
@@ -100,6 +101,7 @@ class RabbitmqFederation(FederationBase):
     def __init__(
         self,
         session_id,
+        computing_session,
         party: PartyMeta,
         parties: List[PartyMeta],
         mq: MQ,
@@ -110,6 +112,7 @@ class RabbitmqFederation(FederationBase):
     ):
         super().__init__(
             session_id=session_id,
+            computing_session=computing_session,
             party=party,
             parties=parties,
             mq=mq,
