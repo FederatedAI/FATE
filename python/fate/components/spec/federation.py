@@ -98,7 +98,7 @@ class OSXFederationSpec(pydantic.BaseModel):
         route_table: dict
         osx_config: OSXConfig
 
-    type: Literal["pulsar"]
+    type: Literal["osx"]
     metadata: MetadataSpec
 
 

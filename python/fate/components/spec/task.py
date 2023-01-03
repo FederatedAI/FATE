@@ -7,6 +7,7 @@ from .computing import EggrollComputingSpec, SparkComputingSpec, StandaloneCompu
 from .device import CPUSpec, GPUSpec
 from .federation import (
     EggrollFederationSpec,
+    OSXFederationSpec,
     PulsarFederationSpec,
     RabbitMQFederationSpec,
     StandaloneFederationSpec,
@@ -25,7 +26,11 @@ class TaskConfigSpec(pydantic.BaseModel):
         device: Union[CPUSpec, GPUSpec]
         computing: Union[StandaloneComputingSpec, EggrollComputingSpec, SparkComputingSpec]
         federation: Union[
-            StandaloneFederationSpec, EggrollFederationSpec, RabbitMQFederationSpec, PulsarFederationSpec
+            StandaloneFederationSpec,
+            EggrollFederationSpec,
+            RabbitMQFederationSpec,
+            PulsarFederationSpec,
+            OSXFederationSpec,
         ]
         logger: Union[PipelineLogger, FlowLogger, CustomLogger]
         mlmd: Union[PipelineMLMDSpec, FlowMLMDSpec, NoopMLMDSpec, CustomMLMDSpec]
