@@ -56,12 +56,26 @@ public class TransferUtil {
         try {
             return Proxy.Metadata.parseFrom(outbound.getPayload());
         } catch (InvalidProtocolBufferException e) {
-            e.printStackTrace();
+
         }
         return null;
     }
+    public static Osx.Outbound buildOutboundFromProxyMetadata(Proxy.Metadata metadata) {
+           return Osx.Outbound.newBuilder().setPayload(metadata.toByteString()).build();
 
-    ;
+    }
+
+
+
+
+
+    public static Proxy.Packet parsePacketFromInbound(Osx.Inbound inbound){
+        try {
+           return  Proxy.Packet.parseFrom(inbound.getPayload());
+        } catch (InvalidProtocolBufferException e) {
+            return null;
+        }
+    }
 
     public static Osx.Inbound buildInboundFromPushingPacket(Proxy.Packet packet, String targetMethod) {
         Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();

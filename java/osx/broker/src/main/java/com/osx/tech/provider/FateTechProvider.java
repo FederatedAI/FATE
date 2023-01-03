@@ -135,17 +135,10 @@ public class FateTechProvider implements TechProvider, Lifecycle {
     @Override
     public void processGrpcInvoke(Osx.Inbound request, StreamObserver<Osx.Outbound> responseObserver) {
         Map<String, String> metaDataMap = request.getMetadataMap();
-
-        String targetMethod = metaDataMap.get(Osx.Metadata.forNumber(4).name());
-
-
-        //RouterInfo routerInfo = ServiceContainer.fateRouterService.route(sourcePartyId,sourceComponentName,targetPartyId,targetComponentName);
-        //context.setRouterInfo(routerInfo);
+        String targetMethod = metaDataMap.get(Osx.Metadata.TargetMethod.name());
         ServiceAdaptor serviceAdaptor = this.getServiceAdaptor(targetMethod);
         if(serviceAdaptor==null){
-            /**
-             * 异常
-             */
+            throw new ParameterException("invalid target method "+targetMethod);
         }
         Context context = ContextUtil.buildContext();
         InboundPackage inboundPackage = new InboundPackage();
@@ -165,8 +158,23 @@ public class FateTechProvider implements TechProvider, Lifecycle {
 
     @Override
     public StreamObserver<Osx.Inbound> processGrpcTransport(Osx.Inbound fristPackage, StreamObserver<Osx.Outbound> responseObserver) {
+        Map<String, String> metaDataMap = fristPackage.getMetadataMap();
+        String targetMethod = metaDataMap.get(Osx.Metadata.TargetMethod.name());
+        ServiceAdaptor serviceAdaptor = this.getServiceAdaptor(targetMethod);
+        if(serviceAdaptor==null){
+            throw new ParameterException("invalid target method "+targetMethod);
+        }
+        Context context = ContextUtil.buildContext();
+        InboundPackage inboundPackage = new InboundPackage();
+        inboundPackage.setBody(responseObserver);
+        OutboundPackage<StreamObserver<Osx.Inbound>> outboundPackage = serviceAdaptor.service( context, inboundPackage);
+        if(outboundPackage!=null&&outboundPackage.getData()!=null){
+            return (StreamObserver<Osx.Inbound>)outboundPackage.getData();
+        }else{
+            return null;
+        }
 
-        return null;
+
     }
 
     @Override

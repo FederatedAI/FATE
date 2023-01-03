@@ -57,10 +57,10 @@ public class RollPairContext {
                 options.getOrDefault(Dict.SERDES, defaultSerdesType));
         ErStore store = new ErStore(erStoreLocator, Lists.newArrayList(), options);
 
-        logger.info("===================ppppppp==={}", store);
+       // logger.info("===================ppppppp==={}", store);
         ErStore loaded = erSession.clusterManagerClient.getOrCreateStore(store);
 
-        logger.info("loaded  erStore {}", loaded);
+       // logger.info("loaded  erStore {}", loaded);
 
         return new RollPair(loaded, this, Maps.newHashMap());
 

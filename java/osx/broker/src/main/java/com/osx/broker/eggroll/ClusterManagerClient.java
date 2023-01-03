@@ -25,7 +25,7 @@ public class ClusterManagerClient {
             return null;
         ErSessionMeta resultErSessionMeta = null;
         Command.CommandResponse commandResponse = commandClient.call(SessionCommands.getOrCreateSession, sessionMeta);
-        logger.info("getOrCreateSession ======================={}", commandResponse);
+       // logger.info("getOrCreateSession ======================={}", commandResponse);
         List<ByteString> result = commandResponse.getResultsList();
         if (result != null) {
             try {
@@ -34,7 +34,7 @@ public class ClusterManagerClient {
                 e.printStackTrace();
             }
         }
-        logger.info("========= getOrCreateSession param {}  result {}", sessionMeta, resultErSessionMeta);
+      //  logger.info("========= getOrCreateSession param {}  result {}", sessionMeta, resultErSessionMeta);
         return resultErSessionMeta;
     }
 
@@ -78,7 +78,7 @@ public class ClusterManagerClient {
 
         Command.CommandResponse commandResponse = commandClient.call(MetaCommnads.getOrCreateStore, input);
         List<ByteString> result = commandResponse.getResultsList();
-        logger.info("==========kkkkkkkkkkkk  {}", commandResponse);
+        //logger.info("==========kkkkkkkkkkkk  {}", commandResponse);
         ErStore resultErStore = null;
         if (result != null) {
             try {

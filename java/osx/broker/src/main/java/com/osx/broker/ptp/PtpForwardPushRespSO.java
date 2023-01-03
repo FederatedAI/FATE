@@ -13,15 +13,16 @@ import org.slf4j.LoggerFactory;
 public class PtpForwardPushRespSO implements StreamObserver<Osx.Outbound> {
 
     Logger logger = LoggerFactory.getLogger(PtpForwardPushRespSO.class);
-    String sourceType;
+
     StreamObserver backPushRespSO;
+    Class backPushRespSOClass;
     CompleteCallback completeCallback;
     ErrorCallback errorCallback;
     Context context;
 
-    public PtpForwardPushRespSO(Context context, StreamObserver backPushRespSO, String sourceType, CompleteCallback completeCallback, ErrorCallback errorCallback) {
+    public PtpForwardPushRespSO(Context context, StreamObserver backPushRespSO, Class backPushRespSOClass , CompleteCallback completeCallback, ErrorCallback errorCallback) {
 
-        this.sourceType = sourceType;
+        this.backPushRespSOClass = backPushRespSOClass;
         this.backPushRespSO = backPushRespSO;
         this.context = context;
         this.completeCallback = completeCallback;
@@ -50,7 +51,7 @@ public class PtpForwardPushRespSO implements StreamObserver<Osx.Outbound> {
     @Override
     public void onNext(Osx.Outbound value) {
 
-        if (sourceType.equals("proxy")) {
+        if (backPushRespSOClass.equals(Proxy.Metadata.class)) {
             Proxy.Metadata metadata = TransferUtil.buildProxyMetadataFromOutbound(value);
             backPushRespSO.onNext(metadata);
         } else {

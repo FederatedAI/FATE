@@ -55,14 +55,17 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
     private boolean needPrintFlow = true;
     private StreamObserver<Proxy.Packet> forwardPushReqSO;
     private StreamObserver<Proxy.Metadata> backRespSO;
+    private Class  backRespSOClass;
     private String transferId;
     private Integer queueId;
 
 
-    public QueuePushReqStreamObserver(Context context, StreamObserver backRespSO
+    public QueuePushReqStreamObserver(Context context, StreamObserver backRespSO,
+                                      Class backRespSOClass
     ) {
 
         //this.fateRouterService = fateRouterService;
+        this.backRespSOClass =  backRespSOClass;
         this.backRespSO = backRespSO;
         this.context = context.subContext();
         this.context.setNeedPrintFlowLog(true);
@@ -85,7 +88,6 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
     public void init(Proxy.Packet packet) throws Exception {
 
         Proxy.Metadata metadata = packet.getHeader();
-
         String desPartyId = metadata.getDst().getPartyId();
         String srcPartyId = metadata.getSrc().getPartyId();
         ByteString encodedRollSiteHeader = metadata.getExt();
@@ -93,7 +95,7 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
 
         Integer partitionId = rsHeader.getPartitionId();
         brokerTag = "putBatch-" + rsHeader.getRsKey("#", "__rsk") + "-" + partitionId;
-        logger.info("=========ErRollSiteHeader {}", rsHeader);
+        //logger.info("=========ErRollSiteHeader {}", rsHeader);
         context.setSessionId(rsHeader.getRollSiteSessionId());
         context.setTopic(brokerTag);
 
@@ -101,7 +103,7 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
             isDst = true;
         }
 
-        logger.info("========= init ======={} to {} set {} isDst {}", srcPartyId, desPartyId, MetaInfo.PROPERTY_SELF_PARTY, isDst);
+        //logger.info("========= init ======={} to {} set {} isDst {}", srcPartyId, desPartyId, MetaInfo.PROPERTY_SELF_PARTY, isDst);
 
         /**
          * 检查目的地是否为自己
@@ -123,21 +125,18 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
             context.setRouterInfo(routerInfo);
             context.setSrcPartyId(routerInfo.getSourcePartyId());
             context.setDesPartyId(routerInfo.getDesPartyId());
-
             ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(context.getRouterInfo(),true);
-
-
             //forwardPushRespSO.setTokenApplyService(ServiceContainer.tokenApplyService);
             if (TransferUtil.isOldVersionFate(routerInfo.getVersion())) {
                 DataTransferServiceGrpc.DataTransferServiceStub stub = DataTransferServiceGrpc.newStub(managedChannel);
-                ForwardPushRespSO forwardPushRespSO = new ForwardPushRespSO(context, backRespSO, () -> {
+                ForwardPushRespSO forwardPushRespSO = new ForwardPushRespSO(context, backRespSO,backRespSOClass, () -> {
                     finishLatch.countDown();
                 }, (t) -> {
                     finishLatch.countDown();
                 });
                 forwardPushReqSO = stub.push(forwardPushRespSO);
             } else {
-                PtpForwardPushRespSO ptpForwardPushRespSO = new PtpForwardPushRespSO(context, backRespSO, "proxy", () -> {
+                PtpForwardPushRespSO ptpForwardPushRespSO = new PtpForwardPushRespSO(context, backRespSO, backRespSOClass, () -> {
                     finishLatch.countDown();
                 }, (t) -> {
                     finishLatch.countDown();
@@ -153,7 +152,6 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
                         Osx.Inbound inbound = TransferUtil.buildInboundFromPushingPacket(packet, TargetMethod.PUSH.name());
                         ptpForwardPushReqSO.onNext(inbound);
                     }
-
                     @Override
                     public void onError(Throwable throwable) {
                         ptpForwardPushReqSO.onError(throwable);
@@ -257,9 +255,9 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
 
         Future<ErTask> commandFuture = RollPairContext.executor.submit(() -> {
             CommandClient commandClient = new CommandClient(egg.getCommandEndpoint());
-            logger.info("before  call EGG_RUN_TASK_COMMAND  {}", task);
+          //  logger.info("before  call EGG_RUN_TASK_COMMAND  {}", task);
             Command.CommandResponse commandResponse = commandClient.call(RollPair.EGG_RUN_TASK_COMMAND, task);
-            logger.info("============== EGG_RUN_TASK_COMMAND {}", commandResponse);
+           // logger.info("============== EGG_RUN_TASK_COMMAND {}", commandResponse);
 
             long begin = System.currentTimeMillis();
             try {

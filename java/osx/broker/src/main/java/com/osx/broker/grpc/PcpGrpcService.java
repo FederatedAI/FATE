@@ -78,6 +78,7 @@ public class PcpGrpcService extends PrivateTransferProtocolGrpc.PrivateTransferP
 
         @Override
         public void onNext(Osx.Inbound inbound) {
+           // logger.info("======================={}",inbound);
             if (!inited) {
                 init(inbound);
             }
@@ -92,8 +93,6 @@ public class PcpGrpcService extends PrivateTransferProtocolGrpc.PrivateTransferP
         public void onError(Throwable throwable) {
             if (requestObserver != null) {
                 requestObserver.onError(throwable);
-            } else {
-                throw new RuntimeException();
             }
         }
 
@@ -101,8 +100,6 @@ public class PcpGrpcService extends PrivateTransferProtocolGrpc.PrivateTransferP
         public void onCompleted() {
             if (requestObserver != null) {
                 requestObserver.onCompleted();
-            } else {
-                throw new RuntimeException();
             }
         }
     }
