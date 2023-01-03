@@ -22,6 +22,9 @@ package com.osx.core.service;
  **/
 public class OutboundPackage<T> {
 
+    Throwable throwable;
+    T data;
+
     public Throwable getThrowable() {
         return throwable;
     }
@@ -29,10 +32,6 @@ public class OutboundPackage<T> {
     public void setThrowable(Throwable throwable) {
         this.throwable = throwable;
     }
-
-    Throwable    throwable;
-
-    T data;
 
     public T getData() {
         return data;

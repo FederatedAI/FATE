@@ -8,7 +8,7 @@ public class ClusterMetricBucket {
     private final LongAdder[] counters;
 
     public ClusterMetricBucket() {
-    ClusterFlowEvent[] events = ClusterFlowEvent.values();
+        ClusterFlowEvent[] events = ClusterFlowEvent.values();
         this.counters = new LongAdder[events.length];
         for (ClusterFlowEvent event : events) {
             counters[event.ordinal()] = new LongAdder();

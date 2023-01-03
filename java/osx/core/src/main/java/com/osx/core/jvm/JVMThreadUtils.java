@@ -21,7 +21,6 @@ import java.lang.management.ThreadMXBean;
 
 /**
  * 类描述：JVM 线程信息工具类
- * 
  **/
 public class JVMThreadUtils {
     static private ThreadMXBean threadMXBean;
@@ -32,6 +31,7 @@ public class JVMThreadUtils {
 
     /**
      * Daemon线程总量
+     *
      * @return
      */
     static public int getDaemonThreadCount() {
@@ -40,6 +40,7 @@ public class JVMThreadUtils {
 
     /**
      * 当前线程总量
+     *
      * @return
      */
     static public int getThreadCount() {
@@ -48,6 +49,7 @@ public class JVMThreadUtils {
 
     /**
      * 获取线程数量峰值（从启动或resetPeakThreadCount()方法重置开始统计）
+     *
      * @return
      */
     static public int getPeakThreadCount() {
@@ -56,6 +58,7 @@ public class JVMThreadUtils {
 
     /**
      * 获取线程数量峰值（从启动或resetPeakThreadCount()方法重置开始统计），并重置
+     *
      * @return
      * @Throws java.lang.SecurityException - if a security manager exists and the caller does not have ManagementPermission("control").
      */
@@ -76,6 +79,7 @@ public class JVMThreadUtils {
 
     /**
      * 死锁线程总量
+     *
      * @return
      * @Throws IllegalStateException 没有权限或JVM不支持的操作
      */

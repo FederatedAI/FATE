@@ -1,22 +1,16 @@
-
 package com.osx.broker.message;
 
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.net.UnknownHostException;
+import com.osx.broker.grpc.MessageFlag;
+import com.osx.broker.util.MessageId;
+import com.osx.broker.util.UtilAll;
+
+import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-
-import com.osx.broker.grpc.MessageFlag;
-import com.osx.broker.util.MessageId;
-import com.osx.broker.util.UtilAll;
 
 public class MessageDecoder {
 //    public final static int MSG_ID_LENGTH = 8 + 8;
@@ -58,9 +52,9 @@ public class MessageDecoder {
         return UtilAll.bytes2string(input.array());
     }
 
-    public   static  MessageExtBrokerInner   buildMessageExtBrokerInner(String topic , byte[]  body,
-                                                                  int  queueId, MessageFlag flag ,String srcPartyId,String desPartyId){
-        MessageExtBrokerInner  messageExtBrokerInner = new MessageExtBrokerInner();
+    public static MessageExtBrokerInner buildMessageExtBrokerInner(String topic, byte[] body,
+                                                                   int queueId, MessageFlag flag, String srcPartyId, String desPartyId) {
+        MessageExtBrokerInner messageExtBrokerInner = new MessageExtBrokerInner();
         messageExtBrokerInner.setQueueId(queueId);
         messageExtBrokerInner.setBody(body);
         messageExtBrokerInner.setTopic(topic);
@@ -68,7 +62,7 @@ public class MessageDecoder {
         messageExtBrokerInner.setBornTimestamp(System.currentTimeMillis());
         messageExtBrokerInner.setDesPartyId(srcPartyId);
         messageExtBrokerInner.setSrcPartyId(desPartyId);
-        return  messageExtBrokerInner;
+        return messageExtBrokerInner;
     }
 
     public static String createMessageId(SocketAddress socketAddress, long transactionIdhashCode) {
@@ -111,19 +105,19 @@ public class MessageDecoder {
         int bornhostLength = (sysFlag & MessageSysFlag.BORNHOST_V6_FLAG) == 0 ? 8 : 20;
         int storehostAddressLength = (sysFlag & MessageSysFlag.STOREHOSTADDRESS_V6_FLAG) == 0 ? 8 : 20;
         int bodySizePosition = 4 // 1 TOTALSIZE
-            + 4 // 2 MAGICCODE
-            + 4 // 3 BODYCRC
-            + 4 // 4 QUEUEID
-            + 4 // 5 FLAG
-            + 8 // 6 QUEUEOFFSET
-            + 8 // 7 PHYSICALOFFSET
-            + 4 // 8 SYSFLAG
-            + 8 // 9 BORNTIMESTAMP
-            + bornhostLength // 10 BORNHOST
-            + 8 // 11 STORETIMESTAMP
-            + storehostAddressLength // 12 STOREHOSTADDRESS
-            + 4 // 13 RECONSUMETIMES
-            + 8; // 14 Prepared Transaction Offset
+                + 4 // 2 MAGICCODE
+                + 4 // 3 BODYCRC
+                + 4 // 4 QUEUEID
+                + 4 // 5 FLAG
+                + 8 // 6 QUEUEOFFSET
+                + 8 // 7 PHYSICALOFFSET
+                + 4 // 8 SYSFLAG
+                + 8 // 9 BORNTIMESTAMP
+                + bornhostLength // 10 BORNHOST
+                + 8 // 11 STORETIMESTAMP
+                + storehostAddressLength // 12 STOREHOSTADDRESS
+                + 4 // 13 RECONSUMETIMES
+                + 8; // 14 Prepared Transaction Offset
         int topicLengthPosition = bodySizePosition + 4 + byteBuffer.getInt(bodySizePosition);
 
         byte topicLength = byteBuffer.get(topicLengthPosition);
@@ -265,12 +259,12 @@ public class MessageDecoder {
 //    }
 
     public static MessageExt decode(
-        ByteBuffer byteBuffer, final boolean readBody, final boolean deCompressBody) {
+            ByteBuffer byteBuffer, final boolean readBody, final boolean deCompressBody) {
         return decode(byteBuffer, readBody, deCompressBody, false);
     }
 
     public static MessageExt decode(
-        ByteBuffer byteBuffer, final boolean readBody, final boolean deCompressBody, final boolean isClient) {
+            ByteBuffer byteBuffer, final boolean readBody, final boolean deCompressBody, final boolean isClient) {
         try {
 
             MessageExt msgExt;
@@ -301,13 +295,13 @@ public class MessageDecoder {
             msgExt.setFlag(flag);
 
             // 6 QUEUEOFFSET
-           int  srcPartyIdLength =  byteBuffer.get();
-           if(srcPartyIdLength>0){
-               byte[] srcPartyBytes =new  byte[srcPartyIdLength];
-               byteBuffer.get(srcPartyBytes);
-               String  srcPartyId = new  String(srcPartyBytes);
-               msgExt.setSrcPartyId(srcPartyId);
-           }
+            int srcPartyIdLength = byteBuffer.get();
+            if (srcPartyIdLength > 0) {
+                byte[] srcPartyBytes = new byte[srcPartyIdLength];
+                byteBuffer.get(srcPartyBytes);
+                String srcPartyId = new String(srcPartyBytes);
+                msgExt.setSrcPartyId(srcPartyId);
+            }
 
 //            long queueOffset = byteBuffer.getLong();
 //            msgExt.setQueueOffset(queueOffset);
@@ -317,11 +311,11 @@ public class MessageDecoder {
 //            msgExt.setCommitLogOffset(physicOffset);
 
 
-            int  desPartyIdLength =  byteBuffer.get();
-            if(desPartyIdLength>0){
-                byte[] desPartyIdBytes =new  byte[desPartyIdLength];
+            int desPartyIdLength = byteBuffer.get();
+            if (desPartyIdLength > 0) {
+                byte[] desPartyIdBytes = new byte[desPartyIdLength];
                 byteBuffer.get(desPartyIdBytes);
-                String  desPartyId = new  String(desPartyIdBytes);
+                String desPartyId = new String(desPartyIdBytes);
                 msgExt.setDesPartyId(desPartyId);
             }
 
@@ -475,11 +469,11 @@ public class MessageDecoder {
         short propertiesLength = (short) propertiesBytes.length;
         int sysFlag = message.getFlag();
         int storeSize = 4 // 1 TOTALSIZE
-            + 4 // 2 MAGICCOD
-            + 4 // 3 BODYCRC
-            + 4 // 4 FLAG
-            + 4 + bodyLen // 4 BODY
-            + 2 + propertiesLength;
+                + 4 // 2 MAGICCOD
+                + 4 // 3 BODYCRC
+                + 4 // 4 FLAG
+                + 4 + bodyLen // 4 BODY
+                + 2 + propertiesLength;
         ByteBuffer byteBuffer = ByteBuffer.allocate(storeSize);
         // 1 TOTALSIZE
         byteBuffer.putInt(storeSize);

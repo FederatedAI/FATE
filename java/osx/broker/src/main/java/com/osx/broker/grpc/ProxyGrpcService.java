@@ -1,13 +1,12 @@
-
 package com.osx.broker.grpc;
 
 //import com.firework.transfer.service.PullService;
 
+import com.osx.broker.service.PushService2;
+import com.osx.broker.service.UnaryCallService;
 import com.osx.core.context.Context;
 import com.osx.core.service.InboundPackage;
 import com.osx.core.service.OutboundPackage;
-import com.osx.broker.service.PushService2;
-import com.osx.broker.service.UnaryCallService;
 import com.webank.ai.eggroll.api.networking.proxy.DataTransferServiceGrpc;
 import com.webank.ai.eggroll.api.networking.proxy.Proxy;
 import io.grpc.stub.StreamObserver;
@@ -17,19 +16,19 @@ import org.slf4j.LoggerFactory;
 
 public class ProxyGrpcService extends DataTransferServiceGrpc.DataTransferServiceImplBase {
     Logger logger = LoggerFactory.getLogger(ProxyGrpcService.class);
-
+    UnaryCallService unaryCallService;
+    PushService2 pushService2;
     public ProxyGrpcService(PushService2 pushService2,
                             UnaryCallService unaryCallService
-                     ){
+    ) {
         this.pushService2 = pushService2;
         this.unaryCallService = unaryCallService;
 
 
     }
 
-    UnaryCallService unaryCallService;
-    PushService2 pushService2;
     /**
+     *
      */
 
     public io.grpc.stub.StreamObserver<com.webank.ai.eggroll.api.networking.proxy.Proxy.Packet> push(
@@ -43,7 +42,7 @@ public class ProxyGrpcService extends DataTransferServiceGrpc.DataTransferServic
             data.setBody(pushRequestDataWrap);
             OutboundPackage<StreamObserver> outboundPackage = pushService2.service(context, data);
             return outboundPackage.getData();
-        }catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
@@ -65,6 +64,7 @@ public class ProxyGrpcService extends DataTransferServiceGrpc.DataTransferServic
 //    }
 
     /**
+     *
      */
 
     public void unaryCall(com.webank.ai.eggroll.api.networking.proxy.Proxy.Packet request,
@@ -73,12 +73,12 @@ public class ProxyGrpcService extends DataTransferServiceGrpc.DataTransferServic
         InboundPackage<Proxy.Packet> data = new InboundPackage<>();
         data.setBody(request);
         context.setDataSize(request.getSerializedSize());
-        OutboundPackage<Proxy.Packet> outboundPackage =  unaryCallService.service(context,data);
+        OutboundPackage<Proxy.Packet> outboundPackage = unaryCallService.service(context, data);
         Proxy.Packet result = outboundPackage.getData();
-        Throwable  throwable = outboundPackage.getThrowable();
-        if(throwable!=null) {
+        Throwable throwable = outboundPackage.getThrowable();
+        if (throwable != null) {
             responseObserver.onError(throwable);
-        }else {
+        } else {
             responseObserver.onNext(result);
             responseObserver.onCompleted();
         }
@@ -89,7 +89,6 @@ public class ProxyGrpcService extends DataTransferServiceGrpc.DataTransferServic
             io.grpc.stub.StreamObserver<com.webank.ai.eggroll.api.networking.proxy.Proxy.PollingFrame> responseObserver) {
         return null;
     }
-
 
 
 }

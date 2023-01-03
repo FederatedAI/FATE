@@ -17,7 +17,6 @@
 package com.osx.broker.zk;
 
 
-
 import com.osx.core.config.MetaInfo;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
@@ -61,7 +60,7 @@ public class CuratorZookeeperClient extends AbstractZookeeperClient<CuratorZooke
     private String aclPassword;
     private List<ACL> acls = new ArrayList<>();
 
-    public CuratorZookeeperClient(ZkConfig  zkConfig) {
+    public CuratorZookeeperClient(ZkConfig zkConfig) {
         super(zkConfig);
         try {
             int timeout = zkConfig.getTimeout();
@@ -180,7 +179,7 @@ public class CuratorZookeeperClient extends AbstractZookeeperClient<CuratorZooke
             }
         } catch (NodeExistsException e) {
 
-            throw  e;
+            throw e;
 //            try {
 ////                if (aclEnable) {
 ////                    Stat stat = client.checkExists().forPath(path);
@@ -213,11 +212,12 @@ public class CuratorZookeeperClient extends AbstractZookeeperClient<CuratorZooke
         } catch (Exception e) {
             e.printStackTrace();
             throw new IllegalStateException(e.getMessage(), e);
-        }catch(Throwable e){
+        } catch (Throwable e) {
             e.printStackTrace();
         }
     }
-    public  void  close(){
+
+    public void close() {
         client.close();
     }
 

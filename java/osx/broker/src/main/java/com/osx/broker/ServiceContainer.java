@@ -1,34 +1,28 @@
 package com.osx.broker;
 
 
-
+import com.osx.broker.consumer.ConsumerManager;
+import com.osx.broker.grpc.ClusterService;
+import com.osx.broker.grpc.PcpGrpcService;
+import com.osx.broker.grpc.ProxyGrpcService;
 import com.osx.broker.interceptor.RequestHandleInterceptor;
+import com.osx.broker.message.AllocateMappedFileService;
+import com.osx.broker.queue.TransferQueueManager;
+import com.osx.broker.router.DefaultFateRouterServiceImpl;
+import com.osx.broker.router.FateRouterService;
+import com.osx.broker.server.OsxServer;
+import com.osx.broker.service.PushService2;
+import com.osx.broker.service.TokenApplyService;
+import com.osx.broker.service.UnaryCallService;
+import com.osx.broker.store.MessageStore;
+import com.osx.broker.token.DefaultTokenService;
+import com.osx.broker.zk.CuratorZookeeperClient;
+import com.osx.broker.zk.ZkConfig;
 import com.osx.core.config.MetaInfo;
 import com.osx.core.flow.ClusterFlowRuleManager;
 import com.osx.core.flow.FlowCounterManager;
 import com.osx.core.service.AbstractServiceAdaptor;
 import com.osx.tech.provider.TechProviderRegister;
-
-//import com.osx.transfer.consumer.RedirectSinker;
-
-import com.osx.broker.grpc.ClusterService;
-
-import com.osx.broker.grpc.PcpGrpcService;
-import com.osx.broker.grpc.ProxyGrpcService;
-//import com.osx.transfer.grpc.QueueGrpcService;
-import com.osx.broker.message.AllocateMappedFileService;
-import com.osx.broker.consumer.ConsumerManager;
-//import com.osx.transfer.ptp.QueryTransferQueueService;
-import com.osx.broker.queue.TransferQueueManager;
-import com.osx.broker.router.DefaultFateRouterServiceImpl;
-import com.osx.broker.router.FateRouterService;
-
-import com.osx.broker.server.OsxServer;
-import com.osx.broker.service.*;
-import com.osx.broker.store.MessageStore;
-import com.osx.broker.token.DefaultTokenService;
-import com.osx.broker.zk.CuratorZookeeperClient;
-import com.osx.broker.zk.ZkConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,112 +31,104 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ServiceContainer {
-    static Logger logger = LoggerFactory.getLogger(ServiceContainer.class);
     static public ConsumerManager consumerManager;
     static public PcpGrpcService pcpGrpcService;
-
-
-    static public TransferQueueManager  transferQueueManager;
-    static public AllocateMappedFileService  allocateMappedFileService;
+    static public TransferQueueManager transferQueueManager;
+    static public AllocateMappedFileService allocateMappedFileService;
     static public FlowCounterManager flowCounterManager;
-   // static public ZookeeperRegistry  zookeeperRegistry;
+    // static public ZookeeperRegistry  zookeeperRegistry;
     static public OsxServer transferServer;
-    static public ProxyGrpcService  proxyGrpcService;
+    static public ProxyGrpcService proxyGrpcService;
     static public FateRouterService fateRouterService;
-//    static public QueueGrpcService queueGrpcservice;
-   // static public CommonService commonService;
-    static public ClusterService  clusterService;
-    //static public DLedgerServer dLedgerServer;
-
+    //    static public QueueGrpcService queueGrpcservice;
+    // static public CommonService commonService;
+    static public ClusterService clusterService;
     //static public ProducerStreamService  producerStreamService;
-    static public Map<String, AbstractServiceAdaptor> serviceAdaptorMap = new HashMap<String,AbstractServiceAdaptor>();
-    static public TokenApplyService tokenApplyService ;
-    static public PushService2 pushService2 ;
-    static public UnaryCallService unaryCallService ;
-
-    static  public  RequestHandleInterceptor requestHandleInterceptor;
-//    static public DefaultRouterInterceptor defaultRouterInterceptor;
- //   static public ProducerUnaryService producerUnaryService;
-   // static public SyncQueueService syncQueueService;
-
-
-   // static public ConsumeUnaryService  consumeUnaryService;
+    static public Map<String, AbstractServiceAdaptor> serviceAdaptorMap = new HashMap<String, AbstractServiceAdaptor>();
+    //static public DLedgerServer dLedgerServer;
+    static public TokenApplyService tokenApplyService;
+    static public PushService2 pushService2;
+    static public UnaryCallService unaryCallService;
+    static public RequestHandleInterceptor requestHandleInterceptor;
+    // static public ConsumeUnaryService  consumeUnaryService;
 //    static public CancelTransferService  cancelTransferService;
 //    static public AckService   ackService;
 //    static public QueryTransferQueueService queryTransferQueueService;
-    static public MessageStore  messageStore ;
+    static public MessageStore messageStore;
+//    static public DefaultRouterInterceptor defaultRouterInterceptor;
+    //   static public ProducerUnaryService producerUnaryService;
+    // static public SyncQueueService syncQueueService;
     //static public ClusterClientEndpoint clusterClientEndpoint;
     //static public ReportService  reportService;
 //    static public RedirectSinker redirectSinker;
     static public ClusterFlowRuleManager clusterFlowRuleManager;
     static public DefaultTokenService defaultTokenService;
     //static public TokenApplyService  tokenApplyService;
-    static public CuratorZookeeperClient  zkClient;
-//    static public ClusterQueueApplyService  clusterQueueApplyService;
-
+    static public CuratorZookeeperClient zkClient;
     static public TechProviderRegister techProviderRegister;
+//    static public ClusterQueueApplyService  clusterQueueApplyService;
+    static Logger logger = LoggerFactory.getLogger(ServiceContainer.class);
 
-
-    public static void init(){
+    public static void init() {
         flowCounterManager = createFlowCounterManager();
-        clusterFlowRuleManager =  createClusterFlowRuleManager();
+        clusterFlowRuleManager = createClusterFlowRuleManager();
         //zookeeperRegistry = createServiceRegistry();
         allocateMappedFileService = createAllocateMappedFileService();
         messageStore = createMessageStore(allocateMappedFileService);
         zkClient = createCuratorZookeeperClient();
-        transferQueueManager  = createTransferQueueManager();
+        transferQueueManager = createTransferQueueManager();
         consumerManager = createTransferQueueConsumerManager();
         fateRouterService = createFateRouterService();
         tokenApplyService = createTokenApplyService();
         pushService2 = createPushService2();
-       // consumeUnaryService = createConsumeUnaryService();
-       // cancelTransferService = createCancelTransferService(transferQueueManager,consumerManager);
+        // consumeUnaryService = createConsumeUnaryService();
+        // cancelTransferService = createCancelTransferService(transferQueueManager,consumerManager);
         //producerStreamService = createProducerStreamService(tokenApplyService,fateRouterService,consumerManager,transferQueueManager);
-     //   producerUnaryService = createProducerUnaryService(fateRouterService,consumerManager,transferQueueManager);
+        //   producerUnaryService = createProducerUnaryService(fateRouterService,consumerManager,transferQueueManager);
         //queryTransferQueueService = new QueryTransferQueueService(transferQueueManager);
-      //  queueGrpcservice =       createQueueGrpcservice();
+        //  queueGrpcservice =       createQueueGrpcservice();
         requestHandleInterceptor = createDefaulRequestInterceptor(fateRouterService);
 //        defaultRouterInterceptor = createDefaultRouterInterceptor(fateRouterService);
         unaryCallService = createUnaryCallService(requestHandleInterceptor);
-        proxyGrpcService = new  ProxyGrpcService(pushService2,unaryCallService);
-        transferServer =  new OsxServer();
+        proxyGrpcService = new ProxyGrpcService(pushService2, unaryCallService);
+        transferServer = new OsxServer();
         //clusterClientEndpoint = createClusterClientEndpoint();
         //reportService = createReportService();
         //ackService = createAckService();
-       // commonService = createCommonService();
+        // commonService = createCommonService();
 //        redirectSinker = createRedirectSinker();
-        defaultTokenService =  createDefaultTokenService();
+        defaultTokenService = createDefaultTokenService();
         tokenApplyService = createTokenApplyService();
         //syncQueueService = createSyncQueueService();
-       // clusterQueueApplyService = createClusterQueueApplyService();
+        // clusterQueueApplyService = createClusterQueueApplyService();
         clusterService = createClusterService();
-       // dLedgerServer = createDLedgerServer();
+        // dLedgerServer = createDLedgerServer();
 
         pcpGrpcService = createPcpGrpcService();
-        techProviderRegister= createTechProviderRegister();
-        if(!transferServer.start()){
+        techProviderRegister = createTechProviderRegister();
+        if (!transferServer.start()) {
             System.exit(-1);
-        }else{
+        } else {
 
-        };
-
+        }
+        ;
 
 
     }
 
-    public  static TechProviderRegister createTechProviderRegister(){
-        TechProviderRegister   techProviderRegister = new TechProviderRegister();
+    public static TechProviderRegister createTechProviderRegister() {
+        TechProviderRegister techProviderRegister = new TechProviderRegister();
         techProviderRegister.init();
         return techProviderRegister;
     }
 
-    public  static PcpGrpcService  createPcpGrpcService(){
+    public static PcpGrpcService createPcpGrpcService() {
 
-            return   new PcpGrpcService();
+        return new PcpGrpcService();
     }
 
-    public  static ClusterService createClusterService(){
-            return  new ClusterService();
+    public static ClusterService createClusterService() {
+        return new ClusterService();
     }
 
 //    public  static ClusterQueueApplyService createClusterQueueApplyService(){
@@ -150,27 +136,26 @@ public class ServiceContainer {
 //    };
 
 
-
     //public  static  SyncQueueService  createSyncQueueService(){
 //            return  new  SyncQueueService();
 //    }
 
-    public  static  CuratorZookeeperClient  createCuratorZookeeperClient(){
-        if(MetaInfo.isCluster()){
-            ZkConfig  zkConfig= new  ZkConfig(MetaInfo.PROPERTY_ZK_URL,5000);
+    public static CuratorZookeeperClient createCuratorZookeeperClient() {
+        if (MetaInfo.isCluster()) {
+            ZkConfig zkConfig = new ZkConfig(MetaInfo.PROPERTY_ZK_URL, 5000);
             return new CuratorZookeeperClient(zkConfig);
         }
         return null;
     }
 
-    public  static  TokenApplyService createTokenApplyService(){
-        TokenApplyService   tokenApplyService =   new TokenApplyService();
+    public static TokenApplyService createTokenApplyService() {
+        TokenApplyService tokenApplyService = new TokenApplyService();
         tokenApplyService.start();
-        return  tokenApplyService;
+        return tokenApplyService;
     }
 
-    public  static DefaultTokenService  createDefaultTokenService(){
-        return  new  DefaultTokenService();
+    public static DefaultTokenService createDefaultTokenService() {
+        return new DefaultTokenService();
     }
 //   // public  static CommonService createCommonService(){
 //        return  new CommonService();
@@ -180,7 +165,9 @@ public class ServiceContainer {
 //        return  new  RedirectSinker();
 //    }
 
-    public  static ClusterFlowRuleManager createClusterFlowRuleManager(){return  new   ClusterFlowRuleManager();}
+    public static ClusterFlowRuleManager createClusterFlowRuleManager() {
+        return new ClusterFlowRuleManager();
+    }
 
 //    public static AckService  createAckService(){
 //        AckService   ackService = new  AckService();
@@ -201,12 +188,12 @@ public class ServiceContainer {
 
 
     public static MessageStore createMessageStore(
-                                                  AllocateMappedFileService allocateMappedFileService){
-       // TransferQueueManager transferQueueManager ,AllocateMappedFileService allocateMappedFileService,String path){
-            MessageStore messageStore = new MessageStore(allocateMappedFileService
-                    ,MetaInfo.PROPERTY_TRANSFER_FILE_PATH_PRE+ File.separator+MetaInfo.INSTANCE_ID+File.separator+"message-store");
+            AllocateMappedFileService allocateMappedFileService) {
+        // TransferQueueManager transferQueueManager ,AllocateMappedFileService allocateMappedFileService,String path){
+        MessageStore messageStore = new MessageStore(allocateMappedFileService
+                , MetaInfo.PROPERTY_TRANSFER_FILE_PATH_PRE + File.separator + MetaInfo.INSTANCE_ID + File.separator + "message-store");
         messageStore.start();
-            return   messageStore;
+        return messageStore;
 
     }
 
@@ -216,29 +203,28 @@ public class ServiceContainer {
 //      return    new QueueGrpcService();
 //    }
 
-    public static RequestHandleInterceptor createDefaulRequestInterceptor(FateRouterService  routerService){
-        RequestHandleInterceptor requestHandleInterceptor=   new  RequestHandleInterceptor(routerService);
-        return  requestHandleInterceptor;
+    public static RequestHandleInterceptor createDefaulRequestInterceptor(FateRouterService routerService) {
+        RequestHandleInterceptor requestHandleInterceptor = new RequestHandleInterceptor(routerService);
+        return requestHandleInterceptor;
     }
 
 
-    static  FlowCounterManager  createFlowCounterManager(){
-        FlowCounterManager  flowCounterManager = new FlowCounterManager("transfer");
+    static FlowCounterManager createFlowCounterManager() {
+        FlowCounterManager flowCounterManager = new FlowCounterManager("transfer");
         flowCounterManager.startReport();
-        return  flowCounterManager;
+        return flowCounterManager;
     }
 
-    static UnaryCallService createUnaryCallService(RequestHandleInterceptor  requestHandleInterceptor){
-        UnaryCallService unaryCallService = new  UnaryCallService();
+    static UnaryCallService createUnaryCallService(RequestHandleInterceptor requestHandleInterceptor) {
+        UnaryCallService unaryCallService = new UnaryCallService();
         unaryCallService.addPreProcessor(requestHandleInterceptor);
         return unaryCallService;
     }
 
-    static PushService2  createPushService2(){
-        PushService2  pushService2 = new PushService2();
+    static PushService2 createPushService2() {
+        PushService2 pushService2 = new PushService2();
         return pushService2;
     }
-
 
 
 //    static  ZookeeperRegistry createServiceRegistry() {
@@ -252,7 +238,6 @@ public class ServiceContainer {
 //        routerService.setRegistry(zookeeperRegistry);
 //        return routerService;
 //    }
-
 
 
 //    static ProducerUnaryService createProducerUnaryService(
@@ -283,9 +268,6 @@ public class ServiceContainer {
 //    }
 
 
-
-
-
 //    static ProducerStreamService createProducerStreamService(TokenApplyService tokenApplyService,
 //                                                       FateRouterService fateRouterService,
 //                                                       ConsumerManager consumerManager,
@@ -298,8 +280,8 @@ public class ServiceContainer {
 //        return  producerService;
 //    }
 
-    static ConsumerManager  createTransferQueueConsumerManager(){
-        ConsumerManager  consumerManager = new  ConsumerManager();
+    static ConsumerManager createTransferQueueConsumerManager() {
+        ConsumerManager consumerManager = new ConsumerManager();
         return consumerManager;
     }
 
@@ -310,21 +292,21 @@ public class ServiceContainer {
 //        return tokenApplyService;
 //    }
 
-    static  FateRouterService createFateRouterService(){
-        DefaultFateRouterServiceImpl    fateRouterService = new DefaultFateRouterServiceImpl();
+    static FateRouterService createFateRouterService() {
+        DefaultFateRouterServiceImpl fateRouterService = new DefaultFateRouterServiceImpl();
         fateRouterService.start();
-        return  fateRouterService;
+        return fateRouterService;
     }
 
-    static TransferQueueManager   createTransferQueueManager( ){
-        TransferQueueManager  transferQueueManager = new  TransferQueueManager();
+    static TransferQueueManager createTransferQueueManager() {
+        TransferQueueManager transferQueueManager = new TransferQueueManager();
         return transferQueueManager;
     }
 
-    static AllocateMappedFileService  createAllocateMappedFileService(){
-        AllocateMappedFileService  allocateMappedFileService = new  AllocateMappedFileService();
+    static AllocateMappedFileService createAllocateMappedFileService() {
+        AllocateMappedFileService allocateMappedFileService = new AllocateMappedFileService();
         allocateMappedFileService.start();
-        return  allocateMappedFileService;
+        return allocateMappedFileService;
     }
 
 
@@ -372,7 +354,6 @@ public class ServiceContainer {
 //
 //        logger.info("===== {}",serviceAdaptorMap);
 //    }
-
 
 
 //    public ApplicationListener<ApplicationReadyEvent> registerComponent(ZookeeperRegistry zookeeperRegistry) {

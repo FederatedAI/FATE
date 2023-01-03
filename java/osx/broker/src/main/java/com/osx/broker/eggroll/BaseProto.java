@@ -3,11 +3,11 @@ package com.osx.broker.eggroll;
 
 import com.osx.core.utils.JsonUtil;
 
-public abstract class BaseProto <T>{
+public abstract class BaseProto<T> {
 
-   abstract T toProto();
+    abstract T toProto();
 
-   public String  toString(){
-      return JsonUtil.object2Json(this);
-   }
+    public String toString() {
+        return JsonUtil.object2Json(this);
+    }
 }

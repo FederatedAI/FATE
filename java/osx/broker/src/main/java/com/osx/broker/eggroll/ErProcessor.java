@@ -5,9 +5,33 @@ import com.webank.eggroll.core.meta.Meta;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ErProcessor extends BaseProto<Meta.Processor>{
+public class ErProcessor extends BaseProto<Meta.Processor> {
 
-    long  id  = -1;
+    long id = -1;
+    long serverNodeId = -1;
+    String name = Dict.EMPTY;
+    String processorType = Dict.EMPTY;
+    String status = Dict.EMPTY;
+    ErEndpoint commandEndpoint;
+    ErEndpoint transferEndpoint;
+    int pid = -1;
+    ConcurrentHashMap options;
+
+    public static ErProcessor parseFromPb(Meta.Processor processor) {
+        if (processor != null) {
+            ErProcessor erProcessor = new ErProcessor();
+            erProcessor.setId(processor.getId());
+            erProcessor.setServerNodeId(processor.getServerNodeId());
+            erProcessor.setName(processor.getName());
+            erProcessor.setProcessorType(processor.getProcessorType());
+            erProcessor.setCommandEndpoint(ErEndpoint.parseFromPb(processor.getCommandEndpoint()));
+            erProcessor.setTransferEndpoint(ErEndpoint.parseFromPb(processor.getTransferEndpoint()));
+            erProcessor.setPid(processor.getPid());
+            return erProcessor;
+        } else {
+            return null;
+        }
+    }
 
     public long getId() {
         return id;
@@ -81,16 +105,7 @@ public class ErProcessor extends BaseProto<Meta.Processor>{
         this.options = options;
     }
 
-    long  serverNodeId = -1;
-    String name= Dict.EMPTY;
-    String processorType = Dict.EMPTY;
-    String  status = Dict.EMPTY;
-    ErEndpoint  commandEndpoint ;
-    ErEndpoint  transferEndpoint;
-    int  pid = -1;
-    ConcurrentHashMap options;
-
-    public Meta.Processor toProto(){
+    public Meta.Processor toProto() {
 
         return Meta.Processor.newBuilder().
                 setId(this.id).
@@ -100,25 +115,6 @@ public class ErProcessor extends BaseProto<Meta.Processor>{
                 setCommandEndpoint(this.commandEndpoint.toProto()).setTransferEndpoint(this.transferEndpoint.toProto())
                 .setPid(this.pid).build();
 
-    }
-
-
-
-
-    public  static ErProcessor parseFromPb(Meta.Processor processor){
-        if(processor!=null) {
-            ErProcessor erProcessor = new ErProcessor();
-            erProcessor.setId(processor.getId());
-            erProcessor.setServerNodeId(processor.getServerNodeId());
-            erProcessor.setName(processor.getName());
-            erProcessor.setProcessorType(processor.getProcessorType());
-            erProcessor.setCommandEndpoint(ErEndpoint.parseFromPb(processor.getCommandEndpoint()));
-            erProcessor.setTransferEndpoint(ErEndpoint.parseFromPb(processor.getTransferEndpoint()));
-            erProcessor.setPid(processor.getPid());
-            return erProcessor;
-        }else{
-            return null;
-        }
     }
 
 

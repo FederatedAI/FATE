@@ -6,21 +6,18 @@ public class IdUtils {
     private static String job = "job";
     private static String task = "task";
 
-    public static String generateJobId(String sessionId,String tag, String delim){
+    public static String generateJobId(String sessionId, String tag, String delim) {
         String result = String.join(delim, sessionId, "scala", job, TimeUtils.getNowMs(null));
         if (StringUtils.isBlank(tag)) {
             return result;
+        } else {
+            return result + "_" + tag;
         }
-        else{
-            return  result+"_"+tag;
-        }
-            //s"${result}_${tag}"
+        //s"${result}_${tag}"
     }
 
 
-
 }
-
 
 
 //

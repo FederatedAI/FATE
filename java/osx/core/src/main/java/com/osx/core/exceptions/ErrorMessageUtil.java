@@ -19,9 +19,6 @@ package com.osx.core.exceptions;
 import com.osx.core.constant.Dict;
 import com.osx.core.constant.StatusCode;
 import com.osx.core.context.Context;
-import com.osx.core.service.AbstractServiceAdaptor;
-
-
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import org.slf4j.Logger;
@@ -68,8 +65,8 @@ public class ErrorMessageUtil {
         return retcode;
     }
 
-    public static StatusRuntimeException throwableToException(Context context, Throwable throwable){
-        if(throwable instanceof StatusRuntimeException ){
+    public static StatusRuntimeException throwableToException(Context context, Throwable throwable) {
+        if (throwable instanceof StatusRuntimeException) {
             return (StatusRuntimeException) throwable;
         }
         /**
@@ -80,7 +77,7 @@ public class ErrorMessageUtil {
     }
 
 
-    public static ExceptionInfo handleExceptionExceptionInfo(Context context , Throwable e) {
+    public static ExceptionInfo handleExceptionExceptionInfo(Context context, Throwable e) {
         ExceptionInfo exceptionInfo = new ExceptionInfo();
         if (e instanceof BaseException) {
             BaseException baseException = (BaseException) e;
@@ -91,7 +88,7 @@ public class ErrorMessageUtil {
             exceptionInfo.setMessage(e.getMessage());
         }
         exceptionInfo.setThrowable(e);
-        if(context.needAssembleException()) {
+        if (context.needAssembleException()) {
             exceptionInfo.setThrowable(throwableToException(context, e));
         }
         return exceptionInfo;

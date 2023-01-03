@@ -3,13 +3,14 @@ package com.osx.broker.queue;
 
 import com.osx.core.utils.JsonUtil;
 
-public  class TransferQueueApplyInfo{
+public class TransferQueueApplyInfo {
 
     String transferId;
     String instanceId;
-    String ip ;
+    String ip;
     String sessionId;
-    long  applyTimestamp;
+    long applyTimestamp;
+
     public String getTransferId() {
         return transferId;
     }
@@ -30,16 +31,16 @@ public  class TransferQueueApplyInfo{
         return ip;
     }
 
+    public void setIp(String ip) {
+        this.ip = ip;
+    }
+
     public String getSessionId() {
         return sessionId;
     }
 
     public void setSessionId(String sessionId) {
         this.sessionId = sessionId;
-    }
-
-    public void setIp(String ip) {
-        this.ip = ip;
     }
 
     public long getApplyTimestamp() {
@@ -50,7 +51,7 @@ public  class TransferQueueApplyInfo{
         this.applyTimestamp = applyTimestamp;
     }
 
-    public  String toString(){
+    public String toString() {
         return JsonUtil.object2Json(this);
     }
 

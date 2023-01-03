@@ -1,27 +1,29 @@
 package com.osx.core.exceptions;
 
+import com.google.common.collect.Maps;
+import com.osx.core.constant.Dict;
 import com.osx.core.utils.JsonUtil;
 
-public  class ExceptionInfo {
+import java.util.Map;
+
+public class ExceptionInfo {
 
 
     String code;
-        String message;
+    String message;
+    Throwable throwable;
 
-        public Throwable getThrowable() {
-            return throwable;
-        }
+    public ExceptionInfo() {
 
-        public void setThrowable(Throwable throwable) {
-            this.throwable = throwable;
-        }
+    }
 
-        Throwable  throwable;
+    public Throwable getThrowable() {
+        return throwable;
+    }
 
-        public ExceptionInfo() {
-
-        }
-
+    public void setThrowable(Throwable throwable) {
+        this.throwable = throwable;
+    }
 
     public String getCode() {
         return code;
@@ -31,15 +33,18 @@ public  class ExceptionInfo {
         this.code = code;
     }
 
-        public String getMessage() {
-            return message != null ? message : "";
-        }
-
-        public void setMessage(String message) {
-            this.message = message;
-        }
-
-        public  String  toString(){
-            return  JsonUtil.object2Json(this);
-        }
+    public String getMessage() {
+        return message != null ? message : "";
     }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public String toString() {
+        Map data = Maps.newHashMap();
+        data.put(Dict.CODE,code);
+        data.put(Dict.MESSAGE,message);
+        return JsonUtil.object2Json(data);
+    }
+}

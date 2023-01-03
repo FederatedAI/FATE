@@ -1,12 +1,54 @@
 package com.osx.broker.eggroll;
 
-import com.beust.jcommander.internal.Lists;
+import com.google.common.collect.Lists;
 import com.webank.eggroll.core.transfer.Transfer;
 
 import java.util.List;
 import java.util.Map;
 
 public class ErRollSiteHeader extends BaseProto<Transfer.RollSiteHeader> {
+
+    String rollSiteSessionId;
+    String name;
+    String tag;
+    String srcRole;
+    String srcPartyId;
+    String dstRole;
+    String dstPartyId;
+    String dataType;
+    Map<String, String> options;
+    Integer totalPartitions;
+    Integer partitionId;
+    Long totalStreams;
+    Long totalBatches;
+    Long streamSeq;
+    Long batchSeq;
+    String stage;
+
+    public static ErRollSiteHeader parseFromPb(Transfer.RollSiteHeader rollSiteHeader) {
+        if (rollSiteHeader != null) {
+            ErRollSiteHeader erRollSiteHeader = new ErRollSiteHeader();
+            erRollSiteHeader.rollSiteSessionId = rollSiteHeader.getRollSiteSessionId();
+            erRollSiteHeader.name = rollSiteHeader.getName();
+            erRollSiteHeader.tag = rollSiteHeader.getTag();
+            erRollSiteHeader.srcRole = rollSiteHeader.getSrcRole();
+            erRollSiteHeader.srcPartyId = rollSiteHeader.getSrcPartyId();
+            erRollSiteHeader.dstRole = rollSiteHeader.getDstRole();
+            erRollSiteHeader.dstPartyId = rollSiteHeader.getDstPartyId();
+            erRollSiteHeader.dataType = rollSiteHeader.getDataType();
+            erRollSiteHeader.options = rollSiteHeader.getOptionsMap();
+            erRollSiteHeader.totalPartitions = rollSiteHeader.getTotalPartitions();
+            erRollSiteHeader.partitionId = rollSiteHeader.getPartitionId();
+            erRollSiteHeader.totalStreams = rollSiteHeader.getTotalStreams();
+            erRollSiteHeader.streamSeq = rollSiteHeader.getStreamSeq();
+            erRollSiteHeader.batchSeq = rollSiteHeader.getBatchSeq();
+            erRollSiteHeader.stage = rollSiteHeader.getStage();
+            return erRollSiteHeader;
+        } else {
+            return null;
+        }
+
+    }
 
     public String getRollSiteSessionId() {
         return rollSiteSessionId;
@@ -136,53 +178,10 @@ public class ErRollSiteHeader extends BaseProto<Transfer.RollSiteHeader> {
         this.stage = stage;
     }
 
-    String rollSiteSessionId;
-    String name;
-    String tag;
-    String srcRole;
-    String srcPartyId;
-    String dstRole;
-    String dstPartyId;
-    String dataType;
-    Map<String,String > options;
-    Integer totalPartitions;
-    Integer partitionId;
-    Long totalStreams;
-    Long totalBatches;
-    Long streamSeq;
-    Long batchSeq;
-    String stage;
-
-    public static  ErRollSiteHeader  parseFromPb(Transfer.RollSiteHeader rollSiteHeader){
-        if(rollSiteHeader!=null) {
-            ErRollSiteHeader erRollSiteHeader = new ErRollSiteHeader();
-            erRollSiteHeader.rollSiteSessionId = rollSiteHeader.getRollSiteSessionId();
-            erRollSiteHeader.name = rollSiteHeader.getName();
-            erRollSiteHeader.tag = rollSiteHeader.getTag();
-            erRollSiteHeader.srcRole = rollSiteHeader.getSrcRole();
-            erRollSiteHeader.srcPartyId = rollSiteHeader.getSrcPartyId();
-            erRollSiteHeader.dstRole = rollSiteHeader.getDstRole();
-            erRollSiteHeader.dstPartyId = rollSiteHeader.getDstPartyId();
-            erRollSiteHeader.dataType = rollSiteHeader.getDataType();
-            erRollSiteHeader.options = rollSiteHeader.getOptionsMap();
-            erRollSiteHeader.totalPartitions = rollSiteHeader.getTotalPartitions();
-            erRollSiteHeader.partitionId = rollSiteHeader.getPartitionId();
-            erRollSiteHeader.totalStreams = rollSiteHeader.getTotalStreams();
-            erRollSiteHeader.streamSeq = rollSiteHeader.getStreamSeq();
-            erRollSiteHeader.batchSeq = rollSiteHeader.getBatchSeq();
-            erRollSiteHeader.stage = rollSiteHeader.getStage();
-            return erRollSiteHeader;
-        }else {
-            return null;
-        }
-
-    }
-
-
-    public String  getRsKey(String delim ,String  prefix){
+    public String getRsKey(String delim, String prefix) {
         List<String> finalArray =
-        Lists.newArrayList(prefix,rollSiteSessionId, name, tag, srcRole, srcPartyId, dstRole, dstPartyId);
-       return String.join(delim, finalArray);
+                Lists.newArrayList(prefix, rollSiteSessionId, name, tag, srcRole, srcPartyId, dstRole, dstPartyId);
+        return String.join(delim, finalArray);
     }
 
     @Override

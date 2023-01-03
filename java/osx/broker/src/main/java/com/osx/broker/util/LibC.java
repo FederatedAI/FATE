@@ -1,4 +1,3 @@
-
 package com.osx.broker.util;
 
 import com.sun.jna.*;

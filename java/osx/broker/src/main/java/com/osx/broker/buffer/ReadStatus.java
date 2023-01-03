@@ -1,6 +1,6 @@
 package com.osx.broker.buffer;
 
-public  enum ReadStatus{
-        OK,ERROR,DISCARD;
+public enum ReadStatus {
+    OK, ERROR, DISCARD;
 
-    }
+}

@@ -1,14 +1,8 @@
-
-
 package com.osx.core.log;
 
 import java.io.Serializable;
 
 public class Level implements Serializable {
-
-    transient int level;
-    transient String levelStr;
-    transient int syslogEquivalent;
 
     public final static int OFF_INT = Integer.MAX_VALUE;
     public final static int ERROR_INT = 40000;
@@ -16,33 +10,22 @@ public class Level implements Serializable {
     public final static int INFO_INT = 20000;
     public final static int DEBUG_INT = 10000;
     public final static int ALL_INT = Integer.MIN_VALUE;
-
-
-    private static final String ALL_NAME = "ALL";
-
-    private static final String DEBUG_NAME = "DEBUG";
-
-    private static final String INFO_NAME = "INFO";
-
-    private static final String WARN_NAME = "WARN";
-
-    private static final String ERROR_NAME = "ERROR";
-
-    private static final String OFF_NAME = "OFF";
-
-    final static public Level OFF = new Level(OFF_INT, OFF_NAME, 0);
-
-    final static public Level ERROR = new Level(ERROR_INT, ERROR_NAME, 3);
-
-    final static public Level WARN = new Level(WARN_INT, WARN_NAME, 4);
-
-    final static public Level INFO = new Level(INFO_INT, INFO_NAME, 6);
-
-    final static public Level DEBUG = new Level(DEBUG_INT, DEBUG_NAME, 7);
-
-    final static public Level ALL = new Level(ALL_INT, ALL_NAME, 7);
-
     static final long serialVersionUID = 3491141966387921974L;
+    private static final String ALL_NAME = "ALL";
+    final static public Level ALL = new Level(ALL_INT, ALL_NAME, 7);
+    private static final String DEBUG_NAME = "DEBUG";
+    final static public Level DEBUG = new Level(DEBUG_INT, DEBUG_NAME, 7);
+    private static final String INFO_NAME = "INFO";
+    final static public Level INFO = new Level(INFO_INT, INFO_NAME, 6);
+    private static final String WARN_NAME = "WARN";
+    final static public Level WARN = new Level(WARN_INT, WARN_NAME, 4);
+    private static final String ERROR_NAME = "ERROR";
+    final static public Level ERROR = new Level(ERROR_INT, ERROR_NAME, 3);
+    private static final String OFF_NAME = "OFF";
+    final static public Level OFF = new Level(OFF_INT, OFF_NAME, 0);
+    transient int level;
+    transient String levelStr;
+    transient int syslogEquivalent;
 
     protected Level(int level, String levelStr, int syslogEquivalent) {
         this.level = level;

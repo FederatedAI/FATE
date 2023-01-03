@@ -1,5 +1,3 @@
-
-
 package com.osx.core.log;
 
 import org.slf4j.Logger;

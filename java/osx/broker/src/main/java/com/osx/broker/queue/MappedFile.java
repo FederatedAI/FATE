@@ -1,4 +1,3 @@
-
 package com.osx.broker.queue;
 
 import com.osx.broker.message.*;
@@ -6,6 +5,10 @@ import com.osx.broker.util.LibC;
 import com.osx.broker.util.UtilAll;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import sun.nio.ch.DirectBuffer;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -19,10 +22,6 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import sun.nio.ch.DirectBuffer;
 
 public class MappedFile extends ReferenceResource {
     public static final int OS_PAGE_SIZE = 1024 * 4;
@@ -40,7 +39,7 @@ public class MappedFile extends ReferenceResource {
      * Message will put to here first, and then reput to FileChannel if writeBuffer is not null.
      */
     protected ByteBuffer writeBuffer = null;
-   // protected TransientStorePool transientStorePool = null;
+    // protected TransientStorePool transientStorePool = null;
     private String fileName;
     private long fileFromOffset;
     private File file;
@@ -91,7 +90,7 @@ public class MappedFile extends ReferenceResource {
     }
 
     private static Method method(Object target, String methodName, Class<?>[] args)
-        throws NoSuchMethodException {
+            throws NoSuchMethodException {
         try {
             return target.getClass().getMethod(methodName, args);
         } catch (NoSuchMethodException e) {
@@ -372,11 +371,11 @@ public class MappedFile extends ReferenceResource {
                 return new SelectMappedBufferResult(this.fileFromOffset + pos, byteBufferNew, size, this);
             } else {
                 log.warn("matched, but hold failed, request pos: " + pos + ", fileFromOffset: "
-                    + this.fileFromOffset);
+                        + this.fileFromOffset);
             }
         } else {
             log.warn("selectMappedBuffer request pos invalid, request pos: " + pos + ", size: " + size
-                + ", fileFromOffset: " + this.fileFromOffset+", readPosition: "+readPosition);
+                    + ", fileFromOffset: " + this.fileFromOffset + ", readPosition: " + readPosition);
         }
 
         return null;
@@ -402,13 +401,13 @@ public class MappedFile extends ReferenceResource {
     public boolean cleanup(final long currentRef) {
         if (this.isAvailable()) {
             log.error("this file[REF:" + currentRef + "] " + this.fileName
-                + " have not shutdown, stop unmapping.");
+                    + " have not shutdown, stop unmapping.");
             return false;
         }
 
         if (this.isCleanupOver()) {
             log.error("this file[REF:" + currentRef + "] " + this.fileName
-                + " have cleanup, do not do it again.");
+                    + " have cleanup, do not do it again.");
             return true;
         }
 
@@ -422,28 +421,28 @@ public class MappedFile extends ReferenceResource {
     public boolean destroy(final long intervalForcibly) {
         this.shutdown(intervalForcibly);
 
-      //  if (this.isCleanupOver()) {
-            try {
-                this.fileChannel.close();
-                log.info("close file channel " + this.fileName + " OK");
+        //  if (this.isCleanupOver()) {
+        try {
+            this.fileChannel.close();
+            log.info("close file channel " + this.fileName + " OK");
 
-                long beginTime = System.currentTimeMillis();
-                boolean result = this.file.delete();
-                log.info("delete file[REF:" + this.getRefCount() + "] " + this.fileName
+            long beginTime = System.currentTimeMillis();
+            boolean result = this.file.delete();
+            log.info("delete file[REF:" + this.getRefCount() + "] " + this.fileName
                     + (result ? " OK, " : " Failed, ") + "W:" + this.getWrotePosition() + " M:"
                     + this.getFlushedPosition() + ", "
                     + UtilAll.computeElapsedTimeMilliseconds(beginTime));
-            } catch (Exception e) {
-                log.warn("close file channel " + this.fileName + " Failed. ", e);
-            }
+        } catch (Exception e) {
+            log.warn("close file channel " + this.fileName + " Failed. ", e);
+        }
 
-            return true;
+        return true;
 //        } else {
 //            log.warn("destroy mapped file[REF:" + this.getRefCount() + "] " + this.fileName
 //                + " Failed. cleanupOver: " + this.cleanupOver);
 //        }
 
-     //   return false;
+        //   return false;
     }
 
     public int getWrotePosition() {

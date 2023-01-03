@@ -11,7 +11,7 @@ import java.util.Map;
 import static com.osx.core.config.MetaInfo.PROPERTY_EGGROLL_CLUSTER_MANANGER_IP;
 import static com.osx.core.config.MetaInfo.PROPERTY_EGGROLL_CLUSTER_MANANGER_PORT;
 
-public  class ErSession {
+public class ErSession {
 
     Logger logger = LoggerFactory.getLogger(ErSession.class);
 //    class ErSession(val sessionId: String = s"er_session_jvm_${TimeUtils.getNowMs()}_${RuntimeUtils.siteLocalAddress}",
@@ -20,13 +20,24 @@ public  class ErSession {
 //                    createIfNotExists: Boolean = true,
 //                    var processors: Array[ErProcessor] = Array(),
 //            options: Map[String, String] = Map())
+    SessionStatus status = SessionStatus.NEW;
+    String sessionId;
+    String tag = "";
+    String name = "";
+    boolean createIfNotExists = true;
+    List<ErProcessor> processors = Lists.newArrayList();
+    Map<String, String> options = Maps.newHashMap();
+    ErSessionMeta erSessionMeta;
+    ClusterManagerClient clusterManagerClient;
+    List<ErProcessor> rollsBuffer;
+    Map<Long, List<ErProcessor>> eggBuffer = Maps.newHashMap();
 
-    public   ErSession(String  sessionId,boolean createIfNotExists){
+    public ErSession(String sessionId, boolean createIfNotExists) {
 
         this.sessionId = sessionId;
         this.createIfNotExists = createIfNotExists;
-        clusterManagerClient = new ClusterManagerClient(new  CommandClient(new ErEndpoint(PROPERTY_EGGROLL_CLUSTER_MANANGER_IP,PROPERTY_EGGROLL_CLUSTER_MANANGER_PORT.intValue())));
-        ErSessionMeta   erSessionMetaArgs = new  ErSessionMeta();
+        clusterManagerClient = new ClusterManagerClient(new CommandClient(new ErEndpoint(PROPERTY_EGGROLL_CLUSTER_MANANGER_IP, PROPERTY_EGGROLL_CLUSTER_MANANGER_PORT.intValue())));
+        ErSessionMeta erSessionMetaArgs = new ErSessionMeta();
 
         erSessionMetaArgs.setId(sessionId);
         erSessionMetaArgs.setName(name);
@@ -34,23 +45,23 @@ public  class ErSession {
         erSessionMetaArgs.setTag(tag);
         erSessionMetaArgs.setProcessors(this.processors);
         erSessionMetaArgs.setOptions(options);
-        logger.info("create ErSession ============{}",erSessionMetaArgs);
-        if(createIfNotExists){
-            if(processors.isEmpty()){
-                erSessionMeta=    clusterManagerClient.getOrCreateSession(erSessionMetaArgs);
-            }else{
+        logger.info("create ErSession ============{}", erSessionMetaArgs);
+        if (createIfNotExists) {
+            if (processors.isEmpty()) {
+                erSessionMeta = clusterManagerClient.getOrCreateSession(erSessionMetaArgs);
+            } else {
 
 
-                erSessionMeta =  clusterManagerClient.registerSession(erSessionMetaArgs);
+                erSessionMeta = clusterManagerClient.registerSession(erSessionMetaArgs);
             }
-        }else{
-            erSessionMeta =  clusterManagerClient.getSession(erSessionMetaArgs);
+        } else {
+            erSessionMeta = clusterManagerClient.getSession(erSessionMetaArgs);
 
         }
 
-        logger.info("===============dddddd=============={} ",erSessionMeta);
+        logger.info("===============dddddd=============={} ", erSessionMeta);
 
-        processors =  erSessionMeta.getProcessors();
+        processors = erSessionMeta.getProcessors();
         status = SessionStatus.valueOf(erSessionMeta.getStatus());
         //            processors.foreach(p => {
 //        val processorType = p.processorType
@@ -63,29 +74,25 @@ public  class ErSession {
 //        }
 //    })
 
-        processors.forEach((processor->{
-            if(processor.getProcessorType().toLowerCase().startsWith("egg_")){
+        processors.forEach((processor -> {
+            if (processor.getProcessorType().toLowerCase().startsWith("egg_")) {
 
-               if(eggBuffer.get(processor.getServerNodeId())!=null){
-                   eggBuffer.get(processor.getServerNodeId()).add(processor);
-               }else{
-                   List   list = Lists.newArrayList(processor);
-                   eggBuffer.put(processor.getServerNodeId(),list);
-               };
-            }else if( processor.getProcessorType().toLowerCase().startsWith("roll_")){
+                if (eggBuffer.get(processor.getServerNodeId()) != null) {
+                    eggBuffer.get(processor.getServerNodeId()).add(processor);
+                } else {
+                    List list = Lists.newArrayList(processor);
+                    eggBuffer.put(processor.getServerNodeId(), list);
+                }
+                ;
+            } else if (processor.getProcessorType().toLowerCase().startsWith("roll_")) {
                 rollsBuffer.add(processor);
+            } else {
+                throw new IllegalArgumentException("processor type ${processorType} not supported in roll pair");
             }
-            else {
-            throw new IllegalArgumentException("processor type ${processorType} not supported in roll pair");
-        }
         }));
 
 
-
-
     }
-
-    SessionStatus  status = SessionStatus.NEW;
 
     public String getSessionId() {
         return sessionId;
@@ -95,10 +102,6 @@ public  class ErSession {
         this.sessionId = sessionId;
     }
 
-    String  sessionId;
-    String  tag="";
-    String  name="";
-
     public SessionStatus getStatus() {
         return status;
     }
@@ -106,7 +109,6 @@ public  class ErSession {
     public void setStatus(SessionStatus status) {
         this.status = status;
     }
-
 
     public String getTag() {
         return tag;
@@ -167,22 +169,18 @@ public  class ErSession {
     public List<ErProcessor> getRollsBuffer() {
         return rollsBuffer;
     }
+
     public void setRollsBuffer(List<ErProcessor> rollsBuffer) {
         this.rollsBuffer = rollsBuffer;
     }
+
     public Map<Long, List<ErProcessor>> getEggBuffer() {
         return eggBuffer;
     }
+
     public void setEggBuffer(Map<Long, List<ErProcessor>> eggBuffer) {
         this.eggBuffer = eggBuffer;
     }
-    boolean   createIfNotExists= true;
-    List<ErProcessor> processors= Lists.newArrayList();
-    Map<String,String> options= Maps.newHashMap();
-    ErSessionMeta   erSessionMeta;
-    ClusterManagerClient clusterManagerClient;
-    List<ErProcessor> rollsBuffer;
-    Map<Long ,List<ErProcessor>>  eggBuffer = Maps.newHashMap();
     //    private val rolls_buffer = ArrayBuffer[ErProcessor]()
 //    private val eggs_buffer = mutable.Map[Long, ArrayBuffer[ErProcessor]]()
     //    def routeToEgg(partition: ErPartition): ErProcessor = {
@@ -193,21 +191,16 @@ public  class ErSession {
 //        eggs(serverNodeId)(eggIdx)
 //    }
 
+    public ErProcessor routeToEgg(ErPartition erPartition) {
+        long getServerNodeId = erPartition.processor.getServerNodeId();
+        if (eggBuffer.get(getServerNodeId) != null) {
 
-    public  ErProcessor  routeToEgg(ErPartition  erPartition){
-        long getServerNodeId   = erPartition.processor.getServerNodeId();
-        if(   eggBuffer.get(getServerNodeId)!=null){
-
-          int  eggCountOnServerNode =  eggBuffer.get(getServerNodeId).size();
-          int  eggIdx = erPartition.id / eggBuffer.size() % eggCountOnServerNode;
-           return  eggBuffer.get(getServerNodeId).get(eggIdx);
+            int eggCountOnServerNode = eggBuffer.get(getServerNodeId).size();
+            int eggIdx = erPartition.id / eggBuffer.size() % eggCountOnServerNode;
+            return eggBuffer.get(getServerNodeId).get(eggIdx);
         }
         return null;
     }
-
-
-
-
 
 
 //    private var status = SessionStatus.NEW

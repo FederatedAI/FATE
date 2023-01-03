@@ -1,4 +1,3 @@
-
 package com.osx.core.flow;
 
 
@@ -28,18 +27,16 @@ public class ClusterMetric {
     }
 
     public long getCurrentCountForReport(ClusterFlowEvent event) {
-         metric.currentWindow();
-         List<ClusterMetricBucket>  list  = metric.values();
-         AtomicLong result = new AtomicLong();
-         list.forEach(clusterMetricBucket -> {
-            long  count =  clusterMetricBucket.get(event);
-             result.set(result.get() + count);
-         });
-         return  result.get();
+        metric.currentWindow();
+        List<ClusterMetricBucket> list = metric.values();
+        AtomicLong result = new AtomicLong();
+        list.forEach(clusterMetricBucket -> {
+            long count = clusterMetricBucket.get(event);
+            result.set(result.get() + count);
+        });
+        return result.get();
 
     }
-
-
 
 
     /**

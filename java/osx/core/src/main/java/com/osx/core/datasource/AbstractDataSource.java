@@ -1,5 +1,5 @@
-
 package com.osx.core.datasource;
+
 import com.osx.core.flow.DynamicProperty;
 import com.osx.core.flow.Property;
 

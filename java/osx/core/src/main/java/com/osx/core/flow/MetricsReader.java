@@ -121,7 +121,7 @@ class MetricsReader {
      * identity will be read.
      */
     List<MetricNode> readMetricsByEndTime(List<String> fileNames, int pos, long offset,
-                                                                                 long beginTimeMs, long endTimeMs, String identity) throws Exception {
+                                          long beginTimeMs, long endTimeMs, String identity) throws Exception {
         List<MetricNode> list = new ArrayList<MetricNode>(1024);
         if (readMetricsInOneFileByEndTime(list, fileNames.get(pos++), offset, beginTimeMs, endTimeMs, identity)) {
             while (pos < fileNames.size()
@@ -132,7 +132,7 @@ class MetricsReader {
     }
 
     List<MetricNode> readMetrics(List<String> fileNames, int pos,
-                                                                        long offset, int recommendLines) throws Exception {
+                                 long offset, int recommendLines) throws Exception {
         List<MetricNode> list = new ArrayList<MetricNode>(recommendLines);
         readMetricsInOneFile(list, fileNames.get(pos++), offset, recommendLines);
         while (list.size() < recommendLines && pos < fileNames.size()) {

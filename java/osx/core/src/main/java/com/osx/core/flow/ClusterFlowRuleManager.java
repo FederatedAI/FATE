@@ -20,8 +20,6 @@ import static com.osx.core.config.MetaInfo.PROPERTY_SAMPLE_COUNT;
 
 public final class ClusterFlowRuleManager {
 
-   static  Logger logger = LoggerFactory.getLogger(ClusterFlowRuleManager.class);
-
     /**
      * The default cluster flow rule property supplier that creates a new dynamic property
      * for a specific namespace to do rule management manually.
@@ -33,7 +31,6 @@ public final class ClusterFlowRuleManager {
                     return new DynamicProperty<>();
                 }
             };
-
     /**
      * (flowId, clusterRule)
      */
@@ -41,7 +38,7 @@ public final class ClusterFlowRuleManager {
     /**
      *
      */
-    private static final Map<String,FlowRule>  RESOURCE_RULES =  new ConcurrentHashMap<>();
+    private static final Map<String, FlowRule> RESOURCE_RULES = new ConcurrentHashMap<>();
     /**
      * (namespace, [flowId...])
      */
@@ -55,21 +52,23 @@ public final class ClusterFlowRuleManager {
      * </pre>
      */
     private static final Map<Long, String> FLOW_NAMESPACE_MAP = new ConcurrentHashMap<>();
-
     /**
      * (namespace, property-listener wrapper)
      */
     private static final Map<String, NamespaceFlowProperty<FlowRule>> PROPERTY_MAP = new ConcurrentHashMap<>();
+    private static final Object UPDATE_LOCK = new Object();
+    static Logger logger = LoggerFactory.getLogger(ClusterFlowRuleManager.class);
     /**
      * Cluster flow rule property supplier for a specific namespace.
      */
     private static volatile Function<String, Property<List<FlowRule>>> propertySupplier
             = DEFAULT_PROPERTY_SUPPLIER;
 
-    private static final Object UPDATE_LOCK = new Object();
-
     static {
         initDefaultProperty();
+    }
+
+    public ClusterFlowRuleManager() {
     }
 
     private static void initDefaultProperty() {
@@ -77,11 +76,11 @@ public final class ClusterFlowRuleManager {
         Property<List<FlowRule>> defaultProperty = new DynamicProperty<>();
         String defaultNamespace = "default";
         PropertyListener<List<FlowRule>> listener = new FlowRulePropertyListener(defaultNamespace);
-        registerPropertyInternal(defaultNamespace, defaultProperty,listener);
+        registerPropertyInternal(defaultNamespace, defaultProperty, listener);
         String currentPath = null;
-        if( MetaInfo.PROPERTY_FLOW_RULE_TABLE!=null){
+        if (MetaInfo.PROPERTY_FLOW_RULE_TABLE != null) {
             currentPath = MetaInfo.PROPERTY_FLOW_RULE_TABLE;
-        }else {
+        } else {
             URL url = Thread.currentThread().getContextClassLoader().getResource("flowRule.json");
 
             if (url != null) {
@@ -91,7 +90,7 @@ public final class ClusterFlowRuleManager {
             }
         }
         logger.info("load flow rule {}", currentPath);
-        if(currentPath!=null) {
+        if (currentPath != null) {
             File confFile = new File(currentPath);
             FileRefreshableDataSource fileRefreshableDataSource = null;
             try {
@@ -99,8 +98,8 @@ public final class ClusterFlowRuleManager {
 
                     List<FlowRule> content = JsonUtil.json2List((String) source, new TypeReference<List<FlowRule>>() {
                     });
-                    logger.info("load flow rule content {}",content);
-                    return  content;
+                    logger.info("load flow rule content {}", content);
+                    return content;
                 });
                 fileRefreshableDataSource.getProperty().addListener(listener);
             } catch (FileNotFoundException e) {
@@ -179,7 +178,7 @@ public final class ClusterFlowRuleManager {
     private static void registerPropertyInternal(/*@NonNull*/ String namespace, /*@Valid*/
                                                               Property<List<FlowRule>> property,
                                                               PropertyListener listener
-            ) {
+    ) {
         NamespaceFlowProperty<FlowRule> oldProperty = PROPERTY_MAP.get(namespace);
         if (oldProperty != null) {
             oldProperty.getProperty().removeListener(oldProperty.getListener());
@@ -237,14 +236,13 @@ public final class ClusterFlowRuleManager {
         return FLOW_RULES.get(id);
     }
 
-    public static FlowRule  getFlowRuleByResource(String resource){
+    public static FlowRule getFlowRuleByResource(String resource) {
 
         return RESOURCE_RULES.get(resource);
     }
 
-
-    public  static   Map<String,FlowRule> getResourceRules(){
-        return  RESOURCE_RULES;
+    public static Map<String, FlowRule> getResourceRules() {
+        return RESOURCE_RULES;
     }
 
     public static Set<Long> getFlowIdSet(String namespace) {
@@ -304,6 +302,23 @@ public final class ClusterFlowRuleManager {
         NAMESPACE_FLOW_ID_MAP.put(namespace, new HashSet<Long>());
     }
 
+//    private static void clearAndResetRulesConditional(/*@Valid*/ String namespace, Predicate<Long> predicate) {
+//        Set<Long> oldIdSet = NAMESPACE_FLOW_ID_MAP.get(namespace);
+//        if (oldIdSet != null && !oldIdSet.isEmpty()) {
+//            for (Long flowId : oldIdSet) {
+//                if (predicate.test(flowId)) {
+//                    FLOW_RULES.remove(flowId);
+//                    FLOW_NAMESPACE_MAP.remove(flowId);
+//                    ClusterMetricStatistics.removeMetric(flowId);
+//                    if (CurrentConcurrencyManager.containsFlowId(flowId)) {
+//                        CurrentConcurrencyManager.remove(flowId);
+//                    }
+//                }
+//            }
+//            oldIdSet.clear();
+//        }
+//    }
+
     /**
      * Clear all rules of the provided namespace and reset map.
      *
@@ -325,23 +340,6 @@ public final class ClusterFlowRuleManager {
         }
     }
 
-//    private static void clearAndResetRulesConditional(/*@Valid*/ String namespace, Predicate<Long> predicate) {
-//        Set<Long> oldIdSet = NAMESPACE_FLOW_ID_MAP.get(namespace);
-//        if (oldIdSet != null && !oldIdSet.isEmpty()) {
-//            for (Long flowId : oldIdSet) {
-//                if (predicate.test(flowId)) {
-//                    FLOW_RULES.remove(flowId);
-//                    FLOW_NAMESPACE_MAP.remove(flowId);
-//                    ClusterMetricStatistics.removeMetric(flowId);
-//                    if (CurrentConcurrencyManager.containsFlowId(flowId)) {
-//                        CurrentConcurrencyManager.remove(flowId);
-//                    }
-//                }
-//            }
-//            oldIdSet.clear();
-//        }
-//    }
-
     /**
      * Get connected count for associated namespace of given {@code flowId}.
      *
@@ -358,7 +356,6 @@ public final class ClusterFlowRuleManager {
 //        }
 //        return ConnectionManager.getConnectedCount(namespace);
 //    }
-
     public static String getNamespace(long flowId) {
         return FLOW_NAMESPACE_MAP.get(flowId);
     }
@@ -373,11 +370,11 @@ public final class ClusterFlowRuleManager {
         Set<Long> flowIdSet = new HashSet<>();
 
         for (FlowRule rule : list) {
-            System.err.println("==================="+rule);
+            System.err.println("===================" + rule);
             if (!rule.isClusterMode()) {
                 continue;
             }
-            RESOURCE_RULES.put(rule.getResource(),rule);
+            RESOURCE_RULES.put(rule.getResource(), rule);
 //            if (!FlowRuleUtil.isValidRule(rule)) {
 ////                RecordLog.warn(
 ////                        "[ClusterFlowRuleManager] Ignoring invalid flow rule when loading new flow rules: " + rule);
@@ -388,7 +385,7 @@ public final class ClusterFlowRuleManager {
 //            }
 
             // Flow id should not be null after filtered.
-        //    ClusterFlowConfig clusterConfig = rule.getClusterConfig();
+            //    ClusterFlowConfig clusterConfig = rule.getClusterConfig();
 
 //            Long flowId = clusterConfig.getFlowId();
 //            if (flowId == null) {
@@ -419,9 +416,6 @@ public final class ClusterFlowRuleManager {
 
     }
 
-
-
-
     private static final class FlowRulePropertyListener implements PropertyListener<List<FlowRule>> {
 
         private final String namespace;
@@ -432,7 +426,7 @@ public final class ClusterFlowRuleManager {
 
         @Override
         public synchronized void configUpdate(List<FlowRule> conf) {
-            logger.info("config update {}" ,conf);
+            logger.info("config update {}", conf);
             applyClusterFlowRule(conf, namespace);
 //            RecordLog.info("[ClusterFlowRuleManager] Cluster flow rules received for namespace <{}>: {}",
 //                    namespace, FLOW_RULES);
@@ -442,12 +436,9 @@ public final class ClusterFlowRuleManager {
         public synchronized void configLoad(List<FlowRule> conf) {
 
             applyClusterFlowRule(conf, namespace);
-            logger.info("flow rule load {}" ,JsonUtil.formatJson(JsonUtil.object2Json(RESOURCE_RULES)));
+            logger.info("flow rule load {}", JsonUtil.formatJson(JsonUtil.object2Json(RESOURCE_RULES)));
 //            RecordLog.info("[ClusterFlowRuleManager] Cluster flow rules loaded for namespace <{}>: {}",
 //                    namespace, FLOW_RULES);
         }
-    }
-
-    public ClusterFlowRuleManager() {
     }
 }

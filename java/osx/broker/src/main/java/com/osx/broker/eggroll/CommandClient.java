@@ -15,15 +15,13 @@ import java.util.stream.Collectors;
 public class CommandClient {
 
     Logger logger = LoggerFactory.getLogger(CommandClient.class);
+    ErEndpoint erEndpoint;
 
-    public  CommandClient(ErEndpoint erEndpoint){
+    public CommandClient(ErEndpoint erEndpoint) {
         this.erEndpoint = erEndpoint;
     }
 
-    ErEndpoint  erEndpoint;
-
-
-    private   ManagedChannel  buildManagedChannel(String ip ,int port){
+    private ManagedChannel buildManagedChannel(String ip, int port) {
         NettyChannelBuilder channelBuilder = NettyChannelBuilder
                 .forAddress(ip, port)
                 .keepAliveTime(60, TimeUnit.MINUTES)
@@ -36,28 +34,27 @@ public class CommandClient {
                 .enableRetry()
                 .retryBufferSize(16 << 20)
                 .maxRetryAttempts(20);
-            channelBuilder.usePlaintext();
+        channelBuilder.usePlaintext();
 
         return channelBuilder.build();
 
     }
 
 
+    public Command.CommandResponse call(CommandURI commandUri, BaseProto... baseProtos) {
 
-   public  Command.CommandResponse  call(CommandURI  commandUri,BaseProto... baseProtos){
-
-        String id = System.currentTimeMillis() +"_"+commandUri.uri.toString();
-        Command.CommandRequest  commandRequest =   Command.CommandRequest.newBuilder()
-                    .setId(id)
-                    .setUri(commandUri.uri.toString())
-                    .addAllArgs(Arrays.stream(baseProtos).
-                            map((element)->((AbstractMessageLite)element.toProto()).toByteString()).collect(Collectors.toList()))
+        String id = System.currentTimeMillis() + "_" + commandUri.uri.toString();
+        Command.CommandRequest commandRequest = Command.CommandRequest.newBuilder()
+                .setId(id)
+                .setUri(commandUri.uri.toString())
+                .addAllArgs(Arrays.stream(baseProtos).
+                        map((element) -> ((AbstractMessageLite) element.toProto()).toByteString()).collect(Collectors.toList()))
                 .build();
-       logger.info("===call {} {} id {}",erEndpoint.host,erEndpoint.port,id);
+        logger.info("===call {} {} id {}", erEndpoint.host, erEndpoint.port, id);
 
-        ManagedChannel  managedChannel =  buildManagedChannel(erEndpoint.host,erEndpoint.port);
+        ManagedChannel managedChannel = buildManagedChannel(erEndpoint.host, erEndpoint.port);
         CommandServiceGrpc.CommandServiceBlockingStub stub = CommandServiceGrpc.newBlockingStub(managedChannel);
-       Command.CommandResponse commandResponse = stub.call(commandRequest);
+        Command.CommandResponse commandResponse = stub.call(commandRequest);
         return commandResponse;
     }
 

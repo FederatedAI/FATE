@@ -1,4 +1,3 @@
-
 package com.osx.core.flow;
 
 import com.osx.core.utils.AssertUtil;
@@ -8,9 +7,8 @@ import java.util.concurrent.atomic.LongAdder;
 
 public class RequestLimiter {
 
-    private double qpsAllowed;
-
     private final LeapArray<LongAdder> data;
+    private double qpsAllowed;
 
     public RequestLimiter(double qpsAllowed) {
         this(new UnaryLeapArray(10, 1000), qpsAllowed);
@@ -49,13 +47,13 @@ public class RequestLimiter {
         return qpsAllowed;
     }
 
-    public boolean canPass() {
-        return getQps() + 1 <= qpsAllowed;
-    }
-
     public RequestLimiter setQpsAllowed(double qpsAllowed) {
         this.qpsAllowed = qpsAllowed;
         return this;
+    }
+
+    public boolean canPass() {
+        return getQps() + 1 <= qpsAllowed;
     }
 
     public boolean tryPass() {

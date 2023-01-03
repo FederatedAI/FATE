@@ -1,14 +1,14 @@
 package com.osx.core.flow;
 
 
-
-
-
 import com.osx.core.token.TokenResult;
 import com.osx.core.token.TokenResultStatus;
 
 
 final public class ClusterFlowChecker {
+
+    private ClusterFlowChecker() {
+    }
 
     private static double calcGlobalThreshold(FlowRule rule) {
         double count = rule.getCount();
@@ -21,7 +21,7 @@ final public class ClusterFlowChecker {
 //                return count * connectedCount;
 //        }
 
-        return  count;
+        return count;
     }
 
     static boolean allowProceed(long flowId) {
@@ -42,7 +42,7 @@ final public class ClusterFlowChecker {
         }
 
         double latestQps = metric.getAvg(ClusterFlowEvent.PASS);
-        double globalThreshold = calcGlobalThreshold(rule) ;
+        double globalThreshold = calcGlobalThreshold(rule);
         double nextRemaining = globalThreshold - latestQps - acquireCount;
 
         if (nextRemaining >= 0) {
@@ -55,8 +55,8 @@ final public class ClusterFlowChecker {
             }
             // Remaining count is cut down to a smaller integer.
             return new TokenResult(TokenResultStatus.OK)
-                .setRemaining((int) nextRemaining)
-                .setWaitInMs(0);
+                    .setRemaining((int) nextRemaining)
+                    .setWaitInMs(0);
         } else {
             if (prioritized) {
                 // Try to occupy incoming buckets.
@@ -67,8 +67,8 @@ final public class ClusterFlowChecker {
                     if (waitInMs > 0) {
                         //ClusterServerStatLogUtil.log("flow|waiting|" + id);
                         return new TokenResult(TokenResultStatus.SHOULD_WAIT)
-                            .setRemaining(0)
-                            .setWaitInMs(waitInMs);
+                                .setRemaining(0)
+                                .setWaitInMs(waitInMs);
                     }
                     // Or else occupy failed, should be blocked.
                 }
@@ -76,24 +76,22 @@ final public class ClusterFlowChecker {
             // Blocked.
             metric.add(ClusterFlowEvent.BLOCK, acquireCount);
             metric.add(ClusterFlowEvent.BLOCK_REQUEST, 1);
-        //    ClusterServerStatLogUtil.log("flow|block|" + id, acquireCount);
-        //    ClusterServerStatLogUtil.log("flow|block_request|" + id, 1);
+            //    ClusterServerStatLogUtil.log("flow|block|" + id, acquireCount);
+            //    ClusterServerStatLogUtil.log("flow|block_request|" + id, 1);
             if (prioritized) {
                 // Add prioritized block.
                 metric.add(ClusterFlowEvent.OCCUPIED_BLOCK, acquireCount);
-         //       ClusterServerStatLogUtil.log("flow|occupied_block|" + id, 1);
+                //       ClusterServerStatLogUtil.log("flow|occupied_block|" + id, 1);
             }
 
             return blockedResult(rule);
         }
     }
 
-    private static TokenResult blockedResult(FlowRule  rule ){
+    private static TokenResult blockedResult(FlowRule rule) {
         return new TokenResult(TokenResultStatus.BLOCKED)
-            .setRemaining(0)
-            .setWaitInMs(0)
+                .setRemaining(0)
+                .setWaitInMs(0)
                 .setWaitInMs(rule.getMaxQueueingTimeMs());
     }
-
-    private ClusterFlowChecker() {}
 }

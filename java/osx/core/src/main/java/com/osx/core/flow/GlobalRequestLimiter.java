@@ -1,4 +1,3 @@
-
 package com.osx.core.flow;
 
 import com.osx.core.utils.AssertUtil;
@@ -7,10 +6,12 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 
-
 public final class GlobalRequestLimiter {
 
     private static final Map<String, RequestLimiter> GLOBAL_QPS_LIMITER_MAP = new ConcurrentHashMap<>();
+
+    private GlobalRequestLimiter() {
+    }
 
     public static void initIfAbsent(String namespace) {
         AssertUtil.notEmpty(namespace, "namespace cannot be empty");
@@ -61,6 +62,4 @@ public final class GlobalRequestLimiter {
             }
         }
     }
-
-    private GlobalRequestLimiter() {}
 }

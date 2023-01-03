@@ -18,8 +18,8 @@
     },
     "10000":{
       "default":[{
-        "port": 9370,
-        "ip": "10.42.0.1",
+        "port": 9889,
+        "ip": "localhost",
         "version": 197
       }]
 

@@ -17,7 +17,6 @@
 package com.osx.core.jvm;
 
 
-
 public class JvmInfo {
     long timestamp;
     JVMMemoryUtils.JVMMemoryUsage heap;

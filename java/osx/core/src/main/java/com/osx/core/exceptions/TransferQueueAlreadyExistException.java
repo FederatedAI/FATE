@@ -1,4 +1,4 @@
 package com.osx.core.exceptions;
 
-public class TransferQueueAlreadyExistException extends BaseException{
+public class TransferQueueAlreadyExistException extends BaseException {
 }

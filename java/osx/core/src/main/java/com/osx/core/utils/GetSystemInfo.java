@@ -16,11 +16,9 @@
 
 package com.osx.core.utils;
 
-import com.sun.management.OperatingSystemMXBean;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-//import sun.management.ManagementFactoryHelper;
 
 import java.io.IOException;
 import java.lang.management.GarbageCollectorMXBean;
@@ -235,7 +233,7 @@ public class GetSystemInfo {
 ////    }
 
 
-    public static void getJVMRuntimeParam(){
+    public static void getJVMRuntimeParam() {
 
 //        RuntimeMXBean runtimeMXBean = ManagementFactoryHelper.getRuntimeMXBean();
 //JVM启动参数
@@ -261,7 +259,7 @@ public class GetSystemInfo {
         long fullCount = 0, fullTime = 0, youngCount = 0, youngTime = 0;
         List<GarbageCollectorMXBean> gcs = ManagementFactory.getGarbageCollectorMXBeans();
         for (GarbageCollectorMXBean gc : gcs) {
-            System.err.println(gc.getName() +"" +gc.getCollectionCount());
+            System.err.println(gc.getName() + "" + gc.getCollectionCount());
 
 
         }
@@ -279,10 +277,8 @@ public class GetSystemInfo {
 //                    youngTime += gc.getCollectionTime();
 //                    break;
 //            }
-            //todo your deal code， perfcounter report or write log here
-        }
-
-
+        //todo your deal code， perfcounter report or write log here
+    }
 
 
 //    public  static  void  getSystemLoad(){
@@ -298,15 +294,13 @@ public class GetSystemInfo {
 //    }
 
 
-    public  static  void main(String[] args){
+    public static void main(String[] args) {
 
-    //    getSystemLoad();
+        //    getSystemLoad();
         reportGC();
 
 
-
     }
-
 
 
 }

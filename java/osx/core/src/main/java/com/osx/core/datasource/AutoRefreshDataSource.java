@@ -1,4 +1,3 @@
-
 package com.osx.core.datasource;
 
 import org.slf4j.Logger;
@@ -11,10 +10,9 @@ import java.util.concurrent.TimeUnit;
 
 public abstract class AutoRefreshDataSource<S, T> extends AbstractDataSource<S, T> {
 
-    Logger logger = LoggerFactory.getLogger(AutoRefreshDataSource.class);
-
-    private ScheduledExecutorService service;
     protected long recommendRefreshMs = 3000;
+    Logger logger = LoggerFactory.getLogger(AutoRefreshDataSource.class);
+    private ScheduledExecutorService service;
 
     public AutoRefreshDataSource(Converter<S, T> configParser) {
         super(configParser);
@@ -33,7 +31,7 @@ public abstract class AutoRefreshDataSource<S, T> extends AbstractDataSource<S, 
     @SuppressWarnings("PMD.ThreadPoolCreationRule")
     private void startTimerService() {
         service = Executors.newScheduledThreadPool(1,
-            new NamedThreadFactory("sentinel-datasource-auto-refresh-task", true));
+                new NamedThreadFactory("sentinel-datasource-auto-refresh-task", true));
         service.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {

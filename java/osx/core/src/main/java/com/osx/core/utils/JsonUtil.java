@@ -22,7 +22,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.MessageOrBuilder;
 import org.apache.commons.lang3.StringUtils;
@@ -108,29 +107,29 @@ public class JsonUtil {
 //        return JsonParser.parseString(json).getAsJsonObject();
 //    }
 
-    public static <T> T json2Object(JsonObject source,Class<T> clazz){
+    public static <T> T json2Object(JsonObject source, Class<T> clazz) {
         String json = source.toString();
-        return json2Object(json,clazz);
+        return json2Object(json, clazz);
     }
 
-    public static <T> T object2Objcet(Object source,Class<T> clazz){
+    public static <T> T object2Objcet(Object source, Class<T> clazz) {
         String json = object2Json(source);
-        return json2Object(json,clazz);
+        return json2Object(json, clazz);
     }
 
-    public static <T> T object2Objcet(Object source,TypeReference<T> tr){
+    public static <T> T object2Objcet(Object source, TypeReference<T> tr) {
         String json = object2Json(source);
-        return json2Object(json,tr);
+        return json2Object(json, tr);
     }
 
     public static String formatJson(String jsonStr) {
-        return formatJson(jsonStr,"   ");
+        return formatJson(jsonStr, "   ");
     }
 
     /***
      * format json string
      */
-    public static String formatJson(String jsonStr,String formatChar) {
+    public static String formatJson(String jsonStr, String formatChar) {
         if (null == jsonStr || "".equals(jsonStr)) return "";
         jsonStr = jsonStr.replace("\\n", "");
         StringBuilder sb = new StringBuilder();
@@ -154,7 +153,7 @@ public class JsonUtil {
                     if (!isInQuotationMarks) {
                         sb.append('\n');
                         indent++;
-                        addIndentTab(sb, indent,formatChar);
+                        addIndentTab(sb, indent, formatChar);
                     }
                     break;
                 case '}':
@@ -162,7 +161,7 @@ public class JsonUtil {
                     if (!isInQuotationMarks) {
                         sb.append('\n');
                         indent--;
-                        addIndentTab(sb, indent,formatChar);
+                        addIndentTab(sb, indent, formatChar);
                     }
                     sb.append(current);
                     break;
@@ -170,7 +169,7 @@ public class JsonUtil {
                     sb.append(current);
                     if (last != '\\' && !isInQuotationMarks) {
                         sb.append('\n');
-                        addIndentTab(sb, indent,formatChar);
+                        addIndentTab(sb, indent, formatChar);
                     }
                     break;
                 case ' ':
@@ -189,19 +188,19 @@ public class JsonUtil {
         return sb.toString();
     }
 
-    private static void addIndentTab(StringBuilder sb, int indent,String formatChar) {
+    private static void addIndentTab(StringBuilder sb, int indent, String formatChar) {
         for (int i = 0; i < indent; i++) {
             sb.append(formatChar);
         }
     }
 
-    public static String pbToJson(MessageOrBuilder  message){
+    public static String pbToJson(MessageOrBuilder message) {
         try {
-            return    com.google.protobuf.util.JsonFormat.printer().print(message);
+            return com.google.protobuf.util.JsonFormat.printer().print(message);
         } catch (InvalidProtocolBufferException e) {
             e.printStackTrace();
         }
-        return  "";
+        return "";
     }
 
 

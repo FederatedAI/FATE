@@ -1,4 +1,3 @@
-
 package com.osx.broker.queue;
 
 import java.util.concurrent.atomic.AtomicLong;

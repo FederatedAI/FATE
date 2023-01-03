@@ -6,21 +6,53 @@ import com.google.common.collect.Maps;
 import com.osx.core.utils.JsonUtil;
 import com.webank.eggroll.core.meta.Meta;
 
-
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class ErStore  extends BaseProto<Meta.Store>{
+public class ErStore extends BaseProto<Meta.Store> {
 
-    public String toString(){
-        return JsonUtil.object2Json(this);
-    }
+    ErStoreLocator storeLocator;
+    List<ErPartition> partitions = Lists.newArrayList();
+    Map<String, String> options = Maps.newHashMap();
 
-    public  ErStore(ErStoreLocator  storeLocator,List<ErPartition>  partitions,Map<String,String> options){
+    public ErStore(ErStoreLocator storeLocator, List<ErPartition> partitions, Map<String, String> options) {
         this.storeLocator = storeLocator;
         this.partitions = partitions;
         this.options = options;
+    }
+
+    public static ErStore parseFromPb(Meta.Store store) {
+        ErStoreLocator erStoreLocator = ErStoreLocator.parseFromPb(store.getStoreLocator());
+
+        List<ErPartition> erPartitions = store.getPartitionsList().stream().map(ErPartition::parseFromPb).collect(Collectors.toList());
+        ErStore erStore = new ErStore(erStoreLocator, erPartitions, store.getOptionsMap());
+        return erStore;
+    }
+
+    public static void main(String[] args) {
+
+//        String namespace ,String name,String  storeType,
+//        int totalPartitions ,String partitioner,
+//                String serdes
+
+        ErStoreLocator erStoreLocator = new ErStoreLocator("mynamespace",
+                "myname", "mypath", "mystoreType", 1, "xxxx", "myserdes");
+
+        List<ErPartition> partitions = Lists.newArrayList();
+        ErPartition erPartition = new ErPartition(11, null, null, 33);
+        partitions.add(erPartition);
+
+        ErStore erStore = new ErStore(erStoreLocator, partitions, Maps.newHashMap());
+
+        System.err.println(erStore.toProto());
+
+        System.err.println(ErStore.parseFromPb(erStore.toProto()));
+
+    }
+
+    public String toString() {
+        return JsonUtil.object2Json(this);
     }
 
     public ErStoreLocator getStoreLocator() {
@@ -47,15 +79,9 @@ public class ErStore  extends BaseProto<Meta.Store>{
         this.options = options;
     }
 
-    ErStoreLocator   storeLocator;
-    List<ErPartition> partitions= Lists.newArrayList();
-    Map<String,String> options= Maps.newHashMap();
-
-
-    public ErPartition  getPartition(int  index){
+    public ErPartition getPartition(int index) {
         return partitions.get(index);
     }
-
 
     @Override
     Meta.Store toProto() {
@@ -63,41 +89,9 @@ public class ErStore  extends BaseProto<Meta.Store>{
                 .setStoreLocator(this.storeLocator.toProto())
                 .addAllPartitions(this.partitions.stream().map(ErPartition::toProto).collect(Collectors.toList()))
                 .putAllOptions(this.options);
-       return  builder.build();
-    }
-
-
-    public static  ErStore parseFromPb(Meta.Store store){
-        ErStoreLocator  erStoreLocator = ErStoreLocator.parseFromPb(store.getStoreLocator());
-
-        List<ErPartition>  erPartitions = store.getPartitionsList().stream().map(ErPartition::parseFromPb).collect(Collectors.toList());
-        ErStore  erStore = new  ErStore(erStoreLocator,erPartitions,store.getOptionsMap());
-        return erStore;
-    }
-    
-    
-    public  static void main(String[] args){
-
-//        String namespace ,String name,String  storeType,
-//        int totalPartitions ,String partitioner,
-//                String serdes
-
-        ErStoreLocator  erStoreLocator =  new  ErStoreLocator("mynamespace",
-                "myname","mypath","mystoreType",1,"xxxx","myserdes");
-
-        List<ErPartition>  partitions = Lists.newArrayList();
-        ErPartition  erPartition = new  ErPartition(11,null,null,33);
-        partitions.add(erPartition);
-
-        ErStore  erStore =  new ErStore(erStoreLocator,partitions,Maps.newHashMap());
-
-        System.err.println(erStore.toProto());
-
-        System.err.println(ErStore.parseFromPb(erStore.toProto()));
-
+        return builder.build();
     }
 }
-
 
 
 //  implicit class ErStoreToPbMessage(src: ErStore) extends PbMessageSerializer {

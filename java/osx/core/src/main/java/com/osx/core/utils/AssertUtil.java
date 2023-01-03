@@ -1,4 +1,3 @@
-
 package com.osx.core.utils;
 
 
@@ -8,7 +7,8 @@ import java.util.Collection;
 
 public class AssertUtil {
 
-    private AssertUtil(){}
+    private AssertUtil() {
+    }
 
     public static void notEmpty(String string, String message) {
         if (StringUtils.isEmpty(string)) {

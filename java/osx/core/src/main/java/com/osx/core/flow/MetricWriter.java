@@ -18,7 +18,6 @@ package com.osx.core.flow;
 
 
 import com.osx.core.config.MetaInfo;
-
 import com.osx.core.utils.GetSystemInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +32,7 @@ import java.util.*;
 
 public class MetricWriter {
 
-    public static final String METRIC_BASE_DIR = MetaInfo.PROPERTY_USER_HOME  + "/.fate/metric/";
+    public static final String METRIC_BASE_DIR = MetaInfo.PROPERTY_USER_HOME + "/.fate/metric/";
     public static final String METRIC_FILE = "metrics.log";
     public static final String METRIC_FILE_INDEX_SUFFIX = ".idx";
     public static final Comparator<String> METRIC_FILE_NAME_CMP = new MetricFileNameComparator();

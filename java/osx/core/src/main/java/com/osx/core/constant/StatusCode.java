@@ -22,14 +22,14 @@ public class StatusCode {
     public static final String NET_ERROR = "105";
     public static final String SYSTEM_ERROR = "110";
     public static final String PARAM_ERROR = "120";
-    public static final String TRANSFER_APPLYINFO_SYNC_ERROR="129";
-    public static final String  PROXY_ROUTER_ERROR="130";
+    public static final String TRANSFER_APPLYINFO_SYNC_ERROR = "129";
+    public static final String PROXY_ROUTER_ERROR = "130";
 
 
     public static final String PROXY_LOAD_ROUTER_TABLE_ERROR = "132";
 
     public static final String PROXY_UPDATE_ROUTER_TABLE_ERROR = "133";
-    public static final String INVALID_RESPONSE =  "135";
+    public static final String INVALID_RESPONSE = "135";
     public static final String CONSUME_NO_MESSAGE = "136";
     public static final String MESSAGE_PARSE_ERROR = "137";
     public static final String TRANSFER_QUEUE_NOT_FIND = "138";
@@ -38,8 +38,6 @@ public class StatusCode {
     public static final String CONSUMER_NOT_EXIST = "141";
     public static final String INVALID_REDIRECT_INFO = "142";
     public static final String INVALID_INDEXFILE_DETAIL = "143";
-
-
 
 
 }

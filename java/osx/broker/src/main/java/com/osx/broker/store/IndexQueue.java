@@ -1,9 +1,4 @@
-
 package com.osx.broker.store;
-
-import java.io.File;
-import java.nio.ByteBuffer;
-import java.util.concurrent.atomic.AtomicLong;
 
 import com.osx.broker.message.SelectMappedBufferResult;
 import com.osx.broker.queue.MappedFile;
@@ -11,15 +6,15 @@ import com.osx.broker.queue.MappedFileQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicLong;
+
 
 public class IndexQueue {
-    private static final Logger log = LoggerFactory.getLogger(IndexQueue.class);
-
     public static final int CQ_STORE_UNIT_SIZE = 12;
+    private static final Logger log = LoggerFactory.getLogger(IndexQueue.class);
     //private static final InternalLogger LOG_ERROR = InternalLoggerFactory.getLogger(LoggerName.STORE_ERROR_LOGGER_NAME);
-
-
-
     private final MappedFileQueue mappedFileQueue;
     private final String transferId;
 
@@ -29,6 +24,20 @@ public class IndexQueue {
     private final int mappedFileSize;
     private long maxPhysicOffset = -1;
     private volatile long minLogicOffset = 0;
+    private AtomicLong logicOffset = new AtomicLong(0);
+
+    public IndexQueue(
+            final String transferId,
+            final String storePath,
+            final int mappedFileSize) {
+        this.storePath = storePath;
+        this.mappedFileSize = mappedFileSize;
+        this.transferId = transferId;
+        String queueDir = this.storePath
+                + File.separator + transferId;
+        this.mappedFileQueue = new MappedFileQueue(queueDir, mappedFileSize, null);
+        this.byteBufferIndex = ByteBuffer.allocate(CQ_STORE_UNIT_SIZE);
+    }
 
     public AtomicLong getLogicOffset() {
         return logicOffset;
@@ -36,23 +45,6 @@ public class IndexQueue {
 
     public void setLogicOffset(AtomicLong logicOffset) {
         this.logicOffset = logicOffset;
-    }
-
-    private AtomicLong  logicOffset = new AtomicLong(0);
-
-
-
-    public IndexQueue(
-        final String transferId,
-        final String storePath,
-        final int mappedFileSize) {
-        this.storePath = storePath;
-        this.mappedFileSize = mappedFileSize;
-        this.transferId = transferId;
-        String queueDir = this.storePath
-            + File.separator + transferId;
-        this.mappedFileQueue = new MappedFileQueue(queueDir, mappedFileSize, null);
-        this.byteBufferIndex = ByteBuffer.allocate(CQ_STORE_UNIT_SIZE);
     }
 
     public boolean load() {
@@ -135,15 +127,15 @@ public class IndexQueue {
         return this.minLogicOffset / CQ_STORE_UNIT_SIZE;
     }
 
-    public long putMessagePositionInfoWrapper( long  offset ,int msgSize) {
+    public long putMessagePositionInfoWrapper(long offset, int msgSize) {
         final int maxRetries = 30;
 
-        for (int i = 0; i < maxRetries ; i++) {
+        for (int i = 0; i < maxRetries; i++) {
 
             boolean result = this.putMessagePositionInfo(offset,
-                    msgSize, this.logicOffset.get()+1);
+                    msgSize, this.logicOffset.get() + 1);
 
-            if(result){
+            if (result) {
                 return logicOffset.addAndGet(1);
 
             }
@@ -153,7 +145,7 @@ public class IndexQueue {
     }
 
     private boolean putMessagePositionInfo(final long offset, final int size,
-        final long cqOffset) {
+                                           final long cqOffset) {
 
         if (offset + size <= this.maxPhysicOffset) {
             log.warn("Maybe try to build consume queue repeatedly maxPhysicOffset={} phyOffset={}", maxPhysicOffset, offset);
@@ -177,14 +169,14 @@ public class IndexQueue {
                 this.mappedFileQueue.setCommittedWhere(expectLogicOffset);
                 this.fillPreBlank(mappedFile, expectLogicOffset);
                 log.info("fill pre blank space " + mappedFile.getFileName() + " " + expectLogicOffset + " "
-                    + mappedFile.getWrotePosition());
+                        + mappedFile.getWrotePosition());
             }
 
             if (cqOffset != 0) {
                 long currentLogicOffset = mappedFile.getWrotePosition() + mappedFile.getFileFromOffset();
 
                 if (expectLogicOffset < currentLogicOffset) {
-                              return true;
+                    return true;
                 }
 
                 if (expectLogicOffset != currentLogicOffset) {
@@ -218,12 +210,9 @@ public class IndexQueue {
                 return result;
             }
         }
-        log.info("start index {} {} return null",startIndex,logicOffset);
+        log.info("start index {} {} return null", startIndex, logicOffset);
         return null;
     }
-
-
-
 
 
     public long getMinLogicOffset() {
@@ -241,9 +230,6 @@ public class IndexQueue {
     }
 
 
-
-
-
     public long getMaxPhysicOffset() {
         return maxPhysicOffset;
     }
@@ -253,7 +239,7 @@ public class IndexQueue {
     }
 
     public void destroy() {
-        
+
         this.maxPhysicOffset = -1;
         this.minLogicOffset = 0;
         this.mappedFileQueue.destroy();
@@ -272,8 +258,6 @@ public class IndexQueue {
         mappedFileQueue.checkSelf();
 
     }
-
-
 
 
 }

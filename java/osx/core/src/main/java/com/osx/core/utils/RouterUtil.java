@@ -17,10 +17,11 @@ public class RouterUtil {
 //        return "receive_"+destination;
 //    }
 
-    public  static  String  getReceiveKey(String  key){
-        return "receive_"+key;
+    public static String getReceiveKey(String key) {
+        return "receive_" + key;
     }
-    public  static  String  getSendKey(String key){
-        return  "to_"+key;
+
+    public static String getSendKey(String key) {
+        return "to_" + key;
     }
 }

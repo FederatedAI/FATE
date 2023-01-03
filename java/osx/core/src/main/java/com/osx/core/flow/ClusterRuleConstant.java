@@ -1,4 +1,3 @@
-
 package com.osx.core.flow;
 
 public final class ClusterRuleConstant {
@@ -11,5 +10,6 @@ public final class ClusterRuleConstant {
 
     public static final int DEFAULT_CLUSTER_SAMPLE_COUNT = 10;
 
-    private ClusterRuleConstant() {}
+    private ClusterRuleConstant() {
+    }
 }

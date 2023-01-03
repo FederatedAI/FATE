@@ -2,7 +2,9 @@ package com.osx.broker.message;
 
 public class MessageWraper {
 
-    MessageExt  message;
+    MessageExt message;
+    long indexFileOffset;
+    long indexFileTotal;
 
     public MessageExt getMessage() {
         return message;
@@ -20,8 +22,6 @@ public class MessageWraper {
         this.indexFileOffset = indexFileOffset;
     }
 
-    long  indexFileOffset;
-
     public long getIndexFileTotal() {
         return indexFileTotal;
     }
@@ -29,6 +29,4 @@ public class MessageWraper {
     public void setIndexFileTotal(long indexFileTotal) {
         this.indexFileTotal = indexFileTotal;
     }
-
-    long  indexFileTotal;
 }

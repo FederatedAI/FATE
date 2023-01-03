@@ -1,11 +1,22 @@
 package com.osx.broker.consumer;
 
-import com.osx.core.router.RouterInfo;
 import com.osx.core.constant.TransferStatus;
+import com.osx.core.router.RouterInfo;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RedirectConsumer extends UnaryConsumer {
+
+    RouterInfo routerInfo;
+    TransferStatus transferStatus;
+    AtomicBoolean isWorking = new AtomicBoolean(false);
+
+
+    public RedirectConsumer(long consumerId, String transferId
+    ) {
+        super(consumerId, transferId);
+        transferStatus = TransferStatus.TRANSFERING;
+    }
 
     public RouterInfo getRouterInfo() {
         return routerInfo;
@@ -14,9 +25,6 @@ public class RedirectConsumer extends UnaryConsumer {
     public void setRouterInfo(RouterInfo routerInfo) {
         this.routerInfo = routerInfo;
     }
-
-    RouterInfo  routerInfo;
-
 
     @Override
     public TransferStatus getTransferStatus() {
@@ -28,24 +36,13 @@ public class RedirectConsumer extends UnaryConsumer {
         this.transferStatus = transferStatus;
     }
 
-    TransferStatus  transferStatus ;
-
-    public boolean  getIsWorking() {
+    public boolean getIsWorking() {
         return isWorking.get();
     }
 
-    public boolean  setIsWorking(boolean  pre,boolean update) {
-        return isWorking.compareAndSet(pre,update);
+    public boolean setIsWorking(boolean pre, boolean update) {
+        return isWorking.compareAndSet(pre, update);
     }
-
-    AtomicBoolean  isWorking = new  AtomicBoolean(false);
-
-    public  RedirectConsumer(long consumerId,String transferId
-                             ){
-        super( consumerId, transferId);
-        transferStatus = TransferStatus.TRANSFERING;
-    }
-
 
 
 }

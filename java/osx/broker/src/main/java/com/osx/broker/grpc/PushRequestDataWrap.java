@@ -4,8 +4,8 @@ import com.webank.ai.eggroll.api.networking.proxy.Proxy;
 import io.grpc.stub.StreamObserver;
 
 public class PushRequestDataWrap {
-    Proxy.Packet  packet;
-    StreamObserver   streamObserver;
+    Proxy.Packet packet;
+    StreamObserver streamObserver;
 
     public Proxy.Packet getPacket() {
         return packet;

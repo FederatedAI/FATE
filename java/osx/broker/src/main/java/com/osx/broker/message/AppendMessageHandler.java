@@ -1,8 +1,6 @@
-
 package com.osx.broker.message;
 
 import java.nio.ByteBuffer;
-
 
 
 public interface AppendMessageHandler {

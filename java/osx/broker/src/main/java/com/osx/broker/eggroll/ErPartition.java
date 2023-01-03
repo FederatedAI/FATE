@@ -2,9 +2,14 @@ package com.osx.broker.eggroll;
 
 import com.webank.eggroll.core.meta.Meta;
 
-public class ErPartition extends  BaseProto<Meta.Partition>{
+public class ErPartition extends BaseProto<Meta.Partition> {
 
-    public  ErPartition(Integer id ,ErStoreLocator storeLocator,ErProcessor  processor,int rankInNode ){
+    Integer id;
+    ErStoreLocator storeLocator;
+    ErProcessor processor;
+    int rankInNode;
+
+    public ErPartition(Integer id, ErStoreLocator storeLocator, ErProcessor processor, int rankInNode) {
         this.id = id;
         this.storeLocator = storeLocator;
         this.processor = processor;
@@ -12,9 +17,18 @@ public class ErPartition extends  BaseProto<Meta.Partition>{
 
     }
 
+    public static ErPartition parseFromPb(Meta.Partition partition) {
 
-    Integer  id;
-    ErStoreLocator  storeLocator;
+        if (partition != null) {
+            Meta.StoreLocator storeLocator = partition.getStoreLocator();
+            ErStoreLocator erStoreLocator = ErStoreLocator.parseFromPb(storeLocator);
+            ErProcessor erProcessor = ErProcessor.parseFromPb(partition.getProcessor());
+            ErPartition erPartition = new ErPartition(partition.getId(), erStoreLocator, erProcessor, partition.getRankInNode());
+            return erPartition;
+        } else {
+            return null;
+        }
+    }
 
     public Integer getId() {
         return id;
@@ -48,39 +62,22 @@ public class ErPartition extends  BaseProto<Meta.Partition>{
         this.rankInNode = rankInNode;
     }
 
-    ErProcessor     processor;
-    int rankInNode;
-
-    public  String  toPath(String delim){
+    public String toPath(String delim) {
         return String.join(delim, storeLocator.toPath(delim = delim), id.toString());
     }
 
     @Override
     Meta.Partition toProto() {
 
-        Meta.Partition.Builder  builder = Meta.Partition.newBuilder();
+        Meta.Partition.Builder builder = Meta.Partition.newBuilder();
         builder.setId(id);
         builder.setRankInNode(rankInNode);
-        if(storeLocator!=null)
+        if (storeLocator != null)
             builder.setStoreLocator(storeLocator.toProto());
-        if(processor!=null){
+        if (processor != null) {
             builder.setProcessor(this.processor.toProto());
         }
         return builder.build();
-    }
-
-
-    public  static ErPartition   parseFromPb(Meta.Partition  partition ){
-
-        if(partition!=null) {
-            Meta.StoreLocator storeLocator = partition.getStoreLocator();
-            ErStoreLocator erStoreLocator = ErStoreLocator.parseFromPb(storeLocator);
-            ErProcessor erProcessor = ErProcessor.parseFromPb(partition.getProcessor());
-            ErPartition erPartition = new ErPartition(partition.getId(), erStoreLocator, erProcessor, partition.getRankInNode());
-            return  erPartition;
-        }else{
-            return  null;
-        }
     }
 }
 

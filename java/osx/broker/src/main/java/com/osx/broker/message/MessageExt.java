@@ -1,4 +1,3 @@
-
 package com.osx.broker.message;
 
 import java.net.Inet4Address;
@@ -17,7 +16,7 @@ public class MessageExt extends Message {
 
     private int storeSize;
 
-   // private long queueOffset;
+    // private long queueOffset;
 
 
     private int sysFlag;
@@ -32,31 +31,14 @@ public class MessageExt extends Message {
     private int reconsumeTimes;
 
     private long preparedTransactionOffset;
-
-    public String getSrcPartyId() {
-        return srcPartyId;
-    }
-
-    public void setSrcPartyId(String srcPartyId) {
-        this.srcPartyId = srcPartyId;
-    }
-
-    public String getDesPartyId() {
-        return desPartyId;
-    }
-
-    public void setDesPartyId(String desPartyId) {
-        this.desPartyId = desPartyId;
-    }
-
-    private String  srcPartyId;
-    private String  desPartyId;
+    private String srcPartyId;
+    private String desPartyId;
 
     public MessageExt() {
     }
 
     public MessageExt(int queueId, long bornTimestamp, SocketAddress bornHost, long storeTimestamp,
-        SocketAddress storeHost, String msgId) {
+                      SocketAddress storeHost, String msgId) {
         this.queueId = queueId;
         this.bornTimestamp = bornTimestamp;
         this.bornHost = bornHost;
@@ -64,14 +46,6 @@ public class MessageExt extends Message {
         this.storeHost = storeHost;
         this.msgId = msgId;
     }
-
-//    public static TopicFilterType parseTopicFilterType(final int sysFlag) {
-//        if ((sysFlag & MessageSysFlag.MULTI_TAGS_FLAG) == MessageSysFlag.MULTI_TAGS_FLAG) {
-//            return TopicFilterType.MULTI_TAG;
-//        }
-//
-//        return TopicFilterType.SINGLE_TAG;
-//    }
 
     public static ByteBuffer socketAddress2ByteBuffer(final SocketAddress socketAddress, final ByteBuffer byteBuffer) {
         InetSocketAddress inetSocketAddress = (InetSocketAddress) socketAddress;
@@ -96,6 +70,30 @@ public class MessageExt extends Message {
             byteBuffer = ByteBuffer.allocate(16 + 4);
         }
         return socketAddress2ByteBuffer(socketAddress, byteBuffer);
+    }
+
+    public String getSrcPartyId() {
+        return srcPartyId;
+    }
+
+    public void setSrcPartyId(String srcPartyId) {
+        this.srcPartyId = srcPartyId;
+    }
+
+//    public static TopicFilterType parseTopicFilterType(final int sysFlag) {
+//        if ((sysFlag & MessageSysFlag.MULTI_TAGS_FLAG) == MessageSysFlag.MULTI_TAGS_FLAG) {
+//            return TopicFilterType.MULTI_TAG;
+//        }
+//
+//        return TopicFilterType.SINGLE_TAG;
+//    }
+
+    public String getDesPartyId() {
+        return desPartyId;
+    }
+
+    public void setDesPartyId(String desPartyId) {
+        this.desPartyId = desPartyId;
     }
 
     public ByteBuffer getBornHostBytes() {
@@ -253,10 +251,10 @@ public class MessageExt extends Message {
     @Override
     public String toString() {
         return "MessageExt [brokerName=" + brokerName + ", queueId=" + queueId + ", storeSize=" + storeSize
-            + ", sysFlag=" + sysFlag + ", bornTimestamp=" + bornTimestamp + ", bornHost=" + bornHost
-            + ", storeTimestamp=" + storeTimestamp + ", storeHost=" + storeHost + ", msgId=" + msgId
-            + ", commitLogOffset=" + commitLogOffset + ", bodyCRC=" + bodyCRC + ", reconsumeTimes="
-            + reconsumeTimes + ", preparedTransactionOffset=" + preparedTransactionOffset
-            + ", toString()=" + super.toString() + "]";
+                + ", sysFlag=" + sysFlag + ", bornTimestamp=" + bornTimestamp + ", bornHost=" + bornHost
+                + ", storeTimestamp=" + storeTimestamp + ", storeHost=" + storeHost + ", msgId=" + msgId
+                + ", commitLogOffset=" + commitLogOffset + ", bodyCRC=" + bodyCRC + ", reconsumeTimes="
+                + reconsumeTimes + ", preparedTransactionOffset=" + preparedTransactionOffset
+                + ", toString()=" + super.toString() + "]";
     }
 }

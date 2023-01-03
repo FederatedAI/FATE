@@ -15,7 +15,7 @@
  */
 
 package com.osx.core.jvm;
- 
+
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;

@@ -16,18 +16,15 @@
 
 package com.osx.core.service;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.osx.core.constant.Dict;
 import com.osx.core.constant.StatusCode;
 import com.osx.core.context.Context;
 import com.osx.core.exceptions.ErrorMessageUtil;
 import com.osx.core.exceptions.ExceptionInfo;
 import com.osx.core.utils.JsonUtil;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-
-
 import io.grpc.stub.AbstractStub;
-import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @Author
  **/
 
-    public abstract class AbstractServiceAdaptor<req, resp> implements ServiceAdaptor<req, resp> {
+public abstract class AbstractServiceAdaptor<req, resp> implements ServiceAdaptor<req, resp> {
 
 
     static public AtomicInteger requestInHandle = new AtomicInteger(0);
@@ -54,12 +51,13 @@ import java.util.concurrent.atomic.AtomicInteger;
     InterceptorChain postChain = new DefaultInterceptorChain();
     private Map<String, Method> methodMap = Maps.newHashMap();
     private AbstractStub serviceStub;
+
     public AbstractServiceAdaptor() {
 
     }
 
-    public void registerMethod(String actionType,Method  method){
-        this.methodMap.put(actionType,method);
+    public void registerMethod(String actionType, Method method) {
+        this.methodMap.put(actionType, method);
     }
 
 
@@ -71,7 +69,7 @@ import java.util.concurrent.atomic.AtomicInteger;
         this.methodMap = methodMap;
     }
 
-    public AbstractServiceAdaptor  addPreProcessor(Interceptor interceptor) {
+    public AbstractServiceAdaptor addPreProcessor(Interceptor interceptor) {
         preChain.addInterceptor(interceptor);
         return this;
     }
@@ -116,13 +114,13 @@ import java.util.concurrent.atomic.AtomicInteger;
     public OutboundPackage<resp> service(Context context, InboundPackage<req> data) throws RuntimeException {
 
         OutboundPackage<resp> outboundPackage = new OutboundPackage<resp>();
-       // context.preProcess();
+        // context.preProcess();
         List<Throwable> exceptions = Lists.newArrayList();
         context.setReturnCode(StatusCode.SUCCESS);
 //        if (!isOpen) {
 //            return this.serviceFailInner(context, data, new ShowDownRejectException());
 //        }
-        if(data.getBody()!=null) {
+        if (data.getBody() != null) {
             context.putData(Dict.INPUT_DATA, data.getBody());
         }
 
@@ -146,29 +144,29 @@ import java.util.concurrent.atomic.AtomicInteger;
 
         } catch (Throwable e) {
             exceptions.add(e);
-            logger.error("service error",e);
+            logger.error("service error", e);
         } finally {
             requestInHandle.decrementAndGet();
             try {
                 if (exceptions.size() != 0) {
                     outboundPackage = this.serviceFail(context, data, exceptions);
                 }
-            }finally {
+            } finally {
                 printFlowLog(context);
             }
-          //  int returnCode = context.getReturnCode();
+            //  int returnCode = context.getReturnCode();
 
 //            if(outboundPackage.getData()!=null) {
 //                context.putData(Dict.OUTPUT_DATA, outboundPackage.getData());
 //            }
-           // context.postProcess(data, outboundPackage);
+            // context.postProcess(data, outboundPackage);
 
         }
         return outboundPackage;
     }
 
     protected void printFlowLog(Context context) {
-        
+
         context.printFlowLog();
 
 //        flowLogger.info("{}|{}|{}|{}|" +
@@ -183,8 +181,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
     protected OutboundPackage<resp> serviceFailInner(Context context, InboundPackage<req> data, Throwable e) {
         OutboundPackage<resp> outboundPackage = new OutboundPackage<resp>();
-        ExceptionInfo exceptionInfo = ErrorMessageUtil.handleExceptionExceptionInfo(context ,e);
+        ExceptionInfo exceptionInfo = ErrorMessageUtil.handleExceptionExceptionInfo(context, e);
         context.setReturnCode(exceptionInfo.getCode());
+        context.setReturnMsg(exceptionInfo.getMessage());
         resp rsp = transformExceptionInfo(context, exceptionInfo);
         outboundPackage.setData(rsp);
         outboundPackage.setThrowable(exceptionInfo.getThrowable());
@@ -198,7 +197,7 @@ import java.util.concurrent.atomic.AtomicInteger;
         return serviceFailInner(context, data, e);
     }
 
-      protected abstract resp transformExceptionInfo(Context context, ExceptionInfo exceptionInfo);
+    protected abstract resp transformExceptionInfo(Context context, ExceptionInfo exceptionInfo);
 
 
 }

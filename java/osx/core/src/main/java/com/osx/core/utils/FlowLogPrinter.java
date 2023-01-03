@@ -4,5 +4,5 @@ import com.osx.core.context.Context;
 
 public interface FlowLogPrinter {
 
-    public  void  print(Context context);
+    public void print(Context context);
 }

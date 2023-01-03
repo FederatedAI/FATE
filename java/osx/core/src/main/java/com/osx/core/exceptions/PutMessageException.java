@@ -2,7 +2,7 @@ package com.osx.core.exceptions;
 
 import com.osx.core.constant.StatusCode;
 
-public class PutMessageException extends BaseException{
+public class PutMessageException extends BaseException {
 
     public PutMessageException(String retCode, String message) {
         super(retCode, message);

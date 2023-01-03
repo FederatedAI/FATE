@@ -5,6 +5,9 @@ import io.grpc.stub.StreamObserver;
 
 public class PullRequestDataWrap {
 
+    Proxy.Metadata metadata;
+    StreamObserver streamObserver;
+
     public Proxy.Metadata getMetadata() {
         return metadata;
     }
@@ -20,9 +23,5 @@ public class PullRequestDataWrap {
     public void setStreamObserver(StreamObserver streamObserver) {
         this.streamObserver = streamObserver;
     }
-
-    Proxy.Metadata   metadata;
-
-    StreamObserver   streamObserver;
 
 }
