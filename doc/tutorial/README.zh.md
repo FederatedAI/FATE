@@ -6,7 +6,7 @@
     
 - [用 `Pipeline` 上传数据](pipeline/pipeline_tutorial_upload.ipynb)
 - [用 `Pipeline` 进行 `Hetero SecureBoost` 训练和预测](pipeline/pipeline_tutorial_hetero_sbt.ipynb)
-- [用 `Pipeline` 构建横向神经网络模型](pipeline/pipeline_tutorial_homo_nn.ipynb)
+- [用 `Pipeline` 构建神经网络模型](pipeline/nn_tutorial/README.md)
 - [用 `Pipeline` 进行带 `Match ID` 的 `Hetero SecureBoost` 训练和预测](pipeline/pipeline_tutorial_match_id.ipynb)
 
 不使用 `Pipeline` 来提交任务也是支持的，用户需要配置一些 `json` 格式的任务配置文件:
