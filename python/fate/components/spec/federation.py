@@ -63,10 +63,6 @@ class RabbitMQFederationSpec(pydantic.BaseModel):
 
 class PulsarFederationSpec(pydantic.BaseModel):
     class MetadataSpec(pydantic.BaseModel):
-        class RouteTable(pydantic.BaseModel):
-            host: str
-            port: int
-
         class PulsarConfig(pydantic.BaseModel):
             host: str
             port: int
@@ -81,7 +77,7 @@ class PulsarFederationSpec(pydantic.BaseModel):
 
         federation_id: str
         parties: FederationPartiesSpec
-        route_table: Dict[str, RouteTable]
+        route_table: dict
         pulsar_config: PulsarConfig
         pulsar_run: dict = {}
         connection: dict = {}
