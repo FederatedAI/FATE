@@ -1,6 +1,8 @@
 taskid: xxx
+party_task_id: xxxx
 component: hetero_lr
 role: arbiter
+partyid: "10001"
 stage: train
 inputs:
   parameters:
@@ -14,16 +16,19 @@ conf:
       metadata:
         uri: file:///Users/sage/alpha/output/model
         format: json
+        name_template: "{name}-{uuid}"
     metric:
       type: directory
       metadata:
         uri: file:///Users/sage/alpha/output/metric
         format: json
+        name_template: "{name}-{uuid}"
     data:
       type: directory
       metadata:
         uri: file:///Users/sage/alpha/output/data
         format: csv
+        name_template: "{name}-{uuid}"
   mlmd:
     type: pipeline
     metadata:
