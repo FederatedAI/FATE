@@ -14,6 +14,6 @@
 #  limitations under the License.
 #
 
-from ._federation import Federation
+from ._federation import EggrollFederation
 
-__all__ = ["Federation"]
+__all__ = ["EggrollFederation"]

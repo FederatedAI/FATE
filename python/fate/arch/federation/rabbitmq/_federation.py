@@ -15,12 +15,12 @@
 #
 
 import json
-from typing import List
+from logging import getLogger
+from typing import List, Optional
 
 from fate.interface import PartyMeta
 
 from ...common import Party, file_utils
-from ...common.log import getLogger
 from .._federation import FederationBase
 from ._mq_channel import MQChannel
 from ._rabbit_manager import RabbitManager
@@ -61,37 +61,30 @@ class _TopicPair(object):
 class RabbitmqFederation(FederationBase):
     @staticmethod
     def from_conf(
-        federation_session_id: str, party: PartyMeta, parties: List[PartyMeta], runtime_conf: dict, **kwargs
+        federation_session_id: str,
+        party: PartyMeta,
+        parties: List[PartyMeta],
+        route_table: dict,
+        host: str,
+        port: int,
+        mng_port: int,
+        base_user: str,
+        base_password: str,
+        mode: str,
+        max_message_size: Optional[int],
+        rabbitmq_run: dict = {},
+        connection: dict = {},
     ):
-        rabbitmq_config = kwargs["rabbitmq_config"]
-        LOGGER.debug(f"rabbitmq_config: {rabbitmq_config}")
-        host = rabbitmq_config.get("host")
-        port = rabbitmq_config.get("port")
-        mng_port = rabbitmq_config.get("mng_port")
-        base_user = rabbitmq_config.get("user")
-        base_password = rabbitmq_config.get("password")
-        mode = rabbitmq_config.get("mode", "replication")
-        # max_message_size；
-        max_message_size = int(rabbitmq_config.get("max_message_size", DEFAULT_MESSAGE_MAX_SIZE))
-
+        LOGGER.debug(
+            f"federation_session_id={federation_session_id}, party={party}, parties={parties},  route_table={route_table}, rabbitmq_run={rabbitmq_run}",
+        )
+        if max_message_size is None:
+            max_message_size = DEFAULT_MESSAGE_MAX_SIZE
         union_name = federation_session_id
         policy_id = federation_session_id
-
-        rabbitmq_run = runtime_conf.get("job_parameters", {}).get("rabbitmq_run", {})
-        LOGGER.debug(f"rabbitmq_run: {rabbitmq_run}")
-
-        max_message_size = int(rabbitmq_run.get("max_message_size", max_message_size))
-
-        LOGGER.debug(f"set max message size to {max_message_size} Bytes")
-
         rabbit_manager = RabbitManager(base_user, base_password, f"{host}:{mng_port}", rabbitmq_run)
         rabbit_manager.create_user(union_name, policy_id)
-        route_table_path = rabbitmq_config.get("route_table")
-        if route_table_path is None:
-            route_table_path = "conf/rabbitmq_route_table.yaml"
-        route_table = file_utils.load_yaml_conf(conf_path=route_table_path)
         mq = MQ(host, port, union_name, policy_id, route_table)
-        conf = rabbit_manager.runtime_config.get("connection", {})
 
         return RabbitmqFederation(
             federation_session_id,
@@ -100,7 +93,7 @@ class RabbitmqFederation(FederationBase):
             mq,
             rabbit_manager,
             max_message_size,
-            conf,
+            connection,
             mode,
         )
 
@@ -112,7 +105,7 @@ class RabbitmqFederation(FederationBase):
         mq: MQ,
         rabbit_manager: RabbitManager,
         max_message_size,
-        conf,
+        connection,
         mode,
     ):
         super().__init__(
@@ -121,7 +114,7 @@ class RabbitmqFederation(FederationBase):
             parties=parties,
             mq=mq,
             max_message_size=max_message_size,
-            conf=conf,
+            conf=connection,
         )
         self._rabbit_manager = rabbit_manager
         self._vhost_set = set()
