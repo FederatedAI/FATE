@@ -1,3 +1,3 @@
-from ._federation import MQ, Federation, PulsarManager
+from ._federation import MQ, PulsarFederation, PulsarManager
 
-__all__ = ["Federation", "MQ", "PulsarManager"]
+__all__ = ["PulsarFederation", "MQ", "PulsarManager"]

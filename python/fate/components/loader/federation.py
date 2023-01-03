@@ -1,6 +1,7 @@
 def load_federation(federation, computing):
     from fate.components.spec.federation import (
         EggrollFederationSpec,
+        PulsarFederationSpec,
         RabbitMQFederationSpec,
         StandaloneFederationSpec,
     )
@@ -46,6 +47,28 @@ def load_federation(federation, computing):
             mode=federation.metadata.rabbitmq_config.mode,
             max_message_size=federation.metadata.rabbitmq_config.max_message_size,
             rabbitmq_run=federation.metadata.rabbitmq_run,
+            connection=federation.metadata.connection,
+        )
+
+    if isinstance(federation, PulsarFederationSpec):
+        from fate.arch.federation.pulsar import PulsarFederation
+
+        return PulsarFederation.from_conf(
+            federation_session_id=federation.metadata.federation_id,
+            party=federation.metadata.parties.local.tuple(),
+            parties=[p.tuple() for p in federation.metadata.parties.parties],
+            route_table={k: v.dict() for k, v in federation.metadata.route_table.items()},
+            mode=federation.metadata.pulsar_config.mode,
+            host=federation.metadata.pulsar_config.host,
+            port=federation.metadata.pulsar_config.port,
+            mng_port=federation.metadata.pulsar_config.mng_port,
+            base_user=federation.metadata.pulsar_config.base_user,
+            base_password=federation.metadata.pulsar_config.base_password,
+            max_message_size=federation.metadata.pulsar_config.max_message_size,
+            topic_ttl=federation.metadata.pulsar_config.topic_ttl,
+            cluster=federation.metadata.pulsar_config.cluster,
+            tenant=federation.metadata.pulsar_config.tenant,
+            pulsar_run=federation.metadata.pulsar_run,
             connection=federation.metadata.connection,
         )
     # TODO: load from plugin

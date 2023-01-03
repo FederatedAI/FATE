@@ -61,6 +61,35 @@ class RabbitMQFederationSpec(pydantic.BaseModel):
     metadata: MetadataSpec
 
 
+class PulsarFederationSpec(pydantic.BaseModel):
+    class MetadataSpec(pydantic.BaseModel):
+        class RouteTable(pydantic.BaseModel):
+            host: str
+            port: int
+
+        class PulsarConfig(pydantic.BaseModel):
+            host: str
+            port: int
+            mng_port: int
+            base_user: Optional[str] = None
+            base_password: Optional[str] = None
+            max_message_size: Optional[int] = None
+            mode: str = "replication"
+            topic_ttl: Optional[int] = None
+            cluster: Optional[str] = None
+            tenant: Optional[str] = None
+
+        federation_id: str
+        parties: FederationPartiesSpec
+        route_table: Dict[str, RouteTable]
+        pulsar_config: PulsarConfig
+        pulsar_run: dict = {}
+        connection: dict = {}
+
+    type: Literal["pulsar"]
+    metadata: MetadataSpec
+
+
 class CustomFederationSpec(pydantic.BaseModel):
     type: Literal["custom"]
     metadata: dict

@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from typing import List
+from typing import List, Optional
 
 from fate.interface import PartyMeta
 
@@ -55,40 +55,41 @@ class _TopicPair(object):
         self.receive = receive
 
 
-class Federation(FederationBase):
+class PulsarFederation(FederationBase):
     @staticmethod
     def from_conf(
-        federation_session_id: str, party: PartyMeta, parties: List[PartyMeta], runtime_conf: dict, **kwargs
+        federation_session_id: str,
+        party: PartyMeta,
+        parties: List[PartyMeta],
+        route_table: dict,
+        mode: str,
+        host: str,
+        port: int,
+        mng_port: int,
+        topic_ttl: Optional[int],
+        cluster: Optional[str],
+        tenant: Optional[str],
+        max_message_size: Optional[int],
+        base_user: Optional[str] = None,
+        base_password: Optional[str] = None,
+        pulsar_run: dict = {},
+        connection: dict = {},
     ):
-        pulsar_config = kwargs["pulsar_config"]
-        LOGGER.debug(f"pulsar_config: {pulsar_config}")
-        host = pulsar_config.get("host", "localhost")
-        port = pulsar_config.get("port", "6650")
-        mng_port = pulsar_config.get("mng_port", "8080")
-        topic_ttl = int(pulsar_config.get("topic_ttl", 0))
-        cluster = pulsar_config.get("cluster", DEFAULT_CLUSTER)
-        # tenant name should be unified between parties
-        tenant = pulsar_config.get("tenant", DEFAULT_TENANT)
-
-        # max_message_size；
-        max_message_size = int(pulsar_config.get("max_message_size", DEFAULT_MESSAGE_MAX_SIZE))
-
-        pulsar_run = runtime_conf.get("job_parameters", {}).get("pulsar_run", {})
-        LOGGER.debug(f"pulsar_run: {pulsar_run}")
-
-        max_message_size = int(pulsar_run.get("max_message_size", max_message_size))
-
-        LOGGER.debug(f"set max message size to {max_message_size} Bytes")
-
-        # topic ttl could be overwritten by run time config
-        topic_ttl = int(pulsar_run.get("topic_ttl", topic_ttl))
+        if topic_ttl is None:
+            topic_ttl = 0
+        if cluster is None:
+            cluster = DEFAULT_CLUSTER
+        if tenant is None:
+            tenant = DEFAULT_TENANT
+        if max_message_size is None:
+            max_message_size = DEFAULT_MESSAGE_MAX_SIZE
+        if "max_message_size" in pulsar_run:
+            max_message_size = pulsar_run["max_message_size"]
+        if "topic_ttl" in pulsar_run:
+            topic_ttl = pulsar_run["topic_ttl"]
 
         # pulsar not use user and password so far
         # TODO add credential to connections
-        pulsar_config.get("user")
-        pulsar_config.get("password")
-        mode = pulsar_config.get("mode", "replication")
-
         pulsar_manager = PulsarManager(host=host, port=mng_port, runtime_config=pulsar_run)
 
         # init tenant
@@ -96,17 +97,13 @@ class Federation(FederationBase):
         if tenant_info.get("allowedClusters") is None:
             pulsar_manager.create_tenant(tenant=tenant, admins=[], clusters=[cluster])
 
-        route_table_path = pulsar_config.get("route_table")
-        if route_table_path is None:
-            route_table_path = "conf/pulsar_route_table.yaml"
-        route_table = file_utils.load_yaml_conf(conf_path=route_table_path)
         mq = MQ(host, port, route_table)
 
-        conf = pulsar_manager.runtime_config.get("connection", {})
+        connection = pulsar_manager.runtime_config.get("connection", {})
 
         LOGGER.debug(f"federation mode={mode}")
 
-        return Federation(
+        return PulsarFederation(
             federation_session_id,
             party,
             parties,
@@ -116,7 +113,7 @@ class Federation(FederationBase):
             topic_ttl,
             cluster,
             tenant,
-            conf,
+            connection,
             mode,
         )
 
