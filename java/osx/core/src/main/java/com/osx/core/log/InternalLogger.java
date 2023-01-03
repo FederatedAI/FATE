@@ -1,5 +1,3 @@
-
-
 package com.osx.core.log;
 
 public interface InternalLogger {

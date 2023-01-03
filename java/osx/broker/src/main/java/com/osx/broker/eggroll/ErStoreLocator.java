@@ -5,24 +5,10 @@ import com.osx.core.utils.JsonUtil;
 import com.webank.eggroll.core.meta.Meta;
 import org.apache.commons.lang3.StringUtils;
 
-public class ErStoreLocator  extends  BaseProto<Meta.StoreLocator>{
+public class ErStoreLocator extends BaseProto<Meta.StoreLocator> {
 
 
-    public ErStoreLocator(String namespace ,String name,
-                          String path,
-                          String  storeType,
-                          int totalPartitions ,String partitioner,
-                            String serdes
-    ){
-        this.namespace = namespace;
-        this.name = name;
-        this.path = path;
-        this.storeType = storeType;
-        this.partitioner = partitioner;
-        this.totalPartitions = totalPartitions;
-        this.serdes = serdes;
-
-    }
+    String storeType;
 
 
 //    (
@@ -33,9 +19,43 @@ public class ErStoreLocator  extends  BaseProto<Meta.StoreLocator>{
 //    partitioner = options.getOrElse(StringConstants.PARTITIONER, PartitionerTypes.BYTESTRING_HASH),
 //    serdes = options.getOrElse(StringConstants.SERDES, defaultSerdesType)
 //            )
+    String namespace;
+    String name;
+    String path;
+    int totalPartitions;
+    String partitioner;
+    String serdes;
+
+    public ErStoreLocator(String namespace, String name,
+                          String path,
+                          String storeType,
+                          int totalPartitions, String partitioner,
+                          String serdes
+    ) {
+        this.namespace = namespace;
+        this.name = name;
+        this.path = path;
+        this.storeType = storeType;
+        this.partitioner = partitioner;
+        this.totalPartitions = totalPartitions;
+        this.serdes = serdes;
+
+    }
+
+    public static ErStoreLocator parseFromPb(Meta.StoreLocator storeLocator) {
 
 
-    String  storeType;
+        ErStoreLocator erStoreLocator = new ErStoreLocator(storeLocator.getNamespace(),
+                storeLocator.getName(),
+                storeLocator.getPath(),
+                storeLocator.getStoreType(),
+                storeLocator.getTotalPartitions(),
+                storeLocator.getPartitioner(),
+                storeLocator.getSerdes()
+        );
+        return erStoreLocator;
+
+    }
 
     public String getStoreType() {
         return storeType;
@@ -93,30 +113,23 @@ public class ErStoreLocator  extends  BaseProto<Meta.StoreLocator>{
         this.serdes = serdes;
     }
 
-    String  namespace;
-    String  name;
-    String  path;
-    int  totalPartitions;
-    String  partitioner;
-    String  serdes;
-
-    String toPath(String delim){
+    String toPath(String delim) {
         if (!StringUtils.isBlank(path)) {
             return path;
         } else {
-           return  String.join(delim, storeType, namespace, name);
+            return String.join(delim, storeType, namespace, name);
         }
     }
 
     @Override
     Meta.StoreLocator toProto() {
 
-        Meta.StoreLocator.Builder   builder =  Meta.StoreLocator.newBuilder();
+        Meta.StoreLocator.Builder builder = Meta.StoreLocator.newBuilder();
 
         return builder.setName(name)
-        .setNamespace(namespace)
-        .setPartitioner(partitioner)
-        .setStoreType(storeType).
+                .setNamespace(namespace)
+                .setPartitioner(partitioner)
+                .setStoreType(storeType).
                 setPath(path).
                 setTotalPartitions(totalPartitions).
                 setSerdes(serdes).build();
@@ -124,26 +137,9 @@ public class ErStoreLocator  extends  BaseProto<Meta.StoreLocator>{
 
     }
 
-    public   static  ErStoreLocator  parseFromPb(Meta.StoreLocator  storeLocator){
-
-
-        ErStoreLocator  erStoreLocator = new  ErStoreLocator(storeLocator.getNamespace(),
-                storeLocator.getName(),
-                storeLocator.getPath(),
-                storeLocator.getStoreType(),
-                storeLocator.getTotalPartitions(),
-                storeLocator.getPartitioner(),
-                storeLocator.getSerdes()
-        );
-        return erStoreLocator;
-
-    }
-
-
-    public String  toString(){
+    public String toString() {
         return JsonUtil.object2Json(this);
     }
-
 
 
 }

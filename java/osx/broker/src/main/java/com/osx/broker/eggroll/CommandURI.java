@@ -13,16 +13,17 @@ import java.util.Map;
 public class CommandURI {
     URI uri;
     String queryString;
-    Map<String,String > queryPairs;
+    Map<String, String> queryPairs;
 
-    public CommandURI(String prefix,String name ){
-        this(prefix+"/"+name);
+    public CommandURI(String prefix, String name) {
+        this(prefix + "/" + name);
     }
-    public CommandURI(String  uriString ){
+
+    public CommandURI(String uriString) {
         try {
             uri = new URI(uriString);
             queryString = uri.getQuery();
-            queryPairs =  new HashMap<>();
+            queryPairs = new HashMap<>();
             if (StringUtils.isBlank(queryString)) {
                 queryPairs.put(Dict.ROUTE, uriString);
             } else {
@@ -32,35 +33,32 @@ public class CommandURI {
                     String key = pair;
                     String value = Dict.EMPTY;
                     if (idx > 0)
-                        key = URLDecoder.decode(pair.substring(0, idx), StandardCharsets.UTF_8.name()) ;
-                    else
-                         if (idx > 0 && pair.length() > idx + 1)
-                                value = URLDecoder.decode(pair.substring(idx + 1), StandardCharsets.UTF_8.name());
+                        key = URLDecoder.decode(pair.substring(0, idx), StandardCharsets.UTF_8.name());
+                    else if (idx > 0 && pair.length() > idx + 1)
+                        value = URLDecoder.decode(pair.substring(idx + 1), StandardCharsets.UTF_8.name());
                     queryPairs.put(key, value);
                 }
             }
 
-        } catch (Exception  e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
     }
 
 
-
-    String getQueryValue(String  key){
-        return    queryPairs.get(key);
+    String getQueryValue(String key) {
+        return queryPairs.get(key);
     }
 
-    String getRoute(){
-       return  queryPairs.get(Dict.ROUTE);
+    String getRoute() {
+        return queryPairs.get(Dict.ROUTE);
     }
 
 
-    String  getName() {
-      return   StringUtils.substringAfterLast(uri.getPath(), Dict.SLASH);
+    String getName() {
+        return StringUtils.substringAfterLast(uri.getPath(), Dict.SLASH);
     }
-
 
 
 //    class CommandURI(val uriString: String) {

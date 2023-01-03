@@ -4,7 +4,7 @@ from fate.arch.unify import device
 
 from ._dtype import dtype
 from ._lstorage import LStorage
-from ._shape import Shape
+from ._shape import DAxis, Shape
 
 
 class DStorage:
@@ -18,6 +18,12 @@ class DStorage:
     @property
     def shape(self):
         return self._shape
+
+    @property
+    def d_axis(self) -> DAxis:
+        if self._shape.d_axis is None:
+            raise ValueError(f"DStorage should not have none daxis")
+        return self._shape.d_axis
 
     @property
     def dtype(self):
@@ -39,6 +45,11 @@ class DStorage:
         from ..storage.distributed.agg import max
 
         return max(self, *args, **kwargs)
+
+    def min(self, *args, **kwargs):
+        from ..storage.distributed.agg import min
+
+        return min(self, *args, **kwargs)
 
     def mean(self, *args, **kwargs):
         from ..storage.distributed.agg import mean
@@ -72,7 +83,7 @@ class DStorage:
 
     def to_local(self):
         storages = self.collect()
-        return storages[0].cat(storages[1:], self.shape.d_axis)
+        return storages[0].cat(storages[1:], self.shape.d_axis.axis)
 
     @classmethod
     def from_storages(cls, ctx, storages: List[LStorage], d_axis=0, partitions=4):
@@ -106,7 +117,8 @@ class DStorage:
                     if shape_size[i] != storage.shape.size[i]:
                         raise RuntimeError(f"requires same shape except d_axis")
         blocks = ctx.computing.parallelize(enumerate(storages), partition=partitions, include_key=True)
-        return DStorage(blocks, Shape(shape_size, d_axis), d_type, device)
+        d_axis_cls = DAxis(d_axis, [s.shape.size[d_axis] for s in storages])
+        return DStorage(blocks, Shape(shape_size, d_axis_cls), d_type, device)
 
     @classmethod
     def unary_op(

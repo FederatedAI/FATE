@@ -14,6 +14,13 @@ import java.util.concurrent.Future;
 
 public class PutBatchSinkPushRespSO implements StreamObserver<Transfer.TransferBatch> {
 
+    StreamObserver<Proxy.Metadata> eggSiteServicerPushRespSO;
+    Proxy.Metadata reqHeader;
+    Future<ErTask> commandFuture;
+    CountDownLatch finishLatch;
+    Logger logger = LoggerFactory.getLogger(PutBatchSinkPushRespSO.class);
+
+
     public PutBatchSinkPushRespSO(Proxy.Metadata reqHeader,
                                   Future<ErTask> commandFuture,
                                   StreamObserver<Proxy.Metadata> eggSiteServicerPushRespSO,
@@ -24,16 +31,6 @@ public class PutBatchSinkPushRespSO implements StreamObserver<Transfer.TransferB
         this.eggSiteServicerPushRespSO = eggSiteServicerPushRespSO;
         this.finishLatch = finishLatch;
     }
-
-    StreamObserver<Proxy.Metadata> eggSiteServicerPushRespSO;
-
-    Proxy.Metadata reqHeader;
-
-    Future<ErTask> commandFuture;
-    CountDownLatch finishLatch;
-
-
-    Logger logger = LoggerFactory.getLogger(PutBatchSinkPushRespSO.class);
 
     @Override
     public void onNext(Transfer.TransferBatch resp) {
@@ -58,7 +55,7 @@ public class PutBatchSinkPushRespSO implements StreamObserver<Transfer.TransferB
             eggSiteServicerPushRespSO.onCompleted();
         } catch (Exception e) {
             e.printStackTrace();
-            logger.error("==========" ,e);
+            logger.error("==========", e);
 
         }
 

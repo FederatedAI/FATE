@@ -1,20 +1,15 @@
-
 package com.osx.broker.message;
 
 
-import com.osx.core.frame.ServiceThread;
 import com.osx.broker.queue.MappedFile;
 import com.osx.broker.util.UtilAll;
+import com.osx.core.frame.ServiceThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.PriorityBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 
 /**
@@ -24,15 +19,20 @@ public class AllocateMappedFileService extends ServiceThread {
     private static final Logger log = LoggerFactory.getLogger(AllocateMappedFileService.class);
     private static int waitTimeOut = 1000 * 5;
     private ConcurrentMap<String, AllocateRequest> requestTable =
-        new ConcurrentHashMap<String, AllocateRequest>();
+            new ConcurrentHashMap<String, AllocateRequest>();
     private PriorityBlockingQueue<AllocateRequest> requestQueue =
-        new PriorityBlockingQueue<AllocateRequest>();
+            new PriorityBlockingQueue<AllocateRequest>();
     private volatile boolean hasException = false;
 //    private DefaultMessageStore messageStore;
 //
 //    public AllocateMappedFileService(DefaultMessageStore messageStore) {
 //        this.messageStore = messageStore;
 //    }
+
+    public static void main(String[] args) {
+
+
+    }
 
     public MappedFile putRequestAndReturnMappedFile(String nextFilePath, int fileSize) {
         int canSubmitRequests = 2;
@@ -137,12 +137,12 @@ public class AllocateMappedFileService extends ServiceThread {
             AllocateRequest expectedRequest = this.requestTable.get(req.getFilePath());
             if (null == expectedRequest) {
                 log.warn("this mmap request expired, maybe cause timeout " + req.getFilePath() + " "
-                    + req.getFileSize());
+                        + req.getFileSize());
                 return true;
             }
             if (expectedRequest != req) {
                 log.warn("never expected here,  maybe cause timeout " + req.getFilePath() + " "
-                    + req.getFileSize() + ", req:" + req + ", expectedRequest:" + expectedRequest);
+                        + req.getFileSize() + ", req:" + req + ", expectedRequest:" + expectedRequest);
                 return true;
             }
 
@@ -167,7 +167,7 @@ public class AllocateMappedFileService extends ServiceThread {
                 if (elapsedTime > 10) {
                     int queueSize = this.requestQueue.size();
                     log.warn("create mappedFile spent time(ms) " + elapsedTime + " queue size " + queueSize
-                        + " " + req.getFilePath() + " " + req.getFileSize());
+                            + " " + req.getFilePath() + " " + req.getFileSize());
                 }
 
                 // pre write mappedFile
@@ -297,11 +297,5 @@ public class AllocateMappedFileService extends ServiceThread {
                 return false;
             return true;
         }
-    }
-
-
-    public  static  void  main(String[] args){
-
-
     }
 }

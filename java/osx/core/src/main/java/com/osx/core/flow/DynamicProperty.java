@@ -1,4 +1,3 @@
-
 package com.osx.core.flow;
 
 import org.slf4j.Logger;
@@ -9,11 +8,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 
-
 public class DynamicProperty<T> implements Property<T> {
-    Logger logger = LoggerFactory.getLogger(DynamicProperty.class);
-
     protected Set<PropertyListener<T>> listeners = Collections.synchronizedSet(new HashSet<PropertyListener<T>>());
+    Logger logger = LoggerFactory.getLogger(DynamicProperty.class);
     private T value = null;
 
     public DynamicProperty() {
@@ -28,7 +25,7 @@ public class DynamicProperty<T> implements Property<T> {
     public void addListener(PropertyListener<T> listener) {
 
         listeners.add(listener);
-       // logger.info("fire listener config load {}",value);
+        // logger.info("fire listener config load {}",value);
         listener.configLoad(value);
     }
 
@@ -42,7 +39,7 @@ public class DynamicProperty<T> implements Property<T> {
         if (isEqual(value, newValue)) {
             return false;
         }
-      //  RecordLog.info("[DynamicSentinelProperty] Config will be updated to: {}", newValue);
+        //  RecordLog.info("[DynamicSentinelProperty] Config will be updated to: {}", newValue);
 
         value = newValue;
         for (PropertyListener<T> listener : listeners) {

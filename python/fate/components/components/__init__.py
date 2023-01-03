@@ -1,3 +1,4 @@
+from .evaluation import evaluation
 from .feature_scale import feature_scale
 from .hetero_lr import hetero_lr
 from .intersection import intersection
@@ -8,4 +9,5 @@ BUILDIN_COMPONENTS = [
     reader,
     feature_scale,
     intersection,
+    evaluation
 ]

@@ -1,11 +1,7 @@
 package com.osx.core.flow;
 
 
-
-
 import com.osx.core.token.TokenResult;
-
-import java.util.Collection;
 
 public interface TokenService {
 
@@ -41,6 +37,7 @@ public interface TokenService {
      * @return result of the token request
      */
     //TokenResult requestConcurrentToken(String clientAddress,Long ruleId,int acquireCount);
+
     /**
      * Request release concurrent tokens from remote token server asynchronously.
      *

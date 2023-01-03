@@ -48,7 +48,7 @@ public final class TokenResultStatus {
     /**
      * Token already is released before the request arrives.
      */
-    public static final int ALREADY_RELEASE=7;
+    public static final int ALREADY_RELEASE = 7;
 
     private TokenResultStatus() {
     }

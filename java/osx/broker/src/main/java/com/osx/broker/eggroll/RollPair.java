@@ -3,18 +3,21 @@ package com.osx.broker.eggroll;
 import java.util.Map;
 
 public class RollPair {
-    public static   final String  PUT_BATCH =  "putBatch";
-    public static final  String ROLL_PAIR_URI_PREFIX = "v1/roll-pair";
-    public static final  String  EGG_PAIR_URI_PREFIX = "v1/egg-pair";
+    public static final String PUT_BATCH = "putBatch";
+    public static final String ROLL_PAIR_URI_PREFIX = "v1/roll-pair";
+    public static final String EGG_PAIR_URI_PREFIX = "v1/egg-pair";
 
-    public static final  String   RUN_JOB = "runJob";
-    public static final  String   RUN_TASK = "runTask";
-    public static CommandURI EGG_RUN_TASK_COMMAND = new CommandURI(EGG_PAIR_URI_PREFIX+"/"+RUN_TASK);
-    public static CommandURI ROLL_RUN_JOB_COMMAND = new CommandURI(ROLL_PAIR_URI_PREFIX+"/"+RUN_JOB);
+    public static final String RUN_JOB = "runJob";
+    public static final String RUN_TASK = "runTask";
+    public static CommandURI EGG_RUN_TASK_COMMAND = new CommandURI(EGG_PAIR_URI_PREFIX + "/" + RUN_TASK);
+    public static CommandURI ROLL_RUN_JOB_COMMAND = new CommandURI(ROLL_PAIR_URI_PREFIX + "/" + RUN_JOB);
+    ErStore store;
+    RollPairContext ctx;
+    Map<String, String> options;
 
-    public  RollPair(ErStore store,RollPairContext  ctx,   Map<String,String> options){
+    public RollPair(ErStore store, RollPairContext ctx, Map<String, String> options) {
         this.store = store;
-        this.ctx =  ctx;
+        this.ctx = ctx;
         this.options = options;
     }
 
@@ -41,10 +44,6 @@ public class RollPair {
     public void setOptions(Map<String, String> options) {
         this.options = options;
     }
-
-    ErStore   store;
-    RollPairContext  ctx;
-    Map<String,String> options;
 
 //
 //    val transferFutures = new Array[Future[Transfer.TransferBatch]](totalPartitions)
@@ -88,10 +87,6 @@ public class RollPair {
 //    }
 
 }
-
-
-
-
 
 
 //
@@ -175,7 +170,6 @@ public class RollPair {
 //        if (f != null) f.get()
 //    })
 //    }
-
 
 
 //}

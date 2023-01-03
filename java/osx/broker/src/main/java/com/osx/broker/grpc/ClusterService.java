@@ -2,20 +2,17 @@ package com.osx.broker.grpc;
 
 import com.firework.cluster.rpc.Firework;
 import com.firework.cluster.rpc.FireworkServiceGrpc;
-
-
-
+import com.osx.broker.ServiceContainer;
 import com.osx.core.context.Context;
 import com.osx.core.service.InboundPackage;
 import com.osx.core.service.OutboundPackage;
-import com.osx.broker.ServiceContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public class ClusterService extends  FireworkServiceGrpc.FireworkServiceImplBase  {
+public class ClusterService extends FireworkServiceGrpc.FireworkServiceImplBase {
 
-    Logger logger  = LoggerFactory.getLogger(ClusterService.class);
+    Logger logger = LoggerFactory.getLogger(ClusterService.class);
 
     //ZookeeperRegistry zookeeperRegistry;
 
@@ -24,10 +21,7 @@ public class ClusterService extends  FireworkServiceGrpc.FireworkServiceImplBase
 //    DataTransferService dataTransferService;
 
 
-
     //TransferQueueApplyService    transferQueueApplyService;
-
-
 
 
 //    public TokenService getTokenService() {
@@ -60,19 +54,16 @@ public class ClusterService extends  FireworkServiceGrpc.FireworkServiceImplBase
 //    }
 
 
-
-
     public void applyToken(com.firework.cluster.rpc.Firework.TokenRequest request,
                            io.grpc.stub.StreamObserver<com.firework.cluster.rpc.Firework.TokenResponse> responseObserver) {
         Context context = buidlContext();
         InboundPackage inboundPackage = new InboundPackage();
         inboundPackage.setBody(request);
-        OutboundPackage<Firework.TokenResponse> outboundPackage =  ServiceContainer.defaultTokenService.service(context,inboundPackage);
+        OutboundPackage<Firework.TokenResponse> outboundPackage = ServiceContainer.defaultTokenService.service(context, inboundPackage);
         Firework.TokenResponse tokenResponse = outboundPackage.getData();
         responseObserver.onNext(tokenResponse);
         responseObserver.onCompleted();
     }
-
 
 
     public void queryRouter(com.firework.cluster.rpc.Firework.QueryRouterRequest request,
@@ -102,7 +93,6 @@ public class ClusterService extends  FireworkServiceGrpc.FireworkServiceImplBase
 //    }
 
 
-
 //    public void unRegisterTransferQueue(com.firework.cluster.rpc.Firework.UnRegisterTransferQueueRequest request,
 //                                        io.grpc.stub.StreamObserver<com.firework.cluster.rpc.Firework.UnRegisterTransferQueueResponse> responseObserver) {
 //
@@ -112,6 +102,7 @@ public class ClusterService extends  FireworkServiceGrpc.FireworkServiceImplBase
 //    }
 
     /**
+     *
      */
     public void cancelClusterTransfer(com.firework.cluster.rpc.Firework.CancelClusterTransferRequest request,
                                       io.grpc.stub.StreamObserver<com.firework.cluster.rpc.Firework.CancelClusterTransferResponse> responseObserver) {
@@ -119,10 +110,10 @@ public class ClusterService extends  FireworkServiceGrpc.FireworkServiceImplBase
     }
 
 
-    private  Context  buidlContext(){
-       Context  context = new Context();
-       // context.setSourceIp(sourceIp.get()!=null?sourceIp.get().toString():"");
-        return  context;
+    private Context buidlContext() {
+        Context context = new Context();
+        // context.setSourceIp(sourceIp.get()!=null?sourceIp.get().toString():"");
+        return context;
     }
 
 //    private Server buildServer( ){

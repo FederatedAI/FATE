@@ -1,16 +1,12 @@
-
-
 package com.osx.core.log;
 
 public class SysLogger {
 
-    protected static boolean debugEnabled = false;
-
-    private static boolean quietMode = false;
-
     private static final String PREFIX = "RocketMQLog: ";
     private static final String ERR_PREFIX = "RocketMQLog:ERROR ";
     private static final String WARN_PREFIX = "RocketMQLog:WARN ";
+    protected static boolean debugEnabled = false;
+    private static boolean quietMode = false;
 
     public static void setInternalDebugging(boolean enabled) {
         debugEnabled = enabled;

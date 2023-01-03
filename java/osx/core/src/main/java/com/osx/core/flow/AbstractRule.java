@@ -1,4 +1,3 @@
-
 package com.osx.core.flow;
 
 public abstract class AbstractRule implements Rule {
@@ -71,7 +70,7 @@ public abstract class AbstractRule implements Rule {
 //    }
 
     public <T extends AbstractRule> T as(Class<T> clazz) {
-        return (T)this;
+        return (T) this;
     }
 
 //    @Override

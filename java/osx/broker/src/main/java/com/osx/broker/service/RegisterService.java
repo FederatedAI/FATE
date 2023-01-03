@@ -6,17 +6,17 @@ import com.osx.broker.zk.ZkConfig;
 public class RegisterService {
 
 
-    public RegisterService(ZkConfig  zkConfig){
+    CuratorZookeeperClient curatorZookeeperClient;
+
+    public RegisterService(ZkConfig zkConfig) {
         curatorZookeeperClient = new CuratorZookeeperClient(zkConfig);
     }
-    CuratorZookeeperClient curatorZookeeperClient ;
 
-
-
-    public  void  registerTransferQueue(){
+    public void registerTransferQueue() {
 
     }
-    public  void registerComponent(){
+
+    public void registerComponent() {
 
     }
 

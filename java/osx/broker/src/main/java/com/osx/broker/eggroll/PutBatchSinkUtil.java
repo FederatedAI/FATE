@@ -7,26 +7,24 @@ import com.google.common.cache.LoadingCache;
 import java.util.concurrent.TimeUnit;
 
 public class PutBatchSinkUtil {
-  public static LoadingCache<String ,ErSession> sessionCache =
+    public static LoadingCache<String, ErSession> sessionCache =
 
 
-          CacheBuilder.newBuilder()
-                .maximumSize(2000)
-                .expireAfterWrite(10, TimeUnit.MINUTES)
-                .concurrencyLevel(100)
-                .recordStats()
-                .softValues()
-                .build(new CacheLoader<String, ErSession>() {
-                    @Override
-                    public ErSession load(String sessionId) throws Exception {
-                        return      new ErSession(sessionId , false);
-                    }
+            CacheBuilder.newBuilder()
+                    .maximumSize(2000)
+                    .expireAfterWrite(10, TimeUnit.MINUTES)
+                    .concurrencyLevel(100)
+                    .recordStats()
+                    .softValues()
+                    .build(new CacheLoader<String, ErSession>() {
+                               @Override
+                               public ErSession load(String sessionId) throws Exception {
+                                   return new ErSession(sessionId, false);
+                               }
 
 
-            }
-        );
-
-
+                           }
+                    );
 
 
 //    object PutBatchSinkUtils {

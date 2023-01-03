@@ -29,7 +29,7 @@ public class RouterInfo {
     private String url;
     private String host;
     private Integer port;
-    private boolean useSSL=false;
+    private boolean useSSL = false;
     private String negotiationType;
     private String certChainFile;
     private String privateKeyFile;
@@ -37,9 +37,9 @@ public class RouterInfo {
     private String caFile;
     private String version;
 
-    public  String toKey(){
-          StringBuffer  sb =   new StringBuffer();
-          return    sb.append(host).append("_").append(port).append("_").append(negotiationType).toString();
+    public String toKey() {
+        StringBuffer sb = new StringBuffer();
+        return sb.append(host).append("_").append(port).append("_").append(negotiationType).toString();
     }
 
     @Override
@@ -47,12 +47,11 @@ public class RouterInfo {
         return JsonUtil.object2Json(this);
     }
 
-    public String getResource(){
+    public String getResource() {
         StringBuilder sb = new StringBuilder();
         sb.append(sourcePartyId).append("-").append(desPartyId);
         return sb.toString();
     }
-
 
 
 }

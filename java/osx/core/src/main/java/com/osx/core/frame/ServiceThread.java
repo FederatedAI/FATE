@@ -1,24 +1,21 @@
-
 package com.osx.core.frame;
-
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class ServiceThread implements Runnable {
     private static final Logger log = LoggerFactory.getLogger(ServiceThread.class);
 
     private static final long JOIN_TIME = 90 * 1000;
-
-    private Thread thread;
     protected final CountDownLatch waitPoint = new CountDownLatch(1);
+    private final AtomicBoolean started = new AtomicBoolean(false);
     protected volatile AtomicBoolean hasNotified = new AtomicBoolean(false);
     protected volatile boolean stopped = false;
     protected boolean isDaemon = false;
-
-    private final AtomicBoolean started = new AtomicBoolean(false);
+    private Thread thread;
 
     public ServiceThread() {
 
@@ -64,7 +61,7 @@ public abstract class ServiceThread implements Runnable {
             }
             long elapsedTime = System.currentTimeMillis() - beginTime;
             log.info("join thread " + this.getServiceName() + " elapsed time(ms) " + elapsedTime + " "
-                + this.getJointime());
+                    + this.getJointime());
         } catch (InterruptedException e) {
             log.error("Interrupted", e);
         }

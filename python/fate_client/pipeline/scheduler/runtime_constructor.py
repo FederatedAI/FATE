@@ -1,6 +1,5 @@
 from ..conf.env_config import StandaloneConfig
-from ..entity.component_structures import OutputDefinitionsSpec
-from ..entity.dag_structures import RuntimeTaskOutputChannelSpec, ModelWarehouseChannelSpec
+from ..entity.dag_structures import RuntimeTaskOutputChannelSpec
 from ..entity.task_structure import TaskScheduleSpec, LOGGERSpec, TaskRuntimeInputSpec, \
     MLMDSpec, RuntimeConfSpec, ComputingEngineSpec, DeviceSpec, FederationPartySpec, \
     ComputingEngineMetadata, FederationEngineSpec, FederationEngineMetadata, InputArtifact
@@ -78,7 +77,7 @@ class RuntimeConstructor(object):
             if self._stage not in set(artifact_spec.stages):
                 raise ValueError(f"Task stage is {self._stage}, not match input artifact's stage {artifact_spec.stage}")
 
-            roles = set(artifact_spec.roles)
+            roles = set(channels[0].roles) if isinstance(channels, list) else set(channels.roles)
             optional = artifact_spec.optional
             artifact_type = artifact_spec.type
             for party in self._runtime_parties:

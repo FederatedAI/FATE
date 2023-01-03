@@ -10,6 +10,7 @@ public class TranferQueueInfo {
     long lastStatusChangeTimestamp;
     long lastWriteTimestamp;
     long lastReadTimestamp;
+    long logicOffset;
 
     public long getLogicOffset() {
         return logicOffset;
@@ -18,8 +19,6 @@ public class TranferQueueInfo {
     public void setLogicOffset(long logicOffset) {
         this.logicOffset = logicOffset;
     }
-
-    long logicOffset;
 
     public String getTransferId() {
         return transferId;

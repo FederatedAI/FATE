@@ -1,5 +1,6 @@
 from fate.arch.unify import URI
 from fate.components import GUEST, HOST, DatasetArtifact, Output, Role, cpn
+from fate.components import DatasetArtifact
 
 
 @cpn.component(roles=[GUEST, HOST])

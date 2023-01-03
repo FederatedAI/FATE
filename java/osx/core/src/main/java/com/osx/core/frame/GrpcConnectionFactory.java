@@ -15,11 +15,10 @@
  */
 
 package com.osx.core.frame;
-import com.osx.core.config.*;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
+
+import com.osx.core.config.GrpcChannelInfo;
+import com.osx.core.exceptions.SysException;
 import com.osx.core.router.RouterInfo;
-import io.grpc.ConnectivityState;
 import io.grpc.ManagedChannel;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NegotiationType;
@@ -30,70 +29,71 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
+
+import static com.osx.core.config.MetaInfo.*;
 
 public class GrpcConnectionFactory {
 
     private static final Logger logger = LoggerFactory.getLogger(GrpcConnectionFactory.class);
+    static ConcurrentHashMap<String, ManagedChannel> managedChannelPool = new ConcurrentHashMap<>();
+
+    static GrpcChannelInfo defaultfGrpcChannelInfo;
 
     private GrpcConnectionFactory() {
     }
 
-    static ConcurrentHashMap<String,ManagedChannel> managedChannelPool = new ConcurrentHashMap<>();
+    public static synchronized ManagedChannel createManagedChannel(RouterInfo routerInfo,boolean usePooled) {
 
-//
-//    public static synchronized ManagedChannel createManagedChannel(RouterInfo  routerInfo){
-//
-//
-//
-//    }
-    static GrpcChannelInfo  defaultfGrpcChannelInfo;
 
-    public static synchronized ManagedChannel createManagedChannel(RouterInfo  routerInfo) {
-        if(managedChannelPool.get(routerInfo.toKey())!=null){
-            return  managedChannelPool.get(routerInfo.toKey());
-        }else {
-            ManagedChannel managedChannel =  createManagedChannel(routerInfo, defaultfGrpcChannelInfo);
-            managedChannelPool.put(routerInfo.toKey(),managedChannel);
+        if(usePooled) {
+            if (managedChannelPool.get(routerInfo.toKey()) != null) {
+                return managedChannelPool.get(routerInfo.toKey());
+            } else {
+                ManagedChannel managedChannel = createManagedChannel(routerInfo, buildDefaultGrpcChannelInfo());
+                managedChannelPool.put(routerInfo.toKey(), managedChannel);
+                return managedChannel;
+            }
+        }else{
+            ManagedChannel managedChannel = createManagedChannel(routerInfo, buildDefaultGrpcChannelInfo());
             return  managedChannel;
         }
     }
 
 
+    private static  GrpcChannelInfo  buildDefaultGrpcChannelInfo(){
+        GrpcChannelInfo  grpcChannelInfo = new  GrpcChannelInfo();
+        grpcChannelInfo.setKeepAliveTime(PROPERTY_GRPC_CLIENT_KEEPALIVE_TIME_SEC);
+        grpcChannelInfo.setKeepAliveTimeout(PROPERTY_GRPC_CLIENT_KEEPALIVE_TIMEOUT_SEC);
+        grpcChannelInfo.setKeepAliveWithoutCalls(PROPERTY_GRPC_CLIENT_KEEPALIVE_WITHOUT_CALLS_ENABLED);
+        grpcChannelInfo.setFlowControlWindow(PROPERTY_GRPC_CLIENT_FLOW_CONTROL_WINDOW);
+        grpcChannelInfo.setMaxInboundMessageSize(PROPERTY_GRPC_CLIENT_MAX_INBOUND_MESSAGE_SIZE);
+        grpcChannelInfo.setRetryBufferSize(PROPERTY_GRPC_CLIENT_RETRY_BUFFER_SIZE);
+        grpcChannelInfo.setIdelTimeOut(PROPERTY_GRPC_CLIENT_MAX_CONNECTION_IDLE_SEC);
+        grpcChannelInfo.setPerRpcBufferLimit(PROPERTY_GRPC_CLIENT_PER_RPC_BUFFER_LIMIT);
+        return grpcChannelInfo;
+
+    }
 
 
-
-
-
-
-
-
-
-    public static synchronized ManagedChannel createManagedChannel(RouterInfo  routerInfo, GrpcChannelInfo channelInfo) {
+    public static synchronized ManagedChannel createManagedChannel(RouterInfo routerInfo, GrpcChannelInfo channelInfo) {
         try {
-            if (logger.isDebugEnabled()) {
-                logger.debug("create ManagedChannel");
+            if(channelInfo==null){
+                throw  new SysException("grpc channel info is null");
             }
-
             NettyChannelBuilder channelBuilder = NettyChannelBuilder
                     .forAddress(routerInfo.getHost(), routerInfo.getPort())
-                    .keepAliveTime(60, TimeUnit.MINUTES)
-                    .keepAliveTimeout(60, TimeUnit.MINUTES)
-                    .keepAliveWithoutCalls(true)
-                    .idleTimeout(60, TimeUnit.MINUTES)
-                    .perRpcBufferLimit(128 << 20)
-                    .flowControlWindow(32 << 20)
-                    .maxInboundMessageSize(32 << 20)
+                    .keepAliveTime(channelInfo.getKeepAliveTime(), TimeUnit.MINUTES)
+                    .keepAliveTimeout(channelInfo.getKeepAliveTimeout(), TimeUnit.MINUTES)
+                    .keepAliveWithoutCalls(channelInfo.isKeepAliveWithoutCalls())
+                    .idleTimeout(channelInfo.getIdelTimeOut(), TimeUnit.MINUTES)
+                    .perRpcBufferLimit(channelInfo.getPerRpcBufferLimit())
+                    .flowControlWindow(channelInfo.getFlowControlWindow())
+                    .maxInboundMessageSize(channelInfo.getMaxInboundMessageSize())
                     .enableRetry()
-                    .retryBufferSize(16 << 20)
-                    .maxRetryAttempts(20);
+                    .retryBufferSize(channelInfo.getRetryBufferSize())
+                    .maxRetryAttempts(channelInfo.getMaxRetryAttemps());
 
             if (routerInfo != null && NegotiationType.TLS.name().equals(routerInfo.getNegotiationType())
                     && StringUtils.isNotBlank(routerInfo.getCertChainFile())
@@ -111,14 +111,12 @@ public class GrpcConnectionFactory {
                 channelBuilder.usePlaintext();
             }
             return channelBuilder.build();
-        }
-        catch (Exception e) {
-            logger.error("create channel error : " ,e);
+        } catch (Exception e) {
+            logger.error("create channel error : ", e);
             //e.printStackTrace();
         }
         return null;
     }
-
 
 
 }

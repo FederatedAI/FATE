@@ -9,6 +9,30 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ErSessionMeta extends BaseProto<Meta.SessionMeta> {
+    String id;
+    String status;
+    String name;
+    int totalProcCount;
+    int activeProcCount;
+    String tag;
+    List<ErProcessor> processors;
+    Map<String, String> options;
+
+    static ErSessionMeta parseFromPb(Meta.SessionMeta sessionMeta) {
+        if (sessionMeta == null) {
+            return null;
+        }
+
+        ErSessionMeta erSessionMeta = new ErSessionMeta();
+        erSessionMeta.id = sessionMeta.getId();
+        erSessionMeta.status = sessionMeta.getStatus();
+        erSessionMeta.name = sessionMeta.getName();
+        erSessionMeta.tag = sessionMeta.getTag();
+        erSessionMeta.options = sessionMeta.getOptionsMap();
+        erSessionMeta.processors = sessionMeta.getProcessorsList().stream().map(ErProcessor::parseFromPb).collect(Collectors.toList());
+        return erSessionMeta;
+    }
+
     public String getId() {
         return id;
     }
@@ -73,19 +97,8 @@ public class ErSessionMeta extends BaseProto<Meta.SessionMeta> {
         this.options = options;
     }
 
-    String id;
-    String status;
-    String name;
-    int totalProcCount;
-    int activeProcCount;
-    String tag;
-    List<ErProcessor> processors;
-    Map<String,String> options;
-
-
-
-    public Meta.SessionMeta   toProto(){
-        Meta.SessionMeta.Builder        builder = Meta.SessionMeta.newBuilder()
+    public Meta.SessionMeta toProto() {
+        Meta.SessionMeta.Builder builder = Meta.SessionMeta.newBuilder()
                 .setId(this.id)
                 .setName(this.name)
                 .setStatus(this.status)
@@ -93,30 +106,13 @@ public class ErSessionMeta extends BaseProto<Meta.SessionMeta> {
                 .addAllProcessors(this.processors.stream().map(ErProcessor::toProto).collect(Collectors.toList()))
                 .putAllOptions(this.options);
 
-        return  builder.build();
+        return builder.build();
     }
 
-
-    static ErSessionMeta parseFromPb( Meta.SessionMeta  sessionMeta) {
-        if(sessionMeta==null){
-            return null;
-        }
-
-        ErSessionMeta  erSessionMeta  = new ErSessionMeta();
-        erSessionMeta.id = sessionMeta.getId();
-        erSessionMeta.status = sessionMeta.getStatus();
-        erSessionMeta.name = sessionMeta.getName();
-        erSessionMeta.tag = sessionMeta.getTag();
-        erSessionMeta.options = sessionMeta.getOptionsMap();
-        erSessionMeta.processors = sessionMeta.getProcessorsList().stream().map(ErProcessor::parseFromPb).collect(Collectors.toList());
-        return  erSessionMeta;
-    }
-
-    public  String toString(){
+    public String toString() {
         return JsonUtil.object2Json(this);
     }
 }
-
 
 
 //        override def toProto[T >: PbMessage](): Meta.SessionMeta = {

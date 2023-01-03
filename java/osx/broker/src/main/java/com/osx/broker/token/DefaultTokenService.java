@@ -1,10 +1,8 @@
 package com.osx.broker.token;
 
 import com.firework.cluster.rpc.Firework;
-
-
-import com.osx.core.constant.Dict;
 import com.osx.core.config.MetaInfo;
+import com.osx.core.constant.Dict;
 import com.osx.core.context.Context;
 import com.osx.core.exceptions.ExceptionInfo;
 import com.osx.core.flow.*;
@@ -19,24 +17,22 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 
-public class DefaultTokenService extends AbstractServiceAdaptor<Firework.TokenRequest,Firework.TokenResponse> implements TokenService {
+public class DefaultTokenService extends AbstractServiceAdaptor<Firework.TokenRequest, Firework.TokenResponse> implements TokenService {
 
     Logger logger = LoggerFactory.getLogger(DefaultTokenService.class);
+    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
+    MetricReport metricReport = new FileMetricReport(Dict.SERVICE_FIREWORK_CLUSTERMANAGER);
 
-    public DefaultTokenService(){
+    public DefaultTokenService() {
 
     }
-
-    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
-
-    MetricReport  metricReport = new FileMetricReport(Dict.SERVICE_FIREWORK_CLUSTERMANAGER);
 
     @Override
     protected Firework.TokenResponse doService(Context context, InboundPackage<Firework.TokenRequest> data) {
         Firework.TokenRequest tokenRequest = data.getBody();
-        TokenResult tokenResult = this.requestToken(tokenRequest.getResource(),tokenRequest.getCount(),true);
+        TokenResult tokenResult = this.requestToken(tokenRequest.getResource(), tokenRequest.getCount(), true);
 //        logger.info("resource {} require {} result {}",tokenRequest.getResource(),tokenRequest.getCount(),tokenResult);
-        Firework.TokenResponse.Builder   tokenResponseBuilder = Firework.TokenResponse.newBuilder();
+        Firework.TokenResponse.Builder tokenResponseBuilder = Firework.TokenResponse.newBuilder();
         tokenResponseBuilder.setStatus(tokenResult.getStatus());
         tokenResponseBuilder.setWaitInMs(tokenResult.getWaitInMs());
         return tokenResponseBuilder.build();
@@ -57,16 +53,16 @@ public class DefaultTokenService extends AbstractServiceAdaptor<Firework.TokenRe
     @Override
     public TokenResult requestToken(String resource, int acquireCount, boolean prioritized) {
 
-        if(StringUtils.isEmpty(resource)){
+        if (StringUtils.isEmpty(resource)) {
             return badRequest();
         }
         FlowRule rule = ClusterFlowRuleManager.getFlowRuleByResource(resource);
         if (rule == null) {
-            logger.error("resource {} no rule",resource);
+            logger.error("resource {} no rule", resource);
             ClusterMetric clusterMetric = ClusterMetricStatistics.getMetric(resource);
-            if(clusterMetric==null){
-                ClusterMetricStatistics.putMetricIfAbsent(resource,new ClusterMetric(MetaInfo.PROPERTY_SAMPLE_COUNT,MetaInfo.PROPERTY_INTERVAL_MS));
-                clusterMetric =ClusterMetricStatistics.getMetric(resource);
+            if (clusterMetric == null) {
+                ClusterMetricStatistics.putMetricIfAbsent(resource, new ClusterMetric(MetaInfo.PROPERTY_SAMPLE_COUNT, MetaInfo.PROPERTY_INTERVAL_MS));
+                clusterMetric = ClusterMetricStatistics.getMetric(resource);
             }
             clusterMetric.add(ClusterFlowEvent.PASS, acquireCount);
             clusterMetric.add(ClusterFlowEvent.PASS_REQUEST, 1);
@@ -84,7 +80,7 @@ public class DefaultTokenService extends AbstractServiceAdaptor<Firework.TokenRe
         if (tokenId == null) {
             return;
         }
-      //  ConcurrentClusterFlowChecker.releaseConcurrentToken(tokenId);
+        //  ConcurrentClusterFlowChecker.releaseConcurrentToken(tokenId);
     }
 
     private boolean notValidRequest(Long id, int count) {

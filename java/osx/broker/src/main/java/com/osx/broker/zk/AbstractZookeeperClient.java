@@ -17,7 +17,6 @@
 package com.osx.broker.zk;
 
 
-
 import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,11 +42,9 @@ public abstract class AbstractZookeeperClient<TargetDataListener, TargetChildLis
     private volatile boolean closed = false;
 
 
-
     public AbstractZookeeperClient(ZkConfig config) {
 
     }
-
 
 
     @Override
@@ -192,7 +189,7 @@ public abstract class AbstractZookeeperClient<TargetDataListener, TargetChildLis
 
     protected abstract void createEphemeral(String path, String data) throws KeeperException.NodeExistsException;
 
-    public  abstract boolean checkExists(String path);
+    public abstract boolean checkExists(String path);
 
     protected abstract TargetChildListener createTargetChildListener(String path, ChildListener listener);
 

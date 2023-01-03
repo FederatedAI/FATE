@@ -1,37 +1,33 @@
 package com.osx.broker.ptp;
 
-import com.osx.core.context.Context;
 import com.osx.broker.callback.CompleteCallback;
 import com.osx.broker.callback.ErrorCallback;
-//import com.firework.transfer.service.TokenApplyService;
 import com.osx.broker.util.TransferUtil;
+import com.osx.core.context.Context;
 import com.webank.ai.eggroll.api.networking.proxy.Proxy;
 import io.grpc.stub.StreamObserver;
-import org.ppc.ptp.Pcp;
+import org.ppc.ptp.Osx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PtpForwardPushRespSO implements StreamObserver<Pcp.Outbound> {
+public class PtpForwardPushRespSO implements StreamObserver<Osx.Outbound> {
 
     Logger logger = LoggerFactory.getLogger(PtpForwardPushRespSO.class);
 
-    public  PtpForwardPushRespSO(Context context, StreamObserver  backPushRespSO ,String  sourceType, CompleteCallback completeCallback, ErrorCallback errorCallback){
+    StreamObserver backPushRespSO;
+    Class backPushRespSOClass;
+    CompleteCallback completeCallback;
+    ErrorCallback errorCallback;
+    Context context;
 
-        this.sourceType = sourceType;
+    public PtpForwardPushRespSO(Context context, StreamObserver backPushRespSO, Class backPushRespSOClass , CompleteCallback completeCallback, ErrorCallback errorCallback) {
+
+        this.backPushRespSOClass = backPushRespSOClass;
         this.backPushRespSO = backPushRespSO;
         this.context = context;
         this.completeCallback = completeCallback;
         this.errorCallback = errorCallback;
     }
-    String  sourceType;
-
-    StreamObserver  backPushRespSO;
-
-    CompleteCallback  completeCallback;
-
-    ErrorCallback  errorCallback;
-
-    Context  context;
 
     public StreamObserver getBackPushRespSO() {
         return backPushRespSO;
@@ -52,22 +48,21 @@ public class PtpForwardPushRespSO implements StreamObserver<Pcp.Outbound> {
     //TokenApplyService   tokenApplyService;
 
 
-
     @Override
-    public void onNext(Pcp.Outbound value) {
+    public void onNext(Osx.Outbound value) {
 
-        if(sourceType.equals("proxy")){
-            Proxy.Metadata  metadata = TransferUtil.buildProxyMetadataFromOutbound(value);
+        if (backPushRespSOClass.equals(Proxy.Metadata.class)) {
+            Proxy.Metadata metadata = TransferUtil.buildProxyMetadataFromOutbound(value);
             backPushRespSO.onNext(metadata);
-        }else{
+        } else {
             backPushRespSO.onNext(value);
         }
     }
 
     @Override
     public void onError(Throwable t) {
-        logger.error("onError {}",t);
-        if(errorCallback!=null) {
+        logger.error("onError {}", t);
+        if (errorCallback != null) {
             errorCallback.callback(t);
         }
         backPushRespSO.onError(t);
@@ -76,7 +71,7 @@ public class PtpForwardPushRespSO implements StreamObserver<Pcp.Outbound> {
 
     @Override
     public void onCompleted() {
-        if(completeCallback!=null){
+        if (completeCallback != null) {
             completeCallback.callback();
         }
         backPushRespSO.onCompleted();

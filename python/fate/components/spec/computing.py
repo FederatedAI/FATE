@@ -6,6 +6,7 @@ import pydantic
 class StandaloneComputingSpec(pydantic.BaseModel):
     class MetadataSpec(pydantic.BaseModel):
         computing_id: str
+        options: dict = {}
 
     type: Literal["standalone"]
     metadata: MetadataSpec
@@ -14,6 +15,7 @@ class StandaloneComputingSpec(pydantic.BaseModel):
 class EggrollComputingSpec(pydantic.BaseModel):
     class MetadataSpec(pydantic.BaseModel):
         computing_id: str
+        options: dict = {}
 
     type: Literal["eggroll"]
     metadata: MetadataSpec

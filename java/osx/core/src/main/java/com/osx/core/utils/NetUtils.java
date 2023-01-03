@@ -65,9 +65,10 @@ public class NetUtils {
     }
 
 
-    public static boolean isLocalhostAddress(String address){
-       return LOCALHOST_PATTERN.matcher(address).matches();
+    public static boolean isLocalhostAddress(String address) {
+        return LOCALHOST_PATTERN.matcher(address).matches();
     }
+
     public static int getAvailablePort() {
         try (ServerSocket ss = new ServerSocket()) {
             ss.bind(null);

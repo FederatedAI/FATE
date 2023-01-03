@@ -16,9 +16,9 @@
 
 package com.osx.core.jvm;
 
+import com.google.common.collect.Lists;
 import com.osx.core.flow.LeapArray;
 import com.osx.core.flow.TimeUtil;
-import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

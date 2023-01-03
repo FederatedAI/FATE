@@ -5,9 +5,9 @@ import com.osx.core.frame.ServiceThread;
 
 public class TransferQueueMonitorService extends ServiceThread {
 
-    TransferQueueManager  transferQueueManager;
+    TransferQueueManager transferQueueManager;
 
-    public TransferQueueMonitorService(TransferQueueManager transferQueueManager){
+    public TransferQueueMonitorService(TransferQueueManager transferQueueManager) {
         this.transferQueueManager = transferQueueManager;
     }
 
@@ -18,10 +18,6 @@ public class TransferQueueMonitorService extends ServiceThread {
 
     @Override
     public void run() {
-
-
-
-
 
 
     }

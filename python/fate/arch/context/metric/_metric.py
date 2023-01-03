@@ -29,3 +29,13 @@ class AccuracyMetric(Metric):
 
     def dict(self) -> dict:
         return self.accuracy
+
+
+class AUCMetric(Metric):
+    type = "auc"
+
+    def __init__(self, auc) -> None:
+        self.auc = auc
+
+    def dict(self) -> dict:
+        return self.auc

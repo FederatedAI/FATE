@@ -1,26 +1,31 @@
 package com.osx.broker.consumer;
 
 
-import com.osx.core.constant.StatusCode;
-import com.osx.core.constant.TransferStatus;
-import com.osx.core.context.Context;
-import com.osx.core.exceptions.AckIndexException;
 import com.osx.broker.ServiceContainer;
 import com.osx.broker.message.SelectMappedBufferResult;
 import com.osx.broker.queue.Consumer;
 import com.osx.broker.queue.TransferQueue;
+import com.osx.core.constant.StatusCode;
+import com.osx.core.constant.TransferStatus;
+import com.osx.core.context.Context;
+import com.osx.core.exceptions.AckIndexException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-public   class LocalQueueConsumer implements Consumer<TransferQueue.TransferQueueConsumeResult> {
+public class LocalQueueConsumer implements Consumer<TransferQueue.TransferQueueConsumeResult> {
 
+    protected long consumerId;
     Logger logger = LoggerFactory.getLogger(LocalQueueConsumer.class);
+    String transferId;
+    AtomicLong consumeOffset = new AtomicLong(1);
+    volatile TransferStatus transferStatus = TransferStatus.INIT;
+    long createTimestamp = System.currentTimeMillis();
 
-    public  LocalQueueConsumer(long consumerId,String transferId){
-        this.consumerId =  consumerId;
-        this.transferId =  transferId;
+    public LocalQueueConsumer(long consumerId, String transferId) {
+        this.consumerId = consumerId;
+        this.transferId = transferId;
     }
 
     public long getConsumerId() {
@@ -31,8 +36,6 @@ public   class LocalQueueConsumer implements Consumer<TransferQueue.TransferQueu
         this.consumerId = consumerId;
     }
 
-    protected long  consumerId ;
-
     public String getTransferId() {
         return transferId;
     }
@@ -41,33 +44,14 @@ public   class LocalQueueConsumer implements Consumer<TransferQueue.TransferQueu
         this.transferId = transferId;
     }
 
-    public void setConsumeOffset(AtomicLong consumeOffset) {
-        this.consumeOffset = consumeOffset;
-    }
-
-    String  transferId;
-
-
-    AtomicLong consumeOffset = new AtomicLong(1);
-
-    volatile TransferStatus transferStatus = TransferStatus.INIT;
-
-    long  createTimestamp = System.currentTimeMillis();
-
-    public boolean checkMsgIsArrive(long  consumeOffset){
+    public boolean checkMsgIsArrive(long consumeOffset) {
         TransferQueue transferQueue = ServiceContainer.transferQueueManager.getQueue(transferId);
-        if(transferQueue!=null) {
+        if (transferQueue != null) {
             long indexFileOffset = transferQueue.getIndexQueue().getLogicOffset().get();
-            return  consumeOffset<=indexFileOffset;
+            return consumeOffset <= indexFileOffset;
         }
-        return  false;
+        return false;
     }
-
-
-
-
-
-
 
     public TransferStatus getTransferStatus() {
         return transferStatus;
@@ -85,40 +69,43 @@ public   class LocalQueueConsumer implements Consumer<TransferQueue.TransferQueu
         this.createTimestamp = createTimestamp;
     }
 
-
-    public long  addConsumeCount(int size) {
+    public long addConsumeCount(int size) {
         return this.consumeOffset.addAndGet(size);
     }
 
-    public long  ack(long index){
-        long  currentIndex = this.consumeOffset.get();
-        if(index!=currentIndex){
-            throw new AckIndexException("ack invalid index ,current : "+currentIndex+" ack : "+index);
-        }else{
+    public long ack(long index) {
+        long currentIndex = this.consumeOffset.get();
+        if (index != currentIndex) {
+            throw new AckIndexException("ack invalid index ,current : " + currentIndex + " ack : " + index);
+        } else {
             return this.consumeOffset.addAndGet(1);
         }
     }
 
-    public  long  getConsumeOffset(){
-        return  this.consumeOffset.get();
+    public long getConsumeOffset() {
+        return this.consumeOffset.get();
     }
 
-    public synchronized TransferQueue.TransferQueueConsumeResult consume(Context context , long   beginOffset){
-        TransferQueue.TransferQueueConsumeResult  result ;
+    public void setConsumeOffset(AtomicLong consumeOffset) {
+        this.consumeOffset = consumeOffset;
+    }
+
+    public synchronized TransferQueue.TransferQueueConsumeResult consume(Context context, long beginOffset) {
+        TransferQueue.TransferQueueConsumeResult result;
         long offset = beginOffset;
         TransferQueue transferQueue = ServiceContainer.transferQueueManager.getQueue(transferId);
-        if(transferQueue!=null) {
+        if (transferQueue != null) {
             SelectMappedBufferResult selectMappedBufferResult = null;
-            if(offset<=0) {
-                 offset = consumeOffset.get();
+            if (offset <= 0) {
+                offset = consumeOffset.get();
             }
-            result  = transferQueue.consumeOneMessage(context,offset);
+            result = transferQueue.consumeOneMessage(context, offset);
 
-        }else{
-            logger.error("transfer Id {} is not found",transferId);
-            result = new TransferQueue.TransferQueueConsumeResult(StatusCode.TRANSFER_QUEUE_NOT_FIND,null,beginOffset,0);
+        } else {
+            logger.error("transfer Id {} is not found", transferId);
+            result = new TransferQueue.TransferQueueConsumeResult(StatusCode.TRANSFER_QUEUE_NOT_FIND, null, beginOffset, 0);
         }
-        return  result;
+        return result;
 
     }
 

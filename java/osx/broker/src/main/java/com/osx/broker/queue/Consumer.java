@@ -21,7 +21,7 @@ public interface Consumer<T> {
 //
 //    public void setCreateTimestamp(long createTimestamp) ;
 
-   // public MessageWraper consume(Context context, long offset);
-   public T consume(Context context, long offset);
+    // public MessageWraper consume(Context context, long offset);
+    public T consume(Context context, long offset);
 
 }

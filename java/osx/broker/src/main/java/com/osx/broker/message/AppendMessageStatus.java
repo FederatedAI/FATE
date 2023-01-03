@@ -1,4 +1,3 @@
-
 package com.osx.broker.message;
 
 public enum AppendMessageStatus {

@@ -17,7 +17,6 @@
 package com.osx.core.service;
 
 import com.osx.core.router.RouterInfo;
-
 import io.grpc.ManagedChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

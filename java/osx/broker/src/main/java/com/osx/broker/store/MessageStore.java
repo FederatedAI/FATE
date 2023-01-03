@@ -1,12 +1,12 @@
 package com.osx.broker.store;
 
+import com.osx.broker.message.*;
+import com.osx.broker.queue.*;
 import com.osx.core.config.MetaInfo;
-import com.osx.core.frame.ServiceThread;
 import com.osx.core.constant.TransferStatus;
 import com.osx.core.exceptions.MappedFileException;
 import com.osx.core.exceptions.TransferQueueInvalidStatusException;
-import com.osx.broker.message.*;
-import com.osx.broker.queue.*;
+import com.osx.core.frame.ServiceThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,53 +16,26 @@ import java.util.concurrent.locks.ReentrantLock;
 import static com.osx.core.config.MetaInfo.MAP_FILE_SIZE;
 
 public class MessageStore {
-    
+
+    protected final AtomicInteger wrotePosition = new AtomicInteger(0);
     Logger logger = LoggerFactory.getLogger(MessageStore.class);
     volatile TransferStatus transferStatus = TransferStatus.INIT;
     long createTimestamp;
     long lastStatusChangeTimestamp;
     long lastWriteTimestamp;
     long lastReadTimestamp;
-
-    protected final AtomicInteger wrotePosition = new AtomicInteger(0);
     TransferQueueManager transferQueueManager;
     MappedFileQueue mappedFileQueue;
     ReentrantLock putMessageLock = new ReentrantLock();
     long beginTimeInLock;
     AppendMessageHandler appendMessageCallback = new DefaultAppendMessageHandler(MAP_FILE_SIZE);
-    AllocateMappedFileService allocateMappedFileService ;
+    AllocateMappedFileService allocateMappedFileService;
 
-    CleanMappedFileThread  cleanMappedFileThread = new  CleanMappedFileThread();
+    CleanMappedFileThread cleanMappedFileThread = new CleanMappedFileThread();
 
-    /**
-     * 定期扫描过期文件
-     */
-    private  class CleanMappedFileThread extends ServiceThread {
-
-        @Override
-        public String getServiceName() {
-            return "CleanMappedFileThread";
-        }
-
-        @Override
-        public void run() {
-            while(true) {
-                this.waitForRunning(3600000);
-                try{
-                    int  count = mappedFileQueue.deleteExpiredFileByTime(MetaInfo.PROPERTY_MAPPED_FILE_EXPIRE_TIME,1000,1000,false);
-                    logger.info("CleanMappedFileThread clean expired mapped file ,count {}",count);
-                }catch(Exception e){
-                    logger.error("CleanMappedFileThread clean error",e);
-                }
-            }
-        }
-    }
-
-
-
-    public  MessageStore(AllocateMappedFileService allocateMappedFileService, String path){
+    public MessageStore(AllocateMappedFileService allocateMappedFileService, String path) {
         allocateMappedFileService = this.allocateMappedFileService;
-        mappedFileQueue = new MappedFileQueue(path,MAP_FILE_SIZE,allocateMappedFileService);
+        mappedFileQueue = new MappedFileQueue(path, MAP_FILE_SIZE, allocateMappedFileService);
         this.createTimestamp = System.currentTimeMillis();
         this.lastStatusChangeTimestamp = this.createTimestamp;
         this.lastWriteTimestamp = this.createTimestamp;
@@ -70,13 +43,13 @@ public class MessageStore {
     }
 
     public PutMessageResult putMessage(final MessageExtBrokerInner msg) {
-        if(transferStatus== TransferStatus.TRANSFERING) {
+        if (transferStatus == TransferStatus.TRANSFERING) {
             long timestamp = System.currentTimeMillis();
             msg.setStoreTimestamp(timestamp);
             if (logger.isTraceEnabled()) {
                 logger.trace("put message {}", msg);
             }
-            lastWriteTimestamp=timestamp;
+            lastWriteTimestamp = timestamp;
             AppendMessageResult result = null;
             String topic = msg.getTopic();
             int queueId = msg.getQueueId();
@@ -141,37 +114,37 @@ public class MessageStore {
             wrotePosition.addAndGet(result.getWroteBytes());
             PutMessageResult putMessageResult = new PutMessageResult(PutMessageStatus.PUT_OK, result);
             return putMessageResult;
-        }else{
-            throw  new TransferQueueInvalidStatusException( "invalid queue status : "+transferStatus);
+        } else {
+            throw new TransferQueueInvalidStatusException("invalid queue status : " + transferStatus);
         }
     }
 
-    public SelectMappedBufferResult consumeOneMessage(long offset)  {
-        if(transferStatus==TransferStatus.TRANSFERING) {
+    public SelectMappedBufferResult consumeOneMessage(long offset) {
+        if (transferStatus == TransferStatus.TRANSFERING) {
             Message result = null;
             SelectMappedBufferResult selectMappedBufferResult = this.selectOneMessageByOffset(offset);
             return selectMappedBufferResult;
-        }else{
-            throw new TransferQueueInvalidStatusException("transfer queue invalid status : "+transferStatus);
+        } else {
+            throw new TransferQueueInvalidStatusException("transfer queue invalid status : " + transferStatus);
         }
     }
 
     public SelectMappedBufferResult getMessage(final long offset, final int size) {
 
-        if(transferStatus==TransferStatus.TRANSFERING) {
+        if (transferStatus == TransferStatus.TRANSFERING) {
             this.lastReadTimestamp = System.currentTimeMillis();
-            if(this.mappedFileQueue!=null) {
+            if (this.mappedFileQueue != null) {
                 MappedFile mappedFile = this.mappedFileQueue.findMappedFileByOffset(offset, offset == 0);
                 if (mappedFile != null) {
                     int pos = (int) (offset % MAP_FILE_SIZE);
                     return mappedFile.selectMappedBuffer(pos, size);
                 }
                 return null;
-            }else{
+            } else {
                 throw new MappedFileException();
             }
-        }else {
-            throw new  TransferQueueInvalidStatusException("transfer queue invalid status : "+transferStatus);
+        } else {
+            throw new TransferQueueInvalidStatusException("transfer queue invalid status : " + transferStatus);
         }
 
     }
@@ -190,8 +163,6 @@ public class MessageStore {
         return null;
     }
 
-
-
     public long getCreateTimestamp() {
         return createTimestamp;
     }
@@ -199,8 +170,6 @@ public class MessageStore {
     public void setCreateTimestamp(long createTimestamp) {
         this.createTimestamp = createTimestamp;
     }
-
-
 
     public TransferStatus getTransferStatus() {
         return transferStatus;
@@ -213,12 +182,12 @@ public class MessageStore {
         return wrotePosition;
     }
 
-
-    public synchronized void  start(){
-        if(this.transferStatus==TransferStatus.INIT){
+    public synchronized void start() {
+        if (this.transferStatus == TransferStatus.INIT) {
             this.transferStatus = TransferStatus.TRANSFERING;
         }
     }
+
     public long getLastReadTimestamp() {
         return lastReadTimestamp;
     }
@@ -233,5 +202,29 @@ public class MessageStore {
 
     public void setLastWriteTimestamp(long lastWriteTimestamp) {
         this.lastWriteTimestamp = lastWriteTimestamp;
+    }
+
+    /**
+     * 定期扫描过期文件
+     */
+    private class CleanMappedFileThread extends ServiceThread {
+
+        @Override
+        public String getServiceName() {
+            return "CleanMappedFileThread";
+        }
+
+        @Override
+        public void run() {
+            while (true) {
+                this.waitForRunning(3600000);
+                try {
+                    int count = mappedFileQueue.deleteExpiredFileByTime(MetaInfo.PROPERTY_MAPPED_FILE_EXPIRE_TIME, 1000, 1000, false);
+                    logger.info("CleanMappedFileThread clean expired mapped file ,count {}", count);
+                } catch (Exception e) {
+                    logger.error("CleanMappedFileThread clean error", e);
+                }
+            }
+        }
     }
 }

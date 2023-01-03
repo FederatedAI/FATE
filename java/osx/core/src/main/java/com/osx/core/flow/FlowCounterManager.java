@@ -17,15 +17,12 @@
 package com.osx.core.flow;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-
-import com.osx.core.utils.GetSystemInfo;
-import com.osx.core.utils.JsonUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.osx.core.utils.GetSystemInfo;
+import com.osx.core.utils.JsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-
 
 import java.io.*;
 import java.util.Comparator;
@@ -40,11 +37,8 @@ import java.util.stream.Collectors;
 
 public class FlowCounterManager {
 
-    public FlowCounterManager(){
-        this("default");
-    }
     public static final boolean USE_PID = true;
-    private static final String DEFAULT_CONFIG_FILE = "/test"+ File.separator + ".fate" + File.separator + "flowRules.json";
+    private static final String DEFAULT_CONFIG_FILE = "/test" + File.separator + ".fate" + File.separator + "flowRules.json";
     Logger logger = LoggerFactory.getLogger(FlowCounterManager.class);
     String appName;
     MetricSearcher metricSearcher;
@@ -53,9 +47,14 @@ public class FlowCounterManager {
     ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
     Map<String, Double> sourceQpsAllowMap = new HashMap<>();
     private ConcurrentHashMap<String, FlowCounter> passMap = new ConcurrentHashMap<>();
+    public FlowCounterManager() {
+        this("default");
+    }
+
     public FlowCounterManager(String appName) {
         this(appName, false);
     }
+
     public FlowCounterManager(String appName, Boolean countModelRequest) {
         this.appName = appName;
         String baseFileName = appName + "-metrics.log";
@@ -219,13 +218,13 @@ public class FlowCounterManager {
 //                metricNode.setExceptionQps(exceptionCounter != null ? new Double(exceptionCounter.getQps()).longValue() : 0);
 //                metricNode.setSuccessQps(successCounter != null ? new Double(successCounter.getQps()).longValue() : 0);
 
-                    reportList.add(metricNode);
+                reportList.add(metricNode);
 
 
-                    //modelReportList.add(metricNode);
+                //modelReportList.add(metricNode);
 
             });
-               //logger.info("try to report {}",reportList);
+            //logger.info("try to report {}",reportList);
             metricReport.report(reportList);
 //            if (modelMetricReport != null) {
 //                modelMetricReport.report(modelReportList);
@@ -252,7 +251,7 @@ public class FlowCounterManager {
      * init rules
      */
     private void initialize() throws IOException {
-       file = new File(DEFAULT_CONFIG_FILE);
+        file = new File(DEFAULT_CONFIG_FILE);
         logger.info("try to load flow counter rules, {}", file.getAbsolutePath());
 
         if (file.exists()) {
@@ -267,7 +266,8 @@ public class FlowCounterManager {
                     result += tempString;
                 }
 
-                List<Map> list = JsonUtil.json2Object(result, new TypeReference<List<Map>>() {});
+                List<Map> list = JsonUtil.json2Object(result, new TypeReference<List<Map>>() {
+                });
                 if (list != null) {
                     list.forEach(map -> {
                         sourceQpsAllowMap.put((String) map.get("source"), Double.valueOf(String.valueOf(map.get("allow_qps"))));

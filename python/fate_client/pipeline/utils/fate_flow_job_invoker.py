@@ -17,7 +17,7 @@ class FATEFlowJobInvoker(object):
             status = response_data["status"]
             if status == JobStatus.SUCCESS:
                 elapse_seconds = timedelta(seconds=int(time.time() - start_time))
-                print(f"Job is success!!! Job id is {job_id}")
+                print(f"Job is success!!! Job id is {job_id}, response_data={response_data}")
                 print(f"Total time: {elapse_seconds}")
                 break
 

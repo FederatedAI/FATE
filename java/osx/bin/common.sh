@@ -89,16 +89,17 @@ JAVA_OPT="${JAVA_OPT} ${JAVA_OPT_EXT}"
 
 set -e
 getpid() {
-  if [ -e "./bin/$1.pid" ]; then
-    pid=$(cat ./bin/$1.pid)
+  if [ -e "./bin/broker.pid" ]; then
+    pid=$(cat ./bin/broker.pid)
   fi
   if [[ -n ${pid} ]]; then
     count=$(ps -ef | grep $pid | grep -v "grep" | wc -l)
     if [[ ${count} -eq 0 ]]; then
-      rm ./bin/$1.pid
+      rm ./bin/broker.pid
       unset pid
     fi
   fi
+
 }
 
 mklogsdir() {
@@ -114,27 +115,6 @@ start() {
   getpid $module
   if [[ ! -n ${pid} ]]; then   JAVA_OPT="${JAVA_OPT}  "
     mklogsdir
-
-#  case "${module}" in
-#      broker)
-#          main_class=com.osx.broker.Bootstrap
-#          ;;
-#      cluster-manager)
-#          main_class=com.firework.cluster.server.bootstrap.Bootstrap
-#          ;;
-#      dashboard)
-#          main_class=com.firework.admin.Bootstrap
-#          ;;
-#      cli)
-#          main_class=com.firework.cli.bootstrap.Bootstrap
-#          ;;
-#      *)
-#          echo "module: $1 {transfer|cluster-manager|dashboard|cli}"
-#          exit 1
-#  esac
-
-
-
 #    if [[ -e "${module}.jar" ]]; then
 #      rm ${module}.jar
 #    fi

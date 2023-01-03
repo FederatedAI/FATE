@@ -1,17 +1,24 @@
 package com.osx.broker.router;
 
 
-
-
-
-
 import com.osx.core.utils.JsonUtil;
 
 import java.util.concurrent.atomic.AtomicLong;
 
 public class RouterMetric {
 
-    long  lastCheckTimestamp;
+    long lastCheckTimestamp;
+    AtomicLong sourceReceiveBytesCount = new AtomicLong(0);
+    AtomicLong sourceSendBytesCount = new AtomicLong(0);
+    AtomicLong sinkReceiveBytesCount = new AtomicLong(0);
+    AtomicLong sinkSendBytesCount = new AtomicLong(0);
+    long lastUpstreamBytesCount;
+    long lastDownstreamBytesCount;
+
+    public static void main(String[] args) {
+        RouterMetric routerMetric = new RouterMetric();
+        System.err.println("xxxxxxxxxxxxxxxxxxxxx" + routerMetric);
+    }
 
     public long getLastCheckTimestamp() {
         return lastCheckTimestamp;
@@ -69,44 +76,24 @@ public class RouterMetric {
         this.lastDownstreamBytesCount = lastDownstreamBytesCount;
     }
 
-    AtomicLong sourceReceiveBytesCount=new AtomicLong(0);
-
-    AtomicLong sourceSendBytesCount = new AtomicLong(0);
-
-    AtomicLong sinkReceiveBytesCount = new AtomicLong(0);
-
-    AtomicLong sinkSendBytesCount = new AtomicLong(0);
-
-    long  lastUpstreamBytesCount;
-
-    long  lastDownstreamBytesCount;
-
-    public  long  addSourceReceive(int  size){
+    public long addSourceReceive(int size) {
         return sourceReceiveBytesCount.addAndGet(size);
     }
 
-    public  long   addSourceSend(int size){
-        return  sourceSendBytesCount.addAndGet(size);
+    public long addSourceSend(int size) {
+        return sourceSendBytesCount.addAndGet(size);
     }
 
-
-    public  long  addSinkReceive(int  size){
+    public long addSinkReceive(int size) {
         return sinkReceiveBytesCount.addAndGet(size);
     }
 
-    public  long   addSinkSend(int size){
-        return  sinkSendBytesCount.addAndGet(size);
+    public long addSinkSend(int size) {
+        return sinkSendBytesCount.addAndGet(size);
     }
 
-
-
-    public  String toString(){
+    public String toString() {
         return JsonUtil.object2Json(this);
-    }
-
-    public  static  void  main(String[] args){
-        RouterMetric   routerMetric = new  RouterMetric();
-        System.err.println("xxxxxxxxxxxxxxxxxxxxx"+routerMetric);
     }
 
 }

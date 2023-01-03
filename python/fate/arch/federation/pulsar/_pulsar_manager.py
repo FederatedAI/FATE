@@ -38,7 +38,7 @@ TENANT = "tenants/{}"
 
 
 class PulsarManager:
-    def __init__(self, host: str, port: str, runtime_config: dict = {}):
+    def __init__(self, host: str, port: int, runtime_config: dict = {}):
         self.service_url = "http://{}:{}/admin/v2/".format(host, port)
         self.runtime_config = runtime_config
 
@@ -46,9 +46,7 @@ class PulsarManager:
     def _create_session(self):
         # retry mechanism refers to
         # https://urllib3.readthedocs.io/en/latest/reference/urllib3.util.html#urllib3.util.Retry
-        retry = Retry(
-            total=MAX_RETRIES, redirect=MAX_REDIRECT, backoff_factor=BACKOFF_FACTOR
-        )
+        retry = Retry(total=MAX_RETRIES, redirect=MAX_REDIRECT, backoff_factor=BACKOFF_FACTOR)
         s = requests.Session()
         # initialize headers
         s.headers.update({"Content-Type": "application/json"})
@@ -61,9 +59,7 @@ class PulsarManager:
     # allocator
     def get_allocator(self, allocator: str = "default"):
         session = self._create_session()
-        response = session.get(
-            self.service_url + "broker-stats/allocator-stats/{}".format(allocator)
-        )
+        response = session.get(self.service_url + "broker-stats/allocator-stats/{}".format(allocator))
         return response
 
     # cluster
@@ -103,9 +99,7 @@ class PulsarManager:
 
         session = self._create_session()
 
-        response = session.put(
-            self.service_url + CLUSTER.format(cluster_name), data=json.dumps(data)
-        )
+        response = session.put(self.service_url + CLUSTER.format(cluster_name), data=json.dumps(data))
         return response
 
     def update_cluster(
@@ -132,9 +126,7 @@ class PulsarManager:
 
         session = self._create_session()
 
-        response = session.post(
-            self.service_url + CLUSTER.format(cluster_name), data=json.dumps(data)
-        )
+        response = session.post(self.service_url + CLUSTER.format(cluster_name), data=json.dumps(data))
         return response
 
     # tenants
@@ -148,9 +140,7 @@ class PulsarManager:
 
         data = {"adminRoles": admins, "allowedClusters": clusters}
 
-        response = session.put(
-            self.service_url + TENANT.format(tenant), data=json.dumps(data)
-        )
+        response = session.put(self.service_url + TENANT.format(tenant), data=json.dumps(data))
 
         return response
 
@@ -164,9 +154,7 @@ class PulsarManager:
 
         data = {"adminRoles": admins, "allowedClusters": clusters}
 
-        response = session.post(
-            self.service_url + TENANT.format(tenant), data=json.dumps(data)
-        )
+        response = session.post(self.service_url + TENANT.format(tenant), data=json.dumps(data))
         return response
 
     # namespace
@@ -187,9 +175,7 @@ class PulsarManager:
 
     def delete_namespace(self, tenant: str, namespace: str):
         session = self._create_session()
-        response = session.delete(
-            self.service_url + "namespaces/{}/{}".format(tenant, namespace)
-        )
+        response = session.delete(self.service_url + "namespaces/{}/{}".format(tenant, namespace))
         return response
 
     def set_clusters_to_namespace(self, tenant: str, namespace: str, clusters: list):
@@ -203,19 +189,14 @@ class PulsarManager:
 
     def get_cluster_from_namespace(self, tenant: str, namespace: str):
         session = self._create_session()
-        response = session.get(
-            self.service_url + "namespaces/{}/{}/replication".format(tenant, namespace)
-        )
+        response = session.get(self.service_url + "namespaces/{}/{}/replication".format(tenant, namespace))
 
         return response
 
-    def set_subscription_expiration_time(
-        self, tenant: str, namespace: str, mintues: int = 0
-    ):
+    def set_subscription_expiration_time(self, tenant: str, namespace: str, mintues: int = 0):
         session = self._create_session()
         response = session.post(
-            self.service_url
-            + "namespaces/{}/{}/subscriptionExpirationTime".format(tenant, namespace),
+            self.service_url + "namespaces/{}/{}/subscriptionExpirationTime".format(tenant, namespace),
             json=mintues,
         )
 
@@ -231,15 +212,10 @@ class PulsarManager:
 
         return response
 
-    def unsubscribe_namespace_all_topics(
-        self, tenant: str, namespace: str, subscription_name: str
-    ):
+    def unsubscribe_namespace_all_topics(self, tenant: str, namespace: str, subscription_name: str):
         session = self._create_session()
         response = session.post(
-            self.service_url
-            + "namespaces/{}/{}/unsubscribe/{}".format(
-                tenant, namespace, subscription_name
-            )
+            self.service_url + "namespaces/{}/{}/unsubscribe/{}".format(tenant, namespace, subscription_name)
         )
         return response
 
@@ -272,14 +248,10 @@ class PulsarManager:
         return response
 
     # topic
-    def unsubscribe_topic(
-        self, tenant: str, namespace: str, topic: str, subscription_name: str
-    ):
+    def unsubscribe_topic(self, tenant: str, namespace: str, topic: str, subscription_name: str):
         session = self._create_session()
         response = session.delete(
             self.service_url
-            + "persistent/{}/{}/{}/subscription/{}".format(
-                tenant, namespace, topic, subscription_name
-            )
+            + "persistent/{}/{}/{}/subscription/{}".format(tenant, namespace, topic, subscription_name)
         )
         return response

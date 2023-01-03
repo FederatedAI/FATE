@@ -20,6 +20,9 @@ class SQLiteStatusManager(object):
 
         return True
 
+    def record_task_status(self, task_id, status):
+        self._meta_manager.update_task_state(task_id, status)
+
     def record_terminate_status(self, task_ids):
         for task_id in task_ids:
             # task_run = self._meta_manager.get_or_create_task(execution_id)

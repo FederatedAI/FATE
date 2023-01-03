@@ -1,19 +1,19 @@
 package com.osx.broker.service;
+
 import com.firework.cluster.rpc.Firework;
 import com.firework.cluster.rpc.FireworkServiceGrpc;
-
-import com.osx.core.frame.Lifecycle;
+import com.osx.broker.ServiceContainer;
 import com.osx.core.config.MetaInfo;
 import com.osx.core.constant.StreamLimitMode;
 import com.osx.core.context.Context;
 import com.osx.core.flow.FlowRule;
+import com.osx.core.frame.Lifecycle;
 import com.osx.core.token.TokenResult;
 import com.osx.core.token.TokenResultStatus;
 import com.osx.core.utils.JsonUtil;
-import com.osx.broker.ServiceContainer;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -21,17 +21,15 @@ import java.util.concurrent.ScheduledExecutorService;
 
 public class TokenApplyService implements Lifecycle {
 
-    static  Logger logger = LoggerFactory.getLogger(TokenApplyService.class);
+    static Logger logger = LoggerFactory.getLogger(TokenApplyService.class);
+    ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+    private FireworkServiceGrpc.FireworkServiceBlockingStub blockingStub;
 
-    public  TokenApplyService(){
+    public TokenApplyService() {
 
     }
 
-    ScheduledExecutorService  scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-
-    private      FireworkServiceGrpc.FireworkServiceBlockingStub  blockingStub ;
-
-    public FireworkServiceGrpc.FireworkServiceBlockingStub buildBlockingStub(String  address){
+    public FireworkServiceGrpc.FireworkServiceBlockingStub buildBlockingStub(String address) {
 //        String[] ipports=   address.split(":");
 //        ManagedChannel channel = GrpcConnectionFactory.getManagedChannel(ipports[0],Integer.parseInt(ipports[1]));
 //        FireworkServiceGrpc.FireworkServiceBlockingStub  blockingStub = FireworkServiceGrpc.newBlockingStub(channel);
@@ -39,16 +37,15 @@ public class TokenApplyService implements Lifecycle {
         return null;
     }
 
-    public  void applyToken(Context context , String  resource, int count) {
+    public void applyToken(Context context, String resource, int count) {
 
-        if(MetaInfo.PROPERTY_STREAM_LIMIT_MODE.equals(StreamLimitMode.LOCAL.name())|| MetaInfo.PROPERTY_STREAM_LIMIT_MODE.equals(StreamLimitMode.CLUSTER.name()))
-        {
-            TokenResult localTokenResult =tryLocalLimit(resource,count);
-            logger.info("request token {} count {} result {}",resource,count,localTokenResult);
+        if (MetaInfo.PROPERTY_STREAM_LIMIT_MODE.equals(StreamLimitMode.LOCAL.name()) || MetaInfo.PROPERTY_STREAM_LIMIT_MODE.equals(StreamLimitMode.CLUSTER.name())) {
+            TokenResult localTokenResult = tryLocalLimit(resource, count);
+            logger.info("request token {} count {} result {}", resource, count, localTokenResult);
             /**
              * 集群限流
              */
-            if(MetaInfo.PROPERTY_STREAM_LIMIT_MODE.equals(StreamLimitMode.CLUSTER.name())) {
+            if (MetaInfo.PROPERTY_STREAM_LIMIT_MODE.equals(StreamLimitMode.CLUSTER.name())) {
                 /**
                  * 先尝试本地限流,当本地返回通过时再尝试全局限流
                  */
@@ -58,9 +55,9 @@ public class TokenApplyService implements Lifecycle {
                     tryClusterLimit(resource, count);
                 }
                 //   flowCounterManager.pass(resource, count);
-    //        }else{
-    ////            logger.info("service {} resource {} has no flow rule",context.getServiceName(),resource);
-    //        }
+                //        }else{
+                ////            logger.info("service {} resource {} has no flow rule",context.getServiceName(),resource);
+                //        }
 
             }
             ServiceContainer.flowCounterManager.pass(resource, count);
@@ -68,12 +65,12 @@ public class TokenApplyService implements Lifecycle {
     }
 
 
-    private TokenResult tryLocalLimit(String  resource,int count){
+    private TokenResult tryLocalLimit(String resource, int count) {
         boolean needLoop = false;
         int tryTime = 0;
-        TokenResult tokenResult ;
+        TokenResult tokenResult;
         do {
-             tokenResult = ServiceContainer.defaultTokenService.requestToken(resource,count,true);
+            tokenResult = ServiceContainer.defaultTokenService.requestToken(resource, count, true);
             if (tokenResult != null) {
                 ++tryTime;
                 //logger.info("prepare to apply token {} {} result {}", resource, count,tokenResult);
@@ -96,7 +93,7 @@ public class TokenApplyService implements Lifecycle {
                     case TokenResultStatus.BLOCKED:
                         try {
                             sleepMs = tokenResult.getWaitInMs();
-                            if(sleepMs>0) {
+                            if (sleepMs > 0) {
                                 Thread.sleep(sleepMs);
                             }
                             logger.info("should block {} ms try time {}", sleepMs, tryTime);
@@ -113,15 +110,15 @@ public class TokenApplyService implements Lifecycle {
             }
         } while (needLoop && tryTime < MetaInfo.PROPERTY_STREAM_LIMIT_MAX_TRY_TIME);
 
-        return  tokenResult;
+        return tokenResult;
 
     }
 
-    private void tryClusterLimit(String  resource ,int count){
+    private void tryClusterLimit(String resource, int count) {
         Firework.TokenRequest.Builder tokenRequestBuilder = Firework.TokenRequest.newBuilder();
         tokenRequestBuilder.setCount(count);
         tokenRequestBuilder.setResource(resource);
-        if(blockingStub==null){
+        if (blockingStub == null) {
             blockingStub = buildBlockingStub(MetaInfo.masterInfo.getInstanceId());
         }
         boolean needLoop = false;
@@ -151,7 +148,7 @@ public class TokenApplyService implements Lifecycle {
                     case TokenResultStatus.BLOCKED:
                         try {
                             sleepMs = tokenResult.getWaitInMs();
-                            if(sleepMs>0) {
+                            if (sleepMs > 0) {
                                 Thread.sleep(sleepMs);
                                 logger.info("should block {} ms try time {}", sleepMs, tryTime);
                             }
@@ -170,18 +167,17 @@ public class TokenApplyService implements Lifecycle {
     }
 
 
-
-    private  Map  parseFlowRule(String content){
-        Map  temp = JsonUtil.json2Object(content,Map.class);
-        Map  result = new HashMap();
-        temp.forEach((k,v)->{
+    private Map parseFlowRule(String content) {
+        Map temp = JsonUtil.json2Object(content, Map.class);
+        Map result = new HashMap();
+        temp.forEach((k, v) -> {
             try {
                 result.put(k, JsonUtil.json2Object(JsonUtil.object2Json(v), FlowRule.class));
-            }catch (Exception e){
-                logger.error("parse flowRule error",e);
+            } catch (Exception e) {
+                logger.error("parse flowRule error", e);
             }
         });
-        return  result;
+        return result;
     }
 
     @Override

@@ -15,7 +15,7 @@ public class NamedThreadFactory implements ThreadFactory {
         this.daemon = daemon;
         SecurityManager s = System.getSecurityManager();
         group = (s != null) ? s.getThreadGroup() :
-            Thread.currentThread().getThreadGroup();
+                Thread.currentThread().getThreadGroup();
         this.namePrefix = namePrefix;
     }
 

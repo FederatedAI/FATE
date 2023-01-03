@@ -5,7 +5,7 @@ from fate.interface import MetricsWrap as MetricsWrapProtocol
 
 from ._handler import NoopMetricsHandler
 from ._incomplte_metrics import StepMetrics
-from ._metric import AccuracyMetric, LossMetric, ScalarMetric
+from ._metric import AccuracyMetric, AUCMetric, LossMetric, ScalarMetric
 from ._metrics import ROCMetrics
 from ._type import InCompleteMetrics, Metric, Metrics
 
@@ -69,8 +69,12 @@ class MetricsWrap(MetricsWrapProtocol):
     def log_loss(self, name: str, loss: float, step, timestamp=None):
         return self.log_metric(name, LossMetric(loss), step, timestamp)
 
-    def log_accuracy(self, name: str, accuracy: float, step, timestamp=None):
+    def log_accuracy(self, name: str, accuracy: float, step=None, timestamp=None):
         return self.log_metric(name, AccuracyMetric(accuracy), step, timestamp)
+
+    def log_auc(self, name: str, auc: float, step=None, timestamp=None):
+        return self.log_metric(name, AUCMetric(auc), step, timestamp)
 
     def log_roc(self, name: str, data: List[Tuple[float, float]]):
         return self.log_metrics(ROCMetrics(name, data))
+

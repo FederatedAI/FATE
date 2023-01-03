@@ -8,7 +8,8 @@ from pipeline.pipeline import FateFlowPipeline
 pipeline = FateFlowPipeline().set_scheduler_party_id(party_id=10001).set_roles(
         guest=9999, host=[10000, 10001], arbiter=10001)
 reader_0 = Reader(name="reader_0")
-reader_0.guest.component_param(path="file:///Users/tonly/FATE_1/examples/data/breast_hetero_guest.csv",
+reader_0.guest.component_param(path="/Users/maguoqiang/mgq/FATE-2.0-alpha-with-flow/FATE/"
+                                    "examples/data/breast_hetero_guest.csv",
                                format="csv",
                                id_name="id",
                                delimiter=",",
@@ -16,7 +17,8 @@ reader_0.guest.component_param(path="file:///Users/tonly/FATE_1/examples/data/br
                                label_type="float32",
                                dtype="float32")
 
-reader_0.hosts[[0, 1]].component_param(path="file:///Users/tonly/FATE_1/examples/data/breast_hetero_host.csv",
+reader_0.hosts[[0, 1]].component_param(path="/Users/maguoqiang/mgq/FATE-2.0-alpha-with-flow/FATE/"
+                                            "examples/data/breast_hetero_host.csv",
                                        format="csv",
                                        id_name="id",
                                        delimiter=",",
@@ -32,16 +34,11 @@ intersection_1 = Intersection(name="intersection_1",
                               input_data=reader_0.outputs["output_data"])
 
 lr_0 = HeteroLR(name="lr_0",
-                validate_data=intersection_0.outputs["output_data"],
-                train_data=intersection_0.outputs["output_data"],
+                train_data=intersection_0.outputs["train_output_data"],
+                eval_data=intersection_1.outputs["test_output_data"],
                 max_iter=1,
                 learning_rate=0.01,
-                batch_size=569)
-
-lr_1 = HeteroLR(name="lr_1",
-                validate_data=intersection_1.outputs["output_data"],
-                test_data=intersection_1.outputs["output_data"],
-                input_model=lr_0.outputs["output_model"])
+                batch_size=-1)
 
 pipeline.add_task(reader_0)
 pipeline.add_task(intersection_0)

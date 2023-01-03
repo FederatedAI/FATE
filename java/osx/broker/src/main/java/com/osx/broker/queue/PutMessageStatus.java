@@ -1,4 +1,3 @@
-
 package com.osx.broker.queue;
 
 public enum PutMessageStatus {

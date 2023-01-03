@@ -1,6 +1,4 @@
-
 package com.osx.broker.message;
-
 
 
 import java.io.File;
@@ -14,7 +12,7 @@ public class MessageStoreConfig {
     //The directory in which the commitlog is kept
 
     private String storePathCommitLog = System.getProperty("user.home") + File.separator + "store"
-        + File.separator + "commitlog";
+            + File.separator + "commitlog";
 
     // CommitLog file size,default is 1G
     private int mappedFileSizeCommitLog = 1024 * 1024 * 1024;
@@ -110,7 +108,7 @@ public class MessageStoreConfig {
 
     //private BrokerRole brokerRole = BrokerRole.ASYNC_MASTER;
 
-//    private FlushDiskType flushDiskType = FlushDiskType.ASYNC_FLUSH;
+    //    private FlushDiskType flushDiskType = FlushDiskType.ASYNC_FLUSH;
     private int syncFlushTimeout = 1000 * 5;
     private String messageDelayLevel = "1s 5s 10s 30s 1m 2m 3m 4m 5m 6m 7m 8m 9m 10m 20m 30m 1h 2h";
     private long flushDelayOffsetInterval = 1000 * 10;
@@ -610,7 +608,6 @@ public class MessageStoreConfig {
 //        return transientStorePoolEnable && FlushDiskType.ASYNC_FLUSH == getFlushDiskType()
 //            && BrokerRole.SLAVE != getBrokerRole();
 //    }
-
     public void setTransientStorePoolEnable(final boolean transientStorePoolEnable) {
         this.transientStorePoolEnable = transientStorePoolEnable;
     }

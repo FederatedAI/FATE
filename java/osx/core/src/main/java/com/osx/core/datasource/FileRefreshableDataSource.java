@@ -11,19 +11,16 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 
 
-
 public class FileRefreshableDataSource<T> extends AutoRefreshDataSource<String, T> {
 
-    Logger logger = LoggerFactory.getLogger(FileRefreshableDataSource.class);
     private static final int MAX_SIZE = 1024 * 1024 * 4;
     private static final long DEFAULT_REFRESH_MS = 3000;
     private static final int DEFAULT_BUF_SIZE = 1024 * 1024;
     private static final Charset DEFAULT_CHAR_SET = Charset.forName("utf-8");
-
-    private byte[] buf;
     private final Charset charset;
     private final File file;
-
+    Logger logger = LoggerFactory.getLogger(FileRefreshableDataSource.class);
+    private byte[] buf;
     private long lastModified = 0L;
 
 
@@ -36,12 +33,12 @@ public class FileRefreshableDataSource<T> extends AutoRefreshDataSource<String, 
     }
 
     public FileRefreshableDataSource(File file, Converter<String, T> configParser, int bufSize)
-        throws FileNotFoundException {
+            throws FileNotFoundException {
         this(file, configParser, DEFAULT_REFRESH_MS, bufSize, DEFAULT_CHAR_SET);
     }
 
     public FileRefreshableDataSource(File file, Converter<String, T> configParser, Charset charset)
-        throws FileNotFoundException {
+            throws FileNotFoundException {
         this(file, configParser, DEFAULT_REFRESH_MS, DEFAULT_BUF_SIZE, charset);
     }
 
@@ -84,15 +81,15 @@ public class FileRefreshableDataSource<T> extends AutoRefreshDataSource<String, 
         try {
             inputStream = new FileInputStream(file);
             FileChannel channel = inputStream.getChannel();
-            logger.info("file channel size {}",channel.size());
+            logger.info("file channel size {}", channel.size());
             if (channel.size() > buf.length) {
                 throw new IllegalStateException(file.getAbsolutePath() + " file size=" + channel.size()
-                    + ", is bigger than bufSize=" + buf.length + ". Can't read");
+                        + ", is bigger than bufSize=" + buf.length + ". Can't read");
             }
             int len = inputStream.read(buf);
-            if(len>0) {
+            if (len > 0) {
                 return new String(buf, 0, len, charset);
-            }else{
+            } else {
                 return "";
             }
         } finally {

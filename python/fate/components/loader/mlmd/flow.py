@@ -1,11 +1,10 @@
 import logging
 from typing import Optional
 
-from pydantic import BaseModel
-
 from fate.components.loader.mlmd import MLMD
 from fate.components.loader.mlmd.protocol import IOManagerProtocol
 from fate.components.spec.mlmd import FlowMLMDSpec
+from pydantic import BaseModel
 
 
 class ExecutionStatus:
@@ -37,6 +36,7 @@ class ExecutionStatus:
         if message:
             error = message.get("exception")
         import requests
+
         logging.info(self._mlmd.metadata.statu_uri)
         data = self.StateData(execution_id=self._taskid, status=state, error=error).dict()
         logging.debug(f"request flow uri: {self._mlmd.metadata.statu_uri}")
@@ -68,18 +68,34 @@ class IOManager(IOManagerProtocol):
 
     def log_output_data(self, key, value):
         import requests
+
         logging.debug(f"request flow uri: {self.mlmd.metadata.tracking_uri}")
-        response = requests.post(self.mlmd.metadata.tracking_uri,
-                                 json={"output_key": value.name, "meta_data": value.metadata,
-                                       "execution_id": self.task_id, "uri": value.uri, "type": "data"})
+        response = requests.post(
+            self.mlmd.metadata.tracking_uri,
+            json={
+                "output_key": value.name,
+                "meta_data": value.metadata,
+                "execution_id": self.task_id,
+                "uri": value.uri,
+                "type": "data",
+            },
+        )
         logging.debug(f"response: {response.text}")
 
-    def log_output_model(self, key, value):
+    def log_output_model(self, key, value, metadata={}):
         import requests
+
         logging.debug(f"request flow uri: {self.mlmd.metadata.tracking_uri}")
-        response = requests.post(self.mlmd.metadata.tracking_uri,
-                                 json={"output_key": value.name, "meta_data": value.metadata,
-                                       "execution_id": self.task_id, "uri": value.uri, "type": "model"})
+        response = requests.post(
+            self.mlmd.metadata.tracking_uri,
+            json={
+                "output_key": value.name,
+                "meta_data": value.metadata,
+                "execution_id": self.task_id,
+                "uri": value.uri,
+                "type": "model",
+            },
+        )
         logging.debug(response.text)
         logging.debug(value)
 

@@ -1,11 +1,11 @@
 package com.osx.broker.constants;
 
 public enum Direction {
-//    RECEIVE,
+    //    RECEIVE,
 //    RESPONSE,
 //    BACKSEND,
 //    BACKRECE,
-        UP,
-        DOWN
+    UP,
+    DOWN
 
 }

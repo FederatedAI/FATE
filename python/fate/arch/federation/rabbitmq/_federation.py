@@ -15,9 +15,11 @@
 #
 
 import json
+from logging import getLogger
+from typing import List, Optional
 
-from ...common import Party, file_utils
-from ...common.log import getLogger
+from fate.interface import PartyMeta
+
 from .._federation import FederationBase
 from ._mq_channel import MQChannel
 from ._rabbit_manager import RabbitManager
@@ -47,9 +49,7 @@ class MQ(object):
 
 
 class _TopicPair(object):
-    def __init__(
-        self, tenant=None, namespace=None, vhost=None, send=None, receive=None
-    ):
+    def __init__(self, tenant=None, namespace=None, vhost=None, send=None, receive=None):
         self.tenant = tenant
         self.namespace = namespace
         self.vhost = vhost
@@ -60,68 +60,64 @@ class _TopicPair(object):
 class RabbitmqFederation(FederationBase):
     @staticmethod
     def from_conf(
-        federation_session_id: str, party: Party, runtime_conf: dict, **kwargs
+        federation_session_id: str,
+        computing_session,
+        party: PartyMeta,
+        parties: List[PartyMeta],
+        route_table: dict,
+        host: str,
+        port: int,
+        mng_port: int,
+        base_user: str,
+        base_password: str,
+        mode: str,
+        max_message_size: Optional[int],
+        rabbitmq_run: dict = {},
+        connection: dict = {},
     ):
-        rabbitmq_config = kwargs["rabbitmq_config"]
-        LOGGER.debug(f"rabbitmq_config: {rabbitmq_config}")
-        host = rabbitmq_config.get("host")
-        port = rabbitmq_config.get("port")
-        mng_port = rabbitmq_config.get("mng_port")
-        base_user = rabbitmq_config.get("user")
-        base_password = rabbitmq_config.get("password")
-        mode = rabbitmq_config.get("mode", "replication")
-        # max_message_size；
-        max_message_size = int(
-            rabbitmq_config.get("max_message_size", DEFAULT_MESSAGE_MAX_SIZE)
+        LOGGER.debug(
+            f"federation_session_id={federation_session_id}, party={party}, parties={parties},  route_table={route_table}, rabbitmq_run={rabbitmq_run}",
         )
-
+        if max_message_size is None:
+            max_message_size = DEFAULT_MESSAGE_MAX_SIZE
         union_name = federation_session_id
         policy_id = federation_session_id
-
-        rabbitmq_run = runtime_conf.get("job_parameters", {}).get("rabbitmq_run", {})
-        LOGGER.debug(f"rabbitmq_run: {rabbitmq_run}")
-
-        max_message_size = int(rabbitmq_run.get("max_message_size", max_message_size))
-
-        LOGGER.debug(f"set max message size to {max_message_size} Bytes")
-
-        rabbit_manager = RabbitManager(
-            base_user, base_password, f"{host}:{mng_port}", rabbitmq_run
-        )
+        rabbit_manager = RabbitManager(base_user, base_password, f"{host}:{mng_port}", rabbitmq_run)
         rabbit_manager.create_user(union_name, policy_id)
-        route_table_path = rabbitmq_config.get("route_table")
-        if route_table_path is None:
-            route_table_path = "conf/rabbitmq_route_table.yaml"
-        route_table = file_utils.load_yaml_conf(conf_path=route_table_path)
         mq = MQ(host, port, union_name, policy_id, route_table)
-        conf = rabbit_manager.runtime_config.get("connection", {})
 
         return RabbitmqFederation(
             federation_session_id,
+            computing_session,
             party,
+            parties,
             mq,
             rabbit_manager,
             max_message_size,
-            conf,
+            connection,
             mode,
         )
 
     def __init__(
         self,
         session_id,
-        party: Party,
+        computing_session,
+        party: PartyMeta,
+        parties: List[PartyMeta],
         mq: MQ,
         rabbit_manager: RabbitManager,
         max_message_size,
-        conf,
+        connection,
         mode,
     ):
         super().__init__(
             session_id=session_id,
+            computing_session=computing_session,
             party=party,
+            parties=parties,
             mq=mq,
             max_message_size=max_message_size,
-            conf=conf,
+            conf=connection,
         )
         self._rabbit_manager = rabbit_manager
         self._vhost_set = set()
@@ -144,12 +140,8 @@ class RabbitmqFederation(FederationBase):
             self._rabbit_manager.delete_user(user=self._mq.union_name)
 
     def _get_vhost(self, party):
-        low, high = (
-            (self._party, party) if self._party < party else (party, self._party)
-        )
-        vhost = (
-            f"{self._session_id}-{low.role}-{low.party_id}-{high.role}-{high.party_id}"
-        )
+        low, high = (self._party, party) if self._party < party else (party, self._party)
+        vhost = f"{self._session_id}-{low.role}-{low.party_id}-{high.role}-{high.party_id}"
         return vhost
 
     def _maybe_create_topic_and_replication(self, party, topic_suffix):
@@ -177,9 +169,7 @@ class RabbitmqFederation(FederationBase):
         # initial vhost
         if topic_pair.vhost not in self._vhost_set:
             self._rabbit_manager.create_vhost(topic_pair.vhost)
-            self._rabbit_manager.add_user_to_vhost(
-                self._mq.union_name, topic_pair.vhost
-            )
+            self._rabbit_manager.add_user_to_vhost(self._mq.union_name, topic_pair.vhost)
             self._vhost_set.add(topic_pair.vhost)
 
         # initial send queue, the name is send-${vhost}
@@ -205,9 +195,7 @@ class RabbitmqFederation(FederationBase):
         # initial vhost
         if topic_pair.vhost not in self._vhost_set:
             self._rabbit_manager.create_vhost(topic_pair.vhost)
-            self._rabbit_manager.add_user_to_vhost(
-                self._mq.union_name, topic_pair.vhost
-            )
+            self._rabbit_manager.add_user_to_vhost(self._mq.union_name, topic_pair.vhost)
             self._vhost_set.add(topic_pair.vhost)
 
         # initial send queue, the name is send-${vhost}
@@ -229,9 +217,7 @@ class RabbitmqFederation(FederationBase):
     def _upstream_uri(self, party_id):
         host = self._mq.route_table.get(int(party_id)).get("host")
         port = self._mq.route_table.get(int(party_id)).get("port")
-        upstream_uri = (
-            f"amqp://{self._mq.union_name}:{self._mq.policy_id}@{host}:{port}"
-        )
+        upstream_uri = f"amqp://{self._mq.union_name}:{self._mq.policy_id}@{host}:{port}"
         return upstream_uri
 
     def _get_channel(
@@ -266,9 +252,7 @@ class RabbitmqFederation(FederationBase):
 
     def _get_consume_message(self, channel_info):
         for method, properties, body in channel_info.consume():
-            LOGGER.debug(
-                f"[rabbitmq._get_consume_message] method: {method}, properties: {properties}"
-            )
+            LOGGER.debug(f"[rabbitmq._get_consume_message] method: {method}, properties: {properties}")
 
             properties = {
                 "message_id": properties.message_id,

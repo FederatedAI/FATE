@@ -1,36 +1,36 @@
 package com.osx.broker.ptp;
 
 
-import com.osx.core.config.MetaInfo;
-import com.osx.core.constant.StatusCode;
-import com.osx.core.context.Context;
-import com.osx.core.service.InboundPackage;
-import com.osx.core.utils.NetUtils;
-import com.osx.federation.rpc.Osx;
 import com.osx.broker.ServiceContainer;
 import com.osx.broker.queue.CreateQueueResult;
 import com.osx.broker.queue.TransferQueue;
 import com.osx.broker.queue.TransferQueueApplyInfo;
-import org.ppc.ptp.Pcp;
+import com.osx.core.config.MetaInfo;
+import com.osx.core.constant.ActionType;
+import com.osx.core.constant.StatusCode;
+import com.osx.core.context.Context;
+import com.osx.core.service.InboundPackage;
+import com.osx.core.utils.NetUtils;
+import org.ppc.ptp.Osx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-public class PtpQueryTransferQueueService  extends AbstractPtpServiceAdaptor {
+public class PtpQueryTransferQueueService extends AbstractPtpServiceAdaptor {
     Logger logger = LoggerFactory.getLogger(PtpQueryTransferQueueService.class);
 
-    public   PtpQueryTransferQueueService(){
+    public PtpQueryTransferQueueService() {
         this.setServiceName("query");
     }
 
     @Override
-    protected Pcp.Outbound doService(Context context, InboundPackage<Pcp.Inbound> data) {
+    protected Osx.Outbound doService(Context context, InboundPackage<Osx.Inbound> data) {
 
-        Pcp.Inbound request = data.getBody();
-        Pcp.Outbound.Builder  outboundBuilder = Pcp.Outbound.newBuilder();
+        Osx.Inbound request = data.getBody();
+        Osx.Outbound.Builder outboundBuilder = Osx.Outbound.newBuilder();
         Map<String, String> metaDataMap = request.getMetadataMap();
-        Osx.TopicInfo  topicInfo ;
+        Osx.TopicInfo topicInfo;
 //        String version = metaDataMap.get(Pcp.Header.Version.name());
 //        String techProviderCode = metaDataMap.get(Pcp.Header.TechProviderCode.name());
 //        String traceId = metaDataMap.get(Pcp.Header.TraceID.name());
@@ -39,15 +39,15 @@ public class PtpQueryTransferQueueService  extends AbstractPtpServiceAdaptor {
 //        String targetNodeId = metaDataMap.get(Pcp.Header.TargetNodeID.name());
 //        String sourceInstId = metaDataMap.get(Pcp.Header.SourceInstID.name());
 //        String targetInstId = metaDataMap.get(Pcp.Header.TargetInstID.name());
-        String sessionId = metaDataMap.get(Pcp.Header.SessionID.name());
+        String sessionId = metaDataMap.get(Osx.Header.SessionID.name());
 //        String targetMethod = metaDataMap.get(Pcp.Metadata.TargetMethod.name());
 //        String targetComponentName = metaDataMap.get(Pcp.Metadata.TargetComponentName.name());
 //        String sourceComponentName = metaDataMap.get(Pcp.Metadata.SourceComponentName.name());
 //        String sourcePartyId= sourceInstId+"."+sourceNodeId;
 //        String targetPartyId = targetNodeId+"."+targetNodeId;
-        String topic =  metaDataMap.get(Pcp.Metadata.MessageTopic.name());
- //       String offsetString = metaDataMap.get(Pcp.Metadata.MessageOffSet.name());
-        context.setActionType("query");
+        String topic = metaDataMap.get(Osx.Metadata.MessageTopic.name());
+        //       String offsetString = metaDataMap.get(Pcp.Metadata.MessageOffSet.name());
+        context.setActionType(ActionType.QUERY_TOPIC.getAlias());
 //        FireworkTransfer.QueryTransferQueueInfoRequest queryTransferQueueInfoRequest = data.getBody();
 //        String  transferId = queryTransferQueueInfoRequest.getTransferId();
 //        String  sessionId = queryTransferQueueInfoRequest.getSessionId();
@@ -57,30 +57,30 @@ public class PtpQueryTransferQueueService  extends AbstractPtpServiceAdaptor {
         //Preconditions.checkArgument(StringUtils.isNotEmpty(transferId));
         TransferQueue transferQueue = ServiceContainer.transferQueueManager.getQueue(topic);
         //FireworkTransfer.QueryTransferQueueInfoResponse response;
-        Osx.TopicInfo.Builder  topicInfoBuilder = Osx.TopicInfo.newBuilder();
-        if(transferQueue!=null){
-          topicInfo = topicInfoBuilder.setTopic(transferQueue.getTransferId()).
+        Osx.TopicInfo.Builder topicInfoBuilder = Osx.TopicInfo.newBuilder();
+        if (transferQueue != null) {
+            topicInfo = topicInfoBuilder.setTopic(transferQueue.getTransferId()).
                     setCreateTimestamp(transferQueue.getCreateTimestamp())
                     .setIp(NetUtils.getLocalHost())
                     .setPort(MetaInfo.PROPERTY_PORT).build();
-        }else {
+        } else {
             /**
              * 全局topic信息
              */
             TransferQueueApplyInfo transferQueueApplyInfo = ServiceContainer.transferQueueManager.queryGlobleQueue(topic);
-            if(transferQueueApplyInfo!=null){
+            if (transferQueueApplyInfo != null) {
                 String instanceId = transferQueueApplyInfo.getInstanceId();
                 String[] instanceElements = instanceId.split(":");
                 topicInfoBuilder.setTopic(transferQueueApplyInfo.getTransferId()).
                         setCreateTimestamp(transferQueueApplyInfo.getApplyTimestamp())
                         .setIp(instanceElements[0])
                         .setPort(Integer.parseInt(instanceElements[1]));
-               topicInfo = topicInfoBuilder.build();
-            }else{
+                topicInfo = topicInfoBuilder.build();
+            } else {
                 /**
                  * 由查询创建队列
                  */
-                CreateQueueResult createQueueResult = ServiceContainer.transferQueueManager.createNewQueue(topic,sessionId,false);
+                CreateQueueResult createQueueResult = ServiceContainer.transferQueueManager.createNewQueue(topic, sessionId, false);
                 topicInfo = topicInfoBuilder
                         .setTopic(topic)
                         .setCreateTimestamp(System.currentTimeMillis())

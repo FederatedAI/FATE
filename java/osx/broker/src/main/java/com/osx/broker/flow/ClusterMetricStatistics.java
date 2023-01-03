@@ -1,6 +1,4 @@
-
 package com.osx.broker.flow;
-
 
 
 import com.osx.core.flow.ClusterMetric;
@@ -10,16 +8,18 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 
-
 public final class ClusterMetricStatistics {
 
     private static final Map<String, ClusterMetric> METRIC_MAP = new ConcurrentHashMap<>();
+
+    private ClusterMetricStatistics() {
+    }
 
     public static void clear() {
         METRIC_MAP.clear();
     }
 
-    public static void putMetric(String  resource, ClusterMetric metric) {
+    public static void putMetric(String resource, ClusterMetric metric) {
         AssertUtil.notNull(metric, "Cluster metric cannot be null");
         METRIC_MAP.put(resource, metric);
     }
@@ -33,16 +33,12 @@ public final class ClusterMetricStatistics {
         return true;
     }
 
-    public static void removeMetric(String  resource) {
+    public static void removeMetric(String resource) {
         METRIC_MAP.remove(resource);
     }
 
-    public static ClusterMetric getMetric(String  resource) {
+    public static ClusterMetric getMetric(String resource) {
         return METRIC_MAP.get(resource);
-    }
-
-    public static  Map<String, ClusterMetric> getMetricMap(){
-        return METRIC_MAP;
     }
 
 //    public static void resetFlowMetrics() {
@@ -53,10 +49,9 @@ public final class ClusterMetricStatistics {
 //        }
 //    }
 
-
-
-    private ClusterMetricStatistics() {}
-
+    public static Map<String, ClusterMetric> getMetricMap() {
+        return METRIC_MAP;
+    }
 
 
 }

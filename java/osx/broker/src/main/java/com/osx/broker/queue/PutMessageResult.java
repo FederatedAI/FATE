@@ -1,4 +1,3 @@
-
 package com.osx.broker.queue;
 
 import com.osx.broker.message.AppendMessageResult;
@@ -6,6 +5,12 @@ import com.osx.broker.message.AppendMessageResult;
 public class PutMessageResult {
     private PutMessageStatus putMessageStatus;
     private AppendMessageResult appendMessageResult;
+    private long msgLogicOffset;
+
+    public PutMessageResult(PutMessageStatus putMessageStatus, AppendMessageResult appendMessageResult) {
+        this.putMessageStatus = putMessageStatus;
+        this.appendMessageResult = appendMessageResult;
+    }
 
     public long getMsgLogicOffset() {
         return msgLogicOffset;
@@ -13,14 +18,6 @@ public class PutMessageResult {
 
     public void setMsgLogicOffset(long msgLogicOffset) {
         this.msgLogicOffset = msgLogicOffset;
-    }
-
-    private long  msgLogicOffset;
-
-
-    public PutMessageResult(PutMessageStatus putMessageStatus, AppendMessageResult appendMessageResult) {
-        this.putMessageStatus = putMessageStatus;
-        this.appendMessageResult = appendMessageResult;
     }
 
     public boolean isOk() {
@@ -46,7 +43,7 @@ public class PutMessageResult {
     @Override
     public String toString() {
         return "PutMessageResult [putMessageStatus=" + putMessageStatus + ", appendMessageResult="
-            + appendMessageResult + "]";
+                + appendMessageResult + "]";
     }
 
 }

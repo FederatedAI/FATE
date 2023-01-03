@@ -25,9 +25,7 @@ class StandaloneFederation(FederationEngine):
             f"party={party}"
         )
         self._session_id = federation_session_id
-        self._federation = RawFederation(
-            standalone_session, federation_session_id, party
-        )
+        self._federation = RawFederation(standalone_session._session, federation_session_id, party)
         LOGGER.debug("[federation.standalone]init federation context done")
         self._remote_history = set()
         self._get_history = set()
@@ -51,9 +49,7 @@ class StandaloneFederation(FederationEngine):
     ):
         for party in parties:
             if (name, tag, party) in self._remote_history:
-                raise ValueError(
-                    f"remote to {parties} with duplicate tag: {name}.{tag}"
-                )
+                raise ValueError(f"remote to {parties} with duplicate tag: {name}.{tag}")
             self._remote_history.add((name, tag, party))
 
         if isinstance(v, Table):

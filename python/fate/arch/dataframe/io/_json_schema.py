@@ -1,3 +1,6 @@
+import pandas as pd
+
+
 FRAME_SCHEME = "fate.dataframe"
 
 
@@ -10,31 +13,31 @@ def build_schema(data, global_ranks):
     fields.append(
         dict(
             type="str",
-            name=schema["sid"],
+            name=schema.sid,
             property="index"
         )
     )
 
-    if schema.get("match_id_name") is not None:
+    if schema.match_id_name is not None:
         fields.append(
             dict(
                 type="str",
-                name=schema["match_id"],
+                name=schema.match_id_name,
                 property="match_id"
             )
         )
 
-    if schema.get("label_name") is not None:
+    if schema.label_name is not None:
         label = data.label
         fields.append(
             dict(
                 type=label.dtype.name,
-                name=schema["label_name"],
+                name=schema.label_name,
                 property="label"
             )
         )
 
-    if schema.get("weight_name") is not None:
+    if schema.weight_name is not None:
         weight = data.weight
         fields.append(
             dict(
@@ -44,22 +47,35 @@ def build_schema(data, global_ranks):
             )
         )
 
-    if schema.get("header") is not None:
+    if schema.header is not None:
         values = data.values
-        columns = schema.get("header")
-        for col_name in columns:
-            fields.append(
-                dict(
-                    type=values.dtype.name,
-                    name=col_name,
-                    property="value"
+        columns = schema.header
+        if isinstance(values, pd.DataFrame):
+            for col_name in columns:
+                fields.append(
+                    dict(
+                        type=values[col_name].dtype.name,
+                        name=col_name,
+                        property="value",
+                        source="pd.dataframe"
+                    )
                 )
-            )
+        else:
+            for col_name in columns:
+                fields.append(
+                    dict(
+                        type=values.dtype.name,
+                        name=col_name,
+                        property="value",
+                        source="fate.arch.tensor"
+                    )
+                )
 
-    schema["fields"] = fields
-    schema["global_ranks"] = global_ranks
-    schema["type"] = FRAME_SCHEME
-    return schema
+    built_schema = dict()
+    built_schema["fields"] = fields
+    built_schema["global_ranks"] = global_ranks
+    built_schema["type"] = FRAME_SCHEME
+    return built_schema
 
 
 def parse_schema(schema):
@@ -100,7 +116,8 @@ def parse_schema(schema):
             recovery_schema["header"] = header
             column_info["values"] = dict(start_idx=idx,
                                          end_idx=idx + len(header) - 1,
-                                         type=field["type"])
+                                         type=field["type"],
+                                         source=field["source"])
             break
 
     return recovery_schema, schema["global_ranks"], column_info
