@@ -28,7 +28,7 @@ class CSession(CSessionABC):
     def __init__(self, session_id: str, options=None):
         if options is not None:
             max_workers = options.get("task_cores", None)
-        self._session = Session(session_id, max_workers=max_workers)
+            self._session = Session(session_id, max_workers=max_workers)
 
     def get_standalone_session(self):
         return self._session
