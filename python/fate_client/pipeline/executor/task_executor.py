@@ -25,13 +25,14 @@ class StandaloneExecutor(object):
 
         return StandaloneModelInfo(
             job_id=self._job_id,
-            task_info=self._runtime_constructor_dict
+            task_info=self._runtime_constructor_dict,
+            model_id=self._job_id,
+            model_version=0
         )
 
     def predict(self,
                 dag_schema: DAGSchema,
                 component_specs: Dict[str, ComponentSpec],
-                schedule_role: str,
                 fit_model_info: StandaloneModelInfo) -> StandaloneModelInfo:
         self._dag_parser.parse_dag(dag_schema, component_specs)
         self._run(fit_model_info)
@@ -110,15 +111,34 @@ class FateFlowExecutor(object):
     def fit(self, dag_schema: DAGSchema, component_specs: Dict[str, ComponentSpec],
             schedule_role: str) -> FateFlowModelInfo:
         schedule_party_id = self.get_schedule_party_id(dag_schema, schedule_role)
-        flow_job_invoker = FATEFlowJobInvoker()
 
-        job_id = flow_job_invoker.submit_job(dag_schema.dict(exclude_defaults=True))
+        return self._run(dag_schema, schedule_role, schedule_party_id)
+
+    def predict(self,
+                dag_schema: DAGSchema,
+                component_specs: Dict[str, ComponentSpec],
+                fit_model_info: FateFlowModelInfo) -> FateFlowModelInfo:
+        schedule_role = fit_model_info.schedule_role
+        schedule_party_id = fit_model_info.schedule_party_id
+
+        return self._run(dag_schema, schedule_role, schedule_party_id)
+
+    def _run(self,
+             dag_schema: DAGSchema,
+             schedule_role,
+             schedule_party_id) -> FateFlowModelInfo:
+
+        flow_job_invoker = FATEFlowJobInvoker()
+        job_id, model_id, model_version = flow_job_invoker.submit_job(dag_schema.dict(exclude_defaults=True))
+
         flow_job_invoker.monitor_status(job_id, schedule_role, schedule_party_id)
 
         return FateFlowModelInfo(
             job_id=job_id,
             schedule_role=schedule_role,
-            schedule_party_id=schedule_party_id
+            schedule_party_id=schedule_party_id,
+            model_id=model_id,
+            model_version=model_version
         )
 
     @staticmethod

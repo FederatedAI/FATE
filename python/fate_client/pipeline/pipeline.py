@@ -111,6 +111,7 @@ class Pipeline(object):
                 self._roles = task.roles
 
             self._tasks.update(task.tasks)
+            self._job_conf.update(task.conf.dict())
             self._model_info = task.model_info
 
         return self
@@ -119,7 +120,7 @@ class Pipeline(object):
         self._dag.compile(task_insts=self._tasks,
                           roles=self._roles,
                           stage=self._stage,
-                          job_conf=self._job_conf.conf)
+                          job_conf=self._job_conf.dict())
         return self
 
     def get_deployed_pipeline(self):
@@ -129,6 +130,7 @@ class Pipeline(object):
         deploy_pipeline = Pipeline(self._executor)
         deploy_pipeline.set_stage("deployed")
         deploy_pipeline.conf = self._job_conf
+        deploy_pipeline.conf.update(self._predict_dag.conf.dict(exclude_defaults=True))
         deploy_pipeline.predict_dag = self._predict_dag
         deploy_pipeline.roles = self._roles
         deploy_pipeline.model_info = self._model_info
@@ -175,7 +177,6 @@ class Pipeline(object):
     def predict(self) -> "Pipeline":
         self._executor.predict(self._dag.dag_spec,
                                self.get_component_specs(),
-                               self._schedule_role,
                                self._model_info)
 
         return self
@@ -199,6 +200,10 @@ class Pipeline(object):
             task_name_list = [task.name for (task_name, task) in self._tasks.items()]
 
         self._predict_dag = DagParser.deploy(task_name_list, self._dag.dag_spec, self.get_component_specs())
+
+        if self._model_info:
+            self._predict_dag.conf.model_id = self._model_info.model_id
+            self._predict_dag.conf.model_version = self._model_info.model_version
 
         return yaml.dump(self._predict_dag.dict(exclude_defaults=True))
 

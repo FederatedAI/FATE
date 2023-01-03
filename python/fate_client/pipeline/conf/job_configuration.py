@@ -8,6 +8,14 @@ class JobConf(object):
     def set_all(self, **kwargs):
         self._conf.update(kwargs)
 
-    @property
-    def conf(self):
+    def update(self, conf: dict):
+        for k, v in conf.items():
+            if k not in self._conf:
+                self._conf[k] = v
+
+    def dict(self):
         return self._conf
+
+
+class TaskConf(JobConf):
+    ...

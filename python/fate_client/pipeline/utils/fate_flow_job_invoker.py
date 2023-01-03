@@ -17,7 +17,7 @@ class FATEFlowJobInvoker(object):
             status = response_data["status"]
             if status == JobStatus.SUCCESS:
                 elapse_seconds = timedelta(seconds=int(time.time() - start_time))
-                print(f"Job is success!!! Job id is {job_id}")
+                print(f"Job is success!!! Job id is {job_id}, response_data={response_data}")
                 print(f"Total time: {elapse_seconds}")
                 break
 
@@ -42,6 +42,13 @@ class FATEFlowJobInvoker(object):
                     pre_task = task
                 print(f"\x1b[80D\x1b[1A\x1b[KRunning task {task}, time elapse: {elapse_seconds}")
 
+            elif status == JobStatus.WAITING:
+                elapse_seconds = timedelta(seconds=int(time.time() - start_time))
+                print(f"\x1b[80D\x1b[1A\x1b[KJob is waiting, time elapse: {elapse_seconds}")
+
+            elif status == JobStatus.FAILED:
+                raise ValueError(f"Job is failed, please check out job_id={job_id} in fate_flow log directory")
+
             time.sleep(1)
 
     def submit_job(self, dag_schema):
@@ -52,9 +59,11 @@ class FATEFlowJobInvoker(object):
                 raise ValueError(f"Return code {code}!=0")
 
             job_id = response["job_id"]
-            return job_id
+            model_id = response["data"]["model_id"]
+            model_version = response["data"]["model_version"]
+            return job_id, model_id, model_version
         except BaseException:
-            raise ValueError(f"submit job is failed, response={response.text}")
+            raise ValueError(f"submit job is failed, response={response}")
 
     def query_job(self, job_id, role, party_id):
         response = self._client.query_job(job_id, role, party_id)
@@ -81,5 +90,5 @@ class FATEFlowJobInvoker(object):
 class JobStatus(object):
     SUCCESS = "success"
     RUNNING = "running"
-
-
+    WAITING = "waiting"
+    FAILED = "failed"

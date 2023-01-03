@@ -20,6 +20,10 @@ class FlowMLMDSpec(BaseModel):
     metadata: FlowMLMDMetaData
 
 
+class NoopMLMDSpec(BaseModel):
+    type: Literal["noop"]
+
+
 class CustomMLMDSpec(BaseModel):
     class CustomMLMDMetaData(BaseModel):
         entrypoint: str

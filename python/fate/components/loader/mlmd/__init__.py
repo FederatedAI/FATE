@@ -1,6 +1,11 @@
 import logging
 
-from fate.components.spec.mlmd import CustomMLMDSpec, FlowMLMDSpec, PipelineMLMDSpec
+from fate.components.spec.mlmd import (
+    CustomMLMDSpec,
+    FlowMLMDSpec,
+    NoopMLMDSpec,
+    PipelineMLMDSpec,
+)
 
 from .protocol import MLMD
 
@@ -19,6 +24,10 @@ def load_mlmd(mlmd, taskid) -> MLMD:
 
         return FlowMLMD(mlmd, taskid)
 
+    if isinstance(mlmd, NoopMLMDSpec):
+        from .noop import NoopMLMD
+
+        return NoopMLMD(mlmd, taskid)
     # from entrypoint
     if isinstance(mlmd, CustomMLMDSpec):
         import pkg_resources

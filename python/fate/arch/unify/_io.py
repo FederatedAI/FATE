@@ -33,6 +33,7 @@ class URI:
         for cls in ConcrateURI.__subclasses__():
             if cls.schema() == self.schema:
                 return cls.from_uri(self)
+        raise NotImplementedError(f"uri schema `{self.schema}` not found")
 
 
 class ConcrateURI(metaclass=ABCMeta):
@@ -49,6 +50,19 @@ _EGGROLL_NAME_MAX_SIZE = 128
 
 
 @dataclass
+class FileURI(ConcrateURI):
+    path: str
+
+    @classmethod
+    def schema(cls):
+        return "file"
+
+    @classmethod
+    def from_uri(cls, uri: URI):
+        return FileURI(uri.path)
+
+
+@dataclass
 class EggrollURI(ConcrateURI):
     namespace: str
     name: str
@@ -62,9 +76,7 @@ class EggrollURI(ConcrateURI):
         _, namespace, *names = uri.path.split("/")
         name = "_".join(names)
         if len(name) > _EGGROLL_NAME_MAX_SIZE:
-            name = hashlib.md5(name.encode(encoding="utf8")).hexdigest()[
-                :_EGGROLL_NAME_MAX_SIZE
-            ]
+            name = hashlib.md5(name.encode(encoding="utf8")).hexdigest()[:_EGGROLL_NAME_MAX_SIZE]
         return EggrollURI(namespace, name)
 
 
@@ -86,8 +98,6 @@ class HdfsURI(ConcrateURI):
 class HttpURI(ConcrateURI):
     path: str
     authority: Optional[str] = None
-
-
 
     @classmethod
     def schema(cls):

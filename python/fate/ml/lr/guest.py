@@ -79,7 +79,8 @@ class LrModuleGuest(HeteroModule):
         )
         for X, y in batch_loader:
             output = tensor.matmul(X, self.w)
-            print(output)
+
+        return output
 
     def get_model(self):
         return {

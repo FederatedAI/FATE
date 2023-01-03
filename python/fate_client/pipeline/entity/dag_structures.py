@@ -11,19 +11,22 @@ class OutputChannelSpec(BaseModel):
     producer_task: str
     output_artifact_key: str
     model_id: Optional[str]
-    model_version: Optional[str]
+    model_version: Optional[Union[str, int]]
+    roles: Optional[List[Literal["guest", "host", "arbiter"]]]
 
 
 class RuntimeTaskOutputChannelSpec(BaseModel):
     producer_task: str
     output_artifact_key: str
+    roles: Optional[List[Literal["guest", "host", "arbiter"]]]
 
 
 class ModelWarehouseChannelSpec(BaseModel):
     model_id: Optional[str]
-    model_version: Optional[str]
+    model_version: Optional[Union[str, int]]
     producer_task: str
     output_artifact_key: str
+    roles: Optional[List[Literal["guest", "host", "arbiter"]]]
 
 
 InputChannelSpec = TypeVar("InputChannelSpec",

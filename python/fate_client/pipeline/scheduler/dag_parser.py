@@ -47,6 +47,7 @@ class DagParser(object):
                 continue
 
             upstream_inputs = dict()
+            runtime_roles = self._tasks[name].runtime_roles
             for input_key, output_specs_dict in task_spec.inputs.artifacts.items():
                 upstream_inputs[input_key] = dict()
                 for artifact_source, channel_spec_list in output_specs_dict.items():
@@ -83,6 +84,7 @@ class DagParser(object):
                         dependent_task = channel_spec.producer_task
                         self._add_edge(dependent_task, name)
 
+            upstream_inputs = self.check_and_add_runtime_roles(upstream_inputs, runtime_roles)
             self._tasks[name].upstream_inputs = upstream_inputs
 
     def _add_edge(self, src, dst, attrs=None):
@@ -157,17 +159,70 @@ class DagParser(object):
     def get_task_node(self, task_name):
         return self._tasks[task_name]
 
+    def get_need_revisit_tasks(self, visited_tasks, failed_tasks):
+        """
+        visited_tasks: already visited tasks
+        failed_tasks: failed tasks
+
+        this function finds tasks need to rerun, a task need to rerun if is upstreams is failed
+        """
+        invalid_tasks = set(self.topological_sort()) - set(visited_tasks)
+        invalid_tasks |= set(failed_tasks)
+
+        revisit_tasks = []
+        for task_to_check in visited_tasks:
+            if task_to_check in invalid_tasks:
+                revisit_tasks.append(task_to_check)
+                continue
+
+            task_valid = True
+            task_stack = {task_to_check}
+            stack = [task_to_check]
+
+            while len(stack) > 0 and task_valid:
+                task = stack.pop()
+                pre_tasks = self.predecessors(task)
+
+                for pre_task in pre_tasks:
+                    if pre_task in task_stack:
+                        continue
+                    if pre_task in invalid_tasks:
+                        task_valid = False
+                        break
+
+                    task_stack.add(pre_task)
+                    stack.append(pre_task)
+
+            if not task_valid:
+                revisit_tasks.append(task_to_check)
+
+        return revisit_tasks
+
     def topological_sort(self):
         return nx.topological_sort(self._dag)
 
-    def predecessors(self, node):
-        return set(self._dag.predecessors(node))
+    def predecessors(self, task):
+        return set(self._dag.predecessors(task))
 
-    def successors(self, node):
-        return self._dag.successors(node)
+    def successors(self, task):
+        return self._dag.successors(task)
 
     def get_edge_attr(self, src, dst):
         return self._dag.edges[src, dst]
+
+    @staticmethod
+    def check_and_add_runtime_roles(upstream_inputs, runtime_roles):
+        correct_inputs = copy.deepcopy(upstream_inputs)
+        for input_key, channel_list in upstream_inputs.items():
+            if isinstance(channel_list, list):
+                for idx, channel in enumerate(channel_list):
+                    if channel.roles is None:
+                        correct_inputs[input_key][idx].roles = runtime_roles
+            else:
+                if channel_list.roles is None:
+                    correct_inputs[input_key].roles = runtime_roles
+
+        return correct_inputs
 
     @property
     def conf(self):
@@ -542,6 +597,14 @@ class TaskNodeInfo(object):
     @runtime_parties.setter
     def runtime_parties(self, runtime_parties):
         self._runtime_parties = runtime_parties
+
+    @property
+    def runtime_roles(self) -> list:
+        roles = set()
+        for party_spec in self._runtime_parties:
+            roles.add(party_spec.role)
+
+        return list(roles)
 
     @property
     def upstream_inputs(self):

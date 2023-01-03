@@ -25,6 +25,15 @@ class IOManagerProtocol:
     def log_output_artifact(self, key, value):
         ...
 
+    def log_output_data(self, key, value):
+        ...
+
+    def log_output_model(self, key, value):
+        ...
+
+    def log_output_metric(self, key, value):
+        ...
+
 
 class MLMD(Protocol):
     execution_status: ExecutionStatus

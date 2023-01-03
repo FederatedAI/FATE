@@ -66,20 +66,26 @@ class _TorchStorage(LStorage):
             return _ops_cpu_plain_binary_buildin(method, args, kwargs)
 
     def mean(self, *args, **kwargs):
-        output = torch.mean(self.data, *args, **kwargs)
-        output_dtype = dtype.from_torch_dtype(output.dtype)
-        output_shape = Shape(output.shape)
-        return _TorchStorage(output_dtype, output_shape, output)
+        return _ops_cpu_plain_unary_buildin("mean", args, kwargs)(self)
 
     def sum(self, *args, **kwargs):
-        output = torch.sum(self.data, *args, **kwargs)
-        output_dtype = dtype.from_torch_dtype(output.dtype)
-        output_shape = Shape(output.shape)
-        return _TorchStorage(output_dtype, output_shape, output)
+        return _ops_cpu_plain_unary_buildin("sum", args, kwargs)(self)
+
+    def var(self, *args, **kwargs):
+        return _ops_cpu_plain_unary_buildin("var", args, kwargs)(self)
+
+    def std(self, *args, **kwargs):
+        return _ops_cpu_plain_unary_buildin("std", args, kwargs)(self)
+
+    def max(self, *args, **kwargs):
+        return _ops_cpu_plain_unary_custom("max", args, kwargs)(self)
+
+    def min(self, *args, **kwargs):
+        return _ops_cpu_plain_unary_custom("min", args, kwargs)(self)
 
 
 def _ops_cpu_plain_unary_buildin(method, args, kwargs) -> Callable[[_TorchStorage], _TorchStorage]:
-    if method in {"exp", "log", "neg", "reciprocal", "square", "abs", "sum", "sqrt"}:
+    if method in {"exp", "log", "neg", "reciprocal", "square", "abs", "sum", "sqrt", "var", "std", "mean"}:
         func = getattr(torch, method)
 
         def _wrap(storage: _TorchStorage) -> _TorchStorage:
@@ -93,12 +99,11 @@ def _ops_cpu_plain_unary_buildin(method, args, kwargs) -> Callable[[_TorchStorag
 
 
 def _has_custom_unary(method):
-    return method in {"slice"}
+    return method in {"slice", "max", "min"}
 
 
 def _ops_cpu_plain_unary_custom(method, args, kwargs) -> Callable[[_TorchStorage], _TorchStorage]:
     if method == "slice":
-        args[0]
 
         def _slice(storage: _TorchStorage):
             output = storage.data[args[0]]
@@ -108,11 +113,47 @@ def _ops_cpu_plain_unary_custom(method, args, kwargs) -> Callable[[_TorchStorage
 
         return _slice
 
+    if method == "max":
+
+        def _max(storage: _TorchStorage):
+            dim = None
+            if len(args) > 0:
+                dim = args[0]
+            if "dim" in kwargs:
+                dim = kwargs["dim"]
+            if dim is None:
+                output = torch.as_tensor(storage.data.max(*args, **kwargs))
+            else:
+                output = storage.data.max(*args, **kwargs).values
+            output_dtype = dtype.from_torch_dtype(output.dtype)
+            output_shape = Shape(output.shape)
+            return _TorchStorage(output_dtype, output_shape, output)
+
+        return _max
+
+    if method == "min":
+
+        def _min(storage: _TorchStorage):
+            dim = None
+            if len(args) > 0:
+                dim = args[0]
+            if "dim" in kwargs:
+                dim = kwargs["dim"]
+            if dim is None:
+                output = torch.as_tensor(storage.data.min(*args, **kwargs))
+            else:
+                output = storage.data.min(*args, **kwargs).values
+            output_dtype = dtype.from_torch_dtype(output.dtype)
+            output_shape = Shape(output.shape)
+            return _TorchStorage(output_dtype, output_shape, output)
+
+        return _min
+
     raise NotImplementedError(f"method `{method}` not found in torch unary custom, consider to add custom extending")
 
 
 def _ops_cpu_plain_binary_buildin(method, args, kwargs) -> Callable[[Any, Any], _TorchStorage]:
-    if method in {"add", "sub", "mul", "div", "pow", "remainder", "matmul", "true_divide"}:
+    if method in {"add", "sub", "mul", "div", "pow", "remainder", "matmul", "true_divide", "maximum", "minimum"}:
         func = getattr(torch, method)
 
         def _wrap(a, b) -> _TorchStorage:

@@ -27,7 +27,11 @@ class DAG(object):
             task = dict(component_ref=task_inst.component_ref)
             dependent_tasks = task_inst.get_dependent_tasks()
             inputs = RuntimeInputDefinition()
-            input_channel, input_artifacts = task_inst.get_runtime_input_artifacts()
+            cpn_runtime_roles = set(roles.get_runtime_roles()) & set(task_inst.support_roles)
+            if cpn_runtime_roles != set(roles.get_runtime_roles()):
+                task["parties"] = roles.get_parties_spec(cpn_runtime_roles)
+
+            input_channel, input_artifacts = task_inst.get_runtime_input_artifacts(cpn_runtime_roles)
             task_stage = ComponentStageSchedule.get_stage(input_artifacts)
             if task_stage != stage:
                 task["stage"] = task_stage
@@ -38,9 +42,8 @@ class DAG(object):
             if dependent_tasks:
                 task["dependent_tasks"] = dependent_tasks
 
-            cpn_runtime_roles = set(roles.get_runtime_roles()) & set(task_inst.support_roles)
-            if cpn_runtime_roles != set(roles.get_runtime_roles()):
-                task["parties"] = roles.get_parties_spec(cpn_runtime_roles)
+            if task_inst.conf.dict():
+                task["conf"] = task_inst.conf.dict()
 
             common_parameters = task_inst.get_component_param()
             if common_parameters:
@@ -49,9 +52,9 @@ class DAG(object):
             for role in cpn_runtime_roles:
                 party_id_list = roles.get_party_id_list_by_role(role)
                 for idx, party_id in enumerate(party_id_list):
+                    role_party_key = f"{role}_{party_id}"
                     role_param = task_inst.get_role_param(role, idx)
                     if role_param:
-                        role_party_key = f"{role}_{party_id}"
                         if role_party_key not in party_tasks:
                             party_tasks[role_party_key] = PartyTaskSpec(
                                 parties=[PartySpec(role=role, party_id=[party_id])],
@@ -63,6 +66,10 @@ class DAG(object):
                                 parameters=role_param
                             )
                         )
+
+                    role_conf = task_inst.get_role_conf(role, idx)
+                    if role_conf:
+                        party_tasks[role_party_key].conf = role_conf
 
             if inputs.dict(exclude_unset=True):
                 task["inputs"] = inputs

@@ -5,9 +5,8 @@ import numpy as np
 import torch
 from fate.arch import tensor
 import pandas as pd
-import PIL
 
-from ._index import Index
+from .storage import Index
 from ._dataframe import DataFrame
 
 

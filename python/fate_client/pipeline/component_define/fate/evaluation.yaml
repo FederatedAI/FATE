@@ -1,0 +1,34 @@
+component:
+  name: evaluation
+  description: ''
+  provider: fate
+  version: 2.0.0.alpha
+  labels: []
+  roles:
+    - guest
+    - host
+    - arbiter
+  input_definitions:
+    parameters: {}
+    artifacts:
+      input_data:
+        type: dataset
+        optional: false
+        stages:
+          - default
+        roles:
+          - guest
+          - host
+          - arbiter
+  output_definitions:
+    artifacts:
+      output_metric:
+        type: classification_metrics
+        optional: false
+        stages:
+          - default
+        roles:
+          - guest
+          - host
+          - arbiter
+schema_version: v1

@@ -1,5 +1,6 @@
 import copy
 from ..conf.types import SupportRole, PlaceHolder, ArtifactSourceType
+from ..conf.job_configuration import TaskConf
 from ..utils.id_gen import get_uuid
 from pipeline.entity.component_structures import ComponentSpec, load_component_spec, ArtifactSpec
 from ..interface import ArtifactChannel
@@ -21,6 +22,7 @@ class Component(object):
         self._callable = True
         self._outputs = None
         self._component_param = dict()
+        self._task_conf = TaskConf()
 
         if self.yaml_define_path is None:
             raise ValueError("Component should have yaml define file, set yaml_define_path first please!")
@@ -134,10 +136,16 @@ class Component(object):
         return self._component_spec.name
 
     @property
+    def conf(self):
+        return self._task_conf
+
+    @property
     def support_roles(self):
         if not self.runtime_roles:
             return self._component_spec.roles
         else:
+            if not isinstance(self.runtime_roles, list):
+                self.runtime_roles = [self.runtime_roles]
             return list(set(self._component_spec.roles) & set(self.runtime_roles))
 
     def component_param(self, **kwargs):
@@ -165,6 +173,24 @@ class Component(object):
                 component_param.update(party_inst.get_component_param())
 
         return component_param
+
+    def get_role_conf(self, role, index):
+        conf = dict()
+        if role not in self.__party_instance:
+            return conf
+
+        index = str(index)
+        role_inst_dict = self.__party_instance[role]
+
+        for _, inst in role_inst_dict.items():
+            for party_index, party_inst in inst.party_instance.items():
+                party_index = party_index.split("|")
+                if index not in party_index:
+                    continue
+
+                conf.update(party_inst.conf.dict())
+
+        return conf
 
     def validate_runtime_env(self, roles):
         runtime_roles = roles.get_runtime_roles()
@@ -241,7 +267,7 @@ class Component(object):
 
         return list(dependencies)
 
-    def get_runtime_input_artifacts(self):
+    def get_runtime_input_artifacts(self, runtime_roles):
         input_definition_artifacts = self._component_spec.input_definitions.artifacts
         runtime_input_channels = dict()
         input_artifacts = dict()
@@ -258,14 +284,19 @@ class Component(object):
 
             channels = getattr(self, artifact_key)
 
+            roles = list(set(runtime_roles) & set(artifact_spec.roles)) \
+                if set(runtime_roles) != set(artifact_spec.roles) else None
+
             if isinstance(channels, list):
                 output_artifact = []
                 for channel in channels:
                     artifact_spec_source = __get_artifact_spec_by_source_type(channel.source)
                     output_artifact.append(artifact_spec_source(
                         producer_task=channel.task_name,
-                        output_artifact_key=channel.name
+                        output_artifact_key=channel.name,
+                        roles=roles
                     ))
+
                 runtime_input_channels[artifact_key] = {channels[0].source: output_artifact}
                 input_artifacts[artifact_key] = artifact_spec
             else:
@@ -273,7 +304,8 @@ class Component(object):
                 runtime_input_channels[artifact_key] = {
                     channels.source: artifact_spec_source(
                         producer_task=channels.task_name,
-                        output_artifact_key=channels.name
+                        output_artifact_key=channels.name,
+                        roles=roles
                     )
                 }
                 input_artifacts[artifact_key] = artifact_spec
