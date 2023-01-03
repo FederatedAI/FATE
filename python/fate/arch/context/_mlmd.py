@@ -105,8 +105,8 @@ class MachineLearningMetadata:
             task_run.name = taskid
             task_run.properties["state"].string_value = "INIT"
             task_run.properties["safe_terminate"].bool_value = False
-        [task_run_id] = self.store.put_executions([task_run])
-        task_run.id = task_run_id
+            [task_run_id] = self.store.put_executions([task_run])
+            task_run.id = task_run_id
         return task_run
 
     def get_task_safe_terminate_flag(self, taskid: str):

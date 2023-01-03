@@ -7,6 +7,7 @@ class DirectoryDataPool(pydantic.BaseModel):
     class DirectoryDataPoolMetadata(pydantic.BaseModel):
         uri: str
         format: str = "csv"
+        name_template: str = "{name}"  # `name` and `uuid` allowed in template
 
     type: Literal["directory"]
     metadata: DirectoryDataPoolMetadata
@@ -21,6 +22,7 @@ class DirectoryModelPool(pydantic.BaseModel):
     class DirectoryDataPoolMetadata(pydantic.BaseModel):
         uri: str
         format: str = "json"
+        name_template: str = "{name}"  # `name` and `uuid` allowed in template
 
     type: Literal["directory"]
     metadata: DirectoryDataPoolMetadata
@@ -35,6 +37,7 @@ class DirectoryMetricPool(pydantic.BaseModel):
     class DirectoryDataPoolMetadata(pydantic.BaseModel):
         uri: str
         format: str = "json"
+        name_template: str = "{name}"  # `name` and `uuid` allowed in template
 
     type: Literal["directory"]
     metadata: DirectoryDataPoolMetadata

@@ -23,12 +23,11 @@ from pickle import loads as p_loads
 
 from fate.interface import FederationEngine, PartyMeta
 
-from ..abc import CTableABC, FederationABC, GarbageCollectionABC
+from ..abc import CTableABC
 from ..common import Party
 from ..common.log import getLogger
 from ..federation import FederationDataType
 from ..federation._datastream import Datastream
-from ..session import computing_session
 from ._gc import GarbageCollector
 
 LOGGER = getLogger()
@@ -50,7 +49,16 @@ def _get_splits(obj, max_message_size):
 
 
 class FederationBase(FederationEngine):
-    def __init__(self, session_id, party: PartyMeta, parties: typing.List[PartyMeta], mq, max_message_size, conf=None):
+    def __init__(
+        self,
+        session_id,
+        computing_session,
+        party: PartyMeta,
+        parties: typing.List[PartyMeta],
+        mq,
+        max_message_size,
+        conf=None,
+    ):
         self._session_id = session_id
         self._mq = mq
         self._topic_map = {}
@@ -63,6 +71,7 @@ class FederationBase(FederationEngine):
         self.remote_gc: GarbageCollector = GarbageCollector()
         self.local_party = party
         self.parties = parties
+        self.computing_session = computing_session
 
         # temp
         self._party = Party(party[0], party[1])
@@ -113,7 +122,7 @@ class FederationBase(FederationEngine):
                     conf=self._conf,
                 )
 
-                table = computing_session.parallelize(range(partitions), partitions, include_key=False)
+                table = self.computing_session.parallelize(range(partitions), partitions, include_key=False)
                 table = table.mapPartitionsWithIndex(receive_func)
 
                 # add gc
@@ -151,7 +160,7 @@ class FederationBase(FederationEngine):
             if not isinstance(v, CTableABC):
                 v, num_slice = _get_splits(v, self._max_message_size)
                 if num_slice > 1:
-                    v = computing_session.parallelize(data=v, partition=1, include_key=True)
+                    v = self.computing_session.parallelize(data=v, partition=1, include_key=True)
                     body = {
                         "dtype": FederationDataType.SPLIT_OBJECT,
                         "partitions": v.partitions,

@@ -75,7 +75,8 @@ def execute_component(config: TaskConfigSpec):
 
             # wrap model artifact
             input_model_artifacts = {
-                key: input_model_wrapper.wrap(value, mlmd.io) for key, value in input_model_artifacts.items()
+                key: value if value is None else input_model_wrapper.wrap(value, mlmd.io)
+                for key, value in input_model_artifacts.items()
             }
 
             # fill in outputs
@@ -85,7 +86,8 @@ def execute_component(config: TaskConfigSpec):
 
             # wrap model artifact
             output_model_artifacts = {
-                key: output_model_wrapper.wrap(value, mlmd.io) for key, value in output_model_artifacts.items()
+                key: value if value is None else output_model_wrapper.wrap(value, mlmd.io)
+                for key, value in output_model_artifacts.items()
             }
 
             # get execute key-word arguments
