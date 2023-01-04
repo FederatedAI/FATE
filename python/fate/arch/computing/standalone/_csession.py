@@ -26,9 +26,7 @@ LOGGER = getLogger()
 
 
 class CSession(CSessionABC):
-    def __init__(
-        self, session_id: Optional[str] = None, options: Optional[dict] = None
-    ):
+    def __init__(self, session_id: Optional[str] = None, options: Optional[dict] = None):
         if session_id is None:
             session_id = generate_computing_uuid()
         if options is None:
@@ -50,6 +48,7 @@ class CSession(CSessionABC):
         if isinstance(address, StandaloneAddress):
             raw_table = self._session.load(address.name, address.namespace)
             if address.storage_type != StandaloneStoreType.ROLLPAIR_IN_MEMORY:
+                partitions = raw_table.partitions if partitions is None else partitions
                 raw_table = raw_table.save_as(
                     name=f"{address.name}_{uuid()}",
                     namespace=address.namespace,
@@ -60,21 +59,10 @@ class CSession(CSessionABC):
             table.schema = schema
             return table
 
-        from ...common.address import PathAddress
-
-        if isinstance(address, PathAddress):
-            from ...computing import ComputingEngine
-            from ...computing.non_distributed import LocalData
-
-            return LocalData(address.path, engine=ComputingEngine.STANDALONE)
-        raise NotImplementedError(
-            f"address type {type(address)} not supported with standalone backend"
-        )
+        raise NotImplementedError(f"address type {type(address)} not supported with standalone backend")
 
     def parallelize(self, data: Iterable, partition: int, include_key: bool, **kwargs):
-        table = self._session.parallelize(
-            data=data, partition=partition, include_key=include_key, **kwargs
-        )
+        table = self._session.parallelize(data=data, partition=partition, include_key=include_key, **kwargs)
         return Table(table)
 
     def cleanup(self, name, namespace):
@@ -96,7 +84,5 @@ class CSession(CSessionABC):
         try:
             self.stop()
         except Exception as e:
-            LOGGER.warning(
-                f"stop storage session {self.session_id} failed, try to kill", e
-            )
+            LOGGER.warning(f"stop storage session {self.session_id} failed, try to kill", e)
             self.kill()
