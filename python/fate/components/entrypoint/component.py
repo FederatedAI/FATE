@@ -25,8 +25,8 @@ logger = logging.getLogger(__name__)
 
 
 def execute_component(config: TaskConfigSpec):
-    taskid = config.taskid
-    mlmd = load_mlmd(config.conf.mlmd, taskid)
+    party_task_id = config.party_task_id
+    mlmd = load_mlmd(config.conf.mlmd, party_task_id)
     computing = load_computing(config.conf.computing)
     federation = load_federation(config.conf.federation, computing)
     device = load_device(config.conf.device)
@@ -35,7 +35,7 @@ def execute_component(config: TaskConfigSpec):
     metrics_handler = load_metrics_handler()
     output_pool = load_pool(config.conf.output)
     ctx = Context(
-        context_name=taskid,
+        context_name=party_task_id,
         device=device,
         computing=computing,
         federation=federation,
@@ -58,7 +58,7 @@ def execute_component(config: TaskConfigSpec):
 
             # load model wrapper
             output_model_wrapper = load_output_model_wrapper(
-                config.taskid, config.taskid, component, config.role, config.partyid, config.conf.federation
+                config.task_id, config.party_task_id, component, config.role, config.party_id, config.conf.federation
             )
             input_model_wrapper = load_input_model_wrapper()
             # parse and validate parameters

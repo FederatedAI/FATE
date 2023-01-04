@@ -8,8 +8,8 @@ import pydantic
 from ruamel import yaml
 
 
-def load_output_model_wrapper(jobid, taskid, cpn, role, partyid, federation):
-    return ComponentModelWriterWrapper(cpn, federation, jobid, taskid, role, partyid)
+def load_output_model_wrapper(task_id, party_task_id, cpn, role, partyid, federation):
+    return ComponentModelWriterWrapper(cpn, federation, task_id, party_task_id, role, partyid)
 
 
 def load_input_model_wrapper():
@@ -17,11 +17,11 @@ def load_input_model_wrapper():
 
 
 class ComponentModelWriterWrapper:
-    def __init__(self, cpn, federation, jobid, taskid, role, partyid) -> None:
-        self.jobid = jobid
-        self.taskid = taskid
+    def __init__(self, cpn, federation, task_id, party_task_id, role, party_id) -> None:
+        self.task_id = task_id
+        self.party_task_id = party_task_id
         self.role = role
-        self.partyid = partyid
+        self.party_id = party_id
         self.cpn_spec = MLModelComponentSpec(name=cpn.name, provider=cpn.provider, version=cpn.version, metadata={})
         guest = []
         host = []
@@ -79,10 +79,13 @@ class ComponentModelWriter:
     def _get_meta(self):
         return MLModelSpec(
             federated=MLModelFederatedSpec(
-                jobid=self.info.jobid, parties=self.info.parties_spec, component=self.info.cpn_spec
+                task_id=self.info.task_id, parties=self.info.parties_spec, component=self.info.cpn_spec
             ),
             party=MLModelPartySpec(
-                party_task_id=self.info.taskid, role=self.info.role, partyid=self.info.partyid, models=self.models
+                party_task_id=self.info.party_task_id,
+                role=self.info.role,
+                partyid=self.info.party_id,
+                models=self.models,
             ),
         )
 
@@ -162,7 +165,7 @@ class MLModelPartiesSpec(pydantic.BaseModel):
 
 class MLModelFederatedSpec(pydantic.BaseModel):
 
-    jobid: str
+    task_id: str
     parties: MLModelPartiesSpec
     component: MLModelComponentSpec
 

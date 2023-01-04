@@ -1,8 +1,8 @@
-taskid: xxx
+task_id: xxx
 party_task_id: xxxx
 component: hetero_lr
 role: host
-partyid: "10000"
+party_id: "10000"
 stage: train
 inputs:
   parameters:
