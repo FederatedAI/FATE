@@ -25,11 +25,12 @@ def load_pool(output_pool_conf):
 
 
 def _load_data_pool(data_pool):
+    from fate.arch.unify import URI
     from fate.components.spec.output import DirectoryDataPool
 
     if isinstance(data_pool, DirectoryDataPool):
         return DataPool(
-            base_uri=data_pool.metadata.uri,
+            base_uri=URI.from_string(data_pool.metadata.uri).to_schema(),
             format=data_pool.metadata.format,
             name_template=data_pool.metadata.name_template,
         )
@@ -37,11 +38,12 @@ def _load_data_pool(data_pool):
 
 
 def _load_model_pool(model_pool):
+    from fate.arch.unify import URI
     from fate.components.spec.output import DirectoryModelPool
 
     if isinstance(model_pool, DirectoryModelPool):
         return ModelPool(
-            base_uri=model_pool.metadata.uri,
+            base_uri=URI.from_string(model_pool.metadata.uri).to_schema(),
             format=model_pool.metadata.format,
             name_template=model_pool.metadata.name_template,
         )
@@ -49,11 +51,12 @@ def _load_model_pool(model_pool):
 
 
 def _load_metric_pool(metric_pool):
+    from fate.arch.unify import URI
     from fate.components.spec.output import DirectoryMetricPool
 
     if isinstance(metric_pool, DirectoryMetricPool):
         return MetricPool(
-            base_uri=metric_pool.metadata.uri,
+            base_uri=URI.from_string(metric_pool.metadata.uri).to_schema(),
             format=metric_pool.metadata.format,
             name_template=metric_pool.metadata.name_template,
         )
@@ -70,9 +73,9 @@ class DataPool:
         from fate.components import DatasetArtifact
 
         file_name = self.name_template.format(name=name, uuid=uuid.uuid1())
-        uri = f"{self.base_uri}/{file_name}"
+        uri = self.base_uri.create_file(file_name)
         metadata = dict(format=self.format)
-        return DatasetArtifact(name=name, uri=uri, metadata=metadata)
+        return DatasetArtifact(name=name, uri=uri.to_string(), metadata=metadata)
 
 
 class ModelPool:
@@ -85,9 +88,9 @@ class ModelPool:
         from fate.components import ModelArtifact
 
         file_name = self.name_template.format(name=name, uuid=uuid.uuid1())
-        uri = f"{self.base_uri}/{file_name}"
+        uri = self.base_uri.create_file(file_name)
         metadata = dict(format=self.format)
-        return ModelArtifact(name=name, uri=uri, metadata=metadata)
+        return ModelArtifact(name=name, uri=uri.to_string(), metadata=metadata)
 
 
 class MetricPool:
@@ -100,6 +103,6 @@ class MetricPool:
         from fate.components import MetricArtifact
 
         file_name = self.name_template.format(name=name, uuid=uuid.uuid1())
-        uri = f"{self.base_uri}/{file_name}"
+        uri = self.base_uri.create_file(file_name)
         metadata = dict(format=self.format)
-        return MetricArtifact(name=name, uri=uri, metadata=metadata)
+        return MetricArtifact(name=name, uri=uri.to_string(), metadata=metadata)
