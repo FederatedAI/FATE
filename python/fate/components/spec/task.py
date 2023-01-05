@@ -36,10 +36,11 @@ class TaskConfigSpec(pydantic.BaseModel):
         mlmd: Union[PipelineMLMDSpec, FlowMLMDSpec, NoopMLMDSpec, CustomMLMDSpec]
         output: OutputPoolConf
 
-    taskid: str
+    task_id: str
+    party_task_id: str
     component: str
     role: str
-    partyid: str
+    party_id: str
     stage: str = "default"
     inputs: TaskInputsSpec = TaskInputsSpec(parameters={}, artifacts={})
     conf: TaskConfSpec

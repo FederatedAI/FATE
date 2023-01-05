@@ -26,23 +26,37 @@
         <java.version>1.8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <guava.version>27.1-jre</guava.version>
-        <grpc.version>1.25.0</grpc.version>
+        <guava.version>31.1-jre</guava.version>
+        <grpc.version>1.51.1</grpc.version>
         <lombok.version>1.18.24</lombok.version>
-        <protobuf.version>3.6.1</protobuf.version>
+        <protobuf.version>3.21.12</protobuf.version>
         <junit.version>5.26</junit.version>
         <protobuf-maven-plugin.version>0.6.1</protobuf-maven-plugin.version>
         <os-maven-plugin.version>1.6.1</os-maven-plugin.version>
         <slf4j.version>1.7.36</slf4j.version>
-        <jackson.version>2.13.2.2</jackson.version>
-        <jedis.version>2.9.0</jedis.version>
+        <jackson.version>2.14.1</jackson.version>
+        <commons-cli.version>1.5.0</commons-cli.version>
         <skipTests>true</skipTests>
-        <jcommander.version>1.78</jcommander.version>
         <log4j2.version>2.17.2</log4j2.version>
-
+        <sl4j.version>1.7.30</sl4j.version>
+        <zookeeper.version>3.8.0</zookeeper.version>
+        <jetty.version>9.4.50.v20221201</jetty.version>
+        <commons-io.version>2.11.0</commons-io.version>
+        <curator-framework.version>5.4.0</curator-framework.version>
+        <disruptor.version>3.4.4</disruptor.version>
+        <guaua.version>31.1-jre</guaua.version>
+        <httpclient.version>4.5.14</httpclient.version>
+        <commons-lang3.version>3.12.0</commons-lang3.version>
+        <commons-io.version>2.11.0</commons-io.version>
+        <flatbuffers-java.version>1.10.0</flatbuffers-java.version>
+        <commons-validator.version>1.7</commons-validator.version>
+        <protobuf-java-format.version>1.2</protobuf-java-format.version>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
         <commons-configuration.version>1.10</commons-configuration.version>
+        <commons-text.version>1.10.0</commons-text.version>
+        <junit.version>4.13.2</junit.version>
+        <jna.version>5.12.1</jna.version>
     </properties>
 
     <dependencyManagement>
@@ -55,7 +69,7 @@
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
-                <version>1.7.30</version>
+                <version>${sl4j.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
@@ -73,138 +87,82 @@
                 <artifactId>log4j-slf4j-impl</artifactId>
                 <version>${log4j2.version}</version>
             </dependency>
+
+
             <dependency>
                 <groupId>net.java.dev.jna</groupId>
                 <artifactId>jna</artifactId>
-                <version>4.2.2</version>
+                <version>${jna.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>commons-validator</groupId>
                 <artifactId>commons-validator</artifactId>
-                <version>1.7</version>
+                <version>${commons-validator.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.zookeeper</groupId>
                 <artifactId>zookeeper</artifactId>
-                <version>3.5.5</version>
+                <version>${zookeeper.version}</version>
             </dependency>
             <dependency>
                 <groupId>commons-cli</groupId>
                 <artifactId>commons-cli</artifactId>
-                <version>1.5.0</version>
+                <version>${commons-cli.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-server</artifactId>
-                <version>9.4.50.v20221201</version>
+                <version>${jetty.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-servlet</artifactId>
-                <version>9.4.50.v20221201</version>
+                <version>${jetty.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
-                <version>2.11.0</version>
+                <version>${commons-io.version}</version>
             </dependency>
-
-
-            <dependency>
-                <groupId>org.apache.commons</groupId>
-                <artifactId>commons-collections4</artifactId>
-                <version>4.4</version>
-            </dependency>
-
             <dependency>
                 <groupId>org.apache.curator</groupId>
                 <artifactId>curator-framework</artifactId>
-                <version>5.4.0</version>
+                <version>${curator-framework.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.apache.curator</groupId>
                 <artifactId>curator-recipes</artifactId>
-                <version>5.4.0</version>
+                <version>${curator-framework.version}</version>
             </dependency>
-<!--            <dependency>-->
-<!--                <groupId>org.slf4j</groupId>-->
-<!--                <artifactId>slf4j-log4j12</artifactId>-->
-<!--                <version>${slf4j.version}</version>-->
-<!--            </dependency>-->
-
 
             <dependency>
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
                 <version>${lombok.version}</version>
             </dependency>
-
-
-
-
-
-
-
             <dependency>
                 <groupId>com.lmax</groupId>
                 <artifactId>disruptor</artifactId>
-                <version>3.4.2</version>
+                <version>${disruptor.version}</version>
             </dependency>
 
-<!--            <dependency>-->
-<!--                <groupId>net.java.dev.jna</groupId>-->
-<!--                <artifactId>jna</artifactId>-->
-<!--                <version>4.2.2</version>-->
-<!--            </dependency>-->
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
-                <version>3.4</version>
+                <version>${commons-lang3.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>31.1-jre</version>
+                <version>${guava.version}</version>
             </dependency>
             <dependency>
-                <groupId>commons-codec</groupId>
-                <artifactId>commons-codec</artifactId>
-                <version>1.9</version>
-            </dependency>
-
-
-            <dependency>
-                <groupId>commons-validator</groupId>
-                <artifactId>commons-validator</artifactId>
-                <version>1.7</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.assertj</groupId>
-                <artifactId>assertj-core</artifactId>
-                <version>2.6.0</version>
-                <scope>test</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.junit.platform</groupId>
-                <artifactId>junit-platform-launcher</artifactId>
-                <version>1.0.1</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter-engine</artifactId>
-                <version>5.0.1</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.junit.vintage</groupId>
-                <artifactId>junit-vintage-engine</artifactId>
-                <version>4.12.1</version>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>${junit.version}</version>
                 <scope>test</scope>
             </dependency>
 
@@ -221,53 +179,22 @@
             </dependency>
 
             <dependency>
-                <groupId>org.apache.commons</groupId>
-                <artifactId>commons-lang3</artifactId>
-                <version>3.8.1</version>
-            </dependency>
-
-            <dependency>
-                <groupId>commons-codec</groupId>
-                <artifactId>commons-codec</artifactId>
-                <version>1.12</version>
-            </dependency>
-
-            <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
-                <version>2.6</version>
+                <version>${commons-io.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-text</artifactId>
-                <version>1.4</version>
+                <version>${commons-text.version}</version>
             </dependency>
 
-            <dependency>
-                <groupId>com.google.protobuf</groupId>
-                <artifactId>protobuf-java-util</artifactId>
-                <version>${protobuf.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.json</groupId>
-                <artifactId>json</artifactId>
-                <version>20151123</version>
-                <scope>compile</scope>
-            </dependency>
-
-
-            <dependency>
-                <groupId>com.beust</groupId>
-                <artifactId>jcommander</artifactId>
-                <version>${jcommander.version}</version>
-            </dependency>
 
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-annotations</artifactId>
-                <version>2.13.2</version>
+                <version>${jackson.version}</version>
             </dependency>
 
             <dependency>
@@ -279,13 +206,13 @@
             <dependency>
                 <groupId>com.google.flatbuffers</groupId>
                 <artifactId>flatbuffers-java</artifactId>
-                <version>1.10.0</version>
+                <version>${flatbuffers-java.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>com.google.flatbuffers</groupId>
                 <artifactId>flatbuffers-java-grpc</artifactId>
-                <version>1.10.0</version>
+                <version>${flatbuffers-java.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.grpc</groupId>
@@ -321,17 +248,12 @@
                 <version>${protobuf.version}</version>
             </dependency>
 
-            <dependency>
-                <groupId>org.json</groupId>
-                <artifactId>json</artifactId>
-                <version>20151123</version>
-                <scope>compile</scope>
-            </dependency>
+
 
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-annotations</artifactId>
-                <version>2.13.2</version>
+                <version>${jackson.version}</version>
             </dependency>
 
             <dependency>
@@ -357,11 +279,7 @@
                 <artifactId>grpc-protobuf</artifactId>
                 <version>${grpc.version}</version>
             </dependency>
-            <dependency>
-                <groupId>com.google.protobuf</groupId>
-                <artifactId>protobuf-java-util</artifactId>
-                <version>${protobuf.version}</version>
-            </dependency>
+
 
             <dependency>
                 <groupId>io.grpc</groupId>
@@ -369,28 +287,18 @@
                 <version>${grpc.version}</version>
             </dependency>
 
-            <dependency>
-               <groupId>org.apache.httpcomponents</groupId>
-                <artifactId>httpclient</artifactId>
-                <version>4.5.7</version>
-            </dependency>
-            <dependency>
-                <groupId>commons-net</groupId>
-                <artifactId>commons-net</artifactId>
-                <version>3.8.0</version>
-            </dependency>
 
             <dependency>
                 <groupId>com.googlecode.protobuf-java-format</groupId>
                 <artifactId>protobuf-java-format</artifactId>
-                <version>1.2</version>
+                <version>${protobuf-java-format.version}</version>
             </dependency>
 
 
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpclient</artifactId>
-                <version>4.5.13</version>
+                <version>${httpclient.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

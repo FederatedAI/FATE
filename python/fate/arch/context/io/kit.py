@@ -2,7 +2,7 @@ from typing import Protocol
 
 from fate.components import Artifact, DatasetArtifact, MetricArtifact, ModelArtifact
 
-from ...unify import URI
+from ...unify import URI, EggrollURI
 
 
 class Reader(Protocol):
@@ -82,9 +82,14 @@ class IOKit:
                     return CSVReader(ctx, name, uri, metadata)
 
                 elif writer_format == "dataframe":
-                    from .data.dataframe import DataFrameReader
+                    from .data.file import FileDataFrameReader
 
-                    return DataFrameReader(ctx, name, uri, {})
+                    return FileDataFrameReader(ctx, name, uri.to_schema(), {})
+            elif uri.schema == "eggroll":
+                if writer_format == "dataframe":
+                    from .data.eggroll import EggrollDataFrameReader
+
+                    return EggrollDataFrameReader(ctx, uri.to_schema(), {})
         raise NotImplementedError(f"{artifact}")
 
     def writer(self, ctx, artifact: Artifact, **kwargs) -> "Writer":
@@ -120,6 +125,7 @@ class IOKit:
                 from .model.http import HTTPModelWriter
 
                 return HTTPModelWriter(ctx, name, uri, metadata)
+
         if isinstance(artifact, DatasetArtifact):
             uri = URI.from_string(artifact.uri)
             if uri.schema == "file":
@@ -129,7 +135,12 @@ class IOKit:
                     return CSVWriter(ctx, name, uri, metadata)
 
                 elif writer_format == "dataframe":
-                    from .data.dataframe import DataFrameWriter
+                    from .data.file import FileDataFrameWriter
 
-                    return DataFrameWriter(ctx, name, uri.path, {})
+                    return FileDataFrameWriter(ctx, name, uri.to_schema(), {})
+            elif uri.schema == "eggroll":
+                if writer_format == "dataframe":
+                    from .data.eggroll import EggrollDataFrameWriter
+
+                    return EggrollDataFrameWriter(ctx, uri.to_schema(), {})
         raise NotImplementedError(f"{artifact}")

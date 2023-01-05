@@ -15,6 +15,8 @@
 #
 
 
+from typing import Optional
+
 from eggroll.core.session import session_init
 from eggroll.roll_pair.roll_pair import runtime_init
 
@@ -47,21 +49,18 @@ class CSession(CSessionABC):
         return self._session_id
 
     @computing_profile
-    def load(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
+    def load(self, address: AddressABC, partitions: Optional[int], schema: dict, **kwargs):
 
         from ...common.address import EggRollAddress
         from ...storage import EggRollStoreType
 
         if isinstance(address, EggRollAddress):
             options = kwargs.get("option", {})
-            options["total_partitions"] = partitions
-            options["store_type"] = kwargs.get(
-                "store_type", EggRollStoreType.ROLLPAIR_LMDB
-            )
+            if partitions is not None:
+                options["total_partitions"] = partitions
+            options["store_type"] = kwargs.get("store_type", EggRollStoreType.ROLLPAIR_LMDB)
             options["create_if_missing"] = False
-            rp = self._rpc.load(
-                namespace=address.namespace, name=address.name, options=options
-            )
+            rp = self._rpc.load(namespace=address.namespace, name=address.name, options=options)
             if rp is None or rp.get_partitions() == 0:
                 raise RuntimeError(f"no exists: {address.name}, {address.namespace}")
 
@@ -79,15 +78,7 @@ class CSession(CSessionABC):
 
         from ...common.address import PathAddress
 
-        if isinstance(address, PathAddress):
-            from ...computing import ComputingEngine
-            from ...computing.non_distributed import LocalData
-
-            return LocalData(address.path, engine=ComputingEngine.EGGROLL)
-
-        raise NotImplementedError(
-            f"address type {type(address)} not supported with eggroll backend"
-        )
+        raise NotImplementedError(f"address type {type(address)} not supported with eggroll backend")
 
     @computing_profile
     def parallelize(self, data, partition: int, include_key: bool, **kwargs) -> Table:
@@ -116,7 +107,5 @@ class CSession(CSessionABC):
         try:
             self.stop()
         except Exception as e:
-            LOGGER.warning(
-                f"stop storage session {self.session_id} failed, try to kill", e
-            )
+            LOGGER.warning(f"stop storage session {self.session_id} failed, try to kill", e)
             self.kill()
