@@ -1,4 +1,4 @@
-from .._tensor import Tensor
+from .._tensor import DStorage, Tensor
 from ..types import Shape
 from ._ops import _get_dispatch_info, dispatch_signature2
 
@@ -37,19 +37,24 @@ def matmul(a: Tensor, b: Tensor) -> Tensor:
     if mul_shape_a.size[-1] != mul_shape_b.size[0]:
         raise ValueError("matmul: dimension mismatch: should be (..., n) x (...,n,?)")
 
-    if mul_shape_a.is_d_axis(-2):
-        raise ValueError(f"not supported distributed axis position (...,d,?) for left tensor {a}")
-    if mul_shape_b.is_d_axis(-1):
-        raise ValueError("not supported distributed axis position (...,?,d) for right tensor {b}")
+    if mul_shape_a.is_d_axis(-2) and mul_shape_b.is_d_axis(-1):
+        raise ValueError(
+            f"not supported distributed axis position (...,d,?) for left tensor {a} and distributed axis position (...,?,d) for right tensor {b}"
+        )
 
-    out_storage = a.storage.blocks.join(
-        b.storage.blocks,
-        apply_transpose(
-            local_ops.matmul,
-            a.storage.transposed,
-            b.storage.transposed,
-        ),
-    ).reduce(local_ops.add)
+    if mul_shape_a.is_d_axis(-2) and mul_shape_b.d_axis is None:
+        out_storage = DStorage.elemwise_bc_op(a.storage, b.storage, lambda l, r: local_ops.matmul(l, r))
+    elif mul_shape_b.is_d_axis(-1) and mul_shape_a.d_axis is None:
+        out_storage = DStorage.elemwise_bc_op(a.storage, b.storage, lambda l, r: local_ops.matmul(l, r))
+    else:
+        out_storage = a.storage.blocks.join(
+            b.storage.blocks,
+            apply_transpose(
+                local_ops.matmul,
+                a.storage.transposed,
+                b.storage.transposed,
+            ),
+        ).reduce(local_ops.add)
     return Tensor(out_storage)
 
 
