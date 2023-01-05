@@ -1,5 +1,5 @@
 from .._tensor import DStorage, Tensor
-from ..types import Shape
+from ..types import DAxis, Shape
 from ._ops import _get_dispatch_info, dispatch_signature2
 
 
@@ -43,10 +43,18 @@ def matmul(a: Tensor, b: Tensor) -> Tensor:
         )
 
     if mul_shape_a.is_d_axis(-2) and mul_shape_b.d_axis is None:
-        out_storage = DStorage.elemwise_bc_op(
-            a.storage, b.storage, lambda l, r: local_ops.matmul(l, r), shape=bs_shape
+        shape = Shape(
+            size=[*bs_shape.size, mul_shape_a.size[0], mul_shape_b.size[-1]],
+            d_axis=DAxis(len(bs_shape.size) + mul_shape_a.d_axis.axis, mul_shape_a.d_axis.partitions),
         )
+        out_storage = DStorage.elemwise_bc_op(a.storage, b.storage, lambda l, r: local_ops.matmul(l, r), shape=shape)
     elif mul_shape_b.is_d_axis(-1) and mul_shape_a.d_axis is None:
+        shape = (
+            Shape(
+                size=[*bs_shape.size, mul_shape_a.size[0], mul_shape_b.size[-1]],
+                d_axis=DAxis(len(bs_shape.size) + mul_shape_b.d_axis.axis, mul_shape_b.d_axis.partitions),
+            ),
+        )
         out_storage = DStorage.elemwise_bc_op(
             a.storage, b.storage, lambda l, r: local_ops.matmul(l, r), shape=bs_shape
         )
