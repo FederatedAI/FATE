@@ -95,7 +95,6 @@ class OSXFederationSpec(pydantic.BaseModel):
 
         federation_id: str
         parties: FederationPartiesSpec
-        route_table: dict
         osx_config: OSXConfig
 
     type: Literal["osx"]
