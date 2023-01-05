@@ -39,7 +39,7 @@ class FileDataFrameReader:
             data = json.load(fin)
 
         table = self.ctx.computing.parallelize(data, include_key=True, partition=1)
-        data.schema = schema
+        table.schema = schema
         df = dataframe.deserialize(self.ctx, table)
 
         return Dataframe(df, df.shape[1], df.shape[0])
