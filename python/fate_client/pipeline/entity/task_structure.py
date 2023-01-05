@@ -75,7 +75,8 @@ class RuntimeConfSpec(BaseModel):
 
 
 class TaskScheduleSpec(BaseModel):
-    taskid: str
+    task_id: str
+    party_task_id: str
     component: str
     role: str
     stage: str

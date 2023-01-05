@@ -24,7 +24,7 @@ from ...abc import AddressABC, CSessionABC
 from ...common.base_utils import fate_uuid
 from ...common.log import getLogger
 from ...common.profile import computing_profile
-from ...computing.eggroll import Table
+from ._table import Table
 
 LOGGER = getLogger()
 

@@ -11,22 +11,22 @@ class SQLiteStatusManager(object):
     def create_status_manager(cls, status_uri):
         return SQLiteStatusManager(status_uri)
 
-    def monitor_finish_status(self, task_ids: list):
-        for task_id in task_ids:
-            task_run = self._meta_manager.get_or_create_task(task_id)
+    def monitor_finish_status(self, party_task_ids: list):
+        for party_task_id in party_task_ids:
+            task_run = self._meta_manager.get_or_create_task(party_task_id)
             state = task_run.properties["state"].string_value
             if state in ["INIT", "running"]:
                 return False
 
         return True
 
-    def record_task_status(self, task_id, status):
-        self._meta_manager.update_task_state(task_id, status)
+    def record_task_status(self, party_task_id, status):
+        self._meta_manager.update_task_state(party_task_id, status)
 
-    def record_terminate_status(self, task_ids):
-        for task_id in task_ids:
+    def record_terminate_status(self, party_task_ids):
+        for party_task_id in party_task_ids:
             # task_run = self._meta_manager.get_or_create_task(execution_id)
-            self._meta_manager.set_task_safe_terminate_flag(task_id)
+            self._meta_manager.set_task_safe_terminate_flag(party_task_id)
 
     def get_task_results(self, tasks_info):
         """
@@ -41,7 +41,7 @@ class SQLiteStatusManager(object):
             if role not in summary_msg:
                 summary_msg[role] = dict()
 
-            task_run = self._meta_manager.get_or_create_task(task_info.task_id)
+            task_run = self._meta_manager.get_or_create_task(task_info.party_task_id)
             status = task_run.properties["state"].string_value
 
             summary_msg[role][party_id] = status

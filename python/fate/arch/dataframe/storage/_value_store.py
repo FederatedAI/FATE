@@ -42,3 +42,7 @@ class ValueStore(object):
 
     def tolist(self):
         return self.to_local().tolist()
+
+    @staticmethod
+    def values(self):
+        return self._data

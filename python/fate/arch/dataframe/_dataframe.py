@@ -2,7 +2,8 @@ import copy
 import operator
 import torch
 from .ops import stat_method, arith_method, transform_to_predict_result
-from .storage import ValueStore
+from .storage import ValueStore, Index
+from fate.arch.computing import is_table
 
 
 # TODO: record data type, support multiple data types
@@ -78,24 +79,13 @@ class DataFrame(object):
         return stat_method(self._values, "min", *args, index=self._schema.header, **kwargs)
 
     def mean(self, *args, **kwargs) -> "DataFrame":
-        """
-        TODO: re-implement later
-        """
-        import pandas as pd
-        std_ret = self._values[0]
-        dtype = str(std_ret.dtype.to_torch_dtype()).split(".", -1)[-1]
-        return pd.Series(std_ret.tolist(), index=self._schema.header, dtype=dtype)
-        # return stat_method(self._values, "mean", *args, index=self._schema["header"], **kwargs)
+        return stat_method(self._values, "mean", *args, index=self._schema.header, **kwargs)
 
     def sum(self, *args, **kwargs) -> "DataFrame":
         return stat_method(self._values, "sum", *args, index=self._schema.header, **kwargs)
 
     def std(self, *args, **kwargs) -> "DataFrame":
-        import pandas as pd
-        std_ret = self._values[1]
-        dtype = str(std_ret.dtype.to_torch_dtype()).split(".", -1)[-1]
-        return pd.Series(std_ret.tolist(), index=self._schema.header, dtype=dtype)
-        # return stat_method(self._values, "std", *args, index=self._schema["header"], **kwargs)
+        return stat_method(self._values, "std", *args, index=self._schema.header, **kwargs)
 
     def count(self) -> "int":
         return self.shape[0]
@@ -171,7 +161,7 @@ class DataFrame(object):
     def _retrieval_attr(self) -> dict:
         return dict(
             ctx=self._ctx,
-            schema=self._schema,
+            schema=self._schema.dict(),
             index=self._index,
             values=self._values,
             label=self._label,
@@ -192,33 +182,86 @@ class DataFrame(object):
 
         return indexes
 
-    def loc(self, ids):
+    def loc(self, ids, with_partition_id=True):
         # this is very costly, use iloc is better
         # TODO: if data is not balance, repartition is need?
-        if not isinstance(ids, (int, list)):
-            raise ValueError(f"loc function accepts single id or list of ids, but {ids} found")
-
         if isinstance(ids, int):
             ids = [ids]
 
-        indexes = self._index.get_indexer(ids)
+        indexes = self._index.get_indexer(ids, with_partition_id)
 
         return self.iloc(indexes)
 
     def iloc(self, indexes):
         # TODO: if data is not balance, repartition is need?
-        if not isinstance(indexes, (int, list)):
-            raise ValueError(f"iloc function accepts single integer or list of integers, but {indexes} found")
+        if self.is_local:
+            if is_table(indexes):
+                raise ValueError("Local dataframe does not support table indexer")
+                # indexes = indexes.reduce(lambda l1, l2: l1 + l2)
 
-        weight = self._weight[indexes] if self._weight else None
-        label = self._label[indexes] if self._label else None
-        values = self._values[indexes] if self._values else None
-        match_id = self._match_id[indexes] if self._match_id else None
-        index = self._index[indexes] if self._index else None
+            weight = self._weight[indexes] if self._weight else None
+            label = self._label[indexes] if self._label else None
+            values = self._values[indexes] if self._values else None
+            match_id = self._match_id[indexes] if self._match_id else None
+            index = self._index[indexes]
+        elif isinstance(indexes, (int, list)) or is_table(indexes):
+            if isinstance(indexes, int):
+                indexes = [indexes]
+
+            """
+            indexer: [(old_partition_id, old_block_index), (new_partition_id, new_block_index)]
+            note: new_block_index may not be continuous
+            """
+            if isinstance(indexes, list):
+                indexes = self._index.change_index_list_to_indexer(indexes)
+            """
+            agg_indexer: key=old_partition_id, value=[old_block_index, (new_partition_id, new_block_index)]
+            """
+            agg_indexer = Index.aggregate_indexer(indexes)
+
+            # TODO: distributed tensor does not provider slice api, need to fix later
+            def _iloc_tensor(distributed_tensor):
+                blocks = distributed_tensor.storage.blocks
+                dtype = blocks.first()[1].dtype.name
+
+                def _retrieval_func(kvs):
+                    ret = dict()
+                    for partition_id_key, (t, mappings) in kvs:
+                        t = t.to_local().data.tolist()
+                        for old_block_index, (new_partition_id, new_block_index) in mappings:
+                            t_value = t[old_block_index]
+
+                            if new_partition_id not in ret:
+                                ret[new_partition_id] = []
+                            ret[new_partition_id].append((new_block_index, t_value))
+
+                    return list(ret.items())
+
+                blocks = blocks.join(agg_indexer, lambda ten, block_mapping: (ten, block_mapping))
+                blocks = blocks.mapReducePartitions(_retrieval_func, lambda l1, l2: l1 + l2)
+                blocks = blocks.mapValues(lambda block: sorted(block, key = lambda buf: buf[0]))
+                blocks = blocks.mapValues(
+                    lambda block: torch.tensor([value[1] for value in block], dtype=getattr(torch, dtype)))
+                blocks = [block for pid, block in sorted(list(blocks.collect()))]
+
+                from fate.arch import tensor
+                return tensor.distributed_tensor(
+                    self._ctx,
+                    blocks,
+                    partitions=len(blocks)
+                )
+
+            weight = _iloc_tensor(self._weight) if self._weight else None
+            label = _iloc_tensor(self._label) if self._label else None
+            values = _iloc_tensor(self._values) if self._values else None
+            match_id = _iloc_tensor(self._match_id) if self._match_id else None
+            index = self._index[indexes]
+        else:
+            raise ValueError(f"iloc function dose not support args type={type(indexes)}")
 
         return DataFrame(
             self._ctx,
-            self._schema,
+            self._schema.dict(),
             index=index,
             match_id=match_id,
             label=label,
@@ -244,6 +287,19 @@ class DataFrame(object):
             self._schema.dict(),
             **ret_dict
         )
+
+    @property
+    def is_local(self):
+        if self._values is not None:
+            return not self._values.is_distributed
+        if self._weight is not None:
+            return not self._weight.is_distributed
+        if self.label is not None:
+            return not self._label.is_distributed
+        if self._match_id is not None:
+            return not self._match_id.is_distributed
+
+        return False
 
     def transform_to_predict_result(self, predict_score, data_type="train", task_type="binary",
                                     classes=None, threshold=0.5):

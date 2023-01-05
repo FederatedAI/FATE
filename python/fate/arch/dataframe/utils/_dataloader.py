@@ -3,8 +3,8 @@ import random
 import numpy as np
 import pandas as pd
 import torch
+from fate.arch.context.io.data import df
 from fate.arch.dataframe import PandasReader, TorchDataSetReader
-
 
 class DataLoader(object):
     def __init__(
@@ -36,6 +36,8 @@ class DataLoader(object):
         self._init_settings()
 
     def _init_settings(self):
+        if isinstance(self._dataset, df.Dataframe):
+            self._dataset = self._dataset.data
         """
         if isinstance(self._dataset, pd.DataFrame):
             self._dataset = PandasReader().to_frame(self._ctx, self._dataset)
@@ -129,9 +131,6 @@ class FullBatchDataLoader(object):
         if self._role == "arbiter":
             return
 
-        # TODO: need to modify later, in mini-demo stage, only local tensor is supported
-        self._dataset = self._dataset.to_local()
-
         if self._batch_size == len(self._dataset):
             self._batch_splits.append(self._dataset)
         else:
@@ -158,8 +157,6 @@ class FullBatchDataLoader(object):
                     batch_indexes = iter_ctx.guest.get("batch_indexes")
                     sub_frame = self._dataset.loc(batch_indexes)
                     self._batch_splits.append(sub_frame)
-
-        # TODO: the following is just for mini-demo
 
     def __next__(self):
         if self._role == "arbiter":

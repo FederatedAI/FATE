@@ -27,9 +27,13 @@ class StandaloneFederationSpec(pydantic.BaseModel):
 
 class EggrollFederationSpec(pydantic.BaseModel):
     class MetadataSpec(pydantic.BaseModel):
+        class EggrollConfig(pydantic.BaseModel):
+            host: str
+            port: int
+
         federation_id: str
-        proxy_endpoint: str
         parties: FederationPartiesSpec
+        eggroll_config: EggrollConfig
 
     type: Literal["eggroll"]
     metadata: MetadataSpec
