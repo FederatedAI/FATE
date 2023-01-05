@@ -31,7 +31,7 @@ def t1(ctx):
 @fixture
 def t3():
     return tensor.tensor(
-        torch.tensor([[1.0, 2.0, 3.0, 4.0, 5.0, 6.0], [1.0, 2.0, 3.0, 4.0, 5.0, 6.0], [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]]),
+        torch.tensor([[1.0], [1.0], [1.0]]),
     )
 
 
@@ -56,6 +56,6 @@ def t4():
 
 
 def test_1(t1, t3):
-    print(t1.to_local())
+    print(t1)
     print(t3)
-    print(tensor.matmul(t1, t3).to_local())
+    print(tensor.matmul(t1, t3))
