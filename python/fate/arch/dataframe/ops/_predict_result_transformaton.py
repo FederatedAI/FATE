@@ -11,13 +11,15 @@ def transform_to_predict_result(ctx, predict_score, data_type="train", task_type
     if task_type == "regression":
         ...
     elif task_type == "binary":
-        # TODO: now predict_score is only local_tensor, need to optimize later
-        predict_score_local = predict_score.storage.data
-        predict_score = ctx.computing.parallelize(
-            [predict_score_local],
-            include_key=False,
-            partition=1
-        )
+        if predict_score.is_distributed:
+            predict_score = predict_score.storage.blocks.mapValues(lambda t: t.to_local().data)
+        else:
+            predict_score_local = predict_score.storage.data
+            predict_score = ctx.computing.parallelize(
+                [predict_score_local],
+                include_key=False,
+                partition=1
+            )
 
         to_predict_result_func = functools.partial(_predict_score_to_binary_result,
                                                    header=transform_header,

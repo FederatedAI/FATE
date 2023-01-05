@@ -1,10 +1,11 @@
 import pandas as pd
+from ..storage import ValueStore
 
 
 FRAME_SCHEME = "fate.dataframe"
 
 
-def build_schema(data, global_ranks):
+def build_schema(data):
     fields = []
     schema = data.schema
     """
@@ -60,6 +61,8 @@ def build_schema(data, global_ranks):
                         source="pd.dataframe"
                     )
                 )
+        elif isinstance(values, ValueStore):
+            ...
         else:
             for col_name in columns:
                 fields.append(
@@ -73,7 +76,8 @@ def build_schema(data, global_ranks):
 
     built_schema = dict()
     built_schema["fields"] = fields
-    built_schema["global_ranks"] = global_ranks
+    built_schema["global_ranks"] = data.index.global_ranks
+    built_schema["block_partition_mapping"] = data.index.block_partition_mapping
     built_schema["type"] = FRAME_SCHEME
     return built_schema
 
@@ -120,4 +124,4 @@ def parse_schema(schema):
                                          source=field["source"])
             break
 
-    return recovery_schema, schema["global_ranks"], column_info
+    return recovery_schema, schema["global_ranks"], schema["block_partition_mapping"], column_info
