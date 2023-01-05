@@ -43,9 +43,13 @@ def matmul(a: Tensor, b: Tensor) -> Tensor:
         )
 
     if mul_shape_a.is_d_axis(-2) and mul_shape_b.d_axis is None:
-        out_storage = DStorage.elemwise_bc_op(a.storage, b.storage, lambda l, r: local_ops.matmul(l, r))
+        out_storage = DStorage.elemwise_bc_op(
+            a.storage, b.storage, lambda l, r: local_ops.matmul(l, r), shape=bs_shape
+        )
     elif mul_shape_b.is_d_axis(-1) and mul_shape_a.d_axis is None:
-        out_storage = DStorage.elemwise_bc_op(a.storage, b.storage, lambda l, r: local_ops.matmul(l, r))
+        out_storage = DStorage.elemwise_bc_op(
+            a.storage, b.storage, lambda l, r: local_ops.matmul(l, r), shape=bs_shape
+        )
     else:
         out_storage = a.storage.blocks.join(
             b.storage.blocks,

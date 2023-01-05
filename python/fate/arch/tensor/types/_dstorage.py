@@ -217,6 +217,7 @@ class DStorage:
         b: "DStorage",
         func: Callable[[LStorage, LStorage], LStorage],
         output_dtype=None,
+        shape=None,
         **kwargs,
     ):
         def _apply_transpose(func, lf, rf):
@@ -239,7 +240,9 @@ class DStorage:
             raise RuntimeError("exactly one DStorage required")
         if output_dtype is None:
             output_dtype = a._dtype
-        return DStorage(output_blocks, a.shape, output_dtype, a._device)
+        if shape is None:
+            shape = a.shape
+        return DStorage(output_blocks, shape, output_dtype, a._device)
 
     def local_ops_helper(self):
         from ..storage._helper import local_ops_helper
