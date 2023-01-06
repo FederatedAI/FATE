@@ -41,5 +41,16 @@ def read_data(ctx, path, format, id_name, delimiter, label_name, label_type, dty
                 dtype=dtype,
             ),
         )
-        data = ctx.reader(data_meta).read_dataframe()
-        ctx.writer(output_data).write_dataframe(data)
+    elif format == "raw_table":
+        data_meta = DatasetArtifact(
+            uri=path,
+            name="data",
+            metadata=dict(
+                format=format
+            )
+        )
+    else:
+        raise ValueError(f"Reader does not support format={format}")
+
+    data = ctx.reader(data_meta).read_dataframe()
+    ctx.writer(output_data).write_dataframe(data)
