@@ -50,11 +50,12 @@ def train(ctx, train_data, train_output_data, output_model, method):
 
     scaler = FeatureScale(method)
     with ctx.sub_ctx("train") as sub_ctx:
-        train_data = sub_ctx.reader(train_data).read_dataframe().data.to_local()
+        train_data = sub_ctx.reader(train_data).read_dataframe().data
         scaler.fit(sub_ctx, train_data)
 
         model = scaler.to_model()
-        sub_ctx.writer(output_model).write_model(model)
+        with output_model as model_writer:
+            model_writer.write_model("feature_scale", model, metadata={})
 
     with ctx.sub_ctx("predict") as sub_ctx:
         output_data = scaler.transform(sub_ctx, train_data)
@@ -65,7 +66,8 @@ def predict(ctx, input_model, test_data, test_output_data):
     from fate.ml.feature_scale import FeatureScale
 
     with ctx.sub_ctx("predict") as sub_ctx:
-        model = sub_ctx.reader(input_model).read_model()
+        with input_model as model_reader:
+            model = model_reader.read_model()
         scaler = FeatureScale.from_model(model)
         test_data = sub_ctx.reader(test_data).read_dataframe().data
         output_data = scaler.transform(sub_ctx, test_data)
