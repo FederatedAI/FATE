@@ -6,10 +6,10 @@ from .artifact import ArtifactSpec
 from .computing import EggrollComputingSpec, SparkComputingSpec, StandaloneComputingSpec
 from .device import CPUSpec, GPUSpec
 from .federation import (
-    EggrollFederationSpec,
     OSXFederationSpec,
     PulsarFederationSpec,
     RabbitMQFederationSpec,
+    RollSiteFederationSpec,
     StandaloneFederationSpec,
 )
 from .logger import CustomLogger, FlowLogger, PipelineLogger
@@ -27,7 +27,7 @@ class TaskConfigSpec(pydantic.BaseModel):
         computing: Union[StandaloneComputingSpec, EggrollComputingSpec, SparkComputingSpec]
         federation: Union[
             StandaloneFederationSpec,
-            EggrollFederationSpec,
+            RollSiteFederationSpec,
             RabbitMQFederationSpec,
             PulsarFederationSpec,
             OSXFederationSpec,
