@@ -130,9 +130,6 @@ def _serialize_distributed(ctx, data):
 
     serialize_data.schema = schema
     return serialize_data
-    # data_dict = dict(data=sorted(list(serialize_data.collect())),
-    #                  schema=schema)
-    # return data_dict
 
 
 def serialize(ctx, data):
@@ -143,15 +140,6 @@ def serialize(ctx, data):
 
 
 def deserialize(ctx, data):
-    # local_data = data["data"]
-    # schema = data["schema"]
-    # data = ctx.computing.parallelize(
-    #         local_data,
-    #         include_key=True,
-    #         partition=len(local_data)
-    #     )
-    # data.schema = schema
-
     recovery_schema, global_ranks, block_partition_mapping, column_info = parse_schema(data.schema)
 
     def _recovery_index(kvs):
@@ -203,7 +191,7 @@ def deserialize(ctx, data):
     tensor_keywords = ["weight", "label", "values"]
     for keyword in tensor_keywords:
         if keyword in column_info:
-            if keyword == "values" and column_info["values"]["source"] == "pd.dataframe":
+            if keyword == "values" and column_info["values"]["source"] == "fate.dataframe.value_store":
                 continue
             _recovery_func = functools.partial(
                 _recovery_tensor,
@@ -212,7 +200,7 @@ def deserialize(ctx, data):
             tensors = [tensor for key, tensor in sorted(list(data.mapValues(_recovery_func).collect()))]
             ret_dict[keyword] = _to_distributed_tensor(tensors)
 
-    if "values" in column_info and column_info["values"]["source"] == "pd.dataframe":
+    if "values" in column_info and column_info["values"]["source"] == "fate.dataframe.value_store":
         _recovery_df_func = functools.partial(
             _recovery_distributed_value_store,
             value_info=column_info["values"],
