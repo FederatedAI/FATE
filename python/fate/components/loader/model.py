@@ -94,7 +94,7 @@ class ComponentModelWriter:
 
     def _write_meta(self):
         with tempfile.NamedTemporaryFile("w") as f:
-            yaml.safe_dump(self._get_meta().json(), f)
+            yaml.safe_dump(self._get_meta().dict(), f)
             f.flush()
             self._add(f.name, _MODEL_META_NAME)
 
