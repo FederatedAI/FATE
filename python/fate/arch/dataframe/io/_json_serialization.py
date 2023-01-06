@@ -94,12 +94,17 @@ def _serialize_distributed(ctx, data):
     if data.values is not None:
         if isinstance(data.values, ValueStore):
             value_concat = data.values.values
+            if tensor_concat is not None:
+                value_concat = tensor_concat.join(value_concat,
+                                                  lambda t1, t2: np.concatenate(
+                                                      [t1.to_local().data.numpy(), t2.to_numpy()], axis=-1))
         else:
             value_concat = data.values.storage.blocks.mapValues(lambda t: t.to_local().data)
+            if tensor_concat is not None:
+                value_concat = tensor_concat.join(value_concat,
+                                                  lambda t1, t2: np.concatenate(
+                                                      [t1.to_local().data.numpy(), t2.numpy()], axis=-1))
 
-        if tensor_concat is not None:
-            value_concat = tensor_concat.join(value_concat,
-                                              lambda t1, t2: np.concatenate([t1.to_local().data.numpy(), t2.numpy()], axis=-1))
     else:
         value_concat = tensor_concat
         if value_concat is not None:

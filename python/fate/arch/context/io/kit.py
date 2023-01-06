@@ -90,6 +90,11 @@ class IOKit:
                     from .data.eggroll import EggrollDataFrameReader
 
                     return EggrollDataFrameReader(ctx, uri.to_schema(), {})
+                elif writer_format == "raw_table":
+                    from .data.eggroll import EggrollRawTableReader
+
+                    return EggrollRawTableReader(ctx, name, uri.to_schema(), {})
+
         raise NotImplementedError(f"{artifact}")
 
     def writer(self, ctx, artifact: Artifact, **kwargs) -> "Writer":

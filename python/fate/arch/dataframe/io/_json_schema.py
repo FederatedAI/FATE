@@ -62,7 +62,17 @@ def build_schema(data):
                     )
                 )
         elif isinstance(values, ValueStore):
-            ...
+            dtypes = values.dtypes
+            for col_name in columns:
+                fields.append(
+                    dict(
+                        type=dtypes[col_name].name,
+                        name=col_name,
+                        property="value",
+                        source="fate.dataframe.value_store"
+                    )
+                )
+
         else:
             for col_name in columns:
                 fields.append(

@@ -32,11 +32,11 @@ class RawTableReader(object):
         return self._dense_format_to_frame(ctx, table)
 
     def _dense_format_to_frame(self, ctx, table):
-        table = table.mapValues(lambda value: value.split(self._delimiter, -1))
-
         schema = dict()
         schema["sid"] = table.schema["sid"]
         header = table.schema["header"].split(self._delimiter, -1)
+
+        table = table.mapValues(lambda value: value.split(self._delimiter, -1))
         header_indexes = list(range(len(header)))
         index_table, _block_partition_mapping, _global_ranks = _convert_to_order_indexes(table)
 
@@ -47,7 +47,8 @@ class RawTableReader(object):
             label_idx = header.index(self._label_name)
             header.remove(self._label_name)
             header_indexes.remove(label_idx)
-            label_table = table.mapValues(lambda value: [value[label_idx]])
+            label_type = getattr(torch, self._label_type)
+            label_table = table.mapValues(lambda value: [label_type(value[label_idx])])
             data_dict["label"] = _convert_to_tensor(ctx,
                                                     label_table,
                                                     block_partition_mapping=_block_partition_mapping,
@@ -70,7 +71,7 @@ class RawTableReader(object):
             schema["weight_name"] = self._weight_name
 
         if header_indexes:
-            value_table = table.mapValues(lambda value: np.array(value_table)[header_indexes].tolist())
+            value_table = table.mapValues(lambda value: np.array(value)[header_indexes].astype(self._dtype).tolist())
             data_dict["values"] = _convert_to_tensor(ctx,
                                                      value_table,
                                                      block_partition_mapping=_block_partition_mapping,
