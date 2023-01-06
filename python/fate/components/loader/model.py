@@ -16,6 +16,9 @@ def load_input_model_wrapper():
     return ComponentModelLoaderWrapper()
 
 
+_MODEL_META_NAME = "FMLModel.yaml"
+
+
 class ComponentModelWriterWrapper:
     def __init__(self, cpn, federation, task_id, party_task_id, role, party_id) -> None:
         self.task_id = task_id
@@ -93,7 +96,7 @@ class ComponentModelWriter:
         with tempfile.NamedTemporaryFile("w") as f:
             yaml.safe_dump(self._get_meta().json(), f)
             f.flush()
-            self._add(f.name, "FMLModel.yaml")
+            self._add(f.name, _MODEL_META_NAME)
 
     def write_model(self, name, model, metadata, created_time=None):
         if created_time is None:
@@ -129,8 +132,8 @@ class ComponentModelLoader:
             if self._tar is None:
                 raise ValueError(f"should open first")
             with tempfile.TemporaryDirectory() as d:
-                path = f"{d}/FMLModel.yaml"
-                self._tar.extract("FMLModel.yaml", path)
+                path = f"{d}/{_MODEL_META_NAME}"
+                self._tar.extract(_MODEL_META_NAME, d)
                 with open(path, "r") as f:
                     meta = yaml.safe_load(f)
 
@@ -145,8 +148,8 @@ class ComponentModelLoader:
         model_name = model_info.name
         with tempfile.TemporaryDirectory() as d:
             path = f"{d}/{model_name}"
-            self._tar.extract(model_name, path)
-            with open(model_name, "r") as f:
+            self._tar.extract(model_name, d)
+            with open(path, "r") as f:
                 return json.load(f)
 
 
