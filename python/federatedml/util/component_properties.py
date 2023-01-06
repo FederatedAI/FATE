@@ -198,12 +198,17 @@ class ComponentProperties(object):
         data = {}
 
         LOGGER.debug(f"Input data_sets: {datasets}")
-
         for cpn_name, data_dict in datasets.items():
             for data_type in ["train_data", "eval_data", "validate_data", "test_data"]:
                 if data_type in data_dict:
                     d_table = data_dict.get(data_type)
-                    model_data[data_type] = model.obtain_data(d_table)
+                    if data_type in model_data:
+                        if isinstance(model_data[data_type], list):
+                            model_data[data_type].append(model.obtain_data(d_table))
+                        else:
+                            model_data[data_type] = [model_data[data_type], model.obtain_data(d_table)]
+                    else:
+                        model_data[data_type] = model.obtain_data(d_table)                      
                     del data_dict[data_type]
 
             if len(data_dict) > 0:
@@ -302,7 +307,11 @@ class ComponentProperties(object):
         running_funcs = RunningFuncs()
         schema = None
         for d in [train_data, validate_data, test_data]:
-            if d is not None:
+            if isinstance(d, list):
+                if d[0] is not None:
+                    schema = d[0].schema
+                    break
+            elif d is not None:
                 schema = d.schema
                 break
 
