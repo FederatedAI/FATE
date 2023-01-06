@@ -98,7 +98,7 @@ class EggrollURI(ConcrateURI):
         return EggrollURI(namespace=self.namespace, name=name)
 
     def to_string(self):
-        return f"eggroll://{self.namespace}/{self.name}"
+        return f"eggroll:///{self.namespace}/{self.name}"
 
 
 @dataclass
