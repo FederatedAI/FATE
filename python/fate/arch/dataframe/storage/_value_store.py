@@ -7,6 +7,7 @@ class ValueStore(object):
         self._ctx = ctx
         self._header = header
         self._data = distributed_table
+        self._dtypes = None
 
     def to_local(self, keep_table=False):
         if self._data.partitions == 1 and keep_table:
@@ -43,6 +44,13 @@ class ValueStore(object):
     def tolist(self):
         return self.to_local().tolist()
 
-    @staticmethod
+    @property
+    def dtypes(self):
+        if self._dtypes is None:
+            self._dtypes = self._data.first()[1].dtypes
+
+        return self._dtypes
+
+    @property
     def values(self):
         return self._data
