@@ -39,26 +39,37 @@ class EggrollDataFrameReader:
 
     def read_dataframe(self):
         from fate.arch import dataframe
-        from fate.arch.common.address import EggRollAddress
 
-        meta_key, meta = list(
-            self.ctx.computing.load(
-                address=EggRollAddress(name=self.uri.get_meta_name(), namespace=self.uri.get_meta_namespace()),
-                partitions=1,
-                schema={},
-                **self.metadata,
-            ).collect()
-        )[0]
-        assert meta_key == "schema"
-        num_partitions = self.metadata.get("num_partitions")
-        table = self.ctx.computing.load(
-            address=EggRollAddress(name=self.uri.get_data_name(), namespace=self.uri.get_data_namespace()),
-            partitions=num_partitions,
-            schema=meta,
-            **self.metadata,
-        )
+        table = load_table(self.ctx, self.uri, self.metadata)
         df = dataframe.deserialize(self.ctx, table)
         return df
+
+
+class EggrollRawTableReader:
+    def __init__(self, ctx, name: str, uri: EggrollURI, metadata: dict) -> None:
+        self.name = name
+        self.ctx = ctx
+        self.uri = EggrollMetaURI(uri)
+        self.metadata = metadata
+
+    def read_dataframe(self):
+        import inspect
+
+        from .df import Dataframe
+        from fate.arch import dataframe
+
+        table = load_table(self.ctx, self.uri, self.metadata)
+
+        meta = table.schema.get("meta", {})
+        kwargs = {}
+        p = inspect.signature(dataframe.RawTableReader.__init__).parameters
+        parameter_keys = p.keys()
+        for k, v in meta.items():
+            if k in parameter_keys:
+                kwargs[k] = v
+
+        dataframe_reader = dataframe.RawTableReader(**kwargs).to_frame(self.ctx, table)
+        return Dataframe(dataframe_reader, dataframe_reader.shape[1], dataframe_reader.shape[0])
 
 
 class EggrollMetaURI:
@@ -76,3 +87,26 @@ class EggrollMetaURI:
 
     def get_meta_name(self):
         return f"{self.uri.name}.meta"
+
+
+def load_table(ctx, uri: EggrollMetaURI, metadata: dict):
+    from fate.arch.common.address import EggRollAddress
+
+    meta_key, meta = list(
+        ctx.computing.load(
+            address=EggRollAddress(name=uri.get_meta_name(), namespace=uri.get_meta_namespace()),
+            partitions=1,
+            schema={},
+            **metadata,
+        ).collect()
+    )[0]
+    assert meta_key == "schema"
+    num_partitions = metadata.get("num_partitions")
+    table = ctx.computing.load(
+        address=EggRollAddress(name=uri.get_data_name(), namespace=uri.get_data_namespace()),
+        partitions=num_partitions,
+        schema=meta,
+        **metadata,
+    )
+
+    return table
