@@ -34,6 +34,8 @@ try:
 except ImportError:
     pass
 
+from federatedml.secureprotol.fate_ckks import CKKSKeypair, CKKSPublicKey, CKKSPrivateKey
+
 _TORCH_VALID = False
 try:
     import torch
@@ -310,6 +312,47 @@ class IpclPaillierEncrypt(Encrypt):
         raw_en_func = functools.partial(self.raw_encrypt, exponent=exponent)
         return self._recursive_func(X, raw_en_func)
 
+class CKKSEncrypt(Encrypt):
+    '''
+    Class for performing homomorphic encryption using the CKKS scheme.
+    Uses the library TenSEAL: https://github.com/OpenMined/TenSEAL
+    '''
+    def __init__(self):
+        super(CKKSEncrypt, self).__init__()
+
+    def generate_key(self, poly_modulus_degree=None, coeff_mod_bit_sizes=None, global_scale=2**40):
+        self.public_key, self.privacy_key = CKKSKeypair.generate_keypair(
+            poly_modulus_degree, coeff_mod_bit_sizes, global_scale
+        )
+
+    def get_key_pair(self):
+        return self.public_key, self.privacy_key
+
+    def get_public_key(self):
+        return self.public_key
+
+    def set_public_key(self, public_key):
+        if not isinstance(public_key, CKKSPublicKey):
+            raise TypeError(f"argument 'privacy_key' expects type of CKKSPublicKey, found type of: {type(public_key)}")
+
+    def get_privacy_key(self):
+        return self.privacy_key()
+
+    def set_privacy_key(self, privacy_key):
+        if not isinstance(privacy_key, CKKSPrivateKey):
+            raise TypeError(f"argument 'privacy_key' expects type of CKKSPrivateKey, found type of: {type(privacy_key)}")
+
+    def encrypt(self, value):
+        if self.public_key is None:
+            return None
+
+        return self.public_key.encrypt(value)
+
+    def decrypt(self, value):
+        if self.privacy_key is None:
+            return None
+
+        return self.privacy_key.decrypt(value)
 
 class PadsCipher(Encrypt):
     def __init__(self):
