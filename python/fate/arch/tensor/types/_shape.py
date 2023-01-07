@@ -3,7 +3,7 @@ from typing import List, Optional, overload
 
 
 class DAxis:
-    def __init__(self, axis, partitions) -> None:
+    def __init__(self, axis: int, partitions) -> None:
         self.axis = axis
         self.partitions = partitions
 

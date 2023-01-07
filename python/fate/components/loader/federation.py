@@ -1,9 +1,9 @@
 def load_federation(federation, computing):
     from fate.components.spec.federation import (
-        EggrollFederationSpec,
         OSXFederationSpec,
         PulsarFederationSpec,
         RabbitMQFederationSpec,
+        RollSiteFederationSpec,
         StandaloneFederationSpec,
     )
 
@@ -17,7 +17,7 @@ def load_federation(federation, computing):
             [p.tuple() for p in federation.metadata.parties.parties],
         )
 
-    if isinstance(federation, EggrollFederationSpec):
+    if isinstance(federation, RollSiteFederationSpec):
         from fate.arch.computing.eggroll import CSession
         from fate.arch.federation.eggroll import EggrollFederation
 
@@ -29,7 +29,7 @@ def load_federation(federation, computing):
             rs_session_id=federation.metadata.federation_id,
             party=federation.metadata.parties.local.tuple(),
             parties=[p.tuple() for p in federation.metadata.parties.parties],
-            proxy_endpoint=federation.metadata.proxy_endpoint,
+            proxy_endpoint=f"{federation.metadata.rollsite_config.port}:{federation.metadata.rollsite_config.port}",
         )
 
     if isinstance(federation, RabbitMQFederationSpec):

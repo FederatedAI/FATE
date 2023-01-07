@@ -171,9 +171,11 @@ class RuntimeConstructor(object):
         for party in self._runtime_parties:
             conf = self._construct_runtime_conf(party.role, party.party_id)
             party_task_spec = TaskScheduleSpec(
-                taskid=gen_task_id(self._job_id, self._task_name, party.role, party.party_id),
+                task_id=self._federation_id,
+                party_task_id=gen_task_id(self._job_id, self._task_name, party.role, party.party_id),
                 component=self._component_ref,
                 role=party.role,
+                party_id=party.party_id,
                 stage=self._stage,
                 conf=conf
             )
@@ -212,8 +214,8 @@ class RuntimeConstructor(object):
     def task_conf_path(self, role, party_id):
         return self._task_conf_path[role][party_id]
 
-    def task_id(self, role, party_id):
-        return self._task_schedule_spec[role][party_id].taskid
+    def party_task_id(self, role, party_id):
+        return self._task_schedule_spec[role][party_id].party_task_id
 
     @property
     def status_manager(self):
@@ -224,8 +226,8 @@ class RuntimeConstructor(object):
 
     def retrieval_task_outputs(self):
         for party in self._runtime_parties:
-            task_id = self._task_schedule_spec[party.role][party.party_id].taskid
-            outputs = self._resource_manager.status_manager.get_task_outputs(task_id)
+            party_task_id = self._task_schedule_spec[party.role][party.party_id].party_task_id
+            outputs = self._resource_manager.status_manager.get_task_outputs(party_task_id)
 
             for output_key in self.OUTPUT_KEYS:
                 output_list = outputs.get(output_key)

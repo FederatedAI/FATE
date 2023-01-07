@@ -10,115 +10,82 @@ from .storage import Index
 from ._dataframe import DataFrame
 
 
-class TableReader(object):
+class RawTableReader(object):
     def __init__(self,
-                 input_format="dense",
-                 with_match_id=False,
-                 match_id_name=None,
-                 with_label=False,
-                 label_name="y",
-                 label_type="int",
-                 with_weight=False,
-                 weight_name="weight",
-                 data_type="float64"):
-        self._input_format = input_format
-        self._with_match_id = with_match_id
-        self._match_id_name = match_id_name
-        self._with_label = with_label
+                 delimiter: str = ",",
+                 label_name: typing.Union[None, str] = None,
+                 label_type: str = "int",
+                 weight_name: typing.Union[None, str] = None,
+                 dtype: str = "float32",
+                 input_format: str = "dense"):
+        self._delimiter = delimiter
         self._label_name = label_name
         self._label_type = label_type
-        self._with_weight = with_weight
         self._weight_name = weight_name
-        self._data_type = data_type
-
-        self._block_partition_mapping = None
-
-    def load(self, namespace, name):
-        """
-        :param namespace:
-        :param name:
-        :return:
-        """
-        pass
+        self._dtype = dtype
+        self._input_format = input_format
 
     def to_frame(self, ctx, table):
-        if self._input_format == "dense":
-            return self._dense_format_to_frame(ctx, table)
-        elif self._input_format in ["libsvm", "svmlight", "sparse"]:
-            ...
-        elif self._input_format == "tag_value":
-            ...
+        if self._input_format != "dense":
+            raise ValueError("Only support dense input format in this version.")
+
+        return self._dense_format_to_frame(ctx, table)
 
     def _dense_format_to_frame(self, ctx, table):
+        schema = dict()
+        schema["sid"] = table.schema["sid"]
+        header = table.schema["header"].split(self._delimiter, -1)
 
-        self._block_partition_mapping = _convert_to_order_indexes(table)
+        table = table.mapValues(lambda value: value.split(self._delimiter, -1))
+        header_indexes = list(range(len(header)))
+        index_table, _block_partition_mapping, _global_ranks = _convert_to_order_indexes(table)
 
-        schema = self._process_schema(table.schema,
-                                      self._input_format,
-                                      self._with_match_id,
-                                      self._match_id_name,
-                                      self._with_label,
-                                      self._label_name,
-                                      self._with_weight,
-                                      self._with_weight)
-
-        data_trans = table.mapValues(lambda value: value.split(schema["delimiter"], -1))
         data_dict = {}
-
-        # TODO: String tensor does not support in torch, match_id is not considered yet,
-        #       maybe wrapper of data frame is much better
-        if self._with_match_id:
-            match_id = data_trans.mapValues(lambda value: value[schema["match_id_index"]])
-
-        if self._with_label:
-            label = data_trans.mapValues(lambda value: value[schema["label_index"]])
+        if self._label_name:
+            if self._label_name not in header:
+                raise ValueError("Label name does not exist in header, please have a check")
+            label_idx = header.index(self._label_name)
+            header.remove(self._label_name)
+            header_indexes.remove(label_idx)
+            label_type = getattr(torch, self._label_type)
+            label_table = table.mapValues(lambda value: [label_type(value[label_idx])])
             data_dict["label"] = _convert_to_tensor(ctx,
-                                                    label,
-                                                    block_partition_mapping=self._block_partition_mapping,
+                                                    label_table,
+                                                    block_partition_mapping=_block_partition_mapping,
                                                     dtype=getattr(torch, self._label_type))
+            schema["label_name"] = self._label_name
 
-        if self._with_weight:
-            weight = data_trans.mapValues(lambda value: value[schema["weight_index"]])
+        if self._weight_name:
+            if self._weight_name not in header:
+                raise ValueError("Weight name does not exist in header, please have a check")
+
+            weight_idx = header.index(self._weight_name)
+            header.remove(self._weight_name)
+            header_indexes.remove(weight_idx)
+            weight_table = table.mapValues(lambda value: [value[weight_idx]])
             data_dict["weight"] = _convert_to_tensor(ctx,
-                                                     weight,
-                                                     block_partition_mapping=self._block_partition_mapping,
-                                                     dtype="float64")
-
-        if schema["feature_indexes"]:
-            values = data_trans.mapValues(lambda value: np.array(value)[schema["feature_indexes"]].tolist())
-            data_dict["values"] = _convert_to_tensor(ctx,
-                                                     values,
-                                                     block_partition_mapping=self._block_partition_mapping,
+                                                     weight_table,
+                                                     block_partition_mapping=_block_partition_mapping,
                                                      dtype=getattr(torch, "float64"))
 
-    @staticmethod
-    def _process_schema(schema, input_format, with_match_id, match_id_name,
-                        with_label, label_name, with_weight, weight_name):
-        if input_format == "dense":
-            post_schema = dict()
-            post_schema["sid"] = schema["sid"]
-            post_schema["delimiter"] = schema.get("delimiter", ",")
-            header = schema.get("header", {}).split(post_schema["delimiter"], -1)
+            schema["weight_name"] = self._weight_name
 
-            filter_indexes = []
-            if with_match_id:
-                post_schema["match_id_index"] = header.index(match_id_name)
-                filter_indexes.append(post_schema["match_id_index"])
+        if header_indexes:
+            value_table = table.mapValues(lambda value: np.array(value)[header_indexes].astype(self._dtype).tolist())
+            data_dict["values"] = _convert_to_tensor(ctx,
+                                                     value_table,
+                                                     block_partition_mapping=_block_partition_mapping,
+                                                     dtype=getattr(torch, self._dtype))
+            schema["header"] = header
 
-            if with_label:
-                post_schema["label_index"] = header.index(label_name)
-                filter_indexes.append(post_schema["label_index"])
+        data_dict["index"] = _convert_to_index(ctx,
+                                               index_table,
+                                               block_partition_mapping=_block_partition_mapping,
+                                               global_ranks=_global_ranks)
 
-            if with_weight:
-                post_schema["weight_index"] = header.index(weight_name)
-                filter_indexes.append(post_schema["weight_index"])
-
-            if header:
-                post_schema["feature_indexes"] = list(filter(lambda _id: _id not in filter_indexes, range(len(header))))
-
-            return post_schema
-        else:
-            raise NotImplementedError
+        return DataFrame(ctx=ctx,
+                         schema=schema,
+                         **data_dict)
 
 
 class ImageReader(object):
@@ -215,7 +182,7 @@ class PandasReader(object):
             partition=self._partition
         )
 
-        _block_partition_mapping, _global_ranks = _convert_to_order_indexes(index_table)
+        index_table, _block_partition_mapping, _global_ranks = _convert_to_order_indexes(index_table)
 
         data_dict = {}
         if self._label_name:
@@ -277,6 +244,17 @@ def _convert_to_order_indexes(table):
         block_size = 1 + sum(1 for kv in kvs)
         return {key: block_size}
 
+    def _order_indexes(kvs, rank_dict: dict = None):
+        bid = None
+        order_indexes = []
+        for idx, (k, v) in enumerate(kvs):
+            if bid is None:
+                bid = rank_dict[k]["block_id"]
+
+            order_indexes.append((k, (bid, idx)))
+
+        return order_indexes
+
     block_summary = table.mapPartitions(_get_block_summary).reduce(lambda blk1, blk2: {**blk1, **blk2})
 
     start_index, block_id = 0, 0
@@ -291,18 +269,23 @@ def _convert_to_order_indexes(table):
         start_index += blk_size
         block_id += 1
 
-    return block_partition_mapping, global_ranks
+    order_func = functools.partial(_order_indexes,
+                                   rank_dict=block_partition_mapping)
+    order_table = table.mapPartitions(
+        order_func,
+        use_previous_behavior=False
+    )
+
+    return order_table, block_partition_mapping, global_ranks
 
 
 def _convert_to_index(ctx, table, block_partition_mapping, global_ranks):
-    convert_func = functools.partial(_convert_block,
-                                     block_partition_mapping=block_partition_mapping,
-                                     dtype=str,
-                                     convert_type="index")
-
-    index_table = table.mapPartitions(convert_func, use_previous_behavior=False)
-
-    return Index(ctx, index_table, global_ranks)
+    return Index(
+        ctx,
+        table,
+        block_partition_mapping=block_partition_mapping,
+        global_ranks=global_ranks
+    )
 
 
 def _convert_to_tensor(ctx, table, block_partition_mapping, dtype):

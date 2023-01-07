@@ -25,13 +25,17 @@ class StandaloneFederationSpec(pydantic.BaseModel):
     metadata: MetadataSpec
 
 
-class EggrollFederationSpec(pydantic.BaseModel):
+class RollSiteFederationSpec(pydantic.BaseModel):
     class MetadataSpec(pydantic.BaseModel):
-        federation_id: str
-        proxy_endpoint: str
-        parties: FederationPartiesSpec
+        class RollSiteConfig(pydantic.BaseModel):
+            host: str
+            port: int
 
-    type: Literal["eggroll"]
+        federation_id: str
+        parties: FederationPartiesSpec
+        rollsite_config: RollSiteConfig
+
+    type: Literal["rollsite"]
     metadata: MetadataSpec
 
 
@@ -95,7 +99,6 @@ class OSXFederationSpec(pydantic.BaseModel):
 
         federation_id: str
         parties: FederationPartiesSpec
-        route_table: dict
         osx_config: OSXConfig
 
     type: Literal["osx"]

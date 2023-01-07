@@ -13,11 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from ..common import EngineType, FederatedMode, conf_utils
-from ..computing import ComputingEngine
-from ..federation import FederationEngine
-from ..relation_ship import Relationship
-from ..storage import StorageEngine
 
 
 def get_engine_class_members(engine_class) -> list:
@@ -30,6 +25,12 @@ def get_engine_class_members(engine_class) -> list:
 
 
 def get_engines():
+    from ..common import EngineType, FederatedMode, conf_utils
+    from ..computing import ComputingEngine
+    from ..federation import FederationEngine
+    from ..relation_ship import Relationship
+    from ..storage import StorageEngine
+
     engines = {
         EngineType.COMPUTING: None,
         EngineType.FEDERATION: None,
@@ -37,18 +38,14 @@ def get_engines():
     }
 
     # check service_conf.yaml
-    if (
-        conf_utils.get_base_config("default_engines", {}).get(EngineType.COMPUTING)
-        is None
-    ):
+    if conf_utils.get_base_config("default_engines", {}).get(EngineType.COMPUTING) is None:
         raise RuntimeError(f"must set default_engines on conf/service_conf.yaml")
     default_engines = conf_utils.get_base_config("default_engines")
 
     # computing engine
     if default_engines.get(EngineType.COMPUTING) is None:
         raise RuntimeError(
-            f"{EngineType.COMPUTING} is None,"
-            f"Please check default_engines on conf/service_conf.yaml"
+            f"{EngineType.COMPUTING} is None," f"Please check default_engines on conf/service_conf.yaml"
         )
     engines[EngineType.COMPUTING] = default_engines[EngineType.COMPUTING].upper()
     if engines[EngineType.COMPUTING] not in get_engine_class_members(ComputingEngine):
@@ -66,9 +63,7 @@ def get_engines():
     for t in (EngineType.STORAGE, EngineType.FEDERATION):
         if engines.get(t) is None:
             # use default relation engine
-            engines[t] = Relationship.Computing[engines[EngineType.COMPUTING]][t][
-                "default"
-            ]
+            engines[t] = Relationship.Computing[engines[EngineType.COMPUTING]][t]["default"]
 
     # set default federated mode by federation engine
     if engines[EngineType.FEDERATION] == FederationEngine.STANDALONE:
@@ -83,24 +78,20 @@ def get_engines():
         raise RuntimeError(f"{engines[EngineType.FEDERATION]} is illegal")
 
     for t in [EngineType.FEDERATION]:
-        if (
-            engines[t]
-            not in Relationship.Computing[engines[EngineType.COMPUTING]][t]["support"]
-        ):
-            raise RuntimeError(
-                f"{engines[t]} is not supported in {engines[EngineType.COMPUTING]}"
-            )
+        if engines[t] not in Relationship.Computing[engines[EngineType.COMPUTING]][t]["support"]:
+            raise RuntimeError(f"{engines[t]} is not supported in {engines[EngineType.COMPUTING]}")
 
     return engines
 
 
 def is_standalone():
-    return (
-        get_engines().get(EngineType.FEDERATION).upper() == FederationEngine.STANDALONE
-    )
+    return get_engines().get(EngineType.FEDERATION).upper() == FederationEngine.STANDALONE
 
 
 def get_engines_config_from_conf(group_map=False):
+    from ..common import EngineType, conf_utils
+    from ..relation_ship import Relationship
+
     engines_config = {}
     engine_group_map = {}
     for engine_type in {
@@ -113,9 +104,7 @@ def get_engines_config_from_conf(group_map=False):
     for group_name, engine_map in Relationship.EngineConfMap.items():
         for engine_type, name_maps in engine_map.items():
             for name_map in name_maps:
-                single_engine_config = conf_utils.get_base_config(group_name, {}).get(
-                    name_map[1], {}
-                )
+                single_engine_config = conf_utils.get_base_config(group_name, {}).get(name_map[1], {})
                 if single_engine_config:
                     engine_name = name_map[0]
                     engines_config[engine_type][engine_name] = single_engine_config

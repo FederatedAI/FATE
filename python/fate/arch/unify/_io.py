@@ -45,6 +45,12 @@ class ConcrateURI(metaclass=ABCMeta):
     def from_uri(cls, uri: URI) -> "ConcrateURI":
         ...
 
+    def create_file(self, name):
+        ...
+
+    def to_string(self):
+        ...
+
 
 _EGGROLL_NAME_MAX_SIZE = 128
 
@@ -60,6 +66,12 @@ class FileURI(ConcrateURI):
     @classmethod
     def from_uri(cls, uri: URI):
         return FileURI(uri.path)
+
+    def create_file(self, name):
+        return FileURI(f"{self.path}/{name}")
+
+    def to_string(self):
+        return f"file://{self.path}"
 
 
 @dataclass
@@ -79,6 +91,15 @@ class EggrollURI(ConcrateURI):
             name = hashlib.md5(name.encode(encoding="utf8")).hexdigest()[:_EGGROLL_NAME_MAX_SIZE]
         return EggrollURI(namespace, name)
 
+    def create_file(self, name):
+        name = f"{self.name}_{name}"
+        if len(name) > _EGGROLL_NAME_MAX_SIZE:
+            name = hashlib.md5(name.encode(encoding="utf8")).hexdigest()[:_EGGROLL_NAME_MAX_SIZE]
+        return EggrollURI(namespace=self.namespace, name=name)
+
+    def to_string(self):
+        return f"eggroll:///{self.namespace}/{self.name}"
+
 
 @dataclass
 class HdfsURI(ConcrateURI):
@@ -92,6 +113,15 @@ class HdfsURI(ConcrateURI):
     @classmethod
     def from_uri(cls, uri: URI):
         return HdfsURI(uri.path, uri.authority)
+
+    def create_file(self, name):
+        return HdfsURI(path=f"{self.path}/{name}", authority=self.authority)
+
+    def to_string(self):
+        if self.authority:
+            return f"hdfs://{self.authority}{self.path}"
+        else:
+            return f"hdfs://{self.path}"
 
 
 @dataclass
@@ -107,6 +137,15 @@ class HttpURI(ConcrateURI):
     def from_uri(cls, uri: URI):
         return HttpURI(uri.path, uri.authority)
 
+    def create_file(self, name):
+        return HttpURI(path=f"{self.path}/{name}", authority=self.authority)
+
+    def to_string(self):
+        if self.authority:
+            return f"http://{self.authority}{self.path}"
+        else:
+            return f"http://{self.path}"
+
 
 @dataclass
 class HttpsURI(ConcrateURI):
@@ -121,11 +160,11 @@ class HttpsURI(ConcrateURI):
     def from_uri(cls, uri: URI):
         return HttpsURI(uri.path, uri.authority)
 
+    def create_file(self, name):
+        return HttpURI(path=f"{self.path}/{name}", authority=self.authority)
 
-if __name__ == "__main__":
-    print(URI.from_string("file:///aaa"))
-    print(URI.from_string("eggroll:///namespace/name1/name2").to_schema())
-    print(URI.from_string("eggroll:///namespace/name1/name2"))
-    print(URI.from_string("https://127.0.0.1:9999/test"))
-    print(URI.from_string("hdsf://127.0.0.1:9999/namespace/name"))
-    print(URI.from_string("hive://sage:pass@127.0.0.1:9999/namespace/name"))
+    def to_string(self):
+        if self.authority:
+            return f"https://{self.authority}{self.path}"
+        else:
+            return f"https://{self.path}"
