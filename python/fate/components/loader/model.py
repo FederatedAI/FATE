@@ -47,6 +47,54 @@ class ComponentModelLoaderWrapper:
         return ComponentModelLoader(artifact, io_mlmd)
 
 
+class ModelTarWriteHandler:
+    def __init__(self, tar) -> None:
+        self.tar = tar
+
+    def add_model(self, name, model):
+        with tempfile.NamedTemporaryFile("w") as f:
+            json.dump(model, f)
+            f.flush()
+            self.tar.add(f.name, name)
+
+    def add_meta(self, meta):
+        with tempfile.NamedTemporaryFile("w") as f:
+            yaml.safe_dump(meta, f)
+            f.flush()
+            self.tar.add(f.name, _MODEL_META_NAME)
+
+
+class FileModelTarWriteHandler(ModelTarWriteHandler):
+    def __init__(self, uri) -> None:
+        super().__init__(tarfile.open(uri.path, "w"))
+
+    def close(self):
+        self.tar.close()
+
+    def mlmd_send(self, mlmd, artifact, metadata):
+        mlmd.log_output_model(artifact.name, artifact, metadata=metadata)
+
+
+class HttpModelTarWriteTarHandler(ModelTarWriteHandler):
+    def __init__(self, uri) -> None:
+        self.uri = uri
+        import io
+
+        self.memory_file = io.BytesIO()
+        super().__init__(tarfile.open(uri.path, "w"))
+
+    def close(self):
+        self.tar.close()
+
+    def mlmd_send(self, mlmd, artifact, metadata):
+        import requests
+
+        # TODO: upload
+        response = requests.post(url=self.uri.to_string(), json={"data": self.memory_file})
+
+        mlmd.log_output_model(artifact.name, artifact, metadata=metadata, tarfile=self)
+
+
 class ComponentModelWriter:
     def __init__(self, info: ComponentModelWriterWrapper, artifact, mlmd) -> None:
         self.info = info
@@ -55,29 +103,31 @@ class ComponentModelWriter:
         from fate.arch.unify import URI
 
         self.artifact = artifact
-        self.uri = URI.from_string(artifact.uri)
+        self.uri = URI.from_string(artifact.uri).to_schema()
         self.mlmd = mlmd
+
         self._tar = None
 
     def __enter__(self):
-        self._tar = tarfile.open(self.uri.path, "w")
+        from fate.arch.unify import FileURI, HttpsURI, HttpURI
+
+        if isinstance(self.uri, FileURI):
+            self._tar = FileModelTarWriteHandler(self.uri)
+        elif isinstance(self.uri, (HttpURI, HttpsURI)):
+            self._tar = HttpModelTarWriteTarHandler(self.uri)
+        else:
+            raise NotImplementedError(f"model writer not support uri: {self.uri}")
         return self
 
     def __exit__(self, type, value, trace):
-        if self._tar is None:
-            raise ValueError(f"should open first")
         self._write_meta()
-        self._mlmd_send()
-        self._tar.close()
+        self._get_tar().mlmd_send(self.mlmd, self.artifact, self._get_meta().dict())
+        self._get_tar().close()
 
-    def _mlmd_send(self):
-        metadata = self._get_meta().json()
-        self.mlmd.log_output_model(self.artifact.name, self.artifact, metadata)
-
-    def _add(self, path, name):
+    def _get_tar(self):
         if self._tar is None:
             raise ValueError(f"should open first")
-        self._tar.add(path, name)
+        return self._tar
 
     def _get_meta(self):
         return MLModelSpec(
@@ -93,19 +143,73 @@ class ComponentModelWriter:
         )
 
     def _write_meta(self):
-        with tempfile.NamedTemporaryFile("w") as f:
-            yaml.safe_dump(self._get_meta().dict(), f)
-            f.flush()
-            self._add(f.name, _MODEL_META_NAME)
+        self._get_tar().add_meta(self._get_meta().dict())
 
     def write_model(self, name, model, metadata, created_time=None):
         if created_time is None:
             created_time = datetime.now()
+        self._get_tar().add_model(name, model)
+        self.models.append(MLModelModelSpec(name=name, created_time=created_time, metadata=metadata))
+
+
+class ModelTarReadHandler:
+    def __init__(self, tar) -> None:
+        self.tar = tar
+        self.meta = None
+
+    def add_model(self, name, model):
         with tempfile.NamedTemporaryFile("w") as f:
             json.dump(model, f)
             f.flush()
-            self._add(f.name, name)
-            self.models.append(MLModelModelSpec(name=name, created_time=created_time, metadata=metadata))
+            self.tar.add(f.name, name)
+
+    def add_meta(self, meta):
+        with tempfile.NamedTemporaryFile("w") as f:
+            yaml.safe_dump(meta, f)
+            f.flush()
+            self.tar.add(f.name, _MODEL_META_NAME)
+
+    def get_meta(self):
+        if self.meta is None:
+            with tempfile.TemporaryDirectory() as d:
+                path = f"{d}/{_MODEL_META_NAME}"
+                self.tar.extract(_MODEL_META_NAME, d)
+                with open(path, "r") as f:
+                    meta = yaml.safe_load(f)
+
+            self.meta = MLModelSpec.parse_obj(meta)
+        return self.meta
+
+    def read_model(self, **kwargs):
+        # return first for now, TODO: extend this
+        model_info = self.get_meta().party.models[0]
+        model_name = model_info.name
+        with tempfile.TemporaryDirectory() as d:
+            path = f"{d}/{model_name}"
+            self.tar.extract(model_name, d)
+            with open(path, "r") as f:
+                return json.load(f)
+
+
+class FileModelTarReadHandler(ModelTarReadHandler):
+    def __init__(self, uri) -> None:
+        super().__init__(tarfile.open(uri.path, "r"))
+
+    def close(self):
+        self.tar.close()
+
+
+class HttpModelTarReadTarHandler(ModelTarReadHandler):
+    def __init__(self, uri) -> None:
+        import requests
+
+        # TODO: download tar
+        requests.get(url=uri.to_string()).json().get("data")
+        tar = ...
+        super().__init__(tar)
+
+    def close(self):
+        self.tar.close()
 
 
 class ComponentModelLoader:
@@ -113,44 +217,32 @@ class ComponentModelLoader:
         self.artifact = artifact
         from fate.arch.unify import URI
 
-        self.uri = URI.from_string(artifact.uri)
+        self.uri = URI.from_string(artifact.uri).to_schema()
         self.mlmd = mlmd
         self._tar = None
         self._meta = None
 
     def __enter__(self):
-        self._tar = tarfile.open(self.uri.path, "r")
+        from fate.arch.unify import FileURI, HttpsURI, HttpURI
+
+        if isinstance(self.uri, FileURI):
+            self._tar = FileModelTarReadHandler(self.uri)
+        elif isinstance(self.uri, (HttpURI, HttpsURI)):
+            self._tar = HttpModelTarReadTarHandler(self.uri)
+        else:
+            raise NotImplementedError(f"model writer not support uri: {self.uri}")
         return self
 
     def __exit__(self, type, value, trace):
+        self._get_tar().close()
+
+    def _get_tar(self):
         if self._tar is None:
             raise ValueError(f"should open first")
-        self._tar.close()
-
-    def _get_meta(self):
-        if self._meta is None:
-            if self._tar is None:
-                raise ValueError(f"should open first")
-            with tempfile.TemporaryDirectory() as d:
-                path = f"{d}/{_MODEL_META_NAME}"
-                self._tar.extract(_MODEL_META_NAME, d)
-                with open(path, "r") as f:
-                    meta = yaml.safe_load(f)
-
-            self._meta = MLModelSpec.parse_obj(meta)
-        return self._meta
+        return self._tar
 
     def read_model(self, **kwargs):
-        if self._tar is None:
-            raise ValueError(f"should open first")
-        # return first for now, TODO: extend this
-        model_info = self._get_meta().party.models[0]
-        model_name = model_info.name
-        with tempfile.TemporaryDirectory() as d:
-            path = f"{d}/{model_name}"
-            self._tar.extract(model_name, d)
-            with open(path, "r") as f:
-                return json.load(f)
+        return self._get_tar().read_model(**kwargs)
 
 
 class MLModelComponentSpec(pydantic.BaseModel):
