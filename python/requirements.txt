@@ -55,6 +55,7 @@ impyla==0.18.0
 venv-pack==0.2.0
 fate-crypto==0.3.0
 ipcl-python==2.0.0
+tenseal==0.3.13
 
 # addtional requirements for eggroll
 grpcio==1.46.3
