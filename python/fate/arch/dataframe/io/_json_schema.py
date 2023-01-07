@@ -51,17 +51,7 @@ def build_schema(data):
     if schema.header is not None:
         values = data.values
         columns = schema.header
-        if isinstance(values, pd.DataFrame):
-            for col_name in columns:
-                fields.append(
-                    dict(
-                        type=values[col_name].dtype.name,
-                        name=col_name,
-                        property="value",
-                        source="pd.dataframe"
-                    )
-                )
-        elif isinstance(values, ValueStore):
+        if isinstance(values, ValueStore):
             dtypes = values.dtypes
             for col_name in columns:
                 fields.append(
