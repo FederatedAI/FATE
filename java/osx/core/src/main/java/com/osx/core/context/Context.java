@@ -1,4 +1,4 @@
-package com.osx.core.context;/*
+/*
  * Copyright 2019 The FATE Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@ package com.osx.core.context;/*
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+package com.osx.core.context;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.osx.core.constant.Dict;
@@ -36,12 +36,6 @@ public class Context {
     protected long timestamp = System.currentTimeMillis();
     protected boolean needAssembleException = false;
     protected String actionType;
-
-
-//    public BaseContext setNeedAssembleException(boolean needAssembleException) {
-//        this.needAssembleException = needAssembleException;
-//        return this;
-//    }
     protected String sessionId;
     protected boolean needPrintFlowLog = true;
     protected Long dataSize;
@@ -50,24 +44,6 @@ public class Context {
     String resourceName;
     Throwable t;
     FlowLogPrinter flowLogPrinter = FlowLogUtil::printFlowLog;
-
-//    public String getTransferId() {
-//        if( dataMap.get(Dict.TRANSFER_ID)!=null)
-//            return dataMap.get(Dict.TRANSFER_ID).toString();
-//        return null;
-//    }
-
-    public Context(long timestamp, Map dataMap) {
-
-    }
-
-
-    public Context() {
-    }
-
-//    public void setOffset(long  offset){
-//        dataMap.put(Dict.ST);
-//    }
 
     public Long getDataSize() {
         return dataSize;
@@ -107,20 +83,6 @@ public class Context {
     public String getSessionId() {
         return this.sessionId;
     }
-
-//    public BaseContext() {
-//        timestamp = System.currentTimeMillis();
-//    }
-
-//    public BaseContext(String actionType) {
-//        timestamp = System.currentTimeMillis();
-//        this.actionType = actionType;
-//    }
-
-//    private BaseContext(long timestamp, Map dataMap) {
-//        this.timestamp = timestamp;
-//        this.dataMap = dataMap;
-//    }
 
     public void setSessionId(String sessionId) {
         this.sessionId = sessionId;

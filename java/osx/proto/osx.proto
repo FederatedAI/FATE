@@ -18,7 +18,6 @@ syntax = "proto3";
 
 package org.ppc.ptp;
 
-
 message Message{
   string msgId = 1;//消息ID
   bytes head = 2;//消息头部
