@@ -1,6 +1,19 @@
+/*
+ * Copyright 2019 The FATE Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.osx.broker.token;
-
-import com.firework.cluster.rpc.Firework;
 import com.osx.core.config.MetaInfo;
 import com.osx.core.constant.Dict;
 import com.osx.core.context.Context;
@@ -17,38 +30,16 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 
-public class DefaultTokenService extends AbstractServiceAdaptor<Firework.TokenRequest, Firework.TokenResponse> implements TokenService {
+public class DefaultTokenService implements TokenService {
 
     Logger logger = LoggerFactory.getLogger(DefaultTokenService.class);
     ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
     MetricReport metricReport = new FileMetricReport(Dict.SERVICE_FIREWORK_CLUSTERMANAGER);
-
     public DefaultTokenService() {
 
     }
 
-    @Override
-    protected Firework.TokenResponse doService(Context context, InboundPackage<Firework.TokenRequest> data) {
-        Firework.TokenRequest tokenRequest = data.getBody();
-        TokenResult tokenResult = this.requestToken(tokenRequest.getResource(), tokenRequest.getCount(), true);
-//        logger.info("resource {} require {} result {}",tokenRequest.getResource(),tokenRequest.getCount(),tokenResult);
-        Firework.TokenResponse.Builder tokenResponseBuilder = Firework.TokenResponse.newBuilder();
-        tokenResponseBuilder.setStatus(tokenResult.getStatus());
-        tokenResponseBuilder.setWaitInMs(tokenResult.getWaitInMs());
-        return tokenResponseBuilder.build();
-    }
 
-    @Override
-    protected Firework.TokenResponse transformExceptionInfo(Context context, ExceptionInfo exceptionInfo) {
-        return null;
-    }
-
-
-//    Config config;
-//
-//    public DefaultTokenService(Config config){
-//        config = config;
-//    }
 
     @Override
     public TokenResult requestToken(String resource, int acquireCount, boolean prioritized) {
@@ -73,8 +64,6 @@ public class DefaultTokenService extends AbstractServiceAdaptor<Firework.TokenRe
         }
         return ClusterFlowChecker.acquireClusterToken(rule, acquireCount, prioritized);
     }
-
-
     @Override
     public void releaseConcurrentToken(Long tokenId) {
         if (tokenId == null) {
@@ -82,7 +71,6 @@ public class DefaultTokenService extends AbstractServiceAdaptor<Firework.TokenRe
         }
         //  ConcurrentClusterFlowChecker.releaseConcurrentToken(tokenId);
     }
-
     private boolean notValidRequest(Long id, int count) {
         return id == null || id <= 0 || count <= 0;
     }
@@ -90,37 +78,8 @@ public class DefaultTokenService extends AbstractServiceAdaptor<Firework.TokenRe
     private boolean notValidRequest(String address, Long id, int count) {
         return address == null || "".equals(address) || id == null || id <= 0 || count <= 0;
     }
-
     private TokenResult badRequest() {
         return new TokenResult(TokenResultStatus.BAD_REQUEST);
     }
 
-//    @Override
-//    public void onApplicationEvent(ApplicationReadyEvent event) {
-//
-//
-//
-//        executor.scheduleAtFixedRate(() -> {
-//            long current = TimeUtil.currentTimeMillis();
-//            List<MetricNode> reportList = Lists.newArrayList();
-//            List<MetricNode> modelReportList = Lists.newArrayList();
-//            ClusterMetricStatistics.getMetricMap().forEach((sourceName, clusterMetric) -> {
-//                long  pass = clusterMetric.getCurrentCountForReport(ClusterFlowEvent.PASS);
-////                FlowCounter successCounter = successMap.get(sourceName);
-////                FlowCounter blockCounter = blockMap.get(sourceName);
-////                FlowCounter exceptionCounter = exceptionMap.get(sourceName);
-//                MetricNode metricNode = new MetricNode();
-//                metricNode.setTimestamp(current);
-//                metricNode.setResource(sourceName);
-//                metricNode.setPassQps(pass);
-//                metricNode.setBlockQps(0);
-//                metricNode.setExceptionQps( 0);
-//                metricNode.setSuccessQps(pass);
-//                reportList.add(metricNode);
-//
-//            });
-////            logger.info("try to report {}",reportList);
-//            metricReport.report(reportList);
-//        }, 0, 1, TimeUnit.SECONDS);
-//    }
 }

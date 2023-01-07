@@ -24,9 +24,4 @@ public interface Interceptor<req, resp> {
     default public void doPreProcess(Context context, InboundPackage<req> inboundPackage) throws Exception {
 
     }
-
-//    default public void doPostProcess(Context context, InboundPackage<req> inboundPackage, OutboundPackage<resp> outboundPackage) throws Exception {
-//
-//    }
-
 }

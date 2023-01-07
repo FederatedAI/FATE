@@ -19,7 +19,7 @@ package com.osx.core.constant;
 import com.osx.core.config.MetaInfo;
 
 public class Dict {
-
+    public static final String FATE_TECH_PROVIDER="FT";
     public static final String ORIGIN_REQUEST = "origin_request";
     public static final String CASEID = "caseid";
     public static final String SEQNO = "seqno";
@@ -41,6 +41,9 @@ public class Dict {
     public static final String RETURN_CODE = "returnCode";
     public static final String SOURCE_PARTY_ID = "sourcePartyId";
     public static final String DES_PARTY_ID = "desPartyId";
+    public static final String SOURCE_COMPONENT = "sourceComponent";
+    public static final String DES_COMPONENT =  "desComponent";
+
     public static final String DOWN_STREAM_COST = "downstreamCost";
     public static final String DOWN_STREAM_BEGIN = "downstreamBegin";
     public static final String ROUTE_BASIS = "routeBasis";

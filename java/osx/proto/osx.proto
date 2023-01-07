@@ -76,18 +76,6 @@ message Outbound {
 // 互联互通如果使用其他协议作为参考标准，Header会复用metadata传输互联互通协议报头
 // 互联互通如果使用GRPC作为参考标准，Header会复用HTTP2的报头传输互联互通协议报头
 
-//service PPCTransferService {
-//  rpc push (stream Inbound) returns (Outbound);
-////  rpc pull (Metadata) returns (stream Packet);
-//  rpc unaryCall (Inbound) returns (Outbound);
-// // rpc polling (stream PollingFrame) returns (stream PollingFrame);
-//
-//
-//
-//
-//}
-
-
 service PrivateTransferProtocol {
   rpc transport (stream Inbound) returns (stream Outbound);
   rpc invoke (Inbound) returns (Outbound);

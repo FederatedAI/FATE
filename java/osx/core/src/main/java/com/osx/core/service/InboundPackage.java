@@ -23,10 +23,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-/**
- * @Description TODO
- * @Author
- **/
 public class InboundPackage<T> {
 
     static Logger logger = LoggerFactory.getLogger(InboundPackage.class);
@@ -36,15 +32,6 @@ public class InboundPackage<T> {
     String source;
     Map head;
 
-    /*public HttpServletRequest getHttpServletRequest() {
-        return httpServletRequest;
-    }
-
-    public void setHttpServletRequest(HttpServletRequest httpServletRequest) {
-        this.httpServletRequest = httpServletRequest;
-    }
-
-    HttpServletRequest   httpServletRequest;*/
     T body;
 
     public ManagedChannel getManagedChannel() {

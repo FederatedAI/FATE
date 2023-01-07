@@ -16,10 +16,7 @@
 
 package com.osx.core.service;
 
-/**
- * @Description
- * @Author
- **/
+
 public interface InterceptorChain<req, resp> extends Interceptor<req, resp> {
 
     public void addInterceptor(Interceptor<req, resp> interceptor);

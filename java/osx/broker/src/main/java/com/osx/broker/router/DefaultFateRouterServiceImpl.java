@@ -1,5 +1,19 @@
+/*
+ * Copyright 2019 The FATE Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.osx.broker.router;
-
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.gson.JsonArray;
@@ -7,6 +21,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.osx.core.constant.NegotiationType;
 import com.osx.core.datasource.FileRefreshableDataSource;
 import com.osx.core.flow.PropertyListener;
 import com.osx.core.router.RouterInfo;
@@ -45,7 +60,6 @@ public class DefaultFateRouterServiceImpl implements FateRouterService {
     @Override
     public RouterInfo route(Proxy.Packet packet) {
         Preconditions.checkArgument(packet != null);
-        //  logger.info("====================== {}",packet);
         RouterInfo routerInfo = null;
         Proxy.Metadata metadata = packet.getHeader();
         Transfer.RollSiteHeader rollSiteHeader = null;
@@ -59,13 +73,12 @@ public class DefaultFateRouterServiceImpl implements FateRouterService {
         if (StringUtils.isEmpty(dstPartyId)) {
             dstPartyId = metadata.getDst().getPartyId();
         }
-
         dstPartyId = metadata.getDst().getPartyId();
         String desRole = metadata.getDst().getRole();
         String srcRole = metadata.getSrc().getRole();
         String srcPartyId = metadata.getSrc().getPartyId();
         routerInfo = this.route(srcPartyId, srcRole, dstPartyId, desRole);
-        logger.info("query router info {} to {} {} return {}", srcPartyId, dstPartyId, desRole, routerInfo);
+        //logger.info("query router info {} to {} {} return {}", srcPartyId, dstPartyId, desRole, routerInfo);
         return routerInfo;
     }
 
@@ -85,6 +98,7 @@ public class DefaultFateRouterServiceImpl implements FateRouterService {
                     routerInfo.setDesPartyId(dstPartyId);
                     routerInfo.setSourcePartyId(srcPartyId);
                     routerInfo.setVersion(endpoint.get(VERSION) != null ? endpoint.get(VERSION).toString() : null);
+                    routerInfo.setNegotiationType(endpoint.get(negotiationType)!=null?endpoint.get(negotiationType).toString():"");
                 }
             } else {
 
@@ -97,25 +111,16 @@ public class DefaultFateRouterServiceImpl implements FateRouterService {
                     routerInfo.setDesPartyId(dstPartyId);
                     routerInfo.setSourcePartyId(srcPartyId);
                     routerInfo.setVersion(endpoint.get(VERSION) != null ? endpoint.get(VERSION).toString() : null);
+                    routerInfo.setNegotiationType(endpoint.get(negotiationType)!=null?endpoint.get(negotiationType).toString():"");
                 }
                 if(StringUtils.isNotEmpty(desRole)){
                     logger.warn("role {} is not found,return default router info ",desRole);
                 }
             }
         }
-        //   logger.info("query router info {} return {}",dstPartyId,routerInfo);
         return routerInfo;
     }
 
-//    @Override
-//    public RouterInfo route(FireworkTransfer.RouteInfo  routeInfo) {
-//
-//        String desPartyId = routeInfo.getDesPartyId();
-//        String srcPartyId = routeInfo.getSrcPartyId();
-//        String desRole = routeInfo.getDesRole();
-//        String srcRole = routeInfo.getSrcRole();
-//        return  this.route(srcRole,srcPartyId,desPartyId,desRole);
-//    }
 
 
     Map<String, Map<String, List<Map>>> initRouteTable(Map confJson) {
@@ -181,6 +186,8 @@ public class DefaultFateRouterServiceImpl implements FateRouterService {
                     if (endpointJson.get(negotiationType)!=null) {
                         String targetNegotiationType = endpointJson.get(negotiationType).toString();
                         element.put(negotiationType, targetNegotiationType);
+                    }else{
+                        element.put(negotiationType, NegotiationType.PLAINTEXT);
                     }
 
                     if (endpointJson.get(certChainFile)!=null) {

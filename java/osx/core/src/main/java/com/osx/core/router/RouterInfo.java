@@ -39,7 +39,10 @@ public class RouterInfo {
 
     public String toKey() {
         StringBuffer sb = new StringBuffer();
-        return sb.append(host).append("_").append(port).append("_").append(negotiationType).toString();
+         sb.append(host).append("_").append(port);
+                 if(negotiationType!=null)
+                     sb.append("_").append(negotiationType);
+                 return  sb.toString();
     }
 
     @Override

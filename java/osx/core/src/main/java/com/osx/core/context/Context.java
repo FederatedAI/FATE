@@ -211,6 +211,24 @@ public class Context {
         dataMap.put(Dict.DES_PARTY_ID, hostAppid);
     }
 
+    public  void setSrcComponent(String srcComponent){
+        dataMap.put(Dict.SOURCE_COMPONENT,srcComponent);
+    }
+
+    public  String getSrcComponent(){
+        return (String)dataMap.get(Dict.SOURCE_COMPONENT);
+    }
+
+    public  void setDesComponent(String desComponent){
+        dataMap.put(Dict.DES_COMPONENT,desComponent);
+    }
+
+    public  String getDesComponent(){
+        return   (String)dataMap.get(Dict.DES_COMPONENT);
+    }
+
+
+
     public RouterInfo getRouterInfo() {
         return (RouterInfo) dataMap.get(Dict.ROUTER_INFO);
     }

@@ -13,10 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.osx.broker;
-
-
 import com.google.common.collect.Lists;
 import com.osx.core.config.MetaInfo;
 import com.osx.core.constant.Dict;
@@ -35,17 +32,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.Properties;
-
-
 public class Bootstrap {
     static Logger logger = LoggerFactory.getLogger(Bootstrap.class);
-
     static CommandLine commandLine;
-
     public static void main(String[] args) {
         try {
             Options options = ServerUtil.buildCommandlineOptions(new Options());
-            commandLine = ServerUtil.parseCmdLine("Transfer", args, buildCommandlineOptions(options),
+            commandLine = ServerUtil.parseCmdLine("osx", args, buildCommandlineOptions(options),
                     new PosixParser());
             String filePath = commandLine.getOptionValue('c');
             logger.info("try to parse config file {}", filePath);
@@ -57,18 +50,7 @@ public class Bootstrap {
             Bootstrap bootstrap = new Bootstrap();
             bootstrap.start(args);
             Thread shutDownThread = new Thread(() -> bootstrap.stop());
-
-            shutDownThread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-                @Override
-                public void uncaughtException(Thread t, Throwable e) {
-                    logger.error("0000000000000000", e);
-                }
-            });
-
             Runtime.getRuntime().addShutdownHook(shutDownThread);
-//           Thread.sleep(10000);
-//            bootstrap.stop();
-
         } catch (Exception ex) {
             ex.printStackTrace();
             System.exit(1);

@@ -1,11 +1,24 @@
+/*
+ * Copyright 2019 The FATE Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.osx.broker.queue;
-
-import com.firework.cluster.rpc.Firework;
-import com.firework.cluster.rpc.FireworkServiceGrpc;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.protobuf.ByteString;
 import com.osx.broker.ServiceContainer;
 import com.osx.core.config.MasterInfo;
 import com.osx.core.config.MetaInfo;
@@ -14,11 +27,15 @@ import com.osx.core.constant.Dict;
 import com.osx.core.constant.StatusCode;
 import com.osx.core.constant.TransferStatus;
 import com.osx.core.context.Context;
+import com.osx.core.exceptions.CreateTopicErrorException;
+import com.osx.core.exceptions.RemoteRpcException;
 import com.osx.core.frame.GrpcConnectionFactory;
 import com.osx.core.frame.ServiceThread;
+import com.osx.core.ptp.TargetMethod;
 import com.osx.core.router.RouterInfo;
 import com.osx.core.utils.JsonUtil;
 import io.grpc.ManagedChannel;
+import io.grpc.StatusRuntimeException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zookeeper.KeeperException;
 import org.ppc.ptp.Osx;
@@ -27,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -364,28 +382,22 @@ public class TransferQueueManager {
                          * 这种情况存在于本地已删除，而集群信息未同步更新，可能存在延迟，这时重走申请流程
                          */
                     }
-                }
-                ;
+                };
 
+                Osx.Outbound applyTopicResponse = this.applyFromMaster(transferId,sessionId,MetaInfo.INSTANCE_ID);
+                logger.info("apply topic response {}", applyTopicResponse);
 
-                Firework.ApplyTransferQueueRequest request = Firework.ApplyTransferQueueRequest.newBuilder().
-                        setTransferId(transferId).
-                        setInstanceId(MetaInfo.INSTANCE_ID).
-                        setSessionId(sessionId).build();
-
-
-                Firework.ApplyTransferQueueResponse applyTransferQueueResponse = this.applyFromMaster(request);
-                logger.info("apply transfer queue response {}", applyTransferQueueResponse);
-
-                if (applyTransferQueueResponse != null) {
-                    int applyReturnCode = applyTransferQueueResponse.getCode();
+                if (applyTopicResponse != null) {
+                   // int applyReturnCode = applyTransferQueueResponse.getCode();
 
                     //  TransferQueueApplyInfo transferQueueApplyInfo=applyTransferQueueResponse.getTransferQueueApplyInfo();
 
                     /**
                      * 从clustermananger 返回的结果中比对instantceId ，如果为本实例，则在本地建Q
                      */
-                    if (MetaInfo.INSTANCE_ID.equals(applyTransferQueueResponse.getInstanceId())) {
+                    String  applyInstanceId = applyTopicResponse.getMetadataMap().get(Osx.Metadata.InstanceId.name());
+
+                    if (MetaInfo.INSTANCE_ID.equals(applyInstanceId)) {
 
                         String[] elements = MetaInfo.INSTANCE_ID.split(":");
                         createQueueResult.setPort(Integer.parseInt(elements[1]));
@@ -393,17 +405,18 @@ public class TransferQueueManager {
                         createQueueResult.setTransferQueue(localCreate(transferId, sessionId));
                         registerTransferQueue(transferId, sessionId);
                         //createQueueResult = applyFromCluster(transferId,sessionId);
-
                     } else {
-                        String instanceId = applyTransferQueueResponse.getInstanceId();
-                        String[] args = instanceId.split(":");
-                        String ip = args[0];
-                        String portString = args[1];
-                        int grpcPort = Integer.parseInt(portString);
-                        createQueueResult.setRedirectIp(ip);
-                        createQueueResult.setPort(grpcPort);
-                    }
-                    ;
+                        if(applyInstanceId!=null) {
+                            String[] args = applyInstanceId.split(":");
+                            String ip = args[0];
+                            String portString = args[1];
+                            int grpcPort = Integer.parseInt(portString);
+                            createQueueResult.setRedirectIp(ip);
+                            createQueueResult.setPort(grpcPort);
+                        }else{
+                            throw new CreateTopicErrorException("apply topic from master error");
+                        }
+                    };
                 } else {
                     throw new RuntimeException();
                 }
@@ -485,16 +498,23 @@ public class TransferQueueManager {
     }
 
 
-    public Osx.Outbound applyFromMaster(Context context, Osx.Inbound inbound) {
+    public Osx.Outbound applyFromMaster( String topic,String sessionId,String instanceId) {
         if (!isMaster()) {
-            ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(this.getMasterAddress(),true);
-            PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub stub = PrivateTransferProtocolGrpc.newBlockingStub(managedChannel);
-            return stub.invoke(inbound);
-        } else {
 
-            String topic = inbound.getMetadataMap().get(Osx.Metadata.MessageTopic);
-            String instanceId = inbound.getMetadataMap().get(Osx.Metadata.InstanceId);
-            String sessionId = inbound.getMetadataMap().get(Osx.Header.SessionID);
+            RouterInfo  routerInfo = this.getMasterAddress();
+            //context.setRouterInfo(routerInfo);
+            ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo,true);
+            PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub stub = PrivateTransferProtocolGrpc.newBlockingStub(managedChannel);
+            try {
+                Osx.Inbound.Builder   builder = Osx.Inbound.newBuilder();
+                builder.putMetadata(Osx.Metadata.MessageTopic.name(),topic);
+                builder.putMetadata(Osx.Metadata.InstanceId.name(),instanceId);
+                builder.putMetadata(Osx.Header.SessionID.name(),sessionId);
+                return stub.invoke(builder.build());
+            }catch(StatusRuntimeException e){
+                throw  new RemoteRpcException("send to "+routerInfo.toKey()+" error");
+            }
+        } else {
             TransferQueueApplyInfo transferQueueApplyInfo = this.handleClusterApply(topic,
                     instanceId, sessionId);
             Osx.Outbound.Builder outboundBuilder = Osx.Outbound.newBuilder();
@@ -507,23 +527,6 @@ public class TransferQueueManager {
         }
     }
 
-
-    public Firework.ApplyTransferQueueResponse applyFromMaster(Firework.ApplyTransferQueueRequest produceRequest) {
-        if (!isMaster()) {
-            ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(getMasterAddress(),true);
-            FireworkServiceGrpc.FireworkServiceBlockingStub stub = FireworkServiceGrpc.newBlockingStub(managedChannel);
-            return stub.applyTransferQueue(produceRequest);
-        } else {
-            TransferQueueApplyInfo transferQueueApplyInfo = this.handleClusterApply(produceRequest.getTransferId(),
-                    produceRequest.getInstanceId(), produceRequest.getSessionId());
-            Firework.ApplyTransferQueueResponse.Builder resultBuilder = Firework.ApplyTransferQueueResponse.newBuilder();
-            resultBuilder.setTransferId(transferQueueApplyInfo.getTransferId());
-            resultBuilder.setApplyTimestamp(transferQueueApplyInfo.getApplyTimestamp());
-            resultBuilder.setCode(0);
-            resultBuilder.setInstanceId(transferQueueApplyInfo.getInstanceId());
-            return resultBuilder.build();
-        }
-    }
 
     private RouterInfo getMasterAddress() {
         RouterInfo routerInfo = new RouterInfo();
@@ -550,6 +553,7 @@ public class TransferQueueManager {
 
 
     private TransferQueue localCreate(String transferId, String sessionId) {
+        logger.info("create local topic {}",transferId);
         TransferQueue transferQueue = new TransferQueue(transferId, this, MetaInfo.PROPERTY_TRANSFER_FILE_PATH_PRE + File.separator + MetaInfo.INSTANCE_ID);
         transferQueue.setSessionId(sessionId);
         transferQueue.start();

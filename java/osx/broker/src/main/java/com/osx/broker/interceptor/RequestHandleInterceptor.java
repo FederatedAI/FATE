@@ -1,5 +1,21 @@
+/*
+ * Copyright 2019 The FATE Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.osx.broker.interceptor;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.osx.broker.grpc.PushRequestDataWrap;
 import com.osx.broker.router.FateRouterService;
 import com.osx.core.context.Context;
@@ -8,6 +24,7 @@ import com.osx.core.router.RouterInfo;
 import com.osx.core.service.InboundPackage;
 import com.osx.core.service.Interceptor;
 import com.webank.ai.eggroll.api.networking.proxy.Proxy;
+import com.webank.eggroll.core.transfer.Transfer;
 import org.apache.commons.lang3.StringUtils;
 import org.ppc.ptp.Osx;
 
@@ -18,31 +35,13 @@ import java.util.Map;
 
 public class RequestHandleInterceptor implements Interceptor {
     Logger logger = LoggerFactory.getLogger(RequestHandleInterceptor.class);
-    FateRouterService fateRouterService;
-    public RequestHandleInterceptor(FateRouterService fateRouterService) {
-        this.fateRouterService = fateRouterService;
-    }
+
     public void doPreProcess(Context context, InboundPackage inboundPackage) throws Exception {
         Object body = inboundPackage.getBody();
 
-        if (body instanceof PushRequestDataWrap) {
-
-            PushRequestDataWrap pushRequestDataWrap = (PushRequestDataWrap) body;
-            Proxy.Packet packet = pushRequestDataWrap.getPacket();
-            context.putData("pushStreamObserver", pushRequestDataWrap.getStreamObserver());
-            RouterInfo routerInfo = fateRouterService.route(packet);
-            if (packet != null && packet.getHeader() != null && packet.getHeader().getTask() != null) {
-                context.setTopic(packet.getHeader().getTask().getTaskId());
-            }
-            //Preconditions.checkArgument(routerInfo!=null);
-            context.setDesPartyId(routerInfo.getDesPartyId());
-            context.setSrcPartyId(routerInfo.getSourcePartyId());
-            context.setRouterInfo(routerInfo);
-        }
-        if (body instanceof Osx.Inbound) {
+     if (body instanceof Osx.Inbound) {
             Osx.Inbound request = (Osx.Inbound) body;
             Map<String, String> metaDataMap = request.getMetadataMap();
-
             String version = metaDataMap.get(Osx.Header.Version.name());
             String techProviderCode = metaDataMap.get(Osx.Header.TechProviderCode.name());
             String traceId = metaDataMap.get(Osx.Header.TraceID.name());
@@ -59,40 +58,55 @@ public class RequestHandleInterceptor implements Interceptor {
             String targetPartyId = StringUtils.isEmpty(targetInstId) ? targetNodeId : targetInstId + "." + targetNodeId;
             String topic = metaDataMap.get(Osx.Metadata.MessageTopic.name());
             String offsetString = metaDataMap.get(Osx.Metadata.MessageOffSet.name());
-            RouterInfo routerInfo = fateRouterService.route(sourcePartyId, sourceComponentName, targetPartyId, targetComponentName);
+            //RouterInfo routerInfo = fateRouterService.route(sourcePartyId, sourceComponentName, targetPartyId, targetComponentName);
             Long offset = StringUtils.isNotEmpty(offsetString) ? Long.parseLong(offsetString) : null;
 
             context.setDesPartyId(targetPartyId);
             context.setSrcPartyId(sourcePartyId);
-            context.setRouterInfo(routerInfo);
+            //context.setRouterInfo(routerInfo);
             context.setTopic(topic);
             context.setRequestMsgIndex(offset);
             context.setSessionId(sessionId);
-
-            logger.info("=========== sessionId {}pppppppppppp{}", context.getSessionId(), sessionId);
-            logger.info("metaDataMap {}", metaDataMap);
+            context.setDesComponent(targetComponentName);
+            context.setSrcComponent(sourceComponentName);
             return;
         }
+        else if (body instanceof PushRequestDataWrap) {
+            PushRequestDataWrap pushRequestDataWrap = (PushRequestDataWrap) body;
+            Proxy.Packet packet = pushRequestDataWrap.getPacket();
+            handleProxyPacket(context ,packet);
+            return ;
+        }else if (body instanceof Proxy.Packet) {
+         handleProxyPacket(context ,(Proxy.Packet) body);
+     } else {
+         throw new RuntimeException();
+     }
 
 
-        /**
-         * 旧版本
-         */
-        if (body instanceof Proxy.Packet) {
-            Proxy.Packet packet = (Proxy.Packet) body;
-            RouterInfo routerInfo = fateRouterService.route((Proxy.Packet) body);
-            if (routerInfo == null) {
-                throw new NoRouterInfoException("no router info");
-            }
-            if (packet != null && packet.getHeader() != null && packet.getHeader().getTask() != null) {
-                context.setTopic(packet.getHeader().getTask().getTaskId());
-            }
-            context.setDesPartyId(routerInfo.getDesPartyId());
-            context.setSrcPartyId(routerInfo.getSourcePartyId());
-            context.setRouterInfo(routerInfo);
-        } else {
-            throw new RuntimeException();
+
+    }
+
+    private   void  handleProxyPacket(Context context ,Proxy.Packet packet){
+        Proxy.Metadata metadata = packet.getHeader();
+        Transfer.RollSiteHeader rollSiteHeader = null;
+        try {
+            rollSiteHeader = Transfer.RollSiteHeader.parseFrom(metadata.getExt());
+        } catch (InvalidProtocolBufferException e) {
+            e.printStackTrace();
         }
+        String dstPartyId = rollSiteHeader.getDstPartyId();
+
+        if (StringUtils.isEmpty(dstPartyId)) {
+            dstPartyId = metadata.getDst().getPartyId();
+        }
+        dstPartyId = metadata.getDst().getPartyId();
+        String desRole = metadata.getDst().getRole();
+        String srcRole = metadata.getSrc().getRole();
+        String srcPartyId = metadata.getSrc().getPartyId();
+        context.setSrcPartyId(srcPartyId);
+        context.setDesPartyId(dstPartyId);
+        context.setSrcComponent(srcRole);
+        context.setDesComponent(desRole);
     }
 
 }

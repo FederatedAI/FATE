@@ -1,6 +1,6 @@
 package com.osx.broker.message;
 
-import com.osx.broker.grpc.MessageFlag;
+import com.osx.broker.constants.MessageFlag;
 import com.osx.broker.util.MessageId;
 import com.osx.broker.util.UtilAll;
 

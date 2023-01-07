@@ -1,6 +1,19 @@
+/*
+ * Copyright 2019 The FATE Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.osx.broker.consumer;
-
-
 import com.google.common.collect.Maps;
 import com.osx.core.frame.ServiceThread;
 import org.slf4j.Logger;
@@ -16,16 +29,12 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ConsumerManager {
     Logger logger = LoggerFactory.getLogger(ConsumerManager.class);
     ScheduledExecutorService scheduledExecutorService = new ScheduledThreadPoolExecutor(1);
-    //    ConcurrentHashMap<String, Map<Long ,Consumer>>  transferQueueConsumerMap = new ConcurrentHashMap<>();
     ConcurrentHashMap<String, UnaryConsumer> unaryConsumerMap = new ConcurrentHashMap<>();
-    // ConcurrentHashMap<String, PushConsumer>  pushConsumerMap  = new ConcurrentHashMap<>();
     ConcurrentHashMap<String, StreamConsumer> streamConsumerMap = new ConcurrentHashMap<>();
     ConcurrentHashMap<String, RedirectConsumer> redirectConsumerMap = new ConcurrentHashMap<>();
     AtomicLong consumerIdIndex = new AtomicLong(0);
 
-//    public  Map<Long,Consumer>  getTransferQueueConsumerSet(String transferId){
-//        return transferQueueConsumerMap.get(transferId);
-//    }
+
     ServiceThread longPullingThread = new ServiceThread() {
         @Override
         public String getServiceName() {
@@ -45,8 +54,8 @@ public class ConsumerManager {
                         try {
                             answerCount.addAndGet(unaryConsumer.answerLongPulling());
                             longPullingWaitingSize.addAndGet(unaryConsumer.getLongPullingQueueSize());
-                        } catch (Exception e) {
-                            e.printStackTrace();
+                        } catch (Exception igore) {
+                            igore.printStackTrace();
                         }
                     });
                     if (longPullingWaitingSize.get() > 0) {
@@ -65,31 +74,8 @@ public class ConsumerManager {
 
 
     public ConsumerManager() {
-//        scheduledExecutorService.scheduleAtFixedRate(()->{
-//            checkAndClean();
-//        },1,1, TimeUnit.SECONDS);
-
         longPullingThread.start();
-        // monitorThread.start();
     }
-
-
-//    ServiceThread  monitorThread  = new ServiceThread() {
-//        @Override
-//        public String getServiceName() {
-//            return "monitorThread";
-//        }
-//
-//        @Override
-//        public void run() {
-//            AtomicInteger longPullingSize = new AtomicInteger(0);
-//            int consumerSize=0;
-//            while(true){
-//
-//                this.waitForRunning(30000);
-//            }
-//        }
-//    };
 
     public Map<String, UnaryConsumer> getUnaryConsumerMap() {
         return Maps.newHashMap(this.unaryConsumerMap);

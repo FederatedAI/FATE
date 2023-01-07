@@ -1,5 +1,19 @@
+/*
+ * Copyright 2019 The FATE Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.osx.core.flow;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.osx.core.config.MetaInfo;
 import com.osx.core.datasource.FileRefreshableDataSource;
@@ -20,10 +34,6 @@ import static com.osx.core.config.MetaInfo.PROPERTY_SAMPLE_COUNT;
 
 public final class ClusterFlowRuleManager {
 
-    /**
-     * The default cluster flow rule property supplier that creates a new dynamic property
-     * for a specific namespace to do rule management manually.
-     */
     public static final Function<String, Property<List<FlowRule>>> DEFAULT_PROPERTY_SUPPLIER =
             new Function<String, Property<List<FlowRule>>>() {
                 @Override
@@ -31,36 +41,18 @@ public final class ClusterFlowRuleManager {
                     return new DynamicProperty<>();
                 }
             };
-    /**
-     * (flowId, clusterRule)
-     */
+
     private static final Map<Long, FlowRule> FLOW_RULES = new ConcurrentHashMap<>();
-    /**
-     *
-     */
+
     private static final Map<String, FlowRule> RESOURCE_RULES = new ConcurrentHashMap<>();
-    /**
-     * (namespace, [flowId...])
-     */
+
     private static final Map<String, Set<Long>> NAMESPACE_FLOW_ID_MAP = new ConcurrentHashMap<>();
-    /**
-     * <p>This map (flowId, namespace) is used for getting connected count
-     * when checking a specific rule in {@code ruleId}:</p>
-     *
-     * <pre>
-     * ruleId -> namespace -> connection group -> connected count
-     * </pre>
-     */
+
     private static final Map<Long, String> FLOW_NAMESPACE_MAP = new ConcurrentHashMap<>();
-    /**
-     * (namespace, property-listener wrapper)
-     */
+
     private static final Map<String, NamespaceFlowProperty<FlowRule>> PROPERTY_MAP = new ConcurrentHashMap<>();
     private static final Object UPDATE_LOCK = new Object();
     static Logger logger = LoggerFactory.getLogger(ClusterFlowRuleManager.class);
-    /**
-     * Cluster flow rule property supplier for a specific namespace.
-     */
     private static volatile Function<String, Property<List<FlowRule>>> propertySupplier
             = DEFAULT_PROPERTY_SUPPLIER;
 
@@ -141,12 +133,6 @@ public final class ClusterFlowRuleManager {
         }
     }
 
-    /**
-     * Listen to the {@link Property} for cluster {@link FlowRule}s if current property for namespace is absent.
-     * The property is the source of cluster {@link FlowRule}s for a specific namespace.
-     *
-     * @param namespace namespace to register
-     */
     public static void registerPropertyIfAbsent(String namespace) {
         AssertUtil.notEmpty(namespace, "namespace cannot be empty");
         if (!PROPERTY_MAP.containsKey(namespace)) {
@@ -191,12 +177,6 @@ public final class ClusterFlowRuleManager {
             resetNamespaceFlowIdMapFor(namespace);
         }
     }
-
-    /**
-     * Remove cluster flow rule property for a specific namespace.
-     *
-     * @param namespace valid namespace
-     */
     public static void removeProperty(String namespace) {
         AssertUtil.notEmpty(namespace, "namespace cannot be empty");
         synchronized (UPDATE_LOCK) {
@@ -223,12 +203,6 @@ public final class ClusterFlowRuleManager {
         }
     }
 
-    /**
-     * Get flow rule by rule ID.
-     *
-     * @param id rule ID
-     * @return flow rule
-     */
     public static FlowRule getFlowRuleById(Long id) {
         if (!ClusterRuleUtil.validId(id)) {
             return null;
@@ -260,12 +234,6 @@ public final class ClusterFlowRuleManager {
         return new ArrayList<>(FLOW_RULES.values());
     }
 
-    /**
-     * Get all cluster flow rules within a specific namespace.
-     *
-     * @param namespace valid namespace
-     * @return cluster flow rules within the provided namespace
-     */
     public static List<FlowRule> getFlowRules(String namespace) {
         if (StringUtils.isEmpty(namespace)) {
             return new ArrayList<>();

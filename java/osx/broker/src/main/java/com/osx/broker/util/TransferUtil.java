@@ -52,6 +52,22 @@ public class TransferUtil {
     }
 
 
+    public static String buildResource(Osx.Inbound inbound){
+        String  sourceNodeId = inbound.getMetadataMap().get(Osx.Header.SourceNodeID.name());
+        String  targetNodeId = inbound.getMetadataMap().get(Osx.Header.TargetNodeID.name());
+        String  sourceInstId = inbound.getMetadataMap().get(Osx.Header.SourceInstID.name());
+        if(sourceInstId==null){
+            sourceInstId="";
+        }
+        String  targetInstId = inbound.getMetadataMap().get(Osx.Header.TargetInstID.name());
+        if(targetInstId==null){
+            targetInstId="";
+        }
+        StringBuffer  sb =  new StringBuffer();
+        sb.append(sourceInstId).append(sourceNodeId).append("_").append(targetInstId).append(targetNodeId);
+        return  sb.toString();
+    }
+
     public static Proxy.Metadata buildProxyMetadataFromOutbound(Osx.Outbound outbound) {
         try {
             return Proxy.Metadata.parseFrom(outbound.getPayload());
@@ -64,10 +80,6 @@ public class TransferUtil {
            return Osx.Outbound.newBuilder().setPayload(metadata.toByteString()).build();
 
     }
-
-
-
-
 
     public static Proxy.Packet parsePacketFromInbound(Osx.Inbound inbound){
         try {
@@ -92,8 +104,7 @@ public class TransferUtil {
             e.printStackTrace();
 
         }
-        //logger.info("=========ErRollSiteHeader {}",rsHeader);
-        //"#", prefix: Array[String] = Array("__rsk")
+
         String sessionId = "";
         if (rsHeader != null) {
             sessionId = String.join("_", rsHeader.getRollSiteSessionId(), rsHeader.getDstRole(), rsHeader.getDstPartyId());
