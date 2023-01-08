@@ -84,17 +84,17 @@ class IOManager(IOManagerProtocol):
 
     def log_output_model(self, key, value, metadata={}):
         import requests
-
-        logging.debug(f"request flow uri: {self.mlmd.metadata.tracking_uri}")
+        data = {
+            "output_key": value.name,
+            "meta_data": value.metadata,
+            "execution_id": self.task_id,
+            "uri": value.uri,
+            "type": "model",
+        }
+        logging.debug(f"request flow uri: {self.mlmd.metadata.tracking_uri}, data: {data}")
         response = requests.post(
             self.mlmd.metadata.tracking_uri,
-            json={
-                "output_key": value.name,
-                "meta_data": value.metadata,
-                "execution_id": self.task_id,
-                "uri": value.uri,
-                "type": "model",
-            },
+            json=data,
         )
         logging.debug(response.text)
         logging.debug(value)
