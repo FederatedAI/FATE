@@ -120,19 +120,21 @@ def predict_guest(ctx, input_model, test_data, test_output_data):
     from fate.ml.lr.guest import LrModuleGuest
 
     with ctx.sub_ctx("predict") as sub_ctx:
-        model = sub_ctx.reader(input_model).read_model()
+        with input_model as model_reader:
+            model = model_reader.read_model()
         module = LrModuleGuest.from_model(model)
         test_data = sub_ctx.reader(test_data).read_dataframe()
-        output_data = module.predict(sub_ctx, test_data)
-        sub_ctx.writer(test_output_data).write_dataframe(output_data)
+        predict_score = module.predict(sub_ctx, test_data)
+        predict_result = test_data.data.transform_to_predict_result(predict_score)
+        sub_ctx.writer(test_output_data).write_dataframe(predict_result)
 
 
 def predict_host(ctx, input_model, test_data, test_output_data):
     from fate.ml.lr.host import LrModuleHost
 
     with ctx.sub_ctx("predict") as sub_ctx:
-        model = sub_ctx.reader(input_model).read_model()
+        with input_model as model_reader:
+            model = model_reader.read_model()
         module = LrModuleHost.from_model(model)
         test_data = sub_ctx.reader(test_data).read_dataframe()
-        output_data = module.predict(sub_ctx, test_data)
-        sub_ctx.writer(test_output_data).write_dataframe(output_data)
+        module.predict(sub_ctx, test_data)
