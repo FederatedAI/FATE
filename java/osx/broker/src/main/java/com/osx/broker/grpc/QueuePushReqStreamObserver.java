@@ -78,18 +78,11 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
     public QueuePushReqStreamObserver(Context context, StreamObserver backRespSO,
                                       Class backRespSOClass
     ) {
-
-        //this.fateRouterService = fateRouterService;
         this.backRespSOClass =  backRespSOClass;
         this.backRespSO = backRespSO;
         this.context = context.subContext();
         this.context.setNeedPrintFlowLog(true);
-//        this.transferQueueManager = transferQueueManager;
-//        this.consumerManager = consumerManager;
-//        this.tokenApplyService = tokenApplyService;
         this.context.setServiceName("pushTransfer");
-
-
     }
 
     public StreamObserver<Proxy.Packet> getForwardPushReqSO() {
@@ -110,16 +103,12 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
 
         Integer partitionId = rsHeader.getPartitionId();
         brokerTag = "putBatch-" + rsHeader.getRsKey("#", "__rsk") + "-" + partitionId;
-        //logger.info("=========ErRollSiteHeader {}", rsHeader);
         context.setSessionId(rsHeader.getRollSiteSessionId());
         context.setTopic(brokerTag);
 
         if (MetaInfo.PROPERTY_SELF_PARTY.contains(desPartyId)) {
             isDst = true;
         }
-
-        //logger.info("========= init ======={} to {} set {} isDst {}", srcPartyId, desPartyId, MetaInfo.PROPERTY_SELF_PARTY, isDst);
-
         /**
          * 检查目的地是否为自己
          */
@@ -191,19 +180,8 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
         }
 
         metadata = firstRequest.getHeader();
-        logger.info("init eggroll begin {}", firstRequest);
         String oneLineStringMetadata = ToStringUtils.toOneLineString(metadata);
-//        ByteString encodedRollSiteHeader = metadata.getExt();
         context.setActionType(ActionType.PUSH_EGGROLL.getAlias());
-//        ErRollSiteHeader rsHeader=null;
-//        try {
-//            rsHeader= ErRollSiteHeader.parseFromPb(Transfer.RollSiteHeader.parseFrom(encodedRollSiteHeader));
-//        } catch (InvalidProtocolBufferException e) {
-//            e.printStackTrace();
-//
-//        }
-//        logger.info("=========ErRollSiteHeader {}",rsHeader);
-        //"#", prefix: Array[String] = Array("__rsk")
         String rsKey = rsHeader.getRsKey("#", "__rsk");
         String sessionId = String.join("_", rsHeader.getRollSiteSessionId(), rsHeader.getDstRole(), rsHeader.getDstPartyId());
         context.setSessionId(sessionId);
@@ -211,7 +189,6 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
         try {
             session = PutBatchSinkUtil.sessionCache.get(sessionId);
         } catch (ExecutionException e) {
-            e.printStackTrace();
             logger.error("get session error ", e);
         }
         if (!SessionStatus.ACTIVE.name().equals(session.getErSessionMeta().getStatus())) {
@@ -226,7 +203,7 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
         Map rpOptions = Maps.newHashMap();
         rpOptions.putAll(rsHeader.getOptions());
         rpOptions.put(Dict.TOTAL_PARTITIONS_SNAKECASE, rsHeader.getTotalPartitions().toString());
-        //var rpOptions = rsHeader.options ++ Map(StringConstants.TOTAL_PARTITIONS_SNAKECASE -> rsHeader.totalPartitions.toString)
+
         if (rsHeader.getDataType().equals("object")) {
             rpOptions.put(Dict.SERDES, SerdesTypes.EMPTY.name());
         } else {
@@ -235,21 +212,10 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
 
         // table creates here
         RollPair rp = ctx.load(namespace, name, rpOptions);
-
         Integer partitionId = rsHeader.getPartitionId();
         ErPartition partition = rp.getStore().getPartition(partitionId);
         ErProcessor egg = ctx.getErSession().routeToEgg(partition);
-        logger.info("egg ========{}", egg);
-//        RollPair.PUT_BATCH
-//        delim: String = "#", prefix: Array[String] = Array("__rsk")
-//        val PUT_BATCH = "putBatch"
-        // s"${}-${rsHeader.getRsKey()}-${partitionId}"
-//        brokerTag =
-//                    "putBatch-"+rsHeader.getRsKey("#", "__rsk")+"-"+partitionId;
-
-        //  logger.info("======= brokerTag ======{}",brokerTag);
         String jobId = IdUtils.generateJobId(ctx.getErSession().getSessionId(), brokerTag, "-");
-        logger.info("======jobId ======={}", jobId);
         Map<String, String> jobOptions = new HashMap<>();
 
         jobOptions.putAll(rsHeader.getOptions());
@@ -270,17 +236,12 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
 
         Future<ErTask> commandFuture = RollPairContext.executor.submit(() -> {
             CommandClient commandClient = new CommandClient(egg.getCommandEndpoint());
-          //  logger.info("before  call EGG_RUN_TASK_COMMAND  {}", task);
             Command.CommandResponse commandResponse = commandClient.call(RollPair.EGG_RUN_TASK_COMMAND, task);
-           // logger.info("============== EGG_RUN_TASK_COMMAND {}", commandResponse);
-
             long begin = System.currentTimeMillis();
             try {
                 Meta.Task taskMeta = Meta.Task.parseFrom(commandResponse.getResultsList().get(0));
                 ErTask erTask = ErTask.parseFromPb(taskMeta);
                 long now = System.currentTimeMillis();
-                logger.info("task ===cost===={}", now - begin);
-
                 return erTask;
             } catch (InvalidProtocolBufferException e) {
                 e.printStackTrace();
@@ -296,8 +257,6 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
         ManagedChannel channel = GrpcConnectionFactory.createManagedChannel(routerInfo,false);
         TransferServiceGrpc.TransferServiceStub stub = TransferServiceGrpc.newStub(channel);
         putBatchSinkPushReqSO = stub.send(new PutBatchSinkPushRespSO(metadata, commandFuture, backRespSO, finishLatch));
-
-        logger.info("eggroll init over =========");
     }
 
 
@@ -424,18 +383,4 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
         }
     }
 
-//    public     MessageExtBrokerInner   buildMessageExtBrokerInner(String topic ,byte[]  body,
-//                                                                        int  queueId,MessageFlag  flag ,RouterInfo  routerInfo){
-//        MessageExtBrokerInner  messageExtBrokerInner = new MessageExtBrokerInner();
-//        messageExtBrokerInner.setQueueId(queueId);
-//        messageExtBrokerInner.setBody(body);
-//        messageExtBrokerInner.setTopic(topic);
-//        messageExtBrokerInner.setFlag(MessageFlag.COMPELETED.getFlag());
-//        messageExtBrokerInner.setBornTimestamp(System.currentTimeMillis());
-//        if(routerInfo!=null){
-//            messageExtBrokerInner.setDesPartyId(routerInfo.getDesPartyId());
-//            messageExtBrokerInner.setSrcPartyId(routerInfo.getSourcePartyId());
-//        }
-//        return  messageExtBrokerInner;
-//    }
 }

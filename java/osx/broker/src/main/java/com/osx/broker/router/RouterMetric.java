@@ -30,7 +30,6 @@ public class RouterMetric {
 
     public static void main(String[] args) {
         RouterMetric routerMetric = new RouterMetric();
-        System.err.println("xxxxxxxxxxxxxxxxxxxxx" + routerMetric);
     }
 
     public long getLastCheckTimestamp() {

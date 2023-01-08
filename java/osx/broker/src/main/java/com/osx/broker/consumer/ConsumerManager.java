@@ -55,7 +55,7 @@ public class ConsumerManager {
                             answerCount.addAndGet(unaryConsumer.answerLongPulling());
                             longPullingWaitingSize.addAndGet(unaryConsumer.getLongPullingQueueSize());
                         } catch (Exception igore) {
-                            igore.printStackTrace();
+
                         }
                     });
                     if (longPullingWaitingSize.get() > 0) {
@@ -64,7 +64,7 @@ public class ConsumerManager {
                         interval = 1000;
                     }
                 } catch (Exception igore) {
-                    igore.printStackTrace();
+
                 }
                 this.waitForRunning(interval);
             }

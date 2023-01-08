@@ -52,7 +52,7 @@ public class Bootstrap {
             Thread shutDownThread = new Thread(() -> bootstrap.stop());
             Runtime.getRuntime().addShutdownHook(shutDownThread);
         } catch (Exception ex) {
-            ex.printStackTrace();
+           // ex.printStackTrace();
             System.exit(1);
         }
     }
@@ -118,7 +118,7 @@ public class Bootstrap {
             MetaInfo.TRANSFER_FATECLOUD_SECRET_INFO_URL = environment.getProperty(Dict.TRANSFER_FATECLOUD_SECRET_INFO_URL, "http://localhost:9091/fate-manager/api/site/secretinfo");
             MetaInfo.TRANSFER_FATECLOUD_AUTHENTICATION_URL = environment.getProperty(Dict.TRANSFER_FATECLOUD_AUTHENTICATION_URL, "http://localhost:8999/cloud-manager/api/site/rollsite/checkPartyId");
             MetaInfo.PROPERTY_SELF_PARTY.addAll(Lists.newArrayList(environment.getProperty(Dict.PROPERTY_SELF_PARTY, "").split(",")));
-            ;
+
             MetaInfo.HTTP_CLIENT_CONFIG_CONN_REQ_TIME_OUT = Integer.valueOf(environment.getProperty(Dict.HTTP_CLIENT_CONFIG_CONN_REQ_TIME_OUT,"500"));
             MetaInfo.HTTP_CLIENT_CONFIG_CONN_TIME_OUT = Integer.valueOf(environment.getProperty(Dict.HTTP_CLIENT_CONFIG_CONN_TIME_OUT,"2000"));
             MetaInfo.HTTP_CLIENT_CONFIG_SOCK_TIME_OUT = Integer.valueOf(environment.getProperty(Dict.HTTP_CLIENT_CONFIG_SOCK_TIME_OUT,"3000"));
@@ -135,7 +135,7 @@ public class Bootstrap {
             MetaInfo.INSTANCE_ID = NetUtils.getLocalHost() + ":" + MetaInfo.PROPERTY_PORT;
             MetaInfo.PROPERTY_DEPLOY_MODE = environment.getProperty(Dict.PROPERTY_DEPLOY_MODE);
             MetaInfo.PROPERTY_CLUSTER_MANAGER_ADDRESS = environment.getProperty(Dict.PROPERTY_CLUSTER_MANAGER_ADDRESS);
-           MetaInfo.PROPERTY_EGGROLL_CLUSTER_MANANGER_IP = environment.getProperty(Dict.PROPERTY_EGGROLL_CLUSTER_MANANGER_IP);
+            MetaInfo.PROPERTY_EGGROLL_CLUSTER_MANANGER_IP = environment.getProperty(Dict.PROPERTY_EGGROLL_CLUSTER_MANANGER_IP);
             MetaInfo.PROPERTY_EGGROLL_CLUSTER_MANANGER_PORT = Integer.parseInt(environment.getProperty(Dict.PROPERTY_EGGROLL_CLUSTER_MANANGER_PORT));
             MetaInfo.PROPERTY_ZK_URL = environment.getProperty(Dict.PROPERTY_ZK_URL);
         } catch (Exception e) {

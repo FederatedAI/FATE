@@ -42,7 +42,6 @@ public class ProxyGrpcService extends DataTransferServiceGrpc.DataTransferServic
     public io.grpc.stub.StreamObserver<com.webank.ai.eggroll.api.networking.proxy.Proxy.Packet> push(
             io.grpc.stub.StreamObserver<com.webank.ai.eggroll.api.networking.proxy.Proxy.Metadata> responseObserver) {
         try {
-            logger.info("receive push request");
             Context context = ContextUtil.buildContext();
             InboundPackage<PushRequestDataWrap> data = new InboundPackage<>();
             PushRequestDataWrap pushRequestDataWrap = new PushRequestDataWrap();
@@ -51,7 +50,7 @@ public class ProxyGrpcService extends DataTransferServiceGrpc.DataTransferServic
             OutboundPackage<StreamObserver> outboundPackage = pushService2.service(context, data);
             return outboundPackage.getData();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("push error",e);
         }
         return null;
     }

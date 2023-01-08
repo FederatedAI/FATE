@@ -54,7 +54,7 @@ public class CommandURI {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+
         }
 
     }

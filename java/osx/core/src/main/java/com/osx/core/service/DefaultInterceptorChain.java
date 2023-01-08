@@ -48,6 +48,7 @@ public class DefaultInterceptorChain<req, resp> implements InterceptorChain<req,
     @Override
     public void doPreProcess(Context context, InboundPackage<req> inboundPackage) throws Exception {
         for (Interceptor<req, resp> interceptor : chain) {
+            logger.info("====== {}",interceptor);
             interceptor.doPreProcess(context, inboundPackage);
 
         }

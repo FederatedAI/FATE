@@ -112,18 +112,6 @@ public class HttpClientPool {
                 .build();
         return httpClient;
     }
-
-//    public static String post(String url, Map<String, Object> requestData) {
-//        return sendPost(url, requestData, null);
-//    }
-
-//    public static String post(String url, Map<String, Object> requestData, Map<String, String> headers) {
-//        return sendPost(url, requestData, headers);
-//    }
-//    public static PtpHttpResponse post(String url, byte[] body, Map<String, String> headers) {
-//        return sendPtpPost(url, body, headers);
-//    }
-
     public static Osx.Outbound sendPtpPost(String url, byte[] body, Map<String, String> headers) {
         HttpPost httpPost = new HttpPost(url);
         config(httpPost, headers);
@@ -133,15 +121,6 @@ public class HttpClientPool {
         }
         return getPtpHttpResponse(httpPost);
     }
-//    public static String sendPost(String url, String requestData, Map<String, String> headers) {
-//        HttpPost httpPost = new HttpPost(url);
-//        config(httpPost, headers);
-//        StringEntity stringEntity = new StringEntity(requestData, Dict.CHARSET_UTF8);
-//        stringEntity.setContentEncoding(Dict.CHARSET_UTF8);
-//        httpPost.setEntity(stringEntity);
-//        return getResponse(httpPost);
-//    }
-
     public static String sendPost(String url, byte[] body, Map<String, String> headers) {
         HttpPost httpPost = new HttpPost(url);
         config(httpPost, headers);
@@ -149,16 +128,6 @@ public class HttpClientPool {
         httpPost.setEntity(byteArrayEntity);
         return getResponse(httpPost);
     }
-
-//    public static String sendPost(String url, byte[] requestData, Map<String, String> headers) {
-//        HttpPost httpPost = new HttpPost(url);
-//        config(httpPost, headers);
-//        ByteArrayEntity byteArrayEntity = new ByteArrayEntity(requestData);
-//        byteArrayEntity.setContentEncoding(Dict.CHARSET_UTF8);
-//        httpPost.setEntity(byteArrayEntity);
-//        return getResponse(httpPost);
-//    }
-
     public static String get(String url, Map<String, String> headers) {
         return sendGet(url, headers);
     }
@@ -223,11 +192,9 @@ public class HttpClientPool {
             if(headMap.get(PtpHttpHeader.ReturnMessage)!=null)
                 outboundBuilder.setMessage(headMap.get(PtpHttpHeader.ReturnMessage));
 
-           // String result = EntityUtils.toString(entity, Dict.CHARSET_UTF8);
             EntityUtils.consume(entity);
             return outboundBuilder.build();
         } catch (IOException ex) {
-            ex.printStackTrace();
             logger.error("get http response failed:", ex);
             return null;
         } finally {

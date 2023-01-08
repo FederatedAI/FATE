@@ -112,7 +112,7 @@ public class UnaryConsumer extends LocalQueueConsumer {
 
                 }
             } catch (Exception igore) {
-                igore.printStackTrace();
+
             }
         }
         if (reputList != null) {

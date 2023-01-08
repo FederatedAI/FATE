@@ -386,11 +386,9 @@ public abstract class LeapArray<T> {
         for (WindowWrap<T> window : lists) {
             sb.append(window.windowStart()).append(":").append(window.value().toString());
         }
-//        System.out.println(sb.toString());
     }
 
     public long currentWaiting() {
-        // TODO: default method. Should remove this later.
         return 0;
     }
 

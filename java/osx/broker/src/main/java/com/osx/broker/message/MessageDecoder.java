@@ -1,3 +1,18 @@
+/*
+ * Copyright 2019 The FATE Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.osx.broker.message;
 
 import com.osx.broker.constants.MessageFlag;
@@ -26,20 +41,7 @@ public class MessageDecoder {
     public static final int PHY_POS_POSITION = 4 + 4 + 4 + 4 + 4 + 8;
     public static final int QUEUE_OFFSET_POSITION = 4 + 4 + 4 + 4 + 4;
     public static final int SYSFLAG_POSITION = 4 + 4 + 4 + 4 + 4 + 8 + 8;
-//    public static final int BODY_SIZE_POSITION = 4 // 1 TOTALSIZE
-//        + 4 // 2 MAGICCODE
-//        + 4 // 3 BODYCRC
-//        + 4 // 4 QUEUEID
-//        + 4 // 5 FLAG
-//        + 8 // 6 QUEUEOFFSET
-//        + 8 // 7 PHYSICALOFFSET
-//        + 4 // 8 SYSFLAG
-//        + 8 // 9 BORNTIMESTAMP
-//        + 8 // 10 BORNHOST
-//        + 8 // 11 STORETIMESTAMP
-//        + 8 // 12 STOREHOSTADDRESS
-//        + 4 // 13 RECONSUMETIMES
-//        + 8; // 14 Prepared Transaction Offset
+
 
     public static String createMessageId(final ByteBuffer input, final ByteBuffer addr, final long offset) {
         input.flip();
@@ -148,116 +150,6 @@ public class MessageDecoder {
         return decode(byteBuffer, readBody, true, false);
     }
 
-//    public static byte[] encode(MessageExt messageExt, boolean needCompress) throws Exception {
-//        byte[] body = messageExt.getBody();
-//        byte[] topics = messageExt.getTopic().getBytes(CHARSET_UTF8);
-//        byte topicLen = (byte) topics.length;
-//        String properties = messageProperties2String(messageExt.getProperties());
-//        byte[] propertiesBytes = properties.getBytes(CHARSET_UTF8);
-//        short propertiesLength = (short) propertiesBytes.length;
-//        int sysFlag = messageExt.getSysFlag();
-//        int bornhostLength = (sysFlag & MessageSysFlag.BORNHOST_V6_FLAG) == 0 ? 8 : 20;
-//        int storehostAddressLength = (sysFlag & MessageSysFlag.STOREHOSTADDRESS_V6_FLAG) == 0 ? 8 : 20;
-//        byte[] newBody = messageExt.getBody();
-//        if (needCompress && (sysFlag & MessageSysFlag.COMPRESSED_FLAG) == MessageSysFlag.COMPRESSED_FLAG) {
-//            newBody = UtilAll.compress(body, 5);
-//        }
-//        int bodyLength = newBody.length;
-//        int storeSize = messageExt.getStoreSize();
-//        ByteBuffer byteBuffer;
-//        if (storeSize > 0) {
-//            byteBuffer = ByteBuffer.allocate(storeSize);
-//        } else {
-//            storeSize = 4 // 1 TOTALSIZE
-//                + 4 // 2 MAGICCODE
-//                + 4 // 3 BODYCRC
-//                + 4 // 4 QUEUEID
-//                + 4 // 5 FLAG
-//                + 8 // 6 QUEUEOFFSET
-//                + 8 // 7 PHYSICALOFFSET
-//                + 4 // 8 SYSFLAG
-//                + 8 // 9 BORNTIMESTAMP
-//                + bornhostLength // 10 BORNHOST
-//                + 8 // 11 STORETIMESTAMP
-//                + storehostAddressLength // 12 STOREHOSTADDRESS
-//                + 4 // 13 RECONSUMETIMES
-//                + 8 // 14 Prepared Transaction Offset
-//                + 4 + bodyLength // 14 BODY
-//                + 1 + topicLen // 15 TOPIC
-//                + 2 + propertiesLength // 16 propertiesLength
-//                + 0;
-//            byteBuffer = ByteBuffer.allocate(storeSize);
-//        }
-//        // 1 TOTALSIZE
-//        byteBuffer.putInt(storeSize);
-//
-//        // 2 MAGICCODE
-//        byteBuffer.putInt(MESSAGE_MAGIC_CODE);
-//
-//        // 3 BODYCRC
-//        int bodyCRC = messageExt.getBodyCRC();
-//        byteBuffer.putInt(bodyCRC);
-//
-//        // 4 QUEUEID
-//        int queueId = messageExt.getQueueId();
-//        byteBuffer.putInt(queueId);
-//
-//        // 5 FLAG
-//        int flag = messageExt.getFlag();
-//        byteBuffer.putInt(flag);
-//
-//        // 6 QUEUEOFFSET
-//        long queueOffset = messageExt.getQueueOffset();
-//        byteBuffer.putLong(queueOffset);
-//
-//        // 7 PHYSICALOFFSET
-//        long physicOffset = messageExt.getCommitLogOffset();
-//        byteBuffer.putLong(physicOffset);
-//
-//        // 8 SYSFLAG
-//        byteBuffer.putInt(sysFlag);
-//
-//        // 9 BORNTIMESTAMP
-//        long bornTimeStamp = messageExt.getBornTimestamp();
-//        byteBuffer.putLong(bornTimeStamp);
-//
-//        // 10 BORNHOST
-//        InetSocketAddress bornHost = (InetSocketAddress) messageExt.getBornHost();
-//        byteBuffer.put(bornHost.getAddress().getAddress());
-//        byteBuffer.putInt(bornHost.getPort());
-//
-//        // 11 STORETIMESTAMP
-//        long storeTimestamp = messageExt.getStoreTimestamp();
-//        byteBuffer.putLong(storeTimestamp);
-//
-//        // 12 STOREHOST
-//        InetSocketAddress serverHost = (InetSocketAddress) messageExt.getStoreHost();
-//        byteBuffer.put(serverHost.getAddress().getAddress());
-//        byteBuffer.putInt(serverHost.getPort());
-//
-//        // 13 RECONSUMETIMES
-//        int reconsumeTimes = messageExt.getReconsumeTimes();
-//        byteBuffer.putInt(reconsumeTimes);
-//
-//        // 14 Prepared Transaction Offset
-//        long preparedTransactionOffset = messageExt.getPreparedTransactionOffset();
-//        byteBuffer.putLong(preparedTransactionOffset);
-//
-//        // 15 BODY
-//        byteBuffer.putInt(bodyLength);
-//        byteBuffer.put(newBody);
-//
-//        // 16 TOPIC
-//        byteBuffer.put(topicLen);
-//        byteBuffer.put(topics);
-//
-//        // 17 properties
-//        byteBuffer.putShort(propertiesLength);
-//        byteBuffer.put(propertiesBytes);
-//
-//        return byteBuffer.array();
-//    }
-
     public static MessageExt decode(
             ByteBuffer byteBuffer, final boolean readBody, final boolean deCompressBody) {
         return decode(byteBuffer, readBody, deCompressBody, false);
@@ -267,14 +159,7 @@ public class MessageDecoder {
             ByteBuffer byteBuffer, final boolean readBody, final boolean deCompressBody, final boolean isClient) {
         try {
 
-            MessageExt msgExt;
-//            if (isClient) {
-//                msgExt = new MessageClientExt();
-//            } else
-            {
-                msgExt = new MessageExt();
-            }
-
+            MessageExt msgExt= new MessageExt();
             // 1 TOTALSIZE
             int storeSize = byteBuffer.getInt();
             msgExt.setStoreSize(storeSize);
@@ -329,45 +214,12 @@ public class MessageDecoder {
             msgExt.setBornTimestamp(bornTimeStamp);
 
 
-//
-//            // 10 BORNHOST
-//            int bornhostIPLength = (sysFlag & MessageSysFlag.BORNHOST_V6_FLAG) == 0 ? 4 : 16;
-//            byte[] bornHost = new byte[bornhostIPLength];
-//            byteBuffer.get(bornHost, 0, bornhostIPLength);
-//            int port = byteBuffer.getInt();
-//            msgExt.setBornHost(new InetSocketAddress(InetAddress.getByAddress(bornHost), port));
-//
-//            // 11 STORETIMESTAMP
-//            long storeTimestamp = byteBuffer.getLong();
-//            msgExt.setStoreTimestamp(storeTimestamp);
-//
-//            // 12 STOREHOST
-//            int storehostIPLength = (sysFlag & MessageSysFlag.STOREHOSTADDRESS_V6_FLAG) == 0 ? 4 : 16;
-//            byte[] storeHost = new byte[storehostIPLength];
-//            byteBuffer.get(storeHost, 0, storehostIPLength);
-//            port = byteBuffer.getInt();
-//            msgExt.setStoreHost(new InetSocketAddress(InetAddress.getByAddress(storeHost), port));
-//
-//            // 13 RECONSUMETIMES
-//            int reconsumeTimes = byteBuffer.getInt();
-//            msgExt.setReconsumeTimes(reconsumeTimes);
-//
-//            // 14 Prepared Transaction Offset
-//            long preparedTransactionOffset = byteBuffer.getLong();
-//            msgExt.setPreparedTransactionOffset(preparedTransactionOffset);
-
             // 15 BODY
             int bodyLen = byteBuffer.getInt();
             if (bodyLen > 0) {
                 if (readBody) {
                     byte[] body = new byte[bodyLen];
                     byteBuffer.get(body);
-
-                    // uncompress body
-//                    if (deCompressBody && (sysFlag & MessageSysFlag.COMPRESSED_FLAG) == MessageSysFlag.COMPRESSED_FLAG) {
-//                        body = UtilAll.uncompress(body);
-//                    }
-
                     msgExt.setBody(body);
                 } else {
                     byteBuffer.position(byteBuffer.position() + bodyLen);
@@ -389,15 +241,6 @@ public class MessageDecoder {
                 Map<String, String> map = string2messageProperties(propertiesString);
                 msgExt.setProperties(map);
             }
-
-//            int msgIDLength = storehostIPLength + 4 + 8;
-//            ByteBuffer byteBufferMsgId = ByteBuffer.allocate(msgIDLength);
-//            String msgId = createMessageId(byteBufferMsgId, msgExt.getStoreHostBytes(), msgExt.getCommitLogOffset());
-//            msgExt.setMsgId(msgId);
-
-//            if (isClient) {
-//                ((MessageClientExt) msgExt).setOffsetMsgId(msgId);
-//            }
 
             return msgExt;
         } catch (Exception e) {

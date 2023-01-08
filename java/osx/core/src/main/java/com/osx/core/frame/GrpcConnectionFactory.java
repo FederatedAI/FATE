@@ -17,6 +17,7 @@
 package com.osx.core.frame;
 
 import com.osx.core.config.GrpcChannelInfo;
+import com.osx.core.exceptions.NoRouterInfoException;
 import com.osx.core.exceptions.SysException;
 import com.osx.core.router.RouterInfo;
 import io.grpc.ManagedChannel;
@@ -45,8 +46,9 @@ public class GrpcConnectionFactory {
     }
 
     public static synchronized ManagedChannel createManagedChannel(RouterInfo routerInfo,boolean usePooled) {
-
-
+        if(routerInfo==null){
+            throw new NoRouterInfoException("no router info");
+        }
         if(usePooled) {
             if (managedChannelPool.get(routerInfo.toKey()) != null) {
                 return managedChannelPool.get(routerInfo.toKey());

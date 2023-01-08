@@ -190,7 +190,7 @@ public class QueueTest {
     }
 
     @Test
-    public void test06UnaryConsume() {
+    public void test06UnarytimestampConsume() {
         boolean needContinue = true;
         Osx.Outbound consumeResponse;
         int count = 0;

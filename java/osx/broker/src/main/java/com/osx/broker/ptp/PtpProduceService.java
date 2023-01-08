@@ -27,6 +27,7 @@ import com.osx.broker.util.TransferUtil;
 import com.osx.core.config.MetaInfo;
 import com.osx.core.constant.ActionType;
 import com.osx.core.constant.DeployMode;
+import com.osx.core.constant.Dict;
 import com.osx.core.constant.StatusCode;
 import com.osx.core.context.Context;
 import com.osx.core.exceptions.*;
@@ -72,21 +73,21 @@ public class PtpProduceService extends AbstractPtpServiceAdaptor {
             }
             context.setActionType(ActionType.MSG_DOWNLOAD.getAlias());
             context.setRouterInfo(null);
-            CreateQueueResult createQueueResult = ServiceContainer.transferQueueManager.createNewQueue(topic, sessionId, false);
-            if (createQueueResult == null) {
-                throw new CreateTopicErrorException("create topic "+topic+" error");
+            TransferQueue  transferQueue = ServiceContainer.transferQueueManager.getQueue(topic);
+            CreateQueueResult createQueueResult = null;
+            if( transferQueue==null) {
+                 createQueueResult = ServiceContainer.transferQueueManager.createNewQueue(topic, sessionId, false);
+                if (createQueueResult == null) {
+                    throw new CreateTopicErrorException("create topic " + topic + " error");
+                }
+                transferQueue = createQueueResult.getTransferQueue();
             }
             String resource = TransferUtil.buildResource(produceRequest);
             int  dataSize = produceRequest.getSerializedSize();
-             ServiceContainer.tokenApplyService.applyToken(context,resource,dataSize);
+            ServiceContainer.tokenApplyService.applyToken(context,resource,dataSize);
             ServiceContainer.flowCounterManager.pass(resource,dataSize);
-            TransferQueue transferQueue = createQueueResult.getTransferQueue();
             if (transferQueue != null) {
-                //MessageExtBrokerInner messageExtBrokerInner = new MessageExtBrokerInner();
                 byte[] msgBytes = produceRequest.getPayload().toByteArray();
-                //context.(msgBytes.length);
-                //messageExtBrokerInner.setBody(msgBytes);
-
                 MessageExtBrokerInner messageExtBrokerInner = MessageDecoder.buildMessageExtBrokerInner(topic, msgBytes, 0, MessageFlag.MSG, context.getSrcPartyId(),
                         context.getDesPartyId());
                 PutMessageResult putMessageResult = transferQueue.putMessage(messageExtBrokerInner);
@@ -94,15 +95,15 @@ public class PtpProduceService extends AbstractPtpServiceAdaptor {
                     throw new PutMessageException("put status " + putMessageResult.getPutMessageStatus());
                 }
                 long logicOffset = putMessageResult.getMsgLogicOffset();
+                context.setCurrentMsgIndex(logicOffset);
                 Osx.Outbound.Builder outBoundBuilder = Osx.Outbound.newBuilder();
                 outBoundBuilder.setCode(StatusCode.SUCCESS);
-                outBoundBuilder.setMessage("SUCCESS");
+                outBoundBuilder.setMessage(Dict.SUCCESS);
                 return outBoundBuilder.build();
             } else {
                 /**
                  * 集群内转发
                  */
-
                 if (MetaInfo.PROPERTY_DEPLOY_MODE.equals(DeployMode.cluster.name())) {
                     RouterInfo redirectRouterInfo = new RouterInfo();
                     String redirectIp = createQueueResult.getRedirectIp();

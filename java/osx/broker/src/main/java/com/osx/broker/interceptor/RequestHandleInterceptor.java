@@ -20,6 +20,7 @@ import com.osx.broker.grpc.PushRequestDataWrap;
 import com.osx.broker.router.FateRouterService;
 import com.osx.core.context.Context;
 import com.osx.core.exceptions.NoRouterInfoException;
+import com.osx.core.exceptions.ParameterException;
 import com.osx.core.router.RouterInfo;
 import com.osx.core.service.InboundPackage;
 import com.osx.core.service.Interceptor;
@@ -58,12 +59,9 @@ public class RequestHandleInterceptor implements Interceptor {
             String targetPartyId = StringUtils.isEmpty(targetInstId) ? targetNodeId : targetInstId + "." + targetNodeId;
             String topic = metaDataMap.get(Osx.Metadata.MessageTopic.name());
             String offsetString = metaDataMap.get(Osx.Metadata.MessageOffSet.name());
-            //RouterInfo routerInfo = fateRouterService.route(sourcePartyId, sourceComponentName, targetPartyId, targetComponentName);
             Long offset = StringUtils.isNotEmpty(offsetString) ? Long.parseLong(offsetString) : null;
-
             context.setDesPartyId(targetPartyId);
             context.setSrcPartyId(sourcePartyId);
-            //context.setRouterInfo(routerInfo);
             context.setTopic(topic);
             context.setRequestMsgIndex(offset);
             context.setSessionId(sessionId);
@@ -79,10 +77,8 @@ public class RequestHandleInterceptor implements Interceptor {
         }else if (body instanceof Proxy.Packet) {
          handleProxyPacket(context ,(Proxy.Packet) body);
      } else {
-         throw new RuntimeException();
+         throw new ParameterException("invalid inbound type");
      }
-
-
 
     }
 
@@ -92,14 +88,13 @@ public class RequestHandleInterceptor implements Interceptor {
         try {
             rollSiteHeader = Transfer.RollSiteHeader.parseFrom(metadata.getExt());
         } catch (InvalidProtocolBufferException e) {
-            e.printStackTrace();
+            throw new ParameterException("invalid rollSiteHeader");
         }
         String dstPartyId = rollSiteHeader.getDstPartyId();
-
         if (StringUtils.isEmpty(dstPartyId)) {
             dstPartyId = metadata.getDst().getPartyId();
         }
-        dstPartyId = metadata.getDst().getPartyId();
+
         String desRole = metadata.getDst().getRole();
         String srcRole = metadata.getSrc().getRole();
         String srcPartyId = metadata.getSrc().getPartyId();

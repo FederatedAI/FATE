@@ -23,16 +23,10 @@ import com.osx.core.utils.FlowLogUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.Map;
-
-
 public class Context {
-
     static final String LOGGER_NAME = "flow";
-
     private static final Logger logger = LoggerFactory.getLogger(LOGGER_NAME);
-
     protected long timestamp = System.currentTimeMillis();
     protected boolean needAssembleException = false;
     protected String actionType;
@@ -45,27 +39,29 @@ public class Context {
     Throwable t;
     FlowLogPrinter flowLogPrinter = FlowLogUtil::printFlowLog;
 
+    public  Context(){
+    }
+    public  Context(long  timestamp, Map dataMap){
+        timestamp = timestamp;
+        this.dataMap =  dataMap;
+    }
     public Long getDataSize() {
         return dataSize;
     }
-
     public void setDataSize(long dataSize) {
         this.dataSize = dataSize;
     }
-
     public String getTopic() {
         if (dataMap.get(Dict.TOPIC) != null)
             return dataMap.get(Dict.TOPIC).toString();
         return null;
     }
-
     public void setTopic(String topic) {
         this.dataMap.put(Dict.TOPIC, topic);
     }
 
     public String getInstanceId() {
         return (String) dataMap.get(Dict.INSTANCE_ID);
-
     }
 
     public void setInstanceId(String instanceId) {
@@ -115,7 +111,6 @@ public class Context {
             return null;
         }
     }
-
     public void setCaseId(String caseId) {
         dataMap.put(Dict.CASEID, caseId);
     }
@@ -188,8 +183,6 @@ public class Context {
     public  String getDesComponent(){
         return   (String)dataMap.get(Dict.DES_COMPONENT);
     }
-
-
 
     public RouterInfo getRouterInfo() {
         return (RouterInfo) dataMap.get(Dict.ROUTER_INFO);
@@ -294,12 +287,9 @@ public class Context {
         this.flowLogPrinter = flowLogPrinter;
         return this;
     }
-
     public void printFlowLog() {
         if (needPrintFlowLog) {
             flowLogPrinter.print(this);
         }
     }
-
-
 }

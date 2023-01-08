@@ -206,7 +206,7 @@ public class FateTechProvider implements TechProvider, Lifecycle {
     public void init() {
         Preconditions.checkArgument(ServiceContainer.fateRouterService != null);
         requestHandleInterceptor = new RequestHandleInterceptor();
-        routerInterceptor = new RouterInterceptor(ServiceContainer.fateRouterService);
+        routerInterceptor =ServiceContainer.routerInterceptor;
         registerServiceAdaptor();
     }
 

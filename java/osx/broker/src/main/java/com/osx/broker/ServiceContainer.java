@@ -20,6 +20,7 @@ import com.osx.broker.consumer.ConsumerManager;
 import com.osx.broker.grpc.PcpGrpcService;
 import com.osx.broker.grpc.ProxyGrpcService;
 import com.osx.broker.interceptor.RequestHandleInterceptor;
+import com.osx.broker.interceptor.RouterInterceptor;
 import com.osx.broker.message.AllocateMappedFileService;
 import com.osx.broker.queue.TransferQueueManager;
 import com.osx.broker.router.DefaultFateRouterServiceImpl;
@@ -70,6 +71,8 @@ public class ServiceContainer {
 //    static public QueryTransferQueueService queryTransferQueueService;
     static public MessageStore messageStore;
 //    static public DefaultRouterInterceptor defaultRouterInterceptor;
+
+    static  public  RouterInterceptor routerInterceptor;
     //   static public ProducerUnaryService producerUnaryService;
     // static public SyncQueueService syncQueueService;
     //static public ClusterClientEndpoint clusterClientEndpoint;
@@ -102,8 +105,8 @@ public class ServiceContainer {
         //queryTransferQueueService = new QueryTransferQueueService(transferQueueManager);
         //  queueGrpcservice =       createQueueGrpcservice();
         requestHandleInterceptor = createDefaulRequestInterceptor();
-//        defaultRouterInterceptor = createDefaultRouterInterceptor(fateRouterService);
-        unaryCallService = createUnaryCallService(requestHandleInterceptor);
+        routerInterceptor =  createDefaultRouterInterceptor(fateRouterService);
+        unaryCallService = createUnaryCallService(requestHandleInterceptor,routerInterceptor);
         proxyGrpcService = new ProxyGrpcService(pushService2, unaryCallService);
         transferServer = new OsxServer();
         //clusterClientEndpoint = createClusterClientEndpoint();
@@ -219,6 +222,10 @@ public class ServiceContainer {
         RequestHandleInterceptor requestHandleInterceptor = new RequestHandleInterceptor();
         return requestHandleInterceptor;
     }
+    public  static RouterInterceptor createDefaultRouterInterceptor(FateRouterService fateRouterService){
+        RouterInterceptor routerInterceptor = new RouterInterceptor(fateRouterService);
+        return routerInterceptor;
+    }
 
 
     static FlowCounterManager createFlowCounterManager() {
@@ -227,9 +234,10 @@ public class ServiceContainer {
         return flowCounterManager;
     }
 
-    static UnaryCallService createUnaryCallService(RequestHandleInterceptor requestHandleInterceptor) {
+    static UnaryCallService createUnaryCallService(RequestHandleInterceptor requestHandleInterceptor,RouterInterceptor routerInterceptor) {
         UnaryCallService unaryCallService = new UnaryCallService();
         unaryCallService.addPreProcessor(requestHandleInterceptor);
+        unaryCallService.addPreProcessor(routerInterceptor);
         return unaryCallService;
     }
 

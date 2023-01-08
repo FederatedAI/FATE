@@ -18,8 +18,10 @@ import java.util.concurrent.TimeUnit;
 
 public class OldFateTest {
 
-    static int port = 9889;//9371
-    static String ip = "localhost";
+    static int port = 9370;//9371
+   // static String ip = "localhost";
+    static String ip = "10.42.0.85";
+
     static Logger logger = LoggerFactory.getLogger(OldFateTest.class);
 
     static boolean useSSL = false;

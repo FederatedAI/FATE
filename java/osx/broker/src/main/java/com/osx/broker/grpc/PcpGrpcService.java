@@ -90,14 +90,13 @@ public class PcpGrpcService extends PrivateTransferProtocolGrpc.PrivateTransferP
 
         @Override
         public void onNext(Osx.Inbound inbound) {
-           // logger.info("======================={}",inbound);
             if (!inited) {
                 init(inbound);
             }
             if (requestObserver != null) {
                 requestObserver.onNext(inbound);
             } else {
-                throw new RuntimeException();
+                throw new SysException("requestObserver is null");
             }
         }
 

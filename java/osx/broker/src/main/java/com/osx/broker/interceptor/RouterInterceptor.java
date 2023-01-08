@@ -21,18 +21,32 @@ import com.osx.core.service.InboundPackage;
 import com.osx.core.service.Interceptor;
 import com.osx.core.service.OutboundPackage;
 import org.ppc.ptp.Osx;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class RouterInterceptor implements Interceptor {
+
+    Logger logger = LoggerFactory.getLogger(RouterInterceptor.class);
+
     public RouterInterceptor(FateRouterService fateRouterService){
         this.fateRouterService = fateRouterService;
     }
     FateRouterService  fateRouterService;
-    public void doPreProcess(Context context, InboundPackage<Osx.Inbound> inboundPackage, OutboundPackage<Osx.Outbound> outboundPackage) throws Exception {
+
+
+    @Override
+    public void doPreProcess(Context context, InboundPackage inboundPackage) throws Exception {
+
         String sourcePartyId = context.getSrcPartyId();
         String desPartyId = context.getDesPartyId();
         String sourceComponentName  = context.getSrcComponent();
         String desComponentName = context.getDesComponent();
         RouterInfo routerInfo = fateRouterService.route(sourcePartyId,sourceComponentName,desPartyId,desComponentName);
+        logger.info("============== {} {} {} {} ============",sourcePartyId,sourceComponentName,desPartyId,desComponentName);
+        if(logger.isDebugEnabled()) {
+            logger.debug("RouterInterceptor return {}", routerInfo);
+        }
         context.setRouterInfo(routerInfo);
-    }
 
+    }
 }

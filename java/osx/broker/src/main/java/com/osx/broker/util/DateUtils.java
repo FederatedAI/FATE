@@ -522,7 +522,7 @@ public class DateUtils {
             sdf.parse(UTCTimeBuffer.toString());
             return UTCTimeBuffer.toString();
         } catch (ParseException e) {
-            e.printStackTrace();
+
         }
         return null;
     }

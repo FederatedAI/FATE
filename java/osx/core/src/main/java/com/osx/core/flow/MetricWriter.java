@@ -171,7 +171,7 @@ public class MetricWriter {
             }
         }
         // part is like: ".yyyy-MM-dd.number", eg. ".2018-12-24.11"
-        System.err.println("======" + part);
+
         return part.matches("\\.[0-9]{4}-[0-9]{2}-[0-9]{2}");
     }
 

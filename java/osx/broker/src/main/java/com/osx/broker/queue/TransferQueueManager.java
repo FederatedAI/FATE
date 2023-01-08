@@ -193,13 +193,10 @@ public class TransferQueueManager {
         masterQueueApplyInfoMap.forEach((k, v) -> {
             if (current - v.getApplyTimestamp() > 10000) {
                 if (transferQueueApplyInfoMap.get(k) == null) {
-                    logger.info("===============master  remove {}", k);
                     masterQueueApplyInfoMap.remove(k);
                 }
-            }
-            ;
+            };
         });
-        // logger.info("==========cluster count info ============{}",clusterTransferQueueCountMap);
     }
 
     private MasterInfo parseMasterInfo(String masterContent) {
@@ -255,7 +252,7 @@ public class TransferQueueManager {
                         result.add(transferId);
                     } catch (Exception e) {
                         logger.error("destroyInner error {}", transferId);
-                        e.printStackTrace();
+
                     }
                 }
             }
@@ -267,7 +264,6 @@ public class TransferQueueManager {
                 }
             } catch (Exception e) {
                 logger.error("destroy error {}", paramTransferId);
-                e.printStackTrace();
             }
         }
         return result;
@@ -293,7 +289,6 @@ public class TransferQueueManager {
                 long lastReadTimestamp = transferQueue.getLastReadTimestamp();
                 long lastWriteTimestamp = transferQueue.getLastWriteTimestamp();
                 long freeTime = now - (lastReadTimestamp > lastWriteTimestamp ? lastReadTimestamp : lastWriteTimestamp);
-                //    logger.info("transfer queue: {} status: {}  write finish: {} cost time {}",transferId,transferQueue.getTransferStatus(),transferQueue.isWriteOver(),costTime);
                 if (transferQueue.getTransferStatus() == TransferStatus.ERROR || transferQueue.getTransferStatus() == TransferStatus.FINISH) {
                     destroy(transferId);
                 }
@@ -303,7 +298,7 @@ public class TransferQueueManager {
                     return;
                 }
             } catch (Exception igrone) {
-                igrone.printStackTrace();
+
             }
         });
 
@@ -539,16 +534,9 @@ public class TransferQueueManager {
 
     private void unRegisterCluster(String transferId) {
         logger.info("unRegister transferId {}", transferId);
-//        ManagedChannel managedChannel = GrpcConnectionPool.getPool().getManagedChannel(MetaInfo.getClusterManagerHost(), MetaInfo.getClusterManagerPort());
-//        FireworkServiceGrpc.FireworkServiceBlockingStub stub = FireworkServiceGrpc.newBlockingStub(managedChannel);
-//        Firework.UnRegisterTransferQueueRequest.Builder  unRegisterTransferQueueRequestBuilder = Firework.UnRegisterTransferQueueRequest.newBuilder();
-//        unRegisterTransferQueueRequestBuilder.setTransferId(transferId);
-//        stub.unRegisterTransferQueue(unRegisterTransferQueueRequestBuilder.build());
         if (MetaInfo.isCluster()) {
             ServiceContainer.zkClient.delete(ZK_QUEUE_PREFIX + "/" + transferId);
         }
-
-
     }
 
 
@@ -632,7 +620,6 @@ public class TransferQueueManager {
             try {
                 if (this.isMaster()) {
                     ServiceContainer.zkClient.delete(MASTER_PATH);
-                    System.err.println("=========quit master");
                 }
                 ServiceContainer.zkClient.close();
                 ;
@@ -642,44 +629,7 @@ public class TransferQueueManager {
             logger.info("unregister component over");
         }
         this.transferQueueMap.forEach((transferId, transferQueue) -> {
-
             transferQueue.destory();
-            System.err.println("kkkkkkkkkkkkkkkkk");
         });
-
-        logger.info("over========");
     }
-
-//    public synchronized FireworkTransfer.SyncTransferInfoResponse syncTransferQueueApplyInfo(FireworkTransfer.SyncTransferInfoRequest syncTransferInfoRequest){
-//       //logger.info("============================= setTransferQueueApplyInfo {}",data);
-//        FireworkTransfer.SyncTransferInfoResponse.Builder  syncTransferInfoResponseBuilder = FireworkTransfer.SyncTransferInfoResponse.newBuilder();
-//        syncTransferInfoResponseBuilder.setPreVersion(transferApplyInfoVersion);
-//        if(syncTransferInfoRequest!=null) {
-//            if (syncTransferInfoRequest.getVersion()>transferApplyInfoVersion) {
-//                syncTransferInfoResponseBuilder.setCode(StatusCode.SUCCESS);
-//                if(syncTransferInfoRequest.getData()!=null) {
-//                    byte[] dataBytes = syncTransferInfoRequest.getData().toByteArray();
-//                    Map tempData = JsonUtil.json2Object(dataBytes, Map.class);
-//                    if(tempData!=null){
-//                        Map<String, TransferQueueApplyInfo>  resultData = Maps.newHashMap();
-//                        tempData.forEach((transferId,mapData)->{
-//                            resultData.put(transferId.toString(), JsonUtil.json2Object(JsonUtil.object2Json(mapData),TransferQueueApplyInfo.class));
-//                        });
-//                        this.transferQueueApplyInfoMap = resultData;
-//                    }
-//                    transferApplyInfoVersion = syncTransferInfoRequest.getVersion();
-//                    List ids  =  syncTransferInfoRequest.getInstanceIdsList();
-//                    instanceIds.clear();
-//                    instanceIds.addAll(ids);
-//                    instanceIds.add(MetaInfo.INSTANCE_ID);
-//                }
-//            }else{
-//                syncTransferInfoResponseBuilder.setCode(StatusCode.TRANSFER_APPLYINFO_SYNC_ERROR);
-//                syncTransferInfoResponseBuilder.setMsg("version "+syncTransferInfoRequest.getVersion()+" is expired ,now is "+transferApplyInfoVersion);
-//            }
-//        }
-//        return  syncTransferInfoResponseBuilder.build();
-//    }
-
-
 }

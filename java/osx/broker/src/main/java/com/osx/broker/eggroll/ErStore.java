@@ -58,9 +58,6 @@ public class ErStore extends BaseProto<Meta.Store> {
 
         ErStore erStore = new ErStore(erStoreLocator, partitions, Maps.newHashMap());
 
-        System.err.println(erStore.toProto());
-
-        System.err.println(ErStore.parseFromPb(erStore.toProto()));
 
     }
 
