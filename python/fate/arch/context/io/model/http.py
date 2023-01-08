@@ -11,8 +11,8 @@ class HTTPModelWriter:
     def __init__(self, ctx, name: str, uri: URI, metadata) -> None:
         self.name = name
         self.ctx = ctx
-        self.entrypoint = f"{self.uri.schema}://{self.uri.authority}{self.uri.path}"
         self.uri = uri
+        self.entrypoint = f"{self.uri.schema}://{self.uri.authority}{self.uri.path}"
 
     def write_model(self, model):
         logger.debug(self.entrypoint)
