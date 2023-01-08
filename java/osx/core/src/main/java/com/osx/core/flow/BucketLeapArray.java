@@ -16,13 +16,7 @@
 package com.osx.core.flow;
 
 
-/**
- * The fundamental data structure for metric statistics in a time span.
- *
- * @author jialiang.linjl
- * @author Eric Zhao
- * @see LeapArray
- */
+
 public class BucketLeapArray extends LeapArray<MetricBucket> {
 
     public BucketLeapArray(int sampleCount, int intervalInMs) {

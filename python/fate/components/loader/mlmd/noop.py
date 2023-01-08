@@ -37,7 +37,7 @@ class IOManager(IOManagerProtocol):
     def log_output_data(self, key, value):
         print(f"log output data: {key}, {value}")
 
-    def log_output_model(self, key, value, metadata):
+    def log_output_model(self, key, value, metadata={}):
         print(f"log output model: {key}, {value}, {metadata}")
 
     def log_output_metric(self, key, value):

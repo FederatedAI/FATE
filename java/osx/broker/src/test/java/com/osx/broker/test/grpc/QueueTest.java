@@ -4,7 +4,11 @@ package com.osx.broker.test.grpc;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.osx.core.constant.Dict;
+import com.osx.core.frame.GrpcConnectionFactory;
 import com.osx.core.ptp.TargetMethod;
+import com.osx.core.router.RouterInfo;
+import com.osx.core.utils.JsonUtil;
 import io.grpc.ManagedChannel;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import org.junit.Before;
@@ -16,6 +20,7 @@ import org.ppc.ptp.PrivateTransferProtocolGrpc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -37,8 +42,8 @@ public class QueueTest {
         try {
             NettyChannelBuilder channelBuilder = NettyChannelBuilder
                     .forAddress(ip, port)
-                    .keepAliveTime(12, TimeUnit.SECONDS)
-                    .keepAliveTimeout(1, TimeUnit.SECONDS)
+                    .keepAliveTime(12, TimeUnit.MINUTES)
+                    .keepAliveTimeout(12, TimeUnit.MINUTES)
                     .keepAliveWithoutCalls(true)
                     //.idleTimeout(60, TimeUnit.SECONDS)
                     .perRpcBufferLimit(128 << 20)
@@ -100,9 +105,11 @@ public class QueueTest {
 
     }
 
+
+
     @Test
     public void test04UnaryProduce() {
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 1; i++) {
             Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
             inboundBuilder.putMetadata(Osx.Header.Version.name(), "123");
             inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), "FT");
@@ -129,6 +136,37 @@ public class QueueTest {
                 e.printStackTrace();
             }
         }
+    }
+
+    @Test
+    public void  testTopicApply(){
+
+        Osx.Inbound.Builder  inboundBuilder = Osx.Inbound.newBuilder();
+        //  inboundBuilder.putMetadata(Osx.Header.Version.name(), "123");
+        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), Dict.FATE_TECH_PROVIDER );
+        inboundBuilder.putMetadata(Osx.Metadata.TargetMethod.name(), TargetMethod.APPLY_TOPIC.name());
+        inboundBuilder.putMetadata(Osx.Metadata.MessageTopic.name(), "testTopic0001");
+        inboundBuilder.putMetadata(Osx.Metadata.InstanceId.name(),"localhost:9999" );
+        inboundBuilder.putMetadata(Osx.Header.SessionID.name(), "testSessionId");
+
+
+//        TopicApplyRequest  topicApplyRequest = new TopicApplyRequest();
+//        topicApplyRequest.setTopic("testTopic0001");
+//        topicApplyRequest.setInstanceId("localhost:9999");
+//        topicApplyRequest.setSessionId("testSessionId");
+      //  inboundBuilder.setPayload(ByteString.copyFrom(JsonUtil.object2Json(topicApplyRequest).getBytes(StandardCharsets.UTF_8)));
+//        RouterInfo routerInfo = new  RouterInfo();
+//        routerInfo.setHost("localhost");
+//        routerInfo.setPort(9370);
+//        ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(routerInfo,true);
+        // FireworkServiceGrpc.FireworkServiceBlockingStub stub = FireworkServiceGrpc.newBlockingStub(managedChannel);
+        //PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub  stub = PrivateTransferProtocolGrpc.newBlockingStub(managedChannel);
+        Osx.Outbound  outbound = blockingStub.invoke(inboundBuilder.build());
+
+        //TopicApplyResponse  topicApplyResponse = JsonUtil.json2Object(outbound.getPayload().toByteArray(),TopicApplyResponse.class);
+
+        System.err.println(outbound);
+
     }
 
     public void test07Ack(long index) {
@@ -173,7 +211,7 @@ public class QueueTest {
             inboundBuilder.putMetadata(Osx.Metadata.MessageTopic.name(), transferId);
             inboundBuilder.putMetadata(Osx.Metadata.MessageOffSet.name(), "-1");
             consumeResponse = blockingStub.invoke(inboundBuilder.build());
-            System.err.println(consumeResponse);
+            System.err.println("response : "+consumeResponse);
 
             String indexString = consumeResponse.getMetadataMap().get(Osx.Metadata.MessageOffSet.name());
             Long index = Long.parseLong(indexString);
@@ -210,6 +248,12 @@ public class QueueTest {
         inboundBuilder.putMetadata(Osx.Metadata.MessageTopic.name(), transferId);
         Osx.Outbound outbound = blockingStub.invoke(inboundBuilder.build());
         System.err.println("cancel result ：" + outbound);
+    }
+
+
+    public  static  void  main(String[] args){
+        
+
     }
 
 }

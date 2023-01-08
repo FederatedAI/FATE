@@ -14,11 +14,7 @@
  * limitations under the License.
  */
 package com.osx.core.flow;
-
-
 import java.util.concurrent.atomic.LongAdder;
-
-
 public class ClusterMetricLeapArray extends LeapArray<ClusterMetricBucket> {
 
     private final LongAdder[] occupyCounter;

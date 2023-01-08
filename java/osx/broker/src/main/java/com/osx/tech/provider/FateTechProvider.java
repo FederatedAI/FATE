@@ -1,3 +1,18 @@
+/*
+ * Copyright 2019 The FATE Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.osx.tech.provider;
 
 
@@ -5,11 +20,10 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import com.google.protobuf.ByteString;
 import com.osx.broker.ServiceContainer;
-import com.osx.broker.grpc.ContextUtil;
+import com.osx.broker.util.ContextUtil;
 import com.osx.broker.interceptor.RequestHandleInterceptor;
+import com.osx.broker.interceptor.RouterInterceptor;
 import com.osx.broker.ptp.*;
-import com.osx.broker.service.UnaryCallService;
-import com.osx.broker.util.TransferExceptionUtil;
 import com.osx.broker.util.TransferUtil;
 import com.osx.core.config.MetaInfo;
 import com.osx.core.constant.Dict;
@@ -24,23 +38,18 @@ import com.osx.core.ptp.TargetMethod;
 import com.osx.core.service.InboundPackage;
 import com.osx.core.service.OutboundPackage;
 import com.osx.core.service.ServiceAdaptor;
-import com.osx.core.utils.JsonUtil;
 import io.grpc.stub.StreamObserver;
 import org.apache.commons.io.IOUtils;
-import org.eclipse.jetty.http.HttpHeader;
 import org.ppc.ptp.Osx;
 
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
-import static java.lang.System.arraycopy;
 
 /**
  * FATE 相关实现
@@ -51,6 +60,7 @@ public class FateTechProvider implements TechProvider, Lifecycle {
     ConcurrentMap<String, ServiceAdaptor> serviceAdaptorConcurrentMap = new ConcurrentHashMap<>();
 
     RequestHandleInterceptor requestHandleInterceptor;
+    RouterInterceptor  routerInterceptor;
 
     private Set<String> httpAllowedMethod= Sets.newHashSet(TargetMethod.PRODUCE_MSG.name(),TargetMethod.UNARY_CALL.name());
 
@@ -134,25 +144,40 @@ public class FateTechProvider implements TechProvider, Lifecycle {
 
     @Override
     public void processGrpcInvoke(Osx.Inbound request, StreamObserver<Osx.Outbound> responseObserver) {
-        Map<String, String> metaDataMap = request.getMetadataMap();
-        String targetMethod = metaDataMap.get(Osx.Metadata.TargetMethod.name());
-        ServiceAdaptor serviceAdaptor = this.getServiceAdaptor(targetMethod);
-        if(serviceAdaptor==null){
-            throw new ParameterException("invalid target method "+targetMethod);
-        }
         Context context = ContextUtil.buildContext();
-        InboundPackage inboundPackage = new InboundPackage();
-        inboundPackage.setBody(request);
-        OutboundPackage<Osx.Outbound> outboundPackage = serviceAdaptor.service(context, inboundPackage);
-        if (outboundPackage.getData() != null) {
-            responseObserver.onNext(outboundPackage.getData());
+        context.putData(Dict.RESPONSE_STREAM_OBSERVER,responseObserver);
+        Osx.Outbound result = null;
+        try {
+            Map<String, String> metaDataMap = request.getMetadataMap();
+            String targetMethod = metaDataMap.get(Osx.Metadata.TargetMethod.name());
+            ServiceAdaptor serviceAdaptor = this.getServiceAdaptor(targetMethod);
+            if (serviceAdaptor == null) {
+                throw new ParameterException("invalid target method " + targetMethod);
+            }
+            InboundPackage inboundPackage = new InboundPackage();
+            inboundPackage.setBody(request);
+            OutboundPackage<Osx.Outbound> outboundPackage = serviceAdaptor.service(context, inboundPackage);
+            if (outboundPackage.getData() != null) {
+                result = outboundPackage.getData();
+            }
+        }catch (Exception e){
+            ExceptionInfo exceptionInfo =  ErrorMessageUtil.handleExceptionExceptionInfo(context,e);
+            //this.writeHttpRespose(response, exceptionInfo.getCode(),exceptionInfo.getMessage(),null);
+            context.setReturnCode(exceptionInfo.getCode());
+            context.setReturnMsg(exceptionInfo.getMessage());
+            context.printFlowLog();
+            result = Osx.Outbound.newBuilder().setCode(exceptionInfo.getCode()).setMessage(exceptionInfo.getMessage()).build();
+        }
+        if(result!=null) {
+            responseObserver.onNext(result);
             responseObserver.onCompleted();
         }
+
     }
 
     @Override
     public String getProviderId() {
-        return "FT";
+        return Dict.FATE_TECH_PROVIDER;
     }
 
 
@@ -180,7 +205,8 @@ public class FateTechProvider implements TechProvider, Lifecycle {
     @Override
     public void init() {
         Preconditions.checkArgument(ServiceContainer.fateRouterService != null);
-        requestHandleInterceptor = new RequestHandleInterceptor(ServiceContainer.fateRouterService);
+        requestHandleInterceptor = new RequestHandleInterceptor();
+        routerInterceptor = new RouterInterceptor(ServiceContainer.fateRouterService);
         registerServiceAdaptor();
     }
 
@@ -193,18 +219,20 @@ public class FateTechProvider implements TechProvider, Lifecycle {
     public void destroy() {
 
     }
-
-    private ServiceAdaptor getServiceAdaptor(String name) {
+    public ServiceAdaptor getServiceAdaptor(String name) {
         return this.serviceAdaptorConcurrentMap.get(name);
     }
-
     private void registerServiceAdaptor() {
-        this.serviceAdaptorConcurrentMap.put(TargetMethod.UNARY_CALL.name(), new PtpUnaryCallService().addPreProcessor(requestHandleInterceptor));
-        this.serviceAdaptorConcurrentMap.put(TargetMethod.PRODUCE_MSG.name(), new PtpProduceService().addPreProcessor(requestHandleInterceptor));
+        this.serviceAdaptorConcurrentMap.put(TargetMethod.UNARY_CALL.name(), new PtpUnaryCallService().addPreProcessor(requestHandleInterceptor)
+                .addPreProcessor(routerInterceptor));
+        this.serviceAdaptorConcurrentMap.put(TargetMethod.PRODUCE_MSG.name(), new PtpProduceService().addPreProcessor(requestHandleInterceptor)
+                .addPreProcessor(routerInterceptor));
         this.serviceAdaptorConcurrentMap.put(TargetMethod.ACK_MSG.name(), new PtpAckService().addPreProcessor(requestHandleInterceptor));
         this.serviceAdaptorConcurrentMap.put(TargetMethod.CONSUME_MSG.name(), new PtpConsumeService().addPreProcessor(requestHandleInterceptor));
         this.serviceAdaptorConcurrentMap.put(TargetMethod.QUERY_TOPIC.name(), new PtpQueryTransferQueueService().addPreProcessor(requestHandleInterceptor));
         this.serviceAdaptorConcurrentMap.put(TargetMethod.CANCEL_TOPIC.name(), new PtpCancelTransferService().addPreProcessor(requestHandleInterceptor));
         this.serviceAdaptorConcurrentMap.put(TargetMethod.PUSH.name(), new PtpPushService());
+        this.serviceAdaptorConcurrentMap.put(TargetMethod.APPLY_TOKEN.name(), new PtpClusterTokenApplyService());
+        this.serviceAdaptorConcurrentMap.put(TargetMethod.APPLY_TOPIC.name(),new PtpClusterTopicApplyService());
     }
 }

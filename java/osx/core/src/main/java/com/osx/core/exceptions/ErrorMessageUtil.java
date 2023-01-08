@@ -35,18 +35,6 @@ public class ErrorMessageUtil {
 
     static Logger logger = LoggerFactory.getLogger(ErrorMessageUtil.class);
 
-//    public static ReturnResult handleExceptionToReturnResult(Throwable e) {
-//        ReturnResult returnResult = new ReturnResult();
-//        if (e instanceof BaseException) {
-//            BaseException baseException = (BaseException) e;
-//            returnResult.setRetcode(baseException.getRetcode());
-//            returnResult.setRetmsg(e.getMessage());
-//        } else {
-//            returnResult.setRetcode(StatusCode.SYSTEM_ERROR);
-//        }
-//        return returnResult;
-//    }
-
     public static String buildRemoteRpcErrorMsg(int code, String msg) {
         return new StringBuilder().append("host return code ").append(code)
                 .append(" host msg :").append(msg).toString();

@@ -1,19 +1,43 @@
+/*
+ * Copyright 2019 The FATE Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.osx.broker.service;
 
-import com.firework.cluster.rpc.Firework;
-import com.firework.cluster.rpc.FireworkServiceGrpc;
+
+import com.google.protobuf.ByteString;
 import com.osx.broker.ServiceContainer;
 import com.osx.core.config.MetaInfo;
+import com.osx.core.constant.Dict;
 import com.osx.core.constant.StreamLimitMode;
 import com.osx.core.context.Context;
 import com.osx.core.flow.FlowRule;
+import com.osx.core.frame.GrpcConnectionFactory;
 import com.osx.core.frame.Lifecycle;
+import com.osx.core.ptp.TargetMethod;
+import com.osx.core.router.RouterInfo;
+import com.osx.core.token.TokenRequest;
 import com.osx.core.token.TokenResult;
 import com.osx.core.token.TokenResultStatus;
 import com.osx.core.utils.JsonUtil;
+import io.grpc.ManagedChannel;
+import org.ppc.ptp.Osx;
+import org.ppc.ptp.PrivateTransferProtocolGrpc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -23,23 +47,29 @@ public class TokenApplyService implements Lifecycle {
 
     static Logger logger = LoggerFactory.getLogger(TokenApplyService.class);
     ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-    private FireworkServiceGrpc.FireworkServiceBlockingStub blockingStub;
 
     public TokenApplyService() {
 
     }
 
-    public FireworkServiceGrpc.FireworkServiceBlockingStub buildBlockingStub(String address) {
-//        String[] ipports=   address.split(":");
-//        ManagedChannel channel = GrpcConnectionFactory.getManagedChannel(ipports[0],Integer.parseInt(ipports[1]));
-//        FireworkServiceGrpc.FireworkServiceBlockingStub  blockingStub = FireworkServiceGrpc.newBlockingStub(channel);
-//        return  blockingStub;
-        return null;
+    PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub blockingStub;
+
+
+    public PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub buildBlockingStub(String address) {
+        String[] ipports=   address.split(":");
+        RouterInfo  routerInfo =  new RouterInfo();
+        routerInfo.setHost(ipports[0]);
+        routerInfo.setPort(Integer.parseInt(ipports[1]));
+        ManagedChannel channel = GrpcConnectionFactory.createManagedChannel(routerInfo,true);
+        PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub blockingStub = PrivateTransferProtocolGrpc.newBlockingStub(channel);
+        return  blockingStub;
+
     }
 
     public void applyToken(Context context, String resource, int count) {
 
-        if (MetaInfo.PROPERTY_STREAM_LIMIT_MODE.equals(StreamLimitMode.LOCAL.name()) || MetaInfo.PROPERTY_STREAM_LIMIT_MODE.equals(StreamLimitMode.CLUSTER.name())) {
+        if (MetaInfo.PROPERTY_STREAM_LIMIT_MODE.equals(StreamLimitMode.LOCAL.name())
+                || MetaInfo.PROPERTY_STREAM_LIMIT_MODE.equals(StreamLimitMode.CLUSTER.name())) {
             TokenResult localTokenResult = tryLocalLimit(resource, count);
             logger.info("request token {} count {} result {}", resource, count, localTokenResult);
             /**
@@ -49,20 +79,15 @@ public class TokenApplyService implements Lifecycle {
                 /**
                  * 先尝试本地限流,当本地返回通过时再尝试全局限流
                  */
-                // FlowRule localRule = rules.get(resource);
-
                 if (localTokenResult.getStatus() == TokenResultStatus.OK) {
                     tryClusterLimit(resource, count);
                 }
-                //   flowCounterManager.pass(resource, count);
-                //        }else{
-                ////            logger.info("service {} resource {} has no flow rule",context.getServiceName(),resource);
-                //        }
-
             }
             ServiceContainer.flowCounterManager.pass(resource, count);
         }
     }
+
+
 
 
     private TokenResult tryLocalLimit(String resource, int count) {
@@ -70,6 +95,7 @@ public class TokenApplyService implements Lifecycle {
         int tryTime = 0;
         TokenResult tokenResult;
         do {
+
             tokenResult = ServiceContainer.defaultTokenService.requestToken(resource, count, true);
             if (tokenResult != null) {
                 ++tryTime;
@@ -115,9 +141,27 @@ public class TokenApplyService implements Lifecycle {
     }
 
     private void tryClusterLimit(String resource, int count) {
-        Firework.TokenRequest.Builder tokenRequestBuilder = Firework.TokenRequest.newBuilder();
-        tokenRequestBuilder.setCount(count);
-        tokenRequestBuilder.setResource(resource);
+
+
+        TokenRequest  tokenRequest = new TokenRequest();
+        tokenRequest.setResource(resource);
+        tokenRequest.setAcquireCount(count);
+
+        Osx.Inbound.Builder  inboundBuilder = Osx.Inbound.newBuilder();
+
+      //  inboundBuilder.putMetadata(Osx.Header.Version.name(), "123");
+        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), "FT");
+      //  inboundBuilder.putMetadata(Osx.Header.Token.name(), "testToken");
+       // inboundBuilder.putMetadata(Osx.Header.SourceNodeID.name(), "9999");
+      //  inboundBuilder.putMetadata(Osx.Header.TargetNodeID.name(), "10000");
+      //  inboundBuilder.putMetadata(Osx.Header.SourceInstID.name(), "");
+      //  inboundBuilder.putMetadata(Osx.Header.TargetInstID.name(), "");
+        //inboundBuilder.putMetadata(Osx.Header.SessionID.name(), "testSessionID");
+        inboundBuilder.putMetadata(Osx.Metadata.TargetMethod.name(), TargetMethod.APPLY_TOKEN.name());
+     //   inboundBuilder.putMetadata(Osx.Metadata.TargetComponentName.name(), "fateflow");
+     //   inboundBuilder.putMetadata(Osx.Metadata.SourceComponentName.name(), "");
+        inboundBuilder.setPayload(ByteString.copyFrom(JsonUtil.object2Json(tokenRequest).getBytes(StandardCharsets.UTF_8)));
+
         if (blockingStub == null) {
             blockingStub = buildBlockingStub(MetaInfo.masterInfo.getInstanceId());
         }
@@ -125,7 +169,13 @@ public class TokenApplyService implements Lifecycle {
         int tryTime = 0;
 
         do {
-            Firework.TokenResponse tokenResult = blockingStub.applyToken(tokenRequestBuilder.build());
+            Osx.Outbound outbound = blockingStub.invoke(inboundBuilder.build());
+            ByteString  payLoad = outbound.getPayload();
+            TokenResult tokenResult= null;
+            if(payLoad!=null){
+                tokenResult =  JsonUtil.json2Object(payLoad.toByteArray(),TokenResult.class) ;
+            }
+
             if (tokenResult != null) {
                 ++tryTime;
                 //logger.info("prepare to apply token {} {} result {}", resource, count,tokenResult);

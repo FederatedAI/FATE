@@ -28,7 +28,7 @@ class IOManagerProtocol:
     def log_output_data(self, key, value):
         ...
 
-    def log_output_model(self, key, value):
+    def log_output_model(self, key, value, metadata={}):
         ...
 
     def log_output_metric(self, key, value):

@@ -16,7 +16,6 @@
 
 package com.osx.broker.http;
 
-
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import com.osx.core.config.MetaInfo;

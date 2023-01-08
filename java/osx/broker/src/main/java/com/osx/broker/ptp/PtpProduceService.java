@@ -1,24 +1,35 @@
+/*
+ * Copyright 2019 The FATE Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.osx.broker.ptp;
 
 import com.osx.broker.ServiceContainer;
-import com.osx.broker.constants.Direction;
-import com.osx.broker.grpc.MessageFlag;
+import com.osx.broker.constants.MessageFlag;
 import com.osx.broker.message.MessageDecoder;
 import com.osx.broker.message.MessageExtBrokerInner;
 import com.osx.broker.queue.CreateQueueResult;
 import com.osx.broker.queue.PutMessageResult;
 import com.osx.broker.queue.PutMessageStatus;
 import com.osx.broker.queue.TransferQueue;
-import com.osx.broker.util.ResourceUtil;
+import com.osx.broker.util.TransferUtil;
 import com.osx.core.config.MetaInfo;
 import com.osx.core.constant.ActionType;
 import com.osx.core.constant.DeployMode;
 import com.osx.core.constant.StatusCode;
 import com.osx.core.context.Context;
-import com.osx.core.exceptions.InvalidRedirectInfoException;
-import com.osx.core.exceptions.ParameterException;
-import com.osx.core.exceptions.ProduceMsgExcption;
-import com.osx.core.exceptions.PutMessageException;
+import com.osx.core.exceptions.*;
 import com.osx.core.router.RouterInfo;
 import com.osx.core.service.InboundPackage;
 import org.apache.commons.lang3.StringUtils;
@@ -63,18 +74,12 @@ public class PtpProduceService extends AbstractPtpServiceAdaptor {
             context.setRouterInfo(null);
             CreateQueueResult createQueueResult = ServiceContainer.transferQueueManager.createNewQueue(topic, sessionId, false);
             if (createQueueResult == null) {
-                throw new RuntimeException("transfer queue is null");
+                throw new CreateTopicErrorException("create topic "+topic+" error");
             }
-
-            String resource = ResourceUtil.buildResource(srcPartyId + "-" + MetaInfo.PROPERTY_SELF_PARTY, Direction.UP);
-
-            if (createQueueResult == null) {
-                throw new RuntimeException("transfer queue is null");
-            }
-
-            //String resource = ResourceUtil.buildResource(context.getSrcPartyId()+"-"+MetaInfo.PROPERTY_SELF_PARTY, Direction.UP);
-            // ServiceContainer.tokenApplyService.applyToken(context,resource,dataSize);
-            //ServiceContainer.flowCounterManager.pass(resource,dataSize);
+            String resource = TransferUtil.buildResource(produceRequest);
+            int  dataSize = produceRequest.getSerializedSize();
+             ServiceContainer.tokenApplyService.applyToken(context,resource,dataSize);
+            ServiceContainer.flowCounterManager.pass(resource,dataSize);
             TransferQueue transferQueue = createQueueResult.getTransferQueue();
             if (transferQueue != null) {
                 //MessageExtBrokerInner messageExtBrokerInner = new MessageExtBrokerInner();
@@ -82,10 +87,6 @@ public class PtpProduceService extends AbstractPtpServiceAdaptor {
                 //context.(msgBytes.length);
                 //messageExtBrokerInner.setBody(msgBytes);
 
-                /**
-                 * 这里写成blank 是因为topic长度太长 ，如果调整字节后是可以在这里设置的
-                 */
-                // messageExtBrokerInner.setTopic("blank");
                 MessageExtBrokerInner messageExtBrokerInner = MessageDecoder.buildMessageExtBrokerInner(topic, msgBytes, 0, MessageFlag.MSG, context.getSrcPartyId(),
                         context.getDesPartyId());
                 PutMessageResult putMessageResult = transferQueue.putMessage(messageExtBrokerInner);
@@ -93,10 +94,6 @@ public class PtpProduceService extends AbstractPtpServiceAdaptor {
                     throw new PutMessageException("put status " + putMessageResult.getPutMessageStatus());
                 }
                 long logicOffset = putMessageResult.getMsgLogicOffset();
-                //context.setDataSize(logicOffset);
-//            FireworkTransfer.ProduceResponse.Builder produceResponseBuilder = FireworkTransfer.ProduceResponse.newBuilder();
-//            produceResponseBuilder.setCode(StatusCode.SUCCESS);
-//            produceResponseBuilder.setMsg("SUCCESS");
                 Osx.Outbound.Builder outBoundBuilder = Osx.Outbound.newBuilder();
                 outBoundBuilder.setCode(StatusCode.SUCCESS);
                 outBoundBuilder.setMessage("SUCCESS");

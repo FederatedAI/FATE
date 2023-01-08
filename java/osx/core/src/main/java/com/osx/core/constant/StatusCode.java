@@ -38,6 +38,7 @@ public class StatusCode {
     public static final String CONSUMER_NOT_EXIST = "141";
     public static final String INVALID_REDIRECT_INFO = "142";
     public static final String INVALID_INDEXFILE_DETAIL = "143";
+    public static final String CREATE_TOPIC_ERROR = "144";
 
 
 }

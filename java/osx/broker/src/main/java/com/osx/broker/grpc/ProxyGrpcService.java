@@ -1,9 +1,23 @@
+/*
+ * Copyright 2019 The FATE Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.osx.broker.grpc;
-
-//import com.firework.transfer.service.PullService;
 
 import com.osx.broker.service.PushService2;
 import com.osx.broker.service.UnaryCallService;
+import com.osx.broker.util.ContextUtil;
 import com.osx.core.context.Context;
 import com.osx.core.service.InboundPackage;
 import com.osx.core.service.OutboundPackage;
@@ -23,13 +37,7 @@ public class ProxyGrpcService extends DataTransferServiceGrpc.DataTransferServic
     ) {
         this.pushService2 = pushService2;
         this.unaryCallService = unaryCallService;
-
-
     }
-
-    /**
-     *
-     */
 
     public io.grpc.stub.StreamObserver<com.webank.ai.eggroll.api.networking.proxy.Proxy.Packet> push(
             io.grpc.stub.StreamObserver<com.webank.ai.eggroll.api.networking.proxy.Proxy.Metadata> responseObserver) {
@@ -48,24 +56,6 @@ public class ProxyGrpcService extends DataTransferServiceGrpc.DataTransferServic
         return null;
     }
 
-
-//    /**
-//     */
-//    @RegisterService(serviceName = "pull")
-//    public void pull(com.webank.ai.eggroll.api.networking.proxy.Proxy.Metadata request,
-//                     io.grpc.stub.StreamObserver<com.webank.ai.eggroll.api.networking.proxy.Proxy.Packet> responseObserver) {
-//        Context  context = buildContext();
-//        InboundPackage<PullRequestDataWrap> data = new InboundPackage<>();
-//        PullRequestDataWrap pullRequestDataWrap = new  PullRequestDataWrap();
-//        pullRequestDataWrap.setMetadata(request);
-//        pullRequestDataWrap.setStreamObserver(responseObserver);
-//        data.setBody(pullRequestDataWrap);
-//        OutboundPackage<StreamObserver<Proxy.Packet>>  outboundPackage = pullService.service(context,data);
-//    }
-
-    /**
-     *
-     */
 
     public void unaryCall(com.webank.ai.eggroll.api.networking.proxy.Proxy.Packet request,
                           io.grpc.stub.StreamObserver<com.webank.ai.eggroll.api.networking.proxy.Proxy.Packet> responseObserver) {

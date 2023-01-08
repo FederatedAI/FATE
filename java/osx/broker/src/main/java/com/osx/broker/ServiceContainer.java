@@ -1,8 +1,22 @@
+/*
+ * Copyright 2019 The FATE Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.osx.broker;
 
 
 import com.osx.broker.consumer.ConsumerManager;
-import com.osx.broker.grpc.ClusterService;
 import com.osx.broker.grpc.PcpGrpcService;
 import com.osx.broker.grpc.ProxyGrpcService;
 import com.osx.broker.interceptor.RequestHandleInterceptor;
@@ -42,7 +56,7 @@ public class ServiceContainer {
     static public FateRouterService fateRouterService;
     //    static public QueueGrpcService queueGrpcservice;
     // static public CommonService commonService;
-    static public ClusterService clusterService;
+
     //static public ProducerStreamService  producerStreamService;
     static public Map<String, AbstractServiceAdaptor> serviceAdaptorMap = new HashMap<String, AbstractServiceAdaptor>();
     //static public DLedgerServer dLedgerServer;
@@ -87,7 +101,7 @@ public class ServiceContainer {
         //   producerUnaryService = createProducerUnaryService(fateRouterService,consumerManager,transferQueueManager);
         //queryTransferQueueService = new QueryTransferQueueService(transferQueueManager);
         //  queueGrpcservice =       createQueueGrpcservice();
-        requestHandleInterceptor = createDefaulRequestInterceptor(fateRouterService);
+        requestHandleInterceptor = createDefaulRequestInterceptor();
 //        defaultRouterInterceptor = createDefaultRouterInterceptor(fateRouterService);
         unaryCallService = createUnaryCallService(requestHandleInterceptor);
         proxyGrpcService = new ProxyGrpcService(pushService2, unaryCallService);
@@ -101,7 +115,7 @@ public class ServiceContainer {
         tokenApplyService = createTokenApplyService();
         //syncQueueService = createSyncQueueService();
         // clusterQueueApplyService = createClusterQueueApplyService();
-        clusterService = createClusterService();
+//        clusterService = createClusterService();
         // dLedgerServer = createDLedgerServer();
 
         pcpGrpcService = createPcpGrpcService();
@@ -127,9 +141,7 @@ public class ServiceContainer {
         return new PcpGrpcService();
     }
 
-    public static ClusterService createClusterService() {
-        return new ClusterService();
-    }
+
 
 //    public  static ClusterQueueApplyService createClusterQueueApplyService(){
 //        return  new  ClusterQueueApplyService();
@@ -203,8 +215,8 @@ public class ServiceContainer {
 //      return    new QueueGrpcService();
 //    }
 
-    public static RequestHandleInterceptor createDefaulRequestInterceptor(FateRouterService routerService) {
-        RequestHandleInterceptor requestHandleInterceptor = new RequestHandleInterceptor(routerService);
+    public static RequestHandleInterceptor createDefaulRequestInterceptor() {
+        RequestHandleInterceptor requestHandleInterceptor = new RequestHandleInterceptor();
         return requestHandleInterceptor;
     }
 

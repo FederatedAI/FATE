@@ -95,8 +95,11 @@ public class UnaryConsumer extends LocalQueueConsumer {
 //                        if(needOffset<=0){
 //                            this.addConsumeCount(1);  改成了由ack自增
 //                        }
+                    context.setTopic(transferQueue.getTransferId());
                     context.setReturnCode(StatusCode.SUCCESS);
-                    FlowLogUtil.printFlowLogForConsumer(context);
+                    context.setRequestMsgIndex(consumeResult.getRequestIndex());
+                    context.setCurrentMsgIndex(consumeResult.getLogicIndexTotal());
+                    FlowLogUtil.printFlowLog(context);
 
 
                 } else {
