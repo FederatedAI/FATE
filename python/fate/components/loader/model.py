@@ -1,4 +1,5 @@
 import json
+import logging
 import tarfile
 import tempfile
 from datetime import datetime
@@ -81,18 +82,18 @@ class HttpModelTarWriteTarHandler(ModelTarWriteHandler):
         import io
 
         self.memory_file = io.BytesIO()
-        super().__init__(tarfile.open(uri.path, "w"))
+        super().__init__(tarfile.open(fileobj=self.memory_file, mode='w'))
 
     def close(self):
         self.tar.close()
 
     def mlmd_send(self, mlmd, artifact, metadata):
         import requests
-
-        # TODO: upload
-        response = requests.post(url=self.uri.to_string(), json={"data": self.memory_file})
-
-        mlmd.log_output_model(artifact.name, artifact, metadata=metadata, tarfile=self)
+        logging.info(f"mlmd send uri: {self.uri.to_string()}")
+        self.memory_file.seek(0)
+        response = requests.post(url=self.uri.to_string(), files={'file': self.memory_file})
+        logging.info(f"response: {response.text}")
+        mlmd.log_output_model(artifact.name, artifact, metadata=metadata)
 
 
 class ComponentModelWriter:
@@ -201,11 +202,20 @@ class FileModelTarReadHandler(ModelTarReadHandler):
 
 class HttpModelTarReadTarHandler(ModelTarReadHandler):
     def __init__(self, uri) -> None:
+        import io
         import requests
 
-        # TODO: download tar
-        requests.get(url=uri.to_string()).json().get("data")
-        tar = ...
+        from contextlib import closing
+
+        memory_file = io.BytesIO()
+        logging.debug(f"read model from: {uri.to_string()}")
+        with closing(requests.get(url=uri.to_string(), stream=True)) as response:
+            for chunk in response.iter_content(1024):
+                if chunk:
+                    memory_file.write(chunk)
+        memory_file.seek(0)
+        tar = tarfile.open(fileobj=memory_file, mode='r')
+        logging.debug(f"read model success")
         super().__init__(tar)
 
     def close(self):
