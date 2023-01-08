@@ -58,9 +58,11 @@ class StandardScaler(Module):
     def to_model(self):
         return dict(
             mean=self._mean.to_json(),
-            std=self._std.to_json()
+            mean_dtype=self._mean.dtype.name,
+            std=self._std.to_json(),
+            std_dtype=self._std.dtype.name
         )
 
     def from_model(self, model):
-        self._mean = pd.Series(json.loads(model["mean"]))
-        self._std = pd.Series(json.loads(model["std"]))
+        self._mean = pd.Series(json.loads(model["mean"]), dtype=model["mean_dtype"])
+        self._std = pd.Series(json.loads(model["std"]), dtype=model["std_dtype"])
