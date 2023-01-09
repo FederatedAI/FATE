@@ -31,8 +31,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class LocalQueueConsumer implements Consumer<TransferQueue.TransferQueueConsumeResult> {
 
-    protected long consumerId;
     Logger logger = LoggerFactory.getLogger(LocalQueueConsumer.class);
+    protected long consumerId;
     String transferId;
     AtomicLong consumeOffset = new AtomicLong(1);
     volatile TransferStatus transferStatus = TransferStatus.INIT;

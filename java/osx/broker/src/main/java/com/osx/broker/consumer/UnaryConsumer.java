@@ -1,3 +1,18 @@
+/*
+ * Copyright 2019 The FATE Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.osx.broker.consumer;
 
 import com.osx.broker.ServiceContainer;
@@ -23,9 +38,7 @@ public class UnaryConsumer extends LocalQueueConsumer {
     Logger logger = LoggerFactory.getLogger(UnaryConsumer.class);
     ConcurrentLinkedQueue<LongPullingHold> longPullingQueue;
 
-    public UnaryConsumer(long consumerId, String transferId
-
-    ) {
+    public UnaryConsumer(long consumerId, String transferId) {
         super(consumerId, transferId);
         TransferQueue transferQueue = ServiceContainer.transferQueueManager.getQueue(transferId);
         if (transferQueue != null) {
@@ -33,7 +46,6 @@ public class UnaryConsumer extends LocalQueueConsumer {
                 ServiceContainer.consumerManager.onComplete(transferId);
             });
         }
-
         longPullingQueue = new ConcurrentLinkedQueue();
     }
 
@@ -84,7 +96,6 @@ public class UnaryConsumer extends LocalQueueConsumer {
                     }
                 }
 
-                //logger.info("{} longpulling consume {} return {}",transferId,consumeOffset.get(),message);
                 if (consumeResult != null) {
                     if (consumeResult.getMessage() != null && consumeResult.getMessage().getBody() != null)
                         context.setDataSize(consumeResult.getMessage().getBody().length);
@@ -92,16 +103,11 @@ public class UnaryConsumer extends LocalQueueConsumer {
                     answerCount++;
                     longPullingHold.getStreamObserver().onNext(consumeResponse);
                     longPullingHold.getStreamObserver().onCompleted();
-//                        if(needOffset<=0){
-//                            this.addConsumeCount(1);  改成了由ack自增
-//                        }
                     context.setTopic(transferQueue.getTransferId());
                     context.setReturnCode(StatusCode.SUCCESS);
                     context.setRequestMsgIndex(consumeResult.getRequestIndex());
                     context.setCurrentMsgIndex(consumeResult.getLogicIndexTotal());
                     FlowLogUtil.printFlowLog(context);
-
-
                 } else {
                     /*
                      * 若没有消息，则放回队列
