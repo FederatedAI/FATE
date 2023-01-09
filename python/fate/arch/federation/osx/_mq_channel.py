@@ -23,7 +23,7 @@ from fate.arch.federation.osx.pcp_pb2_grpc import PrivateTransferProtocolStub
 
 from .._nretry import nretry
 
-LOGGER = getLogger()
+LOGGER = getLogger(__name__)
 
 
 class MQChannel(object):
@@ -41,6 +41,12 @@ class MQChannel(object):
         self._dst_role = dst_role
         self._channel = None
         self._stub = None
+
+    def __str__(self):
+        return f"<MQChannel host={self._host},port={self._port}, \
+        namespace={self._namespace}, \
+        src=({self._src_role}, {self._src_party_id}), \
+        dst=({self._dst_role}, {self._dst_party_id})>"
 
     @nretry
     def consume(self, offset=-1):
@@ -91,7 +97,7 @@ class MQChannel(object):
         inbound = pcp_pb2.Inbound(metadata=meta)
         result = self._stub.invoke(inbound)
 
-        print(result)
+        LOGGER.debug(f"try to query {self._receive_topic} session {self._namespace}, result {result}")
         return result
 
     @nretry
@@ -129,8 +135,16 @@ class MQChannel(object):
         )
         inbound = pcp_pb2.Inbound(metadata=meta)
         result = self._stub.invoke(inbound)
-        # print(result)
         return result
+
+    def cleanup(self):
+        LOGGER.debug(f"cancel channel")
+
+    def cancel(self):
+        LOGGER.debug(f"cancel channel")
+
+    def close(self):
+        LOGGER.debug(f"close channel")
 
     # def close(self):
     #     try:

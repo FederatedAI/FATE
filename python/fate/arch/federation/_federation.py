@@ -26,12 +26,11 @@ from fate.interface import FederationEngine, PartyMeta
 
 from ..abc import CTableABC
 from ..common import Party
-from ..common.log import getLogger
 from ..federation import FederationDataType
 from ..federation._datastream import Datastream
 from ._gc import GarbageCollector
 
-LOGGER = getLogger()
+LOGGER = logging.getLogger(__name__)
 
 NAME_DTYPE_TAG = "<dtype>"
 _SPLIT_ = "^"
