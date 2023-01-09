@@ -153,7 +153,19 @@ def _ops_cpu_plain_unary_custom(method, args, kwargs) -> Callable[[_TorchStorage
 
 
 def _ops_cpu_plain_binary_buildin(method, args, kwargs) -> Callable[[Any, Any], _TorchStorage]:
-    if method in {"add", "sub", "mul", "div", "pow", "remainder", "matmul", "true_divide", "maximum", "minimum"}:
+    if method in {
+        "add",
+        "sub",
+        "mul",
+        "div",
+        "pow",
+        "remainder",
+        "matmul",
+        "true_divide",
+        "maximum",
+        "minimum",
+        "truediv",
+    }:
         func = getattr(torch, method)
 
         def _wrap(a, b) -> _TorchStorage:
