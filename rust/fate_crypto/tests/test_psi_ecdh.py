@@ -9,9 +9,7 @@ class TestStringMethods(unittest.TestCase):
         k1 = Curve25519()
         k2 = Curve25519()
         m = random.SystemRandom().getrandbits(33 * 8).to_bytes(33, "little")
-        self.assertEqual(
-            k2.diffie_hellman(k1.encrypt(m)), k1.diffie_hellman(k2.encrypt(m))
-        )
+        self.assertEqual(k2.diffie_hellman(k1.encrypt(m)), k1.diffie_hellman(k2.encrypt(m)))
 
     def test_pickle(self):
         k1 = Curve25519()

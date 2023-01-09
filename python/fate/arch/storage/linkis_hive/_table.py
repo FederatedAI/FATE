@@ -54,14 +54,10 @@ class StorageTable(StorageTableBase):
             from pyspark.sql import SparkSession
 
             session = SparkSession.builder.enableHiveSupport().getOrCreate()
-            data = session.sql(
-                f"select * from {self._address.database}.{self._address.name}"
-            )
+            data = session.sql(f"select * from {self._address.database}.{self._address.name}")
             return data
         else:
-            sql = "select * from {}.{}".format(
-                self._address.database, self._address.name
-            )
+            sql = "select * from {}.{}".format(self._address.database, self._address.name)
             data = self.execute(sql)
             for i in data:
                 yield i[0], self.meta.get_id_delimiter().join(list(i[1:]))
@@ -116,11 +112,7 @@ class StorageTable(StorageTableBase):
             )
 
     def _status_entrance(self, exec_id):
-        execute_url = (
-            f"http://{self._address.host}:{self._address.port}{STATUS_URI}".replace(
-                "exec_id", exec_id
-            )
-        )
+        execute_url = f"http://{self._address.host}:{self._address.port}{STATUS_URI}".replace("exec_id", exec_id)
         headers = {
             "Token-Code": "MLSS",
             "Token-User": "alexwu",
@@ -132,9 +124,7 @@ class StorageTable(StorageTableBase):
             if execute_status == "Success":
                 return True
             elif execute_status == "Failed":
-                raise Exception(
-                    f"request linkis hive status entrance failed, status: {execute_status}"
-                )
+                raise Exception(f"request linkis hive status entrance failed, status: {execute_status}")
             else:
                 return False
         else:

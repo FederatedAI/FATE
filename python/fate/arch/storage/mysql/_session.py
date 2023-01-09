@@ -24,9 +24,7 @@ from ...storage import MySQLStoreType, StorageEngine, StorageSessionBase
 
 class StorageSession(StorageSessionBase):
     def __init__(self, session_id, options=None):
-        super(StorageSession, self).__init__(
-            session_id=session_id, engine=StorageEngine.MYSQL
-        )
+        super(StorageSession, self).__init__(session_id=session_id, engine=StorageEngine.MYSQL)
         self._db_con = {}
 
     def table(
@@ -77,9 +75,7 @@ class StorageSession(StorageSessionBase):
                 options=options,
             )
 
-        raise NotImplementedError(
-            f"address type {type(address)} not supported with eggroll storage"
-        )
+        raise NotImplementedError(f"address type {type(address)} not supported with eggroll storage")
 
     def cleanup(self, name, namespace):
         pass

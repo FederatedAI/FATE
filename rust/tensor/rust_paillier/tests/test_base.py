@@ -49,9 +49,7 @@ def data(fp, index, shape=(3, 5), scalar=False) -> np.ndarray:
         if fp == "f32":
             return np.random.random(shape).astype(np.float32) - 0.5
         if fp == "i64":
-            return np.random.randint(
-                low=2147483648, high=2147483648000, size=shape, dtype=np.int64
-            )
+            return np.random.randint(low=2147483648, high=2147483648000, size=shape, dtype=np.int64)
         if fp == "i32":
             return np.random.randint(low=-100, high=100, size=shape, dtype=np.int32)
     else:
@@ -60,9 +58,7 @@ def data(fp, index, shape=(3, 5), scalar=False) -> np.ndarray:
         if fp == "f32":
             return np.random.random(1).astype(np.float32)[0] - 0.5
         if fp == "i64":
-            return np.random.randint(
-                low=2147483648, high=2147483648000, size=1, dtype=np.int64
-            )[0]
+            return np.random.randint(low=2147483648, high=2147483648000, size=1, dtype=np.int64)[0]
         if fp == "i32":
             return np.random.randint(low=-100, high=100, size=1, dtype=np.int32)[0]
 

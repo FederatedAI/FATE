@@ -92,16 +92,12 @@ class StorageTable(StorageTableBase):
         )
         self._cur.execute(create_table)
         # load local file or hdfs file
-        temp_path = os.path.join(
-            get_project_base_directory(), "temp_data", uuid.uuid1().hex
-        )
+        temp_path = os.path.join(get_project_base_directory(), "temp_data", uuid.uuid1().hex)
         os.makedirs(os.path.dirname(temp_path), exist_ok=True)
         with open(temp_path, "w") as f:
             for k, v in kv_list:
                 f.write(hive_utils.serialize_line(k, v))
-        sql = "load data local inpath '{}' into table {}".format(
-            temp_path, self._address.name
-        )
+        sql = "load data local inpath '{}' into table {}".format(temp_path, self._address.name)
         self._cur.execute(sql)
         self._con.commit()
         os.remove(temp_path)
@@ -126,17 +122,13 @@ class StorageTable(StorageTableBase):
         return self.execute(sql)
 
     def _save_as(self, address, name, namespace, partitions=None, **kwargs):
-        sql = "create table {}.{} like {}.{};".format(
-            namespace, name, self._namespace, self._name
-        )
+        sql = "create table {}.{} like {}.{};".format(namespace, name, self._namespace, self._name)
         return self.execute(sql)
 
     def check_address(self):
         schema = self.meta.get_schema()
         if schema:
-            sql = "SELECT {},{} FROM {}".format(
-                schema.get("sid"), schema.get("header"), self._address.name
-            )
+            sql = "SELECT {},{} FROM {}".format(schema.get("sid"), schema.get("header"), self._address.name)
             feature_data = self.execute(sql)
             for feature in feature_data:
                 if feature:

@@ -33,14 +33,10 @@ for k, v in c_table.collect():
     print(v)
 print()
 
-table_meta = sess.persistent(
-    computing_table=c_table, namespace="experiment", name=str(uuid.uuid1())
-)
+table_meta = sess.persistent(computing_table=c_table, namespace="experiment", name=str(uuid.uuid1()))
 
 storage_session = sess.storage()
-s_table = storage_session.get_table(
-    namespace=table_meta.get_namespace(), name=table_meta.get_name()
-)
+s_table = storage_session.get_table(namespace=table_meta.get_namespace(), name=table_meta.get_name())
 for k, v in s_table.collect():
     print(v)
 print()

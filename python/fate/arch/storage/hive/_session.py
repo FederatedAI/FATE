@@ -24,9 +24,7 @@ from ...storage import HiveStoreType, StorageEngine, StorageSessionBase
 
 class StorageSession(StorageSessionBase):
     def __init__(self, session_id, options=None):
-        super(StorageSession, self).__init__(
-            session_id=session_id, engine=StorageEngine.HIVE
-        )
+        super(StorageSession, self).__init__(session_id=session_id, engine=StorageEngine.HIVE)
         self._db_con = {}
 
     def table(
@@ -76,9 +74,7 @@ class StorageSession(StorageSessionBase):
                 partitions=partitions,
                 options=options,
             )
-        raise NotImplementedError(
-            f"address type {type(address)} not supported with eggroll storage"
-        )
+        raise NotImplementedError(f"address type {type(address)} not supported with eggroll storage")
 
     def cleanup(self, name, namespace):
         pass
@@ -106,8 +102,6 @@ class StorageSession(StorageSessionBase):
         )
         with connection:
             with connection.cursor() as cursor:
-                cursor.execute(
-                    "create database if not exists {}".format(address.database)
-                )
+                cursor.execute("create database if not exists {}".format(address.database))
                 print("create db {} success".format(address.database))
             connection.commit()

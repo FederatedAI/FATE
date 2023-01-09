@@ -21,9 +21,7 @@ from ...storage import StorageEngine, StorageSessionBase
 
 class StorageSession(StorageSessionBase):
     def __init__(self, session_id, options=None):
-        super(StorageSession, self).__init__(
-            session_id=session_id, engine=StorageEngine.HDFS
-        )
+        super(StorageSession, self).__init__(session_id=session_id, engine=StorageEngine.HDFS)
 
     def table(
         self,
@@ -46,9 +44,7 @@ class StorageSession(StorageSessionBase):
                 store_type=store_type,
                 options=options,
             )
-        raise NotImplementedError(
-            f"address type {type(address)} not supported with hdfs storage"
-        )
+        raise NotImplementedError(f"address type {type(address)} not supported with hdfs storage")
 
     def cleanup(self, name, namespace):
         pass

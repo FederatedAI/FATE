@@ -21,9 +21,7 @@ from ...storage import StorageEngine, StorageSessionBase
 
 class StorageSession(StorageSessionBase):
     def __init__(self, session_id, options=None):
-        super(StorageSession, self).__init__(
-            session_id=session_id, engine=StorageEngine.STANDALONE
-        )
+        super(StorageSession, self).__init__(session_id=session_id, engine=StorageEngine.STANDALONE)
         self._options = options if options else {}
         self._session = Session(session_id=self._session_id)
 
@@ -49,9 +47,7 @@ class StorageSession(StorageSessionBase):
                 store_type=store_type,
                 options=options,
             )
-        raise NotImplementedError(
-            f"address type {type(address)} not supported with standalone storage"
-        )
+        raise NotImplementedError(f"address type {type(address)} not supported with standalone storage")
 
     def cleanup(self, name, namespace):
         self._session.cleanup(name=name, namespace=namespace)

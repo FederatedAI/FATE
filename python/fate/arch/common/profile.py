@@ -78,16 +78,12 @@ class _ComputingTimer(object):
         self._start = time.time()
 
         function_stack = "\n".join(function_stack_list)
-        self._hash = hashlib.blake2b(
-            function_stack.encode("utf-8"), digest_size=5
-        ).hexdigest()
+        self._hash = hashlib.blake2b(function_stack.encode("utf-8"), digest_size=5).hexdigest()
 
         if self._hash not in self._STATS:
             self._STATS[self._hash] = _ComputingTimerItem(function_name, function_stack)
             if _PROFILE_LOG_ENABLED:
-                profile_logger.debug(
-                    f"[computing#{self._hash}]function_stack: {' <-'.join(function_stack_list)}"
-                )
+                profile_logger.debug(f"[computing#{self._hash}]function_stack: {' <-'.join(function_stack_list)}")
 
         if _PROFILE_LOG_ENABLED:
             profile_logger.debug(f"[computing#{self._hash}]start")
@@ -96,15 +92,11 @@ class _ComputingTimer(object):
         elapse = time.time() - self._start
         self._STATS[self._hash].item.add(elapse)
         if _PROFILE_LOG_ENABLED:
-            profile_logger.debug(
-                f"[computing#{self._hash}]done, elapse: {elapse}, function: {function_string}"
-            )
+            profile_logger.debug(f"[computing#{self._hash}]done, elapse: {elapse}, function: {function_string}")
 
     @classmethod
     def computing_statistics_table(cls, timer_aggregator: _TimerItem = None):
-        stack_table = beautifultable.BeautifulTable(
-            110, precision=4, detect_numerics=False
-        )
+        stack_table = beautifultable.BeautifulTable(110, precision=4, detect_numerics=False)
         stack_table.columns.header = [
             "function",
             "n",
@@ -213,8 +205,7 @@ class _FederationRemoteTimer(_FederationTimer):
         self._end_time = time.time()
         self._REMOTE_STATS[self._full_name].add(self.elapse)
         profile_logger.debug(
-            f"[federation.remote.{self._full_name}.{self._tag}]"
-            f"{self._local_party}->{self._parties} done"
+            f"[federation.remote.{self._full_name}.{self._tag}]" f"{self._local_party}->{self._parties} done"
         )
 
         if is_profile_remote_enable():
@@ -248,8 +239,7 @@ class _FederationGetTimer(_FederationTimer):
         self._end_time = time.time()
         self._GET_STATS[self._full_name].add(self.elapse)
         profile_logger.debug(
-            f"[federation.get.{self._full_name}.{self._tag}]"
-            f"{self._local_party}<-{self._parties} done"
+            f"[federation.get.{self._full_name}.{self._tag}]" f"{self._local_party}<-{self._parties} done"
         )
 
         if is_profile_remote_enable():
@@ -261,8 +251,7 @@ class _FederationGetTimer(_FederationTimer):
             )
             for party, meta in zip(self._parties, remote_meta):
                 profile_logger.debug(
-                    f"[federation.meta.{self._full_name}.{self._tag}]{self._local_party}<-{party}]"
-                    f"meta={meta}"
+                    f"[federation.meta.{self._full_name}.{self._tag}]{self._local_party}<-{party}]" f"meta={meta}"
                 )
 
     @property
@@ -271,9 +260,7 @@ class _FederationGetTimer(_FederationTimer):
 
 
 def federation_remote_timer(name, full_name, tag, local, parties):
-    profile_logger.debug(
-        f"[federation.remote.{full_name}.{tag}]{local}->{parties} start"
-    )
+    profile_logger.debug(f"[federation.remote.{full_name}.{tag}]{local}->{parties} start")
     return _FederationRemoteTimer(name, full_name, tag, local, parties)
 
 
@@ -302,12 +289,8 @@ def profile_ends():
     (
         computing_base_table,
         computing_detailed_table,
-    ) = _ComputingTimer.computing_statistics_table(
-        timer_aggregator=computing_timer_aggregator
-    )
-    federation_base_table = _FederationTimer.federation_statistics_table(
-        timer_aggregator=federation_timer_aggregator
-    )
+    ) = _ComputingTimer.computing_statistics_table(timer_aggregator=computing_timer_aggregator)
+    federation_base_table = _FederationTimer.federation_statistics_table(timer_aggregator=federation_timer_aggregator)
     timer_aggregator.union(computing_timer_aggregator)
     timer_aggregator.union(federation_timer_aggregator)
 
@@ -324,9 +307,7 @@ def profile_ends():
             computing_timer_aggregator.total_time / profile_total_time,
         )
     )
-    profile_logger.info(
-        f"\nComputing:\n{computing_base_table}\n\nFederation:\n{federation_base_table}\n"
-    )
+    profile_logger.info(f"\nComputing:\n{computing_base_table}\n\nFederation:\n{federation_base_table}\n")
     profile_logger.debug(f"\nDetailed Computing:\n{computing_detailed_table}\n")
 
     global _PROFILE_LOG_ENABLED
@@ -351,9 +332,7 @@ def _call_stack_strings():
     call_stack_strings = []
     frames = inspect.getouterframes(inspect.currentframe(), 10)[2:-2]
     for frame in frames:
-        call_stack_strings.append(
-            f"[{frame.filename.split('/')[-1]}:{frame.lineno}]{frame.function}"
-        )
+        call_stack_strings.append(f"[{frame.filename.split('/')[-1]}:{frame.lineno}]{frame.function}")
     return call_stack_strings
 
 

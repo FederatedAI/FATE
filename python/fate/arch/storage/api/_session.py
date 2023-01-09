@@ -23,12 +23,8 @@ from ...storage import StorageEngine, StorageSessionBase
 
 class StorageSession(StorageSessionBase):
     def __init__(self, session_id, options=None):
-        super(StorageSession, self).__init__(
-            session_id=session_id, engine=StorageEngine.PATH
-        )
-        self.base_dir = os.path.join(
-            file_utils.get_project_base_directory(), "api_data", session_id
-        )
+        super(StorageSession, self).__init__(session_id=session_id, engine=StorageEngine.PATH)
+        self.base_dir = os.path.join(file_utils.get_project_base_directory(), "api_data", session_id)
 
     def table(
         self,
@@ -52,9 +48,7 @@ class StorageSession(StorageSessionBase):
                 store_type=store_type,
                 options=options,
             )
-        raise NotImplementedError(
-            f"address type {type(address)} not supported with api storage"
-        )
+        raise NotImplementedError(f"address type {type(address)} not supported with api storage")
 
     def cleanup(self, name, namespace):
         # path = os.path.join(self.base_dir, namespace, name)

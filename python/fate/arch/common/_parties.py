@@ -76,14 +76,10 @@ class PartiesInfo(metaclass=_PartiesMeta):
     @staticmethod
     def from_conf(conf: typing.MutableMapping[str, dict]):
         try:
-            local = Party(
-                role=conf["local"]["role"], party_id=conf["local"]["party_id"]
-            )
+            local = Party(role=conf["local"]["role"], party_id=conf["local"]["party_id"])
             role_to_parties = {}
             for role, party_id_list in conf.get("role", {}).items():
-                role_to_parties[role] = [
-                    Party(role=role, party_id=party_id) for party_id in party_id_list
-                ]
+                role_to_parties[role] = [Party(role=role, party_id=party_id) for party_id in party_id_list]
         except Exception as e:
             raise RuntimeError(
                 "conf parse error, a correct configuration could be:\n"
@@ -114,9 +110,7 @@ class PartiesInfo(metaclass=_PartiesMeta):
 
     @property
     def all_parties(self):
-        return [
-            party for parties in self._role_to_parties.values() for party in parties
-        ]
+        return [party for parties in self._role_to_parties.values() for party in parties]
 
     @property
     def role_set(self):

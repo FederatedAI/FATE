@@ -12,9 +12,7 @@ def host(federation_id, party, parties):
     disable_inner_logs()
     computing = CSession()
     federation = StandaloneFederation(computing, federation_id, party, parties)
-    ctx = Context(
-        "guest", backend=Backend.STANDALONE, computing=computing, federation=federation
-    )
+    ctx = Context("guest", backend=Backend.STANDALONE, computing=computing, federation=federation)
     ctx.cipher.phe.keygen()
     with ctx.sub_ctx("predict") as sub_ctx:
         sub_ctx.log.debug("ctx inited")
@@ -56,15 +54,11 @@ if __name__ == "__main__":
         parties = [guest_party, host_party]
         with contextlib.ExitStack() as stack:
             f = stack.enter_context(tempfile.NamedTemporaryFile(mode="w"))
-            json.dump(
-                dict(party=guest_party, parties=parties, federation_id=federation_id), f
-            )
+            json.dump(dict(party=guest_party, parties=parties, federation_id=federation_id), f)
             f.flush()
             p1 = Popen([sys.executable, __file__, "--role", "guest", "--path", f.name])
             f = stack.enter_context(tempfile.NamedTemporaryFile(mode="w"))
-            json.dump(
-                dict(party=host_party, parties=parties, federation_id=federation_id), f
-            )
+            json.dump(dict(party=host_party, parties=parties, federation_id=federation_id), f)
             f.flush()
             p2 = Popen([sys.executable, __file__, "--role", "host", "--path", f.name])
             p1.communicate()

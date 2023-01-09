@@ -45,9 +45,7 @@ class StorageTable(StorageTableBase):
         schema = self.meta.get_schema()
         if schema:
             if schema.get("sid") and schema.get("header"):
-                sql = "SELECT {},{} FROM {}".format(
-                    schema.get("sid"), schema.get("header"), self._address.name
-                )
+                sql = "SELECT {},{} FROM {}".format(schema.get("sid"), schema.get("header"), self._address.name)
             else:
                 sql = "SELECT {} FROM {}".format(schema.get("sid"), self._address.name)
             feature_data = self.execute(sql)
@@ -91,15 +89,11 @@ class StorageTable(StorageTableBase):
         id_name, feature_name_list, id_delimiter = self._get_id_feature_name()
         feature_sql, feature_list = StorageTable.get_meta_header(feature_name_list)
         id_size = "varchar(100)"
-        create_table = (
-            "create table if not exists {}({} {} NOT NULL, {} PRIMARY KEY({}))".format(
-                self._address.name, id_name, id_size, feature_sql, id_name
-            )
+        create_table = "create table if not exists {}({} {} NOT NULL, {} PRIMARY KEY({}))".format(
+            self._address.name, id_name, id_size, feature_sql, id_name
         )
         self._cur.execute(create_table)
-        sql = "REPLACE INTO {}({}, {})  VALUES".format(
-            self._address.name, id_name, ",".join(feature_list)
-        )
+        sql = "REPLACE INTO {}({}, {})  VALUES".format(self._address.name, id_name, ",".join(feature_list))
         for kv in kv_list:
             sql += '("{}", "{}"),'.format(kv[0], '", "'.join(kv[1].split(id_delimiter)))
         sql = ",".join(sql.split(",")[:-1]) + ";"
@@ -112,9 +106,7 @@ class StorageTable(StorageTableBase):
         self._con.commit()
 
     def _save_as(self, address, name, namespace, partitions=None, **kwargs):
-        sql = "create table {}.{} select * from {};".format(
-            namespace, name, self._address.name
-        )
+        sql = "create table {}.{} select * from {};".format(namespace, name, self._address.name)
         self._cur.execute(sql)
         self._con.commit()
 

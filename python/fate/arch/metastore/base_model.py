@@ -20,12 +20,13 @@ from enum import IntEnum
 from peewee import (
     BigIntegerField,
     CompositeKey,
+    DateTimeField,
     Field,
     FloatField,
     IntegerField,
     Metadata,
     Model,
-    TextField, DateTimeField,
+    TextField,
 )
 
 from ..common import EngineType, conf_utils
@@ -39,7 +40,6 @@ from ..common.base_utils import (
     timestamp_to_date,
 )
 from ..federation import FederationEngine
-
 
 CONTINUOUS_FIELD_TYPE = {IntegerField, FloatField, DateTimeField}
 AUTO_DATE_TIMESTAMP_FIELD_PREFIX = {
@@ -109,9 +109,7 @@ class SerializedField(LongTextField):
                 return None
             return json_dumps(value, with_type=True)
         else:
-            raise ValueError(
-                f"the serialized type {self._serialized_type} is not supported"
-            )
+            raise ValueError(f"the serialized type {self._serialized_type} is not supported")
 
     def python_value(self, value):
         if self._serialized_type == SerializedType.PICKLE:
@@ -125,9 +123,7 @@ class SerializedField(LongTextField):
                 object_pairs_hook=self._object_pairs_hook,
             )
         else:
-            raise ValueError(
-                f"the serialized type {self._serialized_type} is not supported"
-            )
+            raise ValueError(f"the serialized type {self._serialized_type} is not supported")
 
 
 def is_continuous_field(cls: typing.Type) -> bool:
@@ -209,26 +205,17 @@ class BaseModel(Model):
                 if is_continuous_field(type(getattr(cls, attr_name))):
                     if len(f_v) == 2:
                         for i, v in enumerate(f_v):
-                            if (
-                                isinstance(v, str)
-                                and f_n in auto_date_timestamp_field()
-                            ):
+                            if isinstance(v, str) and f_n in auto_date_timestamp_field():
                                 # time type: %Y-%m-%d %H:%M:%S
                                 f_v[i] = date_string_to_timestamp(v)
                         lt_value = f_v[0]
                         gt_value = f_v[1]
                         if lt_value is not None and gt_value is not None:
-                            filters.append(
-                                cls.getter_by(attr_name).between(lt_value, gt_value)
-                            )
+                            filters.append(cls.getter_by(attr_name).between(lt_value, gt_value))
                         elif lt_value is not None:
-                            filters.append(
-                                operator.attrgetter(attr_name)(cls) >= lt_value
-                            )
+                            filters.append(operator.attrgetter(attr_name)(cls) >= lt_value)
                         elif gt_value is not None:
-                            filters.append(
-                                operator.attrgetter(attr_name)(cls) <= gt_value
-                            )
+                            filters.append(operator.attrgetter(attr_name)(cls) <= gt_value)
                 else:
                     filters.append(operator.attrgetter(attr_name)(cls) << f_v)
             else:
@@ -239,13 +226,9 @@ class BaseModel(Model):
                 if not order_by or not hasattr(cls, f"f_{order_by}"):
                     order_by = "create_time"
                 if reverse is True:
-                    query_records = query_records.order_by(
-                        cls.getter_by(f"f_{order_by}").desc()
-                    )
+                    query_records = query_records.order_by(cls.getter_by(f"f_{order_by}").desc())
                 elif reverse is False:
-                    query_records = query_records.order_by(
-                        cls.getter_by(f"f_{order_by}").asc()
-                    )
+                    query_records = query_records.order_by(cls.getter_by(f"f_{order_by}").asc())
             return [query_record for query_record in query_records]
         else:
             return []

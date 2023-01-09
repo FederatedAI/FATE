@@ -24,14 +24,10 @@ from ...storage import EggRollStoreType, StorageEngine, StorageSessionBase
 
 class StorageSession(StorageSessionBase):
     def __init__(self, session_id, options=None):
-        super(StorageSession, self).__init__(
-            session_id=session_id, engine=StorageEngine.EGGROLL
-        )
+        super(StorageSession, self).__init__(session_id=session_id, engine=StorageEngine.EGGROLL)
         self._options = options if options else {}
         self._options["eggroll.session.deploy.mode"] = "cluster"
-        self._rp_session = session_init(
-            session_id=self._session_id, options=self._options
-        )
+        self._rp_session = session_init(session_id=self._session_id, options=self._options)
         self._rpc = RollPairContext(session=self._rp_session)
         self._session_id = self._rp_session.get_session_id()
 
@@ -57,9 +53,7 @@ class StorageSession(StorageSessionBase):
                 store_type=store_type,
                 options=options,
             )
-        raise NotImplementedError(
-            f"address type {type(address)} not supported with eggroll storage"
-        )
+        raise NotImplementedError(f"address type {type(address)} not supported with eggroll storage")
 
     def cleanup(self, name, namespace):
         self._rpc.cleanup(name=name, namespace=namespace)
