@@ -1,3 +1,17 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
 import io
 import pickle
 from typing import Any, List, Optional, TypeVar, Union
@@ -54,12 +68,8 @@ class Party(PartyInterface):
 
     def put(self, *args, **kwargs):
         if args:
-            assert len(args) == 2 and isinstance(
-                args[0], str
-            ), "invalid position parameter"
-            assert (
-                not kwargs
-            ), "keywords paramters not allowed when position parameter provided"
+            assert len(args) == 2 and isinstance(args[0], str), "invalid position parameter"
+            assert not kwargs, "keywords paramters not allowed when position parameter provided"
             kvs = [args]
         else:
             kvs = kwargs.items()
@@ -115,12 +125,8 @@ class Parties(PartiesInterface):
 
     def put(self, *args, **kwargs):
         if args:
-            assert len(args) == 2 and isinstance(
-                args[0], str
-            ), "invalid position parameter"
-            assert (
-                not kwargs
-            ), "keywords paramters not allowed when position parameter provided"
+            assert len(args) == 2 and isinstance(args[0], str), "invalid position parameter"
+            assert not kwargs, "keywords paramters not allowed when position parameter provided"
             kvs = [args]
         else:
             kvs = kwargs.items()
@@ -156,9 +162,7 @@ def _pull(
     )
     values = []
     for party, buffers in zip(parties, raw_values):
-        values.append(
-            _TableRmotePersistentUnpickler.pull(buffers, federation, name, tag, party)
-        )
+        values.append(_TableRmotePersistentUnpickler.pull(buffers, federation, name, tag, party))
     return values
 
 

@@ -1,21 +1,30 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
 import copy
 import operator
+
 import torch
-from .ops import stat_method, arith_method, transform_to_predict_result
-from .storage import ValueStore, Index
 from fate.arch.computing import is_table
+
+from .ops import arith_method, stat_method, transform_to_predict_result
+from .storage import Index, ValueStore
 
 
 # TODO: record data type, support multiple data types
 class DataFrame(object):
-    def __init__(self,
-                 ctx,
-                 schema,
-                 index=None,
-                 match_id=None,
-                 values=None,
-                 label=None,
-                 weight=None):
+    def __init__(self, ctx, schema, index=None, match_id=None, values=None, label=None, weight=None):
         self._ctx = ctx
         self._index = index
         self._match_id = match_id
@@ -118,14 +127,9 @@ class DataFrame(object):
             col_idx = self.schema.header.index(attr)
             value = self._values[:, col_idx]
 
-        schema = dict(sid=self.schema.sid,
-                      header=[attr])
+        schema = dict(sid=self.schema.sid, header=[attr])
 
-        return DataFrame(
-            self._ctx,
-            schema=schema,
-            values=value
-        )
+        return DataFrame(self._ctx, schema=schema, values=value)
 
     def __getitem__(self, items):
         indexes = self.__get_index_by_column_names(items)
@@ -143,8 +147,9 @@ class DataFrame(object):
         new_schema["header"] = new_header
         new_schema["anonymous__header"] = new_anonymous_header
 
-        return DataFrame(self._ctx, index=self._index, values=ret_tensor, label=self._label, weight=self._weight,
-                         schema=new_schema)
+        return DataFrame(
+            self._ctx, index=self._index, values=ret_tensor, label=self._label, weight=self._weight, schema=new_schema
+        )
 
     def __setitem__(self, keys, item):
         if not isinstance(item, DataFrame):
@@ -165,7 +170,7 @@ class DataFrame(object):
             index=self._index,
             values=self._values,
             label=self._label,
-            weight=self._weight
+            weight=self._weight,
         )
 
     def __get_index_by_column_names(self, column_names):
@@ -239,17 +244,15 @@ class DataFrame(object):
 
                 blocks = blocks.join(agg_indexer, lambda ten, block_mapping: (ten, block_mapping))
                 blocks = blocks.mapReducePartitions(_retrieval_func, lambda l1, l2: l1 + l2)
-                blocks = blocks.mapValues(lambda block: sorted(block, key = lambda buf: buf[0]))
+                blocks = blocks.mapValues(lambda block: sorted(block, key=lambda buf: buf[0]))
                 blocks = blocks.mapValues(
-                    lambda block: torch.tensor([value[1] for value in block], dtype=getattr(torch, dtype)))
+                    lambda block: torch.tensor([value[1] for value in block], dtype=getattr(torch, dtype))
+                )
                 blocks = [block for pid, block in sorted(list(blocks.collect()))]
 
                 from fate.arch import tensor
-                return tensor.distributed_tensor(
-                    self._ctx,
-                    blocks,
-                    partitions=len(blocks)
-                )
+
+                return tensor.distributed_tensor(self._ctx, blocks, partitions=len(blocks))
 
             weight = _iloc_tensor(self._weight) if self._weight else None
             label = _iloc_tensor(self._label) if self._label else None
@@ -260,13 +263,7 @@ class DataFrame(object):
             raise ValueError(f"iloc function dose not support args type={type(indexes)}")
 
         return DataFrame(
-            self._ctx,
-            self._schema.dict(),
-            index=index,
-            match_id=match_id,
-            label=label,
-            weight=weight,
-            values=values
+            self._ctx, self._schema.dict(), index=index, match_id=match_id, label=label, weight=weight, values=values
         )
 
     def to_local(self):
@@ -282,11 +279,7 @@ class DataFrame(object):
         if self._match_id:
             ret_dict["match_id"] = self._match_id.to_local()
 
-        return DataFrame(
-            self._ctx,
-            self._schema.dict(),
-            **ret_dict
-        )
+        return DataFrame(self._ctx, self._schema.dict(), **ret_dict)
 
     @property
     def is_local(self):
@@ -301,22 +294,16 @@ class DataFrame(object):
 
         return False
 
-    def transform_to_predict_result(self, predict_score, data_type="train", task_type="binary",
-                                    classes=None, threshold=0.5):
-        """
-        """
+    def transform_to_predict_result(
+        self, predict_score, data_type="train", task_type="binary", classes=None, threshold=0.5
+    ):
+        """ """
 
-        ret, header = transform_to_predict_result(self._ctx,
-                                                  predict_score,
-                                                  data_type=data_type,
-                                                  task_type=task_type,
-                                                  classes=classes,
-                                                  threshold=threshold)
+        ret, header = transform_to_predict_result(
+            self._ctx, predict_score, data_type=data_type, task_type=task_type, classes=classes, threshold=threshold
+        )
 
-        transform_schema = {
-            "header": header,
-            "sid": self._schema.sid
-        }
+        transform_schema = {"header": header, "sid": self._schema.sid}
         if self._schema.match_id_name:
             transform_schema["match_id_name"] = self._schema.match_id_name
 
@@ -329,7 +316,7 @@ class DataFrame(object):
             match_id=self._match_id,
             label=self.label,
             values=ValueStore(self._ctx, ret, header),
-            schema=transform_schema
+            schema=transform_schema,
         )
 
     def serialize(self):
@@ -366,8 +353,9 @@ class ColumnObject(object):
 
 
 class Schema(object):
-    def __init__(self, sid=None, match_id_name=None, weight_name=None,
-                 label_name=None, header=None, anonymous_header=None):
+    def __init__(
+        self, sid=None, match_id_name=None, weight_name=None, label_name=None, header=None, anonymous_header=None
+    ):
         self._sid = sid
         self._match_id_name = match_id_name
         self._weight_name = weight_name
@@ -400,9 +388,7 @@ class Schema(object):
         return self._anonymous_header
 
     def dict(self):
-        schema = dict(
-            sid=self._sid
-        )
+        schema = dict(sid=self._sid)
 
         if self._header:
             schema["header"] = self._header

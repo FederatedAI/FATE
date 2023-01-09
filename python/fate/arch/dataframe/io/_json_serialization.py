@@ -1,12 +1,28 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
 import functools
+
 import numpy as np
 import pandas as pd
 import torch
-from ._json_schema import build_schema, parse_schema
-from .._dataframe import DataFrame
-from ..storage import Index, ValueStore
 from fate.arch import tensor
 from fate.arch.context.io.data import df
+
+from .._dataframe import DataFrame
+from ..storage import Index, ValueStore
+from ._json_schema import build_schema, parse_schema
 
 
 def _serialize_local(ctx, data):
@@ -40,17 +56,14 @@ def _serialize_local(ctx, data):
         value_concat = tensor_concat
 
     if value_concat is not None:
-        tensor_concat = ctx.computing.parallelize(
-            [value_concat.tolist()],
-            include_key=False,
-            partition=1
-        )
+        tensor_concat = ctx.computing.parallelize([value_concat.tolist()], include_key=False, partition=1)
     """
     data only has index
     """
     if tensor_concat is None:
         serialize_data = data.index.mapValues(lambda pd_index: pd_index.tolist())
     else:
+
         def _flatten(index: pd.Index, t: list):
             index = index.tolist()
             # t = t.tolist()
@@ -63,8 +76,7 @@ def _serialize_local(ctx, data):
         serialize_data = data.index.to_local().values.join(tensor_concat, _flatten)
 
     serialize_data.schema = schema
-    data_dict = dict(data=list(serialize_data.collect()),
-                     schema=schema)
+    data_dict = dict(data=list(serialize_data.collect()), schema=schema)
     return data_dict
 
 
@@ -95,15 +107,15 @@ def _serialize_distributed(ctx, data):
         if isinstance(data.values, ValueStore):
             value_concat = data.values.values
             if tensor_concat is not None:
-                value_concat = tensor_concat.join(value_concat,
-                                                  lambda t1, t2: np.concatenate(
-                                                      [t1.to_local().data.numpy(), t2.to_numpy()], axis=-1))
+                value_concat = tensor_concat.join(
+                    value_concat, lambda t1, t2: np.concatenate([t1.to_local().data.numpy(), t2.to_numpy()], axis=-1)
+                )
         else:
             value_concat = data.values.storage.blocks.mapValues(lambda t: t.to_local().data)
             if tensor_concat is not None:
-                value_concat = tensor_concat.join(value_concat,
-                                                  lambda t1, t2: np.concatenate(
-                                                      [t1.to_local().data.numpy(), t2.numpy()], axis=-1))
+                value_concat = tensor_concat.join(
+                    value_concat, lambda t1, t2: np.concatenate([t1.to_local().data.numpy(), t2.numpy()], axis=-1)
+                )
 
     else:
         value_concat = tensor_concat
@@ -114,11 +126,12 @@ def _serialize_distributed(ctx, data):
 
     index = Index.aggregate(data.index.values)
     if tensor_concat is None:
-        """ 
-        data only has index 
+        """
+        data only has index
         """
         serialize_data = index
     else:
+
         def _flatten(index: list, t):
             flatten_ret = []
             for (_id, block_index), _t in zip(index, t):
@@ -161,7 +174,7 @@ def deserialize(ctx, data):
 
         ret_tensor = []
         for v in value:
-            ret_tensor.append(v[start_index: end_index + 1])
+            ret_tensor.append(v[start_index : end_index + 1])
 
         return torch.tensor(ret_tensor, dtype=getattr(torch, dtype))
 
@@ -178,38 +191,29 @@ def deserialize(ctx, data):
         return df
 
     def _to_distributed_tensor(tensor_list):
-        return tensor.distributed_tensor(
-            ctx, tensor_list, partitions=len(tensor_list)
-        )
+        return tensor.distributed_tensor(ctx, tensor_list, partitions=len(tensor_list))
 
     ret_dict = dict()
-    ret_dict["index"] = Index(ctx=ctx,
-                              distributed_index=data.mapPartitions(_recovery_index, use_previous_behavior=False),
-                              block_partition_mapping=block_partition_mapping,
-                              global_ranks=global_ranks)
+    ret_dict["index"] = Index(
+        ctx=ctx,
+        distributed_index=data.mapPartitions(_recovery_index, use_previous_behavior=False),
+        block_partition_mapping=block_partition_mapping,
+        global_ranks=global_ranks,
+    )
 
     tensor_keywords = ["weight", "label", "values"]
     for keyword in tensor_keywords:
         if keyword in column_info:
             if keyword == "values" and column_info["values"]["source"] == "fate.dataframe.value_store":
                 continue
-            _recovery_func = functools.partial(
-                _recovery_tensor,
-                tensor_info=column_info[keyword]
-            )
+            _recovery_func = functools.partial(_recovery_tensor, tensor_info=column_info[keyword])
             tensors = [tensor for key, tensor in sorted(list(data.mapValues(_recovery_func).collect()))]
             ret_dict[keyword] = _to_distributed_tensor(tensors)
 
     if "values" in column_info and column_info["values"]["source"] == "fate.dataframe.value_store":
         _recovery_df_func = functools.partial(
-            _recovery_distributed_value_store,
-            value_info=column_info["values"],
-            header=recovery_schema["header"]
+            _recovery_distributed_value_store, value_info=column_info["values"], header=recovery_schema["header"]
         )
-        ret_dict["values"] = ValueStore(
-            ctx,
-            data.mapValues(_recovery_df_func),
-            recovery_schema["header"]
-        )
+        ret_dict["values"] = ValueStore(ctx, data.mapValues(_recovery_df_func), recovery_schema["header"])
 
     return DataFrame(ctx, recovery_schema, **ret_dict)

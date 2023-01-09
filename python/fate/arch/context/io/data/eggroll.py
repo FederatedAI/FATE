@@ -1,3 +1,17 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
 from fate.arch.abc import CTableABC
 
 from ....unify import EggrollURI
@@ -38,8 +52,9 @@ class EggrollDataFrameReader:
         self.metadata = metadata
 
     def read_dataframe(self):
-        from .df import Dataframe
         from fate.arch import dataframe
+
+        from .df import Dataframe
 
         table = load_table(self.ctx, self.uri, self.metadata)
         df = dataframe.deserialize(self.ctx, table)
@@ -56,8 +71,9 @@ class EggrollRawTableReader:
     def read_dataframe(self):
         import inspect
 
-        from .df import Dataframe
         from fate.arch import dataframe
+
+        from .df import Dataframe
 
         table = load_table(self.ctx, self.uri, self.metadata)
 
