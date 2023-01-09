@@ -12,8 +12,8 @@ target-version = ['py38']
 include = '\.pyi?$'
 force-exclude = '''
 /(
-  \.*_pb2.py |
-  \.*_pb2_grpc.py |
+  .*_pb2.py |
+  .*_pb2_grpc.py |
   ^/examples/ |
   ^/python/fate_test/ |
   ^/python/fate_client/ |
