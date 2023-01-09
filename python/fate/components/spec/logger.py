@@ -23,7 +23,7 @@ class PipelineLogger(pydantic.BaseModel):
     def install(self):
         self.metadata.basepath.mkdir(parents=True, exist_ok=True)
         levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-        formatters = {"brief": {"format": "'%(asctime)s %(levelname)-8s %(name)-15s %(message)s'"}}
+        formatters = {"brief": {"format": "'%(asctime)s %(levelname)-8s %(name)s:%(lineno)s %(message)s'"}}
         handlers = {}
         filters = {}
 
@@ -128,18 +128,18 @@ class FlowLogger(pydantic.BaseModel):
     def install(self):
         self.metadata.basepath.mkdir(parents=True, exist_ok=True)
         levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-        formatters = {"brief": {"format": "'%(asctime)s %(levelname)-8s %(name)-15s %(message)s'"}}
+        formatters = {"brief": {"format": "'%(asctime)s %(levelname)-8s %(name)s:%(lineno)s %(message)s'"}}
         handlers = {}
         filters = {}
 
         def add_file_handler(
-                name,
-                filename,
-                level,
-                formater="brief",
-                filters=[],
-                max_bytes=102400,
-                backup_count=3,
+            name,
+            filename,
+            level,
+            formater="brief",
+            filters=[],
+            max_bytes=102400,
+            backup_count=3,
         ):
             handlers[name] = {
                 "class": "logging.handlers.RotatingFileHandler",
@@ -202,6 +202,7 @@ class FlowLogger(pydantic.BaseModel):
                 disable_existing_loggers=False,
             )
         )
+
 
 class CustomLogger(pydantic.BaseModel):
     class CustomLoggerMetadata(pydantic.BaseModel):
