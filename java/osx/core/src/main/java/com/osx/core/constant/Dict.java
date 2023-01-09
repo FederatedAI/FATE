@@ -91,7 +91,8 @@ public class Dict {
     public static final String PROPERTY_SERVING_ADDRESS = "serving";
     public static final String PROPERTY_USE_ZOOKEEPER = "useZookeeper";
     public static final String PROPERTY_PORT = "port";
-    public static final String PROPERTY_TLS_PORT = "tls.port";
+    public static final String PROPERTY_GRPC_PORT = "grpc.port";
+    public static final String PROPERTY_GRPC_TLS_PORT = "grpc.tls.port";
     public static final String PROPERTY_USER_DIR = "user.dir";
     public static final String PROPERTY_USER_HOME = "user.home";
     public static final String PROPERTY_FILE_SEPARATOR = "file.separator";
@@ -164,6 +165,10 @@ public class Dict {
     public static final String PROPERTY_INTERVAL_MS = "interval.ms";
     public static final String PROPERTY_SAMPLE_COUNT = "sample.count";
     public static final String PRPPERTY_QUEUE_MAX_FREE_TIME = "queue.max.free.time";
+
+    public static String PROPERTY_OPEN_HTTP_SERVER = "open.http.server";
+    public static String PROPERTY_OPEN_GRPC_TLS_SERVER = "open.grpc.tls.server";
+    public static String PROPERTY_DEFAULT_CLIENT_VERSION="default.client.version";
 
 
     public static final String HTTP_CLIENT_CONFIG_CONN_REQ_TIME_OUT = "httpclinet.config.connection.req.timeout";

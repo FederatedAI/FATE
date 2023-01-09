@@ -28,6 +28,7 @@ import java.util.Set;
 
 public class MetaInfo {
     public static final long CURRENT_VERSION = 100;
+    public static  String PROPERTY_DEFAULT_CLIENT_VERSION="2.X.X";
     public static volatile MasterInfo masterInfo;
     public static int PROPERTY_GRPC_SERVER_MAX_CONCURRENT_CALL_PER_CONNECTION = 1000;
     public static int PROPERTY_GRPC_SERVER_MAX_INBOUND_METADATA_SIZE = 128 << 20;
@@ -41,6 +42,7 @@ public class MetaInfo {
     public static int PROPERTY_GRPC_SERVER_MAX_CONNECTION_AGE_SEC = 86400;
     public static int PROPERTY_GRPC_SERVER_MAX_CONNECTION_AGE_GRACE_SEC = 86400;
     public static int PROPERTY_GRPC_ONCOMPLETED_WAIT_TIMEOUT = 600;
+
 
 
 
@@ -78,12 +80,15 @@ public class MetaInfo {
     public static String PROPERTY_SERVER_PRIVATEKEY_FILE;
     public static String PROPERTY_SERVER_CA_FILE;
     public static int ROLLSITE_PARTY_ID;
-    public static Integer PROPERTY_PORT;
+//    public static Integer PROPERTY_PORT;
+    public static Integer PROPERTY_GRPC_PORT;
     public static Integer PROPERTY_HTTP_PORT;
+    public static Boolean PROPERTY_OPEN_HTTP_SERVER = false;
+    public static Boolean PROPERTY_OPEN_GRPC_TLS_SERVER = false;
     public static int     PROPERTY_HTTP_REQUEST_BODY_MAX_SIZE=4096;
     public static String  PROPERTY_HTTP_CONTEXT_PATH="/osx";
     public static String  PROPERTY_HTTP_SERVLET_PATH="/*";
-    public static Integer PROPERTY_TLS_PORT;
+    public static Integer PROPERTY_GRPC_TLS_PORT;
     public static String PROPERTY_ZK_URL;
     public static Boolean PROPERTY_USE_DISRUPTOR = true;
     public static int PROPERTY_STREAM_LIMIT_MAX_TRY_TIME = 3;

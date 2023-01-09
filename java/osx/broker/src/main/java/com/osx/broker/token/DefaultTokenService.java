@@ -38,9 +38,6 @@ public class DefaultTokenService implements TokenService {
     public DefaultTokenService() {
 
     }
-
-
-
     @Override
     public TokenResult requestToken(String resource, int acquireCount, boolean prioritized) {
 
@@ -69,7 +66,6 @@ public class DefaultTokenService implements TokenService {
         if (tokenId == null) {
             return;
         }
-        //  ConcurrentClusterFlowChecker.releaseConcurrentToken(tokenId);
     }
     private boolean notValidRequest(Long id, int count) {
         return id == null || id <= 0 || count <= 0;

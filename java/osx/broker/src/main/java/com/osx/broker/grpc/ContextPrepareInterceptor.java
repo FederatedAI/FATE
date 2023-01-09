@@ -9,8 +9,6 @@ public class ContextPrepareInterceptor implements ServerInterceptor {
     @Override
     public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call, Metadata headers, ServerCallHandler<ReqT, RespT> next) {
         String remoteAddr = call.getAttributes().get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR).toString();
-
-
         String[] remoteAddrSplited = remoteAddr.split(":");
         String remoteIp = remoteAddrSplited[0].replaceAll("\\/", "");
         Context context = Context.current().withValue(sourceIp, remoteIp);

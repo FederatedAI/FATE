@@ -26,7 +26,6 @@ public class RedirectConsumer extends UnaryConsumer {
     TransferStatus transferStatus;
     AtomicBoolean isWorking = new AtomicBoolean(false);
 
-
     public RedirectConsumer(long consumerId, String transferId
     ) {
         super(consumerId, transferId);

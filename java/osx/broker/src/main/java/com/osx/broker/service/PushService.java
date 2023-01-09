@@ -19,6 +19,7 @@ import com.osx.broker.grpc.PushRequestDataWrap;
 import com.osx.broker.grpc.QueuePushReqStreamObserver;
 import com.osx.core.context.Context;
 import com.osx.core.exceptions.ExceptionInfo;
+import com.osx.core.exceptions.SysException;
 import com.osx.core.service.AbstractServiceAdaptor;
 import com.osx.core.service.InboundPackage;
 import com.webank.ai.eggroll.api.networking.proxy.Proxy;
@@ -26,9 +27,9 @@ import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PushService2 extends AbstractServiceAdaptor<PushRequestDataWrap, StreamObserver> {
+public class PushService extends AbstractServiceAdaptor<PushRequestDataWrap, StreamObserver> {
 
-    Logger logger = LoggerFactory.getLogger(PushService2.class);
+    Logger logger = LoggerFactory.getLogger(PushService.class);
     
     @Override
     protected StreamObserver doService(Context context, InboundPackage<PushRequestDataWrap> data
@@ -45,6 +46,6 @@ public class PushService2 extends AbstractServiceAdaptor<PushRequestDataWrap, St
     @Override
     protected StreamObserver transformExceptionInfo(Context context, ExceptionInfo exceptionInfo) {
         logger.error("PushService error {}", exceptionInfo);
-        throw new RuntimeException("xxxxx");
+        throw new SysException(exceptionInfo.toString());
     }
 }

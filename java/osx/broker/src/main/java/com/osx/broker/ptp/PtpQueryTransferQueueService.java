@@ -77,7 +77,7 @@ public class PtpQueryTransferQueueService extends AbstractPtpServiceAdaptor {
             topicInfo = topicInfoBuilder.setTopic(transferQueue.getTransferId()).
                     setCreateTimestamp(transferQueue.getCreateTimestamp())
                     .setIp(NetUtils.getLocalHost())
-                    .setPort(MetaInfo.PROPERTY_PORT).build();
+                    .setPort(MetaInfo.PROPERTY_GRPC_PORT).build();
         } else {
             /**
              * 全局topic信息

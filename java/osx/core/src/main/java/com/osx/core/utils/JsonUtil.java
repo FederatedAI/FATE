@@ -46,7 +46,7 @@ public class JsonUtil {
         try {
             s = mapper.writeValueAsString(o);
         } catch (IOException e) {
-            e.printStackTrace();
+
         }
         return s;
     }

@@ -48,9 +48,7 @@ public class PcpGrpcService extends PrivateTransferProtocolGrpc.PrivateTransferP
 
 
         Map<String, String> metaDataMap = request.getMetadataMap();
-       // String version = metaDataMap.get(Pcp.Header.Version.name());
         String techProviderCode = metaDataMap.get(Osx.Header.TechProviderCode.name());
-
         TechProvider techProvider = ServiceContainer.techProviderRegister.select(techProviderCode);
         if (techProvider != null) {
             techProvider.processGrpcInvoke(request, responseObserver);
@@ -74,7 +72,7 @@ public class PcpGrpcService extends PrivateTransferProtocolGrpc.PrivateTransferP
             // String version = metaDataMap.get(Pcp.Header.Version.name());
 
             logger.info("PcpStreamObserver init {}",metaDataMap);
-           // System.err.println("pppppppppppppppppppppp "+metaDataMap);
+
             String techProviderCode = metaDataMap.get(Osx.Header.TechProviderCode.name());
             techProvider = ServiceContainer.techProviderRegister.select(techProviderCode);
             if (techProvider != null) {

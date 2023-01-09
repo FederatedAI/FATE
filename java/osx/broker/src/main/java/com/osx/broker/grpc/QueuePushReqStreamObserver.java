@@ -130,7 +130,6 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
             context.setSrcPartyId(routerInfo.getSourcePartyId());
             context.setDesPartyId(routerInfo.getDesPartyId());
             ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(context.getRouterInfo(),true);
-            //forwardPushRespSO.setTokenApplyService(ServiceContainer.tokenApplyService);
             if (TransferUtil.isOldVersionFate(routerInfo.getVersion())) {
                 DataTransferServiceGrpc.DataTransferServiceStub stub = DataTransferServiceGrpc.newStub(managedChannel);
                 ForwardPushRespSO forwardPushRespSO = new ForwardPushRespSO(context, backRespSO,backRespSOClass, () -> {

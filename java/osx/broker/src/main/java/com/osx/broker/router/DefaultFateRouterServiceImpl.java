@@ -249,10 +249,7 @@ public class DefaultFateRouterServiceImpl implements FateRouterService {
 
         @Override
         public void configLoad(String value) {
-
-            //   logger.info("fire router table load {}",value);
            Map confJson =  JsonUtil.json2Object(value,Map.class);
-           // JsonObject confJson = JsonParser.parseString(value).getAsJsonObject();
             Map content =(Map) confJson.get("route_table");
             endPointMap = initRouteTable(content);
             logger.info("load router config {}", JsonUtil.formatJson(JsonUtil.object2Json(endPointMap)));

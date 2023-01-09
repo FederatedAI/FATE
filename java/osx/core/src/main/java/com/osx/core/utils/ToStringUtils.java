@@ -32,13 +32,11 @@ public class ToStringUtils {
             try {
                 return protoPrinter.print(target);
             } catch (InvalidProtocolBufferException e) {
-                e.printStackTrace();
+                return null;
             }
         } else {
             return Dict.NULL_WITH_BRACKETS;
         }
-
-        return null;
     }
 
 

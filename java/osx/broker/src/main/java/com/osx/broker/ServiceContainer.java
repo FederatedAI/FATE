@@ -26,7 +26,7 @@ import com.osx.broker.queue.TransferQueueManager;
 import com.osx.broker.router.DefaultFateRouterServiceImpl;
 import com.osx.broker.router.FateRouterService;
 import com.osx.broker.server.OsxServer;
-import com.osx.broker.service.PushService2;
+import com.osx.broker.service.PushService;
 import com.osx.broker.service.TokenApplyService;
 import com.osx.broker.service.UnaryCallService;
 import com.osx.broker.store.MessageStore;
@@ -56,7 +56,7 @@ public class ServiceContainer {
     static public FateRouterService fateRouterService;
     static public Map<String, AbstractServiceAdaptor> serviceAdaptorMap = new HashMap<String, AbstractServiceAdaptor>();
     static public TokenApplyService tokenApplyService;
-    static public PushService2 pushService2;
+    static public PushService pushService;
     static public UnaryCallService unaryCallService;
     static public RequestHandleInterceptor requestHandleInterceptor;
     static public MessageStore messageStore;
@@ -78,11 +78,11 @@ public class ServiceContainer {
         consumerManager = createTransferQueueConsumerManager();
         fateRouterService = createFateRouterService();
         tokenApplyService = createTokenApplyService();
-        pushService2 = createPushService2();
+        pushService = createPushService();
         requestHandleInterceptor = createDefaulRequestInterceptor();
         routerInterceptor =  createDefaultRouterInterceptor(fateRouterService);
         unaryCallService = createUnaryCallService(requestHandleInterceptor,routerInterceptor);
-        proxyGrpcService = new ProxyGrpcService(pushService2, unaryCallService);
+        proxyGrpcService = new ProxyGrpcService(pushService, unaryCallService);
         transferServer = new OsxServer();
         defaultTokenService = createDefaultTokenService();
         tokenApplyService = createTokenApplyService();
@@ -166,9 +166,9 @@ public class ServiceContainer {
         return unaryCallService;
     }
 
-    static PushService2 createPushService2() {
-        PushService2 pushService2 = new PushService2();
-        return pushService2;
+    static PushService createPushService() {
+        PushService pushService = new PushService();
+        return pushService;
     }
 
     static ConsumerManager createTransferQueueConsumerManager() {

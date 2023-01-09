@@ -24,10 +24,12 @@ import com.osx.broker.http.HttpClientPool;
 import com.osx.broker.http.PtpHttpResponse;
 import com.osx.broker.queue.TransferQueue;
 import com.osx.core.config.MetaInfo;
+import com.osx.core.constant.Dict;
 import com.osx.core.constant.Protocol;
 import com.osx.core.constant.PtpHttpHeader;
 import com.osx.core.constant.StatusCode;
 import com.osx.core.context.Context;
+import com.osx.core.exceptions.ConfigErrorException;
 import com.osx.core.exceptions.NoRouterInfoException;
 import com.osx.core.exceptions.RemoteRpcException;
 import com.osx.core.frame.GrpcConnectionFactory;
@@ -52,13 +54,18 @@ public class TransferUtil {
      * @return
      */
     public static boolean isOldVersionFate(String version) {
-        if (version == null)
-            return true;
-        int versionInteger = Integer.parseInt(version);
-        if (versionInteger >= 200) {
-            return false;
-        } else {
-            return true;
+
+        try{
+            if (StringUtils.isEmpty(version))
+                version= MetaInfo.PROPERTY_DEFAULT_CLIENT_VERSION;
+            String firstVersion = version.substring(0,1);
+            if (Integer.parseInt(firstVersion) >= 2) {
+                return false;
+            } else {
+                return true;
+            }
+        }catch(NumberFormatException e){
+            throw new ConfigErrorException("remote version config error : "+version);
         }
 
     }
@@ -123,8 +130,8 @@ public class TransferUtil {
         String desRole = desTopic.getRole();
         inboundBuilder.setPayload(packet.toByteString());
         inboundBuilder.putMetadata(Osx.Header.Version.name(), Long.toString(MetaInfo.CURRENT_VERSION));
-        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), "FT");
-        inboundBuilder.putMetadata(Osx.Header.Token.name(), "testToken");
+        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), Dict.FATE_TECH_PROVIDER);
+        inboundBuilder.putMetadata(Osx.Header.Token.name(), "");
         inboundBuilder.putMetadata(Osx.Header.SourceNodeID.name(), srcPartyId);
         inboundBuilder.putMetadata(Osx.Header.TargetNodeID.name(), desPartyId);
         inboundBuilder.putMetadata(Osx.Header.SourceInstID.name(), "");
@@ -279,5 +286,10 @@ public class TransferUtil {
         }
 
         return builder.build();
+    }
+
+
+    public static  void main(String[] args){
+        System.err.println(isOldVersionFate(null));
     }
 }

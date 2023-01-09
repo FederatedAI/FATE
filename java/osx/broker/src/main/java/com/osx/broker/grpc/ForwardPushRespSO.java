@@ -52,15 +52,6 @@ public class ForwardPushRespSO implements StreamObserver<Proxy.Metadata> {
         this.backPushRespSO = backPushRespSO;
     }
 
-//    public TokenApplyService getTokenApplyService() {
-//        return tokenApplyService;
-//    }
-//
-//    public void setTokenApplyService(TokenApplyService tokenApplyService) {
-//        this.tokenApplyService = tokenApplyService;
-//    }
-
-    //TokenApplyService   tokenApplyService;
     @Override
     public void onNext(Proxy.Metadata value) {
         if(backPushRespClass.equals(Proxy.Metadata.class)) {

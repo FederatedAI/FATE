@@ -38,7 +38,6 @@ public class DefaultAppendMessageHandler implements AppendMessageHandler {
     public DefaultAppendMessageHandler(final int size) {
         this.msgIdMemory = ByteBuffer.allocate(4 + 4 + 8);
         this.msgIdV6Memory = ByteBuffer.allocate(16 + 4 + 8);
-        log.info("======================{}", size);
         this.msgStoreItemMemory = ByteBuffer.allocate(size + END_FILE_MIN_BLANK_LENGTH);
         this.maxMessageSize = size;
     }

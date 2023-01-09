@@ -57,7 +57,7 @@ public class HttpTest {
     public void   testConsumeMsg(){
         Map header = Maps.newHashMap();
         header.put(PtpHttpHeader.Version,"");
-        header.put(PtpHttpHeader.TechProviderCode,"FT");
+        header.put(PtpHttpHeader.TechProviderCode,Dict.FATE_TECH_PROVIDER);
         header.put(PtpHttpHeader.Token,"");
         header.put(PtpHttpHeader.SourceNodeID,srcPartyId);
         header.put(PtpHttpHeader.TargetNodeID,desPartyId);
@@ -78,25 +78,9 @@ public class HttpTest {
 
     @Test
     public  void  testProduceMsg(){
-
-       // HttpClientPool.sendPtpPost(url,);
-//        inboundBuilder.putMetadata(Osx.Header.Version.name(), "123");
-//        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), "FT");
-//        inboundBuilder.putMetadata(Osx.Header.Token.name(), "testToken");
-//        inboundBuilder.putMetadata(Osx.Header.SourceNodeID.name(), "9999");
-//        inboundBuilder.putMetadata(Osx.Header.TargetNodeID.name(), "10000");
-//        inboundBuilder.putMetadata(Osx.Header.SourceInstID.name(), "");
-//        inboundBuilder.putMetadata(Osx.Header.TargetInstID.name(), "");
-//        inboundBuilder.putMetadata(Osx.Header.SessionID.name(), "testSessionID");
-//        inboundBuilder.putMetadata(Osx.Metadata.TargetMethod.name(), "PRODUCE_MSG");
-//        inboundBuilder.putMetadata(Osx.Metadata.TargetComponentName.name(), "");
-//        inboundBuilder.putMetadata(Osx.Metadata.SourceComponentName.name(), "");
-//        inboundBuilder.putMetadata(Osx.Metadata.MessageTopic.name(), transferId);
-
-
         Map header = Maps.newHashMap();
         header.put(PtpHttpHeader.Version,"");
-        header.put(PtpHttpHeader.TechProviderCode,"FT");
+        header.put(PtpHttpHeader.TechProviderCode,Dict.FATE_TECH_PROVIDER);
         header.put(PtpHttpHeader.Token,"");
         header.put(PtpHttpHeader.SourceNodeID,desPartyId);//desPartyId
         header.put(PtpHttpHeader.TargetNodeID,srcPartyId);//srcPartyId

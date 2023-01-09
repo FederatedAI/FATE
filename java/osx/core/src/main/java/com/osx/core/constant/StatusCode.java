@@ -22,6 +22,7 @@ public class StatusCode {
     public static final String NET_ERROR = "105";
     public static final String SYSTEM_ERROR = "110";
     public static final String PARAM_ERROR = "120";
+    public static final String CONFIG_ERROR = "121";
     public static final String TRANSFER_APPLYINFO_SYNC_ERROR = "129";
     public static final String PROXY_ROUTER_ERROR = "130";
 

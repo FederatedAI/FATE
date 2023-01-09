@@ -207,7 +207,9 @@ public class TransferQueueManager {
     private void handleClusterInstanceId(List<String> children) {
         this.instanceIds.clear();
         this.instanceIds.addAll(children);
-        logger.info("instance change : {}", instanceIds);
+        if(logger.isInfoEnabled()) {
+            logger.info("instance change : {}", instanceIds);
+        }
     }
 
     private synchronized void parseApplyInfo(List<String> children) {
@@ -217,7 +219,9 @@ public class TransferQueueManager {
         if (intersecitonSet != null)
             needAddSet = Sets.difference(childSet, intersecitonSet);
         Set<String> needRemoveSet = Sets.difference(transferQueueApplyInfoMap.keySet(), intersecitonSet);
-        logger.info("cluster apply info add {} remove {}", needAddSet, needRemoveSet);
+        if(logger.isInfoEnabled()) {
+            logger.info("cluster apply info add {} remove {}", needAddSet, needRemoveSet);
+        }
         if (needRemoveSet != null) {
             needRemoveSet.forEach(k -> {
                 transferQueueApplyInfoMap.remove(k);
@@ -232,7 +236,7 @@ public class TransferQueueManager {
                         transferQueueApplyInfoMap.put(k, transferQueueApplyInfo);
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                   logger.error("parse apply info from zk error",e);
                 }
             });
         }
@@ -252,7 +256,6 @@ public class TransferQueueManager {
                         result.add(transferId);
                     } catch (Exception e) {
                         logger.error("destroyInner error {}", transferId);
-
                     }
                 }
             }
@@ -293,7 +296,9 @@ public class TransferQueueManager {
                     destroy(transferId);
                 }
                 if (freeTime > MetaInfo.PRPPERTY_QUEUE_MAX_FREE_TIME) {
-                    logger.info("transfer queue : {} freetime  {} need to be destroy", transferId, freeTime);
+                    if(logger.isInfoEnabled()) {
+                        logger.info("transfer queue : {} freetime  {} need to be destroy", transferId, freeTime);
+                    }
                     destroy(transferId);
                     return;
                 }
@@ -383,9 +388,6 @@ public class TransferQueueManager {
                 logger.info("apply topic response {}", applyTopicResponse);
 
                 if (applyTopicResponse != null) {
-                   // int applyReturnCode = applyTransferQueueResponse.getCode();
-
-                    //  TransferQueueApplyInfo transferQueueApplyInfo=applyTransferQueueResponse.getTransferQueueApplyInfo();
 
                     /**
                      * 从clustermananger 返回的结果中比对instantceId ，如果为本实例，则在本地建Q

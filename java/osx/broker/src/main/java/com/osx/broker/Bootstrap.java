@@ -83,8 +83,8 @@ public class Bootstrap {
             MetaInfo.PROPERTY_SERVER_CERTCHAIN_FILE = environment.getProperty(Dict.PROPERTY_SERVER_CERTCHAIN_FILE);
             MetaInfo.PROPERTY_SERVER_PRIVATEKEY_FILE = environment.getProperty(Dict.PROPERTY_SERVER_PRIVATEKEY_FILE);
             MetaInfo.PROPERTY_SERVER_CA_FILE = environment.getProperty(Dict.PROPERTY_SERVER_CA_FILE);
-            MetaInfo.PROPERTY_TLS_PORT = Integer.valueOf(environment.getProperty(Dict.PROPERTY_TLS_PORT, "9883"));
-            MetaInfo.PROPERTY_PORT = Integer.valueOf(environment.getProperty(Dict.PORT, "9889"));
+            MetaInfo.PROPERTY_GRPC_TLS_PORT = Integer.valueOf(environment.getProperty(Dict.PROPERTY_GRPC_TLS_PORT, "9883"));
+            MetaInfo.PROPERTY_GRPC_PORT  = Integer.valueOf(environment.getProperty(Dict.PROPERTY_GRPC_PORT, "9889"));
             MetaInfo.PROPERTY_HTTP_PORT = Integer.valueOf(environment.getProperty(Dict.HTTP_PORT,"8762"));
             MetaInfo.PROPERTY_PRINT_INPUT_DATA = Boolean.valueOf(environment.getProperty(Dict.PROPERTY_PRINT_INPUT_DATA, "false"));
             MetaInfo.PROPERTY_PRINT_OUTPUT_DATA = Boolean.valueOf(environment.getProperty(Dict.PROPERTY_PRINT_OUTPUT_DATA, "false"));
@@ -132,12 +132,18 @@ public class Bootstrap {
             MetaInfo.HTTP_CLIENT_TRAN_SOCK_TIME_OUT = Integer.valueOf(environment.getProperty(Dict.HTTP_CLIENT_TRAN_SOCK_TIME_OUT,"60000"));
 
             MetaInfo.PRPPERTY_QUEUE_MAX_FREE_TIME = Integer.parseInt(environment.getProperty(Dict.PRPPERTY_QUEUE_MAX_FREE_TIME, "60000000"));
-            MetaInfo.INSTANCE_ID = NetUtils.getLocalHost() + ":" + MetaInfo.PROPERTY_PORT;
+            MetaInfo.INSTANCE_ID = NetUtils.getLocalHost() + ":" + MetaInfo.PROPERTY_GRPC_PORT;
             MetaInfo.PROPERTY_DEPLOY_MODE = environment.getProperty(Dict.PROPERTY_DEPLOY_MODE);
             MetaInfo.PROPERTY_CLUSTER_MANAGER_ADDRESS = environment.getProperty(Dict.PROPERTY_CLUSTER_MANAGER_ADDRESS);
             MetaInfo.PROPERTY_EGGROLL_CLUSTER_MANANGER_IP = environment.getProperty(Dict.PROPERTY_EGGROLL_CLUSTER_MANANGER_IP);
             MetaInfo.PROPERTY_EGGROLL_CLUSTER_MANANGER_PORT = Integer.parseInt(environment.getProperty(Dict.PROPERTY_EGGROLL_CLUSTER_MANANGER_PORT));
             MetaInfo.PROPERTY_ZK_URL = environment.getProperty(Dict.PROPERTY_ZK_URL);
+            MetaInfo.PROPERTY_OPEN_HTTP_SERVER = Boolean.valueOf(environment.getProperty(Dict.PROPERTY_OPEN_HTTP_SERVER, "false"));
+            MetaInfo.PROPERTY_OPEN_GRPC_TLS_SERVER = Boolean.valueOf(environment.getProperty(Dict.PROPERTY_OPEN_GRPC_TLS_SERVER, "false"));
+//            public static Boolean PROPERTY_OPEN_HTTP_SERVER = false;
+//            public static Boolean PROPERTY_OPEN_GRPC_TLS_SERVER = false;
+            MetaInfo.PROPERTY_DEFAULT_CLIENT_VERSION =  environment.getProperty(Dict.PROPERTY_DEFAULT_CLIENT_VERSION,"2.X.X");
+
         } catch (Exception e) {
             logger.error("init MetaInfo error", e);
             System.exit(1);

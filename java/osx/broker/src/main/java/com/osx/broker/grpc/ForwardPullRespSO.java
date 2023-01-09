@@ -28,27 +28,19 @@ public class ForwardPullRespSO implements StreamObserver<Proxy.Packet> {
 
     Logger logger = LoggerFactory.getLogger(ForwardPullRespSO.class);
 
-    //TokenApplyService tokenApplyService;
-
     Context context;
 
     StreamObserver<Proxy.Packet> backStreamObserver;
 
     public ForwardPullRespSO(Context context, StreamObserver<Proxy.Packet> backStreamObserver) {
-        //,TokenApplyService  tokenApplyService){
-
-        // Preconditions.checkArgument(tokenApplyService!=null);
         Preconditions.checkArgument(backStreamObserver != null);
         Preconditions.checkArgument(context != null);
         this.context = context;
-        // this.tokenApplyService = tokenApplyService;
         this.backStreamObserver = backStreamObserver;
     }
 
     @Override
     public void onNext(Proxy.Packet value) {
-        String resource = ResourceUtil.buildResource(context.getRouterInfo(), Direction.DOWN);
-        //tokenApplyService.applyToken(context,resource,value.toByteArray().length);
         backStreamObserver.onNext(value);
     }
 

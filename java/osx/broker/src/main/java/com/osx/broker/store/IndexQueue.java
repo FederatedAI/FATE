@@ -29,7 +29,6 @@ import java.util.concurrent.atomic.AtomicLong;
 public class IndexQueue {
     public static final int CQ_STORE_UNIT_SIZE = 12;
     private static final Logger log = LoggerFactory.getLogger(IndexQueue.class);
-    //private static final InternalLogger LOG_ERROR = InternalLoggerFactory.getLogger(LoggerName.STORE_ERROR_LOGGER_NAME);
     private final MappedFileQueue mappedFileQueue;
     private final String transferId;
 
@@ -171,7 +170,6 @@ public class IndexQueue {
         this.byteBufferIndex.limit(CQ_STORE_UNIT_SIZE);
         this.byteBufferIndex.putLong(offset);
         this.byteBufferIndex.putInt(size);
-//        this.byteBufferIndex.putLong(tagsCode);
 
         final long expectLogicOffset = cqOffset * CQ_STORE_UNIT_SIZE;
 
@@ -192,10 +190,6 @@ public class IndexQueue {
 
                 if (expectLogicOffset < currentLogicOffset) {
                     return true;
-                }
-
-                if (expectLogicOffset != currentLogicOffset) {
-
                 }
             }
             this.maxPhysicOffset = offset + size;
@@ -254,11 +248,9 @@ public class IndexQueue {
     }
 
     public void destroy() {
-
         this.maxPhysicOffset = -1;
         this.minLogicOffset = 0;
         this.mappedFileQueue.destroy();
-
     }
 
     public long getMessageTotalInQueue() {
@@ -271,7 +263,6 @@ public class IndexQueue {
 
     public void checkSelf() {
         mappedFileQueue.checkSelf();
-
     }
 
 

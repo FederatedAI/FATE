@@ -76,7 +76,7 @@ public class QueueTest {
     public void test02Query() {
         Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
         inboundBuilder.putMetadata(Osx.Header.Version.name(), "123");
-        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), "FT");
+        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), Dict.FATE_TECH_PROVIDER);
         inboundBuilder.putMetadata(Osx.Header.Token.name(), "testToken");
         inboundBuilder.putMetadata(Osx.Header.SourceNodeID.name(), "9999");
         inboundBuilder.putMetadata(Osx.Header.TargetNodeID.name(), "10000");
@@ -112,7 +112,7 @@ public class QueueTest {
         for (int i = 0; i < 1; i++) {
             Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
             inboundBuilder.putMetadata(Osx.Header.Version.name(), "123");
-            inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), "FT");
+            inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), Dict.FATE_TECH_PROVIDER);
             inboundBuilder.putMetadata(Osx.Header.Token.name(), "testToken");
             inboundBuilder.putMetadata(Osx.Header.SourceNodeID.name(), "9999");
             inboundBuilder.putMetadata(Osx.Header.TargetNodeID.name(), "10000");
@@ -173,7 +173,7 @@ public class QueueTest {
 
         Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
         inboundBuilder.putMetadata(Osx.Header.Version.name(), "123");
-        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), "FT");
+        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), Dict.FATE_TECH_PROVIDER);
         inboundBuilder.putMetadata(Osx.Header.Token.name(), "testToken");
         inboundBuilder.putMetadata(Osx.Header.SourceNodeID.name(), "9999");
         inboundBuilder.putMetadata(Osx.Header.TargetNodeID.name(), "10000");
@@ -198,7 +198,7 @@ public class QueueTest {
             System.err.println("===================");
             Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
             inboundBuilder.putMetadata(Osx.Header.Version.name(), "123");
-            inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), "FT");
+            inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), Dict.FATE_TECH_PROVIDER);
             inboundBuilder.putMetadata(Osx.Header.Token.name(), "testToken");
             inboundBuilder.putMetadata(Osx.Header.SourceNodeID.name(), "9999");
             inboundBuilder.putMetadata(Osx.Header.TargetNodeID.name(), "10000");
@@ -235,7 +235,7 @@ public class QueueTest {
 
         Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
         inboundBuilder.putMetadata(Osx.Header.Version.name(), "123");
-        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), "FT");
+        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), Dict.FATE_TECH_PROVIDER);
         inboundBuilder.putMetadata(Osx.Header.Token.name(), "testToken");
         inboundBuilder.putMetadata(Osx.Header.SourceNodeID.name(), "9999");
         inboundBuilder.putMetadata(Osx.Header.TargetNodeID.name(), "10000");

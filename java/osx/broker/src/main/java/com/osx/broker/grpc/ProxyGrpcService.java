@@ -15,7 +15,7 @@
  */
 package com.osx.broker.grpc;
 
-import com.osx.broker.service.PushService2;
+import com.osx.broker.service.PushService;
 import com.osx.broker.service.UnaryCallService;
 import com.osx.broker.util.ContextUtil;
 import com.osx.core.context.Context;
@@ -31,11 +31,11 @@ import org.slf4j.LoggerFactory;
 public class ProxyGrpcService extends DataTransferServiceGrpc.DataTransferServiceImplBase {
     Logger logger = LoggerFactory.getLogger(ProxyGrpcService.class);
     UnaryCallService unaryCallService;
-    PushService2 pushService2;
-    public ProxyGrpcService(PushService2 pushService2,
+    PushService pushService;
+    public ProxyGrpcService(PushService pushService,
                             UnaryCallService unaryCallService
     ) {
-        this.pushService2 = pushService2;
+        this.pushService = pushService;
         this.unaryCallService = unaryCallService;
     }
 
@@ -47,7 +47,7 @@ public class ProxyGrpcService extends DataTransferServiceGrpc.DataTransferServic
             PushRequestDataWrap pushRequestDataWrap = new PushRequestDataWrap();
             pushRequestDataWrap.setStreamObserver(responseObserver);
             data.setBody(pushRequestDataWrap);
-            OutboundPackage<StreamObserver> outboundPackage = pushService2.service(context, data);
+            OutboundPackage<StreamObserver> outboundPackage = pushService.service(context, data);
             return outboundPackage.getData();
         } catch (Exception e) {
             logger.error("push error",e);
