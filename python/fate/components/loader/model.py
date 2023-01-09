@@ -3,9 +3,15 @@ import logging
 import tarfile
 import tempfile
 from datetime import datetime
-from typing import List
 
-import pydantic
+from fate.components.spec.model import (
+    MLModelComponentSpec,
+    MLModelFederatedSpec,
+    MLModelModelSpec,
+    MLModelPartiesSpec,
+    MLModelPartySpec,
+    MLModelSpec,
+)
 from ruamel import yaml
 
 
@@ -52,7 +58,13 @@ class ModelTarWriteHandler:
     def __init__(self, tar) -> None:
         self.tar = tar
 
-    def add_model(self, name, model):
+    def add_model(self, name, model, file_format):
+        if file_format == "json":
+            self.add_json_model(name, model)
+        else:
+            raise NotImplementedError(f"file_format={file_format} not support")
+
+    def add_json_model(self, name, model):
         with tempfile.NamedTemporaryFile("w") as f:
             json.dump(model, f)
             f.flush()
@@ -82,16 +94,17 @@ class HttpModelTarWriteTarHandler(ModelTarWriteHandler):
         import io
 
         self.memory_file = io.BytesIO()
-        super().__init__(tarfile.open(fileobj=self.memory_file, mode='w'))
+        super().__init__(tarfile.open(fileobj=self.memory_file, mode="w"))
 
     def close(self):
         self.tar.close()
 
     def mlmd_send(self, mlmd, artifact, metadata):
         import requests
+
         logging.info(f"mlmd send uri: {self.uri.to_string()}")
         self.memory_file.seek(0)
-        response = requests.post(url=self.uri.to_string(), files={'file': self.memory_file})
+        response = requests.post(url=self.uri.to_string(), files={"file": self.memory_file})
         logging.info(f"response: {response.text}")
         mlmd.log_output_model(artifact.name, artifact, metadata=metadata)
 
@@ -146,11 +159,13 @@ class ComponentModelWriter:
     def _write_meta(self):
         self._get_tar().add_meta(self._get_meta().dict())
 
-    def write_model(self, name, model, metadata, created_time=None):
+    def write_model(self, name, model, metadata, file_format="json", created_time=None):
         if created_time is None:
             created_time = datetime.now()
-        self._get_tar().add_model(name, model)
-        self.models.append(MLModelModelSpec(name=name, created_time=created_time, metadata=metadata))
+        self._get_tar().add_model(name, model, file_format=file_format)
+        self.models.append(
+            MLModelModelSpec(name=name, created_time=created_time, file_format=file_format, metadata=metadata)
+        )
 
 
 class ModelTarReadHandler:
@@ -185,6 +200,13 @@ class ModelTarReadHandler:
         # return first for now, TODO: extend this
         model_info = self.get_meta().party.models[0]
         model_name = model_info.name
+        file_format = model_info.file_format
+        if file_format == "json":
+            return self.read_json_model(model_name)
+        else:
+            raise NotImplementedError(f"file_format={file_format} not supported")
+
+    def read_json_model(self, model_name):
         with tempfile.TemporaryDirectory() as d:
             path = f"{d}/{model_name}"
             self.tar.extract(model_name, d)
@@ -203,9 +225,9 @@ class FileModelTarReadHandler(ModelTarReadHandler):
 class HttpModelTarReadTarHandler(ModelTarReadHandler):
     def __init__(self, uri) -> None:
         import io
-        import requests
-
         from contextlib import closing
+
+        import requests
 
         memory_file = io.BytesIO()
         logging.debug(f"read model from: {uri.to_string()}")
@@ -214,7 +236,7 @@ class HttpModelTarReadTarHandler(ModelTarReadHandler):
                 if chunk:
                     memory_file.write(chunk)
         memory_file.seek(0)
-        tar = tarfile.open(fileobj=memory_file, mode='r')
+        tar = tarfile.open(fileobj=memory_file, mode="r")
         logging.debug(f"read model success")
         super().__init__(tar)
 
@@ -253,43 +275,3 @@ class ComponentModelLoader:
 
     def read_model(self, **kwargs):
         return self._get_tar().read_model(**kwargs)
-
-
-class MLModelComponentSpec(pydantic.BaseModel):
-    name: str
-    provider: str
-    version: str
-    metadata: dict
-
-
-class MLModelPartiesSpec(pydantic.BaseModel):
-    guest: List[str]
-    host: List[str]
-    arbiter: List[str]
-
-
-class MLModelFederatedSpec(pydantic.BaseModel):
-
-    task_id: str
-    parties: MLModelPartiesSpec
-    component: MLModelComponentSpec
-
-
-class MLModelModelSpec(pydantic.BaseModel):
-    name: str
-    created_time: datetime
-    metadata: dict
-
-
-class MLModelPartySpec(pydantic.BaseModel):
-
-    party_task_id: str
-    role: str
-    partyid: str
-    models: List[MLModelModelSpec]
-
-
-class MLModelSpec(pydantic.BaseModel):
-
-    federated: MLModelFederatedSpec
-    party: MLModelPartySpec
