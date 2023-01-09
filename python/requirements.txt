@@ -1,3 +1,5 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+
 pip>=21
 apsw<3.10
 pkginfo==1.7.1
@@ -9,7 +11,7 @@ cloudpickle==2.1.0
 cos-python-sdk-v5==1.9.10
 Flask==2.0.3
 gmpy2==2.0.8
-joblib==1.0.1
+joblib==1.2.0
 kazoo==2.6.1
 pyyaml==5.4.1
 kfserving==0.5.1
@@ -21,7 +23,7 @@ peewee==3.9.3
 psutil>=5.7.0
 pycryptodomex==3.15.0
 PyMySQL==0.9.3
-pyspark==3.1.3
+pyspark==3.3.1
 python-dotenv==0.13.0
 redis==3.5.3
 urllib3==1.26.5
@@ -30,10 +32,11 @@ requests_toolbelt==0.9.1
 ruamel-yaml==0.16.10
 scikit-learn==1.0.1
 scipy==1.8.1
-tensorflow==2.9.1
-torch==1.12.0
+tensorflow-cpu==2.9.3
+torch==1.13.1+cpu
+torchvision==0.14.1+cpu
 torch-model-archiver==0.3.1
-torchvision==0.13.0
+transformers==4.23.1
 coverage==4.5.2
 pika==1.2.1
 pandas==1.1.5
@@ -41,22 +44,23 @@ cryptography==3.3.2
 sortedcontainers==2.2.2
 pytorch-lightning>=1.6.5
 filelock==3.3.1
-pulsar-client==2.10.1; sys_platform == "linux"
-pulsar-client==2.10.0; sys_platform == "darwin"
+pulsar-client==2.10.2
 fastavro==1.4.1
 lightgbm==3.3.1
 shortuuid==1.0.9
-sklearn2pmml==0.84.2
+sklearn2pmml==0.90.0
 nyoka==5.3.0
-
-etaf-crypto
+transformers==4.23.1
+impyla==0.18.0
+venv-pack==0.2.0
+fate-crypto==0.3.0
+ipcl-python==2.0.0
 
 # addtional requirements for eggroll
 grpcio==1.46.3
 grpcio-tools==1.46.3
 numba==0.53.0
-phe>=1.4.0
-protobuf==3.19.4
+protobuf==3.19.6
 pyarrow==6.0.1
 mmh3==3.0.0
 
@@ -66,6 +70,6 @@ colorama>=0.4.4
 loguru>=0.6.0
 poetry>=0.12
 prettytable>=1.0.0,<2.0.0
-setuptools>=50.0,<51.0
+setuptools>=65.5.1
 sshtunnel>=0.1.5,<0.2.0
 packaging<21.0,>=20.4

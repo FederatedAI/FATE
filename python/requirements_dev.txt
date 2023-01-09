@@ -1,2 +1,4 @@
 -r requirements.txt
+networkx
+pydantic
 pytest-lazy-fixture
