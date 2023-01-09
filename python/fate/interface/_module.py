@@ -1,9 +1,12 @@
-from typing import List, Optional, Protocol
+from typing import List, Optional, Protocol, Union
 
 from ._context import Context
 from ._data_io import Dataframe
-from ._model_io import ModelsLoader, ModelsSaver
 from ._param import Params
+
+
+class Model(Protocol):
+    ...
 
 
 class Module(Protocol):
@@ -27,8 +30,8 @@ class Module(Protocol):
         ...
 
     @classmethod
-    def load_model(cls, ctx: Context, loader: ModelsLoader) -> "Module":
+    def from_model(cls, model: Union[dict, Model]) -> "Module":
         ...
 
-    def save_model(self, ctx: Context, saver: ModelsSaver) -> None:
+    def get_model(self) -> Union[dict, Model]:
         ...
