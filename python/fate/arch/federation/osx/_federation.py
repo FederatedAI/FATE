@@ -35,7 +35,7 @@ class MQ(object):
         self.port = port
 
     def __str__(self):
-        return f"MQ(host={self.host}, port={self.port}, " f"type=osx"
+        return f"MQ(host={self.host}, port={self.port}, type=osx)"
 
     def __repr__(self):
         return self.__str__()
@@ -91,7 +91,7 @@ class OSXFederation(FederationBase):
         pass
 
     def cleanup(self, parties):
-        LOGGER.debug("[osx.cleanup]start to cleanup...")
+        LOGGER.debug("start to cleanup...")
 
         channel = MQChannel(
             host=self._mq.host,

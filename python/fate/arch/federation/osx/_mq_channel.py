@@ -41,12 +41,14 @@ class MQChannel(object):
         self._dst_role = dst_role
         self._channel = None
         self._stub = None
+        LOGGER.debug(f"init, mq={self}")
 
     def __str__(self):
-        return f"<MQChannel host={self._host},port={self._port}, namespace={self._namespace}, src=({self._src_role}, {self._src_party_id}), dst=({self._dst_role}, {self._dst_party_id}), send_topic={self._send_topic}, receive_topic={self._receive_topic}>"
+        return f"<MQChannel namespace={self._namespace}, host={self._host},port={self._port}, src=({self._src_role}, {self._src_party_id}), dst=({self._dst_role}, {self._dst_party_id}), send_topic={self._send_topic}, receive_topic={self._receive_topic}>"
 
     @nretry
     def consume(self, offset=-1):
+        LOGGER.debug(f"consume, offset={offset}, mq={self}")
         self._get_or_create_channel()
         meta = dict(
             MessageTopic=self._send_topic,
@@ -60,27 +62,17 @@ class MQChannel(object):
             MessageOffSet=str(offset),
         )
         inbound = pcp_pb2.Inbound(metadata=meta)
+        LOGGER.debug(f"consume, inbound={inbound}, mq={self}")
         result = self._stub.invoke(inbound)
-
-        # print(result.metadata.MessageOffSet)
-        # print(result.code)
-        # print(result.metadata)
-
+        LOGGER.debug(f"consume, result={result}, mq={self}")
         print(result)
         print(result.code)
         return result
 
-    # @nretry
-    # def cleanup(self):
-    #     self._get_or_create_channel()
-    #     response = self._stub.cancelTransfer(
-    #         firework_transfer_pb2.CancelTransferRequest(transferId=self._receive_topic, sessionId=self._namespace))
-    #     return response
-    #
     @nretry
     def query(self):
+        LOGGER.debug(f"query, mq={self}")
         self._get_or_create_channel()
-        LOGGER.debug(f"try to query {self._receive_topic} session {self._namespace}")
         meta = dict(
             MessageTopic=self._receive_topic,
             TechProviderCode="FT",
@@ -92,13 +84,14 @@ class MQChannel(object):
             SessionID=self._namespace,
         )
         inbound = pcp_pb2.Inbound(metadata=meta)
+        LOGGER.debug(f"query, inbound={inbound}, mq={self}")
         result = self._stub.invoke(inbound)
-
-        LOGGER.debug(f"try to query {self._receive_topic} session {self._namespace}, result {result}")
+        LOGGER.debug(f"query, result={result}, mq={self}")
         return result
 
     @nretry
     def produce(self, body, properties):
+        LOGGER.debug(f"produce body={body}, properties={properties}, mq={self}")
         self._get_or_create_channel()
         meta = dict(
             MessageTopic=self._receive_topic,
@@ -112,12 +105,14 @@ class MQChannel(object):
         )
         msg = osx_pb2.Message(head=bytes(json.dumps(properties), encoding="utf-8"), body=body)
         inbound = pcp_pb2.Inbound(metadata=meta, payload=msg.SerializeToString())
+        LOGGER.debug(f"produce inbound={inbound}, mq={self}")
         result = self._stub.invoke(inbound)
-        print(result)
+        LOGGER.debug(f"produce result={result}, mq={self}")
         return result
 
     @nretry
     def ack(self, offset):
+        LOGGER.debug(f"ack offset={offset}, mq={self}")
         self._get_or_create_channel()
         meta = dict(
             MessageTopic=self._send_topic,
@@ -131,7 +126,9 @@ class MQChannel(object):
             MessageOffSet=offset,
         )
         inbound = pcp_pb2.Inbound(metadata=meta)
+        LOGGER.debug(f"ack inbound={inbound}, mq={self}")
         result = self._stub.invoke(inbound)
+        LOGGER.debug(f"ack result={result}, mq={self}")
         return result
 
     def cleanup(self):
@@ -143,25 +140,14 @@ class MQChannel(object):
     def close(self):
         LOGGER.debug(f"close channel")
 
-    # def close(self):
-    #     try:
-    #         if self._channel:
-    #             self._channel.close()
-    #         self._channel = None
-    #         self._stub = None
-    #     except Exception as e:
-    #         LOGGER.exception(e)
-    #         self._stub = None
-    #         self._channel = None
-    #
-    # def cancel(self):
-    #     self.close()
-
     def _get_or_create_channel(self):
-        target = "{}:{}".format(self._host, self._port)
+        LOGGER.debug(f"call _get_or_create_channel, mq={self}")
+        target = f"{self._host}:{self._port}"
         if self._check_alive():
+            LOGGER.debug(f"channel alive, return, mq={self}")
             return
 
+        LOGGER.debug(f"channel not alive, creating, mq={self}")
         self._channel = grpc.insecure_channel(
             target=target,
             options=[
@@ -184,6 +170,7 @@ class MQChannel(object):
         )
 
         self._stub = PrivateTransferProtocolStub(self._channel)
+        LOGGER.debug(f"channel created, mq={self}")
 
     def _check_alive(self):
         status = (
@@ -193,27 +180,11 @@ class MQChannel(object):
             if self._channel is not None
             else None
         )
+        LOGGER.debug(f"_check_alive: status={status}, mq={self}")
 
         if status == grpc.ChannelConnectivity.SHUTDOWN:
+            LOGGER.debug(f"_check_alive: return True, mq={self}")
             return True
         else:
+            LOGGER.debug(f"_check_alive: return False, mq={self}")
             return False
-
-
-if __name__ == "__main__":
-    mq = MQChannel(
-        host="localhost",
-        port="9370",
-        namespace="test",
-        send_topic="testTopic",
-        receive_topic="testReceiveTopic",
-        src_party_id="9999",
-        src_role="",
-        dst_party_id="9999",
-        dst_role="",
-    )
-    properties = dict(ccc="jjj")
-    # mq.produce(body=bytes("kaideng===",encoding="utf-8"),properties=properties)
-
-    # mq.consume();
-    mq.query()
