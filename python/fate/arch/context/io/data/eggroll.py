@@ -38,11 +38,12 @@ class EggrollDataFrameReader:
         self.metadata = metadata
 
     def read_dataframe(self):
+        from .df import Dataframe
         from fate.arch import dataframe
 
         table = load_table(self.ctx, self.uri, self.metadata)
         df = dataframe.deserialize(self.ctx, table)
-        return df
+        return Dataframe(df, df.shape[1], df.shape[0])
 
 
 class EggrollRawTableReader:

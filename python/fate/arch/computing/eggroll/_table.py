@@ -15,14 +15,14 @@
 #
 
 
+import logging
 import typing
 
 from ...abc import CTableABC
-from ...common import log
 from ...common.profile import computing_profile
 from .._type import ComputingEngine
 
-LOGGER = log.getLogger()
+LOGGER = logging.getLogger(__name__)
 
 
 class Table(CTableABC):
@@ -50,9 +50,7 @@ class Table(CTableABC):
         from ...storage import EggRollStoreType
 
         if isinstance(address, EggRollAddress):
-            options["store_type"] = kwargs.get(
-                "store_type", EggRollStoreType.ROLLPAIR_LMDB
-            )
+            options["store_type"] = kwargs.get("store_type", EggRollStoreType.ROLLPAIR_LMDB)
             self._rp.save_as(
                 name=address.name,
                 namespace=address.namespace,
@@ -69,9 +67,7 @@ class Table(CTableABC):
 
             return LocalData(address.path)
 
-        raise NotImplementedError(
-            f"address type {type(address)} not supported with eggroll backend"
-        )
+        raise NotImplementedError(f"address type {type(address)} not supported with eggroll backend")
 
     @computing_profile
     def collect(self, **kwargs) -> list:
@@ -106,9 +102,7 @@ class Table(CTableABC):
         return Table(self._rp.collapse_partitions(func))
 
     @computing_profile
-    def mapPartitions(
-        self, func, use_previous_behavior=True, preserves_partitioning=False, **kwargs
-    ):
+    def mapPartitions(self, func, use_previous_behavior=True, preserves_partitioning=False, **kwargs):
         if use_previous_behavior is True:
             LOGGER.warning(
                 f"please use `applyPartitions` instead of `mapPartitions` "
@@ -117,11 +111,7 @@ class Table(CTableABC):
             )
             return self.applyPartitions(func)
 
-        return Table(
-            self._rp.map_partitions(
-                func, options={"shuffle": not preserves_partitioning}
-            )
-        )
+        return Table(self._rp.map_partitions(func, options={"shuffle": not preserves_partitioning}))
 
     @computing_profile
     def mapReducePartitions(self, mapper, reducer, **kwargs):
@@ -129,11 +119,7 @@ class Table(CTableABC):
 
     @computing_profile
     def mapPartitionsWithIndex(self, func, preserves_partitioning=False, **kwargs):
-        return Table(
-            self._rp.map_partitions_with_index(
-                func, options={"shuffle": not preserves_partitioning}
-            )
-        )
+        return Table(self._rp.map_partitions_with_index(func, options={"shuffle": not preserves_partitioning}))
 
     @computing_profile
     def reduce(self, func, **kwargs):
@@ -161,9 +147,7 @@ class Table(CTableABC):
         if num is not None:
             total = self._rp.count()
             if num > total:
-                raise ValueError(
-                    f"not enough data to sample, own {total} but required {num}"
-                )
+                raise ValueError(f"not enough data to sample, own {total} but required {num}")
 
             frac = num / float(total)
             while True:
@@ -181,9 +165,7 @@ class Table(CTableABC):
 
             return Table(sampled_table)
 
-        raise ValueError(
-            f"exactly one of `fraction` or `num` required, fraction={fraction}, num={num}"
-        )
+        raise ValueError(f"exactly one of `fraction` or `num` required, fraction={fraction}, num={num}")
 
     @computing_profile
     def subtractByKey(self, other: "Table", **kwargs):

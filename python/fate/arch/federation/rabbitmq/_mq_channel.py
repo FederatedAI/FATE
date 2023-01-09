@@ -15,13 +15,13 @@
 #
 
 import json
+import logging
 
 import pika
 
-from ...common import log
 from .._nretry import nretry
 
-LOGGER = log.getLogger()
+LOGGER = logging.getLogger(__name__)
 
 
 class MQChannel(object):
@@ -148,9 +148,4 @@ class MQChannel(object):
             self._channel = None
 
     def _check_alive(self):
-        return (
-            self._channel
-            and self._channel.is_open
-            and self._conn
-            and self._conn.is_open
-        )
+        return self._channel and self._channel.is_open and self._conn and self._conn.is_open

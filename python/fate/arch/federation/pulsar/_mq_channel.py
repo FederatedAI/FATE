@@ -15,12 +15,13 @@
 #
 
 
+import logging
+
 import pulsar
 
-from ...common import log
 from .._nretry import nretry
 
-LOGGER = log.getLogger()
+LOGGER = logging.getLogger(__name__)
 CHANNEL_TYPE_PRODUCER = "producer"
 CHANNEL_TYPE_CONSUMER = "consumer"
 DEFAULT_TENANT = "fl-tenant"
@@ -173,9 +174,7 @@ class MQChannel(object):
             # alway used current client to fetch producer
             try:
                 self._producer_send = self._producer_conn.create_producer(
-                    TOPIC_PREFIX.format(
-                        self._tenant, self._namespace, self._send_topic
-                    ),
+                    TOPIC_PREFIX.format(self._tenant, self._namespace, self._send_topic),
                     producer_name=UNIQUE_PRODUCER_NAME,
                     send_timeout_millis=60000,
                     max_pending_messages=500,
@@ -198,9 +197,7 @@ class MQChannel(object):
 
             try:
                 self._consumer_receive = self._consumer_conn.subscribe(
-                    TOPIC_PREFIX.format(
-                        self._tenant, self._namespace, self._receive_topic
-                    ),
+                    TOPIC_PREFIX.format(self._tenant, self._namespace, self._receive_topic),
                     subscription_name=DEFAULT_SUBSCRIPTION_NAME,
                     consumer_name=UNIQUE_CONSUMER_NAME,
                     initial_position=pulsar.InitialPosition.Earliest,

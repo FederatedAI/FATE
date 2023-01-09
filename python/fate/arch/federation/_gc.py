@@ -14,15 +14,15 @@
 #  limitations under the License.
 #
 
+import logging
 import typing
 from collections import deque
 
 from fate.interface import GarbageCollector as GarbageCollectorInterface
 
 from ..abc import GarbageCollectionABC
-from ..common.log import getLogger
 
-LOGGER = getLogger()
+LOGGER = logging.getLogger(__name__)
 
 
 class GarbageCollector(GarbageCollectorInterface):

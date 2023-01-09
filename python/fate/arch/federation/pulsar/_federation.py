@@ -14,12 +14,11 @@
 #  limitations under the License.
 #
 
+import logging
 from typing import List, Optional
 
 from fate.interface import PartyMeta
 
-from ...common import Party, file_utils
-from ...common.log import getLogger
 from .._federation import FederationBase
 from ._mq_channel import (
     DEFAULT_CLUSTER,
@@ -29,7 +28,7 @@ from ._mq_channel import (
 )
 from ._pulsar_manager import PulsarManager
 
-LOGGER = getLogger()
+LOGGER = logging.getLogger(__name__)
 # default message max size in bytes = 1MB
 DEFAULT_MESSAGE_MAX_SIZE = 104857
 

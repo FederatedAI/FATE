@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 
+import logging
 import typing
 import uuid
 from itertools import chain
@@ -23,12 +24,12 @@ from pyspark.rddsampler import RDDSamplerBase
 from scipy.stats import hypergeom
 
 from ...abc import CTableABC
-from ...common import hdfs_utils, hive_utils, log
+from ...common import hdfs_utils, hive_utils
 from ...common.profile import computing_profile
 from .._type import ComputingEngine
 from ._materialize import materialize, unmaterialize
 
-LOGGER = log.getLogger()
+LOGGER = logging.getLogger(__name__)
 
 
 class Table(CTableABC):
@@ -61,9 +62,9 @@ class Table(CTableABC):
         from ...common.address import HDFSAddress
 
         if isinstance(address, HDFSAddress):
-            self._rdd.map(lambda x: hdfs_utils.serialize(x[0], x[1])).repartition(
-                partitions
-            ).saveAsTextFile(f"{address.name_node}/{address.path}")
+            self._rdd.map(lambda x: hdfs_utils.serialize(x[0], x[1])).repartition(partitions).saveAsTextFile(
+                f"{address.name_node}/{address.path}"
+            )
             schema.update(self.schema)
             return
 
@@ -76,9 +77,7 @@ class Table(CTableABC):
             #     .toDF()
             # )
             LOGGER.debug(f"partitions: {partitions}")
-            _repartition = self._rdd.map(
-                lambda x: hive_utils.to_row(x[0], x[1])
-            ).repartition(partitions)
+            _repartition = self._rdd.map(lambda x: hive_utils.to_row(x[0], x[1])).repartition(partitions)
             _repartition.toDF().write.saveAsTable(f"{address.database}.{address.name}")
             schema.update(self.schema)
             return
@@ -86,15 +85,13 @@ class Table(CTableABC):
         from ...common.address import LocalFSAddress
 
         if isinstance(address, LocalFSAddress):
-            self._rdd.map(lambda x: hdfs_utils.serialize(x[0], x[1])).repartition(
-                partitions
-            ).saveAsTextFile(address.path)
+            self._rdd.map(lambda x: hdfs_utils.serialize(x[0], x[1])).repartition(partitions).saveAsTextFile(
+                address.path
+            )
             schema.update(self.schema)
             return
 
-        raise NotImplementedError(
-            f"address type {type(address)} not supported with spark backend"
-        )
+        raise NotImplementedError(f"address type {type(address)} not supported with spark backend")
 
     @property
     def partitions(self):
@@ -109,9 +106,7 @@ class Table(CTableABC):
         return from_rdd(_map_value(self._rdd, func))
 
     @computing_profile
-    def mapPartitions(
-        self, func, use_previous_behavior=True, preserves_partitioning=False, **kwargs
-    ):
+    def mapPartitions(self, func, use_previous_behavior=True, preserves_partitioning=False, **kwargs):
         if use_previous_behavior is True:
             LOGGER.warning(
                 f"please use `applyPartitions` instead of `mapPartitions` "
@@ -119,9 +114,7 @@ class Table(CTableABC):
                 f"The previous behavior will not work in future"
             )
             return self.applyPartitions(func)
-        return from_rdd(
-            self._rdd.mapPartitions(func, preservesPartitioning=preserves_partitioning)
-        )
+        return from_rdd(self._rdd.mapPartitions(func, preservesPartitioning=preserves_partitioning))
 
     @computing_profile
     def mapReducePartitions(self, mapper, reducer, **kwargs):
@@ -133,11 +126,7 @@ class Table(CTableABC):
 
     @computing_profile
     def mapPartitionsWithIndex(self, func, preserves_partitioning=False, **kwargs):
-        return from_rdd(
-            self._rdd.mapPartitionsWithIndex(
-                func, preservesPartitioning=preserves_partitioning
-            )
-        )
+        return from_rdd(self._rdd.mapPartitionsWithIndex(func, preservesPartitioning=preserves_partitioning))
 
     @computing_profile
     def glom(self, **kwargs):
@@ -152,16 +141,12 @@ class Table(CTableABC):
         seed=None,
     ):
         if fraction is not None:
-            return from_rdd(
-                self._rdd.sample(fraction=fraction, withReplacement=False, seed=seed)
-            )
+            return from_rdd(self._rdd.sample(fraction=fraction, withReplacement=False, seed=seed))
 
         if num is not None:
             return from_rdd(_exactly_sample(self._rdd, num, seed=seed))
 
-        raise ValueError(
-            f"exactly one of `fraction` or `num` required, fraction={fraction}, num={num}"
-        )
+        raise ValueError(f"exactly one of `fraction` or `num` required, fraction={fraction}, num={num}")
 
     @computing_profile
     def filter(self, func, **kwargs):
@@ -243,9 +228,7 @@ def from_hive(tb_name, db_name, partitions):
 
     session = SparkSession.builder.enableHiveSupport().getOrCreate()
     rdd = materialize(
-        session.sql(f"select * from {db_name}.{tb_name}")
-        .rdd.map(hive_utils.from_row)
-        .repartition(partitions)
+        session.sql(f"select * from {db_name}.{tb_name}").rdd.map(hive_utils.from_row).repartition(partitions)
     )
     return Table(rdd=rdd)
 
@@ -305,9 +288,7 @@ def _glom(rdd):
 
 
 def _exactly_sample(rdd, num: int, seed: int):
-    split_size = rdd.mapPartitionsWithIndex(
-        lambda s, it: [(s, sum(1 for _ in it))]
-    ).collectAsMap()
+    split_size = rdd.mapPartitionsWithIndex(lambda s, it: [(s, sum(1 for _ in it))]).collectAsMap()
     total = sum(split_size.values())
 
     if num > total:

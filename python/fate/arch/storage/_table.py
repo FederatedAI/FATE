@@ -15,6 +15,7 @@
 #
 
 
+import logging
 import operator
 from typing import Iterable
 
@@ -22,16 +23,13 @@ import peewee
 
 from ..abc import AddressABC, StorageTableABC, StorageTableMetaABC
 from ..common.base_utils import current_timestamp
-from ..common.log import getLogger
 from ..metastore.db_models import DB, StorageTableMetaModel
 
-LOGGER = getLogger()
+LOGGER = logging.getLogger(__name__)
 
 
 class StorageTableBase(StorageTableABC):
-    def __init__(
-        self, name, namespace, address, partitions, options, engine, store_type
-    ):
+    def __init__(self, name, namespace, address, partitions, options, engine, store_type):
         self._name = name
         self._namespace = namespace
         self._address = address
@@ -107,9 +105,7 @@ class StorageTableBase(StorageTableABC):
         )
 
     def create_meta(self, **kwargs):
-        table_meta = StorageTableMeta(
-            name=self._name, namespace=self._namespace, new=True
-        )
+        table_meta = StorageTableMeta(name=self._name, namespace=self._namespace, new=True)
         table_meta.set_metas(**kwargs)
         table_meta.address = self._address
         table_meta.partitions = self._partitions
@@ -152,15 +148,11 @@ class StorageTableBase(StorageTableABC):
         return table
 
     def _update_read_access_time(self, read_access_time=None):
-        read_access_time = (
-            current_timestamp() if not read_access_time else read_access_time
-        )
+        read_access_time = current_timestamp() if not read_access_time else read_access_time
         self._meta.update_metas(read_access_time=read_access_time)
 
     def _update_write_access_time(self, write_access_time=None):
-        write_access_time = (
-            current_timestamp() if not write_access_time else write_access_time
-        )
+        write_access_time = current_timestamp() if not write_access_time else write_access_time
         self._meta.update_metas(write_access_time=write_access_time)
 
     # to be implemented
@@ -179,9 +171,7 @@ class StorageTableBase(StorageTableABC):
     def _destroy(self):
         raise NotImplementedError()
 
-    def _save_as(
-        self, address, name, namespace, partitions=None, schema=None, **kwargs
-    ):
+    def _save_as(self, address, name, namespace, partitions=None, schema=None, **kwargs):
         raise NotImplementedError()
 
 
@@ -222,18 +212,14 @@ class StorageTableMeta(StorageTableMetaABC):
         for k, v in self.table_meta.__dict__["__data__"].items():
             setattr(self, k.lstrip("f_"), v)
         if create_address:
-            self.address = self.create_address(
-                storage_engine=self.engine, address_dict=self.address
-            )
+            self.address = self.create_address(storage_engine=self.engine, address_dict=self.address)
 
     def __new__(cls, *args, **kwargs):
         if not kwargs.get("new", False):
             name, namespace = kwargs.get("name"), kwargs.get("namespace")
             if not name or not namespace:
                 return None
-            tables_meta = cls.query_table_meta(
-                filter_fields=dict(name=name, namespace=namespace)
-            )
+            tables_meta = cls.query_table_meta(filter_fields=dict(name=name, namespace=namespace))
             if not tables_meta:
                 return None
             self = super().__new__(cls)
@@ -290,16 +276,12 @@ class StorageTableMeta(StorageTableMetaABC):
         for f_n, f_v in filter_fields.items():
             attr_name = "f_%s" % f_n
             if hasattr(StorageTableMetaModel, attr_name):
-                filters.append(
-                    operator.attrgetter("f_%s" % f_n)(StorageTableMetaModel) == f_v
-                )
+                filters.append(operator.attrgetter("f_%s" % f_n)(StorageTableMetaModel) == f_v)
         if query_fields:
             for f_n in query_fields:
                 attr_name = "f_%s" % f_n
                 if hasattr(StorageTableMetaModel, attr_name):
-                    querys.append(
-                        operator.attrgetter("f_%s" % f_n)(StorageTableMetaModel)
-                    )
+                    querys.append(operator.attrgetter("f_%s" % f_n)(StorageTableMetaModel))
         if filters:
             if querys:
                 tables_meta = StorageTableMetaModel.select(querys).where(*filters)
@@ -331,30 +313,20 @@ class StorageTableMeta(StorageTableMetaABC):
         update_filters = []
         primary_keys = StorageTableMetaModel._meta.primary_key.field_names
         for p_k in primary_keys:
-            update_filters.append(
-                operator.attrgetter(p_k)(StorageTableMetaModel)
-                == meta_info[p_k.lstrip("f_")]
-            )
+            update_filters.append(operator.attrgetter(p_k)(StorageTableMetaModel) == meta_info[p_k.lstrip("f_")])
         table_meta = StorageTableMetaModel()
         update_fields = {}
         for k, v in meta_info.items():
             attr_name = "f_%s" % k
-            if (
-                hasattr(StorageTableMetaModel, attr_name)
-                and attr_name not in primary_keys
-            ):
+            if hasattr(StorageTableMetaModel, attr_name) and attr_name not in primary_keys:
                 if k == "part_of_data":
                     if len(v) < 100:
                         tmp = v
                     else:
                         tmp = v[:100]
-                    update_fields[
-                        operator.attrgetter(attr_name)(StorageTableMetaModel)
-                    ] = tmp
+                    update_fields[operator.attrgetter(attr_name)(StorageTableMetaModel)] = tmp
                 else:
-                    update_fields[
-                        operator.attrgetter(attr_name)(StorageTableMetaModel)
-                    ] = v
+                    update_fields[operator.attrgetter(attr_name)(StorageTableMetaModel)] = v
         if update_filters:
             operate = table_meta.update(update_fields).where(*update_filters)
         else:

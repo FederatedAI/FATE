@@ -15,14 +15,14 @@
 #
 
 import itertools
+import logging
 import typing
 
 from ...abc import CTableABC
-from ...common import log
 from ...common.profile import computing_profile
 from .._type import ComputingEngine
 
-LOGGER = log.getLogger()
+LOGGER = logging.getLogger(__name__)
 
 
 class Table(CTableABC):
@@ -66,9 +66,7 @@ class Table(CTableABC):
             from ...computing.non_distributed import LocalData
 
             return LocalData(address.path)
-        raise NotImplementedError(
-            f"address type {type(address)} not supported with standalone backend"
-        )
+        raise NotImplementedError(f"address type {type(address)} not supported with standalone backend")
 
     @computing_profile
     def count(self) -> int:
@@ -112,9 +110,7 @@ class Table(CTableABC):
         return Table(self._table.applyPartitions(func))
 
     @computing_profile
-    def mapPartitions(
-        self, func, use_previous_behavior=True, preserves_partitioning=False
-    ):
+    def mapPartitions(self, func, use_previous_behavior=True, preserves_partitioning=False):
         if use_previous_behavior is True:
             LOGGER.warning(
                 "please use `applyPartitions` instead of `mapPartitions` "
@@ -122,11 +118,7 @@ class Table(CTableABC):
                 "The previous behavior will not work in future"
             )
             return Table(self._table.applyPartitions(func))
-        return Table(
-            self._table.mapPartitions(
-                func, preserves_partitioning=preserves_partitioning
-            )
-        )
+        return Table(self._table.mapPartitions(func, preserves_partitioning=preserves_partitioning))
 
     @computing_profile
     def mapReducePartitions(self, mapper, reducer, **kwargs):
@@ -134,11 +126,7 @@ class Table(CTableABC):
 
     @computing_profile
     def mapPartitionsWithIndex(self, func, preserves_partitioning=False, **kwargs):
-        return Table(
-            self._table.mapPartitionsWithIndex(
-                func, preserves_partitioning=preserves_partitioning
-            )
-        )
+        return Table(self._table.mapPartitionsWithIndex(func, preserves_partitioning=preserves_partitioning))
 
     @computing_profile
     def glom(self):
@@ -158,9 +146,7 @@ class Table(CTableABC):
         if num is not None:
             total = self._table.count()
             if num > total:
-                raise ValueError(
-                    f"not enough data to sample, own {total} but required {num}"
-                )
+                raise ValueError(f"not enough data to sample, own {total} but required {num}")
 
             frac = num / float(total)
             while True:
@@ -178,9 +164,7 @@ class Table(CTableABC):
 
             return Table(sampled_table)
 
-        raise ValueError(
-            f"exactly one of `fraction` or `num` required, fraction={fraction}, num={num}"
-        )
+        raise ValueError(f"exactly one of `fraction` or `num` required, fraction={fraction}, num={num}")
 
     @computing_profile
     def filter(self, func):

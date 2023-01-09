@@ -14,11 +14,10 @@
 #  limitations under the License.
 #
 
+import logging
 import time
 
-from ..common.log import getLogger
-
-LOGGER = getLogger()
+LOGGER = logging.getLogger(__name__)
 
 
 def nretry(func):

@@ -17,7 +17,6 @@ import json
 import typing
 from logging import getLogger
 
-from fate.arch.common import Party
 from fate.arch.federation.osx import osx_pb2
 from fate.interface import PartyMeta
 
@@ -25,7 +24,7 @@ from .._federation import FederationBase
 from .._nretry import nretry
 from ._mq_channel import MQChannel
 
-LOGGER = getLogger()
+LOGGER = getLogger(__name__)
 # default message max size in bytes = 1MB
 DEFAULT_MESSAGE_MAX_SIZE = 104857
 
@@ -36,7 +35,7 @@ class MQ(object):
         self.port = port
 
     def __str__(self):
-        return f"MQ(host={self.host}, port={self.port}, " f"type=firework"
+        return f"MQ(host={self.host}, port={self.port}, " f"type=osx"
 
     def __repr__(self):
         return self.__str__()
@@ -47,6 +46,9 @@ class _TopicPair(object):
         self.namespace = namespace
         self.send = send
         self.receive = receive
+
+    def __str__(self) -> str:
+        return f"<_TopicPair namespace={self.namespace}, send={self.send}, receive={self.receive}>"
 
 
 class OSXFederation(FederationBase):
@@ -89,7 +91,7 @@ class OSXFederation(FederationBase):
         pass
 
     def cleanup(self, parties):
-        LOGGER.debug("[firework.cleanup]start to cleanup...")
+        LOGGER.debug("[osx.cleanup]start to cleanup...")
 
         channel = MQChannel(
             host=self._mq.host,
@@ -107,6 +109,7 @@ class OSXFederation(FederationBase):
         channel.close()
 
     def _maybe_create_topic_and_replication(self, party, topic_suffix):
+        LOGGER.debug(f"_maybe_create_topic_and_replication, party={party}, topic_suffix={topic_suffix}")
         send_topic_name = f"{self._session_id}-{self._party.role}-{self._party.party_id}-{party.role}-{party.party_id}-{topic_suffix}"
         receive_topic_name = f"{self._session_id}-{party.role}-{party.party_id}-{self._party.role}-{self._party.party_id}-{topic_suffix}"
 
@@ -119,8 +122,11 @@ class OSXFederation(FederationBase):
         return topic_pair
 
     def _get_channel(
-        self, topic_pair: _TopicPair, src_party_id, src_role, dst_party_id, dst_role, mq=None, conf: dict = None
+        self, topic_pair: _TopicPair, src_party_id, src_role, dst_party_id, dst_role, mq: MQ, conf: dict = None
     ):
+        LOGGER.debug(
+            f"_get_channel, topic_pari={topic_pair}, src_party_id={src_party_id}, src_role={src_role}, dst_party_id={dst_party_id}, dst_role={dst_role}"
+        )
         return MQChannel(
             host=mq.host,
             port=mq.port,
@@ -137,24 +143,25 @@ class OSXFederation(FederationBase):
 
     @nretry
     def _query_receive_topic(self, channel_info):
-
-        new_channel_info = channel_info
-        if self._topic_ip_map.__contains__(channel_info._receive_topic):
-            LOGGER.info("query topic hit cache")
-            host = self._topic_ip_map[channel_info._receive_topic][0]
-            port = self._topic_ip_map[channel_info._receive_topic][1]
-        else:
+        LOGGER.debug(f"_query_receive_topic, channel_info={channel_info}")
+        topic = channel_info._receive_topic
+        if topic not in self._topic_ip_map:
+            LOGGER.info("query topic miss cache")
             response = channel_info.query()
-            if response.code == 0:
+            if response.code == "0":
                 topic_info = osx_pb2.TopicInfo()
                 topic_info.ParseFromString(response.payload)
-                host = topic_info.ip
-                port = topic_info.port
-                self._topic_ip_map[channel_info._receive_topic] = (host, port)
-                LOGGER.info(f"query result {channel_info._receive_topic} {host} : {port}")
+                self._topic_ip_map[topic] = (topic_info.ip, topic_info.port)
+                LOGGER.info(f"query result {topic} {topic_info}")
             else:
-                raise LookupError
+                raise LookupError(f"{response}")
+        host, port = self._topic_ip_map[topic]
+
+        new_channel_info = channel_info
         if channel_info._host != host or channel_info._port != port:
+            LOGGER.info(
+                f"channel info missmatch, host: {channel_info._host} vs {host} and port: {channel_info._port} vs {port}"
+            )
             new_channel_info = MQChannel(
                 host=host,
                 port=port,
@@ -169,22 +176,22 @@ class OSXFederation(FederationBase):
         return new_channel_info
 
     def _get_consume_message(self, channel_info):
+        LOGGER.debug(f"_get_comsume_message, channel_info={channel_info}")
         while True:
             response = channel_info.consume()
+            LOGGER.debug(f"_get_comsume_message, channel_info={channel_info}, response={response}")
+            # if response.code == "138":
+            #     continue
             message = osx_pb2.Message()
             message.ParseFromString(response.payload)
             offset = response.metadata["MessageOffSet"]
             head_str = str(message.head, encoding="utf-8")
             LOGGER.debug(f"head str {head_str}")
             properties = json.loads(head_str)
-            LOGGER.info(f"osx response properties {properties}")
+            LOGGER.debug(f"osx response properties {properties}")
             body = message.body
             yield offset, properties, body
 
     def _consume_ack(self, channel_info, id):
+        LOGGER.debug(f"_comsume_ack, channel_info={channel_info}, id={id}")
         channel_info.ack(offset=id)
-
-
-if __name__ == "__main__":
-    mq = MQ("localhost", 9370)
-    federation = Federation("", Party("testRole", 9999), mq)

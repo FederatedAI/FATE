@@ -14,13 +14,12 @@
 #  limitations under the License.
 #
 
+import logging
 import time
 
 import requests
 
-from ...common import log
-
-LOGGER = log.getLogger()
+LOGGER = logging.getLogger(__name__)
 
 C_HTTP_TEMPLATE = "http://{}/api/{}"
 C_COMMON_HTTP_HEADER = {"Content-Type": "application/json"}
@@ -61,9 +60,7 @@ class RabbitManager:
 
     def create_vhost(self, vhost):
         url = C_HTTP_TEMPLATE.format(self.endpoint, "vhosts/" + vhost)
-        result = requests.put(
-            url, headers=C_COMMON_HTTP_HEADER, auth=(self.user, self.password)
-        )
+        result = requests.put(url, headers=C_COMMON_HTTP_HEADER, auth=(self.user, self.password))
         LOGGER.debug(f"[rabbitmanager.create_vhost] {result}")
         self.add_user_to_vhost(self.user, vhost)
         return True
@@ -95,9 +92,7 @@ class RabbitManager:
         return result
 
     def add_user_to_vhost(self, user, vhost):
-        url = C_HTTP_TEMPLATE.format(
-            self.endpoint, "{}/{}/{}".format("permissions", vhost, user)
-        )
+        url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/{}".format("permissions", vhost, user))
         body = {"configure": ".*", "write": ".*", "read": ".*"}
 
         result = requests.put(
@@ -114,9 +109,7 @@ class RabbitManager:
             return False
 
     def remove_user_from_vhost(self, user, vhost):
-        url = C_HTTP_TEMPLATE.format(
-            self.endpoint, "{}/{}/{}".format("permissions", vhost, user)
-        )
+        url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/{}".format("permissions", vhost, user))
         result = requests.delete(url, auth=(self.user, self.password))
         LOGGER.debug(f"[rabbitmanager.remove_user_from_vhost] {result}")
         return result
@@ -128,9 +121,7 @@ class RabbitManager:
         try:
             if result.status_code == 200:
                 exchange_names = [e["name"] for e in result.json()]
-                LOGGER.debug(
-                    f"[rabbitmanager.get_exchanges] exchange_names={exchange_names}"
-                )
+                LOGGER.debug(f"[rabbitmanager.get_exchanges] exchange_names={exchange_names}")
                 return exchange_names
             else:
                 return None
@@ -138,9 +129,7 @@ class RabbitManager:
             return None
 
     def create_exchange(self, vhost, exchange_name):
-        url = C_HTTP_TEMPLATE.format(
-            self.endpoint, "{}/{}/{}".format("exchanges", vhost, exchange_name)
-        )
+        url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/{}".format("exchanges", vhost, exchange_name))
 
         basic_config = {
             "type": "direct",
@@ -163,13 +152,9 @@ class RabbitManager:
         return result
 
     def delete_exchange(self, vhost, exchange_name):
-        url = C_HTTP_TEMPLATE.format(
-            self.endpoint, "{}/{}/{}".format("exchanges", vhost, exchange_name)
-        )
+        url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/{}".format("exchanges", vhost, exchange_name))
         result = requests.delete(url, auth=(self.user, self.password))
-        LOGGER.debug(
-            f"[rabbitmanager.delete_exchange] vhost={vhost}, exchange_name={exchange_name}, {result}"
-        )
+        LOGGER.debug(f"[rabbitmanager.delete_exchange] vhost={vhost}, exchange_name={exchange_name}, {result}")
         return result
 
     def get_policies(self, vhost):
@@ -179,9 +164,7 @@ class RabbitManager:
         try:
             if result.status_code == 200:
                 policies_names = [e["name"] for e in result.json()]
-                LOGGER.debug(
-                    f"[rabbitmanager.get_policies] policies_names={policies_names}"
-                )
+                LOGGER.debug(f"[rabbitmanager.get_policies] policies_names={policies_names}")
                 return policies_names
             else:
                 return None
@@ -189,19 +172,13 @@ class RabbitManager:
             return None
 
     def delete_policy(self, vhost, policy_name):
-        url = C_HTTP_TEMPLATE.format(
-            self.endpoint, "{}/{}/{}".format("policies", vhost, policy_name)
-        )
+        url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/{}".format("policies", vhost, policy_name))
         result = requests.delete(url, auth=(self.user, self.password))
-        LOGGER.debug(
-            f"[rabbitmanager.delete_policy] vhost={vhost}, policy_name={policy_name}, {result}"
-        )
+        LOGGER.debug(f"[rabbitmanager.delete_policy] vhost={vhost}, policy_name={policy_name}, {result}")
         return result
 
     def create_queue(self, vhost, queue_name):
-        url = C_HTTP_TEMPLATE.format(
-            self.endpoint, "{}/{}/{}".format("queues", vhost, queue_name)
-        )
+        url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/{}".format("queues", vhost, queue_name))
 
         basic_config = {"auto_delete": False, "durable": True, "arguments": {}}
 
@@ -223,20 +200,14 @@ class RabbitManager:
             return False
 
     def get_queue(self, vhost, queue_name):
-        url = C_HTTP_TEMPLATE.format(
-            self.endpoint, "{}/{}/{}".format("queues", vhost, queue_name)
-        )
+        url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/{}".format("queues", vhost, queue_name))
 
-        result = requests.get(
-            url, headers=C_COMMON_HTTP_HEADER, auth=(self.user, self.password)
-        )
+        result = requests.get(url, headers=C_COMMON_HTTP_HEADER, auth=(self.user, self.password))
         return result
 
     def get_queues(self, vhost):
         url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}".format("queues", vhost))
-        result = requests.get(
-            url, headers=C_COMMON_HTTP_HEADER, auth=(self.user, self.password)
-        )
+        result = requests.get(url, headers=C_COMMON_HTTP_HEADER, auth=(self.user, self.password))
         try:
             if result.status_code == 200:
                 queue_names = [e["name"] for e in result.json()]
@@ -248,20 +219,14 @@ class RabbitManager:
             return None
 
     def delete_queue(self, vhost, queue_name):
-        url = C_HTTP_TEMPLATE.format(
-            self.endpoint, "{}/{}/{}".format("queues", vhost, queue_name)
-        )
+        url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/{}".format("queues", vhost, queue_name))
         result = requests.delete(url, auth=(self.user, self.password))
-        LOGGER.debug(
-            f"[rabbitmanager.delete_queue] vhost={vhost}, queue_name={queue_name}, {result}"
-        )
+        LOGGER.debug(f"[rabbitmanager.delete_queue] vhost={vhost}, queue_name={queue_name}, {result}")
         return result
 
     def get_connections(self):
         url = C_HTTP_TEMPLATE.format(self.endpoint, "connections")
-        result = requests.get(
-            url, headers=C_COMMON_HTTP_HEADER, auth=(self.user, self.password)
-        )
+        result = requests.get(url, headers=C_COMMON_HTTP_HEADER, auth=(self.user, self.password))
         LOGGER.debug(f"[rabbitmanager.get_connections] {result}")
         return result
 
@@ -280,9 +245,7 @@ class RabbitManager:
         if names is not None:
             LOGGER.debug("[rabbitmanager.delete_connections] start....")
             for name in names:
-                url = C_HTTP_TEMPLATE.format(
-                    self.endpoint, "{}/{}".format("connections", name)
-                )
+                url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}".format("connections", name))
                 result = requests.delete(url, auth=(self.user, self.password))
                 LOGGER.debug(result)
 
@@ -306,9 +269,7 @@ class RabbitManager:
     def unbind_exchange_to_queue(self, vhost, exchange_name, queue_name):
         url = C_HTTP_TEMPLATE.format(
             self.endpoint,
-            "{}/{}/e/{}/q/{}/{}".format(
-                "bindings", vhost, exchange_name, queue_name, queue_name
-            ),
+            "{}/{}/e/{}/q/{}/{}".format("bindings", vhost, exchange_name, queue_name, queue_name),
         )
 
         result = requests.delete(url, auth=(self.user, self.password))
@@ -318,21 +279,15 @@ class RabbitManager:
     def _set_federated_upstream(self, upstream_host, vhost, receive_queue_name):
         url = C_HTTP_TEMPLATE.format(
             self.endpoint,
-            "{}/{}/{}/{}".format(
-                "parameters", "federation-upstream", vhost, receive_queue_name
-            ),
+            "{}/{}/{}/{}".format("parameters", "federation-upstream", vhost, receive_queue_name),
         )
         upstream_runtime_config = self.runtime_config.get("upstream", {})
 
         upstream_runtime_config["uri"] = upstream_host
-        upstream_runtime_config["queue"] = receive_queue_name.replace(
-            "receive", "send", 1
-        )
+        upstream_runtime_config["queue"] = receive_queue_name.replace("receive", "send", 1)
 
         body = {"value": upstream_runtime_config}
-        LOGGER.debug(
-            f"[rabbitmanager._set_federated_upstream]set_federated_upstream, url: {url} body: {body}"
-        )
+        LOGGER.debug(f"[rabbitmanager._set_federated_upstream]set_federated_upstream, url: {url} body: {body}")
 
         result = requests.put(
             url,
@@ -342,9 +297,7 @@ class RabbitManager:
         )
         LOGGER.debug(f"[rabbitmanager._set_federated_upstream] {result}")
         if result.status_code != 201 and result.status_code != 204:
-            LOGGER.debug(
-                f"[rabbitmanager._set_federated_upstream] _set_federated_upstream fail. {result}"
-            )
+            LOGGER.debug(f"[rabbitmanager._set_federated_upstream] _set_federated_upstream fail. {result}")
             return False
 
         return True
@@ -352,9 +305,7 @@ class RabbitManager:
     def _unset_federated_upstream(self, upstream_name, vhost):
         url = C_HTTP_TEMPLATE.format(
             self.endpoint,
-            "{}/{}/{}/{}".format(
-                "parameters", "federation-upstream", vhost, upstream_name
-            ),
+            "{}/{}/{}/{}".format("parameters", "federation-upstream", vhost, upstream_name),
         )
 
         result = requests.delete(url, auth=(self.user, self.password))
@@ -362,17 +313,13 @@ class RabbitManager:
         return result
 
     def _set_federated_queue_policy(self, vhost, receive_queue_name):
-        url = C_HTTP_TEMPLATE.format(
-            self.endpoint, "{}/{}/{}".format("policies", vhost, receive_queue_name)
-        )
+        url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/{}".format("policies", vhost, receive_queue_name))
         body = {
             "pattern": "^" + receive_queue_name + "$",
             "apply-to": "queues",
             "definition": {"federation-upstream": receive_queue_name},
         }
-        LOGGER.debug(
-            f"[rabbitmanager._set_federated_queue_policy]set_federated_queue_policy, url: {url} body: {body}"
-        )
+        LOGGER.debug(f"[rabbitmanager._set_federated_queue_policy]set_federated_queue_policy, url: {url} body: {body}")
 
         result = requests.put(
             url,
@@ -382,17 +329,13 @@ class RabbitManager:
         )
         LOGGER.debug(f"[rabbitmanager._set_federated_queue_policy] {result}")
         if result.status_code != 201 and result.status_code != 204:
-            LOGGER.debug(
-                f"[rabbitmanager._set_federated_queue_policy] _set_federated_queue_policy fail. {result}"
-            )
+            LOGGER.debug(f"[rabbitmanager._set_federated_queue_policy] _set_federated_queue_policy fail. {result}")
             return False
 
         return True
 
     def _unset_federated_queue_policy(self, policy_name, vhost):
-        url = C_HTTP_TEMPLATE.format(
-            self.endpoint, "{}/{}/{}".format("policies", vhost, policy_name)
-        )
+        url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/{}".format("policies", vhost, policy_name))
 
         result = requests.delete(url, auth=(self.user, self.password))
         LOGGER.debug(result)
@@ -401,9 +344,7 @@ class RabbitManager:
     # Create federate queue with upstream
     def federate_queue(self, upstream_host, vhost, send_queue_name, receive_queue_name):
         time.sleep(0.1)
-        LOGGER.debug(
-            f"[rabbitmanager.federate_queue] create federate_queue {receive_queue_name}"
-        )
+        LOGGER.debug(f"[rabbitmanager.federate_queue] create federate_queue {receive_queue_name}")
 
         result = self._set_federated_upstream(upstream_host, vhost, receive_queue_name)
 
@@ -425,9 +366,7 @@ class RabbitManager:
         LOGGER.debug(f"delete federate queue policy status code: {result.status_code}")
 
         result = self._unset_federated_upstream(receive_queue_name, vhost)
-        LOGGER.debug(
-            f"delete federate queue upstream status code: {result.status_code}"
-        )
+        LOGGER.debug(f"delete federate queue upstream status code: {result.status_code}")
 
         return True
 
