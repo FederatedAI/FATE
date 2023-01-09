@@ -40,6 +40,12 @@ class StatusCode(object):
     CANCELED = 2
 
 
+class SiteInfo(object):
+    conf = get_default_config().get("site_info", {})
+    ROLE = conf.get("local_role")
+    PARTY_ID = conf.get("local_party_id")
+
+
 class FlowConfig(object):
     conf = get_default_config().get("fate_flow", {})
     IP = conf.get("ip")

@@ -86,6 +86,16 @@ class FATEFlowJobInvoker(object):
         except BaseException:
             raise ValueError(f"query task is failed, response={response}")
 
+    def query_site_info(self):
+        response = self._client.query_site_info()
+        try:
+            party_id = response["data"]["party_id"]
+            return '9999'
+            # TODO: fix it later
+            # return party_id
+        except BaseException:
+            raise ValueError(f"query site info is failed, response={response}")
+
 
 class JobStatus(object):
     SUCCESS = "success"

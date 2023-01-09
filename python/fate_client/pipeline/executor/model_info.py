@@ -28,11 +28,11 @@ class StandaloneModelInfo(object):
 
 
 class FateFlowModelInfo(object):
-    def __init__(self, job_id: str, schedule_role: str, schedule_party_id: str,
+    def __init__(self, job_id: str, local_role: str, local_party_id: str,
                  model_id: str = None, model_version: int = None):
         self._job_id = job_id
-        self._schedule_role = schedule_role
-        self._schedule_party_id = schedule_party_id
+        self._local_role = local_role
+        self._local_party_id = local_party_id
         self._model_id = model_id
         self._model_version = model_version
 
@@ -41,12 +41,12 @@ class FateFlowModelInfo(object):
         return self._job_id
 
     @property
-    def schedule_role(self):
-        return self._schedule_role
+    def local_role(self):
+        return self._local_role
 
     @property
-    def schedule_party_id(self):
-        return self._schedule_party_id
+    def local_party_id(self):
+        return self._local_party_id
 
     @property
     def model_id(self):

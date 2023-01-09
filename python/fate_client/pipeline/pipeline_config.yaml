@@ -1,5 +1,8 @@
 log_directory:
 console_display_log:
+site_info:
+  local_role: guest
+  local_party_id:
 
 standalone:
   job_directory:

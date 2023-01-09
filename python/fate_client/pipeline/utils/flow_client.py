@@ -6,12 +6,15 @@ class Address(object):
     QUERY_JOB = "/job/query"
     STOP_JOB = "/job/stop"
     QUERY_TASK = "/job/task/query"
+    SITE_INFO = "/site/info/query"
 
     def __init__(self, server_url):
         self._submit_job_url = server_url + self.SUBMIT_JOB
         self._query_job_url = server_url + self.QUERY_JOB
         self._stop_job_url = server_url + self.STOP_JOB
         self._query_task_url = server_url + self.QUERY_TASK
+
+        self._site_info_url = server_url + self.SITE_INFO
 
     @property
     def submit_job_url(self):
@@ -28,6 +31,10 @@ class Address(object):
     @property
     def query_task_url(self):
         return self._query_task_url
+
+    @property
+    def site_info_url(self):
+        return self._site_info_url
 
 
 class FlowClient(object):
@@ -78,4 +85,10 @@ class FlowClient(object):
             }
         )
 
+        return response.json()
+
+    def query_site_info(self):
+        response = requests.get(
+            self._address.site_info_url
+        )
         return response.json()

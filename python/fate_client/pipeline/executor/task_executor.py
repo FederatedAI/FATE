@@ -19,7 +19,7 @@ class StandaloneExecutor(object):
         self._log_dir_prefix = None
 
     def fit(self, dag_schema: DAGSchema, component_specs: Dict[str, ComponentSpec],
-            schedule_role: str) -> StandaloneModelInfo:
+            local_role: str, local_party_id: str) -> StandaloneModelInfo:
         self._dag_parser.parse_dag(dag_schema, component_specs)
         self._run()
 
@@ -34,7 +34,6 @@ class StandaloneExecutor(object):
                 dag_schema: DAGSchema,
                 component_specs: Dict[str, ComponentSpec],
                 fit_model_info: StandaloneModelInfo) -> StandaloneModelInfo:
-        assert 1 == 2, dag_schema
         self._dag_parser.parse_dag(dag_schema, component_specs)
         self._run(fit_model_info)
         return StandaloneModelInfo(
@@ -110,43 +109,56 @@ class FateFlowExecutor(object):
         ...
 
     def fit(self, dag_schema: DAGSchema, component_specs: Dict[str, ComponentSpec],
-            schedule_role: str) -> FateFlowModelInfo:
-        schedule_party_id = self.get_schedule_party_id(dag_schema, schedule_role)
+            local_role: str, local_party_id: str) -> FateFlowModelInfo:
+        flow_job_invoker = FATEFlowJobInvoker()
+        local_party_id = self.get_site_party_id(flow_job_invoker, dag_schema, local_role, local_party_id)
 
-        return self._run(dag_schema, schedule_role, schedule_party_id)
+        return self._run(dag_schema, local_role, local_party_id, flow_job_invoker)
 
     def predict(self,
                 dag_schema: DAGSchema,
                 component_specs: Dict[str, ComponentSpec],
                 fit_model_info: FateFlowModelInfo) -> FateFlowModelInfo:
-        schedule_role = fit_model_info.schedule_role
-        schedule_party_id = fit_model_info.schedule_party_id
+        flow_job_invoker = FATEFlowJobInvoker()
+        schedule_role = fit_model_info.local_role
+        schedule_party_id = fit_model_info.local_party_id
 
-        return self._run(dag_schema, schedule_role, schedule_party_id)
+        return self._run(dag_schema, schedule_role, schedule_party_id, flow_job_invoker)
 
     def _run(self,
              dag_schema: DAGSchema,
-             schedule_role,
-             schedule_party_id) -> FateFlowModelInfo:
+             local_role,
+             local_party_id,
+             flow_job_invoker: FATEFlowJobInvoker) -> FateFlowModelInfo:
 
-        flow_job_invoker = FATEFlowJobInvoker()
         job_id, model_id, model_version = flow_job_invoker.submit_job(dag_schema.dict(exclude_defaults=True))
 
-        flow_job_invoker.monitor_status(job_id, schedule_role, schedule_party_id)
+        flow_job_invoker.monitor_status(job_id, local_role, local_party_id)
 
         return FateFlowModelInfo(
             job_id=job_id,
-            schedule_role=schedule_role,
-            schedule_party_id=schedule_party_id,
+            local_role=local_role,
+            local_party_id=local_party_id,
             model_id=model_id,
             model_version=model_version
         )
 
     @staticmethod
-    def get_schedule_party_id(dag_schema, scheduler_role):
+    def get_site_party_id(flow_job_invoker, dag_schema, role, party_id):
         """
-        query it by flow
+        query it by flow, if backend is standalone, multiple party_ids exist, so need to decide it by query dag
         """
-        for party in dag_schema.dag.parties:
-            if scheduler_role == party.role:
-                return party.party_id[0]
+        site_party_id = flow_job_invoker.query_site_info()
+
+        if site_party_id:
+            return site_party_id
+
+        if party_id:
+            return party_id
+
+        if site_party_id is None:
+            for party in dag_schema.dag.parties:
+                if role == party.role:
+                    return party.party_id[0]
+
+        raise ValueError(f"Can not retrieval site's party_id from site's role {role}")

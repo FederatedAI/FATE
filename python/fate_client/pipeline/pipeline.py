@@ -1,14 +1,14 @@
 import copy
-import pprint
 from typing import Union
+import yaml
 from .executor import StandaloneExecutor, FateFlowExecutor
 from .entity import DAG
 from .entity.runtime_entity import Roles
+from .conf.env_config import SiteInfo
 from .conf.types import SupportRole, PlaceHolder
 from .conf.job_configuration import JobConf
 from .components.component_base import Component
 from .scheduler.dag_parser import DagParser
-import yaml
 
 
 class Pipeline(object):
@@ -21,10 +21,14 @@ class Pipeline(object):
         self._job_conf = JobConf()
         self._model_info = None
         self._predict_dag = None
-        self._schedule_role = "guest"
+        self._local_role = SiteInfo.ROLE
+        self._local_party_id = SiteInfo.PARTY_ID
 
-    def set_schedule_role(self, role):
-        self._schedule_role = role
+    def set_site_role(self, role):
+        self._local_role = role
+
+    def set_site_party_id(self, party_id):
+        self._local_party_id = party_id
 
     def set_stage(self, stage):
         self._stage = stage
@@ -170,7 +174,8 @@ class Pipeline(object):
     def fit(self) -> "Pipeline":
         self._model_info = self._executor.fit(self._dag.dag_spec,
                                               self.get_component_specs(),
-                                              schedule_role=self._schedule_role)
+                                              local_role=self._local_role,
+                                              local_party_id=self._local_party_id)
 
         return self
 
