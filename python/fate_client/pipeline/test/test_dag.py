@@ -62,8 +62,8 @@ evaluation_0 = Evaluation(name="evaluation_0",
 pipeline.add_task(reader_0)
 # pipeline.add_task(feature_scale_0)
 # pipeline.add_task(feature_scale_1)
-# pipeline.add_task(intersection_0)
-# pipeline.add_task(intersection_1)
+pipeline.add_task(intersection_0)
+pipeline.add_task(intersection_1)
 pipeline.add_task(lr_0)
 pipeline.add_task(evaluation_0)
 
@@ -72,8 +72,7 @@ pipeline.conf.set("task_parallelism", 1)
 pipeline.compile()
 print(pipeline.get_dag())
 pipeline.fit()
-exit(0)
-print(pipeline.deploy([reader_0, lr_0]))
+print(pipeline.deploy([intersection_0, lr_0]))
 
 
 predict_pipeline = StandalonePipeline()
@@ -95,7 +94,7 @@ reader_1.hosts[[0, 1]].component_param(path="examples/data/breast_hetero_host.cs
 
 
 deployed_pipeline = pipeline.get_deployed_pipeline()
-deployed_pipeline.lr_0.test_data = reader_1.outputs["output_data"]
+deployed_pipeline.intersection_0.input_data = reader_1.outputs["output_data"]
 
 predict_pipeline.add_task(deployed_pipeline)
 predict_pipeline.add_task(reader_1)

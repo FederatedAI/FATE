@@ -4,7 +4,7 @@ from ..scheduler.runtime_constructor import RuntimeConstructor
 
 class StandaloneModelInfo(object):
     def __init__(self, job_id: str, task_info: Dict[str, RuntimeConstructor],
-                 model_id: str = None, model_version: Union[str, int] = None):
+                 model_id: str = None, model_version: int = None):
         self._job_id = job_id
         self._task_info = task_info
         self._model_id = model_id
@@ -29,7 +29,7 @@ class StandaloneModelInfo(object):
 
 class FateFlowModelInfo(object):
     def __init__(self, job_id: str, schedule_role: str, schedule_party_id: str,
-                 model_id: str = None, model_version: Union[str, int] = None):
+                 model_id: str = None, model_version: int = None):
         self._job_id = job_id
         self._schedule_role = schedule_role
         self._schedule_party_id = schedule_party_id

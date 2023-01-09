@@ -11,7 +11,7 @@ class OutputChannelSpec(BaseModel):
     producer_task: str
     output_artifact_key: str
     model_id: Optional[str]
-    model_version: Optional[Union[str, int]]
+    model_version: Optional[int]
     roles: Optional[List[Literal["guest", "host", "arbiter"]]]
 
 
@@ -23,7 +23,7 @@ class RuntimeTaskOutputChannelSpec(BaseModel):
 
 class ModelWarehouseChannelSpec(BaseModel):
     model_id: Optional[str]
-    model_version: Optional[Union[str, int]]
+    model_version: Optional[int]
     producer_task: str
     output_artifact_key: str
     roles: Optional[List[Literal["guest", "host", "arbiter"]]]
@@ -71,7 +71,7 @@ class JobConfSpec(BaseModel):
     federated_status_collect_type: Optional[str]
     auto_retries: Optional[int]
     model_id: Optional[str]
-    model_version: Optional[str]
+    model_version: Optional[int]
     task: Optional[TaskConfSpec]
 
 

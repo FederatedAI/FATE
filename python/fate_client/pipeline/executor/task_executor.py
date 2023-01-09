@@ -34,6 +34,7 @@ class StandaloneExecutor(object):
                 dag_schema: DAGSchema,
                 component_specs: Dict[str, ComponentSpec],
                 fit_model_info: StandaloneModelInfo) -> StandaloneModelInfo:
+        assert 1 == 2, dag_schema
         self._dag_parser.parse_dag(dag_schema, component_specs)
         self._run(fit_model_info)
         return StandaloneModelInfo(
