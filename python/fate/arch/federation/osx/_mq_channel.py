@@ -43,10 +43,7 @@ class MQChannel(object):
         self._stub = None
 
     def __str__(self):
-        return f"<MQChannel host={self._host},port={self._port}, \
-        namespace={self._namespace}, \
-        src=({self._src_role}, {self._src_party_id}), \
-        dst=({self._dst_role}, {self._dst_party_id})>"
+        return f"<MQChannel host={self._host},port={self._port}, namespace={self._namespace}, src=({self._src_role}, {self._src_party_id}), dst=({self._dst_role}, {self._dst_party_id}), send_topic={self._send_topic}, receive_topic={self._receive_topic}>"
 
     @nretry
     def consume(self, offset=-1):
