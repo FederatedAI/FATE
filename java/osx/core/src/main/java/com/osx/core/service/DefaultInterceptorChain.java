@@ -54,22 +54,4 @@ public class DefaultInterceptorChain<req, resp> implements InterceptorChain<req,
         }
     }
 
-    /**
-     * 后处理即使抛出异常，也将执行完所有
-     *
-     * @param context
-     * @param inboundPackage
-     * @param outboundPackage
-     * @throws Exception
-     */
-//    @Override
-//    public void doPostProcess(Context context, InboundPackage<req> inboundPackage, OutboundPackage<resp> outboundPackage) throws Exception {
-//        for (Interceptor<req, resp> interceptor : chain) {
-//            try {
-//                interceptor.doPostProcess(context, inboundPackage, outboundPackage);
-//            } catch (Throwable e) {
-//                logger.error("doPostProcess error", e);
-//            }
-//        }
-//    }
 }
