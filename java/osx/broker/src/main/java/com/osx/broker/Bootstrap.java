@@ -52,7 +52,6 @@ public class Bootstrap {
             Thread shutDownThread = new Thread(() -> bootstrap.stop());
             Runtime.getRuntime().addShutdownHook(shutDownThread);
         } catch (Exception ex) {
-           // ex.printStackTrace();
             System.exit(1);
         }
     }
