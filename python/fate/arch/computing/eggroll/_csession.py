@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-
+import logging
 from typing import Optional
 
 from eggroll.core.session import session_init
@@ -22,11 +22,10 @@ from eggroll.roll_pair.roll_pair import runtime_init
 
 from ...abc import AddressABC, CSessionABC
 from ...common.base_utils import fate_uuid
-from ...common.log import getLogger
 from ...common.profile import computing_profile
 from ._table import Table
 
-LOGGER = getLogger()
+LOGGER = logging.getLogger(__name__)
 
 
 class CSession(CSessionABC):

@@ -13,15 +13,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
+import logging
 from typing import Iterable
 
 from ...abc import AddressABC, CSessionABC
-from ...common import log
 from ...common.address import LocalFSAddress
 from ._table import from_hdfs, from_hive, from_localfs, from_rdd
 
-LOGGER = log.getLogger()
+LOGGER = logging.getLogger(__name__)
 
 
 class CSession(CSessionABC):
@@ -74,9 +73,7 @@ class CSession(CSessionABC):
             table.schema = schema
             return table
 
-        raise NotImplementedError(
-            f"address type {type(address)} not supported with spark backend"
-        )
+        raise NotImplementedError(f"address type {type(address)} not supported with spark backend")
 
     def parallelize(self, data: Iterable, partition: int, include_key: bool, **kwargs):
         # noinspection PyPackageRequirements

@@ -13,16 +13,17 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
+import logging
 from collections.abc import Iterable
 from typing import Optional
 
 from ..._standalone import Session
 from ...abc import AddressABC, CSessionABC
-from ...common.log import getLogger
 from ...unify import generate_computing_uuid, uuid
 from ._table import Table
 
-LOGGER = getLogger()
+LOGGER = logging.getLogger(__name__)
 
 
 class CSession(CSessionABC):

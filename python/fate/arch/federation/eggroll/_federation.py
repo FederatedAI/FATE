@@ -15,6 +15,7 @@
 #
 
 import concurrent.futures
+import logging
 import os
 import signal
 from typing import List
@@ -24,11 +25,10 @@ from eggroll.roll_site.roll_site import RollSiteContext
 from fate.interface import FederationEngine, PartyMeta
 
 from ...common import remote_status
-from ...common.log import getLogger
 from ...computing.eggroll import Table
 from .._gc import GarbageCollector
 
-LOGGER = getLogger()
+LOGGER = logging.getLogger(__name__)
 
 
 class EggrollFederation(FederationEngine):

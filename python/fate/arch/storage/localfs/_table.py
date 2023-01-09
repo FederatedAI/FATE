@@ -15,15 +15,15 @@
 #
 
 import io
+import logging
 from typing import Iterable
 
 from pyarrow import fs
 
 from ...common import hdfs_utils
-from ...common.log import getLogger
 from ...storage import LocalFSStoreType, StorageEngine, StorageTableBase
 
-LOGGER = getLogger()
+LOGGER = logging.getLogger(__name__)
 
 
 class StorageTable(StorageTableBase):
@@ -51,22 +51,16 @@ class StorageTable(StorageTableBase):
     def path(self):
         return self._address.path
 
-    def _put_all(
-        self, kv_list: Iterable, append=True, assume_file_exist=False, **kwargs
-    ):
+    def _put_all(self, kv_list: Iterable, append=True, assume_file_exist=False, **kwargs):
         LOGGER.info(f"put in file: {self.path}")
 
         # always create the directory first, otherwise the following creation of file will fail.
         self._local_fs_client.create_dir("/".join(self.path.split("/")[:-1]))
 
         if append and (assume_file_exist or self._exist()):
-            stream = self._local_fs_client.open_append_stream(
-                path=self.path, compression=None
-            )
+            stream = self._local_fs_client.open_append_stream(path=self.path, compression=None)
         else:
-            stream = self._local_fs_client.open_output_stream(
-                path=self.path, compression=None
-            )
+            stream = self._local_fs_client.open_output_stream(path=self.path, compression=None)
 
         counter = self._meta.get_count() if self._meta.get_count() else 0
         with io.TextIOWrapper(stream) as writer:
@@ -126,17 +120,11 @@ class StorageTable(StorageTableBase):
             selector = fs.FileSelector(self.path)
             file_infos = self._local_fs_client.get_file_info(selector)
             for file_info in file_infos:
-                if file_info.base_name.startswith(
-                    "."
-                ) or file_info.base_name.startswith("_"):
+                if file_info.base_name.startswith(".") or file_info.base_name.startswith("_"):
                     continue
-                assert (
-                    file_info.is_file
-                ), f"{self.path} is directory contains a subdirectory: {file_info.path}"
+                assert file_info.is_file, f"{self.path} is directory contains a subdirectory: {file_info.path}"
                 with io.TextIOWrapper(
-                    buffer=self._local_fs_client.open_input_stream(
-                        f"{self._address.file_path:}/{file_info.path}"
-                    ),
+                    buffer=self._local_fs_client.open_input_stream(f"{self._address.file_path:}/{file_info.path}"),
                     encoding="utf-8",
                 ) as reader:
                     for line in reader:
@@ -177,8 +165,6 @@ class StorageTable(StorageTableBase):
             offset += len(buffer_block[:end_index])
 
     def _read_lines(self, buffer_block):
-        with io.TextIOWrapper(
-            buffer=io.BytesIO(buffer_block), encoding="utf-8"
-        ) as reader:
+        with io.TextIOWrapper(buffer=io.BytesIO(buffer_block), encoding="utf-8") as reader:
             for line in reader:
                 yield line

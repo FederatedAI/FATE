@@ -14,15 +14,15 @@
 #  limitations under the License.
 #
 import io
+import logging
 from typing import Iterable
 
 from pyarrow import fs
 
 from ...common import hdfs_utils
-from ...common.log import getLogger
 from ...storage import HDFSStoreType, StorageEngine, StorageTableBase
 
-LOGGER = getLogger()
+LOGGER = logging.getLogger(__name__)
 
 
 class StorageTable(StorageTableBase):
@@ -56,18 +56,12 @@ class StorageTable(StorageTableBase):
     def check_address(self):
         return self._exist()
 
-    def _put_all(
-        self, kv_list: Iterable, append=True, assume_file_exist=False, **kwargs
-    ):
+    def _put_all(self, kv_list: Iterable, append=True, assume_file_exist=False, **kwargs):
         LOGGER.info(f"put in hdfs file: {self.file_path}")
         if append and (assume_file_exist or self._exist()):
-            stream = self._hdfs_client.open_append_stream(
-                path=self.file_path, compression=None
-            )
+            stream = self._hdfs_client.open_append_stream(path=self.file_path, compression=None)
         else:
-            stream = self._hdfs_client.open_output_stream(
-                path=self.file_path, compression=None
-            )
+            stream = self._hdfs_client.open_output_stream(path=self.file_path, compression=None)
 
         counter = self._meta.get_count() if self._meta.get_count() else 0
         with io.TextIOWrapper(stream) as writer:
@@ -137,9 +131,7 @@ class StorageTable(StorageTableBase):
             for file_info in file_infos:
                 if file_info.base_name == "_SUCCESS":
                     continue
-                assert (
-                    file_info.is_file
-                ), f"{self.path} is directory contains a subdirectory: {file_info.path}"
+                assert file_info.is_file, f"{self.path} is directory contains a subdirectory: {file_info.path}"
                 with io.TextIOWrapper(
                     buffer=self._hdfs_client.open_input_stream(file_info.path),
                     encoding="utf-8",
@@ -182,8 +174,6 @@ class StorageTable(StorageTableBase):
             offset += len(buffer_block[:end_index])
 
     def _read_lines(self, buffer_block):
-        with io.TextIOWrapper(
-            buffer=io.BytesIO(buffer_block), encoding="utf-8"
-        ) as reader:
+        with io.TextIOWrapper(buffer=io.BytesIO(buffer_block), encoding="utf-8") as reader:
             for line in reader:
                 yield line

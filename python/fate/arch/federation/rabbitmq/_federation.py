@@ -24,7 +24,7 @@ from .._federation import FederationBase
 from ._mq_channel import MQChannel
 from ._rabbit_manager import RabbitManager
 
-LOGGER = getLogger()
+LOGGER = getLogger(__name__)
 
 # default message max size in bytes = 1MB
 DEFAULT_MESSAGE_MAX_SIZE = 1048576

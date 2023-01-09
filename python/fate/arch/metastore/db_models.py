@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 import inspect
+import logging
 import os
 import sys
 
@@ -26,11 +27,10 @@ from peewee import (
     TextField,
 )
 
-from ..common import EngineType, conf_utils, file_utils, log
-from ..federation import FederationEngine
+from ..common import file_utils
 from ..metastore.base_model import BaseModel, DateTimeField, JSONField, SerializedField
 
-LOGGER = log.getLogger()
+LOGGER = logging.getLogger(__name__)
 
 DATABASE = {"name": "xxx"}
 is_standalone = True
@@ -56,9 +56,7 @@ class BaseDataBase(object):
         if is_standalone and not bool(int(os.environ.get("FORCE_USE_MYSQL", 0))):
             from playhouse.apsw_ext import APSWDatabase
 
-            self.database_connection = APSWDatabase(
-                file_utils.get_project_base_directory("fate_sqlite.db")
-            )
+            self.database_connection = APSWDatabase(file_utils.get_project_base_directory("fate_sqlite.db"))
         else:
             from playhouse.pool import PooledMySQLDatabase
 

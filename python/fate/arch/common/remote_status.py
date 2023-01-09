@@ -16,11 +16,10 @@
 
 
 import concurrent.futures
+import logging
 import typing
 
-from .log import getLogger
-
-LOGGER = getLogger()
+LOGGER = logging.getLogger(__name__)
 
 _remote_futures = set()
 
@@ -37,6 +36,4 @@ def add_remote_futures(fs: typing.List[concurrent.futures.Future]):
 
 
 def wait_all_remote_done(timeout=None):
-    concurrent.futures.wait(
-        _remote_futures, timeout=timeout, return_when=concurrent.futures.ALL_COMPLETED
-    )
+    concurrent.futures.wait(_remote_futures, timeout=timeout, return_when=concurrent.futures.ALL_COMPLETED)

@@ -13,15 +13,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import logging
 import os
 from contextlib import closing
 
 import requests
 
-from ...common.log import getLogger
 from ...storage import ApiStoreType, StorageEngine, StorageTableBase
 
-LOGGER = getLogger()
+LOGGER = logging.getLogger(__name__)
 
 
 class StorageTable(StorageTableBase):
@@ -71,14 +71,10 @@ class StorageTable(StorageTableBase):
                             for line in lines:
                                 self.data_count += 1
                                 id = line.split(id_delimiter)[0]
-                                feature = id_delimiter.join(
-                                    line.split(id_delimiter)[1:]
-                                )
+                                feature = id_delimiter.join(line.split(id_delimiter)[1:])
                                 yield id, feature
                             else:
-                                _, self._meta = self._meta.update_metas(
-                                    count=self.data_count
-                                )
+                                _, self._meta = self._meta.update_metas(count=self.data_count)
                                 break
             else:
                 raise Exception(response.status_code, response.text)

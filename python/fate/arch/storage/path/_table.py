@@ -14,11 +14,12 @@
 #  limitations under the License.
 #
 
+import logging
+
 from ...common import path_utils
-from ...common.log import getLogger
 from ...storage import PathStoreType, StorageEngine, StorageTableBase
 
-LOGGER = getLogger()
+LOGGER = logging.getLogger(__name__)
 
 
 class StorageTable(StorageTableBase):
