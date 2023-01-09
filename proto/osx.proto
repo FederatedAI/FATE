@@ -1,0 +1,88 @@
+/*
+ * Copyright 2019 The Eggroll Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+
+package org.ppc.ptp;
+
+message Message{
+  string msgId = 1;//消息ID
+  bytes head = 2;//消息头部
+  bytes body = 3;//消息体
+}
+message  TopicInfo{
+  string topic=1;
+  string ip = 2;
+  int32  port = 3;
+  int64  createTimestamp = 4;
+  int32  status = 5;
+}
+
+// PTP Private transfer protocol
+// 通用报头名称编码，4层无Header以二进制填充到报头，7层以Header传输
+enum Header {
+  Version = 0;           // 协议版本               对应7层协议头x-ptp-version
+  TechProviderCode = 1;  // 厂商编码               对应7层协议头x-ptp-tech-provider-code
+  TraceID = 4;           // 链路追踪ID             对应7层协议头x-ptp-trace-id
+  Token = 5;             // 认证令牌               对应7层协议头x-ptp-token
+  SourceNodeID = 6;      // 发送端节点编号          对应7层协议头x-ptp-source-node-id
+  TargetNodeID = 7;      // 接收端节点编号          对应7层协议头x-ptp-target-node-id
+  SourceInstID = 8;      // 发送端机构编号          对应7层协议头x-ptp-source-inst-id
+  TargetInstID = 9;      // 接收端机构编号          对应7层协议头x-ptp-target-inst-id
+  SessionID = 10;        // 通信会话号，全网唯一     对应7层协议头x-ptp-session-id
+}
+
+// 通信扩展元数据编码，扩展信息均在metadata扩展
+enum Metadata {
+  MessageTopic = 0;                    // 消息话题，异步场景
+  MessageCode = 1;                     // 消息编码，异步场景
+  SourceComponentName = 2;             // 源组件名称
+  TargetComponentName = 3;             // 目标组件名称
+  TargetMethod = 4;                    // 目标方法
+  MessageOffSet = 5;                   // 消息序列号
+  InstanceId = 6;                      // 实例ID
+  Timestamp  = 7;                      // 时间戳
+}
+
+// 通信传输层输入报文编码
+message Inbound {
+  map<string, string>  metadata = 1;   // 报头，可选，预留扩展，Dict，序列化协议由通信层统一实现
+  bytes payload = 2;                   // 报文，上层通信内容承载，序列化协议由上层基于SPI可插拔
+}
+
+// 通信传输层输出报文编码
+message Outbound {
+  map<string, string>  metadata = 1;  // 报头，可选，预留扩展，Dict，序列化协议由通信层统一实现
+  bytes payload = 2;                  // 报文，上层通信内容承载，序列化协议由上层基于SPI可插拔
+  string code = 3;                    // 状态码
+  string message = 4;                 // 状态说明
+}
+
+// 互联互通如果使用异步传输协议作为标准参考，Header会复用metadata传输互联互通协议报头，且metadata中会传输异步场景下的消息相关属性
+// 互联互通如果使用其他协议作为参考标准，Header会复用metadata传输互联互通协议报头
+// 互联互通如果使用GRPC作为参考标准，Header会复用HTTP2的报头传输互联互通协议报头
+
+service PrivateTransferProtocol {
+  rpc transport (stream Inbound) returns (stream Outbound);
+  rpc invoke (Inbound) returns (Outbound);
+}
+
+
+
+
+
+
+

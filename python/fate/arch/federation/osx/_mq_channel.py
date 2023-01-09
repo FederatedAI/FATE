@@ -18,8 +18,8 @@ import json
 from logging import getLogger
 
 import grpc
-from fate.arch.federation.osx import osx_pb2, pcp_pb2
-from fate.arch.federation.osx.pcp_pb2_grpc import PrivateTransferProtocolStub
+from fate.arch.federation.osx import osx_pb2
+from fate.arch.federation.osx.osx_pb2_grpc import PrivateTransferProtocolStub
 
 from .._nretry import nretry
 
@@ -61,7 +61,7 @@ class MQChannel(object):
             SessionID=self._namespace,
             MessageOffSet=str(offset),
         )
-        inbound = pcp_pb2.Inbound(metadata=meta)
+        inbound = osx_pb2.Inbound(metadata=meta)
         LOGGER.debug(f"consume, inbound={inbound}, mq={self}")
         result = self._stub.invoke(inbound)
         LOGGER.debug(f"consume, result={result}, mq={self}")
@@ -83,7 +83,7 @@ class MQChannel(object):
             TargetMethod="QUERY_TOPIC",
             SessionID=self._namespace,
         )
-        inbound = pcp_pb2.Inbound(metadata=meta)
+        inbound = osx_pb2.Inbound(metadata=meta)
         LOGGER.debug(f"query, inbound={inbound}, mq={self}")
         result = self._stub.invoke(inbound)
         LOGGER.debug(f"query, result={result}, mq={self}")
@@ -104,7 +104,7 @@ class MQChannel(object):
             SessionID=self._namespace,
         )
         msg = osx_pb2.Message(head=bytes(json.dumps(properties), encoding="utf-8"), body=body)
-        inbound = pcp_pb2.Inbound(metadata=meta, payload=msg.SerializeToString())
+        inbound = osx_pb2.Inbound(metadata=meta, payload=msg.SerializeToString())
         LOGGER.debug(f"produce inbound={inbound}, mq={self}")
         result = self._stub.invoke(inbound)
         LOGGER.debug(f"produce result={result}, mq={self}")
@@ -125,7 +125,7 @@ class MQChannel(object):
             SessionID=self._namespace,
             MessageOffSet=offset,
         )
-        inbound = pcp_pb2.Inbound(metadata=meta)
+        inbound = osx_pb2.Inbound(metadata=meta)
         LOGGER.debug(f"ack inbound={inbound}, mq={self}")
         result = self._stub.invoke(inbound)
         LOGGER.debug(f"ack result={result}, mq={self}")

@@ -4,16 +4,16 @@ exclude = ["examples/*", "python/fate_test/*", "python/fate_client/*", "doc/*", 
 
 [tool.isort]
 profile = "black"
-skip_glob = ["examples/*", "python/fate_test/*", "python/fate_client/*", "doc/*", "deploy/*", "c/*", "rust/*"]
+skip_glob = ["examples/*", "python/fate_test/*", "python/fate_client/*", "doc/*", "deploy/*", "c/*", "rust/*", "*_pb2.py", "*_pb2_grpc.py"]
 
 [tool.black]
 line-length = 119
 target-version = ['py38']
 include = '\.pyi?$'
-# 'extend-exclude' excludes files or directories in addition to the defaults
 force-exclude = '''
-(
-  .*_pb2.py |
+/(
+  \.*_pb2.py |
+  \.*_pb2_grpc.py |
   ^/examples/ |
   ^/python/fate_test/ |
   ^/python/fate_client/ |
@@ -21,7 +21,7 @@ force-exclude = '''
   ^/c/ |
   ^/doc/ |
   ^/deploy/
-)
+)\
 '''
 
 [tool.pyright]
