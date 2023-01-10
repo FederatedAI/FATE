@@ -156,7 +156,7 @@ class LogisticParam(LinearModelParam):
         self.predict_param.check()
         if self.encrypt_param.method not in [consts.PAILLIER, None]:
             raise ValueError(
-                "logistic_param's encrypted method support 'Paillier' or None only")
+                "logistic_param's encrypted method support 'Paillier' or CKKS or None only")
         self.multi_class = self.check_and_change_lower(self.multi_class, ["ovr"], f"{descr}")
         return True
 

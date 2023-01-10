@@ -144,9 +144,9 @@ class LogisticParam(LinearModelParam):
         descr = "logistic_param's"
         super(LogisticParam, self).check()
         self.predict_param.check()
-        if self.encrypt_param.method not in [consts.PAILLIER, consts.PAILLIER_IPCL, None]:
+        if self.encrypt_param.method not in [consts.PAILLIER, consts.PAILLIER_IPCL, consts.CKKS, None]:
             raise ValueError(
-                "logistic_param's encrypted method support 'Paillier' or None only")
+                "logistic_param's encrypted method support 'Paillier' or CKKS or None only")
         self.multi_class = self.check_and_change_lower(
             self.multi_class, ["ovr"], f"{descr}")
         if not isinstance(self.masked_rate, (float, int)) or self.masked_rate < 0:

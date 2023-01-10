@@ -17,7 +17,7 @@
 import numpy as np
 
 from federatedml.framework.hetero.procedure import convergence
-from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
+from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator, ckks_cipher
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.linear_model.coordinated_linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_base import \
     HeteroLRBase
@@ -32,11 +32,21 @@ class HeteroLRHost(HeteroLRBase):
         self.batch_num = None
         self.batch_index_list = []
         self.role = consts.HOST
-
-        self.cipher = paillier_cipher.Host()
+        self.cipher = None
         self.batch_generator = batch_generator.Host()
         self.gradient_loss_operator = hetero_lr_gradient_and_loss.Host()
         self.converge_procedure = convergence.Host()
+
+    def _init_model(self, params):
+        super()._init_model(params)
+        if self.model_param.encrypt_param.method == consts.PAILLIER or self.model_param.encrypt_param.method == consts.PAILLIER_IPCL:
+            self.cipher = paillier_cipher.Host()
+            self.cipher.register_paillier_cipher(self.transfer_variable)
+        elif self.model_param.encrypt_param.method == consts.CKKS:
+            self.cipher = ckks_cipher.Host()
+            self.cipher.register_ckks_cipher(self.transfer_variable)
+        else:
+            raise ValueError(f"Unsupported encryption method: {self.model_param.encrypt_param.method}")
 
     def fit(self, data_instances, validate_data=None):
         """
@@ -71,7 +81,11 @@ class HeteroLRHost(HeteroLRBase):
 
         self.header = self.get_header(data_instances)
         model_shape = self.get_features_shape(data_instances)
-        self.cipher_operator = self.cipher.gen_paillier_cipher_operator(method=self.model_param.encrypt_param.method)
+
+        if self.model_param.encrypt_param.method == consts.PAILLIER or self.model_param.encrypt_param.method == consts.PAILLIER_IPCL:
+            self.cipher_operator = self.cipher.gen_paillier_cipher_operator(method=self.model_param.encrypt_param.method)
+        elif self.model_param.encrypt_param.method == consts.CKKS:
+            self.cipher_operator = self.cipher.gen_ckks_cipher_operator()
 
         self.batch_generator.initialize_batch_generator(data_instances, shuffle=self.shuffle)
         if self.batch_generator.batch_masked:

@@ -19,6 +19,7 @@ from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.linear_model.coordinated_linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_base import \
     HeteroLRBase
 from federatedml.one_vs_rest.one_vs_rest import one_vs_rest_factory
+from federatedml.framework.hetero.procedure import paillier_cipher, ckks_cipher
 from federatedml.optim.gradient import hetero_lr_gradient_and_loss
 from federatedml.param.logistic_regression_param import HeteroLogisticParam
 from federatedml.transfer_variable.transfer_class.hetero_lr_transfer_variable import HeteroLRTransferVariable
@@ -46,6 +47,15 @@ class HeteroLRArbiter(HeteroBaseArbiter, HeteroLRBase):
         super()._init_model(params)
         self.model_weights = LinearModelWeights([], fit_intercept=self.fit_intercept)
         self.one_vs_rest_obj = one_vs_rest_factory(self, role=self.role, mode=self.mode, has_arbiter=True)
+
+        if self.model_param.encrypt_param.method == consts.PAILLIER or self.model_param.encrypt_param.method == consts.PAILLIER_IPCL:
+            self.cipher = paillier_cipher.Arbiter()
+            self.cipher.register_paillier_cipher(self.transfer_variable)
+        elif self.model_param.encrypt_param.method == consts.CKKS:
+            self.cipher = ckks_cipher.Arbiter()
+            self.cipher.register_ckks_cipher(self.transfer_variable)
+        else:
+            raise ValueError(f"Unsupported encryption method: {self.model_param.encrypt_param.method}")
 
     def fit(self, data_instances=None, validate_data=None):
         LOGGER.debug("Has loss_history: {}".format(hasattr(self, 'loss_history')))

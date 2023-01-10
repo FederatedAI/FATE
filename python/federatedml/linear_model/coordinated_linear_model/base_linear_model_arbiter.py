@@ -15,7 +15,7 @@
 #
 
 from federatedml.framework.hetero.procedure import convergence
-from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
+from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator, ckks_cipher
 from federatedml.linear_model.linear_model_base import BaseLinearModel
 from federatedml.util import LOGGER
 from federatedml.util import consts
@@ -69,8 +69,13 @@ class HeteroBaseArbiter(BaseLinearModel):
 
         LOGGER.info("Enter hetero linear model arbiter fit")
 
-        self.cipher_operator = self.cipher.paillier_keygen(
-            self.model_param.encrypt_param.method, self.model_param.encrypt_param.key_length)
+        if self.model_param.encrypt_param.method == consts.PAILLIER or self.model_param.encrypt_param.method == consts.PAILLIER_IPCL:
+            self.cipher_operator = self.cipher.paillier_keygen(self.model_param.encrypt_param.method, self.model_param.encrypt_param.key_length)
+        elif self.model_param.encrypt_param.method == consts.CKKS:
+            self.cipher_operator = self.cipher.ckks_keygen(self.model_param.encrypt_param.poly_modulus_degree,
+                                                           self.model_param.encrypt_param.coeff_mod_bit_sizes,
+                                                           self.model_param.encrypt_param.global_scale)
+
         self.batch_generator.initialize_batch_generator()
         self.gradient_loss_operator.set_total_batch_nums(self.batch_generator.batch_num)
 
