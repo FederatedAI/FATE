@@ -233,3 +233,9 @@ class StandalonePipeline(Pipeline):
 class FateFlowPipeline(Pipeline):
     def __init__(self, *args):
         super(FateFlowPipeline, self).__init__(FateFlowExecutor(), *args)
+
+    def upload(self, file: str, head: int,
+               namespace: str, name: str,
+               meta: dict, partitions=4,
+               storage_engine=None, **kwargs):
+        self._executor.upload(file, head, namespace, name, meta, partitions, storage_engine, **kwargs)

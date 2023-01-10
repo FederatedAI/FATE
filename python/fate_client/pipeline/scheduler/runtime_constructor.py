@@ -4,7 +4,7 @@ from ..entity.task_structure import TaskScheduleSpec, LOGGERSpec, TaskRuntimeInp
     MLMDSpec, RuntimeConfSpec, ComputingEngineSpec, DeviceSpec, FederationPartySpec, \
     ComputingEngineMetadata, FederationEngineSpec, FederationEngineMetadata, InputArtifact
 from ..manager.resource_manager import StandaloneResourceManager
-from ..utils.id_gen import gen_computing_id, gen_federation_id, gen_task_id
+from python.fate_client.pipeline.utils.standalone.id_gen import gen_computing_id, gen_federation_id, gen_task_id
 
 
 class RuntimeConstructor(object):

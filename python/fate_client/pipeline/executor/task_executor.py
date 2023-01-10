@@ -1,13 +1,13 @@
 from pathlib import Path
 from typing import Dict
-from ..conf.env_config import LogPath, FlowConfig
-from ..utils.id_gen import gen_job_id
-from ..utils.job_process import process_task
+from ..conf.env_config import LogPath
+from ..utils.standalone.id_gen import gen_job_id
+from ..utils.standalone.job_process import process_task
 from ..entity.dag_structures import DAGSchema
 from ..entity.component_structures import ComponentSpec
 from ..scheduler.dag_parser import DagParser
 from ..scheduler.runtime_constructor import RuntimeConstructor
-from ..utils.fate_flow_job_invoker import FATEFlowJobInvoker
+from ..utils.fateflow.fate_flow_job_invoker import FATEFlowJobInvoker
 from .model_info import StandaloneModelInfo, FateFlowModelInfo
 
 
@@ -162,3 +162,21 @@ class FateFlowExecutor(object):
                     return party.party_id[0]
 
         raise ValueError(f"Can not retrieval site's party_id from site's role {role}")
+
+    def upload(self, file: str, head: int,
+               namespace: str, name: str, meta: dict,
+               partitions=4, storage_engine=None, **kwargs):
+        flow_job_invoker = FATEFlowJobInvoker()
+        post_data = dict(file=file,
+                         head=head,
+                         namespace=namespace,
+                         name=name,
+                         meta=meta,
+                         partitions=partitions)
+        if storage_engine:
+            post_data["storage_engine"] = storage_engine
+
+        if kwargs:
+            post_data.update(kwargs)
+
+        flow_job_invoker.upload_data(post_data)

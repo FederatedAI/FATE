@@ -6,7 +6,7 @@ import time
 
 from pathlib import Path
 from types import SimpleNamespace
-from ..scheduler.runtime_constructor import RuntimeConstructor
+from python.fate_client.pipeline.scheduler.runtime_constructor import RuntimeConstructor
 
 
 def run_subprocess(exec_cmd, std_log_fd):

@@ -1,7 +1,7 @@
 import time
 from datetime import timedelta
 from .flow_client import FlowClient
-from ..conf.env_config import FlowConfig
+from ...conf.env_config import FlowConfig
 
 
 class FATEFlowJobInvoker(object):
@@ -46,8 +46,8 @@ class FATEFlowJobInvoker(object):
                 elapse_seconds = timedelta(seconds=int(time.time() - start_time))
                 print(f"\x1b[80D\x1b[1A\x1b[KJob is waiting, time elapse: {elapse_seconds}")
 
-            elif status == JobStatus.FAILED:
-                raise ValueError(f"Job is failed, please check out job_id={job_id} in fate_flow log directory")
+            elif status in [JobStatus.FAILED, JobStatus.CANCELED]:
+                raise ValueError(f"Job is {status}, please check out job_id={job_id} in fate_flow log directory")
 
             time.sleep(1)
 
@@ -96,9 +96,17 @@ class FATEFlowJobInvoker(object):
         except BaseException:
             raise ValueError(f"query site info is failed, response={response}")
 
+    def upload_data(self, upload_conf):
+        resource = self._client.upload_data(upload_conf)
+        return resource
+
 
 class JobStatus(object):
-    SUCCESS = "success"
+    WAITING = 'waiting'
+    READY = 'ready'
     RUNNING = "running"
-    WAITING = "waiting"
+    CANCELED = "canceled"
+    TIMEOUT = "timeout"
     FAILED = "failed"
+    PASS = "pass"
+    SUCCESS = "success"

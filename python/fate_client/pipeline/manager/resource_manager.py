@@ -1,4 +1,4 @@
-from ..utils.id_gen import get_uuid
+from python.fate_client.pipeline.utils.standalone.id_gen import get_uuid
 from ..utils.file_utils import construct_local_dir
 from ..conf.env_config import StandaloneConfig
 from ..entity.task_structure import OutputArtifact

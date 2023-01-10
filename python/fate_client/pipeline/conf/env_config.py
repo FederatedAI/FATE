@@ -18,7 +18,7 @@ import yaml
 from pathlib import Path
 
 
-__all__ = ["StatusCode", "LogPath", "LogFormat", "FlowConfig", "StandaloneConfig"]
+__all__ = ["StatusCode", "LogPath", "LogFormat", "FlowConfig", "StandaloneConfig", "SiteInfo"]
 
 
 with Path(__file__).parent.parent.joinpath("pipeline_config.yaml").resolve().open("r") as fin:
