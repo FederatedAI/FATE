@@ -77,11 +77,10 @@ class EggrollRawTableReader:
 
         table = load_table(self.ctx, self.uri, self.metadata)
 
-        meta = table.schema.get("meta", {})
         kwargs = {}
         p = inspect.signature(dataframe.RawTableReader.__init__).parameters
         parameter_keys = p.keys()
-        for k, v in meta.items():
+        for k, v in table.schema.items():
             if k in parameter_keys:
                 kwargs[k] = v
 

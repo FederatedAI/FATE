@@ -63,7 +63,7 @@ class RawTableReader(object):
             label_idx = header.index(self._label_name)
             header.remove(self._label_name)
             header_indexes.remove(label_idx)
-            label_type = getattr(torch, self._label_type)
+            label_type = getattr(np, self._label_type)
             label_table = table.mapValues(lambda value: [label_type(value[label_idx])])
             data_dict["label"] = _convert_to_tensor(
                 ctx,
