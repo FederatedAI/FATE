@@ -15,7 +15,7 @@
 import logging
 
 from fate.arch.dataframe import DataLoader
-from fate.interface import Context, ModelsLoader, ModelsSaver
+from fate.interface import Context
 
 from ..abc.module import HeteroModule
 

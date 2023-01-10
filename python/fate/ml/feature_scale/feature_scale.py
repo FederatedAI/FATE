@@ -60,8 +60,7 @@ class StandardScaler(Module):
         self._std = train_data.std()
 
     def transform(self, ctx: Context, test_data):
-        return test_data - self._mean
-        # return (test_data - self._mean) / self._std
+        return (test_data - self._mean) / self._std
 
     def to_model(self):
         return dict(
