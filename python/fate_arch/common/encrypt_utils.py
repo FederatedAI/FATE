@@ -13,7 +13,7 @@ def rsa_key_generate():
     with open('private_key.pem', "w") as f:
         f.write(private_pem)
     with open('public_key.pem', "w") as f:
-        f.write(private_pem)
+        f.write(public_pem)
     return private_pem, public_pem
 
 
@@ -36,5 +36,3 @@ def test_encrypt_decrypt():
     print(encrypt_text)
     decrypt_text = pwdecrypt(private_key, encrypt_text)
     print(msg == decrypt_text)
-
-rsa_key_generate()
