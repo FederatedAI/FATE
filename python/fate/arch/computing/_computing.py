@@ -23,8 +23,7 @@ import typing
 from abc import ABCMeta
 from collections.abc import Iterable
 
-from ._address import AddressABC
-from ._path import PathABC
+from ._address import Address
 
 __all__ = ["CTableABC", "CSessionABC"]
 
@@ -66,7 +65,7 @@ class CTableABC(metaclass=ABCMeta):
         ...
 
     @abc.abstractmethod
-    def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
+    def save(self, address: Address, partitions: int, schema: dict, **kwargs):
         """
         save table
 
@@ -550,7 +549,7 @@ class CSessionABC(metaclass=ABCMeta):
     """
 
     @abc.abstractmethod
-    def load(self, address: AddressABC, partitions, schema: dict, **kwargs) -> typing.Union[PathABC, CTableABC]:
+    def load(self, address: Address, partitions, schema: dict, **kwargs) -> CTableABC:
         """
         load a table from given address
 

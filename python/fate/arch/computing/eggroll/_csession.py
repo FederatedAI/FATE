@@ -17,13 +17,16 @@
 import logging
 from typing import Optional
 
-from eggroll.core.session import session_init
-from eggroll.roll_pair.roll_pair import runtime_init
-
-from ...abc import AddressABC, CSessionABC
-from ...common.base_utils import fate_uuid
-from ...common.profile import computing_profile
+from ...unify import uuid
+from .._computing import CSessionABC
+from .._profile import computing_profile
 from ._table import Table
+
+try:
+    from eggroll.core.session import session_init
+    from eggroll.roll_pair.roll_pair import runtime_init
+except ImportError:
+    raise EnvironmentError("eggroll not found in pythonpath")
 
 LOGGER = logging.getLogger(__name__)
 
@@ -48,10 +51,10 @@ class CSession(CSessionABC):
         return self._session_id
 
     @computing_profile
-    def load(self, address: AddressABC, partitions: Optional[int], schema: dict, **kwargs):
+    def load(self, address, partitions: Optional[int], schema: dict, **kwargs):
 
-        from ...common.address import EggRollAddress
-        from ...storage import EggRollStoreType
+        from .._address import EggRollAddress
+        from ._type import EggRollStoreType
 
         if isinstance(address, EggRollAddress):
             options = kwargs.get("option", {})
@@ -65,7 +68,7 @@ class CSession(CSessionABC):
 
             if options["store_type"] != EggRollStoreType.ROLLPAIR_IN_MEMORY:
                 rp = rp.save_as(
-                    name=f"{address.name}_{fate_uuid()}",
+                    name=f"{address.name}_{uuid()}",
                     namespace=self.session_id,
                     partition=partitions,
                     options={"store_type": EggRollStoreType.ROLLPAIR_IN_MEMORY},
@@ -74,8 +77,6 @@ class CSession(CSessionABC):
             table = Table(rp=rp)
             table.schema = schema
             return table
-
-        from ...common.address import PathAddress
 
         raise NotImplementedError(f"address type {type(address)} not supported with eggroll backend")
 

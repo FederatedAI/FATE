@@ -16,8 +16,7 @@
 import logging
 from typing import Iterable
 
-from ...abc import AddressABC, CSessionABC
-from ...common.address import LocalFSAddress
+from .._computing import Address, CSessionABC
 from ._table import from_hdfs, from_hive, from_localfs, from_rdd
 
 LOGGER = logging.getLogger(__name__)
@@ -31,8 +30,8 @@ class CSession(CSessionABC):
     def __init__(self, session_id):
         self._session_id = session_id
 
-    def load(self, address: AddressABC, partitions, schema, **kwargs):
-        from ...common.address import HDFSAddress
+    def load(self, address: Address, partitions, schema, **kwargs):
+        from .._address import HDFSAddress
 
         if isinstance(address, HDFSAddress):
             table = from_hdfs(
@@ -44,15 +43,7 @@ class CSession(CSessionABC):
             table.schema = schema
             return table
 
-        from ...common.address import PathAddress
-
-        if isinstance(address, PathAddress):
-            from ...computing import ComputingEngine
-            from ...computing.non_distributed import LocalData
-
-            return LocalData(address.path, engine=ComputingEngine.SPARK)
-
-        from ...common.address import HiveAddress, LinkisHiveAddress
+        from .._address import HiveAddress, LinkisHiveAddress
 
         if isinstance(address, (HiveAddress, LinkisHiveAddress)):
             table = from_hive(
@@ -62,6 +53,8 @@ class CSession(CSessionABC):
             )
             table.schema = schema
             return table
+
+        from .._address import LocalFSAddress
 
         if isinstance(address, LocalFSAddress):
             table = from_localfs(

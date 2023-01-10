@@ -15,6 +15,7 @@
 #
 
 import logging
+import pickle
 import typing
 import uuid
 from itertools import chain
@@ -23,13 +24,34 @@ import pyspark
 from pyspark.rddsampler import RDDSamplerBase
 from scipy.stats import hypergeom
 
-from ...abc import CTableABC
-from ...common import hdfs_utils, hive_utils
-from ...common.profile import computing_profile
+from .._computing import CTableABC
+from .._profile import computing_profile
 from .._type import ComputingEngine
 from ._materialize import materialize, unmaterialize
 
 LOGGER = logging.getLogger(__name__)
+
+
+_HDFS_DELIMITER = "\t"
+
+
+def hdfs_deserialize(m):
+    fields = m.partition(_HDFS_DELIMITER)
+    return fields[0], pickle.loads(bytes.fromhex(fields[2]))
+
+
+def hdfs_serialize(k, v):
+    return f"{k}{_HDFS_DELIMITER}{pickle.dumps(v).hex()}"
+
+
+def hive_from_row(r):
+    return r.key, pickle.loads(bytes.fromhex(r.value))
+
+
+def hive_to_row(k, v):
+    from pyspark.sql import Row
+
+    return Row(key=k, value=pickle.dumps(v).hex())
 
 
 class Table(CTableABC):
@@ -59,35 +81,28 @@ class Table(CTableABC):
 
     @computing_profile
     def save(self, address, partitions, schema, **kwargs):
-        from ...common.address import HDFSAddress
+        from .._address import HDFSAddress
 
         if isinstance(address, HDFSAddress):
-            self._rdd.map(lambda x: hdfs_utils.serialize(x[0], x[1])).repartition(partitions).saveAsTextFile(
+            self._rdd.map(lambda x: hdfs_serialize(x[0], x[1])).repartition(partitions).saveAsTextFile(
                 f"{address.name_node}/{address.path}"
             )
             schema.update(self.schema)
             return
 
-        from ...common.address import HiveAddress, LinkisHiveAddress
+        from .._address import HiveAddress, LinkisHiveAddress
 
         if isinstance(address, (HiveAddress, LinkisHiveAddress)):
-            # df = (
-            #     self._rdd.map(lambda x: hive_utils.to_row(x[0], x[1]))
-            #     .repartition(partitions)
-            #     .toDF()
-            # )
             LOGGER.debug(f"partitions: {partitions}")
-            _repartition = self._rdd.map(lambda x: hive_utils.to_row(x[0], x[1])).repartition(partitions)
+            _repartition = self._rdd.map(lambda x: hive_to_row(x[0], x[1])).repartition(partitions)
             _repartition.toDF().write.saveAsTable(f"{address.database}.{address.name}")
             schema.update(self.schema)
             return
 
-        from ...common.address import LocalFSAddress
+        from .._address import LocalFSAddress
 
         if isinstance(address, LocalFSAddress):
-            self._rdd.map(lambda x: hdfs_utils.serialize(x[0], x[1])).repartition(partitions).saveAsTextFile(
-                address.path
-            )
+            self._rdd.map(lambda x: hdfs_serialize(x[0], x[1])).repartition(partitions).saveAsTextFile(address.path)
             schema.update(self.schema)
             return
 
@@ -200,11 +215,7 @@ def from_hdfs(paths: str, partitions, in_serialized=True, id_delimiter=None):
     from pyspark import SparkContext
 
     sc = SparkContext.getOrCreate()
-    fun = (
-        hdfs_utils.deserialize
-        if in_serialized
-        else lambda x: (x.partition(id_delimiter)[0], x.partition(id_delimiter)[2])
-    )
+    fun = hdfs_deserialize if in_serialized else lambda x: (x.partition(id_delimiter)[0], x.partition(id_delimiter)[2])
     rdd = materialize(sc.textFile(paths, partitions).map(fun).repartition(partitions))
     return Table(rdd=rdd)
 
@@ -214,11 +225,7 @@ def from_localfs(paths: str, partitions, in_serialized=True, id_delimiter=None):
     from pyspark import SparkContext
 
     sc = SparkContext.getOrCreate()
-    fun = (
-        hdfs_utils.deserialize
-        if in_serialized
-        else lambda x: (x.partition(id_delimiter)[0], x.partition(id_delimiter)[2])
-    )
+    fun = hdfs_deserialize if in_serialized else lambda x: (x.partition(id_delimiter)[0], x.partition(id_delimiter)[2])
     rdd = materialize(sc.textFile(paths, partitions).map(fun).repartition(partitions))
     return Table(rdd=rdd)
 
@@ -227,9 +234,7 @@ def from_hive(tb_name, db_name, partitions):
     from pyspark.sql import SparkSession
 
     session = SparkSession.builder.enableHiveSupport().getOrCreate()
-    rdd = materialize(
-        session.sql(f"select * from {db_name}.{tb_name}").rdd.map(hive_utils.from_row).repartition(partitions)
-    )
+    rdd = materialize(session.sql(f"select * from {db_name}.{tb_name}").rdd.map(hive_from_row).repartition(partitions))
     return Table(rdd=rdd)
 
 

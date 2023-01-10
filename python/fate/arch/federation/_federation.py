@@ -24,11 +24,11 @@ from pickle import loads as p_loads
 
 from fate.interface import FederationEngine, PartyMeta
 
-from ..abc import CTableABC
-from ..common import Party
+from ..computing import CTableABC
 from ..federation import FederationDataType
 from ..federation._datastream import Datastream
 from ._gc import GarbageCollector
+from ._parties import Party
 
 LOGGER = logging.getLogger(__name__)
 

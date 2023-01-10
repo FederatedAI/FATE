@@ -17,8 +17,8 @@ import itertools
 import logging
 import typing
 
-from ...abc import CTableABC
-from ...common.profile import computing_profile
+from .._computing import CTableABC
+from .._profile import computing_profile
 from .._type import ComputingEngine
 
 LOGGER = logging.getLogger(__name__)
@@ -47,7 +47,7 @@ class Table(CTableABC):
 
     @computing_profile
     def save(self, address, partitions, schema, **kwargs):
-        from ...common.address import StandaloneAddress
+        from .._address import StandaloneAddress
 
         if isinstance(address, StandaloneAddress):
             self._table.save_as(
@@ -59,12 +59,6 @@ class Table(CTableABC):
             schema.update(self.schema)
             return
 
-        from ...common.address import PathAddress
-
-        if isinstance(address, PathAddress):
-            from ...computing.non_distributed import LocalData
-
-            return LocalData(address.path)
         raise NotImplementedError(f"address type {type(address)} not supported with standalone backend")
 
     @computing_profile

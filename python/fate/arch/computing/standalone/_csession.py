@@ -18,8 +18,8 @@ from collections.abc import Iterable
 from typing import Optional
 
 from ..._standalone import Session
-from ...abc import AddressABC, CSessionABC
 from ...unify import generate_computing_uuid, uuid
+from .._computing import Address, CSessionABC
 from ._table import Table
 
 LOGGER = logging.getLogger(__name__)
@@ -41,9 +41,9 @@ class CSession(CSessionABC):
     def session_id(self):
         return self._session.session_id
 
-    def load(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
-        from ...common.address import StandaloneAddress
-        from ...storage import StandaloneStoreType
+    def load(self, address: Address, partitions: int, schema: dict, **kwargs):
+        from .._address import StandaloneAddress
+        from ._type import StandaloneStoreType
 
         if isinstance(address, StandaloneAddress):
             raw_table = self._session.load(address.name, address.namespace)

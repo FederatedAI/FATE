@@ -15,16 +15,14 @@
 #
 import hashlib
 import inspect
+import logging
 import time
 import typing
 from functools import wraps
 
 import beautifultable
 
-from ..abc import CTableABC
-from .log import getLogger
-
-profile_logger = getLogger("PROFILING")
+profile_logger = logging.getLogger(__name__)
 _PROFILE_LOG_ENABLED = False
 _START_TIME = None
 _END_TIME = None
@@ -315,6 +313,8 @@ def profile_ends():
 
 
 def _pretty_table_str(v):
+    from ..computing._computing import CTableABC
+
     if isinstance(v, CTableABC):
         return f"Table(partition={v.partitions})"
     else:

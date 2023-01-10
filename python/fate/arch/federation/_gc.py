@@ -20,8 +20,6 @@ from collections import deque
 
 from fate.interface import GarbageCollector as GarbageCollectorInterface
 
-from ..abc import GarbageCollectionABC
-
 LOGGER = logging.getLogger(__name__)
 
 
@@ -57,7 +55,7 @@ class GarbageCollector(GarbageCollectorInterface):
             LOGGER.debug(f"[CLEAN]this could be ignore {e}")
 
 
-class IterationGC(GarbageCollectionABC):
+class IterationGC:
     def __init__(self, capacity=2):
         self._ashcan: deque[typing.List[typing.Tuple[typing.Any, str, dict]]] = deque()
         self._last_tag: typing.Optional[str] = None

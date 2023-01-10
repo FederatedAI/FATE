@@ -18,8 +18,8 @@
 import logging
 import typing
 
-from ...abc import CTableABC
-from ...common.profile import computing_profile
+from .._computing import CTableABC
+from .._profile import computing_profile
 from .._type import ComputingEngine
 
 LOGGER = logging.getLogger(__name__)
@@ -46,8 +46,8 @@ class Table(CTableABC):
     @computing_profile
     def save(self, address, partitions, schema: dict, **kwargs):
         options = kwargs.get("options", {})
-        from ...common.address import EggRollAddress
-        from ...storage import EggRollStoreType
+        from .._address import EggRollAddress
+        from ._type import EggRollStoreType
 
         if isinstance(address, EggRollAddress):
             options["store_type"] = kwargs.get("store_type", EggRollStoreType.ROLLPAIR_LMDB)
@@ -59,13 +59,6 @@ class Table(CTableABC):
             )
             schema.update(self.schema)
             return
-
-        from ...common.address import PathAddress
-
-        if isinstance(address, PathAddress):
-            from ...computing.non_distributed import LocalData
-
-            return LocalData(address.path)
 
         raise NotImplementedError(f"address type {type(address)} not supported with eggroll backend")
 

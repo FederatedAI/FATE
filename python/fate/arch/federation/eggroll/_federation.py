@@ -18,13 +18,13 @@ import concurrent.futures
 import logging
 import os
 import signal
+import typing
 from typing import List
 
 from eggroll.roll_pair.roll_pair import RollPair
 from eggroll.roll_site.roll_site import RollSiteContext
 from fate.interface import FederationEngine, PartyMeta
 
-from ...common import remote_status
 from ...computing.eggroll import Table
 from .._gc import GarbageCollector
 
@@ -158,5 +158,23 @@ def _push_with_exception_handle(rsc, v, name: str, tag: str, parties: List[Party
     for party, future in zip(parties, futures):
         future.add_done_callback(_get_call_back_func(party))
 
-    remote_status.add_remote_futures(futures)
+    add_remote_futures(futures)
     return rs
+
+
+_remote_futures = set()
+
+
+def _clear_callback(future):
+    LOGGER.debug("future `{future}` done, remove")
+    _remote_futures.remove(future)
+
+
+def add_remote_futures(fs: typing.List[concurrent.futures.Future]):
+    for f in fs:
+        f.add_done_callback(_clear_callback)
+        _remote_futures.add(f)
+
+
+def wait_all_remote_done(timeout=None):
+    concurrent.futures.wait(_remote_futures, timeout=timeout, return_when=concurrent.futures.ALL_COMPLETED)

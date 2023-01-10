@@ -15,6 +15,7 @@
 from typing import Any, Callable, List
 
 import torch
+from fate.arch.tensor._exception import OpsDispatchUnsupportedError
 from fate.arch.tensor.types import LStorage, Shape, dtype
 from fate.arch.unify import device
 
