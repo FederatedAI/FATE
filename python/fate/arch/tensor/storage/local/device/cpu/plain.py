@@ -99,8 +99,21 @@ class _TorchStorage(LStorage):
 
 
 def _ops_cpu_plain_unary_buildin(method, args, kwargs) -> Callable[[_TorchStorage], _TorchStorage]:
-    if method in {"exp", "log", "neg", "reciprocal", "square", "abs", "sum", "sqrt", "var", "std", "mean"}:
-        func = getattr(torch, method)
+    if (
+        func := {
+            "exp": torch.exp,
+            "log": torch.log,
+            "neg": torch.neg,
+            "reciprocal": torch.reciprocal,
+            "square": torch.square,
+            "abs": torch.abs,
+            "sum": torch.sum,
+            "sqrt": torch.sqrt,
+            "var": torch.var,
+            "std": torch.std,
+            "mean": torch.mean,
+        }.get(method)
+    ) is not None:
 
         def _wrap(storage: _TorchStorage) -> _TorchStorage:
             output = func(storage.data, *args, **kwargs)
@@ -167,20 +180,21 @@ def _ops_cpu_plain_unary_custom(method, args, kwargs) -> Callable[[_TorchStorage
 
 
 def _ops_cpu_plain_binary_buildin(method, args, kwargs) -> Callable[[Any, Any], _TorchStorage]:
-    if method in {
-        "add",
-        "sub",
-        "mul",
-        "div",
-        "pow",
-        "remainder",
-        "matmul",
-        "true_divide",
-        "maximum",
-        "minimum",
-        "truediv",
-    }:
-        func = getattr(torch, method)
+    if (
+        func := {
+            "add": torch.add,
+            "sub": torch.sub,
+            "mul": torch.mul,
+            "div": torch.div,
+            "pow": torch.pow,
+            "remainder": torch.remainder,
+            "matmul": torch.matmul,
+            "true_divide": torch.true_divide,
+            "truediv": torch.true_divide,
+            "maximum": torch.maximum,
+            "minimum": torch.minimum,
+        }.get(method)
+    ) is not None:
 
         def _wrap(a, b) -> _TorchStorage:
             output = func(_maybe_unwrap_storage(a), _maybe_unwrap_storage(b), *args, **kwargs)
