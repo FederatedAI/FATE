@@ -188,7 +188,11 @@ class _Component:
                 )
             elif annotated == InputAnnotated:
                 input_artifacts[artifact.name] = ArtifactSpec(
-                    type=artifact.type.type, optional=artifact.optional, roles=roles, stages=artifact.stages
+                    type=artifact.type.type,
+                    optional=artifact.optional,
+                    roles=roles,
+                    stages=artifact.stages,
+                    description=artifact.desc,
                 )
             else:
                 raise ValueError(f"bad artifact: {artifact}")
