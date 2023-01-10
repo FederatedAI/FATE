@@ -16,10 +16,14 @@ from typing import Dict, List, Literal, Optional, Type, TypeVar
 
 from typing_extensions import Annotated
 
+T_ROLE = Literal["guest", "host", "arbiter"]
+T_STAGE = Literal["train", "predict", "default"]
+T_LABEL = Literal["trainable"]
+
 
 class Role:
-    def __init__(self, name: str) -> None:
-        self.name = name
+    def __init__(self, name: T_ROLE) -> None:
+        self.name: T_ROLE = name
 
     @property
     def is_guest(self) -> bool:

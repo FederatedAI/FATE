@@ -54,7 +54,7 @@ import logging
 from typing import Any, Dict, List, Optional
 
 import pydantic
-from fate.components import MetricArtifact, Role, Stage
+from fate.components import T_ROLE, T_STAGE, MetricArtifact, Role, Stage
 
 
 class ComponentDeclarError(Exception):
@@ -72,7 +72,7 @@ class _Component:
     def __init__(
         self,
         name: str,
-        roles,
+        roles: List[T_ROLE],
         provider,
         version,
         description,
@@ -180,7 +180,11 @@ class _Component:
             roles = artifact.roles or self.roles
             if annotated == OutputAnnotated:
                 output_artifacts[artifact.name] = ArtifactSpec(
-                    type=artifact.type.type, optional=artifact.optional, roles=roles, stages=artifact.stages
+                    type=artifact.type.type,
+                    optional=artifact.optional,
+                    roles=roles,
+                    stages=artifact.stages,
+                    description=artifact.desc,
                 )
             elif annotated == InputAnnotated:
                 input_artifacts[artifact.name] = ArtifactSpec(
@@ -365,8 +369,8 @@ def _component(name, roles, provider, version, description, is_subcomponent):
 class _ArtifactDeclareClass(pydantic.BaseModel):
     name: str
     type: Any
-    roles: List[str]
-    stages: List[str]
+    roles: List[T_ROLE]
+    stages: List[T_STAGE]
     desc: str
     optional: bool
 
@@ -452,7 +456,7 @@ class _ComponentArtifacts(pydantic.BaseModel):
         _set_all(self.outputs.model_artifact)
         _set_all(self.outputs.metric_artifact)
 
-    def get_artifacts(self):
+    def get_artifacts(self) -> Dict[str, _ArtifactDeclareClass]:
         artifacts = {}
         artifacts.update(self.inputs.data_artifact)
         artifacts.update(self.inputs.model_artifact)
