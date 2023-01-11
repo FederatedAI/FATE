@@ -74,7 +74,7 @@ def load_federation(federation, computing):
             computing_session=computing,
             party=federation.metadata.parties.local.tuple(),
             parties=[p.tuple() for p in federation.metadata.parties.parties],
-            route_table={k: v.dict() for k, v in federation.metadata.route_table.items()},
+            route_table={k: v for k, v in federation.metadata.route_table.items()},
             mode=federation.metadata.pulsar_config.mode,
             host=federation.metadata.pulsar_config.host,
             port=federation.metadata.pulsar_config.port,
