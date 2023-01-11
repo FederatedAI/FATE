@@ -6,7 +6,7 @@
       "default":[
         {
           "port": 9370,
-          "ip": "10.42.0.1"
+          "ip": "localhost"
         }
       ],
       "fateflow":[
