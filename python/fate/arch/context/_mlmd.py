@@ -63,7 +63,7 @@ class MachineLearningMetadata:
                 )
 
             if self.model_type_id == artifact.type_id:
-                data.append(
+                model.append(
                     dict(
                         uri=artifact.uri,
                         name=artifact.properties["name"].string_value,
@@ -72,7 +72,7 @@ class MachineLearningMetadata:
                 )
 
             if self.metric_type_id == artifact.type_id:
-                data.append(
+                metric.append(
                     dict(
                         uri=artifact.uri,
                         name=artifact.properties["name"].string_value,

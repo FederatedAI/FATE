@@ -119,9 +119,9 @@ def execute_component(config: TaskConfigSpec):
 
             # log output artifacts
             for name, artifact in output_data_artifacts.items():
-                mlmd.io.log_output_artifact(name, artifact)
+                mlmd.io.log_output_data(name, artifact)
             for name, artifact in output_metric_artifacts.items():
-                mlmd.io.log_output_artifact(name, artifact)
+                mlmd.io.log_output_metric(name, artifact)
 
         except Exception as e:
             tb = traceback.format_exc()
