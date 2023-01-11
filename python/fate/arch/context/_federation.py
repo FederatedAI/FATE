@@ -22,7 +22,7 @@ from fate.interface import Party as PartyInterface
 from fate.interface import PartyMeta
 
 from ..computing import is_table
-from ..federation.transfer_variable import IterationGC
+from ..federation._gc import IterationGC
 from ._namespace import Namespace
 
 T = TypeVar("T")

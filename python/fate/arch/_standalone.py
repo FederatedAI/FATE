@@ -18,6 +18,7 @@ import asyncio
 import hashlib
 import itertools
 import logging
+import os
 import pickle as c_pickle
 import shutil
 import time
@@ -36,7 +37,6 @@ import lmdb
 import numpy as np
 from fate.interface import PartyMeta
 
-from .common import file_utils
 from .federation import FederationDataType
 
 LOGGER = logging.getLogger(__name__)
@@ -46,6 +46,17 @@ deserialize = c_pickle.loads
 
 # default message max size in bytes = 1MB
 DEFAULT_MESSAGE_MAX_SIZE = 1048576
+
+if (STANDALONE_DATA_PATH := os.getenv("STANDALONE_DATA_PATH")) is not None:
+    _data_dir = Path(STANDALONE_DATA_PATH)
+else:
+    _data_dir = Path(
+        os.path.abspath(
+            os.path.join(
+                os.path.dirname(os.path.realpath(__file__)), os.pardir, os.pardir, os.pardir, "__standalone_data__"
+            )
+        )
+    )
 
 
 # noinspection PyPep8Naming
@@ -682,9 +693,6 @@ def _get_from_meta_table(key):
 # noinspection PyProtectedMember
 def _put_to_meta_table(key, value):
     _get_meta_table().put(key, value)
-
-
-_data_dir = Path(file_utils.get_project_base_directory()).joinpath("data").absolute()
 
 
 def _get_data_dir():

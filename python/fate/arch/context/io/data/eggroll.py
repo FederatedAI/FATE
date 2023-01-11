@@ -12,7 +12,6 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from fate.arch.abc import CTableABC
 
 from ....unify import EggrollURI
 
@@ -25,9 +24,9 @@ class EggrollDataFrameWriter:
 
     def write_dataframe(self, df):
         from fate.arch import dataframe
-        from fate.arch.common.address import EggRollAddress
+        from fate.arch.computing._address import EggRollAddress
 
-        table: CTableABC = dataframe.serialize(self.ctx, df)
+        table = dataframe.serialize(self.ctx, df)
         schema = {}
         table.save(
             address=EggRollAddress(name=self.uri.get_data_name(), namespace=self.uri.get_data_namespace()),
@@ -106,7 +105,7 @@ class EggrollMetaURI:
 
 
 def load_table(ctx, uri: EggrollMetaURI, metadata: dict):
-    from fate.arch.common.address import EggRollAddress
+    from fate.arch.computing._address import EggRollAddress
 
     meta_key, meta = list(
         ctx.computing.load(

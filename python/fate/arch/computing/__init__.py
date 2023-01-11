@@ -13,7 +13,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from ._computing import CTableABC
 from ._type import ComputingEngine
-from ._util import is_table
+
+
+def is_table(v):
+    return isinstance(v, CTableABC)
+
 
 __all__ = ["is_table", "ComputingEngine"]

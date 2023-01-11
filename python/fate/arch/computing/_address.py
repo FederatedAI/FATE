@@ -12,43 +12,27 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from ..abc import AddressABC
-from ..metastore.db_utils import StorageConnector
 
 
-class AddressBase(AddressABC):
-    def __init__(self, connector_name=None):
-        self.connector_name = connector_name
-        if connector_name:
-            connector = StorageConnector(connector_name=connector_name)
-            if connector.get_info():
-                for k, v in connector.get_info().items():
-                    if hasattr(self, k) and v:
-                        self.__setattr__(k, v)
-
-    @property
-    def connector(self):
-        return {}
-
-    @property
-    def storage_engine(self):
-        return
+import abc
 
 
-class StandaloneAddress(AddressBase):
+class Address(metaclass=abc.ABCMeta):
+    ...
+
+
+class StandaloneAddress(Address):
     def __init__(
         self,
         home=None,
         name=None,
         namespace=None,
         storage_type=None,
-        connector_name=None,
     ):
         self.home = home
         self.name = name
         self.namespace = namespace
         self.storage_type = storage_type
-        super(StandaloneAddress, self).__init__(connector_name=connector_name)
 
     def __hash__(self):
         return (self.home, self.name, self.namespace, self.storage_type).__hash__()
@@ -64,12 +48,11 @@ class StandaloneAddress(AddressBase):
         return {"home": self.home}
 
 
-class EggRollAddress(AddressBase):
-    def __init__(self, home=None, name=None, namespace=None, connector_name=None):
+class EggRollAddress(Address):
+    def __init__(self, home=None, name=None, namespace=None):
         self.name = name
         self.namespace = namespace
         self.home = home
-        super(EggRollAddress, self).__init__(connector_name=connector_name)
 
     def __hash__(self):
         return (self.home, self.name, self.namespace).__hash__()
@@ -85,11 +68,10 @@ class EggRollAddress(AddressBase):
         return {"home": self.home}
 
 
-class HDFSAddress(AddressBase):
-    def __init__(self, name_node=None, path=None, connector_name=None):
+class HDFSAddress(Address):
+    def __init__(self, name_node=None, path=None):
         self.name_node = name_node
         self.path = path
-        super(HDFSAddress, self).__init__(connector_name=connector_name)
 
     def __hash__(self):
         return (self.name_node, self.path).__hash__()
@@ -105,10 +87,9 @@ class HDFSAddress(AddressBase):
         return {"name_node": self.name_node}
 
 
-class PathAddress(AddressBase):
-    def __init__(self, path=None, connector_name=None):
+class PathAddress(Address):
+    def __init__(self, path):
         self.path = path
-        super(PathAddress, self).__init__(connector_name=connector_name)
 
     def __hash__(self):
         return self.path.__hash__()
@@ -120,13 +101,12 @@ class PathAddress(AddressBase):
         return self.__str__()
 
 
-class ApiAddress(AddressBase):
-    def __init__(self, method="POST", url=None, header=None, body=None, connector_name=None):
+class ApiAddress(Address):
+    def __init__(self, method="POST", url=None, header=None, body=None):
         self.method = method
         self.url = url
         self.header = header if header else {}
         self.body = body if body else {}
-        super(ApiAddress, self).__init__(connector_name=connector_name)
 
     def __hash__(self):
         return (self.method, self.url).__hash__()
@@ -138,7 +118,7 @@ class ApiAddress(AddressBase):
         return self.__str__()
 
 
-class MysqlAddress(AddressBase):
+class MysqlAddress(Address):
     def __init__(
         self,
         user=None,
@@ -147,7 +127,6 @@ class MysqlAddress(AddressBase):
         port=None,
         db=None,
         name=None,
-        connector_name=None,
     ):
         self.user = user
         self.passwd = passwd
@@ -155,8 +134,6 @@ class MysqlAddress(AddressBase):
         self.port = port
         self.db = db
         self.name = name
-        self.connector_name = connector_name
-        super(MysqlAddress, self).__init__(connector_name=connector_name)
 
     def __hash__(self):
         return (self.host, self.port, self.db, self.name).__hash__()
@@ -178,7 +155,7 @@ class MysqlAddress(AddressBase):
         }
 
 
-class HiveAddress(AddressBase):
+class HiveAddress(Address):
     def __init__(
         self,
         host=None,
@@ -188,7 +165,6 @@ class HiveAddress(AddressBase):
         database="default",
         auth_mechanism="PLAIN",
         password=None,
-        connector_name=None,
     ):
         self.host = host
         self.username = username
@@ -197,7 +173,6 @@ class HiveAddress(AddressBase):
         self.auth_mechanism = auth_mechanism
         self.password = password
         self.name = name
-        super(HiveAddress, self).__init__(connector_name=connector_name)
 
     def __hash__(self):
         return (self.host, self.port, self.database, self.name).__hash__()
@@ -220,7 +195,7 @@ class HiveAddress(AddressBase):
         }
 
 
-class LinkisHiveAddress(AddressBase):
+class LinkisHiveAddress(Address):
     def __init__(
         self,
         host="127.0.0.1",
@@ -232,7 +207,6 @@ class LinkisHiveAddress(AddressBase):
         execute_application_name="hive",
         source={},
         params={},
-        connector_name=None,
     ):
         self.host = host
         self.port = port
@@ -243,7 +217,6 @@ class LinkisHiveAddress(AddressBase):
         self.execute_application_name = execute_application_name
         self.source = source
         self.params = params
-        super(LinkisHiveAddress, self).__init__(connector_name=connector_name)
 
     def __hash__(self):
         return (self.host, self.port, self.database, self.name).__hash__()
@@ -255,10 +228,9 @@ class LinkisHiveAddress(AddressBase):
         return self.__str__()
 
 
-class LocalFSAddress(AddressBase):
-    def __init__(self, path=None, connector_name=None):
+class LocalFSAddress(Address):
+    def __init__(self, path):
         self.path = path
-        super(LocalFSAddress, self).__init__(connector_name=connector_name)
 
     def __hash__(self):
         return (self.path).__hash__()

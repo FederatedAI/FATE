@@ -83,9 +83,11 @@ def execute_component(config: TaskConfigSpec):
             input_metric_artifacts = parse_input_metric(component, stage, role, config.inputs.artifacts)
             # log output artifacts
             for name, artifact in input_data_artifacts.items():
-                mlmd.io.log_input_artifact(name, artifact)
+                if artifact is not None:
+                    mlmd.io.log_input_artifact(name, artifact)
             for name, artifact in input_metric_artifacts.items():
-                mlmd.io.log_input_artifact(name, artifact)
+                if artifact is not None:
+                    mlmd.io.log_input_artifact(name, artifact)
 
             # wrap model artifact
             input_model_artifacts = {
@@ -119,9 +121,11 @@ def execute_component(config: TaskConfigSpec):
 
             # log output artifacts
             for name, artifact in output_data_artifacts.items():
-                mlmd.io.log_output_artifact(name, artifact)
+                if artifact is not None:
+                    mlmd.io.log_output_data(name, artifact)
             for name, artifact in output_metric_artifacts.items():
-                mlmd.io.log_output_artifact(name, artifact)
+                if artifact is not None:
+                    mlmd.io.log_output_metric(name, artifact)
 
         except Exception as e:
             tb = traceback.format_exc()
