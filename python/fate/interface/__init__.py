@@ -20,11 +20,9 @@ from ._data_io import Dataframe
 from ._federation import FederationEngine, FederationWrapper
 from ._gc import GarbageCollector
 from ._metric import InCompleteMetrics, Metric, Metrics, MetricsHandler, MetricsWrap
-from ._module import Module
 from ._party import Parties, Party, PartyMeta
 
 __all__ = [
-    "Module",
     "Context",
     "Dataframe",
     "MetricsHandler",

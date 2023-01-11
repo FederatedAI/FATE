@@ -15,14 +15,13 @@
 from typing import Optional, Union
 
 from fate.interface import Context, Dataframe
-from fate.interface import Module as ModuleProtocol
 
 
 class Model:
     ...
 
 
-class Module(ModuleProtocol):
+class Module:
     mode: str
 
     def fit(
