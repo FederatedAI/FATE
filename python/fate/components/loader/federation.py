@@ -43,7 +43,7 @@ def load_federation(federation, computing):
             rs_session_id=federation.metadata.federation_id,
             party=federation.metadata.parties.local.tuple(),
             parties=[p.tuple() for p in federation.metadata.parties.parties],
-            proxy_endpoint=f"{federation.metadata.rollsite_config.port}:{federation.metadata.rollsite_config.port}",
+            proxy_endpoint=f"{federation.metadata.rollsite_config.host}:{federation.metadata.rollsite_config.port}",
         )
 
     if isinstance(federation, RabbitMQFederationSpec):
