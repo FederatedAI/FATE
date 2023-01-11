@@ -1,8 +1,8 @@
 import copy
 from ..conf.types import SupportRole, PlaceHolder, ArtifactSourceType
 from ..conf.job_configuration import TaskConf
-from python.fate_client.pipeline.utils.standalone.id_gen import get_uuid
-from pipeline.entity.component_structures import load_component_spec
+from ..utils.standalone.id_gen import get_uuid
+from ..entity.component_structures import load_component_spec
 from ..interface import ArtifactChannel
 from ..entity.dag_structures import RuntimeTaskOutputChannelSpec, ModelWarehouseChannelSpec
 

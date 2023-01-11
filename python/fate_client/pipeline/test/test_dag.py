@@ -7,7 +7,7 @@ from pipeline.pipeline import StandalonePipeline
 
 
 pipeline = StandalonePipeline().set_scheduler_party_id(party_id=10001).set_roles(
-        guest=9999, host=[10000, 10001], arbiter=10001)
+        guest=9999, host=10000, arbiter=10001)
 reader_0 = Reader(name="reader_0")
 reader_0.guest.component_param(path="file:///Users/maguoqiang/mgq/FATE-2.0-alpha-with-flow/FATE/"
                                     "examples/data/breast_hetero_guest.csv",
@@ -17,14 +17,17 @@ reader_0.guest.component_param(path="file:///Users/maguoqiang/mgq/FATE-2.0-alpha
                                label_name="y",
                                label_type="float32",
                                dtype="float32")
+reader_0.guest.conf.set("test_reader_guest", 2)
 
-reader_0.hosts[[0, 1]].component_param(path="file:///Users/maguoqiang/mgq/FATE-2.0-alpha-with-flow/FATE/"
+reader_0.hosts[0].component_param(path="file:///Users/maguoqiang/mgq/FATE-2.0-alpha-with-flow/FATE/"
                                             "examples/data/breast_hetero_host.csv",
                                        format="csv",
                                        id_name="id",
                                        delimiter=",",
                                        label_name=None,
                                        dtype="float32")
+
+reader_0.hosts[[0, 1]].conf.set("test_reader_guest", 2)
 
 intersection_0 = Intersection(name="intersection_0",
                               method="raw",
@@ -43,14 +46,13 @@ feature_scale_1 = FeatureScale(name="feature_scale_1",
                                input_model=feature_scale_0.outputs["output_model"])
 
 lr_0 = HeteroLR(name="lr_0",
-                # train_data=feature_scale_0.outputs["train_output_data"],
-                # validate_data=feature_scale_1.outputs["test_output_data"],
-                train_data=reader_0.outputs["output_data"],
-                validate_data=reader_0.outputs["output_data"],
+                train_data=feature_scale_0.outputs["train_output_data"],
+                validate_data=feature_scale_1.outputs["test_output_data"],
                 max_iter=1,
                 learning_rate=0.01,
-                batch_size=569)
+                batch_size=100)
 
+lr_0.conf.set("backend", "gpu")
 lr_1 = HeteroLR(name="lr_1",
                 test_data=feature_scale_1.outputs["test_output_data"],
                 input_model=lr_0.outputs["output_model"])
@@ -60,8 +62,8 @@ evaluation_0 = Evaluation(name="evaluation_0",
                           input_data=lr_0.outputs["train_output_data"])
 
 pipeline.add_task(reader_0)
-# pipeline.add_task(feature_scale_0)
-# pipeline.add_task(feature_scale_1)
+pipeline.add_task(feature_scale_0)
+pipeline.add_task(feature_scale_1)
 pipeline.add_task(intersection_0)
 pipeline.add_task(intersection_1)
 pipeline.add_task(lr_0)
@@ -72,12 +74,16 @@ pipeline.conf.set("task_parallelism", 1)
 pipeline.compile()
 print(pipeline.get_dag())
 pipeline.fit()
-print(pipeline.deploy([intersection_0, lr_0]))
+print(pipeline.get_task_info("feature_scale_0").get_output_model())
+print(pipeline.get_task_info("lr_0").get_output_model())
+print(pipeline.get_task_info("evaluation_0").get_output_metrics())
+print(pipeline.deploy([intersection_0, feature_scale_0, lr_0]))
 
 
 predict_pipeline = StandalonePipeline()
 reader_1 = Reader(name="reader_1")
-reader_1.guest.component_param(path="examples/data/breast_hetero_guest.csv",
+reader_1.guest.component_param(path="file:///Users/maguoqiang/mgq/FATE-2.0-alpha-with-flow/FATE/"
+                                    "examples/data/breast_hetero_guest.csv",
                                format="csv",
                                id_name="id",
                                delimiter=",",
@@ -85,7 +91,8 @@ reader_1.guest.component_param(path="examples/data/breast_hetero_guest.csv",
                                label_type="float32",
                                dtype="float32")
 
-reader_1.hosts[[0, 1]].component_param(path="examples/data/breast_hetero_host.csv",
+reader_1.hosts[0].component_param(path="file:///Users/maguoqiang/mgq/FATE-2.0-alpha-with-flow/FATE/"
+                                       "examples/data/breast_hetero_host.csv",
                                        format="csv",
                                        id_name="id",
                                        delimiter=",",

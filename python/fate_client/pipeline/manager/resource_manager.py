@@ -1,4 +1,4 @@
-from python.fate_client.pipeline.utils.standalone.id_gen import get_uuid
+from ..utils.standalone.id_gen import get_uuid
 from ..utils.file_utils import construct_local_dir
 from ..conf.env_config import StandaloneConfig
 from ..entity.task_structure import OutputArtifact
@@ -92,6 +92,12 @@ class StandaloneResourceManager(object):
                                                                          task_name,
                                                                          role,
                                                                          party_id)
+
+    def get_output_model(self, uri):
+        return self._model_manager.get_output_model(uri)
+
+    def get_output_metrics(self, uri):
+        return self._metric_manager.get_output_metrics(uri)
 
     @staticmethod
     def generate_log_uri(log_dir_prefix, role, party_id):

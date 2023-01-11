@@ -3,6 +3,7 @@ from typing import Union
 import yaml
 from .executor import StandaloneExecutor, FateFlowExecutor
 from .entity import DAG
+from .entity import FateFlowTaskInfo, StandaloneTaskInfo
 from .entity.runtime_entity import Roles
 from .conf.env_config import SiteInfo
 from .conf.types import SupportRole, PlaceHolder
@@ -26,9 +27,11 @@ class Pipeline(object):
 
     def set_site_role(self, role):
         self._local_role = role
+        return self
 
     def set_site_party_id(self, party_id):
         self._local_party_id = party_id
+        return self
 
     def set_stage(self, stage):
         self._stage = stage
@@ -171,6 +174,9 @@ class Pipeline(object):
 
         return component_specs
 
+    def get_task_info(self, task_name):
+        raise NotADirectoryError
+
     def fit(self) -> "Pipeline":
         self._model_info = self._executor.fit(self._dag.dag_spec,
                                               self.get_component_specs(),
@@ -229,6 +235,12 @@ class StandalonePipeline(Pipeline):
     def __init__(self, *args):
         super(StandalonePipeline, self).__init__(StandaloneExecutor(), *args)
 
+    def get_task_info(self, task):
+        if isinstance(task, Component):
+            task = task.name
+
+        return StandaloneTaskInfo(task_name=task, model_info=self._model_info)
+
 
 class FateFlowPipeline(Pipeline):
     def __init__(self, *args):
@@ -239,3 +251,9 @@ class FateFlowPipeline(Pipeline):
                meta: dict, partitions=4,
                storage_engine=None, **kwargs):
         self._executor.upload(file, head, namespace, name, meta, partitions, storage_engine, **kwargs)
+
+    def get_task_info(self, task):
+        if isinstance(task, Component):
+            task = task.name
+
+        return FateFlowTaskInfo(task_name=task, model_info=self._model_info)

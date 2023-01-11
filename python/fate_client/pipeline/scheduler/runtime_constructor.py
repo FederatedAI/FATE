@@ -1,22 +1,25 @@
 from ..conf.env_config import StandaloneConfig
+from ..conf.types import ArtifactType
 from ..entity.dag_structures import RuntimeTaskOutputChannelSpec
 from ..entity.task_structure import TaskScheduleSpec, LOGGERSpec, TaskRuntimeInputSpec, \
     MLMDSpec, RuntimeConfSpec, ComputingEngineSpec, DeviceSpec, FederationPartySpec, \
     ComputingEngineMetadata, FederationEngineSpec, FederationEngineMetadata, InputArtifact
 from ..manager.resource_manager import StandaloneResourceManager
-from python.fate_client.pipeline.utils.standalone.id_gen import gen_computing_id, gen_federation_id, gen_task_id
+from ..utils.standalone.id_gen import gen_computing_id, gen_federation_id, gen_task_id
 
 
 class RuntimeConstructor(object):
     OUTPUT_KEYS = ["model", "metric", "data"]
 
-    def __init__(self, runtime_parties, stage, job_id, task_name, component_ref, runtime_parameters, log_dir):
+    def __init__(self, runtime_parties, stage, job_id, task_name,
+                 component_ref, component_spec, runtime_parameters, log_dir):
         self._task_name = task_name
         self._runtime_parties = runtime_parties
         self._job_id = job_id
         self._federation_id = gen_federation_id(job_id, task_name)
         self._stage = stage
         self._component_ref = component_ref
+        self._component_spec = component_spec
         self._runtime_parameters = runtime_parameters
         self._log_dir = log_dir
 
@@ -70,8 +73,8 @@ class RuntimeConstructor(object):
         return self._output_artifacts[role][party_id].get(output_key, None)
 
     def construct_input_artifacts(self, upstream_inputs, runtime_constructor_dict,
-                                  component_spec, fit_model_info=None):
-        input_artifacts = component_spec.input_definitions.artifacts
+                                  fit_model_info=None):
+        input_artifacts = self._component_spec.input_definitions.artifacts
         for input_key, channels in upstream_inputs.items():
             artifact_spec = input_artifacts[input_key]
             if self._stage not in set(artifact_spec.stages):
@@ -237,3 +240,28 @@ class RuntimeConstructor(object):
                 for output in output_list:
                     output_artifact = InputArtifact(**output)
                     self._output_artifacts[party.role][party.party_id].update({output_artifact.name: output_artifact})
+
+    def get_output_model(self, role, party_id):
+        output_artifacts = self._output_artifacts[role][party_id]
+        models = dict()
+        for artifact_key, artifact in output_artifacts.items():
+            artifact_spec = self._component_spec.output_definitions.artifacts[artifact_key]
+            uri = artifact.uri
+            if artifact_spec.type in [ArtifactType.MODEL, ArtifactType.MODELS]:
+                models.update(self._resource_manager.get_output_model(uri))
+
+        return models
+
+    def get_output_metrics(self, role, party_id):
+        output_artifacts = self._output_artifacts[role][party_id]
+        metrics = dict()
+        for artifact_key, artifact in output_artifacts.items():
+            artifact_spec = self._component_spec.output_definitions.artifacts[artifact_key]
+            uri = artifact.uri
+            if ArtifactType.METRIC in artifact_spec.type:
+                metric_name = uri.split("/", -1)[-1]
+                metrics[metric_name] = self._resource_manager.get_output_metrics(uri)
+
+        return metrics
+
+
