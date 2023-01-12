@@ -8,7 +8,7 @@ FATE1.X维护了多套通信架构，包括eggroll、spark+pulsar+nginx 、spark
 
 ##### 下图为FATE1.X采用spark为计算引擎时的通信架构
 
-![fate_old_spark](/Users/kaideng/work/code/FATE2/FATE/doc/2.0/images/fate_old_spark.png)
+![fate_old_spark](../images/fate_old_spark.png)
 
 如上所示，FATE1.X通信架构有一些弊端如下：
 
