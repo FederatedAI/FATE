@@ -76,6 +76,7 @@ print(pipeline.get_dag())
 pipeline.fit()
 print(pipeline.get_task_info("feature_scale_0").get_output_model())
 print(pipeline.get_task_info("lr_0").get_output_model())
+print(pipeline.get_task_info("lr_0").get_output_data())
 print(pipeline.get_task_info("evaluation_0").get_output_metrics())
 print(pipeline.deploy([intersection_0, feature_scale_0, lr_0]))
 

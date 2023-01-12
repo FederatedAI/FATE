@@ -23,8 +23,10 @@ class TaskInfo(object):
 
 
 class StandaloneTaskInfo(TaskInfo):
-    def get_output_data(self):
-        ...
+    def get_output_data(self, role=None, party_id=None):
+        party_id = party_id if role else self._model_info.local_party_id
+        role = role if role else self._model_info.local_role
+        return self._model_info.task_info[self._task_name].get_output_data(role, party_id)
 
     def get_output_model(self, role=None, party_id=None):
         party_id = party_id if role else self._model_info.local_party_id
@@ -45,7 +47,7 @@ class FateFlowTaskInfo(TaskInfo):
                                                      task_name=self._task_name)
 
     def get_output_data(self, limits=None, ):
-        ...
+        raise ValueError("fate-flow does not support get_output_data interface this version.")
 
     def get_output_metrics(self):
         return FATEFlowJobInvoker().get_output_metrics(job_id=self._model_info.job_id,

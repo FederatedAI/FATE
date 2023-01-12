@@ -93,6 +93,9 @@ class StandaloneResourceManager(object):
                                                                          role,
                                                                          party_id)
 
+    def get_output_data(self, uri):
+        return self._data_manager.get_output_data(uri)
+
     def get_output_model(self, uri):
         return self._model_manager.get_output_model(uri)
 

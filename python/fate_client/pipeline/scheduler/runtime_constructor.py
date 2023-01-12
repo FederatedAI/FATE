@@ -241,10 +241,19 @@ class RuntimeConstructor(object):
                     output_artifact = InputArtifact(**output)
                     self._output_artifacts[party.role][party.party_id].update({output_artifact.name: output_artifact})
 
+    def get_output_data(self, role, party_id):
+        data = dict()
+        for artifact_key, artifact in self._output_artifacts[role][party_id].items():
+            artifact_spec = self._component_spec.output_definitions.artifacts[artifact_key]
+            uri = artifact.uri
+            if artifact_spec.type in [ArtifactType.DATASET, ArtifactType.DATASETS]:
+                data[artifact_key] = self._resource_manager.get_output_data(uri)
+
+        return data
+
     def get_output_model(self, role, party_id):
-        output_artifacts = self._output_artifacts[role][party_id]
         models = dict()
-        for artifact_key, artifact in output_artifacts.items():
+        for artifact_key, artifact in self._output_artifacts[role][party_id].items():
             artifact_spec = self._component_spec.output_definitions.artifacts[artifact_key]
             uri = artifact.uri
             if artifact_spec.type in [ArtifactType.MODEL, ArtifactType.MODELS]:
@@ -253,9 +262,8 @@ class RuntimeConstructor(object):
         return models
 
     def get_output_metrics(self, role, party_id):
-        output_artifacts = self._output_artifacts[role][party_id]
         metrics = dict()
-        for artifact_key, artifact in output_artifacts.items():
+        for artifact_key, artifact in self._output_artifacts[role][party_id].items():
             artifact_spec = self._component_spec.output_definitions.artifacts[artifact_key]
             uri = artifact.uri
             if ArtifactType.METRIC in artifact_spec.type:
