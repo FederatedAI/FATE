@@ -25,13 +25,19 @@ install_requires = [
     "numpy",
     "torch",
     "rust_paillier",
-    "pika",
-    "pulsar",
     "urllib3",
     "grpcio",
     "ml_metadata",
     "beautifultable",
 ]
+extras_require = {
+    "RABBITMQ": ["pika==1.2.1"],
+    "PULSAR": ["pulsar-client"],
+    "SPARK": ["spark"],
+    "ALL": ["pika", "pulsar-client", "spark"],
+}
+
+
 setup(
     name="fate",
     version=fate.__version__,
@@ -44,5 +50,6 @@ setup(
     packages=packages,
     package_dir=package_dir,
     install_requires=install_requires,
+    extras_require=extras_require,
     python_requires=">=3.8",
 )
