@@ -266,20 +266,6 @@ class DataFrame(object):
             self._ctx, self._schema.dict(), index=index, match_id=match_id, label=label, weight=weight, values=values
         )
 
-    def to_local(self):
-        ret_dict = {
-            "index": self._index.to_local(),
-        }
-        if self._values:
-            ret_dict["values"] = self._values.to_local()
-        if self._weight:
-            ret_dict["weight"] = self._weight.to_local()
-        if self._label:
-            ret_dict["label"] = self._label.to_local()
-        if self._match_id:
-            ret_dict["match_id"] = self._match_id.to_local()
-
-        return DataFrame(self._ctx, self._schema.dict(), **ret_dict)
 
     @property
     def is_local(self):
@@ -318,17 +304,6 @@ class DataFrame(object):
             values=ValueStore(self._ctx, ret, header),
             schema=transform_schema,
         )
-
-    def serialize(self):
-        """
-        this function change tensor to a normal distributed table
-        """
-
-    def deserialize(self):
-        """
-        this function change a distributed table to tensor
-        """
-        ...
 
 
 class ColumnObject(object):

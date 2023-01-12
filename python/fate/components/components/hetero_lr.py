@@ -139,7 +139,7 @@ def predict_guest(ctx, input_model, test_data, test_output_data):
         module = LrModuleGuest.from_model(model)
         test_data = sub_ctx.reader(test_data).read_dataframe()
         predict_score = module.predict(sub_ctx, test_data)
-        predict_result = test_data.data.transform_to_predict_result(predict_score)
+        predict_result = test_data.data.transform_to_predict_result(predict_score, data_type="predict")
         sub_ctx.writer(test_output_data).write_dataframe(predict_result)
 
 
