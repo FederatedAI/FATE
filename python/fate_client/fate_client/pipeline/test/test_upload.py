@@ -12,7 +12,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from pipeline.pipeline import FateFlowPipeline
+from fate_client.pipeline.pipeline import FateFlowPipeline
 
 pipeline = FateFlowPipeline()
 pipeline.upload(file="/Users/maguoqiang/mgq/FATE-2.0-alpha-with-flow/FATE/examples/data/breast_hetero_guest.csv",

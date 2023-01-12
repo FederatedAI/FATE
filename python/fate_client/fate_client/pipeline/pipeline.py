@@ -13,7 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import copy
-from typing import Union
 import yaml
 from .executor import StandaloneExecutor, FateFlowExecutor
 from .entity import DAG
@@ -49,10 +48,6 @@ class Pipeline(object):
 
     def set_stage(self, stage):
         self._stage = stage
-        return self
-
-    def set_scheduler_party_id(self, party_id: Union[str, int]):
-        self._roles.set_scheduler_party_id(party_id)
         return self
 
     @property
@@ -263,8 +258,9 @@ class FateFlowPipeline(Pipeline):
     def upload(self, file: str, head: int,
                namespace: str, name: str,
                meta: dict, partitions=4,
+               destroy=True,
                storage_engine=None, **kwargs):
-        self._executor.upload(file, head, namespace, name, meta, partitions, storage_engine, **kwargs)
+        self._executor.upload(file, head, namespace, name, meta, partitions, storage_engine, destroy, **kwargs)
 
     def get_task_info(self, task):
         if isinstance(task, Component):

@@ -18,7 +18,7 @@ from typing import Optional, Literal, List, Union, Dict, Any, TypeVar
 
 class PartySpec(BaseModel):
     role: Union[Literal["guest", "host", "arbiter"]]
-    party_id: List[Union[str, int]]
+    party_id: List[str]
 
 
 class OutputChannelSpec(BaseModel):
@@ -90,7 +90,6 @@ class JobConfSpec(BaseModel):
 
 
 class DAGSpec(BaseModel):
-    scheduler_party_id: Union[str, int]
     parties: List[PartySpec]
     conf: Optional[JobConfSpec]
     stage: Optional[Union[Literal["train", "predict", "default"]]]

@@ -12,36 +12,25 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from pipeline.components.fate import HeteroLR
-from pipeline.components.fate import Reader
-from pipeline.components.fate import FeatureScale
-from pipeline.components.fate import Intersection
-from pipeline.components.fate import Evaluation
-from pipeline.pipeline import StandalonePipeline
+from fate_client.pipeline.components.fate import HeteroLR
+from fate_client.pipeline.components.fate import Reader
+from fate_client.pipeline.components.fate import FeatureScale
+from fate_client.pipeline.components.fate import Intersection
+from fate_client.pipeline.components.fate import Evaluation
+from fate_client.pipeline.pipeline import FateFlowPipeline
 
 
-pipeline = StandalonePipeline().set_scheduler_party_id(party_id=10001).set_roles(
-        guest=9999, host=10000, arbiter=10001)
+pipeline = FateFlowPipeline().set_scheduler_party_id(party_id='9999').set_roles(
+    guest='9999', host='9999', arbiter='9999')
 reader_0 = Reader(name="reader_0")
-reader_0.guest.component_param(path="file:///Users/maguoqiang/mgq/FATE-2.0-alpha-with-flow/FATE/"
-                                    "examples/data/breast_hetero_guest.csv",
-                               format="csv",
-                               id_name="id",
-                               delimiter=",",
-                               label_name="y",
-                               label_type="float32",
-                               dtype="float32")
+reader_0.guest.component_param(path="eggroll:///mgq/breast_hetero_guest",
+                               format="raw_table")
 reader_0.guest.conf.set("test_reader_guest", 2)
 
-reader_0.hosts[0].component_param(path="file:///Users/maguoqiang/mgq/FATE-2.0-alpha-with-flow/FATE/"
-                                            "examples/data/breast_hetero_host.csv",
-                                       format="csv",
-                                       id_name="id",
-                                       delimiter=",",
-                                       label_name=None,
-                                       dtype="float32")
+reader_0.hosts[0].component_param(path="eggroll:///mgq/breast_hetero_host",
+                                  format="raw_table")
 
-reader_0.hosts[[0, 1]].conf.set("test_reader_guest", 2)
+reader_0.hosts[0].conf.set("test_reader_guest", 2)
 
 intersection_0 = Intersection(name="intersection_0",
                               method="raw",
@@ -88,31 +77,18 @@ pipeline.conf.set("task_parallelism", 1)
 pipeline.compile()
 print(pipeline.get_dag())
 pipeline.fit()
-print(pipeline.get_task_info("feature_scale_0").get_output_model())
 print(pipeline.get_task_info("lr_0").get_output_model())
-print(pipeline.get_task_info("lr_0").get_output_data())
 print(pipeline.get_task_info("evaluation_0").get_output_metrics())
 print(pipeline.deploy([intersection_0, feature_scale_0, lr_0]))
 
 
-predict_pipeline = StandalonePipeline()
+predict_pipeline = FateFlowPipeline()
 reader_1 = Reader(name="reader_1")
-reader_1.guest.component_param(path="file:///Users/maguoqiang/mgq/FATE-2.0-alpha-with-flow/FATE/"
-                                    "examples/data/breast_hetero_guest.csv",
-                               format="csv",
-                               id_name="id",
-                               delimiter=",",
-                               label_name="y",
-                               label_type="float32",
-                               dtype="float32")
+reader_1.guest.component_param(path="eggroll:///mgq/breast_hetero_guest",
+                               format="raw_table")
 
-reader_1.hosts[0].component_param(path="file:///Users/maguoqiang/mgq/FATE-2.0-alpha-with-flow/FATE/"
-                                       "examples/data/breast_hetero_host.csv",
-                                       format="csv",
-                                       id_name="id",
-                                       delimiter=",",
-                                       label_name=None,
-                                       dtype="float32")
+reader_1.hosts[0].component_param(path="eggroll:///mgq/breast_hetero_host",
+                                  format="raw_table")
 
 
 deployed_pipeline = pipeline.get_deployed_pipeline()

@@ -12,10 +12,10 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from pipeline.components.fate import Reader
-from pipeline.components.fate import Intersection
-from pipeline.pipeline import StandalonePipeline
-from pipeline.components.fate import FeatureScale
+from fate_client.pipeline.components.fate import Reader
+from fate_client.pipeline.components.fate import Intersection
+from fate_client.pipeline.pipeline import StandalonePipeline
+from fate_client.pipeline.components.fate import FeatureScale
 
 
 pipeline = StandalonePipeline().set_scheduler_party_id(party_id=10001).set_roles(

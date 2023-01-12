@@ -114,22 +114,16 @@ class MLMD(object):
 class StandaloneConfig(object):
     conf = get_default_config().get("standalone", {})
 
-    default_path = Path.cwd()
-    OUTPUT_DATA_DIR = conf.get("output_data_dir")
-    if not OUTPUT_DATA_DIR:
-        OUTPUT_DATA_DIR = default_path.joinpath("data").as_uri()
-    OUTPUT_MODEL_DIR = conf.get("output_model_dir")
+    job_dir = conf.get("job_dir")
+    if not job_dir:
+        job_dir = Path.cwd()
+    else:
+        job_dir = Path(job_dir)
 
-    if not OUTPUT_MODEL_DIR:
-        OUTPUT_MODEL_DIR = default_path.joinpath("model").as_uri()
-    OUTPUT_METRIC_DIR = conf.get("output_metric_dir")
-
-    if not OUTPUT_METRIC_DIR:
-        OUTPUT_METRIC_DIR = default_path.joinpath("metric").as_uri()
-
-    JOB_DIR = conf.get("job_dir")
-    if not JOB_DIR:
-        JOB_DIR = default_path.joinpath("jobs").as_uri()
+    JOB_CONF_DIR = job_dir.joinpath("jobs").as_uri()
+    OUTPUT_DATA_DIR = job_dir.joinpath("data").as_uri()
+    OUTPUT_MODEL_DIR = job_dir.joinpath("model").as_uri()
+    OUTPUT_METRIC_DIR = job_dir.joinpath("metric").as_uri()
 
     MLMD = MLMD(conf)
     LOGGER = LOGGER(conf)

@@ -22,7 +22,7 @@ from ..entity.component_structures import ComponentSpec
 from ..scheduler.dag_parser import DagParser
 from ..scheduler.runtime_constructor import RuntimeConstructor
 from ..utils.fateflow.fate_flow_job_invoker import FATEFlowJobInvoker
-from python.fate_client.pipeline.entity.model_info import StandaloneModelInfo, FateFlowModelInfo
+from ..entity.model_info import StandaloneModelInfo, FateFlowModelInfo
 
 
 class StandaloneExecutor(object):
@@ -197,14 +197,15 @@ class FateFlowExecutor(object):
     @staticmethod
     def upload(file: str, head: int,
                namespace: str, name: str, meta: dict,
-               partitions=4, storage_engine=None, **kwargs):
+               partitions=4, destroy=True, storage_engine=None, **kwargs):
         flow_job_invoker = FATEFlowJobInvoker()
         post_data = dict(file=file,
                          head=head,
                          namespace=namespace,
                          name=name,
                          meta=meta,
-                         partitions=partitions)
+                         partitions=partitions,
+                         destroy=destroy)
         if storage_engine:
             post_data["storage_engine"] = storage_engine
 

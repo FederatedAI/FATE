@@ -33,7 +33,6 @@ class DAG(object):
         return DAGSchema(dag=self._dag_spec, schema_version=SCHEMA_VERSION)
 
     def compile(self, roles, task_insts, stage, job_conf):
-        scheduler_party_id = roles.scheduler_party_id
         parties = roles.get_parties_spec()
         tasks = dict()
         party_tasks = dict()
@@ -91,7 +90,6 @@ class DAG(object):
             tasks[task_name] = TaskSpec(**task)
 
         self._dag_spec = DAGSpec(
-            scheduler_party_id=scheduler_party_id,
             parties=parties,
             stage=stage,
             tasks=tasks

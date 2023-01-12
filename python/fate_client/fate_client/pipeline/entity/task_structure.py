@@ -94,6 +94,6 @@ class TaskScheduleSpec(BaseModel):
     component: str
     role: str
     stage: str
-    party_id: Optional[Union[str, int]]
+    party_id: Optional[str]
     inputs: Optional[TaskRuntimeInputSpec]
     conf: RuntimeConfSpec

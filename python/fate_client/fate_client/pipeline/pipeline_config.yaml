@@ -5,10 +5,7 @@ site_info:
   local_party_id:
 
 standalone:
-  job_directory:
-  output_data_dir:
-  output_model_dir:
-  output_metric_dir:
+  job_dir:
   logger:
     level: "DEBUG"
     debug_mode: true

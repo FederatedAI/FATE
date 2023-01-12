@@ -28,7 +28,7 @@ class StandaloneResourceManager(object):
         self._model_manager = get_model_manager(conf.OUTPUT_MODEL_DIR)
         self._metric_manager = get_metric_manager(conf.OUTPUT_METRIC_DIR)
         self._status_manager = get_status_manager().create_status_manager(conf.MLMD.db)
-        self._task_conf_manager = get_task_conf_manager(conf.JOB_DIR)
+        self._task_conf_manager = get_task_conf_manager(conf.JOB_CONF_DIR)
 
     def generate_output_artifact(self, job_id, task_name, role, party_id, artifact_type):
         if artifact_type == "model":
@@ -122,7 +122,7 @@ class StandaloneResourceManager(object):
 
     def write_out_task_conf(self, job_id, task_name, role, party_id, task_conf):
         task_conf_uri = self._task_conf_manager.record_task_conf(
-            self._conf.JOB_DIR,
+            self._conf.JOB_CONF_DIR,
             job_id,
             task_name,
             role,
