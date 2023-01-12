@@ -24,7 +24,6 @@ from ..unify import device
 from ._cipher import CipherKit
 from ._federation import GC, Parties, Party
 from ._namespace import Namespace
-from ._tensor import TensorKit
 from .io.kit import IOKit
 from .metric import MetricsWrap
 
@@ -56,7 +55,6 @@ class Context(ContextInterface):
         self.super_namespace = Namespace()
 
         self.cipher: CipherKit = CipherKit(device)
-        self.tensor: TensorKit = TensorKit(computing, device)
         self._io_kit: IOKit = IOKit()
 
         self._computing = computing
