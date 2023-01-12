@@ -58,8 +58,8 @@ def load_federation(federation, computing):
             host=federation.metadata.rabbitmq_config.host,
             port=federation.metadata.rabbitmq_config.port,
             mng_port=federation.metadata.rabbitmq_config.mng_port,
-            base_user=federation.metadata.rabbitmq_config.base_user,
-            base_password=federation.metadata.rabbitmq_config.base_password,
+            base_user=federation.metadata.rabbitmq_config.user,
+            base_password=federation.metadata.rabbitmq_config.password,
             mode=federation.metadata.rabbitmq_config.mode,
             max_message_size=federation.metadata.rabbitmq_config.max_message_size,
             rabbitmq_run=federation.metadata.rabbitmq_run,
@@ -69,18 +69,23 @@ def load_federation(federation, computing):
     if isinstance(federation, PulsarFederationSpec):
         from fate.arch.federation.pulsar import PulsarFederation
 
+        route_table = {}
+        for k, v in federation.metadata.route_table.route.items():
+            route_table.update({k: v.dict()})
+        if (default := federation.metadata.route_table.default) is not None:
+            route_table.update({"default": default.dict()})
         return PulsarFederation.from_conf(
             federation_session_id=federation.metadata.federation_id,
             computing_session=computing,
             party=federation.metadata.parties.local.tuple(),
             parties=[p.tuple() for p in federation.metadata.parties.parties],
-            route_table={k: v for k, v in federation.metadata.route_table.items()},
+            route_table=route_table,
             mode=federation.metadata.pulsar_config.mode,
             host=federation.metadata.pulsar_config.host,
             port=federation.metadata.pulsar_config.port,
             mng_port=federation.metadata.pulsar_config.mng_port,
-            base_user=federation.metadata.pulsar_config.base_user,
-            base_password=federation.metadata.pulsar_config.base_password,
+            base_user=federation.metadata.pulsar_config.user,
+            base_password=federation.metadata.pulsar_config.password,
             max_message_size=federation.metadata.pulsar_config.max_message_size,
             topic_ttl=federation.metadata.pulsar_config.topic_ttl,
             cluster=federation.metadata.pulsar_config.cluster,
