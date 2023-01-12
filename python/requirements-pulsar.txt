@@ -1,0 +1,1 @@
+pulsar-client==2.10.2
