@@ -19,8 +19,7 @@
     "10000":{
       "default":[{
         "port": 9889,
-        "ip": "localhost",
-        "version": 197
+        "ip": "localhost"
       }]
 
     }

@@ -52,6 +52,72 @@ FATE1.X维护了多套通信架构，包括eggroll、spark+pulsar+nginx 、spark
 
 ![osx_on_spark.drawio](../images/osx_on_spark.drawio.png)
 
+## 配置：
+
+以下为osx最简配置,对应部署文件中的broker.properties
+
+```properties
+#grpc端口
+grpc.port= 9370 
+#是否开启http server
+open.http.server=false
+# http端口
+http.port=8080
+# 是否开启grpc+TLS传输
+open.grpc.tls.server=false
+#grpc+TLS传输时使用的端口
+grpc.tls.port=9883
+#本方partyId,可以以逗号分隔并填写多个
+self.party=10000
+#部署方式 standalone/cluster，standalone代表单机模式 cluster代表集群模式
+deploy.model=standalone
+#集群模式下需要接入zookeeper,以下为zookeeper地址
+zk.url=localhost:2181
+#若要使用eggroll作为计算引擎，需要知悉eggroll cluster-manager组件的ip与端口
+eggroll.cluster.manager.ip =  localhost
+eggroll.cluster.manager.port = 4670
+```
+
+
+
+## 路由：
+
+路由配置相关文件为route_table.json ,与eggroll组件rollsite保持一致：
+
+```json
+{
+  "route_table":
+  {
+    "9999":
+    {
+      "default":[
+        {
+          "port": 9370,
+          "ip": "localhost"
+        }
+      ],
+      "fateflow":[
+        {
+          "port": 9360,
+          "ip": "localhost"
+        }
+      ]
+    },
+    "10000":{
+      "default":[{
+        "port": 9889,
+        "ip": "localhost"
+      }]
+
+    }
+  },
+  "permission":
+  {
+    "default_allow": true
+  }
+}
+```
+
 
 
 ## 接口：
@@ -122,5 +188,13 @@ service PrivateTransferProtocol {
 
 
 
+## 源码打包：
 
+1. 下载源码，打包机器需要安装好maven  + jdk
+2. 进入源码目录/deploy,  执行sh auto-package.sh, 执行完之后会在当前目录出现osx.tar.gz。
 
+## 部署：
+
+1. 部署机器需要安装jdk1.8+
+2. 解压osx.tar.gz 
+3. 进入部署目录，执行sh service.sh start
