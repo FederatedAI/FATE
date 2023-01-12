@@ -12,18 +12,17 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-#
-from flow_sdk.utils import preprocess
-from flow_sdk.client.api.base import BaseFlowAPI
+from pipeline.pipeline import FateFlowPipeline
 
-
-class Task(BaseFlowAPI):
-    def list(self, limit=10):
-        kwargs = locals()
-        config_data, dsl_data = preprocess(**kwargs)
-        return self._post(url='job/list/task', json=config_data)
-
-    def query(self, job_id=None, role=None, party_id=None, component_name=None, status=None):
-        kwargs = locals()
-        config_data, dsl_data = preprocess(**kwargs)
-        return self._post(url='job/task/query', json=config_data)
+pipeline = FateFlowPipeline()
+pipeline.upload(file="/Users/maguoqiang/mgq/FATE-2.0-alpha-with-flow/FATE/examples/data/breast_hetero_guest.csv",
+                head=1,
+                partitions=4,
+                namespace="experiment",
+                name="breast_hetero_guest",
+                storage_engine="standalone",
+                meta={
+                    "label_name": "y",
+                    "label_type": "float32",
+                    "dtype": "float32"
+                })

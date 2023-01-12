@@ -1,4 +1,18 @@
-from python.fate_client.pipeline.utils.standalone.id_gen import get_uuid
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+from ..utils.standalone.id_gen import get_uuid
 from ..utils.file_utils import construct_local_dir
 from ..conf.env_config import StandaloneConfig
 from ..entity.task_structure import OutputArtifact
@@ -92,6 +106,15 @@ class StandaloneResourceManager(object):
                                                                          task_name,
                                                                          role,
                                                                          party_id)
+
+    def get_output_data(self, uri):
+        return self._data_manager.get_output_data(uri)
+
+    def get_output_model(self, uri):
+        return self._model_manager.get_output_model(uri)
+
+    def get_output_metrics(self, uri):
+        return self._metric_manager.get_output_metrics(uri)
 
     @staticmethod
     def generate_log_uri(log_dir_prefix, role, party_id):

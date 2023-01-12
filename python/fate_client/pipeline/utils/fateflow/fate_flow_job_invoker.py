@@ -1,3 +1,17 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
 import time
 from datetime import timedelta
 from .flow_client import FlowClient
@@ -89,16 +103,56 @@ class FATEFlowJobInvoker(object):
     def query_site_info(self):
         response = self._client.query_site_info()
         try:
+            code = response["code"]
+            if code != 0:
+                return None
+
             party_id = response["data"]["party_id"]
-            return '9999'
+            return party_id
             # TODO: fix it later
             # return party_id
-        except BaseException:
-            raise ValueError(f"query site info is failed, response={response}")
+        except ValueError:
+            return None
 
     def upload_data(self, upload_conf):
-        resource = self._client.upload_data(upload_conf)
-        return resource
+        response = self._client.upload_data(upload_conf)
+        try:
+            code = response["code"]
+            if code != 0:
+                raise ValueError(f"Return code {code}!=0")
+
+            namespace = response["data"]["namespace"]
+            name = response["data"]["name"]
+            print(f"Upload data successfully, please use eggroll:///{namespace}/{name} as input uri")
+        except BaseException:
+            raise ValueError(f"Upload data fails, response={response}")
+
+    def get_output_data(self, ):
+        ...
+
+    def get_output_model(self, job_id, role, party_id, task_name):
+        response = self._client.query_model(job_id, role, party_id, task_name)
+        try:
+            code = response["code"]
+            if code != 0:
+                raise ValueError(f"Return code {code}!=0")
+            model = response["data"]["output_model"]
+            return model
+        except BaseException:
+            raise ValueError(f"query task={job_id}, role={role}, "
+                             f"party_id={party_id}'s output model is failed, response={response}")
+
+    def get_output_metrics(self, job_id, role, party_id, task_name):
+        response = self._client.query_metrics(job_id, role, party_id, task_name)
+        try:
+            code = response["code"]
+            if code != 0:
+                raise ValueError(f"Return code {code}!=0")
+            metrics = response["data"]
+            return metrics
+        except BaseException:
+            raise ValueError(f"query task={job_id}, role={role}, "
+                             f"party_id={party_id}'s output metrics is failed, response={response}")
 
 
 class JobStatus(object):

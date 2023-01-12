@@ -63,8 +63,8 @@ class RabbitMQFederationSpec(pydantic.BaseModel):
             host: str
             port: int
             mng_port: int
-            base_user: str
-            base_password: str
+            user: str
+            password: str
             max_message_size: Optional[int] = None
             mode: str = "replication"
 
@@ -81,12 +81,28 @@ class RabbitMQFederationSpec(pydantic.BaseModel):
 
 class PulsarFederationSpec(pydantic.BaseModel):
     class MetadataSpec(pydantic.BaseModel):
+        class RouteTable(pydantic.BaseModel):
+            class Route(pydantic.BaseModel):
+                host: str
+                port: int
+                sslPort: int
+                proxy: str = ""
+
+            class Default(pydantic.BaseModel):
+                domain: str
+                brokerPort: int
+                brokerSslPort: int
+                proxy: str = ""
+
+            route: Dict[str, Route]
+            default: Optional[Default] = None
+
         class PulsarConfig(pydantic.BaseModel):
             host: str
             port: int
             mng_port: int
-            base_user: Optional[str] = None
-            base_password: Optional[str] = None
+            user: Optional[str] = None
+            password: Optional[str] = None
             max_message_size: Optional[int] = None
             mode: str = "replication"
             topic_ttl: Optional[int] = None
@@ -95,7 +111,7 @@ class PulsarFederationSpec(pydantic.BaseModel):
 
         federation_id: str
         parties: FederationPartiesSpec
-        route_table: dict
+        route_table: RouteTable
         pulsar_config: PulsarConfig
         pulsar_run: dict = {}
         connection: dict = {}

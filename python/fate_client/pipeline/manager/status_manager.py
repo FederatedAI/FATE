@@ -1,3 +1,17 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
 import json
 from ml_metadata import metadata_store
 from ml_metadata.proto import metadata_store_pb2
@@ -54,7 +68,7 @@ class SQLiteStatusManager(object):
         return ret
 
     def get_task_outputs(self, task_id):
-        return self._meta_manager.get_artifacts(task_id)
+        return self._meta_manager.get_artifacts(task_id)["output"]
 
 
 def get_status_manager():
@@ -84,9 +98,17 @@ class MachineLearningMetadata:
         artifacts = self.store.get_artifacts_by_context(context_id)
         # parameters
         parameters = []
-        data = []
-        model = []
-        metric = []
+        input_data, output_data = [], []
+        input_model, output_model = [], []
+        input_metric, output_metric = [], []
+
+        def _to_dict(artifact):
+            return dict(
+                uri=artifact.uri,
+                name=artifact.properties["name"].string_value,
+                metadata=json.loads(artifact.properties["metadata"].string_value),
+            )
+
         for artifact in artifacts:
             if self.parameter_type_id == artifact.type_id:
                 parameters.append(
@@ -96,34 +118,31 @@ class MachineLearningMetadata:
                         type=artifact.properties["type"].string_value,
                     )
                 )
-            if self.data_type_id == artifact.type_id:
-                data.append(
-                    dict(
-                        uri=artifact.uri,
-                        name=artifact.properties["name"].string_value,
-                        metadata=json.loads(artifact.properties["metadata"].string_value),
-                    )
-                )
+            if artifact.type_id in {self.data_type_id, self.model_type_id, self.metric_type_id}:
+                is_input = artifact.properties["is_input"].bool_value
 
-            if self.model_type_id == artifact.type_id:
-                data.append(
-                    dict(
-                        uri=artifact.uri,
-                        name=artifact.properties["name"].string_value,
-                        metadata=json.loads(artifact.properties["metadata"].string_value),
-                    )
-                )
+                if self.data_type_id == artifact.type_id:
+                    if is_input:
+                        input_data.append(_to_dict(artifact))
+                    else:
+                        output_data.append(_to_dict(artifact))
 
-            if self.metric_type_id == artifact.type_id:
-                data.append(
-                    dict(
-                        uri=artifact.uri,
-                        name=artifact.properties["name"].string_value,
-                        metadata=json.loads(artifact.properties["metadata"].string_value),
-                    )
-                )
+                if self.model_type_id == artifact.type_id:
+                    if is_input:
+                        input_model.append(_to_dict(artifact))
+                    else:
+                        output_model.append(_to_dict(artifact))
 
-        return dict(parameters=parameters, data=data, model=model, metric=metric)
+                if self.metric_type_id == artifact.type_id:
+                    if is_input:
+                        input_metric.append(_to_dict(artifact))
+                    else:
+                        output_metric.append(_to_dict(artifact))
+        return dict(
+            parameters=parameters,
+            input=dict(data=input_data, model=input_model, metric=input_metric),
+            output=dict(data=output_data, model=output_model, metric=output_metric),
+        )
 
     def get_or_create_task_context(self, taskid):
         task_context_run = self.store.get_context_by_type_and_name("TaskContext", taskid)
@@ -162,8 +181,8 @@ class MachineLearningMetadata:
             task_run.name = taskid
             task_run.properties["state"].string_value = "INIT"
             task_run.properties["safe_terminate"].bool_value = False
-        [task_run_id] = self.store.put_executions([task_run])
-        task_run.id = task_run_id
+            [task_run_id] = self.store.put_executions([task_run])
+            task_run.id = task_run_id
         return task_run
 
     def get_task_safe_terminate_flag(self, taskid: str):
@@ -198,19 +217,20 @@ class MachineLearningMetadata:
         [artifact_id] = self.store.put_artifacts([artifact])
         return artifact_id
 
-    def add_data_artifact(self, name: str, uri: str, metadata: dict):
-        return self.add_artifact(self.data_type_id, name, uri, metadata)
+    def add_data_artifact(self, name: str, uri: str, metadata: dict, is_input):
+        return self.add_artifact(self.data_type_id, name, uri, metadata, is_input)
 
-    def add_model_artifact(self, name: str, uri: str, metadata: dict):
-        return self.add_artifact(self.model_type_id, name, uri, metadata)
+    def add_model_artifact(self, name: str, uri: str, metadata: dict, is_input):
+        return self.add_artifact(self.model_type_id, name, uri, metadata, is_input)
 
-    def add_metric_artifact(self, name: str, uri: str, metadata: dict):
-        return self.add_artifact(self.metric_type_id, name, uri, metadata)
+    def add_metric_artifact(self, name: str, uri: str, metadata: dict, is_input):
+        return self.add_artifact(self.metric_type_id, name, uri, metadata, is_input)
 
-    def add_artifact(self, type_id: int, name: str, uri: str, metadata: dict):
+    def add_artifact(self, type_id: int, name: str, uri: str, metadata: dict, is_input):
         artifact = metadata_store_pb2.Artifact()
         artifact.uri = uri
         artifact.properties["name"].string_value = name
+        artifact.properties["is_input"].bool_value = is_input
         artifact.properties["metadata"].string_value = json.dumps(metadata)
         artifact.type_id = type_id
         [artifact_id] = self.store.put_artifacts([artifact])
@@ -270,6 +290,7 @@ class MachineLearningMetadata:
         artifact_type.name = name
         artifact_type.properties["uri"] = metadata_store_pb2.STRING
         artifact_type.properties["name"] = metadata_store_pb2.STRING
+        artifact_type.properties["is_input"] = metadata_store_pb2.BOOLEAN
         artifact_type.properties["metadata"] = metadata_store_pb2.STRING
         artifact_type_id = self.store.put_artifact_type(artifact_type)
         return artifact_type_id

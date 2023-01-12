@@ -1,3 +1,17 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
 import requests
 
 
@@ -8,6 +22,8 @@ class Address(object):
     QUERY_TASK = "/job/task/query"
     SITE_INFO = "/site/info/query"
     UPLOAD_DATA = "/data/upload"
+    QUERY_MODEL = "/output/model/query"
+    QUERY_METRIC = "/output/metric/query"
 
     def __init__(self, server_url):
         self._submit_job_url = server_url + self.SUBMIT_JOB
@@ -18,6 +34,9 @@ class Address(object):
         self._site_info_url = server_url + self.SITE_INFO
 
         self._upload_url = server_url + self.UPLOAD_DATA
+
+        self._query_model_url = server_url + self.QUERY_MODEL
+        self._query_metric_url = server_url + self.QUERY_METRIC
 
     @property
     def submit_job_url(self):
@@ -42,6 +61,14 @@ class Address(object):
     @property
     def upload_data_url(self):
         return self._upload_url
+
+    @property
+    def query_model_url(self):
+        return self._query_model_url
+
+    @property
+    def query_metric_url(self):
+        return self._query_metric_url
 
 
 class FlowClient(object):
@@ -107,3 +134,29 @@ class FlowClient(object):
         )
 
         return response.json()
+
+    def query_model(self, job_id, role, party_id, task_name):
+        resource = requests.get(
+            self._address.query_model_url,
+            params={
+                "job_id": job_id,
+                "role": role,
+                "party_id": party_id,
+                "task_name": task_name
+            }
+        )
+
+        return resource.json()
+
+    def query_metrics(self, job_id, role, party_id, task_name):
+        resource = requests.get(
+            self._address.query_metric_url,
+            params={
+                "job_id": job_id,
+                "role": role,
+                "party_id": party_id,
+                "task_name": task_name
+            }
+        )
+
+        return resource.json()

@@ -1,3 +1,17 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
 from pathlib import Path
 from typing import Dict
 from ..conf.env_config import LogPath
@@ -8,7 +22,7 @@ from ..entity.component_structures import ComponentSpec
 from ..scheduler.dag_parser import DagParser
 from ..scheduler.runtime_constructor import RuntimeConstructor
 from ..utils.fateflow.fate_flow_job_invoker import FATEFlowJobInvoker
-from .model_info import StandaloneModelInfo, FateFlowModelInfo
+from python.fate_client.pipeline.entity.model_info import StandaloneModelInfo, FateFlowModelInfo
 
 
 class StandaloneExecutor(object):
@@ -23,9 +37,12 @@ class StandaloneExecutor(object):
         self._dag_parser.parse_dag(dag_schema, component_specs)
         self._run()
 
+        local_party_id = self.get_site_party_id(dag_schema, local_role, local_party_id)
         return StandaloneModelInfo(
             job_id=self._job_id,
             task_info=self._runtime_constructor_dict,
+            local_role=local_role,
+            local_party_id=local_party_id,
             model_id=self._job_id,
             model_version=0
         )
@@ -38,7 +55,9 @@ class StandaloneExecutor(object):
         self._run(fit_model_info)
         return StandaloneModelInfo(
             job_id=self._job_id,
-            task_info=self._runtime_constructor_dict
+            task_info=self._runtime_constructor_dict,
+            local_role=fit_model_info.local_role,
+            local_party_id=fit_model_info.local_party_id
         )
 
     def _run(self, fit_model_info: StandaloneModelInfo = None):
@@ -62,12 +81,12 @@ class StandaloneExecutor(object):
                                                      job_id=self._job_id,
                                                      task_name=task_name,
                                                      component_ref=task_node.component_ref,
+                                                     component_spec=task_node.component_spec,
                                                      stage=stage,
                                                      runtime_parameters=runtime_parameters,
                                                      log_dir=log_dir)
             runtime_constructor.construct_input_artifacts(upstream_inputs,
                                                           runtime_constructor_dict,
-                                                          component_spec,
                                                           fit_model_info)
             runtime_constructor.construct_outputs()
             # runtime_constructor.construct_output_artifacts(output_definitions)
@@ -102,6 +121,18 @@ class StandaloneExecutor(object):
                                )
 
         return ret_msg
+
+    @staticmethod
+    def get_site_party_id(dag_schema, role, party_id):
+        if party_id:
+            return party_id
+
+        if party_id is None:
+            for party in dag_schema.dag.parties:
+                if role == party.role:
+                    return party.party_id[0]
+
+        raise ValueError(f"Can not retrieval site's party_id from site's role {role}")
 
 
 class FateFlowExecutor(object):
@@ -163,7 +194,8 @@ class FateFlowExecutor(object):
 
         raise ValueError(f"Can not retrieval site's party_id from site's role {role}")
 
-    def upload(self, file: str, head: int,
+    @staticmethod
+    def upload(file: str, head: int,
                namespace: str, name: str, meta: dict,
                partitions=4, storage_engine=None, **kwargs):
         flow_job_invoker = FATEFlowJobInvoker()
