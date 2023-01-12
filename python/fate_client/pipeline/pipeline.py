@@ -200,9 +200,9 @@ class Pipeline(object):
         return self
 
     def predict(self) -> "Pipeline":
-        self._executor.predict(self._dag.dag_spec,
-                               self.get_component_specs(),
-                               self._model_info)
+        self._model_info = self._executor.predict(self._dag.dag_spec,
+                                                  self.get_component_specs(),
+                                                  self._model_info)
 
         return self
 

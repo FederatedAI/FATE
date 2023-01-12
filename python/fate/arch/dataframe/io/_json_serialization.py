@@ -25,61 +25,6 @@ from ..storage import Index, ValueStore
 from ._json_schema import build_schema, parse_schema
 
 
-def _serialize_local(ctx, data):
-    """
-    index, match_id, label, weight, values
-    """
-    # TODO: tensor does not provide method to get raw values, so we use to local first
-    schema = build_schema(data)
-
-    tensors = [data.label, data.weight]
-    tensor_concat = None
-    for tensor in tensors:
-        if not tensor:
-            continue
-        tensor = tensor.storage.data
-        if tensor_concat is None:
-            tensor_concat = tensor
-        else:
-            tensor_concat = torch.concat([tensor_concat, tensor], -1)
-
-    # TODO: modify here before releasing
-    if data.values is not None:
-        if isinstance(data.values, pd.DataFrame):
-            value_concat = data.values.to_numpy()
-        else:
-            value_concat = data.values.storage.data.numpy()
-
-        if tensor_concat is not None:
-            value_concat = np.concatenate([tensor_concat.numpy(), value_concat], axis=-1)
-    else:
-        value_concat = tensor_concat
-
-    if value_concat is not None:
-        tensor_concat = ctx.computing.parallelize([value_concat.tolist()], include_key=False, partition=1)
-    """
-    data only has index
-    """
-    if tensor_concat is None:
-        serialize_data = data.index.mapValues(lambda pd_index: pd_index.tolist())
-    else:
-
-        def _flatten(index: pd.Index, t: list):
-            index = index.tolist()
-            # t = t.tolist()
-            flatten_ret = []
-            for _id, _tensor in zip(index, t):
-                flatten_ret.append([_id] + _tensor)
-
-            return flatten_ret
-
-        serialize_data = data.index.to_local().values.join(tensor_concat, _flatten)
-
-    serialize_data.schema = schema
-    data_dict = dict(data=list(serialize_data.collect()), schema=schema)
-    return data_dict
-
-
 def _serialize_distributed(ctx, data):
     """
     index, match_id, label, weight, values
@@ -89,16 +34,16 @@ def _serialize_distributed(ctx, data):
 
     tensors = [data.label, data.weight]
     tensor_concat = None
-    for tensor in tensors:
-        if not tensor:
+    for t in tensors:
+        if not t:
             continue
 
         """
         distributed tensor
         """
-        tensor = tensor.storage.blocks
+        t = t.storage.blocks
         if tensor_concat is None:
-            tensor_concat = tensor
+            tensor_concat = t
         else:
             tensor_concat = tensor_concat.join(tensor, lambda t1, t2: torch.concat([t1, t2], -1))
 
