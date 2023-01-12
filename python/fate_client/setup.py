@@ -2,13 +2,6 @@
 from setuptools import setup
 
 packages = [
-    "flow_client",
-    "flow_client.flow_cli",
-    "flow_client.flow_cli.commands",
-    "flow_client.flow_cli.utils",
-    "flow_sdk",
-    "flow_sdk.client",
-    "flow_sdk.client.api",
     "pipeline",
     "pipeline.components",
     "pipeline.components.fate_components",
