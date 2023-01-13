@@ -47,7 +47,6 @@ def _serialize_distributed(ctx, data):
         else:
             tensor_concat = tensor_concat.join(tensor, lambda t1, t2: torch.concat([t1, t2], -1))
 
-    # TODO: modify here before releasing
     if data.values is not None:
         if isinstance(data.values, ValueStore):
             value_concat = data.values.values

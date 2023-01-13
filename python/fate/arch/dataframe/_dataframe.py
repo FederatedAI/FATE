@@ -224,7 +224,7 @@ class DataFrame(object):
             """
             agg_indexer = Index.aggregate_indexer(indexes)
 
-            # TODO: distributed tensor does not provider slice api, need to fix later
+            # TODO: use distributed tensor slice api later
             def _iloc_tensor(distributed_tensor):
                 blocks = distributed_tensor.storage.blocks
                 dtype = blocks.first()[1].dtype.name
