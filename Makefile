@@ -16,15 +16,20 @@ install-tensor-package:                 ## install rust_paillier.
 .PHONY: build-tensor-package
 build-tensor-package:                   ## build rust_paillier.
 	@echo "build rust_paillier"
-	@maturin build --release -m rust/tensor/rust_paillier/Cargo.toml --out dist
+	@maturin build --release -m rust/tensor/rust_paillier/Cargo.toml --out dist --target-dir build
 
 .PHONY: build-fate
 build-fate:                             ## build fate
 	@echo "build fate"
 	@python3 setup.py sdist --formats=gztar -d dist
 
+.PHONY: build-fate_client
+build-fate_client:                      ## build fate
+	@echo "build fate_client"
+	@cd python/fate_client && python3 setup.py sdist --formats=gztar -d ../../dist
+
 .PHONY: build
-build: build-tensor-package build-fate  ## build
+build: build-tensor-package build-fate  build-fate_client ## build
 	@echo "build all"
 	@python3 setup.py sdist --formats=gztar -d dist
 
@@ -34,8 +39,8 @@ clean:                                  ## Clean unused files.
 	@rm -rf build/
 	@rm -rf rust/tensor/rust_paillier/target
 	@find python -name '*.pyc' -exec rm -f {} \;
-	@find python -name '__pycache__' -exec rm -rf {} \;
-	@find python -name '*.egg-info' -exec rm -rf {} \;
+	@find python -name '__pycache__' -exec rm -rf {} \+
+	@find python -name '*.egg-info' -exec rm -rf {} \+
 
 
 .PHONY: proto-gen-osx

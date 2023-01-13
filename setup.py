@@ -31,10 +31,18 @@ install_requires = [
     "beautifultable",
 ]
 extras_require = {
-    "RABBITMQ": ["pika==1.2.1"],
-    "PULSAR": ["pulsar-client"],
-    "SPARK": ["spark"],
-    "ALL": ["pika", "pulsar-client", "spark"],
+    "rabbitmq": ["pika==1.2.1"],
+    "pulsar": ["pulsar-client==2.10.2"],
+    "spark": ["spark"],
+    "eggroll": [
+        "grpcio==1.46.3",
+        "grpcio-tools==1.46.3",
+        "numba==0.53.0",
+        "protobuf==3.19.6",
+        "pyarrow==6.0.1",
+        "mmh3==3.0.0",
+    ],
+    "all": ["fate[rabbitmq,pulsar,spark,eggroll]"],
 }
 
 
