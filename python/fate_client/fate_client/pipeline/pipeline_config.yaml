@@ -8,7 +8,7 @@ standalone:
   job_dir:
   logger:
     level: "DEBUG"
-    debug_mode: true
+    debug_mode: false
   device:
     type: "CPU"
   mlmd:
