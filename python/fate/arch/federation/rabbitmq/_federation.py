@@ -21,6 +21,7 @@ from typing import List, Optional
 from fate.interface import PartyMeta
 
 from .._federation import FederationBase
+from .._parties import Party
 from ._mq_channel import MQChannel
 from ._rabbit_manager import RabbitManager
 
@@ -126,12 +127,12 @@ class RabbitmqFederation(FederationBase):
     def __getstate__(self):
         pass
 
-    def destroy(self, parties):
+    def destroy(self):
         LOGGER.debug("[rabbitmq.cleanup]start to cleanup...")
-        for party in parties:
-            if self._party == party:
+        for party in self.parties:
+            if self.local_party == party:
                 continue
-            vhost = self._get_vhost(party)
+            vhost = self._get_vhost(Party(role=party[0], party_id=party[1]))
             LOGGER.debug(f"[rabbitmq.cleanup]start to cleanup vhost {vhost}...")
             self._rabbit_manager.clean(vhost)
             LOGGER.debug(f"[rabbitmq.cleanup]cleanup vhost {vhost} done")

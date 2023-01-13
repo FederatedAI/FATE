@@ -37,7 +37,7 @@ class FederationEngine(Protocol):
     ):
         ...
 
-    def destroy(self, parties):
+    def destroy(self):
         ...
 
 

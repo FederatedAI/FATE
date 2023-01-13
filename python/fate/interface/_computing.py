@@ -16,4 +16,5 @@ from typing import Protocol
 
 
 class ComputingEngine(Protocol):
-    ...
+    def destroy(self):
+        ...

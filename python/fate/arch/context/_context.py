@@ -12,6 +12,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+import logging
 from contextlib import contextmanager
 from copy import copy
 from typing import Iterator, List, Optional
@@ -26,6 +27,8 @@ from ._federation import GC, Parties, Party
 from ._namespace import Namespace
 from .io.kit import IOKit
 from .metric import MetricsWrap
+
+logger = logging.getLogger(__name__)
 
 
 class Context(ContextInterface):
@@ -87,7 +90,7 @@ class Context(ContextInterface):
         return self._get_computing()
 
     @property
-    def federation(self):
+    def federation(self) -> FederationEngine:
         return self._get_federation()
 
     @contextmanager
@@ -166,8 +169,19 @@ class Context(ContextInterface):
             raise RuntimeError(f"computing not set")
         return self._computing
 
-    def reader(self, uri, **kwargs) -> "Reader":
+    def reader(self, uri, **kwargs):
         return self._io_kit.reader(self, uri, **kwargs)
 
-    def writer(self, uri, **kwargs) -> "Writer":
+    def writer(self, uri, **kwargs):
         return self._io_kit.writer(self, uri, **kwargs)
+
+    def destroy(self):
+        try:
+            self.computing.destroy()
+        except:
+            logger.exception("computing engine close failed", stack_info=True)
+
+        try:
+            self.federation.destroy()
+        except:
+            logger.exception("computing engine close failed", stack_info=True)

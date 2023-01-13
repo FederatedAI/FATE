@@ -152,7 +152,7 @@ class PulsarFederation(FederationBase):
     def __getstate__(self):
         pass
 
-    def destroy(self, parties):
+    def destroy(self):
         # The idea cleanup strategy is to consume all message in topics,
         # and let pulsar cluster to collect the used topics.
 

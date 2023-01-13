@@ -142,9 +142,9 @@ def execute_component(config: TaskConfigSpec):
             time.sleep(0.5)
         logger.debug("terminating, bye~")
     finally:
-        logger.debug("cleaning...")
-        # context.clean()
-        logger.debug("clean finished")
+        logger.debug("stop and cleaning...")
+        ctx.destroy()
+        logger.debug("stop and clean finished")
 
 
 def parse_input_parameters(mlmd: MLMD, cpn: _Component, input_parameters: Dict[str, Any]) -> dict:

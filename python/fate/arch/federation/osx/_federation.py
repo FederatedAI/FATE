@@ -90,7 +90,7 @@ class OSXFederation(FederationBase):
     def __getstate__(self):
         pass
 
-    def cleanup(self, parties):
+    def destroy(self):
         LOGGER.debug("start to cleanup...")
 
         channel = MQChannel(

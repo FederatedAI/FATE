@@ -123,7 +123,7 @@ class EggrollFederation(FederationEngine):
             LOGGER.debug(f"[{log_str}]remote object with type: {type(v)}")
             _push_with_exception_handle(self._rsc, v, name, tag, parties)
 
-    def destroy(self, parties: List[PartyMeta]):
+    def destroy(self):
         self._rp_ctx.cleanup(name="*", namespace=self._session_id)
 
 

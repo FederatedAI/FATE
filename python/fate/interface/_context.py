@@ -43,3 +43,6 @@ class Context(Protocol):
 
     def iter(self, iterable: Iterable[T]) -> Iterator[Tuple["Context", T]]:
         ...
+
+    def destroy(self):
+        ...
