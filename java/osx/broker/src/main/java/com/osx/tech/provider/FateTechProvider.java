@@ -177,7 +177,7 @@ public class FateTechProvider implements TechProvider, Lifecycle {
 
     @Override
     public String getProviderId() {
-        return Dict.FATE_TECH_PROVIDER;
+        return  MetaInfo.PROPERTY_FATE_TECH_PROVIDER;
     }
 
 

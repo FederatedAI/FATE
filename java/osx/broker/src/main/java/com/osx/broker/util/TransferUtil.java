@@ -130,7 +130,7 @@ public class TransferUtil {
         String desRole = desTopic.getRole();
         inboundBuilder.setPayload(packet.toByteString());
         inboundBuilder.putMetadata(Osx.Header.Version.name(), Long.toString(MetaInfo.CURRENT_VERSION));
-        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), Dict.FATE_TECH_PROVIDER);
+        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(),  MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
         inboundBuilder.putMetadata(Osx.Header.Token.name(), "");
         inboundBuilder.putMetadata(Osx.Header.SourceNodeID.name(), srcPartyId);
         inboundBuilder.putMetadata(Osx.Header.TargetNodeID.name(), desPartyId);

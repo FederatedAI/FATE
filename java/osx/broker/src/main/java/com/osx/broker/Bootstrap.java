@@ -76,7 +76,7 @@ public class Bootstrap {
                 logger.error("parse config error, {}", e.getMessage());
                 throw e;
             }
-
+            MetaInfo.PROPERTY_FATE_TECH_PROVIDER =  environment.getProperty(Dict.PROPERTY_FATE_TECH_PROVIDER,"FATE");
             MetaInfo.PROPERTY_ROOT_PATH = new File("").getCanonicalPath();
             MetaInfo.PROPERTY_ROUTE_TABLE = environment.getProperty(Dict.PROPERTY_ROUTE_TABLE);
             MetaInfo.PROPERTY_SERVER_CERTCHAIN_FILE = environment.getProperty(Dict.PROPERTY_SERVER_CERTCHAIN_FILE);

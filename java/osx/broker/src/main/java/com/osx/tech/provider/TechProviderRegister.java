@@ -30,32 +30,21 @@ public class TechProviderRegister implements Lifecycle {
 
     ConcurrentMap<String, TechProvider> registerMap = new ConcurrentHashMap<>();
 
-    //public TechProvider select(Pcp.Inbound inbound) {
-
-        public TechProvider select(String  techProviderCode ) {
-            Preconditions.checkArgument(techProviderCode != null);
-
+    public TechProvider select(String  techProviderCode ) {
+        Preconditions.checkArgument(techProviderCode != null);
         return this.registerMap.get(techProviderCode);
     }
-
-
-
     public void init() {
         FateTechProvider fateTechProvider = new FateTechProvider();
         fateTechProvider.init();
         this.registerMap.put(fateTechProvider.getProviderId(), fateTechProvider);
     }
-
     @Override
     public void start() {
-
     }
-
     @Override
     public void destroy() {
-
     }
-
 
 }
 

@@ -19,7 +19,7 @@ package com.osx.core.constant;
 import com.osx.core.config.MetaInfo;
 
 public class Dict {
-    public static final String FATE_TECH_PROVIDER="FT";
+    public static final String PROPERTY_FATE_TECH_PROVIDER="fate.tech.provider";
     public static final String ORIGIN_REQUEST = "origin_request";
     public static final String CASEID = "caseid";
     public static final String SEQNO = "seqno";

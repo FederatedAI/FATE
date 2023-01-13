@@ -57,7 +57,7 @@ public class HttpTest {
     public void   testConsumeMsg(){
         Map header = Maps.newHashMap();
         header.put(PtpHttpHeader.Version,"");
-        header.put(PtpHttpHeader.TechProviderCode,Dict.FATE_TECH_PROVIDER);
+        header.put(PtpHttpHeader.TechProviderCode, MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
         header.put(PtpHttpHeader.Token,"");
         header.put(PtpHttpHeader.SourceNodeID,srcPartyId);
         header.put(PtpHttpHeader.TargetNodeID,desPartyId);
@@ -80,7 +80,7 @@ public class HttpTest {
     public  void  testProduceMsg(){
         Map header = Maps.newHashMap();
         header.put(PtpHttpHeader.Version,"");
-        header.put(PtpHttpHeader.TechProviderCode,Dict.FATE_TECH_PROVIDER);
+        header.put(PtpHttpHeader.TechProviderCode, MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
         header.put(PtpHttpHeader.Token,"");
         header.put(PtpHttpHeader.SourceNodeID,desPartyId);//desPartyId
         header.put(PtpHttpHeader.TargetNodeID,srcPartyId);//srcPartyId

@@ -4,6 +4,7 @@ package com.osx.broker.test.grpc;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.osx.core.config.MetaInfo;
 import com.osx.core.constant.Dict;
 import com.osx.core.frame.GrpcConnectionFactory;
 import com.osx.core.ptp.TargetMethod;
@@ -76,7 +77,7 @@ public class QueueTest {
     public void test02Query() {
         Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
         inboundBuilder.putMetadata(Osx.Header.Version.name(), "123");
-        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), Dict.FATE_TECH_PROVIDER);
+        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(),  MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
         inboundBuilder.putMetadata(Osx.Header.Token.name(), "testToken");
         inboundBuilder.putMetadata(Osx.Header.SourceNodeID.name(), "9999");
         inboundBuilder.putMetadata(Osx.Header.TargetNodeID.name(), "10000");
@@ -112,7 +113,7 @@ public class QueueTest {
         for (int i = 0; i < 1; i++) {
             Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
             inboundBuilder.putMetadata(Osx.Header.Version.name(), "123");
-            inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), Dict.FATE_TECH_PROVIDER);
+            inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(),  MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
             inboundBuilder.putMetadata(Osx.Header.Token.name(), "testToken");
             inboundBuilder.putMetadata(Osx.Header.SourceNodeID.name(), "9999");
             inboundBuilder.putMetadata(Osx.Header.TargetNodeID.name(), "10000");
@@ -143,7 +144,7 @@ public class QueueTest {
 
         Osx.Inbound.Builder  inboundBuilder = Osx.Inbound.newBuilder();
         //  inboundBuilder.putMetadata(Osx.Header.Version.name(), "123");
-        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), Dict.FATE_TECH_PROVIDER );
+        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(),  MetaInfo.PROPERTY_FATE_TECH_PROVIDER );
         inboundBuilder.putMetadata(Osx.Metadata.TargetMethod.name(), TargetMethod.APPLY_TOPIC.name());
         inboundBuilder.putMetadata(Osx.Metadata.MessageTopic.name(), "testTopic0001");
         inboundBuilder.putMetadata(Osx.Metadata.InstanceId.name(),"localhost:9999" );
@@ -173,7 +174,7 @@ public class QueueTest {
 
         Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
         inboundBuilder.putMetadata(Osx.Header.Version.name(), "123");
-        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), Dict.FATE_TECH_PROVIDER);
+        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(),  MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
         inboundBuilder.putMetadata(Osx.Header.Token.name(), "testToken");
         inboundBuilder.putMetadata(Osx.Header.SourceNodeID.name(), "9999");
         inboundBuilder.putMetadata(Osx.Header.TargetNodeID.name(), "10000");
@@ -198,7 +199,7 @@ public class QueueTest {
             System.err.println("===================");
             Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
             inboundBuilder.putMetadata(Osx.Header.Version.name(), "123");
-            inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), Dict.FATE_TECH_PROVIDER);
+            inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(),  MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
             inboundBuilder.putMetadata(Osx.Header.Token.name(), "testToken");
             inboundBuilder.putMetadata(Osx.Header.SourceNodeID.name(), "9999");
             inboundBuilder.putMetadata(Osx.Header.TargetNodeID.name(), "10000");
@@ -235,7 +236,7 @@ public class QueueTest {
 
         Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
         inboundBuilder.putMetadata(Osx.Header.Version.name(), "123");
-        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), Dict.FATE_TECH_PROVIDER);
+        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(),  MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
         inboundBuilder.putMetadata(Osx.Header.Token.name(), "testToken");
         inboundBuilder.putMetadata(Osx.Header.SourceNodeID.name(), "9999");
         inboundBuilder.putMetadata(Osx.Header.TargetNodeID.name(), "10000");

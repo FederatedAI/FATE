@@ -1,5 +1,6 @@
 package com.osx.broker.test.grpc;
 
+import com.osx.core.config.MetaInfo;
 import com.osx.core.constant.Dict;
 import com.osx.core.ptp.TargetMethod;
 import io.grpc.ManagedChannel;
@@ -64,7 +65,7 @@ public class NewFateTest {
     public void testUnaryCall(){
         Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
         inboundBuilder.putMetadata(Osx.Header.Version.name(), "123");
-        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), Dict.FATE_TECH_PROVIDER);
+        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
         inboundBuilder.putMetadata(Osx.Header.Token.name(), "testToken");
         inboundBuilder.putMetadata(Osx.Header.SourceNodeID.name(), "9999");
         inboundBuilder.putMetadata(Osx.Header.TargetNodeID.name(), "10000");

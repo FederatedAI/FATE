@@ -28,6 +28,7 @@ import java.util.Set;
 
 public class MetaInfo {
     public static final long CURRENT_VERSION = 100;
+    public static  String PROPERTY_FATE_TECH_PROVIDER = "FATE";
     public static  String PROPERTY_DEFAULT_CLIENT_VERSION="2.X.X";
     public static volatile MasterInfo masterInfo;
     public static int PROPERTY_GRPC_SERVER_MAX_CONCURRENT_CALL_PER_CONNECTION = 1000;
