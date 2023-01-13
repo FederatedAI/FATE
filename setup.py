@@ -9,7 +9,8 @@ if fate_path not in sys.path:
 
 import fate
 
-packages = find_packages("python")
+packages = find_packages("python", exclude=["fate_client", "fate_client.*"])
+print(packages)
 package_dir = {"": "python"}
 install_requires = [
     "sklearn",
@@ -18,7 +19,7 @@ install_requires = [
     "pydantic",
     "click",
     "typing-extensions",
-    "ruamel-yaml",
+    "ruamel.yaml",
     "requests",
     "cloudpickle",
     "lmdb",
