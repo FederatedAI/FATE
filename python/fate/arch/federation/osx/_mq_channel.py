@@ -52,7 +52,7 @@ class MQChannel(object):
         self._get_or_create_channel()
         meta = dict(
             MessageTopic=self._send_topic,
-            TechProviderCode="FT",
+            TechProviderCode="FATE",
             SourceNodeID=self._src_party_id,
             TargetNodeID=self._dst_party_id,
             TargetComponentName=self._dst_role,
@@ -75,7 +75,7 @@ class MQChannel(object):
         self._get_or_create_channel()
         meta = dict(
             MessageTopic=self._receive_topic,
-            TechProviderCode="FT",
+            TechProviderCode="FATE",
             SourceNodeID=self._src_party_id,
             TargetNodeID=self._dst_party_id,
             TargetComponentName=self._dst_role,
@@ -95,7 +95,7 @@ class MQChannel(object):
         self._get_or_create_channel()
         meta = dict(
             MessageTopic=self._receive_topic,
-            TechProviderCode="FT",
+            TechProviderCode="FATE",
             SourceNodeID=self._src_party_id,
             TargetNodeID=self._dst_party_id,
             TargetComponentName=self._dst_role,
@@ -116,7 +116,7 @@ class MQChannel(object):
         self._get_or_create_channel()
         meta = dict(
             MessageTopic=self._send_topic,
-            TechProviderCode="FT",
+            TechProviderCode="FATE",
             SourceNodeID=self._src_party_id,
             TargetNodeID=self._dst_party_id,
             TargetComponentName=self._dst_role,
