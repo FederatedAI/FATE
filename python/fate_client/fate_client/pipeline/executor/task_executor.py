@@ -14,7 +14,7 @@
 #  limitations under the License.
 from pathlib import Path
 from typing import Dict
-from ..conf.env_config import LogPath
+from ..conf.env_config import StandaloneConfig
 from ..utils.standalone.id_gen import gen_job_id
 from ..utils.standalone.job_process import process_task
 from ..entity.dag_structures import DAGSchema
@@ -62,7 +62,7 @@ class StandaloneExecutor(object):
 
     def _run(self, fit_model_info: StandaloneModelInfo = None):
         self._job_id = gen_job_id()
-        self._log_dir_prefix = Path(LogPath.log_directory()).joinpath(self._job_id)
+        self._log_dir_prefix = StandaloneConfig.OUTPUT_LOG_DIR.joinpath(self._job_id)
         print(f"log prefix {self._log_dir_prefix}")
 
         runtime_constructor_dict = dict()
@@ -73,9 +73,7 @@ class StandaloneExecutor(object):
             stage = task_node.stage
             runtime_parties = task_node.runtime_parties
             runtime_parameters = task_node.runtime_parameters
-            component_spec = task_node.component_spec
             upstream_inputs = task_node.upstream_inputs
-            # output_definitions = task_node.output_definitions
 
             runtime_constructor = RuntimeConstructor(runtime_parties=runtime_parties,
                                                      job_id=self._job_id,

@@ -23,12 +23,11 @@ package_data = {"": ["*"]}
 
 install_requires = [
     "click>=7.1.2,<8.0.0",
-    "loguru>=0.6.0",
     "poetry>=0.12",
     "pandas>=1.1.5",
     "requests>=2.24.0,<3.0.0",
     "requests_toolbelt>=0.9.1,<0.10.0",
-    "ruamel.yaml==0.16.10",
+    "ruamel.yaml>=0.16.10",
     "setuptools>=65.5.1",
     "networkx>=2.8.7",
     "pydantic",

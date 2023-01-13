@@ -18,7 +18,7 @@ import yaml
 from pathlib import Path
 
 
-__all__ = ["StatusCode", "LogPath", "LogFormat", "FlowConfig", "StandaloneConfig", "SiteInfo"]
+__all__ = ["StatusCode", "FlowConfig", "StandaloneConfig", "SiteInfo"]
 
 
 with Path(__file__).parent.parent.joinpath("pipeline_config.yaml").resolve().open("r") as fin:
@@ -124,6 +124,7 @@ class StandaloneConfig(object):
     OUTPUT_DATA_DIR = job_dir.joinpath("data").as_uri()
     OUTPUT_MODEL_DIR = job_dir.joinpath("model").as_uri()
     OUTPUT_METRIC_DIR = job_dir.joinpath("metric").as_uri()
+    OUTPUT_LOG_DIR = job_dir.joinpath("logs")
 
     MLMD = MLMD(conf)
     LOGGER = LOGGER(conf)
@@ -131,30 +132,3 @@ class StandaloneConfig(object):
     COMPUTING_ENGINE = ComputingEngine(conf)
     FEDERATION_ENGINE = FederationEngine(conf)
 
-
-class LogPath(object):
-    @classmethod
-    def log_directory(cls):
-        conf = get_default_config()
-        log_directory = conf.get("log_directory")
-        if log_directory:
-            log_directory = Path(log_directory).resolve()
-        else:
-            log_directory = Path(__file__).parent.parent.joinpath("logs")
-        try:
-            log_directory.mkdir(parents=True, exist_ok=True)
-        except Exception as e:
-            raise RuntimeError(f"can't create log directory for pipeline: {log_directory}") from e
-        if not Path(log_directory).resolve().is_dir():
-            raise NotADirectoryError(f"provided log directory {log_directory} is not a directory.")
-        return log_directory
-
-    DEBUG = 'DEBUG.log'
-    INFO = 'INFO.log'
-    ERROR = 'ERROR.log'
-
-
-class LogFormat(object):
-    SIMPLE = '<green>[{time:HH:mm:ss}]</green><level>{message}</level>'
-    NORMAL = '<green>{time:YYYY-MM-DD HH:mm:ss}</green> | ' \
-             '<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'

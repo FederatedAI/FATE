@@ -109,8 +109,6 @@ class FATEFlowJobInvoker(object):
 
             party_id = response["data"]["party_id"]
             return party_id
-            # TODO: fix it later
-            # return party_id
         except ValueError:
             return None
 
