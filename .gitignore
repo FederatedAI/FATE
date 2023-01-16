@@ -16,6 +16,7 @@ Cargo.lock
 # excluded paths
 /rust/**/target/
 /build/
+/dist/
 /java/**/target/
 /fateboard/target/
 /fateflow/logs/

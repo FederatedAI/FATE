@@ -1,46 +1,53 @@
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 mkfile_dir := $(dir $(mkfile_path))
+.DEFAULT_GOAL:=help
 
-.PHONY: help
-help:                                   ## Show the help.
-	@echo "Usage: make <target>"
-	@echo ""
-	@echo "Targets:"
-	@fgrep "##" Makefile | fgrep -v fgrep
-
-.PHONY: install-tensor-package
-install-tensor-package:                 ## install rust_paillier.
+##@ Dev
+.PHONY: install-rust_paillier
+install-rust_paillier: ## Install rust_paillier.
 	@echo "install rust_paillier"
-	@maturin develop --release -m rust/tensor/rust_paillier/Cargo.toml 
+	@cd ${mkfile_dir} && maturin develop --release -m rust/tensor/rust_paillier/Cargo.toml
 
-.PHONY: build-tensor-package
-build-tensor-package:                   ## build rust_paillier.
+##@ Build
+.PHONY: build-rust_paillier
+build-rust_paillier: ## Build rust_paillier.
 	@echo "build rust_paillier"
-	@maturin build --release -m rust/tensor/rust_paillier/Cargo.toml --out dist --target-dir build
+	@cd ${mkfile_dir} && maturin build --release -m rust/tensor/rust_paillier/Cargo.toml --out dist --target-dir build
 
 .PHONY: build-fate
-build-fate:                             ## build fate
+build-fate: ## Build fate
 	@echo "build fate"
-	@cd python && python3 setup.py sdist --formats=gztar -d ../dist
+	@cd ${mkfile_dir}/python && \
+		python3 setup.py sdist --formats=gztar -d ../dist
 
-.PHONY: build
-build: build-tensor-package build-fate
+.PHONY: build ## Build all
+build: build-rust_paillier build-fate
 	@echo "build all"
 
-.PHONY: clean
-clean:                                  ## Clean unused files.
-	@rm -rf dist/
-	@rm -rf build/
-	@rm -rf rust/tensor/rust_paillier/target
-	@find python -name '*.pyc' -exec rm -f {} \;
-	@find python -name '__pycache__' -exec rm -rf {} \+
-	@find python -name '*.egg-info' -exec rm -rf {} \+
-
-
-.PHONY: proto-gen-osx
-proto-gen-osx:                          ## generate osx protobuf.
-	@python3 -m grpc_tools.protoc --proto_path=proto/ \
+##@ Generate
+.PHONY: gen-osx-proto
+gen-osx-proto: ## Generate osx protobuf.
+	@cd ${mkfile_dir} && \
+		python3 -m grpc_tools.protoc --proto_path=proto/ \
 		--python_out=python/fate/arch/federation/osx/ \
 		--grpc_python_out=python/fate/arch/federation/osx/ \
 		proto/osx.proto
 
+.PHONY: gen-task-jsonschema
+gen-task-jsonschema: ## Generate task jsonschema.
+	@cd ${mkfile_dir}/python && \
+		python3 -c "from fate.components.spec.task import TaskConfigSpec; print(TaskConfigSpec.schema_json(indent=2))" >> \
+		${mkfile_dir}/schemas/task.schema.json
+
+##@ Clean
+.PHONY: clean
+clean: ## Clean unused files.
+	@cd ${mkfile_dir} && \
+		rm -rf dist/ build/ rust/tensor/rust_paillier/target && \
+		find python -name '*.pyc' -exec rm -f {} \; && \
+		find python -name '__pycache__' -exec rm -rf {} \+ && \
+		find python -name '*.egg-info' -exec rm -rf {} \+
+
+.PHONY: help
+help:
+	@awk 'BEGIN {FS = ":.*##"; printf "Usage: make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
