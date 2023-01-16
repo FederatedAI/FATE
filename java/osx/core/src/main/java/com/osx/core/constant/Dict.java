@@ -257,8 +257,8 @@ public class Dict {
     public static final String MODEL_TABLE_NAME = "modelTableName";
     public static final String REGISTER_ENVIRONMENT = "online";
 
-    public static final String SERVICE_FIREWORK = "firework";
-    public static final String SERVICE_FIREWORK_CLUSTERMANAGER = "firework_cluster_manager";
+    public static final String SERVICE_OSX = "osx";
+    public static final String SERVICE_OSX_CLUSTERMANAGER = "osx_cluster_manager";
     public static final String SERVICE_PROXY = "proxy";
     public static final String SERVICE_ADMIN = "admin";
     public static final String FAILED = "failed";

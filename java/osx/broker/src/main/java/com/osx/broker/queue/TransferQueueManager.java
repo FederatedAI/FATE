@@ -55,7 +55,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class TransferQueueManager {
     final String ZK_QUEUE_PREFIX = "/FATE-TRANSFER/QUEUE";
     final String MASTER_PATH = "/FATE-TRANSFER/MASTER";
-    final String ZK_COMPONENTS_PREFIX = "/FATE-COMPONENTS/firework";
+    final String ZK_COMPONENTS_PREFIX = "/FATE-COMPONENTS/osx";
     ThreadPoolExecutor errorCallBackExecutor = new ThreadPoolExecutor(1, 2, 1000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(100));
     ThreadPoolExecutor completeCallBackExecutor = new ThreadPoolExecutor(1, 2, 1000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(100));
     ThreadPoolExecutor destroyCallBackExecutor = new ThreadPoolExecutor(1, 2, 1000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(100));

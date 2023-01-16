@@ -34,7 +34,7 @@ public class DefaultTokenService implements TokenService {
 
     Logger logger = LoggerFactory.getLogger(DefaultTokenService.class);
     ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
-    MetricReport metricReport = new FileMetricReport(Dict.SERVICE_FIREWORK_CLUSTERMANAGER);
+    MetricReport metricReport = new FileMetricReport(Dict.SERVICE_OSX_CLUSTERMANAGER);
     public DefaultTokenService() {
 
     }
