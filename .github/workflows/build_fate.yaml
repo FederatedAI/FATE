@@ -1,9 +1,9 @@
-name: Build fate_client
+name: Build fate
 on:
   workflow_dispatch:
     inputs:
       source:
-        description: 'source branch'     
+        description: 'source branch'
         required: true
       type:
         description: 'publish type, test or release'
@@ -25,29 +25,28 @@ jobs:
 
       - name: Build fate_client
         run: |
-          cd python/fate_client
           python3 setup.py sdist --formats=gztar
 
       - name: Twine check
         run: |
           pip install -U twine
-          twine check python/fate_client/dist/*
+          twine check dist/*
 
       - name: Upload to artifact
         uses: actions/upload-artifact@v2
         with:
           path: |
-            python/fate_client/dist/*
+            dist/*
 
       - name: Test Install
         run: |
           pip install -U pip
-          pip install --find-link=python/fate_client/dist/ fate_client
+          pip install --find-link=dist/ fate
 
       - name: Upload to PyPI Test
         if: ${{ github.event.inputs.type == 'test' }}
         run: |
-          twine upload --repository testpypi python/fate_client/dist/* --verbose
+          twine upload --repository testpypi dist/* --verbose
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.pypitest_token }}
@@ -55,7 +54,7 @@ jobs:
       - name: Upload to PyPI
         if: ${{ github.event.inputs.type == 'release' }}
         run: |
-          twine upload python/fate_client/dist/* --verbose
+          twine upload dist/* --verbose
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.pypi_token }}
