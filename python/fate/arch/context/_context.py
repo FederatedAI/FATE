@@ -177,11 +177,11 @@ class Context(ContextInterface):
 
     def destroy(self):
         try:
-            self.computing.destroy()
+            self.federation.destroy()
         except:
             logger.exception("computing engine close failed", stack_info=True)
 
         try:
-            self.federation.destroy()
+            self.computing.destroy()
         except:
             logger.exception("computing engine close failed", stack_info=True)
