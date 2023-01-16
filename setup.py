@@ -37,7 +37,7 @@ extras_require = {
     "eggroll": [
         "grpcio==1.46.3",
         "grpcio-tools==1.46.3",
-        "numba==0.53.0",
+        "numba==0.56.4",
         "protobuf==3.19.6",
         "pyarrow==6.0.1",
         "mmh3==3.0.0",

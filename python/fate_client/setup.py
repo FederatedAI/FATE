@@ -48,6 +48,9 @@ install_requires = [
     "ml_metadata",
 ]
 
+extras_require = {
+    "fate": ["pyfate"],
+}
 entry_points = {"console_scripts": ["fate_client = fate_client.cli:cli"]}
 
 setup_kwargs = {
@@ -64,6 +67,7 @@ setup_kwargs = {
     "packages": packages,
     "package_data": package_data,
     "install_requires": install_requires,
+    "extras_require": extras_require,
     "entry_points": entry_points,
     "python_requires": ">=3.8",
 }
