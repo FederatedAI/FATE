@@ -29,24 +29,10 @@ jobs:
         with:
           python-version: 3.8
 
-      - name: Prepare poetry
-        uses: abatilo/actions-poetry@v2.0.0
-        with:
-          poetry-version: 1.1.6
-
       - name: Build fate_client
         run: |
           cd python/fate_client
-          rm -f setup.py
-          # clear README.rst
-          echo "# fate client" > README.rst
-          # bump fate client version
-          poetry version ${{github.event.inputs.target}}
-          # build package, saved in dist/
-          poetry build
-
-      - name: List dist files
-        run: ls -lh python/fate_client/dist/ python/fate_client/dist/
+          python3 setup.py sdist --formats=gztar
 
       - name: Twine check
         run: |
@@ -62,7 +48,7 @@ jobs:
       - name: Test Install
         run: |
           pip install -U pip
-          pip install python/fate_client/dist/fate_client-${{github.event.inputs.target}}.tar.gz
+          pip install --find-link=python/fate_client/dist/ fate_client
 
       - name: Upload to PyPI Test
         if: ${{ github.event.inputs.type == 'test' }}

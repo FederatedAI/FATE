@@ -14,6 +14,7 @@
 #  limitations under the License.
 # -*- coding: utf-8 -*-
 from setuptools import setup
+import fate_client
 
 packages = [
     "fate_client",
@@ -55,7 +56,7 @@ entry_points = {"console_scripts": ["fate_client = fate_client.cli:cli"]}
 
 setup_kwargs = {
     "name": "fate-client",
-    "version": "2.0.0-alpha",
+    "version": fate_client.__version__,
     "description": "Clients for FATE, including fate_client and pipeline",
     "long_description_content_type": "text/markdown",
     "long_description": "Clients for FATE, including fate_client and pipeline",
