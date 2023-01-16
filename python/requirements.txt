@@ -1,5 +1,3 @@
---extra-index-url https://download.pytorch.org/whl/cpu
-
 # fate
 -r requirements-fate.txt
 
@@ -11,4 +9,3 @@
 
 # pulsar
 -r requirements-pulsar.txt
-
