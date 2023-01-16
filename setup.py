@@ -12,7 +12,7 @@ import fate
 packages = find_packages("python", exclude=["fate_client", "fate_client.*"])
 package_dir = {"": "python"}
 install_requires = [
-    "sklearn",
+    "scikit-learn",
     "pandas",
     "protobuf",
     "pydantic",
@@ -33,7 +33,7 @@ install_requires = [
 extras_require = {
     "rabbitmq": ["pika==1.2.1"],
     "pulsar": ["pulsar-client==2.10.2"],
-    "spark": ["spark"],
+    "spark": ["pyspark"],
     "eggroll": [
         "grpcio==1.46.3",
         "grpcio-tools==1.46.3",
@@ -42,17 +42,18 @@ extras_require = {
         "pyarrow==6.0.1",
         "mmh3==3.0.0",
     ],
-    "all": ["fate[rabbitmq,pulsar,spark,eggroll]"],
+    "all": ["pyfate[rabbitmq,pulsar,spark,eggroll]"],
 }
 
 
 setup(
-    name="fate",
+    name="pyfate",
     version=fate.__version__,
     keywords=["federated learning"],
     author="FederatedAI",
     author_email="contact@FedAI.org",
-    description="FATE (Federated AI Technology Enabler) is the world's first industrial grade federated learning open source framework to enable enterprises and institutions to collaborate on data while protecting data security and privacy. It implements secure computation protocols based on homomorphic encryption and multi-party computation (MPC). Supporting various federated learning scenarios, FATE now provides a host of federated learning algorithms, including logistic regression, tree-based algorithms, deep learning and transfer learning.",
+    long_description_content_type="text/markdown",
+    long_description="FATE (Federated AI Technology Enabler) is the world's first industrial grade federated learning open source framework to enable enterprises and institutions to collaborate on data while protecting data security and privacy. It implements secure computation protocols based on homomorphic encryption and multi-party computation (MPC). Supporting various federated learning scenarios, FATE now provides a host of federated learning algorithms, including logistic regression, tree-based algorithms, deep learning and transfer learning.",
     license="Apache-2.0 License",
     url="https://fate.fedai.org/",
     packages=packages,
