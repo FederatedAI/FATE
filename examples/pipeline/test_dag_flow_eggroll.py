@@ -20,7 +20,7 @@ from fate_client.pipeline.components.fate import Evaluation
 from fate_client.pipeline import FateFlowPipeline
 
 
-pipeline = FateFlowPipeline().set_scheduler_party_id(party_id='9999').set_roles(
+pipeline = FateFlowPipeline().set_roles(
     guest='9999', host='9999', arbiter='9999')
 reader_0 = Reader(name="reader_0")
 reader_0.guest.component_param(path="eggroll:///${guest_table_namespace}/${guest_table_name}",

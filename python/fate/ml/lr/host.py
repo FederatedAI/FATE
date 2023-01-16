@@ -57,8 +57,8 @@ class LrModuleHost(HeteroModule):
                 d = batch_ctx.guest.get("d")
                 tensor.matmul(X.T, d).to(batch_ctx.arbiter, "g_enc")
                 g = batch_ctx.arbiter.get("g")
-                g += self.alpha * w
-                w -= (self.learning_rate / h) * g
+                g = g / h + self.alpha * w
+                w -= self.learning_rate * g
                 logger.info(f"w={w}")
                 j += 1
 

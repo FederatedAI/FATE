@@ -112,7 +112,7 @@ class FullBatchDataLoader(object):
         self._mode = mode
         self._role = role
         self._batch_size = batch_size
-        if self._batch_size < 0:
+        if self._batch_size < 0 and self._role != "arbiter":
             self._batch_size = len(self._dataset)
         self._shuffle = shuffle
         self._random_seed = random_seed
@@ -159,6 +159,8 @@ class FullBatchDataLoader(object):
                 for i, iter_ctx in self._ctx.range(self._batch_num):
                     batch_indexes = indexes[self._batch_size * i : self._batch_size * (i + 1)]
 
+                    # TODO: for mini-demo stage, tensor does not support slice,
+                    #  so only testing batch indexes sending interface
                     sub_frame = self._dataset.loc(batch_indexes)
 
                     if self._role == "guest":
@@ -177,6 +179,7 @@ class FullBatchDataLoader(object):
                 yield batch_id, batch_id
             return
 
+        # TODO: generate a batch of data
         for batch in self._batch_splits:
             if batch.label and batch.weight:
                 yield batch.index, batch.values, batch.label, batch.weight

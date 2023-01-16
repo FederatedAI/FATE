@@ -72,12 +72,12 @@ class LrModuleGuest(HeteroModule):
                 batch_ctx.hosts.put(d=d)
                 batch_ctx.arbiter.put(loss=loss)
 
-                # gradian
+                # gradient
                 batch_ctx.arbiter.put("g_enc", X.T @ d)
                 g: tensor.Tensor = batch_ctx.arbiter.get("g")
                 # apply l2 penalty
-                g += self.alpha * w
-                w -= (self.learning_rate / h) * g
+                g = g / h + self.alpha * w
+                w -= self.learning_rate * g
                 logger.info(f"w={w}")
                 j += 1
         self.w = w

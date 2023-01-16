@@ -59,9 +59,9 @@ feature_scale_1 = FeatureScale(name="feature_scale_1",
 lr_0 = HeteroLR(name="lr_0",
                 train_data=feature_scale_0.outputs["train_output_data"],
                 validate_data=feature_scale_1.outputs["test_output_data"],
-                max_iter=1,
-                learning_rate=0.01,
-                batch_size=100)
+                max_iter=100,
+                learning_rate=0.03,
+                batch_size=-1)
 
 evaluation_0 = Evaluation(name="evaluation_0",
                           runtime_roles="guest",
