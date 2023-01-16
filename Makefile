@@ -21,17 +21,11 @@ build-tensor-package:                   ## build rust_paillier.
 .PHONY: build-fate
 build-fate:                             ## build fate
 	@echo "build fate"
-	@python3 setup.py sdist --formats=gztar -d dist
-
-.PHONY: build-fate_client
-build-fate_client:                      ## build fate
-	@echo "build fate_client"
-	@cd python/fate_client && python3 setup.py sdist --formats=gztar -d ../../dist
+	@cd python && python3 setup.py sdist --formats=gztar -d ../dist
 
 .PHONY: build
-build: build-tensor-package build-fate  build-fate_client ## build
+build: build-tensor-package build-fate
 	@echo "build all"
-	@python3 setup.py sdist --formats=gztar -d dist
 
 .PHONY: clean
 clean:                                  ## Clean unused files.

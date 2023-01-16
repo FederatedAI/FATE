@@ -1,16 +1,9 @@
 import os
-import sys
-
-from setuptools import find_packages, setup
-
-fate_path = os.path.abspath(os.path.join(__file__, os.path.pardir, "python"))
-if fate_path not in sys.path:
-    sys.path.append(fate_path)
 
 import fate
+from setuptools import find_packages, setup
 
-packages = find_packages("python", exclude=["fate_client", "fate_client.*"])
-package_dir = {"": "python"}
+packages = find_packages(".")
 install_requires = [
     "scikit-learn",
     "pandas",
@@ -45,6 +38,12 @@ extras_require = {
     "all": ["pyfate[rabbitmq,pulsar,spark,eggroll]"],
 }
 
+readme_path = os.path.abspath(os.path.join(__file__, os.path.pardir, os.path.pardir, "README.md"))
+if os.path.exists(readme_path):
+    with open(readme_path, "r") as f:
+        long_description = f.read()
+else:
+    long_description = "fate"
 
 setup(
     name="pyfate",
@@ -53,11 +52,10 @@ setup(
     author="FederatedAI",
     author_email="contact@FedAI.org",
     long_description_content_type="text/markdown",
-    long_description="FATE (Federated AI Technology Enabler) is the world's first industrial grade federated learning open source framework to enable enterprises and institutions to collaborate on data while protecting data security and privacy. It implements secure computation protocols based on homomorphic encryption and multi-party computation (MPC). Supporting various federated learning scenarios, FATE now provides a host of federated learning algorithms, including logistic regression, tree-based algorithms, deep learning and transfer learning.",
+    long_description=long_description,
     license="Apache-2.0 License",
     url="https://fate.fedai.org/",
     packages=packages,
-    package_dir=package_dir,
     install_requires=install_requires,
     extras_require=extras_require,
     python_requires=">=3.8",

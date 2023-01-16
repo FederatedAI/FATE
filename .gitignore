@@ -1,49 +1,25 @@
 # common file patterns
 .DS_STORE
 .idea
+.vscode/*
 *.iml
 *.pyc
 __pycache__
-*.jar
-*.class
-.project
-*.prefs
-_build
 venv
-*.log
 *.tar.gz
 *.db
 *.db-journal
 *.mdb
 .env
-.vscode/*
 Cargo.lock
 
 # excluded paths
 /rust/**/target/
+/build/
 /java/**/target/
 /fateboard/target/
-/data/
-/logs/
-/jobs/
-/audit/
-/doc/federatedml_component/params/
-/output/
-
-# build dir
-/FATE_install_*/
-/standalone_fate_install_*/
-/standalone_fate_docker_*/
-/docker_fate_base_*/
-
-# fate_test
-fate_test_config.yaml
-examples/cache/
-**/fate_test/**/logs/
-**/fate_test/**/output/
-
-# user defined config
-/conf/local.*.yaml
+/fateflow/logs/
+/fateflow/jobs/
 
 # logs
 **/logs/*

@@ -9,3 +9,6 @@
 
 # pulsar
 -r requirements-pulsar.txt
+
+# spark
+-r requirements-spark.txt
