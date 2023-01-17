@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import logging
+import signal
 import time
 import traceback
 from typing import Any, Dict
@@ -41,13 +42,13 @@ logger = logging.getLogger(__name__)
 def execute_component(config: TaskConfigSpec):
     party_task_id = config.party_task_id
     mlmd = load_mlmd(config.conf.mlmd, party_task_id)
-    computing = load_computing(config.conf.computing)
-    federation = load_federation(config.conf.federation, computing)
     device = load_device(config.conf.device)
     role = load_role(config.role)
     stage = load_stage(config.stage)
     metrics_handler = load_metrics_handler()
     output_pool = load_pool(config.conf.output)
+    computing = load_computing(config.conf.computing)
+    federation = load_federation(config.conf.federation, computing)
     ctx = Context(
         context_name=party_task_id,
         device=device,
@@ -56,6 +57,21 @@ def execute_component(config: TaskConfigSpec):
         metrics_handler=metrics_handler,
     )
     logger.debug(f"component={config.component}, context={ctx}")
+
+    # registe signal to handle sigterm
+    def gracefully_stop(signum, frame):
+        logger.debug(f"gracefully stop: signum={signum}")
+        try:
+            ctx.destroy()
+        except:
+            logger.debug(f"context destroy failed, skip")
+        finally:
+            import sys
+
+            sys.exit()
+
+    signal.signal(signal.SIGTERM, gracefully_stop)
+
     try:
         logger.debug("running...")
         mlmd.execution_status.log_excution_start()
