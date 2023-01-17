@@ -24,7 +24,7 @@ pipeline = FateFlowPipeline().set_roles(
     guest='9999', host='9999', arbiter='9999')
 reader_0 = Reader(name="reader_0")
 reader_0.guest.component_param(path="file://${abs_path_of_data_guest}",
-                               # path=file:///data/projects/fate/examples/data/breast_hetero_guest.csv
+                               # path="file:///data/projects/fate/examples/data/breast_hetero_guest.csv",
                                format="csv",
                                id_name="id",
                                delimiter=",",
@@ -33,13 +33,12 @@ reader_0.guest.component_param(path="file://${abs_path_of_data_guest}",
                                dtype="float32")
 
 reader_0.hosts[0].component_param(path="file://${abs_path_of_data_host}",
-                                  # path=file:///data/projects/fate/examples/data/breast_hetero_host.csv
+                                  # path="file:///data/projects/fate/examples/data/breast_hetero_host.csv",
                                   format="csv",
                                   id_name="id",
                                   delimiter=",",
                                   label_name=None,
                                   dtype="float32")
-reader_0.hosts[0].conf.set("test_reader_guest", 2)
 
 intersection_0 = Intersection(name="intersection_0",
                               method="raw",
@@ -88,7 +87,7 @@ predict_pipeline = FateFlowPipeline()
 reader_1 = Reader(name="reader_1")
 
 reader_1.guest.component_param(path="file://${abs_path_of_data_guest}",
-                               # path=file:///data/projects/fate/examples/data/breast_hetero_guest.csv
+                               # path="file:///data/projects/fate/examples/data/breast_hetero_guest.csv",
                                format="csv",
                                id_name="id",
                                delimiter=",",
@@ -97,7 +96,7 @@ reader_1.guest.component_param(path="file://${abs_path_of_data_guest}",
                                dtype="float32")
 
 reader_1.hosts[0].component_param(path="file://${abs_path_of_data_host}",
-                                  # path=file:///data/projects/fate/examples/data/breast_hetero_host.csv
+                                  # path="file:///data/projects/fate/examples/data/breast_hetero_host.csv",
                                   format="csv",
                                   id_name="id",
                                   delimiter=",",

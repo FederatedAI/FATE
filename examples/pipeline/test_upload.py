@@ -16,7 +16,7 @@ from fate_client.pipeline import FateFlowPipeline
 
 pipeline = FateFlowPipeline()
 pipeline.upload(file="${abs_path_of_data_guest}",
-                # file=/data/projects/fate/examples/data/breast_hetero_guest.csv
+                # file="/data/projects/fate/examples/data/breast_hetero_guest.csv",
                 head=1,
                 partitions=4,
                 namespace="experiment",
@@ -29,11 +29,11 @@ pipeline.upload(file="${abs_path_of_data_guest}",
 
 pipeline = FateFlowPipeline()
 pipeline.upload(file="${abs_path_of_data_host}",
-                # file=/data/projects/fate/examples/data/breast_hetero_host.csv
+                # file="/data/projects/fate/examples/data/breast_hetero_host.csv",
                 head=1,
                 partitions=4,
                 namespace="experiment",
-                name="breast_hetero_guest",
+                name="breast_hetero_host",
                 meta={
                     "label_name": None,
                     "dtype": "float32"

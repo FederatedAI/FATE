@@ -24,7 +24,7 @@ pipeline = StandalonePipeline().set_roles(
         guest='9999', host='10000', arbiter='10001')
 reader_0 = Reader(name="reader_0")
 reader_0.guest.component_param(path="file://${abs_path_of_data_guest}",
-                               # path=file:///data/projects/fate/examples/data/breast_hetero_guest.csv
+                               # path="file:///data/projects/fate/examples/data/breast_hetero_guest.csv",
                                format="csv",
                                id_name="id",
                                delimiter=",",
@@ -33,7 +33,7 @@ reader_0.guest.component_param(path="file://${abs_path_of_data_guest}",
                                dtype="float32")
 
 reader_0.hosts[0].component_param(path="file://${abs_path_of_data_host}",
-                                  # path=file:///data/projects/fate/examples/data/breast_hetero_host.csv
+                                  # path="file:///data/projects/fate/examples/data/breast_hetero_host.csv",
                                   format="csv",
                                   id_name="id",
                                   delimiter=",",
@@ -88,7 +88,7 @@ print(pipeline.deploy([intersection_0, feature_scale_0, lr_0]))
 predict_pipeline = StandalonePipeline()
 reader_1 = Reader(name="reader_1")
 reader_1.guest.component_param(path="file://${abs_path_of_data_guest}",
-                               # path=file:///data/projects/fate/examples/data/breast_hetero_guest.csv
+                               # path="file:///data/projects/fate/examples/data/breast_hetero_guest.csv",
                                format="csv",
                                id_name="id",
                                delimiter=",",
@@ -97,7 +97,7 @@ reader_1.guest.component_param(path="file://${abs_path_of_data_guest}",
                                dtype="float32")
 
 reader_1.hosts[0].component_param(path="file://${abs_path_of_data_host}",
-                                  # path=file:///data/projects/fate/examples/data/breast_hetero_host.csv
+                                  # path="file:///data/projects/fate/examples/data/breast_hetero_host.csv",
                                   format="csv",
                                   id_name="id",
                                   delimiter=",",
