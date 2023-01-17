@@ -15,7 +15,6 @@ class CKKSKeypair(object):
             poly_modulus_degree=poly_modulus_degree,
             coeff_mod_bit_sizes=coeff_mod_bit_sizes
         )
-        context.generate_galois_keys()
         context.global_scale = global_scale
 
         secret_key = context.secret_key()
@@ -37,6 +36,15 @@ class CKKSPublicKey(object):
 
         self.__public_context = public_context
 
+    def __getstate__(self):
+        return self.__public_context.serialize(save_public_key=True,
+                                               save_secret_key=False,
+                                               save_relin_keys=False,
+                                               save_galois_keys=False)
+
+    def __setstate__(self, state):
+        self.__public_context = ts.context_from(state)
+
     def encrypt(self, value):
         """Encrypt a real-valued number"""
         if isinstance(value, list):
@@ -47,7 +55,7 @@ class CKKSPublicKey(object):
         singleton_vector = [value]
         ckks_vector = ts.ckks_vector(self.__public_context, singleton_vector)
 
-        return CKKSEncryptedNumber(ckks_vector)
+        return CKKSEncryptedNumber(ckks_vector, self.__public_context)
 
     def __is_real_number(self, value):
         return np.isreal(value)
@@ -73,13 +81,27 @@ class CKKSPrivateKey(object):
 
 
 class CKKSEncryptedNumber(object):
-    def __init__(self, encrypted_vector):
+    def __init__(self, encrypted_vector, context):
         if not isinstance(encrypted_vector, ts.CKKSVector):
-            raise ValueError("encrypted_vector should be a tenseal CKKSVector")
+            raise TypeError(f"encrypted_vector should be a tenseal CKKSVector, got {type(encrypted_vector)}")
+        elif not isinstance(context, ts.Context):
+            raise TypeError(f"context should be a tenseal context, got {type(context)}")
         elif not self.__is_singleton_vector(encrypted_vector):
-            raise ValueError("encrypted_vector should only contain one number")
+            raise ValueError(f"encrypted_vector should only contain one number, got vector of length {encrypted_vector.shape[0]}")
 
         self.__encrypted_vector = encrypted_vector
+        self.__context = context
+
+    def __getstate__(self):
+        return self.__encrypted_vector.serialize(), self.__context.serialize(save_public_key=False,
+                                                                             save_secret_key=False,
+                                                                             save_relin_keys=False,
+                                                                             save_galois_keys=False)
+
+    def __setstate__(self, state):
+        encrypted_vector_bytes, lightweight_context_bytes = state
+        self.__context = ts.context_from(lightweight_context_bytes)
+        self.__encrypted_vector = ts.ckks_vector_from(self.__context, encrypted_vector_bytes)
 
     def __add__(self, other):
         if isinstance(other, CKKSEncryptedNumber):
@@ -104,13 +126,13 @@ class CKKSEncryptedNumber(object):
 
     def __mul__(self, other):
         if isinstance(other, CKKSEncryptedNumber):
-            return self.__from_ts_enc_vec(self.__encrypted_vector * other.__encrypted_vector)
+            return ValueError("Multiplication between encrypted numbers are not supported currently")
         else:
             return self.__from_ts_enc_vec(self.__encrypted_vector * other)
 
     def __from_ts_enc_vec(self, ts_enc_vec):
         """Converts tenseal encrypted singleton vector to CKKSEncryptedNumber"""
-        return CKKSEncryptedNumber(ts_enc_vec)
+        return CKKSEncryptedNumber(ts_enc_vec, self.__context)
 
     def _get_tenseal_encrypted_vector(self):
         """Should only be called by CKKSPrivateKey"""
