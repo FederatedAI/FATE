@@ -33,6 +33,10 @@ class RawIntersectionGuest(HeteroModule):
         for intersect_index in intersect_indexes:
             intersect_data = intersect_data.loc(intersect_index)
 
+        intersect_count = intersect_data.count()
+        ctx.hosts.put("intersect_count", intersect_count)
+
+        logger.info(f"intersect count={intersect_count}")
         return intersect_data
 
 
@@ -46,4 +50,6 @@ class RawIntersectionHost(HeteroModule):
         # ctx.guest.put("intersect_index", intersect_data.index.tolist())
         ctx.guest.put("intersect_index", intersect_data.index.values)
 
+        intersect_count = ctx.guest.get("intersect_count")
+        logger.info(f"intersect count={intersect_count}")
         return intersect_data
