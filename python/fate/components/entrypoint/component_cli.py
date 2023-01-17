@@ -28,7 +28,8 @@ def component():
 @click.option("--config-entrypoint", required=False, help="enctypoint to get config")
 @click.option("--properties", "-p", multiple=True, help="properties config")
 @click.option("--env-prefix", "-e", type=str, default="runtime.component.", help="prefix for env config")
-def execute(process_tag, config, config_entrypoint, properties, env_prefix):
+@click.option("--env-name", required=False, type=str, help="env name for config")
+def execute(process_tag, config, config_entrypoint, properties, env_prefix, env_name):
     "execute component"
     import logging
 
@@ -41,6 +42,7 @@ def execute(process_tag, config, config_entrypoint, properties, env_prefix):
 
     # parse config
     configs = {}
+    load_config_from_env(configs, env_name)
     load_config_from_entrypoint(configs, config_entrypoint)
     load_config_from_file(configs, config)
     load_config_from_properties(configs, properties_items)
@@ -115,10 +117,10 @@ def load_config_from_properties(configs, properties_dict):
 
 
 def load_config_from_file(configs, config_file):
-    from ruamel import yaml
+    import json
 
     if config_file is not None:
-        configs.update(yaml.safe_load(config_file))
+        configs.update(json.load(config_file))
     return configs
 
 
@@ -131,6 +133,15 @@ def load_config_from_entrypoint(configs, config_entrypoint):
             configs.update(resp["config"])
         except:
             pass
+    return configs
+
+
+def load_config_from_env(configs, env_name):
+    import os
+    import json
+
+    if env_name is not None and os.environ.get(env_name):
+        configs.update(json.loads(os.environ[env_name]))
     return configs
 
 
