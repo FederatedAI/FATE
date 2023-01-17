@@ -208,7 +208,7 @@ class ComponentProperties(object):
                         else:
                             model_data[data_type] = [model_data[data_type], model.obtain_data(d_table)]
                     else:
-                        model_data[data_type] = model.obtain_data(d_table)                      
+                        model_data[data_type] = model.obtain_data(d_table)
                     del data_dict[data_type]
 
             if len(data_dict) > 0:

@@ -50,7 +50,7 @@ class FedAVGGraphTrainer(FedAVGTrainer):
                  validation_freqs=None,  # validation configuration
                  checkpoint_save_freqs=None,  # checkpoint configuration
                  task_type='auto',
-                 num_neighbors=[10,10],
+                 num_neighbors=[10, 10],
                  ):
 
         super(FedAVGGraphTrainer, self).__init__(
@@ -94,7 +94,7 @@ class FedAVGGraphTrainer(FedAVGTrainer):
             input_nodes=train_set.input_nodes,
             batch_size=self.batch_size,
             pin_memory=self.pin_memory,
-            shuffle=self.shuffle,            
+            shuffle=self.shuffle,
             num_workers=self.data_loader_worker)
 
         # compute round to aggregate
@@ -255,6 +255,3 @@ class FedAVGGraphTrainer(FedAVGTrainer):
         LOGGER.debug(ret_rs)
         LOGGER.debug(ret_label)
         return dataset.get_sample_ids(), ret_rs, ret_label
-
-
-

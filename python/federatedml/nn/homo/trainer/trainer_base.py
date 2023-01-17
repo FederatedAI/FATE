@@ -428,7 +428,10 @@ def get_trainer_class(trainer_module_name: str):
 
         for k, v in ds_modules.__dict__.items():
             if isinstance(v, type):
-                if issubclass(v, TrainerBase) and v is not TrainerBase and "".join(v.__name__.lower().split("_")) == "".join(trainer_module_name.lower().split("_")):
+                if issubclass(
+                        v, TrainerBase) and v is not TrainerBase and "".join(
+                        v.__name__.lower().split("_")) == "".join(
+                        trainer_module_name.lower().split("_")):
                     return v
         raise ValueError('Did not find any class in {}.py that is the subclass of Trainer class'.
                          format(trainer_module_name))

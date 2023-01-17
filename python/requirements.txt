@@ -1,4 +1,5 @@
 --extra-index-url https://download.pytorch.org/whl/cpu
+--find-links https://data.pyg.org/whl/torch-1.13.0+cpu.html
 
 pip>=21
 apsw<3.10

@@ -21,7 +21,6 @@ import torch as t
 from torch import nn
 
 from pipeline import fate_torch_hook
-#pipeline
 from pipeline.component.nn import TrainerParam
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.data_transform import DataTransform
@@ -29,13 +28,7 @@ from pipeline.component import HomoNN, Evaluation
 from pipeline.component.reader import Reader
 from pipeline.interface import Data
 from pipeline.utils.tools import load_job_config
-
-import torch_geometric.nn as pyg
-
 fate_torch_hook(t)
-# fate_torch_hook(pyg)
-
-
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -44,17 +37,18 @@ def main(config="../../config.yaml", namespace=""):
     )
     loss = nn.NLLLoss()
     optimizer = t.optim.Adam(model.parameters(), lr=0.001)
-    
+
     homo_graph_0 = HomoNN(
         name="homo_graph_0",
         model=model,
         loss=loss,
         optimizer=optimizer,
-        trainer=TrainerParam(trainer_name='fedavg_graph_trainer', epochs=10, batch_size=10, 
-                validation_freqs=1, num_neighbors=[11, 11], task_type='multi'),
+        trainer=TrainerParam(trainer_name='fedavg_graph_trainer', epochs=10, batch_size=10,
+                             validation_freqs=1, num_neighbors=[11, 11], task_type='multi'),
         torch_seed=100
     )
     run_homo_graph_pipeline(config, namespace, dataset.cora, homo_graph_0, 1)
+
 
 def run_homo_graph_pipeline(config, namespace, data: dict, nn_component, num_host=1):
     if isinstance(config, str):
@@ -97,9 +91,9 @@ def run_homo_graph_pipeline(config, namespace, data: dict, nn_component, num_hos
     ).component_param(with_label=True, output_format="dense")
     data_transform_all_feats.get_party_instance(role="host", party_id=hosts).component_param(
         with_label=True
-    )    
+    )
 
-    #train set
+    # train set
     reader_train = Reader(name="reader_train")
     reader_train.get_party_instance(role="guest", party_id=config.parties.guest[0]).component_param(
         table=guest_train
@@ -117,7 +111,7 @@ def run_homo_graph_pipeline(config, namespace, data: dict, nn_component, num_hos
         with_label=True
     )
 
-    #valid set
+    # valid set
     reader_val = Reader(name="reader_val")
     reader_val.get_party_instance(role="guest", party_id=config.parties.guest[0]).component_param(
         table=guest_val
@@ -135,7 +129,7 @@ def run_homo_graph_pipeline(config, namespace, data: dict, nn_component, num_hos
         with_label=True
     )
 
-    #test set
+    # test set
     reader_test = Reader(name="reader_test")
     reader_test.get_party_instance(role="guest", party_id=config.parties.guest[0]).component_param(
         table=guest_test
@@ -151,7 +145,7 @@ def run_homo_graph_pipeline(config, namespace, data: dict, nn_component, num_hos
         with_label=True
     )
 
-    #adjcent table
+    # adjcent table
     reader_adj = Reader(name="reader_adj")
     reader_adj.get_party_instance(role="guest", party_id=config.parties.guest[0]).component_param(
         table=guest_adj
@@ -161,9 +155,9 @@ def run_homo_graph_pipeline(config, namespace, data: dict, nn_component, num_hos
     )
     data_transform_adj = DataTransform(name="data_transform_adj", with_label=False)
     data_transform_adj.get_party_instance(role="guest", party_id=config.parties.guest[0]
-    ).component_param(with_label=False, output_format="dense")
+                                          ).component_param(with_label=False, output_format="dense")
     data_transform_adj.get_party_instance(role="host", party_id=hosts
-    ).component_param(with_label=False, output_format="dense")
+                                          ).component_param(with_label=False, output_format="dense")
 
     pipeline.add_component(reader_all_feats)
     pipeline.add_component(data_transform_all_feats, data=Data(data=reader_all_feats.output.data))
@@ -174,8 +168,17 @@ def run_homo_graph_pipeline(config, namespace, data: dict, nn_component, num_hos
 
     pipeline.add_component(reader_adj)
     pipeline.add_component(data_transform_adj, data=Data(data=reader_adj.output.data))
-    pipeline.add_component(nn_component, data=Data(train_data=[data_transform_all_feats.output.data, data_transform_adj.output.data, data_transform_train.output.data],
-                                                    validate_data=[data_transform_all_feats.output.data, data_transform_adj.output.data, data_transform_val.output.data]))
+    pipeline.add_component(
+        nn_component,
+        data=Data(
+            train_data=[
+                data_transform_all_feats.output.data,
+                data_transform_adj.output.data,
+                data_transform_train.output.data],
+            validate_data=[
+                data_transform_all_feats.output.data,
+                data_transform_adj.output.data,
+                data_transform_val.output.data]))
     pipeline.add_component(Evaluation(name='eval_0'), data=Data(data=nn_component.output.data))
 
     pipeline.compile()
@@ -187,21 +190,21 @@ class dataset_meta(type):
     @property
     def cora(cls):
         return {
-            "guest":{
-                    "all_feats": {"name": "cora_feats_guest", "namespace": "experiment"},
-                    "train": {"name": "cora_train_guest", "namespace": "experiment"},
-                    "val": {"name": "cora_val_guest", "namespace": "experiment"},
-                    "test": {"name": "cora_test_guest", "namespace": "experiment"},
-                    "adj": {"name": "cora_adj_guest", "namespace": "experiment"}
-                },
+            "guest": {
+                "all_feats": {"name": "cora_feats_guest", "namespace": "experiment"},
+                "train": {"name": "cora_train_guest", "namespace": "experiment"},
+                "val": {"name": "cora_val_guest", "namespace": "experiment"},
+                "test": {"name": "cora_test_guest", "namespace": "experiment"},
+                "adj": {"name": "cora_adj_guest", "namespace": "experiment"}
+            },
             "host": {
-                    "all_feats": {"name": "cora_feats_host", "namespace": "experiment"},
-                    "train": {"name": "cora_train_host", "namespace": "experiment"},
-                    "val": {"name": "cora_val_host", "namespace": "experiment"},
-                    "test": {"name": "cora_test_host", "namespace": "experiment"},
-                    "adj": {"name": "cora_adj_host", "namespace": "experiment"},
-                },
-        }    
+                "all_feats": {"name": "cora_feats_host", "namespace": "experiment"},
+                "train": {"name": "cora_train_host", "namespace": "experiment"},
+                "val": {"name": "cora_val_host", "namespace": "experiment"},
+                "test": {"name": "cora_test_host", "namespace": "experiment"},
+                "adj": {"name": "cora_adj_host", "namespace": "experiment"},
+            },
+        }
 
 
 class dataset(metaclass=dataset_meta):

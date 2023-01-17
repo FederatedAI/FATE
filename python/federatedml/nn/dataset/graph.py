@@ -61,7 +61,6 @@ class GraphDataset(Dataset):
                 return torch.float64
         return dtype
 
-
     def __process_feats(self, data_feats):
         LOGGER.info("processing feats")
         cnt = data_feats.count()
@@ -79,7 +78,7 @@ class GraphDataset(Dataset):
             self.key2idx[k] = index
             index += 1
 
-        num_label = len(set(y))       
+        num_label = len(set(y))
         if num_label == 2:
             self.output_shape = 1
         elif num_label > 2:
@@ -89,7 +88,6 @@ class GraphDataset(Dataset):
 
         self.data.x = torch.tensor(x, dtype=self.f_dtype)
         self.data.y = torch.tensor(y, dtype=self.l_dtype)
-
 
     def __process_adj(self, data_adj):
         LOGGER.info("processing edges")
@@ -107,9 +105,9 @@ class GraphDataset(Dataset):
                 raise "Incorrect adj format"
             srcs.append(src)
             dsts.append(dst)
-        
+
         self.data.edge_index = torch.tensor([srcs, dsts], dtype=torch.long)
-        if len(vals) > 0:                
+        if len(vals) > 0:
             self.data.edge_attr = torch.tensor(vals, dtype=torch.float)
 
     def __process_input_nodes(self, data_input_nodes):
@@ -130,7 +128,6 @@ class GraphDataset(Dataset):
             self.origin_table['feats'] = pd.read_csv(data_feats)
             self.origin_table['adj'] = pd.read_csv(data_adj)
             self.origin_table['input_nodes'] = pd.read_csv(input_nodes)
-    
         else:
             # if is FATE DTable, collect data and transform to array format
             LOGGER.info('collecting FATE DTable')
@@ -143,4 +140,3 @@ class GraphDataset(Dataset):
 
     def get_sample_ids(self):
         return self.sample_ids
-
