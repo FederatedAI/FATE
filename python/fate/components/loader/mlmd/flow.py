@@ -24,13 +24,30 @@ from pydantic import BaseModel
 class ExecutionStatus:
     class StateData(BaseModel):
         execution_id: str
-        status: str
+        status: Optional[str]
         error: Optional[str]
 
     class Status:
+        WAITING = 'waiting'
+        READY = 'ready'
         RUNNING = "running"
-        SUCCESS = "success"
+        CANCELED = "canceled"
+        TIMEOUT = "timeout"
         FAILED = "failed"
+        PASS = "pass"
+        SUCCESS = "success"
+
+    class EndStatus:
+        CANCELED = "canceled"
+        TIMEOUT = "timeout"
+        FAILED = "failed"
+        PASS = "pass"
+        SUCCESS = "success"
+
+        @classmethod
+        def status_list(cls):
+            return [cls.__dict__[k] for k in cls.__dict__.keys() if
+                    not callable(getattr(cls, k)) and not k.startswith("__")]
 
     def __init__(self, mlmd: FlowMLMDSpec, taskid) -> None:
         self._mlmd = mlmd
@@ -57,8 +74,25 @@ class ExecutionStatus:
         response = requests.post(self._mlmd.metadata.statu_uri, json=data)
         logging.debug(f"response: {response.text}")
 
+    def _get_state(self):
+        import requests
+        logging.info(self._mlmd.metadata.statu_uri)
+        data = self.StateData(execution_id=self._taskid).dict()
+        logging.debug(f"wzh test request flow uri: {self._mlmd.metadata.statu_uri}")
+        response = requests.get(self._mlmd.metadata.statu_uri, params=data)
+        logging.debug(f"response: {response.text}")
+        status = False
+        try:
+            task_status = response.json().get("data").get("status")
+            if task_status in ExecutionStatus.EndStatus.status_list():
+                status = True
+        except Exception as e:
+            logging.exception(e)
+            status = True
+        return status
+
     def safe_terminate(self):
-        return True
+        return self._get_state()
 
 
 class IOManager(IOManagerProtocol):
@@ -116,6 +150,9 @@ class IOManager(IOManagerProtocol):
 
     def log_output_metric(self, key, value):
         logging.debug(value)
+
+    def safe_terminate(self):
+        pass
 
 
 class FlowMLMD(MLMD):
