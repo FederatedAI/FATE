@@ -117,10 +117,10 @@ def load_config_from_properties(configs, properties_dict):
 
 
 def load_config_from_file(configs, config_file):
-    import json
+    from ruamel import yaml
 
     if config_file is not None:
-        configs.update(json.load(config_file))
+        configs.update(yaml.safe_load(config_file))
     return configs
 
 
@@ -138,10 +138,10 @@ def load_config_from_entrypoint(configs, config_entrypoint):
 
 def load_config_from_env(configs, env_name):
     import os
-    import json
+    from ruamel import yaml
 
     if env_name is not None and os.environ.get(env_name):
-        configs.update(json.loads(os.environ[env_name]))
+        configs.update(yaml.safe_load(os.environ[env_name]))
     return configs
 
 
