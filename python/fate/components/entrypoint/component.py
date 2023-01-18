@@ -66,9 +66,9 @@ def execute_component(config: TaskConfigSpec):
         except:
             logger.debug(f"context destroy failed, skip")
         finally:
-            import sys
+            import os
 
-            sys.exit()
+            os._exit(0)
 
     signal.signal(signal.SIGTERM, gracefully_stop)
 
@@ -158,6 +158,14 @@ def execute_component(config: TaskConfigSpec):
             time.sleep(0.5)
         logger.debug("terminating, bye~")
     finally:
+
+        # protect process from `sigterm` when context destroying
+        def drop_sigterm(signum, frame):
+            logger.warning(
+                "component is cleaning, will stop in few seconds. Terminate now may cause some process not stop properly, please wait."
+            )
+
+        signal.signal(signal.SIGTERM, drop_sigterm)
         logger.debug("stop and cleaning...")
         ctx.destroy()
         logger.debug("stop and clean finished")

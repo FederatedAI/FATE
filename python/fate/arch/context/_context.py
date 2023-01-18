@@ -65,6 +65,7 @@ class Context(ContextInterface):
         self._role_to_parties = None
 
         self._gc = GC()
+        self._is_destroyed = False
 
     def with_namespace(self, namespace: Namespace):
         context = copy(self)
@@ -176,14 +177,16 @@ class Context(ContextInterface):
         return self._io_kit.writer(self, uri, **kwargs)
 
     def destroy(self):
-        try:
-            self.federation.destroy()
-            logger.debug("federation engine destroy done")
-        except:
-            logger.exception("federation engine destroy failed", stack_info=True)
+        if not self._is_destroyed:
+            try:
+                self.federation.destroy()
+                logger.debug("federation engine destroy done")
+            except:
+                logger.exception("federation engine destroy failed", stack_info=True)
 
-        try:
-            self.computing.destroy()
-            logger.debug("computing engine destroy done")
-        except:
-            logger.exception("computing engine destroy failed", stack_info=True)
+            try:
+                self.computing.destroy()
+                logger.debug("computing engine destroy done")
+            except:
+                logger.exception("computing engine destroy failed", stack_info=True)
+            self._is_destroyed = True
