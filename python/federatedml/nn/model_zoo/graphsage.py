@@ -19,4 +19,4 @@ class Sage(nn.Module):
                 x = conv(x, edge_index)
             else:
                 x = conv(x)
-        return x 
+        return x
