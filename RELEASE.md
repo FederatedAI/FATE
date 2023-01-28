@@ -15,7 +15,7 @@
 * Provide several cli tools to interact and execute components.
 
 > ML
-* Provide base demos for component development: reader、intersection、feature scale、lr and evaluation.
+* Provide base demos for federated machine learning algorithm: intersection、feature scale、lr and evaluation.
 
 > Pipeline 2.0:  Scalable Federated DSL for Application Layer Interconnection
 * Introduce new scalable and standardized federated DSL IR(Intermediate Representation) for federated modeling job
