@@ -17,10 +17,17 @@
 > ML
 * Provide base demos for component development: reader、intersection、feature scale、lr and evaluation.
 
-> Client
+
 * Newly designed federated modeling job DAG, more standardized and scalable, more cross-platform friendly
 * Support modeling federated tasks directly using local data storage after installation
 * Support multiple execution backends, including standalone and Fate-Flow
+
+> OSX(Open Site Exchange)
+* Support grpc synchronous transmission and streaming transmission. Compatible with eggroll interface and can replace FATE-1.x rollsite component
+* Support asynchronous message transmission, which can replace rabbitmq and pulsar components in FATE-1.x
+* Support HTTP-1.X protocol transmission
+* Support cluster deployment and inter-site traffic control
+* Support networking as an Exchange component
 
 > Deploy
 * Support installing from PyPI
