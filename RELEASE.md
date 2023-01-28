@@ -17,13 +17,15 @@
 > ML
 * Provide base demos for component development: reader、intersection、feature scale、lr and evaluation.
 
-> FATE-Client
-* Newly designed federated modeling job DAG, more standardized and scalable, more cross-platform friendly
-* Support modeling federated tasks directly using local data storage after installation
-* Support multiple execution backends, including standalone and Fate-Flow
+> Pipeline 2.0:  Scalable Federated DSL for Application Layer Interconnection
+* Introduce new scalable and standardized federated DSL IR(Intermediate Representation) for federated modeling job
+* Compiler python client to DSL IR
+* Support multiple scalable execution backends, including standalone and Fate-Flow.
 
-> OSX(Open Site Exchange)
-* Support grpc synchronous transmission and streaming transmission. Compatible with eggroll interface and can replace FATE-1.x rollsite component
+
+> OSX(Open Site Exchange) 1.0: Building Open Platform for Cross-Site Communication Interconnection
+* Standardized Cross-Site lower-level federation api
+* Support grpc synchronous transmission and streaming transmission; Compatible with eggroll interface and can replace FATE-1.x rollsite component
 * Support asynchronous message transmission, which can replace rabbitmq and pulsar components in FATE-1.x
 * Support HTTP-1.X protocol transmission
 * Support cluster deployment and inter-site traffic control
