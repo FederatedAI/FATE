@@ -91,15 +91,14 @@ class Index(object):
         global_ranks = self.regenerate_global_ranks(agg_table, self._global_ranks)
         block_partition_mapping = self.regenerate_block_partition_mapping(agg_table, global_ranks)
 
-        def _flat_partition(k, values, ranks=None):
-            start_index = ranks[k]["start_index"]
+        def _flat_partition(k, values):
             _flat_ret = []
             for idx, (_id, block_index) in enumerate(values):
-                _flat_ret.append((_id, (k, start_index + idx)))
+                _flat_ret.append((_id, (k, idx)))
 
             return _flat_ret
 
-        _flat_func = functools.partial(_flat_partition, ranks=global_ranks)
+        _flat_func = functools.partial(_flat_partition)
         index_table = agg_table.flatMap(_flat_func)
 
         return Index(self._ctx, index_table, block_partition_mapping, global_ranks)
