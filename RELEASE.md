@@ -1,27 +1,25 @@
 ## Release 2.0.0-alpha
 ### Feature Highlights
-> Arch
+> Arch 2.0：Building Unified and Standardized API for Heterogeneous Computing Engines Interconnection
 * Introduce `Context` to manage useful APIs for developers, such as `Metrics`, `Cipher`, `Tensor` and `IO`.
 * Introduce `Tensor` data structure to handle local and distributed matrix operation, with built-in heterogeneous acceleration support. 
 * Introduce `DataFrame`, a 2D tabular data structure for data io and simple feature engineering.
 * Refactor `logger`, customizable logging for different use cases and flavors.
-* Introduce new High-Level federation API suite: `context.<role>.get(name)/context.<role>.put(name=value)`.
+* Introduce new high-level federation API suite: `context.<role>.get(name)/context.<role>.put(name=value)`.
 
-
-> Components
+> Components 2.0: Building Standardized Algorithm Components for different Scheduling Engines
 * Introduce `components` toolbox to wrap `ML` modules as standard executable programs.
-* Implement base demos components: reader, intersection, feature scale, lr and evaluation. 
 * `spec` and `loader` expose clear `API` for smooth internal extension and external system integration. 
 * Provide several cli tools to interact and execute components.
+* Implement base demos components: reader, intersection, feature scale, lr and evaluation. 
 
-> ML
+> ML 2.0(demo)
 * Provide base demos for federated machine learning algorithm: intersection、feature scale、lr and evaluation.
 
-> Pipeline 2.0:  Scalable Federated DSL for Application Layer Interconnection
+> Pipeline 2.0: Building Scalable Federated DSL for Application Layer Interconnection
 * Introduce new scalable and standardized federated DSL IR(Intermediate Representation) for federated modeling job
 * Compiler python client to DSL IR
 * Support multiple scalable execution backends, including standalone and Fate-Flow.
-
 
 > OSX(Open Site Exchange) 1.0: Building Open Platform for Cross-Site Communication Interconnection
 * Standardized Cross-Site lower-level federation api
