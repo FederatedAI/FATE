@@ -18,7 +18,7 @@
 
 > Pipeline 2.0: Building Scalable Federated DSL for Application Layer Interconnection
 * Introduce new scalable and standardized federated DSL IR(Intermediate Representation) for federated modeling job
-* Compiler python client to DSL IR
+* Compile python client to DSL IR
 * Support multiple scalable execution backends, including standalone and Fate-Flow.
 
 > OSX(Open Site Exchange) 1.0: Building Open Platform for Cross-Site Communication Interconnection
