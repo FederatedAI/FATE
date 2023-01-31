@@ -361,6 +361,7 @@ public class Dict {
     public final static String QUEUE = "queue";
     public final static String TOTAL = "total";
     public final static String LOCALHOST = "localhost";
+    public final static String LOCALHOST2 = "127.0.0.1";
     public final static String STORE_TYPE = "storeType";
     public final static String STORE_TYPE_SNAKECASE = "store_type";
     public final static String NAMESPACE = "namespace";
@@ -371,8 +372,9 @@ public class Dict {
     public final static String PARTITIONER = "partitioner";
     public final static String SERDES = "serdes";
     public final static String TRANSFER_BROKER_NAME = "transfer_broker_name";
-    public static String PROPERTY_DLEDGER_PEER = "dledger.peer";
-    public static String PROPERTY_DLEDGER_SELF = "dledger.self";
+    public final static String IS_CYCLE="cycle";
+    public final static String EGGROLL_SEND_TOPIC_PREFIX="EGGROLL_SEND_";
+    public final static String EGGROLL_BACK_TOPIC_PREFIX="EGGROLL_BACK_";
 
 
 }

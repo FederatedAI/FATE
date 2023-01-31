@@ -92,8 +92,8 @@ public class ClusterManagerClient {
             try {
                 Meta.Store oriStore = Meta.Store.parseFrom(result.get(0));
                 resultErStore = ErStore.parseFromPb(oriStore);
-            } catch (InvalidProtocolBufferException e) {
-                e.printStackTrace();
+            } catch (InvalidProtocolBufferException igore) {
+
             }
         }
         return resultErStore;

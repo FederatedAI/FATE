@@ -67,16 +67,6 @@ public class JvmInfoCounter {
         }
     }
 
-    public static void main(String[] args) {
-        JvmInfoCounter.start();
-        while (true) {
-            System.err.println(JvmInfoCounter.getMemInfos());
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-    }
+
 
 }

@@ -21,12 +21,19 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.osx.core.config.MetaInfo;
+import com.osx.core.constant.Dict;
 import com.osx.core.constant.NegotiationType;
 import com.osx.core.datasource.FileRefreshableDataSource;
+import com.osx.core.exceptions.CycleRouteInfoException;
+import com.osx.core.exceptions.NoRouterInfoException;
 import com.osx.core.flow.PropertyListener;
+import com.osx.core.frame.ServiceThread;
 import com.osx.core.router.RouterInfo;
 import com.osx.core.utils.JsonUtil;
+import com.osx.core.utils.NetUtils;
 import com.webank.ai.eggroll.api.networking.proxy.Proxy;
+import com.webank.eggroll.core.meta.Meta;
 import com.webank.eggroll.core.transfer.Transfer;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -81,7 +88,19 @@ public class DefaultFateRouterServiceImpl implements FateRouterService {
         //logger.info("query router info {} to {} {} return {}", srcPartyId, dstPartyId, desRole, routerInfo);
         return routerInfo;
     }
-
+    private  RouterInfo buildRouterInfo (Map endpoint,String srcPartyId, String srcRole, String dstPartyId, String desRole){
+        RouterInfo routerInfo = new RouterInfo();
+        routerInfo.setHost(endpoint.get(IP).toString());
+        routerInfo.setPort(((Number) endpoint.get(PORT)).intValue());
+        routerInfo.setDesPartyId(dstPartyId);
+        routerInfo.setSourcePartyId(srcPartyId);
+        routerInfo.setVersion(endpoint.get(VERSION) != null ? endpoint.get(VERSION).toString() : null);
+        routerInfo.setNegotiationType(endpoint.get(negotiationType)!=null?endpoint.get(negotiationType).toString():"");
+        if(endpoint.get(Dict.IS_CYCLE)!=null&&(Boolean)endpoint.get(Dict.IS_CYCLE)){
+            throw new CycleRouteInfoException(routerInfo.getHost()+":"+routerInfo.getPort()+" is a cycle");
+        }
+        return routerInfo;
+    }
 
     public RouterInfo route(String srcPartyId, String srcRole, String dstPartyId, String desRole) {
         RouterInfo routerInfo = null;
@@ -92,32 +111,21 @@ public class DefaultFateRouterServiceImpl implements FateRouterService {
                 List<Map> ips = partyIdMap.getOrDefault(desRole, null);
                 if (ips != null && ips.size() > 0) {
                     Map endpoint = ips.get((int) (System.currentTimeMillis() % ips.size()));
-                    routerInfo = new RouterInfo();
-                    routerInfo.setHost(endpoint.get(IP).toString());
-                    routerInfo.setPort(((Number) endpoint.get(PORT)).intValue());
-                    routerInfo.setDesPartyId(dstPartyId);
-                    routerInfo.setSourcePartyId(srcPartyId);
-                    routerInfo.setVersion(endpoint.get(VERSION) != null ? endpoint.get(VERSION).toString() : null);
-                    routerInfo.setNegotiationType(endpoint.get(negotiationType)!=null?endpoint.get(negotiationType).toString():"");
+                    routerInfo = buildRouterInfo(endpoint,srcPartyId,  srcRole,  dstPartyId,  desRole);
                 }
             } else {
 
                 List<Map> ips = partyIdMap.getOrDefault(DEFAULT, null);
                 if (ips != null && ips.size() > 0) {
                     Map endpoint = ips.get((int) (System.currentTimeMillis() % ips.size()));
-                    routerInfo = new RouterInfo();
-                    routerInfo.setHost(endpoint.get(IP).toString());
-                    routerInfo.setPort(((Number) endpoint.get(PORT)).intValue());
-                    routerInfo.setDesPartyId(dstPartyId);
-                    routerInfo.setSourcePartyId(srcPartyId);
-                    routerInfo.setVersion(endpoint.get(VERSION) != null ? endpoint.get(VERSION).toString() : null);
-                    routerInfo.setNegotiationType(endpoint.get(negotiationType)!=null?endpoint.get(negotiationType).toString():"");
+                    routerInfo = buildRouterInfo(endpoint,srcPartyId,  srcRole,  dstPartyId,  desRole);
                 }
                 if(StringUtils.isNotEmpty(desRole)){
                     logger.warn("role {} is not found,return default router info ",desRole);
                 }
             }
         }
+
         return routerInfo;
     }
 
@@ -234,7 +242,72 @@ public class DefaultFateRouterServiceImpl implements FateRouterService {
         } catch (FileNotFoundException e) {
             logger.error("router file {} is not found", currentPath);
         }
+        /**
+         * 检查路由表中是否存在回环
+         */
+        ServiceThread cycleChecker = new ServiceThread(){
+
+            @Override
+            public void run() {
+                while (true) {
+                    //Map<String, List<Map>> partyIdMap = this.endPointMap.get(dstPartyId);
+                    endPointMap.forEach((desPartyId, desPoint) -> {
+                        if (!MetaInfo.PROPERTY_SELF_PARTY.contains(desPartyId)) {
+
+                            desPoint.forEach((key, routerElementMap) -> {
+                                routerElementMap.forEach(endPoint -> {
+
+                                    String ip = endPoint.get(IP).toString();
+                                    int port = ((Number) endPoint.get(PORT)).intValue();
+                                    boolean isCycle = checkCycle(ip, port);
+                                    if(isCycle){
+                                        logger.warn("route info {}->{}->{}->{} is a cycle , please check route_table.json",desPartyId,key,ip,port);
+                                    }
+                                    endPoint.put(Dict.IS_CYCLE, isCycle);
+                                });
+                            });
+                        }
+
+                    });
+
+                    this.waitForRunning(5000);
+
+                }
+
+            }
+
+            @Override
+            public String getServiceName() {
+                return "cycle_checker";
+            }
+        };
+        cycleChecker.start();
     }
+
+
+    private  boolean checkCycle(String ip,int port){
+
+        String localIp = MetaInfo.INSTANCE_ID.split(":")[0];
+
+        if(localIp.equals(ip)|| Dict.LOCALHOST.equals(ip)||Dict.LOCALHOST2.equals(ip)){
+            if(MetaInfo.PROPERTY_GRPC_PORT==(port)){
+                return true;
+            }
+            if(MetaInfo.PROPERTY_OPEN_GRPC_TLS_SERVER){
+                if(MetaInfo.PROPERTY_GRPC_TLS_PORT==port){
+                    return true;
+                }
+            }
+            if(MetaInfo.PROPERTY_OPEN_HTTP_SERVER){
+                if(MetaInfo.PROPERTY_HTTP_PORT==(port)){
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
 
     private class RouterTableListener implements PropertyListener<String> {
 

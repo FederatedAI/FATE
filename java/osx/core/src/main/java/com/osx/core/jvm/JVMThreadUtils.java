@@ -95,19 +95,6 @@ public class JVMThreadUtils {
         }
     }
 
-    public static void main(String[] args) {
-        for (; ; ) {
-//            System.out.println("=======================================================================");
-//            System.out.println("getDaemonThreadCount: " + JVMThreadUtils.getDaemonThreadCount());
-//            System.out.println("getNonHeapMemoryUsage: " + JVMThreadUtils.getThreadCount());
-//            System.out.println("getPeakThreadCountAndReset: " + JVMThreadUtils.getAndResetPeakThreadCount());
-//            System.out.println("getDeadLockedThreadCount: " + JVMThreadUtils.getDeadLockedThreadCount());
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-    }
+
 }
 

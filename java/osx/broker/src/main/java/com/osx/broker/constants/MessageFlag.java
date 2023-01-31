@@ -17,7 +17,7 @@ package com.osx.broker.constants;
 
 public enum MessageFlag {
 
-    MSG(0), ERROR(1), COMPELETED(2);
+    SENDMSG(0), ERROR(1), COMPELETED(2),BACKMSG(3);
 
     private int flag;
 
@@ -28,11 +28,13 @@ public enum MessageFlag {
     static public MessageFlag getMessageFlag(int flag) {
         switch (flag) {
             case 0:
-                return MSG;
+                return SENDMSG;
             case 1:
                 return ERROR;
             case 2:
                 return COMPELETED;
+            case 3:
+                return BACKMSG;
             default:
                 return null;
         }

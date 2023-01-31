@@ -111,8 +111,8 @@ public class TokenApplyService implements Lifecycle {
                         logger.info("should wait {} ms", sleepMs);
                         try {
                             Thread.sleep(sleepMs);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
+                        } catch (InterruptedException igore) {
+
                         }
                         needLoop = false;
                         break;

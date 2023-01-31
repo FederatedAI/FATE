@@ -166,17 +166,7 @@ public abstract class AbstractServiceAdaptor<req, resp> implements ServiceAdapto
     }
 
     protected void printFlowLog(Context context) {
-
         context.printFlowLog();
-
-//        flowLogger.info("{}|{}|{}|{}|" +
-//                        "{}|{}|{}|{}|" +
-//                        "{}|{}",
-//                context.getSourceIp(), context.getSrcPartyId(),
-//                context.getDesPartyId(), context.getReturnCode(), context.getCostTime(),
-//                context.getDownstreamCost(), serviceName, context.getRouterInfo() != null ? context.getRouterInfo() : "",
-//                MetaInfo.PROPERTY_PRINT_INPUT_DATA?context.getData(Dict.INPUT_DATA):"",
-//                MetaInfo.PROPERTY_PRINT_OUTPUT_DATA?context.getData(Dict.OUTPUT_DATA):"");
     }
 
     protected OutboundPackage<resp> serviceFailInner(Context context, InboundPackage<req> data, Throwable e) {

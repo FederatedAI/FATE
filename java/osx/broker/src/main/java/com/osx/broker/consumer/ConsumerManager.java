@@ -14,11 +14,22 @@
  * limitations under the License.
  */
 package com.osx.broker.consumer;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.lmax.disruptor.EventHandler;
+import com.osx.broker.ServiceContainer;
+import com.osx.broker.callback.MsgEventCallback;
+import com.osx.broker.eggroll.PushConsumer;
+
+import com.osx.broker.message.Message;
+import com.osx.broker.queue.TransferQueue;
+import com.osx.core.constant.Dict;
+import com.osx.core.frame.Lifecycle;
 import com.osx.core.frame.ServiceThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.*;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
@@ -26,11 +37,11 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class ConsumerManager {
+public class ConsumerManager   implements Lifecycle {
     Logger logger = LoggerFactory.getLogger(ConsumerManager.class);
     ScheduledExecutorService scheduledExecutorService = new ScheduledThreadPoolExecutor(1);
     ConcurrentHashMap<String, UnaryConsumer> unaryConsumerMap = new ConcurrentHashMap<>();
-    ConcurrentHashMap<String, StreamConsumer> streamConsumerMap = new ConcurrentHashMap<>();
+    ConcurrentHashMap<String, EventDrivenConsumer> eventDrivenConsumerMap = new ConcurrentHashMap<>();
     ConcurrentHashMap<String, RedirectConsumer> redirectConsumerMap = new ConcurrentHashMap<>();
     AtomicLong consumerIdIndex = new AtomicLong(0);
 
@@ -72,6 +83,25 @@ public class ConsumerManager {
         }
     };
 
+//    private void  dispatchEvent(Message message){
+//        String topic = message.getTopic();
+//        PushConsumer consumer = consumerMap.get(topic);
+//        if(consumer==null) {
+//            consumer= new EggrollConsumer();
+//            consumer.init();
+//            consumer.start();
+//            if(consumerMap.putIfAbsent(topic,consumer)==null){
+//
+//            }else{
+//                consumer.destroy();
+//                consumer = consumerMap.get(topic);
+//            };
+//        }
+//        MessageEvent messageEvent = new MessageEvent();
+//        messageEvent.setTopic(topic);
+//        consumer.fireEvent(streamMessageEvent);
+//    }
+
 
     public ConsumerManager() {
         longPullingThread.start();
@@ -95,6 +125,25 @@ public class ConsumerManager {
         return unaryConsumerMap.get(transferId);
     }
 
+
+    public EventDrivenConsumer  getEventDrivenConsumer(String topic){
+
+        return this.eventDrivenConsumerMap.get(topic);
+
+    }
+
+    public EventDrivenConsumer  createEventDrivenConsumer(String topic, EventHandler  eventHandler){
+        if (eventDrivenConsumerMap.get(topic) == null) {
+            EventDrivenConsumer  eventDrivenConsumer =
+                    new EventDrivenConsumer(consumerIdIndex.get(), topic,eventHandler);
+            eventDrivenConsumerMap.putIfAbsent(topic, eventDrivenConsumer);
+            return eventDrivenConsumerMap.get(topic);
+        } else {
+            return eventDrivenConsumerMap.get(topic);
+        }
+    }
+
+
     public UnaryConsumer getOrCreateUnaryConsumer(String transferId) {
         if (unaryConsumerMap.get(transferId) == null) {
             UnaryConsumer unaryConsumer =
@@ -106,16 +155,16 @@ public class ConsumerManager {
         }
     }
 
-    public StreamConsumer getOrCreateStreamConsumer(String transferId) {
-
-        if (streamConsumerMap.get(transferId) == null) {
-            StreamConsumer streamConsumer = new StreamConsumer(consumerIdIndex.get(), transferId);
-            streamConsumerMap.putIfAbsent(transferId, streamConsumer);
-            return streamConsumerMap.get(transferId);
-        } else {
-            return streamConsumerMap.get(transferId);
-        }
-    }
+//    public StreamConsumer getOrCreateStreamConsumer(String transferId) {
+//
+//        if (streamConsumerMap.get(transferId) == null) {
+//            StreamConsumer streamConsumer = new StreamConsumer(consumerIdIndex.get(), transferId);
+//            streamConsumerMap.putIfAbsent(transferId, streamConsumer);
+//            return streamConsumerMap.get(transferId);
+//        } else {
+//            return streamConsumerMap.get(transferId);
+//        }
+//    }
 
     public synchronized RedirectConsumer getOrCreateRedirectConsumer(String resource) {
         logger.info("getOrCreateRedirectConsumer {}", resource);
@@ -146,10 +195,25 @@ public class ConsumerManager {
         logger.info("remove consumer {}", transferId);
     }
 
-    /**
-     *
-     */
     private void checkAndClean() {
+    }
+
+    @Override
+    public void init() {
+
+
+
+
+    }
+
+    @Override
+    public void start() {
+
+    }
+
+    @Override
+    public void destroy() {
+
     }
 
     public static class ReportData {

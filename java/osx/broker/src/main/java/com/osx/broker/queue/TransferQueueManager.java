@@ -20,6 +20,9 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.protobuf.ByteString;
 import com.osx.broker.ServiceContainer;
+
+import com.osx.broker.callback.MsgEventCallback;
+import com.osx.broker.consumer.EventDriverRule;
 import com.osx.core.config.MasterInfo;
 import com.osx.core.config.MetaInfo;
 import com.osx.core.constant.DeployMode;
@@ -67,6 +70,7 @@ public class TransferQueueManager {
     ConcurrentHashMap<String, TransferQueue> transferQueueMap = new ConcurrentHashMap<>();
     ConcurrentHashMap<String, Set<String>> sessionQueueMap = new ConcurrentHashMap<>();
     ConcurrentHashMap<String, ReentrantLock> transferIdLockMap = new ConcurrentHashMap();
+    ConcurrentHashMap<EventDriverRule, List<MsgEventCallback>> msgCallBackRuleMap = new ConcurrentHashMap<>();
     volatile long transferApplyInfoVersion = -1;
     private ServiceThread cleanTask = new ServiceThread() {
         @Override
@@ -448,7 +452,7 @@ public class TransferQueueManager {
         try {
             ServiceContainer.zkClient.create(path, JsonUtil.object2Json(transferQueueApplyInfo), true);
         } catch (KeeperException.NodeExistsException e) {
-            e.printStackTrace();
+            logger.error("register path {} to zk error",path);
         }
     }
 
@@ -477,7 +481,7 @@ public class TransferQueueManager {
                 try {
                     ServiceContainer.zkClient.create(path, JsonUtil.object2Json(transferQueueApplyInfo), true);
                 } catch (KeeperException.NodeExistsException e) {
-                    e.printStackTrace();
+                    logger.error("register path {} in zk error",path);
                 }
                 String content = ServiceContainer.zkClient.getContent(path);
                 transferQueueApplyInfo = JsonUtil.json2Object(content, TransferQueueApplyInfo.class);
@@ -541,26 +545,35 @@ public class TransferQueueManager {
         }
     }
 
-
-    private TransferQueue localCreate(String transferId, String sessionId) {
-        logger.info("create local topic {}",transferId);
-        TransferQueue transferQueue = new TransferQueue(transferId, this, MetaInfo.PROPERTY_TRANSFER_FILE_PATH_PRE + File.separator + MetaInfo.INSTANCE_ID);
-        transferQueue.setSessionId(sessionId);
-        transferQueue.start();
-        transferQueue.registeDestoryCallback(() -> {
-            this.transferQueueMap.remove(transferId);
-            if (this.sessionQueueMap.get(sessionId) != null) {
-                this.sessionQueueMap.get(sessionId).remove(transferId);
+    private  void setMsgCallBack(TransferQueue  transferQueue){
+        this.msgCallBackRuleMap.forEach((rule,msgCallbacks)->{
+            if(rule.isMatch(transferQueue)){
+                transferQueue.registerMsgCallback(msgCallbacks);
             }
         });
-        transferQueueMap.put(transferId, transferQueue);
+    };
+
+
+    private TransferQueue localCreate(String topic, String sessionId) {
+        logger.info("create local topic {}",topic);
+        TransferQueue transferQueue = new TransferQueue(topic, this, MetaInfo.PROPERTY_TRANSFER_FILE_PATH_PRE + File.separator + MetaInfo.INSTANCE_ID);
+        transferQueue.setSessionId(sessionId);
+        transferQueue.start();
+        transferQueue.registerDestoryCallback(() -> {
+            this.transferQueueMap.remove(topic);
+            if (this.sessionQueueMap.get(sessionId) != null) {
+                this.sessionQueueMap.get(sessionId).remove(topic);
+            }
+        });
+        setMsgCallBack(transferQueue);
+        transferQueueMap.put(topic, transferQueue);
         sessionQueueMap.putIfAbsent(sessionId, new HashSet<>());
-        sessionQueueMap.get(sessionId).add(transferId);
+        sessionQueueMap.get(sessionId).add(topic);
         return transferQueue;
     }
 
-    public TransferQueue getQueue(String transferId) {
-        return transferQueueMap.get(transferId);
+    public TransferQueue getQueue(String topic) {
+        return transferQueueMap.get(topic);
     }
 
     public Map<String, TransferQueue> getAllLocalQueue() {
@@ -568,17 +581,17 @@ public class TransferQueueManager {
     }
 
 
-    private void destroy(String transferId) {
-        Preconditions.checkArgument(StringUtils.isNotEmpty(transferId));
-        ReentrantLock transferIdLock = this.transferIdLockMap.get(transferId);
+    private void destroy(String topic) {
+        Preconditions.checkArgument(StringUtils.isNotEmpty(topic));
+        ReentrantLock transferIdLock = this.transferIdLockMap.get(topic);
         if (transferIdLock != null) {
             transferIdLock.lock();
         }
         try {
-            TransferQueue transferQueue = getQueue(transferId);
+            TransferQueue transferQueue = getQueue(topic);
             if (transferQueue != null) {
                 destroyInner(transferQueue);
-                transferIdLockMap.remove(transferId);
+                transferIdLockMap.remove(topic);
             }
 
         } finally {
@@ -617,21 +630,23 @@ public class TransferQueueManager {
     }
 
     public void destroyAll() {
-        logger.info("prepare to destory {}", transferQueueMap);
         if (MetaInfo.isCluster()) {
             try {
                 if (this.isMaster()) {
                     ServiceContainer.zkClient.delete(MASTER_PATH);
                 }
                 ServiceContainer.zkClient.close();
-                ;
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            logger.info("unregister component over");
         }
         this.transferQueueMap.forEach((transferId, transferQueue) -> {
             transferQueue.destory();
         });
+    }
+
+
+    public void  addMsgCallBackRule(EventDriverRule rule, List<MsgEventCallback > callbacks){
+        this.msgCallBackRuleMap.put(rule,callbacks);
     }
 }

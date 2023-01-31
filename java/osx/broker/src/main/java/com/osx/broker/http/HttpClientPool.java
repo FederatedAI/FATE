@@ -196,6 +196,7 @@ public class HttpClientPool {
             return outboundBuilder.build();
         } catch (IOException ex) {
             logger.error("get http response failed:", ex);
+            ex.printStackTrace();
             return null;
         } finally {
             try {

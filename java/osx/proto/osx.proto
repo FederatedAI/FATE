@@ -54,6 +54,9 @@ enum Metadata {
   MessageOffSet = 5;                   // 消息序列号
   InstanceId = 6;                      // 实例ID
   Timestamp  = 7;                      // 时间戳
+  MessageFlag = 8;                     // 消息标志
+  MessageTopicBack =9;                 // 接受应答消息队列
+
 }
 
 // 通信传输层输入报文编码

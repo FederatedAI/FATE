@@ -38,8 +38,8 @@ public class EncryptUtils {
                 result += Integer.toHexString((0x000000FF & s[i]) | 0xFFFFFF00).substring(6);
             }
             return result;
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception igore) {
+
         }
 
         return "";

@@ -18,6 +18,8 @@ import com.osx.broker.ServiceContainer;
 import com.osx.broker.callback.CompleteCallback;
 import com.osx.broker.callback.DestoryCallback;
 import com.osx.broker.callback.ErrorCallback;
+import com.osx.broker.callback.MsgCallback;
+import com.osx.broker.callback.MsgEventCallback;
 import com.osx.broker.message.MessageDecoder;
 import com.osx.broker.message.MessageExt;
 import com.osx.broker.message.MessageExtBrokerInner;
@@ -47,6 +49,7 @@ public class TransferQueue {
     List<ErrorCallback> errorCallbacks = new ArrayList<>();
     List<CompleteCallback> completeCallbacks = new ArrayList<>();
     List<DestoryCallback> destoryCallbacks = new ArrayList();
+    List<MsgEventCallback> msgCallbacks =  new ArrayList<>();
     long createTimestamp;
     long lastStatusChangeTimestamp;
     long lastWriteTimestamp;
@@ -105,6 +108,11 @@ public class TransferQueue {
                 int size = putMessageResult.getAppendMessageResult().getWroteBytes();
                 logger.info("store begin offset {},size {}", beginWriteOffset, size);
                 putMessageResult.setMsgLogicOffset(indexQueue.putMessagePositionInfoWrapper(beginWriteOffset, size));
+                if(this.msgCallbacks.size()>0){
+                    this.msgCallbacks.forEach(msgCallback-> {
+                        msgCallback.callback(this,msg);
+                    });
+                }
             } else {
                 throw new RuntimeException();
             }
@@ -191,7 +199,7 @@ public class TransferQueue {
         });
     }
 
-    public synchronized void registeErrorCallback(ErrorCallback errorCallback) {
+    public synchronized void registerErrorCallback(ErrorCallback errorCallback) {
         if (transferStatus == TransferStatus.TRANSFERING) {
             errorCallbacks.add(errorCallback);
         } else {
@@ -199,12 +207,21 @@ public class TransferQueue {
         }
     }
 
-    public synchronized void registeDestoryCallback(DestoryCallback destoryCallback) {
+    public synchronized void registerDestoryCallback(DestoryCallback destoryCallback) {
         if (transferStatus == TransferStatus.TRANSFERING)
             destoryCallbacks.add(destoryCallback);
         else
             throw new TransferQueueInvalidStatusException("status is " + transferStatus);
     }
+
+    public synchronized void registerMsgCallback(List<MsgEventCallback> msgCallbacks) {
+        if (transferStatus == TransferStatus.TRANSFERING)
+            msgCallbacks.addAll(msgCallbacks);
+        else
+            throw new TransferQueueInvalidStatusException("status is " + transferStatus);
+    }
+
+
 
     public TransferStatus getTransferStatus() {
         return transferStatus;

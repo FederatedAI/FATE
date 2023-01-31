@@ -147,6 +147,7 @@ public class MetaInfo {
     public static Integer PROPERTY_EGGROLL_CLUSTER_MANANGER_PORT;
 
 
+
     public static Integer PROPERTY_CONSUME_SPIN_TIME = 500;
 
     public static String PROPERTY_CLUSTER_MANAGER_ADDRESS;
@@ -158,6 +159,7 @@ public class MetaInfo {
     public static Integer PROPERTY_CLUSTER_MANAGER_PORT;
 
     public static Boolean PROPERTY_USE_ZOOKEEPER = true;
+    public static Boolean PROPERTY_USE_MSG_QUEUE_REPLACE_STREAM = true;
 
     /**
      * 从连接池中申请连接的超时时间

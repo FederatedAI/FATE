@@ -36,6 +36,7 @@ public class RouterInfo {
     private String trustCertCollectionFile;
     private String caFile;
     private String version;
+    private boolean isCycle;
 
     public String toKey() {
         StringBuffer sb = new StringBuffer();

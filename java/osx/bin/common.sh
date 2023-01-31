@@ -84,7 +84,6 @@ JAVA_OPT="${JAVA_OPT} -XX:-OmitStackTraceInFastThrow"
 JAVA_OPT="${JAVA_OPT} -XX:+AlwaysPreTouch"
 JAVA_OPT="${JAVA_OPT} -XX:MaxDirectMemorySize=15g"
 JAVA_OPT="${JAVA_OPT} -XX:-UseLargePages -XX:-UseBiasedLocking"
-#JAVA_OPT="${JAVA_OPT} -Xdebug -Xrunjdwp:transport=dt_socket,address=9555,server=y,suspend=n"
 JAVA_OPT="${JAVA_OPT} ${JAVA_OPT_EXT}"
 
 set -e
@@ -115,48 +114,18 @@ start() {
   getpid $module
   if [[ ! -n ${pid} ]]; then   JAVA_OPT="${JAVA_OPT}  "
     mklogsdir
-#    if [[ -e "${module}.jar" ]]; then
-#      rm ${module}.jar
-#    fi
-#    ln -s ${module}-${module_version}.jar ${module}.jar
     JAVA_OPT="${JAVA_OPT} -cp conf/broker/:lib/*"
-#    if [ ${module} = "transfer" ]; then
-#      echo "transfer"
-#    elif [ ${module} = "cluster-manager" ] || [ ${module} = "dashboard" ]; then
-#      JAVA_OPT="${JAVA_OPT} -Dspring.config.location=${configpath}/cluster-manager.properties"
-#      JAVA_OPT="${JAVA_OPT} -cp conf/:lib/*:${module}.jar"
-#    else
-#      echo "usage: ${module} {transfer|cluster-manager|dashboard}"
-#    fi
-
     JAVA_OPT="${JAVA_OPT} ${main_class}"
-
     JAVA_OPT="${JAVA_OPT} -c ${configpath}/broker/broker.properties"
-#    if [ ${module} = "broker" -o ${module} = "cli"  ]; then
-#     JAVA_OPT="${JAVA_OPT} -c ${configpath}/broker/broker.properties"
-#    elif [ ${module} = "cluster-manager" ]; then
-#     JAVA_OPT="${JAVA_OPT} -c ${configpath}/cluster-manager/cluster-manager.properties"
-#
-#    elif [ ${module} = "dashboard" ]; then
-#     JAVA_OPT="-jar ${libpath}/dashboard-1.0.0.jar -spring.config.location=${configpath}/dashboard/application.properties"
-#    fi
-
-               if [ ${module} = "cli" ]; then
-                  java ${JAVA_OPT}
-              else
-                 nohup  $JAVA ${JAVA_OPT} >/dev/null 2>&1 &
-                  #sleep 5
-                  #id=$(ps -p $! | awk '{print $1}' | sed -n '2p')
-                  inspect_pid 5 $!
-
-                      if [[ "$exist" = 1 ]]; then
-                        echo $! >./bin/${module}.pid
-                        getpid ${module}
-                        echo "service start sucessfully. pid: ${pid}"
-                      else
-                        echo "service start failed"
-                      fi
-                  fi
+    nohup  $JAVA ${JAVA_OPT} >/dev/null 2>&1 &
+    inspect_pid 5 $!
+    if [[ "$exist" = 1 ]]; then
+       echo $! >./bin/${module}.pid
+       getpid ${module}
+       echo "service start sucessfully. pid: ${pid}"
+    else
+       echo "service start failed, "
+    fi
   else
     echo "service already started. pid: ${pid}"
   fi
@@ -195,11 +164,9 @@ stop() {
   fi
 }
 
-
 inspect_pid() {
   total=0
   exist=0
-  #echo "inspect pid: $2,periods: $1"
   if [[ -n $2 ]]; then
     while [[ $total -le $1 ]]
     do

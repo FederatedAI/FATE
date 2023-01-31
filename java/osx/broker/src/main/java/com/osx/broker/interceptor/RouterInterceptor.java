@@ -42,7 +42,6 @@ public class RouterInterceptor implements Interceptor {
         String sourceComponentName  = context.getSrcComponent();
         String desComponentName = context.getDesComponent();
         RouterInfo routerInfo = fateRouterService.route(sourcePartyId,sourceComponentName,desPartyId,desComponentName);
-        logger.info("============== {} {} {} {} ============",sourcePartyId,sourceComponentName,desPartyId,desComponentName);
         if(logger.isDebugEnabled()) {
             logger.debug("RouterInterceptor return {}", routerInfo);
         }

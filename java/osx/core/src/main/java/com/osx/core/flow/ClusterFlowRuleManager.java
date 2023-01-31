@@ -338,7 +338,6 @@ public final class ClusterFlowRuleManager {
         Set<Long> flowIdSet = new HashSet<>();
 
         for (FlowRule rule : list) {
-            System.err.println("===================" + rule);
             if (!rule.isClusterMode()) {
                 continue;
             }

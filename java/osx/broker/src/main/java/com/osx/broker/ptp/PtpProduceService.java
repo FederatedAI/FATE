@@ -88,7 +88,12 @@ public class PtpProduceService extends AbstractPtpServiceAdaptor {
             ServiceContainer.flowCounterManager.pass(resource,dataSize);
             if (transferQueue != null) {
                 byte[] msgBytes = produceRequest.getPayload().toByteArray();
-                MessageExtBrokerInner messageExtBrokerInner = MessageDecoder.buildMessageExtBrokerInner(topic, msgBytes, 0, MessageFlag.MSG, context.getSrcPartyId(),
+                String flag = produceRequest.getMetadataMap().get(Osx.Metadata.MessageFlag.name());
+                MessageFlag  messageFlag = MessageFlag.SENDMSG;
+                if(StringUtils.isNotEmpty(flag)){
+                    messageFlag =  MessageFlag.valueOf(flag);
+                }
+                MessageExtBrokerInner messageExtBrokerInner = MessageDecoder.buildMessageExtBrokerInner(topic, msgBytes, 0, messageFlag, context.getSrcPartyId(),
                         context.getDesPartyId());
                 PutMessageResult putMessageResult = transferQueue.putMessage(messageExtBrokerInner);
                 if (putMessageResult.getPutMessageStatus() != PutMessageStatus.PUT_OK) {

@@ -58,8 +58,8 @@ public class JsonUtil {
         T t = null;
         try {
             t = mapper.readValue(json, c);
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException igore) {
+
         }
         return t;
     }
@@ -82,8 +82,7 @@ public class JsonUtil {
         T result = null;
         try {
             result = mapper.readValue(json, typeReference);
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException igore) {
         }
         return result;
     }

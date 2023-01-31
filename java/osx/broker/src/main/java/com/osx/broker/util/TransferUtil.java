@@ -108,7 +108,10 @@ public class TransferUtil {
         }
     }
 
-    public static Osx.Inbound buildInboundFromPushingPacket(Proxy.Packet packet, String targetMethod) {
+
+
+
+    public static Osx.Inbound.Builder buildInboundFromPushingPacket(Proxy.Packet packet, String targetMethod) {
         Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
         Proxy.Topic srcTopic = packet.getHeader().getSrc();
         String srcPartyId = srcTopic.getPartyId();
@@ -140,7 +143,8 @@ public class TransferUtil {
         inboundBuilder.putMetadata(Osx.Metadata.TargetMethod.name(), targetMethod);
         inboundBuilder.putMetadata(Osx.Metadata.TargetComponentName.name(), desRole);
         inboundBuilder.putMetadata(Osx.Metadata.SourceComponentName.name(), "");
-        return inboundBuilder.build();
+        return inboundBuilder;
+
     };
 
     static  public void buildHttpFromPb(Osx.Inbound  inbound){
@@ -214,9 +218,7 @@ public class TransferUtil {
         }else{
             if(routerInfo.getProtocol().equals(Protocol.HTTP)){
                 String url = routerInfo.getUrl();
-
                 Map<String, String> metaDataMap = produceRequest.getMetadataMap();
-
                 String version = metaDataMap.get(Osx.Header.Version.name());
                 String techProviderCode = metaDataMap.get(Osx.Header.TechProviderCode.name());
                 String traceId = metaDataMap.get(Osx.Header.TraceID.name());

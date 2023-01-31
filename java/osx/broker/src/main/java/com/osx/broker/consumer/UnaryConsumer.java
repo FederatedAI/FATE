@@ -42,7 +42,7 @@ public class UnaryConsumer extends LocalQueueConsumer {
         super(consumerId, transferId);
         TransferQueue transferQueue = ServiceContainer.transferQueueManager.getQueue(transferId);
         if (transferQueue != null) {
-            transferQueue.registeDestoryCallback(() -> {
+            transferQueue.registerDestoryCallback(() -> {
                 ServiceContainer.consumerManager.onComplete(transferId);
             });
         }
