@@ -27,4 +27,4 @@ if __name__ == "__main__":
     cli = click.Group()
     cli.add_command(component)
     cli.add_command(clean)
-    cli(prog_name="python -m fate.component")
+    cli(prog_name="python -m fate.components")
