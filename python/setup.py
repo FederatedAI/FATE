@@ -39,7 +39,6 @@ extras_require = {
         "llvmlite==0.36.0",
         "psutil>=5.7.0",
         "python-rocksdb==0.7.0",
-        "pystack-debugger>=0.9.0",
     ],
     "all": ["pyfate[rabbitmq,pulsar,spark,eggroll]"],
 }
