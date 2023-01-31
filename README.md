@@ -26,7 +26,7 @@ FATE is an open source project hosted by Linux Foundation. The [Technical Charte
 Releases history can be found in [releases](https://github.com/FederatedAI/FATE/releases), deployment resources can be found on [wiki](https://github.com/FederatedAI/FATE/wiki/Download)
 
 ### Quick Start
-- [Training Demo With Installing From Pypi](./doc/2.0/Quick Start.md)
+- [Training Demo With Installing From Pypi](doc/2.0/Quick Start.md)
 
 ## Related Repositories (Projects)
 - [KubeFATE](https://github.com/FederatedAI/KubeFATE): An operational tool for the FATE platform using cloud native technologies such as containers and Kubernetes.
@@ -37,7 +37,7 @@ Releases history can be found in [releases](https://github.com/FederatedAI/FATE/
 - [EggRoll](https://github.com/WeBankFinTech/eggroll): A simple high-performance computing framework for (federated) machine learning.
 - [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE): A tool to optimize and automate the configuration and deployment operations via Ansible.
 - [FATE-Builder](https://github.com/FederatedAI/FATE-Builder): A tool to build package and docker image for FATE and KubeFATE.
-- [FATE_CLIENT](https://github.com/FederatedAI/FATE-Client): A tool to enable fast federated modeling tasks for FATE.
+- [FATE-Client](https://github.com/FederatedAI/FATE-Client): A tool to enable fast federated modeling tasks for FATE.
 
 ## Governance 
 
