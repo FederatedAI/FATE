@@ -1,4 +1,4 @@
-name: Build fate
+name: Build pyfate
 on:
   workflow_dispatch:
     inputs:
@@ -25,7 +25,7 @@ jobs:
 
       - name: Build fate_client
         run: |
-          python3 setup.py sdist --formats=gztar
+          python3 python/setup.py sdist --formats=gztar
 
       - name: Twine check
         run: |
