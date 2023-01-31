@@ -2,11 +2,11 @@
 	path = eggroll
 	url = https://github.com/WeBankFinTech/eggroll
 	branch = dev-2.5.0-alpha
-[submodule "fateflow"]
-	path = fateflow
-	url = https://github.com/FederatedAI/FATE-Flow
-	branch = dev-2.0-alpha
-[submodule "fateclient"]
-	path = fateclient
+[submodule "fate_client"]
+	path = fate_client
 	url = https://github.com/FederatedAI/FATE-Client
+	branch = dev-2.0-alpha
+[submodule "fate_flow"]
+	path = fate_flow
+	url = https://github.com/FederatedAI/FATE-Flow
 	branch = dev-2.0-alpha
