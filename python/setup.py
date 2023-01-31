@@ -37,7 +37,6 @@ extras_require = {
         "cachetools>=3.0.0",
         "cloudpickle==2.1.0",
         "psutil>=5.7.0",
-        "python-rocksdb==0.7.0",
     ],
     "all": ["pyfate[rabbitmq,pulsar,spark,eggroll]"],
 }
