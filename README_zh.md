@@ -24,7 +24,7 @@ FATE于2019年2月首次对外开源，并成立
 FATE 2.0以前的版本在[发布页](https://github.com/FederatedAI/FATE/releases), 下载资源汇总页在[wiki](https://github.com/FederatedAI/FATE/wiki/Download)
 
 ### 快速开始
-- [从Pypi下载安装并启动训练任务示例](doc/2.0/Quick Start.md)
+- [从Pypi下载安装并启动训练任务示例](doc/2.0/quick_start.md)
 
 ## 关联仓库
 - [KubeFATE](https://github.com/FederatedAI/KubeFATE)
