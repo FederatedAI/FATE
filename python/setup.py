@@ -36,7 +36,6 @@ extras_require = {
         "mmh3==3.0.0",
         "cachetools>=3.0.0",
         "cloudpickle==2.1.0",
-        "llvmlite==0.36.0",
         "psutil>=5.7.0",
         "python-rocksdb==0.7.0",
     ],
