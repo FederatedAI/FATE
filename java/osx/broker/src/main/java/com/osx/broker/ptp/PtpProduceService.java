@@ -53,6 +53,7 @@ public class PtpProduceService extends AbstractPtpServiceAdaptor {
         String srcPartyId = context.getSrcPartyId();
         String sessionId = context.getSessionId();
         Osx.Inbound produceRequest = data.getBody();
+        System.err.println("=============="+produceRequest);
         if (MetaInfo.PROPERTY_SELF_PARTY.contains(context.getDesPartyId())) {
             isDst = true;
         }

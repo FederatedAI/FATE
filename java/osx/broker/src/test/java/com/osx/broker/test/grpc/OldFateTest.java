@@ -148,12 +148,25 @@ public class OldFateTest {
 //            }
 //            for (int t = 0; t < 1; t++) {
 
+        String  srcPartyId =  "10000";
+        String  desPartyId =  "9999";
 
 //                new Thread(() -> {
             StreamObserver<Proxy.Packet> requestOb = stub.push(responseOb);
             for (int i = 0; i < 3; i++) {
+
+//                Proxy.Metadata metadata = packet.getHeader();
+//                ByteString encodedRollSiteHeader = metadata.getExt();
+                Transfer.RollSiteHeader.Builder  rollSiteHeader = Transfer.RollSiteHeader.newBuilder();
+                rollSiteHeader.setDstRole("desRole");
+                rollSiteHeader.setDstPartyId(desPartyId);
+                rollSiteHeader.setSrcPartyId(srcPartyId);
+                rollSiteHeader.setSrcRole("srcRole");
                 Proxy.Packet.Builder packetBuilder = Proxy.Packet.newBuilder();
-                packetBuilder.setHeader(Proxy.Metadata.newBuilder().setSrc(Proxy.Topic.newBuilder().setPartyId("10000")).setDst(Proxy.Topic.newBuilder().setPartyId("9999").setName("kaidengTestTopic").build()).build());
+                packetBuilder.setHeader(Proxy.Metadata.newBuilder().setSrc(Proxy.Topic.newBuilder().setPartyId("10000"))
+                        .setDst(Proxy.Topic.newBuilder().setPartyId("9999").setName("kaidengTestTopic").build())
+                                .setExt(rollSiteHeader.build().toByteString())
+                        .build());
 //                Transfer.RollSiteHeader.Builder headerBuilder = Transfer.RollSiteHeader.newBuilder();
 //                headerBuilder.setDstPartyId("10000");
                 //   packetBuilder.setHeader(Proxy.Metadata.newBuilder().setExt(headerBuilder.build().toByteString()));

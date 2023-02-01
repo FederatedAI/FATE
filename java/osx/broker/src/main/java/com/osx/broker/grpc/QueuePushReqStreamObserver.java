@@ -58,6 +58,7 @@ import org.ppc.ptp.PrivateTransferProtocolGrpc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -177,8 +178,6 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
                         backRespSO.onCompleted();
                     }
                 });
-
-
                 forwardPushReqSO = new StreamObserver<Proxy.Packet>() {
                     @Override
                     public void onNext(Proxy.Packet packet) {
@@ -192,46 +191,20 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
                     @Override
                     public void onError(Throwable throwable) {
 
-
-                        Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
-                        inboundBuilder.setPayload(packet.toByteString());
-                        inboundBuilder.putMetadata(Osx.Header.Version.name(), Long.toString(MetaInfo.CURRENT_VERSION));
-                        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
-                        inboundBuilder.putMetadata(Osx.Header.Token.name(), "");
-                        inboundBuilder.putMetadata(Osx.Header.SourceNodeID.name(), srcPartyId);
-                        inboundBuilder.putMetadata(Osx.Header.TargetNodeID.name(), desPartyId);
-                        inboundBuilder.putMetadata(Osx.Header.SourceInstID.name(), "");
-                        inboundBuilder.putMetadata(Osx.Header.TargetInstID.name(), "");
-                        inboundBuilder.putMetadata(Osx.Header.SessionID.name(), "");
-                        inboundBuilder.putMetadata(Osx.Metadata.TargetMethod.name(), TargetMethod.PRODUCE_MSG.name());
-                        inboundBuilder.putMetadata(Osx.Metadata.TargetComponentName.name(), "");
-                        inboundBuilder.putMetadata(Osx.Metadata.SourceComponentName.name(), "");
-                        inboundBuilder.putMetadata(Osx.Metadata.MessageTopicBack.name(), backTopic);
-                        inboundBuilder.putMetadata(Osx.Metadata.MessageFlag.name(), MessageFlag.ERROR.name());
-                        inboundBuilder.putMetadata(Osx.Metadata.MessageTopic.name(), sendTopic);
+                        ExceptionInfo  exceptionInfo = new ExceptionInfo();
+                        exceptionInfo.setMessage(throwable.getMessage());
+                        String errorData = JsonUtil.object2Json(exceptionInfo);
+                        Osx.Inbound.Builder inboundBuilder = TransferUtil.buildInbound(srcPartyId,desPartyId,TargetMethod.PRODUCE_MSG.name(),
+                                sendTopic,MessageFlag.ERROR,context.getSessionId(),errorData.getBytes(StandardCharsets.UTF_8))
+                                .putMetadata(Osx.Metadata.MessageFlag.name(), MessageFlag.ERROR.name());
                         stub.invoke(inboundBuilder.build());
-
                     }
 
                     @Override
                     public void onCompleted() {
-
-                        Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
-                        inboundBuilder.setPayload(packet.toByteString());
-                        inboundBuilder.putMetadata(Osx.Header.Version.name(), Long.toString(MetaInfo.CURRENT_VERSION));
-                        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
-                        inboundBuilder.putMetadata(Osx.Header.Token.name(), "");
-                        inboundBuilder.putMetadata(Osx.Header.SourceNodeID.name(), srcPartyId);
-                        inboundBuilder.putMetadata(Osx.Header.TargetNodeID.name(), desPartyId);
-                        inboundBuilder.putMetadata(Osx.Header.SourceInstID.name(), "");
-                        inboundBuilder.putMetadata(Osx.Header.TargetInstID.name(), "");
-                        inboundBuilder.putMetadata(Osx.Header.SessionID.name(), "");
-                        inboundBuilder.putMetadata(Osx.Metadata.TargetMethod.name(), TargetMethod.PRODUCE_MSG.name());
-                        inboundBuilder.putMetadata(Osx.Metadata.TargetComponentName.name(), "");
-                        inboundBuilder.putMetadata(Osx.Metadata.SourceComponentName.name(), "");
-                        inboundBuilder.putMetadata(Osx.Metadata.MessageTopicBack.name(), backTopic);
-                        inboundBuilder.putMetadata(Osx.Metadata.MessageFlag.name(), MessageFlag.COMPELETED.name());
-                        inboundBuilder.putMetadata(Osx.Metadata.MessageTopic.name(), sendTopic);
+                        Osx.Inbound.Builder inboundBuilder = TransferUtil.buildInbound(srcPartyId,desPartyId,TargetMethod.PRODUCE_MSG.name(),
+                                        sendTopic,MessageFlag.ERROR,context.getSessionId(),"completed".getBytes(StandardCharsets.UTF_8))
+                                .putMetadata(Osx.Metadata.MessageFlag.name(), MessageFlag.COMPELETED.name());
                         stub.invoke(inboundBuilder.build());
                     }
                 };
