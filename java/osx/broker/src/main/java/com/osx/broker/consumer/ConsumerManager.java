@@ -19,7 +19,6 @@ import com.google.common.collect.Maps;
 import com.lmax.disruptor.EventHandler;
 import com.osx.broker.ServiceContainer;
 import com.osx.broker.callback.MsgEventCallback;
-import com.osx.broker.eggroll.PushConsumer;
 
 import com.osx.broker.message.Message;
 import com.osx.broker.queue.TransferQueue;
@@ -44,7 +43,6 @@ public class ConsumerManager   implements Lifecycle {
     ConcurrentHashMap<String, EventDrivenConsumer> eventDrivenConsumerMap = new ConcurrentHashMap<>();
     ConcurrentHashMap<String, RedirectConsumer> redirectConsumerMap = new ConcurrentHashMap<>();
     AtomicLong consumerIdIndex = new AtomicLong(0);
-
 
     ServiceThread longPullingThread = new ServiceThread() {
         @Override
@@ -82,25 +80,6 @@ public class ConsumerManager   implements Lifecycle {
 
         }
     };
-
-//    private void  dispatchEvent(Message message){
-//        String topic = message.getTopic();
-//        PushConsumer consumer = consumerMap.get(topic);
-//        if(consumer==null) {
-//            consumer= new EggrollConsumer();
-//            consumer.init();
-//            consumer.start();
-//            if(consumerMap.putIfAbsent(topic,consumer)==null){
-//
-//            }else{
-//                consumer.destroy();
-//                consumer = consumerMap.get(topic);
-//            };
-//        }
-//        MessageEvent messageEvent = new MessageEvent();
-//        messageEvent.setTopic(topic);
-//        consumer.fireEvent(streamMessageEvent);
-//    }
 
 
     public ConsumerManager() {

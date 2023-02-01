@@ -19,6 +19,7 @@ package com.osx.broker.util;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.osx.broker.constants.MessageFlag;
 import com.osx.broker.eggroll.ErRollSiteHeader;
 import com.osx.broker.http.HttpClientPool;
 import com.osx.broker.http.PtpHttpResponse;
@@ -33,6 +34,7 @@ import com.osx.core.exceptions.ConfigErrorException;
 import com.osx.core.exceptions.NoRouterInfoException;
 import com.osx.core.exceptions.RemoteRpcException;
 import com.osx.core.frame.GrpcConnectionFactory;
+import com.osx.core.ptp.TargetMethod;
 import com.osx.core.router.RouterInfo;
 import com.webank.ai.eggroll.api.networking.proxy.Proxy;
 import com.webank.eggroll.core.transfer.Transfer;
@@ -106,6 +108,41 @@ public class TransferUtil {
         } catch (InvalidProtocolBufferException e) {
             return null;
         }
+    }
+
+    public  static  Osx.Inbound.Builder  buildInbound(String srcPartyId,
+                                                      String desPartyId,
+                                                      String targetMethod,
+                                                      String topic,
+                                                      MessageFlag messageFlag,
+                                                      String sessionId,
+                                                      byte[] payLoad){
+
+        Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
+        inboundBuilder.putMetadata(Osx.Header.Version.name(), Long.toString(MetaInfo.CURRENT_VERSION));
+        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(),  MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
+//        inboundBuilder.putMetadata(Osx.Header.Token.name(), "");
+        inboundBuilder.putMetadata(Osx.Header.SourceNodeID.name(), srcPartyId);
+        inboundBuilder.putMetadata(Osx.Header.TargetNodeID.name(), desPartyId);
+//        inboundBuilder.putMetadata(Osx.Header.SourceInstID.name(), "");
+//        inboundBuilder.putMetadata(Osx.Header.TargetInstID.name(), "");
+        if(StringUtils.isNotEmpty(sessionId)) {
+            inboundBuilder.putMetadata(Osx.Header.SessionID.name(), sessionId);
+        }
+        inboundBuilder.putMetadata(Osx.Metadata.TargetMethod.name(), targetMethod);
+//        inboundBuilder.putMetadata(Osx.Metadata.TargetComponentName.name(), "");
+//        inboundBuilder.putMetadata(Osx.Metadata.SourceComponentName.name(), "");
+        if(StringUtils.isNotEmpty(topic)) {
+            inboundBuilder.putMetadata(Osx.Metadata.MessageTopic.name(), topic);
+        }
+        if(messageFlag!=null) {
+            inboundBuilder.putMetadata(Osx.Metadata.MessageFlag.name(), messageFlag.name());
+        }
+        if(payLoad!=null) {
+            inboundBuilder.setPayload(ByteString.copyFrom(payLoad));
+        }
+        return  inboundBuilder;
+
     }
 
 

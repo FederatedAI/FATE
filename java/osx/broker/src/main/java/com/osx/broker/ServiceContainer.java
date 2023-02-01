@@ -17,6 +17,7 @@ package com.osx.broker;
 
 
 import com.osx.broker.consumer.ConsumerManager;
+import com.osx.broker.eggroll.EventDriverMsgManager;
 import com.osx.broker.grpc.PcpGrpcService;
 import com.osx.broker.grpc.ProxyGrpcService;
 import com.osx.broker.interceptor.RequestHandleInterceptor;
@@ -65,6 +66,7 @@ public class ServiceContainer {
     static public DefaultTokenService defaultTokenService;
     static public CuratorZookeeperClient zkClient;
     static public TechProviderRegister techProviderRegister;
+    static public EventDriverMsgManager eventDriverMsgManager;
 
     static Logger logger = LoggerFactory.getLogger(ServiceContainer.class);
 
@@ -86,8 +88,7 @@ public class ServiceContainer {
         transferServer = new OsxServer();
         defaultTokenService = createDefaultTokenService();
         tokenApplyService = createTokenApplyService();
-
-
+        eventDriverMsgManager = createEventDriverMsgManager( consumerManager, transferQueueManager);
         pcpGrpcService = createPcpGrpcService();
         techProviderRegister = createTechProviderRegister();
         if (!transferServer.start()) {
@@ -99,6 +100,14 @@ public class ServiceContainer {
 
 
     }
+
+    private static EventDriverMsgManager createEventDriverMsgManager(ConsumerManager consumerManager,TransferQueueManager transferQueueManager){
+        EventDriverMsgManager  eventDriverMsgManager = new EventDriverMsgManager(consumerManager,transferQueueManager);
+        eventDriverMsgManager.init();
+        eventDriverMsgManager.start();
+        return eventDriverMsgManager;
+    }
+
 
     public static TechProviderRegister createTechProviderRegister() {
         TechProviderRegister techProviderRegister = new TechProviderRegister();

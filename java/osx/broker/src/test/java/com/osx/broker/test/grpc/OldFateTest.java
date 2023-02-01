@@ -18,9 +18,9 @@ import java.util.concurrent.TimeUnit;
 
 public class OldFateTest {
 
-    static int port = 9370;//9371
-   // static String ip = "localhost";
-    static String ip = "10.42.0.85";
+    static int port = 9889;//9371
+   static String ip = "localhost";
+
 
     static Logger logger = LoggerFactory.getLogger(OldFateTest.class);
 
@@ -153,7 +153,7 @@ public class OldFateTest {
             StreamObserver<Proxy.Packet> requestOb = stub.push(responseOb);
             for (int i = 0; i < 3; i++) {
                 Proxy.Packet.Builder packetBuilder = Proxy.Packet.newBuilder();
-                packetBuilder.setHeader(Proxy.Metadata.newBuilder().setSrc(Proxy.Topic.newBuilder().setPartyId("9999")).setDst(Proxy.Topic.newBuilder().setPartyId("10000").setName("kaidengTestTopic").build()).build());
+                packetBuilder.setHeader(Proxy.Metadata.newBuilder().setSrc(Proxy.Topic.newBuilder().setPartyId("10000")).setDst(Proxy.Topic.newBuilder().setPartyId("9999").setName("kaidengTestTopic").build()).build());
 //                Transfer.RollSiteHeader.Builder headerBuilder = Transfer.RollSiteHeader.newBuilder();
 //                headerBuilder.setDstPartyId("10000");
                 //   packetBuilder.setHeader(Proxy.Metadata.newBuilder().setExt(headerBuilder.build().toByteString()));
@@ -180,7 +180,7 @@ public class OldFateTest {
 
     public static void main(String[] args) {
         System.err.println("===============");
-        testUnaryCall();
+        testPush();
         CountDownLatch countDownLatch = new CountDownLatch(1);
         try {
             countDownLatch.await();

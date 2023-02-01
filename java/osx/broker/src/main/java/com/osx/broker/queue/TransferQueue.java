@@ -18,7 +18,6 @@ import com.osx.broker.ServiceContainer;
 import com.osx.broker.callback.CompleteCallback;
 import com.osx.broker.callback.DestoryCallback;
 import com.osx.broker.callback.ErrorCallback;
-import com.osx.broker.callback.MsgCallback;
 import com.osx.broker.callback.MsgEventCallback;
 import com.osx.broker.message.MessageDecoder;
 import com.osx.broker.message.MessageExt;

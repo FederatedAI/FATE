@@ -19,9 +19,14 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.lmax.disruptor.EventHandler;
 import com.osx.broker.ServiceContainer;
 import com.osx.broker.constants.MessageFlag;
+import com.osx.broker.consumer.EventDrivenConsumer;
+import com.osx.broker.consumer.GrpcEventHandler;
+import com.osx.broker.consumer.MessageEvent;
 import com.osx.broker.eggroll.*;
+import com.osx.broker.message.MessageExt;
 import com.osx.broker.ptp.PtpForwardPushRespSO;
 import com.osx.broker.queue.CreateQueueResult;
 import com.osx.broker.queue.TransferQueue;
@@ -29,6 +34,7 @@ import com.osx.broker.util.TransferUtil;
 import com.osx.core.config.MetaInfo;
 import com.osx.core.constant.ActionType;
 import com.osx.core.constant.Dict;
+import com.osx.core.constant.StatusCode;
 import com.osx.core.constant.TransferStatus;
 import com.osx.core.context.Context;
 import com.osx.core.exceptions.*;
@@ -36,6 +42,7 @@ import com.osx.core.frame.GrpcConnectionFactory;
 import com.osx.core.ptp.TargetMethod;
 import com.osx.core.router.RouterInfo;
 import com.osx.core.utils.FlowLogUtil;
+import com.osx.core.utils.JsonUtil;
 import com.osx.core.utils.ToStringUtils;
 import com.webank.ai.eggroll.api.networking.proxy.DataTransferServiceGrpc;
 import com.webank.ai.eggroll.api.networking.proxy.Proxy;
@@ -133,117 +140,140 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
             context.setRouterInfo(routerInfo);
             context.setSrcPartyId(routerInfo.getSourcePartyId());
             context.setDesPartyId(routerInfo.getDesPartyId());
-            ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(context.getRouterInfo(),true);
-            if (TransferUtil.isOldVersionFate(routerInfo.getVersion())) {
-                DataTransferServiceGrpc.DataTransferServiceStub stub = DataTransferServiceGrpc.newStub(managedChannel);
-                ForwardPushRespSO forwardPushRespSO = new ForwardPushRespSO(context, backRespSO,backRespSOClass, () -> {
-                    finishLatch.countDown();
-                }, (t) -> {
-                    finishLatch.countDown();
-                });
-                forwardPushReqSO = stub.push(forwardPushRespSO);
-            } else {
+            ManagedChannel managedChannel = GrpcConnectionFactory.createManagedChannel(context.getRouterInfo(), true);
 
-                if(!MetaInfo.PROPERTY_USE_MSG_QUEUE_REPLACE_STREAM||
-                       !MetaInfo.PROPERTY_SELF_PARTY.contains(srcPartyId)) {
-                    PtpForwardPushRespSO ptpForwardPushRespSO = new PtpForwardPushRespSO(context, backRespSO, backRespSOClass, () -> {
+            if (MetaInfo.PROPERTY_USE_MSG_QUEUE_REPLACE_STREAM && MetaInfo.PROPERTY_SELF_PARTY.contains(srcPartyId)) {
+                //由本方发起的传输且使用队列替代流式传输，需要在本地建立接受应答的队列,
+                PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub stub = PrivateTransferProtocolGrpc.newBlockingStub(managedChannel);
+                String uuid = UUID.randomUUID().toString();
+                String backTopic = Dict.EGGROLL_BACK_TOPIC_PREFIX + uuid;
+                String sendTopic = Dict.EGGROLL_SEND_TOPIC_PREFIX + uuid;
+                CreateQueueResult createQueueResult = ServiceContainer.transferQueueManager.createNewQueue(backTopic, context.getSessionId(), true);
+                if (createQueueResult.getTransferQueue() == null) {
+                    throw new RemoteRpcException("create queue error");
+                }
+                TransferQueue answerQueue = createQueueResult.getTransferQueue();
+                ServiceContainer.consumerManager.createEventDrivenConsumer(backTopic, new GrpcEventHandler() {
+                    @Override
+                    protected void handleMessage(MessageExt message) {
+                        Proxy.Metadata proxyMetadata = null;
+                        try {
+                            proxyMetadata = Proxy.Metadata.parseFrom(message.getBody());
+                        } catch (InvalidProtocolBufferException e) {
+                            e.printStackTrace();
+                        }
+                        backRespSO.onNext(proxyMetadata);
+                    }
+
+                    @Override
+                    protected void handleError(MessageExt message) {
+                        byte[] body = message.getBody();
+                        ExceptionInfo exceptionInfo = JsonUtil.json2Object(body, ExceptionInfo.class);
+                        backRespSO.onError(new RuntimeException(exceptionInfo.getMessage()));
+                    }
+
+                    @Override
+                    protected void handleComplete(MessageExt message) {
+                        backRespSO.onCompleted();
+                    }
+                });
+
+
+                forwardPushReqSO = new StreamObserver<Proxy.Packet>() {
+                    @Override
+                    public void onNext(Proxy.Packet packet) {
+                        Osx.Inbound inbound = TransferUtil.buildInboundFromPushingPacket(packet, TargetMethod.PRODUCE_MSG.name())
+                                .putMetadata(Osx.Metadata.MessageTopicBack.name(), backTopic)
+                                .putMetadata(Osx.Metadata.MessageFlag.name(), MessageFlag.SENDMSG.name())
+                                .putMetadata(Osx.Metadata.MessageTopic.name(), sendTopic).build();
+                        stub.invoke(inbound);
+                    }
+
+                    @Override
+                    public void onError(Throwable throwable) {
+
+
+                        Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
+                        inboundBuilder.setPayload(packet.toByteString());
+                        inboundBuilder.putMetadata(Osx.Header.Version.name(), Long.toString(MetaInfo.CURRENT_VERSION));
+                        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
+                        inboundBuilder.putMetadata(Osx.Header.Token.name(), "");
+                        inboundBuilder.putMetadata(Osx.Header.SourceNodeID.name(), srcPartyId);
+                        inboundBuilder.putMetadata(Osx.Header.TargetNodeID.name(), desPartyId);
+                        inboundBuilder.putMetadata(Osx.Header.SourceInstID.name(), "");
+                        inboundBuilder.putMetadata(Osx.Header.TargetInstID.name(), "");
+                        inboundBuilder.putMetadata(Osx.Header.SessionID.name(), "");
+                        inboundBuilder.putMetadata(Osx.Metadata.TargetMethod.name(), TargetMethod.PRODUCE_MSG.name());
+                        inboundBuilder.putMetadata(Osx.Metadata.TargetComponentName.name(), "");
+                        inboundBuilder.putMetadata(Osx.Metadata.SourceComponentName.name(), "");
+                        inboundBuilder.putMetadata(Osx.Metadata.MessageTopicBack.name(), backTopic);
+                        inboundBuilder.putMetadata(Osx.Metadata.MessageFlag.name(), MessageFlag.ERROR.name());
+                        inboundBuilder.putMetadata(Osx.Metadata.MessageTopic.name(), sendTopic);
+                        stub.invoke(inboundBuilder.build());
+
+                    }
+
+                    @Override
+                    public void onCompleted() {
+
+                        Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
+                        inboundBuilder.setPayload(packet.toByteString());
+                        inboundBuilder.putMetadata(Osx.Header.Version.name(), Long.toString(MetaInfo.CURRENT_VERSION));
+                        inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(), MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
+                        inboundBuilder.putMetadata(Osx.Header.Token.name(), "");
+                        inboundBuilder.putMetadata(Osx.Header.SourceNodeID.name(), srcPartyId);
+                        inboundBuilder.putMetadata(Osx.Header.TargetNodeID.name(), desPartyId);
+                        inboundBuilder.putMetadata(Osx.Header.SourceInstID.name(), "");
+                        inboundBuilder.putMetadata(Osx.Header.TargetInstID.name(), "");
+                        inboundBuilder.putMetadata(Osx.Header.SessionID.name(), "");
+                        inboundBuilder.putMetadata(Osx.Metadata.TargetMethod.name(), TargetMethod.PRODUCE_MSG.name());
+                        inboundBuilder.putMetadata(Osx.Metadata.TargetComponentName.name(), "");
+                        inboundBuilder.putMetadata(Osx.Metadata.SourceComponentName.name(), "");
+                        inboundBuilder.putMetadata(Osx.Metadata.MessageTopicBack.name(), backTopic);
+                        inboundBuilder.putMetadata(Osx.Metadata.MessageFlag.name(), MessageFlag.COMPELETED.name());
+                        inboundBuilder.putMetadata(Osx.Metadata.MessageTopic.name(), sendTopic);
+                        stub.invoke(inboundBuilder.build());
+                    }
+                };
+
+            } else {
+                if (TransferUtil.isOldVersionFate(routerInfo.getVersion())) {
+                    DataTransferServiceGrpc.DataTransferServiceStub stub = DataTransferServiceGrpc.newStub(managedChannel);
+                    ForwardPushRespSO forwardPushRespSO = new ForwardPushRespSO(context, backRespSO, backRespSOClass, () -> {
                         finishLatch.countDown();
                     }, (t) -> {
                         finishLatch.countDown();
                     });
-                    PrivateTransferProtocolGrpc.PrivateTransferProtocolStub stub = PrivateTransferProtocolGrpc.newStub(managedChannel);
-                    StreamObserver<Osx.Inbound> ptpForwardPushReqSO = stub.transport(ptpForwardPushRespSO);
-                    forwardPushReqSO = new StreamObserver<Proxy.Packet>() {
-                        @Override
-                        public void onNext(Proxy.Packet packet) {
-                            Osx.Inbound inbound = TransferUtil.buildInboundFromPushingPacket(packet, TargetMethod.PUSH.name()).build();
-                            ptpForwardPushReqSO.onNext(inbound);
-                        }
+                    forwardPushReqSO = stub.push(forwardPushRespSO);
+                } else {
 
-                        @Override
-                        public void onError(Throwable throwable) {
-                            ptpForwardPushReqSO.onError(throwable);
-                        }
+                        PtpForwardPushRespSO ptpForwardPushRespSO = new PtpForwardPushRespSO(context, backRespSO, backRespSOClass, () -> {
+                            finishLatch.countDown();
+                        }, (t) -> {
+                            finishLatch.countDown();
+                        });
+                        PrivateTransferProtocolGrpc.PrivateTransferProtocolStub stub = PrivateTransferProtocolGrpc.newStub(managedChannel);
+                        StreamObserver<Osx.Inbound> ptpForwardPushReqSO = stub.transport(ptpForwardPushRespSO);
+                        forwardPushReqSO = new StreamObserver<Proxy.Packet>() {
+                            @Override
+                            public void onNext(Proxy.Packet packet) {
+                                Osx.Inbound inbound = TransferUtil.buildInboundFromPushingPacket(packet, TargetMethod.PUSH.name()).build();
+                                ptpForwardPushReqSO.onNext(inbound);
+                            }
 
-                        @Override
-                        public void onCompleted() {
-                            ptpForwardPushReqSO.onCompleted();
-                        }
-                    };
-                }else{
-                    //由本方发起的传输且使用队列替代流式传输，需要在本地建立接受应答的队列,
-                    PrivateTransferProtocolGrpc.PrivateTransferProtocolBlockingStub stub = PrivateTransferProtocolGrpc.newBlockingStub(managedChannel);
-                    String uuid = UUID.randomUUID().toString();
-                    String backTopic  = Dict.EGGROLL_BACK_TOPIC_PREFIX+uuid;
-                    String sendTopic =Dict.EGGROLL_SEND_TOPIC_PREFIX+uuid;
-                    CreateQueueResult createQueueResult= ServiceContainer.transferQueueManager.createNewQueue(backTopic,context.getSessionId(),true);
-                    if(createQueueResult.getTransferQueue()==null){
-                        throw  new RemoteRpcException("create queue error");
-                    }
-                    TransferQueue answerQueue = createQueueResult.getTransferQueue();
-                    EggrollConsumerManage
-                    forwardPushReqSO =  new StreamObserver<Proxy.Packet>() {
-                        @Override
-                        public void onNext(Proxy.Packet packet) {
-                            Osx.Inbound inbound = TransferUtil.buildInboundFromPushingPacket(packet, TargetMethod.PRODUCE_MSG.name())
-                                    .putMetadata(Osx.Metadata.MessageTopicBack.name(),backTopic )
-                                    .putMetadata(Osx.Metadata.MessageFlag.name(), MessageFlag.MSG.name())
-                                    .putMetadata(Osx.Metadata.MessageTopic.name(), sendTopic).build();
-                            stub.invoke(inbound);
-                        }
+                            @Override
+                            public void onError(Throwable throwable) {
+                                ptpForwardPushReqSO.onError(throwable);
+                            }
 
-                        @Override
-                        public void onError(Throwable throwable) {
-
-
-                            Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
-                            inboundBuilder.setPayload(packet.toByteString());
-                            inboundBuilder.putMetadata(Osx.Header.Version.name(), Long.toString(MetaInfo.CURRENT_VERSION));
-                            inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(),  MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
-                            inboundBuilder.putMetadata(Osx.Header.Token.name(), "");
-                            inboundBuilder.putMetadata(Osx.Header.SourceNodeID.name(), srcPartyId);
-                            inboundBuilder.putMetadata(Osx.Header.TargetNodeID.name(), desPartyId);
-                            inboundBuilder.putMetadata(Osx.Header.SourceInstID.name(), "");
-                            inboundBuilder.putMetadata(Osx.Header.TargetInstID.name(), "");
-                            inboundBuilder.putMetadata(Osx.Header.SessionID.name(), "");
-                            inboundBuilder.putMetadata(Osx.Metadata.TargetMethod.name(), TargetMethod.PRODUCE_MSG.name());
-                            inboundBuilder.putMetadata(Osx.Metadata.TargetComponentName.name(), "");
-                            inboundBuilder.putMetadata(Osx.Metadata.SourceComponentName.name(), "");
-                            inboundBuilder.putMetadata(Osx.Metadata.MessageTopicBack.name(),backTopic );
-                            inboundBuilder .putMetadata(Osx.Metadata.MessageFlag.name(), MessageFlag.ERROR.name());
-                            inboundBuilder.putMetadata(Osx.Metadata.MessageTopic.name(), sendTopic);
-                            stub.invoke(inboundBuilder.build());
-
-                        }
-
-                        @Override
-                        public void onCompleted() {
-
-                            Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
-                            inboundBuilder.setPayload(packet.toByteString());
-                            inboundBuilder.putMetadata(Osx.Header.Version.name(), Long.toString(MetaInfo.CURRENT_VERSION));
-                            inboundBuilder.putMetadata(Osx.Header.TechProviderCode.name(),  MetaInfo.PROPERTY_FATE_TECH_PROVIDER);
-                            inboundBuilder.putMetadata(Osx.Header.Token.name(), "");
-                            inboundBuilder.putMetadata(Osx.Header.SourceNodeID.name(), srcPartyId);
-                            inboundBuilder.putMetadata(Osx.Header.TargetNodeID.name(), desPartyId);
-                            inboundBuilder.putMetadata(Osx.Header.SourceInstID.name(), "");
-                            inboundBuilder.putMetadata(Osx.Header.TargetInstID.name(), "");
-                            inboundBuilder.putMetadata(Osx.Header.SessionID.name(), "");
-                            inboundBuilder.putMetadata(Osx.Metadata.TargetMethod.name(), TargetMethod.PRODUCE_MSG.name());
-                            inboundBuilder.putMetadata(Osx.Metadata.TargetComponentName.name(), "");
-                            inboundBuilder.putMetadata(Osx.Metadata.SourceComponentName.name(), "");
-                            inboundBuilder.putMetadata(Osx.Metadata.MessageTopicBack.name(),backTopic );
-                            inboundBuilder .putMetadata(Osx.Metadata.MessageFlag.name(), MessageFlag.COMPELETED.name());
-                            inboundBuilder.putMetadata(Osx.Metadata.MessageTopic.name(), sendTopic);
-                            stub.invoke(inboundBuilder.build());
-                        }
-                    };
-
-
+                            @Override
+                            public void onCompleted() {
+                                ptpForwardPushReqSO.onCompleted();
+                            }
+                        };
 
 
                 }
-
             }
         }
         transferStatus = TransferStatus.TRANSFERING;
@@ -452,10 +482,6 @@ public class QueuePushReqStreamObserver implements StreamObserver<Proxy.Packet> 
                     }
                 }
             }
-//            if(needPrintFlow){
-//                context.setActionType("push");
-//                context.printFlowLog();
-//            }
             logger.info("receive completed  !!!!");
         }
     }
