@@ -29,5 +29,15 @@
 * Support cluster deployment and inter-site traffic control
 * Support networking as an Exchange component
 
+> FATE Flow 2.0: Build an interconnection scheduling platform
+* Adapted to re-designed federated modeling DAG
+* Standardized API interface with param type checking 
+* Decoupling Flow from FATE repository 
+* Optimized scheduling logic, with configurable dispatcher decoupled from initiator 
+* Encapsulated scheduling client to allow cross-platform scheduling
+* Support container-level algorithm loading and task scheduling, enhancing support for cross-platform heterogeneous scenarios
+* Independent maintenance for system configuration to enhance flexibility and  ease of configuration
+* Support new communication engine OSX, while compatible with all engines from Flow 1.X
+
 > Deploy
 * Support installing from PyPI
