@@ -47,17 +47,13 @@ class PipelineLogger(pydantic.BaseModel):
             level,
             formater="brief",
             filters=[],
-            max_bytes=102400,
-            backup_count=3,
         ):
             handlers[name] = {
-                "class": "logging.handlers.RotatingFileHandler",
+                "class": "logging.FileHandler",
                 "level": level,
                 "formatter": formater,
                 "filters": filters,
-                "filename": filename,
-                "maxBytes": max_bytes,
-                "backupCount": backup_count,
+                "filename": filename
             }
 
         # add root logger
@@ -151,18 +147,14 @@ class FlowLogger(pydantic.BaseModel):
             filename,
             level,
             formater="brief",
-            filters=[],
-            max_bytes=102400,
-            backup_count=3,
+            filters=[]
         ):
             handlers[name] = {
-                "class": "logging.handlers.RotatingFileHandler",
+                "class": "logging.FileHandler",
                 "level": level,
                 "formatter": formater,
                 "filters": filters,
-                "filename": filename,
-                "maxBytes": max_bytes,
-                "backupCount": backup_count,
+                "filename": filename
             }
 
         # add root logger
