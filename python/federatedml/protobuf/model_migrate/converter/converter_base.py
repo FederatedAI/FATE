@@ -38,7 +38,10 @@ class AutoReplace(object):
 
     def anonymous_format(self, string: str):
         """{role}_{party_id}_{idx}"""
-        role, party_id, idx = string.split('_')
+        split = string.split('_')
+        if len(split) == 2:
+            return string
+        role, party_id, idx = split
         mapping = self.get_mapping(role)
         new_party_id = mapping[int(party_id)]
         return generate_anonymous(idx, new_party_id, role)
