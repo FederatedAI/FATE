@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import pickle
 
 import numpy as np
 import unittest
@@ -124,6 +125,35 @@ class TestCKKSEncryptedNumber(unittest.TestCase):
             x = x + 5000 - 0.2
             de_en_x = self.private_key.decrypt(en_x)
             self.assert_small_rel_diff(de_en_x, x)
+
+    def test_chain_mul(self):
+        # Compute 5! in encrypted form
+        encrypted_product = self.public_key.encrypt(1.0)
+        for value in [1, 2, 3, 4, 5]:
+            encrypted_product *= value
+
+        # Check if the result is almost equal to 5! = 120
+        self.assertAlmostEqual(self.private_key.decrypt(encrypted_product), 120)
+
+    def test_serialization(self):
+        x = 100.0
+        encrypted_x = self.public_key.encrypt(x)
+        result = self.private_key.decrypt(_serialize_and_deserialize(encrypted_x))
+        self.assertAlmostEqual(x, result)
+
+
+class TestCKKSPublicKeySerialization(unittest.TestCase):
+    def test_serialization(self):
+        public_key, _ = CKKSKeypair.generate_keypair()
+        # Test no error in serialization/deserialization
+        _serialize_and_deserialize(public_key)
+        # Nothing to assert
+
+
+def _serialize_and_deserialize(obj):
+    serialized_obj = pickle.dumps(obj)
+    deserialized_obj = pickle.loads(serialized_obj)
+    return deserialized_obj
 
 
 if __name__ == '__main__':
