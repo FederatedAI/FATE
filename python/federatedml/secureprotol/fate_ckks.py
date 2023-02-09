@@ -92,6 +92,9 @@ class CKKSEncryptedNumber(object):
         self.__encrypted_vector = encrypted_vector
         self.__context = context
 
+    def apply_obfuscator(self):
+        pass
+
     def __getstate__(self):
         return self.__encrypted_vector.serialize(), self.__context.serialize(save_public_key=False,
                                                                              save_secret_key=False,
@@ -126,7 +129,7 @@ class CKKSEncryptedNumber(object):
 
     def __mul__(self, other):
         if isinstance(other, CKKSEncryptedNumber):
-            return ValueError("Multiplication between encrypted numbers are not supported currently")
+            return self.__from_ts_enc_vec(self.__encrypted_vector * other.__encrypted_vector)
         else:
             return self.__from_ts_enc_vec(self.__encrypted_vector * other)
 
