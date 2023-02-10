@@ -15,20 +15,20 @@ client = FlowClient('127.0.0.1', 9000, 'v1')
 ### 用法
 
 ``` sourceCode python
-client.job.submit(conf_path, dsl_path)
+client.job.submit(config_data, dsl_path)
 ```
 
 ### 函数定义
 
-#### `submit(conf_path, dsl_path)`
+#### `submit(config_data, dsl_path)`
 
   - 介绍：提交执行pipeline任务。
   - 参数：
 
-| 编号 | 参数      | 参数类型 | 必要参数 | 参数介绍         |
-| ---- | --------- | -------- | -------- | ---------------- |
-| 1    | conf_path | string   | 是       | 任务配置文件路径 |
-| 2    | dsl_path  | string   | 是       | DSL文件路径      |
+| 编号 | 参数        | 参数类型 | 必要参数 | 参数介绍    |
+| ---- | ----------- | -------- | -------- | ----------- |
+| 1    | config_data | dict     | 是       | 任务配置    |
+| 2    | dsl_path    | string   | 是       | DSL文件路径 |
 
 #### `stop(job_id)`
 
@@ -56,12 +56,12 @@ client.job.submit(conf_path, dsl_path)
   - 介绍：下载指定任务的配置文件到指定目录。
   - 参数：
 
-| 否   | 参数        | 参数类型 | 必要参数 | 参数介绍     |
-| ---- | ----------- | -------- | -------- | ------------ |
-| 1    | job_id      | integer  | 是       | Job ID       |
-| 2    | role        | string   | 是       | 角色         |
-| 3    | party_id    | integer  | 是       | Party id     |
-| 4    | output_path | string   | 是       | 输出目录路径 |
+| 否  | 参数        | 参数类型 | 必要参数 | 参数介绍     |
+| --- | ----------- | -------- | -------- | ------------ |
+| 1   | job_id      | integer  | 是       | Job ID       |
+| 2   | role        | string   | 是       | 角色         |
+| 3   | party_id    | integer  | 是       | Party id     |
+| 4   | output_path | string   | 是       | 输出目录路径 |
 
 #### `log(job_id, output_path)`
 
@@ -182,14 +182,14 @@ will be detected in priority while the 'job_id' 参数 would be ignored.
   - 介绍：下载指定组件的输出数据。
   - 参数：
 
-| 编号 | 参数              | 参数类型    | 必要参数 | 参数介绍                    |
-| -- | --------------- | ------- | ---- | ----------------------- |
-| 1  | job_id         | integer | 是    | Job ID                  |
-| 2  | role            | string  | 是    | 角色                      |
-| 3  | party_id       | integer | 是    | Party id                |
-| 4  | component_name | string  | 是    | 组件名                     |
-| 5  | output_path    | string  | 是    | 输出目录路径                  |
-| 6  | limit           | integer | 否    | 返回结果数量限制（默认：-1，指返回所有数据） |
+| 编号 | 参数           | 参数类型 | 必要参数 | 参数介绍                                     |
+| ---- | -------------- | -------- | -------- | -------------------------------------------- |
+| 1    | job_id         | integer  | 是       | Job ID                                       |
+| 2    | role           | string   | 是       | 角色                                         |
+| 3    | party_id       | integer  | 是       | Party id                                     |
+| 4    | component_name | string   | 是       | 组件名                                       |
+| 5    | output_path    | string   | 是       | 输出目录路径                                 |
+| 6    | limit          | integer  | 否       | 返回结果数量限制（默认：-1，指返回所有数据） |
 
 #### `output_data_table(job_id, role, party_id, component_name)`
 
@@ -229,30 +229,30 @@ will be detected in priority while the 'job_id' 参数 would be ignored.
 ### 用法
 
 ``` sourceCode python
-client.data.download(conf_path)
+client.data.download(config_data)
 ```
 
 ### 函数定义
 
-#### `download(conf_path)`
+#### `download(config_data)`
 
   - 介绍：下载数据表。
   - 参数：
 
-| 编号 | 参数      | 参数类型 | 必要参数 | 参数介绍         |
-| ---- | --------- | -------- | -------- | ---------------- |
-| 1    | conf_path | string   | 是       | 任务配置文件路径 |
+| 编号 | 参数        | 参数类型 | 必要参数 | 参数介绍 |
+| ---- | ----------- | -------- | -------- | -------- |
+| 1    | config_data | dict     | 是       | 任务配置 |
 
-#### `upload(conf_path, verbose=0, drop=0)`
+#### `upload(config_data, verbose=0, drop=0)`
 
   - 介绍：上传数据表。
   - 参数：
 
-| 编号 | 参数      | 参数类型 | 必要参数 | 参数介绍                                                     |
-| ---- | --------- | -------- | -------- | ------------------------------------------------------------ |
-| 1    | conf_path | string   | 是       | 任务配置文件路径                                             |
-| 2    | verbose   | integer  | 否       | 如果赋值为1，用户将在控制台获得上传进度（默认为0）           |
-| 3    | drop      | integer  | 否       | 如果赋值为1，旧版已上传数据将被新上传的同名数据替换（默认为0） |
+| 编号 | 参数        | 参数类型 | 必要参数 | 参数介绍                                                       |
+| ---- | ----------- | -------- | -------- | -------------------------------------------------------------- |
+| 1    | config_data | dict     | 是       | 任务配置                                                       |
+| 2    | verbose     | integer  | 否       | 如果赋值为1，用户将在控制台获得上传进度（默认为0）             |
+| 3    | drop        | integer  | 否       | 如果赋值为1，旧版已上传数据将被新上传的同名数据替换（默认为0） |
 
 #### `upload_history(limit=10, job_id=None)`
 
@@ -279,9 +279,9 @@ client.task.list(limit=10)
   - 介绍： 展示Task列表。
   - 参数：
 
-| 编号 | 参数    | 参数类型    | 必要参数 | 参数介绍            |
-| -- | ----- | ------- | ---- | --------------- |
-| 1  | limit | integer | 否    | 返回结果数量限制（默认：10） |
+| 编号 | 参数  | 参数类型 | 必要参数 | 参数介绍                     |
+| ---- | ----- | -------- | -------- | ---------------------------- |
+| 1    | limit | integer  | 否       | 返回结果数量限制（默认：10） |
 
 #### `query(job_id=None, role=None, party_id=None, component_name=None, status=None)`
 
@@ -301,61 +301,61 @@ client.task.list(limit=10)
 ### 用法
 
 ``` sourceCode python
-client.model.load(conf_path)
+client.model.load(config_data)
 ```
 
 ### 函数定义
 
-#### `load(conf_path=None, job_id=None)`
+#### `load(config_data=None, job_id=None)`
 
   - 介绍：加载模型。如果 `dsl_version == 2` 则需要先 `deploy` 模型。
   - 参数：
 
-| 编号 | 参数      | 参数类型 | 必要参数 | 参数介绍         |
-| ---- | --------- | -------- | -------- | ---------------- |
-| 1    | conf_path | string   | 否       | 任务配置文件路径 |
-| 2    | job_id    | string   | 否       | Job ID           |
+| 编号 | 参数        | 参数类型 | 必要参数 | 参数介绍 |
+| ---- | ----------- | -------- | -------- | -------- |
+| 1    | config_data | dict     | 否       | 任务配置 |
+| 2    | job_id      | string   | 否       | Job ID   |
 
-#### `bind(conf_path, job_id=None)`
+#### `bind(config_data, job_id=None)`
 
   - 介绍： 绑定模型。如果 `dsl_version == 2` 则需要先 `deploy` 模型。
   - 参数：
 
-| 编号 | 参数      | 参数类型 | 必要参数 | 参数介绍         |
-| ---- | --------- | -------- | -------- | ---------------- |
-| 1    | conf_path | string   | 是       | 任务配置文件路径 |
-| 2    | job_id    | string   | 否       | Job ID           |
+| 编号 | 参数        | 参数类型 | 必要参数 | 参数介绍 |
+| ---- | ----------- | -------- | -------- | -------- |
+| 1    | config_data | dict     | 是       | 任务配置 |
+| 2    | job_id      | string   | 否       | Job ID   |
 
-#### `export_model(conf_path, to_database=False)`
+#### `export_model(config_data, to_database=False)`
 
   - 介绍：
 导出模型。
   - 参数：
 
-| 编号 | 参数        | 参数类型 | 必要参数 | 参数介绍                                                     |
-| ---- | ----------- | -------- | -------- | ------------------------------------------------------------ |
-| 1    | conf_path   | string   | 是       | 任务配置文件路径                                             |
+| 编号 | 参数        | 参数类型 | 必要参数 | 参数介绍                                                                          |
+| ---- | ----------- | -------- | -------- | --------------------------------------------------------------------------------- |
+| 1    | config_data | dict     | 是       | 任务配置                                                                          |
 | 2    | to_database | bool     | 否       | 如果指定且有可用的数据库环境，fate flow将从根据任务配置文件将模型导出到数据库中。 |
 
-#### `import_model(conf_path, from_database=False)`
+#### `import_model(config_data, from_database=False)`
 
   - 介绍：
 导入模型。
   - 参数：
 
-| 编号 | 参数          | 参数类型 | 必要参数 | 参数介绍                                                     |
-| ---- | ------------- | -------- | -------- | ------------------------------------------------------------ |
-| 1    | conf_path     | string   | 是       | 任务配置文件路径                                             |
+| 编号 | 参数          | 参数类型 | 必要参数 | 参数介绍                                                                        |
+| ---- | ------------- | -------- | -------- | ------------------------------------------------------------------------------- |
+| 1    | config_data   | dict     | 是       | 任务配置                                                                        |
 | 2    | from_database | bool     | 否       | 如果指定且有可用的数据库环境，fate flow将从根据任务配置文件从数据库中导入模型。 |
 
-#### `migrate(conf_path, to_database=False)`
+#### `migrate(config_data, to_database=False)`
 
   - 介绍： 迁移模型。
   - 参数：
 
-| 编号 | 参数      | 参数类型 | 必要参数 | 参数介绍         |
-| ---- | --------- | -------- | -------- | ---------------- |
-| 1    | conf_path | string   | 是       | 任务配置文件路径 |
+| 编号 | 参数        | 参数类型 | 必要参数 | 参数介绍 |
+| ---- | ----------- | -------- | -------- | -------- |
+| 1    | config_data | dict     | 是       | 任务配置 |
 
 #### `tag_list(job_id)`
 
@@ -423,23 +423,23 @@ client.model.load(conf_path)
 | 4    | party_id      | string   | 否       | Party ID |
 | 5    | query_filters | list     | 否       | 检索字段 |
 
-#### `homo_convert(conf_path)`
+#### `homo_convert(config_data)`
 
   - 介绍： 基于横向训练的模型，生成其他ML框架的模型文件。
   - 参数：
 
-| 编号 | 参数      | 参数类型 | 必要参数 | 参数介绍         |
-| ---- | --------- | -------- | -------- | ---------------- |
-| 1    | conf_path | string   | 是       | 任务配置文件路径 |
+| 编号 | 参数        | 参数类型 | 必要参数 | 参数介绍 |
+| ---- | ----------- | -------- | -------- | -------- |
+| 1    | config_data | dict     | 是       | 任务配置 |
 
-#### `homo_deploy(conf_path)`
+#### `homo_deploy(config_data)`
 
   - 介绍： 将横向训练之后使用homo_convert功能生成的模型部署到在线推理系统中，当前支持创建基于KFServing的推理服务。
   - 参数：
 
-| 编号 | 参数      | 参数类型 | 必要参数 | 参数介绍         |
-| ---- | --------- | -------- | -------- | ---------------- |
-| 1    | conf_path | string   | 是       | 任务配置文件路径 |
+| 编号 | 参数        | 参数类型 | 必要参数 | 参数介绍 |
+| ---- | ----------- | -------- | -------- | -------- |
+| 1    | config_data | dict     | 是       | 任务配置 |
 
 ## Tag 操作
 
