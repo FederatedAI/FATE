@@ -35,7 +35,7 @@ class PHECipher(PHECipherInterface):
 
         if kind == PHEKind.AUTO or PHEKind.PAILLIER:
             if self.device == device.CPU:
-                from .storage.local.device.cpu.multithread_cpu_paillier_block import (
+                from .storage.local.device.cpu.cpu_paillier_block import (
                     BlockPaillierCipher,
                 )
 
