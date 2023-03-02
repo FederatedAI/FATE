@@ -19,6 +19,28 @@ from ..._shape import Shape
 from ._storage import _TorchStorage
 
 
+def from_torch(t: torch.Tensor):
+    return _TorchStorage(dtype.from_torch_dtype(t.dtype), Shape(t.shape), t)
+
+
+def randn(shape, _dtype: dtype):
+    return _TorchStorage(
+        dtype.from_torch_dtype(_dtype), Shape(shape), torch.randn(shape, dtype=_dtype.to_torch_dtype())
+    )
+
+
+def ones(shape, _dtype: dtype):
+    return _TorchStorage(
+        dtype.from_torch_dtype(_dtype), Shape(shape), torch.ones(shape, dtype=_dtype.to_torch_dtype())
+    )
+
+
+def zeros(shape, _dtype: dtype):
+    return _TorchStorage(
+        dtype.from_torch_dtype(_dtype), Shape(shape), torch.zeros(shape, dtype=_dtype.to_torch_dtype())
+    )
+
+
 def quantile(storage, q, epsilon):
     from fate_utils.quantile import quantile_f64_ix2
 

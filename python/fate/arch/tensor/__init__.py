@@ -14,12 +14,14 @@
 #  limitations under the License.
 from fate.arch.storage import dtype
 
+from ._create import *
 from ._ops import *
-from ._tensor import distributed_tensor, randn, tensor
 
 __all__ = [
-    "tensor",
+    "from_torch",
     "randn",
-    "distributed_tensor",
+    "ones",
+    "zeros",
+    "from_blocks",
     "dtype",
 ]

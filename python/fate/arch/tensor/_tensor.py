@@ -14,38 +14,12 @@
 #  limitations under the License.
 from typing import List, Union
 
-import torch
-from fate.interface import Context
-
-from ..storage import storage_ops
-from ..storage._dtype import dtype
 from ..storage._protocol import LStorage
-from ..storage._shape import Shape
 from .distributed import DStorage
 
 
-def tensor(t: torch.Tensor):
-    from ..storage.impl.torch_based._storage import _TorchStorage
-
-    storage = _TorchStorage(dtype.from_torch_dtype(t.dtype), Shape(t.shape), t)
-    return Tensor(storage)
-
-
-def randn(shape, dtype):
-    torch_tensor = torch.randn(shape, dtype=dtype.to_torch_dtype())
-    return tensor(torch_tensor)
-
-
-def distributed_tensor(ctx: Context, tensors: List[torch.Tensor], d_axis=0, partitions=3):
-    from ..storage.impl.torch_based._storage import _TorchStorage
-
-    storages = [_TorchStorage(dtype.from_torch_dtype(t.dtype), Shape(t.shape), t) for t in tensors]
-    storage = DStorage.from_storages(ctx, storages, d_axis, partitions)
-    return Tensor(storage)
-
-
 class Tensor:
-    def __init__(self, storage: Union["DStorage", LStorage]) -> None:
+    def __init__(self, storage: Union[DStorage, LStorage]) -> None:
         self._storage = storage
 
     @property

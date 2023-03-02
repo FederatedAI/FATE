@@ -14,7 +14,10 @@
 #  limitations under the License.
 
 
+import torch
+
 from ._dispatch import _auto_dispatch
+from ._tensor import Tensor
 
 
 @_auto_dispatch
