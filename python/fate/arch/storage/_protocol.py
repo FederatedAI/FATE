@@ -12,12 +12,25 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from typing import Union
 
-from ._dstorage import DStorage
+from typing import Protocol
+
+from fate.arch.unify import device
+
 from ._dtype import dtype
-from ._lstorage import LStorage
-from ._shape import DAxis, Shape
+from ._shape import Shape
 
-Storage = Union[LStorage, DStorage]
-__all__ = ["dtype", "Shape", "DAxis", "LStorage", "DStorage", "Storage"]
+
+class LStorage(Protocol):
+    device: device
+    dtype: dtype
+    shape: Shape
+
+    def tolist(self):
+        ...
+
+    def transpose(self) -> "LStorage":
+        ...
+
+    def to_local(self) -> "LStorage":
+        ...

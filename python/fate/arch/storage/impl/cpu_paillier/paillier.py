@@ -12,12 +12,14 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from typing import Any, Callable, List
+from typing import List
 
 import torch
-from fate.arch.tensor._exception import OpsDispatchUnsupportedError
-from fate.arch.tensor.types import LStorage, Shape, dtype
 from fate.arch.unify import device
+
+from ..._dtype import dtype
+from ..._protocol import LStorage
+from ..._shape import Shape
 
 
 class _RustPaillierStorage(LStorage):
@@ -64,44 +66,3 @@ class _RustPaillierStorage(LStorage):
         tensors.extend([storage.data for storage in others])
         cat_tensor = torch.cat(tensors, axis)
         return _RustPaillierStorage(d_type, Shape(cat_tensor.shape), cat_tensor)
-
-
-def _ops_dispatch_signature_1_local_cpu_paillier(
-    method, args, kwargs
-) -> Callable[[_RustPaillierStorage], _RustPaillierStorage]:
-    raise OpsDispatchUnsupportedError(method, False, device.CPU, dtype.paillier)
-
-
-def _ops_dispatch_signature_2_local_cpu_paillier(
-    method,
-    args,
-    kwargs,
-) -> Callable[[Any, Any], _RustPaillierStorage]:
-
-    # TODO: implement ops directly in C/Rust side
-    def _wrap(a, b, **kwargs) -> _RustPaillierStorage:
-        import operator
-
-        a, b = _maybe_unwrap_storage(a), _maybe_unwrap_storage(b)
-        func = getattr(operator, method)
-        output = func(a, b)
-        return _RustPaillierStorage(dtype.paillier, Shape(output.shape), output)
-
-    return _wrap
-
-
-def _ops_dispatch_signature_3_local_cpu_paillier(
-    method,
-    args,
-    kwargs,
-) -> Callable[[_RustPaillierStorage], _RustPaillierStorage]:
-    raise OpsDispatchUnsupportedError(method, False, device.CPU, dtype.paillier)
-
-
-def _maybe_unwrap_storage(s):
-    from .plain import _TorchStorage
-
-    if isinstance(s, (_RustPaillierStorage, _TorchStorage)):
-        return s.data
-    else:
-        return s

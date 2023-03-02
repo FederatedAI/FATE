@@ -12,22 +12,11 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-class OpsDispatchException(Exception):
-    ...
 
+import fate.arch.storage._ops as storage_ops
 
-class OpsDispatchBadSignatureError(OpsDispatchException):
-    ...
+from ._dtype import dtype
+from ._protocol import LStorage
+from ._shape import DAxis, Shape
 
-
-class OpsDispatchBadDtypeError(OpsDispatchException):
-    ...
-
-
-class OpsDispatchUnsupportedError(OpsDispatchException):
-    def __init__(self, method, distributed, device, dtype) -> None:
-        super().__init__(f"method={method}, distributed={distributed}, device={device}, dtype={dtype}")
-
-
-class OpDispatchInvalidDevice(OpsDispatchException):
-    ...
+__all__ = ["dtype", "Shape", "DAxis", "LStorage"]

@@ -12,8 +12,14 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from ._tensor import distributed_tensor, randn, tensor
-from .ops import *
-from .types import *
+from fate.arch.storage import dtype
 
-__all__ = ["tensor", "randn", "distributed_tensor"]
+from ._ops import *
+from ._tensor import distributed_tensor, randn, tensor
+
+__all__ = [
+    "tensor",
+    "randn",
+    "distributed_tensor",
+    "dtype",
+]

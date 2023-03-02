@@ -12,16 +12,15 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from typing import Callable, List, Optional
+from typing import Callable, Generic, List, Optional, TypeVar
 
+from fate.arch.storage import DAxis, LStorage, Shape, dtype
 from fate.arch.unify import device
 
-from ._dtype import dtype
-from ._lstorage import LStorage
-from ._shape import DAxis, Shape
+BT = TypeVar("BT")
 
 
-class DStorage:
+class DStorage(Generic[BT]):
     def __init__(self, blocks, shape: Shape, dtype: dtype, device: device, transposed=False) -> None:
         self.blocks = blocks
         self._shape = shape
@@ -50,36 +49,6 @@ class DStorage:
     def transpose(self) -> "DStorage":
         return DStorage(self.blocks, self.shape.transpose(), self.dtype, self.device, not self.transposed)
 
-    def sum(self, *args, **kwargs):
-        from ..storage.distributed.agg import sum
-
-        return sum(self, *args, **kwargs)
-
-    def max(self, *args, **kwargs):
-        from ..storage.distributed.agg import max
-
-        return max(self, *args, **kwargs)
-
-    def min(self, *args, **kwargs):
-        from ..storage.distributed.agg import min
-
-        return min(self, *args, **kwargs)
-
-    def mean(self, *args, **kwargs):
-        from ..storage.distributed.agg import mean
-
-        return mean(self, *args, **kwargs)
-
-    def std(self, *args, **kwargs):
-        from ..storage.distributed.agg import std
-
-        return std(self, *args, **kwargs)
-
-    def var(self, *args, **kwargs):
-        from ..storage.distributed.agg import var
-
-        return var(self, *args, **kwargs)
-
     def __eq__(self, __o: object) -> bool:
         if isinstance(__o, DStorage) and self._dtype == __o.dtype and self._device == __o.device:
             return self.to_local() == __o.to_local()
@@ -95,7 +64,7 @@ class DStorage:
     def collect(self) -> List[LStorage]:
         return [pair[1] for pair in sorted(self.blocks.collect())]
 
-    def to_local(self):
+    def to_local(self) -> BT:
         storages = self.collect()
         return storages[0].cat(storages[1:], self.shape.d_axis.axis)
 
@@ -135,96 +104,6 @@ class DStorage:
         return DStorage(blocks, Shape(shape_size, d_axis_cls), d_type, device)
 
     @classmethod
-    def unary_op(
-        cls,
-        a: "DStorage",
-        mapper: Callable[[LStorage], LStorage],
-        output_shape: Optional[Shape] = None,
-        output_dtype=None,
-    ):
-        def _apply_transpose(func, flag):
-            def _wrap(blk):
-                if flag:
-                    blk = blk.transpose()
-                return func(blk)
-
-            return _wrap
-
-        mapper = _apply_transpose(mapper, a.transposed)
-        output_block = a.blocks.mapValues(mapper)
-        if output_dtype is None:
-            output_dtype = a._dtype
-        if output_shape is None:
-            output_shape = a.shape
-        return DStorage(output_block, output_shape, output_dtype, a._device)
-
-    @classmethod
-    def elemwise_unary_op(
-        cls,
-        a,
-        mapper: Callable[[LStorage], LStorage],
-        output_dtype=None,
-    ):
-        def _apply_transpose(func, flag):
-            def _wrap(blk):
-                if flag:
-                    blk = blk.transpose()
-                return func(blk)
-
-            return _wrap
-
-        mapper = _apply_transpose(mapper, a.transposed)
-        output_block = a.blocks.mapValues(mapper)
-        if output_dtype is None:
-            output_dtype = a._dtype
-        return DStorage(output_block, a.shape, output_dtype, a._device)
-
-    @classmethod
-    def agg_unary_op(
-        cls,
-        a: "DStorage",
-        mapper: Callable[[LStorage], LStorage],
-        reducer,
-        post_func,
-        output_dtype=None,
-    ):
-        if output_dtype is None:
-            output_dtype = a._dtype
-        output_block = a.blocks.mapValues(mapper)
-        if reducer is not None:
-            output_block = output_block.reduce(reducer)
-
-            if post_func is not None:
-                output_block = post_func(output_block)
-            return output_block
-        else:
-            return DStorage(output_block, a.shape, output_dtype, a._device)
-
-    @classmethod
-    def elemwise_binary_op(
-        cls,
-        a: "DStorage",
-        b: "DStorage",
-        binary_mapper: Callable[[LStorage, LStorage], LStorage],
-        output_dtype=None,
-    ):
-        def _apply_transpose(func, lf, rf):
-            def _wrap(lblk, rblk):
-                if lf:
-                    lblk = lblk.transpose()
-                if rf:
-                    rblk = rblk.transpose()
-                return func(lblk, rblk)
-
-            return _wrap
-
-        binary_mapper = _apply_transpose(binary_mapper, a.transposed, b.transposed)
-        output_blocks = a.blocks.join(b.blocks, binary_mapper)
-        if output_dtype is None:
-            output_dtype = a._dtype
-        return DStorage(output_blocks, a.shape, output_dtype, a._device)
-
-    @classmethod
     def elemwise_bc_op(
         cls,
         a: "DStorage",
@@ -234,6 +113,7 @@ class DStorage:
         shape=None,
         **kwargs,
     ):
+        # TODO: remove this
         def _apply_transpose(func, lf, rf):
             def _wrap(lblk, rblk):
                 if lf:
@@ -257,8 +137,3 @@ class DStorage:
         if shape is None:
             shape = a.shape
         return DStorage(output_blocks, shape, output_dtype, a._device)
-
-    def local_ops_helper(self):
-        from ..storage._helper import local_ops_helper
-
-        return local_ops_helper(self.device, self.dtype)
