@@ -124,9 +124,6 @@ class CKKSEncryptedNumber(object):
     def __rmul__(self, other):
         return self.__mul__(other)
 
-    def __truediv__(self, other):
-        return self.__mul__(1 / other)
-
     def __mul__(self, other):
         if isinstance(other, CKKSEncryptedNumber):
             return self.__from_ts_enc_vec(self.__encrypted_vector * other.__encrypted_vector)

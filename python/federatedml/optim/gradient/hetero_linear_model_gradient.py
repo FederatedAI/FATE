@@ -193,7 +193,7 @@ class Guest(HeteroGradientBase):
         def _apply_obfuscate(val):
             val.apply_obfuscator()
             return val
-        fore_gradient = fore_gradient.mapValues(lambda val: _apply_obfuscate(val) / batch_size)
+        fore_gradient = fore_gradient.mapValues(lambda val: _apply_obfuscate(val) * (1.0 / batch_size))
 
         if partial_masked_index_enc:
             masked_fore_gradient = partial_masked_index_enc.union(fore_gradient)

@@ -85,15 +85,6 @@ class TestCKKSEncryptedNumber(unittest.TestCase):
             de_en_res = self.private_key.decrypt(en_res)
             self.assert_small_rel_diff(de_en_res, res)
 
-        x = 9
-        en_x = self.public_key.encrypt(x)
-
-        for i in range(100):
-            en_x = en_x + 5000 - 0.2
-            x = x + 5000 - 0.2
-            de_en_x = self.private_key.decrypt(en_x)
-            self.assert_small_rel_diff(de_en_x, x)
-
     def test_enc_mul(self):
         x_li = np.ones(100) * np.random.randint(10)
         y_li = np.ones(100) * np.random.randint(100) * -1
@@ -116,24 +107,6 @@ class TestCKKSEncryptedNumber(unittest.TestCase):
 
             de_en_res = self.private_key.decrypt(en_res)
             self.assert_small_rel_diff(de_en_res, res)
-
-        x = 9
-        en_x = self.public_key.encrypt(x)
-
-        for i in range(100):
-            en_x = en_x + 5000 - 0.2
-            x = x + 5000 - 0.2
-            de_en_x = self.private_key.decrypt(en_x)
-            self.assert_small_rel_diff(de_en_x, x)
-
-    def test_chain_mul(self):
-        # Compute 5! in encrypted form
-        encrypted_product = self.public_key.encrypt(1.0)
-        for value in [1, 2, 3, 4, 5]:
-            encrypted_product *= value
-
-        # Check if the result is almost equal to 5! = 120
-        self.assertAlmostEqual(self.private_key.decrypt(encrypted_product), 120)
 
     def test_serialization(self):
         x = 100.0

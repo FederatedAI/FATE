@@ -35,9 +35,9 @@ class FixedPointEncoder(object):
 
     def decode(self, obj):
         if isinstance(obj, np.ndarray):
-            decode_obj = obj / self._fixpoint_precision
+            decode_obj = obj * (1.0 / self._fixpoint_precision)
         elif isinstance(obj, list):
-            decode_obj = (np.array(obj) / self._fixpoint_precision).to_list()
+            decode_obj = (np.array(obj) * (1.0 / self._fixpoint_precision)).to_list()
         else:
             raise ValueError("FixPointEncoder Not support type {}".format(type(obj)))
 
