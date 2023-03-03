@@ -125,10 +125,8 @@ class CKKSEncryptedNumber(object):
         return self.__mul__(other)
 
     def __mul__(self, other):
-        if isinstance(other, CKKSEncryptedNumber):
-            return self.__from_ts_enc_vec(self.__encrypted_vector * other.__encrypted_vector)
-        else:
-            return self.__from_ts_enc_vec(self.__encrypted_vector * other)
+        vector = self.__encrypted_vector * (other.__encrypted_vector if isinstance(other, CKKSEncryptedNumber) else other)
+        return self.__from_ts_enc_vec(vector)
 
     def __from_ts_enc_vec(self, ts_enc_vec):
         """Converts tenseal encrypted singleton vector to CKKSEncryptedNumber"""
