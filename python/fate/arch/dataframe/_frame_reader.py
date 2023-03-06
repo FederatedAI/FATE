@@ -15,30 +15,40 @@
 import functools
 import typing
 
-import numpy as np
 import pandas as pd
 import torch
+
+from typing import Union
 from fate.arch import tensor
 
+
+from .entity import types
 from ._dataframe import DataFrame
-from .storage import Index
+from .manager import BlockManager
+from .manager import SchemaManager
 
 
 class RawTableReader(object):
     def __init__(
         self,
         delimiter: str = ",",
+        match_id_name = None,
         label_name: typing.Union[None, str] = None,
         label_type: str = "int",
         weight_name: typing.Union[None, str] = None,
-        dtype: str = "float32",
+        weight_type: str = "float32",
+        dtype: Union[str, dict] = "float32",
+        na_values: Union[None, str, int, float, dict] = None,
         input_format: str = "dense",
     ):
         self._delimiter = delimiter
+        self._match_id_name = match_id_name
         self._label_name = label_name
         self._label_type = label_type
         self._weight_name = weight_name
+        self._weight_type = weight_type
         self._dtype = dtype
+        self._na_values = na_values
         self._input_format = input_format
 
     def to_frame(self, ctx, table):
@@ -48,57 +58,42 @@ class RawTableReader(object):
         return self._dense_format_to_frame(ctx, table)
 
     def _dense_format_to_frame(self, ctx, table):
-        schema = dict()
-        schema["sid"] = table.schema["sid"]
-        header = table.schema["header"].split(self._delimiter, -1)
-
-        table = table.mapValues(lambda value: value.split(self._delimiter, -1))
-        header_indexes = list(range(len(header)))
-        index_table, _block_partition_mapping, _global_ranks = _convert_to_order_indexes(table)
-
-        data_dict = {}
-        if self._label_name:
-            if self._label_name not in header:
-                raise ValueError("Label name does not exist in header, please have a check")
-            label_idx = header.index(self._label_name)
-            header.remove(self._label_name)
-            header_indexes.remove(label_idx)
-            label_type = getattr(np, self._label_type)
-            label_table = table.mapValues(lambda value: [label_type(value[label_idx])])
-            data_dict["label"] = _convert_to_tensor(
-                ctx,
-                label_table,
-                block_partition_mapping=_block_partition_mapping,
-                dtype=getattr(torch, self._label_type),
-            )
-            schema["label_name"] = self._label_name
-
-        if self._weight_name:
-            if self._weight_name not in header:
-                raise ValueError("Weight name does not exist in header, please have a check")
-
-            weight_idx = header.index(self._weight_name)
-            header.remove(self._weight_name)
-            header_indexes.remove(weight_idx)
-            weight_table = table.mapValues(lambda value: [value[weight_idx]])
-            data_dict["weight"] = _convert_to_tensor(
-                ctx, weight_table, block_partition_mapping=_block_partition_mapping, dtype=getattr(torch, "float64")
-            )
-
-            schema["weight_name"] = self._weight_name
-
-        if header_indexes:
-            value_table = table.mapValues(lambda value: np.array(value)[header_indexes].astype(self._dtype).tolist())
-            data_dict["values"] = _convert_to_tensor(
-                ctx, value_table, block_partition_mapping=_block_partition_mapping, dtype=getattr(torch, self._dtype)
-            )
-            schema["header"] = header
-
-        data_dict["index"] = _convert_to_index(
-            ctx, index_table, block_partition_mapping=_block_partition_mapping, global_ranks=_global_ranks
+        """
+        流程：schema-manager初始化得到每列的schema
+             block-manager初始化得到可合并的列类型，其中注意的是，index列\weight\label不合并
+             block-manager维护映射表：每列被映射的block_index，根据的是列索引id
+                                    block的属性：同类型是否可以合并
+        """
+        schema_manager = SchemaManager()
+        index_dict = schema_manager.parse_table_schema(
+            schema=table.schema,
+            delimiter=self._delimiter,
+            match_id_name=self._match_id_name,
+            label_name=self._label_name,
+            weight_name=self._weight_name
         )
 
-        return DataFrame(ctx=ctx, schema=schema, **data_dict)
+        schema_manager.init_column_types(self._label_type, self._weight_type, self._dtype, default_type=types.DEFAULT_DATA_TYPE)
+        block_manager = BlockManager()
+        block_manager.initialize_blocks(schema_manager)
+
+        partition_order_mappings = _get_partition_order(table)
+        functools.partial(_to_blocks,
+                          schema_manager=schema_manager,
+                          index_dict=index_dict,
+                          block_manager=block_manager,
+                          partition_order_mappings=partition_order_mappings,
+                          na_values=self._na_values)
+        block_table = table.mapPartitions(
+            _to_blocks,
+            use_previous_behavior=False
+        )
+
+        return DataFrame(ctx=ctx,
+                         block_table=block_table,
+                         partition_order_mappings=partition_order_mappings,
+                         schema_manager=schema_manager,
+                         block_manager=block_manager)
 
 
 class ImageReader(object):
@@ -118,28 +113,38 @@ class CSVReader(object):
     # TODO: a. support match_id, b. more id type
     def __init__(
         self,
-        id_name: typing.Union[None, str] = None,
+        sample_id_name: typing.Union[None, str] = None,
+        match_id_list: typing.Union[None, list] = None,
+        match_id_name: typing.Union[None, str] = None,
         delimiter: str = ",",
         label_name: typing.Union[None, str] = None,
         label_type: str = "int",
         weight_name: typing.Union[None, str] = None,
+        weight_type: str = "float32",
         dtype: str = "float32",
-        partition: int = 4,
+        na_values: Union[None, str, list, dict] = None,
+        partition: int = 4
     ):
-        self._id_name = id_name
+        self._sample_id_name = sample_id_name
+        self._match_id_list = match_id_list
+        self._match_id_name = match_id_name
         self._delimiter = delimiter
         self._label_name = label_name
         self._label_type = label_type
         self._weight_name = weight_name
+        self._weight_type = weight_type
         self._dtype = dtype
+        self._na_values = na_values
         self._partition = partition
 
     def to_frame(self, ctx, path):
         # TODO: use table put data instead of read all data
-        df = pd.read_csv(path, delimiter=self._delimiter)
+        df = pd.read_csv(path, delimiter=self._delimiter, na_values=self._na_values)
 
         return PandasReader(
-            id_name=self._id_name,
+            sample_id_name=self._sample_id_name,
+            match_id_list=self._match_id_list,
+            match_id_name=self._match_id_name,
             label_name=self._label_name,
             label_type=self._label_type,
             weight_name=self._weight_name,
@@ -173,142 +178,162 @@ class TorchDataSetReader(object):
 class PandasReader(object):
     def __init__(
         self,
-        id_name: typing.Union[None, str] = None,
+        sample_id_name: typing.Union[None, str] = None,
+        match_id_list: typing.Union[None, list] = None,
+        match_id_name: typing.Union[None, str] = None,
         label_name: str = None,
         label_type: str = "int",
         weight_name: typing.Union[None, str] = None,
+        weight_type: str = "float32",
         dtype: str = "float32",
         partition: int = 4,
     ):
-        self._id_name = id_name
+        self._sample_id_name = sample_id_name
+        self._match_id_list = match_id_list
+        self._match_id_name = match_id_name
         self._label_name = label_name
         self._label_type = label_type
         self._weight_name = weight_name
+        self._weight_type = weight_type
         self._dtype = dtype
         self._partition = partition
 
+        if self._sample_id_name and not self._match_id_name:
+            raise ValueError(f"As sample_id {self._sample_id_name} is given, match_id should be given too")
+
     def to_frame(self, ctx, df: "pd.DataFrame"):
-        schema = dict()
-        if not self._id_name:
-            self._id_name = df.columns[0]
-        df = df.set_index(self._id_name)
+        if not self._sample_id_name:
+            self._sample_id_name = types.DEFAULT_SID_NAME
+            df.index.name = self._sample_id_name
+        else:
+            df = df.set_index(self._sample_id_name)
 
-        # TODO: need to ensure id's type is str?
-        df.index = df.index.astype("str")
+        schema_manager = SchemaManager()
+        index_dict = schema_manager.parse_local_file_schema(sample_id_name=self._sample_id_name,
+                                                            columns=df.columns.tolist(),
+                                                            match_id_list=self._match_id_list,
+                                                            match_id_name=self._match_id_name,
+                                                            label_name=self._label_name,
+                                                            weight_name=self._weight_name)
+        schema_manager.init_column_types(self._label_type, self._weight_type, self._dtype,
+                                         default_type=types.DEFAULT_DATA_TYPE)
+        block_manager = BlockManager()
+        block_manager.initialize_blocks(schema_manager)
 
-        id_list = df.index.tolist()
-
-        index_table = ctx.computing.parallelize(
-            zip(id_list, range(df.shape[0])), include_key=True, partition=self._partition
+        buf = zip(df.index.tolist(), df.values.tolist())
+        table = ctx.computing.parallelize(
+            buf, include_key=True, partition=self._partition
         )
 
-        index_table, _block_partition_mapping, _global_ranks = _convert_to_order_indexes(index_table)
-
-        data_dict = {}
-        if self._label_name:
-            label_list = [[label] for label in df[self._label_name].tolist()]
-            label_table = ctx.computing.parallelize(
-                zip(id_list, label_list), include_key=True, partition=self._partition
-            )
-            data_dict["label"] = _convert_to_tensor(
-                ctx,
-                label_table,
-                block_partition_mapping=_block_partition_mapping,
-                dtype=getattr(torch, self._label_type),
-            )
-            df = df.drop(columns=self._label_name)
-            schema["label_name"] = self._label_name
-
-        if self._weight_name:
-            weight_list = df[self._weight_name].tolist()
-            weight_table = ctx.computing.parallelize(
-                zip(id_list, weight_list), include_key=True, partition=self._partition
-            )
-            data_dict["weight"] = _convert_to_tensor(
-                ctx, weight_table, block_partition_mapping=_block_partition_mapping, dtype=getattr(torch, "float64")
-            )
-
-            df = df.drop(columns=self._weight_name)
-            schema["weight_name"] = self._weight_name
-
-        if df.shape[1]:
-            value_table = ctx.computing.parallelize(
-                zip(id_list, df.values), include_key=True, partition=self._partition
-            )
-            data_dict["values"] = _convert_to_tensor(
-                ctx, value_table, block_partition_mapping=_block_partition_mapping, dtype=getattr(torch, self._dtype)
-            )
-            schema["header"] = df.columns.to_list()
-
-        data_dict["index"] = _convert_to_index(
-            ctx, index_table, block_partition_mapping=_block_partition_mapping, global_ranks=_global_ranks
+        partition_order_mappings = _get_partition_order(table)
+        to_block_func = functools.partial(_to_blocks,
+                          schema_manager=schema_manager,
+                          index_dict=index_dict,
+                          block_manager=block_manager,
+                          partition_order_mappings=partition_order_mappings)
+        block_table = table.mapPartitions(
+            to_block_func,
+            use_previous_behavior = False
         )
 
-        schema["sid"] = self._id_name
+        return DataFrame(ctx=ctx,
+                         block_table=block_table,
+                         partition_order_mappings=partition_order_mappings,
+                         schema_manager=schema_manager,
+                         block_manager=block_manager)
 
-        return DataFrame(ctx=ctx, schema=schema, **data_dict)
+
+def _to_blocks(kvs,
+               schema_manager=None,
+               index_dict=None,
+               block_manager=None,
+               partition_order_mappings=None,
+               na_values=None):
+    """
+    sample_id/match_id,label(maybe missing),weight(maybe missing),X
+    """
+    partition_id = None
+
+    schema = schema_manager.schema
+
+    splits = [[] for idx in range(len(block_manager.blocks))]
+    sample_id_block = block_manager.get_block_id(
+        schema_manager.get_column_index(
+            schema.sample_id_name
+        )
+    )[0]
+
+    match_id_block = block_manager.get_block_id(
+        schema_manager.get_column_index(
+            schema.match_id_name
+        )
+    )[0] if schema.match_id_name else None
+    match_id_column_index = index_dict["match_id_index"]
+
+    label_block = block_manager.get_block_id(
+        schema_manager.get_column_index(
+            schema.label_name
+        )
+    )[0] if schema.label_name else None
+    label_column_index = index_dict["label_index"]
+
+    weight_block = block_manager.get_block_id(
+        schema_manager.get_column_index(
+            schema.weight_name
+        )
+    )[0] if schema.weight_name else None
+    weight_column_index = index_dict["weight_index"]
+
+    column_indexes = index_dict["column_indexes"]
+    columns = schema.columns
+    column_blocks_mapping = dict()
+    for col_id, col_name in zip(column_indexes, columns):
+        mapping_index = schema_manager.get_column_index(col_name)
+        bid = block_manager.get_block_id(mapping_index)[0]
+        if bid not in column_blocks_mapping:
+            column_blocks_mapping[bid] = []
+
+        column_blocks_mapping[bid].append(col_id)
+
+    for key, value in kvs:
+        if partition_id is None:
+            partition_id = partition_order_mappings[key]["block_id"]
+
+        # columns = value.split(",", -1)
+        splits[sample_id_block].append(key)
+        if match_id_block:
+            splits[match_id_block].append(value[match_id_column_index])
+        if label_block:
+            splits[label_block].append([value[label_column_index]])
+        if weight_block:
+            splits[weight_block].append([value[weight_column_index]])
+
+        for bid, col_id_list in column_blocks_mapping.items():
+            splits[bid].append([value[col_id] for col_id in col_id_list])
+
+    transformed_blocks = []
+    for bid, block in enumerate(block_manager.blocks):
+        transformed_blocks.append(block.convert_block(splits[bid]))
+
+    return [(partition_id, transformed_blocks)]
 
 
-def _convert_to_order_indexes(table):
+def _get_partition_order(table):
     def _get_block_summary(kvs):
         key = next(kvs)[0]
         block_size = 1 + sum(1 for kv in kvs)
         return {key: block_size}
 
-    def _order_indexes(kvs, rank_dict: dict = None):
-        bid = None
-        order_indexes = []
-        for idx, (k, v) in enumerate(kvs):
-            if bid is None:
-                bid = rank_dict[k]["block_id"]
-
-            order_indexes.append((k, (bid, idx)))
-
-        return order_indexes
-
     block_summary = table.mapPartitions(_get_block_summary).reduce(lambda blk1, blk2: {**blk1, **blk2})
 
     start_index, block_id = 0, 0
-    block_partition_mapping = dict()
-    global_ranks = []
+    block_order_mappings = dict()
     for blk_key, blk_size in block_summary.items():
-        block_partition_mapping[blk_key] = dict(
+        block_order_mappings[blk_key] = dict(
             start_index=start_index, end_index=start_index + blk_size - 1, block_id=block_id
         )
-        global_ranks.append(block_partition_mapping[blk_key])
 
         start_index += blk_size
         block_id += 1
 
-    order_func = functools.partial(_order_indexes, rank_dict=block_partition_mapping)
-    order_table = table.mapPartitions(order_func, use_previous_behavior=False)
-
-    return order_table, block_partition_mapping, global_ranks
-
-
-def _convert_to_index(ctx, table, block_partition_mapping, global_ranks):
-    return Index(ctx, table, block_partition_mapping=block_partition_mapping, global_ranks=global_ranks)
-
-
-def _convert_to_tensor(ctx, table, block_partition_mapping, dtype):
-    # TODO: in mini-demo stage, distributed tensor only accept list, in future, replace this with distributed table.
-    convert_func = functools.partial(_convert_block, block_partition_mapping=block_partition_mapping, dtype=dtype)
-    blocks_with_id = list(table.mapPartitions(convert_func, use_previous_behavior=False).collect())
-    blocks = [block_with_id[1] for block_with_id in sorted(blocks_with_id)]
-
-    return tensor.distributed_tensor(ctx, blocks, partitions=len(blocks))
-
-
-def _convert_block(kvs, block_partition_mapping, dtype, convert_type="tensor"):
-    ret = []
-    block_id = None
-    for key, value in kvs:
-        if block_id is None:
-            block_id = block_partition_mapping[key]["block_id"]
-
-        ret.append(value)
-
-    if convert_type == "tensor":
-        return [(block_id, torch.tensor(ret, dtype=dtype))]
-    else:
-        return [(block_id, pd.Index(ret, dtype=dtype))]
+    return block_order_mappings

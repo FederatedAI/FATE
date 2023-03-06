@@ -12,6 +12,22 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from ._sample_index import SampleIndex
-from ._match_index import MatchIndex
-from ._value_store import ValueStore
+
+"""
+This Structure is used for psi process, support very limited operation: like hash/curve25519
+"""
+
+class MatchIndex(object):
+    def __init__(self, ctx, match_index_table):
+        """
+        match_index_table: each partition is a pandas dataframe index object
+        """
+        self._ctx = ctx
+        self._match_index_table = match_index_table
+        self._count = None
+
+    def count(self):
+        if not self._count:
+            self._count = self._match_index_table.count()
+
+        return self._count

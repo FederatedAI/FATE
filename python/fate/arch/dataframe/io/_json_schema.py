@@ -12,90 +12,32 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-import pandas as pd
+from ..manager import SchemaManager, BlockManager
 
-from ..storage import ValueStore
-
-FRAME_SCHEME = "fate.dataframe"
+FRAME_SCHEME = "fate.arch.dataframe"
 
 
 def build_schema(data):
-    fields = []
-    schema = data.schema
-    """
-    index, match_id, label, weight, values
-    """
-    fields.append(dict(type="str", name=schema.sid, property="index"))
-
-    if schema.match_id_name is not None:
-        fields.append(dict(type="str", name=schema.match_id_name, property="match_id"))
-
-    if schema.label_name is not None:
-        label = data.label
-        fields.append(dict(type=label.dtype.name, name=schema.label_name, property="label"))
-
-    if schema.weight_name is not None:
-        weight = data.weight
-        fields.append(dict(type=weight.dtype.name, name=schema["weight_name"], property="weight"))
-
-    if schema.header is not None:
-        values = data.values
-        columns = schema.header
-        if isinstance(values, ValueStore):
-            dtypes = values.dtypes
-            for col_name in columns:
-                fields.append(
-                    dict(
-                        type=dtypes[col_name].name,
-                        name=col_name,
-                        property="value",
-                        source="fate.dataframe.value_store",
-                    )
-                )
-
-        else:
-            for col_name in columns:
-                fields.append(dict(type=values.dtype.name, name=col_name, property="value", source="fate.arch.tensor"))
+    schema_manager = data.schema_manager
+    block_manager = data.block_manager
+    fields = schema_manager.serialize()
+    for col_id, field in enumerate(fields):
+        block_id = block_manager.get_block_id(col_id)[0]
+        should_compress = block_manager.get_block(block_id).should_compress
+        field["should_compress"] = should_compress
 
     built_schema = dict()
     built_schema["fields"] = fields
-    built_schema["global_ranks"] = data.index.global_ranks
-    built_schema["block_partition_mapping"] = data.index.block_partition_mapping
+    built_schema["partition_order_mappings"] = data.partition_order_mappings
     built_schema["type"] = FRAME_SCHEME
     return built_schema
 
 
 def parse_schema(schema):
-    if "type" not in schema or schema["type"] != FRAME_SCHEME:
+    if schema.get("type") != FRAME_SCHEME:
         raise ValueError(f"deserialize data error, schema type is not {FRAME_SCHEME}")
 
-    recovery_schema = dict()
-    column_info = dict()
     fields = schema["fields"]
+    partition_order_mappings = schema["partition_order_mappings"]
 
-    for idx, field in enumerate(fields):
-        if field["property"] == "index":
-            recovery_schema["sid"] = field["name"]
-            column_info["index"] = dict(start_idx=idx, end_idx=idx, type=field["type"])
-
-        elif field["property"] == "match_id":
-            recovery_schema["match_id_name"] = field["name"]
-            column_info["match_id"] = dict(start_idx=idx, end_idx=idx, type=field["type"])
-
-        elif field["property"] == "label":
-            recovery_schema["label_name"] = field["name"]
-            column_info["label"] = dict(start_idx=idx, end_idx=idx, type=field["type"])
-
-        elif field["property"] == "weight":
-            recovery_schema["weight_name"] = field["name"]
-            column_info["weight"] = dict(start_idx=idx, end_idx=idx, type=field["type"])
-
-        elif field["property"] == "value":
-            header = [field["name"] for field in fields[idx:]]
-            recovery_schema["header"] = header
-            column_info["values"] = dict(
-                start_idx=idx, end_idx=idx + len(header) - 1, type=field["type"], source=field["source"]
-            )
-            break
-
-    return recovery_schema, schema["global_ranks"], schema["block_partition_mapping"], column_info
+    return fields, partition_order_mappings
