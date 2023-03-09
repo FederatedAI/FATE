@@ -19,6 +19,7 @@ import tempfile
 import numpy as np
 import torch
 import torch.utils.data as data
+from collections import OrderedDict
 from sklearn.metrics import (
     accuracy_score,
     precision_score,
@@ -129,11 +130,17 @@ class PytorchNNModel(NNModel):
         self._metrics = metrics
 
     def get_model_weights(self) -> OrderDictWeights:
-        return OrderDictWeights(self._model.state_dict())
+        numpy_state = OrderedDict()
+        for k, v in self._model.state_dict().items():
+            numpy_state[k] = v.numpy()
+        return OrderDictWeights(numpy_state)
 
     def set_model_weights(self, weights: Weights):
         unboxed = weights.unboxed
-        self._model.load_state_dict(unboxed)
+        tensor_state = OrderedDict()
+        for k, v in unboxed.items():
+            tensor_state[k] = torch.from_numpy(v)
+        self._model.load_state_dict(tensor_state)
 
     def train(self, data: data.Dataset, **kwargs):
         loss_fn = build_loss_fn(self._loss)
