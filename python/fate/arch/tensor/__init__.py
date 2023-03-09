@@ -12,16 +12,22 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from fate.arch.storage import dtype
+import torch
 
-from ._create import *
-from ._ops import *
+from ._cipher import keygen
+from ._custom_ops import *
+from .distributed import DTensor
+from .paillier import PaillierTensor
+
+# hook custom ops to torch
+torch.encrypt = encrypt
+torch.decrypt = decrypt
+torch.rmatmul = rmatmul
 
 __all__ = [
-    "from_torch",
-    "randn",
-    "ones",
-    "zeros",
-    "from_blocks",
-    "dtype",
+    "keygen",
+    "DTensor",
+    "PaillierTensor",
+    "encrypt",
+    "decrypt",
 ]

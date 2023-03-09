@@ -104,8 +104,18 @@ impl CT {
         let b = pk.encrypt(b, false);
         self.sub(&b, pk)
     }
+    /*
+    other - self
+    */
+    pub fn rsub_pt(&self, b: &PT, pk: &PK) -> CT {
+        let b = pk.encrypt(b, false);
+        b.sub(self, pk)
+    }
     pub fn sub(&self, b: &CT, pk: &PK) -> CT {
         self.add(&b.neg(pk), pk)
+    }
+    pub fn rsub(&self, b: &CT, pk: &PK) -> CT {
+        self.neg(pk).add(&b, pk)
     }
     pub fn add_assign(&mut self, b: &CT, pk: &PK) {
         // FIXME

@@ -23,6 +23,18 @@ impl Index<(usize, usize)> for Cipherblock {
     }
 }
 impl Cipherblock {
+    pub fn reshape(&self, shape: Vec<usize>) -> Cipherblock {
+        let s1: usize = self.shape.iter().product();
+        let s2: usize = shape.iter().product();
+        if s1 != s2 {
+            panic!("reshape failed, {} vs {}", s1, s2);
+        };
+        Cipherblock {
+            pk: self.pk.clone(),
+            data: self.data.clone(),
+            shape,
+        }
+    }
     pub fn map<F>(&self, func: F) -> Cipherblock
     where
         F: Fn(&fixedpoint::CT) -> fixedpoint::CT,

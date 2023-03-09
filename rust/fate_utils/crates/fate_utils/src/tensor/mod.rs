@@ -216,6 +216,35 @@ impl Cipherblock {
         self.sub_plaintext_scalar(other)
     }
 
+    // rsub
+    pub fn rsub_cipherblock(&self, other: &Cipherblock) -> Cipherblock {
+        self.rsub_cb(other)
+    }
+    pub fn rsub_plaintext_f64(&self, other: PyReadonlyArrayDyn<f64>) -> Cipherblock {
+        self.rsub_plaintext(other.as_array())
+    }
+    pub fn rsub_plaintext_f32(&self, other: PyReadonlyArrayDyn<f32>) -> Cipherblock {
+        self.rsub_plaintext(other.as_array())
+    }
+    pub fn rsub_plaintext_i64(&self, other: PyReadonlyArrayDyn<i64>) -> Cipherblock {
+        self.rsub_plaintext(other.as_array())
+    }
+    pub fn rsub_plaintext_i32(&self, other: PyReadonlyArrayDyn<i32>) -> Cipherblock {
+        self.rsub_plaintext(other.as_array())
+    }
+    pub fn rsub_plaintext_scalar_f64(&self, other: f64) -> Cipherblock {
+        self.rsub_plaintext_scalar(other)
+    }
+    pub fn rsub_plaintext_scalar_f32(&self, other: f32) -> Cipherblock {
+        self.rsub_plaintext_scalar(other)
+    }
+    pub fn rsub_plaintext_scalar_i64(&self, other: i64) -> Cipherblock {
+        self.rsub_plaintext_scalar(other)
+    }
+    pub fn rsub_plaintext_scalar_i32(&self, other: i32) -> Cipherblock {
+        self.rsub_plaintext_scalar(other)
+    }
+
     // mul
     pub fn mul_plaintext_f64(&self, other: PyReadonlyArrayDyn<f64>) -> Cipherblock {
         self.mul_plaintext(other.as_array())

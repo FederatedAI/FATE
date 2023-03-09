@@ -92,9 +92,13 @@ impl Cipherblock {
     impl_ops_cipher_scalar!(add_cipher_scalar, fixedpoint::CT::add);
     impl_ops_plaintext_scalar!(add_plaintext_scalar, fixedpoint::CT::add_pt);
     impl_ops_cipher!(sub_cb, fixedpoint::CT::sub);
+    impl_ops_cipher!(rsub_cb, fixedpoint::CT::rsub);
     impl_ops_plain!(sub_plaintext, fixedpoint::CT::sub_pt);
+    impl_ops_plain!(rsub_plaintext, fixedpoint::CT::rsub_pt);
     impl_ops_cipher_scalar!(sub_cipher_scalar, fixedpoint::CT::sub);
+    impl_ops_cipher_scalar!(rsub_cipher_scalar, fixedpoint::CT::rsub);
     impl_ops_plaintext_scalar!(sub_plaintext_scalar, fixedpoint::CT::sub_pt);
+    impl_ops_plaintext_scalar!(rsub_plaintext_scalar, fixedpoint::CT::rsub_pt);
     impl_ops_plain!(mul_plaintext, fixedpoint::CT::mul);
     impl_ops_plaintext_scalar!(mul_plaintext_scalar, fixedpoint::CT::mul);
 

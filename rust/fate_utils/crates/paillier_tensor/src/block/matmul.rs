@@ -114,7 +114,15 @@ fn checked_shape_cipherblock_matmul_plaintext_ix1<T>(
     lhs: &Cipherblock,
     rhs: ArrayView1<T>,
 ) -> (usize, usize, usize) {
-    if lhs.shape.len() != 2 || lhs.shape[1] != rhs.dim() {
+    if lhs.shape.len() > 2 || lhs.shape.len() == 0 {
+        panic!(
+            "dot shape error: ({:?}) x ({:?}), left one should be dim 1 or dim 2",
+            lhs.shape,
+            rhs.dim()
+        );
+    }
+
+    if lhs.shape[1] != rhs.dim() {
         panic!("dot shape error: ({:?}) x ({:?})", lhs.shape, rhs.dim());
     }
     (lhs.shape[0], lhs.shape[1], 1)
@@ -143,14 +151,20 @@ pub fn cipherblock_matmul_plaintext_ix1<T: CouldCode>(
     rhs: ArrayView1<T>,
 ) -> Cipherblock {
     // (m x s) x (s x n)
-    let (m, s, n) = checked_shape_cipherblock_matmul_plaintext_ix1(lhs, rhs);
-    let data = matmul_apply(m, s, n, |i, k, _, v| {
-        matmul_ops_cipherblock_plaintext_ix1(v, i, k, lhs, rhs);
-    });
-    Cipherblock {
-        pk: lhs.pk.clone(),
-        data,
-        shape: vec![m, n],
+    if lhs.shape.len() == 1 {
+        let lifted = lhs.reshape(vec![1, lhs.shape[0]]);
+        let output = cipherblock_matmul_plaintext_ix1(&lifted, rhs);
+        output.reshape(output.shape[1..].to_vec())
+    } else {
+        let (m, s, n) = checked_shape_cipherblock_matmul_plaintext_ix1(lhs, rhs);
+        let data = matmul_apply(m, s, n, |i, k, _, v| {
+            matmul_ops_cipherblock_plaintext_ix1(v, i, k, lhs, rhs);
+        });
+        Cipherblock {
+            pk: lhs.pk.clone(),
+            data,
+            shape: vec![m],
+        }
     }
 }
 
@@ -159,14 +173,20 @@ pub fn cipherblock_matmul_plaintext_ix2<T: CouldCode>(
     rhs: ArrayView2<T>,
 ) -> Cipherblock {
     // (m x s) x (s x n)
-    let (m, s, n) = checked_shape_cipherblock_matmul_plaintext_ix2(lhs, rhs);
-    let data = matmul_apply(m, s, n, |i, k, j, v| {
-        matmul_ops_cipherblock_plaintext_ix2(v, i, k, j, lhs, rhs);
-    });
-    Cipherblock {
-        pk: lhs.pk.clone(),
-        data,
-        shape: vec![m, n],
+    if lhs.shape.len() == 1 {
+        let lifted = lhs.reshape(vec![1, lhs.shape[0]]);
+        let output = cipherblock_matmul_plaintext_ix2(&lifted, rhs);
+        output.reshape(output.shape[1..].to_vec())
+    } else {
+        let (m, s, n) = checked_shape_cipherblock_matmul_plaintext_ix2(lhs, rhs);
+        let data = matmul_apply(m, s, n, |i, k, j, v| {
+            matmul_ops_cipherblock_plaintext_ix2(v, i, k, j, lhs, rhs);
+        });
+        Cipherblock {
+            pk: lhs.pk.clone(),
+            data,
+            shape: vec![m, n],
+        }
     }
 }
 pub fn cipherblock_rmatmul_plaintext_ix1<T: CouldCode>(
@@ -174,14 +194,20 @@ pub fn cipherblock_rmatmul_plaintext_ix1<T: CouldCode>(
     rhs: &Cipherblock,
 ) -> Cipherblock {
     // (m x s) x (s x n)
-    let (m, s, n) = checked_shape_cipherblock_rmatmul_plaintext_ix1(lhs, rhs);
-    let data = matmul_apply(m, s, n, |_, k, j, v| {
-        rmatmul_ops_cipherblock_plaintext_ix1(v, k, j, lhs, rhs);
-    });
-    Cipherblock {
-        pk: rhs.pk.clone(),
-        data,
-        shape: vec![m, n],
+    if rhs.shape.len() == 1 {
+        let lifted = rhs.reshape(vec![rhs.shape[0], 1]);
+        let output = cipherblock_rmatmul_plaintext_ix1(lhs, &lifted);
+        output.reshape(output.shape[..output.shape.len() - 1].to_vec())
+    } else {
+        let (m, s, n) = checked_shape_cipherblock_rmatmul_plaintext_ix1(lhs, rhs);
+        let data = matmul_apply(m, s, n, |_, k, j, v| {
+            rmatmul_ops_cipherblock_plaintext_ix1(v, k, j, lhs, rhs);
+        });
+        Cipherblock {
+            pk: rhs.pk.clone(),
+            data,
+            shape: vec![n],
+        }
     }
 }
 
@@ -190,14 +216,20 @@ pub fn cipherblock_rmatmul_plaintext_ix2<T: CouldCode>(
     rhs: &Cipherblock,
 ) -> Cipherblock {
     // (m x s) x (s x n)
-    let (m, s, n) = checked_shape_cipherblock_rmatmul_plaintext_ix2(lhs, rhs);
-    let data = matmul_apply(m, s, n, |i, k, j, v| {
-        rmatmul_ops_cipherblock_plaintext_ix2(v, i, k, j, lhs, rhs);
-    });
-    Cipherblock {
-        pk: rhs.pk.clone(),
-        data,
-        shape: vec![m, n],
+    if rhs.shape.len() == 1 {
+        let lifted = rhs.reshape(vec![rhs.shape[0], 1]);
+        let output = cipherblock_rmatmul_plaintext_ix2(lhs, &lifted);
+        output.reshape(output.shape[..output.shape.len() - 1].to_vec())
+    } else {
+        let (m, s, n) = checked_shape_cipherblock_rmatmul_plaintext_ix2(lhs, rhs);
+        let data = matmul_apply(m, s, n, |i, k, j, v| {
+            rmatmul_ops_cipherblock_plaintext_ix2(v, i, k, j, lhs, rhs);
+        });
+        Cipherblock {
+            pk: rhs.pk.clone(),
+            data,
+            shape: vec![m, n],
+        }
     }
 }
 
