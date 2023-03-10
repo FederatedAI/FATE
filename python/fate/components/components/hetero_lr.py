@@ -35,10 +35,10 @@ def hetero_lr(ctx, role):
 @hetero_lr.train()
 @cpn.artifact("train_data", type=Input[DatasetArtifact], roles=[GUEST, HOST], desc="training data")
 @cpn.artifact("validate_data", type=Input[DatasetArtifact], optional=True, roles=[GUEST, HOST], desc="validation data")
-@cpn.parameter("learning_rate", type=params.ConFloat(gt=0.0), default=0.1, desc="learning rate")
-@cpn.parameter("max_iter", type=params.ConInt(gt=0), default=100, desc="max iteration num")
+@cpn.parameter("learning_rate", type=params.learning_rate_param(), default=0.1, desc="learning rate")
+@cpn.parameter("max_iter", type=params.conint(gt=0), default=100, desc="max iteration num")
 @cpn.parameter(
-    "batch_size", type=params.ConInt(), default=100, desc="batch size, value less or equals to 0 means full batch"
+    "batch_size", type=params.conint(gt=0), default=100, desc="batch size, value less or equals to 0 means full batch"
 )
 @cpn.artifact("train_output_data", type=Output[DatasetArtifact], roles=[GUEST, HOST])
 @cpn.artifact("train_output_metric", type=Output[LossMetrics], roles=[ARBITER])
