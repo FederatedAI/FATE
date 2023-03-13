@@ -88,3 +88,34 @@ def test_binary(ctx, t1_f32, t2_f32, t1_f32_sharding, t2_f32_sharding, op):
     assert op(t1_f32, t2_f32) == DTensor.from_sharding_list(
         ctx, [op(s1, s2) for s1, s2 in zip(t1_f32_sharding, t2_f32_sharding)], num_partitions=3
     )
+
+
+@pytest.mark.parametrize(
+    "op",
+    [torch.sum, torch.mean],
+)
+def test_sum_mean(ctx, t1_f32, t2_f32, t1_f32_sharding, t2_f32_sharding, op):
+    assert op(t1_f32) == op(torch.cat(t1_f32_sharding))
+    assert torch.allclose(op(t1_f32, dim=0), op(torch.cat(t1_f32_sharding), dim=0))
+    assert op(t1_f32, dim=1) == DTensor.from_sharding_list(
+        ctx, [op(s, dim=1) for s in t1_f32_sharding], num_partitions=3
+    )
+    assert op(t1_f32, dim=1, keepdim=True) == DTensor.from_sharding_list(
+        ctx, [op(s, dim=1, keepdim=True) for s in t1_f32_sharding], num_partitions=3
+    )
+
+
+@pytest.mark.parametrize(
+    "op",
+    [torch.var, torch.std],
+)
+def test_var_std(ctx, t1_f32, t2_f32, t1_f32_sharding, t2_f32_sharding, op):
+    assert torch.isclose(op(t1_f32), op(torch.cat(t1_f32_sharding)))
+    assert torch.allclose(op(t1_f32, dim=0), op(torch.cat(t1_f32_sharding), dim=0))
+    assert torch.allclose(op(t1_f32, dim=0, unbiased=False), op(torch.cat(t1_f32_sharding), dim=0, unbiased=False))
+    assert op(t1_f32, dim=1) == DTensor.from_sharding_list(
+        ctx, [op(s, dim=1) for s in t1_f32_sharding], num_partitions=3
+    )
+    assert op(t1_f32, dim=1, keepdim=True) == DTensor.from_sharding_list(
+        ctx, [op(s, dim=1, keepdim=True) for s in t1_f32_sharding], num_partitions=3
+    )

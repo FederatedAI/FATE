@@ -10,12 +10,35 @@ def sum(input: DTensor, *args, **kwargs):
         dim = args[0]
     if "dim" in kwargs:
         dim = kwargs["dim"]
-    if dim is not None and not kwargs.get("keepdim", False):
-        kwargs["keepdim"] = False
-    block_table = input.blocks.mapValues(lambda x: torch.sum(x, *args, **kwargs))
-    if dim is None or dim == input._d_axis.axis:
-        return block_table.reduce(torch.add)
-    return DTensor(block_table, input.shape, input._d_axis, input._dtype, input._device)
+    if isinstance(dim, int):
+        dim = (dim,)
+    dtype = kwargs.get("dtype", None)
+    if dim is None:
+        if "keepdim" in kwargs:
+            raise TypeError(
+                f"sum() received an invalid combination of arguments - got (Tensor, keepdim=bool), but expected one of\n"
+                "* (Tensor input)\n"
+                "* (Tensor input, tuple of ints dim, bool keepdim)\n"
+                "* (Tensor input, tuple of names dim, bool keepdim)"
+            )
+        out = input.shardings.map_reduce_shard(lambda x: torch.sum(x), torch.add)
+        if dtype:
+            out = out.type(dtype)
+        return out
+
+    keepdim = kwargs.get("keepdim", False)
+    if input.shardings._axis not in dim:
+        return DTensor(
+            input.shardings.map_shard(
+                lambda x: torch.sum(x, dim=dim, keepdim=keepdim, dtype=dtype),
+                shapes=input.shardings.squeeze_shapes(dim, keepdim),
+            )
+        )
+
+    out = input.shardings.map_reduce_shard(lambda x: torch.sum(x, dim=dim, keepdim=keepdim), torch.add)
+    if dtype:
+        out = out.type(dtype)
+    return out
 
 
 @implements(torch.mean)
@@ -25,22 +48,161 @@ def mean(input: DTensor, *args, **kwargs):
         dim = args[0]
     if "dim" in kwargs:
         dim = kwargs["dim"]
-    if dim is not None and dim != input._d_axis.axis:
-        count = input.shape[dim]
+    if isinstance(dim, int):
+        dim = (dim,)
+    dtype = kwargs.get("dtype", None)
+    if dtype is None:
+        if not input.dtype.is_floating_point:
+            raise RuntimeError(
+                f"mean(): could not infer output dtype. Input dtype must be either a floating point or complex dtype. Got: {input.dtype}"
+            )
+        dtype = input.dtype
+    if dim is None:
+        if "keepdim" in kwargs:
+            raise TypeError(
+                f"mean() received an invalid combination of arguments - got (Tensor, keepdim=bool), but expected one of\n"
+                "* (Tensor input)\n"
+                "* (Tensor input, tuple of ints dim, bool keepdim)\n"
+                "* (Tensor input, tuple of names dim, bool keepdim)"
+            )
+        return torch.div(
+            input.shardings.map_reduce_shard(lambda x: torch.sum(x, dtype=torch.float64), torch.add),
+            input.shape.numel(),
+        ).type(dtype)
+
+    keepdim = kwargs.get("keepdim", False)
+    count = 1
+    for d in dim:
+        count *= input.shape[d]
+    if input.shardings._axis not in dim:
         return DTensor(
-            input.blocks.mapValues(lambda x: torch.true_divide(torch.sum(x, *args, **kwargs), count)),
-            input.shape,
-            input._d_axis,
-            input._dtype,
-            input._device,
+            input.shardings.map_shard(
+                lambda x: torch.div(torch.sum(x, dim=dim, keepdim=keepdim, dtype=torch.float64), count).type(dtype),
+                shapes=input.shardings.squeeze_shapes(dim, keepdim),
+            )
         )
-    else:
+
+    return torch.div(
+        input.shardings.map_reduce_shard(
+            lambda x: torch.sum(x, dim=dim, keepdim=keepdim, dtype=torch.float64), torch.add
+        ),
+        count,
+    ).type(dtype)
+
+
+@implements(torch.std)
+def std(input: DTensor, *args, **kwargs):
+    dim = None
+    if len(args) > 0:
+        dim = args[0]
+    if "dim" in kwargs:
+        dim = kwargs["dim"]
+    if isinstance(dim, int):
+        dim = (dim,)
+    dtype = kwargs.get("dtype", None)
+    if dtype is None:
+        if not input.dtype.is_floating_point:
+            raise RuntimeError(
+                f"std(): could not infer output dtype. Input dtype must be either a floating point or complex dtype. Got: {input.dtype}"
+            )
+        dtype = input.dtype
+    unbiased = kwargs.get("unbiased", True)
+    keepdim = kwargs.get("keepdim", False)
+    if dim is None:
+        if "keepdim" in kwargs:
+            raise TypeError(
+                f"std() received an invalid combination of arguments - got (Tensor, keepdim=bool), but expected one of\n"
+                "* (Tensor input)\n"
+                "* (Tensor input, tuple of ints dim, bool keepdim)\n"
+                "* (Tensor input, tuple of names dim, bool keepdim)"
+            )
+
+    if dim is None or input.shardings._axis in dim:
         if dim is None:
-            count = input.shape.numel()
+            n = input.shape.numel()
+            sq, s = input.shardings.map_reduce_shard(
+                mapper_func=lambda x: (torch.sum(torch.square(x)), torch.sum(x)),
+                reducer_func=lambda a, b: (torch.add(a[0], b[0]), torch.add(a[1], b[1])),
+            )
         else:
-            count = input.shape[dim]
-        output = input.blocks.mapValues(lambda x: torch.sum(x, *args, **kwargs)).reduce(lambda x, y: torch.add(x, y))
-        return torch.true_divide(output, count)
+            n = 1
+            for d in dim:
+                n *= input.shape[d]
+            sq, s = input.shardings.map_reduce_shard(
+                mapper_func=lambda x: (
+                    torch.sum(torch.square(x), dim=dim, keepdim=keepdim),
+                    torch.sum(x, dim=dim, keepdim=keepdim),
+                ),
+                reducer_func=lambda a, b: (torch.add(a[0], b[0]), torch.add(a[1], b[1])),
+            )
+        output = torch.sub(torch.div(sq, n), torch.square(torch.div(s, n)))
+        if unbiased:
+            output = torch.mul(output, n / (n - 1))
+        output = torch.sqrt(output)
+        return output
+
+    return DTensor(
+        input.shardings.map_shard(
+            lambda x: torch.std(x, dim=dim, unbiased=unbiased), shapes=input.shardings.squeeze_shapes(dim, keepdim)
+        )
+    )
+
+
+@implements(torch.var)
+def var(input: DTensor, *args, **kwargs):
+    dim = None
+    if len(args) > 0:
+        dim = args[0]
+    if "dim" in kwargs:
+        dim = kwargs["dim"]
+    if isinstance(dim, int):
+        dim = (dim,)
+    dtype = kwargs.get("dtype", None)
+    if dtype is None:
+        if not input.dtype.is_floating_point:
+            raise RuntimeError(
+                f"std(): could not infer output dtype. Input dtype must be either a floating point or complex dtype. Got: {input.dtype}"
+            )
+        dtype = input.dtype
+    unbiased = kwargs.get("unbiased", True)
+    keepdim = kwargs.get("keepdim", False)
+    if dim is None:
+        if "keepdim" in kwargs:
+            raise TypeError(
+                f"std() received an invalid combination of arguments - got (Tensor, keepdim=bool), but expected one of\n"
+                "* (Tensor input)\n"
+                "* (Tensor input, tuple of ints dim, bool keepdim)\n"
+                "* (Tensor input, tuple of names dim, bool keepdim)"
+            )
+
+    if dim is None or input.shardings._axis in dim:
+        if dim is None:
+            n = input.shape.numel()
+            sq, s = input.shardings.map_reduce_shard(
+                mapper_func=lambda x: (torch.sum(torch.square(x)), torch.sum(x)),
+                reducer_func=lambda a, b: (torch.add(a[0], b[0]), torch.add(a[1], b[1])),
+            )
+        else:
+            n = 1
+            for d in dim:
+                n *= input.shape[d]
+            sq, s = input.shardings.map_reduce_shard(
+                mapper_func=lambda x: (
+                    torch.sum(torch.square(x), dim=dim, keepdim=keepdim),
+                    torch.sum(x, dim=dim, keepdim=keepdim),
+                ),
+                reducer_func=lambda a, b: (torch.add(a[0], b[0]), torch.add(a[1], b[1])),
+            )
+        output = torch.sub(torch.div(sq, n), torch.square(torch.div(s, n)))
+        if unbiased:
+            output = torch.mul(output, n / (n - 1))
+        return output
+
+    return DTensor(
+        input.shardings.map_shard(
+            lambda x: torch.var(x, dim=dim, unbiased=unbiased), shapes=input.shardings.squeeze_shapes(dim, keepdim)
+        )
+    )
 
 
 @implements(torch.min)
@@ -85,74 +247,3 @@ def max(storage, *args, **kwargs):
             )
         else:
             return _unary_op(storage, lambda s: storage_ops.max(s, *args, **kwargs))
-
-
-@implements(torch.std)
-def std(storage, *args, **kwargs):
-    dim = None
-    if len(args) > 0:
-        dim = args[0]
-    if "dim" in kwargs:
-        dim = kwargs["dim"]
-    unbiased = kwargs.get("unbiased", True)
-
-    if dim is not None and dim != storage.d_axis.axis:
-        return _unary_op(storage, lambda x: storage_ops.std(x, dim=dim, unbiased=unbiased))
-
-    else:
-        if dim is None:
-            n = storage.shape.prod()
-
-            def _mapper(x):
-                return (storage_ops.sum(storage_ops.square(x)), storage_ops.sum(x))
-
-        else:
-            n = storage.shape[dim]
-
-            def _mapper(x):
-                return (storage_ops.sum(storage_ops.square(x), dim=dim), storage_ops.sum(x, dim=dim))
-
-        def _reducer(x, y):
-            return (storage_ops.add(x[0], y[0]), storage_ops.add(x[1], y[1]))
-
-        sq, s = storage.blocks.mapValues(_mapper).reduce(_reducer)
-        output = storage_ops.sub(storage_ops.div(sq, n), storage_ops.square(storage_ops.div(s, n)))
-        if unbiased:
-            output = storage_ops.mul(output, n / (n - 1))
-        output = storage_ops.sqrt(output)
-        return output
-
-
-@implements(torch.var)
-def var(storage, *args, **kwargs):
-    dim = None
-    if len(args) > 0:
-        dim = args[0]
-    if "dim" in kwargs:
-        dim = kwargs["dim"]
-    unbiased = kwargs.get("unbiased", True)
-
-    if dim is not None and dim != storage.d_axis.axis:
-        return _unary_op(storage, lambda x: storage_ops.var(x, dim=dim, unbiased=unbiased))
-
-    else:
-        if dim is None:
-            n = storage.shape.prod()
-
-            def _mapper(x):
-                return (storage_ops.sum(storage_ops.square(x)), storage_ops.sum(x))
-
-        else:
-            n = storage.shape[dim]
-
-            def _mapper(x):
-                return (storage_ops.sum(storage_ops.square(x), dim=dim), storage_ops.sum(x, dim=dim))
-
-        def _reducer(x, y):
-            return (storage_ops.add(x[0], y[0]), storage_ops.add(x[1], y[1]))
-
-        sq, s = storage.blocks.mapValues(_mapper).reduce(_reducer)
-        output = storage_ops.sub(storage_ops.div(sq, n), storage_ops.square(storage_ops.div(s, n)))
-        if unbiased:
-            output = storage_ops.mul(output, n / (n - 1))
-        return output

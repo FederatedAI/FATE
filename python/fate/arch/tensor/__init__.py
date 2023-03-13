@@ -12,17 +12,10 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-import torch
-
 from ._cipher import keygen
 from ._custom_ops import *
 from .distributed import DTensor
 from .paillier import PaillierTensor
-
-# hook custom ops to torch
-torch.encrypt = encrypt
-torch.decrypt = decrypt
-torch.rmatmul = rmatmul
 
 __all__ = [
     "keygen",

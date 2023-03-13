@@ -208,3 +208,8 @@ def matmul(input, other):
         else:
             raise ValueError(f"can't matmul `PaillierTensor` with `torch.Tensor` with dim `{len(other.shape)}`")
     return NotImplemented
+
+
+@implements(_custom_ops)
+def to_local(input):
+    return input

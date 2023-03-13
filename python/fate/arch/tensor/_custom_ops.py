@@ -33,3 +33,21 @@ def rmatmul(input, other):
             if hasattr(input, "__torch_function__"):
                 return input.__torch_function__(rmatmul, (type(input), type(other)), (input, other), None)
     raise NotImplementedError("")
+
+
+def to_local(input):
+    if isinstance(input, torch.Tensor):
+        return input
+
+    else:
+        # torch tensor-like
+        if hasattr(input, "__torch_function__"):
+            return input.__torch_function__(to_local, (type(input),), (input,), None)
+    raise NotImplementedError("")
+
+
+# hook custom ops to torch
+torch.encrypt = encrypt
+torch.decrypt = decrypt
+torch.rmatmul = rmatmul
+torch.to_local = to_local

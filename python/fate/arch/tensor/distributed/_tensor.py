@@ -15,7 +15,7 @@
 
 import functools
 import typing
-from typing import List, Optional, cast
+from typing import List, Optional, Tuple, TypeVar, cast
 
 import torch
 from fate.arch.computing import CTableABC
@@ -65,10 +65,6 @@ class DTensor:
     def __str__(self) -> str:
         return f"<DTensor(shardings={self.shardings})>"
 
-    def to_local(self) -> torch.Tensor:
-        storages = [pair[1] for pair in sorted(self.blocks.collect())]
-        return torch.cat(storages, self._d_axis.axis)
-
     @classmethod
     def from_sharding_table(
         cls,
@@ -90,18 +86,9 @@ class DTensor:
             ctx.computing.parallelize(data, partition=num_partitions, include_key=False), shapes, axis, dtype, device
         )
 
-    @classmethod
-    def from_storages(cls, ctx, storages: List[torch.Tensor], d_axis=0, partitions=4):
-        d_type = storages[0].dtype
-        device = storages[0].device
-        shape_size = storages[0].shape
-        for storage in storages[1:]:
-            if storage.dtype != d_type:
-                raise RuntimeError(f"requires same dtype")
-            if storage.device != device:
-                raise RuntimeError(f"requires same device")
-        blocks = ctx.computing.parallelize(enumerate(storages), partition=partitions, include_key=True)
-        return DTensor(blocks, shape_size, DAxis(d_axis, partitions), d_type, device)
+
+T1 = TypeVar("T1")
+T2 = TypeVar("T2")
 
 
 class Shardings:
@@ -139,9 +126,32 @@ class Shardings:
             self._dtype = dtype
             self._device = device
 
+    def shapes(self):
+        return self._shapes
+
+    def squeeze_shapes(self, dims: Tuple[int], keepdim=False):
+        _shapes = []
+        for s in self._shapes:
+            _s = []
+            for i in range(len(s)):
+                if i in dims:
+                    if keepdim:
+                        _s.append(1)
+                else:
+                    _s.append(s[i])
+            _shapes.append(torch.Size(_s))
+        return _shapes
+
     @property
     def shape(self):
-        return self._shapes[0]
+        _shape = list(self._shapes[0])
+        for s in self._shapes[1:]:
+            for i in range(len(_shape)):
+                if i == self._axis:
+                    _shape[i] += s[i]
+                else:
+                    assert _shape[i] == s[i]
+        return torch.Size(_shape)
 
     @property
     def dtype(self):
@@ -171,14 +181,33 @@ class Shardings:
     def __str__(self) -> str:
         return f"Sharding<shapes={self._shapes}, dtype={self._dtype}, device={self._device}>"
 
+    def merge(self):
+        shardings = [pair[1] for pair in sorted(self._data.collect())]
+        return torch.cat(shardings, self._axis)
+
     def map_shard(
-        self, func: typing.Callable[[torch.Tensor], torch.Tensor], dtype_promote_to: Optional[torch.dtype] = None
+        self,
+        func: typing.Callable[[torch.Tensor], torch.Tensor],
+        shapes: Optional[List[torch.Size]] = None,
+        dtype_promote_to: Optional[torch.dtype] = None,
     ):
         if dtype_promote_to is not None:
             dtype = torch.promote_types(self.dtype, dtype_promote_to)
         else:
             dtype = self._dtype
-        return Shardings(self._data.mapValues(func), self._shapes, self._axis, dtype, self._device)
+        if shapes is None:
+            shapes = self._shapes
+        return Shardings(self._data.mapValues(func), shapes, self._axis, dtype, self._device)
+
+    def map_reduce_shard(
+        self,
+        mapper_func: typing.Callable[[torch.Tensor], T1],
+        reducer_func: typing.Callable[[T1, T1], T2],
+    ) -> T2:
+        """
+        expect local output
+        """
+        return self._data.mapValues(mapper_func).reduce(reducer_func)
 
     def join_shard(
         self,
