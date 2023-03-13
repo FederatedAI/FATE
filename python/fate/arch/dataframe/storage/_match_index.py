@@ -12,21 +12,22 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from ._indexer import (
-    aggregate_indexer,
-    transform_to_table,
-    get_partition_order_mappings
-)
-from ._transformer import (
-    transform_to_tensor,
-)
-from ._secure_boost_ops import (
-    select_column_value
-)
 
+"""
+This Structure is used for psi process, support very limited operation: like hash/curve25519
+"""
 
-__all__ = ["transform_to_tensor",
-           "transform_to_table",
-           "aggregate_indexer",
-           "get_partition_order_mappings",
-           "select_column_value"]
+class MatchIndex(object):
+    def __init__(self, ctx, match_index_table):
+        """
+        match_index_table: each partition is a pandas dataframe index object
+        """
+        self._ctx = ctx
+        self._match_index_table = match_index_table
+        self._count = None
+
+    def count(self):
+        if not self._count:
+            self._count = self._match_index_table.count()
+
+        return self._count

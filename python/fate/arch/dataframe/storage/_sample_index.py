@@ -19,7 +19,7 @@ import pandas as pd
 from fate.arch.computing import is_table
 
 
-class Index(object):
+class SampleIndex(object):
     def __init__(self, ctx, distributed_index, block_partition_mapping, global_ranks):
         self._ctx = ctx
         self._index_table = distributed_index
@@ -70,7 +70,7 @@ class Index(object):
             if block_id != 0:
                 block_partition_mapping.pop(block_id)
 
-        return Index(self._ctx, index_table, block_partition_mapping, global_ranks)
+        return SampleIndex(self._ctx, index_table, block_partition_mapping, global_ranks)
 
     def __getitem__(self, items):
         if isinstance(items, int):
@@ -101,7 +101,7 @@ class Index(object):
         _flat_func = functools.partial(_flat_partition)
         index_table = agg_table.flatMap(_flat_func)
 
-        return Index(self._ctx, index_table, block_partition_mapping, global_ranks)
+        return SampleIndex(self._ctx, index_table, block_partition_mapping, global_ranks)
 
     def get_indexer(self, ids, with_partition_id=True):
         if isinstance(ids, list):

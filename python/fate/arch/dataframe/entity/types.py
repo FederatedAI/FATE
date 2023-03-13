@@ -1,0 +1,2 @@
+DEFAULT_DATA_TYPE = "float32"
+DEFAULT_SID_NAME = "sample_id"

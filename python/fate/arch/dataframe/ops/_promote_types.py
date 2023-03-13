@@ -12,24 +12,20 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-import pandas as pd
-from fate.arch.storage import storage_ops
+#
+from ..manager import DataManager
+from ..manager.block_manager import Block
 
 
-def min(block_table, block_indexes):
-    map_ret = self._block_table.mapValues(lambda blocks: storage_ops.min(blocks[-1].storage, dim=0))
-    reduce_ret = map_ret.reduce(lambda x, y: storage_ops.minimum(x, y))
-    block_index_set = set(block_indexes)
-    def _mapper(blocks):
-        return [
-            storage_ops.min(blocks[idx]) if idx in block_index_set else blocks[idx]
+def promote_types(block_table, data_manager: DataManager, to_promote_blocks):
+    data_manager.promote_types(to_promote_blocks)
+    to_promote_block_dict = dict((bid, block_type) for bid, block_type in to_promote_blocks)
+    block_table = block_table.mapValues(
+        lambda blocks: [
+            blocks[bid] if bid not in to_promote_block_dict
+            else Block.get_block_by_type(to_promote_block_dict[bid]).convert_block(blocks[bid].tolist())
+            for bid in range(len(blocks))
         ]
+    )
 
-    def _reducer(lhs, rhs):
-        ...
-
-    block_table.mapValues(_mapper).reduce(_reducer)
-
-
-def max(block_table, op_block_indexes):
-    ...
+    return block_table, data_manager
