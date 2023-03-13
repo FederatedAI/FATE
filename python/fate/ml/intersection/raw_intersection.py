@@ -27,11 +27,11 @@ class RawIntersectionGuest(HeteroModule):
 
     def fit(self, ctx: Context, train_data, validate_data=None):
         # ctx.hosts.put("raw_index", train_data.index.tolist())
-        ctx.hosts.put("raw_index", train_data.index.values)
+        ctx.hosts.put("raw_index", train_data.get_indexer(target="sample_id"))
         intersect_indexes = ctx.hosts.get("intersect_index")
         intersect_data = train_data
         for intersect_index in intersect_indexes:
-            intersect_data = intersect_data.loc(intersect_index)
+            intersect_data = intersect_data.loc(intersect_index, preserve_order=True)
 
         intersect_count = intersect_data.count()
         ctx.hosts.put("intersect_count", intersect_count)
@@ -48,7 +48,7 @@ class RawIntersectionHost(HeteroModule):
         guest_index = ctx.guest.get("raw_index")
         intersect_data = train_data.loc(guest_index)
         # ctx.guest.put("intersect_index", intersect_data.index.tolist())
-        ctx.guest.put("intersect_index", intersect_data.index.values)
+        ctx.guest.put("intersect_index", intersect_data.get_indexer(target="sample_id"))
 
         intersect_count = ctx.guest.get("intersect_count")
         logger.info(f"intersect count={intersect_count}")
