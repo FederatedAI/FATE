@@ -34,9 +34,6 @@ class Schema(object):
         self._columns = pd.Index(columns) if columns else pd.Index([])
         self._anonymous_columns = pd.Index(anonymous_columns) if anonymous_columns else pd.Index([])
 
-        self._name_index_mapping = dict()
-        self._index_name_mapping = dict()
-
     @property
     def sample_id_name(self):
         return self._sample_id_name
@@ -81,17 +78,9 @@ class Schema(object):
     def anonymous_columns(self) -> pd.Index:
         return self._anonymous_columns
 
-    def get_column_index(self, name):
-        if name not in self._name_index_mapping:
-            raise ValueError(f"{name} does not exist in schema")
-
-        return self._name_index_mapping[name]
-
-    def get_column_name(self, idx):
-        if idx >= len(self._index_name_mapping):
-            raise ValueError(f"Index={idx} is out out bound")
-
-        return self._index_name_mapping[idx]
+    def append_columns(self, names):
+        self._columns.append(pd.Index(names))
+        # TODO: extend anonymous column
 
     def serialize(self):
         s_obj = list()
@@ -139,8 +128,8 @@ class SchemaManager(object):
     def __init__(self):
         self._schema = None
         self._type_mapping = dict()
-        self._name_index_mapping = dict()
-        self._index_name_mapping = dict()
+        self._name_offset_mapping = dict()
+        self._offset_name_mapping = dict()
 
     @property
     def schema(self):
@@ -150,8 +139,43 @@ class SchemaManager(object):
     def schema(self, schema):
         self._schema = schema
 
+    def append_columns(self, names, block_types):
+        field_index = len(self._name_offset_mapping)
+        for offset, name in enumerate(names):
+            if isinstance(block_types, list):
+                dtype = block_types[offset].value
+            else:
+                dtype = block_types.value
+
+            self._type_mapping[name] = dtype
+            self._name_offset_mapping[name] = field_index
+            self._offset_name_mapping[field_index] = name
+
+        self.schema.append_columns(names)
+
+        return [field_index + offset for offset in range(len(names))]
+
+    def split_columns(self, names, block_types):
+        field_indexes = [self._name_offset_mapping[name] for name in names]
+        for offset, name in enumerate(names):
+            if isinstance(block_types, list):
+                self._type_mapping[name] = block_types[offset].value
+            else:
+                self._type_mapping[name] = block_types.value
+
+        return field_indexes
+
+    def duplicate(self):
+        dup_schema_manager = SchemaManager()
+        dup_schema_manager.schema = self._schema
+        dup_schema_manager._name_offset_mapping = self._name_offset_mapping
+        dup_schema_manager._type_mapping = self._type_mapping
+        dup_schema_manager._offset_name_mapping = self._offset_name_mapping
+
+        return dup_schema_manager
+
     def get_all_keys(self):
-        return list(self._name_index_mapping.keys())
+        return list(self._name_offset_mapping.keys())
 
     def parse_table_schema(self,
                            schema,
@@ -229,7 +253,7 @@ class SchemaManager(object):
         except ValueError:
             raise ValueError(f"{name} does not exist in {columns}")
 
-    def init_column_types(self, label_type="float32", weight_type="float32", dtype="float32",
+    def init_field_types(self, label_type="float32", weight_type="float32", dtype="float32",
                           default_type="float32", match_id_type="index", sample_id_type="index"):
         self._type_mapping[self._schema.sample_id_name] = "index"
 
@@ -251,50 +275,54 @@ class SchemaManager(object):
 
     def init_name_mapping(self):
         offset = 1
-        self._name_index_mapping[self._schema.sample_id_name] = 0
+        self._name_offset_mapping[self._schema.sample_id_name] = 0
 
         if self._schema.match_id_name:
-            self._name_index_mapping[self._schema.match_id_name] = offset
+            self._name_offset_mapping[self._schema.match_id_name] = offset
             offset += 1
 
         if self._schema.label_name:
-            self._name_index_mapping[self._schema.label_name] = offset
+            self._name_offset_mapping[self._schema.label_name] = offset
             offset += 1
 
         if self._schema.weight_name:
-            self._name_index_mapping[self._schema.weight_name] = offset
+            self._name_offset_mapping[self._schema.weight_name] = offset
             offset += 1
 
         if len(self._schema.columns):
             for idx, column_name in enumerate(self._schema.columns):
-                self._name_index_mapping[column_name] = offset + idx
+                self._name_offset_mapping[column_name] = offset + idx
 
-        for column_name, idx in self._name_index_mapping.items():
-            self._index_name_mapping[idx] = column_name
+        for column_name, idx in self._name_offset_mapping.items():
+            self._offset_name_mapping[idx] = column_name
 
-    def get_column_index(self, name):
-        if name not in self._name_index_mapping:
+    def get_field_offset(self, name):
+        if name not in self._name_offset_mapping:
             raise ValueError(f"{name} does not exist in schema")
 
-        return self._name_index_mapping[name]
+        return self._name_offset_mapping[name]
 
-    def get_column_name(self, idx):
-        if idx >= len(self._index_name_mapping):
-            raise ValueError(f"Index={idx} is out out bound")
+    def get_field_name(self, offset):
+        if offset >= len(self._offset_name_mapping):
+            raise ValueError(f"Offset={offset} is out out bound")
 
-        return self._index_name_mapping[idx]
+        return self._offset_name_mapping[offset]
 
-    def get_column_types(self, name=None, flatten=False):
+    def get_field_types(self, name=None, flatten=False):
         if not name:
             if not flatten:
                 return self._type_mapping
             else:
                 types = [None] * len(self._type_mapping)
-                for idx, column_name in self._index_name_mapping:
-                    types[idx] = self._type_mapping[column_name]
+                for idx, name in self._offset_name_mapping:
+                    types[idx] = self._type_mapping[name]
                 return types
         else:
             return self._type_mapping[name]
+
+    def set_field_type_by_offset(self, field_index, field_type):
+        name = self._offset_name_mapping[field_index]
+        self._type_mapping[name] = field_type
 
     def derive_new_schema_manager(self, with_sample_id=True, with_match_id=True,
                                   with_label=True, with_weight=True, columns : Union[str, list] = None):
@@ -324,9 +352,47 @@ class SchemaManager(object):
         derived_schema_manager.init_name_mapping()
 
         for name in derived_schema_manager.get_all_keys():
-            indexes.append(self.get_column_index(name))
+            indexes.append((self.get_field_offset(name), derived_schema_manager.get_field_offset(name)))
+            derived_schema_manager._type_mapping[name] = self.get_field_types(name)
 
-        return derived_schema_manager, indexes
+        return derived_schema_manager, sorted(indexes)
+
+    def infer_operable_field_names(self) -> List[str]:
+        if len(self._schema.columns):
+            return self._schema.columns.tolist()
+        elif self._schema.weight_name:
+            return [self._schema.weight_name]
+        else:
+            return [self._schema.label_name]
+
+    def infer_operable_filed_offsets(self) -> List[int]:
+        operable_field_names = self.infer_operable_field_names()
+        operable_field_offsets = [self._name_offset_mapping[field_name] for field_name in operable_field_names]
+
+        return operable_field_offsets
+
+    def infer_non_operable_field_names(self) -> List[str]:
+        operable_field_name_set = set(self.infer_operable_field_names())
+        non_operable_field_names = []
+        if self._schema.sample_id_name:
+            non_operable_field_names.append(self._schema.sample_id_name)
+
+        if self._schema.match_id_name:
+            non_operable_field_names.append(self._schema.match_id_name)
+
+        if self._schema.label_name and self._schema.label_name not in operable_field_name_set:
+            non_operable_field_names.append(self._schema.label_name)
+
+        if self._schema.weight_name and self._schema.weight_name not in operable_field_name_set:
+            non_operable_field_names.append(self._schema.weight_name)
+
+        return non_operable_field_names
+
+    def infer_non_operable_field_offsets(self) -> List[int]:
+        non_operable_field_names = self.infer_non_operable_field_names()
+        non_operable_field_offsets = [self._name_offset_mapping[field_name] for field_name in non_operable_field_names]
+
+        return non_operable_field_offsets
 
     def serialize(self):
         """
@@ -374,6 +440,6 @@ class SchemaManager(object):
         schema = Schema(**schema_dict)
         schema_manager.schema = schema
         schema_manager.init_name_mapping()
-        schema_manager.init_column_types(**type_dict)
+        schema_manager.init_field_types(**type_dict)
 
         return schema_manager

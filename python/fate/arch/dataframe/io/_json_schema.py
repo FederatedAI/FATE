@@ -12,19 +12,11 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from ..manager import SchemaManager, BlockManager
-
 FRAME_SCHEME = "fate.arch.dataframe"
 
 
 def build_schema(data):
-    schema_manager = data.schema_manager
-    block_manager = data.block_manager
-    fields = schema_manager.serialize()
-    for col_id, field in enumerate(fields):
-        block_id = block_manager.get_block_id(col_id)[0]
-        should_compress = block_manager.get_block(block_id).should_compress
-        field["should_compress"] = should_compress
+    fields = data.data_manager.serialize()
 
     built_schema = dict()
     built_schema["fields"] = fields

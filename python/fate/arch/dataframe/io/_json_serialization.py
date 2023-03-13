@@ -16,18 +16,39 @@ from fate.arch.context.io.data import df
 
 from .._dataframe import DataFrame
 from ._json_schema import build_schema, parse_schema
-from ..ops import transform_block_to_list, transform_list_to_block
-from ..manager import SchemaManager, BlockManager
+from ..manager import DataManager
 
 
 def _serialize(ctx, data):
+    # test
+    # data = data + 1
+    # data = data * 2
+    # data = data - 3
+    # data = 1 - data
+    # data = data / 10
+    # data.label
+    # data.weight
+    # data = data["x1"] * data["x0"]
+    # data = data[["x0", "x1"]] * 3
+    # pd_df = data.as_pd_df()
+    # print (pd.df)
+    # empty_df = data.create_frame(with_label=False, with_weight=False)
+    # data["x20"] = 1.0
+    # data["x21"] = [1, 2]
+    # data[["x22", "x23"]] = [3, 4]
+    # data["x23"] = data["x0"]
+    # data["x1"] = 1.0
+    # data["x2"] = [1, 2]
+    # data[["x3", "x4"]] = [3, 4]
+    # data["x5"] = data["x0"]
     """
     index, match_id, label, weight, values
     """
     # TODO: tensor does not provide method to get raw values directly, so we use .storages.blocks first
     schema = build_schema(data)
 
-    serialize_data = transform_block_to_list(data.block_table, data.block_manager)
+    from ..ops._transformer import transform_block_to_list
+    serialize_data = transform_block_to_list(data.block_table, data.data_manager)
     serialize_data.schema = schema
     return serialize_data
 
@@ -42,10 +63,9 @@ def serialize(ctx, data):
 def deserialize(ctx, data):
     fields, partition_order_mappings = parse_schema(data.schema)
 
-    schema_manager = SchemaManager.deserialize(fields)
-    block_manager = BlockManager()
-    block_manager.initialize_blocks(schema_manager)
+    data_manager = DataManager.deserialize(fields)
+    from ..ops._transformer import transform_list_to_block
 
-    block_table = transform_list_to_block(data, block_manager)
+    block_table = transform_list_to_block(data, data_manager)
 
-    return DataFrame(ctx, block_table, partition_order_mappings, schema_manager, block_manager)
+    return DataFrame(ctx, block_table, partition_order_mappings, data_manager)

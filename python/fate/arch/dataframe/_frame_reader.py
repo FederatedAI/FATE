@@ -13,19 +13,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import functools
-import typing
-
 import pandas as pd
-import torch
-
 from typing import Union
-from fate.arch import tensor
 
 
 from .entity import types
 from ._dataframe import DataFrame
-from .manager import BlockManager
-from .manager import SchemaManager
+from .manager import DataManager
 
 
 class RawTableReader(object):
@@ -33,9 +27,9 @@ class RawTableReader(object):
         self,
         delimiter: str = ",",
         match_id_name = None,
-        label_name: typing.Union[None, str] = None,
+        label_name: Union[None, str] = None,
         label_type: str = "int",
-        weight_name: typing.Union[None, str] = None,
+        weight_name: Union[None, str] = None,
         weight_type: str = "float32",
         dtype: Union[str, dict] = "float32",
         na_values: Union[None, str, int, float, dict] = None,
@@ -64,24 +58,17 @@ class RawTableReader(object):
              block-manager维护映射表：每列被映射的block_index，根据的是列索引id
                                     block的属性：同类型是否可以合并
         """
-        schema_manager = SchemaManager()
-        index_dict = schema_manager.parse_table_schema(
-            schema=table.schema,
-            delimiter=self._delimiter,
-            match_id_name=self._match_id_name,
-            label_name=self._label_name,
-            weight_name=self._weight_name
-        )
-
-        schema_manager.init_column_types(self._label_type, self._weight_type, self._dtype, default_type=types.DEFAULT_DATA_TYPE)
-        block_manager = BlockManager()
-        block_manager.initialize_blocks(schema_manager)
+        data_manager = DataManager()
+        retrieval_index_dict = data_manager.init_from_table_schema(
+            table.schema, delimiter=self._delimiter, match_id_name=self._match_id_name,
+            label_name=self._label_name, weight_name=self._weight_name,
+            label_type=self._label_type, weight_type=self._weight_type,
+            dtype=self._dtype, default_type=types.DEFAULT_DATA_TYPE)
 
         partition_order_mappings = _get_partition_order(table)
         functools.partial(_to_blocks,
-                          schema_manager=schema_manager,
-                          index_dict=index_dict,
-                          block_manager=block_manager,
+                          data_manager=data_manager,
+                          index_dict=retrieval_index_dict,
                           partition_order_mappings=partition_order_mappings,
                           na_values=self._na_values)
         block_table = table.mapPartitions(
@@ -92,8 +79,7 @@ class RawTableReader(object):
         return DataFrame(ctx=ctx,
                          block_table=block_table,
                          partition_order_mappings=partition_order_mappings,
-                         schema_manager=schema_manager,
-                         block_manager=block_manager)
+                         data_manager=data_manager)
 
 
 class ImageReader(object):
@@ -113,13 +99,13 @@ class CSVReader(object):
     # TODO: a. support match_id, b. more id type
     def __init__(
         self,
-        sample_id_name: typing.Union[None, str] = None,
-        match_id_list: typing.Union[None, list] = None,
-        match_id_name: typing.Union[None, str] = None,
+        sample_id_name: Union[None, str] = None,
+        match_id_list: Union[None, list] = None,
+        match_id_name: Union[None, str] = None,
         delimiter: str = ",",
-        label_name: typing.Union[None, str] = None,
+        label_name: Union[None, str] = None,
         label_type: str = "int",
-        weight_name: typing.Union[None, str] = None,
+        weight_name: Union[None, str] = None,
         weight_type: str = "float32",
         dtype: str = "float32",
         na_values: Union[None, str, list, dict] = None,
@@ -178,12 +164,12 @@ class TorchDataSetReader(object):
 class PandasReader(object):
     def __init__(
         self,
-        sample_id_name: typing.Union[None, str] = None,
-        match_id_list: typing.Union[None, list] = None,
-        match_id_name: typing.Union[None, str] = None,
+        sample_id_name: Union[None, str] = None,
+        match_id_list: Union[None, list] = None,
+        match_id_name: Union[None, str] = None,
         label_name: str = None,
         label_type: str = "int",
-        weight_name: typing.Union[None, str] = None,
+        weight_name: Union[None, str] = None,
         weight_type: str = "float32",
         dtype: str = "float32",
         partition: int = 4,
@@ -208,17 +194,12 @@ class PandasReader(object):
         else:
             df = df.set_index(self._sample_id_name)
 
-        schema_manager = SchemaManager()
-        index_dict = schema_manager.parse_local_file_schema(sample_id_name=self._sample_id_name,
-                                                            columns=df.columns.tolist(),
-                                                            match_id_list=self._match_id_list,
-                                                            match_id_name=self._match_id_name,
-                                                            label_name=self._label_name,
-                                                            weight_name=self._weight_name)
-        schema_manager.init_column_types(self._label_type, self._weight_type, self._dtype,
-                                         default_type=types.DEFAULT_DATA_TYPE)
-        block_manager = BlockManager()
-        block_manager.initialize_blocks(schema_manager)
+        data_manager = DataManager()
+        retrieval_index_dict = data_manager.init_from_local_file(
+            sample_id_name=self._sample_id_name, columns=df.columns.tolist(), match_id_list=self._match_id_list,
+            match_id_name=self._match_id_name, label_name=self._label_name, weight_name=self._weight_name,
+            label_type=self._label_type, weight_type=self._weight_type,
+            dtype=self._dtype, default_type=types.DEFAULT_DATA_TYPE)
 
         buf = zip(df.index.tolist(), df.values.tolist())
         table = ctx.computing.parallelize(
@@ -227,10 +208,10 @@ class PandasReader(object):
 
         partition_order_mappings = _get_partition_order(table)
         to_block_func = functools.partial(_to_blocks,
-                          schema_manager=schema_manager,
-                          index_dict=index_dict,
-                          block_manager=block_manager,
+                          data_manager=data_manager,
+                          retrieval_index_dict=retrieval_index_dict,
                           partition_order_mappings=partition_order_mappings)
+
         block_table = table.mapPartitions(
             to_block_func,
             use_previous_behavior = False
@@ -239,14 +220,12 @@ class PandasReader(object):
         return DataFrame(ctx=ctx,
                          block_table=block_table,
                          partition_order_mappings=partition_order_mappings,
-                         schema_manager=schema_manager,
-                         block_manager=block_manager)
+                         data_manager=data_manager)
 
 
 def _to_blocks(kvs,
-               schema_manager=None,
-               index_dict=None,
-               block_manager=None,
+               data_manager=None,
+               retrieval_index_dict=None,
                partition_order_mappings=None,
                na_values=None):
     """
@@ -254,42 +233,26 @@ def _to_blocks(kvs,
     """
     partition_id = None
 
-    schema = schema_manager.schema
+    schema = data_manager.schema
 
-    splits = [[] for idx in range(len(block_manager.blocks))]
-    sample_id_block = block_manager.get_block_id(
-        schema_manager.get_column_index(
-            schema.sample_id_name
-        )
-    )[0]
+    splits = [[] for idx in range(data_manager.block_num)]
+    sample_id_block = data_manager.loc_block(schema.sample_id_name, with_offset=False) if schema.sample_id_name else None
 
-    match_id_block = block_manager.get_block_id(
-        schema_manager.get_column_index(
-            schema.match_id_name
-        )
-    )[0] if schema.match_id_name else None
-    match_id_column_index = index_dict["match_id_index"]
+    match_id_block = data_manager.loc_block(schema.match_id_name, with_offset=False)if schema.match_id_name else None
+    match_id_column_index = retrieval_index_dict["match_id_index"]
 
-    label_block = block_manager.get_block_id(
-        schema_manager.get_column_index(
-            schema.label_name
-        )
-    )[0] if schema.label_name else None
-    label_column_index = index_dict["label_index"]
+    label_block = data_manager.loc_block(schema.label_name, with_offset=False) if schema.label_name else None
+    label_column_index = retrieval_index_dict["label_index"]
 
-    weight_block = block_manager.get_block_id(
-        schema_manager.get_column_index(
-            schema.weight_name
-        )
-    )[0] if schema.weight_name else None
-    weight_column_index = index_dict["weight_index"]
+    weight_block = data_manager.loc_block(schema.weight_name, with_offset=False) if schema.weight_name else None
+    weight_column_index = retrieval_index_dict["weight_index"]
 
-    column_indexes = index_dict["column_indexes"]
+    column_indexes = retrieval_index_dict["column_indexes"]
+
     columns = schema.columns
     column_blocks_mapping = dict()
     for col_id, col_name in zip(column_indexes, columns):
-        mapping_index = schema_manager.get_column_index(col_name)
-        bid = block_manager.get_block_id(mapping_index)[0]
+        bid = data_manager.loc_block(col_name, with_offset=False)
         if bid not in column_blocks_mapping:
             column_blocks_mapping[bid] = []
 
@@ -311,11 +274,9 @@ def _to_blocks(kvs,
         for bid, col_id_list in column_blocks_mapping.items():
             splits[bid].append([value[col_id] for col_id in col_id_list])
 
-    transformed_blocks = []
-    for bid, block in enumerate(block_manager.blocks):
-        transformed_blocks.append(block.convert_block(splits[bid]))
+    converted_blocks = data_manager.convert_to_blocks(splits)
 
-    return [(partition_id, transformed_blocks)]
+    return [(partition_id, converted_blocks)]
 
 
 def _get_partition_order(table):
