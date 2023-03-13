@@ -23,8 +23,7 @@ from .ops import (
     aggregate_indexer,
     transform_to_tensor,
     transform_to_table,
-    get_partition_order_mappings,
-    select_column_value
+    get_partition_order_mappings
 )
 from .manager import DataManager, Schema
 
@@ -141,6 +140,10 @@ class DataFrame(object):
     def block_table(self):
         return self._block_table
 
+    @block_table.setter
+    def block_table(self, block_table):
+        self._block_table = block_table
+
     @property
     def partition_order_mappings(self):
         return self._partition_order_mappings
@@ -148,6 +151,10 @@ class DataFrame(object):
     @property
     def data_manager(self) -> "DataManager":
         return self._data_manager
+
+    @data_manager.setter
+    def data_manager(self, data_manager):
+        self._data_manager = data_manager
 
     def as_tensor(self, dtype=None):
         """
@@ -237,16 +244,16 @@ class DataFrame(object):
         return self.__arithmetic_operate(operator.truediv, other)
 
     def __lt__(self, other) -> "DataFrame":
-        ...
+        return self.__cmp_operate(operator.lt, other)
 
     def __le__(self, other) -> "DataFrame":
-        ...
+        return self.__cmp_operate(operator.le, other)
 
     def __gt__(self, other) -> "DataFrame":
-        ...
+        return self.__cmp_operate(operator.gt, other)
 
     def __ge__(self, other) -> "DataFrame":
-        ...
+        return self.__cmp_operate(operator.ge, other)
 
     def __arithmetic_operate(self, op, other) -> "DataFrame":
         """
@@ -261,7 +268,8 @@ class DataFrame(object):
         return arith_operate(self, other, op)
 
     def __cmp_operate(self, op, other) -> "DataFrame":
-        ...
+        from .ops._cmp import cmp_operate
+        return cmp_operate(self, other, op)
 
     def __getattr__(self, attr):
         if attr not in self._data_manager.schema.columns:
@@ -296,7 +304,7 @@ class DataFrame(object):
 
         from .ops._set_item import set_item
 
-        self._block_table = set_item(self, keys, items, state)
+        set_item(self, keys, items, state)
 
     def __len__(self):
         return self.count()
@@ -418,7 +426,13 @@ class DataFrame(object):
 
     @classmethod
     def hstack(cls, stacks: List["DataFrame"]) -> "DataFrame":
-        ...
+        from .ops._stack import hstack
+        return hstack(stacks)
+
+    @classmethod
+    def vstack(cls, stacks: List["DataFrame"]) -> "DataFrame":
+        from .ops._stack import vstack
+        return vstack(stacks)
 
     def __extract_fields(self, with_sample_id=True, with_match_id=True,
                          with_label=True, with_weight=True, columns: Union[str, list] = None) -> "DataFrame":
@@ -452,52 +466,3 @@ class DataFrame(object):
         assert block_loc[1] == 0, "support only one indexer in current version"
 
         return transform_to_table(self._block_table, block_loc[0], self._partition_order_mappings)
-
-    def to_secure_boost_frame(self):
-        return SecureBoostFrame(
-            self._ctx,
-            self._block_table,
-            self._partition_order_mappings,
-            self._data_manager
-        )
-
-
-class SecureBoostFrame(DataFrame):
-    def apply_node_map(self, node_map_dict: Dict[Any, Any]) -> "DataFrame":
-        """
-        值替换，比如(0, True)->1，(0, False)->2表示分裂到下一层怎么走
-        """
-        ...
-
-    def apply_select(self, target: Union["DataFrame", "SecureBoostFrame"]):
-        """
-        根据DataFrame的列取出对应特征列的值，该算子不放到storage层实现，涉及到每行可能特征会不一样
-        """
-        if len(target.schema.columns) != 1:
-            raise ValueError("To use apply_select, target's should has only one column")
-
-        other_column_name = target.schema.columns[0]
-        target_block_id = target.data_manager.loc_block(other_column_name)
-        offset = target.schema_manager.get_column_offset(other_column_name)
-        target_block_id = target.block_manager.get_block_id(offset)
-
-        non_operable_column_offsets = self._schema_manager.infer_non_operable_column_offsets()
-        non_operable_blocks = [
-            self._block_manager.get_block_id(column_offset)[0] for column_offset in non_operable_column_offsets
-        ]
-
-        select_column_value(
-            self._block_table,
-            target.block_table,
-            target_block_id,
-            non_operable_blocks,
-            self._schema_manager,
-            self._block_manager
-        )
-
-        return SecureBoostFrame(
-            self._ctx,
-            target_block_id,
-            self._partition_order_mappings,
-            ...,
-        )

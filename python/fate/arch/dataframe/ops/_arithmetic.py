@@ -45,7 +45,7 @@ def arith_operate(lhs: DataFrame, rhs, op) -> "DataFrame":
 
         rhs_types = [block.dtype for block in rhs_blocks]
         to_promote_blocks = data_manager.try_to_promote_types(block_indexes, rhs_types)
-    elif isinstance(rhs, (int, float)):
+    elif isinstance(rhs, (bool, int, float, np.int32, np.float32, np.int64, np.float64, np.bool)):
         block_table = _operate(lhs.block_table, rhs, op, block_indexes)
         to_promote_blocks = data_manager.try_to_promote_types(block_indexes, rhs)
     else:

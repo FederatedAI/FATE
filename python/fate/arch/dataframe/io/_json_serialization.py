@@ -31,8 +31,11 @@ def _serialize(ctx, data):
     # data = data["x1"] * data["x0"]
     # data = data[["x0", "x1"]] * 3
     # pd_df = data.as_pd_df()
-    # print (pd.df)
+    # print (pd_df)
     # empty_df = data.create_frame(with_label=False, with_weight=False)
+    # empty_df["x20"] = 1.0
+    # print(DataFrame.hstack([data, empty_df]).as_pd_df())
+    # print(DataFrame.vstack([data, data * 3]).as_pd_df())
     # data["x20"] = 1.0
     # data["x21"] = [1, 2]
     # data[["x22", "x23"]] = [3, 4]
