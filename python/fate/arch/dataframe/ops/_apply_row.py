@@ -19,11 +19,14 @@ import torch
 from collections import Iterable
 
 from .._dataframe import DataFrame
+from ..manager.block_manager import BlockType
 from ..manager.data_manager import DataManager
+from ..utils._auto_column_name_generated import generated_default_column_names
 
 
-def apply_row(df: "DataFrame", func, result_type="expand",
-              columns: list=None, with_label=False, with_weight=False) -> "DataFrame":
+def apply_row(df: "DataFrame", func,
+              columns: list=None, with_label=False, with_weight=False,
+              enable_type_align_checking=True) -> "DataFrame":
     """
     In current version, assume that the apply_row results' lengths are equal
     """
@@ -35,19 +38,25 @@ def apply_row(df: "DataFrame", func, result_type="expand",
                                                             columns=None)
 
     non_operable_field_names = dst_data_manager.get_field_name_list()
-    non_operable_fields_loc = [data_manager.loc_block(field_name) for field_name in non_operable_field_names]
+    non_operable_blocks = [data_manager.loc_block(field_name,
+                                                  with_offset=False) for field_name in non_operable_field_names]
 
-    fields_loc = data_manager.get_fields_loc(with_label=with_label, with_weight=with_weight)
+    fields_loc = data_manager.get_fields_loc(with_sample_id=False, with_match_id=False,
+                                             with_label=with_label, with_weight=with_weight)
+
     fields_name = data_manager.get_field_name_list(with_sample_id=False,
                                                    with_match_id=False,
                                                    with_label=with_label,
                                                    with_weight=with_weight)
 
-    _apply_func = functools.partial(_apply, func=func, result_type=result_type, src_field_names=fields_name,
-                                    src_fields_loc=fields_loc, src_non_operable_fields_loc=non_operable_fields_loc,
-                                    ret_columns=columns, dst_dm=dst_data_manager)
+    _apply_func = functools.partial(_apply, func=func, src_field_names=fields_name,
+                                    src_fields_loc=fields_loc, src_non_operable_blocks=non_operable_blocks,
+                                    ret_columns=columns, dst_dm=dst_data_manager,
+                                    enable_type_align_checking=enable_type_align_checking)
 
-    dst_block_table = df.block_table.mapValues(_apply)
+    dst_block_table_with_dm = df.block_table.mapValues(_apply_func)
+    dst_data_manager = dst_block_table_with_dm.first()[1][1]
+    dst_block_table = dst_block_table_with_dm.mapValues(lambda blocks_with_dm: blocks_with_dm[0])
 
     return DataFrame(
         df._ctx,
@@ -57,21 +66,22 @@ def apply_row(df: "DataFrame", func, result_type="expand",
     )
 
 
-def _apply(blocks, func=None, result_type=None, src_field_names=None,
-            src_fields_loc=None, src_non_operable_fields_loc=None, ret_columns=None, dst_dm: "DataManager"=None):
+def _apply(blocks, func=None, src_field_names=None,
+           src_fields_loc=None, src_non_operable_blocks=None, ret_columns=None,
+           dst_dm: "DataManager"=None, enable_type_align_checking=True):
     dm = dst_dm.duplicate()
-    ret_blocks = []
+    apply_blocks = []
     lines = len(blocks[0])
     ret_column_len = len(ret_columns) if ret_columns is not None else None
-    reserved_blocks = []
+    block_types = []
 
     for lid in range(lines):
         apply_row_data = []
         for bid, offset in src_fields_loc:
             if isinstance(blocks[bid], torch.Tensor):
-                apply_row_data.append(blocks[bid][lid][bid].item())
+                apply_row_data.append(blocks[bid][lid][offset].item())
             else:
-                apply_row_data.append(blocks[bid][lid][bid])
+                apply_row_data.append(blocks[bid][lid][offset])
 
         apply_ret = func(pd.Series(apply_row_data, index=src_field_names))
 
@@ -86,4 +96,34 @@ def _apply(blocks, func=None, result_type=None, src_field_names=None,
                 raise ValueError("Result of apply row should have equal length")
             apply_ret = [apply_ret]
 
-    return ret_blocks, dst_dm
+        if ret_column_len is None:
+            ret_column_len = len(apply_ret)
+
+        if not block_types:
+            block_types = [BlockType.get_block_type(value) for value in apply_ret]
+            apply_blocks = [[] for idx in range(ret_column_len)]
+
+        for idx, value in enumerate(apply_ret):
+            apply_blocks[idx].append([value])
+
+        if enable_type_align_checking:
+            for idx, value in enumerate(apply_ret):
+                block_type = BlockType.get_block_type(value)
+                if block_types[idx] < block_type:
+                    block_types[idx] = block_type
+
+    if not ret_columns:
+        ret_columns = generated_default_column_names(ret_column_len)
+
+    block_indexes = dm.append_columns(
+        ret_columns, block_types
+    )
+
+    ret_blocks = [[] for idx in range(len(src_non_operable_blocks) + ret_column_len)]
+    for idx, bid in enumerate(src_non_operable_blocks):
+        ret_blocks[idx] = blocks[bid]
+
+    for idx, bid in enumerate(block_indexes):
+        ret_blocks[bid] = dm.blocks[bid].convert_block(apply_blocks[idx])
+
+    return ret_blocks, dm

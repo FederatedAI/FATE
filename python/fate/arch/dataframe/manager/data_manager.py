@@ -134,23 +134,28 @@ class DataManager(object):
         for col_id, _block_id_tuple in field_block_mapping.items():
             fields_loc[col_id] = _block_id_tuple
 
+        exclude_indexes = set()
         if not with_sample_id and self.schema.sample_id_name:
-            field_index = self._schema_manager.get_field_offset(self.schema.sample_id_name)
-            fields_loc = fields_loc[: field_index] + fields_loc[field_index + 1:]
+            exclude_indexes.add(self._schema_manager.get_field_offset(self.schema.sample_id_name))
 
         if not with_match_id and self.schema.match_id_name:
-            field_index = self._schema_manager.get_field_offset(self.schema.match_id_name)
-            fields_loc = fields_loc[: field_index] + fields_loc[field_index + 1:]
+            exclude_indexes.add(self._schema_manager.get_field_offset(self.schema.match_id_name))
 
         if not with_label and self.schema.label_name:
-            field_index = self._schema_manager.get_field_offset(self.schema.label_name)
-            fields_loc = fields_loc[: field_index] + fields_loc[field_index + 1:]
+            exclude_indexes.add(self._schema_manager.get_field_offset(self.schema.label_name))
 
         if not with_weight and self.schema.weight_name:
-            field_index = self._schema_manager.get_field_offset(self.schema.weight_name)
-            fields_loc = fields_loc[: field_index] + fields_loc[field_index + 1:]
+            exclude_indexes.add(self._schema_manager.get_field_offset(self.schema.weight_name))
 
-        return fields_loc
+        if not exclude_indexes:
+            return fields_loc
+
+        ret_fields_loc = []
+        for field_index, field_loc in enumerate(fields_loc):
+            if field_index not in exclude_indexes:
+                ret_fields_loc.append(field_loc)
+
+        return ret_fields_loc
 
     def get_field_name(self, field_index):
         return self._schema_manager.get_field_name(field_index)

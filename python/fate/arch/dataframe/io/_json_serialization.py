@@ -49,6 +49,8 @@ def _serialize(ctx, data):
     # data["x2"] = [1, 2]
     # data[["x3", "x4"]] = [3, 4]
     # data["x5"] = data["x0"]
+    # apply_df = data.apply_row(lambda value: [1, {1:2, 2:3}])
+    # print(apply_df.as_pd_df())
     """
     index, match_id, label, weight, values
     """

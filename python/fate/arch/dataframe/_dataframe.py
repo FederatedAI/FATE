@@ -193,15 +193,16 @@ class DataFrame(object):
             self._data_manager
         )
 
-    def apply_row(self, func, result_type="expand", columns=None, with_label=False, with_weight=False):
+    def apply_row(self, func, columns=None, with_label=False,
+                  with_weight=False, enable_type_align_checking=True):
         from .ops._apply_row import apply_row
         return apply_row(
             self,
             func,
-            result_type=result_type,
             columns=columns,
             with_label=with_label,
-            with_weight=with_weight
+            with_weight=with_weight,
+            enable_type_align_checking=enable_type_align_checking
         )
 
     def create_frame(self, with_label=False, with_weight=False, columns: list = None) -> "DataFrame":

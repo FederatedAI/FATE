@@ -42,6 +42,9 @@ class BlockType(str, Enum):
             return l_type
 
     def __lt__(self, other):
+        if self == other:
+            return False
+
         if self == BlockType.bool:
             return other != BlockType.bool
 
