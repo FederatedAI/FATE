@@ -4,7 +4,7 @@ from fate.arch.tensor import _custom_ops
 from ._tensor import PaillierTensor, implements
 
 
-@implements(_custom_ops.decrypt)
+@implements(_custom_ops.decrypt_f)
 def decrypt(input, decryptor):
     return decryptor.decrypt(input)
 
@@ -143,8 +143,8 @@ def mul(input, other):
     return NotImplemented
 
 
-@implements(_custom_ops.rmatmul)
-def rmatmul(input, other):
+@implements(_custom_ops.rmatmul_f)
+def rmatmul_f(input, other):
     if not isinstance(input, PaillierTensor) and isinstance(other, PaillierTensor):
         return matmul(other, input)
 
@@ -210,6 +210,6 @@ def matmul(input, other):
     return NotImplemented
 
 
-@implements(_custom_ops)
-def to_local(input):
+@implements(_custom_ops.to_local_f)
+def to_local_f(input):
     return input

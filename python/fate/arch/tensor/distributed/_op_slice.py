@@ -1,11 +1,10 @@
-from fate.arch.storage import DAxis, Shape, storage_ops
+from fate.arch.tensor import _custom_ops
 
-from .._storage import DStorage
-from ._dispatch import _register
+from ._tensor import DTensor, implements
 
 
-@_register
-def slice(storage, key):
+@implements(_custom_ops.slice_f)
+def slice_f(input: DTensor, key):
     if isinstance(key, list):
         partition_keys = [[] for _ in storage.d_axis.partitions]
         agg = 0

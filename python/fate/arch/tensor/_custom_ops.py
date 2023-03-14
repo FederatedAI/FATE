@@ -1,27 +1,27 @@
 import torch
 
 
-def encrypt(tensor, encryptor):
+def encrypt_f(tensor, encryptor):
     if isinstance(tensor, torch.Tensor):
         return encryptor.encrypt(tensor)
     else:
         # torch tensor-like
         if hasattr(tensor, "__torch_function__"):
-            return tensor.__torch_function__(encrypt, (type(tensor),), (tensor, encryptor), None)
+            return tensor.__torch_function__(encrypt_f, (type(tensor),), (tensor, encryptor), None)
     raise NotImplementedError("")
 
 
-def decrypt(tensor, decryptor):
+def decrypt_f(tensor, decryptor):
     if isinstance(tensor, torch.Tensor):
         return decryptor.encrypt(tensor)
     else:
         # torch tensor-like
         if hasattr(tensor, "__torch_function__"):
-            return tensor.__torch_function__(decrypt, (type(tensor),), (tensor, decryptor), None)
+            return tensor.__torch_function__(decrypt_f, (type(tensor),), (tensor, decryptor), None)
     raise NotImplementedError("")
 
 
-def rmatmul(input, other):
+def rmatmul_f(input, other):
     if isinstance(input, torch.Tensor) and isinstance(other, torch.Tensor):
         return torch.matmul(other, input)
     else:
@@ -31,23 +31,33 @@ def rmatmul(input, other):
 
         else:
             if hasattr(input, "__torch_function__"):
-                return input.__torch_function__(rmatmul, (type(input), type(other)), (input, other), None)
+                return input.__torch_function__(rmatmul_f, (type(input), type(other)), (input, other), None)
     raise NotImplementedError("")
 
 
-def to_local(input):
+def to_local_f(input):
     if isinstance(input, torch.Tensor):
         return input
 
     else:
         # torch tensor-like
         if hasattr(input, "__torch_function__"):
-            return input.__torch_function__(to_local, (type(input),), (input,), None)
+            return input.__torch_function__(to_local_f, (type(input),), (input,), None)
     raise NotImplementedError("")
 
 
+def slice_f(input, arg):
+    if isinstance(input, torch.Tensor):
+        return input[arg]
+
+    else:
+        # torch tensor-like
+        if hasattr(input, "__torch_function__"):
+            return input.__torch_function__(slice_f, (type(input),), (input, arg), None)
+
+
 # hook custom ops to torch
-torch.encrypt = encrypt
-torch.decrypt = decrypt
-torch.rmatmul = rmatmul
-torch.to_local = to_local
+torch.encrypt_f = encrypt_f
+torch.decrypt_f = decrypt_f
+torch.rmatmul_f = rmatmul_f
+torch.to_local_f = to_local_f
