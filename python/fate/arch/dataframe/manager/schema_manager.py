@@ -155,7 +155,7 @@ class SchemaManager(object):
 
             self._type_mapping[name] = dtype
             self._name_offset_mapping[name] = field_index
-            self._offset_name_mapping[field_index] = name
+            self._offset_name_mapping[field_index + offset] = name
 
         self.schema.append_columns(names)
 

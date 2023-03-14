@@ -34,10 +34,11 @@ def _serialize(ctx, data):
     # print (pd_df)
     # empty_df = data.create_frame(with_label=False, with_weight=False)
     # empty_df["x20"] = 1.0
-    df = data.create_frame()
-    df["g"] = 100
-    df["h"] = 200
-    new_df = DataFrame.hstack([data, df])
+    # df = data.create_frame()
+    # df["g"] = 100
+    # df["h"] = 200
+    # new_df = DataFrame.hstack([data, df])
+    # print (new_df.as_pd_df())
     # print(DataFrame.hstack([data, empty_df]).as_pd_df())
     # print(DataFrame.vstack([data, data * 3]).as_pd_df())
     # data["x20"] = 1.0
