@@ -57,23 +57,6 @@ def vstack(data_frames: List["DataFrame"]) -> "DataFrame":
     if len(data_frames[0]) == 1:
         return data_frames[0]
 
-    def _flatten_partition(kvs, block_num=0):
-        _flattens = []
-        for partition_id, blocks in kvs:
-            lines = len(blocks[0])
-            for idx in range(lines):
-                sample_id = blocks[0][idx]
-                row = []
-                for bid in range(1, block_num):
-                    if isinstance(blocks[bid], pd.Index):
-                        row.append(blocks[bid][idx])
-                    else:
-                        row.append(blocks[bid][idx].tolist())
-
-                _flattens.append((sample_id, row))
-
-        return _flattens
-
     def _align_blocks(blocks, src_fields_loc=None, src_dm: DataManager=None, dst_dm: DataManager=None):
         ret_blocks = []
         lines = None
@@ -100,21 +83,6 @@ def vstack(data_frames: List["DataFrame"]) -> "DataFrame":
                 ret_blocks.append(dst_dm.blocks[dst_bid].convert_block(block_buf))
 
         return ret_blocks
-
-    def _to_blocks(kvs, dm: DataManager=None, partition_mappings: dict=None):
-        ret_blocks = [[] for i in range(dm.block_num)]
-
-        partition_id = None
-        for sample_id, value in kvs:
-            if partition_id is None:
-                partition_id = partition_mappings[sample_id]["block_id"]
-            ret_blocks[0].append(sample_id)
-            for bid, buf in enumerate(value):
-                ret_blocks[bid + 1].append(buf)
-
-        ret_blocks = dm.convert_to_blocks(ret_blocks)
-
-        return [(partition_id, ret_blocks)]
 
     l_df = data_frames[0]
     data_manager = l_df.data_manager
@@ -154,3 +122,69 @@ def vstack(data_frames: List["DataFrame"]) -> "DataFrame":
         partition_order_mappings,
         data_manager
     )
+
+
+def drop(df: "DataFrame", index: "DataFrame"=None) -> "DataFrame":
+    data_manager = df.data_manager.duplicate()
+    l_flatten_func = functools.partial(
+        _flatten_partition,
+        block_num=data_manager.block_num
+    )
+    l_flatten_table = df.block_table.mapPartitions(l_flatten_func, use_previous_behavior=False)
+
+    r_flatten_func = functools.partial(
+        _flatten_partition,
+        block_num=index.data_manager.block_num
+    )
+    r_flatten_table = index.block_table.mapPartitions(r_flatten_func, use_previous_behavior=False)
+
+    drop_flatten = l_flatten_table.subtractByKey(r_flatten_table)
+    partition_order_mappings = get_partition_order_by_raw_table(drop_flatten) if drop_flatten.count() else dict()
+
+    _convert_to_block_func = functools.partial(_to_blocks,
+                                               dm=data_manager,
+                                               partition_mappings=partition_order_mappings)
+
+    block_table = drop_flatten.mapPartitions(_convert_to_block_func,
+                                             use_previous_behavior=False)
+
+    return DataFrame(
+        df._ctx,
+        block_table,
+        partition_order_mappings,
+        data_manager
+    )
+
+
+def _flatten_partition(kvs, block_num=0):
+    _flattens = []
+    for partition_id, blocks in kvs:
+        lines = len(blocks[0])
+        for idx in range(lines):
+            sample_id = blocks[0][idx]
+            row = []
+            for bid in range(1, block_num):
+                if isinstance(blocks[bid], pd.Index):
+                    row.append(blocks[bid][idx])
+                else:
+                    row.append(blocks[bid][idx].tolist())
+
+            _flattens.append((sample_id, row))
+
+    return _flattens
+
+
+def _to_blocks(kvs, dm: DataManager=None, partition_mappings: dict=None):
+    ret_blocks = [[] for i in range(dm.block_num)]
+
+    partition_id = None
+    for sample_id, value in kvs:
+        if partition_id is None:
+            partition_id = partition_mappings[sample_id]["block_id"]
+        ret_blocks[0].append(sample_id)
+        for bid, buf in enumerate(value):
+            ret_blocks[bid + 1].append(buf)
+
+    ret_blocks = dm.convert_to_blocks(ret_blocks)
+
+    return [(partition_id, ret_blocks)]

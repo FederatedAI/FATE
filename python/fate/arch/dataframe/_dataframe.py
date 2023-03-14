@@ -212,20 +212,28 @@ class DataFrame(object):
                                       with_weight=with_weight,
                                       columns=columns)
 
-    def max(self, *args, **kwargs) -> "DataFrame":
+    def drop(self, index) -> "DataFrame":
+        from .ops._dimension_scaling import drop
+        return drop(self, index)
+
+    def max(self, *args, **kwargs) -> "pd.Series":
         ...
 
-    def min(self, *args, **kwargs) -> "DataFrame":
+    def min(self, *args, **kwargs) -> "pd.Series":
         ...
 
-    def mean(self, *args, **kwargs) -> "DataFrame":
+    def mean(self, *args, **kwargs) -> "pd.Series":
         ...
 
-    def sum(self, *args, **kwargs) -> "DataFrame":
+    def sum(self, *args, **kwargs) -> "pd.Series":
         ...
 
-    def std(self, *args, **kwargs) -> "DataFrame":
+    def std(self, *args, **kwargs) -> "pd.Series":
         ...
+
+    def sigmoid(self) -> "DataFrame":
+        from .ops._activation import sigmoid
+        return sigmoid(self)
 
     def count(self) -> "int":
         return self.shape[0]
@@ -298,7 +306,7 @@ class DataFrame(object):
 
         return self.__extract_fields(with_sample_id=True, with_match_id=True, columns=items)
 
-    def __setitem__(self, keys, items) -> "DataFrame":
+    def __setitem__(self, keys, items):
         if isinstance(keys, str):
             keys = [keys]
 
@@ -437,12 +445,12 @@ class DataFrame(object):
 
     @classmethod
     def hstack(cls, stacks: List["DataFrame"]) -> "DataFrame":
-        from .ops._stack import hstack
+        from .ops._dimension_scaling import hstack
         return hstack(stacks)
 
     @classmethod
     def vstack(cls, stacks: List["DataFrame"]) -> "DataFrame":
-        from .ops._stack import vstack
+        from .ops._dimension_scaling import vstack
         return vstack(stacks)
 
     def __extract_fields(self, with_sample_id=True, with_match_id=True,

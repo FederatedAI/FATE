@@ -51,8 +51,7 @@ def transform_to_table(block_table, block_index, partition_order_mappings):
         return order_indexes
 
     return block_table.mapPartitions(_convert_to_order_index,
-                                     use_previous_behavior=False
-                                     )
+                                     use_previous_behavior=False)
 
 
 def get_partition_order_mappings(block_table):

@@ -38,6 +38,7 @@ def _serialize(ctx, data):
     # df["g"] = 100
     # df["h"] = 200
     # new_df = DataFrame.hstack([data, df])
+    # print(data.drop(data).shape)
     # print (new_df.as_pd_df())
     # print(DataFrame.hstack([data, empty_df]).as_pd_df())
     # print(DataFrame.vstack([data, data * 3]).as_pd_df())
@@ -51,6 +52,7 @@ def _serialize(ctx, data):
     # data["x5"] = data["x0"]
     # apply_df = data.apply_row(lambda value: [1, {1:2, 2:3}])
     # print(apply_df.as_pd_df())
+    # print(data.sigmoid().as_pd_df())
     """
     index, match_id, label, weight, values
     """

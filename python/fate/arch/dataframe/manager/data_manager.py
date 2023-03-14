@@ -182,7 +182,7 @@ class DataManager(object):
 
     def infer_non_operable_blocks(self):
         non_operable_field_offsets = self._schema_manager.infer_non_operable_field_offsets()
-        block_index_set = set(self._block_manager.loc_block(offset) for offset in non_operable_field_offsets)
+        block_index_set = set(self._block_manager.loc_block(offset, with_offset=False) for offset in non_operable_field_offsets)
         return sorted(list(block_index_set))
 
     def try_to_promote_types(self,
