@@ -94,7 +94,7 @@ T2 = TypeVar("T2")
 class Shardings:
     def __init__(
         self,
-        data: CTableABC,
+        data: CTableABC[int, torch.Tensor],
         shapes: Optional[List[torch.Size]] = None,
         axis: int = 0,
         dtype: Optional[torch.dtype] = None,
@@ -129,18 +129,13 @@ class Shardings:
     def shapes(self):
         return self._shapes
 
-    def squeeze_shapes(self, dims: Tuple[int], keepdim=False):
-        _shapes = []
-        for s in self._shapes:
-            _s = []
-            for i in range(len(s)):
-                if i in dims:
-                    if keepdim:
-                        _s.append(1)
-                else:
-                    _s.append(s[i])
-            _shapes.append(torch.Size(_s))
-        return _shapes
+    @property
+    def axis(self):
+        return self._axis
+
+    @property
+    def dtype(self):
+        return self._dtype
 
     @property
     def shape(self):
@@ -153,9 +148,26 @@ class Shardings:
                     assert _shape[i] == s[i]
         return torch.Size(_shape)
 
-    @property
-    def dtype(self):
-        return self._dtype
+    def shard_strides(self):
+        _stride = [0]
+        agg = 0
+        for s in self._shapes[1:]:
+            agg += s[self._axis]
+            _stride.append(agg)
+        return _stride
+
+    def squeeze_shapes(self, dims: Tuple[int], keepdim=False):
+        _shapes = []
+        for s in self._shapes:
+            _s = []
+            for i in range(len(s)):
+                if i in dims:
+                    if keepdim:
+                        _s.append(1)
+                else:
+                    _s.append(s[i])
+            _shapes.append(torch.Size(_s))
+        return _shapes
 
     def with_dtype(self, dtype: torch.dtype):
         self._dtype = dtype
@@ -202,12 +214,31 @@ class Shardings:
     def map_reduce_shard(
         self,
         mapper_func: typing.Callable[[torch.Tensor], T1],
-        reducer_func: typing.Callable[[T1, T1], T2],
-    ) -> T2:
+        reducer_func: typing.Callable[[T1, T1], T1],
+    ) -> T1:
         """
         expect local output
         """
         return self._data.mapValues(mapper_func).reduce(reducer_func)
+
+    def map_reduce_shard_with_stride(
+        self,
+        stride_mapper_func: typing.Callable[[int, torch.Tensor], T1],
+        reducer_func: typing.Callable[[T1, T1], T1],
+    ) -> T1:
+        """
+        map with stride
+        """
+        strides = self.shard_strides()
+
+        def _stride_mapper(func: typing.Callable[[int, torch.Tensor], T1]):
+            def _wrap(i: int, t: torch.Tensor) -> Tuple[int, T1]:
+                stride = strides[i]
+                return (i, func(stride, t))
+
+            return _wrap
+
+        return self._data.map(_stride_mapper(stride_mapper_func)).reduce(reducer_func)
 
     def join_shard(
         self,

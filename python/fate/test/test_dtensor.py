@@ -119,3 +119,28 @@ def test_var_std(ctx, t1_f32, t2_f32, t1_f32_sharding, t2_f32_sharding, op):
     assert op(t1_f32, dim=1, keepdim=True) == DTensor.from_sharding_list(
         ctx, [op(s, dim=1, keepdim=True) for s in t1_f32_sharding], num_partitions=3
     )
+
+
+@pytest.mark.parametrize(
+    "op",
+    [torch.max, torch.min],
+)
+def test_max_min(ctx, t1_f32, t2_f32, t1_f32_sharding, t2_f32_sharding, op):
+    assert torch.isclose(op(t1_f32), op(torch.cat(t1_f32_sharding)))
+
+    def _eq(r1, r2):
+        assert r1.indices.shape == r2.indices.shape
+        assert r1.values.shape == r2.values.shape
+        assert torch.allclose(r1.indices, r2.indices)
+        assert torch.allclose(r1.values, r2.values)
+
+    _eq(op(t1_f32, dim=0), op(torch.cat(t1_f32_sharding), dim=0))
+    _eq(op(t1_f32, dim=0, keepdim=True), op(torch.cat(t1_f32_sharding), dim=0, keepdim=True))
+
+    assert op(t1_f32, dim=1).values == DTensor.from_sharding_list(
+        ctx, [op(s, dim=1).values for s in t1_f32_sharding], num_partitions=3
+    )
+
+    assert op(t1_f32, dim=1, keepdim=True).values == DTensor.from_sharding_list(
+        ctx, [op(s, dim=1, keepdim=True).values for s in t1_f32_sharding], num_partitions=3
+    )

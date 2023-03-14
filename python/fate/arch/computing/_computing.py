@@ -27,9 +27,14 @@ from ._address import Address
 
 __all__ = ["CTableABC", "CSessionABC"]
 
+K = typing.TypeVar("K")
+V = typing.TypeVar("V")
+K_OUT = typing.TypeVar("K_OUT")
+V_OUT = typing.TypeVar("V_OUT")
+
 
 # noinspection PyPep8Naming
-class CTableABC(metaclass=ABCMeta):
+class CTableABC(typing.Generic[K, V], metaclass=ABCMeta):
     """
     a table of pair-like data supports distributed processing
     """
@@ -97,7 +102,7 @@ class CTableABC(metaclass=ABCMeta):
         ...
 
     @abc.abstractmethod
-    def take(self, n=1, **kwargs):
+    def take(self, n=1, **kwargs) -> typing.List[V]:
         """
         take ``n`` data from table
 
@@ -118,7 +123,7 @@ class CTableABC(metaclass=ABCMeta):
         ...
 
     @abc.abstractmethod
-    def first(self, **kwargs):
+    def first(self, **kwargs) -> V:
         """
         take one data from table
 
@@ -147,7 +152,7 @@ class CTableABC(metaclass=ABCMeta):
         ...
 
     @abc.abstractmethod
-    def map(self, func) -> "CTableABC":
+    def map(self, func: typing.Callable[[K, V], typing.Tuple[K_OUT, V_OUT]]) -> "CTableABC[K_OUT, V_OUT]":
         """
         apply `func` to each data
 
@@ -172,7 +177,7 @@ class CTableABC(metaclass=ABCMeta):
         ...
 
     @abc.abstractmethod
-    def mapValues(self, func):
+    def mapValues(self, func: typing.Callable[[V], V_OUT]) -> "CTableABC[K, V_OUT]":
         """
         apply `func` to each value of data
 
@@ -328,7 +333,7 @@ class CTableABC(metaclass=ABCMeta):
         ...
 
     @abc.abstractmethod
-    def reduce(self, func):
+    def reduce(self, func: typing.Callable[[V, V], V]) -> V:
         """
         reduces all value in pair of table by a binary function `func`
 
@@ -445,7 +450,7 @@ class CTableABC(metaclass=ABCMeta):
         ...
 
     @abc.abstractmethod
-    def join(self, other, func):
+    def join(self, other, func: typing.Callable[[typing.Any, typing.Any], typing.Any]) -> "CTableABC":
         """
         returns intersection of this table and the other table.
 

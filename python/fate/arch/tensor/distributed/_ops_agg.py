@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import torch
 
 from ._tensor import DTensor, implements
@@ -161,7 +163,7 @@ def var(input: DTensor, *args, **kwargs):
     if dtype is None:
         if not input.dtype.is_floating_point:
             raise RuntimeError(
-                f"std(): could not infer output dtype. Input dtype must be either a floating point or complex dtype. Got: {input.dtype}"
+                f"var(): could not infer output dtype. Input dtype must be either a floating point or complex dtype. Got: {input.dtype}"
             )
         dtype = input.dtype
     unbiased = kwargs.get("unbiased", True)
@@ -169,7 +171,7 @@ def var(input: DTensor, *args, **kwargs):
     if dim is None:
         if "keepdim" in kwargs:
             raise TypeError(
-                f"std() received an invalid combination of arguments - got (Tensor, keepdim=bool), but expected one of\n"
+                f"var() received an invalid combination of arguments - got (Tensor, keepdim=bool), but expected one of\n"
                 "* (Tensor input)\n"
                 "* (Tensor input, tuple of ints dim, bool keepdim)\n"
                 "* (Tensor input, tuple of names dim, bool keepdim)"
@@ -206,44 +208,106 @@ def var(input: DTensor, *args, **kwargs):
 
 
 @implements(torch.min)
-def min(storage, *args, **kwargs):
+def min(input: DTensor, *args, **kwargs):
     dim = None
     if len(args) > 0:
         dim = args[0]
     if "dim" in kwargs:
         dim = kwargs["dim"]
+    keepdim = kwargs.get("keepdim", False)
     if dim is None:
-
-        def _mapper(x):
-            return storage_ops.min(x)
-
-        return storage.blocks.mapValues(_mapper).reduce(lambda x, y: storage_ops.minimum(x, y))
-    else:
-        if dim == storage.d_axis.axis:
-            return storage.blocks.mapValues(lambda x: storage_ops.min(x, dim=dim)).reduce(
-                lambda x, y: storage_ops.minimum(x, y)
+        if "keepdim" in kwargs:
+            raise TypeError(
+                f"min() received an invalid combination of arguments - got (Tensor, keepdim=bool), but expected one of\n"
+                "* (Tensor input)\n"
+                "* (Tensor input, tuple of ints dim, bool keepdim)\n"
+                "* (Tensor input, tuple of names dim, bool keepdim)"
             )
         else:
-            return _unary_op(storage, lambda s: storage_ops.min(s, *args, **kwargs))
+            return input.shardings.map_reduce_shard(lambda x: torch.min(x), lambda x, y: torch.minimum(x, y))
+
+    if input.shardings._axis == dim:
+
+        def _mapper(stride: int, x: torch.Tensor):
+            r = torch.min(x, dim=dim, keepdim=keepdim)
+            return (stride, torch.return_types.min((r.values, r.indices + stride)))
+
+        def _reducer(kv1: Tuple[int, torch.return_types.min], kv2: Tuple[int, torch.return_types.min]):
+            s1, r1 = kv1
+            s2, r2 = kv2
+            s1, r1, s2, r2 = (s1, r1, s2, r2) if s1 < s2 else (s2, r2, s1, r1)
+            values = torch.minimum(r1.values, r2.values)
+            indices = torch.add(
+                torch.mul(r1.indices, torch.le(r1.values, r2.values)),
+                torch.mul(r2.indices, torch.gt(r1.values, r2.values)),
+            )
+            return (s1, torch.return_types.min((values, indices)))
+
+        return input.shardings.map_reduce_shard_with_stride(_mapper, _reducer)[1]
+
+    values = DTensor(
+        input.shardings.map_shard(
+            lambda x: torch.min(x, dim=dim, keepdim=keepdim).values,
+            shapes=input.shardings.squeeze_shapes((dim,), keepdim=keepdim),
+        )
+    )
+    indices = DTensor(
+        input.shardings.map_shard(
+            lambda x: torch.min(x, dim=dim, keepdim=keepdim).indices,
+            shapes=input.shardings.squeeze_shapes((dim,), keepdim=keepdim),
+        )
+    )
+    return torch.return_types.min((values, indices))
 
 
 @implements(torch.max)
-def max(storage, *args, **kwargs):
+def max(input: DTensor, *args, **kwargs):
     dim = None
     if len(args) > 0:
         dim = args[0]
     if "dim" in kwargs:
         dim = kwargs["dim"]
+    keepdim = kwargs.get("keepdim", False)
     if dim is None:
-
-        def _mapper(x):
-            return storage_ops.max(x)
-
-        return storage.blocks.mapValues(_mapper).reduce(lambda x, y: storage_ops.maximum(x, y))
-    else:
-        if dim == storage.d_axis.axis:
-            return storage.blocks.mapValues(lambda x: storage_ops.max(x, dim=dim)).reduce(
-                lambda x, y: storage_ops.maximum(x, y)
+        if "keepdim" in kwargs:
+            raise TypeError(
+                f"max() received an invalid combination of arguments - got (Tensor, keepdim=bool), but expected one of\n"
+                "* (Tensor input)\n"
+                "* (Tensor input, tuple of ints dim, bool keepdim)\n"
+                "* (Tensor input, tuple of names dim, bool keepdim)"
             )
         else:
-            return _unary_op(storage, lambda s: storage_ops.max(s, *args, **kwargs))
+            return input.shardings.map_reduce_shard(lambda x: torch.max(x), lambda x, y: torch.minimum(x, y))
+
+    if input.shardings._axis == dim:
+
+        def _mapper(stride: int, x: torch.Tensor):
+            r = torch.max(x, dim=dim, keepdim=keepdim)
+            return (stride, torch.return_types.max((r.values, r.indices + stride)))
+
+        def _reducer(kv1: Tuple[int, torch.return_types.max], kv2: Tuple[int, torch.return_types.max]):
+            s1, r1 = kv1
+            s2, r2 = kv2
+            s1, r1, s2, r2 = (s1, r1, s2, r2) if s1 < s2 else (s2, r2, s1, r1)
+            values = torch.minimum(r1.values, r2.values)
+            indices = torch.add(
+                torch.mul(r1.indices, torch.ge(r1.values, r2.values)),
+                torch.mul(r2.indices, torch.lt(r1.values, r2.values)),
+            )
+            return (s1, torch.return_types.max((values, indices)))
+
+        return input.shardings.map_reduce_shard_with_stride(_mapper, _reducer)[1]
+
+    values = DTensor(
+        input.shardings.map_shard(
+            lambda x: torch.max(x, dim=dim, keepdim=keepdim).values,
+            shapes=input.shardings.squeeze_shapes((dim,), keepdim=keepdim),
+        )
+    )
+    indices = DTensor(
+        input.shardings.map_shard(
+            lambda x: torch.max(x, dim=dim, keepdim=keepdim).indices,
+            shapes=input.shardings.squeeze_shapes((dim,), keepdim=keepdim),
+        )
+    )
+    return torch.return_types.max((values, indices))
