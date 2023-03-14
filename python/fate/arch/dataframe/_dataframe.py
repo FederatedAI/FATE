@@ -17,7 +17,7 @@ import numpy as np
 import operator
 import pandas as pd
 
-from typing import Any, List, Union, Dict
+from typing import List, Union
 
 from .ops import (
     aggregate_indexer,
@@ -193,13 +193,23 @@ class DataFrame(object):
             self._data_manager
         )
 
+    def apply_row(self, func, result_type="expand", columns=None, with_label=False, with_weight=False):
+        from .ops._apply_row import apply_row
+        return apply_row(
+            self,
+            func,
+            result_type=result_type,
+            columns=columns,
+            with_label=with_label,
+            with_weight=with_weight
+        )
+
     def create_frame(self, with_label=False, with_weight=False, columns: list = None) -> "DataFrame":
         return self.__extract_fields(with_sample_id=True,
                                       with_match_id=True,
                                       with_label=with_label,
                                       with_weight=with_weight,
                                       columns=columns)
-
 
     def max(self, *args, **kwargs) -> "DataFrame":
         ...

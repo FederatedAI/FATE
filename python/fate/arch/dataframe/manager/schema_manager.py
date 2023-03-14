@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import copy
 from typing import List, Union
 import pandas as pd
 
@@ -172,10 +173,10 @@ class SchemaManager(object):
 
     def duplicate(self):
         dup_schema_manager = SchemaManager()
-        dup_schema_manager.schema = self._schema
-        dup_schema_manager._name_offset_mapping = self._name_offset_mapping
-        dup_schema_manager._type_mapping = self._type_mapping
-        dup_schema_manager._offset_name_mapping = self._offset_name_mapping
+        dup_schema_manager.schema = copy.deepcopy(self._schema)
+        dup_schema_manager._name_offset_mapping = copy.deepcopy(self._name_offset_mapping)
+        dup_schema_manager._type_mapping = copy.deepcopy(self._type_mapping)
+        dup_schema_manager._offset_name_mapping = copy.deepcopy(self._offset_name_mapping)
 
         return dup_schema_manager
 
@@ -312,6 +313,24 @@ class SchemaManager(object):
             raise ValueError(f"Offset={offset} is out out bound")
 
         return self._offset_name_mapping[offset]
+
+    def get_field_name_list(self, with_sample_id=True, with_match_id=True, with_label=True, with_weight=True):
+        field_names = []
+        if with_sample_id and self._schema.sample_id_name:
+            field_names.append(self._schema.sample_id_name)
+
+        if with_match_id and self._schema.match_id_name:
+            field_names.append(self._schema.match_id_name)
+
+        if with_label and self._schema.label_name:
+            field_names.append(self._schema.label_name)
+
+        if with_weight and self._schema.weight_name:
+            field_names.append(self._schema.weight_name)
+
+        field_names += self._schema.columns.tolist()
+
+        return field_names
 
     def get_field_types(self, name=None, flatten=False):
         if not name:

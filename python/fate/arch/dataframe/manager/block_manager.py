@@ -15,6 +15,7 @@
 #
 
 import bisect
+import copy
 import json
 import numpy as np
 import pandas as pd
@@ -426,8 +427,8 @@ class BlockManager(object):
 
     def duplicate(self):
         dup_block_manager = BlockManager()
-        dup_block_manager.blocks = self._blocks
-        dup_block_manager.field_block_mapping = self._field_block_mapping
+        dup_block_manager.blocks = copy.deepcopy(self._blocks)
+        dup_block_manager.field_block_mapping = copy.deepcopy(self._field_block_mapping)
 
         return dup_block_manager
 

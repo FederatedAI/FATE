@@ -102,7 +102,8 @@ class DataManager(object):
 
         return converted_blocks
 
-    def derive_new_data_manager(self, with_sample_id, with_match_id, with_label, with_weight, columns):
+    def derive_new_data_manager(self, with_sample_id, with_match_id, with_label, with_weight, columns) \
+            -> Tuple["DataManager", List[Tuple[int, int, bool, List]]]:
         schema_manager, derive_indexes = self._schema_manager.derive_new_schema_manager(with_sample_id=with_sample_id,
                                                                                         with_match_id=with_match_id,
                                                                                         with_label=with_label,
@@ -127,16 +128,38 @@ class DataManager(object):
 
             return loc_ret
 
-    def get_fields_loc(self):
+    def get_fields_loc(self, with_sample_id=True, with_match_id=True, with_label=True, with_weight=True):
         field_block_mapping = self._block_manager.field_block_mapping
         fields_loc = [[]] * len(field_block_mapping)
         for col_id, _block_id_tuple in field_block_mapping.items():
             fields_loc[col_id] = _block_id_tuple
 
+        if not with_sample_id and self.schema.sample_id_name:
+            field_index = self._schema_manager.get_field_offset(self.schema.sample_id_name)
+            fields_loc = fields_loc[: field_index] + fields_loc[field_index + 1:]
+
+        if not with_match_id and self.schema.match_id_name:
+            field_index = self._schema_manager.get_field_offset(self.schema.match_id_name)
+            fields_loc = fields_loc[: field_index] + fields_loc[field_index + 1:]
+
+        if not with_label and self.schema.label_name:
+            field_index = self._schema_manager.get_field_offset(self.schema.label_name)
+            fields_loc = fields_loc[: field_index] + fields_loc[field_index + 1:]
+
+        if not with_weight and self.schema.weight_name:
+            field_index = self._schema_manager.get_field_offset(self.schema.weight_name)
+            fields_loc = fields_loc[: field_index] + fields_loc[field_index + 1:]
+
         return fields_loc
 
     def get_field_name(self, field_index):
         return self._schema_manager.get_field_name(field_index)
+
+    def get_field_name_list(self, with_sample_id=True, with_match_id=True, with_label=True, with_weight=True):
+        return self._schema_manager.get_field_name_list(with_sample_id=with_sample_id,
+                                                        with_match_id=with_match_id,
+                                                        with_label=with_label,
+                                                        with_weight=with_weight)
 
     def get_field_type_by_name(self, name):
         return self._schema_manager.get_field_types(name)
