@@ -144,3 +144,46 @@ def test_max_min(ctx, t1_f32, t2_f32, t1_f32_sharding, t2_f32_sharding, op):
     assert op(t1_f32, dim=1, keepdim=True).values == DTensor.from_sharding_list(
         ctx, [op(s, dim=1, keepdim=True).values for s in t1_f32_sharding], num_partitions=3
     )
+
+
+@pytest.mark.parametrize(
+    "op",
+    [torch.add, torch.sub, torch.mul, torch.div, torch.rsub],
+)
+def test_binary_bc_dtensor(ctx, op):
+    t1 = [torch.rand((2, 4, 5)) for _ in range(3)]
+    dt1 = DTensor.from_sharding_list(ctx, t1, num_partitions=3)
+
+    t2 = [torch.rand((2, 1, 5)) for _ in range(3)]
+    dt2 = DTensor.from_sharding_list(ctx, t2, num_partitions=3)
+
+    assert op(dt1, dt2) == DTensor.from_sharding_list(ctx, [op(s1, s2) for s1, s2 in zip(t1, t2)], num_partitions=3)
+
+    t1 = [torch.rand((2, 4, 5)) for _ in range(3)]
+    dt1 = DTensor.from_sharding_list(ctx, t1, num_partitions=3, axis=1)
+
+    t2 = [torch.rand((4, 5)) for _ in range(3)]
+    dt2 = DTensor.from_sharding_list(ctx, t2, num_partitions=3, axis=0)
+
+    assert op(dt1, dt2) == DTensor.from_sharding_list(ctx, [op(s1, s2) for s1, s2 in zip(t1, t2)], num_partitions=3)
+
+
+@pytest.mark.parametrize(
+    "op",
+    [torch.add, torch.sub, torch.mul, torch.div, torch.rsub],
+)
+def test_binary_bc_tensor(ctx, op):
+    t1 = [torch.rand((2, 3, 4, 5)) for _ in range(3)]
+    dt1 = DTensor.from_sharding_list(ctx, t1, num_partitions=3)
+
+    t2 = torch.rand((4, 5))
+    assert op(dt1, t2) == DTensor.from_sharding_list(ctx, [op(s, t2) for s in t1], num_partitions=3)
+
+    t2 = torch.rand((1, 1, 4, 5))
+    assert op(dt1, t2) == DTensor.from_sharding_list(ctx, [op(s, t2) for s in t1], num_partitions=3)
+
+    t1 = [torch.rand((2, 3, 4, 5)) for _ in range(3)]
+    dt1 = DTensor.from_sharding_list(ctx, t1, num_partitions=3, axis=1)
+
+    t2 = torch.rand((4, 5))
+    assert op(dt1, t2) == DTensor.from_sharding_list(ctx, [op(s, t2) for s in t1], num_partitions=3)

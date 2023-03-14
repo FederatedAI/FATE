@@ -29,11 +29,11 @@ def sum(input: DTensor, *args, **kwargs):
         return out
 
     keepdim = kwargs.get("keepdim", False)
-    if input.shardings._axis not in dim:
+    if input.shardings.shapes.axis not in dim:
         return DTensor(
             input.shardings.map_shard(
                 lambda x: torch.sum(x, dim=dim, keepdim=keepdim, dtype=dtype),
-                shapes=input.shardings.squeeze_shapes(dim, keepdim),
+                shapes=input.shardings.shapes.squeeze(dim, keepdim),
             )
         )
 
@@ -76,11 +76,11 @@ def mean(input: DTensor, *args, **kwargs):
     count = 1
     for d in dim:
         count *= input.shape[d]
-    if input.shardings._axis not in dim:
+    if input.shardings.shapes.axis not in dim:
         return DTensor(
             input.shardings.map_shard(
                 lambda x: torch.div(torch.sum(x, dim=dim, keepdim=keepdim, dtype=torch.float64), count).type(dtype),
-                shapes=input.shardings.squeeze_shapes(dim, keepdim),
+                shapes=input.shardings.shapes.squeeze(dim, keepdim),
             )
         )
 
@@ -119,7 +119,7 @@ def std(input: DTensor, *args, **kwargs):
                 "* (Tensor input, tuple of names dim, bool keepdim)"
             )
 
-    if dim is None or input.shardings._axis in dim:
+    if dim is None or input.shardings.shapes.axis in dim:
         if dim is None:
             n = input.shape.numel()
             sq, s = input.shardings.map_reduce_shard(
@@ -145,7 +145,7 @@ def std(input: DTensor, *args, **kwargs):
 
     return DTensor(
         input.shardings.map_shard(
-            lambda x: torch.std(x, dim=dim, unbiased=unbiased), shapes=input.shardings.squeeze_shapes(dim, keepdim)
+            lambda x: torch.std(x, dim=dim, unbiased=unbiased), shapes=input.shardings.shapes.squeeze(dim, keepdim)
         )
     )
 
@@ -177,7 +177,7 @@ def var(input: DTensor, *args, **kwargs):
                 "* (Tensor input, tuple of names dim, bool keepdim)"
             )
 
-    if dim is None or input.shardings._axis in dim:
+    if dim is None or input.shardings.shapes.axis in dim:
         if dim is None:
             n = input.shape.numel()
             sq, s = input.shardings.map_reduce_shard(
@@ -202,7 +202,7 @@ def var(input: DTensor, *args, **kwargs):
 
     return DTensor(
         input.shardings.map_shard(
-            lambda x: torch.var(x, dim=dim, unbiased=unbiased), shapes=input.shardings.squeeze_shapes(dim, keepdim)
+            lambda x: torch.var(x, dim=dim, unbiased=unbiased), shapes=input.shardings.shapes.squeeze(dim, keepdim)
         )
     )
 
@@ -226,7 +226,7 @@ def min(input: DTensor, *args, **kwargs):
         else:
             return input.shardings.map_reduce_shard(lambda x: torch.min(x), lambda x, y: torch.minimum(x, y))
 
-    if input.shardings._axis == dim:
+    if input.shardings.shapes.axis == dim:
 
         def _mapper(stride: int, x: torch.Tensor):
             r = torch.min(x, dim=dim, keepdim=keepdim)
@@ -248,13 +248,13 @@ def min(input: DTensor, *args, **kwargs):
     values = DTensor(
         input.shardings.map_shard(
             lambda x: torch.min(x, dim=dim, keepdim=keepdim).values,
-            shapes=input.shardings.squeeze_shapes((dim,), keepdim=keepdim),
+            shapes=input.shardings.shapes.squeeze((dim,), keepdim=keepdim),
         )
     )
     indices = DTensor(
         input.shardings.map_shard(
             lambda x: torch.min(x, dim=dim, keepdim=keepdim).indices,
-            shapes=input.shardings.squeeze_shapes((dim,), keepdim=keepdim),
+            shapes=input.shardings.shapes.squeeze((dim,), keepdim=keepdim),
         )
     )
     return torch.return_types.min((values, indices))
@@ -279,7 +279,7 @@ def max(input: DTensor, *args, **kwargs):
         else:
             return input.shardings.map_reduce_shard(lambda x: torch.max(x), lambda x, y: torch.minimum(x, y))
 
-    if input.shardings._axis == dim:
+    if input.shardings.shapes.axis == dim:
 
         def _mapper(stride: int, x: torch.Tensor):
             r = torch.max(x, dim=dim, keepdim=keepdim)
@@ -301,13 +301,13 @@ def max(input: DTensor, *args, **kwargs):
     values = DTensor(
         input.shardings.map_shard(
             lambda x: torch.max(x, dim=dim, keepdim=keepdim).values,
-            shapes=input.shardings.squeeze_shapes((dim,), keepdim=keepdim),
+            shapes=input.shardings.shapes.squeeze((dim,), keepdim=keepdim),
         )
     )
     indices = DTensor(
         input.shardings.map_shard(
             lambda x: torch.max(x, dim=dim, keepdim=keepdim).indices,
-            shapes=input.shardings.squeeze_shapes((dim,), keepdim=keepdim),
+            shapes=input.shardings.shapes.squeeze((dim,), keepdim=keepdim),
         )
     )
     return torch.return_types.max((values, indices))

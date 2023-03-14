@@ -29,12 +29,10 @@ def div(input, other):
 
 
 def _binary(input, other, op, swap_operad=False, dtype_promote_to=None):
-    # swap input and output if input is not DStroage
+    # swap input and output if input is not DTensor
     if not isinstance(input, DTensor):
         return _binary(op, other, input, swap_operad=not swap_operad, dtype_promote_to=dtype_promote_to)
 
-    # input and other both DStorage
-    # TODO: validate
     if isinstance(other, DTensor):
         if swap_operad:
             return DTensor(other.shardings.join_shard(input.shardings, op, dtype_promote_to=dtype_promote_to))
@@ -42,9 +40,17 @@ def _binary(input, other, op, swap_operad=False, dtype_promote_to=None):
             return DTensor(input.shardings.join_shard(other.shardings, op, dtype_promote_to=dtype_promote_to))
 
     # other is local tensor, broadcast to partitions
-    # TODO: validate broadcast
     else:
+        shapes = input.shardings.shapes.bc_shapes(other.shape)
         if swap_operad:
-            return DTensor(input.shardings.map_shard(lambda x: op(other, x, dtype_promote_to=dtype_promote_to)))
+            return DTensor(
+                input.shardings.map_shard(
+                    lambda x: op(other, x, dtype_promote_to=dtype_promote_to), shapes=shapes.shapes, axis=shapes.axis
+                )
+            )
         else:
-            return DTensor(input.shardings.map_shard(lambda x: op(x, other), dtype_promote_to=dtype_promote_to))
+            return DTensor(
+                input.shardings.map_shard(
+                    lambda x: op(x, other), dtype_promote_to=dtype_promote_to, shapes=shapes.shapes, axis=shapes.axis
+                )
+            )

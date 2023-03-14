@@ -101,16 +101,16 @@ class Shardings:
         device: Optional[torch.device] = None,
     ):
         self._data = data
-        self._axis = axis
 
         if shapes is None:
             shards_shape = sorted(self._data.map(lambda k, s: (k, s.shape)).collect())
-            self._shapes = []
+            _shapes = []
             for i, (k, s) in enumerate(shards_shape):
                 assert i == k
-                self._shapes.append(s)
+                _shapes.append(s)
         else:
-            self._shapes = shapes
+            _shapes = shapes
+        self._shapes = _ShardingShapes(_shapes, axis)
 
         if dtype is None or device is None:
             first_shard = self._data.first()
@@ -126,12 +126,9 @@ class Shardings:
             self._dtype = dtype
             self._device = device
 
+    @property
     def shapes(self):
         return self._shapes
-
-    @property
-    def axis(self):
-        return self._axis
 
     @property
     def dtype(self):
@@ -139,35 +136,7 @@ class Shardings:
 
     @property
     def shape(self):
-        _shape = list(self._shapes[0])
-        for s in self._shapes[1:]:
-            for i in range(len(_shape)):
-                if i == self._axis:
-                    _shape[i] += s[i]
-                else:
-                    assert _shape[i] == s[i]
-        return torch.Size(_shape)
-
-    def shard_strides(self):
-        _stride = [0]
-        agg = 0
-        for s in self._shapes[1:]:
-            agg += s[self._axis]
-            _stride.append(agg)
-        return _stride
-
-    def squeeze_shapes(self, dims: Tuple[int], keepdim=False):
-        _shapes = []
-        for s in self._shapes:
-            _s = []
-            for i in range(len(s)):
-                if i in dims:
-                    if keepdim:
-                        _s.append(1)
-                else:
-                    _s.append(s[i])
-            _shapes.append(torch.Size(_s))
-        return _shapes
+        return self.shapes.merge_shapes()
 
     def with_dtype(self, dtype: torch.dtype):
         self._dtype = dtype
@@ -178,29 +147,26 @@ class Shardings:
         return self._device
 
     def __eq__(self, __o: object) -> bool:
-        if (
+        return (
             isinstance(__o, Shardings)
             and self.device == __o.device
             and self.dtype == __o.dtype
-            and len(self._shapes) == len(__o._shapes)
-        ):
-            for s1, s2 in zip(self._shapes, __o._shapes):
-                if s1 != s2:
-                    return False
-            return all(self._data.join(__o._data, lambda s1, s2: torch.allclose(s1, s2)).collect())
-        return False
+            and self.shapes == __o.shapes
+            and all(self._data.join(__o._data, lambda s1, s2: torch.allclose(s1, s2)).collect())
+        )
 
     def __str__(self) -> str:
         return f"Sharding<shapes={self._shapes}, dtype={self._dtype}, device={self._device}>"
 
     def merge(self):
         shardings = [pair[1] for pair in sorted(self._data.collect())]
-        return torch.cat(shardings, self._axis)
+        return torch.cat(shardings, self.shapes.axis)
 
     def map_shard(
         self,
         func: typing.Callable[[torch.Tensor], torch.Tensor],
         shapes: Optional[List[torch.Size]] = None,
+        axis: Optional[int] = None,
         dtype_promote_to: Optional[torch.dtype] = None,
     ):
         if dtype_promote_to is not None:
@@ -208,8 +174,10 @@ class Shardings:
         else:
             dtype = self._dtype
         if shapes is None:
-            shapes = self._shapes
-        return Shardings(self._data.mapValues(func), shapes, self._axis, dtype, self._device)
+            shapes = self.shapes.shapes
+        if axis is None:
+            axis = self.shapes.axis
+        return Shardings(self._data.mapValues(func), shapes, axis, dtype, self._device)
 
     def map_reduce_shard(
         self,
@@ -229,7 +197,7 @@ class Shardings:
         """
         map with stride
         """
-        strides = self.shard_strides()
+        strides = self.shapes.strides()
 
         def _stride_mapper(func: typing.Callable[[int, torch.Tensor], T1]):
             def _wrap(i: int, t: torch.Tensor) -> Tuple[int, T1]:
@@ -251,4 +219,79 @@ class Shardings:
             out_dtype = torch.promote_types(self._dtype, other._dtype)
         if dtype_promote_to is not None:
             out_dtype = torch.promote_types(out_dtype, dtype_promote_to)
-        return Shardings(self._data.join(other._data, func), self._shapes, self._axis, out_dtype, self._device)
+        out_shapes = self.shapes.bc_shapes(other.shapes)
+        return Shardings(
+            self._data.join(other._data, func), out_shapes.shapes, out_shapes.axis, out_dtype, self._device
+        )
+
+
+class _ShardingShapes:
+    def __init__(self, shapes: List[torch.Size], axis: int) -> None:
+        self.shapes = shapes
+        self.axis = axis
+
+    def __eq__(self, __o: object) -> bool:
+        if isinstance(__o, _ShardingShapes) and self.axis == __o.axis and len(self.shapes) == len(__o.shapes):
+            for s1, s2 in zip(self.shapes, __o.shapes):
+                if s1 != s2:
+                    return False
+        return True
+
+    def __str__(self) -> str:
+        return f"<ShardingShape(shapes={self.shapes}, axis={self.axis})>"
+
+    def bc_shapes(self, other: "_ShardingShapes") -> "_ShardingShapes":
+        if isinstance(other, _ShardingShapes):
+            assert len(self.shapes) == len(other.shapes), f"sharding num mismatch: {self.shapes} vs {other.shapes}"
+            _bc_shapes = []
+            for s1, s2 in zip(self.shapes, other.shapes):
+                _bc_shapes.append(torch.broadcast_shapes(s1, s2))
+
+            self_axis = len(_bc_shapes[0]) - len(self.shapes[0]) + self.axis
+            other_axis = len(_bc_shapes[0]) - len(other.shapes[0]) + other.axis
+            assert self_axis == other_axis, f"sharding axis mismatch: {self_axis} vs {other_axis}"
+            return _ShardingShapes(_bc_shapes, self_axis)
+        elif isinstance(other, torch.Size):
+            _bc_shapes = []
+            for s in self.shapes:
+                _bc_shapes.append(torch.broadcast_shapes(s, other))
+                # assert other shape in distributed axis is 1
+                other_align_axis = len(other) - len(s) + self.axis
+                if other_align_axis >= 0:
+                    assert other[other_align_axis] == 1, f"shape in distributed axis should be 1: {self} vs {other}"
+            self_axis = len(_bc_shapes[0]) - len(self.shapes[0]) + self.axis
+
+            return _ShardingShapes(_bc_shapes, self.axis)
+        else:
+            raise NotImplementedError(f"type `{other}`")
+
+    def merge_shapes(self):
+        _shape = list(self.shapes[0])
+        for s in self.shapes[1:]:
+            for i in range(len(_shape)):
+                if i == self.axis:
+                    _shape[i] += s[i]
+                else:
+                    assert _shape[i] == s[i]
+        return torch.Size(_shape)
+
+    def strides(self):
+        _stride = [0]
+        agg = 0
+        for s in self.shapes[1:]:
+            agg += s[self.axis]
+            _stride.append(agg)
+        return _stride
+
+    def squeeze(self, dims: Tuple[int], keepdim=False):
+        _shapes = []
+        for s in self.shapes:
+            _s = []
+            for i in range(len(s)):
+                if i in dims:
+                    if keepdim:
+                        _s.append(1)
+                else:
+                    _s.append(s[i])
+            _shapes.append(torch.Size(_s))
+        return _shapes
