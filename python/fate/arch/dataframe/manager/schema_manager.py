@@ -79,8 +79,13 @@ class Schema(object):
         return self._anonymous_columns
 
     def append_columns(self, names):
-        self._columns.append(pd.Index(names))
+        self._columns = self._columns.append(pd.Index(names))
         # TODO: extend anonymous column
+
+    def __eq__(self, other: "Schema"):
+        return self.label_name == other.label_name and self.weight_name == other.weight_name \
+               and self.sample_id_name == other.sample_id_name and self.match_id_name == other.match_id_name \
+               and self.columns.tolist() == other.columns.tolist()
 
     def serialize(self):
         s_obj = list()

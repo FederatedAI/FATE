@@ -328,11 +328,14 @@ class BlockManager(object):
             for offset, (field_index, block_type) in enumerate(zip(field_indexes, block_types)):
                 block = Block.get_block_by_type(block_type)
                 self._blocks.append(block(field_indexes=[field_index], should_compress=should_compress))
+                self._field_block_mapping[field_index] = (block_num, 0)
                 block_ids.append(block_num + offset)
         else:
             block = Block.get_block_by_type(block_types)
             self._blocks.append(block(field_indexes=field_indexes, should_compress=should_compress))
             block_ids.append(block_num)
+            for offset, field_index in enumerate(field_indexes):
+                self._field_block_mapping[field_index] = (block_num, offset)
 
         return block_ids
 

@@ -65,7 +65,9 @@ class RawTableReader(object):
             label_type=self._label_type, weight_type=self._weight_type,
             dtype=self._dtype, default_type=types.DEFAULT_DATA_TYPE)
 
-        partition_order_mappings = _get_partition_order(table)
+        from .ops._indexer import get_partition_order_by_raw_table
+        partition_order_mappings = get_partition_order_by_raw_table(table)
+        # partition_order_mappings = _get_partition_order(table)
         functools.partial(_to_blocks,
                           data_manager=data_manager,
                           index_dict=retrieval_index_dict,
@@ -206,7 +208,9 @@ class PandasReader(object):
             buf, include_key=True, partition=self._partition
         )
 
-        partition_order_mappings = _get_partition_order(table)
+        from .ops._indexer import get_partition_order_by_raw_table
+        partition_order_mappings = get_partition_order_by_raw_table(table)
+        # partition_order_mappings = _get_partition_order(table)
         to_block_func = functools.partial(_to_blocks,
                           data_manager=data_manager,
                           retrieval_index_dict=retrieval_index_dict,
@@ -277,24 +281,3 @@ def _to_blocks(kvs,
     converted_blocks = data_manager.convert_to_blocks(splits)
 
     return [(partition_id, converted_blocks)]
-
-
-def _get_partition_order(table):
-    def _get_block_summary(kvs):
-        key = next(kvs)[0]
-        block_size = 1 + sum(1 for kv in kvs)
-        return {key: block_size}
-
-    block_summary = table.mapPartitions(_get_block_summary).reduce(lambda blk1, blk2: {**blk1, **blk2})
-
-    start_index, block_id = 0, 0
-    block_order_mappings = dict()
-    for blk_key, blk_size in block_summary.items():
-        block_order_mappings[blk_key] = dict(
-            start_index=start_index, end_index=start_index + blk_size - 1, block_id=block_id
-        )
-
-        start_index += blk_size
-        block_id += 1
-
-    return block_order_mappings

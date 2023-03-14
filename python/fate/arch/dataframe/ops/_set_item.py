@@ -25,9 +25,9 @@ def set_item(df: "DataFrame", keys, items, state):
            2 - keys are all old
     """
     if state == 1:
-        return _set_new_item(df, keys, items)
+        _set_new_item(df, keys, items)
     else:
-        return _set_old_item(df, keys, items)
+        _set_old_item(df, keys, items)
 
 
 def _set_new_item(df:"DataFrame", keys, items):
@@ -88,7 +88,7 @@ def _set_new_item(df:"DataFrame", keys, items):
         # TODO: support if DTensor is ok.
         block_table = df.block_table
 
-    return block_table
+    df.block_table = block_table
 
 
 def _set_old_item(df: "DataFrame", keys, items):
@@ -171,4 +171,4 @@ def _set_old_item(df: "DataFrame", keys, items):
         # TODO: support if DTensor is ok.
         block_table = df.block_table
 
-    return block_table
+    df.block_table = block_table

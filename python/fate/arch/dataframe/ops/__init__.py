@@ -20,13 +20,10 @@ from ._indexer import (
 from ._transformer import (
     transform_to_tensor,
 )
-from ._secure_boost_ops import (
-    select_column_value
-)
 
 
 __all__ = ["transform_to_tensor",
            "transform_to_table",
            "aggregate_indexer",
-           "get_partition_order_mappings",
-           "select_column_value"]
+           "get_partition_order_mappings"
+           ]

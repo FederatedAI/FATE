@@ -22,7 +22,7 @@ def compress_blocks(block_table, data_manager: DataManager):
         return block_table, data_manager
 
     def _compress(blocks):
-        ret_blocks = [[] for idx in range(len(data_manager.block_num))]
+        ret_blocks = [[] for idx in range(data_manager.block_num)]
         for src_bid, dst_bid in non_compress_block_changes.items():
             ret_blocks[dst_bid] = blocks[src_bid]
 
