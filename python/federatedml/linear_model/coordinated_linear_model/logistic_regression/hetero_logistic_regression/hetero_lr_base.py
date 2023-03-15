@@ -63,7 +63,8 @@ class HeteroLRBase(BaseLogisticRegression):
         # if len(self.component_properties.host_party_idlist) == 1:
         #     LOGGER.debug(f"set_use_async")
         #     self.gradient_loss_operator.set_use_async()
-        self.gradient_loss_operator.set_fixed_float_precision(self.model_param.floating_point_precision)
+        if params.encrypt_param.method == consts.PAILLIER or params.encrypt_param.method == consts.PAILLIER_IPCL:
+            self.gradient_loss_operator.set_fixed_float_precision(self.model_param.floating_point_precision)
 
     def _get_meta(self):
         meta_protobuf_obj = lr_model_meta_pb2.LRModelMeta(penalty=self.model_param.penalty,
