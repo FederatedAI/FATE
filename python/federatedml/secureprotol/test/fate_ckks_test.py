@@ -20,10 +20,10 @@ import unittest
 from federatedml.secureprotol.fate_ckks import CKKSKeypair
 from federatedml.secureprotol.fate_ckks import CKKSPublicKey
 from federatedml.secureprotol.fate_ckks import CKKSPrivateKey
-from federatedml.secureprotol.fate_ckks import CKKSEncryptedNumber
+from federatedml.secureprotol.fate_ckks import CKKSEncryptedVector
 
 
-def assert_small_rel_diff(first, second, threshold=1, max_percent_diff=1e-5):
+def assert_small_rel_diff_scalar(first, second, threshold=1, max_percent_diff=1e-5):
     """
     Assert two values have small relative differences
     It compares the percentage difference if absolute error is larger than threshold
@@ -34,6 +34,11 @@ def assert_small_rel_diff(first, second, threshold=1, max_percent_diff=1e-5):
         if not percentage_diff < max_percent_diff:
             raise AssertionError(
                 f"Large percentage error {percentage_diff} > {max_percent_diff}, first:{first}, second: {second}")
+
+
+def assert_almost_equal_vector(expected, actual):
+    mean_squared_error = np.square(expected - actual).sum()
+    assert mean_squared_error < 1e-3
 
 
 def serialize_and_deserialize(obj):
@@ -74,10 +79,10 @@ class TestNetworkInteraction(unittest.TestCase):
             decrypted_result = self.arbiter_private_key.decrypt(
                 encrypted_result)
             true_value = v_B * v_A
-            assert_small_rel_diff(decrypted_result, true_value)
+            assert_small_rel_diff_scalar(decrypted_result, true_value)
 
 
-class TestCKKSEncryptedNumber(unittest.TestCase):
+class TestCKKSEncryptedVector(unittest.TestCase):
     def setUp(self):
         self.public_key, self.private_key = CKKSKeypair.generate_keypair()
         self.public_key = serialize_and_deserialize(self.public_key)
@@ -85,7 +90,7 @@ class TestCKKSEncryptedNumber(unittest.TestCase):
     def tearDown(self):
         unittest.TestCase.tearDown(self)
 
-    def test_add(self):
+    def test_add_scalar(self):
         x_li = np.ones(100) * np.random.randint(100)
         y_li = np.ones(100) * np.random.randint(1000)
         z_li = np.ones(100) * np.random.rand()
@@ -107,9 +112,9 @@ class TestCKKSEncryptedNumber(unittest.TestCase):
             res = x + y + z + t
 
             de_en_res = self.private_key.decrypt(en_res)
-            assert_small_rel_diff(de_en_res, res)
+            assert_small_rel_diff_scalar(de_en_res, res)
 
-    def test_mul(self):
+    def test_mul_scalar(self):
         x_li = np.ones(100) * np.random.randint(10)
         y_li = np.ones(100) * np.random.randint(10) * -1
         z_li = np.ones(100) * np.random.rand()
@@ -127,9 +132,9 @@ class TestCKKSEncryptedNumber(unittest.TestCase):
             res = x * y
 
             de_en_res = self.private_key.decrypt(en_res)
-            assert_small_rel_diff(de_en_res, res)
+            assert_small_rel_diff_scalar(de_en_res, res)
 
-    def test_enc_mul(self):
+    def test_enc_mul_scalar(self):
         x_li = np.ones(100) * np.random.randint(10)
         y_li = np.ones(100) * np.random.randint(10) * -1
         z_li = np.ones(100) * np.random.rand()
@@ -150,7 +155,42 @@ class TestCKKSEncryptedNumber(unittest.TestCase):
             res = x * y
 
             de_en_res = self.private_key.decrypt(en_res)
-            assert_small_rel_diff(de_en_res, res)
+            assert_small_rel_diff_scalar(de_en_res, res)
+
+    def test_add_vec(self):
+        x_vec = np.random.rand(100)
+        y_vec = np.random.rand(100)
+
+        enc_x_vec = self.public_key.encrypt(x_vec)
+        enc_y_vec = self.public_key.encrypt(y_vec)
+
+        expected = x_vec + y_vec
+        actual = self.private_key.decrypt(enc_x_vec + enc_y_vec)
+
+        assert_almost_equal_vector(expected, actual)
+
+    def test_enc_vec_mul_plain_scalar(self):
+        x_vec = np.random.rand(100)
+        y = np.random.randint(10)
+
+        enc_x_vec = self.public_key.encrypt(x_vec)
+
+        expected = x_vec * y
+        actual = self.private_key.decrypt(enc_x_vec * y)
+
+        assert_almost_equal_vector(expected, actual)
+
+    def test_enc_vec_mul_enc_vec(self):
+        x_vec = np.random.rand(100)
+        y_vec = np.random.rand(100)
+
+        enc_x_vec = self.public_key.encrypt(x_vec)
+        enc_y_vec = self.public_key.encrypt(y_vec)
+
+        expected = x_vec * y_vec
+        actual = self.private_key.decrypt(enc_x_vec * enc_y_vec)
+
+        assert_almost_equal_vector(expected, actual)
 
 
 class TestCKKSSerialization(unittest.TestCase):
