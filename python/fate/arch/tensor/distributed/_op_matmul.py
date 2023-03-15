@@ -1,10 +1,10 @@
-from fate.arch.storage import storage_ops
-from fate.arch.storage._shape import DAxis, Shape
+import torch
 
-from .._storage import DStorage
+from ._tensor import DTensor, implements
 
 
-def matmul(a: DStorage, b: DStorage):
+@implements(torch.matmul)
+def matmul(a: DTensor, b: DStorage):
     bc_shape_a = a.shape[:-2]
     bc_shape_b = b.shape[:-2]
     bs_shape = Shape.broadcast_shape([bc_shape_a, bc_shape_b], raise_exception=False)

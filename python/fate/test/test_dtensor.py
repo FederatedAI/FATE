@@ -187,3 +187,17 @@ def test_binary_bc_tensor(ctx, op):
 
     t2 = torch.rand((4, 5))
     assert op(dt1, t2) == DTensor.from_sharding_list(ctx, [op(s, t2) for s in t1], num_partitions=3)
+
+
+def test_slice(ctx):
+    t1 = [torch.rand((2, 3, 4, 5)) for _ in range(3)]
+    dt1 = DTensor.from_sharding_list(ctx, t1, num_partitions=3)
+    assert torch.allclose(torch.slice_f(dt1, 3), t1[1][1])
+
+    dt1 = DTensor.from_sharding_list(ctx, t1, num_partitions=3, axis=1)
+    assert torch.slice_f(dt1, 1) == DTensor.from_sharding_list(ctx, [s[1] for s in t1], num_partitions=3)
+
+    dt1 = DTensor.from_sharding_list(ctx, t1, num_partitions=3)
+    # assert torch.allclose(torch.slice_f(dt1, [3,1,2]), torch.cat(t1)[[3,1,2]])
+    print(torch.slice_f(dt1, [3, 1, 2]).shape)
+    print(torch.cat(t1)[[3, 1, 2]].shape)

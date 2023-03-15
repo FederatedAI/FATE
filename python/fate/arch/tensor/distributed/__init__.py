@@ -1,5 +1,6 @@
-from ._op_binary import *
+from ._op_slice import *
 from ._ops_agg import *
+from ._ops_binary import *
 from ._ops_cipher import *
 from ._ops_others import *
 from ._ops_unary import *

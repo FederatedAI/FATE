@@ -53,7 +53,12 @@ def slice_f(input, arg):
     else:
         # torch tensor-like
         if hasattr(input, "__torch_function__"):
-            return input.__torch_function__(slice_f, (type(input),), (input, arg), None)
+            out = input.__torch_function__(slice_f, (type(input),), (input, arg), None)
+            if out == NotImplemented:
+                raise NotImplementedError(f"slice_f: {input}")
+            return out
+
+    raise NotImplementedError(f"slice_f: {input}")
 
 
 # hook custom ops to torch
@@ -61,3 +66,4 @@ torch.encrypt_f = encrypt_f
 torch.decrypt_f = decrypt_f
 torch.rmatmul_f = rmatmul_f
 torch.to_local_f = to_local_f
+torch.slice_f = slice_f
