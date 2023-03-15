@@ -23,23 +23,67 @@ from federatedml.secureprotol.fate_ckks import CKKSPrivateKey
 from federatedml.secureprotol.fate_ckks import CKKSEncryptedNumber
 
 
-class TestCKKSEncryptedNumber(unittest.TestCase):
+def assert_small_rel_diff(first, second, threshold=1, max_percent_diff=1e-5):
+    """
+    Assert two values have small relative differences
+    It compares the percentage difference if absolute error is larger than threshold
+    """
+    abs_err = abs(first - second)
+    if abs_err > threshold:
+        percentage_diff = abs((first - second) / (abs(first) + abs(second)))
+        if not percentage_diff < max_percent_diff:
+            raise AssertionError(
+                f"Large percentage error {percentage_diff} > {max_percent_diff}, first:{first}, second: {second}")
+
+
+def serialize_and_deserialize(obj):
+    serialized_obj = pickle.dumps(obj)
+    deserialized_obj = pickle.loads(serialized_obj)
+    return deserialized_obj
+
+
+class TestNetworkInteraction(unittest.TestCase):
     def setUp(self):
-        self.public_key, self.private_key = CKKSKeypair.generate_keypair()
+        self.arbiter_public_key, self.arbiter_private_key = CKKSKeypair.generate_keypair()
+        self.public_key_in_client = serialize_and_deserialize(
+            self.arbiter_public_key)
 
     def tearDown(self):
         unittest.TestCase.tearDown(self)
 
-    def assert_small_rel_diff(self, first, second, threshold=1, max_percent_diff=1e-5):
-        """
-        Assert two values have small relative differences
-        It compares the percentage difference if absolute error is larger than threshold
-        """
-        abs_err = abs(first - second)
-        if abs_err > threshold:
-            percentage_diff = abs((first - second) / (abs(first) + abs(second)))
-            if not percentage_diff < max_percent_diff:
-                raise AssertionError(f"Large percentage error {percentage_diff} > {max_percent_diff}, first:{first}, second: {second}")
+    def test_cross_parties_enc_mul(self):
+        # Select the value scale
+        scale = 10
+        # Repeat the process 100 times
+        n = 100
+        for _ in range(n):
+            # Party A initialize value
+            v_A = np.random.rand() * scale
+
+            # Party B initialize value
+            v_B = np.random.rand() * scale
+
+            # Party B receives encrypted values from Party A
+            encrypted_v_A = self.public_key_in_client.encrypt(v_A)
+            encrypted_v_from_A = serialize_and_deserialize(encrypted_v_A)
+
+            # Party B do multiplication with its value
+            encrypted_result = v_B * encrypted_v_from_A
+
+            # Decrypt the value and validate
+            decrypted_result = self.arbiter_private_key.decrypt(
+                encrypted_result)
+            true_value = v_B * v_A
+            assert_small_rel_diff(decrypted_result, true_value)
+
+
+class TestCKKSEncryptedNumber(unittest.TestCase):
+    def setUp(self):
+        self.public_key, self.private_key = CKKSKeypair.generate_keypair()
+        self.public_key = serialize_and_deserialize(self.public_key)
+
+    def tearDown(self):
+        unittest.TestCase.tearDown(self)
 
     def test_add(self):
         x_li = np.ones(100) * np.random.randint(100)
@@ -63,13 +107,13 @@ class TestCKKSEncryptedNumber(unittest.TestCase):
             res = x + y + z + t
 
             de_en_res = self.private_key.decrypt(en_res)
-            self.assert_small_rel_diff(de_en_res, res)
+            assert_small_rel_diff(de_en_res, res)
 
     def test_mul(self):
         x_li = np.ones(100) * np.random.randint(10)
-        y_li = np.ones(100) * np.random.randint(100) * -1
+        y_li = np.ones(100) * np.random.randint(10) * -1
         z_li = np.ones(100) * np.random.rand()
-        t_li = range(100)
+        t_li = np.ones(100)
 
         for i in range(x_li.shape[0]):
             x = x_li[i]
@@ -78,18 +122,18 @@ class TestCKKSEncryptedNumber(unittest.TestCase):
             t = t_li[i]
             en_x = self.public_key.encrypt(x)
 
-            en_res = (en_x * y + z) * t
+            en_res = en_x * y
 
-            res = (x * y + z) * t
+            res = x * y
 
             de_en_res = self.private_key.decrypt(en_res)
-            self.assert_small_rel_diff(de_en_res, res)
+            assert_small_rel_diff(de_en_res, res)
 
     def test_enc_mul(self):
         x_li = np.ones(100) * np.random.randint(10)
-        y_li = np.ones(100) * np.random.randint(100) * -1
+        y_li = np.ones(100) * np.random.randint(10) * -1
         z_li = np.ones(100) * np.random.rand()
-        t_li = range(100)
+        t_li = np.ones(100)
 
         for i in range(x_li.shape[0]):
             x = x_li[i]
@@ -101,32 +145,42 @@ class TestCKKSEncryptedNumber(unittest.TestCase):
             en_z = self.public_key.encrypt(z)
             en_t = self.public_key.encrypt(t)
 
-            en_res = (en_x * en_y + en_z) * en_t
+            en_res = en_x * en_y
 
-            res = (x * y + z) * t
+            res = x * y
 
             de_en_res = self.private_key.decrypt(en_res)
-            self.assert_small_rel_diff(de_en_res, res)
-
-    def test_serialization(self):
-        x = 100.0
-        encrypted_x = self.public_key.encrypt(x)
-        result = self.private_key.decrypt(_serialize_and_deserialize(encrypted_x))
-        self.assertAlmostEqual(x, result)
+            assert_small_rel_diff(de_en_res, res)
 
 
-class TestCKKSPublicKeySerialization(unittest.TestCase):
-    def test_serialization(self):
+class TestCKKSSerialization(unittest.TestCase):
+
+    def setUp(self):
+        self.public_key, self.private_key = CKKSKeypair.generate_keypair()
+
+    def tearDown(self):
+        unittest.TestCase.tearDown(self)
+
+    def test_public_key_serialization(self):
         public_key, _ = CKKSKeypair.generate_keypair()
-        # Test no error in serialization/deserialization
-        _serialize_and_deserialize(public_key)
-        # Nothing to assert
 
+        # No error in serialization/deserialization
+        try:
+            serialize_and_deserialize(public_key)
+        except Exception:
+            self.fail('Failed to serialize/deserialize public key')
 
-def _serialize_and_deserialize(obj):
-    serialized_obj = pickle.dumps(obj)
-    deserialized_obj = pickle.loads(serialized_obj)
-    return deserialized_obj
+    def test_encrypted_number_serialization(self):
+        public_key, private_key = CKKSKeypair.generate_keypair()
+
+        x = 100.0
+        encrypted_x = public_key.encrypt(x)
+
+        # No error in serialization/deserialization
+        try:
+            serialize_and_deserialize(encrypted_x)
+        except Exception:
+            self.fail('Failed to serialize/deserialize an encrypted number')
 
 
 if __name__ == '__main__':

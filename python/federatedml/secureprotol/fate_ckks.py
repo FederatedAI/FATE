@@ -39,7 +39,7 @@ class CKKSPublicKey(object):
     def __getstate__(self):
         return self.__public_context.serialize(save_public_key=True,
                                                save_secret_key=False,
-                                               save_relin_keys=False,
+                                               save_relin_keys=True,
                                                save_galois_keys=False)
 
     def __setstate__(self, state):
@@ -96,9 +96,9 @@ class CKKSEncryptedNumber(object):
         pass
 
     def __getstate__(self):
-        return self.__encrypted_vector.serialize(), self.__context.serialize(save_public_key=False,
+        return self.__encrypted_vector.serialize(), self.__context.serialize(save_public_key=True,
                                                                              save_secret_key=False,
-                                                                             save_relin_keys=False,
+                                                                             save_relin_keys=True,
                                                                              save_galois_keys=False)
 
     def __setstate__(self, state):
