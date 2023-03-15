@@ -15,6 +15,7 @@
 #
 
 import bisect
+import copy
 import json
 import numpy as np
 import pandas as pd
@@ -41,6 +42,9 @@ class BlockType(str, Enum):
             return l_type
 
     def __lt__(self, other):
+        if self == other:
+            return False
+
         if self == BlockType.bool:
             return other != BlockType.bool
 
@@ -328,7 +332,7 @@ class BlockManager(object):
             for offset, (field_index, block_type) in enumerate(zip(field_indexes, block_types)):
                 block = Block.get_block_by_type(block_type)
                 self._blocks.append(block(field_indexes=[field_index], should_compress=should_compress))
-                self._field_block_mapping[field_index] = (block_num, 0)
+                self._field_block_mapping[field_index] = (block_num + offset, 0)
                 block_ids.append(block_num + offset)
         else:
             block = Block.get_block_by_type(block_types)
@@ -426,8 +430,8 @@ class BlockManager(object):
 
     def duplicate(self):
         dup_block_manager = BlockManager()
-        dup_block_manager.blocks = self._blocks
-        dup_block_manager.field_block_mapping = self._field_block_mapping
+        dup_block_manager.blocks = copy.deepcopy(self._blocks)
+        dup_block_manager.field_block_mapping = copy.deepcopy(self._field_block_mapping)
 
         return dup_block_manager
 
