@@ -169,6 +169,9 @@ class DataManager(object):
     def get_field_type_by_name(self, name):
         return self._schema_manager.get_field_types(name)
 
+    def get_field_offset(self, name):
+        return self._schema_manager.get_field_offset(name)
+
     def get_block(self, block_id):
         return self._block_manager.blocks[block_id]
 

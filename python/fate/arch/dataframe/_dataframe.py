@@ -216,17 +216,21 @@ class DataFrame(object):
         from .ops._dimension_scaling import drop
         return drop(self, index)
 
-    def max(self, *args, **kwargs) -> "pd.Series":
-        ...
+    def max(self) -> "pd.Series":
+        from .ops._stat import max
+        return max(self)
 
     def min(self, *args, **kwargs) -> "pd.Series":
-        ...
+        from .ops._stat import min
+        return min(self)
 
     def mean(self, *args, **kwargs) -> "pd.Series":
-        ...
+        from .ops._stat import mean
+        return mean(self)
 
     def sum(self, *args, **kwargs) -> "pd.Series":
-        ...
+        from .ops._stat import sum
+        return sum(self)
 
     def std(self, *args, **kwargs) -> "pd.Series":
         ...

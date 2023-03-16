@@ -53,6 +53,8 @@ def _serialize(ctx, data):
     # apply_df = data.apply_row(lambda value: [1, {1:2, 2:3}])
     # print(apply_df.as_pd_df())
     # print(data.sigmoid().as_pd_df())
+    # print(data.min(), data.max(), data.sum(), data.mean())
+
     """
     index, match_id, label, weight, values
     """
