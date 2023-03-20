@@ -21,7 +21,6 @@ from typing import List, Union
 
 from .ops import (
     aggregate_indexer,
-    transform_to_tensor,
     transform_to_table,
     get_partition_order_mappings
 )
@@ -77,8 +76,8 @@ class DataFrame(object):
             return None
 
         return self.__extract_fields(
-            with_sample_id=False,
-            with_match_id=False,
+            with_sample_id=True,
+            with_match_id=True,
             with_label=False,
             with_weight=False,
             columns=self.columns.tolist()
@@ -162,29 +161,8 @@ class DataFrame(object):
         df.label.as_tensor()
         df.values.as_tensor()
         """
-        attr_status = 0
-        if self.schema.label_name:
-            attr_status |= 1
-
-        if self.schema.weight_name:
-            attr_status |= 2
-
-        if len(self.schema.columns):
-            attr_status |= 4
-
-        if attr_status == 0:
-            raise ValueError(f"label/weight/values attributes are None")
-
-        if attr_status & -attr_status != attr_status:
-            raise ValueError(f"Use df.label.as_tensor() or df.weight.as_tensor() or df.values.as_tensor(), "
-                             f"don't mixed please")
-
-        if attr_status == 1:
-            return self.__convert_to_tensor(self.schema.label_name, dtype=dtype)
-        elif attr_status == 1:
-            return self.__convert_to_tensor(self.schema.weight_name, dtype=dtype)
-        else:
-            return self.__convert_to_tensor(self.schema.columns.tolist(), dtype=dtype)
+        from .ops._transformer import transform_to_tensor
+        return transform_to_tensor(self._block_table, self._data_manager, dtype)
 
     def as_pd_df(self) -> "pd.DataFrame":
         from .ops._transformer import transform_to_pandas_dataframe
@@ -458,7 +436,7 @@ class DataFrame(object):
         return vstack(stacks)
 
     def __extract_fields(self, with_sample_id=True, with_match_id=True,
-                         with_label=True, with_weight=True, columns: Union[str, list] = None) -> "DataFrame":
+                         with_label=True, with_weight=True, columns: Union[str, list]=None) -> "DataFrame":
         from .ops._field_extract import field_extract
         return field_extract(
             self,
@@ -468,21 +446,6 @@ class DataFrame(object):
             with_weight=with_weight,
             columns=columns
         )
-
-    def __convert_to_tensor(self, columns: Union[str, list], dtype: str = None):
-        if isinstance(columns, str):
-            columns = [columns]
-
-        column_index_offsets = [self._schema_manager.get_column_offset(column) for column in columns]
-        block_indexes = [self._block_manager.get_block_id(column) for column in column_index_offsets]
-        _, block_retrieval_indexes = self._block_manager.derive_new_block_manager(column_index_offsets)
-
-        return transform_to_tensor(
-            self._ctx,
-            self._block_table,
-            block_indexes,
-            block_retrieval_indexes,
-            dtype=dtype)
 
     def __convert_to_table(self, target_name):
         block_loc = self._data_manager.loc_block(target_name)
