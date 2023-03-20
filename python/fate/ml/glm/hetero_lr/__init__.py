@@ -12,15 +12,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from .evaluation import evaluation
-from .feature_scale import feature_scale
-from .hetero_feature_binning import hetero_feature_binning
-from .hetero_linr import hetero_linr
-from .hetero_lr import hetero_lr
-from .intersection import intersection
-from .reader import reader
 
-BUILDIN_COMPONENTS = [reader, intersection,
-                      feature_scale, hetero_feature_binning,
-                      hetero_lr, hetero_linr,
-                      evaluation]
+from .arbiter import HeteroLrModuleArbiter
+from .guest import HeteroLrModuleGuest
+from .host import HeteroLrModuleHost

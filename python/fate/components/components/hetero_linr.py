@@ -28,11 +28,11 @@ from fate.components import (
 
 
 @cpn.component(roles=[GUEST, HOST, ARBITER])
-def hetero_lr(ctx, role):
+def hetero_linr(ctx, role):
     ...
 
 
-@hetero_lr.train()
+@hetero_linr.train()
 @cpn.artifact("train_data", type=Input[DatasetArtifact], roles=[GUEST, HOST], desc="training data")
 @cpn.artifact("validate_data", type=Input[DatasetArtifact], optional=True, roles=[GUEST, HOST], desc="validation data")
 @cpn.parameter("max_iter", type=params.conint(gt=0), default=20, desc="max iteration num")
@@ -44,22 +44,19 @@ def hetero_lr(ctx, role):
 )
 @cpn.parameter(
     "optimizer", type=params.OptimizerParam,
-    default=params.OptimizerParam(method="sgd", penalty='l2', alpha=1.0,
+    default=params.OptimizerParam(method="sgd", penalty='l2',
                                   optimizer_params={"lr": 1e-2, "decay": 0, "decay_sqrt": False}),
     desc="optimizer, select method from {'sgd', 'nesterov_momentum_sgd', 'adam', 'rmsprop', 'adagrad', 'sqn'} "
          "for list of configurable arguments, refer to torch.optim"
 )
 @cpn.parameter(
     "learning_rate_scheduler", type=params.LRSchedulerParam,
-    default=params.LRSchedulerParam(method="constant", scheduler_params={"gamma": 0.1}),
+    default=params.LRSchedulerParam(method="constant", ),
     desc="learning rate scheduler, select method from {'step', 'linear', 'constant'}"
          "for list of configurable arguments, refer to torch.optim.lr_scheduler"
 )
-@cpn.parameter("init_param", type=params.InitParam,
-               default=params.InitParam(method='zeros', fit_intercept=True),
+@cpn.parameter("init_param", type=params.InitParam, default=params.InitParam(method='zeros', fit_intercept=True),
                desc="Model param init setting.")
-@cpn.parameter("threshold", type=params.confloat(ge=0, le=1), default=0.5,
-               desc="predict threshold for binary data")
 @cpn.artifact("train_output_data", type=Output[DatasetArtifact], roles=[GUEST, HOST])
 @cpn.artifact("train_output_metric", type=Output[LossMetrics], roles=[ARBITER])
 @cpn.artifact("output_model", type=Output[ModelArtifact], roles=[GUEST, HOST])
@@ -75,7 +72,6 @@ def train(
         optimizer,
         learning_rate_scheduler,
         init_param,
-        threshold,
         train_output_data,
         train_output_metric,
         output_model,
@@ -83,7 +79,7 @@ def train(
     if role.is_guest:
         train_guest(
             ctx, train_data, validate_data, train_output_data, output_model, max_iter,
-            batch_size, optimizer, learning_rate_scheduler, init_param, threshold
+            batch_size, optimizer, learning_rate_scheduler, init_param
         )
     elif role.is_host:
         train_host(
@@ -95,42 +91,39 @@ def train(
                       train_output_metric)
 
 
-@hetero_lr.predict()
+@hetero_linr.predict()
 @cpn.artifact("input_model", type=Input[ModelArtifact], roles=[GUEST, HOST])
 @cpn.artifact("test_data", type=Input[DatasetArtifact], optional=False, roles=[GUEST, HOST])
-@cpn.parameter("threshold", type=params.confloat(ge=0, le=1), default=0.5,
-               desc="predict threshold for binary data")
 @cpn.artifact("test_output_data", type=Output[DatasetArtifact], roles=[GUEST, HOST])
 def predict(
         ctx,
         role: Role,
         test_data,
         input_model,
-        threshold,
         test_output_data,
 ):
     if role.is_guest:
-        predict_guest(ctx, input_model, test_data, test_output_data, threshold)
+        predict_guest(ctx, input_model, test_data, test_output_data)
     if role.is_host:
         predict_host(ctx, input_model, test_data, test_output_data)
 
 
 def train_guest(ctx, train_data, validate_data, train_output_data, output_model, max_iter,
-                batch_size, optimizer_param, learning_rate_param, init_param, threshold):
-    from fate.ml.glm.hetero_lr import HeteroLrModuleGuest
-    # optimizer = optimizer_factory(optimizer_param)
+                batch_size, optimizer_param, learning_rate_param, init_param):
+    from fate.ml.glm.hetero_linr import HeteroLinrModuleGuest
+    # ptimizer = optimizer_factory(optimizer_param)
 
     with ctx.sub_ctx("train") as sub_ctx:
-        module = HeteroLrModuleGuest(max_iter=max_iter, batch_size=batch_size,
-                                     optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
-                                     init_param=init_param, threshold=threshold)
+        module = HeteroLinrModuleGuest(max_iter=max_iter, batch_size=batch_size,
+                                       optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
+                                       init_param=init_param)
         train_data = sub_ctx.reader(train_data).read_dataframe()
         if validate_data is not None:
             validate_data = sub_ctx.reader(validate_data).read_dataframe()
         module.fit(sub_ctx, train_data, validate_data)
         model = module.get_model()
         with output_model as model_writer:
-            model_writer.write_model("hetero_lr_guest", model, metadata={"threshold": threshold})
+            model_writer.write_model("hetero_linr_guest", model, metadata={})
 
     with ctx.sub_ctx("predict") as sub_ctx:
         predict_score = module.predict(sub_ctx, validate_data)
@@ -140,45 +133,44 @@ def train_guest(ctx, train_data, validate_data, train_output_data, output_model,
 
 def train_host(ctx, train_data, validate_data, train_output_data, output_model, max_iter, batch_size,
                optimizer_param, learning_rate_param, init_param):
-    from fate.ml.glm.hetero_lr import HeteroLrModuleHost
+    from fate.ml.glm.hetero_linr import HeteroLinrModuleHost
+    # optimizer = optimizer_factory(optimizer_param)
 
     with ctx.sub_ctx("train") as sub_ctx:
-        module = HeteroLrModuleHost(max_iter=max_iter, batch_size=batch_size,
-                                    optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
-                                    init_param=init_param)
+        module = HeteroLinrModuleHost(max_iter=max_iter, batch_size=batch_size,
+                                      optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
+                                      init_param=init_param)
         train_data = sub_ctx.reader(train_data).read_dataframe()
         if validate_data is not None:
             validate_data = sub_ctx.reader(validate_data).read_dataframe()
         module.fit(sub_ctx, train_data, validate_data)
         model = module.get_model()
         with output_model as model_writer:
-            model_writer.write_model("hetero_lr_host", model, metadata={})
+            model_writer.write_model("hetero_linr_host", model, metadata={})
     with ctx.sub_ctx("predict") as sub_ctx:
         module.predict(sub_ctx, validate_data)
 
 
-def train_arbiter(ctx, max_iter, early_stop, tol, batch_size, optimizer_param, learning_rate_scheduler,
-                  train_output_metric):
-    from fate.ml.glm.hetero_lr import HeteroLrModuleArbiter
+def train_arbiter(ctx, max_iter, early_stop, tol, batch_size, optimizer_param,
+                  learning_rate_param, train_output_metric):
+    from fate.ml.glm.hetero_linr import HeteroLinrModuleArbiter
 
-    ctx.metrics.handler.register_metrics(lr_loss=ctx.writer(train_output_metric))
+    ctx.metrics.handler.register_metrics(linr_loss=ctx.writer(train_output_metric))
 
     with ctx.sub_ctx("train") as sub_ctx:
-        module = HeteroLrModuleArbiter(max_iter=max_iter, early_stop=early_stop, tol=tol, batch_size=batch_size,
-                                       optimizer_param=optimizer_param, learning_rate_param=learning_rate_param)
+        module = HeteroLinrModuleArbiter(max_iter=max_iter, early_stop=early_stop, tol=tol, batch_size=batch_size,
+                                         optimizer_param=optimizer_param, learning_rate_param=learning_rate_param)
         module.fit(sub_ctx)
 
 
-def predict_guest(ctx, input_model, test_data, test_output_data, threshold):
-    from fate.ml.glm.hetero_lr import HeteroLrModuleGuest
+def predict_guest(ctx, input_model, test_data, test_output_data):
+    from fate.ml.glm.hetero_linr import HeteroLinrModuleGuest
 
     with ctx.sub_ctx("predict") as sub_ctx:
         with input_model as model_reader:
             model = model_reader.read_model()
 
-        module = HeteroLrModuleGuest.from_model(model)
-        if threshold != 0.5:
-            module.threshold = threshold
+        module = HeteroLinrModuleGuest.from_model(model)
         test_data = sub_ctx.reader(test_data).read_dataframe()
         predict_score = module.predict(sub_ctx, test_data)
         predict_result = test_data.data.transform_to_predict_result(predict_score, data_type="predict")
@@ -186,11 +178,11 @@ def predict_guest(ctx, input_model, test_data, test_output_data, threshold):
 
 
 def predict_host(ctx, input_model, test_data, test_output_data):
-    from fate.ml.glm.hetero_lr import HeteroLrModuleHost
+    from fate.ml.glm.hetero_linr import HeteroLinrModuleHost
 
     with ctx.sub_ctx("predict") as sub_ctx:
         with input_model as model_reader:
             model = model_reader.read_model()
-        module = HeteroLrModuleHost.from_model(model)
+        module = HeteroLinrModuleHost.from_model(model)
         test_data = sub_ctx.reader(test_data).read_dataframe()
         module.predict(sub_ctx, test_data)
