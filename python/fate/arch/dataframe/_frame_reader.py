@@ -136,6 +136,7 @@ class CSVReader(object):
             label_name=self._label_name,
             label_type=self._label_type,
             weight_name=self._weight_name,
+            dtype=self._dtype,
             partition=self._partition,
         ).to_frame(ctx, df)
 
