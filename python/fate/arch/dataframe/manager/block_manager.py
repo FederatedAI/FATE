@@ -70,6 +70,8 @@ class BlockType(str, Enum):
 
     @staticmethod
     def get_block_type(data_type):
+        if isinstance(data_type, np.dtype):
+            data_type = data_type.name
         if isinstance(data_type, str):
             if data_type == "str" or data_type == "object":
                 data_type = "np_object"

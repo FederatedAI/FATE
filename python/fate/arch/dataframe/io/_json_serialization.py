@@ -40,8 +40,12 @@ def _serialize(ctx, data):
     # new_df = DataFrame.hstack([data, df])
     # print(data.drop(data).shape)
     # print (new_df.as_pd_df())
+    # import pandas as pd
+    # print((data[["x0", "x1"]] * pd.Series([1,2])).as_pd_df())
+    # print((data[["x0", "x1"]] + pd.Series([1,2])).as_pd_df())
     # print(DataFrame.hstack([data, empty_df]).as_pd_df())
     # print(DataFrame.vstack([data, data * 3]).as_pd_df())
+    # print(data.values.as_tensor())
     # data["x20"] = 1.0
     # data["x21"] = [1, 2]
     # data[["x22", "x23"]] = [3, 4]
@@ -53,6 +57,8 @@ def _serialize(ctx, data):
     # apply_df = data.apply_row(lambda value: [1, {1:2, 2:3}])
     # print(apply_df.as_pd_df())
     # print(data.sigmoid().as_pd_df())
+    # print(data.min(), data.max(), data.sum(), data.mean())
+
     """
     index, match_id, label, weight, values
     """

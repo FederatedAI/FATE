@@ -17,12 +17,9 @@ from ._indexer import (
     transform_to_table,
     get_partition_order_mappings
 )
-from ._transformer import (
-    transform_to_tensor,
-)
 
 
-__all__ = ["transform_to_tensor",
+__all__ = [
            "transform_to_table",
            "aggregate_indexer",
            "get_partition_order_mappings"

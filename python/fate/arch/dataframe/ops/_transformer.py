@@ -12,37 +12,31 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+import functools
+
 import pandas as pd
 from typing import List, Tuple
 import torch
 from fate.arch import tensor
 import numpy as np
+from ..manager.data_manager import DataManager
 
 
-def transform_to_tensor(ctx, block_table,
-                        block_indexes: List[Tuple[int, int]], retrieval_block_indexes, dtype=None):
-    """
-    column_indexes: column to retrieval
-    block_indexes: list, (block_id, block_indexes)
-    retrieval_block_indexes: list, each element: (src_block_id, dst_block_id, changed=True/False, block_indexes)
-    dtype: convert to tensor with dtype, default is None
-    """
-    def _to_local_tensor(src_blocks):
-        if len(retrieval_block_indexes) == 1:
-            src_block_id, dst_block_id, is_changed, indexes = retrieval_block_indexes[0]
-            if not is_changed:
-                t = src_blocks[src_block_id]
-            else:
-                t = src_blocks[src_block_id][:, indexes]
+def transform_to_tensor(block_table,
+                        data_manager: "DataManager", dtype=None):
+    def _merge_blocks(src_blocks, bids=None, fields=None):
+        if len(bids) == 1:
+            bid = bids[0]
+            t = src_blocks[bid]
         else:
             i = 0
             tensors = []
-            while i < len(block_indexes):
-                bid = block_indexes[i][0]
-                indexes = [block_indexes[i][1]]
+            while i < len(fields):
+                bid = fields[i][0]
+                indexes = [fields[i][1]]
                 j = i + 1
-                while j < len(block_indexes) and block_indexes[j] == block_indexes[j - 1]:
-                    indexes.append(block_indexes[j][1])
+                while j < len(fields) and bid == fields[j][0] and indexes[-1] + 1 == fields[j][1]:
+                    indexes.append(fields[1])
                     j += 1
 
                 tensors.append(src_blocks[bid][:, indexes])
@@ -55,12 +49,26 @@ def transform_to_tensor(ctx, block_table,
 
         return t
 
-    local_tensor_table = block_table.mapValues(_to_local_tensor)
-    local_tensor_blocks = [block_with_id[1] for block_with_id in sorted(local_tensor_table.collect())]
+    block_indexes = data_manager.infer_operable_blocks()
+    for block_id in block_indexes:
+        if not data_manager.get_block(block_id).is_numeric:
+            raise ValueError("Transform to distributed tensor should ensure every field is numeric")
 
-    return tensor.distributed_tensor(ctx,
-                                     local_tensor_blocks,
-                                     partitions=len(local_tensor_blocks))
+    field_names = data_manager.infer_operable_field_names()
+    fields_loc = data_manager.loc_block(field_names)
+
+    _merged_func = functools.partial(
+        _merge_blocks,
+        bids=block_indexes,
+        fields=fields_loc
+    )
+    merged_table = block_table.mapValues(_merged_func)
+
+    shape_table = merged_table.mapValues(lambda v: v.shape)
+    shapes = [shape_obj for k, shape_obj in sorted(shape_table.collect())]
+
+    return tensor.DTensor.from_sharding_table(merged_table,
+                                              shapes=shapes)
 
 
 def transform_block_to_list(block_table, data_manager):
