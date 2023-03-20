@@ -40,6 +40,9 @@ def _serialize(ctx, data):
     # new_df = DataFrame.hstack([data, df])
     # print(data.drop(data).shape)
     # print (new_df.as_pd_df())
+    # import pandas as pd
+    # print((data[["x0", "x1"]] * pd.Series([1,2])).as_pd_df())
+    # print((data[["x0", "x1"]] + pd.Series([1,2])).as_pd_df())
     # print(DataFrame.hstack([data, empty_df]).as_pd_df())
     # print(DataFrame.vstack([data, data * 3]).as_pd_df())
     # data["x20"] = 1.0

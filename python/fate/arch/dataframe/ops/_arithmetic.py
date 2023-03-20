@@ -13,9 +13,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import numpy as np
+import pandas as pd
 from fate.arch.computing import is_table
 from .._dataframe import DataFrame
 from ._promote_types import promote_types
+from .utils.series_align import series_to_ndarray
 
 
 def arith_operate(lhs: DataFrame, rhs, op) -> "DataFrame":
@@ -32,7 +34,9 @@ def arith_operate(lhs: DataFrame, rhs, op) -> "DataFrame":
         block_table = _operate(lhs.block_table, rhs.block_table, op, block_indexes, rhs_block_id)
         to_promote_blocks = data_manager.try_to_promote_types(block_indexes,
                                                               rhs.data_manager.get_block(rhs_block_id).block_type)
-    elif isinstance(rhs, (np.ndarray, list)):
+    elif isinstance(rhs, (np.ndarray, list, pd.Series)):
+        if isinstance(rhs, pd.Series):
+            rhs = series_to_ndarray(rhs, column_names)
         if isinstance(rhs, list):
             rhs = np.array(rhs)
         if len(rhs.shape) > 2:
@@ -40,11 +44,18 @@ def arith_operate(lhs: DataFrame, rhs, op) -> "DataFrame":
         if len(column_names) != rhs.size:
             raise ValueError(f"Size of List/NDArray should = {len(lhs.schema.columns)}")
         rhs = rhs.reshape(-1)
-        rhs_blocks = [rhs[data_manager.get_block(bid).column_indexes] for bid in block_indexes]
-        block_table = _operate(lhs.block_table, rhs_blocks, op, block_indexes)
+        field_indexes = [data_manager.get_field_offset(name) for name in column_names]
+        field_indexes_mappings = dict(zip(field_indexes, range(len(field_indexes))))
+        rhs_blocks = [np.array([]) for i in range(data_manager.block_num)]
+        rhs_types = []
+        for bid in block_indexes:
+            indexer = [field_indexes_mappings[field] for field in data_manager.get_block(bid).field_indexes]
+            rhs_blocks[bid] = rhs[indexer]
+            rhs_types.append(rhs_blocks[bid].dtype)
 
-        rhs_types = [block.dtype for block in rhs_blocks]
+        block_table = _operate(lhs.block_table, rhs_blocks, op, block_indexes)
         to_promote_blocks = data_manager.try_to_promote_types(block_indexes, rhs_types)
+
     elif isinstance(rhs, (bool, int, float, np.int32, np.float32, np.int64, np.float64, np.bool)):
         block_table = _operate(lhs.block_table, rhs, op, block_indexes)
         to_promote_blocks = data_manager.try_to_promote_types(block_indexes, rhs)
