@@ -216,7 +216,7 @@ class DataManager(object):
         for bid, block_type in to_promote_blocks:
             self._block_manager.blocks[bid] = self._block_manager.blocks[bid].convert_block_type(block_type)
             for field_index in self._block_manager.blocks[bid].field_indexes:
-                self._schema_manager.set_field_type_by_offset(field_index, block_type.value())
+                self._schema_manager.set_field_type_by_offset(field_index, block_type.value)
 
     def compress_blocks(self):
         new_blocks, to_compress_block_loc, non_compress_block_changes = self._block_manager.compress()
