@@ -163,7 +163,7 @@ class SoftmaxCrossEntropyLoss(object):
     @staticmethod
     def compute_loss(y, y_prob):
         """
-        The cross-entropy loss class for binary classification
+        The cross-entropy loss class for multi-class classification
             Formula : -sum(log(prob(category_i))) / N
 
         Parameters
