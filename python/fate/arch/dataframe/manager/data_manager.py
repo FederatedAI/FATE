@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import numpy as np
 from .schema_manager import SchemaManager
 from .block_manager import BlockManager
 from .block_manager import BlockType
@@ -169,6 +170,9 @@ class DataManager(object):
     def get_field_type_by_name(self, name):
         return self._schema_manager.get_field_types(name)
 
+    def get_field_offset(self, name):
+        return self._schema_manager.get_field_offset(name)
+
     def get_block(self, block_id):
         return self._block_manager.blocks[block_id]
 
@@ -187,9 +191,9 @@ class DataManager(object):
 
     def try_to_promote_types(self,
                              block_indexes: List[int],
-                             block_type: Union[list, int, float, BlockType]) -> List[Tuple[int, BlockType]]:
+                             block_type: Union[list, int, float, np.dtype, BlockType]) -> List[Tuple[int, BlockType]]:
         promote_types = []
-        if isinstance(block_type, (int, float)):
+        if isinstance(block_type, (int, float, np.dtype)):
             block_type = BlockType.get_block_type(block_type)
 
         if isinstance(block_type, BlockType):
@@ -199,7 +203,7 @@ class DataManager(object):
                         (bid, block_type)
                     )
         else:
-            for idx, (bid, r_type) in enumerate(zip(block_indexes, list)):
+            for idx, (bid, r_type) in enumerate(zip(block_indexes, block_type)):
                 block_type = BlockType.get_block_type(r_type)
                 if self.get_block(bid).block_type < block_type:
                     promote_types.append(
