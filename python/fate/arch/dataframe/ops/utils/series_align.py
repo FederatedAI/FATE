@@ -25,7 +25,7 @@ def series_to_ndarray(series_obj: "pd.Series", fields_to_align: List[str]=None):
 
         indexer = series_obj.index.get_indexer(fields_to_align)
 
-        return series_obj[indexer]
+        return series_obj[indexer].values
 
 
 def series_to_list(series_obj: "pd.Series", fields_to_align: List[str]=None):
