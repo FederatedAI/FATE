@@ -17,9 +17,9 @@ import json
 import logging
 
 import numpy as np
+import pandas as pd
 import torch
 
-from fate.arch import tensor
 from fate.interface import Context
 from ..abc.module import Module
 
@@ -66,8 +66,7 @@ class HeteroBinningModuleGuest(Module):
         for i, (col_bin_list, en_host_count_res) in enumerate(zip(host_col_bin, host_event_non_event_count)):
             host_event_count_hist = en_host_count_res[0].decrypt()
             host_non_event_count_hist = en_host_count_res[1].decrypt()
-            summary_metrics, _ = self._bin_obj.compute_all_col_metrics(col_bin_list,
-                                                                       host_event_count_hist,
+            summary_metrics, _ = self._bin_obj.compute_all_col_metrics(host_event_count_hist,
                                                                        host_non_event_count_hist)
             self._bin_obj.set_host_metrics(ctx.hosts[i], summary_metrics)
 
@@ -122,7 +121,7 @@ class HeteroBinningModuleHost(Module):
         to_compute_col = self.bin_col + self.category_col
         event_count_hist = binned_data.histogram2D(columns=to_compute_col, target=encrypt_y)
         # bin count(entries per bin):
-        bin_count = binned_data.histogram2D(columns=to_compute_col, target=tensor([1] * binned_data.count()))
+        bin_count = binned_data.histogram2D(columns=to_compute_col, target=torch.tensor([1] * binned_data.count()))
         non_event_count_hist = bin_count - event_count_hist
         ctx.guest.put("event_non_event_count", (event_count_hist, non_event_count_hist))
 
@@ -174,7 +173,7 @@ class StandardBinning(Module):
     def set_host_metrics(self, host, metrics_summary):
         self._host_metrics_summary[host] = metrics_summary
 
-    def fit(self, ctx: Context, train_data, validate_data=None):
+    def fit(self, ctx: Context, train_data, validate_data=None, skip_none=False):
         # only bin given `col_bin` cols
         if self.bin_col is None:
             self.bin_col = train_data.schema.columns
@@ -185,28 +184,48 @@ class StandardBinning(Module):
             split_pt_df = train_data.quantile(q=q,
                                               column=self.bin_col,
                                               error_rate=self.error_rate,
-                                              skip_none=True)
+                                              skip_none=skip_none)
             """split_pt_dict = {}
             for col in split_pt_df.schema.columns:
                 split_pt_dict[col] = list(split_pt_df[col])
             self._split_pt_dict = split_pt_dict"""
             # pd.DataFrame
             # @todo: maybe convert to format {col_name: List[split_pt0, split_pt1]}
-            self._split_pt_dict = split_pt_df.to_dict()
+            # self._split_pt_dict = split_pt_df.to_dict()
         elif self.method == "bucket":
-            split_pt_df = train_data.bucket_split(q=self.n_bins, column=self.bin_col, skip_none=True)
+            split_pt_df = train_data.bucket_split(q=self.n_bins, column=self.bin_col, skip_none=skip_none)
 
             """split_pt_dict = {}
             for col in split_pt_df.schema.columns:
                 split_pt_dict[col] = split_pt_df[col]
             self._split_pt_dict = split_pt_dict"""
-            self._split_pt_dict = split_pt_df.to_dict()
+            # self._split_pt_dict = split_pt_df.to_dict()
         elif self.method == "manual":
-            self._split_pt_dict = self._manual_split_pt_dict
+            # self._split_pt_dict = self._manual_split_pt_dict
+            split_pt_df = pd.DataFrame.from_dict(self._manual_split_pt_dict)
+        else:
+            raise ValueError(f"Unknown binning method {self.method} encountered. Please check")
+        self._split_pt_dict = split_pt_df.to_dict()
+
+        def __get_col_bin_count(col):
+            count = len(col.unique())
+            return count
+
+        bin_count = split_pt_df.apply(__get_col_bin_count, axis=0)
+
+        if not skip_none:
+            # add extra bin for columns with nan
+            bin_count = bin_count + (train_data.nan_count() > 0)
+        self._bin_count_dict = bin_count.to_dict()
+
+        """self._split_pt_dict = split_pt_df.to_dict()
         for col_name in self.bin_col:
             bin_count = len(self._split_pt_dict[col_name])
             self._bin_idx_dict[col_name] = list(range(bin_count))
-            self._bin_count_dict[col_name] = bin_count
+            if not skip_none:
+                if train_data[col_name].nan_count() > 0:
+                    bin_count += 1
+            self._bin_count_dict[col_name] = bin_count"""
 
     def bucketize_data(self, train_data):
         binned_df = train_data.bucketize(n_bins=self._split_pt_dict, col=self.bin_col, bucket_none=True)
@@ -304,8 +323,7 @@ class StandardBinning(Module):
         bin_count_hist = binned_data.histogram2D(columns=to_compute_col,
                                                  target=torch.tensor([[1]] * binned_data.count()))
         non_event_count_hist = bin_count_hist - event_count_hist
-        self._metrics_summary, self._woe_dict = self.compute_all_col_metrics(to_compute_col,
-                                                                             event_count_hist,
+        self._metrics_summary, self._woe_dict = self.compute_all_col_metrics(event_count_hist,
                                                                              non_event_count_hist)
 
     def transform(self, ctx: Context, binned_data):

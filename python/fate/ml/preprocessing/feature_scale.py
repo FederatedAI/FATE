@@ -106,13 +106,14 @@ class MinMaxScaler(Module):
         data_max = train_data_select.max()
         data_min = train_data_select.min()
         min_list, max_list = [], []
+
         # min/max values in the same order as schema.header
-        for col in train_data.schema.columns:
+        for col in train_data_select.schema.columns:
             if col in self.feature_range:
-                min_list.append(self.feature_range[0])
-                max_list.append(self.feature_range[1])
-        range_min = pd.Series(min_list)
-        range_max = pd.Series(max_list)
+                min_list.append(self.feature_range[col][0])
+                max_list.append(self.feature_range[col][1])
+        range_min = pd.Series(min_list, index=train_data_select.schema.columns)
+        range_max = pd.Series(max_list, index=train_data_select.schema.columns)
 
         data_range = data_max - data_min
         # for safe division
