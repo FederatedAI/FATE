@@ -373,6 +373,13 @@ class BaseFeatureBinning(ModelBase):
         """
 
         self._stage = "transform"
+        # add missing parameters while loading trained model
+        self.model_param.bin_names = list(model_meta.cols)
+        if model_meta.transform_param:
+            self.model_param.transform_param.transform_cols = list(model_meta.transform_param.transform_cols)
+            self.model_param.transform_param.transform_type = model_meta.transform_param.transform_type
+        if model_meta.skip_static:
+            self.model_param.skip_static = model_meta.skip_static
 
     def export_model(self):
         if self.model_output is not None:
