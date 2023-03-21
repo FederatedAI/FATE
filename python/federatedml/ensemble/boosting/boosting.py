@@ -27,6 +27,7 @@ from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.ensemble.boosting.predict_cache import PredictDataCache
 from federatedml.statistic import data_overview
 from federatedml.optim.convergence import converge_func_factory
+from federatedml.statistic.data_overview import get_anonymous_header
 from federatedml.util import LOGGER
 
 
@@ -62,6 +63,9 @@ class Boosting(ModelBase, ABC):
 
         # random seed
         self.random_seed = 100
+
+        # feat anonymous header
+        self.anonymous_header = None
 
         # data
         self.data_inst = None  # original input data
@@ -214,7 +218,7 @@ class Boosting(ModelBase, ABC):
 
     def data_and_header_alignment(self, data_inst):
         """
-        turn data into sparse and align header/ algin data table header
+        turn data into sparse and align header/ align data table header
         """
 
         cache_dataset_key = self.predict_data_cache.get_data_key(data_inst)
@@ -226,7 +230,8 @@ class Boosting(ModelBase, ABC):
             header = [None] * len(self.feature_name_fid_mapping)
             for idx, col in self.feature_name_fid_mapping.items():
                 header[idx] = col
-            processed_data = data_overview.header_alignment(data_inst_tmp, header)
+            processed_data = data_overview.header_alignment(data_inst_tmp, header,
+                                                            pre_anonymous_header=get_anonymous_header(data_inst))
             self.data_alignment_map[cache_dataset_key] = processed_data
 
         return processed_data
@@ -338,10 +343,10 @@ class Boosting(ModelBase, ABC):
             y_predict = y_hat.mapValues(lambda val: loss_method.predict(val))
             loss = loss_method.compute_loss(y, y_predict)
         elif self.task_type == consts.REGRESSION:
-            if self.objective_param.objective in ["lse", "lae", "logcosh", "tweedie", "log_cosh", "huber"]:
+            if self.objective_param.objective in ["lse", "lae", "logcosh", "log_cosh", "huber"]:
                 loss_method = self.loss
                 loss = loss_method.compute_loss(y, y_hat)
-            else:
+            elif self.objective_param.objective in ['tweedie']:
                 loss_method = self.loss
                 y_predict = y_hat.mapValues(lambda val: loss_method.predict(val))
                 loss = loss_method.compute_loss(y, y_predict)
@@ -436,21 +441,22 @@ class Boosting(ModelBase, ABC):
         given binary/multi-class/regression prediction scores, outputs result in standard format
         """
         predicts = None
+        loss_method = self.loss
         if self.task_type == consts.CLASSIFICATION:
-            loss_method = self.loss
             if self.num_classes == 2:
                 predicts = y_hat.mapValues(lambda f: float(loss_method.predict(f)))
             else:
                 predicts = y_hat.mapValues(lambda f: loss_method.predict(f).tolist())
 
         elif self.task_type == consts.REGRESSION:
-            if self.objective_param.objective in ["lse", "lae", "huber", "log_cosh", "fair", "tweedie"]:
+            if self.objective_param.objective in ["tweedie"]:
+                predicts = y_hat.mapValues(lambda f: [float(loss_method.predict(f))])
+            elif self.objective_param.objective in ["lse", "lae", "huber", "log_cosh", "fair"]:
                 predicts = y_hat
             else:
                 raise NotImplementedError("objective {} not supprted yet".format(self.objective_param.objective))
 
         if self.task_type == consts.CLASSIFICATION:
-
             predict_result = self.predict_score_to_output(data_inst, predict_score=predicts, classes=self.classes_,
                                                           threshold=self.predict_param.threshold)
 

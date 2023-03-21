@@ -40,9 +40,17 @@ This section introduces the dsl and conf for usage of different type of task.
         "conf": "hetero_binning_bucket_binning_conf.json",
         "dsl": "hetero_binning_bucket_binning_dsl.json"
     
+    "bucket_binning_missing_value"
+        "conf": "hetero_binning_bucket_binning_missing_value_conf.json",
+        "dsl": "hetero_binning_bucket_binning_missing_value_dsl.json"
+    
     "sparse_bucket_binning"
         "conf": "hetero_binning_sparse_bucket_binning_conf.json",
         "dsl": "hetero_binning_sparse_bucket_binning_dsl.json"
+    
+    "hetero_binning_sparse_quantile_binning"
+         "conf": "hetero_binning_sparse_quantile_binning_conf.json",
+         "dsl": "hetero_binning_sparse_quantile_binning_dsl.json"
     
     "woe_binning"
         "conf": "hetero_binning_woe_binning_conf.json",
@@ -64,6 +72,10 @@ This section introduces the dsl and conf for usage of different type of task.
         "conf": "hetero_binning_multi_host_conf.json",
         "dsl": "hetero_binning_multi_host_dsl.json"
     
+    "hetero_binning_multi_host_bucket"
+        "conf": "hetero_binning_multi_host_bucket_conf.json",
+        "dsl": "hetero_binning_multi_host_dsl.json"
+    
     "multi_host_optimal"
         "conf": "hetero_binning_multi_host_optimal_conf.json",
         "dsl": "hetero_binning_multi_host_optimal_dsl.json"
@@ -79,6 +91,10 @@ This section introduces the dsl and conf for usage of different type of task.
     "skip_statistic"
         "conf": "hetero_binning_skip_statistic_conf.json",
         "dsl": "hetero_binning_skip_statistic_dsl.json"
+    
+    "hetero_binning_manual_split_points"
+        "conf": "hetero_binning_manual_split_points_conf.json",
+        "dsl": "hetero_binning_manual_split_points_dsl.json"
 
 
 Users can use following commands to running the task.

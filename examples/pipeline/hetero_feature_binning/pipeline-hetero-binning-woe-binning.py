@@ -48,7 +48,6 @@ def main(config="../../config.yaml", namespace=""):
     intersection_0 = Intersection(name="intersection_0")
 
     param = {
-        "name": "hetero_feature_binning_0",
         "method": "quantile",
         "compress_thres": 10000,
         "head_size": 10000,
@@ -61,19 +60,19 @@ def main(config="../../config.yaml", namespace=""):
         "adjustment_factor": 0.5,
         "local_only": False,
         "transform_param": {
-            "transform_cols": [
-                0,
-                1,
-                2
-            ],
-            "transform_names": None,
-            "transform_type": "woe"
+            "transform_type": None
         }
     }
-    hetero_feature_binning_0 = HeteroFeatureBinning(**param)
-    hetero_feature_binning_0.get_party_instance(role="host", party_id=host).component_param(
-        transform_param={"transform_type": None}
-    )
+    hetero_feature_binning_0 = HeteroFeatureBinning(name="hetero_feature_binning_0", **param)
+    hetero_feature_binning_0.get_party_instance(role="guest",
+                                                party_id=guest). \
+        component_param(transform_param={"transform_cols": [
+            0,
+            1,
+            2
+        ],
+            "transform_names": None,
+            "transform_type": "woe"})
 
     pipeline.add_component(reader_0)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))

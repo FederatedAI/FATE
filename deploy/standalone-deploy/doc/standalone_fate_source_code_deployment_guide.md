@@ -24,20 +24,12 @@ netstat -apln|grep 9380
 
 ## 3. Get the source code
 
-Please refer to [get source code](../../../build/common/get_source_code.md), and then,
+Please git clone this repository and all submodules, then set the environment variables required for deployment.
 
-Set the environment variables required for deployment (note that the environment variables set in the following way are only valid for the current terminal session, if you open a new terminal session, such as a new login or a new window, please set them again)
+Note that the environment variables set in the following way are only valid for the current terminal session, if you open a new terminal session, such as a new login or a new window, please set them again.
 
 ```bash
 cd {The directory where the above code is stored}
-export FATE_PROJECT_BASE=$PWD
-export version=`grep "FATE=" ${FATE_PROJECT_BASE}/fate.env | awk -F "=" '{print $2}'`
-```
-
-example:
-
-```bash
-cd /xxx/FATE
 export FATE_PROJECT_BASE=$PWD
 export version=`grep "FATE=" ${FATE_PROJECT_BASE}/fate.env | awk -F "=" '{print $2}'`
 ```
@@ -46,23 +38,13 @@ export version=`grep "FATE=" ${FATE_PROJECT_BASE}/fate.env | awk -F "=" '{print 
 
 ### 4.1 Installing the Python environment (optional)
 
-Please install or use existing Python version 3.6 or 3.7, preferably 3.6.5, which is the official and heavily tested version of the FATE team.
+Please install or use existing Python version 3.8
 
 ### 4.2 Configuring a virtual environment for FATE
 
 ```bash
-virtualenv --version
-```
-
-If the version information is returned normally, then the virtual environment tool is installed, if the command does not exist, please install it yourself, in most cases you can use a similar command to install
-
-```bash
-pip install virtualenv
-```
-
-```bash
 cd(or create) {root directory for the virtual environment}
-virtualenv {name of virtual environment}
+python3 -m venv {虚拟环境名称}
 export FATE_VENV_BASE={root directory for the virtual environment}/{name of virtual environment}
 source ${FATE_VENV_BASE}/bin/activate
 ```
@@ -70,21 +52,21 @@ source ${FATE_VENV_BASE}/bin/activate
 ### 4.3 Installing Python dependencies for FATE
 
 ```bash
-cd ${FATE_PROJECT_BASE};
-bash bin/install_os_dependencies.sh;
-source ${FATE_VENV_BASE}/bin/activate;
+cd ${FATE_PROJECT_BASE}
+bash bin/install_os_dependencies.sh
+source ${FATE_VENV_BASE}/bin/activate
 pip install -r python/requirements.txt
 ```
 
-In case of problems, you can first refer to [Possible problems](#11-problems-that-may-be-encountered)
+In case of problems, you can first refer to [Possible problems](#10-problems-that-may-be-encountered)
 
 ## 5. Configuring FATE
 
 Edit the `bin/init_env.sh` environment variable file
 
 ```bash
-cd ${FATE_PROJECT_BASE};
-sed -i.bak "s#PYTHONPATH=.*#PYTHONPATH=$PWD/python:$PWD/fateflow/python#g" bin/init_env.sh;
+cd ${FATE_PROJECT_BASE}
+sed -i.bak "s#PYTHONPATH=.*#PYTHONPATH=$PWD/python:$PWD/fateflow/python#g" bin/init_env.sh
 sed -i.bak "s#venv=.*#venv=${FATE_VENV_BASE}#g" bin/init_env.sh
 ```
 
@@ -100,10 +82,11 @@ default_engines:
 ## 6. start fate flow server
 
 ```bash
-cd ${FATE_PROJECT_BASE};
-source bin/init_env.sh;
-cd fateflow;
-bash bin/service.sh status;
+cd ${FATE_PROJECT_BASE}
+source bin/init_env.sh
+
+cd fateflow
+bash bin/service.sh status
 bash bin/service.sh start
 ```
 
@@ -119,16 +102,17 @@ python 111907 app 13u IPv4 3570158827 0t0 TCP localhost:9360 (LISTEN)
 ## 7. install fate client
 
 ```bash
-cd ${FATE_PROJECT_BASE};
-source bin/init_env.sh;
-cd python/fate_client/;
+cd ${FATE_PROJECT_BASE}
+source bin/init_env.sh
+
+cd python/fate_client/
 python setup.py install
 ```
 
 Initialize ``fate flow client`''
 
 ```bash
-cd ../../;
+cd ../../
 flow init -c conf/service_conf.yaml
 ```
 
@@ -158,7 +142,7 @@ If it looks like this, the initialization is successful, otherwise, please check
 ### 8.2 Unit tests
 
    ```bash
-   cd ${FATE_PROJECT_BASE};
+   cd ${FATE_PROJECT_BASE}
    bash python/federatedml/test/run_test.sh
    ```
 
@@ -177,40 +161,40 @@ You can also experience the algorithm process kanban through your browser, pleas
 
 Visualizing FATE Jobs with fateboard
 
-### 9.1 Installing and configuring the Java environment
+### 9.1 Configuring Java environment
 
 ```bash
-cd ${FATE_PROJECT_BASE};
-mkdir -p env/jdk;
-cd env/jdk;
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/jdk-8u192.tar.gz;
+mkdir ${FATE_PROJECT_BASE}/env
+cd ${FATE_PROJECT_BASE}/env
+
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/jdk-8u192.tar.gz
 tar xzf jdk-8u192.tar.gz
+
+wget https://dlcdn.apache.org/maven/maven-3/3.8.6/binaries/apache-maven-3.8.6-bin.tar.gz
+tar xzf apache-maven-3.8.6-bin.tar.gz
 ```
 
 Configure environment variables
 
 ```bash
-cd ${FATE_PROJECT_BASE};
-vim bin/init_env.sh;
-sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=$PWD/env/jdk/jdk-8u192/#g" bin/init_env.sh
+export JAVA_HOME=${FATE_PROJECT_BASE}/env/jdk-8u192
+
+cd ${FATE_PROJECT_BASE}
+sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=${JAVA_HOME}#g" bin/init_env.sh
 ```
 
-### 9.2 Download the build package to install fateboard
+### 9.2 Build fateboard
 
 ```bash
-cd ${FATE_PROJECT_BASE};
-mv fateboard fateboard_code;
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/fateboard.tar.gz;
-tar xzf fateboard.tar.gz;
-sed -i.bak "s#fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:sqlite:$PWD/fate_sqlite.db#g" $PWD/fateboard/conf/application.properties;
-sed -i.bak "s#fateflow.url=.*#fateflow.url=http://localhost:9380#g" $PWD/fateboard/conf/application.properties
+cd ${FATE_PROJECT_BASE}/fateboard
+${FATE_PROJECT_BASE}/env/apache-maven-3.8.6/bin/mvn -DskipTests clean package
 ```
 
 ### 9.3 Starting fateboard
 
 ```bash
-cd fateboard;
-bash service.sh status;
+cd fateboard
+bash service.sh status
 bash service.sh start
 ```
 
@@ -223,11 +207,9 @@ status:
         app 116985 333 1.7 5087004 581460 pts/2 Sl+ 14:11 0:06 /xx/FATE/env/jdk/jdk-8u192//bin/java -Dspring.config.location=/xx/FATE/fateboard/conf/ application.properties -Dssh_config_file=/xx/FATE/fateboard/ssh/ -Xmx2048m -Xms2048m -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc: gc.log -XX:+HeapDumpOnOutOfMemoryError -jar /xx/FATE/fateboard
 ```
 
-## 10. Source code installation of fateboard
+Open http://${ip}:8080, ip is `127.0.0.1` or real ip of this machine
 
-Please refer to the [FATEBoard repository](https://github.com/FederatedAI/FATE-Board)
-
-## 11. Problems that may be encountered
+## 10. Problems that may be encountered
 
 - If you get an error like "Too many open files", it may be because the number of OS handles is too low.
   - For MacOS, you can try [here](https://superuser.com/questions/433746/is-there-a-fix-for-the-too-many-open-files-in-system-error-on-os-x-10-7-1 )

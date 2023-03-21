@@ -54,7 +54,7 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
 @click.option("--data-only", is_flag=True, default=False,
               help="upload data only")
 @click.option("--provider", type=str,
-              help="Select the fat version, for example: fate@1.7")
+              help="Select the fate version, for example: fate@1.7")
 @click.option("--disable-clean-data", "clean_data", flag_value=False, default=None)
 @click.option("--enable-clean-data", "clean_data", flag_value=True, default=None)
 @SharedOptions.get_shared_options(hidden=True)
@@ -67,8 +67,10 @@ def run_suite(ctx, replace, include, exclude, glob, timeout, update_job_paramete
     ctx.obj.update(**kwargs)
     ctx.obj.post_process()
     config_inst = ctx.obj["config"]
-    config_inst.extend_sid = ctx.obj["extend_sid"]
-    config_inst.auto_increasing_sid = ctx.obj["auto_increasing_sid"]
+    if ctx.obj["extend_sid"] is not None:
+        config_inst.extend_sid = ctx.obj["extend_sid"]
+    if ctx.obj["auto_increasing_sid"] is not None:
+        config_inst.auto_increasing_sid = ctx.obj["auto_increasing_sid"]
     if clean_data is None:
         clean_data = config_inst.clean_data
     namespace = ctx.obj["namespace"]

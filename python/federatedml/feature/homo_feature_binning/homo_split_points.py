@@ -19,37 +19,40 @@
 import numpy as np
 
 from federatedml.feature.binning.quantile_binning import QuantileBinning
-from federatedml.framework.homo.blocks import secure_mean_aggregator
 from federatedml.framework.weights import DictWeights
 from federatedml.param.feature_binning_param import FeatureBinningParam
+from federatedml.framework.homo.aggregator.secure_aggregator import SecureAggregatorClient, SecureAggregatorServer
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
 
 
 class HomoFeatureBinningServer(object):
     def __init__(self):
-        self.aggregator = secure_mean_aggregator.Server(enable_secure_aggregate=True)
+        self.aggregator = SecureAggregatorServer(secure_aggregate=True, communicate_match_suffix='homo_feature_binning')
         self.suffix = tuple()
 
     def set_suffix(self, suffix):
         self.suffix = suffix
 
     def average_run(self, data_instances=None, bin_param: FeatureBinningParam = None, bin_num=10, abnormal_list=None):
-        agg_split_points = self.aggregator.mean_model(suffix=self.suffix)
-        self.aggregator.send_aggregated_model(agg_split_points)
+        agg_split_points = self.aggregator.aggregate_model(suffix=self.suffix)
+        self.aggregator.broadcast_model(agg_split_points, suffix=self.suffix)
 
     def fit(self, *args, **kwargs):
         pass
 
     def query_quantile_points(self, data_instances, quantile_points):
         suffix = tuple(list(self.suffix) + [str(quantile_points)])
-        agg_quantile_points = self.aggregator.mean_model(suffix=suffix)
-        self.aggregator.send_aggregated_model(agg_quantile_points, suffix=suffix)
+        agg_quantile_points = self.aggregator.aggregate_model(suffix=suffix)
+        self.aggregator.broadcast_model(agg_quantile_points, suffix=suffix)
 
 
 class HomoFeatureBinningClient(object):
     def __init__(self, bin_method=consts.QUANTILE):
-        self.aggregator = secure_mean_aggregator.Client(enable_secure_aggregate=True)
+        self.aggregator = SecureAggregatorClient(
+            secure_aggregate=True,
+            aggregate_type='mean',
+            communicate_match_suffix='homo_feature_binning')
         self.suffix = tuple()
         self.bin_method = bin_method
         self.bin_obj: QuantileBinning = None

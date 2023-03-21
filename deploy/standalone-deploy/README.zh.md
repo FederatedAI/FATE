@@ -70,18 +70,13 @@ docker tag ccr.ccs.tencentyun.com/federatedai/standalone_fate:${version} federat
 ### 2.3 启动
 
    ```bash
-   docker run -d --name standalone_fate -p 8080:8080 federatedai/standalone_fate:${version};
-   docker ps -a | grep standalone_fate
+   docker run -it --name standalone_fate -p 8080:8080 federatedai/standalone_fate:${version}
    ```
-
-   能看到对应${version}的容器运行中则启动成功
 
 ### 2.4 测试
 
-   - 进入容器
-
    ```bash
-   docker exec -it $(docker ps -aqf "name=standalone_fate") bash
+   source bin/init_env.sh
    ```
 
    - [测试项](#4-测试项)
@@ -117,7 +112,7 @@ echo "{要使用的用户名}  ALL=(ALL) NOPASSWD:ALL" | tee /etc/sudoers.d/{要
 
 ### 3.3 安装
 
-进入解压后的目录并使用init.sh进行安装
+进入解压后的目录并使用 `bin/init.sh` 进行安装
 
 该脚本将自动完成:
 
@@ -132,14 +127,14 @@ echo "{要使用的用户名}  ALL=(ALL) NOPASSWD:ALL" | tee /etc/sudoers.d/{要
 
    ```bash
    cd standalone_fate_install_${version}_release;
-   bash init.sh init
+   bash bin/init.sh init
    ```
 
 ### 3.4 启动
 
    ```bash
-   bash init.sh status;
-   bash init.sh start
+   bash bin/init.sh status;
+   bash bin/init.sh start
    ```
 
 ### 3.5 测试

@@ -99,9 +99,6 @@ def main(config="../../config.yaml", param="./breast_lr_config.yaml", namespace=
         "batch_size": param.get("batch_size", -1),
         "init_param": {
             "init_method": param.get("init_method", 'random_uniform')
-        },
-        "encrypt_param": {
-            "method": None
         }
     }
     lr_param.update(config_param)
@@ -130,8 +127,8 @@ def main(config="../../config.yaml", param="./breast_lr_config.yaml", namespace=
                     "test": {"guest": guest_train_data["name"], "host": host_train_data["name"]}
                     }
     result_summary = parse_summary_result(pipeline.get_component("evaluation_0").get_summary())
-    lr_0_data = pipeline.get_component("homo_lr_0").get_output_data().get("data")
-    lr_1_data = pipeline.get_component("homo_lr_1").get_output_data().get("data")
+    lr_0_data = pipeline.get_component("homo_lr_0").get_output_data()
+    lr_1_data = pipeline.get_component("homo_lr_1").get_output_data()
     lr_0_score = extract_data(lr_0_data, "predict_result")
     lr_0_label = extract_data(lr_0_data, "label")
     lr_1_score = extract_data(lr_1_data, "predict_result")

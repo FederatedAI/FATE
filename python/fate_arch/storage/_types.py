@@ -33,6 +33,7 @@ class StorageEngine(object):
     HIVE = 'HIVE'
     LINKIS_HIVE = 'LINKIS_HIVE'
     LOCALFS = 'LOCALFS'
+    API = 'API'
 
 
 class StandaloneStoreType(object):
@@ -68,6 +69,10 @@ class PathStoreType(object):
 
 class FileStoreType(object):
     CSV = 'CSV'
+
+
+class ApiStoreType(object):
+    EXTERNAL = 'EXTERNAL'
 
 
 class MySQLStoreType(object):

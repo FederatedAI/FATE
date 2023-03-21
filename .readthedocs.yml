@@ -7,8 +7,6 @@ mkdocs:
 formats: all
 
 python:
-  version: 3.7
+  version: "3.8"
   install:
-    - method: setuptools
-      path: doc/mkdocs
     - requirements: doc/mkdocs/requirements.txt

@@ -19,18 +19,18 @@ import copy
 import typing
 
 import numpy as np
-from fate_arch.common.base_utils import timestamp_to_date
-from fate_arch.computing import is_table
 from google.protobuf import json_format
 
-from federatedml.param.evaluation_param import EvaluateParam
-from federatedml.protobuf import deserialize_models
-from federatedml.statistic.data_overview import header_alignment
-from federatedml.util import LOGGER, abnormal_detection
-from federatedml.util.io_check import assert_match_id_consistent
-from federatedml.util.component_properties import ComponentProperties, RunningFuncs
+from fate_arch.computing import is_table
 from federatedml.callbacks.callback_list import CallbackList
 from federatedml.feature.instance import Instance
+from federatedml.param.evaluation_param import EvaluateParam
+from federatedml.protobuf import deserialize_models
+from federatedml.statistic.data_overview import header_alignment, predict_detail_dict_to_str
+from federatedml.util import LOGGER, abnormal_detection
+from federatedml.util.anonymous_generator_util import Anonymous
+from federatedml.util.component_properties import ComponentProperties, RunningFuncs
+from federatedml.util.io_check import assert_match_id_consistent
 
 
 def serialize_models(models):
@@ -178,6 +178,7 @@ class ModelBase(object):
         self.step_name = "step_name"
         self.callback_list: CallbackList
         self.callback_variables = CallbacksVariable()
+        self.anonymous_generator = None
 
     @property
     def tracker(self) -> WarpedTrackerClient:
@@ -226,7 +227,9 @@ class ModelBase(object):
 
         # retry
         if (
-            self._retry
+            retry
+            and hasattr(self, '_retry')
+            and callable(self._retry)
             and self.checkpoint_manager is not None
             and self.checkpoint_manager.latest_checkpoint is not None
         ):
@@ -287,6 +290,7 @@ class ModelBase(object):
         self.role = self.component_properties.role
         self.component_properties.parse_dsl_args(cpn_input.datasets, cpn_input.models)
         self.component_properties.parse_caches(cpn_input.caches)
+        self.anonymous_generator = Anonymous(role=self.role, party_id=self.component_properties.local_partyid)
         # init component, implemented by subclasses
         self._init_model(self.model_param)
 
@@ -490,9 +494,11 @@ class ModelBase(object):
                     "predict_detail",
                     "type",
                 ],
-                "sid_name": schema.get("sid_name"),
-                "content_type": "predict_result",
+                "sid": schema.get("sid"),
+                "content_type": "predict_result"
             }
+            if schema.get("match_id_name") is not None:
+                predict_data.schema["match_id_name"] = schema.get("match_id_name")
         return predict_data
 
     @staticmethod
@@ -516,7 +522,10 @@ class ModelBase(object):
         # regression
         if classes is None:
             predict_result = data_instances.join(
-                predict_score, lambda d, pred: [d.label, pred, pred, {"label": pred}]
+                predict_score, lambda d, pred: [d.label,
+                                                pred,
+                                                pred,
+                                                predict_detail_dict_to_str({"label": pred})]
             )
         # binary
         elif isinstance(classes, list) and len(classes) == 2:
@@ -533,7 +542,7 @@ class ModelBase(object):
                     x[0],
                     y,
                     x[1],
-                    {class_neg_name: (1 - x[1]), class_pos_name: x[1]},
+                    predict_detail_dict_to_str({class_neg_name: (1 - x[1]), class_pos_name: x[1]})
                 ],
             )
 
@@ -548,7 +557,7 @@ class ModelBase(object):
                     x,
                     int(classes[np.argmax(y)]),
                     float(np.max(y)),
-                    dict(zip(classes, list(y))),
+                    predict_detail_dict_to_str(dict(zip(classes, list(y))))
                 ],
             )
         else:

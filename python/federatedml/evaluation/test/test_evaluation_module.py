@@ -51,8 +51,11 @@ class TestEvaluation(unittest.TestCase):
 
     def test_psi(self):
         interface = MetricInterface(pos_label=1, eval_type=consts.BINARY)
-        interface.psi(self.psi_train_score, self.psi_val_score, train_labels=self.psi_train_label,
-                      validate_labels=self.psi_val_label)
+        interface.psi(
+            self.psi_train_score,
+            self.psi_val_score,
+            train_labels=self.psi_train_label,
+            validate_labels=self.psi_val_label)
 
     def test_multi(self):
         print('testing multi')
@@ -68,16 +71,22 @@ class TestEvaluation(unittest.TestCase):
 
     def test_newly_added(self):
         print('testing newly added')
-        binary_data = list(zip([i for i in range(len(self.psi_train_score))], self.psi_train_score))
+        binary_data = list(
+            zip([i for i in range(len(self.psi_train_score))], self.psi_train_score))
         classification_metric.Distribution().compute(binary_data, binary_data)
-        multi_data = list(zip([i for i in range(len(self.multi_score))], self.multi_score))
+        multi_data = list(
+            zip([i for i in range(len(self.multi_score))], self.multi_score))
         classification_metric.Distribution().compute(multi_data, multi_data)
 
         classification_metric.KSTest().compute(self.multi_score, self.multi_score)
-        classification_metric.KSTest().compute(self.psi_train_score, self.psi_val_score)
+        classification_metric.KSTest().compute(
+            self.psi_train_score, self.psi_val_score)
 
-        classification_metric.AveragePrecisionScore().compute(self.psi_train_score, self.psi_val_score,
-                                                              self.psi_train_label, self.psi_val_label)
+        classification_metric.AveragePrecisionScore().compute(
+            self.psi_train_score,
+            self.psi_val_score,
+            self.psi_train_label,
+            self.psi_val_label)
 
 
 if __name__ == '__main__':

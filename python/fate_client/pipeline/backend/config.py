@@ -16,20 +16,24 @@
 
 from pathlib import Path
 
-from pipeline.backend import get_default_config
+from ruamel import yaml
+
 from pipeline.constant import JobStatus
 
+
 __all__ = ["JobStatus", "VERSION", "SERVER_VERSION", "TIME_QUERY_FREQS", "Role", "StatusCode",
-           "LogPath", "LogFormat", "IODataType", "FlowConfig"]
+           "LogPath", "LogFormat", "IODataType", "PipelineConfig"]
+
 
 VERSION = 2
 SERVER_VERSION = "v1"
-TIME_QUERY_FREQS = 0.5
+TIME_QUERY_FREQS = 1
+MAX_RETRY = 3
 
 
-CONSOLE_DISPLAY_LOG = get_default_config().get("console_display_log", True)
-if CONSOLE_DISPLAY_LOG is None:
-    CONSOLE_DISPLAY_LOG = True
+def get_default_config() -> dict:
+    with (Path(__file__).parent.parent / "config.yaml").open(encoding="utf-8") as f:
+        return yaml.safe_load(f)
 
 
 class Role(object):
@@ -63,19 +67,36 @@ class IODataType:
     TEST = "test_data"
 
 
-class FlowConfig(object):
-    conf = get_default_config()
-    IP = conf.get("ip", None)
-    if IP is None:
-        raise ValueError(f"IP not configured. "
-                         f"Please use command line tool pipeline init to set Flow server IP.")
-    PORT = conf.get("port", None)
-    if PORT is None:
-        raise ValueError(f"PORT not configured. "
-                         f"Please use command line tool pipeline init to set Flow server port")
+class PipelineConfigMeta(type):
 
-    APP_KEY = conf.get("app_key", None)
-    SECRET_KEY = conf.get("secret_key", None)
+    def __getattr__(cls, name):
+        if name not in cls._keys:
+            raise AttributeError(f"type object '{cls.__name__}' has no attribute '{name}'")
+
+        if cls._conf is None:
+            cls._conf = get_default_config()
+
+        value = cls._conf.get(name.lower())
+
+        if value is not None:
+            return value
+
+        if name in {"IP", "PORT"}:
+            raise ValueError(
+                f"{name} not configured. "
+                "Please use command line tool `pipeline init` to set it."
+            )
+
+        return cls._defaults.get(name)
+
+
+class PipelineConfig(metaclass=PipelineConfigMeta):
+    _conf = None
+    _keys = {"IP", "PORT", "APP_KEY", "SECRET_KEY", "CONSOLE_DISPLAY_LOG", "SYSTEM_SETTING"}
+    _defaults = {
+        "CONSOLE_DISPLAY_LOG": True,
+        "SYSTEM_SETTING": {"role": None},
+    }
 
 
 class LogPath(object):
@@ -105,12 +126,3 @@ class LogFormat(object):
     SIMPLE = '<green>[{time:HH:mm:ss}]</green><level>{message}</level>'
     NORMAL = '<green>{time:YYYY-MM-DD HH:mm:ss}</green> | ' \
              '<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'
-
-
-class SystemSetting(object):
-    @classmethod
-    def system_setting(cls):
-        conf = get_default_config()
-        system_setting = conf.get("system_setting", {})
-        # system_role = system_setting.get("role", None)
-        return system_setting

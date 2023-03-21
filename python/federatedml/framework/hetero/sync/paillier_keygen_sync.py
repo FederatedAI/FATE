@@ -14,7 +14,7 @@
 #
 
 
-from federatedml.secureprotol.encrypt import PaillierEncrypt
+from federatedml.secureprotol.encrypt import PaillierEncrypt, IpclPaillierEncrypt
 from federatedml.util import consts
 
 
@@ -23,8 +23,14 @@ class Arbiter(object):
     def _register_paillier_keygen(self, pubkey_transfer):
         self._pubkey_transfer = pubkey_transfer
 
-    def paillier_keygen(self, key_length, suffix=tuple()):
-        cipher = PaillierEncrypt()
+    def paillier_keygen(self, method, key_length, suffix=tuple()):
+        if method == consts.PAILLIER:
+            cipher = PaillierEncrypt()
+        elif method == consts.PAILLIER_IPCL:
+            cipher = IpclPaillierEncrypt()
+        else:
+            raise ValueError(f"Unsupported encryption method: {method}")
+
         cipher.generate_key(key_length)
         pub_key = cipher.get_public_key()
         self._pubkey_transfer.remote(obj=pub_key, role=consts.HOST, idx=-1, suffix=suffix)
@@ -37,9 +43,16 @@ class _Client(object):
     def _register_paillier_keygen(self, pubkey_transfer):
         self._pubkey_transfer = pubkey_transfer
 
-    def gen_paillier_cipher_operator(self, suffix=tuple()):
+    def gen_paillier_cipher_operator(self, suffix=tuple(), method=consts.PAILLIER):
         pubkey = self._pubkey_transfer.get(idx=0, suffix=suffix)
-        cipher = PaillierEncrypt()
+
+        if method == consts.PAILLIER:
+            cipher = PaillierEncrypt()
+        elif method == consts.PAILLIER_IPCL:
+            cipher = IpclPaillierEncrypt()
+        else:
+            raise ValueError(f"Unsupported encryption method: {method}")
+
         cipher.set_public_key(pubkey)
         return cipher
 

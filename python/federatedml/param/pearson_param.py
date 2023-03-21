@@ -26,22 +26,16 @@ class PearsonParam(BaseParam):
 
     Parameters
     ----------
-
     column_names : list of string
         list of column names
-
     column_index : list of int
         list of column index
-
     cross_parties : bool, default: True
         if True, calculate correlation of columns from both party
-
     need_run : bool
         set False to skip this party
-
     use_mix_rand : bool, defalut: False
         mix system random and pseudo random for quicker calculation
-
     calc_loca_vif : bool, default True
         calculate VIF for columns in local
     """
@@ -61,10 +55,6 @@ class PearsonParam(BaseParam):
         self.cross_parties = cross_parties
         self.need_run = need_run
         self.use_mix_rand = use_mix_rand
-        if column_names is None:
-            self.column_names = []
-        if column_indexes is None:
-            self.column_indexes = []
         self.calc_local_vif = calc_local_vif
 
     def check(self):
@@ -76,6 +66,9 @@ class PearsonParam(BaseParam):
             raise ValueError(
                 f"need_run should be True(which is default) when cross_parties is True."
             )
+
+        self.column_indexes = [] if self.column_indexes is None else self.column_indexes
+        self.column_names = [] if self.column_names is None else self.column_names
         if not isinstance(self.column_names, list):
             raise ValueError(
                 f"type mismatch, column_names with type {type(self.column_names)}"

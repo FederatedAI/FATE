@@ -13,20 +13,21 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import threading
+
 import typing
 import uuid
 
 import peewee
-from fate_arch.common import engine_utils, EngineType
+
 from fate_arch.abc import CSessionABC, FederationABC, CTableABC, StorageSessionABC, StorageTableABC, StorageTableMetaABC
+from fate_arch.common import engine_utils, EngineType, Party
 from fate_arch.common import log, base_utils
 from fate_arch.common import remote_status
+from fate_arch.common._parties import PartiesInfo
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
-from fate_arch.storage import StorageEngine, StorageSessionBase
 from fate_arch.metastore.db_models import DB, SessionRecord, init_database_tables
-from fate_arch.session._parties import PartiesInfo
+from fate_arch.storage import StorageEngine, StorageSessionBase
 
 LOGGER = log.getLogger()
 
@@ -62,6 +63,7 @@ class Session(object):
         self._federation_session: typing.Optional[FederationABC] = None
         self._storage_session: typing.Dict[StorageSessionABC] = {}
         self._parties_info: typing.Optional[PartiesInfo] = None
+        self._all_party_info: typing.List[Party] = []
         self._session_id = str(uuid.uuid1()) if not session_id else session_id
         self._logger = LOGGER if options.get("logger", None) is None else options.get("logger", None)
 
@@ -140,13 +142,19 @@ class Session(object):
             runtime_conf: typing.Optional[dict] = None,
             parties_info: typing.Optional[PartiesInfo] = None,
             service_conf: typing.Optional[dict] = None,
+            record: bool = True,
     ):
-
+        if record:
+            self.save_record(engine_type=EngineType.FEDERATION,
+                             engine_name=self._federation_type,
+                             engine_session_id=federation_session_id,
+                             engine_runtime_conf={"runtime_conf": runtime_conf, "service_conf": service_conf})
         if parties_info is None:
             if runtime_conf is None:
                 raise RuntimeError(f"`party_info` and `runtime_conf` are both `None`")
             parties_info = PartiesInfo.from_conf(runtime_conf)
         self._parties_info = parties_info
+        self._all_party_info = [Party(k, p) for k, v in runtime_conf['role'].items() for p in v]
 
         if self.is_federation_valid:
             raise RuntimeError("federation session already valid")
@@ -189,15 +197,7 @@ class Session(object):
             return self
 
         if self._federation_type == FederationEngine.RABBITMQ:
-            from fate_arch.computing.spark import CSession
             from fate_arch.federation.rabbitmq import Federation
-
-            if not self.is_computing_valid or not isinstance(
-                    self._computing_session, CSession
-            ):
-                raise RuntimeError(
-                    f"require computing with type {ComputingEngine.SPARK} valid"
-                )
 
             self._federation_session = Federation.from_conf(
                 federation_session_id=federation_session_id,
@@ -209,15 +209,7 @@ class Session(object):
 
         # Add pulsar support
         if self._federation_type == FederationEngine.PULSAR:
-            from fate_arch.computing.spark import CSession
             from fate_arch.federation.pulsar import Federation
-
-            if not self.is_computing_valid or not isinstance(
-                    self._computing_session, CSession
-            ):
-                raise RuntimeError(
-                    f"require computing with type {ComputingEngine.SPARK} valid"
-                )
 
             self._federation_session = Federation.from_conf(
                 federation_session_id=federation_session_id,
@@ -283,6 +275,10 @@ class Session(object):
             from fate_arch.storage.localfs import StorageSession
             storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
 
+        elif storage_engine == StorageEngine.API:
+            from fate_arch.storage.api import StorageSession
+            storage_session = StorageSession(session_id=storage_session_id, options=kwargs.get("options", {}))
+
         else:
             raise NotImplementedError(f"can not be initialized with storage engine: {storage_engine}")
 
@@ -343,18 +339,19 @@ class Session(object):
         return self._federation_session is not None
 
     @DB.connection_context()
-    def save_record(self, engine_type, engine_name, engine_session_id):
+    def save_record(self, engine_type, engine_name, engine_session_id, engine_runtime_conf=None):
         self._logger.info(
-            f"try to save session record for manager {self._session_id}, {engine_type} {engine_name} {engine_session_id}")
+            f"try to save session record for manager {self._session_id}, {engine_type} {engine_name}"
+            f" {engine_session_id}")
         session_record = SessionRecord()
         session_record.f_manager_session_id = self._session_id
         session_record.f_engine_type = engine_type
         session_record.f_engine_name = engine_name
         session_record.f_engine_session_id = engine_session_id
-        # TODO: engine address
-        session_record.f_engine_address = {}
+        session_record.f_engine_address = engine_runtime_conf if engine_runtime_conf else {}
         session_record.f_create_time = base_utils.current_timestamp()
-        msg = f"save storage session record for manager {self._session_id}, {engine_type} {engine_name} {engine_session_id}"
+        msg = f"save storage session record for manager {self._session_id}, {engine_type} {engine_name} " \
+              f"{engine_session_id}"
         try:
             effect_count = session_record.save(force_insert=True)
             if effect_count != 1:
@@ -364,11 +361,16 @@ class Session(object):
         except Exception as e:
             raise RuntimeError(f"{msg} exception", e)
         self._logger.info(
-            f"save session record for manager {self._session_id}, {engine_type} {engine_name} {engine_session_id} successfully")
+            f"save session record for manager {self._session_id}, {engine_type} {engine_name} "
+            f"{engine_session_id} successfully")
 
     @DB.connection_context()
-    def delete_session_record(self, engine_session_id):
-        rows = SessionRecord.delete().where(SessionRecord.f_engine_session_id == engine_session_id).execute()
+    def delete_session_record(self, engine_session_id, manager_session_id=None):
+        if not manager_session_id:
+            rows = SessionRecord.delete().where(SessionRecord.f_engine_session_id == engine_session_id).execute()
+        else:
+            rows = SessionRecord.delete().where(SessionRecord.f_engine_session_id == engine_session_id,
+                                                SessionRecord.f_manager_session_id == manager_session_id).execute()
         if rows > 0:
             self._logger.info(f"delete session {engine_session_id} record successfully")
         else:
@@ -377,12 +379,16 @@ class Session(object):
     @classmethod
     @DB.connection_context()
     def query_sessions(cls, reverse=None, order_by=None, **kwargs):
-        return SessionRecord.query(reverse=reverse, order_by=order_by, **kwargs)
+        try:
+            session_records = SessionRecord.query(reverse=reverse, order_by=order_by, **kwargs)
+            return session_records
+        except BaseException:
+            return []
 
     @DB.connection_context()
     def get_session_from_record(self, **kwargs):
         self._logger.info(f"query by manager session id {self._session_id}")
-        session_records = self.query_sessions(manager_session_id=self._session_id, **kwargs)
+        session_records = self.query_sessions(manager_session_id=self.session_id, **kwargs)
         self._logger.info([session_record.f_engine_session_id for session_record in session_records])
         for session_record in session_records:
             try:
@@ -393,8 +399,12 @@ class Session(object):
                     self._get_or_create_storage(storage_session_id=engine_session_id,
                                                 storage_engine=session_record.f_engine_name,
                                                 record=False)
+                elif session_record.f_engine_type == EngineType.FEDERATION:
+                    self._logger.info(f"engine runtime conf: {session_record.f_engine_address}")
+                    self._init_federation_if_not_valid(federation_session_id=engine_session_id,
+                                                       engine_runtime_conf=session_record.f_engine_address)
             except Exception as e:
-                self._logger.error(e)
+                self._logger.info(e)
                 self.delete_session_record(engine_session_id=session_record.f_engine_session_id)
 
     def _init_computing_if_not_valid(self, computing_session_id):
@@ -403,7 +413,30 @@ class Session(object):
             return True
         elif self._computing_session.session_id != computing_session_id:
             self._logger.warning(
-                f"manager session had computing session {self._computing_session.session_id} different with query from db session {computing_session_id}")
+                f"manager session had computing session {self._computing_session.session_id} "
+                f"different with query from db session {computing_session_id}")
+            return False
+        else:
+            # already exists
+            return True
+
+    def _init_federation_if_not_valid(self, federation_session_id, engine_runtime_conf):
+        if not self.is_federation_valid:
+            try:
+                self._logger.info(f"init federation session {federation_session_id} type {self._federation_type}")
+                self.init_federation(federation_session_id=federation_session_id,
+                                     runtime_conf=engine_runtime_conf.get("runtime_conf"),
+                                     service_conf=engine_runtime_conf.get("service_conf"),
+                                     record=False)
+                self._logger.info(f"init federation session {federation_session_id} type {self._federation_type} done")
+                return True
+            except Exception as e:
+                self._logger.warning(
+                    f"init federation session {federation_session_id} type {self._federation_type} failed: {e}")
+                return False
+        elif self._federation_session.session_id != federation_session_id:
+            self._logger.warning(
+                f"manager session had federation session {self._federation_session.session_id} different with query from db session {federation_session_id}")
             return False
         else:
             # already exists
@@ -412,6 +445,7 @@ class Session(object):
     def destroy_all_sessions(self, **kwargs):
         self._logger.info(f"start destroy manager session {self._session_id} all sessions")
         self.get_session_from_record(**kwargs)
+        self.destroy_federation_session()
         self.destroy_storage_session()
         self.destroy_computing_session()
         self._logger.info(f"finish destroy manager session {self._session_id} all sessions")
@@ -420,15 +454,12 @@ class Session(object):
         if self.is_computing_valid:
             try:
                 self._logger.info(f"try to destroy computing session {self._computing_session.session_id}")
-                try:
-                    ret = self._computing_session.stop()
-                except BaseException:
-                    ret = self._computing_session.kill()
-                self._logger.info(f"destroy computing session {self._computing_session.session_id} successfully, "
-                                  f"ret={ret}")
+                self._computing_session.destroy()
             except Exception as e:
                 self._logger.info(f"destroy computing session {self._computing_session.session_id} failed", e)
+
             self.delete_session_record(engine_session_id=self._computing_session.session_id)
+            self._computing_session = None
 
     def destroy_storage_session(self):
         for session_id, session in self._storage_session.items():
@@ -438,7 +469,26 @@ class Session(object):
                 self._logger.info(f"destroy storage session {session_id} successfully")
             except Exception as e:
                 self._logger.exception(f"destroy storage session {session_id} failed", e)
+
             self.delete_session_record(engine_session_id=session_id)
+
+        self._storage_session = {}
+
+    def destroy_federation_session(self):
+        if self.is_federation_valid:
+            try:
+                if self._parties_info.local_party.role != "local":
+                    self._logger.info(
+                        f"try to destroy federation session {self._federation_session.session_id} type"
+                        f" {EngineType.FEDERATION} role {self._parties_info.local_party.role}")
+                    self._federation_session.destroy(parties=self._all_party_info)
+                    self._logger.info(f"destroy federation session {self._federation_session.session_id} done")
+            except Exception as e:
+                self._logger.info(f"destroy federation failed: {e}")
+
+            self.delete_session_record(engine_session_id=self._federation_session.session_id,
+                                       manager_session_id=self.session_id)
+            self._federation_session = None
 
     def wait_remote_all_done(self, timeout=None):
         LOGGER.info(f"remote futures: {remote_status._remote_futures}, waiting...")
@@ -457,9 +507,8 @@ def get_parties() -> PartiesInfo:
 def get_computing_session() -> CSessionABC:
     return get_session().computing
 
+
 # noinspection PyPep8Naming
-
-
 class computing_session(object):
     @staticmethod
     def init(session_id, options=None):

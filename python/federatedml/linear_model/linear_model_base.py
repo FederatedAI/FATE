@@ -60,6 +60,8 @@ class BaseLinearModel(ModelBase):
         self.need_one_vs_rest = False
         self.need_call_back_loss = True
         self.init_param_obj = None
+        self.early_stop = None
+        self.tol = None
 
     def _init_model(self, params):
         self.model_param = params
@@ -77,6 +79,8 @@ class BaseLinearModel(ModelBase):
 
         self.max_iter = params.max_iter
         self.optimizer = optimizer_factory(params)
+        self.early_stop = params.early_stop
+        self.tol = params.tol
         self.converge_func = converge_func_factory(params.early_stop, params.tol)
         self.validation_freqs = params.callback_param.validation_freqs
         self.validation_strategy = None

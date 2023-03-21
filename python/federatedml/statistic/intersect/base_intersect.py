@@ -15,11 +15,11 @@
 #
 
 import functools
-import uuid
 
 from federatedml.param.intersect_param import IntersectParam
 from federatedml.statistic.intersect.intersect_preprocess import BitArray
-from federatedml.transfer_variable.transfer_class.intersection_func_transfer_variable import IntersectionFuncTransferVariable
+from federatedml.transfer_variable.transfer_class.intersection_func_transfer_variable \
+    import IntersectionFuncTransferVariable
 from federatedml.util import LOGGER
 
 
@@ -35,6 +35,7 @@ class Intersect(object):
         self.cache = None
         self.model_param_name = "IntersectModelParam"
         self.model_meta_name = "IntersectModelMeta"
+        self.intersect_method = None
 
         self._guest_id = None
         self._host_id = None
@@ -42,11 +43,11 @@ class Intersect(object):
 
     def load_params(self, param):
         self.model_param = param
-        self.intersect_method = param.intersect_method
         self.only_output_key = param.only_output_key
         self.sync_intersect_ids = param.sync_intersect_ids
         self.cardinality_only = param.cardinality_only
         self.sync_cardinality = param.sync_cardinality
+        self.cardinality_method = param.cardinality_method
         self.run_preprocess = param.run_preprocess
         self.intersect_preprocess_params = param.intersect_preprocess_params
         self.run_cache = param.run_cache
@@ -105,6 +106,9 @@ class Intersect(object):
         if not isinstance(party_list, list):
             party_list = [party_list]
         cache_list = [cache_data.get(str(party_id)) for party_id in party_list]
+        if (cache_len := len(cache_list)) != (data_len := len(cache_data.items())):
+            LOGGER.warning(f"{cache_len} cache sets are given,"
+                           f"but only {data_len} hosts participate in current intersection task.")
         return cache_list
 
     def run_cache_intersect(self, data_instances, cache_data):
@@ -131,7 +135,7 @@ class Intersect(object):
         if keep_encrypt_ids:
             def f(v_prev, v): return v_prev + v
         else:
-            def f(v_prev, v): return "id"
+            def f(v_prev, v): return None
 
         intersect_ids = None
         for i, value in enumerate(intersect_ids_list):
@@ -155,7 +159,7 @@ class Intersect(object):
         if keep_encrypt_ids:
             def f(k, v): return (v, [k])
         else:
-            def f(k, v): return (v, 1)
+            def f(k, v): return (v, None)
         if len(encrypt_intersect_ids) > 1:
             raw_intersect_ids = [e.map(f) for e in encrypt_intersect_ids]
             intersect_ids = Intersect.get_common_intersection(raw_intersect_ids, keep_encrypt_ids)
@@ -171,7 +175,7 @@ class Intersect(object):
         if keep_value:
             encrypt_common_id = encrypt_raw_id.map(lambda k, v: (v[0], v[1]))
         else:
-            encrypt_common_id = encrypt_raw_id.map(lambda k, v: (v[0], "id"))
+            encrypt_common_id = encrypt_raw_id.map(lambda k, v: (v[0], None))
 
         return encrypt_common_id
 
@@ -194,17 +198,13 @@ class Intersect(object):
         if keep_encrypt_id:
             raw_id = encrypt_id_raw_id.map(lambda k, v: (v[0], k))
         else:
-            raw_id = encrypt_id_raw_id.map(lambda k, v: (v[0], 1))
+            raw_id = encrypt_id_raw_id.map(lambda k, v: (v[0], None))
         return raw_id
 
     @staticmethod
     def hash(value, hash_operator, salt=''):
         h_value = hash_operator.compute(value, suffix_salt=salt)
         return h_value
-
-    @staticmethod
-    def generate_new_uuid():
-        return str(uuid.uuid4())
 
     @staticmethod
     def insert_key(kv_iterator, filter, hash_operator=None, salt=None):

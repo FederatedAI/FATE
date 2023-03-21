@@ -1,0 +1,40 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host_tag_value.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "breast_hetero_host_tag_value",
+            "namespace": "experiment",
+            "role": "host_0"
+        }
+    ],
+    "pipeline_tasks": {
+        "train_lr": {
+            "script": "./pipeline_train_lr.py"
+        },
+        "train_manually_lr": {
+            "script": "./pipeline_train_manually_lr.py"
+        },
+        "train_pearson_lr": {
+            "script": "./pipeline_train_pearson_lr.py"
+        },
+        "train_sample_lr": {
+            "script": "./pipeline_train_sample_lr.py"
+        },
+        "train_test_lr": {
+            "script": "./pipeline_train_test_lr.py"
+        },
+        "train_union_lr": {
+            "script": "./pipeline_train_union_lr.py"
+        }
+    }
+}

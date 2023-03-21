@@ -13,12 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-_TF_KERAS_VALID = False
-try:
-    from tensorflow.python.keras.engine import base_layer
-    _TF_KERAS_VALID = True
-except ImportError:
-    pass
+from pipeline.component.nn.backend.torch.base import Sequential as Seq
+from pipeline.component.nn.backend.torch.cust import CustModel
+from pipeline.component.nn.backend.torch.interactive import InteractiveLayer
 
 
 class Sequential(object):
@@ -29,29 +26,55 @@ class Sequential(object):
     def is_empty(self):
         return self._model is None
 
+    def get_model(self):
+        return self._model
+
     def add(self, layer):
-        if _TF_KERAS_VALID and isinstance(layer, base_layer.Layer):
+
+        _IS_TF_KERAS = False
+        try:
+            import tensorflow as tf
+            _IS_TF_KERAS = isinstance(layer, tf.Module)
+        except ImportError:
+            pass
+
+        if _IS_TF_KERAS:
+            # please notice that keras backend now is abandoned, hetero & homo nn support keras backend no more,
+            # but pipeline keras interface is kept
             layer_type = "keras"
-        elif isinstance(layer, dict):
-            layer_type = "nn"
-        elif hasattr(layer, "__module__") and getattr(layer, "__module__").startswith("torch.nn.modules"):
-            layer_type = "pytorch"
         else:
-            raise ValueError("Layer type {} not support yet".format(type(layer)))
+            layer_type = "torch"
+            is_layer = hasattr(
+                layer,
+                "__module__") and "pipeline.component.nn.backend.torch.nn" == getattr(
+                layer,
+                "__module__")
+            is_seq = isinstance(layer, Seq)
+            is_cust_model = isinstance(layer, CustModel)
+            is_interactive_layer = isinstance(layer, InteractiveLayer)
+            if not (is_layer or is_cust_model or is_interactive_layer or is_seq):
+                raise ValueError(
+                    "Layer type {} not support yet, added layer must be a FateTorchLayer or a fate_torch "
+                    "Sequential, remember to call fate_torch_hook() before using pipeline "
+                    "".format(
+                        type(layer)))
 
         self._add_layer(layer, layer_type)
 
-    def _add_layer(self, layer, layer_type):
-        if self._model is None:
-            self._model = _build_model(layer_type)
-            self.__config_type = layer_type
+    def _add_layer(self, layer, layer_type, replace=True):
 
-        if self.__config_type == layer_type:
-            self._model.add(layer)
+        if layer_type == 'torch':
+            if self._model is None or replace:
+                self._model = Seq()
+                self.__config_type = layer_type
+        elif layer_type == 'keras':
+            # please notice that keras backend now is abandoned, hetero & homo nn support keras backend no more,
+            # but pipeline keras interface is kept
+            from pipeline.component.nn.models.keras_interface import SequentialModel
             self.__config_type = layer_type
-        else:
-            raise ValueError(
-                "pre add layer type is {}, not equals to current layer {}".format(self.__config_type, layer_type))
+            self._model = SequentialModel()
+
+        self._model.add(layer)
 
     def get_layer_type(self):
         return self.__config_type
@@ -63,21 +86,11 @@ class Sequential(object):
         return self._model.get_optimizer_config(optimizer)
 
     def get_network_config(self):
+
         if not self.__config_type:
             raise ValueError("Empty layer find, can't get config")
 
         return self._model.get_network_config()
 
-
-def _build_model(type):
-    if type == "keras":
-        from pipeline.component.nn.backend.keras import model_builder
-        return model_builder.build_model()
-
-    if type == "pytorch":
-        from pipeline.component.nn.backend.pytorch import model_builder
-        return model_builder.build_model()
-
-    if type == "nn":
-        from pipeline.component.nn.backend.tf import model_builder
-        return model_builder.build_model()
+    def __repr__(self):
+        return self._model.__repr__()

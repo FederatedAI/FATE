@@ -2,7 +2,18 @@
 
 Linear Regression(LinR) is a simple statistic model widely used for
 predicting continuous numbers. FATE provides Heterogeneous Linear
-Regression(HeteroLinR). HeteroLinR also supports multi-Host training.
+Regression(HeteroLinR) and SSHE Linear Regression(HeteroSSHELinR). 
+
+Below lists features of HeteroLinR & HeteroSSHELinR models:
+
+| Linear Model    	| Arbiter-less Training                                                       	| Weighted Training                                                                                 	| Multi-Host                                                                                     	| Cross Validation                                                                       	| Warm-Start/CheckPoint                                                                          	|
+|-----------------	|-----------------------------------------------------------------------------	|---------------------------------------------------------------------------------------------------	|------------------------------------------------------------------------------------------------	|----------------------------------------------------------------------------------------	|------------------------------------------------------------------------------------------------	|
+| Hetero LinR     	| &cross;                                                                     	| [&check;](../../examples/pipeline/hetero_linear_regression/pipeline-hetero-linr-sample-weight.py) 	| [&check;](../../examples/pipeline/hetero_linear_regression/pipeline-hetero-linr-multi-host.py) 	| [&check;](../../examples/pipeline/hetero_linear_regression/pipeline-hetero-linr-cv.py) 	| [&check;](../../examples/pipeline/hetero_linear_regression/pipeline-hetero-linr-warm-start.py) 	|
+| Hetero SSHELinR 	| [&check;](../../examples/pipeline/hetero_sshe_linr/pipeline-hetero-linr.py) 	| [&check;](../../examples/pipeline/hetero_sshe_linr/pipeline-hetero-linr-sample-weight.py)         	| &cross;                                                                                        	| [&check;](../../examples/pipeline/hetero_sshe_linr/pipeline-hetero-linr-cv.py)         	| [&check;](../../examples/pipeline/hetero_sshe_linr/pipeline-hetero-linr-warm-start.py)         	|
+
+## Heterogeneous LinR
+
+HeteroLinR also supports multi-Host training.
 You can specify multiple hosts in the job configuration file like the
 provided
 <span class="title-ref">examples/dsl/v2/hetero\_linear\_regression</span>.
@@ -12,8 +23,6 @@ parties. Party A represents Guest, party B represents Host. Party C,
 which is also known as “Arbiter,” is a third party that works as
 coordinator. Party C is responsible for generating private and public
 keys.
-
-## Heterogeneous LinR
 
 The process of HeteroLinR training is shown below:
 

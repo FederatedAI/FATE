@@ -17,13 +17,15 @@
 #  limitations under the License.
 
 import copy
+
 import numpy as np
 
 from federatedml.model_base import Metric, MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.param.label_transform_param import LabelTransformParam
 from federatedml.protobuf.generated import label_transform_meta_pb2, label_transform_param_pb2
-from federatedml.statistic.data_overview import get_label_count, get_predict_result_labels
+from federatedml.statistic.data_overview import get_label_count, get_predict_result_labels, \
+    predict_detail_dict_to_str, predict_detail_str_to_dict
 from federatedml.util import LOGGER
 
 
@@ -51,10 +53,30 @@ class LabelTransformer(ModelBase):
     def update_label_encoder(self, data):
         if self.label_encoder is not None:
             LOGGER.info(f"label encoder provided")
+            LOGGER.info("count labels in data.")
+            data_type = data.schema.get("content_type")
+            if data_type is None:
+                label_count = get_label_count(data)
+                labels = sorted(label_count.keys())
+            # predict result
+            else:
+                labels = sorted(get_predict_result_labels(data))
+
             if self.label_list is not None:
                 LOGGER.info(f"label list provided")
                 self.encoder_key_type = {str(v): type(v).__name__ for v in self.label_list}
+            else:
+                self.encoder_key_type = {str(v): type(v).__name__ for v in labels}
 
+            if len(labels) != len(self.label_encoder):
+                missing_values = [k for k in labels if str(k) not in self.label_encoder]
+                LOGGER.warning(f"labels: {missing_values} found in input data "
+                               f"but are not matched in provided label_encoder. "
+                               f"Note that unmatched labels will not be transformed.")
+                self.label_encoder.update(zip([str(k) for k in missing_values],
+                                              missing_values))
+                self.encoder_key_type.update(zip([str(k) for k in missing_values],
+                                                 [type(v).__name__ for v in missing_values]))
         else:
             data_type = data.schema.get("content_type")
             if data_type is None:
@@ -70,8 +92,11 @@ class LabelTransformer(ModelBase):
         self.encoder_value_type = {str(k): type(v).__name__ for k, v in self.label_encoder.items()}
 
         self.label_encoder = {load_value_to_type(k,
-                                                 self.encoder_key_type[str(k)]): v for k,
+                                                 self.encoder_key_type.get(str(k), None)): v for k,
                               v in self.label_encoder.items()}
+        for k, v in self.label_encoder.items():
+            if v is None:
+                raise ValueError(f"given encoder key {k} not found in data or provided label list, please check.")
 
     def _get_meta(self):
         meta = label_transform_meta_pb2.LabelTransformMeta(
@@ -140,8 +165,8 @@ class LabelTransformer(ModelBase):
     @staticmethod
     def replace_predict_label(predict_inst, label_encoder):
         transform_predict_inst = copy.deepcopy(predict_inst)
-        true_label, predict_label, predict_score, predict_detail, result_type = transform_predict_inst.features
-        # true_label, predict_label = label_encoder[true_label], label_encoder[predict_label]
+        true_label, predict_label, predict_score, predict_detail_str, result_type = transform_predict_inst.features
+        predict_detail = predict_detail_str_to_dict(predict_detail_str)
         true_label_replace_val, predict_label_replace_val = label_encoder.get(
             true_label), label_encoder.get(predict_label)
         if true_label_replace_val is None:
@@ -149,7 +174,8 @@ class LabelTransformer(ModelBase):
         if predict_label_replace_val is None:
             raise ValueError(f"{predict_label_replace_val} not found in given label encoder")
         label_encoder_detail = {str(k): v for k, v in label_encoder.items()}
-        predict_detail = {label_encoder_detail[label]: score for label, score in predict_detail.items()}
+        predict_detail_dict = {label_encoder_detail[label]: score for label, score in predict_detail.items()}
+        predict_detail = predict_detail_dict_to_str(predict_detail_dict)
         transform_predict_inst.features = [true_label_replace_val, predict_label_replace_val, predict_score,
                                            predict_detail, result_type]
         return transform_predict_inst
@@ -205,9 +231,8 @@ class LabelTransformer(ModelBase):
 
         return result_data
 
+
 # also used in feature imputation, to be moved to common util
-
-
 def load_value_to_type(value, value_type):
     if value is None:
         loaded_value = None

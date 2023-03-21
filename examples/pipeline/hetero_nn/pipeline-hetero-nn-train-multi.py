@@ -16,19 +16,21 @@
 
 import argparse
 
+import torch as t
+from torch import nn
+
+from pipeline import fate_torch_hook
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component import DataTransform
 from pipeline.component import Evaluation
 from pipeline.component import HeteroNN
 from pipeline.component import Intersection
 from pipeline.component import Reader
+from pipeline.component.nn import DatasetParam
 from pipeline.interface import Data
-from pipeline.interface import Model
-from tensorflow.keras import optimizers
-from tensorflow.keras import initializers
-from tensorflow.keras.layers import Dense
-
 from pipeline.utils.tools import load_job_config
+
+fate_torch_hook(t)
 
 
 def main(config="../../config.yaml", namespace=""):
@@ -39,8 +41,8 @@ def main(config="../../config.yaml", namespace=""):
     guest = parties.guest[0]
     host = parties.host[0]
 
-    guest_train_data = {"name": "vehicle_scale_hetero_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = {"name": "vehicle_scale_hetero_host", "namespace": f"experiment{namespace}"}
+    guest_train_data = {"name": "vehicle_scale_hetero_guest", "namespace": "experiment"}
+    host_train_data = {"name": "vehicle_scale_hetero_host", "namespace": "experiment"}
 
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host)
 
@@ -54,40 +56,56 @@ def main(config="../../config.yaml", namespace=""):
 
     intersection_0 = Intersection(name="intersection_0")
 
-    hetero_nn_0 = HeteroNN(name="hetero_nn_0", epochs=100,
-                           interactive_layer_lr=0.15, batch_size=-1, early_stop="diff")
+    hetero_nn_0 = HeteroNN(name="hetero_nn_0", epochs=15,
+                           interactive_layer_lr=0.05, batch_size=256, validation_freqs=1, task_type='classification',
+                           selector_param={"method": "relative"})
     guest_nn_0 = hetero_nn_0.get_party_instance(role='guest', party_id=guest)
-    guest_nn_0.add_bottom_model(Dense(units=3, input_shape=(9,), activation="relu",
-                                      kernel_initializer=initializers.Constant(value=1)))
-    guest_nn_0.set_interactve_layer(Dense(units=2, input_shape=(2,),
-                                          kernel_initializer=initializers.Constant(value=1)))
-    guest_nn_0.add_top_model(Dense(units=4, input_shape=(2,), activation="softmax",
-                                   kernel_initializer=initializers.Constant(value=1)))
     host_nn_0 = hetero_nn_0.get_party_instance(role='host', party_id=host)
-    host_nn_0.add_bottom_model(Dense(units=3, input_shape=(9,), activation="relu",
-                                     kernel_initializer=initializers.Constant(value=1)))
-    host_nn_0.set_interactve_layer(Dense(units=2, input_shape=(2,),
-                                         kernel_initializer=initializers.Constant(value=1)))
-    hetero_nn_0.compile(optimizer=optimizers.Adam(lr=0.15), loss="categorical_crossentropy")
 
-    hetero_nn_1 = HeteroNN(name="hetero_nn_1")
+    # define model
+    guest_bottom = t.nn.Sequential(
+        nn.Linear(9, 9),
+        nn.ReLU(),
+    )
 
-    evaluation_0 = Evaluation(name="evaluation_0", eval_type="multi")
+    guest_top = t.nn.Sequential(
+        nn.Linear(4, 4),
+        nn.Softmax(dim=1)
+    )
 
+    host_bottom = t.nn.Sequential(
+        nn.Linear(9, 9),
+        nn.ReLU(),
+    )
+
+    # use interactive layer after fate_torch_hook
+    # add drop out in this layer
+    interactive_layer = t.nn.InteractiveLayer(out_dim=4, guest_dim=9, host_dim=9, host_num=1, dropout=0.2)
+
+    guest_nn_0.add_top_model(guest_top)
+    guest_nn_0.add_bottom_model(guest_bottom)
+    host_nn_0.add_bottom_model(host_bottom)
+
+    optimizer = t.optim.Adam(lr=0.05)  # you can initialize optimizer without parameters after fate_torch_hook
+    loss = t.nn.CrossEntropyLoss()
+
+    hetero_nn_0.set_interactive_layer(interactive_layer)
+    # add dataset param, because CrossEntropy loss need flatten long label, so add this parameter
+    # will use table dataset in federatedml/nn/dataset/table.py
+    hetero_nn_0.add_dataset(DatasetParam(dataset_name='table', flatten_label=True, label_dtype='long'))
+    hetero_nn_0.compile(optimizer=optimizer, loss=loss)
+    evaluation_0 = Evaluation(name='eval_0', eval_type='multi')
+
+    # define components IO
     pipeline.add_component(reader_0)
     pipeline.add_component(data_transform_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(intersection_0, data=Data(data=data_transform_0.output.data))
     pipeline.add_component(hetero_nn_0, data=Data(train_data=intersection_0.output.data))
-    pipeline.add_component(hetero_nn_1, data=Data(test_data=intersection_0.output.data),
-                           model=Model(model=hetero_nn_0.output.model))
     pipeline.add_component(evaluation_0, data=Data(data=hetero_nn_0.output.data))
-
     pipeline.compile()
-
     pipeline.fit()
 
     print(pipeline.get_component("hetero_nn_0").get_summary())
-    print(pipeline.get_component("evaluation_0").get_summary())
 
 
 if __name__ == "__main__":

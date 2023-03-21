@@ -70,18 +70,13 @@ docker tag ccr.ccs.tencentyun.com/federatedai/standalone_fate:${version} federat
 ### 2.3 Boot
 
    ```bash
-   docker run -d --name standalone_fate -p 8080:8080 federatedai/standalone_fate:${version};
-   docker ps -a | grep standalone_fate
+   docker run -it --name standalone_fate -p 8080:8080 federatedai/standalone_fate:${version};
    ```
-
-   If you can see that the container corresponding to ${version} is running, it starts successfully
 
 ### 2.4 Testing
 
-   - Enter the container
-
    ```bash
-   docker exec -it $(docker ps -aqf "name=standalone_fate") bash
+   source bin/init_env.sh
    ```
 
    - [test item](#4-test-items)
@@ -117,7 +112,7 @@ Download the installation package and unpack it
 
 ### 3.3 Installation
 
-Go to the unpacked directory and use init.sh to install
+Go to the unpacked directory and use `bin/init.sh` to install
 
 The script will complete automatically:
 
@@ -132,14 +127,14 @@ The script will complete automatically:
 
    ```bash
    cd standalone_fate_install_${version}_release;
-   bash init.sh init
+   bash bin/init.sh init
    ```
 
 ### 3.4 Start
 
    ```bash
-   bash init.sh status;
-   bash init.sh start
+   bash bin/init.sh status;
+   bash bin/init.sh start
    ```
 
 ### 3.5 Testing
@@ -180,7 +175,7 @@ The script will complete automatically:
 
 Some use case algorithms are in [examples](../../examples/dsl/v2) folder, please try using them.
 
-You can also experience the algorithm process kanban through your browser by visiting: Http://${ip}:8080, ip is `127.0.0.1` or the actual ip of the local machine
+You can also experience the algorithm process kanban through your browser by visiting: http://${ip}:8080, ip is `127.0.0.1` or the actual ip of the local machine
 
 ## 5. install FATE in the host (based on the source code to compile their own package)
 

@@ -17,10 +17,15 @@ class Federation(FederationABC):
             f"federation_session_id={federation_session_id}, "
             f"party={party}"
         )
+        self._session_id = federation_session_id
         self._federation = RawFederation(
             standalone_session, federation_session_id, party
         )
         LOGGER.debug("[federation.standalone]init federation context done")
+
+    @property
+    def session_id(self) -> str:
+        return self._session_id
 
     def remote(
         self,
@@ -48,6 +53,9 @@ class Federation(FederationABC):
 
         rtn = self._federation.get(name=name, tag=tag, parties=parties)
         return [Table(r) if isinstance(r, RawTable) else r for r in rtn]
+
+    def destroy(self, parties):
+        self._federation.destroy()
 
 
 _remote_history = set()

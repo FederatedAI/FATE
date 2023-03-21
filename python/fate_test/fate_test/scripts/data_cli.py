@@ -7,7 +7,6 @@ import json
 from datetime import timedelta
 
 import click
-import torchvision
 from pathlib import Path
 from ruamel import yaml
 
@@ -50,8 +49,10 @@ def upload(ctx, include, exclude, glob, suite_type, role, config_type, **kwargs)
     ctx.obj.post_process()
     namespace = ctx.obj["namespace"]
     config_inst = ctx.obj["config"]
-    config_inst.extend_sid = ctx.obj["extend_sid"]
-    config_inst.auto_increasing_sid = ctx.obj["auto_increasing_sid"]
+    if ctx.obj["extend_sid"] is not None:
+        config_inst.extend_sid = ctx.obj["extend_sid"]
+    if ctx.obj["auto_increasing_sid"] is not None:
+        config_inst.auto_increasing_sid = ctx.obj["auto_increasing_sid"]
     yes = ctx.obj["yes"]
     echo.welcome()
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
@@ -171,8 +172,10 @@ def generate(ctx, include, host_data_type, encryption_type, match_rate, sparsity
     ctx.obj.post_process()
     namespace = ctx.obj["namespace"]
     config_inst = ctx.obj["config"]
-    config_inst.extend_sid = ctx.obj["extend_sid"]
-    config_inst.auto_increasing_sid = ctx.obj["auto_increasing_sid"]
+    if ctx.obj["extend_sid"] is not None:
+        config_inst.extend_sid = ctx.obj["extend_sid"]
+    if ctx.obj["auto_increasing_sid"] is not None:
+        config_inst.auto_increasing_sid = ctx.obj["auto_increasing_sid"]
     if parallelize and upload_data:
         upload_data = False
     yes = ctx.obj["yes"]
@@ -306,6 +309,8 @@ def query_component_output_data(clients: Clients, config: Config, component_name
 
 
 def download_mnist(base, name, is_train=True):
+    import torchvision
+
     dataset = torchvision.datasets.MNIST(
         root=base.joinpath(".cache"), train=is_train, download=True
     )

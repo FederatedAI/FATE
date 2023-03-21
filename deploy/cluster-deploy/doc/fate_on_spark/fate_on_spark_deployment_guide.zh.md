@@ -1,4 +1,4 @@
-# FATE ON Spark 部署指南 
+# FATE ON Spark 部署指南
 [English](fate_on_spark_deployment_guide.md)
 
 ## 1.服务器配置
@@ -38,7 +38,7 @@
 | mysql    | mysql     | 3306      | 元数据存储                                            |
 | Spark    |           |           | 计算引擎                                              |
 | HDFS(或者LocalFS)     |           |           | 存储引擎                                              |
-| RabbitMQ(或pulsar) |           |           | 跨站点(party)数据交换代理 
+| RabbitMQ(或pulsar) |           |           | 跨站点(party)数据交换代理
 
 ## 4.基础环境配置
 
@@ -172,18 +172,18 @@ fi
 ```bash
 mkdir -p /data/projects/install
 cd /data/projects/install
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-miniconda3-4.5.4.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-fate-8.0.28.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/openresty-1.17.8.2.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/pip-packages-fate-${version}.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_${version}_release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/Miniconda3-py38_4.12.0-Linux-x86_64.sh
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/jdk-8u345.tar.xz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/mysql-fate-8.0.28.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/openresty-1.17.8.2.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/pip_packages_fate_${version}.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/fate_install_${version}_release.tar.gz
 
 #传输到192.168.0.1和192.168.0.2
 scp *.tar.gz app@192.168.0.1:/data/projects/install
 scp *.tar.gz app@192.168.0.2:/data/projects/install
 ```
-注意: 当前文档需要部署的FATE version>=1.7.0
+注意: 当前文档需要部署的FATE version>=1.7.0，${version}替换为如1.9.0，不带v字符
 ### 5.2 操作系统参数检查
 
 **在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）app用户下执行**
@@ -277,9 +277,7 @@ mysql>show databases;
 mkdir -p /data/projects/fate/common/jdk
 #解压缩
 cd /data/projects/install
-tar xzf jdk-8u192-linux-x64.tar.gz -C /data/projects/fate/common/jdk
-cd /data/projects/fate/common/jdk
-mv jdk1.8.0_192 jdk-8u192
+tar xJf jdk-8u345.tar.xz -C /data/projects/fate/common/jdk
 ```
 
 ### 5.5 部署python
@@ -288,21 +286,14 @@ mv jdk1.8.0_192 jdk-8u192
 
 ```bash
 #创建python虚拟化安装目录
-mkdir -p /data/projects/fate/common/python
+mkdir -p /data/projects/fate/common/python/venv
 
 #安装miniconda3
 cd /data/projects/install
-tar xvf python-env-*.tar.gz
-cd python-env
-sh Miniconda3-4.5.4-Linux-x86_64.sh -b -p /data/projects/fate/common/miniconda3
+bash Miniconda3-py38_4.12.0-Linux-x86_64.sh -b -p /data/projects/fate/common/miniconda3
+#创建虚拟化环境
+/data/projects/fate/common/miniconda3/bin/python3.8 -m venv /data/projects/fate/common/python/venv
 
-#安装virtualenv和创建虚拟化环境
-/data/projects/fate/common/miniconda3/bin/pip install virtualenv-20.0.18-py2.py3-none-any.whl -f . --no-index
-
-/data/projects/fate/common/miniconda3/bin/virtualenv -p /data/projects/fate/common/miniconda3/bin/python3.6 --no-wheel --no-setuptools --no-download /data/projects/fate/common/python/venv
-
-source /data/projects/fate/common/python/venv/bin/activate
-pip install setuptools-42.0.2-py2.py3-none-any.whl
 ```
 
 ### 5.6  部署Spark & HDFS
@@ -325,13 +316,12 @@ pip install setuptools-42.0.2-py2.py3-none-any.whl
 #部署软件
 #在目标服务器（192.168.0.1 192.168.0.2）app用户下执行:
 cd /data/projects/install
-tar xf FATE_install_*.tar.gz
-cd FATE_install_*
+tar xf fate_install_*.tar.gz
+cd fate_install_*
 cp fate.env /data/projects/fate/
 cp RELEASE.md /data/projects/fate
 tar xvf bin.tar.gz -C /data/projects/fate/
 tar xvf conf.tar.gz -C /data/projects/fate/
-tar xvf build.tar.gz -C /data/projects/fate/
 tar xvf deploy.tar.gz -C /data/projects/fate/
 tar xvf examples.tar.gz -C /data/projects/fate/
 tar xvf fate.tar.gz -C /data/projects/fate/
@@ -348,7 +338,7 @@ export FATE_DEPLOY_BASE=\$fate_project_base
 
 export PYTHONPATH=/data/projects/fate/fateflow/python:/data/projects/fate/fate/python
 venv=/data/projects/fate/common/python/venv
-export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
+export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u345
 export PATH=\$PATH:\$JAVA_HOME/bin
 source \${venv}/bin/activate
 export FATE_LOG_LEVEL=DEBUG
@@ -357,9 +347,9 @@ EOF
 
 #安装依赖包
 cd /data/projects/install
-tar xvf pip-packages-fate-*.tar.gz
+tar xvf pip_packages_fate_*.tar.gz
 source /data/projects/fate/common/python/venv/bin/activate
-cd pip-packages-fate-*
+cd pip_packages_fate_*
 pip install -r /data/projects/fate/fate/python/requirements.txt -f ./ --no-index
 cd /data/projects/fate/fate/python/fate_client
 python setup.py install
@@ -381,89 +371,67 @@ pip list | wc -l
 
   fateflow.url，host：http://192.168.0.1:9380，guest：http://192.168.0.2:9380
 
-- 数据库连接串、账号和密码
-
-  fateboard.datasource.jdbc-url，host：mysql://192.168.0.1:3306，guest：mysql://192.168.0.2:3306
-
-  fateboard.datasource.username：fate
-
-  fateboard.datasource.password：fate_dev 
 
 ```
 #在目标服务器（192.168.0.1）app用户下修改执行
 cat > /data/projects/fate/fateboard/conf/application.properties <<EOF
 server.port=8080
 fateflow.url=http://192.168.0.1:9380
-spring.datasource.driver-Class-Name=com.mysql.cj.jdbc.Driver
+#priority is higher than {fateflow.url}, split by ;
+fateflow.url-list=
+fateflow.http_app_key=
+fateflow.http_secret_key=
 spring.http.encoding.charset=UTF-8
 spring.http.encoding.enabled=true
 server.tomcat.uri-encoding=UTF-8
-fateboard.datasource.jdbc-url=jdbc:mysql://192.168.0.1:3306/fate_flow?characterEncoding=utf8&characterSetResults=utf8&autoReconnect=true&failOverReadOnly=false&serverTimezone=GMT%2B8
-fateboard.datasource.username=fate
-fateboard.datasource.password=fate_dev
+fateboard.front_end.cors=false
+fateboard.front_end.url=http://localhost:8028
 server.tomcat.max-threads=1000
 server.tomcat.max-connections=20000
 spring.servlet.multipart.max-file-size=10MB
 spring.servlet.multipart.max-request-size=100MB
-spring.datasource.druid.filter.config.enabled=false
-spring.datasource.druid.web-stat-filter.enabled=false
-spring.datasource.druid.stat-view-servlet.enabled=false
+spring.servlet.session.timeout=1800s
 server.compression.enabled=true
 server.compression.mime-types=application/json,application/xml,text/html,text/xml,text/plain
 server.board.login.username=admin
 server.board.login.password=admin
+#only [h,m,s] is available
+server.servlet.session.timeout=4h
+server.servlet.session.cookie.max-age=4h
 management.endpoints.web.exposure.exclude=*
-#server.ssl.key-store=classpath:
-#server.ssl.key-store-password=
-#server.ssl.key-password=
-#server.ssl.key-alias=
-spring.session.store-type=jdbc
-spring.session.jdbc.initialize-schema=always
-HTTP_APP_KEY=
-HTTP_SECRET_KEY=
+feign.client.config.default.connectTimeout=10000
+feign.client.config.default.readTimeout=10000
 EOF
 
 #在目标服务器（192.168.0.2）app用户下修改执行
 cat > /data/projects/fate/fateboard/conf/application.properties <<EOF
 server.port=8080
 fateflow.url=http://192.168.0.2:9380
-spring.datasource.driver-Class-Name=com.mysql.cj.jdbc.Driver
+#priority is higher than {fateflow.url}, split by ;
+fateflow.url-list=
+fateflow.http_app_key=
+fateflow.http_secret_key=
 spring.http.encoding.charset=UTF-8
 spring.http.encoding.enabled=true
 server.tomcat.uri-encoding=UTF-8
-fateboard.datasource.jdbc-url=jdbc:mysql://192.168.0.2:3306/fate_flow?characterEncoding=utf8&characterSetResults=utf8&autoReconnect=true&failOverReadOnly=false&serverTimezone=GMT%2B8
-fateboard.datasource.username=fate
-fateboard.datasource.password=fate_dev
+fateboard.front_end.cors=false
+fateboard.front_end.url=http://localhost:8028
 server.tomcat.max-threads=1000
 server.tomcat.max-connections=20000
 spring.servlet.multipart.max-file-size=10MB
 spring.servlet.multipart.max-request-size=100MB
-spring.datasource.druid.filter.config.enabled=false
-spring.datasource.druid.web-stat-filter.enabled=false
-spring.datasource.druid.stat-view-servlet.enabled=false
+spring.servlet.session.timeout=1800s
 server.compression.enabled=true
 server.compression.mime-types=application/json,application/xml,text/html,text/xml,text/plain
 server.board.login.username=admin
 server.board.login.password=admin
+#only [h,m,s] is available
+server.servlet.session.timeout=4h
+server.servlet.session.cookie.max-age=4h
 management.endpoints.web.exposure.exclude=*
-#server.ssl.key-store=classpath:
-#server.ssl.key-store-password=
-#server.ssl.key-password=
-#server.ssl.key-alias=
-spring.session.store-type=jdbc
-spring.session.jdbc.initialize-schema=always
-HTTP_APP_KEY=
-HTTP_SECRET_KEY=
+feign.client.config.default.connectTimeout=10000
+feign.client.config.default.readTimeout=10000
 EOF
-```
-
-2）service.sh
-
-```
-#在目标服务器（192.168.0.1 192.168.0.2）app用户下修改执行
-cd /data/projects/fate/fateboard
-vi service.sh
-export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
 ```
 
 ### 6.3 FATE配置文件修改
@@ -493,7 +461,7 @@ default_engines:
 fateflow:
   proxy: nginx
 fate_on_spark:
-  nginx: 
+  nginx:
     host: 127.0.0.1
     http_port: 9390
     grpc_port: 9310
@@ -526,7 +494,7 @@ fate_on_spark:
     cluster: standalone
     tenant: fl-tenant
     topic_ttl: 5
-    route_table:    
+    route_table:
 
 ```
 - Spark的相关配置
@@ -545,7 +513,7 @@ fate_on_spark:
     - user：管理员用户
     - password: 管理员密码
     - route_table: 路由表信息，默认为空
-    
+
 - pulsar相关配置
     - host: 主机ip
     - port: brokerServicePort
@@ -572,7 +540,7 @@ export PYSPARK_PYTHON=/data/projects/fate/common/python/venv/bin/python
 export PYSPARK_DRIVER_PYTHON=/data/projects/fate/common/python/venv/bin/python
 ```
 
-##### 6.3.4 参考配置
+##### 6.3.4 fateflow配置文件参考配置
 
 此配置文件格式要按照yaml格式配置，不然解析报错，可以参考如下例子手工配置，也可以使用以下指令完成。
 
@@ -582,21 +550,36 @@ cat > /data/projects/fate/conf/service_conf.yaml <<EOF
 use_registry: false
 use_deserialize_safe_module: false
 dependent_distribution: false
+encrypt_password: false
+encrypt_module: fate_arch.common.encrypt_utils#pwdecrypt
+private_key:
+party_id:
+hook_module:
+  client_authentication: fate_flow.hook.flow.client_authentication
+  site_authentication: fate_flow.hook.flow.site_authentication
+  permission: fate_flow.hook.flow.permission
+hook_server_name:
+authentication:
+  client:
+    switch: false
+    http_app_key:
+    http_secret_key:
+  site:
+    switch: false
+permission:
+  switch: false
+  component: false
+  dataset: false
 fateflow:
   host: 192.168.0.1
   http_port: 9380
   grpc_port: 9360
-  http_app_key:
-  http_secret_key:
+  nginx:
+    host:
+    http_port:
+    grpc_port:
   proxy: nginx
   protocol: default
-fateboard:
-  host: 192.168.0.1
-  port: 8080
-default_engines:
-  computing: spark
-  federation: rabbitmq
-  storage: localfs
 database:
   name: fate_flow
   user: fate
@@ -605,11 +588,48 @@ database:
   port: 3306
   max_connections: 100
   stale_timeout: 30
+zookeeper:
+  hosts:
+    - 127.0.0.1:2181
+  use_acl: false
+  user: fate
+  password: fate
+default_engines:
+  computing: spark
+  federation: pulsar
+  storage: localfs
+fate_on_standalone:
+  standalone:
+    cores_per_node: 20
+    nodes: 1
+fate_on_eggroll:
+  clustermanager:
+    cores_per_node: 16
+    nodes: 1
+  rollsite:
+    host: 127.0.0.1
+    port: 9370
 fate_on_spark:
   spark:
     home:
     cores_per_node: 20
     nodes: 1
+  linkis_spark:
+    cores_per_node: 20
+    nodes: 2
+    host: 127.0.0.1
+    port: 9001
+    token_code: MLSS
+    python_path: /data/projects/fate/python
+  hive:
+    host: 127.0.0.1
+    port: 10000
+    auth_mechanism:
+    username:
+    password:
+  linkis_hive:
+    host: 127.0.0.1
+    port: 9001
   hdfs:
     name_node: hdfs://fate-cluster
     path_prefix:
@@ -620,18 +640,42 @@ fate_on_spark:
     user: fate
     password: fate
     route_table:
+    mode: replication
+    max_message_size: 1048576
   pulsar:
     host: 192.168.0.1
     port: 6650
-    mng_port: 8080
+    mng_port: 18080
     cluster: standalone
     tenant: fl-tenant
     topic_ttl: 5
     route_table:
+    mode: replication
+    max_message_size: 1048576
   nginx:
     host: 192.168.0.1
     http_port: 9300
     grpc_port: 9310
+fateboard:
+  host: 192.168.0.1
+  port: 8080
+enable_model_store: false
+model_store_address:
+  storage: mysql
+  name: fate_flow
+  user: fate
+  passwd: fate_dev
+  host: 127.0.0.1
+  port: 3306
+  max_connections: 10
+  stale_timeout: 10
+servings:
+  hosts:
+    - 127.0.0.1:8000
+fatemanager:
+  host: 127.0.0.1
+  port: 8001
+  federatedId: 0
 EOF
 
 #在目标服务器（192.168.0.2）app用户下修改执行
@@ -639,21 +683,36 @@ cat > /data/projects/fate/conf/service_conf.yaml <<EOF
 use_registry: false
 use_deserialize_safe_module: false
 dependent_distribution: false
+encrypt_password: false
+encrypt_module: fate_arch.common.encrypt_utils#pwdecrypt
+private_key:
+party_id:
+hook_module:
+  client_authentication: fate_flow.hook.flow.client_authentication
+  site_authentication: fate_flow.hook.flow.site_authentication
+  permission: fate_flow.hook.flow.permission
+hook_server_name:
+authentication:
+  client:
+    switch: false
+    http_app_key:
+    http_secret_key:
+  site:
+    switch: false
+permission:
+  switch: false
+  component: false
+  dataset: false
 fateflow:
   host: 192.168.0.2
   http_port: 9380
   grpc_port: 9360
-  http_app_key:
-  http_secret_key:
+  nginx:
+    host:
+    http_port:
+    grpc_port:
   proxy: nginx
   protocol: default
-fateboard:
-  host: 192.168.0.2
-  port: 8080
-default_engines:
-  computing: spark
-  federation: rabbitmq
-  storage: localfs
 database:
   name: fate_flow
   user: fate
@@ -662,11 +721,48 @@ database:
   port: 3306
   max_connections: 100
   stale_timeout: 30
+zookeeper:
+  hosts:
+    - 127.0.0.1:2181
+  use_acl: false
+  user: fate
+  password: fate
+default_engines:
+  computing: spark
+  federation: pulsar
+  storage: localfs
+fate_on_standalone:
+  standalone:
+    cores_per_node: 20
+    nodes: 1
+fate_on_eggroll:
+  clustermanager:
+    cores_per_node: 16
+    nodes: 1
+  rollsite:
+    host: 127.0.0.1
+    port: 9370
 fate_on_spark:
   spark:
     home:
     cores_per_node: 20
     nodes: 1
+  linkis_spark:
+    cores_per_node: 20
+    nodes: 2
+    host: 127.0.0.1
+    port: 9001
+    token_code: MLSS
+    python_path: /data/projects/fate/python
+  hive:
+    host: 127.0.0.1
+    port: 10000
+    auth_mechanism:
+    username:
+    password:
+  linkis_hive:
+    host: 127.0.0.1
+    port: 9001
   hdfs:
     name_node: hdfs://fate-cluster
     path_prefix:
@@ -677,22 +773,46 @@ fate_on_spark:
     user: fate
     password: fate
     route_table:
+    mode: replication
+    max_message_size: 1048576
   pulsar:
     host: 192.168.0.2
     port: 6650
-    mng_port: 8080
+    mng_port: 18080
     cluster: standalone
     tenant: fl-tenant
     topic_ttl: 5
     route_table:
+    mode: replication
+    max_message_size: 1048576
   nginx:
     host: 192.168.0.2
     http_port: 9300
     grpc_port: 9310
+fateboard:
+  host: 192.168.0.1
+  port: 8080
+enable_model_store: false
+model_store_address:
+  storage: mysql
+  name: fate_flow
+  user: fate
+  passwd: fate_dev
+  host: 127.0.0.1
+  port: 3306
+  max_connections: 10
+  stale_timeout: 10
+servings:
+  hosts:
+    - 127.0.0.1:8000
+fatemanager:
+  host: 127.0.0.1
+  port: 8001
+  federatedId: 0
 EOF
 ```
 
-##### 6.3.5 路由表配置
+##### 6.3.5 mq路由表配置
 
 **conf/rabbitmq_route_table.yaml**
 ```yaml
@@ -730,6 +850,66 @@ default:
   sslPort: 6651
 ```
 
+##### 6.3.6 Nginx路由配置文件修改
+
+配置文件:  /data/projects/fate/proxy/nginx/conf/route_table.yaml
+此配置文件Nginx使用，配置路由信息，可以参考如下例子手工配置，也可以使用以下指令完成：
+
+```
+#在目标服务器（192.168.0.1）app用户下修改执行
+cat > /data/projects/fate/proxy/nginx/conf/route_table.yaml << EOF
+default:
+  proxy:
+    - host: 192.168.0.2
+      http_port: 9300
+      grpc_port: 9310
+10000:
+  proxy:
+    - host: 192.168.0.1
+      http_port: 9300
+      grpc_port: 9310
+  fateflow:
+    - host: 192.168.0.1
+      http_port: 9380
+      grpc_port: 9360
+9999:
+  proxy:
+    - host: 192.168.0.2
+      http_port: 9300
+      grpc_port: 9310
+  fateflow:
+    - host: 192.168.0.2
+      http_port: 9380
+      grpc_port: 9360
+EOF
+
+#在目标服务器（192.168.0.2）app用户下修改执行
+cat > /data/projects/fate/proxy/nginx/conf/route_table.yaml << EOF
+default:
+  proxy:
+    - host: 192.168.0.1
+      http_port: 9300
+      grpc_port: 9310
+10000:
+  proxy:
+    - host: 192.168.0.1
+      http_port: 9300
+      grpc_port: 9310
+  fateflow:
+    - host: 192.168.0.1
+      http_port: 9380
+      grpc_port: 9360
+9999:
+  proxy:
+    - host: 192.168.0.2
+      http_port: 9300
+      grpc_port: 9310
+  fateflow:
+    - host: 192.168.0.2
+      http_port: 9380
+      grpc_port: 9360
+EOF
+```
 
 ## 7. 启动FATE服务
 
@@ -737,11 +917,13 @@ default:
 
 ```
 #启动FATE服务，FATE-Flow依赖MySQL的启动
-source /data/projects/fate/bin/init_env.sh
 cd /data/projects/fate/fateflow/bin
-sh service.sh start
+bash service.sh start
+#启动fateboard服务
 cd /data/projects/fate/fateboard
-sh service.sh start
+bash service.sh start
+#启动nginx服务
+/data/projects/fate/proxy/nginx/sbin/nginx -c /data/projects/fate/proxy/nginx/conf/nginx.conf
 ```
 
 ## 8. Fate client和Fate test配置
@@ -752,6 +934,10 @@ sh service.sh start
 #配置fate client
 source /data/projects/fate/bin/init_env.sh
 flow init -c /data/projects/fate/conf/service_conf.yaml
+#192.168.0.1执行
+pipeline init --ip 192.168.0.1 --port 9380
+#192.168.0.2执行
+pipeline init --ip 192.168.0.2 --port 9380
 
 #配置fate test
 source /data/projects/fate/bin/init_env.sh
@@ -764,7 +950,7 @@ parties:
   guest: [10000]
   - flow_services:
       - {address: 192.168.0.1:9380, parties: [10000]}
-      
+
 #192.168.0.2参数修改如下
 data_base_dir: /data/projects/fate
 fate_base: /data/projects/fate/fate
@@ -801,7 +987,7 @@ parties:
 
 ```
 source /data/projects/fate/bin/init_env.sh
-flow test toy -gid 10000 -hid 10000 
+flow test toy -gid 10000 -hid 10000
 ```
 
 类似如下结果表示成功：
@@ -856,11 +1042,10 @@ fate_test data upload -t min_test
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/min_test_task/
 #单边测试
-python run_task.py -gid 9999 -hid 9999 -aid 9999 -f fast
+flow test min -gid 9999 -hid 9999 -aid 9999 -t fast
 #双边测试
-python run_task.py -gid 9999 -hid 10000 -aid 10000 -f fast
+flow test min -gid 9999 -hid 10000 -aid 10000 -t fast
 ```
 
 其他一些可能有用的参数包括：
@@ -891,7 +1076,7 @@ FATEBoard是一项Web服务。如果成功启动了FATEBoard服务，则可以�
 ```bash
 source /data/projects/fate/init_env.sh
 cd /data/projects/fate/fateflow/bin
-sh service.sh start|stop|status|restart
+bash service.sh start|stop|status|restart
 ```
 
 如果逐个模块启动，需要先启动eggroll再启动fateflow，fateflow依赖eggroll的启动。
@@ -900,7 +1085,7 @@ sh service.sh start|stop|status|restart
 
 ```bash
 cd /data/projects/fate/fateboard
-sh service.sh start|stop|status|restart
+bash service.sh start|stop|status|restart
 ```
 
 3) 启动/关闭/重启NginX服务
@@ -917,7 +1102,7 @@ cd /data/projects/fate/proxy
 
 ```bash
 cd /data/projects/fate/common/mysql/mysql-8.0.13
-sh ./service.sh start|stop|status|restart
+bash ./service.sh start|stop|status|restart
 ```
 
 ### 11.2 查看进程和端口
@@ -953,6 +1138,4 @@ netstat -tlnp | grep 9390
 | fate_flow任务日志 | /data/projects/fate/fateflow/logs                    |
 | fateboard          | /data/projects/fate/fateboard/logs                 |
 | nginx | /data/projects/fate/proxy/nginx/logs                 |
-| mysql              | /data/projects/fate/common/mysql/mysql-8.0.13/logs |
-
-
+| mysql              | /data/projects/fate/common/mysql/mysql-*/logs |

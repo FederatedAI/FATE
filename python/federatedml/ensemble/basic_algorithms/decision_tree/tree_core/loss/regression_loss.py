@@ -15,6 +15,7 @@
 #
 
 import numpy as np
+import functools
 from federatedml.feature.instance import Instance
 from federatedml.util import consts
 from federatedml.statistic.statics import MultivariateStatisticalSummary
@@ -206,11 +207,8 @@ class LogCoshLoss(object):
 class TweedieLoss(object):
     @staticmethod
     def initialize(y):
-        y_inst = y.mapValues(lambda label: Instance(features=np.asarray([label])))
-        y_inst.schema = {"header": ["label"]}
-        statistics = MultivariateStatisticalSummary(y_inst, -1)
-        mean = statistics.get_mean()["label"]
-        return y.mapValues(lambda x: np.asarray([mean])), np.asarray([mean])
+        # init score = 0, equals to base_score=1.0 in xgb, init_score=log(base_score)=0
+        return y.mapValues(lambda x: np.asarray([0])), np.asarray([0])
 
     def __init__(self, rho=None):
         if rho is None:
@@ -220,19 +218,27 @@ class TweedieLoss(object):
 
     @staticmethod
     def predict(value):
-        return value
+        return np.exp(value)
+
+    @staticmethod
+    def _tweedie_loss(label, pred, rho):
+        if pred < 1e-10:
+            pred = 1e-10
+        a = label * np.exp((1 - rho) * np.log(pred)) / (1 - rho)
+        b = np.exp((2 - rho) * np.log(pred)) / (2 - rho)
+        return (-a + b), 1
 
     def compute_loss(self, y, y_pred):
-        tweedie_loss = y.join(y_pred,
-                              lambda y, yp:
-                              (-y * np.exp(1 - self.rho) * np.log(max(yp, consts.FLOAT_ZERO)) / (1 - self.rho) +
-                               np.exp(2 - self.rho) * np.log(max(consts.FLOAT_ZERO, yp)) / (2 - self.rho), 1))
+        loss_func = functools.partial(self._tweedie_loss, rho=self.rho)
+        tweedie_loss = y.join(y_pred, loss_func)
         tweedie_loss_sum, sample_num = tweedie_loss.reduce(lambda tuple1, tuple2:
                                                            (tuple1[0] + tuple2[0], tuple1[1] + tuple2[1]))
         return tweedie_loss_sum / sample_num
 
     def compute_grad(self, y, y_pred):
-        return -y * np.exp(1 - self.rho) * y_pred + np.exp(2 - self.rho) * y_pred
+        if y < 0:
+            raise ValueError('y < 0, in tweedie loss label must be non-negative, but got {}'.format(y))
+        return -y * np.exp((1 - self.rho) * y_pred) + np.exp((2 - self.rho) * y_pred)
 
     def compute_hess(self, y, y_pred):
-        return -y * (1 - self.rho) * np.exp(1 - self.rho) * y_pred + (2 - self.rho) * np.exp(2 - self.rho) * y_pred
+        return -y * (1 - self.rho) * np.exp((1 - self.rho) * y_pred) + (2 - self.rho) * np.exp((2 - self.rho) * y_pred)

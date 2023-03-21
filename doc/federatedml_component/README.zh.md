@@ -5,7 +5,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 1. 联邦统计: 包括隐私交集计算，并集计算，皮尔逊系数, PSI等
 2. 联邦信息检索：基于OT的PIR(SIR)
 3. 联邦特征工程：包括联邦采样，联邦特征分箱，联邦特征选择等。
-4. 联邦机器学习算法：包括横向和纵向的联邦LR, GBDT， DNN，迁移学习, 无监督学习等
+4. 联邦机器学习算法：包括横向和纵向的联邦LR, GBDT， DNN，迁移学习, 无监督学习，纵向半监督学习等
 5. 模型评估：提供对二分类，多分类，回归评估，聚类评估，联邦和单边对比评估
 6. 安全协议：提供了多种安全协议，以进行更安全的多方交互计算。
 
@@ -14,7 +14,6 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 
 | 算法                                                                             | 模块名                     | 描述                                                                                                  | 数据输入                          | 数据输出                                                                                              | 模型输入                                    | 模型输出                       |
 | ------------------------------------------------------------------------------ | ----------------------- | --------------------------------------------------------------------------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------- | -------------------------- |
-| [DataIO](data_transform.md)                                                             | DataIO                  | 该组件将原始数据转换为Instance对象(FATE-v1.7后会逐步弃用，使用DataTransform)。                                             | Table，值为原始数据                  | 转换后的数据表，值为[Data Instance](../../python/federatedml/feature/instance.py)的实例 |                                         | DataIO模型                   |
 | [DataTransform](data_transform.md)                                                      | DataTransform           | 该组件将原始数据转换为Instance对象。                                                                              | Table，值为原始数据                  | 转换后的数据表，值为[Data Instance](../../python/federatedml/feature/instance.py)的实例 |                                         | DataTransform模型            |
 | [Intersect](intersect.md)                                                     | Intersection            | 计算两方的相交数据集，而不会泄漏任何差异数据集的信息。主要用于纵向任务。                                                                | Table                         | 两方Table中相交的部分                                                                                     |                                         | Intersect模型                |
 | [Federated Sampling](sample.md)                           | FederatedSample         | 对数据进行联邦采样，使得数据分布在各方之间变得平衡。这一模块同时支持单机和集群版本。                                                          | Table                         | 采样后的数据，同时支持随机采样和分层采样                                                                              |                                         |                            |
@@ -52,6 +51,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 | [Label Transform](label_transform.md)                                    | LabelTransform                    | 转化输入数据与预测结果的标签值                                                                                     | Table, 值为Instance或预测结果        | Table, 值为标签转化后的Instance或预测结果                                                                      |                                         | LabelTransform Model       |
 | [Hetero SSHE Logistic Regression](logistic_regression.md)                                    | HeteroSSHELR            | 两方构建纵向逻辑回归（无可信第三方）                                                                     | Table, 值为Instance                           | Table, 值为Instance                                                      |                                                      | SSHE LR Model                                                    |
 | [Hetero SSHE Linear Regression](linear_regression.md)                                    | HeteroSSHELinR            | 两方构建纵向线性回归（无可信第三方）                                                                     | Table, 值为Instance                           | Table, 值为Instance                                                      |                                                      | SSHE LinR Model                                                    |
+| [Positive Unlabeled Learning](positive_unlabeled.md)                                   | PositiveUnlabeled | 构建positive unlabeled learning(PU learning)模型                                        | Table, 值为Instance                             | Table, 值为Instance                                                     |                                                      |     |
 
 
 ## 安全协议

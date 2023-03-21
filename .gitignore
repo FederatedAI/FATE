@@ -14,9 +14,11 @@ venv
 *.tar.gz
 *.db
 *.db-journal
+*.mdb
 .env
 
 # excluded paths
+/rust/**/target/
 /arch/core/target/
 /arch/driver/federation/target/
 /arch/eggroll/egg/target/
@@ -41,6 +43,7 @@ venv
 # /eggroll/
 # /fateboard/
 /doc/federatedml_component/params/
+/output/
 
 # build dir
 /FATE_install_*/

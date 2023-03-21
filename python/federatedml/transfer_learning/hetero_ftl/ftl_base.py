@@ -3,16 +3,15 @@ import json
 import functools
 import numpy as np
 from federatedml.util import LOGGER
-from federatedml.nn.homo_nn.nn_model import get_nn_builder
+from federatedml.transfer_learning.hetero_ftl.backend.nn_model import get_nn_builder
 from federatedml.model_base import ModelBase
 from federatedml.param.ftl_param import FTLParam
-from federatedml.nn.homo_nn.nn_model import NNModel
-from federatedml.nn.backend.tf_keras.nn_model import KerasNNModel
+from federatedml.transfer_learning.hetero_ftl.backend.tf_keras.nn_model import KerasNNModel
 from federatedml.util.classify_label_checker import ClassifyLabelChecker
 from federatedml.transfer_variable.transfer_class.ftl_transfer_variable import FTLTransferVariable
 from federatedml.transfer_learning.hetero_ftl.ftl_dataloder import FTLDataLoader
-from federatedml.nn.hetero_nn.backend.tf_keras.data_generator import KerasSequenceDataConverter
-from federatedml.nn.hetero_nn.util import random_number_generator
+from federatedml.transfer_learning.hetero_ftl.backend.tf_keras.data_generator import KerasSequenceDataConverter
+from federatedml.nn.backend.utils import rng as random_number_generator
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.util import consts
 from federatedml.secureprotol.paillier_tensor import PaillierTensor
@@ -36,7 +35,7 @@ class FTL(ModelBase):
         self.use_first_metric_only = None
         self.optimizer = None
         self.intersect_param = None
-        self.config_type = None
+        self.config_type = 'keras'
         self.comm_eff = None
         self.local_round = 1
 
@@ -57,6 +56,7 @@ class FTL(ModelBase):
         self.batch_size = None
         self.epochs = None
         self.store_header = None  # header of input data table
+        self.model_float_type = np.float32
 
         self.cache_dataloader = {}
 
@@ -71,7 +71,6 @@ class FTL(ModelBase):
         self.validation_freqs = param.validation_freqs
         self.optimizer = param.optimizer
         self.intersect_param = param.intersect_param
-        self.config_type = param.config_type
         self.batch_size = param.batch_size
         self.epochs = param.epochs
         self.mode = param.mode
@@ -204,6 +203,10 @@ class FTL(ModelBase):
 
         return data_loader, data_loader.x_shape, data_inst.count(), len(data_loader.get_overlap_indexes())
 
+    def get_model_float_type(self, nn):
+        weights = nn.get_trainable_weights()
+        self.model_float_type = weights[0].dtype
+
     def initialize_nn(self, input_shape):
         """
         initializing nn weights
@@ -211,8 +214,9 @@ class FTL(ModelBase):
 
         loss = "keep_predict_loss"
         self.nn_builder = get_nn_builder(config_type=self.config_type)
-        self.nn: NNModel = self.nn_builder(loss=loss, nn_define=self.nn_define, optimizer=self.optimizer, metrics=None,
-                                           input_shape=input_shape)
+        self.nn = self.nn_builder(loss=loss, nn_define=self.nn_define, optimizer=self.optimizer, metrics=None,
+                                  input_shape=input_shape)
+        self.get_model_float_type(self.nn)
 
         LOGGER.debug('printing nn layers structure')
         for layer in self.nn._model.layers:
@@ -235,6 +239,8 @@ class FTL(ModelBase):
         """
         compute gradient for a mini batch
         """
+        X_batch = X_batch.astype(self.model_float_type)
+        backward_grads_batch = backward_grads_batch.astype(self.model_float_type)
         grads = self.nn.get_weight_gradients(X_batch, backward_grads_batch)
         return grads
 
@@ -316,7 +322,7 @@ class FTL(ModelBase):
         self.optimizer.optimizer = model_meta.optimizer_param.optimizer
         self.optimizer.kwargs = json.loads(model_meta.optimizer_param.kwargs)
 
-        self.initialize_nn((self.input_dim, ))
+        self.initialize_nn((self.input_dim,))
 
     def set_model_param(self, model_param):
 

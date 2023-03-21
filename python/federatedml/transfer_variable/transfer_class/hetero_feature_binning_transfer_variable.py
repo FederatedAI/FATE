@@ -35,3 +35,8 @@ class HeteroFeatureBinningTransferVariable(BaseTransferVariables):
         self.optimal_info = self._create_variable(name='optimal_info', src=['host'], dst=['guest'])
         self.encrypted_label = self._create_variable(name='encrypted_label', src=['guest'], dst=['host'])
         self.paillier_pubkey = self._create_variable(name='paillier_pubkey', src=['guest'], dst=['host'])
+        self.transform_stage_has_label = self._create_variable(
+            name="transform_stage_has_label", src=['guest'], dst=['host'])
+        self.host_anonymous_header_dict = self._create_variable(name='host_anonymous_header_dict',
+                                                                src=['host'],
+                                                                dst=['guest'])

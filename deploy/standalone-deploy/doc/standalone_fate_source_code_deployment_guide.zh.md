@@ -12,8 +12,6 @@
 | **操作系统** | Version: CentOS Linux release 7      |
 | **用户**     | User: app owner:apps                 |
 
-注意，如下示例中的${version}，请用实际的版本号替换，参考[fate.env](../../../fate.env)文件中的FATE版本
-
 ## 2. 部署前环境检查
 
 本地8080、9360、9380端口是否被占用
@@ -26,9 +24,9 @@ netstat -apln|grep 9380
 
 ## 3. 获取源代码
 
-请参考[获取源代码](../../../build/common/get_source_code.zh.md), 完成后,
+请使用 git clone 本仓库及所有 submodules，然后设置部署所需环境变量
 
-请设置部署所需环境变量(注意, 通过以下方式设置的环境变量仅在当前终端会话有效, 若打开新的终端会话, 如重新登录或者新窗口, 请重新设置)
+注意：通过以下方式设置的环境变量仅在当前终端会话有效, 若打开新的终端会话, 如重新登录或者新窗口, 请重新设置
 
 ```bash
 cd {上述代码的存放目录}
@@ -36,35 +34,17 @@ export FATE_PROJECT_BASE=$PWD
 export version=`grep "FATE=" ${FATE_PROJECT_BASE}/fate.env | awk -F "=" '{print $2}'`
 ```
 
-样例:
-
-```bash
-cd /xxx/FATE
-export FATE_PROJECT_BASE=$PWD
-export version=`grep "FATE=" ${FATE_PROJECT_BASE}/fate.env | awk -F "=" '{print $2}'`
-```
-
 ## 4. 安装并配置Python环境
 
-### 4.1 安装Python环境(可选)
+### 4.1 安装Python环境（可选）
 
-请安装或者使用已有的Python 3.6 或者 3.7 版本，最好使用3.6.5，其为FATE团队官方大量测试版本
+请安装或者使用已有的 Python 3.8 版本
 
 ### 4.2 为FATE配置虚拟环境
 
 ```bash
-virtualenv --version
-```
-
-若能正常返回版本信息, 则虚拟环境工具已安装, 若提示命令不存在, 请自行安装，大多情况下可以使用类似命令安装
-
-```bash
-pip install virtualenv
-```
-
-```bash
 cd(or create) {放置虚拟环境的根目录}
-virtualenv {虚拟环境名称}
+python3 -m venv {虚拟环境名称}
 export FATE_VENV_BASE={放置虚拟环境的根目录}/{虚拟环境名称}
 source ${FATE_VENV_BASE}/bin/activate
 ```
@@ -72,13 +52,13 @@ source ${FATE_VENV_BASE}/bin/activate
 ### 4.3 安装FATE所需要的Python依赖包
 
 ```bash
-cd ${FATE_PROJECT_BASE};
-bash bin/install_os_dependencies.sh;
-source ${FATE_VENV_BASE}/bin/activate;
+cd ${FATE_PROJECT_BASE}
+bash bin/install_os_dependencies.sh
+source ${FATE_VENV_BASE}/bin/activate
 pip install -r python/requirements.txt
 ```
 
-如果出现相关问题, 可以先参考[可能遇到的问题](#11-可能会遇到的问题)
+如果出现相关问题, 可以先参考[可能遇到的问题](#10-可能会遇到的问题)
 
 ## 5. 配置FATE
 
@@ -86,7 +66,7 @@ pip install -r python/requirements.txt
 
 ```bash
 cd ${FATE_PROJECT_BASE}
-sed -i.bak "s#PYTHONPATH=.*#PYTHONPATH=$PWD/python:$PWD/fateflow/python#g" bin/init_env.sh;
+sed -i.bak "s#PYTHONPATH=.*#PYTHONPATH=$PWD/python:$PWD/fateflow/python#g" bin/init_env.sh
 sed -i.bak "s#venv=.*#venv=${FATE_VENV_BASE}#g" bin/init_env.sh
 ```
 
@@ -102,10 +82,11 @@ default_engines:
 ## 6. 启动fate flow server
 
 ```bash
-cd ${FATE_PROJECT_BASE};
-source bin/init_env.sh;
-cd fateflow;
-bash bin/service.sh status;
+cd ${FATE_PROJECT_BASE}
+source bin/init_env.sh
+
+cd fateflow
+bash bin/service.sh status
 bash bin/service.sh start
 ```
 
@@ -121,16 +102,17 @@ python  111907  app   13u  IPv4 3570158827      0t0  TCP localhost:9360 (LISTEN)
 ## 7. 安装fate client
 
 ```bash
-cd ${FATE_PROJECT_BASE};
-source bin/init_env.sh;
-cd python/fate_client/;
+cd ${FATE_PROJECT_BASE}
+source bin/init_env.sh
+
+cd python/fate_client/
 python setup.py install
 ```
 
 初始化`fate flow client`
 
 ```bash
-cd ../../;
+cd ../../
 flow init -c conf/service_conf.yaml
 ```
 
@@ -160,7 +142,7 @@ flow init -c conf/service_conf.yaml
 ### 8.2 单元测试
 
    ```bash
-   cd ${FATE_PROJECT_BASE};
+   cd ${FATE_PROJECT_BASE}
    bash ./python/federatedml/test/run_test.sh
    ```
 
@@ -175,44 +157,44 @@ Please refer [here](../../../examples/pipeline/../README.zh.md) for a quick star
 
 您还可以通过浏览器体验算法过程看板，请参照[编译包安装fateboard](#9-编译包安装fateboard建议可选)
 
-## 9. 编译包安装fateboard(建议可选)
+## 9. 编译fateboard（可选）
 
 使用fateboard可视化FATE Job
 
-### 9.1 安装并配置Java环境
+### 9.1 配置Java环境
 
 ```bash
-cd ${FATE_PROJECT_BASE};
-mkdir -p env/jdk;
-cd env/jdk
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/jdk-8u192.tar.gz;
+mkdir ${FATE_PROJECT_BASE}/env
+cd ${FATE_PROJECT_BASE}/env
+
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/jdk-8u192.tar.gz
 tar xzf jdk-8u192.tar.gz
+
+wget https://dlcdn.apache.org/maven/maven-3/3.8.6/binaries/apache-maven-3.8.6-bin.tar.gz
+tar xzf apache-maven-3.8.6-bin.tar.gz
 ```
 
 配置环境变量
 
 ```bash
-cd ${FATE_PROJECT_BASE};
-vim bin/init_env.sh;
-sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=$PWD/env/jdk/jdk-8u192/#g" bin/init_env.sh
+export JAVA_HOME=${FATE_PROJECT_BASE}/env/jdk-8u192
+
+cd ${FATE_PROJECT_BASE}
+sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=${JAVA_HOME}#g" bin/init_env.sh
 ```
 
-### 9.2 下载编译包安装fateboard
+### 9.2 编译fateboard
 
 ```bash
-cd ${FATE_PROJECT_BASE};
-mv fateboard fateboard_code;
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/fateboard.tar.gz;
-tar xzf fateboard.tar.gz;
-sed -i.bak "s#fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:sqlite:$PWD/fate_sqlite.db#g" $PWD/fateboard/conf/application.properties;
-sed -i.bak "s#fateflow.url=.*#fateflow.url=http://localhost:9380#g" $PWD/fateboard/conf/application.properties
+cd ${FATE_PROJECT_BASE}/fateboard
+${FATE_PROJECT_BASE}/env/apache-maven-3.8.6/bin/mvn -DskipTests clean package
 ```
 
 ### 9.3 启动fateboard
 
 ```bash
-cd fateboard;
-bash service.sh status;
+cd ${FATE_PROJECT_BASE}/fateboard
+bash service.sh status
 bash service.sh start
 ```
 
@@ -225,13 +207,9 @@ status:
         app      116985  333  1.7 5087004 581460 pts/2  Sl+  14:11   0:06 /xx/FATE/env/jdk/jdk-8u192//bin/java -Dspring.config.location=/xx/FATE/fateboard/conf/application.properties -Dssh_config_file=/xx/FATE/fateboard/ssh/ -Xmx2048m -Xms2048m -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:gc.log -XX:+HeapDumpOnOutOfMemoryError -jar /xx/FATE/fateboard/fateboard.jar
 ```
 
-访问：Http://${ip}:8080, ip为`127.0.0.1`或本机实际ip
+访问：http://${ip}:8080, ip为`127.0.0.1`或本机实际ip
 
-## 10. 源码安装fateboard
-
-请参考[FATEBoard仓库](https://github.com/FederatedAI/FATE-Board)
-
-## 11. 可能会遇到的问题
+## 10. 可能会遇到的问题
 
 - 如果出现"Too many open files"类似错误，可能是因为操作系统句柄数配置过低
   - 对于MacOS, 可以尝试[这里](https://superuser.com/questions/433746/is-there-a-fix-for-the-too-many-open-files-in-system-error-on-os-x-10-7-1)

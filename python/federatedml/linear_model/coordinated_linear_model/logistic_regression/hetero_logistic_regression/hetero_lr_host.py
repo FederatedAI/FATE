@@ -71,7 +71,7 @@ class HeteroLRHost(HeteroLRBase):
 
         self.header = self.get_header(data_instances)
         model_shape = self.get_features_shape(data_instances)
-        self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
+        self.cipher_operator = self.cipher.gen_paillier_cipher_operator(method=self.model_param.encrypt_param.method)
 
         self.batch_generator.initialize_batch_generator(data_instances, shuffle=self.shuffle)
         if self.batch_generator.batch_masked:

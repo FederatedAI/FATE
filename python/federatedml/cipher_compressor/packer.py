@@ -1,6 +1,6 @@
 import functools
 from federatedml.util import LOGGER
-from federatedml.secureprotol import PaillierEncrypt
+from federatedml.secureprotol import PaillierEncrypt, IpclPaillierEncrypt
 from federatedml.cipher_compressor.compressor import get_homo_encryption_max_int
 from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 from federatedml.cipher_compressor.compressor import PackingCipherTensor
@@ -8,6 +8,7 @@ from federatedml.cipher_compressor.compressor import CipherPackage
 from federatedml.transfer_variable.transfer_class.cipher_compressor_transfer_variable \
     import CipherCompressorTransferVariable
 from federatedml.util import consts
+from typing import Union
 
 
 def cipher_list_to_cipher_tensor(cipher_list: list):
@@ -17,7 +18,7 @@ def cipher_list_to_cipher_tensor(cipher_list: list):
 
 class GuestIntegerPacker(object):
 
-    def __init__(self, pack_num: int, pack_num_range: list, encrypter: PaillierEncrypt,
+    def __init__(self, pack_num: int, pack_num_range: list, encrypter: Union[PaillierEncrypt, IpclPaillierEncrypt],
                  sync_para=True):
         """
         max_int: max int allowed for packing result

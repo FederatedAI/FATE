@@ -26,7 +26,6 @@ class FeatureImputationParam(BaseParam):
 
     Parameters
     ----------
-
     default_value : None or single object type or list
         the value to replace missing value.
         if None, it will use default value defined in federatedml/feature/imputer.py,
@@ -34,25 +33,21 @@ class FeatureImputationParam(BaseParam):
         if list, it's length should be the same as input data' feature dimension,
             means that if some column happens to have missing values, it will replace it
             the value by element in the identical position of this list.
-
     missing_fill_method : [None, 'min', 'max', 'mean', 'designated']
         the method to replace missing value
-
     col_missing_fill_method: None or dict of (column name, missing_fill_method) pairs
         specifies method to replace missing value for each column;
         any column not specified will take missing_fill_method,
         if missing_fill_method is None, unspecified column will not be imputed;
-
     missing_impute : None or list
         element of list can be any type, or auto generated if value is None, define which values to be consider as missing, default: None
-
     need_run: bool, default True
         need run or not
-
     """
 
     def __init__(self, default_value=0, missing_fill_method=None, col_missing_fill_method=None,
                  missing_impute=None, need_run=True):
+        super(FeatureImputationParam, self).__init__()
         self.default_value = default_value
         self.missing_fill_method = missing_fill_method
         self.col_missing_fill_method = col_missing_fill_method

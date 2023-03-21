@@ -30,7 +30,6 @@ class EncryptParam(BaseParam):
         If method is 'Paillier', Paillier encryption will be used for federated ml.
         To use non-encryption version in HomoLR, set this to None.
         For detail of Paillier encryption, please check out the paper mentioned in README file.
-
     key_length : int, default: 1024
         Used to specify the length of key in this encryption method.
 
@@ -56,6 +55,8 @@ class EncryptParam(BaseParam):
                 LOGGER.warning('Iterative Affine and Random Iterative Affine are not supported in version>=1.7.1 '
                                'due to safety concerns, encrypt method will be reset to Paillier')
                 self.method = consts.PAILLIER
+            elif user_input == "ipcl":
+                self.method = consts.PAILLIER_IPCL
             else:
                 raise ValueError(
                     "encrypt_param's method {} not supported".format(user_input))

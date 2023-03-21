@@ -130,7 +130,7 @@
             "conf": "./hetero_nn_epsilon_5k_config.yaml"
         },
         "compare_setting": {
-            "relative_tol": 0.01
+            "relative_tol": 0.05
         }
     },
     "hetero_nn-multi-0": {

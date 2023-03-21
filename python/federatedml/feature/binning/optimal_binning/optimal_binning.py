@@ -20,7 +20,6 @@ import copy
 import functools
 import math
 import operator
-import time
 
 import numpy as np
 
@@ -56,7 +55,8 @@ class OptimalBinning(BaseBinning):
 
     def fit_split_points(self, data_instances):
         header = data_overview.get_header(data_instances)
-        self._default_setting(header)
+        anonymous_header = data_overview.get_anonymous_header(data_instances)
+        self._default_setting(header, anonymous_header)
 
         if (self.event_total and self.non_event_total) is None:
             self.event_total, self.non_event_total = self.get_histogram(data_instances)
@@ -74,27 +74,31 @@ class OptimalBinning(BaseBinning):
             optimal_binning_method = functools.partial(self.merge_optimal_binning,
                                                        optimal_param=self.optimal_param,
                                                        sample_count=sample_count)
+            result_bucket = bucket_table.mapValues(optimal_binning_method)
+            for col_name, (min_heap, bucket_list, non_mixture_num, small_size_num) in result_bucket.collect():
+                split_points = np.unique([bucket.right_bound for bucket in bucket_list]).tolist()
+                self.bin_results.put_col_split_points(col_name, split_points)
+                metric_array = [node.score for node in min_heap.node_list]
+                self.bin_results.put_col_optimal_metric_array(col_name, metric_array)
+                # LOGGER.debug(f"column {col_name}, split_points: {split_points}, metric array: {metric_array}")
+                self.bucket_lists[col_name] = bucket_list
         else:
             optimal_binning_method = functools.partial(self.split_optimal_binning,
                                                        optimal_param=self.optimal_param,
                                                        sample_count=sample_count)
-        result_bucket = bucket_table.mapValues(optimal_binning_method)
-        for col_name, (bucket_list, non_mixture_num, small_size_num) in result_bucket.collect():
-            split_points = np.unique([bucket.right_bound for bucket in bucket_list]).tolist()
-
-            self.bin_results.put_col_split_points(col_name, split_points)
-            # self.__cal_single_col_result(col_name, bucket_list)
-            self.bucket_lists[col_name] = bucket_list
+            result_bucket = bucket_table.mapValues(optimal_binning_method)
+            for col_name, (bucket_list, non_mixture_num, small_size_num, res_ks_array) in result_bucket.collect():
+                split_points = np.unique([bucket.right_bound for bucket in bucket_list]).tolist()
+                self.bin_results.put_col_split_points(col_name, split_points)
+                self.bin_results.put_col_optimal_metric_array(col_name, res_ks_array)
+                # LOGGER.debug(f"column {col_name}, split_points: {split_points}, metric array: {res_ks_array}")
+                self.bucket_lists[col_name] = bucket_list
         return result_bucket
-
-    # def __cal_single_col_result(self, col_name, bucket_list):
-    #     result_counts = [[b.event_count, b.non_event_count] for b in bucket_list]
-    #     col_result_obj = self.woe_1d(result_counts, self.adjustment_factor)
-    #     self.bin_results.put_col_results(col_name, col_result_obj)
 
     def init_bucket(self, data_instances):
         header = data_overview.get_header(data_instances)
-        self._default_setting(header)
+        anonymous_header = data_overview.get_anonymous_header(data_instances)
+        self._default_setting(header, anonymous_header)
 
         init_bucket_param = copy.deepcopy(self.params)
         init_bucket_param.bin_num = self.optimal_param.init_bin_nums
@@ -155,7 +159,7 @@ class OptimalBinning(BaseBinning):
     @staticmethod
     def merge_bucket_list(list1, list2):
         if len(list1) != len(list2):
-            raise AssertionError("In merge bucket list, len of two list are not equal")
+            raise AssertionError("In merge bucket list, len of two lists are not equal")
         result = []
         for idx, b1 in enumerate(list1):
             b2 = list2[idx]
@@ -191,7 +195,6 @@ class OptimalBinning(BaseBinning):
 
     @staticmethod
     def merge_optimal_binning(bucket_list, optimal_param: OptimalBinningParam, sample_count):
-        t0 = time.time()
         max_item_num = math.floor(optimal_param.max_bin_pct * sample_count)
         min_item_num = math.ceil(optimal_param.min_bin_pct * sample_count)
         bucket_dict = {idx: bucket for idx, bucket in enumerate(bucket_list)}
@@ -202,12 +205,11 @@ class OptimalBinning(BaseBinning):
         min_heap = heap.MinHeap()
 
         def _add_heap_nodes(constraint=None):
-            LOGGER.debug("Add heap nodes, constraint: {}, dict_length: {}".format(constraint, len(bucket_dict)))
+            # LOGGER.debug(f"Add heap nodes, constraint: {}, dict_length: {}".format(constraint, len(bucket_dict)))
             this_non_mixture_num = 0
             this_small_size_num = 0
             # Make bucket satisfy mixture condition
 
-            # for i in bucket_dict.keys():
             for i in range(len(bucket_dict)):
                 left_bucket = bucket_dict[i]
                 right_bucket = bucket_dict.get(left_bucket.right_neighbor_idx)
@@ -397,18 +399,17 @@ class OptimalBinning(BaseBinning):
             return aim_var
 
         if optimal_param.mixture:
-            LOGGER.debug("Before mixture add, dick length: {}".format(len(bucket_dict)))
+            LOGGER.debug(f"Before mixture add, dict length: {len(bucket_dict)}")
             min_heap, non_mixture_num, small_size_num = _add_heap_nodes(constraint='mixture')
             min_heap, non_mixture_num = _merge_heap(constraint='mixture', aim_var=non_mixture_num)
             bucket_dict = _update_bucket_info(bucket_dict)
 
             min_heap, non_mixture_num, small_size_num = _add_heap_nodes(constraint='single_mixture')
             min_heap, non_mixture_num = _merge_heap(constraint='single_mixture', aim_var=non_mixture_num)
-            LOGGER.debug("After mixture merge, min_heap size: {}, non_mixture_num: {}".format(min_heap.size,
-                                                                                              non_mixture_num))
+            LOGGER.debug(f"After mixture merge, min_heap size: {min_heap.size}, non_mixture_num: {non_mixture_num}")
             bucket_dict = _update_bucket_info(bucket_dict)
 
-        LOGGER.debug("Before small_size add, dick length: {}".format(len(bucket_dict)))
+        LOGGER.debug(f"Before small_size add, dict length: {len(bucket_dict)}")
         min_heap, non_mixture_num, small_size_num = _add_heap_nodes(constraint='small_size')
         min_heap, small_size_num = _merge_heap(constraint='small_size', aim_var=small_size_num)
         bucket_dict = _update_bucket_info(bucket_dict)
@@ -418,11 +419,11 @@ class OptimalBinning(BaseBinning):
 
         bucket_dict = _update_bucket_info(bucket_dict)
 
-        LOGGER.debug("Before add, dick length: {}".format(len(bucket_dict)))
+        # LOGGER.debug(f"Before add, dict length: {len(bucket_dict)}")
         min_heap, non_mixture_num, small_size_num = _add_heap_nodes()
-        LOGGER.debug("After normal add, small_size: {}, min_heap size: {}".format(small_size_num, min_heap.size))
+        # LOGGER.debug("After normal add, small_size: {}, min_heap size: {}".format(small_size_num, min_heap.size))
         min_heap, total_bucket_num = _merge_heap(aim_var=len(bucket_dict) - final_max_bin)
-        LOGGER.debug("After normal merge, min_heap size: {}".format(min_heap.size))
+        # LOGGER.debug("After normal merge, min_heap size: {}".format(min_heap.size))
 
         non_mixture_num = 0
         small_size_num = 0
@@ -434,9 +435,9 @@ class OptimalBinning(BaseBinning):
         bucket_res = list(bucket_dict.values())
         bucket_res = sorted(bucket_res, key=lambda bucket: bucket.left_bound)
 
-        LOGGER.debug("Before return, dick length: {}".format(len(bucket_dict)))
-        # LOGGER.info(f"Consume time: {time.time() - t0}")
-        return bucket_res, non_mixture_num, small_size_num
+        # LOGGER.debug("Before return, dict length: {}".format(len(bucket_dict)))
+        # LOGGER.debug(f"Before return, min heap node list length: {len(min_heap.node_list)}")
+        return min_heap, bucket_res, non_mixture_num, small_size_num
 
     @staticmethod
     def split_optimal_binning(bucket_list, optimal_param: OptimalBinningParam, sample_count):
@@ -503,6 +504,7 @@ class OptimalBinning(BaseBinning):
             return res_bucket
 
         res_split_index = []
+        res_split_ks = {}
         to_split_pair = [(0, len(bucket_list))]
 
         # iteratively split
@@ -521,6 +523,7 @@ class OptimalBinning(BaseBinning):
             if res_dict.get('left_total') < min_item_num or res_dict.get('right_total') < min_item_num:
                 continue
             res_split_index.append(best_index + 1)
+            res_split_ks[best_index + 1] = best_ks
 
             if res_dict.get('right_total') > res_dict.get('left_total'):
                 to_split_pair.append((best_index + 1, end))
@@ -534,6 +537,12 @@ class OptimalBinning(BaseBinning):
             LOGGER.warning("Best ks optimal binning fail to split. Take middle split point instead")
             res_split_index.append(len(bucket_list) // 2)
         res_split_index = sorted(res_split_index)
+
+        res_ks = []
+        if res_split_ks:
+            res_ks = [res_split_ks[idx] for idx in res_split_index]
+            # last bin
+            # res_ks.append(0.0)
         res_split_index.append(len(bucket_list))
         start = 0
         bucket_res = []
@@ -547,7 +556,8 @@ class OptimalBinning(BaseBinning):
             if new_bucket.total_count < min_item_num:
                 small_size_num += 1
             start = end
-        return bucket_res, non_mixture_num, small_size_num
+
+        return bucket_res, non_mixture_num, small_size_num, res_ks
 
     def bin_sum_to_bucket_list(self, bin_sum, partitions):
         """

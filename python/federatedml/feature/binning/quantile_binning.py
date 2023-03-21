@@ -74,9 +74,10 @@ class QuantileBinning(BaseBinning):
                             }
         """
         header = data_overview.get_header(data_instances)
+        anonymous_header = data_overview.get_anonymous_header(data_instances)
         LOGGER.debug("Header length: {}".format(len(header)))
 
-        self._default_setting(header)
+        self._default_setting(header, anonymous_header)
         # self._init_cols(data_instances)
         percent_value = 1.0 / self.bin_num
 
@@ -130,17 +131,6 @@ class QuantileBinning(BaseBinning):
             return np.unique(split_points)
         else:
             return np.array(split_points)
-        """
-        split_point = []
-        for percent_rate in percentile_rate:
-            s_p = summary.query(percent_rate)
-            if not allow_duplicate:
-                if s_p not in split_point:
-                    split_point.append(s_p)
-            else:
-                split_point.append(s_p)
-        return np.array(split_point)
-        """
 
     @staticmethod
     def feature_summary(data_iter, params, cols_dict, abnormal_list, header, is_sparse):

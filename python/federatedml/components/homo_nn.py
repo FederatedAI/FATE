@@ -29,13 +29,13 @@ def homo_nn_param():
 
 @homo_nn_cpn_meta.bind_runner.on_guest.on_host
 def homo_nn_runner_client():
-    from federatedml.nn.homo_nn.enter_point import HomoNNDefaultClient
+    from federatedml.nn.homo.client import HomoNNClient
 
-    return HomoNNDefaultClient
+    return HomoNNClient
 
 
 @homo_nn_cpn_meta.bind_runner.on_arbiter
 def homo_nn_runner_arbiter():
-    from federatedml.nn.homo_nn.enter_point import HomoNNDefaultServer
+    from federatedml.nn.homo.server import HomoNNServer
 
-    return HomoNNDefaultServer
+    return HomoNNServer

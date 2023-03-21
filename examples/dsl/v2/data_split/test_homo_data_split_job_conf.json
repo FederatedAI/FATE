@@ -17,7 +17,7 @@
             "homo_data_split_0": {
                 "test_size": 0.3,
                 "validate_size": 0.2,
-                "stratified": true
+                "stratified": false
             }
         },
         "role": {

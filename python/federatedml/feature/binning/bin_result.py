@@ -24,7 +24,7 @@ from federatedml.util import LOGGER
 
 class BinColResults(object):
     def __init__(self, woe_array=(), iv_array=(), event_count_array=(), non_event_count_array=(),
-                 event_rate_array=(), non_event_rate_array=(), iv=None):
+                 event_rate_array=(), non_event_rate_array=(), iv=None, optimal_metric_array=()):
         self.woe_array = list(woe_array)
         self.iv_array = list(iv_array)
         self.event_count_array = list(event_count_array)
@@ -40,6 +40,7 @@ class BinColResults(object):
                 iv += (non_event_rate - event_rate) * woe
         self.iv = iv
         self._bin_anonymous = None
+        self.optimal_metric_array = list(optimal_metric_array)
 
     @property
     def bin_anonymous(self):
@@ -55,6 +56,9 @@ class BinColResults(object):
 
     def set_split_points(self, split_points):
         self.split_points = split_points
+
+    def set_optimal_metric(self, metric_array):
+        self.optimal_metric_array = metric_array
 
     def get_split_points(self):
         return np.array(self.split_points)
@@ -91,19 +95,11 @@ class BinColResults(object):
         self.non_event_rate_array = list(iv_obj.non_event_rate_array)
         self.split_points = list(iv_obj.split_points)
         self.iv = iv_obj.iv
+        # new attribute since ver 1.10
+        if hasattr(iv_obj, "optimal_metric_array"):
+            self.optimal_metric_array = list(iv_obj.optimal_metric_array)
 
     def generate_pb_dict(self):
-        # result = feature_binning_param_pb2.IVParam(woe_array=self.woe_array,
-        #                                            iv_array=self.iv_array,
-        #                                            event_count_array=self.event_count_array,
-        #                                            non_event_count_array=self.non_event_count_array,
-        #                                            event_rate_array=self.event_rate_array,
-        #                                            non_event_rate_array=self.non_event_rate_array,
-        #                                            split_points=self.split_points,
-        #                                            iv=self.iv,
-        #                                            is_woe_monotonic=self.is_woe_monotonic,
-        #                                            bin_nums=self.bin_nums,
-        #                                            bin_anonymous=self.bin_anonymous)
         result = {
             "woe_array": self.woe_array,
             "iv_array": self.iv_array,
@@ -115,7 +111,8 @@ class BinColResults(object):
             "iv": self.iv,
             "is_woe_monotonic": self.is_woe_monotonic,
             "bin_nums": self.bin_nums,
-            "bin_anonymous": self.bin_anonymous
+            "bin_anonymous": self.bin_anonymous,
+            "optimal_metric_array": self.optimal_metric_array
         }
         return result
 
@@ -123,13 +120,21 @@ class BinColResults(object):
 class SplitPointsResult(object):
     def __init__(self):
         self.split_results = {}
+        self.optimal_metric = {}
 
     def put_col_split_points(self, col_name, split_points):
         self.split_results[col_name] = split_points
 
+    def put_col_optimal_metric_array(self, col_name, metric_array):
+        self.optimal_metric[col_name] = metric_array
+
     @property
     def all_split_points(self):
         return self.split_results
+
+    @property
+    def all_optimal_metric(self):
+        return self.optimal_metric
 
     def get_split_points_array(self, col_names):
         split_points_result = []
@@ -171,6 +176,11 @@ class BinResults(object):
             return None
         return col_results.split_points
 
+    def put_optimal_metric_array(self, col_name, metric_array):
+        col_results = self.all_cols_results.get(col_name, BinColResults())
+        col_results.set_optimal_metric(metric_array)
+        self.all_cols_results[col_name] = col_results
+
     @property
     def all_split_points(self):
         results = {}
@@ -189,6 +199,10 @@ class BinResults(object):
     @property
     def all_monotonic(self):
         return {col_name: x.is_woe_monotonic for col_name, x in self.all_cols_results.items()}
+
+    @property
+    def all_optimal_metric(self):
+        return {col_name: x.optimal_metric_array for col_name, x in self.all_cols_results.items()}
 
     def summary(self, split_points=None):
         if split_points is None:
@@ -209,8 +223,9 @@ class BinResults(object):
                 self.put_col_split_points(col_name, sp)
         for col_name, col_bin_result in self.all_cols_results.items():
             bin_res_dict = col_bin_result.generate_pb_dict()
+            # LOGGER.debug(f"col name: {col_name}, bin_res_dict: {bin_res_dict}")
             col_result_dict[col_name] = feature_binning_param_pb2.IVParam(**bin_res_dict)
-        LOGGER.debug("In generated_pb, role: {}, party_id: {}".format(self.role, self.party_id))
+        # LOGGER.debug("In generated_pb, role: {}, party_id: {}".format(self.role, self.party_id))
         result_pb = feature_binning_param_pb2.FeatureBinningResult(binning_result=col_result_dict,
                                                                    role=self.role,
                                                                    party_id=str(self.party_id))
@@ -224,6 +239,15 @@ class BinResults(object):
             col_bin_obj = BinColResults()
             col_bin_obj.reconstruct(col_bin_result)
             self.all_cols_results[col_name] = col_bin_obj
+        return self
+
+    def update_anonymous(self, anonymous_header_dict):
+        all_cols_results = dict()
+        for col_name, col_bin_result in self.all_cols_results.items():
+            updated_col_name = anonymous_header_dict[col_name]
+            all_cols_results[updated_col_name] = col_bin_result
+
+        self.all_cols_results = all_cols_results
         return self
 
 
@@ -260,6 +284,13 @@ class MultiClassBinResult(BinResults):
         else:
             self.bin_results[label_idx].put_col_split_points(col_name, split_points)
 
+    def put_optimal_metric_array(self, col_name, metric_array, label_idx=None):
+        if label_idx is None:
+            for br in self.bin_results:
+                br.put_optimal_metric_array(col_name, metric_array)
+        else:
+            self.bin_results[label_idx].put_optimal_metric_array(col_name, metric_array)
+
     def generated_pb_list(self, split_points=None):
         res = []
         for br in self.bin_results:
@@ -281,6 +312,10 @@ class MultiClassBinResult(BinResults):
             result.bin_results[idx].reconstruct(pb)
 
         return result
+
+    def update_anonymous(self, anonymous_header_dict):
+        for idx in range(len(self.bin_results)):
+            self.bin_results[idx].update_anonymous(anonymous_header_dict)
 
     @property
     def all_split_points(self):

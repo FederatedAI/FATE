@@ -51,6 +51,18 @@ This section introduces the dsl and conf for usage of different type of task.
     "single-predict": {
         "conf": "hetero_feature_selection_single_predict_conf.json",
         "dsl": "hetero_feature_selection_single_predict_dsl.json"
+    },
+    "hetero_feature_selection_select_anonymous_col_names": {
+            "conf": "hetero_feature_selection_select_anonymous_col_names_conf.json",
+            "dsl": "hetero_feature_selection_select_anonymous_col_names_dsl.json"
+    },
+    "hetero_feature_selection_manually_anonymous": {
+            "conf": "hetero_feature_selection_manually_anonymous_conf.json",
+            "dsl": "hetero_feature_selection_manually_anonymous_dsl.json"
+    },
+    "hetero_feature_selection_manually_left_anonymous": {
+            "conf": "hetero_feature_selection_manually_left_anonymous_conf.json",
+            "dsl": "hetero_feature_selection_manually_left_anonymous_dsl.json"
     }
     
 Users can use following commands to running the task.
@@ -58,3 +70,6 @@ Users can use following commands to running the task.
     flow job submit -c ${runtime_config} -d ${dsl}
 
 Moreover, after successfully running the fitting task, you can use it to transform too.
+
+For selection using anonymous feature name cases, make sure to change party id value in host feature names accordingly.
+Alternatively, try pipeline examples, where party id will be automatically replaced.

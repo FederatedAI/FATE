@@ -1,4 +1,4 @@
-# FATE Exchange Deployment Guide 
+# FATE Exchange Deployment Guide
 [中文](./fate-exchange_deployment_guide.zh.md)
 
 # 1\. Server Configuration
@@ -137,10 +137,10 @@ Note: Replace ${version} with the specific FATE version number.
 
 ```
 cd /data/projects/install
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_${version}_release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/jdk-8u192-linux-x64.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/fate_install_${version}_release.tar.gz
 
-Note: version without character v, such as FATE_install_1.x.x_release.tar.gz
+Note: version without character v, such as fate_install_1.x.x_release.tar.gz
 ```
 
 ## 5.2 Check OS Parameters
@@ -179,8 +179,8 @@ mv jdk1.8.0_192 jdk-8u192
 #Deploy the software
 #Execute as app user on the destination server (192.168.0.1):
 cd /data/projects/install
-tar xf FATE_install_*.tar.gz
-cd FATE_install_*
+tar xf fate_install_*.tar.gz
+cd fate_install_*
 tar xvf eggroll.tar.gz -C /data/projects/fate
 
 #Set the environment variable file
@@ -195,7 +195,7 @@ EOF
 ### 5.4.2 Modify Eggroll System Profile
 
 - Modify the rollsite IP and port of the corresponding party, and the party id of this party. For the rollsite port, the default value can be used.
-  
+
   eggroll.rollsite.host: 192.168.0.1
   eggroll.rollsite.port: 9370
   eggroll.rollsite.party.id: exchange
@@ -282,7 +282,7 @@ Modify the content in /data/projects/fate/eggroll/conf/route\_table.json. The de
 #Start the Eggroll service
 source /data/projects/fate/init_env.sh
 cd /data/projects/fate/eggroll
-sh ./bin/eggroll.sh rollsite start
+bash ./bin/eggroll.sh rollsite start
 ```
 
 ## 5.6 Verification and Troubleshooting
@@ -314,7 +314,7 @@ cd /data/projects/fate/eggroll
 Start/Shutdown/View/Restart rollsite:
 
 ```
-sh ./bin/eggroll.sh rollsite start/stop/status/restart
+bash ./bin/eggroll.sh rollsite start/stop/status/restart
 ```
 
 ## 6.2 View Processes and Ports
@@ -341,4 +341,3 @@ netstat -tlnp | grep 9370
 | Service| Log Path
 |----------|----------
 | eggroll| /data/projects/fate/eggroll/logs
-

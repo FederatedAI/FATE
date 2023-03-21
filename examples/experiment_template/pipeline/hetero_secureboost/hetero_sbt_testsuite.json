@@ -1,0 +1,48 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host_tag_value.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "breast_hetero_host_tag_value",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/mock_tag_hetero_host.csv",
+            "head": 1,
+            "partition": 4,
+            "table_name": "mock_tag_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        }
+    ],
+    "pipeline_tasks": {
+        "train_manually_sbt": {
+            "script": "./pipeline_train_manually_sbt.py"
+        },
+        "train_one_hot_sbt": {
+            "script": "./pipeline_train_one_hot_sbt.py"
+        },
+        "train_pearson_sbt": {
+            "script": "./pipeline_train_pearson_sbt.py"
+        },
+        "train_sbt": {
+            "script": "./pipeline_train_sbt.py"
+        },
+        "train_test_sbt": {
+            "script": "./pipeline_train_test_sbt.py"
+        },
+        "train_union_sbt": {
+            "script": "./pipeline_train_union_sbt.py"
+        }
+    }
+}

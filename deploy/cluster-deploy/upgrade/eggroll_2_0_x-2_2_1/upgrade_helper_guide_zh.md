@@ -50,14 +50,14 @@
 - allinone 部署方式的停止服务方法
 ```
 cd ${EGGROLL_HOME}
-sh bin/eggroll.sh all stop
+bash bin/eggroll.sh all stop
 ```
 - ansible 部署方式的停止服务方法
 ```
 cd /data/projects/common/supervisord
-sh service.sh stop fate-clustermanager
-sh service.sh stop fate-nodemanager
-sh service.sh stop fate-rollsite
+bash service.sh stop fate-clustermanager
+bash service.sh stop fate-nodemanager
+bash service.sh stop fate-rollsite
 ```
 
 - eggroll手动备份
@@ -89,7 +89,7 @@ ${MYSQL_HOME_PATH}/bin/mysqldump -h <mysql-host> -u <username> -p<passwd> -P <po
 
 ## 3. 使用说明
 
-### 3.1 
+### 3.1
 
 #### 3.1.1 升级脚本部署
 
@@ -104,11 +104,11 @@ ${MYSQL_HOME_PATH}/bin/mysqldump -h <mysql-host> -u <username> -p<passwd> -P <po
 
 ```
 ├─eggroll
-      ├─bin 
-      ├─deploy 
-      ├─lib  
-      └─python 
-   
+      ├─bin
+      ├─deploy
+      ├─lib
+      └─python
+
 ```
 
 ##### 3.1.1.1 获取升级脚本
@@ -174,7 +174,7 @@ eggroll.rollsite.adapter.sendbuf.size=100000
 `/data/projects/fate/`目录，执行以下操作
 
 ```
-mkdir -p /data/projects/fate/ 
+mkdir -p /data/projects/fate/
 unzip /data/projects/fate/eggroll-2.0.1.zip
 cp -r /data/projects/fate/eggroll-2.0.1 /data/projects/fate/eggroll
 echo "__version__ = "2.0.1"" > /data/projects/fate/eggroll/python/eggroll/__init__.py
@@ -187,7 +187,7 @@ echo "__version__ = "2.0.1"" > /data/projects/fate/eggroll/python/eggroll/__init
 `/data/projects/fate/`目录，执行以下操作
 
 ```
-mkdir -p /data/projects/fate/ 
+mkdir -p /data/projects/fate/
 unzip /data/projects/fate/eggroll-2.0.2.zip
 cp -r /data/projects/fate/eggroll-2.0.2 /data/projects/fate/eggroll
 echo "__version__ = "2.0.2"" > /data/projects/fate/eggroll/python/eggroll/__init__.py
@@ -200,7 +200,7 @@ echo "__version__ = "2.0.2"" > /data/projects/fate/eggroll/python/eggroll/__init
 `/data/projects/fate/`目录，执行以下操作
 
 ```
-mkdir -p /data/projects/fate/ 
+mkdir -p /data/projects/fate/
 unzip /data/projects/fate/eggroll-2.2.0.zip
 cp -r /data/projects/fate/eggroll-2.2.0 /data/projects/fate/eggroll
 ```
@@ -269,7 +269,7 @@ alter table session_processor modify column session_id VARCHAR(767);
 
 ```
 python ${PKG_BASE_PATH}/eggroll/deploy/upgrade_helper.py --help
-python upgrade_helper.py 
+python upgrade_helper.py
  -c --nm_file <input eggroll upgrade  namenode node ip sets>
  -r --rs_file <input eggroll upgrade only rollsite node ip sets>
  -e --egg_home <eggroll home path>
@@ -340,11 +340,11 @@ less log.info | grep "current machine not install mysql "
 > alter table session_option add store_option_id SERIAL PRIMARY KEY;
 > alter table session_main modify column session_id VARCHAR(767);
 > alter table session_processor modify column session_id VARCHAR(767);
-> 
-> 
+>
+>
 > ```
 >
-> ## 
+> ##
 
 
 - 4.4 版本检查
@@ -431,4 +431,3 @@ vim内搜索：{module}.err &
 cp ${EGGROLL_HOME}/bin/eggroll.sh ${EGGROLL_HOME}/bin/fate-eggroll.sh
 sed -i '26 i source $cwd/../../bin/init_env.sh' ${EGGROLL_HOME}/bin/fate-eggroll.sh
 ```
-

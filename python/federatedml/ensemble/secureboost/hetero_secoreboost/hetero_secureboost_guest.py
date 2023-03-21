@@ -5,7 +5,7 @@ from federatedml.util import LOGGER
 from federatedml.ensemble.boosting import HeteroBoostingGuest
 from federatedml.param.boosting_param import HeteroSecureBoostParam, DecisionTreeParam
 from federatedml.util.io_check import assert_io_num_rows_equal
-from federatedml.util.anonymous_generator import generate_anonymous
+from federatedml.util.anonymous_generator_util import Anonymous
 from federatedml.statistic.data_overview import with_weight, get_max_sample_weight
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_importance import FeatureImportance
 from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict_transfer_variable import \
@@ -158,6 +158,24 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                 self.feature_importances_[fid] += tree_feature_importance[fid]
         LOGGER.debug('cur feature importance {}'.format(self.feature_importances_))
 
+    def align_feature_importance_guest(self, suffix):
+        """
+        receive feature importance from host to update global feature importance
+        """
+        host_feature_importance_list = self.hetero_sbt_transfer_variable.host_feature_importance.get(idx=-1)
+        # remove host importance, make sure host importance is latest when host anonymous features are updated
+        pop_key = []
+        for key in self.feature_importances_:
+            sitename, fid = key
+            if consts.GUEST not in sitename:
+                pop_key.append(key)
+
+        for k in pop_key:
+            self.feature_importances_.pop(k)
+
+        for i in host_feature_importance_list:
+            self.feature_importances_.update(i)
+
     def goss_sample(self):
 
         sampled_gh = goss_sampling(self.grad_and_hess, self.top_rate, self.other_rate)
@@ -191,11 +209,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
             self.booster_dim = 1
 
     def postprocess(self):
-        host_feature_importance_list = self.hetero_sbt_transfer_variable.host_feature_importance.get(idx=-1)
-        for i in host_feature_importance_list:
-            self.feature_importances_.update(i)
-
-        LOGGER.debug('self feature importance is {}'.format(self.feature_importances_))
+        self.align_feature_importance_guest(suffix='postprocess')
 
     def fit_a_learner(self, epoch_idx: int, booster_dim: int):
 
@@ -224,6 +238,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                                            cipher_compress=self.cipher_compressing,
                                            g_h=g_h, encrypter=self.encrypter,
                                            goss_subsample=self.enable_goss,
+                                           objective=self.objective_param.objective,
                                            complete_secure=complete_secure, max_sample_weights=self.max_sample_weight,
                                            fast_sbt=fast_sbt, tree_type=tree_type, target_host_id=target_host_id,
                                            guest_depth=self.guest_depth, host_depth=self.host_depth,
@@ -276,8 +291,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
                 if consts.GUEST in id_[0]:
                     new_fi[fid_mapping[id_[1]]] = feature_importances[id_].importance
                 else:
-                    role, party_id = id_[0].split(':')
-                    new_fi[generate_anonymous(role=role, fid=id_[1], party_id=party_id)] = feature_importances[
+                    new_fi[id_[0] + '_' + str(id_[1])] = feature_importances[
                         id_].importance
             else:
                 new_fi[fid_mapping[id_]] = feature_importances[id_].importance
@@ -294,6 +308,10 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         cache_dataset_key = self.predict_data_cache.get_data_key(data_inst)
 
         processed_data = self.data_and_header_alignment(data_inst)
+
+        # sync feature importance if host anonymous change in model migration
+        if not self.on_training:
+            self.align_feature_importance_guest('predict')
 
         last_round = self.predict_data_cache.predict_data_last_round(cache_dataset_key)
 
@@ -375,7 +393,12 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         param = list(feat_importance_param)
         rs_dict = {}
         for fp in param:
-            key = (fp.sitename, fp.fid)
+            if consts.GUEST in fp.sitename:
+                key = (fp.sitename.replace(':', '_'), fp.fid)  # guest format
+            else:
+                sitename = fp.sitename.replace(':', '_')
+                anonymous_feat_name = Anonymous().get_suffix_from_anonymous_column(fp.fullname)
+                key = (sitename, anonymous_feat_name)
             importance = FeatureImportance()
             importance.from_protobuf(fp)
             rs_dict[key] = importance
@@ -427,9 +450,9 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
             if consts.GUEST in sitename:
                 fullname = self.feature_name_fid_mapping[fid]
             else:
-                role_name, party_id = sitename.split(':')
-                fullname = generate_anonymous(fid=fid, party_id=party_id, role=role_name)
-
+                fullname = sitename + '_' + str(fid)
+                sitename = sitename.replace('_', ':')
+                fid = None
             feature_importance_param.append(FeatureImportanceInfo(sitename=sitename,  # sitename to distinguish sites
                                                                   fid=fid,
                                                                   importance=importance.importance,

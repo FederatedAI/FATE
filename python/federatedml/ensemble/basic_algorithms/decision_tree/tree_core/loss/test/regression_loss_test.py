@@ -238,41 +238,42 @@ class TestLogCoshLoss(unittest.TestCase):
 
 class TestTweedieLoss(unittest.TestCase):
     def setUp(self):
-        session.init("test_fair_loss")
+        session.init("test_tweedie_loss")
         self.rho = 0.5
         self.tweedie_loss = TweedieLoss(self.rho)
         self.y_list = [i % 2 for i in range(100)]
-        self.predict_list = [random.random() for i in range(100)]
+        self.predict_list = [self.tweedie_loss.predict(random.random()) for i in range(100)]
         self.y = session.parallelize(self.y_list, include_key=False, partition=16)
         self.predict = session.parallelize(self.predict_list, include_key=False, partition=16)
 
     def test_predict(self):
         for y in self.y_list:
             y_pred = self.tweedie_loss.predict(y)
-            self.assertTrue(np.fabs(y_pred - y) < consts.FLOAT_ZERO)
+            self.assertTrue(np.fabs(y_pred - np.exp(y)) < consts.FLOAT_ZERO)
 
     def test_compute_gradient(self):
         for y, y_pred in zip(self.y_list, self.predict_list):
             tweedie_grad = self.tweedie_loss.compute_grad(y, y_pred)
-            grad = -y * np.exp(1 - self.rho) * y_pred + np.exp(2 - self.rho) * y_pred
+            grad = -y * np.exp((1 - self.rho) * y_pred) + np.exp((2 - self.rho) * y_pred)
             self.assertTrue(np.fabs(tweedie_grad - grad) < consts.FLOAT_ZERO)
 
     def test_compute_hess(self):
         for y, y_pred in zip(self.y_list, self.predict_list):
             tweedie_loss_hess = self.tweedie_loss.compute_hess(y, y_pred)
-            hess = -y * (1 - self.rho) * np.exp(1 - self.rho) * y_pred + \
-                (2 - self.rho) * np.exp(2 - self.rho) * y_pred
+            hess = -y * (1 - self.rho) * np.exp((1 - self.rho) * y_pred) + \
+                (2 - self.rho) * np.exp((2 - self.rho) * y_pred)
 
             self.assertTrue(np.fabs(tweedie_loss_hess - hess) < consts.FLOAT_ZERO)
 
     def test_compute_loss(self):
         loss = 0
         for y, y_pred in zip(self.y_list, self.predict_list):
-            if y_pred < consts.FLOAT_ZERO:
-                y_pred = consts.FLOAT_ZERO
 
-            a = y * np.exp(1 - self.rho) * np.log(y_pred) / (1 - self.rho)
-            b = np.exp(2 - self.rho) * np.log(y_pred) / (2 - self.rho)
+            if y_pred < 1e-10:
+                y_pred = 1e-10
+            a = y * np.exp((1 - self.rho) * np.log(y_pred)) / (1 - self.rho)
+            b = np.exp((2 - self.rho) * np.log(y_pred)) / (2 - self.rho)
+
             loss += (-a + b)
 
         loss /= len(self.y_list)

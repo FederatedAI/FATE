@@ -40,7 +40,7 @@
         },
         "method": {
             "conf": "./feature_imputation_method_job_conf.json",
-            "dsl": "./feature_imputation_job_dsl.json"
+            "dsl": "./feature_imputation_method_job_dsl.json"
         },
         "diff-method-per-column": {
             "conf": "./feature_imputation_column_method_job_conf.json",

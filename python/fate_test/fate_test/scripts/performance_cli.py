@@ -59,7 +59,7 @@ from fate_test.scripts._utils import _load_testsuites, _upload_data, _delete_dat
 @click.option("--skip-data", is_flag=True, default=False,
               help="skip uploading data specified in testsuite")
 @click.option("--provider", type=str,
-              help="Select the fat version, for example: fate@1.7")
+              help="Select the fate version, for example: fate@1.7")
 @click.option("--disable-clean-data", "clean_data", flag_value=False, default=None)
 @SharedOptions.get_shared_options(hidden=True)
 @click.pass_context
@@ -71,8 +71,10 @@ def run_task(ctx, job_type, include, replace, timeout, update_job_parameters, up
     ctx.obj.update(**kwargs)
     ctx.obj.post_process()
     config_inst = ctx.obj["config"]
-    config_inst.extend_sid = ctx.obj["extend_sid"]
-    config_inst.auto_increasing_sid = ctx.obj["auto_increasing_sid"]
+    if ctx.obj["extend_sid"] is not None:
+        config_inst.extend_sid = ctx.obj["extend_sid"]
+    if ctx.obj["auto_increasing_sid"] is not None:
+        config_inst.auto_increasing_sid = ctx.obj["auto_increasing_sid"]
     namespace = ctx.obj["namespace"]
     yes = ctx.obj["yes"]
     data_namespace_mangling = ctx.obj["namespace_mangling"]

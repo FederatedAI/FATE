@@ -107,30 +107,38 @@ multiparty computation scheme based on somewhat homomorphic encryption
     s = Session()
     
     # on guest side
-    s.init_computing("a guest session name")
-    s.init_federation("federation session name",
-    runtime_conf={
-      "local": {"role": "guest", "party_id": 1000},
-      "role": {"guest": [1000], "host": [999]},
-    },
-    service_conf=<proxy config>  # for distributed situation
-    )
+    guest_party_id = 10000
+    host_party_id = 10001
+    guest_proxy_ip = "192.168.0.2"  # Generally, it is your current machine IP
+    federation_id = "spdz_demo"     # choose a common federation id (this should be same in both site)
+    session_id = "_".join([federation_id, "guest", str(guest_party_id)])
+    s.init_computing(session_id)
+    s.init_federation(federation_id,
+                      runtime_conf={
+                          "local": {"role": "guest", "party_id": guest_party_id},
+                          "role": {"guest": [guest_party_id], "host": [host_party_id]},
+                      },
+                      service_conf={"host": guest_proxy_ip, "port": 9370})
     s.as_global()
     partys = s.parties.all_parties
-    # [Party(role=guest, party_id=1000), Party(role=host, party_id=999)]
-    
+    # [Party(role=guest, party_id=10000), Party(role=host, party_id=10001)]
+
     # on host side
-    s.init_computing("a host session name")
-    s.init_federation("federation session name",
-    runtime_conf={
-      "local": {"role": "host", "party_id": 999},
-      "role": {"guest": [1000], "host": [999]},
-    },
-    service_conf=<proxy config>  # for distributed situation
-    )
+    guest_party_id = 10000
+    host_party_id = 10001
+    host_proxy_ip = "192.168.0.1"   # Generally, it is your current machine IP
+    federation_id = "spdz_demo"     # choose a common federation id (this should be same in both site)
+    session_id = "_".join([federation_id, "host", str(host_party_id)])
+    s.init_computing(session_id)
+    s.init_federation(federation_id,
+                      runtime_conf={
+                          "local": {"role": "host", "party_id": host_party_id},
+                          "role": {"guest": [guest_party_id], "host": [host_party_id]},
+                      },
+                      service_conf={"host": host_proxy_ip, "port": 9370})
     s.as_global()
     partys = s.parties.all_parties
-    # [Party(role=guest, party_id=1000), Party(role=host, party_id=999)]
+    # [Party(role=guest, party_id=10000), Party(role=host, party_id=10001)]
     ```
 
   - spdz env  

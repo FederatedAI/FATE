@@ -198,7 +198,7 @@ echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab
 Or create by using the code package script in Section 5.1, and execute as app user:
 
 ```
-sh /data/projects/fate-cluster-install-${version}/tools-install/makeVirtualDisk.sh
+bash /data/projects/fate_cluster_install_${version}_release/tools-install/makeVirtualDisk.sh
 Waring: please make sure has enough space of your disk first!!! (Please make sure there is enough storage space)
 current user has sudo privilege(yes|no):yes      (Whether the user has sudo privilege; enter yes and do not abbreviate it)
 Enter store directory:/data    (Set the storage path for virtual memory files; make sure the directory exists and do not set it to the root directory)
@@ -261,21 +261,21 @@ Note: Replace ${version} with specific FATE version number,can be viewed on the 
 
 ```
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_cluster_install_${version}_release-c7-u18.tar.gz
-tar xzf fate_cluster_install_${version}_release-c7-u18.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/fate_cluster_install_${version}_release.tar.gz
+tar xzf fate_cluster_install_${version}_release.tar.gz
 
-Note: version without character v, such as fate_cluster_install_1.x.x_release-c7-u18.tar.gz
+Note: version without character v, such as fate_cluster_install_1.x.x_release.tar.gz
 ```
 
 ### 5.2. Pre-Deployment Check
 
 **Execute as app user on the destination server (192.168.0.1, 192.168.0.2)**
 
-Copy the check script fate-cluster-install-${version}/tools-install/check.sh from 192.168.0.1 to 192.168.0.2
+Copy the check script fate_cluster_install_${version}_release/tools-install/check.sh from 192.168.0.1 to 192.168.0.2
 
 ```
 #Execute the script check on the servers 192.168.0.1 and 192.168.0.2 respectively
-sh ./check.sh
+bash ./check.sh
 
 #Make sure that sudo is configured for app user
 #Virtual memory, minimum 128G in size; otherwise, refer to section 4.6 for resetting
@@ -289,10 +289,10 @@ sh ./check.sh
 
 **Execute as app user on the destination server (192.168.0.1)**
 
-Modify the profile: fate-cluster-install-${version}/allInone/conf/setup.conf.
+Modify the profile: fate_cluster_install_${version}_release/allInone/conf/setup.conf.
 
 ```
-vi fate-cluster-install-${version}/allInone/conf/setup.conf
+vi fate_cluster_install_${version}_release/allInone/conf/setup.conf
 ```
 
 Description of Profile setup.conf
@@ -468,14 +468,14 @@ nodemanager_port=4671
 
 ### 5.4 Deployment
 
-Modify the corresponding configuration items in the setup.conf file according to the above configuration definition, then execute the deployment script under the fate-cluster-install-${version}/allInone directory:
+Modify the corresponding configuration items in the setup.conf file according to the above configuration definition, then execute the deployment script under the fate_cluster_install_${version}_release/allInone directory:
 
 ```
-cd fate-cluster-install-${version}/allInone
-nohup sh ./deploy.sh > logs/boot.log 2>&1 &
+cd fate_cluster_install_${version}_release/allInone
+nohup bash ./deploy.sh > logs/boot.log 2>&1 &
 ```
 
-The deployment log is located in the fate-cluster-install-${version}/allInone/logs directory. A user can check it in real time to see if there are any errors:
+The deployment log is located in the fate_cluster_install_${version}_release/allInone/logs directory. A user can check it in real time to see if there are any errors:
 
 ```
 tail -f ./logs/deploy.log (Just check it when the deployment is completed)
@@ -575,11 +575,10 @@ Select 9999 as the guest and execute on 192.168.0.2:
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/min_test_task/
 #One-sided testing
-python run_task.py -gid 9999 -hid 9999 -aid 9999 -f fast
+flow test min -gid 9999 -hid 9999 -aid 9999 -t fast
 #Two-sided testing
-python run_task.py -gid 9999 -hid 10000 -aid 10000 -f fast
+flow test min -gid 9999 -hid 10000 -aid 10000 -t fast
 ```
 
 Other parameters that may be useful include:
@@ -601,9 +600,18 @@ Fateboard is a web service. When started, it allows a user to view task informat
 
 ### 7.1. Service Management
 
-**Execute as app user on the destination server (192.168.0.1, 192.168.0.2.**
+**Execute as app user on the destination server (192.168.0.1, 192.168.0.2).**
 
-#### 7.1.1. Eggroll Service Management
+#### 7.1.1. Mysql Service Management
+
+Start/Shutdown/View/Restart mysql service
+
+```bash
+cd /data/projects/fate/common/mysql/mysql-*
+bash ./service.sh start|stop|status|restart
+```
+
+#### 7.1.2. Eggroll Service Management
 
 ```bash
 source /data/projects/fate/bin/init_env.sh
@@ -613,23 +621,23 @@ cd /data/projects/fate/eggroll
 Start/Shutdown/View/Restart all modules:
 
 ```bash
-sh ./bin/eggroll.sh all start/stop/status/restart
+bash ./bin/eggroll.sh all start/stop/status/restart
 ```
 
 Start/Shutdown/View/Restart a single module (clustermanager, nodemanager, rollsite):
 
 ```bash
-sh ./bin/eggroll.sh clustermanager start/stop/status/restart
+bash ./bin/eggroll.sh clustermanager start/stop/status/restart
 ```
 
-#### 7.1.2. FATE Service Management
+#### 7.1.3. FATE Service Management
 
 1. Start/Shutdown/View/Restart fate_flow service
 
 ```bash
 source /data/projects/fate/bin/init_env.sh
 cd /data/projects/fate/fateflow/bin
-sh service.sh start|stop|status|restart
+bash service.sh start|stop|status|restart
 ```
 
 To start the modules on an individual basis, a user must start eggroll before fateflow, as fateflow requires eggroll to run.
@@ -638,16 +646,7 @@ To start the modules on an individual basis, a user must start eggroll before fa
 
 ```bash
 cd /data/projects/fate/fateboard
-sh service.sh start|stop|status|restart
-```
-
-#### 7.1.3. Mysql Service Management
-
-Start/Shutdown/View/Restart mysql service
-
-```bash
-cd /data/projects/fate/common/mysql/mysql-8.0.13
-sh ./service.sh start|stop|status|restart
+bash service.sh start|stop|status|restart
 ```
 
 ### 7.2. View Processes and Ports
@@ -690,7 +689,7 @@ netstat -tlnp | grep 8080
 | eggroll               | /data/projects/fate/eggroll/logs                   |
 | fate_flow & task log | /data/projects/fate/fateflow/logs                  |
 | fateboard             | /data/projects/fate/fateboard/logs                 |
-| mysql                 | /data/projects/fate/common/mysql/mysql-8.0.13/logs |
+| mysql                 | /data/projects/fate/common/mysql/mysql-*/logs |
 
 ### 7.4. Space Clearance Rules
 

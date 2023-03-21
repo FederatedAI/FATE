@@ -1,3 +1,78 @@
+## Release 1.10.0
+### Major Features and Improvements
+> FederatedML
+* Renewed Homo NN: PyTorch-based, support flexible model building:
+   * Support user access to complex self-defined PyTorch models or ready-to-use PyTorch models such as DeepFM, ResNet, BERT, Yolo
+   * Support various data set types, may build data set based on PyTorch Dataset
+   * User-defined training loss
+   * User-defined training process: user-defined aggregation algorithm for client and server
+   * Provide API for developing Aggregator
+* Upgraded Hetero NN: support flexible model building and various data set types:
+   * more flexible pytorch top/bottom model customization; provide access to industry approved PyTorch models
+   * User-defined training loss
+   * Support various data set types, may build data set based on PyTorch Dataset
+* Renewed Homo-federated framework with support for all current homo models, including Homo NN, Homo LR,Homo SecureBoost, 
+  Homo Feature Binning, and Hetero KMeans. This provides smoother algorithm customization and development experience
+* Semi-Supervised Algorithm Positive Unlabeled Learning
+* Hetero LR & Hetero SecureBoost now supports Intel IPCL
+* Intersection support Multi-host Elliptic-curve-based PSI
+* Intersection may compute Multi-host Secure PSI Cardinality
+* Hetero Feature Optimal Binning now record & show Gini/KS/Chi-Square metrics
+* Host may load Hetero Binning model with WOE score through Model Loader
+* Hetero Feature Binning support binning by user-provided split points
+* Sampler support weighted sampling by instance weight
+
+> Fate-Client
+* Flow CLI adds min-test options
+* Pipeline adds `data-bind` API, useful for local development 
+* Pipeline may reconfigure role/model_id/model_version, switching `party_id` for prediction task
+
+
+## Release 1.9.2
+### Major Features and Improvements
+> EggRoll
+* Support EggRoll v2.4.7
+
+
+## Release 1.9.1
+### Major Features and Improvements
+> Bug-Fix
+* Fix cipher compression with large Hessian value for HeteroSecureBoost
+* Fix tweedie-loss calculation in HeteroSecureBoost
+* Fix Intersection summary when left-joining data with match_id
+* Fix event/non_event statistic for WOE computation in HeteroFeatureBinning
+* Fix default sid name display for data uploaded with meta
+
+
+## Release 1.9.0
+### Major Features and Improvements
+> FederatedML
+* Add elliptic curve based PSI algorithm, which allows 128-bit secure-level intersection of billion samples, 20x faster than RSA protocol under the same security level
+* Support accurate intersection cardinality calculation
+* Support for multi-column ID data; user may specify id column for PSI intersection and subsequent modeling usage
+* Hetero NN supports torch backend and supports complex layers such as LSTM
+* Add CoAE label reinforcement mechanism for vertical federated neural network
+* Hetero NN supports multi-host modeling scenarios
+* HeteroSecureBoost supports merging sub-models from all parties and exporting the merged model into lightgbm or PMML format
+* HeteroLR and HeteroSSHELR support merging sub-models from all parties and exporting the merged model into sklearn or PMML format
+* HeteroFeatureSelection supports anonymous feature selection
+* Label Encoder adds automatic label type inference
+* 10x faster local VIF computation in HeteroPearson, with added support for computing local VIF on linearly dependent columns
+* Optimized feature engineering column processing logic
+* HeteroFeatureBinning supports calculation of IV and WOE values during prediction
+* Renewed feature anonymous generation logic
+
+> FATE-ARCH
+* Support python3.8+
+* Support Spark 3x
+* Renewed Federation module, RabbitMQ and Pulsar support client transmission mode
+* Support Standalone, Spark, EggRoll heterogeneous computing engine interconnection
+
+> Fate-Client
+* PipeLine adds timeout retry mechanism
+* Pipeline's `get_output_data` API now may return component output data in DataFrame-typed format
+
+
 ## Release 1.8.0
 ### Major Features and Improvements
 > FederatedML

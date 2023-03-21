@@ -46,9 +46,9 @@ class RawIntersect(Intersect):
         if self.use_hash and self.hash_method != "none":
             sid_hash_pair = data_instances.map(
                 lambda k, v: (Intersect.hash(k, self.hash_operator, self.salt), k))
-            data_sid = sid_hash_pair.mapValues(lambda v: 1)
+            data_sid = sid_hash_pair.mapValues(lambda v: None)
         else:
-            data_sid = data_instances.mapValues(lambda v: 1)
+            data_sid = data_instances.mapValues(lambda v: None)
 
         LOGGER.info("Send id role is {}".format(self.role))
 
@@ -93,7 +93,7 @@ class RawIntersect(Intersect):
 
             if sid_hash_pair and recv_intersect_ids is not None:
                 hash_intersect_ids_map = recv_intersect_ids.join(sid_hash_pair, lambda r, s: s)
-                intersect_ids = hash_intersect_ids_map.map(lambda k, v: (v, 'intersect_id'))
+                intersect_ids = hash_intersect_ids_map.map(lambda k, v: (v, None))
             else:
                 intersect_ids = recv_intersect_ids
         else:
@@ -108,9 +108,9 @@ class RawIntersect(Intersect):
         if self.use_hash and self.hash_method != "none":
             sid_hash_pair = data_instances.map(
                 lambda k, v: (Intersect.hash(k, self.hash_operator, self.salt), k))
-            data_sid = sid_hash_pair.mapValues(lambda v: 1)
+            data_sid = sid_hash_pair.mapValues(lambda v: None)
         else:
-            data_sid = data_instances.mapValues(lambda v: 1)
+            data_sid = data_instances.mapValues(lambda v: None)
 
         if self.role == consts.HOST:
             send_ids_federation = self.transfer_variable.send_ids_guest
@@ -125,11 +125,11 @@ class RawIntersect(Intersect):
         LOGGER.info("Get ids_list from role-send, ids_list size is {}".format(len(recv_ids_list)))
 
         if ids_list_size == 1:
-            hash_intersect_ids = recv_ids_list[0].join(data_sid, lambda i, d: "intersect_id")
+            hash_intersect_ids = recv_ids_list[0].join(data_sid, lambda i, d: None)
         elif ids_list_size > 1:
             hash_intersect_ids_list = []
             for ids in recv_ids_list:
-                hash_intersect_ids_list.append(ids.join(data_sid, lambda i, d: "intersect_id"))
+                hash_intersect_ids_list.append(ids.join(data_sid, lambda i, d: None))
             hash_intersect_ids = self.get_common_intersection(hash_intersect_ids_list)
         else:
             hash_intersect_ids = None
@@ -157,16 +157,8 @@ class RawIntersect(Intersect):
 
         if sid_hash_pair:
             hash_intersect_ids_map = hash_intersect_ids.join(sid_hash_pair, lambda r, s: s)
-            intersect_ids = hash_intersect_ids_map.map(lambda k, v: (v, 'intersect_id'))
+            intersect_ids = hash_intersect_ids_map.map(lambda k, v: (v, None))
         else:
             intersect_ids = hash_intersect_ids
 
-        """
-        if self.task_version_id is not None:
-            namespace = "#".join([str(self.guest_party_id), str(self.host_party_id), "mountain"])
-            for k, v in enumerate(recv_ids_list):
-                table_name = '_'.join([self.task_version_id, str(k)])
-                self.tracker.job_tracker.save_as_table(v, table_name, namespace)
-                LOGGER.info("save guest_{}'s id in name:{}, namespace:{}".format(k, table_name, namespace))
-        """
         return intersect_ids

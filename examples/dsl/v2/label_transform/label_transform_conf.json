@@ -12,7 +12,7 @@
             10000
         ],
         "arbiter": [
-            9999
+            10000
         ]
     },
     "component_parameters": {
@@ -52,6 +52,9 @@
                         }
                     },
                     "label_transform_0": {
+                        "need_run": false
+                    },
+                    "label_transform_1": {
                         "need_run": false
                     }
                 }

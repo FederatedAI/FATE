@@ -1,0 +1,58 @@
+{
+    "dsl_version": 2,
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "guest": [
+            9999
+        ],
+        "host": [
+            10000
+        ]
+    },
+    "component_parameters": {
+        "common": {
+            "intersect_0": {
+                "cardinality_method": "ecdh",
+                "cardinality_only": true,
+                "sync_cardinality": false,
+                "ecdh_params": {
+                    "hash_method": "sha256",
+                    "curve": "curve25519"
+                }
+            }
+        },
+        "role": {
+            "guest": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "data_transform_0": {
+                        "with_label": false,
+                        "output_format": "dense"
+                    }
+                }
+            },
+            "host": {
+                "0": {
+                    "reader_0": {
+                        "table": {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    },
+                    "data_transform_0": {
+                        "with_label": false,
+                        "output_format": "dense"
+                    }
+                }
+            }
+        }
+    }
+}

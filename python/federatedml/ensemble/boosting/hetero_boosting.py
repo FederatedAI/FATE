@@ -21,7 +21,7 @@ from abc import ABC
 import abc
 from federatedml.ensemble.boosting import Boosting
 from federatedml.param.boosting_param import HeteroBoostingParam
-from federatedml.secureprotol import PaillierEncrypt
+from federatedml.secureprotol import PaillierEncrypt, IpclPaillierEncrypt
 from federatedml.util import consts
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.util.classify_label_checker import ClassifyLabelChecker
@@ -32,6 +32,7 @@ from federatedml.model_base import MetricMeta
 from federatedml.transfer_variable.transfer_class.hetero_boosting_transfer_variable import \
     HeteroBoostingTransferVariable
 from federatedml.util.io_check import assert_io_num_rows_equal
+from federatedml.statistic.data_overview import get_anonymous_header
 
 
 class HeteroBoosting(Boosting, ABC):
@@ -66,6 +67,9 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
         LOGGER.info("generate encrypter")
         if self.encrypt_param.method.lower() == consts.PAILLIER.lower():
             self.encrypter = PaillierEncrypt()
+            self.encrypter.generate_key(self.encrypt_param.key_length)
+        elif self.encrypt_param.method.lower() == consts.PAILLIER_IPCL.lower():
+            self.encrypter = IpclPaillierEncrypt()
             self.encrypter.generate_key(self.encrypt_param.key_length)
         else:
             raise NotImplementedError("unknown encrypt type {}".format(self.encrypt_param.method.lower()))
@@ -143,7 +147,8 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
 
         self.data_inst = data_inst
 
-        self.data_bin, self.bin_split_points, self.bin_sparse_points = self.prepare_data(data_inst)
+        to_process_data_inst = self.data_and_header_alignment(data_inst) if self.is_warm_start else data_inst
+        self.data_bin, self.bin_split_points, self.bin_sparse_points = self.prepare_data(to_process_data_inst)
 
         self.y = self.get_label(self.data_bin)
 
@@ -285,6 +290,10 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
         self.start_round = len(self.boosting_model_list) // self.booster_dim
         self.boosting_round += self.start_round
 
+    def set_anonymous_header(self, data_inst):
+        if not self.anonymous_header:
+            self.anonymous_header = {v: k for k, v in zip(get_anonymous_header(data_inst), data_inst.schema['header'])}
+
     def fit(self, data_inst, validate_data=None):
 
         LOGGER.info('begin to fit a hetero boosting model, model is {}'.format(self.model_name))
@@ -293,7 +302,10 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
 
         self.on_training = True
 
-        self.data_bin, self.bin_split_points, self.bin_sparse_points = self.prepare_data(data_inst)
+        to_process_data_inst = self.data_and_header_alignment(data_inst) if self.is_warm_start else data_inst
+        self.data_bin, self.bin_split_points, self.bin_sparse_points = self.prepare_data(to_process_data_inst)
+
+        self.set_anonymous_header(to_process_data_inst)
 
         if self.is_warm_start:
             self.prepare_warm_start(data_inst)

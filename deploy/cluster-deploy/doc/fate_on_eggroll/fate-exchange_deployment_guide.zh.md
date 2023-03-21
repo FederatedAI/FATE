@@ -1,4 +1,4 @@
-#  FATE exchange部署指南 
+#  FATE exchange部署指南
 [English](./fate-exchange_deployment_guide.md)
 
 1.服务器配置
@@ -145,10 +145,10 @@ fi
 备注：用具体FATE版本号替换${version}
 ```
 cd /data/projects/install
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_${version}_release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/resources/jdk-8u192-linux-x64.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/fate_install_${version}_release.tar.gz
 
-注意：version不带字符v，如FATE_install_1.x.x_release.tar.gz
+注意：version不带字符v，如fate_install_1.x.x_release.tar.gz
 ```
 
 ## 5.2 操作系统参数检查
@@ -189,8 +189,8 @@ mv jdk1.8.0_192 jdk-8u192
 #部署软件
 #在目标服务器（192.168.0.1）app用户下执行:
 cd /data/projects/install
-tar xf FATE_install_*.tar.gz
-cd FATE_install_*
+tar xf fate_install_*.tar.gz
+cd fate_install_*
 tar xvf eggroll.tar.gz -C /data/projects/fate
 
 #设置环境变量文件
@@ -299,7 +299,7 @@ EOF
 #启动eggroll服务
 source /data/projects/fate/init_env.sh
 cd /data/projects/fate/eggroll
-sh ./bin/eggroll.sh rollsite start
+bash ./bin/eggroll.sh rollsite start
 ```
 
 ## 5.6 验证和问题定位
@@ -333,7 +333,7 @@ cd /data/projects/fate/eggroll
 启动/关闭/查看/重启rollsite：
 
 ```
-sh ./bin/eggroll.sh rollsite start/stop/status/restart
+bash ./bin/eggroll.sh rollsite start/stop/status/restart
 ```
 
 ## 6.2 查看进程和端口

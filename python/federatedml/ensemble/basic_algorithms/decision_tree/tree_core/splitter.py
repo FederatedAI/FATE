@@ -30,7 +30,6 @@ import functools
 import random
 from fate_arch.session import computing_session as session
 from fate_arch.common import log
-from fate_arch.federation import segment_transfer_enabled
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.criterion import XgboostCriterion
 from federatedml.util import consts
 
@@ -511,7 +510,7 @@ class Splitter(object):
         return gain
 
 
-class BigObjectTransfer(metaclass=segment_transfer_enabled()):
+class BigObjectTransfer:
     def __init__(self, data):
         self._obj = data
 

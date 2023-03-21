@@ -133,13 +133,8 @@ def _check():
             pipeline config check
     """
     from pipeline.backend import config as conf
-    if conf.FlowConfig.IP is None:
-        click.echo(f"Flow server ip not yet configured. Please specify setting with pipeline initialization tool.")
-        return
-    if conf.FlowConfig.PORT is None:
-        click.echo(f"Flow server port not yet configured. Please specify setting with pipeline initialization tool.")
 
-    client = FlowClient(ip=conf.FlowConfig.IP, port=conf.FlowConfig.PORT, version=conf.SERVER_VERSION)
+    client = FlowClient(ip=conf.PipelineConfig.IP, port=conf.PipelineConfig.PORT, version=conf.SERVER_VERSION)
     version = client.remote_version.fate_flow()
     if version is None:
         click.echo(f"Flow server not responsive. Please check flow server ip and port setting.")

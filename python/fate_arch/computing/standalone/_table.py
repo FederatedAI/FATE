@@ -133,6 +133,14 @@ class Table(CTableABC):
         return Table(self._table.mapReducePartitions(mapper, reducer))
 
     @computing_profile
+    def mapPartitionsWithIndex(self, func, preserves_partitioning=False, **kwargs):
+        return Table(
+            self._table.mapPartitionsWithIndex(
+                func, preserves_partitioning=preserves_partitioning
+            )
+        )
+
+    @computing_profile
     def glom(self):
         return Table(self._table.glom())
 

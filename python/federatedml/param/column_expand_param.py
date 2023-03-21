@@ -28,25 +28,20 @@ class ColumnExpandParam(BaseParam):
 
     Parameters
     ----------
-
     append_header : None or str or List[str], default: None
         Name(s) for appended feature(s). If None is given, module outputs the original input value without any operation.
-
     method : str, default: 'manual'
         If method is 'manual', use user-specified `fill_value` to fill in new features.
-
     fill_value : int or float or str or List[int] or List[float] or List[str], default: 1e-8
         Used for filling expanded feature columns. If given a list, length of the list must match that of `append_header`
-
     need_run: bool, default: True
         Indicate if this module needed to be run.
-
     """
 
     def __init__(self, append_header=None, method="manual",
                  fill_value=consts.FLOAT_ZERO, need_run=True):
         super(ColumnExpandParam, self).__init__()
-        self.append_header = [] if append_header is None else append_header
+        self.append_header = append_header
         self.method = method
         self.fill_value = fill_value
         self.need_run = need_run
@@ -64,6 +59,7 @@ class ColumnExpandParam(BaseParam):
 
         BaseParam.check_boolean(self.need_run, descr=descr)
 
+        self.append_header = [] if self.append_header is None else self.append_header
         if not isinstance(self.append_header, list):
             raise ValueError(f"{descr} append_header must be None or list of str. "
                              f"Received {type(self.append_header)} instead.")

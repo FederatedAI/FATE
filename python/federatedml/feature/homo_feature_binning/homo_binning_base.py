@@ -12,18 +12,17 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+#
 
 import functools
-
 import numpy as np
-from federatedml.util import LOGGER
-
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.framework import weights
 from fate_arch.session import computing_session as session
 from federatedml.param.feature_binning_param import HomoFeatureBinningParam
 from federatedml.statistic.data_statistics import MultivariateStatisticalSummary
 from federatedml.transfer_variable.transfer_class.homo_binning_transfer_variable import HomoBinningTransferVariable
+from federatedml.framework.homo.aggregator.secure_aggregator import SecureAggregatorClient, SecureAggregatorServer
 from federatedml.util import consts
 
 
@@ -97,9 +96,7 @@ class RankArray(object):
 class Server(BaseBinning):
     def __init__(self, params=None, abnormal_list=None):
         super().__init__(params, abnormal_list)
-        # self.aggregator = secure_sum_aggregator.Server(enable_secure_aggregate=True)
-        self.aggregator = None
-
+        self.aggregator: SecureAggregatorServer = None
         self.transfer_variable = HomoBinningTransferVariable()
         self.suffix = None
 
@@ -113,13 +110,17 @@ class Server(BaseBinning):
         self.aggregator = aggregator
 
     def get_total_count(self):
-        total_count = self.aggregator.sum_model(suffix=(self.suffix, 'total_count'))
-        self.aggregator.send_aggregated_model(total_count, suffix=(self.suffix, 'total_count'))
+        # total_count = self.aggregator.sum_model(suffix=(self.suffix, 'total_count'))
+        # self.aggregator.send_aggregated_model(total_count, suffix=(self.suffix, 'total_count'))
+        total_count = self.aggregator.aggregate_model(suffix=(self.suffix, 'total_count'))
+        self.aggregator.broadcast_model(total_count, suffix=(self.suffix, 'total_count'))
         return total_count
 
     def get_missing_count(self):
-        missing_count = self.aggregator.sum_model(suffix=(self.suffix, 'missing_count'))
-        self.aggregator.send_aggregated_model(missing_count, suffix=(self.suffix, 'missing_count'))
+        # missing_count = self.aggregator.sum_model(suffix=(self.suffix, 'missing_count'))
+        # self.aggregator.send_aggregated_model(missing_count, suffix=(self.suffix, 'missing_count'))
+        missing_count = self.aggregator.aggregate_model(suffix=(self.suffix, 'missing_count'))
+        self.aggregator.broadcast_model(missing_count, suffix=(self.suffix, 'missing_count'))
         return missing_count
 
     def get_min_max(self):
@@ -135,15 +136,16 @@ class Server(BaseBinning):
         return min_values, max_values
 
     def query_values(self):
-        rank_weight = self.aggregator.aggregate_tables(suffix=(self.suffix, 'rank'))
-        self.aggregator.send_aggregated_tables(rank_weight, suffix=(self.suffix, 'rank'))
+        # rank_weight = self.aggregator.aggregate_tables(suffix=(self.suffix, 'rank'))
+        # self.aggregator.send_aggregated_tables(rank_weight, suffix=(self.suffix, 'rank'))
+        rank_weight = self.aggregator.aggregate_model(suffix=(self.suffix, 'rank'))
+        self.aggregator.broadcast_model(rank_weight, suffix=(self.suffix, 'rank'))
 
 
 class Client(BaseBinning):
     def __init__(self, params: HomoFeatureBinningParam = None, abnormal_list=None):
         super().__init__(params, abnormal_list)
-        # self.aggregator = secure_sum_aggregator.Client(enable_secure_aggregate=True)
-        self.aggregator = None
+        self.aggregator: SecureAggregatorClient = None
         self.transfer_variable = HomoBinningTransferVariable()
         self.max_values, self.min_values = None, None
         self.suffix = None
@@ -220,8 +222,8 @@ class Client(BaseBinning):
     def query_values(self, summary_table, query_points):
         local_ranks = summary_table.join(query_points, self._query_table)
 
-        self.aggregator.send_table(local_ranks, suffix=(self.suffix, 'rank'))
-        global_rank = self.aggregator.get_aggregated_table(suffix=(self.suffix, 'rank'))
+        self.aggregator.send_model(local_ranks, suffix=(self.suffix, 'rank'))
+        global_rank = self.aggregator.get_aggregated_model(suffix=(self.suffix, 'rank'))
         global_rank = global_rank.mapValues(lambda x: np.array(x, dtype=int))
         return global_rank
 

@@ -109,6 +109,10 @@ class Table(CTableABC):
         return Table(self._rp.map_partitions(func=mapper, reduce_op=reducer))
 
     @computing_profile
+    def mapPartitionsWithIndex(self, func, preserves_partitioning=False, **kwargs):
+        return Table(self._rp.map_partitions_with_index(func, options={"shuffle": not preserves_partitioning}))
+
+    @computing_profile
     def reduce(self, func, **kwargs):
         return self._rp.reduce(func)
 

@@ -30,11 +30,7 @@ def privilege(ctx):
 
 
 @privilege.command("grant", short_help="Grant Privilege Command")
-@cli_args.SRC_PARTY_ID
-@cli_args.SRC_ROLE
-@cli_args.PRIVILEGE_ROLE
-@cli_args.PRIVILEGE_COMMAND
-@cli_args.PRIVILEGE_COMPONENT
+@cli_args.CONF_PATH
 @click.pass_context
 def grant(ctx, **kwargs):
     """
@@ -42,22 +38,18 @@ def grant(ctx, **kwargs):
 
 
     \b
-    grant role/command/component privilege
+    grant component | dataset privilege
 
     \b
     - USAGE:
-        flow privilege grant --src-party-id 9999 --src-role guest --privilege-role all
+        flow privilege grant -c fateflow/examples/permission/grant.json
     """
     config_data, dsl_data = preprocess(**kwargs)
-    access_server('post', ctx, 'permission/grant/privilege', config_data)
+    access_server('post', ctx, 'permission/grant', config_data)
 
 
 @privilege.command("delete", short_help="Delete Privilege Command")
-@cli_args.SRC_PARTY_ID
-@cli_args.SRC_ROLE
-@cli_args.PRIVILEGE_ROLE
-@cli_args.PRIVILEGE_COMMAND
-@cli_args.PRIVILEGE_COMPONENT
+@cli_args.CONF_PATH
 @click.pass_context
 def delete(ctx, **kwargs):
     """
@@ -65,31 +57,30 @@ def delete(ctx, **kwargs):
 
 
     \b
-    delete role/command/component privilege
+    delete component | dataset privilege
 
     \b
     - USAGE:
-        flow privilege delete --src-party-id 9999 --src-role guest --privilege-role all
+        flow privilege delete  -c fateflow/examples/permission/delete.json
     """
     config_data, dsl_data = preprocess(**kwargs)
-    access_server('post', ctx, 'permission/delete/privilege', config_data)
+    access_server('post', ctx, 'permission/delete', config_data)
 
 
 @privilege.command("query", short_help="Query Privilege Command")
-@cli_args.SRC_PARTY_ID
-@cli_args.SRC_ROLE
+@cli_args.PARTYID_REQUIRED
 @click.pass_context
-def delete(ctx, **kwargs):
+def query(ctx, **kwargs):
     """
     - DESCRIPTION:
 
 
     \b
-    query role/command/component privilege
+    query component | dataset privilege
 
     \b
     - USAGE:
-        flow privilege query --src-party-id 9999 --src-role guest
+        flow privilege query -p 10000
     """
     config_data, dsl_data = preprocess(**kwargs)
-    access_server('post', ctx, 'permission/query/privilege', config_data)
+    access_server('post', ctx, 'permission/query', config_data)

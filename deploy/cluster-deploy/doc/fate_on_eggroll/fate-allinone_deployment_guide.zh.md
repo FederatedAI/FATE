@@ -199,7 +199,7 @@ echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab
 或者使用5.1章节的代码包中的脚本创建，app用户执行：
 
 ```
-sh /data/projects/fate-cluster-install-${version}/tools-install/makeVirtualDisk.sh
+bash /data/projects/fate_cluster_install_${version}_release/tools-install/makeVirtualDisk.sh
 Waring: please make sure has enough space of your disk first!!! （请确认有足够的存储空间）
 current user has sudo privilege(yes|no):yes      （是否有sudo权限，输入yes，不能简写）
 Enter store directory:/data    （设置虚拟内存文件的存放路径，确保目录存在和不要设置在根目录）
@@ -263,21 +263,21 @@ Swap:        131071           0      131071
 
 ```
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate_cluster_install_${version}_release-c7-u18.tar.gz
-tar xzf fate_cluster_install_${version}_release-c7-u18.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/release/fate_cluster_install_${version}_release.tar.gz
+tar xzf fate_cluster_install_${version}_release.tar.gz
 
-注意：version不带字符v，如fate_cluster_install_1.x.x_release-c7-u18.tar.gz
+注意：version不带字符v，如fate_cluster_install_1.x.x_release.tar.gz
 ```
 
 ### 5.2. 部署前检查
 
 **在目标服务器（192.168.0.1 192.168.0.2 ）app用户下执行**
 
-把检查脚本fate-cluster-install-${version}/tools-install/check.sh从192.168.0.1拷贝到192.168.0.2
+把检查脚本fate_cluster_install_${version}_release/tools-install/check.sh从192.168.0.1拷贝到192.168.0.2
 
 ```
 #在192.168.0.1和192.168.0.2服务器上分别执行检查脚本
-sh ./check.sh
+bash ./check.sh
 
 #确认app用户已配置sudo
 #虚拟内存，size不低于128G，如不满足需参考4.6章节重新设置
@@ -291,10 +291,10 @@ sh ./check.sh
 
 **在目标服务器（192.168.0.1）app用户下执行**
 
-修改配置文件fate-cluster-install-${version}/allInone/conf/setup.conf.
+修改配置文件fate_cluster_install_${version}_release/allInone/conf/setup.conf.
 
 ```
-vi fate-cluster-install-${version}/allInone/conf/setup.conf
+vi fate_cluster_install_${version}_release/allInone/conf/setup.conf
 ```
 
 配置文件setup.conf说明：
@@ -470,14 +470,14 @@ nodemanager_port=4671
 
 ### 5.4. 部署
 
-按照上述配置含义修改setup.conf文件对应的配置项后，然后在fate-cluster-install-${version}/allInone目录下执行部署脚本：
+按照上述配置含义修改setup.conf文件对应的配置项后，然后在fate_cluster_install_${version}_release/allInone目录下执行部署脚本：
 
 ```
-cd fate-cluster-install-${version}/allInone
-nohup sh ./deploy.sh > logs/boot.log 2>&1 &
+cd fate_cluster_install_${version}_release/allInone
+nohup bash ./deploy.sh > logs/boot.log 2>&1 &
 ```
 
-部署日志输出在fate-cluster-install-${version}/allInone/logs目录下,实时查看是否有报错：
+部署日志输出在fate_cluster_install_${version}_release/allInone/logs目录下,实时查看是否有报错：
 
 ```
 tail -f ./logs/deploy.log （部署结束，查看一下即可）
@@ -577,11 +577,10 @@ fate_test data upload -t min_test
 
 ```
 source /data/projects/fate/bin/init_env.sh
-cd /data/projects/fate/examples/min_test_task/
 #单边测试
-python run_task.py -gid 9999 -hid 9999 -aid 9999 -f fast
+flow test min -gid 9999 -hid 9999 -aid 9999 -t fast
 #双边测试
-python run_task.py -gid 9999 -hid 10000 -aid 10000 -f fast
+flow test min -gid 9999 -hid 10000 -aid 10000 -t fast
 ```
 
 其他一些可能有用的参数包括：
@@ -605,7 +604,16 @@ Fateboard是一项Web服务。如果成功启动了fateboard服务，则可以�
 
 **在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
-#### 7.1.1. Eggroll服务管理
+#### 7.1.1. Mysql服务管理
+
+启动/关闭/查看/重启mysql服务
+
+```bash
+cd /data/projects/fate/common/mysql/mysql-*
+bash ./service.sh start|stop|status|restart
+```
+
+#### 7.1.2. Eggroll服务管理
 
 ```bash
 source /data/projects/fate/bin/init_env.sh
@@ -615,23 +623,23 @@ cd /data/projects/fate/eggroll
 启动/关闭/查看/重启所有：
 
 ```bash
-sh ./bin/eggroll.sh all start/stop/status/restart
+bash ./bin/eggroll.sh all start/stop/status/restart
 ```
 
 启动/关闭/查看/重启单个模块(可选：clustermanager，nodemanager，rollsite)：
 
 ```bash
-sh ./bin/eggroll.sh clustermanager start/stop/status/restart
+bash ./bin/eggroll.sh clustermanager start/stop/status/restart
 ```
 
-#### 7.1.2. Fate服务管理
+#### 7.1.3. Fate服务管理
 
 1) 启动/关闭/查看/重启fate_flow服务
 
 ```bash
 source /data/projects/fate/bin/init_env.sh
 cd /data/projects/fate/fateflow/bin
-sh service.sh start|stop|status|restart
+bash service.sh start|stop|status|restart
 ```
 
 如果逐个模块启动，需要先启动eggroll再启动fateflow，fateflow依赖eggroll的启动。
@@ -640,16 +648,7 @@ sh service.sh start|stop|status|restart
 
 ```bash
 cd /data/projects/fate/fateboard
-sh service.sh start|stop|status|restart
-```
-
-#### 7.1.3. Mysql服务管理
-
-启动/关闭/查看/重启mysql服务
-
-```bash
-cd /data/projects/fate/common/mysql/mysql-8.0.13
-sh ./service.sh start|stop|status|restart
+bash service.sh start|stop|status|restart
 ```
 
 ### 7.2. 查看进程和端口
@@ -687,12 +686,12 @@ netstat -tlnp | grep 8080
 
 ### 7.3. 服务日志
 
-| 服务               | 日志路径                                           |
-| ------------------ | -------------------------------------------------- |
-| eggroll            | /data/projects/fate/eggroll/logs                   |
-| fate_flow&任务日志 | /data/projects/fate/fateflow/logs                  |
-| fateboard          | /data/projects/fate/fateboard/logs                 |
-| mysql              | /data/projects/fate/common/mysql/mysql-8.0.13/logs |
+| 服务               | 日志路径                                      |
+| ------------------ | --------------------------------------------- |
+| eggroll            | /data/projects/fate/eggroll/logs              |
+| fate_flow&任务日志 | /data/projects/fate/fateflow/logs             |
+| fateboard          | /data/projects/fate/fateboard/logs            |
+| mysql              | /data/projects/fate/common/mysql/mysql-*/logs |
 
 ### 7.4. 空间清理规则
 
@@ -779,4 +778,3 @@ find /data/projects/fate/eggroll/data/IN_MEMORY/ -maxdepth 1 -mindepth 1 -mtime 
 ```bash
 find /data/projects/fate/eggroll/data/LMDB/ -maxdepth 1 -mindepth 1 -mtime +N -type d -name "output_data_*" | xargs rm -rf
 ```
-

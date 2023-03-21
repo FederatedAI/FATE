@@ -50,39 +50,130 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
 
         self._setup_bin_inner_param(data_instances, self.model_param)
 
+        split_points_obj = None
         if self.model_param.method == consts.OPTIMAL:
             has_missing_value = self.iv_calculator.check_containing_missing_value(data_instances)
             for idx in self.bin_inner_param.bin_indexes:
                 if idx in has_missing_value:
                     raise ValueError(f"Optimal Binning do not support missing value now.")
-        split_points = self.binning_obj.fit_split_points(data_instances)
+        if self.model_param.split_points_by_col_name or self.model_param.split_points_by_index:
+            split_points = self._get_manual_split_points(data_instances)
+            self.use_manual_split_points = True
+            for col_name, sp in split_points.items():
+                self.binning_obj.bin_results.put_col_split_points(col_name, sp)
+        else:
+            split_points = self.binning_obj.fit_split_points(data_instances)
+            split_points_obj = self.binning_obj.bin_results
 
         if self.model_param.skip_static:
-            self.transform(data_instances)
+            self.transform_data(data_instances)
             return self.data_output
 
+        label_counts_dict, label_counts, label_table = self.stat_label(data_instances)
+        self.bin_result = self.cal_local_iv(data_instances, split_points, label_counts, label_table)
+        if self.model_param.method == consts.OPTIMAL and split_points_obj is not None:
+            # LOGGER.debug(f"set optimal metric array")
+            self.set_optimal_metric_array(split_points_obj.all_optimal_metric)
+
+        if self.model_param.local_only:
+
+            self.transform_data(data_instances)
+            self.set_summary(self.bin_result.summary())
+            return self.data_output
+
+        self.host_results = self.federated_iv(
+            data_instances=data_instances,
+            label_table=label_table,
+            result_counts=label_counts_dict,
+            label_elements=self.labels,
+            label_counts=label_counts)
+
+        total_summary = self.bin_result.summary()
+        for host_res in self.host_results:
+            total_summary = self._merge_summary(total_summary, host_res.summary())
+
+        self.set_schema(data_instances)
+        self.transform_data(data_instances)
+        LOGGER.info("Finish feature binning fit and transform")
+        self.set_summary(total_summary)
+        return self.data_output
+
+    def transform(self, data_instances):
+        if self.model_param.skip_static:
+            self.transform_data(data_instances)
+            return self.data_output
+
+        has_label = True
+        if data_instances.first()[1].label is None:
+            has_label = False
+
+        self.transfer_variable.transform_stage_has_label.remote(has_label,
+                                                                role=consts.HOST,
+                                                                idx=-1)
+        if not has_label:
+            self.transform_data(data_instances)
+            return self.data_output
+
+        self._setup_bin_inner_param(data_instances, self.model_param)
+
+        label_counts_dict, label_counts, label_table = self.stat_label(data_instances)
+
+        if (set(self.labels) & set(label_counts_dict)) != set(label_counts_dict):
+            raise ValueError(f"Label {set(self.labels) - set(label_counts_dict)} can not be recognized")
+
+        split_points = self.binning_obj.bin_results.all_split_points
+        self.transform_bin_result = self.cal_local_iv(data_instances, split_points, label_counts, label_table)
+
+        if self.model_param.local_only:
+
+            self.transform_data(data_instances)
+            self.set_summary(self.bin_result.summary())
+            return self.data_output
+
+        self.transform_host_results = self.federated_iv(data_instances=data_instances,
+                                                        label_table=label_table,
+                                                        result_counts=label_counts_dict,
+                                                        label_elements=self.labels,
+                                                        label_counts=label_counts)
+
+        total_summary = self.transform_bin_result.summary()
+        for host_res in self.transform_host_results:
+            total_summary = self._merge_summary(total_summary, host_res.summary())
+
+        self.set_schema(data_instances)
+        self.transform_data(data_instances)
+        LOGGER.info("Finish feature binning fit and transform")
+        self.set_summary(total_summary)
+        return self.data_output
+
+    def stat_label(self, data_instances):
         label_counts_dict = data_overview.get_label_count(data_instances)
 
         if len(label_counts_dict) > 2:
             if self.model_param.method == consts.OPTIMAL:
                 raise ValueError("Have not supported optimal binning in multi-class data yet")
 
-        self.labels = list(label_counts_dict.keys())
-        label_counts = [label_counts_dict[k] for k in self.labels]
+        if self._stage == "fit":
+            self.labels = list(label_counts_dict.keys())
+            self.labels.sort()
+            self.labels.reverse()
+
+        label_counts = [label_counts_dict.get(k, 0) for k in self.labels]
         label_table = IvCalculator.convert_label(data_instances, self.labels)
-        self.bin_result = self.iv_calculator.cal_local_iv(data_instances=data_instances,
-                                                          split_points=split_points,
-                                                          labels=self.labels,
-                                                          label_counts=label_counts,
-                                                          bin_cols_map=self.bin_inner_param.get_need_cal_iv_cols_map(),
-                                                          label_table=label_table)
 
-        if self.model_param.local_only:
+        return label_counts_dict, label_counts, label_table
 
-            self.transform(data_instances)
-            self.set_summary(self.bin_result.summary())
-            return self.data_output
+    def cal_local_iv(self, data_instances, split_points, label_counts, label_table):
+        bin_result = self.iv_calculator.cal_local_iv(data_instances=data_instances,
+                                                     split_points=split_points,
+                                                     labels=self.labels,
+                                                     label_counts=label_counts,
+                                                     bin_cols_map=self.bin_inner_param.get_need_cal_iv_cols_map(),
+                                                     label_table=label_table)
 
+        return bin_result
+
+    def federated_iv(self, data_instances, label_table, result_counts, label_elements, label_counts):
         if self.model_param.encrypt_param.method == consts.PAILLIER:
             paillier_encryptor = PaillierEncrypt()
             paillier_encryptor.generate_key(self.model_param.encrypt_param.key_length)
@@ -90,21 +181,6 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
             raise NotImplementedError("encrypt method not supported yet")
         self._packer = GuestIntegerPacker(pack_num=len(self.labels), pack_num_range=label_counts,
                                           encrypter=paillier_encryptor)
-
-        self.federated_iv(data_instances=data_instances, label_table=label_table,
-                          result_counts=label_counts_dict, label_elements=self.labels)
-
-        total_summary = self.bin_result.summary()
-        for host_res in self.host_results:
-            total_summary = self._merge_summary(total_summary, host_res.summary())
-
-        self.set_schema(data_instances)
-        self.transform(data_instances)
-        LOGGER.info("Finish feature binning fit and transform")
-        self.set_summary(total_summary)
-        return self.data_output
-
-    def federated_iv(self, data_instances, label_table, result_counts, label_elements):
 
         converted_label_table = label_table.mapValues(lambda x: [int(i) for i in x])
         encrypted_label_table = self._packer.pack_and_encrypt(converted_label_table)
@@ -114,6 +190,8 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
         encrypted_bin_sum_infos = self.transfer_variable.encrypted_bin_sum.get(idx=-1)
         encrypted_bin_infos = self.transfer_variable.optimal_info.get(idx=-1)
         LOGGER.info("Get encrypted_bin_sum from host")
+
+        host_results = []
         for host_idx, encrypted_bin_info in enumerate(encrypted_bin_infos):
             host_party_id = self.component_properties.host_party_idlist[host_idx]
             encrypted_bin_sum = encrypted_bin_sum_infos[host_idx]
@@ -128,7 +206,10 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
                                               result_counts=result_counts,
                                               label_elements=label_elements)
             bin_result.set_role_party(role=consts.HOST, party_id=host_party_id)
-            self.host_results.append(bin_result)
+
+            host_results.append(bin_result)
+
+        return host_results
 
     def host_optimal_binning(self, data_instances, host_idx, encrypted_bin_info, result_counts, category_names):
         optimal_binning_params = encrypted_bin_info['optimal_params']
@@ -157,7 +238,7 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
         category_names = encrypted_bin_info['category_names']
         result_counts_dict = dict(result_counts_table.collect())
         host_party_id = self.component_properties.host_party_idlist[host_idx]
-        if host_bin_methods == consts.OPTIMAL:
+        if host_bin_methods == consts.OPTIMAL and self._stage == "fit":
             if len(result_counts) > 2:
                 raise ValueError("Have not supported optimal binning in multi-class data yet")
             host_binning_obj = self.host_optimal_binning(data_instances, host_idx,

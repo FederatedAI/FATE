@@ -19,7 +19,7 @@ from federatedml.secureprotol.symmetric_encryption.cryptor_executor import Crypt
 from federatedml.secureprotol.symmetric_encryption.pohlig_hellman_encryption import PohligHellmanCipherKey
 from federatedml.statistic.intersect.base_intersect import Intersect
 from federatedml.transfer_variable.transfer_class.dh_intersect_transfer_variable import DhIntersectTransferVariable
-from federatedml.util import LOGGER
+from federatedml.util import LOGGER, consts
 
 
 class DhIntersect(Intersect):
@@ -41,7 +41,7 @@ class DhIntersect(Intersect):
         self.key_length = self.dh_params.key_length
 
     def get_intersect_method_meta(self):
-        dh_meta = {"intersect_method": self.intersect_method,
+        dh_meta = {"intersect_method": consts.DH,
                    "hash_method": self.dh_params.hash_method,
                    "salt": self.salt}
         return dh_meta
@@ -76,23 +76,15 @@ class DhIntersect(Intersect):
             return 3
         return 1
 
-    @staticmethod
-    def _decrypt_id(data_instance, cipher, reserve_value=False):
-        """
-        Decrypt the key (ID) of input Table
-        :param data_instance: Table
-        :param reserve_value: (e, De) if reserve_value, otherwise (De, -1)
-        :return:
-        """
-        if reserve_value:
-            return cipher.map_decrypt(data_instance, mode=0)
-        else:
-            return cipher.map_decrypt(data_instance, mode=1)
-
+    """
     def _generate_commutative_cipher(self):
         self.commutative_cipher = [
             CryptoExecutor(PohligHellmanCipherKey.generate_key(self.key_length)) for _ in self.host_party_id_list
         ]
+    """
+
+    def _generate_commutative_cipher(self):
+        self.commutative_cipher = CryptoExecutor(PohligHellmanCipherKey.generate_key(self.key_length))
 
     def _sync_commutative_cipher_public_knowledge(self):
         """
@@ -101,9 +93,9 @@ class DhIntersect(Intersect):
         """
         pass
 
-    def _exchange_id_list(self, id_list):
+    def _exchange_id(self, id_cipher, replace_val=True):
         """
-        :param id_list: Table in the form (id, 0)
+        :param id_cipher: Table in the form (id, 0)
         :return:
         """
         pass
@@ -116,7 +108,7 @@ class DhIntersect(Intersect):
         """
         pass
 
-    def get_intersect_doubly_encrypted_id(self, data_instances):
+    def get_intersect_doubly_encrypted_id(self, data_instances, keep_key=True):
         raise NotImplementedError("This method should not be called here")
 
     def decrypt_intersect_doubly_encrypted_id(self, id_list_intersect_cipher_cipher):

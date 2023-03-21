@@ -18,12 +18,11 @@ import abc
 import numpy as np
 import operator
 
-from fate_arch.federation import segment_transfer_enabled
 from federatedml.secureprotol.encrypt import Encrypt
 from federatedml.util import LOGGER
 
 
-class TransferableWeights(metaclass=segment_transfer_enabled()):
+class TransferableWeights:
     def __init__(self, weights, cls, *args, **kwargs):
         self._weights = weights
         self._cls = cls
@@ -53,7 +52,7 @@ class TransferableWeights(metaclass=segment_transfer_enabled()):
             return self._cls(self._weights, *args, **kwargs)
 
 
-class Weights(metaclass=segment_transfer_enabled()):
+class Weights:
 
     def __init__(self, l):
         self._weights = l
@@ -96,7 +95,6 @@ class Weights(metaclass=segment_transfer_enabled()):
         return self.binary_op(other, operator.add, inplace=True)
 
     def __add__(self, other):
-        LOGGER.debug("In binary_op0, _w: {}".format(self._weights))
         return self.binary_op(other, operator.add, inplace=False)
 
     def __radd__(self, other):
@@ -263,7 +261,7 @@ class NumpyWeights(Weights):
         if inplace:
             size = self._weights.size
             view = self._weights.view().reshape(size)
-            view_other = other._weights.view().reshpae(size)
+            view_other = other._weights.view().reshape(size)
             for i in range(size):
                 view[i] = func(view[i], view_other[i])
             return self
@@ -279,3 +277,6 @@ class NumpyWeights(Weights):
         for i in range(size):
             view[i] += a * view_other[i]
         return self
+
+    def __repr__(self):
+        return self._weights.__repr__()
