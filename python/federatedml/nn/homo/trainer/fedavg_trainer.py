@@ -2,6 +2,7 @@ import torch
 import torch as t
 import tqdm
 import numpy as np
+from torch.nn import DataParallel
 from torch.utils.data import DataLoader
 from federatedml.framework.homo.aggregator.secure_aggregator import SecureAggregatorClient as SecureAggClient
 from federatedml.framework.homo.aggregator.secure_aggregator import SecureAggregatorServer as SecureAggServer
@@ -82,16 +83,24 @@ class FedAVGTrainer(TrainerBase):
         self.weighted_aggregation = weighted_aggregation
         self.aggregate_every_n_epoch = aggregate_every_n_epoch
 
-        # GPU
+        # GPU, check cuda setting
         self.cuda = cuda
         if not torch.cuda.is_available() and self.cuda is not None:
             raise ValueError('Cuda is not available on this machine')
+        
         self.cuda_main_device = None
+        self.data_parallel = False
+        self.parallel_model = None
+
         if isinstance(self.cuda, int):
             self.cuda_main_device = self.cuda
         elif isinstance(self.cuda, list):
             for i in self.cuda:
                 assert isinstance(i, int), 'cuda device must be int, but got {}'.format(self.cuda)
+            self.cuda_main_device = self.cuda[0]
+            if len(self.cuda) > 1:
+                self.data_parallel = True
+                LOGGER.info('Using DataParallel in Pytorch')
 
         # data loader
         self.batch_size = batch_size
@@ -148,6 +157,12 @@ class FedAVGTrainer(TrainerBase):
 
         return client_agg, aggregate_round
     
+    def _select_model(self):
+        if self.data_parallel:
+            return self.parallel_model
+        else:
+            return self.model
+    
     def train_an_epoch(self, epoch_idx, model, train_set, optimizer, loss):
 
         epoch_loss = 0.0
@@ -165,7 +180,11 @@ class FedAVGTrainer(TrainerBase):
         dl = self.data_loader
     
         if self.cuda:
-            model = model.cuda(self.cuda_main_device)
+            if self.data_parallel:
+                model = model.cuda(self.cuda_main_device)
+                self.parallel_model = DataParallel(model, device_ids=self.cuda, output_device=self.cuda_main_device)
+            else:
+                model = model.cuda(self.cuda_main_device)
 
         if not self.fed_mode:
             to_iterate = tqdm.tqdm(dl)
@@ -234,7 +253,8 @@ class FedAVGTrainer(TrainerBase):
 
             cur_epoch = i
             LOGGER.info('epoch is {}'.format(i))
-            epoch_loss = self.train_an_epoch(i, self.model, train_set, optimizer, loss)
+            model = self._select_model()
+            epoch_loss = self.train_an_epoch(i, model, train_set, optimizer, loss)
             self.callback_loss(epoch_loss, i)
             loss_history.append(float(epoch_loss))
             LOGGER.info('epoch loss is {}'.format(epoch_loss))
@@ -304,7 +324,8 @@ class FedAVGTrainer(TrainerBase):
 
         # switch eval mode
         dataset.eval()
-        self.model.eval()
+        model = self._select_model()
+        model.eval()
 
         if not dataset.has_sample_ids():
             dataset.init_sid_and_getfunc(prefix=dataset.get_type())
@@ -316,7 +337,7 @@ class FedAVGTrainer(TrainerBase):
                     dataset, self.batch_size):
                 if self.cuda:
                     batch_data = self.to_cuda(batch_data, self.cuda_main_device)
-                pred = self.model(batch_data)
+                pred = model(batch_data)
                 pred_result.append(pred)
                 labels.append(batch_label)
 
@@ -325,7 +346,7 @@ class FedAVGTrainer(TrainerBase):
 
         # switch back to train mode
         dataset.train()
-        self.model.train()
+        model.train()
 
         return dataset.get_sample_ids(), ret_rs, ret_label
 
