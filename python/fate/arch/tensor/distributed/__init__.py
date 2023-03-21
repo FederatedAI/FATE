@@ -1,3 +1,4 @@
+from ._op_matmul import *
 from ._op_slice import *
 from ._ops_agg import *
 from ._ops_binary import *

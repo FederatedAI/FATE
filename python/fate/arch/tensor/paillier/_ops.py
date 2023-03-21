@@ -178,7 +178,7 @@ def rmatmul_f(input, other):
 @implements(torch.matmul)
 def matmul(input, other):
     if not isinstance(input, PaillierTensor) and isinstance(other, PaillierTensor):
-        return rmatmul(other, input)
+        return rmatmul_f(other, input)
 
     if isinstance(other, PaillierTensor):
         raise ValueError("can't matmul `PaillierTensor` with `PaillierTensor`")

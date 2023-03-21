@@ -18,7 +18,8 @@
 import logging
 import typing
 
-from .._computing import CTableABC
+from fate.interface import CTableABC
+
 from .._profile import computing_profile
 from .._type import ComputingEngine
 

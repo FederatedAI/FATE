@@ -12,7 +12,7 @@ def slice_f(input: DTensor, key):
             # 1.1: slice output in one of shardings
             if input.shardings.shapes.axis == 0:
                 return input.shardings.map_reduce_shard_with_stride(
-                    stride_mapper_func=lambda stride, s: [s[key - stride]]
+                    stride_mapper_func=lambda stride, _, s: [s[key - stride]]
                     if stride <= key < stride + s.shape[0]
                     else [],
                     reducer_func=lambda x, y: [*x, *y],
@@ -34,7 +34,7 @@ def slice_f(input: DTensor, key):
 
         if input.shardings.shapes.axis == 0:
             outputs = input.shardings.map_reduce_shard_with_stride(
-                stride_mapper_func=lambda stride, s: [
+                stride_mapper_func=lambda stride, _, s: [
                     (i, s[k - stride]) for i, k in enumerate(key) if stride <= k < stride + s.shape[0]
                 ],
                 reducer_func=lambda x, y: [*x, *y],

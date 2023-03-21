@@ -228,7 +228,7 @@ def min(input: DTensor, *args, **kwargs):
 
     if input.shardings.shapes.axis == dim:
 
-        def _mapper(stride: int, x: torch.Tensor):
+        def _mapper(stride: int, _: int, x: torch.Tensor):
             r = torch.min(x, dim=dim, keepdim=keepdim)
             return (stride, torch.return_types.min((r.values, r.indices + stride)))
 
@@ -281,7 +281,7 @@ def max(input: DTensor, *args, **kwargs):
 
     if input.shardings.shapes.axis == dim:
 
-        def _mapper(stride: int, x: torch.Tensor):
+        def _mapper(stride: int, _: int, x: torch.Tensor):
             r = torch.max(x, dim=dim, keepdim=keepdim)
             return (stride, torch.return_types.max((r.values, r.indices + stride)))
 

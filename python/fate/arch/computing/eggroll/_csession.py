@@ -17,8 +17,9 @@
 import logging
 from typing import Optional
 
+from fate.interface import CSessionABC
+
 from ...unify import uuid
-from .._computing import CSessionABC
 from .._profile import computing_profile
 from ._table import Table
 
