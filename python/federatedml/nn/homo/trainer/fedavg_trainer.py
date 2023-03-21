@@ -32,7 +32,11 @@ class FedAVGTrainer(TrainerBase):
 
     aggregate_every_n_epoch: None or int. if None, aggregate model on the end of every epoch, if int, aggregate
                              every n epochs.
-    cuda: bool, use cuda or not
+
+    cuda: None, int or list of int. if None, use cpu; if int, use the the {int} device, if list of int, use the
+          This trainier will automatically detect use DataParallel for multi GPU training, the first index will be
+          the main device and the output device.
+
     pin_memory: bool, for pytorch DataLoader
     shuffle: bool, for pytorch DataLoader
     data_loader_worker: int, for pytorch DataLoader, number of workers when loading data
@@ -49,10 +53,11 @@ class FedAVGTrainer(TrainerBase):
     def __init__(self, epochs=10, batch_size=512,  # training parameter
                  early_stop=None, tol=0.0001,  # early stop parameters
                  secure_aggregate=True, weighted_aggregation=True, aggregate_every_n_epoch=None,  # federation
-                 cuda=False, pin_memory=True, shuffle=True, data_loader_worker=0,  # GPU & dataloader
+                 cuda=None, 
+                 pin_memory=True, shuffle=True, data_loader_worker=0,  # GPU & dataloader
                  validation_freqs=None,  # validation configuration
                  checkpoint_save_freqs=None,  # checkpoint configuration
-                 task_type='auto'
+                 task_type='auto'  # task type
                  ):
 
         super(FedAVGTrainer, self).__init__()
@@ -64,7 +69,7 @@ class FedAVGTrainer(TrainerBase):
         self.save_freq = checkpoint_save_freqs
 
         self.task_type = task_type
-        task_type_allow = [
+        task_type_allow = [ 
             consts.BINARY,
             consts.REGRESSION,
             consts.MULTY,
@@ -79,14 +84,21 @@ class FedAVGTrainer(TrainerBase):
 
         # GPU
         self.cuda = cuda
-        if not torch.cuda.is_available() and self.cuda:
+        if not torch.cuda.is_available() and self.cuda is not None:
             raise ValueError('Cuda is not available on this machine')
+        self.cuda_main_device = None
+        if isinstance(self.cuda, int):
+            self.cuda_main_device = self.cuda
+        elif isinstance(self.cuda, list):
+            for i in self.cuda:
+                assert isinstance(i, int), 'cuda device must be int, but got {}'.format(self.cuda)
 
         # data loader
         self.batch_size = batch_size
         self.pin_memory = pin_memory
         self.shuffle = shuffle
         self.data_loader_worker = data_loader_worker
+        self.data_loader = None
 
         self.early_stop = early_stop
         early_stop_type = ['diff', 'abs']
@@ -112,36 +124,9 @@ class FedAVGTrainer(TrainerBase):
                                  'secure_aggregate', 'weighted_aggregation', 'pin_memory,'], self.is_bool, '{} is not a bool')
         self.check_trainer_param(
             [self.tol], ['tol'], self.is_float, '{} is not a float')
+        
 
-    def train(
-            self,
-            train_set: Dataset,
-            validate_set: Dataset = None,
-            optimizer: t.optim.Optimizer = None,
-            loss=None,
-            extra_dict={}):
-
-        if self.cuda:
-            self.model = self.model.cuda()
-
-        if optimizer is None:
-            raise ValueError(
-                'FedAVGTrainer requires an optimizer, but got None, please specify optimizer in the '
-                'job configuration')
-        if loss is None:
-            raise ValueError(
-                'FedAVGTrainer requires a loss function, but got None, please specify loss function in the'
-                ' job configuration')
-
-        if self.batch_size > len(train_set) or self.batch_size == -1:
-            self.batch_size = len(train_set)
-        dl = DataLoader(
-            train_set,
-            batch_size=self.batch_size,
-            pin_memory=self.pin_memory,
-            shuffle=self.shuffle,
-            num_workers=self.data_loader_worker)
-
+    def _init_aggregator(self, train_set):
         # compute round to aggregate
         cur_agg_round = 0
         if self.aggregate_every_n_epoch is not None:
@@ -161,6 +146,83 @@ class FedAVGTrainer(TrainerBase):
         else:
             client_agg = None
 
+        return client_agg, aggregate_round
+    
+    def train_an_epoch(self, epoch_idx, model, train_set, optimizer, loss):
+
+        epoch_loss = 0.0
+        batch_idx = 0
+        acc_num = 0
+
+        if self.data_loader is None:
+            self.data_loader = DataLoader(
+                                    train_set,
+                                    batch_size=self.batch_size,
+                                    pin_memory=self.pin_memory,
+                                    shuffle=self.shuffle,
+                                    num_workers=self.data_loader_worker)
+        
+        dl = self.data_loader
+    
+        if self.cuda:
+            model = model.cuda(self.cuda_main_device)
+
+        if not self.fed_mode:
+            to_iterate = tqdm.tqdm(dl)
+        else:
+            to_iterate = dl
+
+        for batch_data, batch_label in to_iterate:
+
+            if self.cuda:
+                batch_data, batch_label = self.to_cuda(
+                    batch_data, self.cuda_main_device), self.to_cuda(batch_label, self.cuda_main_device)
+
+            optimizer.zero_grad()
+            pred = model(batch_data)
+            batch_loss = loss(pred, batch_label)
+            batch_loss.backward()
+            optimizer.step()
+            batch_loss_np = batch_loss.detach().numpy(
+            ) if not self.cuda else batch_loss.cpu().detach().numpy()
+            if acc_num + self.batch_size > len(train_set):
+                batch_len = len(train_set) - acc_num
+            else:
+                batch_len = self.batch_size
+            epoch_loss += batch_loss_np * batch_len
+            batch_idx += 1
+
+        if self.fed_mode:
+            LOGGER.debug(
+                'epoch {} batch {} finished'.format(epoch_idx, batch_idx))
+        
+        epoch_loss = epoch_loss / len(train_set)
+        return epoch_loss
+
+    def train(
+            self,
+            train_set: Dataset,
+            validate_set: Dataset = None,
+            optimizer: t.optim.Optimizer = None,
+            loss=None,
+            extra_dict={}):
+
+        if optimizer is None:
+            raise ValueError(
+                'FedAVGTrainer requires an optimizer, but got None, please specify optimizer in the '
+                'job configuration')
+        if loss is None:
+            raise ValueError(
+                'FedAVGTrainer requires a loss function, but got None, please specify loss function in the'
+                ' job configuration')
+
+        if self.batch_size > len(train_set) or self.batch_size == -1:
+            self.batch_size = len(train_set)
+
+        # compute round to aggregate
+        cur_agg_round = 0
+        client_agg, aggregate_round = self._init_aggregator(train_set)
+
         # running var
         cur_epoch = 0
         loss_history = []
@@ -169,45 +231,10 @@ class FedAVGTrainer(TrainerBase):
 
         # training process
         for i in range(self.epochs):
+
             cur_epoch = i
             LOGGER.info('epoch is {}'.format(i))
-            epoch_loss = 0.0
-            batch_idx = 0
-            acc_num = 0
-
-            # for better user interface
-            if not self.fed_mode:
-                to_iterate = tqdm.tqdm(dl)
-            else:
-                to_iterate = dl
-
-            for batch_data, batch_label in to_iterate:
-
-                if self.cuda:
-                    batch_data, batch_label = self.to_cuda(
-                        batch_data), self.to_cuda(batch_label)
-
-                optimizer.zero_grad()
-                pred = self.model(batch_data)
-                batch_loss = loss(pred, batch_label)
-                batch_loss.backward()
-                optimizer.step()
-                batch_loss_np = batch_loss.detach().numpy(
-                ) if not self.cuda else batch_loss.cpu().detach().numpy()
-                if acc_num + self.batch_size > len(train_set):
-                    batch_len = len(train_set) - acc_num
-                else:
-                    batch_len = self.batch_size
-                epoch_loss += batch_loss_np * batch_len
-                batch_idx += 1
-
-                if self.fed_mode:
-                    LOGGER.debug(
-                        'epoch {} batch {} finished'.format(
-                            i, batch_idx))
-
-            # loss compute
-            epoch_loss = epoch_loss / len(train_set)
+            epoch_loss = self.train_an_epoch(i, self.model, train_set, optimizer, loss)
             self.callback_loss(epoch_loss, i)
             loss_history.append(float(epoch_loss))
             LOGGER.info('epoch loss is {}'.format(epoch_loss))
@@ -215,8 +242,10 @@ class FedAVGTrainer(TrainerBase):
             # federation process, if running local mode, cancel federation
             if client_agg is not None:
                 if not (self.aggregate_every_n_epoch is not None and (i + 1) % self.aggregate_every_n_epoch != 0):
-                    # model averaging
+                    
+                    # model averaging, only aggregate trainable param
                     self.model = client_agg.model_aggregation(self.model)
+
                     # agg loss and get converge status
                     converge_status = client_agg.loss_aggregation(epoch_loss)
                     cur_agg_round += 1
@@ -286,7 +315,7 @@ class FedAVGTrainer(TrainerBase):
             for batch_data, batch_label in DataLoader(
                     dataset, self.batch_size):
                 if self.cuda:
-                    batch_data = self.to_cuda(batch_data)
+                    batch_data = self.to_cuda(batch_data, self.cuda_main_device)
                 pred = self.model(batch_data)
                 pred_result.append(pred)
                 labels.append(batch_label)

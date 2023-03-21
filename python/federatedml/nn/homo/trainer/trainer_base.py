@@ -374,16 +374,16 @@ class TrainerBase(object):
         self._update_metric_summary(eval_obj.metric_summaries)
         return self._evaluation_summary
 
-    def to_cuda(self, var):
+    def to_cuda(self, var, device=0):
         if hasattr(var, 'cuda'):
-            return var.cuda()
+            return var.cuda(device)
         elif isinstance(var, tuple) or isinstance(var, list):
             ret = tuple(self.to_cuda(i) for i in var)
             return ret
         elif isinstance(var, dict):
             for k in var:
                 if hasattr(var[k], 'cuda'):
-                    var[k] = var[k].cuda()
+                    var[k] = var[k].cuda(device)
             return var
         else:
             return var
