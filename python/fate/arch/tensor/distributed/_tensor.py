@@ -288,19 +288,6 @@ class _ShardingShapes:
         else:
             raise NotImplementedError(f"type `{other}`")
 
-    def matmul_shapes(self, other: Union[torch.Size, "_ShardingShapes"]) -> "_ShardingShapes":
-        if isinstance(other, torch.Size):
-            return _get_shapes_matmul_with_local(self, other)
-
-        # elif isinstance(other, _ShardingShapes):
-        #     assert len(self.shapes) == len(other.shapes), f"sharding num mismatch: {self.shapes} vs {other.shapes}"
-        #     _matmul_shapes = []
-        #     for s1, s2 in zip(self.shapes, other.shapes):
-        #         _matmul_shapes.append(_calc_matmul_output_shape(s1, s2))
-        #     ...
-        else:
-            raise NotImplementedError(f"type `{other}`")
-
     def merge_shapes(self):
         _shape = list(self.shapes[0])
         for s in self.shapes[1:]:
@@ -331,58 +318,3 @@ class _ShardingShapes:
                     _s.append(s[i])
             _shapes.append(torch.Size(_s))
         return _shapes
-
-
-def _calc_matmul_output_shape(a: torch.Size, b: torch.Size):
-    assert len(a) > 0 and len(b) > 0
-    # assert matmul part match
-    if a[-2:][-1] != b[-2:][0]:
-        raise RuntimeError(f"shape mismatch for mat1, mat2 with shape `{a}` and `{b}`")
-    output_left_matmul_shape = None if len(a) == 1 else a[-2]
-    output_right_matmul_shape = None if len(b) == 1 else b[-1]
-
-    # assert broadcast part match
-    output_shape = torch.broadcast_shapes(a[:-2], b[:-2])
-
-    # maybe append matmul part
-    if output_left_matmul_shape is not None:
-        output_shape = torch.Size([*output_shape, output_left_matmul_shape])
-    if output_right_matmul_shape is not None:
-        output_shape = torch.Size([*output_shape, output_right_matmul_shape])
-    return output_shape
-
-
-def _get_shapes_matmul_with_local(a: "_ShardingShapes", b: torch.Size) -> "_ShardingShapes":
-    assert len(b) > 0
-    _matmul_shapes = []
-    axis = None
-    for ai in a.shapes:
-        assert len(ai) > 0
-        # assert dimension of matmul part match
-        if ai[-2:][-1] != b[-2:][0]:
-            raise RuntimeError(f"shape mismatch for mat1, mat2 with shape `{a}` and `{b}`")
-        if len(ai) - 1 == a.axis:
-            raise RuntimeError(f"can't handle matmul with local tensor when distributed axis in last dimension")
-        # broadcast part: dimension of distributed axis corresponding to local tensor should be 1
-        if len(ai) > 2 and len(b) > 2 and (axis_b := len(b) - len(ai) + a.axis) >= 0 and b[axis_b] != 1:
-            raise RuntimeError(
-                f"can't handle matmul with local tensor when distributed axis broadcast with dimension other than 1"
-            )
-        output_shape = torch.broadcast_shapes(ai[:-2], b[:-2])
-        output_axis = a.axis + len(output_shape) - (len(ai) - 2)
-
-        if len(ai) == 1:
-            output_axis -= 0
-        else:
-            output_shape = torch.Size([*output_shape, ai[-2]])
-
-        if len(b) != 1:
-            output_shape = torch.Size([*output_shape, b[-1]])
-        _matmul_shapes.append(output_shape)
-        if axis is None:
-            axis = output_axis
-        else:
-            assert axis == output_axis
-    if axis is None:
-        raise RuntimeError("calc axis failed")
-    return _ShardingShapes(_matmul_shapes, axis)
