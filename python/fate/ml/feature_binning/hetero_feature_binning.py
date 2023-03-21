@@ -212,10 +212,6 @@ class StandardBinning(Module):
             return count
 
         bin_count = split_pt_df.apply(__get_col_bin_count, axis=0)
-
-        if not skip_none:
-            # add extra bin for columns with nan
-            bin_count = bin_count + (train_data.nan_count() > 0)
         self._bin_count_dict = bin_count.to_dict()
 
         """self._split_pt_dict = split_pt_df.to_dict()
