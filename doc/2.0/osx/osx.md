@@ -207,7 +207,7 @@ osx的接口协议目前采用了互联互通会议制定的通信协议以及�
 
 若不开发自定义的处理器且需要对接FATE，则需要了解OSX 的接口逻辑，且按照OSX逻辑发送对应的信息。
 
-目前OSX支持同步/流式/消息队列 模式传输，同步rpc用于调度组件的命令传输，流式传输目前用在了与FATE eggroll组件的通信中，流式传输对接难度较大且eggroll接口逻辑复杂，不建议使用该方式对接。建议使用消息队列模式对接。FATE处理器支持配置接口转化器，一些
+目前OSX支持同步/流式/消息队列 模式传输，同步rpc用于调度组件的命令传输，流式传输目前用在了与FATE eggroll组件的通信中，流式传输对接难度较大且eggroll接口逻辑复杂，不建议使用该方式对接。建议使用消息队列模式对接。FATE处理器支持配置接口转化器，可以对接口的输入输出进行字段上的微调、转换之类的操作。
 
 消息队列模式包含几个操作：
 
@@ -283,9 +283,9 @@ osx的接口协议目前采用了互联互通会议制定的通信协议以及�
                 inboundBuilder.putMetadata(Osx.Metadata.MessageTopic.name(), "testTopic");
                 inboundBuilder.putMetadata(Osx.Metadata.MessageOffSet.name(), "-1");
                 blockingStub.invoke(inboundBuilder.build());
-
+    
     	  }
-        
+        		//消费消息确认，之后版本会变为可选，可由使用者在消费时确定是自动提交确认还是显式提交
               public void testMsgAck() {
     
                 Osx.Inbound.Builder inboundBuilder = Osx.Inbound.newBuilder();
@@ -303,7 +303,7 @@ osx的接口协议目前采用了互联互通会议制定的通信协议以及�
                 inboundBuilder.putMetadata(Osx.Metadata.MessageTopic.name(), "testTopic");
                 inboundBuilder.putMetadata(Osx.Metadata.MessageOffSet.name(), "122");
                  blockingStub.invoke(inboundBuilder.build());
-
+    
         }
 
 | 字段名称                | 是否必填 | 意义                                                                                                                                                                                                                                                       | 默认值  |
@@ -324,7 +324,7 @@ osx的接口协议目前采用了互联互通会议制定的通信协议以及�
 | MessageTopic        |      | 该字段用于数据传输时的Topic ，如当TargetMethod 为PRODUCE\_MSG、CONSUME\_MSG、ACK\_MSG时为必填                                                                                                                                                                                 |      |
 | MessageOffSet       |      | 该字段用于表示消息offset  ，在TargetMethod为CONSUME\_MSG、ACK\_MSG 时该字段为必填，当TargetMethod为CONSUME\_MSG时，填入-1表示取队头消息（需要注意在该种情况下，目前osx的实现逻辑为：当消息未到来之前会阻塞请求，直到消息到来才会返回结果）  ，填入其他整数则表示取对应offset的消息，一般情况下填入-1即可。当TargetMethod为ACK\_MSG时填入确认消费消息的offset，该offset可从消费请求的结果中获取。 |      |
 
-#### 自定义的接口转化器（alpha版本中该功能未完善，从beta版本中正式加入）
+#### 方案二、自定义的接口转化器（alpha版本中该功能未完善，从beta版本中正式加入）
 
 在FATE处理器中可以加入自定义的接口转化器，用于处理通信相关数据，实现自定义逻辑之后可将编译后的jar包加入{在部署目录}/extends/ 下，并在translator.properties加入对应配置，并重启服务。
 
