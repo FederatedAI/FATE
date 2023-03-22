@@ -24,7 +24,9 @@ class FedPELanguageModel(t.nn.Module):
         else:
             config = getattr(transformers, adapter_name)(**adapter_config)
         self._pe_lm.add_adapter(self._adapter_name, config)
-
+        self._pe_lm.train_adapter(self._adapter_name)
+        
+        self.model_summary()
 
     def model_summary(self):
         summary = self._pe_lm.adapter_summary()

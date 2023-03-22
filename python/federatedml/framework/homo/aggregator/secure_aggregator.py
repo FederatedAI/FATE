@@ -82,6 +82,7 @@ class SecureAggregatorClient(AggregatorBaseClient):
         if isinstance(model, t.nn.Module):
             parameters = list(model.parameters())
             tmp_list = [[p.cpu().detach().numpy() for p in parameters if p.requires_grad]]
+            LOGGER.debug('Aggregate trainable parameters: {}/{}'.format(len(tmp_list[0]), len(parameters)))
         elif isinstance(model, t.optim.Optimizer):
             tmp_list = [[p.cpu().detach().numpy() for p in group["params"]]
                         for group in model.param_groups]
@@ -284,3 +285,4 @@ class SecureAggregatorServer(AggregatorBaseServer):
         self.broadcast_converge_status(
             converge_status, suffix=suffix, party_idx=party_idx)
         return agg_loss, converge_status
+

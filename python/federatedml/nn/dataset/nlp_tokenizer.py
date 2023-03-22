@@ -68,7 +68,7 @@ class TokenizerDataset(Dataset):
         
         if self.with_label:
             self.label = t.Tensor(self.text.label).detach().numpy()
-            self.label = self.label.reshape((len(self.word_idx), -1))
+            self.label = self.label.reshape((len(self.text), -1))
 
         if 'id' in self.text:
             self.sample_ids = self.text['id'].values.tolist()
@@ -83,13 +83,20 @@ class TokenizerDataset(Dataset):
         return self.sample_ids
 
     def __getitem__(self, item):
-        if self.with_label:
-            return self.word_idx[item], self.label[item]
+        
+        ret = None
+        if self.return_input_ids:
+            ret = self.word_idx[item]
         else:
-            return self.word_idx[item]
+            ret = {k: v[item] for k, v in self.word_idx.items()}
+
+        if self.with_label:
+            return ret, self.label[item]
+        else:
+            return ret
 
     def __len__(self):
-        return len(self.word_idx)
+        return len(self.text)
 
     def __repr__(self):
         return self.tokenizer.__repr__()

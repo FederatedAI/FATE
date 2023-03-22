@@ -85,13 +85,12 @@ class FedAVGTrainer(TrainerBase):
 
         # GPU, check cuda setting
         self.cuda = cuda
-        if not torch.cuda.is_available() and self.cuda is not None:
-            raise ValueError('Cuda is not available on this machine')
-        
         self.cuda_main_device = None
         self.data_parallel = False
         self.parallel_model = None
 
+        if not torch.cuda.is_available() and self.cuda is not None:
+            raise ValueError('Cuda is not available on this machine')
         if isinstance(self.cuda, int):
             self.cuda_main_device = self.cuda
         elif isinstance(self.cuda, list):
@@ -157,12 +156,24 @@ class FedAVGTrainer(TrainerBase):
 
         return client_agg, aggregate_round
     
+
+    def set_model(self, model: t.nn.Module):
+
+        if not issubclass(type(model), t.nn.Module):
+            raise ValueError('model must be a subclass of pytorch nn.Module')
+        self.model = model
+        if self.cuda is not None:
+            self.model = self.model.cuda(self.cuda_main_device)
+            if self.data_parallel:
+                self.parallel_model = DataParallel(model, device_ids=self.cuda, output_device=self.cuda_main_device)
+
     def _select_model(self):
         if self.data_parallel:
             return self.parallel_model
         else:
             return self.model
     
+
     def train_an_epoch(self, epoch_idx, model, train_set, optimizer, loss):
 
         epoch_loss = 0.0
@@ -178,13 +189,6 @@ class FedAVGTrainer(TrainerBase):
                                     num_workers=self.data_loader_worker)
         
         dl = self.data_loader
-    
-        if self.cuda:
-            if self.data_parallel:
-                model = model.cuda(self.cuda_main_device)
-                self.parallel_model = DataParallel(model, device_ids=self.cuda, output_device=self.cuda_main_device)
-            else:
-                model = model.cuda(self.cuda_main_device)
 
         if not self.fed_mode:
             to_iterate = tqdm.tqdm(dl)
@@ -193,7 +197,7 @@ class FedAVGTrainer(TrainerBase):
 
         for batch_data, batch_label in to_iterate:
 
-            if self.cuda:
+            if self.cuda is not None:
                 batch_data, batch_label = self.to_cuda(
                     batch_data, self.cuda_main_device), self.to_cuda(batch_label, self.cuda_main_device)
 
@@ -203,7 +207,7 @@ class FedAVGTrainer(TrainerBase):
             batch_loss.backward()
             optimizer.step()
             batch_loss_np = batch_loss.detach().numpy(
-            ) if not self.cuda else batch_loss.cpu().detach().numpy()
+            ) if self.cuda is None else batch_loss.cpu().detach().numpy()
             if acc_num + self.batch_size > len(train_set):
                 batch_len = len(train_set) - acc_num
             else:
@@ -335,7 +339,7 @@ class FedAVGTrainer(TrainerBase):
 
             for batch_data, batch_label in DataLoader(
                     dataset, self.batch_size):
-                if self.cuda:
+                if self.cuda is not None:
                     batch_data = self.to_cuda(batch_data, self.cuda_main_device)
                 pred = model(batch_data)
                 pred_result.append(pred)
@@ -399,3 +403,4 @@ class FedAVGTrainer(TrainerBase):
                     break
 
         LOGGER.info('server aggregation process done')
+
