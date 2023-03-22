@@ -81,7 +81,7 @@ class SecureAggregatorClient(AggregatorBaseClient):
 
         if isinstance(model, t.nn.Module):
             parameters = list(model.parameters())
-            tmp_list = [[p.cpu().detach().numpy() for p in parameters]]
+            tmp_list = [[p.cpu().detach().numpy() for p in parameters if p.requires_grad]]
         elif isinstance(model, t.optim.Optimizer):
             tmp_list = [[p.cpu().detach().numpy() for p in group["params"]]
                         for group in model.param_groups]
@@ -118,8 +118,9 @@ class SecureAggregatorClient(AggregatorBaseClient):
                              for arr_list in agg_model]
 
             if isinstance(model, t.nn.Module):
-                for agg_p, p in zip(agg_model[0], model.parameters()):
+                for agg_p, p in zip(agg_model[0], [p for p in model.parameters() if p.requires_grad]):
                     p.data.copy_(t.Tensor(agg_p))
+
                 return model
             elif isinstance(model, t.optim.Optimizer):
                 for agg_group, group in zip(agg_model, model.param_groups):
