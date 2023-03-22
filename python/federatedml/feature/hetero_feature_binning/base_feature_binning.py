@@ -22,11 +22,11 @@ import numpy as np
 
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.bin_inner_param import BinInnerParam
+from federatedml.feature.binning.bin_result import MultiClassBinResult
 from federatedml.feature.binning.bucket_binning import BucketBinning
+from federatedml.feature.binning.iv_calculator import IvCalculator
 from federatedml.feature.binning.optimal_binning.optimal_binning import OptimalBinning
 from federatedml.feature.binning.quantile_binning import QuantileBinning
-from federatedml.feature.binning.iv_calculator import IvCalculator
-from federatedml.feature.binning.bin_result import MultiClassBinResult
 from federatedml.feature.fate_element_type import NoneType
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.model_base import ModelBase
@@ -318,9 +318,9 @@ class BaseFeatureBinning(ModelBase):
         if self.role == consts.HOST:
             binning_result = dict(list(multi_class_result.results)[0].binning_result)
             woe_array = list(binning_result.values())[0].woe_array
+            self.bin_result = MultiClassBinResult.reconstruct(list(multi_class_result.results))
             # if manual woe, reconstruct
             if woe_array:
-                self.bin_result = MultiClassBinResult.reconstruct(list(multi_class_result.results))
                 self.has_woe_array = True
 
         assert isinstance(model_meta, feature_binning_meta_pb2.FeatureBinningMeta)
@@ -373,6 +373,18 @@ class BaseFeatureBinning(ModelBase):
         """
 
         self._stage = "transform"
+
+    def record_missing(self, instances):
+        from federatedml.statistic.statics import MissingStatistic
+        header = instances.schema['header']
+        tag_id_mapping = {v: k for k, v in enumerate(header)}
+        feature_count_rs = MissingStatistic.count_feature_ratio(instances, tag_id_mapping,
+                                                                not MissingStatistic.is_sparse(instances),
+                                                                missing_val=self.binning_obj.abnormal_list)
+        total_count = instances.count()
+        for col_idx, feature_count in enumerate(feature_count_rs):
+            missing = feature_count < total_count
+            self.bin_result.put_col_missing(header[col_idx], missing)
 
     def export_model(self):
         if self.model_output is not None:
