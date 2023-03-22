@@ -375,6 +375,9 @@ class BaseFeatureBinning(ModelBase):
         self._stage = "transform"
         # add missing parameters while loading trained model
         self.model_param.bin_names = list(model_meta.cols)
+        # force configure bin_indexes to empty list because model_meta.cols is all bin col name,
+        # defult bin_indexs = -1, so it will process all column during transform stage.
+        self.model_param.bin_indexes = []
         if model_meta.transform_param:
             self.model_param.transform_param.transform_cols = list(model_meta.transform_param.transform_cols)
             self.model_param.transform_param.transform_type = model_meta.transform_param.transform_type
