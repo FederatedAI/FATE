@@ -109,9 +109,10 @@ class CKKSEncryptedVector(object):
 
     def __add__(self, other):
         if isinstance(other, CKKSEncryptedVector):
-            return self.__from_ts_enc_vec(self.__encrypted_vector + other.__encrypted_vector)
+            self.__encrypted_vector += other.__encrypted_vector
         else:
-            return self.__from_ts_enc_vec(self.__encrypted_vector + other)
+            self.__encrypted_vector += other
+        return self
 
     def __radd__(self, other):
         return self.__add__(other)
@@ -126,12 +127,11 @@ class CKKSEncryptedVector(object):
         return self.__mul__(other)
 
     def __mul__(self, other):
-        vector = self.__encrypted_vector * (other.__encrypted_vector if isinstance(other, CKKSEncryptedVector) else other)
-        return self.__from_ts_enc_vec(vector)
-
-    def __from_ts_enc_vec(self, ts_enc_vec):
-        """Converts tenseal encrypted singleton vector to CKKSEncryptedNumber"""
-        return CKKSEncryptedVector(ts_enc_vec, self.__context)
+        if isinstance(other, CKKSEncryptedVector):
+            self.__encrypted_vector *= other.__encrypted_vector
+        else:
+            self.__encrypted_vector *= other
+        return self
 
     def _get_tenseal_encrypted_vector(self):
         """Should only be called by CKKSPrivateKey"""
