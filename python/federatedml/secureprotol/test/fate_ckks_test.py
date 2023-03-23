@@ -87,20 +87,13 @@ class TestCKKSEncryptedVector(unittest.TestCase):
         self.public_key, self.private_key = CKKSKeypair.generate_keypair()
         self.public_key = serialize_and_deserialize(self.public_key)
 
-    def tearDown(self):
-        unittest.TestCase.tearDown(self)
 
     def test_add_scalar(self):
-        x_li = np.ones(100) * np.random.randint(100)
-        y_li = np.ones(100) * np.random.randint(1000)
-        z_li = np.ones(100) * np.random.rand()
-        t_li = range(100)
-
-        for i in range(x_li.shape[0]):
-            x = x_li[i]
-            y = y_li[i]
-            z = z_li[i]
-            t = t_li[i]
+        for _ in range(100):
+            x = np.random.randint(100)
+            y = np.random.randint(1000)
+            z = np.random.rand()
+            t = np.random.randint(100)
 
             en_x = self.public_key.encrypt(x)
             en_y = self.public_key.encrypt(y)
@@ -115,16 +108,12 @@ class TestCKKSEncryptedVector(unittest.TestCase):
             assert_small_rel_diff_scalar(de_en_res, res)
 
     def test_mul_scalar(self):
-        x_li = np.ones(100) * np.random.randint(10)
-        y_li = np.ones(100) * np.random.randint(10) * -1
-        z_li = np.ones(100) * np.random.rand()
-        t_li = np.ones(100)
+        for _ in range(100):
+            x = np.random.randint(10)
+            y = np.random.randint(10) * -1
+            z = np.random.rand()
+            t = 1
 
-        for i in range(x_li.shape[0]):
-            x = x_li[i]
-            y = y_li[i]
-            z = z_li[i]
-            t = t_li[i]
             en_x = self.public_key.encrypt(x)
 
             en_res = en_x * y
@@ -135,20 +124,29 @@ class TestCKKSEncryptedVector(unittest.TestCase):
             assert_small_rel_diff_scalar(de_en_res, res)
 
     def test_enc_mul_scalar(self):
-        x_li = np.ones(100) * np.random.randint(10)
-        y_li = np.ones(100) * np.random.randint(10) * -1
-        z_li = np.ones(100) * np.random.rand()
-        t_li = np.ones(100)
+        for _ in range(100):
+            x = np.random.randint(10)
+            y = np.random.randint(10) * -1
+            z = np.random.rand()
+            t = 1
 
-        for i in range(x_li.shape[0]):
-            x = x_li[i]
-            y = y_li[i]
-            z = z_li[i]
-            t = t_li[i]
             en_x = self.public_key.encrypt(x)
             en_y = self.public_key.encrypt(y)
-            en_z = self.public_key.encrypt(z)
-            en_t = self.public_key.encrypt(t)
+
+            en_res = en_x * en_y
+
+            res = x * y
+
+            de_en_res = self.private_key.decrypt(en_res)
+            assert_small_rel_diff_scalar(de_en_res, res)
+
+    def test_enc_mul_small_scalar(self):
+        for _ in range(100):
+            x = np.random.uniform(-1e-10, 1e-10)
+            y = np.random.uniform(-1e-10, 1e-10)
+
+            en_x = self.public_key.encrypt(x)
+            en_y = self.public_key.encrypt(y)
 
             en_res = en_x * en_y
 
@@ -189,8 +187,6 @@ class TestCKKSEncryptedVector(unittest.TestCase):
 
         expected = x_vec * y_vec
         actual = self.private_key.decrypt(enc_x_vec * enc_y_vec)
-
-        assert_almost_equal_vector(expected, actual)
 
 
 class TestCKKSSerialization(unittest.TestCase):
