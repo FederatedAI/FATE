@@ -128,10 +128,10 @@ class CKKSEncryptedVector(object):
 
     def __mul__(self, other):
         if isinstance(other, CKKSEncryptedVector):
-            self.__encrypted_vector *= other.__encrypted_vector
+            value = self.__encrypted_vector * other.__encrypted_vector
         else:
-            self.__encrypted_vector *= other
-        return self
+            value = self.__encrypted_vector * other
+        return CKKSEncryptedVector(value, self.__context)
 
     def _get_tenseal_encrypted_vector(self):
         """Should only be called by CKKSPrivateKey"""
