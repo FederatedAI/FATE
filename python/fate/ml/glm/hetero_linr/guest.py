@@ -22,24 +22,29 @@ from fate.arch import dataframe
 from fate.interface import Context
 from fate.ml.abc.module import HeteroModule
 from fate.ml.utils._model_param import initialize_param
+from fate.ml.utils._optimizer import Optimizer, LRScheduler
 
 logger = logging.getLogger(__name__)
 
 
-class HeteroLinrModuleGuest(HeteroModule):
+class HeteroLinRModuleGuest(HeteroModule):
     def __init__(
             self,
             max_iter=None,
             batch_size=None,
-            optimizer=None,
-            learning_rate_scheduler=None,
+            optimizer_param=None,
+            learning_rate_param=None,
             init_param=None,
             threshold=0.5
     ):
         self.max_iter = max_iter
         self.batch_size = batch_size
-        self.optimizer = optimizer
-        self.lr_scheduler = learning_rate_scheduler
+        self.optimizer = Optimizer(optimizer_param["method"],
+                                   optimizer_param["penalty"],
+                                   optimizer_param["alpha"],
+                                   optimizer_param["optimizer_params"])
+        self.lr_scheduler = LRScheduler(learning_rate_param["method"],
+                                        learning_rate_param["scheduler_params"])
         self.init_param = init_param
         self.threshold = threshold
 
@@ -74,9 +79,11 @@ class HeteroLinrModuleGuest(HeteroModule):
         }
 
     @classmethod
-    def from_model(cls, model) -> "HeteroLinrModuleGuest":
-        linr = HeteroLinrModuleGuest(**model["metadata"])
-        linr.estimator = HeteroLinrEstimatorGuest().restore(json.loads(model["estimator"]))
+    def from_model(cls, model) -> "HeteroLinRModuleGuest":
+        linr = HeteroLinRModuleGuest(**model["metadata"])
+        estimator = HeteroLinrEstimatorGuest()
+        estimator.restore(json.loads(model["estimator"]))
+        linr.estimator = estimator
 
         return linr
 

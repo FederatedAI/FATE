@@ -137,7 +137,9 @@ class HeteroLrModuleGuest(HeteroModule):
                 label: HeteroLrEstimatorGuest().restore(json.loads(d)) for label, d in all_estimator.items()
             }
         else:
-            lr.estimator = HeteroLrEstimatorGuest().restore(json.loads(all_estimator))
+            estimator = HeteroLrEstimatorGuest()
+            estimator.restore(json.loads(all_estimator))
+            lr.estimator = estimator
 
         return lr
 
@@ -177,17 +179,21 @@ class HeteroLrEstimatorGuest(HeteroModule):
         if w is None:
             w = initialize_param(coef_count, **self.init_param)
             self.optimizer.init_optimizer(model_parameter_length=w.size()[0])
-        batch_loader = dataframe.DataLoader(
+        """batch_loader = dataframe.DataLoader(
             train_data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="guest", sync_arbiter=True,
             return_weight=True
-        )  # @todo: include batch weight
+        )  # @todo: include batch weight"""
+        batch_loader = dataframe.DataLoader(
+            train_data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="guest", sync_arbiter=True
+        )
         if self.end_iter >= 0:
             self.start_iter = self.end_iter + 1
         for i, iter_ctx in ctx.range(self.start_iter, self.max_iter):
             logger.info(f"start iter {i}")
             j = 0
             self.optimizer.set_iters(i)
-            for batch_ctx, (X, Y, weight) in iter_ctx.iter(batch_loader):
+            # for batch_ctx, (X, Y, weight) in iter_ctx.iter(batch_loader):
+            for batch_ctx, (X, Y) in iter_ctx.iter(batch_loader):
                 h = X.shape[0]
 
                 Xw = torch.matmul(X, w)
@@ -201,8 +207,8 @@ class HeteroLrEstimatorGuest(HeteroModule):
                     d += Xw_h
                     loss -= 0.5 / h * torch.matmul(Y.T, Xw_h)
                     loss += 0.25 / h * torch.matmul(Xw.T, Xw_h)
-                if with_weight:
-                    d = d * weight
+                # if with_weight:
+                #    d = d * weight
                 for Xw2_h in batch_ctx.hosts.get("Xw2_h"):
                     loss += 0.125 / h * Xw2_h
 

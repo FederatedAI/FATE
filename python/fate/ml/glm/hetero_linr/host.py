@@ -21,22 +21,27 @@ from fate.arch.dataframe import DataLoader
 from fate.interface import Context
 from fate.ml.abc.module import HeteroModule
 from fate.ml.utils._model_param import initialize_param
+from fate.ml.utils._optimizer import Optimizer, LRScheduler
 
 logger = logging.getLogger(__name__)
 
 
-class HeteroLinrModuleHost(HeteroModule):
+class HeteroLinRModuleHost(HeteroModule):
     def __init__(
             self,
             max_iter,
             batch_size,
-            optimizer,
-            learning_rate_scheduler,
+            optimizer_param,
+            learning_rate_param,
             init_param
     ):
         self.max_iter = max_iter
-        self.optimizer = optimizer
-        self.lr_scheduler = learning_rate_scheduler
+        self.optimizer = Optimizer(optimizer_param["method"],
+                                   optimizer_param["penalty"],
+                                   optimizer_param["alpha"],
+                                   optimizer_param["optimizer_params"])
+        self.lr_scheduler = LRScheduler(learning_rate_param["method"],
+                                        learning_rate_param["scheduler_params"])
         self.batch_size = batch_size
         self.init_param = init_param
 
@@ -44,7 +49,6 @@ class HeteroLinrModuleHost(HeteroModule):
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
         encryptor = ctx.arbiter("encryptor").get()
-        self.label_count = ctx.guest("label_count").get()
         estimator = HeteroLinrEstimatorHost(max_iter=self.max_iter,
                                             batch_size=self.batch_size,
                                             optimizer=self.optimizer,
@@ -62,9 +66,11 @@ class HeteroLinrModuleHost(HeteroModule):
         }
 
     @classmethod
-    def from_model(cls, model) -> "HeteroLinrModuleHost":
-        linr = HeteroLinrModuleHost(**model["metadata"])
-        linr.estimator = HeteroLinrEstimatorHost().restore(json.loads(model["estimator"]))
+    def from_model(cls, model) -> "HeteroLinRModuleHost":
+        linr = HeteroLinRModuleHost(**model["metadata"])
+        estimator = HeteroLinrEstimatorHost()
+        estimator.restore(json.loads(model["estimator"]))
+        linr.estimator = estimator
 
         return linr
 

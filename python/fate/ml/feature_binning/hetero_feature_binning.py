@@ -157,8 +157,8 @@ class StandardBinning(Module):
         self._manual_split_pt_dict = split_pt_dict
         # {col_name: [split_pts]}, ordered by split_pts
         self._split_pt_dict = None
-        # {col_name: [bin_num]}, ordered by split_pts
         self._bin_idx_dict = None
+        # {col_name: [bin_num]}, ordered by split_pts
         self._bin_count_dict = None
         # {col_name: [woe]}, ordered by split_pts, for transform
         self._woe_dict = None

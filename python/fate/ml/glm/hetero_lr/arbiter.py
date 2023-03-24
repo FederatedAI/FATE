@@ -99,8 +99,10 @@ class HeteroLrModuleArbiter(HeteroModule):
                 label: HeteroLrEstimatorArbiter().restore(json.loads(d)) for label, d in all_estimator.items()
             }
         else:
-            lr.estimator = HeteroLrEstimatorArbiter().restore(json.loads(all_estimator))
-
+            estimator = HeteroLrEstimatorArbiter()
+            estimator.restore(json.loads(all_estimator))
+            lr.estimator = estimator
+            return lr
         return lr
 
 

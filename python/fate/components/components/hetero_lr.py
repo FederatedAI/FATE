@@ -165,7 +165,7 @@ def train_arbiter(ctx, max_iter, early_stop, tol, batch_size, optimizer_param, l
 
     with ctx.sub_ctx("train") as sub_ctx:
         module = HeteroLrModuleArbiter(max_iter=max_iter, early_stop=early_stop, tol=tol, batch_size=batch_size,
-                                       optimizer_param=optimizer_param, learning_rate_param=learning_rate_param)
+                                       optimizer_param=optimizer_param, learning_rate_param=learning_rate_scheduler)
         module.fit(sub_ctx)
 
 

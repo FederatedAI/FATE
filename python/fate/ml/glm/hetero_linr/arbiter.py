@@ -21,28 +21,32 @@ from fate.arch.dataframe import DataLoader
 from fate.interface import Context
 from fate.ml.abc.module import HeteroModule
 from fate.ml.utils._convergence import converge_func_factory
-from fate.ml.utils._optimizer import separate
+from fate.ml.utils._optimizer import separate, Optimizer, LRScheduler
 
 logger = logging.getLogger(__name__)
 
 
-class HeteroLinrModuleArbiter(HeteroModule):
+class HeteroLinRModuleArbiter(HeteroModule):
     def __init__(
             self,
             max_iter,
             early_stop,
             tol,
             batch_size,
-            optimizer,
-            learning_rate_scheduler
+            optimizer_param,
+            learning_rate_param
 
     ):
         self.max_iter = max_iter
         self.batch_size = batch_size
         self.early_stop = early_stop
         self.tol = tol
-        self.optimizer = optimizer
-        self.lr_scheduler = learning_rate_scheduler
+        self.optimizer = Optimizer(optimizer_param["method"],
+                                   optimizer_param["penalty"],
+                                   optimizer_param["alpha"],
+                                   optimizer_param["optimizer_params"])
+        self.lr_scheduler = LRScheduler(learning_rate_param["method"],
+                                        learning_rate_param["scheduler_params"])
 
         self.estimator = None
 
@@ -60,13 +64,14 @@ class HeteroLinrModuleArbiter(HeteroModule):
 
     def to_model(self):
         return {
-            "optimizer": self.estimator.get_model(),
+            "estimator": self.estimator.get_model(),
         }
 
     def from_model(cls, model):
-        linr = HeteroLinrModuleArbiter(**model["metadata"])
-        linr.optimizer = HeteroLinrEstimatorArbiter().restore(json.loads(model["estimator"]))
-
+        linr = HeteroLinRModuleArbiter(**model["metadata"])
+        estimator = HeteroLinrEstimatorArbiter()
+        estimator.restore(json.loads(model["estimator"]))
+        linr.estimator = estimator
         return linr
 
 

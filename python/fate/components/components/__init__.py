@@ -19,8 +19,9 @@ from .hetero_linr import hetero_linr
 from .hetero_lr import hetero_lr
 from .intersection import intersection
 from .reader import reader
+from .statistics import statistics
 
 BUILDIN_COMPONENTS = [reader, intersection,
                       feature_scale, hetero_feature_binning,
                       hetero_lr, hetero_linr,
-                      evaluation]
+                      evaluation, statistics]

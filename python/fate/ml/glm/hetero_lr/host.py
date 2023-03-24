@@ -22,6 +22,7 @@ from fate.arch.dataframe import DataLoader
 from fate.interface import Context
 from fate.ml.abc.module import HeteroModule
 from fate.ml.utils._model_param import initialize_param
+from fate.ml.utils._optimizer import Optimizer, LRScheduler
 
 logger = logging.getLogger(__name__)
 
@@ -31,13 +32,17 @@ class HeteroLrModuleHost(HeteroModule):
             self,
             max_iter,
             batch_size,
-            optimizer,
-            learning_rate_scheduler,
+            optimizer_param,
+            learning_rate_param,
             init_param
     ):
         self.max_iter = max_iter
-        self.optimizer = optimizer
-        self.lr_scheduler = learning_rate_scheduler
+        self.optimizer = Optimizer(optimizer_param["method"],
+                                   optimizer_param["penalty"],
+                                   optimizer_param["alpha"],
+                                   optimizer_param["optimizer_params"])
+        self.lr_scheduler = LRScheduler(learning_rate_param["method"],
+                                        learning_rate_param["scheduler_params"])
         self.batch_size = batch_size
         self.init_param = init_param
 
@@ -103,7 +108,9 @@ class HeteroLrModuleHost(HeteroModule):
                 label: HeteroLrEstimatorHost().restore(json.loads(d)) for label, d in all_estimator.items()
             }
         else:
-            lr.estimator = HeteroLrEstimatorHost().restore(json.loads(all_estimator))
+            estimator = HeteroLrEstimatorHost()
+            estimator.restore(json.loads(all_estimator))
+            lr.estimator = estimator
 
         return lr
 
