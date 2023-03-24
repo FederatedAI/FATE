@@ -127,15 +127,14 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         send feature importance to guest to update global feature importance
         """
         new_feat_importance = self.get_anonymous_importance()
-        self.hetero_sbt_transfer_variable.host_feature_importance.remote(new_feat_importance)
+        self.hetero_sbt_transfer_variable.host_feature_importance.remote(new_feat_importance, suffix=suffix)
 
     def preprocess(self):
         if self.multi_mode == consts.MULTI_OUTPUT:
             self.booster_dim = 1
 
     def postprocess(self):
-        # generate anonymous
-        self.align_feature_importance_host(suffix='postprocess')
+        pass
 
     def fit_a_learner(self, epoch_idx: int, booster_dim: int):
 
@@ -161,6 +160,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
                                            )
         tree.fit()
         self.update_feature_importance(tree.get_feature_importance())
+        self.align_feature_importance_host(suffix=(epoch_idx, booster_dim))
         return tree
 
     def load_learner(self, model_meta, model_param, epoch_idx, booster_idx):
