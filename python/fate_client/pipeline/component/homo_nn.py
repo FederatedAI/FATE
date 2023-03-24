@@ -26,7 +26,7 @@ DEFAULT_PARAM_DICT = {}
 
 try:
     import torch as t
-    OptimizerType = optim.Optimizer
+    OptimizerType = t.optim.Optimizer
 except ImportError:
     OptimizerType = 't.optim.Optimizer'
 
