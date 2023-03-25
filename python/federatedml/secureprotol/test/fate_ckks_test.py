@@ -210,7 +210,7 @@ class TestCKKSEncryptedVector(unittest.TestCase):
         expected = x_vec * y_vec
         actual = self.private_key.decrypt(enc_x_vec * enc_y_vec)
 
-    def test_numpy_boardcast(self):
+    def test_numpy_broadcast(self):
         array = np.arange(1, 10)
 
         x = np.random.rand()
