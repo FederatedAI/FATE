@@ -210,6 +210,16 @@ class TestCKKSEncryptedVector(unittest.TestCase):
         expected = x_vec * y_vec
         actual = self.private_key.decrypt(enc_x_vec * enc_y_vec)
 
+    def test_numpy_boardcast(self):
+        array = np.arange(1, 10)
+
+        x = np.random.rand()
+        enc_x = self.public_key.encrypt(x)
+
+        array_mul_enc_x = array * enc_x
+        actual = np.array([self.private_key.decrypt(enc_value) for enc_value in array_mul_enc_x])
+        assert_almost_equal_vector(actual, array * x)
+
 
 class TestCKKSSerialization(unittest.TestCase):
 
