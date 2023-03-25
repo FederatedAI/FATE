@@ -87,7 +87,6 @@ class TestCKKSEncryptedVector(unittest.TestCase):
         self.public_key, self.private_key = CKKSKeypair.generate_keypair()
         self.public_key = serialize_and_deserialize(self.public_key)
 
-
     def test_add_scalar(self):
         for _ in range(100):
             x = np.random.randint(100)
@@ -106,6 +105,29 @@ class TestCKKSEncryptedVector(unittest.TestCase):
 
             de_en_res = self.private_key.decrypt(en_res)
             assert_small_rel_diff_scalar(de_en_res, res)
+
+    def test_subtract_scalar(self):
+        for _ in range(100):
+            x = np.random.randint(100)
+
+            y = np.random.randint(1000)
+            z = np.random.rand()
+            t = np.random.randint(100)
+
+            en_x = self.public_key.encrypt(x)
+            en_y = self.public_key.encrypt(y)
+            en_z = self.public_key.encrypt(z)
+            en_t = self.public_key.encrypt(t)
+
+            en_res1 = en_x - y
+            res1 = x - y
+            de_en_res1 = self.private_key.decrypt(en_res1)
+            assert_small_rel_diff_scalar(de_en_res1, res1)
+
+            en_res2 = z - en_t
+            res2 = z - t
+            de_en_res2 = self.private_key.decrypt(en_res2)
+            assert_small_rel_diff_scalar(de_en_res2, res2)
 
     def test_mul_scalar(self):
         for _ in range(100):
