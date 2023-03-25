@@ -1,6 +1,8 @@
 import numpy as np
 import tenseal as ts
 
+from federatedml.util import LOGGER
+
 
 class CKKSKeypair(object):
     @staticmethod
@@ -84,7 +86,7 @@ class CKKSPrivateKey(object):
 
 
 class CKKSEncryptedVector(object):
-    def __init__(self, encrypted_vector, context):
+    def __init__(self, encrypted_vector, context, depth=0):
         if not isinstance(encrypted_vector, ts.CKKSVector):
             raise TypeError(f"encrypted_vector should be a tenseal CKKSVector, got {type(encrypted_vector)}")
         elif not isinstance(context, ts.Context):
@@ -92,6 +94,11 @@ class CKKSEncryptedVector(object):
 
         self.__encrypted_vector = encrypted_vector
         self.__context = context
+        self.__depth = depth
+
+    @property
+    def depth(self):
+        return self.__depth
 
     def apply_obfuscator(self):
         pass
@@ -100,10 +107,10 @@ class CKKSEncryptedVector(object):
         return self.__encrypted_vector.serialize(), self.__context.serialize(save_public_key=True,
                                                                              save_secret_key=False,
                                                                              save_relin_keys=True,
-                                                                             save_galois_keys=False)
+                                                                             save_galois_keys=False), self.__depth
 
     def __setstate__(self, state):
-        encrypted_vector_bytes, lightweight_context_bytes = state
+        encrypted_vector_bytes, lightweight_context_bytes, self.__depth = state
         self.__context = ts.context_from(lightweight_context_bytes)
         self.__encrypted_vector = ts.ckks_vector_from(self.__context, encrypted_vector_bytes)
 
@@ -118,20 +125,32 @@ class CKKSEncryptedVector(object):
         return self.__add__(other)
 
     def __sub__(self, other):
-        return self + (other * -1)
+        if isinstance(other, CKKSEncryptedVector):
+            self.__encrypted_vector = self.__encrypted_vector - other.__encrypted_vector
+        else:
+            self.__encrypted_vector = self.__encrypted_vector - other
+        return self
 
     def __rsub__(self, other):
-        return other + (self * -1)
+        if isinstance(other, CKKSEncryptedVector):
+            self.__encrypted_vector = other.__encrypted_vector - self.__encrypted_vector
+        else:
+            self.__encrypted_vector = other - self.__encrypted_vector
+        return self
 
     def __rmul__(self, other):
         return self.__mul__(other)
 
     def __mul__(self, other):
-        if isinstance(other, CKKSEncryptedVector):
-            value = self.__encrypted_vector * other.__encrypted_vector
-        else:
-            value = self.__encrypted_vector * other
-        return CKKSEncryptedVector(value, self.__context)
+        try:
+            if isinstance(other, CKKSEncryptedVector):
+                value = self.__encrypted_vector * other.__encrypted_vector
+            else:
+                value = self.__encrypted_vector * other
+            return CKKSEncryptedVector(value, self.__context, depth=self.__depth + 1)
+        except ValueError as e:
+            LOGGER.debug(f'Scale out of bound, current depth = {self.__depth+1}')
+            raise e
 
     def _get_tenseal_encrypted_vector(self):
         """Should only be called by CKKSPrivateKey"""
