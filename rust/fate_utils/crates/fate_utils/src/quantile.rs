@@ -6,6 +6,8 @@ use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 use quantile::greenwald_khanna;
 use serde::{Deserialize, Serialize};
+use pyo3::types::PyTuple;
+use pyo3::exceptions::PyTypeError;
 
 #[derive(PartialEq, PartialOrd, Clone, Copy, Debug, Serialize, Deserialize)]
 struct Ordf64(f64);
@@ -37,8 +39,18 @@ impl QuantileSummaryStream {
 #[pymethods]
 impl QuantileSummaryStream {
     #[new]
-    fn __new__() -> Self {
-        QuantileSummaryStream::new(None)
+    #[args(args = "*")]
+    fn __new__(args: &PyTuple) -> PyResult<Self> {
+        match args.len() {
+            0 => Ok(QuantileSummaryStream::new(None)),
+            1 => args
+                .get_item(0)
+                .unwrap()
+                .extract::<f64>()
+                .map_err(|e| PyTypeError::new_err(e.to_string())) // convert error to pyerr
+                .map(|epsion| QuantileSummaryStream::new(Some(epsion))),
+            _ => Err(PyTypeError::new_err("accept zero or one positional args")),
+        }
     }
 
     pub fn __getstate__(&self, py: Python) -> PyResult<PyObject> {

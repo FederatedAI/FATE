@@ -17,9 +17,10 @@ import logging
 from collections.abc import Iterable
 from typing import Optional
 
+from fate.interface import Address, CSessionABC
+
 from ..._standalone import Session
 from ...unify import generate_computing_uuid, uuid
-from .._computing import Address, CSessionABC
 from ._table import Table
 
 LOGGER = logging.getLogger(__name__)
