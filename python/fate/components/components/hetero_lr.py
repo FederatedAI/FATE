@@ -45,7 +45,7 @@ def hetero_lr(ctx, role):
 @cpn.parameter(
     "optimizer", type=params.OptimizerParam,
     default=params.OptimizerParam(method="sgd", penalty='l2', alpha=1.0,
-                                  optimizer_params={"lr": 1e-2, "decay": 0, "decay_sqrt": False}),
+                                  optimizer_params={"lr": 1e-2, "weight_decay": 0}),
     desc="optimizer, select method from {'sgd', 'nesterov_momentum_sgd', 'adam', 'rmsprop', 'adagrad', 'sqn'} "
          "for list of configurable arguments, refer to torch.optim"
 )
@@ -125,6 +125,10 @@ def train_guest(ctx, train_data, validate_data, train_output_data, output_model,
                                      optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
                                      init_param=init_param, threshold=threshold)
         train_data = sub_ctx.reader(train_data).read_dataframe()
+        # temp code start
+        train_data = train_data.data
+        # temp code end
+
         if validate_data is not None:
             validate_data = sub_ctx.reader(validate_data).read_dataframe()
         module.fit(sub_ctx, train_data, validate_data)
@@ -147,6 +151,9 @@ def train_host(ctx, train_data, validate_data, train_output_data, output_model, 
                                     optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
                                     init_param=init_param)
         train_data = sub_ctx.reader(train_data).read_dataframe()
+        # temp code start
+        train_data = train_data.data
+        # temp code end
         if validate_data is not None:
             validate_data = sub_ctx.reader(validate_data).read_dataframe()
         module.fit(sub_ctx, train_data, validate_data)

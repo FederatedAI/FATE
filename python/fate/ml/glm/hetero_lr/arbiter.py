@@ -41,12 +41,18 @@ class HeteroLrModuleArbiter(HeteroModule):
         self.batch_size = batch_size
         self.early_stop = early_stop
         self.tol = tol
-        self.optimizer = Optimizer(optimizer_param["method"],
+        """self.optimizer = Optimizer(optimizer_param["method"],
                                    optimizer_param["penalty"],
                                    optimizer_param["alpha"],
                                    optimizer_param["optimizer_params"])
         self.lr_scheduler = LRScheduler(learning_rate_param["method"],
-                                        learning_rate_param["scheduler_params"])
+                                        learning_rate_param["scheduler_params"])"""
+        self.optimizer = Optimizer(optimizer_param.method,
+                                   optimizer_param.penalty,
+                                   optimizer_param.alpha,
+                                   optimizer_param.optimizer_params)
+        self.lr_scheduler = LRScheduler(learning_rate_param.method,
+                                        learning_rate_param.scheduler_params)
         self.lr_param = learning_rate_param
 
         self.estimator = None
@@ -55,7 +61,8 @@ class HeteroLrModuleArbiter(HeteroModule):
     def fit(self, ctx: Context) -> None:
         encryptor, decryptor = ctx.cipher.phe.keygen(options=dict(key_length=2048))
         ctx.hosts("encryptor").put(encryptor)
-        label_count = ctx.guest("label_count").get()
+        """ label_count = ctx.guest("label_count").get()"""
+        label_count = 2
         if label_count > 2:
             self.ovr = True
             self.estimator = {}

@@ -44,6 +44,7 @@ class HeteroLinRModuleHost(HeteroModule):
                                         learning_rate_param["scheduler_params"])
         self.batch_size = batch_size
         self.init_param = init_param
+        self.init_param.fit_intercept = False
 
         self.estimator = None
 
@@ -105,7 +106,10 @@ class HeteroLinrEstimatorHost(HeteroModule):
             self.optimizer.init_optimizer(model_parameter_length=w.size()[0])
         if self.end_iter >= 0:
             self.start_iter = self.end_iter + 1
-        for i, iter_ctx in ctx.range(self.start_iter, self.max_iter):
+        """for i, iter_ctx in ctx.range(self.start_iter, self.max_iter):"""
+        # temp code start
+        for i, iter_ctx in ctx.range(self.max_iter):
+            # temp code end
             logger.info(f"start iter {i}")
             j = 0
             self.optimizer.set_iters(i)

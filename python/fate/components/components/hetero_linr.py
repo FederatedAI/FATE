@@ -44,8 +44,8 @@ def hetero_linr(ctx, role):
 )
 @cpn.parameter(
     "optimizer", type=params.OptimizerParam,
-    default=params.OptimizerParam(method="sgd", penalty='l2',
-                                  optimizer_params={"lr": 1e-2, "decay": 0, "decay_sqrt": False}),
+    default=params.OptimizerParam(method="sgd", penalty='l2', alpha=1.0,
+                                  optimizer_params={"lr": 1e-2, "weight_decay": 0}),
     desc="optimizer, select method from {'sgd', 'nesterov_momentum_sgd', 'adam', 'rmsprop', 'adagrad', 'sqn'} "
          "for list of configurable arguments, refer to torch.optim"
 )

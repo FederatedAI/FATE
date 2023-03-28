@@ -40,12 +40,20 @@ class HeteroLrModuleGuest(HeteroModule):
     ):
         self.max_iter = max_iter
         self.batch_size = batch_size
-        self.optimizer = Optimizer(optimizer_param["method"],
+        """self.optimizer = Optimizer(optimizer_param["method"],
                                    optimizer_param["penalty"],
                                    optimizer_param["alpha"],
                                    optimizer_param["optimizer_params"])
         self.lr_scheduler = LRScheduler(learning_rate_param["method"],
-                                        learning_rate_param["scheduler_params"])
+                                        learning_rate_param["scheduler_params"])"""
+        self.optimizer = Optimizer(optimizer_param.method,
+                                   optimizer_param.penalty,
+                                   optimizer_param.alpha,
+                                   optimizer_param.optimizer_params)
+        logger.info(f"self.optimizer set: {self.optimizer}")
+
+        self.lr_scheduler = LRScheduler(learning_rate_param.method,
+                                        learning_rate_param.scheduler_params)
         self.init_param = init_param
         self.threshold = threshold
 
@@ -54,12 +62,18 @@ class HeteroLrModuleGuest(HeteroModule):
         self.labels = []
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
-        y_vals = train_data.label.as_tensor().unique()
+        """y_vals = train_data.label.as_tensor().unique()
         label_count = len(y_vals)
         ctx.arbiter.put("label_count", label_count)
         ctx.hosts.put("label_count", label_count)
         self.labels = y_vals
-        with_weight = train_data.weight is not None
+        with_weight = train_data.weight is not None"""
+        # temp code start
+        label_count = 2
+        ctx.arbiter.put("label_count", label_count)
+        ctx.hosts.put("label_count", label_count)
+        with_weight = False
+        # temp code end
 
         if label_count > 2:
             self.ovr = True
@@ -175,10 +189,19 @@ class HeteroLrEstimatorGuest(HeteroModule):
         if self.init_param.fit_intercept:
             train_data["intercept"] = 1
             coef_count += 1
+
+        # temp code start
+        # coef_count = 10
+        # temp code end
+
         w = self.w
         if w is None:
-            w = initialize_param(coef_count, **self.init_param)
+            """w = initialize_param(coef_count, **self.init_param)"""
+            # temp code start
+            w = initialize_param(coef_count, fit_intercept=False, method="zeros")
             self.optimizer.init_optimizer(model_parameter_length=w.size()[0])
+            # temp code end
+
         """batch_loader = dataframe.DataLoader(
             train_data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="guest", sync_arbiter=True,
             return_weight=True
@@ -188,10 +211,14 @@ class HeteroLrEstimatorGuest(HeteroModule):
         )
         if self.end_iter >= 0:
             self.start_iter = self.end_iter + 1
-        for i, iter_ctx in ctx.range(self.start_iter, self.max_iter):
+        """for i, iter_ctx in ctx.range(self.start_iter, self.max_iter):"""
+        # temp code start
+        for i, iter_ctx in ctx.range(self.max_iter):
+            # temp code end
             logger.info(f"start iter {i}")
             j = 0
             self.optimizer.set_iters(i)
+            logger.info(f"self.optimizer set iters{i}")
             # for batch_ctx, (X, Y, weight) in iter_ctx.iter(batch_loader):
             for batch_ctx, (X, Y) in iter_ctx.iter(batch_loader):
                 h = X.shape[0]
