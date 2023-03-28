@@ -14,14 +14,20 @@
 #  limitations under the License.
 #
 
-from pipeline.component.component_base import FateComponent
-from pipeline.component.nn.models.sequantial import Sequential
-from pipeline.component.nn.backend.torch.interactive import InteractiveLayer
 from pipeline.interface import Input
 from pipeline.interface import Output
 from pipeline.utils.tools import extract_explicit_parameter
 from pipeline.component.nn.interface import DatasetParam
 
+try:
+    from pipeline.component.component_base import FateComponent
+    from pipeline.component.nn.models.sequantial import Sequential
+    from pipeline.component.nn.backend.torch.interactive import InteractiveLayer
+except Exception as e:
+    print(e)
+    print('Import NN components in HeteroNN module failed, \
+this may casue by the situation that torch are not installed,\
+please install torch to use this module')
 
 class HeteroNN(FateComponent):
 
