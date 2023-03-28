@@ -291,7 +291,7 @@ class HomoNNClient(ModelBase):
                 param=self.dataset_param
             )
             if id(val_dataset_inst) != id(dataset_inst):
-                val_dataset_inst.set_type('validate')
+                dataset_inst.set_type('validate')
             LOGGER.info('validate dataset instance is {}'.format(dataset_inst))
         else:
             val_dataset_inst = None
