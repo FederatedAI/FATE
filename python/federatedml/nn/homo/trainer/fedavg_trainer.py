@@ -49,6 +49,9 @@ class FedAVGTrainer(TrainerBase):
     task_type: str, 'auto', 'binary', 'multi', 'regression'
                this option decides the return format of this trainer, and the evaluation type when running validation.
                if auto, will automatically infer your task type from labels and predict results.
+    save_to_local_dir: bool, if True, a dictionary containing the model, optimizer, and metadata will be saved to a local directory.
+                The path is structured as follows: fateflow/jobs/${jobid}/${party}/${party_id}/${your_nn_component}.
+                If set to False, the model will not be saved to the FATE framework in protobuf format.
     """
 
     def __init__(self, epochs=10, batch_size=512,  # training parameter
@@ -58,7 +61,8 @@ class FedAVGTrainer(TrainerBase):
                  pin_memory=True, shuffle=True, data_loader_worker=0,  # GPU & dataloader
                  validation_freqs=None,  # validation configuration
                  checkpoint_save_freqs=None,  # checkpoint configuration
-                 task_type='auto'  # task type
+                 task_type='auto',  # task type
+                 save_to_local_dir=False,  # save model to local path
                  ):
 
         super(FedAVGTrainer, self).__init__()
@@ -68,6 +72,7 @@ class FedAVGTrainer(TrainerBase):
         self.tol = tol
         self.validation_freq = validation_freqs
         self.save_freq = checkpoint_save_freqs
+        self.save_to_local_dir = save_to_local_dir
 
         self.task_type = task_type
         task_type_allow = [ 
@@ -128,8 +133,8 @@ class FedAVGTrainer(TrainerBase):
                                   'aggregate_every_n_epoch'],
                                  self.is_pos_int,
                                  '{} is not a positive int')
-        self.check_trainer_param([self.secure_aggregate, self.weighted_aggregation, self.pin_memory], [
-                                 'secure_aggregate', 'weighted_aggregation', 'pin_memory,'], self.is_bool, '{} is not a bool')
+        self.check_trainer_param([self.secure_aggregate, self.weighted_aggregation, self.pin_memory, self.save_to_local_dir], [
+                                 'secure_aggregate', 'weighted_aggregation', 'pin_memory', 'save_to_local_dir'], self.is_bool, '{} is not a bool')
         self.check_trainer_param(
             [self.tol], ['tol'], self.is_float, '{} is not a float')
         
@@ -303,8 +308,13 @@ class FedAVGTrainer(TrainerBase):
 
             # save check point process
             if self.save_freq is not None and ((i + 1) % self.save_freq == 0):
-                self.checkpoint(
-                    i, self.model, optimizer, converge_status=need_stop, loss_history=loss_history)
+
+                if self.save_to_local_dir:
+                    self.local_checkpoint(
+                        self.model, i, optimizer, converge_status=need_stop, loss_history=loss_history)
+                else:
+                    self.checkpoint(
+                        self.model, i, optimizer, converge_status=need_stop, loss_history=loss_history)
                 LOGGER.info('save checkpoint : epoch {}'.format(i))
 
             # if meet stop condition then stop
@@ -313,8 +323,14 @@ class FedAVGTrainer(TrainerBase):
 
         # post-process
         best_epoch = int(np.array(loss_history).argmin())
-        self.save(model=self.model, optimizer=optimizer, epoch_idx=cur_epoch, loss_history=loss_history,
+
+        if self.save_to_local_dir:
+            self.local_save(model=self.model, optimizer=optimizer, epoch_idx=cur_epoch, loss_history=loss_history,
+                    converge_status=need_stop, best_epoch=best_epoch)
+        else:
+            self.save(model=self.model, optimizer=optimizer, epoch_idx=cur_epoch, loss_history=loss_history,
                   converge_status=need_stop, best_epoch=best_epoch)
+            
         self.summary({
             'best_epoch': best_epoch,
             'loss_history': loss_history,

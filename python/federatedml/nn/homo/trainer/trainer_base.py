@@ -1,7 +1,9 @@
+import os 
 import abc
 import importlib
 import torch as t
 import numpy as np
+import subprocess
 from torch.nn import Module
 from typing import List
 from federatedml.util import consts
@@ -12,6 +14,7 @@ from federatedml.feature.instance import Instance
 from federatedml.evaluation.evaluation import Evaluation
 from federatedml.model_base import Metric, MetricMeta
 from federatedml.param import EvaluateParam
+
 
 
 class StdReturnFormat(object):
@@ -195,6 +198,38 @@ class TrainerBase(object):
     """
     User Interfaces
     """
+    
+    def _local_save(self, model, optimizer, epoch_idx, converge_status, loss_history, best_epoch, extra_data, save_path, save_name):
+        
+        LOGGER.debug('save model to local dir')
+        model_dict = {
+            'model': model.state_dict(),
+            'optimizer': optimizer.state_dict(),
+            'model_define': self.nn_define,
+            'optimizer_define': self.opt_define,
+            'loss_define': self.loss_define,
+            'epoch_idx': epoch_idx,
+            'converge_status': converge_status,
+            'loss_history': loss_history,
+            'best_epoch': best_epoch,
+            'extra_data': extra_data
+        }
+        absolute_path = os.path.abspath(save_path)
+        path = os.path.join(absolute_path, save_name) 
+        t.save(model_dict, path)
+
+        model_dict = self._exporter.export_model_dict(model_define=self.nn_define,
+                                                     optimizer_define=self.opt_define,
+                                                     loss_define=self.loss_define,
+                                                     epoch_idx=epoch_idx,
+                                                     converge_status=converge_status,
+                                                     loss_history=loss_history,
+                                                     best_epoch=best_epoch,
+                                                     extra_data=extra_data,
+                                                     local_save_path=path
+                                                    )
+        self._cache_model = model_dict
+
 
     def set_model(self, model: Module):
         if not issubclass(type(model), Module):
@@ -215,6 +250,7 @@ class TrainerBase(object):
             epoch_idx, int) and epoch_idx >= 0, 'epoch idx must be an int >= 0'
 
         if self._exporter:
+            LOGGER.debug('save model to fate')
             model_dict = self._exporter.export_model_dict(model=model,
                                                           optimizer=optimizer,
                                                           model_define=self.nn_define,
@@ -230,8 +266,8 @@ class TrainerBase(object):
 
     def checkpoint(
             self,
-            epoch_idx,
             model=None,
+            epoch_idx=-1,
             optimizer=None,
             converge_status=False,
             loss_history=None,
@@ -254,6 +290,43 @@ class TrainerBase(object):
             self.save(model=model, epoch_idx=epoch_idx, optimizer=optimizer, converge_status=converge_status,
                       loss_history=loss_history, best_epoch=best_epoch, extra_data=extra_data)
 
+            self._model_checkpoint.add_checkpoint(len(self._set_model_checkpoint_epoch),
+                                                  to_save_model=serialize_models(self._cache_model))  # step_index, to_save_model
+            self._set_model_checkpoint_epoch.add(epoch_idx)
+            LOGGER.info('checkpoint at epoch {} saved'.format(epoch_idx))
+
+    def local_save(self,
+            model=None,
+            epoch_idx=-1,
+            optimizer=None,
+            converge_status=False,
+            loss_history=None,
+            best_epoch=-1,
+            extra_data={}):
+        
+        assert isinstance(
+            epoch_idx, int) and epoch_idx >= 0, 'epoch idx must be an int >= 0'
+
+        if self._exporter:
+            # default saving folder is under the job folder
+            save_path = '../../../../'
+            model_name = 'model.pkl'
+            self._local_save(model, optimizer, epoch_idx, converge_status, loss_history, best_epoch, extra_data, save_path, model_name)
+
+    def local_checkpoint(self,
+            model=None,
+            epoch_idx=-1,
+            optimizer=None,
+            converge_status=False,
+            loss_history=None,
+            best_epoch=-1,
+            extra_data={}):
+
+        if self._exporter:
+            # default saving folder is under the job folder
+            save_path = '../../../../'
+            model_name = 'checkpoint_{}.pkl'.format(epoch_idx)
+            self._local_save(model, optimizer, epoch_idx, converge_status, loss_history, best_epoch, extra_data, save_path, model_name)
             self._model_checkpoint.add_checkpoint(len(self._set_model_checkpoint_epoch),
                                                   to_save_model=serialize_models(self._cache_model))  # step_index, to_save_model
             self._set_model_checkpoint_epoch.add(epoch_idx)

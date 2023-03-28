@@ -32,7 +32,7 @@ class NNModelExporter(ExporterBase):
         super().__init__(*args, **kwargs)
 
     def export_model_dict(self, model=None, optimizer=None, model_define=None, optimizer_define=None, loss_define=None,
-                          epoch_idx=-1, converge_status=False, loss_history=None, best_epoch=-1, extra_data={}):
+                          epoch_idx=-1, converge_status=False, loss_history=None, best_epoch=-1, local_save_path='', extra_data={}):
 
         if issubclass(type(model), torch.nn.Module):
             model_statedict = model.state_dict()
@@ -62,6 +62,7 @@ class NNModelExporter(ExporterBase):
         param.epoch_idx = epoch_idx
         param.converge_status = converge_status
         param.best_epoch = best_epoch
+        param.local_save_path = local_save_path
         if loss_history is None:
             loss_history = []
         param.loss_history.extend(loss_history)
@@ -118,7 +119,7 @@ class HomoNNClient(ModelBase):
         self.nn_define = param.nn_define
         self.loss = param.loss
         self.optimizer = param.optimizer
-
+    
     def init(self):
 
         # set random seed
@@ -140,22 +141,33 @@ class HomoNNClient(ModelBase):
         if self.model_loaded:
 
             param, meta = get_homo_param_meta(self.model)
-            self.warm_start_iter = param.epoch_idx
-            if param is None or meta is None:
-                raise ValueError(
-                    'model protobuf is None, make sure'
-                    'that your trainer calls export_model() function to save models')
+            LOGGER.info('save path is {}'.format(param.local_save_path))
+            if param.local_save_path == '':
+                LOGGER.info('Load model from model protobuf')
+                self.warm_start_iter = param.epoch_idx
+                if param is None or meta is None:
+                    raise ValueError(
+                        'model protobuf is None, make sure'
+                        'that your trainer calls export_model() function to save models')
 
-            if meta.nn_define[0] is None:
-                raise ValueError(
-                    'nn_define is None, model protobuf has no nn-define, make sure'
-                    'that your trainer calls export_model() function to save models')
+                if meta.nn_define[0] is None:
+                    raise ValueError(
+                        'nn_define is None, model protobuf has no nn-define, make sure'
+                        'that your trainer calls export_model() function to save models')
 
-            self.nn_define = json.loads(meta.nn_define[0])
-            loss = json.loads(meta.loss_func_define[0])
-            optimizer = json.loads(meta.optimizer_define[0])
-            loaded_model_dict = recover_model_bytes(param.model_bytes)
-            extra_data = recover_model_bytes(param.extra_data_bytes)
+                self.nn_define = json.loads(meta.nn_define[0])
+                loss = json.loads(meta.loss_func_define[0])
+                optimizer = json.loads(meta.optimizer_define[0])
+                loaded_model_dict = recover_model_bytes(param.model_bytes)
+                extra_data = recover_model_bytes(param.extra_data_bytes)
+            else:
+                LOGGER.info('Load model from local save path')
+                save_dict = torch.load(open(param.local_save_path, 'rb'))
+                self.nn_define = save_dict['model_define']
+                loss = save_dict['loss_define']
+                optimizer = save_dict['optimizer_define']
+                loaded_model_dict = save_dict
+                extra_data = save_dict['extra_data']
 
             if self.optimizer is not None and optimizer != self.optimizer:
                 LOGGER.info('optimizer updated')
@@ -243,7 +255,7 @@ class HomoNNClient(ModelBase):
                 assert validate_input is not None, 'input validate path is None!'
 
         # fate loss callback setting
-        self.callback_meta(
+        self.callback_meta( 
             "loss",
             "train",
             MetricMeta(
