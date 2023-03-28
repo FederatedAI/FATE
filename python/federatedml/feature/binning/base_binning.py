@@ -17,20 +17,19 @@
 #  limitations under the License.
 
 import bisect
-import functools
-import math
-import random
 import copy
+import functools
+
 import numpy as np
 
 from federatedml.feature.binning.bin_inner_param import BinInnerParam
-from federatedml.feature.binning.bin_result import BinColResults, SplitPointsResult
-from federatedml.statistic.data_overview import get_header, get_anonymous_header
+from federatedml.feature.binning.bin_result import SplitPointsResult
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.statistic import data_overview
+from federatedml.statistic.data_overview import get_header, get_anonymous_header
 from federatedml.util import LOGGER
-from federatedml.feature.fate_element_type import NoneType
+
 
 # from federatedml.statistic import statics
 
@@ -52,10 +51,7 @@ class BaseBinning(object):
             self.params = None
 
         self.bin_num = params.bin_num
-        if abnormal_list is None:
-            self.abnormal_list = []
-        else:
-            self.abnormal_list = abnormal_list
+        self.abnormal_list = abnormal_list
         self.split_points = None
 
     @property
@@ -181,12 +177,15 @@ class BaseBinning(object):
     def convert_feature_to_woe(self, data_instances):
         is_sparse = data_overview.is_sparse_data(data_instances)
         schema = data_instances.schema
+        abnormal_list = self.abnormal_list
+        if self.abnormal_list is None:
+            abnormal_list = []
 
         if is_sparse:
             f = functools.partial(self._convert_sparse_data,
                                   bin_inner_param=self.bin_inner_param,
                                   bin_results=self.bin_results,
-                                  abnormal_list=self.abnormal_list,
+                                  abnormal_list=abnormal_list,
                                   convert_type='woe'
                                   )
             new_data = data_instances.mapValues(f)
@@ -194,7 +193,7 @@ class BaseBinning(object):
             f = functools.partial(self._convert_dense_data,
                                   bin_inner_param=self.bin_inner_param,
                                   bin_results=self.bin_results,
-                                  abnormal_list=self.abnormal_list,
+                                  abnormal_list=abnormal_list,
                                   convert_type='woe')
             new_data = data_instances.mapValues(f)
         new_data.schema = schema
@@ -203,6 +202,9 @@ class BaseBinning(object):
     def convert_feature_to_bin(self, data_instances, split_points=None):
         is_sparse = data_overview.is_sparse_data(data_instances)
         schema = data_instances.schema
+        abnormal_list = self.abnormal_list
+        if self.abnormal_list is None:
+            abnormal_list = []
 
         if split_points is None:
             split_points = self.bin_results.all_split_points
@@ -214,7 +216,7 @@ class BaseBinning(object):
             f = functools.partial(self._convert_sparse_data,
                                   bin_inner_param=self.bin_inner_param,
                                   bin_results=self.bin_results,
-                                  abnormal_list=self.abnormal_list,
+                                  abnormal_list=abnormal_list,
                                   convert_type='bin_num'
                                   )
             new_data = data_instances.mapValues(f)
@@ -222,7 +224,7 @@ class BaseBinning(object):
             f = functools.partial(self._convert_dense_data,
                                   bin_inner_param=self.bin_inner_param,
                                   bin_results=self.bin_results,
-                                  abnormal_list=self.abnormal_list,
+                                  abnormal_list=abnormal_list,
                                   convert_type='bin_num')
             new_data = data_instances.mapValues(f)
         new_data.schema = schema
