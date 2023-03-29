@@ -5,6 +5,8 @@ With this framework, you can create your own models, datasets, trainers, and agg
 This tutorial introduces you to our brand new framework. With links below, you can learn how to use our Homo & Hetero(Horizontal and Vertical) NN step by step. Please notice that this tutorial is based on the standalone version, if you are using the cluster version, you may have to deploy the codes/data 
 on every party respectively.
 
+In FATE-1.11, we support federated large language model training with parameter efficient methods(Adapters).
+
 ## Quick Start
 
 To get yourself be familiar with FATE-NN and pipeline, we recommend completing these two quick start tutorials. If you are using tabular data and do not require any customizations, these tutorials should be sufficient for your needs
@@ -60,22 +62,26 @@ In order to show you how to develop your own Trainer, here we try to develop a s
 - [Use CustModel to Set Top, Bottom Model](Hetero-NN-Customize-Model.ipynb)
 
 
-## Advanced Examples
+# Advanced Examples
 
 Here we offer some advanced examples of using FATE-NN framework.
 
-### Resnet classification(Homo-NN)
+## Fed-PELLM(Parameter Efficient Large Language Model) Training
+
+- [Federated PELLM example with GPT-2](./GPT2-example.ipynb)
+
+## Resnet classification(Homo-NN)
 
 - [Federated Rensnet training on CIFAR-10](Resnet-example.ipynb)
 
-### Recommendation models(Homo-NN)
+## Recommendation models(Homo-NN)
 
 - [Federated classic CTR model training on Criteo](CTR-example.ipynb)
 
-### Federated Text Classification Using Bert(Homo-NN)
+## Federated Text Classification Using Bert(Homo-NN)
 
 - [Using Frozen Parameters Bert for Sentiment Classification](Bert-example.ipynb)
 
-### Training on vertical-split heterogeneous data(Hetero-NN)
+## Training on vertical-split heterogeneous data(Hetero-NN)
 
 - [A federated task with guest using image data and host using text data](Hetero-NN-Mix-Task.ipynb)
