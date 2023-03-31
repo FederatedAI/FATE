@@ -285,4 +285,3 @@ class SecureAggregatorServer(AggregatorBaseServer):
         self.broadcast_converge_status(
             converge_status, suffix=suffix, party_idx=party_idx)
         return agg_loss, converge_status
-
