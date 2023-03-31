@@ -53,7 +53,6 @@ please install torch to use this module')
     Sequential = None
 
 
-
 class HomoNN(FateComponent):
     """
 

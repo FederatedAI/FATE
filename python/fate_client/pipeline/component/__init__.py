@@ -39,14 +39,14 @@ from pipeline.component.hetero_sshe_linr import HeteroSSHELinR
 from pipeline.component.positive_unlabeled import PositiveUnlabeled
 
 try:
-    import torch 
+    import torch
     from pipeline.component.homo_nn import HomoNN
     from pipeline.component.hetero_ftl import HeteroFTL
     from pipeline.component.hetero_nn import HeteroNN
-except:
+except BaseException:
     print('Import torch failed, this may casue by the situation that torch are not installed, HomoNN, HeteroNN, HeteroFTL are not available')
     HomoNN, HeteroNN, HeteroFTL = None, None, None
-    
+
 
 __all__ = [
     "DataStatistics",

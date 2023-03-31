@@ -29,6 +29,7 @@ except Exception as e:
 this may casue by the situation that torch are not installed,\
 please install torch to use this module')
 
+
 class HeteroNN(FateComponent):
 
     @extract_explicit_parameter
