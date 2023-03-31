@@ -174,6 +174,7 @@ class HomoNNClient(ModelBase):
             else:
                 LOGGER.info('Load model from local save path')
                 save_dict = torch.load(open(param.local_save_path, 'rb'))
+                self.warm_start_iter = save_dict['epoch_idx']
                 self.nn_define = save_dict['model_define']
                 loss = save_dict['loss_define']
                 optimizer = save_dict['optimizer_define']
