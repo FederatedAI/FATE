@@ -6,10 +6,10 @@ class DeBERTa(PELLM):
 
     config_class = DebertaConfig
 
-    def __init__(self, config: dict=None,
-                pretrained_path: str=None,
-                adapter_type: str=None,
-                adapter_config: dict=None) -> None:
+    def __init__(self, config: dict = None,
+                 pretrained_path: str = None,
+                 adapter_type: str = None,
+                 adapter_config: dict = None) -> None:
 
         if pretrained_path is not None:
             self.check_config(pretrain_path=pretrained_path)
@@ -19,4 +19,6 @@ class DeBERTa(PELLM):
 
     def check_config(self, pretrain_path):
         config = AutoConfig.from_pretrained(pretrain_path)
-        assert type(config) == DebertaConfig, 'The config of pretrained model must be DebertaConfig, but got {}'.format(type(config))
+        assert isinstance(
+            config, DebertaConfig), 'The config of pretrained model must be DebertaConfig, but got {}'.format(
+            type(config))

@@ -39,7 +39,7 @@ class LeastSquaredErrorLoss(Loss):
     @staticmethod
     def compute_loss(y, y_pred, sample_weight=None):
 
-        lse_loss = y.join(y_pred, lambda y, yp: ((y - yp) * (y - yp), 1) )
+        lse_loss = y.join(y_pred, lambda y, yp: ((y - yp) * (y - yp), 1))
         avg_loss = Loss.reduce(lse_loss, sample_weights=sample_weight)
         return avg_loss
 
@@ -186,7 +186,7 @@ class LogCoshLoss(Loss):
         statistics = MultivariateStatisticalSummary(y_inst, -1)
         mean = statistics.get_mean()["label"]
         return y.mapValues(lambda x: np.asarray([mean])), np.asarray([mean])
-    
+
     @staticmethod
     def predict(value):
         return value
@@ -203,7 +203,7 @@ class LogCoshLoss(Loss):
     @staticmethod
     def compute_hess(y, y_pred):
         return 1 - np.tanh(y_pred - y) ** 2
-    
+
 
 class TweedieLoss(Loss):
 
@@ -211,7 +211,7 @@ class TweedieLoss(Loss):
     def initialize(y):
         # init score = 0, equals to base_score=1.0 in xgb, init_score=log(base_score)=0
         return y.mapValues(lambda x: np.asarray([0])), np.asarray([0])
-    
+
     def __init__(self, rho=None):
         super().__init__()
         if rho is None:

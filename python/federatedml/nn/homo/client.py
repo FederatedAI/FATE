@@ -31,8 +31,19 @@ class NNModelExporter(ExporterBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def export_model_dict(self, model=None, optimizer=None, model_define=None, optimizer_define=None, loss_define=None,
-                          epoch_idx=-1, converge_status=False, loss_history=None, best_epoch=-1, local_save_path='', extra_data={}):
+    def export_model_dict(
+            self,
+            model=None,
+            optimizer=None,
+            model_define=None,
+            optimizer_define=None,
+            loss_define=None,
+            epoch_idx=-1,
+            converge_status=False,
+            loss_history=None,
+            best_epoch=-1,
+            local_save_path='',
+            extra_data={}):
 
         if issubclass(type(model), torch.nn.Module):
             model_statedict = model.state_dict()
@@ -119,7 +130,7 @@ class HomoNNClient(ModelBase):
         self.nn_define = param.nn_define
         self.loss = param.loss
         self.optimizer = param.optimizer
-    
+
     def init(self):
 
         # set random seed
@@ -256,7 +267,7 @@ class HomoNNClient(ModelBase):
                 assert validate_input is not None, 'input validate path is None!'
 
         # fate loss callback setting
-        self.callback_meta( 
+        self.callback_meta(
             "loss",
             "train",
             MetricMeta(

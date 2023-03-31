@@ -69,6 +69,7 @@ Here we offer some advanced examples of using FATE-NN framework.
 ## Fed-PELLM(Parameter Efficient Large Language Model) Training
 
 - [Federated PELLM example with GPT-2](./GPT2-example.ipynb)
+- [Federated Multi-Task GPT-2: Classification and NER Tagging](./GPT2-multi-task.ipynb)
 
 ## Resnet classification(Homo-NN)
 

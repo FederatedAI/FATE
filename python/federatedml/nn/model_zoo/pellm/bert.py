@@ -5,10 +5,10 @@ from federatedml.nn.model_zoo.pellm.parameter_efficient_llm import PELLM
 class BERT(PELLM):
     config_class = BertConfig
 
-    def __init__(self, config: dict=None,
-                 pretrained_path: str=None,
-                 adapter_type: str=None,
-                 adapter_config: dict=None) -> None:
+    def __init__(self, config: dict = None,
+                 pretrained_path: str = None,
+                 adapter_type: str = None,
+                 adapter_config: dict = None) -> None:
 
         if pretrained_path is not None:
             self.check_config(pretrain_path=pretrained_path)
@@ -18,5 +18,6 @@ class BERT(PELLM):
 
     def check_config(self, pretrain_path):
         config = AutoConfig.from_pretrained(pretrain_path)
-        assert type(config) == BertConfig, 'The config of pretrained model must be BertConfig, but got {}'.format(type(config))
-
+        assert isinstance(
+            config, BertConfig), 'The config of pretrained model must be BertConfig, but got {}'.format(
+            type(config))

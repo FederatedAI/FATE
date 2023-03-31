@@ -5,10 +5,10 @@ from federatedml.nn.model_zoo.pellm.parameter_efficient_llm import PELLM
 class DistillBert(PELLM):
     config_class = DistilBertConfig
 
-    def __init__(self, config: dict=None,
-                pretrained_path: str=None,
-                adapter_type: str=None,
-                adapter_config: dict=None) -> None:
+    def __init__(self, config: dict = None,
+                 pretrained_path: str = None,
+                 adapter_type: str = None,
+                 adapter_config: dict = None) -> None:
 
         if pretrained_path is not None:
             self.check_config(pretrain_path=pretrained_path)
@@ -18,4 +18,6 @@ class DistillBert(PELLM):
 
     def check_config(self, pretrain_path):
         config = AutoConfig.from_pretrained(pretrain_path)
-        assert type(config) == DistilBertConfig, 'The config of pretrained model must be DistilBertConfig, but got {}'.format(type(config))
+        assert isinstance(
+            config, DistilBertConfig), 'The config of pretrained model must be DistilBertConfig, but got {}'.format(
+            type(config))

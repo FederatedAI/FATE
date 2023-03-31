@@ -18,6 +18,7 @@ import numpy as np
 from federatedml.optim import activation
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss.loss import Loss
 
+
 class SigmoidBinaryCrossEntropyLoss(object):
     @staticmethod
     def initialize(y):

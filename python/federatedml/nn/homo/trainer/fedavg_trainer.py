@@ -57,7 +57,7 @@ class FedAVGTrainer(TrainerBase):
     def __init__(self, epochs=10, batch_size=512,  # training parameter
                  early_stop=None, tol=0.0001,  # early stop parameters
                  secure_aggregate=True, weighted_aggregation=True, aggregate_every_n_epoch=None,  # federation
-                 cuda=None, 
+                 cuda=None,
                  pin_memory=True, shuffle=True, data_loader_worker=0,  # GPU & dataloader
                  validation_freqs=None,  # validation configuration
                  checkpoint_save_freqs=None,  # checkpoint configuration
@@ -75,7 +75,7 @@ class FedAVGTrainer(TrainerBase):
         self.save_to_local_dir = save_to_local_dir
 
         self.task_type = task_type
-        task_type_allow = [ 
+        task_type_allow = [
             consts.BINARY,
             consts.REGRESSION,
             consts.MULTY,
@@ -137,7 +137,6 @@ class FedAVGTrainer(TrainerBase):
                                  'secure_aggregate', 'weighted_aggregation', 'pin_memory', 'save_to_local_dir'], self.is_bool, '{} is not a bool')
         self.check_trainer_param(
             [self.tol], ['tol'], self.is_float, '{} is not a float')
-        
 
     def _init_aggregator(self, train_set):
         # compute round to aggregate
@@ -160,7 +159,6 @@ class FedAVGTrainer(TrainerBase):
             client_agg = None
 
         return client_agg, aggregate_round
-    
 
     def set_model(self, model: t.nn.Module):
 
@@ -177,7 +175,6 @@ class FedAVGTrainer(TrainerBase):
             return self.parallel_model
         else:
             return self.model
-    
 
     def train_an_epoch(self, epoch_idx, model, train_set, optimizer, loss):
 
@@ -187,12 +184,12 @@ class FedAVGTrainer(TrainerBase):
 
         if self.data_loader is None:
             self.data_loader = DataLoader(
-                                    train_set,
-                                    batch_size=self.batch_size,
-                                    pin_memory=self.pin_memory,
-                                    shuffle=self.shuffle,
-                                    num_workers=self.data_loader_worker)
-        
+                train_set,
+                batch_size=self.batch_size,
+                pin_memory=self.pin_memory,
+                shuffle=self.shuffle,
+                num_workers=self.data_loader_worker)
+
         dl = self.data_loader
 
         if not self.fed_mode:
@@ -223,7 +220,7 @@ class FedAVGTrainer(TrainerBase):
         if self.fed_mode:
             LOGGER.debug(
                 'epoch {} batch {} finished'.format(epoch_idx, batch_idx))
-        
+
         epoch_loss = epoch_loss / len(train_set)
         return epoch_loss
 
@@ -271,7 +268,7 @@ class FedAVGTrainer(TrainerBase):
             # federation process, if running local mode, cancel federation
             if client_agg is not None:
                 if not (self.aggregate_every_n_epoch is not None and (i + 1) % self.aggregate_every_n_epoch != 0):
-                    
+
                     # model averaging, only aggregate trainable param
                     self.model = client_agg.model_aggregation(self.model)
 
@@ -326,11 +323,11 @@ class FedAVGTrainer(TrainerBase):
 
         if self.save_to_local_dir:
             self.local_save(model=self.model, optimizer=optimizer, epoch_idx=cur_epoch, loss_history=loss_history,
-                    converge_status=need_stop, best_epoch=best_epoch)
+                            converge_status=need_stop, best_epoch=best_epoch)
         else:
             self.save(model=self.model, optimizer=optimizer, epoch_idx=cur_epoch, loss_history=loss_history,
-                  converge_status=need_stop, best_epoch=best_epoch)
-            
+                      converge_status=need_stop, best_epoch=best_epoch)
+
         self.summary({
             'best_epoch': best_epoch,
             'loss_history': loss_history,
@@ -419,4 +416,3 @@ class FedAVGTrainer(TrainerBase):
                     break
 
         LOGGER.info('server aggregation process done')
-

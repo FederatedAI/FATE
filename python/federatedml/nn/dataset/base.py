@@ -170,6 +170,6 @@ def get_dataset_class(dataset_module_name: str):
             raise ValueError('Did not find any class in {}.py that is the subclass of Dataset class'.
                              format(dataset_module_name))
         else:
-            return ds[-1] # return the last defined class
+            return ds[-1]  # return the last defined class
     except ValueError as e:
         raise e

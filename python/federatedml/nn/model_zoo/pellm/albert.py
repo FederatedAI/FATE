@@ -6,12 +6,12 @@ class ALBert(PELLM):
 
     config_class = AlbertConfig
 
-    def __init__(self, config: dict=None, 
-                 pretrained_path: str=None,
-                 adapter_type: str=None,
-                 adapter_config: dict=None,
+    def __init__(self, config: dict = None,
+                 pretrained_path: str = None,
+                 adapter_type: str = None,
+                 adapter_config: dict = None,
                  ) -> None:
-        
+
         if pretrained_path is not None:
             self.check_config(pretain_path=pretrained_path)
         if config is None and pretrained_path is None:
@@ -20,4 +20,6 @@ class ALBert(PELLM):
 
     def check_config(self, pretain_path):
         config = AutoConfig.from_pretrained(pretain_path)
-        assert type(config) == AlbertConfig, 'The config of pretrained model must be AlbertConfig, but got {}'.format(type(config))
+        assert isinstance(
+            config, AlbertConfig), 'The config of pretrained model must be AlbertConfig, but got {}'.format(
+            type(config))

@@ -1,5 +1,6 @@
 from federatedml.statistic.data_overview import with_weight
 
+
 class Loss(object):
 
     @staticmethod
@@ -21,10 +22,10 @@ class Loss(object):
     @staticmethod
     def compute_hess(y, y_pred):
         raise NotImplementedError()
-    
+
     @staticmethod
     def reduce(sample_loss, sample_weights=None):
-        
+
         from federatedml.util import LOGGER
         if sample_weights is not None and with_weight(sample_weights):
             # apply sample weights
