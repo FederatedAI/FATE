@@ -25,7 +25,6 @@ def get_class(module_name, class_name, param, base_path):
             if isinstance(v, type):
                 if issubclass(v, nn.Module) and v is not nn.Module:
                     if v.__name__ == class_name:
-                        print(param)
                         return v(**param)
                     else:
                         name_simi_list += ([(str_simi(class_name, v.__name__), v)])

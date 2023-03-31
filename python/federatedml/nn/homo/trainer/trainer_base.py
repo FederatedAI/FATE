@@ -498,12 +498,15 @@ def get_trainer_class(trainer_module_name: str):
         '{}.homo.trainer.{}'.format(
             ML_PATH, trainer_module_name))
     try:
-
+        trainers = []
         for k, v in ds_modules.__dict__.items():
             if isinstance(v, type):
                 if issubclass(v, TrainerBase) and v is not TrainerBase:
-                    return v
-        raise ValueError('Did not find any class in {}.py that is the subclass of Trainer class'.
-                         format(trainer_module_name))
+                    trainers.append(v)
+        if len(trainers) == 0:
+            raise ValueError('Did not find any class in {}.py that is the subclass of Trainer class'.
+                            format(trainer_module_name))
+        else:
+            return trainers[-1] # return the last defined trainer
     except ValueError as e:
         raise e

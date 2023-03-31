@@ -218,6 +218,7 @@ class HomoNNClient(ModelBase):
 
         # init trainer
         trainer_inst: TrainerBase = trainer_class(**self.trainer_param)
+        LOGGER.info('trainer class is {}'.format(trainer_class))
 
         trainer_train_args = inspect.getfullargspec(trainer_inst.train).args
         args_format = [

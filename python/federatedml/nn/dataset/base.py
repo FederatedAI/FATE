@@ -161,12 +161,15 @@ def get_dataset_class(dataset_module_name: str):
         '{}.dataset.{}'.format(
             ML_PATH, dataset_module_name))
     try:
-
+        ds = []
         for k, v in ds_modules.__dict__.items():
             if isinstance(v, type):
                 if issubclass(v, Dataset) and v is not Dataset:
-                    return v
-        raise ValueError('Did not find any class in {}.py that is the subclass of Dataset class'.
-                         format(dataset_module_name))
+                    ds.append(v)
+        if len(ds) == 0:
+            raise ValueError('Did not find any class in {}.py that is the subclass of Dataset class'.
+                             format(dataset_module_name))
+        else:
+            return ds[-1] # return the last defined class
     except ValueError as e:
         raise e

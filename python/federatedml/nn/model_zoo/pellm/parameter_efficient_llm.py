@@ -21,7 +21,6 @@ class PELLM(t.nn.Module):
                  ) -> None:
         
         super().__init__()
-
         self._pe_lm: AutoAdapterModel = None
         self.config = config
         self.config_path = pretrained_path
@@ -50,7 +49,7 @@ class PELLM(t.nn.Module):
         if self.adapter_config is None:
             config = getattr(transformers, self.adapter_type)()
         else:
-            config = getattr(transformers, self.adapter_type)(**self.adapter_config)
+            config = getattr(transformers, self.adapter_type)().from_dict(self.adapter_config)
         self._pe_lm.add_adapter(self._adapter_name, config)
         self._pe_lm.train_adapter(self._adapter_name)
 
