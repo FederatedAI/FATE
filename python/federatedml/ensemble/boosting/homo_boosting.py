@@ -202,7 +202,7 @@ class HomoBoostingClient(Boosting, ABC):
                 cur_sample_weights = model.get_sample_weights()
                 self.y_hat = self.get_new_predict_score(self.y_hat, cur_sample_weights, dim=class_idx)
 
-            local_loss = self.compute_loss(self.y_hat, self.y)
+            local_loss = self.compute_loss(self.y_hat, self.y, self.data_inst)
             self.aggregator.send_local_loss(local_loss, suffix=(epoch_idx,))
 
             validation_strategy = self.callback_list.get_validation_strategy()

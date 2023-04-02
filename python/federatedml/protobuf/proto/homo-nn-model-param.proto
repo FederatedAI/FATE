@@ -27,4 +27,5 @@ message HomoNNParam {
     bool converge_status = 4;
     repeated float loss_history = 5;
     int32 best_epoch = 6;
+    string local_save_path = 7;
 }
