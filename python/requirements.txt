@@ -37,6 +37,7 @@ torch==1.13.1+cpu
 torchvision==0.14.1+cpu
 torch-model-archiver==0.3.1
 transformers==4.23.1
+adapter-transformers==3.2.0
 coverage==4.5.2
 pika==1.2.1
 pandas==1.1.5
