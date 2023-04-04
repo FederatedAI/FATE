@@ -1,6 +1,5 @@
 import json
 import torch
-import tempfile
 import inspect
 from fate_arch.computing.non_distributed import LocalData
 from fate_arch.computing._util import is_table

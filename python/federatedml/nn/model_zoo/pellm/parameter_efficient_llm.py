@@ -1,7 +1,6 @@
 import torch as t
 import transformers
 from transformers.adapters import AutoAdapterModel
-from federatedml.util import LOGGER
 from transformers.adapters import _import_structure
 from transformers.configuration_utils import PretrainedConfig
 from federatedml.util import LOGGER
