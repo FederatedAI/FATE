@@ -33,12 +33,16 @@ class EncryptParam(BaseParam):
     key_length : int, default: 1024
         Used to specify the length of key in this encryption method.
 
+    See https://github.com/microsoft/APSI for details about CKKS's parameters
     """
 
-    def __init__(self, method=consts.PAILLIER, key_length=1024):
+    def __init__(self, method=consts.PAILLIER, key_length=1024, poly_modulus_degree=None, coeff_mod_bit_sizes=None, global_scale=2 ** 40):
         super(EncryptParam, self).__init__()
         self.method = method
         self.key_length = key_length
+        self.poly_modulus_degree = poly_modulus_degree
+        self.coeff_mod_bit_sizes = coeff_mod_bit_sizes
+        self.global_scale = global_scale
 
     def check(self):
         if self.method is not None and type(self.method).__name__ != "str":
@@ -57,6 +61,9 @@ class EncryptParam(BaseParam):
                 self.method = consts.PAILLIER
             elif user_input == "ipcl":
                 self.method = consts.PAILLIER_IPCL
+            elif user_input == "ckks":
+                self.method = consts.CKKS
+                LOGGER.warning('CKKS is not fully tested and developed, use it on your own risk')
             else:
                 raise ValueError(
                     "encrypt_param's method {} not supported".format(user_input))
@@ -67,6 +74,41 @@ class EncryptParam(BaseParam):
         elif self.key_length <= 0:
             raise ValueError(
                 "encrypt_param's key_length must be greater or equal to 1")
+
+        if self.poly_modulus_degree is None and self.coeff_mod_bit_sizes is None:
+            self.poly_modulus_degree = 8192
+            self.coeff_mod_bit_sizes = [60, 40, 40, 60]
+            LOGGER.info("No value for poly_modulus_degree and coeff_mod_bit_sizes are set, using default values 8192 and [60, 40, 40, 60]")
+        elif self.poly_modulus_degree is not None and self.poly_modulus_degree is not None:
+            # Check type
+            if type(self.poly_modulus_degree).__name__ != "int":
+                raise ValueError(
+                    "encrypt_param's poly_modulus_degree {} not supported, should be int type".format(self.poly_modulus_degree))
+            if type(self.coeff_mod_bit_sizes).__name__ != "list":
+                raise ValueError(
+                    "encrypt_param's coeff_mod_bit_sizes {} not supported, should be list type".format(self.coeff_mod_bit_sizes))
+
+            # poly_modulus_degree must be a power of 2
+            def is_power_of_two(n):
+                return (n & (n - 1) == 0) and n != 0
+            if not is_power_of_two(self.poly_modulus_degree):
+                raise ValueError("poly_modulus_degree should be a power of two")
+
+            # Sum of coeff_mod_bit_sizes cannot exceed a value given poly_modulus_degree
+            valid_bit_sizes_table = {
+                1024: 27,
+                2048: 54,
+                4096: 109,
+                8192: 218,
+                16384: 438,
+                32768: 881
+            }
+            max_sum = valid_bit_sizes_table[self.poly_modulus_degree]
+            if sum(self.coeff_mod_bit_sizes) > max_sum:
+                raise ValueError("The sum of coeff_mod_bit_sizes is too large, see https://github.com/microsoft/APSI for details on how to set this")
+
+        else:
+            raise ValueError("poly_modulus_degree and coeff_mod_bit_sizes must be either both None or has value")
 
         LOGGER.debug("Finish encrypt parameter check!")
         return True

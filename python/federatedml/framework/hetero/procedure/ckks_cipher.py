@@ -14,7 +14,22 @@
 #  limitations under the License.
 #
 
-from federatedml.secureprotol.encrypt import RsaEncrypt, PaillierEncrypt, IpclPaillierEncrypt, CKKSEncrypt
-from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
+from federatedml.framework.hetero.sync import ckks_keygen_sync
 
-__all__ = ['RsaEncrypt', 'PaillierEncrypt', 'IpclPaillierEncrypt', 'EncryptModeCalculator', 'CKKSEncrypt']
+
+class Host(ckks_keygen_sync.Host):
+
+    def register_ckks_cipher(self, transfer_variables):
+        self._register_ckks_keygen(pubkey_transfer=transfer_variables.ckks_pubkey)
+
+
+class Guest(ckks_keygen_sync.Guest):
+
+    def register_ckks_cipher(self, transfer_variables):
+        self._register_ckks_keygen(pubkey_transfer=transfer_variables.ckks_pubkey)
+
+
+class Arbiter(ckks_keygen_sync.Arbiter):
+
+    def register_ckks_cipher(self, transfer_variables):
+        self._register_ckks_keygen(pubkey_transfer=transfer_variables.ckks_pubkey)

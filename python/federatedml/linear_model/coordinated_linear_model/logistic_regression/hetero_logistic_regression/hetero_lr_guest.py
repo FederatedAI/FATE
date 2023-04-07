@@ -17,7 +17,7 @@
 import copy
 
 from federatedml.framework.hetero.procedure import convergence
-from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
+from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator, ckks_cipher
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.linear_model.coordinated_linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_base import \
     HeteroLRBase
@@ -36,11 +36,22 @@ class HeteroLRGuest(HeteroLRBase):
         self.data_batch_count = []
         # self.guest_forward = None
         self.role = consts.GUEST
-        self.cipher = paillier_cipher.Guest()
+        self.cipher = None
         self.batch_generator = batch_generator.Guest()
         self.gradient_loss_operator = hetero_lr_gradient_and_loss.Guest()
         self.converge_procedure = convergence.Guest()
         # self.need_one_vs_rest = None
+
+    def _init_model(self, params):
+        super()._init_model(params)
+        if self.model_param.encrypt_param.method == consts.PAILLIER or self.model_param.encrypt_param.method == consts.PAILLIER_IPCL:
+            self.cipher = paillier_cipher.Guest()
+            self.cipher.register_paillier_cipher(self.transfer_variable)
+        elif self.model_param.encrypt_param.method == consts.CKKS:
+            self.cipher = ckks_cipher.Guest()
+            self.cipher.register_ckks_cipher(self.transfer_variable)
+        else:
+            raise ValueError(f"Unsupported encryption method: {self.model_param.encrypt_param.method}")
 
     @staticmethod
     def load_data(data_instance):
@@ -93,7 +104,11 @@ class HeteroLRGuest(HeteroLRBase):
 
         data_instances = data_instances.mapValues(HeteroLRGuest.load_data)
         LOGGER.debug(f"MODEL_STEP After load data, data count: {data_instances.count()}")
-        self.cipher_operator = self.cipher.gen_paillier_cipher_operator(method=self.model_param.encrypt_param.method)
+
+        if self.model_param.encrypt_param.method == consts.PAILLIER or self.model_param.encrypt_param.method == consts.PAILLIER_IPCL:
+            self.cipher_operator = self.cipher.gen_paillier_cipher_operator(method=self.model_param.encrypt_param.method)
+        elif self.model_param.encrypt_param.method == consts.CKKS:
+            self.cipher_operator = self.cipher.gen_ckks_cipher_operator()
 
         self.batch_generator.initialize_batch_generator(data_instances, self.batch_size,
                                                         batch_strategy=self.batch_strategy,
@@ -130,7 +145,7 @@ class HeteroLRGuest(HeteroLRBase):
         while self.n_iter_ < self.max_iter:
             self.callback_list.on_epoch_begin(self.n_iter_)
             LOGGER.info("iter: {}".format(self.n_iter_))
-            batch_data_generator = self.batch_generator.generate_batch_data(suffix=(self.n_iter_, ), with_index=True)
+            batch_data_generator = self.batch_generator.generate_batch_data(suffix=(self.n_iter_,), with_index=True)
             self.optimizer.set_iters(self.n_iter_)
             batch_index = 0
             for batch_data, index_data in batch_data_generator:

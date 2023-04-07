@@ -21,7 +21,7 @@ from federatedml.linear_model.coordinated_linear_model.logistic_regression.base_
 from federatedml.optim.gradient.hetero_sqn_gradient import sqn_factory
 from federatedml.param.logistic_regression_param import HeteroLogisticParam
 from federatedml.protobuf.generated import lr_model_meta_pb2
-from federatedml.secureprotol import PaillierEncrypt, IpclPaillierEncrypt
+from federatedml.secureprotol import PaillierEncrypt, IpclPaillierEncrypt, CKKSEncrypt
 from federatedml.transfer_variable.transfer_class.hetero_lr_transfer_variable import HeteroLRTransferVariable
 from federatedml.util import LOGGER
 from federatedml.util import consts
@@ -46,21 +46,25 @@ class HeteroLRBase(BaseLogisticRegression):
         super()._init_model(params)
         self.encrypted_mode_calculator_param = params.encrypted_mode_calculator_param
 
+        LOGGER.debug(f'Encrypt parameter method is {params.encrypt_param.method}')
         if params.encrypt_param.method == consts.PAILLIER:
             self.cipher_operator = PaillierEncrypt()
         elif params.encrypt_param.method == consts.PAILLIER_IPCL:
             self.cipher_operator = IpclPaillierEncrypt()
+        elif params.encrypt_param.method == consts.CKKS:
+            self.cipher_operator = CKKSEncrypt()
         else:
             raise ValueError(f"Unsupported encryption method: {params.encrypt_param.method}")
+        LOGGER.debug(f"Cipher Type: {type(self.cipher)}")
 
-        self.cipher.register_paillier_cipher(self.transfer_variable)
         self.converge_procedure.register_convergence(self.transfer_variable)
         self.batch_generator.register_batch_generator(self.transfer_variable)
         self.gradient_loss_operator.register_gradient_procedure(self.transfer_variable)
         # if len(self.component_properties.host_party_idlist) == 1:
         #     LOGGER.debug(f"set_use_async")
         #     self.gradient_loss_operator.set_use_async()
-        self.gradient_loss_operator.set_fixed_float_precision(self.model_param.floating_point_precision)
+        if params.encrypt_param.method == consts.PAILLIER or params.encrypt_param.method == consts.PAILLIER_IPCL:
+            self.gradient_loss_operator.set_fixed_float_precision(self.model_param.floating_point_precision)
 
     def _get_meta(self):
         meta_protobuf_obj = lr_model_meta_pb2.LRModelMeta(penalty=self.model_param.penalty,
