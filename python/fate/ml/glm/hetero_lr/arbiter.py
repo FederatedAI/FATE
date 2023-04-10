@@ -40,18 +40,18 @@ class HeteroLrModuleArbiter(HeteroModule):
         self.batch_size = batch_size
         self.early_stop = early_stop
         self.tol = tol
-        """self.optimizer = Optimizer(optimizer_param["method"],
+        self.optimizer = Optimizer(optimizer_param["method"],
                                    optimizer_param["penalty"],
                                    optimizer_param["alpha"],
                                    optimizer_param["optimizer_params"])
         self.lr_scheduler = LRScheduler(learning_rate_param["method"],
-                                        learning_rate_param["scheduler_params"])"""
-        self.optimizer = Optimizer(optimizer_param.method,
+                                        learning_rate_param["scheduler_params"])
+        """self.optimizer = Optimizer(optimizer_param.method,
                                    optimizer_param.penalty,
                                    optimizer_param.alpha,
                                    optimizer_param.optimizer_params)
         self.lr_scheduler = LRScheduler(learning_rate_param.method,
-                                        learning_rate_param.scheduler_params)
+                                        learning_rate_param.scheduler_params)"""
         self.lr_param = learning_rate_param
 
         self.estimator = None

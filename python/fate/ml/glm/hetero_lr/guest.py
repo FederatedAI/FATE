@@ -40,20 +40,20 @@ class HeteroLrModuleGuest(HeteroModule):
     ):
         self.max_iter = max_iter
         self.batch_size = batch_size
-        """self.optimizer = Optimizer(optimizer_param["method"],
+        self.optimizer = Optimizer(optimizer_param["method"],
                                    optimizer_param["penalty"],
                                    optimizer_param["alpha"],
                                    optimizer_param["optimizer_params"])
         self.lr_scheduler = LRScheduler(learning_rate_param["method"],
-                                        learning_rate_param["scheduler_params"])"""
-        self.optimizer = Optimizer(optimizer_param.method,
+                                        learning_rate_param["scheduler_params"])
+        """self.optimizer = Optimizer(optimizer_param.method,
                                    optimizer_param.penalty,
                                    optimizer_param.alpha,
                                    optimizer_param.optimizer_params)
         logger.info(f"self.optimizer set: {self.optimizer}")
 
         self.lr_scheduler = LRScheduler(learning_rate_param.method,
-                                        learning_rate_param.scheduler_params)
+                                        learning_rate_param.scheduler_params)"""
         self.init_param = init_param
         self.threshold = threshold
 
