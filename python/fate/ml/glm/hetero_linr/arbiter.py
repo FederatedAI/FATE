@@ -12,7 +12,6 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-import json
 import logging
 
 import torch
@@ -76,7 +75,7 @@ class HeteroLinRModuleArbiter(HeteroModule):
     def from_model(cls, model):
         linr = HeteroLinRModuleArbiter(**model["metadata"])
         estimator = HeteroLinrEstimatorArbiter()
-        estimator.restore(json.loads(model["estimator"]))
+        estimator.restore(model["estimator"])
         linr.estimator = estimator
         return linr
 
@@ -176,15 +175,15 @@ class HeteroLinrEstimatorArbiter(HeteroModule):
 
     def to_model(self):
         return {
-            "optimizer": json.dumps(self.optimizer.state_dict()),
-            "lr_scheduler": json.dumps(self.lr_scheduler.state_dict()),
+            "optimizer": self.optimizer.state_dict(),
+            "lr_scheduler": self.lr_scheduler.state_dict(),
             "end_iter": self.end_iter,
             "converged": self.is_converged
         }
 
     def restore(self, model):
-        self.optimizer.load_state_dict(json.loads(model["optimizer"]))
-        self.lr_scheduler.load_state_dict(json.loads(model["lr_scheduler"]))
+        self.optimizer.load_state_dict(model["optimizer"])
+        self.lr_scheduler.load_state_dict(model["lr_scheduler"])
         self.end_iter = model["end_iter"]
         self.is_converged = model["is_converged"]
         # self.start_iter = model["end_iter"] + 1

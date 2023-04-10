@@ -88,7 +88,7 @@ class HeteroLinRModuleGuest(HeteroModule):
     def from_model(cls, model) -> "HeteroLinRModuleGuest":
         linr = HeteroLinRModuleGuest(**model["metadata"])
         estimator = HeteroLinrEstimatorGuest()
-        estimator.restore(json.loads(model["estimator"]))
+        estimator.restore(model["estimator"])
         linr.estimator = estimator
 
         return linr
@@ -183,8 +183,8 @@ class HeteroLinrEstimatorGuest(HeteroModule):
     def get_model(self):
         return {
             "w": self.w.tolist(),
-            "optimizer": json.dumps(self.optimizer.state_dict()),
-            "lr_scheduler": json.dumps(self.lr_scheduler.state_dict()),
+            "optimizer": self.optimizer.state_dict(),
+            "lr_scheduler": self.lr_scheduler.state_dict(),
             "end_iter": self.end_iter,
             "converged": self.is_converged
         }
@@ -192,7 +192,7 @@ class HeteroLinrEstimatorGuest(HeteroModule):
     def restore(self, model):
 
         self.w = torch.tensor(model["w"])
-        self.optimizer.load_state_dict(json.loads(model["optimizer"]))
-        self.lr_scheduler.load_state_dict(json.loads(model["lr_scheduler"]))
+        self.optimizer.load_state_dict(model["optimizer"])
+        self.lr_scheduler.load_state_dict(model["lr_scheduler"])
         self.end_iter = model["end_iter"]
         self.is_converged = model["is_converged"]
