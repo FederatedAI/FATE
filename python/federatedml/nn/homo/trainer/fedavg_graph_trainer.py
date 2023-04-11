@@ -74,6 +74,8 @@ class FedAVGGraphTrainer(FedAVGTrainer):
             loss=None,
             extra_dict={}):
 
+        ds = train_set
+
         if self.cuda:
             self.model = self.model.cuda()
 
@@ -86,12 +88,12 @@ class FedAVGGraphTrainer(FedAVGTrainer):
                 'FedAVGGraphTrainer requires a loss function, but got None, please specify loss function in the'
                 ' job configuration')
 
-        if self.batch_size > len(train_set) or self.batch_size == -1:
-            self.batch_size = len(train_set)
+        if self.batch_size > len(ds.input_nodes_train) or self.batch_size == -1:
+            self.batch_size = len(ds.input_nodes_train)
         dl = NeighborLoader(
-            data=train_set.data,
+            data=ds.data,
             num_neighbors=self.num_neighbors,
-            input_nodes=train_set.input_nodes,
+            input_nodes=ds.input_nodes_train,
             batch_size=self.batch_size,
             pin_memory=self.pin_memory,
             shuffle=self.shuffle,
@@ -107,7 +109,7 @@ class FedAVGGraphTrainer(FedAVGTrainer):
         # initialize fed avg client
         if self.fed_mode:
             if self.weighted_aggregation:
-                sample_num = len(train_set)
+                sample_num = len(ds.input_nodes_train)
             else:
                 sample_num = 1.0
 
@@ -141,8 +143,8 @@ class FedAVGGraphTrainer(FedAVGTrainer):
                 optimizer.step()
                 batch_loss_np = batch_loss.detach().numpy(
                 ) if not self.cuda else batch_loss.cpu().detach().numpy()
-                if acc_num + self.batch_size > len(train_set):
-                    batch_len = len(train_set) - acc_num
+                if acc_num + self.batch_size > len(ds.input_nodes_train):
+                    batch_len = len(ds.input_nodes_train) - acc_num
                 else:
                     batch_len = self.batch_size
                 epoch_loss += batch_loss_np * batch_len
@@ -154,7 +156,7 @@ class FedAVGGraphTrainer(FedAVGTrainer):
                             i, batch_idx))
 
             # loss compute
-            epoch_loss = epoch_loss / len(train_set)
+            epoch_loss = epoch_loss / len(ds.input_nodes_train)
             self.callback_loss(epoch_loss, i)
             loss_history.append(float(epoch_loss))
             LOGGER.info('epoch loss is {}'.format(epoch_loss))
@@ -177,7 +179,7 @@ class FedAVGGraphTrainer(FedAVGTrainer):
             # validation process
             if self.validation_freq and ((i + 1) % self.validation_freq == 0):
                 LOGGER.info('running validation')
-                ids_t, pred_t, label_t = self._predict(train_set)
+                ids_t, pred_t, label_t = self._predict(ds, 'train')
                 evaluation_summary = self.evaluation(
                     ids_t,
                     pred_t,
@@ -185,8 +187,8 @@ class FedAVGGraphTrainer(FedAVGTrainer):
                     dataset_type='train',
                     epoch_idx=i,
                     task_type=self.task_type)
-                if validate_set is not None:
-                    ids_v, pred_v, label_v = self._predict(validate_set)
+                if ds.input_nodes_vali is not None:
+                    ids_v, pred_v, label_v = self._predict(ds, 'vali')
                     evaluation_summary = self.evaluation(
                         ids_v,
                         pred_v,
@@ -216,7 +218,7 @@ class FedAVGGraphTrainer(FedAVGTrainer):
             'metrics_summary': evaluation_summary
         })
 
-    def _predict(self, dataset: Dataset):
+    def _predict(self, dataset: Dataset, which_ds='train'):
 
         pred_result = []
 
@@ -227,10 +229,19 @@ class FedAVGGraphTrainer(FedAVGTrainer):
         if not dataset.has_sample_ids():
             dataset.init_sid_and_getfunc(prefix=dataset.get_type())
 
+        if which_ds == 'train':
+            input_nodes = dataset.input_nodes_train
+        elif which_ds == 'vali':
+            input_nodes = dataset.input_nodes_vali
+        elif which_ds == 'test':
+            input_nodes = dataset.input_nodes_test
+        else:
+            raise ValueError("Nnknown dataset to predict!")
+
         dl = NeighborLoader(
             data=dataset.data,
             num_neighbors=self.num_neighbors,
-            input_nodes=dataset.input_nodes,
+            input_nodes=input_nodes,
             batch_size=self.batch_size,
             pin_memory=self.pin_memory,
             num_workers=self.data_loader_worker)
