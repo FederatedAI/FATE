@@ -1,8 +1,10 @@
+import deepspeed
 import json
 import torch
+import torch.distributed as dist
 import inspect
 from fate_arch.computing.non_distributed import LocalData
-from fate_arch.computing._util import is_table
+from fate_arch.computing import is_table
 from federatedml.model_base import ModelBase
 from federatedml.nn.homo.trainer.trainer_base import get_trainer_class, TrainerBase
 from federatedml.nn.backend.utils.data import load_dataset
@@ -19,7 +21,6 @@ from federatedml.statistic.data_overview import check_with_inst_id
 from federatedml.nn.homo.trainer.trainer_base import ExporterBase
 from fate_arch.session import computing_session
 from federatedml.nn.backend.utils.data import get_ret_predict_table
-from federatedml.nn.dataset.table import TableDataset
 from federatedml.nn.backend.utils.data import add_match_id
 from federatedml.protobuf.generated.homo_nn_model_param_pb2 import HomoNNParam as HomoNNParamPB
 from federatedml.protobuf.generated.homo_nn_model_meta_pb2 import HomoNNMeta as HomoNNMetaPB
@@ -117,6 +118,10 @@ class HomoNNClient(ModelBase):
         # warm start display iter
         self.warm_start_iter = None
 
+        # deepspeed
+        self.ds_config = None
+        self.model_save_flag = False
+
     def _init_model(self, param: HomoNNParam):
 
         train_param = param.trainer.to_dict()
@@ -129,6 +134,7 @@ class HomoNNClient(ModelBase):
         self.nn_define = param.nn_define
         self.loss = param.loss
         self.optimizer = param.optimizer
+        self.ds_config = param.ds_config
 
     def init(self):
 
@@ -206,7 +212,7 @@ class HomoNNClient(ModelBase):
 
         LOGGER.info('model structure is {}'.format(model))
         # init optimizer
-        if self.optimizer is not None:
+        if self.optimizer is not None and not self.ds_config:
             optimizer_: FateTorchOptimizer = s.recover_optimizer_from_dict(
                 self.optimizer)
             # pass model parameters to optimizer
@@ -248,6 +254,14 @@ class HomoNNClient(ModelBase):
 
         trainer_inst.set_nn_config(self.nn_define, self.optimizer, self.loss)
         trainer_inst.fed_mode = True
+
+        if self.ds_config:
+            deepspeed.init_distributed()
+            model_parameters = list(filter(lambda p: p.requires_grad, model.parameters()))
+            model, optimizer, _, _ = deepspeed.initialize(model=model,
+                                                          model_parameters=model_parameters,
+                                                          config=self.ds_config)
+            trainer_inst.enable_deepspeed()
 
         return trainer_inst, model, optimizer, loss_fn, extra_data
 

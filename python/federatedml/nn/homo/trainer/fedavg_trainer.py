@@ -1,5 +1,9 @@
+import os
+import time
+
 import torch
 import torch as t
+import torch.distributed as dist
 import tqdm
 import numpy as np
 from torch.nn import DataParallel
@@ -62,7 +66,7 @@ class FedAVGTrainer(TrainerBase):
                  validation_freqs=None,  # validation configuration
                  checkpoint_save_freqs=None,  # checkpoint configuration
                  task_type='auto',  # task type
-                 save_to_local_dir=False,  # save model to local path
+                 save_to_local_dir=False  # save model to local path
                  ):
 
         super(FedAVGTrainer, self).__init__()
@@ -153,8 +157,11 @@ class FedAVGTrainer(TrainerBase):
             else:
                 sample_num = 1.0
 
-            client_agg = SecureAggClient(
-                True, aggregate_weight=sample_num, communicate_match_suffix=self.comm_suffix)
+            if self._enable_deepspeed and dist.get_rank() == 0:
+                client_agg = SecureAggClient(
+                    True, aggregate_weight=sample_num, communicate_match_suffix=self.comm_suffix)
+            else:
+                client_agg = None
         else:
             client_agg = None
 
@@ -188,7 +195,9 @@ class FedAVGTrainer(TrainerBase):
                 batch_size=self.batch_size,
                 pin_memory=self.pin_memory,
                 shuffle=self.shuffle,
-                num_workers=self.data_loader_worker)
+                num_workers=self.data_loader_worker,
+                collate_fn=getattr(train_set, "collate_fn", None)
+            )
 
         dl = self.data_loader
 
@@ -202,20 +211,40 @@ class FedAVGTrainer(TrainerBase):
             if self.cuda is not None:
                 batch_data, batch_label = self.to_cuda(
                     batch_data, self.cuda_main_device), self.to_cuda(batch_label, self.cuda_main_device)
+            elif self._enable_deepspeed:
+                batch_data, batch_label = self.to_cuda(
+                    batch_data, self.model.device), self.to_cuda(batch_label, self.model.device)
 
             optimizer.zero_grad()
             pred = model(batch_data)
-            batch_loss = loss(pred, batch_label)
-            batch_loss.backward()
-            optimizer.step()
-            batch_loss_np = batch_loss.detach().numpy(
-            ) if self.cuda is None else batch_loss.cpu().detach().numpy()
+
+            if not loss and hasattr(pred, "loss"):
+                batch_loss = pred.loss
+            elif loss is not None:
+                batch_loss = loss(pred, batch_label)
+            else:
+                raise ValueError(
+                    'FedAVGTrainer requires a loss function, but got None, please specify loss function in the'
+                    ' job configuration')
+
+            if not self._enable_deepspeed:
+                batch_loss.backward()
+                optimizer.step()
+                batch_loss_np = batch_loss.detach().numpy(
+                ) if self.cuda is None else batch_loss.cpu().detach().numpy()
+            else:
+                batch_loss = batch_loss.mean()
+                batch_loss_np = batch_loss.cpu().detach().numpy()
+                model.backward(batch_loss)
+                model.step()
+
             if acc_num + self.batch_size > len(train_set):
                 batch_len = len(train_set) - acc_num
             else:
                 batch_len = self.batch_size
             epoch_loss += batch_loss_np * batch_len
             batch_idx += 1
+            LOGGER.debug(f"finish epoch={epoch_idx}, batch={batch_idx}")
 
         if self.fed_mode:
             LOGGER.debug(
@@ -236,10 +265,6 @@ class FedAVGTrainer(TrainerBase):
             raise ValueError(
                 'FedAVGTrainer requires an optimizer, but got None, please specify optimizer in the '
                 'job configuration')
-        if loss is None:
-            raise ValueError(
-                'FedAVGTrainer requires a loss function, but got None, please specify loss function in the'
-                ' job configuration')
 
         if self.batch_size > len(train_set) or self.batch_size == -1:
             self.batch_size = len(train_set)
@@ -266,15 +291,25 @@ class FedAVGTrainer(TrainerBase):
             LOGGER.info('epoch loss is {}'.format(epoch_loss))
 
             # federation process, if running local mode, cancel federation
-            if client_agg is not None:
+            if client_agg is not None or self._enable_deepspeed:
                 if not (self.aggregate_every_n_epoch is not None and (i + 1) % self.aggregate_every_n_epoch != 0):
 
                     # model averaging, only aggregate trainable param
-                    self.model = client_agg.model_aggregation(self.model)
+                    if not self._enable_deepspeed or dist.get_rank() == 0:
+                        self.model = client_agg.model_aggregation(self.model)
+                        if self._enable_deepspeed and dist.get_world_size() > 1:
+                            self.share_model()
+                    elif self._enable_deepspeed and dist.get_world_size() > 1:
+                        self.share_model()
 
                     # agg loss and get converge status
-                    converge_status = client_agg.loss_aggregation(epoch_loss)
-                    cur_agg_round += 1
+                    if not self._enable_deepspeed or dist.get_rank() == 0:
+                        converge_status = client_agg.loss_aggregation(epoch_loss)
+                        cur_agg_round += 1
+                        self._sync_converge_status(converge_status)
+                    else:
+                        converge_status = self._sync_converge_status()
+
                     LOGGER.info(
                         'model averaging finished, aggregate round {}/{}'.format(
                             cur_agg_round, aggregate_round))
@@ -304,6 +339,7 @@ class FedAVGTrainer(TrainerBase):
                         task_type=self.task_type)
 
             # save check point process
+            """
             if self.save_freq is not None and ((i + 1) % self.save_freq == 0):
 
                 if self.save_to_local_dir:
@@ -313,6 +349,7 @@ class FedAVGTrainer(TrainerBase):
                     self.checkpoint(
                         self.model, i, optimizer, converge_status=need_stop, loss_history=loss_history)
                 LOGGER.info('save checkpoint : epoch {}'.format(i))
+            """
 
             # if meet stop condition then stop
             if need_stop:
@@ -321,12 +358,14 @@ class FedAVGTrainer(TrainerBase):
         # post-process
         best_epoch = int(np.array(loss_history).argmin())
 
+        """
         if self.save_to_local_dir:
             self.local_save(model=self.model, optimizer=optimizer, epoch_idx=cur_epoch, loss_history=loss_history,
                             converge_status=need_stop, best_epoch=best_epoch)
         else:
             self.save(model=self.model, optimizer=optimizer, epoch_idx=cur_epoch, loss_history=loss_history,
                       converge_status=need_stop, best_epoch=best_epoch)
+        """
 
         self.summary({
             'best_epoch': best_epoch,
@@ -336,7 +375,6 @@ class FedAVGTrainer(TrainerBase):
         })
 
     def _predict(self, dataset: Dataset):
-
         pred_result = []
 
         # switch eval mode
@@ -368,6 +406,7 @@ class FedAVGTrainer(TrainerBase):
         return dataset.get_sample_ids(), ret_rs, ret_label
 
     def predict(self, dataset: Dataset):
+        return
 
         ids, ret_rs, ret_label = self._predict(dataset)
 
@@ -416,3 +455,27 @@ class FedAVGTrainer(TrainerBase):
                     break
 
         LOGGER.info('server aggregation process done')
+
+    def _share_model(self):
+        rank = dist.get_rank()
+
+        if rank == 0:
+            for p in self.model.parameters():
+                if p.requires_grad:
+                    scatter_list = [p.data for _ in range(dist.get_world_size())]
+                    dist.scatter(p.data, scatter_list, async_op=False)
+        else:
+            for p in self.model.parameters():
+                if p.requires_grad:
+                    dist.scatter(p.data, src=0, async_op=False)
+
+        dist.barrier()
+
+    def _sync_converge_status(self, converge_status=None):
+        if dist.get_rank() == 0:
+            t_status = torch.Tensor([converge_status])
+            dist.scatter(t_status, [t for _ in range(dist.get_world_size())], async_op=False)
+        else:
+            t_status = torch.Tensor([False])
+            dist.scatter(t_status, src=0, async_op=False)
+            return t_status[0].item()

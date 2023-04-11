@@ -41,7 +41,8 @@ class HomoNNParam(BaseParam):
                  torch_seed: int = 100,
                  nn_define: dict = None,
                  loss: dict = None,
-                 optimizer: dict = None
+                 optimizer: dict = None,
+                 ds_config: dict = None
                  ):
 
         super(HomoNNParam, self).__init__()
@@ -51,6 +52,7 @@ class HomoNNParam(BaseParam):
         self.nn_define = nn_define
         self.loss = loss
         self.optimizer = optimizer
+        self.ds_config = ds_config
 
     def check(self):
 

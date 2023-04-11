@@ -43,7 +43,8 @@ try:
         'torch_seed': 100,
         'loss': None,
         'optimizer': None,
-        'nn_define': None
+        'nn_define': None,
+        'ds_config': None
     }
 except Exception as e:
     print(e)
@@ -80,6 +81,7 @@ class HomoNN(FateComponent):
                  torch_seed: int = 100,
                  loss=None,
                  optimizer: OptimizerType = None,
+                 ds_config: dict = None,
                  model: Sequential = None, **kwargs):
 
         explicit_parameters = copy.deepcopy(DEFAULT_PARAM_DICT)
