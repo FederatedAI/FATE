@@ -187,7 +187,7 @@ wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate/${version}/
 scp *.tar.gz app@192.168.0.1:/data/projects/install
 scp *.tar.gz app@192.168.0.2:/data/projects/install
 ```
-Note: The current document needs to be deployed with FATE version>=1.7.0, ${version} is replaced with e.g. 1.9.0, without the v character.
+Note: The current document needs to be deployed with FATE version>=1.7.0, ${version} is replaced with e.g. 1.11.0, without the v character.
 
 ### 5.2 Operating system parameter checking
 
