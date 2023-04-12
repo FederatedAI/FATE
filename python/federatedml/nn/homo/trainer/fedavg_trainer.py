@@ -8,6 +8,7 @@ import tqdm
 import numpy as np
 from torch.nn import DataParallel
 from torch.utils.data import DataLoader
+from torch.utils.data.distributed import DistributedSampler
 from federatedml.framework.homo.aggregator.secure_aggregator import SecureAggregatorClient as SecureAggClient
 from federatedml.framework.homo.aggregator.secure_aggregator import SecureAggregatorServer as SecureAggServer
 from federatedml.nn.dataset.base import Dataset
@@ -157,7 +158,7 @@ class FedAVGTrainer(TrainerBase):
             else:
                 sample_num = 1.0
 
-            if self._enable_deepspeed and dist.get_rank() == 0:
+            if not dist.is_available() or dist.get_rank() == 0:
                 client_agg = SecureAggClient(
                     True, aggregate_weight=sample_num, communicate_match_suffix=self.comm_suffix)
             else:
@@ -189,6 +190,7 @@ class FedAVGTrainer(TrainerBase):
         batch_idx = 0
         acc_num = 0
 
+        """
         if self.data_loader is None:
             self.data_loader = DataLoader(
                 train_set,
@@ -198,6 +200,10 @@ class FedAVGTrainer(TrainerBase):
                 num_workers=self.data_loader_worker,
                 collate_fn=getattr(train_set, "collate_fn", None)
             )
+        """
+
+        if isinstance(self.data_loader.sampler, DistributedSampler):
+            self.data_loader.sampler.set_epoch(epoch_idx)
 
         dl = self.data_loader
 
@@ -279,6 +285,7 @@ class FedAVGTrainer(TrainerBase):
         need_stop = False
         evaluation_summary = {}
 
+        self._get_train_data_loader(train_set)
         # training process
         for i in range(self.epochs):
 
@@ -291,19 +298,19 @@ class FedAVGTrainer(TrainerBase):
             LOGGER.info('epoch loss is {}'.format(epoch_loss))
 
             # federation process, if running local mode, cancel federation
-            if client_agg is not None or self._enable_deepspeed:
+            if client_agg is not None or dist.is_available():
                 if not (self.aggregate_every_n_epoch is not None and (i + 1) % self.aggregate_every_n_epoch != 0):
 
                     # model averaging, only aggregate trainable param
-                    if not self._enable_deepspeed or dist.get_rank() == 0:
+                    if not dist.is_available() or dist.get_rank() == 0:
                         self.model = client_agg.model_aggregation(self.model)
-                        if self._enable_deepspeed and dist.get_world_size() > 1:
+                        if dist.is_available() and dist.get_world_size() > 1:
                             self._share_model()
-                    elif self._enable_deepspeed and dist.get_world_size() > 1:
+                    elif dist.is_available() and dist.get_world_size() > 1:
                         self._share_model()
 
                     # agg loss and get converge status
-                    if not self._enable_deepspeed or dist.get_rank() == 0:
+                    if not dist.is_available() or dist.get_rank() == 0:
                         converge_status = client_agg.loss_aggregation(epoch_loss)
                         cur_agg_round += 1
                         self._sync_converge_status(converge_status)
@@ -456,6 +463,33 @@ class FedAVGTrainer(TrainerBase):
 
         LOGGER.info('server aggregation process done')
 
+    def _get_train_data_loader(self, train_set, ):
+        collate_fn = train_set.collate_fn if hasattr(train_set, "collate_fn") else None
+
+        if not dist.is_available() or dist.get_world_size() <= 1:
+            self.data_loader = DataLoader(
+                train_set,
+                batch_size=self.batch_size,
+                pin_memory=self.pin_memory,
+                shuffle=self.shuffle,
+                num_workers=self.data_loader_worker,
+                collate_fn=collate_fn
+            )
+        else:
+            train_sampler = DistributedSampler(
+                    train_set,
+                    num_replicas=dist.get_world_size(),
+                    rank=dist.get_rank()
+            )
+            self.data_loader = DataLoader(
+                train_set,
+                batch_size=self.batch_size,
+                pin_memory=self.pin_memory,
+                num_workers=self.data_loader_worker,
+                collate_fn=collate_fn,
+                sampler=train_sampler
+            )
+
     def _share_model(self):
         rank = dist.get_rank()
 
@@ -476,6 +510,6 @@ class FedAVGTrainer(TrainerBase):
             t_status = self.to_cuda(torch.Tensor([converge_status]), self.model.device)
             dist.scatter(t_status, [t_status for _ in range(dist.get_world_size())], async_op=False)
         else:
-            t_status = torch.Tensor([False])
+            t_status = self.to_cuda(torch.Tensor([False]), self.model.device)
             dist.scatter(t_status, src=0, async_op=False)
             return t_status[0].item()
