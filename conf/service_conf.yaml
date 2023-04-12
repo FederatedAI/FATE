@@ -73,10 +73,14 @@ fate_on_standalone:
   standalone:
     cores_per_node: 20
     nodes: 1
+    devices:
+      127.0.0.1: 4
 fate_on_eggroll:
   clustermanager:
     cores_per_node: 16
     nodes: 1
+    devices:
+      127.0.0.1: 8
   rollsite:
     host: 127.0.0.1
     port: 9370
