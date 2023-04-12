@@ -167,13 +167,5 @@ model_store_address:
 servings:
   hosts:
     - 127.0.0.1:8000
-fatemanager:
-  host: 127.0.0.1
-  port: 8001
-  federatedId: 0
 pdsh:
   path: /opt/homebrew/bin/pdsh
-  active_workers: 127.0.0.1
-  master_address: 127.0.0.1
-  master_port: 12345
-  world_info: {"127.0.0.1": [0, 1]}
