@@ -298,9 +298,9 @@ class FedAVGTrainer(TrainerBase):
                     if not self._enable_deepspeed or dist.get_rank() == 0:
                         self.model = client_agg.model_aggregation(self.model)
                         if self._enable_deepspeed and dist.get_world_size() > 1:
-                            self.share_model()
+                            self._share_model()
                     elif self._enable_deepspeed and dist.get_world_size() > 1:
-                        self.share_model()
+                        self._share_model()
 
                     # agg loss and get converge status
                     if not self._enable_deepspeed or dist.get_rank() == 0:
@@ -473,8 +473,8 @@ class FedAVGTrainer(TrainerBase):
 
     def _sync_converge_status(self, converge_status=None):
         if dist.get_rank() == 0:
-            t_status = torch.Tensor([converge_status])
-            dist.scatter(t_status, [t for _ in range(dist.get_world_size())], async_op=False)
+            t_status = self.to_cuda(torch.Tensor([converge_status]), self.model.device)
+            dist.scatter(t_status, [t_status for _ in range(dist.get_world_size())], async_op=False)
         else:
             t_status = torch.Tensor([False])
             dist.scatter(t_status, src=0, async_op=False)
