@@ -1,3 +1,18 @@
+> FederatedML
+* Support FedLLM (Federated Large Language Models) 
+  * Integration of LLM for federated learning: BERT, ALBERT, RoBERTa, GPT-2, BART, DeBERTa, and DistilBERT. Please note that if using such pretrain-models, compliance with their licenses is needed.
+  * Integration of Parameter-efficient tuning methods for federated learning:  Bottleneck Adapters (including Houlsby, Pfeiffer, Parallel schemes), Invertible Adapters, LoRA, IA3, and Compacter.
+  * Improved Homo Federated Trainer class, allowing CUDA device specification and DataParallel acceleration for multi-GPU devices.
+  * TokenizerDataset feature upgrade, better adaptation to HuggingFace Tokenizer.
+
+> Bug-Fix
+* Fix inconsistent `bin_num` display of Hetero Feature Binning for data contains missing value
+* Fix inconsistency in transforming data for transforming selected columns of Hetero Feature Binning When using ModelLoader
+* Fix `exclusive_data_type` not valid in DataTransform when meta for input data is missing
+* Fix weighted loss calculation and feature importance display issues in Tree-Based models
+* Fix sample id display of NN
+
+
 ## Release 1.10.0
 ### Major Features and Improvements
 > FederatedML

@@ -109,10 +109,13 @@ class DenseFeatureTransformer(object):
         header = schema["header"]
         exclusive_data_type = meta.get("exclusive_data_type", None)
         if exclusive_data_type:
-            self.exclusive_data_type = dict([(k.lower(), v) for k, v in exclusive_data_type.items()])
-            for idx, col_name in enumerate(header):
-                if col_name in self.exclusive_data_type:
-                    self.exclusive_data_type_fid_map[idx] = self.exclusive_data_type[col_name]
+            self._init_exclusive_data_type(exclusive_data_type, header)
+
+    def _init_exclusive_data_type(self, exclusive_data_type, header):
+        self.exclusive_data_type = dict([(k.lower(), v) for k, v in exclusive_data_type.items()])
+        for idx, col_name in enumerate(header):
+            if col_name in self.exclusive_data_type:
+                self.exclusive_data_type_fid_map[idx] = self.exclusive_data_type[col_name]
 
     def extract_feature_value(self, value, header_index=None):
         if not header_index:
@@ -154,6 +157,8 @@ class DenseFeatureTransformer(object):
             schema.update(generated_header)
             schema = self.anonymous_generator.generate_anonymous_header(schema)
             set_schema(input_data, schema)
+            if self.exclusive_data_type:
+                self._init_exclusive_data_type(self.exclusive_data_type, schema["header"])
         else:
             self._update_param(schema)
 

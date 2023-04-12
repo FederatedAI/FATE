@@ -15,13 +15,11 @@
 #
 
 import copy
-import functools
 
 import numpy as np
 
 from federatedml.cipher_compressor.packer import GuestIntegerPacker
 from federatedml.feature.binning.iv_calculator import IvCalculator
-from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 from federatedml.feature.binning.optimal_binning.optimal_binning import OptimalBinning
 from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseFeatureBinning
 from federatedml.secureprotol import PaillierEncrypt
@@ -66,17 +64,19 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
             split_points_obj = self.binning_obj.bin_results
 
         if self.model_param.skip_static:
+            self.record_missing(data_instances)
             self.transform_data(data_instances)
             return self.data_output
 
         label_counts_dict, label_counts, label_table = self.stat_label(data_instances)
         self.bin_result = self.cal_local_iv(data_instances, split_points, label_counts, label_table)
+        self.record_missing(data_instances)
+
         if self.model_param.method == consts.OPTIMAL and split_points_obj is not None:
             # LOGGER.debug(f"set optimal metric array")
             self.set_optimal_metric_array(split_points_obj.all_optimal_metric)
 
         if self.model_param.local_only:
-
             self.transform_data(data_instances)
             self.set_summary(self.bin_result.summary())
             return self.data_output

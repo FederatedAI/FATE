@@ -19,9 +19,10 @@ import functools
 from federatedml.feature.instance import Instance
 from federatedml.util import consts
 from federatedml.statistic.statics import MultivariateStatisticalSummary
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.loss.loss import Loss
 
 
-class LeastSquaredErrorLoss(object):
+class LeastSquaredErrorLoss(Loss):
 
     @staticmethod
     def initialize(y):
@@ -36,10 +37,11 @@ class LeastSquaredErrorLoss(object):
         return value
 
     @staticmethod
-    def compute_loss(y, y_pred):
+    def compute_loss(y, y_pred, sample_weight=None):
+
         lse_loss = y.join(y_pred, lambda y, yp: ((y - yp) * (y - yp), 1))
-        lse_sum, sample_num = lse_loss.reduce(lambda tuple1, tuple2: (tuple1[0] + tuple2[0], tuple1[1] + tuple2[1]))
-        return lse_sum / sample_num
+        avg_loss = Loss.reduce(lse_loss, sample_weights=sample_weight)
+        return avg_loss
 
     @staticmethod
     def compute_grad(y, y_pred):
@@ -54,7 +56,7 @@ class LeastSquaredErrorLoss(object):
             return 2
 
 
-class LeastAbsoluteErrorLoss(object):
+class LeastAbsoluteErrorLoss(Loss):
     @staticmethod
     def initialize(y):
         y_inst = y.mapValues(lambda label: Instance(features=np.asarray([label])))
@@ -68,10 +70,10 @@ class LeastAbsoluteErrorLoss(object):
         return value
 
     @staticmethod
-    def compute_loss(y, y_pred):
-        lae = y.join(y_pred, lambda y, yp: (np.abs(y - yp), 1))
-        lae_sum, sample_num = lae.reduce(lambda tuple1, tuple2: (tuple1[0] + tuple2[0], tuple1[1] + tuple2[1]))
-        return lae_sum / sample_num
+    def compute_loss(y, y_pred, sample_weight=None):
+        lae_loss = y.join(y_pred, lambda y, yp: (np.abs(y - yp), 1))
+        avg_loss = Loss.reduce(lae_loss, sample_weights=sample_weight)
+        return avg_loss
 
     @staticmethod
     def compute_grad(y, y_pred):
@@ -80,7 +82,6 @@ class LeastAbsoluteErrorLoss(object):
             diff[diff > consts.FLOAT_ZERO] = 1
             diff[diff < consts.FLOAT_ZERO] = -1
             diff[np.abs(diff) <= consts.FLOAT_ZERO] = 0
-
             return diff
         else:
             diff = y_pred - y
@@ -100,7 +101,7 @@ class LeastAbsoluteErrorLoss(object):
             return 1
 
 
-class HuberLoss(object):
+class HuberLoss(Loss):
     @staticmethod
     def initialize(y):
         y_inst = y.mapValues(lambda label: Instance(features=np.asarray([label])))
@@ -110,6 +111,7 @@ class HuberLoss(object):
         return y.mapValues(lambda x: np.asarray([mean])), np.asarray([mean])
 
     def __init__(self, delta):
+        super().__init__()
         if delta is None:
             self.delta = consts.FLOAT_ZERO
         else:
@@ -118,11 +120,11 @@ class HuberLoss(object):
         if np.abs(self.delta) < consts.FLOAT_ZERO:
             self.delta = consts.FLOAT_ZERO
 
-    def compute_loss(self, y, y_pred):
+    def compute_loss(self, y, y_pred, sample_weight=None):
         huber_loss = y.join(y_pred, lambda y, yp:
                             (self.delta ** 2 * (np.sqrt(1 + ((yp - y) / self.delta) ** 2) - 1), 1))
-        huber_sum, sample_num = huber_loss.reduce(lambda tuple1, tuple2: (tuple1[0] + tuple2[0], tuple1[1] + tuple2[1]))
-        return huber_sum / sample_num
+        avg_loss = Loss.reduce(huber_loss, sample_weights=sample_weight)
+        return avg_loss
 
     @staticmethod
     def predict(value):
@@ -137,7 +139,7 @@ class HuberLoss(object):
         return 1.0 / (1.0 + diff * diff / (self.delta ** 2)) ** 1.5
 
 
-class FairLoss(object):
+class FairLoss(Loss):
     @staticmethod
     def initialize(y):
         y_inst = y.mapValues(lambda label: Instance(features=np.asarray([label])))
@@ -147,6 +149,7 @@ class FairLoss(object):
         return y.mapValues(lambda x: np.asarray([mean])), np.asarray([mean])
 
     def __init__(self, c):
+        super().__init__()
         if c is None:
             self.c = consts.FLOAT_ZERO
         else:
@@ -159,12 +162,11 @@ class FairLoss(object):
     def predict(value):
         return value
 
-    def compute_loss(self, y, y_pred):
+    def compute_loss(self, y, y_pred, sample_weight=None):
         fair_loss = y.join(y_pred, lambda y, yp:
                            (self.c * np.abs(yp - y) - self.c ** 2 * np.log(np.abs(yp - y) / self.c + 1), 1))
-        fair_loss_sum, sample_num = fair_loss.reduce(
-            lambda tuple1, tuple2: (tuple1[0] + tuple2[0], tuple1[1] + tuple2[1]))
-        return fair_loss_sum / sample_num
+        avg_loss = Loss.reduce(fair_loss, sample_weights=sample_weight)
+        return avg_loss
 
     def compute_grad(self, y, y_pred):
         diff = y_pred - y
@@ -175,7 +177,8 @@ class FairLoss(object):
         return self.c ** 2 / (np.abs(diff) + self.c) ** 2
 
 
-class LogCoshLoss(object):
+class LogCoshLoss(Loss):
+
     @staticmethod
     def initialize(y):
         y_inst = y.mapValues(lambda label: Instance(features=np.asarray([label])))
@@ -188,12 +191,10 @@ class LogCoshLoss(object):
     def predict(value):
         return value
 
-    @staticmethod
-    def compute_loss(y, y_pred):
+    def compute_loss(self, y, y_pred, sample_weight=None):
         log_cosh_loss = y.join(y_pred, lambda y, yp: (np.log(np.cosh(yp - y)), 1))
-        log_cosh_sum, sample_num = log_cosh_loss.reduce(
-            lambda tuple1, tuple2: (tuple1[0] + tuple2[0], tuple1[1] + tuple2[1]))
-        return log_cosh_sum / sample_num
+        avg_loss = Loss.reduce(log_cosh_loss, sample_weights=sample_weight)
+        return avg_loss
 
     @staticmethod
     def compute_grad(y, y_pred):
@@ -204,13 +205,15 @@ class LogCoshLoss(object):
         return 1 - np.tanh(y_pred - y) ** 2
 
 
-class TweedieLoss(object):
+class TweedieLoss(Loss):
+
     @staticmethod
     def initialize(y):
         # init score = 0, equals to base_score=1.0 in xgb, init_score=log(base_score)=0
         return y.mapValues(lambda x: np.asarray([0])), np.asarray([0])
 
     def __init__(self, rho=None):
+        super().__init__()
         if rho is None:
             self.rho = consts.FLOAT_ZERO
         else:
@@ -220,6 +223,12 @@ class TweedieLoss(object):
     def predict(value):
         return np.exp(value)
 
+    def compute_loss(self, y, y_pred, sample_weight=None):
+        loss_func = functools.partial(self._tweedie_loss, rho=self.rho)
+        tweedie_loss = y.join(y_pred, loss_func)
+        avg_loss = Loss.reduce(tweedie_loss, sample_weights=sample_weight)
+        return avg_loss
+
     @staticmethod
     def _tweedie_loss(label, pred, rho):
         if pred < 1e-10:
@@ -227,13 +236,6 @@ class TweedieLoss(object):
         a = label * np.exp((1 - rho) * np.log(pred)) / (1 - rho)
         b = np.exp((2 - rho) * np.log(pred)) / (2 - rho)
         return (-a + b), 1
-
-    def compute_loss(self, y, y_pred):
-        loss_func = functools.partial(self._tweedie_loss, rho=self.rho)
-        tweedie_loss = y.join(y_pred, loss_func)
-        tweedie_loss_sum, sample_num = tweedie_loss.reduce(lambda tuple1, tuple2:
-                                                           (tuple1[0] + tuple2[0], tuple1[1] + tuple2[1]))
-        return tweedie_loss_sum / sample_num
 
     def compute_grad(self, y, y_pred):
         if y < 0:
