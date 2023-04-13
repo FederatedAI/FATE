@@ -1,3 +1,5 @@
+## Release 1.11.0
+### Major Features and Improvements
 > FederatedML
 * Support FedLLM (Federated Large Language Models) 
   * Integration of LLM for federated learning: BERT, ALBERT, RoBERTa, GPT-2, BART, DeBERTa, and DistilBERT. Please note that if using such pretrain-models, compliance with their licenses is needed.
