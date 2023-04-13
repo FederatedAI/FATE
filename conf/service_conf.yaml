@@ -169,3 +169,4 @@ servings:
     - 127.0.0.1:8000
 pdsh:
   path: /opt/homebrew/bin/pdsh
+  pdcp: /opt/homebrew/bin/pdcp
