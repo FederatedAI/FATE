@@ -1,13 +1,12 @@
-from ._fields import ConstrainedFloat
+import pydantic
+
+from ._fields import StringChoice
 
 
-class LearningRate(ConstrainedFloat):
-    gt = 0.0
-
-    @classmethod
-    def dict(cls):
-        return {"name": cls.__name__}
+class LRSchedulerType(StringChoice):
+    choice = {'constant', 'linear', 'step'}
 
 
-def learning_rate_param():
-    return LearningRate
+class LRSchedulerParam(pydantic.BaseModel):
+    method: LRSchedulerType = 'constant'
+    scheduler_params: dict = None
