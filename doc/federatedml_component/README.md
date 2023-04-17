@@ -62,6 +62,8 @@ provide:
 | [Hetero SSHE Logistic Regression](logistic_regression.md)                                    | HeteroSSHELR            | Build hetero logistic regression model without arbiter                                                                     | Table, values are Instances                               | Table, values are Instances                                                           |                                                      | SSHE LR Model                                                    |
 | [Hetero SSHE Linear Regression](linear_regression.md)                                    | HeteroSSHELinR            | Build hetero linear regression model without arbiter                                                                     | Table, values are Instances                               | Table, values are Instances                                                           |                                                      | SSHE LinR Model                                                    |
 | [Positive Unlabeled Learning](positive_unlabeled.md) | PositiveUnlabeled | Build positive unlabeled learning model                                        | Table, values are Instances                               | Table, values are Instances                                                           |                                                      |     |
+| [FATE-LLM](fate_llm.md) | FATE_LLM | Federated Large Language Model                                        | Torch DataSet                               |                                                            | PreTrained Large Language Model                       |    FineTuned Large Language Model |
+
 
 ## Secure Protocol
 
