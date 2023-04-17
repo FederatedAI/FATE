@@ -25,6 +25,8 @@ class FixedPointEncoder(object):
 
     def encode(self, obj):
         if isinstance(obj, np.ndarray):
+            if not np.issubdtype(obj.dtype, np.number):
+                obj = obj.astype(float)
             fixed_obj = np.round(obj * self._fixpoint_precision, 0).astype(int)
         elif isinstance(obj, list):
             fixed_obj = np.round(np.array(obj) * self._fixpoint_precision, 0).astype(int).to_list()

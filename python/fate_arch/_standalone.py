@@ -33,11 +33,9 @@ from pathlib import Path
 import cloudpickle as f_pickle
 import lmdb
 import numpy as np
-
 from fate_arch.common import Party, file_utils
 from fate_arch.common.log import getLogger
 from fate_arch.federation import FederationDataType
-
 
 LOGGER = getLogger()
 
@@ -92,11 +90,7 @@ class Table(object):
                 db = env.open_db()
                 with env.begin(write=True) as txn:
                     txn.drop(db)
-
-        table_key = f"{self._namespace}.{self._name}"
-        _get_meta_table().delete(table_key)
-        path = _get_storage_dir(self._namespace, self._name)
-        shutil.rmtree(path, ignore_errors=True)
+        _TableMetaManager.destory_table(self._namespace, self._name)
 
     def take(self, n, **kwargs):
         if n <= 0:
@@ -137,9 +131,7 @@ class Table(object):
 
     def reduce(self, func):
         # noinspection PyProtectedMember
-        rs = self._session._submit_unary(
-            func, _do_reduce, self._partitions, self._name, self._namespace
-        )
+        rs = self._session._submit_unary(func, _do_reduce, self._partitions, self._name, self._namespace)
         rs = [r for r in filter(partial(is_not, None), rs)]
         if len(rs) <= 0:
             return None
@@ -214,9 +206,7 @@ class Table(object):
                     ret[_k] = reducer(ret[_k], _v)
             return ret
 
-        dup.put_all(
-            self.applyPartitions(_local_map_reduce).reduce(_dict_reduce).items()
-        )
+        dup.put_all(self.applyPartitions(_local_map_reduce).reduce(_dict_reduce).items())
         return dup
 
     def glom(self):
@@ -240,7 +230,7 @@ class Table(object):
 
     # noinspection PyProtectedMember
     def _map_reduce(self, mapper, reducer):
-        results = self._session._submit_map_reduce(
+        results = self._session._submit_map_reduce_in_partitions(
             mapper, reducer, self._partitions, self._name, self._namespace
         )
         result = results[0]
@@ -254,9 +244,7 @@ class Table(object):
 
     def _unary(self, func, do_func):
         # noinspection PyProtectedMember
-        results = self._session._submit_unary(
-            func, do_func, self._partitions, self._name, self._namespace
-        )
+        results = self._session._submit_unary(func, do_func, self._partitions, self._name, self._namespace)
         result = results[0]
         # noinspection PyProtectedMember
         return _create_table(
@@ -271,13 +259,9 @@ class Table(object):
         left, right = self, other
         if left._partitions != right._partitions:
             if other.count() > self.count():
-                left = left.save_as(
-                    str(uuid.uuid1()), session_id, partition=right._partitions
-                )
+                left = left.save_as(str(uuid.uuid1()), session_id, partition=right._partitions)
             else:
-                right = other.save_as(
-                    str(uuid.uuid1()), session_id, partition=left._partitions
-                )
+                right = other.save_as(str(uuid.uuid1()), session_id, partition=left._partitions)
 
         # noinspection PyProtectedMember
         results = self._session._submit_binary(
@@ -341,9 +325,7 @@ class Table(object):
         with self._get_env_for_partition(p) as env:
             with env.begin(write=True) as txn:
                 old_value_bytes = txn.get(k_bytes)
-                return (
-                    None if old_value_bytes is None else deserialize(old_value_bytes)
-                )
+                return None if old_value_bytes is None else deserialize(old_value_bytes)
 
     def delete(self, k):
         k_bytes = _k_to_bytes(k=k)
@@ -352,11 +334,7 @@ class Table(object):
             with env.begin(write=True) as txn:
                 old_value_bytes = txn.get(k_bytes)
                 if txn.delete(k_bytes):
-                    return (
-                        None
-                        if old_value_bytes is None
-                        else deserialize(old_value_bytes)
-                    )
+                    return None if old_value_bytes is None else deserialize(old_value_bytes)
                 return None
 
 
@@ -384,9 +362,7 @@ class Session(object):
         )
 
     # noinspection PyUnusedLocal
-    def parallelize(
-        self, data: Iterable, partition: int, include_key: bool = False, **kwargs
-    ):
+    def parallelize(self, data: Iterable, partition: int, include_key: bool = False, **kwargs):
         if not include_key:
             data = enumerate(data)
         table = _create_table(
@@ -399,7 +375,7 @@ class Session(object):
         return table
 
     def cleanup(self, name, namespace):
-        data_path = _get_data_dir()
+        data_path = _data_dir
         if not data_path.is_dir():
             LOGGER.error(f"illegal data dir: {data_path}")
             return
@@ -434,15 +410,14 @@ class Session(object):
         for p in range(partitions):
             futures.append(
                 self._pool.submit(
-                    _do_func, _UnaryProcess(task_info, _Operand(namespace, name, p))
+                    _do_func,
+                    _UnaryProcess(task_info, _Operand(namespace, name, p, partitions)),
                 )
             )
         results = [r.result() for r in futures]
         return results
 
-    def _submit_map_reduce_in_partition(
-        self, mapper, reducer, partitions, name, namespace
-    ):
+    def _submit_map_reduce_in_partitions(self, mapper, reducer, partitions, name, namespace):
         task_info = _MapReduceTaskInfo(
             self.session_id,
             function_id=str(uuid.uuid1()),
@@ -454,15 +429,13 @@ class Session(object):
             futures.append(
                 self._pool.submit(
                     _do_map_reduce_in_partitions,
-                    _MapReduceProcess(task_info, _Operand(namespace, name, p)),
+                    _MapReduceProcess(task_info, _Operand(namespace, name, p, partitions)),
                 )
             )
         results = [r.result() for r in futures]
         return results
 
-    def _submit_binary(
-        self, func, do_func, partitions, name, namespace, other_name, other_namespace
-    ):
+    def _submit_binary(self, func, do_func, partitions, name, namespace, other_name, other_namespace):
         task_info = _TaskInfo(
             self.session_id,
             function_id=str(uuid.uuid1()),
@@ -470,11 +443,9 @@ class Session(object):
         )
         futures = []
         for p in range(partitions):
-            left = _Operand(namespace, name, p)
-            right = _Operand(other_namespace, other_name, p)
-            futures.append(
-                self._pool.submit(do_func, _BinaryProcess(task_info, left, right))
-            )
+            left = _Operand(namespace, name, p, partitions)
+            right = _Operand(other_namespace, other_name, p, partitions)
+            futures.append(self._pool.submit(do_func, _BinaryProcess(task_info, left, right)))
         results = [r.result() for r in futures]
         return results
 
@@ -491,6 +462,71 @@ def _get_splits(obj, max_message_size):
         return kv, num_slice
 
 
+class _FederationMetaManager:
+    STATUS_TABLE_NAME_PREFIX = "__federation_status__"
+    OBJECT_TABLE_NAME_PREFIX = "__federation_object__"
+
+    def __init__(self, session_id, party) -> None:
+        self.session_id = session_id
+        self.party = party
+        self._env = {}
+
+    async def awiat_status_set(self, key):
+        value = self.get_status(key)
+        while value is None:
+            await asyncio.sleep(0.1)
+            value = self.get_status(key)
+        LOGGER.debug("[GET] Got {} type {}".format(key, "Table" if isinstance(value, tuple) else "Object"))
+        return value
+
+    def get_status(self, key):
+        return self._get(self._get_status_table_name(self.party), key)
+
+    def set_status(self, party, key, value):
+        return self._set(self._get_status_table_name(party), key, value)
+
+    def ack_status(self, key):
+        return self._ack(self._get_status_table_name(self.party), key)
+
+    def get_object(self, key):
+        return self._get(self._get_object_table_name(self.party), key)
+
+    def set_object(self, party, key, value):
+        return self._set(self._get_object_table_name(party), key, value)
+
+    def ack_object(self, key):
+        return self._ack(self._get_object_table_name(self.party), key)
+
+    def _get_status_table_name(self, party):
+        return f"{self.STATUS_TABLE_NAME_PREFIX}.{party.role}_{party.party_id}"
+
+    def _get_object_table_name(self, party):
+        return f"{self.OBJECT_TABLE_NAME_PREFIX}.{party.role}_{party.party_id}"
+
+    def _get_env(self, name):
+        if name not in self._env:
+            self._env[name] = _get_env(self.session_id, name, str(0), write=True)
+        return self._env[name]
+
+    def _get(self, name, key):
+        env = self._get_env(name)
+        with env.begin(write=False) as txn:
+            old_value_bytes = txn.get(serialize(key))
+            if old_value_bytes is not None:
+                old_value_bytes = deserialize(old_value_bytes)
+            return old_value_bytes
+
+    def _set(self, name, key, value):
+        env = self._get_env(name)
+        with env.begin(write=True) as txn:
+            return txn.put(serialize(key), serialize(value))
+
+    def _ack(self, name, key):
+        env = self._get_env(name)
+        with env.begin(write=True) as txn:
+            txn.delete(serialize(key))
+
+
 class Federation(object):
     def _federation_object_key(self, name, tag, s_party, d_party):
         return f"{self._session_id}-{name}-{tag}-{s_party.role}-{s_party.party_id}-{d_party.role}-{d_party.party_id}"
@@ -500,98 +536,18 @@ class Federation(object):
         self._party: Party = party
         self._session = session
         self._max_message_size = DEFAULT_MESSAGE_MAX_SIZE
-        self._other_status_tables = {}
-        self._other_object_tables = {}
         self._even_loop = None
-        self._federation_status_table_cache = None
-        self._federation_object_table_cache = None
+
+        self._meta = _FederationMetaManager(session_id, party)
 
     def destroy(self):
         self._session.cleanup(namespace=self._session_id, name="*")
-
-    @property
-    def _federation_status_table(self):
-        if self._federation_status_table_cache is None:
-            self._federation_status_table_cache = _create_table(
-                session=self._session,
-                name=self._get_status_table_name(self._party),
-                namespace=self._session_id,
-                partitions=1,
-                need_cleanup=True,
-                error_if_exist=False,
-            )
-        return self._federation_status_table_cache
-
-    @property
-    def _federation_object_table(self):
-        if self._federation_object_table_cache is None:
-            self._federation_object_table_cache = _create_table(
-                session=self._session,
-                name=self._get_object_table_name(self._party),
-                namespace=self._session_id,
-                partitions=1,
-                need_cleanup=True,
-                error_if_exist=False,
-            )
-        return self._federation_object_table_cache
 
     @property
     def _loop(self):
         if self._even_loop is None:
             self._even_loop = asyncio.get_event_loop()
         return self._even_loop
-
-    @staticmethod
-    def _get_status_table_name(party):
-        return f"__federation_status__.{party.role}_{party.party_id}"
-
-    @staticmethod
-    def _get_object_table_name(party):
-        return f"__federation_object__.{party.role}_{party.party_id}"
-
-    def _get_other_status_table(self, party):
-        if party in self._other_status_tables:
-            return self._other_status_tables[party]
-        table = _create_table(
-            self._session,
-            name=self._get_status_table_name(party),
-            namespace=self._session_id,
-            partitions=1,
-            need_cleanup=False,
-            error_if_exist=False,
-        )
-        self._other_status_tables[party] = table
-        return table
-
-    def _get_other_object_table(self, party):
-        if party in self._other_object_tables:
-            return self._other_object_tables[party]
-        table = _create_table(
-            self._session,
-            name=self._get_object_table_name(party),
-            namespace=self._session_id,
-            partitions=1,
-            need_cleanup=False,
-            error_if_exist=False,
-        )
-        self._other_object_tables[party] = table
-        return table
-
-    # noinspection PyProtectedMember
-    def _put_status(self, party, _tagged_key, value):
-        self._get_other_status_table(party).put(_tagged_key, value)
-
-    # noinspection PyProtectedMember
-    def _put_object(self, party, _tagged_key, value):
-        self._get_other_object_table(party).put(_tagged_key, value)
-
-    # noinspection PyProtectedMember
-    def _get_object(self, _tagged_key):
-        return self._federation_object_table.get(_tagged_key)
-
-    # noinspection PyProtectedMember
-    def _get_status(self, _tagged_key):
-        return self._federation_status_table.get(_tagged_key)
 
     # noinspection PyUnusedLocal
     def remote(self, v, name: str, tag: str, parties: typing.List[Party]):
@@ -637,13 +593,11 @@ class Federation(object):
                     f"[{log_str}]save Table(namespace={v.namespace}, name={v.name}, partitions={v.partitions}) as "
                     f"Table(namespace={v.namespace}, name={saved_name}, partitions={v.partitions})"
                 )
-                _v = v.save_as(
-                    name=saved_name, namespace=v.namespace, need_cleanup=False
-                )
-                self._put_status(party, _tagged_key, (_v.name, _v.namespace, dtype))
+                _v = v.save_as(name=saved_name, namespace=v.namespace, need_cleanup=False)
+                self._meta.set_status(party, _tagged_key, (_v.name, _v.namespace, dtype))
             else:
-                self._put_object(party, _tagged_key, v)
-                self._put_status(party, _tagged_key, _tagged_key)
+                self._meta.set_object(party, _tagged_key, v)
+                self._meta.set_status(party, _tagged_key, _tagged_key)
 
     # noinspection PyProtectedMember
     def get(self, name: str, tag: str, parties: typing.List[Party]) -> typing.List:
@@ -653,16 +607,14 @@ class Federation(object):
 
         for party in parties:
             _tagged_key = self._federation_object_key(name, tag, party, self._party)
-            tasks.append(_check_status_and_get_value(self._get_status, _tagged_key))
+            tasks.append(self._meta.awiat_status_set(_tagged_key))
         results = self._loop.run_until_complete(asyncio.gather(*tasks))
 
         rtn = []
         for r in results:
             if isinstance(r, tuple):
                 # noinspection PyTypeChecker
-                table: Table = _load_table(
-                    session=self._session, name=r[0], namespace=r[1], need_cleanup=True
-                )
+                table: Table = _load_table(session=self._session, name=r[0], namespace=r[1], need_cleanup=True)
 
                 dtype = r[2]
                 LOGGER.debug(
@@ -670,74 +622,61 @@ class Federation(object):
                     f"Table(namespace={table.namespace}, name={table.name}, partitions={table.partitions}), dtype={dtype}")
 
                 if dtype == FederationDataType.SPLIT_OBJECT:
-                    obj_bytes = b''.join(map(lambda t: t[1], sorted(table.collect(), key=lambda x: x[0])))
+                    obj_bytes = b"".join(map(lambda t: t[1], sorted(table.collect(), key=lambda x: x[0])))
                     obj = deserialize(obj_bytes)
                     rtn.append(obj)
                 else:
                     rtn.append(table)
             else:
-                obj = self._get_object(r)
+                obj = self._meta.get_object(r)
                 if obj is None:
-                    raise EnvironmentError(
-                        f"federation get None from {parties} with name {name}, tag {tag}"
-                    )
+                    raise EnvironmentError(f"federation get None from {parties} with name {name}, tag {tag}")
                 rtn.append(obj)
-                self._federation_object_table.delete(k=r)
+                self._meta.ack_object(r)
                 LOGGER.debug(f"[{log_str}] got object with type: {type(obj)}")
-            self._federation_status_table.delete(r)
+            self._meta.ack_status(r)
         return rtn
 
 
-_meta_table: typing.Optional[Table] = None
+class _TableMetaManager:
+    namespace = "__META__"
+    name = "fragments"
+    num_partitions = 10
+    _env = {}
 
-_SESSION = Session(uuid.uuid1().hex)
+    @classmethod
+    def _get_meta_env(cls, namespace, name):
+        k_bytes = _k_to_bytes(f"{namespace}.{name}")
+        p = _hash_key_to_partition(k_bytes, cls.num_partitions)
+        if p not in cls._env:
+            cls._env[p] = _get_env(cls.namespace, cls.name, str(p), write=True)
+        return k_bytes, cls._env[p]
 
+    @classmethod
+    def add_table_meta(cls, namespace, name, num_partitions):
+        k_bytes, env = cls._get_meta_env(namespace, name)
+        with env.begin(write=True) as txn:
+            return txn.put(k_bytes, serialize(num_partitions))
 
-def _get_meta_table():
-    global _meta_table
-    if _meta_table is None:
-        _meta_table = Table(
-            _SESSION,
-            namespace="__META__",
-            name="fragments",
-            partitions=10,
-            need_cleanup=False,
-        )
-    return _meta_table
+    @classmethod
+    def get_table_meta(cls, namespace, name):
+        k_bytes, env = cls._get_meta_env(namespace, name)
+        with env.begin(write=False) as txn:
+            old_value_bytes = txn.get(k_bytes)
+            if old_value_bytes is not None:
+                old_value_bytes = deserialize(old_value_bytes)
+            return old_value_bytes
 
-
-# noinspection PyProtectedMember
-def _get_from_meta_table(key):
-    return _get_meta_table().get(key)
-
-
-# noinspection PyProtectedMember
-def _put_to_meta_table(key, value):
-    _get_meta_table().put(key, value)
+    @classmethod
+    def destory_table(cls, namespace, name):
+        k_bytes, env = cls._get_meta_env(namespace, name)
+        with env.begin(write=True) as txn:
+            txn.delete(k_bytes)
+        path = _data_dir.joinpath(namespace, name)
+        shutil.rmtree(path, ignore_errors=True)
 
 
 _data_dir = Path(file_utils.get_project_base_directory()).joinpath("data").absolute()
-
-
-def _get_data_dir():
-    return _data_dir
-
-
-def _get_storage_dir(*args):
-    return _data_dir.joinpath(*args)
-
-
-async def _check_status_and_get_value(get_func, key):
-    value = get_func(key)
-    while value is None:
-        await asyncio.sleep(0.1)
-        value = get_func(key)
-    LOGGER.debug(
-        "[GET] Got {} type {}".format(
-            key, "Table" if isinstance(value, tuple) else "Object"
-        )
-    )
-    return value
 
 
 def _create_table(
@@ -748,18 +687,17 @@ def _create_table(
     need_cleanup=True,
     error_if_exist=False,
 ):
-    if isinstance(namespace, int):
-        raise ValueError(f"{namespace} {name}")
-    _table_key = ".".join([namespace, name])
-    if _get_from_meta_table(_table_key) is not None:
-        if error_if_exist:
-            raise RuntimeError(
-                f"table already exist: name={name}, namespace={namespace}"
-            )
-        else:
-            partitions = _get_from_meta_table(_table_key)
+    assert isinstance(namespace, str)
+    assert isinstance(name, str)
+    assert isinstance(partitions, int)
+
+    exist_partitions = _TableMetaManager.get_table_meta(namespace, name)
+    if exist_partitions is None:
+        _TableMetaManager.add_table_meta(namespace, name, partitions)
     else:
-        _put_to_meta_table(_table_key, partitions)
+        if error_if_exist:
+            raise RuntimeError(f"table already exist: name={name}, namespace={namespace}")
+        partitions = exist_partitions
 
     return Table(
         session=session,
@@ -770,14 +708,8 @@ def _create_table(
     )
 
 
-def _exist(name: str, namespace: str):
-    _table_key = ".".join([namespace, name])
-    return _get_from_meta_table(_table_key) is not None
-
-
 def _load_table(session, name, namespace, need_cleanup=False):
-    _table_key = ".".join([namespace, name])
-    partitions = _get_from_meta_table(_table_key)
+    partitions = _TableMetaManager.get_table_meta(namespace, name)
     if partitions is None:
         raise RuntimeError(f"table not exist: name={name}, namespace={namespace}")
     return Table(
@@ -818,17 +750,16 @@ class _MapReduceTaskInfo:
 
     def get_reducer(self):
         if self._reduce_function_deserialized is None:
-            self._reduce_function_deserialized = f_pickle.loads(
-                self.reduce_function_bytes
-            )
+            self._reduce_function_deserialized = f_pickle.loads(self.reduce_function_bytes)
         return self._reduce_function_deserialized
 
 
 class _Operand:
-    def __init__(self, namespace, name, partition):
+    def __init__(self, namespace, name, partition, num_partitions):
         self.namespace = namespace
         self.name = name
         self.partition = partition
+        self.num_partitions = num_partitions
 
     def as_env(self, write=False):
         return _get_env(self.namespace, self.name, str(self.partition), write=write)
@@ -841,7 +772,10 @@ class _UnaryProcess:
 
     def output_operand(self):
         return _Operand(
-            self.info.task_id, self.info.function_id, self.operand.partition
+            self.info.task_id,
+            self.info.function_id,
+            self.operand.partition,
+            self.operand.num_partitions,
         )
 
     def get_func(self):
@@ -855,7 +789,10 @@ class _MapReduceProcess:
 
     def output_operand(self):
         return _Operand(
-            self.info.task_id, self.info.function_id, self.operand.partition
+            self.info.task_id,
+            self.info.function_id,
+            self.operand.partition,
+            self.operand.num_partitions,
         )
 
     def get_mapper(self):
@@ -872,17 +809,23 @@ class _BinaryProcess:
         self.right = right
 
     def output_operand(self):
-        return _Operand(self.info.task_id, self.info.function_id, self.left.partition)
+        return _Operand(
+            self.info.task_id,
+            self.info.function_id,
+            self.left.partition,
+            self.left.num_partitions,
+        )
 
     def get_func(self):
         return self.info.get_func()
 
 
 def _get_env(*args, write=False):
-    _path = _get_storage_dir(*args)
+    _path = _data_dir.joinpath(*args)
     return _open_env(_path, write=write)
 
 
+# @cached(cache=EvictLRUCache(maxsize=64, evict=_evict))
 def _open_env(path, write=False):
     path.mkdir(parents=True, exist_ok=True)
 
@@ -926,12 +869,9 @@ def _do_map(p: _UnaryProcess):
     rtn = p.output_operand()
     with ExitStack() as s:
         source_env = s.enter_context(p.operand.as_env())
-        partitions = _get_from_meta_table(f"{p.operand.namespace}.{p.operand.name}")
         txn_map = {}
-        for partition in range(partitions):
-            env = s.enter_context(
-                _get_env(rtn.namespace, rtn.name, str(partition), write=True)
-            )
+        for partition in range(p.operand.num_partitions):
+            env = s.enter_context(_get_env(rtn.namespace, rtn.name, str(partition), write=True))
             txn_map[partition] = s.enter_context(env.begin(write=True))
         source_txn = s.enter_context(source_env.begin())
         cursor = s.enter_context(source_txn.cursor())
@@ -939,7 +879,7 @@ def _do_map(p: _UnaryProcess):
             k, v = deserialize(k_bytes), deserialize(v_bytes)
             k1, v1 = p.get_func()(k, v)
             k1_bytes, v1_bytes = serialize(k1), serialize(v1)
-            partition = _hash_key_to_partition(k1_bytes, partitions)
+            partition = _hash_key_to_partition(k1_bytes, p.operand.num_partitions)
             txn_map[partition].put(k1_bytes, v1_bytes)
     return rtn
 
@@ -963,7 +903,7 @@ def _do_apply_partitions(p: _UnaryProcess):
         if cursor.last():
             k_bytes = cursor.key()
             dst_txn.put(k_bytes, serialize(v))
-    return rtn
+        return rtn
 
 
 def _do_map_partitions(p: _UnaryProcess):
@@ -984,7 +924,7 @@ def _do_map_partitions(p: _UnaryProcess):
         else:
             k_bytes = cursor.key()
             dst_txn.put(k_bytes, serialize(v))
-    return rtn
+        return rtn
 
 
 def _do_map_partitions_with_index(p: _UnaryProcess):
@@ -1005,19 +945,17 @@ def _do_map_partitions_with_index(p: _UnaryProcess):
         else:
             k_bytes = cursor.key()
             dst_txn.put(k_bytes, serialize(v))
-    return rtn
+        return rtn
 
 
 def _do_map_reduce_in_partitions(p: _MapReduceProcess):
     rtn = p.output_operand()
     with ExitStack() as s:
         source_env = s.enter_context(p.operand.as_env())
-        partitions = _get_from_meta_table(f"{p.operand.namespace}.{p.operand.name}")
+        partitions = p.operand.num_partitions
         txn_map = {}
         for partition in range(partitions):
-            env = s.enter_context(
-                _get_env(rtn.namespace, rtn.name, str(partition), write=True)
-            )
+            env = s.enter_context(_get_env(rtn.namespace, rtn.name, str(partition), write=True))
             txn_map[partition] = s.enter_context(env.begin(write=True))
         source_txn = s.enter_context(source_env.begin())
         cursor = s.enter_context(source_txn.cursor())
@@ -1034,9 +972,7 @@ def _do_map_reduce_in_partitions(p: _MapReduceProcess):
             if pre_v is None:
                 txn_map[partition].put(k_bytes, serialize(v))
             else:
-                txn_map[partition].put(
-                    k_bytes, serialize(reducer(deserialize(pre_v), v))
-                )
+                txn_map[partition].put(k_bytes, serialize(reducer(deserialize(pre_v), v)))
     return rtn
 
 
