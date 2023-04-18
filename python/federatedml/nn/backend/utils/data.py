@@ -4,6 +4,7 @@ from federatedml.util import LOGGER
 from federatedml.nn.dataset.base import Dataset, get_dataset_class
 from federatedml.nn.dataset.image import ImageDataset
 from federatedml.nn.dataset.table import TableDataset
+from federatedml.nn.dataset.graph import GraphDataset
 
 
 def try_dataset_class(dataset_class, path, param):
@@ -33,7 +34,7 @@ def load_dataset(dataset_name, data_path_or_dtable, param, dataset_cache: dict):
         # automatically match default dataset
         LOGGER.info('dataset is not specified, use auto inference')
 
-        for ds_class in [TableDataset, ImageDataset]:
+        for ds_class in [TableDataset, ImageDataset, GraphDataset]:
             dataset_inst = try_dataset_class(
                 ds_class, data_path_or_dtable, param=param)
             if dataset_inst is not None:
