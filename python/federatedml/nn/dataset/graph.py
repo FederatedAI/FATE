@@ -90,7 +90,7 @@ class GraphDataset(Dataset):
         self.input_nodes_test = tmp[tmp[self.feats_dataset_col] == self.feats_dataset_test].index.to_list()
 
         self.data.x = torch.tensor(tmp.drop([self.id_col, self.feats_dataset_col,
-                                   self.label_col], axis=1).to_numpy(), dtype=self.f_dtype)
+                                             self.label_col], axis=1).to_numpy(), dtype=self.f_dtype)
         self.data.y = torch.tensor(tmp[self.label_col], dtype=self.l_dtype)
 
     def __process_adj(self, data_path):
