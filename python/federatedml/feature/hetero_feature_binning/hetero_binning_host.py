@@ -19,7 +19,6 @@ import operator
 
 from federatedml.cipher_compressor.compressor import CipherCompressorHost
 from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseFeatureBinning
-from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
 from federatedml.util import LOGGER
 from federatedml.util import consts
 
@@ -49,6 +48,7 @@ class HeteroFeatureBinningHost(BaseFeatureBinning):
         else:
             # Calculates split points of data in self part
             split_points = self.binning_obj.fit_split_points(data_instances)
+        self.record_missing(data_instances)
 
         return self.stat_and_transform(data_instances, split_points)
 

@@ -14,12 +14,20 @@
 #  limitations under the License.
 #
 
-from pipeline.component.component_base import FateComponent
-from pipeline.component.nn.models.sequantial import Sequential
 from pipeline.interface import Input
 from pipeline.interface import Output
 from pipeline.utils.tools import extract_explicit_parameter
 from pipeline.param import consts
+
+
+try:
+    from pipeline.component.component_base import FateComponent
+    from pipeline.component.nn.models.sequantial import Sequential
+except Exception as e:
+    print(e)
+    print('Import NN components in HeteroFTL module failed, \
+this may casue by the situation that torch/keras are not installed,\
+please install them to use this module')
 
 
 class HeteroFTL(FateComponent):

@@ -41,6 +41,8 @@ class BinColResults(object):
         self.iv = iv
         self._bin_anonymous = None
         self.optimal_metric_array = list(optimal_metric_array)
+        self.missing = False
+        self.bin_count = None
 
     @property
     def bin_anonymous(self):
@@ -60,6 +62,9 @@ class BinColResults(object):
     def set_optimal_metric(self, metric_array):
         self.optimal_metric_array = metric_array
 
+    def set_missing(self, if_missing):
+        self.missing = if_missing
+
     def get_split_points(self):
         return np.array(self.split_points)
 
@@ -78,7 +83,14 @@ class BinColResults(object):
 
     @property
     def bin_nums(self):
-        return len(self.woe_array)
+        if self.bin_count is not None:
+            return self.bin_count
+        if self.split_points is not None:
+            bin_num = len(self.split_points)
+            if self.missing:
+                bin_num += 1
+            return bin_num
+        return len(self.iv_array)
 
     def result_dict(self):
         save_dict = self.__dict__
@@ -95,6 +107,7 @@ class BinColResults(object):
         self.non_event_rate_array = list(iv_obj.non_event_rate_array)
         self.split_points = list(iv_obj.split_points)
         self.iv = iv_obj.iv
+        self.bin_count = iv_obj.bin_nums
         # new attribute since ver 1.10
         if hasattr(iv_obj, "optimal_metric_array"):
             self.optimal_metric_array = list(iv_obj.optimal_metric_array)
@@ -167,6 +180,11 @@ class BinResults(object):
     def put_col_split_points(self, col_name, split_points):
         col_results = self.all_cols_results.get(col_name, BinColResults())
         col_results.set_split_points(split_points)
+        self.all_cols_results[col_name] = col_results
+
+    def put_col_missing(self, col_name, if_missing):
+        col_results = self.all_cols_results.get(col_name, BinColResults())
+        col_results.set_missing(if_missing)
         self.all_cols_results[col_name] = col_results
 
     def query_split_points(self, col_name):
@@ -283,6 +301,13 @@ class MultiClassBinResult(BinResults):
                 br.put_col_split_points(col_name, split_points)
         else:
             self.bin_results[label_idx].put_col_split_points(col_name, split_points)
+
+    def put_col_missing(self, col_name, if_missing, label_idx=None):
+        if label_idx is None:
+            for br in self.bin_results:
+                br.put_col_missing(col_name, if_missing)
+        else:
+            self.bin_results[label_idx].put_col_missing(col_name, if_missing)
 
     def put_optimal_metric_array(self, col_name, metric_array, label_idx=None):
         if label_idx is None:

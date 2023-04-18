@@ -1,6 +1,5 @@
 import json
 import torch
-import tempfile
 import inspect
 from fate_arch.computing.non_distributed import LocalData
 from fate_arch.computing._util import is_table
@@ -31,8 +30,19 @@ class NNModelExporter(ExporterBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def export_model_dict(self, model=None, optimizer=None, model_define=None, optimizer_define=None, loss_define=None,
-                          epoch_idx=-1, converge_status=False, loss_history=None, best_epoch=-1, extra_data={}):
+    def export_model_dict(
+            self,
+            model=None,
+            optimizer=None,
+            model_define=None,
+            optimizer_define=None,
+            loss_define=None,
+            epoch_idx=-1,
+            converge_status=False,
+            loss_history=None,
+            best_epoch=-1,
+            local_save_path='',
+            extra_data={}):
 
         if issubclass(type(model), torch.nn.Module):
             model_statedict = model.state_dict()
@@ -62,6 +72,7 @@ class NNModelExporter(ExporterBase):
         param.epoch_idx = epoch_idx
         param.converge_status = converge_status
         param.best_epoch = best_epoch
+        param.local_save_path = local_save_path
         if loss_history is None:
             loss_history = []
         param.loss_history.extend(loss_history)
@@ -140,22 +151,34 @@ class HomoNNClient(ModelBase):
         if self.model_loaded:
 
             param, meta = get_homo_param_meta(self.model)
-            self.warm_start_iter = param.epoch_idx
-            if param is None or meta is None:
-                raise ValueError(
-                    'model protobuf is None, make sure'
-                    'that your trainer calls export_model() function to save models')
+            LOGGER.info('save path is {}'.format(param.local_save_path))
+            if param.local_save_path == '':
+                LOGGER.info('Load model from model protobuf')
+                self.warm_start_iter = param.epoch_idx
+                if param is None or meta is None:
+                    raise ValueError(
+                        'model protobuf is None, make sure'
+                        'that your trainer calls export_model() function to save models')
 
-            if meta.nn_define[0] is None:
-                raise ValueError(
-                    'nn_define is None, model protobuf has no nn-define, make sure'
-                    'that your trainer calls export_model() function to save models')
+                if meta.nn_define[0] is None:
+                    raise ValueError(
+                        'nn_define is None, model protobuf has no nn-define, make sure'
+                        'that your trainer calls export_model() function to save models')
 
-            self.nn_define = json.loads(meta.nn_define[0])
-            loss = json.loads(meta.loss_func_define[0])
-            optimizer = json.loads(meta.optimizer_define[0])
-            loaded_model_dict = recover_model_bytes(param.model_bytes)
-            extra_data = recover_model_bytes(param.extra_data_bytes)
+                self.nn_define = json.loads(meta.nn_define[0])
+                loss = json.loads(meta.loss_func_define[0])
+                optimizer = json.loads(meta.optimizer_define[0])
+                loaded_model_dict = recover_model_bytes(param.model_bytes)
+                extra_data = recover_model_bytes(param.extra_data_bytes)
+            else:
+                LOGGER.info('Load model from local save path')
+                save_dict = torch.load(open(param.local_save_path, 'rb'))
+                self.warm_start_iter = save_dict['epoch_idx']
+                self.nn_define = save_dict['model_define']
+                loss = save_dict['loss_define']
+                optimizer = save_dict['optimizer_define']
+                loaded_model_dict = save_dict
+                extra_data = save_dict['extra_data']
 
             if self.optimizer is not None and optimizer != self.optimizer:
                 LOGGER.info('optimizer updated')
@@ -206,6 +229,7 @@ class HomoNNClient(ModelBase):
 
         # init trainer
         trainer_inst: TrainerBase = trainer_class(**self.trainer_param)
+        LOGGER.info('trainer class is {}'.format(trainer_class))
 
         trainer_train_args = inspect.getfullargspec(trainer_inst.train).args
         args_format = [
