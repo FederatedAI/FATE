@@ -31,6 +31,6 @@ class PHECipher:
         self.device = _device
 
     def keygen(self, **kwargs):
-        from fate.arch.tensor._phe import phe_keygen
+        from fate.arch.tensor import keygen
 
-        return phe_keygen(self.device, **kwargs)
+        return keygen(self.device, **kwargs)

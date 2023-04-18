@@ -134,6 +134,18 @@ class Context(ContextInterface):
         return self._get_federation().local_party
 
     @property
+    def is_on_guest(self):
+        return self.local[0] == "guest"
+
+    @property
+    def is_on_host(self):
+        return self.local[0] == "host"
+
+    @property
+    def is_on_artbiter(self):
+        return self.local[0] == "arbiter"
+
+    @property
     def parties(self) -> Parties:
         return Parties(
             self._get_federation(),
