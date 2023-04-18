@@ -70,9 +70,9 @@ class PaillierTensor:
         return matmul(self, other)
 
     def __rmatmul__(self, other):
-        from ._ops import rmatmul
+        from ._ops import rmatmul_f
 
-        return rmatmul(self, other)
+        return rmatmul_f(self, other)
 
 
 def implements(torch_function):

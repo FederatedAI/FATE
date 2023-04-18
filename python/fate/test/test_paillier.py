@@ -90,20 +90,20 @@ def test_mul(x3_4_p, x3_4_p2, x3_4_e, pri):
 def test_matmul_ix2(x3_4_p, x4_3_p, x3_4_e, x4_e, x4_p, pri):
     assert torch.allclose(pri.decrypt(torch.matmul(x3_4_e, x4_3_p)), torch.matmul(x3_4_p, x4_3_p))
     assert torch.allclose(pri.decrypt(torch.matmul(x4_3_p, x3_4_e)), torch.matmul(x4_3_p, x3_4_p))
-    assert torch.allclose(pri.decrypt(torch.rmatmul(x3_4_e, x4_3_p)), torch.rmatmul(x3_4_p, x4_3_p))
-    assert torch.allclose(pri.decrypt(torch.rmatmul(x4_3_p, x3_4_e)), torch.rmatmul(x4_3_p, x3_4_p))
+    assert torch.allclose(pri.decrypt(torch.rmatmul_f(x3_4_e, x4_3_p)), torch.rmatmul_f(x3_4_p, x4_3_p))
+    assert torch.allclose(pri.decrypt(torch.rmatmul_f(x4_3_p, x3_4_e)), torch.rmatmul_f(x4_3_p, x3_4_p))
     assert torch.allclose(pri.decrypt(x3_4_e @ x4_3_p), x3_4_p @ x4_3_p)
     assert torch.allclose(pri.decrypt(x4_3_p @ x3_4_e), x4_3_p @ x3_4_p)
 
     assert torch.allclose(pri.decrypt(torch.matmul(x4_e, x4_3_p)), torch.matmul(x4_p, x4_3_p))
     assert torch.allclose(pri.decrypt(torch.matmul(x3_4_p, x4_e)), torch.matmul(x3_4_p, x4_p))
-    assert torch.allclose(pri.decrypt(torch.rmatmul(x4_e, x3_4_p)), torch.rmatmul(x4_p, x3_4_p))
+    assert torch.allclose(pri.decrypt(torch.rmatmul_f(x4_e, x3_4_p)), torch.rmatmul_f(x4_p, x3_4_p))
 
 
 def test_matmul_ix1(x3_4_p, x3_4_e, x4_p, x4_e, x3_p, pri):
     assert torch.allclose(pri.decrypt(torch.matmul(x3_4_e, x4_p)), torch.matmul(x3_4_p, x4_p))
     assert torch.allclose(pri.decrypt(x3_4_e @ x4_p), x3_4_p @ x4_p)
-    assert torch.allclose(pri.decrypt(torch.rmatmul(x3_4_e, x3_p)), torch.rmatmul(x3_4_p, x3_p))
+    assert torch.allclose(pri.decrypt(torch.rmatmul_f(x3_4_e, x3_p)), torch.rmatmul_f(x3_4_p, x3_p))
     assert torch.allclose(pri.decrypt(x3_p @ x3_4_e), x3_p @ x3_4_p)
 
     assert torch.allclose(pri.decrypt(torch.matmul(x4_e, x4_p)), torch.matmul(x4_p, x4_p))
