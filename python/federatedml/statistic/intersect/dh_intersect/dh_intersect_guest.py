@@ -31,19 +31,6 @@ class DhIntersectionGuest(DhIntersect):
         self.host_count = None
         # self.recorded_k_data = None
 
-    """def _sync_commutative_cipher_public_knowledge(self):
-        for i, _ in enumerate(self.host_party_id_list):
-            self.transfer_variable.commutative_cipher_public_knowledge.remote(self.commutative_cipher[i],
-                                                                              role=consts.HOST,
-                                                                              idx=i)
-            LOGGER.info(f"sent commutative cipher public knowledge to {i}th host")"""
-
-    def _sync_commutative_cipher_public_knowledge(self):
-        self.transfer_variable.commutative_cipher_public_knowledge.remote(self.commutative_cipher,
-                                                                          role=consts.HOST,
-                                                                          idx=-1)
-        LOGGER.info(f"sent commutative cipher public knowledge to all host")
-
     def _exchange_id(self, id_cipher, replace_val=True):
         """for i, id in enumerate(id_list):
             if replace_val:
@@ -70,23 +57,6 @@ class DhIntersectionGuest(DhIntersect):
         LOGGER.info("got doubly encrypted id list from all host")
         return id_list_guest
 
-    """
-    def send_intersect_ids(self, encrypt_intersect_ids_list, intersect_ids):
-        if len(self.host_party_id_list) > 1:
-            for i, host_party_id in enumerate(self.host_party_id_list):
-                remote_intersect_id = intersect_ids.map(lambda k, v: (v[i], None))
-                self.transfer_variable.intersect_ids.remote(remote_intersect_id,
-                                                            role=consts.HOST,
-                                                            idx=i)
-                LOGGER.info(f"Remote intersect ids to Host {host_party_id}!")
-        else:
-            remote_intersect_id = encrypt_intersect_ids_list[0].mapValues(lambda v: None)
-            self.transfer_variable.intersect_ids.remote(remote_intersect_id,
-                                                        role=consts.HOST,
-                                                        idx=0)
-            LOGGER.info(f"Remote intersect ids to Host!")
-    """
-
     def send_intersect_ids(self, intersect_ids):
         for i, host_party_id in enumerate(self.host_party_id_list):
             remote_intersect_id = intersect_ids.map(lambda k, v: (v[i], None))
@@ -97,10 +67,9 @@ class DhIntersectionGuest(DhIntersect):
 
     def get_intersect_doubly_encrypted_id(self, data_instances, keep_key=True):
         self._generate_commutative_cipher()
-        self._sync_commutative_cipher_public_knowledge()
+        self.commutative_cipher.init()
         self.host_count = len(self.host_party_id_list)
 
-        self.commutative_cipher.init()
         LOGGER.info("commutative cipher key generated")
 
         # 1st ID encrypt: # (Eg, -1)
@@ -163,7 +132,6 @@ class DhIntersectionGuest(DhIntersect):
 
     def generate_cache(self, data_instances):
         self._generate_commutative_cipher()
-        self._sync_commutative_cipher_public_knowledge()
         self.commutative_cipher.init()
         LOGGER.info("commutative cipher key generated")
 
