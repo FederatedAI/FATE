@@ -188,8 +188,15 @@ class DiffieHellman(object):
     @staticmethod
     def _key_pair(num_bits=1024):
         available = {
-            1024: [DiffieHellman._oakley_group_1024_1024, DiffieHellman._additional_group_1024_160],
-            2048: [DiffieHellman._oakley_group_2048_2048, DiffieHellman._additional_group_2048_224, DiffieHellman._additional_group_2048_256]
+            1024: [
+                DiffieHellman._oakley_group_1024_1024,
+                DiffieHellman._additional_group_1024_160
+            ],
+            2048: [
+                DiffieHellman._oakley_group_2048_2048,
+                DiffieHellman._additional_group_2048_224,
+                DiffieHellman._additional_group_2048_256
+            ]
         }
         assert num_bits in available,\
             "key pairs with specified size({0} bits) not found, please use one of {1}".format(
