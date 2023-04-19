@@ -36,23 +36,24 @@ def hetero_feature_selection(ctx, role):
 
 @hetero_feature_selection.train()
 @cpn.artifact("train_data", type=Input[DatasetArtifact], roles=[GUEST, HOST])
-@cpn.artifact("input_isometric_model", type=List[Input[ModelArtifact]], roles=[GUEST, HOST])
+@cpn.artifact("input_statistic_model", type=Input[ModelArtifact], roles=[GUEST, HOST])
+@cpn.artifact("input_binning_model", type=Input[ModelArtifact], roles=[GUEST, HOST])
 @cpn.parameter("method", type=List[params.string_choice(["manual", "binning", "statistic"])],
                default=["manual"], optional=False,
                desc="selection method, options: {manual, binning, statistic}")
 @cpn.parameter("select_col", type=List[str], default=None,
                desc="list of column names to be selected, if None, all columns will be considered")
-@cpn.parameter("iv_param", type=params.IVFilterParam,
+@cpn.parameter("iv_param", type=params.iv_filter_param(),
                default=params.IVFilterParam(metrics="iv", take_high=True,
                                             threshold=1, filter_type="threshold", host_thresholds=1,
                                             host_take_high=True,
                                             select_federated=True),
                desc="binning filter param")
-@cpn.parameter("statistic_param", type=params.StatisticFilterParam,
-               default=params.StatisicFilterParam(metrics="mean",
-                                                  threshold=1, filter_type="threshold", take_high=True),
+@cpn.parameter("statistic_param", type=params.statistic_filter_param(),
+               default=params.StatisticFilterParam(metrics="mean",
+                                                   threshold=1, filter_type="threshold", take_high=True),
                desc="statistic filter param")
-@cpn.parameter("manual_param", type=params.ManualFilterParam,
+@cpn.parameter("manual_param", type=params.manual_filter_param(),
                default=params.ManualFilterParam(filter_out_col=[], keep_col=[]),
                desc="note that manual filter will always be processed as the last filter")
 @cpn.parameter("keep_one", type=bool, default=True, desc="whether to keep at least one feature among `select_col`")
@@ -64,7 +65,8 @@ def feature_selection_train(
         ctx,
         role: Role,
         train_data,
-        input_isometric_model,
+        input_statistic_model,
+        input_binning_model,
         method,
         select_col,
         iv_param,
@@ -75,7 +77,7 @@ def feature_selection_train(
         train_output_data,
         output_model,
 ):
-    train(ctx, train_data, train_output_data, input_isometric_model,
+    train(ctx, train_data, train_output_data, input_binning_model, input_statistic_model,
           output_model, method, select_col, iv_param, statistic_param, manual_param,
           keep_one, use_anonymous)
 
@@ -94,18 +96,25 @@ def feature_selection_predict(
     predict(ctx, input_model, test_data, test_output_data, role)
 
 
-def train(ctx, train_data, train_output_data, input_isometric_model,
+def train(ctx, train_data, train_output_data, input_binning_model, input_statistic_model,
           output_model, method, select_col, iv_param, statistic_param, manual_param,
           keep_one, use_anonymous):
     from fate.ml.feature_selection import HeteroSelectionModuleHost, HeteroSelectionModuleGuest
 
     with ctx.sub_ctx("train") as sub_ctx:
         isometric_model_dict = {}
-        for input_model in input_isometric_model:
-            with input_model as model_reader:
-                model = model_reader.read_model()
-                model_type = json.loads(model["model_meta"])["model_type"]
-                isometric_model_dict[model_type] = json.loads(model)
+        if input_binning_model:
+            model = input_binning_model.read_model()
+            model_type = json.loads(model["model_meta"]).get("model_type")
+            if model_type != "binning":
+                raise ValueError(f"model type: {model_type} is not binning, but {model_type}")
+            isometric_model_dict["binning"] = json.loads(input_binning_model.read_model())
+        if input_statistic_model:
+            model = input_statistic_model.read_model()
+            model_type = json.loads(model["model_meta"]).get("model_type")
+            if model_type != "statistic":
+                raise ValueError(f"model type: {model_type} is not statistic, but {model_type}")
+            isometric_model_dict["statistic"] = json.loads(input_statistic_model.read_model())
 
         train_data = sub_ctx.reader(train_data).read_dataframe().data
         columns = train_data.schema.columns.to_list()
@@ -131,7 +140,6 @@ def train(ctx, train_data, train_output_data, input_isometric_model,
         selection.fit(sub_ctx, train_data)
         model = selection.to_model()
         with output_model as model_writer:
-            # @todo: maybe rm method from meta
             model_writer.write_model("feature_selection", model, metadata={"method": method})
 
     with ctx.sub_ctx("predict") as sub_ctx:

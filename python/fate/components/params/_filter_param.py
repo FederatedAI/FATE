@@ -1,12 +1,27 @@
+#
+#  Copyright 2023 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
 from typing import Union, List
 
 import pydantic
 
-from ._fields import string_choice
+from ._fields import string_choice, Parameter
 from ._metrics import statistic_metrics_param
 
 
-class StandardFilterParam(pydantic.BaseModel):
+class StandardFilterParam(pydantic.BaseModel, Parameter):
     metrics: List[str]
 
     filter_type: List[string_choice({'threshold', 'top_k', 'top_percentile'})] = ['threshold']
@@ -28,7 +43,7 @@ class StandardFilterParam(pydantic.BaseModel):
         return values
 
 
-class FederatedStandardFilterParam(StandardFilterParam):
+class FederatedStandardFilterParam(StandardFilterParam, Parameter):
     host_filter_type: List[string_choice({'threshold', 'top_k', 'top_percentile'})] = ['threshold']
     host_threshold: List[Union[int, float]] = [1.0]
     host_take_high: List[bool] = [True]
@@ -51,15 +66,15 @@ class FederatedStandardFilterParam(StandardFilterParam):
         return values
 
 
-class IVFilterParam(FederatedStandardFilterParam):
+class IVFilterParam(FederatedStandardFilterParam, Parameter):
     metrics: List[string_choice({'iv'})] = ['iv']
 
 
-class StatisticFilterParam(StandardFilterParam):
+class StatisticFilterParam(StandardFilterParam, Parameter):
     metrics: List[statistic_metrics_param(describe=False)] = ["mean"]
 
 
-class ManualFilterParam(pydantic.BaseModel):
+class ManualFilterParam(pydantic.BaseModel, Parameter):
     keep_col: List[str] = []
     left_out_col: List[str] = []
 
@@ -71,3 +86,18 @@ class ManualFilterParam(pydantic.BaseModel):
         if intersection:
             raise ValueError(f"`keep_col` and `left_out_col` share common elements: {intersection}")
         return values
+
+
+def iv_filter_param():
+    namespace = {}
+    return type("IVFilterParam", (IVFilterParam,), namespace)
+
+
+def statistic_filter_param():
+    namespace = {}
+    return type("StatisticFilterParam", (StatisticFilterParam,), namespace)
+
+
+def manual_filter_param():
+    namespace = {}
+    return type("ManualFilterParam", (ManualFilterParam,), namespace)

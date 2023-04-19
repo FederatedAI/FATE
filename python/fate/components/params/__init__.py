@@ -15,7 +15,8 @@
 #
 
 from ._cipher import CipherParamType, PaillierCipherParam
-from ._fields import confloat, conint, jsonschema, parse, string_choice
-from ._filter_param import StatisticFilterParam, IVFilterParam, ManualFilterParam
+from ._fields import confloat, conint, jsonschema, parse, string_choice, Parameter
+from ._filter_param import StatisticFilterParam, IVFilterParam, ManualFilterParam, \
+    statistic_filter_param, iv_filter_param, manual_filter_param
 from ._metrics import metrics_param, statistic_metrics_param
 from ._penalty import penalty_param

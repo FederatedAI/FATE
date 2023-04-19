@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from typing import Union, List
+from typing import List
 
 from fate.components import (
     GUEST,
@@ -45,7 +45,7 @@ def hetero_feature_binning(ctx, role):
 @cpn.parameter("method", type=params.string_choice(["quantile", "bucket"]),
                default="quantile", optional=False,
                desc="binning method, options: {quantile, bucket, manual}")
-@cpn.parameter("n_bins", type=Union[params.conint(gt=1), params.confloat(ge=0, le=1)], default=10,
+@cpn.parameter("n_bins", type=params.conint(gt=1), default=10,
                desc="max number of bins, should be no less than 2")
 @cpn.parameter("split_pt_dict", type=dict, default=None,
                desc="dict, manually provided split points, only effective when `method`='manual'")
