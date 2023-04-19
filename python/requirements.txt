@@ -1,5 +1,4 @@
 --extra-index-url https://download.pytorch.org/whl/cpu
---find-links https://data.pyg.org/whl/torch-1.13.0+cpu.html
 
 pip>=21
 apsw<3.10
@@ -57,12 +56,6 @@ impyla==0.18.0
 venv-pack==0.2.0
 fate-crypto==0.3.0
 ipcl-python==2.0.0
-pyg-lib==0.1.0+pt113cpu
-torch-scatter==2.1.0+pt113cpu
-torch-sparse==0.6.16+pt113cpu
-torch-cluster==1.6.0+pt113cpu
-torch-spline-conv==1.2.1+pt113cpu
-torch-geometric==2.2.0
 
 # addtional requirements for eggroll
 grpcio==1.46.3
