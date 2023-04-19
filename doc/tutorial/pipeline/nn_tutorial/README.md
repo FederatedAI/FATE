@@ -83,6 +83,10 @@ Here we offer some advanced examples of using FATE-NN framework.
 
 - [Using Frozen Parameters Bert for Sentiment Classification](Bert-example.ipynb)
 
+## Node Classification Using GNN(Homo-NN)
+
+- [Homo Graph Sage for Node Classification Task](Homo-Graph.ipynb)
+
 ## Training on vertical-split heterogeneous data(Hetero-NN)
 
 - [A federated task with guest using image data and host using text data](Hetero-NN-Mix-Task.ipynb)

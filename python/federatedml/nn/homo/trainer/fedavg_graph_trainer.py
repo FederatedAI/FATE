@@ -46,7 +46,7 @@ class FedAVGGraphTrainer(FedAVGTrainer):
     def __init__(self, epochs=10, batch_size=512,  # training parameter
                  early_stop=None, tol=0.0001,  # early stop parameters
                  secure_aggregate=True, weighted_aggregation=True, aggregate_every_n_epoch=None,  # federation
-                 cuda=False, pin_memory=True, shuffle=True, data_loader_worker=0,  # GPU & dataloader
+                 cuda=None, pin_memory=True, shuffle=True, data_loader_worker=0,  # GPU & dataloader
                  validation_freqs=None,  # validation configuration
                  checkpoint_save_freqs=None,  # checkpoint configuration
                  task_type='auto',
