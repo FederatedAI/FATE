@@ -83,17 +83,17 @@ def train(ctx, train_data, train_output_data, output_model, method, feature_rang
     from fate.ml.preprocessing import FeatureScale
     train_data = ctx.reader(train_data).read_dataframe().data
 
+
     with ctx.sub_ctx("train") as sub_ctx:
-        columns = train_data.schema.columns
+        columns = train_data.schema.columns.to_list()
         anonymous_columns = None
         if use_anonymous:
-            anonymous_columns = train_data.schema.anonymous_columns
+            anonymous_columns = train_data.schema.anonymous_columns.to_list()
             if method != "min_max":
                 feature_range = None
         scale_col, feature_range = get_to_scale_cols(columns, anonymous_columns, scale_col, scale_idx, feature_range)
 
         scaler = FeatureScale(method, scale_col, feature_range)
-        train_data = sub_ctx.reader(train_data).read_dataframe().data
         scaler.fit(sub_ctx, train_data)
 
         model = scaler.to_model()

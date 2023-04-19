@@ -84,6 +84,8 @@ def train(ctx, train_data, output_model, metrics, bias, skip_col, use_anonymous)
 
 
 def get_to_compute_cols(columns, anonymous_columns, skip_columns, use_anonymous):
+    if skip_columns is None:
+        skip_columns = []
     if use_anonymous and skip_columns is not None:
         skip_columns = [anonymous_columns[columns.index(col)] for col in skip_columns]
     skip_col_set = set(skip_columns)

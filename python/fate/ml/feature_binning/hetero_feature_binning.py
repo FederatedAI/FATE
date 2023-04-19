@@ -43,10 +43,15 @@ class HeteroBinningModuleGuest(HeteroModule):
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
         logger.info("Enter HeteroBinning fit.")
+        # temp code block start
+        """
         y_vals = train_data.label.unique()
         if len(y_vals) > 2:
             raise ValueError(f"More than 2 classes found in label column. "
                              f"HeteroBinning currently only supports binary data. Please check.")
+        """
+        # temp code block end
+
         self._bin_obj.fit(ctx, train_data)
 
     def compute_metrics(self, ctx: Context, binned_data):

@@ -60,6 +60,8 @@ class StandardScaler(Module):
         self.select_col = select_col
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
+        if self.select_col is None:
+            self.select_col = train_data.schema.columns.to_list()
         train_data_select = train_data[self.select_col]
         self._mean = train_data_select.mean()
         self._std = train_data_select.std()
@@ -136,7 +138,7 @@ class MinMaxScaler(Module):
         return dict(
             scale=self._scale.to_dict(),
             scale_dtype=self._scale.dtype.name,
-            scale_min=self._scale_min.to_dit(),
+            scale_min=self._scale_min.to_dict(),
             scale_min_dtype=self._scale_min.dtype.name,
             select_col=self.select_col
         )
