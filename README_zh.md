@@ -36,6 +36,7 @@ FATE 支持多种部署模式，用户可以根据自身情况进行选择。[�
 - [使用FATE-Pipeline训练及预测纵向SBT任务](./doc/tutorial/pipeline/pipeline_tutorial_hetero_sbt.ipynb)
 - [使用FATE-Pipeline构建横、纵向神经网络模型](doc/tutorial/pipeline/nn_tutorial/README.md)
 - [使用DSL json conf运行任务](doc/tutorial/dsl_conf/dsl_conf_tutorial.md)
+- [FATE-LLM训练教程](doc/tutorial/fate_llm/README.md)
 - [更多教程](doc/tutorial)
 
 ## 关联仓库
