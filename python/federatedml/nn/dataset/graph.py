@@ -2,7 +2,10 @@ import numpy as np
 import pandas as pd
 from federatedml.statistic.data_overview import with_weight
 from federatedml.nn.dataset.base import Dataset
-from torch_geometric.data import Data
+try:
+    from torch_geometric.data import Data
+except:
+    pass
 import torch
 from federatedml.util import LOGGER
 
