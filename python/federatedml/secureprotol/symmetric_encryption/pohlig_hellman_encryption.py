@@ -18,8 +18,9 @@
 #
 import random
 
-from federatedml.secureprotol.gmpy_math import is_prime, invert, gcd, powmod, next_prime
+from federatedml.secureprotol.gmpy_math import is_prime, invert, gcd, powmod
 from federatedml.secureprotol.symmetric_encryption.symmetric_encryption import SymmetricKey, SymmetricCiphertext
+from federatedml.secureprotol.diffie_hellman import DiffieHellman
 from federatedml.util import conversion
 
 
@@ -51,26 +52,8 @@ class PohligHellmanCipherKey(SymmetricKey):
         :param key_size: int
         :return: PohligHellmanCipherKey
         """
-        key_size_half = key_size // 2
-        while True:
-            mod_base_half = PohligHellmanCipherKey.generate_prime(2 ** (key_size_half - 1), 2 ** key_size_half - 1)
-            mod_base = mod_base_half * 2 + 1
-            if is_prime(mod_base):
-                return PohligHellmanCipherKey(mod_base)
-
-    @staticmethod
-    def generate_prime(left, right):
-        """
-        Generate a prime over (left, right]
-        :param left:
-        :param right:
-        :return:
-        """
-        while True:
-            random_integer = random.randint(left, right)
-            random_prime = next_prime(random_integer)
-            if random_prime <= right:
-                return random_prime
+        mod_base, _ = DiffieHellman.generate_oakley_group_key_pair(num_bits=key_size)
+        return PohligHellmanCipherKey(mod_base)
 
     def init(self):
         """

@@ -1,3 +1,10 @@
+## Release 1.11.1
+### Major Features and Improvements
+> FederatedML
+* Support Homo Graph Neural Network
+* PSI-DH protocol enhancement: use Oakley MODP modulus groups
+
+
 ## Release 1.11.0
 ### Major Features and Improvements
 > FederatedML
