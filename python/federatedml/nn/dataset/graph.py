@@ -4,7 +4,7 @@ from federatedml.statistic.data_overview import with_weight
 from federatedml.nn.dataset.base import Dataset
 try:
     from torch_geometric.data import Data
-except:
+except BaseException:
     pass
 import torch
 from federatedml.util import LOGGER
