@@ -66,10 +66,9 @@ In order to show you how to develop your own Trainer, here we try to develop a s
 
 Here we offer some advanced examples of using FATE-NN framework.
 
-## Fed-PELLM(Parameter Efficient Large Language Model) Training
+## FATE-LLM(Federated Large Language Models) Training
 
-- [Federated PELLM example with GPT-2](./GPT2-example.ipynb)
-- [Federated Multi-Task GPT-2: Classification and NER Tagging](./GPT2-multi-task.ipynb)
+- [FATE-LLM Training Guides](../../fate_llm/README.md)
 
 ## Resnet classification(Homo-NN)
 
