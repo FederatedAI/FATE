@@ -17,16 +17,15 @@ from contextlib import contextmanager
 from copy import copy
 from typing import Iterator, List, Optional
 
-from fate.interface import T_ROLE, ComputingEngine
 from fate.interface import Context as ContextInterface
 from fate.interface import FederationEngine, MetricsHandler, PartyMeta
-
-from ..unify import device
+from fate.interface import T_ROLE, ComputingEngine
 from ._cipher import CipherKit
 from ._federation import GC, Parties, Party
 from ._namespace import Namespace
 from .io.kit import IOKit
 from .metric import MetricsWrap
+from ..unify import device
 
 logger = logging.getLogger(__name__)
 
@@ -142,7 +141,7 @@ class Context(ContextInterface):
         return self.local[0] == "host"
 
     @property
-    def is_on_artbiter(self):
+    def is_on_arbiter(self):
         return self.local[0] == "arbiter"
 
     @property
