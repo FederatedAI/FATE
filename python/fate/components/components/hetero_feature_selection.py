@@ -36,8 +36,8 @@ def hetero_feature_selection(ctx, role):
 
 @hetero_feature_selection.train()
 @cpn.artifact("train_data", type=Input[DatasetArtifact], roles=[GUEST, HOST])
-@cpn.artifact("input_statistic_model", type=Input[ModelArtifact], roles=[GUEST, HOST])
-@cpn.artifact("input_binning_model", type=Input[ModelArtifact], roles=[GUEST, HOST])
+@cpn.artifact("input_statistic_model", type=Input[ModelArtifact], roles=[GUEST, HOST], optional=True)
+@cpn.artifact("input_binning_model", type=Input[ModelArtifact], roles=[GUEST, HOST], optional=True)
 @cpn.parameter("method", type=List[params.string_choice(["manual", "binning", "statistic"])],
                default=["manual"], optional=False,
                desc="selection method, options: {manual, binning, statistic}")
@@ -77,7 +77,7 @@ def feature_selection_train(
         train_output_data,
         output_model,
 ):
-    train(ctx, train_data, train_output_data, input_binning_model, input_statistic_model,
+    train(ctx, role, train_data, train_output_data, input_binning_model, input_statistic_model,
           output_model, method, select_col, iv_param, statistic_param, manual_param,
           keep_one, use_anonymous)
 
@@ -96,7 +96,7 @@ def feature_selection_predict(
     predict(ctx, input_model, test_data, test_output_data, role)
 
 
-def train(ctx, train_data, train_output_data, input_binning_model, input_statistic_model,
+def train(ctx, role, train_data, train_output_data, input_binning_model, input_statistic_model,
           output_model, method, select_col, iv_param, statistic_param, manual_param,
           keep_one, use_anonymous):
     from fate.ml.feature_selection import HeteroSelectionModuleHost, HeteroSelectionModuleGuest
@@ -104,17 +104,23 @@ def train(ctx, train_data, train_output_data, input_binning_model, input_statist
     with ctx.sub_ctx("train") as sub_ctx:
         isometric_model_dict = {}
         if input_binning_model:
-            model = input_binning_model.read_model()
+            with input_binning_model as model_reader:
+                model = model_reader.read_model()
             model_type = json.loads(model["model_meta"]).get("model_type")
             if model_type != "binning":
                 raise ValueError(f"model type: {model_type} is not binning, but {model_type}")
-            isometric_model_dict["binning"] = json.loads(input_binning_model.read_model())
+            isometric_model_dict["binning"] = model
         if input_statistic_model:
-            model = input_statistic_model.read_model()
+            with input_statistic_model as model_reader:
+                model = model_reader.read_model()
+            # temp code block
             model_type = json.loads(model["model_meta"]).get("model_type")
             if model_type != "statistic":
                 raise ValueError(f"model type: {model_type} is not statistic, but {model_type}")
-            isometric_model_dict["statistic"] = json.loads(input_statistic_model.read_model())
+            # temp code block end
+            isometric_model_dict["statistic"] = model
+
+        logger.info(f"input model: {isometric_model_dict}")
 
         train_data = sub_ctx.reader(train_data).read_dataframe().data
         columns = train_data.schema.columns.to_list()
@@ -129,11 +135,11 @@ def train(ctx, train_data, train_output_data, input_binning_model, input_statist
                 keep_col = [columns[anonymous_columns.index(col)] for col in manual_param.keep_col]
                 manual_param.keep_col = keep_col
 
-        if sub_ctx.is_on_guest():
+        if role.is_guest:
             selection = HeteroSelectionModuleGuest(method, select_col, isometric_model_dict,
                                                    iv_param, statistic_param, manual_param,
                                                    keep_one)
-        elif sub_ctx.is_on_host():
+        elif role.is_host:
             selection = HeteroSelectionModuleHost(method, select_col, isometric_model_dict,
                                                   iv_param, statistic_param, manual_param,
                                                   keep_one)
@@ -168,4 +174,10 @@ def predict(ctx, input_model, test_data, test_output_data, role):
         output_data = test_data
         if method is not None:
             output_data = selection.transform(sub_ctx, test_data)
+        """
+        # temp code start
+        test_data = sub_ctx.reader(test_data).read_dataframe().data
+        output_data = selection.transform(sub_ctx, test_data)
+        # temp code end
+        """
         sub_ctx.writer(test_output_data).write_dataframe(output_data)

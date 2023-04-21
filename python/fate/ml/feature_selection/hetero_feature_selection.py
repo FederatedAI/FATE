@@ -45,6 +45,7 @@ class HeteroSelectionModuleGuest(HeteroModule):
         self._selection_obj = []
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
+        logger.info(f"isometric_model_dict: {self.isometric_model_dict}")
         if self.select_col is None:
             self.select_col = train_data.schema.columns.to_list()
 
@@ -161,7 +162,9 @@ class HeteroSelectionModuleHost(HeteroModule):
                 self._selection_obj[i] = selection_obj
                 self._inner_method[i] = "manual"
             elif filter_type == "iv":
-                model = self.isometric_model_dict["binning"]
+                model = self.isometric_model_dict.get("binning", None)
+                if model is None:
+                    raise ValueError(f"Cannot find binning model in input, please check")
                 selection_obj = StandardSelection(method=filter_type,
                                                   header=header,
                                                   param=self.iv_param,
@@ -170,7 +173,9 @@ class HeteroSelectionModuleHost(HeteroModule):
                 self._selection_obj[i] = selection_obj
                 self._inner_method[i] = "iv"
             elif filter_type == "statistic":
-                model = self.isometric_model_dict["statistic"]
+                model = self.isometric_model_dict.get("statistic", None)
+                if model is None:
+                    raise ValueError(f"Cannot find statistic model in input, please check")
                 selection_obj = StandardSelection(method=filter_type,
                                                   header=header,
                                                   param=self.statistic_param,
@@ -314,6 +319,7 @@ class StandardSelection(Module):
         self.method = method
         self.param = param
         self.filter_conf = {}
+
         if param is not None:
             for metric_name, filter_type, threshold, take_high in zip(
                     self.param.get("metrics", DEFAULT_METRIC.get(method)),
@@ -325,6 +331,20 @@ class StandardSelection(Module):
                 metric_conf["threshold"] = metric_conf.get("threshold", []) + [threshold]
                 metric_conf["take_high"] = metric_conf.get("take_high", []) + [take_high]
                 self.filter_conf[metric_name] = metric_conf
+        # temp code block starts
+        """if param is not None:
+            for metric_name, filter_type, threshold, take_high in zip(
+                    self.param.metrics or DEFAULT_METRIC.get(method),
+                    self.param.filter_type or  ['threshold'],
+                    self.param.threshold or [1.0],
+                    self.param.take_high or [True]):
+                metric_conf = self.filter_conf.get(metric_name, {})
+                metric_conf["filter_type"] = metric_conf.get("filter_type", []) + [filter_type]
+                metric_conf["threshold"] = metric_conf.get("threshold", []) + [threshold]
+                metric_conf["take_high"] = metric_conf.get("take_high", []) + [take_high]
+                self.filter_conf[metric_name] = metric_conf"""
+        # temp code block ends
+
         self.model = self.convert_model(model)
         self.keep_one = keep_one
         self._header = header
@@ -372,7 +392,11 @@ class StandardSelection(Module):
             if self.keep_one:
                 self._keep_one()
         """
+
         metric_names = self.param.get("metrics", [])
+        # temp code bock start
+        """metric_names = self.param.metrics or []"""
+        # temp code ends
         # local only
         if self.method in ["statistic"]:
             for metric_name in metric_names:
