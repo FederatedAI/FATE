@@ -14,8 +14,8 @@
 #  limitations under the License.
 import logging
 
+from fate.arch.dataframe import DataFrame
 from fate.interface import Context
-from fate.interface import Dataframe
 from ..abc.module import Module
 
 logger = logging.getLogger(__name__)
@@ -25,11 +25,18 @@ class Union(Module):
     def __init__(self, axis=0):
         self.axis = axis
 
-    def fit(self, ctx: Context, train_data_list, validate_data=None) -> None:
+    def fit(self, ctx: Context, train_data_list, validate_data=None):
         if self.axis == 0:
-            result_data = Dataframe.vstack(train_data_list)
+            result_data = DataFrame.vstack(train_data_list)
         elif self.axis == 1:
-            result_data = Dataframe.hstack(train_data_list)
+            col_set = set()
+            for data in train_data_list:
+                data_cols = set(data.schema.columns)
+                if col_set.intersection(data_cols):
+                    raise ValueError(f"column name conflict: {col_set.intersection(data_cols)}. "
+                                     f"Please check input data")
+                col_set.update(data_cols)
+            result_data = DataFrame.hstack(train_data_list)
         else:
             raise ValueError(f"axis must be 0 or 1, but got {self.axis}")
         return result_data
