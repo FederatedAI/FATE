@@ -84,6 +84,8 @@ class FedAVGTrainer(TrainerBase):
             consts.BINARY,
             consts.REGRESSION,
             consts.MULTY,
+            consts.CAUSAL_LM,
+            consts.SEQ_2_SEQ_LM,
             'auto']
         assert self.task_type in task_type_allow, 'task type must in {}'.format(
             task_type_allow)
@@ -221,7 +223,11 @@ class FedAVGTrainer(TrainerBase):
                 batch_data, batch_label = self.to_cuda(
                     batch_data, self.model.device), self.to_cuda(batch_label, self.model.device)
 
-            optimizer.zero_grad()
+            if not self._enable_deepspeed:
+                optimizer.zero_grad()
+            else:
+                model.zero_grad()
+
             pred = model(batch_data)
 
             if not loss and hasattr(pred, "loss"):
@@ -240,8 +246,8 @@ class FedAVGTrainer(TrainerBase):
                 ) if self.cuda is None else batch_loss.cpu().detach().numpy()
             else:
                 batch_loss = batch_loss.mean()
+                batch_loss = model.backward(batch_loss)
                 batch_loss_np = batch_loss.cpu().detach().numpy()
-                model.backward(batch_loss)
                 model.step()
 
             if acc_num + self.batch_size > len(train_set):
@@ -250,7 +256,7 @@ class FedAVGTrainer(TrainerBase):
                 batch_len = self.batch_size
             epoch_loss += batch_loss_np * batch_len
             batch_idx += 1
-            LOGGER.debug(f"finish epoch={epoch_idx}, batch={batch_idx}")
+            LOGGER.info(f"finish epoch={epoch_idx}, batch={batch_idx}")
 
         if self.fed_mode:
             LOGGER.debug(
@@ -346,17 +352,16 @@ class FedAVGTrainer(TrainerBase):
                         task_type=self.task_type)
 
             # save check point process
-            """
-            if self.save_freq is not None and ((i + 1) % self.save_freq == 0):
+            if not dist.is_available() or dist.get_rank() == 0:
+                if self.save_freq is not None and ((i + 1) % self.save_freq == 0):
 
-                if self.save_to_local_dir:
-                    self.local_checkpoint(
-                        self.model, i, optimizer, converge_status=need_stop, loss_history=loss_history)
-                else:
-                    self.checkpoint(
-                        self.model, i, optimizer, converge_status=need_stop, loss_history=loss_history)
-                LOGGER.info('save checkpoint : epoch {}'.format(i))
-            """
+                    if self.save_to_local_dir:
+                        self.local_checkpoint(
+                            self.model, i, optimizer, converge_status=need_stop, loss_history=loss_history)
+                    else:
+                        self.checkpoint(
+                            self.model, i, optimizer, converge_status=need_stop, loss_history=loss_history)
+                    LOGGER.info('save checkpoint : epoch {}'.format(i))
 
             # if meet stop condition then stop
             if need_stop:
@@ -365,14 +370,13 @@ class FedAVGTrainer(TrainerBase):
         # post-process
         best_epoch = int(np.array(loss_history).argmin())
 
-        """
-        if self.save_to_local_dir:
-            self.local_save(model=self.model, optimizer=optimizer, epoch_idx=cur_epoch, loss_history=loss_history,
-                            converge_status=need_stop, best_epoch=best_epoch)
-        else:
-            self.save(model=self.model, optimizer=optimizer, epoch_idx=cur_epoch, loss_history=loss_history,
-                      converge_status=need_stop, best_epoch=best_epoch)
-        """
+        if not dist.is_available() or dist.get_rank() == 0:
+            if self.save_to_local_dir:
+                self.local_save(model=self.model, optimizer=optimizer, epoch_idx=cur_epoch, loss_history=loss_history,
+                                converge_status=need_stop, best_epoch=best_epoch)
+            else:
+                self.save(model=self.model, optimizer=optimizer, epoch_idx=cur_epoch, loss_history=loss_history,
+                          converge_status=need_stop, best_epoch=best_epoch)
 
         self.summary({
             'best_epoch': best_epoch,
@@ -413,7 +417,9 @@ class FedAVGTrainer(TrainerBase):
         return dataset.get_sample_ids(), ret_rs, ret_label
 
     def predict(self, dataset: Dataset):
-        return
+        if self.task_type in [consts.CAUSAL_LM, consts.SEQ_2_SEQ_LM]:
+            LOGGER.warning(f"Not support prediction of task_types={[consts.CAUSAL_LM, consts.SEQ_2_SEQ_LM]}")
+            return
 
         ids, ret_rs, ret_label = self._predict(dataset)
 
@@ -463,7 +469,7 @@ class FedAVGTrainer(TrainerBase):
 
         LOGGER.info('server aggregation process done')
 
-    def _get_train_data_loader(self, train_set, ):
+    def _get_train_data_loader(self, train_set):
         collate_fn = train_set.collate_fn if hasattr(train_set, "collate_fn") else None
 
         if not dist.is_available() or dist.get_world_size() <= 1:

@@ -8,6 +8,7 @@ from fate_arch.computing import is_table
 from federatedml.model_base import ModelBase
 from federatedml.nn.homo.trainer.trainer_base import get_trainer_class, TrainerBase
 from federatedml.nn.backend.utils.data import load_dataset
+from federatedml.nn.backend.utils import deepspeed_utils
 from federatedml.param.homo_nn_param import HomoNNParam
 from federatedml.nn.backend.torch import serialization as s
 from federatedml.nn.backend.torch.base import FateTorchOptimizer
@@ -120,6 +121,7 @@ class HomoNNClient(ModelBase):
 
         # deepspeed
         self.ds_config = None
+        self._ds_stage = -1
         self.model_save_flag = False
 
     def _init_model(self, param: HomoNNParam):
@@ -140,6 +142,9 @@ class HomoNNClient(ModelBase):
 
         # set random seed
         global_seed(self.torch_seed)
+
+        if self.ds_config:
+            deepspeed_utils.init_deepspeed_env(self.ds_config)
 
         # load trainer class
         if self.trainer is None:
@@ -256,11 +261,7 @@ class HomoNNClient(ModelBase):
         trainer_inst.fed_mode = True
 
         if self.ds_config:
-            deepspeed.init_distributed()
-            model_parameters = list(filter(lambda p: p.requires_grad, model.parameters()))
-            model, optimizer, _, _ = deepspeed.initialize(model=model,
-                                                          model_parameters=model_parameters,
-                                                          config=self.ds_config)
+            model, optimizer = deepspeed_utils.deepspeed_init(model, self.ds_config)
             trainer_inst.enable_deepspeed()
 
         return trainer_inst, model, optimizer, loss_fn, extra_data

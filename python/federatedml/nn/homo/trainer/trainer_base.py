@@ -1,15 +1,17 @@
 import os
 import abc
 import importlib
+
 import torch as t
 import numpy as np
-import subprocess
+from pathlib import Path
 from torch.nn import Module
 from typing import List
 from federatedml.util import consts
 from federatedml.util import LOGGER
 from federatedml.model_base import serialize_models
 from federatedml.nn.backend.utils.common import ML_PATH
+from federatedml.nn.model_zoo.peft import PEFTLM
 from federatedml.feature.instance import Instance
 from federatedml.evaluation.evaluation import Evaluation
 from federatedml.model_base import Metric, MetricMeta
@@ -213,25 +215,47 @@ class TrainerBase(object):
             loss_history,
             best_epoch,
             extra_data,
-            save_path,
-            save_name):
+            save_path):
 
         LOGGER.debug('save model to local dir')
-        model_dict = {
-            'model': model.state_dict(),
-            'optimizer': optimizer.state_dict(),
-            'model_define': self.nn_define,
-            'optimizer_define': self.opt_define,
-            'loss_define': self.loss_define,
-            'epoch_idx': epoch_idx,
-            'converge_status': converge_status,
-            'loss_history': loss_history,
-            'best_epoch': best_epoch,
-            'extra_data': extra_data
-        }
-        absolute_path = os.path.abspath(save_path)
-        path = os.path.join(absolute_path, save_name)
-        t.save(model_dict, path)
+        if isinstance(model, PEFTLM):
+            """
+            saved_params = {
+                k: p.to("cpu") for k, p in model.named_parameters() if p.requires_grad
+            }
+            Path.mkdir(Path(save_path), exist_ok=True)
+            t.save(saved_params, os.path.join(save_path, "adapter_model.bin"))
+            model.save_pretrained(save_path)
+            """
+        else:
+            unwrap_model = TrainerBase.unwrap_model(model)
+            if isinstance(unwrap_model, PEFTLM):
+                """
+                saved_params = {
+                    k: p.to("cpu") for k, p in unwrap_model.named_parameters() if p.requires_grad
+                }
+                Path.mkdir(Path(save_path), exist_ok=True)
+                t.save(saved_params, os.path.join(save_path, "adapter_model.bin"))
+                """
+                unwrap_model.save_pretrained(save_path)
+            else:
+                model_state_dict = model.state_dict()
+                model_dict = {
+                    'model': model_state_dict,
+                    'optimizer': optimizer.state_dict(),
+                    'model_define': self.nn_define,
+                    'optimizer_define': self.opt_define,
+                    'loss_define': self.loss_define,
+                    'epoch_idx': epoch_idx,
+                    'converge_status': converge_status,
+                    'loss_history': loss_history,
+                    'best_epoch': best_epoch,
+                    'extra_data': extra_data
+                }
+                t.save(model_dict, save_path)
+
+        if self._enable_deepspeed and self._tracker is not None:
+            self._tracker.sync_model(save_path)
 
         model_dict = self._exporter.export_model_dict(model_define=self.nn_define,
                                                       optimizer_define=self.opt_define,
@@ -241,7 +265,7 @@ class TrainerBase(object):
                                                       loss_history=loss_history,
                                                       best_epoch=best_epoch,
                                                       extra_data=extra_data,
-                                                      local_save_path=path
+                                                      local_save_path=save_path
                                                       )
         self._cache_model = model_dict
 
@@ -291,6 +315,9 @@ class TrainerBase(object):
         assert isinstance(
             epoch_idx, int) and epoch_idx >= 0, 'epoch idx must be an int >= 0'
 
+        if isinstance(TrainerBase.unwrap_model(model), PEFTLM):
+            raise ValueError("save checkpoint of Pretrained model should provide local dir")
+
         if self._model_checkpoint:
 
             if self._exporter is None:
@@ -323,8 +350,12 @@ class TrainerBase(object):
 
         if self._exporter:
             # default saving folder is under the job folder
-            save_path = '../../../../'
-            model_name = 'model.pkl'
+            model_name = "model.pkl"
+            if self._enable_deepspeed:
+                save_path = os.path.join(os.environ["MODEL_STORE_DIR"], model_name)
+            else:
+                save_path = os.path.abspath(os.path.join('../../../../', model_name))
+
             self._local_save(
                 model,
                 optimizer,
@@ -333,8 +364,7 @@ class TrainerBase(object):
                 loss_history,
                 best_epoch,
                 extra_data,
-                save_path,
-                model_name)
+                save_path)
 
     def local_checkpoint(self,
                          model=None,
@@ -347,8 +377,11 @@ class TrainerBase(object):
 
         if self._exporter:
             # default saving folder is under the job folder
-            save_path = '../../../../'
             model_name = 'checkpoint_{}.pkl'.format(epoch_idx)
+            if self._enable_deepspeed:
+                save_path = os.path.join(os.environ["MODEL_STORE_DIR"], model_name)
+            else:
+                save_path = os.path.abspath(os.path.join('../../../../', model_name))
             self._local_save(
                 model,
                 optimizer,
@@ -357,8 +390,7 @@ class TrainerBase(object):
                 loss_history,
                 best_epoch,
                 extra_data,
-                save_path,
-                model_name)
+                save_path)
             self._model_checkpoint.add_checkpoint(len(self._set_model_checkpoint_epoch),
                                                   to_save_model=serialize_models(self._cache_model))  # step_index, to_save_model
             self._set_model_checkpoint_epoch.add(epoch_idx)
@@ -515,6 +547,13 @@ class TrainerBase(object):
     @abc.abstractmethod
     def server_aggregate_procedure(self, extra_data={}):
         pass
+
+    @staticmethod
+    def unwrap_model(model):
+        if hasattr(model, "module"):
+            return TrainerBase.unwrap_model(model.module)
+        else:
+            return model
 
 
 """
