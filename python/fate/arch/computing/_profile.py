@@ -313,9 +313,9 @@ def profile_ends():
 
 
 def _pretty_table_str(v):
-    from ..computing._computing import CTableABC
+    from ..computing import is_table
 
-    if isinstance(v, CTableABC):
+    if is_table(v):
         return f"Table(partition={v.partitions})"
     else:
         return f"{type(v).__name__}"

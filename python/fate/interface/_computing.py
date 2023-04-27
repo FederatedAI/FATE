@@ -12,9 +12,14 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from typing import Protocol
+from typing import Iterable, Protocol
+
+from ._table import CTableABC
 
 
 class ComputingEngine(Protocol):
     def destroy(self):
+        ...
+
+    def parallelize(self, data: Iterable, partition: int, include_key: bool = False, **kwargs) -> CTableABC:
         ...
