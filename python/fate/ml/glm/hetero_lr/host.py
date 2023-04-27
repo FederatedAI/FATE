@@ -36,12 +36,21 @@ class HeteroLrModuleHost(HeteroModule):
             init_param
     ):
         self.max_iter = max_iter
-        self.optimizer = Optimizer(optimizer_param["method"],
+        # temp code block start
+        """self.optimizer = Optimizer(optimizer_param["method"],
                                    optimizer_param["penalty"],
                                    optimizer_param["alpha"],
                                    optimizer_param["optimizer_params"])
         self.lr_scheduler = LRScheduler(learning_rate_param["method"],
-                                        learning_rate_param["scheduler_params"])
+                                        learning_rate_param["scheduler_params"])"""
+        # temp ode block ends
+
+        self.optimizer = Optimizer(optimizer_param.method,
+                                   optimizer_param.penalty,
+                                   optimizer_param.alpha,
+                                   optimizer_param.optimizer_params)
+        self.lr_scheduler = LRScheduler(learning_rate_param.method,
+                                        learning_rate_param.scheduler_params)
         self.batch_size = batch_size
         self.init_param = init_param
 

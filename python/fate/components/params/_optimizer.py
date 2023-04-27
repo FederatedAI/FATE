@@ -11,7 +11,6 @@ class OptimizerParam(pydantic.BaseModel):
     alpha: float = 1.0
     optimizer_params: dict
 
-# @todo: maybe add new optimizer param
-
-
-# OptimizerParam = Union[OptimizerParam]
+def optimizer_param():
+    namespace = {}
+    return type("OptimizerParam", (OptimizerParam,), namespace)

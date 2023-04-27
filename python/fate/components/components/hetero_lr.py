@@ -40,25 +40,25 @@ def hetero_lr(ctx, role):
                desc="early stopping criterion, choose from {weight_diff, diff, abs, val_metrics}")
 @cpn.parameter("tol", type=params.confloat(ge=0), default=1e-4)
 @cpn.parameter(
-    "batch_size", type=params.conint(), default=-1, desc="batch size, value less or equals to 0 means full batch"
+    "batch_size", type=params.conint(ge=-1), default=-1, desc="batch size, value less or equals to 0 means full batch"
 )
 @cpn.parameter(
-    "optimizer", type=params.OptimizerParam,
+    "optimizer", type=params.optimizer_param(),
     default=params.OptimizerParam(method="sgd", penalty='l2', alpha=1.0,
                                   optimizer_params={"lr": 1e-2, "weight_decay": 0}),
     desc="optimizer, select method from {'sgd', 'nesterov_momentum_sgd', 'adam', 'rmsprop', 'adagrad', 'sqn'} "
          "for list of configurable arguments, refer to torch.optim"
 )
 @cpn.parameter(
-    "learning_rate_scheduler", type=params.LRSchedulerParam,
+    "learning_rate_scheduler", type=params.lr_scheduler_param(),
     default=params.LRSchedulerParam(method="constant", scheduler_params={"gamma": 0.1}),
     desc="learning rate scheduler, select method from {'step', 'linear', 'constant'}"
          "for list of configurable arguments, refer to torch.optim.lr_scheduler"
 )
-@cpn.parameter("init_param", type=params.InitParam,
+@cpn.parameter("init_param", type=params.init_param(),
                default=params.InitParam(method='zeros', fit_intercept=True),
                desc="Model param init setting.")
-@cpn.parameter("threshold", type=params.confloat(ge=0, le=1), default=0.5,
+@cpn.parameter("threshold", type=params.confloat(ge=0.0, le=1.0), default=0.5,
                desc="predict threshold for binary data")
 @cpn.artifact("train_output_data", type=Output[DatasetArtifact], roles=[GUEST, HOST])
 @cpn.artifact("train_output_metric", type=Output[LossMetrics], roles=[ARBITER])
@@ -98,7 +98,7 @@ def train(
 @hetero_lr.predict()
 @cpn.artifact("input_model", type=Input[ModelArtifact], roles=[GUEST, HOST])
 @cpn.artifact("test_data", type=Input[DatasetArtifact], optional=False, roles=[GUEST, HOST])
-@cpn.parameter("threshold", type=params.confloat(ge=0, le=1), default=0.5,
+@cpn.parameter("threshold", type=params.confloat(ge=0.0, le=1.0), default=0.5,
                desc="predict threshold for binary data")
 @cpn.artifact("test_output_data", type=Output[DatasetArtifact], roles=[GUEST, HOST])
 def predict(
@@ -125,12 +125,12 @@ def train_guest(ctx, train_data, validate_data, train_output_data, output_model,
                                      optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
                                      init_param=init_param, threshold=threshold)
         train_data = sub_ctx.reader(train_data).read_dataframe()
-        # temp code start
-        train_data = train_data.data
-        # temp code end
 
         if validate_data is not None:
             validate_data = sub_ctx.reader(validate_data).read_dataframe()
+        # temp code start
+        train_data = train_data.data
+        # temp code end
         module.fit(sub_ctx, train_data, validate_data)
         model = module.get_model()
         with output_model as model_writer:
@@ -151,11 +151,12 @@ def train_host(ctx, train_data, validate_data, train_output_data, output_model, 
                                     optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
                                     init_param=init_param)
         train_data = sub_ctx.reader(train_data).read_dataframe()
+
+        if validate_data is not None:
+            validate_data = sub_ctx.reader(validate_data).read_dataframe()
         # temp code start
         train_data = train_data.data
         # temp code end
-        if validate_data is not None:
-            validate_data = sub_ctx.reader(validate_data).read_dataframe()
         module.fit(sub_ctx, train_data, validate_data)
         model = module.get_model()
         with output_model as model_writer:

@@ -40,12 +40,22 @@ class HeteroLrModuleGuest(HeteroModule):
     ):
         self.max_iter = max_iter
         self.batch_size = batch_size
-        self.optimizer = Optimizer(optimizer_param["method"],
+        # temp code block start
+        """self.optimizer = Optimizer(optimizer_param["method"],
                                    optimizer_param["penalty"],
                                    optimizer_param["alpha"],
                                    optimizer_param["optimizer_params"])
         self.lr_scheduler = LRScheduler(learning_rate_param["method"],
-                                        learning_rate_param["scheduler_params"])
+                                        learning_rate_param["scheduler_params"])"""
+        # temp ode block ends
+
+        self.optimizer = Optimizer(optimizer_param.method,
+                                   optimizer_param.penalty,
+                                   optimizer_param.alpha,
+                                   optimizer_param.optimizer_params)
+        self.lr_scheduler = LRScheduler(learning_rate_param.method,
+                                        learning_rate_param.scheduler_params)
+
         self.init_param = init_param
         self.threshold = threshold
 
@@ -69,7 +79,7 @@ class HeteroLrModuleGuest(HeteroModule):
 
         if label_count > 2:
             self.ovr = True
-            self.estimator = True
+            self.estimator = {}
             train_data_binarized_label = train_data.label.one_hot()
             for i, class_ctx in ctx.range(range(label_count)):
                 optimizer = copy.deepcopy(self.optimizer)

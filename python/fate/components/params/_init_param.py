@@ -11,6 +11,11 @@ class InitParam(pydantic.BaseModel):
     fit_intercept: bool = True
 
 
+def init_param():
+    namespace = {}
+    return type("InitParam", (InitParam,), namespace)
+
+
 """
 class OnesInitParam(pydantic.BaseModel):
     method: Literal['ones']

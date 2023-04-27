@@ -15,8 +15,8 @@
 #
 
 from ._cipher import CipherParamType, PaillierCipherParam
-from ._fields import confloat, conint, jsonschema, parse, string_choice
-from ._init_param import InitParam
-from ._learning_rate import LRSchedulerParam
-from ._optimizer import OptimizerParam
+from ._fields import confloat, conint, jsonschema, parse, string_choice, Parameter
+from ._init_param import InitParam, init_param
+from ._learning_rate import LRSchedulerParam, lr_scheduler_param
+from ._optimizer import OptimizerParam, optimizer_param
 from ._penalty import penalty_param

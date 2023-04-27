@@ -43,19 +43,19 @@ def hetero_linr(ctx, role):
     "batch_size", type=params.conint(), default=-1, desc="batch size, value less or equals to 0 means full batch"
 )
 @cpn.parameter(
-    "optimizer", type=params.OptimizerParam,
+    "optimizer", type=params.optimizer_param(),
     default=params.OptimizerParam(method="sgd", penalty='l2', alpha=1.0,
                                   optimizer_params={"lr": 1e-2, "weight_decay": 0}),
     desc="optimizer, select method from {'sgd', 'nesterov_momentum_sgd', 'adam', 'rmsprop', 'adagrad', 'sqn'} "
          "for list of configurable arguments, refer to torch.optim"
 )
 @cpn.parameter(
-    "learning_rate_scheduler", type=params.LRSchedulerParam,
-    default=params.LRSchedulerParam(method="constant", ),
+    "learning_rate_scheduler", type=params.lr_scheduler_param(),
+    default=params.LRSchedulerParam(method="constant"),
     desc="learning rate scheduler, select method from {'step', 'linear', 'constant'}"
          "for list of configurable arguments, refer to torch.optim.lr_scheduler"
 )
-@cpn.parameter("init_param", type=params.InitParam, default=params.InitParam(method='zeros', fit_intercept=True),
+@cpn.parameter("init_param", type=params.init_param(), default=params.InitParam(method='zeros', fit_intercept=True),
                desc="Model param init setting.")
 @cpn.artifact("train_output_data", type=Output[DatasetArtifact], roles=[GUEST, HOST])
 @cpn.artifact("train_output_metric", type=Output[LossMetrics], roles=[ARBITER])
