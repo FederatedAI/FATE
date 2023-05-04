@@ -124,13 +124,11 @@ def train_guest(ctx, train_data, validate_data, train_output_data, output_model,
         module = HeteroLrModuleGuest(max_iter=max_iter, batch_size=batch_size,
                                      optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
                                      init_param=init_param, threshold=threshold)
-        train_data = sub_ctx.reader(train_data).read_dataframe()
+        train_data = sub_ctx.reader(train_data).read_dataframe().data
 
         if validate_data is not None:
-            validate_data = sub_ctx.reader(validate_data).read_dataframe()
-        # temp code start
-        train_data = train_data.data
-        # temp code end
+            validate_data = sub_ctx.reader(validate_data).read_dataframe().data
+
         module.fit(sub_ctx, train_data, validate_data)
         model = module.get_model()
         with output_model as model_writer:
@@ -150,13 +148,11 @@ def train_host(ctx, train_data, validate_data, train_output_data, output_model, 
         module = HeteroLrModuleHost(max_iter=max_iter, batch_size=batch_size,
                                     optimizer_param=optimizer_param, learning_rate_param=learning_rate_param,
                                     init_param=init_param)
-        train_data = sub_ctx.reader(train_data).read_dataframe()
+        train_data = sub_ctx.reader(train_data).read_dataframe().data
 
         if validate_data is not None:
-            validate_data = sub_ctx.reader(validate_data).read_dataframe()
-        # temp code start
-        train_data = train_data.data
-        # temp code end
+            validate_data = sub_ctx.reader(validate_data).read_dataframe().data
+
         module.fit(sub_ctx, train_data, validate_data)
         model = module.get_model()
         with output_model as model_writer:

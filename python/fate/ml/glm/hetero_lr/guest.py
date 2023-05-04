@@ -179,6 +179,7 @@ class HeteroLrEstimatorGuest(HeteroModule):
         self.start_iter = 0
         self.end_iter = -1
         self.is_converged = False
+        self.with_weight = False
 
     def fit_single_model(self, ctx, train_data, validate_data=None, with_weight=False):
         """
@@ -188,8 +189,9 @@ class HeteroLrEstimatorGuest(HeteroModule):
                 loss = log2 - (1/N)*0.5*∑ywx + (1/N)*0.125*[∑(Wg*Xg)^2 + ∑(Wh*Xh)^2 + 2 * ∑(Wg*Xg * Wh*Xh)]
          """
         coef_count = train_data.shape[1]
+        # @todo: need to make sure add single-valued column works
         if self.init_param.fit_intercept:
-            train_data["intercept"] = 1
+            train_data["intercept"] = 1.0
             coef_count += 1
 
         # temp code start
@@ -204,15 +206,13 @@ class HeteroLrEstimatorGuest(HeteroModule):
             self.optimizer.init_optimizer(model_parameter_length=w.size()[0])
             # temp code end
 
-        """batch_loader = dataframe.DataLoader(
-            train_data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="guest", sync_arbiter=True,
-            return_weight=True
-        )  # @todo: include batch weight"""
         batch_loader = dataframe.DataLoader(
             train_data, ctx=ctx, batch_size=self.batch_size, mode="hetero", role="guest", sync_arbiter=True
         )
         if self.end_iter >= 0:
             self.start_iter = self.end_iter + 1
+        """if train_data.weight:
+            self.with_weight = True"""
         """for i, iter_ctx in ctx.range(self.start_iter, self.max_iter):"""
         # temp code start
         for i, iter_ctx in ctx.range(self.max_iter):
@@ -221,8 +221,16 @@ class HeteroLrEstimatorGuest(HeteroModule):
             j = 0
             self.optimizer.set_iters(i)
             logger.info(f"self.optimizer set iters{i}")
+            # todo: if self.with_weight: include weight in batch result
             # for batch_ctx, (X, Y, weight) in iter_ctx.iter(batch_loader):
-            for batch_ctx, (X, Y) in iter_ctx.iter(batch_loader):
+            # temp code start
+            # for batch_ctx, (X, Y) in iter_ctx.iter(batch_loader):
+            for batch_ctx, X, Y in [(iter_ctx, train_data, train_data.label)]:
+                # temp code end
+                logger.info(f"X: {X}, Y: {Y}")
+                # temp code start
+                X = X.values.as_tensor()
+                # temp code end
                 h = X.shape[0]
 
                 Xw = torch.matmul(X, w)
