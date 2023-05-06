@@ -1,11 +1,5 @@
 # -*-coding: Utf-8 -*-
-'''
-====================
-@File : sm2 .py
-author: circle
-Time：2023/4/3
-@Desc:
-=====================
+
 '''
 from federatedml.util import LOGGER
 import tinyec.ec as ec
@@ -76,30 +70,3 @@ def sha256_hash(plaintext):
     print(f'hash finished!\n,plaintext is:{plaintext},\n,hashvalue is:{hashvalue}')
     return hashvalue
 
-
-if __name__ == '__main__':
-    s1 = SM2()
-    print('s1 pr key:', s1.private_key, type(s1.private_key))
-    plaintext1 = b'12345'
-    hashvalue1 = sha256_hash(plaintext1)
-    cipher1 = s1.encrypt(hashvalue1)
-
-    s2 = SM2()
-    print('s2 pr key:', s2.private_key)
-    plaintext2 = b'12345'
-    hashvalue2 = sha256_hash(plaintext2)
-    cipher2 = s2.encrypt(hashvalue2)
-    #
-    print('cipher1:', cipher1, type(cipher1))
-
-    print('cipher2:', cipher2)
-
-    sign1 = s1.diffie_hellman(cipher2)
-    sign2 = s2.diffie_hellman(cipher1)
-    #
-    print('sign1:', sign1, type(sign1))
-    print('sign2:', sign2, type(sign2))
-    if sign1 == sign2:
-        print('True')
-    else:
-        print('False')
