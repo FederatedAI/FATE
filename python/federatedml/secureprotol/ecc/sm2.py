@@ -63,10 +63,3 @@ class SM2:
         return self.private_key
 
 
-def sha256_hash(plaintext):
-    from federatedml.secureprotol.hash.hash_factory import Hash
-    hash_operator = Hash('sha256', hex_output=False)
-    hashvalue = hash_operator.compute(plaintext, suffix_salt='12345')
-    print(f'hash finished!\n,plaintext is:{plaintext},\n,hashvalue is:{hashvalue}')
-    return hashvalue
-
