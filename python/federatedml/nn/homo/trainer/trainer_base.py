@@ -4,14 +4,13 @@ import importlib
 
 import torch as t
 import numpy as np
-from pathlib import Path
 from torch.nn import Module
 from typing import List
 from federatedml.util import consts
 from federatedml.util import LOGGER
 from federatedml.model_base import serialize_models
 from federatedml.nn.backend.utils.common import ML_PATH
-from federatedml.nn.model_zoo.peft import PEFTLM
+from federatedml.nn.model_zoo.pellm.parameter_efficient_llm import PELLM
 from federatedml.feature.instance import Instance
 from federatedml.evaluation.evaluation import Evaluation
 from federatedml.model_base import Metric, MetricMeta
@@ -218,25 +217,11 @@ class TrainerBase(object):
             save_path):
 
         LOGGER.debug('save model to local dir')
-        if isinstance(model, PEFTLM):
-            """
-            saved_params = {
-                k: p.to("cpu") for k, p in model.named_parameters() if p.requires_grad
-            }
-            Path.mkdir(Path(save_path), exist_ok=True)
-            t.save(saved_params, os.path.join(save_path, "adapter_model.bin"))
+        if isinstance(model, PELLM) and model.enable_save_pretrained:
             model.save_pretrained(save_path)
-            """
         else:
             unwrap_model = TrainerBase.unwrap_model(model)
-            if isinstance(unwrap_model, PEFTLM):
-                """
-                saved_params = {
-                    k: p.to("cpu") for k, p in unwrap_model.named_parameters() if p.requires_grad
-                }
-                Path.mkdir(Path(save_path), exist_ok=True)
-                t.save(saved_params, os.path.join(save_path, "adapter_model.bin"))
-                """
+            if isinstance(unwrap_model, PELLM) and model.enable_save_pretrained:
                 unwrap_model.save_pretrained(save_path)
             else:
                 model_state_dict = model.state_dict()
@@ -254,8 +239,10 @@ class TrainerBase(object):
                 }
                 t.save(model_dict, save_path)
 
+        """
         if self._enable_deepspeed and self._tracker is not None:
             self._tracker.sync_model(save_path)
+        """
 
         model_dict = self._exporter.export_model_dict(model_define=self.nn_define,
                                                       optimizer_define=self.opt_define,
@@ -315,7 +302,7 @@ class TrainerBase(object):
         assert isinstance(
             epoch_idx, int) and epoch_idx >= 0, 'epoch idx must be an int >= 0'
 
-        if isinstance(TrainerBase.unwrap_model(model), PEFTLM):
+        if isinstance(TrainerBase.unwrap_model(model), PELLM):
             raise ValueError("save checkpoint of Pretrained model should provide local dir")
 
         if self._model_checkpoint:

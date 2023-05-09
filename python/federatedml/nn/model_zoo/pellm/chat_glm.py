@@ -1,7 +1,10 @@
-from federatedml.nn.model_zoo.peft.parameter_efficient_finetune_llm import PEFTLM
+from federatedml.nn.model_zoo.pellm.parameter_efficient_llm import PELLM
+from transformers import AutoConfig
 
 
-class ChatGLMForConditionalGeneration(PEFTLM):
+class ChatGLMForConditionalGeneration(PELLM):
+    enable_save_pretrained = True
+
     def __init__(self,
                  pretrained_path: str = None,
                  peft_type: str = None,
@@ -15,17 +18,22 @@ class ChatGLMForConditionalGeneration(PEFTLM):
 
         super().__init__(pretrained_path=pretrained_path,
                          peft_type=peft_type,
-                         peft_config=peft_config,
-                         fp16=fp16)
+                         peft_config=peft_config)
+
+        if fp16:
+            self._pe_lm.half()
 
     def init_config(self):
-        super(ChatGLMForConditionalGeneration, self).init_config()
+        self.config = AutoConfig.from_pretrained(self.config_path, trust_remote_code=True)
         self.config.pre_seq_len = self.pre_seq_len
         self.config.prefix_projection = self.prefix_projection
 
+    def init_base_lm(self):
+        super(ChatGLMForConditionalGeneration, self).init_base_lm(trust_remote_code=True)
+
     def add_peft(self):
         if self.pre_seq_len:
-            self.peft_lm.half()
-            self.peft_lm.transformer.prefix_encoder.float()
+            self._pe_lm.half()
+            self._pe_lm.transformer.prefix_encoder.float()
         else:
             super(ChatGLMForConditionalGeneration, self).add_peft()

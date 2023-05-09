@@ -1,7 +1,5 @@
-import deepspeed
 import json
 import torch
-import torch.distributed as dist
 import inspect
 from fate_arch.computing.non_distributed import LocalData
 from fate_arch.computing import is_table

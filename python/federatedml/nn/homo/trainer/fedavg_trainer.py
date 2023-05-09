@@ -1,11 +1,9 @@
-import os
-import time
-
 import torch
 import torch as t
 import torch.distributed as dist
 import tqdm
 import numpy as np
+import transformers
 from torch.nn import DataParallel
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
@@ -51,7 +49,7 @@ class FedAVGTrainer(TrainerBase):
                       if is multi classification task, will use metrics 'precision', 'recall', 'accuracy'
                       if is regression task, will use metrics 'mse', 'mae', 'rmse', 'explained_variance', 'r2_score'
     checkpoint_save_freqs: save model every n epoch, if None, will not save checkpoint.
-    task_type: str, 'auto', 'binary', 'multi', 'regression'
+    task_type: str, 'auto', 'binary', 'multi', 'regression',
                this option decides the return format of this trainer, and the evaluation type when running validation.
                if auto, will automatically infer your task type from labels and predict results.
     save_to_local_dir: bool, if True, a dictionary containing the model, optimizer, and metadata will be saved to a local directory.
@@ -67,7 +65,9 @@ class FedAVGTrainer(TrainerBase):
                  validation_freqs=None,  # validation configuration
                  checkpoint_save_freqs=None,  # checkpoint configuration
                  task_type='auto',  # task type
-                 save_to_local_dir=False  # save model to local path
+                 save_to_local_dir=False,  # save model to local path
+                 collate_fn=None,
+                 collate_fn_params=None
                  ):
 
         super(FedAVGTrainer, self).__init__()
@@ -79,7 +79,7 @@ class FedAVGTrainer(TrainerBase):
         self.save_freq = checkpoint_save_freqs
         self.save_to_local_dir = save_to_local_dir
 
-        self.task_type = task_type
+        self.task_type = task_type.lower()
         task_type_allow = [
             consts.BINARY,
             consts.REGRESSION,
@@ -119,6 +119,9 @@ class FedAVGTrainer(TrainerBase):
         self.shuffle = shuffle
         self.data_loader_worker = data_loader_worker
         self.data_loader = None
+
+        self.collate_fn = collate_fn
+        self.collate_fn_params = collate_fn_params if collate_fn_params is not None else dict()
 
         self.early_stop = early_stop
         early_stop_type = ['diff', 'abs']
@@ -192,18 +195,6 @@ class FedAVGTrainer(TrainerBase):
         batch_idx = 0
         acc_num = 0
 
-        """
-        if self.data_loader is None:
-            self.data_loader = DataLoader(
-                train_set,
-                batch_size=self.batch_size,
-                pin_memory=self.pin_memory,
-                shuffle=self.shuffle,
-                num_workers=self.data_loader_worker,
-                collate_fn=getattr(train_set, "collate_fn", None)
-            )
-        """
-
         if isinstance(self.data_loader.sampler, DistributedSampler):
             self.data_loader.sampler.set_epoch(epoch_idx)
 
@@ -214,14 +205,21 @@ class FedAVGTrainer(TrainerBase):
         else:
             to_iterate = dl
 
-        for batch_data, batch_label in to_iterate:
+        batch_label = None
+        for _batch_iter in to_iterate:
+            if self.task_type in [consts.CAUSAL_LM, consts.SEQ_2_SEQ_LM]:
+                batch_data = _batch_iter
+            else:
+                batch_data, batch_label = _batch_iter
 
-            if self.cuda is not None:
-                batch_data, batch_label = self.to_cuda(
-                    batch_data, self.cuda_main_device), self.to_cuda(batch_label, self.cuda_main_device)
-            elif self._enable_deepspeed:
-                batch_data, batch_label = self.to_cuda(
-                    batch_data, self.model.device), self.to_cuda(batch_label, self.model.device)
+            batch_data = self._decode(batch_data)
+            batch_label = self._decode(batch_label)
+
+            if self.cuda is not None or self._enable_deepspeed:
+                device = self.cuda_main_device if self.cuda_main_device else self.model.device
+                batch_data = self.to_cuda(batch_data, device)
+                if batch_label is not None:
+                    batch_label = self.to_cuda(batch_label, device)
 
             if not self._enable_deepspeed:
                 optimizer.zero_grad()
@@ -233,6 +231,10 @@ class FedAVGTrainer(TrainerBase):
             if not loss and hasattr(pred, "loss"):
                 batch_loss = pred.loss
             elif loss is not None:
+                if batch_label is None:
+                    raise ValueError(
+                        "When loss is set, please provide label to calculate loss"
+                    )
                 batch_loss = loss(pred, batch_label)
             else:
                 raise ValueError(
@@ -245,7 +247,6 @@ class FedAVGTrainer(TrainerBase):
                 batch_loss_np = batch_loss.detach().numpy(
                 ) if self.cuda is None else batch_loss.cpu().detach().numpy()
             else:
-                batch_loss = batch_loss.mean()
                 batch_loss = model.backward(batch_loss)
                 batch_loss_np = batch_loss.cpu().detach().numpy()
                 model.step()
@@ -299,8 +300,9 @@ class FedAVGTrainer(TrainerBase):
             LOGGER.info('epoch is {}'.format(i))
             model = self._select_model()
             epoch_loss = self.train_an_epoch(i, model, train_set, optimizer, loss)
-            self.callback_loss(epoch_loss, i)
-            loss_history.append(float(epoch_loss))
+            if not dist.is_available() or dist.get_rank() == 0:
+                self.callback_loss(epoch_loss, i)
+                loss_history.append(float(epoch_loss))
             LOGGER.info('epoch loss is {}'.format(epoch_loss))
 
             # federation process, if running local mode, cancel federation
@@ -469,8 +471,25 @@ class FedAVGTrainer(TrainerBase):
 
         LOGGER.info('server aggregation process done')
 
+    def _decode(self, data):
+        if isinstance(data, transformers.tokenization_utils_base.BatchEncoding):
+            return dict(data)
+        else:
+            return data
+
+    def _get_collate_fn(self, dataset):
+        if not self.collate_fn and not hasattr(dataset, "collate_fn"):
+            return None
+        if self.collate_fn:
+            if not hasattr(dataset, "tokenizer"):
+                raise ValueError(f"Collate Fn Only Support in task types=[{consts.CAUSAL_LM}, {consts.SEQ_2_SEQ_LM}]")
+            collate_fn = getattr(transformers, self.collate_fn)(dataset.tokenizer, **self.collate_fn_params)
+            return collate_fn
+        else:
+            return dataset.collate_fn
+
     def _get_train_data_loader(self, train_set):
-        collate_fn = train_set.collate_fn if hasattr(train_set, "collate_fn") else None
+        collate_fn = self._get_collate_fn(train_set)
 
         if not dist.is_available() or dist.get_world_size() <= 1:
             self.data_loader = DataLoader(
