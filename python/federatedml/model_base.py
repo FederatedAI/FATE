@@ -144,9 +144,6 @@ class WarpedTrackerClient:
     def log_component_summary(self, summary_data: dict):
         return self._tracker.log_component_summary(summary_data=summary_data)
 
-    def sync_model(self, path):
-        return self._tracker.sync_model(path)
-
 
 class ModelBase(object):
     component_name = None

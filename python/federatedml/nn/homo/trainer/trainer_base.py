@@ -239,11 +239,6 @@ class TrainerBase(object):
                 }
                 t.save(model_dict, save_path)
 
-        """
-        if self._enable_deepspeed and self._tracker is not None:
-            self._tracker.sync_model(save_path)
-        """
-
         model_dict = self._exporter.export_model_dict(model_define=self.nn_define,
                                                       optimizer_define=self.opt_define,
                                                       loss_define=self.loss_define,
