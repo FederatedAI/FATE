@@ -190,7 +190,6 @@ class PlainTextAggregatorServer(Aggregator):
             raise ValueError(
                 'can not aggregate receive model, format is illegal: {}'.format(models))
         
-        print('aggregated model is {}'.format(agg_result))
         return agg_result
 
     def _aggregate_loss(self, party_idx=-1):

@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from fate.interface import Context
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Callable
 from fate.interface import Context
 from torch.optim import Optimizer
 from torch.utils.data import Dataset
@@ -53,10 +53,15 @@ class FedAVGCLient(FedTrainerClient):
                  training_args: TrainingArguments, fed_args: FedArguments, 
                  train_set: Dataset, val_set: Dataset = None, 
                  scheduler: _LRScheduler = None, 
-                 callbacks: List[TrainerCallback] = [], use_hf_default_behavior: bool = False, compute_metrics=None):
+                 callbacks: List[TrainerCallback] = [], 
+                 data_collator: Callable=None,
+                 use_hf_default_behavior: bool = False, 
+                 compute_metrics: Callable = None, 
+                 local_model: bool = False):
         
-        super().__init__(ctx, model, loss_fn, optimizer, training_args, fed_args, train_set, val_set, scheduler, callbacks, use_hf_default_behavior,
-                         compute_metrics=compute_metrics)
+        super().__init__(ctx, model, loss_fn, optimizer, training_args, fed_args, train_set, val_set, data_collator,
+                                  scheduler, callbacks, use_hf_default_behavior,
+                                 compute_metrics=compute_metrics, local_mode=local_model)
 
         self._start_time = 0
         self._start_log = '**********Epoch {}**********'
@@ -80,6 +85,7 @@ class FedAVGCLient(FedTrainerClient):
             control: Optional[TrainerControl] = None,
             state: Optional[TrainerState] = None,
             **kwargs):
+
         self._cur_start_log = self._start_log.format(int(state.epoch))
         logger.info(self._cur_start_log)
         logger.info('local training start')

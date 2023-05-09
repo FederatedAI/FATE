@@ -351,7 +351,8 @@ class StdFedTrainerMixin(FedCallBackInterFace):
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
                  callbacks: Optional[List[TrainerCallback]] = [],
                  use_hf_default_behavior: bool = False,
-                 compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None
+                 compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
+                 local_mode: bool = None
                  ):
         
         assert isinstance(
@@ -359,15 +360,21 @@ class StdFedTrainerMixin(FedCallBackInterFace):
             callbacks)
         
         self.ctx = ctx
+        self.local_mode = local_mode
         self._callbacks = callbacks
         self._args = training_args
         self._fed_args = fed_args
         self._user_compute_metric_func = compute_metrics
         self.train_dataset = train_set
         self.eval_dataset = val_set
-        self._aggregator: Aggregator = self.init_aggregator()
         self.loss_func = loss_fn
         self._use_hf_default_behavior = use_hf_default_behavior
+
+        if not self.local_mode:
+            self._aggregator: Aggregator = self.init_aggregator()
+        else:
+            self._aggregator = None
+            logger.info('Local model is set, skip initializing aggregator')
 
     @property
     def aggregator(self):
@@ -389,12 +396,17 @@ class StdFedTrainerMixin(FedCallBackInterFace):
         # remove default printer callback, need to user our logging strategy
         new_callback_list = []
         for i in callback_handler.callbacks:
-            if not isinstance(i, PrinterCallback):
-                new_callback_list.append(i)
+            # if not isinstance(i, PrinterCallback):
+            new_callback_list.append(i)
         new_callback_list += new_callbacks
         callback_handler.callbacks = new_callback_list
 
     def _add_fed_callback(self, callback_handler, fed_callback_inst):
+
+        if self.local_mode:
+            logger.info('Local model is set, federation callback disabled')
+            return
+
         has_fed_callback = False
 
         for c in callback_handler.callbacks:
@@ -431,15 +443,20 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
                  fed_args: FedArguments,
                  train_set: Dataset,
                  val_set: Dataset = None,
+                 data_collator: Callable = None,
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
                  callbacks: Optional[List[TrainerCallback]] = [],
                  use_hf_default_behavior: bool = False,
-                 compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None
+                 compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
+                 local_mode: bool = False,
                  ):
 
         # default use no lr decay
         if scheduler is None:
-            scheduler = LambdaLR(optimizer, lambda x: 1)
+            if use_hf_default_behavior and optimizer is None:
+                pass
+            else:
+                scheduler = LambdaLR(optimizer, lambda x: 1)
     
         # in case you forget to set evaluation_strategy
         if val_set is not None and training_args.evaluation_strategy == 'no':
@@ -458,15 +475,19 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
                                     scheduler=scheduler,
                                     callbacks=callbacks,
                                     use_hf_default_behavior=use_hf_default_behavior,
-                                    compute_metrics=compute_metrics
+                                    compute_metrics=compute_metrics,
+                                    local_mode=local_mode
                                     )
+
+        if data_collator is None:
+            data_collator = _utils.collate.default_collate
 
         Trainer.__init__(self,
                         model=model,
                         args=self._args,
                         train_dataset=train_set,
                         eval_dataset=val_set,
-                        data_collator=_utils.collate.default_collate,
+                        data_collator=data_collator,
                         optimizers=[optimizer, scheduler],
                         compute_metrics=self._compute_metrics_warp_func
                         )
