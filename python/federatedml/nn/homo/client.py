@@ -6,7 +6,7 @@ from fate_arch.computing import is_table
 from federatedml.model_base import ModelBase
 from federatedml.nn.homo.trainer.trainer_base import get_trainer_class, TrainerBase
 from federatedml.nn.backend.utils.data import load_dataset
-from federatedml.nn.backend.utils import deepspeed_utils
+from federatedml.nn.backend.utils import deepspeed_util
 from federatedml.param.homo_nn_param import HomoNNParam
 from federatedml.nn.backend.torch import serialization as s
 from federatedml.nn.backend.torch.base import FateTorchOptimizer
@@ -142,7 +142,7 @@ class HomoNNClient(ModelBase):
         global_seed(self.torch_seed)
 
         if self.ds_config:
-            deepspeed_utils.init_deepspeed_env(self.ds_config)
+            deepspeed_util.init_deepspeed_env(self.ds_config)
 
         # load trainer class
         if self.trainer is None:
@@ -259,8 +259,10 @@ class HomoNNClient(ModelBase):
         trainer_inst.fed_mode = True
 
         if self.ds_config:
-            model, optimizer = deepspeed_utils.deepspeed_init(model, self.ds_config)
-            trainer_inst.enable_deepspeed()
+            model, optimizer = deepspeed_util.deepspeed_init(model, self.ds_config)
+            trainer_inst.enable_deepspeed(is_zero_3=deepspeed_util.is_zero3(self.ds_config))
+            if deepspeed_util.is_zero3(self.ds_config):
+                model.train()
 
         return trainer_inst, model, optimizer, loss_fn, extra_data
 
@@ -389,7 +391,6 @@ class HomoNNClient(ModelBase):
         return ret_table
 
     def export_model(self):
-
         if self.model is None:
             LOGGER.debug('export an empty model')
             return self.exporter.export_model_dict()  # return an empty model

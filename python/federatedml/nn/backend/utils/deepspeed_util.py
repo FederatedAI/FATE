@@ -27,7 +27,7 @@ def deepspeed_init(model, ds_config):
 
 
 def is_zero3(ds_config):
-    return ds_config.get("zero_optimization", {}).get("stage", -1)
+    return ds_config.get("zero_optimization", {}).get("stage", -1) == 3
 
 
 def init_deepspeed_env(ds_config):
@@ -38,3 +38,11 @@ def init_deepspeed_env(ds_config):
         from transformers.deepspeed import HfDeepSpeedConfig
 
         HfDeepSpeedConfig(ds_config)
+
+
+def gather_model(model):
+    while hasattr(model, "module"):
+        model = model.module
+
+    for _, p in model.named_parameters():
+        p.all_gather()

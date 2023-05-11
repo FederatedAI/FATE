@@ -65,6 +65,7 @@ class TrainerBase(object):
 
         # deepspeed enabled
         self._enable_deepspeed = False
+        self._deepspeed_zero_3 = False
 
     @staticmethod
     def is_pos_int(val):
@@ -119,8 +120,9 @@ class TrainerBase(object):
         assert isinstance(val, bool), 'fed mode must be a bool'
         self._fed_mode = val
 
-    def enable_deepspeed(self):
+    def enable_deepspeed(self, is_zero_3=False):
         self._enable_deepspeed = True
+        self._deepspeed_zero_3 = is_zero_3
 
     def local_mode(self):
         self.fed_mode = False
