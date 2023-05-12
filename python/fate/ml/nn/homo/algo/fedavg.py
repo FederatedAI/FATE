@@ -1,5 +1,8 @@
 import time
-from fate.ml.nn.trainer.trainer_base import FedTrainerClient, FedTrainerServer, logger
+
+from transformers.training_args import TrainingArguments
+from fate.ml.aggregator.base import Aggregator
+from fate.ml.nn.trainer.trainer_base import FedTrainerClient, FedTrainerServer, TrainingArguments, logger
 from fate.ml.nn.trainer.trainer_base import FedArguments, time_decorator
 from dataclasses import field
 from dataclasses import dataclass, field
@@ -58,7 +61,7 @@ class FedAVGCLient(FedTrainerClient):
         return aggregator
     
     @time_decorator('FedAVG')
-    def on_epoch_end(
+    def on_federation(
             self,
             ctx: Context,
             aggregator: PlainTextAggregatorClient,
@@ -88,5 +91,5 @@ class FedAVGServer(FedTrainerServer):
         aggregator = PlainTextAggregatorServer(self.ctx, aggregator_name='fed_avg')
         return aggregator
 
-    def on_epoch_end(self, ctx: Context, aggregator: PlainTextAggregatorServer, fed_args: FedArguments, args: TrainingArguments):
+    def on_federation(self, ctx: Context, aggregator: Aggregator, fed_args: FedArguments, args: TrainingArguments):
         aggregator.model_aggregation()

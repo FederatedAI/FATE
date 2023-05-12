@@ -73,7 +73,7 @@ Fed Callback Related Classes
 """
 
 
-class FedCallBackInterFace(object):
+class ShortcutCallBackInterFace(object):
 
     def __init__(self) -> None:
         pass
@@ -168,21 +168,6 @@ class FedCallBackInterFace(object):
             **kwargs):
         pass
 
-    def on_substep_end(
-            self,
-            ctx: Context,
-            aggregator: Aggregator,
-            fed_args: FedArguments,
-            args: TrainingArguments,
-            model: Optional[nn.Module] = None,
-            optimizer: Optional[Optimizer] = None,
-            scheduler: Optional[_LRScheduler] = None,
-            dataloader: Optional[Tuple[DataLoader]] = None,
-            control: Optional[TrainerControl] = None,
-            state: Optional[TrainerState] = None,
-            **kwargs):
-            pass
-
     def on_step_end(
         self,
         ctx: Context,
@@ -198,7 +183,10 @@ class FedCallBackInterFace(object):
         **kwargs):
         pass
 
-    def on_log(
+
+class FedCallbackInterface(object):
+
+    def on_federation(
         self,
         ctx: Context,
         aggregator: Aggregator,
@@ -215,7 +203,6 @@ class FedCallBackInterFace(object):
 
     def init_aggregator(self):
         raise NotImplementedError('init_aggregator() must be implemented in subclass, init aggregator here')
-    
 
 
 # I dont like huggingface logging
@@ -229,36 +216,39 @@ class LogSuppressFilter(logging.Filter):
         return True
     
 
+def compute_max_aggregation(fed_args: FedArguments, max_epoch: int, max_steps: int, epochs_trained: int, steps_trained: int) -> int:
+
+    if fed_args.aggregate_strategy == AggregateStrategy.PROGRESS_PERCENTAGE.value and fed_args.aggregation_percentage is not None:
+        max_aggregation = int(1 / fed_args.aggregation_percentage)
+        aggregate_freq = int(max_steps / max_aggregation)
+        max_aggregation = max_aggregation - int(steps_trained / aggregate_freq)
+    elif fed_args.aggregate_strategy == AggregateStrategy.EPOCH.value:
+        aggregate_freq = fed_args.aggregate_freq
+        max_aggregation = int((max_epoch - epochs_trained) / aggregate_freq)
+    elif fed_args.aggregate_strategy == AggregateStrategy.STEP.value:
+        aggregate_freq = fed_args.aggregate_freq
+        max_aggregation = int((max_steps - steps_trained) / aggregate_freq)
+
+    return max_aggregation, aggregate_freq
+    
+
 class AggregationChecker:
 
-    def __init__(self, fed_args: FedArguments, max_epoch: int, max_steps: int, epochs_trained: int, steps_trained: int):
+    def __init__(self, max_aggregation, aggregate_freq, max_epoch: int, max_steps: int, epochs_trained: int, steps_trained: int):
 
-        self.fed_args = fed_args
         self.max_epoch = max_epoch
         self.max_steps = max_steps
         self.epochs_trained = epochs_trained
         self.steps_trained = steps_trained
         self.aggregation_count = 0
-        self.aggregate_freq = None
-
-        if fed_args.aggregate_strategy == AggregateStrategy.PROGRESS_PERCENTAGE.value and fed_args.aggregation_percentage is not None:
-            self.max_aggregation = int(1 / fed_args.aggregation_percentage)
-            self.aggregate_freq = int(self.max_steps / self.max_aggregation)
-            self.max_aggregation = self.max_aggregation - int(steps_trained / self.aggregate_freq)
-
-        elif fed_args.aggregate_strategy == AggregateStrategy.EPOCH.value:
-            self.aggregate_freq = fed_args.aggregate_freq
-            self.max_aggregation = int((self.max_epoch - self.epochs_trained) / self.aggregate_freq)
-
-        elif fed_args.aggregate_strategy == AggregateStrategy.STEP.value:
-            self.aggregate_freq = fed_args.aggregate_freq
-            self.max_aggregation = int((self.max_steps - self.steps_trained) / self.aggregate_freq)
+        self.aggregate_freq = aggregate_freq
+        self.max_aggregation = max_aggregation
 
     def should_aggregate(self, state: TrainerState) -> bool:
 
         cur_epoch = int(state.epoch)
         cur_step = int(state.global_step)
-        
+
         if self.aggregation_count >= self.max_aggregation:
             return False
 
@@ -287,12 +277,15 @@ class AggregationChecker:
 
 class FedParameterAlignCallback(TrainerCallback):
 
-    def __init__(self, ctx, training_args, fed_args, is_server=False) -> None:
+    def __init__(self, ctx: Context, training_args: TrainingArguments, fed_args: FedArguments, is_server: bool = False) -> None:
         super().__init__()
         self.ctx = ctx
         self.is_server = is_server
         self.training_args = training_args
         self.fed_args = fed_args
+        self._suffix = 'fed_para'
+        self._send_count = 0
+        self._parameters = None
 
     def _client_send_parameters(self, state: TrainerState, args, train_dataloader):
         # client need to compute: epochs, max_steps, num_step_per_epoch, trained_epoch, trained_steps
@@ -327,15 +320,72 @@ class FedParameterAlignCallback(TrainerCallback):
             steps_trained_in_current_epoch *= args.gradient_accumulation_steps
         else:
             steps_trained_in_current_epoch = 0
+
+        max_aggregation, aggregate_freq = compute_max_aggregation(self.fed_args, max_steps, num_train_epochs, epochs_trained, state.global_step)
+
+        # send parameters
+        parameters = {
+            'num_train_epochs': num_train_epochs,
+            'max_steps': max_steps,
+            'num_update_steps_per_epoch': num_update_steps_per_epoch,
+            'epochs_trained': epochs_trained,
+            'steps_trained_in_current_epoch': steps_trained_in_current_epoch,
+            'max_aggregation': max_aggregation,
+            'aggregate_freq': aggregate_freq,
+            'aggregation_strategy': self.fed_args.aggregate_strategy
+        }
+
+        print('parameters is {}'.format(parameters))
+
+        self.ctx.arbiter.put(self._suffix + '_' + str(self._send_count), parameters)
+        self._send_count += 1
+        self._parameters = parameters
+
+    def get_parameters(self):
+        return self._parameters
+
+    def _startegy_type(self, strategy):
+        # by step or by epoch
+        by_step = set([AggregateStrategy.STEP.value, AggregateStrategy.PROGRESS_PERCENTAGE.value])
+        by_epoch = set([AggregateStrategy.EPOCH.value])
+        if strategy in by_step:
+            return 'by_step'
+        elif strategy in by_epoch:
+            return 'by_epoch'
+        else:
+            raise ValueError('strategy {} not supported'.format(strategy))
+
+    def _check_fed_strategy(self, parameters):
+        # check the fed strategy, assert all clients has the same startegy
+        all_cilent_strategy = [p['aggregation_strategy'] for p in parameters]
+        print('all client strategies are {}'.format(all_cilent_strategy))
+        strategy_flag = self._startegy_type(all_cilent_strategy[0])
+        for p in all_cilent_strategy[1: ]:
+            if self._startegy_type(p) != strategy_flag:
+                raise ValueError('fed strategy not match, all clients has to have the same strategy: by epoch(epoch) or by step(step, progress_percentage),\n \
+                                 please check: {}'.format(all_cilent_strategy))
+            
+        return strategy_flag
+
+    def _check_federation_round(self, parameters):
         
-        print(num_train_epochs)
-        print(num_update_steps_per_epoch)
-        print(epochs_trained)
-        print(steps_trained_in_current_epoch)
+        agg_round = [p['max_aggregation'] for p in parameters]
+        if len(set(agg_round)) != 1:
+            raise ValueError('federation round not match, all clients has to have the same aggregation round,\n \
+                              please check: {}'.format(agg_round))
+        return agg_round[0]
 
     def _server_check_parameters(self):
         # check if all clients parameters of aggregation match
-        print('receiving parameters')
+        para_1 = self.ctx.hosts.get(self._suffix + '_' + str(self._send_count))
+        para_2 = self.ctx.guest.get(self._suffix + '_' + str(self._send_count))
+        self._send_count += 1
+        para_1.append(para_2)
+        para = para_1
+        # strategy = self._check_fed_strategy(para)
+        agg_round = self._check_federation_round(para)
+        self._parameters = {'max_aggregation': agg_round}
+        print('checking passed')
 
     def on_train_begin(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
         if self.is_server:
@@ -343,15 +393,52 @@ class FedParameterAlignCallback(TrainerCallback):
         else:
             train_dataloader = kwargs['train_dataloader']
             self._client_send_parameters(state, args, train_dataloader)
-    
 
-class FedTrainerCallbackWrapper(TrainerCallback):
+
+class CallbackWrapper(TrainerCallback):
+
 
     def __init__(self, ctx: Context, wrapped_trainer: 'StdFedTrainerMixin'):
         self.ctx = ctx
         self.wrapped_trainer = wrapped_trainer
         self.aggregator = wrapped_trainer.aggregator
         self.fed_arg = wrapped_trainer._fed_args
+
+
+    def _call_wrapped(self, event_name: str, **kwargs):
+        event = getattr(self.wrapped_trainer, event_name)
+        kwargs['scheduler'] = kwargs.pop('lr_scheduler', None)
+
+        train_dataloader = kwargs.pop('train_dataloader', None)
+        eval_dataloader = kwargs.pop('eval_dataloader', None)
+        dataloaders = tuple(filter(None, (train_dataloader, eval_dataloader)))
+        kwargs['dataloader'] = dataloaders
+
+        return event(self.ctx, self.aggregator, self.fed_arg, **kwargs)
+    
+
+
+class FedCallbackWrapper(CallbackWrapper):
+
+    def __init__(self, ctx: Context, wrapped_trainer: 'StdFedTrainerMixin'):
+        super().__init__(ctx, wrapped_trainer)
+
+    def on_epoch_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
+        if self.fed_arg.aggregate_strategy == AggregateStrategy.EPOCH.value:
+            print('aggregation on epoch end')
+            return self._call_wrapped('on_federation', args=args, state=state, control=control, **kwargs)
+    
+    def on_step_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
+        if self.fed_arg.aggregate_strategy == AggregateStrategy.PROGRESS_PERCENTAGE.value or \
+            self.fed_arg.aggregate_strategy == AggregateStrategy.STEP.value:
+            print('aggregation on step end')
+            return self._call_wrapped('on_federation', args=args, state=state, control=control, **kwargs)
+
+    
+class ShortcutCallbackWrapper(CallbackWrapper):
+
+    def __init__(self, ctx: Context, wrapped_trainer: 'StdFedTrainerMixin'):
+        super().__init__(ctx, wrapped_trainer)
 
     def _call_wrapped(self, event_name: str, **kwargs):
         event = getattr(self.wrapped_trainer, event_name)
@@ -442,19 +529,6 @@ class FedTrainerCallbackWrapper(TrainerCallback):
             control=control,
             **kwargs)
 
-    def on_substep_end(
-            self,
-            args: TrainingArguments,
-            state: TrainerState,
-            control: TrainerControl,
-            **kwargs):
-        return self._call_wrapped(
-            'on_substep_end',
-            args=args,
-            state=state,
-            control=control,
-            **kwargs)
-
     def on_step_end(
             self,
             args: TrainingArguments,
@@ -468,14 +542,6 @@ class FedTrainerCallbackWrapper(TrainerCallback):
             control=control,
             **kwargs)
     
-    def on_log(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
-        return self._call_wrapped(
-            'on_log',
-            args=args,
-            state=state,
-            control=control,
-            **kwargs)
-
 
 logger.addFilter(LogSuppressFilter())
 
@@ -485,7 +551,7 @@ Mixin Class For Federation Trainer
 """
 
 
-class StdFedTrainerMixin(FedCallBackInterFace):
+class StdFedTrainerMixin(ShortcutCallBackInterFace, FedCallbackInterface):
 
     def __init__(self,
                  ctx: Context,
@@ -551,21 +617,16 @@ class StdFedTrainerMixin(FedCallBackInterFace):
         new_callback_list += new_callbacks
         callback_handler.callbacks = new_callback_list
 
-    def _add_fed_callback(self, callback_handler):
+    def _add_fate_callback(self, callback_handler):
+
         # the callback handler is Trainer.callback_handler
+        shortcut_callback_inst = ShortcutCallbackWrapper(self.ctx, self)
+        callback_handler.callbacks.append(shortcut_callback_inst)
+
         if self.local_mode:
             logger.info('Local model is set, federation callback disabled')
             return
 
-        # has_fed_callback = False
-        # for c in callback_handler.callbacks:
-        #     if isinstance(c, type(fed_callback_inst)):
-        #         has_fed_callback = True
-        #         break
-        # if not has_fed_callback:
-
-        fed_callback_inst = FedTrainerCallbackWrapper(self.ctx, self)
-        callback_handler.callbacks.append(fed_callback_inst)
         if self.parameter_alignment:
             callback_handler.callbacks.append(FedParameterAlignCallback(self.ctx, 
                                                                         fed_args=self._fed_args, 
@@ -573,6 +634,9 @@ class StdFedTrainerMixin(FedCallBackInterFace):
                                                                         is_server=False))
         else:
             logger.warning('Parameter alignment is disabled, this may cause fed-training failure')
+
+        callback_handler.callbacks.append(FedCallbackWrapper(self.ctx, self))
+
         
     def _remove_fed_callback(self, callback_class):
         self.callback_handler.callbacks = [
@@ -655,7 +719,7 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
                         )
         
         # self._handle_callback(self.callback_handler, self._callbacks)
-        self._add_fed_callback(self.callback_handler)
+        self._add_fate_callback(self.callback_handler)
 
     def init_aggregator(self):
         return None
@@ -687,7 +751,7 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
             return (None, logits, labels)
         
 
-class FedTrainerServer(FedCallBackInterFace):
+class FedTrainerServer(object):
 
     def __init__(self, ctx: Context, 
                  parameter_alignment: bool = True,
@@ -701,26 +765,43 @@ class FedTrainerServer(FedCallBackInterFace):
         self._fed_args = fed_args
         self._max_steps = None
         self._parameter_check_callback = FedParameterAlignCallback(self.ctx, None, None, True)
+        self._max_aggregation = None
 
     def init_aggregator(self):
         return None
+    
+    def on_train_end(self, ctx: Context, aggregator: Aggregator, fed_args: FedArguments, args: TrainingArguments):
+        pass
+
+    def on_train_begin(self, ctx: Context, aggregator: Aggregator, fed_args: FedArguments, args: TrainingArguments):
+        pass
+
+    def on_init_end(self, ctx: Context, aggregator: Aggregator, fed_args: FedArguments, args: TrainingArguments):
+        pass
+
+    def on_federation(self, ctx: Context, aggregator: Aggregator, fed_args: FedArguments, args: TrainingArguments):
+        pass
 
     def train(self):
 
         if self.parameter_alignment:
-            pass
+            self._parameter_check_callback.on_train_begin(None, None, None)  # only get parameters from clients and align
+            parameters = self._parameter_check_callback.get_parameters()
+            self._max_aggregation = parameters['max_aggregation']
         else:
-            epochs = self._args.num_train_epochs
-            max_steps = self._args.max_steps
+            logger.warn('If you choose not to use parameter alignment, please make sure that the sever aggregation round matches clients\'')
+            if self._fed_args.aggregate_strategy == AggregateStrategy.EPOCH.value:
+                self._max_aggregation = self._args.num_train_epochs
+            elif self._fed_args.aggregate_strategy == AggregateStrategy.STEP.value:
+                self._max_aggregation = self._args.max_steps
+                if self._max_aggregation == -1:
+                    raise ValueError('max_steps must be set when aggregate_strategy is step')
+            elif self._fed_args.aggregate_strategy == AggregateStrategy.PROGRESS_PERCENTAGE.value:
+                self._max_aggregation = int((1/self._fed_args.aggregation_percentage))
         
         self.on_init_end(self.ctx, aggregator=self.aggregator, args=self._args, fed_args=self._fed_args)
         self.on_train_begin(self.ctx, aggregator=self.aggregator, args=self._args, fed_args=self._fed_args)
-        for epoch in range(self._args.num_train_epochs):
-            self.on_epoch_begin(self.ctx, aggregator=self.aggregator, args=self._args, fed_args=self._fed_args)
-            # for step in range(self.training_args.num_steps_per_epoch):
-            #     self.on_step_begin(self.ctx, aggregator=self.aggregator, args=self._args, fed_args=self._fed_args, step=step)
-            #     self.on_substep_end(self.ctx, aggregator=self.aggregator, args=self._args, fed_args=self._fed_args)
-            #     self.on_step_end(self.ctx, aggregator=self.aggregator, args=self._args, fed_args=self._fed_args, step=step)
-            self.on_epoch_end(self.ctx, aggregator=self.aggregator, args=self._args, fed_args=self._fed_args)
+        for i in range(self._max_aggregation):
+            self.on_federation(self.ctx, aggregator=self.aggregator, args=self._args, fed_args=self._fed_args)
         self.on_train_end(self.ctx, aggregator=self.aggregator, args=self._args, fed_args=self._fed_args)
 
