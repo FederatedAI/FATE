@@ -36,7 +36,7 @@ def transform_to_tensor(block_table,
                 indexes = [fields[i][1]]
                 j = i + 1
                 while j < len(fields) and bid == fields[j][0] and indexes[-1] + 1 == fields[j][1]:
-                    indexes.append(fields[1])
+                    indexes.append(fields[j][1])
                     j += 1
 
                 tensors.append(src_blocks[bid][:, indexes])
