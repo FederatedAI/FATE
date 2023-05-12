@@ -40,13 +40,13 @@ def union_train(
         ctx,
         role: Role,
         train_data_list,
-        method,
+        axis,
         train_output_data
 ):
-    train(ctx, train_data_list, train_output_data, method)
+    train(ctx, train_data_list, train_output_data, axis)
 
 
-def train(ctx, train_data_list, train_output_data, method):
+def train(ctx, train_data_list, train_output_data, axis):
     from fate.ml.preprocessing import Union
     data_list = []
     for data in train_data_list:
@@ -54,6 +54,6 @@ def train(ctx, train_data_list, train_output_data, method):
         data_list.append(data)
 
     with ctx.sub_ctx("train") as sub_ctx:
-        union_obj = Union(method)
+        union_obj = Union(axis)
         output_data = union_obj.fit(sub_ctx, data_list)
         sub_ctx.writer(train_output_data).write_dataframe(output_data)
