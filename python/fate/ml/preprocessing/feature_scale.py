@@ -23,13 +23,13 @@ logger = logging.getLogger(__name__)
 
 
 class FeatureScale(Module):
-    def __init__(self, method="standard", scale_col=None, feature_range=None):
+    def __init__(self, method="standard", scale_col=None, feature_range=None, strict_range=True):
         self.method = method
         self._scaler = None
         if self.method == "standard":
             self._scaler = StandardScaler(scale_col)
         elif self.method == "min_max":
-            self._scaler = MinMaxScaler(scale_col, feature_range)
+            self._scaler = MinMaxScaler(scale_col, feature_range, strict_range)
         else:
             raise ValueError(f"Unknown scale method {self.method} given. Please check.")
 
@@ -88,19 +88,23 @@ class StandardScaler(Module):
 
 class MinMaxScaler(Module):
     """
-       Transform given data by scaling features to given range.
-       Adapted from sklearn.preprocessing.minmax_scale
+       Transform data by scaling features to given feature range.
+       Note that if `strict_range` is set, transformed values will always be within given range,
+       regardless whether transform data exceeds training data value range (as in 1.x ver)
 
        The transformation is given by::
-           X_std = (X - X.min()) / (X.max() - X.min())
-           X_scaled = X_std * (range_max - range_min) + range_min
+           X_scaled = (X - X.min()) / (X.max() - X.min()) * feature_range + feature_range_min
+                    = (X - X.min()) * (feature_range / (X.max() - X.min()) + feature_range_min
     """
 
-    def __init__(self, select_col, feature_range):
+    def __init__(self, select_col, feature_range, strict_range):
         self.feature_range = feature_range
         self.select_col = select_col
+        self.strict_range = strict_range
         self._scale = None
         self._scale_min = None
+        self._range_min = None
+        self._range_max = None
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
         train_data_select = train_data[self.select_col]
@@ -115,22 +119,30 @@ class MinMaxScaler(Module):
                 max_list.append(self.feature_range[col][1])
         range_min = pd.Series(min_list, index=train_data_select.schema.columns)
         range_max = pd.Series(max_list, index=train_data_select.schema.columns)
+        # record range for strict transformation
+        self._range_min = range_min
+        self._range_max = range_max
 
         data_range = data_max - data_min
         # for safe division
         data_range[data_range < 1e-6] = 1.0
         self._scale = (range_max - range_min) / data_range
-        self._scale_min = range_min - data_min * self._scale
+        self._scale_min = data_min * self._scale
 
     def transform(self, ctx: Context, test_data):
         """
         Transformation is given by:
-            X_scaled = scale * X + range_min - X_train.min() * scale
-        where scale = (range_max - range_min) / (X_train.max() - X_train.min()
+            X_scaled = X * scale - scale_min + feature_range_min
+        where scale = feature_range / (X_train.max() - X_train.min()) and scale_min = X_train.min() * scale
 
         """
         test_data_select = test_data[self.select_col]
-        data_scaled = test_data_select * self._scale + self._scale_min
+
+        data_scaled = test_data_select * self._scale - (self._scale_min + self._range_min)
+        if self.strict_range:
+            # feature value strictly within given feature range
+            data_scaled[data_scaled < self._range_min] = self._range_min
+            data_scaled[data_scaled > self._range_max] = self._range_max
         test_data[self.select_col] = data_scaled
         return test_data
 
@@ -140,10 +152,16 @@ class MinMaxScaler(Module):
             scale_dtype=self._scale.dtype.name,
             scale_min=self._scale_min.to_dict(),
             scale_min_dtype=self._scale_min.dtype.name,
+            range_min=self._range_min.to_dict(),
+            range_max=self._range_max.to_dict(),
+            strict_range=self.strict_range,
             select_col=self.select_col
         )
 
     def from_model(self, model):
         self._scale = pd.Series(model["scale"], dtype=model["scale_dtype"])
         self._scale_min = pd.Series(model["scale_min"], dtype=model["scale_min_dtype"])
+        self._range_min = pd.Series(model["range_min"])
+        self._range_max = pd.Series(model["range_max"])
+        self.strict_range = model["strict_range"]
         self.select_col = model["select_col"]

@@ -46,6 +46,9 @@ def feature_scale(ctx, role):
 @cpn.parameter("scale_idx", type=List[params.conint(ge=0)], default=None,
                desc="list of column index to be scaled, if None, all columns will be scaled; "
                     "only one of {scale_col, scale_idx} should be specified")
+@cpn.parameter("strict_range", type=bool, default=True,
+               desc="whether transformed value to be strictly restricted within given range; "
+                    "effective for 'min_max' scale method only")
 @cpn.parameter("use_anonymous", type=bool, default=False,
                desc="bool, whether interpret `scale_col` as anonymous column names")
 @cpn.artifact("train_output_data", type=Output[DatasetArtifact], roles=[GUEST, HOST])
@@ -58,11 +61,13 @@ def feature_scale_train(
         feature_range,
         scale_col,
         scale_idx,
+        strict_range,
         use_anonymous,
         train_output_data,
         output_model,
 ):
-    train(ctx, train_data, train_output_data, output_model, method, feature_range, scale_col, scale_idx, use_anonymous)
+    train(ctx, train_data, train_output_data, output_model, method, feature_range, scale_col, scale_idx,
+          strict_range, use_anonymous)
 
 
 @feature_scale.predict()
@@ -79,10 +84,10 @@ def feature_scale_predict(
     predict(ctx, input_model, test_data, test_output_data)
 
 
-def train(ctx, train_data, train_output_data, output_model, method, feature_range, scale_col, scale_idx, use_anonymous):
+def train(ctx, train_data, train_output_data, output_model, method, feature_range, scale_col, scale_idx,
+          strict_range, use_anonymous):
     from fate.ml.preprocessing import FeatureScale
     train_data = ctx.reader(train_data).read_dataframe().data
-
 
     with ctx.sub_ctx("train") as sub_ctx:
         columns = train_data.schema.columns.to_list()
@@ -93,7 +98,7 @@ def train(ctx, train_data, train_output_data, output_model, method, feature_rang
                 feature_range = None
         scale_col, feature_range = get_to_scale_cols(columns, anonymous_columns, scale_col, scale_idx, feature_range)
 
-        scaler = FeatureScale(method, scale_col, feature_range)
+        scaler = FeatureScale(method, scale_col, feature_range, strict_range)
         scaler.fit(sub_ctx, train_data)
 
         model = scaler.to_model()
