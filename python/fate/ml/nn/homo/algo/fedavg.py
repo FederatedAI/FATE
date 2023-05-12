@@ -3,7 +3,6 @@ from fate.ml.nn.trainer.trainer_base import FedTrainerClient, FedTrainerServer, 
 from fate.ml.nn.trainer.trainer_base import FedArguments, time_decorator
 from dataclasses import field
 from dataclasses import dataclass, field
-from enum import Enum
 from fate.interface import Context
 from dataclasses import dataclass
 from typing import List, Optional, Tuple, Callable
@@ -19,10 +18,6 @@ from fate.ml.aggregator.plaintext_aggregator import PlainTextAggregatorClient, P
 from transformers import TrainingArguments, TrainerState, TrainerControl
 
 
-class AggregateStrategy(Enum):
-    EPOCH = "epoch"
-    BATCH = "batch"
-
 
 @dataclass
 class FedAVGArguments(FedArguments):
@@ -31,18 +26,12 @@ class FedAVGArguments(FedArguments):
     The arguemnt for FedAVG algorithm, used in FedAVGClient and FedAVGServer.
 
     Attributes:
-        aggregate_strategy: AggregateStrategy
-            Aggregate strategy to be used, either 'epoch' or 'batch'.
-        aggregate_freq: int
-            The frequency of the aggregation, specified as an integer.
         weighted_aggregate: bool
             Whether to use weighted aggregation or not.
         secure_aggregate: bool
             Whether to use secure aggregation or not.
     """
         
-    aggregate_strategy: AggregateStrategy = field(default=AggregateStrategy.EPOCH)
-    aggregate_freq: int = field(default=1)
     weighted_aggregate: bool = field(default=True)
     secure_aggregate: bool = field(default=False)
 
@@ -63,33 +52,10 @@ class FedAVGCLient(FedTrainerClient):
                                   scheduler, callbacks, use_hf_default_behavior,
                                  compute_metrics=compute_metrics, local_mode=local_model)
 
-        self._start_time = 0
-        self._start_log = '**********Epoch {}**********'
-        self._cur_start_log = None
-
     def init_aggregator(self):
         sample_num = len(self.train_dataset)
         aggregator = PlainTextAggregatorClient(self.ctx, aggregator_name='fed_avg', aggregate_type='weighted_mean', sample_num=sample_num)
         return aggregator
-    
-    def on_epoch_begin(
-            self,
-            ctx: Context,
-            aggregator: PlainTextAggregatorClient,
-            fed_args: FedArguments,
-            args: TrainingArguments,
-            model: Optional[nn.Module] = None,
-            optimizer: Optional[Optimizer] = None,
-            scheduler: Optional[_LRScheduler] = None,
-            dataloader: Optional[Tuple[DataLoader]] = None,
-            control: Optional[TrainerControl] = None,
-            state: Optional[TrainerState] = None,
-            **kwargs):
-
-        self._cur_start_log = self._start_log.format(int(state.epoch))
-        logger.info(self._cur_start_log)
-        logger.info('local training start')
-        self._start_time = time.time()
     
     @time_decorator('FedAVG')
     def on_epoch_end(
@@ -106,33 +72,17 @@ class FedAVGCLient(FedTrainerClient):
             state: Optional[TrainerState] = None,
             **kwargs):
         
-        logger.info('epoch {} local training finised, takes {}'.format(state.epoch, time.time() - self._start_time))
-        self._start_time = 0
-        logger.info('epoch {} model aggregation start'.format(int(state.epoch)))
         aggregator.model_aggregation(model)
-        logger.info('epoch {} model aggregation finished'.format(int(state.epoch)))
-
-    def on_log(
-            self,
-            ctx: Context,
-            aggregator: PlainTextAggregatorClient,
-            fed_args: FedArguments,
-            args: TrainingArguments,
-            model: Optional[nn.Module] = None,
-            optimizer: Optional[Optimizer] = None,
-            scheduler: Optional[_LRScheduler] = None,
-            dataloader: Optional[Tuple[DataLoader]] = None,
-            control: Optional[TrainerControl] = None,
-            state: Optional[TrainerState] = None,
-            **kwargs):
-        
-        logger.info('info: {}'.format(state.log_history[-1]))
 
 
 class FedAVGServer(FedTrainerServer):
 
-    def __init__(self, ctx: Context, training_args: TrainingArguments, fed_args: FedArguments) -> None:
-        super().__init__(ctx, training_args, fed_args)
+    def __init__(self, ctx: Context, 
+                 parameter_alignment: bool = True,
+                 training_args: TrainingArguments = None, 
+                 fed_args: FedArguments = None) -> None:
+        
+        super().__init__(ctx, parameter_alignment, training_args, fed_args)
 
     def init_aggregator(self):
         aggregator = PlainTextAggregatorServer(self.ctx, aggregator_name='fed_avg')

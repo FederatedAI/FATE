@@ -1,19 +1,24 @@
 import torch
+import math
+import sys
 from torch import nn
 import numpy as np
 import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple, Union, Callable
+from enum import Enum
+from transformers.training_args import TrainingArguments
 from fate.interface import Context
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader, Dataset
 from transformers import TrainingArguments as hf_TrainingArguments
 from transformers import Trainer, TrainerState, TrainerControl, EvalPrediction
+from transformers.trainer_utils import has_length
 from torch.optim.lr_scheduler import _LRScheduler, LambdaLR
 from torch.utils.data import _utils
 from fate.ml.aggregator.base import Aggregator
 from transformers.trainer import logger
-from transformers.trainer_callback import TrainerCallback, PrinterCallback
+from transformers.trainer_callback import TrainerCallback, PrinterCallback, TrainerControl, TrainerState
 from typing import Optional
 import time
 
@@ -30,10 +35,27 @@ def time_decorator(descr=""):
     return decorator
 
 
+"""
+Fed Arguments
+"""
+
+
+class AggregateStrategy(Enum):
+    EPOCH = "epoch"
+    STEP = "step"
+    PROGRESS_PERCENTAGE = "progress_percentage"
+
+
 @dataclass
 class FedArguments(object):
-    ...
+    """
+    The argument for Fed algorithm
+    """
+    aggregate_strategy: AggregateStrategy = field(default=AggregateStrategy.EPOCH.value)
+    aggregate_freq: int = field(default=1)
+    aggregation_percentage: float = field(default=0.01)
 
+    
 
 @dataclass
 class TrainingArguments(hf_TrainingArguments):
@@ -44,6 +66,11 @@ class TrainingArguments(hf_TrainingArguments):
     save_strategy: str = field(default="no")
     logging_strategy: str = field(default="epoch")
     evaluation_strategy: str = field(default="no")
+
+
+"""
+Fed Callback Related Classes
+"""
 
 
 class FedCallBackInterFace(object):
@@ -202,9 +229,125 @@ class LogSuppressFilter(logging.Filter):
         return True
     
 
+class AggregationChecker:
+
+    def __init__(self, fed_args: FedArguments, max_epoch: int, max_steps: int, epochs_trained: int, steps_trained: int):
+
+        self.fed_args = fed_args
+        self.max_epoch = max_epoch
+        self.max_steps = max_steps
+        self.epochs_trained = epochs_trained
+        self.steps_trained = steps_trained
+        self.aggregation_count = 0
+        self.aggregate_freq = None
+
+        if fed_args.aggregate_strategy == AggregateStrategy.PROGRESS_PERCENTAGE.value and fed_args.aggregation_percentage is not None:
+            self.max_aggregation = int(1 / fed_args.aggregation_percentage)
+            self.aggregate_freq = int(self.max_steps / self.max_aggregation)
+            self.max_aggregation = self.max_aggregation - int(steps_trained / self.aggregate_freq)
+
+        elif fed_args.aggregate_strategy == AggregateStrategy.EPOCH.value:
+            self.aggregate_freq = fed_args.aggregate_freq
+            self.max_aggregation = int((self.max_epoch - self.epochs_trained) / self.aggregate_freq)
+
+        elif fed_args.aggregate_strategy == AggregateStrategy.STEP.value:
+            self.aggregate_freq = fed_args.aggregate_freq
+            self.max_aggregation = int((self.max_steps - self.steps_trained) / self.aggregate_freq)
+
+    def should_aggregate(self, state: TrainerState) -> bool:
+
+        cur_epoch = int(state.epoch)
+        cur_step = int(state.global_step)
+        
+        if self.aggregation_count >= self.max_aggregation:
+            return False
+
+        if cur_epoch > self.max_epoch:
+            return False
+
+        strategy = self.fed_args.aggregate_strategy
+
+        if strategy == AggregateStrategy.EPOCH.value:
+            if cur_epoch > self.epochs_trained and (cur_epoch - self.epochs_trained) % self.fed_args.aggregate_freq == 0:
+                self.aggregation_count += 1
+                return True
+        elif strategy == AggregateStrategy.STEP.value:
+            if cur_step > self.steps_trained_in_current_epoch and (cur_step - self.steps_trained_in_current_epoch) % self.fed_args.aggregate_freq == 0:
+                self.aggregation_count += 1
+                return True
+        elif strategy == AggregateStrategy.PROGRESS_PERCENTAGE.value:
+            if self.aggregate_step_interval is not None:
+                total_trained_steps = self.epochs_trained * self.num_update_steps_per_epoch + self.steps_trained_in_current_epoch
+                if (cur_epoch * self.num_update_steps_per_epoch + cur_step) % self.aggregate_step_interval == total_trained_steps % self.aggregate_step_interval:
+                    self.aggregation_count += 1
+                    return True
+
+        return False
+
+
+class FedParameterAlignCallback(TrainerCallback):
+
+    def __init__(self, ctx, training_args, fed_args, is_server=False) -> None:
+        super().__init__()
+        self.ctx = ctx
+        self.is_server = is_server
+        self.training_args = training_args
+        self.fed_args = fed_args
+
+    def _client_send_parameters(self, state: TrainerState, args, train_dataloader):
+        # client need to compute: epochs, max_steps, num_step_per_epoch, trained_epoch, trained_steps
+        # and sync with server
+
+        # compute num_train_epochs, max_steps
+        len_dataloader = None
+
+        if has_length(train_dataloader):
+            len_dataloader = len(train_dataloader)
+            num_update_steps_per_epoch = len_dataloader // args.gradient_accumulation_steps
+            num_update_steps_per_epoch = max(num_update_steps_per_epoch, 1)
+            if args.max_steps > 0:
+                max_steps = args.max_steps
+                num_train_epochs = args.max_steps // num_update_steps_per_epoch + int(
+                    args.max_steps % num_update_steps_per_epoch > 0
+                )
+            else:
+                max_steps = math.ceil(args.num_train_epochs * num_update_steps_per_epoch)
+                num_train_epochs = math.ceil(args.num_train_epochs)
+
+        elif args.max_steps > 0:  # Rely on max_steps when dataloader does not have a working size
+            max_steps = args.max_steps
+            # Setting a very large number of epochs so we go as many times as necessary over the iterator.
+            num_train_epochs = sys.maxsize
+            num_update_steps_per_epoch = max_steps
+
+        # warm start related variables
+        epochs_trained = state.global_step // num_update_steps_per_epoch
+        if not args.ignore_data_skip:
+            steps_trained_in_current_epoch = state.global_step % (num_update_steps_per_epoch)
+            steps_trained_in_current_epoch *= args.gradient_accumulation_steps
+        else:
+            steps_trained_in_current_epoch = 0
+        
+        print(num_train_epochs)
+        print(num_update_steps_per_epoch)
+        print(epochs_trained)
+        print(steps_trained_in_current_epoch)
+
+    def _server_check_parameters(self):
+        # check if all clients parameters of aggregation match
+        print('receiving parameters')
+
+    def on_train_begin(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
+        if self.is_server:
+            self._server_check_parameters()
+        else:
+            train_dataloader = kwargs['train_dataloader']
+            self._client_send_parameters(state, args, train_dataloader)
+    
+
 class FedTrainerCallbackWrapper(TrainerCallback):
 
-    def __init__(self, ctx: Context, wrapped_trainer: 'FedTrainerClient'):
+    def __init__(self, ctx: Context, wrapped_trainer: 'StdFedTrainerMixin'):
         self.ctx = ctx
         self.wrapped_trainer = wrapped_trainer
         self.aggregator = wrapped_trainer.aggregator
@@ -337,6 +480,11 @@ class FedTrainerCallbackWrapper(TrainerCallback):
 logger.addFilter(LogSuppressFilter())
 
 
+"""
+Mixin Class For Federation Trainer
+"""
+
+
 class StdFedTrainerMixin(FedCallBackInterFace):
 
     def __init__(self,
@@ -352,7 +500,8 @@ class StdFedTrainerMixin(FedCallBackInterFace):
                  callbacks: Optional[List[TrainerCallback]] = [],
                  use_hf_default_behavior: bool = False,
                  compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
-                 local_mode: bool = None
+                 local_mode: bool = None,
+                 parameter_alignment = True
                  ):
         
         assert isinstance(
@@ -361,6 +510,7 @@ class StdFedTrainerMixin(FedCallBackInterFace):
         
         self.ctx = ctx
         self.local_mode = local_mode
+        self.parameter_alignment = parameter_alignment
         self._callbacks = callbacks
         self._args = training_args
         self._fed_args = fed_args
@@ -393,7 +543,7 @@ class StdFedTrainerMixin(FedCallBackInterFace):
     
     def _handle_callback(self, callback_handler, new_callbacks):
 
-        # remove default printer callback, need to user our logging strategy
+        # remove default printer callback, need to use our logging strategy
         new_callback_list = []
         for i in callback_handler.callbacks:
             # if not isinstance(i, PrinterCallback):
@@ -401,28 +551,38 @@ class StdFedTrainerMixin(FedCallBackInterFace):
         new_callback_list += new_callbacks
         callback_handler.callbacks = new_callback_list
 
-    def _add_fed_callback(self, callback_handler, fed_callback_inst):
-
+    def _add_fed_callback(self, callback_handler):
+        # the callback handler is Trainer.callback_handler
         if self.local_mode:
             logger.info('Local model is set, federation callback disabled')
             return
 
-        has_fed_callback = False
+        # has_fed_callback = False
+        # for c in callback_handler.callbacks:
+        #     if isinstance(c, type(fed_callback_inst)):
+        #         has_fed_callback = True
+        #         break
+        # if not has_fed_callback:
 
-        for c in callback_handler.callbacks:
-            if isinstance(c, type(fed_callback_inst)):
-                has_fed_callback = True
-                break
-
-        if not has_fed_callback:
-            callback_handler.callbacks.append(fed_callback_inst)
-            
+        fed_callback_inst = FedTrainerCallbackWrapper(self.ctx, self)
+        callback_handler.callbacks.append(fed_callback_inst)
+        if self.parameter_alignment:
+            callback_handler.callbacks.append(FedParameterAlignCallback(self.ctx, 
+                                                                        fed_args=self._fed_args, 
+                                                                        training_args=self._args, 
+                                                                        is_server=False))
+        else:
+            logger.warning('Parameter alignment is disabled, this may cause fed-training failure')
+        
     def _remove_fed_callback(self, callback_class):
         self.callback_handler.callbacks = [
             c for c in self.callback_handler.callbacks if not isinstance(
                 c, callback_class)]
 
 
+"""
+Base Classes of Client/Sever Trainer
+"""
 
 class FedTrainerClient(Trainer, StdFedTrainerMixin):
 
@@ -449,6 +609,7 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
                  use_hf_default_behavior: bool = False,
                  compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
                  local_mode: bool = False,
+                 parameter_alignment = True
                  ):
 
         # default use no lr decay
@@ -476,7 +637,8 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
                                     callbacks=callbacks,
                                     use_hf_default_behavior=use_hf_default_behavior,
                                     compute_metrics=compute_metrics,
-                                    local_mode=local_mode
+                                    local_mode=local_mode,
+                                    parameter_alignment=parameter_alignment
                                     )
 
         if data_collator is None:
@@ -492,10 +654,8 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
                         compute_metrics=self._compute_metrics_warp_func
                         )
         
-        print(self._fed_args)
-        fed_trainer_callback = FedTrainerCallbackWrapper(self.ctx, self)
-        self._handle_callback(self.callback_handler, self._callbacks)
-        self._add_fed_callback(self.callback_handler, fed_trainer_callback)
+        # self._handle_callback(self.callback_handler, self._callbacks)
+        self._add_fed_callback(self.callback_handler)
 
     def init_aggregator(self):
         return None
@@ -529,20 +689,33 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
 
 class FedTrainerServer(FedCallBackInterFace):
 
-    def __init__(self, ctx: Context, training_args: TrainingArguments, fed_args: FedArguments) -> None:
+    def __init__(self, ctx: Context, 
+                 parameter_alignment: bool = True,
+                 training_args: TrainingArguments = None, 
+                 fed_args: FedArguments = None) -> None:
+        
         self.ctx = ctx
-        self.training_args = training_args
+        self.parameter_alignment = parameter_alignment
         self.aggregator: Aggregator = self.init_aggregator()
         self._args = training_args
         self._fed_args = fed_args
+        self._max_steps = None
+        self._parameter_check_callback = FedParameterAlignCallback(self.ctx, None, None, True)
 
     def init_aggregator(self):
         return None
 
     def train(self):
+
+        if self.parameter_alignment:
+            pass
+        else:
+            epochs = self._args.num_train_epochs
+            max_steps = self._args.max_steps
+        
         self.on_init_end(self.ctx, aggregator=self.aggregator, args=self._args, fed_args=self._fed_args)
         self.on_train_begin(self.ctx, aggregator=self.aggregator, args=self._args, fed_args=self._fed_args)
-        for epoch in range(self.training_args.num_train_epochs):
+        for epoch in range(self._args.num_train_epochs):
             self.on_epoch_begin(self.ctx, aggregator=self.aggregator, args=self._args, fed_args=self._fed_args)
             # for step in range(self.training_args.num_steps_per_epoch):
             #     self.on_step_begin(self.ctx, aggregator=self.aggregator, args=self._args, fed_args=self._fed_args, step=step)
