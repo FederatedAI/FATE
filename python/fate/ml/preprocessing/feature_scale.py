@@ -140,7 +140,7 @@ class MinMaxScaler(Module):
 
         data_scaled = test_data_select * self._scale - (self._scale_min + self._range_min)
         if self.strict_range:
-            # feature value strictly within given feature range
+            # output feature value strictly within given feature range
             data_scaled[data_scaled < self._range_min] = self._range_min
             data_scaled[data_scaled > self._range_max] = self._range_max
         test_data[self.select_col] = data_scaled
@@ -153,7 +153,9 @@ class MinMaxScaler(Module):
             scale_min=self._scale_min.to_dict(),
             scale_min_dtype=self._scale_min.dtype.name,
             range_min=self._range_min.to_dict(),
+            range_min_dtype=self._range_min.dtype.name,
             range_max=self._range_max.to_dict(),
+            range_max_dtype=self._range_max.dtype.name,
             strict_range=self.strict_range,
             select_col=self.select_col
         )
@@ -161,7 +163,7 @@ class MinMaxScaler(Module):
     def from_model(self, model):
         self._scale = pd.Series(model["scale"], dtype=model["scale_dtype"])
         self._scale_min = pd.Series(model["scale_min"], dtype=model["scale_min_dtype"])
-        self._range_min = pd.Series(model["range_min"])
-        self._range_max = pd.Series(model["range_max"])
+        self._range_min = pd.Series(model["range_min"], dtype=model["range_min_dtype"])
+        self._range_max = pd.Series(model["range_max"], dtype=model["range_max_dtype"])
         self.strict_range = model["strict_range"]
         self.select_col = model["select_col"]
