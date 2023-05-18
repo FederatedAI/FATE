@@ -18,7 +18,7 @@ from torch.optim.lr_scheduler import _LRScheduler, LambdaLR
 from torch.utils.data import _utils
 from fate.ml.aggregator.base import Aggregator
 from transformers.trainer import logger
-from transformers.trainer_callback import TrainerCallback, PrinterCallback, TrainerControl, TrainerState
+from transformers.trainer_callback import TrainerCallback, TrainerControl, TrainerState
 from typing import Optional
 import time
 
@@ -335,7 +335,7 @@ class FedParameterAlignCallback(TrainerCallback):
             steps_trained_in_current_epoch = 0
 
         max_aggregation, aggregate_freq = compute_max_aggregation(self.fed_args, num_train_epochs, max_steps, epochs_trained, state.global_step)
-        print('computed max_aggregation is {}'.format(max_aggregation))
+        logger.info('computed max_aggregation is {}'.format(max_aggregation))
 
         # send parameters
         parameters = {
@@ -349,7 +349,7 @@ class FedParameterAlignCallback(TrainerCallback):
             'aggregation_strategy': self.fed_args.aggregate_strategy
         }
 
-        print('parameters is {}'.format(parameters))
+        logger.info('parameters is {}'.format(parameters))
 
         self.ctx.arbiter.put(self._suffix + '_' + str(self._send_count), parameters)
         self._send_count += 1
@@ -373,7 +373,7 @@ class FedParameterAlignCallback(TrainerCallback):
     def _check_fed_strategy(self, parameters):
         # check the fed strategy, assert all clients has the same startegy
         all_cilent_strategy = [p['aggregation_strategy'] for p in parameters]
-        print('all client strategies are {}'.format(all_cilent_strategy))
+        logger.info('all client strategies are {}'.format(all_cilent_strategy))
         strategy_flag = self._startegy_type(all_cilent_strategy[0])
         for p in all_cilent_strategy[1: ]:
             if self._startegy_type(p) != strategy_flag:
@@ -400,7 +400,7 @@ class FedParameterAlignCallback(TrainerCallback):
         # strategy = self._check_fed_strategy(para)
         agg_round = self._check_federation_round(para)
         self._parameters = {'max_aggregation': agg_round}
-        print('checking passed')
+        logger.info('checking passed')
 
     def on_train_begin(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
 
@@ -442,13 +442,13 @@ class FedCallbackWrapper(CallbackWrapper):
     def on_epoch_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
         if self.fed_arg.aggregate_strategy == AggregateStrategy.EPOCH.value:
             if self.wrapped_trainer.aggregation_checker.should_aggregate(state):
-                print('aggregation on epoch end')
+                logger.info('aggregation on epoch end')
                 return self._call_wrapped('on_federation', args=args, state=state, control=control, **kwargs)
     
     def on_step_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
         if self.fed_arg.aggregate_strategy == AggregateStrategy.STEP.value:
             if self.wrapped_trainer.aggregation_checker.should_aggregate(state):
-                print('aggregation on step end')
+                logger.info('aggregation on step end')
                 return self._call_wrapped('on_federation', args=args, state=state, control=control, **kwargs)
 
     
@@ -629,10 +629,10 @@ class StdFedTrainerMixin(ShortcutCallBackInterFace, FedCallbackInterface):
     
     def _handle_callback(self, callback_handler, new_callbacks):
 
-        # remove default printer callback, need to use our logging strategy
+        # remove default logger.infoer callback, need to use our logging strategy
         new_callback_list = []
         for i in callback_handler.callbacks:
-            # if not isinstance(i, PrinterCallback):
+            # if not isinstance(i, logger.infoerCallback):
             new_callback_list.append(i)
         new_callback_list += new_callbacks
         callback_handler.callbacks = new_callback_list
@@ -810,7 +810,7 @@ class FedTrainerServer(object):
             self._parameter_check_callback.on_train_begin(None, None, None)  # only get parameters from clients and align
             parameters = self._parameter_check_callback.get_parameters()
             self._max_aggregation = parameters['max_aggregation']
-            print('checked parameters are {}'.format(parameters))
+            logger.info('checked parameters are {}'.format(parameters))
         else:
             logger.warn('If you choose not to use parameter alignment, please make sure that the sever aggregation round matches clients\'')
             self._max_aggregation, _ = compute_max_aggregation(self._fed_args, self._args.num_train_epochs, self._args.max_steps, 0, 0)
