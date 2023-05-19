@@ -400,7 +400,6 @@ class FedParameterAlignCallback(TrainerCallback):
         # strategy = self._check_fed_strategy(para)
         agg_round = self._check_federation_round(para)
         self._parameters = {'max_aggregation': agg_round}
-        logger.info('checking passed')
 
     def on_train_begin(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
 
@@ -432,7 +431,6 @@ class CallbackWrapper(TrainerCallback):
 
         return event(self.ctx, self.aggregator, self.fed_arg, **kwargs)
     
-
 
 class FedCallbackWrapper(CallbackWrapper):
 

@@ -1,6 +1,8 @@
 from typing import Dict
 from transformers import EvalPrediction
 import pandas as pd
+import torch
+import numpy as np
 
 
 class Metric(object):
@@ -10,6 +12,14 @@ class Metric(object):
 
     def __call__(self, predict, label, **kwargs) -> Dict:
         pass
+
+    def to_numpy(self, data):
+        if isinstance(data, list):
+            return np.array(data)
+        elif isinstance(data, torch.Tensor):
+            return data.detach().cpu().numpy()
+        else:
+            return data
 
 
 class MetricPipeline(object):
