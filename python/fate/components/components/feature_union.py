@@ -27,11 +27,11 @@ from fate.components import (
 
 
 @cpn.component(roles=[GUEST, HOST])
-def union(ctx, role):
+def feature_union(ctx, role):
     ...
 
 
-@union.train()
+@feature_union.train()
 @cpn.artifact("train_data_list", type=Input[DatasetsArtifacts], roles=[GUEST, HOST])
 @cpn.parameter("axis", type=params.conint(strict=True, ge=0, le=1), default=0, optional=False,
                desc="axis along which concatenation is performed, 0 for row-wise, 1 for column-wise")
@@ -47,13 +47,13 @@ def union_train(
 
 
 def train(ctx, train_data_list, train_output_data, axis):
-    from fate.ml.preprocessing import Union
+    from fate.ml.preprocessing import FeatureUnion
     data_list = []
     for data in train_data_list:
         data = ctx.reader(data).read_dataframe().data
         data_list.append(data)
 
     with ctx.sub_ctx("train") as sub_ctx:
-        union_obj = Union(axis)
+        union_obj = FeatureUnion(axis)
         output_data = union_obj.fit(sub_ctx, data_list)
         sub_ctx.writer(train_output_data).write_dataframe(output_data)

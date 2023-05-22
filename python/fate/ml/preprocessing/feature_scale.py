@@ -107,32 +107,26 @@ class MinMaxScaler(Module):
         self._range_max = None
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
+        if self.select_col is None:
+            self.select_col = train_data.schema.columns.to_list()
         train_data_select = train_data[self.select_col]
         data_max = train_data_select.max()
         data_min = train_data_select.min()
-        min_list, max_list = [], []
 
-        # min/max values in the same order as schema.header
-        for col in train_data_select.schema.columns:
-            if col in self.feature_range:
-                min_list.append(self.feature_range[col][0])
-                max_list.append(self.feature_range[col][1])
-        range_min = pd.Series(min_list, index=train_data_select.schema.columns)
-        range_max = pd.Series(max_list, index=train_data_select.schema.columns)
-        # record range for strict transformation
-        self._range_min = range_min
-        self._range_max = range_max
+        # select_col has same keys as feature_range
+        self._range_min = pd.Series({col: self.feature_range[col][0] for col in self.select_col})
+        self._range_max = pd.Series({col: self.feature_range[col][1] for col in self.select_col})
 
         data_range = data_max - data_min
         # for safe division
         data_range[data_range < 1e-6] = 1.0
-        self._scale = (range_max - range_min) / data_range
+        self._scale = (self._range_max - self._range_min) / data_range
         self._scale_min = data_min * self._scale
 
     def transform(self, ctx: Context, test_data):
         """
         Transformation is given by:
-            X_scaled = X * scale - scale_min + feature_range_min
+            X_scaled = (X * scale - scale_min) + feature_range_min
         where scale = feature_range / (X_train.max() - X_train.min()) and scale_min = X_train.min() * scale
 
         """
@@ -140,9 +134,9 @@ class MinMaxScaler(Module):
 
         data_scaled = test_data_select * self._scale - (self._scale_min + self._range_min)
         if self.strict_range:
-            # output feature value strictly within given feature range
-            data_scaled[data_scaled < self._range_min] = self._range_min
-            data_scaled[data_scaled > self._range_max] = self._range_max
+            # restrict feature output within given feature value range
+            data_scaled = data_scaled[data_scaled >= self._range_min].fillna(self._range_min)
+            data_scaled = data_scaled[data_scaled <= self._range_max].fillna(self._range_max)
         test_data[self.select_col] = data_scaled
         return test_data
 

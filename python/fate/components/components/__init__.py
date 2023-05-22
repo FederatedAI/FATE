@@ -13,15 +13,19 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 from .evaluation import evaluation
+from .feature_imputation import feature_imputation
 from .feature_scale import feature_scale
+from .feature_union import feature_union
 from .hetero_feature_binning import hetero_feature_binning
 from .hetero_feature_selection import hetero_feature_selection
 from .intersection import intersection
 from .reader import reader
 from .statistics import statistics
-from .union import union
 
 BUILDIN_COMPONENTS = [reader, intersection,
-                      feature_scale, hetero_feature_binning,
+                      hetero_feature_binning,
+                      feature_scale,
                       evaluation, statistics, hetero_feature_selection,
-                      union]
+                      feature_imputation,
+                      feature_union
+                      ]

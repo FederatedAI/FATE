@@ -21,7 +21,7 @@ from ..abc.module import Module
 logger = logging.getLogger(__name__)
 
 
-class Union(Module):
+class FeatureUnion(Module):
     def __init__(self, axis=0):
         self.axis = axis
 

@@ -103,7 +103,7 @@ def train(ctx, train_data, train_output_data, output_model, method, feature_rang
 
         model = scaler.to_model()
         with output_model as model_writer:
-            model_writer.write_model("preprocessing", model, metadata={})
+            model_writer.write_model("feature_scale", model, metadata={})
 
     with ctx.sub_ctx("predict") as sub_ctx:
         output_data = scaler.transform(sub_ctx, train_data)
