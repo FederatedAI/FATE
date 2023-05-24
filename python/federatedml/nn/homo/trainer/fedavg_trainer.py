@@ -165,7 +165,7 @@ class FedAVGTrainer(TrainerBase):
             else:
                 sample_num = 1.0
 
-            if distributed_util.is_rank_0():
+            if not distributed_util.is_distributed() or distributed_util.is_rank_0():
                 client_agg = SecureAggClient(
                     True, aggregate_weight=sample_num, communicate_match_suffix=self.comm_suffix)
             else:
@@ -218,7 +218,7 @@ class FedAVGTrainer(TrainerBase):
             batch_label = self._decode(batch_label)
 
             if self.cuda is not None or self._enable_deepspeed:
-                device = self.cuda_main_device if self.cuda_main_device else self.model.device
+                device = self.cuda_main_device if self.cuda_main_device is not None else self.model.device
                 batch_data = self.to_cuda(batch_data, device)
                 if batch_label is not None:
                     batch_label = self.to_cuda(batch_label, device)
@@ -264,7 +264,7 @@ class FedAVGTrainer(TrainerBase):
                     epoch_loss += batch_loss_np
 
             batch_idx += 1
-            LOGGER.info(f"finish epoch={epoch_idx}, batch={batch_idx}")
+            # LOGGER.info(f"finish epoch={epoch_idx}, batch={batch_idx}")
 
         if self.fed_mode:
             LOGGER.debug(
@@ -307,7 +307,7 @@ class FedAVGTrainer(TrainerBase):
             LOGGER.info('epoch is {}'.format(i))
             model = self._select_model()
             epoch_loss = self.train_an_epoch(i, model, train_set, optimizer, loss)
-            if distributed_util.is_rank_0():
+            if not distributed_util.is_distributed() or distributed_util.is_rank_0():
                 self.callback_loss(epoch_loss, i)
                 loss_history.append(float(epoch_loss))
                 LOGGER.info('epoch loss is {}'.format(epoch_loss))
@@ -320,22 +320,23 @@ class FedAVGTrainer(TrainerBase):
                     if self._deepspeed_zero_3:
                         deepspeed_util.gather_model(self.model)
 
-                    if distributed_util.is_rank_0():
+                    if not distributed_util.is_distributed() or distributed_util.is_rank_0():
                         self.model = client_agg.model_aggregation(self.model)
                         if distributed_util.is_distributed() and distributed_util.get_num_workers() > 1:
                             self._share_model()
-                    elif distributed_util.is_distributed() and distributed_util.get_num_workers() > 1:
+                    else:
                         self._share_model()
 
                     # agg loss and get converge status
-                    if distributed_util.is_rank_0():
+                    if not distributed_util.is_distributed() or distributed_util.is_rank_0():
                         converge_status = client_agg.loss_aggregation(epoch_loss)
                         cur_agg_round += 1
-                        self._sync_converge_status(converge_status)
+                        if distributed_util.is_distributed() and distributed_util.get_num_workers() > 1:
+                            self._sync_converge_status(converge_status)
                     else:
                         converge_status = self._sync_converge_status()
 
-                    if distributed_util.is_rank_0():
+                    if not distributed_util.is_distributed() or distributed_util.is_rank_0():
                         LOGGER.info(
                             'model averaging finished, aggregate round {}/{}'.format(
                                 cur_agg_round, aggregate_round))
@@ -370,7 +371,7 @@ class FedAVGTrainer(TrainerBase):
                 if self._deepspeed_zero_3:
                     deepspeed_util.gather_model(self.model)
 
-            if distributed_util.is_rank_0():
+            if not distributed_util.is_distributed() or distributed_util.is_rank_0():
                 if self.save_freq is not None and ((i + 1) % self.save_freq == 0):
 
                     if self.save_to_local_dir:
@@ -389,7 +390,7 @@ class FedAVGTrainer(TrainerBase):
         if self._deepspeed_zero_3:
             deepspeed_util.gather_model(self.model)
 
-        if distributed_util.is_rank_0():
+        if not distributed_util.is_distributed() or distributed_util.is_rank_0():
             best_epoch = int(np.array(loss_history).argmin())
 
             if self.save_to_local_dir:
