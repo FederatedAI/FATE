@@ -51,11 +51,16 @@ lightgbm==3.3.1
 shortuuid==1.0.9
 sklearn2pmml==0.90.0
 nyoka==5.3.0
-transformers==4.23.1
+transformers==4.29.1
 impyla==0.18.0
 venv-pack==0.2.0
 fate-crypto==0.3.0
 ipcl-python==2.0.0
+deepspeed==0.9.2
+sentencepiece==0.1.97
+mpi4py==3.1.4
+peft==0.2.0
+
 
 # addtional requirements for eggroll
 grpcio==1.46.3
