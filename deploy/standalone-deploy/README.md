@@ -41,7 +41,7 @@ export version={FATE version for this deployment}
 example:
 
 ```bash
-export version=1.11.0
+export version=1.11.1
 ```
 
 ### 2.2 Pulling mirrors

@@ -72,22 +72,7 @@ class EncodeParam(BaseParam):
 
 class RAWParam(BaseParam):
     """
-    Specify parameters for raw intersect method
-
-    Parameters
-    ----------
-    use_hash: bool
-        whether to hash ids for raw intersect
-    salt: str
-        the src id will be str = str + salt, default by empty string
-    hash_method: str
-        the hash method of src id, support md5, sha1, sha224, sha256, sha384, sha512, sm3, default by None
-    base64: bool
-        if True, the result of hash will be changed to base64, default by False
-    join_role: {"guest", "host"}
-        role who joins ids, supports "guest" and "host" only and effective only for raw.
-        If it is "guest", the host will send its ids to guest and find the intersection of
-        ids in guest; if it is "host", the guest will send its ids to host. Default by "guest";
+    Note: This param is deprecated
     """
 
     def __init__(self, use_hash=False, salt='', hash_method='none', base64=False, join_role=consts.GUEST):
@@ -368,7 +353,7 @@ class IntersectPreProcessParam(BaseParam):
         return True
 
 
-@deprecated_param("random_bit", "join_role", "with_encode", "encode_params", "intersect_cache_param",
+@deprecated_param("random_bit", "join_role", "with_encode", "encode_params", "intersect_cache_param", "raw_params",
                   "repeated_id_process", "repeated_id_owner", "allow_info_share", "info_owner", "with_sample_id")
 class IntersectParam(BaseParam):
     """
@@ -402,9 +387,9 @@ class IntersectParam(BaseParam):
         effective only when with_encode is True;
         this param will be deprecated in future version, use 'raw_params' in future implementation
     raw_params: RAWParam
-        effective for raw method only
+        this param is deprecated
     rsa_params: RSAParam
-        effective for rsa method only
+        effective for rsa method only, this param is deprecated
     dh_params: DHParam
         effective for dh method only
     ecdh_params: ECDHParam
@@ -494,6 +479,10 @@ class IntersectParam(BaseParam):
 
     def check(self):
         descr = "intersect param's "
+
+        if self.intersect_method.lower() == consts.RAW.lower():
+            self.intersect_method = consts.ECDH
+            LOGGER.warning("Raw intersect method is not supported, it will be replaced by ECDH")
 
         self.intersect_method = self.check_and_change_lower(self.intersect_method,
                                                             [consts.RSA, consts.RAW, consts.DH, consts.ECDH],

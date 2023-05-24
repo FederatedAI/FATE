@@ -40,13 +40,6 @@ finding common even ids.
 With RSA intersection, participants can get their intersection ids
 securely and efficiently.
 
-## RAW Intersection
-
-This mode implements the simple intersection method in which a
-participant sends all its ids to another participant, and the other
-participant finds their common ids. Finally, the joining role will send
-the intersection ids to the sender.
-
 ## DH Intersection
 
 This mode implements secure intersection based on symmetric encryption
@@ -88,7 +81,7 @@ Intersection support cache.
 
 ## Multi-Host Intersection
 
-RSA, RAW, and DH intersection support multi-host scenario. It means a
+RSA,  and DH intersection support multi-host scenario. It means a
 guest can perform intersection with more than one host simultaneously
 and get the common ids among all participants.
 
@@ -155,14 +148,13 @@ And for Host:
 
 ## Feature
 
-Below lists features of each ECDH, RSA, DH, and RAW intersection methods.
+Below lists features of each ECDH, RSA and DH intersection methods.
 
 | Intersect Methods 	| PSI                                                                     	| Match-ID Support                                                       	| Multi-Host                                                                   	| Exact-Cardinality                                                                              	| Estimated Cardinality                                                              	| Preprocessing                                                                        	| Cache                                                                         	|
 |-------------------	|-------------------------------------------------------------------------	|------------------------------------------------------------------------	|------------------------------------------------------------------------------	|------------------------------------------------------------------------------------------------	|------------------------------------------------------------------------------------	|--------------------------------------------------------------------------------------	|-------------------------------------------------------------------------------	|
 | ECDH              	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-ecdh.py) 	| &check;                                                                	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-ecdh-multi)    | [&check;](../../examples/dsl/v2/intersect/test_intersect_job_ecdh_exact_cardinality_conf.json) 	| &cross;                                                                            	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-ecdh-w-preprocess.py) 	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-ecdh-cache.py) 	|
 | RSA               	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-rsa.py)  	| [&check;](../../examples/pipeline/match_id_test/pipeline-hetero-lr.py) 	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-multi-rsa.py) 	| &cross;                                                                                        	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-rsa-cardinality.py) 	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-dh-w-preprocess.py)   	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-rsa-cache.py)  	|
 | DH                	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-dh.py)   	| &check;                                                                	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-dh-multi.py)  	| [&check;](examples/dsl/v2/intersect/test_intersect_job_dh_exact_cardinality_conf.json)         	| &cross;                                                                            	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-rsa-w-preprocess.py)  	| [&check;](../../examples/pipeline/intersect/pipeline-intersect-dh-cache.py)   	|
-| RAW               	| &check;                                                                 	| &check;                                                                	| &check;                                                                      	| &cross;                                                                                        	| &cross;                                                                            	| &check;                                                                              	| &cross;                                                                       	|
 
 All four methods support:
 
@@ -179,10 +171,6 @@ All four methods support:
 RSA, DH, ECDH intersection methods also support:
 
 1.  PSI with cache
-
-RAW intersection supports the following extra feature:
-
-1.  base64 encoding may be used for all hashing methods.
 
 Cardinality Computation:
 

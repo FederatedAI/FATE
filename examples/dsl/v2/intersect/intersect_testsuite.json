@@ -26,14 +26,6 @@
         }
     ],
     "tasks": {
-        "raw_intersect": {
-            "conf": "./test_intersect_job_raw_conf.json",
-            "dsl": "./test_intersect_job_dsl.json"
-        },
-        "raw_intersect_sm3": {
-            "conf": "./test_intersect_job_raw_sm3_conf.json",
-            "dsl": "./test_intersect_job_dsl.json"
-        },
         "rsa_intersect": {
             "conf": "./test_intersect_job_rsa_conf.json",
             "dsl": "./test_intersect_job_dsl.json"
@@ -52,10 +44,6 @@
         },
         "rsa_intersect_w_preprocess": {
             "conf": "./test_intersect_job_rsa_w_preprocess_conf.json",
-            "dsl": "./test_intersect_job_dsl.json"
-        },
-        "raw_intersect_multi_host": {
-            "conf": "./test_intersect_job_raw_multi_host_conf.json",
             "dsl": "./test_intersect_job_dsl.json"
         },
         "dh_intersect": {

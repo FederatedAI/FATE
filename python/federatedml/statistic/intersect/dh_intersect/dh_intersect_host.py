@@ -28,11 +28,6 @@ class DhIntersectionHost(DhIntersect):
         self.role = consts.HOST
         self.id_list_local_first = None
 
-    def _sync_commutative_cipher_public_knowledge(self):
-        self.commutative_cipher = self.transfer_variable.commutative_cipher_public_knowledge.get(idx=0)
-
-        LOGGER.info(f"got commutative cipher public knowledge from guest")
-
     def _exchange_id(self, id_cipher, replace_val=True):
         if replace_val:
             id_cipher = id_cipher.mapValues(lambda v: None)
@@ -61,7 +56,7 @@ class DhIntersectionHost(DhIntersect):
         return intersect_ids
 
     def get_intersect_doubly_encrypted_id(self, data_instances, keep_key=True):
-        self._sync_commutative_cipher_public_knowledge()
+        self._generate_commutative_cipher()
         self.commutative_cipher.init()
 
         # 1st ID encrypt: (Eh, (h, Instance))
@@ -116,7 +111,7 @@ class DhIntersectionHost(DhIntersect):
         self.commutative_cipher = CryptoExecutor(ph_key)
 
     def generate_cache(self, data_instances):
-        self._sync_commutative_cipher_public_knowledge()
+        self._generate_commutative_cipher()
         self.commutative_cipher.init()
 
         cache_id = str(uuid.uuid4())

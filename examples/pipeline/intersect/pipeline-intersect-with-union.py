@@ -51,16 +51,9 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='host', party_id=host).component_param(table=host_train_data)
 
     param = {
-        "intersect_method": "raw",
+        "intersect_method": "ecdh",
         "sync_intersect_ids": True,
-        "only_output_key": True,
-        "raw_params": {
-            "use_hash": True,
-            "hash_method": "sha256",
-            "salt": "12345",
-            "base64": True,
-            "join_role": "host"
-        }
+        "only_output_key": True
     }
     # define Intersection components
     intersections = []

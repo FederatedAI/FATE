@@ -30,8 +30,6 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 class DhIntersectTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
-        self.commutative_cipher_public_knowledge = self._create_variable(
-            name='commutative_cipher_public_knowledge', src=['guest'], dst=['host'])
         self.id_ciphertext_list_exchange_g2h = self._create_variable(
             name='id_ciphertext_list_exchange_g2h', src=['guest'], dst=['host'])
         self.id_ciphertext_list_exchange_h2g = self._create_variable(
