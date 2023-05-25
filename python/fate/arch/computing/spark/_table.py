@@ -21,10 +21,10 @@ import uuid
 from itertools import chain
 
 import pyspark
+from fate.interface import CTableABC
 from pyspark.rddsampler import RDDSamplerBase
 from scipy.stats import hypergeom
 
-from .._computing import CTableABC
 from .._profile import computing_profile
 from .._type import ComputingEngine
 from ._materialize import materialize, unmaterialize
