@@ -23,7 +23,7 @@ from fate.components import (
     Role,
     cpn,
 )
-from fate.ml.evaluation import BinaryEvaluator
+# from fate.ml.evaluation import BinaryEvaluator
 
 
 @cpn.component(roles=[GUEST, HOST, ARBITER])
