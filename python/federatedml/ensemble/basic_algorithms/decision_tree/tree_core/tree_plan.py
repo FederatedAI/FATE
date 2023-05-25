@@ -44,7 +44,7 @@ def create_tree_plan(work_mode: str, k=1, tree_num=10, host_list=None, complete_
     elif work_mode == consts.LAYERED_TREE:
         tree_plan = [(tree_type_dict['layered_tree'], -1) for i in range(tree_num)]
         if complete_secure > 0:
-            complete_secure = tree_num if complete_secure > tree_num else complete_secure 
+            complete_secure = tree_num if complete_secure > tree_num else complete_secure
             for i in range(complete_secure):
                 tree_plan[i] = (tree_type_dict['normal_tree'], -1)
 
