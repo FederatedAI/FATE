@@ -549,7 +549,8 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.check_boolean(self.EINI_random_mask, 'eini random mask')
         self.check_boolean(self.EINI_complexity_check, 'eini complexity check')
 
-        assert isinstance(self.complete_secure, int) and self.complete_secure >= 0, "complete secure should be an int >= 0"
+        assert isinstance(self.complete_secure,
+                          int) and self.complete_secure >= 0, "complete secure should be an int >= 0"
 
         if self.EINI_inference and self.EINI_random_mask:
             LOGGER.warning('To protect the inference decision path, notice that current setting will multiply'
