@@ -602,7 +602,8 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
         self.check_boolean(self.EINI_random_mask, 'eini random mask')
         self.check_boolean(self.EINI_complexity_check, 'eini complexity check')
 
-        assert isinstance(self.complete_secure, int) and self.complete_secure >= 0, "complete secure should be an int >= 0"
+        assert isinstance(self.complete_secure,
+                          int) and self.complete_secure >= 0, "complete secure should be an int >= 0"
 
         if self.work_mode is not None:
             self.boosting_strategy = self.work_mode
