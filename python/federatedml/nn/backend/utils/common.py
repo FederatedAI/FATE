@@ -3,6 +3,7 @@ import numpy as np
 import tempfile
 
 ML_PATH = 'federatedml.nn'
+LLM_PATH = "fate_llm"
 HOMOMODELMETA = "HomoNNMeta"
 HOMOMODELPARAM = "HomoNNParam"
 

@@ -2,11 +2,11 @@ import torch.distributed as dist
 
 
 def is_rank_0():
-    return not dist.is_available() or dist.get_rank() == 0
+    return dist.get_rank() == 0
 
 
 def is_distributed():
-    return dist.is_available()
+    return dist.is_initialized()
 
 
 def get_num_workers():

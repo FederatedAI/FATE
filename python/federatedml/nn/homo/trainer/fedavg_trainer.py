@@ -209,6 +209,12 @@ class FedAVGTrainer(TrainerBase):
 
         batch_label = None
         for _batch_iter in to_iterate:
+            _batch_iter = self._decode(_batch_iter)
+            if isinstance(_batch_iter, list):
+                batch_data, batch_label = _batch_iter
+            else:
+                batch_data = _batch_iter
+            """
             if self.task_type in [consts.CAUSAL_LM, consts.SEQ_2_SEQ_LM]:
                 batch_data = _batch_iter
             else:
@@ -216,6 +222,7 @@ class FedAVGTrainer(TrainerBase):
 
             batch_data = self._decode(batch_data)
             batch_label = self._decode(batch_label)
+            """
 
             if self.cuda is not None or self._enable_deepspeed:
                 device = self.cuda_main_device if self.cuda_main_device is not None else self.model.device
@@ -421,12 +428,24 @@ class FedAVGTrainer(TrainerBase):
 
         labels = []
         with torch.no_grad():
+            for _batch_iter in DataLoader(
+                dataset, self.batch_size
+            ):
+                if isinstance(_batch_iter, list):
+                    batch_data, batch_label = _batch_iter
+                else:
+                    batch_label = _batch_iter.pop("labels")
+                    batch_data = _batch_iter
 
-            for batch_data, batch_label in DataLoader(
-                    dataset, self.batch_size):
-                if self.cuda is not None:
-                    batch_data = self.to_cuda(batch_data, self.cuda_main_device)
+                if self.cuda is not None or self._enable_deepspeed:
+                    device = self.cuda_main_device if self.cuda_main_device is not None else self.model.device
+                    batch_data = self.to_cuda(batch_data, device)
+
                 pred = model(batch_data)
+
+                if not isinstance(pred, torch.Tensor):
+                    pred = pred.logits
+
                 pred_result.append(pred)
                 labels.append(batch_label)
 

@@ -354,6 +354,10 @@ CURVE25519 = 'curve25519'
 # HOMO NN Framework
 FEDAVG_TRAINER = 'fedavg_trainer'
 
+# DEEPSPEED
+DEEPSPEED_MODEL_DIR = "EGGROLL_CONTAINER_MODELS_DIR"
+FLOW_MODEL_SYNC_PATH = "MODEL_PATH"
+
 # positive unlabeled
 PROBABILITY = "probability"
 QUANTITY = "quantity"

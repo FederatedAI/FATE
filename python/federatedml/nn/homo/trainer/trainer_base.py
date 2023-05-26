@@ -10,7 +10,6 @@ from federatedml.util import consts
 from federatedml.util import LOGGER
 from federatedml.model_base import serialize_models
 from federatedml.nn.backend.utils.common import ML_PATH
-from federatedml.nn.model_zoo.pellm.parameter_efficient_llm import PELLM
 from federatedml.feature.instance import Instance
 from federatedml.evaluation.evaluation import Evaluation
 from federatedml.model_base import Metric, MetricMeta
@@ -219,11 +218,11 @@ class TrainerBase(object):
             save_path):
 
         LOGGER.debug('save model to local dir')
-        if isinstance(model, PELLM) and model.enable_save_pretrained:
+        if hasattr(model, "enable_save_pretrained") and model.enable_save_pretrained:
             model.save_pretrained(save_path)
         else:
             unwrap_model = TrainerBase.unwrap_model(model)
-            if isinstance(unwrap_model, PELLM) and model.enable_save_pretrained:
+            if hasattr(model, "enable_save_pretrained") and model.enable_save_pretrained:
                 unwrap_model.save_pretrained(save_path)
             else:
                 model_state_dict = model.state_dict()
@@ -241,6 +240,7 @@ class TrainerBase(object):
                 }
                 t.save(model_dict, save_path)
 
+        local_save_path = save_path if not self._enable_deepspeed else os.environ[consts.FLOW_MODEL_SYNC_PATH]
         model_dict = self._exporter.export_model_dict(model_define=self.nn_define,
                                                       optimizer_define=self.opt_define,
                                                       loss_define=self.loss_define,
@@ -249,7 +249,7 @@ class TrainerBase(object):
                                                       loss_history=loss_history,
                                                       best_epoch=best_epoch,
                                                       extra_data=extra_data,
-                                                      local_save_path=save_path
+                                                      local_save_path=local_save_path
                                                       )
         self._cache_model = model_dict
 
@@ -299,8 +299,10 @@ class TrainerBase(object):
         assert isinstance(
             epoch_idx, int) and epoch_idx >= 0, 'epoch idx must be an int >= 0'
 
+        """
         if isinstance(TrainerBase.unwrap_model(model), PELLM):
             raise ValueError("save checkpoint of Pretrained model should provide local dir")
+        """
 
         if self._model_checkpoint:
 
@@ -336,7 +338,7 @@ class TrainerBase(object):
             # default saving folder is under the job folder
             model_name = "model.pkl"
             if self._enable_deepspeed:
-                save_path = os.path.join(os.environ["MODEL_STORE_DIR"], model_name)
+                save_path = os.path.join(os.environ[consts.DEEPSPEED_MODEL_DIR], model_name)
             else:
                 save_path = os.path.abspath(os.path.join('../../../../', model_name))
 
@@ -363,7 +365,7 @@ class TrainerBase(object):
             # default saving folder is under the job folder
             model_name = 'checkpoint_{}.pkl'.format(epoch_idx)
             if self._enable_deepspeed:
-                save_path = os.path.join(os.environ["MODEL_STORE_DIR"], model_name)
+                save_path = os.path.join(os.environ[consts.DEEPSPEED_MODEL_DIR], model_name)
             else:
                 save_path = os.path.abspath(os.path.join('../../../../', model_name))
             self._local_save(
@@ -556,12 +558,12 @@ def get_trainer_class(trainer_module_name: str):
         trainers = []
         for k, v in ds_modules.__dict__.items():
             if isinstance(v, type):
-                if issubclass(
-                        v, TrainerBase) and v is not TrainerBase and "".join(
-                        v.__name__.lower().split("_")) == "".join(
-                        trainer_module_name.lower().split("_")):
-                    return v
-        raise ValueError('Did not find any class in {}.py that is the subclass of Trainer class'.
-                         format(trainer_module_name))
+                if issubclass(v, TrainerBase) and v is not TrainerBase:
+                    trainers.append(v)
+        if len(trainers) == 0:
+            raise ValueError('Did not find any class in {}.py that is the subclass of Trainer class'.
+                             format(trainer_module_name))
+        else:
+            return trainers[-1]  # return the last defined trainer
     except ValueError as e:
         raise e
