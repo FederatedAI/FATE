@@ -13,8 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
-import numpy as np
 from pipeline.interface import Input
 from pipeline.interface import Output
 from pipeline.utils.tools import extract_explicit_parameter
@@ -24,6 +22,7 @@ from pipeline.param import consts
 try:
     from pipeline.component.component_base import FateComponent
     from pipeline.component.nn.models.sequantial import Sequential
+    import numpy as np
 except Exception as e:
     print(e)
     print('Import NN components in HeteroFTL module failed, \
