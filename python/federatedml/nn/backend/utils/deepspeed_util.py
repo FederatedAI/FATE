@@ -18,6 +18,9 @@ import deepspeed
 
 def deepspeed_init(model, ds_config):
     deepspeed.init_distributed()
+    for p in model.parameters():
+        if not p.is_contiguous():
+            p.data.copy_(p.contiguous().data)
     model_parameters = list(filter(lambda p: p.requires_grad, model.parameters()))
     model, optimizer, _, _ = deepspeed.initialize(model=model,
                                                   model_parameters=model_parameters,
