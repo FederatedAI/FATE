@@ -627,19 +627,27 @@ class FScoreTable(Metric):
         }))
 
 
-class PSI(object):
+class PSI(Metric):
 
-    def compute(self, train_scores: list, validate_scores: list, train_labels=None, validate_labels=None,
-                debug=False, str_intervals=False, round_num=3, pos_label=1):
+    metric_name = 'psi'
+
+    def __call__(self, predict: dict, label: dict) -> Dict:
+
         """
         train/validate scores: predicted scores on train/validate set
         train/validate labels: true labels
         debug: print debug message
         if train&validate labels are not None, count positive sample percentage in every interval
-        pos_label: pos label
-        round_num： round number
-        str_intervals: return str intervals
         """
+
+        str_intervals=False
+        round_num=3,
+        pos_label=1
+
+        train_scores = predict.get('train_scores', None)
+        validate_scores = predict.get('validate_scores', None)
+        train_labels = label.get('train_labels', None)
+        validate_labels = label.get('validate_labels', None)
 
         train_scores = np.array(train_scores)
         validate_scores = np.array(validate_scores)
@@ -666,10 +674,6 @@ class PSI(object):
             train_pos_perc[np.isnan(train_pos_perc)] = 0
             validate_pos_perc[np.isnan(validate_pos_perc)] = 0
 
-        if debug:
-            print(train_count)
-            print(validate_count)
-
         assert (train_count['interval'] == validate_count['interval']), 'train count interval is not equal to ' \
                                                                         'validate count interval'
 
@@ -685,12 +689,30 @@ class PSI(object):
         intervals = train_count['interval'] if not str_intervals else PSI.intervals_to_str(train_count['interval'],
                                                                                            round_num=round_num)
 
+        total_psi = EvalResult(total_psi)
+
         if train_labels is None and validate_labels is None:
-            return psi_scores, total_psi, expected_interval, expected_percentage, actual_interval, actual_percentage, \
-                intervals
+            psi_table = EvalResult(pd.DataFrame({
+                'psi_scores': psi_scores,
+                'expected_interval': expected_interval,
+                'actual_interval': actual_interval,
+                'expected_percentage': expected_percentage,
+                'actual_percentage': actual_percentage,
+                'interval': intervals
+            }))
         else:
-            return psi_scores, total_psi, expected_interval, expected_percentage, actual_interval, actual_percentage, \
-                train_pos_perc, validate_pos_perc, intervals
+            psi_table = EvalResult(pd.DataFrame({
+                'psi_scores': psi_scores,
+                'expected_interval': expected_interval,
+                'actual_interval': actual_interval,
+                'expected_percentage': expected_percentage,
+                'actual_percentage': actual_percentage,
+                'train_pos_perc': train_pos_perc,
+                'validate_pos_perc': validate_pos_perc,
+                'interval': intervals
+            }))
+
+        return {'psi_table': psi_table, 'total_psi': total_psi}
 
     @staticmethod
     def quantile_binning_and_count(scores, quantile_points):

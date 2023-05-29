@@ -59,7 +59,7 @@ class Metric(object):
     def __init__(self, *args, **kwargs):
         pass
 
-    def __call__(self, predict, label, **kwargs) -> Dict:
+    def __call__(self, predict, label, **kwargs) -> EvalResult:
         pass
 
     def to_numpy(self, data):
