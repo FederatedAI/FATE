@@ -16,14 +16,14 @@ tree_actions = {
 }
 
 
-def create_tree_plan(work_mode: str, k=1, tree_num=10, host_list=None, complete_secure=True):
+def create_tree_plan(work_mode: str, k=1, tree_num=10, host_list=None, complete_secure=0):
     """
     Args:
         work_mode:
         k: k is needed when work_mode is 'layered'
         tree_num: decision tree number
         host_list: need to specify host idx when under multi-host scenario, default is None
-        complete_secure:
+        complete_secure: int, num of complete secure tree
     Returns: tree plan: (work mode, host id) host id -1 is default value
     """
 
@@ -43,8 +43,10 @@ def create_tree_plan(work_mode: str, k=1, tree_num=10, host_list=None, complete_
 
     elif work_mode == consts.LAYERED_TREE:
         tree_plan = [(tree_type_dict['layered_tree'], -1) for i in range(tree_num)]
-        if complete_secure:
-            tree_plan[0] = (tree_type_dict['guest_feat_only'], -1)
+        if complete_secure > 0:
+            complete_secure = tree_num if complete_secure > tree_num else complete_secure
+            for i in range(complete_secure):
+                tree_plan[i] = (tree_type_dict['normal_tree'], -1)
 
     return tree_plan
 
