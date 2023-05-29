@@ -641,13 +641,23 @@ class PSI(Metric):
         """
 
         str_intervals=False
-        round_num=3,
+        round_num=3
         pos_label=1
 
-        train_scores = predict.get('train_scores', None)
-        validate_scores = predict.get('validate_scores', None)
-        train_labels = label.get('train_labels', None)
-        validate_labels = label.get('validate_labels', None)
+        if not isinstance(predict, dict) or (label is not None and not isinstance(label, dict)):
+            raise ValueError("Input 'predict' must be a dictionary, and 'label' must be either None or a dictionary.")
+
+        train_scores = predict.get('train_scores')
+        validate_scores = predict.get('validate_scores')
+
+        if None in [train_scores, validate_scores]:
+            raise ValueError(
+                "Input 'predict' should contain the following keys: 'train_scores', 'validate_scores'. "
+                "Please make sure both keys are present."
+            )
+
+        train_labels = label.get('train_labels') if label is not None else None
+        validate_labels = label.get('validate_labels') if label is not None else None
 
         train_scores = np.array(train_scores)
         validate_scores = np.array(validate_scores)

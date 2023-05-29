@@ -71,35 +71,32 @@ class Metric(object):
             return data
 
 
-class MetricPipeline(object):
+class MetricEnsemble(object):
 
     def __init__(self) -> None:
         self._metrics = []
+        self._metric_suffix = set()
 
     def add_metric(self, metric: Metric):
         self._metrics.append(metric)
-        return self
+        return self        
     
     def _parse_input(self, eval_rs):
-        
         if isinstance(eval_rs, EvalPrediction):
             # parse hugging face format
             predict = eval_rs.predictions
             label = eval_rs.label_ids
             input_ = eval_rs.inputs
 
-        elif isinstance(eval_rs, tuple):
+        elif isinstance(eval_rs, tuple) and len(eval_rs) == 2:
             # conventional format
             predict, label = eval_rs
             input_ = None
-        
-        # elif isinstance(eval_rs)
-        #     # pandas dataframe
-        #     # FATE DataFrame
 
         else:
-            raise ValueError('unkown eval_rs format: {}'.format(type(eval_rs)))
-        
+            raise ValueError('Unknown eval_rs format: {}. Expected input formats are either '
+                             'an instance of EvalPrediction or a 2-tuple (predict, label).'.format(type(eval_rs)))
+
         return predict, label, input_
 
     def __call__(self, eval_rs, **kwargs) -> Dict:
@@ -108,5 +105,8 @@ class MetricPipeline(object):
         for metric in self._metrics:
             metric_result.update(metric(predict=predict, label=label, input_=input_))
         return metric_result
+
+    def fit(self, eval_rs, **kwargs) -> Dict:
+        return self.__call__(eval_rs, **kwargs)
 
 

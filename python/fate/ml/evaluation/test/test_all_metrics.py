@@ -1,6 +1,6 @@
 import unittest
 from fate.ml.evaluation.regression import *
-from fate.ml.evaluation.classification import *
+from fate.ml.evaluation.classi import *
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, accuracy_score, recall_score, precision_score, f1_score
 from sklearn.datasets import make_classification
 
