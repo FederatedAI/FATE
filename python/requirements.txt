@@ -23,7 +23,7 @@ peewee==3.9.3
 psutil>=5.7.0
 pycryptodomex==3.15.0
 PyMySQL==0.9.3
-pyspark==3.3.1
+pyspark==3.4.0
 python-dotenv==0.13.0
 redis==3.5.3
 urllib3==1.26.5
@@ -32,12 +32,10 @@ requests_toolbelt==0.9.1
 ruamel-yaml==0.16.10
 scikit-learn==1.0.1
 scipy==1.8.1
-tensorflow-cpu==2.9.3
+tensorflow-cpu==2.11.1
 torch==1.13.1+cpu
 torchvision==0.14.1+cpu
 torch-model-archiver==0.3.1
-transformers==4.23.1
-adapter-transformers==3.2.0
 coverage==4.5.2
 pika==1.2.1
 pandas==1.1.5
@@ -56,10 +54,6 @@ impyla==0.18.0
 venv-pack==0.2.0
 fate-crypto==0.3.0
 ipcl-python==2.0.0
-deepspeed==0.9.2
-sentencepiece==0.1.97
-mpi4py==3.1.4
-peft==0.2.0
 
 
 # addtional requirements for eggroll
