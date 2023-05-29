@@ -13,7 +13,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import deepspeed
+
+try:
+    import deepspeed
+except ModuleNotFoundError:
+    from federatedml.util import LOGGER
+    LOGGER.warning("Try to Import DeepSpeed ERROR, Will Not Support Using DeepSpeed")
 
 
 def deepspeed_init(model, ds_config):
