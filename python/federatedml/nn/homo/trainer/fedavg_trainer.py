@@ -239,11 +239,14 @@ class FedAVGTrainer(TrainerBase):
 
             if not loss and hasattr(pred, "loss"):
                 batch_loss = pred.loss
+
             elif loss is not None:
                 if batch_label is None:
                     raise ValueError(
                         "When loss is set, please provide label to calculate loss"
                     )
+                if not isinstance(pred, torch.Tensor) and hasattr(pred, "logits"):
+                    pred = pred.logits
                 batch_loss = loss(pred, batch_label)
             else:
                 raise ValueError(
@@ -443,7 +446,7 @@ class FedAVGTrainer(TrainerBase):
 
                 pred = model(batch_data)
 
-                if not isinstance(pred, torch.Tensor):
+                if not isinstance(pred, torch.Tensor) and hasattr(pred, "logits"):
                     pred = pred.logits
 
                 pred_result.append(pred)
@@ -461,6 +464,9 @@ class FedAVGTrainer(TrainerBase):
     def predict(self, dataset: Dataset):
         if self.task_type in [consts.CAUSAL_LM, consts.SEQ_2_SEQ_LM]:
             LOGGER.warning(f"Not support prediction of task_types={[consts.CAUSAL_LM, consts.SEQ_2_SEQ_LM]}")
+            return
+
+        if distributed_util.is_distributed() and not distributed_util.is_rank_0():
             return
 
         ids, ret_rs, ret_label = self._predict(dataset)
