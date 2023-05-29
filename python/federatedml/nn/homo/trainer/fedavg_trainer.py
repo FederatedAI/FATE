@@ -560,9 +560,9 @@ class FedAVGTrainer(TrainerBase):
             )
         else:
             train_sampler = DistributedSampler(
-                    train_set,
-                    num_replicas=dist.get_world_size(),
-                    rank=dist.get_rank()
+                train_set,
+                num_replicas=dist.get_world_size(),
+                rank=dist.get_rank()
             )
             self.data_loader = DataLoader(
                 train_set,
