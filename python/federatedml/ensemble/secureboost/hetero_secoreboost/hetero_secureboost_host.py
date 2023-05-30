@@ -29,7 +29,6 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.tree_param = DecisionTreeParam()  # decision tree param
         self.model_param = HeteroSecureBoostParam()
         self.complete_secure = 0
-        self.complete_secure_count = 0
         self.model_name = 'HeteroSecureBoost'
         self.enable_goss = False
         self.cipher_compressing = False
@@ -65,7 +64,6 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
         self.enable_goss = param.run_goss
         self.zero_as_missing = param.zero_as_missing
         self.complete_secure = param.complete_secure
-        self.complete_secure_count = self.complete_secure
         self.sparse_opt_para = param.sparse_optimization
         self.cipher_compressing = param.cipher_compress
         self.new_ver = param.new_ver
@@ -140,8 +138,7 @@ class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
     def fit_a_learner(self, epoch_idx: int, booster_dim: int):
 
         flow_id = self.generate_flowid(epoch_idx, booster_dim)
-        complete_secure = True if (self.complete_secure_count > 0) else False
-        self.complete_secure_count -= 1  # complete secure counting, if complete secure > 0, this tree is complete secure tree
+        complete_secure = True if (epoch_idx < self.complete_secure) else False
         fast_sbt = (self.boosting_strategy == consts.MIX_TREE or self.boosting_strategy == consts.LAYERED_TREE)
 
         tree_type, target_host_id = None, None
