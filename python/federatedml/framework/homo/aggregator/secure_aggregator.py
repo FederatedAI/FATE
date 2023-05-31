@@ -81,10 +81,10 @@ class SecureAggregatorClient(AggregatorBaseClient):
 
         if isinstance(model, t.nn.Module):
             parameters = list(model.parameters())
-            tmp_list = [[p.cpu().detach().numpy() for p in parameters if p.requires_grad]]
+            tmp_list = [[np.array(p.cpu().detach().tolist()) for p in parameters if p.requires_grad]]
             LOGGER.debug('Aggregate trainable parameters: {}/{}'.format(len(tmp_list[0]), len(parameters)))
         elif isinstance(model, t.optim.Optimizer):
-            tmp_list = [[p.cpu().detach().numpy() for p in group["params"]]
+            tmp_list = [[np.array(p.cpu().detach().tolist()) for p in group["params"]]
                         for group in model.param_groups]
         elif isinstance(model, list):
             for p in model:
