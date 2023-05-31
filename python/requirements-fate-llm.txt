@@ -1,3 +1,4 @@
+accelerate==0.19.0
 hjson==3.1.0
 ninja==1.11.1
 py-cpuinfo==9.0.0
@@ -5,4 +6,3 @@ pydantic==1.10.7
 deepspeed==0.9.2
 sentencepiece==0.1.97
 peft==0.2.0
-

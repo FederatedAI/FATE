@@ -167,7 +167,7 @@ class FedAVGTrainer(TrainerBase):
 
             if not distributed_util.is_distributed() or distributed_util.is_rank_0():
                 client_agg = SecureAggClient(
-                    True, aggregate_weight=sample_num, communicate_match_suffix=self.comm_suffix)
+                    self.secure_aggregate, aggregate_weight=sample_num, communicate_match_suffix=self.comm_suffix)
             else:
                 client_agg = None
         else:
@@ -256,8 +256,8 @@ class FedAVGTrainer(TrainerBase):
             if not self._enable_deepspeed:
                 batch_loss.backward()
                 optimizer.step()
-                batch_loss_np = batch_loss.detach().numpy(
-                ) if self.cuda is None else batch_loss.cpu().detach().numpy()
+                batch_loss_np = np.array(batch_loss.detach().tolist()) if self.cuda is None \
+                    else np.array(batch_loss.cpu().detach().tolist())
 
                 if acc_num + self.batch_size > len(train_set):
                     batch_len = len(train_set) - acc_num
@@ -267,7 +267,7 @@ class FedAVGTrainer(TrainerBase):
                 epoch_loss += batch_loss_np * batch_len
             else:
                 batch_loss = model.backward(batch_loss)
-                batch_loss_np = batch_loss.cpu().detach().numpy()
+                batch_loss_np = np.array(batch_loss.cpu().detach().tolist())
                 model.step()
                 batch_loss_np = self._sync_loss(batch_loss_np * self._get_batch_size(batch_data))
                 if distributed_util.is_rank_0():
