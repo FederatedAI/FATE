@@ -39,7 +39,6 @@ Deploying FATE to multiple nodes to achieve scalability, reliability and managea
 - [Train & Predict Hetero SecureBoost with FATE-Pipeline](./doc/tutorial/pipeline/pipeline_tutorial_hetero_sbt.ipynb)
 - [Build & Customize NN models with FATE-Pipeline](./doc/tutorial/pipeline/nn_tutorial/README.md)
 - [Run Job with DSL json conf](doc/tutorial/dsl_conf/dsl_conf_tutorial.md)
-- [FATE-LLM Training Guides](doc/tutorial/fate_llm/README.md)
 - [More Tutorials...](doc/tutorial)
 
 ## Related Repositories (Projects)
@@ -51,6 +50,7 @@ Deploying FATE to multiple nodes to achieve scalability, reliability and managea
 - [EggRoll](https://github.com/WeBankFinTech/eggroll): A simple high-performance computing framework for (federated) machine learning.
 - [AnsibleFATE](https://github.com/FederatedAI/AnsibleFATE): A tool to optimize and automate the configuration and deployment operations via Ansible.
 - [FATE-Builder](https://github.com/FederatedAI/FATE-Builder): A tool to build package and docker image for FATE and KubeFATE.
+- [FATE-LLM](https://github.com/FederatedAI/FATE-LLM/blob/main/README.md)
 ## Documentation 
 
 ### FATE Design 
