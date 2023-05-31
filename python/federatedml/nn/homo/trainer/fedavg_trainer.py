@@ -167,7 +167,7 @@ class FedAVGTrainer(TrainerBase):
 
             if not distributed_util.is_distributed() or distributed_util.is_rank_0():
                 client_agg = SecureAggClient(
-                    self.secure_aggregate, aggregate_weight=sample_num, communicate_match_suffix=self.comm_suffix)
+                    True, aggregate_weight=sample_num, communicate_match_suffix=self.comm_suffix)
             else:
                 client_agg = None
         else:
