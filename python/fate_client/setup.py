@@ -29,7 +29,7 @@ packages = [
 package_data = {"": ["*"]}
 
 install_requires = [
-    "click>=8.1.3,<9.0.0",
+    "click>=7.1.2,<8.0.0",
     "loguru>=0.6.0",
     "poetry>=0.12",
     "pandas>=1.1.5",
