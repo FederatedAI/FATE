@@ -68,7 +68,7 @@ Here we offer some advanced examples of using FATE-NN framework.
 
 ## FATE-LLM(Federated Large Language Models) Training
 
-- [FATE-LLM Training Guides](../../fate_llm/README.md)
+- [FATE-LLM Training](https://github.com/FederatedAI/FATE-LLM/blob/main/README.md)
 
 ## Resnet classification(Homo-NN)
 
