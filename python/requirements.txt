@@ -9,7 +9,7 @@ casbin==1.16.6
 casbin-sqlalchemy-adapter==0.4.2
 cloudpickle==2.1.0
 cos-python-sdk-v5==1.9.10
-Flask==2.0.3
+Flask==2.2.5
 gmpy2==2.0.8
 joblib==1.2.0
 kazoo==2.6.1
@@ -65,7 +65,7 @@ pyarrow==6.0.1
 mmh3==3.0.0
 
 # addtional requirements for fate-client
-click>=7.1.2,<8.0.0
+click>=8.1.3,<9.0.0
 colorama>=0.4.4
 loguru>=0.6.0
 poetry>=0.12
