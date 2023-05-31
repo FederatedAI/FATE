@@ -14,7 +14,6 @@ def not_working_save_to_fate_llm(*args, **kwargs):
         'and if ipython.get_ipython() is working')
 
 
-
 try:
     import IPython as ipy
     from IPython.core.magic import register_cell_magic

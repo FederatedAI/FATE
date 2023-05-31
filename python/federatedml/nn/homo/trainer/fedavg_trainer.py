@@ -256,8 +256,8 @@ class FedAVGTrainer(TrainerBase):
             if not self._enable_deepspeed:
                 batch_loss.backward()
                 optimizer.step()
-                batch_loss_np = np.array(batch_loss.detach().tolist()
-                ) if self.cuda is None else np.array(batch_loss.cpu().detach().tolist())
+                batch_loss_np = np.array(batch_loss.detach().tolist()) if self.cuda is None \
+                    else np.array(batch_loss.cpu().detach().tolist())
 
                 if acc_num + self.batch_size > len(train_set):
                     batch_len = len(train_set) - acc_num
