@@ -6,7 +6,7 @@ packages = ["fate_test", "fate_test.scripts", "fate_test.scripts.op_test", "fate
 package_data = {"": ["*"]}
 
 install_requires = [
-    "click>=8.1.3,<9.0.0",
+    "click>=7.1.2,<8.0.0",
     "fate_client>=1.11,<2.0",
     "loguru>=0.6.0",
     "pandas>=1.1.5",
