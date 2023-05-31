@@ -116,7 +116,7 @@ if register_cell_magic is not None:
     else:
         save_to_fate_llm = not_working_save_to_fate_llm
 else:
-    save_to_fate = not_working_save_to_fate
+    save_to_fate_llm = not_working_save_to_fate_llm
 
 
 class TrainerParam(BaseParam):
