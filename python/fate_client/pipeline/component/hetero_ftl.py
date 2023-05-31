@@ -13,7 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
 from pipeline.interface import Input
 from pipeline.interface import Output
 from pipeline.utils.tools import extract_explicit_parameter
@@ -23,11 +22,21 @@ from pipeline.param import consts
 try:
     from pipeline.component.component_base import FateComponent
     from pipeline.component.nn.models.sequantial import Sequential
+    import numpy as np
 except Exception as e:
     print(e)
     print('Import NN components in HeteroFTL module failed, \
 this may casue by the situation that torch/keras are not installed,\
 please install them to use this module')
+
+
+def find_and_convert_float32_in_dict(d, path=""):
+    for k, v in d.items():
+        new_path = f"{path}.{k}" if path else k
+        if isinstance(v, dict):
+            find_and_convert_float32_in_dict(v, new_path)
+        elif isinstance(v, np.float32) or isinstance(v, np.float64):
+            d[k] = float(v)
 
 
 class HeteroFTL(FateComponent):
@@ -75,6 +84,9 @@ class HeteroFTL(FateComponent):
         self.optimizer = self._nn_model.get_optimizer_config(optimizer)
         self.config_type = self._nn_model.get_layer_type()
         self.nn_define = self._nn_model.get_network_config()
+
+        find_and_convert_float32_in_dict(self.nn_define)
+        find_and_convert_float32_in_dict(self.optimizer)
 
     def __getstate__(self):
         state = dict(self.__dict__)

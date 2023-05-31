@@ -1,5 +1,5 @@
 from torch.utils.data import Dataset as Dataset_
-from federatedml.nn.backend.utils.common import ML_PATH
+from federatedml.nn.backend.utils.common import ML_PATH, LLM_PATH
 import importlib
 import abc
 import numpy as np
@@ -157,9 +157,16 @@ def get_dataset_class(dataset_module_name: str):
 
     if dataset_module_name.endswith('.py'):
         dataset_module_name = dataset_module_name.replace('.py', '')
-    ds_modules = importlib.import_module(
-        '{}.dataset.{}'.format(
-            ML_PATH, dataset_module_name))
+    try:
+        ds_modules = importlib.import_module(
+            '{}.dataset.{}'.format(
+                ML_PATH, dataset_module_name)
+        )
+    except BaseException:
+        ds_modules = importlib.import_module(
+            '{}.dataset.{}'.format(
+                LLM_PATH, dataset_module_name)
+        )
     try:
         ds = []
         for k, v in ds_modules.__dict__.items():

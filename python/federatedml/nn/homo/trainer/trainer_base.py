@@ -1,9 +1,9 @@
 import os
 import abc
 import importlib
+
 import torch as t
 import numpy as np
-import subprocess
 from torch.nn import Module
 from typing import List
 from federatedml.util import consts
@@ -62,6 +62,10 @@ class TrainerBase(object):
         # ret summary
         self._summary = {}
 
+        # deepspeed enabled
+        self._enable_deepspeed = False
+        self._deepspeed_zero_3 = False
+
     @staticmethod
     def is_pos_int(val):
         return val > 0 and isinstance(val, int)
@@ -114,6 +118,10 @@ class TrainerBase(object):
     def fed_mode(self, val):
         assert isinstance(val, bool), 'fed mode must be a bool'
         self._fed_mode = val
+
+    def enable_deepspeed(self, is_zero_3=False):
+        self._enable_deepspeed = True
+        self._deepspeed_zero_3 = is_zero_3
 
     def local_mode(self):
         self.fed_mode = False
@@ -207,26 +215,32 @@ class TrainerBase(object):
             loss_history,
             best_epoch,
             extra_data,
-            save_path,
-            save_name):
+            save_path):
 
         LOGGER.debug('save model to local dir')
-        model_dict = {
-            'model': model.state_dict(),
-            'optimizer': optimizer.state_dict(),
-            'model_define': self.nn_define,
-            'optimizer_define': self.opt_define,
-            'loss_define': self.loss_define,
-            'epoch_idx': epoch_idx,
-            'converge_status': converge_status,
-            'loss_history': loss_history,
-            'best_epoch': best_epoch,
-            'extra_data': extra_data
-        }
-        absolute_path = os.path.abspath(save_path)
-        path = os.path.join(absolute_path, save_name)
-        t.save(model_dict, path)
+        if hasattr(model, "enable_save_pretrained") and model.enable_save_pretrained:
+            model.save_pretrained(save_path)
+        else:
+            unwrap_model = TrainerBase.unwrap_model(model)
+            if hasattr(model, "enable_save_pretrained") and model.enable_save_pretrained:
+                unwrap_model.save_pretrained(save_path)
+            else:
+                model_state_dict = model.state_dict()
+                model_dict = {
+                    'model': model_state_dict,
+                    'optimizer': optimizer.state_dict(),
+                    'model_define': self.nn_define,
+                    'optimizer_define': self.opt_define,
+                    'loss_define': self.loss_define,
+                    'epoch_idx': epoch_idx,
+                    'converge_status': converge_status,
+                    'loss_history': loss_history,
+                    'best_epoch': best_epoch,
+                    'extra_data': extra_data
+                }
+                t.save(model_dict, save_path)
 
+        local_save_path = save_path if not self._enable_deepspeed else os.environ[consts.FLOW_MODEL_SYNC_PATH]
         model_dict = self._exporter.export_model_dict(model_define=self.nn_define,
                                                       optimizer_define=self.opt_define,
                                                       loss_define=self.loss_define,
@@ -235,7 +249,7 @@ class TrainerBase(object):
                                                       loss_history=loss_history,
                                                       best_epoch=best_epoch,
                                                       extra_data=extra_data,
-                                                      local_save_path=path
+                                                      local_save_path=local_save_path
                                                       )
         self._cache_model = model_dict
 
@@ -285,6 +299,11 @@ class TrainerBase(object):
         assert isinstance(
             epoch_idx, int) and epoch_idx >= 0, 'epoch idx must be an int >= 0'
 
+        """
+        if isinstance(TrainerBase.unwrap_model(model), PELLM):
+            raise ValueError("save checkpoint of Pretrained model should provide local dir")
+        """
+
         if self._model_checkpoint:
 
             if self._exporter is None:
@@ -317,8 +336,12 @@ class TrainerBase(object):
 
         if self._exporter:
             # default saving folder is under the job folder
-            save_path = '../../../../'
-            model_name = 'model.pkl'
+            model_name = "model.pkl"
+            if self._enable_deepspeed:
+                save_path = os.path.join(os.environ[consts.DEEPSPEED_MODEL_DIR], model_name)
+            else:
+                save_path = os.path.abspath(os.path.join('../../../../', model_name))
+
             self._local_save(
                 model,
                 optimizer,
@@ -327,8 +350,7 @@ class TrainerBase(object):
                 loss_history,
                 best_epoch,
                 extra_data,
-                save_path,
-                model_name)
+                save_path)
 
     def local_checkpoint(self,
                          model=None,
@@ -341,8 +363,11 @@ class TrainerBase(object):
 
         if self._exporter:
             # default saving folder is under the job folder
-            save_path = '../../../../'
             model_name = 'checkpoint_{}.pkl'.format(epoch_idx)
+            if self._enable_deepspeed:
+                save_path = os.path.join(os.environ[consts.DEEPSPEED_MODEL_DIR], model_name)
+            else:
+                save_path = os.path.abspath(os.path.join('../../../../', model_name))
             self._local_save(
                 model,
                 optimizer,
@@ -351,8 +376,7 @@ class TrainerBase(object):
                 loss_history,
                 best_epoch,
                 extra_data,
-                save_path,
-                model_name)
+                save_path)
             self._model_checkpoint.add_checkpoint(len(self._set_model_checkpoint_epoch),
                                                   to_save_model=serialize_models(self._cache_model))  # step_index, to_save_model
             self._set_model_checkpoint_epoch.add(epoch_idx)
@@ -510,6 +534,13 @@ class TrainerBase(object):
     def server_aggregate_procedure(self, extra_data={}):
         pass
 
+    @staticmethod
+    def unwrap_model(model):
+        if hasattr(model, "module"):
+            return TrainerBase.unwrap_model(model.module)
+        else:
+            return model
+
 
 """
 Load Trainer
@@ -527,12 +558,12 @@ def get_trainer_class(trainer_module_name: str):
         trainers = []
         for k, v in ds_modules.__dict__.items():
             if isinstance(v, type):
-                if issubclass(
-                        v, TrainerBase) and v is not TrainerBase and "".join(
-                        v.__name__.lower().split("_")) == "".join(
-                        trainer_module_name.lower().split("_")):
-                    return v
-        raise ValueError('Did not find any class in {}.py that is the subclass of Trainer class'.
-                         format(trainer_module_name))
+                if issubclass(v, TrainerBase) and v is not TrainerBase:
+                    trainers.append(v)
+        if len(trainers) == 0:
+            raise ValueError('Did not find any class in {}.py that is the subclass of Trainer class'.
+                             format(trainer_module_name))
+        else:
+            return trainers[-1]  # return the last defined trainer
     except ValueError as e:
         raise e

@@ -35,7 +35,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.grad_and_hess = None
         self.feature_importances_ = {}
         self.model_param = HeteroSecureBoostParam()
-        self.complete_secure = False
+        self.complete_secure = 0
         self.data_alignment_map = {}
         self.hetero_sbt_transfer_variable = HeteroSecureBoostTransferVariable()
         self.model_name = 'HeteroSecureBoost'
@@ -85,6 +85,8 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.boosting_strategy = param.boosting_strategy
         self.guest_depth = param.guest_depth
         self.host_depth = param.host_depth
+        if self.boosting_strategy == consts.LAYERED_TREE:
+            param.tree_param.max_depth = param.guest_depth + param.host_depth
 
         if self.use_missing:
             self.tree_param.use_missing = self.use_missing
@@ -222,7 +224,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
             g_h = self.get_grad_and_hess(self.grad_and_hess, booster_dim)
 
         flow_id = self.generate_flowid(epoch_idx, booster_dim)
-        complete_secure = True if (epoch_idx == 0 and self.complete_secure) else False
+        complete_secure = True if (epoch_idx < self.complete_secure) else False
 
         tree_type, target_host_id = None, None
         fast_sbt = (self.boosting_strategy == consts.MIX_TREE or self.boosting_strategy == consts.LAYERED_TREE)

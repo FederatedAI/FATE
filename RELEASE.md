@@ -1,3 +1,15 @@
+## Release 1.11.2
+### Major Features and Improvements
+> FederatedML
+* Integrate DeepSpeed, support distributed training of FATE-LLM
+* Separate upgraded FATE-LLM's from FATE into new “FATE-LLM” github repo
+* HomoNN now supports data collator and distributed sampler
+* Hetero SecureBoost supports running multiple boosting rounds in complete secure mode with `complete_secure` option 
+
+> Bug-Fix
+* Fix hessian computation of softmax cross entropy in SecureBoostt
+
+
 ## Release 1.11.1
 ### Major Features and Improvements
 > FederatedML
