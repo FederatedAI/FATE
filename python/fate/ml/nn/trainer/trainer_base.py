@@ -569,7 +569,6 @@ Mixin Class For Federation Trainer
 class StdFedTrainerMixin(ShortcutCallBackInterFace, FedCallbackInterface):
 
     def __init__(self,
-                 ctx: Context,
                  model: nn.Module,
                  loss_fn: nn.Module,
                  optimizer: torch.optim.Optimizer,
@@ -582,14 +581,15 @@ class StdFedTrainerMixin(ShortcutCallBackInterFace, FedCallbackInterface):
                  use_hf_default_behavior: bool = False,
                  compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
                  local_mode: bool = None,
-                 parameter_alignment = True
+                 parameter_alignment = True,
+                 ctx: Context = None,
                  ):
         
         assert isinstance(
             callbacks, list), 'callback must be a list containing Callback objects, but got {}'.format(
             callbacks)
         
-        self.ctx = ctx
+        self.ctx: Context = ctx
         self.local_mode = local_mode
         self.parameter_alignment = parameter_alignment
         self._callbacks = callbacks
@@ -609,6 +609,10 @@ class StdFedTrainerMixin(ShortcutCallBackInterFace, FedCallbackInterface):
         else:
             self._aggregator = None
             logger.info('Local model is set, skip initializing aggregator')
+
+    def set_fed_context(self, ctx: Context):
+        assert isinstance(ctx, Context), 'ctx must be a Context object, but got {}'.format(ctx)
+        self.ctx = ctx
 
     @property
     def aggregator(self):
@@ -679,7 +683,6 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
     """
 
     def __init__(self,
-                 ctx: Context,
                  model: nn.Module,
                  loss_fn: nn.Module,
                  optimizer: torch.optim.Optimizer,
@@ -693,7 +696,8 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
                  use_hf_default_behavior: bool = False,
                  compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
                  local_mode: bool = False,
-                 parameter_alignment = True
+                 parameter_alignment = True,
+                 ctx: Context = None,
                  ):
 
         # default use no lr decay
@@ -773,10 +777,12 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
 
 class FedTrainerServer(object):
 
-    def __init__(self, ctx: Context, 
+    def __init__(self,  
                  parameter_alignment: bool = True,
                  training_args: TrainingArguments = None, 
-                 fed_args: FedArguments = None) -> None:
+                 fed_args: FedArguments = None,
+                 ctx: Context = None,
+                 ) -> None:
         
         self.ctx = ctx
         self.parameter_alignment = parameter_alignment
@@ -786,6 +792,10 @@ class FedTrainerServer(object):
         self._max_steps = None
         self._parameter_check_callback = FedParameterAlignCallback(self, self.ctx, None, None, is_server=True)
         self._max_aggregation = None
+
+    def set_fed_context(self, ctx: Context):
+        assert isinstance(ctx, Context), 'ctx must be a Context object, but got {}'.format(ctx)
+        self.ctx = ctx
 
     def init_aggregator(self):
         return None
