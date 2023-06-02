@@ -167,7 +167,7 @@ class FedAVGTrainer(TrainerBase):
 
             if not distributed_util.is_distributed() or distributed_util.is_rank_0():
                 client_agg = SecureAggClient(
-                    True, aggregate_weight=sample_num, communicate_match_suffix=self.comm_suffix)
+                    self.secure_aggregate, aggregate_weight=sample_num, communicate_match_suffix=self.comm_suffix)
             else:
                 client_agg = None
         else:
@@ -490,7 +490,7 @@ class FedAVGTrainer(TrainerBase):
                 'check early stop, converge func is {}'.format(converge_func))
 
         LOGGER.info('server running aggregate procedure')
-        server_agg = SecureAggServer(True, communicate_match_suffix=self.comm_suffix)
+        server_agg = SecureAggServer(self.secure_aggregate, communicate_match_suffix=self.comm_suffix)
 
         # aggregate and broadcast models
         for i in range(self.epochs):
