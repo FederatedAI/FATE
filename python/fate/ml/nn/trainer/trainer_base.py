@@ -21,6 +21,7 @@ from transformers.trainer import logger
 from transformers.trainer_callback import TrainerCallback, TrainerControl, TrainerState
 from typing import Optional
 import time
+from dataclasses import asdict, dataclass, field, fields
 
 
 def time_decorator(descr=""):
@@ -53,8 +54,24 @@ class FedArguments(object):
     aggregate_strategy: AggregateStrategy = field(default=AggregateStrategy.EPOCH.value)
     aggregate_freq: int = field(default=1)
 
-    
+    def to_dict(self):
+        """
+        Serializes this instance while replace `Enum` by their values (for JSON serialization support). It obfuscates
+        the token values by removing their value.
+        """
+        # filter out fields that are defined as field(init=False)
+        d = dict((field.name, getattr(self, field.name)) for field in fields(self) if field.init)
 
+        for k, v in d.items():
+            if isinstance(v, Enum):
+                d[k] = v.value
+            if isinstance(v, list) and len(v) > 0 and isinstance(v[0], Enum):
+                d[k] = [x.value for x in v]
+            if k.endswith("_token"):
+                d[k] = f"<{k.upper()}>"
+        return d
+
+    
 @dataclass
 class TrainingArguments(hf_TrainingArguments):
     

@@ -1,9 +1,8 @@
 import time
-
 from transformers.training_args import TrainingArguments
 from fate.ml.aggregator.base import Aggregator
 from fate.ml.nn.trainer.trainer_base import FedTrainerClient, FedTrainerServer, TrainingArguments, logger
-from fate.ml.nn.trainer.trainer_base import FedArguments, time_decorator
+from fate.ml.nn.trainer.trainer_base import FedArguments, time_decorator, TrainingArguments
 from dataclasses import field
 from dataclasses import dataclass, field
 from fate.interface import Context
@@ -18,9 +17,8 @@ from torch.nn import Module
 from torch import nn
 from torch.utils.data import DataLoader
 from fate.ml.aggregator.plaintext_aggregator import PlainTextAggregatorClient, PlainTextAggregatorServer
-from transformers import TrainingArguments, TrainerState, TrainerControl
+from transformers import TrainerState, TrainerControl
 from fate.ml.nn.utils.algo import HomoAlgorithm
-
 
 
 @dataclass
@@ -56,7 +54,7 @@ class FedAVGCLient(FedTrainerClient):
         
         super().__init__(model, loss_fn, optimizer, training_args, fed_args, train_set, val_set, data_collator,
                          scheduler, callbacks, use_hf_default_behavior,
-                         compute_metrics=compute_metrics, local_mode=local_model)
+                         compute_metrics=compute_metrics, local_mode=local_model, ctx=ctx)
 
     def init_aggregator(self):
         sample_num = len(self.train_dataset)
