@@ -586,6 +586,7 @@ Mixin Class For Federation Trainer
 class StdFedTrainerMixin(ShortcutCallBackInterFace, FedCallbackInterface):
 
     def __init__(self,
+                 ctx: Context, 
                  model: nn.Module,
                  loss_fn: nn.Module,
                  optimizer: torch.optim.Optimizer,
@@ -598,8 +599,7 @@ class StdFedTrainerMixin(ShortcutCallBackInterFace, FedCallbackInterface):
                  use_hf_default_behavior: bool = False,
                  compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
                  local_mode: bool = None,
-                 parameter_alignment = True,
-                 ctx: Context = None,
+                 parameter_alignment = True
                  ):
         
         assert isinstance(
@@ -626,10 +626,6 @@ class StdFedTrainerMixin(ShortcutCallBackInterFace, FedCallbackInterface):
         else:
             self._aggregator = None
             logger.info('Local model is set, skip initializing aggregator')
-
-    def set_fed_context(self, ctx: Context):
-        assert isinstance(ctx, Context), 'ctx must be a Context object, but got {}'.format(ctx)
-        self.ctx = ctx
 
     @property
     def aggregator(self):
@@ -700,6 +696,7 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
     """
 
     def __init__(self,
+                 ctx: Context,
                  model: nn.Module,
                  loss_fn: nn.Module,
                  optimizer: torch.optim.Optimizer,
@@ -713,8 +710,7 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
                  use_hf_default_behavior: bool = False,
                  compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
                  local_mode: bool = False,
-                 parameter_alignment = True,
-                 ctx: Context = None,
+                 parameter_alignment = True
                  ):
 
         # default use no lr decay
@@ -795,10 +791,10 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
 class FedTrainerServer(object):
 
     def __init__(self,  
+                 ctx: Context,
                  parameter_alignment: bool = True,
                  training_args: TrainingArguments = None, 
                  fed_args: FedArguments = None,
-                 ctx: Context = None,
                  ) -> None:
         
         self.ctx = ctx

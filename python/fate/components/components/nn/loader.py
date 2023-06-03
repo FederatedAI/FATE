@@ -1,9 +1,33 @@
 import sys
 import importlib.util
 import json
+from abc import ABC, abstractmethod
 
 
-class Loader:
+class AbstractLoader(ABC):
+    @abstractmethod
+    def __init__(self, module_name, item_name, path=None, **kwargs):
+        pass
+
+    @abstractmethod
+    def load_inst(self):
+        pass
+
+    @abstractmethod
+    def load_class(self):
+        pass
+
+    @abstractmethod
+    def to_json(self):
+        pass
+
+    @abstractmethod
+    def to_dict(self):
+        pass
+
+
+class Loader(AbstractLoader):
+    
     def __init__(self, module_name, item_name, path=None, **kwargs):
         """Create a new Loader to import an item (class or function) from a module.
 
@@ -97,3 +121,33 @@ class Loader:
             'path': self.path,
             'params': self.kwargs
         }
+    
+    @staticmethod
+    def from_json(json_str):
+        """Create a new Loader from a JSON string.
+
+        Args:
+            json_str (str): A JSON string representation of a Loader.
+
+        Returns:
+            A new Loader instance.
+        """
+        data = json.loads(json_str)
+        return Loader.from_dict(data)
+
+    @staticmethod
+    def from_dict(data_dict):
+        """Create a new Loader from a dictionary.
+
+        Args:
+            data_dict (dict): A dictionary representation of a Loader.
+
+        Returns:
+            A new Loader instance.
+        """
+        return Loader(module_name=data_dict['module_name'], 
+                    item_name=data_dict['item_name'], 
+                    path=data_dict.get('path'), 
+                    **data_dict.get('params', {}))
+
+
