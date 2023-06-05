@@ -205,8 +205,12 @@ class _Component:
                 type_name = type(parameter.type).__name__
                 type_meta = parameter.type.dict()
             else:
-                type_name = parameter.type.__name__
-                type_meta = {}
+                field_default = ... if parameter.default is None else parameter.default
+                parameter_type = pydantic.create_model(
+                    f"parameter_{parameter.name}", data=(parameter.type, field_default)
+                )
+                type_name = parameter_type.__name__
+                type_meta = parameter_type.schema()
 
             input_parameters[parameter.name] = ParameterSpec(
                 type=type_name,
@@ -546,11 +550,11 @@ class _ParameterDeclareClass:
             )
         if self.optional != p.optional:
             raise ComponentDeclarError(
-                f"parameter {parameter.name} declare multiple times with different optional: `{self.optional}` vs `{p.optional}`"
+                f"parameter {p.name} declare multiple times with different optional: `{self.optional}` vs `{p.optional}`"
             )
         if self.type != p.type:
             raise ComponentDeclarError(
-                f"parameter {parameter.name} declare multiple times with different type: `{self.type}` vs `{self.type}`"
+                f"parameter {p.name} declare multiple times with different type: `{self.type}` vs `{self.type}`"
             )
         return self
 
