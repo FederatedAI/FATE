@@ -53,3 +53,18 @@ def train(
     output_model,
 ):
    print('running homo nn cwj 114514')
+   print('my role is {}'.format(role))
+
+
+@homo_nn.predict()
+@cpn.artifact("input_model", type=Input[ModelArtifact], roles=[GUEST, HOST])
+@cpn.artifact("test_data", type=Input[DatasetArtifact], optional=False, roles=[GUEST, HOST])
+@cpn.artifact("test_output_data", type=Output[DatasetArtifact], roles=[GUEST, HOST])
+def predict(
+    ctx,
+    role: Role,
+    test_data,
+    input_model,
+    test_output_data,
+):
+    pass
