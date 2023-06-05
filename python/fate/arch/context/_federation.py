@@ -97,6 +97,9 @@ class Parties(PartiesInterface):
     def __getitem__(self, key: int) -> Party:
         return Party(self.federation, self.parties[key], self.namespace)
 
+    def __len__(self) -> int:
+        return len(self.parties)
+
     def __call__(self, key: str) -> "_KeyedParty":
         return _KeyedParty(self, key)
 
