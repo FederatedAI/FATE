@@ -91,8 +91,6 @@ def train(
         server_trainer = setup.setup()
         server_trainer.train()
 
-   
-    print('running homo nn cwj 114514')
     print('my role is {}'.format(role))
 
 
