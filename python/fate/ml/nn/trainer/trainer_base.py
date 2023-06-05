@@ -756,7 +756,8 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
                         )
         
         # self._handle_callback(self.callback_handler, self._callbacks)
-        self._add_fate_callback(self.callback_handler)
+        if not self.local_mode:
+            self._add_fate_callback(self.callback_handler)
 
     def init_aggregator(self):
         return None

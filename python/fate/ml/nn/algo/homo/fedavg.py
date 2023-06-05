@@ -18,7 +18,6 @@ from torch import nn
 from torch.utils.data import DataLoader
 from fate.ml.aggregator.plaintext_aggregator import PlainTextAggregatorClient, PlainTextAggregatorServer
 from transformers import TrainerState, TrainerControl
-from fate.ml.nn.utils.algo import HomoAlgorithm
 
 
 @dataclass
@@ -40,7 +39,9 @@ class FedAVGArguments(FedArguments):
 
 class FedAVGCLient(FedTrainerClient):
     
-    def __init__(self, model: Module, loss_fn: Module, optimizer: Optimizer, 
+    def __init__(self, 
+                 ctx: Context,
+                 model: Module, loss_fn: Module, optimizer: Optimizer, 
                  training_args: TrainingArguments, fed_args: FedArguments, 
                  train_set: Dataset, val_set: Dataset = None, 
                  scheduler: _LRScheduler = None, 
@@ -48,13 +49,12 @@ class FedAVGCLient(FedTrainerClient):
                  data_collator: Callable=None,
                  use_hf_default_behavior: bool = False, 
                  compute_metrics: Callable = None, 
-                 local_model: bool = False,
-                 ctx: Context = None
+                 local_mode: bool = False
                  ):
         
-        super().__init__(model, loss_fn, optimizer, training_args, fed_args, train_set, val_set, data_collator,
+        super().__init__(ctx, model, loss_fn, optimizer, training_args, fed_args, train_set, val_set, data_collator,
                          scheduler, callbacks, use_hf_default_behavior,
-                         compute_metrics=compute_metrics, local_mode=local_model, ctx=ctx)
+                         compute_metrics=compute_metrics, local_mode=local_mode)
 
     def init_aggregator(self):
         sample_num = len(self.train_dataset)
@@ -82,10 +82,10 @@ class FedAVGCLient(FedTrainerClient):
 class FedAVGServer(FedTrainerServer):
 
     def __init__(self, 
+                 ctx: Context,
                  parameter_alignment: bool = True,
                  training_args: TrainingArguments = None, 
-                 fed_args: FedArguments = None,
-                 ctx: Context = None, 
+                 fed_args: FedArguments = None
                  ) -> None:
         
         super().__init__(ctx, parameter_alignment, training_args, fed_args)
@@ -98,7 +98,7 @@ class FedAVGServer(FedTrainerServer):
         aggregator.model_aggregation()
 
 
-class FedAVG(HomoAlgorithm):
+class FedAVG(object):
 
     client = FedAVGCLient
-    sever = FedAVGServer
+    server = FedAVGServer
