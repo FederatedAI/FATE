@@ -30,9 +30,8 @@ import pandas as pd
 from fate.interface import Context
 from fate.components.components.nn.setup.fate_setup import FateSetup
 from fate.components.components.nn.nn_setup import NNSetup
-from fate.components.components.nn.loader import Loader, _Source
+from fate.components.components.nn.loader import Loader
 from fate.arch.dataframe._dataframe import DataFrame
-from fate.ml.nn.algo.homo.fedavg import FedAVGArguments, TrainingArguments
 import logging
 
 
@@ -77,9 +76,9 @@ def train(
     if setup_module != 'fate_setup':
         if source == None:
             # load from default folder
-            setup = Loader('fate.components.components.nn.setup.' + setup_module, setup_class, **setup_conf).load_inst()
+            setup = Loader('fate.components.components.nn.setup.' + setup_module, setup_class, **setup_conf).call_item()
         else:
-            setup = Loader(setup_module, setup_class, source=source, **setup_conf).load_inst()
+            setup = Loader(setup_module, setup_class, source=source, **setup_conf).call_item()
         assert isinstance(setup, NNSetup), 'loaded class must be a subclass of NNSetup class, but got {}'.format(type(setup))
     else:
         print('using default fate setup')

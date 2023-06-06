@@ -36,8 +36,8 @@ class FateSetup(NNSetup):
         if conf is None:
             return None
         if return_class:
-            return Loader.from_dict(conf).load_class()
-        return Loader.from_dict(conf).load_inst()
+            return Loader.from_dict(conf).load_item()
+        return Loader.from_dict(conf).call_item()
 
     def setup(self):
 
@@ -63,7 +63,7 @@ class FateSetup(NNSetup):
             model = self._loader_load_from_conf(self.model_conf)
             # load optimizer
             optimizer_loader = Loader.from_dict(self.optimizer_conf)
-            optimizer_ = optimizer_loader.load_class()
+            optimizer_ = optimizer_loader.load_item()
             optimizer_params = optimizer_loader.kwargs
             optimizer = optimizer_(model.parameters(), **optimizer_params)
             # load loss

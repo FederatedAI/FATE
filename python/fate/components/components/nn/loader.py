@@ -4,6 +4,7 @@ import importlib.util
 from abc import ABC, abstractmethod
 from enum import Enum
 import json
+from typing import Any
 import yaml
 
 
@@ -32,11 +33,11 @@ class AbstractLoader(ABC):
         pass
 
     @abstractmethod
-    def load_inst(self):
+    def call_item(self):
         pass
 
     @abstractmethod
-    def load_class(self):
+    def load_item(self):
         pass
 
     @abstractmethod
@@ -69,7 +70,10 @@ class Loader(AbstractLoader):
 
         self.kwargs = kwargs
 
-    def load_inst(self):
+    def __call__(self):
+        return self.call_item()
+
+    def call_item(self):
         item = self._load_item()
 
         if item is not None and callable(item):
@@ -77,7 +81,7 @@ class Loader(AbstractLoader):
 
         return item
 
-    def load_class(self):
+    def load_item(self):
         return self._load_item()
 
     def _load_item(self):
