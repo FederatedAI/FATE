@@ -1,22 +1,30 @@
+import os
 import sys
 import importlib.util
 from abc import ABC, abstractmethod
 from enum import Enum
 import json
+import yaml
 
 
-class Source(object):
+class _Source(object):
     MODEL_ZOO = 'fate.ml.nn.model_zoo'
     DATASET = 'fate.ml.nn.dataset'
     CUST_FUNC = 'fate.ml.nn.cust_func'
 
 
-MODULE_PATH = set(
-    ['fate.ml.nn.model_zoo',
-    'fate.ml.nn.dataset',
-    'fate.ml.nn.cust_func']
-)
+SOURCE_FILE = 'source.yaml'
 
+def is_path(s):
+    return os.path.exists(s)
+
+
+def load_source():
+    script_path = os.path.realpath(__file__)
+    script_dir = os.path.dirname(script_path)
+    with open(script_dir + '/' + SOURCE_FILE, 'r') as f:
+        source = yaml.safe_load(f)
+    return source
 
 class AbstractLoader(ABC):
     @abstractmethod
@@ -43,19 +51,21 @@ class AbstractLoader(ABC):
 class Loader(AbstractLoader):
     
     def __init__(self, module_name, item_name, source=None, **kwargs):
-        self.item_name = item_name
 
-        if isinstance(source, str) and source in MODULE_PATH:
-            self.module_name = f'{source}.{module_name}'
-            self.source = None
-        elif isinstance(source, str):
+        self.item_name = item_name
+        self.module_name = module_name
+        self.source = source
+        self.source_path = None
+
+        if isinstance(source, str):
             self.module_name = module_name
-            self.source = source
+            source_dict = load_source()
+            if self.source in source_dict:
+                self.source_path = source_dict[self.source]
+            else:
+                raise ValueError('source name {} is not found in the source.yaml file. Please check the source name.'.format(self.source))
         elif source is None:
             self.module_name = module_name
-            self.source = None
-        else:
-            raise TypeError("The 'source' parameter must be either a string or an instance of the 'Source' enum.")
 
         self.kwargs = kwargs
 
@@ -71,22 +81,22 @@ class Loader(AbstractLoader):
         return self._load_item()
 
     def _load_item(self):
-        if self.source is not None:
-            sys.path.append(self.source)
+
+        if self.source_path is not None:
+            sys.path.append(self.source_path)
 
         spec = importlib.util.find_spec(self.module_name)
         if spec is None:
-            print("Module: {} not found.".format(self.module_name))
-            return None
-
+            raise ValueError("Module: {} not found in the import path.".format(self.module_name))
+        
         module = importlib.import_module(self.module_name)
 
         item = getattr(module, self.item_name, None)
         if item is None:
             print("Item: {} not found in module: {}.".format(self.item_name, self.module_name))
 
-        if self.source is not None:
-            sys.path.remove(self.source)
+        if self.source_path is not None:
+            sys.path.remove(self.source_path)
 
         return item
 
@@ -97,8 +107,8 @@ class Loader(AbstractLoader):
         return {
             'module_name': self.module_name,
             'item_name': self.item_name,
-            'source': self.source if self.source else self.module_name.split('.')[0],
-            'kwargs': self.kwargs
+            'kwargs': self.kwargs,
+            'source': self.source
         }
 
     @staticmethod
@@ -110,6 +120,27 @@ class Loader(AbstractLoader):
     def from_dict(data_dict):
         return Loader(module_name=data_dict['module_name'], 
                       item_name=data_dict['item_name'], 
-                      source=data_dict.get('source'),
+                      source=data_dict.get('source', None),
                       **data_dict.get('kwargs', {})
                       )
+
+
+class ModelLoader(Loader):
+    def __init__(self, module_name, item_name, source=None, **kwargs):
+        if source is None:
+            module_name = f'{_Source.MODEL_ZOO}.{module_name}'  # add prefix for moduele loader
+        super(ModelLoader, self).__init__(module_name, item_name, source, **kwargs)
+
+
+class DatasetLoader(Loader):
+    def __init__(self, module_name, item_name, source=None, **kwargs):
+        if source is None:
+            module_name = f'{_Source.DATASET}.{module_name}'  # add prefix for moduele loader
+        super(DatasetLoader, self).__init__(module_name, item_name, source, **kwargs)
+
+
+class CustFuncLoader(Loader):
+    def __init__(self, module_name, item_name, source=None, **kwargs):
+        if source is None:
+            module_name = f'{_Source.CUST_FUNC}.{module_name}'  # add prefix for moduele loader
+        super(CustFuncLoader, self).__init__(module_name, item_name, source, **kwargs)

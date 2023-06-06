@@ -1,6 +1,7 @@
 from fate.components import Role
 from fate.interface import Context
 
+
 class NNSetup(object):
 
     def __init__(self) -> None:

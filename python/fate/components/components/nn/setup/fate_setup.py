@@ -48,24 +48,32 @@ class FateSetup(NNSetup):
         ctx = self.get_context()
             
         if self.is_client():
+
             # load arguments, models, etc
             # prepare datatset
-
             dataset = self._loader_load_from_conf(self.dataset_conf)
             cpn_input = self.get_cpn_input_data()
 
             if hasattr(dataset, 'load'):
                 dataset.load(cpn_input)
             else:
-                raise ValueError(f"dataset {dataset} has no load method")
+                raise ValueError(f"dataset {dataset} has no load() method")
             
+            # load model
             model = self._loader_load_from_conf(self.model_conf)
-            optimizer_ = self._loader_load_from_conf(self.optimizer_conf, return_class=True)
-            optimizer = optimizer_(model.parameters(), lr=0.001)
+            # load optimizer
+            optimizer_loader = Loader.from_dict(self.optimizer_conf)
+            optimizer_ = optimizer_loader.load_class()
+            optimizer_params = optimizer_loader.kwargs
+            optimizer = optimizer_(model.parameters(), **optimizer_params)
+            # load loss
             loss = self._loader_load_from_conf(self.loss_conf)
+            # load collator func
             data_collator = self._loader_load_from_conf(self.data_collator_conf)
+            # args
             training_args = TrainingArguments(**self.training_args_conf)
             fed_args = FedAVGArguments(**self.fed_args_conf)
+            # prepare trainer
             trainer = client_class(ctx=ctx, model=model, loss_fn=loss,
                                    optimizer=optimizer, training_args=training_args,
                                    fed_args=fed_args, data_collator=data_collator,
@@ -75,3 +83,4 @@ class FateSetup(NNSetup):
             trainer = server_class(ctx=ctx)
 
         return trainer
+    
