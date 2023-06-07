@@ -16,7 +16,9 @@ from .evaluation import evaluation
 from .feature_scale import feature_scale
 from .hetero_linr import hetero_linr
 from .hetero_lr import hetero_lr
+from .hetero_poisson import hetero_poisson
 from .intersection import intersection
 from .reader import reader
 
-BUILDIN_COMPONENTS = [hetero_lr, hetero_linr, reader, feature_scale, intersection, evaluation]
+BUILDIN_COMPONENTS = [hetero_lr, hetero_linr, reader, feature_scale, intersection, evaluation,
+                      hetero_poisson]
