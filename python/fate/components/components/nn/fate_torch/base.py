@@ -4,6 +4,18 @@ from torch.nn import Sequential as tSequential
 import json
 
 
+
+def convert_tuples_to_lists(data):
+    if isinstance(data, tuple):
+        return list(data)
+    elif isinstance(data, list):
+        return [convert_tuples_to_lists(item) for item in data]
+    elif isinstance(data, dict):
+        return {key: convert_tuples_to_lists(value) for key, value in data.items()}
+    else:
+        return data
+
+
 class FateTorch(object):
 
     def __init__(self):
@@ -15,7 +27,7 @@ class FateTorch(object):
         ret_dict ={
             'module_name': 'torch.nn',
             'item_name':  str(type(self).__name__),
-            'kwargs': self.param_dict
+            'kwargs': convert_tuples_to_lists(self.param_dict)
         }
         return ret_dict
 
@@ -30,7 +42,7 @@ class FateTorchOptimizer(object):
         ret_dict ={
             'module_name': 'torch.optim',
             'item_name':  type(self).__name__,
-            'kwargs': self.param_dict
+            'kwargs': convert_tuples_to_lists(self.param_dict)
         }
         return ret_dict
 
@@ -100,5 +112,5 @@ class Sequential(tSequential):
 
     def to_json(self):
         return json.dumps(self.to_dict(), indent=4)
-
-        
+    
+    
