@@ -29,7 +29,7 @@ import os
 import pandas as pd
 from fate.interface import Context
 from fate.components.components.nn.setup.fate_setup import FateSetup
-from fate.components.components.nn.nn_setup import NNSetup
+from fate.components.components.nn.nn_setup import NNSetup, SetupReturn
 from fate.components.components.nn.loader import Loader
 from fate.arch.dataframe._dataframe import DataFrame
 import logging
@@ -76,33 +76,42 @@ def train(
     if setup_module != 'fate_setup':
         if source == None:
             # load from default folder
-            setup = Loader('fate.components.components.nn.setup.' + setup_module, setup_class, **setup_conf).call_item()
+            setup = Loader('fate.components.components.nn.setup.' + setup_module, setup_class, **setup_conf)()
         else:
-            setup = Loader(setup_module, setup_class, source=source, **setup_conf).call_item()
+            setup = Loader(setup_module, setup_class, source=source, **setup_conf)()
         assert isinstance(setup, NNSetup), 'loaded class must be a subclass of NNSetup class, but got {}'.format(type(setup))
     else:
         print('using default fate setup')
         setup = FateSetup(**setup_conf)
 
-    setup.set_context(ctx)
     setup.set_role(role)
-
     print('setup class is {}'.format(setup))
 
-    if role.is_guest or role.is_host:
-        with ctx.sub_ctx("train") as sub_ctx:
+    with ctx.sub_ctx("train") as sub_ctx:
+
+        # set context
+        setup.set_context(sub_ctx)
+
+        if role.is_guest or role.is_host:  # is client
+
             train_data: DataFrame = sub_ctx.reader(train_data).read_dataframe().data
             train_data: pd.DataFrame = train_data.as_pd_df()
             print('train data is {}'.format(train_data))
             setup.set_cpn_input_data(train_data)
             # get trainer
-            trainer = setup.setup()
-            trainer.train()
+            setup_ret = setup.setup()
+            if not isinstance(setup_ret, SetupReturn):
+                raise ValueError('The return of your setup class must be a SetupReturn Instance, but got {}'.format(setup_ret))
+            client_trainer = setup_ret['trainer']
+            client_trainer.train()
 
-    elif role.is_arbiter:
-        # get trainer
-        server_trainer = setup.setup()
-        server_trainer.train()
+        elif role.is_arbiter:  # is sever
+            # get trainer
+            setup_ret = setup.setup()
+            if not isinstance(setup_ret, SetupReturn):
+                    raise ValueError('The return of your setup class must be a SetupReturn Instance, but got {}'.format(setup_ret))
+            server_trainer = setup_ret['trainer']
+            server_trainer.train()
 
 
 @homo_nn.predict()

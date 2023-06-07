@@ -101,37 +101,4 @@ class Sequential(tSequential):
     def to_json(self):
         return json.dumps(self.to_dict(), indent=4)
 
-    def add_optimizer(self, opt):
-        setattr(self, 'optimizer', opt)
-
-    def add(self, layer):
-
-        if isinstance(layer, Sequential):
-            self._modules = layer._modules
-            # copy optimizer
-            if hasattr(layer, 'optimizer'):
-                setattr(self, 'optimizer', layer.optimizer)
-        elif isinstance(layer, FateTorch):
-            self.add_module(str(len(self)), layer)
-            # update optimizer if dont have
-            if not hasattr(self, 'optimizer') and hasattr(layer, 'optimizer'):
-                setattr(self, 'optimizer', layer.optimizer)
-        else:
-            raise ValueError(
-                'unknown input layer type {}, this type is not supported'.format(
-                    type(layer)))
-
-    @staticmethod
-    def get_loss_config(loss: FateTorch):
-        return loss.to_dict()
-
-    def get_optimizer_config(self, optimizer=None):
-        if hasattr(self, 'optimizer'):
-            return self.optimizer.to_dict()
-        else:
-            return optimizer.to_dict()
-
-    def get_network_config(self):
-        return self.to_dict()
-
         

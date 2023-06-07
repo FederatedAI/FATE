@@ -1,8 +1,9 @@
-from fate.components.components.nn.nn_setup import NNSetup
+from fate.components.components.nn.nn_setup import NNSetup, SetupReturn
 from transformers import TrainingArguments
 from fate.ml.nn.algo.homo.fedavg import FedAVG, FedAVGArguments, FedAVGCLient, FedAVGServer
 from typing import Optional, Dict
 from fate.components.components.nn.loader import Loader
+
 
 SUPPORTED_ALGO = ['fedavg']
 
@@ -78,9 +79,12 @@ class FateSetup(NNSetup):
                                    optimizer=optimizer, training_args=training_args,
                                    fed_args=fed_args, data_collator=data_collator,
                                    train_set=dataset, local_mode=self.local_mode)
+            
+            return SetupReturn(trainer=trainer, model=model, optimizer=optimizer, loss=loss, 
+                               train_args=training_args, fed_args=fed_args, data_collator=data_collator,
+                               train_set=dataset, validate_set=dataset)
 
         elif self.is_server():
             trainer = server_class(ctx=ctx)
-
-        return trainer
+            return SetupReturn(trainer=trainer)
     
