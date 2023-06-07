@@ -236,7 +236,7 @@ class HeteroLrEstimatorGuest(HeteroModule):
                 Xw = torch.matmul(X, w)
                 d = 0.25 * Xw - 0.5 * Y
                 loss = 0.125 / h * torch.matmul(Xw.T, Xw) - 0.5 / h * torch.matmul(Xw.T, Y)
-                if self.optimizer.l1_penlaty or self.optimizer.l2_penalty:
+                if self.optimizer.l1_penalty or self.optimizer.l2_penalty:
                     loss_norm = self.optimizer.loss_norm(w)
                     loss += loss_norm
                     d = self.optimizer.add_regular_to_grad(d, w)

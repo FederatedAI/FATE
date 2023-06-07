@@ -34,8 +34,7 @@ class HeteroLinRModuleGuest(HeteroModule):
             batch_size=None,
             optimizer_param=None,
             learning_rate_param=None,
-            init_param=None,
-            threshold=0.5
+            init_param=None
     ):
         self.max_iter = max_iter
         self.batch_size = batch_size
@@ -133,7 +132,7 @@ class HeteroLinrEstimatorGuest(HeteroModule):
                 Xw = torch.matmul(X, w)
                 d = Xw - Y
                 loss = 1 / 2 / h * torch.matmul(d.T, d)
-                if self.optimizer.l1_penlaty or self.optimizer.l2_penalty:
+                if self.optimizer.l1_penalty or self.optimizer.l2_penalty:
                     loss_norm = self.optimizer.loss_norm(w)
                     loss += loss_norm
                 for Xw_h in batch_ctx.hosts.get("Xw_h"):
