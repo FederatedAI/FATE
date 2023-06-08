@@ -21,6 +21,9 @@ from .._dataframe import DataFrame
 from ..manager import DataManager
 
 
+FLOATING_POINT_ZERO = 1e-14
+
+
 def min(df: "DataFrame"):
     data_manager = df.data_manager
     operable_blocks = data_manager.infer_operable_blocks()
@@ -170,6 +173,56 @@ def var(df: "DataFrame", ddof=1) -> "pd.Series":
 
 def std(df: "DataFrame", ddof=1):
     return var(df, ddof) ** 0.5
+
+
+def skew(df: "DataFrame", unbiased=False):
+    data_manager = df.data_manager
+    n = df.shape[0]
+
+    if unbiased and n < 3:
+        field_names = data_manager.infer_operable_field_names()
+        return pd.Series([np.nan for _ in range(len(field_names))], index=field_names)
+
+    _mean = mean(df)
+    m1 = df - _mean
+    m2 = (m1 ** 2).mean()
+    m3 = (m1 ** 3).mean()
+
+    """
+    if abs(value) in m2 < eps=1e-14, we regard it as 0, but eps=1e-14 should be global instead of this file.
+    """
+    non_zero_mask = abs(m2) >= FLOATING_POINT_ZERO
+    m3[~non_zero_mask] = 0
+    m2[~non_zero_mask] = 1
+
+    if unbiased:
+        return (n * (n - 1)) ** 0.5 / (n - 2) * (m3 / m2 ** 1.5)
+    else:
+        return m3 / m2 ** 1.5
+
+
+def kurt(df: "DataFrame", unbiased=False):
+    data_manager = df.data_manager
+    n = df.shape[0]
+    if unbiased and n < 4:
+        field_names = data_manager.infer_operable_field_names()
+        return pd.Series([np.nan for _ in range(len(field_names))], index=field_names)
+
+    _mean = mean(df)
+    m1 = df - _mean
+    m2 = m1 ** 2
+    m4 = m2 ** 2
+    m2 = m2.mean()
+    m4 = m4.mean()
+
+    non_zero_mask = abs(m2) >= FLOATING_POINT_ZERO
+    m4[~non_zero_mask] = 0
+    m2[~non_zero_mask] = 1
+
+    if unbiased:
+        return (n - 1) / ((n - 2) * (n - 3)) * ((n + 1) * m4 / m2**2 - 3 * (n - 1))
+    else:
+        return m4 / m2 ** 4 - 3
 
 
 def _post_process(reduce_ret, operable_blocks, data_manager: "DataManager") -> "pd.Series":
