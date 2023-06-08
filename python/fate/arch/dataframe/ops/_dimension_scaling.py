@@ -156,6 +156,13 @@ def drop(df: "DataFrame", index: "DataFrame"=None) -> "DataFrame":
     )
 
 
+def sample(df: "DataFrame", n=None, frac=None, **kwargs):
+    """
+    下采样：
+    """
+    ...
+
+
 def _flatten_partition(kvs, block_num=0):
     _flattens = []
     for partition_id, blocks in kvs:

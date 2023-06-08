@@ -154,7 +154,7 @@ class SchemaManager(object):
                 dtype = block_types.value
 
             self._type_mapping[name] = dtype
-            self._name_offset_mapping[name] = field_index
+            self._name_offset_mapping[name] = field_index + offset
             self._offset_name_mapping[field_index + offset] = name
 
         self.schema.append_columns(names)

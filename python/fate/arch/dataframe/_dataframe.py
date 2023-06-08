@@ -194,6 +194,14 @@ class DataFrame(object):
         from .ops._dimension_scaling import drop
         return drop(self, index)
 
+    def fillna(self, value):
+        from .ops._fillna import fillna
+        return fillna(self, value)
+
+    def isin(self, values):
+        from .ops._isin import isin
+        return isin(self, values)
+
     def max(self) -> "pd.Series":
         from .ops._stat import max
         return max(self)
@@ -210,8 +218,13 @@ class DataFrame(object):
         from .ops._stat import sum
         return sum(self)
 
-    def std(self, *args, **kwargs) -> "pd.Series":
-        ...
+    def std(self, ddof=1, **kwargs) -> "pd.Series":
+        from .ops._stat import std
+        return std(self, ddof=ddof)
+
+    def var(self, ddof=1, **kwargs):
+        from .ops._stat import var
+        return var(self, ddof=ddof)
 
     def sigmoid(self) -> "DataFrame":
         from .ops._activation import sigmoid
@@ -256,6 +269,10 @@ class DataFrame(object):
     def __ge__(self, other) -> "DataFrame":
         return self.__cmp_operate(operator.ge, other)
 
+    def __invert__(self):
+        from .ops._unary_operator import invert
+        return invert(self)
+
     def __arithmetic_operate(self, op, other) -> "DataFrame":
         """
         df * 1.5, int -> float
@@ -279,7 +296,13 @@ class DataFrame(object):
         assert 1 == 2
 
     def __getitem__(self, items) -> "DataFrame":
-        if not isinstance(items, list):
+        if isinstance(items, DataFrame):
+            from .ops._where import where
+            return where(self, items)
+
+        if isinstance(items, pd.Index):
+            items = items.tolist()
+        elif not isinstance(items, list):
             items = [items]
 
         for item in items:
@@ -291,6 +314,8 @@ class DataFrame(object):
     def __setitem__(self, keys, items):
         if isinstance(keys, str):
             keys = [keys]
+        elif isinstance(keys, pd.Series):
+            keys = keys.tolist()
 
         state = 0
         column_set = set(self._data_manager.schema.columns)
