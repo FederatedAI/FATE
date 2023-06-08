@@ -13,20 +13,23 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from ..manager import DataManager
-from ..manager.block_manager import Block
+import operator
+from .._dataframe import DataFrame
+from ..manager import BlockType
+from .utils.operators import unary_operate
 
 
-def promote_types(block_table, data_manager: DataManager, to_promote_blocks):
-    data_manager.promote_types(to_promote_blocks)
-    to_promote_block_dict = dict((bid, block_type) for bid, block_type in to_promote_blocks)
-    block_table = block_table.mapValues(
-        lambda blocks: [
-            blocks[bid] if bid not in to_promote_block_dict
-            else Block.get_block_by_type(to_promote_block_dict[bid]).convert_block(blocks[bid].tolist())
-            for bid in range(len(blocks))
-        ]
+def invert(df: DataFrame):
+    data_manager = df.data_manager
+    block_indexes = data_manager.infer_operable_blocks()
+    for bid in block_indexes:
+        if data_manager.blocks[bid] != BlockType.bool:
+            raise ValueError("to use ~df syntax, data types should be bool")
+
+    block_table = unary_operate(df.block_table, operator.invert, block_indexes)
+    return type(df)(
+        df.ctx,
+        block_table,
+        df.partition_order_mappings,
+        data_manager.duplicate()
     )
-
-    return block_table, data_manager
-
