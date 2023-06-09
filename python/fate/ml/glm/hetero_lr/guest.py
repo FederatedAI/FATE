@@ -229,7 +229,7 @@ class HeteroLrEstimatorGuest(HeteroModule):
                 # temp code end
                 logger.info(f"X: {X}, Y: {Y}")
                 # temp code start
-                X = X.values.as_tensor()
+                # X = X.values.as_tensor()
                 # temp code end
                 h = X.shape[0]
 

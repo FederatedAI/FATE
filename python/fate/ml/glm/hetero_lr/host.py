@@ -174,7 +174,7 @@ class HeteroLrEstimatorHost(HeteroModule):
                 # h = X.shape[0]
                 logger.info(f"start batch {j}")
                 # temp code start
-                X = X.values.as_tensor()
+                # X = X.values.as_tensor()
                 # temp code end
                 Xw_h = 0.25 * torch.matmul(X, w)
                 if self.optimizer.l1_penalty or self.optimizer.l2_penalty:
@@ -186,7 +186,6 @@ class HeteroLrEstimatorHost(HeteroModule):
                 g.to(batch_ctx.arbiter, "g_enc")
 
                 loss_norm = self.optimizer.loss_norm(w)
-                # todo: return none if penalty is none
                 if loss_norm is not None:
                     encryptor.encrypt(loss_norm).to(batch_ctx.guest, "h_loss")
                 else:
