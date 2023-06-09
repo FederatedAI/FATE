@@ -226,6 +226,14 @@ class DataFrame(object):
         from .ops._stat import var
         return var(self, ddof=ddof)
 
+    def skew(self, unbiased=False):
+        from .ops._stat import skew
+        return skew(self, unbiased=unbiased)
+
+    def kurt(self, unbiased=False):
+        from .ops._stat import kurt
+        return kurt(self, unbiased=unbiased)
+
     def sigmoid(self) -> "DataFrame":
         from .ops._activation import sigmoid
         return sigmoid(self)
@@ -256,6 +264,9 @@ class DataFrame(object):
 
     def __truediv__(self, other) -> "DataFrame":
         return self.__arithmetic_operate(operator.truediv, other)
+
+    def __pow__(self, power) -> "DataFrame":
+        return self.__arithmetic_operate(operator.pow, power)
 
     def __lt__(self, other) -> "DataFrame":
         return self.__cmp_operate(operator.lt, other)
