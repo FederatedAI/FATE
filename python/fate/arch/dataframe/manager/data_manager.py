@@ -191,9 +191,9 @@ class DataManager(object):
 
     def try_to_promote_types(self,
                              block_indexes: List[int],
-                             block_type: Union[list, int, float, np.dtype, BlockType]) -> List[Tuple[int, BlockType]]:
+                             block_type: Union[bool, list, int, float, np.dtype, BlockType]) -> List[Tuple[int, BlockType]]:
         promote_types = []
-        if isinstance(block_type, (int, float, np.dtype)):
+        if isinstance(block_type, (bool, int, float, np.dtype)):
             block_type = BlockType.get_block_type(block_type)
 
         if isinstance(block_type, BlockType):

@@ -18,6 +18,7 @@ from fate.arch.computing import is_table
 from .._dataframe import DataFrame
 from ._promote_types import promote_types
 from .utils.series_align import series_to_ndarray
+from .utils.operators import binary_operate
 
 
 def arith_operate(lhs: DataFrame, rhs, op) -> "DataFrame":
@@ -53,11 +54,11 @@ def arith_operate(lhs: DataFrame, rhs, op) -> "DataFrame":
             rhs_blocks[bid] = rhs[indexer]
             rhs_types.append(rhs_blocks[bid].dtype)
 
-        block_table = _operate(lhs.block_table, rhs_blocks, op, block_indexes)
+        block_table = binary_operate(lhs.block_table, rhs_blocks, op, block_indexes)
         to_promote_blocks = data_manager.try_to_promote_types(block_indexes, rhs_types)
 
     elif isinstance(rhs, (bool, int, float, np.int32, np.float32, np.int64, np.float64, np.bool)):
-        block_table = _operate(lhs.block_table, rhs, op, block_indexes)
+        block_table = binary_operate(lhs.block_table, rhs, op, block_indexes)
         to_promote_blocks = data_manager.try_to_promote_types(block_indexes, rhs)
     else:
         raise ValueError(f"Operation={op} between dataframe and {type(rhs)} is not implemented")
@@ -84,7 +85,7 @@ def _operate(lhs, rhs, op, block_indexes, rhs_block_id=None):
                 for bid in range(len(blocks))
             ]
         )
-    elif isinstance(rhs, (int, list)):
+    elif isinstance(rhs, (bool, int, float, np.int32, np.float32, np.int64, np.float64, np.bool)):
         op_ret = lhs.mapValues(
             lambda blocks:
             [
