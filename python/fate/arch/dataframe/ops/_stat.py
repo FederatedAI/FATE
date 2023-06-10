@@ -21,6 +21,9 @@ from .._dataframe import DataFrame
 from ..manager import DataManager
 
 
+FLOATING_POINT_ZERO = 1e-14
+
+
 def min(df: "DataFrame"):
     data_manager = df.data_manager
     operable_blocks = data_manager.infer_operable_blocks()
@@ -114,6 +117,114 @@ def mean(df: "DataFrame") -> "pd.Series":
     return sum(df) / df.shape[0]
 
 
+def var(df: "DataFrame", ddof=1) -> "pd.Series":
+    data_manager = df.data_manager
+    operable_blocks = data_manager.infer_operable_blocks()
+    n = df.shape[0]
+
+    def _mapper(blocks, op_bids):
+        ret = []
+        for bid in op_bids:
+            block = blocks[bid]
+            if isinstance(block, torch.Tensor):
+                ret.append(
+                    (
+                        torch.sum(torch.square(block), axis=0, keepdim=True),
+                        torch.sum(block, axis=0, keepdim=True),
+                    )
+                )
+            else:
+                ret.append(
+                    (
+                        np.sum(np.square(block), axis=0),
+                        np.sum(block, axis=0)
+                    )
+                )
+
+        return ret
+
+    def _reducer(blocks1, block2):
+        ret = []
+        for block1, block2 in zip(blocks1, block2):
+            if isinstance(block1, torch.Tensor):
+                ret.append((torch.add(block1[0], block2[0]), torch.add(block1[1], block2[1])))
+            else:
+                ret.append((np.add(block1[0], block2[0]), np.add(block1[1], block2[1])))
+
+        return ret
+
+    mapper_func = functools.partial(
+        _mapper,
+        op_bids=operable_blocks
+    )
+    reduce_ret = df.block_table.mapValues(mapper_func).reduce(_reducer)
+
+    ret_blocks = []
+    for (lhs, rhs) in reduce_ret:
+        if isinstance(lhs, torch.Tensor):
+            rhs = torch.mul(torch.square(torch.div(rhs, n)), n)
+            ret_blocks.append(torch.div(torch.sub(lhs, rhs), n - ddof))
+        else:
+            rhs = np.mul(np.square(np.div(rhs, n)), n)
+            ret_blocks.append(np.div(np.sub(lhs, rhs), n - ddof))
+
+    return _post_process(ret_blocks, operable_blocks, data_manager)
+
+
+def std(df: "DataFrame", ddof=1):
+    return var(df, ddof) ** 0.5
+
+
+def skew(df: "DataFrame", unbiased=False):
+    data_manager = df.data_manager
+    n = df.shape[0]
+
+    if unbiased and n < 3:
+        field_names = data_manager.infer_operable_field_names()
+        return pd.Series([np.nan for _ in range(len(field_names))], index=field_names)
+
+    _mean = mean(df)
+    m1 = df - _mean
+    m2 = (m1 ** 2).mean()
+    m3 = (m1 ** 3).mean()
+
+    """
+    if abs(value) in m2 < eps=1e-14, we regard it as 0, but eps=1e-14 should be global instead of this file.
+    """
+    non_zero_mask = abs(m2) >= FLOATING_POINT_ZERO
+    m3[~non_zero_mask] = 0
+    m2[~non_zero_mask] = 1
+
+    if unbiased:
+        return (n * (n - 1)) ** 0.5 / (n - 2) * (m3 / m2 ** 1.5)
+    else:
+        return m3 / m2 ** 1.5
+
+
+def kurt(df: "DataFrame", unbiased=False):
+    data_manager = df.data_manager
+    n = df.shape[0]
+    if unbiased and n < 4:
+        field_names = data_manager.infer_operable_field_names()
+        return pd.Series([np.nan for _ in range(len(field_names))], index=field_names)
+
+    _mean = mean(df)
+    m1 = df - _mean
+    m2 = m1 ** 2
+    m4 = m2 ** 2
+    m2 = m2.mean()
+    m4 = m4.mean()
+
+    non_zero_mask = abs(m2) >= FLOATING_POINT_ZERO
+    m4[~non_zero_mask] = 0
+    m2[~non_zero_mask] = 1
+
+    if unbiased:
+        return (n - 1) / ((n - 2) * (n - 3)) * ((n + 1) * m4 / m2**2 - 3 * (n - 1))
+    else:
+        return m4 / m2 ** 4 - 3
+
+
 def _post_process(reduce_ret, operable_blocks, data_manager: "DataManager") -> "pd.Series":
     field_names = data_manager.infer_operable_field_names()
     field_indexes = [data_manager.get_field_offset(name) for name in field_names]
@@ -122,7 +233,7 @@ def _post_process(reduce_ret, operable_blocks, data_manager: "DataManager") -> "
 
     block_type = None
 
-    reduce_ret = [r.tolist() for r in reduce_ret]
+    reduce_ret = [r.reshape(-1).tolist() for r in reduce_ret]
     for idx, bid in enumerate(operable_blocks):
         field_indexes = data_manager.blocks[bid].field_indexes
         for offset, field_index in enumerate(field_indexes):

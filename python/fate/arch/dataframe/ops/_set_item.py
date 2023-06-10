@@ -34,7 +34,7 @@ def _set_new_item(df:"DataFrame", keys, items):
     def _append_single(blocks, item, col_len, bid=None, dm: DataManager=None):
         lines = len(blocks[0])
         ret_blocks = [block for block in blocks]
-        ret_blocks.append(dm.blocks[bid].convert_block([[item for idx in range(col_len)] for idx in range(lines)]))
+        ret_blocks.append(dm.blocks[bid].convert_block([[item for _ in range(col_len)] for idx in range(lines)]))
 
         return ret_blocks
 
@@ -42,7 +42,7 @@ def _set_new_item(df:"DataFrame", keys, items):
         lines = len(blocks[0])
         ret_blocks = [block for block in blocks]
         for bid, item in zip(bid_list, item_list):
-            ret_blocks.append(dm.blocks[bid].convert_block([[item] for idx in range(lines)]))
+            ret_blocks.append(dm.blocks[bid].convert_block([[item] for _ in range(lines)]))
 
         return ret_blocks
 

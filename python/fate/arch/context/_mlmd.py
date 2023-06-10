@@ -155,7 +155,7 @@ class MachineLearningMetadata:
         artifact = metadata_store_pb2.Artifact()
         artifact.properties["name"].string_value = name
         artifact.properties["type"].string_value = str(type(value))
-        artifact.properties["value"].string_value = json.dumps(value)
+        artifact.properties["value"].string_value = json.dumps(str(value))
         artifact.type_id = self.parameter_type_id
         [artifact_id] = self.store.put_artifacts([artifact])
         return artifact_id
