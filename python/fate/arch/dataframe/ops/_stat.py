@@ -225,13 +225,15 @@ def kurt(df: "DataFrame", unbiased=False):
         return m4 / m2 ** 4 - 3
 
 
+def variation(df: "DataFrame", ddof=1):
+    return std(df, ddof==ddof) / mean(df)
+
+
 def _post_process(reduce_ret, operable_blocks, data_manager: "DataManager") -> "pd.Series":
     field_names = data_manager.infer_operable_field_names()
     field_indexes = [data_manager.get_field_offset(name) for name in field_names]
     field_indexes_loc = dict(zip(field_indexes, range(len(field_indexes))))
     ret = [[] for i in range(len(field_indexes))]
-
-    block_type = None
 
     reduce_ret = [r.reshape(-1).tolist() for r in reduce_ret]
     for idx, bid in enumerate(operable_blocks):
@@ -240,9 +242,4 @@ def _post_process(reduce_ret, operable_blocks, data_manager: "DataManager") -> "
             loc = field_indexes_loc[field_index]
             ret[loc] = reduce_ret[idx][offset]
 
-        if block_type is None:
-            block_type = data_manager.blocks[bid].block_type
-        elif block_type < data_manager.blocks[bid].block_type:
-            block_type = data_manager.blocks[bid].block_type
-
-    return pd.Series(ret, index=field_names, dtype=block_type.value)
+    return pd.Series(ret, index=field_names)

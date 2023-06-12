@@ -198,9 +198,16 @@ class DataFrame(object):
         from .ops._fillna import fillna
         return fillna(self, value)
 
+    def isna(self):
+        from .ops._missing import isna
+        return isna(self)
+
     def isin(self, values):
         from .ops._isin import isin
         return isin(self, values)
+
+    def na_count(self):
+        return self.isna().sum()
 
     def max(self) -> "pd.Series":
         from .ops._stat import max
@@ -225,6 +232,10 @@ class DataFrame(object):
     def var(self, ddof=1, **kwargs):
         from .ops._stat import var
         return var(self, ddof=ddof)
+
+    def variation(self, ddof=1):
+        from .ops._stat import variation
+        return variation(self, ddof=ddof)
 
     def skew(self, unbiased=False):
         from .ops._stat import skew
