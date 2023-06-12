@@ -4,12 +4,13 @@ from fate.interface import Context
 
 class SetupReturn(object):
 
-    def __init__(self, trainer=None, model=None, train_set=None, validate_set=None, optimizer=None, loss=None, scheduler=None, data_collator=None,
+    def __init__(self, trainer=None, model=None, train_set=None, validate_set=None, test_set=None, optimizer=None, loss=None, scheduler=None, data_collator=None,
                 train_args=None, fed_args=None) -> None:
         self.trainer = trainer
         self.model = model
         self.train_set = train_set
         self.validate_set = validate_set
+        self.test_set = test_set
         self.optimizer = optimizer
         self.loss = loss
         self.scheduler = scheduler
@@ -73,5 +74,8 @@ class NNSetup(object):
     def get_cpn_input_model(self):
         return self._cpn_input_model
 
-    def setup(self):
-        raise NotImplementedError("method setup must be implemented")
+    def train_setup(self):
+        pass
+    
+    def predict_setup(self):
+        pass

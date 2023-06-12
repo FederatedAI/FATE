@@ -1,7 +1,7 @@
 import time
 from transformers.training_args import TrainingArguments
 from fate.ml.aggregator.base import Aggregator
-from fate.ml.nn.trainer.trainer_base import FedTrainerClient, FedTrainerServer, TrainingArguments, logger
+from fate.ml.nn.trainer.trainer_base import FedTrainerClient, FedTrainerServer, TrainingArguments
 from fate.ml.nn.trainer.trainer_base import FedArguments, time_decorator, TrainingArguments
 from dataclasses import field
 from dataclasses import dataclass, field
@@ -17,7 +17,7 @@ from torch.nn import Module
 from torch import nn
 from torch.utils.data import DataLoader
 from fate.ml.aggregator.plaintext_aggregator import PlainTextAggregatorClient, PlainTextAggregatorServer
-from transformers import TrainerState, TrainerControl
+from transformers import TrainerState, TrainerControl, PreTrainedTokenizer
 
 
 @dataclass
@@ -47,12 +47,13 @@ class FedAVGCLient(FedTrainerClient):
                  scheduler: _LRScheduler = None, 
                  callbacks: List[TrainerCallback] = [], 
                  data_collator: Callable=None,
+                 tokenizer: Optional[PreTrainedTokenizer] = None,
                  use_hf_default_behavior: bool = False, 
                  compute_metrics: Callable = None, 
                  local_mode: bool = False
                  ):
         
-        super().__init__(ctx, model, loss_fn, optimizer, training_args, fed_args, train_set, val_set, data_collator,
+        super().__init__(ctx, model, loss_fn, optimizer, training_args, fed_args, train_set, val_set, data_collator, tokenizer,
                          scheduler, callbacks, use_hf_default_behavior,
                          compute_metrics=compute_metrics, local_mode=local_mode)
 
@@ -83,12 +84,13 @@ class FedAVGServer(FedTrainerServer):
 
     def __init__(self, 
                  ctx: Context,
-                 parameter_alignment: bool = True,
                  training_args: TrainingArguments = None, 
-                 fed_args: FedArguments = None
+                 fed_args: FedArguments = None,
+                 parameter_alignment: bool = True,
+                 local_mode: bool = False
                  ) -> None:
         
-        super().__init__(ctx, parameter_alignment, training_args, fed_args)
+        super().__init__(ctx, training_args, fed_args, parameter_alignment, local_mode)
 
     def init_aggregator(self):
         aggregator = PlainTextAggregatorServer(self.ctx, aggregator_name='fed_avg')

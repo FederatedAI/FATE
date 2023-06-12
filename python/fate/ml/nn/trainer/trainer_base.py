@@ -11,7 +11,7 @@ from transformers.training_args import TrainingArguments
 from fate.interface import Context
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader, Dataset
-from transformers import TrainingArguments as hf_TrainingArguments
+from transformers import TrainingArguments as hf_TrainingArguments, PreTrainedTokenizer
 from transformers import Trainer, TrainerState, TrainerControl, EvalPrediction
 from transformers.trainer_utils import has_length
 from torch.optim.lr_scheduler import _LRScheduler, LambdaLR
@@ -75,8 +75,7 @@ class FedArguments(object):
 @dataclass
 class TrainingArguments(hf_TrainingArguments):
     
-    # By default, we disable tqdm progress bar for logging conerns.
-    output_dir: str = field(default="./")
+    output_dir: str = field(default='./')
     disable_tqdm: bool = field(default=True)
     save_strategy: str = field(default="no")
     logging_strategy: str = field(default="epoch")
@@ -595,6 +594,7 @@ class StdFedTrainerMixin(ShortcutCallBackInterFace, FedCallbackInterface):
                  train_set: Dataset,
                  val_set: Dataset = None,
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
+                 tokenizer: Optional[PreTrainedTokenizer] = None,
                  callbacks: Optional[List[TrainerCallback]] = [],
                  use_hf_default_behavior: bool = False,
                  compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
@@ -620,12 +620,6 @@ class StdFedTrainerMixin(ShortcutCallBackInterFace, FedCallbackInterface):
 
         # for callback class to check if aggregation is needed
         self.aggregation_checker: AggregationChecker = None
-
-        if not self.local_mode:
-            self._aggregator: Aggregator = self.init_aggregator()
-        else:
-            self._aggregator = None
-            logger.info('Local model is set, skip initializing aggregator')
 
     @property
     def aggregator(self):
@@ -706,6 +700,7 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
                  val_set: Dataset = None,
                  data_collator: Callable = None,
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
+                 tokenizer: Optional[PreTrainedTokenizer] = None,
                  callbacks: Optional[List[TrainerCallback]] = [],
                  use_hf_default_behavior: bool = False,
                  compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
@@ -752,12 +747,16 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
                         eval_dataset=val_set,
                         data_collator=data_collator,
                         optimizers=[optimizer, scheduler],
+                        tokenizer=tokenizer,
                         compute_metrics=self._compute_metrics_warp_func
                         )
-        
-        # self._handle_callback(self.callback_handler, self._callbacks)
+
         if not self.local_mode:
+            self._aggregator: Aggregator = self.init_aggregator()
             self._add_fate_callback(self.callback_handler)
+        else:
+            self._aggregator = None
+            logger.info('Local model is set, skip initializing fed setting & aggregator')
 
     def init_aggregator(self):
         return None
@@ -793,19 +792,25 @@ class FedTrainerServer(object):
 
     def __init__(self,  
                  ctx: Context,
-                 parameter_alignment: bool = True,
                  training_args: TrainingArguments = None, 
                  fed_args: FedArguments = None,
+                 parameter_alignment: bool = True,
+                 local_mode: bool = False
                  ) -> None:
         
         self.ctx = ctx
         self.parameter_alignment = parameter_alignment
-        self.aggregator: Aggregator = self.init_aggregator()
+        self.local_mode = local_mode
         self._args = training_args
         self._fed_args = fed_args
         self._max_steps = None
         self._parameter_check_callback = FedParameterAlignCallback(self, self.ctx, None, None, is_server=True)
         self._max_aggregation = None
+
+        if not self.local_mode:
+            self.aggregator: Aggregator = self.init_aggregator()
+        else:
+            logger.info('Local model is set, skip initializing fed setting & aggregator')
 
     def set_fed_context(self, ctx: Context):
         assert isinstance(ctx, Context), 'ctx must be a Context object, but got {}'.format(ctx)
@@ -828,6 +833,9 @@ class FedTrainerServer(object):
 
     def train(self):
 
+        if self.local_mode:
+            return
+
         if self.parameter_alignment:
             self._parameter_check_callback.on_train_begin(None, None, None)  # only get parameters from clients and align
             parameters = self._parameter_check_callback.get_parameters()
@@ -842,4 +850,8 @@ class FedTrainerServer(object):
         for i in range(self._max_aggregation):
             self.on_federation(self.ctx, aggregator=self.aggregator, args=self._args, fed_args=self._fed_args)
         self.on_train_end(self.ctx, aggregator=self.aggregator, args=self._args, fed_args=self._fed_args)
+
+    def predict(self):
+        # server does not need to predict
+        pass
 
