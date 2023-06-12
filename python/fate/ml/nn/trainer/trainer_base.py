@@ -11,7 +11,7 @@ from transformers.training_args import TrainingArguments
 from fate.interface import Context
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader, Dataset
-from transformers import TrainingArguments as hf_TrainingArguments
+from transformers import TrainingArguments as hf_TrainingArguments, PreTrainedTokenizer
 from transformers import Trainer, TrainerState, TrainerControl, EvalPrediction
 from transformers.trainer_utils import has_length
 from torch.optim.lr_scheduler import _LRScheduler, LambdaLR
@@ -75,8 +75,7 @@ class FedArguments(object):
 @dataclass
 class TrainingArguments(hf_TrainingArguments):
     
-    # By default, we disable tqdm progress bar for logging conerns.
-    output_dir: str = field(default="./")
+    output_dir: str = field(default='./')
     disable_tqdm: bool = field(default=True)
     save_strategy: str = field(default="no")
     logging_strategy: str = field(default="epoch")
@@ -174,7 +173,7 @@ class ShortcutCallBackInterFace(object):
             aggregator: Aggregator,
             fed_args: FedArguments,
             args: TrainingArguments,
-            model: Optional[nn.Module] = None,
+            model: Optional[nn.Module] = None, 
             optimizer: Optional[Optimizer] = None,
             scheduler: Optional[_LRScheduler] = None,
             dataloader: Optional[Tuple[DataLoader]] = None,
@@ -419,12 +418,16 @@ class FedParameterAlignCallback(TrainerCallback):
         self._parameters = {'max_aggregation': agg_round}
 
     def on_train_begin(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
-
-        if self.is_server:
-            self._server_check_parameters()
+        
+        if self.trainer_class.local_mode:
+            logger.info('local model, skipping federated parameter checking')
+            return
         else:
-            train_dataloader = kwargs['train_dataloader']
-            self._client_send_parameters(state, args, train_dataloader)
+            if self.is_server:
+                self._server_check_parameters()
+            else:
+                train_dataloader = kwargs['train_dataloader']
+                self._client_send_parameters(state, args, train_dataloader)
 
 
 class CallbackWrapper(TrainerCallback):
@@ -433,9 +436,7 @@ class CallbackWrapper(TrainerCallback):
     def __init__(self, ctx: Context, wrapped_trainer: 'StdFedTrainerMixin'):
         self.ctx = ctx
         self.wrapped_trainer = wrapped_trainer
-        self.aggregator = wrapped_trainer.aggregator
-        self.fed_arg = wrapped_trainer._fed_args
-
+        self.fed_arg = self.wrapped_trainer._fed_args
 
     def _call_wrapped(self, event_name: str, **kwargs):
         event = getattr(self.wrapped_trainer, event_name)
@@ -445,8 +446,7 @@ class CallbackWrapper(TrainerCallback):
         eval_dataloader = kwargs.pop('eval_dataloader', None)
         dataloaders = tuple(filter(None, (train_dataloader, eval_dataloader)))
         kwargs['dataloader'] = dataloaders
-
-        return event(self.ctx, self.aggregator, self.fed_arg, **kwargs)
+        return event(self.ctx, self.wrapped_trainer.aggregator, self.fed_arg, **kwargs)
     
 
 class FedCallbackWrapper(CallbackWrapper):
@@ -454,13 +454,25 @@ class FedCallbackWrapper(CallbackWrapper):
     def __init__(self, ctx: Context, wrapped_trainer: 'StdFedTrainerMixin'):
         super().__init__(ctx, wrapped_trainer)
 
+    def on_train_begin(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
+        # initialize aggregator
+        # doesnot call wrapper here, make sure aggregator is not called before it is initialized
+        if self.wrapped_trainer.local_mode:
+            logger.info('local mode, skip federation aggregator initialization, aggregator will be None')
+        else:
+            self.wrapped_trainer.aggregator = self.wrapped_trainer.init_aggregator()
+
     def on_epoch_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
+        if self.wrapped_trainer.local_mode:
+            return
         if self.fed_arg.aggregate_strategy == AggregateStrategy.EPOCH.value:
             if self.wrapped_trainer.aggregation_checker.should_aggregate(state):
                 logger.info('aggregation on epoch end')
                 return self._call_wrapped('on_federation', args=args, state=state, control=control, **kwargs)
     
     def on_step_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
+        if self.wrapped_trainer.local_mode:
+            return
         if self.fed_arg.aggregate_strategy == AggregateStrategy.STEP.value:
             if self.wrapped_trainer.aggregation_checker.should_aggregate(state):
                 logger.info('aggregation on step end')
@@ -471,17 +483,6 @@ class ShortcutCallbackWrapper(CallbackWrapper):
 
     def __init__(self, ctx: Context, wrapped_trainer: 'StdFedTrainerMixin'):
         super().__init__(ctx, wrapped_trainer)
-
-    def _call_wrapped(self, event_name: str, **kwargs):
-        event = getattr(self.wrapped_trainer, event_name)
-        kwargs['scheduler'] = kwargs.pop('lr_scheduler', None)
-
-        train_dataloader = kwargs.pop('train_dataloader', None)
-        eval_dataloader = kwargs.pop('eval_dataloader', None)
-        dataloaders = tuple(filter(None, (train_dataloader, eval_dataloader)))
-        kwargs['dataloader'] = dataloaders
-
-        return event(self.ctx, self.aggregator, self.fed_arg, **kwargs)
 
     def on_init_end(
             self,
@@ -595,10 +596,11 @@ class StdFedTrainerMixin(ShortcutCallBackInterFace, FedCallbackInterface):
                  train_set: Dataset,
                  val_set: Dataset = None,
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
+                 tokenizer: Optional[PreTrainedTokenizer] = None,
                  callbacks: Optional[List[TrainerCallback]] = [],
                  use_hf_default_behavior: bool = False,
                  compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
-                 local_mode: bool = None,
+                 local_mode: bool = False,
                  parameter_alignment = True
                  ):
         
@@ -617,21 +619,10 @@ class StdFedTrainerMixin(ShortcutCallBackInterFace, FedCallbackInterface):
         self.eval_dataset = val_set
         self.loss_func = loss_fn
         self._use_hf_default_behavior = use_hf_default_behavior
+        self._aggregator = None
 
         # for callback class to check if aggregation is needed
         self.aggregation_checker: AggregationChecker = None
-
-        if not self.local_mode:
-            self._aggregator: Aggregator = self.init_aggregator()
-        else:
-            self._aggregator = None
-            logger.info('Local model is set, skip initializing aggregator')
-
-    @property
-    def aggregator(self):
-        if self._aggregator is None:
-            raise RuntimeError('Aggregator is not initialized')
-        return self._aggregator
         
     def _compute_metrics_warp_func(self, *args, **kwargs):
         
@@ -655,30 +646,41 @@ class StdFedTrainerMixin(ShortcutCallBackInterFace, FedCallbackInterface):
     def _add_fate_callback(self, callback_handler):
 
         # the callback handler is Trainer.callback_handler
-        shortcut_callback_inst = ShortcutCallbackWrapper(self.ctx, self)
-        callback_handler.callbacks.append(shortcut_callback_inst)
-
-        if self.local_mode:
-            logger.info('Local model is set, federation callback disabled')
-            return
-
+        # call order: 
+        # fed callback aggregator init(once), parameter check(once), 
+        # on federation of fedcallback
+        # callbacks of shortcutcallback
+        callback_handler.callbacks.append(FedCallbackWrapper(self.ctx, self))
         if self.parameter_alignment:
             callback_handler.callbacks.append(FedParameterAlignCallback(self,
                                                                         self.ctx, 
                                                                         fed_args=self._fed_args, 
                                                                         training_args=self._args, 
                                                                         is_server=False))
-
         else:
             logger.warning('Parameter alignment is disabled, this may cause fed-training failure')
-
-        callback_handler.callbacks.append(FedCallbackWrapper(self.ctx, self))
-
+        callback_handler.callbacks.append(ShortcutCallbackWrapper(self.ctx, self))
         
     def _remove_fed_callback(self, callback_class):
         self.callback_handler.callbacks = [
             c for c in self.callback_handler.callbacks if not isinstance(
                 c, callback_class)]
+
+    def set_local_mode(self):
+        self.local_mode = True
+        logger.info('trainer set to local mode')
+
+    def set_fed_mode(self):
+        self.local_mode = False
+        logger.info('trainer set to federated mode')
+
+    @property
+    def aggregator(self):
+        return self._aggregator
+    
+    @aggregator.setter
+    def aggregator(self, value):
+        self._aggregator = value
 
 
 """
@@ -706,6 +708,7 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
                  val_set: Dataset = None,
                  data_collator: Callable = None,
                  scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None,
+                 tokenizer: Optional[PreTrainedTokenizer] = None,
                  callbacks: Optional[List[TrainerCallback]] = [],
                  use_hf_default_behavior: bool = False,
                  compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
@@ -752,12 +755,11 @@ class FedTrainerClient(Trainer, StdFedTrainerMixin):
                         eval_dataset=val_set,
                         data_collator=data_collator,
                         optimizers=[optimizer, scheduler],
+                        tokenizer=tokenizer,
                         compute_metrics=self._compute_metrics_warp_func
                         )
-        
-        # self._handle_callback(self.callback_handler, self._callbacks)
-        if not self.local_mode:
-            self._add_fate_callback(self.callback_handler)
+
+        self._add_fate_callback(self.callback_handler)
 
     def init_aggregator(self):
         return None
@@ -793,14 +795,15 @@ class FedTrainerServer(object):
 
     def __init__(self,  
                  ctx: Context,
-                 parameter_alignment: bool = True,
                  training_args: TrainingArguments = None, 
                  fed_args: FedArguments = None,
+                 parameter_alignment: bool = True,
+                 local_mode: bool = False
                  ) -> None:
         
         self.ctx = ctx
         self.parameter_alignment = parameter_alignment
-        self.aggregator: Aggregator = self.init_aggregator()
+        self.local_mode = local_mode
         self._args = training_args
         self._fed_args = fed_args
         self._max_steps = None
@@ -828,6 +831,12 @@ class FedTrainerServer(object):
 
     def train(self):
 
+        if self.local_mode:
+            logger.info('Local model is set, skip initializing fed setting & aggregator')
+            return
+
+        self.aggregator: Aggregator = self.init_aggregator()
+        logger.info('Initialized aggregator Done: {}'.format(self.aggregator))
         if self.parameter_alignment:
             self._parameter_check_callback.on_train_begin(None, None, None)  # only get parameters from clients and align
             parameters = self._parameter_check_callback.get_parameters()
@@ -842,4 +851,8 @@ class FedTrainerServer(object):
         for i in range(self._max_aggregation):
             self.on_federation(self.ctx, aggregator=self.aggregator, args=self._args, fed_args=self._fed_args)
         self.on_train_end(self.ctx, aggregator=self.aggregator, args=self._args, fed_args=self._fed_args)
+
+    def predict(self):
+        # server does not need to predict
+        pass
 

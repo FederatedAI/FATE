@@ -27,9 +27,10 @@ from fate.components import (
 )
 import os
 import pandas as pd
+from typing import Literal
 from fate.interface import Context
 from fate.components.components.nn.setup.fate_setup import FateSetup
-from fate.components.components.nn.nn_setup import NNSetup, SetupReturn
+from fate.components.components.nn.nn_setup import NNRunner, SetupReturn, ComponentInputData
 from fate.components.components.nn.loader import Loader
 from fate.arch.dataframe._dataframe import DataFrame
 import logging
@@ -40,6 +41,89 @@ logger = logging.getLogger(__name__)
 
 def is_path(s):
     return os.path.exists(s)
+
+
+def prepare_setup_class(setup_module, setup_class, setup_conf, source):
+    print('setup conf is {}'.format(setup_conf))
+    print('source is {}'.format(source))
+    if setup_module != 'fate_setup':
+        if source == None:
+            # load from default folder
+            setup = Loader('fate.components.components.nn.setup.' + setup_module, setup_class, **setup_conf)()
+        else:
+            setup = Loader(setup_module, setup_class, source=source, **setup_conf)()
+        assert isinstance(setup, NNRunner), 'loaded class must be a subclass of NNSetup class, but got {}'.format(type(setup))
+    else:
+        print('using default fate setup')
+        setup = FateSetup(**setup_conf)
+
+    return setup
+
+
+def transform_input_dataframe(sub_ctx, data):
+
+    df_: DataFrame = sub_ctx.reader(data).read_dataframe().data
+    df: pd.DataFrame = df_.as_pd_df()
+    return df
+
+
+def prepare_context_and_role(setup, ctx, role, sub_ctx_name):
+    with ctx.sub_ctx(sub_ctx_name) as sub_ctx:
+        # set context
+        setup.set_context(sub_ctx)
+        setup.set_role(role)
+        return sub_ctx
+
+
+def process_setup(setup, stage=Literal['train', 'predict']):
+    setup_ret = setup.setup(stage)
+    print('setup class is {}'.format(setup))
+    if not isinstance(setup_ret, SetupReturn):
+        raise ValueError(f'The return of your setup class must be a SetupReturn Instance, but got {setup_ret}')
+    return setup_ret
+
+
+def handle_client(setup, sub_ctx, stage, cpn_input_data):
+    if stage == 'train':
+        train_data, validate_data = cpn_input_data
+        train_data = transform_input_dataframe(sub_ctx, train_data)
+        if validate_data is not None:
+            validate_data = transform_input_dataframe(sub_ctx, validate_data)
+        setup.set_cpn_input_data(ComponentInputData(train_data, validate_data))
+    elif stage == 'predict':
+        test_data = cpn_input_data
+        test_data = transform_input_dataframe(sub_ctx, test_data)
+        setup.set_cpn_input_data(ComponentInputData(test_data=test_data))
+    else:
+        raise ValueError(f'Unknown stage {stage}')
+    setup_ret = process_setup(setup, stage)
+    return setup_ret
+
+
+def handle_server(setup, stage):
+    return process_setup(setup, stage)['trainer']
+
+
+def update_output_dir(trainer):
+    
+    FATE_TEST_PATH = '/home/cwj/FATE/playground/test_output_path'
+    # default trainer
+    trainer.args.output_dir = FATE_TEST_PATH
+
+
+def model_output(setup_module,
+                 setup_class,
+                 setup_conf,
+                 source,
+                 model_output_path
+                ):
+    return {
+        'setup_module': setup_module,
+        'setup_class': setup_class,
+        'setup_conf': setup_conf,
+        'source': source,
+        'model_output_path': model_output_path
+    }
 
 
 @cpn.component(roles=[GUEST, HOST, ARBITER])
@@ -71,47 +155,33 @@ def train(
     output_model,
 ):
    
-    print('setup conf is {}'.format(setup_conf))
-    print('source is {}'.format(source))
-    if setup_module != 'fate_setup':
-        if source == None:
-            # load from default folder
-            setup = Loader('fate.components.components.nn.setup.' + setup_module, setup_class, **setup_conf)()
-        else:
-            setup = Loader(setup_module, setup_class, source=source, **setup_conf)()
-        assert isinstance(setup, NNSetup), 'loaded class must be a subclass of NNSetup class, but got {}'.format(type(setup))
-    else:
-        print('using default fate setup')
-        setup = FateSetup(**setup_conf)
+    setup = prepare_setup_class(setup_module, setup_class, setup_conf, source)
+    sub_ctx = prepare_context_and_role(setup, ctx, role, "train")
 
-    setup.set_role(role)
-    print('setup class is {}'.format(setup))
+    if role.is_guest or role.is_host:  # is client
+        setup_ret = handle_client(setup, sub_ctx, 'train', [train_data, validate_data])
+        client_trainer = setup_ret['trainer']
+        update_output_dir(client_trainer)  # update output dir
+        client_trainer.train()
 
-    with ctx.sub_ctx("train") as sub_ctx:
+        output_conf = model_output(setup_module,
+                                   setup_class,
+                                   setup_conf,
+                                   source,
+                                   client_trainer.args.output_dir)
 
-        # set context
-        setup.set_context(sub_ctx)
+        print('model output is {}'.format(output_conf))
+        client_trainer.save_model()
+        import json
+        path = '/home/cwj/FATE/playground/test_output_model/'
+        json.dump(output_conf, open(path + str(role.name) + '_conf.json', 'w'), indent=4)
 
-        if role.is_guest or role.is_host:  # is client
-
-            train_data: DataFrame = sub_ctx.reader(train_data).read_dataframe().data
-            train_data: pd.DataFrame = train_data.as_pd_df()
-            print('train data is {}'.format(train_data))
-            setup.set_cpn_input_data(train_data)
-            # get trainer
-            setup_ret = setup.setup()
-            if not isinstance(setup_ret, SetupReturn):
-                raise ValueError('The return of your setup class must be a SetupReturn Instance, but got {}'.format(setup_ret))
-            client_trainer = setup_ret['trainer']
-            client_trainer.train()
-
-        elif role.is_arbiter:  # is sever
-            # get trainer
-            setup_ret = setup.setup()
-            if not isinstance(setup_ret, SetupReturn):
-                    raise ValueError('The return of your setup class must be a SetupReturn Instance, but got {}'.format(setup_ret))
-            server_trainer = setup_ret['trainer']
-            server_trainer.train()
+        with output_model as model_writer:
+            model_writer.write_model("homo_nn", {}, metadata={})
+        
+    elif role.is_arbiter:  # is server
+        server_trainer = handle_server(setup, 'train')
+        server_trainer.train()
 
 
 @homo_nn.predict()
@@ -125,4 +195,28 @@ def predict(
     input_model,
     test_output_data,
 ):
-    pass
+
+    if role.is_guest or role.is_host:  # is client
+
+        import json
+        path = '/home/cwj/FATE/playground/test_output_model/'
+        model_conf = json.load(open(path + str(role.name) + '_conf.json', 'r'))
+        setup_module = model_conf['setup_module']
+        setup_class = model_conf['setup_class']
+        setup_conf = model_conf['setup_conf']
+        source = model_conf['source']
+    
+        setup = prepare_setup_class(setup_module, setup_class, setup_conf, source)
+        sub_ctx = prepare_context_and_role(setup, ctx, role, "predict")
+        setup_ret = handle_client(setup, sub_ctx, 'predict', test_data)
+        to_predict_dataset = setup_ret['test_set']
+        client_trainer = setup_ret['trainer']
+
+        if to_predict_dataset is None:
+            raise ValueError('The return of your setup class in the training stage must have "test_set" in the predict stage')
+        
+        pred_rs = client_trainer.predict(to_predict_dataset)
+        print(f'predict result is {pred_rs}')
+
+    elif role.is_arbiter:  # is server
+        print('arbiter skip predict')
