@@ -252,6 +252,12 @@ class DataFrame(object):
     def count(self) -> "int":
         return self.shape[0]
 
+    def describe(self, metric_kwargs=None):
+        from .ops._stat import describe
+        if metric_kwargs is None:
+            metric_kwargs = dict()
+        return describe(self, metric_kwargs)
+
     def quantile(self, q, axis=0, method="quantile", ):
         ...
 
