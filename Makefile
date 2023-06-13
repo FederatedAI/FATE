@@ -3,16 +3,20 @@ mkfile_dir := $(dir $(mkfile_path))
 .DEFAULT_GOAL:=help
 
 ##@ Dev
-.PHONY: install-rust_paillier
+.PHONY: install-rust
 install-rust_paillier: ## Install rust_paillier.
-	@echo "install rust_paillier"
-	@cd ${mkfile_dir} && maturin develop --release -m rust/tensor/rust_paillier/Cargo.toml
+	@echo "install fate_utils"
+	@cd ${mkfile_dir} && \
+		. venv/bin/activate.sh && \
+		maturin develop --release -m rust/fate_utils/Cargo.toml --target-dir build
 
 ##@ Build
-.PHONY: build-rust_paillier
-build-rust_paillier: ## Build rust_paillier.
-	@echo "build rust_paillier"
-	@cd ${mkfile_dir} && maturin build --release -m rust/tensor/rust_paillier/Cargo.toml --out dist --target-dir build
+.PHONY: build-rust
+build-rust: ## Build fate_utils.
+	@echo "build fate_utils"
+	@cd ${mkfile_dir} && \
+		. ${mkfile_dir}venv/bin/activate && \
+		maturin build --release -m rust/fate_utils/crates/fate_utils/Cargo.toml --out dist --target-dir build
 
 .PHONY: build-fate
 build-fate: ## Build fate

@@ -187,7 +187,9 @@ def parse_input_parameters(mlmd: MLMD, cpn: _Component, input_parameters: Dict[s
                 try:
                     value = params.parse(parameter.type, parameter_apply)
                 except Exception as e:
-                    raise ComponentApplyError(f"apply value `{parameter_apply}` to parameter `{arg}` failed:\n{e}")
+                    raise ComponentApplyError(
+                        f"apply value `{parameter_apply}` to parameter `{arg}` failed:\n{e}"
+                    ) from e
                 execute_parameters[parameter.name] = value
                 mlmd.io.log_input_parameter(parameter.name, parameter_apply)
     return execute_parameters

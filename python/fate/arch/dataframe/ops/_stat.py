@@ -17,9 +17,9 @@ import functools
 import numpy as np
 import pandas as pd
 import torch
+
 from .._dataframe import DataFrame
 from ..manager import DataManager
-
 
 FLOATING_POINT_ZERO = 1e-14
 
@@ -237,7 +237,8 @@ def describe(df: "DataFrame", metric_kwargs):
     stat_metrics["mean"] = mean(df)
     stat_metrics["std"] = std(df) if "std" not in metric_kwargs else std(df, ddof=metric_kwargs["std"])
     stat_metrics["var"] = var(df) if "var" not in metric_kwargs else var(df, ddof=metric_kwargs["var"])
-    stat_metrics["variation"] = variation(df) if "variation" not in metric_kwargs else variation(df, ddof=metric_kwargs["variation"])
+    stat_metrics["variation"] = variation(df) if "variation" not in metric_kwargs else variation(df, ddof=metric_kwargs[
+        "variation"])
     stat_metrics["skew"] = skew(df) if "skew" not in metric_kwargs else skew(df, unbiased=metric_kwargs["unbiased"])
     stat_metrics["kurt"] = kurt(df) if "kurt" not in metric_kwargs else kurt(df, unbiased=metric_kwargs["unbiased"])
     stat_metrics["na_count"] = df.isna().sum()
@@ -259,4 +260,3 @@ def _post_process(reduce_ret, operable_blocks, data_manager: "DataManager") -> "
             ret[loc] = reduce_ret[idx][offset]
 
     return pd.Series(ret, index=field_names)
-

@@ -1,0 +1,20 @@
+[package]
+name = "paillier"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+math = { path = "../math" }
+serde = { workspace = true }
+
+[dev-dependencies]
+criterion = { workspace = true }
+iai = { workspace = true}
+
+[[bench]]
+name = "iai_bench"
+harness = false
+
+[[bench]]
+name = "paillier_bench"
+harness = false

@@ -17,5 +17,6 @@ from .feature_scale import feature_scale
 from .hetero_lr import hetero_lr
 from .intersection import intersection
 from .reader import reader
+from .statistics import statistics
 
-BUILDIN_COMPONENTS = [hetero_lr, reader, feature_scale, intersection, evaluation]
+BUILDIN_COMPONENTS = [hetero_lr, reader, feature_scale, intersection, evaluation, statistics]

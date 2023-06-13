@@ -14,7 +14,6 @@
 #  limitations under the License.
 from fate.interface import CipherKit as CipherKitInterface
 
-from ..tensor._phe import PHECipher
 from ..unify import device
 
 
@@ -25,3 +24,13 @@ class CipherKit(CipherKitInterface):
     @property
     def phe(self):
         return PHECipher(self.device)
+
+
+class PHECipher:
+    def __init__(self, _device) -> None:
+        self.device = _device
+
+    def keygen(self, **kwargs):
+        from fate.arch.tensor import keygen
+
+        return keygen(self.device, **kwargs)

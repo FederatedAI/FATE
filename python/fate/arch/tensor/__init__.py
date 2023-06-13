@@ -12,8 +12,15 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from ._tensor import distributed_tensor, randn, tensor
-from .ops import *
-from .types import *
+from ._cipher import keygen
+from ._custom_ops import *
+from .distributed import DTensor
+from .paillier import PaillierTensor
 
-__all__ = ["tensor", "randn", "distributed_tensor"]
+__all__ = [
+    "keygen",
+    "DTensor",
+    "PaillierTensor",
+    "encrypt",
+    "decrypt",
+]

@@ -1,0 +1,10 @@
+[package]
+name = "quantile"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { workspace = true }
+
+[dev-dependencies.quickcheck]
+version = "0.5"
