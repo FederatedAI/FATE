@@ -349,22 +349,16 @@ class BlockManager(object):
 
         return block_ids
 
-    def pop_blocks(self, block_indexes: List[int], field_index_changes: Dict[int, int]):
+    def pop_blocks(self, block_indexes: List[int]):
         block_index_set = set(block_indexes)
         blocks = []
         field_block_mapping = dict()
 
         for bid, block in enumerate(self._blocks):
             if bid not in block_index_set:
-                block.reset_field_indexes(field_index_changes)
                 blocks.append(block)
 
-        for bid, block in enumerate(blocks):
-            for offset, field_index in enumerate(block.field_indexes):
-                field_block_mapping[field_index] = (bid, offset)
-
         self._blocks = blocks
-        self._field_block_mapping = field_block_mapping
 
     def split_fields(self, field_indexes, block_types):
         field_sets = set(field_indexes)
@@ -449,6 +443,15 @@ class BlockManager(object):
 
     @field_block_mapping.setter
     def field_block_mapping(self, field_block_mapping):
+        self._field_block_mapping = field_block_mapping
+
+    def reset_block_field_indexes(self, field_index_changes: Dict[int, int]):
+        field_block_mapping = dict()
+        for bid in range(len(self._blocks)):
+            self._blocks[bid].reset_field_indexes(field_index_changes)
+            for offset, field_index in enumerate(self._blocks[bid].field_indexes):
+                field_block_mapping[field_index] = (bid, offset)
+
         self._field_block_mapping = field_block_mapping
 
     def duplicate(self):
