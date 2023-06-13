@@ -44,6 +44,16 @@ class DataManager(object):
 
         return block_indexes
 
+    def pop_blocks(self, block_indexes: List[int]):
+        """
+        """
+        field_indexes = []
+        for block_index in block_indexes:
+            field_indexes.extend(self._block_manager.blocks[block_index].field_indexes)
+
+        field_index_changes = self._schema_manager.pop_fields(field_indexes)
+        self._block_manager.pop_blocks(block_indexes, field_index_changes)
+
     def split_columns(self, columns: List[str], block_types: Union["BlockType", List["BlockType"]]):
         field_indexes = self._schema_manager.split_columns(columns, block_types)
         narrow_blocks, dst_blocks = self._block_manager.split_fields(field_indexes, block_types)

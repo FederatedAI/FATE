@@ -185,10 +185,10 @@ class DataFrame(object):
 
     def create_frame(self, with_label=False, with_weight=False, columns: list = None) -> "DataFrame":
         return self.__extract_fields(with_sample_id=True,
-                                      with_match_id=True,
-                                      with_label=with_label,
-                                      with_weight=with_weight,
-                                      columns=columns)
+                                     with_match_id=True,
+                                     with_label=with_label,
+                                     with_weight=with_weight,
+                                     columns=columns)
 
     def drop(self, index) -> "DataFrame":
         from .ops._dimension_scaling import drop
@@ -197,6 +197,10 @@ class DataFrame(object):
     def fillna(self, value):
         from .ops._fillna import fillna
         return fillna(self, value)
+
+    def get_dummies(self, dtype="int32"):
+        from .ops._encoder import get_dummies
+        return get_dummies(self, dtype=dtype)
 
     def isna(self):
         from .ops._missing import isna

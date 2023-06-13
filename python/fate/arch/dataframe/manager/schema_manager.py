@@ -83,6 +83,23 @@ class Schema(object):
         self._columns = self._columns.append(pd.Index(names))
         # TODO: extend anonymous column
 
+    def pop_columns(self, names):
+        names = set(names)
+        if self._label_name in names:
+            names.remove(self._label_name)
+            self._label_name = None
+        if self._weight_name  in names:
+            names.remove(self._weight_name)
+            self._weight_name = None
+
+        columns = []
+        for name in self._columns:
+            if name not in names:
+                columns.append(name)
+        self._columns = pd.Index(columns)
+
+        # TODO: pop anonymous columns
+
     def __eq__(self, other: "Schema"):
         return self.label_name == other.label_name and self.weight_name == other.weight_name \
                and self.sample_id_name == other.sample_id_name and self.match_id_name == other.match_id_name \
@@ -160,6 +177,31 @@ class SchemaManager(object):
         self.schema.append_columns(names)
 
         return [field_index + offset for offset in range(len(names))]
+
+    def pop_fields(self, field_indexes):
+        field_names = [self._offset_name_mapping[field_id] for field_id in field_indexes]
+        self._schema = copy.deepcopy(self._schema)
+        self._schema.pop_columns(field_names)
+
+        field_index_set = set(field_indexes)
+        left_field_indexes = []
+        for i in range(len(self._offset_name_mapping)):
+            if i not in field_index_set:
+                left_field_indexes.append(i)
+
+        name_offset_mapping = dict()
+        offset_name_mapping = dict()
+        field_index_changes = dict()
+        for dst_field_id, src_field_id in enumerate(left_field_indexes):
+            name = self._offset_name_mapping[src_field_id]
+            name_offset_mapping[name] = dst_field_id
+            offset_name_mapping[dst_field_id] = name
+            field_index_changes[src_field_id] = dst_field_id
+
+        self._name_offset_mapping = name_offset_mapping
+        self._offset_name_mapping = offset_name_mapping
+
+        return field_index_changes
 
     def split_columns(self, names, block_types):
         field_indexes = [self._name_offset_mapping[name] for name in names]
