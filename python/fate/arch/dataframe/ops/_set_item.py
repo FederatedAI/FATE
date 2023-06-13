@@ -30,7 +30,41 @@ def set_item(df: "DataFrame", keys, items, state):
         _set_old_item(df, keys, items)
 
 
-def _set_new_item(df:"DataFrame", keys, items):
+def set_label_or_weight(df: "DataFrame", item: "DataFrame", key_type="label"):
+    if not isinstance(item, DataFrame):
+        raise ValueError(f"To set label or weight, make sure rhs type={type(df)}")
+
+    data_manager = df.data_manager
+    other_data_manager = item.data_manager
+    other_field_names = other_data_manager.infer_operable_field_names()
+    other_block_id = other_data_manager.loc_block(other_field_names[0], with_offset=False)
+
+    if len(other_field_names) > 1:
+        raise ValueError(f"Too many columns of rhs, only one is supported")
+
+    other_block_type = other_data_manager.blocks[other_block_id].block_type
+    if (name := getattr(df.schema, f"{key_type}_name")) is not None:
+        block_id = data_manager.loc_block(name, with_offset=False)
+        block_table = df.block_table.join(item.block_table,
+                                          lambda blocks1, blocks2:
+                                          [block if bid != block_id else blocks2[other_block_id]
+                                           for bid, block in enumerate(blocks1)]
+        )
+        if data_manager.blocks[block_id].block_type < other_block_type:
+            data_manager = data_manager.blocks[block_id].convert_block_type(other_block_type)
+    else:
+        block_id, block_migrate_mappings = data_manager.add_label_or_weight(key_type=key_type,
+                                                                            name=other_field_names[0],
+                                                                            block_type=other_block_type)
+
+        block_table = df.block_table.join(item.block_table,
+                                          lambda blocks1, blocks2: blocks1 + [blocks2[other_block_id]])
+
+    df.block_table = block_table
+    df.data_manager = data_manager
+
+
+def _set_new_item(df: "DataFrame", keys, items):
     def _append_single(blocks, item, col_len, bid=None, dm: DataManager=None):
         lines = len(blocks[0])
         ret_blocks = [block for block in blocks]
