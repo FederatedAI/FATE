@@ -13,18 +13,18 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import numpy as np
 import operator
-import pandas as pd
-
 from typing import List, Union
 
+import numpy as np
+import pandas as pd
+
+from .manager import DataManager, Schema
 from .ops import (
     aggregate_indexer,
     transform_to_table,
     get_partition_order_mappings
 )
-from .manager import DataManager, Schema
 
 
 class DataFrame(object):
@@ -256,11 +256,9 @@ class DataFrame(object):
     def count(self) -> "int":
         return self.shape[0]
 
-    def describe(self, metric_kwargs=None):
+    def describe(self, ddof=1, unbiased=False):
         from .ops._stat import describe
-        if metric_kwargs is None:
-            metric_kwargs = dict()
-        return describe(self, metric_kwargs)
+        return describe(self, ddof=ddof, unbiased=unbiased)
 
     def quantile(self, q, axis=0, method="quantile", ):
         ...
