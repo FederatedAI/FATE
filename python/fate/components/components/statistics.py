@@ -41,6 +41,7 @@ def statistics(ctx, role):
                desc="metrics to be computed, default 'describe', "
                     "which computes: {'count', 'mean', 'std', 'min', '25%', '50%', '75%', 'max'},"
                     "note that if 'describe' is specified, it's best not to be provide other metrics simultaneously")
+@cpn.parameter("ddof", type=params.conint(ge=0), default=1, desc="Delta Degrees of Freedom for std and var, default 1")
 @cpn.parameter("bias", type=bool, default=True,
                desc="If False, the calculations of skewness and kurtosis are corrected for statistical bias.")
 @cpn.parameter("skip_col", type=List[str], default=None, optional=True,
@@ -53,15 +54,16 @@ def statistics_train(
         role: Role,
         train_data,
         metrics,
+        ddof,
         bias,
         skip_col,
         use_anonymous,
         output_model,
 ):
-    train(ctx, train_data, output_model, metrics, bias, skip_col, use_anonymous)
+    train(ctx, train_data, output_model, metrics, ddof, bias, skip_col, use_anonymous)
 
 
-def train(ctx, train_data, output_model, metrics, bias, skip_col, use_anonymous):
+def train(ctx, train_data, output_model, metrics, ddof, bias, skip_col, use_anonymous):
     from fate.ml.statistics.statistics import FeatureStatistics
 
     with ctx.sub_ctx("train") as sub_ctx:
@@ -74,7 +76,7 @@ def train(ctx, train_data, output_model, metrics, bias, skip_col, use_anonymous)
             for metric in metrics:
                 if metric == "describe":
                     raise ValueError(f"'describe' should not be combined with additional metric names.")
-        stat_computer = FeatureStatistics(list(set(metrics)), bias)
+        stat_computer = FeatureStatistics(list(set(metrics)), ddof, bias)
         train_data = train_data[select_cols]
         stat_computer.fit(sub_ctx, train_data)
 

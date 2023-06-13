@@ -36,10 +36,10 @@ def feature_scale(ctx, role):
 @feature_scale.train()
 @cpn.artifact("train_data", type=Input[DatasetArtifact], roles=[GUEST, HOST])
 @cpn.parameter("method", type=params.string_choice(["standard", "min_max"]), default="standard", optional=False)
-@cpn.parameter("feature_range", type=Union[tuple, dict], default=(0, 1), optional=True,
+@cpn.parameter("feature_range", type=Union[list, dict], default=[0, 1], optional=True,
                desc="Result feature value range for `min_max` method, "
-                    "take either dict in format: {col_name: (min, max)} for specific columns "
-                    "or (min, max) for all columns. Columns unspecified will be scaled to default range (0,1)")
+                    "take either dict in format: {col_name: [min, max]} for specific columns "
+                    "or [min, max] for all columns. Columns unspecified will be scaled to default range [0,1]")
 @cpn.parameter("scale_col", type=List[str], default=None,
                desc="list of column names to be scaled, if None, all columns will be scaled; "
                     "only one of {scale_col, scale_idx} should be specified")
@@ -142,7 +142,7 @@ def get_to_scale_cols(columns, anonymous_columns, scale_col, scale_idx, feature_
         if isinstance(feature_range, dict):
             for col in select_col:
                 if col not in feature_range:
-                    feature_range[col] = (0, 1)
+                    feature_range[col] = [0, 1]
         else:
             feature_range = {col: feature_range for col in select_col}
     return select_col, feature_range

@@ -120,7 +120,7 @@ def train(ctx, role, train_data, train_output_data, input_binning_model, input_s
             # temp code block end
             isometric_model_dict["statistic"] = model
 
-        logger.info(f"input model: {isometric_model_dict}")
+        # logger.info(f"input model: {isometric_model_dict}")
 
         train_data = sub_ctx.reader(train_data).read_dataframe().data
         columns = train_data.schema.columns.to_list()

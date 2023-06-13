@@ -25,9 +25,9 @@ logger = logging.getLogger(__name__)
 
 
 class FeatureStatistics(Module):
-    def __init__(self, metrics: List[str] = None, bias=True):
+    def __init__(self, metrics: List[str] = None, ddof=1, bias=True):
         self.metrics = metrics
-        self.summary = StatisticsSummary(bias)
+        self.summary = StatisticsSummary(ddof, bias)
 
     def fit(self, ctx: Context, train_data, validate_data=None) -> None:
         self.summary.compute_metrics(train_data, self.metrics)
@@ -47,12 +47,13 @@ class FeatureStatistics(Module):
 
 
 class StatisticsSummary(Module):
-    def __init__(self, bias=True):
+    def __init__(self, ddof=1, bias=True):
         """if metrics is not None:
             if len(metrics) == 1 and metrics[0] == "describe":
                 self.inner_metric_names = ['count', 'mean', 'std', 'min', '25%', '50%', '75%', 'max']
             else:
                 self.inner_metric_names = metrics"""
+        self.ddof = ddof
         self.bias = bias
         self.inner_metric_names = []
         self.metrics_summary = None
@@ -65,7 +66,7 @@ class StatisticsSummary(Module):
         for metric in metrics:
             metric_val = None
             if metric == "describe":
-                res = data.describe()
+                res = data.describe(ddof=self.ddof, unbiased=~self.bias)
                 self.metrics_summary = res
                 self.inner_metric_names = list(res.index)
                 return
@@ -86,89 +87,35 @@ class StatisticsSummary(Module):
             elif metric == "median":
                 metric_val = data.median()
             elif metric == "std":
-                metric_val = data.std()
+                metric_val = data.std(ddof=self.ddof)
             elif metric == "var":
-                metric_val = data.var()
+                metric_val = data.var(ddof=self.ddof)
             elif metric == "coefficient_of_variation":
-                metric_val = data.coe()
+                metric_val = data.variation(ddof=self.ddof)
             elif metric == "missing_count":
                 if self._nan_count is None:
-                    self._nan_count = data.nan_count()
+                    self._nan_count = data.na_count()
                 metric_val = self._nan_count
             elif metric == "missing_ratio":
                 if self._nan_count is None:
-                    self._nan_count = data.nan_count()
+                    self._nan_count = data.na_count()
                 if self._count is None:
                     self._count = data.count()
                 metric_val = self._nan_count / self._count
             elif metric == "skewness":
-                metric_val = self.compute_skewness(data)
+                metric_val = data.skew(unbiased=~self.bias)
             elif metric == "kurtosis":
-                metric_val = self.compute_kurtosis(data)
+                metric_val = data.kurt(unbiased=~self.bias)
 
             res.loc[metric] = metric_val
 
+        has_nan = res.isnull().any()
+        if has_nan.any():
+            nan_cols = res.columns[has_nan].to_list()
+            logger.warning(f"NaN value(s) found in statistics over columns: {nan_cols}; "
+                           f"this may lead to unexpected behavior.")
         self.metrics_summary = res
         self.inner_metric_names = list(res.index)
-
-    def compute_skewness(self, data):
-        """
-            The sample skewness is computed as the Fisher-Pearson coefficient
-        of skewness, i.e.
-        .. math::
-            g_1=\frac{m_3}{m_2^{3/2}}
-        where
-        .. math::
-            m_i=\frac{1}{N}\\sum_{n=1}^N(x[n]-\bar{x})^i
-        If the bias is False, return the adjusted Fisher-Pearson standardized moment coefficient
-        i.e.
-        .. math::
-        G_1=\frac{k_3}{k_2^{3/2}}=
-            \frac{\\sqrt{N(N-1)}}{N-2}\frac{m_3}{m_2^{3/2}}.
-        """
-        if self._mean is None:
-            self._mean = data.mean()
-        m3 = ((data - self._mean) ** 3).mean()
-
-        m2 = data.var(unbiased=False)
-        zero_mask = m2 >= 1e-6
-        m2[~zero_mask] = 1
-        skewness = zero_mask * m3 / m2 ** 1.5
-        if not self.bias:
-            if self._count is None:
-                self._count = data.count()
-            bias_factor = (self._count * (self._count - 1)) ** 0.5 / (self._count - 2)
-            skewness = skewness * bias_factor
-        skewness[~zero_mask] = 0.0
-        return skewness
-
-    def compute_kurtosis(self, data):
-        """
-            Return Fisher coefficient of kurtosis:
-            .. math::
-                g = \frac{m_4}{m_2^2} - 3
-            If bias is False, the calculations are corrected for statistical bias.
-        """
-        if self._mean is None:
-            self._mean = data.mean()
-
-        m4 = ((data - self._mean) ** 4).mean()
-        m2 = data.var(unbiased=False)
-        zero_mask = m2 >= 1e-6
-        m2[~zero_mask] = 1
-        kurtosis = m4 / m2 ** 2
-
-        if not self.bias:
-            if self._count is None:
-                self._count = data.count()
-
-            bias_factor = 1 / (self._count - 2) / (self._count - 3)
-            new_val = bias_factor * ((self._count ** 2 - 1) * kurtosis - 3 * ((self._count - 1) ** 2)) + 3
-            kurtosis[zero_mask] = new_val
-        kurtosis -= 3
-        kurtosis[~zero_mask] = 0.0
-        return kurtosis
-
     def to_model(self):
         return {"inner_metric_names": self.inner_metric_names,
                 "metrics_summary": self.metrics_summary.to_dict()}
