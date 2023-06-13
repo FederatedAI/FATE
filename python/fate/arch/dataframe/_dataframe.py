@@ -13,18 +13,18 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import operator
-from typing import List, Union
-
 import numpy as np
+import operator
 import pandas as pd
 
-from .manager import DataManager, Schema
+from typing import List, Union
+
 from .ops import (
     aggregate_indexer,
     transform_to_table,
     get_partition_order_mappings
 )
+from .manager import DataManager, Schema
 
 
 class DataFrame(object):
@@ -256,25 +256,23 @@ class DataFrame(object):
     def count(self) -> "int":
         return self.shape[0]
 
-    def describe(self, metric_kwargs=None):
+    def describe(self, ddof=1, unbiased=False):
         from .ops._stat import describe
-        if metric_kwargs is None:
-            metric_kwargs = dict()
-        return describe(self, metric_kwargs)
+        return describe(self, ddof=ddof, unbiased=unbiased)
 
     def quantile(self, q, axis=0, method="quantile", ):
         ...
 
-    def __add__(self, other: Union[int, float, list, "np.ndarray", "DataFrame"]) -> "DataFrame":
+    def __add__(self, other: Union[int, float, list, "np.ndarray", "DataFrame", "pd.Series"]) -> "DataFrame":
         return self.__arithmetic_operate(operator.add, other)
 
-    def __radd__(self, other: Union[int, float, list, "np.ndarray"]) -> "DataFrame":
+    def __radd__(self, other: Union[int, float, list, "np.ndarray", "pd.Series"]) -> "DataFrame":
         return self + other
 
-    def __sub__(self, other: Union[int, float, list, "np.ndarray"]) -> "DataFrame":
+    def __sub__(self, other: Union[int, float, list, "np.ndarray", "pd.Series"]) -> "DataFrame":
         return self.__arithmetic_operate(operator.sub, other)
 
-    def __rsub__(self, other: Union[int, float, list, "np.ndarray"]) -> "DataFrame":
+    def __rsub__(self, other: Union[int, float, list, "np.ndarray", "pd.Series"]) -> "DataFrame":
         return self * (-1) + other
 
     def __mul__(self, other) -> "DataFrame":
@@ -325,7 +323,25 @@ class DataFrame(object):
         if attr not in self._data_manager.schema.columns:
             raise ValueError(f"DataFrame does not has attribute {attr}")
 
-        assert 1 == 2
+        return self.__getitem__(attr)
+
+    def __setattr__(self, key, value):
+        if key not in ["label", "weight"]:
+            self.__dict__[key] = value
+            return
+
+        if key == "label":
+            if self._label is not None:
+                self.__dict__["_label"] = None
+            from .ops._set_item import set_label_or_weight
+            set_label_or_weight(self, value, key_type=key)
+        elif key == "weight":
+            if self._weight is not None:
+                self.__dict__["_weight"] = None
+            from .ops._set_item import set_label_or_weight
+            set_label_or_weight(self, value, key_type=key)
+        else:
+            return self.__setitem__(key, value)
 
     def __getitem__(self, items) -> "DataFrame":
         if isinstance(items, DataFrame):

@@ -18,6 +18,10 @@ from typing import List, Union
 import pandas as pd
 
 
+DEFAULT_LABEL_NAME = "label"
+DEFAULT_WEIGHT_NAME = "weight"
+
+
 class Schema(object):
     def __init__(
         self,
@@ -162,6 +166,35 @@ class SchemaManager(object):
     def schema(self, schema):
         self._schema = schema
 
+    def add_label_or_weight(self, key_type, name, block_type):
+        self._type_mapping[name] = block_type.value
+
+        src_field_names = self.get_field_name_list()
+        if key_type == "label":
+            self._schema.label_name = name
+        else:
+            self._schema.weight_name = name
+
+        dst_field_names = self.get_field_name_list()
+
+        name_offset_mapping = dict()
+        offset_name_mapping = dict()
+        field_index_changes = dict()
+
+        for offset, field_name in enumerate(dst_field_names):
+            name_offset_mapping[field_name] = offset
+            offset_name_mapping[offset] = name
+
+        for field_name in src_field_names:
+            src_offset = self._name_offset_mapping[field_name]
+            dst_offset = name_offset_mapping[field_name]
+            field_index_changes[src_offset] = dst_offset
+
+        self._name_offset_mapping = name_offset_mapping
+        self._offset_name_mapping = offset_name_mapping
+
+        return self._name_offset_mapping[name], field_index_changes
+
     def append_columns(self, names, block_types):
         field_index = len(self._name_offset_mapping)
         for offset, name in enumerate(names):
@@ -302,7 +335,7 @@ class SchemaManager(object):
             raise ValueError(f"{name} does not exist in {columns}")
 
     def init_field_types(self, label_type="float32", weight_type="float32", dtype="float32",
-                          default_type="float32", match_id_type="index", sample_id_type="index"):
+                         default_type="float32", match_id_type="index", sample_id_type="index"):
         self._type_mapping[self._schema.sample_id_name] = "index"
 
         if self._schema.match_id_name:
