@@ -326,8 +326,14 @@ class DataFrame(object):
         return self.__getitem__(attr)
 
     def __setattr__(self, key, value):
-        if key not in ["label", "weight"]:
+        property_attr_mapping = dict(block_table="_block_table",
+                                     data_manager="_data_manager")
+        if key not in ["label", "weight"] and key not in property_attr_mapping:
             self.__dict__[key] = value
+            return
+
+        if key in property_attr_mapping:
+            self.__dict__[property_attr_mapping[key]] = value
             return
 
         if key == "label":
@@ -335,13 +341,11 @@ class DataFrame(object):
                 self.__dict__["_label"] = None
             from .ops._set_item import set_label_or_weight
             set_label_or_weight(self, value, key_type=key)
-        elif key == "weight":
+        else:
             if self._weight is not None:
                 self.__dict__["_weight"] = None
             from .ops._set_item import set_label_or_weight
             set_label_or_weight(self, value, key_type=key)
-        else:
-            return self.__setitem__(key, value)
 
     def __getitem__(self, items) -> "DataFrame":
         if isinstance(items, DataFrame):
