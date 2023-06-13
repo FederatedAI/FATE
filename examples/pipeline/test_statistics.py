@@ -110,7 +110,7 @@ def main(config="./config.yaml", namespace=""):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("PIPELINE DEMO")
-    parser.add_argument("-config", type=str, default="/Users/yuwu/PycharmProjects/FATE/examples/config.yaml",
+    parser.add_argument("-config", type=str, default="",
                         help="config file")
     parser.add_argument("-namespace", type=str, default="",
                         help="namespace for data stored in FATE")
