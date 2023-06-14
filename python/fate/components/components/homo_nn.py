@@ -28,8 +28,8 @@ from fate.components import (
 import os
 import pandas as pd
 from fate.interface import Context
-from fate.components.components.nn.runner.fate_runner import FateRunner
-from fate.components.components.nn.nn_runner import NNRunner, NNInput, NNOutput
+from fate.components.components.nn.runner.default_runner import DefaultRunner
+from fate.components.components.nn.nn_runner import NNRunner, NNInput
 from fate.components.components.nn.loader import Loader
 from fate.arch.dataframe._dataframe import DataFrame
 import logging
@@ -57,7 +57,7 @@ def prepare_runner_class(runner_module, runner_class, runner_conf, source):
         assert isinstance(runner, NNRunner), 'loaded class must be a subclass of NNRunner class, but got {}'.format(type(runner))
     else:
         print('using default fate runner')
-        runner = FateRunner(**runner_conf)
+        runner = DefaultRunner(**runner_conf)
 
     return runner
 
@@ -116,8 +116,8 @@ def homo_nn(ctx, role):
 @homo_nn.train()
 @cpn.artifact("train_data", type=Input[DatasetArtifact], roles=[GUEST, HOST], desc="training data")
 @cpn.artifact("validate_data", type=Input[DatasetArtifact], optional=True, roles=[GUEST, HOST], desc="validation data")
-@cpn.parameter("runner_module", type=str, default='fate_runner', desc="name of your runner script")
-@cpn.parameter("runner_class", type=str, default='FateRunner', desc="class name of your runner class")
+@cpn.parameter("runner_module", type=str, default='default_runner', desc="name of your runner script")
+@cpn.parameter("runner_class", type=str, default='DefaultRunner', desc="class name of your runner class")
 @cpn.parameter("source", type=str, default=None, desc="path to your runner script folder")
 @cpn.parameter("runner_conf", type=dict, default={}, desc="the parameter dict of the NN runner class")
 @cpn.artifact("train_output_data", type=Output[DatasetArtifact], roles=[GUEST, HOST])

@@ -1,8 +1,7 @@
 import pandas as pd
-from typing import Union, Type, Callable, Optional, List, Tuple
+from typing import Union, Optional
 from fate.components import Role
 from fate.interface import Context
-from fate.ml.nn.trainer.trainer_base import FedTrainerClient, FedTrainerServer
 
 
 

@@ -108,7 +108,7 @@ class SetupReturn:
         return repr_string
 
 
-class FateRunner(NNRunner):
+class DefaultRunner(NNRunner):
 
     def __init__(self, 
                  algo: str = 'fedavg',

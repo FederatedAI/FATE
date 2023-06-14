@@ -2,10 +2,9 @@ import os
 import sys
 import importlib.util
 from abc import ABC, abstractmethod
-from enum import Enum
 import json
-from typing import Any
 import yaml
+import difflib
 
 
 class _Source(object):
@@ -85,24 +84,38 @@ class Loader(AbstractLoader):
         return self._load_item()
 
     def _load_item(self):
-
         if self.source_path is not None:
             sys.path.append(self.source_path)
 
         spec = importlib.util.find_spec(self.module_name)
         if spec is None:
-            raise ValueError("Module: {} not found in the import path.".format(self.module_name))
-        
-        module = importlib.import_module(self.module_name)
+            # Search for similar module names
+            suggestion = self._find_similar_module_names()
+            print('suggestion is {}'.format(suggestion))
+            if suggestion:
+                raise ValueError("Module: {} not found in the import path. Do you mean {}?".format(self.module_name, suggestion))
+            else:
+                raise ValueError("Module: {} not found in the import path.".format(self.module_name))
 
+        module = importlib.import_module(self.module_name)
+        
         item = getattr(module, self.item_name, None)
         if item is None:
-            print("Item: {} not found in module: {}.".format(self.item_name, self.module_name))
+            raise ValueError("Item: {} not found in module: {}.".format(self.item_name, self.module_name))
 
         if self.source_path is not None:
             sys.path.remove(self.source_path)
 
         return item
+
+    def _find_similar_module_names(self):
+
+        if self.source_path is None:
+            return None
+        files = os.listdir(self.source_path)
+        print('source matches are', files)
+        similar_names = difflib.get_close_matches(self.module_name, files)
+        return similar_names[0] if similar_names else None
 
     def to_json(self):
         return json.dumps(self.to_dict())
