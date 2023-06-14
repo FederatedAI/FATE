@@ -68,9 +68,9 @@ class HeteroFeatureBinningGuest(BaseFeatureBinning):
                 raise ValueError("Have not supported optimal binning in multi-class data yet")
 
         self.labels = list(label_counts_dict.keys())
-        label_counts = [label_counts_dict[k] for k in self.labels]
         if len(self.labels) == 2 and not self.labels[0]:
             self.labels.reverse()
+        label_counts = [label_counts_dict[k] for k in self.labels]
 
         label_table = IvCalculator.convert_label(data_instances, self.labels)
         self.bin_result = self.iv_calculator.cal_local_iv(data_instances=data_instances,
