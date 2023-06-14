@@ -14,8 +14,11 @@
 #  limitations under the License.
 from typing import Any, Dict, List, Optional
 
-from fate.components import T_LABEL, T_ROLE, T_STAGE
 from pydantic import BaseModel
+
+from .._label import T_LABEL
+from .._role import T_ROLE
+from .._stage import T_STAGE
 
 
 class ParameterSpec(BaseModel):
@@ -35,12 +38,14 @@ class ArtifactSpec(BaseModel):
 
 
 class InputDefinitionsSpec(BaseModel):
-    parameters: Dict[str, ParameterSpec]
-    artifacts: Dict[str, ArtifactSpec]
+    data: Dict[str, ArtifactSpec]
+    model: Dict[str, ArtifactSpec]
 
 
 class OutputDefinitionsSpec(BaseModel):
-    artifacts: Dict[str, ArtifactSpec]
+    data: Dict[str, ArtifactSpec]
+    model: Dict[str, ArtifactSpec]
+    metric: Dict[str, ArtifactSpec]
 
 
 class ComponentSpec(BaseModel):
@@ -50,6 +55,7 @@ class ComponentSpec(BaseModel):
     version: str
     labels: List[T_LABEL]
     roles: List[T_ROLE]
+    parameters: Dict[str, ParameterSpec]
     input_definitions: InputDefinitionsSpec
     output_definitions: OutputDefinitionsSpec
 

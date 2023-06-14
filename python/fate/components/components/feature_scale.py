@@ -12,16 +12,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from fate.components import (
-    GUEST,
-    HOST,
-    DatasetArtifact,
-    Input,
-    ModelArtifact,
-    Output,
-    Role,
-    cpn,
-)
+from fate.components.core import GUEST, HOST, Role, cpn
 
 
 @cpn.component(roles=[GUEST, HOST])
@@ -30,10 +21,10 @@ def feature_scale(ctx, role):
 
 
 @feature_scale.train()
-@cpn.artifact("train_data", type=Input[DatasetArtifact], roles=[GUEST, HOST])
+@cpn.dataframe_input("train_data", roles=[GUEST, HOST])
 @cpn.parameter("method", type=str, default="standard", optional=False)
-@cpn.artifact("train_output_data", type=Output[DatasetArtifact], roles=[GUEST, HOST])
-@cpn.artifact("output_model", type=Output[ModelArtifact], roles=[GUEST, HOST])
+@cpn.dataframe_output("train_output_data", roles=[GUEST, HOST])
+@cpn.json_model_output("output_model", roles=[GUEST, HOST])
 def feature_scale_train(
     ctx,
     role: Role,
@@ -46,9 +37,9 @@ def feature_scale_train(
 
 
 @feature_scale.predict()
-@cpn.artifact("input_model", type=Input[ModelArtifact], roles=[GUEST, HOST])
-@cpn.artifact("test_data", type=Input[DatasetArtifact], optional=False, roles=[GUEST, HOST])
-@cpn.artifact("test_output_data", type=Output[DatasetArtifact], roles=[GUEST, HOST])
+@cpn.json_model_input("input_model", roles=[GUEST, HOST])
+@cpn.dataframe_input("test_data", optional=False, roles=[GUEST, HOST])
+@cpn.dataframe_output("test_output_data", roles=[GUEST, HOST])
 def feature_scale_predict(
     ctx,
     role: Role,

@@ -19,7 +19,8 @@ logger = logging.getLogger(__name__)
 
 def load_component(cpn_name: str):
     from fate.components.components import BUILDIN_COMPONENTS
-    from fate.components.cpn import _Component
+
+    from .component_desc._component import Component
 
     # from buildin
     for cpn in BUILDIN_COMPONENTS:
@@ -29,9 +30,9 @@ def load_component(cpn_name: str):
     # from entrypoint
     import pkg_resources
 
-    for cpn_ep in pkg_resources.iter_entry_points(group="fate.ext.component"):
+    for cpn_ep in pkg_resources.iter_entry_points(group="fate.ext.component_desc"):
         try:
-            candidate_cpn: _Component = cpn_ep.load()
+            candidate_cpn: Component = cpn_ep.load()
             candidate_cpn_name = candidate_cpn.name
         except Exception as e:
             logger.warning(
@@ -50,7 +51,7 @@ def list_components():
     buildin_components = [c.name for c in BUILDIN_COMPONENTS]
     third_parties_components = []
 
-    for cpn_ep in pkg_resources.iter_entry_points(group="fate.ext.component"):
+    for cpn_ep in pkg_resources.iter_entry_points(group="fate.ext.component_desc"):
         try:
             candidate_cpn = cpn_ep.load()
             candidate_cpn_name = candidate_cpn.name

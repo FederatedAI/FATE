@@ -12,6 +12,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+
 import click
 
 
@@ -27,13 +28,13 @@ def component():
 @click.option("--config", required=False, type=click.File(), help="config path")
 @click.option("--config-entrypoint", required=False, help="enctypoint to get config")
 @click.option("--properties", "-p", multiple=True, help="properties config")
-@click.option("--env-prefix", "-e", type=str, default="runtime.component.", help="prefix for env config")
+@click.option("--env-prefix", "-e", type=str, default="runtime.component_desc.", help="prefix for env config")
 @click.option("--env-name", required=False, type=str, help="env name for config")
 def execute(process_tag, config, config_entrypoint, properties, env_prefix, env_name):
-    "execute component"
+    "execute component_desc"
     import logging
 
-    from fate.components.spec.task import TaskConfigSpec
+    from fate.components.core.spec.task import TaskConfigSpec
 
     # parse properties
     properties_items = {}
@@ -55,9 +56,19 @@ def execute(process_tag, config, config_entrypoint, properties, env_prefix, env_
     logger.debug("logger installed")
     logger.debug(f"task config: {task_config}")
 
-    from fate.components.entrypoint.component import execute_component
+    from fate.components.entrypoint.component import execute_component_from_config
 
-    execute_component(task_config)
+    execute_component_from_config(task_config)
+
+
+@component.command()
+@click.option("--process-tag", required=True, help="unique id to identify this execution process")
+@click.option("--config", required=False, type=click.File(), help="config path")
+def cleanup(process_tag, config):
+    from fate.components.core.spec.task import TaskCleanupConfigSpec
+    from fate.components.entrypoint.component import cleanup_component_execution
+
+    cleanup_component_execution(TaskCleanupConfigSpec.parse_obj(config))
 
 
 def load_properties(properties) -> dict:
@@ -138,6 +149,7 @@ def load_config_from_entrypoint(configs, config_entrypoint):
 
 def load_config_from_env(configs, env_name):
     import os
+
     from ruamel import yaml
 
     if env_name is not None and os.environ.get(env_name):
@@ -146,11 +158,11 @@ def load_config_from_env(configs, env_name):
 
 
 @component.command()
-@click.option("--name", required=True, help="name of component")
+@click.option("--name", required=True, help="name of component_desc")
 @click.option("--save", type=click.File(mode="w", lazy=True), help="save desc output to specified file in yaml format")
 def desc(name, save):
-    "generate component describe config"
-    from fate.components.loader.component import load_component
+    "generate component_desc describe config"
+    from fate.components.core import load_component
 
     cpn = load_component(name)
     if save:
@@ -162,8 +174,8 @@ def desc(name, save):
 @component.command()
 @click.option("--save", type=click.File(mode="w", lazy=True), help="save desc output to specified file in yaml format")
 def task_schema(save):
-    "generate component task config json schema"
-    from fate.components.spec.task import TaskConfigSpec
+    "generate component_desc task config json schema"
+    from fate.components.core.spec.task import TaskConfigSpec
 
     if save:
         save.write(TaskConfigSpec.schema_json())
@@ -175,7 +187,7 @@ def task_schema(save):
 @click.option("--save", type=click.File(mode="w", lazy=True), help="save list output to specified file in json format")
 def list(save):
     "list all components"
-    from fate.components.loader.component import list_components
+    from fate.components.core import list_components
 
     if save:
         import json
@@ -183,13 +195,3 @@ def list(save):
         json.dump(list_components(), save)
     else:
         print(list_components())
-
-
-@component.command()
-@click.option("--db", required=True, type=str, help="mlmd db")
-@click.option("--taskid", required=True, type=str, help="taskid")
-def set_mlmd_finish(db, taskid):
-    from fate.arch.context._mlmd import MachineLearningMetadata
-
-    mlmd = MachineLearningMetadata(metadata={"filename_uri": db})
-    mlmd.set_task_safe_terminate_flag(taskid)

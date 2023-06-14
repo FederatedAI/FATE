@@ -53,7 +53,7 @@ class PipelineLogger(pydantic.BaseModel):
                 "level": level,
                 "formatter": formater,
                 "filters": filters,
-                "filename": filename
+                "filename": filename,
             }
 
         # add root logger
@@ -82,9 +82,9 @@ class PipelineLogger(pydantic.BaseModel):
             }
             root_handlers.append(handler_name)
 
-        # add component logger
+        # add component_desc logger
         component_handlers = []
-        component_base_path = self.metadata.basepath.joinpath("component")
+        component_base_path = self.metadata.basepath.joinpath("component_desc")
         component_base_path.mkdir(parents=True, exist_ok=True)
         filters["components"] = {"name": "fate.components"}
         filters["ml"] = {"name": "fate.ml"}
@@ -142,19 +142,13 @@ class FlowLogger(pydantic.BaseModel):
         handlers = {}
         filters = {}
 
-        def add_file_handler(
-            name,
-            filename,
-            level,
-            formater="brief",
-            filters=[]
-        ):
+        def add_file_handler(name, filename, level, formater="brief", filters=[]):
             handlers[name] = {
                 "class": "logging.FileHandler",
                 "level": level,
                 "formatter": formater,
                 "filters": filters,
-                "filename": filename
+                "filename": filename,
             }
 
         # add root logger
@@ -170,9 +164,9 @@ class FlowLogger(pydantic.BaseModel):
             )
             root_handlers.append(handler_name)
 
-        # add component logger
+        # add component_desc logger
         component_handlers = []
-        component_base_path = self.metadata.basepath.joinpath("component")
+        component_base_path = self.metadata.basepath.joinpath("component_desc")
         component_base_path.mkdir(parents=True, exist_ok=True)
         filters["components"] = {"name": "fate.components"}
         filters["ml"] = {"name": "fate.ml"}

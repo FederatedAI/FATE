@@ -18,9 +18,7 @@ import tarfile
 import tempfile
 from datetime import datetime
 
-from ruamel import yaml
-
-from fate.components.spec.model import (
+from fate.components.core.spec.model import (
     MLModelComponentSpec,
     MLModelFederatedSpec,
     MLModelModelSpec,
@@ -28,6 +26,7 @@ from fate.components.spec.model import (
     MLModelPartySpec,
     MLModelSpec,
 )
+from ruamel import yaml
 
 
 def load_output_model_wrapper(task_id, party_task_id, cpn, role, partyid, federation):

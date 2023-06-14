@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 def load_federation(federation, computing):
-    from fate.components.spec.federation import (
+    from fate.components.core.spec.federation import (
         OSXFederationSpec,
         PulsarFederationSpec,
         RabbitMQFederationSpec,

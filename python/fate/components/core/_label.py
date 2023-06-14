@@ -12,13 +12,10 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-import click
+from typing import Literal
+
+T_LABEL = Literal["trainable"]
 
 
-@click.command()
-def clean():
-    """
-    clean task resources
-    """
-    # TODO: implement
-    print("cleaned")
+class LABELS:
+    TRAINABLE = "trainable"
