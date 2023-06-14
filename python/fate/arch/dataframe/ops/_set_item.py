@@ -53,9 +53,9 @@ def set_label_or_weight(df: "DataFrame", item: "DataFrame", key_type="label"):
         if data_manager.blocks[block_id].block_type < other_block_type:
             data_manager = data_manager.blocks[block_id].convert_block_type(other_block_type)
     else:
-        block_id, block_migrate_mappings = data_manager.add_label_or_weight(key_type=key_type,
-                                                                            name=other_field_names[0],
-                                                                            block_type=other_block_type)
+        data_manager.add_label_or_weight(key_type=key_type,
+                                         name=other_field_names[0],
+                                         block_type=other_block_type)
 
         block_table = df.block_table.join(item.block_table,
                                           lambda blocks1, blocks2: blocks1 + [blocks2[other_block_id]])

@@ -75,6 +75,9 @@ def transform_block_to_list(block_table, data_manager):
     fields_loc = data_manager.get_fields_loc()
 
     def _to_list(src_blocks):
+        if src_blocks[0].shape[0] == 0:
+            return []
+
         i = 0
         dst_list = None
         lines = 0

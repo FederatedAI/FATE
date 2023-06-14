@@ -183,7 +183,7 @@ class SchemaManager(object):
 
         for offset, field_name in enumerate(dst_field_names):
             name_offset_mapping[field_name] = offset
-            offset_name_mapping[offset] = name
+            offset_name_mapping[offset] = field_name
 
         for field_name in src_field_names:
             src_offset = self._name_offset_mapping[field_name]

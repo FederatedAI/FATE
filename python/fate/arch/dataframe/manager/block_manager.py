@@ -128,6 +128,7 @@ class Block(object):
     def reset_field_indexes(self, dst_field_indexes):
         field_indexes = [dst_field_indexes[src_field_index] for src_field_index in self._field_indexes]
         self._field_index_mapping = dict(zip(field_indexes, range(len(field_indexes))))
+        self._field_indexes = field_indexes
 
     def derive_block(self, field_indexes) -> Tuple["Block", bool, list]:
         """
