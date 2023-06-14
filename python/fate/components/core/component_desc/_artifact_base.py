@@ -1,9 +1,18 @@
+import typing
 from contextlib import contextmanager
-from typing import Any, Dict, Generator, Generic, List, TypeVar
+from typing import Any, Dict, Generator, Generic, List, TypeVar, Union
 
 from .._role import T_ROLE, Role
 from .._stage import T_STAGE, Stage
 from ..spec.component import ArtifactSpec
+
+if typing.TYPE_CHECKING:
+    from ._data_artifact import DataDirectoryArtifactDescribe, DataframeArtifactDescribe
+    from ._metric_artifact import JsonMetricArtifactDescribe
+    from ._model_artifact import (
+        JsonModelArtifactDescribe,
+        ModelDirectoryArtifactDescribe,
+    )
 
 W = TypeVar("W")
 T = TypeVar("T")
@@ -114,11 +123,11 @@ class ArtifactDescribe:
 class ComponentArtifactDescribes:
     def __init__(
         self,
-        data_inputs: Dict[str, ArtifactDescribe] = None,
-        model_inputs: Dict[str, ArtifactDescribe] = None,
-        data_outputs: Dict[str, ArtifactDescribe] = None,
-        model_outputs: Dict[str, ArtifactDescribe] = None,
-        metric_outputs: Dict[str, ArtifactDescribe] = None,
+        data_inputs: Dict[str, Union["DataframeArtifactDescribe", "DataDirectoryArtifactDescribe"]] = None,
+        model_inputs: Dict[str, Union["JsonModelArtifactDescribe", "ModelDirectoryArtifactDescribe"]] = None,
+        data_outputs: Dict[str, Union["DataframeArtifactDescribe", "DataDirectoryArtifactDescribe"]] = None,
+        model_outputs: Dict[str, Union["JsonModelArtifactDescribe", "ModelDirectoryArtifactDescribe"]] = None,
+        metric_outputs: Dict[str, "JsonMetricArtifactDescribe"] = None,
     ):
         if data_inputs is None:
             data_inputs = {}
@@ -151,23 +160,23 @@ class ComponentArtifactDescribes:
             raise ValueError(f"artifact {artifact.name} already exists")
         self._keys.add(artifact.name)
 
-    def add_data_input(self, artifact: ArtifactDescribe):
+    def add_data_input(self, artifact: Union["DataframeArtifactDescribe", "DataDirectoryArtifactDescribe"]):
         self._add_artifact(artifact)
         self.data_inputs[artifact.name] = artifact
 
-    def add_model_input(self, artifact: ArtifactDescribe):
+    def add_model_input(self, artifact: Union["JsonModelArtifactDescribe", "ModelDirectoryArtifactDescribe"]):
         self._add_artifact(artifact)
         self.model_inputs[artifact.name] = artifact
 
-    def add_data_output(self, artifact: ArtifactDescribe):
+    def add_data_output(self, artifact: Union["DataframeArtifactDescribe", "DataDirectoryArtifactDescribe"]):
         self._add_artifact(artifact)
         self.data_outputs[artifact.name] = artifact
 
-    def add_model_output(self, artifact: ArtifactDescribe):
+    def add_model_output(self, artifact: Union["JsonModelArtifactDescribe", "ModelDirectoryArtifactDescribe"]):
         self._add_artifact(artifact)
         self.model_outputs[artifact.name] = artifact
 
-    def add_metric_output(self, artifact: ArtifactDescribe):
+    def add_metric_output(self, artifact: Union["JsonMetricArtifactDescribe"]):
         self._add_artifact(artifact)
         self.metric_outputs[artifact.name] = artifact
 
