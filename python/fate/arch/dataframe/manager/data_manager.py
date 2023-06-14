@@ -38,11 +38,25 @@ class DataManager(object):
     def schema(self):
         return self._schema_manager.schema
 
+    def add_label_or_weight(self, key_type, name, block_type):
+        field_index, field_index_changes = self._schema_manager.add_label_or_weight(key_type, name, block_type)
+        self._block_manager.reset_block_field_indexes(field_index_changes)
+        self._block_manager.append_fields([field_index], block_type, should_compress=False)
+
     def append_columns(self, columns: List[str], block_types: Union["BlockType", List["BlockType"]]) -> List[int]:
         field_indexes = self._schema_manager.append_columns(columns, block_types)
         block_indexes = self._block_manager.append_fields(field_indexes, block_types)
 
         return block_indexes
+
+    def pop_blocks(self, block_indexes: List[int]):
+        field_indexes = []
+        for block_index in block_indexes:
+            field_indexes.extend(self._block_manager.blocks[block_index].field_indexes)
+
+        field_index_changes = self._schema_manager.pop_fields(field_indexes)
+        self._block_manager.pop_blocks(block_indexes)
+        self._block_manager.reset_block_field_indexes(field_index_changes)
 
     def split_columns(self, columns: List[str], block_types: Union["BlockType", List["BlockType"]]):
         field_indexes = self._schema_manager.split_columns(columns, block_types)
@@ -87,7 +101,7 @@ class DataManager(object):
                                                                       label_name,
                                                                       weight_name)
         schema_manager.init_field_types(label_type, weight_type, dtype,
-                                         default_type=default_type)
+                                        default_type=default_type)
         block_manager = BlockManager()
         block_manager.initialize_blocks(schema_manager)
 
@@ -191,9 +205,9 @@ class DataManager(object):
 
     def try_to_promote_types(self,
                              block_indexes: List[int],
-                             block_type: Union[list, int, float, np.dtype, BlockType]) -> List[Tuple[int, BlockType]]:
+                             block_type: Union[bool, list, int, float, np.dtype, BlockType]) -> List[Tuple[int, BlockType]]:
         promote_types = []
-        if isinstance(block_type, (int, float, np.dtype)):
+        if isinstance(block_type, (bool, int, float, np.dtype)):
             block_type = BlockType.get_block_type(block_type)
 
         if isinstance(block_type, BlockType):

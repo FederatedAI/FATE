@@ -185,14 +185,33 @@ class DataFrame(object):
 
     def create_frame(self, with_label=False, with_weight=False, columns: list = None) -> "DataFrame":
         return self.__extract_fields(with_sample_id=True,
-                                      with_match_id=True,
-                                      with_label=with_label,
-                                      with_weight=with_weight,
-                                      columns=columns)
+                                     with_match_id=True,
+                                     with_label=with_label,
+                                     with_weight=with_weight,
+                                     columns=columns)
 
     def drop(self, index) -> "DataFrame":
         from .ops._dimension_scaling import drop
         return drop(self, index)
+
+    def fillna(self, value):
+        from .ops._fillna import fillna
+        return fillna(self, value)
+
+    def get_dummies(self, dtype="int32"):
+        from .ops._encoder import get_dummies
+        return get_dummies(self, dtype=dtype)
+
+    def isna(self):
+        from .ops._missing import isna
+        return isna(self)
+
+    def isin(self, values):
+        from .ops._isin import isin
+        return isin(self, values)
+
+    def na_count(self):
+        return self.isna().sum()
 
     def max(self) -> "pd.Series":
         from .ops._stat import max
@@ -210,8 +229,25 @@ class DataFrame(object):
         from .ops._stat import sum
         return sum(self)
 
-    def std(self, *args, **kwargs) -> "pd.Series":
-        ...
+    def std(self, ddof=1, **kwargs) -> "pd.Series":
+        from .ops._stat import std
+        return std(self, ddof=ddof)
+
+    def var(self, ddof=1, **kwargs):
+        from .ops._stat import var
+        return var(self, ddof=ddof)
+
+    def variation(self, ddof=1):
+        from .ops._stat import variation
+        return variation(self, ddof=ddof)
+
+    def skew(self, unbiased=False):
+        from .ops._stat import skew
+        return skew(self, unbiased=unbiased)
+
+    def kurt(self, unbiased=False):
+        from .ops._stat import kurt
+        return kurt(self, unbiased=unbiased)
 
     def sigmoid(self) -> "DataFrame":
         from .ops._activation import sigmoid
@@ -220,19 +256,23 @@ class DataFrame(object):
     def count(self) -> "int":
         return self.shape[0]
 
+    def describe(self, ddof=1, unbiased=False):
+        from .ops._stat import describe
+        return describe(self, ddof=ddof, unbiased=unbiased)
+
     def quantile(self, q, axis=0, method="quantile", ):
         ...
 
-    def __add__(self, other: Union[int, float, list, "np.ndarray", "DataFrame"]) -> "DataFrame":
+    def __add__(self, other: Union[int, float, list, "np.ndarray", "DataFrame", "pd.Series"]) -> "DataFrame":
         return self.__arithmetic_operate(operator.add, other)
 
-    def __radd__(self, other: Union[int, float, list, "np.ndarray"]) -> "DataFrame":
+    def __radd__(self, other: Union[int, float, list, "np.ndarray", "pd.Series"]) -> "DataFrame":
         return self + other
 
-    def __sub__(self, other: Union[int, float, list, "np.ndarray"]) -> "DataFrame":
+    def __sub__(self, other: Union[int, float, list, "np.ndarray", "pd.Series"]) -> "DataFrame":
         return self.__arithmetic_operate(operator.sub, other)
 
-    def __rsub__(self, other: Union[int, float, list, "np.ndarray"]) -> "DataFrame":
+    def __rsub__(self, other: Union[int, float, list, "np.ndarray", "pd.Series"]) -> "DataFrame":
         return self * (-1) + other
 
     def __mul__(self, other) -> "DataFrame":
@@ -243,6 +283,9 @@ class DataFrame(object):
 
     def __truediv__(self, other) -> "DataFrame":
         return self.__arithmetic_operate(operator.truediv, other)
+
+    def __pow__(self, power) -> "DataFrame":
+        return self.__arithmetic_operate(operator.pow, power)
 
     def __lt__(self, other) -> "DataFrame":
         return self.__cmp_operate(operator.lt, other)
@@ -255,6 +298,10 @@ class DataFrame(object):
 
     def __ge__(self, other) -> "DataFrame":
         return self.__cmp_operate(operator.ge, other)
+
+    def __invert__(self):
+        from .ops._unary_operator import invert
+        return invert(self)
 
     def __arithmetic_operate(self, op, other) -> "DataFrame":
         """
@@ -276,10 +323,38 @@ class DataFrame(object):
         if attr not in self._data_manager.schema.columns:
             raise ValueError(f"DataFrame does not has attribute {attr}")
 
-        assert 1 == 2
+        return self.__getitem__(attr)
+
+    def __setattr__(self, key, value):
+        property_attr_mapping = dict(block_table="_block_table",
+                                     data_manager="_data_manager")
+        if key not in ["label", "weight"] and key not in property_attr_mapping:
+            self.__dict__[key] = value
+            return
+
+        if key in property_attr_mapping:
+            self.__dict__[property_attr_mapping[key]] = value
+            return
+
+        if key == "label":
+            if self._label is not None:
+                self.__dict__["_label"] = None
+            from .ops._set_item import set_label_or_weight
+            set_label_or_weight(self, value, key_type=key)
+        else:
+            if self._weight is not None:
+                self.__dict__["_weight"] = None
+            from .ops._set_item import set_label_or_weight
+            set_label_or_weight(self, value, key_type=key)
 
     def __getitem__(self, items) -> "DataFrame":
-        if not isinstance(items, list):
+        if isinstance(items, DataFrame):
+            from .ops._where import where
+            return where(self, items)
+
+        if isinstance(items, pd.Index):
+            items = items.tolist()
+        elif not isinstance(items, list):
             items = [items]
 
         for item in items:
@@ -291,6 +366,8 @@ class DataFrame(object):
     def __setitem__(self, keys, items):
         if isinstance(keys, str):
             keys = [keys]
+        elif isinstance(keys, pd.Series):
+            keys = keys.tolist()
 
         state = 0
         column_set = set(self._data_manager.schema.columns)

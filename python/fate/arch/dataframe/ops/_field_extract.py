@@ -16,7 +16,7 @@ import pandas as pd
 from .._dataframe import DataFrame
 
 
-def field_extract(fate_df: "DataFrame", with_sample_id=True, with_match_id=True, with_weight=True,
+def field_extract(df: "DataFrame", with_sample_id=True, with_match_id=True, with_weight=True,
                   with_label=True, columns=None):
     """
     blocks_loc: list, each element: (src_block_id, dst_block_id, changed=True/False, block_indexes)
@@ -39,18 +39,18 @@ def field_extract(fate_df: "DataFrame", with_sample_id=True, with_match_id=True,
 
         return extract_blocks
 
-    data_manager, blocks_loc = fate_df.data_manager.derive_new_data_manager(
+    data_manager, blocks_loc = df.data_manager.derive_new_data_manager(
         with_sample_id=with_sample_id,
         with_match_id=with_match_id,
         with_label=with_label,
         with_weight=with_weight,
         columns=columns
     )
-    extract_table = fate_df.block_table.mapValues(_extract_columns)
+    extract_table = df.block_table.mapValues(_extract_columns)
 
     return DataFrame(
-        fate_df._ctx,
+        df._ctx,
         extract_table,
-        partition_order_mappings=fate_df.partition_order_mappings,
+        partition_order_mappings=df.partition_order_mappings,
         data_manager=data_manager
     )
