@@ -101,7 +101,7 @@ class DataManager(object):
                                                                       label_name,
                                                                       weight_name)
         schema_manager.init_field_types(label_type, weight_type, dtype,
-                                         default_type=default_type)
+                                        default_type=default_type)
         block_manager = BlockManager()
         block_manager.initialize_blocks(schema_manager)
 

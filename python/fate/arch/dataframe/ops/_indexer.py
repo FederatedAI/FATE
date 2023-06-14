@@ -64,10 +64,15 @@ def get_partition_order_mappings(block_table):
 
     return block_order_mappings
 
+
 def get_partition_order_by_raw_table(table):
     def _get_block_summary(kvs):
-        key = next(kvs)[0]
-        block_size = 1 + sum(1 for kv in kvs)
+        try:
+            key = next(kvs)[0]
+            block_size = 1 + sum(1 for kv in kvs)
+        except StopIteration:
+            key, block_size = 0, 0
+
         return {key: block_size}
 
     block_summary = table.mapPartitions(_get_block_summary).reduce(lambda blk1, blk2: {**blk1, **blk2})
