@@ -21,7 +21,6 @@ from typing import List, Union
 
 from .ops import (
     aggregate_indexer,
-    transform_to_table,
     get_partition_order_mappings
 )
 from .manager import DataManager, Schema
@@ -528,4 +527,5 @@ class DataFrame(object):
         block_loc = self._data_manager.loc_block(target_name)
         assert block_loc[1] == 0, "support only one indexer in current version"
 
+        from .ops._indexer import transform_to_table
         return transform_to_table(self._block_table, block_loc[0], self._partition_order_mappings)
