@@ -60,27 +60,17 @@ def execute(process_tag, config, config_entrypoint, properties, env_prefix, env_
 
     from fate.components.entrypoint.component import execute_component_from_config
 
-    try:
-        execute_component_from_config(task_config)
-    except Exception as e:
-        with open("trace.json") as fw:
-            json.dump(
-                dict(
-                    execute_status="failed",
-                    execute_error=str(e),
-                    execute_exception=traceback.format_exc(),
-                ),
-                fw,
-            )
-        raise e
-    else:
-        with open("trace.json") as fw:
-            json.dump(
-                dict(
-                    execute_status="success",
-                ),
-                fw,
-            )
+    execute_component_from_config(task_config)
+
+
+@component.command()
+@click.option("--process-tag", required=True, help="unique id to identify this execution process")
+@click.option("--config", required=False, type=click.File(), help="config path")
+def cleanup(process_tag, config):
+    from fate.components.entrypoint.component import cleanup_component_execution
+    from fate.components.spec.task import TaskCleanupConfigSpec
+
+    cleanup_component_execution(TaskCleanupConfigSpec.parse_obj(config))
 
 
 def load_properties(properties) -> dict:

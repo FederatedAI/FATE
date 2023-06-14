@@ -54,3 +54,14 @@ class TaskConfigSpec(pydantic.BaseModel):
     input_artifacts: Dict[str, Union[ArtifactSpec, List[ArtifactSpec]]] = {}
     output_artifacts: Dict[str, Union[ArtifactSpec, List[ArtifactSpec]]] = {}
     conf: TaskConfSpec
+
+
+class TaskCleanupConfigSpec(pydantic.BaseModel):
+    computing: Union[StandaloneComputingSpec, EggrollComputingSpec, SparkComputingSpec]
+    federation: Union[
+        StandaloneFederationSpec,
+        RollSiteFederationSpec,
+        RabbitMQFederationSpec,
+        PulsarFederationSpec,
+        OSXFederationSpec,
+    ]

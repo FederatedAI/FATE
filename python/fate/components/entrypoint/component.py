@@ -12,9 +12,9 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+import json
 import logging
-import signal
-import time
+import os.path
 import traceback
 
 from fate.arch import Context
@@ -24,46 +24,47 @@ from fate.components.loader.computing import load_computing
 from fate.components.loader.device import load_device
 from fate.components.loader.federation import load_federation
 from fate.components.loader.metric import load_metrics_handler
-from fate.components.loader.mlmd import load_mlmd
 from fate.components.loader.other import load_role, load_stage
-from fate.components.spec.task import TaskConfigSpec
+from fate.components.spec.task import TaskCleanupConfigSpec, TaskConfigSpec
 
 logger = logging.getLogger(__name__)
 
 
-def execute_component_from_config(config: TaskConfigSpec):
-    party_task_id = config.party_task_id
-    mlmd = load_mlmd(config.conf.mlmd, party_task_id)
-    device = load_device(config.conf.device)
-    metrics_handler = load_metrics_handler()
-    computing = load_computing(config.conf.computing)
-    federation = load_federation(config.conf.federation, computing)
-    ctx = Context(
-        device=device,
-        computing=computing,
-        federation=federation,
-        metrics_handler=metrics_handler,
-    )
-    role = load_role(config.role)
-    stage = load_stage(config.stage)
-    logger.debug(f"component={config.component}, context={ctx}")
-
-    # register signal to handle sigterm
-    def gracefully_stop(signum, frame):
-        logger.debug(f"gracefully stop: signum={signum}")
-        try:
-            ctx.destroy()
-        except:
-            logger.debug(f"context destroy failed, skip")
-        finally:
-            import os
-
-            os._exit(0)
-
-    signal.signal(signal.SIGTERM, gracefully_stop)
+def cleanup_component_execution(config: TaskCleanupConfigSpec):
     try:
+        computing = load_computing(config.computing)
+        federation = load_federation(config.federation, computing)
+        ctx = Context(
+            computing=computing,
+            federation=federation,
+        )
+        ctx.destroy()
+    except Exception as e:
+        traceback.print_exception()
+        raise e
+
+
+def execute_component_from_config(config: TaskConfigSpec):
+    final_status_file_name = "final_status.json"
+    cwd = os.path.abspath(os.path.curdir)
+    logger.debug(f"component execution in path `{cwd}`")
+    logger.debug(f"logging final status to  `{os.path.join(cwd, final_status_file_name)}`")
+    try:
+        party_task_id = config.party_task_id
+        device = load_device(config.conf.device)
+        metrics_handler = load_metrics_handler()
+        computing = load_computing(config.conf.computing)
+        federation = load_federation(config.conf.federation, computing)
+        ctx = Context(
+            device=device,
+            computing=computing,
+            federation=federation,
+            metrics_handler=metrics_handler,
+        )
+        role = load_role(config.role)
+        stage = load_stage(config.stage)
+        logger.debug(f"component={config.component}, context={ctx}")
         logger.debug("running...")
-        mlmd.execution_status.log_excution_start()
 
         # get correct component/subcomponent handle stage
         component = load_component(config.component)
@@ -79,35 +80,18 @@ def execute_component_from_config(config: TaskConfigSpec):
         execute_kwargs = parse_execute_kwargs(ctx, component, role, stage, config)
 
         # execute
-        try:
-            component.execute(ctx, role, **execute_kwargs)
-        except Exception as e:
-            tb = traceback.format_exc()
-            mlmd.execution_status.log_excution_exception(dict(exception=str(e.args), traceback=tb))
-            raise e
-        else:
-            mlmd.execution_status.log_excution_end()
+        component.execute(ctx, role, **execute_kwargs)
 
     except Exception as e:
         logger.error(e, exc_info=True)
+        with open(final_status_file_name, "w") as fw:
+            json.dump(dict(final_status="exception", exceptions=traceback.format_exc()), fw)
         raise e
     else:
         logger.debug("done without error, waiting signal to terminate")
-        while not mlmd.execution_status.safe_terminate():
-            time.sleep(0.5)
+        with open(final_status_file_name, "w") as fw:
+            json.dump(dict(final_status="exception"), fw)
         logger.debug("terminating, bye~")
-    finally:
-
-        # protect process from `sigterm` when context destroying
-        def drop_sigterm(signum, frame):
-            logger.warning(
-                "component is cleaning, will stop in few seconds. Terminate now may cause some process not stop properly, please wait."
-            )
-
-        signal.signal(signal.SIGTERM, drop_sigterm)
-        logger.debug("stop and cleaning...")
-        ctx.destroy()
-        logger.debug("stop and clean finished")
 
 
 def parse_execute_kwargs(ctx, component: "_Component", role, stage, config):
