@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 def load_component(cpn_name: str):
     from fate.components.components import BUILDIN_COMPONENTS
-    from fate.components.cpn import _Component
+    from fate.components.core.cpn import _Component
 
     # from buildin
     for cpn in BUILDIN_COMPONENTS:

@@ -34,14 +34,25 @@ class Context(Protocol):
     computing: ComputingEngine
     federation: FederationEngine
 
-    @contextmanager
-    def sub_ctx(self, namespace) -> Iterator["Context"]:
+    def sub_ctx(self, namespace) -> "Context":
         ...
 
-    def range(self, end) -> Iterator[Tuple[int, "Context"]]:
+    @property
+    def on_iterations(self) -> "Context":
         ...
 
-    def iter(self, iterable: Iterable[T]) -> Iterator[Tuple["Context", T]]:
+    @property
+    def on_batches(self) -> "Context":
+        ...
+
+    @property
+    def on_cross_validations(self) -> "Context":
+        ...
+
+    def ctxs_range(self, end) -> Iterator[Tuple[int, "Context"]]:
+        ...
+
+    def ctxs_zip(self, iterable: Iterable[T]) -> Iterator[Tuple["Context", T]]:
         ...
 
     def destroy(self):

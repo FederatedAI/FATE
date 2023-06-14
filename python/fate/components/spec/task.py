@@ -28,14 +28,9 @@ from .federation import (
 )
 from .logger import CustomLogger, FlowLogger, PipelineLogger
 from .mlmd import CustomMLMDSpec, FlowMLMDSpec, NoopMLMDSpec, PipelineMLMDSpec
-from .output import OutputPoolConf
 
 
 class TaskConfigSpec(pydantic.BaseModel):
-    class TaskInputsSpec(pydantic.BaseModel):
-        parameters: Dict[str, Any] = {}
-        artifacts: Dict[str, Union[ArtifactSpec, List[ArtifactSpec]]] = {}
-
     class TaskConfSpec(pydantic.BaseModel):
         device: Union[CPUSpec, GPUSpec]
         computing: Union[StandaloneComputingSpec, EggrollComputingSpec, SparkComputingSpec]
@@ -48,7 +43,6 @@ class TaskConfigSpec(pydantic.BaseModel):
         ]
         logger: Union[PipelineLogger, FlowLogger, CustomLogger]
         mlmd: Union[PipelineMLMDSpec, FlowMLMDSpec, NoopMLMDSpec, CustomMLMDSpec]
-        output: OutputPoolConf
 
     task_id: str
     party_task_id: str
@@ -56,5 +50,7 @@ class TaskConfigSpec(pydantic.BaseModel):
     role: str
     party_id: str
     stage: str = "default"
-    inputs: TaskInputsSpec = TaskInputsSpec(parameters={}, artifacts={})
+    parameters: Dict[str, Any] = {}
+    input_artifacts: Dict[str, Union[ArtifactSpec, List[ArtifactSpec]]] = {}
+    output_artifacts: Dict[str, Union[ArtifactSpec, List[ArtifactSpec]]] = {}
     conf: TaskConfSpec

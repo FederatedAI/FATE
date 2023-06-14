@@ -12,6 +12,9 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+import json
+import traceback
+
 import click
 
 
@@ -55,9 +58,29 @@ def execute(process_tag, config, config_entrypoint, properties, env_prefix, env_
     logger.debug("logger installed")
     logger.debug(f"task config: {task_config}")
 
-    from fate.components.entrypoint.component import execute_component
+    from fate.components.entrypoint.component import execute_component_from_config
 
-    execute_component(task_config)
+    try:
+        execute_component_from_config(task_config)
+    except Exception as e:
+        with open("trace.json") as fw:
+            json.dump(
+                dict(
+                    execute_status="failed",
+                    execute_error=str(e),
+                    execute_exception=traceback.format_exc(),
+                ),
+                fw,
+            )
+        raise e
+    else:
+        with open("trace.json") as fw:
+            json.dump(
+                dict(
+                    execute_status="success",
+                ),
+                fw,
+            )
 
 
 def load_properties(properties) -> dict:
@@ -138,6 +161,7 @@ def load_config_from_entrypoint(configs, config_entrypoint):
 
 def load_config_from_env(configs, env_name):
     import os
+
     from ruamel import yaml
 
     if env_name is not None and os.environ.get(env_name):

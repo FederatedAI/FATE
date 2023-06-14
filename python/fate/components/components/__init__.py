@@ -12,10 +12,18 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from .evaluation import evaluation
-from .feature_scale import feature_scale
+# from .evaluation import evaluation
+# from .feature_scale import feature_scale
+# from .intersection import intersection
+# from .reader import reader
+from .demo import run
 from .hetero_lr import hetero_lr
-from .intersection import intersection
-from .reader import reader
 
-BUILDIN_COMPONENTS = [hetero_lr, reader, feature_scale, intersection, evaluation]
+BUILDIN_COMPONENTS = [
+    hetero_lr,
+    # reader,
+    # feature_scale,
+    # intersection,
+    # evaluation,
+    run,
+]

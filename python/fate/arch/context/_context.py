@@ -15,7 +15,7 @@
 import logging
 from contextlib import contextmanager
 from copy import copy
-from typing import Iterator, List, Optional
+from typing import Iterable, Iterator, List, Optional, Tuple, TypeVar
 
 from fate.interface import T_ROLE, ComputingEngine
 from fate.interface import Context as ContextInterface
@@ -24,11 +24,13 @@ from fate.interface import FederationEngine, MetricsHandler, PartyMeta
 from ..unify import device
 from ._cipher import CipherKit
 from ._federation import GC, Parties, Party
-from ._namespace import Namespace
+from ._namespace import NS, default_ns
 from .io.kit import IOKit
 from .metric import MetricsWrap
 
 logger = logging.getLogger(__name__)
+
+T = TypeVar("T")
 
 
 class Context(ContextInterface):
@@ -42,49 +44,31 @@ class Context(ContextInterface):
 
     def __init__(
         self,
-        context_name: Optional[str] = None,
         device: device = device.CPU,
         computing: Optional[ComputingEngine] = None,
         federation: Optional[FederationEngine] = None,
         metrics_handler: Optional[MetricsHandler] = None,
-        namespace: Optional[Namespace] = None,
+        namespace: Optional[NS] = None,
     ) -> None:
-        self.context_name = context_name
-        self.metrics = MetricsWrap(metrics_handler)
-
-        if namespace is None:
-            namespace = Namespace()
-        self.namespace = namespace
-        self.super_namespace = Namespace()
-
-        self.cipher: CipherKit = CipherKit(device)
-        self._io_kit: IOKit = IOKit()
-
+        self._device = device
         self._computing = computing
         self._federation = federation
-        self._role_to_parties = None
+        self._metrics_handler = metrics_handler
+        if namespace is None:
+            namespace = default_ns
+        self.namespace = namespace
 
+        self.metrics = MetricsWrap(metrics_handler)
+        self.cipher: CipherKit = CipherKit(device)
+        self._io_kit: IOKit = IOKit()
+        self._role_to_parties = None
         self._gc = GC()
         self._is_destroyed = False
 
-    def with_namespace(self, namespace: Namespace):
+    def with_namespace(self, namespace: NS):
         context = copy(self)
         context.namespace = namespace
         return context
-
-    def into_group_namespace(self, group_name: str, group_id: str):
-        context = copy(self)
-        context.metrics = context.metrics.into_group(group_name, group_id)
-        context.namespace = self.namespace.sub_namespace(f"{group_name}_{group_id}")
-        return context
-
-    def range(self, end):
-        for i in range(end):
-            yield i, self.with_namespace(self.namespace.sub_namespace(f"{i}"))
-
-    def iter(self, iterable):
-        for i, it in enumerate(iterable):
-            yield self.with_namespace(self.namespace.sub_namespace(f"{i}")), it
 
     @property
     def computing(self):
@@ -94,12 +78,34 @@ class Context(ContextInterface):
     def federation(self) -> FederationEngine:
         return self._get_federation()
 
-    @contextmanager
-    def sub_ctx(self, namespace: str) -> Iterator["Context"]:
-        try:
-            yield self.with_namespace(self.namespace.sub_namespace(namespace))
-        finally:
-            ...
+    def sub_ctx(self, name: str) -> "Context":
+        return self.with_namespace(self.namespace.sub_ns(name=name))
+
+    @property
+    def on_iterations(self) -> "Context":
+        ...
+
+    @property
+    def on_batches(self) -> "Context":
+        ...
+
+    @property
+    def on_cross_validations(self) -> "Context":
+        ...
+
+    def ctxs_range(self, end: int) -> Iterable[Tuple[int, "Context"]]:
+        """
+        create contexes with namespaces indexed from 0 to end(excluded)
+        """
+        for i in range(end):
+            yield i, self.with_namespace(self.namespace.indexed_ns(index=i))
+
+    def ctxs_zip(self, iterable: Iterable[T]) -> Iterable[Tuple["Context", T]]:
+        """
+        zip contexts with iterable with namespaces indexed from 0
+        """
+        for i, it in enumerate(iterable):
+            yield self.with_namespace(self.namespace.indexed_ns(index=i)), it
 
     def set_federation(self, federation: FederationEngine):
         self._federation = federation
@@ -182,8 +188,8 @@ class Context(ContextInterface):
             raise RuntimeError(f"computing not set")
         return self._computing
 
-    def reader(self, uri, **kwargs):
-        return self._io_kit.reader(self, uri, **kwargs)
+    def reader(self, *args, **kwargs):
+        return self._io_kit.reader(self, *args, **kwargs)
 
     def writer(self, uri, **kwargs):
         return self._io_kit.writer(self, uri, **kwargs)

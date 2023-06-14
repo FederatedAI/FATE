@@ -12,37 +12,28 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from fate.components import (
-    ARBITER,
-    GUEST,
-    HOST,
-    DatasetArtifact,
-    Input,
-    LossMetrics,
-    ModelArtifact,
-    Output,
-    Role,
-    cpn,
-    params,
-)
+
+from fate.arch import Context
+from fate.components import ARBITER, GUEST, HOST, Role, params
+from fate.components.core import artifacts, component, parameter
 
 
-@cpn.component(roles=[GUEST, HOST, ARBITER])
+@component(roles=[GUEST, HOST, ARBITER])
 def hetero_lr(ctx, role):
     ...
 
 
 @hetero_lr.train()
-@cpn.artifact("train_data", type=Input[DatasetArtifact], roles=[GUEST, HOST], desc="training data")
-@cpn.artifact("validate_data", type=Input[DatasetArtifact], optional=True, roles=[GUEST, HOST], desc="validation data")
-@cpn.parameter("learning_rate", type=params.learning_rate_param(), default=0.1, desc="learning rate")
-@cpn.parameter("max_iter", type=params.conint(gt=0), default=100, desc="max iteration num")
-@cpn.parameter(
+@artifacts.dataframe_input("train_data", roles=[GUEST, HOST], desc="training data")
+@artifacts.dataframe_input("validate_data", optional=True, roles=[GUEST, HOST], desc="validation data")
+@parameter("learning_rate", type=params.learning_rate_param(), default=0.1, desc="learning rate")
+@parameter("max_iter", type=params.conint(gt=0), default=100, desc="max iteration num")
+@parameter(
     "batch_size", type=params.conint(gt=0), default=100, desc="batch size, value less or equals to 0 means full batch"
 )
-@cpn.artifact("train_output_data", type=Output[DatasetArtifact], roles=[GUEST, HOST])
-@cpn.artifact("train_output_metric", type=Output[LossMetrics], roles=[ARBITER])
-@cpn.artifact("output_model", type=Output[ModelArtifact], roles=[GUEST, HOST])
+@artifacts.dataframe_output("train_output_data", roles=[GUEST, HOST])
+@artifacts.json_metric_output("train_output_metric", roles=[ARBITER])
+@artifacts.json_model_output("output_model", roles=[GUEST, HOST])
 def train(
     ctx,
     role: Role,
@@ -68,9 +59,9 @@ def train(
 
 
 @hetero_lr.predict()
-@cpn.artifact("input_model", type=Input[ModelArtifact], roles=[GUEST, HOST])
-@cpn.artifact("test_data", type=Input[DatasetArtifact], optional=False, roles=[GUEST, HOST])
-@cpn.artifact("test_output_data", type=Output[DatasetArtifact], roles=[GUEST, HOST])
+@artifacts.json_model_input("input_model", roles=[GUEST, HOST])
+@artifacts.dataframe_input("test_data", optional=False, roles=[GUEST, HOST])
+@artifacts.dataframe_output("test_output_data", roles=[GUEST, HOST])
 def predict(
     ctx,
     role: Role,
@@ -84,8 +75,44 @@ def predict(
         predict_host(ctx, input_model, test_data, test_output_data)
 
 
-def train_guest(ctx, train_data, validate_data, train_output_data, output_model, max_iter, learning_rate, batch_size):
+@hetero_lr.cross_validation()
+@artifacts.dataframe_input("data", optional=False, roles=[GUEST, HOST])
+@parameter("num_fold", type=params.conint(ge=2), desc="num cross validation fold")
+@parameter("learning_rate", type=params.learning_rate_param(), default=0.1, desc="learning rate")
+@parameter("max_iter", type=params.conint(gt=0), default=100, desc="max iteration num")
+@parameter(
+    "batch_size", type=params.conint(gt=0), default=100, desc="batch size, value less or equals to 0 means full batch"
+)
+def cross_validation(
+    ctx: Context,
+    role: Role,
+    data,
+    num_fold,
+    learning_rate,
+    max_iter,
+    batch_size,
+):
+    cv_ctx = ctx.on_cross_validations
+    data = ctx.reader(data).read_dataframe()
+    # TODO: split data
+    for i, fold_ctx in cv_ctx.ctxs_range(num_fold):
+        if role.is_guest:
+            from fate.ml.lr.guest import LrModuleGuest
 
+            module = LrModuleGuest(max_iter=max_iter, learning_rate=learning_rate, batch_size=batch_size)
+            train_data, validate_data = split_dataframe(data, num_fold, i)
+            module.fit(fold_ctx, train_data)
+            predicted = module.predict(fold_ctx, validate_data)
+            evaluation = evaluate(predicted)
+        elif role.is_host:
+            ...
+        elif role.is_arbiter:
+            ...
+
+
+#
+#
+def train_guest(ctx, train_data, validate_data, train_output_data, output_model, max_iter, learning_rate, batch_size):
     from fate.ml.lr.guest import LrModuleGuest
 
     with ctx.sub_ctx("train") as sub_ctx:

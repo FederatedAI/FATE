@@ -14,8 +14,6 @@
 #  limitations under the License.
 from typing import Protocol
 
-from fate.components import Artifact, DatasetArtifact, MetricArtifact, ModelArtifact
-
 from ...unify import URI, EggrollURI
 
 
@@ -52,66 +50,55 @@ class IOKit:
         format = metadata.get("format")
         return format, name, uri, metadata
 
-    def reader(self, ctx, artifact, **kwargs):
-        name = artifact.name
-        metadata = artifact.metadata
-        if "metadata" in kwargs:
-            metadata = kwargs["metadata"]
-        for k, v in kwargs.items():
-            if k not in ["name", "metadata"]:
-                metadata[k] = v
+    def reader(self, ctx, name, path, metadata):
         writer_format = metadata.get("format")
-        if "name" in kwargs:
-            name = kwargs["name"]
+        uri = URI.from_string(path)
+        if uri.schema == "file":
+            if writer_format == "csv":
+                from .data.csv import CSVReader
 
-        if isinstance(artifact, MetricArtifact):
-            uri = URI.from_string(artifact.uri)
-            if uri.schema == "file":
-                from .metric.file import FileMetricsReader
+                return CSVReader(ctx, name, uri, metadata)
 
-                return FileMetricsReader(ctx, name, uri, metadata)
-            if uri.schema in ["http", "https"]:
-                from .metric.http import HTTPMetricsReader
+            elif writer_format == "dataframe":
+                from .data.file import FileDataFrameReader
 
-                return HTTPMetricsReader(ctx, name, uri, metadata)
+                return FileDataFrameReader(ctx, name, path.to_schema(), {})
+        elif uri.schema == "eggroll":
+            if writer_format == "dataframe":
+                from .data.eggroll import EggrollDataFrameReader
 
-        if isinstance(artifact, ModelArtifact):
-            uri = URI.from_string(artifact.uri)
-            if uri.schema == "file":
-                from .model.file import FileModelReader
+                return EggrollDataFrameReader(ctx, path.to_schema(), {})
+            elif writer_format == "raw_table":
+                from .data.eggroll import EggrollRawTableReader
 
-                return FileModelReader(ctx, name, uri, metadata)
+                return EggrollRawTableReader(ctx, name, path.to_schema(), {})
 
-            if uri.schema in ["http", "https"]:
-                from .model.http import HTTPModelReader
+        # if isinstance(artifact, MetricArtifact):
+        #     uri = URI.from_string(artifact.uri)
+        #     if uri.schema == "file":
+        #         from .metric.file import FileMetricsReader
 
-                return HTTPModelReader(ctx, name, uri, metadata)
+        #         return FileMetricsReader(ctx, name, uri, metadata)
+        #     if uri.schema in ["http", "https"]:
+        #         from .metric.http import HTTPMetricsReader
 
-        if isinstance(artifact, DatasetArtifact):
-            uri = URI.from_string(artifact.uri)
-            if uri.schema == "file":
-                if writer_format == "csv":
-                    from .data.csv import CSVReader
+        #         return HTTPMetricsReader(ctx, name, uri, metadata)
 
-                    return CSVReader(ctx, name, uri, metadata)
+        # if isinstance(artifact, ModelArtifact):
+        #     uri = URI.from_string(artifact.uri)
+        #     if uri.schema == "file":
+        #         from .model.file import FileModelReader
 
-                elif writer_format == "dataframe":
-                    from .data.file import FileDataFrameReader
+        #         return FileModelReader(ctx, name, uri, metadata)
 
-                    return FileDataFrameReader(ctx, name, uri.to_schema(), {})
-            elif uri.schema == "eggroll":
-                if writer_format == "dataframe":
-                    from .data.eggroll import EggrollDataFrameReader
+        #     if uri.schema in ["http", "https"]:
+        #         from .model.http import HTTPModelReader
 
-                    return EggrollDataFrameReader(ctx, uri.to_schema(), {})
-                elif writer_format == "raw_table":
-                    from .data.eggroll import EggrollRawTableReader
-
-                    return EggrollRawTableReader(ctx, name, uri.to_schema(), {})
+        #         return HTTPModelReader(ctx, name, uri, metadata)
 
         raise NotImplementedError(f"{artifact}")
 
-    def writer(self, ctx, artifact: Artifact, **kwargs) -> "Writer":
+    def writer(self, ctx, artifact, **kwargs) -> "Writer":
         name = artifact.name
         metadata = artifact.metadata
         if "metadata" in kwargs:
@@ -145,7 +132,7 @@ class IOKit:
 
                 return HTTPModelWriter(ctx, name, uri, metadata)
 
-        if isinstance(artifact, DatasetArtifact):
+        if isinstance(artifact, DirectoryArtifact):
             uri = URI.from_string(artifact.uri)
             if uri.schema == "file":
                 if writer_format == "csv":
