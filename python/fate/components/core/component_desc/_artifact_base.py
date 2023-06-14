@@ -1,7 +1,30 @@
-from typing import Dict, List
+from contextlib import contextmanager
+from typing import Any, Dict, Generator, Generic, List, TypeVar
 
-from fate.components import T_ROLE, T_STAGE, Role, Stage
-from fate.components.spec.component import ArtifactSpec
+from .._role import T_ROLE, Role
+from .._stage import T_STAGE, Stage
+from ..spec.component import ArtifactSpec
+
+W = TypeVar("W")
+T = TypeVar("T")
+
+
+class Slot(Generic[W]):
+    def __init__(self, writer: W) -> None:
+        self._writer = writer
+
+    @contextmanager
+    def writer(self) -> Generator[W, Any, Any]:
+        yield self._writer
+
+
+class Slots(Generic[W]):
+    def __init__(self, writer_generator) -> None:
+        self._writer_generator = writer_generator
+
+    @contextmanager
+    def writer(self, index) -> Generator[W, Any, Any]:
+        yield self._writer_generator.get_writer(index)
 
 
 class ArtifactType:
@@ -179,7 +202,7 @@ class ComponentArtifactDescribes:
         )
 
     def get_inputs_spec(self, roles):
-        from fate.components.spec.component import InputDefinitionsSpec
+        from fate.components.core.spec.component import InputDefinitionsSpec
 
         return InputDefinitionsSpec(
             data={k: v.dict(roles) for k, v in self.data_inputs.items()},
@@ -187,7 +210,7 @@ class ComponentArtifactDescribes:
         )
 
     def get_outputs_spec(self, roles):
-        from fate.components.spec.component import OutputDefinitionsSpec
+        from fate.components.core.spec.component import OutputDefinitionsSpec
 
         return OutputDefinitionsSpec(
             data={k: v.dict(roles) for k, v in self.data_outputs.items()},

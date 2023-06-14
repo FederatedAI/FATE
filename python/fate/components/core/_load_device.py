@@ -12,13 +12,13 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-def load_role(role: str):
-    from fate.components import Role
+def load_device(device_spec):
+    from fate.arch.unify import device
+    from fate.components.core.spec.device import CPUSpec, GPUSpec
 
-    return Role(role)
+    if isinstance(device_spec, CPUSpec):
+        return device.CPU
 
-
-def load_stage(stage: str):
-    from fate.components import Stage
-
-    return Stage(stage)
+    if isinstance(device_spec, GPUSpec):
+        return device.CUDA
+    raise ValueError(f"device `{device_spec}` not implemented yet")

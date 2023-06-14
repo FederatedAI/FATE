@@ -3,10 +3,14 @@ import json
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from fate.components.core.cpn import Role
-
-from ._artifact import ArtifactDescribe, ArtifactType, ComponentArtifactDescribes
-from ._slot import Slot, Slots
+from .._role import Role
+from ._artifact_base import (
+    ArtifactDescribe,
+    ArtifactType,
+    ComponentArtifactDescribes,
+    Slot,
+    Slots,
+)
 
 
 class MetricArtifactType(ArtifactType):

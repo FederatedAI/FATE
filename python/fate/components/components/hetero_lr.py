@@ -14,26 +14,25 @@
 #  limitations under the License.
 
 from fate.arch import Context
-from fate.components import ARBITER, GUEST, HOST, Role, params
-from fate.components.core import artifacts, component, parameter
+from fate.components.core import ARBITER, GUEST, HOST, Role, cpn, params
 
 
-@component(roles=[GUEST, HOST, ARBITER])
+@cpn.component(roles=[GUEST, HOST, ARBITER])
 def hetero_lr(ctx, role):
     ...
 
 
 @hetero_lr.train()
-@artifacts.dataframe_input("train_data", roles=[GUEST, HOST], desc="training data")
-@artifacts.dataframe_input("validate_data", optional=True, roles=[GUEST, HOST], desc="validation data")
-@parameter("learning_rate", type=params.learning_rate_param(), default=0.1, desc="learning rate")
-@parameter("max_iter", type=params.conint(gt=0), default=100, desc="max iteration num")
-@parameter(
+@cpn.dataframe_input("train_data", roles=[GUEST, HOST], desc="training data")
+@cpn.dataframe_input("validate_data", optional=True, roles=[GUEST, HOST], desc="validation data")
+@cpn.parameter("learning_rate", type=params.learning_rate_param(), default=0.1, desc="learning rate")
+@cpn.parameter("max_iter", type=params.conint(gt=0), default=100, desc="max iteration num")
+@cpn.parameter(
     "batch_size", type=params.conint(gt=0), default=100, desc="batch size, value less or equals to 0 means full batch"
 )
-@artifacts.dataframe_output("train_output_data", roles=[GUEST, HOST])
-@artifacts.json_metric_output("train_output_metric", roles=[ARBITER])
-@artifacts.json_model_output("output_model", roles=[GUEST, HOST])
+@cpn.dataframe_output("train_output_data", roles=[GUEST, HOST])
+@cpn.json_metric_output("train_output_metric", roles=[ARBITER])
+@cpn.json_model_output("output_model", roles=[GUEST, HOST])
 def train(
     ctx,
     role: Role,
@@ -59,9 +58,9 @@ def train(
 
 
 @hetero_lr.predict()
-@artifacts.json_model_input("input_model", roles=[GUEST, HOST])
-@artifacts.dataframe_input("test_data", optional=False, roles=[GUEST, HOST])
-@artifacts.dataframe_output("test_output_data", roles=[GUEST, HOST])
+@cpn.json_model_input("input_model", roles=[GUEST, HOST])
+@cpn.dataframe_input("test_data", optional=False, roles=[GUEST, HOST])
+@cpn.dataframe_output("test_output_data", roles=[GUEST, HOST])
 def predict(
     ctx,
     role: Role,
@@ -76,11 +75,11 @@ def predict(
 
 
 @hetero_lr.cross_validation()
-@artifacts.dataframe_input("data", optional=False, roles=[GUEST, HOST])
-@parameter("num_fold", type=params.conint(ge=2), desc="num cross validation fold")
-@parameter("learning_rate", type=params.learning_rate_param(), default=0.1, desc="learning rate")
-@parameter("max_iter", type=params.conint(gt=0), default=100, desc="max iteration num")
-@parameter(
+@cpn.dataframe_input("data", optional=False, roles=[GUEST, HOST])
+@cpn.parameter("num_fold", type=params.conint(ge=2), desc="num cross validation fold")
+@cpn.parameter("learning_rate", type=params.learning_rate_param(), default=0.1, desc="learning rate")
+@cpn.parameter("max_iter", type=params.conint(gt=0), default=100, desc="max iteration num")
+@cpn.parameter(
     "batch_size", type=params.conint(gt=0), default=100, desc="batch size, value less or equals to 0 means full batch"
 )
 def cross_validation(

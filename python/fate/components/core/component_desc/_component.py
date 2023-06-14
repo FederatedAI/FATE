@@ -45,7 +45,7 @@
 #
 
 """
-use decorators to define component for FATE.
+use decorators to define component_desc for FATE.
 flowing codes modified from [click](https://github.com/pallets/click) project
 """
 
@@ -53,24 +53,15 @@ import inspect
 import logging
 from typing import List, Optional
 
-from fate.components import T_ROLE, Role
-
+from .._role import T_ROLE, Role
+from .._stage import CROSS_VALIDATION, DEFAULT, PREDICT, TRAIN
+from ._artifact_base import ComponentArtifactDescribes
 from ._parameter import ComponentParameterDescribes
-from .artifacts._artifact import ComponentArtifactDescribes
-
-
-class ComponentDeclareError(Exception):
-    ...
-
-
-class ComponentApplyError(Exception):
-    ...
-
 
 logger = logging.getLogger(__name__)
 
 
-class _Component:
+class Component:
     def __init__(
         self,
         name: str,
@@ -95,18 +86,18 @@ class _Component:
             self.description = ""
         self.artifacts = artifacts
         self.func_args = list(inspect.signature(self.callback).parameters.keys())
-        self.stage_components: List[_Component] = []
+        self.stage_components: List[Component] = []
 
     def validate_declare(self):
         # validate
         if self.func_args[0] != "ctx":
-            raise ComponentDeclareError("bad component definition, first argument should be `ctx`")
+            raise ComponentDeclareError("bad component_desc definition, first argument should be `ctx`")
         if self.func_args[1] != "role":
-            raise ComponentDeclareError("bad component definition, second argument should be `role`")
+            raise ComponentDeclareError("bad component_desc definition, second argument should be `role`")
 
         if set(self.func_args[2:]) != {*self.parameters.mapping.keys(), *self.artifacts.keys()}:
             raise ComponentDeclareError(
-                f"bad component definition, function arguments `{self.func_args[2:]}` should be same as {self.parameters.mapping.keys()} and {self.artifacts.keys()}"
+                f"bad component_desc definition, function arguments `{self.func_args[2:]}` should be same as {self.parameters.mapping.keys()} and {self.artifacts.keys()}"
             )
 
     def execute(self, ctx, role, **kwargs):
@@ -117,7 +108,7 @@ class _Component:
     def dict(self):
         return self._flatten_stages()._dict()
 
-    def _flatten_stages(self) -> "_Component":
+    def _flatten_stages(self) -> "Component":
         merged_parameters = self.parameters
         merged_artifacts = self.artifacts
         for stage_cpn in self.stage_components:
@@ -125,7 +116,7 @@ class _Component:
             merged_parameters = merged_parameters.merge(stage_cpn.parameters)
             merged_artifacts = merged_artifacts.merge(stage_cpn.artifacts)
 
-        return _Component(
+        return Component(
             name=self.name,
             roles=self.roles,
             provider=self.provider,
@@ -138,7 +129,7 @@ class _Component:
         )
 
     def _dict(self):
-        from fate.components.spec.component import ComponentSpec, ComponentSpecV1
+        from fate.components.core.spec.component import ComponentSpec, ComponentSpecV1
 
         return ComponentSpecV1(
             component=ComponentSpec(
@@ -173,7 +164,6 @@ class _Component:
     def predict(
         self, roles: List = None, provider: Optional[str] = None, version: Optional[str] = None, description=None
     ):
-        from fate.components import PREDICT
 
         if roles is None:
             roles = []
@@ -183,7 +173,6 @@ class _Component:
     def train(
         self, roles: List = None, provider: Optional[str] = None, version: Optional[str] = None, description=None
     ):
-        from fate.components import TRAIN
 
         if roles is None:
             roles = []
@@ -193,7 +182,6 @@ class _Component:
     def cross_validation(
         self, roles: List = None, provider: Optional[str] = None, version: Optional[str] = None, description=None
     ):
-        from fate.components import CROSS_VALIDATION
 
         if roles is None:
             roles = []
@@ -210,16 +198,16 @@ class _Component:
         version: Optional[str] = None,
         description=None,
     ):
-        r"""Creates a new stage component with :class:`_Component` and uses the decorated function as
+        r"""Creates a new stage component_desc with :class:`_Component` and uses the decorated function as
         callback.  This will also automatically attach all decorated
-        :func:`artifact`\s and :func:`parameter`\s as parameters to the component execution.
+        :func:`artifact`\s and :func:`parameter`\s as parameters to the component_desc execution.
 
-        The stage name of the component defaults to the name of the function.
+        The stage name of the component_desc defaults to the name of the function.
         If you want to change that, you can
         pass the intended name as the first argument.
 
         Once decorated the function turns into a :class:`Component` instance
-        that can be invoked as a component execution.
+        that can be invoked as a component_desc execution.
         """
         if roles is None:
             roles = []
@@ -243,14 +231,14 @@ def component(
 ):
     r"""Creates a new :class:`_Component` and uses the decorated function as
     callback.  This will also automatically attach all decorated
-    :func:`artifact`\s and :func:`parameter`\s as parameters to the component execution.
+    :func:`artifact`\s and :func:`parameter`\s as parameters to the component_desc execution.
 
-    The name of the component defaults to the name of the function.
+    The name of the component_desc defaults to the name of the function.
     If you want to change that, you can
     pass the intended name as the first argument.
 
     Once decorated the function turns into a :class:`Component` instance
-    that can be invoked as a component execution.
+    that can be invoked as a component_desc execution.
     """
     from fate import __provider__, __version__
 
@@ -270,12 +258,10 @@ def component(
 
 
 def _component(name, roles, provider, version, description, is_subcomponent):
-    from fate.components import DEFAULT
-
     def decorator(f):
         cpn_name = name or f.__name__.lower()
-        if isinstance(f, _Component):
-            raise TypeError("Attempted to convert a callback into a component twice.")
+        if isinstance(f, Component):
+            raise TypeError("Attempted to convert a callback into a component_desc twice.")
         try:
             parameters = f.__component_parameters__
             del f.__component_parameters__
@@ -298,7 +284,7 @@ def _component(name, roles, provider, version, description, is_subcomponent):
                 desc = desc.decode("utf-8")
         else:
             desc = inspect.cleandoc(desc)
-        cpn = _Component(
+        cpn = Component(
             name=cpn_name,
             roles=roles,
             provider=provider,
@@ -314,3 +300,7 @@ def _component(name, roles, provider, version, description, is_subcomponent):
         return cpn
 
     return decorator
+
+
+class ComponentDeclareError(Exception):
+    ...

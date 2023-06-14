@@ -31,8 +31,8 @@ class ParameterDescribe:
         return self
 
     def get_parameter_spec(self):
-        from fate.components.params import Parameter
-        from fate.components.spec.component import ParameterSpec
+        from fate.components.core.params import Parameter
+        from fate.components.core.spec.component import ParameterSpec
 
         if isinstance(self.type, Parameter):  # recomanded
             type_name = type(self.type).__name__
@@ -52,7 +52,7 @@ class ParameterDescribe:
         )
 
     def apply(self, parameter_config):
-        from fate.components import params
+        from fate.components.core import params
 
         if parameter_config is not None:
             try:
@@ -91,7 +91,7 @@ class ComponentParameterDescribes:
 
 
 def parameter(name, type, default=None, optional=True, desc=""):
-    """attaches a parameter to the component."""
+    """attaches a parameter to the component_desc."""
 
     def decorator(f):
         description = desc

@@ -2,10 +2,14 @@ import inspect
 from pathlib import Path
 from typing import List, Optional
 
-from fate.components.core.cpn import Role
-
-from ._artifact import ArtifactDescribe, ArtifactType, ComponentArtifactDescribes
-from ._slot import Dataframe, Slot, Slots, SlotWriter
+from .._role import Role
+from ._artifact_base import (
+    ArtifactDescribe,
+    ArtifactType,
+    ComponentArtifactDescribes,
+    Slot,
+    Slots,
+)
 
 
 class DataArtifactType(ArtifactType):
@@ -25,11 +29,11 @@ class DataDirectoryArtifactType(DataArtifactType):
         self.metadata = metadata
 
 
-class DataframeWriter(SlotWriter[Dataframe]):
+class DataframeWriter:
     def __init__(self, address) -> None:
         self._address = address
 
-    def write(self, slot: Dataframe):
+    def write(self, slot):
         ...
 
 

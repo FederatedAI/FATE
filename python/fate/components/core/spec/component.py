@@ -14,8 +14,11 @@
 #  limitations under the License.
 from typing import Any, Dict, List, Optional
 
-from fate.components import T_LABEL, T_ROLE, T_STAGE
 from pydantic import BaseModel
+
+from .._label import T_LABEL
+from .._role import T_ROLE
+from .._stage import T_STAGE
 
 
 class ParameterSpec(BaseModel):

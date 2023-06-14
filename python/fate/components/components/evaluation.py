@@ -12,20 +12,20 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from fate.components import ARBITER, GUEST, HOST, Role
-from fate.components.core import artifacts, component, parameter
-from fate.ml.evaluation import BinaryEvaluator
+from fate.components.core import ARBITER, GUEST, HOST, Role, cpn
 
 
-@component(roles=[GUEST, HOST, ARBITER])
-@artifacts.dataframe_input("input_data", roles=[GUEST, HOST, ARBITER])
-@parameter("eval_type", type=str, default="binary", optional=True)
-@artifacts.json_metric_output("output_metric", roles=[GUEST, HOST, ARBITER])
+@cpn.component(roles=[GUEST, HOST, ARBITER])
+@cpn.dataframe_input("input_data", roles=[GUEST, HOST, ARBITER])
+@cpn.parameter("eval_type", type=str, default="binary", optional=True)
+@cpn.json_metric_output("output_metric", roles=[GUEST, HOST, ARBITER])
 def evaluation(ctx, role: Role, input_data, eval_type, output_metric):
     evaluate(ctx, input_data, eval_type, output_metric)
 
 
 def evaluate(ctx, input_data, eval_type, output_metric):
+    from fate.ml.evaluation import BinaryEvaluator
+
     data = ctx.reader(input_data).read_dataframe().data
     y_true = data.label.tolist()
     y_pred = data.predict_score.values.tolist()

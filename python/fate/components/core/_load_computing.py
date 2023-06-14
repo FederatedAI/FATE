@@ -13,8 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 def load_computing(computing):
-    from fate.components.spec.computing import (
-        CustomComputingSpec,
+    from fate.components.core.spec.computing import (
         EggrollComputingSpec,
         SparkComputingSpec,
         StandaloneComputingSpec,

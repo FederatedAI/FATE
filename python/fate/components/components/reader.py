@@ -12,20 +12,19 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from fate.components import GUEST, HOST, Role
-from fate.components.core import artifacts, component, parameter
+from fate.components.core import GUEST, HOST, Role, cpn
 
 
-@component(roles=[GUEST, HOST])
-@parameter("path", type=str, default=None, optional=False)
-@parameter("format", type=str, default="csv", optional=False)
-@parameter("sample_id_name", type=str, default=None, optional=True)
-@parameter("match_id_name", type=str, default=None, optional=True)
-@parameter("delimiter", type=str, default=",", optional=True)
-@parameter("label_name", type=str, default=None, optional=True)
-@parameter("label_type", type=str, default="float32", optional=True)
-@parameter("dtype", type=str, default="float32", optional=True)
-@artifacts.dataframe_output("output_data", roles=[GUEST, HOST])
+@cpn.component(roles=[GUEST, HOST])
+@cpn.parameter("path", type=str, default=None, optional=False)
+@cpn.parameter("format", type=str, default="csv", optional=False)
+@cpn.parameter("sample_id_name", type=str, default=None, optional=True)
+@cpn.parameter("match_id_name", type=str, default=None, optional=True)
+@cpn.parameter("delimiter", type=str, default=",", optional=True)
+@cpn.parameter("label_name", type=str, default=None, optional=True)
+@cpn.parameter("label_type", type=str, default="float32", optional=True)
+@cpn.parameter("dtype", type=str, default="float32", optional=True)
+@cpn.dataframe_output("output_data", roles=[GUEST, HOST])
 def reader(
     ctx,
     role: Role,

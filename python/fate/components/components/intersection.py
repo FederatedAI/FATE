@@ -12,14 +12,13 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from fate.components import GUEST, HOST, Role
-from fate.components.core import artifacts, component, parameter
+from fate.components.core import GUEST, HOST, Role, cpn
 
 
-@component(roles=[GUEST, HOST], provider="fate")
-@artifacts.dataframe_input("input_data", roles=[GUEST, HOST])
-@parameter("method", type=str, default="raw", optional=True)
-@artifacts.dataframe_output("output_data", roles=[GUEST, HOST])
+@cpn.component(roles=[GUEST, HOST], provider="fate")
+@cpn.dataframe_input("input_data", roles=[GUEST, HOST])
+@cpn.parameter("method", type=str, default="raw", optional=True)
+@cpn.dataframe_output("output_data", roles=[GUEST, HOST])
 def intersection(
     ctx,
     role: Role,
