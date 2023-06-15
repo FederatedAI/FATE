@@ -18,6 +18,7 @@
 # from .reader import reader
 from .demo import run
 from .hetero_lr import hetero_lr
+from .dataframe_transformer import dataframe_transformer
 
 BUILDIN_COMPONENTS = [
     hetero_lr,
@@ -26,4 +27,5 @@ BUILDIN_COMPONENTS = [
     # intersection,
     # evaluation,
     run,
+    dataframe_transformer
 ]
