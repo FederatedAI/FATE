@@ -17,8 +17,7 @@ from .df import Dataframe
 
 
 class CSVReader:
-    def __init__(self, ctx, name: str, uri: URI, metadata: dict) -> None:
-        self.name = name
+    def __init__(self, ctx, uri: URI, metadata: dict) -> None:
         self.ctx = ctx
         self.uri = uri
         self.metadata = metadata

@@ -50,19 +50,20 @@ class IOKit:
         format = metadata.get("format")
         return format, name, uri, metadata
 
-    def reader(self, ctx, name, path, metadata):
+    def reader(self, ctx, path, metadata):
+        print("path: ", path, "metadata: ", metadata)
         writer_format = metadata.get("format")
         uri = URI.from_string(path)
         if uri.schema == "file":
             if writer_format == "csv":
                 from .data.csv import CSVReader
 
-                return CSVReader(ctx, name, uri, metadata)
+                return CSVReader(ctx, uri, metadata)
 
             elif writer_format == "dataframe":
                 from .data.file import FileDataFrameReader
 
-                return FileDataFrameReader(ctx, name, path.to_schema(), {})
+                return FileDataFrameReader(ctx, path.to_schema(), {})
         elif uri.schema == "eggroll":
             if writer_format == "dataframe":
                 from .data.eggroll import EggrollDataFrameReader
@@ -71,7 +72,7 @@ class IOKit:
             elif writer_format == "raw_table":
                 from .data.eggroll import EggrollRawTableReader
 
-                return EggrollRawTableReader(ctx, name, path.to_schema(), {})
+                return EggrollRawTableReader(ctx, path.to_schema(), {})
 
         # if isinstance(artifact, MetricArtifact):
         #     uri = URI.from_string(artifact.uri)

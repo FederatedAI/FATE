@@ -1,10 +1,11 @@
 import typing
-from contextlib import contextmanager
-from typing import Any, Dict, Generator, Generic, List, TypeVar, Union
+from typing import Dict, Generic, List, TypeVar, Union
 
 from .._role import T_ROLE, Role
 from .._stage import T_STAGE, Stage
+from ..spec.artifact import URI
 from ..spec.component import ArtifactSpec
+from ..spec.task import ArtifactInputApplySpec, ArtifactOutputApplySpec
 
 if typing.TYPE_CHECKING:
     from ._data_artifact import DataDirectoryArtifactDescribe, DataframeArtifactDescribe
@@ -15,32 +16,31 @@ if typing.TYPE_CHECKING:
     )
 
 W = TypeVar("W")
-T = TypeVar("T")
-
-
-class Slot(Generic[W]):
-    def __init__(self, writer: W) -> None:
-        self._writer = writer
-
-    @contextmanager
-    def writer(self) -> Generator[W, Any, Any]:
-        yield self._writer
-
-
-class Slots(Generic[W]):
-    def __init__(self, writer_generator) -> None:
-        self._writer_generator = writer_generator
-
-    @contextmanager
-    def writer(self, index) -> Generator[W, Any, Any]:
-        yield self._writer_generator.get_writer(index)
 
 
 class ArtifactType:
-    ...
+    type: str
+
+    @classmethod
+    def _load(cls, uri: URI, metadata: dict) -> "ArtifactType":
+        raise NotImplementedError(f"load artifact from spec `{cls}`")
+
+    @classmethod
+    def load_input(cls, spec: ArtifactInputApplySpec) -> "ArtifactType":
+        return cls._load(spec.get_uri(), spec.metadata)
+
+    @classmethod
+    def load_output(cls, spec: ArtifactOutputApplySpec):
+        i = 0
+        while True:
+            yield cls._load(spec.get_uri(i), {})
+            i += 1
 
 
-class ArtifactDescribe:
+AT = TypeVar("AT")
+
+
+class ArtifactDescribe(Generic[AT]):
     def __init__(self, name: str, roles: List[T_ROLE], stages: List[T_STAGE], desc: str, optional: bool, multi: bool):
         self.name = name
         self.roles = roles
@@ -81,26 +81,34 @@ class ArtifactDescribe:
 
     def dict(self, roles):
         return ArtifactSpec(
-            type=self._get_type(),
+            type=self._get_type().type,
             optional=self.optional,
             roles=roles,
             stages=self.stages,
             description=self.desc,
         )
 
-    def _get_type(self):
+    def _get_type(self) -> AT:
         raise NotImplementedError()
 
-    def _load_as_input(self, ctx, apply_config):
-        raise NotImplementedError()
+    def _load_as_component_execute_arg(self, ctx, artifact: AT):
+        """
+        load artifact as concreate arg passing to component execute
+        """
+        raise NotImplementedError(f"load as component execute arg artifact({self}) error")
 
-    def _load_as_output_slot(self, ctx, apply_config):
-        raise NotImplementedError()
+    def _load_as_component_execute_arg_writer(self, ctx, artifact: AT):
+        raise NotImplementedError(f"load as component execute arg slot artifact({self}) error")
 
     def load_as_input(self, ctx, apply_config):
         if apply_config is not None:
             try:
-                return self._load_as_input(ctx, apply_config)
+                if self.multi:
+                    return [
+                        self._load_as_component_execute_arg(ctx, self._get_type().load_input(c)) for c in apply_config
+                    ]
+                else:
+                    return self._load_as_component_execute_arg(ctx, self._get_type().load_input(apply_config))
             except Exception as e:
                 raise ComponentArtifactApplyError(f"load as input artifact({self}) error: {e}") from e
         if not self.optional:
@@ -110,8 +118,12 @@ class ArtifactDescribe:
 
     def load_as_output_slot(self, ctx, apply_config):
         if apply_config is not None:
+            output_iter = self._get_type().load_output(apply_config)
             try:
-                return self._load_as_output_slot(ctx, apply_config)
+                if self.multi:
+                    return (self._load_as_component_execute_arg_writer(ctx, output) for output in output_iter)
+                else:
+                    return self._load_as_component_execute_arg_writer(ctx, next(output_iter))
             except Exception as e:
                 raise ComponentArtifactApplyError(f"load as output artifact({self}) slot error: {e}") from e
         if not self.optional:

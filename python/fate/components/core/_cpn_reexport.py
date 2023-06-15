@@ -24,6 +24,8 @@ from .component_desc._data_artifact import (
     dataframe_inputs,
     dataframe_output,
     dataframe_outputs,
+    table_input,
+    table_inputs,
 )
 from .component_desc._metric_artifact import json_metric_output, json_metric_outputs
 from .component_desc._model_artifact import (
@@ -38,13 +40,15 @@ from .component_desc._model_artifact import (
 )
 from .component_desc._parameter import parameter
 
-__init__ = [
+__all__ = [
     "component",
     "parameter",
     "dataframe_input",
     "dataframe_output",
     "dataframe_inputs",
     "dataframe_outputs",
+    "table_input",
+    "table_inputs",
     "data_directory_input",
     "data_directory_output",
     "data_directory_outputs",

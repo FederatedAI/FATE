@@ -36,8 +36,7 @@ class FileDataFrameWriter:
 
 
 class FileDataFrameReader:
-    def __init__(self, ctx, name: str, uri: FileURI, metadata: dict) -> None:
-        self.name = name
+    def __init__(self, ctx, uri: FileURI, metadata: dict) -> None:
         self.ctx = ctx
         self.uri = FileMetaURI(uri)
         self.metadata = metadata
