@@ -358,7 +358,7 @@ class ConfusionMatrix(Metric):
     def __init__(self):
         super().__init__()
 
-    def __call__(self, predict, label):
+    def __call__(self, predict, label, **kwargs):
 
         predict = self.to_numpy(predict)
         label = self.to_numpy(label)
@@ -428,7 +428,7 @@ class Lift(Metric, BiClassMetric):
 
         return lifts_y, lifts_x
 
-    def __call__(self, predict, label):
+    def __call__(self, predict, label, **kwargs):
 
         confusion_mat, score_threshold, cuts = self.prepare_confusion_mat(label, predict, add_to_end=False, )
 
@@ -493,7 +493,7 @@ class Gain(Metric, BiClassMetric):
 
         return gain_y, gain_x
 
-    def __call__(self, predict, label):
+    def __call__(self, predict, label, **kwargs):
 
         confusion_mat, score_threshold, cuts = self.prepare_confusion_mat(label, predict, add_to_end=False, )
 
@@ -529,7 +529,7 @@ class BiClassPrecisionTable(Metric, BiClassMetric):
 
         return precision_scores
     
-    def __call__(self, predict, label) -> Dict:
+    def __call__(self, predict, label, **kwargs) -> Dict:
         p, threshold, cuts = self.compute(label, predict)
         return EvalResult(pd.DataFrame({
             'p': p,
@@ -553,7 +553,7 @@ class BiClassRecallTable(Metric, BiClassMetric):
         recall_scores = confusion_mat['tp'] / (confusion_mat['tp'] + confusion_mat['fn'])
         return recall_scores
 
-    def __call__(self, predict, label) -> Dict:
+    def __call__(self, predict, label, **kwargs) -> Dict:
         r, threshold, cuts = self.compute(label, predict)
         return EvalResult(pd.DataFrame({
             'r': r,
@@ -583,7 +583,7 @@ class BiClassAccuracyTable(Metric, BiClassMetric):
             else (confusion_mat['tp'] + confusion_mat['tn'])
         return rs[:-1]
 
-    def __call__(self, predict, label) -> Dict:
+    def __call__(self, predict, label, **kwargs) -> Dict:
         accuracy, threshold, cuts = self.compute(label, predict)
         return EvalResult(pd.DataFrame({
             'accuracy': accuracy,
@@ -631,7 +631,7 @@ class PSI(Metric):
 
     metric_name = 'psi'
 
-    def __call__(self, predict: dict, label: dict) -> Dict:
+    def __call__(self, predict: dict, label: dict, **kwargs) -> Dict:
 
         """
         train/validate scores: predicted scores on train/validate set

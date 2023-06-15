@@ -99,14 +99,18 @@ class MetricEnsemble(object):
 
         return predict, label, input_
 
-    def __call__(self, eval_rs, **kwargs) -> Dict:
+    def __call__(self, eval_rs=None, predict=None, label=None, **kwargs) -> Dict:
+
         metric_result = {}
-        predict, label, input_ = self._parse_input(eval_rs)
+        
+        if eval_rs is not None:
+            predict, label, input_ = self._parse_input(eval_rs)
+
         for metric in self._metrics:
-            metric_result.update(metric(predict=predict, label=label, input_=input_))
+            metric_result[metric.metric_name] = metric(predict, label)
         return metric_result
 
-    def fit(self, eval_rs, **kwargs) -> Dict:
-        return self.__call__(eval_rs, **kwargs)
+    def fit(self, eval_rs=None, predict=None, label=None, **kwargs) -> Dict:
+        return self.__call__(eval_rs, predict, label, **kwargs)
 
 

@@ -2,7 +2,7 @@ import torch as t
 import os
 from fate.components.components.nn.nn_runner import NNInput, NNRunner, NNOutput
 from fate.ml.nn.algo.homo.fedavg import FedAVG, FedAVGArguments, FedAVGCLient, FedAVGServer, TrainingArguments
-from typing import Optional, Dict, Tuple, Union
+from typing import Optional, Dict, Union
 from fate.components.components.nn.loader import Loader
 import torch.nn as nn
 import torch.optim as optim
@@ -11,6 +11,11 @@ from torch.optim.lr_scheduler import _LRScheduler
 from fate.ml.nn.trainer.trainer_base import FedArguments, TrainingArguments, FedTrainerClient, FedTrainerServer
 from typing import Union, Type, Callable, Optional
 from transformers.trainer_utils import get_last_checkpoint
+from typing import Literal
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 SUPPORTED_ALGO = ['fedavg']
@@ -120,6 +125,7 @@ class DefaultRunner(NNRunner):
                  loss_conf: Optional[Dict] = None,
                  data_collator_conf: Optional[Dict] = None,
                  tokenizer_conf: Optional[Dict] = None,
+                 task_type: Literal['classification', 'regression'] = 'classification',
                  use_hf_default_behavior: bool = False,
                  local_mode: bool = False
                 ) -> None:
@@ -136,6 +142,7 @@ class DefaultRunner(NNRunner):
         self.use_hf_default_behavior = use_hf_default_behavior
         self.local_mode = local_mode
         self.tokenizer_conf = tokenizer_conf
+        self.task_type = task_type
 
         self._resume_from_checkpoint = False
 
@@ -165,6 +172,8 @@ class DefaultRunner(NNRunner):
         if self.algo == 'fedavg':
             client_class: FedAVGCLient = FedAVG.client
             server_class: FedAVGServer = FedAVG.server
+        else:
+            raise ValueError(f"algo {self.algo} not supported")
 
         ctx = self.get_context()
             
@@ -225,11 +234,27 @@ class DefaultRunner(NNRunner):
         
     def train(self, input_data: NNInput = None) -> Optional[Union[NNOutput, None]]:
         
+        
         setup = self.setup(input_data, stage='train')
         trainer = setup['trainer']
         if self.is_client():
+
             trainer.train(resume_from_checkpoint=self._resume_from_checkpoint)
             trainer.save_model(input_data.get('fate_save_path'))
+            # predict the dataset when training is done
+            train_rs = trainer.predict(setup['train_set']) if setup['train_set'] else None
+            validate_rs = trainer.predict(setup['validate_set']) if setup['validate_set'] else None
+        
+            ret = self.generate_std_nn_output(input_data=input_data,
+                                    train_eval_prediction=train_rs,
+                                    validate_eval_prediction=validate_rs,
+                                    task_type=self.task_type,
+                                    threshold=0.5)
+            
+            logger.debug(f"train output: {ret}")
+
+            return ret
+            
         elif self.is_server():
             trainer.train()
 
@@ -239,8 +264,8 @@ class DefaultRunner(NNRunner):
         test_set = setup['test_set']
         trainer = setup['trainer']
         pred_rs = trainer.predict(test_set)
-
-        return NNOutput(data=pred_rs)
+        ret = self.generate_std_nn_output(input_data=input_data, test_eval_prediction=pred_rs, task_type=self.task_type, threshold=0.5)
+        return ret
 
 
     
